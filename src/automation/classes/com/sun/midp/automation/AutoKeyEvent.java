@@ -27,34 +27,45 @@
 package com.sun.midp.automation;
 
 /**
- * Represents generic event. Serves as base interface for all specific
- * event interfaces.
+ * Represents key event.
  */
-public interface AutoEvent {
+public interface AutoKeyEvent extends AutoEvent {
     /**
-     * Gets event type.
+     * Gets key state.
      *
-     * @return AutoEventType representing event type
+     * @return AutoKeyState representing key state
      */
-    public AutoEventType getType();
+    public AutoKeyState getKeyState();
 
     /**
-     * Gets string representation of event. The format is following:
+     * Gets key code.
+     *
+     * @return AutoKeyCode representing key code if event has a key code, 
+     * or null, if event has key char instead
+     */
+    public AutoKeyCode  getKeyCode();
+
+    /**
+     * Gets key char.
+     *
+     * @return key char if event has it, or unspecified,
+     * if event has key code instead
+     */
+    public char getKeyChar();
+
+    /**
+     * Gets string representation of this event. The format is following:
      * <br>&nbsp;&nbsp;
-     * <i>type_name arg1_name: arg1_value, arg2_name: arg2_value, ...</i>
+     * <b>key code:</b> <i>code_value</i><b>, state:</b> <i>state_value</i>
      * <br>
-     * where <i>arg1_name</i>, <i>arg2_name</i> and so on are event argument 
-     * (properties) names, and <i>arg1_value</i>, <i>arg2_value</i> and so on
-     * are argument values.
+     * where <i>code_value</i> and <i>state_value</i> are string 
+     * representation of key code (key char) and key state.
      * <br>
      * For example:
      * <br>&nbsp;&nbsp;
-     * <b>pen x: 20, y: 100, state: pressed</b>
-     * <br>
-     * In this example, <b>pen</b> is type name, <b>x</b> and <b>y</b> are 
-     * argument names, and <b>20</b> and <b>100</b> are argument values.
-     *
-     * @return string representation of event
+     * <b>key code: soft1, state: pressed</b>
+     * <br>&nbsp;&nbsp;
+     * <b>key code: a, state: pressed</b>
      */
     public String toString();
 }

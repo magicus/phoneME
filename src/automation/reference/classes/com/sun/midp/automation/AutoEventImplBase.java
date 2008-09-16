@@ -24,37 +24,41 @@
  * information or have any questions.
  */
 
+
 package com.sun.midp.automation;
+import com.sun.midp.events.*;
 
 /**
- * Represents generic event. Serves as base interface for all specific
- * event interfaces.
+ * Base class for all event implementation classes. Partially 
+ * implements AutoEvent interface.
  */
-public interface AutoEvent {
+abstract class AutoEventImplBase implements AutoEvent {
+    /** Event type */
+    private AutoEventType type;
+
     /**
      * Gets event type.
      *
      * @return AutoEventType representing event type
      */
-    public AutoEventType getType();
+    public AutoEventType getType() {
+        return type;
+    }
 
     /**
-     * Gets string representation of event. The format is following:
-     * <br>&nbsp;&nbsp;
-     * <i>type_name arg1_name: arg1_value, arg2_name: arg2_value, ...</i>
-     * <br>
-     * where <i>arg1_name</i>, <i>arg2_name</i> and so on are event argument 
-     * (properties) names, and <i>arg1_value</i>, <i>arg2_value</i> and so on
-     * are argument values.
-     * <br>
-     * For example:
-     * <br>&nbsp;&nbsp;
-     * <b>pen x: 20, y: 100, state: pressed</b>
-     * <br>
-     * In this example, <b>pen</b> is type name, <b>x</b> and <b>y</b> are 
-     * argument names, and <b>20</b> and <b>100</b> are argument values.
+     * Gets native event (used by our MIDP implementation) 
+     * corresponding to this Automation event.
      *
-     * @return string representation of event
+     * @return native event corresponding to this Automation event
      */
-    public String toString();
+    abstract NativeEvent toNativeEvent();
+
+    /**
+     * Constructor.
+     *
+     * @param type event type
+     */
+    protected AutoEventImplBase(AutoEventType type) {
+        this.type  = type;
+    }
 }

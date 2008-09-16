@@ -27,34 +27,46 @@
 package com.sun.midp.automation;
 
 /**
- * Represents generic event. Serves as base interface for all specific
- * event interfaces.
+ * Represents ordered sequence of events.
  */
-public interface AutoEvent {
+public interface AutoEventSequence {
     /**
-     * Gets event type.
+     * Gets events in this sequence as array.
      *
-     * @return AutoEventType representing event type
+     * @return sequence events as array
      */
-    public AutoEventType getType();
+    public AutoEvent[] getEvents();
 
     /**
-     * Gets string representation of event. The format is following:
-     * <br>&nbsp;&nbsp;
-     * <i>type_name arg1_name: arg1_value, arg2_name: arg2_value, ...</i>
-     * <br>
-     * where <i>arg1_name</i>, <i>arg2_name</i> and so on are event argument 
-     * (properties) names, and <i>arg1_value</i>, <i>arg2_value</i> and so on
-     * are argument values.
-     * <br>
-     * For example:
-     * <br>&nbsp;&nbsp;
-     * <b>pen x: 20, y: 100, state: pressed</b>
-     * <br>
-     * In this example, <b>pen</b> is type name, <b>x</b> and <b>y</b> are 
-     * argument names, and <b>20</b> and <b>100</b> are argument values.
+     * Tests if this sequence has no events.
      *
-     * @return string representation of event
+     * @return true if and only if this sequence has no events, 
+     * false otherwise.
+     */
+    public boolean isEmpty();
+
+    /**
+     * Adds single event to the end of this sequence.
+     *
+     * @param event event to add
+     */
+    public void addEvents(AutoEvent event) 
+        throws IllegalArgumentException;
+
+    /**
+     * Adds events to the end of this sequence.
+     *
+     * @param events events to add
+     */
+    public void addEvents(AutoEvent[] events)
+        throws IllegalArgumentException;
+
+    /**
+     * Gets string representation of this sequence which consists of string
+     * representation of individual events separated by new line character.
+     *
+     * @return string representation of this sequence
      */
     public String toString();
+
 }

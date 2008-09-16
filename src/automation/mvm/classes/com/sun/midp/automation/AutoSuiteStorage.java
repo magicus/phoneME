@@ -26,35 +26,38 @@
 
 package com.sun.midp.automation;
 
-/**
- * Represents generic event. Serves as base interface for all specific
- * event interfaces.
+import java.util.*;
+import java.io.*;
+import com.sun.midp.midletsuite.*;
+import com.sun.midp.installer.*;
+
+/** 
+ * Represents suites storage.
  */
-public interface AutoEvent {
+public interface AutoSuiteStorage {
     /**
-     * Gets event type.
+     * Installs suite from specified location.
      *
-     * @return AutoEventType representing event type
+     * @param location URI pointing to suite jad/jar
+     * @return AutoSuiteDescriptor representing installed suit
      */
-    public AutoEventType getType();
+    public AutoSuiteDescriptor installSuite(String location)
+        throws IOException, MIDletSuiteLockedException, 
+               MIDletSuiteCorruptedException, InvalidJadException,
+               SecurityException;
 
     /**
-     * Gets string representation of event. The format is following:
-     * <br>&nbsp;&nbsp;
-     * <i>type_name arg1_name: arg1_value, arg2_name: arg2_value, ...</i>
-     * <br>
-     * where <i>arg1_name</i>, <i>arg2_name</i> and so on are event argument 
-     * (properties) names, and <i>arg1_value</i>, <i>arg2_value</i> and so on
-     * are argument values.
-     * <br>
-     * For example:
-     * <br>&nbsp;&nbsp;
-     * <b>pen x: 20, y: 100, state: pressed</b>
-     * <br>
-     * In this example, <b>pen</b> is type name, <b>x</b> and <b>y</b> are 
-     * argument names, and <b>20</b> and <b>100</b> are argument values.
+     * Uninstalls specified suite.
      *
-     * @return string representation of event
+     * @param suite suite to uninstall
      */
-    public String toString();
+    public void uninstallSuite(AutoSuiteDescriptor suite) 
+        throws MIDletSuiteLockedException;
+
+    /**
+     * Gets a vector of installed suites.
+     *
+     * @return vector with suites descriptors
+     */
+    public Vector getInstalledSuites();
 }

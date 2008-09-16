@@ -27,34 +27,26 @@
 package com.sun.midp.automation;
 
 /**
- * Represents generic event. Serves as base interface for all specific
- * event interfaces.
+ * Represents delay (pause) event.
  */
-public interface AutoEvent {
+public interface AutoDelayEvent extends AutoEvent {
     /**
-     * Gets event type.
+     * Gets delay value in milliseconds.
      *
-     * @return AutoEventType representing event type
+     * @return delay value in milliseconds
      */
-    public AutoEventType getType();
+    public int getMsec();
 
     /**
-     * Gets string representation of event. The format is following:
+     * Gets string representation of this event. The format is following:
      * <br>&nbsp;&nbsp;
-     * <i>type_name arg1_name: arg1_value, arg2_name: arg2_value, ...</i>
+     * <b>delay msec:</b> <i>msec_value</i>
      * <br>
-     * where <i>arg1_name</i>, <i>arg2_name</i> and so on are event argument 
-     * (properties) names, and <i>arg1_value</i>, <i>arg2_value</i> and so on
-     * are argument values.
+     * where <i>msec_value</i> is string representation of delay value.
      * <br>
      * For example:
      * <br>&nbsp;&nbsp;
-     * <b>pen x: 20, y: 100, state: pressed</b>
-     * <br>
-     * In this example, <b>pen</b> is type name, <b>x</b> and <b>y</b> are 
-     * argument names, and <b>20</b> and <b>100</b> are argument values.
-     *
-     * @return string representation of event
+     * <b>delay msec: 500</b>
      */
     public String toString();
 }

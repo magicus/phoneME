@@ -25,36 +25,35 @@
  */
 
 package com.sun.midp.automation;
+import java.util.*;
 
 /**
- * Represents generic event. Serves as base interface for all specific
- * event interfaces.
+ * Factory interface for creating events from string prefix and arguments 
+ * in form of argument name/argument value pairs. Used for creating events 
+ * from string representation after it has been parsed by parser.
+ * Each factory implementing that interface knows about single prefix.
+ *
  */
-public interface AutoEvent {
+interface AutoEventFromArgsFactory {
     /**
-     * Gets event type.
+     * Gets prefix that this factory knows about.
      *
-     * @return AutoEventType representing event type
+     * @return string prefix
      */
-    public AutoEventType getType();
+    public String getPrefix();
 
     /**
-     * Gets string representation of event. The format is following:
-     * <br>&nbsp;&nbsp;
-     * <i>type_name arg1_name: arg1_value, arg2_name: arg2_value, ...</i>
-     * <br>
-     * where <i>arg1_name</i>, <i>arg2_name</i> and so on are event argument 
-     * (properties) names, and <i>arg1_value</i>, <i>arg2_value</i> and so on
-     * are argument values.
-     * <br>
-     * For example:
-     * <br>&nbsp;&nbsp;
-     * <b>pen x: 20, y: 100, state: pressed</b>
-     * <br>
-     * In this example, <b>pen</b> is type name, <b>x</b> and <b>y</b> are 
-     * argument names, and <b>20</b> and <b>100</b> are argument values.
+     * Creates event(s) from arguments. Multiple events can be created,
+     * for example, in case of key click, which consists of two events:
+     * key pressed and key released.
      *
-     * @return string representation of event
+     * @param args argument name/argument value pairs in form of Hashtable 
+     * with argument names used as key
+     * @return event(s) created from arguments in form of AutoEvent array
+     * @throws IllegalArgumentException if factory was unable to create
+     * event(s) from these arguments
      */
-    public String toString();
+    public AutoEvent[] create(Hashtable args) 
+        throws IllegalArgumentException;
 }
+

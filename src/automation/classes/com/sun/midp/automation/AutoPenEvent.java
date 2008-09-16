@@ -27,34 +27,41 @@
 package com.sun.midp.automation;
 
 /**
- * Represents generic event. Serves as base interface for all specific
- * event interfaces.
+ * Represents pen event.
  */
-public interface AutoEvent {
+public interface AutoPenEvent extends AutoEvent {
     /**
-     * Gets event type.
+     * Gets pen state.
      *
-     * @return AutoEventType representing event type
+     * @return AutoPenState representing pen state
      */
-    public AutoEventType getType();
+    public AutoPenState getPenState();
+
+    /**
+     * Gets X coord of pen tip.
+     *
+     * @return x coord of pen tip
+     */
+    public int getX();
+
+    /**
+     * Gets Y coord of pen tip.
+     *
+     * @return y coord of pen tip
+     */
+    public int getY();
 
     /**
      * Gets string representation of event. The format is following:
      * <br>&nbsp;&nbsp;
-     * <i>type_name arg1_name: arg1_value, arg2_name: arg2_value, ...</i>
+     * <b>pen x:</b> <i>x_value</i><b>, y:</b> <i>y_value</i><b>, state:</b> <i>state_value</i>
      * <br>
-     * where <i>arg1_name</i>, <i>arg2_name</i> and so on are event argument 
-     * (properties) names, and <i>arg1_value</i>, <i>arg2_value</i> and so on
-     * are argument values.
+     * where <i>x_value</i>, <i>y_value</i> and <i>state_value</i> are string 
+     * representation of x coord, y coord and pen state.
      * <br>
      * For example:
      * <br>&nbsp;&nbsp;
-     * <b>pen x: 20, y: 100, state: pressed</b>
-     * <br>
-     * In this example, <b>pen</b> is type name, <b>x</b> and <b>y</b> are 
-     * argument names, and <b>20</b> and <b>100</b> are argument values.
-     *
-     * @return string representation of event
+     * <b>pen x: 10, y: 10, state: pressed</b>
      */
     public String toString();
 }

@@ -27,34 +27,44 @@
 package com.sun.midp.automation;
 
 /**
- * Represents generic event. Serves as base interface for all specific
- * event interfaces.
+ * Represents event type.
  */
-public interface AutoEvent {
+public final class AutoEventType {
     /**
-     * Gets event type.
-     *
-     * @return AutoEventType representing event type
+     * Event type: key event
      */
-    public AutoEventType getType();
+    public static final AutoEventType KEY = 
+        new AutoEventType("key");
 
     /**
-     * Gets string representation of event. The format is following:
-     * <br>&nbsp;&nbsp;
-     * <i>type_name arg1_name: arg1_value, arg2_name: arg2_value, ...</i>
-     * <br>
-     * where <i>arg1_name</i>, <i>arg2_name</i> and so on are event argument 
-     * (properties) names, and <i>arg1_value</i>, <i>arg2_value</i> and so on
-     * are argument values.
-     * <br>
-     * For example:
-     * <br>&nbsp;&nbsp;
-     * <b>pen x: 20, y: 100, state: pressed</b>
-     * <br>
-     * In this example, <b>pen</b> is type name, <b>x</b> and <b>y</b> are 
-     * argument names, and <b>20</b> and <b>100</b> are argument values.
-     *
-     * @return string representation of event
+     * Event type: pen event
      */
-    public String toString();
+    public static final AutoEventType PEN = 
+        new AutoEventType("pen");   
+
+    /**
+     * Event type: delay event
+     */
+    public static final AutoEventType DELAY = 
+        new AutoEventType("delay");
+
+    /** Type name */
+    private String name;
+
+
+    /**
+     * Gets the type name
+     *
+     * @return type name as string
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Private constructor to prevent creating class instances
+     */
+    private AutoEventType(String name) {
+        this.name = name;
+    }
 }

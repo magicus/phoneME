@@ -1,5 +1,5 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,34 +27,30 @@
 package com.sun.midp.automation;
 
 /**
- * Represents generic event. Serves as base interface for all specific
- * event interfaces.
+ * AutoSuiteStorage interface implementation.
  */
-public interface AutoEvent {
-    /**
-     * Gets event type.
-     *
-     * @return AutoEventType representing event type
-     */
-    public AutoEventType getType();
+final class AutoSuiteStorageImpl implements AutoSuiteStorage {
+    /** The one and only class instance */
+    private static AutoSuiteStorageImpl instance = null;
+
 
     /**
-     * Gets string representation of event. The format is following:
-     * <br>&nbsp;&nbsp;
-     * <i>type_name arg1_name: arg1_value, arg2_name: arg2_value, ...</i>
-     * <br>
-     * where <i>arg1_name</i>, <i>arg2_name</i> and so on are event argument 
-     * (properties) names, and <i>arg1_value</i>, <i>arg2_value</i> and so on
-     * are argument values.
-     * <br>
-     * For example:
-     * <br>&nbsp;&nbsp;
-     * <b>pen x: 20, y: 100, state: pressed</b>
-     * <br>
-     * In this example, <b>pen</b> is type name, <b>x</b> and <b>y</b> are 
-     * argument names, and <b>20</b> and <b>100</b> are argument values.
-     *
-     * @return string representation of event
+     * Private constructor: this class is singleton
      */
-    public String toString();
+    private AutoSuiteStorageImpl() {
+    }
+
+
+    /**
+     * Gets class instance
+     *
+     * @return single AutoSuiteStorage instance
+     */
+    synchronized static AutoSuiteStorageImpl getInstance() {
+        if (instance == null) {
+            instance = new AutoSuiteStorageImpl();
+        }
+
+        return instance;
+    }
 }
