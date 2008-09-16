@@ -254,7 +254,6 @@ javacall_result
 javanotify_ams_install_answer(javacall_ams_install_request_code requestCode,
                               const javacall_ams_install_state* pInstallState,
                               const javacall_ams_install_data* pResultData) {
-    JVMSPI_ThreadID thread;
     javacall_result res;
 
     if (pResultData != NULL) {
@@ -272,17 +271,13 @@ javanotify_ams_install_answer(javacall_ams_install_request_code requestCode,
     g_fAnswerReady = JAVACALL_TRUE;
 
     if (g_installerIsolateId != -1) {
-        thread = SNI_GetSpecialThread(g_installerIsolateId);
-        if (thread != NULL) {
-            /*
-             * we're running in a different thread, so can't unblock the
-             * installer thread directly - sending an event instead
-             */
-            res = send_request_impl(NATIVE_UNBLOCK_INSTALLER,
-                                    (int)thread);
-        } else {
-            res = JAVACALL_FAIL;
-        }
+        /*
+         * we're running in a different thread, so can't unblock the
+         * installer thread directly - sending an event instead
+         */
+        res = send_request_impl(NATIVE_UNBLOCK_INSTALLER, 0);
+    } else {
+        res = JAVACALL_FAIL;
     }
 
     return res;

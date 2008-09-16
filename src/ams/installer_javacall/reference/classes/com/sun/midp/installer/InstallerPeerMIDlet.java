@@ -444,14 +444,15 @@ public class InstallerPeerMIDlet extends MIDlet
         // appId of the running installer which the event is intended for
         int installerAppId = nativeEvent.intParam1;
 
-        if ((installerAppId != appId) && (appId != -1)) { // -1 - broadcast
+        // -1 - broadcast
+        if ((installerAppId != appId) && (installerAppId != -1)) {
             // this event was sent to another installer, ignoring
             return;
         }
 
         switch (nativeEvent.getType()) {
             case EventTypes.NATIVE_UNBLOCK_INSTALLER: {
-                unblockInstaller0(nativeEvent.intParam2);
+                unblockInstaller0();
                 break;
             }
 
@@ -559,10 +560,8 @@ public class InstallerPeerMIDlet extends MIDlet
 
     /**
      * Unblocks the installer thread.
-     *
-     * @param thread ID of the thread to unblock
      */
-    private static native void unblockInstaller0(int thread);
+    private static native void unblockInstaller0();
 }
 
 /**

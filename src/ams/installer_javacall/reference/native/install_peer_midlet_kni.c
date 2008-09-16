@@ -55,7 +55,7 @@
 int g_installerIsolateId = -1;
 
 /**
- * This field is set up by the javacall_ams_install_answer() callback.
+ * These fields are set up by the javacall_ams_install_answer() callback.
  */
 jboolean g_fAnswer = JAVACALL_FALSE, g_fAnswerReady = JAVACALL_FALSE;
 
@@ -74,6 +74,8 @@ jboolean g_fAnswer = JAVACALL_FALSE, g_fAnswerReady = JAVACALL_FALSE;
  * @param installStatus current status of the installation, -1 if not used
  * @param newLocation   new url of the resource to install; null if not used
  */
+#include <stdio.h>
+
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
     javacall_ams_install_state jcInstallState;
@@ -218,7 +220,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
                                                  &jcRequestData);
 
                 if (jcRes != JAVACALL_OK) {
-                    /* If something is wrong, apply "No" answer */
+                  /* If something is wrong, apply "No" answer */
                     g_fAnswer = JAVACALL_FALSE;
                     g_fAnswerReady = JAVACALL_TRUE;
                 }
@@ -244,8 +246,8 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_getAnswer0) {
         g_installerIsolateId = -1;
     } else {
         g_installerIsolateId = getCurrentIsolateId();
-        SNI_SetSpecialThread(g_installerIsolateId);
-        SNI_BlockThread();
+        /* block the thread until the answer is ready */
+        midp_thread_wait(INSTALLER_UI_SIGNAL, getCurrentIsolateId(), NULL);
     }
 
     KNI_ReturnBoolean(g_fAnswer == JAVACALL_TRUE ? KNI_TRUE : KNI_FALSE);
@@ -346,14 +348,10 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_notifyRequestHandled0) {
 
 /**
  * Unblocks the installer thread.
- *
- * @param thread ID of the thread to unblock
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_unblockInstaller0) {
-    JVMSPI_ThreadID thread  = (JVMSPI_ThreadID)KNI_GetParameterAsInt(1);
-
-    midp_thread_unblock(thread);
+    midp_thread_signal(INSTALLER_UI_SIGNAL, getCurrentIsolateId(), 0);
 
     KNI_ReturnVoid();
 }
