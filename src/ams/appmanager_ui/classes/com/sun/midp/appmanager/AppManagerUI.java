@@ -69,22 +69,20 @@ interface AppManagerUI {
      * Called when state of a running midlet has changed.
      *
      * @param si corresponding midlet suite info
-     * @param midlet
      */
-    void notifyMidletStateChanged(RunningMIDletSuiteInfo si, MIDletProxy midlet);
+    void notifyMidletStateChanged(RunningMIDletSuiteInfo si);
 
     /**
      * Called when a running internal midlet exited.
-     * @param midlet proxy of the midlet that has exited
+     * @param midlet
      */
     void notifyInternalMidletExited(MIDletProxy midlet);
 
     /**
      * Called when a running midlet exited.
      * @param si corresponding midlet suite info
-     * @param midletClassName Class name of the exited midlet
      */
-    void notifyMidletExited(RunningMIDletSuiteInfo si, String midletClassName);
+    void notifyMidletExited(RunningMIDletSuiteInfo si);
 
     /**
      * Called by AppManagerPeer after a MIDlet suite
@@ -101,13 +99,6 @@ interface AppManagerUI {
      */
     void notifySuiteInstalledExt(RunningMIDletSuiteInfo si);
 
-    /**
-     * Called when a suite exited (the only MIDlet in suite exited or the
-     * MIDlet selector exited).
-     * @param suiteInfo Suite which just exited
-     */
-    void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo);
-    
     /**
      * Called when a MIDlet suite has been removed externally.
      * @param si corresponding suite info
@@ -153,7 +144,7 @@ interface AppManagerUI {
      * @param item corresponding suite info
      */
     void setCurrentItem(RunningMIDletSuiteInfo item);
-   
+
     /**
      * Called to determine MidletSuiteInfo of the last selected Item.
      * Is used to restore selection in the app manager.
@@ -163,21 +154,13 @@ interface AppManagerUI {
     RunningMIDletSuiteInfo getSelectedMIDletSuiteInfo();
 
     /**
-     * Called when midlet switcher is needed.
+     * Called when midlet selector needed.
      *
      * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
      *        if false then possibility to launch midlet is needed.
      */
     void showMidletSwitcher(boolean onlyFromLaunchedList);
-
-    /**
-     * Called when midlet selector is needed. Should show a list of
-     * midlets present in the given suite and allow to select one.
-     *
-     * @param msiToRun a suite from which a midlet must be selected
-     */
-    void showMidletSelector(RunningMIDletSuiteInfo msiToRun);
 
     /**
      * Called by Manager when destroyApp happens to clean up data.
@@ -191,3 +174,5 @@ interface AppManagerUI {
     Displayable getMainDisplayable();
 
 }
+
+

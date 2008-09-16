@@ -71,9 +71,4 @@ public abstract class MMHelper {
      */
     public abstract Display getItemDisplay(Item item);
 
-    /**
-     * Is current Display (playing video) overlapped by system layers
-     */
-    public abstract boolean isDisplayOverlapped(Graphics g);
-
 };

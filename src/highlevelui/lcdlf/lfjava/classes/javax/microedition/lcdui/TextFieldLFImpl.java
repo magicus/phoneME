@@ -26,7 +26,13 @@
 
 package javax.microedition.lcdui;
 
-import com.sun.midp.lcdui.*;
+import com.sun.midp.lcdui.EventConstants;
+import com.sun.midp.lcdui.PhoneDial;
+
+import com.sun.midp.lcdui.DynamicCharacterArray;
+import com.sun.midp.lcdui.Text;
+import com.sun.midp.lcdui.TextCursor;
+import com.sun.midp.lcdui.TextPolicy;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
@@ -34,8 +40,6 @@ import com.sun.midp.chameleon.*;
 import com.sun.midp.chameleon.input.*;
 import com.sun.midp.chameleon.layers.InputModeLayer;
 import com.sun.midp.chameleon.layers.PTILayer;
-import com.sun.midp.chameleon.layers.VirtualKeyboardLayer;
-import com.sun.midp.chameleon.layers.VirtualKeyListener;
 
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.TextFieldSkin;
@@ -51,7 +55,7 @@ import java.util.*;
  * This is the look &amps; feel implementation for TextField.
  */
 class TextFieldLFImpl extends ItemLFImpl implements 
-    TextFieldLF, TextInputComponent, CommandListener, VirtualKeyListener
+    TextFieldLF, TextInputComponent, CommandListener 
 {
     /** TextField instance associated with this view */
     protected TextField tf;
@@ -94,9 +98,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
 
     /** The state of the popup ChoiceGroup (false by default) */
     private boolean pt_popupOpen;
-
-    /** The state of the virtual keyboard popup (false by default) */
-    private boolean vkb_popupOpen;
 
     /** predictive text options */
     String[] pt_matches;
@@ -947,7 +948,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
         
         // IMPL_NOTE: problem with synchronization on layers and LCDUILock
         showPTPopup((int)0, cursor, w, h);
-        showKeyboardLayer();
         return newXOffset;
     }
 
@@ -1340,13 +1340,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
         uCallKeyPressed(keyCode);
     }
 
-    public void processKeyPressed(int keyCode) {
-        cachedInputSession.processKey(keyCode, false);
-    }
-
-    public void processKeyReleased(int keyCode) {
-    }
-
 
     /** Timer to indicate long key press */
     class TimerKey extends TimerTask {
@@ -1635,7 +1628,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      */
     void uCallTraverseOut() {
         super.uCallTraverseOut();
-
+        
         // Dismiss input mode indicator layer outside LCDUILock
         // to avoid deadlocking with Chameleon internal lock 'layers'.
         disableLayers();
@@ -1647,7 +1640,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
      */
     private void disableLayers() {
         Display currentDisplay;
-
         
         synchronized (Display.LCDUILock) {
             currentDisplay = getCurrentDisplay();
@@ -1657,8 +1649,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         // to avoid deadlocking with Chameleon internal lock 'layers'.
         if (currentDisplay != null) {
             hidePTILayer();
-            hideKeyboardLayer();
-        currentDisplay.hidePopup(inputModeIndicator);
+	    currentDisplay.hidePopup(inputModeIndicator);
         }
      }
 
@@ -1975,56 +1966,23 @@ class TextFieldLFImpl extends ItemLFImpl implements
         }
     }
 
+
     /**
      * Show predictive text popup dialog 
      */
     protected void showPTILayer() {
         Display d = getCurrentDisplay();
-	if (d != null) {
-	    PTILayer pt_popup = d.getPTIPopup();
-	    pt_popup.setList(pt_matches);
-	    if (!pt_popupOpen) {
-		if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
-				   "[showPTPopup] showing");
-		}
-		d.showPopup(pt_popup);
-		pt_popupOpen = true;
-		lRequestInvalidate(true, true);
-	    } 
-	}
-    }
-
-    /**
-     * Show virtual keybord popup
-     */
-    protected void showKeyboardLayer() {
-
-        Display d = getCurrentDisplay();
-
-        if (d != null) {
-            if (!vkb_popupOpen) {
-               if (d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode) {
-                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
-                    if (keyboardPopup != null ) {
-                        keyboardPopup.setVirtualKeyboardLayerListener(this);
-                        keyboardPopup.setKeyboardType(VirtualKeyboard.LOWER_ALPHABETIC_KEYBOARD);
-                        d.showPopup(keyboardPopup);
-                        vkb_popupOpen = true;
-                        lRequestInvalidate(true, true);
-                    }
-                }
-            } else {
-                if (!(d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode)) {
-                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
-                    if (keyboardPopup != null ) {
-                        keyboardPopup.setVirtualKeyboardLayerListener(null);
-                        d.hidePopup(keyboardPopup);
-                        vkb_popupOpen = false;
-                        lRequestInvalidate(true, true);
-                    }
-                }
+        if (!pt_popupOpen && d != null) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[showPTPopup] showing");
             }
+
+            PTILayer pt_popup = d.getPTIPopup();
+            pt_popup.setList(pt_matches);
+            d.showPopup(pt_popup);
+            pt_popupOpen = true;
+            lRequestInvalidate(true, true);
         }
     }
     
@@ -2042,23 +2000,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
             d.hidePopup(pt_popup);
             pt_popupOpen = false;
             lRequestInvalidate(true, true);
-        }
-    }
-
-    /**
-     * Hide virtual keyboard popap
-     */
-    protected void hideKeyboardLayer() {
-        
-        Display d = getCurrentDisplay();
-        if (vkb_popupOpen && d != null) {
-            VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
-            if (keyboardPopup != null ) {
-                keyboardPopup.setVirtualKeyboardLayerListener(null);
-                d.hidePopup(keyboardPopup);
-                vkb_popupOpen = false;
-                lRequestInvalidate(true, true);
-            }
         }
     }
     

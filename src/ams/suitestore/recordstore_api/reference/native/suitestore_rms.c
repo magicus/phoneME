@@ -40,8 +40,6 @@
 #include <midpRMS.h>
 #include <midpUtilKni.h>
 #include <pcsl_memory.h>
-#include <pcsl_esc.h>
-#include <pcsl_string.h>
 #include <suitestore_intern.h>
 #include <suitestore_rms.h>
 
@@ -113,7 +111,7 @@ midp_suite_get_rms_filename(SuiteIdType suiteId,
         fileNameLen = PCSL_STRING_ESCAPED_BUFFER_SIZE(resourceNameLen + extLen);
         pcsl_string_predict_size(&rmsFileName, fileNameLen);
 
-        if (pcsl_esc_attach_string(pResourceName, &rmsFileName) !=
+        if (pcsl_string_append_escaped_ascii(&rmsFileName, pResourceName) !=
                 PCSL_STRING_OK ||
                     pcsl_string_append(&rmsFileName, ext) != PCSL_STRING_OK) {
             pcsl_string_free(&rmsFileName);

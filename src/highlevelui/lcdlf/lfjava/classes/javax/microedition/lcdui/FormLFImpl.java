@@ -30,6 +30,7 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.ScreenSkin;
+import com.sun.midp.chameleon.skins.PTISkin;
 
 
 /**

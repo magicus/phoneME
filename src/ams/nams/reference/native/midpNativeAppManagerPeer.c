@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -86,8 +86,6 @@ nams_listeners_notify(NamsListenerType listenerType,
  * @return error code: (ALL_OK if successful)
  */
 MIDPError midp_system_initialize(void) {
-    MIDPError error;
-
 	int midp_heap_requirement = getHeapRequirement();
 
     JVM_Initialize();
@@ -98,37 +96,8 @@ MIDPError midp_system_initialize(void) {
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
 
-    if (ALL_OK == (error = (MIDPError)midpInitialize())) {
-        error = (MIDPError)init_listeners_impl();
+    return init_listeners_impl();
 }
-
-    return error;
-}
-
-
-static MIDPError system_cleanup(int status) {
-    NamsEventData eventData;
-    MIDPError errCode;
-    memset((char*)&eventData, 0, sizeof(NamsEventData));
-    eventData.event  = MIDP_NAMS_EVENT_STATE_CHANGED;
-    eventData.state = MIDP_SYSTEM_STATE_STOPPED;
-    nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
-
-    switch (status) {
-        case MIDP_SHUTDOWN_STATUS: {
-            errCode = ALL_OK;
-            break;
-        }
-
-        default: {
-            errCode = GENERAL_ERROR;
-            break;
-        }
-    }
-
-    return errCode;
-}
-
 
 /**
  * Starts the system. Does not return until the system is stopped.
@@ -139,13 +108,26 @@ static MIDPError system_cleanup(int status) {
 MIDPError midp_system_start(void) {
     int vmStatus;
     MIDPError errCode;
+    NamsEventData eventData;
+
+    memset((char*)&eventData, 0, sizeof(NamsEventData));
 
     vmStatus = midpRunMainClass(NULL, APP_MANAGER_PEER, 0, NULL);
 
-    if (MIDP_RUNNING_STATUS != vmStatus) {
-        errCode = system_cleanup(vmStatus);
-    } else {
-        errCode = ALL_OK;
+    eventData.event  = MIDP_NAMS_EVENT_STATE_CHANGED;
+    eventData.state = MIDP_SYSTEM_STATE_STOPPED;
+    nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
+
+    switch (vmStatus) {
+        case MIDP_SHUTDOWN_STATUS: {
+            errCode = ALL_OK;
+            break;
+        }
+
+        default: {
+            errCode = GENERAL_ERROR;
+            break;
+        }
     }
 
     return errCode;
@@ -244,17 +226,16 @@ MIDPError midp_midlet_create_start_with_args(SuiteIdType suiteId,
         jint argsNum, jint appId, const MidletRuntimeInfo* pRuntimeInfo) {
     MidpEvent evt;
     pcsl_string temp;
-    int i;
     /*
      * evt.stringParam1 is a midlet class name,
      * evt.stringParam2 is a display name,
      * evt.stringParam3-5 - the arguments
      * evt.stringParam6 - profile name
      */
-    pcsl_string* params[3];
-    params[0] = &evt.stringParam3;
-    params[1] = &evt.stringParam4;
-    params[2] = &evt.stringParam5;
+    pcsl_string* params[] = {
+        &evt.stringParam3, &evt.stringParam4, &evt.stringParam5
+    };
+    int i;
 
     MIDP_EVENT_INITIALIZE(evt);
 

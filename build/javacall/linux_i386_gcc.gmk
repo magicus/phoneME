@@ -49,4 +49,3 @@ EXTRA_CPPFLAGS +=
 LD_FLAGS +=
 EXTRA_LIBS += 
 
-LIBS += -L$(JAVACALL_LIB_DIR) -ljavacall$(g)$(r)

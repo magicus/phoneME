@@ -29,6 +29,7 @@ package com.sun.midp.appmanager;
 import javax.microedition.midlet.*;
 import javax.microedition.lcdui.*;
 
+import com.sun.midp.io.j2me.storage.*;
 import com.sun.midp.main.MIDletSuiteUtils;
 import com.sun.midp.midletsuite.*;
 
@@ -111,7 +112,7 @@ public class MIDletSuiteLauncher extends MIDlet implements ApplicationManager {
     /** Launch ODT Agent. */
     public void launchODTAgent() {
     }
-
+		      
     /**
      * Launches a suite.
      *
@@ -150,26 +151,15 @@ public class MIDletSuiteLauncher extends MIDlet implements ApplicationManager {
      * foreground.
      * 
      * @param suiteInfo information for the midlet to be put to foreground
-     * @param className the running MIDlet class name
      */
-    public void moveToForeground(RunningMIDletSuiteInfo suiteInfo, String className) {
+    public void moveToForeground(RunningMIDletSuiteInfo suiteInfo) {
     }
     
     /**
      * Exit the midlet with the passed in midlet suite info.
      * 
      * @param suiteInfo information for the midlet to be terminated
-     * @param className the running MIDlet class name
      */
-    public void exitMidlet(RunningMIDletSuiteInfo suiteInfo, String className) {
-    }
-
-    /**
-     * Handle exit of MIDlet suite (the only MIDlet in sute exited or MIDlet
-     * selector exited).
-     * @param suiteInfo Containing ID of exited suite
-     * @param className the running MIDlet class name
-     */
-    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {
+    public void exitMidlet(RunningMIDletSuiteInfo suiteInfo) {
     }
 }

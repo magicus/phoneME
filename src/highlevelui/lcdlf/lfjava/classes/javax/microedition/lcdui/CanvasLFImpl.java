@@ -27,18 +27,13 @@
 package javax.microedition.lcdui;
 
 /* import  javax.microedition.lcdui.KeyConverter; */
-import com.sun.midp.chameleon.layers.VirtualKeyListener;
-
-import com.sun.midp.i18n.ResourceConstants;
-
 import java.util.Vector;
 import java.util.Enumeration;
 
 /**
 * This is the look amps; feel implementation for Canvas.
 */
-class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyListener {
-
+class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
 
     /**
      * Constructor.
@@ -392,7 +387,6 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
          embeddedVideos.removeElement(video);
      }
 
-
     // ************************************************************
     //  private methods
     // ************************************************************
@@ -456,11 +450,4 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
      */
     private static MMHelperImpl mmHelper = MMHelperImpl.getInstance();
 
-    public void processKeyPressed(int keyCode) {
-        uCallKeyPressed(keyCode);
-    }
-
-    public void processKeyReleased(int keyCode) {
-        uCallKeyReleased(keyCode);
-    }
 }

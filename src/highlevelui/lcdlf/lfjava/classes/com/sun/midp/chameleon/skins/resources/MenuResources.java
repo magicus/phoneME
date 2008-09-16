@@ -47,73 +47,73 @@ public class MenuResources {
             return;
         }
         
-        MenuSkin.WIDTH = SkinLoader.getInt(
+        MenuSkin.WIDTH = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_WIDTH);
-        MenuSkin.HEIGHT = SkinLoader.getInt(
+        MenuSkin.HEIGHT = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_HEIGHT);
 
-        int alignX = SkinLoader.getInt(
+        int alignX = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_ALIGN_X);
-        MenuSkin.ALIGN_X = SkinLoader.resourceConstantsToGraphics(alignX);
+        MenuSkin.ALIGN_X = SkinResources.resourceConstantsToGraphics(alignX);
 
-        int alignY = SkinLoader.getInt(
+        int alignY = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_ALIGN_Y);
-        MenuSkin.ALIGN_Y = SkinLoader.resourceConstantsToGraphics(alignY);
+        MenuSkin.ALIGN_Y = SkinResources.resourceConstantsToGraphics(alignY);
 
-        MenuSkin.TITLE_X = SkinLoader.getInt(
+        MenuSkin.TITLE_X = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_TITLE_X);
-        MenuSkin.TITLE_Y = SkinLoader.getInt(
+        MenuSkin.TITLE_Y = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_TITLE_Y);
-        MenuSkin.TITLE_MAXWIDTH = SkinLoader.getInt(
+        MenuSkin.TITLE_MAXWIDTH = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_TITLE_MAXWIDTH);
 
-        int titleAlign = SkinLoader.getInt(
+        int titleAlign = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_TITLE_ALIGN);
-        MenuSkin.TITLE_ALIGN = SkinLoader.resourceConstantsToGraphics(
+        MenuSkin.TITLE_ALIGN = SkinResources.resourceConstantsToGraphics(
                 titleAlign);
 
-        MenuSkin.MAX_ITEMS = SkinLoader.getInt(
+        MenuSkin.MAX_ITEMS = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_MAX_ITEMS);
-        MenuSkin.ITEM_HEIGHT = SkinLoader.getInt(
+        MenuSkin.ITEM_HEIGHT = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_ITEM_HEIGHT);
-        MenuSkin.ITEM_TOPOFFSET = SkinLoader.getInt(
+        MenuSkin.ITEM_TOPOFFSET = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_ITEM_TOPOFFSET);
-        MenuSkin.ITEM_INDEX_ANCHOR_X = SkinLoader.getInt(
+        MenuSkin.ITEM_INDEX_ANCHOR_X = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_ITEM_INDEX_ANCHOR_X);
-        MenuSkin.ITEM_ANCHOR_X = SkinLoader.getInt(
+        MenuSkin.ITEM_ANCHOR_X = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_ITEM_ANCHOR_X);
-        MenuSkin.COLOR_BG = SkinLoader.getInt(
+        MenuSkin.COLOR_BG = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_COLOR_BG);
-        MenuSkin.COLOR_BG_SEL = SkinLoader.getInt(
+        MenuSkin.COLOR_BG_SEL = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_COLOR_BG_SEL);
-        MenuSkin.COLOR_TITLE = SkinLoader.getInt(
+        MenuSkin.COLOR_TITLE = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_COLOR_TITLE);
-        MenuSkin.COLOR_INDEX = SkinLoader.getInt(
+        MenuSkin.COLOR_INDEX = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_COLOR_INDEX);
-        MenuSkin.COLOR_INDEX_SEL = SkinLoader.getInt(
+        MenuSkin.COLOR_INDEX_SEL = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_COLOR_INDEX_SEL);
-        MenuSkin.COLOR_ITEM = SkinLoader.getInt(
+        MenuSkin.COLOR_ITEM = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_COLOR_ITEM);
-        MenuSkin.COLOR_ITEM_SEL = SkinLoader.getInt(
+        MenuSkin.COLOR_ITEM_SEL = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_COLOR_ITEM_SEL);
-        MenuSkin.TEXT_TITLE = SkinLoader.getString(
+        MenuSkin.TEXT_TITLE = SkinResources.getString(
                 SkinPropertiesIDs.MENU_TEXT_TITLE);
-        MenuSkin.FONT_TITLE = SkinLoader.getFont(
+        MenuSkin.FONT_TITLE = SkinResources.getFont(
                 SkinPropertiesIDs.MENU_FONT_TITLE);
-        MenuSkin.FONT_ITEM = SkinLoader.getFont(
+        MenuSkin.FONT_ITEM = SkinResources.getFont(
                 SkinPropertiesIDs.MENU_FONT_ITEM);
-        MenuSkin.FONT_ITEM_SEL = SkinLoader.getFont(
+        MenuSkin.FONT_ITEM_SEL = SkinResources.getFont(
                 SkinPropertiesIDs.MENU_FONT_ITEM_SEL);
-        MenuSkin.IMAGE_BG = SkinLoader.getCompositeImage(
+        MenuSkin.IMAGE_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.MENU_IMAGE_BG, 9);
         /*
         Uncomment if background image for selected item is used
-        MenuSkin.IMAGE_ITEM_SEL_BG = SkinLoader.getCompositeImage(
+        MenuSkin.IMAGE_ITEM_SEL_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.MENU_IMAGE_ITEM_SEL_BG, 3);
         */
-        MenuSkin.IMAGE_SUBMENU_ARROW = SkinLoader.getImage(
+        MenuSkin.IMAGE_SUBMENU_ARROW = SkinResources.getImage(
                 SkinPropertiesIDs.MENU_IMAGE_SUBMENU);
-        MenuSkin.IMAGE_SUBMENU_ARROW_HL = SkinLoader.getImage(
+        MenuSkin.IMAGE_SUBMENU_ARROW_HL = SkinResources.getImage(
                 SkinPropertiesIDs.MENU_IMAGE_SUBMENU_HL);
             
         init = true;

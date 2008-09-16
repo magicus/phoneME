@@ -24,6 +24,7 @@
  * information or have any questions.
  */
 package com.sun.midp.chameleon.input;
+import javax.microedition.lcdui.Displayable;
 
 
 public class InputModeFactory {
@@ -48,7 +49,7 @@ public class InputModeFactory {
                 case ALPHANUMERIC_INPUT_MODE: im = new AlphaNumericInputMode(); break;
                 case PREDICTIVE_TEXT_INPUT_MODE: im = new PredictiveTextInputMode(); break;
                 case SYMBOL_INPUT_MODE: im = new SymbolInputMode(); break;
-                case VIRTUAL_INPUT_MODE: im = new VirtualKeyboardInputMode(); break;
+                case VIRTUAL_INPUT_MODE: im = new VirtualInputMode(); break;
                 default: throw new IllegalArgumentException("bad java input mode id: "+id);
             }
             return im;

@@ -49,78 +49,78 @@ public class AlertResources {
             return;
         }
         
-        AlertSkin.WIDTH = SkinLoader.getInt(
+        AlertSkin.WIDTH = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_WIDTH);
         if (AlertSkin.WIDTH == -1) {
             AlertSkin.WIDTH = (int)(.95 * ScreenSkin.WIDTH);
         }
-        AlertSkin.HEIGHT = SkinLoader.getInt(
+        AlertSkin.HEIGHT = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_HEIGHT);
         if (AlertSkin.HEIGHT == -1) {
             AlertSkin.HEIGHT = (int)(.75 * ScreenSkin.HEIGHT);
         }
 
-        int alignX = SkinLoader.getInt(
+        int alignX = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_ALIGN_X);
-        AlertSkin.ALIGN_X = SkinLoader.resourceConstantsToGraphics(alignX);
+        AlertSkin.ALIGN_X = SkinResources.resourceConstantsToGraphics(alignX);
 
-        int alignY = SkinLoader.getInt(
+        int alignY = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_ALIGN_Y);
-        AlertSkin.ALIGN_Y = SkinLoader.resourceConstantsToGraphics(alignY);
+        AlertSkin.ALIGN_Y = SkinResources.resourceConstantsToGraphics(alignY);
 
-        AlertSkin.MARGIN_H = SkinLoader.getInt(
+        AlertSkin.MARGIN_H = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_MARGIN_H);
-        AlertSkin.MARGIN_V = SkinLoader.getInt(
+        AlertSkin.MARGIN_V = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_MARGIN_V);
 
-        int titleAlign = SkinLoader.getInt(
+        int titleAlign = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_TITLE_ALIGN);
-        AlertSkin.TITLE_ALIGN = SkinLoader.resourceConstantsToGraphics(
+        AlertSkin.TITLE_ALIGN = SkinResources.resourceConstantsToGraphics(
                 titleAlign);
 
-        AlertSkin.TITLE_HEIGHT = SkinLoader.getInt(
+        AlertSkin.TITLE_HEIGHT = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_TITLE_HEIGHT);
-        AlertSkin.TITLE_MARGIN = SkinLoader.getInt(
+        AlertSkin.TITLE_MARGIN = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_TITLE_MARGIN);
-        AlertSkin.TEXT_TITLE_INFO = SkinLoader.getString(
+        AlertSkin.TEXT_TITLE_INFO = SkinResources.getString(
                 SkinPropertiesIDs.ALERT_TEXT_TITLE_INFO);
-        AlertSkin.TEXT_TITLE_WARN = SkinLoader.getString(
+        AlertSkin.TEXT_TITLE_WARN = SkinResources.getString(
                 SkinPropertiesIDs.ALERT_TEXT_TITLE_WARN);
-        AlertSkin.TEXT_TITLE_ERRR = SkinLoader.getString(
+        AlertSkin.TEXT_TITLE_ERRR = SkinResources.getString(
                 SkinPropertiesIDs.ALERT_TEXT_TITLE_ERRR);
-        AlertSkin.TEXT_TITLE_ALRM = SkinLoader.getString(
+        AlertSkin.TEXT_TITLE_ALRM = SkinResources.getString(
                 SkinPropertiesIDs.ALERT_TEXT_TITLE_ALRM);
-        AlertSkin.TEXT_TITLE_CNFM = SkinLoader.getString(
+        AlertSkin.TEXT_TITLE_CNFM = SkinResources.getString(
                 SkinPropertiesIDs.ALERT_TEXT_TITLE_CNFM);
-        AlertSkin.PAD_HORIZ = SkinLoader.getInt(
+        AlertSkin.PAD_HORIZ = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_PAD_HORIZ);
-        AlertSkin.PAD_VERT = SkinLoader.getInt(
+        AlertSkin.PAD_VERT = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_PAD_VERT); 
-        AlertSkin.SCROLL_AMOUNT = SkinLoader.getInt(
+        AlertSkin.SCROLL_AMOUNT = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_SCROLL_AMOUNT);
-        AlertSkin.TIMEOUT = SkinLoader.getInt(
+        AlertSkin.TIMEOUT = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_TIMEOUT);
-        AlertSkin.COLOR_BG = SkinLoader.getInt(
+        AlertSkin.COLOR_BG = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_COLOR_BG);
-        AlertSkin.COLOR_TITLE = SkinLoader.getInt(
+        AlertSkin.COLOR_TITLE = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_COLOR_TITLE);
-        AlertSkin.COLOR_FG = SkinLoader.getInt(
+        AlertSkin.COLOR_FG = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_COLOR_FG);
-        AlertSkin.FONT_TITLE = SkinLoader.getFont(
+        AlertSkin.FONT_TITLE = SkinResources.getFont(
                 SkinPropertiesIDs.ALERT_FONT_TITLE);
-        AlertSkin.FONT_TEXT = SkinLoader.getFont(
+        AlertSkin.FONT_TEXT = SkinResources.getFont(
                 SkinPropertiesIDs.ALERT_FONT_TEXT);
-        AlertSkin.IMAGE_BG = SkinLoader.getCompositeImage(
+        AlertSkin.IMAGE_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.ALERT_IMAGE_BG, 9);
-        AlertSkin.IMAGE_ICON_INFO = SkinLoader.getImage(
+        AlertSkin.IMAGE_ICON_INFO = SkinResources.getImage(
                 SkinPropertiesIDs.ALERT_IMAGE_ICON_INFO); 
-        AlertSkin.IMAGE_ICON_WARN = SkinLoader.getImage(
+        AlertSkin.IMAGE_ICON_WARN = SkinResources.getImage(
                 SkinPropertiesIDs.ALERT_IMAGE_ICON_WARN);
-        AlertSkin.IMAGE_ICON_ERRR = SkinLoader.getImage(
+        AlertSkin.IMAGE_ICON_ERRR = SkinResources.getImage(
                 SkinPropertiesIDs.ALERT_IMAGE_ICON_ERRR);
-        AlertSkin.IMAGE_ICON_ALRM = SkinLoader.getImage(
+        AlertSkin.IMAGE_ICON_ALRM = SkinResources.getImage(
                 SkinPropertiesIDs.ALERT_IMAGE_ICON_ALRM);
-        AlertSkin.IMAGE_ICON_CNFM = SkinLoader.getImage(
+        AlertSkin.IMAGE_ICON_CNFM = SkinResources.getImage(
                 SkinPropertiesIDs.ALERT_IMAGE_ICON_CNFM);
 
         checkLocale();

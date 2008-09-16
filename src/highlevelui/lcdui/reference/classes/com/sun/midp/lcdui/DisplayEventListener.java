@@ -78,7 +78,6 @@ public class DisplayEventListener implements EventListener {
         eventQueue.registerEventListener(EventTypes.COMMAND_EVENT, this);
         eventQueue.registerEventListener(EventTypes.PEER_CHANGED_EVENT, this);
         eventQueue.registerEventListener(EventTypes.ROTATION_EVENT,this);
-        eventQueue.registerEventListener(EventTypes.VIRTUAL_KEYBOARD_EVENT,this);
     }
 
     /**
@@ -154,10 +153,6 @@ public class DisplayEventListener implements EventListener {
 
             case EventTypes.ROTATION_EVENT:
                 dc.handleRotationEvent();
-                return;
-
-            case EventTypes.VIRTUAL_KEYBOARD_EVENT:
-                dc.handleVirtualKeyboardEvent();
                 return;
 
             default:

@@ -68,19 +68,15 @@ static MIDPError store_install_properties(SuiteIdType suiteId,
     const MidpProperties* pJadProps, const MidpProperties* pJarProps,
         jint* pOutDataSize);
 
-static MIDPError store_jar(char** ppszError, ComponentType type,
-    SuiteIdType suiteId, ComponentIdType componentId, StorageIdType storageId,
-    const pcsl_string* jarName, pcsl_string* pNewFileName);
+static MIDPError store_jar(char** ppszError, SuiteIdType suiteId,
+    StorageIdType storageId, const pcsl_string* jarName,
+        pcsl_string* pNewFileName);
 
 static MIDPError add_to_suite_list_and_save(MidletSuiteData* pMsd);
 
-static MIDPError write_install_info(char** ppszError, ComponentType type,
-                                    SuiteIdType suiteId,
-                                    ComponentIdType componentId,
+static MIDPError write_install_info(char** ppszError, SuiteIdType suiteId,
                                     const MidpInstallInfo* pInstallInfo,
                                     jint* pOutDataSize);
-
-static MIDPError create_unique_id(ComponentType idType, void* pId);
 
 /* ------------------------------------------------------------ */
 /*                           Public API                         */
@@ -88,7 +84,13 @@ static MIDPError create_unique_id(ComponentType idType, void* pId);
 
 /**
  * Returns a unique identifier of MIDlet suite.
+ * Constructed from the combination
+ * of the values of the <code>MIDlet-Name</code> and
+ * <code>MIDlet-Vendor</code> attributes.
  *
+ * @param vendor name of the vendor that created the application, as
+ *          given in a JAD file
+ * @param name name of the suite, as given in a JAD file
  * @param pSuiteId [out] receives the platform-specific storage name of the
  *          application given by vendorName and appName
  *
@@ -96,22 +98,78 @@ static MIDPError create_unique_id(ComponentType idType, void* pId);
  */
 MIDPError
 midp_create_suite_id(SuiteIdType* pSuiteId) {
-    return create_unique_id(COMPONENT_REGULAR_SUITE, pSuiteId);
-}
+    char* pszError;
+    SuiteIdType newSuiteId;
+    MidletSuiteData* pData;
+    int maxSuiteId;
+    MIDPError status;
 
-#if ENABLE_DYNAMIC_COMPONENTS
-/**
- * Returns a unique identifier of a MIDlet suite's dynamic component.
- *
- * @param pComponentId [out] receives a platform-specific id of the component
- *
- * @return ALL_OK if success, else an error code
- */
-MIDPError
-midp_create_component_id(ComponentIdType* pComponentId) {
-    return create_unique_id(COMPONENT_DYNAMIC, pComponentId);
+    *pSuiteId = UNUSED_SUITE_ID;
+
+    /*
+     * This is a public API which can be called without the VM running
+     * so we need automatically init anything needed, to make the
+     * caller's code less complex.
+     *
+     * Initialization is performed in steps so that we do use any
+     * extra resources such as the VM for the operation being performed.
+     */
+    if (midpInit(LIST_LEVEL) != 0) {
+        return OUT_OF_MEMORY;
+    }
+
+    /* load _suites.dat */
+    status = read_suites_data(&pszError);
+    storageFreeError(pszError);
+    if (status != ALL_OK) {
+        return status;
+    }
+
+    pData = g_pSuitesData;
+
+    /* find a maximal existing suite id */
+    maxSuiteId = 1;
+
+    while (pData != NULL) {
+        if (pData->suiteId > maxSuiteId) {
+            maxSuiteId = pData->suiteId;
+        }
+
+        pData = pData->nextEntry;
+    }
+
+    newSuiteId = maxSuiteId + 1;
+
+    /* check for overflow */
+    if (newSuiteId == MAX_SUITE_ID) {
+        int suiteIdExist;
+        newSuiteId = 0;
+        do {
+            newSuiteId++;
+            suiteIdExist = 0;
+            pData = g_pSuitesData;
+
+            while (pData != NULL) {
+                if (pData->suiteId == newSuiteId) {
+                    suiteIdExist = 1;
+                    break;
+                }
+
+                pData = pData->nextEntry;
+            }
+
+            if (newSuiteId == MAX_SUITE_ID) {
+                /* there are no free suite IDs! */
+                return OUT_OF_STORAGE;
+            }
+        } while (suiteIdExist || newSuiteId == UNUSED_SUITE_ID ||
+                 newSuiteId == INTERNAL_SUITE_ID);
+    }
+
+    *pSuiteId = newSuiteId;
+
+    return ALL_OK;
 }
-#endif /* ENABLE_DYNAMIC_COMPONENTS */
 
 /**
  * Read a the install information of a suite from persistent storage.
@@ -367,19 +425,12 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
 
     suiteId = pSuiteData->suiteId;
 
-#if ENABLE_DYNAMIC_COMPONENTS
-    /* if installing a dynamic component, don't check if the suite is locked */
-    if (pSuiteData->type == COMPONENT_REGULAR_SUITE) {
-#endif /* ENABLE_DYNAMIC_COMPONENTS */
-        node = find_storage_lock(suiteId);
-        if (node != NULL) {
-            if (node->update != KNI_TRUE) {
-                return SUITE_LOCKED;
-            }
+    node = find_storage_lock(suiteId);
+    if (node != NULL) {
+        if (node->update != KNI_TRUE) {
+            return SUITE_LOCKED;
         }
-#if ENABLE_DYNAMIC_COMPONENTS
     }
-#endif /* ENABLE_DYNAMIC_COMPONENTS */
 
     /*
      * This is a public API which can be called without the VM running
@@ -410,15 +461,14 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
         pMsd->suiteSize = 0;
         pMsd->nextEntry = NULL;
 
-        status = begin_transaction(TRANSACTION_INSTALL_SUITE, UNUSED_SUITE_ID,
+        status = begin_transaction(TRANSACTION_INSTALL, UNUSED_SUITE_ID,
             &pSuiteData->varSuiteData.pathToJar);
         if (status != ALL_OK) {
             pcsl_mem_free(pMsd);        
             break;
         }
 
-        status = store_jar(&pszError, pMsd->type, suiteId,
-            pMsd->componentId, pMsd->storageId,
+        status = store_jar(&pszError, suiteId, pMsd->storageId,
             /* holds the temporary name of the file with the suite */
             &pSuiteData->varSuiteData.pathToJar,
             /* the new (permanent) name of the suite will be returned here */
@@ -487,21 +537,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
             return status;
         }
 
-#if ENABLE_DYNAMIC_COMPONENTS
-        /*
-         * IMPL_NOTE: for now, don't write install info for dynamic components
-         */
-        if (pMsd->type == COMPONENT_REGULAR_SUITE) {
-            status = write_install_info(&pszError, COMPONENT_REGULAR_SUITE,
-                suiteId, UNUSED_COMPONENT_ID, pInstallInfo, &tmpSize);
-        } else {
-            status = ALL_OK;
-            tmpSize = 0;
-        }
-#else
-        status = write_install_info(&pszError, COMPONENT_REGULAR_SUITE,
-            suiteId, UNUSED_COMPONENT_ID, pInstallInfo, &tmpSize);
-#endif
+        status = write_install_info(&pszError, suiteId, pInstallInfo, &tmpSize);
         if (status != ALL_OK) {
             if (pszError != NULL) {
                 storageFreeError(pszError);
@@ -510,44 +546,25 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
         }
         pMsd->suiteSize += tmpSize;
 
-#if ENABLE_DYNAMIC_COMPONENTS
-        /*
-         * IMPL_NOTE: at least for now, code from dynamic components is
-         *            executed with the same permissions as the calling
-         *            midlet has; so they are not saved here.
-         */
-        if (pMsd->type == COMPONENT_REGULAR_SUITE) {
-#endif
-            status = store_install_properties(suiteId, &pInstallInfo->jadProps,
-                            &pInstallInfo->jarProps, &tmpSize);
-            if (status != ALL_OK) {
-                break;
-            }
-            pMsd->suiteSize += tmpSize;
-#if ENABLE_DYNAMIC_COMPONENTS
+        status = store_install_properties(suiteId, &pInstallInfo->jadProps,
+                                          &pInstallInfo->jarProps, &tmpSize);
+        if (status != ALL_OK) {
+            break;
         }
-#endif
+        pMsd->suiteSize += tmpSize;
 
-#if ENABLE_DYNAMIC_COMPONENTS
-        /* don't use settings for dynamic components */
-        if (pMsd->type == COMPONENT_REGULAR_SUITE) {
-#endif
-            /* Suites start off as enabled. */
-            status = write_settings(&pszError, suiteId, KNI_TRUE,
-                pSuiteSettings->pushInterruptSetting,
-                    pSuiteSettings->pushOptions,
-                        pSuiteSettings->pPermissions,
-                            pSuiteSettings->permissionsLen, &tmpSize);
-            if (status != ALL_OK) {
-                if (pszError != NULL) {
-                    storageFreeError(pszError);
-                }
-                break;
+        /* Suites start off as enabled. */
+        status = write_settings(&pszError, suiteId, KNI_TRUE,
+            pSuiteSettings->pushInterruptSetting, pSuiteSettings->pushOptions,
+                pSuiteSettings->pPermissions, pSuiteSettings->permissionsLen,
+                    &tmpSize);
+        if (status != ALL_OK) {
+            if (pszError != NULL) {
+                storageFreeError(pszError);
             }
-            pMsd->suiteSize += tmpSize;
-#if ENABLE_DYNAMIC_COMPONENTS
+            break;
         }
-#endif
+        pMsd->suiteSize += tmpSize;
 
 #if ENABLE_IMAGE_CACHE
         createImageCache(suiteId, pMsd->storageId, &tmpSize);
@@ -582,145 +599,10 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
 /* ------------------------------------------------------------ */
 
 /**
- * Returns a unique identifier of a MIDlet suite or a dynamic component.
- *
- * @param idType    type of ID to create: COMPONENT_REGULAR_SUITE or
- *                  COMPONENT_DYNAMIC
- * @param pId [out] receives a platform-specific ID of a midlet suite or
- *                  of a dynamic component depending on idType
- *
- * @return ALL_OK if success, else an error code
- */
-static MIDPError
-create_unique_id(ComponentType idType, void* pId) {
-    char* pszError;
-    MidletSuiteData* pData;
-    MIDPError status;
-    /*
-     * IMPL_NOTE: the current implementation uses an internal knowledge
-     *            that suites' and components' IDs are of integer type. 
-     */
-    jint maxId, newId;
-
-    if (idType == COMPONENT_REGULAR_SUITE) {
-        *(SuiteIdType*)pId = UNUSED_SUITE_ID;
-    } else if (idType == COMPONENT_DYNAMIC) {
-        *(ComponentIdType*)pId = UNUSED_COMPONENT_ID;
-    } else { 
-        return BAD_PARAMS;
-    }
-
-    /*
-     * This is a public API which can be called without the VM running
-     * so we need automatically init anything needed, to make the
-     * caller's code less complex.
-     *
-     * Initialization is performed in steps so that we do use any
-     * extra resources such as the VM for the operation being performed.
-     */
-    if (midpInit(LIST_LEVEL) != 0) {
-        return OUT_OF_MEMORY;
-    }
-
-    /* load _suites.dat */
-    status = read_suites_data(&pszError);
-    storageFreeError(pszError);
-    if (status != ALL_OK) {
-        return status;
-    }
-
-    pData = g_pSuitesData;
-
-    /* find a maximal existing suite id or component id */
-    maxId = 1;
-
-    if (idType == COMPONENT_REGULAR_SUITE) {
-        while (pData != NULL) {
-            if (pData->type == idType && pData->suiteId > maxId) {
-                maxId = pData->suiteId;
-            }
-
-            pData = pData->nextEntry;
-        }
-    } else {
-        while (pData != NULL) {
-            if (pData->type == idType && pData->componentId > maxId) {
-                maxId = pData->componentId;
-            }
-
-            pData = pData->nextEntry;
-        }
-    }
-
-    newId = maxId + 1;
-
-    /* check for overflow */
-    if ((idType == COMPONENT_REGULAR_SUITE && newId == (jint)MAX_SUITE_ID) ||
-            (idType == COMPONENT_DYNAMIC && newId == (jint)MAX_COMPONENT_ID)) {
-        int idExists;
-        newId = 0;
-        /* try to find the next unoccupied ID */
-        do {
-            newId++;
-            idExists = 0;
-            pData = g_pSuitesData;
-
-            if (idType == COMPONENT_REGULAR_SUITE) {
-                while (pData != NULL) {
-                    if (pData->type == idType &&
-                            pData->suiteId == (SuiteIdType)newId) {
-                        idExists = 1;
-                        break;
-                    }
-
-                    pData = pData->nextEntry;
-                }
-
-                if (newId == (jint)MAX_SUITE_ID) {
-                    /* there are no free suite IDs! */
-                    return OUT_OF_STORAGE;
-                }
-            } else {
-                while (pData != NULL) {
-                    if (pData->type == idType &&
-                            pData->componentId == (ComponentIdType)newId) {
-                        idExists = 1;
-                        break;
-                    }
-
-                    pData = pData->nextEntry;
-                }
-
-                if (newId == (jint)MAX_COMPONENT_ID) {
-                    /* there are no free component IDs! */
-                    return OUT_OF_STORAGE;
-                }
-            }
-        } while (idExists ||
-                 (idType == COMPONENT_REGULAR_SUITE &&
-                     (newId == (jint)UNUSED_SUITE_ID ||
-                      newId == (jint)INTERNAL_SUITE_ID)) ||
-                 (idType == COMPONENT_DYNAMIC &&
-                     newId == (jint)UNUSED_COMPONENT_ID));
-    }
-
-    /* save the result */
-    if (idType == COMPONENT_REGULAR_SUITE) {
-        *(SuiteIdType*)pId = (SuiteIdType)newId;
-    } else {
-        *(ComponentIdType*)pId = (ComponentIdType)newId;
-    }
-
-    return ALL_OK;
-}
-
-/**
  * Stores the JAR of a MIDlet suite to persistent storage.
  *
  * @param ppszError pointer to character string pointer to accept an error
- * @param type what is being stored: a midlet suite or a dynamic component
  * @param suiteId ID of the suite
- * @param componentId ID of the component (used if type == COMPONENT_DYNAMIC)
  * @param storageId ID of the storage where the jar should be saved
  * @param pJarName filename of the temporary Jar
  * @param pNewFileName [out] permanent filename of the suite's jar.
@@ -731,32 +613,15 @@ create_unique_id(ComponentType idType, void* pId) {
  * @returns error code (ALL_OK if successful)
  */
 static MIDPError
-store_jar(char** ppszError, ComponentType type, SuiteIdType suiteId,
-          ComponentIdType componentId, StorageIdType storageId,
+store_jar(char** ppszError, SuiteIdType suiteId, StorageIdType storageId,
           const pcsl_string* pJarName, pcsl_string* pNewFileName) {
     MIDPError status;
     pcsl_string filename = PCSL_STRING_NULL;
 
-#if !ENABLE_DYNAMIC_COMPONENTS
-    /* supresses compilation warnings */
-    (void)type;
-    (void)componentId;
-#endif
-
     *pNewFileName = PCSL_STRING_NULL;
 
-#if ENABLE_DYNAMIC_COMPONENTS
-    if (type == COMPONENT_DYNAMIC) {
-        status = midp_suite_get_component_class_path(
-            componentId, suiteId, storageId, KNI_FALSE, &filename);
-    } else {
-#endif
-        status = midp_suite_get_class_path(suiteId, storageId,
-                                           KNI_FALSE, &filename);
-#if ENABLE_DYNAMIC_COMPONENTS
-    }
-#endif
-
+    status = midp_suite_get_class_path(suiteId, storageId,
+                                       KNI_FALSE, &filename);
     if (status != ALL_OK) {
         return status;
     }
@@ -807,17 +672,8 @@ add_to_suite_list_and_save(MidletSuiteData* pMsd) {
      * so read_suites_data() was already called.
      */
 
-#if ENABLE_DYNAMIC_COMPONENTS
-    /* check if the suite with the same component ID already exists */
-    if (pMsd->type == COMPONENT_DYNAMIC) {
-        pExistingSuite = get_component_data(pMsd->componentId);
-    } else {
-#endif
-        /* check if the suite with the same ID already exists */
-        pExistingSuite = get_suite_data(pMsd->suiteId);
-#if ENABLE_DYNAMIC_COMPONENTS
-    }
-#endif
+    /* check if the suite with the same ID already exists */
+    pExistingSuite = get_suite_data(pMsd->suiteId);
 
     if (pExistingSuite == NULL) {
         /* if this is a new suite, add a new structure to the list */
@@ -832,7 +688,7 @@ add_to_suite_list_and_save(MidletSuiteData* pMsd) {
 
         /* finding the entry preceding the pExistingSuite */
         while (pData != NULL) {
-           if (pData == pExistingSuite) {
+            if (pData->suiteId == pMsd->suiteId) {
                 break;
             }
             pPrev = pData;
@@ -853,13 +709,7 @@ add_to_suite_list_and_save(MidletSuiteData* pMsd) {
     storageFreeError(pszError);
 
     if (status != ALL_OK) {
-        if (pExistingSuite == NULL) {
-            /*
-             * Decrement the number of suites if this was an attempt to add
-             * a new suite rather than overwrite existing one.
-             */
-            g_numberOfSuites--;
-        }
+        g_numberOfSuites--;
         pMsd->nextEntry = NULL;
         g_pSuitesData = pPrev;
     }
@@ -882,9 +732,7 @@ add_to_suite_list_and_save(MidletSuiteData* pMsd) {
  * Unicode strings are written as an int and jshort array.
  * </pre>
  * @param ppszError pointer to character string pointer to accept an error
- * @param type type of the component whose installation info is being saved
  * @param suiteId ID of a suite
- * @param componentId ID of a component
  * @param pInstallInfo a pointer to allocated InstallInfo struct
  * @param pOutDataSize [out] points to a place where the size of the
  *                           written data is saved; can be NULL
@@ -892,8 +740,7 @@ add_to_suite_list_and_save(MidletSuiteData* pMsd) {
  * @return error code (ALL_OK if successful)
  */
 static MIDPError
-write_install_info(char** ppszError, ComponentType type, SuiteIdType suiteId,
-                   ComponentIdType componentId,
+write_install_info(char** ppszError, SuiteIdType suiteId,
                    const MidpInstallInfo* pInstallInfo,
                    jint* pOutDataSize) {
     pcsl_string filename;
@@ -901,12 +748,6 @@ write_install_info(char** ppszError, ComponentType type, SuiteIdType suiteId,
     int handle;
     int i;
     MIDPError status;
-
-/* #if !ENABLE_DYNAMIC_COMPONENTS */
-    (void)type;
-    (void)componentId;
-/* #endif */
-
     *ppszError = NULL;
 
     if (pInstallInfo == NULL) {

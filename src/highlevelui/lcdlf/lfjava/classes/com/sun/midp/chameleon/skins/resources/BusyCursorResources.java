@@ -49,21 +49,21 @@ public class BusyCursorResources {
             return;
         }
         
-        BusyCursorSkin.WIDTH = SkinLoader.getInt(
+        BusyCursorSkin.WIDTH = SkinResources.getInt(
                 SkinPropertiesIDs.BUSYCRSR_WIDTH);
-        BusyCursorSkin.HEIGHT = SkinLoader.getInt(
+        BusyCursorSkin.HEIGHT = SkinResources.getInt(
                 SkinPropertiesIDs.BUSYCRSR_HEIGHT);
-        BusyCursorSkin.NUM_FRAMES = SkinLoader.getInt(
+        BusyCursorSkin.NUM_FRAMES = SkinResources.getInt(
                 SkinPropertiesIDs.BUSYCRSR_NUM_FRAMES);
-        BusyCursorSkin.FRAME_X = SkinLoader.getInt(
+        BusyCursorSkin.FRAME_X = SkinResources.getInt(
                 SkinPropertiesIDs.BUSYCRSR_FRAME_X);
-        BusyCursorSkin.FRAME_Y = SkinLoader.getInt(
+        BusyCursorSkin.FRAME_Y = SkinResources.getInt(
                 SkinPropertiesIDs.BUSYCRSR_FRAME_Y);
-        BusyCursorSkin.FRAME_SEQUENCE = SkinLoader.getNumbersSequence(
+        BusyCursorSkin.FRAME_SEQUENCE = SkinResources.getNumbersSequence(
                 SkinPropertiesIDs.BUSYCRSR_FRAME_SEQU);
-        BusyCursorSkin.IMAGE_BG = SkinLoader.getImage(
+        BusyCursorSkin.IMAGE_BG = SkinResources.getImage(
                 SkinPropertiesIDs.BUSYCRSR_IMAGE_BG);
-        BusyCursorSkin.IMAGE_FRAME = SkinLoader.getCompositeImage(
+        BusyCursorSkin.IMAGE_FRAME = SkinResources.getCompositeImage(
             SkinPropertiesIDs.BUSYCRSR_IMAGE_FRAME, 
             BusyCursorSkin.NUM_FRAMES);
 

@@ -50,7 +50,9 @@ void midpport_security_set_permission_listener(
  * Start a security permission checking.
  *
  * @param suiteId       - the MIDlet Suite the permission should be checked with
- * @param permission    - permission type
+ * @param suiteIdLen    - number of chars in the MIDlet Suite id
+ * @param permission    - permission name
+ * @param permissionLen - number of chars in permission name
  * @param pHandle       - address of variable to receive the handle; this is set
  *                        only when this function returns -1.
  *
@@ -61,10 +63,13 @@ void midpport_security_set_permission_listener(
  *          A handle for this check session is returned and the result will be 
  *          notified through security permission listener.
  */
-jint midpport_security_check_permission(jint suiteId, jint permission,
+jint midpport_security_check_permission(jchar* suiteId, jint suiteIdLen,
+                                        jchar* permission, jint permissionLen,
                                         jint* pHandle) {
     (void)suiteId;
+    (void)suiteIdLen;
     (void)permission;
+    (void)permissionLen;
     (void)pHandle;
 
     return 1; /* IMPL_NOTE: example grants all permissions */
@@ -79,7 +84,9 @@ jint midpport_security_check_permission(jint suiteId, jint permission,
  * it should be reported as unknown.
  * 
  * @param suiteId       - the MIDlet Suite the permission should be checked with
- * @param permission    - permission type
+ * @param suiteIdLen    - number of chars in the MIDlet Suite id
+ * @param permission    - permission name
+ * @param permissionLen - number of chars in permission name
  *
  * @return status code as:
  *      0 - if the permission is denied
@@ -87,9 +94,14 @@ jint midpport_security_check_permission(jint suiteId, jint permission,
  *     -1 - if the permission cannot be determined without blocking Java system,
  *          e.g. asking user interaction.
  */
-jint midpport_security_check_permission_status(jint suiteId, jint permission) {
+jint midpport_security_check_permission_status(jchar* suiteId,
+                                               jint suiteIdLen,
+                                               jchar* permission,
+                                               jint permissionLen) {
     (void)suiteId;
+    (void)suiteIdLen;
     (void)permission;
+    (void)permissionLen;
 
     return 1; /* IMPL_NOTE: example grants all permissions */                                    
 }

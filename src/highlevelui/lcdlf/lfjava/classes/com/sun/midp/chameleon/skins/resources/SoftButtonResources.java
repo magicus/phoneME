@@ -52,12 +52,12 @@ public class SoftButtonResources {
         }
 
         SoftButtonSkin.HEIGHT = (SoftButtonLayer.isNativeSoftButtonLayerSupported0())?
-                0:SkinLoader.getInt(SkinPropertiesIDs.SOFTBTN_HEIGHT);
+                0:SkinResources.getInt(SkinPropertiesIDs.SOFTBTN_HEIGHT);
 
-        SoftButtonSkin.NUM_BUTTONS = SkinLoader.getInt(
+        SoftButtonSkin.NUM_BUTTONS = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_NUM_BUTTONS);
         
-        SoftButtonSkin.BUTTON_ANCHOR_X = SkinLoader.getNumbersSequence(
+        SoftButtonSkin.BUTTON_ANCHOR_X = SkinResources.getNumbersSequence(
                 SkinPropertiesIDs.SOFTBTN_BUTTON_ANCHOR_X);
         for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
             if (SoftButtonSkin.BUTTON_ANCHOR_X[i] < 0) {
@@ -66,53 +66,53 @@ public class SoftButtonResources {
             }
         }
         
-        SoftButtonSkin.BUTTON_ANCHOR_Y = SkinLoader.getNumbersSequence(
+        SoftButtonSkin.BUTTON_ANCHOR_Y = SkinResources.getNumbersSequence(
                 SkinPropertiesIDs.SOFTBTN_BUTTON_ANCHOR_Y);
                
-        int[] alignX = SkinLoader.getNumbersSequence(
+        int[] alignX = SkinResources.getNumbersSequence(
                 SkinPropertiesIDs.SOFTBTN_BUTTON_ALIGN_X);
         for (int i = 0; i < alignX.length; ++i) {
-            alignX[i] = SkinLoader.resourceConstantsToGraphics(alignX[i]);
+            alignX[i] = SkinResources.resourceConstantsToGraphics(alignX[i]); 
         }
         SoftButtonSkin.BUTTON_ALIGN_X = alignX;
                 
-        SoftButtonSkin.BUTTON_MAX_WIDTH = SkinLoader.getNumbersSequence(
+        SoftButtonSkin.BUTTON_MAX_WIDTH = SkinResources.getNumbersSequence(
                 SkinPropertiesIDs.SOFTBTN_BUTTON_MAX_WIDTH);
         
-        int shdAlign = SkinLoader.getInt(
+        int shdAlign = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_BUTTON_SHD_ALIGN);
         SoftButtonSkin.BUTTON_SHD_ALIGN = 
-            SkinLoader.resourceConstantsToGraphics(shdAlign);
+            SkinResources.resourceConstantsToGraphics(shdAlign);
 
-        SoftButtonSkin.COLOR_FG = SkinLoader.getInt(
+        SoftButtonSkin.COLOR_FG = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_COLOR_FG);
-        SoftButtonSkin.COLOR_FG_SHD = SkinLoader.getInt(
+        SoftButtonSkin.COLOR_FG_SHD = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_COLOR_FG_SHD);
-        SoftButtonSkin.COLOR_BG = SkinLoader.getInt(
+        SoftButtonSkin.COLOR_BG = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_COLOR_BG);
-        SoftButtonSkin.COLOR_MU_FG = SkinLoader.getInt(
+        SoftButtonSkin.COLOR_MU_FG = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_COLOR_MU_FG);
-        SoftButtonSkin.COLOR_MU_FG_SHD = SkinLoader.getInt(
+        SoftButtonSkin.COLOR_MU_FG_SHD = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_COLOR_MU_FG_SHD);
-        SoftButtonSkin.COLOR_MU_BG = SkinLoader.getInt(
+        SoftButtonSkin.COLOR_MU_BG = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_COLOR_MU_BG);
-        SoftButtonSkin.COLOR_AU_FG = SkinLoader.getInt(
+        SoftButtonSkin.COLOR_AU_FG = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_COLOR_AU_FG);
-        SoftButtonSkin.COLOR_AU_FG_SHD = SkinLoader.getInt(
+        SoftButtonSkin.COLOR_AU_FG_SHD = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_COLOR_AU_FG_SHD);
-        SoftButtonSkin.COLOR_AU_BG = SkinLoader.getInt(
+        SoftButtonSkin.COLOR_AU_BG = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_COLOR_AU_BG);
-        SoftButtonSkin.FONT = SkinLoader.getFont(
+        SoftButtonSkin.FONT = SkinResources.getFont(
                 SkinPropertiesIDs.SOFTBTN_FONT);
-        SoftButtonSkin.TEXT_MENUCMD = SkinLoader.getString(
+        SoftButtonSkin.TEXT_MENUCMD = SkinResources.getString(
                 SkinPropertiesIDs.SOFTBTN_TEXT_MENUCMD);
-        SoftButtonSkin.TEXT_BACKCMD = SkinLoader.getString(
+        SoftButtonSkin.TEXT_BACKCMD = SkinResources.getString(
                 SkinPropertiesIDs.SOFTBTN_TEXT_BACKCMD);
-        SoftButtonSkin.IMAGE_BG = SkinLoader.getCompositeImage(
+        SoftButtonSkin.IMAGE_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.SOFTBTN_IMAGE_BG, 3);
-        SoftButtonSkin.IMAGE_MU_BG = SkinLoader.getCompositeImage(
+        SoftButtonSkin.IMAGE_MU_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.SOFTBTN_IMAGE_MU_BG, 3);
-        SoftButtonSkin.IMAGE_AU_BG = SkinLoader.getCompositeImage(
+        SoftButtonSkin.IMAGE_AU_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.SOFTBTN_IMAGE_AU_BG, 3);
 
         init = true;

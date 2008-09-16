@@ -31,15 +31,12 @@
 #
 ######################################################################
 
-#Default settings
-AMS_PLATFORM_REQUEST_DIR = $(SUBSYSTEM_AMS_DIR)/platform_request
-AMS_PLATFORM_REQUEST_IMPL_DIR ?= $(AMS_PLATFORM_REQUEST_DIR)/$(PLATFORM)
-
+vpath % $(SUBSYSTEM_AMS_DIR)/platform_request/$(PLATFORM)/native
 
 # Include path for the sub-system
 #
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-    -I$(AMS_PLATFORM_REQUEST_DIR)/include
+    -I$(SUBSYSTEM_AMS_DIR)/platform_request/include
 
-include $(AMS_PLATFORM_REQUEST_IMPL_DIR)/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/platform_request/$(PLATFORM)/lib.gmk
 

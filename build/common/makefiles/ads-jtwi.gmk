@@ -46,8 +46,7 @@ endif
 PCSL_TARGET_DIR ?= $(PCSL_OUTPUT_DIR)/$(TARGET_OS)_$(TARGET_CPU)
 LD_FLAGS        +=
 EXTRA_INCLUDES  += -I$(PCSL_TARGET_DIR)/inc
-PCSL_TARGET_LIBS = $(PCSL_TARGET_DIR)/lib/libpcsl_escfilenames$(LIB_SUFFIX) \
-                   $(PCSL_TARGET_DIR)/lib/libpcsl_file$(LIB_SUFFIX) \
+PCSL_TARGET_LIBS = $(PCSL_TARGET_DIR)/lib/libpcsl_file$(LIB_SUFFIX) \
                    $(PCSL_TARGET_DIR)/lib/libpcsl_memory$(LIB_SUFFIX) \
                    $(PCSL_TARGET_DIR)/lib/libpcsl_print$(LIB_SUFFIX) \
                    $(PCSL_TARGET_DIR)/lib/libpcsl_string$(LIB_SUFFIX) \

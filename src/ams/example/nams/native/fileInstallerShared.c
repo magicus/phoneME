@@ -1409,7 +1409,7 @@ int fileInstaller(int argc, char* argv[]) {
         suiteData.isEnabled = 1;
         suiteData.isTrusted = trusted;
         suiteData.jarHashLen = 0;
-        suiteData.type = COMPONENT_PREINSTALLED_SUITE;
+        suiteData.isPreinstalled = 0;
 
         res = midp_store_suite(&installInfo, &suiteSettings, &suiteData);
 

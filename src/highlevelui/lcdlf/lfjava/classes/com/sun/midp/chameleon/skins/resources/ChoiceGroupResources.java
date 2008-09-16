@@ -48,50 +48,50 @@ public class ChoiceGroupResources {
             return;
         }
 
-        ChoiceGroupSkin.WIDTH_IMAGE = SkinLoader.getInt(
+        ChoiceGroupSkin.WIDTH_IMAGE = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_WIDTH_IMAGE);
-        ChoiceGroupSkin.HEIGHT_IMAGE = SkinLoader.getInt(
+        ChoiceGroupSkin.HEIGHT_IMAGE = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_HEIGHT_IMAGE);
-        ChoiceGroupSkin.WIDTH_SCROLL = SkinLoader.getInt(
+        ChoiceGroupSkin.WIDTH_SCROLL = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_WIDTH_SCROLL);
-        ChoiceGroupSkin.WIDTH_THUMB = SkinLoader.getInt(
+        ChoiceGroupSkin.WIDTH_THUMB = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_WIDTH_THUMB);
-        ChoiceGroupSkin.HEIGHT_THUMB = SkinLoader.getInt(
+        ChoiceGroupSkin.HEIGHT_THUMB = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_HEIGHT_THUMB);
-        ChoiceGroupSkin.PAD_H = SkinLoader.getInt(
+        ChoiceGroupSkin.PAD_H = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_PAD_H);
-        ChoiceGroupSkin.PAD_V = SkinLoader.getInt(
+        ChoiceGroupSkin.PAD_V = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_PAD_V);
-        ChoiceGroupSkin.COLOR_FG = SkinLoader.getInt(
+        ChoiceGroupSkin.COLOR_FG = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_COLOR_FG);
-        ChoiceGroupSkin.COLOR_BG = SkinLoader.getInt(
+        ChoiceGroupSkin.COLOR_BG = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_COLOR_BG);
-        ChoiceGroupSkin.COLOR_BORDER = SkinLoader.getInt(
+        ChoiceGroupSkin.COLOR_BORDER = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_COLOR_BRDR);
-        ChoiceGroupSkin.COLOR_BORDER_SHD = SkinLoader.getInt(
+        ChoiceGroupSkin.COLOR_BORDER_SHD = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_COLOR_BRDR_SHD);
-        ChoiceGroupSkin.COLOR_SCROLL = SkinLoader.getInt(
+        ChoiceGroupSkin.COLOR_SCROLL = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_COLOR_SCROLL);
-        ChoiceGroupSkin.COLOR_THUMB = SkinLoader.getInt(
+        ChoiceGroupSkin.COLOR_THUMB = SkinResources.getInt(
                 SkinPropertiesIDs.CHOICE_COLOR_THUMB);
-        ChoiceGroupSkin.FONT = SkinLoader.getFont(
+        ChoiceGroupSkin.FONT = SkinResources.getFont(
                 SkinPropertiesIDs.CHOICE_FONT);
-        ChoiceGroupSkin.FONT_FOCUS = SkinLoader.getFont(
+        ChoiceGroupSkin.FONT_FOCUS = SkinResources.getFont(
                 SkinPropertiesIDs.CHOICE_FONT_FOCUS);
-        ChoiceGroupSkin.IMAGE_RADIO = SkinLoader.getCompositeImage(
+        ChoiceGroupSkin.IMAGE_RADIO = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.CHOICE_IMAGE_RADIO, 2);
-        ChoiceGroupSkin.IMAGE_CHKBOX = SkinLoader.getCompositeImage(
+        ChoiceGroupSkin.IMAGE_CHKBOX = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.CHOICE_IMAGE_CHKBX, 2);
         /*
         Uncomment if background image is used
-        ChoiceGroupSkin.IMAGE_BG = SkinLoader.getCompositeImage(
+        ChoiceGroupSkin.IMAGE_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.CHOICE_IMAGE_BG, 9);
         */
-        ChoiceGroupSkin.IMAGE_BUTTON_BG = SkinLoader.getCompositeImage(
+        ChoiceGroupSkin.IMAGE_BUTTON_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.CHOICE_IMAGE_BTN_BG, 9);
-        ChoiceGroupSkin.IMAGE_BUTTON_ICON = SkinLoader.getImage(
+        ChoiceGroupSkin.IMAGE_BUTTON_ICON = SkinResources.getImage(
                 SkinPropertiesIDs.CHOICE_IMAGE_BTN_ICON);
-        ChoiceGroupSkin.IMAGE_POPUP_BG = SkinLoader.getCompositeImage(
+        ChoiceGroupSkin.IMAGE_POPUP_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.CHOICE_IMAGE_POPUP_BG, 9);
 
         init = true;

@@ -48,39 +48,39 @@ public class TextFieldResources {
         if (init && !reload) {
             return;
         }
-        TextFieldSkin.PAD_H = SkinLoader.getInt(
+        TextFieldSkin.PAD_H = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_PAD_H);
-        TextFieldSkin.PAD_V = SkinLoader.getInt(
+        TextFieldSkin.PAD_V = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_PAD_V);
-        TextFieldSkin.BOX_MARGIN = SkinLoader.getInt(
+        TextFieldSkin.BOX_MARGIN = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_BOX_MARGIN);
-        TextFieldSkin.WIDTH_CARET = SkinLoader.getInt(
+        TextFieldSkin.WIDTH_CARET = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_WIDTH_CARET);
-        TextFieldSkin.SCROLL_RATE = SkinLoader.getInt(
+        TextFieldSkin.SCROLL_RATE = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_SCRL_RATE);
-        TextFieldSkin.SCROLL_SPEED = SkinLoader.getInt(
+        TextFieldSkin.SCROLL_SPEED = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_SCRL_SPD);
-        TextFieldSkin.COLOR_FG = SkinLoader.getInt(
+        TextFieldSkin.COLOR_FG = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_COLOR_FG);
-        TextFieldSkin.COLOR_BG = SkinLoader.getInt(
+        TextFieldSkin.COLOR_BG = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_COLOR_BG);
-        TextFieldSkin.COLOR_BORDER = SkinLoader.getInt(
+        TextFieldSkin.COLOR_BORDER = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_COLOR_BRDR);
-        TextFieldSkin.COLOR_BORDER_SHD = SkinLoader.getInt(
+        TextFieldSkin.COLOR_BORDER_SHD = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_COLOR_BRDR_SHD);     
-        TextFieldSkin.COLOR_FG_UE = SkinLoader.getInt(
+        TextFieldSkin.COLOR_FG_UE = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_COLOR_FG_UE);
-        TextFieldSkin.COLOR_BG_UE = SkinLoader.getInt(
+        TextFieldSkin.COLOR_BG_UE = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_COLOR_BG_UE);
-        TextFieldSkin.COLOR_BORDER_UE = SkinLoader.getInt(
+        TextFieldSkin.COLOR_BORDER_UE = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_COLOR_BRDR_UE);
-        TextFieldSkin.COLOR_BORDER_SHD_UE = SkinLoader.getInt(
+        TextFieldSkin.COLOR_BORDER_SHD_UE = SkinResources.getInt(
                 SkinPropertiesIDs.TEXTFIELD_COLOR_BRDR_SHD_UE);
         /*
         Uncomment if background image for (un)editable text component is used
-        TextFieldSkin.IMAGE_BG = SkinLoader.getCompositeImage(
+        TextFieldSkin.IMAGE_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.TEXTFIELD_IMAGE_BG, 9);
-        TextFieldSkin.IMAGE_BG_UE = SkinLoader.getCompositeImage(
+        TextFieldSkin.IMAGE_BG_UE = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.TEXTFIELD_IMAGE_BG_UE, 9);
         */
 

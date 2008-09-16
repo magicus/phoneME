@@ -1289,10 +1289,8 @@ class DateEditor extends PopupLayer implements CommandListener {
             break;
         case Constants.KEYCODE_LEFT:
             if (amHilighted) {
-		if (mode != DateField.TIME) {
-		    focusOn = CALENDAR;
-		    traverse = true;
-		}
+                focusOn = CALENDAR;
+                traverse = true;
             } else {
                 amHilighted = true;
                 traverse = true;

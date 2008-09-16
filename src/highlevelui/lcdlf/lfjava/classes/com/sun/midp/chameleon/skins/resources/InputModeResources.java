@@ -54,17 +54,17 @@ public class InputModeResources {
             return;
         }
         
-        InputModeSkin.MARGIN = SkinLoader.getInt(
+        InputModeSkin.MARGIN = SkinResources.getInt(
                 SkinPropertiesIDs.INPUT_MODE_MARGIN);
-        InputModeSkin.COLOR_BG = SkinLoader.getInt(
+        InputModeSkin.COLOR_BG = SkinResources.getInt(
                 SkinPropertiesIDs.INPUT_MODE_COLOR_BG);
-        InputModeSkin.COLOR_FG = SkinLoader.getInt(
+        InputModeSkin.COLOR_FG = SkinResources.getInt(
                 SkinPropertiesIDs.INPUT_MODE_COLOR_FG);
-        InputModeSkin.COLOR_BDR = SkinLoader.getInt(
+        InputModeSkin.COLOR_BDR = SkinResources.getInt(
                 SkinPropertiesIDs.INPUT_MODE_COLOR_BDR);
-        InputModeSkin.FONT = SkinLoader.getFont(
+        InputModeSkin.FONT = SkinResources.getFont(
                 SkinPropertiesIDs.INPUT_MODE_FONT);
-        InputModeSkin.IMAGE_BG = SkinLoader.getCompositeImage(
+        InputModeSkin.IMAGE_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.INPUT_MODE_IMAGE_BG, 3);
         init = true;
     }

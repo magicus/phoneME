@@ -36,6 +36,8 @@ import com.sun.midp.midlet.*;
 
 import com.sun.midp.installer.*;
 
+import com.sun.midp.midletsuite.*;
+
 import com.sun.midp.main.*;
 
 import com.sun.midp.configurator.Constants;
@@ -59,8 +61,7 @@ public class MVMManager extends MIDlet
     implements MIDletProxyListListener,
                 DisplayControllerListener, 
                 ApplicationManager,
-                ODTControllerEventConsumer,
-                AMSServicesEventConsumer {
+                ODTControllerEventConsumer {
 
     /** Constant for the discovery application class name. */
     private static final String DISCOVERY_APP =
@@ -78,6 +79,9 @@ public class MVMManager extends MIDlet
     /** True until constructed for the first time. */
     private static boolean first = true;
 
+    /** MIDlet Suite storage object. */
+    private MIDletSuiteStorage midletSuiteStorage;
+
     /** Screen that displays all installed midlets and installer */
     private AppManagerPeer appManager;
 
@@ -90,9 +94,6 @@ public class MVMManager extends MIDlet
     /** If on device debug is active, ID of the suite under debug. */
     private int suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
 
-    /** A thread waiting until a midlet is terminated. Can be null. */
-    private Thread waitForDestroyThread;
-
     /**
      * Create and initialize a new MVMManager MIDlet.
      */
@@ -101,9 +102,16 @@ public class MVMManager extends MIDlet
 
         EventQueue eq = EventQueue.getEventQueue();
         new ODTControllerEventListener(eq, this);
-        new AMSServicesEventListener(eq, this);
 
+        midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
+
+        /*
+         * Listen to the MIDlet proxy list.
+         * this allows us to notify the Application Selector
+         * of any changes whenever switch back to the AMS.
+         */
         midletProxyList = MIDletProxyList.getMIDletProxyList();
+        midletProxyList.addListener(this);
 
         // The proxy for this MIDlet may not have been create yet.
         for (; ; ) {
@@ -139,15 +147,6 @@ public class MVMManager extends MIDlet
         appManager = new AppManagerPeer(this, display, displayError, first,
                                         null);
 
-        /*
-         * Listen to the MIDlet proxy list.
-         * This allows us to notify the Application Selector
-         * of any changes whenever switch back to the AMS.
-         * The listener must be set up after finishing all
-         * initialization in the constructor.
-         */
-        midletProxyList.addListener(this);
-
         processArguments();
 
         if (first) {
@@ -175,17 +174,14 @@ public class MVMManager extends MIDlet
                                           String displayName,
                                           boolean isDebugMode) {
         if (suiteUnderDebugId != MIDletSuite.UNUSED_SUITE_ID) {
-            /* IMPL NOTE: this forces only one running MIDlet in debug mode - 
-             * the VM currently does not support more MIDlets in debug mode 
-             * at the same time. */
-            isDebugMode = false;
+            // suite is already under debug
+            return;
         }
 
         try {
-            appManager.launchSuite(suiteId, className, isDebugMode);
-            if (isDebugMode) {
-                suiteUnderDebugId = suiteId;
-            }
+            MIDletSuiteUtils.execute(suiteId, className,
+                                     displayName, isDebugMode);
+            suiteUnderDebugId = suiteId;
         } catch (Exception ex) {
             displayError.showErrorAlert(displayName, ex, null, null);
         }
@@ -212,59 +208,7 @@ public class MVMManager extends MIDlet
     public void handleODDSuiteRemovedEvent(int suiteId) {
         appManager.notifySuiteRemoved(suiteId);
     }
-
-    /**
-     * Processes RESTART_MIDLET_EVENT.
-     *
-     * @param externalAppId application ID assigned by externall App Manager;
-     *                      not used if there is no external manager
-     * @param suiteId ID of the midlet suite
-     * @param className class name of the midlet to restart
-     * @param displayName display name of the midlet to restart
-     */
-    public void handleRestartMIDletEvent(int externalAppId, int suiteId,
-                                         String className, String displayName) {
-        try {
-            final MIDletProxy mp = midletProxyList.findMIDletProxy(suiteId,
-                                                                   className);
-            if (mp != null) {
-                final int id = suiteId;
-                final String nameOfClass  = className;
-                final String nameOfMIDlet = displayName;
-
-                // wait until the midlet is destroyed
-                waitForDestroyThread = new Thread() {
-                    public void run() {
-                        try {
-                            int timeout = 1000 *
-                                Configuration.getIntProperty(
-                                    "destoryMIDletTimeout", 5);
-
-                            synchronized(waitForDestroyThread) {
-                                wait(timeout);
-                            }
-                        } catch(InterruptedException ie) {
-                            // ignore
-                        }
-
-                        MIDletSuiteUtils.execute(id, nameOfClass,
-                                                 nameOfMIDlet);
-                    }
-                };
-
-                waitForDestroyThread.start();
-
-                mp.destroyMidlet();
-            } else {
-                // the midlet is not running, just starting it
-                MIDletSuiteUtils.execute(suiteId, className,
-                                         displayName);
-            }
-        } catch (Exception ex) {
-            displayError.showErrorAlert(displayName, ex, null, null);
-        }
-    }
-
+    
     // =================================================================
     // ---------- Operations that can be performed on Midlets ----------
 
@@ -336,51 +280,31 @@ public class MVMManager extends MIDlet
     public void midletUpdated(MIDletProxy midlet, int fieldId) {
         appManager.notifyMidletStateChanged(midlet);
     }
-    
+
     /**
      * Called when a MIDlet is removed from the list.
      *
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-        appManager.notifyMidletExited(midlet);
-    }
+        if (suiteUnderDebugId == midlet.getSuiteId()) {
+            MIDletProxy odtAgentMidlet = midletProxyList.findMIDletProxy(
+                MIDletSuite.INTERNAL_SUITE_ID, ODT_AGENT);
 
-    /**
-     * Called when a suite exited (the only MIDlet in suite exited or the
-     * MIDlet selector exited).
-     * @param suiteInfo Suite which just exited
-     * @param className the running MIDlet class name
-     */
-    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {
-        MIDletProxy odtAgentMidlet = midletProxyList.findMIDletProxy(
-            MIDletSuite.INTERNAL_SUITE_ID, ODT_AGENT);
-
-        if (odtAgentMidlet != null) {
-            EventQueue eq = EventQueue.getEventQueue();
-            NativeEvent event = new NativeEvent(
-                    EventTypes.MIDP_ODD_MIDLET_EXITED_EVENT);
-            event.intParam1    = suiteInfo.suiteId;
-            event.stringParam1 = odtAgentMidlet.getClassName();
-            eq.sendNativeEventToIsolate(event,
-                    odtAgentMidlet.getIsolateId());
-        }
-
-        /* IMPL NOTE: Disabling this code forces only one MIDlet in debug 
-         * mode per whole life of the agent. This avoids problems 
-         * with starting MIDlets in debug mode (CR 6736719) */
-//        if (suiteUnderDebugId == suiteInfo.suiteId) {
-//            suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
-//        }
-        
-        appManager.notifySuiteExited(suiteInfo);
-
-        if (waitForDestroyThread != null) {
-            synchronized(waitForDestroyThread) {
-                waitForDestroyThread.notify();
-                waitForDestroyThread = null;
+            if (odtAgentMidlet != null) {
+                EventQueue eq = EventQueue.getEventQueue();
+                NativeEvent event = new NativeEvent(
+                        EventTypes.MIDP_ODD_MIDLET_EXITED_EVENT);
+                event.intParam1    = suiteUnderDebugId;
+                event.stringParam1 = odtAgentMidlet.getClassName();
+                eq.sendNativeEventToIsolate(event,
+                        odtAgentMidlet.getIsolateId());
             }
+
+            suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
         }
+
+        appManager.notifyMidletExited(midlet);
     }
 
     /**
@@ -448,13 +372,12 @@ public class MVMManager extends MIDlet
         try {
             // Create an instance of the MIDlet class
             // All other initialization happens in MIDlet constructor
-            MIDletSuiteUtils.execute(suiteInfo.suiteId, midletToRun, null, 
-                    suiteInfo.isDebugMode);
+            MIDletSuiteUtils.execute(suiteInfo.suiteId, midletToRun, null);
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
         }
     }
- 
+
     /**
      * Update a suite.
      *
@@ -487,9 +410,8 @@ public class MVMManager extends MIDlet
      * foreground.
      *
      * @param suiteInfo information for the midlet to be put to foreground
-     * @param className the running MIDlet class name
      */
-    public void moveToForeground(RunningMIDletSuiteInfo suiteInfo, String className) {
+    public void moveToForeground(RunningMIDletSuiteInfo suiteInfo) {
         try {
 
             if (Constants.MEASURE_STARTUP) {
@@ -498,7 +420,7 @@ public class MVMManager extends MIDlet
             }
 
             if (suiteInfo != null) {
-                midletProxyList.setForegroundMIDlet(suiteInfo.getProxyFor(className));
+                midletProxyList.setForegroundMIDlet(suiteInfo.proxy);
             }
 
         } catch (Exception ex) {
@@ -511,15 +433,11 @@ public class MVMManager extends MIDlet
      * Exit the midlet with the passed in midlet suite info.
      *
      * @param suiteInfo information for the midlet to be terminated
-     * @param className the running MIDlet class name
      */
-    public void exitMidlet(RunningMIDletSuiteInfo suiteInfo, String className) {
+    public void exitMidlet(RunningMIDletSuiteInfo suiteInfo) {
         try {
             if (suiteInfo != null) {
-                MIDletProxy proxy = suiteInfo.getProxyFor(className);
-                if (proxy != null) {
-                    proxy.destroyMidlet();
-                }
+                suiteInfo.proxy.destroyMidlet();
             }
 
         } catch (Exception ex) {

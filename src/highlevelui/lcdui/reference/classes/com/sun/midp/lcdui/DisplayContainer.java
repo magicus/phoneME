@@ -76,39 +76,25 @@ public class DisplayContainer {
     /**
      * Get a display to request the foreground on behalf of the MIDlet.
      *
-     * @param owner the object that owns this display
+     * @param nameOfOwner class name of the MIDlet that owns this display
      */
-    public void requestForegroundForDisplay(Object owner) {
-        DisplayAccess da = findDisplayByOwner(owner);
+    public void requestForegroundForDisplay(String nameOfOwner) {
+        DisplayAccess da = findDisplayByOwner(nameOfOwner);
 
-        if (da != null) {
-            da.requestForeground();
-        }
+        da.requestForeground();
     }
 
     /**
      * Removes display object from the container.
      *
-     * @param owner the MIDlet that owns this display
+     * @param nameOfOwner class name of the MIDlet that owns this display
      *
      * @return true if display has been succcessfully removed, 
      *         false, if display object has not been found in the container.
      */
-    public synchronized boolean removeDisplay(Object owner) {
-        DisplayAccess da = findDisplayByOwner(owner);
+    public synchronized boolean removeDisplay(String nameOfOwner) {
+        DisplayAccess da = findDisplayByOwner(nameOfOwner);
 
-        return displays.removeElement(da);
-    }
-    
-    /**
-     * Removes display object from the container.
-     *
-     * @param da display access of the display
-     *
-     * @return true if display has been succcessfully removed, 
-     *         false, if display object has not been found in the container.
-     */
-    public synchronized boolean removeDisplay(DisplayAccess da) {
         return displays.removeElement(da);
     }
     
@@ -136,17 +122,17 @@ public class DisplayContainer {
     /**
      * Find a display by owner.
      *
-     * @param owner the object that owns the display
+     * @param nameOfOwner class name of the MIDlet that owns this display
      *
      * @return a display access object or null if not found
      */
-    public synchronized DisplayAccess findDisplayByOwner(Object owner) {
+    public synchronized DisplayAccess findDisplayByOwner(String nameOfOwner) {
         int size = displays.size();
 
         for (int i = 0; i < size; i++) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
 
-            if (current.getOwner() == owner) {
+            if (current.getNameOfOwner().equals(nameOfOwner)) {
                 return current;
             }
         }

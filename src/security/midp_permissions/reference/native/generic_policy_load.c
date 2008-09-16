@@ -42,18 +42,18 @@ static string groupTBL [] = {
     "net_access",
     "low_level_net_access",
     "call_control",
-    "application_auto_invocation",
-    "local_connectivity",
     "messaging",
     "restricted_messaging",
+    "application_auto_invocation",
+    "local_connectivity",
+    "smart_card",
+    "authentication",
     "multimedia_recording",
     "read_user_data_access",
     "write_user_data_access",
     "location",
     "landmark",
     "payment",
-    "authentication",
-    "smart_card",
     "satsa"
 };
 static const int groupTBLsize = sizeof(groupTBL) / sizeof(string);
@@ -161,14 +161,18 @@ static struct _group_member {
                 sizeof(low_level_net_access_members)/sizeof(string)},
     {call_control_members, 
                 sizeof(call_control_members)/sizeof(string)},
-    {application_auto_invocation_members, 
-                sizeof(application_auto_invocation_members)/sizeof(string)},
-    {local_connectivity_members, 
-                sizeof(local_connectivity_members)/sizeof(string)},
     {messaging_members, 
                 sizeof(messaging_members)/sizeof(string)},
     {restricted_messaging_members, 
                 sizeof(restricted_messaging_members)/sizeof(string)},
+    {application_auto_invocation_members, 
+                sizeof(application_auto_invocation_members)/sizeof(string)},
+    {local_connectivity_members, 
+                sizeof(local_connectivity_members)/sizeof(string)},
+    {smart_card_members, 
+                sizeof(smart_card_members)/sizeof(string)},
+    {authentication_members, 
+                sizeof(authentication_members)/sizeof(string)},
     {multimedia_recording_members, 
                 sizeof(multimedia_recording_members)/sizeof(string)},
     {read_user_data_access_members, 
@@ -178,10 +182,6 @@ static struct _group_member {
     {location_members, sizeof(location_members)/sizeof(string)},
     {landmark_members, sizeof(landmark_members)/sizeof(string)},
     {payment_members, sizeof(payment_members)/sizeof(string)},
-    {authentication_members, 
-                sizeof(authentication_members)/sizeof(string)},
-    {smart_card_members, 
-                sizeof(smart_card_members)/sizeof(string)},
     {satsa_members, sizeof(satsa_members)/sizeof(string)}
 };
 
@@ -192,8 +192,8 @@ static struct _group_member {
 #define ONESHOT  16
 
 typedef struct _values {
-    int maxval;
     int defval;
+    int maxval;
 } values;
 
 static values identifiedTBL[] = {
@@ -299,9 +299,6 @@ void permissions_dealloc(void* array) {
     return; //all arrays are static
 }
 
-void permissions_loading_finished() {
-}
-
 #define DEF_NUM_OF_LINES 6
 static struct _messages {
     string list[DEF_NUM_OF_LINES];
@@ -324,6 +321,18 @@ static struct _messages {
     "Is it OK to open a restricted network connection?",
     "%1 wants to open a restricted network connection.\n\nIs it OK to open a restricted network connection?"
     }},
+    {{"Messaging",
+    "How often should %1 ask for permission before sending or receiving text messages?",
+    "Don't send or receive messages and don't ask",
+    "Is it OK to Send Messages?",
+    "%1 wants to send text message(s). This could result in charges.%3 message(s) will be sent to %2.\n\nIs it OK to send messages?"
+    }},
+    {{"Secured Messaging",
+    "How often should %1 ask for permission before sending or receiving secured text messages?",
+    "Don't send or receive secured messages and don't ask",
+    "Is it OK to Send secured Messages?",
+    "%1 wants to send text secured message(s). This could result in charges.%3 message(s) will be sent to %2.\n\nIs it OK to send messages?"
+    }},
     {{"Auto-Start Registration",
     "How often should %1 ask for permission to register itself to automatically start?",
     "Don't register and don't ask",
@@ -336,17 +345,17 @@ static struct _messages {
     "Is it OK to Connect?",
     "%1 wants to connect to a computer. This may require a data cable.\n\nIs it OK to make a connection?"
     }},
-    {{"Messaging",
-    "How often should %1 ask for permission before sending or receiving text messages?",
-    "Don't send or receive messages and don't ask",
-    "Is it OK to Send Messages?",
-    "%1 wants to send text message(s). This could result in charges.%3 message(s) will be sent to %2.\n\nIs it OK to send messages?"
+    {{"Smart Card Communication",
+    "How often should %1 ask for permission to access your smart card?",
+    "Don't access my smart card and don't ask",
+    "Is it OK to access your smart card?",
+    "Application %1 wants to access your smart card.\n\nIs it OK to access your smart card?"
     }},
-    {{"Secured Messaging",
-    "How often should %1 ask for permission before sending or receiving secured text messages?",
-    "Don't send or receive secured messages and don't ask",
-    "Is it OK to Send secured Messages?",
-    "%1 wants to send text secured message(s). This could result in charges.%3 message(s) will be sent to %2.\n\nIs it OK to send messages?"
+    {{"Personal Indentification",
+    "How often should %1 ask for permission to use your smart card to identify you?",
+    "Don't sign and don't ask",
+    "Is it OK to obtain your personal signature?",
+    "%1 wants to obtain your personal digital signature.\n\nIs it OK to obtain your personal signature?\nContent to be signed:\n\n%3"
     }},
     {{"Recording",
     "How often should %1 ask for permission to record audio and images? This will use space on your phone.",
@@ -380,18 +389,6 @@ static struct _messages {
     "Application %1 wants to access your landmark database.\n\nIs it OK to access your landmark database?"
     }},
     {{"payment"}},
-    {{"Personal Indentification",
-    "How often should %1 ask for permission to use your smart card to identify you?",
-    "Don't sign and don't ask",
-    "Is it OK to obtain your personal signature?",
-    "%1 wants to obtain your personal digital signature.\n\nIs it OK to obtain your personal signature?\nContent to be signed:\n\n%3"
-    }},
-    {{"Smart Card Communication",
-    "How often should %1 ask for permission to access your smart card?",
-    "Don't access my smart card and don't ask",
-    "Is it OK to access your smart card?",
-    "Application %1 wants to access your smart card.\n\nIs it OK to access your smart card?"
-    }},
     {{"satsa"}}
 
 };

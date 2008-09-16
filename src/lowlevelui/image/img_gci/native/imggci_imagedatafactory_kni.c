@@ -36,8 +36,11 @@
 
 #include <imgapi_image.h>
 #include <img_errorcodes.h>
-#include <img_imagedata_load.h>
 #include <imgdcd_image_util.h>
+
+#if ENABLE_IMAGE_CACHE
+#include <imageCache.h>
+#endif
 
 
 /** Convenenient for convert Java image object to screen buffer */
@@ -362,31 +365,55 @@ static int load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
 }
 
 /**
- * Load Java ImageData instance with image data in RAW format.
- * Image data is provided in native buffer.
+ * Loads a native image data from image cache into ImageData..
+ * <p>
+ * Java declaration:
+ * <pre>
+ *     boolean loadCachedImage0(ImageData imageData,
+ *                              String suiteId, String resName);
+ * </pre>
  *
- * @param imageData Java ImageData object to be loaded with image data
- * @param buffer pointer to native buffer with raw image data
- * @param length length of the raw image data in the buffer
- *
- * @return KNI_TRUE in the case ImageData is successfully loaded with
- *    raw image data, otherwise KNI_FALSE.
+ * @param imageData The ImageData to be populated
+ * @param suiteId   The suite Id
+ * @param resName   The name of the image resource
+ * @return true if a cached image was loaded, false otherwise
  */
-int img_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
-    unsigned char *buffer, int length) {
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadCachedImage0) {
+#if ENABLE_IMAGE_CACHE
+    int len;
+    SuiteIdType suiteId;
+    jboolean status = KNI_FALSE;
+    unsigned char *rawBuffer = NULL;
 
-    int status = KNI_FALSE;
-
-    KNI_StartHandles(1);
+    KNI_StartHandles(3);
 
     /* A handle for which KNI_IsNullHandle() check is true */
     KNI_DeclareHandle(nullHandle);
 
-    status = load_imagedata_from_raw_buffer(KNIPASSARGS
-                    imageData, buffer, nullHandle, 0, length);
+    GET_PARAMETER_AS_PCSL_STRING(3, resName)
+
+    KNI_DeclareHandle(imageData);
+    KNI_GetParameterAsObject(1, imageData);
+
+    suiteId = KNI_GetParameterAsInt(2);
+
+    len = loadImageFromCache(suiteId, &resName, &rawBuffer);
+    if (len != -1 && rawBuffer != NULL) {
+        /* image is found in cache */
+        status = load_imagedata_from_raw_buffer(KNIPASSARGS
+            imageData, rawBuffer, nullHandle, 0, len);
+    }
+
+    midpFree(rawBuffer);
+
+    RELEASE_PCSL_STRING_PARAMETER
 
     KNI_EndHandles();
-    return status;
+    KNI_ReturnBoolean(status);
+#else
+    KNI_ReturnBoolean(KNI_FALSE);
+#endif
 }
 
 /**

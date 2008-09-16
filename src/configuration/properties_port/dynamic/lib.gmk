@@ -36,19 +36,29 @@ INT_SUBSYSTEM_PROPERTIES_PORT_NAME = properties_port
 SUBSYSTEMS += $(INT_SUBSYSTEM_PROPERTIES_PORT_NAME)
 
 # vpath for native implementation of dynamic properties
-vpath % $(CONFIG_PROPERTIES_PORT_IMPL_DIR)/native
+vpath % $(SUBSYSTEM_DIR)/configuration/properties_port/dynamic/native
 
 # Configuration files with properties data
 #
-SUBSYSTEM_CONFIGURATION_CONFIG_FILES = \
+INT_CONFIGURATION_CONFIG_FILES = \
         $(GENERATED_DIR)/lib/internal.config \
         $(GENERATED_DIR)/lib/system.config
 
 # Native files 
 #
-SUBSYSTEM_CONFIGURATION_NATIVE_FILES += midp_properties_dynamic.c
+DYNAMIC_PROPERTIES_PORT_NATIVE_FILES = midp_properties_dynamic.c
 
-# Include Java files
-# SUBSYSTEM_CONFIGURATION_JAVA_FILES +=  
+# Include files
+# 
+INT_PROPERTIES_PORT_JAVA_FILES = 
 
+# Publish the variables to global Makefile
+#
+SUBSYSTEM_PROPERTIES_PORT_JAVA_FILES = \
+	$(INT_PROPERTIES_PORT_JAVA_FILES)
 
+SUBSYSTEM_PROPERTIES_PORT_NATIVE_FILES += \
+	$(DYNAMIC_PROPERTIES_PORT_NATIVE_FILES)
+
+SUBSYSTEM_CONFIGURATION_CONFIG_FILES = \
+        $(INT_CONFIGURATION_CONFIG_FILES)

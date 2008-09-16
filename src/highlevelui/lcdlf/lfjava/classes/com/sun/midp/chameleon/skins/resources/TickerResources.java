@@ -47,41 +47,41 @@ public class TickerResources {
             return;
         }
         
-        TickerSkin.HEIGHT = SkinLoader.getInt(
+        TickerSkin.HEIGHT = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_HEIGHT);
 
-        int align = SkinLoader.getInt(
+        int align = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_ALIGN);
-        TickerSkin.ALIGN = SkinLoader.resourceConstantsToGraphics(align);
+        TickerSkin.ALIGN = SkinResources.resourceConstantsToGraphics(align);
 
-        int direction = SkinLoader.getInt(
+        int direction = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_DIRECTION);
-        TickerSkin.DIRECTION = SkinLoader.resourceConstantsToGraphics(
+        TickerSkin.DIRECTION = SkinResources.resourceConstantsToGraphics(
                 direction);
 
-        TickerSkin.RATE = SkinLoader.getInt(
+        TickerSkin.RATE = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_RATE);
-        TickerSkin.SPEED = SkinLoader.getInt(
+        TickerSkin.SPEED = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_SPEED);
-        TickerSkin.TEXT_ANCHOR_Y = SkinLoader.getInt(
+        TickerSkin.TEXT_ANCHOR_Y = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_TEXT_ANCHOR_Y);
 
-        int shdAlign = SkinLoader.getInt(
+        int shdAlign = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_TEXT_SHD_ALIGN);
-        TickerSkin.TEXT_SHD_ALIGN = SkinLoader.resourceConstantsToGraphics(
+        TickerSkin.TEXT_SHD_ALIGN = SkinResources.resourceConstantsToGraphics(
                 shdAlign);
 
-        TickerSkin.COLOR_BG = SkinLoader.getInt(
+        TickerSkin.COLOR_BG = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_COLOR_BG);
-        TickerSkin.COLOR_FG = SkinLoader.getInt(
+        TickerSkin.COLOR_FG = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_COLOR_FG);
-        TickerSkin.COLOR_FG_SHD = SkinLoader.getInt(
+        TickerSkin.COLOR_FG_SHD = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_COLOR_FG_SHD);
-        TickerSkin.FONT = SkinLoader.getFont(
+        TickerSkin.FONT = SkinResources.getFont(
                 SkinPropertiesIDs.TICKER_FONT);
-        TickerSkin.IMAGE_BG = SkinLoader.getCompositeImage(
+        TickerSkin.IMAGE_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.TICKER_IMAGE_BG, 3);
-        TickerSkin.IMAGE_AU_BG = SkinLoader.getCompositeImage(
+        TickerSkin.IMAGE_AU_BG = SkinResources.getCompositeImage(
                 SkinPropertiesIDs.TICKER_IMAGE_AU_BG, 3);
 
         init = true;

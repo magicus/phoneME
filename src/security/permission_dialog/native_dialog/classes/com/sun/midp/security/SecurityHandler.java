@@ -53,9 +53,6 @@ public final class SecurityHandler {
     /** The security token for this class. */
     private static SecurityToken classSecurityToken;
 
-    /** The standard security exception message. */
-    public static final String STD_EX_MSG = "Application not authorized " +
-                                            "to access the restricted API";
     /**
      * Creates a security domain with a list of permitted actions or no list
      * to indicate all actions. The caller must be have permission for
@@ -104,23 +101,27 @@ public final class SecurityHandler {
      *  -1 if the status is unknown
      */
     public int checkPermission(String permission) {
-        int status = 0;
-        int permId;
+        boolean found = false;
+        int i;
 
-        try {
-            permId = Permissions.getId(permission);
+        for (i = 0; i < Permissions.NUMBER_OF_PERMISSIONS; i++) {
+        	if (Permissions.getName(i).equals(permission)) {
+        		found = true;
+        		break;
+        	}
+        }
+        
+        if (found) {
         	MIDletSuite current =
 		MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
 
         	if (current != null) {
         		// query native security mgr for status
-                status = checkPermissionStatus0(current.getID(), permId);
+		    return checkPermissionStatus0(current.getID(), permission);
         	}
-        } catch (SecurityException exc) {
-            // intentionally ignored
         }
         
-        return status;
+        return 0; // Deny permission
     }
 
     /**
@@ -209,14 +210,12 @@ public final class SecurityHandler {
     	MIDletSuite current =
             MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
 
-        if (current != null) {
-            // can throw SecurityException
-            int permId = Permissions.getId(permission);
-            if (checkPermission0(current.getID(), permId)) {
-                return false;
-            }
+        if (current == null) {
+	    // Deny. Internal suite should not call this function
+	    return true;
+        } else {
+	    return !checkPermission0(current.getID(), permission);
         }
-        throw new SecurityException(STD_EX_MSG);
     }
 
     /**
@@ -242,8 +241,8 @@ public final class SecurityHandler {
      *   display.
      */
     public static boolean askUserForPermission(SecurityToken token,
-            boolean trusted, String title, String question, String app,
-            String resource, String extraValue) throws InterruptedException {
+            String title, String question, String app, String resource,
+            String extraValue) throws InterruptedException {
     	// Allow Push interrupt since the decision is already made
 	// at native Push level
         return true;
@@ -272,7 +271,7 @@ public final class SecurityHandler {
      * 
      * @return true if permission is granted. Otherwise, false.
      */
-    private native boolean checkPermission0(int suiteId, int permission);
+    private native boolean checkPermission0(String suiteId, String permission);
     
     /**
      * Get the status of the specified permission.
@@ -289,6 +288,6 @@ public final class SecurityHandler {
      * @return 0 if the permission is denied; 1 if the permission is allowed;
      *  -1 if the status is unknown
      */
-    private native int checkPermissionStatus0(int suiteId,
-					      int permission);
+    private native int checkPermissionStatus0(String suiteId,
+					      String permission);
 }

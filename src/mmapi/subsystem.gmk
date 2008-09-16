@@ -30,12 +30,8 @@
 # other def. (like VPATH)
 ######################################################################
 
-$(GENERATED_DIR)/classes/javax/microedition/lcdui/MMHelperImpl.java: \
-    $(SUBSYSTEM_DIR)/mmapi/classes/javax/microedition/lcdui/MMHelperImpl.jpp
-	@$(call runjpp,$^,$@)
-
 SUBSYSTEM_MMAPI_JAVA_FILES = \
-    $(GENERATED_DIR)/classes/javax/microedition/lcdui/MMHelperImpl.java \
+    $(SUBSYSTEM_DIR)/mmapi/classes/javax/microedition/lcdui/MMHelperImpl.java \
     $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMHelper.java \
     $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMVideoItem.java \
     $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMVideoItemImpl.java \

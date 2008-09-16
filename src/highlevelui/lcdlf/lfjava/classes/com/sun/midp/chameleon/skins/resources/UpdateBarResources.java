@@ -49,21 +49,21 @@ public class UpdateBarResources {
             return;
         }
         
-        UpdateBarSkin.WIDTH = SkinLoader.getInt(
+        UpdateBarSkin.WIDTH = SkinResources.getInt(
                 SkinPropertiesIDs.UPDATEBAR_WIDTH);
-        UpdateBarSkin.HEIGHT = SkinLoader.getInt(
+        UpdateBarSkin.HEIGHT = SkinResources.getInt(
                 SkinPropertiesIDs.UPDATEBAR_HEIGHT);
-        UpdateBarSkin.NUM_FRAMES = SkinLoader.getInt(
+        UpdateBarSkin.NUM_FRAMES = SkinResources.getInt(
                 SkinPropertiesIDs.UPDATEBAR_NUM_FRAMES);
-        UpdateBarSkin.FRAME_X = SkinLoader.getInt(
+        UpdateBarSkin.FRAME_X = SkinResources.getInt(
                 SkinPropertiesIDs.UPDATEBAR_FRAME_X);
-        UpdateBarSkin.FRAME_Y = SkinLoader.getInt(
+        UpdateBarSkin.FRAME_Y = SkinResources.getInt(
                 SkinPropertiesIDs.UPDATEBAR_FRAME_Y);
-        UpdateBarSkin.FRAME_SEQUENCE = SkinLoader.getNumbersSequence(
+        UpdateBarSkin.FRAME_SEQUENCE = SkinResources.getNumbersSequence(
                 SkinPropertiesIDs.UPDATEBAR_FRAME_SEQU);
-        UpdateBarSkin.IMAGE_BG = SkinLoader.getImage(
+        UpdateBarSkin.IMAGE_BG = SkinResources.getImage(
                 SkinPropertiesIDs.UPDATEBAR_IMAGE_BG);
-        UpdateBarSkin.IMAGE_FRAME = SkinLoader.getCompositeImage(
+        UpdateBarSkin.IMAGE_FRAME = SkinResources.getCompositeImage(
             SkinPropertiesIDs.UPDATEBAR_IMAGE_FRAME,
             UpdateBarSkin.NUM_FRAMES);
 

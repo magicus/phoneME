@@ -327,11 +327,6 @@ public class Command {
     // protected members //
 
     /**
-     * A command used for executing Virtual Keyboard
-     */
-    static final int VIRTUAL = 9;
-
-    /**
      * The label rendered on the screen for this Command.
      * Chosen from the available set of labels.
      */

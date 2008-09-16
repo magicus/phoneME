@@ -343,8 +343,11 @@ public class X509Certificate implements Certificate {
     private int keyUsage = -1;
     /** Collection of extended keyUsage bits. */
     private int extKeyUsage = -1;
-    /** Entries extracted from AuthorityInfoAccess extension. */
-    Vector authInfoAccess = new Vector(2);
+    /** AuthorityInfoAccess extension: access method. */
+    private byte[] authAccessMethod = null;
+    /** AuthorityInfoAccess extension: access location. */
+    private String authAccessLocation = null;
+
 
     /** Private constructor */
     private X509Certificate() {
@@ -834,6 +837,8 @@ public class X509Certificate implements Certificate {
                                          0, ID_AIA.length)) {
                     extId = "AIA";
 
+                    authAccessLocation = "";
+
                     /*
                      * AuthorityInfoAccessSyntax  ::=
                      *     SEQUENCE SIZE (1..MAX) OF AccessDescription
@@ -844,12 +849,8 @@ public class X509Certificate implements Certificate {
                      */
                     getLen(SEQUENCE_TYPE);
                     int oidLen;
-                    String authAccessLocation;
-                    byte[] authAccessMethod;
 
                     while (idx < extValIdx + extValLen) {
-                        authAccessLocation = "";
-
                         getLen(SEQUENCE_TYPE);
                         
                         oidLen = getLen(OID_TYPE);
@@ -875,13 +876,10 @@ public class X509Certificate implements Certificate {
                                     authAccessLocation += (char)enc[idx++];
                                 }
                             }
-
-                            authInfoAccess.addElement(
-                                new AuthorityInfoAccessEntry(
-                                    authAccessMethod, authAccessLocation
-                                ));
                         } else {
                             // acessLocation type is not supported
+                            authAccessMethod = null;
+                            authAccessLocation = null;
                             if (crit) {
                                 badExt = true;
                             }
@@ -1294,16 +1292,6 @@ public class X509Certificate implements Certificate {
                         cert.verify(caCerts[certIdx].getPublicKey());
                         // if no exceptions, we found the right certificate
                         isChainComplete = true;
-
-                        /*
-                         * If the last certificate in chain is self-signed,
-                         * don't add its subject twice.
-                         */
-                        String certSubj = cert.getSubject();
-                        if (!certSubj.equals(cert.getIssuer())) {
-                            subjectNames.addElement(certSubj);
-                        }
-
                         subjectNames.addElement(caCerts[certIdx].getSubject());
                         break;
                     } catch (CertificateException ce) {
@@ -1729,47 +1717,23 @@ public class X509Certificate implements Certificate {
     }
 
     /**
-     * Checks if this certificate has AuthorityInfoAccess extension
+     * Returns access method field of AuthorityInfoAccess extension.
      *
-     * @return true if this certificate contains AuthorityInfoAccess extension,
-     *         false otherwise 
+     * @return A byte array containing the access method field of
+     *         AuthorityInfoAccess extension if present, null otherwise.
      */
-    public boolean hasAuthorityInfoAccess() {
-        return (authInfoAccess.size() > 0);
+    public byte[] getAuthAccessMethod() {
+        return getCopyOfArray(authAccessMethod);
     }
 
     /**
-     * Returns a vector of AuthorityInfoAccess extension entries
-     * having the specified access method.
+     * Returns access location field of AuthorityInfoAccess extension.
      *
-     * @param method access method to search for
-     *
-     * @return vector of AuthorityInfoAccessEntry having the given access
-     *         method or null if there are no such entries, or if
-     *         the AuthorityInfoAccess extension is not present
+     * @return A string containing the access location field of
+     *         AuthorityInfoAccess extension if present, null otherwise.
      */
-    public Vector getAuthorityInfoAccess(byte[] method) {
-        int numOfEntries = authInfoAccess.size();
-
-        if (numOfEntries == 0 || method == null) {
-            return null;
-        }
-
-        Vector vectorOfEntries = new Vector(numOfEntries);
-
-        for (int i = 0; i < numOfEntries; i++) {
-            AuthorityInfoAccessEntry aiaEntry =
-                    (AuthorityInfoAccessEntry)authInfoAccess.elementAt(i);
-            byte[] accessMethod = aiaEntry.getAccessMethod();
-
-            if (accessMethod != null && accessMethod.length == method.length &&
-                    Utils.byteMatch(accessMethod, 0, method,
-                                    0, accessMethod.length)) {
-                vectorOfEntries.addElement(aiaEntry);
-            }
-        }
-
-        return (vectorOfEntries.size() > 0) ? vectorOfEntries : null;
+    public String getAuthAccessLocation() {
+        return authAccessLocation;
     }
 
     /**

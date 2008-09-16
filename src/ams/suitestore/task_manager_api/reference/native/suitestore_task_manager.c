@@ -88,22 +88,7 @@ midp_get_number_of_suites(int* pNumOfSuites) {
         /* load _suites.dat */
         status = read_suites_data(&pszError);
         if (status == ALL_OK) {
-#if ENABLE_DYNAMIC_COMPONENTS
-            MidletSuiteData* pData = g_pSuitesData;
-            int num = 0;
-
-            /* walk through the linked list */
-            while (pData != NULL) {
-                if (pData->type == COMPONENT_REGULAR_SUITE) {
-                    num++;
-                }
-                pData = pData->nextEntry;
-            }
-
-            *pNumOfSuites = num;
-#else
             *pNumOfSuites = g_numberOfSuites;
-#endif /* ENABLE_DYNAMIC_COMPONENTS */
         } else {
             storageFreeError(pszError);
         }
@@ -111,55 +96,6 @@ midp_get_number_of_suites(int* pNumOfSuites) {
 
     return status;
 }
-
-#if ENABLE_DYNAMIC_COMPONENTS
-/**
- * Retrieves the number of the installed components belonging
- * to the given midlet suite.
- *
- * @param suiteId          [in]  ID of the MIDlet suite the information about
- *                               whose components must be retrieved
- * @param pNumOfComponents [out] pointer to variable to accept the number
- *                               of components
- *
- * @returns error code (ALL_OK if no errors)
- */
-MIDPError
-midp_get_number_of_components(SuiteIdType suiteId, int* pNumOfComponents) {
-    MIDPError status;
-    char* pszError;
-    MidletSuiteData* pData;
-    int n = 0;
-
-    do {
-        if (midpInit(LIST_LEVEL) != 0) {
-            status = OUT_OF_MEMORY;
-            break;
-        }
-
-        /* load _suites.dat */
-        status = read_suites_data(&pszError);
-        if (status != ALL_OK) {
-            storageFreeError(pszError);
-            break;
-        }
-
-        pData = g_pSuitesData;
-
-        /* walk through the linked list */
-        while (pData != NULL) {
-            if (pData->suiteId == suiteId && pData->type == COMPONENT_DYNAMIC) {
-                n++;
-            }
-            pData = pData->nextEntry;
-        }
-
-        *pNumOfComponents = n;
-    } while(0);
-
-    return status;
-}
-#endif /* ENABLE_DYNAMIC_COMPONENTS */
 
 /**
  * Disables a suite given its suite ID.
@@ -220,9 +156,6 @@ midp_get_suite_ids(SuiteIdType** ppSuites, int* pNumOfSuites) {
     SuiteIdType* pSuiteIds;
     MidletSuiteData* pData;
     int numberOfSuites = 0;
-#if ENABLE_DYNAMIC_COMPONENTS
-    int numberOfEntries = 0;
-#endif
 
     *ppSuites = NULL;
     *pNumOfSuites = 0;
@@ -262,23 +195,12 @@ midp_get_suite_ids(SuiteIdType** ppSuites, int* pNumOfSuites) {
 
     /* walk through the linked list collecting suite IDs */
     while (pData != NULL) {
-#if ENABLE_DYNAMIC_COMPONENTS
-        if (pData->type == COMPONENT_REGULAR_SUITE) {
-#endif
-            pSuiteIds[numberOfSuites] = pData->suiteId;
-            numberOfSuites++;
-#if ENABLE_DYNAMIC_COMPONENTS
-        }
-        numberOfEntries++;
-#endif
+        pSuiteIds[numberOfSuites] = pData->suiteId;
         pData = pData->nextEntry;
+        numberOfSuites++;
     }
 
-#if ENABLE_DYNAMIC_COMPONENTS
-    if (numberOfEntries != g_numberOfSuites) {
-#else
     if (numberOfSuites != g_numberOfSuites) {
-#endif
         /*
          * This should not happen: it means that something is wrong with
          * the list of structures containing the midlet suites information.
@@ -374,12 +296,12 @@ midp_remove_suite(SuiteIdType suiteId) {
         suite_listeners_notify(SUITESTORE_LISTENER_TYPE_REMOVE,
             SUITESTORE_OPERATION_START, ALL_OK, pData);
 
-        if (pData->type == COMPONENT_PREINSTALLED_SUITE) {
+        if (pData->isPreinstalled) {
             status = BAD_PARAMS;
             break;
         }
 
-        status = begin_transaction(TRANSACTION_REMOVE_SUITE, suiteId, NULL);
+        status = begin_transaction(TRANSACTION_REMOVE, suiteId, NULL);
         if (status != ALL_OK) {
             break;
         }
@@ -493,7 +415,7 @@ midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
     (void)suiteId;
     (void)newStorageId;
     return GENERAL_ERROR;
-#else
+#endif
 
    /*
     * if VERIFY_ONCE is enabled then MONET is disabled
@@ -553,7 +475,7 @@ midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
             return BAD_PARAMS;
         }
 
-        if (pData->type == COMPONENT_PREINSTALLED_SUITE) {
+        if (pData->isPreinstalled) {
             remove_storage_lock(suiteId);
             return BAD_PARAMS;
         }
@@ -636,9 +558,7 @@ midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
 
         return status;
     }
-
-#endif /* VERIFY_ONCE */
-}
+ }
 
 /**
  * Moves the given midlet suite to another folder.

@@ -29,6 +29,9 @@ package javax.microedition.lcdui;
 import java.io.InputStream;
 import java.io.IOException;
 
+import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.midlet.MIDletStateHandler;
+
 /**
  * ImageFactory implementation based on putpixel graphics library and stores
  * data on Java heap.
@@ -58,14 +61,6 @@ class ImageDataFactory implements AbstractImageDataFactory {
     private static final byte[] rawHeader = new byte[] {
          (byte)0x89, (byte)0x53, (byte)0x55, (byte)0x4E
     };
-
-    /** Reference to a image cache. */
-    private SuiteImageCache imageCache;
-
-    /** Initialize the image cache factory. */
-    private ImageDataFactory() {
-        imageCache = SuiteImageCacheFactory.getCache();
-    }
 
     /**
      * ImageDataFactory singleton used for <code>ImageData</code>
@@ -490,9 +485,26 @@ class ImageDataFactory implements AbstractImageDataFactory {
      */
     private boolean loadCachedImage(ImageData imageData,
                                     String resName) {
-        return imageCache.loadAndCreateImmutableImageData(imageData, 
-                                                            resName);
+        MIDletSuite midletSuite =
+            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
+        int suiteId = midletSuite.getID();
+
+        return loadCachedImage0(imageData, suiteId, resName);
     }
+
+    /**
+     * Native function to load native image data from cache and populate
+     * an immutable <code>ImageData</code>.
+     * pixelData and alphaData, width and height, will be set
+     * in native upon success.
+     *
+     * @param imageData The <code>ImageData</code> to populate
+     * @param suiteId   The suite id
+     * @param resName   The image resource name
+     * @return          true if image was loaded and created, false otherwise
+     */
+    private native boolean loadCachedImage0(ImageData imageData,
+                                            int suiteId, String resName);
 
     /**
      * Function to decode an <code>ImageData</code> from PNG data.
