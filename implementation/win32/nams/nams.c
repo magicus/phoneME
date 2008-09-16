@@ -32,6 +32,7 @@
 #include "javacall_dir.h"
 #include "javacall_lcd.h"
 #include "javacall_ams_app_manager.h"
+#include "javacall_ams_platform.h"
 
 /**
  * Inform on completion of the previously requested operation.
@@ -212,7 +213,7 @@ javacall_result javacall_ams_get_domain(javacall_suite_id suiteID,
     return JAVACALL_OK;
 }
 
-#if !ENABLE_NATIVE_AMS_UI
+//#if !ENABLE_NATIVE_AMS_UI
 
 /**
  * App Manager invokes this function to get permissions of the suite.
@@ -276,7 +277,7 @@ javacall_ams_suite_set_permissions(javacall_suite_id suiteID,
     return JAVACALL_OK;
 }
 
-#endif /* ENABLE_NATIVE_AMS_UI */
+//#endif /* ENABLE_NATIVE_AMS_UI */
 
 /**
  * This function is called by the installer when some action is required

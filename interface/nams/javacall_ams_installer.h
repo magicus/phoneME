@@ -615,10 +615,10 @@ typedef enum {
  *                                           successfully started,
  *                      an error code otherwise
  *
- * The return of this function only tells if the install process is started
- * successfully. The actual result of if the installation (status and ID of
- * the newly installed suite) will be reported later by
- * javacall_ams_operation_completed().
+ * The return of this function only tells if the installation process is started
+ * successfully. The actual result of if the installation (status and ID of the
+ * newly installed suite contained in the fields of javacall_ams_install_data
+ * structure) will be reported later by javacall_ams_operation_completed().
  */
 javacall_result
 JCDECL_APPMGR_INST(install_suite)(javacall_app_id appId,
@@ -626,6 +626,26 @@ JCDECL_APPMGR_INST(install_suite)(javacall_app_id appId,
                        javacall_const_utf16_string installUrl,
                        javacall_storage_id storageId,
                        javacall_folder_id folderId);
+
+/**
+ * Application manager invokes this function to start an update of
+ * an installed midlet suite.
+ *
+ * @param appId ID that will be used to uniquely identify this operation
+ * @param suiteId ID of the midlet suite to update
+ *
+ * @return status code: <tt>JAVACALL_OK</tt> if the update operation was
+ *                                           successfully started,
+ *                      an error code otherwise
+ *
+ * The return of this function only tells if the update process is started
+ * successfully. The actual result of if the installation (status field
+ * of javacall_ams_install_data structure) will be reported later by
+ * javacall_ams_operation_completed().
+ */
+javacall_result
+JCDECL_APPMGR_INST(update_suite)(javacall_app_id appId,
+                                 javacall_suite_id suiteId);
 
 /**
  * Application manager invokes this function to enable or disable
