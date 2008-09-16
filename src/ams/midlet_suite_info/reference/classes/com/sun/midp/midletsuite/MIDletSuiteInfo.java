@@ -54,6 +54,26 @@ public class MIDletSuiteInfo {
     public String iconName = null;
 
     /**
+     * Copy all information from another such object.
+     * @param that the source object
+     */
+    final public void copyFieldsFrom(MIDletSuiteInfo that) {
+        // IMPL_NOTE: this method is final to prevent inheritance from
+        // RunningMIDletSuiteInfo: this method deals only with
+        // persistent properties.
+        this.suiteId = that.suiteId;
+        this.storageId = that.storageId;
+        this.folderId = that.folderId;
+        this.displayName = that.displayName;
+        this.midletToRun = that.midletToRun;
+        this.numberOfMidlets = that.numberOfMidlets;
+        this.enabled = that.enabled;
+        this.trusted = that.trusted;
+        this.preinstalled = that.preinstalled;
+        this.iconName = that.iconName;
+    }
+
+    /**
      * Constructs a MIDletSuiteInfo object for a suite.
      *
      * @param theID ID the system has for this suite

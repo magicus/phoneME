@@ -344,7 +344,7 @@ class AppManagerPeer implements CommandListener {
 
                 if (si.sameSuite(midlet)) {
                     si.addProxy(midlet);
-                    appManagerUI.notifyMidletStarted(si);
+                    appManagerUI.notifyMidletStarted(si, midletClassName);
                     return;
                 }
             }
@@ -487,7 +487,6 @@ class AppManagerPeer implements CommandListener {
     private void updateContent() {
         int[] suiteIds;
         RunningMIDletSuiteInfo msi = null;
-        boolean newlyAdded;
 
         suiteIds = midletSuiteStorage.getListOfSuites();
 
@@ -557,7 +556,6 @@ class AppManagerPeer implements CommandListener {
 
         // Add the rest of the installed midlets
         for (int lowest, i = 0; i < suiteIds.length; i++) {
-
             lowest = i;
 
             for (int k = i + 1; k < suiteIds.length; k++) {
@@ -566,57 +564,43 @@ class AppManagerPeer implements CommandListener {
                 }
             }
             try {
-                MIDletSuiteInfo temp =
-                    midletSuiteStorage.getMIDletSuiteInfo(suiteIds[lowest]);
 
-                RunningMIDletSuiteInfo suiteInfo =
-                    new RunningMIDletSuiteInfo(temp, midletSuiteStorage);
+                RunningMIDletSuiteInfo updatedMsi =
+                    new RunningMIDletSuiteInfo(
+                            midletSuiteStorage.getMIDletSuiteInfo(suiteIds[lowest]),
+                            midletSuiteStorage);
 
-                newlyAdded = true;
-                for (int k = 0; k < msiVector.size(); k++) {
-                    msi =
-                        (RunningMIDletSuiteInfo)msiVector.elementAt(k);
+                msi = findRunningMidletSuiteInfo(suiteIds[lowest]);
+                if (null == msi) {
+                    // newly added
+                    append(updatedMsi);
+                } else {
+                    MIDletSuiteInfo oldMsi = new MIDletSuiteInfo(msi.suiteId);
+                    oldMsi.copyFieldsFrom(msi);
 
-                    if (suiteIds[lowest] == msi.suiteId) {
-                        newlyAdded = false;
-                        boolean isEnabled = suiteInfo.enabled;
+                    appManagerUI.notifyMIDletSuiteStateChanged(msi, updatedMsi);
 
-                        if (msi.enabled != isEnabled) {
-                            msi.enabled = isEnabled;
+                    msi.copyFieldsFrom(updatedMsi);
 
-                            // MIDlet suite being enabled
-                            appManagerUI.notifyMIDletSuiteEnabled(msi);
-                            // running MIDlets will continue to run
-                            // even when disabled
-                        }
-
-                        // Update all information about the suite;
-                        // if the suite's icon was changed, reload it.
-                        String oldIconName = msi.iconName;
-                        int oldNumberOfMidlets = msi.numberOfMidlets;
-                        MIDletProxy[] oldProxies = msi.getProxies();
-
-                        appManagerUI.notifyMIDletSuiteStateChaged(msi, suiteInfo);
-
-                        msi = suiteInfo;
-                        msi.addProxies(oldProxies);
-
-                        if ((suiteInfo.iconName != null &&
-                                !suiteInfo.iconName.equals(oldIconName)) ||
-                            (suiteInfo.iconName == null &&
-                                suiteInfo.numberOfMidlets != oldNumberOfMidlets)
-                        ) {
-                            msi.icon = null;
-                            msi.loadIcon(midletSuiteStorage);
-                            appManagerUI.notifyMIDletSuiteIconChaged(msi);
-                        }
-
-                        break;
+                    // Update all information about the suite;
+                    // if the suite's icon was changed, reload it.
+                    if (oldMsi.enabled != updatedMsi.enabled) {
+                        // MIDlet suite being enabled
+                        appManagerUI.notifyMIDletSuiteEnabled(msi);
+                        // running MIDlets will continue to run
+                        // even when disabled
                     }
-                }
 
-                if (newlyAdded) {
-                    append(suiteInfo);
+                    if ((updatedMsi.iconName != null &&
+                            !updatedMsi.iconName.equals(oldMsi.iconName)) ||
+                        (updatedMsi.iconName == null &&
+                            updatedMsi.numberOfMidlets != oldMsi.numberOfMidlets)
+                    ) {
+                        msi.icon = null;
+                        msi.loadIcon(midletSuiteStorage);
+                        appManagerUI.notifyMIDletSuiteIconChaged(updatedMsi);
+                    }
+
                 }
 
             } catch (Exception e) {
@@ -836,7 +820,7 @@ class AppManagerPeer implements CommandListener {
      * @param suiteId Suite ID to search info for
      * @return the matching info, null if not found.
      */
-    private RunningMIDletSuiteInfo getRunningMidletSuiteInfo(int suiteId) {
+    private RunningMIDletSuiteInfo findRunningMidletSuiteInfo(int suiteId) {
         int size = msiVector.size();
         for (int i = 0; i < size; i++) {
             RunningMIDletSuiteInfo info = 
@@ -856,7 +840,7 @@ class AppManagerPeer implements CommandListener {
      */
     void launchSuite(int suiteId, String midletClassname, boolean isDebugMode) {
 
-        RunningMIDletSuiteInfo msi = getRunningMidletSuiteInfo(suiteId);
+        RunningMIDletSuiteInfo msi = findRunningMidletSuiteInfo(suiteId);
         if (msi == null) {
             if (midletClassname == null) {
                 /* unknown suite, classname not specified: cannot say what to 

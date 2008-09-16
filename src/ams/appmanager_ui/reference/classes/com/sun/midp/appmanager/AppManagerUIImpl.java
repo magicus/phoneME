@@ -769,15 +769,16 @@ class AppManagerUIImpl extends Form
      * Called when a new midlet was launched.
      *
      * @param si corresponding midlet suite info
+     * @param className MIDlet class name
      */
-    public void notifyMidletStarted(RunningMIDletSuiteInfo si) {
+    public void notifyMidletStarted(RunningMIDletSuiteInfo si, String className) {
         MidletCustomItem ci = findItem(si);
         if (null != ci) {
             setupDefaultCommand(ci);
             setupRunStateDependentCommands(ci);
 
             // add item to midlet switcher
-            midletSwitcher.append(ci.msi);
+            midletSwitcher.append(ci.msi, className);
         }
     }
 
@@ -890,7 +891,7 @@ class AppManagerUIImpl extends Form
             setupRunStateDependentCommands(mci);
             setupDefaultCommand(mci);
 
-            midletSwitcher.remove(mci.msi);
+            midletSwitcher.remove(mci.msi, midletClassName);
             mci.update();
 
             /* find appropriate MIDlet selector */
@@ -1090,10 +1091,9 @@ class AppManagerUIImpl extends Form
      * @param si corresponding suite info
      * @param newSi new suite info
      */
-    public void notifyMIDletSuiteStateChaged(RunningMIDletSuiteInfo si,
+    public void notifyMIDletSuiteStateChanged(RunningMIDletSuiteInfo si,
                                              RunningMIDletSuiteInfo newSi) {
         midletSwitcher.update(si, newSi);
-
     }
 
     /**
