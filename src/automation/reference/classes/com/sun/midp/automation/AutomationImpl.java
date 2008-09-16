@@ -105,7 +105,7 @@ final class AutomationImpl extends Automation {
 
         // and send this native event to foreground isolate
         nativeEvent.intParam4 = foregroundDisplayId;
-        eventQueue.sendNativeEventToIsolate(nativeEvent,foregroundIsolateId);
+        eventQueue.sendNativeEventToIsolate(nativeEvent, foregroundIsolateId);
     }
 
     /**
@@ -116,7 +116,7 @@ final class AutomationImpl extends Automation {
      * parameters has illegal value
      */
     public void simulateEvents(AutoEventSequence events) 
-        throws IllegalArgumentException{
+        throws IllegalArgumentException {
 
         if (events == null) {
             throw new IllegalArgumentException("Event sequence is null");

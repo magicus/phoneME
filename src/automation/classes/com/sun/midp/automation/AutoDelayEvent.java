@@ -39,10 +39,14 @@ public interface AutoDelayEvent extends AutoEvent {
 
     /**
      * Gets string representation of this event. The format is following:
-     *  delay msec: msec_value
-     * where msec_value is string representation of delay value. 
+     * <br>&nbsp;&nbsp;
+     * <b>delay msec:</b> <i>msec_value</i>
+     * <br>
+     * where <i>msec_value</i> is string representation of delay value.
+     * <br>
      * For example:
-     *  delay msec: 500
+     * <br>&nbsp;&nbsp;
+     * <b>delay msec: 500</b>
      */
     public String toString();
 }

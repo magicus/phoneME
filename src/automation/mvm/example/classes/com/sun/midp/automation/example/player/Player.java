@@ -198,14 +198,14 @@ public class Player extends MIDlet implements Runnable {
         boolean comment = false;
         
         try {
-            long len = 0 ;
+            long len = 0;
             int ch = 0;
             c = (HttpConnection)Connector.open(scenarioURL);
             is = c.openInputStream();
             len = c.getLength();
             if (len != -1) {
 	            // Read exactly Content-Length bytes
-   	            for (int i = 0; i < len ; i++ ) {
+   	            for (int i = 0; i < len; i++) {
 	                if ((ch = is.read()) != -1) {
                         if (ch == (int)'\n' && comment) {
                             comment = false;
@@ -221,7 +221,7 @@ public class Player extends MIDlet implements Runnable {
                     }
                 }
             } else {
-                //Read until the connection is closed.
+                // Read until the connection is closed
 	            while ((ch = is.read()) != -1) {
                     len = is.available();
                     if (ch == (int)'\n' && comment) {

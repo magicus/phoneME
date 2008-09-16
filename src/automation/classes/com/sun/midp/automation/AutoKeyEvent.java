@@ -55,12 +55,17 @@ public interface AutoKeyEvent extends AutoEvent {
 
     /**
      * Gets string representation of this event. The format is following:
-     *  key code: code_value, state: state_value
-     * where code_value and state_value are string representation 
-     * of key code (key char) and key state.
+     * <br>&nbsp;&nbsp;
+     * <b>key code:</b> <i>code_value</i><b>, state:</b> <i>state_value</i>
+     * <br>
+     * where <i>code_value</i> and <i>state_value</i> are string 
+     * representation of key code (key char) and key state.
+     * <br>
      * For example:
-     *  key code: soft1, state: pressed
-     *  key code: a, state: pressed
+     * <br>&nbsp;&nbsp;
+     * <b>key code: soft1, state: pressed</b>
+     * <br>&nbsp;&nbsp;
+     * <b>key code: a, state: pressed</b>
      */
     public String toString();
 }

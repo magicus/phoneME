@@ -53,11 +53,15 @@ public interface AutoPenEvent extends AutoEvent {
 
     /**
      * Gets string representation of event. The format is following:
-     *  pen x: x_value, y: y_value, state: state_value
-     * where x_value, y_value and state_value are string representation 
-     * of x coord, y coord and pen state.
+     * <br>&nbsp;&nbsp;
+     * <b>pen x:</b> <i>x_value</i><b>, y:</b> <i>y_value</i><b>, state:</b> <i>state_value</i>
+     * <br>
+     * where <i>x_value</i>, <i>y_value</i> and <i>state_value</i> are string 
+     * representation of x coord, y coord and pen state.
+     * <br>
      * For example:
-     *  pen x: 10, y: 10, state: pressed
+     * <br>&nbsp;&nbsp;
+     * <b>pen x: 10, y: 10, state: pressed</b>
      */
     public String toString();
 }

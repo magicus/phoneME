@@ -40,13 +40,19 @@ public interface AutoEvent {
 
     /**
      * Gets string representation of event. The format is following:
-     * type_name arg1_name: arg1_value, arg2_name: arg2_value, ...
-     * where "arg1_name", "arg2_name" and so on are event argument (properties) 
-     * names, and "arg1_value", "arg2_value" and so on are argument values.
+     * <br>&nbsp;&nbsp;
+     * <i>type_name arg1_name: arg1_value, arg2_name: arg2_value, ...</i>
+     * <br>
+     * where <i>arg1_name</i>, <i>arg2_name</i> and so on are event argument 
+     * (properties) names, and <i>arg1_value</i>, <i>arg2_value</i> and so on
+     * are argument values.
+     * <br>
      * For example:
-     *  pen x: 20, y: 100, state: pressed
-     * In this example, "pen" is type name, "x" and "y" are argument names, 
-     * and "20" and "100" are argument values.
+     * <br>&nbsp;&nbsp;
+     * <b>pen x: 20, y: 100, state: pressed</b>
+     * <br>
+     * In this example, <b>pen</b> is type name, <b>x</b> and <b>y</b> are 
+     * argument names, and <b>20</b> and <b>100</b> are argument values.
      *
      * @return string representation of event
      */
