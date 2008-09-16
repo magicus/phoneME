@@ -42,6 +42,8 @@
 #include <javacall_ams_installer.h>
 #include <javacall_ams_platform.h>
 
+#include <stdio.h>
+
 /*
  * IMPL_NOTE: this request code is not used in
  * java[call|notify]_ams_install_ask/answer
@@ -174,16 +176,18 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
     javacall_ams_properties suiteProperties;
     javacall_const_utf16_string authPath[];
     */
+    jcInstallState.suiteProperties.numberOfProperties = 0;
+    jcInstallState.authPathLen = 0;
 
     if (jcRes == JAVACALL_OK) {
         if ((int)requestCode == RQ_UPDATE_STATUS) {
             /* reporting the current installation progress */
-            int currStepDone = 50;
+            int totalDone = (int)((int)jcRequestData.installStatus * 100 /
+                                  (int) JAVACALL_INSTALL_STATUS_COMPLETED);
+            int currStepDone = totalDone; /* IMPL_NOTE: should be changed */
 
             javacall_ams_install_report_progress(&jcInstallState,
-                jcRequestData.installStatus, currStepDone,
-                    (int)((int)jcRequestData.installStatus * 100 /
-                          (int) JAVACALL_INSTALL_STATUS_COMPLETED));
+                jcRequestData.installStatus, currStepDone, totalDone);
         } else {
             /* get request type-dependent parameters */
             if (requestCode ==
@@ -321,7 +325,8 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_notifyRequestHandled0) {
     jint  requestCode = KNI_GetParameterAsInt(2);
     jint  resultCode  = KNI_GetParameterAsInt(3);
     jboolean result   = KNI_GetParameterAsBoolean(4);
-    javacall_bool jcResult = (result == KNI_TRUE ? JAVACALL_TRUE : JAVACALL_FALSE);
+    javacall_bool jcResult =
+            (result == KNI_TRUE ? JAVACALL_TRUE : JAVACALL_FALSE);
     javacall_opcode operationCode = JAVACALL_OPCODE_INVALID;
 
     /* IMPL_NOTE: currently unused because the supported operations can't fail */

@@ -146,14 +146,24 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     case WM_JAVA_AMS_INSTALL_ASK: {
-        javacall_ams_install_data resultData;
+        javacall_ams_install_data resultData, *pRequestData;
         javacall_ams_install_request_code requestCode;
         javacall_ams_install_state* pInstallState;
+        InstallRequestData* pRqData;
         int nRes;
         LPTSTR pszText = NULL;
 
         requestCode = (javacall_ams_install_request_code)wParam;
-        pInstallState = (javacall_ams_install_state*)lParam;
+        pRqData = (InstallRequestData*)lParam;
+
+        if (pRqData == NULL) {
+            // should not happen
+            resultData.fAnswer = JAVACALL_FALSE;
+            break;
+        }
+
+        pInstallState = &pRqData->installState;
+        pRequestData  = &pRqData->requestData;
 
         for (int i = 0; i < INSTALL_REQUEST_NUM; i++) {
             if (g_szInstallRequestText[i][0]  == (LONG)requestCode) {
@@ -183,6 +193,8 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     _T("returned %d\n"), (int)res);
         }
 
+        javacall_free(pRqData);
+
         break;
     }
 
@@ -192,7 +204,7 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
        HWND hOperProgress, hTotalProgress, hEditInfo;
        WORD wCurProgress, wTotalProgress;
        javacall_ams_install_status status;
-       TCHAR szBuf[127];
+       TCHAR szBuf[256];
        LPTSTR pszInfo;
 
        hOperProgress = GetDlgItem(hwndDlg, IDC_PROGRESS_OPERATION);
@@ -287,23 +299,28 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     case WM_JAVA_AMS_INSTALL_FINISHED: {
-       TCHAR szBuf[127];
+       TCHAR szBuf[256];
        javacall_ams_install_data* pResult = (javacall_ams_install_data*)lParam;
 
-       if (pResult && 
-               (pResult->installStatus == JAVACALL_INSTALL_STATUS_COMPLETED) &&
+       if (pResult != NULL) {
+           if ((pResult->installStatus == JAVACALL_INSTALL_STATUS_COMPLETED) &&
                (pResult->installResultCode == JAVACALL_INSTALL_EXC_ALL_OK)) {
-           MessageBox(hwndDlg, _T("Installation completed!"), g_szTitle,
-                      MB_ICONINFORMATION | MB_OK);
-       } else {
-           wsprintf(szBuf,
-                    _T("Installation failed!\n\n Error status %d, code %d"),
-                    pResult->installStatus, pResult->installResultCode);
-           MessageBox(hwndDlg, szBuf, g_szTitle, MB_ICONERROR | MB_OK);
-       }
 
-       // Free memeory alloced by us in javacall_ams_operation_completed
-       javacall_free(pResult);
+               MessageBox(hwndDlg, _T("Installation completed!"), g_szTitle,
+                          MB_ICONINFORMATION | MB_OK);
+           } else {
+               wsprintf(szBuf,
+                        _T("Installation failed!\n\n Error status %d, code %d"),
+                        pResult->installStatus, pResult->installResultCode);
+               MessageBox(hwndDlg, szBuf, g_szTitle, MB_ICONERROR | MB_OK);
+           }
+
+           // Free memory alloced by us in javacall_ams_operation_completed
+           javacall_free(pResult);
+       } else {
+           MessageBox(hwndDlg, _T("Installation failed! Reason unknown."),
+                      g_szTitle, MB_ICONERROR | MB_OK);
+       }
 
        CloseInstallerDlg(hwndDlg);
 

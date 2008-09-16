@@ -27,19 +27,18 @@
 #define __APP_MANAGER_PROGRESS_H
 
 #include <windows.h>
+#include <javacall_ams_installer.h>
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
+typedef struct _InstallRequestData {
+    javacall_ams_install_state installState;
+    javacall_ams_install_data  requestData;
+} InstallRequestData;
+
 
 BOOL CreateProgressDialog(HINSTANCE hInstance, HWND hWndParent);
 
 void ShowProgressDialog(BOOL fShow);
 
 BOOL PostProgressMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-//#ifdef __cplusplus
-//}
-//#endif
 
 #endif  /* __APP_MANAGER_PROGRESS_H */

@@ -49,20 +49,24 @@ extern "C" {
 void javacall_ams_operation_completed(javacall_opcode operation,
                                       const javacall_app_id appId,
                                       void* pResult) {
-    wprintf(
-        _T(">>> javacall_ams_operation_completed(), operation = %d, appId = %d\n"),
-            (int)operation, (int)appId);
+    wprintf(_T(">>> javacall_ams_operation_completed(), ")
+            _T("operation = %d, appId = %d\n"), (int)operation, (int)appId);
 
     if (operation == JAVACALL_OPCODE_INSTALL_SUITE) {
         const size_t dataSize = sizeof(javacall_ams_install_data);
 
-        javacall_ams_install_data* pData = 
-            (javacall_ams_install_data*)javacall_malloc(dataSize);
-        memcpy(pData, pResult, dataSize);
+        javacall_ams_install_data* pData;
 
-        PostProgressMessage(WM_JAVA_AMS_INSTALL_FINISHED,
-                            (WPARAM)appId, (LPARAM)pData);
-    }    
+        if (pResult != NULL &&
+                ((javacall_ams_install_data*)pResult)->installStatus ==
+                  JAVACALL_INSTALL_STATUS_COMPLETED) {
+            pData = (javacall_ams_install_data*)javacall_malloc(dataSize);
+            memcpy(pData, pResult, dataSize);
+
+            PostProgressMessage(WM_JAVA_AMS_INSTALL_FINISHED,
+                                (WPARAM)appId, (LPARAM)pData);
+        }
+    }
 }
 
 /**
@@ -212,9 +216,23 @@ javacall_ams_install_ask(javacall_ams_install_request_code requestCode,
     wprintf(_T(">>> javacall_ams_install_ask(), requestCode = %d\n"), requestCode);
 
 
+    InstallRequestData* pRqData =
+        (InstallRequestData*)javacall_malloc(sizeof(InstallRequestData));
+    if (pRqData == NULL || pInstallState == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    memcpy(&pRqData->installState, pInstallState,
+           sizeof(javacall_ams_install_state));
+
+    if (pRequestData != NULL) {
+        memcpy(&pRqData->requestData, pRequestData,
+               sizeof(javacall_ams_install_data));
+    }
+
     BOOL fRes = PostProgressMessage(WM_JAVA_AMS_INSTALL_ASK,
                                     (WPARAM)requestCode,
-                                    (LPARAM)pInstallState);
+                                    (LPARAM)pRqData);
 
     return (fRes == TRUE) ? JAVACALL_OK : JAVACALL_FAIL;
 }

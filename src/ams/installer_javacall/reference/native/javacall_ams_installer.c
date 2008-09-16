@@ -258,8 +258,6 @@ javanotify_ams_install_answer(javacall_ams_install_request_code requestCode,
     JVMSPI_ThreadID thread;
     javacall_result res;
 
-    g_fAnswerReady = JAVACALL_TRUE;
-
     if (pResultData != NULL) {
         g_fAnswer = pResultData->fAnswer;
         res = JAVACALL_OK;
@@ -271,6 +269,8 @@ javanotify_ams_install_answer(javacall_ams_install_request_code requestCode,
     if (pInstallState == NULL) {
         res = JAVACALL_FAIL;
     }
+
+    g_fAnswerReady = JAVACALL_TRUE;
 
     if (g_installerIsolateId != -1) {
         thread = SNI_GetSpecialThread(g_installerIsolateId);

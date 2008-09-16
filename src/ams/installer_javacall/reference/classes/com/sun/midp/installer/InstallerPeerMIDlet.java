@@ -182,14 +182,20 @@ public class InstallerPeerMIDlet extends MIDlet
             return;
         }
 
-        int storageId = Constants.INTERNAL_STORAGE_ID;
+        int storageId = Constants.UNUSED_STORAGE_ID;
         String strStorageId = getAppProperty("arg-2");
+
         if (strStorageId != null) {
             try {
                 storageId = Integer.parseInt(strStorageId);
             } catch (NumberFormatException nfe) {
                 // Intentionally ignored
             }
+        }
+
+        if (storageId == Constants.UNUSED_STORAGE_ID) {
+            // apply defaults
+            storageId = Constants.INTERNAL_STORAGE_ID;
         }
 
         // If a scheme is omitted, handle the url
