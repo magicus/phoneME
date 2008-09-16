@@ -7199,6 +7199,7 @@ jvmti_GetSystemProperty(jvmtiEnv* jvmtienv,
     nameString = (*env)->NewStringUTF(env, property);
     if ((*env)->ExceptionOccurred(env)) {
 	(*env)->ExceptionClear(env);
+        err = JVMTI_ERROR_NOT_AVAILABLE;
 	/* NULL will be returned below */
     } else {
 	if (CVMjvmtiGetPhase() == JVMTI_PHASE_ONLOAD) {
@@ -7230,6 +7231,7 @@ jvmti_GetSystemProperty(jvmtiEnv* jvmtienv,
 					       systemGetProperty, nameString);
 	    if ((*env)->ExceptionOccurred(env)) {
 		(*env)->ExceptionClear(env);
+		err = JVMTI_ERROR_NOT_AVAILABLE;
 	    } else if (valueString != NULL) {
 		utf = (*env)->GetStringUTFChars(env, valueString, NULL);
 		ALLOC(jvmtienv, strlen(utf)+1, valuePtr);
