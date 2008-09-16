@@ -31,6 +31,14 @@ import java.io.IOException;
  * Information about a MIDlet that is to be installed.
  */
 public class InstallInfo {
+    /** True if this is not a midlet suite but a suite's component. */
+    public boolean isSuiteComponent;
+
+    /**
+     * If isSuiteComponent is true, holds ID of the component. In this case
+     * field "id" holds ID of the suite that owns this component.
+     */
+    public int componentId;
 
     /** What ID the installed suite is stored by. */
     public int id;
@@ -40,7 +48,7 @@ public class InstallInfo {
 
     /** URL of the JAR. */
     public String jarUrl;
-
+        
     /** Name of the downloaded MIDlet suite jar file. */
     public String jarFilename;
 

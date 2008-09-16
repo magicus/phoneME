@@ -58,6 +58,11 @@ GROUP_PROTOCOL_JAVADOC_PACKAGES += \
 SUBSYSTEM_SECURE_CONNECTION_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/ssl/reference/classes/com/sun/midp/io/j2me/ssl/Protocol.java
 
+ifeq ($(USE_NETMON), true)
+SUBSYSTEM_SECURE_CONNECTION_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/ssl/reference/classes/com/sun/kvem/io/j2me/ssl/Protocol.java
+endif
+
 endif
 
 # Even if SSL is not supported, we have to include

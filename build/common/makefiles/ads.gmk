@@ -32,6 +32,7 @@ _ADS_GMK_        =
 
 # Suffix
 LIB_SUFFIX      = .lib
+LIB_PREFIX      = 
 SHARED_LIB_SUFFIX = .lib
 OBJ_SUFFIX      = .o
 

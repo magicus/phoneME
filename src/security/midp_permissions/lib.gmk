@@ -85,7 +85,9 @@ ifeq ($(TARGET_OS), javacall)
 POLICY_FILES = $(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.JTWI \
 	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.JTWI \
 	$(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.MSA \
-	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.MSA 
+	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.MSA \
+    $(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.FULL \
+    $(PERMISSIONS_CONFIG_DIR)/_policy.txt.FULL
 
 javacall_policy_load.c : policy_files
 

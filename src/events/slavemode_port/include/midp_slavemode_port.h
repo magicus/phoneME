@@ -61,6 +61,13 @@ void midp_slavemode_schedule_vm_timeslice(void);
  */
 jlong midp_slavemode_time_slice(void);
 
+
+/**
+ * Runs the platform-specific event loop.
+ */
+void midp_slavemode_event_loop(void);
+
+
 #ifdef __cplusplus
 }
 #endif

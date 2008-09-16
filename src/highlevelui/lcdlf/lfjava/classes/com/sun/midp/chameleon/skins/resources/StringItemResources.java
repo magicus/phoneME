@@ -48,35 +48,35 @@ public class StringItemResources {
             return;
         }
         
-        StringItemSkin.PAD_BUTTON_H = SkinResources.getInt(
+        StringItemSkin.PAD_BUTTON_H = SkinLoader.getInt(
                 SkinPropertiesIDs.STRINGITEM_PAD_BUTTON_H);
-        StringItemSkin.PAD_BUTTON_V = SkinResources.getInt(
+        StringItemSkin.PAD_BUTTON_V = SkinLoader.getInt(
                 SkinPropertiesIDs.STRINGITEM_PAD_BUTTON_V);
-        StringItemSkin.BUTTON_BORDER_W = SkinResources.getInt(
+        StringItemSkin.BUTTON_BORDER_W = SkinLoader.getInt(
                 SkinPropertiesIDs.STRINGITEM_BUTTON_BORDER_W);
-        StringItemSkin.COLOR_FG_LINK = SkinResources.getInt(
+        StringItemSkin.COLOR_FG_LINK = SkinLoader.getInt(
                 SkinPropertiesIDs.STRINGITEM_COLOR_FG_LNK);
-        StringItemSkin.COLOR_FG_LINK_FOCUS = SkinResources.getInt(
+        StringItemSkin.COLOR_FG_LINK_FOCUS = SkinLoader.getInt(
                 SkinPropertiesIDs.STRINGITEM_COLOR_FG_LNK_FOC);
-        StringItemSkin.COLOR_BG_LINK_FOCUS = SkinResources.getInt(
+        StringItemSkin.COLOR_BG_LINK_FOCUS = SkinLoader.getInt(
                 SkinPropertiesIDs.STRINGITEM_COLOR_BG_LNK_FOC);
-        StringItemSkin.COLOR_FG_BUTTON = SkinResources.getInt(
+        StringItemSkin.COLOR_FG_BUTTON = SkinLoader.getInt(
                 SkinPropertiesIDs.STRINGITEM_COLOR_FG_BTN);
-        StringItemSkin.COLOR_BG_BUTTON = SkinResources.getInt(
+        StringItemSkin.COLOR_BG_BUTTON = SkinLoader.getInt(
                 SkinPropertiesIDs.STRINGITEM_COLOR_BG_BTN);
-        StringItemSkin.COLOR_BORDER_LT = SkinResources.getInt(
+        StringItemSkin.COLOR_BORDER_LT = SkinLoader.getInt(
                 SkinPropertiesIDs.STRINGITEM_COLOR_BORDER_LT);
-        StringItemSkin.COLOR_BORDER_DK = SkinResources.getInt(
+        StringItemSkin.COLOR_BORDER_DK = SkinLoader.getInt(
                 SkinPropertiesIDs.STRINGITEM_COLOR_BORDER_DK);
-        StringItemSkin.FONT = SkinResources.getFont(
+        StringItemSkin.FONT = SkinLoader.getFont(
                 SkinPropertiesIDs.STRINGITEM_FONT);
-        StringItemSkin.FONT_LINK = SkinResources.getFont(
+        StringItemSkin.FONT_LINK = SkinLoader.getFont(
                 SkinPropertiesIDs.STRINGITEM_FONT_LNK);
-        StringItemSkin.FONT_BUTTON = SkinResources.getFont(
+        StringItemSkin.FONT_BUTTON = SkinLoader.getFont(
                 SkinPropertiesIDs.STRINGITEM_FONT_BTN);
-        StringItemSkin.IMAGE_LINK = SkinResources.getImage(
+        StringItemSkin.IMAGE_LINK = SkinLoader.getImage(
                 SkinPropertiesIDs.STRINGITEM_IMAGE_LNK);
-        StringItemSkin.IMAGE_BUTTON = SkinResources.getCompositeImage(
+        StringItemSkin.IMAGE_BUTTON = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.STRINGITEM_IMAGE_BTN, 9);
 
         init = true;

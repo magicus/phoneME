@@ -37,14 +37,26 @@ import javax.microedition.lcdui.Display;
  */
 public interface DisplayStaticAccess {
     /**
-     * Gets the <code>Display</code> object by owner name.
+     * Gets the <code>Display</code> object by owner, create one if needed.
      *
-     * @param owner name of the owner of the display, the owner can be
+     * @param owner the owner of the display, the owner can be any class
      *
      * @return the display object that application can use for its user
      * interface
      *
      * @throws NullPointerException if <code>owner</code> is <code>null</code>
      */
-    Display getDisplay(String owner);
+    Display getDisplay(Object owner);
+
+    /**
+     * Free a <code>Display</code> no longer in use.
+     *
+     * @param owner the owner of the display, the owner can be any class
+     *
+     * @return true if display has been succcessfully removed, 
+     *         false, if display object has not been found.
+     *
+     * @throws NullPointerException if <code>owner</code> is <code>null</code>
+     */
+    public boolean freeDisplay(Object owner);
 } 

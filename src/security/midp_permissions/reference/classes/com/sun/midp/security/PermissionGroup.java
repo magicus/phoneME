@@ -90,7 +90,8 @@ public final class PermissionGroup {
         runtimeQuestion = theRuntimeQuestion;
         if (runtimeQuestion == null)
             runtimeQuestion = "n/a";
-        if (theRuntimeOneshotQuestion == null)
+        runtimeOneshotQuestion = theRuntimeOneshotQuestion;
+        if (runtimeOneshotQuestion == null)
             runtimeOneshotQuestion = runtimeQuestion;
     }
     /**

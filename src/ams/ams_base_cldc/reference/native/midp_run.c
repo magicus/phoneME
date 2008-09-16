@@ -3,22 +3,22 @@
  *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -378,7 +378,7 @@ midpInitializeUI(void) {
 
         reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
         if (0 == reserved) {
-            REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");            
+            REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");
             reserved = AMS_MEMORY_RESERVED_MVM;
         }
 
@@ -400,7 +400,7 @@ midpInitializeUI(void) {
     }
 #endif
 
-#if ENABLE_ON_DEVICE_DEBUG || ENABLE_WTK_DEBUG 
+#if ENABLE_ON_DEVICE_DEBUG || ENABLE_WTK_DEBUG
     {
 #if ENABLE_MULTIPLE_ISOLATES
     #define OPT_NUM 3
@@ -420,13 +420,9 @@ midpInitializeUI(void) {
             (void)JVM_ParseOneArg(1, &argv[i]);
         }
 #undef OPT_NUM
-        
-        /*
-         * Use the default port: 2800.
-         * To redefine it, "-port <n>" option can be used.
-         */
+
      }
-#else
+#endif /* ENABLE_ON_DEVICE_DEBUG || ENABLE_WTK_DEBUG */
 
 #if ENABLE_JAVA_DEBUGGER
     {
@@ -441,7 +437,6 @@ midpInitializeUI(void) {
     }
 #endif
 
-#endif /* ENABLE_ON_DEVICE_DEBUG || ENABLE_WTK_DEBUG */
 
     if (pushopen() != 0) {
         return -1;
@@ -528,7 +523,7 @@ static void setDebugOption(int debugOption) {
         argv[0] = "-debug_isolate";
         (void)JVM_ParseOneArg(1, argv);
 #endif
-        
+
         if (debugOption == MIDP_DEBUG_SUSPEND) {
             argv[0] = "-suspend";
             (void)JVM_ParseOneArg(1, argv);
@@ -798,7 +793,7 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
         } else {
 #if !ENABLE_WTK_DEBUG
             setDebugOption(MIDP_DEBUG_NO_SUSPEND);
-#endif            
+#endif
         }
 #endif
     } while (commandState->suiteId != UNUSED_SUITE_ID);
@@ -1027,21 +1022,26 @@ int midpRunMainClass(JvmPathChar *classPath,
      */
     vmStatus = midpRunVm(classPath, mainClass, argc, argv);
 
-    pushcheckinall();
-    midp_resetEvents();
-    midpMIDletProxyListReset();
 
-    if (vmStatus != MAIN_EXIT) {
-        /*
-         * The VM aborted, most likely a bad class file in an installed
-         * MIDlet.
-         */
-        vmStatus = MIDP_ERROR_STATUS;
+    if (0 == vmStatus) {
+        vmStatus = MIDP_RUNNING_STATUS;
     } else {
-        vmStatus = MIDP_SHUTDOWN_STATUS;
+        pushcheckinall();
+        midp_resetEvents();
+        midpMIDletProxyListReset();
+        midpFinalize();
+        if (vmStatus != MAIN_EXIT) {
+            /*
+             * The VM aborted, most likely a bad class file in an installed
+             * MIDlet.
+             */
+            vmStatus = MIDP_ERROR_STATUS;
+        } else {
+            vmStatus = MIDP_SHUTDOWN_STATUS;
+        }
     }
 
-    midpFinalize();
 
     return vmStatus;
 }
+

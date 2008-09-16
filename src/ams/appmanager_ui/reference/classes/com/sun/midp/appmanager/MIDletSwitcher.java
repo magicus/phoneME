@@ -24,9 +24,8 @@
 
 package com.sun.midp.appmanager;
 
-import java.util.*;
 import javax.microedition.lcdui.*;
-import com.sun.midp.midletsuite.*;
+
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.configurator.Constants;
@@ -171,7 +170,7 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
             //bring to foreground appropriate midlet
             int ind = getSelectedIndex();
             if (ind != -1) {
-                manager.moveToForeground(minfo[ind]);
+                manager.moveToForeground(minfo[ind], null);
             }
             display.setCurrent(managerUI.getMainDisplayable());
         }

@@ -5,22 +5,22 @@
 
         Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-        
+
         This program is free software; you can redistribute it and/or
         modify it under the terms of the GNU General Public License version
         2 only, as published by the Free Software Foundation.
-        
+
         This program is distributed in the hope that it will be useful, but
         WITHOUT ANY WARRANTY; without even the implied warranty of
         MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
         General Public License version 2 for more details (a copy is
         included at /legal/license.txt).
-        
+
         You should have received a copy of the GNU General Public License
         version 2 along with this work; if not, write to the Free Software
         Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
         02110-1301 USA
-        
+
         Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
         Clara, CA 95054 or visit www.sun.com if you need additional
         information or have any questions.
@@ -140,6 +140,9 @@
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
             Name="OPTIONS"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="OPEN"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
             Name="MANUFACTURER"
@@ -333,6 +336,12 @@
   <constant Type="int"
             Name="LCDUI_TF_CAPS_ON_LB_PTI"
             Comment="Input Methods: Lable name for 'PTI' caps on"/>
+  <constant Type="int"
+            Name="PUSH_TITLE"
+            Comment="Push Dialog Title"/>
+  <constant Type="int"
+            Name="PUSH_CONTENT"
+            Comment="Push Dialog Content"/>
   <constant Type="int"
             Name="LCDUI_TF_NATIVE_VKBD"
             Comment="Input Methods: Name for 'Native Virtual Keyboard'"/>
@@ -844,7 +853,7 @@
             Name="AMS_GRA_INTLR_INVALIDJADEXCEPTION_UNSUPPORTED_CHAR_ENCODING"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
 
-  <!-- Class verification literals common for both standalone verification  
+  <!-- Class verification literals common for both standalone verification
        and for verification intergrated into suite intsallation process -->
   <constant Type="int"
             Name="AMS_CLASS_VERIFIER_TITLE"
@@ -1141,6 +1150,40 @@
   <constant Type="int"
             Name="SR_SUSPEND_ALERT_MSG"
             Comment="Suspend/resume: com.sun.midp.suspend.SuspendResumeUI"/>
+
+  <constant Type="int"
+            Name="AMS_DISC_APP_INSTALL_FROM_FILE"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_INSTALL_FROM_HTTP"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_START_FILE_INSTALL"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_STORAGE_INSTALL"
+            Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_PREPARE_INSTALL_STORAGE"
+            Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_GAUGE_LABEL_STORAGE"
+            Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
+  <constant Type="int"
+            Name="AMS_FILE_PATH"
+            Comment="AMS: general"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL_STORAGE"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_FILE_NOT_FOUND"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/> 
 </constant_class>
 </constants>
 </configuration>

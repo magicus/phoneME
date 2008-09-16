@@ -106,14 +106,15 @@ class AppManagerUIImpl implements AppManagerUI {
      * Called when state of a running midlet has changed.
      *
      * @param si corresponding midlet suite info
+     * @param midlet
      */
-    public void notifyMidletStateChanged(RunningMIDletSuiteInfo si) {
+    public void notifyMidletStateChanged(RunningMIDletSuiteInfo si, MIDletProxy midlet) {
 
     }
 
     /**
      * Called when a running internal midlet exited.
-     * @param midlet
+     * @param midlet proxy of the midlet that has exited
      */
     public void notifyInternalMidletExited(MIDletProxy midlet) {
 
@@ -122,8 +123,10 @@ class AppManagerUIImpl implements AppManagerUI {
     /**
      * Called when a running midlet exited.
      * @param si corresponding midlet suite info
+     * @param midletClassName Class name of the exited midlet
      */
-    public void notifyMidletExited(RunningMIDletSuiteInfo si) {
+    public void notifyMidletExited(RunningMIDletSuiteInfo si, 
+            String midletClassName) {
 
     }
 
@@ -144,6 +147,15 @@ class AppManagerUIImpl implements AppManagerUI {
      */
     public void notifySuiteInstalledExt(RunningMIDletSuiteInfo si) {
 
+    }
+
+    /**
+     * Called when a suite exited (the only MIDlet in suite exited or the
+     * MIDlet selector exited).
+     *
+     * @param suiteInfo Suite which just exited
+     */
+    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
     }
 
     /**
@@ -215,13 +227,23 @@ class AppManagerUIImpl implements AppManagerUI {
     }
 
     /**
-     * Called when midlet selector needed.
+     * Called when midlet switcher is needed.
      *
      * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
      *        if false then possibility to launch midlet is needed.
      */
     public void showMidletSwitcher(boolean onlyFromLaunchedList) {
+
+    }
+
+    /**
+     * Called when midlet selector is needed. Should show a list of
+     * midlets present in the given suite and allow to select one.
+     *
+     * @param msiToRun a suite from which a midlet must be selected
+     */
+    public void showMidletSelector(RunningMIDletSuiteInfo msiToRun) {
 
     }
 
@@ -240,8 +262,4 @@ class AppManagerUIImpl implements AppManagerUI {
         return null;
     }
     
-
-
 }
-
-

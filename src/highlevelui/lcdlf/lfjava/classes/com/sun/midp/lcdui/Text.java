@@ -331,18 +331,18 @@ public class Text {
 		int curLine = (cursor.y / fontHeight) - 1;
 
         int curX;
-        int bestIndex;// = info.lineStart[curLine];
+        int bestIndex = info.lineStart[curLine];
             if (ScreenSkin.RL_DIRECTION) {
-                curX = curLine == 0 ? w - offset : w;
-                bestIndex = info.lineEnd[curLine] - 1 ;
+                curX = curLine == 0 ? w - offset - cursor.width : w;
             } else {
                 curX = curLine == 0 ? offset : 0;
-                bestIndex = info.lineStart[curLine];
             }
+
         int curY = cursor.y;
 		int bestX = curX;
 
-		// take one character at a time and check its position
+
+        // take one character at a time and check its position
 		// against the supplied coordinates in cursor
 		//
         int lineStart = info.lineStart[curLine];
