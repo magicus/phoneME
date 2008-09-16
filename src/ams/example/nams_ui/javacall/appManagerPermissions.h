@@ -30,18 +30,10 @@
 
 #include <javacall_ams_suitestore.h>
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
 extern const int PERMISSION_VAL_NUM;
 
 int PermissionValueToIndex(javacall_ams_permission_val jpPermission);
 
 LRESULT CALLBACK PermissionWndProc(HWND, UINT, WPARAM, LPARAM);
-
-//#ifdef __cplusplus
-//}
-//#endif
 
 #endif  /* __APP_MANAGER_PERMISSIONS_H */

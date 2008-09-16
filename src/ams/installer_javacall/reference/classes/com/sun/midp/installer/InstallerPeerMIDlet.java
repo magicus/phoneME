@@ -30,6 +30,13 @@ import javax.microedition.midlet.MIDlet;
 
 import com.sun.midp.midlet.MIDletSuite;
 
+import com.sun.midp.midletsuite.MIDletSuiteImpl;
+import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.midletsuite.MIDletSuiteLockedException;
+import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
+import com.sun.midp.midletsuite.MIDletInfo;
+import com.sun.midp.midletsuite.InstallInfo;
+
 import com.sun.midp.events.*;
 
 import com.sun.midp.security.SecurityInitializer;
@@ -155,6 +162,7 @@ public class InstallerPeerMIDlet extends MIDlet
             "https", "HttpInstaller",
             "file",  "FileInstaller"
         };
+        String suiteName = null;
 
         // parse the arguments
         String arg0 = getAppProperty("arg-0");
@@ -182,6 +190,48 @@ public class InstallerPeerMIDlet extends MIDlet
                             "URL to install from is not given.");
             notifyDestroyed();
             return;
+        }
+
+        // check if this is not URL but an integer, so this is a suite update
+        // and this parameter is a suite ID
+        int suiteId = MIDletSuite.UNUSED_SUITE_ID;
+        String errStr = null;
+
+        try {
+            suiteId = Integer.parseInt(url);
+
+            try {
+                // get URL and suite name from the suite properties
+                MIDletSuiteImpl midletSuite =
+                    MIDletSuiteStorage.getMIDletSuiteStorage().getMIDletSuite(
+                        suiteId, false);
+                InstallInfo installInfo = midletSuite.getInstallInfo();
+
+                if (midletSuite.getNumberOfMIDlets() == 1) {
+                    MIDletInfo midletInfo =
+                        new MIDletInfo(midletSuite.getProperty("MIDlet-1"));
+                    suiteName = midletInfo.name;
+                } else {
+                    suiteName =
+                        midletSuite.getProperty(MIDletSuite.SUITE_NAME_PROP);
+                }
+
+                url = installInfo.getDownloadUrl();
+                midletSuite.close();
+            } catch (MIDletSuiteCorruptedException msce) {
+                errStr = "MIDlet suite is corrupted.";
+            } catch (MIDletSuiteLockedException msle) {
+                errStr = "MIDlet suite is locked.";
+            }
+
+            if (errStr != null) {
+                reportFinished0(appId, suiteId, -1, errStr);
+                notifyDestroyed();
+                return;
+            }
+
+        } catch (NumberFormatException nfe) {
+            // ignore
         }
 
         int storageId = Constants.UNUSED_STORAGE_ID;
@@ -238,7 +288,7 @@ public class InstallerPeerMIDlet extends MIDlet
 
         try {
             if (jarOnly) {
-                lastInstalledSuiteId = installer.installJar(url, null,
+                lastInstalledSuiteId = installer.installJar(url, suiteName,
                     storageId, false, false, this);
             } else {
                 lastInstalledSuiteId =
@@ -248,6 +298,7 @@ public class InstallerPeerMIDlet extends MIDlet
             errCode = ije.getReason();
             errMsg = ije.getExtraData();
         } catch (Throwable t) {
+t.printStackTrace();
             errCode = -1;
             errMsg = "Error installing the suite: " + t.getMessage();
         }

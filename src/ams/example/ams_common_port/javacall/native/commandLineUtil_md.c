@@ -35,6 +35,7 @@
 #include <javacall_defs.h>
 #include <javacall_dir.h>
 #include <javacall_platform_defs.h>
+#include <javautil_unicode.h>
 
 #define MAX_PATH_LEN JAVACALL_MAX_ROOT_PATH_LENGTH
 

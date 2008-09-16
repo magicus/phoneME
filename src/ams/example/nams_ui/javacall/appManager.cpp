@@ -1211,7 +1211,7 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             WCHAR szUrl[256];
             int nUrlLen = 0;
 
-            if (hCombobox) {
+            if (hCombobox != NULL) {
                 wItem = (WPARAM)SendMessage(hCombobox, CB_GETCURSEL, 0, 0);
                 jFolderId = (javacall_folder_id)SendMessage(hCombobox,
                                                             CB_GETITEMDATA,
@@ -1255,11 +1255,12 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
         }
 
+        case IDM_SUITE_UPDATE:
         case IDM_SUITE_INSTALL:
         case IDM_FOLDER_INSTALL_INTO: {
             TVI_INFO* pInfo;
 
-            if (hCombobox) {
+            if (hCombobox != NULL) {
                 int nCurSel = 0;
 
                 if (wCmd == IDM_FOLDER_INSTALL_INTO) {
@@ -1296,6 +1297,28 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 g_jInstallerId = pInfo->appId = g_jAppId++;
             }
             AddWindowMenuItem(L"Installer", pInfo);
+
+            if (wCmd == IDM_SUITE_UPDATE) {
+                javacall_result res = javanotify_ams_update_suite(g_jInstallerId,
+                    (javacall_suite_id)lParam);
+
+                if (res == JAVACALL_OK) {
+                    // IMPL_NOTE: the following code must be refactored
+
+                    // IMPL_NOTE: no need to update application ID since it's
+                    // done when install dialog is shown.
+
+                    // Hide the install path dialog then
+                    // show install progress dialog
+                    ShowWindow(hwndDlg, SW_HIDE);                    
+                    ShowProgressDialog(TRUE);
+                } else {
+                    TCHAR szBuf[127];
+                    wsprintf(szBuf, _T("Can't start the update process!")
+                             _T("\n\nError code %d"), (int)res);
+                    MessageBox(hwndDlg, szBuf, g_szTitle, NULL);
+                }
+            }
 
             break;
         }
@@ -1773,6 +1796,20 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
             }
 
+            case IDM_SUITE_UPDATE: {
+                if (g_hMidletTreeView == NULL) {
+                    break;
+                }
+        
+                HTREEITEM hItem = TreeView_GetSelection(g_hMidletTreeView);
+                TVI_INFO* pInfo = GetTviInfo(g_hMidletTreeView, hItem);
+                if (pInfo == NULL || pInfo->type != TVI_TYPE_SUITE) {
+                    break;
+                }
+
+                lParam = (LPARAM)pInfo->suiteId;
+                // fall through
+            }
             case IDM_SUITE_INSTALL: {
                 // Delegate message processing to installation dialog
                 if (g_hInstallDlg) {
@@ -2356,8 +2393,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         POINT pt;
 
         hItem = HitTest(hWnd, lParam);
-        if (hItem)
-        {
+        if (hItem) {
             // Mark the item as selected
             TreeView_SelectItem(hWnd, hItem);
 
@@ -2370,8 +2406,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
             if (pInfo) {
                 HMENU hSubMenu;
-                switch (pInfo->type)
-                {
+                switch (pInfo->type) {
                     case TVI_TYPE_SUITE:
                         hSubMenu = GetSubMenu(g_hSuitePopupMenu, 0);
                         break;
@@ -2421,12 +2456,11 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         // Test for the identifier of a command item.
         WORD wCmd = LOWORD(wParam);
 
-        switch (wCmd)
-        {
+        switch (wCmd) {
             case IDM_INFO:
             case IDM_FOLDER_INFO:
             case IDM_SUITE_INFO:
-            case IDM_MIDLET_INFO:
+            case IDM_MIDLET_INFO: {
                 if (g_hInfoDlg) {
                     HTREEITEM hItem = TreeView_GetSelection(hWnd);
                     TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
@@ -2459,6 +2493,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     }
                 }
                 break;
+            }
 
             case IDM_SUITE_SETTINGS: {
                 // Delegate message processing to permissions dialog
@@ -2513,6 +2548,20 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     }
 
                     g_htiCopiedSuite = NULL;
+                }
+                break;
+            }
+
+            case IDM_SUITE_UPDATE: {
+                // Delegate message processing to installation dialog
+                if (g_hInstallDlg) {
+                     HTREEITEM hItem = TreeView_GetSelection(hWnd);
+                     TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
+
+                     if (pInfo && (pInfo->type == TVI_TYPE_SUITE)) {
+                         PostMessage(g_hInstallDlg, WM_COMMAND, (WPARAM)wCmd,
+                                     (LPARAM)pInfo->suiteId);
+                     }
                 }
                 break;
             }

@@ -28,18 +28,10 @@
 
 #include <windows.h>
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
 #define DLG_BUTTON_MARGIN 5
 
 SIZE GetButtonSize(HWND hBtn);
 
 void PrintWindowSize(HWND hWnd, LPTSTR pszName);
-
-//#ifdef __cplusplus
-//}
-//#endif
 
 #endif  /* __APP_MANAGER_UTILS_H */

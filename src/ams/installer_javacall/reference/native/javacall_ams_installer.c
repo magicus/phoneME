@@ -47,6 +47,99 @@
 extern int g_installerIsolateId;
 extern jboolean g_fAnswer, g_fAnswerReady;
 
+
+/**
+ * Implementation for javanotify_ams_install_suite() and
+ * javanotify_ams_update_suite().
+ *
+ * @param appId ID that will be used to uniquely identify this operation
+ * @param suiteId ID of the midlet suite to update or JAVACALL_INVALID_SUITE_ID
+ *                if this is operation of installation rather than an update
+ * @param srcType
+ *             type of data pointed by installUrl: a JAD file, a JAR file
+ *             or any of them; used only if suiteId is JAVACALL_INVALID_SUITE_ID
+ * @param installUrl
+ *             null-terminated http url string of MIDlet's jad or jar file;
+ *             used only if suiteId is JAVACALL_INVALID_SUITE_ID
+ * @param storageId ID of the storage where to install the suite or
+ *                  JAVACALL_INVALID_STORAGE_ID to use the default storage;
+ *                  used only if suiteId is JAVACALL_INVALID_SUITE_ID
+ * @param folderId ID of the folder into which to install the suite or
+ *                  JAVACALL_INVALID_FOLDER_ID to use the default folder;
+ *                  used only if suiteId is JAVACALL_INVALID_SUITE_ID
+ *
+ * @return status code: <tt>JAVACALL_OK</tt> if the requested operation
+ *                                           was successfully started,
+ *                      an error code otherwise
+ */
+static javacall_result
+install_or_update_impl(javacall_app_id appId,
+                       javacall_suite_id suiteId,
+                       javacall_ams_install_source_type srcType,
+                       javacall_const_utf16_string installUrl,
+                       javacall_storage_id storageId,
+                       javacall_folder_id folderId) {
+    const javacall_utf16 installerClass[] = {
+       'c', 'o', 'm', '.', 's', 'u', 'n', '.', 'm', 'i', 'd', 'p', '.',
+       'i', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r', '.',
+       'I', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r', 'P', 'e', 'e', 'r',
+       'M', 'I', 'D', 'l', 'e', 't',
+       0
+    };
+    javacall_const_utf16_string pArgs[3];
+    javacall_utf16 strAppId[16], strStorageId[16],
+                   strFolderId[16], strSuiteId[16];
+    javacall_result res = JAVACALL_FAIL;
+    javacall_int32 argsNum;
+
+    (void)srcType; /* IMPL_NOTE: URL type is detected automatically */
+
+    res = javautil_unicode_from_int32((javacall_int32)appId,
+            strAppId, sizeof(strAppId) / sizeof(javacall_utf16));
+    if (res != JAVACALL_OK) {
+        return res;
+    }
+
+    if (suiteId == JAVACALL_INVALID_SUITE_ID) {
+        /* this is an installation of a new suite */
+        res = javautil_unicode_from_int32((javacall_int32)storageId,
+                strStorageId, sizeof(strStorageId) / sizeof(javacall_utf16));
+        if (res != JAVACALL_OK) {
+            return res;
+        }
+
+        res = javautil_unicode_from_int32((javacall_int32)folderId,
+            strFolderId, sizeof(strFolderId) / sizeof(javacall_utf16));
+        if (res != JAVACALL_OK) {
+            return res;
+        }
+
+        /* IMPL_NOTE: currently folderId is not used. */
+        (void)folderId;
+
+        pArgs[1] = installUrl;
+        pArgs[2] = strStorageId;
+        argsNum = 3;
+    } else {
+        /* this is an update of an existing suite */
+        res = javautil_unicode_from_int32((javacall_int32)suiteId,
+                strSuiteId, sizeof(strSuiteId) / sizeof(javacall_utf16));
+        if (res != JAVACALL_OK) {
+            return res;
+        }
+
+        pArgs[1] = strSuiteId;
+        argsNum = 2;
+    }
+
+    pArgs[0] = strAppId;
+
+    res = javanotify_ams_midlet_start_with_args(-1, appId, installerClass,
+                                                pArgs, argsNum, NULL);
+
+    return res;
+}
+
 /**
  * Application manager invokes this function to start a suite installation.
  *
@@ -98,10 +191,10 @@ extern jboolean g_fAnswer, g_fAnswerReady;
  *                                           successfully started,
  *                      an error code otherwise
  *
- * The return of this function only tells if the install process is started
- * successfully. The actual result of if the installation (status and ID of
- * the newly installed suite) will be reported later by
- * javacall_ams_operation_completed().
+ * The return of this function only tells if the installation process is started
+ * successfully. The actual result of if the installation (status and ID of the
+ * newly installed suite contained in the fields of javacall_ams_install_data
+ * structure) will be reported later by javacall_ams_operation_completed().
  */
 javacall_result
 javanotify_ams_install_suite(javacall_app_id appId,
@@ -109,52 +202,41 @@ javanotify_ams_install_suite(javacall_app_id appId,
                              javacall_const_utf16_string installUrl,
                              javacall_storage_id storageId,
                              javacall_folder_id folderId) {
-    const javacall_utf16 installerClass[] = {
-       'c', 'o', 'm', '.', 's', 'u', 'n', '.', 'm', 'i', 'd', 'p', '.',
-       'i', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r', '.',
-       'I', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r', 'P', 'e', 'e', 'r',
-       'M', 'I', 'D', 'l', 'e', 't',
-       0
-    };
-    javacall_const_utf16_string pArgs[3];
-    javacall_utf16 strAppId[16], strStorageId[16], strFolderId[16];
-    javacall_result res = JAVACALL_FAIL;
-
     if (installUrl == NULL) {
         return JAVACALL_FAIL;
     }
 
-    (void)srcType;
+    return install_or_update_impl(appId, JAVACALL_INVALID_SUITE_ID,
+                                  srcType, installUrl,
+                                  storageId, folderId);
+}
 
-    res = javautil_unicode_from_int32((javacall_int32)appId,
-            strAppId, sizeof(strAppId) / sizeof(javacall_utf16));
-    if (res != JAVACALL_OK) {
-        return res;
+/**
+ * Application manager invokes this function to start an update of
+ * an installed midlet suite.
+ *
+ * @param appId ID that will be used to uniquely identify this operation
+ * @param suiteId ID of the midlet suite to update
+ *
+ * @return status code: <tt>JAVACALL_OK</tt> if the update operation was
+ *                                           successfully started,
+ *                      an error code otherwise
+ *
+ * The return of this function only tells if the update process is started
+ * successfully. The actual result of if the installation (status field
+ * of javacall_ams_install_data structure) will be reported later by
+ * javacall_ams_operation_completed().
+ */
+javacall_result
+javanotify_ams_update_suite(javacall_app_id appId, javacall_suite_id suiteId) {
+    if (suiteId == JAVACALL_INVALID_SUITE_ID) {
+        return JAVACALL_FAIL;
     }
 
-    res = javautil_unicode_from_int32((javacall_int32)storageId,
-            strStorageId, sizeof(strStorageId) / sizeof(javacall_utf16));
-    if (res != JAVACALL_OK) {
-        return res;
-    }
-
-    res = javautil_unicode_from_int32((javacall_int32)folderId,
-            strFolderId, sizeof(strFolderId) / sizeof(javacall_utf16));
-    if (res != JAVACALL_OK) {
-        return res;
-    }
-
-    /* IMPL_NOTE: currently folderId is not used. */
-    (void)folderId;
-
-    pArgs[0] = strAppId;
-    pArgs[1] = installUrl;
-    pArgs[2] = strStorageId;
-
-    res = javanotify_ams_midlet_start_with_args(-1, appId, installerClass,
-                                                pArgs, 3, NULL);
-
-    return res;
+    return install_or_update_impl(appId, suiteId,
+                                  JAVACALL_INSTALL_SRC_ANY, NULL,
+                                  JAVACALL_INVALID_STORAGE_ID,
+                                  JAVACALL_INVALID_FOLDER_ID);
 }
 
 /**

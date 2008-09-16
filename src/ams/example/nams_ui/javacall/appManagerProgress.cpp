@@ -35,13 +35,21 @@
 static HWND g_hProgressDlg = NULL;
 
 
-static LONG g_szInstallRequestText[][2] = 
-{ 
-{(LONG)JAVACALL_INSTALL_REQUEST_WARNING, (LONG)_T("Warning!")},
-{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_JAR_DOWNLOAD, (LONG)_T("Download the JAR file?")},
-{(LONG)JAVACALL_INSTALL_REQUEST_KEEP_RMS, (LONG)_T("Keep the RMS?")},
-{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_AUTH_PATH, (LONG)_T("Trust the authorization path?")},
-{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION, (LONG)_T("Allow redirection?")}
+static LONG g_szInstallRequestText[][2] = {
+    { (LONG)JAVACALL_INSTALL_REQUEST_WARNING,
+      (LONG)_T("Warning!") },
+
+    { (LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_JAR_DOWNLOAD,
+      (LONG)_T("Download the JAR file?") },
+
+    { (LONG)JAVACALL_INSTALL_REQUEST_KEEP_RMS,
+      (LONG)_T("Keep the RMS?") },
+
+    { (LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_AUTH_PATH,
+      (LONG)_T("Trust the authorization path?") },
+
+    { (LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION,
+      (LONG)_T("Allow redirection?") }
 };
 
 #define INSTALL_REQUEST_NUM \
@@ -49,7 +57,7 @@ static LONG g_szInstallRequestText[][2] =
 
 
 INT_PTR CALLBACK ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
-                                LPARAM lParam);
+                                 LPARAM lParam);
 
 void ShowProgressDialog(BOOL fShow) {
     if (g_hProgressDlg) {
@@ -112,8 +120,8 @@ BOOL CreateProgressDialog(HINSTANCE hInstance, HWND hWndParent) {
         PrintWindowSize(hBtnNo, _T("Cancel button"));
     }
 
-    // TODO: implement dynamic positioning and resize for the rest controls of
-    // the dialog.
+    // IMPL_NOTE: dynamic positioning and resizing should be implemented
+    //            for the rest controls of the dialog.
 
     g_hProgressDlg = hDlg;
 
@@ -173,6 +181,24 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         }
 
         if (pszText) {
+            TCHAR szBuf[256];
+            if (requestCode == JAVACALL_INSTALL_REQUEST_WARNING &&
+                    pInstallState != NULL) {
+                javacall_ams_install_exception_code reason =
+                    pInstallState->exceptionCode;
+
+                if ((reason == JAVACALL_INSTALL_EXC_OLD_VERSION) ||
+                        (reason == JAVACALL_INSTALL_EXC_ALREADY_INSTALLED) ||
+                            (reason == JAVACALL_INSTALL_EXC_NEW_VERSION)) {
+                    // if this is an update, add some additional information
+                    // to the message
+                    wsprintf(szBuf, 
+                             _T("%s\nMIDlet suite is already installed!\n")
+                             _T("Overwrite it?"), pszText);
+                    pszText = szBuf;
+                }
+            }
+
             nRes = MessageBox(hwndDlg, pszText, g_szTitle,
                               MB_ICONQUESTION | MB_YESNO);
 
@@ -209,7 +235,7 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
        hOperProgress = GetDlgItem(hwndDlg, IDC_PROGRESS_OPERATION);
 
-       if (hOperProgress) {
+       if (hOperProgress != NULL) {
            wCurProgress = LOWORD(wParam);
 
             // Validate progress values
@@ -224,7 +250,7 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
        hTotalProgress = GetDlgItem(hwndDlg, IDC_PROGRESS_TOTAL);
 
-       if (hTotalProgress) {
+       if (hTotalProgress != NULL) {
            wTotalProgress = HIWORD(wParam);
 
            if (wTotalProgress < 0) {
@@ -301,6 +327,17 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_JAVA_AMS_INSTALL_FINISHED: {
        TCHAR szBuf[256];
        javacall_ams_install_data* pResult = (javacall_ams_install_data*)lParam;
+
+       // update progress bars: 100% completed
+       HWND hOperProgress = GetDlgItem(hwndDlg, IDC_PROGRESS_OPERATION);
+       if (hOperProgress != NULL) {
+           SendMessage(hOperProgress, PBM_SETPOS, 100, 0);
+       }
+
+       HWND hTotalProgress = GetDlgItem(hwndDlg, IDC_PROGRESS_TOTAL);
+       if (hTotalProgress != NULL) {
+           SendMessage(hTotalProgress, PBM_SETPOS, 100, 0);
+       }
 
        if (pResult != NULL) {
            if ((pResult->installStatus == JAVACALL_INSTALL_STATUS_COMPLETED) &&
