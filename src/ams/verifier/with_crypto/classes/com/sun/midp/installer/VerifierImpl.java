@@ -34,7 +34,7 @@ import javax.microedition.io.Connector;
 import javax.microedition.pki.CertificateException;
 
 import com.sun.midp.pki.X509Certificate;
-import com.sun.midp.pki.Utils;
+import com.sun.midp.pki.AuthorityInfoAccessEntry;
 
 import com.sun.midp.pki.ocsp.OCSPValidator;
 import com.sun.midp.pki.ocsp.CertStatus;
@@ -166,7 +166,6 @@ public class VerifierImpl implements Verifier {
 
             try {
                 verifyStream(jarStream, jarSig);
-                // state.installInfo.authPath = authPath;
             } finally {
                 jarStream.close();
             }
@@ -355,11 +354,6 @@ public class VerifierImpl implements Verifier {
                 certValidator = new OCSPValidatorImpl();
             }
 
-            // DER encoding for id-ad-ocsp: id-pkix 48 1
-            final byte[] idAdOcsp = {
-                0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01
-            };
-
             /*
              * Go through the authorization path and send OCSP requests
              * begin with the most trusted certificate.
@@ -369,19 +363,21 @@ public class VerifierImpl implements Verifier {
                 X509Certificate cert = (X509Certificate)
                     derCerts.elementAt(derCerts.size() - i - 1);
 
-                if (cert.getAuthAccessLocation() == null) {
+                if (!cert.hasAuthorityInfoAccess()) {
                     /*
                      * Don't use OCSP for the certificates that have not
                      * AuthorityInfoAccess extension. 
                      */
                     continue;
                 } else {
-                    // check the access method: OID must be id-ad-ocsp
-                    byte[] accessMethod = cert.getAuthAccessMethod();
-                    if (accessMethod == null ||
-                        accessMethod.length != idAdOcsp.length ||
-                        !Utils.byteMatch(accessMethod, 0, idAdOcsp,
-                                         0, accessMethod.length)) {
+                    /*
+                     * Searching for an entry in AuthorityInfoAccess having
+                     * access method with OID == id-ad-ocsp.
+                     */
+                    Vector authInfoAccess = cert.getAuthorityInfoAccess(
+                            AuthorityInfoAccessEntry.ACCESS_METHOD_OCSP);
+
+                    if (authInfoAccess == null || authInfoAccess.size() == 0) {
                         // unsupported access method
                         throw new InvalidJadException(
                             InvalidJadException.UNKNOWN_CERT_STATUS,

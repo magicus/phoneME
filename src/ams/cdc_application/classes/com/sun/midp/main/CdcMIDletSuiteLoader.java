@@ -374,9 +374,14 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      *
      * @param suite reference to the loaded suite
      * @param className class name of the MIDlet
+     * @param midlet reference to the MIDlet, null if the MIDlet's constructor
+     *               was not successful
      */
-    public void midletDestroyed(MIDletSuite suite, String className) {
-        displayContainer.removeDisplay(className);
+    public void midletDestroyed(MIDletSuite suite, String className,
+                                MIDlet midlet) {
+        if (midlet != null) {
+            displayContainer.removeDisplay(midlet);
+        }
     }
 
     // ForegroundController

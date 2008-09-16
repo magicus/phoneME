@@ -33,13 +33,11 @@ import java.io.DataOutputStream;
 
 import java.io.IOException;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import com.sun.j2me.security.AccessController;
 
 public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
 
+    private static final String UNTRUSTED = "UNTRUSTED/1.0";
     private static final String HTTP_PERMISSION_NAME =
 	"javax.microedition.io.Connector.http";
     
@@ -136,6 +134,30 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
      */
     protected void inputStreamPermissionCheck() {
         return;
+    }
+    
+    protected void connect() throws IOException {
+        try {
+            AccessController.checkPermission(AccessController.TRUSTED_APP_PERMISSION_NAME);
+        } catch (SecurityException exc) {
+            String newUserAgentValue;
+            String origUserAgentValue = getRequestProperty("User-Agent");
+            if (origUserAgentValue != null) {
+                /*
+                 * HTTP header values can be concatenated, so original value
+                 * of the "User-Agent" header field should not be ignored in 
+                 * this case
+                 */
+                newUserAgentValue = origUserAgentValue;
+                if (-1 == origUserAgentValue.indexOf(UNTRUSTED)) {
+                    newUserAgentValue += " " + UNTRUSTED;
+                }
+            } else {
+                newUserAgentValue = UNTRUSTED;
+            }
+            reqProperties.put("User-Agent", newUserAgentValue);
+        }
+        super.connect();
     }
 
 }

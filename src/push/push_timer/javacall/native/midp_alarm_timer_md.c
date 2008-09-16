@@ -1,7 +1,5 @@
 /*
- *
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -56,7 +54,12 @@ push_alarm_handler(javacall_handle handle) {
     midp_jc_event_union e;
     e.eventType  = MIDP_JC_EVENT_PUSH;
     e.data.pushEvent.alarmHandle = (int)handle;
+#if !ENABLE_CDC
     javacall_event_send((unsigned char*)&e,sizeof(midp_jc_event_union));
+#else
+    javacall_event_send_cvm(MIDP_EVENT_QUEUE_ID, (unsigned char*)&e,
+        sizeof(midp_jc_event_union));
+#endif
 }
 
 /**

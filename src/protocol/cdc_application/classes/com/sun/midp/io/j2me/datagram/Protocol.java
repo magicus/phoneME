@@ -27,6 +27,8 @@
 package com.sun.midp.io.j2me.datagram;
 
 import com.sun.j2me.security.AccessController;
+import javax.microedition.io.Datagram;
+import java.io.IOException;
 
 public class Protocol extends com.sun.cdc.io.j2me.datagram.Protocol {
 
@@ -108,5 +110,21 @@ public class Protocol extends com.sun.cdc.io.j2me.datagram.Protocol {
     protected void inputStreamPermissionCheck() {
         return;
     }
-
+    
+    public void send(Datagram dgram) throws IOException, SecurityException {
+        try {
+            AccessController.checkPermission(AccessController.TRUSTED_APP_PERMISSION_NAME);
+        } catch (SecurityException exc) {
+            /*
+             * JTWI security check, untrusted MIDlets cannot open
+             * WAP gateway ports 9200-9203.
+             */
+            int remotePort = getPort(dgram.getAddress());
+            if (remotePort >= 9200 && remotePort <= 9203) {
+                throw new SecurityException(
+                        "Target port denied to untrusted applications");
+            }
+        }
+        super.send(dgram);
+    }
 }

@@ -58,6 +58,11 @@ GROUP_PROTOCOL_JAVADOC_PACKAGES += \
 SUBSYSTEM_HTTPS_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/https/reference/classes/com/sun/midp/io/j2me/https/Protocol.java
 
+ifeq ($(USE_NETMON), true)
+SUBSYSTEM_HTTPS_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/https/reference/classes/com/sun/kvem/io/j2me/https/Protocol.java
+endif
+
 endif
 
 # Even if HTTPS is not supported, we have to include

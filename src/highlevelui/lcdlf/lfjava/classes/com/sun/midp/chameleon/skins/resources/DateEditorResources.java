@@ -49,64 +49,64 @@ public class DateEditorResources {
             return;
         }
         
-        DateEditorSkin.HEIGHT = SkinResources.getInt(
+        DateEditorSkin.HEIGHT = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEEDITOR_HEIGHT);
-        DateEditorSkin.HEIGHT_POPUPS = SkinResources.getInt(
+        DateEditorSkin.HEIGHT_POPUPS = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEEDITOR_HEIGHT_POPUPS);
-        DateEditorSkin.WIDTH_DATE = SkinResources.getInt(
+        DateEditorSkin.WIDTH_DATE = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEEDITOR_WIDTH_D);
-        DateEditorSkin.WIDTH_TIME = SkinResources.getInt(
+        DateEditorSkin.WIDTH_TIME = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEEDITOR_WIDTH_T);
-        DateEditorSkin.WIDTH_DATETIME = SkinResources.getInt(
+        DateEditorSkin.WIDTH_DATETIME = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEEDITOR_WIDTH_DT);
-        DateEditorSkin.COLOR_BG = SkinResources.getInt(
+        DateEditorSkin.COLOR_BG = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEEDITOR_COLOR_BG);
-        DateEditorSkin.COLOR_POPUPS_BG = SkinResources.getInt(
+        DateEditorSkin.COLOR_POPUPS_BG = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEEDITOR_COLOR_POPUPS_BG);
-        DateEditorSkin.COLOR_BORDER = SkinResources.getInt(
+        DateEditorSkin.COLOR_BORDER = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEEDITOR_COLOR_BRDR);
-        DateEditorSkin.COLOR_TRAVERSE_IND = SkinResources.getInt(
+        DateEditorSkin.COLOR_TRAVERSE_IND = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEEDITOR_COLOR_TRAV_IND);
-        DateEditorSkin.COLOR_CLOCKHAND_LT = SkinResources.getInt(
+        DateEditorSkin.COLOR_CLOCKHAND_LT = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEEDITOR_COLOR_CLK_LT);
-        DateEditorSkin.COLOR_CLOCKHAND_DK = SkinResources.getInt(
+        DateEditorSkin.COLOR_CLOCKHAND_DK = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEEDITOR_COLOR_CLK_DK);
-        DateEditorSkin.FONT_POPUPS = SkinResources.getFont(
+        DateEditorSkin.FONT_POPUPS = SkinLoader.getFont(
                 SkinPropertiesIDs.DATEEDITOR_FONT_POPUPS);
         /*
         Uncomment if background image is used
-        DateEditorSkin.IMAGE_BG = SkinResources.getCompositeImage(
+        DateEditorSkin.IMAGE_BG = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.DATEEDITOR_IMAGE_BG, 9);
         */
-        DateEditorSkin.IMAGE_MONTH_BG = SkinResources.getImage(
+        DateEditorSkin.IMAGE_MONTH_BG = SkinLoader.getImage(
                 SkinPropertiesIDs.DATEEDITOR_IMAGE_MON_BG);
-        DateEditorSkin.IMAGE_YEAR_BG = SkinResources.getImage(
+        DateEditorSkin.IMAGE_YEAR_BG = SkinLoader.getImage(
                 SkinPropertiesIDs.DATEEDITOR_IMAGE_YR_BG);
-        DateEditorSkin.IMAGE_CAL_BG = SkinResources.getImage(
+        DateEditorSkin.IMAGE_CAL_BG = SkinLoader.getImage(
                 SkinPropertiesIDs.DATEEDITOR_IMAGE_CAL_BG);
-        DateEditorSkin.IMAGE_DATES = SkinResources.getImage(
+        DateEditorSkin.IMAGE_DATES = SkinLoader.getImage(
                 SkinPropertiesIDs.DATEEDITOR_IMAGE_DATES);
-        DateEditorSkin.IMAGE_DAYS = SkinResources.getImage(
+        DateEditorSkin.IMAGE_DAYS = SkinLoader.getImage(
                 SkinPropertiesIDs.DATEEDITOR_IMAGE_DAYS);
-        DateEditorSkin.IMAGE_TIME_BG = SkinResources.getImage(
+        DateEditorSkin.IMAGE_TIME_BG = SkinLoader.getImage(
                 SkinPropertiesIDs.DATEEDITOR_IMAGE_TIME_BG);
-        DateEditorSkin.IMAGE_RADIO = SkinResources.getCompositeImage(
+        DateEditorSkin.IMAGE_RADIO = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.DATEEDITOR_IMAGE_RADIO, 2);
-        DateEditorSkin.IMAGE_AMPM = SkinResources.getImage(
+        DateEditorSkin.IMAGE_AMPM = SkinLoader.getImage(
                 SkinPropertiesIDs.DATEEDITOR_IMAGE_AMPM);
-        DateEditorSkin.IMAGE_CLOCK_BG = SkinResources.getImage(
+        DateEditorSkin.IMAGE_CLOCK_BG = SkinLoader.getImage(
                 SkinPropertiesIDs.DATEEDITOR_IMAGE_CLOCK_BG);
         /*
           Locale is set to a country where uses RIGHT-TO-LEFT note
           e.g Hebrew, Arabic
           */
-        DateEditorSkin.IMAGE_MONTH_HE_BG = SkinResources.getImage(
+        DateEditorSkin.IMAGE_MONTH_HE_BG = SkinLoader.getImage(
                  SkinPropertiesIDs.DATEEDITOR_IMAGE_MON_HE_BG);
-         DateEditorSkin.IMAGE_DAY_HE_BG = SkinResources.getImage(
+         DateEditorSkin.IMAGE_DAY_HE_BG = SkinLoader.getImage(
                  SkinPropertiesIDs.DATEEDITOR_IMAGE_DAY_HE_BG);
-         DateEditorSkin.IMAGE_YEAR_HE_BG = SkinResources.getImage(
+         DateEditorSkin.IMAGE_YEAR_HE_BG = SkinLoader.getImage(
                  SkinPropertiesIDs.DATEEDITOR_IMAGE_YR_HE_BG);
-         DateEditorSkin.IMAGE_TIME_HE_BG = SkinResources.getImage(
+         DateEditorSkin.IMAGE_TIME_HE_BG = SkinLoader.getImage(
                  SkinPropertiesIDs.DATEEDITOR_IMAGE_TIME_HE_BG);   
 
         init = true;

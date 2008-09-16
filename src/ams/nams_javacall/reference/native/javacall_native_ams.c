@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -28,8 +28,11 @@
 #include <javacall_native_ams.h>
 #include <midpNativeAppManager.h>
 #include <midpEvents.h>
+#include <midp_logging.h>
 #include <midp_runtime_info.h>
 #include <listeners_intern.h>
+#include <commandLineUtil_md.h>
+#include <midpAMS.h>
 
 #define MAX_CLASS_NAME_LEN   256
 #define MAX_PROFILE_NAME_LEN 64
@@ -50,9 +53,9 @@ midp_midlet_ui_state2javacall(jint midpMidletUiState);
 static javacall_change_reason
 midp_midlet_event_reason2javacall(jint midpEventReason);
 
-void midp_listener_ams_operation_completed(const NamsEventData* pEventData);
+void midp_listener_ams_system_status(const NamsEventData* pEventData);
 void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData);
-void midp_listener_ams_midlet_ui_state_changed(const NamsEventData* pEventData);
+void midp_listener_ams_ui_state_changed(const NamsEventData* pEventData);
 
 /**
  * Platform invokes this function to start the MIDP system.
@@ -62,14 +65,29 @@ void midp_listener_ams_midlet_ui_state_changed(const NamsEventData* pEventData);
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result javanotify_ams_system_start() {
-    MIDPError res = midp_system_initialize();
+    MIDPError res;
+
+    /* get midp home directory, set it */
+    char* dir = getApplicationDir(NULL);
+    if (dir == NULL) {
+        return JAVACALL_FAIL;
+    }
+    /* set up appDir before calling initialize */
+    midpSetAppDir(dir);
+
+    /* get midp config directory, set it */
+    dir = getConfigurationDir(NULL);
+    /* set up confDir before calling initialize */
+    midpSetConfigDir(dir);
+
+    res = midp_system_initialize();
     if (res != ALL_OK) {
         return JAVACALL_FAIL;
     }
 
-    midp_add_event_listener(midp_listener_ams_operation_completed,
+    midp_add_event_listener(midp_listener_ams_system_status,
                             SYSTEM_EVENT_LISTENER);
-    midp_add_event_listener(midp_listener_ams_midlet_ui_state_changed,
+    midp_add_event_listener(midp_listener_ams_ui_state_changed,
                             DISPLAY_EVENT_LISTENER);
     midp_add_event_listener(midp_listener_ams_midlet_state_changed,
                             MIDLET_EVENT_LISTENER);
@@ -146,7 +164,7 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
         return JAVACALL_FAIL;
     }
 
-    jcRes = javautil_unicode_utf16_to_utf8(className, classNameLen,
+    jcRes = javautil_unicode_utf16_to_utf8(className, utf16Len,
         (unsigned char*) pClassName, sizeof(pClassName) / sizeof(jchar) - 1,
             (javacall_int32*) &classNameLen);
     if (jcRes != JAVACALL_OK) {
@@ -330,12 +348,15 @@ javanotify_ams_midlet_get_suite_info(const javacall_app_id appID,
     pSuiteData->storageId = (javacall_int32) midpSuiteData.storageId;
     pSuiteData->isEnabled = (javacall_bool) midpSuiteData.isEnabled;
     pSuiteData->isEnabled = (javacall_bool) midpSuiteData.isTrusted;
-    pSuiteData->numberOfMidlets = (javacall_int32) midpSuiteData.numberOfMidlets;
+    pSuiteData->numberOfMidlets =
+                            (javacall_int32) midpSuiteData.numberOfMidlets;
     pSuiteData->installTime = (long) midpSuiteData.installTime;
     pSuiteData->jadSize = (javacall_int32) midpSuiteData.jadSize;
     pSuiteData->jarSize = (javacall_int32) midpSuiteData.jarSize;
     pSuiteData->jarHashLen = (javacall_int32) midpSuiteData.jarHashLen;
-    pSuiteData->isPreinstalled = (javacall_bool) midpSuiteData.isPreinstalled;
+    /* IMPL_NOTE: structure of javacall_ams_suite_data should be revised */
+    pSuiteData->isPreinstalled = (javacall_bool)
+        (midpSuiteData.type == COMPONENT_PREINSTALLED_SUITE);
 
     pSuiteData->varSuiteData.pJarHash = midpSuiteData.varSuiteData.pJarHash;
 
@@ -386,28 +407,49 @@ javanotify_ams_create_resource_cache(const javacall_suite_id suiteID) {
 }
 
 /**
- * MIDP proxy for the javacall_ams_operation_completed() listener.
+ * MIDP proxy for the javacall_ams_system_state_change() and
+ * javacall_ams_operation_completed() listener.
  *
  * @param pEventData full data about the event and about the application
  *                   caused this event
  */
-void midp_listener_ams_operation_completed(const NamsEventData* pEventData) {
+void midp_listener_ams_system_status(const NamsEventData* pEventData) {
     void* pResult = NULL;
 
     if (pEventData == NULL) {
         return;
     }
 
+    if ( MIDP_NAMS_EVENT_STATE_CHANGED == pEventData->event) {
+        javacall_system_state state;
+        switch (pEventData->state) {
+        case MIDP_SYSTEM_STATE_ACTIVE:
+            state = JAVACALL_SYSTEM_STATE_ACTIVE;
+            break;
+        case MIDP_SYSTEM_STATE_SUSPENDED:
+            state = JAVACALL_SYSTEM_STATE_SUSPENDED;
+            break;
+        case MIDP_SYSTEM_STATE_STOPPED:
+            state = JAVACALL_SYSTEM_STATE_STOPPED;
+            break;
+        default:
+            state = JAVACALL_SYSTEM_STATE_ERROR;
+            break;
+        }
+        javacall_ams_system_state_changed(state);
+    } else if (MIDP_NAMS_EVENT_OPERATION_COMPLETED == pEventData->event) {
     if (pEventData->state == ALL_OK) {
         if (pEventData->reason == NATIVE_MIDLET_GETINFO_REQUEST) {
             pResult = pEventData->pRuntimeInfo;
         }
     }
-    
     javacall_ams_operation_completed(
         midp_operation2javacall(pEventData->reason),
         (javacall_app_id)pEventData->appId,
         pResult);
+    } else {
+        REPORT_ERROR(LC_AMS, "Invalid system status");
+    }
 }
 
 

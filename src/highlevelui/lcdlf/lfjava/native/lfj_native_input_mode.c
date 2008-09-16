@@ -405,7 +405,7 @@ KNIDECL(com_sun_midp_chameleon_input_InputModeFactory_getInputModeIds) {
 
 #ifdef WINCE
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_chameleon_input_VirtualInputMode_showNativeKeyboard) {
+KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_showNativeKeyboard) {
     bVirtualModeEnabled = KNI_TRUE;
     midpPaintAllowed = 0;
     SipShowIM(SIPF_ON);
@@ -413,7 +413,7 @@ KNIDECL(com_sun_midp_chameleon_input_VirtualInputMode_showNativeKeyboard) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_chameleon_input_VirtualInputMode_hideNativeKeyboard) {
+KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_hideNativeKeyboard) {
     bVirtualModeEnabled = KNI_FALSE;
     midpPaintAllowed = 0;
     SipShowIM(SIPF_OFF);

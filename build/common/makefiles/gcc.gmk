@@ -35,6 +35,7 @@
 # File suffixes
 #
 # LIB_SUFFIX       suffix of library file
+# LIB_PREFIX        prefix of library file
 # OBJ_SUFFIX       suffix of object file
 #
 # Compiler definitions
@@ -77,6 +78,7 @@ endif
 
 # Suffix
 LIB_SUFFIX      = .a
+LIB_PREFIX      = lib
 SHARED_LIB_SUFFIX = .so
 OBJ_SUFFIX      = o
 

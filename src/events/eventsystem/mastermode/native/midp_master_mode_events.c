@@ -79,7 +79,7 @@ eventUnblockJavaThread(
 
         if (pThreadReentryData != NULL 
                 && pThreadReentryData->descriptor == descriptor 
-                && pThreadReentryData->waitingFor == waitingFor) {
+                && pThreadReentryData->waitingFor == (midpSignalType)waitingFor) {
             pThreadReentryData->status = status;
             midp_thread_unblock(blocked_threads[i].thread_id);
             return 1;
