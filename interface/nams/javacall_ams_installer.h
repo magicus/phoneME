@@ -169,7 +169,7 @@ typedef enum {
     JAVACALL_INSTALL_EXC_JAD_NOT_FOUND,
 
     /** (4) The content provider certificate is missing. */
-    JAVACALL_INSTALL_EXC_MISSING_PROVIDER_CERT,
+    JAVACALL_INSTALL_EXC_MISSING_PROVIDER_CERT = 4,
 
     /** (5) The content provider certificate cannot be decoded. */
     JAVACALL_INSTALL_EXC_CORRUPT_PROVIDER_CERT,
@@ -247,7 +247,7 @@ typedef enum {
      * (25) The MIDlet suite name does not match the one in the JAR
      * manifest.
      */
-    JAVACALL_INSTALL_EXC_SUITE_NAME_MISMATCH,
+    JAVACALL_INSTALL_EXC_SUITE_NAME_MISMATCH = 25,
 
     /** (26) The version does not match the one in the JAR manifest. */
     JAVACALL_INSTALL_EXC_VERSION_MISMATCH,
