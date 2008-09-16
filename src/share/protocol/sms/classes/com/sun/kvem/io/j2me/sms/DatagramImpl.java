@@ -102,6 +102,12 @@ public class DatagramImpl{
         String currValue = getTextEncoding(messageType);
         if (currValue != null) {
             dr.setHeader("Text-Encoding", currValue);
+            if (messageType == com.sun.midp.io.j2me.sms.Protocol.GSM_TEXT) {
+                byte[] gsm7bytes = TextEncoder.encode(buffer);
+                if (gsm7bytes != null) {
+                    buffer = gsm7bytes;
+                }
+            }
         }
 
         length = buffer.length;
@@ -207,6 +213,12 @@ public class DatagramImpl{
         String currValue = getTextEncoding(messageType);
         if (currValue != null) {
             dr.setHeader("Text-Encoding", currValue);
+            if (messageType == com.sun.midp.io.j2me.sms.Protocol.GSM_TEXT) {
+                byte[] gsm7bytes = TextEncoder.encode(buffer);
+                if (gsm7bytes != null) {
+                    buffer = gsm7bytes;
+                }
+            }
         }
 
         length = buffer.length;
