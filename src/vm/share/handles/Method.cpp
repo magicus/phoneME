@@ -1088,7 +1088,8 @@ void Method::check_bytecodes(JVM_SINGLE_ARG_TRAPS) {
               if (Bytes::is_Java_byte_ordering_different()) {
                 raw_npairs = Bytes::swap_u4(raw_npairs);
               }
-              if (raw_npairs < 0) {
+              // Note: need both comparisons to handle overflow
+              if (raw_npairs < 0 || 2 * raw_npairs < 0) {
                 goto error;
               }
               fields = 2 + 2 * raw_npairs;
