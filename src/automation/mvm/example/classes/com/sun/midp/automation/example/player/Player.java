@@ -35,18 +35,51 @@ import java.util.*;
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
 import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
 
+/**
+ * Player that replays events scenario file (see "scenarios" directory 
+ * for example scenarios) for specified MIDlet. The Player has three 
+ * arguments:
+ *  - URL of MIDlet to install and run
+ *  - URL of scenario file
+ *  - [optional] Speed divider
+ *  For example, assuming that MIDlet and scenario files are stored on 
+ *  localhost, you run the player like that:
+ *   runMidlet internal com.sun.midp.automation.example.Player 
+ *   http://localhost/LWUITDemo.jad http://localhost/LWUITDemo.txt
+ */
 public class Player extends MIDlet implements Runnable {
-    private boolean debug = true;
-    private String midletURI = null;
-    private String scriptURI = null;
+    /** If true, print some debug info while running */
+    private boolean debug = false;
+
+    /** URL of MIDlet to install and run */
+    private String midletURL = null;
+
+    /** URL of scenario to replay */
+    private String scenarioURL = null;
+
+    /** Speed adjustment divider */
     private double speedAdjustment;
+
+    /** True, if speed divider has been specified */
     private boolean hasSpeedAdjustment = false;
+
+    /** Our Thread */
     private Thread run = null;
+
+    /** Automation instance */
     private Automation automation = null;
+
+    /** AutoSuiteStorargwe instance for installing/removing MIDlet */
     private AutoSuiteStorage storage = null;
+
+    /** AutoSuiteDescriptor corresponding to MIDlet to run */
     private AutoSuiteDescriptor midletSuite = null;
+
+    /** Running MIDlet */
     private AutoMIDlet midlet = null;
-    private AutoEventSequence script = null;    
+
+    /** Event sequence created from scenario file */
+    private AutoEventSequence scenario = null;    
 
     public Player() {
         automation = Automation.getInstance();
@@ -77,18 +110,18 @@ public class Player extends MIDlet implements Runnable {
     }    
 
     public void run() {
-        midletURI = getAppProperty("arg-0");
-        if (midletURI == null) {
+        midletURL = getAppProperty("arg-0");
+        if (midletURL == null) {
             reportException(
-                    new RuntimeException("MIDlet URI is not specified"),
+                    new RuntimeException("MIDlet URL is not specified"),
                     true);
             return;
         }
 
-        scriptURI = getAppProperty("arg-1");
-        if (scriptURI == null) {
+        scenarioURL = getAppProperty("arg-1");
+        if (scenarioURL == null) {
             reportException(
-                    new RuntimeException("Script URI is not specified"),
+                    new RuntimeException("Scenario URL is not specified"),
                     true);
             return;
         }
@@ -99,22 +132,22 @@ public class Player extends MIDlet implements Runnable {
             speedAdjustment = Double.parseDouble(sSpeed);
         }
 
-        report("MIDlet URI: " + midletURI);
-        report("Script URI: " + scriptURI);
+        report("MIDlet URL: " + midletURL);
+        report("Scenario URL: " + scenarioURL);
         if (hasSpeedAdjustment) {
             report("Speed adjustment: " + speedAdjustment);
         }
 
         try {
             installMIDlet();
-            downloadScript();
+            downloadScenario();
             startMIDlet();
 
-            // replay script
+            // replay scenario
             if (hasSpeedAdjustment) {
-                automation.simulateEvents(script, speedAdjustment);
+                automation.simulateEvents(scenario, speedAdjustment);
             } else {
-                automation.simulateEvents(script);
+                automation.simulateEvents(scenario);
             }
         } catch (Throwable e) {
             reportException(e, false);
@@ -145,7 +178,7 @@ public class Player extends MIDlet implements Runnable {
         throws IOException, 
                MIDletSuiteLockedException, MIDletSuiteCorruptedException {
 
-        midletSuite = storage.installSuite(midletURI);
+        midletSuite = storage.installSuite(midletURL);
     }
 
     private void uninstallMIDlet() 
@@ -156,7 +189,7 @@ public class Player extends MIDlet implements Runnable {
         }
     }
 
-    private void downloadScript() 
+    private void downloadScenario() 
         throws IOException {
 
         StringBuffer b = new StringBuffer();
@@ -167,7 +200,7 @@ public class Player extends MIDlet implements Runnable {
         try {
             long len = 0 ;
             int ch = 0;
-            c = (HttpConnection)Connector.open(scriptURI);
+            c = (HttpConnection)Connector.open(scenarioURL);
             is = c.openInputStream();
             len = c.getLength();
             if (len != -1) {
@@ -206,8 +239,8 @@ public class Player extends MIDlet implements Runnable {
             }
             
             AutoEventFactory eventFactory = automation.getEventFactory();
-            script = eventFactory.createFromString(b.toString());
-            report("script:\n" + script.toString());
+            scenario = eventFactory.createFromString(b.toString());
+            report("scenario:\n" + scenario.toString());
         } finally {
             if (is != null) {
                 is.close();

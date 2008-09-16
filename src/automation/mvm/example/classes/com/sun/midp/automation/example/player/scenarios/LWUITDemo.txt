@@ -26,9 +26,13 @@
 
 
 # This is a scenario file for automating LWUITDemo MIDlet.
-# It was written for LWUIT release from 2008-08-14,
-# so there is no guarantee that it will work for later
-# releases. 
+# You can download LWUIT from
+# https://lwuit.dev.java.net/
+# This scenario was written for LWUIT release from 2008-08-14,
+# so there is no guarantee that it will work for earlier or later
+# releases.
+# In order to use this scenario, make sure that SJWC is compiled
+# with jpeg support.
 
 delay msec: 1000
 
