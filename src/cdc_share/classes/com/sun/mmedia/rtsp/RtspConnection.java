@@ -24,8 +24,6 @@
 
 package com.sun.mmedia.rtsp;
 
-import com.sun.mmedia.rtsp.protocol.*;
-
 import java.io.*;
 import java.net.*;
 
@@ -55,7 +53,7 @@ public class RtspConnection extends RtspConnectionBase
         }
     }
 
-    public RtspConnection( RtspUrl url ) throws IOException {
-        super( url );
+    public RtspConnection( RtspDS ds ) throws IOException {
+        super( ds );
     }
 }

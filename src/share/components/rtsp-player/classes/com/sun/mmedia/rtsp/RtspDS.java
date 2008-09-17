@@ -26,20 +26,27 @@ package com.sun.mmedia.rtsp;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Random;
 import javax.microedition.media.Player;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.protocol.SourceStream;
 
 import com.sun.mmedia.protocol.BasicDS;
 
+import com.sun.mmedia.rtsp.protocol.*;
+
 public class RtspDS extends BasicDS
 {
-    private final static String userAgent = "User-Agent: MMAPI RTSP Client 1.0";
+    private Random rnd = new Random( System.currentTimeMillis() );
 
-    private boolean        connected   = false;
     private RtspConnection connection  = null;
     private InputStream    inputStream = null;
     private RtspUrl        url         = null;
+    private int            seqNum      = 0;
+
+    public RtspUrl getUrl() {
+        return url;
+    }
 
     public void setLocator( String ml ) throws MediaException {
         try {
@@ -51,25 +58,25 @@ public class RtspDS extends BasicDS
     }
 
     public synchronized void connect() throws IOException {
-        if( !connected ) {
+        if( null == connection ) {
             try {
-                connection = new RtspConnection( url );
+                connection = new RtspConnection( this );
 
-                int sequenceNumber = 4268;
+                seqNum = rnd.nextInt();
 
-                String msg = "DESCRIBE rtsp://" + url.getHost() + "/" + url.getFile() +
-                    " RTSP/1.0\r\n" + "CSeq: " + sequenceNumber + "\r\n" +
-                    "Accept: application/sdp\r\n" + userAgent + "\r\n\r\n";
+                sendRequest( RtspOutgoingRequest.createDescribe( seqNum, url ) );
+                waitForResponse();
 
-                connection.sendData( msg.getBytes() );
+                sendRequest( RtspOutgoingRequest.createSetup( seqNum, url, allocPort() ) );
+                waitForResponse();
 
                 // TODO: determine actual content type
                 setContentType( "audio/x-wav" );
-
-                connected = true;
             } catch( RuntimeException re ) {
+                connection = null;
                 throw re;
             } catch( Exception ex ) {
+                connection = null;
                 throw new IOException( "failed to connect to " +
                                 locator + " : " + ex.getMessage() );
             }
@@ -77,9 +84,9 @@ public class RtspDS extends BasicDS
     }
 
     public synchronized void disconnect() {
-        if( connected ) {
+        if( null != connection ) {
+            connection.close();
             connection = null;
-            connected = false;
         }
     }
 
@@ -100,5 +107,68 @@ public class RtspDS extends BasicDS
 
     public synchronized long getDuration() {
         return Player.TIME_UNKNOWN;
+    }
+
+    //=========================================================================
+
+    /**
+     * Highest and lowest port values allowed for RTP port pairs.
+     */
+    private static final int MIN_PORT = 1024;  // inclusive
+    private static final int MAX_PORT = 65536; // exclusive
+    private static int nextPort = MIN_PORT;
+
+    private static int allocPort() {
+        int retVal = nextPort;
+
+        // TODO: check if these ports are actually available
+
+        if( ++nextPort == MAX_PORT ) nextPort = MIN_PORT;
+        return retVal;
+    }
+
+    //=========================================================================
+
+    private Object msgWaitEvent = new Object();
+    private boolean responseReceived = false;
+
+    /** 
+     * This method is called by RtspConnection when message is received
+     */
+    protected void processIncomingMessage( byte[] msg ) {
+        System.out.println( "--------- incoming ---------\n"
+                            + new String( msg ) +
+                            "----------------------------\n" );
+
+        synchronized( msgWaitEvent ) {
+            responseReceived = true;
+            msgWaitEvent.notifyAll();
+            seqNum++;
+        }
+    }
+
+    private boolean sendRequest( RtspOutgoingRequest request ) {
+        synchronized( msgWaitEvent ) {
+            if( !responseReceived ) {
+                // prevent sending next request while sill waiting for reply
+                return false;
+            } else {
+                responseReceived = false;
+                return connection.sendData( request.getBytes() );
+            }
+        }
+    }
+
+    private boolean waitForResponse() {
+        boolean ok;
+        synchronized( msgWaitEvent ) {
+            try {
+                msgWaitEvent.wait( 5000 );
+                ok = responseReceived;
+            } catch( InterruptedException e ) {
+                ok = false;
+            }
+        }
+        return ok;
     }
 }

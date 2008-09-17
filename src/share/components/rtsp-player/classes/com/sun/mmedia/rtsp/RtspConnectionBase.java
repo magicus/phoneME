@@ -48,6 +48,7 @@ public abstract class RtspConnectionBase extends Thread implements Runnable
 
     protected InputStream      is = null;
     protected OutputStream     os = null;
+    protected RtspDS           ds = null;
 
     /** Platform-specific implementations override this method
      * to create 'is' and 'os' objects
@@ -61,10 +62,10 @@ public abstract class RtspConnectionBase extends Thread implements Runnable
      * @exception  IOException  Throws and IOException if a connection
      *                          to the RTSP server cannot be established.
      */
-    public RtspConnectionBase( RtspUrl url ) throws IOException {
+    public RtspConnectionBase( RtspDS ds ) throws IOException {
 
         try {
-            openStreams( url );
+            openStreams( ds.getUrl() );
         } catch( IOException e ) {
             System.out.println( "IOE in RtspConnection ctor:" + e );
             throw e;
@@ -74,6 +75,7 @@ public abstract class RtspConnectionBase extends Thread implements Runnable
         if( null == os ) throw new IOException( "OutputStream creation failed" );
 
         connectionIsAlive = true;
+        this.ds           = ds;
 
         start();
     }
@@ -145,11 +147,7 @@ public abstract class RtspConnectionBase extends Thread implements Runnable
                         }
 
                         // whole message is completely received
-
-                        System.out.println( "--------- response ---------\n"
-                                            + baos +
-                                            "----------------------------\n" );
-
+                        ds.processIncomingMessage( baos.toByteArray() );
                         baos.reset();
                     }
                 } else {

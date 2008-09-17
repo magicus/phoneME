@@ -284,7 +284,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                 try {
                     mediaDownload.fgDownload();
                 } catch (IOException ex) {
-                    throw new MediaException("Can not start media download thread : " + ex.getMessage());
+                    throw new MediaException("Can not start media download thread : " + ex);
                 }
             }
         }
