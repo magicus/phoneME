@@ -26,6 +26,8 @@
 
 package com.sun.midp.installer;
 
+import java.util.Vector;
+
 import javax.microedition.midlet.MIDlet;
 
 import com.sun.midp.midlet.MIDletSuite;
@@ -327,8 +329,12 @@ t.printStackTrace();
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean warnUser(InstallState state) {
-        sendNativeRequest0(RQ_WARN_USER, convertInstallState(state),
-                           -1, null);
+        int err = sendNativeRequest0(RQ_WARN_USER, convertInstallState(state),
+                                     -1, null);
+        if (err != 0) {
+            return false; /* stop the installation */
+        }
+
         /*
          * This Java thread is blocked here until the answer arrives
          * in native, then it is woken up also from the native code.
@@ -347,8 +353,13 @@ t.printStackTrace();
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean confirmJarDownload(InstallState state) {
-        sendNativeRequest0(RQ_CONFIRM_JAR_DOWNLOAD, convertInstallState(state),
-                           -1, null);
+        int err = sendNativeRequest0(RQ_CONFIRM_JAR_DOWNLOAD,
+                                     convertInstallState(state),
+                                     -1, null);
+        if (err != 0) {
+            return false; /* stop the installation */
+        }
+
         /*
          * This Java thread is blocked here until the answer arrives
          * in native, then it is woken up also from the native code.
@@ -380,8 +391,13 @@ t.printStackTrace();
      * @return true if the user wants to keep the RMS data for the next suite
      */
     public boolean keepRMS(InstallState state) {
-        sendNativeRequest0(RQ_ASK_KEEP_RMS, convertInstallState(state),
-                           -1, null);
+        int err = sendNativeRequest0(RQ_ASK_KEEP_RMS,
+                                     convertInstallState(state),
+                                     -1, null);
+        if (err != 0) {
+            return true; /* keep the RMS */
+        }
+
         /*
          * This Java thread is blocked here until the answer arrives
          * in native, then it is woken up also from the native code.
@@ -400,8 +416,13 @@ t.printStackTrace();
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean confirmAuthPath(InstallState state) {
-        sendNativeRequest0(RQ_CONFIRM_AUTH_PATH, convertInstallState(state),
-                           -1, null);
+        int err = sendNativeRequest0(RQ_CONFIRM_AUTH_PATH,
+                                     convertInstallState(state),
+                                     -1, null);
+        if (err != 0) {
+            return false; /* stop the installation */
+        }
+
         /*
          * This Java thread is blocked here until the answer arrives
          * in native, then it is woken up also from the native code.
@@ -423,8 +444,13 @@ t.printStackTrace();
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean confirmRedirect(InstallState state, String newLocation) {
-        sendNativeRequest0(RQ_CONFIRM_REDIRECT, convertInstallState(state),
-                           -1, newLocation);
+        int err = sendNativeRequest0(RQ_CONFIRM_REDIRECT,
+                                     convertInstallState(state),
+                                     -1, newLocation);
+        if (err != 0) {
+            return false; /* stop the installation */
+        }
+
         /*
          * This Java thread is blocked here until the answer arrives
          * in native, then it is woken up also from the native code.
@@ -459,8 +485,41 @@ t.printStackTrace();
             nis.exceptionCode = ije.getReason();
         }
 
-        // IMPL_NOTE: not implemented yet
-        nis.suiteProperties = null;
+        /*
+         * IMPL_NOTE: only well-known attributes are supported
+         *            for the installation purposes.
+         */
+        final String[] propNames = {
+            MIDletSuite.JAR_MANIFEST,       MIDletSuite.DATA_SIZE_PROP,
+            MIDletSuite.JAR_SIZE_PROP,      MIDletSuite.JAR_URL_PROP,
+            MIDletSuite.SUITE_NAME_PROP,    MIDletSuite.VENDOR_PROP,
+            MIDletSuite.VERSION_PROP,       MIDletSuite.DESC_PROP,
+            MIDletSuite.CONFIGURATION_PROP, MIDletSuite.PROFILE_PROP,
+            MIDletSuite.RUNTIME_EXEC_ENV_PROP,
+            MIDletSuite.RUNTIME_EXEC_ENV_DEFAULT,
+            MIDletSuite.PERMISSIONS_PROP,   MIDletSuite.PERMISSIONS_OPT_PROP
+        };
+
+        Vector v = new Vector(propNames.length * 2);
+
+        for (int i = 0; i < propNames.length; i++) {
+            String propValue = state.getAppProperty(propNames[i]);
+            if (propValue != null) {
+                v.addElement(propNames[i]);
+                v.addElement(propValue);
+            }
+        }
+
+        int arraySize = v.size();
+        if (arraySize > 0) {
+            nis.suiteProperties = new String[arraySize];
+            for (int j = 0; j < arraySize; j++, j++) {
+                nis.suiteProperties[j] = (String)v.elementAt(j);
+                nis.suiteProperties[j + 1] = (String)v.elementAt(j + 1);
+            }
+        } else {
+            nis.suiteProperties = null;
+        }
 
         return nis;
     }
@@ -565,8 +624,10 @@ t.printStackTrace();
      * @param state       current installation state
      * @param status      current status of the installation, -1 if not used
      * @param newLocation new url of the resource to install; null if not used
+     *
+     * @return 0 if no errors, a platform-specific error code otherwise
      */
-    private static native void sendNativeRequest0(
+    private static native int sendNativeRequest0(
             int requestCode,
             NativeInstallState state,
             int status,

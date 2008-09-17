@@ -60,6 +60,86 @@ int g_installerIsolateId = -1;
 jboolean g_fAnswer = JAVACALL_FALSE, g_fAnswerReady = JAVACALL_FALSE;
 
 /**
+ * Extracts strings from the given java array and places them into
+ * an array of javacall strings.
+ *
+ * Note: the caller is responsible for freeing memory allocated for
+ *       javacall strings in this function.
+ *
+ * @param javaObj    [in]  java array of strings
+ * @param tmpHandle  [in]  temporary KNI handle
+ * @param pArraySize [out] on exit will hold the size
+ *                         of the allocated string array
+ * @param ppArray    [out] on exit will hold a pointer
+ *                         to the array of javacall strings
+ *
+ * @return JAVACALL_OK if succeeded, JAVACAL_FAIL otherwise
+ */
+static javacall_result
+java_str_array2javacall_impl(jobject javaObj, jobject tmpHandle,
+                             javacall_int32* pArraySize,
+                             javacall_utf16_string** ppArray) {
+    javacall_int32 tmpArrSize = 0;
+    javacall_utf16_string* pTmpArray = NULL;
+    javacall_result jcRes = JAVACALL_OK;
+
+    tmpArrSize = (javacall_int32)KNI_GetArrayLength(javaObj);
+
+    do {
+        if (tmpArrSize > 0) {
+            jint i;
+            pTmpArray = (javacall_utf16_string*)javacall_malloc(
+                tmpArrSize * sizeof(javacall_utf16_string));
+            if (pTmpArray == NULL) {
+                jcRes = JAVACALL_OUT_OF_MEMORY;
+                break;
+            }
+
+            for (i = 0; i < tmpArrSize; i++) {
+                jsize strLen;
+                
+                KNI_GetObjectArrayElement(javaObj, i, tmpHandle);
+                strLen = KNI_GetStringLength(tmpHandle);
+
+                if (strLen >= 0) {
+                    pTmpArray[i] = (javacall_utf16_string)
+                        javacall_malloc((strLen + 1) * sizeof(jchar));
+                    if (pTmpArray[i] == NULL) {
+                        /*
+                         * save the current number of strings in the array
+                         * to free them later
+                         */
+                        tmpArrSize = (i == 0) ? 0 : i - 1;
+                        jcRes = JAVACALL_OUT_OF_MEMORY;
+                        break;
+                    }
+
+                    if (strLen > 0) {
+                        KNI_GetStringRegion(tmpHandle, 0, strLen, pTmpArray[i]);
+                    } else {
+                        /* empty string */
+                        pTmpArray[i][0] = 0;
+                    }
+                } else {
+                    pTmpArray[i] = NULL;
+                }
+            }
+
+            if (jcRes != JAVACALL_OK) {
+                break;
+            }
+        } else {
+            pTmpArray = NULL;
+        }
+    } while (0);
+
+    *pArraySize = tmpArrSize;
+    *ppArray    = pTmpArray;
+
+    return jcRes;
+}
+
+/**
  * Sends a request of type defined by the given request code to
  * the party that uses this installer via the native callback.
  *
@@ -73,25 +153,33 @@ jboolean g_fAnswer = JAVACALL_FALSE, g_fAnswerReady = JAVACALL_FALSE;
  * @param installState  current installation state
  * @param installStatus current status of the installation, -1 if not used
  * @param newLocation   new url of the resource to install; null if not used
+ *
+ * @return 0 if no errors, a platform-specific error code otherwise
  */
-#include <stdio.h>
-
-KNIEXPORT KNI_RETURNTYPE_VOID
+KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
     javacall_ams_install_state jcInstallState;
     javacall_ams_install_data  jcRequestData;
     javacall_result            jcRes = JAVACALL_OK;
+    javacall_utf16_string      jcProperties = NULL;
     javacall_ams_install_request_code requestCode =
         (javacall_ams_install_request_code) KNI_GetParameterAsInt(1);
     pcsl_string pcslJarUrl = PCSL_STRING_NULL_INITIALIZER,
                 pcslSuiteName = PCSL_STRING_NULL_INITIALIZER;
+    jint propertiesLen;
 
-    KNI_StartHandles(4);
+    KNI_StartHandles(6);
     KNI_DeclareHandle(javaInstallState);
+    KNI_DeclareHandle(javaProperties);
+    KNI_DeclareHandle(javaAuthPath);
     KNI_DeclareHandle(clazz);
     KNI_DeclareHandle(tmpHandle);
 
     KNI_GetParameterAsObject(2, javaInstallState);
+
+    if (KNI_IsNullHandle(javaInstallState)) {
+        KNI_ReturnInt(JAVACALL_FAIL);
+    }
 
     /* The request is not sent yet, so the answer is not received. */
     g_fAnswerReady = JAVACALL_FALSE;
@@ -142,6 +230,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
             pcslRes = pcsl_string_convert_to_utf16(&pcslJarUrl,
                 (jchar*)jcInstallState.jarUrl, strSize, &convertedLength);
             if (pcslRes != PCSL_STRING_OK) {
+                jcRes = JAVACALL_OUT_OF_MEMORY;
                 break;
             }
         } else {
@@ -157,29 +246,88 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
             pcslRes = pcsl_string_convert_to_utf16(&pcslSuiteName,
                 (jchar*)jcInstallState.suiteName, strSize, &convertedLength);
             if (pcslRes != PCSL_STRING_OK) {
+                jcRes = JAVACALL_OUT_OF_MEMORY;
                 break;
             }
         } else {
             jcInstallState.suiteName = NULL;
         }
 
-        jcRes = JAVACALL_OK;
+        /* get the suite properties from the Java object */
+        KNI_GetObjectField(javaInstallState,
+            midp_get_field_id(KNIPASSARGS clazz, "suiteProperties",
+                              "[Ljava/lang/String;"),
+            javaProperties);
+
+        /* get the authorization path from the java object */
+        KNI_GetObjectField(javaInstallState,
+            midp_get_field_id(KNIPASSARGS clazz, "authPath",
+                              "[Ljava/lang/String;"),
+            javaAuthPath);
+
+        /* convert the suite properties to javacall format */
+        if (!KNI_IsNullHandle(javaProperties)) {
+            jcRes = java_str_array2javacall_impl(javaProperties, tmpHandle,
+                &propertiesLen, &jcInstallState.suiteProperties.pStringArr);
+        } else {
+            jcRes = JAVACALL_OK;
+            propertiesLen = 0;
+            jcInstallState.suiteProperties.pStringArr = NULL;
+        }
+
+        /* 2 strings (key/value) for each property */
+        jcInstallState.suiteProperties.numberOfProperties = propertiesLen >> 1;
+
+        if (jcRes != JAVACALL_OK) {
+            break;
+        }
+
+        /* convert the authorization path to javacall format */
+        if (!KNI_IsNullHandle(javaAuthPath)) {
+            jcRes = java_str_array2javacall_impl(javaAuthPath, tmpHandle,
+                &jcInstallState.authPathLen, &jcInstallState.pAuthPath);
+        } else {
+            jcRes = JAVACALL_OK;
+            jcInstallState.authPathLen = 0;
+            jcInstallState.pAuthPath = NULL;
+        }
+
+        /* jcRes contains the result code */
     } while (0);
 
     pcsl_string_free(&pcslJarUrl);
     pcsl_string_free(&pcslSuiteName);
 
+    if (jcRes != JAVACALL_OK) {
+        int j;
+
+        /* free suite properties */
+        if (jcInstallState.suiteProperties.pStringArr != NULL) {
+            /* free each string */
+            for (j = 0;
+                     j < jcInstallState.suiteProperties.numberOfProperties << 1;
+                         j++) {
+                javacall_free(jcInstallState.suiteProperties.pStringArr[j]);
+            }
+            /* free the array of pointers to the strings */
+            javacall_free(jcInstallState.suiteProperties.pStringArr);
+        }
+
+        /* free authorization path */
+        if (jcInstallState.pAuthPath != NULL) {
+            /* free each string */
+            for (j = 0; j < jcInstallState.authPathLen; j++) {
+                javacall_free(jcInstallState.pAuthPath[j]);
+            }
+            /* free the array of pointers to the strings */
+            javacall_free(jcInstallState.pAuthPath);
+        }
+    }
+
     /*
-    TODO:
-    public String[] suiteProperties;
-    public String[] authPath;
-
-    javacall_ams_properties suiteProperties;
-    javacall_const_utf16_string authPath[];
-    */
-    jcInstallState.suiteProperties.numberOfProperties = 0;
-    jcInstallState.authPathLen = 0;
-
+     * now general parameters are read and converted, get
+     * request-specific parameters (if any) and send the request
+     */
     if (jcRes == JAVACALL_OK) {
         if ((int)requestCode == RQ_UPDATE_STATUS) {
             /* reporting the current installation progress */
@@ -220,7 +368,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
                                                  &jcRequestData);
 
                 if (jcRes != JAVACALL_OK) {
-                  /* If something is wrong, apply "No" answer */
+                    /* If something is wrong, apply "No" answer */
                     g_fAnswer = JAVACALL_FALSE;
                     g_fAnswerReady = JAVACALL_TRUE;
                 }
@@ -230,7 +378,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
 
     KNI_EndHandles();
 
-    KNI_ReturnVoid();
+    KNI_ReturnInt(jcRes == JAVACALL_OK ? 0 : jcRes);
 }
 
 /**
@@ -247,7 +395,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_getAnswer0) {
     } else {
         g_installerIsolateId = getCurrentIsolateId();
         /* block the thread until the answer is ready */
-        midp_thread_wait(INSTALLER_UI_SIGNAL, getCurrentIsolateId(), NULL);
+        midp_thread_wait(INSTALLER_UI_SIGNAL, g_installerIsolateId, NULL);
     }
 
     KNI_ReturnBoolean(g_fAnswer == JAVACALL_TRUE ? KNI_TRUE : KNI_FALSE);
