@@ -30,6 +30,7 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Calendar;
 import java.util.TimeZone;
+import java.util.Date;
 
 /**
  * Used to represent each Type, Length, Value structure in a DER buffer.
@@ -556,6 +557,7 @@ public class TLV {
         }
 
         Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        c.setTime(new Date());
 
         int offset;
         int year;

@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.util.Vector;
 import java.util.Calendar;
 import java.util.TimeZone;
+import java.util.Date;
 
 import com.sun.j2me.security.Token;
 
@@ -2207,8 +2208,8 @@ class WIMApplication {
         t.next = TLV.createSequence();
         t = t.next;
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        calendar.setTime(new Date());        
 
         t.setChild(TLV.createOID("1.2.840.113549.1.9.5")). // signingTime
           setNext(new TLV(TLV.SET_TYPE)).
