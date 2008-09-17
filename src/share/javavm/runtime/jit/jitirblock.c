@@ -590,6 +590,9 @@ CVMJITsplitNot(CVMJITCompilationContext *con, CVMUint32 i, void *data)
     /* Make sure the goto target is a block if not already: */
     newLabel(con, /* goto */ pcIndex + 4, /* end */ pcIndex + 8);
 
+    /* Bad candidate. Remove from set so that translateRange will
+       not try to replace it. */ 
+    CVMJITsetRemove(con, &mc->notSeq, pcIndex);
 }
 
 /*
