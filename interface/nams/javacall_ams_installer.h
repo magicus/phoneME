@@ -503,7 +503,7 @@ typedef struct _javacall_ams_install_state {
      * the most trusted CA that authorized this suite.
      * It is NULL if the suite was not signed.
      */
-    javacall_const_utf16_string authPath;
+    javacall_utf16_string* pAuthPath;
 
     /** Length of the authorization path. */
     javacall_int32 authPathLen;
