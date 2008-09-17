@@ -163,7 +163,9 @@ final class MIDletSelector implements CommandListener {
      * Displays this selector on the screen.
      */
     public void show() {
-        lockSuite();
+        if (! suiteInfo.hasRunningMidlet()) {
+            lockSuite();
+        }
         refreshList();
         display.setCurrent(mlist);
     }
@@ -193,7 +195,7 @@ final class MIDletSelector implements CommandListener {
     }
 
     /**
-     * Unlocks associated suite.
+     * Unlocks associated suite (only if previously locked by lockSuite())
      */
     private void unlockSuite() {
         if (msi != null) {
