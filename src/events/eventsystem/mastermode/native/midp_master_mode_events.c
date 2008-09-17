@@ -253,6 +253,11 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
                                 newSignal.waitingFor, newSignal.descriptor,
                                 newSignal.status);
         break;
+    case JSR290_OBJECT_FINALIZE_SIGNAL:
+        midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                newSignal.waitingFor, newSignal.descriptor,
+                                newSignal.status);
+        break;
 #endif /* ENABLE_JSR_290 */
     default:
 #ifdef ENABLE_API_EXTENSIONS

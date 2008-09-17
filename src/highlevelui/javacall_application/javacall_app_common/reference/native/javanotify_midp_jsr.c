@@ -1002,6 +1002,19 @@ javanotify_fluid_image_notify_dirty (
     midp_jc_event_send(&e);
 }
 
+void
+javanotify_remove_weak_reference (
+    javacall_handle                       object_handle
+    ) {
+
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_DOM_OBJECT_FINALIZE;
+    e.data.jsr290DOMFinalizeEvent.object_handle = object_handle;
+    midp_jc_event_send(&e);
+}
+
+
 #endif /* ENABLE_JSR_290 */
 
 /**

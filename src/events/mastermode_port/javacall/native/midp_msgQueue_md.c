@@ -278,6 +278,11 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = JSR290_INVALIDATE_SIGNAL;
         pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
         break;
+    case JSR290_JC_EVENT_DOM_OBJECT_FINALIZE:
+        pNewSignal->waitingFor = JSR290_OBJECT_FINALIZE_SIGNAL;
+        pNewSignal->descriptor = (int)0;
+        pNewSignal->pResult = (void *) event->data.jsr290DOMFinalizeEvent.object_handle;
+        break;
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_177
