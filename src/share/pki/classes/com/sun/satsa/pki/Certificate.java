@@ -28,6 +28,7 @@ package com.sun.satsa.pki;
 
 import java.util.Calendar;
 import java.util.TimeZone;
+import java.util.Date;
 import com.sun.satsa.util.*;
 
 import com.sun.j2me.i18n.Resource;
@@ -66,6 +67,7 @@ class Certificate {
     boolean isExpired() {
 
         Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        c.setTime(new Date());
         try {
             return c.before(getValidity(cert, true)) ||
                    c.after(getValidity(cert, false));
