@@ -45,26 +45,19 @@ import com.sun.lwuit.animations.CommonTransitions;
 /** Implements the splash screen */
 class SplashScreen extends Form {
 
-    private final int SPLASH_SCREEN_DELAY = 2000;
-
-    /** Splash screen image */
-    private Image splashScreen;
     /** The form to be displayed after SplashScreen is dismissed. */
     private Form mainForm;
     /* Task to switch to main form */
     private TimerTask timerTask;
     /* A timer to schedule the timeout task */
     private Timer timeoutTimer;
-    /* splash screen image */
-    private Image splashImage;
-
-    private Label splashLabel;
-
-    private Container splashContainer;
-
-    private int runSpeed = 500;
 
     private Transition in, out;
+
+    private final int runSpeed = 500;
+    private final int splashScreenDelay = 1000;
+
+
 
     SplashScreen(Form mainForm) {
 	int width, height;
@@ -77,43 +70,38 @@ class SplashScreen extends Form {
 
 	timerTask = new TimeoutTask();
 	timeoutTimer = new Timer();
-	splashImage = null;
 
-	out = Transition3D.createFlyIn(runSpeed);
-	in = Transition3D.createFlyIn(runSpeed);
+	out = CommonTransitions.createFade(runSpeed);
 
 	setTransitionOutAnimator(out);
-	setTransitionInAnimator(in);
 
+	System.out.println("SplashScreen.SplashScreen():  calling getImageFromInternalStorage with args " +
+		"splash_screen_" + width + "x" + height);
 
+	try {
+	    sourceImage = GraphicalInstaller.getImageFromInternalStorage(
+		    "splash_screen_" + width + "x" + height);
 
-//TODO:  this block causes exception
-//         sourceImage = GraphicalInstaller.getImageFromInternalStorage("
-// 		splash_screen_" + width + "x" + height);
+	} catch ( Throwable t ) {
+	    t.printStackTrace();
+	}
 
-	splashImage = AppManagerUIImpl.convertImage(sourceImage);
+	System.out.println("SplashScreen.SplashScreen(): " +
+			   "AppManagerUIImpl.calling convertImage()");
+	Image splashImage = AppManagerUIImpl.convertImage(sourceImage);
 
 	if (splashImage != null) {
-	    splashLabel = new Label(splashImage);
+	    Label splashLabel = new Label(splashImage);
+	    addComponent(splashLabel);
 	}
 	else {
-	    splashLabel = new Label("Welcome to Java Wireless Client!");
+	    setTitle("Welcome to Java Wireless Client!");
 	}
-
-	addComponent(splashLabel);
     }
 
     /* Set a timer to switch to the App Manager Screen. */
     public void showNotify() {
-	timeoutTimer.schedule(timerTask, SPLASH_SCREEN_DELAY);
-    }
-
-    /**
-     * This method is called when available area of
-     * the Displayable has been changed.
-     */
-    protected  void  sizeChanged(int w, int h) {
-	/* TODO:  resize image */
+	timeoutTimer.schedule(timerTask, splashScreenDelay);
     }
 
     /**

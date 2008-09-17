@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -33,20 +33,19 @@ import javax.microedition.midlet.*;
 import javax.microedition.rms.*;
 
 import com.sun.j2me.security.AccessController;
-
-
 import com.sun.lwuit.*;
-
-import com.sun.lwuit.events.ActionListener;
+import com.sun.lwuit.TextArea;
+import com.sun.lwuit.animations.CommonTransitions;
+import com.sun.lwuit.animations.Transition;
 import com.sun.lwuit.events.ActionEvent;
+import com.sun.lwuit.events.ActionListener;
+import com.sun.lwuit.geom.Dimension;
 import com.sun.lwuit.layouts.*;
+import com.sun.lwuit.layouts.FlowLayout;
 import com.sun.lwuit.plaf.Style;
 import com.sun.lwuit.plaf.UIManager;
 import com.sun.lwuit.util.Resources;
-import com.sun.lwuit.geom.Dimension;
-import com.sun.lwuit.TextArea;
-
-import com.sun.lwuit.layouts.FlowLayout;
+import com.sun.midp.appmanager.AppManagerUIImpl;	/* for convertImage */
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.content.CHManager;
 import com.sun.midp.i18n.Resource;
@@ -60,8 +59,6 @@ import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midletsuite.*;
 import com.sun.midp.security.*;
 import com.sun.midp.util.ResourceHandler;
-
-import com.sun.midp.appmanager.*;	/* for convertImage */
 
 /**
  * The Graphical MIDlet suite installer.
@@ -106,26 +103,16 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
     private TextField passwordField;
     /** Background installer that holds state for the current install. */
     private BackgroundInstaller backgroundInstaller;
-    /** Displays the progress of the install. */
-    private Form progressForm;
-    /** Gauge for progress form index. */
-    private int progressGaugeIndex;
-    /** URL for progress form index. */
-    private int progressUrlIndex;
     /** Keeps track of when the display last changed, in milliseconds. */
     private long lastDisplayChange;
     /** What to display to the user when the current action is cancelled. */
     private String cancelledMessage;
-    /** What to display to the user when the current action is finishing. */
-    private String finishingMessage;
     /** Displays a list of storages to install to. */
     private List storageListBox;
     /** Contains storageListBox */
     private Form storageListForm;
     /** ID of the storage where the new midlet suite will be installed. */
     private int storageId = Constants.INTERNAL_STORAGE_ID;
-
-    //private Progress progressGauge;
 
     /* label at the progress form */
     private Label urlLabel;
@@ -142,8 +129,8 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
         new Command(Resource.getString(ResourceConstants.CANCEL),
                     ResourceConstants.CANCEL);
     /** Command object for "Exit" command*/
-    private Command exitCmd =
-	new Command(Resource.getString(ResourceConstants.EXIT),
+    private Command backCmd =
+	new Command(Resource.getString(ResourceConstants.BACK),
 		    ResourceConstants.EXIT);
     /** Command object for "Install" command for the confirm download form. */
     private Command continueCmd =
@@ -179,6 +166,11 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
     /* true if user confirmation should be presented */
     private boolean noConfirmation = false;
 
+    private Transition dialogTransition;
+
+    /* transition speed */
+    private final int runSpeed = 1000;
+
     /**
      * Gets an image from the internal storage.
      * <p>
@@ -203,14 +195,18 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
 
     public static javax.microedition.lcdui.Image
 	getImageFromInternalStorage(String imageName) {
+	System.out.println("GraphicalInstaller.java.getImageFromInternalStorage():  enter");
 	byte[] imageBytes =
 		ResourceHandler.getSystemImageResource(null, imageName);
 
 	if (imageBytes != null) {
+	    System.out.println("GraphicalInstaller.java.getImageFromInternalStorage():  calling createImage().  "+
+			       "imageBytes.length is " + imageBytes.length);
 	    return javax.microedition.lcdui.Image.createImage(
 		imageBytes, 0, imageBytes.length);
 	}
 
+	System.out.println("GraphicalInstaller.java.getImageFromInternalStorage():  returning null");
 	return null;
     }
 
@@ -231,6 +227,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
     private static String translateJadException(
             InvalidJadException exception, String name, String vendor,
             String version, String jadUrl) {
+	System.out.println("GraphicalInstaller.translateJadException():  enter.  exception.getReason() is " + exception.getReason());
         String[] values = {name, vendor, version, jadUrl,
                            exception.getExtraData()};
         int key;
@@ -444,13 +441,14 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      * update a currently installed suite.
      */
     public GraphicalInstaller() {
-        String arg0;
+	System.out.println(">>>GraphicalInstaller.GraphicalInstaller()");
+	String arg0;
 
         installer = new HttpInstaller();
-	com.sun.lwuit.Display.init(this);
-
         initSettings();
-	initTheme();
+
+	dialogTransition = CommonTransitions.createSlide(
+	    CommonTransitions.SLIDE_VERTICAL, true, runSpeed);
 
         // Establish Content handler installer context
         chmanager = CHManager.getManager(null);
@@ -583,18 +581,20 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      *  <code>false</code> otherwise.
      */
     void exit(boolean success) {
+	System.out.println("GraphicalInstaller.exit(): enter. success is " + success);
         chmanager.installDone(success);
-
         notifyDestroyed();
     }
 
 
     public void actionPerformed(ActionEvent evt) {
 	Command cmd = evt.getCommand();
+	System.out.println("GraphicalInstaller.actionPerformed():  enter.  cmd.getId() is " + cmd.getId());
 
 	switch (cmd.getId()) {
 	case ResourceConstants.NEXT:
 	    // the user has entered a username and password
+	    System.out.println("GraphicalInstaller.actionPerformed():  enter.  cmd.getId() is " + cmd.getId());
 	    resumeInstallWithPassword();
 	    break;
 	case ResourceConstants.SELECT:
@@ -602,16 +602,10 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
 	    installSuite(label, url, storageId, forceUpdate, noConfirmation);
 	    break;
 	case ResourceConstants.OK:
-	    resumeInstallAfterWarning();
+
 	    break;
 	case ResourceConstants.INSTALL:
-	    startJarDownload();
-	    break;
-	case ResourceConstants.YES:
-	    setKeepRMSAnswer(true);
-	    break;
-	case ResourceConstants.NO:
-	    setKeepRMSAnswer(false);
+//	    startJarDownload();
 	    break;
 	case ResourceConstants.STOP:
 	    if (installer != null) {
@@ -625,7 +619,15 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
 		 */
 		synchronized (this) {
 		    if (installer.stopInstalling()) {
-			displayCancelledMessage(cancelledMessage);
+			Dialog.show(Resource.getString(     	//title
+					ResourceConstants.INFO),
+					cancelledMessage,	//text
+					new Command[]{okCmd},	//commands
+					Dialog.TYPE_INFO,	//type
+					null,			//icon
+					0,			//infinite timeout,
+					dialogTransition);	//transition
+			exit(false);
 		    }
 		}
 	    } else {
@@ -634,10 +636,9 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
 	    }
 	    break;
 	case ResourceConstants.CANCEL:
-	    displayCancelledMessage(cancelledMessage);
-	    cancelBackgroundInstall();
+
 	    break;
-	case ResourceConstants.EXIT:
+	case ResourceConstants.BACK:
 	    // goto back to the manager midlet
 	    exit(false);
 	    break;
@@ -653,6 +654,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      * Method requires com.sun.midp.ams permission.
      */
     public static void initSettings() {
+	System.out.println("GraphicalInstaller.initSettings():  enter");
         AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         try {
@@ -688,9 +690,8 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      * @param curMidlet suiteId of the currently selected midlet
      * @return the Exception that may have been thrown, or null
      */
-    public static Exception saveSettings(String url, int curMidlet) {
-        Exception ret = null;
-
+    public static void saveSettings(String url, int curMidlet) {
+	System.out.println("GraphicalInstaller.saveSettings():  enter");
         AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         try {
@@ -724,10 +725,9 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
             settings.closeRecordStore();
             dos.close();
         } catch (Exception e) {
-            ret = e;
+	    e.printStackTrace();
+	    //throw e;
         }
-
-        return ret;
     }
 
     /**
@@ -736,6 +736,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      * @param id ID of the suite to update
      */
     private void updateSuite(int id) {
+	System.out.println("GraphicalInstaller.updateSuite():  enter");
         MIDletSuiteImpl midletSuite = null;
         try {
             // Any runtime error will get caught by the installer
@@ -756,8 +757,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
 
             cancelledMessage =
                 Resource.getString(ResourceConstants.AMS_GRA_INTLR_UPD_CAN);
-            finishingMessage =
-                Resource.getString(ResourceConstants.AMS_GRA_INTLR_FIN_UPD);
+
             installSuiteCommon(Resource.getString
                                (ResourceConstants.AMS_GRA_INTLR_UPDATING),
                                name,
@@ -781,8 +781,8 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
 		    new Command[]{okCmd},//commands
 		    Dialog.TYPE_ERROR,//type
 		    null,//icon
-		    5000,//timeout,
-		    null);//transition
+		    0,	//timeout,
+		    dialogTransition);//transition
         } finally {
             if (midletSuite != null) {
                 midletSuite.close();
@@ -801,10 +801,10 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      */
     private void installSuite(String label, String url, int storageId,
                               boolean forceUpdate, boolean noConfirmation) {
+	System.out.println("GraphicalInstaller.installSuite():  enter");
         cancelledMessage =
             Resource.getString(ResourceConstants.AMS_GRA_INTLR_INST_CAN);
-        finishingMessage =
-            Resource.getString(ResourceConstants.AMS_GRA_INTLR_FIN_INST);
+
         installSuiteCommon(Resource.getString
                            (ResourceConstants.AMS_GRA_INTLR_INSTALLING),
                            label, url, storageId,
@@ -826,10 +826,8 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      */
     private void installSuiteCommon(String action, String name, String url, int storageId,
             String successMessage, boolean updateFlag, boolean noConfirmation) {
+	System.out.println("GraphicalInstaller.installSuiteCommon():  enter");
         try {
-            createProgressForm(action, name, url, 0,
-                        Resource.getString(
-                            ResourceConstants.AMS_GRA_INTLR_CONN_GAUGE_LABEL));
             backgroundInstaller = new BackgroundInstaller(this, url, name, storageId,
                                       successMessage, updateFlag, noConfirmation);
             new Thread(backgroundInstaller).start();
@@ -847,38 +845,11 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
         }
     }
 
-    /**
-     * Create and display the progress form to the user with the stop action.
-     *
-     * @param action action to put in the form's title
-     * @param name name to in the form's title
-     * @param url URL of a JAD
-     * @param size 0 if unknown, else size of object to download in K bytes
-     * @param gaugeLabel label for progress gauge
-     */
-    private void createProgressForm(String action, String name,
-                                    String url, int size, String gaugeLabel) {
-
-        progressForm = new Form(action + " " + name);
-	progressForm.setLayout(new FlowLayout());
-
-	urlLabel = new Label();
-	if (url != null) {
-	    urlLabel.setText(Resource.getString
-			       (ResourceConstants.AMS_WEBSITE) + ": " + url);
-	}
-
-	//progressGauge = new Progress();
-	progressForm.addComponent(urlLabel);
-	progressForm.addCommand(stopCmd);
-	progressForm.setCommandListener(this);
-
-	progressForm.show();
-    }
 
 
     /** Cancel an install (if there is one) waiting for user input. */
     private void cancelBackgroundInstall() {
+	System.out.println("GraphicalInstaller.cancelBackgroundInstall():  enter");
         if (backgroundInstaller != null) {
             backgroundInstaller.continueInstall = false;
 
@@ -895,20 +866,11 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      * @param state current state of the install.
      */
     private void updateStatus(int status, InstallState state) {
-        if (status == Installer.DOWNLOADING_JAD) {
-            updateProgressForm("", 0,
-                 Resource.getString
-                   (ResourceConstants.
-                   AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL));
-            return;
-        }
+	System.out.println("GraphicalInstaller.updateStatus():  enter");
 
         if (status == Installer.DOWNLOADING_JAR) {
-            updateProgressForm(state.getJarUrl(), state.getJarSize(),
-                 Resource.getString
-                   (ResourceConstants.
-                   AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL));
-            return;
+
+	    return;
         }
 
         if (status == Installer.DOWNLOADED_1K_OF_JAR &&
@@ -919,42 +881,38 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
 
         if (Constants.MONET_ENABLED) {
             if (status == Installer.GENERATING_APP_IMAGE) {
-                updateProgressForm(null, 0,
-                    Resource.getString
-                      (ResourceConstants.
-                      AMS_GRA_INTLR_GENERATING_APP_IMAGE_GAUGE_LABEL));
-                return;
+
+		return;
             }
         }
 
         if (Constants.VERIFY_ONCE) {
             if (status == Installer.VERIFYING_SUITE_CLASSES) {
                 if (state.getLastException() != null) {
-                    displayWarning(
-                        Resource.getString(
-                        ResourceConstants.AMS_GRA_INTLR_INSTALL_WARNING),
-                        Resource.getString(
-                        ResourceConstants.AMS_CLASS_VERIFIER_FAILURE));
+
+		    Dialog.show(Resource.getString(	//title
+				ResourceConstants.AMS_GRA_INTLR_INSTALL_WARNING),
+				Resource.getString(	//message
+				ResourceConstants.AMS_CLASS_VERIFIER_FAILURE),
+				new Command[]{okCmd},//commands
+				Dialog.TYPE_ERROR,//type
+				null,//icon
+				0,   //infinite timeout,
+				dialogTransition);//transition
                 } else {
-                    updateProgressForm(null, 0,
-                        Resource.getString(
-                        ResourceConstants.AMS_CLASS_VERIFIER_GAUGE_LABEL));
-                    return;
+		    return;
                 }
             }
         }
 
         if (status == Installer.VERIFYING_SUITE) {
-            updateProgressForm(null, 0,
-                 Resource.getString
-                   (ResourceConstants.
-                   AMS_GRA_INTLR_VERIFYING_SUITE_GAUGE_LABEL));
-            return;
+
+	    return;
         }
 
         if (status == Installer.STORING_SUITE) {
-            updateProgressForm(null, 0, finishingMessage);
-            return;
+
+	    return;
         }
 
         if (status == Installer.CORRUPTED_SUITE) {
@@ -966,46 +924,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
         }
     }
 
-    /**
-     * Prevent screen flash on a fast systems.
-     */
-    void preventScreenFlash() {
-        long waitTime = ALERT_TIMEOUT -
-            (System.currentTimeMillis() - lastDisplayChange);
 
-        if (waitTime <= 0) {
-            return;
-
-        }
-
-        try {
-            Thread.sleep(waitTime);
-        } catch (InterruptedException ie) {
-            // ignore
-        }
-    }
-
-    /**
-     * Update URL and gauge of the progress form.
-     *
-     * @param url new URL, null to remove, "" to not change
-     * @param size 0 if unknown, else size of object to download in K bytes
-     * @param gaugeLabel label for progress gauge
-     */
-    private void updateProgressForm(String url, int size, String gaugeLabel) {
-        // We need to prevent "flashing" on fast development platforms.
-        preventScreenFlash();
-
-	/* TODO:  add label */
-	//progressGauge = new Progress();
-
-        if (url == null) {
-	    urlLabel.setText("");
-        } else if (url.length() != 0) {
-	    urlLabel.setText(Resource.getString
-                               (ResourceConstants.AMS_WEBSITE) + ": " + url);
-        }
-    }
 
     /**
      * Give the user a chance to act on warning during an installation.
@@ -1018,48 +937,31 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      * @param jadUrl URL of a JAD, can be null
      * @param e last exception from the installer
      */
-    private void warnUser(String name, String vendor, String version,
+    private boolean warnUser(String name, String vendor, String version,
                           String jadUrl, InvalidJadException e) {
+	System.out.println("GraphicalInstaller.warnUser():  enter");
 
-     //known issue:  crash if this code is compiled & run
-//         Dialog.show(Resource.getString(     //title
-//                 ResourceConstants.WARNING),
-//                 translateJadException(e, name, vendor, version, jadUrl),//message
-//                 new Command[]{cancelCmd, okCmd},//commands
-//                 Dialog.TYPE_WARNING,//type
-//                 null,//icon
-//                 100000,//timeout,
-//                 null);//transition
+	Command cmd = Dialog.show(Resource.getString(     //title
+		ResourceConstants.WARNING),
+		translateJadException(e, name, vendor, version, jadUrl),//message
+		new Command[]{cancelCmd, okCmd},//commands
+		Dialog.TYPE_WARNING,//type
+		null,//icon
+		0,//timeout,
+		dialogTransition);//transition
 
-	Form warningForm = new Form(Resource.getString(ResourceConstants.WARNING));
-	warningForm.setLayout(new BorderLayout());
-	TextArea textArea = new TextArea(
-	    translateJadException(e, name, vendor, version, jadUrl));
-	textArea.getStyle().setBgTransparency(0x00);
-	warningForm.addComponent(BorderLayout.CENTER, textArea);
-	warningForm.addCommand(cancelCmd);
-	warningForm.addCommand(okCmd);
-	warningForm.setCommandListener(this);
-	warningForm.show();
+	if (cmd == okCmd) {
+	    return true;
+	}
+	return false;
     }
 
-    /**
-     * Resume the install after a the user overrides a warning.
-     */
-    private void resumeInstallAfterWarning() {
-        // redisplay the progress form
-        progressForm.show();
-
-        backgroundInstaller.continueInstall = true;
-        synchronized (backgroundInstaller) {
-            backgroundInstaller.notify();
-        }
-    }
 
     /**
      * Ask for a username and password.
      */
     private void getUsernameAndPassword() {
+	System.out.println("GraphicalInstaller.getUsernameAndPassword():  enter");
         getUsernameAndPasswordCommon("");
     }
 
@@ -1067,9 +969,10 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      * Ask for proxy username and password.
      */
     private void getProxyUsernameAndPassword() {
+	System.out.println("GraphicalInstaller.getProxyUsernameAndPassword():  enter");
         getUsernameAndPasswordCommon(
               Resource.getString(
-              ResourceConstants.AMS_GRA_INTLR_PASSWORD_FORM_FIREWALL_TITLE));
+		  ResourceConstants.AMS_GRA_INTLR_PASSWORD_FORM_FIREWALL_TITLE));
     }
 
     /**
@@ -1078,29 +981,8 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      * @param title title of the password form
      */
     private void getUsernameAndPasswordCommon(String title) {
-        if (passwordForm == null) {
-            passwordForm = new Form(title);
-	    passwordForm.setLayout(new FlowLayout());
-
-            usernameField = new TextField(
-                            Resource.getString(ResourceConstants.
-                                               AMS_GRA_INTLR_ENTER_ID),
-			    40);
-            passwordForm.addComponent(usernameField);
-
-            passwordField = new TextField(
-                            Resource.getString(ResourceConstants.
-                                               AMS_GRA_INTLR_PASSWORD),
-			    40);
-
-            passwordForm.addComponent(passwordField);
-            passwordForm.addCommand(cancelCmd);
-            passwordForm.addCommand(nextCmd);
-            passwordForm.setCommandListener(this);
-        }
-
-        passwordField.setText("");
-        passwordForm.show();
+	System.out.println("GraphicalInstaller.getUsernameAndPasswordCommon():  enter");
+	/* IMPL_NOTE:  To implement */
     }
 
     /**
@@ -1110,7 +992,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
         String username;
         String password;
 
-
+	System.out.println("GraphicalInstaller.resumeInstallWithPassword():  enter");
         username = usernameField.getText();
         password = passwordField.getText();
         if (username == null || username.length() == 0) {
@@ -1122,7 +1004,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
 			Dialog.TYPE_ERROR,//type
 			null,//icon
 			ALERT_TIMEOUT,//timeout,
-			null);//transition
+			dialogTransition);//transition
 	    passwordForm.show();
 	    return;
 	}
@@ -1136,13 +1018,13 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
 		    Dialog.TYPE_ERROR,//type
 		    null,//icon
 		    ALERT_TIMEOUT,//timeout,
-		    null);//transition
+		    dialogTransition);//transition
 	    passwordForm.show();
 	    return;
         }
 
         // redisplay the progress form
-        progressForm.show();
+        //progressForm.show();
 
         if (backgroundInstaller.proxyAuth) {
             backgroundInstaller.installState.setProxyUsername(username);
@@ -1163,99 +1045,75 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      *
      * @param state current state of the install.
      */
-    private void displayDownloadConfirmation(InstallState state) {
-        Form infoForm;
-        String name;
-        String desc;
-        StringBuffer label = new StringBuffer(40);
-        StringBuffer value = new StringBuffer(40);
+    private boolean displayDownloadConfirmation(InstallState state) {
+	System.out.println("GraphicalInstaller.displayDownloadConfirmation():  enter");
+        String suiteName;
+	String confirmStr = new String();
         String[] values = new String[1];
 
-	Label item;
-
-        name = state.getSuiteName();
+        suiteName = state.getSuiteName();
 
         try {
-            infoForm = new Form(Resource.getString
-                              (ResourceConstants.AMS_CONFIRMATION));
-	    infoForm.setLayout(new FlowLayout());
+            values[0] = suiteName;
 
-            values[0] = name;
-//             item = new Label(Resource.getString
-//                       (ResourceConstants.AMS_GRA_INTLR_WANT_INSTALL,
-//                        values));
-	    TextArea textArea = new TextArea(Resource.getString
+	    confirmStr += Resource.getString
 		      (ResourceConstants.AMS_GRA_INTLR_WANT_INSTALL,
-		       values));
-	    System.out.println("1");
-	    textArea.setRows(2);
-	    System.out.println("2");
-	    textArea.setEditable(false);
-	    System.out.println("3");
-	    infoForm.addComponent(textArea);
-	    System.out.println("4");
+		       values) + "\n";
 
-            if (!installer.isJadSigned()) {
+	    /* add untrusted warning */
+	    if (!installer.isJadSigned()) {
                 // The MIDlet suite is not signed, therefore will be untrusted
-                item = new Label(
-                          Resource.getString(ResourceConstants.WARNING) + ":" +
-                          Resource.getString
-                          (ResourceConstants.AMS_GRA_INTLR_UNTRUSTED_WARN));
-                infoForm.addComponent(item);
+		confirmStr += Resource.getString(ResourceConstants.WARNING) + ":" +
+			    Resource.getString(ResourceConstants.AMS_GRA_INTLR_UNTRUSTED_WARN) + "\n";
             }
 
-            // round up the size to a Kilobyte
-            label.append(Resource.getString(ResourceConstants.AMS_SIZE));
-            label.append(": ");
-            value.setLength(0);
-            value.append(state.getJarSize());
-            value.append(" K");
-            item = new Label(label.toString() + value.toString());
-            infoForm.addComponent(item);
+            /* get size */
+	    confirmStr += Resource.getString(ResourceConstants.AMS_SIZE) +
+		": " + state.getJarSize() + " K" + "\n";
 
-            label.setLength(0);
-            label.append(Resource.getString(ResourceConstants.AMS_VERSION));
-            label.append(": ");
-            value.setLength(0);
-            item = new Label(label.toString() +
-                       state.getAppProperty(MIDletSuite.VERSION_PROP));
-            infoForm.addComponent(item);
+	    /* get version */
+	    confirmStr += Resource.getString(ResourceConstants.AMS_VERSION) + ": " +
+		state.getAppProperty(MIDletSuite.VERSION_PROP) + "\n";
 
-            label.setLength(0);
-            label.append(Resource.getString(ResourceConstants.AMS_VENDOR));
-            label.append(": ");
-            item = new Label(label.toString() +
-                      state.getAppProperty(MIDletSuite.VENDOR_PROP));
-            infoForm.addComponent(item);
+	    /* get vendor */
+	    confirmStr += Resource.getString(ResourceConstants.AMS_VENDOR) + ": "  +
+		state.getAppProperty(MIDletSuite.VENDOR_PROP) + "\n";
 
-            desc = state.getAppProperty(MIDletSuite.DESC_PROP);
+	    /* get description */
+	    String desc = state.getAppProperty(MIDletSuite.DESC_PROP);
             if (desc != null) {
-                label.setLength(0);
-                label.append(Resource.getString
-                             (ResourceConstants.AMS_DESCRIPTION));
-                label.append(": ");
-                item = new Label(label.toString() + desc);
-                infoForm.addComponent(item);
+		confirmStr += Resource.getString
+                             (ResourceConstants.AMS_DESCRIPTION) + ": " + desc + "\n";
             }
 
-            label.setLength(0);
-            label.append(Resource.getString(ResourceConstants.AMS_WEBSITE));
-            label.append(": ");
-            infoForm.addComponent(new Label(label.toString() +
-                                           state.getJarUrl()));
+	    /* get website */
+	    confirmStr += Resource.getString(ResourceConstants.AMS_WEBSITE) + ": " +
+		state.getJarUrl() + "\n";
 
-            infoForm.addCommand(continueCmd);
-            infoForm.addCommand(cancelCmd);
-            infoForm.setCommandListener(this);
+	    /* show dialog */
+	    Command cmd =
+		Dialog.show(Resource.getString(     //title
+			    ResourceConstants.AMS_GRA_INTLR_INSTALL_WARNING),
+			    confirmStr,			//component body
+			    new Command[]{okCmd, cancelCmd},//commands
+			    Dialog.TYPE_WARNING,	//type
+			    null,//icon
+			    0,//infinite timeout,
+			    dialogTransition);//transition
 
-            // We need to prevent "flashing" on fast development platforms.
-            preventScreenFlash();
+	    if (okCmd == cmd) {
+		System.out.println("GraphicalInstaller.displayDownloadConfirmation():  Ok command selected.");
+		return true;
+	    }
+	    else {
+		System.out.println("GraphicalInstaller.displayDownloadConfirmation():  Cancel command selected.");
+		return false;
+	    }
 
-            infoForm.show();
         } catch (Exception ex) {
             StringBuffer sb = new StringBuffer();
 
-            sb.append(name);
+            sb.append(suiteName);
             sb.append("\n");
             sb.append(Resource.getString(ResourceConstants.EXCEPTION));
             sb.append(": ");
@@ -1263,6 +1121,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
             displayException(Resource.getString
                              (ResourceConstants.AMS_CANT_ACCESS),
                              sb.toString());
+	    return false;
         }
     }
 
@@ -1271,8 +1130,9 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      *
      * @param state current state of the install.
      */
-    private void displayKeepRMSForm(InstallState state) {
-        Form infoForm;
+    private boolean displayKeepRMSForm(InstallState state) {
+	System.out.println("GraphicalInstaller.displayKeepRMSForm():  enter");
+        Container c = new Container();
         String name;
         StringBuffer value = new StringBuffer(40);
         String[] values = new String[1];
@@ -1280,23 +1140,34 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
         name = state.getAppProperty(MIDletSuite.SUITE_NAME_PROP);
 
         try {
-            infoForm = new Form(Resource.getString
-                              (ResourceConstants.AMS_CONFIRMATION));
-	    infoForm.setLayout(new FlowLayout());
             values[0] = name;
             value.append(Resource.getString
                          (ResourceConstants.AMS_GRA_INTLR_NEW_OLD_VERSION,
                           values));
-            infoForm.addComponent(new Label(value.toString()));
+            c.addComponent(new Label(value.toString()));
 
-            infoForm.addCommand(keepRMSCmd);
-            infoForm.addCommand(removeRMSCmd);
-            infoForm.setCommandListener(this);
+	    Command cmd = Dialog.show(Resource.getString(     //title
+			ResourceConstants.AMS_CONFIRMATION),
+			c,			//component body
+			new Command[]{keepRMSCmd, removeRMSCmd},//commands
+			Dialog.TYPE_CONFIRMATION,	//type
+			null,//icon
+			0,//infinite timeout,
+			dialogTransition);//transition
 
-            // We need to prevent "flashing" on fast development platforms.
-            preventScreenFlash();
+	    if (cmd == keepRMSCmd) {
+		backgroundInstaller.continueInstall = true;
+	    }
+	    else {
+		backgroundInstaller.continueInstall = false;
+	    }
 
-            infoForm.show();
+	    synchronized (backgroundInstaller) {
+		backgroundInstaller.notify();
+	    }
+	    return backgroundInstaller.continueInstall;
+
+
         } catch (Exception ex) {
             StringBuffer sb = new StringBuffer();
 
@@ -1308,7 +1179,8 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
             displayException(Resource.getString
                              (ResourceConstants.AMS_CANT_ACCESS),
                              sb.toString());
-        }
+	    return false;
+	}
     }
 
     /**
@@ -1316,8 +1188,9 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      *
      * @param state current state of the install.
      */
-    private void displayAuthPathConfirmation(InstallState state) {
-        Form infoForm;
+    private boolean displayAuthPathConfirmation(InstallState state) {
+	System.out.println("GraphicalInstaller.displayAuthPathConfirmation():  enter");
+        Container c = new Container();
         String name;
         String values[] = new String[1];
         Label item;
@@ -1328,14 +1201,10 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
         name = state.getAppProperty(MIDletSuite.SUITE_NAME_PROP);
 
         try {
-	    infoForm = new Form(Resource.getString(
-                          ResourceConstants.AMS_AUTHORIZATION_INFO));
-	    infoForm.setLayout(new FlowLayout());
+	    Image icon = AppManagerUIImpl.convertImage(
+		TrustedMIDletIcon.getIcon());
 
-//             Image icon = AppManagerUIImpl.convertImage(
-//                 TrustedMIDletIcon.getIcon());
-
-//	    Label l = new Label(icon);
+	    Label l = new Label(icon);
 
             values[0] = name;
             label.setLength(0);
@@ -1347,18 +1216,30 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
             temp = label.toString();
             for (int i = 0; i < authPath.length; i++) {
                 item = new Label(temp + authPath[i]);
-                infoForm.addComponent(item);
+                c.addComponent(item);
                 temp = " -> ";
             }
 
-            infoForm.addCommand(continueCmd);
-            infoForm.addCommand(cancelCmd);
-            infoForm.setCommandListener(this);
+	    Command cmd = Dialog.show(Resource.getString(     //title
+			ResourceConstants.AMS_CONFIRMATION),
+			c,	//component body
+			new Command[]{continueCmd, cancelCmd},//commands
+			Dialog.TYPE_CONFIRMATION,	//type
+			null,//icon
+			0,//infinite timeout,
+			dialogTransition);//transition
 
-            // We need to prevent "flashing" on fast development platforms.
-            preventScreenFlash();
+	    if (cmd == continueCmd) {
+		System.out.println("GraphicalInstaller.displayAuthPathConfirmation():  continueCmd command chosen.");
+		startJarDownload();
+		return true;
+	    }
+	    else {
+		System.out.println("GraphicalInstaller.displayAuthPathConfirmation():  cancelCmd command chosen.");
+		return false;
+	    }
 
-            infoForm.show();
+
         } catch (Exception ex) {
             StringBuffer sb = new StringBuffer();
 
@@ -1368,6 +1249,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
             displayException(Resource.getString
                              (ResourceConstants.AMS_CANT_ACCESS),
                              sb.toString());
+	    return false;
         }
     }
 
@@ -1377,31 +1259,39 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      * @param state current state of the install.
      * @param newLocation new url of the resource to install.
      */
-    private void displayRedirectConfirmation(InstallState state,
+    private boolean displayRedirectConfirmation(InstallState state,
                                              String newLocation) {
-        Form infoForm;
+	System.out.println("GraphicalInstaller.displayRedirectConfirmation():  enter");
+	Container c = new Container();
         StringBuffer value = new StringBuffer(40);
         String[] values = new String[1];
 
         try {
-            infoForm = new Form(Resource.getString(
-                                  ResourceConstants.AMS_CONFIRMATION));
-	    infoForm.setLayout(new FlowLayout());
 
 	    values[0] = newLocation;
             value.append(Resource.getString(
                              ResourceConstants.AMS_GRA_INTLR_CONFIRM_REDIRECT,
                                  values));
-            infoForm.addComponent(new Label(value.toString()));
+            c.addComponent(new Label(value.toString()));
 
-            infoForm.addCommand(continueCmd);
-            infoForm.addCommand(cancelCmd);
-            infoForm.setCommandListener(this);
+	    Command cmd = Dialog.show(Resource.getString(     //title
+			ResourceConstants.AMS_CONFIRMATION),
+			c,	//component body
+			new Command[]{continueCmd, cancelCmd},//commands
+			Dialog.TYPE_CONFIRMATION,	//type
+			null,//icon
+			0,//infinite timeout,
+			dialogTransition);//transition
 
-            // We need to prevent "flashing" on fast development platforms.
-            preventScreenFlash();
-
-            infoForm.show();
+	    if (cmd == continueCmd) {
+		System.out.println("GraphicalInstaller.displayRedirectConfirmation():  continueCmd command chosen.");
+		startJarDownload();
+		return true;
+	    }
+	    else {
+		System.out.println("GraphicalInstaller.displayRedirectConfirmation():  cancelCmd command chosen.");
+		return false;
+	    }
         } catch (Exception ex) {
             StringBuffer sb = new StringBuffer();
 
@@ -1411,6 +1301,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
             displayException(Resource.getString(
                                  ResourceConstants.AMS_CANT_ACCESS),
                                      sb.toString());
+	    return false;
         }
     }
 
@@ -1418,12 +1309,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      * Resume the install to start the JAR download.
      */
     private void startJarDownload() {
-        updateProgressForm(backgroundInstaller.url, 0,
-                 Resource.getString
-                   (ResourceConstants.
-                   AMS_GRA_INTLR_CONN_GAUGE_LABEL));
-        // redisplay the progress form
-        progressForm.show();
+	System.out.println("GraphicalInstaller.startJarDownload():  enter");
 
         backgroundInstaller.continueInstall = true;
         synchronized (backgroundInstaller) {
@@ -1432,44 +1318,51 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
     }
 
     /** Confirm the JAR only download with the user. */
-    private void displayJarOnlyDownloadConfirmation() {
-        Form infoForm;
+    private boolean displayJarOnlyDownloadConfirmation() {
+	System.out.println("GraphicalInstaller.displayJarOnlyDownloadConfirmation():  enter");
+        Container c = new Container();
         Label item;
         StringBuffer label = new StringBuffer(40);
         StringBuffer value = new StringBuffer(40);
         String[] values = new String[1];
 
         try {
-            infoForm = new Form(Resource.getString
-                              (ResourceConstants.AMS_CONFIRMATION));
-	    infoForm.setLayout(new FlowLayout());
-
-
             values[0] = backgroundInstaller.name;
             item = new Label(Resource.getString(
                                   ResourceConstants.AMS_GRA_INTLR_WANT_INSTALL) +
                                   values);
-            infoForm.addComponent(item);
+            c.addComponent(item);
 
             label.append(Resource.getString(ResourceConstants.AMS_WEBSITE));
             label.append(": ");
             item = new Label(label.toString() + backgroundInstaller.url);
-            infoForm.addComponent(item);
+            c.addComponent(item);
 
             value.append(" \n");
             value.append(Resource.getString
                          (ResourceConstants.AMS_GRA_INTLR_NO_INFO));
-            infoForm.addComponent(new Label(value.toString()));
+            c.addComponent(new Label(value.toString()));
 
-            infoForm.addCommand(continueCmd);
-            infoForm.addCommand(cancelCmd);
-            infoForm.setCommandListener(this);
+	    Command cmd = Dialog.show(Resource.getString(     //title
+			ResourceConstants.AMS_CONFIRMATION),
+			c,	//component body
+			new Command[]{continueCmd, cancelCmd},//commands
+			Dialog.TYPE_CONFIRMATION,	//type
+			null,//icon
+			0,//infinite timeout,
+			dialogTransition);//transition
 
-            // We need to prevent "flashing" on fast development platforms.
-            preventScreenFlash();
+	    if (cmd == continueCmd) {
+		System.out.println("GraphicalInstaller.displayJarOnlyDownloadConfirmation():  continueCmd command chosen.");
+		startJarDownload();
+		return true;
+	    }
+	    else {
+		System.out.println("GraphicalInstaller.displayJarOnlyDownloadConfirmation():  cancelCmd command chosen.");
+		return false;
+	    }
 
-            infoForm.show();
-        } catch (Exception ex) {
+	} catch (Exception ex) {
             StringBuffer sb = new StringBuffer();
 
             sb.append(backgroundInstaller.name);
@@ -1480,26 +1373,10 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
             displayException(Resource.getString
                              (ResourceConstants.AMS_CANT_ACCESS),
                              sb.toString());
+	    return false;
         }
     }
 
-    /**
-     * Tell the background installer to keep the RMS data.
-     *
-     * @param keepRMS set to true to mean the user answered yes
-     */
-    private void setKeepRMSAnswer(boolean keepRMS) {
-        // redisplay the progress form
-        progressForm.show();
-
-        // We need to prevent "flashing" on fast development platforms.
-        preventScreenFlash();
-
-        backgroundInstaller.continueInstall = keepRMS;
-        synchronized (backgroundInstaller) {
-            backgroundInstaller.notify();
-        }
-    }
 
     /**
      * Alert the user that an action was successful.
@@ -1507,11 +1384,9 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      * @param successMessage message to display to user
      */
     private void displaySuccessMessage(String successMessage) {
+	System.out.println("GraphicalInstaller.displaySuccessMessage():  enter");
         /* TODO:  refactor */
 	Image icon = getLwuitImageFromInternalStorage("_dukeok8");
-
-	// We need to prevent "flashing" on fast development platforms.
-        preventScreenFlash();
 
         lastDisplayChange = System.currentTimeMillis();
 
@@ -1522,62 +1397,9 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
 			Dialog.TYPE_INFO,	//type
 			null,			//icon
 			ALERT_TIMEOUT,		//timeout,
-			null);			//transition
+			dialogTransition);	//transition
     }
 
-    /**
-     * Alert the user that an action was canceled.
-     *
-     * @param message message to display to user
-     */
-    private void displayCancelledMessage(String message) {
-        /* TODO:  refactor */
-	Image icon = getLwuitImageFromInternalStorage("_ack8");
-
-	// We need to prevent "flashing" on fast development platforms.
-        preventScreenFlash();
-
-        lastDisplayChange = System.currentTimeMillis();
-
-	Dialog.show(Resource.getString(     	//title
-			ResourceConstants.INFO),
-			message,		//text
-			new Command[]{okCmd},	//commands
-			Dialog.TYPE_INFO,	//type
-			null,			//icon
-			ALERT_TIMEOUT,		//timeout,
-			null);			//transition
-
-    }
-
-    /**
-     * Display an alert to the user, with a done command.
-     *
-     * @param title alert's title
-     * @param message alert message
-     * @param type severity of the alert message
-     */
-    private void displayAlert(
-        String title, String message, int type) {
-
-	Dialog.show(title,	//title
-		    message,	//message
-		    new Command[]{okCmd},//commands
-		    type,//type
-		    null,//icon
-		    ALERT_TIMEOUT,//timeout,
-		    null);//transition
-    }
-
-    /**
-     * Display an warning to the user, with a done command.
-     *
-     * @param title warnings form's title
-     * @param message warning message
-     */
-    private void displayWarning(String title, String message) {
-        displayAlert(title, message, Dialog.TYPE_WARNING);
-    }
 
     /**
      * Display an exception to the user, with a done command.
@@ -1586,7 +1408,23 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
      * @param message exception message
      */
     private void displayException(String title, String message) {
-        displayAlert(title, message, Dialog.TYPE_ERROR);
+	System.out.println("GraphicalInstaller.displayException():  enter");
+
+	Dialog dlg = new Dialog(title);
+	dlg.setScrollable(false);
+	dlg.setLayout(new BorderLayout());
+	dlg.addComponent(BorderLayout.CENTER, new TextArea(message));
+	dlg.addCommand(okCmd);
+	dlg.show();
+
+
+//         Dialog.show(title,      //title
+//                     message,    //message
+//                     new Command[]{okCmd},//commands
+//                     Dialog.TYPE_ERROR, //type
+//                     null, //icon
+//                     0,    //infinite timeout,
+//                     dialogTransition);//transition
     }
 
 
@@ -1636,6 +1474,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
                 String theJadUrl, String theName, int theStorageId,
                 String theSuccessMessage, boolean updateFlag,
                 boolean noConfirmationFlag) {
+	    System.out.println("BackgroundInstaller():  enter");
             parent = theParent;
             url = theJadUrl;
             name = theName;
@@ -1649,7 +1488,8 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
          * Run the installer.
          */
         public void run() {
-            // ID of the suite that was just installed
+	    System.out.println("BackgroundInstaller.run():  enter");
+	    // ID of the suite that was just installed
             int lastInstalledMIDletId = MIDletSuite.UNUSED_SUITE_ID;
 
             try {
@@ -1681,13 +1521,9 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
                         GraphicalInstaller.saveSettings(null,
                                                         lastInstalledMIDletId);
 
-                        parent.displaySuccessMessage(successMessage);
+			//IMPL_NOTE:  ENABLE BACK
+			//parent.displaySuccessMessage(successMessage);
 
-                        /*
-                         * We need to prevent "flashing" on fast development
-                         * platforms.
-                         */
-                        parent.preventScreenFlash();
 
                         parent.exit(true);
                     } catch (InvalidJadException ije) {
@@ -1760,16 +1596,15 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
                 if (lastInstalledMIDletId == MIDletSuite.UNUSED_SUITE_ID) {
                     // Reset an ID of the last successfully installed midlet
                     // because an error has occured.
-                    GraphicalInstaller.saveSettings(null,
-                        MIDletSuite.UNUSED_SUITE_ID);
+		    try {
+			GraphicalInstaller.saveSettings(null,
+			    MIDletSuite.UNUSED_SUITE_ID);
+
+		    } catch ( Exception e ) {
+			//IMPL_NOTE: indicate error
+		    }
                 }
 
-                if (parent.progressForm != null) {
-                    // end the background thread of progress gauge.
-                    //Progress progressGauge = parent.progressGauge;
-		    /* TODO:  refactor */
-		    //progressGauge.setProgress(Gauge.CONTINUOUS_IDLE);
-                }
             }
         }
 
@@ -1785,6 +1620,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
          *         false to stop the install
          */
         public boolean warnUser(InstallState state) {
+	    System.out.println("BackgroundInstaller.warnUser():  enter");
             installState = state;
 
             InvalidJadException e = installState.getLastException();
@@ -1817,20 +1653,42 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
                 break;
 
             case InvalidJadException.OLD_VERSION:
-            case InvalidJadException.ALREADY_INSTALLED:
+	    case InvalidJadException.ALREADY_INSTALLED:
+		Command cmd =
+		    Dialog.show(Resource.getString(     //title
+				ResourceConstants.WARNING),
+				translateJadException(e, name,
+				    state.getAppProperty(MIDletSuite.VENDOR_PROP),
+				    state.getAppProperty(MIDletSuite.VENDOR_PROP),
+				    url),//message
+				new Command[]{cancelCmd, okCmd},//commands
+				Dialog.TYPE_WARNING,//type
+				null,//icon
+				0,//timeout,
+				dialogTransition);//transition
+		if (okCmd == cmd) {
+		    /* indicate user wants to continue */
+		    return true;
+		}
+		else {
+		    return false;
+		}
+		/* indicate user does not want to continue */
+
             case InvalidJadException.NEW_VERSION:
                 // this is now an update
                 update = true;
 
                 // fall through
-            default:
-                parent.warnUser(name,
+	    default:
+		System.out.println("BackgroundInstaller.warnUser():  calling parent.warnUser()");
+                return parent.warnUser(name,
                     state.getAppProperty(MIDletSuite.VENDOR_PROP),
                     state.getAppProperty(MIDletSuite.VERSION_PROP),
                     url, e);
             }
 
-            return waitForUser();
+            return true;
         }
 
         /**
@@ -1845,19 +1703,17 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
          *         install
          */
         public boolean confirmJarDownload(InstallState state) {
+	    System.out.println("BackgroundInstaller.confirmJarDownload():  enter");
             if (update || noConfirmation) {
                 // this an update, no need to confirm.
                 return true;
             }
 
             installState = state;
-
             url = state.getJarUrl();
 
-            parent.displayDownloadConfirmation(state);
-            return waitForUser();
-        }
-
+            return  parent.displayDownloadConfirmation(state);
+	}
         /**
          * Called with the current state of the install so the user can be
          * asked to confirm if the RMS data should be kept for new version of
@@ -1869,10 +1725,10 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
          * suite
          */
         public boolean keepRMS(InstallState state) {
+	    System.out.println("BackgroundInstaller.keepRMS():  enter");
             installState = state;
 
-            parent.displayKeepRMSForm(state);
-            return waitForUser();
+            return parent.displayKeepRMSForm(state);
         }
 
 
@@ -1888,8 +1744,8 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
          *         install
          */
         public boolean confirmAuthPath(InstallState state) {
-            parent.displayAuthPathConfirmation(state);
-            return waitForUser();
+	    System.out.println("BackgroundInstaller.confirmAuthPath():  enter");
+            return parent.displayAuthPathConfirmation(state);
         }
 
         /**
@@ -1905,8 +1761,8 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
          * @return true if the user wants to continue, false to stop the install
          */
         public boolean confirmRedirect(InstallState state, String newLocation) {
-            parent.displayRedirectConfirmation(state, newLocation);
-            return waitForUser();
+	    System.out.println("BackgroundInstaller.confirmRedirect():  enter");
+            return parent.displayRedirectConfirmation(state, newLocation);
         }
 
         /**
@@ -1917,42 +1773,15 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
          *         install
          */
         private boolean confirmJarOnlyDownload() {
+	    System.out.println("BackgroundInstaller.confirmJarOnlyDownload():  enter");
             if (update) {
                 // this an update, no need to confirm.
                 return true;
             }
 
-            parent.displayJarOnlyDownloadConfirmation();
-            return waitForUser();
+            return parent.displayJarOnlyDownloadConfirmation();
         }
 
-        /**
-         * Wait for the user to respond to current dialog.
-         *
-         * @return true if the user wants to continue, false to stop the
-         *         install
-         */
-        private boolean waitForUser() {
-            boolean temp;
-
-            synchronized (this) {
-                try {
-                    this.wait();
-                } catch (InterruptedException ie) {
-                    if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                        Logging.report(Logging.WARNING, LogChannels.LC_AMS,
-                                      "wait threw an InterruptedException");
-                    }
-                }
-            }
-
-            installState = null;
-
-            temp = continueInstall;
-            continueInstall = false;
-
-            return temp;
-        }
 
         /**
          * Called with the current status of the install.
@@ -1962,6 +1791,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
          * @param state current state of the install.
          */
         public void updateStatus(int status, InstallState state) {
+	    System.out.println("BackgroundInstaller.updateStatus():  enter");
             parent.updateStatus(status, state);
         }
 
@@ -1970,35 +1800,14 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
          * and then display the list of suites.
          */
         private void displayListAfterCancelMessage() {
+	    System.out.println("BackgroundInstaller.displayListAfterCancelMessage():  enter");
             // wait for the parent to display "cancelled"
             synchronized (parent) {
-                /*
-                 * We need to prevent "flashing" on fast
-                 * development platforms.
-                 */
-                parent.preventScreenFlash();
 
                 // go back to app list
                 parent.exit(false);
             }
         }
-    }
-
-    private void initTheme() {
-	try {
-	    RandomAccessStream storage = new RandomAccessStream();
-	    storage.connect(File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
-                "javaTheme.res", Connector.READ);
-	    int length = storage.getSizeOf();
-	    byte[] resourceData = new byte[length];
-	    storage.readBytes(resourceData, 0,length);
-	    storage.disconnect();
-	    Resources r = Resources.open(new ByteArrayInputStream(resourceData));
-	    UIManager.getInstance().setThemeProps(r.getTheme("javaTheme"));
-	    //com.sun.lwuit.Display.getInstance().getCurrent().refreshTheme();
-	} catch (IOException ioe) {
-	    ioe.printStackTrace();
-	}
     }
 
 }

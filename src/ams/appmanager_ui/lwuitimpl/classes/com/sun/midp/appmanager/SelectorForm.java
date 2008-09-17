@@ -29,11 +29,14 @@ package com.sun.midp.appmanager;
 import java.util.Hashtable;
 
 import com.sun.lwuit.*;
+import com.sun.lwuit.animations.CommonTransitions;
+import com.sun.lwuit.animations.Transition;
 import com.sun.lwuit.TextArea;
 import com.sun.lwuit.animations.CommonTransitions;
 import com.sun.lwuit.animations.Transition;
 import com.sun.lwuit.events.ActionEvent;
 import com.sun.lwuit.events.ActionListener;
+import com.sun.lwuit.events.FocusListener;
 import com.sun.lwuit.geom.Dimension;
 import com.sun.lwuit.layouts.BorderLayout;
 import com.sun.lwuit.layouts.*;
@@ -50,9 +53,6 @@ import com.sun.midp.midletsuite.*;
 
 
 public class SelectorForm extends Form implements ActionListener  {
-
-    private Form mainForm;
-
     /**
      * Information needed to display a list of MIDlets.
      */
@@ -65,7 +65,7 @@ public class SelectorForm extends Form implements ActionListener  {
      * MIDlet information, class, name, icon; one per MIDlet.
      */
     private MIDletInfo[] minfo;
-    
+
 
     /** Command object for "Back" command for AMS */
     private static final Command backCommand =
@@ -81,20 +81,35 @@ public class SelectorForm extends Form implements ActionListener  {
     private Hashtable midletsHash = new Hashtable();
     /* mapping:  suite info->button */
     private Hashtable reverseHash = new Hashtable();
+    /* midlets buttons container */
+    private Container buttonsContainer;
 
-    private Container mainContainer;
+    /* Main AMS form */
+    private Form mainForm;
 
-    private static final int MAX_MIDLETS_IN_SUITE = 20;
+    private Transition right, left, dialogTransition;
 
-    private static final int currentRows = 5;
-    private static final int currentCols = 1;
+    private ApplicationManager manager;
 
-    public SelectorForm(Form mainForm){
+    private final int MAX_MIDLETS_IN_SUITE = 20;
+    private final int SMALL_ICON_SIZE = 20;
+    private final int LIST_ROW_HEIGHT = 20;
+    private final int runSpeed = 1000;
 
-	minfo = new MIDletInfo[MAX_MIDLETS_IN_SUITE];
-	mainContainer = new Container();
+    private int rows = 5;
+    private int cols = 1;
 
+
+    public SelectorForm(Form mainForm, ApplicationManager manager) {
 	this.mainForm = mainForm;
+	this.manager = manager;
+
+	left = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, true, runSpeed);
+	right = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, false, runSpeed);
+
+	setTransitionOutAnimator(left);
+	setTransitionInAnimator(right);
+
 	addCommand(backCommand);
 	addCommand(launchCmd);
 	setCommandListener(this);
@@ -105,6 +120,11 @@ public class SelectorForm extends Form implements ActionListener  {
 	this.msi = msi;
 	mcount = 0;
 
+	/* IMPL_NOTE:  buttonsContainer needs to be recreated for each invocation
+    	    of this method to avoid showing same midlets over and over*/
+	minfo = new MIDletInfo[MAX_MIDLETS_IN_SUITE];
+	buttonsContainer = new Container();
+
 	try {
 	    createForm();
 	} catch ( Throwable t ) {
@@ -114,9 +134,9 @@ public class SelectorForm extends Form implements ActionListener  {
     }
 
     private void createForm() {
-	MIDletSuiteStorage mss = MIDletSuiteStorage.getMIDletSuiteStorage();	
-
 	System.out.println("createForm: enter");
+	MIDletSuiteStorage mss = MIDletSuiteStorage.getMIDletSuiteStorage();
+
 	/* read midlet suite items to data structures */
 	try {
 	    readMIDletInfo(mss);
@@ -125,19 +145,27 @@ public class SelectorForm extends Form implements ActionListener  {
 	}
 
 	setTitle(msi.displayName);
-	setLayout(new GridLayout(currentRows, currentCols));
 
+	int displayHeight = com.sun.lwuit.Display.getInstance().getDisplayHeight();
+	int displayWidth = com.sun.lwuit.Display.getInstance().getDisplayWidth();
+	rows = displayHeight / LIST_ROW_HEIGHT;
+	buttonsContainer.setLayout(new GridLayout(rows, cols));
 
-	// Add each midlet
+	setLayout(new FlowLayout());
+
+	/* Add  midlets from suite */
 	for (int i = 0; i < mcount; i++) {
 	    Image icon = null;
+	    ButtonActionListener bAListener = new ButtonActionListener();
 	    if (minfo[i].icon != null) {
-		icon = convertImage(RunningMIDletSuiteInfo.getIcon(msi.suiteId,
+		icon = AppManagerUIImpl.convertImage(RunningMIDletSuiteInfo.getIcon(msi.suiteId,
 		    minfo[i].icon, mss));
 	    }
+	    /* resize image */
+	    icon = icon.scaled(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
 	    /* create button */
 	    /* build button */
-	    Button button = new Button(msi.displayName){
+	    Button button = new Button(minfo[i].name){
 		public Image getPressedIcon() {
 		    Image i = getIcon();
 		    return i.scaled((int) (i.getWidth() * 0.8), (int) (i.getHeight() * 0.8));
@@ -148,19 +176,29 @@ public class SelectorForm extends Form implements ActionListener  {
 		    return i.scaled((int) (i.getWidth() * 1.2), (int) (i.getHeight() * 1.2));
 		}
 	    };
+	    button.setIcon(icon);
+	    button.getStyle().setBgTransparency(0x00);
+	    button.setBorderPainted(false);
+	    button.setAlignment(Label.LEFT);
+	    button.setTextPosition(Label.RIGHT);
+	    button.addActionListener(bAListener);
+
+	    /* set button width */
+	    Dimension currentSize = button.getPreferredSize();
+	    Dimension newSize = new Dimension(displayWidth, currentSize.getHeight());
+	    button.setPreferredSize(newSize);
+
 	    /* Add button */
-	    mainContainer.addComponent(button);
+            buttonsContainer.addComponent(button);
 	    midletsHash.put(button, msi);
 	    reverseHash.put(msi, button);
 	}
 
-
-
-	addComponent(mainContainer);
-	/* show the data structures on screen */
-	System.out.println("showing selectorForm");	
+	/* remove components from previous invocations */
+	removeAll();
+	addComponent(buttonsContainer);
     }
-    
+
 
     public void actionPerformed(ActionEvent evt) {
 	Command cmd = evt.getCommand();
@@ -169,7 +207,16 @@ public class SelectorForm extends Form implements ActionListener  {
 	case ResourceConstants.BACK:
 	    mainForm.show();
 	    break;
+	case ResourceConstants.LAUNCH:
+	    handlerLaunch();
+	    break;
 	}
+    }
+
+    private void handlerLaunch() {
+	int index = buttonsContainer.getComponentIndex(getFocused());
+	System.out.println("handlerLaunch():  enter.  index is " + index);
+	manager.launchSuite(msi, minfo[index].classname);
     }
 
     /**
@@ -177,13 +224,13 @@ public class SelectorForm extends Form implements ActionListener  {
      * @param info MIDlet information to add to MIDlet
      */
     private void addMIDlet(MIDletInfo info) {
-	System.out.println("addMIDlet:  enter");
+	System.out.println("addMIDlet():  enter");
         if (mcount >= minfo.length) {
             MIDletInfo[] n = new MIDletInfo[mcount+4];
             System.arraycopy(minfo, 0, n, 0, mcount);
             minfo = n;
         }
-	
+
         minfo[mcount++] = info;
     }
 
@@ -193,11 +240,11 @@ public class SelectorForm extends Form implements ActionListener  {
      * @param mss the midlet suite storage
      *
      * @throws MIDletSuiteCorruptedException if the suite is corrupted
-     * @throws MIDletSuiteLockedException if the suite is locked 
+     * @throws MIDletSuiteLockedException if the suite is locked
      */
     private void readMIDletInfo(MIDletSuiteStorage mss)
             throws MIDletSuiteCorruptedException, MIDletSuiteLockedException {
-	System.out.println("readMIDletInfo:  enter");
+	System.out.println("readMIDletInfo():  enter");
         MIDletSuite midletSuite = mss.getMIDletSuite(msi.suiteId, false);
 
             if (midletSuite == null) {
@@ -212,7 +259,6 @@ public class SelectorForm extends Form implements ActionListener  {
                     if (attr == null || attr.length() == 0){
                         break;
 		    }
-
                     addMIDlet(new MIDletInfo(attr));
                 }
             } finally {
@@ -220,22 +266,15 @@ public class SelectorForm extends Form implements ActionListener  {
             }
     }
 
-    /*TODO: refactor */
-    public static Image convertImage(javax.microedition.lcdui.Image sourceImage) {
-	int width, height;
-	int[] tmp;
 
-	if (sourceImage == null) {
-	    return null;
-	}
+    private class ButtonActionListener implements ActionListener {
 
-	width = sourceImage.getWidth();
-	height = sourceImage.getHeight();
-	tmp = new int[width * height];
-	sourceImage.getRGB(tmp, 0, width, 0, 0, width, height);
-	Image tmpImage = Image.createImage(tmp, width, height);
-	return tmpImage;
+        public void actionPerformed(ActionEvent evt) {
+	    RunningMIDletSuiteInfo msi = ((RunningMIDletSuiteInfo)
+					 midletsHash.get(evt.getSource()));
+
+	    handlerLaunch();
+        }
     }
-
 
 }

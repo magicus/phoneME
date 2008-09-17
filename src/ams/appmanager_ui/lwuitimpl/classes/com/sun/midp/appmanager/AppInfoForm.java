@@ -45,275 +45,276 @@ import com.sun.midp.io.j2me.push.*;
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midletsuite.*;
 
-import com.sun.lwuit.animations.Transition;
-import com.sun.lwuit.animations.CommonTransitions;
 
+public class AppInfoForm extends Form implements ActionListener {
 
-public class AppInfoForm extends Form implements ActionListener  {
+	private MIDletSuiteStorage midletSuiteStorage;
 
-    private MIDletSuiteStorage midletSuiteStorage;
+	private Transition in, out;
 
-    private Transition in, out;
+	private final int MAX_COLS = 7;
+	private final int largestW = 0;
+	private final int runSpeed = 500;
 
-    private final int MAX_COLS = 6;
-    private int largestW = 0;
-    private int runSpeed = 500;
-    private int numberOfMidlets;
+	private int numberOfMidlets;
 
-    private Form mainForm;
+	private Form mainForm;
+	private Font font;
 
-    private Image suiteIcon;
+	private Image suiteIcon;
+	private Image midletIcon;
 
-    /** Command object for "Back" command for AMS */
-    private static final Command backCommand =
+	/** Command object for "Back" command for AMS */
+	private static final Command backCommand =
 	new Command(Resource.getString(ResourceConstants.BACK),
-		    ResourceConstants.BACK);
+				ResourceConstants.BACK);
 
-    public AppInfoForm(Form mainForm){
-	this.mainForm = mainForm;
-	addCommand(backCommand);
-	setCommandListener(this);
-	setLayout(new BoxLayout(BoxLayout.Y_AXIS));
+	public AppInfoForm(Form mainForm){
+		this.mainForm = mainForm;
+		addCommand(backCommand);
+		setCommandListener(this);
+		setLayout(new BoxLayout(BoxLayout.Y_AXIS));
 
-	out = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, true, runSpeed);
-	in = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, false, runSpeed);
-	setTransitionOutAnimator(out);
-	setTransitionInAnimator(in);
-    }
+		createIcons();
 
-
-    public void setContents(int suiteId) throws Throwable {
-
-	MIDletSuiteImpl midletSuite = null;
-	InstallInfo installInfo; /** Installation information of the suite. */
-	javax.microedition.lcdui.Image tmpIcon;
-	String displayName;
-
-	suiteIcon = null; /* reset suite icon */
-
-	midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
-	midletSuite = midletSuiteStorage.getMIDletSuite(suiteId, false);
-	numberOfMidlets = midletSuite.getNumberOfMIDlets();
-	installInfo = midletSuite.getInstallInfo();
-
-
-	try {
-	    midletSuiteStorage.getMIDletSuite(suiteId, false);
-	} catch ( Exception e ) {
-	    throw(e);
+		out = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, true, runSpeed);
+		in = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, false, runSpeed);
+		font = Font.createSystemFont(Font.FACE_SYSTEM,
+									 Font.STYLE_BOLD, Font.SIZE_SMALL);
+		setTransitionOutAnimator(out);
+		setTransitionInAnimator(in);
 	}
 
 
-	/* clear components from previous invocations */
-	removeAll();
+	public void setContents(int suiteId) throws Throwable {
 
-	/* set title */
-	if (numberOfMidlets == 1) {
-            String value = midletSuite.getProperty("MIDlet-1");
-            MIDletInfo temp = new MIDletInfo(value);
-            displayName = temp.name;
-        } else {
-            displayName =
-                midletSuite.getProperty(MIDletSuiteImpl.SUITE_NAME_PROP);
-        }
-	setTitle("Info " + displayName);
+		MIDletSuiteImpl midletSuite = null;
+		InstallInfo installInfo; /** Installation information of the suite. */
+		String displayName;
+		Label tmpLabel;
+		TextArea tmpArea;
 
-	/* set midlet icon */
-	Label iconLabel = new Label();
-	iconLabel.setIcon(getSuiteIcon());
-	iconLabel.getStyle().setBgTransparency(0xff);
-	addComponent(createPair(displayName, iconLabel, largestW));
+		suiteIcon = null; /* reset suite icon */
 
-	/* set size */
-	StringBuffer tmpBuf = new StringBuffer(40);
-	Label size = new Label();
-	
-	tmpBuf.setLength(0);
-	tmpBuf.append(
-	    Integer.toString((MIDletSuiteStorage.getMIDletSuiteStorage().
-		getStorageUsed(midletSuite.getID()) +
-		1023) / 1024));
-	tmpBuf.append(" K");
-	size.setText(tmpBuf.toString());
-	addComponent(createPair(Resource.getString(ResourceConstants.AMS_SIZE),
-			size, largestW));
+		midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
+		midletSuite = midletSuiteStorage.getMIDletSuite(suiteId, false);
+		numberOfMidlets = midletSuite.getNumberOfMIDlets();
+		installInfo = midletSuite.getInstallInfo();
 
-	/* set version */
-	Label tmpLabel = new Label(midletSuite.getProperty(
-				    MIDletSuite.VERSION_PROP));
-	tmpLabel.setFocusable(true);
-	addComponent(createPair(Resource.getString(ResourceConstants.AMS_VERSION),
-				tmpLabel, largestW));
-
-	/* set vendor */
-	if (midletSuite.isTrusted()) {
-	    addComponent(createPair(Resource.getString
-                          (ResourceConstants.AMS_MGR_AUTH_VENDOR),
-				new Label(midletSuite.getProperty(
-				    MIDletSuite.VENDOR_PROP)),
-				    largestW));
-	}
-	else {
-	    addComponent(createPair(Resource.getString
-                (ResourceConstants.AMS_MGR_VENDOR),
-		new Label(midletSuite.getProperty( MIDletSuite.VENDOR_PROP)),
-				    largestW));
-	}
-
-	/* set description */
-	String descProp = midletSuite.getProperty(MIDletSuite.DESC_PROP);
-	if (descProp != null) {
-	    addComponent(createPair(Resource.getString
-	        (ResourceConstants.AMS_DESCRIPTION),
-		new Label(descProp),
-		largestW));
-	}
-
-	/* set contents */
-	String amsContents = null;
-	/* IMPL_NOTE:  uncomment when AMS_CONTENTS is available */
-	/* amsContents = midletSuite.getProperty(MIDletSuite.AMS_CONTENTS); */
-	if (amsContents != null) {
-	    addComponent(createPair(Resource.getString
-		(ResourceConstants.AMS_CONTENTS),
-		new Label(amsContents),
-		largestW));
-	}
-
-	/* set website */
-	String downloadUrl = installInfo.getDownloadUrl();
-	if (downloadUrl != null) {
-	    Label downloadUrlLable = new Label(downloadUrl);
-	    downloadUrlLable.setFocusable(true);
-	    addComponent(createPair(Resource.getString
-		 (ResourceConstants.AMS_WEBSITE), downloadUrlLable, largestW));
-	}
-
-//         if (downloadUrl != null) {
-//             addComponent(createPair(Resource.getString
-//                  (ResourceConstants.AMS_WEBSITE),
-//                  new Label(downloadUrl),
-//                  largestW));
-//         }
-
-	/* set advanced separator */
-	addComponent(createPair(Resource.getString
-		     (ResourceConstants.AMS_ADVANCED),
-			    new Label(""),
-				largestW));
+		try {
+			midletSuiteStorage.getMIDletSuite(suiteId, false);
+		} catch ( Exception e ) {
+			throw(e);
+		}
 
 
-	/* set is trusted */
-	CheckBox checkBox = new CheckBox();
-	checkBox.setSelected(midletSuite.isTrusted());
-	addComponent(createPair(Resource.getString
-		     (ResourceConstants.AMS_MGR_TRUSTED),
-				checkBox,
-				largestW));
+		/* clear components from previous invocations */
+		removeAll();
 
-	/* set is verified */
-       if (Constants.VERIFY_ONCE && midletSuite.isVerified()) {
-	   addComponent(createPair(Resource.getString
-			(ResourceConstants.AMS_VERIFIED_CLASSES),
-				   new Label(""),
-				   largestW));
-	}
+		/* set title */
+		if (numberOfMidlets == 1) {
+			String value = midletSuite.getProperty("MIDlet-1");
+			MIDletInfo temp = new MIDletInfo(value);
+			displayName = temp.name;
+		} else {
+			displayName =
+				midletSuite.getProperty(MIDletSuiteImpl.SUITE_NAME_PROP);
+		}
+		setTitle("Info " + displayName);
 
-       /* set authorized by */
-       String[] authPath = installInfo.getAuthPath();
-       if (authPath != null) {
-	   List authList = new List();
-	   for (int i = 0; i < authPath.length; i++) {
-	       authList.addItem(new Label(authPath[i]));
-	   }
+		/* set midlet icon */
+		tmpLabel = new Label();
+		tmpLabel.setIcon(getSuiteIcon());
+		tmpLabel.getStyle().setBgTransparency(0x00);
+		tmpLabel.setBorderPainted(false);
+		addComponent(createPair(displayName, tmpLabel));
 
-	   addComponent(createPair(Resource.getString
-			(ResourceConstants.AMS_AUTHORIZED_BY),
-				   authList,
-				   largestW));
-       }
+		/* set size */
+		StringBuffer tmpBuf = new StringBuffer(40);
+		tmpLabel = new Label();
+		tmpLabel.getStyle().setBgTransparency(0x00);
+		tmpLabel.setBorderPainted(false);
 
-       /* set list connections */
-       String listConnections = PushRegistryInternal.listConnections(
-                       midletSuite.getID(), false);
-       if (listConnections != null) {
-	   addComponent(createPair(Resource.getString
-			(ResourceConstants.AMS_AUTO_START_CONN),
-				   new Label(listConnections),
-				   largestW));
-       }
+		tmpBuf.setLength(0);
+		tmpBuf.append(
+					 Integer.toString((MIDletSuiteStorage.getMIDletSuiteStorage().
+									   getStorageUsed(midletSuite.getID()) +
+									   1023) / 1024));
+		tmpBuf.append(" K");
+		tmpLabel.setText(tmpBuf.toString());
+		addComponent(createPair(Resource.getString(ResourceConstants.AMS_SIZE),
+								tmpLabel));
 
-    }
+		/* set version */
+		tmpLabel = new Label(midletSuite.getProperty(
+													MIDletSuite.VERSION_PROP));
+		tmpLabel.getStyle().setBgTransparency(0x00);
+		tmpLabel.setBorderPainted(false);
+		addComponent(createPair(Resource.getString(ResourceConstants.AMS_VERSION),
+								tmpLabel));
 
-    public void actionPerformed(ActionEvent evt) {
-	Command cmd = evt.getCommand();
+		/* set vendor */
+		tmpArea = new TextArea(midletSuite.getProperty(
+													  MIDletSuite.VENDOR_PROP));
+		tmpArea.getStyle().setBgTransparency(0x00);
+		tmpArea.setBorderPainted(false);
+		tmpArea.setFocusable(false);
+		if (midletSuite.isTrusted()) {
+			addComponent(createPair(Resource.getString
+									(ResourceConstants.AMS_MGR_AUTH_VENDOR),
+									tmpArea));
+		} else {
+			addComponent(createPair(Resource.getString
+									(ResourceConstants.AMS_MGR_VENDOR),
+									tmpArea));
+		}
 
-	switch (cmd.getId()) {
-	case ResourceConstants.BACK:
-	    mainForm.show();
-	    break;
-	}
-    }
+		/* set description */
+		String descProp = midletSuite.getProperty(MIDletSuite.DESC_PROP);
+		if (descProp != null) {
+			tmpArea = new TextArea(descProp);
+			tmpArea.setFocusable(false);
+			tmpArea.getStyle().setBgTransparency(0x00);
+			tmpArea.setBorderPainted(false);
+			tmpArea.setRows(2);
 
+			addComponent(createPair(Resource.getString
+									(ResourceConstants.AMS_DESCRIPTION), tmpArea));
+		}
 
-    /**
-     * Helper method that allows us to create a pair of components label and the given
-     * component in a horizontal layout with a minimum label width
-     */
-    protected Container createPair(String label, Component c, int minWidth) {
-	Container pair = new Container(new BorderLayout());
-	//Label l =  new Label(label);
-	int rows = 1;
-	if (label.length() > MAX_COLS) {
-	    rows = 2;
-	}
-	TextArea t = new TextArea(label, rows, MAX_COLS);
-	t.setEditable(false);
-	//Dimension d = l.getPreferredSize();
-	//d.setWidth(Math.max(d.getWidth(), minWidth));
-	//l.setPreferredSize(d);
-	//l.getStyle().setBgTransparency(100);
-	pair.addComponent(BorderLayout.WEST,t);
-	//pair.addComponent(BorderLayout.WEST,l);
-	pair.addComponent(BorderLayout.CENTER, c);
-	return pair;
-    }
+		/* set contents */
+		String amsContents = null;
+		/* IMPL_NOTE:  uncomment when AMS_CONTENTS is available */
+		/* amsContents = midletSuite.getProperty(MIDletSuite.AMS_CONTENTS); */
+		if (amsContents != null) {
+			tmpLabel = new Label(amsContents);
+			tmpLabel.getStyle().setBgTransparency(0x00);
+			tmpLabel.setBorderPainted(false);
 
-     /**
-     * Helper method that allows us to create a pair of components label and the given
-     * component in a horizontal layout
-     */
-     protected Container createPair(String label, Component c) {
-         return createPair(label,c,0);
-     }
+			addComponent(createPair(Resource.getString
+									(ResourceConstants.AMS_CONTENTS), tmpLabel));
+		}
 
-    /**
-    * Gets the single MIDlet suite icon from storage.
-    *
-    * @return icon image
-    */
-    private Image getSuiteIcon() {
+		/* set website */
+		String downloadUrl = installInfo.getDownloadUrl();
+		if (downloadUrl != null) {
+			tmpArea = new TextArea(downloadUrl);
+			tmpArea.setFocusable(false);
+			tmpArea.getStyle().setBgTransparency(0x00);
+			tmpArea.setBorderPainted(false);
+			tmpArea.setRows(2);
+			addComponent(createPair(Resource.getString
+									(ResourceConstants.AMS_WEBSITE), tmpArea));
+		}
 
-	javax.microedition.lcdui.Image sourceImage;
-	String srcIconName;
+		/* set advanced separator */
+		tmpLabel = new Label("");
+		tmpLabel.getStyle().setBgTransparency(0x00);
+		tmpLabel.setBorderPainted(false);
 
-	if (suiteIcon != null) {
-	    return suiteIcon;
+		addComponent(createPair(Resource.getString
+								(ResourceConstants.AMS_ADVANCED), tmpLabel));
+
+		/* set is trusted */
+		CheckBox checkBox = new CheckBox();
+		checkBox.getStyle().setBgTransparency(0x00);
+		checkBox.setBorderPainted(false);
+		checkBox.setSelected(midletSuite.isTrusted());
+		checkBox.setFocusable(false);
+		addComponent(createPair(Resource.getString
+								(ResourceConstants.AMS_MGR_TRUSTED),
+								checkBox));
+		/* set is verified */
+		if (Constants.VERIFY_ONCE && midletSuite.isVerified()) {
+			tmpLabel = new Label("");
+			tmpLabel.getStyle().setBgTransparency(0x00);
+			tmpLabel.setBorderPainted(false);
+			addComponent(createPair(Resource.getString
+									(ResourceConstants.AMS_VERIFIED_CLASSES), tmpLabel));
+		}
+
+		/* set authorized by */
+		String[] authPath = installInfo.getAuthPath();
+		if (authPath != null) {
+			Container c = new Container();
+			for (int i = 0; i < authPath.length; i++) {
+				tmpLabel = new Label(authPath[i]);
+				tmpLabel.getStyle().setBgTransparency(0x00);
+				tmpLabel.setBorderPainted(false);
+			}
+
+			addComponent(createPair(Resource.getString
+									(ResourceConstants.AMS_AUTHORIZED_BY), c));
+		}
+
+		/* set list connections */
+		String listConnections = PushRegistryInternal.listConnections(
+																	 midletSuite.getID(), false);
+		if (listConnections != null) {
+			tmpLabel = new Label(listConnections);
+			tmpLabel.getStyle().setBgTransparency(0x00);
+			tmpLabel.setBorderPainted(false);
+
+			addComponent(createPair(Resource.getString
+									(ResourceConstants.AMS_AUTO_START_CONN),
+									tmpLabel));
+		}
+
 	}
 
-	if (numberOfMidlets == 1) {
-	    srcIconName = new String("_single8");
-	}
-	else {
-	    srcIconName = new String("_suite8");
+	public void actionPerformed(ActionEvent evt) {
+		Command cmd = evt.getCommand();
+
+		switch (cmd.getId()) {
+		case ResourceConstants.BACK:
+			mainForm.show();
+			break;
+		}
 	}
 
-	System.out.println("srcIconName is" + srcIconName);
-	sourceImage = GraphicalInstaller.getImageFromInternalStorage(srcIconName);
-	System.out.println("Source image is " + sourceImage);
-	suiteIcon = AppManagerUIImpl.convertImage(sourceImage);
-	System.out.println("suiteIcon is " + suiteIcon);
 
-	return suiteIcon;
-    }
+	/**
+	 * Helper method that allows us to create a pair of components label and the given
+	 * component in a horizontal layout with a minimum label width
+	 */
+	protected Container createPair(String label, Component c) {
+		Container pair = new Container(new BorderLayout());
+		int rows = 1;
+		if (label.length() > MAX_COLS) {
+			rows = 2;
+		}
+		TextArea t = new TextArea(label, rows, MAX_COLS);
+		t.getStyle().setBgTransparency(0x00);
+		t.getStyle().setFont(font);
+		t.setBorderPainted(false);
+		t.setEditable(false);
+		pair.addComponent(BorderLayout.WEST,t);
+		pair.addComponent(BorderLayout.CENTER, c);
+		return pair;
+	}
+
+
+	/**
+	* Gets the single MIDlet suite icon from storage.
+	*
+	* @return icon image
+	*/
+	private Image getSuiteIcon() {
+		if (numberOfMidlets == 1) {
+			return midletIcon;
+		}
+		return suiteIcon;
+	}
+
+	private void createIcons() {
+		javax.microedition.lcdui.Image sourceImage;
+
+		/* create midlet icon */
+		sourceImage = GraphicalInstaller.getImageFromInternalStorage(new String("_single8"));
+		midletIcon = AppManagerUIImpl.convertImage(sourceImage);
+
+		/* create midlets suite icon */
+		sourceImage = GraphicalInstaller.getImageFromInternalStorage(new String("_suite8"));
+		suiteIcon = AppManagerUIImpl.convertImage(sourceImage);
+	}
 }
