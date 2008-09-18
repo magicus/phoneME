@@ -39,6 +39,16 @@ else # ifneq ($(FILTER_OBJECTS)x,x)
 PORTING_OBJECTS+=$(TEMP_OBJECTS)
 endif # ifneq ($(FILTER_OBJECTS)x,x)
 
+ifeq ($(USE_NATIVE_AMS_UI), true)
+
+ifneq ($(FILTER_OBJECTS_NAMS_UI)x,x)
+NAMS_UI_OBJECTS+=$(filter-out $(FILTER_OBJECTS_NAMS_UI),$(TEMP_OBJECTS))
+else
+NAMS_UI_OBJECTS+=$(TEMP_OBJECTS)
+endif
+
+endif
+
 NOTIFIER_OBJECTS=$(patsubst %.c,%.obj,$(NOTIFIER_SOURCE))
 
 ifneq ($(UTILITIES)x, x)
@@ -51,7 +61,16 @@ EXTRA_LDFLAGS+=$(NOTIFIERS_LIB)
 endif
 PROPERTY_OBJECTS=$(addsuffix .obj,$(PROPERTY_FILES))
 
+ifeq ($(USE_NATIVE_AMS_UI), true)
+
+local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib \
+    $(JAVACALL_OUTPUT_LIB_DIR)/javacall_nams_ui$(BUILD_EXT).lib
+
+else
+
 local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
+
+endif
 
 ifeq ($(VC8CE_ARCH_PATH),)
 CC=cl.exe
@@ -140,6 +159,18 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/javacall_static_properties.obj: $(STATIC_PROPERTIES_C
 	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
 
 JAVACALL_EXTRA_LIBS::
+
+ifeq ($(USE_NATIVE_AMS_UI), true)
+
+$(JAVACALL_OUTPUT_LIB_DIR)/javacall_nams_ui$(BUILD_EXT).lib: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NAMS_UI_OBJECTS)) \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PROPERTY_OBJECTS)) \
+	$(SPECIFIC_OBJECTS)
+	@echo "...Generating Library: $@"
+	@$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
+
+endif
 
 $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \

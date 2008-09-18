@@ -31,11 +31,13 @@
 #include "javacall_memory.h"
 #include "javacall_dir.h"
 #include "javacall_lcd.h"
-#include "javacall_nams.h"
+#include "javacall_ams_app_manager.h"
+#include "javacall_ams_platform.h"
 
 /**
  * Inform on completion of the previously requested operation.
  *
+ * @param operation code of the completed operation
  * @param appID The ID used to identify the application
  * @param pResult Pointer to a static buffer containing
  *                operation-dependent result
@@ -51,20 +53,16 @@ void javacall_ams_operation_completed(javacall_opcode operation,
 }
 
 /**
- * Inform on change of the VM'slifecycle status.
+ * Java invokes this function to inform the platform on change of the system
+ * lifecycle status.
  *
- * Java will invoke this function whenever the lifecycle status of the running
- * VM is changed
- * 
- * @param state new state of the running VM. Can be either,
+ * @param state new state of the running Java system. Can be either,
  *        <tt>JAVACALL_SYSTEM_STATE_ACTIVE</tt>
  *        <tt>JAVACALL_SYSTEM_STATE_SUSPENDED</tt>
  *        <tt>JAVACALL_SYSTEM_STATE_STOPPED</tt>
  *        <tt>JAVACALL_SYSTEM_STATE_ERROR</tt>
- *        <tt>JAVACALL_MIDLET_STATE_ERROR</tt>
  */
 void javacall_ams_system_state_changed(javacall_system_state state) {
-    (void)state;
 }
 
 /**
@@ -82,13 +80,13 @@ void javacall_ams_system_state_changed(javacall_system_state state) {
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_midlet_state_changed(javacall_midlet_state state,
-                                       const javacall_app_id appID,
+void javacall_ams_midlet_state_changed(javacall_lifecycle_state state,
+                                       javacall_app_id appID,
                                        javacall_change_reason reason) {
     int appIndex = 0;
 
     switch (state) {
-        case JAVACALL_MIDLET_STATE_PAUSED:
+        case JAVACALL_LIFECYCLE_MIDLET_PAUSED:
             if (nams_if_midlet_exist(appID) != JAVACALL_OK) {
                 /* New started midlet */
                 if (nams_add_midlet(appID) != JAVACALL_OK) {
@@ -98,12 +96,12 @@ void javacall_ams_midlet_state_changed(javacall_midlet_state state,
                 javacall_print("[NAMS] Midlet state change to paused\n");
             }
             break;
-        case JAVACALL_MIDLET_STATE_DESTROYED:
+        case JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN:
             if (nams_remove_midlet(appID) != JAVACALL_OK) {
                 javacall_print("[NAMS] Midlet can't be removed!\n");
             }
             return;
-        case JAVACALL_MIDLET_STATE_ERROR:
+        case JAVACALL_LIFECYCLE_MIDLET_ERROR:
             javacall_print("[NAMS] Midlet state error!\n");
             break;
         default:
@@ -120,7 +118,7 @@ void javacall_ams_midlet_state_changed(javacall_midlet_state state,
         /* javacall_ams_refresh_lcd(); */
     }
 }
-                                      
+
 /**
  * Inform on change of the specific MIDlet's lifecycle status.
  *
@@ -135,9 +133,9 @@ void javacall_ams_midlet_state_changed(javacall_midlet_state state,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_ui_state_changed(javacall_midlet_ui_state state,
-                                   const javacall_app_id appID,
-                                   javacall_change_reason reason) {
+void javacall_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
+                                          javacall_app_id appID,
+                                          javacall_change_reason reason) {
     int appIndex = 0;
 
     switch (state) {
@@ -170,17 +168,27 @@ void javacall_ams_ui_state_changed(javacall_midlet_ui_state state,
 }
 
 /**
- * Get path name of the directory which holds suite's RMS files.
- * @param suiteID Unique ID of the MIDlet suite
- * @param szPath  A buffer allocated to contain the returned path name string.
- *                The returned string must be double-'\0' terminated.
- * @param maxPath Buffer length of szPath
- * @return <tt>JAVACALL_OK</tt> on success, 
+ * Java invokes this function to get path name of the directory which
+ * holds the suite's RMS files.
+ *
+ * The Platform must provide an implementation of this function if the
+ * RMS is on the MIDP side.
+ *
+ * Note that memory for the parameter pRmsPath is allocated
+ * by the callee. The caller is responsible for freeing it
+ * using javacall_free().
+ *
+ * @param suiteId  [in]  unique ID of the MIDlet suite
+ * @param pRmsPath [out] a place to hold a pointer to the buffer containing
+ *                       the returned RMS path string.
+ *                       The returned string must be double-'\0' terminated.
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID, 
-                                          javacall_utf16_string szPath, 
-                                          int maxPath) {
+javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID,
+                                          javacall_utf16_string* pRmsPath) {
+#if 1
     javacall_utf16 path[JAVACALL_MAX_FILE_NAME_LENGTH*2];
     int len;
 
@@ -188,13 +196,17 @@ javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID,
         return JAVACALL_FAIL;
     }
 
-    if (len > maxPath) {
+    pRmsPath = javacall_malloc(len);
+    if (pRmsPath == NULL) {
         return JAVACALL_FAIL;
     }
 
-    memcpy(szPath, path, len);
+    memcpy(pRmsPath, path, len);
 
     return JAVACALL_OK;
+#else
+    return JAVACALL_FAIL;
+#endif
 }
 
 /**
@@ -214,17 +226,22 @@ javacall_result javacall_ams_get_domain(javacall_suite_id suiteID,
     return JAVACALL_OK;
 }
 
+//#if !ENABLE_NATIVE_AMS_UI
+
 /**
- * Get permission set of the suite.
- * @param suiteID       Unique ID of the MIDlet suite
- * @param pPermissions  Pointer to a javacall_ext_ams_permission_set structure
- *                      to contain returned permission setttings
- * @return <tt>JAVACALL_OK</tt> on success, 
- *         <tt>JAVACALL_FAIL</tt>
+ * App Manager invokes this function to get permissions of the suite.
+ *
+ * Note: memory for pPermissions array is allocated and freed by the caller.
+ *
+ * @param suiteId       [in]     unique ID of the MIDlet suite
+ * @param pPermissions  [in/out] array of JAVACALL_AMS_NUMBER_OF_PERMISSIONS
+ *                               elements that will be filled with the
+ *                               current permissions' values on exit
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-javacall_ams_get_permissions(javacall_suite_id suiteID,
-                             javacall_ams_permission_set* pPermissions) {
+javacall_ams_suite_get_permissions(javacall_suite_id suiteID,
+                                   javacall_ams_permission_val* pPermissions) {
     if (nams_get_midlet_permissions(suiteID, pPermissions) != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
@@ -250,24 +267,58 @@ javacall_ams_set_permission(javacall_suite_id suiteID,
 }
 
 /**
- * Set permission set of the suite.
- * @param suiteID       Unique ID of the MIDlet suite
- * @param pPermissions  Pointer to a javacall_ext_ams_permission_set structure
- *                      to contain returned permission setttings
- * @return <tt>JAVACALL_OK</tt> on success, 
- *         <tt>JAVACALL_FAIL</tt>
+ * App Manager invokes this function to set permissions of the suite.
+ *
+ * @param suiteId       [in]  unique ID of the MIDlet suite
+ * @param pPermissions  [in]  array of JAVACALL_AMS_NUMBER_OF_PERMISSIONS
+ *                            elements containing the permissions' values
+ *                            to be set
+ *
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-javacall_ams_set_permissions(javacall_suite_id suiteID,
-                             javacall_ams_permission_set* pPermissions) {
+javacall_ams_suite_set_permissions(javacall_suite_id suiteID,
+                                   javacall_ams_permission_val* pPermissions) {
     int i;
     for (i = JAVACALL_AMS_PERMISSION_HTTP;
             i < JAVACALL_AMS_PERMISSION_LAST; i ++) {
         if (nams_set_midlet_permission(suiteID, (javacall_ams_permission)i,
-            pPermissions->permission[i]) != JAVACALL_OK) {
+                                       pPermissions[i]) != JAVACALL_OK) {
             return JAVACALL_FAIL;
         }
     }
+    return JAVACALL_OK;
+}
+
+//#endif /* ENABLE_NATIVE_AMS_UI */
+
+/**
+ * This function is called by the installer when some action is required
+ * from the user.
+ *
+ * It must be implemented at that side (Java or Platform) where the
+ * application manager is located.
+ *
+ * After processing the request, javanotify_ams_install_answer() must
+ * be called to report the result to the installer.
+ *
+ * @param requestCode   identifies the requested action
+ *                      in pair with pInstallState->appId uniquely
+ *                      identifies this request
+ * @param pInstallState pointer to a structure containing all information
+ *                      about the current installation state
+ * @param pRequestData  pointer to request-specific data (may be NULL)
+ *
+ * @return <tt>JAVACALL_OK</tt> if handling of the request was started
+ *                              successfully,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result
+javacall_ams_install_ask(javacall_ams_install_request_code requestCode,
+                         const javacall_ams_install_state* pInstallState,
+                         const javacall_ams_install_data* pRequestData) {
+    javacall_print("[NAMS] javacall_ams_install_ask()\n");
+
     return JAVACALL_OK;
 }
 
@@ -441,14 +492,14 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
 
     if (nams_string_to_utf16(key1, strlen(key1), &uKey1, strlen(key1)) !=
             JAVACALL_OK) {
-        javacall_print("[NAMS] javacall_ams_getSuiteID "
+        javacall_print("[NAMS] javacall_ams_get_suite_id "
                        "nams_string_to_utf16 error\n");
         return JAVACALL_FAIL;
     }
 
     if (nams_string_to_utf16(key2, strlen(key2), &uKey2, strlen(key2)) !=
             JAVACALL_OK) {
-        javacall_print("[NAMS] javacall_ams_getSuiteID "
+        javacall_print("[NAMS] javacall_ams_get_suite_id "
                        "nams_string_to_utf16 error\n");
         return JAVACALL_FAIL;
     }
@@ -498,25 +549,63 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
 }
 
 /**
- * VM invokes this function to get the image cache path.
- * @param suiteID   unique ID of the MIDlet suite
- * @param cachePath buffer for Platform store the image cache path
- * @param cachePathLen the length of cachePath
+ * Installer invokes this function to inform the application manager about
+ * the current installation progress.
  *
- * @return <tt>JAVACALL_OK</tt> on success, 
+ * Note: when installation is completed, javacall_ams_operation_completed()
+ *       will be called to report installation status; its last parameter
+ *       holding a pointer to an operation-specific data will point to a
+ *       javacall_ams_install_data structure.
+ *
+ * @param pInstallState pointer to a structure containing all information
+ *                      about the current installation state
+ * @param installStatus defines current installation step
+ * @param currStepPercentDone percents completed (0 - 100), -1 if unknown
+ * @param totalPercentDone percents completed (0 - 100), -1 if unknown
+ */
+void
+javacall_ams_install_report_progress(
+        const javacall_ams_install_state* pInstallState,
+        javacall_ams_install_status installStatus,
+        int currStepPercentDone, int totalPercentDone) {
+    javacall_print("[NAMS] javacall_ams_install_report_progress()\n");
+
+    (void)pInstallState;
+    (void)installStatus;
+    (void)currStepPercentDone;
+    (void)totalPercentDone;
+}
+
+/**
+ * Java invokes this function to get the image cache path.
+ *
+ * The Platform must always provide an implementation of this function.
+ *
+ * Note that memory for the parameter pCachePath is allocated
+ * by the callee. The caller is responsible for freeing it
+ * using javacall_free().
+ *
+ * @param suiteId    [in]  unique ID of the MIDlet suite
+ * @param pCachePath [out] a place to hold a pointer to the buffer where
+ *                         the Platform will store the image cache path
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_get_resource_cache_path(const javacall_suite_id suiteID,
-                                     javacall_utf16_string cachePath,
-                                     int cachePathLen) {
+javacall_ams_get_resource_cache_path(javacall_suite_id suiteId,
+                                     javacall_utf16_string* pCachePath) {
+#if 0
     javacall_result res;
     int pathLen;
 
-    res = nams_db_get_suite_home(suiteID, cachePath, &pathLen);
+    res = nams_db_get_suite_home(suiteId, cachePath, &pathLen);
     if (res != JAVACALL_OK || pathLen > cachePathLen) {
         res = JAVACALL_FAIL;
     }
 
     return JAVACALL_OK;
+#else
+    return JAVACALL_FAIL;
+#endif
 }

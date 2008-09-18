@@ -100,8 +100,9 @@ void javanotify_shutdown(void);
 
 /**
  * A notification function for telling Java to perform installation of
- * a MIDlet via http,
+ * a content via http.
  *
+<<<<<<< .working
  * The given url should be of the form http://www.sun.com/a/b/c/d.jad then
  * Java will start a graphical installer will download the MIDlet
  * fom the internet.
@@ -125,9 +126,6 @@ void javanotify_install_midlet(const char * httpUrl);
 void javanotify_install_midlet_from_browser(const char * browserUrl, const char* localResPath);
 
 /**
- * A notification function for telling Java to perform installation of
- * a content via http, for SprintAMS.
- *
  * This function requires that the descriptor (JADfile, or GCDfile)
  * has already been downloaded and resides somewhere on the file system.
  * The function also requires the full URL that was used to download the
@@ -159,29 +157,6 @@ void javanotify_install_content(const char * httpUrl,
                                 unsigned int descFilePathLen,
                                 javacall_bool isJadFile,
                                 javacall_bool isSilent);
-
-/**
- * A notification function for telling Java to perform installation of
- * a MIDlet from filesystem,
- *
- * The installation will be performed in the background without launching
- * the graphic installer application.
- *
- * The given path is the full path to MIDlet's jad file or jad.
- * In case the MIDlet's jad file is specified, then
- * the MIDlet's jar file muts reside in the same directory as the jad
- * file.
- *
- * @param jadFilePath full path the jad (or jar) file which is of the form:
- *        file://a/b/c/d.jad
- * @param jadFilePathLen length of the file path
- * @param userWasAsked a flag indicating whether the platform already asked
- *        the user for permission to download and install the application
- *        so there's no need to ask again and we can immediately install.
- */
-void javanotify_install_midlet_from_filesystem(const javacall_utf16* jadFilePath,
-                                               int jadFilePathLen,
-                                               int userWasAsked);
 
 /**
  * @enum javacall_lifecycle_state
@@ -260,29 +235,98 @@ void javanotify_start_java_with_arbitrary_args(int argc, char* argv[]);
  * @brief Java lifecycle state
  */
 typedef enum {
-    /** MIDlet started */
+    /** MIDlet started (ACTIVE state) */
     JAVACALL_LIFECYCLE_MIDLET_STARTED           =10,
-    /** MIDlet paused */
+    /** MIDlet paused (PAUSED state) */
     JAVACALL_LIFECYCLE_MIDLET_PAUSED            =11,
-    /** MIDlet resumed */
+    /** MIDlet resumed (ACTIVE state) */
     JAVACALL_LIFECYCLE_MIDLET_RESUMED           =12,
-    /** MIDlet shutdown */
+    /** MIDlet shutdown (DESTROYED state) */
     JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN          =13,
     /** MIDlet install completed */
     JAVACALL_LIFECYCLE_MIDLET_INSTALL_COMPLETED =15,
-    /** MIDlet paused internally */
+    /** MIDlet paused internally (PAUSED state) */
     JAVACALL_LIFECYCLE_MIDLET_INTERNAL_PAUSED   =16,
-    /** MIDlet resumed internally */
+    /** MIDlet resumed internally (ACTIVE state) */
     JAVACALL_LIFECYCLE_MIDLET_INTERNAL_RESUMED  =17,
-    /** MIDlet destroyed internally */
-    JAVACALL_LIFECYCLE_MIDLET_DESTROY           =18
-} javacall_lifecycle_state ;
+    /** Error starting MIDlet                    */
+    JAVACALL_LIFECYCLE_MIDLET_ERROR             =18
+} javacall_lifecycle_state;
+
+/* for compatibility with legacy code */
+#define JAVACALL_LIFECYCLE_MIDLET_DESTROY JAVACALL_LIFECYCLE_MIDLET_ERROR
+
+/**
+ * @enum javacall_change_reason
+ * @brief The reason the lifecycle state was changed
+ */
+typedef enum {
+    /**
+     * MIDlet start error status, when a MIDlet's constructor
+     * fails to catch a runtime exception.
+     */
+    JAVACALL_MIDLET_CONSTRUCTOR_FAILED,
+
+    /** MIDlet start error status, when a MIDlet suite is not found */
+    JAVACALL_MIDLET_SUITE_NOT_FOUND,
+
+    /**
+     * MIDlet start error status, when a class needed to create a MIDlet
+     * is not found.
+     */
+    JAVACALL_MIDLET_CLASS_NOT_FOUND,
+
+    /**
+     * MIDlet start error status, when intantiation exception is
+     * thrown during the intantiation of a MIDlet.
+     */
+    JAVACALL_MIDLET_INSTANTIATION_EXCEPTION,
+
+    /**
+     * MIDlet start error status, when illegal access exception
+     * is thrown during the intantiation of a MIDlet.
+     */
+    JAVACALL_MIDLET_ILLEGAL_ACCESS_EXCEPTION,
+
+    /**
+     * MIDlet start error status, when a MIDlet's constructor
+     * runs out of memory.
+     */
+    JAVACALL_MIDLET_OUT_OF_MEM_ERROR,
+
+    /**
+     * MIDlet start error status, when a the system cannot
+     * reserve enough resource to start a MIDlet suite.
+     */
+    JAVACALL_MIDLET_RESOURCE_LIMIT,
+
+    /**
+     * MIDlet start error status, when system has exceeded
+     * the maximum Isolate count.
+     */
+    JAVACALL_MIDLET_ISOLATE_RESOURCE_LIMIT,
+
+    /**
+     * MIDlet start error status, when a MIDlet's isolate
+     * constructor throws to catch a runtime exception.
+     */
+    JAVACALL_MIDLET_ISOLATE_CONSTRUCTOR_FAILED,
+
+    /** MIDlet was forced to be terminated */
+    JAVACALL_MIDP_REASON_TERMINATED,
+
+    /** MIDlet exit */
+    JAVACALL_MIDP_REASON_EXIT,
+
+    /** Other */
+    JAVACALL_MIDP_REASON_OTHER
+} javacall_change_reason;
 
 /**
  * Inform on change of the lifecycle status of the VM
  *
  * Java will invoke this function whenever the lifecycle status of the running
- * MIDlet is changes, for example when the running MIDlet has entered paused
+ * MIDlet is changed, for example when the running MIDlet has entered paused
  * status, the MIDlet has shut down etc.
  *
  * @param state new state of the running MIDlet. can be either,
