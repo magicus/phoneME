@@ -405,6 +405,15 @@ public class OperationImpl extends Operation {
         }
 
         InputStream input = http.openInputStream();
+        
+// TRACE input
+//java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+//byte b[] = new byte[128]; int l;
+//while( (l = input.read(b)) > 0 ) out.write(b, 0, l);
+//input = new java.io.ByteArrayInputStream( out.toByteArray() );
+//System.out.println( "TRACE: " + getClass().getName() + ".setupResStream():\n" +
+//				out.toString());
+// end of TRACE         
 
         if (response == HttpConnection.HTTP_OK) {
 
