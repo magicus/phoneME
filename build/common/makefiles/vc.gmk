@@ -44,14 +44,9 @@ CPP		= cl
 CC_OUTPUT	= -Fo
 
 LD 		= link
-ifneq ($(CREATE_MIDP_LIB),)
-ifeq ($(CREATE_MIDP_LIB),true)
-override CREATE_MIDP_LIB=lib
-$(warning CREATE_MIDP_LIB was overridden to : $(CREATE_MIDP_LIB))
-endif
-ifeq ($(CREATE_MIDP_LIB),shared_lib)
+
+ifeq ($(CREATE_MIDP_SHARED_LIB),true)
 LD_FLAGS 	+= /DLL
-endif
 endif
 
 LD_OUTPUT	= -out:

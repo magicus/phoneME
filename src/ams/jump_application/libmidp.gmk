@@ -35,4 +35,3 @@
 #
 # Create a libmidp.so for non-ROMized build.
 #
-MIDP_SHARED_LIB_DEPS = $(OBJ_FILES)

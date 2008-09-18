@@ -33,13 +33,6 @@
 ############################################################
 
 #
-# Create a libmidp.so if we are not statically linking with cvm
-#
-ifneq ($(CVM_STATICLINK_LIBS), true)
-MIDP_SHARED_LIB_DEPS = $(MIDP_DEPS) $(OBJ_FILES)
-endif
-
-#
 # Create runMidlet script
 #
 ifneq ($(CVM_STATICLINK_LIBS), true)
