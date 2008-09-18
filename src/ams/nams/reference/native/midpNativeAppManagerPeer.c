@@ -835,6 +835,8 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_main_NativeAppManagerPeer_exitInternal(void) {
     int value = (int)KNI_GetParameterAsInt(1);
 
+    midp_remove_all_event_listeners(ANY_EVENT_LISTENER);
+
     midp_exitVM(value);
     KNI_ReturnVoid();
 }

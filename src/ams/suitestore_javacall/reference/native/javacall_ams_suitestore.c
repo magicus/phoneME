@@ -62,6 +62,12 @@ static int javacall_permission2midp(javacall_ams_permission jcPermission);
 static jbyte
 javacall_permission_val2midp(javacall_ams_permission_val jcPermissionVal);
 
+static MIDPError
+pcsl_string_array2javacall_impl(const pcsl_string* pPcslStrArray,
+                                jint srcArrSize,
+                                javacall_utf16_string** ppOutArray,
+                                javacall_int32* pOutArraySize);
+
 /*----------------------- Suite Storage: Common API -------------------------*/
 
 /**
@@ -98,10 +104,18 @@ javanotify_ams_suite_storage_cleanup() {
  */
 const javacall_utf16_string
 javanotify_ams_suite_suiteid2javacall_string(javacall_suite_id value) {
-    static javacall_utf16_string jsSuiteId = {0};
-    /* IMPL_NOTE: need to implement! */
-    /*const pcsl_string* pPcslStrVal =
-        midp_suiteid2pcsl_string((SuiteIdType)value);*/
+    static javacall_utf16 jsSuiteId[GET_SUITE_ID_LEN(value) + 1];
+    jsize convertedLen;
+    pcsl_string_status pcslRes;
+    const pcsl_string* pPcslStrVal =
+        midp_suiteid2pcsl_string((SuiteIdType)value);
+
+    pcslRes = pcsl_string_convert_to_utf16(pPcslStrVal, jsSuiteId,
+        (jsize)(sizeof(jsSuiteId) / sizeof(javacall_utf16)), &convertedLen);
+    if (pcslRes != PCSL_STRING_OK) {
+        jsSuiteId[0] = 0;
+    }
+
     return jsSuiteId;
 }
 
@@ -427,11 +441,17 @@ javanotify_ams_suite_get_install_info(javacall_suite_id suiteId,
         pInstallInfo->isTrusted = (midpInstallInfo.trusted == KNI_TRUE) ?
             JAVACALL_TRUE : JAVACALL_FALSE;
 
+        /* convert the authorization path */
         pInstallInfo->authPathLen = (javacall_int32)midpInstallInfo.authPathLen;
         if (midpInstallInfo.authPathLen > 0) {
-            // TODO !!!
+            status = pcsl_string_array2javacall_impl(
+                midpInstallInfo.authPath_as, midpInstallInfo.authPathLen,
+                &pInstallInfo->pAuthPath, &pInstallInfo->authPathLen);
+            if (status != ALL_OK) {
+                break;
+            }
         } else {
-            pInstallInfo->authPath = NULL;
+            pInstallInfo->pAuthPath = NULL;
         }
 
         pInstallInfo->verifyHashLen = midpInstallInfo.verifyHashLen;
@@ -454,12 +474,45 @@ javanotify_ams_suite_get_install_info(javacall_suite_id suiteId,
             pInstallInfo->pVerifyHash = NULL;
         }
 
-        /* IMPL_NOTE: to be implemented !!!
-        pInstallInfo->jadProps.numberOfProperties = 0;
-        /*     midpInstallInfo.jadProps.numberOfProperties; */
+        /* converting the properties from JAD */
+        if (pInstallInfo->jadUrl != NULL) {
+            pInstallInfo->jadProps.numberOfProperties =
+                (javacall_int32)midpInstallInfo.jadProps.numberOfProperties;
 
-        pInstallInfo->jarProps.numberOfProperties = 0;
-        /*    midpInstallInfo.jarProps.numberOfProperties; */
+            if (midpInstallInfo.jadProps.numberOfProperties > 0) {
+                status = pcsl_string_array2javacall_impl(
+                    midpInstallInfo.jadProps.pStringArr,
+                    midpInstallInfo.jadProps.numberOfProperties,
+                    &pInstallInfo->jadProps.pStringArr,
+                    &pInstallInfo->jadProps.numberOfProperties);
+                if (status != ALL_OK) {
+                    break;
+                }
+            } else {
+                pInstallInfo->jadProps.pStringArr = NULL;
+            }
+        } else {
+            pInstallInfo->jadProps.numberOfProperties = 0;
+            pInstallInfo->jadProps.pStringArr = NULL;
+        }
+
+        /* converting the properties from JAR */
+        pInstallInfo->jarProps.numberOfProperties =
+            (javacall_int32)midpInstallInfo.jarProps.numberOfProperties;
+
+        if (midpInstallInfo.jarProps.numberOfProperties > 0) {
+            status = pcsl_string_array2javacall_impl(
+                midpInstallInfo.jarProps.pStringArr,
+                midpInstallInfo.jarProps.numberOfProperties,
+                &pInstallInfo->jarProps.pStringArr,
+                &pInstallInfo->jarProps.numberOfProperties);
+            if (status != ALL_OK) {
+                break;
+            }
+        } else {
+            pInstallInfo->jarProps.pStringArr = NULL;
+        }
+
     } while (0);
 
     midp_free_install_info(&midpInstallInfo);
@@ -497,8 +550,35 @@ void javanotify_ams_suite_free_install_info(
             javacall_free(pInstallInfo->pVerifyHash);
         }
 
-        for (i = 0; i < pInstallInfo->authPathLen; i++) {
-            javacall_free(&pInstallInfo->authPath[i]);
+        /* free the auth. path */
+        if (pInstallInfo->pAuthPath != NULL) {
+            for (i = 0; i < pInstallInfo->authPathLen; i++) {
+                javacall_free(&pInstallInfo->pAuthPath[i]);
+            }
+
+            javacall_free(pInstallInfo->pAuthPath);
+        }
+
+        /* free the properties from JAD */
+        if (pInstallInfo->jadProps.pStringArr != NULL) {
+            for (i = 0; i < pInstallInfo->jadProps.numberOfProperties; i++) {
+                if (pInstallInfo->jadProps.pStringArr[i] != NULL) {
+                    javacall_free(pInstallInfo->jadProps.pStringArr[i]);
+                }
+            }
+
+            javacall_free(pInstallInfo->jadProps.pStringArr);
+        }
+
+        /* free the properties from JAR */
+        if (pInstallInfo->jarProps.pStringArr != NULL) {
+            for (i = 0; i < pInstallInfo->jarProps.numberOfProperties; i++) {
+                if (pInstallInfo->jarProps.pStringArr[i] != NULL) {
+                    javacall_free(pInstallInfo->jarProps.pStringArr[i]);
+                }
+            }
+
+            javacall_free(pInstallInfo->jarProps.pStringArr);
         }
 
         javacall_free(pInstallInfo);
@@ -558,8 +638,13 @@ javanotify_ams_suite_store_suite(
                            const javacall_ams_suite_install_info* pInstallInfo,
                            const javacall_ams_suite_settings* pSuiteSettings,
                            const javacall_ams_suite_info* pSuiteInfo) {
-    /* IMPL_NOTE: to be implemented! */
-    return JAVACALL_FAIL;
+    /*
+     * IMPL_NOTE: to be implemented! Currently it's not critical to have this
+     *            function implemented, it is required only for the case when
+     *            the installer is located on the Platform's side, but the suite
+     *            strorage - on our side.
+     */
+    return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /*------------- Suite Storage: interface to Application Manager -------------*/
@@ -954,6 +1039,33 @@ javanotify_ams_suite_free_info(javacall_ams_suite_info* pSuiteInfo) {
 javacall_result
 javanotify_ams_suite_get_domain(javacall_suite_id suiteId,
                                 javacall_ams_domain* pDomainId) {
+    javacall_result jcRes;
+    javacall_ams_suite_info* pSuiteInfo;
+
+    if (pDomainId == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    if ((SuiteIdType)suiteId == INTERNAL_SUITE_ID) {
+        /* internal suites belong to the manufacturer domain */
+        *pDomainId = JAVACALL_AMS_DOMAIN_MANUFACTURER;
+        return JAVACALL_OK;
+    }
+
+    jcRes = javanotify_ams_suite_get_info(suiteId, &pSuiteInfo);
+    if (jcRes != JAVACALL_OK) {
+        return jcRes;
+    }
+
+    /*
+     * IMPL_NOTE: instead of revealing the actual domain, here we just check
+     *            if the domain is trusted or not for simplicity.
+     */
+    *pDomainId = (pSuiteInfo->isTrusted == JAVACALL_TRUE ?
+        JAVACALL_AMS_DOMAIN_THIRDPARTY : JAVACALL_AMS_DOMAIN_UNTRUSTED);
+
+    javanotify_ams_suite_free_info(pSuiteInfo);
+
     return JAVACALL_OK;
 }
 
@@ -1719,8 +1831,31 @@ static javacall_result midp_error2javacall(MIDPError midpErr) {
  *
  * @return an error code, ALL_OK if no errors
  */
-MIDPError midp_javacall_str2pcsl_str(javacall_const_utf16_string pSrcStr,
-                                     pcsl_string* pDstStr) {
+static MIDPError
+midp_javacall_str2pcsl_str(javacall_const_utf16_string pSrcStr,
+                           pcsl_string* pDstStr) {
+    jsize srcStrLen;
+    pcsl_string_status pcslRes;
+
+    if (pDstStr == NULL) {
+        return BAD_PARAMS;
+    }
+
+    if (pSrcStr == NULL) {
+        *pDstStr = PCSL_STRING_NULL;
+        return ALL_OK;
+    }
+
+    if (javautil_unicode_utf16_ulength(pSrcStr, &srcStrLen) != JAVACALL_OK) {
+        return GENERAL_ERROR;
+    }
+
+    pcslRes =
+        pcsl_string_convert_from_utf16((jchar*)pSrcStr, srcStrLen, pDstStr);
+    if (pcslRes != PCSL_STRING_OK) {
+        return OUT_OF_MEMORY;
+    }
+
     return ALL_OK;
 }
 
@@ -1735,8 +1870,9 @@ MIDPError midp_javacall_str2pcsl_str(javacall_const_utf16_string pSrcStr,
  *
  * @return an error code, ALL_OK if no errors
  */
-MIDPError midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,
-                                     javacall_utf16_string* pDstStr) {
+static MIDPError
+midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,
+                           javacall_utf16_string* pDstStr) {
     jsize len = pcsl_string_utf16_length(pSrcStr);
     const jchar* pBuf = pcsl_string_get_utf16_data(pSrcStr);
 
@@ -1773,10 +1909,10 @@ MIDPError midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,
  *
  * @return an error code, ALL_OK if no errors
  */
-MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
-                            javacall_utf16_string* pDisplayName,
-                            javacall_utf16_string* pIconName,
-                            javacall_utf16_string* pClassName) {
+static MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
+                                   javacall_utf16_string* pDisplayName,
+                                   javacall_utf16_string* pIconName,
+                                   javacall_utf16_string* pClassName) {
     MIDPError status; 
     pcsl_string_status err;
     pcsl_string fieldValue, tmpFieldValue;
@@ -1929,6 +2065,76 @@ javacall_permission_val2midp(javacall_ams_permission_val jcPermissionVal) {
     }
 
     return midpPermissionVal;
+}
+
+/**
+ * Converts the given array of pcsl strings into an array of javacall strings.
+ *
+ * Note: the caller is responsible for freeing memory allocated for
+ *       javacall strings in this function.
+ *       Even if the function has returned an error, *pOutArraySize will
+ *       hold the number of entries actually allocated in the output array.
+ *
+ * @param pPcslStrArray [in]  array of pcsl strings to convert
+ * @param srcArraySize  [in]  number of strings in the source array
+ * @param ppOutArray    [out] on exit will hold a pointer to
+ *                            the array of javacall strings
+ * @param pOutArraySize [out] on exit will hold the size of
+ *                            the allocated string array
+ *
+ * @return ALL_OK if succeeded, an error code otherwise
+ */
+static MIDPError
+pcsl_string_array2javacall_impl(const pcsl_string* pPcslStrArray,
+                                jint srcArraySize,
+                                javacall_utf16_string** ppOutArray,
+                                javacall_int32* pOutArraySize) {
+    int i;
+    jsize strSize, convertedLength;
+    pcsl_string_status pcslRes;
+    javacall_utf16_string* pResArray;
+    javacall_int32 outSize = 0;
+    MIDPError status = ALL_OK;
+
+    do {
+        /* allocate memory to hold the output array */
+        pResArray = (javacall_utf16_string*)javacall_malloc(
+            srcArraySize * sizeof(javacall_utf16_string));
+
+        if (pResArray == NULL) {
+            outSize = 0;
+            status = OUT_OF_MEMORY;
+            break;
+        }
+
+        /* convert each string in the source array */
+        for (i = 0; i < srcArraySize; i++) {
+            strSize = pcsl_string_utf16_length(&pPcslStrArray[i]);
+
+            pResArray[i] =
+                (javacall_utf16_string)javacall_malloc((strSize + 1) << 1);
+
+            if (pResArray[i] == NULL) {
+                /* save the current array size for proper freeing */
+                outSize = i;
+                status = OUT_OF_MEMORY;
+                break;
+            }
+
+            pcslRes = pcsl_string_convert_to_utf16(&pPcslStrArray[i],
+                (jchar*)pResArray[i], strSize, &convertedLength);
+
+            if (pcslRes != PCSL_STRING_OK) {
+                status = GENERAL_ERROR;
+                break;
+            }
+        }
+    } while (0);
+
+    *pOutArraySize = outSize;
+    *ppOutArray = pResArray;
+
+    return status;
 }
 
 #undef FREE_JC_STRING

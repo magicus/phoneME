@@ -65,6 +65,8 @@ jboolean g_fAnswer = JAVACALL_FALSE, g_fAnswerReady = JAVACALL_FALSE;
  *
  * Note: the caller is responsible for freeing memory allocated for
  *       javacall strings in this function.
+ *       Even if the function has returned an error, *pArraySize will
+ *       hold the number of entries actually allocated in the output array.
  *
  * @param javaObj    [in]  java array of strings
  * @param tmpHandle  [in]  temporary KNI handle
@@ -79,7 +81,7 @@ static javacall_result
 java_str_array2javacall_impl(jobject javaObj, jobject tmpHandle,
                              javacall_int32* pArraySize,
                              javacall_utf16_string** ppArray) {
-    javacall_int32 tmpArrSize = 0;
+    javacall_int32 tmpArrSize;
     javacall_utf16_string* pTmpArray = NULL;
     javacall_result jcRes = JAVACALL_OK;
 
@@ -109,7 +111,7 @@ java_str_array2javacall_impl(jobject javaObj, jobject tmpHandle,
                          * save the current number of strings in the array
                          * to free them later
                          */
-                        tmpArrSize = (i == 0) ? 0 : i - 1;
+                        tmpArrSize = i;
                         jcRes = JAVACALL_OUT_OF_MEMORY;
                         break;
                     }
@@ -129,7 +131,8 @@ java_str_array2javacall_impl(jobject javaObj, jobject tmpHandle,
                 break;
             }
         } else {
-            pTmpArray = NULL;
+            tmpArrSize = 0;
+            pTmpArray  = NULL;
         }
     } while (0);
 
