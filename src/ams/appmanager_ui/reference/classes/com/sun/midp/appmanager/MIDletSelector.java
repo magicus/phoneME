@@ -283,7 +283,7 @@ final class MIDletSelector implements CommandListener {
     private String encodeMIDletName(MIDletProxy mp, String name) {
         int state;
         return ((mp == null) ? "o "
-            : (MIDletProxy.MIDLET_ACTIVE == (state = mp.getMidletState())) ? "A "
+            : (MIDletProxy.MIDLET_ACTIVE == (state = mp.getMidletState())) ? "* "
             : (MIDletProxy.MIDLET_PAUSED == state) ? "P "
             : (MIDletProxy.MIDLET_DESTROYED == state) ? "D "
             : "? ") + name;
