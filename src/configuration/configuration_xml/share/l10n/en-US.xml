@@ -5,29 +5,29 @@
 
   Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-  
+
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License version
   2 only, as published by the Free Software Foundation.
-  
+
   This program is distributed in the hope that it will be useful, but
   WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
   General Public License version 2 for more details (a copy is
   included at /legal/license.txt).
-  
+
   You should have received a copy of the GNU General Public License
   version 2 along with this work; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   02110-1301 USA
-  
+
   Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
   Clara, CA 95054 or visit www.sun.com if you need additional
   information or have any questions.
 -->
 <configuration>
-<localized_strings Package="com.sun.midp.l10n" 
-    Name="LocalizedStringsBase" 
+<localized_strings Package="com.sun.midp.l10n"
+    Name="LocalizedStringsBase"
     KeysClass="com.sun.midp.i18n.ResourceConstants" >
 <localized_string Key="DONE"
                 Value="Done"/>
@@ -286,8 +286,10 @@
                 Value="Move to phone"/>
 <localized_string Key="AMS_EXTRENAL_STORAGE_NAME"
                 Value="Memory card "/>
-<localized_string Key="AMS_TOGGLE_ICONS_VIEW"
-                Value="Toggle icons view "/>
+<localized_string Key="AMS_CHANGE_STYLE"
+                Value="Change view style"/>
+<localized_string Key="AMS_CHANGE_STYLE_TITLE"
+                Value="View Settings"/>
 <localized_string Key="AMS_MGR_TITLE"
                  Value="Java MIDlets"/>
 <localized_string Key="AMS_MGR_SETTINGS"

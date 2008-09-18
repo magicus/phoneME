@@ -51,7 +51,9 @@ import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midletsuite.*;
 
 
-
+/**
+ * Form to display several midlets from within the same midlet suite
+ */
 public class SelectorForm extends Form implements ActionListener  {
     /**
      * Information needed to display a list of MIDlets.
@@ -78,9 +80,9 @@ public class SelectorForm extends Form implements ActionListener  {
 		    ResourceConstants.LAUNCH);
 
     /* mapping:  button->suite info */
-    private Hashtable midletsHash = new Hashtable();
+    private Hashtable midletsHash;
     /* mapping:  suite info->button */
-    private Hashtable reverseHash = new Hashtable();
+    private Hashtable reverseHash;
     /* midlets buttons container */
     private Container buttonsContainer;
 
@@ -94,28 +96,44 @@ public class SelectorForm extends Form implements ActionListener  {
     private final int MAX_MIDLETS_IN_SUITE = 20;
     private final int SMALL_ICON_SIZE = 20;
     private final int LIST_ROW_HEIGHT = 20;
-    private final int runSpeed = 1000;
+    private final int RUN_SPEED = 500;
 
+    private int displayHeight;
+    private int displayWidth;
     private int rows = 5;
-    private int cols = 1;
 
 
+    /**
+     * Ctor.  Initialize midlet suite independent logic.
+     *
+     * @param mainForm:  main AMS form
+     * @param manager:  application manager used to run midlets
+     */
     public SelectorForm(Form mainForm, ApplicationManager manager) {
 	this.mainForm = mainForm;
 	this.manager = manager;
 
-	left = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, true, runSpeed);
-	right = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, false, runSpeed);
+	left = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, true, RUN_SPEED);
+	right = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, false, RUN_SPEED);
 
 	setTransitionOutAnimator(left);
 	setTransitionInAnimator(right);
+
+	displayHeight = com.sun.lwuit.Display.getInstance().getDisplayHeight();
+	displayWidth = com.sun.lwuit.Display.getInstance().getDisplayWidth();
+	rows = displayHeight / LIST_ROW_HEIGHT;
+	setLayout(new FlowLayout());
 
 	addCommand(backCommand);
 	addCommand(launchCmd);
 	setCommandListener(this);
     }
 
-
+    /**
+     * Set contents of the selector form
+     *
+     * @param msi midlet suite
+     */
     public void setContents(RunningMIDletSuiteInfo msi) {
 	this.msi = msi;
 	mcount = 0;
@@ -123,35 +141,34 @@ public class SelectorForm extends Form implements ActionListener  {
 	/* IMPL_NOTE:  buttonsContainer needs to be recreated for each invocation
     	    of this method to avoid showing same midlets over and over*/
 	minfo = new MIDletInfo[MAX_MIDLETS_IN_SUITE];
+
+	setTitle(msi.displayName);
 	buttonsContainer = new Container();
+	buttonsContainer.setLayout(new GridLayout(rows, 1));
+	midletsHash = new Hashtable();
+	reverseHash = new Hashtable();
 
-	try {
-	    createForm();
-	} catch ( Throwable t ) {
-	    t.printStackTrace();
-	}
-
+	/* add midlets from suite to container and hash tables*/
+	addMidlets();
+	/* clear form */
+	removeAll();
+	/* add buttons container to the form */
+	addComponent(buttonsContainer);
     }
 
-    private void createForm() {
-	System.out.println("createForm: enter");
-	MIDletSuiteStorage mss = MIDletSuiteStorage.getMIDletSuiteStorage();
 
+    /**
+     * Add midlets to the midlets buttons container
+     *
+     */
+    private void addMidlets() {
+	MIDletSuiteStorage mss = MIDletSuiteStorage.getMIDletSuiteStorage();
 	/* read midlet suite items to data structures */
 	try {
 	    readMIDletInfo(mss);
 	} catch ( Throwable t ) {
 	    t.printStackTrace();
 	}
-
-	setTitle(msi.displayName);
-
-	int displayHeight = com.sun.lwuit.Display.getInstance().getDisplayHeight();
-	int displayWidth = com.sun.lwuit.Display.getInstance().getDisplayWidth();
-	rows = displayHeight / LIST_ROW_HEIGHT;
-	buttonsContainer.setLayout(new GridLayout(rows, cols));
-
-	setLayout(new FlowLayout());
 
 	/* Add  midlets from suite */
 	for (int i = 0; i < mcount; i++) {
@@ -193,13 +210,14 @@ public class SelectorForm extends Form implements ActionListener  {
 	    midletsHash.put(button, msi);
 	    reverseHash.put(msi, button);
 	}
-
-	/* remove components from previous invocations */
-	removeAll();
-	addComponent(buttonsContainer);
     }
 
 
+    /**
+     * Commands handler dispatcher.
+     *
+     * @param evt: action event with the command ID
+     */
     public void actionPerformed(ActionEvent evt) {
 	Command cmd = evt.getCommand();
 
@@ -213,6 +231,10 @@ public class SelectorForm extends Form implements ActionListener  {
 	}
     }
 
+
+    /**
+     *	Obtains focus and launches approperiate midlet
+     */
     private void handlerLaunch() {
 	int index = buttonsContainer.getComponentIndex(getFocused());
 	System.out.println("handlerLaunch():  enter.  index is " + index);
@@ -221,10 +243,11 @@ public class SelectorForm extends Form implements ActionListener  {
 
     /**
      * Add a MIDlet to the list.
+     *
      * @param info MIDlet information to add to MIDlet
      */
     private void addMIDlet(MIDletInfo info) {
-	System.out.println("addMIDlet():  enter");
+	System.out.println("addMIDlet():  enter.  info is " + info.toString());
         if (mcount >= minfo.length) {
             MIDletInfo[] n = new MIDletInfo[mcount+4];
             System.arraycopy(minfo, 0, n, 0, mcount);
@@ -267,6 +290,10 @@ public class SelectorForm extends Form implements ActionListener  {
     }
 
 
+    /**
+     * Class needed to intercept button pressed events
+     *
+     */
     private class ButtonActionListener implements ActionListener {
 
         public void actionPerformed(ActionEvent evt) {

@@ -46,6 +46,7 @@ MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_IMPL_DIR)/classes
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/AppManagerUIImpl.java \
     $(APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/AppInfoForm.java \
+    $(APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/ThemesForm.java \
     $(APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/SplashScreen.java \
     $(APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/SelectorForm.java \
     $(APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/AppSettingsForm.java

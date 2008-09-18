@@ -61,27 +61,63 @@ import com.sun.midp.main.*;
 import com.sun.midp.midletsuite.*;
 import com.sun.midp.payment.*;
 
-public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 
+/**
+ * The Graphical MIDlet selector Screen.
+ * <p>
+ * It displays a list or grid of currently installed
+ * MIDlets/MIDlet suites (including the Installer MIDlet). Each MIDlet or
+ * MIDlet suite is represented by an icon with a name under it.
+ * An icon from a jad file for the MIDlet/MIDlet suite representation
+ * is used if possible, otherwise a default icon is used.
+ *
+ * There is a a set of commands per MIDlet/MIDlet suite. Note that
+ * the set of commands can change depending on the corresponding MIDlet state.
+ * For MIDlets/MIDlet suites that are not running the following commands are
+ * available:
+ * <ul>
+ * <li><b>Launch</b>: Launch the MIDlet or the MIDlet Selector
+ *      if it is a suite.
+ * <li><b>Remove</b>: Remove the MIDlet/MIDlet suite teh user selected
+ *      (with confirmation). </li>
+ * <li><b>Update</b>: Update the MIDlet/MIDlet suite the user selected.</li>
+ * <li><b>Info</b>: Show the user general information
+ *    of the selected MIDlet/MIdlet suite. </li>
+ * <li><b>Settings</b>: Let the user change the manager's settings.
+ * </ul>
+ *
+ * For MIDlets/MIDlet suites that are running the following commands are
+ * available:
+ * <ul>
+ * <li><b>Bring to foreground</b>: Bring the running MIDlet to foreground
+ * <li><b>End</b>: Terminate the running MIDlet
+ * <li><b>Remove</b>: Remove the MIDlet/MIDlet suite teh user selected
+ *      (with confirmation). </li>
+ * <li><b>Update</b>: Update the MIDlet/MIDlet suite the user selected.</li>
+ * <li><b>Info</b>: Show the user general information
+ *    of the selected MIDlet/MIdlet suite. </li>
+ * <li><b>Settings</b>: Let the user change the manager's settings.
+ * </ul>
+ *
+ */
+public class AppManagerUIImpl implements AppManagerUI, ActionListener {
+    /* Forms */
     private Form mainMenu;
+    private ThemesForm themesForm;
     private AppInfoForm appInfoForm;
     private AppSettingsForm appSettingsForm;
     private SelectorForm selectorForm;
     private SplashScreen splashScreen;
     private DiscoveryApp discoveryApp;
 
-    private Label label;
-    private javax.microedition.lcdui.Display display;
-    private Vector folders;
-    private Container mainContainer;
+    private Container buttonsContainer;
 
+    /* hard coded button size parameters */
     private static final int GRID_CELL_SIZE = 80;
     private static final int LIST_ROW_HEIGHT = 20;
     private static final int LARGE_ICON_SIZE = 40;
     private static final int SMALL_ICON_SIZE = 20;
 
-
-    private int elementWidth = 0;
     private int cols = 0;
     private int gridRows = 0;
     private int listRows = 0;
@@ -94,6 +130,8 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 
     private final int GRID_STYLE = 0;
     private final int LIST_STYLE = 1;
+
+    public static final String[] LAYOUTS = {"Grid", "List"};
 
     private int currentStyle = LIST_STYLE;
 
@@ -154,9 +192,10 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 
 
     /** Command object for "Toggle icons" command. */
-    private Command toggleIconsCmd = new Command(Resource.getString
-					   (ResourceConstants.AMS_TOGGLE_ICONS_VIEW),
-					   ResourceConstants.AMS_TOGGLE_ICONS_VIEW);
+    private Command changeStyleCmd = new Command(Resource.getString
+					   (ResourceConstants.AMS_CHANGE_STYLE),
+					   ResourceConstants.AMS_CHANGE_STYLE);
+
 
 
     /** Display for the Manager MIDlet. */
@@ -167,9 +206,6 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 
     /** MIDlet Suite storage object. */
     private MIDletSuiteStorage midletSuiteStorage;
-
-    /** If there are folders */
-    private boolean foldersOn;
 
     /* mapping:  button->suite info */
     private Hashtable midletsHash = new Hashtable();
@@ -188,7 +224,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
     private Transition dialogTransition;
 
     /* transition speed */
-    private final int runSpeed = 1000;
+    private final int RUN_SPEED = 500;
 
 
     /**
@@ -209,22 +245,24 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 
 	/* init lwuit */
 	com.sun.lwuit.Display.init(manager);
-	midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
-
 	initTheme();
 
+
+	midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 	createMainMenu();
 	mainMenu.setCommandListener(this);
 
 	dialogTransition = CommonTransitions.createSlide(
-	    CommonTransitions.SLIDE_VERTICAL, true, runSpeed);
+	    CommonTransitions.SLIDE_VERTICAL, true, RUN_SPEED);
 
+	/* create forms */
 	appInfoForm = new AppInfoForm(mainMenu);
+	themesForm = new ThemesForm(mainMenu, this);
 	selectorForm = new SelectorForm(mainMenu, manager);
 	splashScreen = new SplashScreen(mainMenu);
 	discoveryApp = new DiscoveryApp(mainMenu);
+
 	splashScreen.show();
-	//com.sun.lwuit.Display.getInstance().getCurrent().refreshTheme();
     }
 
     /**
@@ -240,7 +278,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
     AppManagerUIImpl(ApplicationManager manager, AppManagerPeer appManager,
                  Display display, DisplayError displayError, boolean foldersOn,
                  boolean askUserIfLaunchMidlet) {
-	System.out.println("AppManagerUIImpl with askUserIfLaunchMidlet(): enter " + askUserIfLaunchMidlet);
+	System.out.println(">>>AppManagerUIImpl with askUserIfLaunchMidlet() " + askUserIfLaunchMidlet);
     }
 
 
@@ -252,7 +290,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @param suiteInfo the midlet suite info
      */
     public void itemAppended(RunningMIDletSuiteInfo suiteInfo) {
-
+	System.out.println(">>>itemAppended()");
 	/* Convert image to lwuit format*/
 	Image tmpIcon = convertImage(suiteInfo.icon);
 
@@ -275,7 +313,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 	};
 
 	/* Add button */
-	mainContainer.addComponent(button);
+	buttonsContainer.addComponent(button);
 	/* add button to hash tables */
 	midletsHash.put(button, suiteInfo);
 	reverseHash.put(suiteInfo, button);
@@ -292,7 +330,6 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 	button.setIcon((Image)currentIconsHash.get(button));
 
 	/* set button width */
-	//Dimension newSize = new Dimension(currentWidth, button.getPreferredH());
 	Dimension newSize = new Dimension(currentWidth, currentHeight);
 	button.setPreferredSize(newSize);
 
@@ -304,7 +341,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 
 	/* Add commands */
 	commandsVector.addElement(exitCommand);
-	commandsVector.addElement(toggleIconsCmd);
+	commandsVector.addElement(changeStyleCmd);
 
 	if (suiteInfo.midletToRun != null &&
             suiteInfo.midletToRun.equals(AppManagerPeer.DISCOVERY_APP)) {
@@ -326,6 +363,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
             }
         }
 	commandsHash.put(button, commandsVector);
+	System.out.println("<<<itemAppended()");
     }
 
     /**
@@ -338,14 +376,14 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
     public void itemRemoved(RunningMIDletSuiteInfo suiteInfo) {
 
 	Button button = (Button)reverseHash.get(suiteInfo);
-	System.out.println("itemRemoved():  enter");
+	System.out.println(">>>itemRemoved()");
 
 	midletsHash.remove(button);
 	reverseHash.remove(suiteInfo);
 	smallIconsHash.remove(button);
 	largeIconsHash.remove(button);
 	commandsHash.remove(button);
-	mainContainer.removeComponent(button);
+	buttonsContainer.removeComponent(button);
 
 	Dialog.show(Resource.getString(	//title
 		    ResourceConstants.AMS_INFORMATION),
@@ -374,7 +412,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @param si corresponding midlet suite info
      */
     public void notifyMidletStarted(RunningMIDletSuiteInfo si) {
-	System.out.println("notifyMidletStarted():  enter");
+	System.out.println(">>>notifyMidletStarted()");
 	Button b = (Button)reverseHash.get(si);
 	Vector v = (Vector)commandsHash.get(b);
 
@@ -403,7 +441,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @param si corresponding midlet suite info
      */
     public void notifyMidletStateChanged(RunningMIDletSuiteInfo si) {
-	System.out.println("notifyMidletStateChanged(): enter  State is " +
+	System.out.println(">>>notifyMidletStateChanged()  State is " +
 			   si.proxy.getMidletState());
     }
 
@@ -412,7 +450,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @param midlet
      */
     public void notifyInternalMidletExited(MIDletProxy midlet) {
-	System.out.println("notifyInternalMidletExited(): enter");
+	System.out.println(">>>notifyInternalMidletExited()");
 	com.sun.lwuit.Display.init(manager);
 	mainMenu.show();
     }
@@ -422,7 +460,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @param si corresponding midlet suite info
      */
     public void notifyMidletExited(RunningMIDletSuiteInfo si) {
-	System.out.println("notifyMidletExited(): enter");
+	System.out.println(">>>notifyMidletExited()");
 	Button b = (Button)reverseHash.get(si);
 	markExited(b);
 
@@ -441,8 +479,23 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @param si corresponding suite info
      */
     public void notifySuiteInstalled(RunningMIDletSuiteInfo si) {
-	System.out.println("notifySuiteInstalled(): enter");
+	System.out.println(">>>notifySuiteInstalled()");
+
 	mainMenu.show();
+
+	String msg = new String();
+	msg += si.displayName +
+	    Resource.getString(ResourceConstants.AMS_GRA_INTLR_SUCC_INSTALLED);
+
+	/* IMPL_NOTE:  if uncommenting, image freezes */
+//         Dialog.show(Resource.getString( //title
+//                     ResourceConstants.AMS_INFORMATION),
+//                     msg,//text
+//                     new Command[]{okCmd},//commands
+//                     Dialog.TYPE_INFO,//type
+//                     null,//icon
+//                     0,//timeout,
+//                     dialogTransition);//transition
     }
 
     /**
@@ -450,7 +503,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @param si corresponding suite info
      */
     public void notifySuiteInstalledExt(RunningMIDletSuiteInfo si) {
-	System.out.println("notifySuiteInstalledExt(): enter");
+	System.out.println(">>>notifySuiteInstalledExt()");
     }
 
     /**
@@ -458,7 +511,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @param si corresponding suite info
      */
     public void notifySuiteRemovedExt(RunningMIDletSuiteInfo si) {
-	System.out.println("notifySuiteRemovedExt(): enter");
+	System.out.println(">>>notifySuiteRemovedExt()");
     }
 
     /**
@@ -467,7 +520,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      */
     public void notifyMIDletSuiteEnabled(RunningMIDletSuiteInfo msi) {
 
-	System.out.println("notifyMIDletSuiteEnabled(): enter");
+	System.out.println(">>>notifyMIDletSuiteEnabled()");
 	Button b = (Button)reverseHash.get(msi);
 	Vector v = (Vector)commandsHash.get(b);
 
@@ -486,7 +539,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @param si corresponding suite info
      */
     public void notifyMIDletSuiteIconChaged(RunningMIDletSuiteInfo msi) {
-	System.out.println("notifyMIDletSuiteIconChaged(): enter");
+	System.out.println(">>>notifyMIDletSuiteIconChaged()");
 	Button b = (Button)reverseHash.get(msi);
 
 	Image tmpIcon = convertImage(msi.icon);
@@ -505,7 +558,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      */
     public void notifyMidletStartError(int suiteId, String className, int errorCode,
 				String errorDetails) {
-	System.out.println("notifyMidletStartError(): enter");
+	System.out.println(">>>notifyMidletStartError()");
     }
 
     /**
@@ -516,7 +569,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      */
     public void notifyMIDletSuiteStateChaged(RunningMIDletSuiteInfo si,
 					     RunningMIDletSuiteInfo newSi) {
-	System.out.println("notifyMIDletSuiteStateChaged(): enter");
+	System.out.println(">>>notifyMIDletSuiteStateChaged()");
     }
 
     /**
@@ -526,7 +579,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @param item corresponding suite info
      */
     public void setCurrentItem(RunningMIDletSuiteInfo item) {
-	System.out.println("setCurrentItem(): enter");
+	System.out.println(">>>setCurrentItem()");
     }
 
     /**
@@ -536,7 +589,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @return last selected MidletSuiteInfo
      */
     public RunningMIDletSuiteInfo getSelectedMIDletSuiteInfo() {
-	System.out.println("getSelectedMIDletSuiteInfo(): enter");
+	System.out.println(">>>getSelectedMIDletSuiteInfo()");
 	return null;
     }
 
@@ -548,7 +601,7 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      *        if false then possibility to launch midlet is needed.
      */
     public void showMidletSwitcher(boolean onlyFromLaunchedList) {
-	System.out.println("showMidletSwitcher(): enter");
+	System.out.println(">>>showMidletSwitcher()");
 	mainMenu.show();
     }
 
@@ -559,16 +612,17 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @param msiToRun a suite from which a midlet must be selected
      */
     public void showMidletSelector(RunningMIDletSuiteInfo msiToRun){
-	System.out.println("showMidletSelector(): enter");
+	System.out.println(">>>showMidletSelector()");
     }
 
 
 
     /**
      * Called by Manager when destroyApp happens to clean up data.
+     *
      */
     public void cleanUp() {
-	System.out.println("cleanUp(): enter");
+	System.out.println(">>>cleanUp()");
     }
 
     /**
@@ -576,12 +630,16 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
      * @return main screen
      */
     public Displayable getMainDisplayable() {
-	System.out.println("getMainDisplayable(): enter");
+	System.out.println(">>>getMainDisplayable()");
 	return null;
     }
 
 
-
+    /**
+     * Commands handler dispatcher.
+     *
+     * @param evt: action event with the command ID
+     */
     public void actionPerformed(ActionEvent evt) {
 	Command cmd = evt.getCommand();
 	RunningMIDletSuiteInfo msi;
@@ -599,12 +657,12 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 	    handlerRemove();
 	    break;
 
-	case ResourceConstants.AMS_TOGGLE_ICONS_VIEW:
-	    handlerToggleIconsView();
-	    break;
-
 	case ResourceConstants.INFO:
 	    handlerInfo();
+	    break;
+
+	case ResourceConstants.AMS_CHANGE_STYLE:
+	    handlerChangeStyle();
 	    break;
 
 	case ResourceConstants.FOREGROUND:
@@ -622,6 +680,31 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 	}
     }
 
+    /**
+     * Getter for current style
+     */
+    public int getCurrentStyle() {
+	return currentStyle;
+    }
+
+    /**
+     * Interface method to switch layouts
+     *
+     * @param layoutName:  new layout name
+     * Currently "List" and "Grid" are supported.
+     * IMPL_NOTE:  refactor to support more layouts
+     */
+    public void setIconsStyle(String styleName){
+	if ((currentStyle == GRID_STYLE && "List".equals(styleName))||
+	    (currentStyle == LIST_STYLE && "Grid".equals(styleName))) {
+		handlerToggleIconsView();
+	}
+    }
+
+    /**
+     * Class needed to intercept button pressed events
+     *
+     */
     private class ButtonActionListener implements ActionListener {
 
         public void actionPerformed(ActionEvent evt) {
@@ -644,6 +727,12 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
         }
     }
 
+    /**
+     * Converts from javax Image to Lwuit image
+     *
+     * @param sourceImage image in javax format
+     * @return Image in Lwuit format
+     */
     public static Image convertImage(javax.microedition.lcdui.Image sourceImage) {
 	int width, height;
 	int[] tmp;
@@ -662,6 +751,10 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 
 
 
+    /**
+     * Launches focused midlet/midlet suite
+     *
+     */
     private void handlerLaunch() {
 	RunningMIDletSuiteInfo msi = ((RunningMIDletSuiteInfo)
 				     (midletsHash.get(mainMenu.getFocused())));
@@ -686,6 +779,11 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 
 
 
+    /**
+     * Switches between list and grid views
+     *
+     * IMPL_NOTE:  refactor to support more than 2 view types
+     */
     private void handlerToggleIconsView() {
 	if (currentStyle == GRID_STYLE) {
 	    /* transition to List style */
@@ -711,18 +809,22 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 	}
 
 	Dimension newSize = new Dimension(currentWidth, currentHeight);
-	int numOfButtons = mainContainer.getComponentCount();
+	int numOfButtons = buttonsContainer.getComponentCount();
 	for (int i = 0; i < numOfButtons; i++) {
-	    Button currentButton = (Button)mainContainer.getComponentAt(i);
+	    Button currentButton = (Button)buttonsContainer.getComponentAt(i);
 	    currentButton.setAlignment(currentIconAlignment);
 	    currentButton.setTextPosition(currentTextAlignment);
 	    currentButton.setIcon((Image)currentIconsHash.get(currentButton));
 	    currentButton.setPreferredSize(newSize);
 	}
-	mainContainer.setLayout(new GridLayout(currentRows, currentCols));
-	mainContainer.revalidate();
+	buttonsContainer.setLayout(new GridLayout(currentRows, currentCols));
+	buttonsContainer.revalidate();
     }
 
+    /**
+     * Removes the focused midlet/midlet suite
+     *
+     */
     private void handlerRemove() {
         String confirmStr;
         String tmpStr;
@@ -831,19 +933,34 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 	}
     }
 
-
+    /**
+     * Shows the info form relevant to the currently focused item
+     *
+     */
     private void handlerInfo() {
 	RunningMIDletSuiteInfo msi = ((RunningMIDletSuiteInfo)
 				     (midletsHash.get(mainMenu.getFocused())));
 	try {
 	    appInfoForm.setContents(msi.suiteId);
 	} catch ( Throwable t ) {
-	    System.out.println("Error updating info form");
+	    System.out.println(">>>Error updating info form");
 	}
 
 	appInfoForm.show();
     }
 
+    /**
+     * Displays the change style form
+     */
+    private void handlerChangeStyle() {
+	themesForm.show();
+    }
+
+
+    /**
+     * Shows the settings form relevant to the currently focused item
+     *
+     */
     private void handlerSettings() {
 	RunningMIDletSuiteInfo msi = ((RunningMIDletSuiteInfo)
 				     (midletsHash.get(mainMenu.getFocused())));
@@ -851,6 +968,10 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 	appSettingsForm.show();
     }
 
+    /**
+     * Brings to foreground currently focused item
+     *
+     */
     private void handlerForeground() {
 	RunningMIDletSuiteInfo msi = ((RunningMIDletSuiteInfo)
 		                     (midletsHash.get(mainMenu.getFocused())));
@@ -859,6 +980,10 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 	manager.moveToForeground(msi);
     }
 
+    /**
+     * Ends the currently focused item
+     *
+     */
     private void handlerEnd() {
 	RunningMIDletSuiteInfo msi = ((RunningMIDletSuiteInfo)
 				     (midletsHash.get(mainMenu.getFocused())));
@@ -866,10 +991,19 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 	manager.exitMidlet(msi);
     }
 
+    /**
+     * Shows main install form
+     *
+     */
     private void handlerInstall() {
 	discoveryApp.showMainForm();
     }
 
+    /**
+     * Extracts command from vector v and adds them to the main menu
+     *
+     * @param v Vector containing the commands
+     */
     private void addCommands(Vector v) {
 	Command c;
 	for (int i = 0; i < v.size(); i++) {
@@ -878,27 +1012,44 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 	}
     }
 
+    /**
+     * Removes all commands from main menu, adds commands from v and
+     * exit command.
+     *
+     * @param v Vector containing the commands
+     */
     private void refreshCommands(Vector v) {
 	mainMenu.removeAllCommands();
 	addCommands(v);
 	mainMenu.setBackCommand(exitCommand);
     }
 
-
+    /**
+     * Marks midlet corresponding to b as started
+     *
+     * @param b:  button midlet of which is started
+     */
     private void markStarted(Button b) {
-	//b.getStyle().setBgTransparency(0xff);
 	b.setBorderPainted(true);
     }
 
 
-
+    /**
+     * Cancels the started milet mark
+     *
+     * @param b:  button midlet of which is exited
+     */
     private void markExited(Button b) {
 	//b.getStyle().setBgTransparency(0x00);
 	b.setBorderPainted(false);
     }
 
 
-
+    /**
+     * Initializes lwuit theme
+     *
+     * IMPL_NOTE:  make theme name dynamic
+     */
     private void initTheme() {
 	try {
 	    RandomAccessStream storage = new RandomAccessStream();
@@ -915,6 +1066,10 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 	}
     }
 
+    /**
+     * Creaetes and initializes the main menu form.  The form is
+     * created in list style
+     */
     private void createMainMenu() {
 	/* calculate cols and rows */
 	displayWidth = com.sun.lwuit.Display.getInstance().getDisplayWidth();
@@ -934,18 +1089,19 @@ public class AppManagerUIImpl implements AppManagerUI, ActionListener {
 	currentWidth = displayWidth;
 	currentHeight = LARGE_ICON_SIZE;
 
-	mainContainer = new Container();
-	mainContainer.setLayout(new GridLayout(currentRows, currentCols));
+	buttonsContainer = new Container();
+	buttonsContainer.setLayout(new GridLayout(currentRows, currentCols));
 
 	mainMenu = new Form("Java midlets");
 	mainMenu.setLayout(new FlowLayout());
-	mainMenu.addComponent(mainContainer);
+	mainMenu.addComponent(buttonsContainer);
     }
 
 
+    /**
+     * Focus listener class needed to process buttons clicks events
+     */
     private class ButtonsFocusListener implements FocusListener {
-
-	private byte transparency;
 
 	/**
 	 * Invoked when component gains focus

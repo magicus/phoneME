@@ -38,11 +38,13 @@ import com.sun.lwuit.Label;
 import com.sun.lwuit.Container;
 
 import com.sun.lwuit.animations.Transition;
-import com.sun.lwuit.animations.Transition3D;
 import com.sun.lwuit.animations.CommonTransitions;
 
 
-/** Implements the splash screen */
+/**
+ * Implements the splash screen
+ *
+ */
 class SplashScreen extends Form {
 
     /** The form to be displayed after SplashScreen is dismissed. */
@@ -51,14 +53,20 @@ class SplashScreen extends Form {
     private TimerTask timerTask;
     /* A timer to schedule the timeout task */
     private Timer timeoutTimer;
+    /* Transition out of the Splash Screen */
+    private Transition out;
 
-    private Transition in, out;
-
-    private final int runSpeed = 500;
-    private final int splashScreenDelay = 1000;
+    private final int RUN_SPEED = 500;
+    private final int SPLASH_SCREEN_DELAY = 1000;
 
 
-
+    /**
+     * Ctor
+     *
+     * Measure display size, get splash image, initialize form.
+     *
+     * @param mainForm:  main AMS screen to be switched to after splash
+     */
     SplashScreen(Form mainForm) {
 	int width, height;
 	javax.microedition.lcdui.Image sourceImage = null;
@@ -71,7 +79,7 @@ class SplashScreen extends Form {
 	timerTask = new TimeoutTask();
 	timeoutTimer = new Timer();
 
-	out = CommonTransitions.createFade(runSpeed);
+	out = CommonTransitions.createFade(RUN_SPEED);
 
 	setTransitionOutAnimator(out);
 
@@ -99,9 +107,12 @@ class SplashScreen extends Form {
 	}
     }
 
-    /* Set a timer to switch to the App Manager Screen. */
+    /**
+     * Set a timer to switch to the App Manager Screen.
+     *
+     */
     public void showNotify() {
-	timeoutTimer.schedule(timerTask, splashScreenDelay);
+	timeoutTimer.schedule(timerTask, SPLASH_SCREEN_DELAY);
     }
 
     /**

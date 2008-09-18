@@ -62,23 +62,7 @@ import com.sun.midp.util.ResourceHandler;
 
 /**
  * The Graphical MIDlet suite installer.
- * <p>
- * The graphical installer is implements the installer requirements of the
- * MIDP OTA specification.</p>
- * <p>
- * If the Content Handler API (CHAPI) is present the GraphicalInstaller will
- * dequeue a single Invocation and install from the URL contained
- * in the request. If there is no Invocation present then the arguments below
- * will be used.
- * <p>
- * The MIDlet uses certain application properties as arguments: </p>
- * <ol>
- *   <li>arg-0: "U" for update "I" or anything else for install</li>
- *   <li>arg-1: Suite ID for updating, URL for installing
- *   <li>arg-2: For installing a name to put in the title bar when installing
- * </ol>
- * @see CHManagerImpl
- * @see CHManager
+ *
  */
 public class GraphicalInstaller extends MIDlet implements ActionListener {
 
@@ -169,15 +153,14 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
     private Transition dialogTransition;
 
     /* transition speed */
-    private final int runSpeed = 1000;
+    private final int RUN_SPEED = 500;
 
     /**
      * Gets an image from the internal storage.
-     * <p>
-     * Method requires com.sun.midp.ams permission.
      *
-     * IMPL_NOTE: this method should be moved somewhere.
-     *
+     * Note:  This method is required in addition to
+     * getLwuitImageFromInternalStorage() to solve javax/lwuit image
+     * consistency issues.
      * @param imageName image file name without a path and extension
      * @return Image loaded from storage, or null if not found
      */
@@ -448,7 +431,7 @@ public class GraphicalInstaller extends MIDlet implements ActionListener {
         initSettings();
 
 	dialogTransition = CommonTransitions.createSlide(
-	    CommonTransitions.SLIDE_VERTICAL, true, runSpeed);
+	    CommonTransitions.SLIDE_VERTICAL, true, RUN_SPEED);
 
         // Establish Content handler installer context
         chmanager = CHManager.getManager(null);

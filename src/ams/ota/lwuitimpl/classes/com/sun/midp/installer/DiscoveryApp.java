@@ -64,16 +64,11 @@ import com.sun.midp.io.j2me.storage.File;
 
 
 /**
- * The Graphical MIDlet suite Discovery Application.
- * <p>
- * Let the user install a suite from a list of suites
- * obtained using an HTML URL given by the user. This list is derived by
- * extracting the links with hrefs that are in quotes and end with ".jad" from
- * the HTML page. An href in an extracted link is assumed to be an absolute
- * URL for a MIDP application descriptor. The selected URL is then passed to
- * graphical Installer.
+ * Discovery application.  Used to get available applications for install
+ * and to invoke installer
+ *
  */
-public class DiscoveryApp extends Form implements ActionListener {
+public class DiscoveryApp implements ActionListener {
 
     /** Contains the default URL for the install list. */
     private String defaultInstallListUrl = "http://";
@@ -101,7 +96,6 @@ public class DiscoveryApp extends Form implements ActionListener {
         new Command(Resource.getString(ResourceConstants.GOTO),
                     ResourceConstants.GOTO);
 
-
     /** Command object for "Back" command in the suite list form. */
     private Command backCmd = new Command(Resource.getString
 					  (ResourceConstants.BACK),
@@ -121,18 +115,17 @@ public class DiscoveryApp extends Form implements ActionListener {
 	new Command(Resource.getString(ResourceConstants.OK),
 		    ResourceConstants.OK);
 
-    /** Command object for "Ok" command for dialogs form. */
+    /** Command object for "Install" command*/
     private Command installCmd =
 	new Command(Resource.getString(ResourceConstants.INSTALL),
 		    ResourceConstants.INSTALL);
-
 
     /* Mapping button -> button suite index */
     private Hashtable itemsHash;
 
     private Transition right, left, dialogTransition;
     /* transition speed */
-    private final int runSpeed = 1000;
+    private final int RUN_SPEED = 500;
 
     /**
      * Create and initialize a new discovery application MIDlet.
@@ -145,9 +138,9 @@ public class DiscoveryApp extends Form implements ActionListener {
 
 	itemsHash = new Hashtable();
 
-	left = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, true, runSpeed);
-	right = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, false, runSpeed);
-	dialogTransition = CommonTransitions.createSlide(CommonTransitions.SLIDE_VERTICAL, true, runSpeed);
+	left = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, true, RUN_SPEED);
+	right = CommonTransitions.createSlide(CommonTransitions.SLIDE_HORIZONTAL, false, RUN_SPEED);
+	dialogTransition = CommonTransitions.createSlide(CommonTransitions.SLIDE_VERTICAL, true, RUN_SPEED);
 
         GraphicalInstaller.initSettings();
 	/* get amsUrl and defaultInstallListUrl */
@@ -157,40 +150,19 @@ public class DiscoveryApp extends Form implements ActionListener {
 
     }
 
+    /**
+     * Display main DiscoveryApp form
+     *
+     */
     public void showMainForm() {
         urlTextForm.show();
     }
 
-
     /**
-     * Start.
-     */
-    public void startApp() {
-    }
-
-    /**
-     * Pause; there are no resources that need to be released.
-     */
-    public void pauseApp() {
-    }
-
-    /**
-     * Destroy cleans up.
+     * Commands handler dispatcher.
      *
-     * @param unconditional is ignored; this object always
-     * destroys itself when requested.
+     * @param evt: action event with the command ID
      */
-    public void destroyApp(boolean unconditional) {
-    }
-
-    /**
-     * Respond to a command issued on any Screen.
-     *
-     * @param c command activated by the user
-     * @param s the Displayable the command was on.
-     */
-
-
     public void actionPerformed(ActionEvent evt) {
 	Command cmd = evt.getCommand();
 
@@ -229,6 +201,7 @@ public class DiscoveryApp extends Form implements ActionListener {
 
     /**
      * Get the settings the Manager saved for the user.
+     *
      */
     private void restoreSettings() {
         ByteArrayInputStream bas;
@@ -285,6 +258,7 @@ public class DiscoveryApp extends Form implements ActionListener {
 
     /**
      * Save the URL setting the user entered in to the urlTextBox.
+     *
      */
     private void saveURLSetting() {
         String temp;
@@ -320,7 +294,6 @@ public class DiscoveryApp extends Form implements ActionListener {
 	    null,//icon
 	    0,//timeout,
 	    dialogTransition);//transition
-
     }
 
 
@@ -385,6 +358,10 @@ public class DiscoveryApp extends Form implements ActionListener {
     }
 
 
+    /**
+     * Gets index of focused item an installs corresponding suite.
+     *
+     */
     private void handlerInstall() {
 	System.out.println("handlerInstall():  enter");
 	System.out.println("installListForm.getFocused() returns " +
@@ -394,6 +371,10 @@ public class DiscoveryApp extends Form implements ActionListener {
 	installSuite(index);
     }
 
+    /**
+     * Create and initialize all the forms
+     *
+     */
     private void createForms() {
 	/* urlTextForm */
 	urlTextArea = new TextArea(defaultInstallListUrl);
