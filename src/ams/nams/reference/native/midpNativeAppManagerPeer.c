@@ -46,6 +46,8 @@
 #include <midp_runtime_info.h>
 #include <heap.h>
 
+#include <commandLineUtil_md.h>
+
 /** The name of the native application manager peer internal class. */
 #define APP_MANAGER_PEER "com.sun.midp.main.NativeAppManagerPeer"
 
@@ -86,8 +88,7 @@ nams_listeners_notify(NamsListenerType listenerType,
  * @return error code: (ALL_OK if successful)
  */
 MIDPError midp_system_initialize(void) {
-    MIDPError error;
-
+    char *pAppDir, *pConfDir;
 	int midp_heap_requirement = getHeapRequirement();
 
     JVM_Initialize();
@@ -98,20 +99,45 @@ MIDPError midp_system_initialize(void) {
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
 
-    if (ALL_OK == (error = (MIDPError)midpInitialize())) {
-        error = (MIDPError)init_listeners_impl();
+    /* set up appDir before calling midp_system_start */
+    pAppDir = getApplicationDir(NULL);
+    if (pAppDir == NULL) {
+        return GENERAL_ERROR;
+    }
+
+    midpSetAppDir(pAppDir);
+
+    /* get midp configuration directory, set it */
+    pConfDir = getConfigurationDir(NULL);
+    if (pConfDir == NULL) {
+        return GENERAL_ERROR;
+    }
+
+    midpSetConfigDir(pConfDir);
+
+    if (midpInitialize() != 0) {
+        return GENERAL_ERROR;
+    }
+
+    return init_listeners_impl();
 }
 
-    return error;
-}
-
-
+/**
+ * Clean up the system. Notifies the listeners that the Java system was stopped.
+ *
+ * @param status current Java system status
+ *
+ * @return ALL_OK if it was a normal system shutdown, an error code otherwise
+ */
 static MIDPError system_cleanup(int status) {
     NamsEventData eventData;
     MIDPError errCode;
+
     memset((char*)&eventData, 0, sizeof(NamsEventData));
-    eventData.event  = MIDP_NAMS_EVENT_STATE_CHANGED;
+
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;
     eventData.state = MIDP_SYSTEM_STATE_STOPPED;
+
     nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
 
     switch (status) {
@@ -128,7 +154,6 @@ static MIDPError system_cleanup(int status) {
 
     return errCode;
 }
-
 
 /**
  * Starts the system. Does not return until the system is stopped.
@@ -264,6 +289,7 @@ MIDPError midp_midlet_create_start_with_args(SuiteIdType suiteId,
             evt.stringParam1 = temp;
         } else {
             pcsl_string_free(&temp);
+            return BAD_PARAMS;
         }
     }
 
@@ -403,21 +429,20 @@ MIDPError midp_midlet_destroy(jint appId, jint timeout) {
 }
 
 /**
- * Gets information about the suite containing the specified running MIDlet.
+ * Gets ID of the suite containing the specified running MIDlet.
  * This call is synchronous.
  *
- * @param appId The ID used to identify the application
- *
- * @param pSuiteData [out] pointer to a structure where static information
- *                         about the midlet will be stored
+ * @param appId    [in]  The ID used to identify the application
+ * @param pSuiteId [out] On exit will hold an ID of the suite the midlet
+ *                       belongs to
  *
  * @return error code: ALL_OK if successful,
  *                     NOT_FOUND if the application was not found,
- *                     BAD_PARAMS if pSuiteData is null
+ *                     BAD_PARAMS if pSuiteId is null
  */
-MIDPError midp_midlet_get_suite_info(jint appId, MidletSuiteData* pSuiteData) {
+MIDPError midp_midlet_get_suite_id(jint appId, SuiteIdType* pSuiteId) {
     (void)appId; /* not finished */
-    if (pSuiteData == NULL) {
+    if (pSuiteId == NULL) {
         return BAD_PARAMS;
     }
 
@@ -830,6 +855,8 @@ Java_com_sun_midp_main_NativeAppManagerPeer_registerAmsIsolateId(void) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_main_NativeAppManagerPeer_exitInternal(void) {
     int value = (int)KNI_GetParameterAsInt(1);
+
+    midp_remove_all_event_listeners(ANY_EVENT_LISTENER);
 
     midp_exitVM(value);
     KNI_ReturnVoid();

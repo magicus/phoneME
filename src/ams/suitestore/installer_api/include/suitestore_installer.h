@@ -107,7 +107,7 @@ typedef struct _MidpSuiteSettings {
  * Returns a unique identifier of MIDlet suite.
  *
  * @param pSuiteId [out] receives the platform-specific storage name of the
- *                       application given by vendorName and appName
+ *                       application
  *
  * @return ALL_OK if success, else an error code
  */

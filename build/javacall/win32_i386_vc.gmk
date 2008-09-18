@@ -54,4 +54,6 @@ LIBS += Comdlg32.lib shell32.lib advapi32.lib
 EXTRA_ROMGEN_CFG_FILES += $(notdir $(VM_PROFILES_CONFIG_FILE))
 ROMGEN_INCLUDE_PATHS += $(dir $(VM_PROFILES_CONFIG_FILE))
 
+ifeq ($(USE_NATIVE_APP_MANAGER), false)
 MIDP_BIN_TARGET ?= wtk
+endif

@@ -329,7 +329,10 @@ endef
 #	USE_ROMIZED_DEMOS
 #
 BOOLEAN_OPTIONS = \
-	USE_NATIVE_AMS \
+	USE_NATIVE_APP_MANAGER \
+	USE_NATIVE_INSTALLER \
+	USE_NATIVE_SUITE_STORAGE \
+	USE_NATIVE_RMS \
 	USE_NAMS_TEST_SERVICE \
 	USE_RAW_AMS_IMAGES \
 	USE_RESTRICTED_CRYPTO \
@@ -400,16 +403,40 @@ $(BOOLEAN_OPTIONS)::
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_boolean) $(LOG)
 
-USE_NATIVE_AMS::
-	@if [ "$(USE_NATIVE_AMS)" = "true" ]; then \
+USE_NATIVE_APP_MANAGER::
+	@if [ "$(USE_NATIVE_APP_MANAGER)" = "true" ]; then \
 	  if [ "$(USE_I3_TEST)" = "true" ]; then \
 	    if [ "$(USE_NAMS_TEST_SERVICE)" = "false" ]; then \
 	      echo "ERROR: USE_NAMS_TEST_SERVICE must be set to true when building"\
-	           "with USE_NATIVE_AMS=true and USE_I3_TEST=true"; \
+	           "with USE_NATIVE_APP_MANAGER=true and USE_I3_TEST=true"; \
 	      exit -1; \
 	    fi; \
 	  fi; \
 	fi;
+
+USE_NATIVE_INSTALLER::
+	@if [ "$(USE_NATIVE_INSTALLER)" = "true" ]; then \
+	  if [ ! "$(TARGET_PLATFORM)" = "javacall" ]; then \
+	    echo "ERROR: USE_NATIVE_INSTALLER option is meaningless when TARGET_PLATFORM is not javacall"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_NATIVE_SUITE_STORAGE::
+	@if [ "$(USE_NATIVE_SUITE_STORAGE)" = "true" ]; then \
+	  if [ ! "$(TARGET_PLATFORM)" = "javacall" ]; then \
+	    echo "ERROR: USE_NATIVE_SUITE_STORAGE option is meaningless when TARGET_PLATFORM is not javacall"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_NATIVE_RMS::
+	@if [ "$(USE_NATIVE_RMS)" = "true" ]; then \
+	  if [ ! "$(TARGET_PLATFORM)" = "javacall" ]; then \
+	    echo "ERROR: USE_NATIVE_RMS option is meaningless when TARGET_PLATFORM is not javacall"; \
+	    exit -1; \
+	  fi; \
+	fi
 
 USE_VERIFY_ONCE::
 	@if [ "$(USE_VERIFY_ONCE)" = "true" ]; then \

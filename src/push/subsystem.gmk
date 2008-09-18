@@ -34,7 +34,7 @@
 #
 ######################################################################
 
-ifeq ($(USE_NATIVE_AMS), true)
+ifeq ($(USE_NATIVE_APP_MANAGER), true)
   USE_NATIVE_PUSH=true
 endif
 

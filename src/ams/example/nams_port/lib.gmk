@@ -41,7 +41,8 @@ ifeq ($(TARGET_PLATFORM), javacall)
     SUBSYSTEM_AMS_EXTRA_INCLUDES += \
         -I$(SUBSYSTEM_AMS_DIR)/example/nams_port/$(TARGET_PLATFORM)/native
 
-    AMS_RUNNAMS_NATIVE_FILES += nams.c
+#    It is implemented inside the javacall library.
+#    AMS_RUNNAMS_NATIVE_FILES += nams.c
 else
     vpath % $(SUBSYSTEM_AMS_DIR)/example/nams_port/default/native
 

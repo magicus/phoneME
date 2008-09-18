@@ -47,9 +47,9 @@ public final class JSRInitializer {
 // #endif
 
 // #ifdef ENABLE_JSR_211
-// #ifdef ENABLE_NATIVE_AMS
+// #ifdef ENABLE_NATIVE_APP_MANAGER
         com.sun.midp.jsr211.Initializer.init();
-// #endif ENABLE_NATIVE_AMS
+// #endif ENABLE_NATIVE_APP_MANAGER
 // #endif
 
 // #ifdef ENABLE_JSR_226

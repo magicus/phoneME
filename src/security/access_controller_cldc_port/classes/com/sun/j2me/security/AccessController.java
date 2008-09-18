@@ -134,7 +134,7 @@ public final class AccessController {
      * If the permission check failed because an InterruptedException was
      * thrown, this method will throw a InterruptedSecurityException.
      *
-     * @param permission ID of the permission to check for,
+     * @param name ID of the permission to check for,
      *      the ID must be from
      *      {@link com.sun.midp.security.Permissions}
      * @param resource string to insert into the question, can be null if
@@ -151,11 +151,9 @@ public final class AccessController {
             String resource, String extraValue) throws SecurityException {
 
         if (context == null) {
-            throw new SecurityException("not security context set");
+            throw new SecurityException("no security context set");
         }
 
         context.checkPermission(name, resource, extraValue);
     }
 }
-
-

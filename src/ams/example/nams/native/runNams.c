@@ -109,7 +109,7 @@ static SuiteIdType suiteIDToRun = UNUSED_SUITE_ID;
 static pcsl_string classNameToRun = PCSL_STRING_NULL_INITIALIZER;
 static pcsl_string* const aclassNameToRun = &classNameToRun;
 static SuiteIdType* pSuiteIds = NULL;
-static jint numberOfSuiteIds = 0;
+static int numberOfSuiteIds = 0;
 static jint *pSuiteRunState = NULL;
 static jint foregroundAppId = 0;
 

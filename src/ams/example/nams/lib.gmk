@@ -188,14 +188,14 @@ endif
 ifdef INCLUDE_SHELL_SCRIPTS
 
 $(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/shell/%
-	@echo " ... installing $@"
-	@cp -f $< $@
-	@chmod +x $@
+	$(A)echo " ... installing $@"
+	$(A)cp -f $< $@
+	$(A)chmod +x $@
 
 $(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/batch/%
-	@echo " ... installing $@"
-	@cp -f $< $@
-	@chmod +x $@
+	$(A)echo " ... installing $@"
+	$(A)cp -f $< $@
+	$(A)chmod +x $@
 
 SUBSYSTEM_AMS_EXECUTABLES += \
 	$(BINDIR)/autotest$(g)$(BAT) \

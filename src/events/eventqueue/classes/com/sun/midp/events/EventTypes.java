@@ -364,4 +364,22 @@ public final class EventTypes {
      * This event is used for show or hide java virtual keyboard
      */
     public static final int VIRTUAL_KEYBOARD_EVENT = 57;
+
+    /**
+     * This event is sent by a native code to the Java installer to
+     * enable or disable OCSP check. 
+     */
+    public static final int NATIVE_ENABLE_OCSP_REQUEST = 58;
+
+    /**
+     * This event is sent by a native code to the Java installer to
+     * check if OCSP is currently enabled.
+     */
+    public static final int NATIVE_CHECK_OCSP_ENABLED_REQUEST = 59;
+
+    /**
+     * This event is sent by a native code to InstallerPeerMIDlet
+     * to unblock the installer thread waiting for a user's answer.
+     */
+    public static final int NATIVE_UNBLOCK_INSTALLER = 60;
 }

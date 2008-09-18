@@ -849,7 +849,7 @@ int fileInstaller(int argc, char* argv[]) {
     /* jar relative url file:///jadname.jar */
     pcsl_string jarRelativeURL     = PCSL_STRING_NULL;
 
-    jchar trusted = KNI_TRUE;
+    jboolean trusted = KNI_TRUE;
 
     /*
      * From Permissions.java, 50 permissions, level 1 is allowed. Don't

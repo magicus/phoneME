@@ -179,6 +179,29 @@ extern "C" {
  */
 #define RESTART_MIDLET_EVENT            56
 
+/**
+ * This event is used for show or hide java virtual keyboard
+ */
+#define VIRTUAL_KEYBOARD_EVENT          57
+
+/**
+ * This event is sent by a native code to the Java installer to
+ * enable or disable OCSP check.
+ */
+#define NATIVE_ENABLE_OCSP_REQUEST      58
+
+/**
+ * This event is sent by a native code to the Java installer to
+ * check if OCSP is currently enabled.
+ */
+#define NATIVE_CHECK_OCSP_ENABLED_REQUEST 59
+
+/**
+ * This event is sent by a native code to InstallerPeerMIDlet
+ * to unblock the installer thread waiting for a user's answer.
+ */
+#define NATIVE_UNBLOCK_INSTALLER        60
+
 /** @} */
 
 /**

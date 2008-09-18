@@ -915,6 +915,7 @@ change_enabled_state(SuiteIdType suiteId, jboolean enabled) {
     status = read_settings(&pszError, suiteId, &temp, &pushInterrupt,
                            &pushOptions, &pPermissions, &numberOfPermissions);
     if (status != ALL_OK) {
+        storageFreeError(pszError);
         return status;
     }
 
@@ -928,6 +929,7 @@ change_enabled_state(SuiteIdType suiteId, jboolean enabled) {
                             NULL);
     pcsl_mem_free(pPermissions);
     if (status != ALL_OK) {
+        storageFreeError(pszError);
         /* nothing was written, so nothing to rollback, just finish */
         (void)finish_transaction();
         return status;
