@@ -1682,11 +1682,11 @@ static void handle_javanotify_chapi_java_invoke(
     printf( "classname = '%ls', suite_id = '%ls'\n", classname, suite_id_out );
 #endif
     if (0 == jsrop_string_to_suiteid (suite_id_out, &suite_id)) {
-        suite_id = INVALID_SUITE_ID;
+        suite_id = UNUSED_SUITE_ID;
     }
     JAVAME_FREE(suite_id_out);
 
-    if (INVALID_SUITE_ID == suite_id) { // attempt to invoke native handler or suite id conversion error
+    if (UNUSED_SUITE_ID == suite_id) { // attempt to invoke native handler or suite id conversion error
         JAVAME_FREE(classname);
         jsr211_abort_platform_invocation(invoc_id);
         return;
@@ -1704,7 +1704,7 @@ static void handle_javanotify_chapi_java_invoke(
     invoc->tid = invoc_id;
     invoc->status = STATUS_INIT;
     invoc->suiteId = suite_id;
-    invoc->invokingSuiteId = INVALID_SUITE_ID;
+    invoc->invokingSuiteId = UNUSED_SUITE_ID;
 
     if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(handler_id, javacall_string_len(handler_id), &invoc->ID))
         res = JAVACALL_FAIL;
