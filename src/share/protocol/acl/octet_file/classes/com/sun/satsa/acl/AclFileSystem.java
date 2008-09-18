@@ -122,7 +122,7 @@ public class AclFileSystem extends FileSystemAbstract {
             throw new IOException("Bad FCI");
         }
 
-        if (data[0] == 0x62) {
+        if (data[0] == 0x62) { /* FCP were received */
             TLV fci;
             try {
                 fci = new TLV(data, 0);
@@ -138,7 +138,12 @@ public class AclFileSystem extends FileSystemAbstract {
                 if (t.type == 0x82) { // File descriptor
                     if (t.length >= 4) {
                         byte[] descriptor = t.getValue();
-                        boolean isLinear = (descriptor[0] & 0x7) == 0x2;
+                        /* 0x2 and 0x3 are allowed values for 'Linear fixed' 
+                           EF structure field */
+                        /* IMPL_NOTE: Was not tested when EF structure field
+                                      equals 0x3 */
+                        boolean isLinear = ((descriptor[0] & 0x7) == 0x2) || 
+                                           ((descriptor[0] & 0x7) == 0x3);
                         if (isLinear) {
                             recordSize = Utils.getShort(descriptor, 2);
                         }
@@ -172,9 +177,7 @@ public class AclFileSystem extends FileSystemAbstract {
             int P1P2 = (recNo << 8) | 0x04; // select by record number
             byte[] result = apdu.resetCommand().
                     sendCommand(INS_READ_REC, P1P2, 0, false);
-            int lastSW = ((result[result.length - 2] & 0xff) << 8) |
-                          (result[result.length - 1] & 0xff);
-            if (lastSW != 0x9000) {
+            if (Utils.getU2(result, result.length - 2) != 0x9000) {
                 break;
             }
             
