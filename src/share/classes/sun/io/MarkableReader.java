@@ -114,7 +114,8 @@ public class MarkableReader {
             marker += size;
         }
 
-        return size;
+        // InputStream.read() must not return 0 when called with len > 0
+        return (size == 0) ? -1 : size;
     }
     
     /**
