@@ -44,6 +44,8 @@ public class AclFileSystem extends FileSystemAbstract {
     private byte[] ATR;
     /** variable defines the unit size in the INS_READ command */
     private int unitSize = 1;
+    /** variable defines the record size for linear file. -1 means transparent file */
+    private int recordSize = -1;
     /** DIR file object */
     public DIRF DIR;
     /**
@@ -109,6 +111,7 @@ public class AclFileSystem extends FileSystemAbstract {
 
         isEFSelected = false;
         currentFileSize = 0;
+        recordSize = -1;
 
         if (data.length == 2) {
             return;       // FCI is empty
@@ -117,6 +120,37 @@ public class AclFileSystem extends FileSystemAbstract {
         /* parse FCI */
         if (Utils.getU2(data, data.length - 2) != 0x9000) {
             throw new IOException("Bad FCI");
+        }
+
+        if (data[0] == 0x62) { /* FCP were received */
+            TLV fci;
+            try {
+                fci = new TLV(data, 0);
+            } catch (TLVException tlvException) {
+                throw new IOException("Bad FCI structure: " + tlvException);
+            }
+
+            if (fci.child == null) {
+                throw new IOException("Bad FCI structure");
+            }
+
+            for (TLV t = fci.child; t != null; t = t.next) {
+                if (t.type == 0x82) { // File descriptor
+                    if (t.length >= 4) {
+                        byte[] descriptor = t.getValue();
+                        /* 0x2 and 0x3 are allowed values for 'Linear fixed' 
+                           EF structure field */
+                        /* IMPL_NOTE: Was not tested when EF structure field
+                                      equals 0x3 */
+                        boolean isLinear = ((descriptor[0] & 0x7) == 0x2) || 
+                                           ((descriptor[0] & 0x7) == 0x3);
+                        if (isLinear) {
+                            recordSize = Utils.getShort(descriptor, 2);
+                        }
+                    }
+                    break;
+                }
+            }
         }
 
         isEFSelected = true;
@@ -128,7 +162,42 @@ public class AclFileSystem extends FileSystemAbstract {
      * @throws IOException if IO error occurs
      */
     public byte[] readFile() throws IOException {
-        byte[] data = readData(0, currentFileSize, 0);
+        if (recordSize < 0) {        
+            return readData(0, currentFileSize, 0);
+        } else {
+            return readLinearFile();
+        }
+    }
+
+    private byte[] readLinearFile() throws IOException {
+        Vector v = new Vector();
+        int readLength = 0;
+        int recNo = 1;
+        while (true) {
+            int P1P2 = (recNo << 8) | 0x04; // select by record number
+            byte[] result = apdu.resetCommand().
+                    sendCommand(INS_READ_REC, P1P2, 0, false);
+            if (Utils.getU2(result, result.length - 2) != 0x9000) {
+                break;
+            }
+            
+            v.addElement(result);
+            readLength += result.length - 2;
+            recNo++;
+        }
+        
+        if (readLength == 0) {
+            return new byte[0];
+        }
+        
+        byte[] data = new byte[readLength];
+        int offset = 0;
+        for (int i = 0; i < v.size(); i++) {
+            byte[] r = (byte[])v.elementAt(i);
+            System.arraycopy(r, 0, data, offset, r.length - 2);
+            offset += r.length - 2;
+        }
+        currentFileSize = readLength;
         return data;
     }
 

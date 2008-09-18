@@ -40,6 +40,8 @@ abstract public class FileSystemAbstract {
     /** APDU INS byte. */
     protected static final byte INS_READ      = (byte) 0xb0;
     /** APDU INS byte. */
+    protected static final byte INS_READ_REC  = (byte) 0xb2;       
+    /** APDU INS byte. */
     protected static final byte INS_UPDATE    = (byte) 0xd6;
     /** Root path for this application. */
     short[] root;
