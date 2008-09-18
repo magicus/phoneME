@@ -142,6 +142,9 @@
             Name="OPTIONS"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
+            Name="OPEN"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
             Name="MANUFACTURER"
             Comment="General strings"/>
   <constant Type="int"

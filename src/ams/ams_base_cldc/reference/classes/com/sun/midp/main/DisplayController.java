@@ -407,6 +407,22 @@ class DisplayController {
         return midlet;
     }
 
+
+    /**
+     * Call to notify display controller that foreground MIDlet 
+     * has changed. Currently used by Automation API which 
+     * subclasses DisplayController.
+     *
+     * @param oldForeground proxy of the old foreground MIDlet 
+     * @param newForeground proxy of the new foreground MIDlet 
+     *
+     */
+    void foregroundMidletChanged(MIDletProxy oldForeground, 
+            MIDletProxy newForeground) {
+        // we aren't interested in it, but our subclasses are
+    }
+    
+
     /**
      * Clear the last MIDlet created, if it is one given.
      *

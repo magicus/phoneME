@@ -77,7 +77,7 @@ SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 
 ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES += \
-    $(PERMISSIONS_DIR)/reference/i3test/com/sun/midp/security/TestPermissions.java
+#    $(PERMISSIONS_DIR)/reference/i3test/com/sun/midp/security/TestPermissions.java
 endif
 
 

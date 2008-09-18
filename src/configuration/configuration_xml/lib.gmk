@@ -359,6 +359,14 @@ GENERATE_L10N_STRINGS = \
 	-xml $(INT_MERGED_XML_FILE) \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/l10n)`
 
+ifeq ($(GENERATE_CHAMELEON_ELEMENTS), true)
+# transformation for generating .java file with chameleon to elements mapping
+GENERATE_CHAMELEMENT_SOURCE = \
+      -xml $(INT_MERGED_XML_FILE) \
+      -xsl $(INT_XSL_DIR)/cldc/chameleonElements.xsl \
+      -out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/ChameleonVsElements.java)`
+endif
+
 define generate_configuration
 	@echo " ... generating configuration files"
 	@$(INT_INVOKE_TRANSFORMER) \
@@ -370,7 +378,8 @@ define generate_configuration
 		$(GENERATE_PROPERTIES_CALLOUTS) \
 		$(GENERATE_PERMISSIONS_JAVA_SOURCE) \
 		$(GENERATE_PERMISSIONS_NATIVE_SOURCE) \
-		$(GENERATE_KEYBOARDS_SOURCE)
+		$(GENERATE_KEYBOARDS_SOURCE) \
+		$(GENERATE_CHAMELEMENT_SOURCE)
 	@echo " ... generating localized strings"
 	@$(INT_INVOKE_L10N_GENERATOR) \
 		$(GENERATE_L10N_STRINGS)

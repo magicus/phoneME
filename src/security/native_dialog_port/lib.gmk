@@ -41,8 +41,11 @@ NATIVE_DIALOG_DIR = $(SUBSYSTEM_DIR)/security/native_dialog_port
 #
 # vpath for this platform specific files
 #
-
+ifeq ($(TARGET_PLATFORM), javacall)
+vpath % $(NATIVE_DIALOG_DIR)/javacall/native
+else
 vpath % $(NATIVE_DIALOG_DIR)/stubs/native
+endif
 
 #
 # Native files for the native impl of the library
