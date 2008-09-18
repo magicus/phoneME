@@ -30,6 +30,7 @@ import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.main.Configuration;
+import com.sun.midp.main.MIDletProxy;
 
 /**
  * The Graphical MIDlet swicher.
@@ -96,7 +97,13 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
     synchronized void append(RunningMIDletSuiteInfo msi, String className) {
         checkInfoArraySize();
         minfo[mcount++] = new MidletListEntry(msi, className);
-        append(msi.displayName, msi.icon);
+        final MIDletProxy midletProxy = msi.getProxyFor(className);
+        StringBuffer name = new StringBuffer(msi.displayName);
+        if (midletProxy != null) {
+            name.append('/');
+            name.append(midletProxy.getDisplayName());
+        }
+        append(name.toString(), msi.icon);
     }
 
     /**
