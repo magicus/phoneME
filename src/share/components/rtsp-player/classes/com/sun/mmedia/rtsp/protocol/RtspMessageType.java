@@ -71,5 +71,9 @@ public class RtspMessageType {
     public int getType() {
         return type;
     }
+
+    public String toString() {
+        return ( -1 == type ) ? "[UNKNOWN]" : messages[ type ];
+    }
 }
 

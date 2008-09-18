@@ -43,6 +43,7 @@ public class RtspDS extends BasicDS
     private InputStream    inputStream = null;
     private RtspUrl        url         = null;
     private int            seqNum      = 0;
+    private String         sessionId   = null;
 
     public RtspUrl getUrl() {
         return url;
@@ -65,20 +66,25 @@ public class RtspDS extends BasicDS
                 seqNum = rnd.nextInt();
 
                 sendRequest( RtspOutgoingRequest.createDescribe( seqNum, url ) );
-                waitForResponse();
 
                 sendRequest( RtspOutgoingRequest.createSetup( seqNum, url, allocPort() ) );
-                waitForResponse();
+
+                sessionId = "4268";
+
+                sendRequest( RtspOutgoingRequest.createPlay( seqNum, url, sessionId ) );
 
                 // TODO: determine actual content type
                 setContentType( "audio/x-wav" );
-            } catch( RuntimeException re ) {
+
+            } catch( InterruptedException e ) {
                 connection = null;
-                throw re;
-            } catch( Exception ex ) {
+                Thread.currentThread().interrupt();
+                throw new IOException( "connect to " +
+                                locator + " aborted: " + e.getMessage() );
+            } catch( IOException e ) {
                 connection = null;
                 throw new IOException( "failed to connect to " +
-                                locator + " : " + ex.getMessage() );
+                                locator + " : " + e.getMessage() );
             }
         }
     }
@@ -130,43 +136,35 @@ public class RtspDS extends BasicDS
     //=========================================================================
 
     private Object msgWaitEvent = new Object();
-    private boolean responseReceived = false;
+    private RtspIncomingMessage response = null;
 
     /** 
      * This method is called by RtspConnection when message is received
      */
-    protected void processIncomingMessage( byte[] msg ) {
-        System.out.println( "--------- incoming ---------\n"
-                            + new String( msg ) +
-                            "----------------------------\n" );
-
+    protected void processIncomingMessage( byte[] bytes ) {
         synchronized( msgWaitEvent ) {
-            responseReceived = true;
+            response = new RtspIncomingMessage( bytes );
             msgWaitEvent.notifyAll();
             seqNum++;
         }
     }
 
-    private boolean sendRequest( RtspOutgoingRequest request ) {
-        synchronized( msgWaitEvent ) {
-            if( !responseReceived ) {
-                // prevent sending next request while sill waiting for reply
-                return false;
-            } else {
-                responseReceived = false;
-                return connection.sendData( request.getBytes() );
-            }
-        }
-    }
+    /**
+     * blocks until response is received or timeout period expires
+     */
+    private boolean sendRequest( RtspOutgoingRequest request ) 
+        throws InterruptedException {
 
-    private boolean waitForResponse() {
-        boolean ok;
+        boolean ok = false;
         synchronized( msgWaitEvent ) {
-            try {
-                msgWaitEvent.wait( 5000 );
-                ok = responseReceived;
-            } catch( InterruptedException e ) {
-                ok = false;
+            response = null;
+            if( connection.sendData( request.getBytes() ) ) {
+                try {
+                    msgWaitEvent.wait( 5000 );
+                    ok = ( null != response );
+                } catch( InterruptedException e ) {
+                    throw e;
+                }
             }
         }
         return ok;

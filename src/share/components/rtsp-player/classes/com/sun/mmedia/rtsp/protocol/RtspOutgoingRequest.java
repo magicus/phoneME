@@ -49,6 +49,15 @@ public class RtspOutgoingRequest {
             + userAgent + "\r\n\r\n" );
     }
 
+    public static RtspOutgoingRequest createPlay( int seqNum, RtspUrl url, String sesId ) {
+        return new RtspOutgoingRequest(
+            "PLAY rtsp://" + url.getHost() + "/" + url.getFile() + " RTSP/1.0\r\n"
+            + "CSeq: " + seqNum + "\r\n" 
+            + "Range: npt=0-\r\n" 
+            + ( ( null != sesId ) ? ( "Session: " + sesId + "\r\n" ) : "" )
+            + userAgent + "\r\n\r\n" );
+    }
+
     public RtspOutgoingRequest( String msg ) {
         this.msg = msg;
     }
