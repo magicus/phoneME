@@ -356,7 +356,7 @@ typedef struct _javacall_ams_suite_install_info {
      * if signed, the Certificate Authorization path, begining with the
      * most trusted entity, that authorized it
      */
-    javacall_utf16_string authPath;
+    javacall_utf16_string* pAuthPath;
     /** length of the authorization path */
     javacall_int32 authPathLen;
     /** suite hash for the suites with preverified classes */
