@@ -89,8 +89,8 @@ endif
 endif
 endif
 
-LOCAL_CFLAGS_debug = -MDd -Gm -EHsc -Zi -Od -D_DEBUG -D_MBCS -D_LIB -FD -W3
-LOCAL_CFLAGS_nodebug = -MD -EHsc -O2 -D_MBCS -D_LIB -W3
+LOCAL_CFLAGS_debug = -MDd -Gm -EHsc -Zi -Od -D_DEBUG -D_LIB -FD -W3
+LOCAL_CFLAGS_nodebug = -MD -EHsc -O2 -D_LIB -W3
 
 CXXFLAGS+= -nologo $(LOCAL_CFLAGS_$(BUILD))
 CFLAGS+= -nologo $(LOCAL_CFLAGS_$(BUILD))
