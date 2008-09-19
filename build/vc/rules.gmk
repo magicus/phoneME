@@ -37,7 +37,6 @@ ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
 else
     USE_CYGWIN = true
     HOST_OS = win32
-$(warning HOST_OS $(HOST_OS))
     define fixcygpath
     cygpath -m $(1)
     endef
