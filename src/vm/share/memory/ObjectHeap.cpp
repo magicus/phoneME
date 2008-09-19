@@ -768,7 +768,6 @@ ObjectHeap::get_reference_array(const int ref_index) {
   GUARANTEE(is_encoded_reference(ref_index), "Must be encoded ref");
   const unsigned type = get_reference_type(ref_index);
   const unsigned owner = get_reference_owner(ref_index);
-
   return get_reference_array(type, owner);
 }
 
@@ -1314,7 +1313,7 @@ bool ObjectHeap::expand_current_compiled_method(const int delta) {
 
 #endif
 
-void ObjectHeap::dispose() {
+void ObjectHeap::dispose( void ) {
   _inline_allocation_top = NULL;
   set_inline_allocation_end(NULL);
   _bitvector_base        = NULL;
@@ -1413,6 +1412,8 @@ bool ObjectHeap::create() {
   }
 
   GUARANTEE(!YoungGenerationAtEndOfHeap, "sanity");
+
+  _compiler_code_generator = NULL;
 #endif
 
 #ifndef PRODUCT

@@ -45,7 +45,7 @@ typedef signed   int     intptr_t;
 // Additional Java basic types
 
 typedef unsigned  char   jubyte;
-typedef    unsigned __int16 jushort;
+typedef unsigned __int16 jushort;
 typedef unsigned __int32 juint;
 typedef unsigned __int64 julong;
 

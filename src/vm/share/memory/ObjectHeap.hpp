@@ -313,9 +313,9 @@ public:
   };
 
   static int make_reference(unsigned type, unsigned owner, unsigned index);
-  static unsigned get_reference_type(const int ref_index);
-  static unsigned get_reference_owner(const int ref_index);
-  static unsigned get_reference_index(const int ref_index);
+  static unsigned get_reference_type  (const int ref_index);
+  static unsigned get_reference_owner (const int ref_index);
+  static unsigned get_reference_index (const int ref_index);
   static ReturnOop get_reference_array(const int ref_index);
 
   static ReturnOop get_reference_array(unsigned type, unsigned owner);
