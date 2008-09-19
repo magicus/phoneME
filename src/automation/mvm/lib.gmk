@@ -76,6 +76,17 @@ endif
 
 ifeq ($(USE_AUTOMATION_EXAMPLE), true)
 SUBSYSTEM_AUTOMATION_JAVA_FILES += \
-	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/player/Player.java
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/player/Player.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Expression.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Constant.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Variable.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Instructions.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/ScriptExtension.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Instructions.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Routines.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/ScriptParser.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/ScriptDebugger.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Script.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/runner/ScriptWrapper.java
 endif
 
