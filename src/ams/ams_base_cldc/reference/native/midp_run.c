@@ -851,7 +851,7 @@ midp_run_midlet_with_args(SuiteIdType suiteId,
  *                      MIDlet Suite in <tt>suiteId</tt>.
  * @param classPathExt The classpath extension to be appended to
  *                 the generated classpath. May be NULL or empty.
- * @return <tt>0</tt> if the classpath was generated,
+ * @return <tt>MIDP_ERROR_NONE</tt> if the classpath was generated,
  *    MIDP_ERROR_AMS_SUITE_NOT_FOUND mean the suite does not exist,
  *    OUT_OF_MEM_LEN if out of memory for the new string,
  *    IO_ERROR if an IO_ERROR.
@@ -869,7 +869,7 @@ static MIDP_ERROR getClassPathPlus(SuiteIdType suiteId,
     int i,j;
 
     if (suiteId == UNUSED_SUITE_ID) {
-        return -1;
+        return MIDP_ERROR_AMS_SUITE_NOT_FOUND;
     }
 
     if (suiteId == INTERNAL_SUITE_ID) {
@@ -927,7 +927,7 @@ static MIDP_ERROR getClassPathPlus(SuiteIdType suiteId,
 
     setMonetClassPath(userClassPath, jarPathLen);
 
-    return 0;
+    return MIDP_ERROR_NONE;
 }
 
 
