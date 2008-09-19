@@ -42,6 +42,8 @@ import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.suspend.SuspendSystem;
 import com.sun.midp.suspend.SuspendSystemListener;
 
+import com.sun.midp.configurator.Constants;
+
 /**
  * Manages a list of MIDlet proxies, each proxy representing a running MIDlet
  * and tracks which MIDlet has the foreground display, the list only available
@@ -418,6 +420,9 @@ public class MIDletProxyList
             midletProxy = null;
             return;
         }
+
+        // Load and cache run-time extended MIDlet attributes
+        MIDletProxyUtils.setupExtendedAttributes(midletProxy);
 
         midletProxies.addElement(midletProxy);
 
@@ -1039,8 +1044,6 @@ public class MIDletProxyList
     /**
      * Sets the foreground MIDlet. If the given midletProxy is paused,
      * then it will be activated before given the foreground.
-     * the internal system property "pause_app_in_background" is true,
-     * then previous foreground MIDlet will be paused.
      * <p>
      * The follow steps are performed when changed:<p>
      * 1. Send an event to notify the old foreground Display it has lost the
@@ -1060,6 +1063,26 @@ public class MIDletProxyList
             return;
         }
 
+        /*
+         * If the value is "yes" when the MIDlet is launched, it must be
+         * launched directly to the background.
+         *
+         * This attribute inherits all the features and requirements from
+         * "MIDlet-Background-Pause:no" even the attribute is not present.
+         *
+         * A MIDlet that was launched per this attribute must be able to bring
+         * itself to the foreground by calling MIDlet.resumeRequest. An user is
+         * not able to put the MIDlet to the foreground.
+         */
+        if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+            if (newForeground.wasNotActive) {
+                if (newForeground.getExtendedAttribute(
+                        MIDletProxy.MIDLET_LAUNCH_BG)) {
+                    return;
+                }
+            }
+        }
+
         if (foregroundMidlet != null &&
             (foregroundMidlet.getMidletState() !=
             MIDletProxy.MIDLET_DESTROYED)) {
@@ -1068,6 +1091,18 @@ public class MIDletProxyList
              */
             MIDletProxyUtils.minPriority(foregroundMidlet);
             foregroundMidlet.notifyMIDletHasForeground(false);
+
+            /*
+             * If extended MIDlet attributes support enabled and
+             * MIDlet-Background-Pause attribute is set to true when pause the
+             * MIDlet right after it's put it in the background.
+             */
+            if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+                if (foregroundMidlet.getExtendedAttribute(
+                        MIDletProxy.MIDLET_BACKGROUND_PAUSE)) {
+                    foregroundMidlet.pauseMidlet();
+                }
+            }
         }
 
         MIDletProxy oldForeground = foregroundMidlet;
@@ -1090,9 +1125,33 @@ public class MIDletProxyList
             */
             MIDletProxyUtils.normalPriority(foregroundMidlet);
 
+            /*
+             * IMPL_NOTE: there are no listeners for the certain
+             * MIDletProxyListListener.ALERT_WAITING reason in MIDP.
+             * To check whether call to notifyListenersOfProxyUpdate may be safely
+             * removed here.
+             */
             notifyListenersOfProxyUpdate(foregroundMidlet,
                 MIDletProxyListListener.ALERT_WAITING);
 
+            /*
+             * If extended MIDlet attributes support enabled and
+             * MIDlet-Background-Pause attribute is set to true when activate
+             * the MIDlet back after it's returned back to the foreground.
+             */
+
+            /* IMPL_NOTE: in current implementation, MIDlet is always activated
+             * when it's put to the foreground regardless it was paused by user
+             * or due to the MIDlet-Pause-Backround attribute.
+             */
+/*
+            if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+                if (foregroundMidlet.getExtendedAttribute(
+                        MIDletProxy.MIDLET_BACKGROUND_PAUSE)) {
+                    foregroundMidlet.activateMidlet();
+                }
+            }
+*/
         } else {
             setForegroundInNativeState(MIDletSuiteUtils.getAmsIsolateId(),
                                        -1);

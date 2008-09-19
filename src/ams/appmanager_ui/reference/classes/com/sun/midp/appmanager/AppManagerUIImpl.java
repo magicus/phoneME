@@ -784,20 +784,51 @@ class AppManagerUIImpl extends Form
 
     /**
      * This function encapsulates the logic of showing the "End" and
-     * "To Foreground" commands only for suites that have exactly one
-     * runing MIDlet.
-     * @param ci  midlet custom item
+     * "To Foreground" commands.
+     *
+     * @param ci midlet custom item
      */
     private void setupRunStateDependentCommands(AppManagerUIImpl.MidletCustomItem ci) {
         // IMPL_NOTE: we decide to have the "Open" command default for all cases,
         // just to make the life easier for both the programmer and the user.
         RunningMIDletSuiteInfo si = ci.msi;
         if (si.numberOfRunningMidlets() == 1) {
-            ci.addCommand(endCmd);
-            ci.addCommand(fgCmd);
+            if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+                MIDletProxy proxy = si.getFirstProxy();
+
+                if (proxy != null) {
+                    /*
+                     * Add "Bring to foreground" command only if the MIDLet has
+                     * no MIDlet-Launch-Background attribute.
+                     */
+                    if (!proxy.getExtendedAttribute(
+                            MIDletProxy.MIDLET_LAUNCH_BG)) {
+                        ci.setDefaultCommand(fgCmd);
+                    }
+
+                    /*
+                     * Check whether MIDlet-No-Exit attribute is defined for
+                     * the MIDlet.
+                     *
+                     * If definded and the value is "yes" then the application
+                     * is not allowed to be exited other than calling
+                     * destroyApp().
+                     *
+                     * Add "End" command only if an user may termniate the
+                     * MIDlet.
+                     */
+                    if (!proxy.getExtendedAttribute(
+                            MIDletProxy.MIDLET_NO_EXIT)) {
+                        ci.addCommand(endCmd);
+                    }
+                }
+            } else {
+                ci.setDefaultCommand(fgCmd);
+                ci.addCommand(endCmd);
+            }
         } else {
-            ci.removeCommand(endCmd);
             ci.removeCommand(fgCmd);
+            ci.removeCommand(endCmd);
         }
     }
 
@@ -836,7 +867,6 @@ class AppManagerUIImpl extends Form
                 if (appManager.oddEnabled()) {
                     mci.removeCommand(launchODTAgentCmd);
                 }
-                mci.setDefaultCommand(fgCmd);
             }
         } else { // not internal suite
             // running MIDlets will continue to run
@@ -888,8 +918,8 @@ class AppManagerUIImpl extends Form
         } else {
             // we get here when mci.msi.proxy already is null
 
-            setupRunStateDependentCommands(mci);
             setupDefaultCommand(mci);
+            setupRunStateDependentCommands(mci);
 
             midletSwitcher.remove(mci.msi, midletClassName);
             mci.update();

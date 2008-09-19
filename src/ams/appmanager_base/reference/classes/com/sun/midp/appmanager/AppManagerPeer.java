@@ -37,6 +37,8 @@ import com.sun.midp.io.j2me.push.PushRegistryInternal;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
+import com.sun.midp.configurator.Constants;
+
 import com.sun.midp.payment.PAPICleanUp;
 
 import java.io.*;
@@ -574,6 +576,7 @@ class AppManagerPeer implements CommandListener {
                 if (null == msi) {
                     // newly added
                     append(updatedMsi);
+                    launchSuite(updatedMsi);
                 } else {
                     MIDletSuiteInfo oldMsi = new MIDletSuiteInfo(msi.suiteId);
                     oldMsi.copyFieldsFrom(msi);
@@ -620,6 +623,66 @@ class AppManagerPeer implements CommandListener {
     private void append(RunningMIDletSuiteInfo suiteInfo) {
         msiVector.addElement(suiteInfo);
         appManagerUI.itemAppended(suiteInfo);
+    }
+
+    /**
+     * If extended MIDlet attributes support enabled, launch all MIDlets from
+     * the suite that have MIDlet-Launch-Power-On attribute set to true.
+     * <p/>
+     * This method is used during JVM start-up to run all such MIDlets from all
+     * installed suites. The method is also utilzied for newly installed
+     * MIDlets that have the attribute to launch them right after installation
+     * process is completed.
+     *
+     * @param suiteId ID of the suite
+     */
+    private void launchSuite(RunningMIDletSuiteInfo suiteInfo) {
+        if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+            // IMPL_NOTE: for better performance open suite only one time
+            MIDletSuite suite = MIDletSuiteUtils.getSuite(suiteInfo.suiteId);
+
+            if (suite != null) {
+                /**
+                 * Calling to MIDletSuiteUtils.getSuite locks the
+                 * suite this makes impossible to launch a MIDlet
+                 * from it. So we have to iterate over all MIDlets
+                 * in the suite and remember which of them must be
+                 * started upon JVM start-up.
+                 */
+                int midletsNum = suiteInfo.numberOfMidlets;
+                Vector midletsToStart = new Vector(midletsNum);
+                try {
+                    for (int m = 1; m <= midletsNum; m++) {
+                        String prop = MIDletSuiteUtils.getSuiteProperty(
+                            suite, m, MIDletSuite.LAUNCH_POWER_ON_PROP);
+
+                        if ("yes".equalsIgnoreCase(prop)) {
+                            String className =
+                                MIDletSuiteUtils.getMIDletClassName(suite, m);
+                            midletsToStart.addElement(className);
+                        }
+                    }
+                } finally {
+                    suite.close();
+                }
+
+                for (Enumeration e = midletsToStart.elements();
+                        e.hasMoreElements() ;) {
+                    manager.launchSuite(suiteInfo, (String)e.nextElement());
+
+                     /*
+                      * IMPL_NOTE: current implementation's
+                      * limitation is it allows to run only one
+                      * MIDlet from a suite.
+                      *
+                      * IMPL_NOTE: remove this break after
+                      * multiple running MIDlets from a single
+                      * suite is supported.
+                      */
+                      break; // run only one MIDLet from the suite
+                }
+            }
+        }
     }
 
     /**

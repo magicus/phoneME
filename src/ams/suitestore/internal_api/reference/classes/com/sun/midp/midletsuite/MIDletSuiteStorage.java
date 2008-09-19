@@ -159,7 +159,7 @@ public class MIDletSuiteStorage {
      * corrupted
      * @exception MIDletSuiteCorruptedException if the suite is corrupted
      *
-     * @return MIDlet Suite reference
+     * @return MIDlet Suite reference or null if the suite doesn't exist
      */
     public synchronized MIDletSuiteImpl getMIDletSuite(int id,
             boolean update)
