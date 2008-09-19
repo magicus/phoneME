@@ -64,13 +64,16 @@ public class Protocol extends ProtocolBase {
     protected String url;
 
     /**  DCS: GSM Alphabet  */
-    protected static final int GSM_TEXT = 0;
+    public static final int GSM_TEXT = 0;
 
     /**  DCS: Binary */
-    protected static final int GSM_BINARY = 1;
+    public static final int GSM_BINARY = 1;
 
     /**  DCS: Unicode UCS-2 */
-    protected static final int GSM_UCS2 = 2;
+    public static final int GSM_UCS2 = 2;
+
+    /**	 Type encoding of last received SMS message */
+    protected int messageRecType;
 
     /** Creates a message connection protocol handler. */
     public Protocol() {
@@ -382,6 +385,7 @@ public class Protocol extends ProtocolBase {
             /* Messages other than binary are assumed to be text. */
             String type = MessageConnection.TEXT_MESSAGE;
             boolean isTextMessage = true;
+            messageRecType = cbsPacket.encodingType;
             if (cbsPacket.encodingType == GSM_BINARY)  {
                 type = MessageConnection.BINARY_MESSAGE;
                 isTextMessage = false;

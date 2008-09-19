@@ -132,8 +132,7 @@ ifeq ($(USE_NETMON), true)
 MODULE_JSR_120_SMS_JAVA_FILES += \
     $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/kvem/io/j2me/sms/Protocol.java \
     $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/kvem/io/j2me/sms/DatagramImpl.java \
-    $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/kvem/io/j2me/sms/DatagramRecord.java \
-    $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/kvem/io/j2me/sms/TransportMessage.java
+    $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/kvem/io/j2me/sms/DatagramRecord.java
 
 MODULE_JSR_120_CBS_JAVA_FILES += \
 $(JSR_120_DIR)/src/share/protocol/cbs/classes/com/sun/kvem/io/j2me/cbs/Protocol.java

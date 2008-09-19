@@ -28,110 +28,110 @@ package com.sun.kvem.io.j2me.sms;
 
 import javax.wireless.messaging.*;
 import java.io.*;
-import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.j2me.sms.*;
 
+/**
+ * Network monitor implementation for SMS protocol.
+ *
+ */
 public class Protocol extends com.sun.midp.io.j2me.sms.Protocol {
-    private static long nextGroupID;
+
+    /** Static field for generation the unique ID. */
+    private static long nextGroupID = 1;
+
+    /** Instance of class which sends SMS data to network monitor. */
     private static DatagramImpl smsImpl;
 
-    private static synchronized long getNextGroupID() {
-        return nextGroupID++;
-    }
-
+    /** Network monitor session ID. */
     private long groupID;
-
+    
+    /**
+     * Initialization.
+     *
+     * The new network session ID is assigned.
+     */
     public Protocol() {
         super();
-        groupID = getNextGroupID();
+        groupID = nextGroupID++;
         if (smsImpl == null) {
             smsImpl = new DatagramImpl();
         }
     }
 
-    long getGroupID() {
-        return groupID;
-    }
 
-    boolean isOpen() { return open; }
-
-    public String protocol() { return "sms"; }
-
+    /**
+     * Sends a message over the connection. This method extracts the data
+     * payload from the <code>Message</code> object so that it can be sent as a
+     * datagram.
+     *
+     * @param     dmsg a <code>Message</code> object
+     * @exception java.io.IOException if the message could not be sent or
+     *     because of network failure
+     * @exception java.lang.IllegalArgumentException if the message is
+     *     incomplete or contains invalid information. This exception is also
+     *     thrown if the payload of the message exceeds the maximum length for
+     *     the given messaging protocol.
+     * @exception java.io.InterruptedIOException if a timeout occurs while
+     *     either trying to send the message or if this <code>Connection</code>
+     *     object is closed during this <code>send</code> operation.
+     * @exception java.lang.NullPointerException if the parameter is
+     *     <code>null</code>.
+     * @exception java.lang.SecurityException if the application does not have
+     *      permission to send the message.
+     */
     public void send(Message dmsg) throws IOException {
 
         byte[] buf = null;
-        String type = null;
 
         super.send(dmsg);
 
         ensureOpen();
         if (dmsg instanceof TextMessage) {
-            type = "text";
             buf = ((com.sun.midp.io.j2me.sms.TextObject)dmsg).getBytes();
         } else if (dmsg instanceof BinaryMessage) {
             buf = ((BinaryMessage)dmsg).getPayloadData();
-            type = "binary";
         }
 
-        /*
-         * parse name into host and port
-         */
-        String addr = dmsg.getAddress();
-        HttpUrl url = new HttpUrl(addr);
 
-        long sendTime = smsImpl.send(type, dmsg.getAddress(), buf,
-                                     (url.host == null ? Integer.toString(url.port) : null),
-                                     getGroupID());
+        smsImpl.send(dmsg.getAddress(), buf,
+                                 (getMsgHost(dmsg) == null ? Integer.toString(getMsgPort(dmsg)) : null),
+                                 messageSendType, numberOfSegments(dmsg), groupID);
 
     }
 
+    /**
+     * Receives the bytes that have been sent over the connection, constructs a
+     * <code>Message</code> object, and returns it.
+     * <p>
+     * If there are no <code>Message</code>s waiting on the connection, this
+     * method will block until a message is received, or the
+     * <code>MessageConnection</code> is closed.
+     *
+     * @return a <code>Message</code> object.
+     * @exception java.io.IOException if an error occurs while receiving a
+     *     message.
+     * @exception java.io.InterruptedIOException if this
+     *     <code>MessageConnection</code> object is closed during this receive
+     *     method call.
+     * @exception java.lang.SecurityException if the application does not have
+     *      permission to receive messages using the given port number.
+     */
     public synchronized Message receive()
         throws IOException {
 
         byte[] buf = null;
-        String type = null;
         Message msg = super.receive();
 
-        ensureOpen();
         if (msg instanceof TextMessage) {
-            type = "text";
             buf = ((com.sun.midp.io.j2me.sms.TextObject)msg).getBytes();
         } else if (msg instanceof BinaryMessage) {
             buf = ((BinaryMessage)msg).getPayloadData();
-            type = "binary";
         }
 
-        long sendTime = smsImpl.receive(type, msg.getAddress(), buf, getAppID(),
-                                        getGroupID(), "sms");
+        long sendTime = smsImpl.receive(messageRecType, msg.getAddress(), buf, getAppID(),
+                                        numberOfSegments(msg), groupID, "sms");
 
         return msg;
     }
-
-
-    /**
-     * Nadav, workaround June 12th, 2008
-     * This is just for extracting the host and port
-     * Think it is better to fix the real HttpUrl
-     *
-     * Similar to com.sun.midp.io.HttpUrl
-     */
-    class HttpUrl {
-        public HttpUrl(String url) {
-
-
-
-            int index1 = url.indexOf("://");
-            if (index1 != -1) {
-                int index2 = url.indexOf(':', index1+3);
-                if (index2 != -1) {
-                    port = Integer.parseInt(url.substring(index2+1));
-	            host = url.substring(index1+3, index2);
-                } else {
-                    host = url.substring(index1+3);
-                }
-            }
-        }
-        public int port = -1;
-        public String host;
-    }
+ 
 }

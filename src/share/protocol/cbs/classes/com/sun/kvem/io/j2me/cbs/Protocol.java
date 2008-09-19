@@ -32,49 +32,64 @@ import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.j2me.sms.*;
 import com.sun.kvem.io.j2me.sms.DatagramImpl;
 
+/**
+ * Network monitor implementation for CBS protocol.
+ *
+ */
 public class Protocol extends com.sun.midp.io.j2me.cbs.Protocol {
-    private static long nextGroupID;
+
+    /** Static field for generation the unique ID. */
+    private static long nextGroupID = 1;
+
+    /** Instance of class which sends CBS data to network monitor. */
     private static DatagramImpl cbsImpl;
     
-    private static synchronized long getNextGroupID() {
-        return nextGroupID++;
-    }
-    
+    /** Network monitor session ID. */
     private long groupID;
     
+    /**
+     * Initialization.
+     *
+     * The new network session ID is assigned.
+     */
     public Protocol() {
         super();
-        groupID = getNextGroupID();
+        groupID = nextGroupID++;
         if (cbsImpl == null) {
             cbsImpl = new DatagramImpl();
         }
     }
-    
-    long getGroupID() {
-        return groupID;
-    }
-    
-    boolean isOpen() { return open; }
 
-    public String protocol() { return "cbs"; }
-
-    public synchronized Message receive()
-        throws IOException {
+    /**
+     * Receives the bytes that have been sent over the connection,
+     * constructs a <code>Message</code> object, and returns it.
+     * <p>
+     * If there are no <code>Message</code>s waiting on the connection,
+     * this method will block until the <code>MessageConnection</code>
+     * is closed, or a message is received.
+     *
+     * @return a <code>Message</code> object
+     * @exception java.io.IOException if an error occurs while receiving
+     *         a message.
+     * @exception java.io.InterruptedIOException if this
+     *         <code>MessageConnection</code> object is closed during the
+     *         call of this method.
+     * @exception java.lang.SecurityException if the application doesn't have
+     *         permission to receive messages on the given port.
+     */
+    public synchronized Message receive() throws IOException {
 
         byte[] buf = null;
-        String type = null;
         Message msg = super.receive();
 
-        ensureOpen();
         if (msg instanceof TextMessage) {
-            type = "text";
             buf = ((com.sun.midp.io.j2me.cbs.TextObject)msg).getBytes();
         } else if (msg instanceof BinaryMessage) {
             buf = ((BinaryMessage)msg).getPayloadData();
-            type = "binary";
         }
 
-        long sendTime = cbsImpl.receive(type, msg.getAddress(), buf, getAppID(), getGroupID(), "cbs");
+        cbsImpl.receive(messageRecType, msg.getAddress(), buf, getAppID(),
+                numberOfSegments(msg), groupID, "cbs");
 
         return msg;
     }
