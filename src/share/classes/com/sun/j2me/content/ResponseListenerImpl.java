@@ -32,7 +32,7 @@ import javax.microedition.content.ResponseListener;
  * Thread to monitor pending invocations and notify a listener
  * when a matching one is present.
  */
-class ResponseListenerImpl implements Runnable {
+class ResponseListenerImpl implements Runnable, Counter {
 
     /** ContenHandlerServer for which this is listening. */
     private final RegistryImpl registry;
@@ -42,6 +42,8 @@ class ResponseListenerImpl implements Runnable {
 
     /** The active thread processing the run method. */
     private Thread thread;
+    
+    private int stopFlag = 0;
 
     /**
      * Create a new listener for pending invocations.
@@ -49,15 +51,14 @@ class ResponseListenerImpl implements Runnable {
      * @param registry the RegistryImpl to listen for
      * @param listener the listener to notify when present
      */
-    ResponseListenerImpl(RegistryImpl registry,
-			 ResponseListener listener) {
-	this.registry = registry;
-	setListener(listener);
+    ResponseListenerImpl(RegistryImpl registry, ResponseListener listener) {
+		this.registry = registry;
+		setListener(listener);
     }
 
     /**
      * Set the listener to be notified and start/stop the monitoring
-     * thread as necesary.
+     * thread as necessary.
      * If the listener is non-null make sure there is a thread active
      * to monitor it.
      * If there is no listener, then stop the monitor thread.
@@ -65,27 +66,28 @@ class ResponseListenerImpl implements Runnable {
      * @param listener the listener to update
      */
     void setListener(ResponseListener listener) {
-	this.listener = listener;
-
-	if (listener != null) {
-	    // Ensure a thread is running to watch for it
-	    if (thread == null || !thread.isAlive()) {
-		thread = new Thread(this);
-		thread.start();
-	    }
-	} else {
-	    // Forget the thread doing the listening; it will exit
-	    thread = null;
-	}
-
-	/*
-	 * Reset notified flags on pending responses.
-	 * Unblock any threads waiting to notify current listeners
-	 */
-	InvocationStore.setListenNotify(registry.application.getStorageId(),
-					registry.application.getClassname(),
-					false);
-	InvocationStore.cancel();
+		this.listener = listener;
+	
+		if (listener != null) {
+		    // Ensure a thread is running to watch for it
+		    if (thread == null || !thread.isAlive()) {
+				thread = new Thread(this);
+				thread.start();
+		    }
+		} else {
+		    // Forget the thread doing the listening; it will exit
+		    thread = null;
+		}
+	
+		/*
+		 * Reset notified flags on pending responses.
+		 * Unblock any threads waiting to notify current listeners
+		 */
+		InvocationStore.setListenNotify(registry.application.getStorageId(),
+									registry.application.getClassname(), false);
+		// stop listening thread
+		stopFlag++;
+		InvocationStore.cancel();
     }
 
     /**
@@ -95,20 +97,24 @@ class ResponseListenerImpl implements Runnable {
      * notified.
      */
     public void run() {
-	Thread mythread = Thread.currentThread();
-	while (mythread == thread) {
-	    // Remember the listener to notify to avoid a race condition
-	    ResponseListener l = listener;
-	    if (l != null) {
-		// Wait for a matching invocation
-		boolean pending =
-		    InvocationStore.listen(registry.application.getStorageId(),
-					   registry.application.getClassname(),
-					   false, true);
-		if (pending) {
-		    l.invocationResponseNotify(registry.getRegistry());
+		Thread mythread = Thread.currentThread();
+		while (mythread == thread) {
+		    // Remember the listener to notify to avoid a race condition
+		    ResponseListener l = listener;
+		    if (l != null) {
+				// Wait for a matching invocation
+				boolean pending =
+				    InvocationStore.listen(registry.application.getStorageId(),
+							   			registry.application.getClassname(), false, true,
+							   			this);
+				if (pending) {
+				    l.invocationResponseNotify(registry.getRegistry());
+				}
+		    }
 		}
-	    }
-	}
     }
+
+	public int getCounter() {
+		return stopFlag;
+	}
 }

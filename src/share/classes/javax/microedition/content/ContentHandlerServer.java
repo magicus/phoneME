@@ -195,7 +195,7 @@ public interface ContentHandlerServer extends ContentHandler {
      *
      * @return the next pending Invocation or <code>null</code>
      *  if no Invocation is available; <code>null</code>
-     *  if cancelled with {@link #cancelGetRequest cancelGetRequest}
+     *  if canceled with {@link #cancelGetRequest cancelGetRequest}
      * @see Registry#invoke
      * @see #finish
      */

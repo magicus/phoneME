@@ -45,6 +45,10 @@ import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletProxyListListener;
 import com.sun.midp.midlet.MIDletSuite;
 
+import com.sun.midp.events.EventListener;
+import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.Event;
+import com.sun.midp.events.EventTypes;
 
 /**
  * Handle all of the details of installing ContentHandlers.
@@ -61,26 +65,26 @@ import com.sun.midp.midlet.MIDletSuite;
  * MIDP stack is not built with CHAPI and the real implementation when
  * MIDP stack is BUILT with CHAPI.
  */
-public class CHManagerImpl
-    extends com.sun.midp.content.CHManager
-    implements MIDletProxyListListener
-{
+public class CHManagerImpl extends com.sun.midp.content.CHManager
+    						implements MIDletProxyListListener, EventListener {
 
     /**
      * Inner class to request security token from SecurityInitializer.
      * SecurityInitializer should be able to check this inner class name.
      */
-    static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
+    static private class SecurityTrusted implements ImplicitlyTrustedClass {};
 
     static {
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.<static initializer>" );
         SecurityToken classSecurityToken =
                 SecurityInitializer.requestToken(new SecurityTrusted());
         com.sun.midp.content.CHManager.setCHManager(classSecurityToken, new CHManagerImpl());
         AppProxy.setSecurityToken(classSecurityToken);
+        
+        // load Invocation class
+        Class cl = Invocation.class;
+        cl = cl.getClass();
     }
-
-
 
     /** Installed handlers accumulator. */
     private RegistryInstaller regInstaller;
@@ -98,6 +102,7 @@ public class CHManagerImpl
      */
     private CHManagerImpl() {
         super();
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl()" );
     }
 
     /**
@@ -106,6 +111,7 @@ public class CHManagerImpl
      * attributes.
      */
     public void install() {
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.install" );
         if (regInstaller != null) {
             regInstaller.install();
             regInstaller = null; // Let GC take it.
@@ -133,35 +139,36 @@ public class CHManagerImpl
      * @exception InvalidJadException if there is no classname field,
      *   or if there are more than five comma separated fields on the line.
      */
-    public void preInstall(Installer installer,
-			   InstallState state,
-			   MIDletSuite msuite,
-			   String authority)
-	throws InvalidJadException
+    public void preInstall(Installer installer, InstallState state,
+					MIDletSuite msuite, String authority) throws InvalidJadException
     {
-	try {
-	    AppBundleProxy bundle =
-		new AppBundleProxy(installer, state, msuite, authority);
-            regInstaller = new RegistryInstaller();
-            regInstaller.preInstall(bundle);
-	} catch (IllegalArgumentException ill) {
-	    throw new InvalidJadException(
-			  InvalidJadException.INVALID_CONTENT_HANDLER,
-			  ill.getMessage());
-	} catch (ContentHandlerException che) {
-	    if (che.getErrorCode() == ContentHandlerException.AMBIGUOUS) {
-		throw new InvalidJadException(
-			      InvalidJadException.CONTENT_HANDLER_CONFLICT,
-			      che.getMessage());
-	    } else {
-		throw new InvalidJadException(
-			      InvalidJadException.INVALID_CONTENT_HANDLER,
-			      che.getMessage());
-	    }
-	} catch (ClassNotFoundException cnfe) {
-	    throw new InvalidJadException(InvalidJadException.CORRUPT_JAR,
-					  cnfe.getMessage());
-	}
+        if( AppProxy.LOGGER != null ) 
+        	AppProxy.LOGGER.println( "CHManagerImpl.preInstall(): installer = " + 
+        			installer + ", state = " + state + ", msuite = " + msuite + 
+        			"\n\tauthority = '" + authority + "'" );
+		try {
+		    AppBundleProxy bundle =
+		    	new AppBundleProxy(installer, state, msuite, authority);
+            regInstaller = new RegistryInstaller(bundle);
+            regInstaller.preInstall();
+		} catch (IllegalArgumentException ill) {
+		    throw new InvalidJadException(
+				  InvalidJadException.INVALID_CONTENT_HANDLER, ill.getMessage());
+		} catch (ContentHandlerException che) {
+		    if (che.getErrorCode() == ContentHandlerException.AMBIGUOUS) {
+				throw new InvalidJadException(
+					      InvalidJadException.CONTENT_HANDLER_CONFLICT,
+					      che.getMessage());
+		    } else {
+				throw new InvalidJadException(
+					      InvalidJadException.INVALID_CONTENT_HANDLER,
+					      che.getMessage());
+		    }
+		} catch (ClassNotFoundException cnfe) {
+		    throw new InvalidJadException(InvalidJadException.CORRUPT_JAR,
+						  cnfe.getMessage());
+		}
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.preInstall() exit" );
     }
 
     /**
@@ -170,6 +177,7 @@ public class CHManagerImpl
      * @param suiteId the suiteId
      */
     public void uninstall(int suiteId) {
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.uninstall()" );
         RegistryInstaller.uninstallAll(suiteId, false);
     }
 
@@ -189,11 +197,11 @@ public class CHManagerImpl
      * @see com.sun.midp.content.CHManagerImpl
      */
     public String getInstallURL(MIDlet midlet) {
-	try {
-	    handler = Registry.getServer(midlet.getClass().getName());
-	} catch (ContentHandlerException che) {
-            return null;
-        }
+		try {
+		    handler = Registry.getServer(midlet.getClass().getName());
+		} catch (ContentHandlerException che) {
+	        return null;
+	    }
 
         installInvoc = handler.getRequest(false);
         if (installInvoc != null) {
@@ -202,7 +210,7 @@ public class CHManagerImpl
                 return url;
             }
         }
-	return null;
+        return null;
     }
 
     /**
@@ -213,9 +221,10 @@ public class CHManagerImpl
      * @see com.sun.midp.content.CHManagerImpl
      */
     public void installDone(boolean success) {
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.installDone()" );
         if (installInvoc != null) {
-	    handler.finish(installInvoc,
-			   success ? Invocation.OK : Invocation.CANCELLED);
+		    handler.finish(installInvoc,
+				   success ? Invocation.OK : Invocation.CANCELLED);
             installInvoc = null;
             regInstaller = null; // Double-clean.
         }
@@ -228,9 +237,11 @@ public class CHManagerImpl
      * This method is only called from MIDletSuiteLoader in the AMS Isolate.
      *
      * @param midletProxyList reference to the MIDlet proxy list
+     * @param eventQueue reference to AMS isolate event queue
      */
-    public void initCleanupMonitor(MIDletProxyList midletProxyList) {
+    public void init(MIDletProxyList midletProxyList, EventQueue eventQueue) {
         midletProxyList.addListener(this);
+        eventQueue.registerEventListener(EventTypes.CHAPI_EVENT, this);
     }
 
     /**
@@ -241,7 +252,7 @@ public class CHManagerImpl
      * @param classname the midlet classname
      */
     public void midletInit(int suiteId, String classname) {
-	InvocationStore.setCleanup(suiteId, classname, true);
+    	InvocationStore.setCleanup(suiteId, classname, true);
     }
 
     /**
@@ -254,6 +265,7 @@ public class CHManagerImpl
      * @param midlet The proxy of the MIDlet being added
      */
     public void midletAdded(MIDletProxy midlet) {
+    	AppProxy.midletIsAdded( midlet.getSuiteId(), midlet.getClassName() );
     }
 
     /**
@@ -274,14 +286,14 @@ public class CHManagerImpl
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-	AppProxy.getCurrent().logInfo("midletRemoved: " +
-				      midlet.getClassName());
-
-	// Cleanup unprocessed Invocations
-	RegistryImpl.cleanup(midlet.getSuiteId(), midlet.getClassName());
-
-	// Check for and execute a pending MIDlet suite
-	InvocationImpl.invokeNext();
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println("midletRemoved: " + midlet.getClassName());
+	
+		// Cleanup unprocessed Invocations
+		RegistryImpl.cleanup(midlet.getSuiteId(), midlet.getClassName());
+		AppProxy.midletIsRemoved( midlet.getSuiteId(), midlet.getClassName() );
+		// Check for and execute a pending MIDlet suite
+		InvocationStoreProxy.invokeNext();
     }
 
     /**
@@ -295,5 +307,37 @@ public class CHManagerImpl
      */
     public void midletStartError(int externalAppId, int suiteId, String className,
                           int errorCode, String errorDetails) {
+		// Cleanup unprocessed Invocations
+    	InvocationStore.setCleanup(suiteId, className, true);
+		RegistryImpl.cleanup(suiteId, className);
+		AppProxy.midletIsRemoved( suiteId, className );
+		// Check for and execute a pending MIDlet suite
+		InvocationStoreProxy.invokeNext();
+    }
+
+    /**
+     * Preprocess an event that is being posted to the event queue.
+     * This method will get called in the thread that posted the event.
+     * 
+     * @param event event being posted
+     *
+     * @param waitingEvent previous event of this type waiting in the
+     *     queue to be processed
+     * 
+     * @return true to allow the post to continue, false to not post the
+     *     event to the queue
+     */
+    public boolean preprocess(Event event, Event waitingEvent) {
+        return true;
+    }
+
+    /**
+     * Process an event.
+     * This method will get called in the event queue processing thread.
+     *
+     * @param event event to process
+     */
+    public void process(Event event) {
+        InvocationStoreProxy.invokeNext();
     }
 }

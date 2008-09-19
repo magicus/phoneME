@@ -26,11 +26,14 @@
 
 package com.sun.j2me.content;
 
-import javax.microedition.content.Invocation;
-
 import com.sun.midp.main.MIDletProxy;
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletProxyListListener;
+
+import com.sun.midp.events.EventListener;
+import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.Event;
+import com.sun.midp.events.EventTypes;
 
 /**
  * Handle all of the details of ContentHandlers lifecycle.
@@ -58,8 +61,9 @@ public class CHManagerImpl
      * This method is only called from MIDletSuiteLoader in the AMS Isolate.
      *
      * @param midletProxyList reference to the MIDlet proxy list
+     * @param eventQueue reference to AMS isolate event queue
      */
-    public void initCleanupMonitor(MIDletProxyList midletProxyList) {
+    public void init(MIDletProxyList midletProxyList, EventQueue eventQueue) {
         midletProxyList.addListener(this);
     }
 
@@ -111,7 +115,7 @@ public class CHManagerImpl
         RegistryImpl.cleanup(midlet.getSuiteId(), midlet.getClassName());
 
         // Check for and execute a pending MIDlet suite
-        InvocationImpl.invokeNext();
+        InvocationStoreProxy.invokeNext();
     }
 
     /**

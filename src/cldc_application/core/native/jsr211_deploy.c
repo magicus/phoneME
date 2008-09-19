@@ -1,7 +1,5 @@
 /*
- * 
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -31,12 +29,8 @@
  */ 
 
 #include <jsr211_registry.h>
-#include <pcsl_memory.h>
-#include <midpString.h>
-#include <midp_logging.h>
-#include <stdio.h>
-
-#define INTERNAL_SUITE_ID -1
+#include <jsrop_memory.h>
+#include <jsrop_suitestore.h>
 
 /** 
  * Include preinstalled content handlers data consisted of:
@@ -60,100 +54,78 @@
 #if ENABLE_NATIVE_AMS
 
 static int nHandlers = 0;
-static const pcsl_string** handlerIds;
-static char** rowHandlers;
+static const jchar** handlerIds = 0;
+static char** rowHandlers = 0;
 
 #else
 
-/**
- * The ID of the GraphicalInstaller handler
- */
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(grinst_id)
-{ 'G','r','a','p','h','i','c','a','l','I','n','s','t','a','l','l','e','r','\0' }
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(grinst_id);
-
 static int nHandlers = 1;
-static const pcsl_string* handlerIds[] = { &grinst_id };
-static char* rowHandlers[] = {
-    "com.sun.midp.installer.GraphicalInstaller\n"
-    "text/vnd.sun.j2me.app-descriptor application/java-archive\n"
-    ".jad .jar\n"
-    "install remove\n"
-    "en de ru\n"
-    "Install Remove Installieren Umziehen "  // en, de
-    "\xD0\xA3\xD1\x81\xD1\x82\xD0\xB0\xD0\xBD\xD0\xBE\xD0\xB2\xD0\xB8\xD1\x82\xD1\x8C \xD0\xA3\xD0\xB4\xD0\xB0\xD0\xBB\xD0\xB8\xD1\x82\xD1\x8C\n" // ru
-    "\n"
+
+static const jchar* handlerIds[] = { 
+	L"GraphicalInstaller" // The ID of the GraphicalInstaller handler
+};
+
+static jchar* rowHandlers[] = {
+    L"com.sun.midp.installer.GraphicalInstaller\0"
+	L"text/vnd.sun.j2me.app-descriptor\0application/java-archive\0\0"    
+    L".jad\0.jar\0\0"
+    L"install\0remove\0\0"
+    L"en\0de\0ru\0\0"
+    L"Install\0Remove\0" // en
+	L"Installieren\0Umziehen\0" // de
+    L"\x0423\x0441\x0442\x0430\x043D\x043E\x0432\x0438\x0442\x044C\0\x0423\x0434\x0430\x043B\x0438\x0442\x044C\0\0" // ru
+	L"\0" // empty access list
 };
 
 #endif
 
-/**
- * Defined in the <regstore.c> file.
- */
-void jsr211_cleanHandlerData(JSR211_content_handler *handler);
 
 /**
- * Deserializes PCSL string [str] from the char buffer [ptr].
- * The string is limited by '\n' or by terminated zero.
- * After deserialization ptr is moved at start of the next line.
+ * Extract string [str] from the jchar buffer [ptr].
+ * The string is limited by '\0'.
+ * After deserialization ptr is moved right after '\0'
  * @return 0 if failed.
  */
-static int fillString(char** ptr, /*OUT*/pcsl_string* str) {
-    char *p = *ptr;
-    int sz;
-
-    while (*p != 0 && *p != '\n')
-        p++;
-    sz = p - *ptr;
-    if (sz > 0 && 
-        PCSL_STRING_OK != pcsl_string_convert_from_utf8((jbyte*)*ptr, sz, str)) {
-        sz = -1;
-    }
-    *ptr = (*p == 0? p: p + 1);
-
-    return sz >= 0;
+static const jchar* getString(const jchar** ptr) {
+	const jchar* p; 
+	const jchar* pstart = p = *ptr;
+    while (*(p++));
+	*ptr = p;
+    return pstart;
 }
 
 /**
- * Deserializes string array [arr] from the char buffer [ptr]. 
- * The array is limited by '\n' or by terminated zero.
- * Each string entry delimited by a whitespace ' '.
- * After deserialization ptr is moved at start of the next line.
- * @return 0 if failed.
+ * Allocate and fill string array [arr] from the jchar buffer [ptr]. 
+ * The array is limited by double '\0'
+ * Each string entry delimited by a single '\0 '.
+ * After deserialization ptr is moved right after double '\0'
+ * @return allocated string list or 0 if list is empty
  */
-static int fillArray(char **ptr, /*OUT*/int* len, /*OUT*/pcsl_string** arr) {
-    char *p0, *p1;
-    pcsl_string* str;
-    int n = 1;
+static int fillArray(const jchar **ptr, /*OUT*/int* len, const jchar*** arr) {
+	const jchar* p = *ptr;
+	const jchar** list;
+	//count array size
+	*len = 0;
+	while (*getString(&p)) ++(*len);
 
-    p1 = p0 = *ptr;
-    while (*p1 != 0 && *p1 != '\n') {
-        if (*p1 == ' ')
-            n++;
-        p1++;
-    }
-    *ptr = (*p1 == 0? p1: p1 + 1);
+	if (!(*len)) {
+		*arr = NULL;
+		return 1;
+	}
 
-    if ((p1 - p0) > 0) {
-        str = alloc_pcsl_string_list(n);
-        if (str == NULL) {
-            return 0;
-        }
-        *arr = str;
-        *len = n;
+	//alloc array list
+	list = *arr = (const jchar**)JAVAME_MALLOC((*len)*sizeof(jchar*));
+	if (!*arr) return 0;
+	
+	//asign elements
+	p = *ptr;
+	while (*p){
+		*(list++) = getString(&p);
+	} 
 
-        while (n--) {
-            p1 = p0;
-            while (*p1 != ' ' && *p1 != 0 && *p1 != '\n')
-                p1++;
-            if (PCSL_STRING_OK != pcsl_string_convert_from_utf8((jbyte*)p0, p1 - p0, str))
-                return 0;
-            p0 = p1 + 1;
-            str++;
-        }
-    }
+	*ptr = p+1;
 
-    return 1;
+	return 1;
 }
 
 /**
@@ -161,10 +133,18 @@ static int fillArray(char **ptr, /*OUT*/int* len, /*OUT*/pcsl_string** arr) {
  * @return <code>JSR211_OK</code> if the installation completes successfully.
  */
 static jsr211_result installHandler(int n) {
-    JSR211_content_handler ch = JSR211_CONTENT_HANDLER_INITIALIZER;
-    char *ptr = rowHandlers[n];
-    jsr211_result status = JSR211_FAILED;
-    int anm_num;    // buffer for actionname map length
+    jsr211_content_handler ch = JSR211_CONTENT_HANDLER_INITIALIZER;
+    jchar *ptr = rowHandlers[n];
+    jsr211_result status;
+	int anm_num;
+	jchar *intrenalSuiteID;
+
+    intrenalSuiteID = JAVAME_MALLOC(
+        (jsrop_suiteid_string_size(INTERNAL_SUITE_ID)+1) * sizeof(jchar));
+
+	if (!jsrop_suiteid_to_string(INTERNAL_SUITE_ID, intrenalSuiteID)){
+		return JSR211_FAILED;
+	}
 
 /*
  *  Fill up CH data:
@@ -179,27 +159,38 @@ static jsr211_result installHandler(int n) {
  *                                                  action_i and locale_j
  *         <access1 access2 access3 ...> -- accesses (see types)
  */
-    if (PCSL_STRING_OK == pcsl_string_dup(handlerIds[n], &(ch.id)) &&
-        fillString(&ptr, &ch.class_name) &&
-        fillArray(&ptr, &ch.type_num, &ch.types) &&
-        fillArray(&ptr, &ch.suff_num, &ch.suffixes) &&
-        fillArray(&ptr, &ch.act_num, &ch.actions) &&
-        fillArray(&ptr, &ch.locale_num, &ch.locales) &&
-        fillArray(&ptr, &anm_num, &ch.action_map) &&
-        fillArray(&ptr, &ch.access_num, &ch.accesses) &&
-        anm_num == (ch.act_num * ch.locale_num)) {
-            ch.suite_id = INTERNAL_SUITE_ID;
-            ch.flag = JSR211_FLAG_COMMON;
-            status = jsr211_register_handler(&ch);
-#if REPORT_LEVEL <= LOG_CRITICAL
-    } else {
-    REPORT_CRIT(LC_NONE, "jsr211_deploy.c: handler data parsing failed");
+	ch.id = handlerIds[n];
+	ch.suite_id = intrenalSuiteID;
+	ch.class_name = getString(&ptr);
+	ch.flag = JSR211_REGISTER_TYPE_STATIC_FLAG; // non-native, statically registered
+
+	// allocate parameters
+	if (!(fillArray(&ptr, &ch.type_num, &ch.types) &&
+		    fillArray(&ptr, &ch.suff_num, &ch.suffixes) &&
+		    fillArray(&ptr, &ch.act_num, &ch.actions) &&
+		    fillArray(&ptr, &ch.locale_num, &ch.locales) &&
+		    fillArray(&ptr, &anm_num, &ch.action_map)&&
+		    anm_num == ch.act_num*ch.locale_num && //check
+		    fillArray(&ptr, &ch.access_num, &ch.accesses))){
+#ifdef _DEBUG
+	    printf("jsr211_deploy.c: handler data parsing failed");
 #endif
-    }
+		status = JSR211_FAILED;
+	} else {
+		// register handler
+		status = jsr211_register_handler(&ch);
+	}
 
-    // clean up handler's memory
-    jsr211_cleanHandlerData(&ch);
+	//clean string lists
+	if (ch.types) JAVAME_FREE(ch.types);
+	if (ch.suffixes) JAVAME_FREE(ch.suffixes);
+	if (ch.actions) JAVAME_FREE(ch.actions);
+	if (ch.locales) JAVAME_FREE(ch.locales);
+	if (ch.action_map) JAVAME_FREE(ch.action_map);
+	if (ch.accesses) JAVAME_FREE(ch.accesses);
 
+	JAVAME_FREE(intrenalSuiteID);
+    
     return status;
 }
 
@@ -208,15 +199,9 @@ static jsr211_result installHandler(int n) {
  * @return JSR211_OK or JSR211_FAILED - if registry corrupted or OUT_OF_MEMORY.
  */
 jsr211_result jsr211_check_internal_handlers(void) {
-    int i,found;
+    int i, found;
     for (i = 0; i < nHandlers; i++) {
-        JSR211_RESULT_CH handler = jsr211_create_result_buffer();
-
-        jsr211_get_handler(&PCSL_STRING_NULL, handlerIds[i], 
-                                            JSR211_SEARCH_EXACT, handler);
-		found = (jsr211_get_result_data(handler) != NULL);
-		jsr211_release_result_buffer(handler);
-
+		found = javacall_chapi_is_access_allowed(handlerIds[i], NULL);
         if (!found) {
             if (JSR211_OK != installHandler(i)) {
                 return JSR211_FAILED;
@@ -225,4 +210,3 @@ jsr211_result jsr211_check_internal_handlers(void) {
     }
     return JSR211_OK;
 }
-

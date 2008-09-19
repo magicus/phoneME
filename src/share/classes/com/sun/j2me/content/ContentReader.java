@@ -37,7 +37,7 @@ import java.io.IOException;
  * The helper class extending GCF Connector functionality with demands
  * of the JSR 211 specification:
  * <ul>
- *  <li> the connetion may deliver the content from a cache.
+ *  <li> the connection may deliver the content from a cache.
  *  <li> the connection should use user credentials.
  * </ul>
  */
@@ -78,7 +78,7 @@ class ContentReader {
      *   protocol handler is prohibited
      */
     Connection open(boolean timeouts) throws IOException, SecurityException {
-        return openPrim(timeouts, false);
+        return openPrim(timeouts);
     }
 
     /**
@@ -98,10 +98,18 @@ class ContentReader {
      */
     String findType() throws IOException, SecurityException {
         String type = null;
-        ContentConnection conn = (ContentConnection)openPrim(true, true);
-
-        if (conn != null) {
-            type = (conn).getType();
+        Connection conn = openPrim(true);
+        if (conn instanceof ContentConnection) {
+        	if( conn instanceof HttpConnection ){
+        		HttpConnection hc = (HttpConnection)conn;
+	            hc.setRequestMethod(HttpConnection.HEAD);
+	
+	            // actual connection performed, some delay...
+	            if (hc.getResponseCode() != HttpConnection.HTTP_OK)
+	            	return null;
+        	}
+        	
+            type = ((ContentConnection)conn).getType();
             conn.close();
 
             if (type != null) {
@@ -135,61 +143,37 @@ class ContentReader {
      * @exception SecurityException is thrown if access to the content
      *  is required and is not permitted
      */
-    private Connection openPrim(boolean timeouts, boolean headsOnly)
-            throws IOException, SecurityException {
-        Connection conn;
-
-        conn = Connector.open(url, Connector.READ, timeouts);
-        if (conn instanceof HttpConnection) {
+    private Connection openPrim(boolean timeouts)
+            				throws IOException, SecurityException {
+    	Connection conn = Connector.open(url, Connector.READ, timeouts);
+        if (conn instanceof HttpConnection && 
+        		(username != null || password != null)) {
             HttpConnection httpc = (HttpConnection)conn;
-            boolean authorized = false;
-            while (true) {
-                if (headsOnly) {
-                    httpc.setRequestMethod(HttpConnection.HEAD);
+            httpc.setRequestMethod(HttpConnection.HEAD);
+            // actual connection performed, some delay...
+            int rc = httpc.getResponseCode();
+
+            // try to set authorization
+            if (rc == HttpConnection.HTTP_UNAUTHORIZED ||
+                    	rc == HttpConnection.HTTP_PROXY_AUTH) {
+                String authType = httpc.getHeaderField("WWW-Authenticate");
+                if (authType == null || !authType.trim().equalsIgnoreCase("basic")) {
+                    throw new IOException("not supported authorization");
                 }
 
-                // actual connection performed, some delay...
-                int rc = httpc.getResponseCode();
-
-                if (rc == HttpConnection.HTTP_OK) {
-                    break;
-                }
-
-                // try to set authorization
-                if (rc == HttpConnection.HTTP_UNAUTHORIZED ||
-                        rc == HttpConnection.HTTP_PROXY_AUTH) {
-                    if (username == null && password == null) {
-                        // TODO: show form requested user input.
-                        throw new IOException("Connection needs authorization");
-                    }
-                    String authType = httpc.getHeaderField("WWW-Authenticate");
-                    if (authType == null || !authType.trim().equalsIgnoreCase("basic")) {
-                        throw new IOException("not supported authorization");
-                    }
-                    if (authorized) {
-                        // there always was one attempt to authorize.
-                        throw new IOException("authorization fails");
-                    }
-
-                    // reopen connection with authorization property set
-                    conn = Connector.open(url, Connector.READ, timeouts);
-                    httpc = (HttpConnection)conn;
-                    httpc.setRequestProperty(
-                            rc == HttpConnection.HTTP_UNAUTHORIZED?
-                            "Authorization": "Proxy-Authorization",
-                            formatAuthCredentials(username, password));
-                    authorized = true;
-                    continue;
-                }
-
-                throw new IOException("Connection failed: "+httpc.getResponseMessage());
+                conn.close();
+                // reopen connection with authorization property set
+                conn = Connector.open(url, Connector.READ, timeouts);
+                httpc = (HttpConnection)conn;
+                httpc.setRequestProperty(
+                        rc == HttpConnection.HTTP_UNAUTHORIZED?
+                        "Authorization": "Proxy-Authorization",
+                        formatAuthCredentials(username, password));
+                return conn;
             }
-        } else if (headsOnly) {
-            // inly HTTP protocol is supported for type discovering.
             conn.close();
-            conn = null;
+            conn = Connector.open(url, Connector.READ, timeouts);
         }
-
         return conn;
     }
 

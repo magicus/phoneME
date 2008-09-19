@@ -24,18 +24,13 @@
  * information or have any questions. 
  */
 
-/*
- * @(#)jsr211_nams_installer.h
- *
- */
-
 #ifndef _JSR211_NAMS_INSTALLER_H_
 #define _JSR211_NAMS_INSTALLER_H_
 
 /**
  * @file
  * @defgroup chapi JSR 211 Content Handler API (CHAPI)
- * @ingroup msa
+ * @ingroup stack
  * @brief This is the JSR211 API definition for Native AMS mode. 
  * Some functionality added for processing JSR211 specific attributes during
  * MIDlet suite installation.
