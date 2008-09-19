@@ -96,8 +96,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     // Lock
     private Object boundLock = new Object();
     
-    private static boolean debug = true;
-
     /** 
      * Refers to current display mode: normal or full screen, provides location 
      * services such as size and position settings. Separates different mode
@@ -146,7 +144,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         if (x + w > clipx + clipw) return false;
         if (y + h > clipy + cliph) return false;
 
-        if (debug) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "isInClippingArea return true - No graphic outside of clipping area"); 
         }  
@@ -159,7 +157,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Prepare direct video rendering surface
      */
     private void prepareVideoSurface(Graphics g, int x, int y, int w, int h) {
-        if (debug) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "prepareVideoSurface " + x + "," + y + "," + w + "," + h); 
         }    
@@ -218,7 +216,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Init display mode
      */
     public Object initDisplayMode(int mode, Object container) {
-        if (debug) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "initDisplayMode mode=" + mode + ", container=" + container); 
         }     
@@ -284,7 +282,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Set display location 
      */
     public void setDisplayLocation(int x, int y) {
-        if (debug) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                            "setDisplayLocation x=" + x + ",y=" + y); 
         }
@@ -300,8 +298,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Set display size
      */
     public void setDisplaySize(int width, int height) throws MediaException {
-
-        if (debug) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "setDisplaySize w=" + width + ",h=" + height); 
         }
@@ -467,7 +464,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             h = dh;
         }
 
-        if (debug) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "paintVideo x=" + x + ",y=" + y + ",w=" + w + ",h=" + h); 
         }
@@ -492,7 +489,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Hide video preview (called from CanvasLFImpl)
      */
     public void hideVideo() {
-        if (debug) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "hideVideoPreview"); 
         }
@@ -505,7 +502,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Show video preview (called from CanvasLFImpl)
      */
     public void showVideo() {
-        if (debug) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "showVideoPreview"); 
         }
@@ -533,7 +530,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
         
         protected void paint(Graphics g, int w, int h) {
-            if (debug) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                     "DVItem.paint visible=" + visible); 
             }
@@ -577,7 +574,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         // Now this function used to control visible state of direct video preview
         // Called from MIDPWindow class
         protected void showNotify() {
-            if (debug) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "showNotify"); 
             }        
             hidden = false;
@@ -587,7 +584,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         // Now this function used to control visible state of direct video preview
         // Called from MIDPWindow class
         protected void hideNotify() {
-            if (debug) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "hideNotify"); 
             }        
             source.setVideoVisible( false);
@@ -637,7 +634,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
 
         public void activate() {
-            if (debug) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "fullScreenLocationControl.activate"); 
             }        
 
@@ -736,7 +733,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
 
         public void activate() {
-            if (debug) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "normalScreenLocationControl.activate"); 
             }        
 

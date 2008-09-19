@@ -25,7 +25,6 @@
 /*
  * - Conditional Compile Flags -
  * 
- * ENABLE_DEBUG : Debug mode ?
  * ENABLE_MULTIPLE_ISOLATES : MVM mode ?
  * RECORD : Support Recording ?
  */
@@ -330,7 +329,10 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     // #ifdef RECORD [
     protected void doReceiveRSL()
     {
-        System.out.println( "[direct] received RSL" );
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+            "[direct] received RSL");
+        }
         
         if (recordControl != null) {
             recordControl.recordSizeLimitReached();

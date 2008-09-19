@@ -321,14 +321,11 @@ public class PlayerImpl implements Player {
 
         BasicPlayer p = null;
 
-        // System.out.println("getPlayerFromType " + className);
-
         try {
             // ... try and instantiate the handler ...
             Class handlerClass = Class.forName(className);
             p = (BasicPlayer) handlerClass.newInstance();
         } catch (Exception e) {
-            // System.out.println("Class not found " + className);
             throw new MediaException(PL_ERR_SH + e.getMessage());
         }
         return p;
@@ -383,7 +380,6 @@ public class PlayerImpl implements Player {
             playerInst.chkClosed(false);
 
             if (vmPaused) {
-                // System.out.println("ERROR: Try to prefetch player during paused state");
                 return;
             }        
 
@@ -444,7 +440,6 @@ public class PlayerImpl implements Player {
             playerInst.chkClosed(false);
 
             if (vmPaused) {
-                // System.out.println("ERROR: Try to start player during paused state");
                 return;
             }
             playerInst.start();
@@ -868,7 +863,6 @@ public class PlayerImpl implements Player {
             BasicPlayer p = (BasicPlayer) e.nextElement();
             int state = p.getState();
             if (state >= Player.REALIZED) {
-                // System.out.println("Send [" + evt + "] to Player " + p.toString());
                 VolumeControl vc = (VolumeControl)p.getControl("VolumeControl");
                 if (vc != null) {
                     vc.setLevel(volume);
@@ -910,7 +904,6 @@ public class PlayerImpl implements Player {
                 }
             } catch(MediaException ex) {
             }
-            //  System.out.println("*** pause MMAPI : " + p + "(" + state + ") ***");
         }
     }
 
@@ -934,8 +927,6 @@ public class PlayerImpl implements Player {
 
             int state = ((Integer) pstates.get(p)).intValue();
             long time = ((Long) mtimes.get(p)).longValue();
-
-            // System.out.println("MMAPI resumeAll state: " + state);
 
             switch (state) {
                 /*

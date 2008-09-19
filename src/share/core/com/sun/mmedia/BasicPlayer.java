@@ -23,6 +23,9 @@
  */
 package com.sun.mmedia;
 
+import com.sun.j2me.log.Logging;
+import com.sun.j2me.log.LogChannels;
+
 import java.io.*;
 import java.util.Vector;
 import java.util.Enumeration;
@@ -349,7 +352,10 @@ public abstract class BasicPlayer
 
     protected void doReceiveRSL()
     {
-        System.out.println( "[basic] received RSL" );
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+            "[basic] received RSL");
+        }
     }
 
     /**
