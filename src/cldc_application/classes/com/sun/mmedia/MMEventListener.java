@@ -73,7 +73,6 @@ class MMEventListener implements EventListener {
         switch ( nevt.intParam4 ) {
         case EVENT_MEDIA_END_OF_MEDIA:
             p = PlayerImpl.get(nevt.intParam1);
-System.out.println("jsr135: EOM");
             if (p != null) {
                 p.sendEvent(PlayerListener.END_OF_MEDIA, new Long(nevt.intParam2 * 1000));
             }

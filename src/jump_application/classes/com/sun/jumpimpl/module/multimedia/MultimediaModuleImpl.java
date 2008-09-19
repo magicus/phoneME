@@ -109,7 +109,10 @@ public class MultimediaModuleImpl implements JUMPModule, JUMPEventHandler {
         try {
             ip.sendMessage(notification);
         } catch (IOException ex) {
-            System.out.println("==> Can not send MMEvent: " + ex.getMessage());
+            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                Logging.report(Logging.WARNING, LogChannels.LC_MMAPI,
+                    "Can not send MMEvent: " + ex.getMessage());
+            }
         }
     }
 }
