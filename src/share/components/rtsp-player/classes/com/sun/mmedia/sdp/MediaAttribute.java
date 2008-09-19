@@ -21,13 +21,14 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
 package com.sun.mmedia.sdp;
 
 public class MediaAttribute {
     private String name;
     private String value;
 
-    public MediaAttribute(String name, String value) {
+    public MediaAttribute( String name, String value ) {
         this.name = name;
         this.value = value;
     }

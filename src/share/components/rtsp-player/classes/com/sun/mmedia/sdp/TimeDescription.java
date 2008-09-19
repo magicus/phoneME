@@ -21,6 +21,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
 package com.sun.mmedia.sdp;
 
 import java.io.*;
@@ -31,26 +32,26 @@ public class TimeDescription extends Parser {
     public String timeActive;
     public Vector repeatTimes;
 
-    public TimeDescription(ByteArrayInputStream bin) {
+    public TimeDescription( ByteArrayInputStream bin ) {
         // Time the session is active:
-        timeActive = getLine(bin);
+        timeActive = getLine( bin );
 
         // Repeat Times:
         repeatTimes = new Vector();
 
-	String tag= getTag( bin);
+        String tag = getTag( bin );
 
-	while( tag != null && tag.length() > 0) {
-	    if( tag.equals( "r=")) {	
-                String repeatTime = getLine(bin);
+        while( tag != null && tag.length() > 0 ) {
+            if( tag.equals( "r=" ) ) {
+                String repeatTime = getLine( bin );
 
-                repeatTimes.addElement(repeatTime);
-	    } else {
-		ungetTag( tag);
-		return;
-	    }
+                repeatTimes.addElement( repeatTime );
+            } else {
+                ungetTag( tag );
+                return;
+            }
 
-	    tag= getTag( bin);
+            tag = getTag( bin );
         }
     }
 }

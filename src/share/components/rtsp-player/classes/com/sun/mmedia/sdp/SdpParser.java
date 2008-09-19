@@ -21,78 +21,57 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
 package com.sun.mmedia.sdp;
 
 import java.io.*;
 import java.util.*;
 
 public class SdpParser extends Parser {
-    public SessionDescription sessionDescription;
 
-    public SdpParser(byte data[]) {
-        init();
+    private SessionDescription sessionDescription = null;
 
-        ByteArrayInputStream bin = new ByteArrayInputStream(data);
-
-        parseData(bin);
+    public SdpParser( byte data[] ) {
+        ByteArrayInputStream bin = new ByteArrayInputStream( data );
+        parseData( bin );
     }
 
-    public void parseData(ByteArrayInputStream bin) {	
-        if( getTag(bin).equals( "v=")) {
-            sessionDescription = new SessionDescription( bin);
-	}
+    public SdpParser( byte data[], int offs, int len ) {
+        ByteArrayInputStream bin = new ByteArrayInputStream( data, offs, len );
+        parseData( bin );
     }
-    
-    public MediaAttribute getSessionAttribute(String name) {
-        MediaAttribute attribute = null;
 
-        if (sessionDescription != null) {
-            attribute = sessionDescription.getSessionAttribute(name);
+    public void parseData( ByteArrayInputStream bin ) {
+        if( getTag( bin ).equals( "v=" ) ) {
+            try {
+                sessionDescription = new SessionDescription( bin );
+            } catch ( Exception e ) {
+                e.printStackTrace();
+            }
         }
-
-        return attribute;
     }
 
-    public MediaDescription getMediaDescription(String name) {
-        MediaDescription description = null;
-
-        if (sessionDescription != null) {
-            description = sessionDescription.getMediaDescription(name);
+    public MediaAttribute getSessionAttribute( String name ) {
+        if( null != sessionDescription ) {
+            return sessionDescription.getSessionAttribute( name );
+        } else {
+            return null;
         }
+    }
 
-	return description;
+    public MediaDescription getMediaDescription( String name ) {
+        if( null != sessionDescription ) {
+            return sessionDescription.getMediaDescription( name );
+        } else {
+            return null;
+        }
     }
 
     public Vector getMediaDescriptions() {
-        Vector descriptions = null;
-
-        if (sessionDescription != null) {
-            descriptions = sessionDescription.getMediaDescriptions();
+        if( null != sessionDescription ) {
+            return sessionDescription.getMediaDescriptions();
+        } else {
+            return null;
         }
-	
-        return descriptions;
-    }    
-  /*
-static String msg= "v=0\r\n" +
-"s=boiler_room_small_jpeg.mov\r\n" +
-"u=http://jmserver2/\r\n" +
-"e=admin@jmserver2\r\n" +
-"c=IN IP4 129.144.89.52\r\n" +
-"a=control:/\r\n" +
-"a=range:npt=0- 139.80500\r\n" +
-"m=video 0 RTP/AVP 97\r\n" +
-"a=rtpmap:97 MP4V-ES\r\n" +
-"a=control:trackID=6 \r\n" +
-"a=fmtp:97 profile-level-id=1; config=000001B001000001B5090000010000000120008440FA282C2090A21F\r\n\r\n";
-    
-    public static void main( String[] args) {
-        SdpParser sdp= new SdpParser( msg.getBytes());
-
-        MediaDescription desc = sdp.getMediaDescription( "video");
-
-        MediaAttribute attribute = desc.getMediaAttribute( "fmtp");
-
-        System.out.println( "attribute: " + attribute.getValue());
     }
-    */
 }

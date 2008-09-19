@@ -21,6 +21,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
 package com.sun.mmedia.sdp;
 
 import java.io.*;
@@ -46,88 +47,86 @@ public class SessionDescription extends Parser {
     public String encryptionKey;
 
 
-    public SessionDescription(ByteArrayInputStream bin) {
+    public SessionDescription( ByteArrayInputStream bin ) {
         // Protocol Version:
-        version = getLine(bin);
+        version = getLine( bin );
 
         connectionIncluded = false;
 
-	timeDescriptions = new Vector();
+        timeDescriptions = new Vector();
         sessionAttributes = new Vector();
-	mediaDescriptions = new Vector();
-	
-	String tag= getTag( bin);
+        mediaDescriptions = new Vector();
 
-	while( tag != null && tag.length() > 0) {
-	    if( tag.equals( "o=")) {
-                origin = getLine(bin);
-                debug( "origin: " + origin);
-	    } else if( tag.equals( "s=")) {
-                sessionName = getLine(bin);
-                debug( "session name: " + sessionName);
-	    } else if( tag.equals( "i=")) {
-                sessionInfo = getLine(bin);
-		debug( "session info: " + sessionInfo);
-	    } else if( tag.equals( "u=")) {
-                uri = getLine(bin);
-                debug( "uri: " + uri);
-	    } else if( tag.equals( "e=")) {
-                email = getLine(bin);
-                debug( "email: " + email);
-	    } else if( tag.equals( "p=")) {	    
-                phone = getLine(bin);
-                debug( "phone: " + phone);
-	    } else if( tag.equals( "c=")) {	 	    
+        String tag = getTag( bin );
+
+        while( tag != null && tag.length() > 0 ) {
+            if( tag.equals( "o=" ) ) {
+                origin = getLine( bin );
+                debug( "origin: " + origin );
+            } else if( tag.equals( "s=" ) ) {
+                sessionName = getLine( bin );
+                debug( "session name: " + sessionName );
+            } else if( tag.equals( "i=" ) ) {
+                sessionInfo = getLine( bin );
+                debug( "session info: " + sessionInfo );
+            } else if( tag.equals( "u=" ) ) {
+                uri = getLine( bin );
+                debug( "uri: " + uri );
+            } else if( tag.equals( "e=" ) ) {
+                email = getLine( bin );
+                debug( "email: " + email );
+            } else if( tag.equals( "p=" ) ) {
+                phone = getLine( bin );
+                debug( "phone: " + phone );
+            } else if( tag.equals( "c=" ) ) {
                 connectionIncluded = true;
+                connectionInfo = getLine( bin );
+                debug( "connection info: " + connectionInfo );
+            } else if( tag.equals( "b=" ) ) {
+                bandwidthInfo = getLine( bin );
+                debug( "bandwidth info: " + bandwidthInfo );
+            } else if( tag.equals( "t=" ) ) {
+                TimeDescription timeDescription = new TimeDescription( bin );
+                timeDescriptions.addElement( timeDescription );
+            } else if( tag.equals( "z=" ) ) {
+                timezoneAdjustment = getLine( bin );
+                debug( "timezone adjustment: " + timezoneAdjustment );
+            } else if( tag.equals( "k=" ) ) {
+                encryptionKey = getLine( bin );
+                debug( "encryption key: " + encryptionKey );
+            } else if( tag.equals( "a=" ) ) {
+                String sessionAttribute = getLine( bin );
+                debug( "session attribute: " + sessionAttribute );
 
-                connectionInfo = getLine(bin);
-                debug( "connection info: " + connectionInfo);
-	    } else if( tag.equals( "b=")) {		    
-                bandwidthInfo = getLine(bin);
-                debug("bandwidth info: " + bandwidthInfo);	    
-	    } else if( tag.equals( "t=")) {
-		TimeDescription timeDescription= new TimeDescription( bin);
+                int index = sessionAttribute.indexOf( ':' );
 
-		timeDescriptions.addElement( timeDescription);
-	    } else if( tag.equals( "z=")) {
-                timezoneAdjustment = getLine(bin);
-                debug( "timezone adjustment: " + timezoneAdjustment);
-	    } else if( tag.equals( "k=")) {
-                encryptionKey = getLine(bin);
-                debug( "encryption key: " + encryptionKey);		
-	    } else if( tag.equals( "a=")) {
-                String sessionAttribute = getLine(bin);
-                debug( "session attribute: " + sessionAttribute);
+                if( index > 0 ) {
+                    String name = sessionAttribute.substring( 0, index );
+                    String value = sessionAttribute.substring( index + 1 );
 
-                int index = sessionAttribute.indexOf(':');
+                    MediaAttribute attribute = new MediaAttribute( name, value );
 
-                if (index > 0) {
-                    String name = sessionAttribute.substring(0, index);
-                    String value = sessionAttribute.substring(index + 1);
+                    sessionAttributes.addElement( attribute );
+                }
+            } else if( tag.equals( "m=" ) ) {
+                MediaDescription mediaDescription = new MediaDescription( bin, connectionIncluded );
 
-                    MediaAttribute attribute = new MediaAttribute(name, value);
+                mediaDescriptions.addElement( mediaDescription );
+            }
 
-                    sessionAttributes.addElement(attribute);
-		}
-	    } else if( tag.equals( "m=")) {
-		MediaDescription mediaDescription= new MediaDescription( bin, connectionIncluded);
-
-		mediaDescriptions.addElement( mediaDescription);
-	    }
-	    
-	    tag= getTag( bin);
-	}
+            tag = getTag( bin );
+        }
     }
 
-    public MediaAttribute getSessionAttribute(String name) {
+    public MediaAttribute getSessionAttribute( String name ) {
         MediaAttribute attribute = null;
 
-        if (sessionAttributes != null) {
-            for (int i = 0; i < sessionAttributes.size(); i++) {
+        if( sessionAttributes != null ) {
+            for( int i = 0; i < sessionAttributes.size(); i++ ) {
                 MediaAttribute entry =
-                        (MediaAttribute) sessionAttributes.elementAt(i);
+                        (MediaAttribute)sessionAttributes.elementAt( i );
 
-                if (entry.getName().equals(name)) {
+                if( entry.getName().equals( name ) ) {
                     attribute = entry;
                     break;
                 }
@@ -137,26 +136,25 @@ public class SessionDescription extends Parser {
         return attribute;
     }
 
-    public MediaDescription getMediaDescription(String name) {
+    public MediaDescription getMediaDescription( String name ) {
         MediaDescription description = null;
 
-        if (mediaDescriptions != null) {
-            for (int i = 0; i < mediaDescriptions.size(); i++) {
+        if( mediaDescriptions != null ) {
+            for( int i = 0; i < mediaDescriptions.size(); i++ ) {
                 MediaDescription entry =
-                        (MediaDescription) mediaDescriptions.elementAt(i);
+                        (MediaDescription)mediaDescriptions.elementAt( i );
 
-                if (entry.name.equals(name)) {
+                if( entry.name.equals( name ) ) {
                     description = entry;
                     break;
                 }
             }
         }
 
-        return description;	
+        return description;
     }
 
     public Vector getMediaDescriptions() {
         return mediaDescriptions;
-    }    
+    }
 }
-

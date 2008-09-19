@@ -33,17 +33,26 @@ import javax.microedition.media.protocol.SourceStream;
 
 import com.sun.mmedia.protocol.BasicDS;
 
+import com.sun.mmedia.sdp.*;
 import com.sun.mmedia.rtsp.protocol.*;
 
 public class RtspDS extends BasicDS
 {
+    private static final int MIN_PORT = 1024;  // inclusive
+    private static final int MAX_PORT = 65536; // exclusive
+
     private Random rnd = new Random( System.currentTimeMillis() );
 
-    private RtspConnection connection  = null;
+    private Object msgWaitEvent = new Object();
+    private RtspIncomingMessage response = null;
+
+    private RtspConnection connection = null;
     private InputStream    inputStream = null;
     private RtspUrl        url         = null;
     private int            seqNum      = 0;
     private String         sessionId   = null;
+
+    private static int nextPort = MIN_PORT;
 
     public RtspUrl getUrl() {
         return url;
@@ -66,6 +75,44 @@ public class RtspDS extends BasicDS
                 seqNum = rnd.nextInt();
 
                 sendRequest( RtspOutgoingRequest.createDescribe( seqNum, url ) );
+
+                SdpParser sdp = response.getSdp();
+
+                if( null != sdp ) {
+                    int  start_time = 0; // in milliseconds
+                    int  end_time   = 0; // in milliseconds
+                    long duration   = 0; // in milliseconds
+
+                    MediaAttribute range = sdp.getSessionAttribute( "range" );
+
+                    if( null != range ) {
+                        String value = range.getValue();
+                        if( value.startsWith( "npt" ) ) {
+                            try {
+                                int start = value.indexOf( '=' ) + 1;
+                                int end = value.indexOf( '-' );
+                                String startTime = value.substring( start, end ).trim();
+                                String endTime = value.substring( end + 1 ).trim();
+
+                                int dotIndex = endTime.indexOf( "." );
+
+                                if( dotIndex < 0 ) {
+                                    end_time = Integer.parseInt( endTime ) * 1000;
+                                } else {
+                                    String p1 = "0" + endTime.substring( 0, dotIndex );
+                                    String p2 = endTime.substring( dotIndex + 1 );
+                                    end_time = Integer.parseInt( p1 ) * 1000;
+                                    end_time += Integer.parseInt( ( p2 + "000" ).substring( 0, 3 ) );
+                                }
+
+                                duration = (long)( ( end_time - start_time ) * 1000 );
+                            } catch( NumberFormatException e ) {
+                                duration = 0;
+                            }
+                        }
+                        System.out.println( "## range:" + start_time + "-" + end_time );
+                    }
+                }
 
                 sendRequest( RtspOutgoingRequest.createSetup( seqNum, url, allocPort() ) );
 
@@ -117,13 +164,6 @@ public class RtspDS extends BasicDS
 
     //=========================================================================
 
-    /**
-     * Highest and lowest port values allowed for RTP port pairs.
-     */
-    private static final int MIN_PORT = 1024;  // inclusive
-    private static final int MAX_PORT = 65536; // exclusive
-    private static int nextPort = MIN_PORT;
-
     private static int allocPort() {
         int retVal = nextPort;
 
@@ -134,9 +174,6 @@ public class RtspDS extends BasicDS
     }
 
     //=========================================================================
-
-    private Object msgWaitEvent = new Object();
-    private RtspIncomingMessage response = null;
 
     /** 
      * This method is called by RtspConnection when message is received

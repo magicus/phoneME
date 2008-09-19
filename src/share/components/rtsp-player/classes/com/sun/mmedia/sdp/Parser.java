@@ -21,6 +21,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
 package com.sun.mmedia.sdp;
 
 import java.io.*;
@@ -28,78 +29,73 @@ import java.util.*;
 
 
 public class Parser {
-    private Vector buffer;
+    private Vector buffer = new Vector();
 
-    public void init() {
-        buffer = new Vector();
-    }
-
-    public String getTag( ByteArrayInputStream bin) {
+    public String getTag( ByteArrayInputStream bin ) {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
-        skipWhitespace(bin);
+        skipWhitespace( bin );
 
-        if (bin.available() > 0) {
-            int ch = readChar(bin);
+        if( bin.available() > 0 ) {
+            int ch = readChar( bin );
 
-            while (ch != '=' && ch != '\n' && ch != '\r' && ch != -1) {
-                bout.write(ch);
+            while( ch != '=' && ch != '\n' && ch != '\r' && ch != -1 ) {
+                bout.write( ch );
 
-                ch = readChar(bin);
+                ch = readChar( bin );
             }
 
-            bout.write(ch);
+            bout.write( ch );
         }
 
-        String tag = new String(bout.toByteArray());
+        String tag = new String( bout.toByteArray() );
 
-	return tag;
+        return tag;
     }
 
-    public void ungetTag(String tokenStr) {
+    public void ungetTag( String tokenStr ) {
         byte token[] = tokenStr.getBytes();
 
-        for (int i = 0; i < token.length; i++) {
+        for( int i = 0; i < token.length; i++ ) {
             buffer.insertElementAt(
-                    new Integer(token[token.length - i - 1]), 0);
+                    new Integer( token[ token.length - i - 1 ] ), 0 );
         }
     }
-    
-    public String getLine(ByteArrayInputStream bin) {
+
+    public String getLine( ByteArrayInputStream bin ) {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
-        if (bin.available() > 0) {
-            int ch = readChar(bin);
+        if( bin.available() > 0 ) {
+            int ch = readChar( bin );
 
-            while (ch != '\n' && ch != '\r' && ch != -1) {
-                bout.write(ch);
-
-                ch = readChar(bin);
+            while( ch != '\n' && ch != '\r' && ch != -1 ) {
+                bout.write( ch );
+                ch = readChar( bin );
             }
         }
 
-        String line = new String(bout.toByteArray());
+        String line = new String( bout.toByteArray() );
 
         return line;
     }
 
-    private void skipWhitespace(ByteArrayInputStream bin) {
-        int ch = readChar(bin);
+    private void skipWhitespace( ByteArrayInputStream bin ) {
+        int ch = readChar( bin );
 
-        while (ch == ' ' || ch == '\n' || ch == '\r') {
-            ch = readChar(bin);
+        while( ch == ' ' || ch == '\n' || ch == '\r' ) {
+            ch = readChar( bin );
         }
 
-        buffer.insertElementAt(new Integer(ch), 0);
+        buffer.insertElementAt( new Integer( ch ), 0 );
     }
 
-    public int readChar(ByteArrayInputStream bin) {
+    public int readChar( ByteArrayInputStream bin ) {
         int ch;
 
-        if (buffer.size() > 0) {
-            ch = ((Integer) buffer.elementAt(0)).intValue();
-
-            buffer.removeElementAt(0);
+        if( buffer.size() > 0 ) {
+            Integer ich = (Integer)buffer.elementAt( 0 );
+            ch = ich.intValue();
+            buffer.removeElementAt( 0 );
         } else {
             ch = bin.read();
         }
@@ -107,11 +103,11 @@ public class Parser {
         return ch;
     }
 
-    private boolean print_debug= false;
-    
-    public void debug( String str) {
-	if( print_debug) {
-	    System.out.println( str);
-	}
+    private boolean print_debug = true;
+
+    public void debug( String str ) {
+        if( print_debug ) {
+            System.out.println( str );
+        }
     }
 }
