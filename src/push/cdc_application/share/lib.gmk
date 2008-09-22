@@ -82,7 +82,7 @@ SUBSYSTEM_CDC_SHARE_PUSH_JAVA_FILES = \
     $(CDC_SHARE_PUSH_PACKAGE_DIR)/controller/MIDPApp.java \
     $(CDC_SHARE_PUSH_PACKAGE_DIR)/controller/PushController.java \
     $(CDC_SHARE_PUSH_PACKAGE_DIR)/ota/InstallerInterface.java \
-    $(CDC_SHARE_PUSH_PACKAGE_DIR)/persistence/Store.java \    
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/persistence/Store.java \
     $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/ConnectionName.java \
     $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/MapProtocolRegistry.java \
     $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/ProtocolClassResolver.java \
