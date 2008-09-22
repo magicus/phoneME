@@ -184,7 +184,8 @@ public class HttpJadInstaller extends MIDlet implements Runnable {
      */
     static void handleInstallerException(Throwable ex) {
         String message = null;
-
+System.out.println("failed 2 - HttpJadInstaller.java");
+            ex.printStackTrace();
         if (ex instanceof InvalidJadException) {
             InvalidJadException ije = (InvalidJadException)ex;
             int reason = ije.getReason();

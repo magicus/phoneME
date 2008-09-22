@@ -277,7 +277,8 @@ class AutoTesterBase extends MIDlet implements CommandListener,
      */
     void handleInstallerException(int suiteId, Throwable ex) {
         String message = null;
-
+System.out.println("failed 1 - autotesterbase.java");
+            ex.printStackTrace();
         if (ex instanceof InvalidJadException) {
             InvalidJadException ije = (InvalidJadException)ex;
 
@@ -295,6 +296,7 @@ class AutoTesterBase extends MIDlet implements CommandListener,
             }
         } else if (ex instanceof IOException) {
             message = "** I/O Error installing suite: " + ex.getMessage();
+            
         } else {
             message = "** Error installing suite: " + ex.toString();
         }
