@@ -67,7 +67,6 @@ SUBSYSTEM_CDC_SHARE_PUSH_PACKAGES = \
     $(CDC_SHARE_PUSH_PACKAGE).controller \
     $(CDC_SHARE_PUSH_PACKAGE).ota \
     $(CDC_SHARE_PUSH_PACKAGE).persistence \
-    $(CDC_SHARE_PUSH_PACKAGE).reservation \
     $(CDC_SHARE_PUSH_PACKAGE).reservation.impl
 
 MIDP_JAVADOC_ALL += \
@@ -83,11 +82,7 @@ SUBSYSTEM_CDC_SHARE_PUSH_JAVA_FILES = \
     $(CDC_SHARE_PUSH_PACKAGE_DIR)/controller/MIDPApp.java \
     $(CDC_SHARE_PUSH_PACKAGE_DIR)/controller/PushController.java \
     $(CDC_SHARE_PUSH_PACKAGE_DIR)/ota/InstallerInterface.java \
-    $(CDC_SHARE_PUSH_PACKAGE_DIR)/persistence/Store.java \
-    $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/ConnectionReservation.java \
-    $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/DataAvailableListener.java \
-    $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/ReservationDescriptor.java \
-    $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/ProtocolFactory.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/persistence/Store.java \    
     $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/ConnectionName.java \
     $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/MapProtocolRegistry.java \
     $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/ProtocolClassResolver.java \
