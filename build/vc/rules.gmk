@@ -30,6 +30,18 @@ ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif
 
+ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
+    define fixcygpath
+    echo $(1)
+    endef
+else
+    USE_CYGWIN = true
+    HOST_OS = win32
+    define fixcygpath
+    cygpath -m $(1)
+    endef
+endif
+
 include $(JAVACALL_DIR)/build/common.gmk
 TEMP_OBJECTS1=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
 TEMP_OBJECTS=$(patsubst %.cpp,%.obj,$(TEMP_OBJECTS1))
@@ -95,18 +107,8 @@ endif
 endif
 endif
 
-LOCAL_CFLAGS_debug = -MDd -Gm -EHsc -Zi -Od -D_DEBUG -D_MBCS -D_LIB -FD -W3
-LOCAL_CFLAGS_nodebug = -MD -EHsc -O2 -D_MBCS -D_LIB -W3
-
-ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
-    define fixcygpath
-    echo $(1)
-    endef
-else
-    define fixcygpath
-    cygpath -m $(1)
-    endef
-endif
+LOCAL_CFLAGS_debug = -MDd -Gm -EHsc -Zi -Od -D_DEBUG -D_LIB -FD -W3
+LOCAL_CFLAGS_nodebug = -MD -EHsc -O2 -D_LIB -W3
 
 CXXFLAGS+= -nologo $(LOCAL_CFLAGS_$(BUILD))
 CFLAGS+= -nologo $(LOCAL_CFLAGS_$(BUILD))
@@ -144,19 +146,19 @@ OUTPUT_OPTION=-Fo`$(call fixcygpath, $@)` \
 
 $(JAVACALL_OUTPUT_LIB_DIR)/%.res: %.rc
 	@echo "...compiling resources ... "
-	@$(RC) $(RCFLAGS) /l 0x409 /d "NDEBUG" /fo`$(call fixcygpath, $@)` `$(call fixcygpath, $<)`
+	$(AT)$(RC) $(RCFLAGS) /l 0x409 /d "NDEBUG" /fo`$(call fixcygpath, $@)` `$(call fixcygpath, $<)`
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.cpp
 	@echo -n "...compiling: "
-	@$(COMPILE.cc) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
+	$(AT)$(COMPILE.cc) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 	@echo -n "...compiling: "
-	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
+	$(AT)$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/javacall_static_properties.obj: $(STATIC_PROPERTIES_C)
 	@echo -n "...compiling: "
-	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
+	$(AT)$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
 
 JAVACALL_EXTRA_LIBS::
 
