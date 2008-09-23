@@ -383,7 +383,7 @@ public class Manager extends MIDlet implements ApplicationManager,
                     getClass().getName(), null, null);
         } else {
             String midletToRun = null;
-            if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+            if (msi.isInternal()) {
                 midletToRun = msi.midletToRun;
             }
             MIDletSuiteUtils.setLastSuiteToRun(MIDletStateHandler.

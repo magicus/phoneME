@@ -803,7 +803,7 @@ class AppManagerUIImpl extends Form
                      */
                     if (!proxy.getExtendedAttribute(
                             MIDletProxy.MIDLET_LAUNCH_BG)) {
-                        ci.setDefaultCommand(fgCmd);
+                        ci.addCommand(fgCmd);
                     }
 
                     /*
@@ -823,7 +823,7 @@ class AppManagerUIImpl extends Form
                     }
                 }
             } else {
-                ci.setDefaultCommand(fgCmd);
+                ci.addCommand(fgCmd);
                 ci.addCommand(endCmd);
             }
         } else {
@@ -836,14 +836,14 @@ class AppManagerUIImpl extends Form
      * This function encapsulates the logic of choosing the default command
      * (open or launch, whatever it means), depending on the midlet type
      * and enabled state.
-     * @param mci
+     * @param mci the form item whose set of menu commands will be modified 
      */
     private void setupDefaultCommand(AppManagerUIImpl.MidletCustomItem mci) {
         RunningMIDletSuiteInfo si = mci.msi;
         boolean running = si.hasRunningMidlet();
 
         // setDefaultCommand will add default command first
-        if (si.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+        if (si.isInternal()) {
             // midlets from the internal suite are never disabled
             if (!running) {
                 if (AppManagerPeer.DISCOVERY_APP.equals(mci.msi.midletToRun)) {
@@ -1177,7 +1177,7 @@ class AppManagerUIImpl extends Form
         MidletCustomItem ci = new MidletCustomItem(suiteInfo);
 
         setupDefaultCommand(ci);
-        if (suiteInfo.suiteId != MIDletSuite.INTERNAL_SUITE_ID) {
+        if (!suiteInfo.isInternal()) {
             ci.addCommand(infoCmd);
             ci.addCommand(removeCmd);
             ci.addCommand(updateCmd);
@@ -1757,7 +1757,7 @@ class AppManagerUIImpl extends Form
             // Icon for the Installer will be shown each time
             // the AppSelector is made current since it is the top
             // most icon and we reset the traversal to start from the top
-            if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+            if (msi.isInternal()) {
                 appManager.ensureNoInternalMIDletsRunning();
             }
         }

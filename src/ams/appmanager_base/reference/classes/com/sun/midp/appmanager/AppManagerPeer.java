@@ -228,12 +228,11 @@ class AppManagerPeer implements CommandListener {
         } else {
             if (ms != null) {
                 // Find item to select
-                if (ms.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+                if (ms.isInternal()) {
                     for (int i = 0; i < msiVector.size(); i++) {
                         RunningMIDletSuiteInfo mi =
                                 (RunningMIDletSuiteInfo)msiVector.elementAt(i);
-                        if ((mi.suiteId ==
-                                MIDletSuite.INTERNAL_SUITE_ID) &&
+                        if ((mi.isInternal()) &&
                                 mi.midletToRun.equals(ms.midletToRun)) {
                             currentItem = mi;
                             break;
@@ -318,6 +317,7 @@ class AppManagerPeer implements CommandListener {
         } else if (c == enableOddNoCmd) {
             // user doesn't want to enable on device debug, do nothing
         }
+        display.setCurrent(appManagerUI.getMainDisplayable());
     }
 
     /**
@@ -517,8 +517,8 @@ class AppManagerPeer implements CommandListener {
                         // icon in the list of MidletCustomItems.
                         // (that midlet exit will be ignored).
 
-                        return super.sameSuite(midlet)
-                               && (INSTALLER.equals(midlet.getClassName())
+                        return sameSuiteId(midlet)
+                            && (INSTALLER.equals(midlet.getClassName())
                                 || DISCOVERY_APP.equals(midlet.getClassName()));
                     }
                 };
@@ -634,7 +634,7 @@ class AppManagerPeer implements CommandListener {
      * MIDlets that have the attribute to launch them right after installation
      * process is completed.
      *
-     * @param suiteId ID of the suite
+     * @param suiteInfo describes the suite
      */
     private void launchSuite(RunningMIDletSuiteInfo suiteInfo) {
         if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
@@ -939,7 +939,7 @@ class AppManagerPeer implements CommandListener {
 
         for (int i = 0; i < msiVector.size(); i++) {
             msi = (RunningMIDletSuiteInfo)msiVector.elementAt(i);
-            if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID &&
+            if (msi.isInternal() &&
                 msi.hasRunningMidlet() &&
                     (DISCOVERY_APP.equals(msi.midletToRun) ||
                      INSTALLER.equals(msi.midletToRun))) {
