@@ -1,6 +1,5 @@
-#   
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -109,13 +108,13 @@ vpath % \
    $(SUBSYSTEM_AMS_DIR)/ams_base/reference/native \
    $(INSTALLER_DIR)/native \
    $(JUMP_AMS_DIR)/native
-                                                                                           
+
 # Include path for the sub-system
 #
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
     -I$(SUBSYSTEM_AMS_DIR)/ams_base/include \
     -I$(INSTALLER_DIR)/../include
-                                                                                           
+
 # Native files for common module
 #
 SUBSYSTEM_AMS_NATIVE_FILES += \
@@ -126,7 +125,3 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
   midpInflate.c \
   midpInit.c \
   JumpInit.c
-
-ifneq ($(CVM_STATICLINK_LIBS), true)
-  SUBSYSTEM_AMS_LAZY_MAKEFILES += $(JUMP_AMS_DIR)/libmidp.gmk
-endif

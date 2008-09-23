@@ -113,6 +113,18 @@ MIDP_CLASSES_ZIP ?= $(MIDP_OUTPUT_DIR)/classes.zip
 ifeq ($(TARGET_VM), cdc_vm)
    ifneq ($(CVM_STATICLINK_LIBS), true)
       MIDP_SHARED_LIB ?= $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
+      MIDP_SHARED_LIB_FILES += $(OBJLIB)
+      CREATE_MIDP_SHARED_LIB = true
+   endif
+else
+   MIDP_LIB_NAME ?= $(LIB_PREFIX)midp
+   ifeq ($(CREATE_MIDP_SHARED_LIB),true)
+      MIDP_SHARED_LIB = $(BINDIR)/$(MIDP_LIB_NAME)$(SHARED_LIB_SUFFIX)
+      MIDP_SHARED_LIB_FILES += $(OBJLIB) $(AMS_RUNMIDLET_OBJ_FILES)
+   endif
+   ifeq ($(CREATE_MIDP_LIB),true)
+      MIDP_LIB = $(BINDIR)/$(MIDP_LIB_NAME)$(LIB_SUFFIX)
+      MIDP_LIB_FILES += $(OBJLIB) $(AMS_RUNMIDLET_OBJ_FILES)
    endif
 endif
 

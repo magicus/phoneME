@@ -270,8 +270,29 @@ clean::
 	    rm -rf "$(MIDP_OUTPUT_DIR)"; \
 	 fi $(LOG)
 
-midp: $(MIDP_DEPS) $(MIDP_RESOURCES)
+ifneq ($(MIDP_LIB),)
+$(MIDP_LIB): $(MIDP_LIB_FILES)
+	@echo " ... libing $@ " $(LOG)
+	$(AR) $(LIB_OUTPUT)`$(call fixcygpath,$@ \
+	     $(LD_START_GROUP) $(MIDP_LIB_FILES) $(LIBS))` $(LD_END_GROUP) $(LOG)
 
+ifeq ($(CREATE_MIDP_LIB),true)
+MIDP_DEPS += $(MIDP_LIB)
+endif
+endif
+
+ifneq ($(MIDP_SHARED_LIB),)
+$(MIDP_SHARED_LIB): $(MIDP_SHARED_LIB_FILES)
+	@echo " ... linking $@ " $(LOG)
+	$(AT)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+	  $(MIDP_SHARED_LIB_FILES) $(LIBS))` $(LOG) 
+
+ifeq ($(CREATE_MIDP_SHARED_LIB),true)
+MIDP_DEPS += $(MIDP_SHARED_LIB)
+endif
+endif
+
+midp: $(MIDP_DEPS) $(MIDP_RESOURCES)
 
 # Phonies to avoid accidents.
 #
