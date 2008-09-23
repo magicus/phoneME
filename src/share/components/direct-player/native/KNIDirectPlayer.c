@@ -83,6 +83,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nTerm) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jint returnValue = 1;
     
+    MMP_DEBUG_STR("+DirectPlayer.nTerm\n");
     KNI_StartHandles(2);
     KNI_DeclareHandle(instance);
     KNI_DeclareHandle(clazz);
@@ -105,6 +106,7 @@ UnlockAudioMutex();
     }
 
     KNI_EndHandles();
+    MMP_DEBUG_STR("-DirectPlayer.nTerm\n");
     KNI_ReturnInt(returnValue);
 }
 
@@ -143,16 +145,25 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nReleaseDevice) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    javacall_result result = JAVACALL_FAIL;
 
     MMP_DEBUG_STR("+nReleaseDevice\n");
 
 LockAudioMutex();            
     if (pKniInfo) {
-        javacall_media_release_device(pKniInfo->pNativeHandle);
-        pKniInfo->isAcquire = JAVACALL_FALSE;
+        JAVACALL_MM_ASYNC_EXEC(
+            result,
+            javacall_media_release_device(pKniInfo->pNativeHandle),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_DEVICE_RELEASED,
+            returns_no_data
+        );
+        if (result == JAVACALL_OK) {
+            pKniInfo->isAcquire = JAVACALL_FALSE;
+        }
     }
 UnlockAudioMutex();            
 
+    MMP_DEBUG_STR("-nReleaseDevice\n");
     KNI_ReturnVoid();
 }
 
@@ -416,7 +427,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSwitchToForeground) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
-    MMP_DEBUG_STR2("nSwitchToForeground %d %d\n", pKniInfo, options);
+    MMP_DEBUG_STR1("nSwitchToForeground %d\n", pKniInfo);
 
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
@@ -443,7 +454,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSwitchToBackground) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
-    MMP_DEBUG_STR2("nSwitchToBackground %d %d\n", pKniInfo, options);
+    MMP_DEBUG_STR1("nSwitchToBackground %d\n", pKniInfo);
 
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
@@ -552,18 +563,21 @@ UnlockAudioMutex();
 /* Native finalizer */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DirectPlayer_finalize) {
+    MMP_DEBUG_STR("+DirectPlayer.finalize\n");
     do_finalize(KNIPASSARGS 0);
     KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DirectMIDI_finalize) {
+    MMP_DEBUG_STR("+DirectMIDI.finalize\n");
     do_finalize(KNIPASSARGS 0);
     KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DirectTone_finalize) {
+    MMP_DEBUG_STR("+DirectTone.finalize\n");
     do_finalize(KNIPASSARGS 0);
     KNI_ReturnVoid();
 }
