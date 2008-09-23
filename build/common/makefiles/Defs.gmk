@@ -250,6 +250,11 @@ else
    EXTRA_CFLAGS += -DENABLE_NAMS_TEST_SERVICE=0
 endif
 
+# Remove the WTK dependency when building with Native App. Manager
+ifeq ($(MIDP_BIN_TARGET), wtk)
+    MIDP_BIN_TARGET=
+endif
+
 else
    EXTRA_CFLAGS += -DENABLE_NATIVE_APP_MANAGER=0 -DENABLE_NAMS_TEST_SERVICE=0
 endif
