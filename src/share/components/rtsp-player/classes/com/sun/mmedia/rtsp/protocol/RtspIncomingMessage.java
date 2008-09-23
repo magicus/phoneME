@@ -24,14 +24,14 @@
 
 package com.sun.mmedia.rtsp.protocol;
 
-import com.sun.mmedia.sdp.SdpParser;
+import com.sun.mmedia.sdp.SdpSessionDescr;
 
 public class RtspIncomingMessage {
 
     private byte[] bytes;
 
     private RtspMessageType type = null;
-    private SdpParser       sdp  = null;
+    private SdpSessionDescr sdp  = null;
 
     public RtspIncomingMessage( byte[] bytes ) {
 
@@ -72,7 +72,7 @@ public class RtspIncomingMessage {
                                         + "]]]" );
                      */
 
-                    sdp = new SdpParser( bytes, offs, bytes.length - offs );
+                    sdp = new SdpSessionDescr( bytes, offs, bytes.length - offs );
                     System.out.println( "SDP parsed\n\n" );
                 }
                 break;
@@ -86,7 +86,7 @@ public class RtspIncomingMessage {
         return type;
     }
 
-    public SdpParser getSdp() {
+    public SdpSessionDescr getSdp() {
         return sdp;
     }
 

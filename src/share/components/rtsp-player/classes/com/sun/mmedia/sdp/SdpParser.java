@@ -27,51 +27,86 @@ package com.sun.mmedia.sdp;
 import java.io.*;
 import java.util.*;
 
-public class SdpParser extends Parser {
+class SdpParser {
+    private Vector buffer = new Vector();
 
-    private SessionDescription sessionDescription = null;
+    public String getTag( ByteArrayInputStream bin ) {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
-    public SdpParser( byte data[] ) {
-        ByteArrayInputStream bin = new ByteArrayInputStream( data );
-        parseData( bin );
+        skipWhitespace( bin );
+
+        if( bin.available() > 0 ) {
+            int ch = readChar( bin );
+
+            while( ch != '=' && ch != '\n' && ch != '\r' && ch != -1 ) {
+                bout.write( ch );
+
+                ch = readChar( bin );
+            }
+
+            bout.write( ch );
+        }
+
+        String tag = new String( bout.toByteArray() );
+
+        return tag;
     }
 
-    public SdpParser( byte data[], int offs, int len ) {
-        ByteArrayInputStream bin = new ByteArrayInputStream( data, offs, len );
-        parseData( bin );
+    public void ungetTag( String tokenStr ) {
+        byte token[] = tokenStr.getBytes();
+
+        for( int i = 0; i < token.length; i++ ) {
+            buffer.insertElementAt(
+                    new Integer( token[ token.length - i - 1 ] ), 0 );
+        }
     }
 
-    public void parseData( ByteArrayInputStream bin ) {
-        if( getTag( bin ).equals( "v=" ) ) {
-            try {
-                sessionDescription = new SessionDescription( bin );
-            } catch ( Exception e ) {
-                e.printStackTrace();
+    public String getLine( ByteArrayInputStream bin ) {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+
+        if( bin.available() > 0 ) {
+            int ch = readChar( bin );
+
+            while( ch != '\n' && ch != '\r' && ch != -1 ) {
+                bout.write( ch );
+                ch = readChar( bin );
             }
         }
+
+        String line = new String( bout.toByteArray() );
+
+        return line;
     }
 
-    public MediaAttribute getSessionAttribute( String name ) {
-        if( null != sessionDescription ) {
-            return sessionDescription.getSessionAttribute( name );
-        } else {
-            return null;
+    private void skipWhitespace( ByteArrayInputStream bin ) {
+        int ch = readChar( bin );
+
+        while( ch == ' ' || ch == '\n' || ch == '\r' ) {
+            ch = readChar( bin );
         }
+
+        buffer.insertElementAt( new Integer( ch ), 0 );
     }
 
-    public MediaDescription getMediaDescription( String name ) {
-        if( null != sessionDescription ) {
-            return sessionDescription.getMediaDescription( name );
+    public int readChar( ByteArrayInputStream bin ) {
+        int ch;
+
+        if( buffer.size() > 0 ) {
+            Integer ich = (Integer)buffer.elementAt( 0 );
+            ch = ich.intValue();
+            buffer.removeElementAt( 0 );
         } else {
-            return null;
+            ch = bin.read();
         }
+
+        return ch;
     }
 
-    public Vector getMediaDescriptions() {
-        if( null != sessionDescription ) {
-            return sessionDescription.getMediaDescriptions();
-        } else {
-            return null;
+    private boolean print_debug = true;
+
+    public void debug( String str ) {
+        if( print_debug ) {
+            System.out.println( str );
         }
     }
 }

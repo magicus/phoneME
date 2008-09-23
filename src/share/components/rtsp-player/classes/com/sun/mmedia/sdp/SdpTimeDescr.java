@@ -27,12 +27,12 @@ package com.sun.mmedia.sdp;
 import java.io.*;
 import java.util.*;
 
-public class TimeDescription extends Parser {
+public class SdpTimeDescr extends SdpParser {
     // Values:
     public String timeActive;
     public Vector repeatTimes;
 
-    public TimeDescription( ByteArrayInputStream bin ) {
+    public SdpTimeDescr( ByteArrayInputStream bin ) {
         // Time the session is active:
         timeActive = getLine( bin );
 

@@ -161,12 +161,11 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/RtspMessageType.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/RtspOutgoingRequest.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/RtspIncomingMessage.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/MediaAttribute.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/MediaDescription.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/Parser.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SdpParser.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SessionDescription.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/TimeDescription.java
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SdpSessionDescr.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SdpMediaDescr.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SdpMediaAttr.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SdpTimeDescr.java
 endif # USE_RTSP
 
 SUBSYSTEM_JSR_135_JAVA_FILES += \

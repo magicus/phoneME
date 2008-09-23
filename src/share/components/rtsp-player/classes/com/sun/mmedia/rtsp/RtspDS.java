@@ -76,14 +76,14 @@ public class RtspDS extends BasicDS
 
                 sendRequest( RtspOutgoingRequest.createDescribe( seqNum, url ) );
 
-                SdpParser sdp = response.getSdp();
+                SdpSessionDescr sdp = response.getSdp();
 
                 if( null != sdp ) {
                     int  start_time = 0; // in milliseconds
                     int  end_time   = 0; // in milliseconds
                     long duration   = 0; // in milliseconds
 
-                    MediaAttribute range = sdp.getSessionAttribute( "range" );
+                    SdpMediaAttr range = sdp.getSessionAttribute( "range" );
 
                     if( null != range ) {
                         String value = range.getValue();

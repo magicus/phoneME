@@ -24,11 +24,11 @@
 
 package com.sun.mmedia.sdp;
 
-public class MediaAttribute {
+public class SdpMediaAttr {
     private String name;
     private String value;
 
-    public MediaAttribute( String name, String value ) {
+    public SdpMediaAttr( String name, String value ) {
         this.name = name;
         this.value = value;
     }

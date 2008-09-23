@@ -27,7 +27,7 @@ package com.sun.mmedia.sdp;
 import java.io.*;
 import java.util.*;
 
-public class MediaDescription extends Parser {
+public class SdpMediaDescr extends SdpParser {
     // Values:
     public String name;
     public String port;
@@ -41,7 +41,7 @@ public class MediaDescription extends Parser {
     public Vector mediaAttributes;
 
 
-    public MediaDescription( ByteArrayInputStream bin,
+    public SdpMediaDescr( ByteArrayInputStream bin,
             boolean connectionIncluded ) {
         // Media Name and Transport Address:
         parseMediaName( getLine( bin ) );
@@ -79,7 +79,7 @@ public class MediaDescription extends Parser {
                     String name = mediaAttribute.substring( 0, index );
                     String value = mediaAttribute.substring( index + 1 );
 
-                    MediaAttribute attribute = new MediaAttribute( name, value );
+                    SdpMediaAttr attribute = new SdpMediaAttr( name, value );
 
                     mediaAttributes.addElement( attribute );
                 }
@@ -123,13 +123,13 @@ public class MediaDescription extends Parser {
         }
     }
 
-    public MediaAttribute getMediaAttribute( String name ) {
-        MediaAttribute attribute = null;
+    public SdpMediaAttr getMediaAttribute( String name ) {
+        SdpMediaAttr attribute = null;
 
         if( mediaAttributes != null ) {
             for( int i = 0; i < mediaAttributes.size(); i++ ) {
-                MediaAttribute entry =
-                        (MediaAttribute)mediaAttributes.elementAt( i );
+                SdpMediaAttr entry =
+                        (SdpMediaAttr)mediaAttributes.elementAt( i );
 
                 if( entry.getName().equals( name ) ) {
                     attribute = entry;
