@@ -719,10 +719,6 @@ class Thread implements Runnable {
      */
     private void exit(Throwable t) {
 
-	// unlocked reserved resources to prevent
-	// out-of-memory errors
-	setThreadExiting();
-
 	// disable any future async/remote exceptions
 	CVM.disableRemoteExceptions();
 	CVM.maskInterrupts();
@@ -739,12 +735,22 @@ class Thread implements Runnable {
 		}
 	    }
 
+	    // unlocked reserved resources to prevent
+	    // out-of-memory errors
+	    setThreadExiting();
+
 	    try {
 		group.remove(this);
 	    } catch (Throwable t0) {
 		// Probably OutOfMemoryError, ignore
 	    }
 	    group = null;
+
+	} else {
+
+	    // unlocked reserved resources to prevent
+	    // out-of-memory errors
+	    setThreadExiting();
 	}
 
 	/* Aggressively null object connected to Thread: see bug 4006245 */
