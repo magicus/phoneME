@@ -48,20 +48,13 @@ import com.sun.midp.log.LogChannels;
 public class AppSettings extends Form
     implements CommandListener, ItemStateListener {
 
+    AppSettingsUI settingsUI;
+
     /** ID for the interrupt choice. */
     private static final int INTERRUPT_CHOICE_ID = 2000;
 
     /** ID for the first push option radio button. */
     private static final int PUSH_OPTION_1_ID = 1000;
-
-    /** Command object for "OK" command for the form. */
-    private Command saveAppSettingsCmd =
-        new Command(Resource.getString(ResourceConstants.SAVE),
-                    Command.OK, 1);
-    /** Command object for "Cancel" command for the form. */
-    private Command cancelCmd =
-        new Command(Resource.getString(ResourceConstants.CANCEL),
-                    Command.CANCEL, 1);
 
     /** The ID of the setting displayed in the form. */
     private int displayedSettingID;
@@ -130,6 +123,7 @@ public class AppSettings extends Form
                        DisplayError displayError,
                        Displayable nextScreen) throws Throwable {
         super(null);
+        settingsUI = new AppSettingsUIImpl(this);
 
         this.displayError = displayError;
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
@@ -140,20 +134,9 @@ public class AppSettings extends Form
         displayApplicationSettings(suiteId);
     }
 
-    /**
-     * Respond to a command issued on any Screen.
-     *
-     * @param c command activated by the user
-     * @param s the Displayable the command was on.
-     */
-    public void commandAction(Command c, Displayable s) {
-        if (c == saveAppSettingsCmd) {
-            saveApplicationSettings();
-            midletSuite.close();
-        } else if (c == cancelCmd) {
-            display.setCurrent(nextScreen);
-            midletSuite.close();
-        }
+
+    public void onGroupChanged(int selected) {
+
     }
 
     /**
@@ -442,8 +425,16 @@ public class AppSettings extends Form
         return choice;
     }
 
+    /**
+     * Cancel the application settings the user entered and dismiss UI.
+     */
+    public void cancelApplicationSettings() {
+        display.setCurrent(nextScreen);
+        midletSuite.close();
+    }
+
     /** Save the application settings the user entered. */
-    private void saveApplicationSettings() {
+    public void saveApplicationSettings() {
         try {
             if (interruptChoice != null) {
                 byte maxInterruptSetting;
@@ -499,6 +490,7 @@ public class AppSettings extends Form
                                         Resource.getString
                                         (ResourceConstants.EXCEPTION), null);
         }
+        midletSuite.close();
     }
 
     /**
@@ -514,102 +506,5 @@ public class AppSettings extends Form
         successAlert.setTimeout(GraphicalInstaller.ALERT_TIMEOUT);
 
         display.setCurrent(successAlert, nextScreen);
-    }
-}
-
-/**
- * A <code>RadioButtonSet</code> is a group radio buttons intended to be
- * placed within a <code>Form</code>. However the radio buttons can be
- * accessed by a assigned ID instead of by index. This lets the calling
- * code be the same when dealing with dynamic sets.
- */
-class RadioButtonSet extends ChoiceGroup {
-    /** Size increment for the ID array. */
-    private static final int SIZE_INCREMENT = 5;
-
-    /** Keeps track of the button IDs. */
-    private int[] ids;
-
-    /**
-     * Creates a new, empty <code>RadioButtonSet</code>, specifying its
-     * title.
-     *
-     * @param label the item's label (see {@link Item Item})
-     * @param popup true if the radio buttons should be popup
-     */
-    RadioButtonSet(String label, boolean popup) {
-        super(label, popup ? Choice.POPUP : Choice.EXCLUSIVE);
-        ids = new int[SIZE_INCREMENT];
-    }
-
-    /**
-     * Appends choice to the set.
-     *
-     * @param stringPart the string part of the element to be added
-     * @param id ID for the radio button
-     *
-     * @throws IllegalArgumentException if the image is mutable
-     * @throws NullPointerException if <code>stringPart</code> is
-     * <code>null</code>
-     * @throws IndexOutOfBoundsException this call would exceed the maximum
-     *         number of buttons for this set
-     */
-    public void append(String stringPart, int id) {
-        int buttonNumber = append(stringPart, null);
-
-        if (buttonNumber >= ids.length) {
-            expandIdArray();
-        }
-
-        ids[buttonNumber] = id;
-    }
-
-    /**
-     * Set the default button.
-     *
-     * @param id ID of default button
-     *
-     * @throws IndexOutOfBoundsException if <code>id</code> is invalid
-     */
-    public void setDefaultButton(int id) {
-        setSelectedIndex(indexFor(id), true);
-    }
-
-    /**
-     * Returns the ID of the selected radio button.
-     *
-     * @return ID of selected element
-     */
-    public int getSelectedButton() {
-        return ids[getSelectedIndex()];
-    }
-
-    /**
-     * Find the index for an ID.
-     *
-     * @param id button id
-     *
-     * @return index for a button
-     *
-     * @exception IndexOutOfBoundsException If no element exists with that ID
-     */
-    private int indexFor(int id) {
-        for (int i = 0; i < ids.length; i++) {
-            if (ids[i] == id) {
-                return i;
-            }
-        }
-
-        throw new IndexOutOfBoundsException();
-    }
-
-    /** Expands the ID array. */
-    private void expandIdArray() {
-        int[] prev = ids;
-
-        ids = new int[prev.length + SIZE_INCREMENT];
-        for (int i = 0; i < prev.length; i++) {
-            ids[i] = prev[i];
-        }
     }
 }
