@@ -1964,6 +1964,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             case Canvas.LEFT:
             case Canvas.UP:
                 if (bounds[Y] >= viewable[Y]) {
+                    //cycling
+                    if (viewable[Y] == 0 && bounds[Y] > viewable[HEIGHT] - viewport[HEIGHT]) {
+                        viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
+                        return true;
+                    }
                     return false;
                 }
 
@@ -1977,6 +1982,12 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 if (bounds[Y] + bounds[HEIGHT] <=
                     viewable[Y] + viewport[HEIGHT]) 
                 {
+                    //cycling 
+                    if ((viewable[Y] == viewable[HEIGHT] - viewport[HEIGHT]) &&
+                        (bounds[Y] <= bounds[HEIGHT])) {
+                        viewable[Y] = 0;
+                        return true;		
+                    }
                     return false;
                 }
 
