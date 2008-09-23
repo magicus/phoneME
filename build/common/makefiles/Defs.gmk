@@ -117,7 +117,7 @@ ifeq ($(TARGET_VM), cdc_vm)
       CREATE_MIDP_SHARED_LIB = true
    endif
 else
-   MIDP_LIB_NAME ?= libmidp
+   MIDP_LIB_NAME ?= $(LIB_PREFIX)midp
    ifeq ($(CREATE_MIDP_SHARED_LIB),true)
       MIDP_SHARED_LIB = $(BINDIR)/$(MIDP_LIB_NAME)$(SHARED_LIB_SUFFIX)
       MIDP_SHARED_LIB_FILES += $(OBJLIB) $(AMS_RUNMIDLET_OBJ_FILES)
