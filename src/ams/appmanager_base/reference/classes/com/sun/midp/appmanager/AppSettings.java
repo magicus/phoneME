@@ -529,7 +529,7 @@ class ChoiceInfo {
         }
         ids[cnt] = id;
         cnt++;
-        itemLabels.add(label);
+        itemLabels.addElement(label);
     }
 
     /**

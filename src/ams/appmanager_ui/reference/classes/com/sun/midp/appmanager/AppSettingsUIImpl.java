@@ -27,7 +27,10 @@
 package com.sun.midp.appmanager;
 
 import com.sun.midp.i18n.Resource;
+import com.sun.midp.i18n.ResourceConstants;
+
 import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
 
 import javax.microedition.lcdui.*;
 
@@ -92,6 +95,11 @@ public class AppSettingsUIImpl extends Form
      */
     public void setGroups(ChoiceInfo groupsChoice) {
         loadApplicationSettings(groupsChoice);
+        addCommand(saveAppSettingsCmd);
+        addCommand(cancelCmd);
+        setCommandListener(this);
+
+        setItemStateListener(this);        
     }
 
 
@@ -113,9 +121,14 @@ public class AppSettingsUIImpl extends Form
             }
             //select current level
             groupSettings[i].setSelectedID(settings.getSelected());
+            groupSettings[i].setPreferredSize(getWidth(), -1);
         }
         // select default group
         groupChoice.setSelectedID(groups.getSelected());
+        append(groupChoice);
+        lastGroupChoiceID = groups.getSelected();
+        lastGroupChoiceIndex = groupChoice.getSelectedIndex();
+        displayedSettingID = append(groupSettings[lastGroupChoiceIndex]);
     }
 
     /**
