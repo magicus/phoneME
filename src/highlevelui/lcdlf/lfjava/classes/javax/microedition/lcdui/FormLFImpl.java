@@ -1627,8 +1627,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * @param dir the direction of traversal
      */
     void uTraverse(int dir) {
-
-        ItemLFImpl[] itemsCopy;
+    	ItemLFImpl[] itemsCopy;
         int traverseIndexCopy;
 
         synchronized (Display.LCDUILock) {
@@ -1671,7 +1670,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         // current page
         int nextIndex = 
                 getNextInteractiveItem(itemsCopy, dir, traverseIndexCopy);
-
+        
         if (nextIndex != -1) {
             // NOTE: In traverse(), if there is a "next" interactive
             // item, there must have been a "first" interactive item
@@ -1780,7 +1779,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             // if we do, then traverse out of the current item and 
             // scroll the page
             
-            if ((dir == Canvas.LEFT || dir == Canvas.UP) && viewable[Y] > 0) {
+            if ((dir == Canvas.LEFT || dir == Canvas.UP) && viewable[Y] >= 0) {
                 // Special case. We're at the top-most interactive item, but
                 // its internal traversal doesn't allow the very top to be
                 // seen, we just scroll the view to show it
@@ -1795,15 +1794,29 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                     setupScroll();
                     uRequestPaint();
                 } else {
+                	//cycling
+                	if (viewable[Y] == 0) {
+                		traverseIndex = itemsCopy.length - 1;
+                 	    traverseIndexCopy = itemsCopy.length - 1;
+                 	    //set up visRect
+                 	    itemTraverse = 
+                            uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+                 	    //set up viewable
+                 	    scrollForBounds(dir, visRect);
+                 	    uHideShowItems(itemsCopy);
+                        uRequestPaint(); // request to paint contents area
+                        return;
+                	} else {
                     // page up
-                    uScrollViewport(Canvas.UP, itemsCopy);
-                    uInitItemsInViewport(
+                        uScrollViewport(Canvas.UP, itemsCopy);
+                        uInitItemsInViewport(
                             Canvas.UP, itemsCopy, traverseIndexCopy);
-                    updateCommandSet();
-                    return;
+                        updateCommandSet();
+                        return;
+                    }
                 }
             } else if ((dir == Canvas.RIGHT || dir == Canvas.DOWN) &&
-                (viewable[Y] + viewport[HEIGHT] < viewable[HEIGHT])) 
+                (viewable[Y] + viewport[HEIGHT] <= viewable[HEIGHT])) 
             {
                 // Special case. We're at the bottom-most interactive item,
                 // but its internal traversal doesn't allow the very bottom
@@ -1821,13 +1834,26 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                     uHideShowItems(itemsCopy);
                     setupScroll();
                     uRequestPaint();                    
-                } else {            
-                    // page down
-                    uScrollViewport(Canvas.DOWN, itemsCopy);
-                    uInitItemsInViewport(
+                } else {
+                	if (viewable[Y] + viewport[HEIGHT] == viewable[HEIGHT]) {
+                	    traverseIndex = 0;
+                 	    traverseIndexCopy = 0;
+                 	    //set up visRect
+                 	    itemTraverse = 
+                            uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+                 	    //set up viewable
+                 	    scrollForBounds(dir, visRect);
+                 	    uHideShowItems(itemsCopy);
+                        uRequestPaint(); // request to paint contents area
+                        return;
+                	} else {
+                        // page down
+                        uScrollViewport(Canvas.DOWN, itemsCopy);
+                        uInitItemsInViewport(
                             Canvas.DOWN, itemsCopy, traverseIndexCopy);
-                    updateCommandSet();
-                    return;
+                        updateCommandSet();
+                        return;
+                    }
                 }
             }
             
