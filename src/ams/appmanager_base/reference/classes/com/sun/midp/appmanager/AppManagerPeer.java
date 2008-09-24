@@ -272,6 +272,20 @@ class AppManagerPeer implements CommandListener {
     }
 
     /**
+     * Shows requested application settings.
+     * @param suiteId suite ID
+     * @param nextScreen displayable that is to be shown
+     *  after settings dialog is dismissed
+     * @throws Throwable
+     */
+    public void showAppSettings(int suiteId,
+                       Displayable nextScreen)  throws Throwable {
+        AppSettings appSettings = new AppSettings(suiteId, display,
+                                                  displayError, nextScreen);
+        display.setCurrent(appSettings.getMainDisplayable());
+    }
+
+    /**
      * Shows ODT Agent midlet in the midlet list.
      */
     public void showODTAgent() {

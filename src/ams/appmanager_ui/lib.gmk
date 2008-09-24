@@ -42,7 +42,8 @@ AMS_APPMANAGER_UI_IMPL_DIR ?= $(AMS_APPMANAGER_UI_DIR)/reference
 
 #Common interface to all implementations
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppManagerUI.java
+    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppManagerUI.java \
+    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppSettingsUI.java
 
 # Get implementation settings and files
 include $(AMS_APPMANAGER_UI_IMPL_DIR)/lib.gmk

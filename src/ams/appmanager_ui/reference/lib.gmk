@@ -29,6 +29,7 @@
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/AppInfo.java \
     $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/AppManagerUIImpl.java \
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/AppSettingsUIImpl.java \
     $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/FolderList.java \
     $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/MIDletSelector.java \
     $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/MIDletSwitcher.java \

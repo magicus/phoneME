@@ -45,6 +45,7 @@ MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_IMPL_DIR)/classes
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/AppManagerUIImpl.java \
+    $(APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/AppSettingsUIImpl.java \
     $(APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/MIDletSelector.java
 
 
