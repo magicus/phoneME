@@ -278,6 +278,25 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = JSR290_INVALIDATE_SIGNAL;
         pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
         break;
+    case JSR290_JC_EVENT_FLUID_LISTENER_COMPLETED:
+        pNewSignal->waitingFor = JSR290_LISTENER_COMPLETED_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
+    case JSR290_JC_EVENT_FLUID_LISTENER_FAILED:
+        pNewSignal->waitingFor = JSR290_LISTENER_FAILED_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
+        pNewSignal->pResult    = event->data.jsr290FluidEvent.text;
+    case JSR290_JC_EVENT_FLUID_LISTENER_PERCENTAGE:
+        pNewSignal->waitingFor = JSR290_LISTENER_PERCENTAGE_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
+        *((float*)&pNewSignal->status) = event->data.jsr290FluidEvent.percentage;
+    case JSR290_JC_EVENT_FLUID_LISTENER_STARTED:
+        pNewSignal->waitingFor = JSR290_LISTENER_STARTED_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
+    case JSR290_JC_EVENT_FLUID_LISTENER_WARNING:
+        pNewSignal->waitingFor = JSR290_LISTENER_WARNING_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
+        pNewSignal->pResult    = event->data.jsr290FluidEvent.text;
+        break;
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_177

@@ -847,7 +847,7 @@ void /*OPTIONAL*/javanotify_location_proximity(
 
 #endif /* ENABLE_JSR_179 */
 
-#ifdef ENABLE_JSR_211
+#if defined(ENABLE_JSR_211) || defined(ENABLE_JSR_290)
 
 /*
  * Copies source javacall_utf16_string string into newly allocated memory buffer
@@ -866,7 +866,9 @@ copy_jc_utf16_string(javacall_const_utf16_string src) {
     memcpy(result, src, ((unsigned int)length + 1) * sizeof(javacall_utf16));
     return result;
 }
+#endif
 
+#ifdef ENABLE_JSR_211
 /*
  * Called by platform to notify java VM that invocation of native handler
  * is finished. This is <code>ContentHandlerServer.finish()</code> substitute
@@ -1017,6 +1019,72 @@ javanotify_fluid_image_notify_dirty (
     e.eventType = JSR290_JC_EVENT_FLUID_INVALIDATE;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
     e.data.jsr290FluidEvent.result      = 0;
+
+    midp_jc_event_send(&e);
+}
+
+void
+javanotify_fluid_listener_completed (
+    javacall_handle                       fluid_image
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_COMPLETED;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+
+    midp_jc_event_send(&e);
+}
+    
+void
+javanotify_fluid_listener_failed (
+    javacall_handle                       fluid_image,
+    javacall_const_utf16_string           failure
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_FAILED;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.text = copy_jc_utf16_string(failure);
+
+    midp_jc_event_send(&e);
+}
+
+void
+javanotify_fluid_listener_percentage (
+    javacall_handle                       fluid_image,
+    float                                 percentage
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_PERCENTAGE;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.percentage = percentage;
+
+    midp_jc_event_send(&e);
+}
+    
+void
+javanotify_fluid_listener_started (
+    javacall_handle                       fluid_image
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_STARTED;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+
+    midp_jc_event_send(&e);
+}
+    
+void
+javanotify_fluid_listener_warning (
+    javacall_handle                       fluid_image,
+    javacall_const_utf16_string           warning
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_WARNING;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.text = copy_jc_utf16_string(warning);
 
     midp_jc_event_send(&e);
 }
