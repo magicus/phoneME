@@ -443,10 +443,15 @@ static int pushOpenInternal(int startListening) {
     int status;
 
     if (startListening) {
-        /* Make sure the network is properly in initialized. */
+        /* Make sure the network is properly initialized. */
 
-        if (pcsl_network_init_start() != PCSL_NET_SUCCESS) {
-            return -1;
+        status  = pcsl_network_init_start();
+        if (status != PCSL_NET_SUCCESS) {
+            if (status == PCSL_NET_WOULDBLOCK) {
+                return -2;
+            } else {
+                return -1;
+            }
         }
     }
 

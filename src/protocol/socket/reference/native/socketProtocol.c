@@ -880,9 +880,8 @@ Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal(void) {
     if (info == NULL){
        status = pcsl_network_init_start();
     }
-    else {
-       status = info->status;
-       pcsl_network_init_finish();
+    else { /* Reinvocation after unblocking the thread */
+       status = pcsl_network_init_finish();
     }
 
    REPORT_INFO2(LC_CORE, "Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal() pcsl_network_init(%d) returned %d\n",

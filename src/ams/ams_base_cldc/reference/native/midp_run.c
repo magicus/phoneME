@@ -438,9 +438,11 @@ midpInitializeUI(void) {
 #endif
 
 
-    if (pushopen() != 0) {
-        return -1;
-    }
+    /*
+     * IMPL_NOTE: don't analyze pushopen status since even if network is not up
+     *  right now it will be brought up later
+     */
+    pushopen();
 
     if (0 == lcdlf_ui_init()) {
 
