@@ -121,7 +121,7 @@ unsigned short pcsl_network_ntohs(
  * See pcsl_network.h for definition.
  */
 int
-pcsl_network_finalize_start(void) {
+pcsl_network_finalize_start(PCSL_NET_CALLBACK pcsl_network_callback) {
 
     javacall_result res;
     res = javacall_network_finalize_start();
@@ -148,24 +148,22 @@ int
 pcsl_network_init(void) {
     javacall_result res;
 
-	res = pcsl_network_init_start();
+	res = pcsl_network_init_start(NULL);
 
 	return res;
 }
-
 
 /**
  * See pcsl_network.h for definition.
  */
 int 
-pcsl_network_init_start(void) {
+pcsl_network_init_start(PCSL_NET_CALLBACK pcsl_network_callback) {
     javacall_result res;
 
     res = javacall_network_init_start();
 
     return javacall_to_pcsl_result(res);
 }
-
 
 /**
  * See pcsl_network.h for definition.
@@ -178,7 +176,6 @@ pcsl_network_init_finish(void) {
 
     return javacall_to_pcsl_result(res);
 }
-
 
 /**
  * See pcsl_network.h for definition.
@@ -200,7 +197,6 @@ pcsl_network_getLocalHostName(char *pLocalHost) {
     return javacall_to_pcsl_result(res);
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
@@ -212,7 +208,6 @@ pcsl_network_getLocalIPAddressAsString(char *pLocalIPAddress) {
 
     return javacall_to_pcsl_result(res);
 }
-
 
 /**
  * Translates the given IP address into a host name. 
@@ -276,7 +271,6 @@ pcsl_network_getHostByAddr_finish(int ipn, char *hostname, void **pHandle, void 
 
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
@@ -308,7 +302,6 @@ pcsl_network_gethostbyname_finish(unsigned char *pAddress,
     return javacall_to_pcsl_result(res);
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
@@ -321,7 +314,6 @@ pcsl_network_getsockopt(void *handle, int flag, int *pOptval) {
     return javacall_to_pcsl_result(res);
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
@@ -333,7 +325,6 @@ pcsl_network_setsockopt(void *handle, int flag, int optval) {
 
     return javacall_to_pcsl_result(res);
 }
-
 
 /**
  * See pcsl_network.h for definition.
