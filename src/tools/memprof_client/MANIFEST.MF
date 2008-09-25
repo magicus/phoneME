@@ -1,0 +1,6 @@
+SCCS-Version: @(#)MANIFEST.MF	1.1 03/02/23 23:08:38
+Copy-Right1: Copyright © 2007 Sun Microsystems, Inc. All rights reserved.
+Copy-Right2: SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+Manifest-Version: 1.0
+Created-By: 1.3.0 (Sun Microsystems Inc.)
+Main-Class: view.Client
