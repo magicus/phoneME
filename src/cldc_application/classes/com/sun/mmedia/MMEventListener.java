@@ -127,7 +127,7 @@ class MMEventListener implements EventListener {
         case EVENT_MEDIA_ERROR:
             p = PlayerImpl.get(nevt.intParam1);
             if (p != null) {
-                p.sendEvent(PlayerListener.RECORD_ERROR, new String("Unexpected Media Error"));
+                p.sendEvent(PlayerListener.ERROR, new String("Unexpected Media Error"));
             }
             break;
 
