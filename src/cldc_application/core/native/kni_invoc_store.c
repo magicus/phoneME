@@ -101,7 +101,7 @@ typedef struct _StoredLink {
     struct _StoredInvoc* invoc;    /**< The stored invocation */
 } StoredLink;
 
-static int copyOut(StoredInvoc *invoc, int mode, 
+static int copyOut(const StoredInvoc *invoc, int mode, 
            jobject invocObj, jobject argsObj, jobject obj);
 static void removeEntry(StoredLink *entry);
 
@@ -136,9 +136,7 @@ static int prevTid = UNDEFINED_TID;
 
 #define ENUM_SIMPLE_INT_FIELDS(actionMacro) \
     actionMacro(previousTid) \
-    actionMacro(suiteId) \
     actionMacro(status) \
-    actionMacro(invokingSuiteId) \
 
 #define ENUM_INT_FIELDS(actionMacro) \
     actionMacro(tid) \
@@ -147,10 +145,8 @@ static int prevTid = UNDEFINED_TID;
     actionMacro(dataLen) \
 
 #define ENUM_STRING_FIELDS(actionMacro) \
-    actionMacro(classname) \
     actionMacro(invokingAuthority) \
     actionMacro(invokingAppName) \
-    actionMacro(invokingClassname) \
     actionMacro(invokingID) \
     actionMacro(url) \
     actionMacro(type) \
@@ -159,10 +155,14 @@ static int prevTid = UNDEFINED_TID;
     actionMacro(username) \
     actionMacro(password) \
 
+//    actionMacro(suiteId) actionMacro(invokingSuiteId) actionMacro(classname) actionMacro(invokingClassname)
+
 #define ENUM_MISC_FIELDS(actionMacro) \
     actionMacro(arguments, "[Ljava/lang/String;") \
     actionMacro(data, "[B") \
     actionMacro(responseRequired, "Z") \
+    actionMacro(destinationApp, "Lcom/sun/j2me/content/ApplicationID;") \
+    actionMacro(invokingApp, "Lcom/sun/j2me/content/ApplicationID;") \
 
 #define FID(field) field##Fid
 #define _toQuote(field) #field
@@ -178,44 +178,87 @@ ENUM_INT_FIELDS(defineField)
 ENUM_STRING_FIELDS(defineField)
 ENUM_MISC_FIELDS(defineMiscField)
 
+// define CLDCAppID fields
+defineField(suiteID)
+defineField(className)
+
 #undef defineMiscField
 #undef defineField
 
-/**
- * Cache the fieldIDs for each fields of the InvocationImpl class.
- * Initialize the invocation queue head.
- * @param invocObj the invocation object
- * @param classObj the Class object of Invocation
- */
-static void init(jobject invocObj, jclass classObj) {
-    if (FID(url) != 0)
-        return;
+//---------------------------------------------------------
 
-    KNI_GetObjectClass(invocObj, classObj);
+#define initField(field, type) \
+    FID(field) = KNI_GetFieldID(classObj, toQuote(field), type ); \
+    // printf( "\n%s = %p", toQuote(field), FID(field) ); \
 
-#define initField(field, type) FID(field) = KNI_GetFieldID(classObj, toQuote(field), type );
 #define initIntField(field) initField(field, "I")
 #define initStringField(field) initField(field, "Ljava/lang/String;")
 
+#define fieldEqZero(field) FID(field) == 0 ||
+#define fieldMiscEqZero(field, type) fieldEqZero(field)
+
+static int initializeInvocationImplFields( jclass classObj ) {
+    if (!KNI_IsNullHandle(classObj)) {
+        // initialize Invocation fields
 ENUM_INT_FIELDS(initIntField)
 ENUM_STRING_FIELDS(initStringField)
 ENUM_MISC_FIELDS(initField)
+
+#if REPORT_LEVEL <= LOG_CRITICAL
+        if ( !(ENUM_INT_FIELDS(fieldEqZero) ENUM_STRING_FIELDS(fieldEqZero) ENUM_MISC_FIELDS(fieldMiscEqZero) 0) )
+            return -1;
+        REPORT_CRIT(LC_NONE, "kni_invoc_store.c: initializeInvocationImplFields failed");
+#endif
+    }
+    return 0;
+}
+
+static int initializeCLDCAppIDFields( jclass classObj ) {
+    if (!KNI_IsNullHandle(classObj)) {
+        // initialize CLDCAppID fields
+        initIntField(suiteID)
+        initStringField(className)
+
+#if REPORT_LEVEL <= LOG_CRITICAL
+        if ( !(fieldEqZero(suiteID) fieldEqZero(className) 0) )
+            return -1;
+        REPORT_CRIT(LC_NONE, "kni_invoc_store.c: initializeCLDCAppIDFields failed");
+#endif
+    }
+    return 0;
+}
+
+#undef fieldEqZero
+#undef fieldMiscEqZero
 
 #undef initStringField
 #undef initIntField
 #undef initField
 
-#if REPORT_LEVEL <= LOG_CRITICAL
-#define fieldEqZero(field) FID(field) == 0 ||
-#define fieldMiscEqZero(field, type) fieldEqZero(field)
+/**
+ * Cache the fieldIDs for each fields of the InvocationImpl class.
+ * Initialize the invocation queue head.
+ * @param invocObj the invocation object
+ * @param tmpObj the Class object of Invocation
+ */
+static void initializeFields(KNIDECLARGS jobject invocationImplObj) {
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(classObj);   // clazz object
 
-    if ( ENUM_INT_FIELDS(fieldEqZero) ENUM_STRING_FIELDS(fieldEqZero) ENUM_MISC_FIELDS(fieldMiscEqZero) 0 ) {
-        REPORT_CRIT(LC_NONE, "invocStore.c: fieldID initialization failed");
-    }
-#undef fieldEqZero
-#undef fieldMiscEqZero
-#endif
+    if (FID(url) != 0)
+        return;
+
+    KNI_GetObjectClass(invocationImplObj, classObj);
+    initializeInvocationImplFields(classObj);
+
+    KNI_FindClass("com/sun/j2me/content/CLDCAppID", classObj);
+    initializeCLDCAppIDFields(classObj);
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
 }
+
+//---------------------------------------------------------
 
 /**
  * The utility allocates memory for StoredInvoc struct and initializes it with
@@ -238,7 +281,7 @@ static StoredInvoc * newStoredInvoc() {
  * @param fieldid of field to store the jstring
  * @return false if the String could not allocate
  */
-static jboolean storeField(const pcsl_string* str,
+static jboolean storeStringField(const pcsl_string* str,
                     jobject invocObj, jfieldID fid, jobject tmpobj) {
     if (str == NULL || pcsl_string_is_null(str)) {
         KNI_ReleaseHandle(tmpobj);
@@ -270,20 +313,37 @@ static jboolean update(StoredInvoc* invoc, jobject invocObj, jobject tmp1, jobje
         int len;
         pcsl_string* args;
 
-#define updateString(name) \
-        pcsl_string_free(&invoc->name); \
-        KNI_GetObjectField(invocObj, FID(name), tmp1); \
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->name)) \
+#define updateString(_struct, _fname, _object) \
+        pcsl_string_free(&(_struct)._fname); \
+        KNI_GetObjectField(_object, FID(_fname), tmp1); \
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &(_struct)._fname)) \
             break; \
 
-#define updateInt(name) \
-        invoc->name = KNI_GetIntField(invocObj, FID(name)); \
+#define updateInvocString(_fname) updateString(*invoc, _fname, invocObj)
+
+#define updateInt(_fname) \
+        invoc->_fname = KNI_GetIntField(invocObj, FID(_fname)); \
 
         ENUM_SIMPLE_INT_FIELDS(updateInt)
-        ENUM_STRING_FIELDS(updateString)
+        ENUM_STRING_FIELDS(updateInvocString)
 #undef updateInt
-#undef updateString
+#undef updateInvocString
     
+        // update destinationApp and invokingApp
+        KNI_GetObjectField(invocObj, FID(destinationApp), tmp1);
+        if(!KNI_IsNullHandle(tmp1)){
+            invoc->destinationApp.suiteID = KNI_GetIntField(tmp1, FID(suiteID));
+            updateString(invoc->destinationApp, className, tmp1)
+        }
+
+        KNI_GetObjectField(invocObj, FID(invokingApp), tmp1);
+        if(!KNI_IsNullHandle(tmp1)){
+            invoc->invokingApp.suiteID = KNI_GetIntField(tmp1, FID(suiteID));
+            updateString(invoc->invokingApp, className, tmp1)
+        }
+
+#undef updateString
+
         invoc->responseRequired = KNI_GetBooleanField(invocObj, FID(responseRequired));
 
         /*
@@ -370,14 +430,15 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_j2me_content_InvocationStore_put0) {
     StoredInvoc* invoc = NULL;
 
-    KNI_StartHandles(4);
+    KNI_StartHandles(5);
     KNI_DeclareHandle(invocObj);
     KNI_DeclareHandle(classObj);
+    KNI_DeclareHandle(tmpObj);
     KNI_DeclareHandle(argsObj);
     KNI_DeclareHandle(str);
 
     KNI_GetParameterAsObject(1, invocObj);
-    init(invocObj, classObj);
+    initializeFields(KNIPASSARGS invocObj);
 
     do {
         /* On any error break out of this block */
@@ -442,7 +503,8 @@ KNIDECL(com_sun_j2me_content_InvocationStore_put0) {
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_j2me_content_InvocationStore_get0) {
     int ret = 0;          /* return value = nothing matched */
-    KNI_StartHandles(4);
+    KNI_StartHandles(5);
+    KNI_DeclareHandle(classObj);
     KNI_DeclareHandle(obj);      /* multipurpose handle */
     KNI_DeclareHandle(argsObj);      /* handle for argument array */
     KNI_DeclareHandle(invocObj);  /* Arg1: Invocation object; non-null */
@@ -494,7 +556,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_get0) {
         StoredInvoc *invoc = match->invoc;
         /* Queue is not empty, get InvocationImpl obj and init. */
         KNI_GetParameterAsObject(getInvokeObjArg, invocObj);
-        init(invocObj, obj);
+        initializeFields(KNIPASSARGS invocObj);
 
         switch (ret = copyOut(invoc, mode, invocObj, argsObj, obj)) {
         case 1:
@@ -558,8 +620,9 @@ KNIDECL(com_sun_j2me_content_InvocationStore_getByTid0) {
     if(!isEmpty()){
         StoredLink * match = invocQueue;
         int tid, mode;
-        KNI_StartHandles(3);
+        KNI_StartHandles(4);
         KNI_DeclareHandle(invocObj);  /* Arg1: Invocation object; non-null */
+        KNI_DeclareHandle(classObj);      /* multipurpose handle */
         KNI_DeclareHandle(tmpObj);      /* multipurpose handle */
         KNI_DeclareHandle(argsObj);      /* handle for argument array */
 #define invocArgIdx 1
@@ -575,7 +638,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_getByTid0) {
             StoredInvoc * invoc = match->invoc;
 
             KNI_GetParameterAsObject(invocArgIdx, invocObj);
-            init(invocObj, tmpObj);
+            initializeFields(KNIPASSARGS invocObj);
 
             switch (ret = copyOut(invoc, mode, invocObj, argsObj, tmpObj)) {
                 case 1:
@@ -611,8 +674,8 @@ KNIDECL(com_sun_j2me_content_InvocationStore_getByTid0) {
  *    1 if all the copies succeeded;
  *    -1 if the Java Arrays allocated for args or data were insufficient
  */
-static int copyOut(StoredInvoc *invoc, int mode, 
-            jobject invocObj, jobject argsObj, jobject obj)
+static int copyOut(const StoredInvoc *invoc, int mode, 
+                    jobject invocObj, jobject argsObj, jobject obj)
 {
     int datalen = 0;
     int arraylen = 0;
@@ -637,7 +700,7 @@ static int copyOut(StoredInvoc *invoc, int mode,
         return -1;
     }
 
-#define store(name) storeField(&invoc->name, invocObj, FID(name), obj) &&
+#define store(name) storeStringField(&invoc->name, invocObj, FID(name), obj) &&
     /* Copy out all the string fields. */
     if (!( ENUM_STRING_FIELDS(store) !0 )) {
         /* Some String allocation failed. */
@@ -647,6 +710,27 @@ static int copyOut(StoredInvoc *invoc, int mode,
 
     ENUM_SIMPLE_INT_FIELDS(storeInt)
     storeInt(tid)
+
+    // copy destinationApp and invokingApp
+    KNI_GetObjectField(invocObj, FID(destinationApp), obj);
+#ifdef DEBUG_INVOCLC
+    printf( "copyOut: destinationApp = %p\n", obj );
+#endif
+    if( !KNI_IsNullHandle(obj) ){
+        KNI_SetIntField(obj, FID(suiteID), invoc->destinationApp.suiteID);
+        storeStringField(&invoc->destinationApp.className, obj, FID(className), argsObj);
+    }
+
+    KNI_GetObjectField(invocObj, FID(invokingApp), obj);
+#ifdef DEBUG_INVOCLC
+    printf( "copyOut: invokingApp = %p\n", obj );
+#endif
+    if( !KNI_IsNullHandle(obj) ){
+        KNI_SetIntField(obj, FID(suiteID), invoc->invokingApp.suiteID);
+        storeStringField(&invoc->invokingApp.className, obj, FID(className), argsObj);
+    }
+
+#undef storeInt
 
     /* Return the arguments if any; array length already checked. */
     if (invoc->argsLen > 0) {
@@ -679,8 +763,6 @@ static int copyOut(StoredInvoc *invoc, int mode,
     }
 
     KNI_SetBooleanField(invocObj, FID(responseRequired), invoc->responseRequired);
-
-#undef storeInt
 
     /* Successful copy out. */
     return 1;
@@ -826,8 +908,8 @@ KNIDECL(com_sun_j2me_content_InvocationStore_setListenNotify0) {
                     continue;
                 }
                 /* Check if this is the right class and suite */
-                if (desiredSuiteId == invoc->suiteId &&
-                        pcsl_string_equals(&desiredClassname, &invoc->classname)) {
+                if (desiredSuiteId == invoc->destinationApp.suiteID &&
+                        pcsl_string_equals(&desiredClassname, &invoc->destinationApp.className)) {
                     /* Reset the flag so this Invocation will notify. */
                     invoc->notified = KNI_FALSE;
                 }
@@ -899,8 +981,8 @@ KNIDECL(com_sun_j2me_content_InvocationStore_setCleanup0) {
              * If the suite matches and the classname matches
              * set cleanup to the next tid;
              */
-            if (desiredSuiteId == invoc->suiteId &&
-                    pcsl_string_equals(&desiredClassname, &invoc->classname)) {
+            if (desiredSuiteId == invoc->destinationApp.suiteID &&
+                    pcsl_string_equals(&desiredClassname, &invoc->destinationApp.className)) {
                 /* Found an entry for the Invocation */
                 invoc->cleanup = cleanup;
                 invoc->notified = KNI_FALSE;
@@ -952,13 +1034,13 @@ KNIDECL(com_sun_j2me_content_InvocationStore_update0) {
 
     KNI_StartHandles(4);
     KNI_DeclareHandle(invocObj);
-    KNI_DeclareHandle(classObj);
+    KNI_DeclareHandle(tmpObj);
     KNI_DeclareHandle(tmp1);
     KNI_DeclareHandle(tmp2);
 #define invocArgIdx 1
 
     KNI_GetParameterAsObject(invocArgIdx, invocObj);
-    init(invocObj, classObj);
+    initializeFields(KNIPASSARGS invocObj);
 
     // get invocation tid
     match = invocFindTid(KNI_GetIntField(invocObj, FID(tid)));
@@ -1012,7 +1094,7 @@ static jboolean invocPut(StoredInvoc* invoc) {
 
 #ifdef DEBUG_INVOCLC
     printf( "invocPut: handlerID '%ls', class = '%ls'\n", 
-                            invoc->ID.data, invoc->classname.data );
+                            invoc->ID.data, invoc->destinationApp.className.data );
 #endif
 
     link = (StoredLink*) JAVAME_CALLOC(1, sizeof(StoredLink));
@@ -1071,13 +1153,13 @@ static StoredLink* invocFind(SuiteIdType suiteId,
         invoc = curr->invoc;
 #ifdef TRACE_INVOCFIND
         printf( "invoc: tid = %d, status = %d, responseReq = %d, ID = '%ls', class = '%ls'\n",
-                invoc->tid, invoc->status, invoc->responseRequired, invoc->ID.data, invoc->classname.data );
+                invoc->tid, invoc->status, invoc->responseRequired, invoc->ID.data, invoc->destinationApp.className.data );
 #endif
         /*
          * If the status matches the request
          * and the suite matches and the classname matches.
          */
-        if (suiteId == invoc->suiteId && pcsl_string_equals(classname, &invoc->classname)){
+        if (suiteId == invoc->destinationApp.suiteID && pcsl_string_equals(classname, &invoc->destinationApp.className)){
 #ifdef TRACE_INVOCFIND
             printf( "\ttid & classname are OK\n" );
 #endif
@@ -1189,6 +1271,8 @@ static void invocFree(StoredInvoc* invoc) {
 
 #define freeStringField( field ) pcsl_string_free(&invoc->field);
         ENUM_STRING_FIELDS(freeStringField)
+        freeStringField( destinationApp.className )
+        freeStringField( invokingApp.className )
 #undef freeStringField
 
         JAVAME_FREE(invoc);
@@ -1288,7 +1372,7 @@ static void unblockWaitingThreads(int newStatus) {
 static void removeEntry(StoredLink* entry) {
 #ifdef DEBUG_INVOCLC
     printf( "kni_invoc_store::removeEntry: handlerID '%ls', class = '%ls'\n", 
-                        entry->invoc->ID.data, entry->invoc->classname.data );
+                        entry->invoc->ID.data, entry->invoc->destinationApp.className.data );
 #endif
     if (entry != NULL) {
         StoredLink *blink = entry->blink;
@@ -1580,12 +1664,9 @@ static void handle_javanotify_chapi_platform_finish(int invoc_id,
         if (result != JAVACALL_OK)
             invoc->status = STATUS_ERROR;
         { /* swap invokee - invoker fields */
-            SuiteIdType tmpSuiteId = invoc->suiteId;
-            pcsl_string tmpClassname = invoc->classname;
-            invoc->suiteId = invoc->invokingSuiteId;
-            invoc->invokingSuiteId = tmpSuiteId;
-            invoc->classname = invoc->invokingClassname;
-            invoc->invokingClassname = tmpClassname;
+            StoredCLDCAppID tmpAppID = invoc->destinationApp;
+            invoc->destinationApp = invoc->invokingApp;
+            invoc->invokingApp = tmpAppID;
         }
         /* Unmark the response since it is "new" to the target */
         invoc->cleanup = KNI_FALSE;
@@ -1703,18 +1784,18 @@ static void handle_javanotify_chapi_java_invoke(
         
     invoc->tid = invoc_id;
     invoc->status = STATUS_INIT;
-    invoc->suiteId = suite_id;
-    invoc->invokingSuiteId = UNUSED_SUITE_ID;
+    invoc->destinationApp.suiteID = suite_id;
+    invoc->invokingApp.suiteID = UNUSED_SUITE_ID;
 
     if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(handler_id, javacall_string_len(handler_id), &invoc->ID))
         res = JAVACALL_FAIL;
-    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(classname, classname_len, &invoc->classname))
+    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(classname, classname_len, &invoc->destinationApp.className))
         res = JAVACALL_FAIL;
     JAVAME_FREE(classname);
 
     /* IMPL_NOTE: null suite ID is an indication of platform request */
-    invoc->invokingClassname = PCSL_STRING_NULL;
-    invoc->invokingID        = PCSL_STRING_NULL;
+    invoc->invokingApp.className = PCSL_STRING_NULL;
+    invoc->invokingID = PCSL_STRING_NULL;
 
     invoc->responseRequired =
         (0 == invocation->responseRequired) ? JSR211_FALSE : JSR211_TRUE;
@@ -1794,7 +1875,7 @@ static void handle_javanotify_chapi_java_invoke(
     }
     if (JAVACALL_OK != res) {
         pcsl_string_free(&invoc->ID);
-        pcsl_string_free(&invoc->classname);
+        pcsl_string_free(&invoc->destinationApp.className);
         pcsl_string_free(&invoc->url);
         pcsl_string_free(&invoc->type);
         pcsl_string_free(&invoc->action);

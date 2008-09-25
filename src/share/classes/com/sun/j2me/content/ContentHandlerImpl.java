@@ -63,7 +63,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
 	    static final int FIELD_COUNT      = 7; /** Total number of fields */
 	    
 		String				getID();
-		int 				getSuiteId();
+		//int 				getSuiteId();
 		
 	    /**
 	     * Returns array field
@@ -81,20 +81,22 @@ public class ContentHandlerImpl extends ContentHandlerRegData
 	/**
 	 * handle of registered content handler.
 	 */
-	protected Handle handle = null;
+	final protected Handle handle;
 	
-    /**
-     * The MIDlet suite storagename that contains the MIDlet.
-     */
-    protected int storageId;
+	final protected ApplicationID applicationID;
 
-    /**
-     * The application class name that implements this content
-     * handler.  Note: Only the application that registered the class
-     * will see the classname; for other applications the value will be
-     * <code>null</code>.
-     */
-    protected String classname;
+//    /**
+//     * The MIDlet suite storagename that contains the MIDlet.
+//     */
+//    protected int storageId;
+//
+//    /**
+//     * The application class name that implements this content
+//     * handler.  Note: Only the application that registered the class
+//     * will see the classname; for other applications the value will be
+//     * <code>null</code>.
+//     */
+//    protected String classname;
 
     /** Count of requests retrieved via {@link #getRequest}. */
     protected int requestCalls;
@@ -130,8 +132,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
     protected ContentHandlerImpl(ContentHandlerImpl handler) {
     	super( handler );
         handle = handler.handle;
-        storageId = handler.storageId;
-        classname = handler.classname;
+        applicationID = handler.applicationID;
         listenerImpl = handler.listenerImpl;
         version = handler.version;
         requestCalls = handler.requestCalls;
@@ -139,7 +140,8 @@ public class ContentHandlerImpl extends ContentHandlerRegData
         appname = handler.appname;
     }
     
-    protected ContentHandlerImpl( Handle handle ){
+    protected ContentHandlerImpl( ApplicationID appID, Handle handle ){
+    	this.applicationID = appID;
     	this.handle = handle; 
     }
 
@@ -473,7 +475,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
     private void loadAppData() {
         if (appname == null) {
             try {
-                AppProxy app = AppProxy.getCurrent().forApp(storageId, classname);
+                AppProxy app = AppProxy.getCurrent().forApp(applicationID);
                 appname = app.getApplicationName();
                 version = app.getVersion();
                 authority = app.getAuthority();
@@ -625,16 +627,16 @@ public class ContentHandlerImpl extends ContentHandlerRegData
     protected void requestNotify() {
     }
 
-    /**
-     * Compare two ContentHandlerImpl's for equality.
-     * Classname, storageID, and seqno must match.
-     * @param other another ContentHandlerImpl
-     * @return true if the other handler is for the same class,
-     * storageID, and seqno.
-     */
-    boolean equals(ContentHandlerImpl other) {
-        return storageId == other.storageId && classname.equals(other.classname);
-    }
+//    /**
+//     * Compare two ContentHandlerImpl's for equality.
+//     * Classname, storageID, and seqno must match.
+//     * @param other another ContentHandlerImpl
+//     * @return true if the other handler is for the same class,
+//     * storageID, and seqno.
+//     */
+//    boolean equals(ContentHandlerImpl other) {
+//        return storageId == other.storageId && classname.equals(other.classname);
+//    }
 
     /**
      * Debug routine to print the values.
@@ -644,8 +646,8 @@ public class ContentHandlerImpl extends ContentHandlerRegData
         if (AppProxy.LOGGER != null) {
             StringBuffer sb = new StringBuffer(80);
             sb.append("CH:");
-            sb.append(" classname: ");
-            sb.append(classname);
+            sb.append(", appID: ");
+            sb.append(applicationID);
             sb.append(", removed: ");
             sb.append(", flag: ");
             sb.append(registrationMethod);
@@ -659,8 +661,6 @@ public class ContentHandlerImpl extends ContentHandlerRegData
             toString(sb, actions);
             sb.append(", access: ");
             toString(sb, accessRestricted);
-            sb.append(", suiteID: ");
-            sb.append(storageId);
             sb.append(", authority: ");
             sb.append(authority);
             sb.append(", appname: ");
@@ -740,19 +740,19 @@ class HandlerNameFilter extends HandlerFilter {
 	} 
 }
 
-class HandlerSuiteIDFilter extends HandlerFilter {
-	private int suiteId;
-
-	HandlerSuiteIDFilter( int suiteId, ContentHandlerImpl.Handle.Receiver r ){
-		super( r );
-		this.suiteId = suiteId;
-	}
-
-	public void push(ContentHandlerImpl.Handle handle) {
-		if( handle.getSuiteId() == suiteId )
-			output.push(handle);
-	}
-}
+//class HandlerSuiteIDFilter extends HandlerFilter {
+//	private int suiteId;
+//
+//	HandlerSuiteIDFilter( int suiteId, ContentHandlerImpl.Handle.Receiver r ){
+//		super( r );
+//		this.suiteId = suiteId;
+//	}
+//
+//	public void push(ContentHandlerImpl.Handle handle) {
+//		if( handle.getSuiteId() == suiteId )
+//			output.push(handle);
+//	}
+//}
 
 class HandlerTypeFilter extends HandlerFilter {
 	private String type;

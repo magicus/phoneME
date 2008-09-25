@@ -252,7 +252,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      * @param classname the midlet classname
      */
     public void midletInit(int suiteId, String classname) {
-    	InvocationStore.setCleanup(suiteId, classname, true);
+    	InvocationStore.setCleanup(new CLDCAppID(suiteId, classname), true);
     }
 
     /**
@@ -290,8 +290,9 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
     		AppProxy.LOGGER.println("midletRemoved: " + midlet.getClassName());
 	
 		// Cleanup unprocessed Invocations
-		RegistryImpl.cleanup(midlet.getSuiteId(), midlet.getClassName());
-		AppProxy.midletIsRemoved( midlet.getSuiteId(), midlet.getClassName() );
+    	CLDCAppID appID = new CLDCAppID(midlet.getSuiteId(), midlet.getClassName());
+		RegistryImpl.cleanup(appID);
+		AppProxy.midletIsRemoved( appID.suiteID, appID.className );
 		// Check for and execute a pending MIDlet suite
 		InvocationStoreProxy.invokeNext();
     }
@@ -308,8 +309,9 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
     public void midletStartError(int externalAppId, int suiteId, String className,
                           int errorCode, String errorDetails) {
 		// Cleanup unprocessed Invocations
-    	InvocationStore.setCleanup(suiteId, className, true);
-		RegistryImpl.cleanup(suiteId, className);
+    	CLDCAppID appID = new CLDCAppID(suiteId, className);
+    	InvocationStore.setCleanup(appID, true);
+		RegistryImpl.cleanup(appID);
 		AppProxy.midletIsRemoved( suiteId, className );
 		// Check for and execute a pending MIDlet suite
 		InvocationStoreProxy.invokeNext();

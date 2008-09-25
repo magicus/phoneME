@@ -83,8 +83,7 @@ class ResponseListenerImpl implements Runnable, Counter {
 		 * Reset notified flags on pending responses.
 		 * Unblock any threads waiting to notify current listeners
 		 */
-		InvocationStore.setListenNotify(registry.application.getStorageId(),
-									registry.application.getClassname(), false);
+		InvocationStore.setListenNotify(registry.application, false);
 		// stop listening thread
 		stopFlag++;
 		InvocationStore.cancel();
@@ -104,9 +103,7 @@ class ResponseListenerImpl implements Runnable, Counter {
 		    if (l != null) {
 				// Wait for a matching invocation
 				boolean pending =
-				    InvocationStore.listen(registry.application.getStorageId(),
-							   			registry.application.getClassname(), false, true,
-							   			this);
+				    InvocationStore.listen(registry.application, false, true, this);
 				if (pending) {
 				    l.invocationResponseNotify(registry.getRegistry());
 				}
