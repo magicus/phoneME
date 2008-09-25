@@ -439,8 +439,9 @@ midpInitializeUI(void) {
 
 
     /*
-     * IMPL_NOTE: don't analyze pushopen status since even if network is not up
-     *  right now it will be brought up later
+     * IMPL_NOTE: don't care of pushopen() return status, go forward anyway.
+     * Try to call pushopen later, for instance, if network is not up right
+     * now it can be brought up later.
      */
     pushopen();
 
