@@ -60,16 +60,12 @@ public class SdpMediaDescr extends SdpParser {
         while( tag != null && tag.length() > 0 ) {
             if( tag.equals( "i=" ) ) {
                 mediaTitle = getLine( bin );
-                debug( "media title: " + mediaTitle );
             } else if( tag.equals( "c=" ) ) {
                 connectionInfo = getLine( bin );
-                debug( "connection info: " + connectionInfo );
             } else if( tag.equals( "b=" ) ) {
                 bandwidthInfo = getLine( bin );
-                debug( "bandwidth info: " + bandwidthInfo );
             } else if( tag.equals( "k=" ) ) {
                 encryptionKey = getLine( bin );
-                debug( "encryption key: " + encryptionKey );
             } else if( tag.equals( "a=" ) ) {
                 String mediaAttribute = getLine( bin );
 
@@ -93,8 +89,6 @@ public class SdpMediaDescr extends SdpParser {
     }
 
     private void parseMediaName( String line ) {
-        debug( "media name: " + line );
-
         int end = line.indexOf( ' ' );
 
         name = line.substring( 0, end );

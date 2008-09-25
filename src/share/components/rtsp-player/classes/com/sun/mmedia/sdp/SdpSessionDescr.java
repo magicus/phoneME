@@ -56,42 +56,30 @@ public class SdpSessionDescr extends SdpParser {
                 while( tag != null && tag.length() > 0 ) {
                     if( tag.equals( "o=" ) ) {
                         origin = getLine( bin );
-                        debug( "origin: " + origin );
                     } else if( tag.equals( "s=" ) ) {
                         sessionName = getLine( bin );
-                        debug( "session name: " + sessionName );
                     } else if( tag.equals( "i=" ) ) {
                         sessionInfo = getLine( bin );
-                        debug( "session info: " + sessionInfo );
                     } else if( tag.equals( "u=" ) ) {
                         uri = getLine( bin );
-                        debug( "uri: " + uri );
                     } else if( tag.equals( "e=" ) ) {
                         email = getLine( bin );
-                        debug( "email: " + email );
                     } else if( tag.equals( "p=" ) ) {
                         phone = getLine( bin );
-                        debug( "phone: " + phone );
                     } else if( tag.equals( "c=" ) ) {
                         connectionIncluded = true;
                         connectionInfo = getLine( bin );
-                        debug( "connection info: " + connectionInfo );
                     } else if( tag.equals( "b=" ) ) {
                         bandwidthInfo = getLine( bin );
-                        debug( "bandwidth info: " + bandwidthInfo );
                     } else if( tag.equals( "t=" ) ) {
                         SdpTimeDescr timeDescription = new SdpTimeDescr( bin );
                         timeDescriptions.addElement( timeDescription );
                     } else if( tag.equals( "z=" ) ) {
                         timezoneAdjustment = getLine( bin );
-                        debug( "timezone adjustment: " + timezoneAdjustment );
                     } else if( tag.equals( "k=" ) ) {
                         encryptionKey = getLine( bin );
-                        debug( "encryption key: " + encryptionKey );
                     } else if( tag.equals( "a=" ) ) {
                         String sessionAttribute = getLine( bin );
-                        debug( "session attribute: " + sessionAttribute );
-
                         int index = sessionAttribute.indexOf( ':' );
 
                         if( index > 0 ) {
@@ -155,25 +143,26 @@ public class SdpSessionDescr extends SdpParser {
     }
 
     public SdpMediaDescr getMediaDescription( String name ) {
-        SdpMediaDescr description = null;
-
         if( mediaDescriptions != null ) {
             for( int i = 0; i < mediaDescriptions.size(); i++ ) {
                 SdpMediaDescr entry =
                         (SdpMediaDescr)mediaDescriptions.elementAt( i );
 
                 if( entry.name.equals( name ) ) {
-                    description = entry;
-                    break;
+                    return entry;
                 }
             }
         }
 
-        return description;
+        return null;
     }
 
-    public Vector getMediaDescriptions() {
-        return mediaDescriptions;
+    public SdpMediaDescr getMediaDescription( int n ) {
+        return mediaDescriptions.elementAt( i );
+    }
+
+    public Vector getMediaDescriptionsCount() {
+        return mediaDescriptions.size();
     }
 }
 

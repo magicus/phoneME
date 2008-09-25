@@ -34,14 +34,13 @@ import javax.microedition.media.protocol.SourceStream;
 import com.sun.mmedia.protocol.BasicDS;
 
 import com.sun.mmedia.sdp.*;
-import com.sun.mmedia.rtsp.protocol.*;
 
 public class RtspDS extends BasicDS
 {
     private static final int MIN_PORT = 1024;  // inclusive
     private static final int MAX_PORT = 65536; // exclusive
 
-    private Random rnd = new Random( System.currentTimeMillis() );
+    private static Random rnd = new Random( System.currentTimeMillis() );
 
     private Object msgWaitEvent = new Object();
     private RtspIncomingMessage response = null;
@@ -51,6 +50,7 @@ public class RtspDS extends BasicDS
     private RtspUrl        url         = null;
     private int            seqNum      = 0;
     private String         sessionId   = null;
+    private RtspRange      range       = null;
 
     private static int nextPort = MIN_PORT;
 
@@ -74,54 +74,35 @@ public class RtspDS extends BasicDS
 
                 seqNum = rnd.nextInt();
 
-                sendRequest( RtspOutgoingRequest.createDescribe( seqNum, url ) );
+                sendRequest( RtspOutgoingRequest.DESCRIBE( seqNum, url ) );
 
                 SdpSessionDescr sdp = response.getSdp();
 
                 if( null != sdp ) {
-                    int  start_time = 0; // in milliseconds
-                    int  end_time   = 0; // in milliseconds
-                    long duration   = 0; // in milliseconds
 
-                    SdpMediaAttr range = sdp.getSessionAttribute( "range" );
+                    int num_tracks = sdp.getMediaDescriptionsCount();
 
-                    if( null != range ) {
-                        String value = range.getValue();
-                        if( value.startsWith( "npt" ) ) {
-                            try {
-                                int start = value.indexOf( '=' ) + 1;
-                                int end = value.indexOf( '-' );
-                                String startTime = value.substring( start, end ).trim();
-                                String endTime = value.substring( end + 1 ).trim();
+                    SdpMediaAttr range_attr = sdp.getSessionAttribute( "range" );
 
-                                int dotIndex = endTime.indexOf( "." );
-
-                                if( dotIndex < 0 ) {
-                                    end_time = Integer.parseInt( endTime ) * 1000;
-                                } else {
-                                    String p1 = "0" + endTime.substring( 0, dotIndex );
-                                    String p2 = endTime.substring( dotIndex + 1 );
-                                    end_time = Integer.parseInt( p1 ) * 1000;
-                                    end_time += Integer.parseInt( ( p2 + "000" ).substring( 0, 3 ) );
-                                }
-
-                                duration = (long)( ( end_time - start_time ) * 1000 );
-                            } catch( NumberFormatException e ) {
-                                duration = 0;
-                            }
+                    if( null != range_attr ) {
+                        try {
+                            range = new RtspRange( range_attr.getValue() );
+                        } catch( NumberFormatException e ) {
+                            range = null;
                         }
-                        System.out.println( "## range:" + start_time + "-" + end_time );
                     }
                 }
 
-                sendRequest( RtspOutgoingRequest.createSetup( seqNum, url, allocPort() ) );
-
-                sessionId = "4268";
-
-                sendRequest( RtspOutgoingRequest.createPlay( seqNum, url, sessionId ) );
+                // sessionId is null at this point
+                for( int i = 0; i < num_tracks; i++ ) {
+                    sendRequest( RtspOutgoingRequest.SETUP( seqNum, url, sessionId, allocPort() ) );
+                    if( 0 == i ) sessionId = response.getSessionId();
+                }
 
                 // TODO: determine actual content type
                 setContentType( "audio/x-wav" );
+
+                start();
 
             } catch( InterruptedException e ) {
                 connection = null;
@@ -138,15 +119,18 @@ public class RtspDS extends BasicDS
 
     public synchronized void disconnect() {
         if( null != connection ) {
+            sendRequest( RtspOutgoingRequest.TEARDOWN( seqNum, url, sessionId ) );
             connection.close();
             connection = null;
         }
     }
 
     public synchronized void start() throws IOException {
+        sendRequest( RtspOutgoingRequest.PLAY( seqNum, url, sessionId ) );
     }
 
     public synchronized void stop() throws IOException {
+        sendRequest( RtspOutgoingRequest.PAUSE( seqNum, url, sessionId ) );
     }
 
     public synchronized SourceStream[] getStreams() {
@@ -159,6 +143,14 @@ public class RtspDS extends BasicDS
     }
 
     public synchronized long getDuration() {
+        if( null != range ) {
+            float from = range.getFrom();
+            float to = range.getTo();
+            if( RtspRange.NOW != from && RtspRange.END != to ) {
+                return (long)( ( to - from ) * 1000.0 );
+            }
+        }
+
         return Player.TIME_UNKNOWN;
     }
 
@@ -180,9 +172,13 @@ public class RtspDS extends BasicDS
      */
     protected void processIncomingMessage( byte[] bytes ) {
         synchronized( msgWaitEvent ) {
-            response = new RtspIncomingMessage( bytes );
-            msgWaitEvent.notifyAll();
-            seqNum++;
+            RtspIncomingMessage msg = new RtspIncomingMessage( bytes );
+            Integer cseq = msg.getCSeq();
+            if( null != cseq && cseq.intValue() == seqNum ) {
+                response = msg;
+                msgWaitEvent.notifyAll();
+                seqNum++;
+            }
         }
     }
 

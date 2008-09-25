@@ -101,12 +101,4 @@ class SdpParser {
 
         return ch;
     }
-
-    private boolean print_debug = true;
-
-    public void debug( String str ) {
-        if( print_debug ) {
-            System.out.println( str );
-        }
-    }
 }
