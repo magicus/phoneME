@@ -128,6 +128,10 @@ public class RtspTransportHeader {
         return client_data_port;
     }
 
+    public int getClientControlPort() {
+        return client_control_port;
+    }
+
     public int getServerDataPort() {
         return server_data_port;
     }

@@ -32,8 +32,6 @@ import java.io.ByteArrayOutputStream;
 import javax.microedition.io.Connector;
 import javax.microedition.io.SocketConnection;
 
-import com.sun.mmedia.rtsp.protocol.*;
-
 /** 
  * RtspConnectionBase is a portable base for RtspConnection platform-specific
  *  classes that represent a TCP/IP connection to an RTSP Server.

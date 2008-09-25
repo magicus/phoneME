@@ -36,6 +36,7 @@ public class RtspIncomingMessage {
 
     private SdpSessionDescr     sdp          = null;
     private String              sessionId    = null;
+    private String              contentBase  = null;
     private Integer             cseq         = null;
     private RtspTransportHeader transportHdr = null;
 
@@ -91,8 +92,16 @@ public class RtspIncomingMessage {
         return sessionId;
     }
 
+    public String getContentBase() {
+        return contentBase;
+    }
+
     public Integer getCSeq() {
         return cseq;
+    }
+
+    public RtspTransportHeader getTransportHeader() {
+        return transportHdr;
     }
 
     private void parseLine( String line ) {
@@ -112,6 +121,8 @@ public class RtspIncomingMessage {
                 transportHdr = new RtspTransportHeader( hdr_body );
             } else if( hdr_type_str.equals( "SESSION" ) ) {
                 sessionId = hdr_body;
+            } else if( hdr_type_str.equals( "CONTENT-BASE" ) ) {
+                contentBase = hdr_body;
             } else if( hdr_type_str.equals( "RANGE" ) ) {
             }
         } else if( line.startsWith( "RTSP/1.0" ) ) {

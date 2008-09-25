@@ -158,10 +158,10 @@ public class SdpSessionDescr extends SdpParser {
     }
 
     public SdpMediaDescr getMediaDescription( int n ) {
-        return mediaDescriptions.elementAt( i );
+        return (SdpMediaDescr)mediaDescriptions.elementAt( n );
     }
 
-    public Vector getMediaDescriptionsCount() {
+    public int getMediaDescriptionsCount() {
         return mediaDescriptions.size();
     }
 }

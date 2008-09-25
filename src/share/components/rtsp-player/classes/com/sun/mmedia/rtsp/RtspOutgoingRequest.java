@@ -40,9 +40,11 @@ public class RtspOutgoingRequest {
             + userAgent + "\r\n\r\n" );
     }
 
-    public static RtspOutgoingRequest SETUP( int seqNum, RtspUrl url, String sesId, int port ) {
+    public static RtspOutgoingRequest SETUP( int seqNum, 
+                                             String cBase, String mCtl,
+                                             String sesId, int port ) {
         return new RtspOutgoingRequest(
-            "SETUP rtsp://" + url.getHost() + "/" + url.getFile() + " RTSP/1.0\r\n"
+            "SETUP " + cBase + mCtl + " RTSP/1.0\r\n"
             + "CSeq: " + seqNum + "\r\n"
             + "Transport: RTP/AVP;unicast;client_port=" + port + "-" + ( port + 1 ) + "\r\n"
             + ( ( null != sesId ) ? ( "Session: " + sesId + "\r\n" ) : "" )
