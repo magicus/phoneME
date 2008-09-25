@@ -8191,20 +8191,27 @@ effect: MAP_PC : 0 : : : : {
 
 	CVMassert(con->mapPcNodeCount <= pcMapTable->numEntries);
 
+        if (compiledPc == con->currentCompilationBlock->logicalAddress) {
 #ifdef CVM_JIT_REGISTER_LOCALS
-	/*
-	 * If this is the MAP_PC node at the start of a basic block that
-	 * is also a backwards branch target, then we need to set the
-	 * compiledPc to the real start of the block that will load
-	 * incoming locals. This is necessary for OSR to work.
-	 */
-	if (compiledPc == con->currentCompilationBlock->logicalAddress) {
+	    /*
+	     * If this is the MAP_PC node at the start of a basic block that
+	     * is also a backwards branch target, then we need to set the
+	     * compiledPc to the real start of the block that will load
+	     * incoming locals. This is necessary for OSR to work.
+	     */
 	    if (con->currentCompilationBlock->loadLocalsLogicalAddress != 0) {
-		compiledPc =
+                compiledPc =
 		    con->currentCompilationBlock->loadLocalsLogicalAddress;
 	    }
-	}
 #endif /* CVM_JIT_REGISTER_LOCALS */
+
+            if (CVMJITirblockIsBackwardBranchTarget(
+                            con->currentCompilationBlock))
+            {
+                CVMemitThreadSchedHook(con);
+            }
+
+        }
 
 	pcMap->javaPc = javaPc;
 	pcMap->compiledPc = compiledPc;
