@@ -56,6 +56,16 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 		       int blocked_threads_count,
 		       jlong timeout);
 
+/**
+ *
+ */
+jboolean midp_check_net_status_signal(int* pStatus);
+
+/**
+ *
+ */
+void midp_network_initialized_event(int status);
+
 #ifdef __cplusplus
 }
 #endif

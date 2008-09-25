@@ -36,6 +36,7 @@
 #include <midp_thread.h>
 #include <midp_run_vm.h>
 #include <suspend_resume.h>
+#include <pcsl_network.h>
 
 #if (ENABLE_JSR_120 || ENABLE_JSR_205)
 #include <wmaInterface.h>
@@ -46,8 +47,9 @@
 #endif
 
 #ifdef ENABLE_API_EXTENSIONS
-extern  check_extrnal_api_events(JVMSPI_BlockedThreadInfo *blocked_threads, int blocked_threads_count, jlong timeout);
-#endif /*ENABLE_API_EXTENSIONS*/
+extern check_extrnal_api_events(JVMSPI_BlockedThreadInfo *blocked_threads,
+                                int blocked_threads_count, jlong timeout);
+#endif /* ENABLE_API_EXTENSIONS */
 
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
@@ -134,6 +136,11 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 
     case UI_SIGNAL:
         midpStoreEventAndSignalForeground(newMidpEvent);
+        break;
+
+    case NETWORK_STATUS_SIGNAL:
+        midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                NETWORK_STATUS_SIGNAL, 0, newSignal.status);
         break;
 
     case NETWORK_READ_SIGNAL:
@@ -256,10 +263,25 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 #endif /* ENABLE_JSR_290 */
     default:
 #ifdef ENABLE_API_EXTENSIONS
-        check_extrnal_api_events(blocked_threads, blocked_threads_count, timeout) ;
+        check_extrnal_api_events(blocked_threads, blocked_threads_count, timeout);
 #endif /*ENABLE_API_EXTENSIONS*/
         break;
     } /* switch */
+}
+
+/**
+ *
+ */
+void midp_network_initialized_event(int status) {
+    (void)status;
+}
+
+/**
+ *
+ */
+jboolean midp_check_net_status_signal(int* pStatus) {
+    *pStatus = PCSL_NET_SUCCESS;
+    return KNI_TRUE;
 }
 
 /**
