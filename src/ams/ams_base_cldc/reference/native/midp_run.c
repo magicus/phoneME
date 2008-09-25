@@ -317,7 +317,7 @@ JVMSPI_Exit(int code) {
  * any of the blocked threads are ready for execution, and call
  * SNI_UnblockThread() on those threads that are ready.
  *
- * Values for the <timeout> paramater:
+ * Values for the <timeout> parameter:
  *  >0 = Block until an event happens, or until <timeout> milliseconds
  *       has elapsed.
  *   0 = Check the events sources but do not block. Return to the
@@ -784,7 +784,7 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
 #if ENABLE_WTK_DEBUG
         /*
          * If ENABLE_ON_DEVICE_DEBUG is also enabled and debug session is in
-         * progress, debugOption will be overriden in the following code block.
+         * progress, debugOption will be overridden in the following code block.
          */
         setDebugOption(debugOption);
 #endif

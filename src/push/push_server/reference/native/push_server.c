@@ -213,6 +213,7 @@ static AlarmEntry *alarmlist = NULL;
  *  1: network is up
  */
 static int networkStatus = -1;
+
 /**
  * Checks current status of the network.
  *
@@ -318,7 +319,7 @@ static char *pushfilter(char *value) {
 }
 
 /**
- * Parses and extracta the MIDlet class name field from connection entry
+ * Parses and extract the MIDlet class name field from connection entry
  * string.
  *
  * @param value address of connection entry string
@@ -462,7 +463,7 @@ static int pushOpenInternal(int startListening) {
 
     push_status = alarm_status = 0;
 
-    /* Check whether the alarm file is already read. */
+    /* Check whether the alarm file has been already read. */
     if (PCSL_TRUE == pcsl_string_is_null(&alarmpathname)) {
         /*
          * Initialize the fully qualified pathname
@@ -483,7 +484,7 @@ static int pushOpenInternal(int startListening) {
 
     }
 
-    /* Check whether the push file is already read. */
+    /* Check whether the push file has been already read. */
     if (PCSL_TRUE == pcsl_string_is_null(&pushpathname)) {
         /*
          * Initialize the fully qualified pathname
@@ -673,14 +674,13 @@ int midpAddPushEntry(SuiteIdType suiteId,
 /**
  * Adds one entry to the push registry.
  * If the entry already exists return an error.
- * On succesful registration, write a new copy of the file to disk.
+ * On successful registration, write a new copy of the file to disk.
  *
  * @param str A push entry string.
  * @return <tt>0</tt> if successful,
  *         <tt>-1</tt> if the entry already exists,
  *         <tt>-2</tt> if out of memory
  *         <tt>-3</tt> if illegal arguments or unknown connection type
- *         <tt>-4</tt> if connection error
  */
 int pushadd(char *str) {
     PushEntry *pe;
@@ -2049,10 +2049,9 @@ static int pushProcessPort(PushEntry* pe) {
 
     /* Make sure the network is properly initialized. */
     if (!isNetworkUp()) {
+        pe->fd = -1;
         return -1;
     }
-
-    pe->isWMAEntry = KNI_FALSE;
 
     /*
      * Open the file descriptor so it can be monitored
@@ -2061,7 +2060,10 @@ static int pushProcessPort(PushEntry* pe) {
      * With WMA 2.0 sms, cbs and mms connections are also
      * allowed.
      */
+
     p = buffer = pe->value;
+
+    pe->isWMAEntry = KNI_FALSE;
     pe->port = -1;
 
 
@@ -2308,7 +2310,7 @@ static int checkfilter(char *filter, char *ip) {
 }
 
 /**
- * Walks through and frees all the alarmEntries in the alarm list.
+ * Walks through and frees all the alarm entries in the alarm list.
  */
 static void alarmListFree() {
     AlarmEntry *alarmp, *alarmtmp;
@@ -2326,7 +2328,7 @@ static void alarmListFree() {
 }
 
 /**
- * Walks through and frees all the pushEntries in the push list.
+ * Walks through and frees all the push entries in the push list.
  */
 static void pushListFree() {
     PushEntry *pushp;
