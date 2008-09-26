@@ -32,44 +32,36 @@ public class AppSettingsUIImpl implements AppSettingsUI {
 
     /**
      * Create and initialize a new application settings MIDlet.
-     * @param appSettings AppSettings peer, where information
-     *   regarding available setting groups and current security
-     *   levels for each group could be found.
-     *   Also appSettings is used to change application settings
-     *   or to cancel the process and dismiss this form.
-     *   Method onGroupLevelSelected of appSettings should be called
-     *   when attempt to change level for particular group occures.
-     *   As a result selectGroupLevel could be called by appSettings
-     *   when proposed level change leads to changes in other groups
-     *   or is not allowed. This may happen for example when mutual
-     *   exclusive combinations selected. All necessary alerts
-     *   in this case are shown to the user by AppSettings and thus
-     *   AppSettingsUIImpl has just to change UI accordingly when
-     *   selectGroupLevel is called. 
+     * @param appSettings AppSettings peer, where information regarding
+     *  available settings and current setting value could be found.
+     *  Also appSettings is used to change application settings or to cancel
+     *  the process and dismiss this form. Method onSettingChanged of
+     *  appSettings should be called when attempt to change value for
+     *  particular setting occures. As a result changeSettingValue could be
+     *  called by appSettings when proposed setting value leads to changes in
+     *  other settings or is not allowed. This may happen for example when mutual
+     *  exclusive combinations selected. All necessary alerts in this case are
+     *  shown to the user by AppSettings and thus AppSettingsUIImpl has just
+     *  to change UI accordingly when changeSettingValue is called. 
      * @param title
      * @throws Throwable
      */
-    public AppSettingsUIImpl(AppSettings appSettings, String title)
+    AppSettingsUIImpl(AppSettings appSettings, String title)
             throws Throwable {
     }
 
     /**
-     * Called by AppSettings to  initialize UI content.
-     * Available group levels and current level for particular
-     * group can be accecssed by method getGroupSettings of AppSettings.
-     * @param groupsChoice
+     * Called by AppSettings when specified value shoud be changed in UI.
+     * Could be called as a result of user input validation by AppSettings
+     * to correct the invalid setting combination. All necessary informational
+     * alerts in this case are shown to the user by AppSettings and thus
+     * AppSettingsUI has just to change UI accordingly.
+     *
+     * @param settingID id of setting
+     * @param  valueID id of selected value
      */
-    public void setGroups(ChoiceInfo groupsChoice) {
+    public void changeSettingValue(int settingID, int valueID) {
         
-    }
-
-    /**
-     * Called by AppSettings to select specified group level
-     * @param groupId id of group
-     * @param levelId id of selected level
-     */
-    public void selectGroupLevel(int groupId, int levelId) {
-
     }
 
     /**
@@ -79,5 +71,4 @@ public class AppSettingsUIImpl implements AppSettingsUI {
     public Displayable getMainDisplayable() {
         return null;
     }
-
 }

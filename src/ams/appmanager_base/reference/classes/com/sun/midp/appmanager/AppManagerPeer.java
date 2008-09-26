@@ -280,7 +280,7 @@ class AppManagerPeer implements CommandListener {
      */
     public void showAppSettings(int suiteId,
                        Displayable nextScreen)  throws Throwable {
-        AppSettings appSettings = new AppSettings(suiteId, display,
+        AppSettings appSettings = new AppSettingsImpl(suiteId, display,
                                                   displayError, nextScreen);
         display.setCurrent(appSettings.getMainDisplayable());
     }

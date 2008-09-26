@@ -3,22 +3,22 @@
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -47,8 +47,9 @@ import java.util.Vector;
 /**
  * The Graphical MIDlet suite settings form.
  */
-public class AppSettings {
+class AppSettingsImpl implements AppSettings {
 
+    /** Application settings UI */
     AppSettingsUI settingsUI;
 
     /** ID for the interrupt choice. */
@@ -58,15 +59,15 @@ public class AppSettings {
     private static final int PUSH_OPTION_1_ID = 1000;
 
     /** The settings choice group. */
-    private ChoiceInfo groupChoice;
+    private ValueChoiceImpl groupChoice;
     /** The application interruption setting. */
-    private ChoiceInfo interruptChoice;
+    private ValueChoiceImpl interruptChoice;
     /** The application permission settings. */
-    private ChoiceInfo[] groupSettings;
+    private ValueChoiceImpl[] groupSettings;
     /** The number of group permission settings. */
     private int numberOfSettings;
     /** The initial setting. */
-    private ChoiceInfo initialSetting;
+    private ValueChoiceImpl initialSetting;
 
     /** Holds the maximum levels for permissions. */
     private byte[] maxLevels;
@@ -115,7 +116,7 @@ public class AppSettings {
      * @param nextScreen - the displayable to be shown after
      *                     this Form is dismissed
      */
-    public AppSettings(int suiteId,
+    public AppSettingsImpl(int suiteId,
                        Display display,
                        DisplayError displayError,
                        Displayable nextScreen) throws Throwable {
@@ -125,46 +126,60 @@ public class AppSettings {
         this.display = display;
         this.nextScreen = nextScreen;
 		PUSH_ID = Permissions.getId("javax.microedition.io.PushRegistry");
+        loadApplicationSettings(suiteId);
+        
         settingsUI = new AppSettingsUIImpl(this, Resource.getString(
                                         ResourceConstants.AMS_MGR_SETTINGS));
-        loadApplicationSettings(suiteId);
     }
 
 
     /**
-     * Called by UI when group level selected
-     * @param groupID id of group
-     * @param levelID id of selected level
+     * Called by UI when value of particular application setting has been
+     * changed by user. AppSettings validates the user input and If value
+     * is not acceptable, for example due to exclusive combination selected,
+     * changeSettingValue method of AppSettingsUI could be called by AppSettings
+     * to change settings to appropriate values. All necessary informational
+     * alerts in this case are shown to the user by AppSettings and thus
+     * AppSettingsUI has just to change UI accordingly when changeSettingValue
+     * is called.
+     *
+     * @param settingID id of setting
+     * @param valueID id of selected value
      */
-    public void onGroupLevelSelected(int groupID, int levelID) {
+    public void onSettingChanged(int settingID, int valueID) {
 
-        if (groupID == INTERRUPT_CHOICE_ID) {
-            interruptChoice.setSelected(levelID);
+        if (settingID == INTERRUPT_CHOICE_ID) {
+            interruptChoice.setSelectedID(valueID);
         } else {
             //else ID of group is equivalent to index in array
-            groupSettings[groupID].setSelected(levelID);
+            groupSettings[settingID].setSelectedID(valueID);
         }
 
     }
 
     /**
-     * Returns choice information containing all groups.
-     * @return choice info
+     * Returns ValueChoice that contains set of available application
+     * setting names and IDs. Selected ID represents the initial setting
+     * to be shown to the user.
+     * @return value choice
      */
-    public ChoiceInfo getGroups() {
-        return groupChoice;        
+    public ValueChoice getSettings() {
+        return groupChoice;
     }
 
     /**
-     * Returns group settings for specified group.
-     * @return choice info
+     * Returns ValueChoice that contains set of possible value' IDs and
+     * lables for specified setting. Selected ID represents value that
+     * is currently active for this setting.
+     * @param settingID
+     * @return available setting values
      */
-    public ChoiceInfo getGroupSettings(int groupID) {
-        if (groupID == INTERRUPT_CHOICE_ID) {
+    public ValueChoice getSettingValues(int settingID) {
+        if (settingID == INTERRUPT_CHOICE_ID) {
             return interruptChoice;
         } else {
             //else ID of group is equivalent to index in array
-            return groupSettings[groupID];
+            return groupSettings[settingID];
         }
     }
 
@@ -216,7 +231,7 @@ public class AppSettings {
             pushInterruptSetting = midletSuite.getPushInterruptSetting();
             pushOptions = midletSuite.getPushOptions();
 
-            groupChoice = new ChoiceInfo(
+            groupChoice = new ValueChoiceImpl(
                 Resource.getString(ResourceConstants.AMS_MGR_PREFERENCES));
 
             if (maxLevels[PUSH_ID] == Permissions.ALLOW) {
@@ -243,7 +258,7 @@ public class AppSettings {
                     ResourceConstants.AMS_MGR_SETTINGS_PUSH_OPT_ANSWER,
                     PUSH_OPTION_1_ID);
 
-           groupSettings = new ChoiceInfo[groups.length];
+           groupSettings = new ValueChoiceImpl[groups.length];
 
             if (interruptChoice != null) {
                 numberOfSettings = 1;
@@ -270,9 +285,6 @@ public class AppSettings {
                     numberOfSettings++;
                 }
             }
-
-            settingsUI.setGroups(groupChoice);
-
         } catch (Throwable t) {
             if (midletSuite != null) {
                 midletSuite.close();
@@ -301,12 +313,12 @@ public class AppSettings {
      *
      * @return choice info or null if setting cannot be modified
      */
-    private ChoiceInfo newSettingChoice(String groupName, int groupID,
+    private ValueChoiceImpl newSettingChoice(String groupName, int groupID,
             String question, String denyAnswer, int maxLevel, int level,
             String name, int extraAnswer, int extraAnswerId) {
         String[] values = {name};
         int initValue;
-        ChoiceInfo choice;
+        ValueChoiceImpl choice;
 
         if (question == null ||
             maxLevel == Permissions.ALLOW || maxLevel == Permissions.NEVER ||
@@ -315,7 +327,7 @@ public class AppSettings {
             return null;
         }
 
-        choice = new ChoiceInfo(Resource.getString(question, values));
+        choice = new ValueChoiceImpl(Resource.getString(question, values));
 
         groupChoice.append(groupName, groupID);
 
@@ -377,29 +389,37 @@ public class AppSettings {
             break;
         }
 
-        choice.setSelected(initValue);
+        choice.setSelectedID(initValue);
 
         if (initialSetting == null) {
             initialSetting = choice;
-            groupChoice.setSelected(groupID);
+            groupChoice.setSelectedID(groupID);
         }
         return choice;
     }
 
     /**
-     * Cancel the application settings the user entered and dismiss UI.
+     * Cancel application settings the user entered and dismiss UI.
+     * Called by AppSettingsUI as responce to user request.
      */
     public void cancelApplicationSettings() {
         display.setCurrent(nextScreen);
         midletSuite.close();
     }
 
-    /** Save the application settings the user entered. */
+    /**
+     * Save application settings the user entered and dismiss UI.
+     * Called by AppSettingsUI as a responce to user request.
+     *
+     * IMPL_NOTE: This method has no arguments as AppSettings is
+     * aware of changes user made due to onSettingChanged calls.
+     *
+     */
     public void saveApplicationSettings() {
         try {
             if (interruptChoice != null) {
                 byte maxInterruptSetting;
-                int interruptSetting = interruptChoice.getSelected();
+                int interruptSetting = interruptChoice.getSelectedID();
 
                 if (maxLevels[PUSH_ID] == Permissions.ALLOW) {
                     maxInterruptSetting = Permissions.BLANKET_GRANTED;
@@ -421,7 +441,7 @@ public class AppSettings {
             for (int i = 0; i < groups.length; i++) {
                 if (groupSettings[i] != null) {
                     byte newSetting =
-                        (byte)groupSettings[i].getSelected();
+                        (byte)groupSettings[i].getSelectedID();
 
                     if (newSetting != Permissions.getPermissionGroupLevel(
                             curLevels, groups[i])) {
@@ -474,126 +494,7 @@ public class AppSettings {
      * @return main screen
      */
     public Displayable getMainDisplayable() {
-        return settingsUI.getMainDisplayable(); 
-    }
-
-}
-
-class ChoiceInfo {
-
-    /** Size increment for the ID array. */
-    private static final int SIZE_INCREMENT = 5;
-
-    /** Keeps track of the choice IDs. */
-    private int[] ids;
-
-    /** Choice title. */
-    private String title;
-
-    /** Choice lables. */
-    private Vector itemLabels;
-
-    /** Id of selected item. */
-    int selectedID;
-
-    /** Item count */
-    int cnt;
-
-    /**
-     * Creates empty choice info
-     * @param title of the choice
-     */
-    ChoiceInfo(String title) {
-        cnt = 0;
-        ids = new int[SIZE_INCREMENT];
-        this.title = title;
-        itemLabels = new Vector(5);
-    }
-
-
-    /**
-     * Appends choice to the set.
-     *
-     * @param label the lable of the element to be added
-     * @param id ID for the item
-     *
-     * @throws IllegalArgumentException if the image is mutable
-     * @throws NullPointerException if <code>stringPart</code> is
-     * <code>null</code>
-     * @throws IndexOutOfBoundsException this call would exceed the maximum
-     *         number of buttons for this set
-     */
-    public void append(String label, int id) {
-        if (cnt >= ids.length) {
-            expandIdArray();
-        }
-        ids[cnt] = id;
-        cnt++;
-        itemLabels.addElement(label);
-    }
-
-    /**
-     * Set the selected item.
-     *
-     * @param id ID of selected item
-     *
-     * @throws IndexOutOfBoundsException if <code>id</code> is invalid
-     */
-    public void setSelected(int id) {
-        selectedID = id;
-    }
-
-    /**
-     * Returns the ID of the selected radio button.
-     *
-     * @return ID of selected element
-     */
-    public int getSelected() {
-        return selectedID;
-    }
-
-    /**
-     * Returns ID of specified item.
-     * @param index item index
-     * @return item ID
-     */
-    public int getID(int index) {
-        return ids[index];
-    }
-
-    /**
-     * Returns count of items.
-     * @return item count
-     */
-    public int getCount() {
-        return cnt;
-    }
-
-    /**
-     * Returns label of cpecified choice items.
-     * @param index item index
-     * @return label
-     */
-    public String getLabel(int index) {
-        return (String)itemLabels.elementAt(index);
-    }
-
-    /**
-     * Returns choice title.
-     * @return title
-     */
-    public String getTitle() {
-        return title;        
-    }
-
-    /** Expands the ID array. */
-    private void expandIdArray() {
-        int[] prev = ids;
-
-        ids = new int[prev.length + SIZE_INCREMENT];
-        for (int i = 0; i < prev.length; i++) {
-            ids[i] = prev[i];
-        }
+        return settingsUI.getMainDisplayable();
     }
 
 }

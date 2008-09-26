@@ -63,70 +63,59 @@ public class AppSettingsUIImpl extends Form
 
     /**
      * Create and initialize a new application settings MIDlet.
-     * @param appSettings AppSettings peer, where information
-     *   regarding available setting groups and current security
-     *   levels for each group could be found.
-     *   Also appSettings is used to change application settings
-     *   or to cancel the process and dismiss this form.
-     *   Method onGroupLevelSelected of appSettings should be called
-     *   when attempt to change level for particular group occures.
-     *   As a result selectGroupLevel could be called by appSettings
-     *   when proposed level change leads to changes in other groups
-     *   or is not allowed. This may happen for example when mutual
-     *   exclusive combinations selected. All necessary alerts
-     *   in this case are shown to the user by AppSettings and thus
-     *   AppSettingsUIImpl has just to change UI accordingly when
-     *   selectGroupLevel is called.
+     * @param appSettings AppSettings peer, where information regarding
+     *  available settings and current setting value could be found.
+     *  Also appSettings is used to change application settings or to cancel
+     *  the process and dismiss this form. Method onSettingChanged of
+     *  appSettings should be called when attempt to change value for
+     *  particular setting occures. As a result changeSettingValue could be
+     *  called by appSettings when proposed setting value leads to changes in
+     *  other settings or is not allowed. This may happen for example when mutual
+     *  exclusive combinations selected. All necessary alerts in this case are
+     *  shown to the user by AppSettings and thus AppSettingsUIImpl has just
+     *  to change UI accordingly when changeSettingValue is called.
      * @param title
      * @throws Throwable
      */
-    public AppSettingsUIImpl(AppSettings appSettings, String title)
+    AppSettingsUIImpl(AppSettings appSettings, String title)
             throws Throwable {
         super(title);
         
         this.appSettings = appSettings;
-    }
-
-    /**
-     * Called by AppSettings to  initialize UI content.
-     * Available group levels and current level for particular
-     * group can be accecssed by method getGroupSettings of AppSettings.
-     * @param groupsChoice
-     */
-    public void setGroups(ChoiceInfo groupsChoice) {
-        loadApplicationSettings(groupsChoice);
+        loadApplicationSettings();
         addCommand(saveAppSettingsCmd);
         addCommand(cancelCmd);
         setCommandListener(this);
 
-        setItemStateListener(this);        
+        setItemStateListener(this);
     }
 
 
     /**
-     * Display the MIDlet suite settings groups.
-     * @param groups
+     * Display the MIDlet suite settings in combo box
+     * and available setting values in option button set.
      */
-    private void loadApplicationSettings(ChoiceInfo groups) {
-        // create popup with available groups
-        groupChoice = new RadioButtonSet(groups.getTitle(), true);
-        groupSettings = new RadioButtonSet[groups.getCount()];
-        for (int i = 0; i < groups.getCount(); i++) {
-            groupChoice.append(groups.getLabel(i), groups.getID(i));
-            ChoiceInfo settings = appSettings.getGroupSettings(groups.getID(i));
+    private void loadApplicationSettings() {
+        // create popup with available settings
+        ValueChoice settings = appSettings.getSettings();
+        groupChoice = new RadioButtonSet(settings.getTitle(), true);
+        groupSettings = new RadioButtonSet[settings.getCount()];
+        for (int i = 0; i < settings.getCount(); i++) {
+            groupChoice.append(settings.getLabel(i), settings.getID(i));
+            ValueChoice settingValues = appSettings.getSettingValues(settings.getID(i));
             // for each group create option button set with available levels
-            groupSettings[i] = new RadioButtonSet(settings.getTitle(), false);
-            for (int j = 0; j < settings.getCount(); j++) {
-                groupSettings[i].append(settings.getLabel(j), settings.getID(j));
+            groupSettings[i] = new RadioButtonSet(settingValues.getTitle(), false);
+            for (int j = 0; j < settingValues.getCount(); j++) {
+                groupSettings[i].append(settingValues.getLabel(j), settingValues.getID(j));
             }
             //select current level
-            groupSettings[i].setSelectedID(settings.getSelected());
+            groupSettings[i].setSelectedID(settingValues.getSelectedID());
             groupSettings[i].setPreferredSize(getWidth(), -1);
         }
         // select default group
-        groupChoice.setSelectedID(groups.getSelected());
+        groupChoice.setSelectedID(settings.getSelectedID());
         append(groupChoice);
-        lastGroupChoiceID = groups.getSelected();
+        lastGroupChoiceID = settings.getSelectedID();
         lastGroupChoiceIndex = groupChoice.getSelectedIndex();
         displayedSettingID = append(groupSettings[lastGroupChoiceIndex]);
     }
@@ -175,18 +164,23 @@ public class AppSettingsUIImpl extends Form
                     "AppSettings: selected=" + selected);
             }
         } else {
-            appSettings.onGroupLevelSelected(lastGroupChoiceID,
+            appSettings.onSettingChanged(lastGroupChoiceID,
                     groupSettings[lastGroupChoiceIndex].getSelectedID());
         }
     }
 
     /**
-     * Called by AppSettings to select specified group level
-     * @param groupID id of group
-     * @param levelID id of selected level
+     * Called by AppSettings when specified value shoud be changed in UI.
+     * Could be called as a result of user input validation by AppSettings
+     * to correct the invalid setting combination. All necessary informational
+     * alerts in this case are shown to the user by AppSettings and thus
+     * AppSettingsUI has just to change UI accordingly.
+     *
+     * @param settingID id of setting
+     * @param  valueID id of selected value
      */
-    public void selectGroupLevel(int groupID, int levelID) {
-        groupSettings[groupChoice.indexFor(groupID)].setSelectedID(levelID);
+    public void changeSettingValue(int settingID, int valueID) {
+        groupSettings[groupChoice.indexFor(settingID)].setSelectedID(valueID);
         
     }
 
@@ -236,7 +230,7 @@ class RadioButtonSet extends ChoiceGroup {
      * @throws IndexOutOfBoundsException this call would exceed the maximum
      *         number of buttons for this set
      */
-    public void append(String stringPart, int id) {
+    void append(String stringPart, int id) {
         int buttonNumber = append(stringPart, null);
 
         if (buttonNumber >= ids.length) {
@@ -253,7 +247,7 @@ class RadioButtonSet extends ChoiceGroup {
      *
      * @throws IndexOutOfBoundsException if <code>id</code> is invalid
      */
-    public void setSelectedID(int id) {
+    void setSelectedID(int id) {
         setSelectedIndex(indexFor(id), true);
     }
 
@@ -262,7 +256,7 @@ class RadioButtonSet extends ChoiceGroup {
      *
      * @return ID of selected element
      */
-    public int getSelectedID() {
+    int getSelectedID() {
         return ids[getSelectedIndex()];
     }
 
@@ -275,7 +269,7 @@ class RadioButtonSet extends ChoiceGroup {
      *
      * @exception IndexOutOfBoundsException If no element exists with that ID
      */
-    public int indexFor(int id) {
+    int indexFor(int id) {
         for (int i = 0; i < ids.length; i++) {
             if (ids[i] == id) {
                 return i;
@@ -293,6 +287,15 @@ class RadioButtonSet extends ChoiceGroup {
         for (int i = 0; i < prev.length; i++) {
             ids[i] = prev[i];
         }
+    }
+
+    /**
+     * Returns ID of specified item.
+     * @param index item index
+     * @return item ID
+     */
+    int getID(int index) {
+        return ids[index];
     }
 }
 

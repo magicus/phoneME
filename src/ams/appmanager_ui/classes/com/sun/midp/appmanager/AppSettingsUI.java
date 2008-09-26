@@ -28,21 +28,18 @@ package com.sun.midp.appmanager;
 
 import javax.microedition.lcdui.Displayable;
 
-public interface AppSettingsUI {
+interface AppSettingsUI {
     /**
-     * Called by AppSettings to select specified group level
-     * @param groupId id of group
-     * @param levelId id of selected level
+     * Called by AppSettings when specified value shoud be changed in UI.
+     * Could be called as a result of user input validation by AppSettings
+     * to correct the invalid setting combination. All necessary informational
+     * alerts in this case are shown to the user by AppSettings and thus
+     * AppSettingsUI has just to change UI accordingly.
+     * 
+     * @param settingID id of setting
+     * @param  valueID id of selected value
      */
-    public void selectGroupLevel(int groupId, int levelId);
-
-    /**
-     * Called by AppSettings to  initialize UI content.
-     * Available group levels and current level for particular
-     * group can be accecssed by method getGroupSettings of AppSettings.
-     * @param groupsChoice
-     */
-    public void setGroups(ChoiceInfo groupsChoice);
+    void changeSettingValue(int settingID, int valueID);
 
     /**
      * Returns the main displayable of the AppSettingsUI.
