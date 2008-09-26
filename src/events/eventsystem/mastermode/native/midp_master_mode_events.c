@@ -270,7 +270,12 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 }
 
 /**
+ * This function is called called when the network initialization
+ * or finalization is completed.
  *
+ * @param isInit 0 if the network finalization has been finished,
+ *               not 0 - if the initialization
+ * @param status one of PCSL_NET_* completion codes
  */
 void midp_network_status_event(int isInit, int status) {
     (void)isInit;
@@ -278,7 +283,9 @@ void midp_network_status_event(int isInit, int status) {
 }
 
 /**
+ * Checks if a network status signal is received.
  *
+ * @return KNI_TRUE if a network status signal was received, KNI_FALSE otherwise
  */
 jboolean midp_check_net_status_signal(int* pStatus) {
     *pStatus = PCSL_NET_SUCCESS;

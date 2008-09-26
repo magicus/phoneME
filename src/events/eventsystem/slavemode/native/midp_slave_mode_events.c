@@ -91,7 +91,12 @@ jlong midp_slavemode_time_slice(void) {
 }
 
 /**
+ * This function is called called when the network initialization
+ * or finalization is completed.
  *
+ * @param isInit 0 if the network finalization has been finished,
+ *               not 0 - if the initialization
+ * @param status one of PCSL_NET_* completion codes
  */
 void midp_network_status_event(int isInit, int status) {
     midp_network_status_event_port(isInit, status);

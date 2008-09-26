@@ -688,7 +688,12 @@ void midp_slavemode_event_loop(void) {
 }
 
 /**
+ * This function is called called when the network initialization
+ * or finalization is completed.
  *
+ * @param isInit 0 if the network finalization has been finished,
+ *               not 0 - if the initialization
+ * @param status one of PCSL_NET_* completion codes
  */
 void midp_network_status_event_port(int isInit, int status) {
     jcapp_network_event_received(isInit, status);
