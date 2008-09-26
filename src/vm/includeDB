@@ -3062,6 +3062,8 @@ ReflectionNatives.cpp           SystemDictionary.hpp
 ReflectionNatives.cpp           Throw.hpp
 ReflectionNatives.cpp           TypeArrayClass.hpp
 ReflectionNatives.cpp           Universe.hpp
+ReflectionNatives.cpp           ClassParserState.hpp
+ReflectionNatives.cpp           ClassFileParser.hpp
 
 ParsedTypeSymbol.hpp            TypeSymbol.hpp
 ParsedTypeSymbol.cpp            ParsedTypeSymbol.hpp
