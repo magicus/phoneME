@@ -39,7 +39,7 @@ public class ValueChoiceImpl implements ValueChoice {
      * @param id ID for the item
      */
     void append(String label, int id) {
-        ids.addElement(id);
+        ids.addElement(new Integer(id));
         labels.addElement(label);
     }
 
@@ -57,7 +57,7 @@ public class ValueChoiceImpl implements ValueChoice {
      *
      * @return ID of selected element
      */
-    int getSelectedID() {
+    public int getSelectedID() {
         return selectedID;
     }
 
@@ -66,8 +66,8 @@ public class ValueChoiceImpl implements ValueChoice {
      * @param index item index
      * @return item ID
      */
-    int getID(int index) {
-        return (Integer)ids.elementAt(index);
+    public int getID(int index) {
+        return ((Integer)ids.elementAt(index)).intValue();
     }
 
     /**
@@ -75,7 +75,7 @@ public class ValueChoiceImpl implements ValueChoice {
      * @param index item index
      * @return label
      */
-    String getLabel(int index) {
+    public String getLabel(int index) {
         return (String)labels.elementAt(index);
     }
 
@@ -83,7 +83,7 @@ public class ValueChoiceImpl implements ValueChoice {
      * Returns count of items
      * @return count
      */
-    int getCount() {
+    public int getCount() {
         return ids.size();
     }
 
@@ -91,7 +91,7 @@ public class ValueChoiceImpl implements ValueChoice {
      * Returns choice title.
      * @return title
      */
-    String getTitle() {
+    public String getTitle() {
         return title;
     }
 
