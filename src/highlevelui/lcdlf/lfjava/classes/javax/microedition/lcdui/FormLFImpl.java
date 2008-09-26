@@ -670,7 +670,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * @param keyCode the key which was released
      */
     void uCallKeyReleased(int keyCode) {
-        if (keyCode == Constants.KEYCODE_UP
+    	if (keyCode == Constants.KEYCODE_UP
             || keyCode == Constants.KEYCODE_DOWN
             || keyCode == Constants.KEYCODE_LEFT
             || keyCode == Constants.KEYCODE_RIGHT) 
@@ -1670,7 +1670,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         // current page
         int nextIndex = 
                 getNextInteractiveItem(itemsCopy, dir, traverseIndexCopy);
-        
         if (nextIndex != -1) {
             // NOTE: In traverse(), if there is a "next" interactive
             // item, there must have been a "first" interactive item
@@ -1730,12 +1729,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             setupScroll();
             updateCommandSet();
         } else {                      
-            
             // There is no more interactive items wholly visible on
             // the current page. We may need to scroll to the next page,
             // if we do, then traverse out of the current item and 
-            // scroll the page
-            
+            // scroll the page            
             if ((dir == Canvas.LEFT || dir == Canvas.UP) && viewable[Y] >= 0) {
                 // Special case. We're at the top-most interactive item, but
                 // its internal traversal doesn't allow the very top to be
@@ -1752,38 +1749,18 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                     uRequestPaint();
                 } else {
                 	//cycling
-                	//System.out.println("viewable[Y]="+viewable[Y]+"  viewable[HEIGHT]="+viewable[HEIGHT] + " viewport[HEIGHT]="+viewport[HEIGHT]);    
-                	
-                	if (viewable[Y] == 0 &&  viewable[HEIGHT] > viewport[HEIGHT]) {
-                		uTraverseOutItem(traverseIndexCopy, itemsCopy);
-                		traverseIndex = itemsCopy.length - 1;
-                 	    traverseIndexCopy = itemsCopy.length - 1;
-                 	    //set up visRect
-                 	    itemTraverse = 
-                            uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
-                 	    //set up viewable
-                 	    scrollForBounds(dir, visRect);
-                 	    uSpecialCaseTraverseLastItem(traverseIndexCopy, itemsCopy);
-                 	    
-                 	    uHideShowItems(itemsCopy);
-                        uRequestPaint(); // request to paint contents area
-                        return;
-                	} else {
-                    // page up
-                        uScrollViewport(Canvas.UP, itemsCopy);
-                        uInitItemsInViewport(
-                            Canvas.UP, itemsCopy, traverseIndexCopy);
-                        updateCommandSet();
-                        return;
+                	if (!cyclingPageUp(traverseIndexCopy,itemsCopy)) {         		
+                        // page up
+                		pageScroll(Canvas.UP, traverseIndexCopy, itemsCopy);
                     }
+                	return;
                 }
-            } else if ((dir == Canvas.RIGHT || dir == Canvas.DOWN) &&
-                (viewable[Y] + viewport[HEIGHT] <= viewable[HEIGHT])) 
-            {
-                // Special case. We're at the bottom-most interactive item,
+            } else if ((dir == Canvas.RIGHT || dir == Canvas.DOWN) ) {
+            	// Special case. We're at the bottom-most interactive item,
                 // but its internal traversal doesn't allow the very bottom
                 // to be seen, we just scroll the view to show it
-                if (traverseIndexCopy != -1 &&
+            	boolean  isBottomShown = (viewable[Y] + viewport[HEIGHT] < viewable[HEIGHT]);
+            	if (traverseIndexCopy != -1 && isBottomShown &&
                     ((itemsCopy[traverseIndexCopy].bounds[Y] + 
                         itemsCopy[traverseIndex].bounds[HEIGHT]) >
                     (viewable[Y] + viewport[HEIGHT]))) 
@@ -1798,27 +1775,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                     uRequestPaint();                    
                 } else {
                 	//cyclic down
-                	if (viewable[Y] + viewport[HEIGHT] == viewable[HEIGHT]) {
-                		uTraverseOutItem(traverseIndexCopy, itemsCopy);
-                		traverseIndex = 0;
-                 	    traverseIndexCopy = 0;
-                 	    //set up visRect
-                 	    itemTraverse = 
-                            uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
-                 	    //set up viewable
-                 	    scrollForBounds(dir, visRect);
-                 	    uSpecialCaseTraverseFirstItem(traverseIndexCopy, itemsCopy);
-                 	    uHideShowItems(itemsCopy);
-                        uRequestPaint(); // request to paint contents area
-                        return;
-                	} else {
+                	if (!cyclingPageDown(traverseIndexCopy, itemsCopy) && isBottomShown) {
                         // page down
-                        uScrollViewport(Canvas.DOWN, itemsCopy);
-                        uInitItemsInViewport(
-                            Canvas.DOWN, itemsCopy, traverseIndexCopy);
-                        updateCommandSet();
-                        return;
+                		pageScroll(dir, traverseIndexCopy, itemsCopy);
                     }
+                	return;
                 }
             }
             
@@ -1834,7 +1795,76 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         }        
     }
     
-    /** There is a special case when traversing to the very last
+    /**
+     * This method scroll page in <code>dir<code> direction
+     * @param dir - the towards for scroll
+     * @param traverseIndexCopy the index of the traverse item
+     * @param itemsCopy the array of items
+     */
+    private void pageScroll(int dir, int traverseIndexCopy, ItemLFImpl[] itemsCopy) {
+    	uScrollViewport(dir, itemsCopy);
+        uInitItemsInViewport(
+            dir, itemsCopy, traverseIndexCopy);
+        updateCommandSet();
+        return;
+    }
+    
+    /**
+     * This method move from the first item to the last item.
+     * @param traverseIndexCopy the index of the traverse item
+     * @param itemsCopy the array of items
+     */
+    private boolean cyclingPageUp(int traverseIndexCopy,
+    		ItemLFImpl[] itemsCopy) {
+    	boolean isCycle = false;
+    	if (viewable[Y] == 0) {
+    		uTraverseOutItem(traverseIndexCopy, itemsCopy);
+    		traverseIndex = itemsCopy.length - 1;
+     	    traverseIndexCopy = itemsCopy.length - 1;
+     	    //set up visRect
+     	    itemTraverse = 
+                uCallItemTraverse(itemsCopy[traverseIndexCopy], Canvas.UP);
+     	    //set up viewable
+     	    scrollForBounds(Canvas.UP, visRect);
+     	    
+     	    if (viewable[HEIGHT] > viewport[HEIGHT]) {
+     	        uSpecialCaseTraverseLastItem(traverseIndexCopy, itemsCopy);
+     	    }
+     	    uHideShowItems(itemsCopy);
+            uRequestPaint(); // request to paint contents area
+            isCycle = true;
+    	}
+    	return isCycle;
+    }
+    
+    /**
+     * This method move from the last item to the first item.
+     * @param traverseIndexCopy the index of the traverse item
+     * @param itemsCopy the array of items
+     */
+    private boolean cyclingPageDown(int traverseIndexCopy,
+    		ItemLFImpl[] itemsCopy) {
+    	boolean isCycle = false;
+    	if (viewable[Y] + viewport[HEIGHT] == viewable[HEIGHT] || 
+    			viewport[HEIGHT] >= viewable[HEIGHT]) {
+    		isCycle = true;
+    		uTraverseOutItem(traverseIndexCopy, itemsCopy);
+    		traverseIndex = 0;
+     	    traverseIndexCopy = 0;
+     	    //set up visRect
+     	    itemTraverse = 
+                uCallItemTraverse(itemsCopy[traverseIndexCopy], Canvas.DOWN);
+     	    //set up viewable
+     	    scrollForBounds(Canvas.DOWN, visRect);
+     	    uSpecialCaseTraverseFirstItem(traverseIndexCopy, itemsCopy);
+     	    uHideShowItems(itemsCopy);
+            uRequestPaint(); // request to paint contents area
+            
+    	}
+    	return isCycle;
+    }
+    
+    /** This method traverse item in a special case when traversing to the very last
      *  item on a Form
      *  @param traverseIndexCopy the index of the traverse item
      *  @param itemsCopy the array of items
@@ -1866,7 +1896,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         }
     }
     
-    /** There is a special case when traversing up to the very first
+    /** This method traverse item in a special case when traversing up to the very first
      *  item on a Form
      *  @param traverseIndexCopy the index of the traverse item
      *  @param itemsCopy the array of items
@@ -2028,8 +2058,9 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             case Canvas.UP:
                 if (bounds[Y] >= viewable[Y]) {
                     //cycling
-                    if (viewable[Y] == 0 && bounds[Y] > viewable[HEIGHT] - viewport[HEIGHT]) {
+                    if (viewable[Y] == 0 && bounds[Y] > viewable[HEIGHT] - viewport[HEIGHT] ) {
                         viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
+                        viewable[Y] = (viewable[Y] >=0) ? viewable[Y] : 0;
                         return true;
                     }
                     return false;
