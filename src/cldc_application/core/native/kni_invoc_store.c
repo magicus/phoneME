@@ -189,7 +189,7 @@ defineField(className)
 
 #define initField(field, type) \
     FID(field) = KNI_GetFieldID(classObj, toQuote(field), type ); \
-    // printf( "\n%s = %p", toQuote(field), FID(field) ); \
+    //printf( "%s = %p\n", toQuote(field), FID(field) ); \
 
 #define initIntField(field) initField(field, "I")
 #define initStringField(field) initField(field, "Ljava/lang/String;")
@@ -242,8 +242,9 @@ static int initializeCLDCAppIDFields( jclass classObj ) {
  * @param tmpObj the Class object of Invocation
  */
 static void initializeFields(KNIDECLARGS jobject invocationImplObj) {
-    KNI_StartHandles(1);
+    KNI_StartHandles(2);
     KNI_DeclareHandle(classObj);   // clazz object
+    KNI_DeclareHandle(obj);
 
     if (FID(url) != 0)
         return;
@@ -252,6 +253,8 @@ static void initializeFields(KNIDECLARGS jobject invocationImplObj) {
     initializeInvocationImplFields(classObj);
 
     KNI_FindClass("com/sun/j2me/content/CLDCAppID", classObj);
+    //KNI_GetObjectField(invocationImplObj, FID(destinationApp), obj);
+    //KNI_GetObjectClass(obj, classObj);
     initializeCLDCAppIDFields(classObj);
 
     KNI_EndHandles();
