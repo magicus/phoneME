@@ -232,11 +232,13 @@ class AppProxy extends CLDCAppID {
     }
 
 	protected AppProxy verify() throws ClassNotFoundException {
-        verifyApplication(className);
-        initAppInfo(new MIDletSuiteUser());
-        appmap.put(className, this);
-        if (LOGGER != null)
-        	LOGGER.println("AppProxy verified: ID " + super.toString() );
+		if(className != null){
+	        verifyApplication(className);
+	        initAppInfo(new MIDletSuiteUser());
+	        appmap.put(className, this);
+	        if (LOGGER != null)
+	        	LOGGER.println("AppProxy verified: ID " + super.toString() );
+		}
         return this;
 	}
 
