@@ -273,6 +273,7 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
  *
  */
 void midp_network_status_event(int isInit, int status) {
+    (void)isInit;
     (void)status;
 }
 

@@ -240,7 +240,7 @@ static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext);
 static void alarmstart(AlarmEntry *entry, jlong alarm);
 static long readLine(char** ppszError, int handle, char* buffer, long length);
 
-static void pcsl_network_initialized(int status);
+static void pcsl_network_initialized(int isInit, int status);
 
 /**
  * Parses and extracts a field from the registry entry string.
@@ -3095,8 +3095,8 @@ Java_com_sun_midp_i3test_TestCompWildcard_cmpWildCard() {
  */
 static void pcsl_network_initialized(int isInit, int status) {
     if (isInit) {
-        netWorkStatus = (status == PCSL_NET_SUCCESS) ? 1 : -3;
+        networkStatus = (status == PCSL_NET_SUCCESS) ? 1 : -3;
     } else {
-        netWorkStatus = (status == PCSL_NET_SUCCESS) ? -2 : -3; /* -2 == off, -3 - err */
+        networkStatus = (status == PCSL_NET_SUCCESS) ? -2 : -3; /* -2 == off, -3 - err */
     }
 }
