@@ -351,23 +351,10 @@ void JVMSPI_PrintRaw(const char* s) {
 }
 
 /**
- * Initializes the UI.
- *
- * @return <tt>0</tt> upon successful initialization, otherwise
- *         <tt>-1</tt>
+ * Initializes the AMS.
  */
-static int
-midpInitializeUI(void) {
-    if (InitializeEvents() != 0) {
-        return -1;
-    }
-
-    /*
-     * Porting consideration:
-     * Here is a good place to put I18N init.
-     * function. e.g. initLocaleMethod();
-     */
-
+static void
+midpInitializeAMS(void) {
     /*
      * Set AMS memory limits
      */
@@ -399,7 +386,13 @@ midpInitializeUI(void) {
         JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_TOTAL_MEMORY, limit);
     }
 #endif
+}
 
+/**
+ * Initializes the Debugger.
+ */
+static void
+midpInitializeDebugger(void) {
 #if ENABLE_ON_DEVICE_DEBUG || ENABLE_WTK_DEBUG
     {
 #if ENABLE_MULTIPLE_ISOLATES
@@ -436,15 +429,16 @@ midpInitializeUI(void) {
         }
     }
 #endif
+}
 
-
-    /*
-     * IMPL_NOTE: don't care of pushopen() return status, go forward anyway.
-     * Try to call pushopen later, for instance, if network is not up right
-     * now it can be brought up later.
-     */
-    pushopen();
-
+/**
+ * Initializes the UI.
+ *
+ * @return <tt>0</tt> upon successful initialization, otherwise
+ *         <tt>-1</tt>
+ */
+static int
+midpInitializeUI(void) {
     if (0 == lcdlf_ui_init()) {
 
         /* Get the initial screen rotation mode property */
@@ -462,27 +456,79 @@ midpInitializeUI(void) {
 }
 
 /**
+ * Initializes the VM.
+ *
+ * @return <tt>0</tt> upon successful initialization, otherwise
+ *         <tt>-1</tt>
+ */
+static int
+midpInitializeVM(void) {
+    if (InitializeEvents() != 0) {
+        return -1;
+    }
+
+    /*
+     * Porting consideration:
+     * Here is a good place to put I18N init.
+     * function. e.g. initLocaleMethod();
+     */
+
+    midpInitializeAMS();
+
+    midpInitializeDebugger();
+
+    if (pushopen() != 0) {
+        return -1;
+    }
+
+    if (midpInitializeUI() != 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+/**
+ * Finalizes the AMS.
+ */
+static void
+midpFinalizeAMS(void) {
+    finalizeCommandState();
+
+    /*
+     * Note: the AMS isolate will have been registered by a native method
+     * call, so there is no corresponding midpRegisterAmsIsolateId in the
+     * midpInitializeAMS() function.
+     */
+    midpUnregisterAmsIsolateId();
+}
+
+/**
  * Finalizes the UI.
  */
 static void
 midpFinalizeUI(void) {
     lcdlf_ui_finalize();
+}
+
+/**
+ * Finalizes the VM.
+ */
+static void
+midpFinalizeVM(void) {
+    midpFinalizeUI();
 
     pushclose();
-    finalizeCommandState();
+
+    midpFinalizeAMS();
+
+    /* 
+     * Porting consideration:
+     * Here is a good place to put I18N finalization
+     * function. e.g. finalizeLocaleMethod();
+     */
 
     FinalizeEvents();
-
-    /* Porting consideration:
-     * Here is a good place to put I18N finalization
-     * function. e.g. finalizeLocaleMethod(); */
-
-    /*
-     * Note: the AMS isolate will have been registered by a native method
-     * call, so there is no corresponding midpRegisterAmsIsolateId in the
-     * midpInitializeUI() function.
-     */
-    midpUnregisterAmsIsolateId();
 }
 
 /**
@@ -577,7 +623,7 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
     jboolean classVerifier = JVM_GetUseVerifier();
 #endif
 
-    if (midpInitCallback(VM_LEVEL, midpInitializeUI, midpFinalizeUI) != 0) {
+    if (midpInitCallback(VM_LEVEL, midpInitializeVM, midpFinalizeVM) != 0) {
         REPORT_WARN(LC_CORE, "Out of memory during init of VM.\n");
         return MIDP_ERROR_STATUS;
     }
@@ -1013,7 +1059,7 @@ int midpRunMainClass(JvmPathChar *classPath,
 
     midpInitialize();
 
-    if (midpInitCallback(VM_LEVEL, midpInitializeUI, midpFinalizeUI) != 0) {
+    if (midpInitCallback(VM_LEVEL, midpInitializeVM, midpFinalizeVM) != 0) {
         REPORT_WARN(LC_CORE, "Out of memory during init of VM.\n");
         return MIDP_ERROR_STATUS;
     }
