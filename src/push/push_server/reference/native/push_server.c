@@ -205,14 +205,20 @@ typedef struct _alarmentry {
 static PushEntry *pushlist = NULL;
 static AlarmEntry *alarmlist = NULL;
 
+typedef enum {
+    NET_STATUS_DOWN       = -3,
+    NET_STATUS_GOING_DOWN = -2, /* network finalization is in progress */
+    NET_STATUS_ERROR      = -1,
+    NET_STATUS_UNKNOWN    = 0,
+    NET_STATUS_GOING_UP   = 1, /* network initialization is in progress */
+    NET_STATUS_UP         = 2
+} network_status_t;
+
+
 /**
- * Network status.
- *
- * -1: unknown,
- *  0: network initialization is in progress,
- *  1: network is up
+ * Current network status.
  */
-static int networkStatus = -1;
+static network_status_t networkStatus = NET_STATUS_UNKNOWN;
 
 /**
  * Checks current status of the network.
@@ -1989,26 +1995,65 @@ static int isNetworkUp() {
 
     res = 0;
 
-    if (networkStatus == -1) { /* network status is unknown */
-        status = pcsl_network_init_start(pcsl_network_initialized);
-        if (status == PCSL_NET_SUCCESS) {
-            networkStatus = 1;
+    switch (networkStatus) {
+        case NET_STATUS_UP:
             res = 1;
-        } else if (status == PCSL_NET_WOULDBLOCK) {
-            networkStatus = 0;
-        } else {
-            /* network error, try later */
+            break;
+
+        case NET_STATUS_GOING_UP: {
+            status = pcsl_network_init_finish();
+
+            switch (status) {
+                case PCSL_NET_SUCCESS:
+                    networkStatus = NET_STATUS_UP;
+                    res = 1;
+                    break;
+
+                case PCSL_NET_WOULDBLOCK:
+                    /* network is still going up. */
+                    break;
+
+                default:
+                    /* network error, try later */
+                    networkStatus = NET_STATUS_ERROR;
+                    break;
+            }
+            break;
         }
-    } else if (networkStatus == 0) { /* bringing network up is in progress */
-        status = pcsl_network_init_finish();
-        if (status == PCSL_NET_SUCCESS) {
-            networkStatus = 1;
-            res = 1;
-        } else {
-            /* try later */
+
+        case NET_STATUS_UNKNOWN:
+        case NET_STATUS_ERROR: {
+            status = pcsl_network_init_start(pcsl_network_initialized);
+
+            switch (status) {
+                case PCSL_NET_SUCCESS:
+                    networkStatus = NET_STATUS_UP;
+                    res = 1;
+                    break;
+
+                case PCSL_NET_WOULDBLOCK:
+                    networkStatus = NET_STATUS_GOING_UP;
+                    break;
+
+                default:
+                    /* network error, try later */
+                    networkStatus = NET_STATUS_ERROR;
+                    break;
+            }
+
+            break;
         }
-    } else {
-        res = 1;
+
+        case NET_STATUS_GOING_DOWN:
+        case NET_STATUS_DOWN:
+            /* 
+             * don't prevent network from going down as well as don't try to
+             * bring it up if MIDP has put it down. 
+             */
+            break;
+
+        default:
+            break;
     }
 
     return res;
@@ -3095,8 +3140,10 @@ Java_com_sun_midp_i3test_TestCompWildcard_cmpWildCard() {
  */
 static void pcsl_network_initialized(int isInit, int status) {
     if (isInit) {
-        networkStatus = (status == PCSL_NET_SUCCESS) ? 1 : -3;
+        networkStatus = (status == PCSL_NET_SUCCESS) ?
+            NET_STATUS_UP : NET_STATUS_ERROR;
     } else {
-        networkStatus = (status == PCSL_NET_SUCCESS) ? -2 : -3; /* -2 == off, -3 - err */
+        networkStatus = (status == PCSL_NET_SUCCESS) ?
+            NET_STATUS_DOWN : NET_STATUS_ERROR;
     }
 }
