@@ -21,41 +21,23 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-package com.sun.mmedia.rtsp.protocol;
 
-import java.io.*;
+package com.sun.mmedia.sdp;
 
-public class StatusLine extends Parser {
-    private String protocol;
-    private int code;
-    private String reason;
+public class SdpMediaAttr {
+    private String name;
+    private String value;
 
-    public StatusLine(String input) {
-        ByteArrayInputStream bin =
-                new ByteArrayInputStream(input.getBytes());
-
-        protocol = getToken(bin);
-
-        // System.out.println("protocol : " + protocol);
-
-        code = Integer.parseInt(getToken(bin));
-
-        // System.out.println("code     : " + code);
-
-        reason = getStringToken(bin);
-
-        // System.out.println("reason   : " + reason);
+    public SdpMediaAttr( String name, String value ) {
+        this.name = name;
+        this.value = value;
     }
 
-    public String getReason() {
-        return reason;
+    public String getName() {
+        return name;
     }
 
-    public int getCode() {
-        return code;
-    }
-
-    public String getProtocol() {
-        return protocol;
+    public String getValue() {
+        return value;
     }
 }

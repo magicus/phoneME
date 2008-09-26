@@ -21,6 +21,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
 package com.sun.mmedia.rtsp;
 
 import java.io.IOException;
@@ -45,15 +46,15 @@ public class RtspUrl {
      * @exception  IOException  Thows an IOException if the URL cannot 
      *                          be parsed as a valid RTP URL.
      */
-    public RtspUrl(String url) throws IOException {
+    public RtspUrl( String url ) throws IOException {
         this.url = url;
 
-        if (url.length() < 7) {
-            throw new IOException("Malformed URL");
+        if( url.length() < 7 ) {
+            throw new IOException( "Malformed URL" );
         }
 
-        if (!url.startsWith("rtsp://")) {
-            throw new IOException("Malformed URL");
+        if( !url.startsWith( "rtsp://" ) ) {
+            throw new IOException( "Malformed URL" );
         }
     }
 
@@ -64,14 +65,14 @@ public class RtspUrl {
      * @return    The file value
      */
     public String getFile() {
-        String str = url.substring(7);
+        String str = url.substring( 7 );
 
-        int start = str.indexOf('/');
+        int start = str.indexOf( '/' );
 
         String file = "";
 
-        if (start != -1) {
-            file = str.substring(start + 1);
+        if( start != -1 ) {
+            file = str.substring( start + 1 );
         }
 
         return file;
@@ -86,20 +87,20 @@ public class RtspUrl {
     public String getHost() {
         String host = null;
 
-        String str = url.substring(7);
+        String str = url.substring( 7 );
 
-        int end = str.indexOf(':');
+        int end = str.indexOf( ':' );
 
-        if (end == -1) {
-            end = str.indexOf('/');
+        if( end == -1 ) {
+            end = str.indexOf( '/' );
 
-            if (end == -1) {
+            if( end == -1 ) {
                 host = str;
             } else {
-                host = str.substring(0, end);
+                host = str.substring( 0, end );
             }
         } else {
-            host = str.substring(0, end);
+            host = str.substring( 0, end );
         }
 
         return host;
@@ -115,14 +116,14 @@ public class RtspUrl {
         int port = 554;
         // default port for RTSP
 
-        String str = url.substring(7);
+        String str = url.substring( 7 );
 
-        int start = str.indexOf(':');
+        int start = str.indexOf( ':' );
 
-        if (start != -1) {
-            int end = str.indexOf('/');
+        if( start != -1 ) {
+            int end = str.indexOf( '/' );
 
-            port = Integer.parseInt(str.substring(start + 1, end));
+            port = Integer.parseInt( str.substring( start + 1, end ) );
         }
 
         return port;

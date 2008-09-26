@@ -32,8 +32,6 @@ import java.io.ByteArrayOutputStream;
 import javax.microedition.io.Connector;
 import javax.microedition.io.SocketConnection;
 
-import com.sun.mmedia.rtsp.protocol.*;
-
 /**
  * The RtspConnection object encapsulates a TCP/IP connection to an RTSP Server.
  */
@@ -61,7 +59,7 @@ public class RtspConnection extends RtspConnectionBase
         }
     }
 
-    public RtspConnection( RtspUrl url ) throws IOException {
-        super( url );
+    public RtspConnection( RtspDS ds ) throws IOException {
+        super( ds );
     }
 }

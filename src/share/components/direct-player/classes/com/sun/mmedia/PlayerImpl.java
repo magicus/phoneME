@@ -244,9 +244,11 @@ public class PlayerImpl implements Player {
                 try {
                     mediaDownload.fgDownload();
                 } catch(IOException ex1) {
-                    throw new MediaException("Can not start download Thread: " + ex1.getMessage());
+                    ex1.printStackTrace();
+                    throw new MediaException("Can not start download Thread: " + ex1);
                 }catch(Exception ex) {
-                    throw new MediaException("Can not start download Thread: " + ex.getMessage());
+                    ex.printStackTrace();
+                    throw new MediaException( "Can not start download Thread: " + ex );
                 }
             }
         }

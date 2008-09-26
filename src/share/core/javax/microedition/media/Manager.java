@@ -990,7 +990,14 @@ public final class Manager {
             throw new IllegalArgumentException();
         }
 
-        String type = source.getContentType();
+        String type;
+
+        try {
+            type = source.getContentType();
+        } catch( IllegalStateException e ) {
+            type = null;
+        }
+
         if (type != null) {
             String theProtocol = null;
             String locator = source.getLocator();

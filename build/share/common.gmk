@@ -129,10 +129,10 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/protocol/ContentDescriptor.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/Jsr234Proxy.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/BasicPlayer.java \
-    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/BasicDS.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/VideoRenderer.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/TonePlayer.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/control/DualToneControl.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/BasicDS.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/LocatorParser.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/VideoSource.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectVolume.java \
@@ -151,50 +151,31 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/PermissionAccessor.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/PermissionAccessorAbstractions.java
 
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/FormatConversionUtils.java \
+    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/GIFPlayer.java \
+    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/GIFImageDecoder.java \
+    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/ImageAccess.java
+
 
 ifeq ($(USE_RTSP), true)
 
 SUBSYSTEM_JSR_135_JAVA_FILES += \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspUrl.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspDS.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspSS.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspConnectionBase.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/CSeqHeader.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/PauseMessage.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/SetParameterMessage.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/ContentBaseHeader.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/PlayMessage.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/SetupMessage.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/DescribeMessage.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/RangeHeader.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/StatusCode.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/DurationHeader.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/Request.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/StatusLine.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/Header.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/RequestLine.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/TeardownMessage.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/Message.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/RequestMessage.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/TransportHeader.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/MessageType.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/Response.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/OptionsMessage.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/ResponseMessage.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/Parser.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/SessionHeader.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/MediaAttribute.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/MediaDescription.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/Parser.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspMessageType.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspRange.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspOutgoingRequest.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspIncomingMessage.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspTransportHeader.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SdpParser.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SessionDescription.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/TimeDescription.java
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SdpSessionDescr.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SdpMediaDescr.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SdpMediaAttr.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SdpTimeDescr.java
 endif # USE_RTSP
-
-SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/FormatConversionUtils.java \
-    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/GIFPlayer.java \
-    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/GIFImageDecoder.java \
-    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/ImageAccess.java
 
 ifeq ($(DIRECT_RECORD), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \

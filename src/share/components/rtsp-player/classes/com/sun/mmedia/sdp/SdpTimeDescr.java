@@ -21,19 +21,37 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-package com.sun.mmedia.rtsp.protocol;
 
-public class SetupMessage extends RequestMessage {
-    public SetupMessage(byte data[]) {
-        super(data);
+package com.sun.mmedia.sdp;
+
+import java.io.*;
+import java.util.*;
+
+public class SdpTimeDescr extends SdpParser {
+    // Values:
+    public String timeActive;
+    public Vector repeatTimes;
+
+    public SdpTimeDescr( ByteArrayInputStream bin ) {
+        // Time the session is active:
+        timeActive = getLine( bin );
+
+        // Repeat Times:
+        repeatTimes = new Vector();
+
+        String tag = getTag( bin );
+
+        while( tag != null && tag.length() > 0 ) {
+            if( tag.equals( "r=" ) ) {
+                String repeatTime = getLine( bin );
+
+                repeatTimes.addElement( repeatTime );
+            } else {
+                ungetTag( tag );
+                return;
+            }
+
+            tag = getTag( bin );
+        }
     }
-  /*
-    public SetupMessage(String url, int sequenceNumber, int port_lo,
-            int port_hi) {
-        String msg = "SETUP " + url + "RTSP/1.0" + "\r\n" + "CSeq: " +
-                sequenceNumber + "\r\n" +
-                "Transport: RTP/AVP;unicast;client_port=" + port_lo +
-                "-" + port_hi;
-    }
-    */
 }

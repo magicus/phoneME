@@ -21,78 +21,84 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
 package com.sun.mmedia.sdp;
 
 import java.io.*;
 import java.util.*;
 
-public class SdpParser extends Parser {
-    public SessionDescription sessionDescription;
+class SdpParser {
+    private Vector buffer = new Vector();
 
-    public SdpParser(byte data[]) {
-        init();
+    public String getTag( ByteArrayInputStream bin ) {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
-        ByteArrayInputStream bin = new ByteArrayInputStream(data);
+        skipWhitespace( bin );
 
-        parseData(bin);
-    }
+        if( bin.available() > 0 ) {
+            int ch = readChar( bin );
 
-    public void parseData(ByteArrayInputStream bin) {	
-        if( getTag(bin).equals( "v=")) {
-            sessionDescription = new SessionDescription( bin);
-	}
-    }
-    
-    public MediaAttribute getSessionAttribute(String name) {
-        MediaAttribute attribute = null;
+            while( ch != '=' && ch != '\n' && ch != '\r' && ch != -1 ) {
+                bout.write( ch );
 
-        if (sessionDescription != null) {
-            attribute = sessionDescription.getSessionAttribute(name);
+                ch = readChar( bin );
+            }
+
+            bout.write( ch );
         }
 
-        return attribute;
+        String tag = new String( bout.toByteArray() );
+
+        return tag;
     }
 
-    public MediaDescription getMediaDescription(String name) {
-        MediaDescription description = null;
+    public void ungetTag( String tokenStr ) {
+        byte token[] = tokenStr.getBytes();
 
-        if (sessionDescription != null) {
-            description = sessionDescription.getMediaDescription(name);
+        for( int i = 0; i < token.length; i++ ) {
+            buffer.insertElementAt(
+                    new Integer( token[ token.length - i - 1 ] ), 0 );
+        }
+    }
+
+    public String getLine( ByteArrayInputStream bin ) {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+
+        if( bin.available() > 0 ) {
+            int ch = readChar( bin );
+
+            while( ch != '\n' && ch != '\r' && ch != -1 ) {
+                bout.write( ch );
+                ch = readChar( bin );
+            }
         }
 
-	return description;
+        String line = new String( bout.toByteArray() );
+
+        return line;
     }
 
-    public Vector getMediaDescriptions() {
-        Vector descriptions = null;
+    private void skipWhitespace( ByteArrayInputStream bin ) {
+        int ch = readChar( bin );
 
-        if (sessionDescription != null) {
-            descriptions = sessionDescription.getMediaDescriptions();
+        while( ch == ' ' || ch == '\n' || ch == '\r' ) {
+            ch = readChar( bin );
         }
-	
-        return descriptions;
-    }    
-  /*
-static String msg= "v=0\r\n" +
-"s=boiler_room_small_jpeg.mov\r\n" +
-"u=http://jmserver2/\r\n" +
-"e=admin@jmserver2\r\n" +
-"c=IN IP4 129.144.89.52\r\n" +
-"a=control:/\r\n" +
-"a=range:npt=0- 139.80500\r\n" +
-"m=video 0 RTP/AVP 97\r\n" +
-"a=rtpmap:97 MP4V-ES\r\n" +
-"a=control:trackID=6 \r\n" +
-"a=fmtp:97 profile-level-id=1; config=000001B001000001B5090000010000000120008440FA282C2090A21F\r\n\r\n";
-    
-    public static void main( String[] args) {
-        SdpParser sdp= new SdpParser( msg.getBytes());
 
-        MediaDescription desc = sdp.getMediaDescription( "video");
-
-        MediaAttribute attribute = desc.getMediaAttribute( "fmtp");
-
-        System.out.println( "attribute: " + attribute.getValue());
+        buffer.insertElementAt( new Integer( ch ), 0 );
     }
-    */
+
+    public int readChar( ByteArrayInputStream bin ) {
+        int ch;
+
+        if( buffer.size() > 0 ) {
+            Integer ich = (Integer)buffer.elementAt( 0 );
+            ch = ich.intValue();
+            buffer.removeElementAt( 0 );
+        } else {
+            ch = bin.read();
+        }
+
+        return ch;
+    }
 }
