@@ -90,3 +90,9 @@ jlong midp_slavemode_time_slice(void) {
     return to;
 }
 
+/**
+ *
+ */
+void midp_network_status_event(int isInit, int status) {
+    midp_network_status_event_port(isInit, status);
+}

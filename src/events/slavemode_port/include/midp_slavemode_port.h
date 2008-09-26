@@ -67,6 +67,10 @@ jlong midp_slavemode_time_slice(void);
  */
 void midp_slavemode_event_loop(void);
 
+/**
+ *
+ */
+void midp_network_status_event_port(int isInit, int status);
 
 #ifdef __cplusplus
 }

@@ -1990,7 +1990,7 @@ static int isNetworkUp() {
     res = 0;
 
     if (networkStatus == -1) { /* network status is unknown */
-       status = pcsl_network_init_start(pcsl_network_initialized);
+        status = pcsl_network_init_start(pcsl_network_initialized);
         if (status == PCSL_NET_SUCCESS) {
             networkStatus = 1;
             res = 1;
@@ -3086,8 +3086,17 @@ Java_com_sun_midp_i3test_TestCompWildcard_cmpWildCard() {
 #endif
 
 /**
+ * This function that is called when the network initialization
+ * or finalization is completed.
  *
+ * @param isInit 0 if the network finalization has been finished,
+ *               not 0 - if the initialization
+ * @param status one of PCSL_NET_* completion codes
  */
-static void pcsl_network_initialized(int status) {
-    (void)status;
+static void pcsl_network_initialized(int isInit, int status) {
+    if (isInit) {
+        netWorkStatus = (status == PCSL_NET_SUCCESS) ? 1 : -3;
+    } else {
+        netWorkStatus = (status == PCSL_NET_SUCCESS) ? -2 : -3; /* -2 == off, -3 - err */
+    }
 }

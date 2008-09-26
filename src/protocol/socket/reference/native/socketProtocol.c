@@ -880,7 +880,7 @@ Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal(void) {
 
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
     if (info == NULL) {
-       status = pcsl_network_init_start(midp_network_initialized_event);
+       status = pcsl_network_init_start(midp_network_status_event);
     } else { /* Reinvocation after unblocking the thread */
        status = pcsl_network_init_finish();
     }

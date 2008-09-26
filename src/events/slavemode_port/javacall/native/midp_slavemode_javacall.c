@@ -52,6 +52,7 @@
 #include <suspend_resume.h>
 
 #include <javacall_lifecycle.h>
+#include <jcapp_export.h>
 
 #ifdef ENABLE_JSR_120
 #include <wmaInterface.h>
@@ -684,4 +685,11 @@ void midp_slavemode_event_loop(void) {
         "midp_slavemode_event_loop() is not "
         "implemented for JavaCall platform\n");
     return;
+}
+
+/**
+ *
+ */
+void midp_network_status_event_port(int isInit, int status) {
+    jcapp_network_event_received(isInit, status);
 }

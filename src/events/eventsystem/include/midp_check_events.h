@@ -64,7 +64,7 @@ jboolean midp_check_net_status_signal(int* pStatus);
 /**
  *
  */
-void midp_network_initialized_event(int status);
+void midp_network_status_event(int isInit, int status);
 
 #ifdef __cplusplus
 }
