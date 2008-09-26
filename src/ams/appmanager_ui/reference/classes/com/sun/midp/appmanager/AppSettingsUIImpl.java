@@ -34,7 +34,7 @@ import com.sun.midp.log.LogChannels;
 
 import javax.microedition.lcdui.*;
 
-public class AppSettingsUIImpl extends Form
+class AppSettingsUIImpl extends Form
         implements AppSettingsUI, CommandListener, ItemStateListener {
 
     /** application settings peer. */
@@ -63,31 +63,9 @@ public class AppSettingsUIImpl extends Form
 
     /**
      * Create and initialize a new application settings MIDlet.
-     * @param appSettings AppSettings peer, where information regarding
-     *  available settings and current setting value could be found.
-     *  Also appSettings is used to change application settings or to cancel
-     *  the process and dismiss this form. Method onSettingChanged of
-     *  appSettings should be called when attempt to change value for
-     *  particular setting occures. As a result changeSettingValue could be
-     *  called by appSettings when proposed setting value leads to changes in
-     *  other settings or is not allowed. This may happen for example when mutual
-     *  exclusive combinations selected. All necessary alerts in this case are
-     *  shown to the user by AppSettings and thus AppSettingsUIImpl has just
-     *  to change UI accordingly when changeSettingValue is called.
-     * @param title
-     * @throws Throwable
      */
-    AppSettingsUIImpl(AppSettings appSettings, String title)
-            throws Throwable {
-        super(title);
-        
-        this.appSettings = appSettings;
-        loadApplicationSettings();
-        addCommand(saveAppSettingsCmd);
-        addCommand(cancelCmd);
-        setCommandListener(this);
-
-        setItemStateListener(this);
+    AppSettingsUIImpl() {
+        super(null);
     }
 
 
@@ -185,11 +163,37 @@ public class AppSettingsUIImpl extends Form
     }
 
     /**
-     * Returns the main displayable of the AppSettingsUI.
-     * @return main screen
+     * Shows UI with application settings.
+     * All information regarding available settings, possible setting values
+     * and current setting value should be queried from AppSettings peer.
+     * @param appSettings AppSettings peer, where information regarding
+     *  available settings and current setting value could be found.
+     *  Also appSettings is used to change application settings or to cancel
+     *  the process and dismiss this form. Method onSettingChanged of
+     *  appSettings should be called when attempt to change value for
+     *  particular setting occures. As a result changeSettingValue could be
+     *  called by appSettings when proposed setting value leads to changes in
+     *  other settings or is not allowed. This may happen for example when mutual
+     *  exclusive combinations selected. All necessary alerts in this case are
+     *  shown to the user by AppSettings and thus AppSettingsUIImpl has just
+     *  to change UI accordingly when changeSettingValue is called.
+     * @param title
+     * @param display - The display instance associated with the manager
+     * @param displayError - The UI used to display error messages
      */
-    public Displayable getMainDisplayable() {
-        return this;
+    public void showAppSettings(AppSettings appSettings, String title,
+        Display display, DisplayError displayError) {
+        
+        setTitle(title);
+        this.appSettings = appSettings;
+        loadApplicationSettings();
+        addCommand(saveAppSettingsCmd);
+        addCommand(cancelCmd);
+        setCommandListener(this);
+
+        setItemStateListener(this);
+        
+        display.setCurrent(this);
     }
 }
 

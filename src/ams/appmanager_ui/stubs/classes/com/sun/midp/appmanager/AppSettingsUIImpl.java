@@ -27,27 +27,14 @@
 package com.sun.midp.appmanager;
 
 import javax.microedition.lcdui.Displayable;
+import javax.microedition.lcdui.Display;
 
-public class AppSettingsUIImpl implements AppSettingsUI {
+class AppSettingsUIImpl implements AppSettingsUI {
 
     /**
      * Create and initialize a new application settings MIDlet.
-     * @param appSettings AppSettings peer, where information regarding
-     *  available settings and current setting value could be found.
-     *  Also appSettings is used to change application settings or to cancel
-     *  the process and dismiss this form. Method onSettingChanged of
-     *  appSettings should be called when attempt to change value for
-     *  particular setting occures. As a result changeSettingValue could be
-     *  called by appSettings when proposed setting value leads to changes in
-     *  other settings or is not allowed. This may happen for example when mutual
-     *  exclusive combinations selected. All necessary alerts in this case are
-     *  shown to the user by AppSettings and thus AppSettingsUIImpl has just
-     *  to change UI accordingly when changeSettingValue is called. 
-     * @param title
-     * @throws Throwable
      */
-    AppSettingsUIImpl(AppSettings appSettings, String title)
-            throws Throwable {
+    AppSettingsUIImpl() {
     }
 
     /**
@@ -70,5 +57,29 @@ public class AppSettingsUIImpl implements AppSettingsUI {
      */
     public Displayable getMainDisplayable() {
         return null;
+    }
+    
+    /**
+     * Shows UI with application settings.
+     * All information regarding available settings, possible setting values
+     * and current setting value should be queried from AppSettings peer.
+     * @param appSettings AppSettings peer, where information regarding
+     *  available settings and current setting value could be found.
+     *  Also appSettings is used to change application settings or to cancel
+     *  the process and dismiss this form. Method onSettingChanged of
+     *  appSettings should be called when attempt to change value for
+     *  particular setting occures. As a result changeSettingValue could be
+     *  called by appSettings when proposed setting value leads to changes in
+     *  other settings or is not allowed. This may happen for example when mutual
+     *  exclusive combinations selected. All necessary alerts in this case are
+     *  shown to the user by AppSettings and thus AppSettingsUIImpl has just
+     *  to change UI accordingly when changeSettingValue is called.
+     * @param title
+     * @param display - The display instance associated with the manager
+     * @param displayError - The UI used to display error messages
+     */
+    public void showAppSettings(AppSettings appSettings, String title,
+                         Display display, DisplayError displayError) {
+        
     }
 }

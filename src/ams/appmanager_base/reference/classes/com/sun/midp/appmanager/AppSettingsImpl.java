@@ -116,10 +116,13 @@ class AppSettingsImpl implements AppSettings {
      * @param nextScreen - the displayable to be shown after
      *                     this Form is dismissed
      */
-    public AppSettingsImpl(int suiteId,
+    AppSettingsImpl(int suiteId,
                        Display display,
                        DisplayError displayError,
-                       Displayable nextScreen) throws Throwable {
+                       Displayable nextScreen)
+            throws MIDletSuiteLockedException,
+            MIDletSuiteCorruptedException
+    {
         this.displayError = displayError;
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
@@ -128,8 +131,9 @@ class AppSettingsImpl implements AppSettings {
 		PUSH_ID = Permissions.getId("javax.microedition.io.PushRegistry");
         loadApplicationSettings(suiteId);
         
-        settingsUI = new AppSettingsUIImpl(this, Resource.getString(
-                                        ResourceConstants.AMS_MGR_SETTINGS));
+        settingsUI = new AppSettingsUIImpl();
+        settingsUI.showAppSettings(this, Resource.getString(
+            ResourceConstants.AMS_MGR_SETTINGS), display, displayError);
     }
 
 
@@ -190,8 +194,7 @@ class AppSettingsImpl implements AppSettings {
      *
      * @exception Exception if problem occurs while getting the suite info
      */
-    private void initMidletSuiteInfo(MIDletSuiteImpl midletSuite)
-        throws Exception {
+    private void initMidletSuiteInfo(MIDletSuiteImpl midletSuite) {
 
         int numberOfMidlets = midletSuite.getNumberOfMIDlets();
         installInfo = midletSuite.getInstallInfo();
@@ -213,10 +216,12 @@ class AppSettingsImpl implements AppSettings {
      * @throws Throwable
      */
     private void loadApplicationSettings(int suiteId)
-        throws Throwable {
+            throws MIDletSuiteLockedException, MIDletSuiteCorruptedException 
+       {
 
         int maxLevel;
         int interruptSetting;
+        boolean loadDone = false;
 
         try {
             groups = Permissions.getSettingGroups();
@@ -285,11 +290,14 @@ class AppSettingsImpl implements AppSettings {
                     numberOfSettings++;
                 }
             }
-        } catch (Throwable t) {
-            if (midletSuite != null) {
-                midletSuite.close();
+            loadDone = true;
+        } finally {
+            if (!loadDone) {
+                if (midletSuite != null) {
+                    midletSuite.close();
+                    midletSuite = null;
+                }
             }
-            throw t;
         }
     }
 
@@ -400,7 +408,7 @@ class AppSettingsImpl implements AppSettings {
 
     /**
      * Cancel application settings the user entered and dismiss UI.
-     * Called by AppSettingsUI as responce to user request.
+     * Called by AppSettingsUI as response to user request.
      */
     public void cancelApplicationSettings() {
         display.setCurrent(nextScreen);
@@ -409,7 +417,7 @@ class AppSettingsImpl implements AppSettings {
 
     /**
      * Save application settings the user entered and dismiss UI.
-     * Called by AppSettingsUI as a responce to user request.
+     * Called by AppSettingsUI as a response to user request.
      *
      * IMPL_NOTE: This method has no arguments as AppSettings is
      * aware of changes user made due to onSettingChanged calls.
@@ -417,6 +425,9 @@ class AppSettingsImpl implements AppSettings {
      */
     public void saveApplicationSettings() {
         try {
+            if (midletSuite == null) {
+                return;
+            }
             if (interruptChoice != null) {
                 byte maxInterruptSetting;
                 int interruptSetting = interruptChoice.getSelectedID();
@@ -470,8 +481,10 @@ class AppSettingsImpl implements AppSettings {
             displayError.showErrorAlert(suiteDisplayName, t,
                                         Resource.getString
                                         (ResourceConstants.EXCEPTION), null);
+        } finally {
+            midletSuite.close();
+            midletSuite = null;
         }
-        midletSuite.close();
     }
 
     /**
@@ -488,13 +501,4 @@ class AppSettingsImpl implements AppSettings {
 
         display.setCurrent(successAlert, nextScreen);
     }
-
-    /**
-     * Returns the main displayable of the AppSettingsUI.
-     * @return main screen
-     */
-    public Displayable getMainDisplayable() {
-        return settingsUI.getMainDisplayable();
-    }
-
 }

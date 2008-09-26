@@ -8,7 +8,7 @@ import java.util.Vector;
  *  It can be used as a data for exclusive
  *  option buttons where each option has an ID.
  */
-public class ValueChoiceImpl implements ValueChoice {
+class ValueChoiceImpl implements ValueChoice {
 
     /** Choice title. */
     private String title;

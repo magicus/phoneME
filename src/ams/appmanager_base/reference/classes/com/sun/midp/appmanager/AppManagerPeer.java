@@ -276,13 +276,12 @@ class AppManagerPeer implements CommandListener {
      * @param suiteId suite ID
      * @param nextScreen displayable that is to be shown
      *  after settings dialog is dismissed
-     * @throws Throwable
      */
     public void showAppSettings(int suiteId,
-                       Displayable nextScreen)  throws Throwable {
+                       Displayable nextScreen)
+            throws MIDletSuiteLockedException, MIDletSuiteCorruptedException {
         AppSettings appSettings = new AppSettingsImpl(suiteId, display,
                                                   displayError, nextScreen);
-        display.setCurrent(appSettings.getMainDisplayable());
     }
 
     /**

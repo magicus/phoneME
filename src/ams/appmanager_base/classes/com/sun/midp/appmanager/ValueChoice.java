@@ -25,7 +25,7 @@ interface ValueChoice {
     int getID(int index);
 
     /**
-     * Returns label of cpecified choice items.
+     * Returns label of specified choice items.
      * @param index item index
      * @return label
      */

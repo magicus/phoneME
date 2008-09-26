@@ -68,23 +68,17 @@ interface AppSettings {
 
     /**
      * Cancel application settings the user entered and dismiss UI.
-     * Called by AppSettingsUI as responce to user request.
+     * Called by AppSettingsUI as response to user request.
      */
     void cancelApplicationSettings();
 
     /**
      * Save application settings the user entered and dismiss UI.
-     * Called by AppSettingsUI as a responce to user request.
+     * Called by AppSettingsUI as a response to user request.
      * 
      * IMPL_NOTE: This method has no arguments as AppSettings is
      * aware of changes user made due to onSettingChanged calls.
      *
      */
     void saveApplicationSettings();
-
-    /**
-     * Returns the main displayable of the AppSettingsUI.
-     * @return main screen
-     */
-    Displayable getMainDisplayable();
 }
