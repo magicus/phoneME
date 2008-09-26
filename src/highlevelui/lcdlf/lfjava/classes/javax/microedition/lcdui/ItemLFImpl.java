@@ -440,7 +440,6 @@ abstract class ItemLFImpl implements ItemLF {
         g.translate(-labelBounds[X] + contentBounds[X],
                     -labelBounds[Y] + contentBounds[Y]);
 
-        //        System.out.println("PRINT lCallPaint lPaintContent= contentBounds[WIDTH] " + contentBounds[WIDTH]);
         lPaintContent(g, contentBounds[WIDTH], contentBounds[HEIGHT]);
 
         g.translate(-contentBounds[X], -contentBounds[Y]);
@@ -1156,7 +1155,6 @@ abstract class ItemLFImpl implements ItemLF {
                        bounds[Y] + trY,
                        bounds[WIDTH],
                        bounds[HEIGHT]);
-
             paintTraversalIndicator(g, bounds[X] + trX, bounds[Y] + trY);
 
             g.setClip(clip[X], clip[Y], clip[WIDTH], clip[HEIGHT]);
@@ -1183,7 +1181,7 @@ abstract class ItemLFImpl implements ItemLF {
         
         // NTS: This may need to special case StringItem?
         g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
-
+         
         g.drawRect(x + 1, y + 1, bounds[WIDTH] - 2, bounds[HEIGHT]- 2);
     }
     
