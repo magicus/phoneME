@@ -189,7 +189,7 @@ static jboolean checkForNetworkStatusSignal(MidpReentryData* pNewSignal,
     if (res == KNI_TRUE) {
         pNewSignal->descriptor = 0;
         pNewSignal->waitingFor = NETWORK_STATUS_SIGNAL;
-        pNewSignal->status = PCSL_NET_SUCCESS;
+        pNewSignal->status = status;
     }
 
     return res;
