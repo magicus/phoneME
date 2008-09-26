@@ -57,7 +57,11 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 		       jlong timeout);
 
 /**
+ * Checks if a network status signal is received.
  *
+ * @param pStatus on exit will hold a new network status (1 - up, 0 - down)
+ *
+ * @return KNI_TRUE if a network status signal was received, KNI_FALSE otherwise
  */
 jboolean midp_check_net_status_signal(int* pStatus);
 
