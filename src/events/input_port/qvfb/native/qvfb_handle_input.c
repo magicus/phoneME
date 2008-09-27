@@ -89,7 +89,6 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
     int midpKeyCode;
     jboolean isPressed;
     jboolean repeatSupport;
-    //printf("HEREE PORT QVFB\n");
     struct QVFbKeyEvent {
         unsigned int unicode;
         unsigned int modifiers;
@@ -101,12 +100,9 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
     /* down a key, QVFB passes a stream of simulated keyups an keydowns */
     int fid = fbapp_get_keyboard_fd();
     read(fid, &qvfbKeyEvent, sizeof(qvfbKeyEvent));
-    //printf("QVFB unicode=%d modifiers=%d press= %d  repeat=%d \nerr=%d  fid=%d sizeof=%d\n",
-//qvfbKeyEvent.unicode, qvfbKeyEvent.modifiers ,qvfbKeyEvent.press, qvfbKeyEvent.repeat, err, fid, sizeof(qvfbKeyEvent));
     midpKeyCode = map_raw_keycode(qvfbKeyEvent.unicode);
     isPressed = (qvfbKeyEvent.press == 1) ? KNI_TRUE : KNI_FALSE;
 
-    //printf("HEREE PORT QVFB isPressedmm= %d\n", isPressed);
     repeatSupport = KNI_FALSE;
    
     fbapp_map_keycode_to_event(
