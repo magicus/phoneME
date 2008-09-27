@@ -31,15 +31,15 @@
 
 #include <kni.h>
 
-#include <sys/time.h>
-#include <sys/types.h>
+#include <sys/time.h> //no
+#include <sys/types.h>//no
 #include <unistd.h>
-
-#include <midpServices.h>
-#include <midpEvents.h>
-#include <midpEventUtil.h>
-#include <fbapp_export.h>
-#include <keymap_input.h>
+#include <stdio.h>//no
+#include <midpServices.h>//nop
+#include <midpEvents.h> //nop
+#include <midpEventUtil.h> //nop
+#include <fbapp_export.h>//nop
+#include <keymap_input.h>//nop
 
 #include "qvfb_keymapping.h"
 
@@ -89,7 +89,7 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
     int midpKeyCode;
     jboolean isPressed;
     jboolean repeatSupport;
-
+    //printf("HEREE PORT QVFB\n");
     struct QVFbKeyEvent {
         unsigned int unicode;
         unsigned int modifiers;
@@ -99,12 +99,16 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
 
     /* IMPL_NOTE: We don't handle repeats, but this seems OK. When you hold */
     /* down a key, QVFB passes a stream of simulated keyups an keydowns */
-
-    read(fbapp_get_keyboard_fd(), &qvfbKeyEvent, sizeof(qvfbKeyEvent));
+    int fid = fbapp_get_keyboard_fd();
+    read(fid, &qvfbKeyEvent, sizeof(qvfbKeyEvent));
+    //printf("QVFB unicode=%d modifiers=%d press= %d  repeat=%d \nerr=%d  fid=%d sizeof=%d\n",
+//qvfbKeyEvent.unicode, qvfbKeyEvent.modifiers ,qvfbKeyEvent.press, qvfbKeyEvent.repeat, err, fid, sizeof(qvfbKeyEvent));
     midpKeyCode = map_raw_keycode(qvfbKeyEvent.unicode);
-    isPressed = qvfbKeyEvent.press ? KNI_TRUE : KNI_FALSE;
-    repeatSupport = KNI_FALSE;
+    isPressed = (qvfbKeyEvent.press == 1) ? KNI_TRUE : KNI_FALSE;
 
+    //printf("HEREE PORT QVFB isPressedmm= %d\n", isPressed);
+    repeatSupport = KNI_FALSE;
+   
     fbapp_map_keycode_to_event(
         pNewSignal, pNewMidpEvent,
         midpKeyCode, isPressed, repeatSupport);
@@ -138,9 +142,10 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
     } pointer;
 
     do {
+          
         n = read(fbapp_get_mouse_fd(), mouseBuf + mouseIdx, 
                 mouseBufSize - mouseIdx);
-	if ( n > 0 )
+        if ( n > 0 )
 	    mouseIdx += n;
     } while ( n > 0 );
 

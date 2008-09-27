@@ -1748,7 +1748,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                     setupScroll();
                     uRequestPaint();
                 } else {
-                	//cycling
+                	//cycling up
                 	if (!cyclingPageUp(traverseIndexCopy,itemsCopy)) {         		
                         // page up
                 		pageScroll(Canvas.UP, traverseIndexCopy, itemsCopy);
