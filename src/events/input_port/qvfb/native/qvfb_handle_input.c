@@ -31,15 +31,15 @@
 
 #include <kni.h>
 
-#include <sys/time.h> //no
-#include <sys/types.h>//no
+#include <sys/time.h> 
+#include <sys/types.h>
 #include <unistd.h>
-#include <stdio.h>//no
-#include <midpServices.h>//nop
-#include <midpEvents.h> //nop
-#include <midpEventUtil.h> //nop
-#include <fbapp_export.h>//nop
-#include <keymap_input.h>//nop
+#include <stdio.h>
+#include <midpServices.h>
+#include <midpEvents.h> 
+#include <midpEventUtil.h> 
+#include <fbapp_export.h>
+#include <keymap_input.h>
 
 #include "qvfb_keymapping.h"
 
@@ -98,8 +98,7 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
 
     /* IMPL_NOTE: We don't handle repeats, but this seems OK. When you hold */
     /* down a key, QVFB passes a stream of simulated keyups an keydowns */
-    int fid = fbapp_get_keyboard_fd();
-    read(fid, &qvfbKeyEvent, sizeof(qvfbKeyEvent));
+    read(fbapp_get_keyboard_fd(), &qvfbKeyEvent, sizeof(qvfbKeyEvent));
     midpKeyCode = map_raw_keycode(qvfbKeyEvent.unicode);
     isPressed = (qvfbKeyEvent.press == 1) ? KNI_TRUE : KNI_FALSE;
 
@@ -137,8 +136,7 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
         int y;
     } pointer;
 
-    do {
-          
+    do {    
         n = read(fbapp_get_mouse_fd(), mouseBuf + mouseIdx, 
                 mouseBufSize - mouseIdx);
         if ( n > 0 )

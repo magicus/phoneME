@@ -499,7 +499,6 @@ static int readNativeEventCommon(int isolateId) {
     KNI_SetIntField(eventObj, typeFieldID, event.type);
 
     KNI_SetIntField(eventObj, intParam1FieldID, event.intParam1);
-    //printf("IN c:event.intParam1=%d\n ", event.intParam1);
     KNI_SetIntField(eventObj, intParam2FieldID, event.intParam2);
     KNI_SetIntField(eventObj, intParam3FieldID, event.intParam3);
     KNI_SetIntField(eventObj, intParam4FieldID, event.intParam4);
@@ -615,7 +614,6 @@ Java_com_sun_midp_events_EventQueue_sendNativeEventToIsolate(void) {
     event.type = KNI_GetIntField(eventObj, typeFieldID);
       
     event.intParam1 = KNI_GetIntField(eventObj, intParam1FieldID);
-    //printf("inC2 sendNativeEventToIsolate:event.intParam1=%d", event.intParam1);
     event.intParam2 = KNI_GetIntField(eventObj, intParam2FieldID);
     event.intParam3 = KNI_GetIntField(eventObj, intParam3FieldID);
     event.intParam4 = KNI_GetIntField(eventObj, intParam4FieldID);
