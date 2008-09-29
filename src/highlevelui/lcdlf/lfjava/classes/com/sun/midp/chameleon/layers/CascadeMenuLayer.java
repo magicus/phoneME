@@ -206,9 +206,9 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
                     scrollIndex--;
                 }
             } else {
-            	selI = menuCmds.length - 1; 
-            	scrollIndex = menuCmds.length - MenuSkin.MAX_ITEMS;
-            	scrollIndex = (scrollIndex > 0) ? scrollIndex : 0;
+                selI = menuCmds.length - 1; 
+                scrollIndex = menuCmds.length - MenuSkin.MAX_ITEMS;
+                scrollIndex = (scrollIndex > 0) ? scrollIndex : 0;
             }
             updateScrollIndicator();
             requestRepaint();
@@ -218,12 +218,13 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
                 if (selI >= MenuSkin.MAX_ITEMS &&
                     scrollIndex < (menuCmds.length - MenuSkin.MAX_ITEMS))
                 {
-                     scrollIndex++;
+                    scrollIndex++;
                 }
                 
             } else {
-            	selI = 0;
-            	scrollIndex = 0;
+                selI = 0;
+                scrollIndex = 0;
+            }
             updateScrollIndicator();
             requestRepaint();
         } else if (keyCode == Constants.KEYCODE_RIGHT) {
