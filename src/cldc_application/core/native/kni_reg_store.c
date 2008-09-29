@@ -249,11 +249,11 @@ static int getStringArray(KNIDECLARGS jobjectArray arrObj, const jchar*** arrPtr
 
 	if (i<n){
 		cleanStringArray(arr, i);
-		return KNI_ENOMEM;
+		KNI_ReturnInt(KNI_ENOMEM);
 	}
 
 	*arrPtr = arr;
-    return n;
+    KNI_ReturnInt(n);
 }
 
 /**
@@ -271,19 +271,17 @@ static int getStringArray(KNIDECLARGS jobjectArray arrObj, const jchar*** arrPtr
  */
 static int fillActionMap(KNIDECLARGS jobject o, jsr211_content_handler* handler) {
     int ret = KNI_OK;   // returned result
-    int len;            // number of locales
+    KNI_StartHandles(3);
+    KNI_DeclareHandle(map);   // current ANMap object
+    KNI_DeclareHandle(str);   // the ANMap's locale|name String object
+    KNI_DeclareHandle(arr);   // the ANMap's array of names object
 
-    len = KNI_IsNullHandle(o)? 0: (int)KNI_GetArrayLength(o);
+    int len = KNI_IsNullHandle(o)? 0: (int)KNI_GetArrayLength(o);
     if (len > 0) {
         int i, j;
         int n = handler->act_num;   // number of actions
 		const jchar** locs = NULL;   // fetched locales
 		const jchar** nams = NULL;   // fetched action names
-
-        KNI_StartHandles(3);
-        KNI_DeclareHandle(map);   // current ANMap object
-        KNI_DeclareHandle(str);   // the ANMap's locale|name String object
-        KNI_DeclareHandle(arr);   // the ANMap's array of names object
 
         do {
             // allocate buffers
@@ -321,11 +319,10 @@ static int fillActionMap(KNIDECLARGS jobject o, jsr211_content_handler* handler)
                 }
             }
         } while (0);
-        
-        KNI_EndHandles();
     }
     
-    return ret;
+    KNI_EndHandles();
+    KNI_ReturnInt(ret);
 }
 
 
@@ -404,7 +401,7 @@ static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassN
     } while (0);
 
     KNI_EndHandles();
-    return ret;
+    KNI_ReturnInt(ret);
 }
 
 /**
