@@ -680,9 +680,21 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
     case JAVACALL_EVENT_AMMS_SNAP_SHOOTING_STOPPED:
     case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
         {
-            size_t size = sizeof( javacall_utf16 ) * ( 1 + wcslen( (javacall_utf16_string)data ) );
+            int i = 0;
+            size_t size = 0;
+            javacall_utf16_string str16 = ( javacall_utf16_string )data;
+            
+            javautil_unicode_utf16_utf8length( str16, &size );
+            ++size;
+            size *= sizeof( javacall_utf16 ); 
+            
             e.data.multimediaEvent.data.str16 = (javacall_utf16_string)malloc( size );
-            wcscpy( e.data.multimediaEvent.data.str16, (javacall_utf16_string)data );
+            //wcscpy( e.data.multimediaEvent.data.str16, (javacall_utf16_string)data );
+            for( i = 0; i < size; i++ )
+            {
+                e.data.multimediaEvent.data.str16[i] = str16[i];
+            }
+            e.data.multimediaEvent.data.str16[i] = 0;
         }
         break;
     default:
