@@ -1,7 +1,5 @@
 /*
- *   
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -516,14 +514,14 @@ static WMA_STATUS jsr205_datagram_write(jint outPort, void* handle, char *toAddr
             }
 
             /* Build the buffer to be written */
-            putShort(dgramBuffer, &index, packetNumber);
-            putShort(dgramBuffer, &index, totalPackets);
+            wma_put_short(dgramBuffer, &index, packetNumber);
+            wma_put_short(dgramBuffer, &index, totalPackets);
             /* Needed for: count < PACKET_MAX_SIZE */
-            putShort(dgramBuffer, &index, count);
+            wma_put_short(dgramBuffer, &index, count);
             /* Total length of message. */
-            putInt(dgramBuffer, &index, length);
+            wma_put_int(dgramBuffer, &index, length);
             /* Writes count bytes, starting at p. */
-            putBytes(dgramBuffer, &index, p, count);
+            wma_put_bytes(dgramBuffer, &index, p, count);
 
             memset(ipAddr, 0, 256);
 
@@ -770,14 +768,14 @@ WMA_STATUS jsr120_sms_write(jchar msgType,
     }
 
     /* Populate the datagram buffer */
-    putInt(buffer, &index, (int)msgType);
-    putInt(buffer, &index, (int)destPort);
-    putLongLong(buffer, &index, timestamp);
-    putString(buffer, &index, (char *)address);
-    putString(buffer, &index, (char *)phNum);
-    putInt(buffer, &index, (int)msgLen);
+    wma_put_int(buffer, &index, (int)msgType);
+    wma_put_int(buffer, &index, (int)destPort);
+    wma_put_long_long(buffer, &index, timestamp);
+    wma_put_string(buffer, &index, (char *)address);
+    wma_put_string(buffer, &index, (char *)phNum);
+    wma_put_int(buffer, &index, (int)msgLen);
     if (msgLen > 0) {
-        putBytes(buffer, &index, (char *)msgBuffer, msgLen);
+        wma_put_bytes(buffer, &index, (char *)msgBuffer, msgLen);
     }
 
 #if ENABLE_WMA_LOOPBACK
@@ -917,11 +915,11 @@ WMA_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
     memset(buffer, 0, totalLength);
 
     /* Populate the buffer to be written. */
-    putString(buffer, &index, (char*)fromAddr);
-    putString(buffer, &index, (char*)appID);
-    putString(buffer, &index, (char*)replyToAppID);
-    putInt(buffer, &index, msgLen);
-    putBytes(buffer, &index, (char *)msg, msgLen);
+    wma_put_string(buffer, &index, (char*)fromAddr);
+    wma_put_string(buffer, &index, (char*)appID);
+    wma_put_string(buffer, &index, (char*)replyToAppID);
+    wma_put_int(buffer, &index, msgLen);
+    wma_put_bytes(buffer, &index, (char *)msg, msgLen);
 
 #if ENABLE_WMA_LOOPBACK
     (void)sendingToSelf;

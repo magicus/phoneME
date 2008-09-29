@@ -1,7 +1,5 @@
 /*
- *  
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -562,14 +560,14 @@ static WMA_STATUS jsr205_datagram_write(WMA_PROTOCOLS protocol, jint outPort, vo
             }
 
             /* Build the buffer to be written */
-            putShort(dgramBuffer, &index, context->packetNumber);
-            putShort(dgramBuffer, &index, totalPackets);
+            wma_put_short(dgramBuffer, &index, context->packetNumber);
+            wma_put_short(dgramBuffer, &index, totalPackets);
             /* Needed for: count < PACKET_MAX_SIZE */
-            putShort(dgramBuffer, &index, context->count);
+            wma_put_short(dgramBuffer, &index, context->count);
             /* Total length of message. */
-            putInt(dgramBuffer, &index, context->remaining_length);
+            wma_put_int(dgramBuffer, &index, context->remaining_length);
             /* Writes count bytes, starting at p. */
-            putBytes(dgramBuffer, &index, context->p, context->count);
+            wma_put_bytes(dgramBuffer, &index, context->p, context->count);
 
             pcsl_status = pcsl_datagram_write_start(
                 (void*)socket_fd, context->ipAddr, outPort, dgramBuffer, MAX_DATAGRAM_LENGTH,
@@ -799,14 +797,14 @@ WMA_STATUS jsr120_sms_write(jchar msgType,
         }
 
         /* Populate the datagram buffer */
-        putInt(context->buffer, &index, (int)msgType);
-        putInt(context->buffer, &index, (int)destPort);
-        putLongLong(context->buffer, &index, timestamp);
-        putString(context->buffer, &index, (char *)address);
-        putString(context->buffer, &index, (char *)phNum);
-        putInt(context->buffer, &index, (int)msgLen);
+        wma_put_int(context->buffer, &index, (int)msgType);
+        wma_put_int(context->buffer, &index, (int)destPort);
+        wma_put_long_long(context->buffer, &index, timestamp);
+        wma_put_string(context->buffer, &index, (char *)address);
+        wma_put_string(context->buffer, &index, (char *)phNum);
+        wma_put_int(context->buffer, &index, (int)msgLen);
         if (msgLen > 0) {
-            putBytes(context->buffer, &index, (char *)msgBuffer, msgLen);
+            wma_put_bytes(context->buffer, &index, (char *)msgBuffer, msgLen);
         }
 
 #if ENABLE_WMA_LOOPBACK
@@ -1074,11 +1072,11 @@ WMA_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
         context->msg_buffer = buffer;
 
         /* Populate the buffer to be written. */
-        putString(buffer, &index, (char*)fromAddr);
-        putString(buffer, &index, (char*)appID);
-        putString(buffer, &index, (char*)replyToAppID);
-        putInt(buffer, &index, msgLen);
-        putBytes(buffer, &index, (char *)msg, msgLen);
+        wma_put_string(buffer, &index, (char*)fromAddr);
+        wma_put_string(buffer, &index, (char*)appID);
+        wma_put_string(buffer, &index, (char*)replyToAppID);
+        wma_put_int(buffer, &index, msgLen);
+        wma_put_bytes(buffer, &index, (char *)msg, msgLen);
     }
     else {
         context = (jsr120_udp_emulator_context*)*pContext;
