@@ -135,7 +135,7 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
      * @exception InterruptedIOException if I/O associated with permissions is interrupted
      */
     ///    protected void checkForPermission(SecurityToken token, String name)
-	protected void checkForPermission()
+    protected void checkForPermission()
 	throws SecurityException, InterruptedIOException
     {
 	throw new SecurityException("Permission not granted");
@@ -242,6 +242,32 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
     public Connection openPrim(String name)
             throws IOException {
         return openPrim(name, Connector.READ_WRITE, false);
+    }
+
+    /**
+     * Check the mode argument and initialize the StreamConnection.
+     * Any permissions checks should be
+     * checked before this method is called because the TCK expects the
+     * security check to fail before the arguments are called even though
+     * the spec does not mandate it.
+     *
+     * @param mode             I/O access mode, see {@link Connector}
+     *
+     * @exception IllegalArgumentException If a parameter is invalid.
+     * @exception IOException  If some other kind of I/O error occurs.
+     */
+    public void initStreamConnection(int mode) throws IOException {
+        switch (mode) {
+        case Connector.READ:
+        case Connector.WRITE:
+        case Connector.READ_WRITE:
+            break;
+
+        default:
+            throw new IllegalArgumentException("Illegal mode");
+        }
+
+        connectionOpen = true;
     }
 
     /**
