@@ -82,7 +82,8 @@ class Socket {
      * @revised 1.4
      */
     public Socket() {
-	setImpl();
+        System.out.println("Socket net: ctor");
+        setImpl();
     }
 
     /**
@@ -97,6 +98,7 @@ class Socket {
      * @since   JDK1.1
      */
     protected Socket(SocketImpl impl) throws SocketException {
+        System.out.println("Socket net: ctor "+impl.toString());
 	this.impl = impl;
 	if (impl != null) {
 	    checkOldImpl();
@@ -314,7 +316,8 @@ class Socket {
 
     private Socket(SocketAddress address, SocketAddress localAddr,
 		   boolean stream) throws IOException {
-	setImpl();
+        System.out.println("Socket net: ctor last: "+address+" : "+localAddr);
+        setImpl();
 
 	// backward compatibility
 	if (address == null)
@@ -329,6 +332,7 @@ class Socket {
 		connect(address);
 	} catch (SocketException e) {
 	    close();
+            Thread.dumpStack();
 	    throw e;
 	}
     }
@@ -348,6 +352,7 @@ class Socket {
 	    impl.create(stream);
 	    created = true;
 	} catch (IOException e) {
+            Thread.dumpStack();
 	    throw new SocketException(e.getMessage());
 	}
     }
@@ -700,6 +705,8 @@ class Socket {
      * @spec JSR-51
      */
     public InputStream getInputStream() throws IOException {
+System.out.println("Socket net: getInputStream");
+   Thread.dumpStack();
 	if (isClosed())
 	    throw new SocketException("Socket is closed");
 	if (!isConnected())
@@ -734,6 +741,8 @@ class Socket {
      * @spec JSR-51
      */
     public OutputStream getOutputStream() throws IOException {
+System.out.println("Socket net: getOutputStream");
+   Thread.dumpStack();
 	if (isClosed())
 	    throw new SocketException("Socket is closed");
 	if (!isConnected())
@@ -1243,7 +1252,9 @@ class Socket {
      * @see #isClosed
      */
     public synchronized void close() throws IOException {
-	synchronized(closeLock) {
+System.out.println("Socket net: close");
+        Thread.dumpStack();
+        synchronized(closeLock) {
 	    if (isClosed())
 		return;
 	    if (created)
@@ -1271,7 +1282,8 @@ class Socket {
      */
     public void shutdownInput() throws IOException
     {
-	if (isClosed())
+System.out.println("Socket net: shutdownInput");
+        if (isClosed())
 	    throw new SocketException("Socket is closed");
 	if (!isConnected())
 	    throw new SocketException("Socket is not connected");
@@ -1301,6 +1313,7 @@ class Socket {
      */
     public void shutdownOutput() throws IOException
     {
+System.out.println("Socket net: shutdownOutput");
 	if (isClosed())
 	    throw new SocketException("Socket is closed");
 	if (!isConnected())

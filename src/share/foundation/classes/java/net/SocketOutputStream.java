@@ -99,30 +99,36 @@ class SocketOutputStream extends FileOutputStream
      * @exception IOException If an I/O error has occurred.
      */
     private void socketWrite(byte b[], int off, int len) throws IOException {
-
+//System.out.println("socketWrite..."+len);
 	if (len <= 0 || off < 0 | off + len > b.length) {
 	    if (len == 0) {
 		return;
 	    }
 	    throw new ArrayIndexOutOfBoundsException();
 	}
+//System.out.println("socketWrite 1");
 
 	FileDescriptor fd = impl.acquireFD();
 	try {
+//System.out.println("socketWrite 2");
 	    socketWrite0(fd, b, off, len);
 	} catch (SocketException se) {
+//System.out.println("socketWrite 3");
 	    if (se instanceof sun.net.ConnectionResetException) {
 		impl.setConnectionResetPending();
 		se = new SocketException("Connection reset");
 	    }
 	    if (impl.isClosedOrPending()) {
+//System.out.println("socketWrite 4");
                 throw new SocketException("Socket closed");
             } else {
 		throw se;
 	    }
 	} finally {
+//System.out.println("socketWrite 5");
 	    impl.releaseFD();
 	}
+//System.out.println("socketWrite 6");
     }
 
     /** 

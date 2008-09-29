@@ -43,7 +43,6 @@ import java.util.Enumeration;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.io.HttpConnection;
 import javax.microedition.io.Connector;
-import javax.microedition.io.ConnectionNotFoundException;
 
 import com.sun.cdc.io.ConnectionBase;
 import com.sun.cdc.io.DateParser;
@@ -80,15 +79,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     /*
      * In/Out Streams used to buffer input and output
      */
-    private PrivateInputStream in;
-    private PrivateOutputStream out;
-
-    /*
-     * The data streams provided to the application.
-     * They wrap up the in and out streams.
-     */
-    private DataInputStream appDataIn;
-    private DataOutputStream appDataOut;
+    private PrivateInputStream privateIn;
+    private PrivateOutputStream privateOut;
 
     /*
      * The streams from the underlying socket connection.
@@ -97,6 +89,16 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     private DataOutputStream streamOutput;
     private DataInputStream streamInput;
 
+    /** Maximum number of persistent connections. */
+    private static int maxNumberOfPersistentConnections = 10;//4;
+    /** Connection linger time in the pool, default 60 seconds. */
+    private static long connectionLingerTime = 600000;
+    protected static StreamConnectionPool connectionPool;
+    static {
+        connectionPool = new StreamConnectionPool(
+                                 maxNumberOfPersistentConnections,
+                                 connectionLingerTime);
+    }
     /*
      * A shared temporary buffer used in a couple of places
      */
@@ -106,6 +108,10 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     private int proxyPort = 80;
 
     private String http_version = "HTTP/1.1";
+
+    /** Used when appl calls setRequestProperty("Connection", "close"). */
+    private boolean ConnectionCloseFlag;
+    private String responseProtocol;
 
     /**
      * create a new instance of this class.
@@ -121,7 +127,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         responseCode = -1;
         protocol = "http";
 	socket = null;
-
+System.out.println("Protocol:ctor");
         AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
                 String http_proxy;
@@ -146,6 +152,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      */
     protected void checkPermission(String host, int port, String file) {
         // Check for SecurityManager.checkConnect()
+System.out.println("Protocol:checkPermission");
         java.lang.SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkConnect(host, port);
@@ -161,6 +168,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      */
     protected void outputStreamPermissionCheck() {
         // Check for SecurityManager.checkConnect()
+System.out.println("Protocol:osPermissionCheck");
         java.lang.SecurityManager sm = System.getSecurityManager();
         if (sm != null){
             if (host != null) {
@@ -179,6 +187,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      * raised if the connection is not allowed.
      */
     protected void inputStreamPermissionCheck() {
+System.out.println("Protocol:isPermissionCheck");
         // Check for SecurityManager.checkConnect()
         java.lang.SecurityManager sm = System.getSecurityManager();
         if (sm != null){
@@ -192,6 +201,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public void open(String url, int mode, boolean timeouts) throws IOException {
+System.out.println("Protocol:open");
         // DEBUG: System.out.println ("open " + url); 
         if (opens > 0) {
             throw new IOException("already connected");
@@ -220,6 +230,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 	// Check permission. The permission method wants the URL
 	checkPermission(host, port, file);
 
+        /*
         // Try to open connection to test for ConnectionNotFoundException
         try {
 	    streamConnection=connectSocket();
@@ -229,10 +240,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             throw new ConnectionNotFoundException
                 ("Could not find "+host+":"+port);
         }
+        */
 
     }
 
     public void close() throws IOException {
+System.out.println("Protocol:close");
         // DEBUG: System.out.println ("close " + opens + " " + connected ); 
         if (--opens == 0 && (connected || requested))
             disconnect();
@@ -246,7 +259,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      */
     public InputStream openInputStream() throws IOException {
          // DEBUG: System.out.println ("open input stream");
-
+System.out.println("Protocol:openIS");
 	inputStreamPermissionCheck();
 
         /* CR 6226615: opening another stream should not throw IOException
@@ -268,13 +281,14 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         connect();
         opens++;
 
-        in = new PrivateInputStream();
-        return in;
+        //in = new PrivateInputStream();
+        return privateIn;
     }
 
     public DataInputStream openDataInputStream() throws IOException {
         // If the connection was opened and closed before the 
         // data input stream is accessed, throw an IO exception
+System.out.println("Protocol:openDIStream");
         if (opens == 0 ){
             throw new IOException("connection is closed");
         }
@@ -286,21 +300,15 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         */
 
         // TBD: throw in exception if the connection has been closed.
-        if (in == null) {
+        if (privateIn == null) {
             openInputStream();
         }
 
-        appDataIn = new DataInputStream(in);
-        return appDataIn;
+        return new DataInputStream(privateIn);
     }
 
     public OutputStream openOutputStream() throws IOException {
-        // Delegate to openDataOutputStream
-        return openDataOutputStream();
-    }
-
-    public DataOutputStream openDataOutputStream() throws IOException {
-
+System.out.println("Protocol:openOutputStream");
 	outputStreamPermissionCheck();
 
          // DEBUG: System.out.println ("open data output stream");
@@ -320,10 +328,19 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
         */
 
+        System.out.println("open OS");
+        connect();
         opens++;
-        out = new PrivateOutputStream();
+        return privateOut;
+    }
+
+    public DataOutputStream openDataOutputStream() throws IOException {
+
+System.out.println("Protocol:openDOStream");
+        if (privateOut == null)
+            openOutputStream();
         outputStreamOpened = true;
-        return new DataOutputStream(out);
+        return new DataOutputStream(privateOut);
     }
 
     /**
@@ -335,6 +352,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         boolean eof;            // true if eof seen
 
         PrivateInputStream() throws IOException {
+System.out.println("PrivateIS:ctor");
             bytesleft = 0;
             chunked = false;
             eof = false;
@@ -388,6 +406,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
          */
         public int available()
             throws IOException {
+System.out.println("PrivateIS:available");
              // DEBUG: System.out.println ("available " + bytesleft + " " + connected );
 
             if (connected) {
@@ -417,6 +436,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
          */
         public int read() throws IOException {
             // Be consistent about returning EOF once encountered.
+System.out.println("PrivateIS:read");
             if (eof) {
                 return -1;
             }
@@ -454,6 +474,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
          * to avoid default byte-by-byte reading behaviour.
          */
         public int read(byte[] b, int off, int len) throws IOException {
+System.out.println("PrivateIS:read[]");
             /* Need to check parameters here, because len may be changed
              * and streamInput.read() will not notice invalid argument.
              */
@@ -503,6 +524,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
          * and terminated with <cr><lf>.
          */
         private int readChunkSize() throws IOException {
+System.out.println("PrivateIS:readChunkSize");
             int size = -1;
             try {
                 String chunk = readLine(streamInput);
@@ -530,6 +552,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
          * is missing.
          */
         private void readCRLF() throws IOException { 
+System.out.println("PrivateIS:readCRLF");
             int ch;
             ch = streamInput.read();
             if (ch != '\r') 
@@ -540,6 +563,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         } 
         
         public void close() throws IOException {
+System.out.println("PrivateIS:close");
             // DEBUG:  System.out.println ("close input stream " + opens + " " + connected );
             if (--opens == 0 && connected) disconnect();
         }
@@ -553,10 +577,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         private ByteArrayOutputStream output;
 
         public PrivateOutputStream() {
+System.out.println("PrivateOS:ctor");
             output = new ByteArrayOutputStream();
         }
 
         public void write(int b) throws IOException {
+System.out.println("PrivateOS:write");
             output.write(b);
             // CR 6216611: set the content-length. Note: we shouldn't set
             // content-length to the size of the current bytes that we are
@@ -570,6 +596,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
          * "len". CR 6216611 
          */
         public void write(byte b[], int off, int len) throws IOException {
+System.out.println("PrivateOS:write[]");
             output.write(b, off, len);
             // Update Content-Length. Note: we should't set
             // content-length to the size of the current bytes that we are
@@ -579,6 +606,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
 
         public void write(byte[] b) throws IOException{
+System.out.println("PrivateOS:write []b");
             // Create the headers
             String reqLine = method + " " + getFile()
                 + (getRef() == null ? "" : "#" + getRef())
@@ -608,6 +636,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
 
         public void flush() throws IOException {
+System.out.println("PrivateOS:flush");
             if (output.size() > 0) {
                 connect();
             }
@@ -622,6 +651,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
 
         public void close() throws IOException {
+System.out.println("PrivateOS:close");
              // DEBUG: System.out.println ("close output stream" + opens + " " + connected );
             // CR 6216611: If the connection is already closed, just return
             if (opens == 0) return;
@@ -630,9 +660,10 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             if (--opens == 0 && connected) disconnect();
             outputStreamOpened = false;
         }
-    }
+    }// PrivateOutputStream
 
     protected void ensureOpen() throws IOException {
+System.out.println("Protocol:ensureOpen");
         if (opens == 0) throw new IOException("Connection closed");
     }
 
@@ -693,18 +724,21 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public int getResponseCode() throws IOException {
+System.out.println("Protocol:getResponseCode");
         ensureOpen();
         connect();
         return responseCode;
     }
 
     public String getResponseMessage() throws IOException {
+System.out.println("Protocol:getResponseMessage");
         ensureOpen();
         connect();
         return responseMsg;
     }
 
     public long getLength() {
+System.out.println("Protocol:getLength");
         try {connect();}
         catch (IOException x) {return -1;}
         try {
@@ -715,6 +749,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public String getType() {
+System.out.println("Protocol:getType");
         try {connect();}
         catch (IOException x) {return null;}
         try {
@@ -723,6 +758,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public String getEncoding() {
+System.out.println("Protocol:getEncoding");
         try {connect();}
         catch (IOException x) {return null;}
         try {
@@ -816,6 +852,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
 
     protected StreamConnection connectSocket() throws IOException {
+System.out.println("Protocol:connectSocket");
         
         // Check for illegal empty string for host
         if (host.equals("")) {
@@ -823,72 +860,47 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
 
         // Open socket connection.
-        HttpStreamConnection hsc = null;
+        StreamConnection hsc = null;
+        if (proxyHost == null) {
+            hsc = connectionPool.get(protocol,
+                                          host, port);
+        } else {
+            hsc = connectionPool.get(protocol,
+                                          proxyHost, proxyPort);
+        }
+        if (hsc != null) {
+            System.out.println("connectSocket: get from pool");
+            return hsc;
+        }
+        
         if (proxyHost == null) {
             hsc = new HttpStreamConnection(host, port);
         } else {
             hsc = new HttpStreamConnection(proxyHost, proxyPort);
         }
-        return (StreamConnection) hsc;
+        System.out.println("connectSocket: new connection");
+        return hsc;
     }
     
-    protected void connectStream() throws IOException {
+    protected void connect() throws IOException {
+        if (connected) {
+            return;
+        }
+System.out.println("Protocol:connect");
 
 	if (streamConnection==null) {
 	    streamConnection=connectSocket();        
         }
 
+        privateOut = new PrivateOutputStream();
         streamOutput = streamConnection.openDataOutputStream();
-
-        // HTTP 1.1 requests must contain content length for proxies
-        if ((getRequestProperty("Content-Length") == null) ||
-            (getRequestProperty("Content-Length").equals("0"))) {
-            reqProperties.put("Content-Length",
-                               "" + (out == null ? 0 : out.size()));
-        }
-        
-        /* // DEBUG
-        String reqLine ;
-
-        if (proxyHost == null) {
-            reqLine = method + " " + getFile()
-                + (getRef() == null ? "" : "#" + getRef())
-                + (getQuery() == null ? "" : "?" + getQuery())
-                + " " + http_version + "\r\n";
-        } else {
-            reqLine = method + " "  
-                + "http://" + host + ":" + port 
-                + getFile()
-                + (getRef() == null ? "" : "#" + getRef())
-                + (getQuery() == null ? "" : "?" + getQuery())
-                + " " + http_version + "\r\n";
-        }
-
-        // DEBUG:  System.out.print("Request: " + reqLine);
-        // we should not write to the streamoutput as we are in set up state and not connected
-        //streamOutput.write((reqLine).getBytes());
-        */
-
-        requested = true;
-
-    }
-
-    protected void connect() throws IOException {
-        if (connected) {
-            return;
-        }
-
-        if (streamConnection==null) {
-            streamConnection=connectSocket();        
-        }
-
-        streamOutput = streamConnection.openDataOutputStream();
+        streamInput = streamConnection.openDataInputStream();
         
         // HTTP 1.1 requests must contain content length for proxies
         if ((getRequestProperty("Content-Length") == null) ||
             (getRequestProperty("Content-Length").equals("0"))) {
             reqProperties.put("Content-Length",
-                               "" + (out == null ? 0 : out.size()));
+                               "" + (privateOut == null ? 0 : privateOut.size()));
         }
 
         String reqLine ;
@@ -922,17 +934,18 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
 	streamOutput.write("\r\n".getBytes());
 
-        if (out != null) {
-	    streamOutput.write(out.toByteArray());
+        if (privateOut != null) {
+	    streamOutput.write(privateOut.toByteArray());
             //***Bug 4485901*** streamOutput.write("\r\n".getBytes());
             // DEBUG: System.out.println("Request: " + new String(out.toByteArray()));  
         }
 
+        System.out.println("writing...");
         streamOutput.flush();
 
-        streamInput = streamConnection.openDataInputStream();
         readResponseMessage(streamInput);
         readHeaders(streamInput);
+        privateIn = new PrivateInputStream();
         
         connected = true;
 
@@ -940,12 +953,13 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
 
     private void readResponseMessage(InputStream in) throws IOException {
+System.out.println("Protocol:readResponseMessage");
         String line = readLine(in);
         int httpEnd, codeEnd;
 
         responseCode = -1;
         responseMsg = null;
-
+        responseProtocol = null;
         // DEBUG: System.out.println ("Response: " + line); 
 
  malformed: {
@@ -955,8 +969,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             if (httpEnd < 0)
                 break malformed;
     
-            String httpVer = line.substring(0, httpEnd);
-            if (!httpVer.startsWith("HTTP"))
+            responseProtocol = line.substring(0, httpEnd);
+            if (!responseProtocol.startsWith("HTTP"))
                 break malformed;
             if(line.length() <= httpEnd)
                 break malformed;
@@ -981,6 +995,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     private void readHeaders(InputStream in) throws IOException {
+System.out.println("Protocol:readHeaders");
         String line, key, value;
         int index;
 
@@ -1010,6 +1025,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      * terminated by <cr><lf> and return it as string.
      */
     private String readLine(InputStream in) {
+System.out.println("Protocol:readLine");
         int c;
         stringbuffer.setLength(0);
         for (;;) {
@@ -1034,18 +1050,56 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     protected void disconnect() throws IOException {
+System.out.println("Protocol:disconnect");
+if (privateOut != null)
+privateOut.close();
+if (privateIn != null)
+privateIn.close();
 
         if (streamConnection != null) {
-            if (streamInput != null) {
-                streamInput.close();
+            String connectionField = (String) headerFields.get("connection");
+            if (connectionField != null &&
+                    (connectionField.equalsIgnoreCase("close") ||
+                    (responseProtocol != null
+                        && responseProtocol.equalsIgnoreCase("HTTP/1.0")
+                        && !connectionField.equalsIgnoreCase("keep-alive")))) {
+                System.out.println("close got Connection:Close HEADER!");
+                if (streamConnection instanceof StreamConnectionElement) {
+                    connectionPool.remove(
+                            (StreamConnectionElement) streamConnection);
+                    streamConnection = null;
+                } else {
+                    System.out.println("Not from pool - disconnect");
+                    disconnectSocket();
+                }
+            } else {
+                System.out.println("close didn't get Connection:Close HEADER!");
             }
-            if (streamOutput != null) {
-                streamOutput.close();
+            if (streamConnection != null){
+
+                if (streamConnection instanceof StreamConnectionElement) {
+                    // we got this connection from the pool
+                    System.out.println("Connection return for reuse: " + streamConnection);
+                    connectionPool.returnForReuse(
+                            (StreamConnectionElement) streamConnection);
+                    streamConnection = null;
+                } else {
+                    System.out.println("Connection add for reuse: " + host+":"+port+
+                            " os: "+streamOutput+" is: "+streamInput);
+                    // save the connection for reuse
+                    if (!connectionPool.add(protocol, host, port,
+                            (HttpStreamConnection)streamConnection, streamOutput,
+                            streamInput)) {
+                        // pool full, disconnect
+                        System.out.println("Pool fool");
+                        disconnectSocket();
+                    }
+                }
             }
-            disconnectSocket();
-            streamConnection = null;
         }
 
+        privateIn = null;
+        privateOut = null;
         responseCode = -1;
         responseMsg = null;
         connected = false;
@@ -1053,8 +1107,16 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     protected void disconnectSocket() throws IOException {
+System.out.println("Protocol:disconnectSocket");
         if (streamConnection != null) {
             streamConnection.close();
+            if (! (streamConnection instanceof StreamConnectionElement)) {
+                streamInput.close();
+                streamOutput.close();
+            }
+            streamInput = null;
+            streamOutput = null;
+            streamConnection = null;
         }    
     }
 

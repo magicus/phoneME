@@ -69,7 +69,7 @@ class HttpStreamConnection implements StreamConnection
 	if (port < 0) {
 	    throw new IllegalArgumentException("bad port number: " + port);
 	}
-
+System.out.println("HttpStreamConnection: ctor "+host+":"+port);
         this.host = host;
         this.port = port;
 
@@ -93,6 +93,10 @@ class HttpStreamConnection implements StreamConnection
             IOException ioe = (IOException)pae.getException();
             throw ioe;
         }
+        socket.setKeepAlive(true);
+        socket.setReuseAddress(true);
+        socket.setSoTimeout(0);
+        socket.setSoLinger(false, 0);
         copen = true;
     }
 
@@ -153,6 +157,7 @@ class HttpStreamConnection implements StreamConnection
      */ 
     synchronized public void close() throws IOException {
         if (copen) {
+            System.out.println("HttpStreamConnection: close");
             copen = false;
             socket.close();
         }

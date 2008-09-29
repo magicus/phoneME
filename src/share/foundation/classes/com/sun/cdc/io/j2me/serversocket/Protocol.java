@@ -76,7 +76,7 @@ public class Protocol extends ConnectionBase
         if(name.charAt(0) != '/' || name.charAt(1) != '/') { 
             throw new IllegalArgumentException("Protocol must start with \"//\" "+name);
         }
-
+System.out.println("ServerSocketProtocol: openPrim "+name);
         /* socket:// case.  System assigned incoming port */
         if (name.length() == 2) {
            open();
@@ -154,6 +154,7 @@ public class Protocol extends ConnectionBase
      *                          connection.
      */
     public void close() throws IOException {
+System.out.println("ServerSocketProtocol: close");
         ssocket.close();
     }
 
