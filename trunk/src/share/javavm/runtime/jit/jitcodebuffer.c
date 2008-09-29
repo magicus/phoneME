@@ -317,9 +317,13 @@ CVMJITmarkCodeBuffer()
     if (!CVMglobals.jit.codeCacheAOTCodeExist)
 #endif
     {
-        CVMassert(CVMglobals.jit.codeCacheFirstFreeBuf != NULL);
-        CVMJITsetCodeCacheDecompileStart(
-            (CVMUint8*)CVMglobals.jit.codeCacheFirstFreeBuf);
+        if (CVMglobals.jit.codeCacheFirstFreeBuf != NULL) {
+            CVMJITsetCodeCacheDecompileStart(
+                (CVMUint8*)CVMglobals.jit.codeCacheFirstFreeBuf);
+        } else {
+            CVMJITsetCodeCacheDecompileStart(
+                CVMglobals.jit.codeCacheEnd);
+        }
     }
 
 #ifdef CVM_USE_MEM_MGR
