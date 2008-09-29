@@ -50,8 +50,6 @@ import com.sun.cdc.io.DateParser;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This class implements the necessary functionality
@@ -104,16 +102,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
     private String httpVersion = "HTTP/1.1";
 
-    /** Maximum number of persistent connections. */
-    private static int maxNumberOfPersistentConnections = 10;//4;
-    /** Connection linger time in the pool, default 60 seconds. */
-    private static long connectionLingerTime = 60000;
-    protected static StreamConnectionPool connectionPool;
-    static {
-        connectionPool = new StreamConnectionPool(
-                                 maxNumberOfPersistentConnections,
-                                 connectionLingerTime);
-    }
     /**
      * Holds the state the readBytes call. So if close is called in another
      * thread than the read thread the close will be directly on the stream,
@@ -283,7 +271,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
     public void open(String url, int mode, boolean timeouts) throws IOException {
         // DEBUG: System.out.println ("open " + url); 
-        System.out.println("open "+this+" connected: "+connected+"\n\turl: "+url);
         if (opens > 0) {
             throw new IOException("already connected");
         }
@@ -309,7 +296,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
     public void close() throws IOException {
         // DEBUG: System.out.println ("close " + opens + " " + connected ); 
-        System.out.println("close "+this+" connected: "+connected+" responseMsg="+responseMsg);
         /* Decrement opens only once - there could be multiple close() calls
          */
         if (!closed) {
@@ -329,8 +315,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      */
     public InputStream openInputStream() throws IOException {
          // DEBUG: System.out.println ("open input stream");
-
-	inputStreamPermissionCheck();
+        inputStreamPermissionCheck();
 
         /* CR 6226615: opening another stream should not throw IOException
         if (in != null) {
@@ -368,7 +353,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public OutputStream openOutputStream() throws IOException {
-	outputStreamPermissionCheck();
+        outputStreamPermissionCheck();
 
          // DEBUG: System.out.println ("open data output stream");
         if (mode != Connector.WRITE && mode != Connector.READ_WRITE) {
@@ -398,8 +383,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public DataOutputStream openDataOutputStream() throws IOException {
-        if (privateOut == null)
-            openOutputStream();
+        openOutputStream();
         return new DataOutputStream(privateOut);
     }
 
@@ -618,7 +602,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         
         public void close() throws IOException {
             // DEBUG:  
-            System.out.println ("close input stream " + opens + " " + connected );
             if (opens == 0)
                 return;
 
@@ -690,7 +673,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
 
         public void flush() throws IOException {
-            System.out.println("Flush "+Protocol.this);
             if (output.size() > 0) {
                 connect();
             }
@@ -936,35 +918,19 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         // Open socket connection.
         StreamConnection hsc = null;
-        String hp = (proxyHost == null)? host+":"+port : proxyHost+":"+proxyPort;
 
-        if (proxyHost == null) {
-            hsc = connectionPool.get(protocol,
-                                          host, port);
-        } else {
-            hsc = connectionPool.get(protocol,
-                                          proxyHost, proxyPort);
-        }
-        if (hsc != null) {
-            System.out.println("connectSocket: get from pool "+hsc);
-            return hsc;
-        }
-        
         if (proxyHost == null) {
             hsc = new HttpStreamConnection(host, port);
         } else {
             hsc = new HttpStreamConnection(proxyHost, proxyPort);
         }
-        System.out.println("connectSocket: new connection "+hsc);
         return hsc;
     }
 
-    private boolean serverDroppedConnection = false;
     protected void connect() throws IOException {
         if (connected) {
             return;
         }
-        System.out.println("Connect "+this+" thread: "+Thread.currentThread().getName());
 
         streamConnection = connectSocket();
 
@@ -979,7 +945,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         String reqLine ;
         
-	if (proxyHost == null) {
+        if (proxyHost == null) {
             reqLine = method + " "
                 + (getFile() == null ? "/" : getFile())
                 + (getRef() == null ? "" : "#" + getRef())
@@ -1000,52 +966,37 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         reqProperties.put ("Host" ,  host + ":" + port );
 
         Enumeration reqKeys = reqProperties.keys();
-        System.out.println("Request property? " + reqKeys.hasMoreElements());
         while (reqKeys.hasMoreElements()) {
             String key = (String)reqKeys.nextElement();
             String reqPropLine = key + ": " + reqProperties.get(key) + "\r\n";
-            System.out.print("Request property: " + reqPropLine);
-	    streamOutput.write((reqPropLine).getBytes());
+            streamOutput.write((reqPropLine).getBytes());
         }
-	streamOutput.write("\r\n".getBytes());
+        streamOutput.write("\r\n".getBytes());
 
         if (privateOut != null) {
-	    streamOutput.write(privateOut.toByteArray());
+            streamOutput.write(privateOut.toByteArray());
             privateOut = null;
             //***Bug 4485901*** streamOutput.write("\r\n".getBytes());
-            System.out.println("Request + bytes");
         }
 
         streamOutput.flush();
 
         streamInput = streamConnection.openDataInputStream();
-        try {
-            System.out.println("Read response message");
-            readResponseMessage(streamInput);
-            serverDroppedConnection = false;
-        } catch (InterruptedIOException ex) {
-            if (serverDroppedConnection)
-                throw ex;
-            serverDroppedConnection = true;
-            disconnect();
-            connect();
-            return;
-        }
-        readHeaders(streamInput);
+        readResponseMessage();
+        readHeaders();
         
         connected = true;
 
     }
 
 
-    private void readResponseMessage(InputStream in) throws IOException {
-        String line = readLine(in);
+    private void readResponseMessage() throws IOException {
+        String line = readLine(streamInput);
         int httpEnd, codeEnd;
 
         responseCode = -1;
         responseMsg = null;
         responseProtocol = null;
-        System.out.println ("Response: " + line); 
 
  malformed: {
             if (line == null)
@@ -1080,7 +1031,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
     
     private void putHeaderField(String key, String value) {
-        System.out.println("++ property put: "+key+"="+value);
         headerFields.put(toLowerCase(key), value);
         /**
          * Check the response header to see if the server would like
@@ -1092,12 +1042,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
     }
 
-    private void readHeaders(InputStream in) throws IOException {
+    private void readHeaders() throws IOException {
         String line, key=null, value=null;
         int index;
 
         for (;;) {
-            line = readLine(in);
+            line = readLine(streamInput);
             // DEBUG: System.out.println ("Response: " + line);   
             
             if (line == null || line.equals(""))
@@ -1167,64 +1117,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     protected void disconnect() throws IOException {
-        System.out.println("disconnect "+this+" connected: "+connected+" thread: "+Thread.currentThread().getName());
-        connected = false;
-        if (streamConnection != null) {
-            String connectionField = (String)headerFields.get("connection");
-            if (ConnectionCloseFlag || connectionField != null
-                && (connectionField.equalsIgnoreCase("close")
-                    || (responseProtocol!=null
-                        && responseProtocol.equalsIgnoreCase("HTTP/1.0")
-                        && !connectionField.equalsIgnoreCase("keep-alive")
-                        ))) {
-                System.out.println("close " + this + " got Connection:Close HEADER!");
-                if (streamConnection instanceof StreamConnectionElement) {
-                    connectionPool.remove(
-                            (StreamConnectionElement) streamConnection);
-                    streamConnection = null;
-                } else {
-                    System.out.println("Not from pool - disconnect");
-                    disconnectSocket();
-                }
-            } else {
-                System.out.println("close " + this + " didn't get Connection:Close HEADER!");
-            }
-
-            if (streamConnection instanceof StreamConnectionElement) {
-                // we got this connection from the pool
-                System.out.println("Connection return for reuse: "+streamConnection);
-                connectionPool.returnForReuse(
-                        (StreamConnectionElement) streamConnection);
-                streamConnection = null;
-            } else
-                System.out.println("Connection add for reuse: "+streamConnection);
-                // save the connection for reuse
-                if (!connectionPool.add(protocol, host, port,
-                        streamConnection, streamOutput, streamInput)) {
-                    // pool full, disconnect
-                    System.out.println("Pool fool");
-                    disconnectSocket();
-                }
-        }
-
+        if (streamConnection == null)
+            return;
         responseCode = -1;
         responseMsg = null;
         connected = false;
         responseProtocol = null;
-    }
-
-    protected void disconnectSocket() throws IOException {
-        if (streamConnection == null)
-            return;
-        System.out.println("-- DISCONNECT -- "+streamConnection);
-        /*if (streamInput != null) {
-            streamInput.close();
-            streamInput = null;
-        }
-        if (streamOutput != null) {
-            streamOutput.close();
-            streamOutput = null;
-        }*/
         streamInput = null;
         streamOutput = null;
         streamConnection.close();
