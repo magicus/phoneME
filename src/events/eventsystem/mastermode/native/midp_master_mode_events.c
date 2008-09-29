@@ -248,17 +248,13 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 #endif /* ENABLE_JSR_256 */
 #ifdef ENABLE_JSR_290
     case JSR290_LOAD_FINISH_SIGNAL:
+    case JSR290_INVALIDATE_SIGNAL:
         midp_thread_signal_list(blocked_threads, blocked_threads_count,
                                 newSignal.waitingFor, newSignal.descriptor,
                                 newSignal.status);
         break;
-    case JSR290_INVALIDATE_SIGNAL:
-    case JSR290_LISTENER_COMPLETED_SIGNAL:
-    case JSR290_LISTENER_FAILED_SIGNAL:
-    case JSR290_LISTENER_PERCENTAGE_SIGNAL:
-    case JSR290_LISTENER_STARTED_SIGNAL:
-    case JSR290_LISTENER_WARNING_SIGNAL:
-        jsr290_fluid_image_process_signal (&newSignal);
+    case JSR290_LISTENER_SIGNAL:
+        jsr290_process_listener_signal (&newSignal);
         break;
 #endif /* ENABLE_JSR_290 */
     default:
