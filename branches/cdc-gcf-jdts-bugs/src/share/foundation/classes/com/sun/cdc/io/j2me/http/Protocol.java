@@ -102,13 +102,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
     private String httpVersion = "HTTP/1.1";
 
-    /**
-     * Holds the state the readBytes call. So if close is called in another
-     * thread than the read thread the close will be directly on the stream,
-     * instead of putting the connection back in the persistent connection
-     * pool, forcing an IOException on the read thread.
-     */
-    private boolean readInProgress;
     /** Used when appl calls setRequestProperty("Connection", "close"). */
     private boolean ConnectionCloseFlag;
     private String responseProtocol;
@@ -310,7 +303,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
     /*
      * Open the input stream if it has not already been opened.
-     * @exception IOException is thrown if the connection was
+     * @exception IOException is thrown if it has already been
      * opened for writing
      */
     public InputStream openInputStream() throws IOException {
@@ -353,6 +346,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public OutputStream openOutputStream() throws IOException {
+        // Delegate to openDataOutputStream
+        return openDataOutputStream();
+    }
+
+    public DataOutputStream openDataOutputStream() throws IOException {
+        
         outputStreamPermissionCheck();
 
          // DEBUG: System.out.println ("open data output stream");
@@ -379,11 +378,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         opens++;
         privateOut = new PrivateOutputStream();
         outputStreamOpened = true;
-        return privateOut;
-    }
-
-    public DataOutputStream openDataOutputStream() throws IOException {
-        openOutputStream();
         return new DataOutputStream(privateOut);
     }
 
@@ -601,7 +595,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
         
         public void close() throws IOException {
-            // DEBUG:  
+            // DEBUG:  System.out.println ("close input stream " + opens + " " + connected );
             if (opens == 0)
                 return;
 
@@ -958,7 +952,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                 + (getQuery() == null ? "" : "?" + getQuery())
                 + " " + httpVersion + "\r\n";
         }
-        System.out.print("Request: " + reqLine);
+        // DEBUG:  System.out.print("Request: " + reqLine);
         streamOutput.write((reqLine).getBytes());
 
         
@@ -977,6 +971,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             streamOutput.write(privateOut.toByteArray());
             privateOut = null;
             //***Bug 4485901*** streamOutput.write("\r\n".getBytes());
+            // DEBUG: System.out.println("Request: " + new String(out.toByteArray()));  
         }
 
         streamOutput.flush();
@@ -997,6 +992,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         responseCode = -1;
         responseMsg = null;
         responseProtocol = null;
+
+        // DEBUG: System.out.println ("Response: " + line);
 
  malformed: {
             if (line == null)
@@ -1030,18 +1027,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         throw new InterruptedIOException("malformed response message");
     }
     
-    private void putHeaderField(String key, String value) {
-        headerFields.put(toLowerCase(key), value);
-        /**
-         * Check the response header to see if the server would like
-         * to close the connection.
-         */
-        if ((key.equalsIgnoreCase("connection")) && 
-            (value.equalsIgnoreCase("close"))) {
-            ConnectionCloseFlag = true;
-        }
-    }
-
     private void readHeaders() throws IOException {
         String line, key=null, value=null;
         int index;
@@ -1066,7 +1051,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                 value += " " + line.substring(index);
             } else {
                 if (key!=null && value!=null) {
-                    putHeaderField(key, value);
+                    headerFields.put(toLowerCase(key), value);
                     key = null;
                     value = null;
                 }
@@ -1084,7 +1069,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
         
         if (key!=null && value!=null) {
-            putHeaderField(key, value);
+            headerFields.put(toLowerCase(key), value);
         }
     }
 
@@ -1119,14 +1104,28 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     protected void disconnect() throws IOException {
         if (streamConnection == null)
             return;
+
+        if (streamInput != null) {
+            streamInput.close();
+            streamInput = null;
+        }
+        if (streamOutput != null) {
+            streamOutput.close();
+            streamOutput = null;
+        }
+        disconnectSocket();
+
         responseCode = -1;
         responseMsg = null;
         connected = false;
         responseProtocol = null;
-        streamInput = null;
-        streamOutput = null;
-        streamConnection.close();
-        streamConnection = null;
+    }
+
+    protected void disconnectSocket() throws IOException {
+        if (streamConnection != null) {
+            streamConnection.close();
+            streamConnection = null;
+        }    
     }
 
     protected synchronized void parseURL() throws IOException {
