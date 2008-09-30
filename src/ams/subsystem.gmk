@@ -59,7 +59,7 @@ MIDP_JAVADOC_ALL += \
     -group "AMS Libraries" \
     $(shell echo $(SUBSYSTEM_AMS_PACKAGES) | tr ' ' $(PATHSEP))
 
-ifeq ($(USE_NATIVE_AMS), true)
+ifeq ($(USE_NATIVE_APP_MANAGER), true)
 SUBSYSTEM_AMS_MODULES = nams
 else
 SUBSYSTEM_AMS_MODULES = jams
@@ -97,7 +97,6 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
             SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/lib.gmk
         endif
 
-
 # Add VM mode specific common files
     ifeq ($(USE_MULTIPLE_ISOLATES), true)
         SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/mvm/lib.gmk
@@ -107,15 +106,22 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
     SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
 
 # libraries for nams/jams    
-    ifeq ($(USE_NATIVE_AMS), false)
-        SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/appmanager_base/lib.gmk \
-            $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk \
-	    $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk
-            
-    else
+    ifeq ($(USE_NATIVE_APP_MANAGER), false)
+        SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk \
+            $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk \
+            $(SUBSYSTEM_AMS_DIR)/appmanager_base/lib.gmk
+    else    
         ifeq ($(TARGET_PLATFORM), javacall)
             SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/nams_javacall/lib.gmk
-        endif    
+    
+            ifeq ($(USE_NATIVE_SUITE_STORAGE), false)
+                SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/suitestore_javacall/lib.gmk
+            endif
+
+            ifeq ($(USE_NATIVE_INSTALLER), false)
+                SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/installer_javacall/lib.gmk
+            endif
+        endif
     endif
 
 # Examples

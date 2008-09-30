@@ -183,4 +183,9 @@ public interface DisplayEventConsumer {
       * Called by event delivery when full screen repaint is requested.
       */
      public void handleScreenRepaintEvent();
+
+     /*
+      * Called by event delivery when need to show or hide virtual keyboard
+      */
+     public void handleVirtualKeyboardEvent();
 }

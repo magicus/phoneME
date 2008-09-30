@@ -77,7 +77,7 @@ SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 
 ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES += \
-    $(PERMISSIONS_DIR)/reference/i3test/com/sun/midp/security/TestPermissions.java
+#    $(PERMISSIONS_DIR)/reference/i3test/com/sun/midp/security/TestPermissions.java
 endif
 
 
@@ -85,12 +85,29 @@ ifeq ($(TARGET_OS), javacall)
 POLICY_FILES = $(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.JTWI \
 	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.JTWI \
 	$(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.MSA \
-	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.MSA 
+	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.MSA \
+    $(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.FULL \
+    $(PERMISSIONS_CONFIG_DIR)/_policy.txt.FULL
 
 javacall_policy_load.c : policy_files
+
+ifeq ($(USE_NATIVE_APP_MANAGER), true)
+
+# Need to apply some security policy when building with NAMS
 
 policy_files :
 	@if [ ! -d $(MIDP_OUTPUT_DIR)/lib ]; then mkdir $(MIDP_OUTPUT_DIR)/lib; fi
 	@cp  $(POLICY_FILES) $(MIDP_OUTPUT_DIR)/lib
+	@cp  $(MIDP_OUTPUT_DIR)/lib/_function_groups.txt.JTWI $(MIDP_OUTPUT_DIR)/lib/_function_groups.txt
+	@cp  $(MIDP_OUTPUT_DIR)/lib/_policy.txt.JTWI $(MIDP_OUTPUT_DIR)/lib/_policy.txt
+
+else
+
+policy_files :
+	@if [ ! -d $(MIDP_OUTPUT_DIR)/lib ]; then mkdir $(MIDP_OUTPUT_DIR)/lib; fi
+	@cp  $(POLICY_FILES) $(MIDP_OUTPUT_DIR)/lib
+
+endif
+
 endif
 

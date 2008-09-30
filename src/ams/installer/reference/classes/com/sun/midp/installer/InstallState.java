@@ -106,7 +106,7 @@ public interface InstallState {
     public int getJarSize();
 
     /**
-     * Gets the authoriztion path of this suite. The path starts with
+     * Gets the authorization path of this suite. The path starts with
      * the most trusted CA that authorized this suite.
      *
      * @return array of CA names or null if the suite was not signed

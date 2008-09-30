@@ -56,13 +56,14 @@
     /*
      * Calculate heap size.
      *
-     * IMPL_NOTE: bellow ENABLE_NATIVE_AMS value is checked instead of moving
-     * this part into a separate library (for ex., ams/example/ams_parameters)
+     * IMPL_NOTE: bellow ENABLE_NATIVE_APP_MANAGER value is checked instead of
+     * moving this part into a separate library
+     * (for ex., ams/example/ams_parameters)
      * because currently amount of memory needed for AMS isolate is the only
      * property that has different values for JAMS and NAMS. If new such values
      * are added, a new library should be introduced.
      */
-#if ENABLE_NATIVE_AMS
+#if ENABLE_NATIVE_APP_MANAGER
     /*
      * Actually, when using NAMS, AMS isolate requires less then 1024K memory,
      * so the value bellow can be tuned for each particular project.

@@ -48,48 +48,48 @@ public class ScrollIndResources {
             return;
         }
         
-        ScrollIndSkin.MODE = SkinResources.getInt(
+        ScrollIndSkin.MODE = SkinLoader.getInt(
                 SkinPropertiesIDs.SCROLL_MODE);
-        ScrollIndSkin.WIDTH = SkinResources.getInt(
+        ScrollIndSkin.WIDTH = SkinLoader.getInt(
                 SkinPropertiesIDs.SCROLL_WIDTH);
     
-        ScrollIndSkin.COLOR_BG = SkinResources.getInt(
+        ScrollIndSkin.COLOR_BG = SkinLoader.getInt(
                 SkinPropertiesIDs.SCROLL_COLOR_BG);
-        ScrollIndSkin.COLOR_FG = SkinResources.getInt(
+        ScrollIndSkin.COLOR_FG = SkinLoader.getInt(
                 SkinPropertiesIDs.SCROLL_COLOR_FG);
-        ScrollIndSkin.COLOR_FRAME = SkinResources.getInt(
+        ScrollIndSkin.COLOR_FRAME = SkinLoader.getInt(
                 SkinPropertiesIDs.SCROLL_COLOR_FRAME);
-        ScrollIndSkin.COLOR_DN_ARROW = SkinResources.getInt(
+        ScrollIndSkin.COLOR_DN_ARROW = SkinLoader.getInt(
                 SkinPropertiesIDs.SCROLL_COLOR_DN_ARROW);
-        ScrollIndSkin.COLOR_UP_ARROW = SkinResources.getInt(
+        ScrollIndSkin.COLOR_UP_ARROW = SkinLoader.getInt(
                 SkinPropertiesIDs.SCROLL_COLOR_UP_ARROW);
 
         /*
         Uncomment if background/foreground images are used
-        ScrollIndSkin.IMAGE_BG = SkinResources.getCompositeImage(
+        ScrollIndSkin.IMAGE_BG = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.SCROLL_IMAGE_BG, 3);
-        ScrollIndSkin.IMAGE_FG = SkinResources.getCompositeImage(
+        ScrollIndSkin.IMAGE_FG = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.SCROLL_IMAGE_FG, 3);
         */
-        ScrollIndSkin.IMAGE_UP = SkinResources.getImage(
+        ScrollIndSkin.IMAGE_UP = SkinLoader.getImage(
                 SkinPropertiesIDs.SCROLL_IMAGE_UP);
-        ScrollIndSkin.IMAGE_DN = SkinResources.getImage(
+        ScrollIndSkin.IMAGE_DN = SkinLoader.getImage(
                 SkinPropertiesIDs.SCROLL_IMAGE_DN);
     
-        ScrollIndSkin.COLOR_AU_BG = SkinResources.getInt(
+        ScrollIndSkin.COLOR_AU_BG = SkinLoader.getInt(
                 SkinPropertiesIDs.SCROLL_COLOR_AU_BG);
-        ScrollIndSkin.COLOR_AU_FG = SkinResources.getInt(
+        ScrollIndSkin.COLOR_AU_FG = SkinLoader.getInt(
                 SkinPropertiesIDs.SCROLL_COLOR_AU_FG);
         /*
         Uncomment if background/foreground images are used for an Alert
-        ScrollIndSkin.IMAGE_AU_BG = SkinResources.getCompositeImage(
+        ScrollIndSkin.IMAGE_AU_BG = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.SCROLL_IMAGE_AU_BG, 3);
-        ScrollIndSkin.IMAGE_AU_FG = SkinResources.getCompositeImage(
+        ScrollIndSkin.IMAGE_AU_FG = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.SCROLL_IMAGE_AU_FG, 3);
         */
-        ScrollIndSkin.IMAGE_AU_UP = SkinResources.getImage(
+        ScrollIndSkin.IMAGE_AU_UP = SkinLoader.getImage(
                 SkinPropertiesIDs.SCROLL_IMAGE_AU_UP);
-        ScrollIndSkin.IMAGE_AU_DN = SkinResources.getImage(
+        ScrollIndSkin.IMAGE_AU_DN = SkinLoader.getImage(
                 SkinPropertiesIDs.SCROLL_IMAGE_AU_DN);
 
         init = true;

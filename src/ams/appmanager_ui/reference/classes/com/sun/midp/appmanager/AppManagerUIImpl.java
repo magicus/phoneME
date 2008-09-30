@@ -192,8 +192,8 @@ class AppManagerUIImpl extends Form
                     Command.ITEM, 1);
 
     /** Command object for "Launch". */
-    private Command launchCmd =
-        new Command(Resource.getString(ResourceConstants.LAUNCH),
+    private Command openCmd =
+        new Command(Resource.getString(ResourceConstants.OPEN),
                     Command.ITEM, 1);
     /** Command object for "Info". */
     private Command infoCmd =
@@ -425,7 +425,7 @@ class AppManagerUIImpl extends Form
      * Requests that the ui element, associated with the specified midlet
      * suite, be visible and active.
      *
-     * @param item corresponding suite info
+     * @param msi corresponding suite info
      */
     public void setCurrentItem(RunningMIDletSuiteInfo msi) {
         for (int i = 0; i < mciVector.size(); i++) {
@@ -548,7 +548,7 @@ class AppManagerUIImpl extends Form
 
             // suite to remove was set in confirmRemove()
             try {
-                appManager.remove(removeMsi);
+                appManager.removeSuite(removeMsi);
             } catch (Throwable t) {
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                     Logging.report(Logging.WARNING, LogChannels.LC_AMS,
@@ -677,7 +677,7 @@ class AppManagerUIImpl extends Form
 
             manager.launchODTAgent();
 
-        } if (c == launchCmd) {
+        } if (c == openCmd) {
 
             enterSuite(msi);
            
@@ -730,14 +730,18 @@ class AppManagerUIImpl extends Form
             }
 
         } else if (c == fgCmd) {
-
-            manager.moveToForeground(msi);
+            // The "Foreground" command will be shown only if there is only one running MIDlet
+            manager.moveToForeground(msi, null);
             display.setCurrent(this);
 
         } else if (c == endCmd) {
-            exitingMidletSuiteId = msi.proxy.getSuiteId();
-            exitingMidletClassName = msi.proxy.getClassName();
-            manager.exitMidlet(msi);
+            // The "End" command will be shown only if there is only one running MIDlet
+            MIDletProxy theOnlyProxy = msi.getFirstProxy();
+            if (theOnlyProxy != null) {
+                exitingMidletSuiteId = theOnlyProxy.getSuiteId();
+                exitingMidletClassName = theOnlyProxy.getClassName();
+                manager.exitMidlet(msi, exitingMidletClassName);
+            }
             display.setCurrent(this);
         } else if (c == changeFolderCmd) {
             if (foldersOn) {
@@ -765,28 +769,113 @@ class AppManagerUIImpl extends Form
      * Called when a new midlet was launched.
      *
      * @param si corresponding midlet suite info
+     * @param className MIDlet class name
      */
-    public void notifyMidletStarted(RunningMIDletSuiteInfo si) {
-        for (int i = 0; i < mciVector.size(); i++) {
-            MidletCustomItem ci = (MidletCustomItem)mciVector.elementAt(i);
+    public void notifyMidletStarted(RunningMIDletSuiteInfo si, String className) {
+        MidletCustomItem ci = findItem(si);
+        if (null != ci) {
+            setupDefaultCommand(ci);
+            setupRunStateDependentCommands(ci);
 
-            if (ci.msi == si) {
-                ci.removeCommand(launchCmd);
-                ci.removeCommand(launchInstallCmd);
+            // add item to midlet switcher
+            midletSwitcher.append(ci.msi, className);
+        }
+    }
 
-                if (appManager.caManagerIncluded()) {
-                    ci.removeCommand(launchCaManagerCmd);
+    /**
+     * This function encapsulates the logic of showing the "End" and
+     * "To Foreground" commands.
+     *
+     * @param ci midlet custom item
+     */
+    private void setupRunStateDependentCommands(AppManagerUIImpl.MidletCustomItem ci) {
+        // IMPL_NOTE: we decide to have the "Open" command default for all cases,
+        // just to make the life easier for both the programmer and the user.
+        RunningMIDletSuiteInfo si = ci.msi;
+        if (si.numberOfRunningMidlets() == 1) {
+            if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+                MIDletProxy proxy = si.getFirstProxy();
+
+                if (proxy != null) {
+                    /*
+                     * Add "Bring to foreground" command only if the MIDLet has
+                     * no MIDlet-Launch-Background attribute.
+                     */
+                    if (!proxy.getExtendedAttribute(
+                            MIDletProxy.MIDLET_LAUNCH_BG)) {
+                        ci.addCommand(fgCmd);
+                    }
+
+                    /*
+                     * Check whether MIDlet-No-Exit attribute is defined for
+                     * the MIDlet.
+                     *
+                     * If definded and the value is "yes" then the application
+                     * is not allowed to be exited other than calling
+                     * destroyApp().
+                     *
+                     * Add "End" command only if an user may termniate the
+                     * MIDlet.
+                     */
+                    if (!proxy.getExtendedAttribute(
+                            MIDletProxy.MIDLET_NO_EXIT)) {
+                        ci.addCommand(endCmd);
+                    }
                 }
-
-                if (appManager.oddEnabled()) {
-                    ci.removeCommand(launchODTAgentCmd);
-                }
-
-                ci.setDefaultCommand(fgCmd);
+            } else {
+                ci.addCommand(fgCmd);
                 ci.addCommand(endCmd);
-                // add item to midlet switcher
-                midletSwitcher.append(ci.msi);
-                return;
+            }
+        } else {
+            ci.removeCommand(fgCmd);
+            ci.removeCommand(endCmd);
+        }
+    }
+
+    /**
+     * This function encapsulates the logic of choosing the default command
+     * (open or launch, whatever it means), depending on the midlet type
+     * and enabled state.
+     * @param mci the form item whose set of menu commands will be modified 
+     */
+    private void setupDefaultCommand(AppManagerUIImpl.MidletCustomItem mci) {
+        RunningMIDletSuiteInfo si = mci.msi;
+        boolean running = si.hasRunningMidlet();
+
+        // setDefaultCommand will add default command first
+        if (si.isInternal()) {
+            // midlets from the internal suite are never disabled
+            if (!running) {
+                if (AppManagerPeer.DISCOVERY_APP.equals(mci.msi.midletToRun)) {
+                    mci.setDefaultCommand(launchInstallCmd);
+                } else if (appManager.caManagerIncluded() &&
+                           AppManagerPeer.CA_MANAGER.equals(mci.msi.midletToRun)) {
+                    mci.setDefaultCommand(launchCaManagerCmd);
+                } else if (appManager.oddEnabled() &&
+                           AppManagerPeer.ODT_AGENT.equals(mci.msi.midletToRun)) {
+                    mci.setDefaultCommand(launchODTAgentCmd);
+                } else {
+                    // This should never happen: all possible kinds of
+                    // internal applications must be listed above
+                    mci.setDefaultCommand(infoCmd);
+                }
+            } else {
+                mci.removeCommand(launchInstallCmd);
+                if (appManager.caManagerIncluded()) {
+                    mci.removeCommand(launchCaManagerCmd);
+                }
+                if (appManager.oddEnabled()) {
+                    mci.removeCommand(launchODTAgentCmd);
+                }
+            }
+        } else { // not internal suite
+            // running MIDlets will continue to run
+            // even when disabled
+            if (mci.msi.enabled || mci.msi.hasRunningMidlet()) {
+                mci.setDefaultCommand(openCmd);
+            } else {
+                mci.setDefaultCommand(infoCmd);
+                mci.removeCommand(openCmd);
             }
         }
     }
@@ -795,8 +884,9 @@ class AppManagerUIImpl extends Form
      * Called when state of a running midlet has changed.
      *
      * @param si corresponding midlet suite info
+     * @param midlet specifies which midlet has changed its state
      */
-    public void notifyMidletStateChanged(RunningMIDletSuiteInfo si) {
+    public void notifyMidletStateChanged(RunningMIDletSuiteInfo si, MIDletProxy midlet) {
         MidletCustomItem mci = null;
 
         for (int i = 0; i < mciVector.size(); i++) {
@@ -821,56 +911,38 @@ class AppManagerUIImpl extends Form
      * @param midletClassName Class name of the exited midlet
      */
     public void notifyMidletExited(RunningMIDletSuiteInfo si, String midletClassName) {
-        for (int i = 0; i < mciVector.size(); i++) {
-            MidletCustomItem ci = (MidletCustomItem)mciVector.elementAt(i);
+        MidletCustomItem mci = findItem(si);
+        if (mci == null) {
+            // Midlet quitted; display the application Selector
+            display.setCurrent(this);
+        } else {
+            // we get here when mci.msi.proxy already is null
 
-            if (ci.msi == si) {
-                ci.removeCommand(fgCmd);
-                ci.removeCommand(endCmd);
+            setupDefaultCommand(mci);
+            setupRunStateDependentCommands(mci);
 
-                if (ci.msi.midletToRun != null &&
-                    ci.msi.midletToRun.equals(AppManagerPeer.DISCOVERY_APP)) {
-                    ci.setDefaultCommand(launchInstallCmd);
-                } else if (appManager.caManagerIncluded() &&
-                    ci.msi.midletToRun != null &&
-                    ci.msi.midletToRun.equals(AppManagerPeer.CA_MANAGER)) {
-                    ci.setDefaultCommand(launchCaManagerCmd);
-                } else if (appManager.oddEnabled() &&
-                    ci.msi.midletToRun != null &&
-                    ci.msi.midletToRun.equals(AppManagerPeer.ODT_AGENT)) {
-                    ci.setDefaultCommand(launchODTAgentCmd);
+            midletSwitcher.remove(mci.msi, midletClassName);
+            mci.update();
+
+            /* find appropriate MIDlet selector */
+            MIDletSelector selector = getMidletSelector(si.suiteId);
+            if (selector != null) {
+
+                /* notify the selector that MIDlet was exited */
+                selector.notifyMidletExited(midletClassName);
+
+                /* if MIDlet exited from AMS menu, stay there. Otherwise
+                 * return back to the selector */
+                if (exitingMidletSuiteId == si.suiteId &&
+                        exitingMidletClassName.equals(midletClassName)) {
+                    exitingMidletSuiteId = 0;
+                    exitingMidletClassName = null;
+                    selector.exitIfNoMidletRuns();
                 } else {
-                    if (ci.msi.enabled) {
-                        ci.setDefaultCommand(launchCmd);
-                    }
+                    selector.show();
                 }
-                midletSwitcher.remove(ci.msi);
-                ci.update();
-
-                /* find appropriate MIDlet selector */
-                MIDletSelector selector = getMidletSelector(si.suiteId);
-                if (selector != null) {
-
-                    /* notify the selector that MIDlet was exited */
-                    selector.notifyMidletExited(midletClassName);
-
-                    /* if MIDlet exited from AMS menu, stay there. Otherwise
-                     * return back to the selector */
-                    if (exitingMidletSuiteId == si.suiteId &&
-                            exitingMidletClassName.equals(midletClassName)) {
-                        exitingMidletSuiteId = 0;
-                        exitingMidletClassName = null;
-                        selector.exitIfNoMidletRuns();
-                    } else {
-                        selector.show();
-                    }
-                }
-                
-                return;
             }
         }
-        // Midlet quited; display the application Selector
-        display.setCurrent(this);
     }
 
     /**
@@ -1036,22 +1108,10 @@ class AppManagerUIImpl extends Form
 
     /**
      * Called when MIDlet suite being enabled
-     * @param si corresponding suite info
+     * @param msi corresponding suite info
      */
     public void notifyMIDletSuiteEnabled(RunningMIDletSuiteInfo msi) {
-        MidletCustomItem mci = findItem(msi);
-
-        if (msi.enabled) {
-            mci.setDefaultCommand(launchCmd);
-        } else { // MIDlet suite is being disabled
-
-            if (mci.msi.proxy == null) { // Not running
-                mci.removeCommand(launchCmd);
-            }
-
-            // running MIDlets will continue to run
-            // even when disabled
-        }
+        setupDefaultCommand(findItem(msi));
     }
 
 
@@ -1061,10 +1121,9 @@ class AppManagerUIImpl extends Form
      * @param si corresponding suite info
      * @param newSi new suite info
      */
-    public void notifyMIDletSuiteStateChaged(RunningMIDletSuiteInfo si,
+    public void notifyMIDletSuiteStateChanged(RunningMIDletSuiteInfo si,
                                              RunningMIDletSuiteInfo newSi) {
         midletSwitcher.update(si, newSi);
-
     }
 
     /**
@@ -1079,6 +1138,7 @@ class AppManagerUIImpl extends Form
     /**
      * Finds MidletCustomItem for specified midlet
      * @param si corresponding suite info
+     * @return the custom item that points to the suite info, or null if not found
      */
     private MidletCustomItem findItem(RunningMIDletSuiteInfo si) {
         for (int i = 0; i < mciVector.size(); i++) {
@@ -1107,21 +1167,6 @@ class AppManagerUIImpl extends Form
     }
 
     /**
-     * Gets MIDlet custom item for the given suite Id
-     * @return MIDlet item or null if it is not found
-     */
-    private MidletCustomItem getMidletItem(int suiteId) {
-        int size = mciVector.size();
-        for (int i = 0; i < size; i++) {
-            MidletCustomItem mci = (MidletCustomItem) mciVector.elementAt(i);
-            if (mci.msi.suiteId == suiteId) {
-                return mci;
-            }
-        }
-        return null;
-    }
-
-    /**
      * The AppManagerPeer manages list of available MIDlet suites
      * and informs AppManagerUI regarding changes in list through
      * itemAppended callback when new item is appended to the list.
@@ -1131,28 +1176,14 @@ class AppManagerUIImpl extends Form
     public void itemAppended(RunningMIDletSuiteInfo suiteInfo) {
         MidletCustomItem ci = new MidletCustomItem(suiteInfo);
 
-        if (suiteInfo.midletToRun != null &&
-            suiteInfo.midletToRun.equals(AppManagerPeer.DISCOVERY_APP)) {
-            // setDefaultCommand will add default command first
-            ci.setDefaultCommand(launchInstallCmd);
-        } else if (appManager.caManagerIncluded() && suiteInfo.midletToRun != null &&
-                   suiteInfo.midletToRun.equals(AppManagerPeer.CA_MANAGER)) {
-            // setDefaultCommand will add default command first
-            ci.setDefaultCommand(launchCaManagerCmd);
-        } else if (appManager.oddEnabled() && suiteInfo.midletToRun != null &&
-                   suiteInfo.midletToRun.equals(AppManagerPeer.ODT_AGENT)) {
-            ci.setDefaultCommand(launchODTAgentCmd);
-        } else {
+        setupDefaultCommand(ci);
+        if (!suiteInfo.isInternal()) {
             ci.addCommand(infoCmd);
             ci.addCommand(removeCmd);
             ci.addCommand(updateCmd);
             ci.addCommand(appSettingsCmd);
             if (suiteInfo.storageId != Constants.INTERNAL_STORAGE_ID) {
                 ci.addCommand(moveToInternalStorageCmd);
-            }
-            if (suiteInfo.enabled) {
-                // setDefaultCommand will add default command first
-                ci.setDefaultCommand(launchCmd);
             }
             if (foldersOn) {
                 ci.addCommand(changeFolderCmd);
@@ -1492,11 +1523,11 @@ class AppManagerUIImpl extends Form
                 if (text != null && h >= ICON_FONT.getHeight()) {
 
                     int color;
-                    if (msi.proxy == null) {
-                        color = hasFocus ? ICON_HL_TEXT : ICON_TEXT;
-                    } else {
+                    if (msi.hasRunningMidlet()) {
                         color = hasFocus ?
                                 ICON_RUNNING_HL_TEXT : ICON_RUNNING_TEXT;
+                    } else {
+                        color = hasFocus ? ICON_HL_TEXT : ICON_TEXT;
                     }
 
                     g.setColor(color);
@@ -1548,10 +1579,9 @@ class AppManagerUIImpl extends Form
                                     (bgIconH - icon.getHeight())/2,
                                     Graphics.TOP | Graphics.RIGHT);
                     }
-
                     // Draw special icon if user attention is requested and
                     // that midlet needs to be brought into foreground by the user
-                    if (msi.proxy != null && msi.proxy.isAlertWaiting()) {
+                    if (msi.isAnyAlertWaiting()) {
                         g.drawImage(FG_REQUESTED,
                                     w - (bgIconW - FG_REQUESTED.getWidth()), 0,
                                     Graphics.TOP | Graphics.LEFT);
@@ -1578,7 +1608,7 @@ class AppManagerUIImpl extends Form
 
                     // Draw special icon if user attention is requested and
                     // that midlet needs to be brought into foreground by the user
-                    if (msi.proxy != null && msi.proxy.isAlertWaiting()) {
+                    if (msi.isAnyAlertWaiting()) {
                         g.drawImage(FG_REQUESTED,
                                     bgIconW - FG_REQUESTED.getWidth(), 0,
                                     Graphics.TOP | Graphics.LEFT);
@@ -1727,7 +1757,7 @@ class AppManagerUIImpl extends Form
             // Icon for the Installer will be shown each time
             // the AppSelector is made current since it is the top
             // most icon and we reset the traversal to start from the top
-            if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+            if (msi.isInternal()) {
                 appManager.ensureNoInternalMIDletsRunning();
             }
         }

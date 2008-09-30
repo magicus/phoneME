@@ -28,6 +28,8 @@ package com.sun.midp.chameleon.skins.resources;
 
 import com.sun.midp.chameleon.skins.SkinPropertiesIDs;
 import com.sun.midp.chameleon.skins.VirtualKeyboardSkin;
+import com.sun.midp.chameleon.skins.AlertSkin;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 
 /** Resources for virtual keyboard layer */
 public class VirtualKeyboardResources {
@@ -54,41 +56,74 @@ public class VirtualKeyboardResources {
             return;
         }
 
-        VirtualKeyboardSkin.KEY = SkinResources.getImage(
+        VirtualKeyboardSkin.WIDTH = SkinLoader.getInt(
+                SkinPropertiesIDs.KEYBOARD_WIDTH);
+        if (VirtualKeyboardSkin.WIDTH == -1) {
+            VirtualKeyboardSkin.WIDTH = (int)(.95 * ScreenSkin.WIDTH);
+        }
+
+        VirtualKeyboardSkin.HEIGHT = SkinLoader.getInt(
+                SkinPropertiesIDs.KEYBOARD_HEIGHT);
+
+        VirtualKeyboardSkin.KEY = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_KEY);
 
-        VirtualKeyboardSkin.BG = SkinResources.getImage(
-                SkinPropertiesIDs.KEYBOARD_BG);
+        VirtualKeyboardSkin.BTN_BACKSPACE = SkinLoader.getImage(
+                SkinPropertiesIDs.KEYBOARD_BTN_BACKSPACE);
 
-        VirtualKeyboardSkin.BTN_UP_SEL = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_CAPS = SkinLoader.getImage(
+                SkinPropertiesIDs.KEYBOARD_BTN_CAPS);
+
+        VirtualKeyboardSkin.BTN_ENTER = SkinLoader.getImage(
+                SkinPropertiesIDs.KEYBOARD_BTN_ENTER);
+
+        VirtualKeyboardSkin.BTN_ALPHA_MODE = SkinLoader.getImage(
+                SkinPropertiesIDs.KEYBOARD_BTN_ALPHA_MODE);
+
+        VirtualKeyboardSkin.BTN_SYMBOL_MODE = SkinLoader.getImage(
+                SkinPropertiesIDs.KEYBOARD_BTN_SYMBOL_MODE);
+
+        VirtualKeyboardSkin.BTN_NUMERIC_MODE = SkinLoader.getImage(
+                SkinPropertiesIDs.KEYBOARD_BTN_NUMERIC_MODE);
+
+        VirtualKeyboardSkin.BG = SkinLoader.getCompositeImage(
+                SkinPropertiesIDs.KEYBOARD_BG,9);
+
+        VirtualKeyboardSkin.COLOR_BG = SkinLoader.getInt(
+                        SkinPropertiesIDs.KEYBOARD_COLOR_BG);
+
+        VirtualKeyboardSkin.BTN_UP_SEL = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_UP_SEL);
 
-        VirtualKeyboardSkin.BTN_UP_UN = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_UP_UN = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_UP_UN);
 
-        VirtualKeyboardSkin.BTN_LEFT_SEL = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_LEFT_SEL = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_LEFT_SEL);
 
-        VirtualKeyboardSkin.BTN_LEFT_UN = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_LEFT_UN = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_LEFT_UN);
 
-        VirtualKeyboardSkin.BTN_MID_SEL = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_MID_SEL = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_MID_SEL);
 
-        VirtualKeyboardSkin.BTN_MID_UN = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_MID_UN = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_MID_UN);
 
-        VirtualKeyboardSkin.BTN_RIGHT_SEL = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_RIGHT_SEL = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_RIGHT_SEL);
 
-        VirtualKeyboardSkin.BTN_RIGHT_UN = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_RIGHT_UN = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_RIGHT_UN);
 
-        VirtualKeyboardSkin.BTN_DOWN_SEL = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_DOWN_SEL = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_DOWN_SEL);
 
-        VirtualKeyboardSkin.BTN_DOWN_UN = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_DOWN_UN = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_DOWN_UN);
+
+        VirtualKeyboardSkin.FONT = SkinLoader.getFont(
+                SkinPropertiesIDs.KEYBOARD_FONT);
         
         init = true;
     }

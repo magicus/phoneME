@@ -66,7 +66,7 @@ SUBSYSTEM_SOCKET_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/socket/reference/classes/com/sun/kvem/io/j2me/socket/Protocol.java
 endif
 
-ifneq ($(USE_NATIVE_AMS), true)
+ifneq ($(USE_NATIVE_APP_MANAGER), true)
 SUBSYSTEM_SOCKET_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/socket/reference/classes/com/sun/midp/io/j2me/socket/ProtocolPushImpl.java
 endif
@@ -87,7 +87,7 @@ ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_SOCKET_I3TEST_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/socket/reference/i3test/com/sun/midp/io/j2me/socket/TestInterruptedIO.java
 
-ifneq ($(USE_NATIVE_AMS), true)
+ifneq ($(USE_NATIVE_APP_MANAGER), true)
 SUBSYSTEM_SOCKET_I3TEST_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/socket/reference/i3test/com/sun/midp/io/j2me/socket/TestPushRegistry.java
 endif

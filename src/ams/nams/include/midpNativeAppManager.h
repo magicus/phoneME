@@ -313,19 +313,18 @@ MIDPError midp_midlet_destroy(jint appId, jint timeout);
 MIDPError midp_midlet_set_foreground(jint appId);
 
 /**
- * Gets information about the suite containing the specified running MIDlet.
+ * Gets ID of the suite containing the specified running MIDlet.
  * This call is synchronous.
  *
- * @param appId The ID used to identify the application
- *
- * @param pSuiteData [out] pointer to a structure where static information
- *                         about the midlet will be stored
+ * @param appId    [in]  The ID used to identify the application
+ * @param pSuiteId [out] On exit will hold an ID of the suite the midlet
+ *                       belongs to
  *
  * @return error code: ALL_OK if successful,
  *                     NOT_FOUND if the application was not found,
- *                     BAD_PARAMS if pSuiteData is null
+ *                     BAD_PARAMS if pSuiteId is null
  */
-MIDPError midp_midlet_get_suite_info(jint appId, MidletSuiteData* pSuiteData);
+MIDPError midp_midlet_get_suite_id(jint appId, SuiteIdType* pSuiteId);
 
 /**
  * Gets runtime information about the specified MIDlet.

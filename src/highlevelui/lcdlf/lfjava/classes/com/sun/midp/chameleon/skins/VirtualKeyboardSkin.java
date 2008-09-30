@@ -28,41 +28,143 @@ package com.sun.midp.chameleon.skins;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Font;
 
+
 /**
  * A skin containing images and parameters related to the PTI bar.
  */
 public class VirtualKeyboardSkin {
 
     /**
-     * This field corresponds to PTI_RIGHT_ARROW skin property.
+     * This field corresponds to KEYBOARD_WIDTH skin property.
      * See its comment for further details.
-     *
-     * A 'null' value for this parameter means there is no image for
-     * right indicator and it should not be used.
+     */
+    public static int WIDTH;
+
+    /**
+     * This field corresponds to KEYBOARD_HEIGHT skin property.
+     * See its comment for further details.
+     */
+    public static int HEIGHT;
+
+    /**
+     * This field corresponds to KEYBOARD_KEY skin property.
+     * See its comment for further details.
      */
     public static Image KEY;
 
-    public static Image BG;
+    /**
+     * This field corresponds to KEYBOARD_BTN_BACKSPACE skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_BACKSPACE;
 
+    /**
+     * This field corresponds to KEYBOARD_BTN_CAPS skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_CAPS;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_ENTER skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_ENTER;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_ALPHA_MODE skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_ALPHA_MODE;
+
+    /**
+     * This field corresponds to BTN_SYMBOL_MODE skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_SYMBOL_MODE;
+
+    /**
+     * This field corresponds to BTN_NUMERIC_MODE skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_NUMERIC_MODE;
+
+    /**
+     * This field corresponds to KEYBOARD_BG skin property.
+     * See its comment for further details.
+     */
+    public static Image[] BG;
+
+    /**
+     * This field corresponds to KEYBOARD_COLOR_BG skin property.
+     * See its comment for further details.
+     */
+    public static int COLOR_BG;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_UP_SEL skin property.
+     * See its comment for further details.
+     */
     public static Image BTN_UP_SEL;
 
+    /**
+     * This field corresponds to KEYBOARD_BTN_UP_UN skin property.
+     * See its comment for further details.
+     */
     public static Image BTN_UP_UN;
 
+    /**
+     * This field corresponds to KEYBOARD_BTN_LEFT_SEL skin property.
+     * See its comment for further details.
+     */
     public static Image BTN_LEFT_SEL;
 
+    /**
+     * This field corresponds to KEYBOARD_BTN_LEFT_UN skin property.
+     * See its comment for further details.
+     */
     public static Image BTN_LEFT_UN;
 
+    /**
+     * This field corresponds to KEYBOARD_BTN_MID_SEL skin property.
+     * See its comment for further details.
+     */
     public static Image BTN_MID_SEL;
 
+    /**
+     * This field corresponds to KEYBOARD_BTN_MID_UN skin property.
+     * See its comment for further details.
+     */
     public static Image BTN_MID_UN;
 
+    /**
+     * This field corresponds to KEYBOARD_BTN_RIGHT_SEL skin property.
+     * See its comment for further details.
+     */
     public static Image BTN_RIGHT_SEL;
 
+    /**
+     * This field corresponds to KEYBOARD_BTN_RIGHT_UN skin property.
+     * See its comment for further details.
+     */
     public static Image BTN_RIGHT_UN;
 
+    /**
+     * This field corresponds to KEYBOARD_BTN_DOWN_SEL skin property.
+     * See its comment for further details.
+     */
     public static Image BTN_DOWN_SEL;
 
+    /**
+     * This field corresponds to KEYBOARD_BTN_DOWN_UN skin property.
+     * See its comment for further details.
+     */
     public static Image BTN_DOWN_UN;
+
+    /**
+     * This field corresponds to KEYBOARD_FONT skin property.
+     * See its comment for further details.
+     */
+    public static Font FONT;
 
 
 

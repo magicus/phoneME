@@ -46,7 +46,7 @@ ifeq ($(USE_MULTIPLE_ISOLATES), true)
 SUBSYSTEM_TEST_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/test/common/classes/com/sun/midp/i3test/IsolateSynch.java
 
-    ifeq ($(USE_NATIVE_AMS), true)
+    ifeq ($(USE_NATIVE_APP_MANAGER), true)
     SUBSYSTEM_TEST_JAVA_FILES += \
         $(SUBSYSTEM_DIR)/test/common/classes/com/sun/midp/i3test/NamsFramework.java \
         $(SUBSYSTEM_DIR)/test/common/classes/com/sun/midp/i3test/NamsTestCase.java

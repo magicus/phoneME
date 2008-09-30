@@ -79,11 +79,11 @@ midp_get_number_of_components(SuiteIdType suiteId, int* pNumOfComponents);
  * of suites in the returned array
  *
  * @returns error code: ALL_OK if no errors,
- *          OUT_OF_MEMORY if for out of memory,
+ *          OUT_OF_MEMORY if out of memory,
  *          IO_ERROR if an IO error
  */
 MIDPError
-midp_get_suite_ids(SuiteIdType** ppSuites, jint* pNumOfSuites);
+midp_get_suite_ids(SuiteIdType** ppSuites, int* pNumOfSuites);
 
 /**
  * Frees a list of suite IDs.
@@ -145,11 +145,13 @@ MIDPError midp_remove_suite(SuiteIdType suiteId);
  * @param suiteId suite ID for the installed package
  * @param newStorageId new storage ID
  *
- * @return SUITE_LOCKED if the
- * suite is locked, NOT_FOUND if the suite cannot be found or
- * invalid storage ID specified, BAD_PARAMS if attempt is made
- * to move suite to the external storage, GENERAL_ERROR if
- * VERIFY_ONCE is not enabled and if MONET is enabled
+ * @return SUITE_LOCKED if the suite is locked,
+ *         NOT_FOUND if the suite cannot be found or
+ *                   invalid storage ID specified,
+           BAD_PARAMS if attempt is made to move suite
+ *                    to the external storage,
+           GENERAL_ERROR if VERIFY_ONCE is not enabled
+ *                       and if MONET is enabled
  */
 MIDPError midp_change_suite_storage(SuiteIdType suiteId,
                                     StorageIdType newStorageId);

@@ -64,7 +64,7 @@ static char confDirBuffer[MAX_FILENAME_LENGTH+1];
  *         <tt>NULL</tt>, this will be a static buffer, so that it safe
  *       to call this function before midpInitialize, don't free it
  */
-char* getMidpHome(char *cmd,char *dirBuffer) {
+char* getMidpHome(char *cmd, char *dirBuffer) {
     int   i;
     char* filesep = NULL;
     char* lastsep;
@@ -84,7 +84,15 @@ char* getMidpHome(char *cmd,char *dirBuffer) {
     filesep = getCharFileSeparator();
 
     dirBuffer[MAX_FILENAME_LENGTH] = 0;
-    strncpy(dirBuffer, cmd, MAX_FILENAME_LENGTH);
+
+    /* in some builds cmd is NULL */
+    if (cmd != NULL) {
+        strncpy(dirBuffer, cmd, MAX_FILENAME_LENGTH);
+    } else {
+        /* use the current directory */
+        dirBuffer[0] = '.';
+        dirBuffer[1] = 0;
+    }
 
     while (j < 2) {
 

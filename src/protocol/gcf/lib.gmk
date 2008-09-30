@@ -1,7 +1,5 @@
 #
-#  
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -73,7 +71,9 @@ SUBSYSTEM_GCF_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/Util.java \
     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/Base64.java \
     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/NetworkConnectionBase.java \
-    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/BufferedConnectionAdapter.java
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/BufferedConnectionAdapter.java \
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/FilterInputStream.java \
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/BufferedInputStream.java
 
 # Native files for the ( gcf ) library
 #

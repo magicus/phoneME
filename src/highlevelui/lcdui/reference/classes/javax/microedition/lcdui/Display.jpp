@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,6 @@ import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.ToneControl;
 
-import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 // #else
 import java.lang.*;
@@ -61,6 +60,7 @@ import com.sun.midp.chameleon.input.BasicTextInputSession;
 import com.sun.midp.chameleon.layers.PopupLayer;
 import com.sun.midp.chameleon.layers.PTILayer;
 import com.sun.midp.chameleon.layers.VirtualKeyboardLayer;
+import com.sun.midp.chameleon.layers.VirtualKeyListener;
 import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
@@ -72,7 +72,6 @@ import com.sun.midp.util.LiveTracer;
 // #endif ENABLE_I3_TEST
 
 // #ifdef ENABLE_GCI
-import java.security.*;
 
 import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
 import com.sun.me.gci.windowsystem.GCIDisplay;
@@ -637,14 +636,14 @@ public class Display {
         GameMap.registerGraphicsAccess(graphicsAccessor);
 
         // #ifdef ENABLE_CHAMELEON
-        SkinResources.initGraphicsAccess(graphicsAccessor);
-        SkinResources.setScreenSize(WIDTH, HEIGHT);
+        SkinLoader.initGraphicsAccess(graphicsAccessor);
+        SkinLoader.setScreenSize(WIDTH, HEIGHT);
 
         // IMPL_NOTE: In the MVM mode it's important to do the first
         //   skin resources loading from the AMS isolate, since they
         //   are shared between all working isolates.
         try {
-            SkinResources.loadSkin(false);
+            SkinLoader.loadSkin(false);
         } catch (IOException e) {
             if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
                 Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI,
@@ -700,6 +699,10 @@ public class Display {
 
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
+
+        // #ifdef ENABLE_CHAMELEON
+        SkinLoader.initDisplayAccess(accessor);
+        // #endif ENABLE_CHAMELEON
 
         /** create DisplayEventConsumer I/F implementor */
         consumer = new DisplayEventConsumerImpl();
@@ -1399,6 +1402,7 @@ public class Display {
         }
     }
 
+
     /**
      * Requests a flashing effect for the device's backlight.  The flashing
      * effect is intended to be used to attract the user's attention or as a
@@ -1760,15 +1764,13 @@ public class Display {
      *   associated with this Display
      **/
     VirtualKeyboardLayer getVirtualKeyboardPopup() {
-
+        if (!VirtualKeyboardLayer.isSupportJavaKeyboard()) {
+            return null;
+        }
         if (keyboardLayer == null) {
-            if (getCurrent() instanceof Canvas) {
-                keyboardLayer = new VirtualKeyboardLayer(
-                    cham_tunnel);
-            } else {
-                keyboardLayer = new VirtualKeyboardLayer(
-                    getInputSession());
-            }
+          VirtualKeyboardResources.load();
+          keyboardLayer = new VirtualKeyboardLayer();
+          keyboardLayer.init();
         }
         return keyboardLayer;
     }
@@ -2396,7 +2398,9 @@ public class Display {
         screenGraphics.reset();
 
         // #ifdef ENABLE_CHAMELEON
-        SkinResources.adjustScreen(accessor);
+
+        SkinLoader.adjustScreen();
+
         // Notify Chameleon that the current displayable should be shown
         // in fullscreen mode.
         // This call will not result in any call into application code
@@ -3226,6 +3230,7 @@ public class Display {
                                               x - window.getBodyAnchorX(),
                                               y - window.getBodyAnchorY());
             }
+
             // #else
             if (currentCopy != null) {
                 currentCopy.uCallPointerEvent(pointerType, x, y);
@@ -3462,7 +3467,7 @@ public class Display {
             }
             
             // #ifdef ENABLE_CHAMELEON
-            SkinResources.adjustScreen(accessor);
+            SkinLoader.adjustScreen();
 
             MIDPWindow windowCopy;
             DisplayableLF currentCopy;
@@ -3520,6 +3525,19 @@ public class Display {
             // the callSerially() event.
             // repaintEventProducer.serviceRepaints();
             getCallSerially();
+        }
+
+        /*
+         * Called by event delivery when need to show or hide virtual keyboard
+         */
+        public void handleVirtualKeyboardEvent() {
+            // #ifdef ENABLE_CHAMELEON
+            Display.this.getVirtualKeyboardPopup();
+            if (keyboardLayer != null) {
+                keyboardLayer.setVirtualKeyboardLayerListener((VirtualKeyListener)Display.this.current);
+                keyboardLayer.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
+            }
+            // #endif ENABLE_CHAMELEON
         }
     } // END DisplayEventConsumerImpl Class
 
