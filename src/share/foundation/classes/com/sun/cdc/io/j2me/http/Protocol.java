@@ -126,8 +126,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         method = GET;
         responseCode = -1;
         protocol = "http";
-	socket = null;
-System.out.println("Protocol:ctor");
+        socket = null;
         AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
                 String http_proxy;
@@ -152,7 +151,6 @@ System.out.println("Protocol:ctor");
      */
     protected void checkPermission(String host, int port, String file) {
         // Check for SecurityManager.checkConnect()
-System.out.println("Protocol:checkPermission");
         java.lang.SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkConnect(host, port);
@@ -168,7 +166,6 @@ System.out.println("Protocol:checkPermission");
      */
     protected void outputStreamPermissionCheck() {
         // Check for SecurityManager.checkConnect()
-System.out.println("Protocol:osPermissionCheck");
         java.lang.SecurityManager sm = System.getSecurityManager();
         if (sm != null){
             if (host != null) {
@@ -187,7 +184,6 @@ System.out.println("Protocol:osPermissionCheck");
      * raised if the connection is not allowed.
      */
     protected void inputStreamPermissionCheck() {
-System.out.println("Protocol:isPermissionCheck");
         // Check for SecurityManager.checkConnect()
         java.lang.SecurityManager sm = System.getSecurityManager();
         if (sm != null){
@@ -201,7 +197,6 @@ System.out.println("Protocol:isPermissionCheck");
     }
 
     public void open(String url, int mode, boolean timeouts) throws IOException {
-System.out.println("Protocol:open");
         // DEBUG: System.out.println ("open " + url); 
         if (opens > 0) {
             throw new IOException("already connected");
@@ -245,7 +240,6 @@ System.out.println("Protocol:open");
     }
 
     public void close() throws IOException {
-System.out.println("Protocol:close");
         // DEBUG: System.out.println ("close " + opens + " " + connected ); 
         if (--opens == 0 && (connected || requested))
             disconnect();
@@ -259,7 +253,6 @@ System.out.println("Protocol:close");
      */
     public InputStream openInputStream() throws IOException {
          // DEBUG: System.out.println ("open input stream");
-System.out.println("Protocol:openIS");
 	inputStreamPermissionCheck();
 
         /* CR 6226615: opening another stream should not throw IOException
@@ -281,14 +274,13 @@ System.out.println("Protocol:openIS");
         connect();
         opens++;
 
-        //in = new PrivateInputStream();
+        privateIn = new PrivateInputStream();
         return privateIn;
     }
 
     public DataInputStream openDataInputStream() throws IOException {
         // If the connection was opened and closed before the 
         // data input stream is accessed, throw an IO exception
-System.out.println("Protocol:openDIStream");
         if (opens == 0 ){
             throw new IOException("connection is closed");
         }
@@ -308,8 +300,13 @@ System.out.println("Protocol:openDIStream");
     }
 
     public OutputStream openOutputStream() throws IOException {
-System.out.println("Protocol:openOutputStream");
-	outputStreamPermissionCheck();
+    // Delegate to openDataOutputStream
+        return openDataOutputStream();
+    }
+
+    public DataOutputStream openDataOutputStream() throws IOException {
+ 
+        outputStreamPermissionCheck();
 
          // DEBUG: System.out.println ("open data output stream");
         if (mode != Connector.WRITE && mode != Connector.READ_WRITE) {
@@ -328,17 +325,8 @@ System.out.println("Protocol:openOutputStream");
         }
         */
 
-        System.out.println("open OS");
-        connect();
         opens++;
-        return privateOut;
-    }
-
-    public DataOutputStream openDataOutputStream() throws IOException {
-
-System.out.println("Protocol:openDOStream");
-        if (privateOut == null)
-            openOutputStream();
+        privateOut = new PrivateOutputStream();
         outputStreamOpened = true;
         return new DataOutputStream(privateOut);
     }
@@ -352,7 +340,6 @@ System.out.println("Protocol:openDOStream");
         boolean eof;            // true if eof seen
 
         PrivateInputStream() throws IOException {
-System.out.println("PrivateIS:ctor");
             bytesleft = 0;
             chunked = false;
             eof = false;
@@ -406,7 +393,6 @@ System.out.println("PrivateIS:ctor");
          */
         public int available()
             throws IOException {
-System.out.println("PrivateIS:available");
              // DEBUG: System.out.println ("available " + bytesleft + " " + connected );
 
             if (connected) {
@@ -436,7 +422,6 @@ System.out.println("PrivateIS:available");
          */
         public int read() throws IOException {
             // Be consistent about returning EOF once encountered.
-System.out.println("PrivateIS:read");
             if (eof) {
                 return -1;
             }
@@ -474,7 +459,6 @@ System.out.println("PrivateIS:read");
          * to avoid default byte-by-byte reading behaviour.
          */
         public int read(byte[] b, int off, int len) throws IOException {
-System.out.println("PrivateIS:read[]");
             /* Need to check parameters here, because len may be changed
              * and streamInput.read() will not notice invalid argument.
              */
@@ -524,7 +508,6 @@ System.out.println("PrivateIS:read[]");
          * and terminated with <cr><lf>.
          */
         private int readChunkSize() throws IOException {
-System.out.println("PrivateIS:readChunkSize");
             int size = -1;
             try {
                 String chunk = readLine(streamInput);
@@ -552,7 +535,6 @@ System.out.println("PrivateIS:readChunkSize");
          * is missing.
          */
         private void readCRLF() throws IOException { 
-System.out.println("PrivateIS:readCRLF");
             int ch;
             ch = streamInput.read();
             if (ch != '\r') 
@@ -563,7 +545,6 @@ System.out.println("PrivateIS:readCRLF");
         } 
         
         public void close() throws IOException {
-System.out.println("PrivateIS:close");
             // DEBUG:  System.out.println ("close input stream " + opens + " " + connected );
             if (--opens == 0 && connected) disconnect();
         }
@@ -577,12 +558,10 @@ System.out.println("PrivateIS:close");
         private ByteArrayOutputStream output;
 
         public PrivateOutputStream() {
-System.out.println("PrivateOS:ctor");
             output = new ByteArrayOutputStream();
         }
 
         public void write(int b) throws IOException {
-System.out.println("PrivateOS:write");
             output.write(b);
             // CR 6216611: set the content-length. Note: we shouldn't set
             // content-length to the size of the current bytes that we are
@@ -596,7 +575,6 @@ System.out.println("PrivateOS:write");
          * "len". CR 6216611 
          */
         public void write(byte b[], int off, int len) throws IOException {
-System.out.println("PrivateOS:write[]");
             output.write(b, off, len);
             // Update Content-Length. Note: we should't set
             // content-length to the size of the current bytes that we are
@@ -606,9 +584,8 @@ System.out.println("PrivateOS:write[]");
         }
 
         public void write(byte[] b) throws IOException{
-System.out.println("PrivateOS:write []b");
             // Create the headers
-            String reqLine = method + " " + getFile()
+            String reqLine = method + " " + (getFile() == null ? "/" : getFile())
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
                 + " " + http_version + "\r\n";
@@ -636,7 +613,6 @@ System.out.println("PrivateOS:write []b");
 
 
         public void flush() throws IOException {
-System.out.println("PrivateOS:flush");
             if (output.size() > 0) {
                 connect();
             }
@@ -651,7 +627,6 @@ System.out.println("PrivateOS:flush");
         }
 
         public void close() throws IOException {
-System.out.println("PrivateOS:close");
              // DEBUG: System.out.println ("close output stream" + opens + " " + connected );
             // CR 6216611: If the connection is already closed, just return
             if (opens == 0) return;
@@ -663,7 +638,6 @@ System.out.println("PrivateOS:close");
     }// PrivateOutputStream
 
     protected void ensureOpen() throws IOException {
-System.out.println("Protocol:ensureOpen");
         if (opens == 0) throw new IOException("Connection closed");
     }
 
@@ -724,21 +698,18 @@ System.out.println("Protocol:ensureOpen");
     }
 
     public int getResponseCode() throws IOException {
-System.out.println("Protocol:getResponseCode");
         ensureOpen();
         connect();
         return responseCode;
     }
 
     public String getResponseMessage() throws IOException {
-System.out.println("Protocol:getResponseMessage");
         ensureOpen();
         connect();
         return responseMsg;
     }
 
     public long getLength() {
-System.out.println("Protocol:getLength");
         try {connect();}
         catch (IOException x) {return -1;}
         try {
@@ -749,7 +720,6 @@ System.out.println("Protocol:getLength");
     }
 
     public String getType() {
-System.out.println("Protocol:getType");
         try {connect();}
         catch (IOException x) {return null;}
         try {
@@ -758,7 +728,6 @@ System.out.println("Protocol:getType");
     }
 
     public String getEncoding() {
-System.out.println("Protocol:getEncoding");
         try {connect();}
         catch (IOException x) {return null;}
         try {
@@ -852,7 +821,6 @@ System.out.println("Protocol:getEncoding");
 
 
     protected StreamConnection connectSocket() throws IOException {
-System.out.println("Protocol:connectSocket");
         
         // Check for illegal empty string for host
         if (host.equals("")) {
@@ -869,7 +837,6 @@ System.out.println("Protocol:connectSocket");
                                           proxyHost, proxyPort);
         }
         if (hsc != null) {
-            System.out.println("connectSocket: get from pool");
             return hsc;
         }
         
@@ -878,7 +845,6 @@ System.out.println("Protocol:connectSocket");
         } else {
             hsc = new HttpStreamConnection(proxyHost, proxyPort);
         }
-        System.out.println("connectSocket: new connection");
         return hsc;
     }
     
@@ -886,15 +852,12 @@ System.out.println("Protocol:connectSocket");
         if (connected) {
             return;
         }
-System.out.println("Protocol:connect");
 
-	if (streamConnection==null) {
-	    streamConnection=connectSocket();        
+        if (streamConnection==null) {
+            streamConnection=connectSocket();        
         }
 
-        privateOut = new PrivateOutputStream();
         streamOutput = streamConnection.openDataOutputStream();
-        streamInput = streamConnection.openDataInputStream();
         
         // HTTP 1.1 requests must contain content length for proxies
         if ((getRequestProperty("Content-Length") == null) ||
@@ -906,7 +869,7 @@ System.out.println("Protocol:connect");
         String reqLine ;
         
 	if (proxyHost == null) {
-            reqLine = method + " " + getFile()
+            reqLine = method + " " + (getFile() == null ? "/" : getFile())
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
                 + " " + http_version + "\r\n";
@@ -940,20 +903,17 @@ System.out.println("Protocol:connect");
             // DEBUG: System.out.println("Request: " + new String(out.toByteArray()));  
         }
 
-        System.out.println("writing...");
         streamOutput.flush();
 
+        streamInput = streamConnection.openDataInputStream();
         readResponseMessage(streamInput);
-        readHeaders(streamInput);
-        privateIn = new PrivateInputStream();
-        
+        readHeaders(streamInput);        
         connected = true;
 
     }
 
 
     private void readResponseMessage(InputStream in) throws IOException {
-System.out.println("Protocol:readResponseMessage");
         String line = readLine(in);
         int httpEnd, codeEnd;
 
@@ -995,7 +955,6 @@ System.out.println("Protocol:readResponseMessage");
     }
 
     private void readHeaders(InputStream in) throws IOException {
-System.out.println("Protocol:readHeaders");
         String line, key, value;
         int index;
 
@@ -1025,7 +984,6 @@ System.out.println("Protocol:readHeaders");
      * terminated by <cr><lf> and return it as string.
      */
     private String readLine(InputStream in) {
-System.out.println("Protocol:readLine");
         int c;
         stringbuffer.setLength(0);
         for (;;) {
@@ -1050,12 +1008,6 @@ System.out.println("Protocol:readLine");
     }
 
     protected void disconnect() throws IOException {
-System.out.println("Protocol:disconnect");
-if (privateOut != null)
-privateOut.close();
-if (privateIn != null)
-privateIn.close();
-
         if (streamConnection != null) {
             String connectionField = (String) headerFields.get("connection");
             if (connectionField != null &&
@@ -1063,40 +1015,39 @@ privateIn.close();
                     (responseProtocol != null
                         && responseProtocol.equalsIgnoreCase("HTTP/1.0")
                         && !connectionField.equalsIgnoreCase("keep-alive")))) {
-                System.out.println("close got Connection:Close HEADER!");
                 if (streamConnection instanceof StreamConnectionElement) {
                     connectionPool.remove(
                             (StreamConnectionElement) streamConnection);
                     streamConnection = null;
                 } else {
-                    System.out.println("Not from pool - disconnect");
                     disconnectSocket();
                 }
-            } else {
-                System.out.println("close didn't get Connection:Close HEADER!");
             }
+            
             if (streamConnection != null){
 
                 if (streamConnection instanceof StreamConnectionElement) {
                     // we got this connection from the pool
-                    System.out.println("Connection return for reuse: " + streamConnection);
                     connectionPool.returnForReuse(
                             (StreamConnectionElement) streamConnection);
                     streamConnection = null;
                 } else {
-                    System.out.println("Connection add for reuse: " + host+":"+port+
-                            " os: "+streamOutput+" is: "+streamInput);
                     // save the connection for reuse
                     if (!connectionPool.add(protocol, host, port,
                             (HttpStreamConnection)streamConnection, streamOutput,
                             streamInput)) {
                         // pool full, disconnect
-                        System.out.println("Pool fool");
                         disconnectSocket();
                     }
                 }
             }
         }
+        /*if (streamInput != null) {
+            streamInput.close(); 
+        }
+        if (streamOutput != null) {
+            streamOutput.close(); 
+        }*/
 
         privateIn = null;
         privateOut = null;
@@ -1107,7 +1058,6 @@ privateIn.close();
     }
 
     protected void disconnectSocket() throws IOException {
-System.out.println("Protocol:disconnectSocket");
         if (streamConnection != null) {
             streamConnection.close();
             if (! (streamConnection instanceof StreamConnectionElement)) {

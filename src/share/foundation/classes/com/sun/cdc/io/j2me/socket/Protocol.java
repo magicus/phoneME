@@ -115,7 +115,6 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
         if(name.charAt(0) != '/' || name.charAt(1) != '/') {
             throw new IllegalArgumentException("Protocol must start with \"//\" "+name);
         }
-System.out.println("SocketProtocol: openPrim "+name);
         name = name.substring(2);
 
         try {
@@ -229,12 +228,10 @@ System.out.println("SocketProtocol: openPrim "+name);
      * @exception  IOException  if an I/O error occurs when creating the
      *                          input stream.
      */
-    private InputStream is;
     public InputStream openInputStream() throws IOException {
-        System.out.println("SocketProtocol: openIS");
         inputStreamPermissionCheck();
-        if (is==null){ is = new UniversalFilterInputStream(this, socket.getInputStream());
-        opens++;}
+        InputStream is = new UniversalFilterInputStream(this, socket.getInputStream());
+        opens++;
         return is;
     }
 
@@ -245,13 +242,11 @@ System.out.println("SocketProtocol: openPrim "+name);
      * @exception  IOException  if an I/O error occurs when creating the
      *                          output stream.
      */
-    private OutputStream os;
     public OutputStream openOutputStream() throws IOException {
         outputStreamPermissionCheck();
-        System.out.println("SocketProtocol: openOS");
-        if (os==null){ os = new UniversalFilterOutputStream(this,
+        OutputStream os = new UniversalFilterOutputStream(this,
                                  socket.getOutputStream());
-        opens++;}
+        opens++;
         return os;
     }
 
@@ -263,9 +258,6 @@ System.out.println("SocketProtocol: openPrim "+name);
      */
     public void close() throws IOException {
         if(--opens == 0) {
-            System.out.println("SocketProtocol: close");
-            is.close(); is = null;
-            os.close(); os = null;
             socket.close();
         }
     }

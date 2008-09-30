@@ -76,7 +76,6 @@ class ServerSocket {
      * @revised 1.4
      */
     public ServerSocket() throws IOException {
-	System.out.println("ServerSocket net: ctor");
         setImpl();
     }
 

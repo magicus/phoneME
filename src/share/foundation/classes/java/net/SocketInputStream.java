@@ -60,10 +60,9 @@ class SocketInputStream extends FileInputStream
      * @param impl the implemented socket input stream
      */
     SocketInputStream(PlainSocketImpl impl) throws IOException {
-	super(impl.getFileDescriptor());
-        System.out.println("SocketInputStream: ctor");
-	this.impl = impl;
-	socket = impl.getSocket();
+        super(impl.getFileDescriptor());
+        this.impl = impl;
+        socket = impl.getSocket();
     }
 
     /**
@@ -243,7 +242,6 @@ class SocketInputStream extends FileInputStream
      */
     private boolean closing = false;
     public void close() throws IOException {
-        System.out.println("SocketInputStream: close");
 	// Prevent recursion. See BugId 4484411
 	if (closing)
 	    return;
