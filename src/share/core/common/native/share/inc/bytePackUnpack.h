@@ -1,7 +1,5 @@
 /*
- *   
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -58,7 +56,7 @@ extern "C" {
  *         The index is incremented by 4
  *
  */
-int getInt(char* buf, int* index);
+int wma_get_int(char* buf, int* index);
 
 /**
  * Returns a short from a byte buffer, starting at specified index.
@@ -70,7 +68,7 @@ int getInt(char* buf, int* index);
  *         The index is incremented by 2
  *
  */
-short getShort(char* buf, int* index);
+short wma_get_short(char* buf, int* index);
 
 /**
  * Returns an long long from a byte buffer, starting at specified index.
@@ -82,7 +80,7 @@ short getShort(char* buf, int* index);
  *         The index is incremented by 8
  *
  */
-jlong getLongLong(char* buf, int* index);
+jlong wma_get_long_long(char* buf, int* index);
 
 /**
  * Returns a string from a byte buffer, starting at specified index.
@@ -94,7 +92,7 @@ jlong getLongLong(char* buf, int* index);
  *         The index is incremented by length of string + 1
  *
  */
-char* getString(char* buf, int* index);
+char* wma_get_string(char* buf, int* index);
 
 /**
  * Puts an int into a byte buffer, starting at specified index.
@@ -105,7 +103,7 @@ char* getString(char* buf, int* index);
  * @return The index is incremented by 4 on return
  *
  */
-void putInt(char *buf, int *index, int x);
+void wma_put_int(char *buf, int *index, int x);
 
 /**
  * Puts a short into a byte buffer, starting at specified index.
@@ -116,7 +114,7 @@ void putInt(char *buf, int *index, int x);
  * @return The index is incremented by 2 on return
  *
  */
-void putShort(char *buf, int *index, short x);
+void wma_put_short(char *buf, int *index, short x);
 
 /**
  * Puts a long long into a byte buffer, starting at specified index.
@@ -127,7 +125,7 @@ void putShort(char *buf, int *index, short x);
  * @return The index is incremented by 8 on return
  *
  */
-void putLongLong(char *buf, int *index, jlong x);
+void wma_put_long_long(char *buf, int *index, jlong x);
 
 /**
  * Puts a byte array of specified length into a byte buffer, starting at specified index.
@@ -140,7 +138,7 @@ void putLongLong(char *buf, int *index, jlong x);
  * @return The index is incremented by length on return
  *
  */
-void putBytes(char *buffer, int *index, char *buf, int length);
+void wma_put_bytes(char *buffer, int *index, char *buf, int length);
 
 /**
  * Gets an array of bytes from a buffer of bytes. Memory is allocated for the
@@ -155,7 +153,7 @@ void putBytes(char *buffer, int *index, char *buf, int length);
  *     <code>length</code>.
  *
  */
-char* getBytes(char* buffer, int* index, int length);
+char* wma_get_bytes(char* buffer, int* index, int length);
 
 /**
  * Puts a null-terminated string into the byte stream, starting at specified
@@ -168,7 +166,7 @@ char* getBytes(char* buffer, int* index, int length);
  * @return The index is incremented by (length + 1) on return
  *
  */
-void putString(char *buffer, int *index, char *buf);
+void wma_put_string(char *buffer, int *index, char *buf);
 
 #ifdef __cplusplus
 }

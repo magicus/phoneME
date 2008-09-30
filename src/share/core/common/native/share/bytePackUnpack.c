@@ -1,7 +1,5 @@
 /*
- *   
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -59,7 +57,7 @@
  *
  * @return the integer that was read.
  */
-int getInt(char* buf, int* index) {
+int wma_get_int(char* buf, int* index) {
     int x1, x2, x3, x4;
     x1 = ((int)(buf[(*index)++] & 0xff));
     x2 = ((int)(buf[(*index)++] & 0xff) << 8);
@@ -76,7 +74,7 @@ int getInt(char* buf, int* index) {
  *
  * @return the short that was read.
  */
-short getShort(char* buf, int* index) {
+short wma_get_short(char* buf, int* index) {
     short x1, x2;
     x1 = ((short)(buf[(*index)++] & 0xff));
     x2 = ((short)(buf[(*index)++] & 0xff) << 8);
@@ -91,7 +89,7 @@ short getShort(char* buf, int* index) {
  *
  * @return the long that was read.
  */
-jlong getLongLong(char* buffer, int* index) {
+jlong wma_get_long_long(char* buffer, int* index) {
     jlong x1, x2, x3, x4, x5, x6, x7, x8;
     x1 =   (jlong)(buffer[(*index)++] & 0xff);
     x2 =  ((jlong)(buffer[(*index)++] & 0xff) << 8);
@@ -110,7 +108,7 @@ jlong getLongLong(char* buffer, int* index) {
  * @param buffer The buffer that holds the string.
  * @param index The reading index. 
  */
-char* getString(char* buffer, int* index) {
+char* wma_get_string(char* buffer, int* index) {
     int len = 0;
     char* s = NULL;
 
@@ -138,10 +136,10 @@ char* getString(char* buffer, int* index) {
  * @return a pointer to the the array of bytes. The memory for this array must
  *     be freed by the calling code.
  */
-char* getBytes(char* buffer, int* index, int length) {
+char* wma_get_bytes(char* buffer, int* index, int length) {
     char* dst = (char*)pcsl_mem_malloc(length);
     int j = 0;
-    putBytes(dst, &j, buffer + *index, length);
+    wma_put_bytes(dst, &j, buffer + *index, length);
     *index = *index + length;
     return dst;
 }
@@ -153,7 +151,7 @@ char* getBytes(char* buffer, int* index, int length) {
  * @param index The writing index.
  * @param x The integer value to be written.
  */ 
-void putInt(char *buffer, int *index, int x) {
+void wma_put_int(char *buffer, int *index, int x) {
     buffer[(*index)++] = (char) (x & 0xff);
     buffer[(*index)++] = (char)((x >> 8) & 0xff);
     buffer[(*index)++] = (char)((x >> 16) & 0xff);
@@ -167,7 +165,7 @@ void putInt(char *buffer, int *index, int x) {
  * @param index The writing index.
  * @param x The short value to be written.
  */
-void putShort(char *buffer, int *index, short x) {
+void wma_put_short(char *buffer, int *index, short x) {
     buffer[(*index)++] = (char) (x & 0xff);
     buffer[(*index)++] = (char)((x >> 8) & 0xff);
 }
@@ -179,7 +177,7 @@ void putShort(char *buffer, int *index, short x) {
  * @param index The writing index.
  * @param x The long value to be written.
  */
-void putLongLong(char *buffer, int *index, jlong x) {
+void wma_put_long_long(char *buffer, int *index, jlong x) {
     buffer[(*index)++] = (char) (x & 0xff);
     buffer[(*index)++] = (char)((x >> 8) & 0xff);
     buffer[(*index)++] = (char)((x >> 16) & 0xff);
@@ -198,7 +196,7 @@ void putLongLong(char *buffer, int *index, jlong x) {
  * @param src The source of the bytes to be written.
  * @param length The number of bytes to be written.
  */
-void putBytes(char *dst, int *index, char *src, int length) {
+void wma_put_bytes(char *dst, int *index, char *src, int length) {
     int i;
 
     for (i = 0; i < length; i++) {
@@ -215,14 +213,15 @@ void putBytes(char *dst, int *index, char *src, int length) {
  * @param s The zero-terminated string to write, or <code>NULL</code> if the
  *     string does not exist. When the string doesn't exist, <code>0xff</code>
  *     is written, instead, which is a special marker for
- *     <code>getString()</code> to use to identify <code>NULL</code> strings.
+ *     <code>wma_get_string()</code> to use to identify <code>NULL</code>
+ *     strings.
  */
-void putString(char* buffer, int* index, char* s) {
+void wma_put_string(char* buffer, int* index, char* s) {
     if (s == NULL) {
         /* Store 0xff for a NULL string. Note: No zero-terminator. */
-        putBytes(buffer, index, "\377", 1);
+        wma_put_bytes(buffer, index, "\377", 1);
     } else {
-        putBytes(buffer, index, s, strlen(s) + 1);
+        wma_put_bytes(buffer, index, s, strlen(s) + 1);
     }
 }
 

@@ -1,7 +1,5 @@
 /*
- *   
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -150,18 +148,18 @@ MmsMessage* createMmsMessageFromBuffer(char* buffer) {
         p = buffer;
 
         /* Get the sender's address. */
-        mms->fromAddress = getString(p, &index);
+        mms->fromAddress = wma_get_string(p, &index);
 
         /* Get the application ID string. */
-        mms->appID = getString(p, &index);
+        mms->appID = wma_get_string(p, &index);
 
         /* Get the reply-to application ID string. */
-        mms->replyToAppID = getString(p, &index);
+        mms->replyToAppID = wma_get_string(p, &index);
 
         /* Get the message length and data. */
-        length = getInt(p, &index);
+        length = wma_get_int(p, &index);
         mms->msgLen = length;
-        mms->msgBuffer = getBytes(p, &index, length);
+        mms->msgBuffer = wma_get_bytes(p, &index, length);
     }
 
     return mms;
@@ -274,17 +272,17 @@ void WMASocket::readableSlot(int socket) {
                 if (sms != NULL) {
                     memset(sms, 0, sizeof(SmsMessage));
 
-                    sms->encodingType = getInt(p, &index);
+                    sms->encodingType = wma_get_int(p, &index);
                     sms->sourcePortNum = ipPort;
-                    sms->destPortNum = (unsigned short)getInt(p, &index);
-                    sms->timeStamp = getLongLong(p, &index);
+                    sms->destPortNum = (unsigned short)wma_get_int(p, &index);
+                    sms->timeStamp = wma_get_long_long(p, &index);
                     /* The next field is the recipient's phone number */
-                    recipientPhone = getString(p, &index);
+                    recipientPhone = wma_get_string(p, &index);
                     pcsl_mem_free(recipientPhone);
                     /* The next field is the sender's phone number */
-                    sms->msgAddr = getString(p, &index);
+                    sms->msgAddr = wma_get_string(p, &index);
 
-                    length = getInt(p, &index);
+                    length = wma_get_int(p, &index);
                     sms->msgLen = length;
                     if (length > 0) {
                         msg = (char*)pcsl_mem_malloc(length + 1);
@@ -326,11 +324,11 @@ void WMASocket::readableSlot(int socket) {
                 if (cbs != NULL) {
                     memset(cbs, 0, sizeof(CbsMessage));
 
-                    cbs->encodingType = (ENCODING_TYPE)getInt(p, &index);
-                    cbs->msgID = getInt(p, &index);
+                    cbs->encodingType = (ENCODING_TYPE)wma_get_int(p, &index);
+                    cbs->msgID = wma_get_int(p, &index);
 
                     /* Pick up the message length and the message data. */
-                    length = getInt(p, &index);
+                    length = wma_get_int(p, &index);
                     cbs->msgLen = length;
                     if (length > 0) {
                         msg = (char*)pcsl_mem_malloc(length);
@@ -577,10 +575,10 @@ static jboolean assemble_frags(char *packet) {
      * Extract the packet number, # packets,
      * no of bytes in this packet and total # of bytes
      */
-    packNum = getShort(packet, &index);
-    numPackets = getShort(packet, &index);
-    count = getShort(packet, &index);
-    totalLen = getInt(packet, &index);
+    packNum = wma_get_short(packet, &index);
+    numPackets = wma_get_short(packet, &index);
+    count = wma_get_short(packet, &index);
+    totalLen = wma_get_int(packet, &index);
 
     if (packNum != packetNumber) {
         /*
