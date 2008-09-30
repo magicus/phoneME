@@ -153,6 +153,8 @@ typedef enum {
     JAVACALL_EVENT_MEDIA_BUFFERING_UNBLOCKED,
     /** Posted when the blocked acquire device finished */
     JAVACALL_EVENT_MEDIA_DEVICE_ACQUIRED,
+    /** Posted when the blocked release device finished */
+    JAVACALL_EVENT_MEDIA_DEVICE_RELEASED,
     
     /** Posted when the blocked get volume finished */
     JAVACALL_EVENT_MEDIA_VOLUME_GOTTEN,
