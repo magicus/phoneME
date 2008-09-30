@@ -23,20 +23,30 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
+
+#include <string.h>
+
 #include <midpMidletSuiteUtils.h>
 #include <midpMIDletProxyList.h>
 #include <midp_foreground_id.h>
 #include <midpPauseResume.h>
-
+#include <midpMalloc.h>
 /**
  * @file
  * Native state of the MIDlet proxy list.
  */
 
+
 /** Reset the MIDlet proxy list for the next run of the VM. */
 void midpMIDletProxyListReset() {
-    gForegroundIsolateId = midpGetAmsIsolateId();
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+    int sizeInBytes = maxDisplays * sizeof(int);
+    gForegroundDisplayIds = midpMalloc(sizeInBytes);
+    memset(gForegroundDisplayIds, 0, sizeInBytes);
+#else
     gForegroundDisplayId = -1;
+#endif // ENABLE_MULTIPLE_DISPLAYS   
+    gForegroundIsolateId = midpGetAmsIsolateId();
 }
 
 /**
@@ -47,9 +57,39 @@ void midpMIDletProxyListReset() {
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_main_MIDletProxyList_setForegroundInNativeState) {
-    gForegroundIsolateId = KNI_GetParameterAsInt(1);
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+    int displayId = KNI_GetParameterAsInt(2);
+    int i;
+    for (i = 0; i < maxDisplays; i++) {
+      if (gForegroundDisplayIds[i] == -1) {
+	gForegroundDisplayIds[i] = displayId;
+	break;
+      }
+    }
+#else
     gForegroundDisplayId = KNI_GetParameterAsInt(2);
+#endif /* ENABLE_MULTIPLE_DISPLAYS */
+    gForegroundIsolateId = KNI_GetParameterAsInt(1);
     KNI_ReturnVoid();
+}
+
+
+/**
+ * Resets the foreground MIDlet.
+ *
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_main_MIDletProxyList_resetForegroundInNativeState) {
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+  int i;  
+  for (i = 0; i < maxDisplays; i++) {
+    gForegroundDisplayIds[i] = -1;
+  }
+#else 
+    gForegroundDisplayId = -1;
+#endif /* ENABLE_MULTIPLE_DISPLAYS */
+  
+  KNI_ReturnVoid();
 }
 
 

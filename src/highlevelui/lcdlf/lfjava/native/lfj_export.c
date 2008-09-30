@@ -201,6 +201,12 @@ int lcdlf_get_display_capabilities(int hardwareId) {
 jint* lcdlf_get_display_device_ids(jint* n) {
     return lfjport_get_display_device_ids(n);
 }
+/**
+* Notify that display device state has ben changed
+*/
+void lcdlf_display_device_state_changed(int hardwareId, int state) {
+    lfjport_display_device_state_changed(hardwareId, state);
+}
 
 #ifdef __cplusplus
 }

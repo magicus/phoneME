@@ -61,6 +61,10 @@ void midpStoreEventAndSignalAms(MidpEvent evt) {
  * @param evt The event to store
  */
 void midpStoreEventAndSignalForeground(MidpEvent evt) {
-    evt.DISPLAY = gForegroundDisplayId;
-    StoreMIDPEventInVmThread(evt, gForegroundIsolateId);
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+  evt.DISPLAY = gForegroundDisplayIds[0];
+#else
+  evt.DISPLAY = gForegroundDisplayId;
+#endif // ENABLE_MULTIPLE_DISPLAYS
+  StoreMIDPEventInVmThread(evt, gForegroundIsolateId);
 }

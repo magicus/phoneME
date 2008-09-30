@@ -168,6 +168,8 @@ extern int fbapp_get_display_capabilities(int hardwareId);
 
 extern jint* fbapp_get_display_device_ids(jint* n);
 
+extern void fbapp_display_device_state_changed(int hardwareId, int state);
+
 typedef enum {
     DISPLAY_DEVICE_ENABLED = 0,
     DISPLAY_DEVICE_DISABLED = 1

@@ -246,6 +246,10 @@ jint* lfjport_get_display_device_ids(jint* n) {
   return fbapp_get_display_device_ids(n);
 }
 
+void lfjport_display_device_state_changed(int hardwareId, int state) {
+  fbapp_display_device_state_changed(hardwareId, state);
+}
+
 #ifdef __cplusplus
 }
 #endif

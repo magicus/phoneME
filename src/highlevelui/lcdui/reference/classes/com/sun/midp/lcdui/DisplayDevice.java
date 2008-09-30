@@ -95,7 +95,7 @@ public class DisplayDevice {
     private boolean isPtrMotionSupported;
 
 
-    private int state;
+    private int state = DISPLAY_DEVICE_DISABLED; // display is  disabled by default
 
 
     /*
@@ -129,7 +129,11 @@ public class DisplayDevice {
      * <code>DISPLAY_DEVICE_ABSENT</code>
      */
     public void setState(int newState) {
-	state = newState;
+        System.out.println("Set new state for display " + hardwareId + " : " + newState + " old state: " + state );
+        if (state != newState) {
+	        state = newState;
+            displayStateChanged0(hardwareId, state);
+        }
     }
 
     /**
@@ -258,6 +262,7 @@ public class DisplayDevice {
      */
     public void refresh(int displayId,
 				int x1, int y1, int x2, int y2) {
+	System.out.println("refresh: displayId = " + displayId + " hardwareId = " + hardwareId);
 	refresh0(hardwareId, displayId, x1, y1, x2, y2); 
     }
 
@@ -296,6 +301,17 @@ public class DisplayDevice {
 	gainedForeground0(hardwareId, displayId);
     }
 
+    public String toString() {
+	return "hardwareId: " + hardwareId +
+	    " displayName: " + displayName +
+	    " isPrimary: " +  isPrimary +
+	    " buildInDisp:" +buildInDisp +
+            " capabilities:"+capabilities +
+	    " isPtrSupported:"+ isPtrSupported+
+            " isPtrMotionSupported:"+isPtrMotionSupported+
+	    " state:" +state;
+
+    }
 
     private native int getScreenWidth0(int hardwareId);
     private native int getScreenHeight0(int hardwareId);
@@ -315,6 +331,7 @@ public class DisplayDevice {
     private native int getDisplayCapabilities0(int hardwareId);
     private native boolean isDisplayPtrSupported0(int hardwareId);
     private native boolean isDisplayPtrMotionSupported0(int hardwareId);
+    private native void displayStateChanged0(int hardwareId, int state);
 
 }
 

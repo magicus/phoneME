@@ -54,13 +54,15 @@
 
 /** System offscreen buffer */
 gxj_screen_buffer gxj_system_screen_buffer;
-
+int mouseFd = 0;
+int keyboardFd = 0;
+int currentId = 0;
 
 /** System screens */
 typedef struct _SystemScreen {
     int hardwareId;
     int isFullScreen;
-    jboolean reverse_orientation;
+    jboolean reverse_orientation;                                             
     gxj_screen_buffer buffer;
     QVFbDisplay qvfbDisplay;
 } SystemScreen;
@@ -72,27 +74,22 @@ static int number_of_screens;
 static int* displayIds;
 
 SystemScreen* getScreenById(int hardwareId) {
-  /*  int i;
+  int i;
   for (i = 0; i < number_of_screens; i++) {
     if (system_screens[i].hardwareId == hardwareId)
       return &system_screens[i];
   }
   return NULL;
-  */
-  (void)hardwareId;
-  return &system_screens[0];
 }
 
 
 /** Return file descriptor of keyboard device, or -1 in none */
-int getKeyboardFd(int hardwareId) {
-    SystemScreen* screen = getScreenById(hardwareId);
-    return (screen != NULL) ? screen->qvfbDisplay.keyboardFd : 0;
+int getKeyboardFd() {
+    return keyboardFd;
 }
 /** Return file descriptor of mouse device, or -1 in none */
-int getMouseFd(int hardwareId) {
-    SystemScreen* screen = getScreenById(hardwareId);
-    return (screen != NULL) ? screen->qvfbDisplay.mouseFd : 0;
+int getMouseFd() {
+    return mouseFd;
 }
 
 void initScreenList() {
@@ -136,12 +133,8 @@ void initSystemScreen(int id, int isFullScreen, int reverse_orientation, int wid
   screen->isFullScreen = isFullScreen;
   screen->reverse_orientation = reverse_orientation;
   
-  initBuffer(width, height, &(screen->buffer)); 
-  
-  if (id == displayIds[0]) {
-    gxj_system_screen_buffer = screen->buffer;
-    
-  }
+  initBuffer(width, height, &(screen->buffer));
+
 }  
             
 void clear(SystemScreen *screen) {
@@ -214,6 +207,25 @@ int getReverseOrientation(int id) {
     }
     return ret;
 }
+
+int getNextDisplayId() {
+    return displayIds[(currentId == (number_of_screens - 1)) ? 0 : ++currentId];
+}
+int getCurrentDisplayId() {
+    return displayIds[currentId];
+}
+
+void displayStateChanged(int id, int state) {
+    SystemScreen *screen = getScreenById(id);
+    // if display is enabled set the system screen to qvfb screen buffer  
+    if (state == 0) {
+        gxj_system_screen_buffer = screen->buffer;
+        mouseFd = screen->qvfbDisplay.mouseFd;
+        keyboardFd = screen->qvfbDisplay.keyboardFd;
+    } 
+    printf("displayStateChanged for %d state %d", id, state);
+}
+
 
 jboolean isFullScreenMode(int id) {
     SystemScreen *screen = getScreenById(id);
@@ -346,8 +358,9 @@ void connectFrameBuffer(int hardwareId) {
     if ((screen->qvfbDisplay.keyboardFd = open(buff, O_RDONLY, 0)) < 0) {
       fprintf(stderr, "open of %s failed\n", buff);
       exit(1);
-    }
-    
+    } else {
+    printf("open keyboard for /tmp/.qtvfb_keyboard-%d = %d", hardwareId, screen->qvfbDisplay.keyboardFd);
+               }
     memset(screen->qvfbDisplay.qvfbPixels, 0, sizeof(gxj_pixel_type) * hdr->width * hdr->height);
     
 }
@@ -415,6 +428,10 @@ void refreshScreenNormal(SystemScreen *screen, int x1, int y1, int x2, int y2) {
     // System screen buffer geometry
     int bufWidth = screen_buffer.width;
     int bufHeight = screen_buffer.height;
+
+//    printf("\n\n\nrefresh screen normal id=%d, hdr: width = %d height =%d depth = %d \nlineStep = %d dataOffset =%d \ndirty_x1=%d dirty_y1=%d dirty_x2=%d dirty_y2=%d is_dirty=%d\n",screen->hardwareId, hdr->width,hdr->height,hdr->depth,hdr->lineStep, hdr->dataOffset,hdr->dirty_x1, hdr->dirty_y1,hdr->dirty_x2, hdr->dirty_y2,hdr->is_dirty);
+//printf("refresh screen normal id = %d, screen_buffer: bufWidth=%d bufHeight=%d\n", screen->hardwareId, bufWidth, bufHeight);
+
 
     REPORT_CALL_TRACE4(LC_HIGHUI, "LF:fbapp_refresh(%3d, %3d, %3d, %3d )\n",
                        x1, y1, x2, y2);

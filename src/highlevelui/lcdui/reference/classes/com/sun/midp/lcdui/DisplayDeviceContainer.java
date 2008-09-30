@@ -85,7 +85,7 @@ public class DisplayDeviceContainer {
 	    DisplayDevice current = (DisplayDevice)displayList.elementAt(i);
 	    if (current.isPrimaryDisplay()) {
 		primaryDisplay = current;
-		break;
+		break;                          
 	    }
 	}
 	return primaryDisplay;

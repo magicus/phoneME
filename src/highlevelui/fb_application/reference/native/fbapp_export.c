@@ -108,22 +108,22 @@ void fbapp_init() {
     initScreenList();
     
     for (i = 0; i < num_of_screens; i++) {
+      printf("init screen : id = %d",display_device_ids[i]);
       initSystemScreen(display_device_ids[i], 0, 0, fbapp_get_screen_width(display_device_ids[i]),
       		       fbapp_get_screen_height(display_device_ids[i]));
       connectFrameBuffer(display_device_ids[i]);    
     }
-    
 }
 
 
 /** Returns the file descriptor for reading the mouse. */
 int fbapp_get_mouse_fd() {
-    return getMouseFd(display_device_ids[0]);
+    return getMouseFd();
 }
 
 /** Returns the file descriptor for reading the keyboard. */
 int fbapp_get_keyboard_fd() {
-    return getKeyboardFd(display_device_ids[0]);
+    return getKeyboardFd();
 }
 
 /**
@@ -267,23 +267,19 @@ void fbapp_map_keycode_to_event(
         }
         break;
 
-    case KEYMAP_MD_DISPLAY_DISABLED:
+    case KEYMAP_MD_NEXT_DISPLAY:
         if (isPressed) {
+        // disable next display in the stack
             pNewMidpEvent->type = DISPLAY_DEVICE_STATE_CHANGED_EVENT;
-            pNewSignal->waitingFor = UI_SIGNAL;
-            pNewMidpEvent->intParam1 = DISPLAY_DEVICE_DISABLED;
+            pNewSignal->waitingFor = DISPLAY_DEVICE_SIGNAL;
+            pNewMidpEvent->intParam1 = getCurrentDisplayId();
+            pNewMidpEvent->intParam2 = DISPLAY_DEVICE_DISABLED;
         } else {
-            /* ignore it */
-        }
-        break;
-
-    case KEYMAP_MD_DISPLAY_ENABLED:
-        if (isPressed) {
+        // enable next display in the stack
             pNewMidpEvent->type = DISPLAY_DEVICE_STATE_CHANGED_EVENT;
-            pNewSignal->waitingFor = UI_SIGNAL;
-            pNewMidpEvent->intParam1 = DISPLAY_DEVICE_ENABLED;
-        } else {
-            /* ignore it */
+            pNewSignal->waitingFor = DISPLAY_DEVICE_SIGNAL;
+            pNewMidpEvent->intParam1 = getNextDisplayId();
+            pNewMidpEvent->intParam2 = DISPLAY_DEVICE_ENABLED;
         }
         break;
 
@@ -291,7 +287,11 @@ void fbapp_map_keycode_to_event(
         if (isPressed) {
             pNewSignal->waitingFor = AMS_SIGNAL;
             pNewMidpEvent->type = MIDLET_DESTROY_REQUEST_EVENT;
-            pNewMidpEvent->DISPLAY = gForegroundDisplayId;
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+            pNewMidpEvent->DISPLAY = gForegroundDisplayIds[0];
+#else 
+	    pNewMidpEvent->DISPLAY = gForegroundDisplayId;
+#endif /* ENABLE_MULTIPLE_DISPLAYS */
             pNewMidpEvent->intParam1 = gForegroundIsolateId;
         } else {
             /* ignore it */
@@ -405,7 +405,9 @@ int fbapp_get_display_capabilities(int hardwareId) {
 
 jint* fbapp_get_display_device_ids(jint* n) {    
     jint *ids = getDisplayIds(n);
-    //    *n = numElems(ids);
     return ids;
 }
 
+void fbapp_display_device_state_changed(int hardwareId, int state) {
+    displayStateChanged(hardwareId, state);
+}

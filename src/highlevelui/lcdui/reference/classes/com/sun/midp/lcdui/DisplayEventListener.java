@@ -119,7 +119,7 @@ public class DisplayEventListener implements EventListener {
 	    displayDeviceContainer.getDisplayDeviceById(nativeEvent.intParam1).setState(nativeEvent.intParam2);
 	    DisplayAccess das[] =  displayContainer.findDisplaysByHardwareId(nativeEvent.intParam1);
 	    for (int i = das.length; --i >= 0;) {
-		das[i].getDisplayEventConsumer().handleDisplayDeviceStateChangedEvent(nativeEvent.intParam2);
+		    das[i].getDisplayEventConsumer().handleDisplayDeviceStateChangedEvent(nativeEvent.intParam2);
 	    }
 	    return;
 	}
@@ -129,6 +129,7 @@ public class DisplayEventListener implements EventListener {
         if (dc != null) {
             switch (event.getType()) {
             case EventTypes.KEY_EVENT:
+
                 if (nativeEvent.intParam1 == EventConstants.IME) {
                     dc.handleInputMethodEvent(nativeEvent.stringParam1);
                 }    

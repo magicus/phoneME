@@ -1080,9 +1080,10 @@ public class MIDletProxyList
 
         if (foregroundMidlet != null) {
 	    int[] displayIds =  foregroundMidlet.getDisplayIds();
-	    for (int i = displayIds.length; --i >= 0;) {
-		setForegroundInNativeState(foregroundMidlet.getIsolateId(),
-					   displayIds[i]);
+	    int isolateId = foregroundMidlet.getIsolateId();
+	    resetForegroundInNativeState();
+	    for (int i = 0; i < displayIds.length; i++) {
+		setForegroundInNativeState(isolateId, displayIds[i]);
 	    }
             // This call with a true parameter will set the alertWaiting field.
             foregroundMidlet.notifyMIDletHasForeground(true);
@@ -1275,6 +1276,11 @@ public class MIDletProxyList
      */
     private native void setForegroundInNativeState(int isolateId,
                                                    int displayId);
+    /**
+     * Reset foreground midletProxy in the native midletProxy list state.
+     *
+     */
+    private native void resetForegroundInNativeState();
 
     /**
      * Notify native code that all MIDlets have been paused.

@@ -41,6 +41,7 @@
 #include <imgapi_image.h>
 
 
+#include <stdio.h>
 
 /**
  * Calls platform specific function to redraw a portion of the display.
@@ -83,6 +84,8 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_refresh0) {
     if (midpHasForeground(displayId)) {
       // Paint only if this is the foreground MIDlet
       lcdlf_refresh(hardwareId, x1, y1, x2, y2);
+    } else {
+      printf("display %d not in foreground\n", displayId);
     }
 
     KNI_ReturnVoid();
@@ -298,4 +301,10 @@ KNIDECL(com_sun_midp_lcdui_DisplayDeviceContainer_getDisplayDevicesIds0) {
     }
 
     KNI_EndHandlesAndReturnObject(returnArray);
+}
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_displayStateChanged0) {
+    jint hardwareId = KNI_GetParameterAsInt(1);
+    jint state = KNI_GetParameterAsInt(2);
+    lcdlf_display_device_state_changed(hardwareId, state);
 }

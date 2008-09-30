@@ -166,6 +166,11 @@ int lcdlf_get_display_capabilities(int hardwareId);
  * Get the list of display device ids
  */
 jint* lcdlf_get_display_device_ids(jint* n);
+/**
+ * Notify the state of the display device has been changed
+ */
+void lcdlf_display_device_state_changed(int hardwareId, int state);
+
 
 #ifdef __cplusplus
 }

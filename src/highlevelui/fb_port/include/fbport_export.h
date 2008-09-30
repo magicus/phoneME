@@ -76,10 +76,10 @@ extern void resizeScreenBuffer(int width, int height);
 extern void refreshScreen(int id, int x1, int y1, int x2, int y2);
 
 /** Return file descriptor of keyboard device, or -1 in none */
-extern int getKeyboardFd(int hardwareId);
+extern int getKeyboardFd();
 
 /** Return file descriptor of mouse device, or -1 in none */
-extern int getMouseFd(int hardwareId);
+extern int getMouseFd();
 
 /** Clear screen device */
 extern void clearScreen(int hardwareId);
@@ -92,6 +92,10 @@ extern int getScreenY(int hardwareId, int height);
 
   /** Get the list of display ids */
 extern jint* getDisplayIds(jint* n );
+
+extern void displayStateChanged(int hardwareId, int state);
+extern int getNextDisplayId();
+extern int getCurrentDisplayId();
 
 #ifdef __cplusplus
 }
