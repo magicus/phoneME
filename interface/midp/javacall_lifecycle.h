@@ -99,10 +99,15 @@ void javanotify_internal_resume(void);
 void javanotify_shutdown(void);
 
 /**
+ * The platform should invoke this function for change system locale
+ */
+void javanotify_change_locale(short languageCode, short regionCode);
+
+/**
  * A notification function for telling Java to perform installation of
  * a content via http.
  *
-<<<<<<< .working
+
  * The given url should be of the form http://www.sun.com/a/b/c/d.jad then
  * Java will start a graphical installer will download the MIDlet
  * fom the internet.

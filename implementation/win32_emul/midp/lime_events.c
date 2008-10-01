@@ -259,7 +259,9 @@ void SendEvent (KVMEventType *evt) {
         case VK_SHUTDOWN:
             javanotify_shutdown();
             break;
-
+	case VK_CHANGE_LOCALE:
+            javanotify_change_locale(evt->screenX, evt->screenY);
+            break;
 #if ENABLE_JSR_179
         case STATE_AVAILABLE:
             HandleLocationProviderStateEvent(JAVACALL_LOCATION_AVAILABLE);
