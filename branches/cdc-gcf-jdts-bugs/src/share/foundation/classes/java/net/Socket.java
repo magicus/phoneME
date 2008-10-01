@@ -82,7 +82,7 @@ class Socket {
      * @revised 1.4
      */
     public Socket() {
-	setImpl();
+        setImpl();
     }
 
     /**
@@ -314,7 +314,7 @@ class Socket {
 
     private Socket(SocketAddress address, SocketAddress localAddr,
 		   boolean stream) throws IOException {
-	setImpl();
+        setImpl();
 
 	// backward compatibility
 	if (address == null)
@@ -1243,7 +1243,7 @@ class Socket {
      * @see #isClosed
      */
     public synchronized void close() throws IOException {
-	synchronized(closeLock) {
+        synchronized(closeLock) {
 	    if (isClosed())
 		return;
 	    if (created)
@@ -1271,7 +1271,7 @@ class Socket {
      */
     public void shutdownInput() throws IOException
     {
-	if (isClosed())
+        if (isClosed())
 	    throw new SocketException("Socket is closed");
 	if (!isConnected())
 	    throw new SocketException("Socket is not connected");

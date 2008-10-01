@@ -115,7 +115,6 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
         if(name.charAt(0) != '/' || name.charAt(1) != '/') {
             throw new IllegalArgumentException("Protocol must start with \"//\" "+name);
         }
-
         name = name.substring(2);
 
         try {
