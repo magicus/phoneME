@@ -182,4 +182,9 @@ public interface DisplayEventConsumer {
       * Called by event delivery when need to show or hide virtual keyboard
       */
      public void handleVirtualKeyboardEvent();
+
+    /*
+     * Called by event delivery when locale is changed
+     */
+    public void handleChangeLocaleEvent();
 }

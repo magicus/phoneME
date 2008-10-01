@@ -382,4 +382,9 @@ public final class EventTypes {
      * to unblock the installer thread waiting for a user's answer.
      */
     public static final int NATIVE_UNBLOCK_INSTALLER = 60;
+
+    /**
+     * This event is used for change current locale
+     */
+    public static final int CHANGE_LOCALE_EVENT	= 61;
 }
