@@ -384,7 +384,6 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         int contentY = contentBounds[Y];
         int contentH = contentBounds[HEIGHT];
 
-
         if (contentY > visRect[Y] + visRect[HEIGHT] ||
             contentY + contentH < visRect[Y]) {
             return ret;
@@ -487,6 +486,12 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             visRect[Y] = newY;
             visRect[HEIGHT] = newHeight;
         }
+       
+        if (cg.owner instanceof FileSelector) {
+            FileSelector selector = (FileSelector) cg.owner;
+            selector.cgFocusIndex = hilightedIndex;
+        }            
+        
         return ret;
     }
 
@@ -566,6 +571,12 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 }
             }
         }
+        
+        if (cg.owner instanceof FileSelector) {
+            FileSelector selector = (FileSelector) cg.owner;
+            selector.cgFocusIndex = hilightedIndex;
+        }
+        
         return id;
     }
 
@@ -579,6 +590,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
      */
     void uCallPointerPressed(int x, int y) {
         itemWasPressed = true;
+        
         int i = getIndexByPointer(x, y);
         if (i >= 0) {
             hilightedIndex = pendingIndex = i;
@@ -623,23 +635,27 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
     void uCallKeyPressed(int keyCode) {
         Form form = null;
         List list = null;
+        FileSelector fileSelector = null;
         Command cmd = null;
         CommandListener cl = null;
 
         synchronized (Display.LCDUILock) {
-
+             
             if (keyCode != Constants.KEYCODE_SELECT || (cg.numOfEls == 0)) {
                 return;
             }
 
             switch (cg.choiceType) {            
                 case Choice.EXCLUSIVE:
-                    if (hilightedIndex == selectedIndex) {
+                    if (hilightedIndex == selectedIndex &&
+                            !(cg.owner instanceof FileSelector)) {
                         return;
                     }
                     setSelectedIndex(hilightedIndex, true);
                     if (cg.owner instanceof Form) {
                         form = (Form)cg.owner; // notify itemStateListener
+                    } else if (cg.owner instanceof FileSelector) {
+                        fileSelector = (FileSelector)cg.owner; // notify itemStateListener
                     }
                     break;
 
@@ -678,6 +694,9 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         } else if (form != null) {
             // For EXCLUSIVE and MULTIPLE CG, notify item state listener
             form.uCallItemStateChanged(cg);
+        } else if (fileSelector != null) {
+            // For EXCLUSIVE notify item state listener
+            fileSelector.uCallItemStateChanged(cg);
         }
     }
 

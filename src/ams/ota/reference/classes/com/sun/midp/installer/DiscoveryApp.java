@@ -113,6 +113,10 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
     private Command installFromFileStorage = new Command(Resource.getString
             (ResourceConstants.AMS_DISC_APP_START_FILE_INSTALL),Command.SCREEN,1);
     
+    /** Command object for begin installing file from external devices. */
+    private Command runSelector = new Command("FileSelector",Command.SCREEN,1);
+    
+    FileSelector selector;
          
     /** Type of last installation. */
     private int lastTypeOfInstall;
@@ -167,6 +171,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
      * @param s the Displayable the command was on.
      */
     public void commandAction(Command c, Displayable s) {
+       
         if (c == discoverCmd) {
             // user wants to discover the suites that can be installed
             discoverSuitesToInstall(urlTextBox.getString());            
@@ -180,26 +185,40 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         } else if (c == endCmd || c == Alert.DISMISS_COMMAND) {
             // goto back to the manager midlet
             notifyDestroyed();
+        } else if (c == fileStorage) {
+            // want to install from external storage  
+            urlTextBox.setTitle(Resource.getString
+                    (ResourceConstants.AMS_DISC_APP_STORAGE_INSTALL));
+            setupCommands(InstallerResource.FILE_INSTALL);
+            restoreSettings();
+            urlTextBox.setString(defaultInstallListUrl);
+        } else if (c == httpStorage) {
+            // want to install from Web
+            urlTextBox.setTitle(Resource.getString
+                     (ResourceConstants.AMS_DISC_APP_WEBSITE_INSTALL));
+            setupCommands(InstallerResource.HTTP_INSTALL);
+            restoreSettings();        
+            urlTextBox.setString(defaultInstallListUrl);
+            
+        } else if (c == installFromFileStorage) {
+            installSuite(createSuiteDownloadInfo());
+            
+        } else if (c == runSelector) {
+            
+            selector = new FileSelector("Selector",FileSelector.LOAD);
+            selector.setCommandListener(this);                       
+                      
+            display.setCurrent(selector);
+            
+            
+        } else if (c == FileSelector.OK_COMMAND) {
+            System.out.println("OK file="+selector.getFile()+
+                    " dir="+selector.getDirectory());
+        } else if (c == FileSelector.CANCEL_COMMAND) {
+            System.out.println("CANCEL file="+selector.getFile()+
+                    " dir="+selector.getDirectory());
+            display.setCurrent(urlTextBox);
         }
-        // want to install from external storage
-        else if (c == fileStorage) {          
-          urlTextBox.setTitle(Resource.getString
-                  (ResourceConstants.AMS_DISC_APP_STORAGE_INSTALL));
-          setupCommands(InstallerResource.FILE_INSTALL);
-          restoreSettings();
-          urlTextBox.setString(defaultInstallListUrl);
-        }
-        // want to install from Web
-        else if (c == httpStorage) {         
-         urlTextBox.setTitle(Resource.getString
-                  (ResourceConstants.AMS_DISC_APP_WEBSITE_INSTALL));
-         setupCommands(InstallerResource.HTTP_INSTALL);
-         restoreSettings();        
-         urlTextBox.setString(defaultInstallListUrl);
-        }
-        else if (c == installFromFileStorage) {
-         installSuite(createSuiteDownloadInfo());        
-        }    
     }
 
     /**
@@ -521,6 +540,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
                 
                 urlTextBox.addCommand(endCmd);
                 urlTextBox.addCommand(saveCmd);
+                urlTextBox.addCommand(runSelector);
                 
                 if (lastTypeOfInstall == InstallerResource.HTTP_INSTALL) {
                    setupCommands(InstallerResource.HTTP_INSTALL);

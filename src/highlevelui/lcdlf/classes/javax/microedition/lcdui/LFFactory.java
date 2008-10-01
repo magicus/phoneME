@@ -82,6 +82,15 @@ abstract class LFFactory {
      */
     abstract FormLF getListLF(List list);
     
+     /**
+     * Returns a <code>FileSelector</code> look &amp; feel implementation.
+     *
+     * @param fileSelector The <code>FileSelector</code> associated with this look&amp;feel
+     *
+     * @return a <code>FileSelector</code> look &amp; feel implementation
+     */
+    abstract FormLF getFileSelectorLF(FileSelector fileSelector, Item[] items);
+    
     /**
      * Returns a <code>TextBox</code> look &amp; feel implementation.
      *

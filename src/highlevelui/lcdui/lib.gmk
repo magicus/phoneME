@@ -122,6 +122,7 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Choice.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/DateField.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/List.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/FileSelector.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Displayable.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Spacer.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Gauge.java \
@@ -166,7 +167,7 @@ SUBSYSTEM_LCDUI_I3TEST_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/StubDisplay.java \
     $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestOne.java \
     $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestTwo.java \
-    $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestThree.java \
+    $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestThree.java \   
     $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestKeyConverter.java \
     $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/game/TestSprite.java \
     $(LCDUI_CLASSES_DIR)/i3test/com/sun/midp/lcdui/TestDisplayFactory.java

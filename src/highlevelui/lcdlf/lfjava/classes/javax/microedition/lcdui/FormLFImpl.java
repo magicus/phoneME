@@ -93,6 +93,27 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             ((TextFieldLFImpl)textField.textFieldLF).setBorder(false);
         }
     }
+    
+    /**
+     * Creates FormLF for the passed in screen.
+     * Passed in ItemLF is added as the only itemLF present.
+     * This constructor is used by FileSelector.
+     * 
+     * @param screen the Screen object associated with this FormLFImpl
+     * @param item the Item to be added to this screen
+     */
+    FormLFImpl(Screen screen, Item item[]) {
+        super(screen);       
+        itemLFs = new ItemLFImpl[item.length];
+        
+        for (int i = 0; i<item.length; i++) {            
+            itemLFs[i] = (ItemLFImpl)item[i].getLF();            
+        }
+        
+        numOfLFs = item.length;
+
+        visRect = new int[4];        
+    }
 
     // ************************************************************
     //  public methods - FormLF interface implementation

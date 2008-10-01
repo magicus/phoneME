@@ -72,6 +72,16 @@ class LFFactoryImpl extends LFFactory {
     FormLF getListLF(List list) {
         return new FormLFImpl(list, list.cg);
     }
+    
+    /**
+     * Returns a FileSelector look & feel implementation.
+     *
+     * @param fileSelector - <placeholder>
+     * @return a FileSelector look & feel implementation
+     */
+    FormLF getFileSelectorLF(FileSelector fileSelector, Item[] items) {
+        return new FormLFImpl(fileSelector,items);
+    }
 
     /**
      * Returns a TextBox look & feel implementation.
