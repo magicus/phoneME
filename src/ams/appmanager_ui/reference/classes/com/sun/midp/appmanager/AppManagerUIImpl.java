@@ -784,20 +784,51 @@ class AppManagerUIImpl extends Form
 
     /**
      * This function encapsulates the logic of showing the "End" and
-     * "To Foreground" commands only for suites that have exactly one
-     * runing MIDlet.
-     * @param ci  midlet custom item
+     * "To Foreground" commands.
+     *
+     * @param ci midlet custom item
      */
     private void setupRunStateDependentCommands(AppManagerUIImpl.MidletCustomItem ci) {
         // IMPL_NOTE: we decide to have the "Open" command default for all cases,
         // just to make the life easier for both the programmer and the user.
         RunningMIDletSuiteInfo si = ci.msi;
         if (si.numberOfRunningMidlets() == 1) {
-            ci.addCommand(endCmd);
-            ci.addCommand(fgCmd);
+            if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+                MIDletProxy proxy = si.getFirstProxy();
+
+                if (proxy != null) {
+                    /*
+                     * Add "Bring to foreground" command only if the MIDLet has
+                     * no MIDlet-Launch-Background attribute.
+                     */
+                    if (!proxy.getExtendedAttribute(
+                            MIDletProxy.MIDLET_LAUNCH_BG)) {
+                        ci.addCommand(fgCmd);
+                    }
+
+                    /*
+                     * Check whether MIDlet-No-Exit attribute is defined for
+                     * the MIDlet.
+                     *
+                     * If definded and the value is "yes" then the application
+                     * is not allowed to be exited other than calling
+                     * destroyApp().
+                     *
+                     * Add "End" command only if an user may termniate the
+                     * MIDlet.
+                     */
+                    if (!proxy.getExtendedAttribute(
+                            MIDletProxy.MIDLET_NO_EXIT)) {
+                        ci.addCommand(endCmd);
+                    }
+                }
+            } else {
+                ci.addCommand(fgCmd);
+                ci.addCommand(endCmd);
+            }
         } else {
-            ci.removeCommand(endCmd);
             ci.removeCommand(fgCmd);
+            ci.removeCommand(endCmd);
         }
     }
 
@@ -805,14 +836,14 @@ class AppManagerUIImpl extends Form
      * This function encapsulates the logic of choosing the default command
      * (open or launch, whatever it means), depending on the midlet type
      * and enabled state.
-     * @param mci
+     * @param mci the form item whose set of menu commands will be modified 
      */
     private void setupDefaultCommand(AppManagerUIImpl.MidletCustomItem mci) {
         RunningMIDletSuiteInfo si = mci.msi;
         boolean running = si.hasRunningMidlet();
 
         // setDefaultCommand will add default command first
-        if (si.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+        if (si.isInternal()) {
             // midlets from the internal suite are never disabled
             if (!running) {
                 if (AppManagerPeer.DISCOVERY_APP.equals(mci.msi.midletToRun)) {
@@ -836,7 +867,6 @@ class AppManagerUIImpl extends Form
                 if (appManager.oddEnabled()) {
                     mci.removeCommand(launchODTAgentCmd);
                 }
-                mci.setDefaultCommand(fgCmd);
             }
         } else { // not internal suite
             // running MIDlets will continue to run
@@ -888,8 +918,8 @@ class AppManagerUIImpl extends Form
         } else {
             // we get here when mci.msi.proxy already is null
 
-            setupRunStateDependentCommands(mci);
             setupDefaultCommand(mci);
+            setupRunStateDependentCommands(mci);
 
             midletSwitcher.remove(mci.msi, midletClassName);
             mci.update();
@@ -1147,7 +1177,7 @@ class AppManagerUIImpl extends Form
         MidletCustomItem ci = new MidletCustomItem(suiteInfo);
 
         setupDefaultCommand(ci);
-        if (suiteInfo.suiteId != MIDletSuite.INTERNAL_SUITE_ID) {
+        if (!suiteInfo.isInternal()) {
             ci.addCommand(infoCmd);
             ci.addCommand(removeCmd);
             ci.addCommand(updateCmd);
@@ -1727,7 +1757,7 @@ class AppManagerUIImpl extends Form
             // Icon for the Installer will be shown each time
             // the AppSelector is made current since it is the top
             // most icon and we reset the traversal to start from the top
-            if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+            if (msi.isInternal()) {
                 appManager.ensureNoInternalMIDletsRunning();
             }
         }

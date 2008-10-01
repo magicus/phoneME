@@ -265,6 +265,14 @@ JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_TEST_I3TEST_JAVA_FILES)
 JTWI_NATIVE_FILES += $(SUBSYSTEM_TEST_NATIVE_FILES)
 endif
 
+ifeq ($(USE_ROMUL), true)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_ROMUL_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_ROMUL_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_ROMUL_EXTRA_INCLUDES)
+endif
+
 #######################################################################
 # DEMOS
 #######################################################################
