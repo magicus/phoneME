@@ -101,11 +101,11 @@ public final class InvocationImpl {
     /** Transaction Identifier. */
     int tid = UNDEFINED_TID;
 
-    /** The MIDlet suite that should handle this Invocation. */
-    int suiteId;
-
-    /** The classname of the MIDlet to deliver to. */
-    String classname;
+    ApplicationID	destinationApp;
+//    /** The MIDlet suite that should handle this Invocation. */
+//    int suiteId;
+//    /** The classname of the MIDlet to deliver to. */
+//    String classname;
 
     /**
      * The status of the request; one of
@@ -123,11 +123,12 @@ public final class InvocationImpl {
     /** The ID that authenticated this Invocation. */
     String invokingID;
 
-    /** The MIDlet suite of the invoking application. */
-    int invokingSuiteId;
-
-    /** The classname in the invoking MIDlet suite for the response. */
-    String invokingClassname;
+    ApplicationID	invokingApp;
+    
+//    /** The MIDlet suite of the invoking application. */
+//    int invokingSuiteId;
+//    /** The classname in the invoking MIDlet suite for the response. */
+//    String invokingClassname;
 
     /** The application name of the invoking MIDlet suite. */
     String invokingAppName;
@@ -159,6 +160,9 @@ public final class InvocationImpl {
         responseRequired = true;
         arguments = ContentHandlerImpl.ZERO_STRINGS;
         data = ZERO_BYTES;
+        
+        destinationApp = AppProxy.createAppID();
+        invokingApp = AppProxy.createAppID();
     }
 
     /**
@@ -442,8 +446,7 @@ public final class InvocationImpl {
         // Fill information about the target content handler.
         setStatus(Invocation.INIT);
         setID(handler.ID);
-        suiteId = handler.storageId;
-        classname = handler.classname;
+        destinationApp = handler.applicationID.duplicate();
 
         // Queue this Invocation
         InvocationStore.put(this);
@@ -488,7 +491,7 @@ public final class InvocationImpl {
         setStatus(status);
 
         if (getResponseRequired()) {
-            if (AppProxy.EXTERNAL_SUITE_ID == suiteId) {
+            if (destinationApp.isNative()) {
             	// 'native to java' invocation is finished
                 return AppProxy.platformFinish(tid);
             }
@@ -585,13 +588,10 @@ public final class InvocationImpl {
                 	return;
                 }
                 	
-                /* Swap the source and target suite and classname */
-                int tmpSuiteId = invokingSuiteId;
-                String tmpClassname = invokingClassname;
-                invokingSuiteId = suiteId;
-                invokingClassname = classname;
-                suiteId = tmpSuiteId;
-                classname = tmpClassname;
+                /* Swap the source and target applications */
+                ApplicationID tmpApp = invokingApp;
+                invokingApp = destinationApp;
+                destinationApp = tmpApp;
 
                 InvocationStore.update(this);
                 /* Unmark the response it is "new" to the target */
@@ -753,7 +753,7 @@ public final class InvocationImpl {
             StringBuffer sb = new StringBuffer(200);
             
             sb.append("tid: "); sb.append(tid);
-        	sb.append("{" + suiteId + ", " + classname + "} status = ");
+        	sb.append( " status = ");
         	String s = "{" + status + "}";
         	switch( status ){
     	    	case Invocation.ACTIVE: s = "ACTIVE"; break;
@@ -770,8 +770,8 @@ public final class InvocationImpl {
             sb.append("\n type: ");      sb.append(getType());
             sb.append(", url: ");       sb.append(getURL());
             sb.append(", respReq: ");   sb.append(getResponseRequired());
-            sb.append("\n   invokee: "); sb.append(classname);
-            sb.append(", invoker: "); sb.append(invokingClassname);
+            sb.append("\n   invokee: "); sb.append(destinationApp);
+            sb.append(", invoker: "); sb.append(invokingApp);
             return sb.toString();
         }
         return super.toString();

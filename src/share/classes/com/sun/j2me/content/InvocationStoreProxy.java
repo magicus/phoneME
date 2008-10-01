@@ -42,7 +42,7 @@ public final class InvocationStoreProxy {
 		}
         // check if it is native handler
         /* IMPL_NOTE: null suite ID is an indication of platform request */
-        if (invoc.suiteId == AppProxy.EXTERNAL_SUITE_ID){
+        if (invoc.destinationApp.isNative()){
         	// call native handler only for unprocessed invocations
         	// status is returned without launching of a handler
         	if( invoc.getStatus() == Invocation.WAITING ) {
@@ -54,10 +54,9 @@ public final class InvocationStoreProxy {
 	                // Ignore => invocation will be deleted
 	            }
         	}
-        } else if (invoc.classname != null) {
+        } else {
             try {
-                AppProxy appl = 
-                	AppProxy.getCurrent().forApp(invoc.suiteId, invoc.classname);
+                AppProxy appl = AppProxy.getCurrent().forApp(invoc.destinationApp);
             	// if MIDlet already started report STARTED
                 int rc = appl.launch("Application")? LIT_MIDLET_STARTED 
                 						: LIT_MIDLET_START_FAILED;

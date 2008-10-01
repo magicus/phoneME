@@ -87,7 +87,7 @@ final class RegistryInstaller {
     int preInstall() throws ContentHandlerException, ClassNotFoundException
     {
         int sz;
-        int suiteId = appl.getStorageId();
+        int suiteId = appl.suiteID;
         ContentHandlerImpl[] chs;
         
         if( AppProxy.LOGGER != null ) 
@@ -120,10 +120,12 @@ final class RegistryInstaller {
                 // Verify dynamic handler.
             	class ReplaceDynamicHandlerException extends Exception {};
                 try {
+                	String handlerClassName = 
+                		CLDCAppID.from(chs[i].applicationID).className; 
                     // is the handler a valid application?
-                    appl.verifyApplication(chs[i].classname);
+                    appl.verifyApplication(handlerClassName);
                     // is there new handler to replace this one?
-                    if( handlersToInstall.containsKey(chs[i].classname) )
+                    if( handlersToInstall.containsKey(handlerClassName) )
                         throw new ReplaceDynamicHandlerException();
                     // The handler remains.
                     continue;
@@ -158,7 +160,8 @@ final class RegistryInstaller {
             if (conf != null) {
                 for (int j = 0; j < conf.length; j++) {
                 	if (conf[j] == null) continue;
-                    if (conf[j].storageId != suiteId || !willRemove(conf[j].ID))
+                    if (CLDCAppID.from(conf[j].applicationID).suiteID != suiteId || 
+                    		!willRemove(conf[j].ID))
                         throw new ContentHandlerException(
 		                            "Content Handler ID: " + handler.ID,
 		                            ContentHandlerException.AMBIGUOUS);
@@ -426,10 +429,16 @@ final class RegistryInstaller {
             	String classname = (String)keys.nextElement();
                 ContentHandlerRegData handlerData =
                 	(ContentHandlerRegData)handlersToInstall.get(classname);
-                RegistryStore.register(appl.getStorageId(), classname, handlerData);
-                if (AppProxy.LOGGER != null) {
-                    AppProxy.LOGGER.println("Register: " + classname + ", id: " + handlerData.getID());
-                }
+                try {
+					RegistryStore.register(appl.forClass(classname), handlerData);
+	                if (AppProxy.LOGGER != null) {
+	                    AppProxy.LOGGER.println("Register: " + classname + ", id: " + handlerData.getID());
+	                }
+				} catch (ClassNotFoundException e) {
+					// assert( false );
+					// it's impossible because appl.forClass(classname) already checked
+					// this class
+				}
             }
         }
     }

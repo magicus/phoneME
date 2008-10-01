@@ -125,7 +125,15 @@ public final class RegistryImpl implements Counter {
     					Token token) throws ContentHandlerException
     {
     	AppProxy.checkAPIPermission(token);
-        return getRegistryImpl(classname);
+    	try {
+	        return getRegistryImpl(AppProxy.getCurrent().forClass(classname));
+        } catch (IllegalArgumentException iae) {
+            throw new ContentHandlerException("not an application",
+                         ContentHandlerException.NO_REGISTERED_HANDLER);
+	    } catch (ClassNotFoundException cnfe) {
+	        throw new ContentHandlerException("not an application",
+	                     ContentHandlerException.NO_REGISTERED_HANDLER);
+	    }
     }
 
     /**
@@ -156,37 +164,36 @@ public final class RegistryImpl implements Counter {
      * @exception NullPointerException if <code>classname</code> is
      *       <code>null</code>
      */
-    static RegistryImpl getRegistryImpl(String classname)
-        throws ContentHandlerException
+    static RegistryImpl getRegistryImpl(AppProxy appl) throws ContentHandlerException
     {
         // Synchronize between competing operations
         RegistryImpl curr = null;
         synchronized (mutex) {
         	if( AppProxy.LOGGER != null )
-        		AppProxy.LOGGER.println( "RegistryImpl.getRegistryImpl( '" +
-        					classname + "' )");
+        		AppProxy.LOGGER.println( 
+        				"RegistryImpl.getRegistryImpl( '" + appl + "' )");
             // Check if class already has a RegistryImpl
-            curr = (RegistryImpl)registries.get(classname);
+            curr = (RegistryImpl)registries.get(appl);
             if (curr != null) {
                 // Check that it is still a CH or MIDlet
                 if (curr.handlerImpl == null && !curr.application.isRegistered()) {
                     // Classname is not a registered MIDlet or ContentHandler
                     throw new
                         ContentHandlerException("not a registered MIDlet",
-                            ContentHandlerException.NO_REGISTERED_HANDLER);
+                        			ContentHandlerException.NO_REGISTERED_HANDLER);
                 }
                 return curr;
             }
 
             // Create a new instance and insert it into the list
-            curr = new RegistryImpl(classname);
-            registries.put(classname, curr);
+            curr = new RegistryImpl(appl);
+            registries.put(appl, curr);
             if( AppProxy.LOGGER != null ){
             	AppProxy.LOGGER.println( "registers:" );
             	java.util.Enumeration e = registries.keys();
             	while( e.hasMoreElements() ){
-            		String c = (String)e.nextElement();
-            		AppProxy.LOGGER.println( "\t" + c + " " + registries.get(c) );
+            		Object key = e.nextElement();
+            		AppProxy.LOGGER.println( "\t" + key + " " + registries.get(key) );
             	}
             }
         }
@@ -196,8 +203,7 @@ public final class RegistryImpl implements Counter {
          * Mark any existing Invocations so that at cleanup the pre-existing
          * Invocations can be handled properly.
          */
-        InvocationStore.setCleanup(curr.application.getStorageId(),
-                                   classname, true);
+        InvocationStore.setCleanup(curr.application, true);
         return curr;
     }
 
@@ -215,23 +221,14 @@ public final class RegistryImpl implements Counter {
      * @exception SecurityException is thrown if the caller
      *  does not have the correct permission
      */
-    private RegistryImpl(String classname) throws ContentHandlerException
+    private RegistryImpl(AppProxy app) throws ContentHandlerException
     {
-        try {
-            // Get the application for the class
-            application = AppProxy.getCurrent().forClass(classname);
-        } catch (ClassNotFoundException cnfe) {
-            throw new ContentHandlerException("not an application",
-                         ContentHandlerException.NO_REGISTERED_HANDLER);
-        } catch (IllegalArgumentException iae) {
-            throw new ContentHandlerException("not an application",
-                         ContentHandlerException.NO_REGISTERED_HANDLER);
-        }
+        application = app;
 
         /* Remember the ContentHandlerImpl, if there is one. */
         handlerImpl = getServer(application);
 
-        if (handlerImpl == null && (!application.isRegistered())) {
+        if (handlerImpl == null && !application.isRegistered()) {
             // Classname is not a registered MIDlet or ContentHandler; fail
             throw new ContentHandlerException("not a registered MIDlet",
                          ContentHandlerException.NO_REGISTERED_HANDLER);
@@ -295,9 +292,9 @@ public final class RegistryImpl implements Counter {
      * @param suiteId the MIDletSuite to cleanup after
      * @param classname the application class to cleanup
      */
-    static void cleanup(int suiteId, String classname) {
+    static void cleanup(ApplicationID appID) {
         InvocationImpl invoc = null;
-        while ((invoc = InvocationStore.getCleanup(suiteId, classname)) != null) {
+        while ((invoc = InvocationStore.getCleanup(appID)) != null) {
             invoc.setStatus(Invocation.ERROR);
         }
     }
@@ -419,14 +416,13 @@ public final class RegistryImpl implements Counter {
         				types, suffixes, actions, actionnames,
                         id, accessRestricted);
             
-            ContentHandlerImpl conflict = 
-            	checkConflicts(handlerData.getID(), appl.storageId, classname);
+            ContentHandlerImpl conflict = checkConflicts(handlerData.getID(), appl);
             if (conflict != null) {
                 unregister(classname);
             }
 
-            ContentHandlerImpl.Handle handle =
-            	RegistryStore.register(appl.storageId, classname, handlerData);
+            ContentHandlerImpl.Handle handle = 
+            	RegistryStore.register(appl, handlerData);
             setServer(handle.get());
 
             if (AppProxy.LOGGER != null) {
@@ -447,7 +443,7 @@ public final class RegistryImpl implements Counter {
     public void setServer(ContentHandlerImpl server) {
         synchronized (mutex) {
             // Update the RegistryImpl, if any, this is a server for
-            RegistryImpl impl = (RegistryImpl)registries.get(server.classname);
+            RegistryImpl impl = (RegistryImpl)registries.get(server.applicationID);
             if (impl != null) {
                 impl.handlerImpl = server;
             }
@@ -462,17 +458,8 @@ public final class RegistryImpl implements Counter {
      *
      * @return found handler or <code>null</code> if none found.
      */
-    static ContentHandlerImpl getHandler(int suiteId, String classname) {
-        if (classname.length() == 0)
-            throw new IllegalArgumentException("classname can't be empty");
-
-        ContentHandlerImpl[] arr = RegistryStore.forSuite(suiteId);
-        for (int i = 0; i < arr.length; i++) {
-            if (classname.equals(arr[i].classname)) {
-                return arr[i];
-            }
-        }
-        return null;
+    static ContentHandlerImpl getHandler(AppProxy appl) {
+        return RegistryStore.getHandler(appl);
     }
     
     /**
@@ -485,7 +472,7 @@ public final class RegistryImpl implements Counter {
      * @return a ContentHandlerImpl within the suite that
      *  need to be removed to register the new ContentHandler
      */
-    static ContentHandlerImpl checkConflicts(String handlerID, int suiteId, String classname)
+    static ContentHandlerImpl checkConflicts(String handlerID, AppProxy appl)
                 throws ContentHandlerException
     {
         ContentHandlerImpl[] handlers = RegistryStore.findConflicted(handlerID);
@@ -496,8 +483,7 @@ public final class RegistryImpl implements Counter {
                 case 0:
                     break;
                 case 1:
-                    if (suiteId == handlers[0].storageId &&
-                    		classname.equals(handlers[0].classname)) {
+                    if (appl.equals(handlers[0].applicationID)) {
                         existing = handlers[0];
                         break;
                     }
@@ -509,7 +495,7 @@ public final class RegistryImpl implements Counter {
         }
 
         if (existing == null) {
-            existing = getHandler(suiteId, classname);
+            existing = getHandler(appl);
         }
 
         return existing;
@@ -587,32 +573,25 @@ public final class RegistryImpl implements Counter {
 
     	if(AppProxy.LOGGER != null)
     		AppProxy.LOGGER.println( "unregister '" + classname + "'" );
-        synchronized (mutex) {
+    	try {
+    		AppProxy appl = application.forClass(classname);
+	        synchronized (mutex) {
+	            RegistryImpl reg = (RegistryImpl)registries.get(appl);
+	            ContentHandlerImpl curr = (reg != null)? reg.getServer() : getHandler(appl);
+	            if (curr != null) {
+	                RegistryStore.unregister(curr.getID());
+	                if (reg != null && appl.equals(curr.applicationID)) {
+	                    reg.handlerImpl = null;
+	                }
+	                return true;
+	            }
+	        }
+        } catch (IllegalArgumentException iae) {
+	    } catch (ClassNotFoundException e) {
+	    }
 
-            ContentHandlerImpl curr = null;
-            RegistryImpl reg = (RegistryImpl)registries.get(classname);
-
-            if (reg != null) {
-                curr = reg.getServer();
-            } else {
-                try {
-                    curr = getHandler(application.getStorageId(), classname);
-                } catch (IllegalArgumentException iae) {
-                    // Empty class name falls down without further processing.
-                }
-            }
-
-            if (curr != null) {
-                RegistryStore.unregister(curr.getID());
-                int suiteId = application.getStorageId();
-                if (reg != null && classname.equals(curr.classname) &&
-                        suiteId == curr.storageId) {
-                    reg.handlerImpl = null;
-                }
-                return true;
-            }
-        }
-
+    	if(AppProxy.LOGGER != null)
+    		AppProxy.LOGGER.println( "unregister() failed." );
         return false;
     }
 
@@ -633,7 +612,7 @@ public final class RegistryImpl implements Counter {
      * Candidate content handlers are found as described in
      * {@link #findHandler findHandler}. If any handlers are
      * found, one is selected for this Invocation.
-     * The choice of content handler is implemention dependent.
+     * The choice of content handler is implementation dependent.
      * <p>
      * If there is a non-null <code>previous</code> Invocation,
      * its status is set to <code>HOLD</code>.
@@ -692,8 +671,8 @@ public final class RegistryImpl implements Counter {
 
             // Fill in information about the invoking application
             invocation.invokingID = getID();
-            invocation.invokingSuiteId = application.getStorageId();
-            invocation.invokingClassname = application.getClassname();
+            invocation.invokingApp = application.duplicate();
+            // TODO: may be authority and app name should be moved to AppID? 
             invocation.invokingAuthority = application.getAuthority();
             invocation.invokingAppName = application.getApplicationName();
 
@@ -828,21 +807,17 @@ public final class RegistryImpl implements Counter {
     {
         // Application has tried to get a response; reset cleanup flags on all
         if (responseCalls == 0) {
-            InvocationStore.setCleanup(application.getStorageId(), 
-            						application.getClassname(), false);
+            InvocationStore.setCleanup(application, false);
         }
         responseCalls++;
 
         // Find a response for this application and context
         InvocationImpl invoc =
-            InvocationStore.getResponse(application.getStorageId(), 
-            						application.getClassname(), wait, this);
+            InvocationStore.getResponse(application, wait, this);
         if (invoc != null) {
             // Keep track of how many responses have been received;
-        	final int fromSuiteId = invoc.invokingSuiteId; 
-        	final String fromClass = invoc.invokingClassname;
-        	int toSuiteId = invoc.suiteId; 
-        	String toClass = invoc.classname;  
+        	final ApplicationID fromApp = invoc.invokingApp; 
+        	ApplicationID toApp = invoc.destinationApp;  
 
             /*
              * If there was a previous Request/Tid
@@ -876,13 +851,11 @@ public final class RegistryImpl implements Counter {
             if (invoc.previous != null && invoc.previous.getStatus() == Invocation.HOLD) {
                 // Restore ACTIVE status to a previously HELD Invocation
                 invoc.previous.setStatus(Invocation.ACTIVE);
-            	toSuiteId = invoc.previous.suiteId; 
-            	toClass = invoc.previous.classname;  
+            	toApp = invoc.previous.destinationApp; 
             }
 
             // Make an attempt to gain the foreground
-        	AppProxy.requestForeground(fromSuiteId, fromClass, 
-        						toSuiteId, toClass);
+        	AppProxy.requestForeground(fromApp, toApp);
 
             return invoc.wrap();
         }
@@ -1162,7 +1135,7 @@ public final class RegistryImpl implements Counter {
      * Gets the content handler for the specified application class.
      * The classname must be a class in the current application.
      *
-     * @param appl the application to look up a server fro
+     * @param appl the application to look up a server for
      * @return the content handler information for the registered
      * classname if the classname was registered by this application,
      * otherwise return <code>null</code>
@@ -1171,11 +1144,7 @@ public final class RegistryImpl implements Counter {
      */
     ContentHandlerImpl getServer(AppProxy appl) {
         synchronized (mutex) {
-
-            String classname = appl.getClassname();
-            int storageId = appl.getStorageId();
-
-            ContentHandlerImpl handler = getHandler(storageId, classname);
+            ContentHandlerImpl handler = getHandler(appl);
 
             if (handler != null) {
                 handler.appname = appl.getApplicationName();

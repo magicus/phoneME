@@ -100,14 +100,13 @@ public class InvocationStore {
      *  its status is set to ACTIVE;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    static InvocationImpl getRequest(int suiteId, String classname,
+    static InvocationImpl getRequest(ApplicationID appID,
                             	boolean shouldBlock, Counter cancelCounter) {
     	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( "InvocationStore.getRequest: suite = " + suiteId +
-    								", classname = '" + classname + "'" );
+    		AppProxy.LOGGER.println( "InvocationStore.getRequest: " + appID );
     	
-        classname.length(); // null pointer check
-        return get(suiteId, classname, MODE_REQUEST, shouldBlock, cancelCounter);
+        CLDCAppID.from(appID).className.length(); // null pointer check
+        return get(CLDCAppID.from(appID), MODE_REQUEST, shouldBlock, cancelCounter);
     }
 
     /**
@@ -125,14 +124,13 @@ public class InvocationStore {
      *  the same MIDlet suiteId and classname if one was requested;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    static InvocationImpl getResponse(int suiteId, String classname, 
+    static InvocationImpl getResponse(ApplicationID appID, 
     						boolean shouldBlock, Counter cancelCounter) {
     	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( "InvocationStore.getResponse: suite = " + suiteId +
-    								", classname = '" + classname + "'" );
+    		AppProxy.LOGGER.println( "InvocationStore.getResponse: " + appID );
     	
-        classname.length(); // null pointer check
-        return get(suiteId, classname, MODE_RESPONSE, shouldBlock, cancelCounter);
+    	CLDCAppID.from(appID).className.length(); // null pointer check
+        return get(CLDCAppID.from(appID), MODE_RESPONSE, shouldBlock, cancelCounter);
     }
 
     /**
@@ -160,8 +158,8 @@ public class InvocationStore {
      *  the same MIDlet suiteId and classname;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    static InvocationImpl getCleanup(int suiteId, String classname) {
-        return get(suiteId, classname, MODE_CLEANUP, false, null);
+    static InvocationImpl getCleanup(ApplicationID appID) {
+        return get(CLDCAppID.from(appID), MODE_CLEANUP, false, null);
     }
 
     /**
@@ -182,8 +180,6 @@ public class InvocationStore {
         if (tid != 0 && next) {
             mode = MODE_TID_NEXT;
         }
-        invoc.suiteId = AppProxy.EXTERNAL_SUITE_ID;
-        invoc.classname = null;
         invoc.tid = tid;
         
     	int s = 0;
@@ -225,7 +221,7 @@ public class InvocationStore {
      *  the same MIDlet suiteId and classname if one was requested;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    private static InvocationImpl get(int suiteId, String classname,
+    private static InvocationImpl get(CLDCAppID appID,
 				      int mode, boolean shouldBlock, Counter cancelCounter) {
     	InvocationImpl invoc = new InvocationImpl();
     
@@ -233,7 +229,7 @@ public class InvocationStore {
     	int oldCancelCount = 0;
     	if( shouldBlock )
     		oldCancelCount = cancelCounter.getCounter();
-    	while ((s = get0(invoc, suiteId, classname, mode, shouldBlock)) != 1) {
+    	while ((s = get0(invoc, appID.suiteID, appID.className, mode, shouldBlock)) != 1) {
     	    if (s == -1) {
         		/*
         		 * Sizes of arguments and data buffers were insufficient
@@ -255,9 +251,8 @@ public class InvocationStore {
     	}
     
     	if (AppProxy.LOGGER != null) {
-    	    AppProxy.LOGGER.println("Store get: (" +
-    					  suiteId + ", " + classname +
-    					  "), mode: " + mode + ", " + invoc);
+    	    AppProxy.LOGGER.println("Store get: " + appID +
+    					  		", mode: " + mode + ", " + invoc);
     	}
         return invoc;
     }
@@ -277,20 +272,21 @@ public class InvocationStore {
      *
      * @return true if a matching invocation is present; false otherwise
      */
-    static boolean listen(int suiteId, String classname,
+    static boolean listen(ApplicationID appID,
                       boolean request, boolean shouldBlock, Counter cancelCounter) {
         final int mode = (request ? MODE_LREQUEST : MODE_LRESPONSE);
         boolean pending;
         int oldCancelCount = 0;
+        CLDCAppID app = CLDCAppID.from(appID);
         if( shouldBlock ) 
         	oldCancelCount = cancelCounter.getCounter();
-        while (!(pending = listen0(suiteId, classname, mode, shouldBlock)) &&
+        while (!(pending = listen0(app.suiteID, app.className, mode, shouldBlock)) &&
                     shouldBlock && oldCancelCount == cancelCounter.getCounter()) {
             // No pending request; retry unless canceled
         }
 
         if (AppProxy.LOGGER != null) {
-            AppProxy.LOGGER.println("Store listen: " + classname +
+            AppProxy.LOGGER.println("Store listen: " + appID +
                                           ", request: " + request +
                                           ", pending: " + pending);
         }
@@ -308,13 +304,14 @@ public class InvocationStore {
      * @param request true to reset request notification flags;
      *   else reset response notification flags
      */
-    static void setListenNotify(int suiteId, String classname, boolean request) {
+    static void setListenNotify(ApplicationID appID, boolean request) {
         int mode = (request ? MODE_LREQUEST : MODE_LRESPONSE);
-        setListenNotify0(suiteId, classname, mode);
+        CLDCAppID app = CLDCAppID.from(appID);
+        setListenNotify0(app.suiteID, app.className, mode);
 
         if (AppProxy.LOGGER != null) {
             AppProxy.LOGGER.println("Store setListenNotify: " +
-                                          classname +
+                                          appID +
                                           ", request: " + request);
         }
     }
@@ -339,12 +336,12 @@ public class InvocationStore {
      *   cleanup at exit
      */
 
-    static void setCleanup(int suiteId, String classname, boolean cleanup) {
+    static void setCleanup(ApplicationID appID, boolean cleanup) {
         if (AppProxy.LOGGER != null) {
-            AppProxy.LOGGER.println("Store setCleanup: " + classname +
+            AppProxy.LOGGER.println("Store setCleanup: " + appID +
                                           ": " + cleanup);
         }
-        setCleanup0(suiteId, classname, cleanup);
+        setCleanup0(CLDCAppID.from(appID).suiteID, CLDCAppID.from(appID).className, cleanup);
     }
 
     /**

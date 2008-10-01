@@ -35,7 +35,7 @@ import com.sun.j2me.security.Token;
  * All protected methods, which are all static, redirect their work
  * to alone instance allowed for given Java runtime (for MIDP
  * it is Isolate).
- * Teh standalone instance initializes resources in the private
+ * The standalone instance initializes resources in the private
  * constructor and then releases its in the native finalizer.
  */
 class RegistryStore {
@@ -70,9 +70,10 @@ class RegistryStore {
     /** This class has a different security domain than the MIDlet suite */
     private static Token classSecurityToken;
     
-	static ContentHandlerImpl.Handle register(int storageId, String classname,
+	static ContentHandlerImpl.Handle register(ApplicationID appID,
 										ContentHandlerRegData handlerData) {
-        if( !store.register0(storageId, classname, handlerData) )
+        if( !store.register0(CLDCAppID.from(appID).suiteID, CLDCAppID.from(appID).className, 
+        						handlerData) )
         	return null;
         return new ContentHandlerHandle( handlerData.ID );
 	}
@@ -108,7 +109,7 @@ class RegistryStore {
         if(AppProxy.LOGGER != null){
 			AppProxy.LOGGER.println( "conflictedHandlers for '" + testID + "' [" + result.length + "]:" );
 			for( int i = 0; i < result.length; i++){
-				AppProxy.LOGGER.println( "class = '" + result[i].storageId + "', ID = '" + result[i].ID + "'" );
+				AppProxy.LOGGER.println( "app = " + result[i].applicationID + ", ID = '" + result[i].ID + "'" );
 			}
         }
 		return result;
@@ -146,6 +147,18 @@ class RegistryStore {
         HandlersCollection collection = new HandlersCollection();
         deserializeCHArray(store.forSuite0(suiteId), collection);
         return collection.getArray(); 
+    }
+    
+    static ContentHandlerImpl getHandler( ApplicationID appID ){
+        ContentHandlerImpl[] arr = 
+        	RegistryStore.forSuite(CLDCAppID.from(appID).suiteID);
+        String classname = CLDCAppID.from(appID).className;
+        for (int i = 0; i < arr.length; i++) {
+            if (classname.equals(CLDCAppID.from(arr[i].applicationID).className)) {
+                return arr[i];
+            }
+        }
+        return null;
     }
 
     /**
@@ -425,10 +438,8 @@ class ContentHandlerHandle implements ContentHandlerImpl.Handle {
 	}
 	
 	private void Init( final RegistryStore.HandlerData data ){
-		created = new ContentHandlerImpl(this){{
+		created = new ContentHandlerImpl(new CLDCAppID(data.suiteId, data.classname), this){{
 			this.ID = handlerID; 
-			this.storageId = data.suiteId;
-			this.classname = data.classname;
 			this.registrationMethod = data.registrationMethod;
 		}};
 	}
@@ -440,7 +451,7 @@ class ContentHandlerHandle implements ContentHandlerImpl.Handle {
 	}
 	
 	public String getID() { return handlerID; }
-	public int getSuiteId() { return get().storageId; }
+	//public int getSuiteId() { return get().storageId; }
 	
 	public String[] getArrayField(int fieldId) {
 		return RegistryStore.getArrayField( getID(), fieldId );

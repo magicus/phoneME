@@ -32,7 +32,7 @@
 
 #include <javautil_unicode.h>
 
-#include <jsr211_registry.h>
+#include <jsr211_invoc.h>
 
 #ifdef _DEBUG
 #define TRACE_REGISTER
@@ -161,21 +161,15 @@ static int initializeFields(KNIDECLARGS int dummy) {
 		    break;
 	    }
         chImplId =          KNI_GetFieldID(clObj,  "ID", STRING_TYPE);
-//        chImplSuiteId =     KNI_GetFieldID(clObj,  "storageId", "I");
-//        chImplClassname =   KNI_GetFieldID(clObj,  "classname", STRING_TYPE);
         chImplregMethod =   KNI_GetFieldID(clObj,  "registrationMethod", "I");
         chImplTypes =       KNI_GetFieldID(clObj,  "types", S_ARRAY_TYPE);
         chImplSuffixes =    KNI_GetFieldID(clObj,  "suffixes", S_ARRAY_TYPE);
         chImplActions =     KNI_GetFieldID(clObj,  "actions", S_ARRAY_TYPE);
-        chImplActionnames = KNI_GetFieldID(clObj,  "actionnames", 
-                                                            ANM_ARRAY_TYPE);
-        chImplAccesses =    KNI_GetFieldID(clObj,  "accessRestricted", 
-                                                            S_ARRAY_TYPE);
+        chImplActionnames = KNI_GetFieldID(clObj,  "actionnames", ANM_ARRAY_TYPE);
+        chImplAccesses =    KNI_GetFieldID(clObj,  "accessRestricted", S_ARRAY_TYPE);
     
-        if (chImplId == 0 || /*chImplSuiteId == 0 || chImplClassname == 0 ||*/
-                chImplregMethod == 0 || chImplTypes == 0 || 
-                chImplSuffixes == 0 || chImplActions == 0 || 
-                chImplActionnames == 0 || chImplAccesses == 0) {
+        if (chImplId == 0 || chImplregMethod == 0 || chImplTypes == 0 || 
+                chImplSuffixes == 0 || chImplActions == 0 || chImplActionnames == 0 || chImplAccesses == 0) {
 #ifdef _DEBUG
 	        printf( "kni_reg_store.c: can't initialize ContentHandlerRegData fields!" );
 #endif
@@ -210,8 +204,11 @@ static int initializeFields(KNIDECLARGS int dummy) {
 
 #undef ANM_CLASS_NAME
 
+#ifdef _DEBUG
+    printf("kni_reg_store.c: initializeFields returns %s\n", (ret == KNI_OK)? "OK" : "FAIL");
+#endif
     KNI_EndHandles();
-    return ret;
+    KNI_ReturnInt(ret);
 }
 
 /**
@@ -252,11 +249,11 @@ static int getStringArray(KNIDECLARGS jobjectArray arrObj, const jchar*** arrPtr
 
 	if (i<n){
 		cleanStringArray(arr, i);
-		return KNI_ENOMEM;
+		KNI_ReturnInt(KNI_ENOMEM);
 	}
 
 	*arrPtr = arr;
-    return n;
+    KNI_ReturnInt(n);
 }
 
 /**
@@ -274,19 +271,17 @@ static int getStringArray(KNIDECLARGS jobjectArray arrObj, const jchar*** arrPtr
  */
 static int fillActionMap(KNIDECLARGS jobject o, jsr211_content_handler* handler) {
     int ret = KNI_OK;   // returned result
-    int len;            // number of locales
+    KNI_StartHandles(3);
+    KNI_DeclareHandle(map);   // current ANMap object
+    KNI_DeclareHandle(str);   // the ANMap's locale|name String object
+    KNI_DeclareHandle(arr);   // the ANMap's array of names object
 
-    len = KNI_IsNullHandle(o)? 0: (int)KNI_GetArrayLength(o);
+    int len = KNI_IsNullHandle(o)? 0: (int)KNI_GetArrayLength(o);
     if (len > 0) {
         int i, j;
         int n = handler->act_num;   // number of actions
 		const jchar** locs = NULL;   // fetched locales
 		const jchar** nams = NULL;   // fetched action names
-
-        KNI_StartHandles(3);
-        KNI_DeclareHandle(map);   // current ANMap object
-        KNI_DeclareHandle(str);   // the ANMap's locale|name String object
-        KNI_DeclareHandle(arr);   // the ANMap's array of names object
 
         do {
             // allocate buffers
@@ -324,11 +319,10 @@ static int fillActionMap(KNIDECLARGS jobject o, jsr211_content_handler* handler)
                 }
             }
         } while (0);
-        
-        KNI_EndHandles();
     }
     
-    return ret;
+    KNI_EndHandles();
+    KNI_ReturnInt(ret);
 }
 
 
@@ -350,7 +344,6 @@ static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassN
 	int length=0;
     KNI_StartHandles(1);
     KNI_DeclareHandle(fldObj);   // field object
-
     do {
         // ID
         KNI_GetObjectField(o, chImplId, fldObj);
@@ -370,6 +363,9 @@ static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassN
         if (JAVACALL_OK!=jsrop_jstring_to_utf16_string(midletClassName, (javacall_utf16_string*)&(handler->class_name))) {
             ret = KNI_ENOMEM; break;
         }
+#ifdef TRACE_REGISTER
+    printf( "kni_reg_store.register0(fillHandlerData): {%ls, %ls}", handler->suite_id, handler->class_name );
+#endif
 
         // flag
         handler->flag = KNI_GetIntField(o, chImplregMethod);
@@ -405,7 +401,7 @@ static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassN
     } while (0);
 
     KNI_EndHandles();
-    return ret;
+    KNI_ReturnInt(ret);
 }
 
 /**
@@ -481,7 +477,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_register0) {
             "id = '%ls'\n"
             "suite_id = '%ls'\n"
             "class_name = '%ls'\n"
-            "flag = %d, type_num = %d, suff_num = %d, act_num = %d, locale_num = %d, acces_num = %d\n",
+            "flag = %d, type_num = %d, suff_num = %d, act_num = %d, locale_num = %d, access_num = %d\n",
             handler.id, handler.suite_id, handler.class_name,
             handler.flag, handler.type_num, handler.suff_num, handler.act_num, handler.locale_num, handler.access_num );
 #endif

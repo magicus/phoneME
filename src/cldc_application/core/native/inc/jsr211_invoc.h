@@ -107,6 +107,12 @@ typedef enum {
  */
 #define STATUS_DISPOSE 100
 
+/** Stored ApplicationID (CLDC version) */
+typedef struct _StoredCLDCAppID {
+    javacall_suite_id   suiteID;    /**< The target MIDlet suiteID */
+    pcsl_string         className;    /**< The target classname */
+} StoredCLDCAppID;
+
 /**
  * Stored InvocationImpl.
  */
@@ -117,31 +123,25 @@ typedef struct _StoredInvoc {
     jboolean    responseRequired; /**< True if a response is required */
     jint        tid;        /**< The assigned transaction id */
     jint        previousTid;    /**< The tid of a previous Invocation */
+
     pcsl_string url;        /**< The URL of the request */
     pcsl_string type;        /**< The type of the request */
     pcsl_string action;        /**< The action of the request */
-    pcsl_string ID;        /**< The ID of the handler requested */
-#ifdef SUITE_ID_STRING
-    pcsl_string suiteID;    /**< The target MIDlet suiteID */
-#else
-    javacall_suite_id suiteId;    /**< The target MIDlet suiteID */
-#endif
-    pcsl_string classname;    /**< The target classname */
-    pcsl_string invokingAuthority; /**< The invoking authority string */
-    pcsl_string invokingAppName; /**< The invoking name */
-#ifdef SUITE_ID_STRING
-    pcsl_string invokingSuiteID;    /**< The target MIDlet suiteID */
-#else
-    javacall_suite_id invokingSuiteId; /**< The invoking MIDlet suiteID */
-#endif
-    pcsl_string invokingClassname; /**< The invoking MIDlet classname */
-    pcsl_string invokingID;    /**< The invoking Application ID */
-    pcsl_string username;    /**< The username provided as credentials */
-    pcsl_string password;    /**< The password provided as credentials */
     int         argsLen;    /**< The length of the argument array */
     pcsl_string* args;        /**< The arguments */
     void*       data;        /**< The data; may be NULL */
     int         dataLen;    /**< The length of the data in bytes */
+
+    pcsl_string ID;        /**< The ID of the handler requested */
+    StoredCLDCAppID destinationApp;  
+
+    pcsl_string invokingAuthority; /**< The invoking authority string */
+    pcsl_string invokingAppName; /**< The invoking name */
+    pcsl_string invokingID;    /**< The invoking Application ID */
+    StoredCLDCAppID invokingApp;  
+
+    pcsl_string username;    /**< The username provided as credentials */
+    pcsl_string password;    /**< The password provided as credentials */
 } StoredInvoc;
 
 /**
