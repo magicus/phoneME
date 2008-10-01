@@ -352,7 +352,6 @@ public class MVMManager extends MIDlet
      * @param suiteInfo Suite which just exited
      * @param className the running MIDlet class name
      */
-
     public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {
         MIDletProxy odtAgentMidlet = midletProxyList.findMIDletProxy(
             MIDletSuite.INTERNAL_SUITE_ID, ODT_AGENT);

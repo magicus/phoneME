@@ -1578,7 +1578,8 @@ public class Display {
  * ************* package private methods
  */
     /**
-     * Gets the primary <code>Display</code> object by owner.
+     * Gets the <code>Display</code> object by owner.
+     *
      * @param owner the owner of the display, the owner can be any class
      * 
      * @return the display object that application can use for its user
@@ -1587,8 +1588,7 @@ public class Display {
      * @throws NullPointerException if <code>owner</code> is <code>null</code>
      */
     static Display getDisplay(Object owner) {
-	/*DisplayAccess da = displayContainer.findPrimaryDisplayByOwner(owner);
-
+	DisplayAccess da = displayContainer.findPrimaryDisplayByOwner(owner);
 	if (da == null) {
 	    addDisplays(owner);
 	    da = displayContainer.findPrimaryDisplayByOwner(owner);
@@ -1598,8 +1598,6 @@ public class Display {
 	System.out.println("getDisplay: hardware id = " + id + " display =  " + da.getDisplay());
 	
 	return da.getDisplay();
-	*/
-    return getDisplays(owner,0)[1];
     }
 
     // #ifdef ENABLE_MULTIPLE_DISPLAYS
@@ -1660,7 +1658,7 @@ public class Display {
 	    }
 	}
         // enable primary display
-    dds[1].setState(DisplayDevice.DISPLAY_DEVICE_ENABLED);
+    dds[0].setState(DisplayDevice.DISPLAY_DEVICE_ENABLED);
     }
 
     /**
@@ -1686,7 +1684,6 @@ public class Display {
 
         return ret;
     }
-
 
     // #ifdef ENABLE_CHAMELEON
     void lSetTitle(DisplayableLF d, String title) {
@@ -2393,7 +2390,6 @@ public class Display {
         // #ifdef ENABLE_CHAMELEON
 
         SkinLoader.adjustScreen();
-
         // Notify Chameleon that the current displayable should be shown
         // in fullscreen mode.
         // This call will not result in any call into application code

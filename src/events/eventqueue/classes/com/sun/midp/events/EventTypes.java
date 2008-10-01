@@ -363,28 +363,29 @@ public final class EventTypes {
     /**
      * Major ID for a request to restart a MIDlet event.
      */
-    public static final int RESTART_MIDLET_EVENT = 56;
+    public static final int RESTART_MIDLET_EVENT = 57;
 
     /**
      * This event is used for show or hide java virtual keyboard
      */
-    public static final int VIRTUAL_KEYBOARD_EVENT = 57;
+    public static final int VIRTUAL_KEYBOARD_EVENT = 58;
 
     /**
      * This event is sent by a native code to the Java installer to
      * enable or disable OCSP check. 
      */
-    public static final int NATIVE_ENABLE_OCSP_REQUEST = 58;
+    public static final int NATIVE_ENABLE_OCSP_REQUEST = 59;
 
     /**
      * This event is sent by a native code to the Java installer to
      * check if OCSP is currently enabled.
      */
-    public static final int NATIVE_CHECK_OCSP_ENABLED_REQUEST = 59;
+    public static final int NATIVE_CHECK_OCSP_ENABLED_REQUEST = 60;
 
     /**
      * This event is sent by a native code to InstallerPeerMIDlet
      * to unblock the installer thread waiting for a user's answer.
      */
-    public static final int NATIVE_UNBLOCK_INSTALLER = 60;
+    public static final int NATIVE_UNBLOCK_INSTALLER = 61;
+
 }

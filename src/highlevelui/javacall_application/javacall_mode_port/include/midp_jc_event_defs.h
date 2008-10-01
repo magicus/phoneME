@@ -456,6 +456,3 @@ midp_jc_event_send(midp_jc_event_union *event);
 #endif
 
 #endif
-
-
-

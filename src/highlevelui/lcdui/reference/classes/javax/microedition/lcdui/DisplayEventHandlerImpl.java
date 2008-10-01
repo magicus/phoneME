@@ -234,7 +234,6 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
 
                 displayContainer.removeDisplaysByOwner(
                     preemptingDisplay.getOwner());
-    
                 preemptingDisplay = null;
 
                 preemptionDoneCalled = false;

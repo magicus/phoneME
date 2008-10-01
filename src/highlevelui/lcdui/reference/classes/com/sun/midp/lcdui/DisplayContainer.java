@@ -78,7 +78,6 @@ public class DisplayContainer {
      *
      * @param owner the object that owns this display
      */
-
     public void requestForegroundForDisplay(Object owner) {
         DisplayAccess[] da = findDisplaysByOwner(owner, 0);
 
@@ -166,7 +165,6 @@ public class DisplayContainer {
      *
      * @return array of display access objects or null if not found
      */
-
     public synchronized DisplayAccess[] findDisplaysByOwner(Object owner, int capabilities) {
         int size = displays.size();
 	Vector v = new Vector(2, 2); 

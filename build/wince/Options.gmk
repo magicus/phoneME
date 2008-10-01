@@ -87,6 +87,7 @@ USE_MULTIPLE_DISPLAYS   = false
 USE_JAVA_VIRTUAL_KEYBOARD   = false
 USE_NATIVE_VIRTUAL_KEYBOARD = true
 
+
 # DEBUG
 USE_DEBUG               = false
 USE_MIDP_MALLOC         = true
