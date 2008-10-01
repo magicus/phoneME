@@ -92,6 +92,16 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     private DataOutputStream streamOutput;
     private DataInputStream streamInput;
 
+    /** Maximum number of persistent connections. */
+    private static int maxNumberOfPersistentConnections = 10;//4;
+    /** Connection linger time in the pool, default 60 seconds. */
+    private static long connectionLingerTime = 600000;
+    protected static StreamConnectionPool connectionPool;
+    static {
+        connectionPool = new StreamConnectionPool(
+                                 maxNumberOfPersistentConnections,
+                                 connectionLingerTime);
+    }
     /*
      * A shared temporary buffer used in a couple of places
      */
@@ -119,7 +129,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         method = GET;
         responseCode = -1;
         protocol = "http";
-        socket = null;
 
         AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
@@ -346,7 +355,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public OutputStream openOutputStream() throws IOException {
-        // Delegate to openDataOutputStream
+    // Delegate to openDataOutputStream
         return openDataOutputStream();
     }
 
@@ -639,7 +648,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         public void write(byte[] b) throws IOException{
             // Create the headers
-            String reqLine = method + " " + getFile()
+            String reqLine = method + " " + (getFile() == null ? "/" : getFile())
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
                 + " " + httpVersion + "\r\n";
@@ -690,7 +699,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             if (--opens == 0 && connected) disconnect();
             outputStreamOpened = false;
         }
-    }
+    }// PrivateOutputStream
 
     protected void ensureOpen() throws IOException {
         if (opens == 0) throw new IOException("Connection closed");
@@ -914,13 +923,24 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         StreamConnection hsc = null;
 
         if (proxyHost == null) {
+            hsc = connectionPool.get(protocol,
+                                          host, port);
+        } else {
+            hsc = connectionPool.get(protocol,
+                                          proxyHost, proxyPort);
+        }
+        if (hsc != null) {
+            return hsc;
+        }
+        
+        if (proxyHost == null) {
             hsc = new HttpStreamConnection(host, port);
         } else {
             hsc = new HttpStreamConnection(proxyHost, proxyPort);
         }
         return hsc;
     }
-
+    
     protected void connect() throws IOException {
         if (connected) {
             return;
@@ -939,9 +959,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         String reqLine ;
         
-        if (proxyHost == null) {
-            reqLine = method + " "
-                + (getFile() == null ? "/" : getFile())
+	if (proxyHost == null) {
+            reqLine = method + " " + (getFile() == null ? "/" : getFile())
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
                 + " " + httpVersion + "\r\n";
@@ -968,8 +987,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         streamOutput.write("\r\n".getBytes());
 
         if (privateOut != null) {
-            streamOutput.write(privateOut.toByteArray());
-            privateOut = null;
+	    streamOutput.write(privateOut.toByteArray());
             //***Bug 4485901*** streamOutput.write("\r\n".getBytes());
             // DEBUG: System.out.println("Request: " + new String(out.toByteArray()));  
         }
@@ -1105,16 +1123,43 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         if (streamConnection == null)
             return;
 
-        if (streamInput != null) {
-            streamInput.close();
-            streamInput = null;
-        }
-        if (streamOutput != null) {
-            streamOutput.close();
-            streamOutput = null;
-        }
-        disconnectSocket();
+        if (streamConnection != null) {
+            String connectionField = (String) headerFields.get("connection");
+            if (connectionField != null &&
+                    (connectionField.equalsIgnoreCase("close") ||
+                    (responseProtocol != null
+                        && responseProtocol.equalsIgnoreCase("HTTP/1.0")
+                        && !connectionField.equalsIgnoreCase("keep-alive")))) {
+                if (streamConnection instanceof StreamConnectionElement) {
+                    connectionPool.remove(
+                            (StreamConnectionElement) streamConnection);
+                    streamConnection = null;
+                } else {
+                    disconnectSocket();
+                }
+            }
+            
+            if (streamConnection != null){
 
+                if (streamConnection instanceof StreamConnectionElement) {
+                    // we got this connection from the pool
+                    connectionPool.returnForReuse(
+                            (StreamConnectionElement) streamConnection);
+                    streamConnection = null;
+                } else {
+                    // save the connection for reuse
+                    if (!connectionPool.add(protocol, host, port,
+                            (HttpStreamConnection)streamConnection, streamOutput,
+                            streamInput)) {
+                        // pool full, disconnect
+                        disconnectSocket();
+                    }
+                }
+            }
+        }
+
+        privateIn = null;
+        privateOut = null;
         responseCode = -1;
         responseMsg = null;
         connected = false;
@@ -1124,6 +1169,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     protected void disconnectSocket() throws IOException {
         if (streamConnection != null) {
             streamConnection.close();
+            if (! (streamConnection instanceof StreamConnectionElement)) {
+                streamInput.close();
+                streamOutput.close();
+            }
+            streamInput = null;
+            streamOutput = null;
             streamConnection = null;
         }    
     }

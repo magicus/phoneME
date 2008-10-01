@@ -99,7 +99,6 @@ class SocketOutputStream extends FileOutputStream
      * @exception IOException If an I/O error has occurred.
      */
     private void socketWrite(byte b[], int off, int len) throws IOException {
-
 	if (len <= 0 || off < 0 | off + len > b.length) {
 	    if (len == 0) {
 		return;

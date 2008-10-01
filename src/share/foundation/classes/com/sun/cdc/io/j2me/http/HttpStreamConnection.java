@@ -74,7 +74,6 @@ class HttpStreamConnection implements StreamConnection
 	if (port < 0) {
 	    throw new IllegalArgumentException("bad port number: " + port);
 	}
-
         this.host = host;
         this.port = port;
 

@@ -60,9 +60,9 @@ class SocketInputStream extends FileInputStream
      * @param impl the implemented socket input stream
      */
     SocketInputStream(PlainSocketImpl impl) throws IOException {
-	super(impl.getFileDescriptor());
-	this.impl = impl;
-	socket = impl.getSocket();
+        super(impl.getFileDescriptor());
+        this.impl = impl;
+        socket = impl.getSocket();
     }
 
     /**

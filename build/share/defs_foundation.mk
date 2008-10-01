@@ -343,6 +343,8 @@ PROFILE_IMPL_CLASSES += \
    \
    com.sun.cdc.io.j2me.http.HttpStreamConnection \
    com.sun.cdc.io.j2me.http.Protocol \
+   com.sun.cdc.io.j2me.http.StreamConnectionElement \
+   com.sun.cdc.io.j2me.http.StreamConnectionPool \
    \
    com.sun.cdc.io.j2me.serversocket.Protocol \
    com.sun.cdc.io.j2me.UniversalFilterInputStream \
