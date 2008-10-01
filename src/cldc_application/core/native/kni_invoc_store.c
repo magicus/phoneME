@@ -242,12 +242,12 @@ static int initializeCLDCAppIDFields( jclass classObj ) {
  * @param tmpObj the Class object of Invocation
  */
 static void initializeFields(KNIDECLARGS jobject invocationImplObj) {
+    if (FID(url) != 0)
+        return;
+
     KNI_StartHandles(2);
     KNI_DeclareHandle(classObj);   // clazz object
     KNI_DeclareHandle(obj);
-
-    if (FID(url) != 0)
-        return;
 
     KNI_GetObjectClass(invocationImplObj, classObj);
     initializeInvocationImplFields(classObj);
