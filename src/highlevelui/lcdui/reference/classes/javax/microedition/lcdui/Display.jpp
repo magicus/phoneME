@@ -1587,26 +1587,19 @@ public class Display {
      * @throws NullPointerException if <code>owner</code> is <code>null</code>
      */
     static Display getDisplay(Object owner) {
-	//DisplayAccess[] das = displayContainer.findDisplaysByOwner(owner, 0);
-
-	DisplayAccess da = displayContainer.findPrimaryDisplayByOwner(owner);
+	/*DisplayAccess da = displayContainer.findPrimaryDisplayByOwner(owner);
 
 	if (da == null) {
 	    addDisplays(owner);
 	    da = displayContainer.findPrimaryDisplayByOwner(owner);
 	}
         
-        //if (das == null) {
-	//    addDisplays(owner);
-	//    das = displayContainer.findDisplaysByOwner(owner, 0);
-	//}
-       // DisplayAccess da = das[das.length - 1];
-	//DisplayAccess da = das[0];
-
 	int id = da.getDisplayDevice().getHardwareId();
 	System.out.println("getDisplay: hardware id = " + id + " display =  " + da.getDisplay());
-
-        return da.getDisplay();
+	
+	return da.getDisplay();
+	*/
+    return getDisplays(owner,0)[1];
     }
 
     // #ifdef ENABLE_MULTIPLE_DISPLAYS
@@ -1667,7 +1660,7 @@ public class Display {
 	    }
 	}
         // enable primary display
-    dds[0].setState(DisplayDevice.DISPLAY_DEVICE_ENABLED);
+    dds[1].setState(DisplayDevice.DISPLAY_DEVICE_ENABLED);
     }
 
     /**
