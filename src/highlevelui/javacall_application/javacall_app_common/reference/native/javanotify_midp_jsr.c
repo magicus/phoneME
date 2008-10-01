@@ -44,7 +44,6 @@ extern "C" {
 #include <javacall_datagram.h>
 #include <javacall_events.h>
 #include <javacall_input.h>
-
 #include <javacall_keypress.h>
 #include <javacall_network.h>
 #include <javacall_penevent.h>
@@ -52,7 +51,6 @@ extern "C" {
 #include <javacall_socket.h>
 #include <javacall_time.h>
 #include <javautil_unicode.h>
-#include <javacall_memory.h>
 
 #ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
@@ -682,19 +680,9 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
     case JAVACALL_EVENT_AMMS_SNAP_SHOOTING_STOPPED:
     case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
         {
-            int i = 0;
-            size_t size = 0;
-            javacall_utf16_string str16 = ( javacall_utf16_string )data;
-            
-            javautil_unicode_utf16_utf8length( str16, &size );
-            ++size;
-            
-            e.data.multimediaEvent.data.str16 = ( javacall_utf16_string )
-                javacall_malloc( size * sizeof( javacall_utf16 ) );
-            for( i = 0; i < size; i++ )
-            {
-                e.data.multimediaEvent.data.str16[i] = str16[i];
-            }
+            size_t size = sizeof( javacall_utf16 ) * ( 1 + wcslen( (javacall_utf16_string)data ) );
+            e.data.multimediaEvent.data.str16 = (javacall_utf16_string)malloc( size );
+            wcscpy( e.data.multimediaEvent.data.str16, (javacall_utf16_string)data );
         }
         break;
     default:
