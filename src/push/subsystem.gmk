@@ -148,6 +148,10 @@ LIB_PUSH_API_SOURCEPATH = $(SUBSYSTEM_PUSH_DIR)/push_api/$(LIB_PUSH_API_IMPL)/cl
 
 SUBSYSTEM_PUSH_API_PACKAGES = \
     com.sun.midp.io.j2me.push
+    
+ifeq ($(TARGET_VM), cdc_vm)
+    SUBSYSTEM_PUSH_API_PACKAGES += com.sun.midp.push.reservation
+endif
 
 MIDP_JAVADOC_SOURCEPATH += \
     $(LIB_PUSH_API_SOURCEPATH) \

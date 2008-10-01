@@ -272,6 +272,16 @@ include $(QA_TESTS_DIR)/portingsupportimpl/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
+# (Extra) ROMUL Subsystem
+# Description: ROMUL implementation
+#####################################################################
+
+ifeq ($(USE_ROMUL), true)
+include $(ROMUL_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+
+#####################################################################
 # (Extra) Demos Subsystem
 # Description: ROMized demos
 #####################################################################

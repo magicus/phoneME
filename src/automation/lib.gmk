@@ -25,7 +25,31 @@
 #
 ######################################################################
 #
-# Automation API Library
+# Automation API Library. 
+#
+# A note about directories structure:
+# - classes/   
+#       API interfaces that are present both in SVM and MVM 
+#       (MVM/SVM-independent part of Automation API)
+# - reference/ 
+#       Implementation of MVM/SVM-independent part of Automation API
+# - mvm/
+#       All MVM-specific files
+# - mvm/classes/
+#       API interfaces that are only present in MVM
+#       (MVM part of Automation API)
+# - mvm/example/
+#       Some examples of Automation API usage which work only
+#       in MVM
+# - mvm/reference/
+#       Implementation of MVM part of Automation API
+# - svm/ 
+#       All SVM-specific files
+# - svm/classes/
+#       API interfaces that are only present in MVM
+#       (SVM part of Automation API)
+# - svm/reference/
+#      Implementation of SVM part of Automation API 
 #
 ######################################################################
 
@@ -53,6 +77,11 @@ MIDP_JAVADOC_ALL += \
 SUBSYSTEM_AUTOMATION_JAVA_FILES = \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutomationInitializer.java
     
+ifneq ($(USE_ROMUL), true)
+SUBSYSTEM_AUTOMATION_JAVA_FILES += \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/romul/ROMULInitializer.java
+endif
+
 ifeq ($(USE_AUTOMATION), true) 
 
 SUBSYSTEM_AUTOMATION_JAVA_FILES += \

@@ -26,6 +26,7 @@
 
 package com.sun.midp.automation;
 
+import com.sun.midp.automation.romul.ROMULInitializer;
 import com.sun.midp.main.*;
 import com.sun.midp.events.*;
 
@@ -65,6 +66,8 @@ public final class AutomationInitializer {
             eventQueue = theEventQueue;
             midletControllerEventProducer = theMidletControllerEventProducer;
             isInitialized = true;
+
+            ROMULInitializer.init();
         }
     }
 

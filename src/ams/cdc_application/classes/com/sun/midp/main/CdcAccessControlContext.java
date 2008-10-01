@@ -54,15 +54,11 @@ public class CdcAccessControlContext extends AccessControlContextAdapter {
      * If the permission check failed because an InterruptedException was
      * thrown, this method will throw a InterruptedSecurityException.
      *
-     * @param permission ID of the permission to check for,
-     *      the ID must be from
-     *      {@link com.sun.midp.security.Permissions}
+     * @param name name of the requested permission
      * @param resource string to insert into the question, can be null if
      *        no %2 in the question
      * @param extraValue string to insert into the question,
      *        can be null if no %3 in the question
-     *
-     * @param name name of the requested permission
      * 
      * @exception SecurityException if the specified permission
      * is not permitted, based on the current security policy
