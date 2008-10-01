@@ -1511,6 +1511,10 @@ jint Java_com_sun_cldchi_jvm_JVM_verifyNextChunk(JVM_SINGLE_ARG_TRAPS) {
 #endif
 }
 
+void Java_com_sun_cldchi_jvm_JVM_flushJarCaches(JVM_SINGLE_ARG_TRAPS) {
+  JarFileParser::flush_caches();
+}
+
 } // extern "C"
 
 #if (!ROMIZING) || (!defined(PRODUCT))
