@@ -76,7 +76,7 @@ class ServerSocket {
      * @revised 1.4
      */
     public ServerSocket() throws IOException {
-        setImpl();
+	setImpl();
     }
 
     /**
@@ -200,9 +200,7 @@ class ServerSocket {
 	if (backlog < 1)
 	  backlog = 50;
 	try {
-        System.out.println("++++ Server socket: ctor port="+port);
 	    bind(new InetSocketAddress(bindAddr, port), backlog);
-        System.out.println("++++ Server socket: ctor done port="+port);
 	} catch(SecurityException e) {
 	    close();
 	    throw e;
@@ -264,16 +262,13 @@ class ServerSocket {
                 }
             }
             try {
-        System.out.println("++++ Server socket setImpl: "+implClass);
                 impl = (SocketImpl) implClass.newInstance();
             } catch (Exception e) {
-        System.out.println("++++ Server socket setImpl: exception: "+e);
                 impl = new PlainSocketImpl();
             }
             if (impl != null && !(impl instanceof java.net.PlainSocketImpl))
                 checkOldImpl();
 	}
-        System.out.println("++++ Server socket setImpl: impl: "+impl);
 	if (impl != null)
 	    impl.setServerSocket(this);
     }
@@ -287,7 +282,6 @@ class ServerSocket {
     void createImpl() throws SocketException {
 	setImpl();
 	try {
-        System.out.println("++++ Server socket createImpl, impl="+impl);
 	    impl.create(true);
 	    created = true;
 	} catch (IOException e) {
