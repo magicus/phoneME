@@ -1757,7 +1757,12 @@
             Comment="Image for virtual keyboard key with unselected down arrow"/>
   <constant Type="int"
             Name="KEYBOARD_FONT"
-            Comment="Virtual keyboard font"/>  
+            Comment="Virtual keyboard font"/>
+    <constant Type="int"
+              Name="TOUCH_RADIUS"
+           Comment="Radius of finger if finger support is on,
+                    if finger support is off than this constant should be 0" />
+
 
 
   <!--

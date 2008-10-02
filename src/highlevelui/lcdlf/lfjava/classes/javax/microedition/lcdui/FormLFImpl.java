@@ -521,6 +521,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 }
             }
         } // synchronized
+
+        if (pointerIndicator) {
+            paintPointerIndicator(g,pointerX,pointerY);
+        }
+
     }
 
     /**
@@ -755,7 +760,30 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         ItemLFImpl item = null;
         for (int i = 0; i < numOfLFs; i++) {
             if (!itemLFs[i].shouldSkipTraverse()) {
-                if (itemLFs[i].itemContainsPointer(x + viewable[X], y + viewable[Y])) {
+                if (ScreenSkin.TOUCH_RADIUS > 0) {
+                    int res1 = (itemLFs[i].itemAcceptPointer(x + viewable[X], y + viewable[Y]));
+//                    System.out.println("FormLFImpl.findItemByPointer res1=" + res1);
+                    if (res1 == 0 || (res1 > 0 && i == numOfLFs - 1)) {
+//                        System.out.println("FormLFImpl.findItemByPointer i=" + i);
+//                        System.out.println("FormLFImpl.findItemByPointer numOfLFs=" + i);
+                        item = itemLFs[i];
+                        break;
+                    } else if (res1 > 0) {
+                        int res2 = (itemLFs[i + 1].itemAcceptPointer(x + viewable[X], y + viewable[Y]));
+//                        System.out.println("FormLFImpl.findItemByPointer res2=" + res2);
+                        if (res1 < res2 || res2 == -1) {
+//                            System.out.println("FormLFImpl.findItemByPointer res1 < res2");
+                            item = itemLFs[i];
+                        } else if (res1 > res2) {
+//                            System.out.println("FormLFImpl.findItemByPointer res1 > res2");
+                            item = itemLFs[i + 1];
+                        } else {
+//                            System.out.println("FormLFImpl.findItemByPointer res1==res2");
+                             item = itemLFs[i].findNearestItem(itemLFs[i + 1],x);
+                        }
+                        break;
+                    }
+                } else if (itemLFs[i].itemContainsPointer(x + viewable[X], y + viewable[Y])) {
                     item = itemLFs[i];
                     break;
                 }
@@ -773,6 +801,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      */
     void uCallPointerPressed(int x, int y) {
         ItemLFImpl v = null;
+
+        pointerIndicator = true;
+        pointerX = x;
+        pointerY = y;               
+
         synchronized (Display.LCDUILock) {
             if (numOfLFs == 0) {
                 return;
@@ -791,7 +824,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             v.uCallPointerPressed(x, y);
 
             uScrollToItem(v.item);
+        } else {
+            uRequestPaint();
         }
+        
     }
 
     /**
@@ -802,6 +838,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      */
     void uCallPointerReleased(int x, int y) {
         ItemLFImpl v = null;
+
+        pointerIndicator = false;        
 
         synchronized (Display.LCDUILock) {
             if (numOfLFs == 0 || 
@@ -822,7 +860,19 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             y = (y + viewable[Y]) - v.getInnerBounds(Y);
             v.uCallPointerReleased(x, y);
         }
+
+        uRequestPaint();        
     }
+
+    void paintPointerIndicator(Graphics g, int x, int y) {
+         // NTS: This may need to special case StringItem?
+         g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
+
+//         System.out.println("FormLFImpl.paintPointerIndicator y=" + y);
+//         System.out.println("FormLFImpl.paintPointerIndicator HEIGHT - y=" + (HEIGHT - y));
+         g.drawArc(x - ScreenSkin.TOUCH_RADIUS, y - ScreenSkin.TOUCH_RADIUS, 2 * ScreenSkin.TOUCH_RADIUS, 2 * ScreenSkin.TOUCH_RADIUS, 0, 360);
+    }
+
 
     /**
      * Handle a pointer dragged event
@@ -1637,6 +1687,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             System.arraycopy(itemLFs, 0, itemsCopy, 0, numOfLFs);
             itemsModified = false;
         }
+
+        System.out.println("uTraverse traverseIndex=" + traverseIndex);
         
         // itemTraverse indicates the return value of the
         // last call to the current item's traverse method.
@@ -2334,5 +2386,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * while FormLF was in HIDDEN or FROZEN state.
      */
     Item pendingCurrentItem; // = null
+
+    boolean pointerIndicator;
+
+    int pointerX;
+    int pointerY;
+
 
 } // class FormLFImpl

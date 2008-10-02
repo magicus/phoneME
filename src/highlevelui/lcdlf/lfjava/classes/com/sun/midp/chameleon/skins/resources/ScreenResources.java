@@ -105,6 +105,9 @@ public class ScreenResources {
         ScreenSkin.IMAGE_BG = SkinLoader.getImage(
                 SkinPropertiesIDs.SCREEN_IMAGE_BG);
 
+        ScreenSkin.TOUCH_RADIUS = SkinLoader.getInt(
+                 SkinPropertiesIDs.TOUCH_RADIUS);
+
         /*
         Uncomment if 9 pc screen background images are used
         ScreenSkin.IMAGE_BG_W_TITLE = SkinLoader.getCompositeImage(
