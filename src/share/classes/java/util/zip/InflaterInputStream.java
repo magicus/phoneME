@@ -152,11 +152,6 @@ class InflaterInputStream extends FilterInputStream {
 
         public int readNative(byte[] b, int off, int len) throws IOException {
             ensureOpen();
-            if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
-                throw new IndexOutOfBoundsException();
-            } else if (len == 0) {
-                return 0;
-            }
             try {
                 int bytesRead = 0;
                 while (len > 0) {
