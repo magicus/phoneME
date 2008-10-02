@@ -30,10 +30,12 @@ import javax.microedition.media.Control;
 
 public class RtspSS implements SourceStream {
 
-    private String mediaControl;
+    private String        mediaControl;
+    private RtpConnection conn;
 
-    public RtspSS( String mediaControl ) {
+    public RtspSS( String mediaControl, int local_port ) {
         this.mediaControl = mediaControl;
+        conn = new RtpConnection( local_port );
     }
 
     public String getMediaControl() {

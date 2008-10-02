@@ -31,12 +31,14 @@ public class RtspIncomingMessage {
     private byte[] bytes;
 
     private RtspMessageType     type         = null;
-    private String              statusCode   = null;
-    private String              statusText   = null;
+    private String              statusCode   = "";
+    private String              statusText   = "";
 
     private SdpSessionDescr     sdp          = null;
     private String              sessionId    = null;
+    private Integer             sessionTimeout = null;
     private String              contentBase  = null;
+    private String              contentType  = null;
     private Integer             cseq         = null;
     private RtspTransportHeader transportHdr = null;
 
@@ -67,17 +69,20 @@ public class RtspIncomingMessage {
 
             offs += len + 2;
 
+            // System.out.println( "line: '" + line + "'" );
+
             if( 0 != line.length() ) {
                 parseLine( line );
             } else {
-                if( offs < bytes.length ) {
+                if( offs < bytes.length && "application/sdp".equals( contentType ) ) {
+                    System.out.println( "processing sdp..." );
                     sdp = new SdpSessionDescr( bytes, offs, bytes.length - offs );
+                    System.out.println( "... sdp processing done." );
                 }
                 break;
             }
         }
-
-        System.out.println( "----------------------------\n\n" );
+        System.out.println( "----- message parsed -------\n\n" );
     }
 
     public RtspMessageType getType() {
@@ -92,8 +97,20 @@ public class RtspIncomingMessage {
         return sessionId;
     }
 
+    public Integer getSessionTimeout() {
+        return sessionTimeout;
+    }
+
     public String getContentBase() {
         return contentBase;
+    }
+
+    public String getStatusCode() {
+        return statusCode;
+    }
+
+    public String getStatusText() {
+        return statusText;
     }
 
     public Integer getCSeq() {
@@ -120,9 +137,25 @@ public class RtspIncomingMessage {
             } else if( hdr_type_str.equals( "TRANSPORT" ) ) {
                 transportHdr = new RtspTransportHeader( hdr_body );
             } else if( hdr_type_str.equals( "SESSION" ) ) {
-                sessionId = hdr_body;
+                int semi_pos = hdr_body.indexOf( ';' );
+                if( -1 == semi_pos ) {
+                    sessionId = hdr_body;
+                } else {
+                    sessionId = hdr_body.substring( 0, semi_pos );
+                    int start = hdr_body.indexOf( "TIMEOUT" );
+                    if( -1 != start ) start = hdr_body.indexOf( "=" ) + 1;
+                    if( start > 0 ) {
+                        try {
+                            sessionTimeout = new Integer( Integer.parseInt( hdr_body.substring( start ) ) );
+                        } catch( NumberFormatException e ) {
+                            sessionTimeout = null;
+                        }
+                    }
+                }
             } else if( hdr_type_str.equals( "CONTENT-BASE" ) ) {
                 contentBase = hdr_body;
+            } else if( hdr_type_str.equals( "CONTENT-TYPE" ) ) {
+                contentType = hdr_body;
             } else if( hdr_type_str.equals( "RANGE" ) ) {
             }
         } else if( line.startsWith( "RTSP/1.0" ) ) {

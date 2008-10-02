@@ -37,6 +37,8 @@ import com.sun.mmedia.sdp.*;
 
 public class RtspDS extends BasicDS
 {
+    private static final int RESPONSE_TIMEOUT = 5000;
+
     private static final int MIN_PORT = 1024;  // inclusive
     private static final int MAX_PORT = 65536; // exclusive
 
@@ -53,7 +55,9 @@ public class RtspDS extends BasicDS
     private String         contentBase = null;
     private RtspRange      range       = null;
 
-    private RtspSS[]       streams     = null;
+    private int sessionTimeout = 60; // in seconds, 60 is default according to the spec
+
+    private RtspSS[] streams = null;
 
     private static int nextPort = MIN_PORT;
 
@@ -78,11 +82,10 @@ public class RtspDS extends BasicDS
                 seqNum = rnd.nextInt();
 
                 if( !sendRequest( RtspOutgoingRequest.DESCRIBE( seqNum, url ) ) ) {
-                    throw new IOException( "DESCRIBE request failed" );
+                    throw new IOException( "RTSP DESCRIBE request failed" );
                 }
 
                 contentBase = response.getContentBase();
-                if( null == contentBase ) throw new IOException( "no Content-Base header received" );
 
                 SdpSessionDescr sdp = response.getSdp();
                 if( null == sdp ) throw new IOException( "no SDP data received" );
@@ -98,36 +101,54 @@ public class RtspDS extends BasicDS
                 }
 
                 int num_tracks = sdp.getMediaDescriptionsCount();
+                if( 0 == num_tracks ) num_tracks = 1;
+
                 streams = new RtspSS[ num_tracks ];
+
+                String mediaControl;
+                RtspOutgoingRequest setup_request;
 
                 // sessionId is null at this point
                 for( int i = 0; i < num_tracks; i++ ) {
 
-                    String mediaControl 
-                        = sdp.getMediaDescription( i ).getMediaAttribute( "control" ).getValue();
+                    // TODO: allocPort() should allocate actual UDP port, not just number
+                    int client_data_port = allocPort();
 
-                    if( sendRequest( RtspOutgoingRequest.SETUP( seqNum, 
-                                                                contentBase, mediaControl,
-                                                                sessionId,
-                                                                allocPort() ) ) ) {
-                        if( 0 == i ) sessionId = response.getSessionId();
-
-                        RtspTransportHeader th = response.getTransportHeader();
-                        if( null != th ) {
-                            System.out.println( "Transport header dump: "
-                            + th.getTransportProtocol()
-                            + ", pf=" + th.getProfile()
-                            + ", lt=" + th.getLowerTransportProtocol()
-                            + ", cd=" + th.getClientDataPort()
-                            + ", cc=" + th.getClientControlPort()
-                            + ", sd=" + th.getServerDataPort()
-                            + ", sc=" + th.getServerControlPort() );
-                        }
-        
-                        streams[ i ] = new RtspSS( mediaControl );
+                    if( i < sdp.getMediaDescriptionsCount() ) {
+                        mediaControl = sdp.getMediaDescription( i ).getMediaAttribute( "control" ).getValue();
                     } else {
+                        mediaControl = null;
+                    }
+
+                    if( null != contentBase ) {
+                        setup_request = RtspOutgoingRequest.SETUP( seqNum, contentBase, mediaControl,
+                                                                   sessionId, client_data_port );
+                    } else {
+                        setup_request = RtspOutgoingRequest.SETUP( seqNum, url, sessionId, client_data_port );
+                    }
+
+                    if( !sendRequest( setup_request ) ) {
                         throw new IOException( "SETUP request failed" );
                     }
+
+                    if( 0 == i ) {
+                        sessionId = response.getSessionId();
+                        Integer timeout = response.getSessionTimeout();
+                        if( null != timeout ) {
+                            sessionTimeout = timeout.intValue();
+                        }
+                    }
+
+                    RtspTransportHeader th = response.getTransportHeader();
+
+                    if( th.getClientDataPort() != client_data_port ) {
+                        // TODO: returned value for client data port may be different.
+                        // in this case an attempt should be made to re-allocate UDP
+                        // port accordingly. Note that this attempt may fail.
+                        client_data_port = th.getClientDataPort();
+                    }
+
+                    streams[ i ] = new RtspSS( mediaControl, client_data_port );
                 }
 
                 // TODO: determine actual content type
@@ -149,6 +170,7 @@ public class RtspDS extends BasicDS
     }
 
     public synchronized void disconnect() {
+        /*
         if( null != connection ) {
             try {
                 sendRequest( RtspOutgoingRequest.TEARDOWN( seqNum, url, sessionId ) );
@@ -159,6 +181,7 @@ public class RtspDS extends BasicDS
                 connection = null;
             }
         }
+        */
     }
 
     public synchronized void start() throws IOException {
@@ -181,7 +204,7 @@ public class RtspDS extends BasicDS
 
     public synchronized SourceStream[] getStreams() {
         if( null == connection ) throw new IllegalStateException( "RTSP: Not connected" );
-        return streams;
+        return new SourceStream[] { null }; //streams;
     }
 
     public synchronized long getDuration() {
@@ -208,7 +231,12 @@ public class RtspDS extends BasicDS
 
         // TODO: check if these ports are actually available
 
-        if( ++nextPort == MAX_PORT ) nextPort = MIN_PORT;
+        nextPort += 2;
+
+        if( nextPort >= MAX_PORT ) {
+            nextPort = MIN_PORT;
+        }
+
         return retVal;
     }
 
@@ -219,9 +247,16 @@ public class RtspDS extends BasicDS
      */
     protected void processIncomingMessage( byte[] bytes ) {
         synchronized( msgWaitEvent ) {
-            RtspIncomingMessage msg = new RtspIncomingMessage( bytes );
+            RtspIncomingMessage msg;
+            try {
+                msg = new RtspIncomingMessage( bytes );
+            } catch( Exception e ) {
+                e.printStackTrace();
+                msg = null;
+            }
             Integer cseq = msg.getCSeq();
-            if( null != cseq && cseq.intValue() == seqNum ) {
+            // response may not have CSeq defined if status is not '200 OK'.
+            if( null == cseq || cseq.intValue() == seqNum ) {
                 response = msg;
                 msgWaitEvent.notifyAll();
                 seqNum++;
@@ -233,20 +268,27 @@ public class RtspDS extends BasicDS
      * blocks until response is received or timeout period expires
      */
     private boolean sendRequest( RtspOutgoingRequest request ) 
-        throws InterruptedException {
+        throws InterruptedException, IOException {
 
         boolean ok = false;
+
         synchronized( msgWaitEvent ) {
             response = null;
             if( connection.sendData( request.getBytes() ) ) {
                 try {
-                    msgWaitEvent.wait( 5000 );
+                    msgWaitEvent.wait( RESPONSE_TIMEOUT );
                     ok = ( null != response );
                 } catch( InterruptedException e ) {
                     throw e;
                 }
             }
         }
+
+        if( ok && !response.getStatusCode().equals( "200" ) ) {
+            throw new IOException( "RTSP error " + response.getStatusCode()
+                                   + ": '" + response.getStatusText() + "'" );
+        }
+
         return ok;
     }
 }

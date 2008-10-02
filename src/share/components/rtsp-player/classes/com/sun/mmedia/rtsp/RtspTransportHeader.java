@@ -26,9 +26,9 @@ package com.sun.mmedia.rtsp;
 
 public class RtspTransportHeader {
 
-    private String transportProtocol;
-    private String profile;
-    private String lowerTransport;
+    //private String transportProtocol;
+    //private String profile;
+    //private String lowerTransport;
     private int client_data_port;
     private int client_control_port;
     private int server_data_port;
@@ -36,6 +36,9 @@ public class RtspTransportHeader {
 
     public RtspTransportHeader( String str ) {
 
+        int start;
+        int end;
+        /*
         // transport protocol:
         int end = str.indexOf( '/' );
 
@@ -52,6 +55,7 @@ public class RtspTransportHeader {
         end = str.indexOf( ";", start );
 
         lowerTransport = str.substring( start, end );
+        */
 
         // client port:
         start = str.indexOf( "client_port" );
@@ -59,26 +63,15 @@ public class RtspTransportHeader {
         if( start > 0 ) {
             // client data port:
             start = str.indexOf( "=", start ) + 1;
-
             end = str.indexOf( "-", start );
-
             String data_str = str.substring( start, end );
-
             client_data_port = Integer.parseInt( data_str );
 
             // client control port:
             start = end + 1;
-
             end = str.indexOf( ";", start );
-
-            String control_str;
-
-            if( end > 0 ) {
-                control_str = str.substring( start, end );
-            } else {
-                control_str = str.substring( start );
-            }
-
+            if( -1 == end ) end = str.length();
+            String control_str = str.substring( start, end );
             client_control_port = Integer.parseInt( control_str );
         }
 
@@ -88,30 +81,20 @@ public class RtspTransportHeader {
         if( start > 0 ) {
             // server data port:
             start = str.indexOf( "=", start ) + 1;
-
             end = str.indexOf( "-", start );
-
             String data_str = str.substring( start, end );
-
             server_data_port = Integer.parseInt( data_str );
 
             // server control port:
             start = end + 1;
-
             end = str.indexOf( ";", start );
-
-            String control_str;
-
-            if( end > 0 ) {
-                control_str = str.substring( start, end );
-            } else {
-                control_str = str.substring( start );
-            }
-
+            if( -1 == end ) end = str.length();
+            String control_str = str.substring( start, end );
             server_control_port = Integer.parseInt( control_str );
         }
     }
 
+    /*
     public String getTransportProtocol() {
         return transportProtocol;
     }
@@ -123,6 +106,7 @@ public class RtspTransportHeader {
     public String getLowerTransportProtocol() {
         return lowerTransport;
     }
+    */
 
     public int getClientDataPort() {
         return client_data_port;
