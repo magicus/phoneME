@@ -733,20 +733,20 @@ void javanotify_on_image_decode_end(javacall_handle handle, javacall_result resu
 #endif
 }
 
+#ifdef ENABLE_JSR_75
 /**
  * A callback function to be called by the platform in order to notify
  * about changes in the available file system roots (new root was added/
  * a root on removed).
  */
 void javanotify_fileconnection_root_changed(void) {
-#ifdef ENABLE_JSR_75
     midp_jc_event_union e;
     REPORT_INFO(LC_CORE, "javanotify_fileconnection_root_changed() >>\n");
     e.eventType = JSR75_FC_JC_EVENT_ROOTCHANGED;
 
     midp_jc_event_send(&e);
-#endif
 }
+#endif
 
 #ifdef ENABLE_JSR_179
 /**
