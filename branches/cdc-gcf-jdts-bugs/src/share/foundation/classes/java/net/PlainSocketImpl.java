@@ -112,9 +112,7 @@ class PlainSocketImpl extends SocketImpl
      */
     protected synchronized void create(boolean stream) throws IOException {
 	fd = new FileDescriptor();
-        System.out.println("+++ PlainSocket create fd="+fd);
 	socketCreate(stream);
-        System.out.println("+++ PlainSocket create done fd="+fd);
 	if (socket != null)
 	    socket.setCreated();
 	if (serverSocket != null)
@@ -362,13 +360,11 @@ class PlainSocketImpl extends SocketImpl
     protected synchronized void bind(InetAddress address, int lport)
 	throws IOException
     {
-System.out.println("+++ PlainSocket bind port="+lport+" add="+address.hostName);
         socketBind(address, lport);
 	if (socket != null)
 	    socket.setBound();
 	if (serverSocket != null)
 	    serverSocket.setBound();
-System.out.println("+++ PlainSocket bind done port="+lport+" add="+address.hostName);
     }
 
     /**
@@ -385,7 +381,6 @@ System.out.println("+++ PlainSocket bind done port="+lport+" add="+address.hostN
      */
     protected synchronized void accept(SocketImpl s) throws IOException {
 	acquireFD();
-        System.out.println("+++ PlainSocket accept fd="+fd);
 	try {
 	    socketAccept(s);
 	} finally {
