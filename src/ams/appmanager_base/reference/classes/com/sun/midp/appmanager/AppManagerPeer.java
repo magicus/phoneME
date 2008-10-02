@@ -271,6 +271,19 @@ class AppManagerPeer implements CommandListener {
     }
 
     /**
+     * Shows requested application settings.
+     * @param suiteId suite ID
+     * @param nextScreen displayable that is to be shown
+     *  after settings dialog is dismissed
+     */
+    public void showAppSettings(int suiteId,
+                       Displayable nextScreen)
+            throws MIDletSuiteLockedException, MIDletSuiteCorruptedException {
+        AppSettings appSettings = new AppSettingsImpl(suiteId, display,
+                                                  displayError, nextScreen);
+    }
+
+    /**
      * Shows ODT Agent midlet in the midlet list.
      */
     public void showODTAgent() {

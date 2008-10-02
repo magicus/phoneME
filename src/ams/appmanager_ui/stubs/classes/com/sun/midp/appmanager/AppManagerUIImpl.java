@@ -97,8 +97,9 @@ class AppManagerUIImpl implements AppManagerUI {
      * Called when a new midlet was launched.
      *
      * @param si corresponding midlet suite info
+     * @param className MIDlet class name
      */
-    public void notifyMidletStarted(RunningMIDletSuiteInfo si) {
+    public void notifyMidletStarted(RunningMIDletSuiteInfo si, String className) {
 
     }
 
@@ -192,6 +193,17 @@ class AppManagerUIImpl implements AppManagerUI {
      */
     public void notifyMidletStartError(int suiteId, String className, int errorCode,
                                 String errorDetails) {
+
+    }
+
+    /**
+     * Called when state of the midlet changes.
+     *
+     * @param si corresponding suite info
+     * @param newSi new suite info
+     */
+    public void notifyMIDletSuiteStateChanged(RunningMIDletSuiteInfo si,
+                                             RunningMIDletSuiteInfo newSi) {
 
     }
 

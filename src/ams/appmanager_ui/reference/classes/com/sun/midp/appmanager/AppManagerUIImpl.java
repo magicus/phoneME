@@ -703,9 +703,7 @@ class AppManagerUIImpl extends Form
         } else if (c == appSettingsCmd) {
 
             try {
-                AppSettings appSettings = new AppSettings(msi.suiteId, display,
-                                                          displayError, this);
-                display.setCurrent(appSettings);
+                appManager.showAppSettings(msi.suiteId, this);
 
             } catch (Throwable t) {
                 displayError.showErrorAlert(msi.displayName, t, null, null);
