@@ -246,7 +246,10 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam1 = event->data.midp_jc_event_display_device.hardwareId;
         pNewMidpEvent->intParam2 = event->data.midp_jc_event_display_device.state;
         break;
-
+    case MIDP_JC_EVENT_CHECK_LOCALE:
+        pNewSignal->waitingFor = UI_SIGNAL:
+        pNewMidpEvent->type    = CHECK_LOCALE_EVENT;
+        break;
 
 #ifdef ENABLE_JSR_75
     case JSR75_FC_JC_EVENT_ROOTCHANGED:

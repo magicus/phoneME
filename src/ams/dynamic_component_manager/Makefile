@@ -1,3 +1,4 @@
+#
 #   
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
@@ -23,31 +24,4 @@
 # information or have any questions.
 #
 
-############################################################
-# Module's Component Configuration file
-#
-# Remember: It is up to the module itself to impose rules of
-# how to compile the options. All the global Makefile needs
-# is the final def. of Java and native file lists and some
-# other def. (like VPATH)
-############################################################
-
-# Add to global SUBSYSTEMS list
-#
-#SUBSYSTEMS += appmanager_base
-
-# Name of the library
-APPMANAGER_BASE_NAME = appmanager_base
-
-# Local module directory
-APPMANAGER_BASE_DIR = $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_BASE_NAME)
-
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(APPMANAGER_BASE_DIR)/classes/com/sun/midp/appmanager/AppSettings.java \
-    $(APPMANAGER_BASE_DIR)/classes/com/sun/midp/appmanager/ValueChoice.java
-
-APPMANAGER_BASE_IMPL_DIR ?= $(APPMANAGER_BASE_DIR)/reference
-
-include $(APPMANAGER_BASE_IMPL_DIR)/lib.gmk
-
-
+include $(CURDIR)/../../../build/share/genroot.make

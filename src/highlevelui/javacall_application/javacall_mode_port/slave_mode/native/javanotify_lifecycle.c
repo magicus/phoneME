@@ -670,6 +670,46 @@ void javanotify_resume(void) {
 }
 
 /**
+ * Decode integer parameters to locale string
+ */
+void decodeLanguage(char* str, int languageCode, int regionCode) {
+    int i;
+
+    str[1] = (languageCode & 0xFF);
+    languageCode >>= 8;
+
+    str[0] = (languageCode & 0xFF);
+    languageCode >>= 8;
+
+    str[2] = '-';
+
+    str[4] = (languageCode & 0xFF);
+    languageCode >>= 8;
+
+    str[3] = (languageCode & 0xFF);
+    languageCode >>= 8;
+
+    str[5] = '\0';
+}
+
+/**
+ * The platform should invoke this function for locale changing
+ */
+void javanotify_change_locale(short languageCode, regionCode) {
+    const char tmp[6];
+	midp_jc_event_union e;
+	
+	REPORT_INFO(LC_CORE, "javanotify_change_locale() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_CHANGE_LOCALE;
+
+    setSystemProperty(LOCALE, tmp);
+
+    midp_jc_event_send(&e);
+	
+}
+
+/**
  * The platform should invoke this function in platform context
  * to select another running application to be the foreground.
  */

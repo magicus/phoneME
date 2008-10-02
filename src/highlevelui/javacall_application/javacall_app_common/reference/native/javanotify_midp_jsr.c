@@ -40,6 +40,7 @@ extern "C" {
 #include <midp_logging.h>
 #include <localeMethod.h>
 #include <midp_jc_event_defs.h>
+#include <midp_properties_port.h>
 
 #include <javacall_datagram.h>
 #include <javacall_events.h>
@@ -732,20 +733,20 @@ void javanotify_on_image_decode_end(javacall_handle handle, javacall_result resu
 #endif
 }
 
+#ifdef ENABLE_JSR_75
 /**
  * A callback function to be called by the platform in order to notify
  * about changes in the available file system roots (new root was added/
  * a root on removed).
  */
 void javanotify_fileconnection_root_changed(void) {
-#ifdef ENABLE_JSR_75
     midp_jc_event_union e;
     REPORT_INFO(LC_CORE, "javanotify_fileconnection_root_changed() >>\n");
     e.eventType = JSR75_FC_JC_EVENT_ROOTCHANGED;
 
     midp_jc_event_send(&e);
-#endif
 }
+#endif
 
 #ifdef ENABLE_JSR_179
 /**
@@ -1138,10 +1139,49 @@ void javanotify_prompt_volume_finish(void) {
                  JAVACALL_OK);
     e.eventType = MIDP_JC_EVENT_VOLUME;
     e.data.VolumeEvent.stub = 0;
-    midp_jc_event_send(&e);
 
 }
+
 #endif /*ENABLE_API_EXTENSIONS*/
+
+/**
+ * Decode integer parameters to locale string
+ */
+void decodeLanguage(char* str, int languageCode, int regionCode) {
+    int i;
+
+    str[1] = (languageCode & 0xFF);
+    languageCode >>= 8;
+
+    str[0] = (languageCode & 0xFF);
+    languageCode >>= 8;
+
+    str[2] = '-';
+
+    str[4] = (languageCode & 0xFF);
+    languageCode >>= 8;
+
+    str[3] = (languageCode & 0xFF);
+    languageCode >>= 8;
+
+    str[5] = '\0';
+}
+
+/**
+ * The platform should invoke this function for locale changing
+ */
+void javanotify_change_locale(short languageCode, short regionCode) {
+    const char tmp[6];
+	midp_jc_event_union e;
+
+	REPORT_INFO(LC_CORE, "javanotify_change_locale() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_CHANGE_LOCALE;
+
+    decodeLanguage(tmp, languageCode, regionCode);
+
+    midp_jc_event_send(&e);
+}
 
 void javanotify_widget_menu_selection(int cmd) {
     // This command comes from a menu item dynamically

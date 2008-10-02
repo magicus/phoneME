@@ -1,3 +1,4 @@
+#
 #   
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
@@ -22,29 +23,27 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 #
-
-############################################################
-# Module's Component Configuration file
+######################################################################
 #
-# Remember: It is up to the module itself to impose rules of
-# how to compile the options. All the global Makefile needs
-# is the final def. of Java and native file lists and some
-# other def. (like VPATH)
-############################################################
+# AMS Dynamic Components Library
+#
+######################################################################
 
-
+# Name of the library
+AMS_DYNAMIC_COMPONENT_MANAGER_NAME = dynamic_component_manager
+AMS_DYNAMIC_COMPONENT_MANAGER_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_DYNAMIC_COMPONENT_MANAGER_NAME)
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_BASE_IMPL_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(AMS_DYNAMIC_COMPONENT_MANAGER_DIR)/reference/classes
 
-# Java files for the sub-system
+# Java files for the library
 #
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/AppManagerPeer.java \
-    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/DisplayError.java \
-    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/AppSettingsImpl.java \
-    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/ValueChoiceImpl.java \
-    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/CaManager.java \
-    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/RunningMIDletSuiteInfo.java
 
+    
+# Implementation classes    
+ifeq ($(USE_DYNAMIC_COMPONENTS), true)
+SUBSYSTEM_AMS_JAVA_FILES += \
+    $(AMS_DYNAMIC_COMPONENT_MANAGER_DIR)/reference/classes/com/sun/midp/appmanager/ComponentManager.java
+
+endif
 

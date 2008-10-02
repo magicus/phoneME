@@ -388,4 +388,9 @@ public final class EventTypes {
      */
     public static final int NATIVE_UNBLOCK_INSTALLER = 61;
 
+
+    /**
+     * This event is used for change current locale
+     */
+    public static final int CHANGE_LOCALE_EVENT	= 61;
 }

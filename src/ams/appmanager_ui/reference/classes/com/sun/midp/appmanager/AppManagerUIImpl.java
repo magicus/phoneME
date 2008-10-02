@@ -186,6 +186,11 @@ class AppManagerUIImpl extends Form
         new Command(Resource.getString(ResourceConstants.LAUNCH),
                     Command.ITEM, 1);
 
+    /** Command object for "Launch" CA manager app. */
+    private Command launchCompManagerCmd =
+        new Command(Resource.getString(ResourceConstants.LAUNCH),
+                    Command.ITEM, 1);
+
     /** Command object for "Launch" ODT Agent app. */
     private Command launchODTAgentCmd =
         new Command(Resource.getString(ResourceConstants.LAUNCH),
@@ -673,6 +678,10 @@ class AppManagerUIImpl extends Form
 
             manager.launchCaManager();
 
+        } else if (c == launchCompManagerCmd) {
+
+            manager.launchComponentManager();
+
         } else if (c == launchODTAgentCmd) {
 
             manager.launchODTAgent();
@@ -703,9 +712,7 @@ class AppManagerUIImpl extends Form
         } else if (c == appSettingsCmd) {
 
             try {
-                AppSettings appSettings = new AppSettings(msi.suiteId, display,
-                                                          displayError, this);
-                display.setCurrent(appSettings);
+                appManager.showAppSettings(msi.suiteId, this);
 
             } catch (Throwable t) {
                 displayError.showErrorAlert(msi.displayName, t, null, null);
@@ -851,6 +858,9 @@ class AppManagerUIImpl extends Form
                 } else if (appManager.caManagerIncluded() &&
                            AppManagerPeer.CA_MANAGER.equals(mci.msi.midletToRun)) {
                     mci.setDefaultCommand(launchCaManagerCmd);
+                } else if (appManager.compManagerIncluded() &&
+                           AppManagerPeer.COMP_MANAGER.equals(mci.msi.midletToRun)) {
+                    mci.setDefaultCommand(launchCompManagerCmd);
                 } else if (appManager.oddEnabled() &&
                            AppManagerPeer.ODT_AGENT.equals(mci.msi.midletToRun)) {
                     mci.setDefaultCommand(launchODTAgentCmd);
@@ -863,6 +873,9 @@ class AppManagerUIImpl extends Form
                 mci.removeCommand(launchInstallCmd);
                 if (appManager.caManagerIncluded()) {
                     mci.removeCommand(launchCaManagerCmd);
+                }
+                if (appManager.compManagerIncluded()) {
+                    mci.removeCommand(launchCompManagerCmd);
                 }
                 if (appManager.oddEnabled()) {
                     mci.removeCommand(launchODTAgentCmd);

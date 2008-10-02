@@ -3,22 +3,22 @@
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -42,11 +42,15 @@ import com.sun.midp.io.j2me.push.*;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
+import java.util.Vector;
+
 /**
  * The Graphical MIDlet suite settings form.
  */
-public class AppSettings extends Form
-    implements CommandListener, ItemStateListener {
+class AppSettingsImpl implements AppSettings {
+
+    /** Application settings UI */
+    AppSettingsUI settingsUI;
 
     /** ID for the interrupt choice. */
     private static final int INTERRUPT_CHOICE_ID = 2000;
@@ -54,29 +58,16 @@ public class AppSettings extends Form
     /** ID for the first push option radio button. */
     private static final int PUSH_OPTION_1_ID = 1000;
 
-    /** Command object for "OK" command for the form. */
-    private Command saveAppSettingsCmd =
-        new Command(Resource.getString(ResourceConstants.SAVE),
-                    Command.OK, 1);
-    /** Command object for "Cancel" command for the form. */
-    private Command cancelCmd =
-        new Command(Resource.getString(ResourceConstants.CANCEL),
-                    Command.CANCEL, 1);
-
-    /** The ID of the setting displayed in the form. */
-    private int displayedSettingID;
-    /** The ID of the popup button selected. */
-    private int lastPopupChoice;
-    /** The initial setting to display. */
-    private RadioButtonSet initialSetting;
-    /** The settings popup choice group. */
-    private RadioButtonSet settingsPopup;
+    /** The settings choice group. */
+    private ValueChoiceImpl groupChoice;
     /** The application interruption setting. */
-    private RadioButtonSet interruptChoice;
+    private ValueChoiceImpl interruptChoice;
     /** The application permission settings. */
-    private RadioButtonSet[] groupSettings;
+    private ValueChoiceImpl[] groupSettings;
     /** The number of group permission settings. */
     private int numberOfSettings;
+    /** The initial setting. */
+    private ValueChoiceImpl initialSetting;
 
     /** Holds the maximum levels for permissions. */
     private byte[] maxLevels;
@@ -125,75 +116,76 @@ public class AppSettings extends Form
      * @param nextScreen - the displayable to be shown after
      *                     this Form is dismissed
      */
-    public AppSettings(int suiteId,
+    AppSettingsImpl(int suiteId,
                        Display display,
                        DisplayError displayError,
-                       Displayable nextScreen) throws Throwable {
-        super(null);
-
+                       Displayable nextScreen)
+            throws MIDletSuiteLockedException,
+            MIDletSuiteCorruptedException
+    {
         this.displayError = displayError;
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
         this.display = display;
         this.nextScreen = nextScreen;
 		PUSH_ID = Permissions.getId("javax.microedition.io.PushRegistry");
-        displayApplicationSettings(suiteId);
+        loadApplicationSettings(suiteId);
+        
+        settingsUI = new AppSettingsUIImpl();
+        settingsUI.showAppSettings(this, Resource.getString(
+            ResourceConstants.AMS_MGR_SETTINGS), display, displayError);
+    }
+
+
+    /**
+     * Called by UI when value of particular application setting has been
+     * changed by user. AppSettings validates the user input and If value
+     * is not acceptable, for example due to exclusive combination selected,
+     * changeSettingValue method of AppSettingsUI could be called by AppSettings
+     * to change settings to appropriate values. All necessary informational
+     * alerts in this case are shown to the user by AppSettings and thus
+     * AppSettingsUI has just to change UI accordingly when changeSettingValue
+     * is called.
+     *
+     * @param settingID id of setting
+     * @param valueID id of selected value
+     */
+    public void onSettingChanged(int settingID, int valueID) {
+
+        if (settingID == INTERRUPT_CHOICE_ID) {
+            interruptChoice.setSelectedID(valueID);
+        } else {
+            //else ID of group is equivalent to index in array
+            groupSettings[settingID].setSelectedID(valueID);
+        }
+
     }
 
     /**
-     * Respond to a command issued on any Screen.
-     *
-     * @param c command activated by the user
-     * @param s the Displayable the command was on.
+     * Returns ValueChoice that contains set of available application
+     * setting names and IDs. Selected ID represents the initial setting
+     * to be shown to the user.
+     * @return value choice
      */
-    public void commandAction(Command c, Displayable s) {
-        if (c == saveAppSettingsCmd) {
-            saveApplicationSettings();
-            midletSuite.close();
-        } else if (c == cancelCmd) {
-            display.setCurrent(nextScreen);
-            midletSuite.close();
-        }
+    public ValueChoice getSettings() {
+        return groupChoice;
     }
 
     /**
-     * Called when internal state of an item in Settings form is
-     * changed by the user. This is used to dynamically display
-     * the setting the user chooses from the settings popup.
-     *
-     * @param item the item that was changed
+     * Returns ValueChoice that contains set of possible value' IDs and
+     * lables for specified setting. Selected ID represents value that
+     * is currently active for this setting.
+     * @param settingID
+     * @return available setting values
      */
-    public void itemStateChanged(Item item) {
-        int selected;
-
-        if (item != settingsPopup) {
-            /* ignore the other items besides the popup */
-            return;
-        }
-
-        selected = settingsPopup.getSelectedButton();
-        if (selected == lastPopupChoice) {
-            return;
-        }
-
-        lastPopupChoice = selected;
-
-        delete(displayedSettingID);
-
-        try {
-            if (selected == INTERRUPT_CHOICE_ID) {
-                displayedSettingID = append(interruptChoice);
-            } else {
-                displayedSettingID = append(groupSettings[selected]);
-            }
-        } catch (IndexOutOfBoundsException e) {
-            // for safety/completeness.
-            displayedSettingID = 0;
-            Logging.report(Logging.ERROR, LogChannels.LC_AMS,
-                "AppSettings: selected=" + selected);
+    public ValueChoice getSettingValues(int settingID) {
+        if (settingID == INTERRUPT_CHOICE_ID) {
+            return interruptChoice;
+        } else {
+            //else ID of group is equivalent to index in array
+            return groupSettings[settingID];
         }
     }
-
 
     /**
      * Initialize the MIDlet suite info fields for a given suite.
@@ -202,8 +194,7 @@ public class AppSettings extends Form
      *
      * @exception Exception if problem occurs while getting the suite info
      */
-    private void initMidletSuiteInfo(MIDletSuiteImpl midletSuite)
-        throws Exception {
+    private void initMidletSuiteInfo(MIDletSuiteImpl midletSuite) {
 
         int numberOfMidlets = midletSuite.getNumberOfMIDlets();
         installInfo = midletSuite.getInstallInfo();
@@ -219,17 +210,18 @@ public class AppSettings extends Form
     }
 
     /**
-     * Display the MIDlet suite settings as choice groups.
+     * Load the MIDlet suite settings as choice group infos.
      *
-     * @param suiteId ID for suite to display
+     * @param suiteId ID for suite
+     * @throws Throwable
      */
-    private void displayApplicationSettings(int suiteId)
-        throws Throwable {
+    private void loadApplicationSettings(int suiteId)
+            throws MIDletSuiteLockedException, MIDletSuiteCorruptedException 
+       {
 
         int maxLevel;
-        String[] values = new String[1];
         int interruptSetting;
-        initialSetting = null;
+        boolean loadDone = false;
 
         try {
             groups = Permissions.getSettingGroups();
@@ -244,13 +236,8 @@ public class AppSettings extends Form
             pushInterruptSetting = midletSuite.getPushInterruptSetting();
             pushOptions = midletSuite.getPushOptions();
 
-            values[0] = suiteDisplayName;
-
-            setTitle(Resource.getString(
-                                        ResourceConstants.AMS_MGR_SETTINGS));
-            settingsPopup = new RadioButtonSet(
-                Resource.getString(ResourceConstants.AMS_MGR_PREFERENCES),
-                    true);
+            groupChoice = new ValueChoiceImpl(
+                Resource.getString(ResourceConstants.AMS_MGR_PREFERENCES));
 
             if (maxLevels[PUSH_ID] == Permissions.ALLOW) {
                 maxLevel = Permissions.BLANKET;
@@ -266,7 +253,7 @@ public class AppSettings extends Form
             }
 
             interruptChoice =
-                newSettingChoice(settingsPopup,
+                newSettingChoice(
                     Resource.getString(ResourceConstants.AMS_MGR_INTRUPT),
                     INTERRUPT_CHOICE_ID,
                     Resource.getString(ResourceConstants.AMS_MGR_INTRUPT_QUE),
@@ -276,7 +263,7 @@ public class AppSettings extends Form
                     ResourceConstants.AMS_MGR_SETTINGS_PUSH_OPT_ANSWER,
                     PUSH_OPTION_1_ID);
 
-           groupSettings = new RadioButtonSet[groups.length];
+           groupSettings = new ValueChoiceImpl[groups.length];
 
             if (interruptChoice != null) {
                 numberOfSettings = 1;
@@ -291,7 +278,6 @@ public class AppSettings extends Form
                                            curLevels, groups[i]);
 
                 groupSettings[i] = newSettingChoice(
-                    settingsPopup,
                     groups[i].getName(),
                     i,
                     groups[i].getSettingsQuestion(),
@@ -304,37 +290,21 @@ public class AppSettings extends Form
                     numberOfSettings++;
                 }
             }
-
-            if (numberOfSettings > 1) {
-                /*
-                 * There is more then one setting to display so add the
-                 * popup to the settings form
-                 */
-                append(settingsPopup);
+            loadDone = true;
+        } finally {
+            if (!loadDone) {
+                if (midletSuite != null) {
+                    midletSuite.close();
+                    midletSuite = null;
+                }
             }
-
-            if (initialSetting != null) {
-                displayedSettingID = append(initialSetting);
-            }
-        } catch (Throwable t) {
-            if (midletSuite != null) {
-                midletSuite.close();
-            }
-            throw t;
         }
-
-        addCommand(saveAppSettingsCmd);
-        addCommand(cancelCmd);
-        setCommandListener(this);
-
-        setItemStateListener(this);
     }
 
     /**
-     * Creates a new choice group in a form if it is user settable,
-     * with the 3 preset choices and a initial one set.
+     * Creates a new choice info if it is user settable,
+     * with the 3 preset choices and a initial one selected.
      *
-     * @param popup settings popup to append to
      * @param groupName name to add to popup
      *                i18N will be translated
      * @param groupID button ID of group in settings popup,
@@ -349,16 +319,14 @@ public class AppSettings extends Form
      *                    answer, i18N will be translated
      * @param extraAnswerId ID for the extra answer
      *
-     * @return choice to put in the application settings form,
-     *           or null if setting cannot be modified
+     * @return choice info or null if setting cannot be modified
      */
-    private RadioButtonSet newSettingChoice(RadioButtonSet popup,
-            String groupName, int groupID, String question, String denyAnswer,
-            int maxLevel, int level, String name, int extraAnswer,
-            int extraAnswerId) {
+    private ValueChoiceImpl newSettingChoice(String groupName, int groupID,
+            String question, String denyAnswer, int maxLevel, int level,
+            String name, int extraAnswer, int extraAnswerId) {
         String[] values = {name};
         int initValue;
-        RadioButtonSet choice;
+        ValueChoiceImpl choice;
 
         if (question == null ||
             maxLevel == Permissions.ALLOW || maxLevel == Permissions.NEVER ||
@@ -367,10 +335,9 @@ public class AppSettings extends Form
             return null;
         }
 
-        choice = new RadioButtonSet(Resource.getString(question, values),
-                                    false);
+        choice = new ValueChoiceImpl(Resource.getString(question, values));
 
-        settingsPopup.append(groupName, groupID);
+        groupChoice.append(groupName, groupID);
 
         switch (maxLevel) {
         case Permissions.BLANKET:
@@ -430,24 +397,40 @@ public class AppSettings extends Form
             break;
         }
 
-        choice.setDefaultButton(initValue);
-
-        choice.setPreferredSize(getWidth(), -1);
+        choice.setSelectedID(initValue);
 
         if (initialSetting == null) {
             initialSetting = choice;
-            lastPopupChoice = groupID;
+            groupChoice.setSelectedID(groupID);
         }
-
         return choice;
     }
 
-    /** Save the application settings the user entered. */
-    private void saveApplicationSettings() {
+    /**
+     * Cancel application settings the user entered and dismiss UI.
+     * Called by AppSettingsUI as response to user request.
+     */
+    public void cancelApplicationSettings() {
+        display.setCurrent(nextScreen);
+        midletSuite.close();
+    }
+
+    /**
+     * Save application settings the user entered and dismiss UI.
+     * Called by AppSettingsUI as a response to user request.
+     *
+     * IMPL_NOTE: This method has no arguments as AppSettings is
+     * aware of changes user made due to onSettingChanged calls.
+     *
+     */
+    public void saveApplicationSettings() {
         try {
+            if (midletSuite == null) {
+                return;
+            }
             if (interruptChoice != null) {
                 byte maxInterruptSetting;
-                int interruptSetting = interruptChoice.getSelectedButton();
+                int interruptSetting = interruptChoice.getSelectedID();
 
                 if (maxLevels[PUSH_ID] == Permissions.ALLOW) {
                     maxInterruptSetting = Permissions.BLANKET_GRANTED;
@@ -469,7 +452,7 @@ public class AppSettings extends Form
             for (int i = 0; i < groups.length; i++) {
                 if (groupSettings[i] != null) {
                     byte newSetting =
-                        (byte)groupSettings[i].getSelectedButton();
+                        (byte)groupSettings[i].getSelectedID();
 
                     if (newSetting != Permissions.getPermissionGroupLevel(
                             curLevels, groups[i])) {
@@ -498,6 +481,9 @@ public class AppSettings extends Form
             displayError.showErrorAlert(suiteDisplayName, t,
                                         Resource.getString
                                         (ResourceConstants.EXCEPTION), null);
+        } finally {
+            midletSuite.close();
+            midletSuite = null;
         }
     }
 
@@ -514,102 +500,5 @@ public class AppSettings extends Form
         successAlert.setTimeout(GraphicalInstaller.ALERT_TIMEOUT);
 
         display.setCurrent(successAlert, nextScreen);
-    }
-}
-
-/**
- * A <code>RadioButtonSet</code> is a group radio buttons intended to be
- * placed within a <code>Form</code>. However the radio buttons can be
- * accessed by a assigned ID instead of by index. This lets the calling
- * code be the same when dealing with dynamic sets.
- */
-class RadioButtonSet extends ChoiceGroup {
-    /** Size increment for the ID array. */
-    private static final int SIZE_INCREMENT = 5;
-
-    /** Keeps track of the button IDs. */
-    private int[] ids;
-
-    /**
-     * Creates a new, empty <code>RadioButtonSet</code>, specifying its
-     * title.
-     *
-     * @param label the item's label (see {@link Item Item})
-     * @param popup true if the radio buttons should be popup
-     */
-    RadioButtonSet(String label, boolean popup) {
-        super(label, popup ? Choice.POPUP : Choice.EXCLUSIVE);
-        ids = new int[SIZE_INCREMENT];
-    }
-
-    /**
-     * Appends choice to the set.
-     *
-     * @param stringPart the string part of the element to be added
-     * @param id ID for the radio button
-     *
-     * @throws IllegalArgumentException if the image is mutable
-     * @throws NullPointerException if <code>stringPart</code> is
-     * <code>null</code>
-     * @throws IndexOutOfBoundsException this call would exceed the maximum
-     *         number of buttons for this set
-     */
-    public void append(String stringPart, int id) {
-        int buttonNumber = append(stringPart, null);
-
-        if (buttonNumber >= ids.length) {
-            expandIdArray();
-        }
-
-        ids[buttonNumber] = id;
-    }
-
-    /**
-     * Set the default button.
-     *
-     * @param id ID of default button
-     *
-     * @throws IndexOutOfBoundsException if <code>id</code> is invalid
-     */
-    public void setDefaultButton(int id) {
-        setSelectedIndex(indexFor(id), true);
-    }
-
-    /**
-     * Returns the ID of the selected radio button.
-     *
-     * @return ID of selected element
-     */
-    public int getSelectedButton() {
-        return ids[getSelectedIndex()];
-    }
-
-    /**
-     * Find the index for an ID.
-     *
-     * @param id button id
-     *
-     * @return index for a button
-     *
-     * @exception IndexOutOfBoundsException If no element exists with that ID
-     */
-    private int indexFor(int id) {
-        for (int i = 0; i < ids.length; i++) {
-            if (ids[i] == id) {
-                return i;
-            }
-        }
-
-        throw new IndexOutOfBoundsException();
-    }
-
-    /** Expands the ID array. */
-    private void expandIdArray() {
-        int[] prev = ids;
-
-        ids = new int[prev.length + SIZE_INCREMENT];
-        for (int i = 0; i < prev.length; i++) {
-            ids[i] = prev[i];
-        }
     }
 }
