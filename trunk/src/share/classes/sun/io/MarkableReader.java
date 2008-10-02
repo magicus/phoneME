@@ -79,7 +79,9 @@ public class MarkableReader {
      * @exception IOException if an I/O error has occurred
      */
     public int read(byte[] b, int off, int len) throws IOException {
-        if (len == 0) {
+        if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
+            throw new IndexOutOfBoundsException();
+        } else if (len == 0) {
             return 0;
         }
 
