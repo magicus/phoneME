@@ -89,6 +89,12 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
         $(SUBSYSTEM_AMS_DIR)/ams_debug/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/dynamic_components/lib.gmk
 
+# Dynamic components
+	ifeq ($(USE_DYNAMIC_COMPONENTS), true)
+            SUBSYSTEM_AMS_COMPONENTS += \
+		$(SUBSYSTEM_AMS_DIR)/dynamic_component_manager/lib.gmk
+        endif
+
 # On device debugging
         ifeq ($(USE_ON_DEVICE_DEBUG), true)
             SUBSYSTEM_AMS_COMPONENTS += $(PROJECT_MIDP_DIR)/src/ams/on_device_debug_base/lib.gmk \

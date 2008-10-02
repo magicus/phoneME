@@ -105,6 +105,10 @@ class AppManagerPeer implements CommandListener {
     public static final String CA_MANAGER =
         "com.sun.midp.appmanager.CaManager";
 
+    /** Constant for the component manager class name */
+    public static final String COMP_MANAGER =
+        "com.sun.midp.appmanager.ComponentManager";
+
     /** Constant for the graphical installer class name. */
     public static final String INSTALLER =
         "com.sun.midp.installer.GraphicalInstaller";
@@ -147,6 +151,9 @@ class AppManagerPeer implements CommandListener {
     /** True, if the CA manager is included. */
     private boolean caManagerIncluded;
 
+    /** True, if the CA manager is included. */
+    private boolean compManagerIncluded;
+    
     /** If there are folders */
     private boolean foldersOn;
 
@@ -159,8 +166,6 @@ class AppManagerPeer implements CommandListener {
     private Command enableOddNoCmd = new Command(Resource.getString
                                            (ResourceConstants.NO),
                                            Command.BACK, 1);
-    
-    
 
     /**
      * Creates and populates the Application Selector Screen.
@@ -179,6 +184,7 @@ class AppManagerPeer implements CommandListener {
         msiVector = new Vector();
         this.displayError = displayError;
         this.manager = manager;
+        
         this.display = display;
         Vector folders = FolderManager.getFolders();
         foldersOn = (folders != null) ? folders.size() > 0 : false;
@@ -186,6 +192,11 @@ class AppManagerPeer implements CommandListener {
             caManagerIncluded = Class.forName(CA_MANAGER) != null;
         } catch (ClassNotFoundException e) {
             // keep caManagerIncluded false
+        }
+        try {
+            compManagerIncluded = Class.forName(COMP_MANAGER) != null;
+        } catch (ClassNotFoundException e) {
+            // keep compManagerIncluded false
         }
 
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
@@ -271,6 +282,14 @@ class AppManagerPeer implements CommandListener {
     }
 
     /**
+     * Returns true, if the CA manager is included.
+     * @return
+     */
+    public boolean compManagerIncluded() {
+        return compManagerIncluded;
+    }
+
+    /**
      * Shows requested application settings.
      * @param suiteId suite ID
      * @param nextScreen displayable that is to be shown
@@ -349,6 +368,7 @@ class AppManagerPeer implements CommandListener {
                 !midletClassName.equals(DISCOVERY_APP) &&
                 !midletClassName.equals(INSTALLER) &&
                 !midletClassName.equals(CA_MANAGER) &&
+                !midletClassName.equals(COMP_MANAGER) &&
                 !midletClassName.equals(ODT_AGENT)) {
             appManagerMidlet = midlet;
             appManagerUI.notifyInternalMidletStarted(midlet);
@@ -394,6 +414,7 @@ class AppManagerPeer implements CommandListener {
                 !midletClassName.equals(DISCOVERY_APP) &&
                 !midletClassName.equals(INSTALLER) &&
                 !midletClassName.equals(CA_MANAGER) &&
+                !midletClassName.equals(COMP_MANAGER) &&
                 !midletClassName.equals(ODT_AGENT)) {
             appManagerMidlet = null;
             appManagerUI.notifyInternalMidletExited(midlet);
@@ -437,7 +458,7 @@ class AppManagerPeer implements CommandListener {
                             appManagerUI.notifySuiteInstalled(msi);
                             return;
                         }
-                    } else if (CA_MANAGER.equals(midletClassName)) {
+                    } else if (CA_MANAGER.equals(midletClassName) || COMP_MANAGER.equals(midletClassName)) {
                         updateContent();
                     }
 
@@ -505,6 +526,8 @@ class AppManagerPeer implements CommandListener {
 
         suiteIds = midletSuiteStorage.getListOfSuites();
 
+        int nextPosition = 0;
+
         // Add the Installer as the first installed midlet
         if (msiVector.size() > 0) {
             msi = (RunningMIDletSuiteInfo)msiVector.elementAt(0);
@@ -538,11 +561,12 @@ class AppManagerPeer implements CommandListener {
 
             append(msi);
         }
+        nextPosition++;
 
         if (caManagerIncluded) {
             // Add the CA manager as the second installed midlet
-            if (msiVector.size() > 1) {
-                msi = (RunningMIDletSuiteInfo)msiVector.elementAt(1);
+            if (msiVector.size() > nextPosition) {
+                msi = (RunningMIDletSuiteInfo)msiVector.elementAt(nextPosition);
             }
 
             if (msi == null || msi.midletToRun == null ||
@@ -552,12 +576,29 @@ class AppManagerPeer implements CommandListener {
                   Resource.getString(ResourceConstants.CA_MANAGER_APP), true);
                 append(msi);
             }
+            nextPosition++;
+        }
+
+        if (compManagerIncluded) {
+            // Add the CA manager as the second installed midlet
+            if (msiVector.size() > nextPosition) {
+                msi = (RunningMIDletSuiteInfo)msiVector.elementAt(nextPosition);
+            }
+
+            if (msi == null || msi.midletToRun == null ||
+                !msi.midletToRun.equals(COMP_MANAGER)) {
+                msi = new RunningMIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
+                  COMP_MANAGER,
+                  Resource.getString(ResourceConstants.COMP_MANAGER_APP), true);
+                append(msi);
+            }
+            nextPosition++;
         }
 
         if (oddEnabled) {
             // Add the ODT Agent midlet as the third installed midlet
-            if (msiVector.size() > 2) {
-                msi = (RunningMIDletSuiteInfo)msiVector.elementAt(2);
+            if (msiVector.size() > nextPosition) {
+                msi = (RunningMIDletSuiteInfo)msiVector.elementAt(nextPosition);
             }
 
             if (msi == null || msi.midletToRun == null ||
@@ -567,6 +608,7 @@ class AppManagerPeer implements CommandListener {
                   Resource.getString(ResourceConstants.ODT_AGENT_MIDLET), true);
                 append(msi);
             }
+            nextPosition++;
         }
 
         // Add the rest of the installed midlets

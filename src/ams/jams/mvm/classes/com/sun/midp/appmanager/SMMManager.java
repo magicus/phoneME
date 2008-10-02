@@ -73,6 +73,10 @@ public class SMMManager extends MIDlet
     private static final String CA_MANAGER =
         "com.sun.midp.appmanager.CaManager";
 
+    /** Constant for the Component manager class name. */
+    private static final String COMP_MANAGER =
+        "com.sun.midp.appmanager.ComponentManager";
+
     /** True until constructed for the first time. */
     private static boolean first = true;
 
@@ -278,6 +282,19 @@ public class SMMManager extends MIDlet
         } catch (Exception ex) {
             displayError.showErrorAlert(Resource.getString(
                 ResourceConstants.CA_MANAGER_APP), ex, null, null);
+        }
+    }
+
+    /**
+     * Launch the component manager.
+     */
+    public void launchComponentManager() {
+        try {
+            MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID, COMP_MANAGER,
+                Resource.getString(ResourceConstants.COMP_MANAGER_APP));
+        } catch (Exception ex) {
+            displayError.showErrorAlert(Resource.getString(
+                ResourceConstants.COMP_MANAGER_APP), ex, null, null);
         }
     }
 

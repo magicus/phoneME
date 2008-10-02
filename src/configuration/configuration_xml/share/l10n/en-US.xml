@@ -97,6 +97,8 @@
                 Value="Class Verifier Application"/>
 <localized_string Key="CA_MANAGER_APP"
                 Value="Manage Certificate Authorities"/>
+<localized_string Key="COMP_MANAGER_APP"
+                Value="Manage Dynamically Loaded Components"/>
 <localized_string Key="FOREGROUND"
                 Value="Bring to foreground"/>
 <localized_string Key="END"
