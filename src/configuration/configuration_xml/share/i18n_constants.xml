@@ -133,6 +133,9 @@
             Name="CA_MANAGER_APP"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
+            Name="COMP_MANAGER_APP"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
             Name="FOREGROUND"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"

@@ -107,7 +107,13 @@ public class MIDletSuiteLauncher extends MIDlet implements ApplicationManager {
     /** Launch the CA manager. */
     public void launchCaManager() {
     }
-    
+
+    /**
+     * Launch the component manager.
+     */
+    public void launchComponentManager() {
+    }
+
     /** Launch ODT Agent. */
     public void launchODTAgent() {
     }

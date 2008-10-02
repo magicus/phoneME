@@ -44,6 +44,9 @@ interface ApplicationManager {
     /** Launch the CA manager. */
     void launchCaManager();
 
+    /** Launch the component manager. */
+    void launchComponentManager();
+    
     /** Launch ODT Agent. */
     void launchODTAgent();
 
