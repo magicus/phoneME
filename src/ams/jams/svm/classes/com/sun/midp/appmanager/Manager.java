@@ -71,6 +71,10 @@ public class Manager extends MIDlet implements ApplicationManager,
     private static final String CA_MANAGER =
         "com.sun.midp.appmanager.CaManager";
 
+    /** Constant for the component manager class name. */
+    private static final String COMP_MANAGER =
+        "com.sun.midp.appmanager.ComponentManager";
+
     /** Constant for the ODT Agent class name. */
     private static final String ODT_AGENT =
         "com.sun.midp.odd.ODTAgentMIDlet";
@@ -248,6 +252,20 @@ public class Manager extends MIDlet implements ApplicationManager,
         } catch (Exception ex) {
             displayError.showErrorAlert(Resource.getString(
                 ResourceConstants.CA_MANAGER_APP), ex, null, null);
+        }
+    }
+
+    /**
+     * Launch the component manager.
+     */
+    public void launchComponentManager() {
+        try {
+            MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID,
+                COMP_MANAGER,
+                Resource.getString(ResourceConstants.COMP_MANAGER_APP));
+        } catch (Exception ex) {
+            displayError.showErrorAlert(Resource.getString(
+                ResourceConstants.COMP_MANAGER_APP), ex, null, null);
         }
     }
 

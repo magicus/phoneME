@@ -47,6 +47,3 @@ SUBSYSTEM_AMS_JAVA_FILES += \
 
 endif
 
-#SUBSYSTEM_AMS_JAVA_FILES += \
-#    $(AMS_DYNAMIC_COMPONENT_MANAGER_DIR)/stubs/classes/com/sun/midp/appmanager/ComponentManager.java
-
