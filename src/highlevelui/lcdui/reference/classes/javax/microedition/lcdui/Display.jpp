@@ -3236,7 +3236,7 @@ public class Display {
          */
         public void handleScreenChangeEvent(
                 Displayable screen) {
-            Display.this.callScreenChange(screen);
+                Display.this.callScreenChange(screen);
         }
 
         /**
@@ -3339,6 +3339,26 @@ public class Display {
                 keyboardLayer.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
             }
             // #endif ENABLE_CHAMELEON
+        }
+
+        /*
+         * Called by event delivery when locale is changed
+         */
+        public void handleChangeLocaleEvent() {
+
+            SkinLoader.checkLocale();
+            AlertResources.checkLocale();
+
+            DisplayableLF currentCopy;
+            synchronized (LCDUILock) {
+                currentCopy = Display.this.current;
+            }
+
+            if (currentCopy != null) {
+                currentCopy.uCallInvalidate();
+            }
+
+            requestScreenRepaint();
         }
     } // END DisplayEventConsumerImpl Class
 

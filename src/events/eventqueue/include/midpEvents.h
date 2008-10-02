@@ -202,6 +202,12 @@ extern "C" {
  */
 #define NATIVE_UNBLOCK_INSTALLER        60
 
+/**
+ * This event is used for change current locale
+ */
+#define CHANGE_LOCALE_EVENT				61
+
+
 /** @} */
 
 /**

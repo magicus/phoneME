@@ -240,6 +240,10 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = ROTATION_EVENT;
         break;
+    case MIDP_JC_EVENT_CHECK_LOCALE:
+        pNewSignal->waitingFor = UI_SIGNAL:
+        pNewMidpEvent->type    = CHECK_LOCALE_EVENT;
+        break;
 
 #ifdef ENABLE_JSR_75
     case JSR75_FC_JC_EVENT_ROOTCHANGED:
