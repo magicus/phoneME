@@ -157,7 +157,6 @@ final class MIDletSelector implements CommandListener {
      * Displays this selector on the screen.
      */
     public void show() {
-        selectedMidlet = -1;
         refreshList();
         display.setCurrent(mlist);
     }
@@ -209,12 +208,7 @@ final class MIDletSelector implements CommandListener {
 
             runningMidlets.addElement(minfo[selectedMidlet].classname);
             manager.launchSuite(suiteInfo, minfo[selectedMidlet].classname);
-            if (parentDisplayable != null) {
-                display.setCurrent(parentDisplayable);
-            } else {
-                selectedMidlet = -1;
-                display.setCurrent(mlist);
-            }
+            selectedMidlet = -1;
 
         } else if (c == backCmd) {
             if (parentDisplayable != null) {
