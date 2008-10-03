@@ -673,7 +673,7 @@ void javanotify_resume(void) {
 /**
  * Decode integer parameters to locale string
  */
-void decodeLanguage(char* str, int languageCode, int regionCode) {
+void decodeLanguage(char* str, short languageCode, short regionCode) {
     int i;
 
     str[1] = (languageCode & 0xFF);
@@ -684,11 +684,11 @@ void decodeLanguage(char* str, int languageCode, int regionCode) {
 
     str[2] = '-';
 
-    str[4] = (languageCode & 0xFF);
-    languageCode >>= 8;
+    str[4] = (regionCode & 0xFF);
+    regionCode >>= 8;
 
-    str[3] = (languageCode & 0xFF);
-    languageCode >>= 8;
+    str[3] = (regionCode & 0xFF);
+    regionCode >>= 8;
 
     str[5] = '\0';
 }
@@ -696,7 +696,7 @@ void decodeLanguage(char* str, int languageCode, int regionCode) {
 /**
  * The platform should invoke this function for locale changing
  */
-void javanotify_change_locale(short languageCode, regionCode) {
+void javanotify_change_locale(short languageCode, short regionCode) {
     const char tmp[6];
     midp_jc_event_union e;
 	

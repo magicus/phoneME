@@ -237,7 +237,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = event->data.pushEvent.alarmHandle;
         break;
     case MIDP_JC_EVENT_ROTATION:
-        pNewSignal->waitingFor = UI_SIGNAL;
+        pNewSignal->waitingFor = UI_SIGNAL:
         pNewMidpEvent->type    = ROTATION_EVENT;
         break;
     case MIDP_JC_EVENT_CHANGE_LOCALE:
