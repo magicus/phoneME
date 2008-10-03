@@ -72,7 +72,7 @@ public class SdpSessionDescr extends SdpParser {
                     } else if( tag.equals( "b=" ) ) {
                         bandwidthInfo = getLine( bin );
                     } else if( tag.equals( "t=" ) ) {
-                        SdpTimeDescr timeDescription = new SdpTimeDescr( bin );
+                        SdpTimeDescr timeDescription = new SdpTimeDescr( this, bin );
                         timeDescriptions.addElement( timeDescription );
                     } else if( tag.equals( "z=" ) ) {
                         timezoneAdjustment = getLine( bin );
@@ -91,7 +91,7 @@ public class SdpSessionDescr extends SdpParser {
                             sessionAttributes.addElement( attribute );
                         }
                     } else if( tag.equals( "m=" ) ) {
-                        SdpMediaDescr mediaDescription = new SdpMediaDescr( bin, connectionIncluded );
+                        SdpMediaDescr mediaDescription = new SdpMediaDescr( this, bin, connectionIncluded );
 
                         mediaDescriptions.addElement( mediaDescription );
                     }

@@ -27,31 +27,32 @@ package com.sun.mmedia.sdp;
 import java.io.*;
 import java.util.*;
 
-public class SdpTimeDescr extends SdpParser {
+public class SdpTimeDescr {
     // Values:
     public String timeActive;
     public Vector repeatTimes;
 
-    public SdpTimeDescr( ByteArrayInputStream bin ) {
+    public SdpTimeDescr( SdpParser p, ByteArrayInputStream bin ) {
+
         // Time the session is active:
-        timeActive = getLine( bin );
+        timeActive = p.getLine( bin );
 
         // Repeat Times:
         repeatTimes = new Vector();
 
-        String tag = getTag( bin );
+        String tag = p.getTag( bin );
 
         while( tag != null && tag.length() > 0 ) {
             if( tag.equals( "r=" ) ) {
-                String repeatTime = getLine( bin );
+                String repeatTime = p.getLine( bin );
 
                 repeatTimes.addElement( repeatTime );
             } else {
-                ungetTag( tag );
+                p.ungetTag( tag );
                 return;
             }
 
-            tag = getTag( bin );
+            tag = p.getTag( bin );
         }
     }
 }

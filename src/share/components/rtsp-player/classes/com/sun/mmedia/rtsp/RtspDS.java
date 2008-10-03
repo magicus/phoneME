@@ -120,8 +120,10 @@ public class RtspDS extends BasicDS
                         mediaControl = null;
                     }
 
-                    if( null != contentBase ) {
-                        setup_request = RtspOutgoingRequest.SETUP( seqNum, contentBase, mediaControl,
+                    if( null != contentBase || null != mediaControl ) {
+                        setup_request = RtspOutgoingRequest.SETUP( seqNum,
+                                                                   ( null == contentBase ) ? "" : contentBase,
+                                                                   ( null == mediaControl ) ? "" : mediaControl,
                                                                    sessionId, client_data_port );
                     } else {
                         setup_request = RtspOutgoingRequest.SETUP( seqNum, url, sessionId, client_data_port );

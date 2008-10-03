@@ -27,7 +27,7 @@ package com.sun.mmedia.sdp;
 import java.io.*;
 import java.util.*;
 
-public class SdpMediaDescr extends SdpParser {
+public class SdpMediaDescr {
     // Values:
     public String name;
     public String port;
@@ -40,11 +40,11 @@ public class SdpMediaDescr extends SdpParser {
     public String encryptionKey;
     public Vector mediaAttributes;
 
-
-    public SdpMediaDescr( ByteArrayInputStream bin,
+    public SdpMediaDescr( SdpParser p, ByteArrayInputStream bin,
             boolean connectionIncluded ) {
+
         // Media Name and Transport Address:
-        parseMediaName( getLine( bin ) );
+        parseMediaName( p.getLine( bin ) );
 
         // Connection Information:
         boolean mandatory = true;
@@ -55,19 +55,19 @@ public class SdpMediaDescr extends SdpParser {
 
         mediaAttributes = new Vector();
 
-        String tag = getTag( bin );
+        String tag = p.getTag( bin );
 
         while( tag != null && tag.length() > 0 ) {
             if( tag.equals( "i=" ) ) {
-                mediaTitle = getLine( bin );
+                mediaTitle = p.getLine( bin );
             } else if( tag.equals( "c=" ) ) {
-                connectionInfo = getLine( bin );
+                connectionInfo = p.getLine( bin );
             } else if( tag.equals( "b=" ) ) {
-                bandwidthInfo = getLine( bin );
+                bandwidthInfo = p.getLine( bin );
             } else if( tag.equals( "k=" ) ) {
-                encryptionKey = getLine( bin );
+                encryptionKey = p.getLine( bin );
             } else if( tag.equals( "a=" ) ) {
-                String mediaAttribute = getLine( bin );
+                String mediaAttribute = p.getLine( bin );
 
                 int index = mediaAttribute.indexOf( ':' );
 
@@ -80,11 +80,11 @@ public class SdpMediaDescr extends SdpParser {
                     mediaAttributes.addElement( attribute );
                 }
             } else if( tag.equals( "m=" ) ) {
-                ungetTag( tag );
+                p.ungetTag( tag );
                 return;
             }
 
-            tag = getTag( bin );
+            tag = p.getTag( bin );
         }
     }
 

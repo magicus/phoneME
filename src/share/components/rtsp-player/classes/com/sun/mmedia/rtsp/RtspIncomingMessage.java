@@ -77,7 +77,8 @@ public class RtspIncomingMessage {
                 if( offs < bytes.length && "application/sdp".equals( contentType ) ) {
                     System.out.println( "processing sdp..." );
                     sdp = new SdpSessionDescr( bytes, offs, bytes.length - offs );
-                    System.out.println( "... sdp processing done." );
+                    System.out.println( "... sdp processing done, " + sdp.getMediaDescriptionsCount() + 
+                                        " media descriptions obtained." );
                 }
                 break;
             }

@@ -75,8 +75,10 @@ public class RtpConnection extends Thread implements Runnable
                 int len = d.getLength();
                 int off = d.getOffset();
                 byte[] data = d.getData();
-                System.out.println( "*rtp* dgram received: " 
-                    + off + "/" + len + ": "
+
+                /*
+                System.out.print( "*rtp* dgram received: " 
+                    + off + "/" + len + ":\t"
                     + hex( data[ 0 ] ) + " "
                     + hex( data[ 1 ] ) + " "
                     + hex( data[ 2 ] ) + " "
@@ -88,7 +90,15 @@ public class RtpConnection extends Thread implements Runnable
                     + hex( data[ 8 ] ) + " "
                     + hex( data[ 9 ] ) + " "
                     + hex( data[ 10 ] ) + " "
-                    + hex( data[ 11 ] ) );
+                    + hex( data[ 11 ] ) + "  " );
+                */
+
+                RtpPacket pkt = new RtpPacket( data );
+
+                System.out.println( "Pt="     + pkt.getPayloadType() +
+                                    ", Seq="  + pkt.getSequenceNumber() + 
+                                    ", Ssrc=" + pkt.getSsrc() );
+
             } catch( IOException e ) {
                 e.printStackTrace();
                 break;
