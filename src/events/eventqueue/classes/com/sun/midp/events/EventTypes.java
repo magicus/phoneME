@@ -364,4 +364,9 @@ public final class EventTypes {
      * This event is used for show or hide java virtual keyboard
      */
     public static final int VIRTUAL_KEYBOARD_EVENT = 57;
+
+    /**
+     * JSR290 Fluid listener notification event
+     */
+    public static final int FLUID_LISTENER_EVENT = 58;
 }

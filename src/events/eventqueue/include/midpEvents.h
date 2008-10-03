@@ -179,6 +179,11 @@ extern "C" {
  */
 #define RESTART_MIDLET_EVENT            56
 
+/**
+ * JSR290 Fluid listener notification event
+ */
+#define FLUID_LISTENER_EVENT            58
+
 /** @} */
 
 /**

@@ -847,27 +847,6 @@ void /*OPTIONAL*/javanotify_location_proximity(
 
 #endif /* ENABLE_JSR_179 */
 
-#if defined(ENABLE_JSR_211) || defined(ENABLE_JSR_290)
-
-/*
- * Copies source javacall_utf16_string string into newly allocated memory buffer
- * @param src source javacall_utf16_string
- * @return pointer to newly allocated memory containing copy of source string
- */
-static javacall_utf16_string
-copy_jc_utf16_string(javacall_const_utf16_string src) {
-    javacall_int32 length = 0;
-    javacall_utf16_string result;
-    if( src == NULL ) return NULL;
-    if (JAVACALL_OK != javautil_unicode_utf16_ulength (src, &length)) {
-        length = 0;
-    }
-    result = javacall_calloc((unsigned int)length + 1, sizeof(javacall_utf16));
-    memcpy(result, src, ((unsigned int)length + 1) * sizeof(javacall_utf16));
-    return result;
-}
-#endif
-
 #ifdef ENABLE_JSR_211
 /*
  * Called by platform to notify java VM that invocation of native handler
@@ -1027,7 +1006,7 @@ javanotify_fluid_listener_failed (
 
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_FAILED;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.text = copy_jc_utf16_string(failure);
+    e.data.jsr290FluidEvent.text = javautil_wcsdup(failure);
 
     midp_jc_event_send(&e);
 }
@@ -1067,7 +1046,7 @@ javanotify_fluid_listener_warning (
 
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_WARNING;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.text = copy_jc_utf16_string(warning);
+    e.data.jsr290FluidEvent.text = javautil_wcsdup(warning);
 
     midp_jc_event_send(&e);
 }
