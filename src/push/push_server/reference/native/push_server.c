@@ -3131,8 +3131,8 @@ Java_com_sun_midp_i3test_TestCompWildcard_cmpWildCard() {
 #endif
 
 /**
- * This function that is called when the network initialization
- * or finalization is completed.
+ * This function is called when the network initialization or finalization is
+ * completed.
  *
  * @param isInit 0 if the network finalization has been finished,
  *               not 0 - if the initialization

@@ -68,7 +68,7 @@ jlong midp_slavemode_time_slice(void);
 void midp_slavemode_event_loop(void);
 
 /**
- * This function is called called when the network initialization
+ * This function is called when the network initialization
  * or finalization is completed.
  *
  * @param isInit 0 if the network finalization has been finished,

@@ -45,12 +45,15 @@ extern "C" {
  * any of the blocked threads are ready for execution, and call
  * SNI_UnblockThread() on those threads that are ready.
  *
- * Values for the <timeout> paramater:
- *  >0 = Block until an event happens, or until <timeout> milliseconds
- *       has elapsed.
- *   0 = Check the events sources but do not block. Return to the
- *       caller immediately regardless of the status of the event sources.
- *  -1 = Do not timeout. Block until an event happens.
+ * @param blocked_threads Array of blocked threads
+ * @param blocked_threads_count Number of threads in the blocked_threads array
+ * @param timeout Values for the paramater:
+ *                >0 = Block until an event happens, or until <timeout> 
+ *                     milliseconds has elapsed.
+ *                 0 = Check the events sources but do not block. Return to the
+ *                     caller immediately regardless of the status of the event
+ *                     sources.
+ *                -1 = Do not timeout. Block until an event happens.
  */
 void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 		       int blocked_threads_count,
@@ -66,7 +69,7 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 jboolean midp_check_net_status_signal(int* pStatus);
 
 /**
- * This function is called called when the network initialization
+ * This function is called when the network initialization
  * or finalization is completed.
  *
  * @param isInit 0 if the network finalization has been finished,
