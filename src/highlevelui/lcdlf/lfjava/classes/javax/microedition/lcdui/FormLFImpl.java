@@ -1820,8 +1820,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         boolean isCycle = false;
         if (viewable[Y] == 0) {
             uTraverseOutItem(traverseIndexCopy, itemsCopy);
-            traverseIndex = itemsCopy.length - 1;
-            traverseIndexCopy = itemsCopy.length - 1;
+            synchronized (Display.LCDUILock) {
+                traverseIndex = itemsCopy.length - 1;
+                traverseIndexCopy = itemsCopy.length - 1;
+            }
             //set up visRect
             itemTraverse = 
                 uCallItemTraverse(itemsCopy[traverseIndexCopy], Canvas.UP);
@@ -1850,8 +1852,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             viewport[HEIGHT] >= viewable[HEIGHT]) {
             isCycle = true;
             uTraverseOutItem(traverseIndexCopy, itemsCopy);
-            traverseIndex = 0;
-            traverseIndexCopy = 0;
+            synchronized (Display.LCDUILock) {
+                traverseIndex = 0;
+                traverseIndexCopy = 0;
+            }
             //set up visRect
             itemTraverse = 
                 uCallItemTraverse(itemsCopy[traverseIndexCopy], Canvas.DOWN);
