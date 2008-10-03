@@ -671,6 +671,16 @@ extern void
 CVMstackDeleteChunk(CVMStack *stack, CVMStackChunk *chunk);
 #endif
 
+#ifdef CVM_JVMTI
+/* Purpose: Deletes the last chunk in the given stack. */
+extern CVMBool
+CVMstackDeleteLastChunk(CVMStack *stack, CVMStackChunk *chunk);
+extern void
+CVMstackEnableReserved(CVMStack *curStack);
+extern void
+CVMstackDisableReserved(CVMStack *curStack);
+#endif
+
 /* 
  * Walk the frames in a given stack and perform frameAction on each. 
  */

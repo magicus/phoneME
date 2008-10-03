@@ -690,9 +690,10 @@ CVMjvmtiPostExceptionEvent(CVMExecEnv* ee, CVMUint8 *pc,
 			  exceptionsEqual);
 
     if (!exceptionsEqual) {
-
+        CVMStack *curStack = &ee->interpreterStack;
 	CVMObjectICell *exceptionRef;
 	CVMFrame* frame = CVMeeGetCurrentFrame(ee);
+        CVMBool stackBumped = CVM_FALSE;
 
 	CVMassert(CVMID_icellIsNull(CVMmiscICell(ee)));
 	if (CVMlocalExceptionOccurred(ee)) {
@@ -705,7 +706,15 @@ CVMjvmtiPostExceptionEvent(CVMExecEnv* ee, CVMUint8 *pc,
 	    CVMclearRemoteException(ee);
 	}
 	if ((*env)->PushLocalFrame(env, 5+LOCAL_FRAME_SLOP) < 0) {
-	    goto cleanup;
+            /* stack overflow, enable reserve */
+	    CVMclearLocalException(ee);
+            CVMstackEnableReserved(curStack);
+            if ((*env)->PushLocalFrame(env, 5+LOCAL_FRAME_SLOP) < 0) {
+                /* OK, now we have really failed */
+                CVMstackDisableReserved(curStack); 
+                goto cleanup;
+            }
+            stackBumped = CVM_TRUE;
 	}
 
         /* OK, we now have a frame so create a local ref to hold
@@ -735,6 +744,9 @@ CVMjvmtiPostExceptionEvent(CVMExecEnv* ee, CVMUint8 *pc,
 	(*env)->PopLocalFrame(env, 0);
 
     cleanup:
+        if (stackBumped) {
+            CVMstackDisableReserved(curStack); 
+        }
 	CVMclearLocalException(ee);
 	CVMgcSafeThrowLocalException(ee, CVMmiscICell(ee));
 	CVMID_icellSetNull(CVMmiscICell(ee));
