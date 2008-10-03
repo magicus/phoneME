@@ -270,6 +270,20 @@ int javautil_stricmp(const char* string1, const char* string2)
     return ch1 - ch2;
 }
 
+javacall_utf16_string javautil_wcsdup(javacall_const_utf16_string src) {
+    javacall_int32 length = 0;
+    javacall_utf16_string result;
+    if( src == NULL ) {
+        return NULL;
+    }
+    if (JAVACALL_OK != javautil_unicode_utf16_ulength (src, &length)) {
+        length = 0;
+    }
+    result = javacall_calloc((unsigned int)length + 1, sizeof(javacall_utf16));
+    memcpy(result, src, ((unsigned int)length + 1) * sizeof(javacall_utf16));
+    return result;
+}
+
 size_t javautil_wcsncpy(javacall_utf16 * dst, javacall_const_utf16_string src, size_t nchars)
 {
     int count = nchars;
