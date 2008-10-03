@@ -39,28 +39,39 @@
 /**
  * See pcsl_network.h for definition.
  */
-int pcsl_network_init_start(void) {
+int
+pcsl_network_init(void) {
+    javacall_result res;
+
+	res = pcsl_network_init_start(NULL);
+
+	return res;
+}
+
+/**
+ * See pcsl_network.h for definition.
+ */
+int pcsl_network_init_start(PCSL_NET_CALLBACK pcsl_network_callback) {
     /*
      * return SUCCESS, so that calling application can initialize successfully
      *
      */
+    (void)pcsl_network_callback;
     return PCSL_NET_SUCCESS;
 }
-
-
 
 /**
  * See pcsl_network.h for definition.
  */
-int pcsl_network_init_finish(void){
+int pcsl_network_init_finish(void) {
     return PCSL_NET_SUCCESS;
 }
-
 
 /**
  * See pcsl_network.h for definition.
  */
-int pcsl_network_finalize_start(void){
+int pcsl_network_finalize_start(PCSL_NET_CALLBACK pcsl_network_callback) {
+    (void)pcsl_network_callback;
     return PCSL_NET_SUCCESS;
 }
 
@@ -70,7 +81,6 @@ int pcsl_network_finalize_start(void){
 int pcsl_network_finalize_finish(void){
     return PCSL_NET_SUCCESS;
 }
-
 
 /**
  * See pcsl_network.h for definition.
@@ -89,7 +99,6 @@ int pcsl_network_gethostbyname_start(
     return PCSL_NET_IOERROR;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  *
@@ -105,7 +114,6 @@ int pcsl_network_gethostbyname_finish(
 {
     return PCSL_NET_IOERROR;
 }
-
 
 /**
  * See pcsl_network.h for definition.

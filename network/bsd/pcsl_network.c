@@ -118,7 +118,6 @@ int pcsl_network_gethostbyname_start(
     return PCSL_NET_SUCCESS;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  *
@@ -204,7 +203,6 @@ int pcsl_network_getsockopt(
     }
 }
 
-
 /**
  * See pcsl_socket.h for definition.
  */
@@ -269,43 +267,41 @@ int pcsl_network_setsockopt(
     return PCSL_NET_SUCCESS;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
 int pcsl_network_init(void) {
-    return pcsl_network_init_start();
+    return pcsl_network_init_start(NULL);
 }
-
 
 /**
  * See pcsl_network.h for definition.
  */
-int pcsl_network_init_start(void) {
+int pcsl_network_init_start(PCSL_NET_CALLBACK pcsl_network_callback) {
+    (void)pcsl_network_callback;
     lastError = 0;
     return PCSL_NET_SUCCESS;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
-int pcsl_network_init_finish(void){
-    return PCSL_NET_SUCCESS;
-}
-
-
-/**
- * See pcsl_network.h for definition.
- */
-int pcsl_network_finalize_start(void){
+int pcsl_network_init_finish(void) {
     return PCSL_NET_SUCCESS;
 }
 
 /**
  * See pcsl_network.h for definition.
  */
-int pcsl_network_finalize_finish(void){
+int pcsl_network_finalize_start(PCSL_NET_CALLBACK pcsl_network_callback) {
+    (void)pcsl_network_callback;
+    return PCSL_NET_SUCCESS;
+}
+
+/**
+ * See pcsl_network.h for definition.
+ */
+int pcsl_network_finalize_finish(void) {
     return PCSL_NET_SUCCESS;
 }
 
@@ -332,7 +328,6 @@ int pcsl_network_getLocalHostName(
     lastError = errno;
     return PCSL_NET_IOERROR;
 }
-
 
 /**
  * See pcsl_network.h for definition.
@@ -505,7 +500,6 @@ int pcsl_network_getlocalport(
 
     return PCSL_NET_SUCCESS;
 }
-        
 
 /**
  * See pcsl_network.h for definition.
