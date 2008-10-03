@@ -387,7 +387,6 @@ int pcsl_network_getlocalport(
 
     return PCSL_NET_SUCCESS;
 }
-        
 
 /**
  * See pcsl_network.h for definition.
@@ -417,15 +416,17 @@ int pcsl_network_getremoteport(
  * See pcsl_network.h for definition.
  */
 int pcsl_network_init(void) {
-	return pcsl_network_init_start();
+	return pcsl_network_init_start(NULL);
 }
 
 /**
  * See pcsl_network.h for definition.
  */
-int pcsl_network_init_start(void) {
+int pcsl_network_init_start(PCSL_NET_CALLBACK pcsl_network_callback) {
     static int netinit = 0;
     static WSADATA wsaData;
+
+    (void)pcsl_network_callback;
 
     if (!netinit) {
         lastError = 0;
@@ -445,25 +446,24 @@ int pcsl_network_init_start(void) {
 /**
  * See pcsl_network.h for definition.
  */
-int pcsl_network_init_finish(void){
+int pcsl_network_init_finish(void) {
 	return PCSL_NET_SUCCESS;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
-int pcsl_network_finalize_start(void){
+int pcsl_network_finalize_start(PCSL_NET_CALLBACK pcsl_network_callback) {
+    (void)pcsl_network_callback;
     return PCSL_NET_SUCCESS;
 }
 
 /**
  * See pcsl_network.h for definition.
  */
-int pcsl_network_finalize_finish(void){
+int pcsl_network_finalize_finish(void) {
     return PCSL_NET_SUCCESS;
 }
-
 
 /**
  * See pcsl_network.h for definition.

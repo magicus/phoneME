@@ -43,6 +43,14 @@
 
 extern int javacall_to_pcsl_result( javacall_result res );
 
+#define PCSL_NET_MAX_NUMBER_OF_LISTENERS 5
+
+static int g_iNumberOfInitListeners = 0;
+static int  g_iNumberOfFinalizeListeners = 0;
+
+static PCSL_NET_CALLBACK g_fnNetInitListeners[PCSL_NET_MAX_NUMBER_OF_LISTENERS];
+static PCSL_NET_CALLBACK
+g_fnNetFinalizeListeners[PCSL_NET_MAX_NUMBER_OF_LISTENERS];
 
 /**
  * See pcsl_network.h for definition.
@@ -116,53 +124,67 @@ unsigned short pcsl_network_ntohs(
     return value;
 }
 
-
-
-
 /**
- * Performs platform-specific initialization of the networking system.
- * 
- * @return PCSL_NET_SUCCESS upon success;\n 
- *         PCSL_NET_IOERROR for an error
+ * See pcsl_network.h for definition.
  */
 int 
 pcsl_network_init(void) {
+        javacall_result res;
+
+	res = pcsl_network_init_start(NULL);
+
+	return res;
+}
+
+/**
+ * See pcsl_network.h for definition.
+ */
+int 
+pcsl_network_init_start(PCSL_NET_CALLBACK pcsl_network_callback) {
     javacall_result res;
 
     res = javacall_network_init_start();
 
-    while (res == JAVACALL_WOULD_BLOCK)
-      res = javacall_network_init_finish();
-
-    switch (res) {
-    case JAVACALL_OK:
-      return PCSL_NET_SUCCESS;
-    case JAVACALL_FAIL:
-      return PCSL_NET_IOERROR;
+    if (res == JAVACALL_WOULD_BLOCK) {
+        if (g_iNumberOfInitListeners == PCSL_NET_MAX_NUMBER_OF_LISTENERS) {
+            return PCSL_NET_INVALID;
+        }
+        g_fnNetInitListeners[g_iNumberOfInitListeners++] =
+            pcsl_network_callback;
     }
-    return PCSL_NET_IOERROR;
+
+    return javacall_to_pcsl_result(res);
 }
 
-
+/**
+ * See pcsl_network.h for definition.
+ */
+int 
+pcsl_network_init_finish(void) {
+    javacall_result res;
+    res = javacall_network_init_finish();
+    return javacall_to_pcsl_result(res);
+}
 
 /**
  * See pcsl_network.h for definition.
  */
 int
-pcsl_network_finalize_start(void) {
+pcsl_network_finalize_start(PCSL_NET_CALLBACK pcsl_network_callback) {
+    javacall_result res;
 
-        javacall_result res;
     res = javacall_network_finalize_start();
 
-        switch (res) {
-                case JAVACALL_OK:
-                        return PCSL_NET_SUCCESS;
-                case JAVACALL_FAIL:
-                        return PCSL_NET_IOERROR;
-                case JAVACALL_WOULD_BLOCK:
-                        return PCSL_NET_WOULDBLOCK;
+    if (res == JAVACALL_WOULD_BLOCK) {
+        if (g_iNumberOfFinalizeListeners == PCSL_NET_MAX_NUMBER_OF_LISTENERS) {
+            return PCSL_NET_INVALID;
+        }
+        g_fnNetFinalizeListeners[g_iNumberOfFinalizeListeners++] =
+            pcsl_network_callback;
     }
-    return PCSL_NET_IOERROR;
+
+    return javacall_to_pcsl_result(res);
+
 }
 
 /**
@@ -171,47 +193,11 @@ pcsl_network_finalize_start(void) {
 int
 pcsl_network_finalize_finish(void) {
 
-        javacall_result res;
+    javacall_result res;
     res = javacall_network_finalize_finish();
-
-        switch (res) {
-                case JAVACALL_OK:
-                        return PCSL_NET_SUCCESS;
-                case JAVACALL_FAIL:
-                        return PCSL_NET_IOERROR;
-                case JAVACALL_WOULD_BLOCK:
-                        return PCSL_NET_WOULDBLOCK;
-    }
-    return PCSL_NET_IOERROR;
-}
-
-
-
-/**
- * See pcsl_network.h for definition.
- */
-int 
-pcsl_network_init_start(void) {
-    javacall_result res;
-
-    res = javacall_network_init_start();
-
     return javacall_to_pcsl_result(res);
+
 }
-
-
-/**
- * See pcsl_network.h for definition.
- */
-int 
-pcsl_network_init_finish(void) {
-    javacall_result res;
-
-    res = javacall_network_init_finish();
-
-    return javacall_to_pcsl_result(res);
-}
-
 
 /**
  * See pcsl_network.h for definition.
@@ -233,7 +219,6 @@ pcsl_network_getLocalHostName(char *pLocalHost) {
     return javacall_to_pcsl_result(res);
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
@@ -245,7 +230,6 @@ pcsl_network_getLocalIPAddressAsString(char *pLocalIPAddress) {
 
     return javacall_to_pcsl_result(res);
 }
-
 
 /**
  * Translates the given IP address into a host name. 
@@ -309,7 +293,6 @@ pcsl_network_getHostByAddr_finish(int ipn, char *hostname, void **pHandle, void 
 
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
@@ -341,7 +324,6 @@ pcsl_network_gethostbyname_finish(unsigned char *pAddress,
     return javacall_to_pcsl_result(res);
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
@@ -354,7 +336,6 @@ pcsl_network_getsockopt(void *handle, int flag, int *pOptval) {
     return javacall_to_pcsl_result(res);
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
@@ -366,7 +347,6 @@ pcsl_network_setsockopt(void *handle, int flag, int optval) {
 
     return javacall_to_pcsl_result(res);
 }
-
 
 /**
  * See pcsl_network.h for definition.
@@ -401,4 +381,51 @@ int pcsl_network_addrToString(unsigned char *ipBytes,
  */
 char * pcsl_inet_ntoa (void *ipBytes) {
     return javacall_inet_ntoa (ipBytes);
+}
+
+/**
+ * Notifies the registered listeners that the network initialization
+ * or finalization is finished.
+ *
+ * @param isInit 0 if the network finalization has been finished,
+ *               not 0 - if the initialization
+ * @param status one of PCSL_NET_* completion codes
+ */
+static void notify_net_status_changed(int isInit, int status) {
+    int i, num;
+    PCSL_NET_CALLBACK* pListener;
+
+    if (isInit) {
+        num = g_iNumberOfInitListeners;
+        pListener = g_fnNetInitListeners;
+    } else {
+        num = g_iNumberOfFinalizeListeners;
+        pListener = g_fnNetFinalizeListeners;
+    }
+
+    for (i = 0; i < num; i++) {
+        pListener[i](isInit, status);
+    }
+
+    /* reset the list of registered callbacks */
+    if (isInit) {
+        g_iNumberOfInitListeners = 0;
+    } else {
+        g_iNumberOfFinalizeListeners = 0;
+    }
+}
+
+/**
+ * A callback function to be called for notification of network
+ * conenction related events, such as network going down or up.
+ * The platform will invoke the call back in platform context.
+ *
+ * @param event the type of network-related event that occured
+ *              JAVACALL_NETWORK_DOWN if the network became unavailable
+ *              JAVACALL_NETWORK_UP if the network is now available
+ *
+ */
+void javanotify_network_event(javacall_network_event netEvent) {
+    notify_net_status_changed(netEvent == JAVACALL_NETWORK_UP,
+                              PCSL_NET_SUCCESS);
 }
