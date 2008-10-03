@@ -44,6 +44,7 @@
 #include <midp_libc_ext.h>
 #include <kni_globals.h>
 #include <midpUtilKni.h>
+#include <midp_check_events.h>
 
 /**
  * @file
@@ -874,19 +875,20 @@ Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal(void) {
     int status = PCSL_NET_SUCCESS;
     ANC_INIT_NETWORK_INDICATOR;
 
-    REPORT_INFO(LC_CORE, "Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal start\n");
+    REPORT_INFO(LC_CORE,
+        "Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal start\n");
 
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
-    if (info == NULL){
-       status = pcsl_network_init_start();
-    }
-    else {
-       status = info->status;
-       pcsl_network_init_finish();
+    if (info == NULL) {
+       status = pcsl_network_init_start(midp_network_status_event);
+    } else { /* Reinvocation after unblocking the thread */
+       status = pcsl_network_init_finish();
     }
 
-   REPORT_INFO2(LC_CORE, "Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal() pcsl_network_init(%d) returned %d\n",
-                                   (int)(info !=NULL), (int)status);
+   REPORT_INFO2(LC_CORE,
+       "Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal() "
+       "pcsl_network_init(%d) returned %d\n",
+       (int)(info != NULL), (int)status);
 
     switch(status){
     case PCSL_NET_SUCCESS:
@@ -895,11 +897,15 @@ Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal(void) {
         midp_thread_wait(NETWORK_STATUS_SIGNAL, 0, NULL);
         break;
     default:
-        REPORT_ERROR2(LC_CORE, "Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal() pcsl_network_init(%d) failed with code %d\n",
-                                   (int)(info!=NULL), (int)status);
+        REPORT_ERROR2(LC_CORE,
+            "Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal() "
+            "pcsl_network_init(%d) failed with code %d\n",
+            (int)(info != NULL), (int)status);
         break;
     }
-    REPORT_INFO(LC_CORE, "Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal end\n");
+
+    REPORT_INFO(LC_CORE,
+        "Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal end\n");
 
     KNI_ReturnVoid();
 }

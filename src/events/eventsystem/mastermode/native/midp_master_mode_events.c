@@ -36,6 +36,7 @@
 #include <midp_thread.h>
 #include <midp_run_vm.h>
 #include <suspend_resume.h>
+#include <pcsl_network.h>
 
 #if (ENABLE_JSR_120 || ENABLE_JSR_205)
 #include <wmaInterface.h>
@@ -46,11 +47,16 @@
 #endif
 
 #ifdef ENABLE_API_EXTENSIONS
-extern  check_extrnal_api_events(JVMSPI_BlockedThreadInfo *blocked_threads, int blocked_threads_count, jlong timeout);
-#endif /*ENABLE_API_EXTENSIONS*/
+extern void check_extrnal_api_events(JVMSPI_BlockedThreadInfo *blocked_threads,
+                                     int blocked_threads_count, jlong timeout);
+#endif /* ENABLE_API_EXTENSIONS */
 
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
+
+/* it is set by the network status event handler */
+static jboolean g_isNetStatusChanged = KNI_FALSE;
+static jint g_iNetState = 0; /* the current network state: 1 - up, 0 - down */
 
 /**
  * Unblock a Java thread.
@@ -89,17 +95,20 @@ eventUnblockJavaThread(
     return 0;
 }
 
-/*
+/**
  * This function is called by the VM periodically. It has to check if
  * any of the blocked threads are ready for execution, and call
  * SNI_UnblockThread() on those threads that are ready.
  *
- * Values for the <timeout> paramater:
- *  >0 = Block until an event happens, or until <timeout> milliseconds
- *       has elapsed.
- *   0 = Check the events sources but do not block. Return to the
- *       caller immediately regardless of the status of the event sources.
- *  -1 = Do not timeout. Block until an event happens.
+ * @param blocked_threads Array of blocked threads
+ * @param blocked_threads_count Number of threads in blocked_threads array
+ * @param timeout Values for the paramater:
+ *                >0 = Block until an event happens, or until <timeout> 
+ *                     milliseconds has elapsed.
+ *                 0 = Check the events sources but do not block. Return to the
+ *                     caller immediately regardless of the status of the event
+ *                     sources.
+ *                -1 = Do not timeout. Block until an event happens.
  */
 void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 		       int blocked_threads_count,
@@ -134,6 +143,11 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 
     case UI_SIGNAL:
         midpStoreEventAndSignalForeground(newMidpEvent);
+        break;
+
+    case NETWORK_STATUS_SIGNAL:
+        midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                NETWORK_STATUS_SIGNAL, 0, newSignal.status);
         break;
 
     case NETWORK_READ_SIGNAL:
@@ -256,10 +270,53 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 #endif /* ENABLE_JSR_290 */
     default:
 #ifdef ENABLE_API_EXTENSIONS
-        check_extrnal_api_events(blocked_threads, blocked_threads_count, timeout) ;
+        check_extrnal_api_events(blocked_threads, blocked_threads_count, timeout);
 #endif /*ENABLE_API_EXTENSIONS*/
         break;
     } /* switch */
+}
+
+/**
+ * This function is called when the network initialization
+ * or finalization is completed.
+ *
+ * @param isInit 0 if the network finalization has been finished,
+ *               not 0 - if the initialization
+ * @param status one of PCSL_NET_* completion codes
+ */
+void midp_network_status_event(int isInit, int status) {
+    if (isInit) {
+        g_iNetState = (status == PCSL_NET_SUCCESS ? 1 : 0);
+    } else {
+        if (status == PCSL_NET_SUCCESS) {
+            g_iNetState = 0;
+        }
+    }
+
+    g_isNetStatusChanged = KNI_TRUE;
+}
+
+/**
+ * Checks if a network status signal is received.
+ *
+ * @param pStatus on exit will hold a new network status (1 - up, 0 - down)
+ *
+ * @return KNI_TRUE if a network status signal was received, KNI_FALSE otherwise
+ */
+jboolean midp_check_net_status_signal(int* pStatus) {
+    jboolean res;
+
+    res = g_isNetStatusChanged;
+
+    if (g_isNetStatusChanged == KNI_TRUE) {
+        g_isNetStatusChanged = KNI_FALSE;
+
+        if (pStatus != NULL) {
+            *pStatus = g_iNetState;
+        }
+    }
+
+    return res;
 }
 
 /**

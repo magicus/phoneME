@@ -52,6 +52,7 @@
 #include <suspend_resume.h>
 
 #include <javacall_lifecycle.h>
+#include <jcapp_export.h>
 
 #ifdef ENABLE_JSR_120
 #include <wmaInterface.h>
@@ -586,11 +587,11 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             break;
 #endif /* ENABLE_JSR_256 */
         case NETWORK_STATUS_SIGNAL:
-            if(MIDP_NETWORK_UP == newSignal.status) {
+            if (MIDP_NETWORK_UP == newSignal.status) {
                 midp_thread_signal_list(blocked_threads,
                                         blocked_threads_count, NETWORK_STATUS_SIGNAL,
                                         newSignal.descriptor, PCSL_NET_SUCCESS);
-            } else if(MIDP_NETWORK_DOWN == newSignal.status) {
+            } else if (MIDP_NETWORK_DOWN == newSignal.status) {
                 midp_thread_signal_list(blocked_threads,
                                         blocked_threads_count, NETWORK_STATUS_SIGNAL,
                                         newSignal.descriptor, PCSL_NET_IOERROR);
@@ -688,4 +689,16 @@ void midp_slavemode_event_loop(void) {
         "midp_slavemode_event_loop() is not "
         "implemented for JavaCall platform\n");
     return;
+}
+
+/**
+ * This function is called when the network initialization
+ * or finalization is completed.
+ *
+ * @param isInit 0 if the network finalization has been finished,
+ *               not 0 - if the initialization
+ * @param status one of PCSL_NET_* completion codes
+ */
+void midp_network_status_event_port(int isInit, int status) {
+    jcapp_network_event_received(isInit, status);
 }

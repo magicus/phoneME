@@ -109,6 +109,16 @@ extern void jcapp_set_softbutton_label_on_native_layer (unsigned short *label,
                                                          int len,
                                                          int index);
 
+/**
+ * A callback function to be called for notification of network
+ * conenction related events, such as network going down or up.
+ * The platform will invoke the call back in platform context.
+ *
+ * @param isInit 0 if the network finalization has been finished,
+ *               not 0 - if the initialization
+ * @param status one of PCSL_NET_* completion codes
+ */
+void jcapp_network_event_received(int isInit, int status);
 
 /*Disables the refresh of the screen*/
  void LCDUI_disable_refresh(void);

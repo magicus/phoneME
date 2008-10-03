@@ -36,8 +36,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <midp_check_events.h>
 #include <midp_logging.h>
 #include <pcsl_network_generic.h>
+#include <pcsl_network.h>
 #include <fbapp_export.h>
 #include <timer_queue.h>
 
@@ -48,9 +50,17 @@
 #include "mastermode_check_signal.h"
 #include "mastermode_handle_signal.h"
 
+/* Forward declarations */
+static jboolean checkForSocketPointerAndKeyboardSignal(MidpReentryData* pNewSignal,
+    MidpEvent* pNewMidpEvent, jlong timeout64);
+
+static jboolean checkForNetworkStatusSignal(MidpReentryData* pNewSignal,
+    MidpEvent* pNewMidpEvent, jlong timeout64);
+
 /** Static list of registered system signal checkers */
 fCheckForSignal checkForSignal[] = {
     checkForSocketPointerAndKeyboardSignal,
+    checkForNetworkStatusSignal,
     // ...
 };
 
@@ -61,7 +71,7 @@ int checkForSignalNum =
 /**
  * Check and handle socket & pointer & keyboard system signals.
  * The function groups signals that can be checked with a single system call.
-
+ *
  * @param pNewSignal        OUT reentry data to unblock threads waiting for a signal
  * @param pNewMidpEvent     OUT a native MIDP event to be stored to Java event queue
  * @param timeout64         IN  >0 the time system can be blocked waiting for a signal
@@ -70,7 +80,7 @@ int checkForSignalNum =
  *
  * @return KNI_TRUE if signal received, KNI_FALSE otherwise
  */
-jboolean checkForSocketPointerAndKeyboardSignal(MidpReentryData* pNewSignal,
+static jboolean checkForSocketPointerAndKeyboardSignal(MidpReentryData* pNewSignal,
     MidpEvent* pNewMidpEvent, jlong timeout64) {
 
     fd_set read_fds;
@@ -154,6 +164,35 @@ jboolean checkForSocketPointerAndKeyboardSignal(MidpReentryData* pNewSignal,
     
     /* No pending signals were detected */
     return KNI_FALSE;
+}
+
+/**
+ * Check and handle network status (up/down) system signal.
+ *
+ * @param pNewSignal        OUT reentry data to unblock threads waiting for a signal
+ * @param pNewMidpEvent     OUT a native MIDP event to be stored to Java event queue
+ * @param timeout64         IN  >0 the time system can be blocked waiting for a signal
+ *                              =0 don't block the system, check for signals instantly
+ *                              <0 block the system until a signal received
+ *
+ * @return KNI_TRUE if signal received, KNI_FALSE otherwise
+ */
+static jboolean checkForNetworkStatusSignal(MidpReentryData* pNewSignal,
+    MidpEvent* pNewMidpEvent, jlong timeout64) {
+
+    int status;
+    jboolean res = midp_check_net_status_signal(&status);
+
+    (void)pNewMidpEvent;
+    (void)timeout64;
+
+    if (res == KNI_TRUE) {
+        pNewSignal->descriptor = 0;
+        pNewSignal->waitingFor = NETWORK_STATUS_SIGNAL;
+        pNewSignal->status = status;
+    }
+
+    return res;
 }
 
 /**
