@@ -3346,8 +3346,10 @@ public class Display {
          */
         public void handleChangeLocaleEvent() {
 
+            // #ifdef ENABLE_CHAMELEON
             SkinLoader.checkLocale();
             AlertResources.checkLocale();
+            // #endif ENABLE_CHAMELEON
 
             DisplayableLF currentCopy;
             synchronized (LCDUILock) {

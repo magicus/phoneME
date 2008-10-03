@@ -51,6 +51,7 @@
 #include "midp_slavemode_port.h"
 
 #define DEFAULT_MEMORY_CHUNK_SIZE (5*1024*1024 + 200*1024)
+#define LOCALE "microedition.locale"
 
 static char urlAddress[BINARY_BUFFER_MAX_LEN];
 
@@ -697,9 +698,9 @@ void decodeLanguage(char* str, int languageCode, int regionCode) {
  */
 void javanotify_change_locale(short languageCode, regionCode) {
     const char tmp[6];
-	midp_jc_event_union e;
+    midp_jc_event_union e;
 	
-	REPORT_INFO(LC_CORE, "javanotify_change_locale() >>\n");
+    REPORT_INFO(LC_CORE, "javanotify_change_locale() >>\n");
 
     e.eventType = MIDP_JC_EVENT_CHANGE_LOCALE;
 

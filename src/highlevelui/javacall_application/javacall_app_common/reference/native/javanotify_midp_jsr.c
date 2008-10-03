@@ -85,6 +85,7 @@ extern "C" {
 #endif /* ENABLE_ON_DEVICE_DEBUG */
 
 #define MAX_PHONE_NUMBER_LENGTH 48
+#define LOCALE "microedition.locale"
 static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
 
 /**
@@ -1179,6 +1180,8 @@ void javanotify_change_locale(short languageCode, short regionCode) {
     e.eventType = MIDP_JC_EVENT_CHANGE_LOCALE;
 
     decodeLanguage(tmp, languageCode, regionCode);
+
+    setSystemProperty(LOCALE, tmp);
 
     midp_jc_event_send(&e);
 }
