@@ -100,6 +100,8 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
     /* down a key, QVFB passes a stream of simulated keyups an keydowns */
     read(fbapp_get_keyboard_fd(), &qvfbKeyEvent, sizeof(qvfbKeyEvent));
     midpKeyCode = map_raw_keycode(qvfbKeyEvent.unicode);
+    /* There is a patch. When a button was released qvfbKeyEvent.press equales*/
+    /* a big number instead of 0. But when a button was pressed this value equals 1.*/
     isPressed = (qvfbKeyEvent.press == 1) ? KNI_TRUE : KNI_FALSE;
 
     repeatSupport = KNI_FALSE;
