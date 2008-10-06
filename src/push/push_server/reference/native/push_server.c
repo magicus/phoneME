@@ -1007,8 +1007,10 @@ int pushcheckout(char* protocol, int port, char * store) {
         standardProtocol = (p->port == port &&
             (strncmp(p->value, protocol, strlen(protocol)) == 0 ||
                 (strncmp(p->value, "sip", 3) == 0 &&
-                    ((strncmp("datagram", protocol, strlen(protocol)) == 0) ||
-                     (strncmp("socket", protocol, strlen(protocol)) == 0))
+               ((!strncmp("datagram", protocol, strlen(protocol)) == 
+                                       pushIsDatagramConnection(p->value)) ||
+                (!strncmp("socket", protocol, strlen(protocol)) == 
+                                       pushIsSocketConnection(p->value)))
                 )
             )
         );
