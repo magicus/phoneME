@@ -113,6 +113,15 @@ private:
     return (FIELD_OFFSET(SocketTransportDesc, _listener_socket));
   }
 
+  bool _first_time;
+  bool _network_is_up;
+  bool _wait_for_network_init;
+
+  void* _listen_handle;
+
+  bool _wait_for_read;
+  bool _wait_for_write;
+
   // read cache
   unsigned char* _m_p_read_cache;
 

@@ -60,13 +60,13 @@
 #define JVM_NET_INIT_TIMEOUT      ((unsigned long)5000)
 
 bool SocketTransport::_first_time = true;
-bool _network_is_up = false;
-bool _wait_for_network_init = false;
+bool SocketTransport::_network_is_up = false;
+bool SocketTransport::_wait_for_network_init = false;
 
-void* _listen_handle = INVALID_HANDLE;
+void* SocketTransport::_listen_handle = INVALID_HANDLE;
 
-bool _wait_for_read = false;
-bool _wait_for_write = false;
+bool SocketTransport::_wait_for_read = false;
+bool SocketTransport::_wait_for_write = false;
 
 Transport::transport_op_def_t SocketTransport::socket_transport_ops = {
   name,
@@ -318,7 +318,7 @@ void SocketTransport::destroy_transport(Transport *t) {
 
 bool SocketTransport::char_avail(Transport *t, int timeout)
 {
-#if 1
+  UsingFastOops fastoops;
   SocketTransport *st = (SocketTransport *)t;
   void* dbg_handle = st->debugger_socket();
   int bytesAvailable = 0;
@@ -333,44 +333,6 @@ bool SocketTransport::char_avail(Transport *t, int timeout)
   } else {
     return false;
   }
-
-#else
-  UsingFastOops fastoops;
-  fd_set readFDs, writeFDs, exceptFDs;
-  int numFDs = 0;
-  int width;
-  struct timeval tv, *tvp;
-  SocketTransport *st = (SocketTransport *)t;
-  int dbg_socket = st->debugger_socket();
-
-  if (dbg_socket == -1) {
-    return false;
-  }
-  FD_ZERO(&readFDs);
-  FD_ZERO(&writeFDs);
-  FD_ZERO(&exceptFDs);
-  FD_SET((unsigned int)dbg_socket, &readFDs);
-  width = dbg_socket;
-
-  if (timeout == -1) {
-    tv.tv_sec = 0;
-    tv.tv_usec = 20000;
-    tvp = &tv;
-    //    tvp = NULL;
-  } else {
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout % 1000) * 1000;
-    tvp = &tv;
-  }
-
-  numFDs = select(width+1, &readFDs, &writeFDs,
-                  &exceptFDs, tvp);
-  if (numFDs <= 0) {
-    return(false);
-  } else {
-    return (true);
-  }
-#endif
 }
 
 int SocketTransport::write_bytes(Transport *t, void *buf, int len)
@@ -418,25 +380,7 @@ int SocketTransport::peek_bytes(Transport *t, void *buf, int len)
   }
 
   return read_bytes_impl(t, buf, len, false, true);
-/*
-  int bytes_cached = st->bytes_cached();
 
-  if (bytes_cached >= len) {
-    jvm_memcpy((unsigned char *)buf, st->get_read_cache(), len);
-    nread = len;
-  } else {
-    st->cache_bytes(len);
-    bytes_cached = st->bytes_cached();
-
-    if (bytes_cached > 0) {
-      jvm_memcpy((unsigned char *)buf, st->get_read_cache(), bytes_cached);
-    }
-
-    nread = bytes_cached;
-  }
-
-  return nread;
-*/
   //nread = recv(dbg_socket, (char *)buf, len, MSG_PEEK);
   //if (nread <= 0) {
   //  return 0;
@@ -445,10 +389,6 @@ int SocketTransport::peek_bytes(Transport *t, void *buf, int len)
   // nread > 0
   //return nread;
 }
-
-//void SocketTransport::cache_bytes(int len) {
-//
-//}
 
 int SocketTransport::read_bytes(Transport *t, void *buf, int len, bool blockflag)
 {
