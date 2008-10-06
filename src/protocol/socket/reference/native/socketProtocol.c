@@ -44,7 +44,7 @@
 #include <midp_libc_ext.h>
 #include <kni_globals.h>
 #include <midpUtilKni.h>
-#include <midp_check_events.h>
+#include <midp_net_events.h>
 
 /**
  * @file

@@ -36,7 +36,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <midp_check_events.h>
+#include <midp_net_events.h>
 #include <midp_logging.h>
 #include <pcsl_network_generic.h>
 #include <pcsl_network.h>
