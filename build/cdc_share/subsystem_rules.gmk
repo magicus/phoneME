@@ -26,8 +26,11 @@
 #
 ######################################################################
 
-include $(XMLPARSER_DIR)/build/rules.gmk
+include $(XMLPARSER_DIR)/build/share/rules.gmk
 
 $(XMLPARSER_JAR): $(XMLPARSER_JAVA_FILES)
 	$(call compileJSROP,xmlparser,$(XMLPARSER_BUILD_DIR)/classes,$(XMLPARSER_JAVA_FILES),)
 	$(call makeJSROPJar,$(XMLPARSER_JAR),$(XMLPARSER_BUILD_DIR)/classes)
+
+source_bundle::
+	$(AT)$(call source_bundle_filter,$(XMLPARSER_DIR),$(XMLPARSER_SOURCE_OUTPUT_DIR),build/cdc_share)

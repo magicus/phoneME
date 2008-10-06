@@ -26,7 +26,7 @@
 #
 ######################################################################
 
-include $(XMLPARSER_DIR)/build/defs.gmk
+include $(XMLPARSER_DIR)/build/share/defs.gmk
 
 XMLPARSER_LIB_NAME        = xmlparser
 XMLPARSER_BUILD_DIR       = $(JSROP_BUILD_DIR)/$(XMLPARSER_LIB_NAME)

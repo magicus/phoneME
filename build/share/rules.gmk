@@ -43,4 +43,4 @@ $(XMLPARSER_GENERATED_DIR)/$(SUN_PATH)/%.java : $(XMLPARSER_SRC_DIR)/$(SUN_PATH)
 # Append XML parser source bundle creation to target
 source_bundle::
 	@echo " ... xmlparser source bundle" $(LOG)
-	$(AT)$(call source_bundle_filter,$(XMLPARSER_DIR),$(SOURCE_OUTPUT_DIR)/xmlparser,build src)
+	$(AT)$(call source_bundle_filter,$(XMLPARSER_DIR),$(XMLPARSER_SOURCE_OUTPUT_DIR),build/share src)
