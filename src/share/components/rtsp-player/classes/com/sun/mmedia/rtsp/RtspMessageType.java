@@ -26,20 +26,20 @@ package com.sun.mmedia.rtsp;
 
 public class RtspMessageType {
 
-    public final static int UNKNOWN       = -1;
+    public final static int UNKNOWN = -1;
 
-    public final static int DESCRIBE      =  0;
-    public final static int ANNOUNCE      =  1;
-    public final static int GET_PARAMETER =  2;
-    public final static int OPTIONS       =  3;
-    public final static int PAUSE         =  4;
-    public final static int PLAY          =  5;
-    public final static int RECORD        =  6;
-    public final static int REDIRECT      =  7;
-    public final static int SETUP         =  8;
-    public final static int SET_PARAMETER =  9;
-    public final static int TEARDOWN      = 10;
-    public final static int RESPONSE      = 11;
+    public final static int DESCRIBE = 0;
+    public final static int ANNOUNCE = 1;
+    public final static int GET_PARAMETER = 2;
+    public final static int OPTIONS = 3;
+    public final static int PAUSE = 4;
+    public final static int PLAY = 5;
+    public final static int RECORD = 6;
+    public final static int REDIRECT = 7;
+    public final static int SETUP = 8;
+    public final static int SET_PARAMETER = 9;
+    public final static int TEARDOWN = 10;
+    public final static int RESPONSE = 11;
 
     private int type;
 
@@ -57,12 +57,12 @@ public class RtspMessageType {
         "TEARDOWN",      // 10
         "RTSP/1.0" };    // 11
 
-    public RtspMessageType( String msg ) {
+    public RtspMessageType(String msg) {
 
         type = UNKNOWN;
 
-        for( int i = 0; i < messages.length; i++ ) {
-            if( msg.equals( messages[ i ] ) ) {
+        for (int i = 0; i < messages.length; i++) {
+            if (msg.equals(messages[i])) {
                 type = i;
                 break;
             }
@@ -74,7 +74,7 @@ public class RtspMessageType {
     }
 
     public String toString() {
-        return ( -1 == type ) ? "[UNKNOWN]" : messages[ type ];
+        return (-1 == type) ? "[UNKNOWN]" : messages[type];
     }
 }
 

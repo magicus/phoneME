@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -28,59 +28,59 @@ class RtpPacket {
 
     byte[] raw_data;
 
-    RtpPacket( byte[] raw_data ) {
+    RtpPacket(byte[] raw_data) {
         this.raw_data = raw_data;
     }
 
     int getVersion() {
-        return raw_data[ 0 ] >> 6;
+        return raw_data[0] >> 6;
     }
 
     boolean hasPadding() {
-        return 0 != ( raw_data[ 0 ] & 0x20 );
+        return 0 != (raw_data[0] & 0x20);
     }
 
     boolean hasExtension() {
-        return 0 != ( raw_data[ 0 ] & 0x10 );
+        return 0 != (raw_data[0] & 0x10);
     }
 
     int getCsrcCount() {
-        return raw_data[ 0 ] & 0x0F;
+        return raw_data[0] & 0x0F;
     }
 
     boolean hasMarker() {
-        return 0 != ( raw_data[ 1 ] & 0x80 );
-    }                  
+        return 0 != (raw_data[1] & 0x80);
+    }
 
     int getPayloadType() {
-        return raw_data[ 1 ] & 0x7F;
+        return raw_data[1] & 0x7F;
     }
 
     int getSequenceNumber() {
-        return ( raw_data[ 2 ] << 8 ) | 
-                 raw_data[ 3 ];
+        return (raw_data[2] << 8) |
+                 raw_data[3];
     }
 
     int getTimestamp() {
-        return ( raw_data[ 4 ] << 24 ) | 
-               ( raw_data[ 5 ] << 16 ) |
-               ( raw_data[ 6 ] << 8 ) | 
-                 raw_data[ 7 ];
+        return (raw_data[4] << 24) |
+               (raw_data[5] << 16) |
+               (raw_data[6] << 8) |
+                 raw_data[7];
     }
 
     int getSsrc() {
-        return ( raw_data[ 8 ] << 24 ) |
-               ( raw_data[ 9 ] << 16 ) |
-               ( raw_data[ 10 ] << 8 ) | 
-                 raw_data[ 11 ];
+        return (raw_data[8] << 24) |
+               (raw_data[9] << 16) |
+               (raw_data[10] << 8) |
+                 raw_data[11];
     }
 
-    int getCsrc( int n ) {
+    int getCsrc(int n) {
         int offs = 12 + 4 * n;
-        return ( raw_data[ offs ] << 24 ) |
-               ( raw_data[ offs + 1 ] << 16 ) |
-               ( raw_data[ offs + 2 ] << 8 ) | 
-                 raw_data[ offs + 3 ];
+        return (raw_data[offs] << 24) |
+               (raw_data[offs + 1] << 16) |
+               (raw_data[offs + 2] << 8) |
+                 raw_data[offs + 3];
     }
 
     int getPayloadOffset() {

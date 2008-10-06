@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -26,9 +26,6 @@ package com.sun.mmedia.rtsp;
 
 public class RtspTransportHeader {
 
-    //private String transportProtocol;
-    //private String profile;
-    //private String lowerTransport;
     private int client_data_port;
     private int client_control_port;
     private int server_data_port;
@@ -38,75 +35,43 @@ public class RtspTransportHeader {
 
         int start;
         int end;
-        /*
-        // transport protocol:
-        int end = str.indexOf( '/' );
-
-        transportProtocol = str.substring( 0, end );
-
-        // profile:
-        int start = end + 1;
-        end = str.indexOf( ";", start );
-
-        profile = str.substring( start, end );
-
-        // lower layer transport:
-        start = end + 1;
-        end = str.indexOf( ";", start );
-
-        lowerTransport = str.substring( start, end );
-        */
 
         // client port:
-        start = str.indexOf( "client_port" );
+        start = str.indexOf("client_port");
 
-        if( start > 0 ) {
+        if (start > 0) {
             // client data port:
-            start = str.indexOf( "=", start ) + 1;
-            end = str.indexOf( "-", start );
-            String data_str = str.substring( start, end );
-            client_data_port = Integer.parseInt( data_str );
+            start = str.indexOf("=", start) + 1;
+            end = str.indexOf("-", start);
+            String data_str = str.substring(start, end);
+            client_data_port = Integer.parseInt(data_str);
 
             // client control port:
             start = end + 1;
-            end = str.indexOf( ";", start );
-            if( -1 == end ) end = str.length();
-            String control_str = str.substring( start, end );
-            client_control_port = Integer.parseInt( control_str );
+            end = str.indexOf(";", start);
+            if (-1 == end) end = str.length();
+            String control_str = str.substring(start, end);
+            client_control_port = Integer.parseInt(control_str);
         }
 
         // server port:
-        start = str.indexOf( "server_port" );
+        start = str.indexOf("server_port");
 
-        if( start > 0 ) {
+        if (start > 0) {
             // server data port:
-            start = str.indexOf( "=", start ) + 1;
-            end = str.indexOf( "-", start );
-            String data_str = str.substring( start, end );
-            server_data_port = Integer.parseInt( data_str );
+            start = str.indexOf("=", start) + 1;
+            end = str.indexOf("-", start);
+            String data_str = str.substring(start, end);
+            server_data_port = Integer.parseInt(data_str);
 
             // server control port:
             start = end + 1;
-            end = str.indexOf( ";", start );
-            if( -1 == end ) end = str.length();
-            String control_str = str.substring( start, end );
-            server_control_port = Integer.parseInt( control_str );
+            end = str.indexOf(";", start);
+            if (-1 == end) end = str.length();
+            String control_str = str.substring(start, end);
+            server_control_port = Integer.parseInt(control_str);
         }
     }
-
-    /*
-    public String getTransportProtocol() {
-        return transportProtocol;
-    }
-
-    public String getProfile() {
-        return profile;
-    }
-
-    public String getLowerTransportProtocol() {
-        return lowerTransport;
-    }
-    */
 
     public int getClientDataPort() {
         return client_data_port;

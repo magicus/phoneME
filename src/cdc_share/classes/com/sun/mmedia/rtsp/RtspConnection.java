@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -30,12 +30,11 @@ import java.net.*;
 /**
  * The RtspConnection object encapsulates a TCP/IP connection to an RTSP Server.
  */
-public class RtspConnection extends RtspConnectionBase
-{
+public class RtspConnection extends RtspConnectionBase {
     private Socket socket;
 
-    protected void openStreams( RtspUrl url ) throws IOException {
-        socket = new Socket( url.getHost(), url.getPort() );
+    protected void openStreams(RtspUrl url) throws IOException {
+        socket = new Socket(url.getHost(), url.getPort());
         is = socket.getInputStream();
         os = socket.getOutputStream();
     }
@@ -43,17 +42,16 @@ public class RtspConnection extends RtspConnectionBase
     protected void closeStreams() {
         is = null;
         os = null;
-        if( null != socket ) {
+        if (null != socket) {
             try {
                 socket.close();
-            } catch( IOException e ) {
-                System.out.println( "*** Cannot close socket: " + e );
+            } catch (IOException e) {
             }
             socket = null;
         }
     }
 
-    public RtspConnection( RtspDS ds ) throws IOException {
-        super( ds );
+    public RtspConnection(RtspDS ds) throws IOException {
+        super(ds);
     }
 }

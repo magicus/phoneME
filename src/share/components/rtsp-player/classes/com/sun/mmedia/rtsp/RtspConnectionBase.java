@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -36,22 +36,21 @@ import javax.microedition.io.SocketConnection;
  * RtspConnectionBase is a portable base for RtspConnection platform-specific
  *  classes that represent a TCP/IP connection to an RTSP Server.
  */
-public abstract class RtspConnectionBase extends Thread implements Runnable
-{
+public abstract class RtspConnectionBase extends Thread implements Runnable {
     /**
      * Flag inidicating whether the connection to
      * the RTSP Server is alive.
      */
     protected boolean connectionIsAlive = false;
 
-    protected InputStream      is = null;
-    protected OutputStream     os = null;
-    protected RtspDS           ds = null;
+    protected InputStream is = null;
+    protected OutputStream os = null;
+    protected RtspDS ds = null;
 
     /** Platform-specific implementations override this method
      * to create 'is' and 'os' objects
      */
-    protected abstract void openStreams( RtspUrl url ) throws IOException;
+    protected abstract void openStreams(RtspUrl url) throws IOException;
     protected abstract void closeStreams();
 
     /** Creates a new RTSP connection.
@@ -60,20 +59,19 @@ public abstract class RtspConnectionBase extends Thread implements Runnable
      * @exception  IOException  Throws and IOException if a connection
      *                          to the RTSP server cannot be established.
      */
-    public RtspConnectionBase( RtspDS ds ) throws IOException {
+    public RtspConnectionBase(RtspDS ds) throws IOException {
 
         try {
-            openStreams( ds.getUrl() );
-        } catch( IOException e ) {
-            System.out.println( "IOE in RtspConnection ctor:" + e );
+            openStreams(ds.getUrl());
+        } catch (IOException e) {
             throw e;
         }
 
-        if( null == is ) throw new IOException( "InputStream creation failed" );
-        if( null == os ) throw new IOException( "OutputStream creation failed" );
+        if (null == is) throw new IOException("InputStream creation failed");
+        if (null == os) throw new IOException("OutputStream creation failed");
 
         connectionIsAlive = true;
-        this.ds           = ds;
+        this.ds = ds;
 
         start();
     }
@@ -86,15 +84,12 @@ public abstract class RtspConnectionBase extends Thread implements Runnable
      * @return          Returns true, if the message was sent
      *                  successfully, otherwise false.
      */
-    public boolean sendData( byte[] message ) {
+    public boolean sendData(byte[] message) {
         try {
-            System.out.println( "--------- request  ---------\n"
-                                + new String( message ) +
-                                "----------------------------\n" );
-            os.write( message );
+            os.write(message);
             os.flush();
             return true;
-        } catch( IOException e ) {
+        } catch (IOException e) {
             return false;
         }
     }
@@ -112,32 +107,32 @@ public abstract class RtspConnectionBase extends Thread implements Runnable
         int ch2 = 0;
         int ch3 = 0;
 
-        while( connectionIsAlive ) {
+        while (connectionIsAlive) {
             try {
                 ch3 = ch2;
                 ch2 = ch1;
                 ch1 = ch0;
                 ch0 = is.read();
 
-                if( -1 != ch0 ) {
+                if (-1 != ch0) {
 
-                    baos.write( ch0 );
+                    baos.write(ch0);
 
-                    if( '\r' == ch1 && '\n' == ch0 &&
-                        '\r' == ch3 && '\n' == ch2 ) {
+                    if ('\r' == ch1 && '\n' == ch0 &&
+                        '\r' == ch3 && '\n' == ch2) {
 
                         // message header is completely received
 
-                        String header = new String( baos.toByteArray() );
+                        String header = new String(baos.toByteArray());
 
-                        int content_length = getContentLength( header );
+                        int content_length = getContentLength(header);
 
-                        for( int i = 0; i < content_length; i++ ) {
+                        for (int i = 0; i < content_length; i++) {
 
                             ch0 = is.read();
 
-                            if( -1 != ch0 ) {
-                                baos.write( ch0 );
+                            if (-1 != ch0) {
+                                baos.write(ch0);
                             } else {
                                 connectionIsAlive = false;
                                 break;
@@ -145,7 +140,7 @@ public abstract class RtspConnectionBase extends Thread implements Runnable
                         }
 
                         // whole message is completely received
-                        ds.processIncomingMessage( baos.toByteArray() );
+                        ds.processIncomingMessage(baos.toByteArray());
                         baos.reset();
                     }
                 } else {

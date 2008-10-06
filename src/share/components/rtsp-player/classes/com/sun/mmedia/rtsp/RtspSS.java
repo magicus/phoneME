@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -30,12 +30,12 @@ import javax.microedition.media.Control;
 
 public class RtspSS implements SourceStream {
 
-    private String        mediaControl;
+    private String mediaControl;
     private RtpConnection conn;
 
-    public RtspSS( String mediaControl, int local_port ) {
+    public RtspSS(String mediaControl, int local_port) {
         this.mediaControl = mediaControl;
-        conn = new RtpConnection( local_port );
+        conn = new RtpConnection(local_port);
     }
 
     public String getMediaControl() {
@@ -60,13 +60,13 @@ public class RtspSS implements SourceStream {
         return -1;
     }
 
-    public int read( byte[] b, int off, int len )
+    public int read(byte[] b, int off, int len)
         throws java.io.IOException {
 
         return -1;
     }
 
-    public long seek( long where ) 
+    public long seek(long where) 
         throws java.io.IOException {
         return 0;
     }
@@ -77,7 +77,7 @@ public class RtspSS implements SourceStream {
 
     // ===================== Controllable methods =============
 
-    public Control getControl( String controlType ) {
+    public Control getControl(String controlType) {
         return null;
     }
 

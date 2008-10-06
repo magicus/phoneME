@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -32,27 +32,27 @@ public class SdpTimeDescr {
     public String timeActive;
     public Vector repeatTimes;
 
-    public SdpTimeDescr( SdpParser p, ByteArrayInputStream bin ) {
+    public SdpTimeDescr(SdpParser p, ByteArrayInputStream bin) {
 
         // Time the session is active:
-        timeActive = p.getLine( bin );
+        timeActive = p.getLine(bin);
 
         // Repeat Times:
         repeatTimes = new Vector();
 
-        String tag = p.getTag( bin );
+        String tag = p.getTag(bin);
 
-        while( tag != null && tag.length() > 0 ) {
-            if( tag.equals( "r=" ) ) {
-                String repeatTime = p.getLine( bin );
+        while (tag != null && tag.length() > 0) {
+            if (tag.equals("r=")) {
+                String repeatTime = p.getLine(bin);
 
-                repeatTimes.addElement( repeatTime );
+                repeatTimes.addElement(repeatTime);
             } else {
-                p.ungetTag( tag );
+                p.ungetTag(tag);
                 return;
             }
 
-            tag = p.getTag( bin );
+            tag = p.getTag(bin);
         }
     }
 }
