@@ -1,6 +1,4 @@
 #
-#
-#
 # Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -528,6 +526,6 @@ endif
 
 # xmlparser component
 ifeq ($(USE_XMLPARSER),true)
-include $(XMLPARSER_DIR)/build/defs.gmk
-include $(XMLPARSER_DIR)/build/rules.gmk
+include $(XMLPARSER_DIR)/build/share/defs.gmk
+include $(XMLPARSER_DIR)/build/share/rules.gmk
 endif
