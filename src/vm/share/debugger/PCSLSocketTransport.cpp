@@ -196,6 +196,8 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct, int tim
     return false;
   }
 
+  st->init_read_cache();
+
   if (ct == SERVER) {
     /*listen =*/ st->listener_socket();
 //    if (timeout != -1) {
@@ -291,6 +293,8 @@ void SocketTransport::destroy_transport(Transport *t) {
   UsingFastOops fastoops;
   SocketTransport *st = (SocketTransport *)t;
   void* listener_handle = st->listener_socket();
+
+  st->finalize_read_cache();
 
   if (listener_handle != INVALID_HANDLE) {
     // last socket in the system, shutdown the listener socket
@@ -472,28 +476,34 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
     return 0;
   }
 
-  int bytes_cached = st->bytes_cached();
+  int bytes_cached = st->bytes_cached_for_read();
 
   if (bytes_cached >= len) {
     jvm_memcpy((unsigned char *)buf, st->get_read_cache(), len);
     if (!peekOnly) {
-      st->set_bytes_cached(bytes_cached - len);
+      st->set_bytes_cached_for_read(bytes_cached - len);
     }
-    nread = len;
-  } else {
-    st->cache_bytes(len);
-    bytes_cached = st->bytes_cached();
 
+    return len;
+  } else {
     if (bytes_cached > 0) {
       jvm_memcpy((unsigned char *)buf, st->get_read_cache(), bytes_cached);
+      len -= bytes_cached;
+      ptr += bytes_cached;
     }
 
     nread = bytes_cached;
+    total = bytes_cached;
+    nleft = len; 
+
+    if (!peekOnly) {
+      st->set_bytes_cached_for_read(0);
+    }
   }
 
   do {
 //    nread = recv(dbg_socket, ptr, nleft, 0);
-    nread = 0;
+//    nread = 0;
 
     if (!_wait_for_read) {
       status = pcsl_socket_read_start(dbg_handle, ptr, nleft,
@@ -505,7 +515,7 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
 
     if (status == PCSL_NET_WOULDBLOCK) {
         _wait_for_read = true;
-        return 0;
+        return total;
     }
 
     _wait_for_read = false;
@@ -534,6 +544,14 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
     }
     
     // nread > 0
+    if (peekOnly) {
+      // add the read data to the cache
+      bool success = st->add_to_read_cache(ptr, nread);
+      if (!success) {
+        break;
+      }
+    }
+
     total += nread;
     nleft -= nread;
     ptr   += nread;
@@ -570,6 +588,39 @@ int SocketTransport::write_int(Transport *t, void *buf)
 int SocketTransport::write_short(Transport *t, void *buf)
 {
   return (write_bytes(t, buf, sizeof(short)));
+}
+
+bool SocketTransport::add_to_read_cache(unsigned char* p_buf, int len) {
+  if (len <= 0 || p_buf == NULL) {
+    return;
+  }
+
+  if (_m_read_cache_size < _m_bytes_cached_for_read + len) {
+    unsigned char* p_tmp_buf;
+    int new_cache_size = _m_read_cache_size + len;
+
+    p_tmp_buf = jvm_malloc(new_cache_size);
+    if (p_tmp_buf == NULL) {
+      return false;
+    }
+
+    _m_p_read_cache = p_tmp_buf;
+    _m_read_cache_size = new_cache_size;
+  }
+
+  jvm_memcpy(&_m_read_cache[_m_bytes_cached_for_read], p_buf, len);
+  _m_bytes_cached_for_read += len;
+  
+  return true;
+}
+
+void SocketTransport::finalize_read_cache() {
+  if (_m_p_read_cache != NULL) {
+    jvm_free(_m_p_read_cache);
+    _m_p_read_cache = NULL;
+    _m_read_cache_size = 0;
+    _m_bytes_cached_for_read = 0;
+  }
 }
 
 //IMPL_NOTE: this is now broken

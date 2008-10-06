@@ -80,6 +80,29 @@ public:
                                    SocketTransportDesc::pointer_count()
                                    JVM_NO_CHECK_AT_BOTTOM);
   }
+
+  void init_read_cache() {
+    _m_read_cache = NULL;
+    _m_read_cache_size = 0;
+    _m_bytes_cached_for_read = 0;
+  }
+
+  const unsigned char* get_read_cache() {
+    return _m_p_read_cache;
+  }
+
+  int bytes_cached_for_read() {
+    return _m_read_cache_size;
+  }
+
+  void set_bytes_cached_for_read(int new_size) {
+    _m_bytes_cached_for_read = (new_size >= 0 ? new_size : 0);
+  }
+
+  bool add_to_read_cache(unsigned char* p_buf, int len);
+
+  void finalize_read_cache();
+    
 private:
   static bool _first_time;
 
@@ -89,5 +112,14 @@ private:
   static int listener_socket_offset() {
     return (FIELD_OFFSET(SocketTransportDesc, _listener_socket));
   }
+
+  // read cache
+  unsigned char* _m_p_read_cache;
+
+  // size of the cache
+  int _m_read_cache_size;
+
+  // number of bytes occupied by data in _m_read_cache_size
+  int _m_bytes_cached_for_read;
 };
 #endif
