@@ -402,6 +402,8 @@ int SocketTransport::peek_bytes(Transport *t, void *buf, int len)
     return 0;
   }
 
+  return read_bytes_impl(t, buf, len, false, true);
+/*
   int bytes_cached = st->bytes_cached();
 
   if (bytes_cached >= len) {
@@ -409,6 +411,7 @@ int SocketTransport::peek_bytes(Transport *t, void *buf, int len)
     nread = len;
   } else {
     st->cache_bytes(len);
+    bytes_cached = st->bytes_cached();
 
     if (bytes_cached > 0) {
       jvm_memcpy((unsigned char *)buf, st->get_read_cache(), bytes_cached);
@@ -418,7 +421,7 @@ int SocketTransport::peek_bytes(Transport *t, void *buf, int len)
   }
 
   return nread;
-
+*/
   //nread = recv(dbg_socket, (char *)buf, len, MSG_PEEK);
   //if (nread <= 0) {
   //  return 0;
@@ -428,11 +431,17 @@ int SocketTransport::peek_bytes(Transport *t, void *buf, int len)
   //return nread;
 }
 
-void SocketTransport::cache_bytes(int len) {
-
-}
+//void SocketTransport::cache_bytes(int len) {
+//
+//}
 
 int SocketTransport::read_bytes(Transport *t, void *buf, int len, bool blockflag)
+{
+  return read_bytes_impl(t, buf, len, blockflag, false);
+}
+
+int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
+                                     bool blockflag, bool peekOnly)
 {
   UsingFastOops fastoops;
   int nread;
@@ -451,7 +460,26 @@ int SocketTransport::read_bytes(Transport *t, void *buf, int len, bool blockflag
     // trying to read 0 bytes, just return
     return 0;
   }
-  
+
+  int bytes_cached = st->bytes_cached();
+
+  if (bytes_cached >= len) {
+    jvm_memcpy((unsigned char *)buf, st->get_read_cache(), len);
+    if (!peekOnly) {
+      st->set_bytes_cached(bytes_cached - len);
+    }
+    nread = len;
+  } else {
+    st->cache_bytes(len);
+    bytes_cached = st->bytes_cached();
+
+    if (bytes_cached > 0) {
+      jvm_memcpy((unsigned char *)buf, st->get_read_cache(), bytes_cached);
+    }
+
+    nread = bytes_cached;
+  }
+
   do {
 //    nread = recv(dbg_socket, ptr, nleft, 0);
     nread = 0;
