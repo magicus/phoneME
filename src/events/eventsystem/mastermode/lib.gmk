@@ -34,3 +34,6 @@ vpath % $(SUBSYSTEM_EVENTS_DIR)/eventsystem/mastermode/native
 SUBSYSTEM_EVENTS_NATIVE_FILES += \
     midp_master_mode_events.c
 endif
+
+SUBSYSTEM_EVENTS_NATIVE_FILES += \
+    midp_master_mode_network.c

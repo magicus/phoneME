@@ -54,10 +54,6 @@ extern void check_extrnal_api_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
 
-/* it is set by the network status event handler */
-static jboolean g_isNetStatusChanged = KNI_FALSE;
-static jint g_iNetState = 0; /* the current network state: 1 - up, 0 - down */
-
 /**
  * Unblock a Java thread.
  * Returns 1 if a thread was unblocked, otherwise 0.
@@ -274,49 +270,6 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 #endif /*ENABLE_API_EXTENSIONS*/
         break;
     } /* switch */
-}
-
-/**
- * This function is called when the network initialization
- * or finalization is completed.
- *
- * @param isInit 0 if the network finalization has been finished,
- *               not 0 - if the initialization
- * @param status one of PCSL_NET_* completion codes
- */
-void midp_network_status_event(int isInit, int status) {
-    if (isInit) {
-        g_iNetState = (status == PCSL_NET_SUCCESS ? 1 : 0);
-    } else {
-        if (status == PCSL_NET_SUCCESS) {
-            g_iNetState = 0;
-        }
-    }
-
-    g_isNetStatusChanged = KNI_TRUE;
-}
-
-/**
- * Checks if a network status signal is received.
- *
- * @param pStatus on exit will hold a new network status (1 - up, 0 - down)
- *
- * @return KNI_TRUE if a network status signal was received, KNI_FALSE otherwise
- */
-jboolean midp_check_net_status_signal(int* pStatus) {
-    jboolean res;
-
-    res = g_isNetStatusChanged;
-
-    if (g_isNetStatusChanged == KNI_TRUE) {
-        g_isNetStatusChanged = KNI_FALSE;
-
-        if (pStatus != NULL) {
-            *pStatus = g_iNetState;
-        }
-    }
-
-    return res;
 }
 
 /**
