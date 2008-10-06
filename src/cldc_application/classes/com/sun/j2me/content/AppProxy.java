@@ -486,15 +486,14 @@ class AppProxy extends CLDCAppID {
     boolean launch(String displayName) {
     	if( isMidletRunning(suiteID, className) )
         	return true;
-    	if( !MIDletSuiteUtils.isAmsIsolate() ){
-    	    if( LOGGER != null ) LOGGER.println("AppProxy.launch(): not isAmsIsolate()");
-	    	if( isInSvmMode )
-	    		return false;
-	    	if( isSuiteRunning(suiteID) )
-	    		return false;
-    	}
+	    if( LOGGER != null ) 
+	    	LOGGER.println("AppProxy.launch(): " + (MIDletSuiteUtils.isAmsIsolate()?"":"NOT ") + "isAmsIsolate()");
+    	if( isInSvmMode && !MIDletSuiteUtils.isAmsIsolate() )
+    		return false;
+    	if( isSuiteRunning(suiteID) )
+    		return false;
     	if( LOGGER != null )
-        	LOGGER.println("AppProxy.launch(): send 'launch' request " + suiteID + ", '" + className + "'}");
+        	LOGGER.println("AppProxy.launch(): send 'launch' request {" + suiteID + ", '" + className + "'}");
     	// always launch an application in background mode
         return MIDletSuiteUtils.execute(classSecurityToken,
         							suiteID, className, displayName);
