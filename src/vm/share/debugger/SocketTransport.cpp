@@ -24,8 +24,12 @@
  * information or have any questions.
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_SocketTransport.cpp.incl"
+#include "incls/_precompiled.incl"
+#include "incls/_SocketTransport.cpp.incl"
+
+// The implementation from this file should be used for the platforms
+// not supported by PCSL, or when building without PCSL
+#if !ENABLE_PCSL || defined(__SYMBIAN32__)
 
 #if ENABLE_JAVA_DEBUGGER
 
@@ -706,3 +710,5 @@ extern "C" int JVM_GetDebuggerSocketFd() {
 #endif
 
 #endif
+
+#endif // !ENABLE_PCSL || defined(__SYMBIAN32__)

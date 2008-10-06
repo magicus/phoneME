@@ -404,6 +404,10 @@ SocketTransport.cpp              SocketTransport.hpp
 SocketTransport.cpp              JavaDebugger.hpp
 SocketTransport.cpp              ObjectHeap_<iarch>.hpp
 
+PCSLSocketTransport.cpp          SocketTransport.hpp
+PCSLSocketTransport.cpp          JavaDebugger.hpp
+PCSLSocketTransport.cpp          ObjectHeap_<iarch>.hpp
+
 TransportDesc.hpp                MixedOopDesc.hpp
 
 Transport.hpp                    TransportDesc.hpp
