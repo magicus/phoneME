@@ -33,7 +33,7 @@
 
 #define JPEG_INTERNALS
 #include "jinclude.h"
-#include "jpeglib.h"
+#include "jvm-jpeglib.h"
 
 
 /* Private subobject */

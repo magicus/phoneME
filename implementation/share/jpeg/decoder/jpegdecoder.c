@@ -45,7 +45,7 @@
 #include <string.h>
 
 #include "mni.h"
-#include "jpeglib.h"
+#include "jvm-jpeglib.h"
 #include <setjmp.h>
 
 #include "jpegdecoder.h"

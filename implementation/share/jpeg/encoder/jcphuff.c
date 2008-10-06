@@ -37,7 +37,7 @@
 
 #define JPEG_INTERNALS
 #include "jinclude.h"
-#include "jpeglib.h"
+#include "jvm-jpeglib.h"
 #include "jchuff.h"		/* Declarations shared with jchuff.c */
 
 #ifdef C_PROGRESSIVE_SUPPORTED

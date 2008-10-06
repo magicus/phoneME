@@ -70,7 +70,7 @@
 
 #define JPEG_INTERNALS
 #include "jinclude.h"
-#include "jpeglib.h"
+#include "jvm-jpeglib.h"
 
 
 /* Pointer to routine to downsample a single component */

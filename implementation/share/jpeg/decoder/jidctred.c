@@ -44,7 +44,7 @@
 
 #define JPEG_INTERNALS
 #include "jinclude.h"
-#include "jpeglib.h"
+#include "jvm-jpeglib.h"
 #include "jdct.h"		/* Private declarations for DCT subsystem */
 
 #ifdef IDCT_SCALING_SUPPORTED

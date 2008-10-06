@@ -247,7 +247,7 @@ typedef unsigned int JDIMENSION;
  * On a few systems, type boolean and/or its values FALSE, TRUE may appear
  * in standard header files.  Or you may have conflicts with application-
  * specific header files that you want to include together with these files.
- * Defining HAVE_BOOLEAN before including jpeglib.h should make it work.
+ * Defining HAVE_BOOLEAN before including jvm-jpeglib.h should make it work.
  */
 
 #ifndef HAVE_BOOLEAN

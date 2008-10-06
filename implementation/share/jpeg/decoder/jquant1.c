@@ -34,7 +34,7 @@
 
 #define JPEG_INTERNALS
 #include "jinclude.h"
-#include "jpeglib.h"
+#include "jvm-jpeglib.h"
 
 #ifdef QUANT_1PASS_SUPPORTED
 

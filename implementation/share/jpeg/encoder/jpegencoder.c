@@ -48,7 +48,7 @@ no need in this header yet, since functions declared there
 are used only in one (current) file ... 
 #include "jpeg_encoder_api.h"
 */
-#include "jpeglib.h"
+#include "jvm-jpeglib.h"
 
 /****************************************************************
  * Structs for JPEG encoder
