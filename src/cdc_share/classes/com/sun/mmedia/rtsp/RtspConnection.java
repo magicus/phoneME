@@ -27,6 +27,9 @@ package com.sun.mmedia.rtsp;
 import java.io.*;
 import java.net.*;
 
+import com.sun.j2me.log.Logging;
+import com.sun.j2me.log.LogChannels;
+
 /**
  * The RtspConnection object encapsulates a TCP/IP connection to an RTSP Server.
  */
@@ -46,6 +49,10 @@ public class RtspConnection extends RtspConnectionBase {
             try {
                 socket.close();
             } catch (IOException e) {
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                        "IOException in RtspConnection.closeStreams(): " + e.getMessage());
+                }
             }
             socket = null;
         }

@@ -30,6 +30,9 @@ import javax.microedition.io.Connector;
 import javax.microedition.io.DatagramConnection;
 import javax.microedition.io.Datagram;
 
+import com.sun.j2me.log.Logging;
+import com.sun.j2me.log.LogChannels;
+
 public class RtpConnection extends Thread implements Runnable {
     DatagramConnection dc;
     int local_port;
@@ -55,7 +58,10 @@ public class RtpConnection extends Thread implements Runnable {
                 byte[] data = d.getData();
                 RtpPacket pkt = new RtpPacket(data);
             } catch (IOException e) {
-                e.printStackTrace();
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                        "IOException in RtpConnection: " + e.getMessage());
+                }
                 break;
             }
         }

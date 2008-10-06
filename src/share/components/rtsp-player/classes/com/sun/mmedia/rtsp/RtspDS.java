@@ -31,6 +31,9 @@ import javax.microedition.media.Player;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.protocol.SourceStream;
 
+import com.sun.j2me.log.Logging;
+import com.sun.j2me.log.LogChannels;
+
 import com.sun.mmedia.protocol.BasicDS;
 
 import com.sun.mmedia.sdp.*;
@@ -177,6 +180,10 @@ public class RtspDS extends BasicDS {
             } catch( InterruptedException e ) {
                 Thread.currentThread().interrupt();
             } catch (IOException e) {
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                        "IOException in RtspDS.disconnect(): " + e.getMessage());
+                }
             } finally {
                 connection.close();
                 connection = null;
@@ -251,7 +258,10 @@ public class RtspDS extends BasicDS {
             try {
                 msg = new RtspIncomingMessage(bytes);
             } catch (Exception e) {
-                e.printStackTrace();
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                        "Exception in RtspDS.processIncomingMessage(): " + e);
+                }
                 msg = null;
             }
             Integer cseq = msg.getCSeq();

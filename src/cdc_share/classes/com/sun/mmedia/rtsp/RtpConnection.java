@@ -29,6 +29,9 @@ import java.net.DatagramSocket;
 import java.net.DatagramPacket;
 import java.net.SocketException;
 
+import com.sun.j2me.log.Logging;
+import com.sun.j2me.log.LogChannels;
+
 public class RtpConnection extends Thread implements Runnable
 {
     DatagramSocket ds;
@@ -55,7 +58,10 @@ public class RtpConnection extends Thread implements Runnable
                 ds.receive( dp );
                 RtpPacket pkt = new RtpPacket( data );
             } catch( IOException e ) {
-                e.printStackTrace();
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                        "IOException in RtpConnection: " + e.getMessage());
+                }
                 break;
             }
         }
