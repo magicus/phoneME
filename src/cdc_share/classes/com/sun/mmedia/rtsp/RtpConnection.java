@@ -24,41 +24,50 @@
 
 package com.sun.mmedia.rtsp;
 
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.DatagramPacket;
+import java.net.SocketException;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
-/**
- * The RtspConnection object encapsulates a TCP/IP connection to an RTSP Server.
- */
-public class RtspConnection extends RtspConnectionBase {
-    private Socket socket;
+public class RtpConnection extends Thread implements Runnable
+{
+    DatagramSocket ds;
+    int            local_port;
 
-    protected void openStreams(RtspUrl url) throws IOException {
-        socket = new Socket(url.getHost(), url.getPort());
-        is = socket.getInputStream();
-        os = socket.getOutputStream();
-    }
+    public RtpConnection( int local_port ) {
+        this.local_port = local_port;
 
-    protected void closeStreams() {
-        is = null;
-        os = null;
-        if (null != socket) {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
-                        "IOException in RtspConnection.closeStreams(): " + e.getMessage());
-                }
-            }
-            socket = null;
+        try {
+            ds = new DatagramSocket( local_port );
+            start();
+        } catch( SocketException e ) {
+            ds = null;
+        } catch( SecurityException e ) {
+            ds = null;
         }
     }
 
-    public RtspConnection(RtspDS ds) throws IOException {
-        super(ds);
+    public void run() {
+        while( null != ds ) {
+            try {
+                byte[] data = new byte[ 4096 ];
+                DatagramPacket dp = new DatagramPacket( data, 4096 );
+                ds.receive( dp );
+                RtpPacket pkt = new RtpPacket( data );
+            } catch( IOException e ) {
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                        "IOException in RtpConnection: " + e.getMessage());
+                }
+                break;
+            }
+        }
+    }
+
+    public boolean connectionIsAlive() {
+        return ( null != ds );
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -29,21 +29,21 @@ import java.util.*;
 
 public class SdpSessionDescr extends SdpParser {
 
-    public SdpSessionDescr( byte data[] ) {
-        ByteArrayInputStream bin = new ByteArrayInputStream( data );
-        parseData( bin );
+    public SdpSessionDescr(byte data[]) {
+        ByteArrayInputStream bin = new ByteArrayInputStream(data);
+        parseData(bin);
     }
 
-    public SdpSessionDescr( byte data[], int offs, int len ) {
-        ByteArrayInputStream bin = new ByteArrayInputStream( data, offs, len );
-        parseData( bin );
+    public SdpSessionDescr(byte data[], int offs, int len) {
+        ByteArrayInputStream bin = new ByteArrayInputStream(data, offs, len);
+        parseData(bin);
     }
 
-    public void parseData( ByteArrayInputStream bin ) {
-        if( getTag( bin ).equals( "v=" ) ) {
+    public void parseData(ByteArrayInputStream bin) {
+        if (getTag(bin).equals("v=")) {
             try {
                 // Protocol Version:
-                version = getLine( bin );
+                version = getLine(bin);
 
                 connectionIncluded = false;
 
@@ -51,54 +51,54 @@ public class SdpSessionDescr extends SdpParser {
                 sessionAttributes = new Vector();
                 mediaDescriptions = new Vector();
 
-                String tag = getTag( bin );
+                String tag = getTag(bin);
 
-                while( tag != null && tag.length() > 0 ) {
-                    if( tag.equals( "o=" ) ) {
-                        origin = getLine( bin );
-                    } else if( tag.equals( "s=" ) ) {
-                        sessionName = getLine( bin );
-                    } else if( tag.equals( "i=" ) ) {
-                        sessionInfo = getLine( bin );
-                    } else if( tag.equals( "u=" ) ) {
-                        uri = getLine( bin );
-                    } else if( tag.equals( "e=" ) ) {
-                        email = getLine( bin );
-                    } else if( tag.equals( "p=" ) ) {
-                        phone = getLine( bin );
-                    } else if( tag.equals( "c=" ) ) {
+                while (tag != null && tag.length() > 0) {
+                    if (tag.equals("o=")) {
+                        origin = getLine(bin);
+                    } else if (tag.equals("s=")) {
+                        sessionName = getLine(bin);
+                    } else if (tag.equals("i=")) {
+                        sessionInfo = getLine(bin);
+                    } else if (tag.equals("u=")) {
+                        uri = getLine(bin);
+                    } else if (tag.equals("e=")) {
+                        email = getLine(bin);
+                    } else if (tag.equals("p=")) {
+                        phone = getLine(bin);
+                    } else if (tag.equals("c=")) {
                         connectionIncluded = true;
-                        connectionInfo = getLine( bin );
-                    } else if( tag.equals( "b=" ) ) {
-                        bandwidthInfo = getLine( bin );
-                    } else if( tag.equals( "t=" ) ) {
-                        SdpTimeDescr timeDescription = new SdpTimeDescr( bin );
-                        timeDescriptions.addElement( timeDescription );
-                    } else if( tag.equals( "z=" ) ) {
-                        timezoneAdjustment = getLine( bin );
-                    } else if( tag.equals( "k=" ) ) {
-                        encryptionKey = getLine( bin );
-                    } else if( tag.equals( "a=" ) ) {
-                        String sessionAttribute = getLine( bin );
-                        int index = sessionAttribute.indexOf( ':' );
+                        connectionInfo = getLine(bin);
+                    } else if (tag.equals("b=")) {
+                        bandwidthInfo = getLine(bin);
+                    } else if (tag.equals("t=")) {
+                        SdpTimeDescr timeDescription = new SdpTimeDescr(this, bin);
+                        timeDescriptions.addElement(timeDescription);
+                    } else if (tag.equals("z=")) {
+                        timezoneAdjustment = getLine(bin);
+                    } else if (tag.equals("k=")) {
+                        encryptionKey = getLine(bin);
+                    } else if (tag.equals("a=")) {
+                        String sessionAttribute = getLine(bin);
+                        int index = sessionAttribute.indexOf(':');
 
-                        if( index > 0 ) {
-                            String name = sessionAttribute.substring( 0, index );
-                            String value = sessionAttribute.substring( index + 1 );
+                        if (index > 0) {
+                            String name = sessionAttribute.substring(0, index);
+                            String value = sessionAttribute.substring(index + 1);
 
-                            SdpMediaAttr attribute = new SdpMediaAttr( name, value );
+                            SdpMediaAttr attribute = new SdpMediaAttr(name, value);
 
-                            sessionAttributes.addElement( attribute );
+                            sessionAttributes.addElement(attribute);
                         }
-                    } else if( tag.equals( "m=" ) ) {
-                        SdpMediaDescr mediaDescription = new SdpMediaDescr( bin, connectionIncluded );
+                    } else if (tag.equals("m=")) {
+                        SdpMediaDescr mediaDescription = new SdpMediaDescr(this, bin, connectionIncluded);
 
-                        mediaDescriptions.addElement( mediaDescription );
+                        mediaDescriptions.addElement(mediaDescription);
                     }
 
-                    tag = getTag( bin );
+                    tag = getTag(bin);
                 }
-            } catch( Exception e ) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -124,15 +124,15 @@ public class SdpSessionDescr extends SdpParser {
     public String timezoneAdjustment;
     public String encryptionKey;
 
-    public SdpMediaAttr getSessionAttribute( String name ) {
+    public SdpMediaAttr getSessionAttribute(String name) {
         SdpMediaAttr attribute = null;
 
-        if( sessionAttributes != null ) {
-            for( int i = 0; i < sessionAttributes.size(); i++ ) {
+        if (sessionAttributes != null) {
+            for (int i = 0; i < sessionAttributes.size(); i++) {
                 SdpMediaAttr entry =
-                        (SdpMediaAttr)sessionAttributes.elementAt( i );
+                        (SdpMediaAttr)sessionAttributes.elementAt(i);
 
-                if( entry.getName().equals( name ) ) {
+                if (entry.getName().equals(name)) {
                     attribute = entry;
                     break;
                 }
@@ -142,13 +142,13 @@ public class SdpSessionDescr extends SdpParser {
         return attribute;
     }
 
-    public SdpMediaDescr getMediaDescription( String name ) {
-        if( mediaDescriptions != null ) {
-            for( int i = 0; i < mediaDescriptions.size(); i++ ) {
+    public SdpMediaDescr getMediaDescription(String name) {
+        if (mediaDescriptions != null) {
+            for (int i = 0; i < mediaDescriptions.size(); i++) {
                 SdpMediaDescr entry =
-                        (SdpMediaDescr)mediaDescriptions.elementAt( i );
+                        (SdpMediaDescr)mediaDescriptions.elementAt(i);
 
-                if( entry.name.equals( name ) ) {
+                if (entry.name.equals(name)) {
                     return entry;
                 }
             }
@@ -157,8 +157,8 @@ public class SdpSessionDescr extends SdpParser {
         return null;
     }
 
-    public SdpMediaDescr getMediaDescription( int n ) {
-        return (SdpMediaDescr)mediaDescriptions.elementAt( n );
+    public SdpMediaDescr getMediaDescription(int n) {
+        return (SdpMediaDescr)mediaDescriptions.elementAt(n);
     }
 
     public int getMediaDescriptionsCount() {

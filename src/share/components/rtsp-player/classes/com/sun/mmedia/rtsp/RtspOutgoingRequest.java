@@ -32,51 +32,61 @@ public class RtspOutgoingRequest {
 
     private String msg;
 
-    public static RtspOutgoingRequest DESCRIBE( int seqNum, RtspUrl url ) {
+    public static RtspOutgoingRequest DESCRIBE(int seqNum, RtspUrl url) {
         return new RtspOutgoingRequest(
-            "DESCRIBE rtsp://" + url.getHost() + "/" + url.getFile() + " RTSP/1.0\r\n" 
+            "DESCRIBE rtsp://" + url.getHost() + "/" + url.getFile() + " RTSP/1.0\r\n"
             + "CSeq: " + seqNum + "\r\n"
-            + "Accept: application/sdp\r\n" 
-            + userAgent + "\r\n\r\n" );
+            + "Accept: application/sdp\r\n"
+            + userAgent + "\r\n\r\n");
     }
 
-    public static RtspOutgoingRequest SETUP( int seqNum, 
+    public static RtspOutgoingRequest SETUP(int seqNum, RtspUrl url,
+                                             String sesId, int port) {
+        return new RtspOutgoingRequest(
+            "SETUP rtsp://" + url.getHost() + "/" + url.getFile() + " RTSP/1.0\r\n"
+            + "CSeq: " + seqNum + "\r\n"
+            + "Transport: RTP/AVP;unicast;client_port=" + port + "-" + (port + 1) + "\r\n"
+            + ((null != sesId) ? ("Session: " + sesId + "\r\n") : "")
+            + userAgent + "\r\n\r\n");
+    }
+
+    public static RtspOutgoingRequest SETUP(int seqNum,
                                              String cBase, String mCtl,
-                                             String sesId, int port ) {
+                                             String sesId, int port) {
         return new RtspOutgoingRequest(
             "SETUP " + cBase + mCtl + " RTSP/1.0\r\n"
             + "CSeq: " + seqNum + "\r\n"
-            + "Transport: RTP/AVP;unicast;client_port=" + port + "-" + ( port + 1 ) + "\r\n"
-            + ( ( null != sesId ) ? ( "Session: " + sesId + "\r\n" ) : "" )
-            + userAgent + "\r\n\r\n" );
+            + "Transport: RTP/AVP;unicast;client_port=" + port + "-" + (port + 1) + "\r\n"
+            + ((null != sesId) ? ("Session: " + sesId + "\r\n") : "")
+            + userAgent + "\r\n\r\n");
     }
 
-    public static RtspOutgoingRequest PLAY( int seqNum, RtspUrl url, String sesId ) {
+    public static RtspOutgoingRequest PLAY(int seqNum, RtspUrl url, String sesId) {
         return new RtspOutgoingRequest(
             "PLAY rtsp://" + url.getHost() + "/" + url.getFile() + " RTSP/1.0\r\n"
-            + "CSeq: " + seqNum + "\r\n" 
-            + "Range: npt=now-\r\n" 
-            + ( ( null != sesId ) ? ( "Session: " + sesId + "\r\n" ) : "" )
-            + userAgent + "\r\n\r\n" );
+            + "CSeq: " + seqNum + "\r\n"
+            + "Range: npt=now-\r\n"
+            + ((null != sesId) ? ("Session: " + sesId + "\r\n") : "")
+            + userAgent + "\r\n\r\n");
     }
 
-    public static RtspOutgoingRequest PAUSE( int seqNum, RtspUrl url, String sesId ) {
+    public static RtspOutgoingRequest PAUSE(int seqNum, RtspUrl url, String sesId) {
         return new RtspOutgoingRequest(
             "PAUSE rtsp://" + url.getHost() + "/" + url.getFile() + " RTSP/1.0\r\n"
             + "CSeq: " + seqNum + "\r\n"
-            + ( ( null != sesId ) ? ( "Session: " + sesId + "\r\n" ) : "" )
-            + userAgent + "\r\n\r\n" );
+            + ((null != sesId) ? ("Session: " + sesId + "\r\n") : "")
+            + userAgent + "\r\n\r\n");
     }
 
-    public static RtspOutgoingRequest TEARDOWN( int seqNum, RtspUrl url, String sesId ) {
+    public static RtspOutgoingRequest TEARDOWN(int seqNum, RtspUrl url, String sesId) {
         return new RtspOutgoingRequest(
             "TEARDOWN rtsp://" + url.getHost() + "/" + url.getFile() + " RTSP/1.0\r\n"
             + "CSeq: " + seqNum + "\r\n"
-            + ( ( null != sesId ) ? ( "Session: " + sesId + "\r\n" ) : "" )
-            + userAgent + "\r\n\r\n" );
+            + ((null != sesId) ? ("Session: " + sesId + "\r\n") : "")
+            + userAgent + "\r\n\r\n");
     }
 
-    public RtspOutgoingRequest( String msg ) {
+    public RtspOutgoingRequest(String msg) {
         this.msg = msg;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ package com.sun.mmedia.sdp;
 import java.io.*;
 import java.util.*;
 
-public class SdpMediaDescr extends SdpParser {
+public class SdpMediaDescr {
     // Values:
     public String name;
     public String port;
@@ -40,92 +40,92 @@ public class SdpMediaDescr extends SdpParser {
     public String encryptionKey;
     public Vector mediaAttributes;
 
+    public SdpMediaDescr(SdpParser p, ByteArrayInputStream bin,
+            boolean connectionIncluded) {
 
-    public SdpMediaDescr( ByteArrayInputStream bin,
-            boolean connectionIncluded ) {
         // Media Name and Transport Address:
-        parseMediaName( getLine( bin ) );
+        parseMediaName(p.getLine(bin));
 
         // Connection Information:
         boolean mandatory = true;
 
-        if( connectionIncluded ) {
+        if (connectionIncluded) {
             mandatory = false;
         }
 
         mediaAttributes = new Vector();
 
-        String tag = getTag( bin );
+        String tag = p.getTag(bin);
 
-        while( tag != null && tag.length() > 0 ) {
-            if( tag.equals( "i=" ) ) {
-                mediaTitle = getLine( bin );
-            } else if( tag.equals( "c=" ) ) {
-                connectionInfo = getLine( bin );
-            } else if( tag.equals( "b=" ) ) {
-                bandwidthInfo = getLine( bin );
-            } else if( tag.equals( "k=" ) ) {
-                encryptionKey = getLine( bin );
-            } else if( tag.equals( "a=" ) ) {
-                String mediaAttribute = getLine( bin );
+        while (tag != null && tag.length() > 0) {
+            if (tag.equals("i=")) {
+                mediaTitle = p.getLine(bin);
+            } else if (tag.equals("c=")) {
+                connectionInfo = p.getLine(bin);
+            } else if (tag.equals("b=")) {
+                bandwidthInfo = p.getLine(bin);
+            } else if (tag.equals("k=")) {
+                encryptionKey = p.getLine(bin);
+            } else if (tag.equals("a=")) {
+                String mediaAttribute = p.getLine(bin);
 
-                int index = mediaAttribute.indexOf( ':' );
+                int index = mediaAttribute.indexOf(':');
 
-                if( index > 0 ) {
-                    String name = mediaAttribute.substring( 0, index );
-                    String value = mediaAttribute.substring( index + 1 );
+                if (index > 0) {
+                    String name = mediaAttribute.substring(0, index);
+                    String value = mediaAttribute.substring(index + 1);
 
-                    SdpMediaAttr attribute = new SdpMediaAttr( name, value );
+                    SdpMediaAttr attribute = new SdpMediaAttr(name, value);
 
-                    mediaAttributes.addElement( attribute );
+                    mediaAttributes.addElement(attribute);
                 }
-            } else if( tag.equals( "m=" ) ) {
-                ungetTag( tag );
+            } else if (tag.equals("m=")) {
+                p.ungetTag(tag);
                 return;
             }
 
-            tag = getTag( bin );
+            tag = p.getTag(bin);
         }
     }
 
-    private void parseMediaName( String line ) {
-        int end = line.indexOf( ' ' );
+    private void parseMediaName(String line) {
+        int end = line.indexOf(' ');
 
-        name = line.substring( 0, end );
+        name = line.substring(0, end);
 
         int start = end + 1;
 
-        end = line.indexOf( ' ', start );
+        end = line.indexOf(' ', start);
 
-        port = line.substring( start, end );
+        port = line.substring(start, end);
 
-
-        start = end + 1;
-
-        end = line.indexOf( ' ', start );
-
-        protocol = line.substring( start, end );
 
         start = end + 1;
 
-        payload = line.substring( start );
+        end = line.indexOf(' ', start);
+
+        protocol = line.substring(start, end);
+
+        start = end + 1;
+
+        payload = line.substring(start);
 
         try {
-            payload_type = Integer.parseInt( payload );
-        } catch( Exception e ) {
+            payload_type = Integer.parseInt(payload);
+        } catch (Exception e) {
             payload_type = -1;
         }
     }
 
-    public SdpMediaAttr getMediaAttribute( String name ) {
+    public SdpMediaAttr getMediaAttribute(String name) {
         SdpMediaAttr attribute = null;
 
-        if( mediaAttributes != null ) {
-            for( int i = 0; i < mediaAttributes.size(); i++ ) {
+        if (mediaAttributes != null) {
+            for (int i = 0; i < mediaAttributes.size(); i++) {
                 SdpMediaAttr entry =
-                        (SdpMediaAttr)mediaAttributes.elementAt( i );
+                        (SdpMediaAttr)mediaAttributes.elementAt(i);
 
-                if( entry.getName().equals( name ) ) {
+                if (entry.getName().equals(name)) {
                     attribute = entry;
                     break;
                 }

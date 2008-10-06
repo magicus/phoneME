@@ -30,54 +30,49 @@ public class RtspIncomingMessage {
 
     private byte[] bytes;
 
-    private RtspMessageType     type         = null;
-    private String              statusCode   = null;
-    private String              statusText   = null;
+    private RtspMessageType type = null;
+    private String statusCode = "";
+    private String statusText = "";
 
-    private SdpSessionDescr     sdp          = null;
-    private String              sessionId    = null;
-    private String              contentBase  = null;
-    private Integer             cseq         = null;
+    private SdpSessionDescr sdp = null;
+    private String sessionId = null;
+    private Integer sessionTimeout = null;
+    private String contentBase = null;
+    private String contentType = null;
+    private Integer cseq = null;
     private RtspTransportHeader transportHdr = null;
 
-    public RtspIncomingMessage( byte[] bytes ) {
-
-        System.out.println( "----- incoming message -----\n"
-                            + new String( bytes ) +
-                            "----------------------------\n" );
-
+    public RtspIncomingMessage(byte[] bytes) {
         this.bytes = bytes;
 
         int n = 0;
-        while( n < bytes.length && ' ' != bytes[ n ] ) n++;
-        String strType = new String( bytes, 0, n );
-        type = new RtspMessageType( strType );
+        while (n < bytes.length && ' ' != bytes[n]) n++;
+        String strType = new String(bytes, 0, n);
+        type = new RtspMessageType(strType);
 
         int offs = 0;
 
-        while( offs < bytes.length ) {
+        while (offs < bytes.length) {
 
             int len = 0;
-            while( offs + len + 1 < bytes.length && 
-                   ( '\r' != bytes[ offs + len ] || '\n' != bytes[ offs + len + 1 ] ) ) { 
+            while (offs + len + 1 < bytes.length &&
+                   ('\r' != bytes[offs + len] || '\n' != bytes[offs + len + 1])) {
                 len++;
             }
 
-            String line = new String( bytes, offs, len );
+            String line = new String(bytes, offs, len);
 
             offs += len + 2;
 
-            if( 0 != line.length() ) {
-                parseLine( line );
+            if (0 != line.length()) {
+                parseLine(line);
             } else {
-                if( offs < bytes.length ) {
-                    sdp = new SdpSessionDescr( bytes, offs, bytes.length - offs );
+                if (offs < bytes.length && "application/sdp".equals(contentType)) {
+                    sdp = new SdpSessionDescr(bytes, offs, bytes.length - offs);
                 }
                 break;
             }
         }
-
-        System.out.println( "----------------------------\n\n" );
     }
 
     public RtspMessageType getType() {
@@ -92,8 +87,20 @@ public class RtspIncomingMessage {
         return sessionId;
     }
 
+    public Integer getSessionTimeout() {
+        return sessionTimeout;
+    }
+
     public String getContentBase() {
         return contentBase;
+    }
+
+    public String getStatusCode() {
+        return statusCode;
+    }
+
+    public String getStatusText() {
+        return statusText;
     }
 
     public Integer getCSeq() {
@@ -104,30 +111,46 @@ public class RtspIncomingMessage {
         return transportHdr;
     }
 
-    private void parseLine( String line ) {
-        int colon_pos = line.indexOf( ':' );
-        if( -1 != colon_pos ) {
+    private void parseLine(String line) {
+        int colon_pos = line.indexOf(':');
+        if (-1 != colon_pos) {
 
-            String hdr_type_str = line.substring( 0, colon_pos ).toUpperCase();
-            String hdr_body = line.substring( colon_pos + 2 );
+            String hdr_type_str = line.substring(0, colon_pos).toUpperCase();
+            String hdr_body = line.substring(colon_pos + 2);
 
-            if( hdr_type_str.equals( "CSEQ" ) ) {
+            if (hdr_type_str.equals("CSEQ")) {
                 try {
-                    cseq = new Integer( Integer.parseInt( hdr_body ) );
-                } catch( NumberFormatException e ) {
+                    cseq = new Integer(Integer.parseInt(hdr_body));
+                } catch (NumberFormatException e) {
                     cseq = null;
                 }
-            } else if( hdr_type_str.equals( "TRANSPORT" ) ) {
-                transportHdr = new RtspTransportHeader( hdr_body );
-            } else if( hdr_type_str.equals( "SESSION" ) ) {
-                sessionId = hdr_body;
-            } else if( hdr_type_str.equals( "CONTENT-BASE" ) ) {
+            } else if (hdr_type_str.equals("TRANSPORT")) {
+                transportHdr = new RtspTransportHeader(hdr_body);
+            } else if (hdr_type_str.equals("SESSION")) {
+                int semi_pos = hdr_body.indexOf(';');
+                if (-1 == semi_pos) {
+                    sessionId = hdr_body;
+                } else {
+                    sessionId = hdr_body.substring(0, semi_pos);
+                    int start = hdr_body.indexOf("TIMEOUT");
+                    if (-1 != start) start = hdr_body.indexOf("=") + 1;
+                    if (start > 0) {
+                        try {
+                            sessionTimeout = new Integer(Integer.parseInt(hdr_body.substring(start)));
+                        } catch (NumberFormatException e) {
+                            sessionTimeout = null;
+                        }
+                    }
+                }
+            } else if (hdr_type_str.equals("CONTENT-BASE")) {
                 contentBase = hdr_body;
-            } else if( hdr_type_str.equals( "RANGE" ) ) {
+            } else if (hdr_type_str.equals("CONTENT-TYPE")) {
+                contentType = hdr_body;
+            } else if (hdr_type_str.equals("RANGE")) {
             }
-        } else if( line.startsWith( "RTSP/1.0" ) ) {
-            statusCode = line.substring( 9, 12 );
-            statusText = line.substring( 13 );
+        } else if (line.startsWith("RTSP/1.0")) {
+            statusCode = line.substring(9, 12);
+            statusText = line.substring(13);
         }
     }
 }

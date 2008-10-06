@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -32,16 +32,18 @@ import java.io.ByteArrayOutputStream;
 import javax.microedition.io.Connector;
 import javax.microedition.io.SocketConnection;
 
+import com.sun.j2me.log.Logging;
+import com.sun.j2me.log.LogChannels;
+
 /**
  * The RtspConnection object encapsulates a TCP/IP connection to an RTSP Server.
  */
-public class RtspConnection extends RtspConnectionBase
-{
+public class RtspConnection extends RtspConnectionBase {
     private SocketConnection sock_conn;
 
-    protected void openStreams( RtspUrl url ) throws IOException {
-        sock_conn = (SocketConnection)Connector.open( "socket://" + url.getHost() +
-                                                      ":" + url.getPort() );
+    protected void openStreams(RtspUrl url) throws IOException {
+        sock_conn = (SocketConnection)Connector.open("socket://" + url.getHost() +
+                                                      ":" + url.getPort());
         is = sock_conn.openInputStream();
         os = sock_conn.openOutputStream();
     }
@@ -49,17 +51,20 @@ public class RtspConnection extends RtspConnectionBase
     protected void closeStreams() {
         is = null;
         os = null;
-        if( null != sock_conn ) {
+        if (null != sock_conn) {
             try {
                 sock_conn.close();
-            } catch( IOException e ) {
-                System.out.println( "*** Cannot close socket connection: " + e );
+            } catch (IOException e) {
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                        "IOException in RtspConnection.closeStreams(): " + e.getMessage());
+                }
             }
             sock_conn = null;
         }
     }
 
-    public RtspConnection( RtspDS ds ) throws IOException {
-        super( ds );
+    public RtspConnection(RtspDS ds) throws IOException {
+        super(ds);
     }
 }

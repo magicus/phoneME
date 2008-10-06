@@ -55,7 +55,8 @@ endif
 
 ifeq ($(USE_RTSP), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
-	$(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/rtsp/RtspConnection.java
+	$(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/rtsp/RtspConnection.java \
+	$(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/rtsp/RtpConnection.java
 endif
 
 

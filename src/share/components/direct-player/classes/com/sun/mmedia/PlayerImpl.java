@@ -120,8 +120,6 @@ public class PlayerImpl implements Player {
         String locator = source.getLocator();
         hNative = nInit(appId, pID, locator);
 
-        System.out.println( "PIMPL.ctor(): hNative=" + hNative );
-
         if (0 == hNative) {
             throw new MediaException("Unable to create native player");
         } else if (-1 == hNative) {
@@ -129,12 +127,10 @@ public class PlayerImpl implements Player {
         }
 
         mediaFormat     = nGetMediaFormat(hNative);
-        System.out.println( "PIMPL.ctor(): nGetMediaFormat => " + mediaFormat );
 
         if( mediaFormat.equals( BasicPlayer.MEDIA_FORMAT_UNSUPPORTED ) ) {
             /* verify if handled by Java */
             mediaFormat = Configuration.getConfiguration().ext2Format(source.getLocator());
-            System.out.println( "PIMPL.ctor(): getConfiguration().ext2Format => " + mediaFormat );
             if( mediaFormat == null || mediaFormat.equals( BasicPlayer.MEDIA_FORMAT_UNSUPPORTED ) ) {
                 nTerm(hNative);
                 throw new MediaException("Unsupported Media Format:" + mediaFormat + " for " + source.getLocator());
@@ -208,7 +204,6 @@ public class PlayerImpl implements Player {
             return;
         }
         String type = source.getContentType();
-        System.out.println( "PIMPL.realize(): source["+source+"].getContentType() = '" + type + "'" );
         if (type == null && stream != null && stream.getContentDescriptor() != null) {
             type = stream.getContentDescriptor().getContentType();
         }
@@ -216,9 +211,6 @@ public class PlayerImpl implements Player {
         if (!nRealize(hNative, type)) {
             throw new MediaException("Can not realize");
         }
-
-        System.out.println( "PIMPL.realize(): byDev=" + handledByDevice + 
-                                           ", byJav=" + handledByJava );
 
         MediaDownload mediaDownload = null;
 

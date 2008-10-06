@@ -49,7 +49,8 @@ endif
 
 ifeq ($(USE_RTSP), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
-	$(JSR_135_DIR)/src/cdc_share/classes/com/sun/mmedia/rtsp/RtspConnection.java
+	$(JSR_135_DIR)/src/cdc_share/classes/com/sun/mmedia/rtsp/RtspConnection.java \
+	$(JSR_135_DIR)/src/cdc_share/classes/com/sun/mmedia/rtsp/RtpConnection.java
 endif
 
 vpath % $(JSR_135_DIR)/src/cdc_share/native
