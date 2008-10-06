@@ -82,7 +82,7 @@ public:
   }
 
   void init_read_cache() {
-    _m_read_cache = NULL;
+    _m_p_read_cache = NULL;
     _m_read_cache_size = 0;
     _m_bytes_cached_for_read = 0;
   }
@@ -104,8 +104,6 @@ public:
   void finalize_read_cache();
     
 private:
-  static bool _first_time;
-
   static int debugger_socket_offset() {
     return (FIELD_OFFSET(SocketTransportDesc, _debugger_socket));
   }
@@ -113,15 +111,15 @@ private:
     return (FIELD_OFFSET(SocketTransportDesc, _listener_socket));
   }
 
-  bool _first_time;
-  bool _network_is_up;
-  bool _wait_for_network_init;
+  static bool _first_time;
+  static   bool _network_is_up;
+  static   bool _wait_for_network_init;
 
-  void* _listen_handle;
+  static   void* _listen_handle;
 
-  bool _wait_for_accept;
-  bool _wait_for_read;
-  bool _wait_for_write;
+  static   bool _wait_for_accept;
+  static   bool _wait_for_read;
+  static   bool _wait_for_write;
 
   // read cache
   unsigned char* _m_p_read_cache;

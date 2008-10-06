@@ -95,14 +95,14 @@ Transport::transport_op_def_t SocketTransport::socket_transport_ops = {
 static void pcsl_network_initialized(int isInit, int status) {
   if (isInit) {
     if (status == PCSL_NET_SUCCESS) {
-      _wait_for_network_init = false;
-      _network_is_up = true;
+      SocketTransport::_wait_for_network_init = false;
+      SocketTransport::_network_is_up = true;
     }
   } else {
     if (status == PCSL_NET_SUCCESS) {
-      _wait_for_network_init = false;
-      _network_is_up = false;
-      _first_time = true;
+      SocketTransport::_wait_for_network_init = false;
+      SocketTransport::_network_is_up = false;
+      SocketTransport::_first_time = true;
     }
   }
 }
@@ -282,6 +282,8 @@ void SocketTransport::disconnect_transport(Transport *t)
   void* dbg_handle = st->debugger_socket();
 
   if (dbg_handle != INVALID_HANDLE) {
+    /* IMPL_NOTE: wait here for 2 seconds to let other side to finish */
+
     pcsl_socket_shutdown_output(dbg_handle);
 
    /* 
@@ -544,7 +546,7 @@ bool SocketTransport::add_to_read_cache(unsigned char* p_buf, int len) {
     unsigned char* p_tmp_buf;
     int new_cache_size = _m_read_cache_size + len;
 
-    p_tmp_buf = jvm_malloc(new_cache_size);
+    p_tmp_buf = (unsigned char*)jvm_malloc(new_cache_size);
     if (p_tmp_buf == NULL) {
       return false;
     }
