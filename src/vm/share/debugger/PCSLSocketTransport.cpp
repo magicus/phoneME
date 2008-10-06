@@ -55,16 +55,13 @@
 #define SOCKET_ERROR   (-1)
 #endif
 
-// in milliseconds
-#define JVM_NET_INIT_ATTEMPT_TIME ((unsigned long)500)
-#define JVM_NET_INIT_TIMEOUT      ((unsigned long)5000)
-
 bool SocketTransport::_first_time = true;
 bool SocketTransport::_network_is_up = false;
 bool SocketTransport::_wait_for_network_init = false;
 
 void* SocketTransport::_listen_handle = INVALID_HANDLE;
 
+bool SocketTransport::_wait_for_accept = false;
 bool SocketTransport::_wait_for_read = false;
 bool SocketTransport::_wait_for_write = false;
 
@@ -210,6 +207,7 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct, int tim
 //    FD_SET((unsigned int)_listen_socket, &readFDs);
 //    width = _listen_socket;
 
+#if 0
     if (timeout == -1) {
       numFDs = ::select(width+1, &readFDs, &writeFDs, &exceptFDs, NULL);
     } else {
@@ -220,31 +218,40 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct, int tim
       if (Verbose) {
         tty->print_cr("Select failed");
       }
-      return(false);
+      return false;
     }
+#endif
 
     //if (FD_ISSET(_listen_socket, &readFDs)) {
       //connect_socket = ::accept(_listen_socket,
       //                          (struct sockaddr *)((void*)&rem_addr),
       //                          (socklen_t *)&rem_addr_len);
+    if (!_wait_for_accept) {
       status = pcsl_serversocket_accept_start(_listen_handle,
         &connect_handle, &pContext);
       if (status == PCSL_NET_WOULDBLOCK) {
-        return(false);
+        _wait_for_accept = true;
+        return false;
       }
-
+    } else {
       status = pcsl_serversocket_accept_finish(_listen_handle,
         &connect_handle, pContext);
       if (status == PCSL_NET_WOULDBLOCK) {
-        return(false);
+        return false;
       }
+      _wait_for_accept = false;
+    }
 
-      if (status != PCSL_NET_SUCCESS) {
-        if (Verbose) {
-          tty->print_cr("Accept failed");
-        }
-        return (false);
+    if (status != PCSL_NET_SUCCESS) {
+      if (Verbose) {
+        tty->print_cr("Accept failed");
       }
+      return false;
+    }
+
+    return true;
+
+#if 0
       /* Turn off Nagle algorithm which is slow in NT.  Since we send many
        * small packets Nagle actually slows us down as we send the packet
        * header in tiny chunks before sending the data portion.  Without this
@@ -255,13 +262,11 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct, int tim
       ::setsockopt(na_get_fd(connect_handle), IPPROTO_TCP, TCP_NODELAY,
                    (char *)&optval, sizeof(optval));
       st->set_debugger_socket((int)connect_handle);
-      return (true);
+      return true;
+#endif
 
-    //} else {
-      //return (false);
-    //}
   } else {
-    return (false);
+    return false;
   }
 }
 
@@ -570,9 +575,6 @@ extern "C" int JVM_GetDebuggerSocketFd() {
   SocketTransport::Raw st = t().obj();
   return (na_get_fd(st().debugger_socket()));
 }
-
-#undef JVM_NET_INIT_ATTEMPT_TIME
-#undef JVM_NET_INIT_TIMEOUT
 
 #endif // ENABLE_JAVA_DEBUGGER
 

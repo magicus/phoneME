@@ -119,6 +119,7 @@ private:
 
   void* _listen_handle;
 
+  bool _wait_for_accept;
   bool _wait_for_read;
   bool _wait_for_write;
 
