@@ -522,7 +522,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             }
         } // synchronized
 
-        if (pointerIndicator) {
+        if (Constants.FINGER_TOUCH && pointerIndicator) {
             paintPointerIndicator(g,pointerX,pointerY);
         }
 
@@ -760,25 +760,19 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         ItemLFImpl item = null;
         for (int i = 0; i < numOfLFs; i++) {
             if (!itemLFs[i].shouldSkipTraverse()) {
-                if (ScreenSkin.TOUCH_RADIUS > 0) {
+                if (Constants.FINGER_TOUCH) {
                     int res1 = (itemLFs[i].itemAcceptPointer(x + viewable[X], y + viewable[Y]));
-//                    System.out.println("FormLFImpl.findItemByPointer res1=" + res1);
+
                     if (res1 == 0 || (res1 > 0 && i == numOfLFs - 1)) {
-//                        System.out.println("FormLFImpl.findItemByPointer i=" + i);
-//                        System.out.println("FormLFImpl.findItemByPointer numOfLFs=" + i);
                         item = itemLFs[i];
                         break;
                     } else if (res1 > 0) {
                         int res2 = (itemLFs[i + 1].itemAcceptPointer(x + viewable[X], y + viewable[Y]));
-//                        System.out.println("FormLFImpl.findItemByPointer res2=" + res2);
                         if (res1 < res2 || res2 == -1) {
-//                            System.out.println("FormLFImpl.findItemByPointer res1 < res2");
                             item = itemLFs[i];
                         } else if (res1 > res2) {
-//                            System.out.println("FormLFImpl.findItemByPointer res1 > res2");
                             item = itemLFs[i + 1];
                         } else {
-//                            System.out.println("FormLFImpl.findItemByPointer res1==res2");
                              item = itemLFs[i].findNearestItem(itemLFs[i + 1],x);
                         }
                         break;
