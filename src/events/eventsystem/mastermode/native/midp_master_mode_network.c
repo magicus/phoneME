@@ -67,7 +67,7 @@ jboolean midp_check_net_status_signal(int* pStatus) {
     if (g_isNetStatusChanged == KNI_TRUE) {
         g_isNetStatusChanged = KNI_FALSE;
 
-        if (pStatus != NULL) {
+        if (pStatus != 0) {
             *pStatus = g_iNetState;
         }
     }
