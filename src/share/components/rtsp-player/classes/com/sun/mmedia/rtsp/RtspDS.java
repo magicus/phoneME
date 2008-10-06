@@ -176,6 +176,7 @@ public class RtspDS extends BasicDS {
                 sendRequest( RtspOutgoingRequest.TEARDOWN( seqNum, url, sessionId ) );
             } catch( InterruptedException e ) {
                 Thread.currentThread().interrupt();
+            } catch (IOException e) {
             } finally {
                 connection.close();
                 connection = null;
