@@ -60,8 +60,11 @@
 #define JVM_NET_INIT_TIMEOUT      ((unsigned long)5000)
 
 bool SocketTransport::_first_time = true;
-int _listen_socket = 0;
+bool _init_network = true;
 bool _wait_for_network_init = false;
+
+void *_listen_handle = INVALID_HANDLE;
+
 bool _wait_for_read = false;
 bool _wait_for_write = false;
 
@@ -107,69 +110,50 @@ void SocketTransport::init_transport(void *t JVM_TRAPS)
 {
   (void)t; // Why? Do we need it in our arguments?
   JVM_IGNORE_TRAPS;
-  UsingFastOops fast_oops;
-  struct sockaddr_in local_addr;
-  int optval;
+  UsingFastOops fastoops;
   short debugger_port;
-  int socket_err;
   int res;
 
   if (_first_time) {
-    _first_time = false;
+
+    if (_init_network) {
+      //unsigned long timeout = 0;
+      if (!_wait_for_network_init) {
+        res = pcsl_network_init_start(pcsl_network_initialized);
+      } else {
+        res = pcsl_network_init_finish(NULL);
+      }
+
+      if (res == PCSL_NET_WOULDBLOCK) {
+        // wait until the network is up
+        _wait_for_network_init = true;
+        return;
+      }
+
+      _wait_for_network_init = false;
+
+      if (res != PCSL_NET_SUCCESS) {
+        jvm_fprintf(stdout, "Could not init the network");
+        _first_time = false; // don't try to init network anymore
+        return;
+      }
+
+      _init_network = false;
+    }
+
     debugger_port = Arguments::_debugger_port;
     if (debugger_port == 0) {
       debugger_port = DefaultDebuggerPort;
     }
 
-    //unsigned long timeout = 0;
-    if (!_wait_for_network_init) {
-      res = pcsl_network_init_start(pcsl_network_initialized);
-    } else {
-      res = pcsl_network_init_finish(NULL);
-    }
-
-    if (res == PCSL_NET_WOULDBLOCK) {
-      // wait until the network is up
-      _wait_for_network_init = true;
-      _first_time = true;
-      return;
-    }
-
-    _wait_for_network_init = false;
+    res = pcsl_serversocket_open(debugger_port, &_listen_handle);
 
     if (res != PCSL_NET_SUCCESS) {
-      jvm_fprintf(stdout, "Could not init the network");
-      return;
-    }
-
-    _listen_socket = ::socket(AF_INET, SOCK_STREAM, 0);
-    if (_listen_socket < 0) {
       jvm_fprintf(stdout, "Could not open listen socket");
       return;
     }
-    local_addr.sin_family = AF_INET;
-    local_addr.sin_addr.s_addr = INADDR_ANY;
-    local_addr.sin_port = htons(debugger_port);
 
-    optval = 1;
-    ::setsockopt(_listen_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&optval,
-                 sizeof(optval));
-    socket_err = ::bind(_listen_socket,
-                        (struct sockaddr *)((void*)&local_addr),
-                        sizeof(local_addr));
-    if (socket_err < 0) {
-      ::closesocket(_listen_socket);
-      _listen_socket = -1;
-      jvm_fprintf(stdout, "Could not bind to listen socket");
-      return;
-    }
-    socket_err = ::listen(_listen_socket, 1);
-    if (socket_err < 0) {
-      ::closesocket(_listen_socket);
-      _listen_socket = -1;
-      jvm_fprintf(stdout, "Could not listen on socket");
-      return;
-    }
+    _first_time = false;
   }
 }
 
@@ -177,7 +161,7 @@ ReturnOop SocketTransport::new_transport(JVM_SINGLE_ARG_TRAPS)
 {
   SocketTransport::Raw this_transport =
     SocketTransport::allocate(JVM_SINGLE_ARG_CHECK_0);
-  this_transport().set_listener_socket(_listen_socket);
+  this_transport().set_listener_socket(na_get_fd(_listen_handle));
   this_transport().set_debugger_socket(-1);
   this_transport().set_ops(&socket_transport_ops);
   return this_transport;
@@ -198,7 +182,7 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct, int tim
   int status;
   static void *pContext = NULL;
 
-  if (_listen_socket == -1) {
+  if (_listen_handle == INVALID_HANDLE) {
     return false;
   }
 
@@ -231,13 +215,13 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct, int tim
       //connect_socket = ::accept(_listen_socket,
       //                          (struct sockaddr *)((void*)&rem_addr),
       //                          (socklen_t *)&rem_addr_len);
-      status = pcsl_serversocket_accept_start((void*)_listen_socket,
+      status = pcsl_serversocket_accept_start(_listen_handle,
         (void**)&connect_socket, &pContext);
       if (status == PCSL_NET_WOULDBLOCK) {
         return(false);
       }
 
-      status = pcsl_serversocket_accept_finish((void*)_listen_socket,
+      status = pcsl_serversocket_accept_finish(_listen_handle,
         (void**)&connect_socket, pContext);
       if (status == PCSL_NET_WOULDBLOCK) {
         return(false);
@@ -311,6 +295,7 @@ void SocketTransport::destroy_transport(Transport *t) {
   }
   
   _first_time = true;
+//  _init_network = true;
 }
 
 // Select on the dbgSocket and wait for a character to arrive.
