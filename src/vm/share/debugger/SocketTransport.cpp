@@ -682,14 +682,6 @@ int SocketTransport::write_short(Transport *t, void *buf)
   return (write_bytes(t, buf, sizeof(short)));
 }
 
-//IMPL_NOTE: this is now broken
-
-extern "C" int JVM_GetDebuggerSocketFd() {
-  Transport::Raw t = Universe::transport_head();
-  SocketTransport::Raw st = t().obj();
-  return (st().debugger_socket());
-}
-
 #if defined(__SYMBIAN32__) || UNDER_ADS
 
 #undef socket

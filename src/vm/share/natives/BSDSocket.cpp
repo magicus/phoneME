@@ -45,6 +45,12 @@ extern "C" {
 
 #if USE_BSD_SOCKET
 
+#if ENABLE_PCSL && !defined(__SYMBIAN32__)
+#include "incls/_PCSLSocketTransport.cpp.incl"
+#else
+#include "incls/_SocketTransport.cpp.incl"
+#endif
+
 #if defined(LINUX) || defined (CYGWIN)
 #define USE_UNISTD_SOCKETS 1
 #else
@@ -406,12 +412,6 @@ void JVMSPI_CheckEvents(JVMSPI_BlockedThreadInfo * blocked_threads,
   int i, num_fds, num_ready;
 
   bool debugger_active = JVM_IsDebuggerActive();
-#if ENABLE_JAVA_DEBUGGER
-  int dbg_socket_fd = -1;
-  if (debugger_active) {
-    dbg_socket_fd = JVM_GetDebuggerSocketFd();
-  }
-#endif
 
   FD_ZERO(&read_fds);
   FD_ZERO(&write_fds);
@@ -434,17 +434,6 @@ void JVMSPI_CheckEvents(JVMSPI_BlockedThreadInfo * blocked_threads,
       num_fds = socket->fd;
     }
   }
-
-#if ENABLE_JAVA_DEBUGGER
-  if (debugger_active) {
-    if (dbg_socket_fd != -1) {
-      FD_SET(dbg_socket_fd, &read_fds);
-      if (num_fds < dbg_socket_fd) {
-        num_fds = dbg_socket_fd;
-      }
-    }
-  }
-#endif
 
   // [2] Call select() on the FDs, without appropriate timeout value
   if (timeout_milli_seconds < 0) {
@@ -514,7 +503,8 @@ void JVMSPI_CheckEvents(JVMSPI_BlockedThreadInfo * blocked_threads,
     }
 #if ENABLE_JAVA_DEBUGGER
     if (debugger_active) {
-      if (FD_ISSET(dbg_socket_fd, &read_fds)) {
+      Transport::Raw t = Universe::transport_head();
+      if (SocketTransport::char_avail(&t, 0)) {
         JVM_ProcessDebuggerCmds();
       }
     }

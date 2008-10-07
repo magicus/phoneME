@@ -195,7 +195,7 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct,
   if (ct == SERVER) {
     /*listen =*/ st->listener_socket();
 
-    (void)timeout; // TODO
+    (void)timeout; // TODO: take timeout into account
 
     if (!_wait_for_accept) {
       status = pcsl_serversocket_accept_start(_listen_handle,
@@ -304,6 +304,7 @@ bool SocketTransport::char_avail(Transport *t, int timeout)
   SocketTransport *st = (SocketTransport *)t;
   void* dbg_handle = (void*)st->debugger_socket();
   int bytesAvailable = 0;
+  (void)timeout; // TODO: take timeout into account
 
   if (dbg_handle == INVALID_HANDLE) {
     return false;
@@ -531,14 +532,6 @@ void SocketTransport::finalize_read_cache() {
     _m_read_cache_size = 0;
     _m_bytes_cached_for_read = 0;
   }
-}
-
-//IMPL_NOTE: this is now broken
-
-extern "C" int JVM_GetDebuggerSocketFd() {
-  Transport::Raw t = Universe::transport_head();
-  SocketTransport::Raw st = t().obj();
-  return (na_get_fd(st().debugger_socket()));
 }
 
 #endif // ENABLE_JAVA_DEBUGGER
