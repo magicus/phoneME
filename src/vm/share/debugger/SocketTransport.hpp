@@ -58,6 +58,8 @@ public:
   static Transport::transport_op_def_t socket_transport_ops;
   static ReturnOop new_transport(JVM_SINGLE_ARG_TRAPS);
 
+  static void pcsl_network_initialized(int isInit, int status);
+
   int debugger_socket() {
     return int_field(debugger_socket_offset());
   }
@@ -104,6 +106,9 @@ public:
   void finalize_read_cache();
     
 private:
+  static int read_bytes_impl(Transport *t, void *buf, int len,
+                             bool blockflag, bool peekOnly);
+
   static int debugger_socket_offset() {
     return (FIELD_OFFSET(SocketTransportDesc, _debugger_socket));
   }

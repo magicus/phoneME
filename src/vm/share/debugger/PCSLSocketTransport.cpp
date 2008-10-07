@@ -35,6 +35,9 @@
 
 #include <pcsl_network.h>
 #include <pcsl_socket.h>
+
+// this definition is needed to include PCSL support for server sockets
+#define ENABLE_SERVER_SOCKET
 #include <pcsl_serversocket.h>
 
 #if 0
@@ -92,7 +95,7 @@ Transport::transport_op_def_t SocketTransport::socket_transport_ops = {
  *               not 0 - if the initialization
  * @param status one of PCSL_NET_* completion codes
  */
-static void pcsl_network_initialized(int isInit, int status) {
+void SocketTransport::pcsl_network_initialized(int isInit, int status) {
   if (isInit) {
     if (status == PCSL_NET_SUCCESS) {
       SocketTransport::_wait_for_network_init = false;
@@ -126,9 +129,9 @@ void SocketTransport::init_transport(void *t JVM_TRAPS)
     if (!_network_is_up) {
       //unsigned long timeout = 0;
       if (!_wait_for_network_init) {
-        res = pcsl_network_init_start(pcsl_network_initialized);
+        res = pcsl_network_init_start(SocketTransport::pcsl_network_initialized);
       } else {
-        res = pcsl_network_init_finish(NULL);
+        res = pcsl_network_init_finish();
       }
 
       if (res == PCSL_NET_WOULDBLOCK) {
@@ -174,16 +177,10 @@ ReturnOop SocketTransport::new_transport(JVM_SINGLE_ARG_TRAPS)
   return this_transport;
 }
 
-bool SocketTransport::connect_transport(Transport *t, ConnectionType ct, int timeout)
+bool SocketTransport::connect_transport(Transport *t, ConnectionType ct,
+                                        int timeout)
 {
   UsingFastOops fastoops;
-//  struct sockaddr_in rem_addr;
-//  int rem_addr_len = sizeof(rem_addr);
-//  fd_set readFDs, writeFDs, exceptFDs;
-//  int numFDs;
-//  int width;
-//  struct timeval tv;
-  int optval;
   void* connect_handle = INVALID_HANDLE;
   SocketTransport *st = (SocketTransport *)t;
   int status;
@@ -197,45 +194,22 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct, int tim
 
   if (ct == SERVER) {
     /*listen =*/ st->listener_socket();
-//    if (timeout != -1) {
-//      tv.tv_sec = timeout;
-//      tv.tv_usec = 0;
-//    }
-//    FD_ZERO(&readFDs);
-//    FD_ZERO(&writeFDs);
-//    FD_ZERO(&exceptFDs);
-//    FD_SET((unsigned int)_listen_socket, &readFDs);
-//    width = _listen_socket;
 
-#if 0
-    if (timeout == -1) {
-      numFDs = ::select(width+1, &readFDs, &writeFDs, &exceptFDs, NULL);
-    } else {
-      numFDs = ::select(width+1, &readFDs, &writeFDs, &exceptFDs, &tv);
-    }
+    (void)timeout; // TODO
 
-    if (numFDs <= 0) {
-      if (Verbose) {
-        tty->print_cr("Select failed");
-      }
-      return false;
-    }
-#endif
-
-    //if (FD_ISSET(_listen_socket, &readFDs)) {
-      //connect_socket = ::accept(_listen_socket,
-      //                          (struct sockaddr *)((void*)&rem_addr),
-      //                          (socklen_t *)&rem_addr_len);
     if (!_wait_for_accept) {
       status = pcsl_serversocket_accept_start(_listen_handle,
         &connect_handle, &pContext);
       if (status == PCSL_NET_WOULDBLOCK) {
+        if (Verbose) {
+          tty->print_cr("Waiting for accept()");
+        }
         _wait_for_accept = true;
         return false;
       }
     } else {
       status = pcsl_serversocket_accept_finish(_listen_handle,
-        &connect_handle, pContext);
+        &connect_handle, &pContext);
       if (status == PCSL_NET_WOULDBLOCK) {
         return false;
       }
@@ -252,9 +226,10 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct, int tim
     return true;
 
 #if 0
-      /* Turn off Nagle algorithm which is slow in NT.  Since we send many
+      /*
+       * Turn off Nagle algorithm which is slow in NT. Since we send many
        * small packets Nagle actually slows us down as we send the packet
-       * header in tiny chunks before sending the data portion.  Without this
+       * header in tiny chunks before sending the data portion. Without this
        * option, it could take 200 ms. per packet roundtrip from KVM on NT to
        * Forte running on some other machine.
        */
@@ -279,17 +254,17 @@ void SocketTransport::disconnect_transport(Transport *t)
 {
   UsingFastOops fastoops;
   SocketTransport *st = (SocketTransport *)t;
-  void* dbg_handle = st->debugger_socket();
+  void* dbg_handle = (void*)st->debugger_socket();
 
   if (dbg_handle != INVALID_HANDLE) {
     /* IMPL_NOTE: wait here for 2 seconds to let other side to finish */
 
     pcsl_socket_shutdown_output(dbg_handle);
 
-   /* 
-    * Note that this function NEVER returns PCSL_NET_WOULDBLOCK. Therefore, the
-    * finish() function should never be called and does nothing.
-    */
+    /* 
+     * Note that this function NEVER returns PCSL_NET_WOULDBLOCK. Therefore, the
+     * finish() function should never be called and does nothing.
+     */
     pcsl_socket_close_start(dbg_handle, NULL);
 
     st->set_debugger_socket((int)INVALID_HANDLE);
@@ -299,7 +274,7 @@ void SocketTransport::disconnect_transport(Transport *t)
 void SocketTransport::destroy_transport(Transport *t) {
   UsingFastOops fastoops;
   SocketTransport *st = (SocketTransport *)t;
-  void* listener_handle = st->listener_socket();
+  void* listener_handle = (void*)st->listener_socket();
 
   st->finalize_read_cache();
 
@@ -307,10 +282,10 @@ void SocketTransport::destroy_transport(Transport *t) {
     // last socket in the system, shutdown the listener socket
     pcsl_socket_shutdown_output(listener_handle);
 
-   /* 
-    * Note that this function NEVER returns PCSL_NET_WOULDBLOCK. Therefore, the
-    * finish() function should never be called and does nothing.
-    */
+    /* 
+     * Note that this function NEVER returns PCSL_NET_WOULDBLOCK. Therefore, the
+     * finish() function should never be called and does nothing.
+     */
     pcsl_socket_close_start(listener_handle, NULL);
 
     st->set_listener_socket((int)INVALID_HANDLE);
@@ -327,7 +302,7 @@ bool SocketTransport::char_avail(Transport *t, int timeout)
 {
   UsingFastOops fastoops;
   SocketTransport *st = (SocketTransport *)t;
-  void* dbg_handle = st->debugger_socket();
+  void* dbg_handle = (void*)st->debugger_socket();
   int bytesAvailable = 0;
 
   if (dbg_handle == INVALID_HANDLE) {
@@ -346,7 +321,7 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
 {
   UsingFastOops fastoops;
   SocketTransport *st = (SocketTransport *)t;
-  void* dbg_handle = st->debugger_socket();
+  void* dbg_handle = (void*)st->debugger_socket();
   int bytes_sent = 0;
   int status;
   static void* pContext;
@@ -358,11 +333,11 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
   //bytes_sent = (int)send(dbg_socket, (char *)buf, len, 0);
 
   if (!_wait_for_write) {
-    status = pcsl_socket_write_start(dbg_handle, buf, len,
-                                     &bytes_sent, &pContext);
+    status = pcsl_socket_write_start(dbg_handle, (char*)buf,
+                                     len, &bytes_sent, &pContext);
   } else {  /* Reinvocation after unblocking the thread */
-    status = pcsl_socket_write_finish(dbg_handle, buf, len,
-                                      &bytes_sent, pContext);
+    status = pcsl_socket_write_finish(dbg_handle, (char*)buf,
+                                      len, &bytes_sent, pContext);
   }
 
   if (status == PCSL_NET_WOULDBLOCK) {
@@ -378,23 +353,14 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
 int SocketTransport::peek_bytes(Transport *t, void *buf, int len)
 {
   UsingFastOops fastoops;
-  int nread;
   SocketTransport *st = (SocketTransport *)t;
-  void* dbg_handle = st->debugger_socket();
+  void* dbg_handle = (void*)st->debugger_socket();
 
   if (dbg_handle == INVALID_HANDLE || len <= 0) {
     return 0;
   }
 
   return read_bytes_impl(t, buf, len, false, true);
-
-  //nread = recv(dbg_socket, (char *)buf, len, MSG_PEEK);
-  //if (nread <= 0) {
-  //  return 0;
-  //}
-
-  // nread > 0
-  //return nread;
 }
 
 int SocketTransport::read_bytes(Transport *t, void *buf, int len, bool blockflag)
@@ -408,14 +374,14 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
   UsingFastOops fastoops;
   int nread;
   unsigned int nleft = len;
-  char *ptr = (char *) buf;
+  unsigned char *ptr = (unsigned char *) buf;
   unsigned int total = 0;
   SocketTransport *st = (SocketTransport *)t;
-  void* dbg_handle = st->debugger_socket();
-  int ststus;
+  void* dbg_handle = (void*)st->debugger_socket();
+  int status;
   static void *pContext;
 
-  if (dbg_socket == INVALID_HANDLE) {
+  if (dbg_handle == INVALID_HANDLE) {
     return 0;
   }
   if (nleft == 0) {
@@ -449,9 +415,6 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
   }
 
   do {
-//    nread = recv(dbg_socket, ptr, nleft, 0);
-//    nread = 0;
-
     if (!_wait_for_read) {
       status = pcsl_socket_read_start(dbg_handle, ptr, nleft,
                                       &nread, &pContext);
@@ -539,7 +502,7 @@ int SocketTransport::write_short(Transport *t, void *buf)
 
 bool SocketTransport::add_to_read_cache(unsigned char* p_buf, int len) {
   if (len <= 0 || p_buf == NULL) {
-    return;
+    return false;
   }
 
   if (_m_read_cache_size < _m_bytes_cached_for_read + len) {
@@ -555,7 +518,7 @@ bool SocketTransport::add_to_read_cache(unsigned char* p_buf, int len) {
     _m_read_cache_size = new_cache_size;
   }
 
-  jvm_memcpy(&_m_read_cache[_m_bytes_cached_for_read], p_buf, len);
+  jvm_memcpy(&_m_p_read_cache[_m_bytes_cached_for_read], p_buf, len);
   _m_bytes_cached_for_read += len;
   
   return true;
