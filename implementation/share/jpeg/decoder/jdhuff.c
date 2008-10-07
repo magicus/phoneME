@@ -38,7 +38,7 @@
 
 #define JPEG_INTERNALS
 #include "jinclude.h"
-#include "jvm-jpeglib.h"
+#include "jvm_jpeglib.h"
 #include "jdhuff.h"		/* Declarations shared with jdphuff.c */
 
 

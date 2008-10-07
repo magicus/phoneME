@@ -34,14 +34,14 @@
  * you may have to edit this file.)
  *
  * NOTE: this file is NOT intended to be included by applications using the
- * JPEG library.  Most applications need only include jvm-jpeglib.h.
+ * JPEG library.  Most applications need only include jvm_jpeglib.h.
  */
 
 
 /* Include auto-config file to find out which system include files we need. */
 
 #include "jconfig.h"		/* auto configuration options */
-#define JCONFIG_INCLUDED	/* so that jvm-jpeglib.h doesn't do it again */
+#define JCONFIG_INCLUDED	/* so that jvm_jpeglib.h doesn't do it again */
 
 /*
  * We need the NULL macro and size_t typedef.
@@ -50,7 +50,7 @@
  * pull in <sys/types.h> as well.
  * Note that the core JPEG library does not require <stdio.h>;
  * only the default error handler and data source/destination modules do.
- * But we must pull it in because of the references to FILE in jvm-jpeglib.h.
+ * But we must pull it in because of the references to FILE in jvm_jpeglib.h.
  * You can remove those references if you want to compile without <stdio.h>.
  */
 

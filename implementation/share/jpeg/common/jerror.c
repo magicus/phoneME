@@ -43,7 +43,7 @@
 
 /* this is not a core library module, so it doesn't define JPEG_INTERNALS */
 #include "jinclude.h"
-#include "jvm-jpeglib.h"
+#include "jvm_jpeglib.h"
 #include "jversion.h"
 #include "jerror.h"
 

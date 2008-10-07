@@ -37,7 +37,7 @@
 
 #define JPEG_INTERNALS
 #include "jinclude.h"
-#include "jvm-jpeglib.h"
+#include "jvm_jpeglib.h"
 
 
 typedef enum {			/* JPEG marker codes */

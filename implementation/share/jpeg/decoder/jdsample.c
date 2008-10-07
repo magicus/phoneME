@@ -42,7 +42,7 @@
 
 #define JPEG_INTERNALS
 #include "jinclude.h"
-#include "jvm-jpeglib.h"
+#include "jvm_jpeglib.h"
 
 
 /* Pointer to routine to upsample a single component */

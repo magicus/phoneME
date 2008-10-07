@@ -39,7 +39,7 @@
 
 #define JPEG_INTERNALS
 #include "jinclude.h"
-#include "jvm-jpeglib.h"
+#include "jvm_jpeglib.h"
 
 
 /* At present, jcsample.c can request context rows only for smoothing.

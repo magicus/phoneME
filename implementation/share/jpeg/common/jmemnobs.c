@@ -40,7 +40,7 @@
 
 #define JPEG_INTERNALS
 #include "jinclude.h"
-#include "jvm-jpeglib.h"
+#include "jvm_jpeglib.h"
 #include "jmemsys.h"		/* import the system-dependent declarations */
 
 #include "mni.h"
