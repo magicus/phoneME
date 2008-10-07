@@ -48,7 +48,10 @@ static struct {
 
 static javacall_bool inFullScreenMode;
 static javacall_bool isLCDActive = JAVACALL_FALSE;
+/* if display orientation is reversed */
 static javacall_bool reverse_orientation;
+/* if display content should be turned upside down */
+static javacall_bool top_down;
 
 static void rotate_offscreen_buffer(javacall_pixel* dst, javacall_pixel *src, int src_width, int src_height);
 
@@ -70,6 +73,7 @@ javacall_result javacall_lcd_init(void) {
 
     isLCDActive = JAVACALL_TRUE;
     inFullScreenMode = JAVACALL_FALSE;
+    top_down = JAVACALL_FALSE;
 
 	f = NewLimeFunction(LIME_PACKAGE,
 						LIME_GRAPHICS_CLASS,
@@ -185,7 +189,7 @@ javacall_result javacall_lcd_flush(void) {
         clip[3] = VRAM.full_height;
     }
 
-    if (reverse_orientation) {
+    if (reverse_orientation || top_down) {
         current_hdc = VRAM.hdc_rotated;
         rotate_offscreen_buffer(current_hdc,
                                 VRAM.hdc,
@@ -226,14 +230,39 @@ javacall_result javacall_lcd_flush(void) {
 static void rotate_offscreen_buffer(javacall_pixel* dst, javacall_pixel *src, int src_width, int src_height) {
     int buffer_length = src_width*src_height;
     javacall_pixel *src_end = src + buffer_length;
-    javacall_pixel *dst_end = dst + buffer_length;
 
-    dst += src_height - 1;
-    while (src < src_end) {
-        *dst = *(src++);
-        dst += src_height;
-        if (dst >= dst_end) {
-            dst -= buffer_length + 1;
+    if (reverse_orientation) {
+        if (!top_down) {
+            javacall_pixel *dst_end = dst + buffer_length;
+            dst += src_height - 1;
+            while (src < src_end) {
+                *dst = *(src++);
+                dst += src_height;
+                if (dst >= dst_end) {
+                    dst -= buffer_length + 1;
+                }
+            }
+        } else {
+            javacall_pixel *dst_start = dst;
+            dst += buffer_length - 1;
+            while (src < src_end) {
+                *dst = *(src++);
+                dst -= src_height;
+                if (dst < dst_start) {
+                    dst += buffer_length - 1;
+                }
+            }
+        }
+    } else {
+        if (top_down) {
+            javacall_pixel *dst_start = dst;
+            dst += buffer_length - 1;
+            while (src < src_end) {
+                *(dst--) = *(src++);
+                if (dst < dst_start) {
+                    dst += buffer_length - 1;
+                }
+            }
         }
     }
 }
@@ -376,7 +405,10 @@ javacall_lcd_set_screen_mode(
 }*/
 
 javacall_bool javacall_lcd_reverse_orientation() {
-      reverse_orientation = !reverse_orientation;    
+      reverse_orientation = !reverse_orientation;
+      // we are rotating display content clockwise
+      top_down = reverse_orientation ? top_down : !top_down;
+
       return reverse_orientation;
 }
  
