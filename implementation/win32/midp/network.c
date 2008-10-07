@@ -1,23 +1,22 @@
 /*
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -26,7 +25,7 @@
 /**
  * @file
  *
- * Implementation of pcsl_network.h for platforms that support the winsock 
+ * Implementation of pcsl_network.h for platforms that support the winsock
  * API.
  *
  * For all functions, the "handle" is the winsock handle (an int)
@@ -43,8 +42,10 @@
 #include "lcd.h"
 #include "local_defs.h"
 
-/* #include <midp_msgQueue_md.h>, will a pcsl_event header file later. */
-//extern HANDLE midpGetWindowHandle();
+extern HWND midpGetWindowHandle(); /* declared in lcd.h */
+
+/* #include <midp_msgQueue_md.h>, will a pcsl_event header file later.
+extern HANDLE midpGetWindowHandle(); */
 /*
 #define WM_DEBUGGER      (WM_USER)
 #define WM_HOST_RESOLVED (WM_USER + 1)
@@ -52,17 +53,21 @@
 */
 
 #define MAX_HOST_LENGTH 256
-//#define ENABLE_NETWORK_TRACING
+/*#define ENABLE_NETWORK_TRACING*/
+#define ENABLE_WMA_SERVER
 
 typedef struct _AddrContext {
     struct _AddrContext* next;
     HANDLE asyncHandle;
     /* host must be last because it is variable length. */
-    struct hostent host; 
+    struct hostent host;
 } AddrContext;
 
 /* For use by pcsl_network_error. */
 int lastError;
+
+/*set flag when WMA Server is intialized*/
+int isWmaServerAlive = 0;
 
 /*
  * To reduce complexity, a whole struct is used a root instead of a just a
@@ -79,7 +84,7 @@ static AddrContext* removeAddrContext(HANDLE asyncHandle) {
     AddrContext* prev = &rootAddrContext;
     AddrContext* current = rootAddrContext.next;
 
-    // Start after the root, because the root struct has no data.
+    /* Start after the root, because the root struct has no data. */
     while (NULL != current) {
         if (current->asyncHandle == asyncHandle) {
             prev->next = current->next;
@@ -97,9 +102,9 @@ static AddrContext* removeAddrContext(HANDLE asyncHandle) {
  * See pcsl_network.h for definition.
  */
 javacall_result javacall_socket_open_start(
-	unsigned char *ipBytes, 
-	int port, 
-	void **pHandle, 
+	unsigned char *ipBytes,
+	int port,
+	void **pHandle,
 	void **pContext)
 {
     SOCKET s;
@@ -133,7 +138,7 @@ javacall_result javacall_socket_open_start(
     memcpy(&addr.sin_addr.s_addr, ipBytes, sizeof(addr.sin_addr.s_addr));
     status = connect(s, (struct sockaddr *)&addr, sizeof(addr));
     lastError = WSAGetLastError();
-    
+
     *pHandle = (void*)s;
     *pContext = NULL;
 
@@ -144,7 +149,7 @@ javacall_result javacall_socket_open_start(
       * the handle.
       */
 
-     //make socket non-blocking
+     /* make socket non-blocking */
      status = ioctlsocket(s, FIONBIO, &nonBlockingFlag);
 
      if(status ==SOCKET_ERROR) {
@@ -155,22 +160,22 @@ javacall_result javacall_socket_open_start(
     } /* end of connect() is OK */
 
     if (WSAEWOULDBLOCK == lastError) {
-          if(WSAAsyncSelect(s, midpGetWindowHandle(), WM_NETWORK, FD_CONNECT) != 0) {
-        closesocket(s);
-        return JAVACALL_FAIL;
-       }
-          return JAVACALL_WOULD_BLOCK;
-   }
+        if (WSAAsyncSelect(s, midpGetWindowHandle(),
+                           WM_NETWORK, FD_CONNECT) != 0) {
+            closesocket(s);
+            return JAVACALL_FAIL;
+        }
+        return JAVACALL_WOULD_BLOCK;
+    }
 
-    closesocket(s);          	
-
-   return JAVACALL_CONNECTION_NOT_FOUND; 
+    closesocket(s);
+    return JAVACALL_CONNECTION_NOT_FOUND;
 }
 
 /**
  * See pcsl_network.h for definition.
  */
-int javacall_socket_open_finish(void *handle,void *context){
+int javacall_socket_open_finish(void *handle, void *context) {
     SOCKET s = (SOCKET)handle;
     int status = (int)context;
 
@@ -185,7 +190,7 @@ int javacall_socket_open_finish(void *handle,void *context){
     closesocket(s);
     return JAVACALL_FAIL;
 }
-      
+
 
 /**
  * Common implementation between read_start() and read_finish().
@@ -193,7 +198,7 @@ int javacall_socket_open_finish(void *handle,void *context){
 static int winsock_read_common(void *handle,
                                unsigned char *pData,
                                int len,
-                               int *pBytesRead){
+                               int *pBytesRead) {
 
     SOCKET s = (SOCKET)handle;
     int bytesRead;
@@ -224,20 +229,17 @@ static int winsock_read_common(void *handle,
     return JAVACALL_FAIL;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
 javacall_result javacall_socket_read_start(void *handle,
                                            unsigned char *pData,
-                                           int len,  
+                                           int len,
                                            int *pBytesRead,
-                                           void **pContext){
-
+                                           void **pContext) {
     *pContext = NULL;
     return winsock_read_common(handle, pData, len, pBytesRead);
 }
-
 
 /**
  * See pcsl_network.h for definition.
@@ -246,12 +248,10 @@ javacall_result javacall_socket_read_finish(void *handle,
                                             unsigned char *pData,
                                             int len,
                                             int *pBytesRead,
-                                            void *context){
-
+                                            void *context) {
     (void)context;
     return winsock_read_common(handle, pData, len, pBytesRead);
 }
-
 
 /**
  * Common implementation between write_start() and write_finish().
@@ -259,8 +259,7 @@ javacall_result javacall_socket_read_finish(void *handle,
 static int winsock_write_common(void *handle,
                                 char *pData,
                                 int len,
-                                int *pBytesWritten){
-
+                                int *pBytesWritten) {
     SOCKET s = (SOCKET)handle;
     int bytesSent;
 
@@ -290,7 +289,6 @@ static int winsock_write_common(void *handle,
     return JAVACALL_FAIL;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
@@ -298,12 +296,10 @@ javacall_result javacall_socket_write_start(void *handle,
                                             char *pData,
                                             int len,
                                             int *pBytesWritten,
-                                            void **pContext){
-
+                                            void **pContext) {
     *pContext = NULL;
     return winsock_write_common(handle, pData, len, pBytesWritten);
 }
-
 
 /**
  * See pcsl_network.h for definition.
@@ -312,17 +308,15 @@ javacall_result javacall_socket_write_finish(void *handle,
                                              char *pData,
                                              int len,
                                              int *pBytesWritten,
-                                             void *context){
-
+                                             void *context) {
     (void)context;
     return winsock_write_common(handle, pData, len, pBytesWritten);
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
-javacall_result javacall_socket_available(void *handle, int *pBytesAvailable){
+javacall_result javacall_socket_available(void *handle, int *pBytesAvailable) {
     SOCKET s = (SOCKET)handle;
     unsigned long len = 0;
     int status;
@@ -360,11 +354,11 @@ javacall_result javacall_socket_shutdown_output(void *handle) {
 /**
  * See pcsl_network.h for definition.
  *
- * Note that this function NEVER returns PCSL_NET_WOULDBLOCK. Therefore, the 
+ * Note that this function NEVER returns PCSL_NET_WOULDBLOCK. Therefore, the
  * finish() function should never be called and does nothing.
  */
 javacall_result javacall_socket_close_start(void *handle,
-                                            void **pContext){
+                                            void **pContext) {
 
     SOCKET s = (SOCKET)handle;
     int status;
@@ -384,7 +378,7 @@ javacall_result javacall_socket_close_start(void *handle,
     lastError = WSAGetLastError();
     if (SOCKET_ERROR != status) {
         return JAVACALL_OK;
-    }        
+    }
 
     if (lastError == WSAEWOULDBLOCK) {
         /*
@@ -399,12 +393,11 @@ javacall_result javacall_socket_close_start(void *handle,
     return JAVACALL_FAIL;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
 javacall_result javacall_socket_close_finish(void *handle,
-                                             void *context){
+                                             void *context) {
 
     (void)handle;
     (void)context;
@@ -415,12 +408,11 @@ javacall_result javacall_socket_close_finish(void *handle,
  * See pcsl_network.h for definition.
  */
 javacall_result javacall_network_gethostbyname_start(char *hostname,
-                                                     unsigned char *pAddress, 
+                                                     unsigned char *pAddress,
                                                      int maxLen,
                                                      int *pLen,
                                                      void **pHandle,
-                                                     void **pContext){
-
+                                                     void **pContext) {
     AddrContext* pAddrContext;
     HANDLE asyncHandle;
 
@@ -435,8 +427,8 @@ javacall_result javacall_network_gethostbyname_start(char *hostname,
     }
 
     asyncHandle = WSAAsyncGetHostByName(midpGetWindowHandle(),
-										WM_HOST_RESOLVED, 
-										hostname, 
+										WM_HOST_RESOLVED,
+										hostname,
 										(char*)(&pAddrContext->host),
                                         MAXGETHOSTSTRUCT);
     lastError = WSAGetLastError();
@@ -453,7 +445,6 @@ javacall_result javacall_network_gethostbyname_start(char *hostname,
 	return JAVACALL_WOULD_BLOCK;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  *
@@ -464,7 +455,7 @@ javacall_result javacall_network_gethostbyname_finish(unsigned char *pAddress,
                                                       int maxLen,
                                                       int *pLen,
                                                       void *handle,
-                                                      void *context){
+                                                      void *context) {
 
     AddrContext* pAddrContext = removeAddrContext((HANDLE)handle);
     int addrLen;
@@ -494,13 +485,12 @@ javacall_result javacall_network_gethostbyname_finish(unsigned char *pAddress,
 	return JAVACALL_OK;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
 javacall_result javacall_network_getsockopt(void *handle,
                                             javacall_socket_option flag,
-                                            int *pOptval){
+                                            int *pOptval) {
 
     SOCKET s = (SOCKET)handle;
     int level = SOL_SOCKET;
@@ -516,7 +506,7 @@ javacall_result javacall_network_getsockopt(void *handle,
         break;
 
     case JAVACALL_SOCK_LINGER: /* LINGER */
-    case JAVACALL_SOCK_ABORT: 
+    case JAVACALL_SOCK_ABORT:
         opttarget = (void *) &lbuf ;
         optsize = sizeof (struct linger);
         optname = SO_LINGER;
@@ -544,7 +534,8 @@ javacall_result javacall_network_getsockopt(void *handle,
             /* If linger is on return the number of seconds. */
             *pOptval = (lbuf.l_onoff == 0 ? 0 : lbuf.l_linger) ;
             } else { /* if (JAVACALL_SOCK_ABORT == flag) */
-                *pOptval = ( ((lbuf.l_onoff == 1) && (lbuf.l_linger == 0)) ? 1 : 0 );
+                *pOptval = ( ((lbuf.l_onoff == 1) &&
+                              (lbuf.l_linger == 0)) ? 1 : 0 );
             }
         }
 
@@ -557,14 +548,12 @@ javacall_result javacall_network_getsockopt(void *handle,
     return JAVACALL_FAIL;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
 javacall_result javacall_network_setsockopt(void *handle,
                                             javacall_socket_option flag,
-                                            int optval){
-
+                                            int optval) {
     SOCKET s = (SOCKET)handle;
     int    level = SOL_SOCKET;
     int    optsize =  sizeof(optval);
@@ -603,7 +592,7 @@ javacall_result javacall_network_setsockopt(void *handle,
         optname = SO_SNDBUF;
         break;
 
-    case JAVACALL_SOCK_ABORT: 
+    case JAVACALL_SOCK_ABORT:
         opttarget = (void *) &lbuf ;
         optsize = sizeof (struct linger);
         optname = SO_LINGER;
@@ -616,7 +605,7 @@ javacall_result javacall_network_setsockopt(void *handle,
         return JAVACALL_INVALID_ARGUMENT;
     }
 
-    if (0 == setsockopt(s, level,  optname, opttarget, optsize)){
+    if (0 == setsockopt(s, level,  optname, opttarget, optsize)) {
         lastError = 0;
         return JAVACALL_OK;
     }
@@ -627,7 +616,7 @@ javacall_result javacall_network_setsockopt(void *handle,
 
 /**
  * Gets the string representation of the local device's IP address.
- * This function returns dotted quad IP address as a string in the 
+ * This function returns dotted quad IP address as a string in the
  * output parameter and not the host name.
  *
  * @param pLocalIPAddress base of char array to receive the local
@@ -637,8 +626,8 @@ javacall_result javacall_network_setsockopt(void *handle,
  * @retval JAVACALL_FAIL    if there is a network error
  */
 
-javacall_result 
-javacall_network_get_local_ip_address_as_string(char *pLocalIPAddress){
+javacall_result
+javacall_network_get_local_ip_address_as_string(char *pLocalIPAddress) {
 
     static char hostname[MAX_HOST_LENGTH];
     struct hostent *pHost;
@@ -662,7 +651,7 @@ javacall_network_get_local_ip_address_as_string(char *pLocalIPAddress){
 	return JAVACALL_OK;
 }
 
-/*
+/**
  * Returns IP address bytes array.
  * Similar with gethostbyname, but non-blocking one.
  * Example: converts "127.0.0.1" to pointer to 0x0100007f
@@ -682,8 +671,10 @@ char* getIPBytes_nonblock(char *hostname) {
 	return pHost->h_addr;
 }
 
+#if ENABLE_JSR_120
 extern javacall_result init_wma_emulator();
 extern javacall_result finalize_wma_emulator();
+#endif
 
 static int netinit = 0;
 /**
@@ -705,11 +696,18 @@ javacall_result javacall_network_init_start(void) {
         netinit = 1;
     }
 
+#ifdef ENABLE_WMA_SERVER
+	if (isWmaServerAlive == 0) {
 #if ENABLE_JSR_120
-    init_wma_emulator();
+		init_wma_emulator();
 #endif
+		isWmaServerAlive = 1;
+	}
+#endif
+
 #ifdef ENABLE_NETWORK_TRACING
-    javacall_print("network_init_start\n");
+    javautil_debug_print(JAVACALL_LOG_INFORMATION, "network",
+                         "network_init_start\n");
 #endif
     return JAVACALL_OK;
 }
@@ -720,7 +718,8 @@ javacall_result javacall_network_init_start(void) {
 javacall_result javacall_network_init_finish() {
 
 #ifdef ENABLE_NETWORK_TRACING
-    javacall_print("network_init_finish\n");
+    javautil_debug_print(JAVACALL_LOG_INFORMATION, "network",
+                         "network_init_finish\n");
 #endif
     return JAVACALL_OK;
 }
@@ -734,13 +733,14 @@ javacall_result javacall_network_init_finish() {
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_network_finalize_start(void)
-{
+javacall_result javacall_network_finalize_start(void) {
 #if ENABLE_JSR_120
-    finalize_wma_emulator();
+    /* finalize_wma_emulator(); */
 #endif
+
 #ifdef ENABLE_NETWORK_TRACING
-    javacall_print("network_finalize_start\n");
+    javautil_debug_print(JAVACALL_LOG_INFORMATION, "network",
+                         "network_finalize_start\n");
 #endif
     return JAVACALL_OK;
 }
@@ -752,10 +752,10 @@ javacall_result javacall_network_finalize_start(void)
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_network_finalize_finish(void)
-{
+javacall_result javacall_network_finalize_finish(void) {
 #ifdef ENABLE_NETWORK_TRACING
-    javacall_print("network_finalize_finish\n");
+    javautil_debug_print(JAVACALL_LOG_INFORMATION, "network",
+                         "network_finalize_finish\n");
 #endif
     return JAVACALL_OK;
 }
@@ -763,26 +763,24 @@ javacall_result javacall_network_finalize_finish(void)
 /**
  * See pcsl_network.h for definition.
  */
-int javacall_network_error(void *handle){
-
+int javacall_network_error(void *handle) {
     (void)handle;
     return lastError;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
-javacall_result javacall_network_get_local_host_name(char *pLocalHost){
-
+javacall_result javacall_network_get_local_host_name(char *pLocalHost) {
     javacall_result res;
 
-    if(netinit == 0) {
-       res = javacall_network_init_start();
-       if(res != JAVACALL_OK) {
-          return JAVACALL_FAIL;
-       }
+    if (netinit == 0) {
+        res = javacall_network_init_start();
+        if (res != JAVACALL_OK) {
+            return JAVACALL_FAIL;
+        }
     }
+
     if (SOCKET_ERROR == gethostname(pLocalHost, MAX_HOST_LENGTH)) {
         return JAVACALL_FAIL;
     }
@@ -793,10 +791,8 @@ javacall_result javacall_network_get_local_host_name(char *pLocalHost){
  * See pcsl_network.h for definition.
  */
 javacall_result /*OPTIONAL*/ javacall_server_socket_open_start(
-	int port, 
-	void **pHandle, 
-	void **pContext) 
-{
+	int port, void **pHandle, void **pContext) {
+
     SOCKET s;
     int falsebuf = 0;
     int status;
@@ -828,48 +824,43 @@ javacall_result /*OPTIONAL*/ javacall_server_socket_open_start(
 	if (status== SOCKET_ERROR) {
 	      (void)closesocket(s);
           return JAVACALL_FAIL;
-    } else { //bind OK
-	      status = listen(s, 3);
-	      *pHandle = (void*)s;   
-		 
+    } else { /* bind OK */
+        status = listen(s, 3);
+        *pHandle = (void*)s;
+
 #ifdef ENABLE_NETWORK_TRACING
-          sprintf(print_buffer,"listen(%d) = %d\n", pHandle, status);
-          javacall_print(print_buffer);
-#endif 
+        sprintf(print_buffer,"listen(%d) = %d\n", pHandle, status);
+        javautil_debug_print(JAVACALL_LOG_INFORMATION, "network", print_buffer);
+#endif
 
-          if(status == SOCKET_ERROR) {
-              closesocket(s);
-              return JAVACALL_FAIL;
-          }
-	     //make socket non-blocking
-            status = ioctlsocket(s, FIONBIO, &nonBlockingFlag);
+        if (status == SOCKET_ERROR) {
+            closesocket(s);
+            return JAVACALL_FAIL;
+        }
+        /* make socket non-blocking */
+        status = ioctlsocket(s, FIONBIO, &nonBlockingFlag);
 
-            if(status ==SOCKET_ERROR) {
-	         closesocket(s);
-             return JAVACALL_FAIL;
-            }
+        if (status ==SOCKET_ERROR) {
+            closesocket(s);
+            return JAVACALL_FAIL;
+        }
 
-            WSAAsyncSelect(s, midpGetWindowHandle(), WM_NETWORK, FD_ACCEPT);
-            return JAVACALL_OK;  //listen OK	     
-        }//bind OK         
-    
-    return JAVACALL_CONNECTION_NOT_FOUND; 
+        WSAAsyncSelect(s, midpGetWindowHandle(), WM_NETWORK, FD_ACCEPT);
+        return JAVACALL_OK; /* listen OK */
+    } /* bind OK */
+
+    return JAVACALL_CONNECTION_NOT_FOUND;
 }
 
 /**
  * See pcsl_network.h for definition.
  */
-javacall_result javacall_server_socket_open_finish(void *handle,void *context){
-
+javacall_result javacall_server_socket_open_finish(void *handle,void *context) {
 	return JAVACALL_OK;
 }
 
-
-
-static int  winsock_server_socket_accept_common(
-     javacall_handle handle, 
-     javacall_handle *newhandle) {
-    
+static int  winsock_server_socket_accept_common(javacall_handle handle,
+                                                javacall_handle *newhandle) {
    SOCKET connfd;
    struct sockaddr sa;
    int saLen = sizeof (sa);
@@ -877,14 +868,14 @@ static int  winsock_server_socket_accept_common(
    connfd = accept((SOCKET)handle, &sa, &saLen);
 #ifdef ENABLE_NETWORK_TRACING
     sprintf(print_buffer,"accept(%d) = %d\n", handle, connfd);
-    javacall_print(print_buffer);
+    javautil_debug_print (JAVACALL_LOG_INFORMATION, "network", print_buffer);
 #endif
     if (connfd == SOCKET_ERROR) {
         int lastError = WSAGetLastError();
 
-        if (lastError == WSAEWOULDBLOCK) {          
+        if (lastError == WSAEWOULDBLOCK) {
             WSAAsyncSelect((SOCKET)handle, midpGetWindowHandle(), WM_NETWORK,
-                   FD_ACCEPT);            
+                   FD_ACCEPT);
             return JAVACALL_WOULD_BLOCK;
         } else if (lastError == WSAEINTR || lastError == WSAENOTSOCK) {
             WSAAsyncSelect((SOCKET)handle, midpGetWindowHandle(), 0, 0);
@@ -894,9 +885,9 @@ static int  winsock_server_socket_accept_common(
             return JAVACALL_FAIL;
         }
     }
-    
+
    *newhandle = (javacall_handle)connfd;
-    WSAAsyncSelect((SOCKET)handle, midpGetWindowHandle(), 0, 0);    
+    WSAAsyncSelect((SOCKET)handle, midpGetWindowHandle(), 0, 0);
     return JAVACALL_OK;
 }
 
@@ -904,34 +895,36 @@ static int  winsock_server_socket_accept_common(
  * See javacall_socket.h for definition.
  */
 javacall_result /*OPTIONAL*/ javacall_server_socket_accept_start(
-      javacall_handle handle, 
+      javacall_handle handle,
       javacall_handle *pNewhandle) {
-   
-    return winsock_server_socket_accept_common( handle,pNewhandle);     
+
+    return winsock_server_socket_accept_common(handle,pNewhandle);
 }
 
 /**
  * See javacall_socket.h for definition.
  */
 javacall_result /*OPTIONAL*/ javacall_server_socket_accept_finish(
-	javacall_handle handle, 
+	javacall_handle handle,
 	javacall_handle *pNewhandle) {
 
-   return winsock_server_socket_accept_common( handle, pNewhandle);      
+    return winsock_server_socket_accept_common(handle, pNewhandle);
 }
 
 /**
  * See javacall_network.h for definition.
  */
-javacall_result javacall_server_socket_set_notifier(javacall_handle handle, javacall_bool set) {
+javacall_result javacall_server_socket_set_notifier(javacall_handle handle,
+                                                    javacall_bool set) {
 	int res;
 
     if (JAVACALL_TRUE == set) {
-        res = WSAAsyncSelect((SOCKET)handle, midpGetWindowHandle(), WM_NETWORK, FD_ACCEPT);
+        res = WSAAsyncSelect((SOCKET)handle, midpGetWindowHandle(),
+                             WM_NETWORK, FD_ACCEPT);
     } else {
         res = WSAAsyncSelect((SOCKET)handle, midpGetWindowHandle(), 0, 0);
     }
-	
+
 	if (0 == res)
 		return JAVACALL_OK;
 	else
@@ -939,7 +932,7 @@ javacall_result javacall_server_socket_set_notifier(javacall_handle handle, java
 }
 
 /**
- * Translates the given IP address into a host name. 
+ * Translates the given IP address into a host name.
  *
  * @param ipn Raw IP address to translate
  * @param hostname the host name. The value of <tt>host</tt> is set by
@@ -952,7 +945,8 @@ javacall_result javacall_server_socket_set_notifier(javacall_handle handle, java
  *
  * @retval JAVACALL_OK          success
  * @retval JAVACALL_FAIL        if there is a network error
- * @retval JAVACALL_WOULD_BLOCK if the caller must call the finish function to complete the operation
+ * @retval JAVACALL_WOULD_BLOCK if the caller must call the finish function
+ *                              to complete the operation
  */
 javacall_result /*OPTIONAL*/ javacall_network_gethostbyaddr_start(int ipn,
     char *hostname, /*OUT*/ javacall_handle* pHandle, void **pContext) {
@@ -965,7 +959,7 @@ javacall_result /*OPTIONAL*/ javacall_network_gethostbyaddr_start(int ipn,
      * can take some time and really effect performance for receiving
      * datagrams.
      */
-    
+
     /* Sample implementation
 
     struct in_addr ipAddress;
@@ -977,10 +971,10 @@ javacall_result /*OPTIONAL*/ javacall_network_gethostbyaddr_start(int ipn,
 
     return JAVACALL_FAIL;
 }
-    
+
 /**
  * Finishes a pending host name lookup operation.
- * 
+ *
  * @param ipn Raw IP address to translate
  * @param hostname the host name. The value of <tt>host</tt> is set by
  *             this function.
@@ -991,7 +985,8 @@ javacall_result /*OPTIONAL*/ javacall_network_gethostbyaddr_start(int ipn,
  *
  * @retval JAVACALL_OK          success
  * @retval JAVACALL_FAIL        if there is a network error
- * @retval JAVACALL_WOULD_BLOCK if the caller must call the finish function again to complete the operation 
+ * @retval JAVACALL_WOULD_BLOCK if the caller must call the finish function
+ *                              again to complete the operation
  */
 javacall_result /*OPTIONAL*/ javacall_network_gethostbyaddr_finish(int ipn,
     char *hostname, /*OUT*/ javacall_handle* pHandle, void *context) {
@@ -1000,23 +995,26 @@ javacall_result /*OPTIONAL*/ javacall_network_gethostbyaddr_finish(int ipn,
 
 /**
  * Gets the http / https proxy address. This method is
- * called when the <tt>com.sun.midp.io.http.proxy</tt> or 
+ * called when the <tt>com.sun.midp.io.http.proxy</tt> or
  <tt>com.sun.midp.io.https.proxy</tt> internal property
  * is retrieved.
  *
- * @param pHttpProxy base of char array to receive the hostname followed 
- *          by ':' and port. - ex) webcache.thecompany.com:8080.  
+ * @param pHttpProxy base of char array to receive the hostname followed
+ *          by ':' and port. - ex) webcache.thecompany.com:8080.
  *          Size of the pHttpProxy should be (MAX_HOST_LENGTH + 6).
- * @param pHttpsProxy base of char array to receive the hostname followed 
- *          by ':' and port. - ex) webcache.thecompany.com:8080.  
+ * @param pHttpsProxy base of char array to receive the hostname followed
+ *          by ':' and port. - ex) webcache.thecompany.com:8080.
  *          Size of the pHttpsProxy should be (MAX_HOST_LENGTH + 6).
  *
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    if there is a network error
  */
-javacall_result /*OPTIONAL*/ javacall_network_get_http_proxy(/*OUT*/ char *pHttpProxy, /*OUT*/ char *pHttpsProxy) {
+javacall_result /*OPTIONAL*/ javacall_network_get_http_proxy(
+    /*OUT*/ char *pHttpProxy, /*OUT*/ char *pHttpsProxy) {
+
     if (NULL != pHttpProxy) {
-        int length = GetEnvironmentVariable("http_proxy", pHttpProxy, MAX_HOST_LENGTH + 7);
+        int length = GetEnvironmentVariable("http_proxy", pHttpProxy,
+                                            MAX_HOST_LENGTH + 7);
 
         if (0 == length || MAX_HOST_LENGTH + 7 < length) {
             return JAVACALL_FAIL;
@@ -1024,12 +1022,14 @@ javacall_result /*OPTIONAL*/ javacall_network_get_http_proxy(/*OUT*/ char *pHttp
     }
 
     if (NULL != pHttpsProxy) {
-        int length = GetEnvironmentVariable("https_proxy", pHttpsProxy, MAX_HOST_LENGTH + 7);
+        int length = GetEnvironmentVariable("https_proxy", pHttpsProxy,
+                                            MAX_HOST_LENGTH + 7);
 
         if (0 == length) {
-            length = GetEnvironmentVariable("http_proxy", pHttpsProxy, MAX_HOST_LENGTH + 7);
+            length = GetEnvironmentVariable("http_proxy", pHttpsProxy,
+                                            MAX_HOST_LENGTH + 7);
         }
-        
+
         if (0 == length || MAX_HOST_LENGTH + 7 < length) {
             return JAVACALL_FAIL;
         }
@@ -1043,7 +1043,7 @@ javacall_result /*OPTIONAL*/ javacall_network_get_http_proxy(/*OUT*/ char *pHttp
  *
  * @param handle handle of an open connection
  * @param pPortNumber returns the local port number
- * 
+ *
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    if there was an error
  */
@@ -1072,14 +1072,11 @@ javacall_result /*OPTIONAL*/ javacall_socket_getlocalport(
  *
  * @param handle handle of an open connection
  * @param pPortNumber returns the local port number
- * 
+ *
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    if there was an error
  */
-javacall_result javacall_socket_getremoteport(
-    void *handle,
-    int *pPortNumber)
-{
+javacall_result javacall_socket_getremoteport(void *handle, int *pPortNumber) {
     SOCKET s = (SOCKET)handle;
     int status;
     struct sockaddr_in sa;
@@ -1106,9 +1103,8 @@ javacall_result javacall_socket_getremoteport(
  * @retval JAVACALL_FAIL    if there was an error
  */
 javacall_result /*OPTIONAL*/ javacall_socket_getlocaladdr(
-    javacall_handle handle,
-    char *pAddress)
-{
+    javacall_handle handle, char *pAddress) {
+
     SOCKET s = (SOCKET)handle;
     int status;
     struct sockaddr_in sa;
@@ -1140,9 +1136,8 @@ javacall_result /*OPTIONAL*/ javacall_socket_getlocaladdr(
  * @retval JAVACALL_FAIL    if there was an error
  */
 javacall_result /*OPTIONAL*/ javacall_socket_getremoteaddr(
-    void *handle,
-    char *pAddress)
-{
+    void *handle, char *pAddress) {
+
     SOCKET s = (SOCKET)handle;
     int status;
     struct sockaddr_in sa;

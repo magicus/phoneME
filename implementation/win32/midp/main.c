@@ -41,6 +41,7 @@
 #include "javacall_properties.h"
 #include "javautil_jad_parser.h"
 #include "javacall_lcd.h"
+#include "javacall_ams_installer.h"
 #include "lcd.h"
 #include "res/resource.h"
 
@@ -162,52 +163,62 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
             }
         } /* end of else if */
 
-    } else if((argc == 3) && (strcmp(argv[1], "install_url") == 0)) {
-
-        /* installer.GraphicalInstaller URL */
-        javacall_print("main() Starting Graphical Installer from URL\n");
-        javanotify_install_midlet(argv[2]);
-
-    } else if((argc == 3) && (strcmp(argv[1], "install_file") == 0)) {
-
-        /* installer.GraphicalInstaller FILE */
-        /*
-        README PLEASE
-        Why do we call to install from url instead of calling to install
-        from file?
-        The main difference between both installs is that in file install
-        path supposed to be unicode and in url install it will be asci
-        When working with ES-Gate on Win32 we type path in plain english.
-        In javanotify_install_midlet_from_filesystem() it converted to
-        asci from unicode since unicode expected and string becomes unusable.
-        So for win32 we will use same javanotify_install_midlet() for both.
-        once ES-Gate ported to platform, we will ask the platform to call
-        to javanotify_install_midlet_from_filesystem() with unicode path
-        and than it should work as expected.
-        This code will not go to platform so it's ok to make here
-        platform dependent tricks.
-        */
-
-        /*
-        javanotify_install_midlet_from_filesystem(
-                                                 (const javacall_utf16*)argv[2],
-                                                 strlen(argv[2]));
-        */
+    } else if ((argc == 3) && (strcmp(argv[1], "install_url") == 0) ||
+                              (strcmp(argv[1], "install_file") == 0)) {
         char *path;
         int pathLen;
         int i;
         javacall_utf16 utf16Path[256];
 
-        javacall_print("main() Starting Graphical Installer from file\n");
-        javacall_print("main() Calling to Graphical Installer from URL\n");
+        if (strcmp(argv[1], "install_url") == 0) {
+            /* installer.GraphicalInstaller URL */
+            javacall_print("main() Starting Graphical Installer from URL\n");
+            /* javanotify_install_midlet(argv[2]); */
+        } else {
+            javacall_print("main() Starting Graphical Installer from file\n");
+            javacall_print("main() Calling to Graphical Installer from URL\n");
+
+            /* installer.GraphicalInstaller FILE */
+            /*
+            README PLEASE
+            Why do we call to install from url instead of calling to install
+            from file?
+            The main difference between both installs is that in file install
+            path supposed to be unicode and in url install it will be asci
+            When working with ES-Gate on Win32 we type path in plain english.
+            In javanotify_install_midlet_from_filesystem() it converted to
+            asci from unicode since unicode expected and string becomes unusable.
+            So for win32 we will use same javanotify_install_midlet() for both.
+            once ES-Gate ported to platform, we will ask the platform to call
+            to javanotify_install_midlet_from_filesystem() with unicode path
+            and than it should work as expected.
+            This code will not go to platform so it's ok to make here
+            platform dependent tricks.
+            */
+
+            /*
+            javanotify_install_midlet_from_filesystem(
+                                                 (const javacall_utf16*)argv[2],
+                                                 strlen(argv[2]));
+            */
+        }
 
         path = argv[2];
-        pathLen = strlen (path);
+        pathLen = strlen(path);
+
         for (i=0; i < pathLen; i++) {
             utf16Path[i] = path[i];
         }
-        javanotify_install_midlet_from_filesystem (utf16Path, pathLen, 0);
 
+        utf16Path[i++] = 0;
+        utf16Path[i]   = 0;
+
+        /*
+        javanotify_install_midlet_from_filesystem (utf16Path, pathLen, 0);
+        */
+
+        javanotify_ams_install_suite(1, JAVACALL_INSTALL_SRC_ANY, utf16Path,
+            JAVACALL_INVALID_STORAGE_ID, JAVACALL_INVALID_FOLDER_ID);
     } else if ((argc == 4) && (strcmp(argv[1], "install_wap") == 0)) {
         {
             char* jadPath = argv[2];
@@ -234,11 +245,23 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
                 jadPathUnicode[4] = ':';
                 jadPathUnicode[5] = '/';
                 jadPathUnicode[6] = '/';
-                for (i=0; i < jadPathLen; i++) {
+
+                for (i = 0; i < jadPathLen; i++) {
                     jadPathUnicode[i+7] = jadPath[i];
                 }
 
-                javanotify_install_midlet_from_filesystem(jadPathUnicode, jadPathLen+7, 1);
+                /*
+                javanotify_install_midlet_from_filesystem(jadPathUnicode,
+                                                          jadPathLen + 7, 1);
+                */
+
+                jadPathUnicode[i + 7] = 0;
+                i++;
+                jadPathUnicode[i + 7] = 0;
+
+                javanotify_ams_install_suite(1, JAVACALL_INSTALL_SRC_ANY,
+                    jadPathUnicode, JAVACALL_INVALID_STORAGE_ID,
+                        JAVACALL_INVALID_FOLDER_ID);
             }
         }
     } else if ((argc >= 3) && (strcmp(argv[1], "install_content") == 0)) {

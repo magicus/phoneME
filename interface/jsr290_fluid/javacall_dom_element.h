@@ -1,26 +1,26 @@
 /*
-* Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
-* DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-* 
-* This program is free software; you can redistribute it and/or
-* modify it under the terms of the GNU General Public License version
-* 2 only, as published by the Free Software Foundation.
-* 
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-* General Public License version 2 for more details (a copy is
-* included at /legal/license.txt).
-* 
-* You should have received a copy of the GNU General Public License
-* version 2 along with this work; if not, write to the Free Software
-* Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-* 02110-1301 USA
-* 
-* Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
-* Clara, CA 95054 or visit www.sun.com if you need additional
-* information or have any questions.
-*/
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
 
 #ifndef __JAVACALL_DOM_ELEMENT_H_
 #define __JAVACALL_DOM_ELEMENT_H_
@@ -478,7 +478,6 @@ javacall_dom_element_has_attribute(javacall_handle handle,
  *   element, <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -576,16 +575,98 @@ javacall_dom_element_set_id_attribute_node(javacall_handle handle,
                                            javacall_bool is_id,
                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
-/** 
- * Deletes object representing this element
+/**
+ * Returns retrieves the number of child elements.
+ *
  * 
  * @param handle Pointer to the object representing this element.
+ * @param ret_value the current number of element nodes that are immediate children
+ * of this element. <code>0</code> if this element has no child elements.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_finalize(javacall_handle handle);
+javacall_dom_element_get_child_element_count(javacall_handle handle,
+                                             /* OUT */ javacall_int32* ret_value);
+
+/**
+ * Returns retrieves the first child element.
+ * 
+ * 
+ * @param handle Pointer to the object representing this element.
+ * @param ret_value Pointer to the object representing 
+ *   the first child element node of this element.
+ * <code>NULL</code> if this element has no child elements.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_first_element_child(javacall_handle handle,
+                                             /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Returns retrieves the last child element.
+ *
+ * 
+ * @param handle Pointer to the object representing this element.
+ * @param ret_value Pointer to the object representing 
+ *   the last child element node of this element.
+ * <code>NULL</code> if this element has no child elements.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_last_element_child(javacall_handle handle,
+                                            /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Returns retrieves the next sibling element.
+ * 
+ * 
+ * @param handle Pointer to the object representing this element.
+ * @param ret_value Pointer to the object representing 
+ *   the next sibling element node of this element.
+ * <code>NULL</code> if this element has no element sibling nodes
+ * that come after this one in the document tree.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_next_element_sibling(javacall_handle handle,
+                                              /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Returns retrieves the previous sibling element.
+ * 
+ * 
+ * @param handle Pointer to the object representing this element.
+ * @param ret_value Pointer to the object representing 
+ *   the previous sibling element node of this element.
+ * <code>NULL</code> if this element has no element sibling nodes
+ * that come before this one in the document tree.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_previous_element_sibling(javacall_handle handle,
+                                                  /* OUT */ javacall_handle* ret_value);
+
+/** 
+ * Decrements ref counter of the native object specified number of times
+ * 
+ * @param handle Pointer to the object representing this node.
+ * @param count number of times to decrement.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_clear_references(javacall_handle handle, javacall_int32 count);
 
 
 /** @} */

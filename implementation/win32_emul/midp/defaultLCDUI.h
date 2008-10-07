@@ -89,8 +89,8 @@ enum KVMEventTypes {
 typedef struct {
     enum KVMEventTypes type;
     int                chr;
-    short              screenX;
-    short              screenY;
+    short                screenX;
+    short                screenY;
 #ifdef INCLUDE_I18N
     unicode*           str;
     short              len;
@@ -183,6 +183,7 @@ typedef enum {
     VK_SUSPEND_CURRENT  = 4,
     VK_RESUME_PREVIOUS  = 5,
     VK_KILL_CURRENT     = 6,
+    VK_CHANGE_LOCALE	= 7,
 
     KEY_USER1    = -32,
     KEY_USER2    = -33,

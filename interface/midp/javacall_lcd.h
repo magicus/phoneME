@@ -344,7 +344,7 @@ void javanotify_display_device_state_changed(int hardwareId, javacall_lcd_displa
 /** @} */
 
 #ifdef __cplusplus
-} //extern "C"
+} // extern "C"
 #endif
 
-#endif
+#endif /* __JAVACALL_LCD_H */

@@ -287,6 +287,15 @@ int javacall_permissions_load_group_messages(javacall_utf8_string* list,
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
+/**
+ * notify implementation that loading is finished - resources 
+ * can be released 
+ */
+void javacall_permissions_loading_finished()
+{
+    return;
+}
+
 #ifdef __cplusplus
 }
 #endif

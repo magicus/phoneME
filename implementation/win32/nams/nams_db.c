@@ -33,7 +33,8 @@
 #include "javautil_jad_parser.h"
 #include "javautil_string.h"
 #include "javacall_memory.h"
-#include "javacall_nams.h"
+#include "javacall_ams_app_manager.h"
+#include "javacall_ams_installer.h"
 
 static char NAMS_DB_FILE[]=".\\nams.db";
 static char NAMS_DB_HOME[]=".\\";

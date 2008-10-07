@@ -153,10 +153,61 @@ typedef void* javacall_handle;
 typedef javacall_int32 javacall_suite_id;
 
 /**
- * @define INVALID_SUITE_ID
- * @brief The suite_id that doesn't correspond to any midlet suite
+ * @brief unique storage ID
  */
-#define INVALID_SUITE_ID (-1)
+typedef javacall_int32 javacall_storage_id;
+
+/**
+ * @brief unique AMS folder ID
+ */
+typedef javacall_int32 javacall_folder_id;
+
+/**
+ * @brief unique running midlet ID
+ */
+typedef javacall_int32 javacall_app_id;
+
+/**
+ * @brief unique RMS ID
+ */
+typedef javacall_int32 javacall_rms_id;
+
+/**
+ * @brief unique RMS record ID
+ */
+typedef javacall_int32 javacall_record_id;
+
+/**
+ * @define JAVACALL_INVALID_SUITE_ID
+ * @brief The suite_id that doesn't correspond to any midlet suite
+ *
+ * IMPL_NOTE: value -1 is reserved for internal (rommized) MIDlet suites
+ */
+#define JAVACALL_INVALID_SUITE_ID (-2)
+
+/**
+ * @define JAVACALL_INVALID_FOLDER_ID
+ * @brief The folder id that doesn't correspond to any folder
+ */
+#define JAVACALL_INVALID_FOLDER_ID (-1)
+
+/**
+ * @define JAVACALL_ROOT_FOLDER_ID
+ * @brief ID of the root folder
+ */
+#define JAVACALL_ROOT_FOLDER_ID (-2)
+
+/**
+ * @define JAVACALL_INVALID_STORAGE_ID
+ * @brief The storage id that doesn't correspond to any storage
+ */
+#define JAVACALL_INVALID_STORAGE_ID (-1)
+
+/**
+ * @define JAVACALL_INVALID_APP_ID
+ * @brief The application id that doesn't correspond to any running application
+ */
+#define JAVACALL_INVALID_APP_ID (-1)
 
 /**
  * @typedef javacall_utf16_string
@@ -205,6 +256,20 @@ typedef const char* javacall_const_ascii_string;
 typedef unsigned short javacall_pixel;
 
 /**
+ * A list of properties that can be searched by a key.
+ *
+ * IMPL_NOTE: should be moved to nams/javacall_ams_common.h
+ */
+typedef struct _javacall_ams_properties {
+    /**
+     * Number of properties, there are 2 Strings (key/value)
+     * for each property.
+     */
+    int numberOfProperties;
+    javacall_utf16_string* pStringArr;
+} javacall_ams_properties;
+
+/**
  * @define JAVACALL_UNKNOWN_LENGTH
  * @brief Corresponds to unknown length
  * @note  Be careful with bit-depth context with signed-unsigned conversion: <br>
@@ -216,7 +281,7 @@ typedef unsigned short javacall_pixel;
  * @}
  */
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 /**
  * @defgroup JTWI JTWI API
@@ -236,4 +301,4 @@ typedef unsigned short javacall_pixel;
  * @}
  */
 
-#endif 
+#endif /* __JAVACALL_DEFINE_H_ */

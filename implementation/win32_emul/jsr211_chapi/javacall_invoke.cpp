@@ -28,8 +28,11 @@
  * @brief Content Handler Invocation stubs.
  */
 
+#include "stdio.h"
+#include "string.h"
 
 #include "javacall_chapi_invoke.h"
+#include "javacall_chapi_registry.h"
 
 #ifdef NULL
 #undef NULL
@@ -43,7 +46,7 @@ static char volatile timeToQuit;
 static DWORD WINAPI InvocationRequestListenerProc( LPVOID lpParam ){
     HANDLE pipe = INVALID_HANDLE_VALUE;
     while( 1 ){
-        pipe = CreateNamedPipe(
+        pipe = ::CreateNamedPipe(
             TEXT(PIPENAME),
             PIPE_ACCESS_DUPLEX,
             PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
@@ -59,43 +62,52 @@ static DWORD WINAPI InvocationRequestListenerProc( LPVOID lpParam ){
         int ret;
 
         do {
-            ret = ReadFile( pipe, &msg, sizeof( msg ), &numberOfBytesRead, 0 );
-            Sleep( 100 );
-        } while ( ! timeToQuit && ret == 0 );
+            ret = ::ReadFile( pipe, &msg, sizeof( msg ), &numberOfBytesRead, 0 );
+            ::Sleep( 100 );
+        } while ( !timeToQuit && ret == 0 );
 
         if ( timeToQuit )
             break;
-
-        assert( ret );
 
         if ( ret == 0 )
             continue;
 
         javacall_chapi_invocation inv;
         inv.url = (javacall_utf16_string) msg.getMsgPtr();
-        inv.type = (javacall_utf16_string) L"void";
+        inv.type = (javacall_utf16_string) NULL;
         inv.action = (javacall_utf16_string) L"open";
         inv.invokingAppName = (javacall_utf16_string) L"jsr211 demo";  
-        inv.invokingAuthority = (javacall_utf16_string) L"???"; 
-        inv.username = (javacall_utf16_string) L"usr";
-        inv.password = (javacall_utf16_string) L"pass";
-        inv.argsLen  = 1;
-        javacall_utf16_string arg = (javacall_utf16_string) msg.getMsgPtr();
-        inv.args     = &arg;
+        inv.invokingAuthority = (javacall_utf16_string) NULL; 
+        inv.username = (javacall_utf16_string) NULL;
+        inv.password = (javacall_utf16_string) NULL;
+        inv.argsLen  = 0;
+        inv.args     = NULL;
         inv.dataLen  = 0; 
         inv.data     = NULL;
         inv.responseRequired = 0;
 
-        javanotify_chapi_java_invoke(
-            (javacall_utf16_string) L"MyContentHandler", 
-            &inv, 
-            1 );
+        printf( "\nURL to process '%ls'", inv.url );
 
-        CloseHandle( pipe );
+        // determine handlerID
+        javacall_utf16_string value = (javacall_utf16_string)wcsrchr( (const wchar_t *)inv.url, L'.' );
+        if( value == NULL )
+            continue;
+        printf( "\nsuffix '%ls'", value );
+        javacall_utf16 buffer[ 0x100 ]; // demo
+        int pos = 0, len = sizeof(buffer)/sizeof(buffer[0]);
+        int rc = javacall_chapi_enum_handlers_by_suffix(value, &pos, buffer, &len);
+        printf( ", pos = %X", pos );
+       	javacall_chapi_enum_finish(pos);
+        if( rc != 0 )
+            continue;
+
+        printf( "\ncontent handler ID '%ls'", buffer );
+        javanotify_chapi_java_invoke( buffer, &inv, 1 );
+
+        ::CloseHandle( pipe );
         pipe = INVALID_HANDLE_VALUE;
     }
-    CloseHandle( pipe );
-
+    ::CloseHandle( pipe );
     return 0;
 }
 
@@ -107,7 +119,6 @@ javacall_result javacall_chapi_java_finish(
     /* OUT */ javacall_bool* should_exit)
 {
     *should_exit = (javacall_bool) 0;
-    assert( status == INVOCATION_STATUS_OK || status == INVOCATION_STATUS_CANCELLED );
     return JAVACALL_OK;
 }
 
