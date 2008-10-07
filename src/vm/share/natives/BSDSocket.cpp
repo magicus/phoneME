@@ -45,12 +45,6 @@ extern "C" {
 
 #if USE_BSD_SOCKET
 
-#if ENABLE_PCSL && !defined(__SYMBIAN32__)
-#include "incls/_PCSLSocketTransport.cpp.incl"
-#else
-#include "incls/_SocketTransport.cpp.incl"
-#endif
-
 #if defined(LINUX) || defined (CYGWIN)
 #define USE_UNISTD_SOCKETS 1
 #else
