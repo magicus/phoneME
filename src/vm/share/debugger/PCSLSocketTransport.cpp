@@ -40,24 +40,6 @@
 #define ENABLE_SERVER_SOCKET
 #include <pcsl_serversocket.h>
 
-#if 0
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <netinet/in.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <fcntl.h>
-#include <netinet/tcp.h>
-#define closesocket close
-#define INVALID_SOCKET (-1)
-#define SOCKET_ERROR   (-1)
-#endif
-
 bool SocketTransport::_first_time = true;
 bool SocketTransport::_network_is_up = false;
 bool SocketTransport::_wait_for_network_init = false;
@@ -304,7 +286,7 @@ bool SocketTransport::char_avail(Transport *t, int timeout)
   SocketTransport *st = (SocketTransport *)t;
   void* dbg_handle = (void*)st->debugger_socket();
   int bytesAvailable = 0;
-  (void)timeout; // TODO: take timeout into account
+  (void)timeout; // IMPL_NOTE: take timeout into account
 
   if (dbg_handle == INVALID_HANDLE) {
     return false;
@@ -330,8 +312,6 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
   if (dbg_handle == INVALID_HANDLE) {
     return 0;
   }
-
-  //bytes_sent = (int)send(dbg_socket, (char *)buf, len, 0);
 
   if (!_wait_for_write) {
     status = pcsl_socket_write_start(dbg_handle, (char*)buf,
@@ -532,6 +512,21 @@ void SocketTransport::finalize_read_cache() {
     _m_read_cache_size = 0;
     _m_bytes_cached_for_read = 0;
   }
+}
+
+/**
+ * Informs the VM that a socket's status was changed.
+ *
+ * Note: this function is not needed for Javacall builds.
+ *
+ * @param handle Platform specific handle
+ * @param signalType Enumerated signal type
+ */
+extern "C" void
+NotifySocketStatusChanged(long handle, int waitingFor) {
+  // do nothing
+  (void)handle;
+  (void)waitingFor;
 }
 
 #endif // ENABLE_JAVA_DEBUGGER
