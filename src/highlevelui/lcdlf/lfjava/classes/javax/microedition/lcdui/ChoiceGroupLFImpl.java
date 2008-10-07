@@ -395,13 +395,15 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         if (cg.numOfEls > 0) {
             int newHeight = visRect[HEIGHT];
             int newHilightedIndex = hilightedIndex;
-            if (hilightedIndex == (cg.numOfEls-1) && Canvas.DOWN == dir) {
-                newHilightedIndex = 0;
-                lScrollToItem(visRect, newHilightedIndex); 
-            } else if (newHilightedIndex == 0 && Canvas.UP == dir) {
-                newHilightedIndex = cg.numOfEls-1;
-                lScrollToItem(visRect, newHilightedIndex); 
-            } 
+            if (isCycle) {
+                if (hilightedIndex == (cg.numOfEls-1) && Canvas.DOWN == dir) {
+                    newHilightedIndex = 0;
+                    lScrollToItem(visRect, newHilightedIndex); 
+                } else if (newHilightedIndex == 0 && Canvas.UP == dir) {
+                    newHilightedIndex = cg.numOfEls-1;
+                    lScrollToItem(visRect, newHilightedIndex); 
+                } 
+            }
             int newY = contentY;
             boolean resetVisRect = false;
 
@@ -1102,4 +1104,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
     boolean traversedIn;
 
     boolean hasFocusWhenPressed; // = false
+    
+    /** Shows if internal cycle need.*/
+    boolean isCycle;
 }
