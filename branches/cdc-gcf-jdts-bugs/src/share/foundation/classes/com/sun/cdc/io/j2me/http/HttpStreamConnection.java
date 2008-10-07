@@ -93,7 +93,7 @@ class HttpStreamConnection implements StreamConnection
                                  return new Socket(hostName, portNum);
                          } 
                      });
-        } catch(java.security.PrivilegedActionException pae) {
+        } catch (java.security.PrivilegedActionException pae) {
             IOException ioe = (IOException)pae.getException();
             throw ioe;
         }
@@ -128,7 +128,8 @@ class HttpStreamConnection implements StreamConnection
             throw new IOException("Connection closed");
         }
         if (os == null)
-            os = new UniversalFilterOutputStream(this, socket.getOutputStream());
+            os = new UniversalFilterOutputStream(
+                        this, socket.getOutputStream());
         return os;
     }
     

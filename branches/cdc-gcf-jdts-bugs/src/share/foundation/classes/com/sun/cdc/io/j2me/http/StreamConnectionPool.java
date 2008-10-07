@@ -223,7 +223,7 @@ public class StreamConnectionPool {
                 continue;
             }
         }
-        for (int i=0; i<connectionsToClose.size(); ++i) {
+        for (int i = 0; i < connectionsToClose.size(); ++i) {
             m_connections.removeElement(connectionsToClose.elementAt(i));
         }
         connectionsToClose.clear();
