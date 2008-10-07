@@ -259,8 +259,6 @@ main(int argc, char *argv[]) {
                 int j = strlen(value);
                 if (j > 0 && j < 6) { /* port length is correct */
                     memcpy(valuePort, value, j+1);
-                    printf("Javacall: main: add keys to VM: key1 = %s key2 = %s key3 = %s\n",
-                        keyMemoryProfiler, keyPort, valuePort);
                     vmArgv[vmArgc++] = keyMemoryProfiler; /* -memory_profiler */
                     vmArgv[vmArgc++] = keyPort; /* -port */
                     vmArgv[vmArgc++] = valuePort; /* port number */
