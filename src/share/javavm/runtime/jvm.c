@@ -2419,7 +2419,7 @@ JVM_CountStackFrames(JNIEnv *env, jobject thread)
 #endif /* CVM_HAVE_DEPRECATED */
 
 JNIEXPORT void JNICALL
-JVM_Interrupt(JNIEnv *env, jobject thread)
+Java_java_lang_Thread_interrupt0(JNIEnv *env, jobject thread)
 {
     CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
     CVMExecEnv *targetEE;
@@ -2445,6 +2445,33 @@ JVM_Interrupt(JNIEnv *env, jobject thread)
     }
 
     CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
+}
+
+JNIEXPORT void JNICALL
+JVM_Interrupt(JNIEnv *env, jobject thread)
+{
+    CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
+    CVMJavaLong eetopVal;
+    CVMExecEnv *targetEE;
+    jmethodID methodID;
+
+    CVMID_fieldReadLong(ee, thread,
+			CVMoffsetOfjava_lang_Thread_eetop,
+			eetopVal);
+    targetEE = (CVMExecEnv *)CVMlong2VoidPtr(eetopVal);
+
+    /* %comment: rt035 */
+    if (targetEE != NULL) {
+        methodID =
+            CVMjniGetMethodID(env,
+                CVMcbJavaInstance(CVMsystemClass(java_lang_Thread)),
+                "interrupt", "()V");
+        if (methodID == NULL) {
+            return;
+        }        
+        (*env)->CallVoidMethod(env, CVMcurrentThreadICell(targetEE),
+                               methodID);
+    }
 }
 
 JNIEXPORT jboolean JNICALL
