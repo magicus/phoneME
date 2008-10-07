@@ -195,6 +195,13 @@ int javacall_lcd_get_screen_height(int hardwareId) {
     return 0;
 }
 
+/**
+ * get currently enabled hardware display id
+ */
+int javacall_lcd_get_current_hardwareId() {
+    return 0;  
+}
+
 
 /** 
  * Get display device name by id

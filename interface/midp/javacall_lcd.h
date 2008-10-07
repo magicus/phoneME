@@ -286,6 +286,10 @@ int javacall_lcd_get_screen_width(int hardwareId);
  */
 int javacall_lcd_get_screen_height(int hardwareId);
 
+/**
+ * get currently enabled hardware display id
+ */
+int javacall_lcd_get_current_hardwareId();
 
 /**
  * Return display name

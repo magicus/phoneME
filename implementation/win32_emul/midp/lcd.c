@@ -490,6 +490,13 @@ javacall_bool generateSoftButtonKeys(int x, int y, javacall_penevent_type pentyp
 	return JAVACALL_FALSE;
     
 }
+
+/**
+ * get currently enabled hardware display id
+ */
+int javacall_lcd_get_current_hardwareId() {
+  return 0;
+}
 /** 
  * Get display device name by id
  * @param hardwareId unique id of hardware screen
