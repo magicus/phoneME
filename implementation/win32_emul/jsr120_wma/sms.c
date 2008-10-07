@@ -31,10 +31,16 @@
 #include "javacall_time.h"
 
 extern char* encodeSmsBuffer(
-    javacall_sms_encoding encodingType, int destPortNum, int srcPortNum, javacall_int64 timeStamp,
-    const char* recipientPhone, const char* senderPhone, int msgLength, const char* msg,
-    int* out_encode_sms_buffer_length);
-extern char* getIPBytes_nonblock(char *hostname);
+    javacall_sms_encoding encodingType, 
+    int            destPortNum, 
+    int            srcPortNum, 
+    javacall_int64 timeStamp,
+    const char*    recipientPhone, 
+    const char*    senderPhone, 
+    int            msgLength, 
+    const char*    msg,
+    int*           out_encode_sms_buffer_length);
+extern char* getIPBytes_nonblock(char* hostname);
 
 extern char* getProp(const char* propName, char* defaultValue);
 extern int getIntProp(const char* propName, int defaultValue);
@@ -44,13 +50,10 @@ extern char *devicePhoneNumber;
 
 extern javacall_handle smsDatagramSocketHandle;
 
-
 /**
- * send an SMS message
+ * Sends an SMS message via UDP emulation.
  *
- * Actually
- *   - sends a datagramm to 11101 port, it can be received by JSR205Tool.jar (used in TCK tests)
- *   - writes a message to the console (it is enough for native tests)
+ * Extern smsOutPortNumber variable contains UDP port.
  * The address to send datagram is one of the following:
  *   - 127.0.0.1 if JSR_205_DATAGRAM_HOST environment variable is not send
  *   - JSR_205_DATAGRAM_HOST environment variable value (if set).
@@ -65,40 +68,45 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
                         unsigned short          destPort,
                         int                     handle) {
 
-    javacall_result ok;
-    int pBytesWritten = 0;
-    void *pContext;
-    unsigned char *pAddress;
+    javacall_result ok = JAVACALL_FAIL;
+    int             pBytesWritten = 0;
+    void*           pContext;
+    unsigned char*  pAddress;
 
     javacall_int64 timeStamp = javacall_time_get_seconds_since_1970();
-    const char* recipientPhone = destAddress;
-    char* senderPhone = devicePhoneNumber;
-    int encodedSMSLength;
-    char* encodedSMS;
+    const char*    recipientPhone = (const char*)destAddress;
+    char*          senderPhone = devicePhoneNumber;
+    int            encodedSMSLength;
+    char*          encodedSMS;
 
     char* IP_text = getProp("JSR_205_DATAGRAM_HOST", "127.0.0.1");
 
     javacall_network_init_start();
-    pAddress = getIPBytes_nonblock(IP_text);
+    pAddress = (unsigned char*)getIPBytes_nonblock(IP_text);
 
-    encodedSMS = encodeSmsBuffer(msgType, destPort,sourcePort, timeStamp, recipientPhone, senderPhone,
-        msgBufferLen, msgBuffer, &encodedSMSLength);
+    encodedSMS = encodeSmsBuffer(msgType, destPort, sourcePort,
+        timeStamp, recipientPhone, senderPhone,
+        msgBufferLen, (const char*)msgBuffer, &encodedSMSLength);
 
     if (encodedSMS == NULL) {
         return JAVACALL_FAIL;
     }
 
     if (smsDatagramSocketHandle) {
-        ok = javacall_datagram_sendto_start(smsDatagramSocketHandle, pAddress, smsOutPortNumber,
+        ok = javacall_datagram_sendto_start(
+            smsDatagramSocketHandle, pAddress, smsOutPortNumber,
             encodedSMS, encodedSMSLength, &pBytesWritten, &pContext);
         if (ok != JAVACALL_OK) {
-	     javautil_debug_print (JAVACALL_LOG_ERROR, "sms", "Error: SMS sending - datagram blocked.\n");
+           javautil_debug_print(JAVACALL_LOG_ERROR, "sms", 
+               "Error: SMS sending - datagram blocked.\n");
         }
     } else {
-        javautil_debug_print (JAVACALL_LOG_ERROR, "sms", "Error: SMS sending - network not initialized.\n");
+        javautil_debug_print(JAVACALL_LOG_ERROR, "sms", 
+            "Error: SMS sending - network not initialized.\n");
     }
 
-    javautil_debug_print (JAVACALL_LOG_INFORMATION, "sms", "## javacall: SMS sending...\n");
+    javautil_debug_print (JAVACALL_LOG_INFORMATION, "sms", 
+        "## javacall: SMS sending...\n");
 
     javanotify_sms_send_completed(JAVACALL_OK, handle);
 
@@ -109,9 +117,15 @@ javacall_result javacall_sms_is_service_available(void){
     return JAVACALL_OK;
 }
 
+/**
+ * The implementation limit: maximum number of open ports.
+ */
 #define PORTS_MAX 8
 static unsigned short portsList[PORTS_MAX] = {0,0,0,0,0,0,0,0};
 
+/**
+ * Refer to javacall_sms.h header for complete description.
+ */
 javacall_result javacall_sms_add_listening_port(unsigned short portNum){
 
     int i;
@@ -136,6 +150,9 @@ javacall_result javacall_sms_add_listening_port(unsigned short portNum){
     return JAVACALL_OK;
 }
 
+/**
+ * Refer to javacall_sms.h header for complete description.
+ */
 javacall_result javacall_sms_remove_listening_port(unsigned short portNum) {
 
     int i;
@@ -152,6 +169,9 @@ javacall_result javacall_sms_remove_listening_port(unsigned short portNum) {
     return JAVACALL_FAIL;
 }
 
+/**
+ * Refer to javacall_sms.h header for complete description.
+ */
 javacall_result javacall_is_sms_port_registered(unsigned short portNum) {
     int i;
     for (i=0; i<PORTS_MAX; i++) {
@@ -162,42 +182,18 @@ javacall_result javacall_is_sms_port_registered(unsigned short portNum) {
     return JAVACALL_FAIL;
 }
 
-int getBitsize(int numBytes,int bitSizeofChar){
-    return (numBytes * 8) - ((numBytes * 8) % bitSizeofChar);
-}
-
 /**
- * returns the number of segments (individual SMS messages) that would
- * be needed in the underlying protocol to send a specified message.
- *
- * The specified message is included as a parameter to this API.
- * Note that this method does not actually send the message.
- * It will only calculate the number of protocol segments needed for sending
- * the message. This API returns a count of the message segments that would be
- * sent for the provided Message.
- *
- * @param msgType message string type: Text or Binary.
- *                The target device should decide the DCS (Data Coding Scheme)
- *                in the PDU according to this parameter and the  message contents.
- *                If the target device is compliant with GSM 3.40, then for a Binary
- *                Message,  the DCS in PDU should be 8-bit binary.
- *                For a  Text Message, the target device should decide the DCS  according to
- *                the  message contents. When all characters in the message contents are in
- *                the GSM 7-bit alphabet, the DCS should be GSM 7-bit; otherwise, it should
- *                be  UCS-2.
- * @param msgBuffer the message body (payload) to be sent
- * @param msgBufferLen the message body (payload) len
- * @param hasPort indicates if the message includes source or destination port number
- * @return number of segments, or 0 value on error
+ * Refer to javacall_sms.h header for complete description.
  */
-
 int javacall_sms_get_number_of_segments(
-        javacall_sms_encoding   msgType,
-        signed char*            msgBuffer,
-        int                     msgBufferLen,
-        javacall_bool           hasPort) {
+        javacall_sms_encoding msgType,
+        char*                 msgBuffer,
+        int                   msgBufferLen,
+        javacall_bool         hasPort) {
 
     int fragmentSize, headSize, segments;
+
+    (char*)msgBuffer;
 
     switch(msgType) {
         case JAVACALL_SMS_MSG_TYPE_ASCII:
@@ -212,10 +208,14 @@ int javacall_sms_get_number_of_segments(
             fragmentSize = 140 - (hasPort? 6 : 0);
             headSize = 7;
             break;
+        default:
+            javautil_debug_print(JAVACALL_LOG_ERROR, "sms_get_number_of_segments", 
+                "Wrong message type.\n");
+            return 0;
     }
 
     if (msgBufferLen < fragmentSize) {
-      segments = 1;
+        segments = 1;
     } else {
         fragmentSize -= headSize;
         segments = (msgBufferLen + fragmentSize - 1) / fragmentSize;
