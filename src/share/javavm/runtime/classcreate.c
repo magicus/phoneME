@@ -519,6 +519,8 @@ CVMclassCreateArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
      */
     CVMcbMethodTablePtr(arrayCb) =
 	CVMcbMethodTablePtr(CVMsystemClass(java_lang_Object));
+    CVMcbMethodTableCount(arrayCb) =
+        CVMcbMethodTableCount(CVMsystemClass(java_lang_Object));
 
     /* 
      * Create the Java side "mirror" to this class
