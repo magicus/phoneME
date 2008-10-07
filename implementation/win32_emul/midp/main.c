@@ -142,6 +142,15 @@ typedef enum {
  * is running locally or via OTA */
 javacall_bool isRunningLocal = JAVACALL_FALSE;
 
+/* "memory profiler" key place */
+static char *keyMemoryProfiler = "-memory_profiler";
+
+/* "port" key place */
+static char *keyPort = "-port";
+
+/* port string value place */
+static char valuePort[6];
+
 main(int argc, char *argv[]) {
     int i, vmArgc = 0;
     char *vmArgv[100]; /* CLDC parameters */
@@ -162,6 +171,7 @@ main(int argc, char *argv[]) {
     char* mvmManagerArgument = NULL;
     javacall_utf16* propFileName;
     int propFileNameLen = 0;
+    int isMempryProfiler = 0;
 
     /* uncomment this like to force the debugger to start */
     /* _asm int 3; */
@@ -245,6 +255,17 @@ main(int argc, char *argv[]) {
             if (strcmp(key,"com.sun.midp.io.j2me.apdu.hostsandports") == 0 ) {
                 key = "com.sun.io.j2me.apdu.hostsandports";
                 property_type = JAVACALL_INTERNAL_PROPERTY;
+            } else if (!isMempryProfiler && strcmp(key,"memmonport") == 0) {
+                int j = strlen(value);
+                if (j > 0 && j < 6) { /* port length is correct */
+                    memcpy(valuePort, value, j+1);
+                    printf("Javacall: main: add keys to VM: key1 = %s key2 = %s key3 = %s\n",
+                        keyMemoryProfiler, keyPort, valuePort);
+                    vmArgv[vmArgc++] = keyMemoryProfiler; /* -memory_profiler */
+                    vmArgv[vmArgc++] = keyPort; /* -port */
+                    vmArgv[vmArgc++] = valuePort; /* port number */
+                    isMempryProfiler = 1;
+                }
             }
             javacall_set_property(key, value, JAVACALL_TRUE,property_type);
         } else if (strcmp(argv[i], "-profile") == 0) {
@@ -253,12 +274,13 @@ main(int argc, char *argv[]) {
                 vmArgv[vmArgc++] = argv[i];
 				} else if (strcmp(argv[i], "-monitormemory") == 0) {
             /* old argument  - ignore it */
-        } else if (strcmp(argv[i], "-memory_profiler") == 0) {
+        } else if (!isMempryProfiler && strcmp(argv[i], keyMemoryProfiler) == 0) {
 
             /* It is a CLDC arg, add to CLDC arguments list */
             vmArgv[vmArgc++] = argv[i++]; /* -memory_profiler */
             vmArgv[vmArgc++] = argv[i++]; /* -port */
             vmArgv[vmArgc++] = argv[i]; /* port number */
+            isMempryProfiler = 1;
         } else if (strcmp(argv[i], "-jprof") == 0) {
 
             /* It is a CLDC arg, add to CLDC arguments list */
