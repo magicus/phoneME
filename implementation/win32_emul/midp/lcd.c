@@ -229,10 +229,9 @@ javacall_result javacall_lcd_flush(void) {
 
 static void rotate_offscreen_buffer(javacall_pixel* dst, javacall_pixel *src, int src_width, int src_height) {
     int buffer_length = src_width*src_height;
-    javacall_pixel *src_end = src + buffer_length;
-
     if (reverse_orientation) {
         if (!top_down) {
+            javacall_pixel *src_end = src + buffer_length;
             javacall_pixel *dst_end = dst + buffer_length;
             dst += src_height - 1;
             while (src < src_end) {
@@ -243,18 +242,21 @@ static void rotate_offscreen_buffer(javacall_pixel* dst, javacall_pixel *src, in
                 }
             }
         } else {
-            javacall_pixel *dst_start = dst;
-            dst += buffer_length - 1;
-            while (src < src_end) {
-                *dst = *(src++);
-                dst -= src_height;
-                if (dst < dst_start) {
-                    dst += buffer_length - 1;
+            javacall_pixel *dst_end = dst + buffer_length;
+            javacall_pixel *src_start = src;
+            dst += src_height - 1;
+            src += buffer_length - 1;
+            while (src >= src_start) {
+                *dst = *(src--);
+                dst += src_height;
+                if (dst >= dst_end) {
+                    dst -= buffer_length + 1;
                 }
             }
         }
     } else {
         if (top_down) {
+            javacall_pixel *src_end = src + buffer_length;
             javacall_pixel *dst_start = dst;
             dst += buffer_length - 1;
             while (src < src_end) {
@@ -408,7 +410,6 @@ javacall_bool javacall_lcd_reverse_orientation() {
       reverse_orientation = !reverse_orientation;
       // we are rotating display content clockwise
       top_down = reverse_orientation ? top_down : !top_down;
-
       return reverse_orientation;
 }
  
