@@ -2810,6 +2810,11 @@ BSDSocket.cpp                    sni.h
 BSDSocket.cpp                    OS.hpp
 BSDSocket.cpp                    Globals.hpp
 
+#if ENABLE_JAVA_DEBUGGER
+BSDSocket.cpp                    Transport.hpp
+BSDSocket.cpp                    SocketTransport.hpp
+#endif
+
 PCSLSocket.cpp                   GlobalDefinitions.hpp
 PCSLSocket.cpp                   jvm.h
 PCSLSocket.cpp                   sni.h
