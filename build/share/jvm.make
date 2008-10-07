@@ -2425,6 +2425,10 @@ DIST_FILES   = $(DIST_BIN_DIR)/NativesTableGen.jar \
                $(DIST_INC_DIR)/NativesTable.hpp \
                $(DIST_INC_DIR)/ROMImage.hpp
 
+ifeq ($(ENABLE_MEMORY_PROFILER), true)
+  DIST_FILES += $(DIST_BIN_DIR)/memprof_client.jar
+endif
+
 ifeq ($(IsTarget)+$(ENABLE_JNI), true+true)
   DIST_FILES += $(DIST_INC_DIR)/jni.h
 endif
@@ -2628,6 +2632,23 @@ $(DIST_BIN_DIR)/kdp.jar: $(SHARE_DIR)/bin/kdp.jar
 	$(A)cp $< $@
 	$(A)$(CHMOD) u+w $@
 	$(A)echo installed $@
+
+ifeq ($(ENABLE_MEMORY_PROFILER), true)
+
+$(WorkSpace)/src/tools/memprof_client/memprof_client.jar: 
+	$(A)echo building memprof_client.jar ...
+	$(A)rm -f $@
+	$(A)make -C $(WorkSpace)/src/tools/memprof_client client
+	$(A)echo built $@
+
+$(DIST_BIN_DIR)/memprof_client.jar: $(WorkSpace)/src/tools/memprof_client/memprof_client.jar
+	$(A)echo installing memprof_client.jar ...
+	$(A)rm -f $@
+	$(A)cp $< $@
+	$(A)$(CHMOD) u+w $@
+	$(A)echo installed $@
+
+endif
 
 $(PREVERIFY): $(PREVERIFY_ORIGINAL)
 	$(A)rm -f $@
