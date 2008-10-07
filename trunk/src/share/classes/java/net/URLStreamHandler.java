@@ -28,11 +28,6 @@
 package java.net;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.File;
-import java.io.OutputStream;
-import java.util.Hashtable;
-import sun.net.www.ParseUtil;
 
 /**
  * The abstract class <code>URLStreamHandler</code> is the common
@@ -170,6 +165,8 @@ public abstract class URLStreamHandler {
 				// port can be null according to RFC2396
 				if (nhost.length() > (ind + 1)) {
 				    port = Integer.parseInt(nhost.substring(ind+1));
+                                    if (port<0)
+                                        port = -2; // -1 is reserved for "no port"
 				}
 			    } else {
 				throw new IllegalArgumentException(
@@ -187,6 +184,8 @@ public abstract class URLStreamHandler {
 			// port can be null according to RFC2396
 			if (host.length() > (ind + 1)) {
 			    port = Integer.parseInt(host.substring(ind + 1));
+                            if (port<0)
+                                port = -2; // -1 is reserved for "no port"
 			}
 			host = host.substring(0, ind);
 		    }
@@ -194,7 +193,7 @@ public abstract class URLStreamHandler {
 	    } else {
 		host = "";
 	    }
-	    if (port < -1)
+	    if (port < -1 || port > 65535)
 		throw new IllegalArgumentException("Invalid port number :" +
 						   port);
 	    start = i;

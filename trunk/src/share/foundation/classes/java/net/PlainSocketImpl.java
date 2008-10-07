@@ -30,9 +30,7 @@ package java.net;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.InterruptedIOException;
 import java.io.FileDescriptor;
-import java.io.ByteArrayOutputStream;
 
 import sun.net.ConnectionResetException;
 
@@ -132,7 +130,7 @@ class PlainSocketImpl extends SocketImpl
     {
 	IOException pending = null;
 	try {
-	    InetAddress address = InetAddress.getByName(host);
+	    address = InetAddress.getByName(host);
 
 	    try {
 		connectToAddress(address, port, timeout);
@@ -334,7 +332,7 @@ class PlainSocketImpl extends SocketImpl
 
     private synchronized void doConnect(InetAddress address, int port, int timeout) throws IOException {
         try {
-	    FileDescriptor fd = acquireFD();
+	    acquireFD();
 	    try {
 	        socketConnect(address, port, timeout);
 		// If we have a ref. to the Socket, then sets the flags
@@ -362,7 +360,7 @@ class PlainSocketImpl extends SocketImpl
     protected synchronized void bind(InetAddress address, int lport)
 	throws IOException
     {
-	socketBind(address, lport);
+        socketBind(address, lport);
 	if (socket != null)
 	    socket.setBound();
 	if (serverSocket != null)
@@ -382,7 +380,7 @@ class PlainSocketImpl extends SocketImpl
      * @param s the connection
      */
     protected synchronized void accept(SocketImpl s) throws IOException {
-	FileDescriptor fd = acquireFD();
+	acquireFD();
 	try {
 	    socketAccept(s);
 	} finally {

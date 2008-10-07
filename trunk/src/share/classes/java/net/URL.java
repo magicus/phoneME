@@ -494,10 +494,10 @@ public final class URL implements java.io.Serializable {
 
 	try {
 	    limit = spec.length();
-	    while ((limit > 0) && (spec.charAt(limit - 1) <= ' ')) {
+	    while ((limit > 0) && (spec.charAt(limit - 1) == ' ' || spec.charAt(limit - 1) == '\u0009')) {
 		limit--;	//eliminate trailing whitespace
 	    }
-	    while ((start < limit) && (spec.charAt(start) <= ' ')) {
+	    while ((start < limit) && (spec.charAt(start) == ' ' || spec.charAt(start) == '\u0009')) {
 		start++;	// eliminate leading whitespace
 	    }
 
@@ -1042,7 +1042,7 @@ public final class URL implements java.io.Serializable {
 		    = (String) java.security.AccessController.doPrivileged(
                     new sun.security.action.GetPropertyAction(
 		        protocolPathProp,""));
-		if (packagePrefixList != "") {
+		if (packagePrefixList.length() > 0) {
 		    packagePrefixList += "|";
 		}
 
