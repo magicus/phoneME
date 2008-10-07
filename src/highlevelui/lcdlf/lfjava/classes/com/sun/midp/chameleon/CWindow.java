@@ -234,7 +234,6 @@ public abstract class CWindow {
             for (CLayerElement le = layers.getTop();
                     le != null; le = le.getLower()) {
                 layer = le.getLayer();
-                System.out.println("layer = " + layer);
                 if (layer.supportsInput &&
                         layer.keyInput(type, keyCode))
                 {

@@ -24,48 +24,13 @@
  * information or have any questions.
  */
 
-#ifndef _MIDP_SLAVEMODE_PORT_H_
-#define _MIDP_SLAVEMODE_PORT_H_
+#include <kni.h>
+#include <pcsl_network.h>
+#include <midp_net_events.h>
 
-#include "java_types.h"
-
-
-/**
- * @defgroup events_slave Slave Mode Specific Porting Interface
- * @ingroup events
- */
-
-/**
- * @file
- * @ingroup events_master
- * @brief Porting interface for platform specific event handling in slave mode.
- */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * Requests that the VM control code schedule a time slice as soon
- * as possible, since Java platform threads are waiting to be run.
- */
-void midp_slavemode_schedule_vm_timeslice(void);
-
-
-/**
- * Executes bytecodes for a time slice
- *
- * @return <tt>-2</tt> if JVM has exited
- *         <tt>-1</tt> if all the Java threads are blocked waiting for events
- *         <tt>timeout value</tt>  the nearest timeout of all blocked Java threads
- */
-jlong midp_slavemode_time_slice(void);
-
-
-/**
- * Runs the platform-specific event loop.
- */
-void midp_slavemode_event_loop(void);
+/* it is set by the network status event handler */
+static jboolean g_isNetStatusChanged = KNI_FALSE;
+static jint g_iNetState = 0; /* the current network state: 1 - up, 0 - down */
 
 /**
  * This function is called when the network initialization
@@ -75,12 +40,37 @@ void midp_slavemode_event_loop(void);
  *               not 0 - if the initialization
  * @param status one of PCSL_NET_* completion codes
  */
-void midp_network_status_event_port(int isInit, int status);
+void midp_network_status_event(int isInit, int status) {
+    if (isInit) {
+        g_iNetState = (status == PCSL_NET_SUCCESS ? 1 : 0);
+    } else {
+        if (status == PCSL_NET_SUCCESS) {
+            g_iNetState = 0;
+        }
+    }
 
-#ifdef __cplusplus
+    g_isNetStatusChanged = KNI_TRUE;
 }
-#endif
 
-/* @} */
+/**
+ * Checks if a network status signal is received.
+ *
+ * @param pStatus on exit will hold a new network status (1 - up, 0 - down)
+ *
+ * @return KNI_TRUE if a network status signal was received, KNI_FALSE otherwise
+ */
+jboolean midp_check_net_status_signal(int* pStatus) {
+    jboolean res;
 
-#endif /* _MIDP_SLAVEMODE_PORT_H_ */
+    res = g_isNetStatusChanged;
+
+    if (g_isNetStatusChanged == KNI_TRUE) {
+        g_isNetStatusChanged = KNI_FALSE;
+
+        if (pStatus != 0) {
+            *pStatus = g_iNetState;
+        }
+    }
+
+    return res;
+}

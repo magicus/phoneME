@@ -215,6 +215,12 @@ void LCDUI_enable_refresh(void){
  disableRefresh=KNI_FALSE;
 }
 
+/**
+ * get currently enabled hardware display id
+ */
+int jcapp_get_current_hardwareId() {
+    return  javacall_lcd_get_current_hardwareId();  
+}
 /** 
  * Get display device name by id
  */

@@ -176,13 +176,13 @@ int fbapp_get_screen_height(int hardwareId) {
 }
 
 /** Return screen x */
-int fbapp_get_screen_x() {
-  return getScreenX(display_device_ids[0], fbapp_get_screen_width(display_device_ids[0]));
+int fbapp_get_screen_x(int hardwareId) {
+  return getScreenX(hardwareId, fbapp_get_screen_width(hardwareId));
 }
 
 /** Return screen x */
-int fbapp_get_screen_y() {
-  return getScreenY(display_device_ids[0], fbapp_get_screen_height(display_device_ids[0]));
+int fbapp_get_screen_y(int hardwareId) {
+  return getScreenY(hardwareId, fbapp_get_screen_height(hardwareId));
 }
 
 /** Return screen orientation flag */
@@ -338,6 +338,10 @@ void fbapp_finalize() {
   clearScreens();
 }
 
+/** get currently enabled hardware display id */
+int fbapp_get_current_hardwareId() {
+    return getCurrentDisplayId();
+}
 
 /** 
  * Get display device name by id

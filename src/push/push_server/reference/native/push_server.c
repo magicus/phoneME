@@ -205,13 +205,36 @@ typedef struct _alarmentry {
 static PushEntry *pushlist = NULL;
 static AlarmEntry *alarmlist = NULL;
 
+typedef enum {
+    NET_STATUS_DOWN       = -3,
+    NET_STATUS_GOING_DOWN = -2, /* network finalization is in progress */
+    NET_STATUS_ERROR      = -1,
+    NET_STATUS_UNKNOWN    = 0,
+    NET_STATUS_GOING_UP   = 1, /* network initialization is in progress */
+    NET_STATUS_UP         = 2
+} network_status_t;
+
+
+/**
+ * Current network status.
+ */
+static network_status_t networkStatus = NET_STATUS_UNKNOWN;
+
+/**
+ * Checks current status of the network.
+ *
+ * @return <tt>1</tt> if network is enabled, <tt>0</tt> otherwise
+ */
+static int isNetworkUp();
+
 static int pushlength = 0;
-static int pushProcessPort(char *buffer, PushEntry* pe);
+static int pushProcessPort(PushEntry* pe);
+static void pushStartListening();
 static int alarmopen();
 static void alarmsave();
 static void pushListFree();
 static void alarmListFree();
-static int parsePushList(int, int);
+static int parsePushList(int);
 static int parseAlarmList(int);
 static int checkfilter(char *filter, char *ip);
 static void pushcheckinentry(PushEntry *p);
@@ -222,6 +245,8 @@ static int pushOpenInternal(int startListening);
 static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext);
 static void alarmstart(AlarmEntry *entry, jlong alarm);
 static long readLine(char** ppszError, int handle, char* buffer, long length);
+
+static void pcsl_network_initialized(int isInit, int status);
 
 /**
  * Parses and extracts a field from the registry entry string.
@@ -300,7 +325,7 @@ static char *pushfilter(char *value) {
 }
 
 /**
- * Parses and extracta the MIDlet class name field from connection entry
+ * Parses and extract the MIDlet class name field from connection entry
  * string.
  *
  * @param value address of connection entry string
@@ -439,75 +464,83 @@ int pushopen() {
  * @return 0 for success else non-zero if a resource problem
  */
 static int pushOpenInternal(int startListening) {
-    int  pushfd;
-    int status;
+    int pushfd;
+    int status, push_status, alarm_status;
 
-    if (startListening) {
-        /* Make sure the network is properly in initialized. */
+    push_status = alarm_status = 0;
 
-        if (pcsl_network_init_start() != PCSL_NET_SUCCESS) {
-            return -1;
-        }
-    }
-
-    /* Get the storage directory. */
-    if (PCSL_FALSE == pcsl_string_is_null(&pushpathname)) {
-        /* already done */
-        return 0;
-    }
-
-    status = 0;
-    do {
+    /* Check whether the alarm file has been already read. */
+    if (PCSL_TRUE == pcsl_string_is_null(&alarmpathname)) {
         /*
-         * Initialize the fully qualified pathnames
-         * of the push and alarm persistent files.
+         * Initialize the fully qualified pathname
+         * of the push persistent file.
+         */
+        if (PCSL_STRING_OK != pcsl_string_cat(
+                storage_get_root(INTERNAL_STORAGE_ID),
+                    &ALARM_LIST_FILENAME, &alarmpathname)) {
+            alarm_status = -1;
+        } else {
+            alarm_status = alarmopen();
+        }
+
+        if (alarm_status != 0) {
+            REPORT_ERROR(LC_PROTOCOL, "Error: alarm open failed");
+            pcsl_string_free(&alarmpathname);
+        }
+
+    }
+
+    /* Check whether the push file has been already read. */
+    if (PCSL_TRUE == pcsl_string_is_null(&pushpathname)) {
+        /*
+         * Initialize the fully qualified pathname
+         * of the push persistent file.
          */
         if (PCSL_STRING_OK != pcsl_string_cat(
                 storage_get_root(INTERNAL_STORAGE_ID),
                     &PUSH_LIST_FILENAME, &pushpathname)) {
-            status = -1;
-            break;
-        }
-
-        if (PCSL_STRING_OK != pcsl_string_cat(
-                storage_get_root(INTERNAL_STORAGE_ID),
-                    &ALARM_LIST_FILENAME, &alarmpathname)) {
-            status = -1;
-            break;
-        }
-
-        /* Now read the registered connections. */
-        pushfd = storage_open(&errStr, &pushpathname, OPEN_READ);
-        if (errStr == NULL) {
-            /* Read through the file one line at a time */
-            status = parsePushList(pushfd, startListening);
-
-            /* Close the storage handle */
-            storageClose (&errStr, pushfd);
-            storageFreeError(errStr);
-
-            if (-1 == status) {
-                break;
-            }
+            push_status = -1;
         } else {
-            REPORT_WARN1(LC_PROTOCOL,
-                "Warning: could not open push registration file: %s",
-                errStr);
-            /* This is normal until the first push registration
-             * when it will be created. */
-            storageFreeError(errStr);
+            /* Now read the registered connections. */
+            pushfd = storage_open(&errStr, &pushpathname, OPEN_READ);
+            if (errStr == NULL) {
+                /* Read through the file one line at a time */
+                status = parsePushList(pushfd);
+
+                /* Close the storage handle */
+                storageClose (&errStr, pushfd);
+                storageFreeError(errStr);
+
+                /*
+                 * IMPL_NOTE: don't check for -1 because in this case some
+                 * entries can be read anyway
+                 */
+                if (status != -2) { /* out of memory */
+                    if (startListening) {
+                        pushStartListening();
+                    }
+                } else {
+                    push_status = -1;
+                }
+            } else {
+                REPORT_WARN1(LC_PROTOCOL,
+                   "Warning: could not open push registration file: %s",
+                    errStr);
+                /* 
+                 * This is normal until the first push registration
+                 * is created.
+                 */
+                storageFreeError(errStr);
+            }
         }
 
-        status = alarmopen();
-    } while (0);
-
-    if (status != 0) {
-        REPORT_ERROR(LC_PROTOCOL, "Error: pushopen out of memory");
-        pcsl_string_free(&pushpathname);
-        pcsl_string_free(&alarmpathname);
+        if (push_status != 0) {
+            REPORT_ERROR(LC_PROTOCOL, "Error: push open failed");
+            pcsl_string_free(&pushpathname);
+        }      
     }
 
-    return status;
+    return (!push_status && !alarm_status) ? 0 : -1;
 }
 
 /**
@@ -647,7 +680,7 @@ int midpAddPushEntry(SuiteIdType suiteId,
 /**
  * Adds one entry to the push registry.
  * If the entry already exists return an error.
- * On succesful registration, write a new copy of the file to disk.
+ * On successful registration, write a new copy of the file to disk.
  *
  * @param str A push entry string.
  * @return <tt>0</tt> if successful,
@@ -659,7 +692,6 @@ int pushadd(char *str) {
     PushEntry *pe;
     int comma;
     char *cp;
-    int ret;
 
     /* Count the characters up to the first comma. */
     for (comma = 0, cp = str; *cp; comma++, cp++) {
@@ -713,25 +745,25 @@ int pushadd(char *str) {
     bt_push_register_url(str, NULL, 0);
 #endif
     */
-    ret = pushProcessPort(str, pe);
+    pushProcessPort(pe);
     if (pe->fd == -1) {
 #if ENABLE_JSR_82
         bt_push_unregister_url(str);
 #endif
-        /* port in use by a native application, reject the registration */
-        midpFree(pe->value);
-        midpFree(pe->storagename);
-        midpFree(pe->filter);
-        midpFree(pe);
-        return ret;
+        /* 
+         * Don't reject the registration.
+         * Port may be in use by a native application but we can't check this,
+         * there is a chance network is just not up yet.
+         */
+    } else {
+        pe->state = CHECKED_IN;
+        pushAddNetworkNotifier(pe);
     }
 
     pe->next = pushlist;
     pushlist = pe;
     pushlength++;
-    pe->state = CHECKED_IN;
 
-    pushAddNetworkNotifier(pe);
     pushsave();
 
     return 0;
@@ -1840,12 +1872,10 @@ char *pushfindsuite(char *store, int available) {
  * in memory cache representation.
  *
  * @param pushfd file descriptor for reading
- * @param startListening if KNI_TRUE the push system will listen for incoming
- *                       data on the push connections.
  * @return <tt>0</tt> if successful, <tt>-1</tt> if there was an error opening
  * the push registry file, <tt>-2</tt> if there was a memory allocation failure
  */
-static int parsePushList(int pushfd, int startListening) {
+static int parsePushList(int pushfd) {
     char buffer[MAX_LINE+1];
     char *errStr = NULL;
     PushEntry *pe;
@@ -1891,14 +1921,6 @@ static int parsePushList(int pushfd, int startListening) {
 #if ENABLE_JSR_180
             pe->isSIPEntry = KNI_FALSE;
 #endif
-
-            if (startListening) {
-                pushProcessPort(buffer, pe);
-                if (pe->fd != -1) {
-                    pe->state = CHECKED_IN;
-                    pushAddNetworkNotifier(pe);
-                }
-            }
         }
 
         /*
@@ -1920,6 +1942,20 @@ static int parsePushList(int pushfd, int startListening) {
     }
 
     return 0;
+}
+
+static void pushStartListening() {
+    PushEntry *pe;
+
+    for (pe = pushlist; pe != NULL ; pe = pe->next) {
+        if (pe->state == AVAILABLE) {
+            pushProcessPort(pe);
+            if (pe->fd != -1) {
+                pe->state = CHECKED_IN;
+                pushAddNetworkNotifier(pe);
+            }
+        }
+    }
 }
 
 /**
@@ -1950,6 +1986,80 @@ static int getUrlPort(char* buffer) {
 }
 
 /**
+ * Checks current status of the network.
+ *
+ * @return <tt>1</tt> if network is enabled, <tt>0</tt> otherwise
+ */
+static int isNetworkUp() {
+    int res, status;
+
+    res = 0;
+
+    switch (networkStatus) {
+        case NET_STATUS_UP:
+            res = 1;
+            break;
+
+        case NET_STATUS_GOING_UP: {
+            status = pcsl_network_init_finish();
+
+            switch (status) {
+                case PCSL_NET_SUCCESS:
+                    networkStatus = NET_STATUS_UP;
+                    res = 1;
+                    break;
+
+                case PCSL_NET_WOULDBLOCK:
+                    /* network is still going up. */
+                    break;
+
+                default:
+                    /* network error, try later */
+                    networkStatus = NET_STATUS_ERROR;
+                    break;
+            }
+            break;
+        }
+
+        case NET_STATUS_UNKNOWN:
+        case NET_STATUS_ERROR: {
+            status = pcsl_network_init_start(pcsl_network_initialized);
+
+            switch (status) {
+                case PCSL_NET_SUCCESS:
+                    networkStatus = NET_STATUS_UP;
+                    res = 1;
+                    break;
+
+                case PCSL_NET_WOULDBLOCK:
+                    networkStatus = NET_STATUS_GOING_UP;
+                    break;
+
+                default:
+                    /* network error, try later */
+                    networkStatus = NET_STATUS_ERROR;
+                    break;
+            }
+
+            break;
+        }
+
+        case NET_STATUS_GOING_DOWN:
+        case NET_STATUS_DOWN:
+            /* 
+             * don't prevent network from going down as well as don't try to
+             * bring it up if MIDP has put it down. 
+             */
+            break;
+
+        default:
+            break;
+    }
+
+    return res;
+}
+
+/**
  * Parses the port number from the connection field
  * and uses it for the connection appropriate open
  * call. The handle will be included in
@@ -1958,7 +2068,7 @@ static int getUrlPort(char* buffer) {
  *
  * @param pe push entry; the following fields are used:
  * <ul>
- * <li>buffer A full-text push entry string from the registry</li>
+ * <li>value A full-text push entry string from the registry</li>
  * <li>fd A pointer to a handle. Used to return the open handle</li>
  * <li>port A pointer to a portId. Used to return the port to the caller</li>
  * <li>appID Application ID</li>
@@ -1967,23 +2077,26 @@ static int getUrlPort(char* buffer) {
                   KNI_FALSE otherwise</li>
  *
  * @return <tt>0</tt> if successful,
- *         <tt>-1</tt> if the entry already exists,
+ *         <tt>-1</tt> connection error,
  *         <tt>-2</tt> if out of memory
  *         <tt>-3</tt> if illegal arguments or unknown connection type
  * </ul>
  */
-static int pushProcessPort(char *buffer, PushEntry* pe) {
-    char *p;
+static int pushProcessPort(PushEntry* pe) {
+    char *p, *buffer;
     void *handle;
     void *context = NULL;
-    char *exception = NULL;
     int status;
 
-    if (buffer == NULL || pe == NULL) {
+    if (pe == NULL || pe->value == NULL) {
         return -3;
     }
 
-    pe->isWMAEntry = KNI_FALSE;
+    /* Make sure the network is properly initialized. */
+    if (!isNetworkUp()) {
+        pe->fd = -1;
+        return -1;
+    }
 
     /*
      * Open the file descriptor so it can be monitored
@@ -1992,8 +2105,12 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
      * With WMA 2.0 sms, cbs and mms connections are also
      * allowed.
      */
-    p = buffer;
+
+    p = buffer = pe->value;
+
+    pe->isWMAEntry = KNI_FALSE;
     pe->port = -1;
+
 
 #if ENABLE_JSR_82
     {
@@ -2052,7 +2169,6 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
             REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded for"
                                      " datagrams");
             pe->fd = -1;
-            exception = (char *)midpIOException;
         } else {
             status = pcsl_datagram_open_start(pe->port,
                                               &handle, &context);
@@ -2066,7 +2182,6 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
                 }
             } else {
                 pe->fd = -1;
-                exception = (char *)midpIOException;
             }
         }
 #if ENABLE_SERVER_SOCKET
@@ -2082,7 +2197,6 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
             REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded"
                                      " for TCP server sockets");
             pe->fd = -1;
-            exception = (char *)midpIOException;
         } else {
             /* Open the server socket */
             status = pcsl_serversocket_open(pe->port, &handle);
@@ -2105,7 +2219,8 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
                     "IOError in push::serversocket::open = %d\n",
                     pcsl_network_error(handle));
                 REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
-                exception = (char *)midpIOException;
+
+                pe->fd = -1;
             }
         }
 #endif
@@ -2141,7 +2256,7 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
         return -3;
     }
 
-    return -3;
+    return (pe->fd != -1) ? 0 : -1;
 }
 
 /**
@@ -2240,7 +2355,7 @@ static int checkfilter(char *filter, char *ip) {
 }
 
 /**
- * Walks through and frees all the alarmEntries in the alarm list.
+ * Walks through and frees all the alarm entries in the alarm list.
  */
 static void alarmListFree() {
     AlarmEntry *alarmp, *alarmtmp;
@@ -2258,7 +2373,7 @@ static void alarmListFree() {
 }
 
 /**
- * Walks through and frees all the pushEntries in the push list.
+ * Walks through and frees all the push entries in the push list.
  */
 static void pushListFree() {
     PushEntry *pushp;
@@ -2356,7 +2471,7 @@ int pushpoll() {
                  * When pushopen was called the port for this entry was busy,
                  * so try again.
                  */
-                pushProcessPort(pe->value, pe);
+                pushProcessPort(pe);
                 if (pe->fd != -1) {
                     REPORT_INFO1(LC_PUSH,
                         "Push network signal on descriptor %x", pe->fd);
@@ -3014,3 +3129,21 @@ Java_com_sun_midp_i3test_TestCompWildcard_cmpWildCard() {
     KNI_ReturnBoolean(ret);
 }
 #endif
+
+/**
+ * This function is called when the network initialization or finalization is
+ * completed.
+ *
+ * @param isInit 0 if the network finalization has been finished,
+ *               not 0 - if the initialization
+ * @param status one of PCSL_NET_* completion codes
+ */
+static void pcsl_network_initialized(int isInit, int status) {
+    if (isInit) {
+        networkStatus = (status == PCSL_NET_SUCCESS) ?
+            NET_STATUS_UP : NET_STATUS_ERROR;
+    } else {
+        networkStatus = (status == PCSL_NET_SUCCESS) ?
+            NET_STATUS_DOWN : NET_STATUS_ERROR;
+    }
+}

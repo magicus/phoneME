@@ -129,7 +129,7 @@ public class MenuLayer extends ScrollablePopupLayer {
      * Updates the scroll indicator.
      */
     public void updateScrollIndicator() {
-        if (scrollInd != null) {
+    	if (scrollInd != null) {
             if (menuCmds.length > MenuSkin.MAX_ITEMS) {
                 scrollInd.setVerticalScroll(
                   (scrollIndex * 100) / (menuCmds.length - MenuSkin.MAX_ITEMS),
@@ -227,8 +227,7 @@ public class MenuLayer extends ScrollablePopupLayer {
         // return 'true' indicating it has handled the key
         // event except for the soft button keys for which it
         // returns 'false'
-        
-        if (keyCode == EventConstants.SOFT_BUTTON1 || 
+    	if (keyCode == EventConstants.SOFT_BUTTON1 || 
             keyCode == EventConstants.SOFT_BUTTON2) {
             return false;
         }
@@ -243,9 +242,13 @@ public class MenuLayer extends ScrollablePopupLayer {
                 if (selI < scrollIndex && scrollIndex > 0) {
                     scrollIndex--;
                 }
-                updateScrollIndicator();
-                requestRepaint();
+            } else {
+            	selI = menuCmds.length - 1; 
+            	scrollIndex = menuCmds.length - MenuSkin.MAX_ITEMS;
+            	scrollIndex = (scrollIndex > 0) ? scrollIndex : 0;	
             }
+            updateScrollIndicator();
+            requestRepaint();
         } else if (keyCode == Constants.KEYCODE_DOWN) {
             if (selI < (menuCmds.length - 1)) {
                 selI++;
@@ -253,9 +256,12 @@ public class MenuLayer extends ScrollablePopupLayer {
                     scrollIndex < (menuCmds.length - MenuSkin.MAX_ITEMS)) {
                     scrollIndex++;
                 } 
-                updateScrollIndicator();
-                requestRepaint();
+            } else {
+            	selI = 0;
+            	scrollIndex = 0; 
             }
+            updateScrollIndicator();
+            requestRepaint();
         } else if (keyCode == Constants.KEYCODE_LEFT) {
             // IMPL_NOTE : Need to add support for a "right popping"
             // sub menu if the system menu is placed on the left

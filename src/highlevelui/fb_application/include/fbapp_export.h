@@ -127,12 +127,12 @@ extern int fbapp_get_screen_height(int hardwareId);
 /**
  * Query frame buffer device for screen x
  */ 
-extern int fbapp_get_screen_x();
+extern int fbapp_get_screen_x(int hardwareId);
 
 /**
  * Query frame buffer device for screen y
  */ 
-extern int fbapp_get_screen_y();
+extern int fbapp_get_screen_y(int hardwareId);
 
 
 /** 
@@ -160,6 +160,11 @@ extern jboolean fbapp_is_display_ptr_supported(int hardwareId);
  * Check if the display device supports pointer motion  events
  */
 extern jboolean fbapp_is_display_ptr_motion_supported(int hardwareId);
+
+/**
+* Get hardware id of  curently enabled display
+*/
+extern int fbapp_get_current_hardwareId();
 
 /**
  * Get display device capabilities

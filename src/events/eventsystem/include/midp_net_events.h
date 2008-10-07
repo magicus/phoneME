@@ -1,7 +1,7 @@
 /*
- *  
+ *   
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -24,21 +24,15 @@
  * information or have any questions.
  */
 
-#ifndef _MIDP_SLAVEMODE_PORT_H_
-#define _MIDP_SLAVEMODE_PORT_H_
+#ifndef _MIDP_NET_EVENTS_H
+#define _MIDP_NET_EVENTS_H
 
-#include "java_types.h"
-
-
-/**
- * @defgroup events_slave Slave Mode Specific Porting Interface
- * @ingroup events
- */
+#include <java_types.h>
 
 /**
  * @file
- * @ingroup events_master
- * @brief Porting interface for platform specific event handling in slave mode.
+ * @ingroup eventsystem
+ * @brief Platform-specific routine to check for network events.
  */
 
 #ifdef __cplusplus
@@ -46,26 +40,13 @@ extern "C" {
 #endif
 
 /**
- * Requests that the VM control code schedule a time slice as soon
- * as possible, since Java platform threads are waiting to be run.
- */
-void midp_slavemode_schedule_vm_timeslice(void);
-
-
-/**
- * Executes bytecodes for a time slice
+ * Checks if a network status signal is received.
  *
- * @return <tt>-2</tt> if JVM has exited
- *         <tt>-1</tt> if all the Java threads are blocked waiting for events
- *         <tt>timeout value</tt>  the nearest timeout of all blocked Java threads
+ * @param pStatus on exit will hold a new network status (1 - up, 0 - down)
+ *
+ * @return KNI_TRUE if a network status signal was received, KNI_FALSE otherwise
  */
-jlong midp_slavemode_time_slice(void);
-
-
-/**
- * Runs the platform-specific event loop.
- */
-void midp_slavemode_event_loop(void);
+jboolean midp_check_net_status_signal(int* pStatus);
 
 /**
  * This function is called when the network initialization
@@ -75,12 +56,10 @@ void midp_slavemode_event_loop(void);
  *               not 0 - if the initialization
  * @param status one of PCSL_NET_* completion codes
  */
-void midp_network_status_event_port(int isInit, int status);
+void midp_network_status_event(int isInit, int status);
 
 #ifdef __cplusplus
 }
 #endif
 
-/* @} */
-
-#endif /* _MIDP_SLAVEMODE_PORT_H_ */
+#endif /* _MIDP_NET_EVENTS_H */

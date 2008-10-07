@@ -164,9 +164,9 @@ class DateEditor extends PopupLayer implements CommandListener {
                 break;
         }
 
-        ScreenLFImpl sLF = (ScreenLFImpl)lf.df.owner.getLF();
-        if (bounds[X] + bounds[W] > sLF.lGetCurrentDisplay().width) {
-            bounds[X] = sLF.lGetCurrentDisplay().width - bounds[W];
+        int w = ((ScreenLFImpl)lf.df.owner.getLF()).width;
+        if (bounds[X] + bounds[W] > w) {
+            bounds[X] = w - bounds[W];
         } else if (bounds[X] < 0) {
             bounds[X] = 0;
         }

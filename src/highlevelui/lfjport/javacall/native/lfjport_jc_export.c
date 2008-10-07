@@ -196,6 +196,13 @@ void lfjport_set_softbutton_label_on_native_layer (unsigned short *label,
 }
 
 
+/**
+ * get currently enabled hardware display id
+ */
+int lfjport_get_current_hardwareId() {
+    return  jcapp_get_current_hardwareId();  
+}
+
 /** 
  * Get display device name by id
  */

@@ -206,6 +206,12 @@ char * lfjport_get_display_name(int hardwareId) {
     return fbapp_get_display_name(hardwareId);
 }
 
+/**
+ * get currently enabled hardware display id
+ */
+int lfjport_get_current_hardwareId() {
+    return  fbapp_get_current_hardwareId();
+}
 
 /**
  * Check if the display device is primary

@@ -152,7 +152,15 @@ void lcdlf_set_softbutton_label_on_native_layer (unsigned short *label,
                                                   len, 
                                                   index);
 }
-  
+
+/**
+ * get currently enabled hardware display id
+ */
+int lcdlf_get_current_hardwareId() {
+    return lfjport_get_current_hardwareId();
+}
+
+
 /** 
  * Get display device name by id
  */

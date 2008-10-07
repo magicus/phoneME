@@ -212,6 +212,13 @@ void lfjport_set_softbutton_label_on_native_layer (unsigned short *label,
  *  Need the real implementation for multiple displays support 
  */
 
+/**
+ * get currently enabled hardware display id
+ */
+int lfjport_get_current_hardwareId() {
+    return  0;  // just one display  is supported
+}
+
 
 /** 
  * Get display device name by id

@@ -124,6 +124,15 @@ jboolean lcdlf_direct_flush(int hardwareId, const java_graphics *g,
 			    const java_imagedata *offscreen_buffer, int h) {
   return lfpport_direct_flush(hardwareId, g, offscreen_buffer, h);
 }
+
+
+/**
+ * get currently enabled hardware display id
+ */
+int lcdlf_get_current_hardwareId() {
+    return 0; 
+}
+
 #ifdef __cplusplus
 }
 #endif

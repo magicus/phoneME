@@ -37,11 +37,14 @@ extern "C" {
 #include <midp_logging.h>
 #include <localeMethod.h>
 #include <midp_jc_event_defs.h>
+#include <midp_properties_port.h>
 
 #include <javacall_events.h>
 #include <javacall_lifecycle.h>
 #include <javacall_time.h>
 #include <javautil_unicode.h>
+
+#define LOCALE "microedition.locale"
 
 char urlAddress[BINARY_BUFFER_MAX_LEN];
 static char localResAddress[BINARY_BUFFER_MAX_LEN];
@@ -677,6 +680,47 @@ void javanotify_resume(void) {
     REPORT_INFO(LC_CORE, "javanotify_resume() >>\n");
 
     e.eventType = MIDP_JC_EVENT_RESUME;
+
+    midp_jc_event_send(&e);
+}
+
+/**
+ * Decode integer parameters to locale string
+ */
+void decodeLanguage(char* str, short languageCode, short regionCode) {
+    int i;
+
+    str[1] = (languageCode & 0xFF);
+    languageCode >>= 8;
+
+    str[0] = (languageCode & 0xFF);
+    languageCode >>= 8;
+
+    str[2] = '-';
+
+    str[4] = (regionCode & 0xFF);
+    regionCode >>= 8;
+
+    str[3] = (regionCode & 0xFF);
+    regionCode >>= 8;
+
+    str[5] = '\0';
+}
+
+/**
+ * The platform should invoke this function for locale changing
+ */
+void javanotify_change_locale(short languageCode, short regionCode) {
+    const char tmp[6];
+	midp_jc_event_union e;
+
+	REPORT_INFO(LC_CORE, "javanotify_change_locale() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_CHANGE_LOCALE;
+
+    decodeLanguage(tmp, languageCode, regionCode);
+
+    setSystemProperty(LOCALE, tmp);
 
     midp_jc_event_send(&e);
 }
