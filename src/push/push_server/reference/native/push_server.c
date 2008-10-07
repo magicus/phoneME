@@ -1005,13 +1005,13 @@ int pushcheckout(char* protocol, int port, char * store) {
          * connection for UDP transport and 'socket' connection for TCP.
          */
         standardProtocol = (p->port == port &&
-            (strncmp(p->value, protocol, strlen(protocol)) == 0 ||
-                (strncmp(p->value, "sip", 3) == 0 &&
-               ((!strncmp("datagram", protocol, strlen(protocol)) == 
+            (!strncmp(p->value, protocol, strlen(protocol)) ||
+               (strncmp(p->value, "sip", 3) == 0 &&
+                 ( (!strncmp("datagram", protocol, strlen(protocol)) && 
                                        pushIsDatagramConnection(p->value)) ||
-                (!strncmp("socket", protocol, strlen(protocol)) == 
+                   (!strncmp("socket", protocol, strlen(protocol)) && 
                                        pushIsSocketConnection(p->value)))
-                )
+               )
             )
         );
 #else
