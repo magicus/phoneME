@@ -55,6 +55,7 @@
 # LD            - Linker command
 # CC            - Compiler command
 # KDP_CMD       - Command for the CLDC Debug Proxy
+# MEMPROF_CMD   - Command for the CLDC memory profiler client
 #
 # Other variables that may be defined elsewhere:
 #
@@ -185,6 +186,9 @@ JAVADOC_CMD  = $(JDK_DIR)/bin/javadoc$(EXE)
 ifeq ($(TARGET_VM), cldc_vm)
    PREVERIFY_CMD        = $(BINDIR)/preverify$(EXE)
    KDP_CMD              = $(BINDIR)/kdp.jar
+   ifeq ($(ENABLE_MEMORY_PROFILER), true)
+     MEMPROF_CMD        = $(BINDIR)/memprof_client.jar
+   endif
    J2ME_CONFIGURATION   = cldc
    EXTRA_CFLAGS        += -DENABLE_CDC=0
 else

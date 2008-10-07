@@ -179,8 +179,11 @@ endif
 
 MIDP_RESOURCES += ams_resources
 MIDP_DEPS += $(ROM_DEPS) $(MMAPI_TARGET) $(OBJ_FILES) $(KDP_CMD) \
-             all_tools not_yet_implemented
+             all_tools not_yet_implemented $(MEMPROF_CMD)
 
+##ifeq ($(ENABLE_MEMORY_PROFILER), true)
+##MIDP_DEFS += $(MEMPROF_CMD)
+##endif
 
 not_yet_implemented::
 
