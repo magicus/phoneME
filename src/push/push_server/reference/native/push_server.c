@@ -1649,6 +1649,10 @@ char *pushfindfd(int fd) {
                     return NULL;
                 }
 
+                /* Set the raw IP address */
+                memcpy(&(pushp->pCachedData->ipAddress),
+                       ipBytes, MAX_ADDR_LENGTH);
+
                 REPORT_INFO1(LC_PROTOCOL,
                              "SIP Push Message: %s",
                              pushp->pCachedData->buffer);
