@@ -25,14 +25,17 @@
 
 package com.sun.j2mews.xml.rpc;
 
+import javax.microedition.io.Connector;
+import javax.microedition.io.HttpConnection;
 import javax.microedition.xml.rpc.*;
 import javax.xml.namespace.QName;
 import javax.xml.rpc.*;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.rmi.MarshalException;
 import java.rmi.ServerException;
-
-import java.io.*;
-import javax.microedition.io.*;
 
 import com.sun.j2me.io.Base64;
 
@@ -257,19 +260,16 @@ public class OperationImpl extends Operation {
 
                 // open stream to service endpoint
                 http = (HttpConnection)Connector.open(
-                    getProperty(Stub.ENDPOINT_ADDRESS_PROPERTY));
+                			getProperty(Stub.ENDPOINT_ADDRESS_PROPERTY));
 
                 ostream = setupReqStream(http);
-
                 // IMPL NOTE: encoding should be either UTF-8 or UTF-16
                 encoder.encode(params, inputType, ostream, null);
-
                 if (ostream != null) {
-                    ostream.close();
+                    ostream.close(); ostream = null;
                 }
 
                 istream = setupResStream(http);
-
                 if (returnType != null && istream != null) {
                     result = decoder.decode(returnType,
                                             istream,
@@ -277,11 +277,11 @@ public class OperationImpl extends Operation {
                                             http.getLength());
                 }
 
-                if (http != null) {
-                    http.close();
-                }
                 if (istream != null) {
-                    istream.close();
+                    istream.close(); istream = null;
+                }
+                if (http != null) {
+                    http.close(); http = null;
                 }
 
             } while (resourceMoved && (attempts++ < maxAttempts));
@@ -298,31 +298,31 @@ public class OperationImpl extends Operation {
             if (ostream != null) {
                 try {
                     ostream.close();
-                } catch (Throwable t2) { }
+                } catch (Throwable t1) { }
+                ostream = null;
             }
             if (istream != null) {
                 try {
                     istream.close();
-                } catch (Throwable t3) { }
+                } catch (Throwable t1) { }
+                istream = null;
             }
             if (http != null) {
                 try {
                     http.close();
                 } catch (Throwable t1) { }
+                http = null;
             }
             // Re-throw whatever error/exception occurs as a new
             // JAXRPCException
-            if (t instanceof JAXRPCException) {
+            if (t instanceof JAXRPCException)
                 throw (JAXRPCException)t;
-            } else {
-                if (t instanceof MarshalException ||
+            if (t instanceof MarshalException ||
                     t instanceof ServerException ||
                         t instanceof FaultDetailException) {
                     throw new JAXRPCException(t);
-                } else {
-                    throw new JAXRPCException(t.toString());
-                }
             }
+            throw new JAXRPCException(t.toString());
         }
     }
 
@@ -391,7 +391,7 @@ public class OperationImpl extends Operation {
      *         from this HttpConnection or null if not available.
      */
     protected InputStream setupResStream(HttpConnection http)
-        throws IOException, ServerException
+        throws IOException
     {
         int response = http.getResponseCode();
 
@@ -405,50 +405,43 @@ public class OperationImpl extends Operation {
         }
 
         InputStream input = http.openInputStream();
-        
-// TRACE input
-//java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-//byte b[] = new byte[128]; int l;
-//while( (l = input.read(b)) > 0 ) out.write(b, 0, l);
-//input = new java.io.ByteArrayInputStream( out.toByteArray() );
-//System.out.println( "TRACE: " + getClass().getName() + ".setupResStream():\n" +
-//				out.toString());
-// end of TRACE         
-
-        if (response == HttpConnection.HTTP_OK) {
-
-            // Catch any session cookie if one was set
-            String useSession = getProperty(Stub.SESSION_MAINTAIN_PROPERTY);
-            if (useSession != null && useSession.toLowerCase().equals("true"))
-            {
-                String cookie = http.getHeaderField("Set-Cookie");
-                if (cookie != null) {
-                    addSessionCookie(
-                        getProperty(Stub.ENDPOINT_ADDRESS_PROPERTY), cookie);
-                }
-            }
-
-            return input;
-        } else {
-            Object detail = decoder.decodeFault(faultHandler,
-                                                input,
-                                                http.getEncoding(),
-                                                http.getLength());
-
-            if (detail instanceof String) {
-                if (((String)detail).indexOf("DataEncodingUnknown") != -1) {
-                    throw new MarshalException((String)detail);
-                } else {
-                    throw new ServerException((String)detail);
-                }
-            } else {
-                Object[] wrapper = (Object[])detail;
-                String message = (String)wrapper[0];
-                QName name = (QName)wrapper[1];
-                detail = wrapper[2];
-                throw new JAXRPCException(message,
-                    new FaultDetailException(name, detail));
-            }
+        try {
+	        if (response == HttpConnection.HTTP_OK) {
+	
+	            // Catch any session cookie if one was set
+	            String useSession = getProperty(Stub.SESSION_MAINTAIN_PROPERTY);
+	            if (useSession != null && useSession.toLowerCase().equals("true"))
+	            {
+	                String cookie = http.getHeaderField("Set-Cookie");
+	                if (cookie != null) {
+	                    addSessionCookie(
+	                        getProperty(Stub.ENDPOINT_ADDRESS_PROPERTY), cookie);
+	                }
+	            }
+	
+	            return input;
+	        }
+	        Object detail = decoder.decodeFault(faultHandler,
+	                                            input,
+	                                            http.getEncoding(),
+	                                            http.getLength());
+	        if (detail instanceof String) {
+	            if (((String)detail).indexOf("DataEncodingUnknown") != -1)
+	                throw new MarshalException((String)detail);
+	            throw new ServerException((String)detail);
+	        }
+	        Object[] wrapper = (Object[])detail;
+	        String message = (String)wrapper[0];
+	        QName name = (QName)wrapper[1];
+	        detail = wrapper[2];
+	        throw new JAXRPCException(message,
+	        				new FaultDetailException(name, detail));
+        } catch( IOException t ){
+        	input.close();
+        	throw t;
+        } catch( RuntimeException t ){
+        	input.close();
+        	throw t;
         }
     }
 
