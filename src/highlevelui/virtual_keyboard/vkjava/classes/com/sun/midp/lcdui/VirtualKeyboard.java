@@ -59,7 +59,7 @@ public class VirtualKeyboard {
     /* Listener for handling keyboard events*/
     VirtualKeyboardListener vkl;
 
-    /* Table of existed keybords*/
+    /* Table of existed keybords */
     Hashtable keyboardsMap = null;
 
     /* Keyboard line in focus */
@@ -71,11 +71,15 @@ public class VirtualKeyboard {
     /* Current key */
     Key currentKey;
 
-    /* Array of current keyboard keys*/
+    /* Array of current keyboard keys */
     Key[][] currentKeyboard;
 
-    /* Current type of keyboard*/
+    /* Current type of keyboard */
     String currentKeyboardType;
+   
+    /* Shrinks of the keyboard */
+    private double shrinkX = 1;
+    private double shrinkY = 1;
 
     /**
      * Virtual Keyboard constructor.
@@ -236,6 +240,18 @@ public class VirtualKeyboard {
             }
         }
     }
+    
+    public void resize(double kshrinkX, double kshrinkY) {
+       shrinkX = kshrinkX;
+       shrinkY = kshrinkY; 
+    
+       for (int i = 0; i < currentKeyboard.length; i++) {
+           for (int j = 0; j < currentKeyboard[i].length; j++) {
+               Key key = currentKeyboard[i][j];
+    	       key.resize(kshrinkX, kshrinkY);
+           } 
+       }       
+    }
 
     /**
      * Handle input from a pen tap. Parameters describe
@@ -306,6 +322,8 @@ public class VirtualKeyboard {
             currentKeyboard = (Key[][]) keyboardsMap.get(newType);
             line = 0;
             column = 0;
+            //shrink cashe from previous time
+            resize(shrinkX, shrinkY);
         }
     }
 
