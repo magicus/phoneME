@@ -1,6 +1,4 @@
 #
-#   
-#
 # Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -82,4 +80,5 @@ XMLPARSER_JAVA_FILES += \
 
 endif
 
+XMLPARSER_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/xmlparser
 # end
