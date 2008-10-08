@@ -162,7 +162,7 @@ main(int argc, char *argv[]) {
     char* mvmManagerArgument = NULL;
     javacall_utf16* propFileName;
     int propFileNameLen = 0;
-    int isMempryProfiler = 0;
+    int isMemoryProfiler = 0;
 
     /* uncomment this like to force the debugger to start */
     /* _asm int 3; */
@@ -246,7 +246,7 @@ main(int argc, char *argv[]) {
             if (strcmp(key,"com.sun.midp.io.j2me.apdu.hostsandports") == 0 ) {
                 key = "com.sun.io.j2me.apdu.hostsandports";
                 property_type = JAVACALL_INTERNAL_PROPERTY;
-            } else if (!isMempryProfiler && strcmp(key,"memmonport") == 0) {
+            } else if (!isMemoryProfiler && strcmp(key,"memmonport") == 0) {
                 int j = strlen(value);
                 if (j > 0 && j < 6) { /* port length is correct */
 				    j++;
@@ -255,7 +255,10 @@ main(int argc, char *argv[]) {
                     javacall_set_property("VmDebuggerPort",
                                       debugPort, JAVACALL_TRUE,
                                       JAVACALL_INTERNAL_PROPERTY);
-                    isMempryProfiler = 1;
+                    javacall_set_property("VmMemoryProfiler",
+                                      "true", JAVACALL_TRUE,
+                                      JAVACALL_INTERNAL_PROPERTY);
+                    isMemoryProfiler = 1;
                 }
             }
             javacall_set_property(key, value, JAVACALL_TRUE,property_type);
@@ -265,13 +268,12 @@ main(int argc, char *argv[]) {
                 vmArgv[vmArgc++] = argv[i];
 				} else if (strcmp(argv[i], "-monitormemory") == 0) {
             /* old argument  - ignore it */
-        } else if (!isMempryProfiler && strcmp(argv[i], "-memory_profiler") == 0) {
+        } else if (strcmp(argv[i], "-memory_profiler") == 0) {
 
             /* It is a CLDC arg, add to CLDC arguments list */
             vmArgv[vmArgc++] = argv[i++]; /* -memory_profiler */
             vmArgv[vmArgc++] = argv[i++]; /* -port */
             vmArgv[vmArgc++] = argv[i]; /* port number */
-            isMempryProfiler = 1;
         } else if (strcmp(argv[i], "-jprof") == 0) {
 
             /* It is a CLDC arg, add to CLDC arguments list */
@@ -404,7 +406,7 @@ main(int argc, char *argv[]) {
             /* It is a CLDC arg, add to CLDC arguments list */
             /* vmArgv[vmArgc++] = argv[i]; */
             i++;
-            if (!isMempryProfiler && strcmp(argv[i], "-port") == 0) {
+            if (!isMemoryProfiler && strcmp(argv[i], "-port") == 0) {
                 /* It is a CLDC arg, add to CLDC arguments list */
                 /* vmArgv[vmArgc++] = argv[i]; */
                 i++;
@@ -466,6 +468,12 @@ main(int argc, char *argv[]) {
         }
     }
 
+    if (!isMemoryProfiler) {
+	    javacall_set_property("VmMemoryProfiler",
+                            NULL, JAVACALL_TRUE,
+                            JAVACALL_INTERNAL_PROPERTY);
+    }
+	
     if (vmArgc > 0 ) {
         /* set VM args */
 	     javanotify_set_vm_args(vmArgc, vmArgv);
