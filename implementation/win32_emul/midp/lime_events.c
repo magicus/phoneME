@@ -66,6 +66,10 @@ extern void HandleLocationProviderStateEvent(int state);
 
 void SendEvent(KVMEventType *evt);
 javacall_bool generateSoftButtonKeys(int x, int y, javacall_penevent_type pentype);
+/*
+ * Translates screen coordinates into displayable coordinate system.
+ */
+void getScreenCoordinates(short screenX, short screenY, short* x, short* y);
 
 /* global varaiable to determine if the application 
  * is running locally or via OTA */
@@ -169,17 +173,30 @@ void SendEvent (KVMEventType *evt) {
 
     switch (evt->type) {
     case penDownKVMEvent:
-        if (!generateSoftButtonKeys(evt->screenX,evt->screenY,JAVACALL_PENPRESSED))
-            javanotify_pen_event(evt->screenX,evt->screenY,JAVACALL_PENPRESSED);
+        if (!generateSoftButtonKeys(evt->screenX, evt->screenY, JAVACALL_PENPRESSED)) {
+            short x;
+            short y;
+            getScreenCoordinates(evt->screenX, evt->screenY, &x, &y);
+            javanotify_pen_event(x, y, JAVACALL_PENPRESSED);
+        }
         break;
 
     case penUpKVMEvent:
-        if (!generateSoftButtonKeys(evt->screenX,evt->screenY,JAVACALL_PENRELEASED))
-            javanotify_pen_event(evt->screenX,evt->screenY,JAVACALL_PENRELEASED);
+        if (!generateSoftButtonKeys(evt->screenX, evt->screenY, JAVACALL_PENRELEASED)) {
+            short x;
+            short y;
+            getScreenCoordinates(evt->screenX, evt->screenY, &x, &y);
+            javanotify_pen_event(x, y, JAVACALL_PENRELEASED);
+        }
         break;
 
     case penMoveKVMEvent:
-        javanotify_pen_event(evt->screenX,evt->screenY,JAVACALL_PENDRAGGED);
+        {
+            short x;
+            short y;
+            getScreenCoordinates(evt->screenX,evt->screenY, &x, &y);
+            javanotify_pen_event(x, y, JAVACALL_PENDRAGGED);
+        }
         break;
 
     case keyDownKVMEvent:

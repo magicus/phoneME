@@ -472,6 +472,29 @@ javacall_bool javacall_lcd_is_native_softbutton_layer_supported () {
 #endif /* ENABLE_NATIVE_SOFTBUTTONS */
 }
 
+/*
+ * Translates screen coordinates into displayable coordinate system.
+ */
+void getScreenCoordinates(short screenX, short screenY, short* x, short* y) {
+    *x = screenX;
+    *y = screenY;
+
+    if (top_down) {
+        *x = VRAM.width - screenX;
+        if(inFullScreenMode) {
+            *y = VRAM.full_height - screenY;
+        } else {
+            *y = VRAM.height - screenY;
+        }
+    }
+
+    if (reverse_orientation) {
+        short prevX = *x;
+        *x = *y;
+        *y = VRAM.width - prevX;
+    }
+}
+
 /**
  * The following function is used to set the softbutton label in the native
  * soft button layer.
