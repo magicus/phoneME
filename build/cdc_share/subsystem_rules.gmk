@@ -46,4 +46,4 @@ source_bundle:: jsr_280_source_bundle
 # Copy and filter JSR 280 source in JSR_280_SOURCE_OUTPUT_DIR
 jsr_280_source_bundle:
 	@echo " ... JSR 280 source bundle" $(LOG)
-	$(AT)$(call source_bundle_filter,$(JSR_280_DIR),$(JSR_280_SOURCE_OUTPUT_DIR),src/share src/cdc_application)
+	$(AT)$(call source_bundle_filter,$(JSR_280_DIR),$(JSR_280_SOURCE_OUTPUT_DIR),build/cdc_share src/share)
