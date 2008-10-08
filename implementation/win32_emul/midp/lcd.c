@@ -406,10 +406,27 @@ javacall_lcd_set_screen_mode(
 	return JAVACALL_FAIL;
 }*/
 
+/* Rotates display according to code.
+ * If code is 0 no screen transformations made;
+ * If code is 1 then screen orientation is reversed.
+ * if code is 2 then screen is turned upside-down.
+ * If code is 3 then both screen orientation is reversed
+ * and screen is turned upside-down.
+ */
+void RotateDisplay(short code) {
+    javacall_bool prev_top_down;
+    prev_top_down = top_down;
+    top_down = code & 0x02;
+    if ((code & 0x01) != reverse_orientation) {
+        javanotify_rotation();
+    } else if (prev_top_down != top_down) {
+        //we should initiate screen refresh
+        javacall_lcd_flush();                
+    }
+}
+
 javacall_bool javacall_lcd_reverse_orientation() {
       reverse_orientation = !reverse_orientation;
-      // we are rotating display content clockwise
-      top_down = reverse_orientation ? top_down : !top_down;
       return reverse_orientation;
 }
  

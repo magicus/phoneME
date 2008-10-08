@@ -71,6 +71,15 @@ javacall_bool generateSoftButtonKeys(int x, int y, javacall_penevent_type pentyp
  * is running locally or via OTA */
 extern javacall_bool isRunningLocal;
 
+/* Rotates display according to code.
+ * If code is 0 no screen transformations made;
+ * If code is 1 then screen orientation is reversed.
+ * if code is 2 then screen is turned upside-down.
+ * If code is 3 then both screen orientation is reversed
+ * and screen is turned upside-down.
+ */
+extern void RotateDisplay(short code);
+
 #if ENABLE_ON_DEVICE_DEBUG
 static const char pStartOddKeySequence[] = "#1*2";
 static int posInSequence = 0;
@@ -174,8 +183,8 @@ void SendEvent (KVMEventType *evt) {
         break;
 
     case keyDownKVMEvent:
-        if (evt->chr == KEY_USER2) {
-            javanotify_rotation();
+        if (evt->chr == KEY_USER2) { 
+            RotateDisplay(evt->screenX);     
         } else if ((evt->chr != KEY_END)) {
             javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
         } else if (isRunningLocal == JAVACALL_FALSE) {
