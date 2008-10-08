@@ -94,7 +94,7 @@ public:
   }
 
   int bytes_cached_for_read() {
-    return _m_read_cache_size;
+    return _m_bytes_cached_for_read;
   }
 
   void set_bytes_cached_for_read(int new_size) {

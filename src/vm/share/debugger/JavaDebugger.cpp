@@ -875,8 +875,10 @@ bool JavaDebugger::dispatch(int timeout)
       // on this transport.  Try to see if a connection attempt has come in
       bool connected = ops->connect_transport(&t, Transport::SERVER, 0);
       if (connected) {
+tty->print_cr(">>> connected!!!");
         sync_debugger(&t);
       } else {
+tty->print_cr(">>> NOT connected :(");
         t = next_t.obj();
         // No connection yet.  Don't check any subsequent transports
         // since we always want to connect the first transport to the first
@@ -1126,6 +1128,7 @@ bool JavaDebugger::sync_debugger(Transport *t)
     // We must have gotten a VM_Exit command during init, return false
     return false;
   }
+tty->print_cr(">>> sync_debugger: true");
   return true;
 }
 
