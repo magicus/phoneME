@@ -47,6 +47,7 @@ public class RtpConnection extends RtpConnectionBase {
     public void startListening(int local_port) throws IOException {
         try {
             ds = new DatagramSocket(local_port);
+            start();
         } catch (SocketException e) {
             throw new IOException("Cannot start listening on port "
                 + local_port + ": " + e);
