@@ -249,8 +249,9 @@ main(int argc, char *argv[]) {
             } else if (!isMempryProfiler && strcmp(key,"memmonport") == 0) {
                 int j = strlen(value);
                 if (j > 0 && j < 6) { /* port length is correct */
-                    debugPort = malloc(sizeof(char)*(strlen(valuePort)+1));
-                    memcpy(debugPort, value, j+1);
+				    j++;
+                    debugPort = malloc(sizeof(char)*j);
+                    memcpy(debugPort, value, j);
                     javacall_set_property("VmDebuggerPort",
                                       debugPort, JAVACALL_TRUE,
                                       JAVACALL_INTERNAL_PROPERTY);
@@ -264,7 +265,7 @@ main(int argc, char *argv[]) {
                 vmArgv[vmArgc++] = argv[i];
 				} else if (strcmp(argv[i], "-monitormemory") == 0) {
             /* old argument  - ignore it */
-        } else if (!isMempryProfiler && strcmp(argv[i], keyMemoryProfiler) == 0) {
+        } else if (!isMempryProfiler && strcmp(argv[i], "-memory_profiler") == 0) {
 
             /* It is a CLDC arg, add to CLDC arguments list */
             vmArgv[vmArgc++] = argv[i++]; /* -memory_profiler */
