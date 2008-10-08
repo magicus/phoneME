@@ -25,8 +25,17 @@
  */
 
 #include <kni.h>
-#include <pcsl_network.h>
 #include <midp_net_events.h>
+
+#if !ENABLE_CDC
+#include <pcsl_network.h>
+#else
+
+#if !defined(PCSL_NET_SUCCESS)
+#define PCSL_NET_SUCCESS 0
+#endif
+
+#endif
 
 /* it is set by the network status event handler */
 static jboolean g_isNetStatusChanged = KNI_FALSE;
