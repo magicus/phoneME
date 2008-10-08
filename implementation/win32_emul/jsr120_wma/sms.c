@@ -39,7 +39,19 @@ extern char* encodeSmsBuffer(
     const char*    senderPhone, 
     int            msgLength, 
     const char*    msg,
-    int*           out_encode_sms_buffer_length);
+    int*           out_encode_sms_buffer_length,
+	int            fragment);
+
+#ifdef LOOPBACK
+extern javacall_result process_UDPEmulator_sms_incoming(
+        unsigned char *pAddress,
+        int*   port,
+        char*  buffer,
+        int    length,
+        int*   pBytesRead,
+        void** pContext);
+#endif
+
 extern char* getIPBytes_nonblock(char* hostname);
 
 extern char* getProp(const char* propName, char* defaultValue);
@@ -81,17 +93,31 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
 
     char* IP_text = getProp("JSR_205_DATAGRAM_HOST", "127.0.0.1");
 
+	int fragment = 0;
+
     javacall_network_init_start();
     pAddress = (unsigned char*)getIPBytes_nonblock(IP_text);
 
+	for (fragment = 0; ; fragment++) {
+
     encodedSMS = encodeSmsBuffer(msgType, destPort, sourcePort,
         timeStamp, recipientPhone, senderPhone,
-        msgBufferLen, (const char*)msgBuffer, &encodedSMSLength);
+        msgBufferLen, (const char*)msgBuffer, &encodedSMSLength, fragment);
 
     if (encodedSMS == NULL) {
-        return JAVACALL_FAIL;
+        return JAVACALL_OK;
     }
 
+#ifdef LOOPBACK
+	{
+        int*   port = 0;
+        int*   pBytesRead = 0;
+        void** pContext = 0;
+		process_UDPEmulator_sms_incoming(pAddress, port, 
+			encodedSMS, encodedSMSLength,
+			pBytesRead, pContext);
+	}
+#else
     if (smsDatagramSocketHandle) {
         ok = javacall_datagram_sendto_start(
             smsDatagramSocketHandle, pAddress, smsOutPortNumber,
@@ -104,8 +130,10 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
         javautil_debug_print(JAVACALL_LOG_ERROR, "sms", 
             "Error: SMS sending - network not initialized.\n");
     }
+#endif
+	}
 
-    javautil_debug_print (JAVACALL_LOG_INFORMATION, "sms", 
+    javautil_debug_print(JAVACALL_LOG_INFORMATION, "sms", 
         "## javacall: SMS sending...\n");
 
     javanotify_sms_send_completed(JAVACALL_OK, handle);
@@ -141,7 +169,7 @@ javacall_result javacall_sms_add_listening_port(unsigned short portNum){
     }
 
     if (free == -1) {
-        javautil_debug_print (JAVACALL_LOG_ERROR, "sms", "ports amount exceeded");
+        javautil_debug_print(JAVACALL_LOG_ERROR, "sms", "ports amount exceeded");
         return JAVACALL_FAIL;
     }
 
@@ -223,3 +251,23 @@ int javacall_sms_get_number_of_segments(
 
     return segments;
 }
+
+#ifdef UNITTEST
+static void javacall_unittest_jsr120_long1() {
+	javacall_sms_encoding   msgType      = JAVACALL_SMS_MSG_TYPE_BINARY;
+	const unsigned char*    destAddress  = (const unsigned char*)"987654321";
+    unsigned char           msgBuffer[1601];    
+	int                     msgBufferLen = 1600;
+	unsigned short          sourcePort   = 11;
+	unsigned short          destPort     = 50000;
+	int                     handle       = 13;
+	int i, j;
+
+	for (i=0; i<16; i++) 
+        for (j=0; i<100; i++)
+            msgBuffer[i*100+j] = '0'+i;
+	msgBuffer[1600]=0;
+    javacall_sms_add_listening_port(destPort);
+	javacall_sms_send(msgType, destAddress, msgBuffer, msgBufferLen, sourcePort, destPort, handle);
+}
+#endif

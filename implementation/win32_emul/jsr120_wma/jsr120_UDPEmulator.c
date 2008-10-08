@@ -48,10 +48,13 @@
 #define WMA_CLIENT_PACKAGE "com.sun.kvem.midp.io.j2se.wma.client"
 #define WMA_PARSE_PACKAGE "com.sun.kvem.midp.io.j2se.wma.common.parse"
 
-#define SMS_BUFF_LENGTH 1500
+#define SMS_UDP_MSG_PAYLOAD_SIZE 1024
+
+#define SMS_BUFF_LENGTH 2000
 char encode_sms_buffer[SMS_BUFF_LENGTH];
+char decode_sms_buffer[SMS_BUFF_LENGTH];
 #define CBS_BUFF_LENGTH 2000
-char encode_cbs_buffer[CBS_BUFF_LENGTH];
+char decode_cbs_buffer[CBS_BUFF_LENGTH];
 
 javacall_handle smsDatagramSocketHandle = NULL;
 
@@ -98,7 +101,7 @@ int getIntProp(const char* propName, int defaultValue) {
     return value ? atoi(value) : defaultValue;
 }
 
-static void decodeSmsBuffer(
+static char* decodeSmsBuffer(
         char*  buffer,
         int*   encodingType, 
         int*   destPortNum, 
@@ -106,15 +109,17 @@ static void decodeSmsBuffer(
         javacall_int64* timeStamp,
         char** recipientPhone, 
         char** senderPhone,
-        int*   msgLength, 
-        char** msg) {
+        int*   msgLength) {
 
     char* ptr = buffer;
     int   segments = 1;
     char* t_pch;
     int   pchLen;
     char* pch;
-    int   segment_num = 1;
+
+    int fragm_size = 0;
+    int fragm_offset = 0;
+    int fragment = 0;
 
     dbg_print("##javacall: decodeSmsBuffer\n");
 
@@ -147,9 +152,16 @@ static void decodeSmsBuffer(
         } else if (strcmp("Segments:", pch) == 0) {
             pch = strtok(NULL, "\n");
             segments = atoi(pch);
+            dbg_print1("##javacall: decodeSmsBuffer segments=%i\n", segments);
         } else if (strcmp("Fragment:", pch) == 0) {
             pch = strtok(NULL, "\n");
-            segment_num = atoi(pch);
+            fragment = atoi(pch);
+        } else if (strcmp("Fragment-Size:", pch) == 0) {
+            pch = strtok(NULL, "\n");
+            fragm_size = atoi(pch);
+        } else if (strcmp("Fragment-Offset:", pch) == 0) {
+            pch = strtok(NULL, "\n");
+            fragm_offset = atoi(pch);
         } else if (strcmp("SenderAddress:", pch) == 0) {
             //Example: 'SenderAddress: sms://+5555555556'
             pch = strtok(NULL, "\n");
@@ -182,22 +194,21 @@ static void decodeSmsBuffer(
             pchLen = (int)strlen("Buffer :\n");
             pch = pch + pchLen;/* strtok(NULL, "\n");*/
 
-            t_pch = *msg;
-            pchLen = *msgLength;
-            if (pchLen > SMS_BUFF_LENGTH) {
-                pchLen = SMS_BUFF_LENGTH;
-
-                if ((segment_num == 1) && (segments > 1)) {
-                    javautil_debug_print(JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "The SMS is too long!");
-                }
-            }    
-            memcpy(t_pch, pch, pchLen);
-            dbg_print1("##javacall: decodeSmsBuffer:msg=%s\n", *msg);
+            if (fragm_size+fragm_offset > SMS_BUFF_LENGTH) {
+                javautil_debug_print(JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "The SMS is too long!");
+            }
+            memcpy(decode_sms_buffer+fragm_offset, pch, fragm_size);
+            dbg_print1("##javacall: decodeSmsBuffer:msg=%s\n", decode_sms_buffer);
         }
         pch = strtok(NULL, " \n");
     }
-        
+
     *ptr = 0;
+
+    /* Note. We assume here that datagrams was not mixed: */
+    /* - the last fragment should finish the sequence     */
+    /* - we get only one sequence in time                 */
+    return (segments == fragment+1) ? decode_sms_buffer : NULL;
 }
 
 char* encodeSmsBuffer(
@@ -209,13 +220,32 @@ char* encodeSmsBuffer(
         const char*    senderPhone, 
         int            msgLength, 
         const char*    msg,
-        int*           out_encode_sms_buffer_length) {
+        int*           out_encode_sms_buffer_length,
+        int            fragment) {
 
-    char port[17];
-    char msgLen[17];
-    char segmentsNum[17];
+    char short_buf[17];
     int lngth;
-    int defaultSegmentsNum = 1;
+
+    int fragments_num   = 0;
+    int fragment_size   = 0;
+    int fragment_offset = 0;
+
+    fragment_offset = SMS_UDP_MSG_PAYLOAD_SIZE * fragment;
+    if (fragment_offset > msgLength) {
+        /* message send already completed */
+        return NULL;
+    }
+    fragments_num = ((msgLength-1) / SMS_UDP_MSG_PAYLOAD_SIZE) + 1;
+    if ((msgLength - fragment_offset) < SMS_UDP_MSG_PAYLOAD_SIZE) {
+        fragment_size = msgLength - fragment_offset;
+    } else {
+        fragment_size = SMS_UDP_MSG_PAYLOAD_SIZE;
+    }
+
+    dbg_print1("##javacall: encodeSmsBuffer: fragment=%i\n",        fragment);
+    dbg_print1("##javacall: encodeSmsBuffer: fragments_num=%i\n",   fragments_num);
+    dbg_print1("##javacall: encodeSmsBuffer: fragment_size=%i\n",   fragment_size);
+    dbg_print1("##javacall: encodeSmsBuffer: fragment_offset=%i\n", fragment_offset);
 
     dbg_print("##javacall: encodeSmsBuffer\n");
 
@@ -257,8 +287,8 @@ char* encodeSmsBuffer(
     strcat(encode_sms_buffer, recipientPhone);
     strcat(encode_sms_buffer, ":");
     /*add port number*/
-    itoa(destPortNum, port, 10);
-    strcat(encode_sms_buffer, port);
+    itoa(destPortNum, short_buf, 10);
+    strcat(encode_sms_buffer, short_buf);
     strcat(encode_sms_buffer, "\n");
 
     /*adding date-stamp*/
@@ -272,22 +302,34 @@ char* encodeSmsBuffer(
     if (srcPortNum > 0) {
         strcat(encode_sms_buffer, ":");
         /*add port number*/
-        itoa(srcPortNum, port, 10);
-        strcat(encode_sms_buffer, port);
+        itoa(srcPortNum, short_buf, 10);
+        strcat(encode_sms_buffer, short_buf);
     }
     strcat(encode_sms_buffer, "\n");
 
-
     strcat(encode_sms_buffer, "Segments: ");
-    /*num of segments is 1 by default*/
-    itoa(defaultSegmentsNum, segmentsNum, 10);
-    strcat(encode_sms_buffer, segmentsNum);
+    itoa(fragments_num, short_buf, 10);
+    strcat(encode_sms_buffer, short_buf);
     strcat(encode_sms_buffer, "\n");
 
+    strcat(encode_sms_buffer, "Fragment: ");
+    itoa(fragment, short_buf, 10);
+    strcat(encode_sms_buffer, short_buf);
+    strcat(encode_sms_buffer, "\n");
+
+    strcat(encode_sms_buffer, "Fragment-Size: ");
+    itoa(fragment_size, short_buf, 10);
+    strcat(encode_sms_buffer, short_buf);
+    strcat(encode_sms_buffer, "\n");
+
+    strcat(encode_sms_buffer, "Fragment-Offset: ");
+    itoa(fragment_offset, short_buf, 10);
+    strcat(encode_sms_buffer, short_buf);
+    strcat(encode_sms_buffer, "\n");
 
     strcat(encode_sms_buffer, "Content-Length: ");
-    itoa(msgLength, msgLen, 10);
-    strcat(encode_sms_buffer, msgLen);
+    itoa(msgLength, short_buf, 10);
+    strcat(encode_sms_buffer, short_buf);
     strcat(encode_sms_buffer, "\n");
 
     /*adding the message - must be at te end of the payload buffer*/
@@ -295,10 +337,10 @@ char* encodeSmsBuffer(
     /*calculate the length of the payload*/
     lngth = (int)strlen(encode_sms_buffer) + msgLength;
 
-    *out_encode_sms_buffer_length = lngth ;
+    *out_encode_sms_buffer_length = lngth;
 
     if (msgLength > 0) {
-        memcpy(&encode_sms_buffer[lngth-msgLength], msg, msgLength);
+        memcpy(&encode_sms_buffer[lngth-msgLength], msg+fragment_offset, msgLength);
     }
     return encode_sms_buffer;
 }
@@ -317,7 +359,7 @@ javacall_result process_UDPEmulator_sms_incoming(
     javacall_sms_encoding   encodingType;
     int                     encodingType_int = 0;
     char*                   sourceAddress = NULL;
-    char*                   msg = NULL;
+    unsigned char*          msg = NULL;
     int                     msgLen = 0;
     int                     destPortNum = 0;
     int                     srcPortNum = 0;
@@ -333,39 +375,36 @@ javacall_result process_UDPEmulator_sms_incoming(
 
     dbg_print("##javacall: process_UDPEmulator_sms_incoming\n");
 
-    msg = (char *) malloc(SMS_BUFF_LENGTH);
-    memset(msg, 0, SMS_BUFF_LENGTH);
-
     sourceAddress = (char*)pAddress;  /* currently, sourceAddress = 0x0100007f = 127.0.0.1*/
-    decodeSmsBuffer(buffer,
+    msg = (unsigned char*)decodeSmsBuffer(buffer,
                     &encodingType_int,
                     &destPortNum,
                     &srcPortNum,
                     &timeStamp,
                     &recipientPhone,
                     &senderPhone,
-                    &msgLen,
-                    &msg);
+                    &msgLen);
+
+    if (msg == NULL) {
+        return JAVACALL_FAIL;
+    }
 
     if (javacall_is_sms_port_registered((unsigned short)destPortNum) != JAVACALL_OK) {
-        javautil_debug_print (JAVACALL_LOG_INFORMATION, "jsr120_UDPEmulator", 
+        javautil_debug_print(JAVACALL_LOG_INFORMATION, "jsr120_UDPEmulator", 
                     "SMS on unregistered port received!");
-        free(msg);
         return JAVACALL_FAIL;
     }
 
     encodingType = encodingType_int;
-    if (msgLen < SMS_BUFF_LENGTH+1) {
-        javanotify_incoming_sms(
-            encodingType, senderPhone, (unsigned char*)msg, msgLen, 
+
+    decode_sms_buffer[msgLen] = 0;
+    dbg_print1("##javacall: javanotify_incoming_sms msgLen=%i\n", msgLen);
+
+    javanotify_incoming_sms(
+            encodingType, senderPhone, msg, msgLen, 
             (unsigned short)srcPortNum, (unsigned short)destPortNum, timeStamp);
-        free(msg);
-        return JAVACALL_OK;
-    }
-    else {
-        free(msg);
-        return JAVACALL_FAIL;
-    }
+
+    return JAVACALL_OK;
 }
 
 javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
@@ -385,9 +424,9 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
     char* address;
     char* t_pch;
 
-	int fragm_size = 0;
-	int fragm_offset = 0;
-	int fragment = 0;
+    int fragm_size = 0;
+    int fragm_offset = 0;
+    int fragment = 0;
 
     /* unused vars */
     (unsigned char*) pAddress;
@@ -424,7 +463,7 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
                 msgBufferLen = atoi(pch);
                 if (msgBufferLen > CBS_BUFF_LENGTH) {
                     javautil_debug_print(JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "Too long CBS message!");
-				}
+                }
             } else if (strcmp("Segments:", pch) == 0) {
                 pch = strtok(NULL, "\n");
                 segments = atoi(pch);
@@ -438,7 +477,6 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
                 /*Example: 'Address: 24680'*/
                 pch = strtok(NULL, "\n");
                 address = pch;
-
             } else if (strcmp("Fragment:", pch) == 0) {
                 pch = strtok(NULL, "\n");
                 fragment = atoi(pch);
@@ -448,14 +486,13 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
             } else if (strcmp("Fragment-Offset:", pch) == 0) {
                 pch = strtok(NULL, "\n");
                 fragm_offset = atoi(pch);
-
             } else if (strcmp("Buffer:", pch) == 0) {
                 msgBuffer = (unsigned char*)pch+8;
                 if (fragm_offset+fragm_size > CBS_BUFF_LENGTH) {
                     javautil_debug_print(JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "Too long CBS message");
                     return JAVACALL_FAIL;
-				}
-				memcpy(encode_cbs_buffer+fragm_offset, msgBuffer, fragm_size);
+                }
+                memcpy(decode_cbs_buffer+fragm_offset, msgBuffer, fragm_size);
                 pch = strtok(NULL, "\n");
             }
             pch = strtok(NULL, " \n");
@@ -480,17 +517,17 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
     }
 
     /* just for convenience */    
-    encode_cbs_buffer[msgBufferLen]=0;
+    decode_cbs_buffer[msgBufferLen]=0;
 
     /* fragment counting starts from zero, segments - from 1 */
     if (fragment == segments-1) {
         /* Note. We assume here that datagrams was not mixed: */
         /* - the last fragment should finish the sequence     */
         /* - we get only one sequence in time                 */
-        javanotify_incoming_cbs(msgType, msgID, (unsigned char*)encode_cbs_buffer, msgBufferLen);
+        javanotify_incoming_cbs(msgType, msgID, (unsigned char*)decode_cbs_buffer, msgBufferLen);
 
         dbg_print1("##javacall: javanotify_incoming_cbs: bufferLen=%i\n", (void*)msgBufferLen);
-        dbg_print1("##javacall: javanotify_incoming_cbs: cbs_buffer=%s\n", encode_cbs_buffer);
+        dbg_print1("##javacall: javanotify_incoming_cbs: cbs_buffer=%s\n", decode_cbs_buffer);
     }
 
     return JAVACALL_OK;
