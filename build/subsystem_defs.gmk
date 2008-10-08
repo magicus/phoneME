@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -82,10 +80,6 @@ SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 	$(JSR_172_PROPERTY_FILE) \
 	$(JSR_172_CONSTANT_FILE) \
 
-# ri_jaxp 
-#
-INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES =
-
 # ri_jaxrpc
 #
 INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES += \
@@ -110,7 +104,6 @@ INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
 
 # All of them together to provide to main makefile
 SUBSYSTEM_JSR_172_JAVA_FILES += \
-	$(INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES) \
     $(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) \
     $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES)
 
