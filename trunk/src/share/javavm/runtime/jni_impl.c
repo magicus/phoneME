@@ -3810,9 +3810,6 @@ CVMmtaskReinitializeChildVM(JNIEnv* env, CVMInt32 clientId)
          * patch enabled code being generated in child process.
          */
         CVMglobals.jit.isPrecompiling = CVM_FALSE;
-#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
-        CVMglobals.jit.pmiEnabled = CVM_TRUE;
-#endif
 #endif
 
         mtaskJvmtiInit(env);
