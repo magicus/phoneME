@@ -50,6 +50,8 @@
 
 #define SMS_BUFF_LENGTH 1500
 char encode_sms_buffer[SMS_BUFF_LENGTH];
+#define CBS_BUFF_LENGTH 2000
+char encode_cbs_buffer[CBS_BUFF_LENGTH];
 
 javacall_handle smsDatagramSocketHandle = NULL;
 
@@ -63,6 +65,13 @@ static void dbg_print(char* message) {
     fprintf(ff, message);
     fclose(ff);
 }
+static void dbg_print1(char* message, void* param1) {
+    FILE* ff = fopen("C:\\out.txt", "aw");
+    printf(message, param1);
+    fprintf(ff, message, param1);
+    fclose(ff);
+}
+
 
 void initializeWMASupport();
 void tearDownWMASupport();
@@ -135,6 +144,7 @@ static void decodeSmsBuffer(
         } else if (strcmp("Content-Length:", pch) == 0) {
             pch = strtok(NULL, "\n");
             *msgLength = atoi(pch);
+            dbg_print1("##javacall: decodeSmsBuffer:msgLength=%i\n", *msgLength);
         } else if (strcmp("Segments:", pch) == 0) {
             pch = strtok(NULL, "\n");
             segments = atoi(pch);
@@ -179,10 +189,11 @@ static void decodeSmsBuffer(
                 pchLen = SMS_BUFF_LENGTH;
 
                 if ((segment_num == 1) && (segments > 1)) {
-                    javautil_debug_print (JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "The SMS is too long!");
+                    javautil_debug_print(JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "The SMS is too long!");
                 }
             }    
             memcpy(t_pch, pch, pchLen);
+            dbg_print1("##javacall: decodeSmsBuffer:msg=%s\n", *msg);
         }
         pch = strtok(NULL, " \n");
     }
@@ -375,6 +386,10 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
     char* address;
     char* t_pch;
 
+	int fragm_size = 0;
+	int fragm_offset = 0;
+	int fragment = 0;
+
     /* unused vars */
     (unsigned char*) pAddress;
     (int*)           port;
@@ -408,9 +423,14 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
             } else if (strcmp("Content-Length:", pch) == 0) {
                 pch = strtok(NULL, "\n");
                 msgBufferLen = atoi(pch);
+                if (msgBufferLen > CBS_BUFF_LENGTH) {
+                    javautil_debug_print(JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "Too long CBS message!");
+				}
+                dbg_print1("##javacall: decodeCbsBuffer: msgBufferLen=%i\n", msgBufferLen);
             } else if (strcmp("Segments:", pch) == 0) {
                 pch = strtok(NULL, "\n");
                 segments = atoi(pch);
+                dbg_print1("##javacall: decodeCbsBuffer: segments=%i\n", segments);
             } else if (strcmp("CBSAddress:", pch) == 0) {
                 /*Example: 'CBSAddress: cbs://:50001'*/
                 pch = strtok(NULL, "\n");
@@ -421,9 +441,29 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
                 /*Example: 'Address: 24680'*/
                 pch = strtok(NULL, "\n");
                 address = pch;
+
+            } else if (strcmp("Fragment:", pch) == 0) {
+                pch = strtok(NULL, "\n");
+                fragment = atoi(pch);
+                dbg_print1("##javacall: decodeCbsBuffer: fragment=%i\n", (void*)fragment);
+            } else if (strcmp("Fragment-Size:", pch) == 0) {
+                pch = strtok(NULL, "\n");
+                fragm_size = atoi(pch);
+                dbg_print1("##javacall: decodeCbsBuffer: fragm_size=%i\n", (void*)fragm_size);
+            } else if (strcmp("Fragment-Offset:", pch) == 0) {
+                pch = strtok(NULL, "\n");
+                fragm_offset = atoi(pch);
+                dbg_print1("##javacall: decodeCbsBuffer: fragm_offset=%i\n", (void*)fragm_offset);
+
             } else if (strcmp("Buffer:", pch) == 0) {
                 msgBuffer = (unsigned char*)pch+8;
+                if (fragm_offset+fragm_size > CBS_BUFF_LENGTH) {
+                    javautil_debug_print(JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "Too long CBS message");
+                    return JAVACALL_FAIL;
+				}
+				memcpy(encode_cbs_buffer+fragm_offset, msgBuffer, fragm_size);
                 pch = strtok(NULL, "\n");
+                dbg_print1("##javacall: decodeCbsBuffer: msgBuffer=%s\n", msgBuffer);
             }
             pch = strtok(NULL, " \n");
         }
@@ -446,7 +486,19 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
         return JAVACALL_FAIL;
     }
 
-    javanotify_incoming_cbs(msgType, msgID, msgBuffer, msgBufferLen);
+    /* just for convenience */    
+    encode_cbs_buffer[msgBufferLen]=0;
+
+    /* fragment counting starts from zero, segments - from 1 */
+    if (fragment == segments-1) {
+        /* Note. We assume here that datagrams was not mixed: */
+        /* - the last fragment should finish the sequence     */
+        /* - we get only one sequence in time                 */
+        javanotify_incoming_cbs(msgType, msgID, encode_cbs_buffer, msgBufferLen);
+        dbg_print1("##javacall: javanotify_incoming_cbs: msgBufferLen=%i\n", msgBufferLen);
+        dbg_print1("##javacall: javanotify_incoming_cbs: encode_cbs_buffer=%s\n", encode_cbs_buffer);
+    }
+}
 
     return JAVACALL_OK;
 }
