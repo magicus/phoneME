@@ -407,42 +407,42 @@ public class OperationImpl extends Operation {
 
         InputStream input = http.openInputStream();
         try {
-	        if (response == HttpConnection.HTTP_OK) {
-	
-	            // Catch any session cookie if one was set
-	            String useSession = getProperty(Stub.SESSION_MAINTAIN_PROPERTY);
-	            if (useSession != null && useSession.toLowerCase().equals("true"))
-	            {
-	                String cookie = http.getHeaderField("Set-Cookie");
-	                if (cookie != null) {
-	                    addSessionCookie(
-	                        getProperty(Stub.ENDPOINT_ADDRESS_PROPERTY), cookie);
-	                }
-	            }
-	
-	            return input;
-	        }
-	        Object detail = decoder.decodeFault(faultHandler,
-	                                            input,
-	                                            http.getEncoding(),
-	                                            http.getLength());
-	        if (detail instanceof String) {
-	            if (((String)detail).indexOf("DataEncodingUnknown") != -1)
-	                throw new MarshalException((String)detail);
-	            throw new ServerException((String)detail);
-	        }
-	        Object[] wrapper = (Object[])detail;
-	        String message = (String)wrapper[0];
-	        QName name = (QName)wrapper[1];
-	        detail = wrapper[2];
-	        throw new JAXRPCException(message,
-	        				new FaultDetailException(name, detail));
+            if (response == HttpConnection.HTTP_OK) {
+    
+                // Catch any session cookie if one was set
+                String useSession = getProperty(Stub.SESSION_MAINTAIN_PROPERTY);
+                if (useSession != null && useSession.toLowerCase().equals("true"))
+                {
+                    String cookie = http.getHeaderField("Set-Cookie");
+                    if (cookie != null) {
+                        addSessionCookie(
+                            getProperty(Stub.ENDPOINT_ADDRESS_PROPERTY), cookie);
+                    }
+                }
+    
+                return input;
+            }
+            Object detail = decoder.decodeFault(faultHandler,
+                                                input,
+                                                http.getEncoding(),
+                                                http.getLength());
+            if (detail instanceof String) {
+                if (((String)detail).indexOf("DataEncodingUnknown") != -1)
+                    throw new MarshalException((String)detail);
+                throw new ServerException((String)detail);
+            }
+            Object[] wrapper = (Object[])detail;
+            String message = (String)wrapper[0];
+            QName name = (QName)wrapper[1];
+            detail = wrapper[2];
+            throw new JAXRPCException(message,
+                            new FaultDetailException(name, detail));
         } catch( IOException t ){
-        	input.close();
-        	throw t;
+            input.close();
+            throw t;
         } catch( RuntimeException t ){
-        	input.close();
-        	throw t;
+            input.close();
+            throw t;
         }
     }
 
