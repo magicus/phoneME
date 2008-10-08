@@ -34,7 +34,9 @@ import  java.util.Hashtable;
 import  java.util.Vector;
 import  com.sun.j2me.app.AppPackage;
 import  com.sun.j2me.app.AppIsolate;
-import  com.sun.mmedia.PlayerStateSubscriber;
+import  com.sun.j2me.log.Logging;
+import  com.sun.j2me.log.LogChannels;
+import com.sun.mmedia.PlayerStateSubscriber;
 
 import java.io.IOException;
 
@@ -166,7 +168,22 @@ public class PlayerImpl implements Player {
 
         if (!handledByDevice) {
             source.connect();
-            stream = source.getStreams()[0];
+            SourceStream[] streams = source.getStreams();
+            if (null == streams) {
+                throw new MediaException("DataSource.getStreams() returned null");
+            } else if (0 == streams.length) {
+                throw new MediaException("DataSource.getStreams() returned an empty array");
+            } else if (null == streams[0]) {
+                throw new MediaException("DataSource.getStreams()[0] is null");
+            } else {
+                if (streams.length > 1 && Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                        "*** DataSource.getStreams() returned " + streams.length + 
+                        " streams, only first one will be used!");
+                }
+
+                stream = streams[0];
+            }
         }
 
         // Set event listener
