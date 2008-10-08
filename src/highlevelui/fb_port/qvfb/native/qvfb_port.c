@@ -43,6 +43,7 @@
 #include <stdio.h>
 
 #include <gxj_putpixel.h>
+#include <gxj_screen_buffer.h>
 #include <midp_logging.h>
 #include <midpMalloc.h>
 #include <midp_constants_data.h>
@@ -52,36 +53,10 @@
 /** @def PERROR Prints diagnostic message. */
 #define PERROR(msg) REPORT_ERROR2(0, "%s: %s", msg, strerror(errno))
 
-/** System offscreen buffer */
-gxj_screen_buffer gxj_system_screen_buffer;
-int mouseFd = 0;
-int keyboardFd = 0;
-int currentId = 0;
-
-/** System screens */
-typedef struct _SystemScreen {
-    int hardwareId;
-    int isFullScreen;
-    jboolean reverse_orientation;                                             
-    gxj_screen_buffer buffer;
-    QVFbDisplay qvfbDisplay;
-} SystemScreen;
-
-
-
-SystemScreen* system_screens; 
-static int number_of_screens;
-static int* displayIds;
-
-SystemScreen* getScreenById(int hardwareId) {
-  int i;
-  for (i = 0; i < number_of_screens; i++) {
-    if (system_screens[i].hardwareId == hardwareId)
-      return &system_screens[i];
-  }
-  return NULL;
-}
-
+/** The file descriptor for reading the mouse */
+static int mouseFd = -1;
+/** The file descriptor for reading the keyboard */
+static int keyboardFd = -1;
 
 /** Return file descriptor of keyboard device, or -1 in none */
 int getKeyboardFd() {
@@ -92,281 +67,118 @@ int getMouseFd() {
     return mouseFd;
 }
 
-void initScreenList() {
-  int size = sizeof(SystemScreen) * number_of_screens;
-  system_screens = (SystemScreen*)midpMalloc(size);
-  if (system_screens != NULL) {
-    memset(system_screens, 0, size);
-  } 
-}
+/** QVFb header data */
+static QVFbHeader *hdr = NULL;
+/** QVFb video buffer for direct drawing */
+static gxj_pixel_type *qvfbPixels = NULL;
 
-void initBuffer(int width, int height, gxj_screen_buffer* buffer) {
-  int size = sizeof(gxj_pixel_type) * width * height;
-  buffer->width = width;
-  buffer->height = height;
-  buffer->alphaData = NULL;
-  buffer->pixelData =
-    (gxj_pixel_type *)midpMalloc(size);
-  if (buffer->pixelData != NULL) {
-    memset(buffer->pixelData, 0, size);
-  } 
-}
-                      
+/** System offscreen buffer */
+gxj_screen_buffer gxj_system_screen_buffer;
 
-/** Allocate and init system screen */
-void initSystemScreen(int id, int isFullScreen, int reverse_orientation, int width, int height) {
-  SystemScreen *screen = getScreenById(id);
-  if (screen == NULL) {
-    int i;
-    for (i = 0; i < number_of_screens; i++) {
-      if (system_screens[i].hardwareId == 0) {
-	screen = &system_screens[i];
-	screen->hardwareId = id;
-	break;
-      }
+/** Allocate system screen buffer */
+void initScreenBuffer(int width, int height) {
+    if (gxj_init_screen_buffer(width, height) != ALL_OK) {
+        fprintf(stderr, "Failed to allocate screen buffer\n");
+        exit(1);
     }
-    if (screen == NULL) {
-      return;
-    }
-  }
-  
-  screen->isFullScreen = isFullScreen;
-  screen->reverse_orientation = reverse_orientation;
-  
-  initBuffer(width, height, &(screen->buffer));
-
-}  
-            
-void clear(SystemScreen *screen) {
-    if (screen == NULL) {
-      return;
-    }
-    gxj_screen_buffer buff = screen->buffer;
-    if (buff.pixelData != NULL) {
-      midpFree(buff.pixelData);
-      buff.pixelData = NULL;
-    }
-    if (buff.alphaData != NULL) {
-      midpFree(buff.alphaData);
-      buff.alphaData = NULL;
-    }
-    
-    memset(screen->qvfbDisplay.qvfbPixels, 0, 
-	   sizeof(gxj_pixel_type) * 
-	   screen->qvfbDisplay.hdr->width * 
-	   screen->qvfbDisplay.hdr->height);
-} 
-
-/** 
- * Clear screen content for particular system screen 
- */
-void clearScreen(int hardwareId) {
-    clear(getScreenById(hardwareId));
-}
-
-/** 
- * Clear screen content for all system screens 
- */
-void clearScreens() {
-  int i;
-  for (i = 0; i < number_of_screens; i++ ) {
-    clear(&system_screens[i]);
-  }
-}          
-
-
-jboolean setFullScreenMode(int id, int mode, int width, int height) {
-    SystemScreen *screen = getScreenById(id);
-    int updated = 0;
-    if (screen == NULL) {
-      return KNI_FALSE;
-    }
-    if (screen->isFullScreen != mode) {
-      gxj_screen_buffer buff = screen->buffer;
-      screen->isFullScreen = mode;
-      
-      if (buff.pixelData != NULL) {
-        if (buff.width == width &&
-	    buff.height == height) {
-        } else {
-	  clear(screen);
-	  initBuffer(width, height, &(screen->buffer));
-
-	}
-	updated = 1;        
-      }
-    }
-    return updated;
-}
-
-int getReverseOrientation(int id) {
-    SystemScreen *screen = getScreenById(id);
-    int ret = 0;
-    if (screen != NULL) {
-      ret = screen->reverse_orientation;
-    }
-    return ret;
-}
-
-int getNextDisplayId() {
-    return displayIds[(currentId == (number_of_screens - 1)) ? 0 : ++currentId];
-}
-int getCurrentDisplayId() {
-    return displayIds[currentId];
-}
-
-void displayStateChanged(int id, int state) {
-    SystemScreen *screen = getScreenById(id);
-    // if display is enabled set the system screen to qvfb screen buffer  
-    if (state == 0) {
-        gxj_system_screen_buffer = screen->buffer;
-        mouseFd = screen->qvfbDisplay.mouseFd;
-        keyboardFd = screen->qvfbDisplay.keyboardFd;
-    } 
-    printf("displayStateChanged for %d state %d", id, state);
-}
-
-
-jboolean isFullScreenMode(int id) {
-    SystemScreen *screen = getScreenById(id);
-    jboolean ret = 0;
-    if (screen != NULL) {
-      ret = screen->isFullScreen;
-    }
-    return ret;
-}
+}                        
 
 /**
  * Change screen orientation to landscape or portrait,
  * depending on the current screen mode
  */
-jboolean reverseScreenOrientation(int id) {
-    int height;
-    SystemScreen *screen = getScreenById(id);
-    if (screen == NULL) {
-      return KNI_FALSE;
-    }
+void reverseScreenOrientation() {
 
-    screen->reverse_orientation = !screen->reverse_orientation;
-    
-    if (screen->buffer.pixelData != NULL) {
-      int size = sizeof(gxj_pixel_type) *
-	screen->buffer.width *
-	screen->buffer.height;
-      
-        memset(screen->buffer.pixelData, 0, size);
-    }
-
-    height = screen->buffer.height;
-    screen->buffer.height = screen->buffer.width;
-    screen->buffer.width = height;
-
-    return screen->reverse_orientation;
-}
-
-
-
-jint* getDisplayIds(jint* num) {
-      char *env;
-      if ((env = getenv("QWS_DISPLAY")) != NULL) {
-      int i;
-      int skip = 1;
-
-      int size;         
-      number_of_screens = 0;
-      
-      i = 0;
-      while (env[i] == ':') {
-	i+=3;
-	number_of_screens++;
-      }
-      printf("num = %d\n", number_of_screens);
-      
-      size = sizeof(int) * number_of_screens;
-      displayIds = (int*)midpMalloc(size);
-      if (displayIds != NULL) {
-	memset(displayIds, 0, size);
-      } 
-      
-      for (i = 0; i < number_of_screens; i++, skip +=3) {
-	displayIds[i] = atoi(env + skip); /* skip the leading colon */
-	printf("id = %d\n", displayIds[i]);
-      } 
-    }
-    *num = number_of_screens;
-    return displayIds;
+    // Whether current Displayable won't repaint the entire screen on
+    // resize event, the artefacts from the old screen content can appear.
+    // That's why the buffer content is not preserved.
+    gxj_rotate_screen_buffer(KNI_FALSE);
 }
 
 /** On i386, connect to the QVFB virtual frame buffer */
-void connectFrameBuffer(int hardwareId) {
+void connectFrameBuffer() {
+    int displayId = 0;
     char buff[30];
     key_t key;
     int shmId;
     unsigned char *shmrgn;
-  
+    char *env;
 
-    QVFbHeader* hdr;
-    
-    SystemScreen *screen = getScreenById(hardwareId);
-    if (screen == NULL) {
-      exit(1);
+    // System screen buffer geometry
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
+
+    if ((env = getenv("QWS_DISPLAY")) != NULL) {
+        displayId = atoi(env + 1); /* skip the leading colon */
     }
-    int bufWidth = screen->buffer.width;
-    int bufHeight = screen->buffer.height;
-    
-    sprintf(buff, "/tmp/.qtvfb_mouse-%d", hardwareId);
-    if ((screen->qvfbDisplay.mouseFd = open(buff, O_RDONLY | O_NONBLOCK, 0)) < 0) {
-      fprintf(stderr, "open of %s failed\n", buff);
-      exit(1);
+
+    sprintf(buff, "/tmp/.qtvfb_mouse-%d", displayId);
+    if ((mouseFd = open(buff, O_RDONLY | O_NONBLOCK, 0)) < 0) {
+        fprintf(stderr, "open of %s failed\n", buff);
+        exit(1);
     }
-    
+
     if ((key = ftok(buff, 'b')) == -1) {
-      PERROR("ftok() failed");
-      exit(1);
+        PERROR("ftok() failed");
+        exit(1);
     }
-    
+
     if ((shmId = shmget(key, 0, 0)) == -1) {
-      PERROR("shmget() failed");
-      exit(1);
+        PERROR("shmget() failed");
+        exit(1);
     }
-    
+
     shmrgn = (unsigned char *)shmat(shmId, 0, 0);
     if ((int)shmrgn == -1 || shmrgn == 0) {
-      PERROR("shmat() failed");
-      exit(1);
+        PERROR("shmat() failed");
+        exit(1);
     }
-    
-    screen->qvfbDisplay.hdr = (QVFbHeader *) shmrgn;
-    hdr = screen->qvfbDisplay.hdr;
-    screen->qvfbDisplay.qvfbPixels = (gxj_pixel_type*)(shmrgn + hdr->dataOffset);
-    
+
+    hdr = (QVFbHeader *) shmrgn;
+    qvfbPixels = (gxj_pixel_type*)(shmrgn + hdr->dataOffset);
+
     fprintf(stderr, "QVFB info: %dx%d, depth=%d\n",
-	    hdr->width, hdr->height, hdr->depth);
-    
+           hdr->width, hdr->height, hdr->depth);
+
     if (hdr->width < bufWidth || hdr->height < bufHeight) {
-      fprintf(stderr, "QVFB screen too small. Need %dx%d\n",
-	      bufWidth, bufHeight);
-      exit(1);
+        fprintf(stderr, "QVFB screen too small. Need %dx%d\n",
+               bufWidth, bufHeight);
+        exit(1);
     }
     if (hdr->depth != 16) {
-      fprintf(stderr, "QVFB depth must be 16. Please run qvfb -depth 16\n");
-      exit(1);
+        fprintf(stderr, "QVFB depth must be 16. Please run qvfb -depth 16\n");
+        exit(1);
     }
-    
-    sprintf(buff, "/tmp/.qtvfb_keyboard-%d", hardwareId);
-    if ((screen->qvfbDisplay.keyboardFd = open(buff, O_RDONLY, 0)) < 0) {
-      fprintf(stderr, "open of %s failed\n", buff);
-      exit(1);
-    } else {
-    printf("open keyboard for /tmp/.qtvfb_keyboard-%d = %d", hardwareId, screen->qvfbDisplay.keyboardFd);
-               }
-    memset(screen->qvfbDisplay.qvfbPixels, 0, sizeof(gxj_pixel_type) * hdr->width * hdr->height);
-    
+
+    sprintf(buff, "/tmp/.qtvfb_keyboard-%d", displayId);
+    if ((keyboardFd = open(buff, O_RDONLY, 0)) < 0) {
+        fprintf(stderr, "open of %s failed\n", buff);
+        exit(1);
+    }
+
+    memset(qvfbPixels, 0, sizeof(gxj_pixel_type) * hdr->width * hdr->height);
 }
 
+/** Clear screen content */
+void clearScreen() {
+    memset(qvfbPixels, 0, 
+	sizeof(gxj_pixel_type) * 
+	    hdr->width * hdr->height);
+}
+
+/**
+ * Resizes system screen buffer to fit the screen dimensions.
+ * Call after frame buffer is initialized.
+ */
+void resizeScreenBuffer(int width, int height) {
+    if (gxj_resize_screen_buffer(width, height) != ALL_OK) {
+        fprintf(stderr, "Failed to reallocate screen buffer\n");
+	    exit(1);
+    }
+}
 
 /** Check if screen buffer is not bigger than frame buffer device */
-void checkScreenBufferSize(QVFbHeader *hdr, int width, int height) {
+static void checkScreenBufferSize(int width, int height) {
     // Check if frame buffer is big enough
     if (hdr->width < width || hdr->height < height) {
         fprintf(stderr, "QVFB screen too small. Need %dx%d\n",
@@ -376,76 +188,56 @@ void checkScreenBufferSize(QVFbHeader *hdr, int width, int height) {
 }
 
 /** Get x-coordinate of screen origin */
-int getScreenX(int hardwareId, int width) {
-    SystemScreen *screen = getScreenById(hardwareId);
-    if (screen == NULL) {
-      return 0;
-    }
-    QVFbHeader *hdr = screen->qvfbDisplay.hdr;
+int getScreenX(int screenRotated) {
     // System screen buffer geometry
-    int bufWidth = width;
+    int bufWidth = gxj_system_screen_buffer.width;
     int x = 0;
-    int LCDwidth = screen->reverse_orientation ? hdr->height : hdr->width;
+    int LCDwidth = screenRotated ? hdr->height : hdr->width;
     if (LCDwidth > bufWidth) {
-      x = (LCDwidth - bufWidth) / 2;
+        x = (LCDwidth - bufWidth) / 2;
     }
     return x;
 }
 
 /** Get y-coordinate of screen origin */
-int getScreenY(int hardwareId, int height) {
-    SystemScreen *screen = getScreenById(hardwareId);
-    if (screen == NULL) {
-      return 0; 
-    }
-    QVFbHeader *hdr = screen->qvfbDisplay.hdr;
-    int bufHeight = height;
+int getScreenY(int screenRotated) {
+    int bufHeight = gxj_system_screen_buffer.height;
     int y = 0;
-    int LCDheight = screen->reverse_orientation ? hdr->width : hdr->height;
+    int LCDheight = screenRotated ? hdr->width : hdr->height;
     if (LCDheight > bufHeight) {
-      y = (LCDheight - bufHeight) / 2;
+        y = (LCDheight - bufHeight) / 2;
     }
     return y;
 }
 
-
-
 /** Refresh screen with offscreen bufer content */
-void refreshScreenNormal(SystemScreen *screen, int x1, int y1, int x2, int y2) {
+void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     // QVFB feature: a number of bytes per line can be different from
     // screenWidth * pixelSize, so lineStep should be used instead.
-    QVFbHeader *hdr = screen->qvfbDisplay.hdr;
-    gxj_screen_buffer screen_buffer = screen->buffer;
-
     int lineStep = hdr->lineStep / sizeof(gxj_pixel_type);
     int dstWidth =  hdr->lineStep / sizeof(gxj_pixel_type);
-    gxj_pixel_type *dst  = (gxj_pixel_type *)screen->qvfbDisplay.qvfbPixels;
-    gxj_pixel_type *src  = screen_buffer.pixelData;
+    gxj_pixel_type *dst  = (gxj_pixel_type *)qvfbPixels;
+    gxj_pixel_type *src  = gxj_system_screen_buffer.pixelData;
 
     int srcWidth = x2 - x1;
 
     // System screen buffer geometry
-    int bufWidth = screen_buffer.width;
-    int bufHeight = screen_buffer.height;
-
-//    printf("\n\n\nrefresh screen normal id=%d, hdr: width = %d height =%d depth = %d \nlineStep = %d dataOffset =%d \ndirty_x1=%d dirty_y1=%d dirty_x2=%d dirty_y2=%d is_dirty=%d\n",screen->hardwareId, hdr->width,hdr->height,hdr->depth,hdr->lineStep, hdr->dataOffset,hdr->dirty_x1, hdr->dirty_y1,hdr->dirty_x2, hdr->dirty_y2,hdr->is_dirty);
-//printf("refresh screen normal id = %d, screen_buffer: bufWidth=%d bufHeight=%d\n", screen->hardwareId, bufWidth, bufHeight);
-
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
 
     REPORT_CALL_TRACE4(LC_HIGHUI, "LF:fbapp_refresh(%3d, %3d, %3d, %3d )\n",
                        x1, y1, x2, y2);
 
     // Check if frame buffer is big enough
-    checkScreenBufferSize(hdr, bufWidth, bufHeight);
+    checkScreenBufferSize(bufWidth, bufHeight);
 
     // Center the LCD output area
     if (hdr->width > bufWidth) {
-      dst += (hdr->width - bufWidth) / 2;
+        dst += (hdr->width - bufWidth) / 2;
     }
     if (hdr->height > bufHeight) {
-      dst += (hdr->height - bufHeight) * lineStep / 2;
+        dst += (hdr->height - bufHeight) * lineStep / 2;
     }
-    
 
     src += y1 * bufWidth + x1;
     dst += y1 * dstWidth + x1;
@@ -464,25 +256,23 @@ void refreshScreenNormal(SystemScreen *screen, int x1, int y1, int x2, int y2) {
 }
 
 /** Refresh rotated screen with offscreen bufer content */
-void refreshScreenRotated(SystemScreen *screen, int x1, int y1, int x2, int y2) {
-    QVFbHeader *hdr = screen->qvfbDisplay.hdr;
-    gxj_screen_buffer screen_buffer = screen->buffer;
+void refreshScreenRotated(int x1, int y1, int x2, int y2) {
 
-    gxj_pixel_type *src = screen_buffer.pixelData;
-    gxj_pixel_type *dst = (gxj_pixel_type *)screen->qvfbDisplay.qvfbPixels;
+    gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
+    gxj_pixel_type *dst = (gxj_pixel_type *)qvfbPixels;
     int srcWidth, srcHeight;
     int lineStep =  hdr->lineStep / sizeof(gxj_pixel_type);
 
     // System screen buffer geometry
-    int bufWidth = screen_buffer.width;
-    int bufHeight = screen_buffer.height;
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
 
     int x;
     int srcInc;
     int dstInc;
 
     // Check if frame buffer is big enough
-    checkScreenBufferSize(hdr, bufHeight, bufWidth);
+    checkScreenBufferSize(bufHeight, bufWidth);
 
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
@@ -517,14 +307,7 @@ void refreshScreenRotated(SystemScreen *screen, int x1, int y1, int x2, int y2) 
     hdr->is_dirty = 1;
 }
 
-void refreshScreen(int id, int x1, int y1, int x2, int y2) {
-  SystemScreen *screen = getScreenById(id);
-  if (screen != NULL) {
-    if (!screen->reverse_orientation) {
-      refreshScreenNormal(screen, x1, y1, x2, y2);
-    } else {
-      refreshScreenRotated(screen, x1, y1, x2, y2);
-    }
-  }
+/** Frees native reources allocated for frame buffer */
+void finalizeFrameBuffer() {
+    gxj_free_screen_buffer();
 }
-

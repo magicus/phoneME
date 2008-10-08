@@ -27,7 +27,6 @@
 package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.chameleon.skins.SoftButtonSkin;
-import com.sun.midp.chameleon.skins.ScreenSkin;
 
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;

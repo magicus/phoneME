@@ -224,7 +224,7 @@ jboolean lfpport_is_display_ptr_motion_supported(int hardwareId) {
  */
 int lfpport_get_display_capabilities(int hardwareId) {
     (void)hardwareId;
-    return 0;
+    return 255;
 }
 
 

@@ -38,19 +38,11 @@
 extern "C" {
 #endif
 
-#include <gxj_screen_buffer.h>
-
 /** Initialize frame buffer video device */
-extern void connectFrameBuffer(int hardwareId);
+extern void connectFrameBuffer();
 
 /** Allocate system screen buffer according to the screen geometry */
 extern void initScreenBuffer(int width, int height);
-
-extern void initScreenList();
-
-extern  void initSystemScreen(int id, int isFullScreen, int reverse_orientation, int width, int height);
-
-extern void clearScreens();
 
 /** Free allocated resources and restore system state */
 extern void finalizeFrameBuffer();
@@ -59,13 +51,7 @@ extern void finalizeFrameBuffer();
  * Change screen orientation to landscape or portrait,
  * depending on the current screen mode
  */
-extern jboolean reverseScreenOrientation(int id);
-
-extern jboolean setFullScreenMode(int id, int mode, int width, int height);
-
-extern int getReverseOrientation(int id);
-
-extern jboolean isFullScreenMode(int id);
+extern void reverseScreenOrientation();
 
 /**
  * Resizes system screen buffer to fit the screen dimensions.
@@ -73,7 +59,11 @@ extern jboolean isFullScreenMode(int id);
  */
 extern void resizeScreenBuffer(int width, int height);
 
-extern void refreshScreen(int id, int x1, int y1, int x2, int y2);
+/** Refresh screen with offscreen bufer content */
+extern void refreshScreenNormal(int x1, int y1, int x2, int y2);
+
+/** Refresh rotated screen with offscreen bufer content */
+extern void refreshScreenRotated(int x1, int y1, int x2, int y2);
 
 /** Return file descriptor of keyboard device, or -1 in none */
 extern int getKeyboardFd();
@@ -82,20 +72,14 @@ extern int getKeyboardFd();
 extern int getMouseFd();
 
 /** Clear screen device */
-extern void clearScreen(int hardwareId);
+extern void clearScreen();
 
 /** Get x-coordinate of screen origin */
-extern int getScreenX(int hardwareId, int width);
+extern int getScreenX(int screenRotated);
 
 /** Get y-coordinate of screen origin */
-extern int getScreenY(int hardwareId, int height);
+extern int getScreenY(int screenRotated);
 
-  /** Get the list of display ids */
-extern jint* getDisplayIds(jint* n );
-
-extern void displayStateChanged(int hardwareId, int state);
-extern int getNextDisplayId();
-extern int getCurrentDisplayId();
 
 #ifdef __cplusplus
 }

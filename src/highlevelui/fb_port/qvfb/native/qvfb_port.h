@@ -36,10 +36,6 @@
 extern "C" {
 #endif
 
-#include <gxj_putpixel.h>
-#include <gxj_screen_buffer.h>
-
-
 /** Header of the QVFb video device */
 typedef struct _QVFbHeader {
     int width;
@@ -53,13 +49,6 @@ typedef struct _QVFbHeader {
     int dirty_y2;
     int is_dirty;
 } QVFbHeader;
-
-typedef struct _QVFbDisplay {
-  QVFbHeader *hdr;
-  gxj_pixel_type *qvfbPixels;
-  int mouseFd;
-  int keyboardFd;
-} QVFbDisplay; 
 
 #ifdef __cplusplus
 }
