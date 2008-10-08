@@ -29,9 +29,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 
-import javax.microedition.io.Connector;
-import javax.microedition.io.SocketConnection;
-
 /** 
  * RtspConnectionBase is a portable base for RtspConnection platform-specific
  *  classes that represent a TCP/IP connection to an RTSP Server.

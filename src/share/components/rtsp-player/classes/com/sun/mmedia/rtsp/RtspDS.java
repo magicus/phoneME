@@ -113,8 +113,23 @@ public class RtspDS extends BasicDS {
                 // sessionId is null at this point
                 for (int i = 0; i < num_tracks; i++) {
 
-                    // TODO: allocPort() should allocate actual UDP port, not just number
-                    int client_data_port = allocPort();
+                    int first_client_data_port = allocPort();
+                    int client_data_port = first_client_data_port;
+
+                    RtpConnection conn = null;
+
+                    do {
+                        try {
+                            conn = new RtpConnection(client_data_port);
+                            conn.startListening();
+                        } catch (IOException e) {
+                            client_data_port = allocPort();
+                        }
+                    } while (null == conn && client_data_port != first_client_data_port);
+
+                    if (null == conn) {
+                        throw new IOException("Unable to allocate client UDP port");
+                    }
 
                     if (i < sdp.getMediaDescriptionsCount()) {
                         mediaControl = sdp.getMediaDescription(i).getMediaAttribute("control").getValue();
@@ -146,13 +161,17 @@ public class RtspDS extends BasicDS {
                     RtspTransportHeader th = response.getTransportHeader();
 
                     if (th.getClientDataPort() != client_data_port) {
-                        // TODO: returned value for client data port may be different.
-                        // in this case an attempt should be made to re-allocate UDP
-                        // port accordingly. Note that this attempt may fail.
+                        // Returned value for client data port is different.
+                        // An attempt is made to re-allocate UDP port accordingly.
+                        if (null != conn) {
+                            conn.stopListening();
+                        }
                         client_data_port = th.getClientDataPort();
+                        conn = new RtpConnection(client_data_port);
+                        conn.startListening();
                     }
 
-                    streams[i] = new RtspSS(mediaControl, client_data_port);
+                    streams[i] = new RtspSS(conn);
                 }
 
                 // TODO: determine actual content type
@@ -235,8 +254,6 @@ public class RtspDS extends BasicDS {
 
     private static int allocPort() {
         int retVal = nextPort;
-
-        // TODO: check if these ports are actually available
 
         nextPort += 2;
 

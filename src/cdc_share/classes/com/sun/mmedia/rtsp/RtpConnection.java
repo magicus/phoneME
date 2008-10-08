@@ -32,42 +32,48 @@ import java.net.SocketException;
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
-public class RtpConnection extends Thread implements Runnable
-{
-    DatagramSocket ds;
-    int            local_port;
+public class RtpConnection extends RtpConnectionBase {
 
-    public RtpConnection( int local_port ) {
-        this.local_port = local_port;
+    DatagramSocket ds = null;
 
-        try {
-            ds = new DatagramSocket( local_port );
-            start();
-        } catch( SocketException e ) {
-            ds = null;
-        } catch( SecurityException e ) {
-            ds = null;
-        }
-    }
-
-    public void run() {
-        while( null != ds ) {
-            try {
-                byte[] data = new byte[ 4096 ];
-                DatagramPacket dp = new DatagramPacket( data, 4096 );
-                ds.receive( dp );
-                RtpPacket pkt = new RtpPacket( data );
-            } catch( IOException e ) {
-                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
-                        "IOException in RtpConnection: " + e.getMessage());
-                }
-                break;
-            }
-        }
+    public RtpConnection(int local_port) {
+        super(local_port);
     }
 
     public boolean connectionIsAlive() {
-        return ( null != ds );
+        return (null != ds);
+    }
+
+    public void startListening(int local_port) throws IOException {
+        try {
+            ds = new DatagramSocket(local_port);
+        } catch (SocketException e) {
+            throw new IOException("Cannot start listening on port "
+                + local_port + ": " + e);
+        } catch (SecurityException e) {
+            throw new IOException("Cannot start listening on port "
+                + local_port + ": " + e);
+        }
+    }
+
+    public void stopListening() {
+        ds.close();
+        ds = null;
+    }
+
+    public RtpPacket receivePacket() {
+        try {
+            byte[] data = new byte[MAX_DATAGRAM_SIZE];
+            DatagramPacket dp = new DatagramPacket(data, MAX_DATAGRAM_SIZE);
+            ds.receive(dp);
+            RtpPacket pkt = new RtpPacket(data);
+            return pkt;
+        } catch (IOException e) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                    "IOException in RtpConnection.receivePacket(): " + e.getMessage());
+            }
+            return null;
+        }
     }
 }

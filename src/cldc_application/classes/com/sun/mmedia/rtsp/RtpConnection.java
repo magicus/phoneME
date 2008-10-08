@@ -33,41 +33,52 @@ import javax.microedition.io.Datagram;
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
-public class RtpConnection extends Thread implements Runnable {
-    DatagramConnection dc;
-    int local_port;
+public class RtpConnection extends RtpConnectionBase {
+
+    DatagramConnection dc = null;
 
     public RtpConnection(int local_port) {
-        this.local_port = local_port;
-
-        try {
-            dc = (DatagramConnection)Connector.open("datagram://:" + local_port);
-            start();
-        } catch (java.io.IOException e) {
-            dc = null;
-        }
-    }
-
-    public void run() {
-        while (null != dc) {
-            try {
-                Datagram d = dc.newDatagram(4096);
-                dc.receive(d);
-                int len = d.getLength();
-                int off = d.getOffset();
-                byte[] data = d.getData();
-                RtpPacket pkt = new RtpPacket(data);
-            } catch (IOException e) {
-                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
-                        "IOException in RtpConnection: " + e.getMessage());
-                }
-                break;
-            }
-        }
+        super(local_port);
     }
 
     public boolean connectionIsAlive() {
         return (null != dc);
+    }
+
+    public void startListening() throws IOException {
+        String url = "datagram://:" + local_port;
+        dc = (DatagramConnection)Connector.open(url);
+        if (null != dc) {
+            start();
+        } else {
+            throw new IOException("Connector.open('" + url + "' returned null.");
+        }
+    }
+
+    public void stopListening() {
+        try {
+            dc.close();
+        } catch (IOException e) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                    "IOException in RtpConnection.stopListening(): " + e.getMessage());
+            }
+        }
+        dc = null;
+    }
+
+    public RtpPacket receivePacket() {
+        try {
+            Datagram d = dc.newDatagram(MAX_DATAGRAM_SIZE);
+            dc.receive(d);
+            RtpPacket pkt = new RtpPacket(d.getData());
+            return pkt;
+        } catch (IOException e) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                    "IOException in RtpConnection.receivePacket(): " + e.getMessage());
+            }
+            return null;
+        }
     }
 }
