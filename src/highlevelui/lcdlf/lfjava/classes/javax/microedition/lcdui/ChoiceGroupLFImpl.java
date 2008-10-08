@@ -395,6 +395,13 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         if (cg.numOfEls > 0) {
             int newHeight = visRect[HEIGHT];
             int newHilightedIndex = hilightedIndex;
+            if (hilightedIndex == (cg.numOfEls-1) && Canvas.DOWN == dir) {
+                newHilightedIndex = 0;
+                lScrollToItem(visRect, newHilightedIndex); 
+            } else if (newHilightedIndex == 0 && Canvas.UP == dir) {
+                newHilightedIndex = cg.numOfEls-1;
+                lScrollToItem(visRect, newHilightedIndex); 
+            } 
             int newY = contentY;
             boolean resetVisRect = false;
 
@@ -497,26 +504,33 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
      * @return
      */
     boolean lScrollToItem(int[] viewport, int[] visRect) {
+        return lScrollToItem(visRect, hilightedIndex ); 
+    }
+
+    /**
+     *  Set visRect as need to pHilightedIndex
+     * @param pHighlightedIndex the index of the highlighted element
+     * @param visRect the in/out rectangle for the internal traversal location
+     * @return true if 
+     */
+    boolean lScrollToItem(int[] visRect, int pHilightedIndex ) {
         int contentY = contentBounds[Y];
 
         if (cg.numOfEls > 0) {
             int newY = contentY + ChoiceGroupSkin.PAD_H;
-
             if (traversedIn) {
-                for (int i = 0; i < hilightedIndex; i++) {
+                for (int i = 0; i < pHilightedIndex; i++) {
                     newY += elHeights[i];
                 }
              
-                if (newY + elHeights[hilightedIndex] > visRect[Y] + visRect[HEIGHT] || newY < visRect[Y]) {
+                if (newY + elHeights[pHilightedIndex] > visRect[Y] + visRect[HEIGHT] || newY < visRect[Y]) {
                     visRect[Y] = bounds[Y] + newY;
-                    visRect[HEIGHT] = elHeights[hilightedIndex];
+                    visRect[HEIGHT] = elHeights[pHilightedIndex];
                     return true;
                 }
-
             }
-
         }
-        return false;
+        return false; 
     }
 
     /**

@@ -123,7 +123,6 @@ public class SkinLoader {
     public static void checkLocale() {
         String locale = System.getProperty("microedition.locale");
 
-
         if (locale != null && locale.equals("he-IL")) {
             ScreenSkin.TEXT_ORIENT = Graphics.RIGHT;
             TickerSkin.DIRECTION = Graphics.RIGHT;

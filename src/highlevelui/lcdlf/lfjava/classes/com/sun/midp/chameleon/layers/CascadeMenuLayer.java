@@ -190,8 +190,7 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
         // return 'true' indicating it has handled the key
         // event except for the soft button keys for which it
         // returns 'false'
-        
-        if (keyCode == EventConstants.SOFT_BUTTON1 || 
+    	if (keyCode == EventConstants.SOFT_BUTTON1 || 
             keyCode == EventConstants.SOFT_BUTTON2) {
             return false;
         }
@@ -206,20 +205,28 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
                 if (selI < scrollIndex && scrollIndex > 0) {
                     scrollIndex--;
                 }
-                updateScrollIndicator();
-                requestRepaint();
+            } else {
+                selI = menuCmds.length - 1; 
+                scrollIndex = menuCmds.length - MenuSkin.MAX_ITEMS;
+                scrollIndex = (scrollIndex > 0) ? scrollIndex : 0;
             }
+            updateScrollIndicator();
+            requestRepaint();
         } else if (keyCode == Constants.KEYCODE_DOWN) {
             if (selI < (menuCmds.length - 1)) {
                 selI++;
                 if (selI >= MenuSkin.MAX_ITEMS &&
                     scrollIndex < (menuCmds.length - MenuSkin.MAX_ITEMS))
                 {
-                        scrollIndex++;
-                } 
-                updateScrollIndicator();
-                requestRepaint();
+                    scrollIndex++;
+                }
+                
+            } else {
+                selI = 0;
+                scrollIndex = 0;
             }
+            updateScrollIndicator();
+            requestRepaint();
         } else if (keyCode == Constants.KEYCODE_RIGHT) {
             menuLayer.dismissCascadeMenu();
         } else if (keyCode == Constants.KEYCODE_SELECT) {

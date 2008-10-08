@@ -40,7 +40,6 @@ extern "C" {
 #include <midp_logging.h>
 #include <localeMethod.h>
 #include <midp_jc_event_defs.h>
-#include <midp_properties_port.h>
 
 #include <javacall_datagram.h>
 #include <javacall_events.h>
@@ -85,6 +84,7 @@ extern "C" {
 #endif /* ENABLE_ON_DEVICE_DEBUG */
 
 #define MAX_PHONE_NUMBER_LENGTH 48
+
 static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
 
 /**
@@ -141,23 +141,24 @@ void javanotify_alarm_expiration() {
     midp_jc_event_send(&e);
 }
 
-
-
- /**
+/**
  * A callback function to be called for notification of network
  * conenction related events, such as network going down or up.
  * The platform will invoke the call back in platform context.
- * @param event the type of network-related event that occured
- *              JAVACALL_NETWORK_DOWN if the network became unavailable
- *              JAVACALL_NETWORK_UP if the network is now available
  *
+ * @param isInit 0 if the network finalization has been finished,
+ *               not 0 - if the initialization
+ * @param status one of PCSL_NET_* completion codes
  */
-void javanotify_network_event(javacall_network_event netEvent) {
+void jcapp_network_event_received(int isInit, int status) {
     midp_jc_event_union e;
 
-    REPORT_INFO(LC_CORE, "javanotify_network_event() >>\n");
+    REPORT_INFO(LC_CORE, "jc_network_event() >>\n");
+
+    (void)status;
+    
     e.eventType = MIDP_JC_EVENT_NETWORK;
-    if (netEvent == JAVACALL_NETWORK_UP) {
+    if (isInit) {
         e.data.networkEvent.netType = MIDP_NETWORK_UP;
     } else {
         e.data.networkEvent.netType = MIDP_NETWORK_DOWN;
@@ -492,6 +493,7 @@ void javanotify_socket_event(javacall_socket_callback_type type,
     midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_socket_event() >>\n");
+
     e.eventType = MIDP_JC_EVENT_SOCKET;
     e.data.socketEvent.handle = socket_handle;
     e.data.socketEvent.status = operation_result;
@@ -606,6 +608,7 @@ void javanotify_datagram_event(javacall_datagram_callback_type type,
     midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_datagram_event() >>\n");
+
     e.eventType = MIDP_JC_EVENT_SOCKET;
     e.data.socketEvent.handle = handle;
     e.data.socketEvent.status = operation_result;
@@ -1144,44 +1147,6 @@ void javanotify_prompt_volume_finish(void) {
 
 #endif /*ENABLE_API_EXTENSIONS*/
 
-/**
- * Decode integer parameters to locale string
- */
-void decodeLanguage(char* str, int languageCode, int regionCode) {
-    int i;
-
-    str[1] = (languageCode & 0xFF);
-    languageCode >>= 8;
-
-    str[0] = (languageCode & 0xFF);
-    languageCode >>= 8;
-
-    str[2] = '-';
-
-    str[4] = (languageCode & 0xFF);
-    languageCode >>= 8;
-
-    str[3] = (languageCode & 0xFF);
-    languageCode >>= 8;
-
-    str[5] = '\0';
-}
-
-/**
- * The platform should invoke this function for locale changing
- */
-void javanotify_change_locale(short languageCode, short regionCode) {
-    const char tmp[6];
-	midp_jc_event_union e;
-
-	REPORT_INFO(LC_CORE, "javanotify_change_locale() >>\n");
-
-    e.eventType = MIDP_JC_EVENT_CHANGE_LOCALE;
-
-    decodeLanguage(tmp, languageCode, regionCode);
-
-    midp_jc_event_send(&e);
-}
 
 void javanotify_widget_menu_selection(int cmd) {
     // This command comes from a menu item dynamically
