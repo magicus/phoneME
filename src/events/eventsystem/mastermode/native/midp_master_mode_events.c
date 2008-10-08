@@ -252,7 +252,8 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
                                 newSignal.waitingFor, newSignal.descriptor,
                                 newSignal.status);
         break;
-    case :
+    case JSR290_LISTENER_SIGNAL:
+        StoreMIDPEventInVmThread(newMidpEvent, -1);
         break;
 #endif /* ENABLE_JSR_290 */
     default:
