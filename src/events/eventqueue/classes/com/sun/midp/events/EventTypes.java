@@ -387,4 +387,9 @@ public final class EventTypes {
      * This event is used for change current locale
      */
     public static final int CHANGE_LOCALE_EVENT	= 61;
+
+    /**
+     * JSR290 DOM object finalize notification event
+     */
+    public static final int DOM_FINALIZE_EVENT = 62;
 }

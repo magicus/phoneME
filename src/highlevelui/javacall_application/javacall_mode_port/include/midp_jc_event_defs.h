@@ -164,6 +164,7 @@ typedef enum {
 #if ENABLE_JSR_290
     ,JSR290_JC_EVENT_FLUID_LOAD_FINISHED
     ,JSR290_JC_EVENT_FLUID_INVALIDATE
+    ,JSR290_JC_EVENT_DOM_FINALIZE
 #endif /*ENABLE_JSR_290*/
 } midp_jc_event_type;
 
@@ -328,6 +329,10 @@ typedef struct {
     javacall_handle fluid_image;
     javacall_result result;
 } jsr290_jc_event_fluid;
+
+typedef struct {
+    javacall_handle handle;
+} jsr290_jc_event_dom;
 #endif /* ENABLE_JSR_290 */
 
 typedef struct {
@@ -423,6 +428,7 @@ typedef struct {
 
 #ifdef ENABLE_JSR_290
         jsr290_jc_event_fluid              jsr290FluidEvent;
+        jsr290_jc_event_dom                jsr290DOMEvent;
 #endif /* ENABLE_JSR_290 */
         midp_jc_event_menu_selection    menuSelectionEvent;
     } data;

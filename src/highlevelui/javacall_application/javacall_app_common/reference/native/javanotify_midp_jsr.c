@@ -1018,6 +1018,18 @@ javanotify_fluid_image_notify_dirty (
     midp_jc_event_send(&e);
 }
 
+void
+javanotify_dom_object_finalized (
+    javacall_handle                       handle
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_DOM_FINALIZE;
+    e.data.jsr290DOMEvent.handle = handle;
+
+    midp_jc_event_send(&e);
+}
+
 #endif /* ENABLE_JSR_290 */
 
 /**

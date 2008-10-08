@@ -207,6 +207,11 @@ extern "C" {
  */
 #define CHANGE_LOCALE_EVENT				61
 
+/**
+ * JSR290 DOM object finalize notification event
+ */
+#define DOM_FINALIZE_EVENT              62;
+
 
 /** @} */
 
