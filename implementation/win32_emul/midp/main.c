@@ -142,15 +142,6 @@ typedef enum {
  * is running locally or via OTA */
 javacall_bool isRunningLocal = JAVACALL_FALSE;
 
-/* "memory profiler" key place */
-static char *keyMemoryProfiler = "-memory_profiler";
-
-/* "port" key place */
-static char *keyPort = "-port";
-
-/* port string value place */
-static char valuePort[6];
-
 main(int argc, char *argv[]) {
     int i, vmArgc = 0;
     char *vmArgv[100]; /* CLDC parameters */
@@ -258,10 +249,11 @@ main(int argc, char *argv[]) {
             } else if (!isMempryProfiler && strcmp(key,"memmonport") == 0) {
                 int j = strlen(value);
                 if (j > 0 && j < 6) { /* port length is correct */
-                    memcpy(valuePort, value, j+1);
-                    vmArgv[vmArgc++] = keyMemoryProfiler; /* -memory_profiler */
-                    vmArgv[vmArgc++] = keyPort; /* -port */
-                    vmArgv[vmArgc++] = valuePort; /* port number */
+                    debugPort = malloc(sizeof(char)*(strlen(valuePort)+1));
+                    memcpy(debugPort, value, j+1);
+                    javacall_set_property("VmDebuggerPort",
+                                      debugPort, JAVACALL_TRUE,
+                                      JAVACALL_INTERNAL_PROPERTY);
                     isMempryProfiler = 1;
                 }
             }
@@ -411,7 +403,7 @@ main(int argc, char *argv[]) {
             /* It is a CLDC arg, add to CLDC arguments list */
             /* vmArgv[vmArgc++] = argv[i]; */
             i++;
-            if (strcmp(argv[i],"-port") == 0) {
+            if (!isMempryProfiler && strcmp(argv[i], "-port") == 0) {
                 /* It is a CLDC arg, add to CLDC arguments list */
                 /* vmArgv[vmArgc++] = argv[i]; */
                 i++;
