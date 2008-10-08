@@ -44,7 +44,7 @@ public class RtpConnection extends RtpConnectionBase {
         return (null != ds);
     }
 
-    public void startListening(int local_port) throws IOException {
+    public void startListening() throws IOException {
         try {
             ds = new DatagramSocket(local_port);
             start();
