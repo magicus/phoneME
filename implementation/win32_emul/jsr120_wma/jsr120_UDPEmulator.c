@@ -144,7 +144,6 @@ static void decodeSmsBuffer(
         } else if (strcmp("Content-Length:", pch) == 0) {
             pch = strtok(NULL, "\n");
             *msgLength = atoi(pch);
-            dbg_print1("##javacall: decodeSmsBuffer:msgLength=%i\n", *msgLength);
         } else if (strcmp("Segments:", pch) == 0) {
             pch = strtok(NULL, "\n");
             segments = atoi(pch);
@@ -180,7 +179,7 @@ static void decodeSmsBuffer(
             pch = strtok(NULL, "\n");
             *timeStamp = _atoi64(pch);
         } else if (strcmp("Buffer:", pch) == 0) {
-            pchLen = strlen("Buffer :\n");
+            pchLen = (int)strlen("Buffer :\n");
             pch = pch + pchLen;/* strtok(NULL, "\n");*/
 
             t_pch = *msg;
@@ -294,7 +293,7 @@ char* encodeSmsBuffer(
     /*adding the message - must be at te end of the payload buffer*/
     strcat(encode_sms_buffer, "Buffer: \n");
     /*calculate the length of the payload*/
-    lngth = strlen(encode_sms_buffer) + msgLength;
+    lngth = (int)strlen(encode_sms_buffer) + msgLength;
 
     *out_encode_sms_buffer_length = lngth ;
 
@@ -330,7 +329,7 @@ javacall_result process_UDPEmulator_sms_incoming(
     (void**)pContext;
     (int*)  pBytesRead;
     (int)   length;
-    (int)   port;
+    (int*)  port;
 
     dbg_print("##javacall: process_UDPEmulator_sms_incoming\n");
 
@@ -382,7 +381,7 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
     int                    msgBufferLen = 0;
 
     char* ptr = buffer;
-    int   segments;
+    int   segments = 1;
     char* address;
     char* t_pch;
 
@@ -426,11 +425,9 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
                 if (msgBufferLen > CBS_BUFF_LENGTH) {
                     javautil_debug_print(JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "Too long CBS message!");
 				}
-                dbg_print1("##javacall: decodeCbsBuffer: msgBufferLen=%i\n", msgBufferLen);
             } else if (strcmp("Segments:", pch) == 0) {
                 pch = strtok(NULL, "\n");
                 segments = atoi(pch);
-                dbg_print1("##javacall: decodeCbsBuffer: segments=%i\n", segments);
             } else if (strcmp("CBSAddress:", pch) == 0) {
                 /*Example: 'CBSAddress: cbs://:50001'*/
                 pch = strtok(NULL, "\n");
@@ -445,15 +442,12 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
             } else if (strcmp("Fragment:", pch) == 0) {
                 pch = strtok(NULL, "\n");
                 fragment = atoi(pch);
-                dbg_print1("##javacall: decodeCbsBuffer: fragment=%i\n", (void*)fragment);
             } else if (strcmp("Fragment-Size:", pch) == 0) {
                 pch = strtok(NULL, "\n");
                 fragm_size = atoi(pch);
-                dbg_print1("##javacall: decodeCbsBuffer: fragm_size=%i\n", (void*)fragm_size);
             } else if (strcmp("Fragment-Offset:", pch) == 0) {
                 pch = strtok(NULL, "\n");
                 fragm_offset = atoi(pch);
-                dbg_print1("##javacall: decodeCbsBuffer: fragm_offset=%i\n", (void*)fragm_offset);
 
             } else if (strcmp("Buffer:", pch) == 0) {
                 msgBuffer = (unsigned char*)pch+8;
@@ -463,7 +457,6 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
 				}
 				memcpy(encode_cbs_buffer+fragm_offset, msgBuffer, fragm_size);
                 pch = strtok(NULL, "\n");
-                dbg_print1("##javacall: decodeCbsBuffer: msgBuffer=%s\n", msgBuffer);
             }
             pch = strtok(NULL, " \n");
         }
@@ -494,11 +487,11 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
         /* Note. We assume here that datagrams was not mixed: */
         /* - the last fragment should finish the sequence     */
         /* - we get only one sequence in time                 */
-        javanotify_incoming_cbs(msgType, msgID, encode_cbs_buffer, msgBufferLen);
-        dbg_print1("##javacall: javanotify_incoming_cbs: msgBufferLen=%i\n", msgBufferLen);
-        dbg_print1("##javacall: javanotify_incoming_cbs: encode_cbs_buffer=%s\n", encode_cbs_buffer);
+        javanotify_incoming_cbs(msgType, msgID, (unsigned char*)encode_cbs_buffer, msgBufferLen);
+
+        dbg_print1("##javacall: javanotify_incoming_cbs: bufferLen=%i\n", (void*)msgBufferLen);
+        dbg_print1("##javacall: javanotify_incoming_cbs: cbs_buffer=%s\n", encode_cbs_buffer);
     }
-}
 
     return JAVACALL_OK;
 }
