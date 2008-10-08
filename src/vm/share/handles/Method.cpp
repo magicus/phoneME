@@ -1039,6 +1039,9 @@ void Method::check_bytecodes(JVM_SINGLE_ARG_TRAPS) {
         goto error;
       }
       else if (code == Bytecodes::_wide) {  // 0xc4
+        if (bci + 1 >= codesize) {
+          goto error;
+        }
         code = bytecode_at(bci + 1);
         if (!Bytecodes::is_defined(code)) {
           goto error;
@@ -1064,6 +1067,8 @@ void Method::check_bytecodes(JVM_SINGLE_ARG_TRAPS) {
         case Bytecodes::_tableswitch:      // 0xaa
           {
             int a_bci = align_size_up(bci + 1, wordSize);
+            // Bounds check: should be able to read at least 2 words 
+            // starting with a_bci
             if (a_bci + 2 * wordSize > codesize) {
               goto error;
             }
@@ -1075,6 +1080,8 @@ void Method::check_bytecodes(JVM_SINGLE_ARG_TRAPS) {
             }
             int fields;
             if (code == Bytecodes::_tableswitch) {
+              // Bounds check: should be able to read at least 3 words 
+              // starting with a_bci
               if (a_bci + 3 * wordSize > codesize) {
                 goto error;
               }
