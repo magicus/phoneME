@@ -293,13 +293,13 @@ public class OperationImpl extends Operation {
 
             return result;
 
-        } catch (Throwable t) {
+        } catch (Exception t) {
             // Debug Line
 
             if (ostream != null) {
                 try {
                     ostream.close();
-                } catch (Throwable t1) {
+                } catch (Exception t1) {
                 	if (Logging.TRACE_ENABLED) Logging.trace(t1, ""); 
                 }
                 ostream = null;
@@ -307,7 +307,7 @@ public class OperationImpl extends Operation {
             if (istream != null) {
                 try {
                     istream.close();
-                } catch (Throwable t1) { 
+                } catch (Exception t1) { 
                 	if (Logging.TRACE_ENABLED) Logging.trace(t1, ""); 
                 }
                 istream = null;
@@ -315,15 +315,15 @@ public class OperationImpl extends Operation {
             if (http != null) {
                 try {
                     http.close();
-                } catch (Throwable t1) { 
+                } catch (Exception t1) { 
                 	if (Logging.TRACE_ENABLED) Logging.trace(t1, ""); 
                 }
                 http = null;
             }
             // Re-throw whatever error/exception occurs as a new
             // JAXRPCException
-            if (t instanceof JAXRPCException)
-                throw (JAXRPCException)t;
+            if (t instanceof RuntimeException)
+                throw (RuntimeException)t;
             if (t instanceof MarshalException ||
                     t instanceof ServerException ||
                         t instanceof FaultDetailException) {
