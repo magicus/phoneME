@@ -299,19 +299,25 @@ public class OperationImpl extends Operation {
             if (ostream != null) {
                 try {
                     ostream.close();
-                } catch (Throwable t1) { Logging.trace(t1, ""); }
+                } catch (Throwable t1) {
+                	if (Logging.TRACE_ENABLED) Logging.trace(t1, ""); 
+                }
                 ostream = null;
             }
             if (istream != null) {
                 try {
                     istream.close();
-                } catch (Throwable t1) { Logging.trace(t1, ""); }
+                } catch (Throwable t1) { 
+                	if (Logging.TRACE_ENABLED) Logging.trace(t1, ""); 
+                }
                 istream = null;
             }
             if (http != null) {
                 try {
                     http.close();
-                } catch (Throwable t1) { Logging.trace(t1, ""); }
+                } catch (Throwable t1) { 
+                	if (Logging.TRACE_ENABLED) Logging.trace(t1, ""); 
+                }
                 http = null;
             }
             // Re-throw whatever error/exception occurs as a new
