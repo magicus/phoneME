@@ -26,13 +26,12 @@ package com.sun.ukit.xml;
 
 import java.io.InputStream;
 import java.io.Reader;
-import java.lang.IllegalArgumentException;
 
 import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLResolver;
-import javax.xml.stream.StreamFilter;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 /**
  * Defines an implementation of a factory for getting streams.

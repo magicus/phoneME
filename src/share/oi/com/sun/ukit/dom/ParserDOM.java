@@ -24,21 +24,19 @@
 
 package com.sun.ukit.dom;
 
-import java.io.InputStream;
 import java.io.IOException;
 
-import org.xml.sax.ErrorHandler;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXParseException;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
-import org.w3c.dom.*;
-
-import com.sun.ukit.xml.Parser;
-import com.sun.ukit.xml.Pair;
 import com.sun.ukit.xml.Input;
+import com.sun.ukit.xml.Pair;
+import com.sun.ukit.xml.Parser;
 
 /**
  * XML non-validating DOM parser.
@@ -129,7 +127,6 @@ import com.sun.ukit.xml.Input;
 	{
 		init();
 		mDoc._setBuild(true);
-		mIsDOM = true;
 		try {
 			if (mPh != PH_MISC_DTD)
 				mPh = PH_MISC_DTD;  // misc before DTD
@@ -168,14 +165,11 @@ import com.sun.ukit.xml.Input;
 			//		XML document starting with document's element
 			do {
 				switch (mEvt) {
-				case EV_ELM:
 				case EV_ELMS:
 					//		Set new parent node
-					if (mEvt == EV_ELMS) {
-						step();
-						break;
-					}
-
+					step();
+					break;
+				case EV_ELM:
 				case EV_ELME:
 					//		Restore previous parent node
 					mParent = mParent.getParentNode();

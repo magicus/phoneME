@@ -1,8 +1,5 @@
-
 #
-#   
-#
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -39,6 +36,10 @@
 #
 SUBSYSTEMS += jsr280
 
+USE_XMLPARSER = true
+SAX_280 = true
+JPP_DEFS += -DSAX_280
+
 # Defines where implementation of org.w3c.dom, org.w3c.dom.events, 
 # org.w3c.dom.views packages and javax.xml.parsers.DocumentBuilder.java,
 # javax.xml.parsers.DocumentBuilderFactory.java classes is located
@@ -73,21 +74,7 @@ JSR_280_OI_DIR = $(JSR_280_DIR)/src/share/oi
 JSR_280_SAX_DIR = $(JSR_280_OI_DIR)/org/xml/sax
 
 JSR_280_API_SAX_JAVA_FILES = \
-    $(JSR_280_SAX_DIR)/XMLReader.java \
     $(JSR_280_SAX_DIR)/XMLFilter.java \
-    $(JSR_280_SAX_DIR)/ContentHandler.java \
-    $(JSR_280_SAX_DIR)/DTDHandler.java \
-    $(JSR_280_SAX_DIR)/ErrorHandler.java \
-    $(JSR_280_SAX_DIR)/EntityResolver.java \
-    $(JSR_280_SAX_DIR)/helpers/DefaultHandler.java \
-    $(JSR_280_SAX_DIR)/ext/Attributes2.java \
-    $(JSR_280_SAX_DIR)/SAXNotRecognizedException.java \
-    $(JSR_280_SAX_DIR)/SAXNotSupportedException.java \
-    $(JSR_280_SAX_DIR)/SAXParseException.java \
-    $(JSR_280_SAX_DIR)/InputSource.java \
-    $(JSR_280_SAX_DIR)/SAXException.java \
-    $(JSR_280_SAX_DIR)/Locator.java \
-    $(JSR_280_SAX_DIR)/Attributes.java
 
 JSR_280_STAX_DIR = $(JSR_280_OI_DIR)/javax/xml/stream
 
@@ -132,10 +119,6 @@ JSR_280_API_DOM_CORE_JAVA_FILES = \
 JSR_280_JAXP_DIR = $(JSR_280_OI_DIR)/javax/xml/parsers
 
 JSR_280_API_JAXP_JAVA_FILES = \
-    $(JSR_280_JAXP_DIR)/SAXParser.java \
-    $(JSR_280_JAXP_DIR)/SAXParserFactory.java \
-    $(JSR_280_JAXP_DIR)/ParserConfigurationException.java \
-    $(JSR_280_JAXP_DIR)/FactoryConfigurationError.java
 
 ifeq ($(DOM_IMPL_SOURCE), jsr280)
 JSR_280_API_JAXP_JAVA_FILES += \
@@ -153,22 +136,13 @@ JSR_280_XML_DIR = $(JSR_280_OI_DIR)/com/sun/ukit/xml
 JSR_280_IO_DIR = $(JSR_280_OI_DIR)/com/sun/ukit/io
 
 JSR_280_XML_JAVA_FILES = \
-    $(JSR_280_XML_DIR)/Parser.java \
     $(JSR_280_XML_DIR)/ParserStAX.java \
     $(JSR_280_XML_DIR)/XMLInputFactoryImp.java \
     $(JSR_280_XML_DIR)/DTDStreamReaderImp.java \
-    $(JSR_280_XML_DIR)/Attrs.java \
-    $(JSR_280_XML_DIR)/Pair.java \
-    $(JSR_280_XML_DIR)/Input.java \
     $(JSR_280_XML_DIR)/WriterStAX.java \
     $(JSR_280_XML_DIR)/WriterNoRepStAX.java \
     $(JSR_280_XML_DIR)/WriterRepStAX.java \
     $(JSR_280_XML_DIR)/XMLOutputFactoryImp.java \
-    $(JSR_280_XML_DIR)/SAXParserFactoryImp.java \
-    $(JSR_280_XML_DIR)/SAXParserImp.java \
-    $(JSR_280_XML_DIR)/ParserSAX.java \
-    $(JSR_280_IO_DIR)/ReaderUTF8.java \
-    $(JSR_280_IO_DIR)/ReaderUTF16.java
 
 JSR_280_XML_JAVA_FILES += \
     $(JSR_280_API_CORE_JAVA_FILES)
@@ -277,3 +251,4 @@ ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_JSR_280_I3TEST_JAVA_FILES =
 endif
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_280_I3TEST_JAVA_FILES)
+

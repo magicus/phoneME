@@ -195,8 +195,7 @@ public interface Element extends Node {
      * @since DOM Level 2
      */
     public String getAttributeNS(String namespaceURI, 
-                                 String localName)
-                                 throws DOMException;
+                                 String localName);
 
     /**
      * Adds a new attribute. If an attribute with the same local name and 
@@ -288,8 +287,7 @@ public interface Element extends Node {
      * @since DOM Level 2
      */
     public Attr getAttributeNodeNS(String namespaceURI, 
-                                   String localName)
-                                   throws DOMException;
+                                   String localName);
 
     /**
      * Adds a new attribute. If an attribute with that local name and that 
@@ -337,8 +335,7 @@ public interface Element extends Node {
      * @since DOM Level 2
      */
     public NodeList getElementsByTagNameNS(String namespaceURI, 
-                                           String localName)
-                                           throws DOMException;
+                                           String localName);
 
     /**
      * Returns <code>true</code> when an attribute with a given name is 
@@ -372,8 +369,7 @@ public interface Element extends Node {
      * @since DOM Level 2
      */
     public boolean hasAttributeNS(String namespaceURI, 
-                                  String localName)
-                                  throws DOMException;
+                                  String localName);
 
     /**
      *  If the parameter <code>isId</code> is <code>true</code>, this method 

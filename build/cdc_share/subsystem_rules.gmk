@@ -1,8 +1,5 @@
-
 #
-#   
-#
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -38,21 +35,15 @@
 $(JSR_280_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
 	$(AT)$(call generateJSRInitializer,$(JSR_280_PROPERTY_FILE),$(JSR_280_GENERATED_DIR),$(JSR_280_INIT_PACKAGE),$@,$(JSR_280_LIB_NAME))
 
-$(JSR_280_JAR):  $(SUBSYSTEM_JSR_280_JAVA_FILES)
-	$(call compileJSRClasses,280)
-
-$(JSR_280_NATIVE_OBJS): javacall_lib $(SUBSYSTEM_JSR_280_NATIVE_FILES)
-
-$(JSR_280_NATIVE_LIB): $(JSR_280_NATIVE_OBJS) $(ABSTRACTIONS_NATIVE_LIBRARY)
-	@echo "Linking $@"
-	$(AT)$(call makeSharedLibrary, $(JSR_280_NATIVE_OBJS))
+$(JSR_280_JAR):  $(XMLPARSER_JAR)
+	$(call compileJSROP,jsr280,$(JSR_280_BUILD_DIR)/classes,\
+        $(SUBSYSTEM_JSR_280_JAVA_FILES) $(JSR_280_CONSTANT_CLASS_JAVA_FILES),$(JSR_280_DEPS))
+	$(call makeJSROPJar,$(JSR_280_JAR),$(JSR_280_BUILD_DIR)/classes)
 
 # Append JSR 280 source bundle creation to target
 source_bundle:: jsr_280_source_bundle
 
 # Copy and filter JSR 280 source in JSR_280_SOURCE_OUTPUT_DIR
-jsr_280_source_bundle: JSR_280_DIR SOURCE_OUTPUT_DIR
+jsr_280_source_bundle:
 	@echo " ... JSR 280 source bundle" $(LOG)
-	@$(call re_src_filter,$(JSR_280_DIR),$(JSR_280_SOURCE_OUTPUT_DIR),src build)
-
-
+	$(AT)$(call source_bundle_filter,$(JSR_280_DIR),$(JSR_280_SOURCE_OUTPUT_DIR),build/cdc_share src/share)

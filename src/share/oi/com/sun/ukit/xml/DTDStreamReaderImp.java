@@ -25,16 +25,12 @@
 package com.sun.ukit.xml;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.NoSuchElementException;
-import java.lang.IllegalArgumentException;
-import java.lang.IllegalStateException;
 
 import javax.xml.stream.DTDStreamReader;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.XMLResolver;
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 /**
  * DTDStreamReader implementation.
