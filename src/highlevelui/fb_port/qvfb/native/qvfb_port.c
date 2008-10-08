@@ -243,12 +243,11 @@ jboolean isFullScreenMode(int id) {
 jboolean reverseScreenOrientation(int id) {
     int height;
     SystemScreen *screen = getScreenById(id);
-    if (screen != NULL) {
+    if (screen == NULL) {
       return KNI_FALSE;
     }
 
     screen->reverse_orientation = !screen->reverse_orientation;
-
     
     if (screen->buffer.pixelData != NULL) {
       int size = sizeof(gxj_pixel_type) *

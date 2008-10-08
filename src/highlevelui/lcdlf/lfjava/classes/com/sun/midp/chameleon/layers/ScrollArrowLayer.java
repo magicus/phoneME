@@ -76,13 +76,17 @@ public class ScrollArrowLayer extends ScrollIndLayer {
             bounds[H] = (2 * ScrollIndSkin.IMAGE_UP.getHeight());
             bounds[Y] = (SoftButtonSkin.HEIGHT - bounds[H]) / 3;
             bounds[H] += bounds[Y];
-            bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT +
+            if (owner != null) {
+                bounds[Y] = owner.bounds[H] - SoftButtonSkin.HEIGHT +
                 bounds[Y];
+            }
         } else {
             bounds[W] = ScrollIndSkin.WIDTH;
             bounds[Y] = 3;
         }
-        bounds[X] = (ScreenSkin.WIDTH - bounds[W]) / 2;
+        if (owner != null) {
+            bounds[X] = (owner.bounds[W] - bounds[W]) / 2;
+        }
     }
 
     /**

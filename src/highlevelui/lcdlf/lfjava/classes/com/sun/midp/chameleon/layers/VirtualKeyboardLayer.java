@@ -27,14 +27,9 @@
 package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.lcdui.*;
-import com.sun.midp.configurator.Constants;
-import com.sun.midp.chameleon.input.*;
 import com.sun.midp.chameleon.skins.VirtualKeyboardSkin;
-import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.CLayer;
 import com.sun.midp.chameleon.MIDPWindow;
-import com.sun.midp.chameleon.ChamDisplayTunnel;
-
 import javax.microedition.lcdui.*;
 
 /**
@@ -111,10 +106,12 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      * Sets the anchor constants for rendering operation.
      */
     private void setAnchor() {
-        bounds[W] = (int)(.95 * ScreenSkin.WIDTH);
+        if (owner != null) {
+            bounds[W] = (int)(.95 * owner.bounds[W]);
+        }
         bounds[H] = VirtualKeyboardSkin.HEIGHT;
-        bounds[X] = bounds[X] = (ScreenSkin.WIDTH - bounds[W]) >> 1;
-        bounds[Y] = ScreenSkin.HEIGHT - bounds[H];
+        bounds[X] = bounds[X] = (owner.bounds[W] - bounds[W]) >> 1;
+        bounds[Y] = owner.bounds[H] - bounds[H];
 
     }
 

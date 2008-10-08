@@ -51,7 +51,9 @@ public class WashLayer extends CLayer {
     
     protected void initialize() {
         super.initialize();
-        bounds[H] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT;        
+        if (owner != null) {
+            bounds[H] = owner.bounds[H] - SoftButtonSkin.HEIGHT;
+        }
     }
 
     /**

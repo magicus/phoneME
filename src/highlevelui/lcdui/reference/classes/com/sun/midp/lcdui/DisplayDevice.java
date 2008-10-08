@@ -129,7 +129,6 @@ public class DisplayDevice {
      * <code>DISPLAY_DEVICE_ABSENT</code>
      */
     public void setState(int newState) {
-        System.out.println("Set new state for display " + hardwareId + " : " + newState + " old state: " + state );
         if (state != newState) {
 	        state = newState;
             displayStateChanged0(hardwareId, state);
@@ -262,7 +261,6 @@ public class DisplayDevice {
      */
     public void refresh(int displayId,
 				int x1, int y1, int x2, int y2) {
-	System.out.println("refresh: displayId = " + displayId + " hardwareId = " + hardwareId);
 	refresh0(hardwareId, displayId, x1, y1, x2, y2); 
     }
 

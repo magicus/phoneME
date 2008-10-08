@@ -51,13 +51,6 @@ public class ScreenResources {
             return;
         }
 
-        if ((ScreenSkin.WIDTH <= 0) || (ScreenSkin.HEIGHT <= 0)) {
-            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                Logging.report(Logging.WARNING, LogChannels.LC_HIGHUI,
-                        "Screen dimentions not set.");
-            }
-        }
-
         int textOrient = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_TEXT_ORIENT);
         ScreenSkin.TEXT_ORIENT = SkinLoader.resourceConstantsToGraphics(

@@ -392,5 +392,5 @@ public final class EventTypes {
     /**
      * This event is used for change current locale
      */
-    public static final int CHANGE_LOCALE_EVENT	= 61;
+    public static final int CHANGE_LOCALE_EVENT	= 62;
 }

@@ -40,29 +40,6 @@ public class SkinLoader {
     }
 
     /**
-     * Refresh skin after screen size is changed
-     */
-    public static void adjustScreen() {
-
-        setScreenSize(displayAccess.getDisplayWidth(),
-                      displayAccess.getDisplayHeight());
-        SoftButtonResources.load(true);
-        AlertResources.load(true);
-    }
-
-    /**
-     * This is method to be called before loadSkin to define the screen
-     * size while static initialization because no Display was created yet
-     * and there is no DisplayAccessor at that stage.
-     * @param width screen width
-     * @param height screen height
-     */
-    public static void setScreenSize(int width, int height) {
-        ScreenSkin.WIDTH = width;
-        ScreenSkin.HEIGHT = height;
-    }
-
-    /**
      * Load the skin, including all its properties and images. Some parts
      * of the skin may be lazily initialized, but this method starts the
      * process. If the flag to 'reload' is true, the method will ignore

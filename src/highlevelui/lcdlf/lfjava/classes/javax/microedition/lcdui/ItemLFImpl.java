@@ -368,7 +368,7 @@ abstract class ItemLFImpl implements ItemLF {
     int lGetAvailableWidth() {
         int w = (item.owner != null) ?
             ((DisplayableLFImpl)item.owner.getLF()).lGetWidth() :
-            ScreenSkin.WIDTH - 2 * ScreenSkin.PAD_FORM_ITEMS;
+            Display.WIDTH - 2 * ScreenSkin.PAD_FORM_ITEMS;
         return w;
     }
 

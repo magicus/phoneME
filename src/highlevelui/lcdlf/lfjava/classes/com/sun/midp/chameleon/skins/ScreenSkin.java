@@ -37,17 +37,6 @@ import com.sun.midp.configurator.Constants;
 public class    ScreenSkin {
     
     /**
-     * The overall width of the screen available for use
-     */
-    public static int WIDTH;
-    
-    /**
-     * The overall height of the screen available for use in
-     * "normal" mode, ie, non-fullscreen
-     */
-    public static int HEIGHT;
-    
-    /**
      * This field corresponds to SCREEN_TEXT_ORIENT skin property.
      * See its comment for further details.
      */

@@ -127,8 +127,7 @@ public class DisplayEventListener implements EventListener {
 	}
         DisplayEventConsumer dc =
             displayContainer.findDisplayEventConsumer(nativeEvent.intParam4);
-
-        if (dc != null) {
+          if (dc != null) {
             switch (event.getType()) {
             case EventTypes.KEY_EVENT:
 
