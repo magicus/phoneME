@@ -955,7 +955,9 @@ CNIsun_misc_CVM_initializeJITPolicy(CVMExecEnv* ee,
 			          CVMMethodBlock **p_m)
 {
 #ifdef CVM_JIT
-    CVMjitPolicyInit(ee, &CVMglobals.jit);
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+    CVMjitProcessOptionsAndPolicyInit(ee, &CVMglobals.jit);
+#endif
 #endif
 
     return CNI_VOID;

@@ -588,6 +588,17 @@ CVMjitInit(CVMExecEnv* ee, CVMJITGlobalState* jgs, const char *options);
 extern CVMBool
 CVMjitPolicyInit(CVMExecEnv* ee, CVMJITGlobalState* jgs);
 
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+/* During AOT compilation and MTASK warmup, dynamic compilation policy
+ * is disabled. Patched method invocation (PMI) is also disabled during
+ * that. This is used to re-initialize JIT options and policy after 
+ * pre-compilation. For AOT, if there is existing AOT code, this is
+ * called after initializing the AOT code.
+ */
+CVMBool
+CVMjitProcessOptionsAndPolicyInit(CVMExecEnv* ee, CVMJITGlobalState* jgs);
+#endif
+
 /* Purpose: Set up the inlining threshold table. */
 CVMBool
 CVMjitSetInliningThresholds(CVMExecEnv* ee, CVMJITGlobalState* jgs);
