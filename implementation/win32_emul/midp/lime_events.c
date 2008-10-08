@@ -66,10 +66,23 @@ extern void HandleLocationProviderStateEvent(int state);
 
 void SendEvent(KVMEventType *evt);
 javacall_bool generateSoftButtonKeys(int x, int y, javacall_penevent_type pentype);
+/*
+ * Translates screen coordinates into displayable coordinate system.
+ */
+void getScreenCoordinates(short screenX, short screenY, short* x, short* y);
 
 /* global varaiable to determine if the application 
  * is running locally or via OTA */
 extern javacall_bool isRunningLocal;
+
+/* Rotates display according to code.
+ * If code is 0 no screen transformations made;
+ * If code is 1 then screen orientation is reversed.
+ * if code is 2 then screen is turned upside-down.
+ * If code is 3 then both screen orientation is reversed
+ * and screen is turned upside-down.
+ */
+extern void RotateDisplay(short code);
 
 #if ENABLE_ON_DEVICE_DEBUG
 static const char pStartOddKeySequence[] = "#1*2";
@@ -160,22 +173,35 @@ void SendEvent (KVMEventType *evt) {
 
     switch (evt->type) {
     case penDownKVMEvent:
-        if (!generateSoftButtonKeys(evt->screenX,evt->screenY,JAVACALL_PENPRESSED))
-            javanotify_pen_event(evt->screenX,evt->screenY,JAVACALL_PENPRESSED);
+        if (!generateSoftButtonKeys(evt->screenX, evt->screenY, JAVACALL_PENPRESSED)) {
+            short x;
+            short y;
+            getScreenCoordinates(evt->screenX, evt->screenY, &x, &y);
+            javanotify_pen_event(x, y, JAVACALL_PENPRESSED);
+        }
         break;
 
     case penUpKVMEvent:
-        if (!generateSoftButtonKeys(evt->screenX,evt->screenY,JAVACALL_PENRELEASED))
-            javanotify_pen_event(evt->screenX,evt->screenY,JAVACALL_PENRELEASED);
+        if (!generateSoftButtonKeys(evt->screenX, evt->screenY, JAVACALL_PENRELEASED)) {
+            short x;
+            short y;
+            getScreenCoordinates(evt->screenX, evt->screenY, &x, &y);
+            javanotify_pen_event(x, y, JAVACALL_PENRELEASED);
+        }
         break;
 
     case penMoveKVMEvent:
-        javanotify_pen_event(evt->screenX,evt->screenY,JAVACALL_PENDRAGGED);
+        {
+            short x;
+            short y;
+            getScreenCoordinates(evt->screenX,evt->screenY, &x, &y);
+            javanotify_pen_event(x, y, JAVACALL_PENDRAGGED);
+        }
         break;
 
     case keyDownKVMEvent:
-        if (evt->chr == KEY_USER2) {
-            javanotify_rotation();
+        if (evt->chr == KEY_USER2) { 
+            RotateDisplay(evt->screenX);     
         } else if ((evt->chr != KEY_END)) {
             javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
         } else if (isRunningLocal == JAVACALL_FALSE) {
