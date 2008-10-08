@@ -38,6 +38,7 @@ import java.rmi.MarshalException;
 import java.rmi.ServerException;
 
 import com.sun.j2me.io.Base64;
+import com.sun.j2me.log.Logging;
 
 /**
  * The <code>OperationImpl</code> class is an implementation
@@ -237,7 +238,7 @@ public class OperationImpl extends Operation {
      *
      * @throws JAXRPCException
      * <UL>
-     * <LI>if an error occurs while excuting the operation.
+     * <LI>if an error occurs while executing the operation.
      * </UL>
      * @see javax.microedition.xml.rpc.Operation
      */
@@ -298,19 +299,19 @@ public class OperationImpl extends Operation {
             if (ostream != null) {
                 try {
                     ostream.close();
-                } catch (Throwable t1) { }
+                } catch (Throwable t1) { Logging.trace(t1, ""); }
                 ostream = null;
             }
             if (istream != null) {
                 try {
                     istream.close();
-                } catch (Throwable t1) { }
+                } catch (Throwable t1) { Logging.trace(t1, ""); }
                 istream = null;
             }
             if (http != null) {
                 try {
                     http.close();
-                } catch (Throwable t1) { }
+                } catch (Throwable t1) { Logging.trace(t1, ""); }
                 http = null;
             }
             // Re-throw whatever error/exception occurs as a new
@@ -541,5 +542,3 @@ public class OperationImpl extends Operation {
         return null;
     }
 }
-
-
