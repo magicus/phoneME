@@ -452,6 +452,12 @@ endif
 endif
 endif
 
+ifeq ($(USE_XMLPARSER), true)
+# xmlparser
+$(MIDP_CLASSES_ZIP):: $(XMLPARSER_JAVA_FILES)
+	$(appendsubsetjavafiles)
+endif
+
 #####################################################################
 # Include subsystem makefiles with "lazy" rules to be parsed after
 # other subsystem makefile have been included and global variables

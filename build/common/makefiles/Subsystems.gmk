@@ -1,6 +1,4 @@
 #
-#
-#
 # Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -536,4 +534,10 @@ endif
 #####################################################################
 ifeq ($(USE_JPEG), true)
 include $(JPEG_DIR)/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+# xmlparser component
+ifeq ($(USE_XMLPARSER),true)
+include $(XMLPARSER_DIR)/build/share/defs.gmk
+include $(XMLPARSER_DIR)/build/share/rules.gmk
 endif
