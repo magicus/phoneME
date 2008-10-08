@@ -1824,13 +1824,13 @@ void BytecodeCompileClosure::direct_invoke(int index, bool must_do_null_check
     BasicType array_element_type = T_ILLEGAL;
     if (name.equals(Symbols::unchecked_byte_arraycopy_name())) {
       array_element_type = T_BYTE;
-    }
+    } else
     if (name.equals(Symbols::unchecked_char_arraycopy_name())) {
       array_element_type = T_CHAR;
-    }
+    } else
     if (name.equals(Symbols::unchecked_int_arraycopy_name())) {
       array_element_type = T_INT;
-    }
+    } else
     if (name.equals(Symbols::unchecked_obj_arraycopy_name())) {
       array_element_type = T_OBJECT;
     }

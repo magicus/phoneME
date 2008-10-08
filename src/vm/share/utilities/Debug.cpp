@@ -394,6 +394,13 @@ void poh() {
   ObjectHeap::print();
 }
 
+#if ENABLE_ISOLATES
+// Print task objects
+void poht( const int task_id ) {
+  ObjectHeap::print_task_objects( task_id );
+}
+#endif
+
 void ref(int x) {
   ObjectHeap::check_reach_root((OopDesc*)x, NULL, -1);
   ObjectHeap::find((OopDesc*)x, false);
