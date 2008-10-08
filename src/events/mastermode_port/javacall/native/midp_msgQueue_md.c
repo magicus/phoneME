@@ -173,20 +173,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
     case MIDP_JC_EVENT_MULTIMEDIA:
 #if ENABLE_JSR_135
-
-        if( JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED == event->data.multimediaEvent.mediaType ) {
-            pNewSignal->waitingFor = MEDIA_SNAPSHOT_SIGNAL;
-            /*
-            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16)
-                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
-            */
-
-            REPORT_CALL_TRACE1(LC_NONE, "[media event] JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED %d\n",
-                               pNewSignal->descriptor);
-        } else {
-            pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
-        }
-
+        pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
         pNewSignal->status = JAVACALL_OK;
 
         pNewMidpEvent->type         = MMAPI_EVENT;

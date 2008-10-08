@@ -198,11 +198,6 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
                 MEDIA_EVENT_SIGNAL, newSignal.descriptor, 
                 newSignal.status);
         break;
-    case MEDIA_SNAPSHOT_SIGNAL:
-        eventUnblockJavaThread(blocked_threads, blocked_threads_count,
-                MEDIA_SNAPSHOT_SIGNAL, newSignal.descriptor, 
-                newSignal.status);
-        break;
 #endif
 #ifdef ENABLE_JSR_179
     case JSR179_LOCATION_SIGNAL:
