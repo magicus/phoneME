@@ -105,7 +105,7 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
         msgBufferLen, (const char*)msgBuffer, &encodedSMSLength, fragment);
 
     if (encodedSMS == NULL) {
-        return JAVACALL_OK;
+        break;
     }
 
 #ifdef LOOPBACK

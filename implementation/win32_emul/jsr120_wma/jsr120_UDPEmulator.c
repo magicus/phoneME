@@ -492,6 +492,9 @@ javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
                     javautil_debug_print(JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "Too long CBS message");
                     return JAVACALL_FAIL;
                 }
+                if ((fragm_size == 0) & (msgBufferLen>0)) {
+                    fragm_size = msgBufferLen;
+                }
                 memcpy(decode_cbs_buffer+fragm_offset, msgBuffer, fragm_size);
                 pch = strtok(NULL, "\n");
             }
