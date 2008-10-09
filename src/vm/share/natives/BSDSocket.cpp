@@ -43,7 +43,7 @@
 extern "C" {
 #endif
 
-#if USE_BSD_SOCKET
+#if USE_BSD_SOCKET || 1
 
 #if defined(LINUX) || defined (CYGWIN)
 #define USE_UNISTD_SOCKETS 1
