@@ -406,6 +406,13 @@ javacall_lcd_set_screen_mode(
 	return JAVACALL_FAIL;
 }*/
 
+void on_screen_rotated() {
+      static LimeFunction *f = NULL;
+      f = NewLimeFunction(LIME_PACKAGE, LIME_GRAPHICS_CLASS, "screenRotated");
+      /* IMPL NOTE: call on the proper screen ID with multiple screen support */
+      f->call(f, NULL, 0 /*screen id*/, reverse_orientation, top_down);
+}
+
 /* Rotates display according to code.
  * If code is 0 no screen transformations made;
  * If code is 1 then screen orientation is reversed.
@@ -421,12 +428,14 @@ void RotateDisplay(short code) {
         javanotify_rotation();
     } else if (prev_top_down != top_down) {
         //we should initiate screen refresh
+        on_screen_rotated();
         javacall_lcd_flush();                
     }
 }
 
 javacall_bool javacall_lcd_reverse_orientation() {
       reverse_orientation = !reverse_orientation;
+      on_screen_rotated();
       return reverse_orientation;
 }
  
