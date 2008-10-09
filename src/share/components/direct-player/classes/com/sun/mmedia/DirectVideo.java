@@ -674,12 +674,12 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
         public void setDisplaySize(int width, int height) {
             synchronized(boundLock) {
-                dw = width;
-                dh = height;
 
                 boolean sizeChanged = ( dw != width || dh != height );
 
                 if (sizeChanged) {
+                    dw = width;
+                    dh = height;
                     source.notifyDisplaySizeChange();
                 }
             }
