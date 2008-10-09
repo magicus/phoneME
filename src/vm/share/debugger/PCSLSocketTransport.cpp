@@ -560,12 +560,13 @@ int SocketTransport::write_short(Transport *t, void *buf)
   return (write_bytes(t, buf, sizeof(short)));
 }
 
-bool SocketTransport::add_to_read_ahead_cache(unsigned char* buf_to_add, int len)
+bool SocketTransport::add_to_read_ahead_buffer(unsigned char* buf_to_add,
+                                               int len)
 {
   UsingFastOops fastoops;
   int cache_size = read_ahead_buffer_size();
   int bytes_cached = bytes_cached_for_read();
-  TypeArray::Fast read_buffer = read_ahead_buffer();
+  TypeArray read_buffer = read_ahead_buffer();
   
   if (Verbose) {
     tty->print_cr("add_to_read_ahead_buffer()");
@@ -576,8 +577,14 @@ bool SocketTransport::add_to_read_ahead_cache(unsigned char* buf_to_add, int len
   }
 
   if (cache_size < bytes_cached + len) {
+    SETUP_ERROR_CHECKER_ARG;
     int new_cache_size = cache_size + len;
-    TypeArray tmp_buf = Universe::new_byte_array(new_cache_size JVM_CHECK);
+    TypeArray tmp_buf = Universe::new_byte_array(new_cache_size JVM_NO_CHECK);
+
+    if (CURRENT_HAS_PENDING_EXCEPTION) {
+      Thread::clear_current_pending_exception();
+      return false;
+    }
 
     if (bytes_cached > 0) {
       TypeArray::array_copy(&read_buffer, 0, &tmp_buf, 0, bytes_cached);
