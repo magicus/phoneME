@@ -29,7 +29,7 @@
 
 // The implementation from this file should be used for the platforms
 // not supported by PCSL, or when building without PCSL
-#if !ENABLE_PCSL || defined(__SYMBIAN32__)
+#if !ENABLE_PCSL
 
 #if ENABLE_JAVA_DEBUGGER
 
@@ -703,4 +703,4 @@ int SocketTransport::write_short(Transport *t, void *buf)
 
 #endif
 
-#endif // !ENABLE_PCSL || defined(__SYMBIAN32__)
+#endif // !ENABLE_PCSL

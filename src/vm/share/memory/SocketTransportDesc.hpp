@@ -27,20 +27,10 @@
 class SocketTransportDesc : public TransportDesc {
 #if ENABLE_JAVA_DEBUGGER
 public:
-
   int              _debugger_socket;
   int              _listener_socket;
+#endif // ENABLE_JAVA_DEBUGGER
 
-  // read cache
-  unsigned char* _m_p_read_cache;
-  
-  // size of the cache
-  int _m_read_cache_size;
-    
-  // number of bytes occupied by data in _m_read_cache_size
-  int _m_bytes_cached_for_read;
-      
-#endif
 protected:
   static jint header_size() { return sizeof(SocketTransportDesc); }
 

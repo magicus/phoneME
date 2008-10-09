@@ -29,7 +29,7 @@
 
 // The implementation from this file should be used, until the target platform
 // is not supported by PCSL, or when building without PCSL
-#if ENABLE_PCSL && !defined(__SYMBIAN32__)
+#if ENABLE_PCSL
 
 #if ENABLE_JAVA_DEBUGGER
 
@@ -77,10 +77,10 @@ Transport::transport_op_def_t SocketTransport::socket_transport_ops = {
  *               not 0 - if the initialization
  * @param status one of PCSL_NET_* completion codes
  */
-void SocketTransport::pcsl_network_initialized(int isInit, int status)
+void SocketTransport::network_initialized_callback(int isInit, int status)
 {
   if (Verbose) {
-    tty->print_cr("SocketTransport::pcsl_network_initialized()");
+    tty->print_cr("SocketTransport::network_initialized_callback()");
   }
 
   if (isInit) {
@@ -123,7 +123,7 @@ void SocketTransport::init_transport(void *t JVM_TRAPS)
 
     if (!_network_is_up) {
       if (!_wait_for_network_init) {
-        res = pcsl_network_init_start(SocketTransport::pcsl_network_initialized);
+        res = pcsl_network_init_start(SocketTransport::network_initialized_callback);
       } else {
         res = pcsl_network_init_finish();
       }
@@ -173,7 +173,7 @@ ReturnOop SocketTransport::new_transport(JVM_SINGLE_ARG_TRAPS)
   this_transport().set_listener_socket((int)_listen_handle);
   this_transport().set_debugger_socket((int)INVALID_HANDLE);
   this_transport().set_ops(&socket_transport_ops);
-  this_transport().init_read_cache();
+  this_transport().reset_read_ahead_buffer();
   
   return this_transport;
 }
@@ -240,7 +240,7 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct,
       tty->print_cr("SocketTransport::connect_transport(): connection accepted");
     }
 
-    st->init_read_cache();
+    st->reset_read_ahead_buffer();
     st->set_debugger_socket((int)connect_handle);
      
     _wait_for_accept = false;
@@ -308,7 +308,7 @@ void SocketTransport::destroy_transport(Transport *t)
     tty->print_cr("SocketTransport::destroy_transport()");
   }
 
-  st->finalize_read_cache();
+  st->reset_read_ahead_buffer();
 
   if (listener_handle != INVALID_HANDLE) {
     // last socket in the system, shutdown the listener socket
@@ -445,7 +445,7 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
   int bytes_cached = st->bytes_cached_for_read();
 
   if (bytes_cached >= len) {
-    jvm_memcpy((unsigned char *)buf, st->read_cache(), len);
+    jvm_memcpy((unsigned char *)buf, st->read_ahead_buffer(), len);
     if (!peekOnly) {
       st->set_bytes_cached_for_read(bytes_cached - len);
     }
@@ -453,7 +453,7 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
     return len;
   } else {
     if (bytes_cached > 0) {
-      jvm_memcpy((unsigned char *)buf, st->read_cache(), bytes_cached);
+      jvm_memcpy((unsigned char *)buf, st->read_ahead_buffer(), bytes_cached);
       len -= bytes_cached;
       ptr += bytes_cached;
     }
@@ -512,7 +512,7 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
     // nread > 0
     if (peekOnly) {
       // add the read data to the cache
-      bool success = st->add_to_read_cache(ptr, nread);
+      bool success = st->add_to_read_ahead_buffer(ptr, nread);
       if (!success) {
         break;
       }
@@ -560,62 +560,42 @@ int SocketTransport::write_short(Transport *t, void *buf)
   return (write_bytes(t, buf, sizeof(short)));
 }
 
-bool SocketTransport::add_to_read_cache(unsigned char* p_buf, int len)
+bool SocketTransport::add_to_read_cache(unsigned char* buf_to_add, int len)
 {
-  int cache_size = read_cache_size();
+  UsingFastOops fastoops;
+  int cache_size = read_ahead_buffer_size();
   int bytes_cached = bytes_cached_for_read();
-  unsigned char* p_read_cache = read_cache();
+  TypeArray::Fast read_buffer = read_ahead_buffer();
   
   if (Verbose) {
-    tty->print_cr("add_to_read_cache()");
+    tty->print_cr("add_to_read_ahead_buffer()");
   }
   
-  if (len <= 0 || p_buf == NULL) {
+  if (len <= 0 || buf_to_add == NULL) {
     return false;
   }
 
   if (cache_size < bytes_cached + len) {
-    unsigned char* p_tmp_buf;
     int new_cache_size = cache_size + len;
-
-    p_tmp_buf = (unsigned char*)jvm_malloc(new_cache_size);
-    if (p_tmp_buf == NULL) {
-      return false;
-    }
+    TypeArray tmp_buf = Universe::new_byte_array(new_cache_size JVM_CHECK);
 
     if (bytes_cached > 0) {
-      jvm_memcpy(p_tmp_buf, p_read_cache, bytes_cached);
-    }
-    
-    if (cache_size > 0) {
-      jvm_free(p_read_cache);
+      TypeArray::array_copy(&read_buffer, 0, &tmp_buf, 0, bytes_cached);
     }
 
-    set_read_cache(p_tmp_buf);
-    set_read_cache_size(new_cache_size);
-    p_read_cache = p_tmp_buf;
+    // update the object if it was changed
+    set_read_ahead_buffer(&tmp_buf);
+    read_buffer = tmp_buf;
 
     if (Verbose) {
       printf("new cache size: %d\n", new_cache_size);
     }
   }
 
-  jvm_memcpy(&p_read_cache[bytes_cached], p_buf, len);
+  jvm_memcpy(read_buffer.base_address() + bytes_cached, buf_to_add, len);
   set_bytes_cached_for_read(bytes_cached + len);
   
   return true;
-}
-
-void SocketTransport::finalize_read_cache()
-{
-  unsigned char* p_read_cache = read_cache();
-  if (p_read_cache != NULL) {
-    jvm_free(p_read_cache);
-    set_read_cache(NULL);
-  }
-  
-  set_read_cache_size(0);
-  set_bytes_cached_for_read(0);
 }
 
 /**
@@ -636,4 +616,4 @@ NotifySocketStatusChanged(long handle, int waitingFor)
 
 #endif // ENABLE_JAVA_DEBUGGER
 
-#endif // ENABLE_PCSL && !defined(__SYMBIAN32__)
+#endif // ENABLE_PCSL

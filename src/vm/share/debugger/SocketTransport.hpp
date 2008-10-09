@@ -58,7 +58,7 @@ public:
   static Transport::transport_op_def_t socket_transport_ops;
   static ReturnOop new_transport(JVM_SINGLE_ARG_TRAPS);
 
-  static void pcsl_network_initialized(int isInit, int status);
+  static void network_initialized_callback(int isInit, int status);
 
   int debugger_socket() {
     return int_field(debugger_socket_offset());
@@ -83,22 +83,23 @@ public:
                                    JVM_NO_CHECK_AT_BOTTOM);
   }
 
-  void init_read_cache() {
-    set_read_cache(NULL);
-    set_read_cache_size(0);
+#if ENABLE_PCSL
+  void reset_read_ahead_buffer() {
+    obj_field_clear(read_ahead_buffer_offset());
     set_bytes_cached_for_read(0);
   }
 
-  unsigned char* read_cache() {
-    return (unsigned char*)int_field(read_cache_offset());
+  ReturnOop read_ahead_buffer() {
+    return obj_field(read_ahead_buffer_offset());
   }
 
   int bytes_cached_for_read() {
     return int_field(bytes_cached_for_read_offset());
   }
 
-  int read_cache_size() {
-    return int_field(read_cache_size_offset());
+  int read_ahead_buffer_size() {
+    TypeArray::Raw tmp = read_ahead_buffer();
+    return tmp().length();
   }
 
   void set_bytes_cached_for_read(int new_size) {
@@ -106,21 +107,32 @@ public:
                   (new_size >= 0 ? new_size : 0));
   }
 
-  bool add_to_read_cache(unsigned char* p_buf, int len);
+  bool add_to_read_ahead_buffer(unsigned char* buf_to_add, int len);
+#endif // ENABLE_PCSL
 
-  void finalize_read_cache();
-    
 private:
-  void set_read_cache(unsigned char* p_new_cache) {
-    return int_field_put(read_cache_offset(), (int)p_new_cache);
-  }
-
-  void set_read_cache_size(int new_cache_size) {
-    return int_field_put(read_cache_size_offset(), new_cache_size);
+#if ENABLE_PCSL
+  void set_read_ahead_buffer(TypeArray* new_buffer) {
+    return obj_field_put(read_ahead_buffer_offset(), new_buffer->obj());
   }
 
   static int read_bytes_impl(Transport *t, void *buf, int len,
                              bool blockflag, bool peekOnly);
+
+  static int read_ahead_buffer_offset() {
+    return (FIELD_OFFSET(SocketTransportDesc, _read_ahead_buffer));
+  }
+
+  static int bytes_cached_for_read_offset() {
+    return (FIELD_OFFSET(SocketTransportDesc, _bytes_cached_for_read));
+  }
+
+  static bool _network_is_up;
+  static bool _wait_for_network_init;
+  static bool _wait_for_accept;
+  static bool _wait_for_read;
+  static bool _wait_for_write;
+#endif // ENABLE_PCSL
 
   static int debugger_socket_offset() {
     return (FIELD_OFFSET(SocketTransportDesc, _debugger_socket));
@@ -129,26 +141,8 @@ private:
     return (FIELD_OFFSET(SocketTransportDesc, _listener_socket));
   }
 
-  static int read_cache_offset() {
-    return (FIELD_OFFSET(SocketTransportDesc, _m_p_read_cache));
-  }
-
-  static int read_cache_size_offset() {
-    return (FIELD_OFFSET(SocketTransportDesc, _m_read_cache_size));
-  }
-
-  static int bytes_cached_for_read_offset() {
-    return (FIELD_OFFSET(SocketTransportDesc, _m_bytes_cached_for_read));
-  }
-  
   static bool _first_time;
-  static bool _network_is_up;
-  static bool _wait_for_network_init;
-
   static void* _listen_handle;
 
-  static bool _wait_for_accept;
-  static bool _wait_for_read;
-  static bool _wait_for_write;
 };
 #endif
