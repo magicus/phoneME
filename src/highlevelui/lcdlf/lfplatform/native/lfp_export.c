@@ -133,6 +133,63 @@ int lcdlf_get_current_hardwareId() {
     return 0; 
 }
 
+/** 
+ * Get display device name by id
+ */
+char * lcdlf_get_display_name(int hardwareId) {
+    return lfpport_get_display_name(hardwareId);
+}
+
+/**
+ * Check if the display device is primary
+ */
+jboolean lcdlf_is_display_primary(int hardwareId) {
+    return lfpport_is_display_primary(hardwareId);
+}
+
+/**
+ * Check if the display device is build-in
+ */
+jboolean lcdlf_is_display_buildin(int hardwareId) {
+    return lfpport_is_display_buildin(hardwareId);
+}
+
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean lcdlf_is_display_ptr_supported(int hardwareId) {
+    return lfpport_is_display_ptr_supported(hardwareId);
+}
+
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean lcdlf_is_display_ptr_motion_supported(int hardwareId) {
+  return lfpport_is_display_ptr_motion_supported(hardwareId);
+}
+/**
+ * Get display device capabilities
+ */
+int lcdlf_get_display_capabilities(int hardwareId) {
+    return lfpport_get_display_capabilities(hardwareId);
+}
+
+/**
+ * Get the list of display device ids
+ */
+jint* lcdlf_get_display_device_ids(jint* n) {
+    return lfpport_get_display_device_ids(n);
+}
+
+/**
+* Notify that display device state has ben changed
+*/
+void lcdlf_display_device_state_changed(int hardwareId, int state) {
+    lfpport_display_device_state_changed(hardwareId, state);
+}
+
+
 #ifdef __cplusplus
 }
 #endif

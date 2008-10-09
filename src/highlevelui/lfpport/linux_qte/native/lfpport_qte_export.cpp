@@ -119,7 +119,8 @@ int lfpport_set_vertical_scroll(
  * @param mode true for full screen mode
  *             false for normal
  */
-void lfpport_set_fullscreen_mode(jboolean mode) {
+void lfpport_set_fullscreen_mode(int hardwareId, jboolean mode) {
+  (void)hardwareId;
   PlatformMIDPMainWindow * mainWindow = 
     PlatformMIDPMainWindow::getMainWindow();
   mainWindow->setFullScreen(mode);
@@ -239,6 +240,13 @@ jint* lfpport_get_display_device_ids(jint* n) {
     return display_device_ids;
 }
 
+/** 
+ * Notify the display device state has been changed 
+ */  
+void lfpport_display_device_state_changed(int hardwareId, int state) {
+    (void)hardwareId;
+    (void)state;
+} 
 
 #ifdef __cplusplus
 }

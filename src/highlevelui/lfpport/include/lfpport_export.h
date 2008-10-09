@@ -140,6 +140,7 @@ int lfpport_get_display_capabilities(int hardwareId);
  */
 jint* lfpport_get_display_device_ids(jint* n);
 
+void lfpport_display_device_state_changed(int hardwareId, int state);
 
 #ifdef __cplusplus
 }
