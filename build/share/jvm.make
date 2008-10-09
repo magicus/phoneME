@@ -2637,7 +2637,6 @@ ifeq ($(ENABLE_MEMORY_PROFILER), true)
 
 $(WorkSpace)/src/tools/memprof_client/memprof_client.jar: 
 	$(A)echo building memprof_client.jar ...
-	$(A)rm -f $@
 	$(A)make -C $(WorkSpace)/src/tools/memprof_client client
 	$(A)echo built $@
 
