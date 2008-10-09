@@ -84,21 +84,26 @@ public:
   }
 
   void init_read_cache() {
-    _m_p_read_cache = NULL;
-    _m_read_cache_size = 0;
-    _m_bytes_cached_for_read = 0;
+    set_read_cache(NULL);
+    set_read_cache_size(0);
+    set_bytes_cached_for_read(0);
   }
 
-  const unsigned char* get_read_cache() {
-    return _m_p_read_cache;
+  unsigned char* read_cache() {
+    return (unsigned char*)int_field(read_cache_offset());
   }
 
   int bytes_cached_for_read() {
-    return _m_bytes_cached_for_read;
+    return int_field(bytes_cached_for_read_offset());
+  }
+
+  int read_cache_size() {
+    return int_field(read_cache_size_offset());
   }
 
   void set_bytes_cached_for_read(int new_size) {
-    _m_bytes_cached_for_read = (new_size >= 0 ? new_size : 0);
+    int_field_put(bytes_cached_for_read_offset(),
+                  (new_size >= 0 ? new_size : 0));
   }
 
   bool add_to_read_cache(unsigned char* p_buf, int len);
@@ -106,6 +111,14 @@ public:
   void finalize_read_cache();
     
 private:
+  void set_read_cache(unsigned char* p_new_cache) {
+    return int_field_put(read_cache_offset(), (int)p_new_cache);
+  }
+
+  void set_read_cache_size(int new_cache_size) {
+    return int_field_put(read_cache_size_offset(), new_cache_size);
+  }
+
   static int read_bytes_impl(Transport *t, void *buf, int len,
                              bool blockflag, bool peekOnly);
 
@@ -116,23 +129,26 @@ private:
     return (FIELD_OFFSET(SocketTransportDesc, _listener_socket));
   }
 
+  static int read_cache_offset() {
+    return (FIELD_OFFSET(SocketTransportDesc, _m_p_read_cache));
+  }
+
+  static int read_cache_size_offset() {
+    return (FIELD_OFFSET(SocketTransportDesc, _m_read_cache_size));
+  }
+
+  static int bytes_cached_for_read_offset() {
+    return (FIELD_OFFSET(SocketTransportDesc, _m_bytes_cached_for_read));
+  }
+  
   static bool _first_time;
-  static   bool _network_is_up;
-  static   bool _wait_for_network_init;
+  static bool _network_is_up;
+  static bool _wait_for_network_init;
 
-  static   void* _listen_handle;
+  static void* _listen_handle;
 
-  static   bool _wait_for_accept;
-  static   bool _wait_for_read;
-  static   bool _wait_for_write;
-
-  // read cache
-  unsigned char* _m_p_read_cache;
-
-  // size of the cache
-  int _m_read_cache_size;
-
-  // number of bytes occupied by data in _m_read_cache_size
-  int _m_bytes_cached_for_read;
+  static bool _wait_for_accept;
+  static bool _wait_for_read;
+  static bool _wait_for_write;
 };
 #endif

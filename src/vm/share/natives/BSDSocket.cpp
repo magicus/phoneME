@@ -498,7 +498,8 @@ void JVMSPI_CheckEvents(JVMSPI_BlockedThreadInfo * blocked_threads,
 #if ENABLE_JAVA_DEBUGGER
     if (debugger_active) {
       Transport::Raw t = Universe::transport_head();
-      if (SocketTransport::char_avail(&t, 0)) {
+      SocketTransport::Raw st = t().obj();
+      if (SocketTransport::char_avail(&st, 0)) {
         JVM_ProcessDebuggerCmds();
       }
     }

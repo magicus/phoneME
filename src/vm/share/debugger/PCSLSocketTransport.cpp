@@ -168,11 +168,13 @@ void SocketTransport::init_transport(void *t JVM_TRAPS)
 ReturnOop SocketTransport::new_transport(JVM_SINGLE_ARG_TRAPS)
 {
   SocketTransport::Raw this_transport =
-  SocketTransport::allocate(JVM_SINGLE_ARG_CHECK_0);
+      SocketTransport::allocate(JVM_SINGLE_ARG_CHECK_0);
+      
   this_transport().set_listener_socket((int)_listen_handle);
   this_transport().set_debugger_socket((int)INVALID_HANDLE);
   this_transport().set_ops(&socket_transport_ops);
   this_transport().init_read_cache();
+  
   return this_transport;
 }
 
@@ -277,6 +279,10 @@ void SocketTransport::disconnect_transport(Transport *t)
   SocketTransport *st = (SocketTransport *)t;
   void* dbg_handle = (void*)st->debugger_socket();
 
+  if (Verbose) {
+    tty->print_cr("SocketTransport::disconnect_transport()");
+  }
+
   if (dbg_handle != INVALID_HANDLE) {
     /* IMPL_NOTE: wait here for 2 seconds to let other side to finish */
 
@@ -297,6 +303,10 @@ void SocketTransport::destroy_transport(Transport *t)
   UsingFastOops fastoops;
   SocketTransport *st = (SocketTransport *)t;
   void* listener_handle = (void*)st->listener_socket();
+
+  if (Verbose) {
+    tty->print_cr("SocketTransport::destroy_transport()");
+  }
 
   st->finalize_read_cache();
 
@@ -329,16 +339,13 @@ bool SocketTransport::char_avail(Transport *t, int timeout)
   (void)timeout; // IMPL_NOTE: take timeout into account
 
   if (dbg_handle == INVALID_HANDLE) {
-printf("char_avail(): false (1)\n");  
     return false;
   }
 
   int status = pcsl_socket_available(dbg_handle, &bytesAvailable);
   if (status == PCSL_NET_SUCCESS && bytesAvailable >= 1) {
-printf("char_avail(): true\n");  
     return true;
   } else {
-printf("char_avail(): false (2)\n");  
     return false;
   }
 }
@@ -352,9 +359,9 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
   int status;
   static void* pContext;
 
-//  if (Verbose) {
+  if (Verbose) {
     tty->print_cr("SocketTransport::write_bytes()");
-//  }
+  }
 
   if (dbg_handle == INVALID_HANDLE) {
     return 0;
@@ -369,11 +376,11 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
   }
 
   if (status == PCSL_NET_WOULDBLOCK) {
-//  if (Verbose) {
+    if (Verbose) {
       tty->print_cr("SocketTransport::write_bytes(): waiting for write");
-//  }
-      _wait_for_write = true;
-      return 0;
+    }
+    _wait_for_write = true;
+    return 0;
   }
 
   _wait_for_write = false;
@@ -391,15 +398,9 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
 int SocketTransport::peek_bytes(Transport *t, void *buf, int len)
 {
   UsingFastOops fastoops;
-  SocketTransport *st = (SocketTransport *)t;
-  void* dbg_handle = (void*)st->debugger_socket();
 
-//  if (Verbose) {
-      tty->print_cr("SocketTransport::peek_bytes()");
-//  }
-
-  if (dbg_handle == INVALID_HANDLE || len <= 0) {
-    return 0;
+  if (Verbose) {
+    tty->print_cr("SocketTransport::peek_bytes()");
   }
 
   return read_bytes_impl(t, buf, len, false, true);
@@ -407,6 +408,12 @@ int SocketTransport::peek_bytes(Transport *t, void *buf, int len)
 
 int SocketTransport::read_bytes(Transport *t, void *buf, int len, bool blockflag)
 {
+  UsingFastOops fastoops;
+
+  if (Verbose) {
+    tty->print_cr("SocketTransport::read_bytes()");
+  }
+
   return read_bytes_impl(t, buf, len, blockflag, false);
 }
 
@@ -423,9 +430,9 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
   int status;
   static void *pContext;
 
-//  if (Verbose) {
+  if (Verbose) {
     tty->print_cr("SocketTransport::read_bytes_impl()");
-//  }
+  }
 
   if (dbg_handle == INVALID_HANDLE) {
     return 0;
@@ -437,10 +444,8 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
 
   int bytes_cached = st->bytes_cached_for_read();
 
-printf("bytes_cached = %d\n", st->bytes_cached_for_read());
-
   if (bytes_cached >= len) {
-    jvm_memcpy((unsigned char *)buf, st->get_read_cache(), len);
+    jvm_memcpy((unsigned char *)buf, st->read_cache(), len);
     if (!peekOnly) {
       st->set_bytes_cached_for_read(bytes_cached - len);
     }
@@ -448,7 +453,7 @@ printf("bytes_cached = %d\n", st->bytes_cached_for_read());
     return len;
   } else {
     if (bytes_cached > 0) {
-      jvm_memcpy((unsigned char *)buf, st->get_read_cache(), bytes_cached);
+      jvm_memcpy((unsigned char *)buf, st->read_cache(), bytes_cached);
       len -= bytes_cached;
       ptr += bytes_cached;
     }
@@ -472,11 +477,11 @@ printf("bytes_cached = %d\n", st->bytes_cached_for_read());
     }
 
     if (status == PCSL_NET_WOULDBLOCK) {
-//  if (Verbose) {
-      tty->print_cr("SocketTransport::read_bytes_impl(): waiting for read");
-//  }
-        _wait_for_read = true;
-        return total;
+      if (Verbose) {
+        tty->print_cr("SocketTransport::read_bytes_impl(): waiting for read");
+      }
+      _wait_for_read = true;
+      return total;
     }
 
     _wait_for_read = false;
@@ -518,7 +523,10 @@ printf("bytes_cached = %d\n", st->bytes_cached_for_read());
     ptr   += nread;
   } while (nleft);
 
-printf("SocketTransport: bytes read: %d\n", (int)total);
+  if (Verbose) {
+    jvm_printf("SocketTransport: bytes read: %d\n", (int)total);
+  }
+  
   return total;
 }
 
@@ -554,47 +562,56 @@ int SocketTransport::write_short(Transport *t, void *buf)
 
 bool SocketTransport::add_to_read_cache(unsigned char* p_buf, int len)
 {
-//  if (Verbose) {
+  int cache_size = read_cache_size();
+  int bytes_cached = bytes_cached_for_read();
+  unsigned char* p_read_cache = read_cache();
+  
+  if (Verbose) {
     tty->print_cr("add_to_read_cache()");
-printf("%d bytes\n", len);    
-//  }
+  }
   
   if (len <= 0 || p_buf == NULL) {
     return false;
   }
 
-  if (_m_read_cache_size < _m_bytes_cached_for_read + len) {
+  if (cache_size < bytes_cached + len) {
     unsigned char* p_tmp_buf;
-    int new_cache_size = _m_read_cache_size + len;
+    int new_cache_size = cache_size + len;
 
     p_tmp_buf = (unsigned char*)jvm_malloc(new_cache_size);
     if (p_tmp_buf == NULL) {
       return false;
     }
 
-    if (_m_bytes_cached_for_read > 0) {
-      jvm_memcpy(p_tmp_buf, _m_p_read_cache, _m_bytes_cached_for_read);
+    if (bytes_cached > 0) {
+      jvm_memcpy(p_tmp_buf, p_read_cache, bytes_cached);
     }
 
-    _m_p_read_cache = p_tmp_buf;
-    _m_read_cache_size = new_cache_size;
-printf("new cache size: %d\n", new_cache_size);
+    set_read_cache(p_tmp_buf);
+    set_read_cache_size(new_cache_size);
+    p_read_cache = p_tmp_buf;
+
+    if (Verbose) {
+      printf("new cache size: %d\n", new_cache_size);
+    }
   }
 
-  jvm_memcpy(&_m_p_read_cache[_m_bytes_cached_for_read], p_buf, len);
-  _m_bytes_cached_for_read += len;
+  jvm_memcpy(&p_read_cache[bytes_cached], p_buf, len);
+  set_bytes_cached_for_read(bytes_cached + len);
   
   return true;
 }
 
 void SocketTransport::finalize_read_cache()
 {
-  if (_m_p_read_cache != NULL) {
-    jvm_free(_m_p_read_cache);
-    _m_p_read_cache = NULL;
-    _m_read_cache_size = 0;
-    _m_bytes_cached_for_read = 0;
+  unsigned char* p_read_cache = read_cache();
+  if (p_read_cache != NULL) {
+    jvm_free(p_read_cache);
+    set_read_cache(NULL);
   }
+  
+  set_read_cache_size(0);
+  set_bytes_cached_for_read(0);
 }
 
 /**
