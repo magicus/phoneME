@@ -45,6 +45,27 @@ extern "C" {
  * @{
  */
 
+/**
+ * Returns  With [<a href='http://www.w3.org/TR/1999/REC-html401-19991224'>HTML 4.01</a>] documents, this method returns the (possibly empty) collection 
+ * of elements whose <code>name</code> value is given by 
+ * <code>element_name</code>. In [<a href='http://www.w3.org/TR/2002/REC-xhtml1-20020801'>XHTML 1.0</a>] documents, this methods only return the 
+ * (possibly empty) collection of form controls with matching name. This 
+ * method is case sensitive. 
+ * 
+ * @param handle Pointer to the object representing this htmldocument.
+ * @param element_name The <code>name</code> attribute value for an 
+ *   element.
+ * @param ret_value Pointer to the object representing 
+ *   the matching elements.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmldocument_get_elements_by_name(javacall_handle handle,
+                                               javacall_const_utf16_string element_name,
+                                               /* OUT */ javacall_handle* ret_value);
+
 /** 
  * Decrements ref counter of the native object specified number of times
  * 

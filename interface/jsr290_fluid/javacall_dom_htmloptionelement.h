@@ -45,6 +45,36 @@ extern "C" {
  * @{
  */
 
+/**
+ * Returns represents the current state of the corresponding form control, in an 
+ * interactive user agent. Changing this attribute changes the state of 
+ * the form control, but does not change the value of the HTML selected 
+ * attribute of the element.
+ * 
+ * @param handle Pointer to the object representing this htmloptionelement.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmloptionelement_get_selected(javacall_handle handle,
+                                            /* OUT */ javacall_bool* ret_value);
+
+/**
+ * Sets represents the current state of the corresponding form control, in an 
+ * interactive user agent. Changing this attribute changes the state of 
+ * the form control, but does not change the value of the HTML selected 
+ * attribute of the element.
+ * 
+ * @param handle Pointer to the object representing this htmloptionelement.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmloptionelement_set_selected(javacall_handle handle,
+                                            javacall_bool selected);
+
 /** 
  * Decrements ref counter of the native object specified number of times
  * 

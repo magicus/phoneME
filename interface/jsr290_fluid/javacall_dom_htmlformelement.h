@@ -45,6 +45,29 @@ extern "C" {
  * @{
  */
 
+/**
+ * Sets restores a form element's default values. It performs the same action 
+ * as a reset button.
+ * 
+ * @param handle Pointer to the object representing this htmlformelement.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlformelement_reset(javacall_handle handle);
+
+/**
+ * Submits the form. It performs the same action as a submit button.
+ * 
+ * @param handle Pointer to the object representing this htmlformelement.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlformelement_submit(javacall_handle handle);
+
 /** 
  * Decrements ref counter of the native object specified number of times
  * 

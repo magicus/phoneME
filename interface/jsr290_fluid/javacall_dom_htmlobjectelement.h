@@ -45,6 +45,19 @@ extern "C" {
  * @{
  */
 
+/**
+ * Returns the document this object contains, if there is any and it is available, 
+ * or <code>NULL</code> otherwise.
+ * 
+ * @param handle Pointer to the object representing this htmlobjectelement.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlobjectelement_get_content_document(javacall_handle handle,
+                                                    /* OUT */ javacall_handle* ret_value);
+
 /** 
  * Decrements ref counter of the native object specified number of times
  * 

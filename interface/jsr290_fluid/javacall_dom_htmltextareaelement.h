@@ -45,6 +45,52 @@ extern "C" {
  * @{
  */
 
+/**
+ * Returns represents the current contents of the corresponding form control, in 
+ * an interactive user agent. Changing this attribute changes the 
+ * contents of the form control, but does not change the contents of the 
+ * element. If the entirety of the data can not fit into a single 
+ * <code>DOMString</code>, the implementation may truncate the data.
+ * 
+ * @param handle Pointer to the object representing this htmltextareaelement.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *                                specified in ret_value_len,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmltextareaelement_get_value(javacall_handle handle,
+                                           /* OUT */ javacall_utf16_string ret_value,
+                                           /* INOUT */ javacall_uint32* ret_value_len);
+
+/**
+ * Select the contents of the <code>TEXTAREA</code>.
+ * 
+ * @param handle Pointer to the object representing this htmltextareaelement.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmltextareaelement_select(javacall_handle handle);
+
+/**
+ * Sets represents the current contents of the corresponding form control, in 
+ * an interactive user agent. Changing this attribute changes the 
+ * contents of the form control, but does not change the contents of the 
+ * element. If the entirety of the data can not fit into a single 
+ * <code>DOMString</code>, the implementation may truncate the data.
+ * 
+ * @param handle Pointer to the object representing this htmltextareaelement.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmltextareaelement_set_value(javacall_handle handle,
+                                           javacall_const_utf16_string value);
+
 /** 
  * Decrements ref counter of the native object specified number of times
  * 
