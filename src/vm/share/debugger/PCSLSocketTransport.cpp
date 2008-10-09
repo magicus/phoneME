@@ -585,6 +585,9 @@ bool SocketTransport::add_to_read_cache(unsigned char* p_buf, int len)
 
     if (bytes_cached > 0) {
       jvm_memcpy(p_tmp_buf, p_read_cache, bytes_cached);
+    }
+    
+    if (cache_size > 0) {
       jvm_free(p_read_cache);
     }
 
