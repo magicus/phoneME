@@ -1,0 +1,167 @@
+<!-- 
+Copyright  2006 Sun Microsystems, Inc. All rights reserved.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+Overview of JUMP system
+</head>
+<body>
+
+The JUMP executive is a modular system designed to perform a set of system
+activities. These system activities might include traditional AMS tasks such
+as launching new apps, controlling application lifecycle, orchestrating window
+management, and performing download and installation of content. Other
+activities might include device management tasks, providing services to other
+JVM containers, holding device-global state, interacting with the hardware and
+OS to get system events, and communicating asynchronous events to individual
+containers.
+
+<p>The JUMP executive is composed of distinct modules conforming to a {@link
+com.sun.jump.module.JUMPModule} interface. Each module implementation is
+specified using a Java interface or abstract class that implements or extends
+{@link com.sun.jump.module.JUMPModule}. This Java interface or abstract class
+acts as a service contract between modules. There is tpyically a <i>local</i>
+interface for use between modules inside the same process, and a <i>remote</i>
+interface for use when modules end up in separate processes.
+
+<p>This type of modularity allows flexibility in implementation:
+<ul>
+<li> Each module can be specified and tested independently of others.
+
+<li> Each module can be implemented purely in Java, or can have native
+components that leverage existing infrastructure.
+
+<li> The remote interfaces allow distribution of the system into several
+address spaces for robustness.
+
+<li> The system can be composed of a permutation of modules based on device
+capability, market and customer needs.
+</ul>
+
+<h4>JUMP modules</h4>
+
+<p>When the executive starts up, it loads a list of module factories, 
+calling {@link com.sun.jump.module.JUMPModuleFactory#load} on each one. 
+Module factories can implement this
+method to perform initialization activities. The list of module factories can be
+declaratively specified in a file. Alternatively, a subclass of {@link
+com.sun.jump.executive.JUMPExecutive} can override its <i>initialize()</i>
+method to hard-code a set of module factories to load.
+
+<p>Within a process, modules can be discovered using the appropriate
+ factory for the module. For example:
+
+<blockquote>
+<pre>
+JUMPLifeCycleModuleFactory lifecycleFactory = 
+    JUMPLifeCycleModuleFactory.getInstance();
+JUMPLifeCycleModule lmod = lifecycleFactory.getModule();
+// ... Use of the lifecycle module follows
+</pre>
+</blockquote>
+
+<p>There is a set of abstractions inside the JUMP executive that are designed
+to apply to all modules. These cover the representation of isolated JVM
+instances managed by the executive, and the core communication mechanisms used
+to access them. 
+
+<h4>JUMP isolates</h4>
+
+<p>Isolated JVM instances are called <i>JUMP isolates</i>.
+A {@link com.sun.jump.executive.JUMPIsolateProxy} object
+encapsulates the state of a running isolate and returns an instance of a {@link com.sun.jump.executive.JUMPApplicationProxy} that can be used to control its
+lifecycle of a corresponding {@link com.sun.jump.common.JUMPApplication} running inside the active isolate.  Each JUMP isolate contains one to many {@link com.sun.jump.common.JUMPApplication} objects.  The JUMP executive can affect application lifecycle using the {@link com.sun.jump.executive.JUMPApplicationProxy#pauseApp} and {@link
+com.sun.jump.executive.JUMPApplicationProxy#resumeApp} methods. The JUMP isolate can also
+request lifecycle changes from the JUMP executive. The isolate factory (interface {@link
+com.sun.jump.executive.JUMPIsolateFactory} is used to perform isolate management operations. 
+It can create new isolates, and manage currently running isolates.
+
+<p>Each JUMP isolate gets a set of abstractions that allow it to use the JUMP
+system. These abstractions can be found in package {@link
+com.sun.jump.isolate.jvmprocess}. The {@link
+com.sun.jump.isolate.jvmprocess.JUMPIsolateProcess} class represents a JUMP
+isolate that is implemented using a JVM process. It hosts common JUMP
+infrastructure, and also contains the application running within the
+container. The {@link com.sun.jump.isolate.jvmprocess.JUMPAppContainer} object
+is responsible for launching the application class and handles all the JUMP
+Isolate related functionality, translating the JUMP environment to a {@link
+com.sun.jump.common.JUMPAppModel} specific view.
+
+<h4>Communication between executive and isolates</h4>
+
+<p>Here's how a sample request-response sequence occurs. In this case
+an isolate is sending a message to the executive process:
+
+<blockquote>
+<pre>
+static boolean requestResponse() {
+    JUMPIsolateProcess myProc = JUMPIsolateProcess.getInstance();
+    JUMPProcessProxy execProc = myProc.getExecutiveProcess();
+    String mType = "message/test";
+
+    JUMPRequest r = new JUMPRequest(mType, new String[] {"a", "b"});
+    JUMPOutgoingMessage m = r.toMessage(myProc);
+
+    JUMPMessage responseMessage;
+    try {
+        responseMessage = execProc.sendMessage(m, 0L);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    }
+    JUMPResponse response = JUMPResponse.fromMessage(responseMessage);
+    if (response.getCommandId().equals(JUMPResponse.ID_SUCCESS)) {
+        return true;
+    } else if (response.getCommandId().equals(JUMPResponse.ID_FAILURE)) {
+        return false;
+    } else {
+        // Unknown ID
+        return false;
+    }
+}
+</pre>
+</blockquote>
+
+<p>The types of request commands that can be composed can be found in {@link
+com.sun.jump.command} package, and the types of responses can be
+found in {@link com.sun.jump.command.JUMPResponse}.
+
+<h4>Remote access to JUMP modules</h4>
+
+<p>From an isolate, a JUMP module can be accessed using a remote
+interface, using the remote service interface as a key. For example:
+
+<blockquote>
+<pre>
+import com.sun.jump.module.lifecycle.remote.JUMPLifeCycleModuleRemote;
+
+String remoteLifecyleInterface = JUMPLifeCycleModuleRemote.class.getName();
+java.rmi.Remote mod =
+    JUMPIsolateProcess.getRemoteService(remoteLifecycleInterface);
+JUMPLifeCycleModuleRemote rlifecycle = (JUMPLifeCycleModuleRemote)mod;
+// ... Remote use of the lifecycle module follows
+</pre>
+</blockquote>
+
+<p>All interfaces <tt>com.sun.jump.module.*.remote.*</tt> are packaged for
+visibility in launched isolates as well as the executive, to make sure clients
+of remote interfaces see a consistent view.
+
+<h4>Known modules</h4>
+
+What follows is a list of modules, with local and remote interfaces:
+
+<table border="1" width="100%" cellspacing=5>
+<tr>
+    <th>Module name</th><th>Local interfaces</th><th>Remote interfaces</th>
+</tr>
+<tr>
+    <td width=33%>JUMP isolate lifecyle module</td>
+    <td>{@link com.sun.jump.module.lifecycle}</td>
+    <td>{@link com.sun.jump.module.lifecycle.remote}</td>
+</tr>
+</table>
+
+  </body> 
+</html>
