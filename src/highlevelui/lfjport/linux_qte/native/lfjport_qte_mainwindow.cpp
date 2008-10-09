@@ -119,7 +119,11 @@ bool ChameleonMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
 
 #if ENABLE_MULTIPLE_ISOLATES
         evt.type = MIDLET_DESTROY_REQUEST_EVENT;
-        evt.DISPLAY = gForegroundDisplayId;
+#ifdef ENABLE_MULTIPLE_DISPLAYS  
+            evt.DISPLAY = gForegroundDisplayIds[0];  
+#else  
+            evt.DISPLAY = gForegroundDisplayId;  
+#endif /* ENABLE_MULTIPLE_DISPLAYS */  
         evt.intParam1 = gForegroundIsolateId;
         midpStoreEventAndSignalAms(evt);
 #else
