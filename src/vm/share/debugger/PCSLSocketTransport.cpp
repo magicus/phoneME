@@ -560,7 +560,7 @@ int SocketTransport::write_short(Transport *t, void *buf)
   return (write_bytes(t, buf, sizeof(short)));
 }
 
-bool SocketTransport::add_to_read_cache(unsigned char* buf_to_add, int len)
+bool SocketTransport::add_to_read_ahead_cache(unsigned char* buf_to_add, int len)
 {
   UsingFastOops fastoops;
   int cache_size = read_ahead_buffer_size();
