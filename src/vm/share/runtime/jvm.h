@@ -412,10 +412,8 @@ void JVM_ProcessDebuggerCmds();
 /* get the name of the transport */
 char * JVM_GetDebuggerTransport();
 
-#if USE_BSD_SOCKET
 /* get the file descriptor of the debugger socket */
 int JVM_GetDebuggerSocketFd();
-#endif
 
 /* is debugger connected? */
 jboolean JVM_IsDebuggerActive();
