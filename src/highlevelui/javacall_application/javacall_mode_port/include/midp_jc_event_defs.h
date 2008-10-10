@@ -329,7 +329,7 @@ typedef struct {
 #ifdef ENABLE_JSR_290
 typedef struct {
     javacall_handle             fluid_image;
-    javacall_const_utf16_string text;
+    javacall_utf16_string       text;
     float                       percentage;
     javacall_result             result;
 } jsr290_jc_event_fluid;
