@@ -80,7 +80,8 @@ local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib \
 
 else
 
-local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
+local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib \
+    $(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.obj
 
 endif
 
@@ -184,6 +185,10 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(AT)$(MAKE) JAVACALL_EXTRA_LIBS
 
 $(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
-    $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
 	@echo "...Generating Library: $@"
 	$(AT)$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
+
+$(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.obj: $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.obj
+	@echo "...Coping stubs to lib directory ..."
+	$(AT)cp $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.obj $(JAVACALL_OUTPUT_LIB_DIR)
