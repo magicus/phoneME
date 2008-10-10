@@ -201,7 +201,10 @@ information or have any questions.
 
         <pathconvert pathsep="," property="java.sources">
             <path id="javac.files.path">
-                <fileset dir="../test"/>
+                <fileset dir="../test">
+                    <include name="**/BaseTest.java"/>
+                    <include name="**/TestMIDlet.java"/>
+                </fileset>
                 <fileset dir="../src/classes/shared"/>
                 <fileset dir="../src/classes/${toolkit}"/>
             </path>
@@ -235,10 +238,19 @@ information or have any questions.
             <midlet name="TestMIDlet" class="${package}.TestMIDlet" />
         </wtkjad>
 
+        <filelist id="package-path" dir="${out.classes}">
+            <file name="${package}"/>
+        </filelist>
+        <pathconvert property="package-path" refid="package-path" dirsep="/">
+            <unpackagemapper from="${out.classes}${file.separator}*" to="*"/>
+        </pathconvert>
+
         <wtkpackage jadfile="${out.root}/test.jad"
                     jarfile="${out.root}/test.jar"
                     basedir="${out.classes}"
-                    preverify="true"/>
+                    preverify="true">
+            <include name="${package-path}/**/*.class"/>
+        </wtkpackage>
     </target>
 
 

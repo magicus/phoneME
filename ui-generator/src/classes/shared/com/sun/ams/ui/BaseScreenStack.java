@@ -191,6 +191,20 @@ public abstract class BaseScreenStack {
     }
 
     /**
+     * Returns topmost screen.
+     *
+     * @exception IllegalStateException
+     *  {@link #destroy()} has been called already on this stack
+     */
+    public synchronized Screen top() {
+        if (destroyed) {
+            throw new IllegalStateException("Stack has beed destroyed");
+        }
+
+        return (Screen)screens.peek();
+    }
+
+    /**
      * Destroys this stack. After stack is destroyed every method will throw
      * <code>IllegalStateException</code> exception. When stack is destroyed
      * all screens are hidden.
