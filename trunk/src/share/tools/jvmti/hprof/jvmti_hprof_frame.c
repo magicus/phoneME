@@ -106,11 +106,10 @@ FrameIndex
 frame_find_or_create(jmethodID method, jlocation location)
 {
     FrameIndex index;
-    static FrameKey empty_key;
     FrameKey key;
     jboolean new_one;
     
-    key          = empty_key;
+    memset(&key, 0, sizeof(key));
     key.method   = method;
     key.location = location;
     new_one      = JNI_FALSE;
