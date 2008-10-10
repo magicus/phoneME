@@ -27,10 +27,10 @@
 class SocketTransportDesc : public TransportDesc {
 #if ENABLE_JAVA_DEBUGGER
 public:
-
   int              _debugger_socket;
   int              _listener_socket;
-#endif
+#endif // ENABLE_JAVA_DEBUGGER
+
 protected:
   static jint header_size() { return sizeof(SocketTransportDesc); }
 

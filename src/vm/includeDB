@@ -404,6 +404,10 @@ SocketTransport.cpp              SocketTransport.hpp
 SocketTransport.cpp              JavaDebugger.hpp
 SocketTransport.cpp              ObjectHeap_<iarch>.hpp
 
+PCSLSocketTransport.cpp          SocketTransport.hpp
+PCSLSocketTransport.cpp          JavaDebugger.hpp
+PCSLSocketTransport.cpp          ObjectHeap_<iarch>.hpp
+
 TransportDesc.hpp                MixedOopDesc.hpp
 
 Transport.hpp                    TransportDesc.hpp
@@ -2805,6 +2809,11 @@ BSDSocket.cpp                    jvm.h
 BSDSocket.cpp                    sni.h
 BSDSocket.cpp                    OS.hpp
 BSDSocket.cpp                    Globals.hpp
+
+#if ENABLE_JAVA_DEBUGGER
+BSDSocket.cpp                    Transport.hpp
+BSDSocket.cpp                    SocketTransport.hpp
+#endif
 
 PCSLSocket.cpp                   GlobalDefinitions.hpp
 PCSLSocket.cpp                   jvm.h

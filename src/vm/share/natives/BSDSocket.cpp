@@ -413,6 +413,7 @@ void JVMSPI_CheckEvents(JVMSPI_BlockedThreadInfo * blocked_threads,
   }
 #endif
 
+
   FD_ZERO(&read_fds);
   FD_ZERO(&write_fds);
   FD_ZERO(&except_fds);
@@ -537,6 +538,54 @@ Java_com_sun_cldc_io_j2me_socket_Protocol_close0() {
   jvm_shutdown(sock, 2);
   closesocket(sock);
 }
+
+#else  /* USE_BSD_SOCKET */
+
+extern "C" {
+
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_cldc_io_j2me_socket_Protocol_open0() {
+  KNI_ReturnInt(-1);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_cldc_io_j2me_socket_Protocol_readByte() {
+  KNI_ReturnInt(-1);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_cldc_io_j2me_socket_Protocol_readBuf() {
+  KNI_ReturnInt(-1);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_cldc_io_j2me_socket_Protocol_writeByte() {
+  KNI_ReturnInt(-1);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_cldc_io_j2me_socket_Protocol_writeBuf() {
+  KNI_ReturnInt(-1);
+}
+
+jint Java_com_sun_cldc_io_j2me_socket_Protocol_available0(Thread *) {
+  return (jint) 0;
+}
+
+void Java_com_sun_cldc_io_j2me_socket_Protocol_close0(Thread *) {
+}
+
+void JVMSPI_CheckEvents(JVMSPI_BlockedThreadInfo *blocked_threads,
+                        int blocked_threads_count,
+                        jlong timeout) {
+  GUARANTEE(blocked_threads_count == 0, 
+            "Vanilla VM with PCSL socket never calls SNI_BlockThread");
+  if (timeout > 0) {
+    Os::sleep(timeout);
+  }
+}
+
+} /* extern "C" */
 
 #endif /* USE_BSD_SOCKET */
 
