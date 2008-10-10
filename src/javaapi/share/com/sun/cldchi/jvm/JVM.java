@@ -287,4 +287,8 @@ public class JVM {
     private static native int verifyNextChunk(String jar, int nextChunkID,
                                               int chunkSize);
 
+    /**
+     * Flushes all JAR file caches.
+     */
+    public static native void flushJarCaches();
 }

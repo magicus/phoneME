@@ -154,9 +154,9 @@
 #define COMPILER_PRINT_AS_YOU_GO(x) \
         if (PrintCompiledCodeAsYouGo) {TTY_TRACE_CR(x);}
 #define VERBOSE_SCHEDULING_AS_YOU_GO(x) \
-	    if (OptimizeCompiledCodeVerboseInternal) {TTY_TRACE_CR(x);}
+            if (OptimizeCompiledCodeVerboseInternal) {TTY_TRACE_CR(x);}
 #define VERBOSE_CSE(x) \
-	    if (VerboseByteCodeEliminate) {TTY_TRACE_CR(x);}
+            if (VerboseByteCodeEliminate) {TTY_TRACE_CR(x);}
 #else
 #define COMPILER_COMMENT(x) 
 #define COMPILER_PRINT_AS_YOU_GO(x)
@@ -286,6 +286,11 @@ extern void fpu();
 
 // Print object heap
 extern void poh();
+
+#if ENABLE_ISOLATES
+// Print task objects
+extern void poht( const int task_id );
+#endif
 
 // Find references to heap object
 extern void ref(int x);

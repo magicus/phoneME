@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.nio.channels.*;
 import java.nio.*;
 import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
 
 public class Client {
   private MPDataProvider _data_provider;
@@ -54,6 +55,7 @@ public class Client {
   private JButton _vm_controller;
   private JButton _connection_controller;
   private JButton _statistics_btn;
+  private JLabel _statusLabel;
   private boolean isConnected = false;
   private static String hostName = "localhost";
   private static int    port = 5000;
@@ -83,7 +85,7 @@ public class Client {
     _frame = new JFrame("Java Heap Memory Observe Tool");
     _frame.pack();
     _frame.setLocation(0, 0);
-    _frame.setSize(1000, 650);
+    _frame.setSize(1000, 700);
     _frame.setVisible(true);
     _frame.setResizable(false);
     _frame.getContentPane().setLayout(new GridBagLayout());
@@ -134,8 +136,14 @@ public class Client {
     _connection_controller = new JButton("Connect");
     _connection_controller.addActionListener(new ConnectionActionListener());
     button_panel.add(_connection_controller);
+    _statusLabel = new JLabel("Disconnected");
+    TitledBorder tb = BorderFactory.createTitledBorder("Memory Observer tool status");
+    _statusLabel.setBorder(tb);
+    JPanel tmpPanel = new JPanel(new BorderLayout());
+    tmpPanel.add(BorderLayout.NORTH, button_panel);
+    tmpPanel.add(BorderLayout.SOUTH, _statusLabel);
 
-    _frame.getContentPane().add(button_panel, new GridBagConstraints(2, 2, 1, 1, 1, 1,
+    _frame.getContentPane().add(tmpPanel, new GridBagConstraints(2, 2, 1, 1, 1, 1,
                   GridBagConstraints.SOUTHEAST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
 
     setDisconnected();
@@ -252,9 +260,13 @@ public class Client {
     public void actionPerformed(ActionEvent e) {
       try {
         if (!vm_run) {
+          _statusLabel.setText("Resuming VM execution..");
           _data_provider.resumeVM();
+          _statusLabel.setText("VM running");
         } else {
+          _statusLabel.setText("Pausing VM execution..");
           _data_provider.pauseVM();
+          _statusLabel.setText("VM paused");
         }      
         vm_run = !vm_run;
       } catch (SocketException e2) {
@@ -279,14 +291,19 @@ public class Client {
     _memory_access_panel.update();
     _vm_controller.setEnabled(false);
     _statistics_btn.setEnabled(false);
+    _connection_controller.setEnabled(true);
     _connection_controller.setText("Connect");
+    _statusLabel.setText("Disconnected");
   }
 
   private void setConnected() {
     isConnected = true;
     _vm_controller.setEnabled(true);
     _statistics_btn.setEnabled(true);
-    _connection_controller.setText("Disconnect");
+    _connection_controller.setText("Connected!");
+    _statusLabel.setText("Connected");
+    //prevent the user from diconnecting, after which he can not connect again
+    _connection_controller.setEnabled(false);
   }
 }
 
