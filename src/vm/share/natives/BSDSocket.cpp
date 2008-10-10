@@ -406,6 +406,13 @@ void JVMSPI_CheckEvents(JVMSPI_BlockedThreadInfo * blocked_threads,
   int i, num_fds, num_ready;
 
   bool debugger_active = JVM_IsDebuggerActive();
+#if ENABLE_JAVA_DEBUGGER
+  int dbg_socket_fd = -1;
+  if (debugger_active) {
+    dbg_socket_fd = JVM_GetDebuggerSocketFd();
+  }
+#endif
+
 
   FD_ZERO(&read_fds);
   FD_ZERO(&write_fds);
@@ -428,6 +435,17 @@ void JVMSPI_CheckEvents(JVMSPI_BlockedThreadInfo * blocked_threads,
       num_fds = socket->fd;
     }
   }
+
+#if ENABLE_JAVA_DEBUGGER
+  if (debugger_active) {
+    if (dbg_socket_fd != -1) {
+      FD_SET(dbg_socket_fd, &read_fds);
+      if (num_fds < dbg_socket_fd) {
+        num_fds = dbg_socket_fd;
+      }
+    }
+  }
+#endif
 
   // [2] Call select() on the FDs, without appropriate timeout value
   if (timeout_milli_seconds < 0) {
@@ -497,9 +515,7 @@ void JVMSPI_CheckEvents(JVMSPI_BlockedThreadInfo * blocked_threads,
     }
 #if ENABLE_JAVA_DEBUGGER
     if (debugger_active) {
-      Transport::Raw t = Universe::transport_head();
-      SocketTransport::Raw st = t().obj();
-      if (SocketTransport::char_avail(&st, 0)) {
+      if (FD_ISSET(dbg_socket_fd, &read_fds)) {
         JVM_ProcessDebuggerCmds();
       }
     }

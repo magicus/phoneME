@@ -31,7 +31,7 @@
 // not supported by PCSL, or when building without PCSL
 #if !ENABLE_PCSL
 
-#if ENABLE_JAVA_DEBUGGER
+#if ENABLE_JAVA_DEBUGGER && USE_BSD_SOCKET
 
 #if defined(LINUX) || defined (CYGWIN)
 #define USE_UNISTD_SOCKETS 1
@@ -680,6 +680,14 @@ int SocketTransport::write_int(Transport *t, void *buf)
 int SocketTransport::write_short(Transport *t, void *buf)
 {
   return (write_bytes(t, buf, sizeof(short)));
+}
+
+//IMPL_NOTE: this is now broken
+
+extern "C" int JVM_GetDebuggerSocketFd() {
+  Transport::Raw t = Universe::transport_head();
+  SocketTransport::Raw st = t().obj();
+  return (st().debugger_socket());
 }
 
 #if defined(__SYMBIAN32__) || UNDER_ADS
