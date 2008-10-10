@@ -424,6 +424,12 @@ midpInitializeDebugger(void) {
     {
         char* argv[2];
 
+        /* memory profiler */
+		if (getInternalProperty("VmMemoryProfiler") != NULL) {
+		    argv[0] = "-memory_profiler";
+            (void)JVM_ParseOneArg(1, argv);
+		}
+
         /* Get the VM debugger port property. */
         argv[1] = (char *)getInternalProperty("VmDebuggerPort");
         if (argv[1] != NULL) {
