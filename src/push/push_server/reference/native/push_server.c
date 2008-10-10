@@ -170,6 +170,8 @@ typedef struct _pushentry {
 #if ENABLE_JSR_180
   /** True if this entry is a SIP-entry. */
   jboolean isSIPEntry;
+  /** Marks shared connection for quick search */
+  jboolean isShared;
 #endif
 } PushEntry;
 
@@ -1249,7 +1251,6 @@ static char* pushApplySipFilter(PushEntry* pushp) {
     unsigned char *acceptcontact_type = NULL;
     unsigned char *required_type = NULL;
     char *p;
-    char *end = NULL;
     int required_type_len;
 
     /*
@@ -1264,32 +1265,13 @@ static char* pushApplySipFilter(PushEntry* pushp) {
 
     if (checksipfilter((unsigned char *)pushp->filter, sender)) {
         /*
-         * Check if a media type filter is also needed.
-         */
-        for (p = pushp->value; *p; p++) {
-            if (midp_strncasecmp(
-                    p, "type=\"application/", 18) == 0 ) {
-                /* Extract just the quoted media type. */
-                p += 18;
-                for (end = p; *end; end++) {
-                    if (*end == '"') {
-                        /* Found end of media type subfield. */
-                        break;
-                    }
-                }
-                /* Stop scanning after media type subfield is located. */
-                break;
-            }
-        }
-
-        /*
          * If a media type tag was specified in the connection URI,
          * then the message is only dispatched if it contains
          * an Accept-Contact header with a matching media feature
          * tag.
          */
-        if (*p != '\0') {
-            required_type_len = end - p;
+        required_type_len = getMIMEType(pushp->value, &p);
+        if (required_type_len) {
             required_type = (unsigned char *)
                 pcsl_mem_malloc(required_type_len + 1);
 
@@ -1926,6 +1908,7 @@ static int parsePushList(int pushfd) {
             pe->appID = NULL;
 #if ENABLE_JSR_180
             pe->isSIPEntry = KNI_FALSE;
+			pe->isShared = KNI_FALSE;
 #endif
         }
 
@@ -2144,6 +2127,8 @@ static int pushProcessPort(PushEntry* pe) {
         } else {
             p += 4;
         }
+		/* clear default value */
+		pe->isShared = 0;
 
         /*
          * Example JSR180 connection strings
@@ -2152,8 +2137,52 @@ static int pushProcessPort(PushEntry* pe) {
          *   sip:*;type="application/x-cannons"
          */
         if (*p == '*') {
+            PushEntry *pushp;
+            /* first conection uses shared port */
+            PushEntry* sharedP = NULL;
+            char* mime;
+            int mime_len;
+            /* Get type */
+            mime_len = getMIMEType(buffer, &mime);
+            if (0 == mime_len) {
+                /* media must be present */
+                REPORT_ERROR(LC_PUSH, "Shared connection must include media.");
+                pe->fd = -1;
+                return -3;
+            }
+            /* check if given MIME is registered already */
+            if (pushlength > 0 ) {
+                /* scan up to current record (VM startup case)
+				   or until end of records (installation case) */
+                for (pushp = pushlist; pushp != pe, pushp != NULL; pushp = pushp->next) {
+                    if (pushp != pe && pushp->isSIPEntry && pushp->isShared) {
+                        char* tmp;
+                        /* compare mime type */
+                        if (0 == mime_len - getMIMEType(pushp->value, &tmp)) {
+                            if (0 == strncmp(mime, tmp, mime_len)) {
+                                /* there is an application with given mime type */
+                                REPORT_ERROR1(LC_PUSH, 
+                                             "There is registered application "
+                                             "with MIME: ", mime);
+                                return -1;
+                            }
+                        }
+                        if (NULL == sharedP) {
+                            sharedP = pushp;
+                        }
+                    }
+                }
+            }
             /* Shared connections must include media. */
             pe->port = 5060;
+            /* mark for quick search */
+            pe->isShared = 1;
+            /* don't create new connection if there is SIP shared conenction */
+            if (NULL  != sharedP) {
+                pe->fd = sharedP->fd;
+                return 0;
+            }
+
         } else {
             /* Dedicated ports may also include media. */
             pe->port = atoi(p);
