@@ -62,6 +62,14 @@ endif
 ifneq ($(CVM_AOT), true)
 CVM_JIT_COPY_CCMCODE_TO_CODECACHE ?= true
 endif
+
+CVM_JIT_PMI ?= false
+ifeq ($(CVM_JIT_PMI), true)
+ifneq ($(CVM_JIT_COPY_CCMCODE_TO_CODECACHE), true)
+$(error cannot specify CVM_JIT_PMI=true with CVM_JIT_COPY_CCMCODE_TO_CODECACHE=false)
+endif
+endif
+
 include  $(CDC_DIR)/build/portlibs/defs_jit_risc.mk
 
 endif
