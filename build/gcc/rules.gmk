@@ -78,7 +78,8 @@ NOTIFIERS_LIB=$(JAVACALL_OUTPUT_LIB_DIR)/libnotifiers$(BUILD_EXT).$(LIB_EXTENSIO
 endif
 PROPERTY_OBJECTS=$(addsuffix .o,$(PROPERTY_FILES))
 
-javacall_lib: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).$(LIB_EXTENSION)
+javacall_lib: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).$(LIB_EXTENSION) \
+    $(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.o
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/%.o: %.cpp
 	@echo "...compiling: $@"
@@ -117,3 +118,7 @@ $(JAVACALL_OUTPUT_LIB_DIR)/libnotifiers$(BUILD_EXT).a: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
 	@echo "...Generating Library: $@"
 	$(AT)$(AR) $(ARFLAGS) $@ $^
+
+$(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.o: $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.o
+	@echo "...Coping stubs to lib directory ..."
+	$(AT)cp $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.o $(JAVACALL_OUTPUT_LIB_DIR)
