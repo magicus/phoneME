@@ -99,7 +99,7 @@ public:
 
   int read_ahead_buffer_size() {
     TypeArray::Raw tmp = read_ahead_buffer();
-    return tmp().length();
+    return tmp.is_null() ? 0 : tmp().length();
   }
 
   void set_bytes_cached_for_read(int new_size) {

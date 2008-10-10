@@ -443,9 +443,10 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
   }
 
   int bytes_cached = st->bytes_cached_for_read();
+  TypeArray read_buffer = read_ahead_buffer();
 
   if (bytes_cached >= len) {
-    jvm_memcpy((unsigned char *)buf, st->read_ahead_buffer(), len);
+    jvm_memcpy((unsigned char *)buf, read_buffer.base_address(), len);
     if (!peekOnly) {
       st->set_bytes_cached_for_read(bytes_cached - len);
     }
@@ -453,7 +454,7 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
     return len;
   } else {
     if (bytes_cached > 0) {
-      jvm_memcpy((unsigned char *)buf, st->read_ahead_buffer(), bytes_cached);
+      jvm_memcpy((unsigned char *)buf, read_buffer.base_address(), bytes_cached);
       len -= bytes_cached;
       ptr += bytes_cached;
     }
@@ -592,10 +593,10 @@ bool SocketTransport::add_to_read_ahead_buffer(unsigned char* buf_to_add,
 
     // update the object if it was changed
     set_read_ahead_buffer(&tmp_buf);
-    read_buffer = tmp_buf;
+    read_buffer = read_ahead_buffer();
 
     if (Verbose) {
-      printf("new cache size: %d\n", new_cache_size);
+      jvm_printf("new cache size: %d\n", new_cache_size);
     }
   }
 
@@ -604,6 +605,14 @@ bool SocketTransport::add_to_read_ahead_buffer(unsigned char* buf_to_add,
   
   return true;
 }
+
+#if USE_BSD_SOCKET
+extern "C" int JVM_GetDebuggerSocketFd() {
+  Transport::Raw t = Universe::transport_head();
+  SocketTransport::Raw st = t().obj();
+  return ((int)st().debugger_socket());
+}
+#endif
 
 /**
  * Informs the VM that a socket's status was changed.
