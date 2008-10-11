@@ -600,7 +600,7 @@ public:
   static void print(Stream* = tty);
   static void print_all_objects(Stream* = tty);
 #if ENABLE_ISOLATES
-  static void print_task_objects(const int task_id, Stream* = tty);
+  static void print_task_objects(const int task_id, Stream* st = tty);
 #endif
   static void print_all_objects(const JvmPathChar* /*file*/);
   static void print_all_classes();
@@ -617,7 +617,7 @@ public:
   static void print(Stream* = tty) PRODUCT_RETURN;
   static void print_all_objects(Stream* = tty) PRODUCT_RETURN;
 #if ENABLE_ISOLATES
-  static void print_task_objects(const int /*task_id*/, Stream* /*tty*/)
+  static void print_task_objects(const int /*task_id*/, Stream* = tty)
                                                         PRODUCT_RETURN;
 #endif
   static void print_all_objects(const JvmPathChar* /*file*/) PRODUCT_RETURN;
