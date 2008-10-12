@@ -1120,9 +1120,13 @@
       Value="keyboard.btn_down_un"
     Romized="false"/>
 
- <font
+  <font
         Key="KEYBOARD_FONT"
       Value="FontResources.SYS_B_M"/>
+
+  <integer
+        Key="TOUCH_RADIUS"
+      Value="10" />
 
   <integer
         Key="MENU_WIDTH"

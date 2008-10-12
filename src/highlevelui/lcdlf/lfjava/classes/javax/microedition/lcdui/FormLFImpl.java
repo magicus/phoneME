@@ -861,9 +861,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
     void paintPointerIndicator(Graphics g, int x, int y) {
          // NTS: This may need to special case StringItem?
          g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
-
-//         System.out.println("FormLFImpl.paintPointerIndicator y=" + y);
-//         System.out.println("FormLFImpl.paintPointerIndicator HEIGHT - y=" + (HEIGHT - y));
          g.drawArc(x - ScreenSkin.TOUCH_RADIUS, y - ScreenSkin.TOUCH_RADIUS, 2 * ScreenSkin.TOUCH_RADIUS, 2 * ScreenSkin.TOUCH_RADIUS, 0, 360);
     }
 
@@ -1682,8 +1679,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             itemsModified = false;
         }
 
-        System.out.println("uTraverse traverseIndex=" + traverseIndex);
-        
         // itemTraverse indicates the return value of the
         // last call to the current item's traverse method.
         // 'true' indicates it is doing internal traversal,

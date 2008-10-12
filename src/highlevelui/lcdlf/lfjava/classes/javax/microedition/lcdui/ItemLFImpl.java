@@ -191,29 +191,16 @@ abstract class ItemLFImpl implements ItemLF {
         int myX = x - contentX;
         int myY = y - contentY;
 
-//        System.out.println("IemLFImpl.itemAcceptPointer myX=" + myX);
-//        System.out.println("IemLFImpl.itemAcceptPointer myY=" + myY);
-//
-//        System.out.println("IemLFImpl.itemAcceptPointer contentBounds[WIDTH]=" + contentBounds[WIDTH]);
-//        System.out.println("IemLFImpl.itemAcceptPointer contentBounds[HEIGHT]=" + contentBounds[HEIGHT]);
-
-
-
         if ((myX >= -ScreenSkin.TOUCH_RADIUS) &&
             (myX <= contentBounds[WIDTH] + ScreenSkin.PAD_FORM_ITEMS - 2 + ScreenSkin.TOUCH_RADIUS)) {
-//            System.out.println("itemAcceptPointer 11111");
             if ((myY < -ScreenSkin.TOUCH_RADIUS
                     || myY > contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2 + ScreenSkin.TOUCH_RADIUS)) {
-//                System.out.println("itemAcceptPointer 22222");
                 return -1;
             } else {
-//                System.out.println("itemAcceptPointer 33333");
                 if (myY >= 0
                     && myY <= contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2 ) {
-//                    System.out.println("itemAcceptPointer 44444");
                     return 0;
                 } else {
-//                    System.out.println("itemAcceptPointer 55555");
                     return Math.max(Math.abs(myY),Math.abs(myY - contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2));
                 }
             }
@@ -500,7 +487,6 @@ abstract class ItemLFImpl implements ItemLF {
         g.translate(-labelBounds[X] + contentBounds[X],
                     -labelBounds[Y] + contentBounds[Y]);
 
-        //        System.out.println("PRINT lCallPaint lPaintContent= contentBounds[WIDTH] " + contentBounds[WIDTH]);
         lPaintContent(g, contentBounds[WIDTH], contentBounds[HEIGHT]);
 
         g.translate(-contentBounds[X], -contentBounds[Y]);

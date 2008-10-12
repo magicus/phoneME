@@ -44,10 +44,7 @@ JAVACALL_OBJ_DIR=$(JAVACALL_OUTPUT_DIR)/obj$(g)
 # Note: it is assumed that Javacall library itself is rebuilt by another Makefile, as there's no explicit
 # rule for building it from MIDP.
 
-
-ifndef darwin_flavor
 MIDP_DEPS += $(JAVACALL_LIB_DIR)/$(LIB_PREFIX)javacall$(g)$(r)$(LIB_SUFFIX)
-endif
 
 EXTRA_CFLAGS += -I$(JAVACALL_INCLUDE_DIR)
 
