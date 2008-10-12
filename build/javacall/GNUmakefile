@@ -43,6 +43,7 @@ JAVACALL_OBJ_DIR=$(JAVACALL_OUTPUT_DIR)/obj$(g)
 # Make MIDP depend on Javacall library so that MIDP is re-linked automatically on any Javacall change
 # Note: it is assumed that Javacall library itself is rebuilt by another Makefile, as there's no explicit
 # rule for building it from MIDP.
+
 MIDP_DEPS += $(JAVACALL_LIB_DIR)/$(LIB_PREFIX)javacall$(g)$(r)$(LIB_SUFFIX)
 
 EXTRA_CFLAGS += -I$(JAVACALL_INCLUDE_DIR)

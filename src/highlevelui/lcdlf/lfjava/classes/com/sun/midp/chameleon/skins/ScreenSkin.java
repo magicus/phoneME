@@ -207,6 +207,11 @@ public class    ScreenSkin {
      * Layout diraction. True if current diraction is right-to-left
      */
     public static boolean RL_DIRECTION;
+
+    /**
+     * Radius of finger if finger support is on
+     */
+    public static int TOUCH_RADIUS;
     
 
     // private constructor

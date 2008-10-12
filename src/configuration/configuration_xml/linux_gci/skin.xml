@@ -1125,6 +1125,10 @@
       Value="FontResources.SYS_B_M"/>
 
   <integer
+        Key="TOUCH_RADIUS"
+      Value="10" />
+
+  <integer
         Key="MENU_WIDTH"
       Value="144"/>
 

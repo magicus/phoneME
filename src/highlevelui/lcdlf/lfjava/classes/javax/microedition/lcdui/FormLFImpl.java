@@ -521,6 +521,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 }
             }
         } // synchronized
+
+        if (Constants.FINGER_TOUCH && pointerIndicator) {
+            paintPointerIndicator(g,pointerX,pointerY);
+        }
+
     }
 
     /**
@@ -755,7 +760,24 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         ItemLFImpl item = null;
         for (int i = 0; i < numOfLFs; i++) {
             if (!itemLFs[i].shouldSkipTraverse()) {
-                if (itemLFs[i].itemContainsPointer(x + viewable[X], y + viewable[Y])) {
+                if (Constants.FINGER_TOUCH) {
+                    int res1 = (itemLFs[i].itemAcceptPointer(x + viewable[X], y + viewable[Y]));
+
+                    if (res1 == 0 || (res1 > 0 && i == numOfLFs - 1)) {
+                        item = itemLFs[i];
+                        break;
+                    } else if (res1 > 0) {
+                        int res2 = (itemLFs[i + 1].itemAcceptPointer(x + viewable[X], y + viewable[Y]));
+                        if (res1 < res2 || res2 == -1) {
+                            item = itemLFs[i];
+                        } else if (res1 > res2) {
+                            item = itemLFs[i + 1];
+                        } else {
+                             item = itemLFs[i].findNearestItem(itemLFs[i + 1],x);
+                        }
+                        break;
+                    }
+                } else if (itemLFs[i].itemContainsPointer(x + viewable[X], y + viewable[Y])) {
                     item = itemLFs[i];
                     break;
                 }
@@ -773,6 +795,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      */
     void uCallPointerPressed(int x, int y) {
         ItemLFImpl v = null;
+
+        pointerIndicator = true;
+        pointerX = x;
+        pointerY = y;               
+
         synchronized (Display.LCDUILock) {
             if (numOfLFs == 0) {
                 return;
@@ -791,7 +818,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             v.uCallPointerPressed(x, y);
 
             uScrollToItem(v.item);
+        } else {
+            uRequestPaint();
         }
+        
     }
 
     /**
@@ -802,6 +832,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      */
     void uCallPointerReleased(int x, int y) {
         ItemLFImpl v = null;
+
+        pointerIndicator = false;        
 
         synchronized (Display.LCDUILock) {
             if (numOfLFs == 0 || 
@@ -822,7 +854,16 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             y = (y + viewable[Y]) - v.getInnerBounds(Y);
             v.uCallPointerReleased(x, y);
         }
+
+        uRequestPaint();        
     }
+
+    void paintPointerIndicator(Graphics g, int x, int y) {
+         // NTS: This may need to special case StringItem?
+         g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
+         g.drawArc(x - ScreenSkin.TOUCH_RADIUS, y - ScreenSkin.TOUCH_RADIUS, 2 * ScreenSkin.TOUCH_RADIUS, 2 * ScreenSkin.TOUCH_RADIUS, 0, 360);
+    }
+
 
     /**
      * Handle a pointer dragged event
@@ -1636,7 +1677,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             System.arraycopy(itemLFs, 0, itemsCopy, 0, numOfLFs);
             itemsModified = false;
         }
-        
+
         // itemTraverse indicates the return value of the
         // last call to the current item's traverse method.
         // 'true' indicates it is doing internal traversal,
@@ -2443,5 +2484,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * while FormLF was in HIDDEN or FROZEN state.
      */
     Item pendingCurrentItem; // = null
+
+    boolean pointerIndicator;
+
+    int pointerX;
+    int pointerY;
+
 
 } // class FormLFImpl

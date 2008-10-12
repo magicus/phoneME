@@ -173,6 +173,53 @@ abstract class ItemLFImpl implements ItemLF {
                 myY >= 0 && myY <= contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2);
     }
 
+
+    /**
+     * Returns if the pointer location (x, y, w.r.t. the Form origin)
+     * is within the bounds of the 'clickable' area of this
+     * ItemLFImpl. We exclude non-interactive areas such as the
+     * label. <p>
+     *
+     * Most items can use this method. The only case that needs
+     * overriding is the ChoiceGroupPopupLFImpl.
+     */
+    int itemAcceptPointer(int x, int y) {
+
+        int contentX = bounds[X] + contentBounds[X] + ScreenSkin.PAD_FORM_ITEMS - 2;
+        int contentY = bounds[Y] + contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS - 2;
+
+        int myX = x - contentX;
+        int myY = y - contentY;
+
+        if ((myX >= -ScreenSkin.TOUCH_RADIUS) &&
+            (myX <= contentBounds[WIDTH] + ScreenSkin.PAD_FORM_ITEMS - 2 + ScreenSkin.TOUCH_RADIUS)) {
+            if ((myY < -ScreenSkin.TOUCH_RADIUS
+                    || myY > contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2 + ScreenSkin.TOUCH_RADIUS)) {
+                return -1;
+            } else {
+                if (myY >= 0
+                    && myY <= contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2 ) {
+                    return 0;
+                } else {
+                    return Math.max(Math.abs(myY),Math.abs(myY - contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2));
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    ItemLFImpl findNearestItem(ItemLFImpl secondItem, int x) {
+        int x1 = bounds[X] + contentBounds[WIDTH];
+        int x2 = secondItem.bounds[X];
+        if ((x - x1) <= (x2 - x)) {
+            return this;
+        } else {
+            return secondItem ;
+        }
+
+    }
+
     
     /**
      * Notifies L&F of a label change in the corresponding Item.

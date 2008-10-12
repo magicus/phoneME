@@ -91,6 +91,7 @@ USE_OCSP                = false
 USE_DYNAMIC_COMPONENTS  = false
 USE_JAVA_VIRTUAL_KEYBOARD   = true
 USE_NATIVE_VIRTUAL_KEYBOARD = false
+USE_FINGER_TOUCH        = false
 
 # DEBUG
 USE_DEBUG               = false

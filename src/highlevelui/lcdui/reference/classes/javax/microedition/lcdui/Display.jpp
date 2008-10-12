@@ -430,7 +430,7 @@ public class Display {
      * Set to false after display changing
      */
     boolean isRotatedKnown = false;
-
+                                                
     /**
      * Current display orientation
      */
