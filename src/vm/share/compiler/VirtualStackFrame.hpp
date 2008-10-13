@@ -292,12 +292,18 @@ class VirtualStackFrame: public CompilerObject {
 
   //the tag corresponding to the index of item on the operation stack
   jint* tag_at(const int index)  {
-    GUARANTEE( unsigned(index) < unsigned(method()->max_execution_stack_count()),
+    // Note: 2 additional stack elements are needed,
+    // see VirtualStackFrame::create() for details
+    GUARANTEE( unsigned(index) < 
+               unsigned(method()->max_execution_stack_count()) + 2,
                "Tag index out of bounds" );
     return bci_stack_base() + index;
   }
   const jint* tag_at(const int index) const {
-    GUARANTEE( unsigned(index) < unsigned(method()->max_execution_stack_count()),
+    // Note: 2 additional stack elements are needed,
+    // see VirtualStackFrame::create() for details
+    GUARANTEE( unsigned(index) < 
+               unsigned(method()->max_execution_stack_count()) + 2,
                "Tag index out of bounds" );
     return bci_stack_base() + index;
   }
