@@ -1650,7 +1650,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 return;
             }
             ItemLFImpl item = itemsCopy[traverseIndexCopy];
-            setUpInternalCycle(item);            
+            item.setInternalCycle(this.numOfLFs == 1);
             itemTraverse = 
                     uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
                 
@@ -2326,18 +2326,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             uInitItemsInViewport(viewable[Y] > oldY ? Canvas.DOWN : Canvas.UP,
                                  items, traverseIndex);
             updateCommandSet();
-        }
-    }
-    
-    /**
-     * This method set up internal cycle if need.
-     *   
-     * @param item - current item 
-     */
-    private void setUpInternalCycle(ItemLFImpl item) {
-    	if (item instanceof ChoiceGroupLFImpl) {
-            ChoiceGroupLFImpl choiceGroupItem = ((ChoiceGroupLFImpl)item);
-            choiceGroupItem.isCycle = (this.numOfLFs == 1); 
         }
     }
 

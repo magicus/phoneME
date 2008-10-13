@@ -1340,6 +1340,16 @@ abstract class ItemLFImpl implements ItemLF {
         return item.lockedHeight + ScreenSkin.PAD_FORM_ITEMS + 
             ScreenSkin.PAD_FORM_ITEMS;
     }
+    
+    /**
+     * This method set up internal cycle.
+     *   
+     * @param cycle - show if internal cycle need in
+     * this item. 
+     */
+    void setInternalCycle(boolean cycle) {
+        this.isInternalCycle = cycle;   
+    }
 
     /** bounds[] array index to x coordinate */
     final static int X      = DisplayableLFImpl.X;
@@ -1458,4 +1468,7 @@ abstract class ItemLFImpl implements ItemLF {
 
     /** true is the item has been focused before pointer down */
     boolean itemWasPressed; // = false
+    
+    /** True if internal cycle need in this item.*/
+    boolean isInternalCycle;
 }
