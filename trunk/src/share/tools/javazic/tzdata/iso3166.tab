@@ -1,35 +1,35 @@
-# 
+#
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
-# 
+# 2 only, as published by the Free Software Foundation.
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.   See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
-# 
+# included at /legal/license.txt).
+#
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
-# 
+# 02110-1301 USA
+#
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 
 # ISO 3166 alpha-2 country codes
 #
-# @(#)iso3166.tab	8.1
+# @(#)iso3166.tab	8.5
 #
-# From Paul Eggert (2004-06-14):
+# From Paul Eggert (2006-09-27):
 #
 # This file contains a table with the following columns:
 # 1.  ISO 3166-1 alpha-2 country code, current as of
-#     ISO 3166-1 Newsletter No. V-10 (2004-04-26).  See:
+#     ISO 3166-1 Newsletter VI-1 (2007-09-21).  See:
 #     <a href="http://www.iso.org/iso/en/prods-services/iso3166ma/index.html">
 #     ISO 3166 Maintenance agency (ISO 3166/MA)
 #     </a>.
@@ -70,6 +70,7 @@ BG	Bulgaria
 BH	Bahrain
 BI	Burundi
 BJ	Benin
+BL	St Barthelemy
 BM	Bermuda
 BN	Brunei
 BO	Bolivia
@@ -93,7 +94,6 @@ CM	Cameroon
 CN	China
 CO	Colombia
 CR	Costa Rica
-CS	Serbia and Montenegro
 CU	Cuba
 CV	Cape Verde
 CX	Christmas Island
@@ -116,13 +116,14 @@ FI	Finland
 FJ	Fiji
 FK	Falkland Islands
 FM	Micronesia
-FO	Faeroe Islands
+FO	Faroe Islands
 FR	France
 GA	Gabon
 GB	Britain (UK)
 GD	Grenada
 GE	Georgia
 GF	French Guiana
+GG	Guernsey
 GH	Ghana
 GI	Gibraltar
 GL	Greenland
@@ -145,12 +146,14 @@ HU	Hungary
 ID	Indonesia
 IE	Ireland
 IL	Israel
+IM	Isle of Man
 IN	India
 IO	British Indian Ocean Territory
 IQ	Iraq
 IR	Iran
 IS	Iceland
 IT	Italy
+JE	Jersey
 JM	Jamaica
 JO	Jordan
 JP	Japan
@@ -179,6 +182,8 @@ LY	Libya
 MA	Morocco
 MC	Monaco
 MD	Moldova
+ME	Montenegro
+MF	St Martin (French part)
 MG	Madagascar
 MH	Marshall Islands
 MK	Macedonia
@@ -227,6 +232,7 @@ PY	Paraguay
 QA	Qatar
 RE	Reunion
 RO	Romania
+RS	Serbia
 RU	Russia
 RW	Rwanda
 SA	Saudi Arabia
