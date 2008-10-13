@@ -22,8 +22,6 @@
 # information or have any questions.
 #
 
-include $(JAVACALL_DIR)/build/common.gmk
-
 .PHONY: all pre_target local_vc post_target JAVACALL_EXTRA_LIBS
 
 all: pre_target javacall_common local_vc post_target
@@ -43,6 +41,8 @@ else
     cygpath -m $(1)
     endef
 endif
+
+include $(JAVACALL_DIR)/build/common.gmk
 
 TEMP_OBJECTS1=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
 TEMP_OBJECTS=$(patsubst %.cpp,%.obj,$(TEMP_OBJECTS1))
