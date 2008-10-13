@@ -129,3 +129,11 @@ void javanotify_mms_send_completed(
                         javacall_result result, 
                         int handle) {}
 #endif /* ENABLE_JSR_205 */
+
+#if ENABLE_ON_DEVICE_DEBUG
+/**
+ * The platform calls this function to inform VM that
+ * ODTAgent midlet must be enabled.
+ */
+void javanotify_enable_odd(void) {}
+#endif
