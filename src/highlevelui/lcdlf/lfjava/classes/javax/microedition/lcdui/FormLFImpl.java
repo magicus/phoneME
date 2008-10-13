@@ -1690,7 +1690,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 itemTraverse = false;
                 return;
             }
-                        
+            ItemLFImpl item = itemsCopy[traverseIndexCopy];
+            item.setInternalCycle(this.numOfLFs == 1);
             itemTraverse = 
                     uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
                 
