@@ -499,32 +499,41 @@ public class Protocol extends BufferedConnectionAdapter
     protected int nonBufferedRead(byte b[], int off, int len)
         throws IOException {
 
-        int bytesRead;
+        int bytesRead = 0;
 
-	if (b == null) {
-	    b = new byte[256];
-	}
+        try {
+            if (b == null) {
+                int chunk = 256;
+                b = new byte[chunk];
+                int end = off + len;
+                int tmp = chunk;
+                for (; off < end && tmp == chunk; off += chunk) {
+                    if (off + chunk > end) {
+                        chunk = end - off;
+                    }
+                    tmp = native_readBytes(handle, b, 0, chunk);
+                    if (tmp > 0) {
+                        bytesRead += tmp;
+                    }
+                }
+                if (tmp < 0) {
+                    eof = true;
+                }
+            } else {
+                bytesRead = native_readBytes(handle, b, off, len);
+            }
+        } finally {
+            if (iStreams == 0) {
+                throw new InterruptedIOException("Stream closed");
+            }
+        }
 
-	try {
-	    ///*                bytesRead = native_readBytes(handle, b, off, len);
-	    bytesRead = native_readBytes(handle, b, off, len);
-	} finally {
-	    if (iStreams == 0) {
-		throw new InterruptedIOException("Stream closed");
-	    }
-	}
+        if (bytesRead == -1) {
+            eof = true;
+        }
 
-	if (bytesRead == -1) {
-	    eof = true;
-	    return -1;
-	}
-
-	if (bytesRead != 0 || !blocking) {
-	    return bytesRead;
-	}
-
-	///            GeneralBase.iowait(); 
-					     return(bytesRead);
+        ///            GeneralBase.iowait(); 
+        return(bytesRead);
     }
 
     /**
