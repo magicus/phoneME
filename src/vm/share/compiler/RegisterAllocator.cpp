@@ -357,7 +357,7 @@ void RegisterAllocator::kill_by_locals(const jint local_index) {
       if ((_notation_map & (1<<reg)) &&
           (table[reg].locals & mask) !=0) {
         VERBOSE_CSE(("kill notation[%s] by local_index%d",
-                          Disassembler::reg_name(reg), local_index));
+                     register_name(reg), local_index));
         wipe_notation_of(reg);
       }
     }
@@ -374,7 +374,7 @@ void RegisterAllocator::kill_by_fields(const jint constant_index) {
       if ((_notation_map & (1<<reg) ) &&
           (table[reg].constants & mask) !=0) {
           VERBOSE_CSE(("kill notation[%s] by put field%d",
-                          Disassembler::reg_name(reg), constant_index));
+                       register_name(reg), constant_index));
         wipe_notation_of(reg);
       }
     }
@@ -390,7 +390,7 @@ void RegisterAllocator::kill_by_array_type(const jint array_element_type) {
       if ((_notation_map & (1<<reg)) &&
           (table[reg].array_element_type & array_element_type) != 0 ) {
         VERBOSE_CSE(("kill notation[%s] by array store%d",
-                          Disassembler::reg_name(reg), array_element_type));
+                     register_name(reg), array_element_type));
         wipe_notation_of(reg);
       }
     }
@@ -413,7 +413,7 @@ void RegisterAllocator::dump_notation(const Register reg){
   if (cur_notation != 0) {
     jint offset = ( cur_notation >> 16 ) & 0xffff ;
     jint length = cur_notation & 0xffff ;
-    COMPILER_COMMENT(("notation[%s]", Disassembler::reg_name(reg)));
+    COMPILER_COMMENT(("notation[%s]", register_name(reg)));
     COMPILER_COMMENT(("    bci start  = %d, length = %d", offset, length));
     COMPILER_COMMENT(("    local deps = 0x%08x", table[reg].locals));
     COMPILER_COMMENT(("    field deps = 0x%08x", table[reg].constants));
