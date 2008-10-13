@@ -389,7 +389,8 @@ root: ASSIGN INDEX reg32 arraySubscript freg32 : 21 :
 	if (canDoFloatLoadstore(ei, CVM_TRUE)){
 	    indexedStore(con, CVMRM_FP_REGS(con), $$);
 	} else {
-	    moveFPToIntRegs(con, NULL, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    CVMJITIRNode *f32 = CVMJITirnodeGetRightSubtree($$);
+	    moveFPToIntRegs(con, f32, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
 	    indexedStore(con, CVMRM_INT_REGS(con), $$);
 	}
     };
@@ -405,7 +406,8 @@ root: ASSIGN arrayIndex freg32 : 21 : : : : {
 	if (canDoFloatLoadstore(ei, CVM_TRUE)){
 	    storeArraySlot(con, CVMRM_FP_REGS(con), $$);
 	}else{
-	    moveFPToIntRegs(con, NULL, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    CVMJITIRNode *f32 = CVMJITirnodeGetRightSubtree($$);
+	    moveFPToIntRegs(con, f32, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
 	    storeArraySlot(con, CVMRM_INT_REGS(con), $$);
 	}
     };
@@ -461,7 +463,8 @@ root: ASSIGN INDEX reg32 arraySubscript freg64 : 21 :
 	if (canDoFloatLoadstore(ei, CVM_TRUE)){
 	    indexedStore(con, CVMRM_FP_REGS(con), $$);
 	} else {
-	    moveFPToIntRegs(con, NULL, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    CVMJITIRNode *f64 = CVMJITirnodeGetRightSubtree($$);
+	    moveFPToIntRegs(con, f64, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
 	    indexedStore(con, CVMRM_INT_REGS(con), $$);
 	}
     };
@@ -477,7 +480,8 @@ root: ASSIGN arrayIndex freg64 : 21 : : : : {
 	if (canDoFloatLoadstore(ei, CVM_TRUE)){
 	    storeArraySlot(con, CVMRM_FP_REGS(con), $$);
 	}else{
-	    moveFPToIntRegs(con, NULL, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    CVMJITIRNode *f64 = CVMJITirnodeGetRightSubtree($$);
+	    moveFPToIntRegs(con, f64, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
 	    storeArraySlot(con, CVMRM_INT_REGS(con), $$);
 	}
     };
