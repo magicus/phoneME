@@ -45,6 +45,10 @@
 #include <javacall_mms.h>
 #endif  /* ENABLE_JSR_205 */
 
+#if ENABLE_JSR_75
+#include <javanotify_fileconnection.h>
+#endif
+
 
 void javanotify_datagram_event(
                              javacall_datagram_callback_type type, 
@@ -136,4 +140,8 @@ void javanotify_mms_send_completed(
  * ODTAgent midlet must be enabled.
  */
 void javanotify_enable_odd(void) {}
+#endif
+
+#if ENABLE_JSR_75
+void javanotify_fileconnection_root_changed() {}
 #endif
