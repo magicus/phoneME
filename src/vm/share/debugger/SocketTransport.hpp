@@ -113,7 +113,7 @@ public:
 private:
 #if ENABLE_PCSL
   void set_read_ahead_buffer(TypeArray* new_buffer) {
-    return obj_field_put(read_ahead_buffer_offset(), new_buffer->obj());
+    obj_field_put(read_ahead_buffer_offset(), new_buffer->obj());
   }
 
   static int read_bytes_impl(Transport *t, void *buf, int len,
