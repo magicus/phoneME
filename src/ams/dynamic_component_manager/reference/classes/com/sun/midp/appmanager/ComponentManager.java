@@ -26,8 +26,18 @@
 
 package com.sun.midp.appmanager;
 
+import com.sun.midp.i18n.Resource;
+import com.sun.midp.i18n.ResourceConstants;
+import com.sun.midp.installer.DynamicComponentInstaller;
+import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.midletsuite.DynamicComponentStorage;
+import com.sun.midp.midletsuite.MIDletSuiteLockedException;
+import com.sun.midp.services.ComponentInfo;
+
+import javax.microedition.lcdui.*;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
+import java.io.IOException;
 
 /**
  * Component Manager
@@ -35,6 +45,11 @@ import javax.microedition.midlet.MIDletStateChangeException;
  * Implements a built-in MIDlet that manages the dynamically installed components.
  */
 public class ComponentManager extends MIDlet {
+
+    public ComponentManager() {
+        new ComponentView(MIDletSuite.INTERNAL_SUITE_ID, this, true);
+    }
+
     /**
      * Signals the <code>MIDlet</code> that it has entered the
      * <em>Active</em> state.
@@ -123,4 +138,321 @@ public class ComponentManager extends MIDlet {
      */
     protected void destroyApp(boolean unconditional) throws MIDletStateChangeException {
     }
+
+    /**
+     * A screen with a list of MIDlet components.
+     *
+     * Can provide read-only or full access to the user.
+     * May serve as the main screen of a MIDlet (in which case the MIDlet
+     * will terminate when the user exits the component list screen) or
+     * be called from some other screen (in which case that screen will
+     * be shown after exiting the the component list screen).
+     */
+    static class ComponentView implements CommandListener, ItemCommandListener {
+
+        /** Command object for "Back" command in the suite list form. */
+        private Command backCmd = new Command(Resource.getString
+                                              (ResourceConstants.BACK),
+                                              Command.BACK, 1);
+
+        /** Command object for "Back" command in the error message form. */
+        private Command errorBackCmd = new Command(Resource.getString
+                                              (ResourceConstants.BACK),
+                                              Command.BACK, 1);
+
+        /** Command object for "Launch". */
+        private Command openCmd =
+            new Command(Resource.getString(ResourceConstants.OPEN),
+                        Command.ITEM, 1);
+
+        /** Command object for "Install" command for the suite list form. */
+        private Command installCmd =
+            new Command(Resource.getString(ResourceConstants.INSTALL),
+                        Command.SCREEN, 1);
+
+        /** Command object for "Back" command in the install screen. */
+        private Command installNoCmd = new Command(Resource.getString
+                                              (ResourceConstants.BACK),
+                                              Command.BACK, 1);
+
+        /** Command object for "Yes, Install" command for the install screen. */
+        private Command installYesCmd =
+            new Command(Resource.getString(ResourceConstants.INSTALL),
+                        Command.SCREEN, 1);
+
+        /** Command object for "Remove" in the suite list form. */
+        private Command removeCmd =
+            new Command(Resource.getString(ResourceConstants.REMOVE),
+                        Command.ITEM, 3);
+
+        /**
+         * The Display object corresponding to the parent MIDlet.
+         * If not null, the current displayable is saved in the constructor
+         * to be restored when the user selects the "Back" command in
+         * the component list Form.
+         */
+        private Display display;
+
+        /**
+         * If not null, the Displayable to be restored
+         * when the user selects the "Back" command in the component list Form.
+         */
+        private Displayable parentDisplayable;
+
+        /**
+         * The parent MIDlet. If not null, this MIDlet receives NotifyDestroyed()
+         * when the user selects the "Back" command in the component list Form.
+         */
+        private MIDlet midlet;
+
+        /** ID of the MIDlet suite whose components we are interested in. */
+        private int  suiteId;
+
+        /** false for read-only access, true for full access. */
+        private boolean mayModify;
+
+        /** The component list Form */
+        private Form compList = new Form(null);
+
+        /** The "install component from url" Form */
+        private Form installUrlForm = null;
+
+        /** the component url text field for installUrlForm */
+        private TextField installUrlField = null ;
+
+        /** the component name text field for installUrlForm */
+        private TextField nameField = null ;
+
+        /** The error message Form */
+        private Form errorForm = null;
+
+        /**
+         * All information about suite components is kept in this
+         * array of ComponentInfo objects.
+         */
+        private ComponentInfo[] ci;
+
+        /**
+         * Use this constructor from a MIDlet having no screen
+         * other than the ComponentView screen. Such wrapper MIDlet will
+         * terminate when the user leaves the component list screen.  
+         * @param suiteId0 the ID of the suite of interest
+         * @param midlet0 the MIDlet that must be terminated when the user leaves the component list screen
+         * @param canModify0 true for full access, false for read-only access
+         */
+        ComponentView(int suiteId0, MIDlet midlet0, boolean canModify0) {
+            suiteId = suiteId0;
+            midlet = midlet0;
+            mayModify = canModify0;
+            display = Display.getDisplay(midlet);
+            refresh();
+        }
+
+        /**
+         * Use this constructor when there is a screen where to return
+         * when the user leaves the component list screen.
+         * @param suiteId0 the ID of the suite of interest
+         * @param display0 the Display object currently in use.
+         * @param canModify0 true for full access, false for read-only access
+         */
+        ComponentView(int suiteId0, Display display0, boolean canModify0) {
+            suiteId = suiteId0;
+            display = display0;
+            mayModify = canModify0;
+            parentDisplayable = display.getCurrent();
+            refresh();
+        }
+
+        /**
+         * Display an error message
+         * @param message the error description message
+         */
+        private void showError(String message) {
+            if (errorForm == null) {
+                    errorForm = new Form("Error");
+            }
+            errorForm.deleteAll();
+            errorForm.append(message);
+            errorForm.addCommand(errorBackCmd);
+            errorForm.setCommandListener(this);
+            display.setCurrent(errorForm);
+        }
+
+        /**
+         * Create a Form for the "Install Component" dialog.
+         * The form is stored into the installUrlForm field.
+         */
+        private void makeInstallDialog() {
+            if (installUrlForm == null) {
+                    installUrlForm = new Form("Install Component");
+                    String componentUrl = "http://127.0.0.1/DynComponent1.jar";
+                    installUrlField = new TextField("Enter URL to install from:",
+                                                 componentUrl, 1024,
+                                                 TextField.URL);
+                    nameField = new TextField("Enter component name:",
+                                             "asdf", 1024,
+                                             TextField.ANY);
+                    installUrlForm.append(installUrlField);
+                    installUrlForm.append(nameField);
+            }
+            installUrlForm.addCommand(installNoCmd);
+            installUrlForm.addCommand(installYesCmd);
+            display.setCurrent(installUrlForm);
+            installUrlForm.setCommandListener(this);
+        }
+
+        /**
+         * Find an item in the component list form.
+         * @param item the item to search for
+         * @return the index of the item in the form, or -1 if not found.
+         */
+        protected int findItem(Item item) {
+            for (int i=0; i<compList.size(); i++) {
+                if (compList.get(i) == item) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        /**
+         * Given an item, find the corresponding ComponentInfo object.
+         * @param item the item to search for
+         * @return the corresponding ComponentInfo object.
+         */
+        protected ComponentInfo findComponent(Item item) {
+            int i = findItem(item);
+            return i == -1 ? null : ci[i];
+        }
+
+        /**
+         * Update content and show the component list screen.
+         */
+        private void refresh() {
+             updateContent();
+             compList.setCommandListener(this);
+             display.setCurrent(compList);
+         }
+
+        /**
+         * Re-read the information about installed components, update the form compList
+         * and the array ci.
+         */
+        private void updateContent() {
+             DynamicComponentStorage dcs =
+                     DynamicComponentStorage.getComponentStorage();
+
+             try {
+                 ci = dcs.getListOfSuiteComponents(suiteId);
+             } catch (IllegalArgumentException iae) {
+                 iae.printStackTrace();
+                 ci = null;
+             }
+
+             compList.setTitle(ci == null ? "Components: none" : "Components: " + ci.length);
+             if (ci != null) {
+                 for (int i = 0; i < ci.length; i++) {
+                     if (i >= compList.size()) {
+                         compList.append(new StringItem(null,ci[i].getDisplayName()+"\n"));
+                     } else {
+                         ((StringItem)compList.get(i)).setText(ci[i].getDisplayName()+"\n");
+                     }
+                     //compList.get(i).addCommand(backCmd);
+                     compList.get(i).setDefaultCommand(openCmd);
+                     if (mayModify) {
+                        compList.get(i).addCommand(removeCmd);
+                     }
+                     compList.get(i).setItemCommandListener(this);
+                 }
+                 for (int i = compList.size() - 1; i >= ci.length; i--) {
+                     compList.delete(i);
+                 }
+             } else {
+                 compList.deleteAll();
+             }
+
+             compList.addCommand(backCmd);
+
+             if (mayModify) {
+                compList.addCommand(installCmd);
+             }
+         }
+
+        /**
+         * Indicates that a command event has occurred on
+         * <code>Displayable d</code>.
+         *
+         * @param c a <code>Command</code> object identifying the
+         *          command. This is either one of the
+         *          applications have been added to <code>Displayable</code> with
+         *          {@link javax.microedition.lcdui.Displayable#addCommand(javax.microedition.lcdui.Command)
+         *          addCommand(Command)} or is the implicit
+         *          {@link javax.microedition.lcdui.List#SELECT_COMMAND SELECT_COMMAND} of
+         *          <code>List</code>.
+         * @param d the <code>Displayable</code> on which this event
+         *          has occurred
+         */
+        public void commandAction(Command c, Displayable d) {
+            if (c == backCmd) {
+                if (parentDisplayable != null) {
+                    display.setCurrent(parentDisplayable);
+                } else {
+                    midlet.notifyDestroyed();
+                }
+            } else if (c == installCmd) {
+                makeInstallDialog();
+            } else if (c == installNoCmd) {
+                refresh();
+            } else if (c == installYesCmd) {
+                DynamicComponentInstaller installer = new DynamicComponentInstaller();
+                try {
+                        int componentId = installer.installComponent(suiteId,
+                                                                 installUrlField.getString(), nameField.getString());
+                } catch (IOException e) {
+                    showError(e.toString());
+                    return;
+                } catch (MIDletSuiteLockedException msle) {
+                    showError("The component is being used now.");
+                    return;
+                }
+
+                refresh();
+
+            } else if (c == errorBackCmd) {
+                refresh();
+            }
+        }
+
+
+        /**
+         * Called by the system to indicate that a command has been invoked on a
+         * particular item.
+         *
+         * @param c    the <code>Command</code> that was invoked
+         * @param item the <code>Item</code> on which the command was invoked
+         */
+        public void commandAction(Command c, Item item) {
+            ComponentInfo cinfo = findComponent(item);
+            if (cinfo==null) {
+                return;
+            }
+            int componentId = cinfo.getComponentId();
+            if (c == removeCmd) {
+                DynamicComponentStorage dcs =
+                        DynamicComponentStorage.getComponentStorage();
+                
+                try {
+                    dcs.removeComponent(componentId);
+                } catch (MIDletSuiteLockedException msle) {
+                    showError("Component is in use: " + msle.getMessage());
+                    return;
+                }
+                refresh();
+                
+            } else if (c == openCmd) {
+                showError("component info: "+cinfo.toString());
+            }
+        }
+
+     }
 }
