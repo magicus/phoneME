@@ -443,7 +443,7 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
   }
 
   int bytes_cached = st->bytes_cached_for_read();
-  TypeArray read_buffer = read_ahead_buffer();
+  TypeArray read_buffer = st->read_ahead_buffer();
 
   if (bytes_cached >= len) {
     jvm_memcpy((unsigned char *)buf, read_buffer.base_address(), len);
