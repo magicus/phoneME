@@ -1876,6 +1876,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      	    }
             uHideShowItems(itemsCopy);
             uRequestPaint(); // request to paint contents area
+            setupScroll();
             isCycle = true;
         }
         return isCycle;
@@ -1904,7 +1905,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             scrollForBounds(Canvas.DOWN, visRect);
             uSpecialCaseTraverseFirstItem(traverseIndexCopy, itemsCopy);
      	    uHideShowItems(itemsCopy);
-            uRequestPaint(); // request to paint contents area       
+            uRequestPaint(); // request to paint contents area
+            setupScroll();       
         }
         return isCycle;
     }
