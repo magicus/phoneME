@@ -1803,7 +1803,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 boolean  isBottomShown = (viewable[Y] + viewport[HEIGHT] < viewable[HEIGHT]);
                 if (traverseIndexCopy != -1 && isBottomShown &&
                     ((itemsCopy[traverseIndexCopy].bounds[Y] + 
-                        itemsCopy[traverseIndex].bounds[HEIGHT]) >
+                        itemsCopy[traverseIndexCopy].bounds[HEIGHT]) >
                     (viewable[Y] + viewport[HEIGHT]))) 
                 {
                     viewable[Y] += (viewport[HEIGHT] - PIXELS_LEFT_ON_PAGE);
@@ -1859,19 +1859,23 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
     private boolean cyclingPageUp(int traverseIndexCopy,
         ItemLFImpl[] itemsCopy) {
         boolean isCycle = false;
-        if (viewable[Y] == 0) {
+        if (viewable[Y] == 0 && itemsCopy.length > 0) {
             uTraverseOutItem(traverseIndexCopy, itemsCopy);
-            synchronized (Display.LCDUILock) {
-                traverseIndex = itemsCopy.length - 1;
-                traverseIndexCopy = itemsCopy.length - 1;
+            
+            int nextIndex = itemsCopy.length - 1;
+            if (itemsCopy[nextIndex].shouldSkipTraverse()) {
+                nextIndex = -1;
             }
-            //set up visRect
-            itemTraverse = 
-                uCallItemTraverse(itemsCopy[traverseIndexCopy], Canvas.UP);
-            //set up viewable
-            scrollForBounds(Canvas.UP, visRect);
-     	    
-     	    if (viewable[HEIGHT] > viewport[HEIGHT]) {
+            synchronized (Display.LCDUILock) {
+                traverseIndex = nextIndex;
+                traverseIndexCopy = nextIndex;
+            }
+            viewable[Y] = (viewable[HEIGHT] > viewport[HEIGHT]) ? 
+                (viewable[HEIGHT] - viewport[HEIGHT]) : 0;  
+            uInitItemsInViewport(Canvas.UP, itemsCopy, nextIndex);
+            updateCommandSet();
+             
+            if (nextIndex != -1 &&viewable[HEIGHT] > viewport[HEIGHT]) {
      	        uSpecialCaseTraverseLastItem(traverseIndexCopy, itemsCopy);
      	    }
             uHideShowItems(itemsCopy);
@@ -1890,21 +1894,28 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
     private boolean cyclingPageDown(int traverseIndexCopy,
         ItemLFImpl[] itemsCopy) {
         boolean isCycle = false;
-        if (viewable[Y] + viewport[HEIGHT] == viewable[HEIGHT] || 
-            viewport[HEIGHT] >= viewable[HEIGHT]) {
+        if (itemsCopy.length > 0 && (viewable[Y] + viewport[HEIGHT] == viewable[HEIGHT] || 
+            viewport[HEIGHT] >= viewable[HEIGHT])) {
             isCycle = true;
             uTraverseOutItem(traverseIndexCopy, itemsCopy);
-            synchronized (Display.LCDUILock) {
-                traverseIndex = 0;
-                traverseIndexCopy = 0;
+            
+            viewable[Y] = 0;
+            //index of next interactive item 
+            int nextIndex = 0;
+            if (itemsCopy[0].shouldSkipTraverse()) {
+                nextIndex = -1;
             }
-            //set up visRect
-            itemTraverse = 
-                uCallItemTraverse(itemsCopy[traverseIndexCopy], Canvas.DOWN);
-            //set up viewable
-            scrollForBounds(Canvas.DOWN, visRect);
-            uSpecialCaseTraverseFirstItem(traverseIndexCopy, itemsCopy);
-     	    uHideShowItems(itemsCopy);
+            synchronized (Display.LCDUILock) {
+                traverseIndex = nextIndex;
+                traverseIndexCopy = nextIndex;
+            } 
+            //set up next interactive item or -1
+            uInitItemsInViewport(Canvas.DOWN, itemsCopy, nextIndex);
+            updateCommandSet();
+            if (nextIndex == 0) {
+                uSpecialCaseTraverseFirstItem(traverseIndexCopy, itemsCopy);
+     	    }
+            uHideShowItems(itemsCopy);
             uRequestPaint(); // request to paint contents area
             setupScroll();       
         }
