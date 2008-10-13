@@ -1252,6 +1252,8 @@ static char* pushApplySipFilter(PushEntry* pushp) {
     unsigned char *required_type = NULL;
     char *p;
     int required_type_len;
+    PushEntry* next;
+    jboolean found = KNI_FALSE;
 
     /*
      * SIP Datagram and Socket connections use the SIP
@@ -1262,29 +1264,31 @@ static char* pushApplySipFilter(PushEntry* pushp) {
     sender = getSipFromHeaderURI((unsigned char *)
                                  pushp->pCachedData->buffer,
                                  pushp->pCachedData->length);
-
-    if (checksipfilter((unsigned char *)pushp->filter, sender)) {
+    next = pushp;
+    do {
+        if (next->isSIPEntry) {
+            if (checksipfilter((unsigned char *)next->filter, sender)) {
         /*
          * If a media type tag was specified in the connection URI,
          * then the message is only dispatched if it contains
          * an Accept-Contact header with a matching media feature
          * tag.
          */
-        required_type_len = getMIMEType(pushp->value, &p);
+                required_type_len = getMIMEType(next->value, &p);
         if (required_type_len) {
             required_type = (unsigned char *)
                 pcsl_mem_malloc(required_type_len + 1);
 
             if (required_type != NULL) {
-                strncpy((char *)required_type, p,
-                        required_type_len);
+                        strncpy((char *)required_type, p, required_type_len);
                 required_type[required_type_len] = '\0';
             }
 
             /*
              * Extract the message media type.
              */
-            acceptcontact_type = getSipAcceptContactType(
+                    acceptcontact_type = 
+                    getSipAcceptContactType(
                 (unsigned char *) pushp->pCachedData->buffer,
                 pushp->pCachedData->length);
 
@@ -1294,33 +1298,52 @@ static char* pushApplySipFilter(PushEntry* pushp) {
                 REPORT_INFO2(LC_PROTOCOL,
                     "SIP Push Message Media Type Matched: %s == %s",
                     required_type,acceptcontact_type);
-                midpFree(sender);
-                midpFree(acceptcontact_type);
-                midpFree(required_type);
+
 
                 /* Required type matched. */
-                return midpStrdup(pushp->value);
+                        found = KNI_TRUE;
+                        break;
             }
 
             REPORT_INFO2(LC_PROTOCOL,
                 "SIP Push Message Media Type Filtered: %s != %s",
                 required_type, acceptcontact_type);
 
-            midpFree(required_type);
         } else {
             /* No type required. */
-            midpFree(sender);
-            return midpStrdup(pushp->value);
+                    found = KNI_TRUE;
+                    break;
+                }
+            }
+            if (!pushp->isShared || NULL == next->next) {
+                /* for dedicated connection 
+                   and last entry of shared connections chain */
+                pushcheckinentry(next);
+                /* and clear chached data for shared connection */
+                midpFree(pushp->pCachedData);
+                pushp->pCachedData = NULL;
+                break;
+            } else if (pushp == next) {
+                /*  mark first chain element as checked in and look for
+                    next element */
+                next->state = CHECKED_IN;
+            } else {
+                /*  keep the state for the rest:
+                    non-sip and  intermediate chanin member */
         }
     }
+        /* scan for entries shared the same connection */
+        next = next->next;
+    } while (pushp->isShared);
 
+    midpFree(acceptcontact_type);
+    midpFree(required_type);
     midpFree(sender);
 
-    /*
-     * Dispose of the filtered push request.
-     * Release any cached packets.
-     */
-    pushcheckinentry(pushp);
+    if (found && LAUNCH_PENDING != next->state) {
+        next->state = LAUNCH_PENDING;
+        return midpStrdup(next->value);
+    }
 
     return NULL;
 }
@@ -1597,6 +1620,9 @@ char *pushfindfd(int fd) {
 #if ENABLE_JSR_180
             /* Check for JSR180 SIP/SIPS connections (UDP). */
             else if (pushp->isSIPEntry) {
+
+                /* Special case: shared connection. Cached datagram is stored 
+                   at first push entry buffer */
                 /*
                  * Read the SIP datagram and save it til the
                  * application reads it.
@@ -2127,8 +2153,6 @@ static int pushProcessPort(PushEntry* pe) {
         } else {
             p += 4;
         }
-		/* clear default value */
-		pe->isShared = 0;
 
         /*
          * Example JSR180 connection strings
@@ -2176,8 +2200,9 @@ static int pushProcessPort(PushEntry* pe) {
             /* Shared connections must include media. */
             pe->port = 5060;
             /* mark for quick search */
-            pe->isShared = 1;
-            /* don't create new connection if there is SIP shared conenction */
+            pe->isShared = KNI_TRUE;
+            /* don't create new connection if there is SIP conenction 
+               shared the same port */
             if (NULL  != sharedP) {
                 pe->fd = sharedP->fd;
                 return 0;
