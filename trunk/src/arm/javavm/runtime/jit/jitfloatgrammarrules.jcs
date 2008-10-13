@@ -68,6 +68,7 @@ moveFPToIntRegs(
 {
     const int size = CVMJITirnodeIsSingleWordType(thisNode) ? 1 : 2;
     CVMRMResource* src  = popResource(con);
+    CVMassert(size == src->size);
     CVMRMResource* dest = CVMRMgetResource(CVMRM_INT_REGS(con),
 					   target, avoid, size);
     CVMRMpinResource(CVMRM_FP_REGS(con), src,
