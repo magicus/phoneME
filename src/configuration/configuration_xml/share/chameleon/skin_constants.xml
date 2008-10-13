@@ -1684,6 +1684,10 @@
             Comment="Height of virtual keyboard"/>
 
   <constant Type="int"
+            Name="KEYBOARD_COEFFICIENT"
+            Comment="The persent of the board which virtual keyboard fill"/>
+
+  <constant Type="int"
             Name="KEYBOARD_KEY"
             Comment="Image for virtual keyboard key"/>
 

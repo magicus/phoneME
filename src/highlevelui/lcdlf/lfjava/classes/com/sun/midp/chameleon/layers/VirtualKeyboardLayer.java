@@ -48,7 +48,6 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     /** the instance of the virtual keyboard */
     private static VirtualKeyboard vk = null;
 
-    private static int MIN_BODYLAYER_HEIGHT = 50;
     /**
      * Create an instance of KeyboardLayer
      */
@@ -72,7 +71,6 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
 
         if (VirtualKeyboard.isSupportJavaKeyboard() && vk == null) {
             vk = VirtualKeyboard.getVirtualKeyboard(this);
-            setAnchor();
          }
     }
 
@@ -166,16 +164,6 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     public void paintBody(Graphics g) {
         vk.paint(g);
     }
-
-    /**
-     * Sets the anchor constants for rendering operation.
-     */
-    private void setAnchor() {
-    	bounds[W] = (int)(.95 * ScreenSkin.WIDTH);
-        bounds[H] = VirtualKeyboardSkin.HEIGHT;
-        bounds[X] = (ScreenSkin.WIDTH - bounds[W]) >> 1;
-        bounds[Y] = ScreenSkin.HEIGHT - bounds[H];
-    }
     
     /**
      * Update bounds of layer
@@ -192,21 +180,16 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
                 bounds[Y] += layers[MIDPWindow.TITLE_LAYER].bounds[H];
                 screenBounds -= layers[MIDPWindow.TITLE_LAYER].bounds[H];
             }
-    	        
             if (layers[MIDPWindow.TICKER_LAYER].isVisible()) {
                 screenBounds -= layers[MIDPWindow.TICKER_LAYER].bounds[H];
             }
             if (layers[MIDPWindow.BTN_LAYER].isVisible()) {
                 screenBounds -= layers[MIDPWindow.BTN_LAYER].bounds[H];
             }
-            int bodyValue = screenBounds - VirtualKeyboardSkin.HEIGHT;//layers[MIDPWindow.KEYBOARD_LAYER].bounds[H];
-            if (bodyValue > MIN_BODYLAYER_HEIGHT) {
-                this.bounds[H] = VirtualKeyboardSkin.HEIGHT;
-                bounds[Y] += bodyValue;
-            } else {
-                this.bounds[H] = screenBounds - MIN_BODYLAYER_HEIGHT;
-                bounds[Y] += MIN_BODYLAYER_HEIGHT;
-            }
+            bounds[H] = (int)(VirtualKeyboardSkin.COEFFICIENT * screenBounds);
+            bounds[H] = (bounds[H] > VirtualKeyboardSkin.HEIGHT) ?
+            		VirtualKeyboardSkin.HEIGHT : bounds[H];
+            bounds[Y] += (screenBounds - bounds[H]); 
             bounds[X] = (ScreenSkin.WIDTH - bounds[W]) >> 1;
             double khrinkX = ((double)bounds[W])/VirtualKeyboardSkin.WIDTH;
             double kshrinkY = ((double)bounds[H])/VirtualKeyboardSkin.HEIGHT;

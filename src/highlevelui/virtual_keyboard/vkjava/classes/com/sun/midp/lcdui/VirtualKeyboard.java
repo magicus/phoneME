@@ -77,7 +77,7 @@ public class VirtualKeyboard {
     /* Current type of keyboard */
     String currentKeyboardType;
    
-    /* Shrinks of the keyboard */
+    /* The  coefficients of keyboard's shrink */
     private double shrinkX = 1;
     private double shrinkY = 1;
 
@@ -241,14 +241,25 @@ public class VirtualKeyboard {
         }
     }
     
+    /**
+     * Set up new coefficients of shrink and resize keyboard. Move keys in new coordinates.
+     * @param kshrinkX - coefficient of shrink on X-dimension
+     * @param kshrinkY - coefficient of shrink on Y-dimension
+     */
     public void resize(double kshrinkX, double kshrinkY) {
-       shrinkX = kshrinkX;
-       shrinkY = kshrinkY; 
+        shrinkX = kshrinkX;
+        shrinkY = kshrinkY; 
+        resize();       
+    }
     
+    /**
+     * Resize keyboard with cashed coefficients. 
+     */
+    private void resize() {
        for (int i = 0; i < currentKeyboard.length; i++) {
            for (int j = 0; j < currentKeyboard[i].length; j++) {
                Key key = currentKeyboard[i][j];
-    	       key.resize(kshrinkX, kshrinkY);
+    	       key.resize(shrinkX, shrinkY);
            } 
        }       
     }
@@ -322,8 +333,8 @@ public class VirtualKeyboard {
             currentKeyboard = (Key[][]) keyboardsMap.get(newType);
             line = 0;
             column = 0;
-            //shrink cashe from previous time
-            resize(shrinkX, shrinkY);
+            //coefficients of shrink are cashed from previous time
+            resize();
         }
     }
 
