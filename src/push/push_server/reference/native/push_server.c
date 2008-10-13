@@ -2179,7 +2179,7 @@ static int pushProcessPort(PushEntry* pe) {
                 /* scan up to current record (VM startup case)
 				   or until end of records (installation case) */
                 for (pushp = pushlist; pushp != pe, pushp != NULL; pushp = pushp->next) {
-                    if (pushp != pe && pushp->isSIPEntry && pushp->isShared) {
+                    if (pushp->isSIPEntry && pushp->isShared){
                         char* tmp;
                         /* compare mime type */
                         if (0 == mime_len - getMIMEType(pushp->value, &tmp)) {
@@ -2201,7 +2201,7 @@ static int pushProcessPort(PushEntry* pe) {
             pe->port = 5060;
             /* mark for quick search */
             pe->isShared = KNI_TRUE;
-            /* don't create new connection if there is SIP conenction 
+            /* don't create new connection if there is SIP connection 
                shared the same port */
             if (NULL  != sharedP) {
                 pe->fd = sharedP->fd;
