@@ -33,7 +33,6 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.installer.*;
 import com.sun.midp.main.*;
 import com.sun.midp.midletsuite.*;
-import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
@@ -222,6 +221,10 @@ class AppManagerUIImpl extends Form
         new Command(Resource.
                     getString(ResourceConstants.AMS_MOVE_TO_INTERNAL_STORAGE),
                     Command.ITEM, 6);
+    /** Command object for "view components". */
+    private Command viewCompCmd =
+        new Command(Resource.getString(ResourceConstants.VIEW_COMP),
+                    Command.ITEM, 7);
 
 
     /** Command object for "Cancel" command for the remove form. */
@@ -700,6 +703,12 @@ class AppManagerUIImpl extends Form
             } catch (Throwable t) {
                 displayError.showErrorAlert(msi.displayName, t, null, null);
             }
+
+        } else if (c == viewCompCmd) {
+
+            // Installation of new components is a MIDlet's prerogative.
+            // Therefore, we specify the read-only mode (3rd arg).
+            new ComponentManager.ComponentView(msi.suiteId, display, false);
 
         } else if (c == removeCmd) {
 
@@ -1200,6 +1209,9 @@ class AppManagerUIImpl extends Form
             }
             if (foldersOn) {
                 ci.addCommand(changeFolderCmd);
+            }
+            if (appManager.compManagerIncluded()) {
+                ci.addCommand(viewCompCmd);
             }
         }
 
