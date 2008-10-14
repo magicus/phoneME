@@ -39,6 +39,9 @@
 #define ucontext asm_ucontext
 #include <asm/ucontext.h>
 
+
+#ifdef CVM_SIGACTION_CHAINING
+
 #define MAXSIGNUM 32
 #define MASK(sig) ((CVMUint32)1 << sig)
 
@@ -114,12 +117,16 @@ sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
     return __sigaction(sig, act, oact);
 }
 
+#endif /* CVM_SIGACTION_CHAINING */
+
 /*
  * SEGV handler
  */
 static void handleSegv(int sig, siginfo_t* info, struct ucontext* ucp)
 {
+#ifdef CVM_DEBUG
     int pid = getpid();
+#endif
     CVMUint8* pc = (CVMUint8*)(ptrdiff_t)ucp->uc_mcontext.sc_pc;
     if (CVMJITcodeCacheInCompiledMethod(pc)) {
 #if 0
@@ -196,6 +203,7 @@ static void handleSegv(int sig, siginfo_t* info, struct ucontext* ucp)
 	ucp->uc_mcontext.sc_pc = ucp->uc_mcontext.sc_pc - 4; 
     }
 #else
+#ifdef CVM_SIGACTION_CHAINING
     /* Call chained handler */
     {
         struct sigaction sa = sact[sig];
@@ -211,6 +219,7 @@ static void handleSegv(int sig, siginfo_t* info, struct ucontext* ucp)
             }
         }
     }
+#endif /* CVM_SIGACTION_CHAINING */
 #endif
 }
 
@@ -224,7 +233,9 @@ linuxSegvHandlerInit(void)
     int i;
     int result = 0;
     
+#ifdef CVM_SIGACTION_CHAINING
     cvmSignalInstalling = CVM_TRUE;
+#endif
 
     for (i = 0; result != -1 && i < (sizeof signals / sizeof signals[0]); ++i){
         struct sigaction sa;
@@ -234,7 +245,9 @@ linuxSegvHandlerInit(void)
         result = sigaction(signals[i], &sa, NULL);
     }
 
+#ifdef CVM_SIGACTION_CHAINING
     cvmSignalInstalling = CVM_FALSE;
+#endif
 
     return (result != -1);
 }

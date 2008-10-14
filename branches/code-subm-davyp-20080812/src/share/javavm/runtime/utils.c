@@ -2166,7 +2166,15 @@ CVMinitPathValues(void *propsPtr, const char *basePath,
         *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
         strcpy(pEnd, jarNames[i]);
     }
-    props->sysclasspath = p;
+    if (*p == '\0' && *userBootclasspath == NULL
+        && preBootclasspath == NULL && postBootclasspath == NULL)
+    {
+        props->sysclasspath = NULL;
+    } else {
+        props->sysclasspath = p;
+        /* return a copy back to caller */
+        *userBootclasspath = strdup(props->sysclasspath);
+    }
     p += strlen(p) + 1;
 #ifdef CVM_HAS_JCE
     /*

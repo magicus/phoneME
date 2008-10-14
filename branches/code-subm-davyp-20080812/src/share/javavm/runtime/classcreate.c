@@ -519,6 +519,8 @@ CVMclassCreateArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
      */
     CVMcbMethodTablePtr(arrayCb) =
 	CVMcbMethodTablePtr(CVMsystemClass(java_lang_Object));
+    CVMcbMethodTableCount(arrayCb) =
+        CVMcbMethodTableCount(CVMsystemClass(java_lang_Object));
 
     /* 
      * Create the Java side "mirror" to this class
@@ -2284,10 +2286,9 @@ CVMreadCode(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock* mb,
 	    /* none of the above */
 	    getNbytes(context, attrLength, NULL);
 	}
+#ifdef CVM_DEBUG_CLASSINFO
 	CVMassert((void*)ln <= (void*)CVMjmdLocalVariableTable(jmd));
 
-
-#ifdef CVM_DEBUG_CLASSINFO
 	/* The VM Spec doesn't seem to require line number tables are 
 	 * ordered. The CVMpc2lineno function in interpreter.c relies
 	 * on the entries being ordered.

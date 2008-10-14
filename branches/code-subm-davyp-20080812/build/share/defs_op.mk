@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -312,6 +312,16 @@ ifeq ($(wildcard $(JSR_280_DEFS_FILE)),)
 $(error JSR_280_DIR must point to a directory containing JSR 280 sources)
 endif
 include $(JSR_280_DEFS_FILE)
+endif
+
+ifeq ($(USE_XMLPARSER),true)
+export XMLPARSER_DIR ?= $(COMPONENTS_DIR)/xmlparser
+XMLPARSER_DEFS_FILE = $(XMLPARSER_DIR)/build/cdc_share/$(SUBSYSTEM_DEFS_FILE)
+ifeq ($(wildcard $(XMLPARSER_DEFS_FILE)),)
+$(error XMLPARSER_DIR must point to a directory containing xmlparser sources)
+endif
+include $(XMLPARSER_DEFS_FILE)
+JSROP_JARS += $(XMLPARSER_JAR)
 endif
 
 # Include API Extensions

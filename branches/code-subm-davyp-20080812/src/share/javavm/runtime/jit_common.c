@@ -1581,19 +1581,28 @@ CVMjitPolicyInit(CVMExecEnv* ee, CVMJITGlobalState* jgs)
 #endif
     } /* Otherwise do nothing.
          The default [im]cost and climit will do the work normally */
-#if defined(CVM_AOT) || defined(CVM_MTASK)
-    else {
-        /* Need to initialize the [im]cost and climit by re-obtaining them 
-         * from the JIT options */
-        if (!CVMprocessSubOptions(knownJitSubOptions, "-Xjit",
-			      &jgs->parsedSubOptions)) {
-	return CVM_FALSE;
-        }
-    }
-#endif
 
     return CVM_TRUE;
 }
+
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+/* During AOT compilation and MTASK warmup, dynamic compilation policy
+ * is disabled. Patched method invocation (PMI) is also disabled during
+ * that. This is used to re-initialize JIT options and policy after 
+ * pre-compilation. For AOT, if there is existing AOT code, this is
+ * called after initializing the AOT code.
+ */
+CVMBool
+CVMjitProcessOptionsAndPolicyInit(
+        CVMExecEnv* ee, CVMJITGlobalState* jgs)
+{
+    if (!CVMprocessSubOptions(knownJitSubOptions, "-Xjit",
+			   &jgs->parsedSubOptions)) {
+        return CVM_FALSE;
+    }
+    return CVMjitPolicyInit(ee, jgs);
+}
+#endif
 
 /* Purpose: Set up the inlining threshold table. */
 CVMBool

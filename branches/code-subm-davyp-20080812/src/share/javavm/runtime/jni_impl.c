@@ -4468,20 +4468,6 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 	goto done;
     }
 
-#if defined(CVM_AOT) && !defined(CVM_MTASK)
-    CVMjitCompileAOTCode(ee);
-#endif
-    
-#ifdef CVM_LVM /* %begin lvm */
-    /* Finish-up the main LVM bootstrapping after the VM gets 
-     * fully initialized */
-    if (!CVMLVMfinishUpBootstrapping(ee)) {
-	errorStr = "error during LVM initialization";
-	errorNo = JNI_ERR;
-	goto done;
-    }
-#endif /* %end lvm */
-
 #ifdef CVM_XRUN
     /* Now that the VM is initialized, may need to handle "helper"
        libraries for JVMTI/PI */
@@ -4513,6 +4499,25 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 #endif
     }
 #endif /* CVM_XRUN */
+
+#if defined(CVM_AOT) && !defined(CVM_MTASK)
+#ifdef CVM_JVMTI
+    if (!CVMjvmtiIsInDebugMode())
+#endif
+    {
+        CVMjitCompileAOTCode(ee);
+    }
+#endif
+    
+#ifdef CVM_LVM /* %begin lvm */
+    /* Finish-up the main LVM bootstrapping after the VM gets 
+     * fully initialized */
+    if (!CVMLVMfinishUpBootstrapping(ee)) {
+	errorStr = "error during LVM initialization";
+	errorNo = JNI_ERR;
+	goto done;
+    }
+#endif /* %end lvm */
 
 #ifdef CVM_JVMTI
     CVMjvmtiEnterPrimordialPhase();

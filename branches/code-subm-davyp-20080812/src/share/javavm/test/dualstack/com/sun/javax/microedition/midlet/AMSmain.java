@@ -42,7 +42,7 @@ public class AMSmain{
  * Some places we want a file name,
  * some places we want a URL.
  * Duplicated from javax.microedition.midlet.AMS.
- */
+ *
 static String
 filenameToURL(String filename){
     java.io.File f = new File(filename);
@@ -53,7 +53,7 @@ filenameToURL(String filename){
 	throw new Error("IOException");
     }
     return longname;
-}
+    }*/
 
 /*
  * MAIN: 
@@ -66,11 +66,11 @@ filenameToURL(String filename){
     public static void
     main( String args[] ){
 	String suitePath = args[0];
-	String midImplPath = System.getProperty(MIDPimplProperty);
+        File midImplPath = new File(System.getProperty(MIDPimplProperty));
 
 	MIDPImplementationClassLoader midpImpl = 
 		MIDPConfig.newMIDPImplementationClassLoader(
-			new String[]{filenameToURL(midImplPath)});
+			new File[]{midImplPath});
 	MemberFilter mf =
 		MIDPConfig.newMemberFilter();
 	MidletAMS suiteRunner;

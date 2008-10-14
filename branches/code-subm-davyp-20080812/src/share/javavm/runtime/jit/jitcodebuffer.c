@@ -317,9 +317,13 @@ CVMJITmarkCodeBuffer()
     if (!CVMglobals.jit.codeCacheAOTCodeExist)
 #endif
     {
-        CVMassert(CVMglobals.jit.codeCacheFirstFreeBuf != NULL);
-        CVMJITsetCodeCacheDecompileStart(
-            (CVMUint8*)CVMglobals.jit.codeCacheFirstFreeBuf);
+        if (CVMglobals.jit.codeCacheFirstFreeBuf != NULL) {
+            CVMJITsetCodeCacheDecompileStart(
+                (CVMUint8*)CVMglobals.jit.codeCacheFirstFreeBuf);
+        } else {
+            CVMJITsetCodeCacheDecompileStart(
+                CVMglobals.jit.codeCacheEnd);
+        }
     }
 
 #ifdef CVM_USE_MEM_MGR
@@ -336,7 +340,7 @@ CVMJITmarkCodeBuffer()
     CVMJITcodeCachePersist(&CVMglobals.jit);
 #ifndef CVM_MTASK
     /* If CVM_MTASK is enabled, isPrecompiling is set to
-     * false in the clild VM.
+     * false in the child VM.
      */
     CVMglobals.jit.isPrecompiling = CVM_FALSE;
 #endif
@@ -699,6 +703,17 @@ CVMJITcodeCacheInit(CVMExecEnv* ee, CVMJITGlobalState *jgs)
     /* Server does the warmup compilation. */
     jgs->isPrecompiling = (CVMglobals.isServer && CVMglobals.clientId <= 0);
 #endif
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+    /* Disable PMI during pre-compiling. CVMglobals.jit.pmiEnabled
+       will be reset properly later by re-processing the -Xjit 
+       options when we are done pre-compilation or finihing
+       initializing AOT code.
+     */
+    jgs->pmiEnabled = !(jgs->isPrecompiling);
+#endif
+#endif
+
 
 #ifdef CVM_JIT_PROFILE
     jgs->profile_fd = -1;
@@ -761,14 +776,15 @@ CVMJITinitializeAOTCode()
             }
             cbuf += bufSize;
         }
-    }
 #ifndef CVM_MTASK
-    /* Dynamic compilation were disabled until this point. Need to
-     * initialize JIT policy to allow dynamic compilation. If
-     * CVM_MTASK is enabled, CVMjitPolicyInit() is eventually called
-     * by sun.misc.Warmup.runit(). */
-    CVMjitPolicyInit(CVMgetEE(), jgs);
+        /* Need to initialize the [im]cost, climit and pmiEnabled 
+         * by re-processing the JIT options.
+         * Dynamic compilation and PMI were disabled until this point. If
+         * CVM_MTASK is enabled, CVMjitPolicyInit() is eventually called
+         * by sun.misc.Warmup.runit(). */
+        CVMjitProcessOptionsAndPolicyInit(CVMgetEE(), jgs);
 #endif
+    }
     return jgs->codeCacheAOTCodeExist;
 }
 #endif
@@ -1236,6 +1252,15 @@ CVMJITcodeCacheMakeRoomForMethod(CVMJITCompilationContext* con,
 {
     CVMJITGlobalState* jgs = &CVMglobals.jit;
     CVMBool success = CVM_FALSE;
+
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+    if (CVMglobals.jit.isPrecompiling) {
+        CVMconsolePrintf("WARNING: Code cache full and decompilating "
+                         "is disabled during AOT compilation. Please "
+                         "use a larger code cache.\n");
+        goto done;
+    }
+#endif
 
     if (!jgs->policyTriggeredDecompilations) {
 	CVMtraceJITStatus(("JS: Code cache full and decompilation "

@@ -499,6 +499,7 @@ Java_com_sun_cdc_io_j2me_comm_Protocol_registerCleanup(JNIEnv *env,
 {
 }
 
+static const jint BUFSIZE = 1024;
 
 JNIEXPORT jint JNICALL  
 Java_com_sun_cdc_io_j2me_comm_Protocol_native_1readBytes(JNIEnv *env,
@@ -508,20 +509,29 @@ Java_com_sun_cdc_io_j2me_comm_Protocol_native_1readBytes(JNIEnv *env,
 							 jint off,
 							 jint len)
 {
-  char *errorMsg = NULL;
-  long bytesRead;
-  jbyte b[256];
+    char *errorMsg = NULL;
+    jbyte b[BUFSIZE];
+    jint chunk = BUFSIZE;
+    jint bytesRead = BUFSIZE;
+    jint result = 0;
+    jint end = off + len;
 
-  bytesRead = readFromPort(&errorMsg, (long)hPort, (char *)b,
-			   (long)len);
-
-  (*env)->SetByteArrayRegion(env, bArray, off, off+bytesRead, (jbyte *)b);
-
-  return(bytesRead);
+    for (; off < end && bytesRead == chunk; off += chunk) {
+        if (off + chunk > end) {
+            chunk = end - off;
+        }
+        bytesRead = readFromPort(&errorMsg, (long)hPort, (char *)b,
+                (long)chunk);
+        
+        if (bytesRead > 0) {
+            result += bytesRead;
+            (*env)->SetByteArrayRegion(env, bArray, off, bytesRead, (jbyte *)b);
+        }
+    }
+    return(result);
 }
 
-
-JNIEXPORT jint JNICALL  
+JNIEXPORT jint JNICALL 
 Java_com_sun_cdc_io_j2me_comm_Protocol_native_1writeBytes(JNIEnv *env,
 							  jobject this,
 							  jint hPort,
@@ -529,18 +539,22 @@ Java_com_sun_cdc_io_j2me_comm_Protocol_native_1writeBytes(JNIEnv *env,
 							  jint off,
 							  jint len)
 {
-  char *errorMsg = NULL;
-  long bytesWritten;
-  jbyte b[256];
-  //int leng;
-  
-  //leng = (*env)->GetArrayLength(env, bArray);
-  (*env)->GetByteArrayRegion(env, bArray, off, off+len, b);
-  bytesWritten = writeToPort(&errorMsg, (long)hPort, (char *)b,
-			     (long)len);
-
-  return(bytesWritten);
+    char *errorMsg = NULL;
+    jbyte b[BUFSIZE];
+    jint chunk = BUFSIZE;
+    jint bytesWritten = BUFSIZE;
+    jint result = 0;
+    jint end = off + len;
+    for (; off < end && bytesWritten == chunk; off += chunk) {
+        if (off + chunk > end) {
+            chunk = end - off;
+        }
+        (*env)->GetByteArrayRegion(env, bArray, off, chunk, b);
+        bytesWritten = writeToPort(&errorMsg, (long)hPort, (char *)b,
+                        (long)chunk);
+        if (bytesWritten > 0) {
+            result += bytesWritten;
+        }
+    }
+    return(result);
 }
-
-
-

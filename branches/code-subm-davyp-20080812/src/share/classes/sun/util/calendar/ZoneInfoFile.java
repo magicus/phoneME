@@ -912,16 +912,16 @@ public class ZoneInfoFile {
      * Reads the specified file under &lt;java.home&gt;/lib/zi into a buffer.
      * @return the buffer, or null if any I/O error occurred.
      */
-    private static byte[] readZoneInfoFile(String fileName) {
+    private static byte[] readZoneInfoFile(final String fileName) {
 	byte[] buffer = null;
 
 	try {
-	    String homeDir = (String) AccessController.doPrivileged(
-				new sun.security.action.GetPropertyAction("java.home"));
-	    final String fname = homeDir + File.separator + "lib" + File.separator
-				 + "zi" + File.separator + fileName;
 	    buffer = (byte[]) AccessController.doPrivileged(new PrivilegedExceptionAction() {
 		public Object run() throws IOException {
+                    String homeDir = System.getProperty("java.home");
+                    final String fname =
+                        homeDir + File.separator + "lib" + File.separator
+                        + "zi" + File.separator + fileName;
 		    File file = new File(fname);
 		    int filesize = (int)file.length();
 		    byte[] buf = new byte[filesize];
