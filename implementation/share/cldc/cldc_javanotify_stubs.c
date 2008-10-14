@@ -49,6 +49,9 @@
 #include <javanotify_fileconnection.h>
 #endif
 
+#if ENABLE_JSR_179
+#include <javanotify_location.h>
+#endif
 
 void javanotify_datagram_event(
                              javacall_datagram_callback_type type, 
@@ -144,4 +147,19 @@ void javanotify_enable_odd(void) {}
 
 #if ENABLE_JSR_75
 void javanotify_fileconnection_root_changed() {}
+#endif
+
+#if ENABLE_JSR_179
+void javanotify_location_proximity(
+        javacall_handle provider,
+        double latitude,
+        double longitude,
+        float proximityRadius,
+        javacall_location_location* pLocationInfo,
+        javacall_location_result operation_result) {}
+
+void javanotify_location_event(
+        javacall_location_callback_type event,
+        javacall_handle provider,
+        javacall_location_result operation_result) {}
 #endif
