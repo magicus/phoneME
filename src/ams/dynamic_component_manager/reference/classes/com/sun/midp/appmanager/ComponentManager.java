@@ -46,6 +46,9 @@ import java.io.IOException;
  */
 public class ComponentManager extends MIDlet {
 
+    /**
+     * Constructor: launches the component view screen.
+     */
     public ComponentManager() {
         new ComponentView(MIDletSuite.INTERNAL_SUITE_ID, this, true);
     }
