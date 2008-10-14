@@ -455,18 +455,23 @@ WMA_STATUS jsr120_sms_unblock_thread(jint handle, jint waitingFor) {
 /**
  * Delete all SMS messages cached in the pool for the specified
  * midlet suite. The linked list with the (msid, port number)
- * pairings has to be specified.
+ * pairings has to be specified. Cleans up listeners list also.
  *
  * @param msid Midlet Suite ID.
- * @param head Head of linked list, that has (msid, port number)
+ * @param listeners Head of linked list, that has (msid, port number)
  *             pairings.
  *
  */
-static void jsr120_sms_delete_all_msgs(AppIdType msid, ListElement* head) {
+static void jsr120_sms_delete_all_msgs(AppIdType msid, ListElement* listeners) {
 
     ListElement *elem = NULL;
 
-    if ((elem = jsr120_list_get_first_by_msID(head, msid)) != NULL) {
+    /* It is supposed that listeners of the specified msid was already unregistered. 
+     * They was not deleted completely because they contains (msid->recent open ports) 
+     * mapping, which is useful to cleanup unused sms messages on midlet exiting.
+     * Here we are cleaning up both listeners list and list of messages.           */
+
+    while ((elem = jsr120_list_remove_first_by_msID(&listeners, msid)) != NULL) {
         /*
          * If the dequeued element has a valid port number,
          * then delete all SMS messages stored for that port.
