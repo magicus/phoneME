@@ -708,7 +708,7 @@ class AppManagerUIImpl extends Form
 
             // Installation of new components is a MIDlet's prerogative.
             // Therefore, we specify the read-only mode (3rd arg).
-            new ComponentManager.ComponentView(msi.suiteId, display, false);
+            ComponentManagerLauncher.componentView(msi.suiteId, display, false);
 
         } else if (c == removeCmd) {
 
