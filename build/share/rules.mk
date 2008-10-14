@@ -347,7 +347,7 @@ $(LIB_CLASSESDIR)/%.class :: $(CVM_BUILDTIME_CLASSESDIR)/%.class
 ifeq ($(EVAL_SUPPORTED),true)
 	$(eval BUILDjavahclasses += $(subst /,.,$*))
 else
-	@echo $(subst /,.,$*) >>$(CVM_BUILD_TOP)/.javahclasses.list
+	@echo '$(subst /,.,$*)' >>$(CVM_BUILD_TOP)/.javahclasses.list
 endif
 endif
 
@@ -355,7 +355,7 @@ $(LIB_CLASSESDIR)/%.class :: %.java
 ifeq ($(EVAL_SUPPORTED),true)
 	$(eval BUILDjavahclasses += $(subst /,.,$*))
 else
-	@echo $(subst /,.,$*) >>$(CVM_BUILD_TOP)/.javahclasses.list
+	@echo '$(subst /,.,$*)' >>$(CVM_BUILD_TOP)/.javahclasses.list
 endif
 	$(call buildClassesList,.libclasses,$?)
 
@@ -451,8 +451,8 @@ $(CVM_BUILD_TOP)/%.list : $(CVM_BUILD_TOP)/%.plist
 
 $(CVM_BUILD_TOP)/.libclasses.plist : $(CLASSLIB_CLASS_FILES) $(CLASSLIB_JAR_FILES)
 ifeq ($(EVAL_SUPPORTED),true)
-	@printf %s "$(BUILDjavahclasses)" > $(CVM_BUILD_TOP)/.javahclasses.list
-	@printf %s "$(BUILD.libclasses)" > $@
+	@printf %s '$(BUILDjavahclasses)' > $(CVM_BUILD_TOP)/.javahclasses.list
+	@printf %s '$(BUILD.libclasses)' > $@
 else
 	@touch $@
 endif
@@ -775,7 +775,7 @@ $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo "USE_JUMP = $(USE_JUMP)" >> $@
 	$(AT) echo "JUMP_DIR = $(JUMP_DIR)" >> $@
 	$(AT) echo "CVM_PRELOAD_SET = $(CVM_PRELOAD_SET)" >> $@
-	$(AT) echo 'CVM_PRELOAD_LIB = $$(eval $$(error CVM_PRELOAD_LIB))' >> $@
+	$(AT) echo 'CVM_PRELOAD_LIB = $$(error CVM_PRELOAD_LIB)' >> $@
 	$(AT) echo "CVM_DLL = $(CVM_DLL)" >> $@
 	$(AT) echo "CVM_STATICLINK_LIBS = $(CVM_STATICLINK_LIBS)" >> $@
 	$(AT) echo "CCFLAGS_SPEED = $(CCFLAGS_SPEED)" >> $@
