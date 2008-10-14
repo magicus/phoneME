@@ -67,18 +67,9 @@ public class Launcher {
 	launcher = (Launcher)
 	    AccessController.doPrivileged(new PrivilegedAction() {
 		public Object run() {
-		// If property sun.boot.class.path is not defined, then
-		// we are running in the old-style launcher, in which
-		// case we just return null.
-
-		String s = System.getProperty("sun.boot.class.path");
-		if (s != null) {
 		    return new Launcher();
-		} else {
-		    return null;
 		}
-	    }
-	});
+        });
     }
 
     public static Launcher getLauncher() {
@@ -651,11 +642,6 @@ public class Launcher {
     private static URLClassPath getBootstrapClassPath0() {
 	String prop = (String)AccessController.doPrivileged(
 	    new GetPropertyAction("sun.boot.class.path"));
-	if (prop == null) {
-	    // Running old-style launcher, so use java.class.path instead
-	    prop = (String)AccessController.doPrivileged(
-		new GetPropertyAction("java.class.path"));
-	}
 	URL[] urls;
 	if (prop != null) {
 	    final String path = prop;

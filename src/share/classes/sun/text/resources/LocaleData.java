@@ -156,7 +156,11 @@ public class LocaleData {
 
 	// Search combined system and application class path
 	if (s != null && s.length() != 0) {
-	    classPath += File.pathSeparator + s;
+            if (classPath == null) {
+                classPath = s;
+            } else {
+                classPath += File.pathSeparator + s;
+            }
 	}
         while (classPath != null && classPath.length() != 0) {
             int i = classPath.lastIndexOf(java.io.File.pathSeparatorChar);

@@ -234,7 +234,6 @@ CVMJITcodeCachePersist()
     strcat(aotfile, sprops->library_path);
     strcat(aotfile, "/cvm.aot");
     fd = open(aotfile, O_WRONLY | O_CREAT | O_TRUNC, 0777);
-    free(aotfile);
 
     if (fd == -1) {
         CVMconsolePrintf("Could not create AOT file: %s.\n", aotfile);
@@ -259,5 +258,6 @@ CVMJITcodeCachePersist()
         close(fd);
         CVMtraceJITStatus(("JS: Finished writing AOT code.\n"));
     }
+    free(aotfile);
 }
 #endif

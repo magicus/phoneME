@@ -29,10 +29,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef __UCLIBC__
 #include <locale.h>
 #include <langinfo.h>
 #include <iconv.h>
-
+#endif
 #include "utf.h"
 
 /* Global variables */
@@ -49,6 +50,7 @@ utfInitialize(char *options)
     ui = (struct UtfInst*)calloc(sizeof(struct UtfInst), 1);
     ui->iconvToPlatform		= (void *)-1;
     ui->iconvFromPlatform	= (void *)-1;
+#ifndef __UCLIBC__
     
     /* Set the locale from the environment */
     (void)setlocale(LC_ALL, "");
@@ -73,6 +75,9 @@ utfInitialize(char *options)
     if ( ui->iconvFromPlatform == (void *)-1 ) {
 	UTF_ERROR("Failed to complete iconv_open() setup");
     }
+#else
+    (void)codeset;
+#endif
     return ui;
 }
 
@@ -82,6 +87,8 @@ utfInitialize(char *options)
 void  JNICALL
 utfTerminate(struct UtfInst *ui, char *options)
 {
+#ifndef __UCLIBC__
+
     if ( ui->iconvFromPlatform != (void *)-1 ) {
 	(void)iconv_close(ui->iconvFromPlatform);
     }
@@ -90,8 +97,11 @@ utfTerminate(struct UtfInst *ui, char *options)
     }
     ui->iconvToPlatform   = (void *)-1;
     ui->iconvFromPlatform = (void *)-1;
+#endif
     (void)free(ui);
 }
+
+#ifndef __UCLIBC__
 
 /*
  * Do iconv() conversion.
@@ -139,6 +149,8 @@ iconvConvert(iconv_t ic, char *bytes, int len, char *output, int outputMaxLen)
     return outputLen;
 }
 
+#endif
+
 /*
  * Convert UTF-8 to Platform Encoding.
  *    Returns length or -1 if output overflows.
@@ -156,8 +168,13 @@ utf8ToPlatform(struct UtfInst*ui, jbyte *utf8, int len, char *output, int output
         output[0] = 0;
         return 0;
     }
+#ifndef __UCLIBC__
 
     return iconvConvert(ui->iconvToPlatform, (char*)utf8, len, output, outputMaxLen);
+#else
+    strncpy(output, (char *)utf8, outputMaxLen - 1);
+    return strlen(output);
+#endif
 }
 
 /*
@@ -177,7 +194,12 @@ utf8FromPlatform(struct UtfInst*ui, char *str, int len, jbyte *output, int outpu
         output[0] = 0;
         return 0;
     }
+#ifndef __UCLIBC__
     
     return iconvConvert(ui->iconvFromPlatform, str, len, (char*)output, outputMaxLen);
+#else
+    strncpy((char *)output, str, outputMaxLen - 1);
+    return strlen((char*)output);
+#endif
 }
 

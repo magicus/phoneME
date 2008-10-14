@@ -1520,6 +1520,8 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	    if (methodTableCount > 0) {
 		methodTableName = c.getNativeName()+"_mt";
 	    } else if (c.isArrayClass()) {
+                methodTableCount =
+                    c.classInfo.superClassInfo.methodtable.length;
 		methodTableName = "java_lang_Object_mt";
 	    } else { /* must be an interface */
 		methodTableName = "0";

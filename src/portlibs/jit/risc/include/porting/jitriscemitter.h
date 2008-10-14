@@ -35,6 +35,10 @@
 #include "portlibs/jit/risc/include/export/jitregman.h"
 #include "javavm/include/jit/jitriscemitterdefs_cpu.h"
 
+#ifdef CVM_HDR_JIT_JITRISCEMITTER_H
+#include CVM_HDR_JIT_JITRISCEMITTER_H
+#endif
+
 /*
  * This file defines the RISC emitter porting layer which includes opaque
  * data structures and function APIs which the platform needs to provide
@@ -878,6 +882,10 @@ CVMCPUemitMethodProloguePatch(CVMJITCompilationContext *con,
  */
 extern void
 CVMCPUemitInvokeMethod(CVMJITCompilationContext *con);
+
+#ifndef CVMemitThreadSchedHook
+#define CVMemitThreadSchedHook(con)   /* */
+#endif
 
 /* ===== Optional APIs to support 64-bit registers ======================== */
 #ifdef CVMCPU_HAS_64BIT_REGISTERS

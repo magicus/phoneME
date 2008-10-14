@@ -39,7 +39,9 @@
 #include "javavm/include/assert.h"
 
 #ifdef CVM_JVMTI
+#ifndef __UCLIBC__
 #include <gnu/libc-version.h>
+#endif
 #ifndef clockid_t
 typedef int clockid_t;
 #endif
@@ -90,6 +92,7 @@ void CVMtimeClockInit(void) {
 	}
     }
     {
+#ifndef __UCLIBC__
 	char _gnu_libc_version[32];
 	char *glibc_version = _gnu_libc_version;
 	char *libpthread_version;
@@ -149,6 +152,7 @@ void CVMtimeClockInit(void) {
 	if (strstr(libpthread_version, "NPTL")) {
 	    isNPTL = CVM_TRUE;
 	}
+#endif /* __UCLIBC__ */
     }
 #endif
     clockTicsPerSec = sysconf(_SC_CLK_TCK);

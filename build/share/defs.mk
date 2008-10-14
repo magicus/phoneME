@@ -213,10 +213,6 @@ ifeq ($(CVM_JVMPI), true)
         override CVM_THREAD_SUSPENSION = true
 endif
 
-ifeq ($(CVM_PRELOAD_LIB), true)
-	override CVM_CREATE_RTJAR = false
-endif
-
 # Set default options.
 # NOTE: These options are officially supported and are documented in
 #       docs/guide/build.html:
@@ -277,6 +273,10 @@ CVM_PRELOAD_LIB         ?= $(CVM_PRELOAD_TEST)
 CVM_STATICLINK_LIBS	= $(CVM_PRELOAD_LIB)
 CVM_SYMBOLS             ?= $(CVM_DEBUG)
 CVM_PRODUCT             ?= premium
+
+ifeq ($(CVM_PRELOAD_LIB), true)
+	override CVM_CREATE_RTJAR = false
+endif
 
 # CVM_TERSEOUTPUT is now deprecated in favor of USE_VERBOSE_MAKE.
 # They have opposite meanings. We look at CVM_TERSEOUTPUT here to set
@@ -1437,7 +1437,7 @@ endif
 # The following tests make up a LOT of classes. Make sure we are not
 # preloading them.
 #
-ifneq ($(CVM_PRELOAD_LIB), true)
+ifneq ($(CVM_PRELOAD_TEST), true)
 CVM_TEST_CLASSES += \
 	ClassLink \
 	ClassisSubclassOf
@@ -2141,18 +2141,39 @@ CVM_ANT         ?= ant
 # Compiler and linker flags
 #
 
-# don't enable extra gcc warnings if using gcc version 2.x
 GET_GCC_VERSION := $(shell $(TARGET_CC) -dumpversion  2> /dev/null)
-ifeq ($(findstring 2.95, $(GET_GCC_VERSION)), 2.95)
+GET_GCC_VERSION := $(subst ., ,$(GET_GCC_VERSION))
+GCC_MAJOR_VERSION := $(firstword $(GET_GCC_VERSION))
+GCC_MINOR_VERSION := $(word 2, $(GET_GCC_VERSION))
+
+# don't enable extra gcc warnings if using gcc version 2.x
+# enable -fwrapv for 3.4 and later
+
+GCC_BOUNDARIES := $(shell awk \
+    'END { \
+             if (M < 3) { \
+                 printf "v2.x"; \
+             } else if (M * 1000 + N >= 3004) { \
+                 printf "v3.4.x"; \
+             } \
+         }' \
+    M=$(GCC_MAJOR_VERSION) N=$(GCC_MINOR_VERSION) < /dev/null)
+
+ifeq ($(GCC_BOUNDARIES), v2.x)
 USE_EXTRA_GCC_WARNINGS ?= false
+USE_FWRAPV = false
 endif
-ifeq ($(findstring 2.96, $(GET_GCC_VERSION)), 2.96)
-USE_EXTRA_GCC_WARNINGS ?= false
+ifeq ($(GCC_BOUNDARIES), v3.4.x)
+USE_FWRAPV = true
 endif
 
 USE_EXTRA_GCC_WARNINGS ?= true
 ifeq ($(USE_EXTRA_GCC_WARNINGS),true)
 EXTRA_CC_WARNINGS ?= -W -Wno-unused-parameter -Wno-sign-compare
+endif
+
+ifeq ($(USE_FWRAPV), true)
+GCC_VERSION_SPECIFIC_FLAGS += -fwrapv
 endif
 
 # for creating gnumake .d files
@@ -2161,15 +2182,17 @@ CCDEPEND   	= -MM
 ASM_FLAGS	= -c -fno-common $(ASM_ARCH_FLAGS)
 CCFLAGS     	= -c -fno-common -Wall \
 			$(EXTRA_CC_WARNINGS) \
-			-fno-strict-aliasing $(CC_ARCH_FLAGS)
+			-fno-strict-aliasing \
+			$(GCC_VERSION_SPECIFIC_FLAGS) \
+			$(CC_ARCH_FLAGS)
 CCCFLAGS 	= -fno-rtti
 ifeq ($(CVM_OPTIMIZED), true)
-CCFLAGS_SPEED	= $(CCFLAGS) -O4
-CCFLAGS_SPACE	= $(CCFLAGS) -O2
-else
-CCFLAGS_SPEED	= $(CCFLAGS)
-CCFLAGS_SPACE	= $(CCFLAGS)
+CCFLAGS_SPEED_OPTIONS ?= -O4 
+CCFLAGS_SPACE_OPTIONS ?= -O2 
 endif
+CCFLAGS_SPEED	= $(CCFLAGS_SPEED_OPTIONS) $(CCFLAGS)
+CCFLAGS_SPACE	= $(CCFLAGS_SPACE_OPTIONS) $(CCFLAGS)
+
 CCFLAGS_LOOP	= $(CCFLAGS_SPEED) $(CC_ARCH_FLAGS_LOOP)
 CCFLAGS_FDLIB 	= $(CCFLAGS_SPEED) $(CC_ARCH_FLAGS_FDLIB)
 

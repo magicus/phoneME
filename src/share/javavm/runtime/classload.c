@@ -902,8 +902,13 @@ CVMclassFindContainer(JNIEnv *env, jobject this, jstring name) {
 CVMBool
 CVMclassBootClassPathInit(JNIEnv *env)
 {
-    return CVMclassPathInit(env, &CVMglobals.bootClassPath, NULL,
-			    CVM_FALSE, CVM_FALSE);
+    if (CVMglobals.bootClassPath.pathString == NULL) {
+        CVMglobals.bootClassPath.initialized = CVM_TRUE;
+        return CVM_TRUE;
+    } else {
+        return CVMclassPathInit(env, &CVMglobals.bootClassPath, NULL,
+                                CVM_FALSE, CVM_FALSE);
+    }
 }
 
 CVMBool
@@ -1456,8 +1461,8 @@ CVMclassPathInit(JNIEnv* env, CVMClassPath* classPath,
 		    CVMtraceClassLoading(("CL: Added zip file \"%s\" to the "
 					  "classpath\n", currPath));
 		    currEntry->type = CVM_CPE_ZIP;
-                    /* canonical form not needed */
-		    currEntry->path = strdup(currPath);
+                    /* canonical form *is* needed (6669683) */
+		    currEntry->path = strdup(canonicalPath);
 		    currEntry->zip = zip;
                     /* For classpath entries only */
                     if (initJavaSide) {

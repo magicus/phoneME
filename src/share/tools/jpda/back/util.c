@@ -1672,10 +1672,14 @@ getPropertyUTF8(JNIEnv *env, char *propertyName)
             JNI_FUNC_PTR(env,ReleaseStringUTFChars)(env, valueString, utf);
         }
     }
+    /* Used to die here if property not defined.  CVM may have 
+     * NULL sun.boot.class.path.  JDWP should call getSystemProperties
+     * to get list of properties available.
     if ( value == NULL ) {
         ERROR_MESSAGE(("JDWP Can't get property value for %s", propertyName));
         EXIT_ERROR(AGENT_ERROR_NULL_POINTER,NULL);
     }
+    */
     return value;
 }
 

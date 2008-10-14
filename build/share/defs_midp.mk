@@ -163,7 +163,8 @@ ifeq ($(CVM_STATICLINK_LIBS), true)
 CVM_OBJECTS		+= $(MIDP_OBJECTS)
 MIDP_LIBS 		?= \
         -L$(PCSL_OUTPUT_DIR)/$(PCSL_TARGET)/lib -lpcsl_file \
-        -lpcsl_memory -lpcsl_network -lpcsl_print -lpcsl_string
+        -lpcsl_memory -lpcsl_network -lpcsl_print -lpcsl_string \
+        -lpcsl_escfilenames
 LINKLIBS 		+= $(MIDP_LIBS)
 endif
 

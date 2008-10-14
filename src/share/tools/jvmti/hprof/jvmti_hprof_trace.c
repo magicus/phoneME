@@ -106,7 +106,6 @@ find_or_create(SerialNumber thread_serial_num, jint n_frames,
     int         key_len;
     TraceIndex  index;
     jboolean    new_one;
-    static TraceKey empty_key;
     
     HPROF_ASSERT(frames!=NULL);
     HPROF_ASSERT(trace_key_buffer!=NULL);
@@ -115,7 +114,7 @@ find_or_create(SerialNumber thread_serial_num, jint n_frames,
         key_len += (int)((n_frames-1)*(int)sizeof(FrameIndex));
     }
     pkey = trace_key_buffer;
-    *pkey = empty_key;
+    memset(pkey, 0, sizeof(*pkey));
     pkey->thread_serial_num = (gdata->thread_in_traces ? thread_serial_num : 0);
     pkey->n_frames = (short)n_frames;
     pkey->phase = phase;

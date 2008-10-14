@@ -400,9 +400,16 @@ CVMinitExecEnv(CVMExecEnv* ee, CVMExecEnv* targetEE,
     /* The first frame has to be a JNI frame so we can allocate
      * jni local refs from it.
      */
+
     result = CVMinitStack(ee, &targetEE->interpreterStack, 
 			  CVMglobals.config.javaStackMinSize,
-			  CVMglobals.config.javaStackMaxSize, 
+#ifdef CVM_JVMTI
+                          /* Leave some space to post events */
+			  CVMglobals.config.javaStackMaxSize -
+                          CVMglobals.config.javaStackChunkSize, 
+#else
+ 			  CVMglobals.config.javaStackMaxSize, 
+#endif
 			  CVMglobals.config.javaStackChunkSize,
 			  CVMJNIFrameCapacity,
 			  CVM_FRAMETYPE_JNI);

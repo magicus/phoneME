@@ -71,7 +71,6 @@
 #define JVM_Sleep		 Java_java_lang_Thread_sleep0
 #define JVM_CurrentThread	 Java_java_lang_Thread_currentThread
 #define JVM_CountStackFrames	 Java_java_lang_Thread_countStackFrames
-#define JVM_Interrupt		 Java_java_lang_Thread_interrupt0
 #define JVM_IsInterrupted	 Java_java_lang_Thread_isInterrupted
 #ifndef CDC_10
 #define JVM_HoldsLock            Java_java_lang_Thread_holdsLock

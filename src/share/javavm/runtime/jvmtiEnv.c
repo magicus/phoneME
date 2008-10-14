@@ -7091,16 +7091,23 @@ jvmti_AddToBootstrapClassLoaderSearch(jvmtiEnv* jvmtienv,
     env = CVMexecEnv2JniEnv(ee);
 
     if (CVMjvmtiGetPhase() == JVMTI_PHASE_ONLOAD) {
-	/* pathString len + seperator + segmetn + null */
-	len = strlen(CVMglobals.bootClassPath.pathString) +
-	    strlen(segment) + 2;
-	tmp = calloc(len, sizeof(char));
-	if (tmp == NULL) {
-	    return JVMTI_ERROR_OUT_OF_MEMORY;
-	}
-	sprintf(tmp, "%s%s%s", CVMglobals.bootClassPath.pathString,
-		CVM_PATH_CLASSPATH_SEPARATOR, segment);
-	free(CVMglobals.bootClassPath.pathString);
+        if (CVMglobals.bootClassPath.pathString == NULL) {
+            tmp = strdup(segment);
+            if (tmp == NULL) {
+                return JVMTI_ERROR_OUT_OF_MEMORY;
+            }
+        } else {
+            /* pathString len + seperator + segmetn + null */
+            len = strlen(CVMglobals.bootClassPath.pathString) +
+                strlen(segment) + 2;
+            tmp = calloc(len, sizeof(char));
+            if (tmp == NULL) {
+                return JVMTI_ERROR_OUT_OF_MEMORY;
+            }
+            sprintf(tmp, "%s%s%s", CVMglobals.bootClassPath.pathString,
+                    CVM_PATH_CLASSPATH_SEPARATOR, segment);
+            free(CVMglobals.bootClassPath.pathString);
+        }
 	CVMglobals.bootClassPath.pathString = tmp;
     } else if (CVMjvmtiGetPhase() == JVMTI_PHASE_LIVE) {
 	char *seg = (char *)segment;
@@ -7189,6 +7196,7 @@ jvmti_GetSystemProperty(jvmtiEnv* jvmtienv,
     nameString = (*env)->NewStringUTF(env, property);
     if ((*env)->ExceptionOccurred(env)) {
 	(*env)->ExceptionClear(env);
+        err = JVMTI_ERROR_NOT_AVAILABLE;
 	/* NULL will be returned below */
     } else {
 	if (CVMjvmtiGetPhase() == JVMTI_PHASE_ONLOAD) {
@@ -7220,6 +7228,7 @@ jvmti_GetSystemProperty(jvmtiEnv* jvmtienv,
 					       systemGetProperty, nameString);
 	    if ((*env)->ExceptionOccurred(env)) {
 		(*env)->ExceptionClear(env);
+		err = JVMTI_ERROR_NOT_AVAILABLE;
 	    } else if (valueString != NULL) {
 		utf = (*env)->GetStringUTFChars(env, valueString, NULL);
 		ALLOC(jvmtienv, strlen(utf)+1, valuePtr);

@@ -29,8 +29,6 @@ package java.net;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.util.Enumeration;
 
 /**
  * Concrete datagram and multicast socket implementation base class.
