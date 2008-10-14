@@ -59,9 +59,12 @@ endif
 # out of the range, non-PC relative instruction jal is used instead
 # of the PC relative branch instructon. If AOT is supported, we
 # want the jal target at a fixed location.
-ifneq ($(CVM_AOT), true)
+#
+# The restriction is not needed since MIPS now uses fixed address for
+# AOT codecache.
+#ifneq ($(CVM_AOT), true)
 CVM_JIT_COPY_CCMCODE_TO_CODECACHE ?= true
-endif
+#endif
 
 CVM_JIT_PMI ?= false
 ifeq ($(CVM_JIT_PMI), true)

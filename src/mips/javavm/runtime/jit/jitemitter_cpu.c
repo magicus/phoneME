@@ -1054,6 +1054,14 @@ CVMCPUemitAbsoluteCall(CVMJITCompilationContext* con,
 		       CVMBool okToBranchAroundCpDump)
 {
 #ifdef CVM_JIT_COPY_CCMCODE_TO_CODECACHE
+    /*
+     * Need to use fixed AOT codecache if 
+     * CVM_JIT_COPY_CCMCODE_TO_CODECACHE is enabled,
+     * because the 'jal' instruction is not PC-relative.
+     */
+#if defined(CVM_AOT) && !defined(CVMAOT_USE_FIXED_ADDRESS)
+#error Need to use fixed AOT codecache if CVM_JIT_COPY_CCMCODE_TO_CODECACHE is enabled.
+#endif
     CVMBool useJAL = CVM_TRUE;
     if (!okToDumpCp) {
 	/*
