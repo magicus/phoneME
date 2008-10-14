@@ -451,7 +451,8 @@ $(CVM_BUILD_TOP)/%.list : $(CVM_BUILD_TOP)/%.plist
 
 $(CVM_BUILD_TOP)/.libclasses.plist : $(CLASSLIB_CLASS_FILES) $(CLASSLIB_JAR_FILES)
 ifeq ($(EVAL_SUPPORTED),true)
-	@printf %s '$(BUILDjavahclasses)' > $(CVM_BUILD_TOP)/.javahclasses.list
+	@printf %s '$(value BUILDjavahclasses)' > \
+	    $(CVM_BUILD_TOP)/.javahclasses.list
 	@printf %s '$(BUILD.libclasses)' > $@
 else
 	@touch $@
