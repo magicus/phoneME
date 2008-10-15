@@ -71,6 +71,7 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
 
         if (VirtualKeyboard.isSupportJavaKeyboard() && vk == null) {
             vk = VirtualKeyboard.getVirtualKeyboard(this);
+            setAnchor();
          }
     }
 
@@ -106,6 +107,16 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
         }
     }
 
+    /**
+     * Sets the anchor constants for rendering operation.
+     */
+    private void setAnchor() {
+        bounds[W] = (int)(.95 * ScreenSkin.WIDTH);
+        bounds[H] = VirtualKeyboardSkin.HEIGHT;
+        bounds[X] = bounds[X] = (ScreenSkin.WIDTH - bounds[W]) >> 1;
+        bounds[Y] = ScreenSkin.HEIGHT - bounds[H];
+
+    }
 
     /**
      * Handles key event in the open popup.
@@ -164,36 +175,21 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     public void paintBody(Graphics g) {
         vk.paint(g);
     }
-    
+
     /**
      * Update bounds of layer
      * @param layers - current layer can be dependant on this parameter
      */
     public void update(CLayer[] layers) {
         super.update(layers);
+
         if (visible) {
-            bounds[W] = (int)(0.95*ScreenSkin.WIDTH);
-            int screenBounds = ScreenSkin.HEIGHT;
-    	
-            bounds[Y] = layers[MIDPWindow.TITLE_LAYER].bounds[Y];
-            if (layers[MIDPWindow.TITLE_LAYER].isVisible()) {
-                bounds[Y] += layers[MIDPWindow.TITLE_LAYER].bounds[H];
-                screenBounds -= layers[MIDPWindow.TITLE_LAYER].bounds[H];
-            }
-            if (layers[MIDPWindow.TICKER_LAYER].isVisible()) {
-                screenBounds -= layers[MIDPWindow.TICKER_LAYER].bounds[H];
-            }
-            if (layers[MIDPWindow.BTN_LAYER].isVisible()) {
-                screenBounds -= layers[MIDPWindow.BTN_LAYER].bounds[H];
-            }
-            bounds[H] = (int)(VirtualKeyboardSkin.COEFFICIENT * screenBounds);
-            bounds[H] = (bounds[H] > VirtualKeyboardSkin.HEIGHT) ?
-            		VirtualKeyboardSkin.HEIGHT : bounds[H];
-            bounds[Y] += (screenBounds - bounds[H]); 
-            bounds[X] = (ScreenSkin.WIDTH - bounds[W]) >> 1;
-            double khrinkX = ((double)bounds[W])/VirtualKeyboardSkin.WIDTH;
-            double kshrinkY = ((double)bounds[H])/VirtualKeyboardSkin.HEIGHT;
-            this.vk.resize(khrinkX, kshrinkY);
+            setAnchor();
+            bounds[Y] -= (layers[MIDPWindow.BTN_LAYER].isVisible() ?
+                    layers[MIDPWindow.BTN_LAYER].bounds[H] : 0) +
+                    (layers[MIDPWindow.TICKER_LAYER].isVisible() ?
+                            layers[MIDPWindow.TICKER_LAYER].bounds[H] : 0);
+
         }
     }
 

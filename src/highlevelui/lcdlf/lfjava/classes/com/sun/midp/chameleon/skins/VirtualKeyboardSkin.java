@@ -45,12 +45,6 @@ public class VirtualKeyboardSkin {
      * See its comment for further details.
      */
     public static int HEIGHT;
-    
-    /**
-     * This field corresponds to KEYBOARD_COEFFICIENT skin property.
-     * See its comment for further details.
-     */
-    public static double COEFFICIENT;
 
     /**
      * This field corresponds to KEYBOARD_KEY skin property.

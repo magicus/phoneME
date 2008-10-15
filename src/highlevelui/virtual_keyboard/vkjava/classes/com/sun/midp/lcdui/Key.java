@@ -82,8 +82,6 @@ public class Key {
     /* height of key */
     private int height;
 
-    private int startX;
-    private int startY;
     /**
      * Constructor
      * @param key - key code
@@ -95,8 +93,6 @@ public class Key {
         this.key = key;
         this.x = x;
         this.y = y;
-        this.startX = x;
-        this.startY = y;
         this.keyType = keyType;
         
         switch (keyType) {
@@ -226,11 +222,6 @@ public class Key {
         } else {
             return keyType;
         }
-    }
-    
-    public void resize(double newX, double newY) {
-        this.x = (int)(startX*newX);
-    	this.y = (int)(startY*newY);       
     }
 
 }

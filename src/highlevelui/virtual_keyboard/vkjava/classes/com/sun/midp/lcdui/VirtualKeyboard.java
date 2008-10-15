@@ -59,7 +59,7 @@ public class VirtualKeyboard {
     /* Listener for handling keyboard events*/
     VirtualKeyboardListener vkl;
 
-    /* Table of existed keybords */
+    /* Table of existed keybords*/
     Hashtable keyboardsMap = null;
 
     /* Keyboard line in focus */
@@ -71,15 +71,11 @@ public class VirtualKeyboard {
     /* Current key */
     Key currentKey;
 
-    /* Array of current keyboard keys */
+    /* Array of current keyboard keys*/
     Key[][] currentKeyboard;
 
-    /* Current type of keyboard */
+    /* Current type of keyboard*/
     String currentKeyboardType;
-   
-    /* The  coefficients of keyboard's shrink */
-    private double shrinkX = 1;
-    private double shrinkY = 1;
 
     /**
      * Virtual Keyboard constructor.
@@ -240,29 +236,6 @@ public class VirtualKeyboard {
             }
         }
     }
-    
-    /**
-     * Set up new coefficients of shrink and resize keyboard. Move keys in new coordinates.
-     * @param kshrinkX - coefficient of shrink on X-dimension
-     * @param kshrinkY - coefficient of shrink on Y-dimension
-     */
-    public void resize(double kshrinkX, double kshrinkY) {
-        shrinkX = kshrinkX;
-        shrinkY = kshrinkY; 
-        resize();       
-    }
-    
-    /**
-     * Resize keyboard with cashed coefficients. 
-     */
-    private void resize() {
-       for (int i = 0; i < currentKeyboard.length; i++) {
-           for (int j = 0; j < currentKeyboard[i].length; j++) {
-               Key key = currentKeyboard[i][j];
-    	       key.resize(shrinkX, shrinkY);
-           } 
-       }       
-    }
 
     /**
      * Handle input from a pen tap. Parameters describe
@@ -333,8 +306,6 @@ public class VirtualKeyboard {
             currentKeyboard = (Key[][]) keyboardsMap.get(newType);
             line = 0;
             column = 0;
-            //coefficients of shrink are cashed from previous time
-            resize();
         }
     }
 

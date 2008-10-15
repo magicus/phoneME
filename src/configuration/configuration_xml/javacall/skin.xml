@@ -1017,15 +1017,11 @@
 
   <integer
         Key="KEYBOARD_WIDTH"
-      Value="235"/>
+      Value="-1"/>
 
   <integer
         Key="KEYBOARD_HEIGHT"
       Value="125"/>
-
-   <integer
-        Key="KEYBOARD_COEFFICIENT"
-      Value="-1"/>
 
   <image
         Key="KEYBOARD_KEY"

@@ -65,11 +65,6 @@ public class VirtualKeyboardResources {
         VirtualKeyboardSkin.HEIGHT = SkinLoader.getInt(
                 SkinPropertiesIDs.KEYBOARD_HEIGHT);
 
-        int percent = SkinLoader.getInt(
-                SkinPropertiesIDs.KEYBOARD_COEFFICIENT);
-        percent = (percent == -1) ? 50 : percent;
-        VirtualKeyboardSkin.COEFFICIENT = (1.0*percent) / 100; 
-        
         VirtualKeyboardSkin.KEY = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_KEY);
 
