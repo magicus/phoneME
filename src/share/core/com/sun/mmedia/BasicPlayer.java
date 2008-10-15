@@ -684,12 +684,13 @@ public abstract class BasicPlayer
 
         if (stream != null) {
             // if stream is not seekable, just return
-            if (NOT_SEEKABLE == stream.getSeekType()) return;
-            try {
-                // seek to start position
-                stream.seek(0);
-            } catch(IOException e) {
-                // System.out.println("[direct] doDeallocate seek IOException");
+            if (NOT_SEEKABLE != stream.getSeekType()) {
+                try {
+                    // seek to start position
+                    stream.seek(0);
+                } catch(IOException e) {
+                    // System.out.println("[direct] doDeallocate seek IOException");
+                }
             }
         }
 
