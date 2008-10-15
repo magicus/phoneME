@@ -38,6 +38,23 @@ GENERATED_CLASSES += \
 # classes, then offsets could be wrong if the bootclasspath is
 # changed.
 
+# CVM_BUILDTIME_CLASSES_min
+#
+# These classes define the minimal ROMized set.
+# 
+# CVM_BUILDTIME_CLASSES_nullapp
+#
+# These classes define the minimal set of classes that will
+# the JVM needs to start a null application.
+#
+# CVM_BUILDTIME_CLASSES
+#
+# The rest of the old ROMized set that included the
+# transitive closure of all dependencies.  This list
+# is used to supplement CLASSLIB_CLASSES, but keeps
+# its original name for backwards compatibility with
+# other makefiles that might add to it.
+
 CVM_BUILDTIME_CLASSES_min += $(CVM_OFFSETS_CLASSES)
 
 # And missing parents for those offset classes

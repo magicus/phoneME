@@ -926,7 +926,6 @@ CVM_HOST_CLEANUP_ACTION 	= \
 CVM_JAVAC_DEBUG_CLEANUP_ACTION 	= \
 	rm -rf $(CVM_BUILD_TOP)/.*classes \
 	       $(CVM_BUILD_TOP)/*_classes $(CVM_BUILD_TOP)/.*.list \
-	       $(CVM_BUILDTIME0_CLASSESDIR) \
 	       $(CVM_BUILDTIME_CLASSESDIR) $(CVM_BUILDTIME_CLASSESZIP) \
 	       $(CVM_TEST_CLASSESDIR) $(CVM_TEST_CLASSESZIP) \
 	       $(CVM_DEMO_CLASSESDIR) $(CVM_DEMO_CLASSESJAR)
@@ -958,7 +957,6 @@ CVM_SERIALIZATION_CLEANUP_ACTION = \
 CVM_PRELOAD_SET_CLEANUP_ACTION = \
 	rm -rf $(CVM_ROMJAVA_CPATTERN)* \
 	$(DEFAULTLOCALELIST_JAVA) \
-	$(CVM_BUILDTIME0_CLASSESDIR) \
 	$(CVM_BUILDTIME_CLASSESDIR) \
 	$(CVM_BUILDTIME_CLASSESZIP) .buildtimeclasses \
 	$(LIB_CLASSESJAR) $(LIB_CLASSESDIR)
@@ -983,7 +981,6 @@ CVM_JIT_CLEANUP_ACTION = \
 	       $(CVM_DERIVEDROOT)/javavm/include/jit/* \
 	       $(CVM_BUILDTIME_CLASSESZIP) \
 	       .buildtimeclasses \
-	       $(CVM_BUILDTIME0_CLASSESDIR) \
 	       $(CVM_BUILDTIME_CLASSESDIR) \
 	       $(CVM_TEST_CLASSESDIR)
 
@@ -992,8 +989,6 @@ CVM_LVM_CLEANUP_ACTION = \
 	rm -rf $(CVM_OBJDIR) $(CVM_ROMJAVA_CPATTERN)* \
 	       $(CVM_BUILDTIME_CLASSESZIP) \
 	       .buildtimeclasses \
-	       $(CVM_BUILDTIME0_CLASSESDIR)/sun/misc/*LogicalVM*.class \
-	       $(CVM_BUILDTIME0_CLASSESDIR)/sun/misc/*Isolate*.class \
 	       $(CVM_BUILDTIME_CLASSESDIR)/sun/misc/*LogicalVM*.class \
 	       $(CVM_BUILDTIME_CLASSESDIR)/sun/misc/*Isolate*.class \
 	       $(CVM_TEST_CLASSESDIR)/lvmtest \
@@ -1031,7 +1026,6 @@ CVM_TIMESTAMPING_CLEANUP_ACTION         = \
 	       $(CVM_OBJDIR)/libromjava.a \
 	       $(CVM_BUILDTIME_CLASSESZIP) \
 	       .buildtimeclasses \
-	       $(CVM_BUILDTIME0_CLASSESDIR)/sun/misc/TimeStamps.class \
 	       $(CVM_BUILDTIME_CLASSESDIR)/sun/misc/TimeStamps.class \
 	       $(CVM_TEST_CLASSESDIR)/TimeStampsTest.class
 
@@ -1244,7 +1238,6 @@ CVM_OBJDIR               := $(call abs2rel,$(CVM_BUILD_TOP)/obj)
 CVM_BINDIR               = $(CVM_BUILD_TOP)/bin
 CVM_DERIVEDROOT          = $(CVM_BUILD_TOP)/generated
 CVM_BUILDTIME_CLASSESDIR = $(CVM_BUILD_TOP)/btclasses
-CVM_BUILDTIME0_CLASSESDIR = $(CVM_BUILD_TOP)/btclasses0
 CVM_JSR_CLASSESDIR 	 = $(CVM_BUILD_TOP)/jsrclasses
 CVM_TEST_CLASSESDIR      = $(CVM_BUILD_TOP)/testclasses
 CVM_DEMO_CLASSESDIR	 = $(CVM_BUILD_TOP)/democlasses
@@ -1400,7 +1393,6 @@ CVM_BUILDDIRS  += \
 	$(CVM_DERIVEDROOT)/cni \
 	$(CVM_DERIVEDROOT)/offsets \
 	$(CVM_DERIVEDROOT)/flags \
-	$(CVM_BUILDTIME0_CLASSESDIR) \
 	$(CVM_BUILDTIME_CLASSESDIR) \
 	$(CVM_TEST_CLASSESDIR) \
 	$(CVM_DEMO_CLASSESDIR) \
@@ -1592,10 +1584,6 @@ CVM_OFFSETS_CLASSES += \
 	sun.io.CharToByteISO8859_1 \
 	java.lang.StringBuffer \
 	java.lang.AssertionStatusDirectives
-
-OTHER += \
-	java.util.AbstractList \
-	java.util.Vector \
 
 CVM_OFFSETS_CLASSES += \
 	java.net.URLClassLoader

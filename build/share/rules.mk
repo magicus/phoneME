@@ -274,7 +274,7 @@ ifeq ($(_CVM_PRELOAD_SET), libtest)
     CVM_PRELOAD_CLASSES += $(CLASSLIB_CLASSES)
     CVM_BT_nullapp_CLASSESDIR = $(CVM_BUILDTIME_CLASSESDIR)
 else
-    $(error Unknown value $(CVM_PRELOAD_SET) for CVM_PRELOAD_SET)
+    $(error Unknown value '$(CVM_PRELOAD_SET)' for CVM_PRELOAD_SET)
 endif
 endif
 endif
