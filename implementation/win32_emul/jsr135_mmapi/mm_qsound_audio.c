@@ -930,39 +930,6 @@ static javacall_result audio_qs_close(javacall_handle handle){
     int gmIdx         = h->hdr.gmIdx;
 
     JC_MM_DEBUG_PRINT2("audio_close: h:%d  mt:%d\n", (int)handle, h->hdr.mediaType);
-
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            MQ234_ERROR e = mQ234_DetachSynthPlayer(g_QSoundGM[gmIdx].gm, h->midi.synth);
-            JC_MM_ASSERT(e == MQ234_ERROR_NO_ERROR);
-
-            r = JAVACALL_OK;
-        }
-        break;
-
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-            if( NULL != h->wav.em )
-                mQ234_EffectModule_removePlayer(h->wav.em, h->wav.stream);
-            r = JAVACALL_OK;
-#if( defined( AMR_USE_QT ) )
-            if (h->hdr.mediaType == JC_FMT_AMR) {
-                MMAPIQTDecoderClose(&h->wav);
-                h->wav.decoder = NULL;
-            }
-#endif
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1("[jc-media] Trying to close unsupported media type %d\n", h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
     h->hdr.state = PL135_CLOSED;
 
     return r;
@@ -1229,6 +1196,94 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
  *
  */
 static javacall_result audio_qs_release_device(javacall_handle handle){
+    ah *h = (ah*)handle;
+    int gmIdx         = h->hdr.gmIdx;
+
+    JC_MM_DEBUG_PRINT("audio_qs_release_device\n");
+
+    switch(h->hdr.mediaType)
+    {
+        case JC_FMT_TONE:
+        case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
+        {
+            if(h->midi.doneCallback != NULL)
+            {
+                mQ234_EventTrigger_Destroy(h->midi.doneCallback);
+                h->midi.doneCallback = NULL;
+            }
+            if( h->midi.synth != NULL )
+            {
+                mQ234_DetachSynthPlayer(g_QSoundGM[gmIdx].gm, h->midi.synth);    
+                mQ234_PlayControl_Destroy(h->midi.synth);
+                h->midi.synth = NULL;
+            }
+            if( h->midi.midiStream != NULL )
+            {
+                FREE( h->midi.midiStream );
+                h->midi.midiStream = NULL;
+            }
+            if( h->midi.storage != NULL )
+            {
+                mQ234_HostStorage_Destroy( h->midi.storage );
+                h->midi.storage = NULL;
+            }
+            h->hdr.dataStopped      = JAVACALL_TRUE;
+            h->hdr.dataEnded        = JAVACALL_FALSE;
+
+			break;
+		}
+        case JC_FMT_AMR:
+        case JC_FMT_MS_PCM:
+			if( NULL != h->wav.stream )
+			{
+				if( NULL != h->wav.em )
+				{
+					mQ234_EffectModule_removePlayer( h->wav.em, h->wav.stream );
+					h->wav.em = NULL;
+				}
+				mQ234_WaveStream_Destroy( h->wav.stream );
+				h->wav.stream = NULL;
+			}
+            if (h->hdr.mediaType == JC_FMT_AMR) {
+				if (h->wav.playBuffer) {
+					FREE(h->wav.playBuffer);
+                                        h->wav.playBuffer = NULL;
+				}
+			}
+
+#if( defined( AMR_USE_QT ) )
+            if (h->hdr.mediaType == JC_FMT_AMR) {
+				if (h->wav.decoder) {
+					MMAPIQTDecoderClose(&h->wav);
+					h->wav.decoder = NULL;
+				}
+            }
+#endif
+    	    h->hdr.dataBuffer       = NULL;
+            h->hdr.dataBufferLen    = 0;
+            h->hdr.dataPos          = 0;
+            h->wav.playBuffer       = NULL;
+            h->wav.playBufferLen    = 0;
+            h->wav.lastChunkOffset  = 0;
+            h->wav.playPos          = 0;
+
+            h->hdr.wholeContentSize = -1;
+            h->hdr.needProcessHeader= JAVACALL_FALSE;
+            h->hdr.dataStopped      = JAVACALL_TRUE;
+            h->hdr.dataEnded        = JAVACALL_FALSE;
+            h->wav.em               = NULL;
+            h->wav.buffering        = JAVACALL_FALSE;
+
+			break;
+	}
+    if (h->hdr.dataBuffer) {
+        FREE(h->hdr.dataBuffer);
+        h->hdr.dataBuffer = NULL;
+    }
+
     return JAVACALL_OK;
 }
 
