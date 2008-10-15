@@ -1019,11 +1019,15 @@
 
   <integer
         Key="KEYBOARD_WIDTH"
-      Value="-1"/>
-
+      Value="235"/>
+  
   <integer
         Key="KEYBOARD_HEIGHT"
       Value="125"/>
+
+   <integer
+        Key="KEYBOARD_COEFFICIENT"
+      Value="50"/>
 
   <image
         Key="KEYBOARD_KEY"
