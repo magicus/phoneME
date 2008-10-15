@@ -31,6 +31,7 @@ $(error TOOLS_DIR is not set.)
 endif
 
 VPATH+=$(JAVACALL_DIR)/implementation/share/cldc
+SOURCE_OUTPUT_LIST+=$(JAVACALL_DIR)/implementation/share/cldc javacall/implementation/share
 
 include $(TOOLS_DIR)/tools.gmk
 
