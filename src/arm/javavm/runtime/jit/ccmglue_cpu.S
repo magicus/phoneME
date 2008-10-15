@@ -149,17 +149,26 @@ ENTRY1 ( CVMCCMruntimeGCRendezvousGlue )
 	 * we are in AOT code. Don't adjust lr. */
 	IMPORT(CVMJITcodeCacheAOTEnd)
 	IMPORT(CVMJITcodeCacheAOTStart)
+	/* load CVMglobals.jit.codeCacheAOTend */
 	ldr	a2, =CVMJITcodeCacheAOTEnd
 	ldr	a2, [a2]
 	ldr	a2, [a2]
-	cmp	lr, a2
-	blo	gcNoRetAddrAdjust
+	cmp	lr, a2 /* compare lr with codeCacheAOTend */
+	/* If lr > codeCacheAOTend, it's from dynamic compiled code.
+	   Adjust lr for dynamic compiled code since it uses patch
+	   based gc checks. */
+	bhs	gcAdjustRetAddr
+	/* lr < codeCacheAOTend, now compare it with codeCacheAOTStart */
 	ldr	a2,  =CVMJITcodeCacheAOTStart
 	ldr	a2, [a2]
 	ldr	a2, [a2]
 	cmp	lr, a2
-	bhs	gcNoRetAddrAdjust
-#endif	
+	/* lr > codeCacheAOTStart && lr < codeCacheAOTend. 
+	   It's AOT code, don't ajust lr since AOT code uses
+	   trap based gc checks. */
+	bhs	gcNoRetAddrAdjust	
+#endif
+LABEL(gcAdjustRetAddr)	
 	sub	lr, lr, #4    /* we want to return to the patch point */
 #endif
 	ENTRY(CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue)
