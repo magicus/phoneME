@@ -108,6 +108,7 @@ public class DefaultConfiguration extends Configuration {
         mimeTypes.put("qcp", MIME_AUDIO_QCELP);
         mimeTypes.put("aac", MIME_AUDIO_AAC);
         mimeTypes.put("amr", MIME_AUDIO_AMR);
+        mimeTypes.put("wma", MIME_AUDIO_WMA);
         mimeTypes.put("awb", MIME_AUDIO_AMR_WB);
         mimeTypes.put("3gp", MIME_VIDEO_3GPP);
         mimeTypes.put("mpg", MIME_VIDEO_MPEG);

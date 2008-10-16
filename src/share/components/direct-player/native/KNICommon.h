@@ -75,6 +75,7 @@
 #define AUDIO_MIDI_MIME     "audio/midi"
 #define AUDIO_WAV_MIME      "audio/x-wav"
 #define AUDIO_MP3_MIME      "audio/mpeg"
+#define AUDIO_WMA9_MIME		"audio/x-ms-wma"
 #define AUDIO_AMR_MIME      "audio/amr"
 #define AUDIO_MPEG4_MIME    "audio/mp4a-latm"
 #define AUDIO_TONE_MIME     "audio/x-tone-seq"
