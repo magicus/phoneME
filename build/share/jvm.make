@@ -1018,7 +1018,7 @@ $(LOOP_GENERATOR):
 else
 $(LOOP_GENERATOR): $(BUILD_PCH) $(Obj_Files) \
 		   InterpreterSkeleton.obj OopMapsSkeleton.obj
-	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ $(Obj_Files) \
+	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ $(Obj_Files) \
 		   InterpreterSkeleton.obj OopMapsSkeleton.obj
 	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
@@ -1043,12 +1043,12 @@ endif
 
 $(ROM_GENERATOR): $(CLDC_ZIP) $(Obj_Files) OopMapsSkeleton.obj $(GP_TABLE_OBJ)
 	$(A)echo "linking ROM generator: $(ROM_GENERATOR)"
-	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ \
+	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ \
 		$(Obj_Files) OopMapsSkeleton.obj $(GP_TABLE_OBJ)
 	$(A)$(ROM_GENERATOR) +GenerateOopMaps
 	$(A)$(MAKE) OopMaps.obj
 	$(A)echo "re-linking ROM generator: $(ROM_GENERATOR)"
-	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ $(Obj_Files) \
+	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ $(Obj_Files) \
                 OopMaps.obj \
                 $(GP_TABLE_OBJ)
 	$(A)$(VC_MANIFEST_EMBED_EXE)
@@ -1056,13 +1056,13 @@ $(ROM_GENERATOR): $(CLDC_ZIP) $(Obj_Files) OopMapsSkeleton.obj $(GP_TABLE_OBJ)
 else
 $(ROM_GENERATOR): $(BUILD_PCH) $(Obj_Files) InterpreterSkeleton.obj \
                                             OopMapsSkeleton.obj
-	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ $(Obj_Files) \
+	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ $(Obj_Files) \
 		InterpreterSkeleton.obj OopMapsSkeleton.obj
 	$(A)$(ROM_GENERATOR) $(LOOP_GEN_ARG)
 	$(A)$(ROM_GENERATOR) +GenerateOopMaps
 	$(A)$(MAKE) Interpreter_$(arch).obj
 	$(A)$(MAKE) OopMaps.obj
-	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ \
+	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ \
 		$(Obj_Files) Interpreter_$(arch).obj OopMaps.obj
 	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
@@ -2095,7 +2095,7 @@ $(LOOP_GENERATOR): $(CLDC_ZIP) $(Obj_Files) InterpreterSkeleton$(OBJ_SUFFIX) \
 					    OopMapsSkeleton$(OBJ_SUFFIX)
 	$(A)echo "linking ASM loop generator: $(LOOP_GENERATOR)"
 	$(A)$(LINK) -o $@ $(Obj_Files) InterpreterSkeleton$(OBJ_SUFFIX) \
-		OopMapsSkeleton$(OBJ_SUFFIX) $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ)
+		OopMapsSkeleton$(OBJ_SUFFIX) $(PCSL_LIBS) $(LINK_FLAGS)
 	$(A)echo generated `pwd`/$@
 endif
 endif
@@ -2120,12 +2120,12 @@ $(ROM_GENERATOR): $(CLDC_ZIP) $(Obj_Files) OopMapsSkeleton$(OBJ_SUFFIX) \
 	 	  $(GP_TABLE_OBJ)
 	$(A)echo "linking ROM generator: $(ROM_GENERATOR)"
 	$(A)$(LINK) -o $@ $(Obj_Files) OopMapsSkeleton$(OBJ_SUFFIX) \
-	          $(GP_TABLE_OBJ) $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ)
+	          $(GP_TABLE_OBJ) $(PCSL_LIBS) $(LINK_FLAGS)
 	$(A)$(ROM_GENERATOR) +GenerateOopMaps
 	$(A)$(MAKE) OopMaps$(OBJ_SUFFIX)
 	$(A)echo "re-linking ROM generator: $(ROM_GENERATOR)"
 	$(A)$(LINK) -o $@ $(Obj_Files) OopMaps$(OBJ_SUFFIX) $(GP_TABLE_OBJ) \
-		$(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ)
+		$(PCSL_LIBS) $(LINK_FLAGS)
 	$(A)echo generated `pwd`/$@
 else
 $(ROM_GENERATOR): $(CLDC_ZIP) $(Obj_Files) InterpreterSkeleton$(OBJ_SUFFIX) \
@@ -2133,14 +2133,14 @@ $(ROM_GENERATOR): $(CLDC_ZIP) $(Obj_Files) InterpreterSkeleton$(OBJ_SUFFIX) \
 	$(A)echo "linking ROM generator: $(ROM_GENERATOR)"
 	$(A)$(LINK) $(Obj_Files) InterpreterSkeleton$(OBJ_SUFFIX) \
 		OopMapsSkeleton$(OBJ_SUFFIX) \
-		-o $@ $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ)
+		-o $@ $(PCSL_LIBS) $(LINK_FLAGS)
 	$(A)$(ROM_GENERATOR) $(LOOP_GEN_ARG)
 	$(A)$(ROM_GENERATOR) +GenerateOopMaps
 	$(A)$(MAKE) Interpreter_$(arch)$(OBJ_SUFFIX)
 	$(A)$(MAKE) OopMaps$(OBJ_SUFFIX)
 	$(A)$(LINK) -o $@ \
 		$(Obj_Files) Interpreter_$(arch)$(OBJ_SUFFIX) \
-                OopMaps$(OBJ_SUFFIX) $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ)
+                OopMaps$(OBJ_SUFFIX) $(PCSL_LIBS) $(LINK_FLAGS)
 	$(A)echo generated `pwd`/$@
 endif
 
