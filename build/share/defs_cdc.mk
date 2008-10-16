@@ -65,6 +65,16 @@ CVM_BUILDTIME_CLASSES_min += \
     java.util.Collection \
     java.util.AbstractCollection \
 
+# Required to be ROMized by "simple sync" optimization support
+CVM_BUILDTIME_CLASSES_min += \
+    java.util.AbstractList \
+    java.util.Vector \
+    java.util.Vector$$1 \
+    java.util.Map \
+    java.util.Dictionary \
+    java.util.Hashtable \
+    java.util.Random \
+
 CVM_BUILDTIME_CLASSES_min += \
     java.lang.Object \
     java.io.Serializable \
@@ -200,13 +210,11 @@ CVM_EXTRA_JNI_CLASSES += \
     java.net.InetAddressImplFactory \
 
 CVM_BUILDTIME_CLASSES_nullapp += \
-    java.util.Vector \
     java.util.Stack \
     java.io.ObjectStreamClass \
     java.io.ObjectStreamField \
     sun.misc.SoftCache \
     java.util.AbstractMap \
-    java.util.Map \
     java.lang.ref.ReferenceQueue \
     java.lang.ref.ReferenceQueue$$Null \
     java.lang.ref.ReferenceQueue$$Lock \
@@ -217,8 +225,6 @@ CVM_BUILDTIME_CLASSES_nullapp += \
     java.lang.Shutdown$$Lock \
     java.security.AccessControlContext \
     java.util.Properties \
-    java.util.Hashtable \
-    java.util.Dictionary \
     java.util.Hashtable$$EmptyEnumerator \
     java.util.Hashtable$$EmptyIterator \
     java.util.Iterator \
@@ -270,7 +276,6 @@ CVM_BUILDTIME_CLASSES_nullapp += \
     java.util.AbstractSet \
     java.util.Set \
     sun.misc.URLClassPath \
-    java.util.AbstractList \
     java.util.ArrayList \
     sun.net.www.protocol.jar.Handler \
     java.lang.SystemClassLoaderAction \
@@ -442,7 +447,6 @@ CVM_BUILDTIME_CLASSES += \
     java.util.NoSuchElementException \
     java.util.PropertyPermission \
     java.util.PropertyResourceBundle \
-    java.util.Random \
     java.util.ResourceBundle \
     java.util.ResourceBundleEnumeration \
     java.util.SimpleTimeZone \

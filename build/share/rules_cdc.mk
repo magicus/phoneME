@@ -85,6 +85,7 @@ $(CVM_BT_min_CLASSESDIR)/java/lang/reflect/Constructor$$AccessException.class : 
 $(CVM_BT_min_CLASSESDIR)/java/lang/reflect/Method$$ArgumentException.class : java/lang/reflect/Method.java
 $(CVM_BT_min_CLASSESDIR)/java/lang/reflect/Method$$AccessException.class : java/lang/reflect/Method.java
 $(CVM_BT_min_CLASSESDIR)/java/lang/ClassLoader$$NativeLibrary.class : java/lang/ClassLoader.java
+$(CVM_BT_min_CLASSESDIR)/java/util/Vector$$1.class : java/util/Vector.java
 $(CVM_BT_nullapp_CLASSESDIR)/java/lang/ref/ReferenceQueue$$Null.class : java/lang/ref/ReferenceQueue.java
 $(CVM_BT_nullapp_CLASSESDIR)/java/lang/ref/ReferenceQueue$$Lock.class : java/lang/ref/ReferenceQueue.java
 $(CVM_BT_nullapp_CLASSESDIR)/java/util/HashMap$$Entry.class : java/util/HashMap.java
