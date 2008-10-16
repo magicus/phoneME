@@ -1,0 +1,82 @@
+Copyright 2007 Sun Microsystems, Inc. All rights reserved.
+
+Sun Microsystems, Inc. has intellectual property rights relating to technology
+embodied in the product that is described in this document. In particular, and
+without limitation, these intellectual property rights may include one or more
+of the U.S. patents listed at http://www.sun.com/patents and one or more
+additional patents or pending patent applications in the U.S. and in other
+countries.
+U.S. Government Rights - Commercial software. Government users are subject to
+the Sun Microsystems, Inc. standard license agreement and applicable provisions
+of the FAR and its supplements.
+
+Use is subject to license terms.
+
+This distribution may include materials developed by third parties.Sun, Sun
+Microsystems, phoneME and Java are trademarks or registered trademarks of Sun
+Microsystems, Inc. in the U.S. and other countries.
+
+
+Copyright 2007 Sun Microsystems, Inc. Tous droits réservés.
+
+Sun Microsystems, Inc. détient les droits de propriété intellectuels relatifs à
+la technologie incorporée dans le produit qui est décrit dans ce document. En
+particulier, et ce sans limitation, ces droits de propriété intellectuelle
+peuvent inclure un ou plus des brevets américains listés à l'adresse
+http://www.sun.com/patents et un ou les brevets supplémentaires ou les
+applications de brevet en attente aux Etats - Unis et dans les autres pays.
+
+L'utilisation est soumise aux termes du contrat de licence.
+
+Cette distribution peut comprendre des composants développés par des tierces
+parties.
+
+Sun, Sun Microsystems, phoneME et Java sont des marques de fabrique ou des
+marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
+
+
+Installation
+
+   The installation process consist of the following steps:
+
+    1. Choose a root directory for provisioning server. Please note that you
+       will have to add content to <server_root>/repository folder;
+    2. Unzip provisioning.zip file to this directory;
+    3. Go to this directory and launch ./configure to update server
+       configuration. It will create or rewrite provisioning.conf file and
+       configure Apache HTTP server;
+    4. Add administrative account to password file using htpasswd tool;
+    5. Restart Apache daemon.
+
+  Manual Installation
+
+   If something goes wrong with automatic installation (for example, you use
+   Windows), please follow the next simple steps:
+
+    1. Choose a root directory for provisioning server. Please note that you
+       will have to add content to <server_root>/repository folder;
+    2. Unzip provisioning.zip file to this directory;
+    3. Go to this directory;
+    4. Copy conf.template to provisioning.conf;
+    5. Open provisioning.conf file in your favourite text editor and replace
+       placeholders as:
+
+   %%SERVER_ROOT%% = Web alias for provisioning server (for example,
+   provisioning);
+
+   %%PWD%% = Current directory (for example, /var/www/provisioning).
+
+    1. Use provisioning.conf as additional Apache configuration file (add a
+       line Include /var/www/provisioning/provisioning.conf to httpd.conf,
+       for example);
+    2. Change permissions of provisioning server directories as appropriate
+       (to allow Apache's child process launch scripts, use styles and browse
+       (and change) the repository);
+    3. Add administrative account to password file using htpasswd tool;
+    4. If you use SuSE? and you have edited /etc/sysconfig/apache2 file,
+       don't forget to launch SuSEconfig? --module apache;
+    5. Restart Apache daemon.
+
+
+Copyright 2007 Sun Microsystems, Inc.
+
