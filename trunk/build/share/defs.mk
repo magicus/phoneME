@@ -1601,7 +1601,7 @@ ifeq ($(CVM_REFLECT), true)
 		java.lang.reflect.Method
 endif
 
-ifeq ($(CVM_JVMPI), true)
+ifneq ($(CVM_JVMPI)$(CVM_JVMTI), falsefalse)
 CVM_OFFSETS_CLASSES += \
         java.lang.ThreadGroup
 endif
