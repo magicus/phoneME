@@ -40,11 +40,10 @@ extern int gForegroundIsolateId;
 /** Foreground display IDs of current foreground MIDlet */
 extern int maxDisplays; /* Should be equal to number of the hardware displays */
 extern int *gForegroundDisplayIds;
-
+extern int isForegroundDisplay(int displayId);
 #else
 /** Foreground display ID of current foreground MIDlet. */
 extern int gForegroundDisplayId;
-
 #endif /* ENABLE_MULTIPLE_DISPLAYS */
 
 #endif /* MIDP_FOREGROUND_ID_H */

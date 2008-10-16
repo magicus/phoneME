@@ -1116,7 +1116,8 @@ void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber
     midp_jc_event_send(&e);
 }
 
-void /* OPTIONAL */ javanotify_rotation() {
+void /* OPTIONAL */ javanotify_rotation(int hardwareId) {
+    (void)hardwareId;
     midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_rotation() >>\n");

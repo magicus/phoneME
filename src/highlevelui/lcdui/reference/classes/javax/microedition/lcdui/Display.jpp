@@ -694,10 +694,6 @@ public class Display {
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
 
-        // #ifdef ENABLE_CHAMELEON
-        SkinLoader.initDisplayAccess(accessor);
-        // #endif ENABLE_CHAMELEON
-
         /** create DisplayEventConsumer I/F implementor */
         consumer = new DisplayEventConsumerImpl();
 
@@ -1586,12 +1582,16 @@ public class Display {
      * @throws NullPointerException if <code>owner</code> is <code>null</code>
      */
     static Display getDisplay(Object owner) {
+	Display ret = null;
 	DisplayAccess da = displayContainer.findPrimaryDisplayByOwner(owner);
 	if (da == null) {
 	    addDisplays(owner);
 	    da = displayContainer.findPrimaryDisplayByOwner(owner);
 	}
-	return da.getDisplay();
+	if (da != null) {
+	    ret =  da.getDisplay();
+	}		
+	return ret;
     }
 
     // #ifdef ENABLE_MULTIPLE_DISPLAYS
@@ -1613,12 +1613,12 @@ public class Display {
 	    das = displayContainer.findDisplaysByOwner(owner, capabilities);
 	}
 	Display[] ds = new Display[das.length];
-	for (int i = 0, sheeft = 1; i < ds.length; i++) {
+	for (int i = 0, shift = 1; i < ds.length; i++) {
 	    if (das[i].getDisplayDevice().isPrimaryDisplay()) {
 		ds[0] = das[i].getDisplay();
-		sheeft = 0;
+		shift = 0;
             } else {
-		ds[i + sheeft] = das[i].getDisplay();
+		ds[i + shift] = das[i].getDisplay();
 	    }
 	}
         return ds;
@@ -1638,9 +1638,8 @@ public class Display {
     static void addDisplays(Object owner) {
 	DisplayDevice[] dds = displayDeviceContainer.getDisplayDevices();
         for (int i = 0; i < dds.length; i++) {
-	    if (dds[i].getState() == DisplayDevice.DISPLAY_DEVICE_ENABLED || 
-		dds[i].getState() == DisplayDevice.DISPLAY_DEVICE_DISABLED) {
-		new Display(owner, dds[i]);
+	    if (dds[i].getState() != DisplayDevice.DISPLAY_DEVICE_ABSENT) {
+		    new Display(owner, dds[i]);
 	    }
 	}
         // enable primary display
@@ -3143,7 +3142,7 @@ public class Display {
 
             // #ifdef ENABLE_CHAMELEON
             // Chameleon is given first priority in processing the
-            // key event. If the return addDisvalue is false, the event
+            // key event. If the return value is false, the event
             // is then sent on to the current displayable
             // This call will not result in any call into application code
             if (!window.keyInput(keyType, keyCode) && currentCopy != null) {

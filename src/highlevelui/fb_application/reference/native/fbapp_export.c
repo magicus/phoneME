@@ -41,6 +41,9 @@
 #include <fbapp_export.h>
 #include <fbport_export.h>
 
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+#include <lcdlf_export.h>
+#endif /* ENABLE_MULTIPLE_DISPLAYS */
 
 /**
  * @file
@@ -273,7 +276,7 @@ void fbapp_map_keycode_to_event(
             pNewMidpEvent->type = MIDLET_DESTROY_REQUEST_EVENT;
 
 #ifdef ENABLE_MULTIPLE_DISPLAYS  
-            pNewMidpEvent->DISPLAY = gForegroundDisplayIds[0];  
+            pNewMidpEvent->DISPLAY = gForegroundDisplayIds[lcdlf_get_current_hardwareId()];  
 #else  
             pNewMidpEvent->DISPLAY = gForegroundDisplayId;  
 #endif /* ENABLE_MULTIPLE_DISPLAYS */  
@@ -343,7 +346,7 @@ char * fbapp_get_display_name(int hardwareId) {
  */  
 jboolean fbapp_is_display_primary(int hardwareId) {  
     (void)hardwareId;
-    return 1;
+    return KNI_TRUE;
 
 }  
   
@@ -352,23 +355,23 @@ jboolean fbapp_is_display_primary(int hardwareId) {
  */  
 jboolean fbapp_is_display_buildin(int hardwareId) {  
   (void)hardwareId;  
-  return 1;  
+  return KNI_TRUE;
 }  
   
 /** 
  * Check if the display device supports pointer events 
  */  
-jboolean fbapp_is_display_ptr_supported(int hardwareId) {  
+jboolean fbapp_is_display_pen_supported(int hardwareId) {
    (void)hardwareId;  
-    return 1;  
+    return KNI_TRUE;
 }  
   
 /** 
  * Check if the display device supports pointer motion  events 
  */  
-jboolean fbapp_is_display_ptr_motion_supported(int hardwareId) {  
+jboolean fbapp_is_display_pen_motion_supported(int hardwareId) {  
    (void)hardwareId;  
-    return 1;  
+    return KNI_TRUE;
 }  
   
 /** 

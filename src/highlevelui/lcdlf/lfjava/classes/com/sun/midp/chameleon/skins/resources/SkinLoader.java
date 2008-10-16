@@ -15,11 +15,6 @@ public class SkinLoader {
     private static SkinResources skinResources = new SkinResourcesImpl();
 
     /**
-     * Display access helper class.
-     */
-    private static DisplayAccess displayAccess;
-
-    /**
      * This method is called by the Display class to hand out GraphicsAccess
      * tunnel instance created in the public javax.microedition.lcdui
      * package and needed for romized images loading.
@@ -28,15 +23,6 @@ public class SkinLoader {
      */
     public static void initGraphicsAccess(GraphicsAccess access) {
         skinResources.initGraphicsAccess(access);
-    }
-    /**
-     * This method is called by the Display class to initialize
-     * Display access tunnel class.
-     *
-     * @param access
-     */
-    public static void initDisplayAccess(DisplayAccess access) {
-        displayAccess = access;
     }
 
     /**

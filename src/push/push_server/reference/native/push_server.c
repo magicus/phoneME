@@ -168,8 +168,10 @@ typedef struct _pushentry {
   /** True if this entry should be handled by WMA rather then by MIDP Push. */
   jboolean isWMAEntry;
 #if ENABLE_JSR_180
-  /** True if this entry is a SIP-entry. */
-  jboolean isSIPEntry;
+    /** True if this entry is a SIP-entry. */
+    jboolean isSIPEntry;
+    /** Marks shared connection for quick search */
+    jboolean isShared;
 #endif
 } PushEntry;
 
@@ -1005,13 +1007,15 @@ int pushcheckout(char* protocol, int port, char * store) {
          * connection for UDP transport and 'socket' connection for TCP.
          */
         standardProtocol = (p->port == port &&
-            (strncmp(p->value, protocol, strlen(protocol)) == 0 ||
-                (strncmp(p->value, "sip", 3) == 0 &&
-                    ((strncmp("datagram", protocol, strlen(protocol)) == 0) ||
-                     (strncmp("socket", protocol, strlen(protocol)) == 0))
-                )
-            )
-        );
+                            (!strncmp(p->value, protocol, strlen(protocol)) ||
+                             (strncmp(p->value, "sip", 3) == 0 &&
+                              ((!strncmp("datagram", protocol, strlen(protocol)) && 
+                                pushIsDatagramConnection(p->value)) ||
+                               (!strncmp("socket", protocol, strlen(protocol)) && 
+                                pushIsSocketConnection(p->value)))
+                             )
+                            )
+                           );
 #else
         /* Port and protocol must match before other checks are done. */
         standardProtocol = (p->port == port &&
@@ -1646,6 +1650,10 @@ char *pushfindfd(int fd) {
                     pushp->state = temp_state;
                     return NULL;
                 }
+                /* Set the raw IP address */
+                memcpy(&(pushp->pCachedData->ipAddress),
+                       ipBytes, MAX_ADDR_LENGTH);
+
 
                 REPORT_INFO1(LC_PROTOCOL,
                              "SIP Push Message: %s",

@@ -91,8 +91,8 @@ public class DisplayDevice {
     private boolean isPrimary = true; 
     private boolean buildInDisp;
     private int capabilities;
-    private boolean isPtrSupported;
-    private boolean isPtrMotionSupported;
+    private boolean isPenSupported;
+    private boolean isPenMotionSupported;
 
 
     private int state = DISPLAY_DEVICE_DISABLED; // display is  disabled by default
@@ -108,8 +108,8 @@ public class DisplayDevice {
 	isPrimary = isDisplayPrimary0(hardwareId); 
 	buildInDisp = isbuildInDisplay0(hardwareId);
 	capabilities = getDisplayCapabilities0(hardwareId);
-	isPtrSupported = isDisplayPtrSupported0(hardwareId);
-	isPtrMotionSupported = isDisplayPtrMotionSupported0(hardwareId);
+	isPenSupported = isDisplayPenSupported0(hardwareId);
+	isPenMotionSupported = isDisplayPenMotionSupported0(hardwareId);
     }
 
     /**
@@ -152,18 +152,7 @@ public class DisplayDevice {
      * If 0 is returned just Canvas screen is supported.
      */
     public int getCapabilities() {
-	return (isPrimary) ?
-	    DISPLAY_DEVICE_SUPPORTS_INPUT_EVENTS |
-	    DISPLAY_DEVICE_SUPPORTS_COMMANDS |
-	    DISPLAY_DEVICE_SUPPORTS_FORMS |
-	    DISPLAY_DEVICE_SUPPORTS_TICKER |
-	    DISPLAY_DEVICE_SUPPORTS_TITLE |
-	    DISPLAY_DEVICE_SUPPORTS_ALERTS |
-	    DISPLAY_DEVICE_SUPPORTS_LISTS |
-	    DISPLAY_DEVICE_SUPPORTS_TEXTBOXES |
-	    DISPLAY_DEVICE_SUPPORTS_TABBEDPANES |
-	    DISPLAY_DEVICE_SUPPORTS_FILESELECTORS
-	    : capabilities;
+	return capabilities;
     }
 
     /**
@@ -190,7 +179,7 @@ public class DisplayDevice {
      * @return true if the display supports pointer events, otherwise - false.
      */
     public boolean hasPointerEvents() {
-	return isPtrSupported;
+	return isPenSupported;
     }
 
     /** 
@@ -198,7 +187,7 @@ public class DisplayDevice {
      * @return true if the display supports pointer motion events, otherwise - false.
      */
     public boolean hasPointerMotionEvents() {
-	return isPtrMotionSupported;
+	return isPenMotionSupported;
     }
     
     /** 
@@ -305,8 +294,8 @@ public class DisplayDevice {
 	    " isPrimary: " +  isPrimary +
 	    " buildInDisp:" +buildInDisp +
             " capabilities:"+capabilities +
-	    " isPtrSupported:"+ isPtrSupported+
-            " isPtrMotionSupported:"+isPtrMotionSupported+
+	    " isPenSupported:"+ isPenSupported+
+            " isPenMotionSupported:"+isPenMotionSupported+
 	    " state:" +state;
 
     }
@@ -327,8 +316,8 @@ public class DisplayDevice {
     private native boolean isDisplayPrimary0(int hardwareId); 
     private native boolean isbuildInDisplay0(int hardwareId);
     private native int getDisplayCapabilities0(int hardwareId);
-    private native boolean isDisplayPtrSupported0(int hardwareId);
-    private native boolean isDisplayPtrMotionSupported0(int hardwareId);
+    private native boolean isDisplayPenSupported0(int hardwareId);
+    private native boolean isDisplayPenMotionSupported0(int hardwareId);
     private native void displayStateChanged0(int hardwareId, int state);
 
 }

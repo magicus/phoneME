@@ -154,12 +154,12 @@ extern jboolean fbapp_is_display_buildin(int hardwareId);
 /**
  * Check if the display device supports pointer events
  */
-extern jboolean fbapp_is_display_ptr_supported(int hardwareId);
+extern jboolean fbapp_is_display_pen_supported(int hardwareId);
 
 /**
  * Check if the display device supports pointer motion  events
  */
-extern jboolean fbapp_is_display_ptr_motion_supported(int hardwareId);
+extern jboolean fbapp_is_display_pen_motion_supported(int hardwareId);
 
 /**
 * Get hardware id of  curently enabled display

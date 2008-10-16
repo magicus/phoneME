@@ -123,12 +123,12 @@ jboolean lfpport_is_display_buildin(int hardwareId);
 /**
  * Check if the display device supports pointer events
  */
-jboolean lfpport_is_display_ptr_supported(int hardwareId);
+jboolean lfpport_is_display_pen_supported(int hardwareId);
 
 /**
  * Check if the display device supports pointer motion  events
  */
-jboolean lfpport_is_display_ptr_motion_supported(int hardwareId);
+jboolean lfpport_is_display_pen_motion_supported(int hardwareId);
 
 /**
  * Get display device capabilities

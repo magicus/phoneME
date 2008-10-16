@@ -264,16 +264,16 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_isbuildInDisplay0) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_midp_lcdui_DisplayDevice_isDisplayPtrSupported0) {
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_isDisplayPenSupported0) {
     jint hardwareId =  KNI_GetParameterAsInt(1);
-    jboolean res = lcdlf_is_display_ptr_supported(hardwareId);
+    jboolean res = lcdlf_is_display_pen_supported(hardwareId);
     KNI_ReturnBoolean(res);
 }
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_midp_lcdui_DisplayDevice_isDisplayPtrMotionSupported0) {
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_isDisplayPenMotionSupported0) {
     jint hardwareId = KNI_GetParameterAsInt(1);
-    jboolean res = lcdlf_is_display_ptr_motion_supported(hardwareId);
+    jboolean res = lcdlf_is_display_pen_motion_supported(hardwareId);
     KNI_ReturnBoolean(res);
 }
 

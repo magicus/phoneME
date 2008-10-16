@@ -185,16 +185,16 @@ jboolean lcdlf_is_display_buildin(int hardwareId) {
 /**
  * Check if the display device supports pointer events
  */
-jboolean lcdlf_is_display_ptr_supported(int hardwareId) {
-    return lfjport_is_display_ptr_supported(hardwareId);
+jboolean lcdlf_is_display_pen_supported(int hardwareId) {
+    return lfjport_is_display_pen_supported(hardwareId);
 }
 
 
 /**
  * Check if the display device supports pointer motion  events
  */
-jboolean lcdlf_is_display_ptr_motion_supported(int hardwareId) {
-  return lfjport_is_display_ptr_motion_supported(hardwareId);
+jboolean lcdlf_is_display_pen_motion_supported(int hardwareId) {
+  return lfjport_is_display_pen_motion_supported(hardwareId);
 }
 /**
  * Get display device capabilities
