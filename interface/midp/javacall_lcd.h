@@ -314,13 +314,13 @@ javacall_bool javacall_lcd_is_display_buildin(int hardwareId);
 /**
  * Check if the display device supports pointer events
  */
-javacall_bool javacall_lcd_is_display_ptr_supported(int hardwareId);
+javacall_bool javacall_lcd_is_display_pen_supported(int hardwareId);
 
 
 /**
  * Check if the display device supports pointer motion  events
  */
-javacall_bool javacall_lcd_is_display_ptr_motion_supported(int hardwareId);
+javacall_bool javacall_lcd_is_display_pen_motion_supported(int hardwareId);
 
 /**
  * Get display device capabilities
@@ -334,7 +334,7 @@ int* javacall_lcd_get_display_device_ids(int* n);
  * The platform should invoke this function in platform context
  * to rotate the screen.
  */
-void javanotify_rotation(void);
+void javanotify_rotation(int hardwareId);
 
 /**
  * The platform should invoke this function in platform context

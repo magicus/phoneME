@@ -175,7 +175,7 @@ void SendEvent (KVMEventType *evt) {
 
     case keyDownKVMEvent:
         if (evt->chr == KEY_USER2) {
-            javanotify_rotation();
+            javanotify_rotation( lcdlf_get_current_hardwareId());
         } else if ((evt->chr != KEY_END)) {
             javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
         } else if (isRunningLocal == JAVACALL_FALSE) {
