@@ -522,10 +522,13 @@ CVM_BT_CLASS_FILES = $(patsubst %,%.class,$(BUILDTIME_CLASS0))
 # javac problably found some dependencies that are not on
 # our list, so copy them to libclasses so they end up in
 # the jar file
+
+CVM_EXCLUDE_FILE = $(CVM_BUILD_TOP)/.EXCLUDE
+
 .move.extra.btclasses2: $(CVM_BUILD_TOP)/.libclasses.list
 ifneq ($(CVM_PRELOAD_FULL_CLOSURE), true)
-	@echo '$(CVM_BT_CLASS_FILES)' | tr ' ' '\n' | sort > EXCLUDE
-	@rsync -qav '--exclude-from=EXCLUDE' \
+	@echo '$(CVM_BT_CLASS_FILES)' | tr ' ' '\n' | sort > $(CVM_EXCLUDE_FILE)
+	@rsync -qav --exclude-from=$(CVM_EXCLUDE_FILE) \
 	    $(CVM_BUILDTIME_CLASSESDIR)/ $(LIB_CLASSESDIR)/
 	@touch $(CVM_BUILD_TOP)/.libclasses;
 endif
