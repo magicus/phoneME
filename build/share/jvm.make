@@ -1186,7 +1186,7 @@ $(JVMTEST_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBTEST_OBJS)
 
 $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVM_LIB) $(JVMTEST_LIB) \
 	    $(EXE_OBJS)
-	$(A)$(LINK) $(LINK_FLAGS) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVM_LIB) \
+	$(A)$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVM_LIB) \
 		$(JVMTEST_LIB) $(PCSL_LIBS)
 	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
@@ -1515,7 +1515,7 @@ $(JVMTEST_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBTEST_OBJS)
 
 $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVMTEST_LIB) \
             $(JVM_LIB) $(EXE_OBJS)
-	$(A)$(LINK) $(LINK_FLAGS) /out:$@ $(EXE_OBJS) $(JVMX_LIB) \
+	$(A)$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ $(EXE_OBJS) $(JVMX_LIB) \
             $(JVMTEST_LIB) $(JVM_LIB) $(LINK_OPT_FLAGS_$(BUILD)) \
             $(LIBS) $(PCSL_LIBS)
 
@@ -1798,7 +1798,7 @@ $(JVM_EXE):
 	$(A)touch $@
 else
 $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) $(EXE_OBJS)
-	$(LINK) $(LINK_FLAGS) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
+	$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
 		$(PCSL_LIBS) $(JAVACALL_LIBS)
 	$(A)if test "$(arch)-$(BUILD)" = "arm-product"; then \
 	    echo running pdstrip ...; \
@@ -2262,13 +2262,13 @@ $(ANIX_LIB): $(JVM_LIB) $(ANIX_OBJS)
 $(JVM_EXE): $(CLDC_ZIP) $(EXE_OBJS) $(JVM_LIB) $(JVMX_LIB) $(JVMTEST_LIB)
 	$(A)echo "linking $@ ... "
 	$(A)$(LINK) -o $@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
-	     $(PCSL_LIBS) $(LINK_FLAGS)
+	     $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ)
 	$(A)if [ "$(ENABLE_MAP_FILE)" != "false" ] &&             \
             [ "$(host_os)" != "solaris" ] &&                      \
 	     [ "$(host_os)" != "darwin" ]; then                   \
 	 echo "linking $@ with MAP file ... ";                    \
 	 $(LINK) -o $@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB)     \
-	     $(JVM_LIB)  $(PCSL_LIBS) $(LINK_FLAGS)               \
+	     $(JVM_LIB)  $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ) \
 	     -Xlinker -M 2> $(JVM_MAP);                           \
         fi
 	$(A)echo generated `pwd`/$@
