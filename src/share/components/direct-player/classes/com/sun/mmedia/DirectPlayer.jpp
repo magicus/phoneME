@@ -478,7 +478,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      */
     protected void doDeallocate() {
         // release device
-        nReleaseDevice(hNative);
         if (nPcmAudioPlayback(hNative)) {
             AudioTunnel.getInstance().stop();
         }
@@ -488,6 +487,8 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         if (mediaDownload != null) {
             mediaDownload.deallocate();
         }
+
+        nReleaseDevice(hNative);
 
         isFirstStart = true;
     }
