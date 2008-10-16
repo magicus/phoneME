@@ -27,7 +27,7 @@
 #
 # CDC library platform classes
 #
-CLASSLIB_CLASSES += \
+CLASSLIB_CLASSES_nullapp += \
 	java.io.VxWorksFileSystem
 
 #

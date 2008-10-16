@@ -29,8 +29,10 @@
 #include "javavm/include/indirectmem.h"
 #include "javavm/include/common_exceptions.h"
 
+#if 0
 #include "generated/offsets/java_util_Vector.h"
 #include "generated/offsets/java_util_AbstractList.h"
+#endif
 
 #if 0
 #undef FIELD_READ_ELEMENTDATA

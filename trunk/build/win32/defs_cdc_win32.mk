@@ -24,10 +24,12 @@
 # @(#)defs_cdc_win32.mk	1.2 06/10/10
 #
 
-CLASSLIB_CLASSES += \
-	java.lang.Win32Process \
+CVM_BUILDTIME_CLASSES_nullapp += \
 	java.io.Win32FileSystem \
 	java.io.WinNTFileSystem \
+
+CLASSLIB_CLASSES += \
+	java.lang.Win32Process \
 
 CVM_TARGETOBJS_SPACE += \
 	Win32Process_md.o \

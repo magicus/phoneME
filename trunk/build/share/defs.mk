@@ -268,9 +268,6 @@ else
 CVM_OPTIMIZED		?= true
 endif
 
-CVM_PRELOAD_TEST        ?= false
-CVM_PRELOAD_LIB         ?= $(CVM_PRELOAD_TEST)
-CVM_STATICLINK_LIBS	= $(CVM_PRELOAD_LIB)
 CVM_SYMBOLS             ?= $(CVM_DEBUG)
 CVM_PRODUCT             ?= premium
 
@@ -359,7 +356,75 @@ CVM_CREATE_RTJAR	?= false
 
 # AOT is only supported for Romized build.
 ifeq ($(CVM_AOT), true)
-override CVM_PRELOAD_LIB = true
+	override CVM_PRELOAD_LIB = true
+endif
+
+ifneq ($(CVM_CLASSLOADING), true)
+        override CVM_PRELOAD_LIB = true
+endif
+
+ifdef CVM_ALLOW_UNRESOLVED
+    $(error Internal flag CVM_ALLOW_UNRESOLVED should not be set)
+endif
+ifdef CVM_PRELOAD_FULL_CLOSURE
+    $(error Internal flag CVM_PRELOAD_FULL_CLOSURE should not be set)
+endif
+ifdef CVM_PRELOAD_ALL
+    $(error Internal flag CVM_PRELOAD_ALL should not be set)
+endif
+ifdef CVM_PRELOAD_SET
+    ifdef CVM_PRELOAD_TEST
+        $(error Do not set both CVM_PRELOAD_SET and CVM_PRELOAD_TEST)
+    endif
+    ifdef CVM_PRELOAD_LIB
+        $(error Do not set both CVM_PRELOAD_SET and CVM_PRELOAD_LIB)
+    endif
+endif
+
+ifdef CVM_PRELOAD_TEST
+CVM_PRELOAD_LIB = $(CVM_PRELOAD_TEST)
+endif
+
+ifdef CVM_PRELOAD_LIB
+    ifeq ($(CVM_PRELOAD_LIB), false)
+        ifeq ($(CVM_PRELOAD_TEST), true)
+            $(error CVM_PRELOAD_LIB=false is incompatible with \
+                CVM_PRELOAD_TEST=true)
+        else
+            CVM_PRELOAD_SET = minfull
+        endif
+    else
+        ifeq ($(CVM_PRELOAD_TEST), true)
+            CVM_PRELOAD_SET = libtestfull
+        else
+            CVM_PRELOAD_SET = libfull
+        endif
+    endif
+endif
+
+CVM_PRELOAD_SET        ?= minfull
+CVM_PRELOAD_ALL         = false
+
+ifeq ($(patsubst %full,true,$(CVM_PRELOAD_SET)), true)
+    CVM_PRELOAD_FULL_CLOSURE = true
+    ifeq ($(patsubst lib%,true,$(CVM_PRELOAD_SET)), true)
+        CVM_PRELOAD_ALL = true
+    endif
+else
+    CVM_PRELOAD_FULL_CLOSURE = false
+endif
+
+ifeq ($(CVM_PRELOAD_SET), libtestfull)
+    CVM_PRELOAD_TEST = true
+endif
+
+CVM_STATICLINK_LIBS   = $(CVM_PRELOAD_ALL)
+
+ifeq ($(CVM_PRELOAD_ALL), true)
+	override CVM_CREATE_RTJAR = false
+endif
+
+ifeq ($(CVM_AOT), true)
 override CVM_JIT         = true
 endif
 
@@ -588,9 +653,8 @@ endif
 ifeq ($(CVM_CLASSLOADING), true)
 	CVM_DEFINES      += -DCVM_CLASSLOADING
 	CVM_DYNAMIC_LINKING = true
-else
-        override CVM_PRELOAD_LIB = true
 endif
+
 # If reflection is explicitly stated to be false by the user, don't
 # allow serialization into the build to override that later
 ifneq ($(CVM_REFLECT), true)
@@ -810,8 +874,7 @@ CVM_FLAGS += \
 	CVM_REFLECT \
 	CVM_SERIALIZATION \
 	CVM_STATICLINK_LIBS \
-	CVM_PRELOAD_LIB \
-	CVM_PRELOAD_TEST \
+	CVM_PRELOAD_SET \
 	CVM_DYNAMIC_LINKING \
 	CVM_TEST_GC \
 	CVM_TEST_GENERATION_GC \
@@ -891,7 +954,7 @@ CVM_SERIALIZATION_CLEANUP_ACTION = \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION) \
 	$(CVM_OBJDIR)/jvm.o $(CVM_ROMJAVA_CPATTERN)*
 
-CVM_PRELOAD_LIB_CLEANUP_ACTION = \
+CVM_PRELOAD_SET_CLEANUP_ACTION = \
 	rm -rf $(CVM_ROMJAVA_CPATTERN)* \
 	$(DEFAULTLOCALELIST_JAVA) \
 	$(CVM_BUILDTIME_CLASSESDIR) \
@@ -900,13 +963,6 @@ CVM_PRELOAD_LIB_CLEANUP_ACTION = \
 
 CVM_STATICLINK_LIBS_CLEANUP_ACTION = \
 	rm -rf $(CVM_LIBDIR) $(CVM_BINDIR)
-
-CVM_PRELOAD_TEST_CLEANUP_ACTION = \
-	rm -rf $(CVM_ROMJAVA_CPATTERN)* \
-	$(CVM_BUILDTIME_CLASSESDIR) \
-	$(CVM_BUILDTIME_CLASSESZIP) .buildtimeclasses \
-	$(CVM_TEST_CLASSESDIR) \
-	$(CVM_TEST_CLASSESZIP)
 
 CVM_DYNAMIC_LINKING_CLEANUP_ACTION = \
 	rm -f $(CVM_OBJDIR)/jvm.o $(CVM_OBJDIR)/jni_impl.o \
@@ -1523,8 +1579,6 @@ CVM_OFFSETS_CLASSES += \
 	java.lang.Float \
 	java.lang.Double \
 	java.lang.ref.Reference \
-	java.util.AbstractList \
-	java.util.Vector \
 	sun.io.ByteToCharConverter \
 	sun.io.CharToByteConverter \
 	sun.io.CharToByteISO8859_1 \
@@ -1544,7 +1598,6 @@ ifeq ($(CVM_REFLECT), true)
 		java.lang.reflect.AccessibleObject \
 		java.lang.reflect.Constructor \
 		java.lang.reflect.Field \
-		java.lang.reflect.InvocationTargetException \
 		java.lang.reflect.Method
 endif
 

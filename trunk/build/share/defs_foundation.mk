@@ -80,10 +80,8 @@ CVM_BUILDTIME_CLASSES += \
    java.security.spec.X509EncodedKeySpec \
    java.text.StringCharacterIterator \
    javax.security.auth.x500.X500Principal \
-   sun.misc.URLClassPath \
    sun.security.action.GetBooleanAction \
    sun.security.action.GetIntegerAction \
-   sun.security.action.GetPropertyAction \
    sun.security.action.LoadLibraryAction \
    sun.security.pkcs.ContentInfo \
    sun.security.pkcs.PKCS7 \
@@ -104,7 +102,6 @@ CVM_BUILDTIME_CLASSES += \
    sun.security.util.ByteArrayLexOrder \
    sun.security.util.ByteArrayTagOrder \
    sun.security.util.Cache \
-   sun.security.util.Debug \
    sun.security.util.DerEncoder \
    sun.security.util.DerIndefLenConverter \
    sun.security.util.DerInputBuffer \

@@ -458,7 +458,7 @@ CVMpreloaderInit()
 		  (randomHash != CVMrandomNext()) ||
 		  (randomHash != CVMrandomNext()));
 
-	for (i = 0; i < CVM_nTotalROMClasses; ++i) {
+	for (i = 0; i < CVM_nROMClasses; ++i) {
 	    const CVMClassBlock *cb = CVM_ROMClassblocks[i];
 	    struct java_lang_Class **cbInstanceICell;
 	    struct java_lang_Class *cbInstance;
@@ -623,7 +623,7 @@ CVMpreloaderInit()
      */
     {
 	int i, j;
-	for (i = 0; i < CVM_nTotalROMClasses; ++i) {
+	for (i = 0; i < CVM_nROMClasses; ++i) {
 	    const CVMClassBlock* cb = CVM_ROMClassblocks[i];
 	    if (cb == NULL || CVMcbIs(cb, PRIMITIVE) ||
 		CVMcbMethodTablePtr(cb) == NULL)
@@ -1072,7 +1072,7 @@ CVMBool CVMpreloaderIsPreloadedObject(CVMObject *obj)
     CVMBool result = CVM_FALSE;
     struct java_lang_Class *firstClass = &CVM_ROMClasses[0];
     struct java_lang_Class *afterLastClass =
-					&CVM_ROMClasses[CVM_nTotalROMClasses];
+					&CVM_ROMClasses[CVM_nROMClasses];
     struct java_lang_String *firstString = &CVM_ROMStrings[0];
     struct java_lang_String *afterLastString = &CVM_ROMStrings[CVM_nROMStrings];
 
