@@ -884,7 +884,7 @@ void javanotify_chapi_platform_finish(
         e.data.jsr211PlatformEvent.jsr211event->handler_id = NULL;
 
         inv = &e.data.jsr211PlatformEvent.jsr211event->invocation;
-        inv->url               = copy_jc_utf16_string (url);
+        inv->url               = javautil_wcsdup (url);
         inv->type              = NULL;
         inv->action            = NULL;
         inv->invokingAppName   = NULL;
@@ -896,7 +896,7 @@ void javanotify_chapi_platform_finish(
             javacall_calloc (sizeof(javacall_utf16_string), inv->argsLen);
         if (NULL != inv->args) {
             for (i = 0; i < inv->argsLen; i++) {
-                inv->args[i] = copy_jc_utf16_string(args[i]);
+                inv->args[i] = javautil_wcsdup(args[i]);
             }
         }
         inv->dataLen           = dataLen;
@@ -934,26 +934,26 @@ void javanotify_chapi_java_invoke(
         javacall_malloc (sizeof(*e.data.jsr211PlatformEvent.jsr211event));
     if (NULL != e.data.jsr211PlatformEvent.jsr211event) {
         e.data.jsr211PlatformEvent.jsr211event->handler_id =
-            copy_jc_utf16_string(handler_id);
+            javautil_wcsdup(handler_id);
         e.data.jsr211PlatformEvent.jsr211event->status     =
             INVOCATION_STATUS_ERROR;
 
         inv = &e.data.jsr211PlatformEvent.jsr211event->invocation;
-        inv->url             = copy_jc_utf16_string(invocation->url);
-        inv->type            = copy_jc_utf16_string(invocation->type);
-        inv->action          = copy_jc_utf16_string(invocation->action);
+        inv->url             = javautil_wcsdup(invocation->url);
+        inv->type            = javautil_wcsdup(invocation->type);
+        inv->action          = javautil_wcsdup(invocation->action);
         inv->invokingAppName =
-            copy_jc_utf16_string(invocation->invokingAppName);
+            javautil_wcsdup(invocation->invokingAppName);
         inv->invokingAuthority =
-            copy_jc_utf16_string(invocation->invokingAuthority);
-        inv->username        = copy_jc_utf16_string(invocation->username);
-        inv->password        = copy_jc_utf16_string(invocation->password);
+            javautil_wcsdup(invocation->invokingAuthority);
+        inv->username        = javautil_wcsdup(invocation->username);
+        inv->password        = javautil_wcsdup(invocation->password);
         inv->argsLen         = invocation->argsLen;
         inv->args            =
             javacall_calloc (sizeof(javacall_utf16_string), inv->argsLen);
         if (NULL != inv->args) {
             for (i = 0; i < inv->argsLen; i++) {
-                inv->args[i] = copy_jc_utf16_string(invocation->args[i]);
+                inv->args[i] = javautil_wcsdup(invocation->args[i]);
             }
         }
         inv->dataLen           = invocation->dataLen;
