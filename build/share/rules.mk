@@ -525,10 +525,9 @@ CVM_BT_CLASS_FILES = $(patsubst %,%.class,$(BUILDTIME_CLASS0))
 .move.extra.btclasses2: $(CVM_BUILD_TOP)/.libclasses.list
 ifneq ($(CVM_PRELOAD_FULL_CLOSURE), true)
 	@echo '$(CVM_BT_CLASS_FILES)' | tr ' ' '\n' | sort > EXCLUDE
-	rsync -qav '--exclude-from=EXCLUDE' \
+	@rsync -qav '--exclude-from=EXCLUDE' \
 	    $(CVM_BUILDTIME_CLASSESDIR)/ $(LIB_CLASSESDIR)/
-	false
-	touch $(CVM_BUILD_TOP)/.libclasses;
+	@touch $(CVM_BUILD_TOP)/.libclasses;
 endif
 
 CVM_LIB_BOOTCLASSPATH = \

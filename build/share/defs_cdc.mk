@@ -200,6 +200,7 @@ CVM_EXTRA_JNI_CLASSES += \
     java.net.InetAddressImplFactory \
 
 CVM_BUILDTIME_CLASSES_nullapp += \
+    java.util.Vector \
     java.util.Stack \
     java.io.ObjectStreamClass \
     java.io.ObjectStreamField \
@@ -269,6 +270,7 @@ CVM_BUILDTIME_CLASSES_nullapp += \
     java.util.AbstractSet \
     java.util.Set \
     sun.misc.URLClassPath \
+    java.util.AbstractList \
     java.util.ArrayList \
     sun.net.www.protocol.jar.Handler \
     java.lang.SystemClassLoaderAction \
@@ -313,9 +315,7 @@ CVM_BUILDTIME_CLASSES += \
     java.io.DataOutputStream \
     java.io.EOFException \
     java.io.Externalizable \
-    sun.net.www.ParseUtil \
     java.io.FileFilter \
-    java.io.FileInputStream \
     java.io.FileNotFoundException \
     java.io.FileReader \
     java.io.FileWriter \
@@ -332,8 +332,6 @@ CVM_BUILDTIME_CLASSES += \
     java.io.ObjectOutputStream \
     java.io.ObjectStreamConstants \
     java.io.OptionalDataException \
-    java.io.OutputStream \
-    java.io.OutputStreamWriter \
     java.io.PipedInputStream \
     java.io.PipedOutputStream \
     java.io.PrintWriter \
@@ -357,11 +355,9 @@ CVM_BUILDTIME_CLASSES += \
     java.lang.Package \
     java.lang.Process \
     java.lang.Runtime \
-    java.lang.RuntimePermission \
     java.lang.SecurityException \
     java.lang.SecurityManager \
     java.lang.StrictMath \
-    java.lang.Terminator \
     java.lang.ThreadDeath \
     java.math.BigInteger \
     java.math.BitSieve \
@@ -381,7 +377,6 @@ CVM_BUILDTIME_CLASSES += \
     java.net.ProtocolException \
     java.net.SocketPermission \
     sun.net.www.MimeTable \
-    java.net.URLStreamHandler \
     java.net.UnknownHostException \
     java.net.UnknownServiceException \
     java.security.AccessControlException \
