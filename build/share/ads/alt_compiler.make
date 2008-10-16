@@ -326,7 +326,7 @@ ifeq ($(skip_link_image), true)
 else
 	$(A)echo "Linking $@..."
 	$(A)$(LINK) $(LINKER_OUTPUT) $@ \
-	    $(EXE_OBJS) $(JVM_LIB) $(JVMX_LIB) $(JVMTEST_LIB) $(LINK_FLAGS) \
+	    $(EXE_OBJS) $(JVM_LIB) $(JVMX_LIB) $(JVMTEST_LIB) $(LINK_FLAGS) $(JC_STUBS_OBJ) \
 	    $(EXTRA_DASH)-map $(EXTRA_DASH)-symbols \
 	    $(EXTRA_DASH)-list $(JVM_MAP) $(EXTRA_DASH)-entry 0x00008000 \
 	    $(EXTRA_DASH)-scatter $(SCATTER_MAP)

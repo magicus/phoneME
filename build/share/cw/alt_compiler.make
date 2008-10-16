@@ -157,7 +157,7 @@ ifeq ($(ENABLE_C_INTERPRETER), true)
 else
 $(ROM_GENERATOR): $(BUILD_PCH) $(Obj_Files) \
                   InterpreterSkeleton.obj OopMapsSkeleton.obj
-	@$(LINK) -o $@ $(LINK_FLAGS) $(Obj_Files) \
+	@$(LINK) -o $@ $(LINK_FLAGS) $(JC_STUBS_OBJ) $(Obj_Files) \
 		InterpreterSkeleton.obj OopMapsSkeleton.obj
 	@$(ROM_GENERATOR) $(LOOP_GEN_ARG)
 	@$(ROM_GENERATOR) +GenerateOopMaps
