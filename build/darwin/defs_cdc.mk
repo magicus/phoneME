@@ -24,7 +24,7 @@
 # @(#)defs_cdc.mk	1.25 06/10/10
 #
 
-CVM_BUILDTIME_CLASSES += \
+CVM_BUILDTIME_CLASSES_nullapp += \
    java.io.UnixFileSystem
 
 #

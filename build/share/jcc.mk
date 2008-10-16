@@ -173,6 +173,9 @@ endif
 ifeq ($(CVM_JVMTI_ROM), true)
 CVM_JCC_OPTIONS += -imageAttribute noPureCode
 endif
+ifeq ($(CVM_ALLOW_UNRESOLVED), true)
+CVM_JCC_OPTIONS += -allowUnresolved
+endif
 
 ###########
 # romjava.c files

@@ -73,3 +73,45 @@ run-unittests:: cdc-reports-dir
 
 -include $(CDC_DIR)/build/share/rules_cdc-commercial.mk
 include $(CDC_DIR)/build/share/rules_zoneinfo.mk
+
+# Hidden dependencies that cannot be deduced from file names
+
+$(CVM_BT_min_CLASSESDIR)/java/lang/Class$$LoadingList.class : java/lang/Class.java
+$(CVM_BT_min_CLASSESDIR)/java/lang/ClassLoader$$NativeLibrary.class : java/lang/ClassLoader.java
+$(CVM_BT_min_CLASSESDIR)/sun/misc/Launcher$$AppClassLoader.class : sun/misc/Launcher.java
+$(CVM_BT_min_CLASSESDIR)/sun/misc/Launcher$$ClassContainer.class : sun/misc/Launcher.java
+$(CVM_BT_min_CLASSESDIR)/java/lang/reflect/Constructor$$ArgumentException.class : java/lang/reflect/Constructor.java
+$(CVM_BT_min_CLASSESDIR)/java/lang/reflect/Constructor$$AccessException.class : java/lang/reflect/Constructor.java
+$(CVM_BT_min_CLASSESDIR)/java/lang/reflect/Method$$ArgumentException.class : java/lang/reflect/Method.java
+$(CVM_BT_min_CLASSESDIR)/java/lang/reflect/Method$$AccessException.class : java/lang/reflect/Method.java
+$(CVM_BT_min_CLASSESDIR)/java/lang/ClassLoader$$NativeLibrary.class : java/lang/ClassLoader.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/ref/ReferenceQueue$$Null.class : java/lang/ref/ReferenceQueue.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/ref/ReferenceQueue$$Lock.class : java/lang/ref/ReferenceQueue.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/util/HashMap$$Entry.class : java/util/HashMap.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/util/Map$$Entry.class : java/util/Map.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/String$$CaseInsensitiveComparator.class : java/lang/String.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/Shutdown$$Lock.class : java/lang/Shutdown.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/util/Hashtable$$EmptyEnumerator.class : java/util/Hashtable.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/util/Hashtable$$EmptyIterator.class : java/util/Hashtable.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/util/Hashtable$$Entry.class : java/util/Hashtable.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/ThreadLocal$$ThreadLocalMap.class : java/lang/ThreadLocal.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/ThreadLocal$$ThreadLocalMap$$Entry.class : java/lang/ThreadLocal.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/ref/Reference$$ReferenceHandler.class : java/lang/ref/Reference.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/StringCoding$$StringDecoder.class : java/lang/StringCoding.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/StringCoding$$ConverterSD.class : java/lang/StringCoding.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/ref/Finalizer$$FinalizerThread.class : java/lang/ref/Finalizer.java
+$(CVM_BT_nullapp_CLASSESDIR)/sun/misc/Launcher$$Factory.class : sun/misc/Launcher.java
+$(CVM_BT_nullapp_CLASSESDIR)/sun/misc/Launcher$$1.class : sun/misc/Launcher.java
+$(CVM_BT_nullapp_CLASSESDIR)/sun/misc/Launcher$$3.class : sun/misc/Launcher.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/io/ExpiringCache$$Entry.class : java/io/ExpiringCache.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/StringCoding$$StringEncoder.class : java/lang/StringCoding.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/StringCoding$$ConverterSE.class : java/lang/StringCoding.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/Integer$$1.class : java/lang/Integer.java
+$(CVM_BT_nullapp_CLASSESDIR)/sun/misc/Launcher$$4.class : sun/misc/Launcher.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/io/FilePermission$$1.class : java/io/FilePermission.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/Long$$1.class : java/lang/Long.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/net/Parts.class : java/net/URL.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/lang/SystemClassLoaderAction.class : java/lang/ClassLoader.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/net/UnknownContentHandler.class : java/net/URLConnection.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/io/FilePermissionCollection.class : java/io/FilePermission.java
+$(CVM_BT_nullapp_CLASSESDIR)/java/security/BasicPermissionCollection.class : java/security/BasicPermission.java

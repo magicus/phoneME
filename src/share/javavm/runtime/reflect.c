@@ -44,7 +44,6 @@
 #include "generated/offsets/java_lang_reflect_AccessibleObject.h"
 #include "generated/offsets/java_lang_reflect_Constructor.h"
 #include "generated/offsets/java_lang_reflect_Field.h"
-#include "generated/offsets/java_lang_reflect_InvocationTargetException.h"
 #include "generated/offsets/java_lang_reflect_Method.h"
 #include "generated/jni/java_lang_reflect_Modifier.h"
 

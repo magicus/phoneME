@@ -282,19 +282,12 @@ class CodeHacker {
 		    // don't try to quicken unresolved references.
 		    // this is not fatal!
 		    //
-		    // Do quicken if its a reference to an array!!
-		    if ((constObj instanceof ClassConstant) &&
-                        (((ClassConstant)constObj).name.string.charAt(0) ==
-                         Const.SIGC_ARRAY)) {
-			((ClassConstant)constObj).forget(); 
-		    } else {
-			if (verbose){
-			    log.println(Localizer.getString(
-				"codehacker.could_not_quicken",
-				 m.qualifiedName(), constObj));
-			}
-			continue;
+		    if (verbose){
+			log.println(Localizer.getString(
+			    "codehacker.could_not_quicken",
+			     m.qualifiedName(), constObj));
 		    }
+		    continue;
 		}
 		switch( (int)code[loc]&0xff ){
 		case Const.opc_ldc_w:

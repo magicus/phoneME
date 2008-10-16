@@ -27,7 +27,7 @@
 CVM_BUILDTIME_CLASSES += \
    sun.misc.FileURLMapper
 
-CVM_BUILDTIME_CLASSES += \
+CVM_BUILDTIME_CLASSES_nullapp += \
    java.io.UnixFileSystem
 
 #

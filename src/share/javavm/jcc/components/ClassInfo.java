@@ -1017,6 +1017,15 @@ class ClassInfo
 		    cinfo.superClassInfo = superClassInfo;
 		}
 	    }
+            if (cinfo.interfaces != null ) {
+                for (int i = 0; i < cinfo.interfaces.length; ++i) {
+                    ClassConstant cc = cinfo.interfaces[i];
+                    if (cc.find() == null) {
+                        log.println(Localizer.getString("classinfo.class_is_missing_parent", cinfo.className, cc.name.string));
+                        ok = false;
+                    }
+                }
+            }
 	}
 	return ok;
     }

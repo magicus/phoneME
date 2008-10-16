@@ -25,10 +25,10 @@
 #
 
 CVM_BUILDTIME_CLASSES += \
-   sun.misc.FileURLMapper
+	sun.misc.FileURLMapper
 
-CVM_BUILDTIME_CLASSES += \
-   java.io.UnixFileSystem
+CVM_BUILDTIME_CLASSES_nullapp += \
+	java.io.UnixFileSystem
 
 #
 # CDC library platform classes

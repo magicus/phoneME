@@ -122,11 +122,17 @@
 #     support and optimized code that will run faster, but not as fast
 #     as when using CVM_DEBUG=false.
 #
-# CVM_PRELOAD_LIB default: false
+# CVM_PRELOAD_LIB default: unset
 #     Build a VM with all the system and profile classes preloaded.
+#     Obsolete.  Replaced by CVM_PRELOAD_SET.
 #
-# CVM_PRELOAD_TEST default: false
+# CVM_PRELOAD_TEST default: unset
 #     Build a VM with the test classes (testclasses.zip) preloaded.
+#     Obsolete.  Replaced by CVM_PRELOAD_SET.
+#
+# CVM_PRELOAD_SET default: minfull
+#     Build a VM with the specified set of classes preloaded.
+#     Possible choices: min nullapp libfull libtestfull
 #
 # CVM_SYMBOLS default: $(CVM_DEBUG)
 #     Include debugging and symbol information for C code even if the build is
