@@ -39,6 +39,7 @@ SUBSYSTEMS += jsr280
 USE_XMLPARSER = true
 SAX_280 = true
 JPP_DEFS += -DSAX_280
+USE_DOM_EVENT ?= true
 
 # Defines where implementation of org.w3c.dom, org.w3c.dom.events, 
 # org.w3c.dom.views packages and javax.xml.parsers.DocumentBuilder.java,
