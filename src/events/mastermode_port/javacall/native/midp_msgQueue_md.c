@@ -269,12 +269,6 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = JSR290_INVALIDATE_SIGNAL;
         pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
         break;
-    case JSR290_JC_EVENT_DOM_FINALIZE:
-        pNewSignal->waitingFor = JSR290_FINALIZE_SIGNAL;
-        pNewMidpEvent->type      = DOM_FINALIZE_EVENT;
-        pNewMidpEvent->intParam1 = (int)(event->data.jsr290DOMEvent.handle);
-        pNewMidpEvent->MM_ISOLATE   = event->data.jsr290DOMEvent.isolate_id;
-        break;
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_177

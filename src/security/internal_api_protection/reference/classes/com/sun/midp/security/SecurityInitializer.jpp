@@ -239,8 +239,8 @@ public final class SecurityInitializer {
         "com.sun.j2me.content.CHManagerImpl$SecurityTrusted",
         // #endif ENABLE_JSR_211
 
-        // #ifdef ENABLE_JSR_290
-        "com.sun.j2me.dom.DOMFactory$SecurityTrusted",
+	// #ifdef ENABLE_JSR_290
+        "com.sun.midp.jsr290Initializer$SecurityTrusted",
         // #endif ENABLE_JSR_290
 
         // Pass the security token to the i3 test framework.
