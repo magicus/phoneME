@@ -124,57 +124,22 @@
 /* do a gc rendezvous */
 	ENTRY(CVMCCMruntimeGCRendezvousGlue)
 ENTRY1 ( CVMCCMruntimeGCRendezvousGlue )
+	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeGCRendezvous)
+	SET_SIZE(CVMCCMruntimeGCRendezvousGlue)
+
+
+#if defined(CVM_JIT_COPY_CCMCODE_TO_CODECACHE) && defined(CVMJIT_PATCH_BASED_GC_CHECKS)	
+	ENTRY(CVMARMruntimeGCRendezvousAdjustRetAddrGlue)
+ENTRY1 ( CVMARMruntimeGCRendezvousAdjustRetAddrGlue )
 	/* If we are copying to the code cache, then only one instruction
          * was needed to call us, so we want to return to it. Otherwise
          * it may have taken multiple instructions, so the last one is
          * patched with a nop so we can skip it.
          */
-#if defined(CVM_JIT_COPY_CCMCODE_TO_CODECACHE) && defined(CVMJIT_PATCH_BASED_GC_CHECKS)
-	/* If CVM_AOT or CVM_MTASK is enabled, we use trap based gc check
-	 * for precompiled code and patch based gc check for dynamic
-	 * compiled code. For precompiled code, don't adjust the lr since
-	 * they are not using patch based gc check. */
-#ifdef CVM_MTASK
-	/* If lr<CVMJITcodeCacheDecompileStart, it's pre-compiled code.
-	 * Don't adjust lr. */
-	IMPORT(CVMJITcodeCacheDecompileStart)
-	ldr	a2, =CVMJITcodeCacheDecompileStart
-	ldr	a2, [a2]
-	ldr	a2, [a2]
-	cmp	lr, a2
-	blo	gcNoRetAddrAdjust
-#endif
-#ifdef CVM_AOT
-	/* If lr>=CVMJITcodeCacheAOTStart and lr<CVMJITcodeCacheAOTEnd, then
-	 * we are in AOT code. Don't adjust lr. */
-	IMPORT(CVMJITcodeCacheAOTEnd)
-	IMPORT(CVMJITcodeCacheAOTStart)
-	/* load CVMglobals.jit.codeCacheAOTend */
-	ldr	a2, =CVMJITcodeCacheAOTEnd
-	ldr	a2, [a2]
-	ldr	a2, [a2]
-	cmp	lr, a2 /* compare lr with codeCacheAOTend */
-	/* If lr > codeCacheAOTend, it's from dynamic compiled code.
-	   Adjust lr for dynamic compiled code since it uses patch
-	   based gc checks. */
-	bhs	gcAdjustRetAddr
-	/* lr < codeCacheAOTend, now compare it with codeCacheAOTStart */
-	ldr	a2,  =CVMJITcodeCacheAOTStart
-	ldr	a2, [a2]
-	ldr	a2, [a2]
-	cmp	lr, a2
-	/* lr > codeCacheAOTStart && lr < codeCacheAOTend. 
-	   It's AOT code, don't ajust lr since AOT code uses
-	   trap based gc checks. */
-	bhs	gcNoRetAddrAdjust	
-#endif
-LABEL(gcAdjustRetAddr)	
 	sub	lr, lr, #4    /* we want to return to the patch point */
-#endif
-	ENTRY(CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue)
-ENTRY1 ( CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue )
-LABEL(gcNoRetAddrAdjust)
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeGCRendezvous)
+	SET_SIZE(CVMARMruntimeGCRendezvousAdjustRetAddrGlue)
+#endif
 
 /* Throw various well known exceptions */
 
