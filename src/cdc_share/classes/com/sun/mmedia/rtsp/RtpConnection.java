@@ -67,7 +67,7 @@ public class RtpConnection extends RtpConnectionBase {
             byte[] data = new byte[MAX_DATAGRAM_SIZE];
             DatagramPacket dp = new DatagramPacket(data, MAX_DATAGRAM_SIZE);
             ds.receive(dp);
-            RtpPacket pkt = new RtpPacket(data);
+            RtpPacket pkt = new RtpPacket(data,dp.getLength());
             return pkt;
         } catch (IOException e) {
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {

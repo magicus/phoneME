@@ -311,20 +311,19 @@ public class PlayerImpl implements Player {
      * @exception  MediaException  Description of the Exception
      */
     private BasicPlayer getPlayerFromType(String type) throws MediaException {
-        String className;
+        String className = null;
 
-        className = Configuration.getConfiguration().getHandler(type);
-        if (className == null) {
-            if (DirectPlayer.nIsVideoControlSupported(hNative)) {
-                className = "com.sun.mmedia.DirectPlayer";
-            } else if (DirectPlayer.nIsToneControlSupported(hNative)) {
-                className = "com.sun.mmedia.DirectTone";
-            } else if (DirectPlayer.nIsMIDIControlSupported(hNative)) {
-                className = "com.sun.mmedia.DirectMIDI";
-            } else {
-                className = "com.sun.mmedia.DirectPlayer";
-            }              
-        }
+        if ("GIF".equals(type)) {
+            className = "com.sun.mmedia.GIFPlayer";
+        } else if (BasicPlayer.MEDIA_FORMAT_CAPTURE_VIDEO.equals(type)) {
+            className = "com.sun.mmedia.DirectCamera";
+        } else if (DirectPlayer.nIsToneControlSupported(hNative)) {
+            className = "com.sun.mmedia.DirectTone";
+        } else if (DirectPlayer.nIsMIDIControlSupported(hNative)) {
+            className = "com.sun.mmedia.DirectMIDI";
+        } else {
+            className = "com.sun.mmedia.DirectPlayer";
+        }              
 
         if ((type == null) || className == null) {
             throw new MediaException(PL_ERR_SH + "MediaFormat " + type + " is not supported");

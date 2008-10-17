@@ -31,15 +31,35 @@ import javax.microedition.media.Control;
 public class RtspSS implements SourceStream {
 
     private RtpConnection conn;
+    private RtpPacket cur_pkt = null;
+    public ContentDescriptor cdescr;
 
     public RtspSS(RtpConnection conn) {
         this.conn = conn;
+        conn.setSS(this);
+    }
+
+    void setContentDescriptor(String descr) {
+        cdescr = new ContentDescriptor(descr);
+        //System.out.println("**** MIME:" + cdescr.getContentType());
+    }
+
+    void packetArrived(RtpPacket pkt) {
+        if (null == cdescr) {
+            RtpPayloadType pt = RtpPayloadType.get(pkt.getPayloadType());
+            if (null != pt) {
+                setContentDescriptor(pt.getDescr());
+            } else {
+                // unsupported content type
+                // conn.stopListening();
+            }
+        }
     }
 
     // ===================== SourceStream methods =============
 
     public ContentDescriptor getContentDescriptor() {
-        return null;
+        return cdescr;
     }
 
     public long getContentLength() {
@@ -57,7 +77,19 @@ public class RtspSS implements SourceStream {
     public int read(byte[] b, int off, int len)
         throws java.io.IOException {
 
-        return -1;
+        if (null == cur_pkt || 0 == cur_pkt.getPayloadSize()) {
+            try {
+                cur_pkt = conn.dequeuePacket();
+            } catch (InterruptedException e) {
+                return -1;
+            }
+        }
+
+        if (null == cur_pkt || 0 == cur_pkt.getPayloadSize()) return -1;
+
+        int bytes_moved = cur_pkt.getPayload(b, off, len);
+
+        return bytes_moved;
     }
 
     public long seek(long where) 

@@ -39,6 +39,7 @@ import com.sun.mmedia.protocol.BasicDS;
 import com.sun.mmedia.sdp.*;
 
 public class RtspDS extends BasicDS {
+
     private static final int RESPONSE_TIMEOUT = 5000;
 
     private static final int MIN_PORT = 1024;  // inclusive
@@ -117,6 +118,7 @@ public class RtspDS extends BasicDS {
                     int client_data_port = first_client_data_port;
 
                     RtpConnection conn = null;
+                    String cdescr = null;
 
                     do {
                         try {
@@ -132,7 +134,19 @@ public class RtspDS extends BasicDS {
                     }
 
                     if (i < sdp.getMediaDescriptionsCount()) {
-                        mediaControl = sdp.getMediaDescription(i).getMediaAttribute("control").getValue();
+                        SdpMediaDescr md = sdp.getMediaDescription(i); 
+                        mediaControl = md.getMediaAttribute("control").getValue();
+                        SdpMediaAttr rtpmap = md.getMediaAttribute("rtpmap");
+                        if (null != rtpmap) {
+                            new RtpPayloadType(rtpmap.getValue());
+                        }
+
+                        if (-1 != md.payload_type) {
+                            RtpPayloadType pt = RtpPayloadType.get(md.payload_type);
+                            if (null != pt) {
+                                cdescr = pt.getDescr();
+                            }
+                        }
                     } else {
                         mediaControl = null;
                     }
@@ -172,10 +186,10 @@ public class RtspDS extends BasicDS {
                     }
 
                     streams[i] = new RtspSS(conn);
+                    if (null != cdescr) {
+                        streams[i].setContentDescriptor(cdescr);
+                    }
                 }
-
-                // TODO: determine actual content type
-                setContentType("audio/x-wav");
 
                 start();
 
@@ -212,10 +226,12 @@ public class RtspDS extends BasicDS {
 
     public synchronized void start() throws IOException {
         if (null == connection) throw new IllegalStateException("RTSP: Not connected");
-        try {
-            started = sendRequest(RtspOutgoingRequest.PLAY(seqNum, url, sessionId));
-        } catch (InterruptedException e) {
-            throw new IOException("start aborted: " + e.getMessage());
+        if (!started) {
+            try {
+                started = sendRequest(RtspOutgoingRequest.PLAY(seqNum, url, sessionId));
+            } catch (InterruptedException e) {
+                throw new IOException("start aborted: " + e.getMessage());
+            }
         }
     }
 
@@ -230,7 +246,7 @@ public class RtspDS extends BasicDS {
 
     public synchronized SourceStream[] getStreams() {
         if (null == connection) throw new IllegalStateException("RTSP: Not connected");
-        return new SourceStream[] { null }; //streams;
+        return streams;
     }
 
     public synchronized long getDuration() {
@@ -247,7 +263,7 @@ public class RtspDS extends BasicDS {
 
     public String getContentType() {
         if (null == connection) throw new IllegalStateException("RTSP: Not connected");
-        return contentType;
+        return null;
     }
 
     //=========================================================================
