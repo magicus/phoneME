@@ -1,6 +1,4 @@
 /*
- * @(#)BigInteger.java	1.47 06/10/23
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
@@ -23,6 +21,10 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional  
  * information or have any questions. 
  *
+ */
+
+/*
+ * @(#)BigInteger.java	1.55 03/01/29
  */
 
 package java.math;
@@ -89,7 +91,7 @@ import java.io.*;
  * a null object reference for any input parameter.
  *
  * @see     BigDecimal
- * @version 1.36, 04/21/00
+ * @version 1.55, 01/29/03
  * @author  Josh Bloch
  * @author  Michael McCloskey
  * @since JDK1.1
@@ -115,17 +117,7 @@ public class BigInteger extends Number implements Comparable {
      * value.  Note that this implies that the BigInteger zero has a
      * zero-length mag array.
      */
-    transient int[] mag;
-
-    /**
-     * This field is required for historical reasons. The magnitude of a
-     * BigInteger used to be in a byte representation, and is still serialized
-     * that way. The mag field is used in all real computations but the
-     * magnitude field is required for storage.
-     *
-     * @serial
-     */
-    private byte[] magnitude;
+    int[] mag;
 
     // These "redundant fields" are initialized with recognizable nonsense
     // values, and cached the first time they are needed (or never, if they
@@ -174,7 +166,7 @@ public class BigInteger extends Number implements Comparable {
      * least significant int has int-number 0, the next int in order of
      * increasing significance has int-number 1, and so forth.
      */
-    private transient int firstNonzeroIntNum = -2;
+    private int firstNonzeroIntNum = -2;
 
     /**
      * This mask is used to obtain the value of an int as if it were unsigned.
@@ -1291,7 +1283,7 @@ public class BigInteger extends Number implements Comparable {
 	if (signum==0)
 	    return (exponent==0 ? ONE : this);
 
-	// Perform exponentiation using repeated squaring method
+	// Perform exponentiation using repeated squaring trick
         int newSign = (signum<0 && (exponent&1)==1 ? -1 : 1);
 	int[] baseToPow2 = this.mag;
         int[] result = {1};
@@ -1851,7 +1843,7 @@ public class BigInteger extends Number implements Comparable {
      */
     private BigInteger modPow2(BigInteger exponent, int p) {
 	/*
-	 * Perform exponentiation using repeated squaring method, chopping off
+	 * Perform exponentiation using repeated squaring trick, chopping off
 	 * high order bits as indicated by modulus.
 	 */
 	BigInteger result = valueOf(1);
@@ -3019,6 +3011,30 @@ public class BigInteger extends Number implements Comparable {
     private static final long serialVersionUID = -8287574255936472291L;
 
     /**
+     * Serializable fields for BigInteger.
+     * 
+     * @serialField signum  int
+     *              signum of this BigInteger.
+     * @serialField magnitude int[]
+     *              magnitude array of this BigInteger.
+     * @serialField bitCount  int
+     *              number of bits in this BigInteger
+     * @serialField bitLength int
+     *              the number of bits in the minimal two's-complement
+     *              representation of this BigInteger
+     * @serialField lowestSetBit int
+     *              lowest set bit in the twos complement representation
+     */
+    private static final ObjectStreamField[] serialPersistentFields = { 
+        new ObjectStreamField("signum", Integer.TYPE), 
+        new ObjectStreamField("magnitude", byte[].class),
+        new ObjectStreamField("bitCount", Integer.TYPE),
+        new ObjectStreamField("bitLength", Integer.TYPE),
+        new ObjectStreamField("firstNonzeroByteNum", Integer.TYPE),
+        new ObjectStreamField("lowestSetBit", Integer.TYPE)
+        };
+
+    /**
      * Reconstitute the <tt>BigInteger</tt> instance from a stream (that is,
      * deserialize it). The magnitude is read in as an array of bytes
      * for historical reasons, but it is converted to an array of ints
@@ -3034,37 +3050,56 @@ public class BigInteger extends Number implements Comparable {
          * transient but are serialized for compatibility reasons.
          */
 
-        // Read in all fields
-	s.defaultReadObject();
+        // prepare to read the alternate persistent fields
+        ObjectInputStream.GetField fields = s.readFields();
+            
+        // Read the alternate persistent fields that we care about
+        signum = (int)fields.get("signum", -2);
+        byte[] magnitude = (byte[])fields.get("magnitude", null);
 
         // Validate signum
-	if (signum < -1 || signum > 1)
-	    throw new java.io.StreamCorruptedException(
-                        "BigInteger: Invalid signum value");
-	if ((magnitude.length==0) != (signum==0))
-	    throw new java.io.StreamCorruptedException(
-                        "BigInteger: signum-magnitude mismatch");
+	if (signum < -1 || signum > 1) {
+            String message = "BigInteger: Invalid signum value";
+            if (fields.defaulted("signum"))
+                message = "BigInteger: Signum not present in stream";
+	    throw new java.io.StreamCorruptedException(message);
+        }
+	if ((magnitude.length==0) != (signum==0)) {
+            String message = "BigInteger: signum-magnitude mismatch";
+            if (fields.defaulted("magnitude"))
+                message = "BigInteger: Magnitude not present in stream";
+	    throw new java.io.StreamCorruptedException(message);
+        }
 
         // Set "cached computation" fields to their initial values
         bitCount = bitLength = -1;
-        lowestSetBit = firstNonzeroByteNum = firstNonzeroIntNum = -2;
+        lowestSetBit = -2;
 
         // Calculate mag field from magnitude and discard magnitude
 	mag = stripLeadingZeroBytes(magnitude);
-        magnitude = null;
     }
 
     /**
-     * Ensure that magnitude (the obsolete byte array representation)
-     * is set prior to serializaing this BigInteger.  This provides a
-     * serialized form that is compatible with older (pre-1.3) versions.
+     * Save the <tt>BigInteger</tt> instance to a stream.
+     * The magnitude of a BigInteger is serialized as a byte array for
+     * historical reasons.
+     * 
+     * @serialData two necessary fields are written as well as obsolete
+     *             fields for compatibility with older versions.
      */
-    private synchronized Object writeReplace() {
-	if (magnitude == null)
-	    magnitude = magSerializedForm();
-
-	return this;
-    }
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        // set the values of the Serializable fields
+        ObjectOutputStream.PutField fields = s.putFields();
+        fields.put("signum", signum);
+        fields.put("magnitude", magSerializedForm());
+        fields.put("bitCount", -1);
+        fields.put("bitLength", -1);
+        fields.put("lowestSetBit", -2);
+        fields.put("firstNonzeroByteNum", -2);
+            
+        // save them
+        s.writeFields();
+}
 
     /**
      * Returns the mag array as an array of bytes.
