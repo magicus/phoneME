@@ -70,7 +70,7 @@ public abstract class BaseScreen implements StringIds {
         return props.get(key);
     }
 
-    BaseScreen(ScreenProperties props) {
+    public BaseScreen(ScreenProperties props) {
         this.props = props;
     }
 

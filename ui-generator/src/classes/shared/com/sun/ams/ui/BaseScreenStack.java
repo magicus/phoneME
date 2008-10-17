@@ -201,7 +201,11 @@ public abstract class BaseScreenStack {
             throw new IllegalStateException("Stack has beed destroyed");
         }
 
-        return (Screen)screens.peek();
+        if (screens != null) {
+            return (Screen)screens.peek();
+        }
+
+        return null;
     }
 
     /**

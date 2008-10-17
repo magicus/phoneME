@@ -45,7 +45,7 @@ public abstract class Screen extends BaseScreen {
         return new Command("OK", Command.OK, 1);
     }
 
-    static Form
+    protected static Form
     createForm() {
         return new Form(null) {
             protected void sizeChanged(int w, int h) {
@@ -54,7 +54,7 @@ public abstract class Screen extends BaseScreen {
         };
     }
 
-    static List
+    protected static List
     createList() {
         return new List(null, List.EXCLUSIVE | List.IMPLICIT);
     }
@@ -107,7 +107,7 @@ public abstract class Screen extends BaseScreen {
         }
     }
 
-    Screen(ScreenProperties props) {
+    public Screen(ScreenProperties props) {
         super(props);
     }
 

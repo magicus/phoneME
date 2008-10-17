@@ -29,11 +29,19 @@ package com.sun.ams.ui;
 import javax.microedition.lcdui.Display;
 
 
-public final class ScreenStack extends BaseScreenStack {
+public class ScreenStack extends BaseScreenStack {
     private Display display;
 
     public ScreenStack(Display d) {
         display = d;
+    }
+
+    protected void setDisplay(Display d) {
+        display = d;
+    }
+
+    protected Display getDisplay() {
+        return display;
     }
 
     protected void showScreen(Screen screen) {
