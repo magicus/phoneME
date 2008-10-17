@@ -68,11 +68,13 @@ public class TitleLayer extends CLayer {
      * Sets the anchor constraints for rendering operation.
      */
     public void setAnchor() {
+	if (owner == null) {
+	    return;
+	}
         bounds[X] = 0;
         bounds[Y] = 0;
-	if (owner != null) {
-	    bounds[W] = owner.bounds[W];
-	}
+
+	bounds[W] = owner.bounds[W];
         bounds[H] = TitleSkin.HEIGHT;
         titlex = 0;
     }
@@ -172,7 +174,7 @@ public class TitleLayer extends CLayer {
         super.update(layers);
         setAnchor();
         CLayer t = layers[MIDPWindow.TICKER_LAYER];
-        if (t.isVisible() && TickerSkin.ALIGN == Graphics.TOP) {
+        if (t != null && t.isVisible() && TickerSkin.ALIGN == Graphics.TOP) {
             bounds[Y] = t.bounds[Y] + t.bounds[H];
         }
 

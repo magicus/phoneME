@@ -106,10 +106,11 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      * Sets the anchor constants for rendering operation.
      */
     private void setAnchor() {
-        if (owner != null) {
-            bounds[W] = (int)(.95 * owner.bounds[W]);
+        if (owner == null) {
+	    return;
         }
-        bounds[H] = VirtualKeyboardSkin.HEIGHT;
+	bounds[W] = (int)(.95 * owner.bounds[W]);
+	bounds[H] = VirtualKeyboardSkin.HEIGHT;
         bounds[X] = bounds[X] = (owner.bounds[W] - bounds[W]) >> 1;
         bounds[Y] = owner.bounds[H] - bounds[H];
 

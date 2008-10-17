@@ -538,19 +538,19 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * Sets the anchor constraints for rendering operation.
      */
     public void setAnchor() {
+	if (owner == null)
+	    return;
         bounds[X] = 0;
-	if (tunnel != null) {
-	    for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
-		if (SoftButtonSkin.BUTTON_ANCHOR_X[i] < 0) {
-		    SoftButtonSkin.BUTTON_ANCHOR_X[i] = tunnel.getDisplayWidth() +
-			SoftButtonSkin.BUTTON_ANCHOR_X[i];
-		}
+	for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
+	    if (SoftButtonSkin.BUTTON_ANCHOR_X[i] < 0) {
+		SoftButtonSkin.BUTTON_ANCHOR_X[i] = owner.bounds[W] +
+		    SoftButtonSkin.BUTTON_ANCHOR_X[i];
 	    }
-	    
-
-	    bounds[Y] = tunnel.getDisplayHeight() - SoftButtonSkin.HEIGHT;
-	    bounds[W] = tunnel.getDisplayWidth();
 	}
+	
+	
+	bounds[Y] = owner.bounds[H] - SoftButtonSkin.HEIGHT;
+	bounds[W] = owner.bounds[W];
 	bounds[H] = SoftButtonSkin.HEIGHT;
     }
 

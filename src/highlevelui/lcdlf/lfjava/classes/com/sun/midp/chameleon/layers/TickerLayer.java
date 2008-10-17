@@ -73,24 +73,24 @@ public class TickerLayer extends CLayer {
     }
 
     public void setAnchor() {
-        bounds[X] = 0;
-	if (owner != null) {
-	    bounds[W] = owner.bounds[W];
+	if (owner == null) {
+	    return;
 	}
-	    bounds[H] = TickerSkin.HEIGHT;
+        bounds[X] = 0;
+	bounds[W] = owner.bounds[W];
+	
+	bounds[H] = TickerSkin.HEIGHT;
         if (textLoc > bounds[X] + bounds[W]) {
             textLoc = bounds[X] + bounds[W];
         }
         switch (TickerSkin.ALIGN) {
-            case(Graphics.TOP):
-                bounds[Y] = 0;
-                break;
+	case(Graphics.TOP):
+	    bounds[Y] = 0;
+	    break;
             case(Graphics.BOTTOM):
-            default:
-		if (owner != null) {
-		    bounds[Y] = owner.bounds[H];
-		}
-                bounds[Y] -= SoftButtonSkin.HEIGHT + bounds[H];
+	default:
+	    bounds[Y] = owner.bounds[H];
+	    bounds[Y] -= SoftButtonSkin.HEIGHT + bounds[H];
         }
     }
 

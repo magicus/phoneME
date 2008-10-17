@@ -106,12 +106,14 @@ public class PTILayer extends PopupLayer {
      * Sets the anchor constants for rendering operation.
      */
     private void setAnchor() {
-	if (owner != null) {
-	    bounds[W] = owner.bounds[W];
-	    bounds[H] = PTISkin.HEIGHT;
-	    bounds[X] = (owner.bounds[W] - bounds[W]) >> 1;
-	    bounds[Y] = owner.bounds[H] - bounds[H];
+	if (owner == null) {
+	    return;
 	}
+	bounds[W] = owner.bounds[W];
+	bounds[H] = PTISkin.HEIGHT;
+	bounds[X] = (owner.bounds[W] - bounds[W]) >> 1;
+	bounds[Y] = owner.bounds[H] - bounds[H];
+	
         widthMax = bounds[W] - PTISkin.MARGIN;
         if (PTISkin.LEFT_ARROW != null && PTISkin.RIGHT_ARROW != null) {
             widthMax -= 4 * PTISkin.MARGIN +
