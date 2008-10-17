@@ -1126,6 +1126,22 @@ void /* OPTIONAL */ javanotify_rotation(int hardwareId) {
     midp_jc_event_send(&e);
 }
 
+/**
+  * The platform should invoke this function in platform context
+  * to notify display device state change
+  */
+void javanotify_display_device_state_changed(int hardwareId, javacall_lcd_display_device_state state) {
+    (void)hardwareId;
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_display_device_state_changed >>\n");
+    e.data.midp_jc_event_display_device.hardwareId =  hardwareId;
+    e.data.midp_jc_event_display_device.state = state;
+    e.eventType = MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED;
+    midp_jc_event_send(&e);
+}
+
+
 #ifdef ENABLE_API_EXTENSIONS
 
 /**
