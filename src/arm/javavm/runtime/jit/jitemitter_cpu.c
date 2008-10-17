@@ -2798,9 +2798,11 @@ CVMCPUemitAtomicSwap(CVMJITCompilationContext* con,
 #endif
 #endif /* CVMJIT_SIMPLE_SYNC_METHODS */
 
-/* glue routine that calls CVMCCMruntimeGCRendezvous. No lr adjustment. */
+#if defined(CVM_JIT_COPY_CCMCODE_TO_CODECACHE) && defined(CVMJIT_PATCH_BASED_GC_CHECKS)
+/* glue routine that calls CVMCCMruntimeGCRendezvous and adjustment lr. */
 extern void
-CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue();
+CVMARMruntimeGCRendezvousAdjustRetAddrGlue();
+#endif
 
 /*
  * Emit code to do a gc rendezvous.
@@ -2818,24 +2820,24 @@ CVMCPUemitGcCheck(CVMJITCompilationContext* con, CVMBool cbufRewind)
         if (cbufRewind) {
 	    /* The code buffer will be rewinded after the bl instruction,
              * and the bl will be patched with the next instruction. In
-             * this case, CVMCCMruntimeGCRendezvousGlue is going to
-             * subtract the lr by 4, so we can return to the patch point
-             * after the gc is done.
+             * this case, CVMARMruntimeGCRendezvousAdjustRetAddrGlue is 
+             * going to subtract the lr by 4, so we can return to the 
+             * patch point after the gc is done.
              */
             CVMJITaddCodegenComment((con,
-                               "call CVMCCMruntimeGCRendezvousGlue"));
+                "call CVMARMruntimeGCRendezvousAdjustRetAddrGlue"));
             helperOffset = CVMCCMcodeCacheCopyHelperOffset(con,
-				CVMCCMruntimeGCRendezvousGlue);
+		CVMARMruntimeGCRendezvousAdjustRetAddrGlue);
         } else {
 	    /* There is no rewinding in this case. We don't want to return
              * to the bl instruction after the gc is done, so call
-             * CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue instead. The
-             * lr adjustment is skipped in this case.
+             * CVMCCMruntimeGCRendezvousGlue instead. The
+             * lr is not adjusted in this case.
              */
             CVMJITaddCodegenComment((con,
-                    "call CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue"));
+                    "call CVMCCMruntimeGCRendezvousGlue"));
             helperOffset =  CVMCCMcodeCacheCopyHelperOffset(con,
-                    CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue);
+                    CVMCCMruntimeGCRendezvousGlue);
         }
 	CVMCPUemitBranchLink(con, helperOffset);
     }
