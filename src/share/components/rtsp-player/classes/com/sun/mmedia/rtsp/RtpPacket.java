@@ -27,9 +27,17 @@ package com.sun.mmedia.rtsp;
 class RtpPacket {
 
     byte[] raw_data;
+    int raw_data_size;
 
-    RtpPacket(byte[] raw_data) {
+    int payload_offs;
+    int payload_size;
+
+    RtpPacket(byte[] raw_data, int raw_data_size) {
         this.raw_data = raw_data;
+        this.raw_data_size = raw_data_size;
+
+        payload_offs = 12 + 4 * getCsrcCount();
+        payload_size = raw_data_size - payload_offs;
     }
 
     int getVersion() {
@@ -56,34 +64,42 @@ class RtpPacket {
         return raw_data[1] & 0x7F;
     }
 
-    int getSequenceNumber() {
-        return (raw_data[2] << 8) |
-                 raw_data[3];
+    short getSequenceNumber() {
+        return (short)(((raw_data[2] & 0xFF) << 8) |
+                       (raw_data[3] & 0xFF) );
     }
 
     int getTimestamp() {
-        return (raw_data[4] << 24) |
-               (raw_data[5] << 16) |
-               (raw_data[6] << 8) |
-                 raw_data[7];
+        return ((raw_data[4] & 0xFF) << 24) |
+               ((raw_data[5] & 0xFF) << 16) |
+               ((raw_data[6] & 0xFF) << 8) |
+                 (raw_data[7] & 0xFF);
     }
 
     int getSsrc() {
-        return (raw_data[8] << 24) |
-               (raw_data[9] << 16) |
-               (raw_data[10] << 8) |
-                 raw_data[11];
+        return ((raw_data[8] & 0xFF) << 24) |
+               ((raw_data[9] & 0xFF) << 16) |
+               ((raw_data[10] & 0xFF) << 8) |
+                 (raw_data[11] & 0xFF);
     }
 
     int getCsrc(int n) {
         int offs = 12 + 4 * n;
-        return (raw_data[offs] << 24) |
-               (raw_data[offs + 1] << 16) |
-               (raw_data[offs + 2] << 8) |
-                 raw_data[offs + 3];
+        return ((raw_data[offs] & 0xFF) << 24) |
+               ((raw_data[offs + 1] & 0xFF) << 16) |
+               ((raw_data[offs + 2] & 0xFF) << 8) |
+                 (raw_data[offs + 3] & 0xFF);
     }
 
-    int getPayloadOffset() {
-        return 12 + 4 * getCsrcCount();
+    int getPayload(byte[] buf, int buf_offs, int buf_size) {
+        int len = Math.min(buf_size, payload_size);
+        System.arraycopy(raw_data, payload_offs, buf, buf_offs, len);
+        payload_size -= len;
+        payload_offs += len;
+        return len;
+    }
+
+    int getPayloadSize() {
+        return payload_size;
     }
 }

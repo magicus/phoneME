@@ -52,12 +52,6 @@ import java.util.Vector;
  */
 public class DefaultConfiguration extends Configuration {
 
-    public final static String maps[][] = {
-        {"GIF", "com.sun.mmedia.GIFPlayer"},
-        {BasicPlayer.MEDIA_FORMAT_CAPTURE_VIDEO, "com.sun.mmedia.DirectCamera"},
-        {AUDIO_CAPTURE_LOCATOR, "com.sun.mmedia.DirectPlayer"},
-    };
-
     /**
      *  Handle for the Image Access Environment...
      */
@@ -70,28 +64,23 @@ public class DefaultConfiguration extends Configuration {
         super();
 
         // Protocol handlers.
-        handlers.put("http", "com.sun.mmedia.protocol.CommonDS");
-        handlers.put("https", "com.sun.mmedia.protocol.CommonDS");
+        protocolHandlers.put("http", "com.sun.mmedia.protocol.CommonDS");
+        protocolHandlers.put("https", "com.sun.mmedia.protocol.CommonDS");
 
         // #ifdef USE_FILE_CONNECTION [
-        handlers.put("file", "com.sun.mmedia.protocol.CommonDS");
+        protocolHandlers.put("file", "com.sun.mmedia.protocol.CommonDS");
         // #endif
 
         // #ifdef USE_RTSP [
-        handlers.put( "rtsp", "com.sun.mmedia.rtsp.RtspDS" );
-        // handlers.put( "rtp", "com.sun.mmedia.protocol.CommonDS" );
+        protocolHandlers.put("rtsp", "com.sun.mmedia.rtsp.RtspDS");
+        // protocolHandlers.put( "rtp", "com.sun.mmedia.protocol.CommonDS" );
         // #else ] [
-        handlers.put( "rtsp", "com.sun.mmedia.protocol.CommonDS" );
-        handlers.put( "rtp", "com.sun.mmedia.protocol.CommonDS" );
+        protocolHandlers.put("rtsp", "com.sun.mmedia.protocol.CommonDS");
+        protocolHandlers.put("rtp", "com.sun.mmedia.protocol.CommonDS");
         // #endif ]
 
-        handlers.put("device", "com.sun.mmedia.protocol.CommonDS");
-        handlers.put("capture", "com.sun.mmedia.protocol.CommonDS");
-
-        // Content handlers.
-        for (int i = 0; i < maps.length; ++i) {
-            handlers.put(maps[i][0], maps[i][1]);
-        }
+        protocolHandlers.put("device", "com.sun.mmedia.protocol.CommonDS");
+        protocolHandlers.put("capture", "com.sun.mmedia.protocol.CommonDS");
 
         // Mime types
         mFormats.put("gif", "GIF");

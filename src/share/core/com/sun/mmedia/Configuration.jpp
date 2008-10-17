@@ -151,9 +151,9 @@ public abstract class Configuration {
                                                                      "https"
                                                                    };
     /**
-     * A hash table of the protocol and content handlers.
+     * A hash table of the protocol handlers.
      */
-    protected Hashtable handlers;
+    protected Hashtable protocolHandlers;
 
     /**
      * A table of mime types.
@@ -188,7 +188,7 @@ public abstract class Configuration {
      *Constructor for the Configuration object
      */
     public Configuration() {
-        handlers = new Hashtable();
+        protocolHandlers = new Hashtable();
         mimeTypes = new Hashtable();
         mFormats = new Hashtable();
         properties = new Hashtable();
@@ -306,8 +306,8 @@ public abstract class Configuration {
      * @param  type  The content type
      * @return       The handler value
      */
-    public String getHandler(String type) {
-        return (String) handlers.get(type);
+    public String getProtocolHandler(String type) {
+        return (String) protocolHandlers.get(type);
     }
 
     /**

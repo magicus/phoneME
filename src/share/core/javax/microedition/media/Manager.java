@@ -1049,7 +1049,7 @@ public final class Manager {
     private static DataSource createDataSource(String locator)
          throws IOException, MediaException {
 
-        String className = config.getHandler(BasicDS.getProtocol(locator));
+        String className = config.getProtocolHandler(BasicDS.getProtocol(locator));
 
         if (className == null) {
             throw new MediaException(DS_ERR + locator);
@@ -1057,10 +1057,10 @@ public final class Manager {
 
         try {
 
-            // ... Try and instance a DataSource ....
+            // ... Try to create a DataSource instance ...
             Class protoClass = Class.forName(className);
             DataSource source = (DataSource) protoClass.newInstance();
-            // ... and get it connected ....
+            // ... and get it connected ...
             ((BasicDS) source).setLocator(locator);
             if (locator.equals(TONE_DEVICE_LOCATOR)) {
                 ((BasicDS) source).setContentType("audio/x-tone-seq");

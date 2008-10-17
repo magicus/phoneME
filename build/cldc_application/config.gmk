@@ -39,3 +39,8 @@ USE_FILE_CONNECTION = true
 endif
 
 USE_LCDUI = true
+
+#
+# If you want to support RTSP, turn on USE_RTSP option
+#
+USE_RTSP = true

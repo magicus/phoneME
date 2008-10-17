@@ -34,16 +34,22 @@ public abstract class RtpConnectionBase extends Thread implements Runnable {
 
     protected static final int MAX_DATAGRAM_SIZE = 4096; // bytes
     protected static final int INITIAL_QUEUE_SIZE = 100; // packets
+    protected static final int PACKET_TIMEOUT = 30000; // ms to wait for packet arrival
 
     public abstract boolean connectionIsAlive();
     public abstract void startListening() throws IOException;
     public abstract void stopListening();
     public abstract RtpPacket receivePacket();
 
-    protected int local_port;
+    protected RtspSS ss = null;
+    protected int    local_port;
 
     public RtpConnectionBase(int local_port) {
         this.local_port = local_port;
+    }
+
+    public void setSS(RtspSS ss) {
+        this.ss = ss;
     }
 
     public void run() {
@@ -74,7 +80,8 @@ public abstract class RtpConnectionBase extends Thread implements Runnable {
     public synchronized boolean enqueuePacket(RtpPacket pkt) {
         try {
             pkt_queue.addElement(pkt);
-            System.out.println("[" + local_port + ":" + pkt_queue.size() + "]");
+            if (null != ss) ss.packetArrived(pkt);
+            notify();
             return true;
         } catch (OutOfMemoryError e) {
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -85,12 +92,15 @@ public abstract class RtpConnectionBase extends Thread implements Runnable {
         }
     }
 
-    public synchronized RtpPacket dequeuePacket() {
-        try {
+    public synchronized RtpPacket dequeuePacket() throws InterruptedException {
+        if (0 == pkt_queue.size()) {
+            wait(PACKET_TIMEOUT);
+        }
+        if (0 != pkt_queue.size()) {
             RtpPacket p = (RtpPacket)pkt_queue.elementAt(0);
             pkt_queue.removeElementAt(0);
             return p;
-        } catch (ArrayIndexOutOfBoundsException e) {
+        } else {
             return null;
         }
     }
