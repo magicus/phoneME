@@ -1291,7 +1291,7 @@ static javacall_result audio_qs_release_device(javacall_handle handle){
 /**
  *
  */
-static javacall_result audio_qs_releaze(javacall_handle handle, javacall_const_utf16_string mime, long mimeLength){
+static javacall_result audio_qs_realize(javacall_handle handle, javacall_const_utf16_string mime, long mimeLength){
     ah* h = (ah *)handle;
     h->hdr.state = PL135_REALIZED;
     return JAVACALL_OK;
@@ -2998,7 +2998,7 @@ static media_basic_interface _audio_qs_basic_itf = {
     audio_qs_destroy,
     audio_qs_acquire_device,
     audio_qs_release_device,
-    audio_qs_releaze,
+    audio_qs_realize,
     audio_qs_prefetch,
     audio_qs_start,
     audio_qs_stop,

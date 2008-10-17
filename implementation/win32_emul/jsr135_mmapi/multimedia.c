@@ -377,6 +377,35 @@ javacall_result fmt_str2mime(
 
 //=============================================================================
 
+/**
+* Get integer parameter from utf16 string ( in the form "param=value" )
+*/
+javacall_result get_int_param(javacall_const_utf16_string ptr, 
+                              javacall_const_utf16_string paramName, 
+                              int * value)
+{
+    javacall_result result = JAVACALL_INVALID_ARGUMENT;
+
+    if ((ptr != NULL) && (paramName != NULL) && (value != NULL)) {
+
+        /// Here is supposed, that sizeof(utf16) == sizeof(wchar_t)
+        /// Search position of the first entrance of paramName
+        javacall_const_utf16_string pFnd = wcsstr(ptr, paramName);
+
+        if (pFnd) {
+            pFnd += wcslen(paramName);
+            if (1 == swscanf(pFnd, L"=%i", value))
+                result = JAVACALL_OK;
+            else 
+                result = JAVACALL_FAIL;
+        }
+    }
+
+    return result;
+}
+
+//=============================================================================
+
 #ifdef ENABLE_MMAPI_LIME
 extern media_interface g_audio_itf;
 extern media_interface g_video_itf;
@@ -387,6 +416,7 @@ extern media_interface g_amr_audio_itf;
 extern media_interface g_qsound_interactive_midi_itf;
 extern media_interface g_record_itf;
 extern media_interface g_fake_radio_itf;
+extern media_interface g_rtp_itf;
 
 media_interface* fmt_enum2itf( jc_fmt fmt )
 {
@@ -532,6 +562,7 @@ javacall_handle javacall_media_create2(int playerId, javacall_media_format_type 
 #define RADIO_CAPTURE_LOCATOR   L"capture://radio"
 #define DEVICE_TONE_LOCATOR     L"device://tone"
 #define DEVICE_MIDI_LOCATOR     L"device://midi"
+#define RTSP_PROTOCOL_PREFIX    L"rtsp://"
 
 /**
  * This function is called to get all the necessary return values from 
@@ -636,6 +667,13 @@ javacall_result javacall_media_create(int appId,
             pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_MIDI;
             pPlayer->mediaItfPtr      = &g_qsound_itf;
             pPlayer->downloadByDevice = JAVACALL_TRUE;
+        }
+        else if( 0 == _wcsnicmp( uri, RTSP_PROTOCOL_PREFIX, 
+                           min( (long)wcslen( RTSP_PROTOCOL_PREFIX ), uriLength ) ) )
+        {
+            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_UNKNOWN;
+            pPlayer->mediaItfPtr      = &g_rtp_itf;
+            pPlayer->downloadByDevice = JAVACALL_FALSE;
         }
         else
         {
