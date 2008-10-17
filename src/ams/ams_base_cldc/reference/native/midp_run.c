@@ -64,6 +64,9 @@
 #include <suspend_resume.h>
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+
 /**
  * @file
  *
@@ -768,6 +771,12 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
             midpFree(classPath);
             classPath = NULL;
         }
+
+        /** 
+         * Any subsequent VM runs that will or not happen after 
+         * the first one counts as VM restart.
+         */
+        commandState->vmRestarted = KNI_TRUE;
 
         if (vmStatus != MAIN_EXIT) {
             /*

@@ -33,7 +33,7 @@ public final class ROMULInitializer {
     /**
      * Initializes ROMUL API.
      */
-    public static void init() {
+    public static void init(boolean vmRestarted) {
     }
 
     /**
