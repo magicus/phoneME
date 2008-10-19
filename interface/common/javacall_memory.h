@@ -32,6 +32,9 @@
  * @brief Javacall interfaces for memory
  */
 
+//defines strcpy, __FILE__, __LINE__
+#include "javacall_os_specific.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -88,8 +91,13 @@ void javacall_memory_heap_deallocate(void* heap);
  * @param    size Number of byte to allocate
  * @return	  a pointer to the newly allocated memory
  */
-void* javacall_malloc(unsigned int size);
+void* javacall_os_malloc(unsigned int size);
 
+#ifdef JAVACALL_MEMINFO
+#define javacall_malloc(size) javacall_meminfo_malloc(size, OS__FILE__, OS__LINE__)
+#else
+#define javacall_malloc(size) javacall_os_malloc(size)
+#endif
 /** 
  * Reallocates memory of the given size from the private JAVACALL memory
  * pool. If memory could not be reallocated function returns null,
@@ -101,6 +109,11 @@ void* javacall_malloc(unsigned int size);
  */
 void* javacall_realloc(void* ptr, unsigned int size);
     
+#ifdef JAVACALL_MEMINFO
+#define javacall_realloc(ptr, size) javacall_meminfo_realloc(ptr, size, OS__FILE__, OS__LINE__)
+#else
+#define javacall_realloc(ptr, size) javacall_os_realloc(ptr, size)
+#endif
 
 
 /**
@@ -108,7 +121,14 @@ void* javacall_realloc(void* ptr, unsigned int size);
  * 
  * @param    ptr	Pointer to allocated memory
  */
-void  javacall_free(void* ptr);
+void  javacall_os_free(void* ptr);
+
+#ifdef JAVACALL_MEMINFO
+#define javacall_free(ptr) javacall_meminfo_free(ptr, OS__FILE__, OS__LINE__)
+#else
+#define javacall_free(ptr) javacall_os_free(ptr)
+#endif
+
         
 /** @} */
     
@@ -148,8 +168,14 @@ void  javacall_free(void* ptr);
  * @param    elementSize Size of one element 
  * @return	  pointer to the newly allocated and cleared memory 
  */
-void* /*OPTIONAL*/ javacall_calloc(unsigned int numberOfElements, unsigned int elementSize );
-    
+void* /*OPTIONAL*/ javacall_os_calloc(unsigned int numberOfElements, unsigned int elementSize );
+
+#ifdef JAVACALL_MEMINFO
+#define javacall_calloc(numberOfElements, elementSize) javacall_meminfo_calloc(numberOfElements, elementSize, OS__FILE__, OS__LINE__)
+#else
+#define javacall_calloc(numberOfElements, elementSize) javacall_os_calloc(numberOfElements, elementSize, OS__FILE__, OS__LINE__)
+#endif
+
 /**
  * Re-allocates memory at the given pointer location in the private
  * JAVACALL memory pool (or null for new memory) so that it is the given
@@ -159,16 +185,28 @@ void* /*OPTIONAL*/ javacall_calloc(unsigned int numberOfElements, unsigned int e
  * @param  size		New size 
  * @return	  pointer to the re-allocated memory 
  */
-void* /*OPTIONAL*/ javacall_realloc(void* ptr, unsigned int size);
-    
+void* /*OPTIONAL*/ javacall_os_realloc(void* ptr, unsigned int size);
+
+#ifdef JAVACALL_MEMINFO
+#define javacall_realloc(ptr, size) javacall_meminfo_realloc(ptr, size, OS__FILE__, OS__LINE__)
+#else
+#define javacall_realloc(ptr, size) javacall_os_realloc(ptr, size)
+#endif
+
     /**
  * Duplicates the given string after allocating the memory for it.
  * 
  * @param    str	String to duplicate
  * @return	pointer to the duplicate string
  */
-char* /*OPTIONAL*/ javacall_strdup(const char* str);
-    
+char* /*OPTIONAL*/ javacall_os_strdup(const char* str);
+
+#ifdef JAVACALL_MEMINFO
+#define javacall_strdup(str) javacall_meminfo_strdup(str, OS__FILE__, OS__LINE__)
+#else
+#define javacall_strdup(str) javacall_os_strdup(str)
+#endif
+
 /** @} */
 
 /** @} */
