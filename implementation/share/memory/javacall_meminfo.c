@@ -37,33 +37,95 @@ void add_memory_info(malloc_info* newMemInfo);
 void remove_memory_info(malloc_info* remMemInfo);
 
 void* javacall_meminfo_malloc(unsigned int size, char* fileName, unsigned int line){
-	unsigned char buffer = NULL;
+	unsigned char completeBuffer = NULL;
 	unsigned int totalSize = size + sizeof(memory_info);
 	memory_info* memInfo = NULL;
 
-	buffer = javacall_os_malloc(totalSize) + sizeof(memory_info);
+	completeBuffer = javacall_os_malloc(totalSize) + sizeof(memory_info);
 
-	memInfo = (memory_info*)(buffer - sizeof(memory_info));
-	initMemInfo(memInfo);
+	if(completeBuffer != NULL) {
+	
+		memInfo = (memory_info*)(buffer);
+		initMemInfo(memInfo);
+	
+		memInfo->size = size;
+		OS_STRCPY(memInfo->fileName, fileName);
+		memInfo->line = line;
+	
+		add_memory_info(memInfo);
+	}
 
-	memInfo->size = size;
-	OS_STRCPY(memInfo->fileName, fileName);
-	memInfo->line = line;
-
-	add_memory_info(memInfo);
-
-	return buffer;
-}
-
-void* javacall_meminfo_realloc(void* ptr, unsigned int size, char* fileName, unsigned int line){
-	javacall_os_realloc(ptr, size);
+	return buffer + sizeof(memory_info);
 }
 
 void  javacall_meminfo_free(void* ptr, char* fileName, unsigned int line){
+	unsigned char completeBuffer = NULL;
+	memory_info* memInfo = NULL;
 
-	javacall_os_free(ptr);
+	completeBuffer = (ptr - sizeof(memory_info));
+	memInfo = (memory_info*)(ptr - sizeof(memory_info));
+
+	remove_memory_info(memInfo);
+
+	javacall_os_free(completeBuffer);
 }
 
+void* javacall_meminfo_realloc(void* ptr, unsigned int size, char* fileName, unsigned int line){
+	javacall_meminfo_free(ptr, fileName, line);
+
+	return javacall_meminfo_malloc(size, fileName, line);
+}
+
+javacall_meminfo_calloc(nunsigned int numberOfElements, unsigned int elementSize, char* fileName, unsigned int line){
+	unsigned char completeBuffer = NULL;
+	unsigned int totalSize = size + sizeof(memory_info);
+	memory_info* memInfo = NULL;
+
+	completeBuffer = javacall_os_calloc(totalSize) + sizeof(memory_info);
+
+	if(completeBuffer != NULL) {
+
+		memInfo = (memory_info*)(buffer);
+		initMemInfo(memInfo);
+
+		memInfo->size = size;
+		OS_STRCPY(memInfo->fileName, fileName);
+		memInfo->line = line;
+
+		add_memory_info(memInfo);
+	}
+
+	return buffer + sizeof(memory_info);
+}
+
+javacall_meminfo_realloc(void* ptr, unsigned int size, char* fileName, unsigned int line){
+	unsigned char completeBuffer = NULL;
+	memory_info* memInfo = NULL;
+
+	completeBuffer = (ptr - sizeof(memory_info));
+	memInfo = (memory_info*)(ptr - sizeof(memory_info));
+
+	remove_memory_info(memInfo);
+
+	completeBuffer = javacall_os_realloc(completeBuffer, size + sizeof(memory_info));
+
+	if(completeBuffer != NULL) {
+
+		memInfo = (memory_info*)(buffer);
+		initMemInfo(memInfo);
+
+		memInfo->size = size;
+		OS_STRCPY(memInfo->fileName, fileName);
+		memInfo->line = line;
+
+		add_memory_info(memInfo);
+	}
+
+	return completeBuffer + sizeof(memory_info);
+}
+
+javacall_meminfo_strdup(const char* str, char* fileName, unsigned int line){
+}
 
 static void initMemInfo(malloc_info* memInfo){
 	memInfo->fileName[0] = \0;
