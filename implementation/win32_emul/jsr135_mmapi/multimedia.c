@@ -434,6 +434,7 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MPEG1_LAYER3_PRO:
     case JC_FMT_MPEG2_AAC:
     case JC_FMT_MPEG4_HE_AAC:
+    case JC_FMT_WMA_9:
         return &g_audio_itf;
 #endif // ENABLE_MMAPI_LIME
 
@@ -516,6 +517,7 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
         { L".mp3",  JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3 },
         { L".mpg",  JAVACALL_MEDIA_FORMAT_MPEG_1       },
         { L".mov",  JAVACALL_MEDIA_FORMAT_MOV          },
+        { L".wma",  JAVACALL_MEDIA_FORMAT_WMA_9 },
 #endif /* ENABLE_MMAPI_LIME */
         { L".gif",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   },
         { L".wmv",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   }
