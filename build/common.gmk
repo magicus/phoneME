@@ -30,6 +30,14 @@ ifeq ($(TOOLS_DIR),)
 $(error TOOLS_DIR is not set.)
 endif
 
+TARGET_VM ?= cldc
+
+ifeq ($(TARGET_VM), cldc)
+#Adding stubs for standalone CLDC executable
+VPATH+=$(JAVACALL_DIR)/implementation/share/cldc
+SOURCE_OUTPUT_LIST+=$(JAVACALL_DIR)/implementation/share/cldc javacall/implementation/share
+endif
+
 include $(TOOLS_DIR)/tools.gmk
 
 include $(JAVACALL_DIR)/build/list.gmk

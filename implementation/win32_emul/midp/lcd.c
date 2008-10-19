@@ -48,7 +48,10 @@ static struct {
 
 static javacall_bool inFullScreenMode;
 static javacall_bool isLCDActive = JAVACALL_FALSE;
+/* if display orientation is reversed */
 static javacall_bool reverse_orientation;
+/* if display content should be turned upside down */
+static javacall_bool top_down;
 
 static void rotate_offscreen_buffer(javacall_pixel* dst, javacall_pixel *src, int src_width, int src_height);
 
@@ -70,6 +73,7 @@ javacall_result javacall_lcd_init(void) {
 
     isLCDActive = JAVACALL_TRUE;
     inFullScreenMode = JAVACALL_FALSE;
+    top_down = JAVACALL_FALSE;
 
 	f = NewLimeFunction(LIME_PACKAGE,
 						LIME_GRAPHICS_CLASS,
@@ -182,7 +186,7 @@ javacall_result javacall_lcd_flush(int hardwareId) {
         clip[3] = VRAM.full_height;
     }
 
-    if (reverse_orientation) {
+    if (reverse_orientation || top_down) {
         current_hdc = VRAM.hdc_rotated;
         rotate_offscreen_buffer(current_hdc,
                                 VRAM.hdc,
@@ -222,15 +226,42 @@ javacall_result javacall_lcd_flush(int hardwareId) {
 
 static void rotate_offscreen_buffer(javacall_pixel* dst, javacall_pixel *src, int src_width, int src_height) {
     int buffer_length = src_width*src_height;
-    javacall_pixel *src_end = src + buffer_length;
-    javacall_pixel *dst_end = dst + buffer_length;
-
-    dst += src_height - 1;
-    while (src < src_end) {
-        *dst = *(src++);
-        dst += src_height;
-        if (dst >= dst_end) {
-            dst -= buffer_length + 1;
+    if (reverse_orientation) {
+        if (!top_down) {
+            javacall_pixel *src_end = src + buffer_length;
+            javacall_pixel *dst_end = dst + buffer_length;
+            dst += src_height - 1;
+            while (src < src_end) {
+                *dst = *(src++);
+                dst += src_height;
+                if (dst >= dst_end) {
+                    dst -= buffer_length + 1;
+                }
+            }
+        } else {
+            javacall_pixel *dst_end = dst + buffer_length;
+            javacall_pixel *src_start = src;
+            dst += src_height - 1;
+            src += buffer_length - 1;
+            while (src >= src_start) {
+                *dst = *(src--);
+                dst += src_height;
+                if (dst >= dst_end) {
+                    dst -= buffer_length + 1;
+                }
+            }
+        }
+    } else {
+        if (top_down) {
+            javacall_pixel *src_end = src + buffer_length;
+            javacall_pixel *dst_start = dst;
+            dst += buffer_length - 1;
+            while (src < src_end) {
+                *(dst--) = *(src++);
+                if (dst < dst_start) {
+                    dst += buffer_length - 1;
+                }
+            }
         }
     }
 }
@@ -373,9 +404,37 @@ javacall_lcd_set_screen_mode(
 	return JAVACALL_FAIL;
 }*/
 
+void on_screen_rotated() {
+      static LimeFunction *f = NULL;
+      f = NewLimeFunction(LIME_PACKAGE, LIME_GRAPHICS_CLASS, "screenRotated");
+      /* IMPL NOTE: call on the proper screen ID with multiple screen support */
+      f->call(f, NULL, 0 /*screen id*/, reverse_orientation, top_down);
+}
+
+/* Rotates display according to code.
+ * If code is 0 no screen transformations made;
+ * If code is 1 then screen orientation is reversed.
+ * if code is 2 then screen is turned upside-down.
+ * If code is 3 then both screen orientation is reversed
+ * and screen is turned upside-down.
+ */
+void RotateDisplay(short code) {
+    javacall_bool prev_top_down;
+    prev_top_down = top_down;
+    top_down = code & 0x02;
+    if ((code & 0x01) != reverse_orientation) {
+        javanotify_rotation();
+    } else if (prev_top_down != top_down) {
+        //we should initiate screen refresh
+        on_screen_rotated();
+        javacall_lcd_flush();                
+    }
+}
+
 javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
-  (void)hardwareId;
-      reverse_orientation = !reverse_orientation;    
+      (void)hardwareId;
+      reverse_orientation = !reverse_orientation;
+      on_screen_rotated();
       return reverse_orientation;
 }
  
@@ -422,6 +481,29 @@ javacall_bool javacall_lcd_is_native_softbutton_layer_supported () {
 #else /* ENABLE_NATIVE_SOFTBUTTONS */
     return JAVACALL_FALSE;
 #endif /* ENABLE_NATIVE_SOFTBUTTONS */
+}
+
+/*
+ * Translates screen coordinates into displayable coordinate system.
+ */
+void getScreenCoordinates(short screenX, short screenY, short* x, short* y) {
+    *x = screenX;
+    *y = screenY;
+
+    if (top_down) {
+        *x = VRAM.width - screenX;
+        if(inFullScreenMode) {
+            *y = VRAM.full_height - screenY;
+        } else {
+            *y = VRAM.height - screenY;
+        }
+    }
+
+    if (reverse_orientation) {
+        short prevX = *x;
+        *x = *y;
+        *y = VRAM.width - prevX;
+    }
 }
 
 /**

@@ -28,6 +28,7 @@ endif
 
 include $(JAVACALL_DIR)/build/list.gmk
 
+TARGET_VM=cvm
 TARGET_CPU=arm
 USE_MIDP=false
 

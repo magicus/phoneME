@@ -444,8 +444,3 @@ char* javautil_string_duplicate(const char *s) {
     strcpy(new_s, s);
     return new_s;
 }
-
-#ifdef __cplusplus
-}
-#endif
-

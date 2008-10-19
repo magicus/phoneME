@@ -51,7 +51,8 @@ EXTRA_LDFLAGS+=$(NOTIFIERS_LIB)
 endif
 PROPERTY_OBJECTS=$(addsuffix .obj,$(PROPERTY_FILES))
 
-local_ads: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
+local_ads: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib \
+    $(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.obj
 
 CC=armcc
 
@@ -98,7 +99,10 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(AT)$(MAKE) JAVACALL_EXTRA_LIBS
 
 $(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
-    $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
 	@echo "...Generating Library: $@"
 	$(AT)$(AR) $(ARFLAGS) `$(call fixcygpath, $@)` `$(call fixcygpath, $^)`
 
+$(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.obj: $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.obj
+	@echo "...Coping stubs to lib directory ..."
+	$(AT)cp $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.obj $(JAVACALL_OUTPUT_LIB_DIR)

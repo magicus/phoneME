@@ -43,6 +43,7 @@ else
 endif
 
 include $(JAVACALL_DIR)/build/common.gmk
+
 TEMP_OBJECTS1=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
 TEMP_OBJECTS=$(patsubst %.cpp,%.obj,$(TEMP_OBJECTS1))
 ifneq ($(FILTER_OBJECTS)x,x)
@@ -73,6 +74,8 @@ EXTRA_LDFLAGS+=$(NOTIFIERS_LIB)
 endif
 PROPERTY_OBJECTS=$(addsuffix .obj,$(PROPERTY_FILES))
 
+TARGET_VM ?= cldc
+
 ifeq ($(USE_NATIVE_AMS_UI), true)
 
 local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib \
@@ -80,7 +83,16 @@ local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib \
 
 else
 
+ifeq ($(TARGET_VM), cldc)
+
+local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib \
+    $(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.obj
+
+else
+
 local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
+
+endif
 
 endif
 
@@ -184,6 +196,14 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(AT)$(MAKE) JAVACALL_EXTRA_LIBS
 
 $(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
-    $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
 	@echo "...Generating Library: $@"
 	$(AT)$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
+
+ifeq ($(TARGET_VM), cldc)
+
+$(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.obj: $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.obj
+	@echo "...Coping stubs to lib directory ..."
+	$(AT)cp $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.obj $(JAVACALL_OUTPUT_LIB_DIR)
+
+endif
