@@ -40,6 +40,11 @@ typedef struct _malloc_info {
 	struct _malloc_info* prev;
 } malloc_info;
 
+typedef struct _meminfo_stat{
+	int maxMemoryUsage;
+	int currentMemeoryUsage;
+}meminfo_stat;
+
 
 void* javacall_meminfo_malloc(unsigned int size);
 void* javacall_meminfo_realloc(void* ptr, unsigned int size);

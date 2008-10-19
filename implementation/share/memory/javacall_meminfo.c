@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 static char* memInfoList = NULL;
+static meminfo_stat;
 
 /* memInfo List functions*/
 void initMemInfo(malloc_info* memInfo);
@@ -53,9 +54,13 @@ void* javacall_meminfo_malloc(unsigned int size, char* fileName, unsigned int li
 		memInfo->line = line;
 	
 		add_memory_info(memInfo);
+
+		completeBuffer += sizeof(memory_info);
+
+		meminfo_stat.currentMemeoryUsage += size;
 	}
 
-	return buffer + sizeof(memory_info);
+	return completeBuffer
 }
 
 void  javacall_meminfo_free(void* ptr, char* fileName, unsigned int line){
@@ -67,6 +72,7 @@ void  javacall_meminfo_free(void* ptr, char* fileName, unsigned int line){
 
 	remove_memory_info(memInfo);
 
+	meminfo_stat.currentMemeoryUsage -= memInfo.size;
 	javacall_os_free(completeBuffer);
 }
 
