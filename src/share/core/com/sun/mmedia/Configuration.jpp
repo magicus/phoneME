@@ -128,6 +128,12 @@ public abstract class Configuration {
      * WMV video mime type
      */
     public final static String MIME_VIDEO_WMV = "video/x-ms-wmv";
+
+    /**
+     * WMA audio mime type
+     */  
+    public final static String MIME_AUDIO_WMA = "audio/x-ms-wma";
+
     /**
      * AVI video mime type
      */
