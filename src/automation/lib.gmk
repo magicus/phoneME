@@ -76,6 +76,10 @@ MIDP_JAVADOC_ALL += \
 # Subsystem's Java files
 SUBSYSTEM_AUTOMATION_JAVA_FILES = \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutomationInitializer.java
+
+vpath % $(SUBSYSTEM_AUTOMATION_DIR)/reference/native
+SUBSYSTEM_AUTOMATION_NATIVE_FILES += \
+    midp_automation_initializer.c
     
 ifneq ($(USE_ROMUL), true)
 SUBSYSTEM_AUTOMATION_JAVA_FILES += \
@@ -110,7 +114,6 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoDelayEventFromArgsFactory.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoPenEventFromArgsFactory.java
 
-vpath % $(SUBSYSTEM_AUTOMATION_DIR)/reference/native
 SUBSYSTEM_AUTOMATION_NATIVE_FILES += \
     midp_automation.c
 
