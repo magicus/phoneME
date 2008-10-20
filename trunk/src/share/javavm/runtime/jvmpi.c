@@ -56,7 +56,7 @@
 #include "javavm/include/porting/doubleword.h"
 #include "javavm/include/porting/endianness.h"
 
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 #include "generated/offsets/java_lang_Thread.h"
 #include "generated/offsets/java_lang_ThreadGroup.h"
 

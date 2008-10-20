@@ -41,7 +41,7 @@
 #include "javavm/include/preloader.h"
 #include "javavm/include/split_verify.h"
 
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 #include "javavm/include/constantpool.h"
 #include "javavm/include/basictypes.h"
 #include "javavm/include/bcattr.h"
@@ -4221,6 +4221,14 @@ Vfy_verifyMethodOrAbort(VfyContext* cntxt, const METHOD vMethod) {
        /*
         * Get the next bytecode
         */
+	{
+	    unsigned char *i = cntxt->bytecodesBeingVerified + ip;
+	    unsigned char *e = cntxt->bytecodesBeingVerified + codeLength;
+	    int len = CVMopcodeGetLengthWithBoundsCheck(i, e);
+	    if (len < 0 || ip + len > codeLength) {
+		Vfy_throw(cntxt, VE_BAD_INSTR); 
+	    }
+	}
         opcode = Vfy_getOpcode(cntxt, ip);
 	if (CVMbcAttr(opcode, BRANCH) || CVMbcAttr(opcode, GCPOINT)){
 	    cntxt->noGcPoints++;
@@ -5214,13 +5222,19 @@ does this do?
                 * Get the number of keys and the delta between each entry
                 */
                 if (opcode == TABLESWITCH) {
-                    keys = Vfy_getCell(cntxt, lpc + 8) - Vfy_getCell(cntxt, lpc + 4) + 1;
+                    CVMInt32 low  = Vfy_getCell(cntxt, lpc + 4);
+                    CVMInt32 high = Vfy_getCell(cntxt, lpc + 8);
+
+                    CVMassert((CVMUint32)high - (CVMUint32)low <= 0xffff);
+
+                    keys = high - low + 1;
                     delta = 4;
                 } else {
                     keys = Vfy_getCell(cntxt, lpc + 4);
+                    CVMassert(keys >= 0);
                     delta = 8;
                     /*
-                     * Make sure that the tableswitch items are sorted
+                     * Make sure that the lookupswitch items are sorted
                      */
                     for (k = keys - 1, lptr = lpc + 8 ; --k >= 0 ; lptr += 8) {
                         long this_key = Vfy_getCell(cntxt, lptr);

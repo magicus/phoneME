@@ -29,7 +29,7 @@
 #include "javavm/include/objects.h"
 #include "javavm/include/directmem.h"
 #include "javavm/include/indirectmem.h"
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 #include "javavm/include/interpreter.h"
 #include "javavm/include/classes.h"
 #include "javavm/include/stacks.h"

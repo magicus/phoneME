@@ -40,7 +40,7 @@
 #include "javavm/include/jit/jitintrinsic.h"
 #include "javavm/include/jit/jitstats.h"
 
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 
 #ifdef CVM_JIT_ESTIMATE_COMPILATION_SPEED
 #include "javavm/include/preloader_impl.h"

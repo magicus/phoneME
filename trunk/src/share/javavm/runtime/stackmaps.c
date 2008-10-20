@@ -33,7 +33,7 @@
 #include "javavm/include/bcattr.h"
 #include "javavm/include/utils.h"
 #include "javavm/include/typeid.h"
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 #include "javavm/include/globals.h"
 #include "javavm/include/stackmaps.h"
 #include "javavm/include/indirectmem.h"

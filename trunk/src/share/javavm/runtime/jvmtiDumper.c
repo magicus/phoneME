@@ -47,7 +47,7 @@
 #include "javavm/include/path_md.h"
 #include "javavm/include/common_exceptions.h"
 #include "javavm/include/named_sys_monitor.h"
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 #include "generated/offsets/java_lang_String.h"
 #include "javavm/export/jvm.h"
 #include "javavm/export/jni.h"

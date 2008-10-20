@@ -33,7 +33,7 @@
 #include "javavm/include/preloader.h"
 #include "javavm/include/common_exceptions.h"
 #include "javavm/include/porting/int.h"
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 #include "javavm/include/globals.h"
 #include "javavm/include/bcattr.h"
 #include "javavm/include/indirectmem.h"

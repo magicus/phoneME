@@ -44,7 +44,7 @@
 #include "javavm/include/stackmaps.h"
 #include "javavm/include/bcattr.h"
 #include "javavm/include/common_exceptions.h"
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 
 #include "generated/offsets/java_lang_Throwable.h"
 #ifdef CVM_CLASSLOADING
@@ -2478,72 +2478,6 @@ CVMunmaskInterrupts(CVMExecEnv *ee)
     }
 
     CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
-}
-
-/*
- * Find the length of the variable length instruction at 'iStream'.
- * This is called if CVMopcodeLengths[*iStream] == 0.
- */
-CVMUint32
-CVMopcodeGetLengthVariable(const CVMUint8* iStream)
-{
-    CVMUint8  opcode  = *iStream;
-    /*
-     * Variable length. Intelligence required.
-     */
-    switch(opcode) {
-	case opc_tableswitch: {
-	    CVMInt32* lpc  = (CVMInt32*)CVMalignWordUp(iStream + 1);
-	    CVMInt32  low  = CVMgetAlignedInt32(&lpc[1]);
-	    CVMInt32  high = CVMgetAlignedInt32(&lpc[2]);
-	    if (((CVMUint32)high - (CVMUint32)low) > 0xffff) {
-		return -1; /* invalid instruction */
-	    }
-	    /*
-	     * Skip default, low, high, and the (high-low+1) jump offsets
-	     */
-	    /* 
-	     * This expression is obviously a rather small pointer
-	     * difference. So just cast it to the return type.
-	     */
-	    return (CVMUint32)((CVMUint8*)(&lpc[3 + (high - low + 1)]) - iStream);
-	}
-        case opc_lookupswitch: {
-	    CVMInt32* lpc    = (CVMInt32*)CVMalignWordUp(iStream+1);
-	    CVMInt32  npairs = CVMgetAlignedInt32(&lpc[1]);
-	    if ((npairs < 0) || (npairs > 65535)) {
-		return -1; /* invalid instruction */
-	    }
-	    /*
-	     * Skip default, npairs, and npairs pairs.
-	     */
-	    /* 
-	     * This expression is obviously a rather small pointer
-	     * difference. So just cast it to the return type.
-	     */
-	    return (CVMUint32)((CVMUint8*)(&lpc[2 + npairs * 2]) - iStream);
-	}
-        case opc_wide: {
-	    switch(iStream[1]) {
-	        case opc_ret:
-	        case opc_iload: case opc_istore: 
-	        case opc_fload: case opc_fstore:
-	        case opc_aload: case opc_astore:
-	        case opc_lload: case opc_lstore:
-	        case opc_dload: case opc_dstore: 
-		    return 4;
-		case opc_iinc:
-		    return 6;
-		default: 
-		    return -1; /* invalid instruction */
-	    }
-	}
-#ifdef CVM_HW
-#include "include/hw/interpreter.i"
-#endif
-    default:
-	return -1; /* I don't know this bytecode! */
-    }
 }
 
 /* Documented in interpreter.h */

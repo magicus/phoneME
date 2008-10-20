@@ -49,7 +49,7 @@
 #include "javavm/include/named_sys_monitor.h"
 #include "javavm/include/constantpool.h"
 #include "javavm/include/stackmaps.h"
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 #include "generated/offsets/java_lang_Thread.h"
 #include "generated/jni/java_lang_reflect_Modifier.h"
 #include "javavm/export/jvm.h"

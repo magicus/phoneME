@@ -52,7 +52,7 @@
 #include "javavm/include/bag.h"
 #include "javavm/include/common_exceptions.h"
 #include "javavm/include/named_sys_monitor.h"
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 #include "generated/offsets/java_lang_Thread.h"
 #include "generated/jni/java_lang_reflect_Modifier.h"
 #include "javavm/export/jvm.h"

@@ -35,7 +35,7 @@
 #include "javavm/include/interpreter.h"
 #include "javavm/include/indirectmem.h"
 #include "javavm/include/clib.h"
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 #include "javavm/include/porting/doubleword.h"
 #include "javavm/include/porting/int.h"
 #include "javavm/include/porting/jit/jit.h"

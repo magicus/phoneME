@@ -40,7 +40,7 @@
 #include "javavm/include/gc_common.h"
 #include "javavm/include/stackmaps.h"
 #include "javavm/include/limits.h"
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 #ifdef CVM_JVMTI
 #include "javavm/include/jvmtiExport.h"
 #endif
