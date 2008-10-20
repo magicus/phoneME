@@ -67,7 +67,7 @@ public class MIDletProxy implements SuspendDependency {
     private int isolateId;
 
     /** IDs of the MIDlet's Displays. */
-    private int[] displayIds = new int[2];
+    private int[] displayIds = new int[1];
 
     /** Number of MIDlet's Displays. */
     private int numOfDisplays = 0;
@@ -146,7 +146,7 @@ public class MIDletProxy implements SuspendDependency {
         foregroundEventProducer = theForegroundEventProducer;
         midletEventProducer = theMIDletEventProducer;
     }
-
+    
     /**
      * Construct a new MIDletProxy.
      *
@@ -159,9 +159,9 @@ public class MIDletProxy implements SuspendDependency {
      * @param  theMidletState MIDlet lifecycle state.
      */
     MIDletProxy(MIDletProxyList theParentList, int theExternalAppId,
-         int theIsolateId, int theSuiteId,
-         String theClassName, String theDisplayName, int theMidletState) {
-
+		int theIsolateId, int theSuiteId,
+		String theClassName, String theDisplayName, int theMidletState) {
+	
         parent = theParentList;
         externalId = theExternalAppId;
         isolateId = theIsolateId;
@@ -218,9 +218,14 @@ public class MIDletProxy implements SuspendDependency {
      * @return IDs of the MIDlet's Displays
      */
     public int[] getDisplayIds() {
-	int[] ret = new int[numOfDisplays];
-	for (int i = 0; i < numOfDisplays; i++ ) {
-	    ret[i] = displayIds[i];
+	int[] ret;
+	if (numOfDisplays == displayIds.length) {
+	    ret = displayIds;
+	} else {
+	    ret = new int[numOfDisplays];
+	    for (int i = 0; i < numOfDisplays; i++ ) {
+		ret[i] = displayIds[i];
+	    }
 	}
         return ret;
     }

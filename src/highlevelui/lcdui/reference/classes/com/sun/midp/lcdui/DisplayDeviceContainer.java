@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -42,11 +42,6 @@ public class DisplayDeviceContainer {
 	for (int i = 0; i < ids.length; i++) {
 	    addDisplayDevice(new DisplayDevice(ids[i]));
 	}
-    }
-    
-
-    public void fillDisplayDecices() {
-	
     }
 
     /** 

@@ -64,6 +64,9 @@
 #include <suspend_resume.h>
 #endif
 
+#include <stdio.h>  
+#include <stdlib.h>  
+
 /**
  * @file
  *
@@ -422,14 +425,20 @@ midpInitializeDebugger(void) {
 
 #if ENABLE_JAVA_DEBUGGER
     {
-        char* argv[2];
-
-        /* Get the VM debugger port property. */
-        argv[1] = (char *)getInternalProperty("VmDebuggerPort");
-        if (argv[1] != NULL) {
-            argv[0] = "-port";
-            (void)JVM_ParseOneArg(2, argv);
-        }
+      char* argv[2];
+      /* memory profiler */  
+      if (getInternalProperty("VmMemoryProfiler") != NULL) {  
+	argv[0] = "-memory_profiler";  
+	(void)JVM_ParseOneArg(1, argv);  
+      }  
+      
+      
+      /* Get the VM debugger port property. */
+      argv[1] = (char *)getInternalProperty("VmDebuggerPort");
+      if (argv[1] != NULL) {
+	argv[0] = "-port";
+	(void)JVM_ParseOneArg(2, argv);
+      }
     }
 #endif
 }
@@ -448,7 +457,7 @@ midpInitializeUI(void) {
         const char* pRotationArg = getSystemProperty(ROTATION_ARG);
         if (pRotationArg) {
             if (atoi(pRotationArg) == 1) {
-	      lcdlf_reverse_orientation(0);// IMPL_NOTE!! correct hardware id
+	      lcdlf_reverse_orientation(lcdlf_get_current_hardwareId());
             }
         }
 
@@ -762,6 +771,13 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
             midpFree(classPath);
             classPath = NULL;
         }
+
+        /** 
+	 * Any subsequent VM runs that will or not happen after 
+	 * the first one counts as VM restart. 
+	 */  
+	commandState->vmRestarted = KNI_TRUE;  
+   
 
         if (vmStatus != MAIN_EXIT) {
             /*
