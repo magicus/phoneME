@@ -1641,16 +1641,19 @@ cbDataDumpRequest(jvmtiEnv *jvmti)
 	} rawMonitorExit(gdata->dump_lock);
 	
 	if (need_to_dump) {
-	    dump_all_data(getEnv());
+            JNIEnv *env = getEnv();
+	    WITH_LOCAL_REFS(env, 1) {
+                dump_all_data(env);
 
-	    rawMonitorEnter(gdata->dump_lock); {
-		gdata->dump_in_process = JNI_FALSE;
-	    } rawMonitorExit(gdata->dump_lock);
+                rawMonitorEnter(gdata->dump_lock); {
+                    gdata->dump_in_process = JNI_FALSE;
+                } rawMonitorExit(gdata->dump_lock);
 
-	    if (gdata->cpu_sampling && !gdata->jvm_shut_down) {
-		cpu_sample_on(NULL, 0); /* resume sampling */
-	    }
-	}
+                if (gdata->cpu_sampling && !gdata->jvm_shut_down) {
+                    cpu_sample_on(NULL, 0); /* resume sampling */
+                }
+            } END_WITH_LOCAL_REFS;
+        }
     } END_CALLBACK();
 
 }

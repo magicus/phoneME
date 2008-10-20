@@ -2114,7 +2114,9 @@ void CVMjvmtiPostObjectFreeEvent(CVMObject *obj)
 	    if (hash == CVM_OBJECT_NO_HASH) {
 		return;
 	    }
-	    CVMjvmtiTagGetTagGC(obj, &tag);
+            CVMjvmtiSetGCOwner(CVM_TRUE);
+	    CVMjvmtiTagGetTag((jobject)&obj, &tag, CVM_TRUE);
+            CVMjvmtiSetGCOwner(CVM_FALSE);
 	    if (tag == 0) {
 		return;
 	    }

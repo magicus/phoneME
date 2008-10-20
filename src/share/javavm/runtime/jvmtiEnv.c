@@ -88,7 +88,6 @@
 #define CVMextraAssert(x) 
 #endif
 
-
 #define INITIAL_BAG_SIZE 4
 
 #define VALID_CLASS(cb)			      \
@@ -195,11 +194,11 @@
 #define CVM_JIT_UNLOCK(ee)
 #endif
 
-
 #define CHECK_CAP(cap_)							\
     if (getCapabilities(context)->cap_ != 1) {				\
 	return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;			\
     }
+
 
 /* StackMutationStopped
    ====================
@@ -371,6 +370,39 @@
 	CVM_JIT_UNLOCK(ee);			 \
     })
 
+typedef struct {
+    CVMSysMutex* mutex;
+} jvmtiSysMutexes;
+
+static const jvmtiSysMutexes jvmtiMutexes[] = {
+#ifdef CVM_CLASSLOADING
+    {&CVMglobals.nullClassLoaderLock},
+#endif
+#ifdef CVM_JIT
+    {&CVMglobals.jitLock},
+#endif
+    {&CVMglobals.heapLock},
+    {&CVMglobals.threadLock}
+};
+
+#define NUM_JVMTI_SYSMUTEXES \
+    (sizeof(jvmtiMutexes) / sizeof(jvmtiSysMutexes))
+
+#define ACQUIRE_SYS_MUTEXES                               \
+    {                                                     \
+        int i;                                            \
+        for (i = 0; i < NUM_JVMTI_SYSMUTEXES; i++) {     \
+            CVMsysMutexLock(ee, jvmtiMutexes[i].mutex);   \
+        }                                                 \
+    }
+
+#define RELEASE_SYS_MUTEXES                               \
+    {                                                     \
+        int i;                                            \
+        for (i = NUM_JVMTI_SYSMUTEXES - 1; i >= 0; i--) {      \
+            CVMsysMutexUnlock(ee, jvmtiMutexes[i].mutex); \
+        }                                                 \
+    }
 
 /* Error names */
 static const char* const jvmtiErrorNames[] =
@@ -592,6 +624,19 @@ static CVMJvmtiContext *CVMjvmtiCreateContext();
 /* TODO: Change to not rely on 64bit masking if possible.  At least change
    to us HPI long functions. */
 static const jlong	GLOBAL_EVENT_BITS = ~THREAD_FILTERED_EVENT_BITS;
+
+static CVMBool jvmtiIsGCOwner;
+
+CVMBool
+CVMjvmtiIsGCOwner() {
+    return jvmtiIsGCOwner;
+}
+
+void
+CVMjvmtiSetGCOwner(CVMBool jvmtiGCOwner) {
+    CVMassert(jvmtiIsGCOwner != jvmtiGCOwner);
+    jvmtiIsGCOwner = jvmtiGCOwner;
+}
 
 /*
  *	Threads
@@ -3021,6 +3066,65 @@ jvmti_ForceEarlyReturnVoid(jvmtiEnv* jvmtienv,
 }
 
 
+static jvmtiError
+suspendAllThreads(jvmtiEnv *jvmtienv, CVMExecEnv *ee, jthread **threads,
+		  int *threadCount)
+{
+
+    jvmtiError err;
+    jint threadState;
+    CVMExecEnv *target;
+    int i;
+
+    err = jvmti_GetAllThreads(jvmtienv, threadCount, threads);
+    if (err != JVMTI_ERROR_NONE) {
+	return err;
+    }
+    for (i = 0; i < *threadCount; i++) {
+	jthreadToExecEnv(ee, (*threads)[i], &target);
+	if (target == ee) {
+	    (*threads)[i] = NULL;
+	    continue;
+	}
+	err = jvmti_GetThreadState(jvmtienv, (*threads)[i], &threadState);
+	if (err != JVMTI_ERROR_NONE) {
+	    return err;
+	}
+	if ((threadState & CVM_THREAD_SUSPENDED) != 0) {
+	    (*threads)[i] = NULL;
+	}
+    }
+
+    for (i = 0; i < *threadCount; i++) {
+	if ((*threads)[i] != NULL) {
+	    err = jvmti_SuspendThread(jvmtienv, (*threads)[i]);
+	    if (err != JVMTI_ERROR_NONE) {
+		for (--i; i >= 0; i--) {
+		    if ((*threads)[i] != NULL) {
+			jvmti_ResumeThread(jvmtienv, (*threads)[i]);
+		    }
+		}
+		return err;
+	    }
+	}
+    }
+    return JVMTI_ERROR_NONE;
+}
+
+static jvmtiError
+resumeAllThreads(jvmtiEnv *jvmtienv, CVMExecEnv *ee, jthread *threads,
+		 int threadCount)
+{
+    int i;
+
+    for (i = 0; i < threadCount; i++) {
+	if (threads[i] != NULL) {
+	    jvmti_ResumeThread(jvmtienv, threads[i]);
+	}
+    }
+    return JVMTI_ERROR_NONE;
+}
+
 /*
  * Heap functions
  */
@@ -3089,18 +3193,17 @@ CVMjvmtiVisitStackPush(CVMObject *obj)
     return err;
 }
 
-jvmtiError
+static CVMBool
 jvmtiVisitStackPop(CVMObject **obj)
 {
-    jvmtiError err = JVMTI_ERROR_NONE;
     CVMJvmtiVisitStack *currentStack = &CVMglobals.jvmti.statics.currentStack;
 
+    if (currentStack->stackPtr <= currentStack->stackBase) {
+	return CVM_FALSE;
+    }
     currentStack->stackPtr--;
     *obj = *currentStack->stackPtr;
-    if (currentStack->stackPtr <= currentStack->stackBase) {
-	return JVMTI_ERROR_OUT_OF_MEMORY;
-    }
-    return err;
+    return CVM_TRUE;
 }
 
 void
@@ -3116,33 +3219,8 @@ jvmtiCleanupMarked() {
 	    CVMjvmtiDeallocate((unsigned char *)node);
 	    node = next;
 	}
+        romObjects[i] = NULL;
     }
-}
-
-static CVMBool
-CVMjvmtiSetHashCallback(CVMObject *obj, CVMClassBlock *cb, CVMUint32 size,
-                          void *data)
-{
-    CVMExecEnv *ee = CVMgetEE();
-    CVMJvmtiDumpContext *dc = (CVMJvmtiDumpContext *)data;
-    JNIEnv *env = dc->env;
-    CVMObjectICell *icell = dc->icell;
-    CVMJvmtiTagNode *node;
-
-    CVMsysMutexLock(ee, &CVMglobals.heapLock);
-    CVMjvmtiSetICellDirect(ee, icell, obj);
-	JVM_IHashCode(env, icell);
-	/* create tagnode as well */
-	node = CVMjvmtiTagGetNode(obj);
-	if (node == NULL) {
-	    CVMjvmtiPostCallbackUpdateTag(obj, node, 1);
-    	    node = CVMjvmtiTagGetNode(obj);
-	    if (node != NULL) {
-		node->tag = 0L;
-	    }
-	}
-            CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
-    return CVM_TRUE;
 }
 
 static jvmtiError JNICALL
@@ -3153,66 +3231,34 @@ jvmti_FollowReferences(jvmtiEnv* jvmtienv,
 		       const jvmtiHeapCallbacks* callbacks,
 		       const void* userData)
 {
-    jvmtiError err;
+    jvmtiError err = JVMTI_ERROR_NONE;
     CVMObject *obj;
     CVMExecEnv *ee = CVMgetEE();
     unsigned char *newStack;
     CVMJvmtiDumpContext dumpContext;
     JNIEnv *env = CVMexecEnv2JniEnv(ee);
     CVMJvmtiVisitStack *currentStack = &CVMglobals.jvmti.statics.currentStack;
-    CVMObjectICell localIcell;
+    jint threadCount;
+    jthread *threads;
 
     CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
 
     memset((void *)currentStack, 0, sizeof(*currentStack));
-#ifdef CVM_JIT
-    CVMsysMutexLock(ee, &CVMglobals.jitLock);
-#endif
 
-    CVMsysMutexLock(ee, &CVMglobals.heapLock);
-    /* And get the rest of the GC locks: */
-    CVMlocksForGCAcquire(ee);
-    //    CVMD_gcBecomeSafeAll(ee);
-
-    /* Set hash for every object in the heap: */
-    dumpContext.icell = &localIcell;
-    dumpContext.env = env;
-    CVMgcimplIterateHeap(ee, CVMjvmtiSetHashCallback,
-                         (void *)&dumpContext);
-
-    //    CVMD_gcAllowUnsafeAll(ee);
-
-    CVMlocksForGCRelease(ee);
-    CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
-#ifdef CVM_JIT
-    CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
-#endif
-    /* Lock out the GC: */
-    /* NOTE: We won't get any interference from GC because this thread
-        holds the heapLock.  This is effectively equivalent to disabling
-        GC. */
-    CVMlocksForThreadSuspendAcquire(ee);
-    CVM_WALK_ALL_THREADS(ee, currentEE, {
-	    jthread thread = CVMcurrentThreadICell(currentEE);
-	    if (!CVMID_icellIsNull(thread) && ee != currentEE) {
-		jvmti_SuspendThread(jvmtienv, thread);
-	    }
-	});
-    CVMlocksForThreadSuspendRelease(ee);
-
-#ifdef CVM_JIT
-    CVMsysMutexLock(ee, &CVMglobals.jitLock);
-#endif
-
-    CVMsysMutexLock(ee, &CVMglobals.heapLock);
-    /* And get the rest of the GC locks: */
+    ACQUIRE_SYS_MUTEXES
+    if ((err = suspendAllThreads(jvmtienv, ee, &threads,
+                                 &threadCount)) != JVMTI_ERROR_NONE) {
+	jvmti_Deallocate(jvmtienv, (unsigned char*)threads);
+	CVMjniPopLocalFrame(env, NULL);
+        RELEASE_SYS_MUTEXES
+	return err;
+    }
+    /* jit, heap and thread lock held above */
+    /* Lock out the GC. (All threads suspended at this point anyway) */
     CVMlocksForGCAcquire(ee);
 
-    /* Roll all threads to GC-safe points. */
-    /* I think it's ok to just hold the GC locks at this point */
-    /*        CVMD_gcBecomeSafeAll(ee); */
-
+    CVMjvmtiSetGCOwner(CVM_TRUE);
 
     err = jvmti_Allocate(jvmtienv, VISIT_STACK_INIT * sizeof(CVMObject *),
 			 &newStack);
@@ -3244,9 +3290,8 @@ jvmti_FollowReferences(jvmtiEnv* jvmtienv,
 	obj = CVMjvmtiGetICellDirect(ee, initialObject);
 	CVMjvmtiVisitStackPush(obj);
     }
-    while(currentStack->stackPtr != currentStack->stackBase) {
-	err = jvmtiVisitStackPop(&obj);
-	if (err != JVMTI_ERROR_NONE) {
+    while(currentStack->stackPtr > currentStack->stackBase) {
+	if (!jvmtiVisitStackPop(&obj)) {
 	    goto cleanupAndExit;
 	}
 	if (CVMjvmtiDumpObject(obj, &dumpContext) == CVM_FALSE) {
@@ -3255,26 +3300,17 @@ jvmti_FollowReferences(jvmtiEnv* jvmtienv,
 	}
     }
 cleanupAndExit:
-    CVM_WALK_ALL_THREADS(ee, currentEE, {
-	    jthread thread = CVMcurrentThreadICell(currentEE);
-	    if (!CVMID_icellIsNull(thread)) {
-		jvmti_ResumeThread(jvmtienv, thread);
-	    }
-	});
-    /* Allow threads to become GC-unsafe again. */
-    /*      CVMD_gcAllowUnsafeAll(ee); */
+     resumeAllThreads(jvmtienv, ee, threads, threadCount);
 
+    CVMjvmtiSetGCOwner(CVM_FALSE);
     CVMlocksForGCRelease(ee);
 
-    CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
-#ifdef CVM_JIT
-    CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
-#endif
+    RELEASE_SYS_MUTEXES
     jvmtiCleanupMarked();
     if (currentStack->stackBase != NULL) {
 	jvmti_Deallocate(jvmtienv, (unsigned char*)currentStack->stackBase);
     }
-    return JVMTI_ERROR_NONE;
+    return err;
 }
 
 
@@ -3287,34 +3323,31 @@ jvmti_IterateThroughHeap(jvmtiEnv* jvmtienv,
     CVMExecEnv *ee = CVMgetEE();
     CVMJvmtiDumpContext dumpContext;
     JNIEnv *env = CVMexecEnv2JniEnv(ee);
+    jvmtiError err = JVMTI_ERROR_NONE;
+    jint threadCount;
+    jthread *threads;
 
     CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
 
-    /* Set hash for every object in the heap: */
-    CVMID_localrootBegin(ee) {
-	CVMID_localrootDeclare(CVMObjectICell, localIcell);
-	dumpContext.icell = localIcell;
-	dumpContext.env = env;
-	CVMD_gcUnsafeExec(ee, {
-	    CVMgcimplIterateHeap(ee, CVMjvmtiSetHashCallback,
-				 (void *)&dumpContext);
-	});
-    } CVMID_localrootEnd();
+    /* suspend all threads */
 
-    /* Lock out the GC: */
-    /* NOTE: We won't get any interference from GC because this thread
-        holds the heapLock.  This is effectively equivalent to disabling
-        GC. */
-#ifdef CVM_JIT
-    CVMsysMutexLock(ee, &CVMglobals.jitLock);
-#endif
+    ACQUIRE_SYS_MUTEXES
 
-    CVMsysMutexLock(ee, &CVMglobals.heapLock);
+    if ((err = suspendAllThreads(jvmtienv, ee, &threads,
+                                 &threadCount)) != JVMTI_ERROR_NONE) {
+	jvmti_Deallocate(jvmtienv, (unsigned char*)threads);
+	CVMjniPopLocalFrame(env, NULL);
+        RELEASE_SYS_MUTEXES
+	return err;
+    }
+    /* heap jit and thread lock held above */
+
     /* And get the rest of the GC locks: */
     CVMlocksForGCAcquire(ee);
-    /* Roll all threads to GC-safe points. */
-    /*        CVMD_gcBecomeSafeAll(ee); */
+
+    CVMjvmtiSetGCOwner(CVM_TRUE);
+
     dumpContext.heapFilter = heapFilter;
     dumpContext.klass = klass;
     dumpContext.callbacks = callbacks;
@@ -3322,7 +3355,12 @@ jvmti_IterateThroughHeap(jvmtiEnv* jvmtienv,
     CVMgcimplIterateHeap(ee, CVMjvmtiIterateDoObject,
 			 (void *)&dumpContext);
 
-    return JVMTI_ERROR_NONE;
+    resumeAllThreads(jvmtienv, ee, threads, threadCount);
+    CVMjvmtiSetGCOwner(CVM_FALSE);
+    CVMlocksForGCRelease(ee);
+
+    RELEASE_SYS_MUTEXES
+    return err;
 }
 
 
@@ -3334,7 +3372,7 @@ jvmti_GetTag(jvmtiEnv* jvmtienv,
     CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
 
-    return CVMjvmtiTagGetTag(jvmtienv, object, tagPtr);
+    return CVMjvmtiTagGetTag(object, tagPtr, CVM_FALSE);
 }
 
 
@@ -3349,7 +3387,7 @@ jvmti_SetTag(jvmtiEnv* jvmtienv,
     if (object == NULL || CVMID_icellIsNull(object)) {
 	return JVMTI_ERROR_INVALID_OBJECT;
     }
-    return CVMjvmtiTagSetTag(jvmtienv, object, tag);
+    return CVMjvmtiTagSetTag(object, tag, CVM_FALSE);
 }
 
 void
@@ -5113,65 +5151,6 @@ fixupCallback(CVMExecEnv* ee,
     }
 }
 
-static jvmtiError
-suspendAllThreads(jvmtiEnv *jvmtienv, CVMExecEnv *ee, jthread **threads,
-		  int *threadCount)
-{
-
-    jvmtiError err;
-    jint threadState;
-    CVMExecEnv *target;
-    int i;
-
-    err = jvmti_GetAllThreads(jvmtienv, threadCount, threads);
-    if (err != JVMTI_ERROR_NONE) {
-	return err;
-    }
-    for (i = 0; i < *threadCount; i++) {
-	jthreadToExecEnv(ee, (*threads)[i], &target);
-	if (target == ee) {
-	    (*threads)[i] = NULL;
-	    continue;
-	}
-	err = jvmti_GetThreadState(jvmtienv, (*threads)[i], &threadState);
-	if (err != JVMTI_ERROR_NONE) {
-	    return err;
-	}
-	if ((threadState & CVM_THREAD_SUSPENDED) != 0) {
-	    (*threads)[i] = NULL;
-	}
-    }
-
-    for (i = 0; i < *threadCount; i++) {
-	if ((*threads)[i] != NULL) {
-	    err = jvmti_SuspendThread(jvmtienv, (*threads)[i]);
-	    if (err != JVMTI_ERROR_NONE) {
-		for (--i; i >= 0; i--) {
-		    if ((*threads)[i] != NULL) {
-			jvmti_ResumeThread(jvmtienv, (*threads)[i]);
-		    }
-		}
-		return err;
-	    }
-	}
-    }
-    return JVMTI_ERROR_NONE;
-}
-
-static jvmtiError
-resumeAllThreads(jvmtiEnv *jvmtienv, CVMExecEnv *ee, jthread *threads,
-		 int threadCount)
-{
-    int i;
-
-    for (i = 0; i < threadCount; i++) {
-	if (threads[i] != NULL) {
-	    jvmti_ResumeThread(jvmtienv, threads[i]);
-	}
-    }
-    return JVMTI_ERROR_NONE;
-}
-
 static jvmtiError JNICALL
 jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 		      jint classCount,
@@ -5213,14 +5192,17 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
     }
     ALLOC(jvmtienv, CVMint2Long(classCount * sizeof(CVMClassBlock*)),
 	  (unsigned char**)&classes);
-
-    if (suspendAllThreads(jvmtienv, ee, &threads,
-			  &threadCount) != JVMTI_ERROR_NONE) {
+    ACQUIRE_SYS_MUTEXES
+    if ((err = suspendAllThreads(jvmtienv, ee, &threads,
+                                 &threadCount)) != JVMTI_ERROR_NONE) {
 	jvmti_Deallocate(jvmtienv, (unsigned char*)threads);
 	jvmti_Deallocate(jvmtienv, (unsigned char*)classes);
 	CVMjniPopLocalFrame(env, NULL);
+        RELEASE_SYS_MUTEXES
 	return err;
     }
+    RELEASE_SYS_MUTEXES
+
     node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
     CVMassert(node != NULL);
     for (i = 0; i < classCount; i++) {
@@ -5272,24 +5254,25 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	newKlass = classes[i];
 	newcb = CVMjvmtiClassRef2ClassBlock(ee, newKlass);
 	className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
+#if 0
 	if (strncmp(className, "java/lang", 9) == 0) {
 	    continue;
 	}
-
-	/* verify number of methods/fields */
+#endif
+        /* verify number of methods/fields */
 	/* Phase 2 - check sig of each method/field */
-	if (CVMcbMethodCount(oldcb) < CVMcbMethodCount(newcb)) {
-	    err = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_ADDED;
-	    goto cleanup;
-	}
-	if (CVMcbMethodCount(oldcb) > CVMcbMethodCount(newcb)) {
-	    err = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_DELETED;
-	    goto cleanup;
-	}
-	if (CVMcbFieldCount(oldcb) != CVMcbFieldCount(newcb)) {
-	    err = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
-	    goto cleanup;
-	}
+        if (CVMcbMethodCount(oldcb) < CVMcbMethodCount(newcb)) {
+            err = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_ADDED;
+            goto cleanup;
+        }
+        if (CVMcbMethodCount(oldcb) > CVMcbMethodCount(newcb)) {
+            err = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_DELETED;
+            goto cleanup;
+        }
+        if (CVMcbFieldCount(oldcb) != CVMcbFieldCount(newcb)) {
+            err = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
+            goto cleanup;
+        }
 	/* clear all breakpoints in this classes methods */
 	JVMTI_LOCK(ee);
 	CVMbagEnumerateOver(CVMglobals.jvmti.statics.breakpoints,
@@ -5339,7 +5322,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	CVMjvmtiSetShouldPostAnyThreadEvent(ee,
 		       threadBits & ~CLASS_PREPARE_BIT);
 	if (!CVMclassLink(ee, newcb, CVM_TRUE)) {
-	    err = JVMTI_ERROR_INVALID_CLASS;
+            err = JVMTI_ERROR_INVALID_CLASS;
 	    CVMjvmtiSetShouldPostAnyThreadEvent(ee, threadBits);
 	    goto cleanup;
 	}
@@ -5354,10 +5337,11 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	newKlass = classes[i];
 	newcb = CVMjvmtiClassRef2ClassBlock(ee, newKlass);
 	className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
+#if 0
 	if (strncmp(className, "java/lang", 9) == 0) {
 	    continue;
 	}
-
+#endif
 	/* 
 	 * This class's old methods  may have quickened bytecodes with
 	 * resolved entries.  Some stack frames will continue to execute
@@ -5420,15 +5404,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	    CVMMethodBlock *newmb = CVMcbMethodSlot(newcb, j);
 	    CVMmbClassBlock(newmb) = oldcb;
 	    CVMmbClassBlockInRange(newmb) = oldcb;
-	    //	    if (CVMmbIsJava(oldmb)) {
-		/*
-		oldmb->immutX.codeX.jmd->jvmtiMethodID =
-		    (CVMUint32)oldmb | CVM_METHOD_OBSOLETE;
-		oldmb->immutX.codeX.jmd->oldConstantpool =
-		    CVMcbConstantPool(oldcb);
-		*/
-		CVMjvmtiMarkAsObsolete(oldmb, CVMcbConstantPool(oldcb));
-		//	    }
+            CVMjvmtiMarkAsObsolete(oldmb, CVMcbConstantPool(oldcb));
 	}
 	CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
 	CVMcbMethods(oldcb) = CVMcbMethods(newcb);

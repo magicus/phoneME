@@ -31,12 +31,10 @@
 
 void CVMjvmtiTagRehash();
 CVMBool CVMjvmtiDumpObject(CVMObject *obj, CVMJvmtiDumpContext *dc);
-jvmtiError CVMjvmtiTagGetTagGC(CVMObject *obj, jlong *tagPtr);
-jvmtiError CVMjvmtiTagGetTag(jvmtiEnv *jvmtienv, jobject object, jlong *tagPtr);
-jvmtiError CVMjvmtiTagSetTag(jvmtiEnv *jvmtienv, jobject object, jlong tag);
+jvmtiError CVMjvmtiTagGetTag(jobject object, jlong *tagPtr, CVMBool);
+jvmtiError CVMjvmtiTagSetTag(jobject object, jlong tag, CVMBool);
 CVMBool CVMjvmtiScanRoots(CVMExecEnv *ee, CVMJvmtiDumpContext *dc);
-void CVMjvmtiPostCallbackUpdateTag(CVMObject *obj, CVMJvmtiTagNode *node,
-				   jlong tag);
+void CVMjvmtiPostCallbackUpdateTag(CVMObject *obj, jlong tag);
 CVMJvmtiTagNode *CVMjvmtiTagGetNode(CVMObject *obj);
 
 CVMBool CVMjvmtiIterateDoObject(CVMObject* obj, CVMClassBlock* cb, 
