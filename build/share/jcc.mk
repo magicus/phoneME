@@ -57,8 +57,8 @@ CVM_JCC_SRCPATH	= $(CVM_TOP)/src/share/javavm/jcc
 CVM_GENOPCODE_DEPEND	= $(CVM_JCC_CLASSPATH)/GenOpcodes.class
 CVM_OPCODE_LIST		= $(CVM_SHAREROOT)/javavm/include/opcodes.list
 CVM_GENOPCODE_TARGETS	= \
-	$(CVM_DERIVEDROOT)/javavm/include/opcodes.h \
-	$(CVM_DERIVEDROOT)/javavm/runtime/opcodes.c \
+	$(CVM_DERIVEDROOT)/javavm/include/gen_opcodes.h \
+	$(CVM_DERIVEDROOT)/javavm/runtime/gen_opcodes.c \
 	$(CVM_DERIVEDROOT)/javavm/runtime/bcattr.c \
 	$(CVM_DERIVEDROOT)/javavm/runtime/opcodelen.c \
 	$(CVM_DERIVEDROOT)/javavm/include/opcodeLabels.h \
@@ -77,8 +77,8 @@ $(CVM_GENOPCODE_TARGETS): $(CVM_OPCODE_LIST) $(CVM_GENOPCODE_DEPEND)
 	$(AT)export CLASSPATH; \
 	CLASSPATH=$(CVM_JCC_CLASSPATH); \
 	$(CVM_JAVA) GenOpcodes $(CVM_OPCODE_LIST) \
-	    -h $(CVM_DERIVEDROOT)/javavm/include/opcodes.h \
-	    -c $(CVM_DERIVEDROOT)/javavm/runtime/opcodes.c \
+	    -h $(CVM_DERIVEDROOT)/javavm/include/gen_opcodes.h \
+	    -c $(CVM_DERIVEDROOT)/javavm/runtime/gen_opcodes.c \
 	    -bcAttr $(CVM_DERIVEDROOT)/javavm/runtime/bcattr.c \
 	    -opcodeLengths $(CVM_DERIVEDROOT)/javavm/runtime/opcodelen.c \
 	    $(CVM_JITOPCODEMAP) \

@@ -52,7 +52,7 @@
 #include "javavm/include/verify.h"
 #include "javavm/include/globals.h"
 
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 #include "opcodes.in_out"
 
 #ifdef __cplusplus
@@ -61,62 +61,6 @@
 #define class XclassX
 #define protected XprotectedX
 #endif
-
-/*
- * The verifier needs to be careful not to read off the end of the
- * code when determining opcode length and validity, so it needs its
- * own version of CVMopcodeGetLength() that checks bounds.
- */
-#define CVMopcodeGetLengthWithBoundsCheck(iStream, iStream_end)	\
-	(CVMopcodeLengths[*(iStream)] ? \
-	 CVMopcodeLengths[*(iStream)] : \
-	 CVMopcodeGetLengthWithBoundsCheckVariable(iStream, iStream_end))
-
-static int
-CVMopcodeGetLengthWithBoundsCheckVariable(const unsigned char* iStream,
-					  const unsigned char* iStream_end)
-{
-    /*
-     * If there is not enough code left to determine the opcode
-     * length, return a value that indicates the opcode extends
-     * past the end of the code.
-     */
-    switch(*iStream) {
-	case opc_tableswitch: {
-	    const unsigned char* lpc =
-		(const unsigned char*)CVMalignWordUp(iStream + 1);
-	    /* Need default, low, high. */
-	    if (iStream_end - lpc < 12) {
-		return 255;
-	    }
-	    break;
-	}
-        case opc_lookupswitch: {
-	    const unsigned char* lpc =
-		(const unsigned char*)CVMalignWordUp(iStream + 1);
-	    /* Need default, npairs. */
-	    if (iStream_end - lpc < 8) {
-		return 255;
-	    }
-	    break;
-	}
-        case opc_wide: {
-	    /* Need opcode. */
-	    if (iStream_end - iStream < 2) {
-		return 255;
-	    }
-	    break;
-	}
-#ifdef CVM_HW
-#include "include/hw/verifycode.i"
-	    break;
-#endif
-	default:
-	    break;
-    }
-
-    return CVMopcodeGetLengthVariable(iStream);
-}
 
 static const unsigned char *
 JVM_GetMethodByteCode(CVMMethodBlock* mb)

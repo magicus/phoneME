@@ -936,7 +936,7 @@ CVM_CLASSLOADING_CLEANUP_ACTION     = \
 	       $(CVM_BUILDTIME_CLASSESZIP) \
 		.buildtimeclasses
 CVM_INSTRUCTION_COUNTING_CLEANUP_ACTION = \
-        rm -f $(CVM_OBJDIR)/opcodes.o $(CVM_OBJDIR)/executejava*.o \
+        rm -f $(CVM_OBJDIR)/*opcodes.o $(CVM_OBJDIR)/executejava*.o \
 	     $(CVM_OBJDIR)/jni_impl.o
 CVM_GCCHOICE_CLEANUP_ACTION 	= \
 	mkdir -p $(CVM_DERIVEDROOT)/javavm/include/; \
@@ -1844,6 +1844,7 @@ CVM_SHAREOBJS_SPACE += \
 	localroots.o \
 	opcodelen.o \
 	opcodes.o \
+	gen_opcodes.o \
 	packages.o \
 	preloader.o \
 	reflect.o \
