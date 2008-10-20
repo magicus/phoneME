@@ -5254,11 +5254,9 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	newKlass = classes[i];
 	newcb = CVMjvmtiClassRef2ClassBlock(ee, newKlass);
 	className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
-#if 0
 	if (strncmp(className, "java/lang", 9) == 0) {
 	    continue;
 	}
-#endif
         /* verify number of methods/fields */
 	/* Phase 2 - check sig of each method/field */
         if (CVMcbMethodCount(oldcb) < CVMcbMethodCount(newcb)) {
@@ -5337,11 +5335,9 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	newKlass = classes[i];
 	newcb = CVMjvmtiClassRef2ClassBlock(ee, newKlass);
 	className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
-#if 0
 	if (strncmp(className, "java/lang", 9) == 0) {
 	    continue;
 	}
-#endif
 	/* 
 	 * This class's old methods  may have quickened bytecodes with
 	 * resolved entries.  Some stack frames will continue to execute
