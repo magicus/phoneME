@@ -664,7 +664,7 @@ CVMgcimplDoGC(CVMExecEnv* ee, CVMUint32 numBytes)
     CVMgcProcessSpecialWithLivenessInfo(ee, &gcOpts, CVMssRefIsLive, NULL,
 					CVMssRefScanTransitively, &tsd);
     
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
     CVMssScanFreedObjects(ee); /* Report freed objects: */
 #endif
     /*

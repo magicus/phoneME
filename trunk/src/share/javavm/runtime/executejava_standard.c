@@ -3400,12 +3400,6 @@ new_transition:
 
     new_mb:
 	    ASMLABEL(label_new_mb);
-#ifdef CVM_JVMPI
-            JVMPI_CHECK_FOR_DATA_DUMP_REQUEST(ee);
-#endif
-#ifdef CVM_JVMTI_ENABLED
-            JVMTI_CHECK_FOR_DATA_DUMP_REQUEST(ee);
-#endif
 	    invokerIdx = CVMmbInvokerIdx(mb);
 	    if (invokerIdx < CVM_INVOKE_CNI_METHOD) {
 		/*
@@ -3546,6 +3540,7 @@ new_transition:
 		}
 
 #ifdef CVM_JVMPI
+                JVMPI_CHECK_FOR_DATA_DUMP_REQUEST(ee);
                 if (CVMjvmpiEventMethodEntryIsEnabled()) {
                     CVMObjectICell* receiverObjectICell = NULL;
                     if (!CVMmbIs(mb, STATIC)) {
@@ -3561,6 +3556,7 @@ new_transition:
 #endif /* CVM_JVMPI */
 
 #ifdef CVM_JVMTI_ENABLED
+                JVMTI_CHECK_FOR_DATA_DUMP_REQUEST(ee);
 		/* %comment k001 */
 		/* Decache all curently uncached interpreter state */
 		if (CVMjvmtiEnvEventEnabled(ee, JVMTI_EVENT_METHOD_ENTRY)) {

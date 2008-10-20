@@ -173,8 +173,9 @@ struct CVMJvmtiContext {
 			CVMoffsetof(CVMJvmtiContext, jvmtiExternal)))
 
 /* Purpose: Checks to see if it is safe to access object pointers directly. */
-#define CVMjvmtiIsSafeToAccessDirectObject(ee_) \
-    (CVMD_isgcUnsafe(ee_) || CVMgcIsGCThread(ee_) || \
+#define CVMjvmtiIsSafeToAccessDirectObject(ee_)         \
+    (CVMD_isgcUnsafe(ee_) || CVMgcIsGCThread(ee_) ||    \
+     CVMjvmtiIsGCOwner() ||                             \
      CVMsysMutexIAmOwner((ee_), &CVMglobals.heapLock))
 
 /* Purpose: Gets the direct object pointer for the specified ICell. */
@@ -209,5 +210,7 @@ int CVMjvmtiDestroyContext(CVMJvmtiContext *context);
    CVMjvmtiClassRef2ClassBlock() takes a class ref i.e.  jclass.
 */
 CVMClassBlock *CVMjvmtiClassRef2ClassBlock(CVMExecEnv *ee, jclass clazz);
+CVMBool CVMjvmtiIsGCOwner();
+void CVMjvmtiSetGCOwner(CVMBool);
 
 #endif /* _INCLUDED_JVMTIENV_H */

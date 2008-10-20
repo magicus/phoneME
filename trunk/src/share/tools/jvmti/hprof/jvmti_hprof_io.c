@@ -1902,9 +1902,6 @@ dump_heap_segment_and_reset(jlong segment_size)
     
     /* Flush all bytes to the heap dump file */
     heap_flush();
-    /* If you don't close the file, WinCE doesn't write out final few bytes */
-    md_close(gdata->heap_fd);
-    gdata->heap_fd = 0;
 
     /* Last segment? */
     last_chunk_len = gdata->heap_write_count - segment_size;

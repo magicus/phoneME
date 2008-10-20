@@ -239,7 +239,10 @@ int
 md_write(int filedes, const void *buf, int nbyte)
 {
 #ifdef WINCE
-    return fwrite(buf, 1, nbyte, GETFILE(filedes));
+    int ret;
+    ret = fwrite(buf, 1, nbyte, GETFILE(filedes));
+    fflush(GETFILE(filedes));
+    return ret;
 #else
     return write(filedes, buf, nbyte);
 #endif
