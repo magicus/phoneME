@@ -82,22 +82,28 @@ Java_java_net_Inet4AddressImpl_getLocalHostName(JNIEnv *env, jobject this) {
 	 */
 #endif /* __linux__ */
 	struct hostent res, res2, *hp;
-	char buf[HENT_BUF_SIZE];
-	char buf2[HENT_BUF_SIZE];
+        union { /* use union to make sure buffer is aligned */
+            char* align;
+            char buf[HENT_BUF_SIZE];
+        } buffer, buffer2;        
 	int h_error=0;
 
 #ifdef __GLIBC__
-	gethostbyname_r(hostname, &res, buf, sizeof(buf), &hp, &h_error);
+	gethostbyname_r(hostname, &res, buffer.buf, sizeof(buffer.buf),
+                        &hp, &h_error);
 #else
-	hp = gethostbyname_r(hostname, &res, buf, sizeof(buf), &h_error);
+	hp = gethostbyname_r(hostname, &res, buffer.buf, sizeof(buffer.buf),
+                             &h_error);
 #endif
 	if (hp) {
 #ifdef __GLIBC__
 	    gethostbyaddr_r(hp->h_addr, hp->h_length, AF_INET,
-			    &res2, buf2, sizeof(buf2), &hp, &h_error);
+			    &res2, buffer2.buf, sizeof(buffer2.buf),
+                            &hp, &h_error);
 #else
 	    hp = gethostbyaddr_r(hp->h_addr, hp->h_length, AF_INET,
-				 &res2, buf2, sizeof(buf2), &h_error);
+				 &res2, buffer2.buf, sizeof(buffer2.buf),
+                                 &h_error);
 #endif
 	    if (hp) {
 		/*
