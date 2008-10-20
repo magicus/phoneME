@@ -229,7 +229,7 @@ static void handleSegv(int sig, siginfo_t* info, struct ucontext* ucp)
 CVMBool
 linuxSegvHandlerInit(void)
 {
-    int signals[] = {SIGSEGV};
+    int signals[] = {SIGSEGV, SIGBUS};
     int i;
     int result = 0;
     
