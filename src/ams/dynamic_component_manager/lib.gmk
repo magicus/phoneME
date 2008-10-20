@@ -43,7 +43,13 @@ MIDP_JAVADOC_SOURCEPATH += $(AMS_DYNAMIC_COMPONENT_MANAGER_DIR)/reference/classe
 # Implementation classes    
 ifeq ($(USE_DYNAMIC_COMPONENTS), true)
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AMS_DYNAMIC_COMPONENT_MANAGER_DIR)/reference/classes/com/sun/midp/appmanager/ComponentManager.java
+    $(AMS_DYNAMIC_COMPONENT_MANAGER_DIR)/reference/classes/com/sun/midp/appmanager/ComponentManager.java \
+    $(AMS_DYNAMIC_COMPONENT_MANAGER_DIR)/reference/classes/com/sun/midp/appmanager/ComponentManagerLauncher.java
+
+else
+
+SUBSYSTEM_AMS_JAVA_FILES += \
+    $(AMS_DYNAMIC_COMPONENT_MANAGER_DIR)/stubs/classes/com/sun/midp/appmanager/ComponentManagerLauncher.java
 
 endif
 

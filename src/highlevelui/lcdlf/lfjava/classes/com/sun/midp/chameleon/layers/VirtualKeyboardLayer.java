@@ -66,7 +66,6 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
 
         if (VirtualKeyboard.isSupportJavaKeyboard() && vk == null) {
             vk = VirtualKeyboard.getVirtualKeyboard(this);
-            setAnchor();
          }
     }
 
@@ -113,7 +112,6 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
 	bounds[H] = VirtualKeyboardSkin.HEIGHT;
         bounds[X] = (owner.bounds[W] - bounds[W]) >> 1;
         bounds[Y] = owner.bounds[H] - bounds[H];
-
     }
 
     /**
@@ -173,7 +171,7 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     public void paintBody(Graphics g) {
         vk.paint(g);
     }
-
+    
     /**
      * Update bounds of layer
      * @param layers - current layer can be dependant on this parameter
@@ -183,7 +181,6 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
 	 if (owner == null) {
 	     return;
 	 }
-
          if (visible) {  
 	     setAnchor();
              int screenBounds = owner.bounds[H];
@@ -207,6 +204,7 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
              double kshrinkY = ((double)bounds[H])/VirtualKeyboardSkin.HEIGHT;  
              this.vk.resize(khrinkX, kshrinkY);  
 	 }
+	 
     }
 
 

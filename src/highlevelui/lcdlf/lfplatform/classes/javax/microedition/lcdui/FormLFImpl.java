@@ -361,7 +361,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         // 2. We are on event dispatch thread, call paint synchronously.
         // 3. Since we could call into app's functions, like traverse(),
         //    showNotify() and paint(), do this outside LCDUILock block.
-        currentDisplay.callPaint(0, 0, width, height, null);
+        currentDisplay.callPaint(0, 0, width, height, null);        
     }
 
     /**

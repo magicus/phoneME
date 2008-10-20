@@ -3,63 +3,42 @@
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
 
-package com.sun.midp.services;
+package com.sun.midp.appmanager;
 
-/** Simple attribute storage describing a component */
-public interface ComponentInfo {
-    /** Component ID that is never used. */
-    public static final int UNUSED_COMPONENT_ID = -1;
+import javax.microedition.lcdui.Display;
 
+/**
+ * Launches the component manager
+ */
+class ComponentManagerLauncher {
     /**
-     *
-     * @return ID of the component
+     * Launch the Component Manager
+     * @param suiteId the ID of the suite of interest
+     * @param display the Display object currently in use.
+     * @param canModify true for full access, false for read-only access
      */
-    public int getComponentId();
-
-    /**
-     *
-     * @return ID of the component
-     */
-    public int getSuiteId();
-
-    /**
-     * Returns true if this component is trusted, false otherwise.
-     *
-     * @return true if this component is trusted, false otherwise
-     */
-    public boolean isTrusted();
-    
-    /**
-     * Returns a string representation of the ComponentInfo object.
-     * For debug only.
-     */
-    public String toString();
-
-
-    /**
-     * Returns the display name of the component
-     * @return user-friendly name of the component
-     */
-    String getDisplayName();
+    public static void componentView(int suiteId, Display display, boolean canModify) {
+        new ComponentManager.ComponentView(suiteId, display, canModify);    
+    }
 }
