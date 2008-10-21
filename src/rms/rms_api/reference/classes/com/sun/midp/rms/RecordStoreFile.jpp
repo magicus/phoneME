@@ -59,10 +59,11 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      * @return an array of record store names.
      */
     static String[] listRecordStores(int suiteId) {
-        String[] array = new String[getNumberOfStores(suiteId)];
+        String filenameBase = RmsEnvironment.getSecureFilenameBase(suiteId);
+        String[] array = new String[getNumberOfStores(filenameBase)];
 
         if (array.length > 0) {
-            getRecordStoreList(suiteId, array);
+            getRecordStoreList(filenameBase, array);
             return array;
         } else {
             return null;
@@ -76,7 +77,7 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      *
      * @return the number of installed suites
      */
-    private static native int getNumberOfStores(int id);
+    private static native int getNumberOfStores(String filenameBase);
 
     /**
      * Retrieves the list of record stores a MIDlet suites owns.
@@ -85,15 +86,23 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      * @param names an empty array of suite IDs to fill, call
      *     getNumberOfSuites to know how big to make the array
      */
-    private static native void getRecordStoreList(int id, String[] names);
+    private static native void getRecordStoreList(String filenameBase, 
+                                                  String[] names);
 
     /**
      * Remove all the Record Stores for a suite.
      *
-     * @param id ID of the suite
+     * @param filenameBase filename base of the suite
      */
-    static native void removeRecordStores(int id);
+    static native void removeRecordStores0(String filenameBase);
 
+    /** Pass-through method to allow conversion of suite id to filename base
+     *
+     * @param suiteId ID of the suite
+     */
+    static void removeRecordStores(int suiteId) {
+        removeRecordStores0(RmsEnvironment.getSecureFilenameBase(suiteId));
+    }
     /**
      * Approximation of remaining space in storage for a new record store.
      *
@@ -107,7 +116,18 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      * @return the approximate space available to create a
      *         record store in bytes.
      */
-    static native int spaceAvailableNewRecordStore(int suiteId);
+    static native int spaceAvailableNewRecordStore0(String filenameBase,
+                                                   int storageId);
+
+    /** Pass through method to enable getting the storage id to pass into
+      * native
+      */
+    static int spaceAvailableNewRecordStore(int suiteId) {
+
+        return spaceAvailableNewRecordStore0(
+            RmsEnvironment.getSecureFilenameBase(suiteId), 
+            RmsEnvironment.getStorageAreaId(suiteId));
+    }
 
     /**
      * Constructs a new RecordStoreFile instance.
@@ -136,7 +156,9 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      */
     RecordStoreFile(int suiteId, String name,
                     int extension) throws IOException {
-        handle = openRecordStoreFile(suiteId, name, extension);
+        handle = openRecordStoreFile(
+                     RmsEnvironment.getSecureFilenameBase(suiteId), 
+                     name, extension);
     }
 
     /**
@@ -154,7 +176,7 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      *
      * @exception IOException if there is an error opening the file.
      */
-    private native int openRecordStoreFile(int suiteId,
+    private native int openRecordStoreFile(String filenameBase,
                                            String name,
                                            int extension) throws IOException;
 
@@ -173,7 +195,9 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      *         record store in bytes.
      */
     public int spaceAvailable(int suiteId) {
-        return spaceAvailableRecordStore(handle, suiteId);
+        return spaceAvailableRecordStore(handle, 
+                   RmsEnvironment.getSecureFilenameBase(suiteId),
+                   RmsEnvironment.getStorageAreaId(suiteId));
     }
 
     /**
@@ -191,7 +215,8 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      *         record store in bytes.
      */
     private static native int spaceAvailableRecordStore(int handle,
-                                                        int suiteId);
+                                                        String filenameBase,
+                                                        int storageId);
 
     /**
      * Sets the position within <code>recordStream</code> to

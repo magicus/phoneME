@@ -80,14 +80,18 @@ storageCleanup(KNIDECLARGS jobject thisObject) {
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_rms_RecordStoreFile_getNumberOfStores) {
-    SuiteIdType suiteId = KNI_GetParameterAsInt(1);
     int numberOfStores = 0;
 
-    numberOfStores = rmsdb_get_number_of_record_stores(suiteId);
-    if (numberOfStores == OUT_OF_MEM_LEN) {
-        KNI_ThrowNew(midpOutOfMemoryError, NULL);
-    }
+    KNI_StartHandles(1);
+    GET_PARAMETER_AS_PCSL_STRING(1, filenameBase) {
 
+        numberOfStores = rmsdb_get_number_of_record_stores(&filenameBase);
+        if (numberOfStores == OUT_OF_MEM_LEN) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        }   
+    } RELEASE_PCSL_STRING_PARAMETER;
+
+    KNI_EndHandles();
     KNI_ReturnInt((jint)numberOfStores);
 }
 
@@ -100,22 +104,21 @@ KNIDECL(com_sun_midp_rms_RecordStoreFile_getNumberOfStores) {
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_rms_RecordStoreFile_getRecordStoreList) {
-    SuiteIdType suiteId;
     int numberOfStrings;
     int numberOfStores;
     int i;
     pcsl_string* pStoreNames = NULL;
 
-    KNI_StartHandles(2);
+    KNI_StartHandles(3);
     KNI_DeclareHandle(names);
     KNI_DeclareHandle(tempStringObj);
 
     KNI_GetParameterAsObject(2, names);
     numberOfStrings = (int)KNI_GetArrayLength(names);
 
-    suiteId = KNI_GetParameterAsInt(1);
+    GET_PARAMETER_AS_PCSL_STRING(1, filenameBase)
 
-    numberOfStores = rmsdb_get_record_store_list(suiteId,
+    numberOfStores = rmsdb_get_record_store_list(&filenameBase,
                                                  /* OUT */ &pStoreNames);
     if (numberOfStores == OUT_OF_MEM_LEN) {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
@@ -137,6 +140,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreFile_getRecordStoreList) {
 
         free_pcsl_string_list(pStoreNames, numberOfStores);
     }
+    RELEASE_PCSL_STRING_PARAMETER
 
     KNI_EndHandles();
     KNI_ReturnVoid();
@@ -148,13 +152,14 @@ KNIDECL(com_sun_midp_rms_RecordStoreFile_getRecordStoreList) {
  * @param suiteId ID of the suite
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_rms_RecordStoreFile_removeRecordStores) {
-    SuiteIdType suiteId = KNI_GetParameterAsInt(1);
-
-    if (!rmsdb_remove_record_stores_for_suite(suiteId)) {
-        KNI_ThrowNew(midpOutOfMemoryError, NULL);
-    }
-
+KNIDECL(com_sun_midp_rms_RecordStoreFile_removeRecordStores0) {
+    KNI_StartHandles(1);
+    GET_PARAMETER_AS_PCSL_STRING(1, filenameBase) {
+      if (!rmsdb_remove_record_stores_for_suite(&filenameBase, 0)) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        }   
+    } RELEASE_PCSL_STRING_PARAMETER;
+    KNI_EndHandles();
     KNI_ReturnVoid();
 }
 
@@ -169,15 +174,17 @@ KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_midp_rms_RecordStoreFactory_suiteHasRmsData) {
     jboolean exists = KNI_FALSE;
     int status;
-    SuiteIdType suiteId = KNI_GetParameterAsInt(1);
 
-    status = rmsdb_suite_has_rms_data(suiteId);
-    if (status == OUT_OF_MEM_LEN) {
-        KNI_ThrowNew(midpOutOfMemoryError, NULL);
-    } else if (status > 0) {
-        exists = KNI_TRUE;
-    }
-
+    KNI_StartHandles(1);
+    GET_PARAMETER_AS_PCSL_STRING(1, filenameBase) {
+        status = rmsdb_suite_has_rms_data(&filenameBase);
+        if (status == OUT_OF_MEM_LEN) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        } else if (status > 0) {
+            exists = KNI_TRUE;
+        } 
+    } RELEASE_PCSL_STRING_PARAMETER;
+    KNI_EndHandles();
     KNI_ReturnBoolean(exists);
 }
 
@@ -195,15 +202,19 @@ KNIDECL(com_sun_midp_rms_RecordStoreFactory_suiteHasRmsData) {
  *         record store in bytes.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_rms_RecordStoreFile_spaceAvailableNewRecordStore) {
+KNIDECL(com_sun_midp_rms_RecordStoreFile_spaceAvailableNewRecordStore0) {
     long available = 0;
-    SuiteIdType suiteId = KNI_GetParameterAsInt(1);
 
-    available = rmsdb_get_new_record_store_space_available(suiteId);
-    if (available == OUT_OF_MEM_LEN) {
-        KNI_ThrowNew(midpOutOfMemoryError, NULL);
-    }
 
+    int storageId = KNI_GetParameterAsInt(2);
+    KNI_StartHandles(1);
+    GET_PARAMETER_AS_PCSL_STRING(1, filenameBase) {
+        available = rmsdb_get_new_record_store_space_available(storageId);
+        if (available == OUT_OF_MEM_LEN) {
+         KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        }
+    } RELEASE_PCSL_STRING_PARAMETER;
+    KNI_EndHandles();
     KNI_ReturnInt((jint)available);
 }
 
@@ -220,14 +231,15 @@ KNIDECL(com_sun_midp_rms_RecordStoreFile_spaceAvailableNewRecordStore) {
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_rms_RecordStoreFile_openRecordStoreFile) {
-    SuiteIdType suiteId = KNI_GetParameterAsInt(1);
     int extension = KNI_GetParameterAsInt(3);
     int handle = -1;
     char* pszError;
 
-    KNI_StartHandles(1);
+    KNI_StartHandles(2);
+    GET_PARAMETER_AS_PCSL_STRING(1, filenameBase) 
     GET_PARAMETER_AS_PCSL_STRING(2, name) {
-        handle = rmsdb_record_store_open(&pszError, suiteId, &name, extension);
+        handle = rmsdb_record_store_open(&pszError, &filenameBase,
+                                         &name, extension);
 
         if (pszError != NULL) {
             if (handle == -2) {
@@ -240,6 +252,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreFile_openRecordStoreFile) {
             KNI_ThrowNew(midpIOException, "cannot get filename");
         }
     } RELEASE_PCSL_STRING_PARAMETER;
+    RELEASE_PCSL_STRING_PARAMETER
 
     KNI_EndHandles();
     KNI_ReturnInt((jint)handle);
@@ -258,14 +271,17 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_rms_RecordStoreFile_spaceAvailableRecordStore) {
     long available = 0;
     int handle = KNI_GetParameterAsInt(1);
-    SuiteIdType suiteId = KNI_GetParameterAsInt(2);
+    int storageId = KNI_GetParameterAsInt(3);
+    KNI_StartHandles(1);
+    GET_PARAMETER_AS_PCSL_STRING(2, filenameBase) {
+        /* the implementation may ignore the suite id */
+        available = rmsdb_get_record_store_space_available(handle, storageId);
+        if (available == OUT_OF_MEM_LEN) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        }
+    } RELEASE_PCSL_STRING_PARAMETER;
 
-    /* the implementation may ignore the suite id */
-    available = rmsdb_get_record_store_space_available(handle, suiteId);
-    if (available == OUT_OF_MEM_LEN) {
-        KNI_ThrowNew(midpOutOfMemoryError, NULL);
-    }
-
+    KNI_EndHandles();
     KNI_ReturnInt((jint)available);
 }
 
