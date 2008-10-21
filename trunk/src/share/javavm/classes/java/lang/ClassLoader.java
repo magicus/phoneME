@@ -1637,7 +1637,7 @@ public abstract class ClassLoader {
             // If the classloader is NULL, we shouldn't be looking in
             // java.library.path.  Hence, throw an exception to indicate that
             // the library is not found in sun.boot.library.path:
-            throw new UnsatisfiedLinkError("no " + name +
+            throw new UnsatisfiedLinkError("no " + mappedLibraryName +
                                            " in sun.boot.library.path");
         }
 
@@ -1650,7 +1650,7 @@ public abstract class ClassLoader {
             }
         }
 	// Oops, it failed
-        throw new UnsatisfiedLinkError("no " + name + " in java.library.path");
+        throw new UnsatisfiedLinkError("no " + mappedLibraryName + " in java.library.path");
     }
 
     /** Changed from the JDK. This now returns the NativeLibrary
