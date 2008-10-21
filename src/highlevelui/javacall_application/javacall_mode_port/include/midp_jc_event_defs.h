@@ -136,8 +136,8 @@ typedef enum {
     MIDP_JC_EVENT_SELECT_APP           ,
 #endif /*ENABLE_MULTIPLE_ISOLATES*/
 #ifdef ENABLE_JSR_211
-    JSR211_JC_EVENT_PLATFORM_FINISH      ,
-    JSR211_JC_EVENT_JAVA_INVOKE          ,
+    JSR211_JC_EVENT_PLATFORM_FINISH    ,
+    JSR211_JC_EVENT_JAVA_INVOKE        ,
 #endif
 #if ENABLE_JSR_234
     MIDP_JC_EVENT_ADVANCED_MULTIMEDIA  ,
@@ -147,23 +147,27 @@ typedef enum {
     MIDP_JC_ENABLE_ODD_EVENT           ,
 #endif /* ENABLE_ON_DEVICE_DEBUG */
     MIDP_JC_EVENT_ROTATION             ,
-    MIDP_JC_EVENT_MENU_SELECTION,
+    MIDP_JC_EVENT_MENU_SELECTION       ,
     MIDP_JC_EVENT_SET_VM_ARGS          ,
     MIDP_JC_EVENT_SET_HEAP_SIZE        ,
     MIDP_JC_EVENT_LIST_MIDLETS         ,
     MIDP_JC_EVENT_LIST_STORAGE_NAMES   ,
     MIDP_JC_EVENT_REMOVE_MIDLET        ,
     MIDP_JC_EVENT_DRM_RO_RECEIVED      ,
-    MIDP_JC_EVENT_PEER_CHANGED
+    MIDP_JC_EVENT_PEER_CHANGED         ,
 
 #if ENABLE_JSR_256
-    ,JSR256_JC_EVENT_SENSOR_AVAILABLE  ,
+    JSR256_JC_EVENT_SENSOR_AVAILABLE   ,
     JSR256_JC_EVENT_SENSOR_OPEN_CLOSE  ,
-    JSR256_JC_EVENT_SENSOR_DATA_READY
+    JSR256_JC_EVENT_SENSOR_DATA_READY  ,
 #endif /*ENABLE_JSR_256*/
 #if ENABLE_JSR_290
-    ,JSR290_JC_EVENT_FLUID_LOAD_FINISHED
-    ,JSR290_JC_EVENT_FLUID_INVALIDATE
+    JSR290_JC_EVENT_FLUID_INVALIDATE   ,
+    JSR290_JC_EVENT_FLUID_LISTENER_COMPLETED,
+    JSR290_JC_EVENT_FLUID_LISTENER_FAILED,
+    JSR290_JC_EVENT_FLUID_LISTENER_PERCENTAGE,
+    JSR290_JC_EVENT_FLUID_LISTENER_STARTED,
+    JSR290_JC_EVENT_FLUID_LISTENER_WARNING,
 #endif /*ENABLE_JSR_290*/
 } midp_jc_event_type;
 
@@ -325,8 +329,10 @@ typedef struct {
 
 #ifdef ENABLE_JSR_290
 typedef struct {
-    javacall_handle fluid_image;
-    javacall_result result;
+    javacall_handle             fluid_image;
+    javacall_utf16_string       text;
+    float                       percentage;
+    javacall_result             result;
 } jsr290_jc_event_fluid;
 #endif /* ENABLE_JSR_290 */
 
