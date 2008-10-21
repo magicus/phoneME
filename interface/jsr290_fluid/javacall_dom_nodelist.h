@@ -53,7 +53,7 @@ extern "C" {
  *  node indices is 0 to <code>length-1</code> inclusive.
  * 
  * @param handle Pointer to the object representing this nodelist.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param index Index into the collection.
@@ -70,7 +70,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_nodelist_item_start(javacall_handle handle,
-                                 javacall_int32 invocationID,
+                                 javacall_int32 invocationId,
                                  void **context,
                                  javacall_int32 index,
                                  /* OUT */ javacall_handle* ret_value);
@@ -107,7 +107,7 @@ javacall_dom_nodelist_item_finish(javacall_handle handle,
  * is 0 to <code>length-1</code> inclusive. 
  * 
  * @param handle Pointer to the object representing this nodelist.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The number of nodes in the list
@@ -120,7 +120,7 @@ javacall_dom_nodelist_item_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_nodelist_get_length_start(javacall_handle handle,
-                                       javacall_int32 invocationID,
+                                       javacall_int32 invocationId,
                                        void **context,
                                        /* OUT */ javacall_int32* ret_value);
 

@@ -50,7 +50,7 @@ extern "C" {
  * returns retrieves a node specified by name.
  * 
  * @param handle Pointer to the object representing this namednodemap.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param name The <code>nodeName</code> of a node to retrieve.
@@ -67,7 +67,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_namednodemap_get_named_item_start(javacall_handle handle,
-                                               javacall_int32 invocationID,
+                                               javacall_int32 invocationId,
                                                void **context,
                                                javacall_const_utf16_string name,
                                                /* OUT */ javacall_handle* ret_value);
@@ -107,7 +107,7 @@ javacall_dom_namednodemap_get_named_item_finish(javacall_handle handle,
  * aliased.
  * 
  * @param handle Pointer to the object representing this namednodemap.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param arg Pointer to the object of
@@ -134,7 +134,7 @@ javacall_dom_namednodemap_get_named_item_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_namednodemap_set_named_item_start(javacall_handle handle,
-                                               javacall_int32 invocationID,
+                                               javacall_int32 invocationId,
                                                void **context,
                                                javacall_handle arg,
                                                /* OUT */ javacall_handle* ret_value,
@@ -190,7 +190,7 @@ javacall_dom_namednodemap_set_named_item_finish(javacall_handle handle,
  * and prefix when applicable.
  * 
  * @param handle Pointer to the object representing this namednodemap.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param name The <code>nodeName</code> of the node to remove.
@@ -212,7 +212,7 @@ javacall_dom_namednodemap_set_named_item_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_namednodemap_remove_named_item_start(javacall_handle handle,
-                                                  javacall_int32 invocationID,
+                                                  javacall_int32 invocationId,
                                                   void **context,
                                                   javacall_const_utf16_string name,
                                                   /* OUT */ javacall_handle* ret_value,
@@ -258,7 +258,7 @@ javacall_dom_namednodemap_remove_named_item_finish(javacall_handle handle,
  * returns <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this namednodemap.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param index Index into this map.
@@ -274,7 +274,7 @@ javacall_dom_namednodemap_remove_named_item_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_namednodemap_item_start(javacall_handle handle,
-                                     javacall_int32 invocationID,
+                                     javacall_int32 invocationId,
                                      void **context,
                                      javacall_int32 index,
                                      /* OUT */ javacall_handle* ret_value);
@@ -309,7 +309,7 @@ javacall_dom_namednodemap_item_finish(javacall_handle handle,
  * is <code>0</code> to <code>length-1</code> inclusive. 
  * 
  * @param handle Pointer to the object representing this namednodemap.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The number of nodes in this map
@@ -322,7 +322,7 @@ javacall_dom_namednodemap_item_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_namednodemap_get_length_start(javacall_handle handle,
-                                           javacall_int32 invocationID,
+                                           javacall_int32 invocationId,
                                            void **context,
                                            /* OUT */ javacall_int32* ret_value);
 
@@ -350,7 +350,7 @@ javacall_dom_namednodemap_get_length_finish(javacall_handle handle,
  * returns retrieves a node specified by local name and namespace URI. 
  * 
  * @param handle Pointer to the object representing this namednodemap.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the node to retrieve.
@@ -368,7 +368,7 @@ javacall_dom_namednodemap_get_length_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_namednodemap_get_named_item_ns_start(javacall_handle handle,
-                                                  javacall_int32 invocationID,
+                                                  javacall_int32 invocationId,
                                                   void **context,
                                                   javacall_const_utf16_string namespace_uri,
                                                   javacall_const_utf16_string local_name,
@@ -407,7 +407,7 @@ javacall_dom_namednodemap_get_named_item_ns_finish(javacall_handle handle,
  * one.
  * 
  * @param handle Pointer to the object representing this namednodemap.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param arg Pointer to the object of
@@ -435,7 +435,7 @@ javacall_dom_namednodemap_get_named_item_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_namednodemap_set_named_item_ns_start(javacall_handle handle,
-                                                  javacall_int32 invocationID,
+                                                  javacall_int32 invocationId,
                                                   void **context,
                                                   javacall_handle arg,
                                                   /* OUT */ javacall_handle* ret_value,
@@ -489,7 +489,7 @@ javacall_dom_namednodemap_set_named_item_ns_finish(javacall_handle handle,
  * corresponding namespace URI, local name, and prefix when applicable.
  * 
  * @param handle Pointer to the object representing this namednodemap.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the node to remove.
@@ -512,7 +512,7 @@ javacall_dom_namednodemap_set_named_item_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_namednodemap_remove_named_item_ns_start(javacall_handle handle,
-                                                     javacall_int32 invocationID,
+                                                     javacall_int32 invocationId,
                                                      void **context,
                                                      javacall_const_utf16_string namespace_uri,
                                                      javacall_const_utf16_string local_name,

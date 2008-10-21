@@ -55,7 +55,7 @@ extern "C" {
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the name of this node
@@ -71,7 +71,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_node_get_node_name_start(javacall_handle handle,
-                                      javacall_int32 invocationID,
+                                      javacall_int32 invocationId,
                                       void **context,
                                       /* OUT */ javacall_utf16_string ret_value,
                                       /* INOUT */ javacall_uint32* ret_value_len);
@@ -114,7 +114,7 @@ javacall_dom_node_get_node_name_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the value of this node
@@ -131,7 +131,7 @@ javacall_dom_node_get_node_name_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_node_value_start(javacall_handle handle,
-                                       javacall_int32 invocationID,
+                                       javacall_int32 invocationId,
                                        void **context,
                                        /* OUT */ javacall_utf16_string ret_value,
                                        /* INOUT */ javacall_uint32* ret_value_len);
@@ -173,7 +173,7 @@ javacall_dom_node_get_node_value_finish(javacall_handle handle,
  * including if the node is read-only.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param node_value the value of the node
@@ -187,7 +187,7 @@ javacall_dom_node_get_node_value_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_set_node_value_start(javacall_handle handle,
-                                       javacall_int32 invocationID,
+                                       javacall_int32 invocationId,
                                        void **context,
                                        javacall_const_utf16_string node_value);
 
@@ -219,7 +219,7 @@ javacall_dom_node_set_node_value_finish(javacall_handle handle,
  * <code>javacall_dom_node_types</code>.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value A code representing the type of the underlying object
@@ -232,7 +232,7 @@ javacall_dom_node_set_node_value_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_node_type_start(javacall_handle handle,
-                                      javacall_int32 invocationID,
+                                      javacall_int32 invocationId,
                                       void **context,
                                       /* OUT */ javacall_dom_node_types* ret_value);
 
@@ -265,7 +265,7 @@ javacall_dom_node_get_node_type_finish(javacall_handle handle,
  * <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -279,7 +279,7 @@ javacall_dom_node_get_node_type_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_parent_node_start(javacall_handle handle,
-                                        javacall_int32 invocationID,
+                                        javacall_int32 invocationId,
                                         void **context,
                                         /* OUT */ javacall_handle* ret_value);
 
@@ -314,7 +314,7 @@ javacall_dom_node_get_parent_node_finish(javacall_handle handle,
  * nodes.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -328,7 +328,7 @@ javacall_dom_node_get_parent_node_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_child_nodes_start(javacall_handle handle,
-                                        javacall_int32 invocationID,
+                                        javacall_int32 invocationId,
                                         void **context,
                                         /* OUT */ javacall_handle* ret_value);
 
@@ -359,7 +359,7 @@ javacall_dom_node_get_child_nodes_finish(javacall_handle handle,
  * <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -373,7 +373,7 @@ javacall_dom_node_get_child_nodes_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_first_child_start(javacall_handle handle,
-                                        javacall_int32 invocationID,
+                                        javacall_int32 invocationId,
                                         void **context,
                                         /* OUT */ javacall_handle* ret_value);
 
@@ -403,7 +403,7 @@ javacall_dom_node_get_first_child_finish(javacall_handle handle,
  * <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -417,7 +417,7 @@ javacall_dom_node_get_first_child_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_last_child_start(javacall_handle handle,
-                                       javacall_int32 invocationID,
+                                       javacall_int32 invocationId,
                                        void **context,
                                        /* OUT */ javacall_handle* ret_value);
 
@@ -447,7 +447,7 @@ javacall_dom_node_get_last_child_finish(javacall_handle handle,
  * this returns <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -461,7 +461,7 @@ javacall_dom_node_get_last_child_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_previous_sibling_start(javacall_handle handle,
-                                             javacall_int32 invocationID,
+                                             javacall_int32 invocationId,
                                              void **context,
                                              /* OUT */ javacall_handle* ret_value);
 
@@ -491,7 +491,7 @@ javacall_dom_node_get_previous_sibling_finish(javacall_handle handle,
  * this returns <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -505,7 +505,7 @@ javacall_dom_node_get_previous_sibling_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_next_sibling_start(javacall_handle handle,
-                                         javacall_int32 invocationID,
+                                         javacall_int32 invocationId,
                                          void **context,
                                          /* OUT */ javacall_handle* ret_value);
 
@@ -535,7 +535,7 @@ javacall_dom_node_get_next_sibling_finish(javacall_handle handle,
  * it is an <code>Element</code>) or <code>NULL</code> otherwise. 
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -549,7 +549,7 @@ javacall_dom_node_get_next_sibling_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_attributes_start(javacall_handle handle,
-                                       javacall_int32 invocationID,
+                                       javacall_int32 invocationId,
                                        void **context,
                                        /* OUT */ javacall_handle* ret_value);
 
@@ -582,7 +582,7 @@ javacall_dom_node_get_attributes_finish(javacall_handle handle,
  * <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -596,7 +596,7 @@ javacall_dom_node_get_attributes_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_owner_document_start(javacall_handle handle,
-                                           javacall_int32 invocationID,
+                                           javacall_int32 invocationId,
                                            void **context,
                                            /* OUT */ javacall_handle* ret_value);
 
@@ -636,7 +636,7 @@ javacall_dom_node_get_owner_document_finish(javacall_handle handle,
  * dependent. 
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param new_child Pointer to the object of
@@ -664,7 +664,7 @@ javacall_dom_node_get_owner_document_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_insert_before_start(javacall_handle handle,
-                                      javacall_int32 invocationID,
+                                      javacall_int32 invocationId,
                                       void **context,
                                       javacall_handle new_child,
                                       javacall_handle ref_child,
@@ -726,7 +726,7 @@ javacall_dom_node_insert_before_finish(javacall_handle handle,
  * is first removed.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param new_child Pointer to the object of
@@ -753,7 +753,7 @@ javacall_dom_node_insert_before_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_replace_child_start(javacall_handle handle,
-                                      javacall_int32 invocationID,
+                                      javacall_int32 invocationId,
                                       void **context,
                                       javacall_handle new_child,
                                       javacall_handle old_child,
@@ -807,7 +807,7 @@ javacall_dom_node_replace_child_finish(javacall_handle handle,
  * of children, and returns it.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param old_child Pointer to the object of
@@ -830,7 +830,7 @@ javacall_dom_node_replace_child_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_remove_child_start(javacall_handle handle,
-                                     javacall_int32 invocationID,
+                                     javacall_int32 invocationId,
                                      void **context,
                                      javacall_handle old_child,
                                      /* OUT */ javacall_handle* ret_value,
@@ -874,7 +874,7 @@ javacall_dom_node_remove_child_finish(javacall_handle handle,
  * is first removed.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param new_child Pointer to the object of
@@ -900,7 +900,7 @@ javacall_dom_node_remove_child_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_append_child_start(javacall_handle handle,
-                                     javacall_int32 invocationID,
+                                     javacall_int32 invocationId,
                                      void **context,
                                      javacall_handle new_child,
                                      /* OUT */ javacall_handle* ret_value,
@@ -946,7 +946,7 @@ javacall_dom_node_append_child_finish(javacall_handle handle,
  * returns whether this node has any children.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value  <code>true</code> if this node has any children, 
@@ -960,7 +960,7 @@ javacall_dom_node_append_child_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_has_child_nodes_start(javacall_handle handle,
-                                        javacall_int32 invocationID,
+                                        javacall_int32 invocationId,
                                         void **context,
                                         /* OUT */ javacall_bool* ret_value);
 
@@ -1015,7 +1015,7 @@ javacall_dom_node_has_child_nodes_finish(javacall_handle handle,
  * <code>Notation</code> nodes is implementation dependent.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param deep If <code>true</code>, recursively clone the subtree under 
@@ -1032,7 +1032,7 @@ javacall_dom_node_has_child_nodes_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_clone_node_start(javacall_handle handle,
-                                   javacall_int32 invocationID,
+                                   javacall_int32 invocationId,
                                    void **context,
                                    javacall_bool deep,
                                    /* OUT */ javacall_handle* ret_value);
@@ -1106,7 +1106,7 @@ javacall_dom_node_clone_node_finish(javacall_handle handle,
  * <code>Text</code> nodes and <code>CDATASection</code> nodes.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -1118,7 +1118,7 @@ javacall_dom_node_clone_node_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_normalize_start(javacall_handle handle,
-                                  javacall_int32 invocationID,
+                                  javacall_int32 invocationId,
                                   void **context);
 
 /**
@@ -1157,7 +1157,7 @@ javacall_dom_node_normalize_finish(javacall_handle handle,
  * that feature is supported by this node.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param feature The name of the feature to test. This is the same name 
@@ -1178,7 +1178,7 @@ javacall_dom_node_normalize_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_is_supported_start(javacall_handle handle,
-                                     javacall_int32 invocationID,
+                                     javacall_int32 invocationId,
                                      void **context,
                                      javacall_const_utf16_string feature,
                                      javacall_const_utf16_string version,
@@ -1234,7 +1234,7 @@ javacall_dom_node_is_supported_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value  The namespace URI of this node, or <code>NULL</code>
@@ -1250,7 +1250,7 @@ javacall_dom_node_is_supported_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_namespace_uri_start(javacall_handle handle,
-                                          javacall_int32 invocationID,
+                                          javacall_int32 invocationId,
                                           void **context,
                                           /* OUT */ javacall_utf16_string ret_value,
                                           /* INOUT */ javacall_uint32* ret_value_len);
@@ -1319,7 +1319,7 @@ javacall_dom_node_get_namespace_uri_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The namespace prefix of this node, or <code>NULL</code>
@@ -1335,7 +1335,7 @@ javacall_dom_node_get_namespace_uri_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_prefix_start(javacall_handle handle,
-                                   javacall_int32 invocationID,
+                                   javacall_int32 invocationId,
                                    void **context,
                                    /* OUT */ javacall_utf16_string ret_value,
                                    /* INOUT */ javacall_uint32* ret_value_len);
@@ -1411,7 +1411,7 @@ javacall_dom_node_get_prefix_finish(javacall_handle handle,
  * 
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param prefix This node namespace prefix.
@@ -1431,7 +1431,7 @@ javacall_dom_node_get_prefix_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_set_prefix_start(javacall_handle handle,
-                                   javacall_int32 invocationID,
+                                   javacall_int32 invocationId,
                                    void **context,
                                    javacall_const_utf16_string prefix,
                                    /* OUT */ javacall_dom_exceptions* exception_code);
@@ -1498,7 +1498,7 @@ javacall_dom_node_set_prefix_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the local part of the qualified name of this node
@@ -1514,7 +1514,7 @@ javacall_dom_node_set_prefix_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_local_name_start(javacall_handle handle,
-                                       javacall_int32 invocationID,
+                                       javacall_int32 invocationId,
                                        void **context,
                                        /* OUT */ javacall_utf16_string ret_value,
                                        /* INOUT */ javacall_uint32* ret_value_len);
@@ -1554,7 +1554,7 @@ javacall_dom_node_get_local_name_finish(javacall_handle handle,
  * returns whether this node (if it is an element) has any attributes.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value <code>true</code> if this node has any attributes, 
@@ -1568,7 +1568,7 @@ javacall_dom_node_get_local_name_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_has_attributes_start(javacall_handle handle,
-                                       javacall_int32 invocationID,
+                                       javacall_int32 invocationId,
                                        void **context,
                                        /* OUT */ javacall_bool* ret_value);
 
@@ -1639,7 +1639,7 @@ javacall_dom_node_has_attributes_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the text content of this node and its descendants
@@ -1656,7 +1656,7 @@ javacall_dom_node_has_attributes_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_text_content_start(javacall_handle handle,
-                                         javacall_int32 invocationID,
+                                         javacall_int32 invocationId,
                                          void **context,
                                          /* OUT */ javacall_utf16_string ret_value,
                                          /* INOUT */ javacall_uint32* ret_value_len);
@@ -1771,7 +1771,7 @@ javacall_dom_node_get_text_content_finish(javacall_handle handle,
  * </table>
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param text_content a String containing the new text content for this node
@@ -1785,7 +1785,7 @@ javacall_dom_node_get_text_content_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_set_text_content_start(javacall_handle handle,
-                                         javacall_int32 invocationID,
+                                         javacall_int32 invocationId,
                                          void **context,
                                          javacall_const_utf16_string text_content);
 
@@ -1864,7 +1864,7 @@ javacall_dom_node_set_text_content_finish(javacall_handle handle,
  * version for the specified feature.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param feature  The name of the feature requested. Note that any plus 
@@ -1889,7 +1889,7 @@ javacall_dom_node_set_text_content_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_feature_start(javacall_handle handle,
-                                    javacall_int32 invocationID,
+                                    javacall_int32 invocationId,
                                     void **context,
                                     javacall_const_utf16_string feature,
                                     javacall_const_utf16_string version,
@@ -1954,7 +1954,7 @@ javacall_dom_node_get_feature_finish(javacall_handle handle,
  * <code>removeEventListener</code> method. 
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param type The event type for which the user is registering
@@ -1977,7 +1977,7 @@ javacall_dom_node_get_feature_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_add_event_listener_start(javacall_handle handle,
-                                           javacall_int32 invocationID,
+                                           javacall_int32 invocationId,
                                            void **context,
                                            javacall_const_utf16_string type,
                                            javacall_bool use_capture,
@@ -2035,7 +2035,7 @@ javacall_dom_node_add_event_listener_finish(javacall_handle handle,
  * the <code>EventTarget</code> has no effect.
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param type Specifies the event type of the <code>EventListener</code> 
@@ -2057,7 +2057,7 @@ javacall_dom_node_add_event_listener_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_remove_event_listener_start(javacall_handle handle,
-                                              javacall_int32 invocationID,
+                                              javacall_int32 invocationId,
                                               void **context);
 
 /**
@@ -2107,7 +2107,7 @@ javacall_dom_node_remove_event_listener_finish(javacall_handle handle,
  *
  * 
  * @param handle Pointer to the object representing this node.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param evt Pointer to the object of
@@ -2133,7 +2133,7 @@ javacall_dom_node_remove_event_listener_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_dispatch_event_start(javacall_handle handle,
-                                       javacall_int32 invocationID,
+                                       javacall_int32 invocationId,
                                        void **context,
                                        javacall_handle evt,
                                        /* OUT */ javacall_bool* ret_value,

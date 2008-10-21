@@ -50,7 +50,7 @@ extern "C" {
  * returns specifies whether the total size of the transfer is known.
  * 
  * @param handle Pointer to the object representing this progressevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -62,7 +62,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_progressevent_get_length_computable_start(javacall_handle handle,
-                                                       javacall_int32 invocationID,
+                                                       javacall_int32 invocationId,
                                                        void **context,
                                                        /* OUT */ javacall_bool* ret_value);
 
@@ -93,7 +93,7 @@ javacall_dom_progressevent_get_length_computable_finish(javacall_handle handle,
  * encodings applied. For more details on HTTP see [RFC2616].
  * 
  * @param handle Pointer to the object representing this progressevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -105,7 +105,7 @@ javacall_dom_progressevent_get_length_computable_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_progressevent_get_loaded_start(javacall_handle handle,
-                                            javacall_int32 invocationID,
+                                            javacall_int32 invocationId,
                                             void **context,
                                             /* OUT */ javacall_int32* ret_value);
 
@@ -138,7 +138,7 @@ javacall_dom_progressevent_get_loaded_finish(javacall_handle handle,
  * some reason unknown, the value of this attribute <em>must</em> be zero.
  * 
  * @param handle Pointer to the object representing this progressevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -150,7 +150,7 @@ javacall_dom_progressevent_get_loaded_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_progressevent_get_total_start(javacall_handle handle,
-                                           javacall_int32 invocationID,
+                                           javacall_int32 invocationId,
                                            void **context,
                                            /* OUT */ javacall_int32* ret_value);
 
@@ -182,7 +182,7 @@ javacall_dom_progressevent_get_total_finish(javacall_handle handle,
  *
  * 
  * @param handle Pointer to the object representing this progressevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param type_arg  
@@ -228,7 +228,7 @@ javacall_dom_progressevent_get_total_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_progressevent_init_progress_event_start(javacall_handle handle,
-                                                     javacall_int32 invocationID,
+                                                     javacall_int32 invocationId,
                                                      void **context,
                                                      javacall_const_utf16_string type_arg,
                                                      javacall_bool can_bubble_arg,
@@ -308,7 +308,7 @@ javacall_dom_progressevent_init_progress_event_finish(javacall_handle handle,
  *
  * 
  * @param handle Pointer to the object representing this progressevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri_arg 
@@ -361,7 +361,7 @@ javacall_dom_progressevent_init_progress_event_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_progressevent_init_progress_event_ns_start(javacall_handle handle,
-                                                        javacall_int32 invocationID,
+                                                        javacall_int32 invocationId,
                                                         void **context,
                                                         javacall_const_utf16_string namespace_uri_arg,
                                                         javacall_const_utf16_string type_arg,

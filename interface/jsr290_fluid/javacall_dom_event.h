@@ -50,7 +50,7 @@ extern "C" {
  * returns the name of the event (case-sensitive). The name must be an XML name.
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -64,7 +64,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_event_get_type_start(javacall_handle handle,
-                                  javacall_int32 invocationID,
+                                  javacall_int32 invocationId,
                                   void **context,
                                   /* OUT */ javacall_utf16_string ret_value,
                                   /* INOUT */ javacall_uint32* ret_value_len);
@@ -95,7 +95,7 @@ javacall_dom_event_get_type_finish(javacall_handle handle,
  * originally dispatched. 
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -107,7 +107,7 @@ javacall_dom_event_get_type_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_event_get_target_start(javacall_handle handle,
-                                    javacall_int32 invocationID,
+                                    javacall_int32 invocationId,
                                     void **context,
                                     /* OUT */ javacall_handle* ret_value);
 
@@ -136,7 +136,7 @@ javacall_dom_event_get_target_finish(javacall_handle handle,
  * particularly useful during capturing and bubbling. 
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -148,7 +148,7 @@ javacall_dom_event_get_target_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_event_get_current_target_start(javacall_handle handle,
-                                            javacall_int32 invocationID,
+                                            javacall_int32 invocationId,
                                             void **context,
                                             /* OUT */ javacall_handle* ret_value);
 
@@ -179,7 +179,7 @@ javacall_dom_event_get_current_target_finish(javacall_handle handle,
  * this is always <code>NULL</code>. 
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -193,7 +193,7 @@ javacall_dom_event_get_current_target_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_event_get_namespace_uri_start(javacall_handle handle,
-                                           javacall_int32 invocationID,
+                                           javacall_int32 invocationId,
                                            void **context,
                                            /* OUT */ javacall_utf16_string ret_value,
                                            /* INOUT */ javacall_uint32* ret_value_len);
@@ -227,7 +227,7 @@ javacall_dom_event_get_namespace_uri_finish(javacall_handle handle,
  * evaluated. 
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -239,7 +239,7 @@ javacall_dom_event_get_namespace_uri_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_event_get_event_phase_start(javacall_handle handle,
-                                         javacall_int32 invocationID,
+                                         javacall_int32 invocationId,
                                          void **context,
                                          /* OUT */ javacall_int16* ret_value);
 
@@ -267,7 +267,7 @@ javacall_dom_event_get_event_phase_finish(javacall_handle handle,
  * event can bubble the value is true, else the value is false. 
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -279,7 +279,7 @@ javacall_dom_event_get_event_phase_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_event_get_bubbles_start(javacall_handle handle,
-                                     javacall_int32 invocationID,
+                                     javacall_int32 invocationId,
                                      void **context,
                                      /* OUT */ javacall_bool* ret_value);
 
@@ -308,7 +308,7 @@ javacall_dom_event_get_bubbles_finish(javacall_handle handle,
  * else the value is false. 
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -320,7 +320,7 @@ javacall_dom_event_get_bubbles_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_event_get_cancelable_start(javacall_handle handle,
-                                        javacall_int32 invocationID,
+                                        javacall_int32 invocationId,
                                         void **context,
                                         /* OUT */ javacall_bool* ret_value);
 
@@ -351,7 +351,7 @@ javacall_dom_event_get_cancelable_finish(javacall_handle handle,
  * for a non-cancelable event has no effect.
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -363,7 +363,7 @@ javacall_dom_event_get_cancelable_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_event_get_default_prevented_start(javacall_handle handle,
-                                               javacall_int32 invocationID,
+                                               javacall_int32 invocationId,
                                                void **context,
                                                /* OUT */ javacall_bool* ret_value);
 
@@ -397,7 +397,7 @@ javacall_dom_event_get_default_prevented_finish(javacall_handle handle,
  * start or 0:0:0 UTC 1st January 1970. 
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -409,7 +409,7 @@ javacall_dom_event_get_default_prevented_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_event_get_time_stamp_start(javacall_handle handle,
-                                        javacall_int32 invocationID,
+                                        javacall_int32 invocationId,
                                         void **context,
                                         /* OUT */ javacall_int64* ret_value);
 
@@ -445,7 +445,7 @@ javacall_dom_event_get_time_stamp_finish(javacall_handle handle,
  * method may be used during any stage of event flow.
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -457,7 +457,7 @@ javacall_dom_event_get_time_stamp_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_event_stop_propagation_start(javacall_handle handle,
-                                          javacall_int32 invocationID,
+                                          javacall_int32 invocationId,
                                           void **context);
 
 /**
@@ -495,7 +495,7 @@ javacall_dom_event_stop_propagation_finish(javacall_handle handle,
  * be used during any stage of event flow. 
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -507,7 +507,7 @@ javacall_dom_event_stop_propagation_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_event_prevent_default_start(javacall_handle handle,
-                                         javacall_int32 invocationID,
+                                         javacall_int32 invocationId,
                                          void **context);
 
 /**
@@ -549,7 +549,7 @@ javacall_dom_event_prevent_default_finish(javacall_handle handle,
  * left unchanged.
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param event_type_arg Specifies the event type. This type may be any 
@@ -572,7 +572,7 @@ javacall_dom_event_prevent_default_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_event_init_event_start(javacall_handle handle,
-                                    javacall_int32 invocationID,
+                                    javacall_int32 invocationId,
                                     void **context,
                                     javacall_const_utf16_string event_type_arg,
                                     javacall_bool can_bubble_arg,
@@ -624,7 +624,7 @@ javacall_dom_event_init_event_finish(javacall_handle handle,
  * <code>Event.initEvent()</code>. 
  * 
  * @param handle Pointer to the object representing this event.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri_arg  Specifies <code>Event.namespaceURI</code>, the 
@@ -646,7 +646,7 @@ javacall_dom_event_init_event_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_event_init_event_ns_start(javacall_handle handle,
-                                       javacall_int32 invocationID,
+                                       javacall_int32 invocationId,
                                        void **context,
                                        javacall_const_utf16_string namespace_uri_arg,
                                        javacall_const_utf16_string event_type_arg,

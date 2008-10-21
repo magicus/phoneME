@@ -55,7 +55,7 @@ extern "C" {
  * attribute cannot be NULL or contain the empty string. 
  * 
  * @param handle Pointer to the object representing this textevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -69,7 +69,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_textevent_get_data_start(javacall_handle handle,
-                                      javacall_int32 invocationID,
+                                      javacall_int32 invocationId,
                                       void **context,
                                       /* OUT */ javacall_utf16_string ret_value,
                                       /* INOUT */ javacall_uint32* ret_value_len);
@@ -107,7 +107,7 @@ javacall_dom_textevent_get_data_finish(javacall_handle handle,
  * <code>UIEvent.detail</code> remains undefined. 
  * 
  * @param handle Pointer to the object representing this textevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param type_arg  Refer to the <code>UIEvent.initUIEvent()</code> method 
@@ -126,7 +126,7 @@ javacall_dom_textevent_get_data_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_textevent_init_text_event_start(javacall_handle handle,
-                                             javacall_int32 invocationID,
+                                             javacall_int32 invocationId,
                                              void **context,
                                              javacall_const_utf16_string type_arg,
                                              javacall_bool can_bubble_arg,
@@ -171,7 +171,7 @@ javacall_dom_textevent_init_text_event_finish(javacall_handle handle,
  * <code>UIEvent.detail</code> remains undefined. 
  * 
  * @param handle Pointer to the object representing this textevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri_arg  Refer to the <code>UIEvent.initUIEventNS()</code> 
@@ -193,7 +193,7 @@ javacall_dom_textevent_init_text_event_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_textevent_init_text_event_ns_start(javacall_handle handle,
-                                                javacall_int32 invocationID,
+                                                javacall_int32 invocationId,
                                                 void **context,
                                                 javacall_const_utf16_string namespace_uri_arg,
                                                 javacall_const_utf16_string type_arg,

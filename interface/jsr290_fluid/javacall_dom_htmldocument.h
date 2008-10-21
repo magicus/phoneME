@@ -54,7 +54,7 @@ extern "C" {
  * method is case sensitive. 
  * 
  * @param handle Pointer to the object representing this htmldocument.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param element_name The <code>name</code> attribute value for an 
@@ -70,7 +70,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_htmldocument_get_elements_by_name_start(javacall_handle handle,
-                                                     javacall_int32 invocationID,
+                                                     javacall_int32 invocationId,
                                                      void **context,
                                                      javacall_const_utf16_string element_name,
                                                      /* OUT */ javacall_handle* ret_value);

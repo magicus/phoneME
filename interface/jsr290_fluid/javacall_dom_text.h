@@ -57,7 +57,7 @@ extern "C" {
  * length of this node, the new node has no data.
  * 
  * @param handle Pointer to the object representing this text.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param offset The 16-bit unit offset at which to split, starting from 
@@ -79,7 +79,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_text_split_text_start(javacall_handle handle,
-                                   javacall_int32 invocationID,
+                                   javacall_int32 invocationId,
                                    void **context,
                                    javacall_int32 offset,
                                    /* OUT */ javacall_handle* ret_value,

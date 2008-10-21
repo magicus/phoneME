@@ -53,7 +53,7 @@ extern "C" {
  * attribute of the element.
  * 
  * @param handle Pointer to the object representing this htmloptionelement.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -65,7 +65,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_htmloptionelement_get_selected_start(javacall_handle handle,
-                                                  javacall_int32 invocationID,
+                                                  javacall_int32 invocationId,
                                                   void **context,
                                                   /* OUT */ javacall_bool* ret_value);
 
@@ -97,7 +97,7 @@ javacall_dom_htmloptionelement_get_selected_finish(javacall_handle handle,
  * attribute of the element.
  * 
  * @param handle Pointer to the object representing this htmloptionelement.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -109,7 +109,7 @@ javacall_dom_htmloptionelement_get_selected_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmloptionelement_set_selected_start(javacall_handle handle,
-                                                  javacall_int32 invocationID,
+                                                  javacall_int32 invocationId,
                                                   void **context,
                                                   javacall_bool selected);
 

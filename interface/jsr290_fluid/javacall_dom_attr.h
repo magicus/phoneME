@@ -55,7 +55,7 @@ extern "C" {
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this attr.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the attribute name
@@ -71,7 +71,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_attr_get_name_start(javacall_handle handle,
-                                 javacall_int32 invocationID,
+                                 javacall_int32 invocationId,
                                  void **context,
                                  /* OUT */ javacall_utf16_string ret_value,
                                  /* INOUT */ javacall_uint32* ret_value_len);
@@ -130,7 +130,7 @@ javacall_dom_attr_get_name_finish(javacall_handle handle,
  * <code>true</code>. 
  * 
  * @param handle Pointer to the object representing this attr.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value <code>true</code> if this attribute was explicitly specified, otherwise <code>false</code>
@@ -143,7 +143,7 @@ javacall_dom_attr_get_name_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_attr_get_specified_start(javacall_handle handle,
-                                      javacall_int32 invocationID,
+                                      javacall_int32 invocationId,
                                       void **context,
                                       /* OUT */ javacall_bool* ret_value);
 
@@ -208,7 +208,7 @@ javacall_dom_attr_get_specified_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this attr.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the value of this attribute
@@ -224,7 +224,7 @@ javacall_dom_attr_get_specified_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_attr_get_value_start(javacall_handle handle,
-                                  javacall_int32 invocationID,
+                                  javacall_int32 invocationId,
                                   void **context,
                                   /* OUT */ javacall_utf16_string ret_value,
                                   /* INOUT */ javacall_uint32* ret_value_len);
@@ -280,7 +280,7 @@ javacall_dom_attr_get_value_finish(javacall_handle handle,
  * value on setting.
  * 
  * @param handle Pointer to the object representing this attr.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param value a String containing the value of this attribute
@@ -294,7 +294,7 @@ javacall_dom_attr_get_value_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_attr_set_value_start(javacall_handle handle,
-                                  javacall_int32 invocationID,
+                                  javacall_int32 invocationId,
                                   void **context,
                                   javacall_const_utf16_string value);
 
@@ -331,7 +331,7 @@ javacall_dom_attr_set_value_finish(javacall_handle handle,
  * <code>NULL</code> if this attribute is not in use.
  * 
  * @param handle Pointer to the object representing this attr.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -345,7 +345,7 @@ javacall_dom_attr_set_value_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_attr_get_owner_element_start(javacall_handle handle,
-                                          javacall_int32 invocationID,
+                                          javacall_int32 invocationId,
                                           void **context,
                                           /* OUT */ javacall_handle* ret_value);
 
@@ -387,7 +387,7 @@ javacall_dom_attr_get_owner_element_finish(javacall_handle handle,
  * </ul>
  * 
  * @param handle Pointer to the object representing this attr.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value <code>true</code> if the attribute is of type ID, otherwise <code>false</code>
@@ -400,7 +400,7 @@ javacall_dom_attr_get_owner_element_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_attr_is_id_start(javacall_handle handle,
-                              javacall_int32 invocationID,
+                              javacall_int32 invocationId,
                               void **context,
                               /* OUT */ javacall_bool* ret_value);
 

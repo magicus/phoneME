@@ -55,7 +55,7 @@ extern "C" {
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this entity.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The public identifier associated with the entity, or <code>NULL</code>
@@ -71,7 +71,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_entity_get_public_id_start(javacall_handle handle,
-                                        javacall_int32 invocationID,
+                                        javacall_int32 invocationId,
                                         void **context,
                                         /* OUT */ javacall_utf16_string ret_value,
                                         /* INOUT */ javacall_uint32* ret_value_len);
@@ -113,7 +113,7 @@ javacall_dom_entity_get_public_id_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this entity.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The system identifier associated with the entity or <code>NULL</code>
@@ -129,7 +129,7 @@ javacall_dom_entity_get_public_id_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_entity_get_system_id_start(javacall_handle handle,
-                                        javacall_int32 invocationID,
+                                        javacall_int32 invocationId,
                                         void **context,
                                         /* OUT */ javacall_utf16_string ret_value,
                                         /* INOUT */ javacall_uint32* ret_value_len);
@@ -171,7 +171,7 @@ javacall_dom_entity_get_system_id_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this entity.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the name of the notation for the entity or <code>NULL</code>
@@ -187,7 +187,7 @@ javacall_dom_entity_get_system_id_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_entity_get_notation_name_start(javacall_handle handle,
-                                            javacall_int32 invocationID,
+                                            javacall_int32 invocationId,
                                             void **context,
                                             /* OUT */ javacall_utf16_string ret_value,
                                             /* INOUT */ javacall_uint32* ret_value_len);

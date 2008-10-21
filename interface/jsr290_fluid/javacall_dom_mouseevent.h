@@ -51,7 +51,7 @@ extern "C" {
  * origin of the screen coordinate system. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -63,7 +63,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_mouseevent_get_screen_x_start(javacall_handle handle,
-                                           javacall_int32 invocationID,
+                                           javacall_int32 invocationId,
                                            void **context,
                                            /* OUT */ javacall_int32* ret_value);
 
@@ -91,7 +91,7 @@ javacall_dom_mouseevent_get_screen_x_finish(javacall_handle handle,
  * origin of the screen coordinate system. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -103,7 +103,7 @@ javacall_dom_mouseevent_get_screen_x_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mouseevent_get_screen_y_start(javacall_handle handle,
-                                           javacall_int32 invocationID,
+                                           javacall_int32 invocationId,
                                            void **context,
                                            /* OUT */ javacall_int32* ret_value);
 
@@ -131,7 +131,7 @@ javacall_dom_mouseevent_get_screen_y_finish(javacall_handle handle,
  * DOM implementation's client area. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -143,7 +143,7 @@ javacall_dom_mouseevent_get_screen_y_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mouseevent_get_client_x_start(javacall_handle handle,
-                                           javacall_int32 invocationID,
+                                           javacall_int32 invocationId,
                                            void **context,
                                            /* OUT */ javacall_int32* ret_value);
 
@@ -171,7 +171,7 @@ javacall_dom_mouseevent_get_client_x_finish(javacall_handle handle,
  * DOM implementation's client area. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -183,7 +183,7 @@ javacall_dom_mouseevent_get_client_x_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mouseevent_get_client_y_start(javacall_handle handle,
-                                           javacall_int32 invocationID,
+                                           javacall_int32 invocationId,
                                            void **context,
                                            /* OUT */ javacall_int32* ret_value);
 
@@ -210,7 +210,7 @@ javacall_dom_mouseevent_get_client_y_finish(javacall_handle handle,
  * returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -222,7 +222,7 @@ javacall_dom_mouseevent_get_client_y_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mouseevent_get_ctrl_key_start(javacall_handle handle,
-                                           javacall_int32 invocationID,
+                                           javacall_int32 invocationId,
                                            void **context,
                                            /* OUT */ javacall_bool* ret_value);
 
@@ -248,7 +248,7 @@ javacall_dom_mouseevent_get_ctrl_key_finish(javacall_handle handle,
  * returns  <code>true</code> if the shift (Shift) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -260,7 +260,7 @@ javacall_dom_mouseevent_get_ctrl_key_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mouseevent_get_shift_key_start(javacall_handle handle,
-                                            javacall_int32 invocationID,
+                                            javacall_int32 invocationId,
                                             void **context,
                                             /* OUT */ javacall_bool* ret_value);
 
@@ -288,7 +288,7 @@ javacall_dom_mouseevent_get_shift_key_finish(javacall_handle handle,
  * represented using this key modifier. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -300,7 +300,7 @@ javacall_dom_mouseevent_get_shift_key_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mouseevent_get_alt_key_start(javacall_handle handle,
-                                          javacall_int32 invocationID,
+                                          javacall_int32 invocationId,
                                           void **context,
                                           /* OUT */ javacall_bool* ret_value);
 
@@ -330,7 +330,7 @@ javacall_dom_mouseevent_get_alt_key_finish(javacall_handle handle,
  * represented using this meta key. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -342,7 +342,7 @@ javacall_dom_mouseevent_get_alt_key_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mouseevent_get_meta_key_start(javacall_handle handle,
-                                           javacall_int32 invocationID,
+                                           javacall_int32 invocationId,
                                            void **context,
                                            /* OUT */ javacall_bool* ret_value);
 
@@ -380,7 +380,7 @@ javacall_dom_mouseevent_get_meta_key_finish(javacall_handle handle,
  * represent such buttons. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -392,7 +392,7 @@ javacall_dom_mouseevent_get_meta_key_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mouseevent_get_button_start(javacall_handle handle,
-                                         javacall_int32 invocationID,
+                                         javacall_int32 invocationId,
                                          void **context,
                                          /* OUT */ javacall_int16* ret_value);
 
@@ -429,7 +429,7 @@ javacall_dom_mouseevent_get_button_finish(javacall_handle handle,
  * event, depending on the type of event. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -441,7 +441,7 @@ javacall_dom_mouseevent_get_button_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mouseevent_get_related_target_start(javacall_handle handle,
-                                                 javacall_int32 invocationID,
+                                                 javacall_int32 invocationId,
                                                  void **context,
                                                  /* OUT */ javacall_handle* ret_value);
 
@@ -470,7 +470,7 @@ javacall_dom_mouseevent_get_related_target_finish(javacall_handle handle,
  * <code>UIEvent.initUIEvent()</code>. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param type_arg  Refer to the <code>UIEvent.initUIEvent()</code> method 
@@ -503,7 +503,7 @@ javacall_dom_mouseevent_get_related_target_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mouseevent_init_mouse_event_start(javacall_handle handle,
-                                               javacall_int32 invocationID,
+                                               javacall_int32 invocationId,
                                                void **context,
                                                javacall_const_utf16_string type_arg,
                                                javacall_bool can_bubble_arg,
@@ -580,7 +580,7 @@ javacall_dom_mouseevent_init_mouse_event_finish(javacall_handle handle,
  * as <code>UIEvent.initUIEventNS()</code>. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
- * @param invocationID Invocation identifier which MUST be used in the 
+ * @param invocationId Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri  Refer to the <code>UIEvent.initUIEventNS()</code> 
@@ -626,7 +626,7 @@ javacall_dom_mouseevent_init_mouse_event_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mouseevent_init_mouse_event_ns_start(javacall_handle handle,
-                                                  javacall_int32 invocationID,
+                                                  javacall_int32 invocationId,
                                                   void **context,
                                                   javacall_const_utf16_string namespace_uri,
                                                   javacall_const_utf16_string type_arg,
