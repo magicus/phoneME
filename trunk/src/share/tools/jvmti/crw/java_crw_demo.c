@@ -47,7 +47,7 @@
 #include "javavm/include/clib.h"
 #include "jni.h"
 #include "jvm.h"
-#include "opcodes.h"
+#include "javavm/include/opcodes.h"
 #include "javavm/include/verify_impl.h"
 
 /* Include our own interface for cross check */
