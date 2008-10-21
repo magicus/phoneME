@@ -61,7 +61,7 @@ extern "C" {
  * is implementation dependent.
  * 
  * @param handle Pointer to the object representing this htmlinputelement.
- * @param invocationId Invocation identifier which MUST be used in the 
+ * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -73,7 +73,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_htmlinputelement_get_checked_start(javacall_handle handle,
-                                                javacall_int32 invocationId,
+                                                javacall_int32 invocation_id,
                                                 void **context,
                                                 /* OUT */ javacall_bool* ret_value);
 
@@ -118,7 +118,7 @@ javacall_dom_htmlinputelement_get_checked_finish(javacall_handle handle,
  * the value attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlinputelement.
- * @param invocationId Invocation identifier which MUST be used in the 
+ * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -132,7 +132,7 @@ javacall_dom_htmlinputelement_get_checked_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmlinputelement_get_value_start(javacall_handle handle,
-                                              javacall_int32 invocationId,
+                                              javacall_int32 invocation_id,
                                               void **context,
                                               /* OUT */ javacall_utf16_string ret_value,
                                               /* INOUT */ javacall_uint32* ret_value_len);
@@ -172,7 +172,7 @@ javacall_dom_htmlinputelement_get_value_finish(javacall_handle handle,
  * "text", "file", or "password".
  * 
  * @param handle Pointer to the object representing this htmlinputelement.
- * @param invocationId Invocation identifier which MUST be used in the 
+ * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -184,7 +184,7 @@ javacall_dom_htmlinputelement_get_value_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmlinputelement_select_start(javacall_handle handle,
-                                           javacall_int32 invocationId,
+                                           javacall_int32 invocation_id,
                                            void **context);
 
 /**
@@ -221,7 +221,7 @@ javacall_dom_htmlinputelement_select_finish(javacall_handle handle,
   * is implementation dependent.
   * 
  * @param handle Pointer to the object representing this htmlinputelement.
- * @param invocationId Invocation identifier which MUST be used in the 
+ * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -233,7 +233,7 @@ javacall_dom_htmlinputelement_select_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmlinputelement_set_checked_start(javacall_handle handle,
-                                                javacall_int32 invocationId,
+                                                javacall_int32 invocation_id,
                                                 void **context,
                                                 javacall_bool checked);
 
@@ -278,7 +278,7 @@ javacall_dom_htmlinputelement_set_checked_finish(javacall_handle handle,
  * the value attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlinputelement.
- * @param invocationId Invocation identifier which MUST be used in the 
+ * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -290,7 +290,7 @@ javacall_dom_htmlinputelement_set_checked_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmlinputelement_set_value_start(javacall_handle handle,
-                                              javacall_int32 invocationId,
+                                              javacall_int32 invocation_id,
                                               void **context,
                                               javacall_const_utf16_string value);
 

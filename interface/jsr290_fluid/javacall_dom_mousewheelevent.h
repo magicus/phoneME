@@ -58,7 +58,7 @@ extern "C" {
  * becomes the smallest measurable amount of rotation.</p>
  * 
  * @param handle Pointer to the object representing this mousewheelevent.
- * @param invocationId Invocation identifier which MUST be used in the 
+ * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -70,7 +70,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_mousewheelevent_get_wheel_delta_start(javacall_handle handle,
-                                                   javacall_int32 invocationId,
+                                                   javacall_int32 invocation_id,
                                                    void **context,
                                                    /* OUT */ javacall_int32* ret_value);
 
@@ -112,7 +112,7 @@ javacall_dom_mousewheelevent_get_wheel_delta_finish(javacall_handle handle,
  *
  * 
  * @param handle Pointer to the object representing this mousewheelevent.
- * @param invocationId Invocation identifier which MUST be used in the 
+ * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri_arg  Refer to the <code>Event.initEventNS()</code> 
@@ -153,7 +153,7 @@ javacall_dom_mousewheelevent_get_wheel_delta_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_start(javacall_handle handle,
-                                                             javacall_int32 invocationId,
+                                                             javacall_int32 invocation_id,
                                                              void **context,
                                                              javacall_const_utf16_string namespace_uri_arg,
                                                              javacall_const_utf16_string type_arg,

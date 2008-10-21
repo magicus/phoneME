@@ -51,7 +51,7 @@ extern "C" {
  * or <code>NULL</code> otherwise.
  * 
  * @param handle Pointer to the object representing this htmlobjectelement.
- * @param invocationId Invocation identifier which MUST be used in the 
+ * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -63,7 +63,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_htmlobjectelement_get_content_document_start(javacall_handle handle,
-                                                          javacall_int32 invocationId,
+                                                          javacall_int32 invocation_id,
                                                           void **context,
                                                           /* OUT */ javacall_handle* ret_value);
 
