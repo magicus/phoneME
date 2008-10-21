@@ -379,6 +379,7 @@ ifdef CVM_PRELOAD_SET
     ifdef CVM_PRELOAD_LIB
         $(error Do not set both CVM_PRELOAD_SET and CVM_PRELOAD_LIB)
     endif
+    CVM_FLAGS += CVM_PRELOAD_SET
 endif
 
 ifdef CVM_PRELOAD_TEST
@@ -386,6 +387,7 @@ CVM_PRELOAD_LIB = $(CVM_PRELOAD_TEST)
 endif
 
 ifdef CVM_PRELOAD_LIB
+    CVM_FLAGS += CVM_PRELOAD_LIB
     ifeq ($(CVM_PRELOAD_LIB), false)
         ifeq ($(CVM_PRELOAD_TEST), true)
             $(error CVM_PRELOAD_LIB=false is incompatible with \
@@ -419,6 +421,7 @@ ifeq ($(CVM_PRELOAD_SET), libtestfull)
 endif
 
 CVM_STATICLINK_LIBS   = $(CVM_PRELOAD_ALL)
+#override CVM_PRELOAD_LIB = $(CVM_PRELOAD_ALL)
 
 ifeq ($(CVM_PRELOAD_ALL), true)
 	override CVM_CREATE_RTJAR = false
@@ -874,7 +877,6 @@ CVM_FLAGS += \
 	CVM_REFLECT \
 	CVM_SERIALIZATION \
 	CVM_STATICLINK_LIBS \
-	CVM_PRELOAD_SET \
 	CVM_DYNAMIC_LINKING \
 	CVM_TEST_GC \
 	CVM_TEST_GENERATION_GC \

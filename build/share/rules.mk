@@ -794,7 +794,7 @@ $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo "CVM_INCLUDE_JUMP = $(CVM_INCLUDE_JUMP)" >> $@
 	$(AT) echo "USE_JUMP = $(USE_JUMP)" >> $@
 	$(AT) echo "JUMP_DIR = $(JUMP_DIR)" >> $@
-	$(AT) echo 'CVM_PRELOAD_LIB = $$(error CVM_PRELOAD_LIB)' >> $@
+	$(AT) echo 'CVM_PRELOAD_LIB = $(CVM_PRELOAD_LIB)' >> $@
 	$(AT) echo "CVM_DLL = $(CVM_DLL)" >> $@
 	$(AT) echo "CVM_STATICLINK_LIBS = $(CVM_STATICLINK_LIBS)" >> $@
 	$(AT) echo "CCFLAGS_SPEED = $(CCFLAGS_SPEED)" >> $@
