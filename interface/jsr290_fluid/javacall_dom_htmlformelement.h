@@ -46,27 +46,78 @@ extern "C" {
  */
 
 /**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
+ * sets restores a form element's default values. It performs the same action 
+ * as a reset button.
+ * 
+ * @param handle Pointer to the object representing this htmlformelement.
+ * @param isolateID Identifier of the isolate which is used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlformelement_reset_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlformelement_reset_start(javacall_handle handle,
+                                         javacall_int32 isolateID,
+                                         void **context);
+
+/**
  * Sets restores a form element's default values. It performs the same action 
  * as a reset button.
  * 
  * @param handle Pointer to the object representing this htmlformelement.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlformelement_reset_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlformelement_reset(javacall_handle handle);
+javacall_dom_htmlformelement_reset_finish(javacall_handle handle,
+                                          void *context);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
+ * submits the form. It performs the same action as a submit button.
+ * 
+ * @param handle Pointer to the object representing this htmlformelement.
+ * @param isolateID Identifier of the isolate which is used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlformelement_submit_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlformelement_submit_start(javacall_handle handle,
+                                          javacall_int32 isolateID,
+                                          void **context);
 
 /**
  * Submits the form. It performs the same action as a submit button.
  * 
  * @param handle Pointer to the object representing this htmlformelement.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlformelement_submit_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlformelement_submit(javacall_handle handle);
+javacall_dom_htmlformelement_submit_finish(javacall_handle handle,
+                                           void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

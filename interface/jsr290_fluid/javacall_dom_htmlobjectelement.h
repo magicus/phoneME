@@ -46,17 +46,44 @@ extern "C" {
  */
 
 /**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
+ * returns the document this object contains, if there is any and it is available, 
+ * or <code>NULL</code> otherwise.
+ * 
+ * @param handle Pointer to the object representing this htmlobjectelement.
+ * @param isolateID Identifier of the isolate which is used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlobjectelement_get_content_document_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlobjectelement_get_content_document_start(javacall_handle handle,
+                                                          javacall_int32 isolateID,
+                                                          void **context,
+                                                          /* OUT */ javacall_handle* ret_value);
+
+/**
  * Returns the document this object contains, if there is any and it is available, 
  * or <code>NULL</code> otherwise.
  * 
  * @param handle Pointer to the object representing this htmlobjectelement.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlobjectelement_get_content_document_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlobjectelement_get_content_document(javacall_handle handle,
-                                                    /* OUT */ javacall_handle* ret_value);
+javacall_dom_htmlobjectelement_get_content_document_finish(javacall_handle handle,
+                                                           void *context,
+                                                           /* OUT */ javacall_handle* ret_value);
 
 /** 
  * Decrements ref counter of the native object specified number of times

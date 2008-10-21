@@ -46,11 +46,15 @@ extern "C" {
  */
 
 /**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
  *  The <code>initCustomEventNS</code> method is used to initialize the 
  * value of a <code>CustomEvent</code> object and has the same behavior 
  * as <code>Event.initEventNS()</code>. 
  * 
  * @param handle Pointer to the object representing this customevent.
+ * @param isolateID Identifier of the isolate which is used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * @param namespace_uri_arg  Refer to the <code>Event.initEventNS()</code> 
  *   method for a description of this parameter. 
  * @param type_arg  Refer to the <code>Event.initEventNS()</code> method 
@@ -63,14 +67,51 @@ extern "C" {
  *   value may be <code>NULL</code>.   
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_customevent_init_custom_event_ns_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_customevent_init_custom_event_ns(javacall_handle handle,
-                                              javacall_const_utf16_string namespace_uri_arg,
-                                              javacall_const_utf16_string type_arg,
-                                              javacall_bool can_bubble_arg,
-                                              javacall_bool cancelable_arg);
+javacall_dom_customevent_init_custom_event_ns_start(javacall_handle handle,
+                                                    javacall_int32 isolateID,
+                                                    void **context,
+                                                    javacall_const_utf16_string namespace_uri_arg,
+                                                    javacall_const_utf16_string type_arg,
+                                                    javacall_bool can_bubble_arg,
+                                                    javacall_bool cancelable_arg);
+
+/**
+ *  The <code>initCustomEventNS</code> method is used to initialize the 
+ * value of a <code>CustomEvent</code> object and has the same behavior 
+ * as <code>Event.initEventNS()</code>. 
+ * 
+ * @param handle Pointer to the object representing this customevent.
+ * @param context The context saved during asynchronous operation.
+ * @param namespace_uri_arg  Refer to the <code>Event.initEventNS()</code> 
+ *   method for a description of this parameter. 
+ * @param type_arg  Refer to the <code>Event.initEventNS()</code> method 
+ *   for a description of this parameter. 
+ * @param can_bubble_arg  Refer to the <code>Event.initEventNS()</code> 
+ *   method for a description of this parameter. 
+ * @param cancelable_arg  Refer to the <code>Event.initEventNS()</code> 
+ *   method for a description of this parameter. 
+ * @param detailArg  Specifies <code>CustomEvent.detail</code>. This 
+ *   value may be <code>NULL</code>.   
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_customevent_init_custom_event_ns_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_customevent_init_custom_event_ns_finish(javacall_handle handle,
+                                                     void *context,
+                                                     javacall_const_utf16_string namespace_uri_arg,
+                                                     javacall_const_utf16_string type_arg,
+                                                     javacall_bool can_bubble_arg,
+                                                     javacall_bool cancelable_arg);
 
 /** 
  * Decrements ref counter of the native object specified number of times
