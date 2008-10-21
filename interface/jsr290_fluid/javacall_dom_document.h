@@ -66,7 +66,7 @@ extern "C" {
  * features supported.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -80,7 +80,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_document_get_doctype_start(javacall_handle handle,
-                                        javacall_int32 isolateID,
+                                        javacall_int32 invocationID,
                                         void **context,
                                         /* OUT */ javacall_handle* ret_value);
 
@@ -125,7 +125,7 @@ javacall_dom_document_get_doctype_finish(javacall_handle handle,
  * DOM application may use objects from multiple implementations.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -139,7 +139,7 @@ javacall_dom_document_get_doctype_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_get_implementation_start(javacall_handle handle,
-                                               javacall_int32 isolateID,
+                                               javacall_int32 invocationID,
                                                void **context,
                                                /* OUT */ javacall_handle* ret_value);
 
@@ -169,7 +169,7 @@ javacall_dom_document_get_implementation_finish(javacall_handle handle,
  * node that is the root element of the document. 
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -183,7 +183,7 @@ javacall_dom_document_get_implementation_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_get_document_element_start(javacall_handle handle,
-                                                 javacall_int32 isolateID,
+                                                 javacall_int32 invocationID,
                                                  void **context,
                                                  /* OUT */ javacall_handle* ret_value);
 
@@ -219,7 +219,7 @@ javacall_dom_document_get_document_element_finish(javacall_handle handle,
  * the <code>createElementNS</code> method.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param tag_name The name of the element type to instantiate. For XML, 
@@ -242,7 +242,7 @@ javacall_dom_document_get_document_element_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_element_start(javacall_handle handle,
-                                           javacall_int32 isolateID,
+                                           javacall_int32 invocationID,
                                            void **context,
                                            javacall_const_utf16_string tag_name,
                                            /* OUT */ javacall_handle* ret_value);
@@ -288,7 +288,7 @@ javacall_dom_document_create_element_finish(javacall_handle handle,
  * creates an empty <code>DocumentFragment</code> object. 
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -302,7 +302,7 @@ javacall_dom_document_create_element_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_document_fragment_start(javacall_handle handle,
-                                                     javacall_int32 isolateID,
+                                                     javacall_int32 invocationID,
                                                      void **context,
                                                      /* OUT */ javacall_handle* ret_value);
 
@@ -330,7 +330,7 @@ javacall_dom_document_create_document_fragment_finish(javacall_handle handle,
  * creates a <code>Text</code> node given the specified string.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param data The data for the node.
@@ -345,7 +345,7 @@ javacall_dom_document_create_document_fragment_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_text_node_start(javacall_handle handle,
-                                             javacall_int32 isolateID,
+                                             javacall_int32 invocationID,
                                              void **context,
                                              javacall_const_utf16_string data,
                                              /* OUT */ javacall_handle* ret_value);
@@ -376,7 +376,7 @@ javacall_dom_document_create_text_node_finish(javacall_handle handle,
  * creates a <code>Comment</code> node given the specified string.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param data The data for the node.
@@ -391,7 +391,7 @@ javacall_dom_document_create_text_node_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_comment_start(javacall_handle handle,
-                                           javacall_int32 isolateID,
+                                           javacall_int32 invocationID,
                                            void **context,
                                            javacall_const_utf16_string data,
                                            /* OUT */ javacall_handle* ret_value);
@@ -423,7 +423,7 @@ javacall_dom_document_create_comment_finish(javacall_handle handle,
  * string.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param data The data for the <code>CDATASection</code> contents.
@@ -439,7 +439,7 @@ javacall_dom_document_create_comment_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_cdata_section_start(javacall_handle handle,
-                                                 javacall_int32 isolateID,
+                                                 javacall_int32 invocationID,
                                                  void **context,
                                                  javacall_const_utf16_string data,
                                                  /* OUT */ javacall_handle* ret_value);
@@ -473,7 +473,7 @@ javacall_dom_document_create_cdata_section_finish(javacall_handle handle,
  * name and data strings.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param target The target part of the processing instruction. Unlike 
@@ -498,7 +498,7 @@ javacall_dom_document_create_cdata_section_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_processing_instruction_start(javacall_handle handle,
-                                                          javacall_int32 isolateID,
+                                                          javacall_int32 invocationID,
                                                           void **context,
                                                           javacall_const_utf16_string target,
                                                           javacall_const_utf16_string data,
@@ -548,7 +548,7 @@ javacall_dom_document_create_processing_instruction_finish(javacall_handle handl
  * the <code>createAttributeNS</code> method.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param name The name of the attribute.
@@ -567,7 +567,7 @@ javacall_dom_document_create_processing_instruction_finish(javacall_handle handl
  */
 javacall_result
 javacall_dom_document_create_attribute_start(javacall_handle handle,
-                                             javacall_int32 isolateID,
+                                             javacall_int32 invocationID,
                                              void **context,
                                              javacall_const_utf16_string name,
                                              /* OUT */ javacall_handle* ret_value);
@@ -615,7 +615,7 @@ javacall_dom_document_create_attribute_finish(javacall_handle handle,
  * case.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param name The name of the entity to reference. Unlike 
@@ -639,7 +639,7 @@ javacall_dom_document_create_attribute_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_entity_reference_start(javacall_handle handle,
-                                                    javacall_int32 isolateID,
+                                                    javacall_int32 invocationID,
                                                     void **context,
                                                     javacall_const_utf16_string name,
                                                     /* OUT */ javacall_handle* ret_value,
@@ -692,7 +692,7 @@ javacall_dom_document_create_entity_reference_finish(javacall_handle handle,
  * preorder traversal of the <code>Document</code> tree. 
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param tagname The name of the tag to match on. The special value "*" 
@@ -711,7 +711,7 @@ javacall_dom_document_create_entity_reference_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_get_elements_by_tag_name_start(javacall_handle handle,
-                                                     javacall_int32 isolateID,
+                                                     javacall_int32 invocationID,
                                                      void **context,
                                                      javacall_const_utf16_string tagname,
                                                      /* OUT */ javacall_handle* ret_value);
@@ -835,7 +835,7 @@ javacall_dom_document_get_elements_by_tag_name_finish(javacall_handle handle,
  * </dl> 
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param imported_node Pointer to the object of
@@ -862,7 +862,7 @@ javacall_dom_document_get_elements_by_tag_name_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_import_node_start(javacall_handle handle,
-                                        javacall_int32 isolateID,
+                                        javacall_int32 invocationID,
                                         void **context,
                                         javacall_handle imported_node,
                                         javacall_bool deep,
@@ -999,7 +999,7 @@ javacall_dom_document_import_node_finish(javacall_handle handle,
  * namespace_uri parameter for methods if they wish to have no namespace.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the element to create.
@@ -1056,7 +1056,7 @@ javacall_dom_document_import_node_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_element_ns_start(javacall_handle handle,
-                                              javacall_int32 isolateID,
+                                              javacall_int32 invocationID,
                                               void **context,
                                               javacall_const_utf16_string namespace_uri,
                                               javacall_const_utf16_string qualified_name,
@@ -1140,7 +1140,7 @@ javacall_dom_document_create_element_ns_finish(javacall_handle handle,
  * no namespace.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the attribute to create.
@@ -1201,7 +1201,7 @@ javacall_dom_document_create_element_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_attribute_ns_start(javacall_handle handle,
-                                                javacall_int32 isolateID,
+                                                javacall_int32 invocationID,
                                                 void **context,
                                                 javacall_const_utf16_string namespace_uri,
                                                 javacall_const_utf16_string qualified_name,
@@ -1287,7 +1287,7 @@ javacall_dom_document_create_attribute_ns_finish(javacall_handle handle,
  * given local name and namespace URI in document order.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the elements to match on. The 
@@ -1306,7 +1306,7 @@ javacall_dom_document_create_attribute_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_get_elements_by_tag_name_ns_start(javacall_handle handle,
-                                                        javacall_int32 isolateID,
+                                                        javacall_int32 invocationID,
                                                         void **context,
                                                         javacall_const_utf16_string namespace_uri,
                                                         javacall_const_utf16_string local_name,
@@ -1353,7 +1353,7 @@ javacall_dom_document_get_elements_by_tag_name_ns_finish(javacall_handle handle,
  * not are expected to return <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param element_id The unique <code>id</code> value for an element.
@@ -1368,7 +1368,7 @@ javacall_dom_document_get_elements_by_tag_name_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_get_element_by_id_start(javacall_handle handle,
-                                              javacall_int32 isolateID,
+                                              javacall_int32 invocationID,
                                               void **context,
                                               javacall_const_utf16_string element_id,
                                               /* OUT */ javacall_handle* ret_value);
@@ -1461,7 +1461,7 @@ javacall_dom_document_get_element_by_id_finish(javacall_handle handle,
  * an <code>INVALID_CHARACTER_ERR</code> exception.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param source Pointer to the object of
@@ -1485,7 +1485,7 @@ javacall_dom_document_get_element_by_id_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_adopt_node_start(javacall_handle handle,
-                                       javacall_int32 isolateID,
+                                       javacall_int32 invocationID,
                                        void **context,
                                        javacall_handle source,
                                        /* OUT */ javacall_handle* ret_value,
@@ -1581,7 +1581,7 @@ javacall_dom_document_adopt_node_finish(javacall_handle handle,
  *
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param event_type  The <code>event_type</code> parameter specifies the 
@@ -1619,7 +1619,7 @@ javacall_dom_document_adopt_node_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_event_start(javacall_handle handle,
-                                         javacall_int32 isolateID,
+                                         javacall_int32 invocationID,
                                          void **context,
                                          javacall_const_utf16_string event_type,
                                          /* OUT */ javacall_handle* ret_value);
@@ -1674,7 +1674,7 @@ javacall_dom_document_create_event_finish(javacall_handle handle,
  *  Test if the implementation can generate events of a specified type. 
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri  Specifies the <code>Event.namespace_uri</code> of 
@@ -1692,7 +1692,7 @@ javacall_dom_document_create_event_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_can_dispatch_start(javacall_handle handle,
-                                         javacall_int32 isolateID,
+                                         javacall_int32 invocationID,
                                          void **context,
                                          javacall_const_utf16_string namespace_uri,
                                          javacall_const_utf16_string type,
@@ -1729,7 +1729,7 @@ javacall_dom_document_can_dispatch_finish(javacall_handle handle,
  * or <code>NULL</code> if none available.
  * 
  * @param handle Pointer to the object representing this document.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -1741,7 +1741,7 @@ javacall_dom_document_can_dispatch_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_get_default_view_start(javacall_handle handle,
-                                             javacall_int32 isolateID,
+                                             javacall_int32 invocationID,
                                              void **context,
                                              /* OUT */ javacall_handle* ret_value);
 

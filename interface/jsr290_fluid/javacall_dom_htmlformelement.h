@@ -51,7 +51,7 @@ extern "C" {
  * as a reset button.
  * 
  * @param handle Pointer to the object representing this htmlformelement.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -63,7 +63,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_htmlformelement_reset_start(javacall_handle handle,
-                                         javacall_int32 isolateID,
+                                         javacall_int32 invocationID,
                                          void **context);
 
 /**
@@ -88,7 +88,7 @@ javacall_dom_htmlformelement_reset_finish(javacall_handle handle,
  * submits the form. It performs the same action as a submit button.
  * 
  * @param handle Pointer to the object representing this htmlformelement.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -100,7 +100,7 @@ javacall_dom_htmlformelement_reset_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmlformelement_submit_start(javacall_handle handle,
-                                          javacall_int32 isolateID,
+                                          javacall_int32 invocationID,
                                           void **context);
 
 /**

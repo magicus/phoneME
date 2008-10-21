@@ -63,7 +63,7 @@ extern "C" {
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the name of the element
@@ -79,7 +79,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_element_get_tag_name_start(javacall_handle handle,
-                                        javacall_int32 isolateID,
+                                        javacall_int32 invocationID,
                                         void **context,
                                         /* OUT */ javacall_utf16_string ret_value,
                                         /* INOUT */ javacall_uint32* ret_value_len);
@@ -128,7 +128,7 @@ javacall_dom_element_get_tag_name_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param name The name of the attribute to retrieve.
@@ -146,7 +146,7 @@ javacall_dom_element_get_tag_name_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_attribute_start(javacall_handle handle,
-                                         javacall_int32 isolateID,
+                                         javacall_int32 invocationID,
                                          void **context,
                                          javacall_const_utf16_string name,
                                          /* OUT */ javacall_utf16_string ret_value,
@@ -198,7 +198,7 @@ javacall_dom_element_get_attribute_finish(javacall_handle handle,
  * the <code>setAttributeNS</code> method.
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param name The name of the attribute to create or alter.
@@ -218,7 +218,7 @@ javacall_dom_element_get_attribute_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_set_attribute_start(javacall_handle handle,
-                                         javacall_int32 isolateID,
+                                         javacall_int32 invocationID,
                                          void **context,
                                          javacall_const_utf16_string name,
                                          javacall_const_utf16_string value,
@@ -274,7 +274,7 @@ javacall_dom_element_set_attribute_finish(javacall_handle handle,
  * <code>removeAttributeNS</code> method.
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param name The name of the attribute to remove.
@@ -288,7 +288,7 @@ javacall_dom_element_set_attribute_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_remove_attribute_start(javacall_handle handle,
-                                            javacall_int32 isolateID,
+                                            javacall_int32 invocationID,
                                             void **context,
                                             javacall_const_utf16_string name);
 
@@ -324,7 +324,7 @@ javacall_dom_element_remove_attribute_finish(javacall_handle handle,
  * use the <code>getAttributeNodeNS</code> method.
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param name The name (<code>nodeName</code>) of the attribute to 
@@ -342,7 +342,7 @@ javacall_dom_element_remove_attribute_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_attribute_node_start(javacall_handle handle,
-                                              javacall_int32 isolateID,
+                                              javacall_int32 invocationID,
                                               void **context,
                                               javacall_const_utf16_string name,
                                               /* OUT */ javacall_handle* ret_value);
@@ -383,7 +383,7 @@ javacall_dom_element_get_attribute_node_finish(javacall_handle handle,
  * URI, use the <code>setAttributeNodeNS</code> method.
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param new_attr Pointer to the object of
@@ -408,7 +408,7 @@ javacall_dom_element_get_attribute_node_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_set_attribute_node_start(javacall_handle handle,
-                                              javacall_int32 isolateID,
+                                              javacall_int32 invocationID,
                                               void **context,
                                               javacall_handle new_attr,
                                               /* OUT */ javacall_handle* ret_value,
@@ -459,7 +459,7 @@ javacall_dom_element_set_attribute_node_finish(javacall_handle handle,
  * corresponding namespace URI, local name, and prefix when applicable. 
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param old_attr Pointer to the object of
@@ -482,7 +482,7 @@ javacall_dom_element_set_attribute_node_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_remove_attribute_node_start(javacall_handle handle,
-                                                 javacall_int32 isolateID,
+                                                 javacall_int32 invocationID,
                                                  void **context,
                                                  javacall_handle old_attr,
                                                  /* OUT */ javacall_handle* ret_value,
@@ -527,7 +527,7 @@ javacall_dom_element_remove_attribute_node_finish(javacall_handle handle,
  * with a given tag name, in document order.
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param name The name of the tag to match on. The special value "*" 
@@ -543,7 +543,7 @@ javacall_dom_element_remove_attribute_node_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_elements_by_tag_name_start(javacall_handle handle,
-                                                    javacall_int32 isolateID,
+                                                    javacall_int32 invocationID,
                                                     void **context,
                                                     javacall_const_utf16_string name,
                                                     /* OUT */ javacall_handle* ret_value);
@@ -584,7 +584,7 @@ javacall_dom_element_get_elements_by_tag_name_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the attribute to retrieve.
@@ -604,7 +604,7 @@ javacall_dom_element_get_elements_by_tag_name_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_attribute_ns_start(javacall_handle handle,
-                                            javacall_int32 isolateID,
+                                            javacall_int32 invocationID,
                                             void **context,
                                             javacall_const_utf16_string namespace_uri,
                                             javacall_const_utf16_string local_name,
@@ -669,7 +669,7 @@ javacall_dom_element_get_attribute_ns_finish(javacall_handle handle,
  * no namespace.
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the attribute to create or 
@@ -693,7 +693,7 @@ javacall_dom_element_get_attribute_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_set_attribute_ns_start(javacall_handle handle,
-                                            javacall_int32 isolateID,
+                                            javacall_int32 invocationID,
                                             void **context,
                                             javacall_const_utf16_string namespace_uri,
                                             javacall_const_utf16_string qualified_name,
@@ -763,7 +763,7 @@ javacall_dom_element_set_attribute_ns_finish(javacall_handle handle,
  * no namespace.
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the attribute to remove.
@@ -783,7 +783,7 @@ javacall_dom_element_set_attribute_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_remove_attribute_ns_start(javacall_handle handle,
-                                               javacall_int32 isolateID,
+                                               javacall_int32 invocationID,
                                                void **context,
                                                javacall_const_utf16_string namespace_uri,
                                                javacall_const_utf16_string local_name,
@@ -834,7 +834,7 @@ javacall_dom_element_remove_attribute_ns_finish(javacall_handle handle,
  * no namespace. 
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the attribute to retrieve.
@@ -853,7 +853,7 @@ javacall_dom_element_remove_attribute_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_attribute_node_ns_start(javacall_handle handle,
-                                                 javacall_int32 isolateID,
+                                                 javacall_int32 invocationID,
                                                  void **context,
                                                  javacall_const_utf16_string namespace_uri,
                                                  javacall_const_utf16_string local_name,
@@ -900,7 +900,7 @@ javacall_dom_element_get_attribute_node_ns_finish(javacall_handle handle,
  * no namespace.
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param new_attr Pointer to the object of
@@ -927,7 +927,7 @@ javacall_dom_element_get_attribute_node_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_set_attribute_node_ns_start(javacall_handle handle,
-                                                 javacall_int32 isolateID,
+                                                 javacall_int32 invocationID,
                                                  void **context,
                                                  javacall_handle new_attr,
                                                  /* OUT */ javacall_handle* ret_value,
@@ -980,7 +980,7 @@ javacall_dom_element_set_attribute_node_ns_finish(javacall_handle handle,
  * document order.
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the elements to match on. The 
@@ -1000,7 +1000,7 @@ javacall_dom_element_set_attribute_node_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_elements_by_tag_name_ns_start(javacall_handle handle,
-                                                       javacall_int32 isolateID,
+                                                       javacall_int32 invocationID,
                                                        void **context,
                                                        javacall_const_utf16_string namespace_uri,
                                                        javacall_const_utf16_string local_name,
@@ -1042,7 +1042,7 @@ javacall_dom_element_get_elements_by_tag_name_ns_finish(javacall_handle handle,
  * otherwise.
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param name The name of the attribute to look for.
@@ -1058,7 +1058,7 @@ javacall_dom_element_get_elements_by_tag_name_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_has_attribute_start(javacall_handle handle,
-                                         javacall_int32 isolateID,
+                                         javacall_int32 invocationID,
                                          void **context,
                                          javacall_const_utf16_string name,
                                          /* OUT */ javacall_bool* ret_value);
@@ -1098,7 +1098,7 @@ javacall_dom_element_has_attribute_finish(javacall_handle handle,
  * no namespace.
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the attribute to look for.
@@ -1115,7 +1115,7 @@ javacall_dom_element_has_attribute_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_has_attribute_ns_start(javacall_handle handle,
-                                            javacall_int32 isolateID,
+                                            javacall_int32 invocationID,
                                             void **context,
                                             javacall_const_utf16_string namespace_uri,
                                             javacall_const_utf16_string local_name,
@@ -1164,7 +1164,7 @@ javacall_dom_element_has_attribute_ns_finish(javacall_handle handle,
  * <code>setIdAttributeNS</code> method. 
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param name The name of the attribute.
@@ -1184,7 +1184,7 @@ javacall_dom_element_has_attribute_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_set_id_attribute_start(javacall_handle handle,
-                                            javacall_int32 isolateID,
+                                            javacall_int32 invocationID,
                                             void **context,
                                             javacall_const_utf16_string name,
                                             javacall_bool is_id,
@@ -1236,7 +1236,7 @@ javacall_dom_element_set_id_attribute_finish(javacall_handle handle,
  * user-determined ID attribute. 
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the attribute.
@@ -1257,7 +1257,7 @@ javacall_dom_element_set_id_attribute_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_set_id_attribute_ns_start(javacall_handle handle,
-                                               javacall_int32 isolateID,
+                                               javacall_int32 invocationID,
                                                void **context,
                                                javacall_const_utf16_string namespace_uri,
                                                javacall_const_utf16_string local_name,
@@ -1310,7 +1310,7 @@ javacall_dom_element_set_id_attribute_ns_finish(javacall_handle handle,
  * user-determined ID attribute. 
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param id_attr Pointer to the object of
@@ -1331,7 +1331,7 @@ javacall_dom_element_set_id_attribute_ns_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_set_id_attribute_node_start(javacall_handle handle,
-                                                 javacall_int32 isolateID,
+                                                 javacall_int32 invocationID,
                                                  void **context,
                                                  javacall_handle id_attr,
                                                  javacall_bool is_id,
@@ -1377,7 +1377,7 @@ javacall_dom_element_set_id_attribute_node_finish(javacall_handle handle,
  *
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the current number of element nodes that are immediate children
@@ -1391,7 +1391,7 @@ javacall_dom_element_set_id_attribute_node_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_child_element_count_start(javacall_handle handle,
-                                                   javacall_int32 isolateID,
+                                                   javacall_int32 invocationID,
                                                    void **context,
                                                    /* OUT */ javacall_int32* ret_value);
 
@@ -1421,7 +1421,7 @@ javacall_dom_element_get_child_element_count_finish(javacall_handle handle,
  * 
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -1436,7 +1436,7 @@ javacall_dom_element_get_child_element_count_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_first_element_child_start(javacall_handle handle,
-                                                   javacall_int32 isolateID,
+                                                   javacall_int32 invocationID,
                                                    void **context,
                                                    /* OUT */ javacall_handle* ret_value);
 
@@ -1467,7 +1467,7 @@ javacall_dom_element_get_first_element_child_finish(javacall_handle handle,
  *
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -1482,7 +1482,7 @@ javacall_dom_element_get_first_element_child_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_last_element_child_start(javacall_handle handle,
-                                                  javacall_int32 isolateID,
+                                                  javacall_int32 invocationID,
                                                   void **context,
                                                   /* OUT */ javacall_handle* ret_value);
 
@@ -1513,7 +1513,7 @@ javacall_dom_element_get_last_element_child_finish(javacall_handle handle,
  * 
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -1529,7 +1529,7 @@ javacall_dom_element_get_last_element_child_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_next_element_sibling_start(javacall_handle handle,
-                                                    javacall_int32 isolateID,
+                                                    javacall_int32 invocationID,
                                                     void **context,
                                                     /* OUT */ javacall_handle* ret_value);
 
@@ -1561,7 +1561,7 @@ javacall_dom_element_get_next_element_sibling_finish(javacall_handle handle,
  * 
  * 
  * @param handle Pointer to the object representing this element.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -1577,7 +1577,7 @@ javacall_dom_element_get_next_element_sibling_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_previous_element_sibling_start(javacall_handle handle,
-                                                        javacall_int32 isolateID,
+                                                        javacall_int32 invocationID,
                                                         void **context,
                                                         /* OUT */ javacall_handle* ret_value);
 

@@ -57,7 +57,7 @@ extern "C" {
  * which was modified, added, or removed. 
  * 
  * @param handle Pointer to the object representing this mutationevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -69,7 +69,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_mutationevent_get_related_node_start(javacall_handle handle,
-                                                  javacall_int32 isolateID,
+                                                  javacall_int32 invocationID,
                                                   void **context,
                                                   /* OUT */ javacall_handle* ret_value);
 
@@ -104,7 +104,7 @@ javacall_dom_mutationevent_get_related_node_finish(javacall_handle handle,
  * <code>CharacterData</code> node in DOMCharDataModified events. 
  * 
  * @param handle Pointer to the object representing this mutationevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -118,7 +118,7 @@ javacall_dom_mutationevent_get_related_node_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mutationevent_get_prev_value_start(javacall_handle handle,
-                                                javacall_int32 isolateID,
+                                                javacall_int32 invocationID,
                                                 void **context,
                                                 /* OUT */ javacall_utf16_string ret_value,
                                                 /* INOUT */ javacall_uint32* ret_value_len);
@@ -152,7 +152,7 @@ javacall_dom_mutationevent_get_prev_value_finish(javacall_handle handle,
  * node in DOMCharDataModified events. 
  * 
  * @param handle Pointer to the object representing this mutationevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -166,7 +166,7 @@ javacall_dom_mutationevent_get_prev_value_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mutationevent_get_new_value_start(javacall_handle handle,
-                                               javacall_int32 isolateID,
+                                               javacall_int32 invocationID,
                                                void **context,
                                                /* OUT */ javacall_utf16_string ret_value,
                                                /* INOUT */ javacall_uint32* ret_value_len);
@@ -199,7 +199,7 @@ javacall_dom_mutationevent_get_new_value_finish(javacall_handle handle,
  * <code>Attr</code> node in a DOMAttrModified event. 
  * 
  * @param handle Pointer to the object representing this mutationevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -213,7 +213,7 @@ javacall_dom_mutationevent_get_new_value_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mutationevent_get_attr_name_start(javacall_handle handle,
-                                               javacall_int32 isolateID,
+                                               javacall_int32 invocationID,
                                                void **context,
                                                /* OUT */ javacall_utf16_string ret_value,
                                                /* INOUT */ javacall_uint32* ret_value_len);
@@ -246,7 +246,7 @@ javacall_dom_mutationevent_get_attr_name_finish(javacall_handle handle,
  * , <code>ADDITION</code>, or <code>REMOVAL</code>. 
  * 
  * @param handle Pointer to the object representing this mutationevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -258,7 +258,7 @@ javacall_dom_mutationevent_get_attr_name_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mutationevent_get_attr_change_start(javacall_handle handle,
-                                                 javacall_int32 isolateID,
+                                                 javacall_int32 invocationID,
                                                  void **context,
                                                  /* OUT */ javacall_int16* ret_value);
 
@@ -288,7 +288,7 @@ javacall_dom_mutationevent_get_attr_change_finish(javacall_handle handle,
  * behavior as <code>Event.initEvent()</code>. 
  * 
  * @param handle Pointer to the object representing this mutationevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param type_arg  Refer to the <code>Event.initEvent()</code> method for 
@@ -316,7 +316,7 @@ javacall_dom_mutationevent_get_attr_change_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mutationevent_init_mutation_event_start(javacall_handle handle,
-                                                     javacall_int32 isolateID,
+                                                     javacall_int32 invocationID,
                                                      void **context,
                                                      javacall_const_utf16_string type_arg,
                                                      javacall_bool can_bubble_arg,
@@ -376,7 +376,7 @@ javacall_dom_mutationevent_init_mutation_event_finish(javacall_handle handle,
  * behavior as <code>Event.initEventNS()</code>. 
  * 
  * @param handle Pointer to the object representing this mutationevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri_arg  Refer to the <code>Event.initEventNS()</code> 
@@ -412,7 +412,7 @@ javacall_dom_mutationevent_init_mutation_event_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_mutationevent_init_mutation_event_ns_start(javacall_handle handle,
-                                                        javacall_int32 isolateID,
+                                                        javacall_int32 invocationID,
                                                         void **context,
                                                         javacall_const_utf16_string namespace_uri_arg,
                                                         javacall_const_utf16_string type_arg,

@@ -54,7 +54,7 @@ extern "C" {
  * <code>DOMString</code>, the implementation may truncate the data.
  * 
  * @param handle Pointer to the object representing this htmltextareaelement.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -68,7 +68,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_htmltextareaelement_get_value_start(javacall_handle handle,
-                                                 javacall_int32 isolateID,
+                                                 javacall_int32 invocationID,
                                                  void **context,
                                                  /* OUT */ javacall_utf16_string ret_value,
                                                  /* INOUT */ javacall_uint32* ret_value_len);
@@ -102,7 +102,7 @@ javacall_dom_htmltextareaelement_get_value_finish(javacall_handle handle,
  * select the contents of the <code>TEXTAREA</code>.
  * 
  * @param handle Pointer to the object representing this htmltextareaelement.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -114,7 +114,7 @@ javacall_dom_htmltextareaelement_get_value_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmltextareaelement_select_start(javacall_handle handle,
-                                              javacall_int32 isolateID,
+                                              javacall_int32 invocationID,
                                               void **context);
 
 /**
@@ -142,7 +142,7 @@ javacall_dom_htmltextareaelement_select_finish(javacall_handle handle,
  * <code>DOMString</code>, the implementation may truncate the data.
  * 
  * @param handle Pointer to the object representing this htmltextareaelement.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -154,7 +154,7 @@ javacall_dom_htmltextareaelement_select_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmltextareaelement_set_value_start(javacall_handle handle,
-                                                 javacall_int32 isolateID,
+                                                 javacall_int32 invocationID,
                                                  void **context,
                                                  javacall_const_utf16_string value);
 

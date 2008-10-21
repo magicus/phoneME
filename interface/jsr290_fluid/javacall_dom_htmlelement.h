@@ -52,7 +52,7 @@ extern "C" {
  * the class attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlelement.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -66,7 +66,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_htmlelement_get_class_name_start(javacall_handle handle,
-                                              javacall_int32 isolateID,
+                                              javacall_int32 invocationID,
                                               void **context,
                                               /* OUT */ javacall_utf16_string ret_value,
                                               /* INOUT */ javacall_uint32* ret_value_len);
@@ -98,7 +98,7 @@ javacall_dom_htmlelement_get_class_name_finish(javacall_handle handle,
  * returns the element's identifier. See the id attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlelement.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -112,7 +112,7 @@ javacall_dom_htmlelement_get_class_name_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmlelement_get_id_start(javacall_handle handle,
-                                      javacall_int32 isolateID,
+                                      javacall_int32 invocationID,
                                       void **context,
                                       /* OUT */ javacall_utf16_string ret_value,
                                       /* INOUT */ javacall_uint32* ret_value_len);
@@ -144,7 +144,7 @@ javacall_dom_htmlelement_get_id_finish(javacall_handle handle,
  * the class attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlelement.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -156,7 +156,7 @@ javacall_dom_htmlelement_get_id_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmlelement_set_class_name_start(javacall_handle handle,
-                                              javacall_int32 isolateID,
+                                              javacall_int32 invocationID,
                                               void **context,
                                               javacall_const_utf16_string class_name);
 
@@ -184,7 +184,7 @@ javacall_dom_htmlelement_set_class_name_finish(javacall_handle handle,
  * sets the element's identifier. See the id attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlelement.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -196,7 +196,7 @@ javacall_dom_htmlelement_set_class_name_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmlelement_set_id_start(javacall_handle handle,
-                                      javacall_int32 isolateID,
+                                      javacall_int32 invocationID,
                                       void **context,
                                       javacall_const_utf16_string id);
 

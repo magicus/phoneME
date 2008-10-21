@@ -50,7 +50,7 @@ extern "C" {
  * test if the DOM implementation implements a specific feature.
  * 
  * @param handle Pointer to the object representing this domimplementation.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param feature The name of the feature to test (case-insensitive). The 
@@ -80,7 +80,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_domimplementation_has_feature_start(javacall_handle handle,
-                                                 javacall_int32 isolateID,
+                                                 javacall_int32 invocationID,
                                                  void **context,
                                                  javacall_const_utf16_string feature,
                                                  javacall_const_utf16_string version,
@@ -132,7 +132,7 @@ javacall_dom_domimplementation_has_feature_finish(javacall_handle handle,
  * <code>DocumentType</code>.
  * 
  * @param handle Pointer to the object representing this domimplementation.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param qualified_name The qualified name of the document type to be 
@@ -157,7 +157,7 @@ javacall_dom_domimplementation_has_feature_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_domimplementation_create_document_type_start(javacall_handle handle,
-                                                          javacall_int32 isolateID,
+                                                          javacall_int32 invocationID,
                                                           void **context,
                                                           javacall_const_utf16_string qualified_name,
                                                           javacall_const_utf16_string public_id,
@@ -209,7 +209,7 @@ javacall_dom_domimplementation_create_document_type_finish(javacall_handle handl
  * its document element. 
  * 
  * @param handle Pointer to the object representing this domimplementation.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri The namespace URI of the document element to create.
@@ -238,7 +238,7 @@ javacall_dom_domimplementation_create_document_type_finish(javacall_handle handl
  */
 javacall_result
 javacall_dom_domimplementation_create_document_start(javacall_handle handle,
-                                                     javacall_int32 isolateID,
+                                                     javacall_int32 invocationID,
                                                      void **context,
                                                      javacall_const_utf16_string namespace_uri,
                                                      javacall_const_utf16_string qualified_name,
@@ -304,7 +304,7 @@ javacall_dom_domimplementation_create_document_finish(javacall_handle handle,
  * version for the specified feature.
  * 
  * @param handle Pointer to the object representing this domimplementation.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param feature  The name of the feature requested. Note that any plus 
@@ -330,7 +330,7 @@ javacall_dom_domimplementation_create_document_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_domimplementation_get_feature_start(javacall_handle handle,
-                                                 javacall_int32 isolateID,
+                                                 javacall_int32 invocationID,
                                                  void **context,
                                                  javacall_const_utf16_string feature,
                                                  javacall_const_utf16_string version,

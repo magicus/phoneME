@@ -56,7 +56,7 @@ extern "C" {
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this processinginstruction.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The target of this processing instruction.
@@ -72,7 +72,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_processinginstruction_get_target_start(javacall_handle handle,
-                                                    javacall_int32 isolateID,
+                                                    javacall_int32 invocationID,
                                                     void **context,
                                                     /* OUT */ javacall_utf16_string ret_value,
                                                     /* INOUT */ javacall_uint32* ret_value_len);
@@ -116,7 +116,7 @@ javacall_dom_processinginstruction_get_target_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this processinginstruction.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The content of this processing instruction
@@ -132,7 +132,7 @@ javacall_dom_processinginstruction_get_target_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_processinginstruction_get_data_start(javacall_handle handle,
-                                                  javacall_int32 isolateID,
+                                                  javacall_int32 invocationID,
                                                   void **context,
                                                   /* OUT */ javacall_utf16_string ret_value,
                                                   /* INOUT */ javacall_uint32* ret_value_len);
@@ -172,7 +172,7 @@ javacall_dom_processinginstruction_get_data_finish(javacall_handle handle,
  * preceding the <code>?&gt;</code>.
  * 
  * @param handle Pointer to the object representing this processinginstruction.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param data character data to add to the node, may not be NULL
@@ -186,7 +186,7 @@ javacall_dom_processinginstruction_get_data_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_processinginstruction_set_data_start(javacall_handle handle,
-                                                  javacall_int32 isolateID,
+                                                  javacall_int32 invocationID,
                                                   void **context,
                                                   javacall_const_utf16_string data);
 

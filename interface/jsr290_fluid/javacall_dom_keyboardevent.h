@@ -55,7 +55,7 @@ extern "C" {
  * <code>"Unidentified"</code>. 
  * 
  * @param handle Pointer to the object representing this keyboardevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -69,7 +69,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_keyboardevent_get_key_identifier_start(javacall_handle handle,
-                                                    javacall_int32 isolateID,
+                                                    javacall_int32 invocationID,
                                                     void **context,
                                                     /* OUT */ javacall_utf16_string ret_value,
                                                     /* INOUT */ javacall_uint32* ret_value_len);
@@ -107,7 +107,7 @@ javacall_dom_keyboardevent_get_key_identifier_finish(javacall_handle handle,
  * Keyboard event types</a>. 
  * 
  * @param handle Pointer to the object representing this keyboardevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -119,7 +119,7 @@ javacall_dom_keyboardevent_get_key_identifier_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_keyboardevent_get_key_location_start(javacall_handle handle,
-                                                  javacall_int32 isolateID,
+                                                  javacall_int32 invocationID,
                                                   void **context,
                                                   /* OUT */ javacall_int32* ret_value);
 
@@ -148,7 +148,7 @@ javacall_dom_keyboardevent_get_key_location_finish(javacall_handle handle,
  * returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this keyboardevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -160,7 +160,7 @@ javacall_dom_keyboardevent_get_key_location_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_keyboardevent_get_ctrl_key_start(javacall_handle handle,
-                                              javacall_int32 isolateID,
+                                              javacall_int32 invocationID,
                                               void **context,
                                               /* OUT */ javacall_bool* ret_value);
 
@@ -186,7 +186,7 @@ javacall_dom_keyboardevent_get_ctrl_key_finish(javacall_handle handle,
  * returns  <code>true</code> if the shift (Shift) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this keyboardevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -198,7 +198,7 @@ javacall_dom_keyboardevent_get_ctrl_key_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_keyboardevent_get_shift_key_start(javacall_handle handle,
-                                               javacall_int32 isolateID,
+                                               javacall_int32 invocationID,
                                                void **context,
                                                /* OUT */ javacall_bool* ret_value);
 
@@ -226,7 +226,7 @@ javacall_dom_keyboardevent_get_shift_key_finish(javacall_handle handle,
  * represented using this key modifier. 
  * 
  * @param handle Pointer to the object representing this keyboardevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -238,7 +238,7 @@ javacall_dom_keyboardevent_get_shift_key_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_keyboardevent_get_alt_key_start(javacall_handle handle,
-                                             javacall_int32 isolateID,
+                                             javacall_int32 invocationID,
                                              void **context,
                                              /* OUT */ javacall_bool* ret_value);
 
@@ -268,7 +268,7 @@ javacall_dom_keyboardevent_get_alt_key_finish(javacall_handle handle,
  * represented using this key modifier. 
  * 
  * @param handle Pointer to the object representing this keyboardevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -280,7 +280,7 @@ javacall_dom_keyboardevent_get_alt_key_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_keyboardevent_get_meta_key_start(javacall_handle handle,
-                                              javacall_int32 isolateID,
+                                              javacall_int32 invocationID,
                                               void **context,
                                               /* OUT */ javacall_bool* ret_value);
 
@@ -311,7 +311,7 @@ javacall_dom_keyboardevent_get_meta_key_finish(javacall_handle handle,
  * <code>UIEvent.detail</code> remains undefined. 
  * 
  * @param handle Pointer to the object representing this keyboardevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param type_arg  Refer to the <code>UIEvent.initUIEvent()</code> method 
@@ -337,7 +337,7 @@ javacall_dom_keyboardevent_get_meta_key_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_keyboardevent_init_keyboard_event_start(javacall_handle handle,
-                                                     javacall_int32 isolateID,
+                                                     javacall_int32 invocationID,
                                                      void **context,
                                                      javacall_const_utf16_string type_arg,
                                                      javacall_bool can_bubble_arg,
@@ -399,7 +399,7 @@ javacall_dom_keyboardevent_init_keyboard_event_finish(javacall_handle handle,
  * <code>UIEvent.detail</code> remains undefined. 
  * 
  * @param handle Pointer to the object representing this keyboardevent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri_arg  Refer to the <code>UIEvent.initUIEventNS()</code> 
@@ -430,7 +430,7 @@ javacall_dom_keyboardevent_init_keyboard_event_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_keyboardevent_init_keyboard_event_ns_start(javacall_handle handle,
-                                                        javacall_int32 isolateID,
+                                                        javacall_int32 invocationID,
                                                         void **context,
                                                         javacall_const_utf16_string namespace_uri_arg,
                                                         javacall_const_utf16_string type_arg,

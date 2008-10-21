@@ -55,7 +55,7 @@ extern "C" {
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this documenttype.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the name of the DTD
@@ -71,7 +71,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_documenttype_get_name_start(javacall_handle handle,
-                                         javacall_int32 isolateID,
+                                         javacall_int32 invocationID,
                                          void **context,
                                          /* OUT */ javacall_utf16_string ret_value,
                                          /* INOUT */ javacall_uint32* ret_value_len);
@@ -120,7 +120,7 @@ javacall_dom_documenttype_get_name_finish(javacall_handle handle,
  * <code>entities</code> cannot be altered in any way.
  * 
  * @param handle Pointer to the object representing this documenttype.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -135,7 +135,7 @@ javacall_dom_documenttype_get_name_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_documenttype_get_entities_start(javacall_handle handle,
-                                             javacall_int32 isolateID,
+                                             javacall_int32 invocationID,
                                              void **context,
                                              /* OUT */ javacall_handle* ret_value);
 
@@ -180,7 +180,7 @@ javacall_dom_documenttype_get_entities_finish(javacall_handle handle,
  * <code>notations</code> cannot be altered in any way.
  * 
  * @param handle Pointer to the object representing this documenttype.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
@@ -194,7 +194,7 @@ javacall_dom_documenttype_get_entities_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_documenttype_get_notations_start(javacall_handle handle,
-                                              javacall_int32 isolateID,
+                                              javacall_int32 invocationID,
                                               void **context,
                                               /* OUT */ javacall_handle* ret_value);
 
@@ -230,7 +230,7 @@ javacall_dom_documenttype_get_notations_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this documenttype.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the public identifier of the external subset
@@ -246,7 +246,7 @@ javacall_dom_documenttype_get_notations_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_documenttype_get_public_id_start(javacall_handle handle,
-                                              javacall_int32 isolateID,
+                                              javacall_int32 invocationID,
                                               void **context,
                                               /* OUT */ javacall_utf16_string ret_value,
                                               /* INOUT */ javacall_uint32* ret_value_len);
@@ -286,7 +286,7 @@ javacall_dom_documenttype_get_public_id_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this documenttype.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The system identifier of the external subset
@@ -302,7 +302,7 @@ javacall_dom_documenttype_get_public_id_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_documenttype_get_system_id_start(javacall_handle handle,
-                                              javacall_int32 isolateID,
+                                              javacall_int32 invocationID,
                                               void **context,
                                               /* OUT */ javacall_utf16_string ret_value,
                                               /* INOUT */ javacall_uint32* ret_value_len);
@@ -346,7 +346,7 @@ javacall_dom_documenttype_get_system_id_finish(javacall_handle handle,
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this documenttype.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing a representation of the internal subset
@@ -362,7 +362,7 @@ javacall_dom_documenttype_get_system_id_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_documenttype_get_internal_subset_start(javacall_handle handle,
-                                                    javacall_int32 isolateID,
+                                                    javacall_int32 invocationID,
                                                     void **context,
                                                     /* OUT */ javacall_utf16_string ret_value,
                                                     /* INOUT */ javacall_uint32* ret_value_len);

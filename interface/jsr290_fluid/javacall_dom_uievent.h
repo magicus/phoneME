@@ -51,7 +51,7 @@ extern "C" {
  * depending on the type of event. 
  * 
  * @param handle Pointer to the object representing this uievent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * 
@@ -63,7 +63,7 @@ extern "C" {
  */
 javacall_result
 javacall_dom_uievent_get_detail_start(javacall_handle handle,
-                                      javacall_int32 isolateID,
+                                      javacall_int32 invocationID,
                                       void **context,
                                       /* OUT */ javacall_int32* ret_value);
 
@@ -92,7 +92,7 @@ javacall_dom_uievent_get_detail_finish(javacall_handle handle,
  * <code>Event.initEvent()</code>. 
  * 
  * @param handle Pointer to the object representing this uievent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param type_arg  Refer to the <code>Event.initEvent()</code> method for 
@@ -111,7 +111,7 @@ javacall_dom_uievent_get_detail_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_uievent_init_ui_event_start(javacall_handle handle,
-                                         javacall_int32 isolateID,
+                                         javacall_int32 invocationID,
                                          void **context,
                                          javacall_const_utf16_string type_arg,
                                          javacall_bool can_bubble_arg,
@@ -154,7 +154,7 @@ javacall_dom_uievent_init_ui_event_finish(javacall_handle handle,
  * <code>Event.initEventNS()</code>. 
  * 
  * @param handle Pointer to the object representing this uievent.
- * @param isolateID Identifier of the isolate which is used in the 
+ * @param invocationID Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param namespace_uri  Refer to the <code>Event.initEventNS()</code> 
@@ -177,7 +177,7 @@ javacall_dom_uievent_init_ui_event_finish(javacall_handle handle,
  */
 javacall_result
 javacall_dom_uievent_init_ui_event_ns_start(javacall_handle handle,
-                                            javacall_int32 isolateID,
+                                            javacall_int32 invocationID,
                                             void **context,
                                             javacall_const_utf16_string namespace_uri,
                                             javacall_const_utf16_string type_arg,
