@@ -33,6 +33,6 @@
  */
 
 #include "jvm.h"
-#include "generated/javavm/include/opcodes.h"
+#include "javavm/include/opcodes.h"
 
 #endif /* _JCOV_JVM_H */
