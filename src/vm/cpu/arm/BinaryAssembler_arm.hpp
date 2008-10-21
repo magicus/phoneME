@@ -359,7 +359,7 @@ private:
 
 #if defined(PRODUCT) && !USE_COMPILER_COMMENTS
 inline void Assembler::emit(int instr) {
-  ((BinaryAssembler*)_compiler_code_generator)->emit_int(instr);
+  ((BinaryAssembler*)_compiler_state)->emit_int(instr);
 }
 #endif // defined(PRODUCT) && !USE_COMPILER_COMMENTS
 

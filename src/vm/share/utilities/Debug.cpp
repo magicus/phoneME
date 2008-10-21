@@ -543,8 +543,10 @@ void ra() {
 void vsf() {
   DebugHandleMarker debug_handle_marker;
   tty->print_cr("VirtualStackFrame");
-  if (Compiler::is_active()) {
-    Compiler::current()->frame()->print();
+
+  Compiler* compiler = Compiler::current();
+  if (compiler) {
+    compiler->frame()->print();
   } else {
     tty->print_cr("  (compiler not active)");
   }
@@ -566,8 +568,9 @@ void dis() {
 
 void fpu() {
   tty->print_cr("FPUstack");
-  if (Compiler::is_active()) {
-    Compiler::current()->frame()->dump_fp_registers(false);
+  Compiler* compiler = Compiler::current();
+  if (compiler) {
+    compiler->frame()->dump_fp_registers(false);
   } else {
     tty->print_cr("  (compiler not active)");
   }

@@ -101,7 +101,7 @@ class VirtualStackFrame: public CompilerObject {
   static Method* method( void );
 
   static CodeGenerator* code_generator( void ) {
-    return _compiler_code_generator;
+    return (CodeGenerator*) _compiler_state;
   }
 
   static int num_stack_lock_words( void ) {

@@ -33,7 +33,6 @@
 # include "incls/_CompilationQueue.cpp.incl"
 
 #if ENABLE_COMPILER
-CompilationQueueElement* CompilationQueueElement::_pool;
 #if ENABLE_CSE
 #define ABORT_CSE_TRACKING VirtualStackFrame::abort_tracking_of_current_snippet();\
       RegisterAllocator::wipe_all_notations();
@@ -45,9 +44,11 @@ CompilationQueueElement* CompilationQueueElement::allocate(
 {
   VirtualStackFrame* frame = Compiler::frame();
 
-  CompilationQueueElement* element = _pool;
-  if( element ) {    
-    _pool = element->next();  // Reuse CompilationQueueElement
+  CompilerState* state = Compiler::state();
+  CompilationQueueElement* element = state->compilation_queue_pool();
+  if( element ) {
+    // Reuse CompilationQueueElement
+    state->remove( element );  
     frame->copy_to( element->frame() );
 
     // These fields will be zero in a newly allocated object, but not 
@@ -604,7 +605,7 @@ void QuickCatchStub::compile(JVM_SINGLE_ARG_TRAPS) {
 
 #ifdef AZZERT
   GUARANTEE( frame()->virtual_stack_pointer() ==
-             Compiler::root()->method()->max_locals(),
+             Compiler::root_method()->max_locals(),
              "must have exactly one stack item");
 #endif
 
@@ -735,9 +736,12 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
 
   // We don't support inlining of methods with exception handlers,
   // so only root method can have exception handlers
-  UsingFastOops fast_oops;
-  Method::Fast method = Compiler::root()->method();
-  const int current_bci = Compiler::root()->compiler_bci();
+
+  Compiler* root = Compiler::root();
+
+  UsingFastOops fast_oops;  
+  Method::Fast method = root->method();
+  const int current_bci = root->compiler_bci();
 
   Value exception(T_OBJECT);
   const int handler_bci = method().exception_handler_bci_for(
@@ -819,7 +823,8 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
 
     // For now we don't support inlining of methods with exception handlers,
     // so only root method can have a handler
-    const Entry* entry = Compiler::root()->entry_for(handler_bci);
+    Compiler* root = Compiler::root();
+    const Entry* entry = root->entry_for(handler_bci);
     if( entry && entry->frame()->is_conformant_to(frame) ) {
       // The exception handler has already been compiled and has the same
       // VSF as here, so we can just branch to it. No need to create
@@ -833,8 +838,7 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
       // Can we always be guaranteed that the compilation continuation gets
       // inserted at the front of the queue and immediately follows?
       gen->jmp(branch_label);
-      CompilationContinuation::insert(Compiler::root(), 
-                                      handler_bci, branch_label JVM_CHECK);
+      CompilationContinuation::insert(root, handler_bci, branch_label JVM_CHECK);
     }
   } else {
     const bool has_monitors = method().access_flags().is_synchronized() ||

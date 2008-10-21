@@ -971,7 +971,7 @@ int CodeGenerator::get_inline_thrower_gp_index(int rte JVM_TRAPS) {
     return -1;
   }
 
-  const int locals = Compiler::root()->method()->max_locals();
+  const int locals = Compiler::root_method()->max_locals();
 
   if (locals < MAX_INLINE_THROWER_METHOD_LOCALS) {
     long offset;

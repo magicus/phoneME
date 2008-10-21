@@ -39,7 +39,7 @@ class GenericAddress: public StackObj {
   static inline VirtualStackFrame* frame ( void );
 
   static inline CodeGenerator* code_generator ( void ) {
-    return _compiler_code_generator;
+    return (CodeGenerator*)_compiler_state;
   }
   static inline Method* method ( void ) {
     return _compiler_method;

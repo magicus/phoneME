@@ -36,9 +36,7 @@
 
 int VirtualStackFrame::_location_map_size;
 
-Method* VirtualStackFrame::method( void ) {
-  return Compiler::root()->method();
-}
+Method* VirtualStackFrame::method( void ) { return Compiler::root_method(); }
 
 #if ENABLE_CSE
 

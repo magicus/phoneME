@@ -508,7 +508,7 @@ OopDesc* ObjectHeap::dead_task;
 
 inline bool ObjectHeap::compiler_area_in_use( void ) {
 #if ENABLE_COMPILER
-  return Compiler::is_active() || Compiler::is_suspended();
+  return Compiler::is_suspended();
 #else
   return false;
 #endif
@@ -1413,7 +1413,9 @@ bool ObjectHeap::create() {
 
   GUARANTEE(!YoungGenerationAtEndOfHeap, "sanity");
 
-  _compiler_code_generator = NULL;
+  _compiler_state = NULL;
+  Compiler::set_current( NULL );
+  Compiler::set_root( NULL );
 #endif
 
 #ifndef PRODUCT
@@ -2008,7 +2010,7 @@ void ObjectHeap::roots_do_to( void do_oop(OopDesc**), const bool young_only,
     CompiledMethodDesc* cm  = (CompiledMethodDesc*)_compiler_area_start;
     CompiledMethodDesc* end = (CompiledMethodDesc*)_compiler_area_top;
     {
-      const CodeGenerator* gen = _compiler_code_generator;
+      const CodeGenerator* gen = Compiler::code_generator();
       if( gen ) {
         end = (CompiledMethodDesc*)gen->compiled_method()->obj();
       }

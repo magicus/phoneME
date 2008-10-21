@@ -63,7 +63,7 @@ class RegisterAllocator {
   };
 
   static inline CodeGenerator* code_generator ( void ) {
-    return _compiler_code_generator;
+    return (CodeGenerator*)_compiler_state;
   }
 
  public:

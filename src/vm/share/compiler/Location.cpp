@@ -30,7 +30,7 @@
 #if ENABLE_COMPILER
 
 inline CodeGenerator* RawLocation::code_generator( void ) {
-  return _compiler_code_generator;
+  return Compiler::code_generator();
 }
 
 inline RawLocation::Actions 

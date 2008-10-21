@@ -34,22 +34,22 @@
 
 #if ENABLE_COMPILER
 
-CompilerStatic  Compiler::_state;
+Compiler*       Compiler::_current;
+#if ENABLE_INLINE
+Compiler*       Compiler::_root;
+#endif
 CompilerContext Compiler::_suspended_compiler_context;
 
-inline void CompilerStatic::cleanup( void ) {
-  jvm_memset( this, 0, sizeof *this );
-}
-
 inline void CompilerContext::oops_do( void do_oop(OopDesc**) ) {
-  if( valid() ) {
-    OopDesc** p = (OopDesc**) this;
-    for( int i = pointer_count(); --i >= 0; p++ ) {
-      do_oop( p );
-    }
-    if (parent() != NULL) {
-      parent()->context()->oops_do( do_oop );
-    }
+  for( CompilerContext* context = this; context->valid(); ) {
+    Compiler* parent = context->parent();
+
+    #define FIELD_DO( type, name ) do_oop( (OopDesc**)&_##name );
+    COMPILER_CONTEXT_HANDLES_DO(FIELD_DO)
+    #undef FIELD_DO
+
+    if( !parent ) break;
+    context = parent->context();
   }
 }
 
@@ -69,12 +69,12 @@ Compiler::CompilationHistory* Compiler::_history_tail;
 
 Compiler::Compiler( Method* method, const int active_bci ) {
   jvm_memset(&_context, 0, sizeof _context );
+  Compiler* compiler = current();
 #if ENABLE_INLINE
-  if (is_active()) {
+  if( compiler ) {
     // Dump cached values to the context
-    current()->set_saved_bci(Compiler::bci());
-    current()->set_saved_num_stack_lock_words(
-      Compiler::num_stack_lock_words());
+    compiler->set_saved_bci(Compiler::bci());
+    compiler->set_saved_num_stack_lock_words(Compiler::num_stack_lock_words());
 
     // Set local base for the new compiler
     GUARANTEE(frame() != NULL, "Frame must be created by the caller");
@@ -88,7 +88,7 @@ Compiler::Compiler( Method* method, const int active_bci ) {
     set_root(this);
     set_local_base(0);
   }
-  set_parent(current());
+  set_parent( compiler );
   set_current(this);
 
   set_method( method );
@@ -305,10 +305,13 @@ void Compiler::process_interpretation_log() {
 
 void Compiler::oops_do( void do_oop(OopDesc**) ) {
   _suspended_compiler_context.oops_do( do_oop );
-  if (is_active()) {
-    current()->context()->oops_do( do_oop );
+
+  Compiler* compiler = current();
+  if( compiler ) {
+    compiler->context()->oops_do( do_oop );
   }
-  code_generator()->oops_do( do_oop );
+
+  state()->oops_do( do_oop );
 }
 
 void Compiler::terminate ( OopDesc* result ) {
@@ -329,8 +332,7 @@ void Compiler::terminate ( OopDesc* result ) {
     }
 #endif
   }
-  CodeGenerator::terminate();
-  _state.cleanup();
+  CompilerState::terminate();
   _suspended_compiler_context.cleanup();
   ObjectHeap::update_compiler_area_top( result );
 }
@@ -368,8 +370,6 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
   }
 #endif
 
-  jvm_fast_globals.compiler_code_generator = NULL;
-
   const jint size = align_allocation_size(1024 + (method()->code_size() *
                                             compiled_code_factor));
 
@@ -393,9 +393,9 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
 
   set_bci(0);
 
-  // Allocate a compiled method.
-  CodeGenerator* gen = CodeGenerator::allocate(size JVM_NO_CHECK);
-  if( gen == NULL ) {
+  // Allocate static compiler state & compiled method
+  CompilerState* state = CompilerState::allocate(size JVM_NO_CHECK);
+  if( state == NULL ) {
     if( TraceCompiledMethodCache ) {
       TTY_TRACE_CR(( "Compilation FAILED - out of memory" ));
     }
@@ -483,7 +483,6 @@ ReturnOop Compiler::compile(Method* method, int active_bci JVM_TRAPS) {
 
   EventLogger::start(EventLogger::COMPILE);
 
-  CompilationQueueElement::reset_pool();
   ObjectHeap::save_compiler_area_top();
 
   // We need a bigger compiled code factor if any of these are set.
@@ -712,6 +711,8 @@ void Compiler::update_null_check_stubs() {
 #endif //ENABLE_INTERNAL_CODE_OPTIMIZER
 
 void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
+//  AllocationDisabler disable_heap_allocation;
+
   // Tell OS to interrupt compilation after a platform-specific amount
   // of time. This avoid long compilation pauses when compiling big methods.
   if( !Compiler::is_inlining() ) { 
@@ -747,9 +748,6 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
       RegisterAllocator::guarantee_all_free();
       clear_current_element();
       element->free();
-    } else {
-      // We will resume compilation of the current element in the next
-      // call to Compiler::resume()
     }
 
     check_free_space(JVM_SINGLE_ARG_NO_CHECK);
@@ -803,14 +801,13 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
   if ( result.not_null() ) {
    ((CompiledMethodDesc*)result().obj())->jvmpi_set_code_size(
                                           code_generator()->code_size());
+    // Send the compiled method load event.
+    if(UseJvmpiProfiler &&
+       JVMPIProfile::VMjvmpiEventCompiledMethodLoadIsEnabled() ) {
+      JVMPIProfile::VMjvmpiPostCompiledMethodLoadEvent(result);
+    }
   }
 
-  // Send the compiled method load event.
-  if(UseJvmpiProfiler && 
-    JVMPIProfile::VMjvmpiEventCompiledMethodLoadIsEnabled() &&
-    result.not_null()) {
-    JVMPIProfile::VMjvmpiPostCompiledMethodLoadEvent(result);
-  }
 #endif
 
   if (InstallCompiledCode) {   
@@ -1023,15 +1020,9 @@ void Compiler::print_compilation_history( void ) {
 #endif // PRODUCT
 
 #if USE_DEBUG_PRINTING
-void CompilerStatic::print_on(Stream *st) {
-  #define COMPILER_STATIC_FIELDS_PRINT( type, name ) \
-          st->print_cr("%-30s = %d", STR(name), _##name);
-  COMPILER_STATIC_FIELDS_DO(COMPILER_STATIC_FIELDS_PRINT);
-}
-
 void Compiler::print_on(Stream *st) {
   st->print_cr("Compiler::_current = 0x%08x", current());
-  _state.print_on(st);
+  state()->print_on(st);
   st->print_cr("Compiler::_closure = 0x%08x", &_closure);
   _closure.print_on(st);
 }

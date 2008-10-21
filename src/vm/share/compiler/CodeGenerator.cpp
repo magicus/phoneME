@@ -118,7 +118,7 @@ void CodeGenerator::check_free_space(JVM_SINGLE_ARG_TRAPS) {
 void CodeGenerator::ensure_sufficient_stack_for(int index, BasicType kind) {
   int adjusted_index = index + (is_two_word(kind) ? 1 : 0);
   const int max_execution_stack_count =
-    Compiler::root()->method()->max_execution_stack_count();
+    Compiler::root_method()->max_execution_stack_count();
 
   int inliner_stack_count = 2;
 #if ENABLE_INLINE
@@ -675,7 +675,7 @@ void CodeGenerator::branch_if(BytecodeClosure::cond_op condition,
 }
 
 bool CodeGenerator::is_inline_exception_allowed(int rte JVM_TRAPS) {
-  Method* m = Compiler::root()->method();
+  Method* m = Compiler::root_method();
   const bool has_monitors = m->access_flags().is_synchronized() ||
                             m->access_flags().has_monitor_bytecodes();
   if (has_monitors) {

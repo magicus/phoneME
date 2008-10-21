@@ -33,24 +33,7 @@
 
 // The compiler translates bytecodes into native instructions.
 
-#define COMPILER_CONTEXT_HANDLES FIELD( Method, method )
-
-class CompilerContextPointers {
-  #define FIELD( type, name ) \
-    type##Desc* _##name;    \
-    type* name ( void ) const           { return (type*) &_##name;     }  \
-    void clear_##name ( void )          { _##name = NULL;              }  \
-    void set_##name ( OopDesc* val )    { _##name = (type##Desc*) val; }  \
-    void set_##name ( const type* val ) { set_##name( val->obj() );    }
-
-public:
-  COMPILER_CONTEXT_HANDLES
-  #undef FIELD
-
-  static int pointer_count( void ) {
-    return sizeof(CompilerContextPointers) / sizeof(OopDesc*);
-  }
-};
+#define COMPILER_CONTEXT_HANDLES_DO(def) def( Method, method )
 
 #define GENERIC_COMPILER_CONTEXT_FIELDS_DO(template)\
   template( CompilationQueueElement*, compilation_queue              )\
@@ -86,18 +69,26 @@ public:
         INLINER_COMPILER_CONTEXT_FIELDS_DO(template) \
         SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) 
 
-class CompilerContext: public CompilerContextPointers {
+class CompilerContext {
 public:
   typedef EntryArray EntryTableType;
 
-  #define FIELD( type, name ) \
+  #define DEFINE_FIELD( type, name ) \
+    type##Desc* _##name;    \
+    type* name ( void ) const           { return (type*) &_##name;     }  \
+    void clear_##name ( void )          { _##name = NULL;              }  \
+    void set_##name ( OopDesc* val )    { _##name = (type##Desc*) val; }  \
+    void set_##name ( const type* val ) { set_##name( val->obj() );    }
+  COMPILER_CONTEXT_HANDLES_DO(DEFINE_FIELD)
+  #undef DEFINE_FIELD
+
+  #define DEFINE_FIELD( type, name ) \
     type _##name;             \
     type name         ( void ) const { return _##name;  }\
     void set_##name   ( type val )   { _##name = val;   }\
     void clear_##name ( void )       { set_##name( 0 ); }
-
-  COMPILER_CONTEXT_FIELDS_DO(FIELD)
-  #undef FIELD
+  COMPILER_CONTEXT_FIELDS_DO(DEFINE_FIELD)
+  #undef DEFINE_FIELD
 
   bool valid ( void ) const { return method()->not_null(); }
 
@@ -109,44 +100,38 @@ public:
 #endif
 };
 
-#define COMPILER_STATIC_FIELDS_DO(template)\
-  template( VirtualStackFrame*, frame                   )\
-  template( VirtualStackFrame*, conforming_frame        )\
-  template( VirtualStackFrame*, cached_preserved_frame  )\
-  template( Compiler*,          root                    )\
-  template( Compiler*,          current                 )
-
-class CompilerStatic {
- public:
-  #define DECLARE_FIELD( type, name ) type _##name;
-  COMPILER_STATIC_FIELDS_DO(DECLARE_FIELD)
-
-  ThrowExceptionStub* _rte_handlers[ThrowExceptionStub::number_of_runtime_exceptions];
-
-#if USE_DEBUG_PRINTING
-  void print_on(Stream *st);
-#endif
-  void cleanup( void );
-};
-
 class Compiler: public StackObj {
  private:
-  // The compiler state.
-  static CompilerStatic _state;
+  static Compiler* _current;
+#if ENABLE_INLINE
+  static Compiler* _root;
+#endif
 
   // Info used to tune down compilation for smoother animation.
-  static jlong          _estimated_frame_time;
-  static jlong          _last_frame_time_stamp;
+  static jlong _estimated_frame_time;
+  static jlong _last_frame_time_stamp;
+
+  static CompilerState* state( void ) { return _compiler_state;  }
 
  public:
-  typedef CompilerContext::EntryTableType EntryTableType;
+  static Compiler* current( void ) { return _current; }
+  static void set_current( Compiler* compiler ) { _current = compiler; }
+  
+#if ENABLE_INLINE
+  static Compiler* root( void ) { return _root; }
+  static void set_root( Compiler* compiler ) { _root = compiler; }
+#else
+  static Compiler* root( void ) { return _current; }
+  static void set_root( Compiler* ) {}
+#endif
 
   #define DEFINE_ACCESSOR( type, name ) \
-    static type name       ( void )          { return _state._##name;    } \
-    static void set_##name ( type name )     { _state._##name = name;    }
+    static type name       (void)      { return state()->name();    } \
+    static void set_##name (type name) { state()->set_##name(name); }
   COMPILER_STATIC_FIELDS_DO(DEFINE_ACCESSOR)
   #undef DEFINE_ACCESSOR
 
+  typedef CompilerContext::EntryTableType EntryTableType;
   #define DEFINE_ACCESSOR( type, name ) \
     type name                  ( void ) const { return _context.name();   } \
     void set_##name            ( type name )  { _context.set_##name(name);} \
@@ -155,14 +140,16 @@ class Compiler: public StackObj {
   COMPILER_CONTEXT_FIELDS_DO(DEFINE_ACCESSOR)
   #undef DEFINE_ACCESSOR
 
-  #define FIELD( type, name ) \
+  #define DEFINE_ACCESSOR( type, name ) \
     type* name       ( void ) const      { return _context.name();     } \
     void clear_##name( void )            { _context.clear_##name();    } \
     void set_##name  ( OopDesc* val )    { _context.set_##name( val ); } \
     void set_##name  ( const type* val ) { _context.set_##name( val ); } \
     static type* current_##name ( void ) { return current()->name();   }
-  COMPILER_CONTEXT_HANDLES
-  #undef FIELD
+  COMPILER_CONTEXT_HANDLES_DO(DEFINE_ACCESSOR)
+  #undef DEFINE_ACCESSOR
+
+  static Method* root_method( void ) { return root()->method(); }  
 
   // Constructor and deconstructor.
   Compiler( Method* method, const int active_bci );
@@ -176,7 +163,6 @@ class Compiler: public StackObj {
 
   // Called during VM start-up
   static void initialize( void ) {
-    jvm_memset(&_state, 0, sizeof _state);
     jvm_memset(&_suspended_compiler_context, 0, 
                sizeof _suspended_compiler_context);
 #if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
@@ -203,13 +189,11 @@ class Compiler: public StackObj {
   static void abort_active_compilation(bool is_permanent JVM_TRAPS);
 
   static CodeGenerator* code_generator( void ) {
-    return _compiler_code_generator;
+    return state()->code_generator();
   }
-
   static CompiledMethod* current_compiled_method( void ) {
     return code_generator()->compiled_method();
   }
-
   static BytecodeCompileClosure* closure( void ) {
     return _compiler_closure;
   }
@@ -345,10 +329,10 @@ class Compiler: public StackObj {
   // Support for sharing of exception thrower stubs.
   typedef ThrowExceptionStub::RuntimeException RuntimeException;
   static ThrowExceptionStub* rte_handler(const RuntimeException rte) {
-    return _state._rte_handlers[rte];
+    return state()->rte_handler(rte);
   }
   static void set_rte_handler(const RuntimeException rte, ThrowExceptionStub* value) {
-    _state._rte_handlers[rte] = value;
+    state()->set_rte_handler(rte, value);
   }
 #if ENABLE_INLINE
   void internal_compile_inlined( Method::Attributes& attributes JVM_TRAPS );
@@ -358,34 +342,26 @@ class Compiler: public StackObj {
     label._encoding = inline_return_label_encoding();
     return label;
   }
-
   void set_inline_return_label(const BinaryAssembler::Label label) {
     set_inline_return_label_encoding(label._encoding );
   }
 
  private:
+  CompilationQueueElement* parent_element( void ) const {
+    GUARANTEE(is_inlining(), "Can only be called during inlining");
+    const Compiler* parent_compiler = parent();
+    GUARANTEE(parent_compiler != NULL, "Cannot be null when inlining");
+    GUARANTEE(parent_compiler != this, "Sanity");
+    CompilationQueueElement* p = parent_compiler->current_element();
+    GUARANTEE(p, "Cannot be null when inlining");
+    return p;
+  }
   VirtualStackFrame* parent_frame( void ) const {
-    GUARANTEE(is_inlining(), "Can only be called during inlining");
-    const Compiler* parent_compiler = parent();
-    GUARANTEE(parent_compiler != NULL, "Cannot be null when inlining");
-    GUARANTEE(parent_compiler != this, "Sanity");
-    const CompilationQueueElement* parent_element = 
-      parent_compiler->current_element();
-    GUARANTEE(parent_element, "Cannot be null when inlining");
-    return parent_element->frame();
+    return parent_element()->frame();
   }
-
   void set_parent_frame( VirtualStackFrame* frame ) {
-    GUARANTEE(is_inlining(), "Can only be called during inlining");
-    const Compiler* parent_compiler = parent();
-    GUARANTEE(parent_compiler != NULL, "Cannot be null when inlining");
-    GUARANTEE(parent_compiler != this, "Sanity");
-    CompilationQueueElement* parent_element = 
-      parent_compiler->current_element();
-    GUARANTEE(parent_element, "Cannot be null when inlining");
-    parent_element->set_frame( frame );
+    parent_element()->set_frame( frame );
   }
-
   void clear_parent_frame( void ) {
     set_parent_frame( NULL );
   }
@@ -416,7 +392,11 @@ class Compiler: public StackObj {
   }
 
   static bool is_inlining( void ) { 
+#if ENABLE_INLINE
     return current() != root();
+#else
+    return false;
+#endif
   }
 
   int compiler_bci( void ) const {
@@ -459,7 +439,7 @@ class Compiler: public StackObj {
     return &_suspended_compiler_context;
   }
   static bool is_suspended ( void ) {
-    return _compiler_code_generator != NULL;
+    return state() != NULL;
   }
 
   static void oops_do( void do_oop(OopDesc**) );
@@ -475,11 +455,8 @@ class Compiler: public StackObj {
   FastOopInStackObj    __must_be_first_item__;
 #endif
 
-  // The compiler closure.
-  BytecodeCompileClosure _closure;
-
-  // The compiler context.
-  CompilerContext        _context;
+  BytecodeCompileClosure _closure;  // The compiler closure.
+  CompilerContext        _context;  // The compiler context.
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM &&ENABLE_CODE_OPTIMIZER
   CompilationQueueElement* _next_element;
@@ -681,7 +658,7 @@ class Compiler: public StackObj {
     _closure.set_code_generator( gen );
   }
   void set_code_generator( void ) {
-    set_code_generator( _compiler_code_generator );
+    set_code_generator( code_generator() );
   }
 
 #if ENABLE_PERFORMANCE_COUNTERS
@@ -736,14 +713,6 @@ private:
   static bool _is_undoing_patching;
 #endif
 };
-
-inline VirtualStackFrame* CodeGenerator::frame ( void ) {
-  return Compiler::current()->frame();
-}
-
-inline VirtualStackFrame* GenericAddress::frame ( void ) {
-  return Compiler::current()->frame();
-}
 
 class VirtualStackFrameContext: public StackObj {
  private:

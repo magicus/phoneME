@@ -37,31 +37,9 @@
 
 class CodeGenerator: public BinaryAssembler {
  public:
-  static CodeGenerator* allocate( const int size JVM_TRAPS ) {
-    OopDesc* compiled_method = Universe::new_compiled_method(size JVM_NO_CHECK);
-    if( compiled_method ) {
-#ifdef PRODUCT
-      CodeGenerator* gen = COMPILER_OBJECT_ALLOCATE( CodeGenerator );
-      if( gen )
-#else
-      static CodeGenerator _code_generator;
-      CodeGenerator* gen = &_code_generator;
-#endif
-      {
-        _compiler_code_generator = gen;
-        gen->initialize( compiled_method );
-        return gen;
-      }
-    }
-    return NULL;
-  }
-  static void terminate( void ) {
-    _compiler_code_generator = NULL;
-  }
   static CodeGenerator* current( void ) {
-    return _compiler_code_generator;
+    return (CodeGenerator*)_compiler_state;
   }
-
   // generate the jmp to interpreter_method_entry for overflow
   void overflow(const Assembler::Register&, const Assembler::Register&);
   // generate the code for the method entry of the given method
@@ -498,6 +476,14 @@ public:
   void append_callinfo_record(const int code_offset JVM_TRAPS);
 #endif
 
+  bool _omit_stack_frame;
+
+  // Platform dependent stuff
+#include "incls/_CodeGenerator_pd.hpp.incl"
+  friend class VirtualStackFrame;
+  friend class ForwardBranchOptimizer;
+
+ protected:
   void initialize( OopDesc* compiled_method ) {
     BinaryAssemblerCommon::initialize( compiled_method );
 #if ENABLE_APPENDED_CALLINFO
@@ -505,13 +491,6 @@ public:
 #endif
     _omit_stack_frame = false;
   }
-
-  bool _omit_stack_frame;
-
-  // Platform dependent stuff
-#include "incls/_CodeGenerator_pd.hpp.incl"
-  friend class VirtualStackFrame;
-  friend class ForwardBranchOptimizer;
 };
 
 #endif
