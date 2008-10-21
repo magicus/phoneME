@@ -3349,18 +3349,27 @@ public class Display {
             // #ifdef ENABLE_CHAMELEON
             SkinLoader.checkLocale();
             AlertResources.checkLocale();
+
+
+            if (hasForeground) {
+                MIDPWindow windowCopy;
+                DisplayableLF currentCopy;
+                synchronized (LCDUILock) {
+                    currentCopy = Display.this.current;
+                    windowCopy = window;
+                }
+
+                windowCopy.setVerticalScroll(0, 100);
+                windowCopy.resize();
+                if (currentCopy != null) {
+                    currentCopy.uCallInvalidate();
+                }
+            }
+
             // #endif ENABLE_CHAMELEON
-
-            DisplayableLF currentCopy;
-            synchronized (LCDUILock) {
-                currentCopy = Display.this.current;
+            if (hasForeground) {
+                requestScreenRepaint();
             }
-
-            if (currentCopy != null) {
-                currentCopy.uCallInvalidate();
-            }
-
-            requestScreenRepaint();
         }
     } // END DisplayEventConsumerImpl Class
 

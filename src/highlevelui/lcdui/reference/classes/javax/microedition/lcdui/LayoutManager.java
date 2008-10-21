@@ -43,11 +43,6 @@ class LayoutManager {
      */
     LayoutManager() {
     	sizingBox = new int[3]; // x,y,width
-        if (locale != null && locale.equals("he-IL")) {
-            layoutDirection = Graphics.RIGHT;
-        } else {
-            layoutDirection = Graphics.LEFT;
-        }
     }
 
     /**
@@ -392,7 +387,15 @@ class LayoutManager {
         // tallest item on a line
         int lineHeight = 0;
         int pW, pH;
-        int curAlignment = (layoutDirection == Graphics.LEFT) ? Item.LAYOUT_LEFT : Item.LAYOUT_RIGHT;
+
+        String locale = System.getProperty("microedition.locale");
+
+        if (locale != null && locale.equals("he-IL")) {
+            rl_direction = true;
+        } else {
+            rl_direction = false;
+        }
+        int curAlignment = (rl_direction) ? Item.LAYOUT_RIGHT : Item.LAYOUT_LEFT;
 
         // We loop through the Items starting in startIndex, until we reach
         // the end of the block, and return the index of the next block,
@@ -911,7 +914,7 @@ class LayoutManager {
      *         index
      */
     private int  getCurHorAlignment(ItemLFImpl[] itemLFs, int index) {
-        if (layoutDirection == Graphics.RIGHT) {
+        if (rl_direction) {
             return Item.LAYOUT_RIGHT;
         }
         for (int hAlign, i = index; i >= 0; i--) {
@@ -1348,11 +1351,8 @@ class LayoutManager {
      */
     static LayoutManager singleInstance = new LayoutManager();
 
-    // 
-    private String locale = System.getProperty("microedition.locale");
-
-    // layout derection depend on the language conventions in use
-    private int layoutDirection;
+    /** layout derection depend on the language conventions in use */
+    private boolean rl_direction;
 
 
     /** Used as an index into the viewport[], for the x origin. */
