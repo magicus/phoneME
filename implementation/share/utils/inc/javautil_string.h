@@ -35,6 +35,10 @@
 #include <string.h>
 #include "javacall_defs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif 
+
 #define COLON    0x3A    /* Colon ':' - Unicode character 0x3A */
 #define CR       0x0D    /* Carriage Return - Unicode character 0x0D */
 #define LF       0x0A    /* Line Feed - Unicode character 0x0A */
@@ -113,6 +117,13 @@ javacall_result javautil_string_trim(char* str);
  */
 javacall_result javautil_string_parse_int(const char* str, int* number);
 
+/*
+ * Copies source javacall_utf16_string string into newly allocated memory buffer
+ * @param src source javacall_utf16_string
+ * @return pointer to newly allocated memory containing copy of source string
+ */
+javacall_utf16_string javautil_wcsdup(javacall_const_utf16_string src) ;
+
 /**
  * Copies at most n wide characters from the wide-character string
  * pointed to by src, including the terminating L'\0' character, to the array
@@ -190,5 +201,8 @@ void javautil_string_strip(char * s);
  */
 char* javautil_string_duplicate(const char *s);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
