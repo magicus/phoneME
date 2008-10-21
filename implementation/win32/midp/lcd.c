@@ -675,7 +675,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 break;
             /* F3 key used for rotation. */ 
             } else if(VK_F3 == wParam) {                 
-                javanotify_rotation(lcdlf_get_current_hardwareId());
+                javanotify_rotation(javacall_lcd_get_current_hardwareId());
                 break;
             }
         }
@@ -820,7 +820,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 if(iMsg == WM_LBUTTONUP) {
                     return 0;
                 }
-                javanotify_rotation( lcdlf_get_current_hardwareId());
+                javanotify_rotation(javacall_lcd_get_current_hardwareId());
                 return 0;
 
             case KEY_HOME:
