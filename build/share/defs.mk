@@ -421,7 +421,7 @@ ifeq ($(CVM_PRELOAD_SET), libtestfull)
 endif
 
 CVM_STATICLINK_LIBS   = $(CVM_PRELOAD_ALL)
-#override CVM_PRELOAD_LIB = $(CVM_PRELOAD_ALL)
+override CVM_PRELOAD_LIB = $(CVM_PRELOAD_ALL)
 
 ifeq ($(CVM_PRELOAD_ALL), true)
 	override CVM_CREATE_RTJAR = false
