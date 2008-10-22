@@ -23,56 +23,59 @@
  * information or have any questions.
  */
 
+#include <stdio.h>
 #include "javacall_meminfo.h"
+#include "javacall_memory.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-static char* memInfoList = NULL;
-static meminfo_stat;
+mem_alloc_info* memInfoList = NULL;
+static meminfo_stat memStat;
 
 /* memInfo List functions*/
-void initMemInfo(malloc_info* memInfo);
-void add_memory_info(malloc_info* newMemInfo);
-void remove_memory_info(malloc_info* remMemInfo);
+void initMemInfo(mem_alloc_info* memInfo);
+void add_mem_alloc_info(mem_alloc_info* newMemInfo);
+void remove_mem_alloc_info(mem_alloc_info* remMemInfo);
 
 void* javacall_meminfo_malloc(unsigned int size, char* fileName, unsigned int line){
-	unsigned char completeBuffer = NULL;
-	unsigned int totalSize = size + sizeof(memory_info);
-	memory_info* memInfo = NULL;
-
-	completeBuffer = javacall_os_malloc(totalSize) + sizeof(memory_info);
+	unsigned char* completeBuffer = NULL;
+	unsigned int totalSize = size + sizeof(mem_alloc_info);
+	unsigned char* javaRetBuffer = NULL;
+	mem_alloc_info* memInfo = NULL;
+	
+	completeBuffer = javacall_os_malloc(totalSize + sizeof(mem_alloc_info));
 
 	if(completeBuffer != NULL) {
 	
-		memInfo = (memory_info*)(buffer);
+		memInfo = (mem_alloc_info*)(completeBuffer);
 		initMemInfo(memInfo);
 	
 		memInfo->size = size;
 		OS_STRCPY(memInfo->fileName, fileName);
 		memInfo->line = line;
 	
-		add_memory_info(memInfo);
+		add_mem_alloc_info(memInfo);
 
-		completeBuffer += sizeof(memory_info);
+		javaRetBuffer = completeBuffer + sizeof(mem_alloc_info);
 
-		meminfo_stat.currentMemeoryUsage += size;
+		memStat.currentMemeoryUsage += size;
 	}
 
-	return completeBuffer
+	return javaRetBuffer;
 }
 
 void  javacall_meminfo_free(void* ptr, char* fileName, unsigned int line){
-	unsigned char completeBuffer = NULL;
-	memory_info* memInfo = NULL;
+	unsigned char* completeBuffer = NULL;
+	mem_alloc_info* memInfo = NULL;
 
-	completeBuffer = (ptr - sizeof(memory_info));
-	memInfo = (memory_info*)(ptr - sizeof(memory_info));
+	completeBuffer = (unsigned char*)((unsigned char*)ptr - sizeof(mem_alloc_info));
+	memInfo = (mem_alloc_info*)((unsigned char*)ptr - sizeof(mem_alloc_info));
 
-	remove_memory_info(memInfo);
+	remove_mem_alloc_info(memInfo);
 
-	meminfo_stat.currentMemeoryUsage -= memInfo.size;
+	memStat.currentMemeoryUsage -= memInfo->size;
 	javacall_os_free(completeBuffer);
 }
 
@@ -82,88 +85,93 @@ void* javacall_meminfo_realloc(void* ptr, unsigned int size, char* fileName, uns
 	return javacall_meminfo_malloc(size, fileName, line);
 }
 
-javacall_meminfo_calloc(nunsigned int numberOfElements, unsigned int elementSize, char* fileName, unsigned int line){
-	unsigned char completeBuffer = NULL;
-	unsigned int totalSize = size + sizeof(memory_info);
-	memory_info* memInfo = NULL;
+void*  javacall_meminfo_calloc(unsigned int numberOfElements, unsigned int elementSize, char* fileName, unsigned int line){
+	unsigned char* completeBuffer = NULL;
+	unsigned int totalSize = elementSize * numberOfElements + sizeof(mem_alloc_info);
+	unsigned int newElementSize = (totalSize + 1)/ numberOfElements;
+	mem_alloc_info* memInfo = NULL;
 
-	completeBuffer = javacall_os_calloc(totalSize) + sizeof(memory_info);
+	//amk xxx todo: check the new newElementSize calc
+	completeBuffer = javacall_os_calloc(numberOfElements, newElementSize);
 
 	if(completeBuffer != NULL) {
 
-		memInfo = (memory_info*)(buffer);
+		memInfo = (mem_alloc_info*)(completeBuffer);
+		initMemInfo(memInfo);
+
+		memInfo->size = elementSize * numberOfElements;
+		OS_STRCPY(memInfo->fileName, fileName);
+		memInfo->line = line;
+
+		add_mem_alloc_info(memInfo);
+	}
+
+	return completeBuffer + sizeof(mem_alloc_info);
+}
+
+#if 0//amk todo: duplicate function need to check why?
+void* javacall_meminfo_realloc(void* ptr, unsigned int size, char* fileName, unsigned int line){
+	unsigned char completeBuffer = NULL;
+	mem_alloc_info* memInfo = NULL;
+
+	completeBuffer = (ptr - sizeof(mem_alloc_info));
+	memInfo = (mem_alloc_info*)(ptr - sizeof(mem_alloc_info));
+
+	remove_mem_alloc_info(memInfo);
+
+	completeBuffer = javacall_os_realloc(completeBuffer, size + sizeof(mem_alloc_info));
+
+	if(completeBuffer != NULL) {
+
+		memInfo = (mem_alloc_info*)(buffer);
 		initMemInfo(memInfo);
 
 		memInfo->size = size;
 		OS_STRCPY(memInfo->fileName, fileName);
 		memInfo->line = line;
 
-		add_memory_info(memInfo);
+		add_mem_alloc_info(memInfo);
 	}
 
-	return buffer + sizeof(memory_info);
+	return completeBuffer + sizeof(mem_alloc_info);
+}
+#endif
+
+void* javacall_meminfo_strdup(const char* str, char* fileName, unsigned int line){
+	return NULL;
 }
 
-javacall_meminfo_realloc(void* ptr, unsigned int size, char* fileName, unsigned int line){
-	unsigned char completeBuffer = NULL;
-	memory_info* memInfo = NULL;
-
-	completeBuffer = (ptr - sizeof(memory_info));
-	memInfo = (memory_info*)(ptr - sizeof(memory_info));
-
-	remove_memory_info(memInfo);
-
-	completeBuffer = javacall_os_realloc(completeBuffer, size + sizeof(memory_info));
-
-	if(completeBuffer != NULL) {
-
-		memInfo = (memory_info*)(buffer);
-		initMemInfo(memInfo);
-
-		memInfo->size = size;
-		OS_STRCPY(memInfo->fileName, fileName);
-		memInfo->line = line;
-
-		add_memory_info(memInfo);
-	}
-
-	return completeBuffer + sizeof(memory_info);
-}
-
-javacall_meminfo_strdup(const char* str, char* fileName, unsigned int line){
-}
-
-static void initMemInfo(malloc_info* memInfo){
-	memInfo->fileName[0] = \0;
+static void initMemInfo(mem_alloc_info* memInfo){
+	memInfo->fileName[0] = '\0';
 	memInfo->line = 0;
 	memInfo->next = NULL;
 	memInfo->prev = NULL;
 }
 
-static void add_memory_info(malloc_info* newMemInfo){
+static void add_mem_alloc_info(mem_alloc_info* newMemInfo){
 
 	if(memInfoList != NULL){
-		malloc_info* prevFirst = memInfoList;
-		prevFirst->prev = newMemInfo;
-		newMemInfo->next = prevFirst;
+		mem_alloc_info* prevFirst = memInfoList;
+		prevFirst->prev = (struct _malloc_info*)newMemInfo;
+		newMemInfo->next = (struct _malloc_info*)prevFirst;
 	}
 
 	memInfoList = newMemInfo;
 
 }
 
-static void remove_memory_info(malloc_info* remMemInfo){
+static void remove_mem_alloc_info(mem_alloc_info* remMemInfo){
 
 	if(remMemInfo->prev == NULL) {
-		memInfoList = remMemInfo->next;
+		memInfoList = (mem_alloc_info*)remMemInfo->next;
 	}else{
-		malloc_info* prev = remMemInfo->prev;
+		mem_alloc_info* prev = (mem_alloc_info*)remMemInfo->prev;
 
 		prev->next = remMemInfo->next;
 	}
 
 	if(remMemInfo->next != NULL) {
-		malloc_info* next = remMemInfo->next;
+		mem_alloc_info* next = (mem_alloc_info*)remMemInfo->next;
 
 		next->prev = remMemInfo->prev;
 	}

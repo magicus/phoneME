@@ -70,6 +70,12 @@ JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platf
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/interface/javacall_defs.h
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/implementation/share/properties/inc/javacall_properties.h
 
+//amk xxx todo: add ifdef 
+VPATH+=$(JAVACALL_DIR)/implementation/share/memory/javacall_meminfo.h
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/implementation/share/memory/javacall_meminfo.h
+PORTING_SOURCE+=$(JAVACALL_DIR)/implementation/share/memory/javacall_meminfo.c
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/share/memory javacall/implementation/share
+
 UTILITIES+= javautil_stdio
 
 ifneq ($(UTILITIES)x, x)

@@ -32,13 +32,13 @@ extern "C" {
 
 #define MAX_FILE_NAME_LENGTH 4096
 
-typedef struct _malloc_info {
+typedef struct _mem_alloc_info {
     int size;
     char fileName[MAX_FILE_NAME_LENGTH];
 	unsigned int line;
 	struct _malloc_info* next;
 	struct _malloc_info* prev;
-} malloc_info;
+} mem_alloc_info;
 
 typedef struct _meminfo_stat{
 	int maxMemoryUsage;
@@ -46,9 +46,11 @@ typedef struct _meminfo_stat{
 }meminfo_stat;
 
 
-void* javacall_meminfo_malloc(unsigned int size);
-void* javacall_meminfo_realloc(void* ptr, unsigned int size);
-void  javacall_meminfo_free(void* ptr);
+void* javacall_meminfo_malloc(unsigned int size, char* fileName, unsigned int line);
+void  javacall_meminfo_free(void* ptr, char* fileName, unsigned int line);
+void* javacall_meminfo_realloc(void* ptr, unsigned int size, char* fileName, unsigned int line);
+void* javacall_meminfo_calloc(unsigned int numberOfElements, unsigned int elementSize, char* fileName, unsigned int line);
+void* javacall_meminfo_strdup(const char* str, char* fileName, unsigned int line);
 
 #ifdef __cplusplus
 }

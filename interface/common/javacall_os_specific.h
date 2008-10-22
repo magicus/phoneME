@@ -32,6 +32,10 @@
  * @brief Javacall os specific macros
  */
 
+#include "AEEAppGen.h"
+#include "AEEHeap.h"
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

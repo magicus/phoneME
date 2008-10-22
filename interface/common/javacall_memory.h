@@ -40,7 +40,8 @@
 extern "C" {
 #endif
     
-    
+#define JAVACALL_MEMINFO 1    
+
 /** 
  * @defgroup Memory Memory API
  * @ingroup JTWI
@@ -108,7 +109,7 @@ void* javacall_os_malloc(unsigned int size);
  * @param    size Number of byte to allocate
  * @return	  a pointer to the reallocated memory or null if memory could not be reallocated
  */
-void* javacall_realloc(void* ptr, unsigned int size);
+void* javacall_os_realloc(void* ptr, unsigned int size);
     
 #ifdef JAVACALL_MEMINFO
 #define javacall_realloc(ptr, size) javacall_meminfo_realloc(ptr, size, OS__FILE__, OS__LINE__)
@@ -177,6 +178,7 @@ void* /*OPTIONAL*/ javacall_os_calloc(unsigned int numberOfElements, unsigned in
 #define javacall_calloc(numberOfElements, elementSize) javacall_os_calloc(numberOfElements, elementSize, OS__FILE__, OS__LINE__)
 #endif
 
+#if 0//amk todo: duplicate function need to check why?
 /**
  * Re-allocates memory at the given pointer location in the private
  * JAVACALL memory pool (or null for new memory) so that it is the given
@@ -193,7 +195,7 @@ void* /*OPTIONAL*/ javacall_os_realloc(void* ptr, unsigned int size);
 #else
 #define javacall_realloc(ptr, size) javacall_os_realloc(ptr, size)
 #endif
-
+#endif 
     /**
  * Duplicates the given string after allocating the memory for it.
  * 
