@@ -427,7 +427,7 @@ void RotateDisplay(short code) {
     } else if (prev_top_down != top_down) {
         //we should initiate screen refresh
         on_screen_rotated();
-        javacall_lcd_flush();                
+        javacall_lcd_flush(javacall_lcd_get_current_hardwareId());                
     }
 }
 
