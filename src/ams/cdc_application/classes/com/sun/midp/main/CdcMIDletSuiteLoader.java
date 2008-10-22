@@ -140,7 +140,7 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
         
        MidletSuiteContainer msc = new MidletSuiteContainer(mss);
        
-       RmsEnvironment.init( msc); 
+       RmsEnvironment.init( internalSecurityToken, msc); 
     }
 
     /**
