@@ -49,6 +49,7 @@ import com.sun.cdc.io.DateParser;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import javax.microedition.io.ConnectionNotFoundException;
 
 
 /**
@@ -99,9 +100,13 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     protected static StreamConnectionPool connectionPool;
     static {
         maxNumberOfPersistentConnections = Integer.parseInt(
-            System.getProperty("microedition.maxpersconn", "10"));
+            (String) AccessController.doPrivileged(
+            new sun.security.action.GetPropertyAction(
+                "microedition.maxpersconn", "10")));
         connectionLingerTime = Integer.parseInt(
-            System.getProperty("microedition.connlinger", "60000"));
+            (String) AccessController.doPrivileged(
+            new sun.security.action.GetPropertyAction(
+                "microedition.connlinger", "60000")));
         connectionPool = new StreamConnectionPool(
                                  maxNumberOfPersistentConnections,
                                  connectionLingerTime);
@@ -304,6 +309,14 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         // Check permission. The permission method wants the URL
         checkPermission(host, port, file);
+        if (streamConnection == null) {
+            try {
+                streamConnection = connectSocket();
+            } catch (IOException ex) {
+                throw new ConnectionNotFoundException(
+                        "Cannot connect to "+host+" on port "+port);
+            }
+        }
 
     }
 
@@ -722,8 +735,11 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             if (--opens == 0 && connected) disconnect();
             outputStreamOpened = false;
         }
-    }// PrivateOutputStream
 
+        private void reset() {
+            output.reset();
+        }
+    }// PrivateOutputStream
     protected void ensureOpen() throws IOException {
         if (opens == 0)
             throw new IOException("Connection closed");
@@ -996,8 +1012,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             return;
         }
 
-        streamConnection = connectSocket();
-
         streamOutput = streamConnection.openDataOutputStream();
         
         // HTTP 1.1 requests must contain content length for proxies
@@ -1039,6 +1053,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         if (privateOut != null) {
     	    streamOutput.write(privateOut.toByteArray());
+            privateOut.reset();
             // ***Bug 4485901*** streamOutput.write("\r\n".getBytes());
             /*
              DEBUG: System.out.println("Request: "
