@@ -145,7 +145,9 @@ static void ParseExceptions(CFcontext *);
 static void ParseLocalVars(CFcontext *, unsigned long code_length);
 #ifdef CVM_SPLIT_VERIFY
 static void ParseStackMap(CFcontext *, CVMUint32 codeLength, 
-			    CVMUint32 maxLocals, CVMUint32 maxStack);
+			  CVMUint32 maxLocals, CVMUint32 maxStack);
+static void ParseStackMapTable(CFcontext *, CVMUint32 codeLength, 
+			       CVMUint32 maxLocals, CVMUint32 maxStack);
 #endif
 
 static void CFerror(CFcontext *context, char *fmt, ...);
@@ -761,6 +763,9 @@ static void ParseCode(CFcontext *context, utf_str *mb_name,
     unsigned int i;
     unsigned int maxstack;
     unsigned int nlocals;
+#ifdef CVM_SPLIT_VERIFY
+    jboolean hasSeenStackMapTableAttribute = JNI_FALSE;
+#endif
 
     if (context->major_version == 45 && context->minor_version <= 2) { 
 	maxstack = get1byte(context);
@@ -827,6 +832,14 @@ static void ParseCode(CFcontext *context, utf_str *mb_name,
 	} else if (utfcmp(attr_name, "LocalVariableTable") == 0) {
 	    ParseLocalVars(context, code_length);
 #ifdef CVM_SPLIT_VERIFY
+	} else if (utfcmp(attr_name, "StackMapTable") == 0 &&
+	    context->major_version >= 50)
+	{
+	    if (hasSeenStackMapTableAttribute) {
+		CFerror(context, "Multiple StackMapTable attributes");
+	    }
+	    hasSeenStackMapTableAttribute = JNI_TRUE;
+	    ParseStackMapTable(context, code_length, nlocals, maxstack);
 	} else if (utfcmp(attr_name, "StackMap") == 0) {
 	    ParseStackMap(context, code_length, nlocals, maxstack);
 #endif
@@ -842,11 +855,12 @@ static void ParseCode(CFcontext *context, utf_str *mb_name,
 
 #ifdef CVM_SPLIT_VERIFY
 
-static void
+static int
 ParseMapElements(
     CFcontext* context,
     int nElements,
     int codeLength,
+    int currSlot,
     int maxSlot)
 {
     int nSlot = 0;
@@ -893,9 +907,169 @@ ParseMapElements(
 	}
 	nSlot += 1;
     }
-    if (nSlot > maxSlot){
+    if (currSlot + nSlot > maxSlot) {
 	CFerror(context, "Stackmap entries for too many stack slots");
     }
+    return nSlot;
+}
+
+
+static void
+ParseStackMapTable(CFcontext *context, CVMUint32 codeLength, 
+    CVMUint32 maxLocals, CVMUint32 maxStack)
+{
+    CVMInt32		  	nEntries;
+    CVMInt32			lastPC = -1;
+    CVMUint32			length = get4bytes(context);
+    int				nLocalSlots = 0;
+    int				nStackSlots = 0;
+    const unsigned char *	endPtr = context->ptr  + length;
+    char *			locals;
+    int				nLocals;
+
+    /*
+     * These asserts are here to remind us that the format of these
+     * things changes for big methods.
+     */
+    CVMassert(codeLength <= 65535);
+    CVMassert(maxLocals  <= 65535);
+    CVMassert(maxStack   <= 65535);
+
+    locals = calloc(1, maxLocals);
+
+    if (locals == NULL) {
+	CFerror(context, "Out of memory");
+    }
+
+#if 0
+    /* Initialize locals from args */
+    /*
+       The following code is just an example.  We don't have an mb
+       yet so we really need to parse the signature string.
+    */
+{
+    CVMterseSigIterator sig;
+    int typeSyllable;
+
+    CVMtypeidGetTerseSignatureIterator(CVMmbNameAndTypeID(mb), &sig);
+
+    nLocals = 0;
+    if (!CVMmbIs(mb, STATIC)) {
+	locals[nLocals++] = 1;
+    }
+    while ((typeSyllable=CVM_TERSE_ITER_NEXT(sig)) != CVM_TYPEID_ENDFUNC) {
+        switch (typeSyllable) {
+        case CVM_TYPEID_LONG:
+        case CVM_TYPEID_DOUBLE:
+	    locals[nLocals++] = 2;
+	    break;
+        default:
+	    locals[nLocals++] = 1;
+        }
+    }
+}
+#else
+    /* We don't support code that rewrites the arguments, so start at 0 */
+    nLocals = 0;
+#endif
+
+    nEntries = get2bytes(context);
+    while (nEntries-- > 0) {
+	int tag = get1byte(context);
+	int frame_type = tag;
+	int offset_delta;
+	int thisPC;
+
+	if (tag < 64) {
+	    /* 0 .. 63 SAME */
+	    nStackSlots = 0;
+	    offset_delta = frame_type;
+	    thisPC = lastPC + offset_delta + 1;
+	} else if (tag < 128) {
+	    /* 64 .. 127 SAME_LOCALS_1_STACK_ITEM */
+	    offset_delta = frame_type - 64;
+	    thisPC = lastPC + offset_delta + 1;
+	    nStackSlots = ParseMapElements(context, 1,
+		codeLength, 0, maxStack);
+	} else if (tag == 255) {
+	    /* 255 FULL_FRAME */
+	    int i, l, s;
+	    offset_delta = get2bytes(context);
+	    thisPC = lastPC + offset_delta + 1;
+	    l = get2bytes(context);
+	    nLocalSlots = 0;
+	    nLocals = 0;
+	    for (i = 0; i < l; ++i) {
+		int slots = ParseMapElements(context, 1,
+		    codeLength, nLocalSlots, maxLocals);
+		nLocalSlots += slots;
+		locals[nLocals + i] = slots;
+	    }
+	    nLocals += l;
+	    CVMassert(nLocals <= maxLocals);
+	    s = get2bytes(context);
+	    nStackSlots = ParseMapElements(context, s,
+		codeLength, 0, maxStack);
+	} else if (tag >= 252) {
+	    /* 252 .. 254 APPEND */
+	    int i;
+	    int k = frame_type - 251;
+	    offset_delta = get2bytes(context);
+	    thisPC = lastPC + offset_delta + 1;
+	    if (nLocals + k > maxLocals) {
+		CFerror(context, "Stackmap entry too many locals ");
+	    }
+	    for (i = 0; i < k; ++i) {
+		int slots = ParseMapElements(context, 1,
+		    codeLength, nLocalSlots, maxLocals);
+		nLocalSlots += slots;
+		locals[nLocals + i] = slots;
+	    }
+	    nLocals += k;
+	    nStackSlots = 0;
+	    CVMassert(nLocals <= maxLocals);
+	} else if (tag == 251) {
+	    /* 251 SAME_FRAME_EXTENDED */
+	    offset_delta = get2bytes(context);
+	    nStackSlots = 0;
+	    thisPC = lastPC + offset_delta + 1;
+	} else if (tag >= 248) {
+	    /* 248 .. 250 CHOP */
+	    int i;
+	    int k = 251 - frame_type;
+	    if (k > nLocals) {
+		CFerror(context, "Stackmap entry args chopped!");
+	    }
+	    for (i = 0; i < k; ++i) {
+		nLocalSlots -= locals[--nLocals];
+	    }
+	    offset_delta = get2bytes(context);
+	    nStackSlots = 0;
+	    thisPC = lastPC + offset_delta + 1;
+	} else if (tag == 247) {
+	    /* 247 SAME_LOCALS_1_STACK_ITEM_EXTENDED */
+	    offset_delta = get2bytes(context);
+	    thisPC = lastPC + offset_delta + 1;
+	    nStackSlots = ParseMapElements(context, 1,
+		codeLength, 0, maxStack);
+	} else {
+	    CFerror(context, "Stackmap entry unsupported tag value");
+	}
+
+	if (thisPC >= codeLength){
+	    CFerror(context, "Stackmap entry PC out of range");
+	}
+	lastPC = thisPC;
+
+	if (context->ptr > endPtr){
+	    CFerror(context, "Stackmap info too long");
+	}
+
+    }
+    if (context->ptr != endPtr){
+	CFerror(context, "Stackmap info too short");
+    }
+    free(locals);
 }
 
 static void
@@ -929,10 +1103,10 @@ ParseStackMap(CFcontext *context, CVMUint32 codeLength,
 	lastPC = thisPC;
 
 	nLocalElements = get2bytes(context);
-	ParseMapElements(context, nLocalElements, codeLength, maxLocals);
+	ParseMapElements(context, nLocalElements, codeLength, 0, maxLocals);
 
 	nStackElements = get2bytes(context);
-	ParseMapElements(context, nStackElements, codeLength, maxStack);
+	ParseMapElements(context, nStackElements, codeLength, 0, maxStack);
 
 	if (context->ptr > endPtr){
 	    CFerror(context, "Stackmap info too long");
