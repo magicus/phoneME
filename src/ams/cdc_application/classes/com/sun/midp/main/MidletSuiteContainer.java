@@ -30,7 +30,7 @@ import com.sun.midp.midletsuite.MIDletSuiteStorage;
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midletsuite.SuiteContainerAdapter;
 
-class MidletSuiteContainer extends SuiteContainerAdapater implements com.sun.midp.rms.SuiteContainer {
+class MidletSuiteContainer extends SuiteContainerAdapter implements com.sun.midp.rms.SuiteContainer {
     public MidletSuiteContainer(MIDletSuiteStorage storage) {
         super(storage);
     }
