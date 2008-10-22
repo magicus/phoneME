@@ -32,13 +32,7 @@ import javax.microedition.io.StreamConnection;
 import javax.wireless.messaging.MessageConnection;
 
 // Classes
-//import com.sun.midp.midlet.MIDletSuite;
-//import com.sun.midp.midlet.Scheduler;
 import com.sun.j2me.app.AppPackage;
-//import com.sun.midp.security.Permissions;
-//import com.sun.midp.security.SecurityToken;
-//import com.sun.midp.security.ImplicitlyTrustedClass;
-//import com.sun.midp.security.SecurityInitializer;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -131,22 +125,14 @@ public abstract class ProtocolBase implements MessageConnection,
     /** Machine name - the parsed target address from the URL. */
     protected String host = null;
 
-    /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
-     */
-//    private static class SecurityTrusted
-//        implements ImplicitlyTrustedClass {};
-
-    /** This class has a different security domain than the MIDlet suite */
-//    private static SecurityToken classSecurityToken =
-//        SecurityInitializer.requestToken(new SecurityTrusted());
-
     /** Message listener for async notifications. */
     volatile MessageListener m_listener = null;
 
     /** Listener thread. */
     Thread m_listenerThread = null;
+
+    /** Used to protect operations with listener thread */
+    protected Object listenerLock = new Object();
 
     /** Used to protect read-modify operation on open field during close() */
     protected Object closeLock = new Object();
@@ -174,9 +160,9 @@ public abstract class ProtocolBase implements MessageConnection,
 
     /** Creates a message connection protocol handler. */
     public ProtocolBase() {
-	appPackage = AppPackage.getInstance();
-	// IMPL_NOTE: should be moved to a JSROP initializer
-	//	com.sun.jump.driver.wma.Listener.startListener();
+        appPackage = AppPackage.getInstance();
+        // IMPL_NOTE: should be moved to a JSROP initializer
+        //    com.sun.jump.driver.wma.Listener.startListener();
     }
     /**
      * Construct a new message object from the given type.
@@ -242,9 +228,9 @@ public abstract class ProtocolBase implements MessageConnection,
      * @exception IOException if the connection is closed
      */
     public void ensureOpen() throws IOException {
-	if (!open) {
-	    throw new IOException("Connection closed");
-	}
+        if (!open) {
+            throw new IOException("Connection closed");
+        }
     }
 
     protected boolean needStopReceiver = false;
@@ -256,7 +242,7 @@ public abstract class ProtocolBase implements MessageConnection,
      * @exception IOException if the connection is not closed
      */
     protected void io2InterruptedIOExc(IOException ex, String name) 
-        throws IOException, InterruptedIOException {
+            throws IOException, InterruptedIOException {
         try {
             ensureOpen();
         } catch (IOException ioe) {
@@ -315,19 +301,19 @@ public abstract class ProtocolBase implements MessageConnection,
             /*
              * Don't let the application waste time listening on a client
              * connection, which can not be used for receive operations.
-	         */
+             */
             if (host != null && host.length() > 0) {
                 throw new IOException("Cannot listen on client connection");
             }
         }
 
-        synchronized (this) {
-	    if ((m_listener != null) && (listener == null)) {
+        synchronized (listenerLock) {
+            if ((m_listener != null) && (listener == null)) {
                 needStopReceiver = true;
             }
             m_listener = listener;
             /* Start a new receive thread when need */
-	    if ((listener != null) && (m_listenerThread == null)) {
+            if ((listener != null) && (m_listenerThread == null)) {
                 startReceiverThread();
             }
         }
@@ -366,8 +352,7 @@ public abstract class ProtocolBase implements MessageConnection,
      *
      * @return  returns handle to the connection.
      */
-    protected abstract int unblock00(int msid)
-         throws IOException;
+    protected abstract int unblock00(int msid) throws IOException;
 
     /**
      * Close connection.
@@ -391,44 +376,40 @@ public abstract class ProtocolBase implements MessageConnection,
      * Start receiver thread
      */
     private void startReceiverThread() {
-	final MessageConnection messageConnection = this;
+        final MessageConnection messageConnection = this;
 
-	if (m_listenerThread == null) {
+        if (m_listenerThread == null) {
 
-	    m_listenerThread = new Thread() {
-
-		/**
-		 * Run the steps that wait for a new message.
-		 */
-		public void run() {
-
-		    int messageLength = 0;
-		    do {
-
-			/* No message, initially. */
-			messageLength = -1;
-			try {
-		            messageLength =
+            m_listenerThread = new Thread() {
+               /**
+                 * Run the steps that wait for a new message.
+                 */
+                public void run() {
+                    int messageLength = 0;
+                    do {
+                        /* No message, initially. */
+                        messageLength = -1;
+                        try {
+                            messageLength =
                                 waitUntilMessageAvailable00(connHandle);
                             if (needStopReceiver) {
                                 break;
                             }
-				/*
-				 * If a message is available and there are
-				 * listeners, notify all listeners of the
-				 * incoming message.
-				 */
-				if (messageLength >= 0) {
-                                    synchronized (this) {
-                                        if (m_listener != null) {
-
-					    // Invoke registered listener.
-					    m_listener.notifyIncomingMessage(
-                                                messageConnection);
-                                        }
+                            /*
+                             * If a message is available and there are
+                             * listeners, notify all listeners of the
+                             * incoming message.
+                             */
+                            if (messageLength >= 0) {
+                                synchronized (listenerLock) {
+                                    if (m_listener != null) {
+                                        // Invoke registered listener.
+                                        m_listener.notifyIncomingMessage(
+                                            messageConnection);
                                     }
                                 }
-			} catch (InterruptedIOException iioe) {
+                            }
+                        } catch (InterruptedIOException iioe) {
                             /*
                              * Terminate, the reader thread has been
                              * interrupted
@@ -443,14 +424,13 @@ public abstract class ProtocolBase implements MessageConnection,
                              * closed. So Terminate.
                              */
                             break;
-			}
-
-		    } while (!needStopReceiver);
-		}
+                         }
+                    } while (!needStopReceiver);
+                }
             };
 
             m_listenerThread.start();
-	}
+        }
     }
 
     /**
@@ -460,8 +440,7 @@ public abstract class ProtocolBase implements MessageConnection,
      * @return 0 on success, -1 on failure
      * @exception IOException  if an I/O error occurs
      */
-    protected abstract int waitUntilMessageAvailable00(int handle)
-                               throws IOException;
+    protected abstract int waitUntilMessageAvailable00(int handle) throws IOException;
 
     public abstract Connection openPrim(String name, int mode, boolean timeouts) throws IOException;
     public abstract void close() throws IOException;
