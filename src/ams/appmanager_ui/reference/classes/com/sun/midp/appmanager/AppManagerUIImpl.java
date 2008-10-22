@@ -278,7 +278,7 @@ class AppManagerUIImpl extends Form
                                            Command.ITEM, 1);
 
     // Current locale
-    private String locale = System.getProperty("microedition.locale");
+    private String locale;
 
     // Layout direction. True if direction is right-to-left
     private boolean RL_DIRECTION;
@@ -374,13 +374,6 @@ class AppManagerUIImpl extends Form
 
         setCommandListener(this);
         
-        if (locale != null && locale.equals("he-IL")) {
-            RL_DIRECTION = true;
-            TEXT_ORIENT = Graphics.RIGHT;
-        } else {
-            RL_DIRECTION = false;
-            TEXT_ORIENT = Graphics.LEFT;
-        }
     }
 
     /**
@@ -1193,6 +1186,9 @@ class AppManagerUIImpl extends Form
      * and informs AppManagerUI regarding changes in list through
      * itemAppended callback when new item is appended to the list.
      *
+     * The order in which the MIDlets are shown is up to the UI
+     * and need not be the order of itemAppended invocations.
+     *
      * @param suiteInfo the midlet suite info
      */
     public void itemAppended(RunningMIDletSuiteInfo suiteInfo) {
@@ -1543,6 +1539,16 @@ class AppManagerUIImpl extends Form
             int cY = g.getClipY();
             int cW = g.getClipWidth();
             int cH = g.getClipHeight();
+            
+            locale = System.getProperty("microedition.locale");
+            
+            if (locale != null && locale.equals("he-IL")) {
+                RL_DIRECTION = true;
+                TEXT_ORIENT = Graphics.RIGHT;
+            } else {
+                RL_DIRECTION = false;
+                TEXT_ORIENT = Graphics.LEFT;
+            }
 
             if ((cW + cX) > bgIconW) {
                 if (text != null && h >= ICON_FONT.getHeight()) {

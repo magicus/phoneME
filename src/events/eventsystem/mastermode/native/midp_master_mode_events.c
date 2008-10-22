@@ -138,7 +138,11 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         break;
 
     case UI_SIGNAL:
-        midpStoreEventAndSignalForeground(newMidpEvent);
+        if (newMidpEvent.type == CHANGE_LOCALE_EVENT) {
+            StoreMIDPEventInVmThread(newMidpEvent, -1);
+        } else {
+            midpStoreEventAndSignalForeground(newMidpEvent);
+        }
         break;
 
     case DISPLAY_DEVICE_SIGNAL:
@@ -257,11 +261,13 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         break;
 #endif /* ENABLE_JSR_256 */
 #ifdef ENABLE_JSR_290
-    case JSR290_LOAD_FINISH_SIGNAL:
     case JSR290_INVALIDATE_SIGNAL:
         midp_thread_signal_list(blocked_threads, blocked_threads_count,
                                 newSignal.waitingFor, newSignal.descriptor,
                                 newSignal.status);
+        break;
+    case JSR290_LISTENER_SIGNAL:
+        StoreMIDPEventInVmThread(newMidpEvent, -1);
         break;
 #endif /* ENABLE_JSR_290 */
     default:
