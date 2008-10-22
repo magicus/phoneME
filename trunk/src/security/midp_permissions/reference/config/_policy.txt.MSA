@@ -1,0 +1,168 @@
+alias: net_access
+  javax.microedition.io.Connector.http,
+  javax.microedition.io.Connector.https,
+  javax.microedition.io.Connector.obex.client.tcp,
+  javax.microedition.io.Connector.obex.server.tcp
+
+alias: low_level_net_access
+  javax.microedition.io.Connector.datagram, 
+  javax.microedition.io.Connector.datagramreceiver,
+  javax.microedition.io.Connector.socket,
+  javax.microedition.io.Connector.serversocket,  
+  javax.microedition.io.Connector.ssl
+
+alias: call_control
+  javax.microedition.io.Connector.sip,
+  javax.microedition.io.Connector.sips
+
+alias: messaging
+  javax.wireless.messaging.sms.send,
+  javax.wireless.messaging.mms.send,
+  javax.microedition.io.Connector.sms,  
+  javax.wireless.messaging.sms.receive,  
+  javax.microedition.io.Connector.mms,
+  javax.wireless.messaging.mms.receive
+
+alias: restricted_messaging
+  javax.wireless.messaging.cbs.receive,
+  javax.microedition.io.Connector.cbs
+
+alias: application_auto_invocation
+  javax.microedition.io.PushRegistry,
+  javax.microedition.content.ContentHandler
+
+alias: local_connectivity
+  javax.microedition.io.Connector.comm,
+  javax.microedition.io.Connector.obex.client,
+  javax.microedition.io.Connector.obex.server,
+  javax.microedition.io.Connector.bluetooth.client,
+  javax.microedition.io.Connector.bluetooth.server
+
+alias: smart_card
+  javax.microedition.apdu.aid,
+  javax.microedition.jcrmi
+
+alias: authentication
+  javax.microedition.securityservice.CMSMessageSignatureService
+
+alias: multimedia_recording
+  javax.microedition.media.control.RecordControl,
+  javax.microedition.media.control.VideoControl.getSnapshot,
+  javax.microedition.amms.control.camera.enableShutterFeedback
+
+alias: read_user_data_access
+  javax.microedition.pim.ContactList.read,
+  javax.microedition.pim.EventList.read,
+  javax.microedition.pim.ToDoList.read,
+  javax.microedition.io.Connector.file.read
+
+alias: write_user_data_access
+  javax.microedition.pim.ContactList.write,
+  javax.microedition.pim.EventList.write,
+  javax.microedition.pim.ToDoList.write,
+  javax.microedition.io.Connector.file.write,
+  javax.microedition.amms.control.tuner.setPreset
+
+alias: location
+  javax.microedition.location.Location,
+  javax.microedition.location.ProximityListener,
+  javax.microedition.location.Orientation
+
+alias: landmark
+  javax.microedition.location.LandmarkStore.read,
+  javax.microedition.location.LandmarkStore.write,
+  javax.microedition.location.LandmarkStore.category,
+  javax.microedition.location.LandmarkStore.management
+
+alias: payment
+  javax.microedition.payment.process
+
+alias: satsa
+  javax.microedition.apdu.sat
+
+domain: minimum,unsecured
+
+domain: maximum,unsecured
+allow: net_access
+allow: low_level_net_access
+allow: application_auto_invocation
+allow: local_connectivity
+allow: messaging
+allow: restricted_messaging
+allow: authentication
+allow: smart_card
+allow: call_control
+allow: multimedia_recording
+allow: read_user_data_access
+allow: write_user_data_access
+allow: location
+allow: landmark
+allow: payment
+allow: satsa
+
+domain: manufacturer
+allow: net_access
+allow: low_level_net_access
+allow: application_auto_invocation
+allow: local_connectivity
+allow: messaging
+allow: restricted_messaging
+allow: authentication
+allow: smart_card
+allow: call_control
+allow: multimedia_recording
+allow: read_user_data_access
+allow: write_user_data_access
+allow: location
+allow: landmark
+allow: payment
+allow: satsa
+
+domain: operator
+allow: net_access
+allow: low_level_net_access
+allow: application_auto_invocation
+allow: local_connectivity
+allow: messaging
+allow: restricted_messaging
+allow: authentication
+allow: smart_card
+allow: call_control
+allow: multimedia_recording
+allow: read_user_data_access
+allow: write_user_data_access
+allow: location
+allow: landmark
+allow: payment
+allow: satsa
+
+domain: identified_third_party
+blanket(session): net_access
+blanket(session): low_level_net_access
+blanket(oneshot): call_control
+blanket(oneshot): application_auto_invocation
+blanket(session): local_connectivity
+blanket(oneshot): messaging
+blanket(oneshot): restricted_messaging
+blanket(session): multimedia_recording
+blanket(oneshot): read_user_data_access
+blanket(oneshot): write_user_data_access
+blanket(session): location
+blanket(session): landmark
+allow: payment
+blanket(session): authentication
+blanket(session): smart_card
+
+domain: unidentified_third_party,unsecured
+session(oneshot): net_access
+session(oneshot): low_level_net_access
+oneshot(oneshot): call_control
+session(oneshot): application_auto_invocation
+blanket(oneshot): local_connectivity
+oneshot(oneshot): messaging
+oneshot(oneshot): restricted_messaging
+session(oneshot): multimedia_recording
+oneshot(oneshot): read_user_data_access
+oneshot(oneshot): write_user_data_access
+session(oneshot): location
+session(oneshot): landmark

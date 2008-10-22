@@ -1,0 +1,384 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+    
+
+  Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+<title>JAD Tool</title>
+</head>
+<body bgcolor="white">
+<h2>JAD Tool</h2>
+
+<h3>Summary</h3>
+
+The JAD Tool provides a command line interface to sign MIDlet suites using 
+public key cryptography according to the MIDP specification. Signing a
+MIDlet suite is the process of adding the signer certificate(s) and the
+digital signature of the JAR to a JAD.
+<p>
+The JAD Tool only uses certificates and keys from Java<sup>tm</sup> Standard
+Edition (J2SE) keystores. J2SE provides the
+<a href="http://java.sun.com/j2se/1.3/docs/tooldocs/win32/keytool.html">
+command line tool</a> to manage J2SE keystores.</p>
+
+The general usage for the JAD Tool is (from the MIDP home directory):
+<blockquote>
+  <code>java -jar bin/JadTool.jar</code> <i>(command followed by  arguments for the command)</i>
+</blockquote>
+
+The JAD Tool provides the following commands to:
+<ul>
+  <li>Display usage help text</li>
+  <li>Add a provider certificate from a keystore to a JAD</li>
+  <li>Add the digital signature of a JAR to a JAD</li>
+  <li>Decode and display a provider certificate from a JAD</li>
+</ul>
+For shell script use, when a command is successful, the status code upon
+completion will be "0" and if there is an error it will be "-1".
+
+<h3>General Argument Parsing Considerations</h3>
+
+Properly producing user friendly command line argument errors requires a
+great deal of code, and since this tool is not intended for the general
+public, this tool with have very simple option
+parsing that will lead to to some less then user friendly error conditions.
+Like the J2SE "java" command, any potentially valid value for an option will be
+accepted for that option even if it looks like a option flag. No positive
+case will be disallowed to make the errors more user friendly. Basically the
+tool will make only ensure that option values are formated according to the
+specification of the underlying Java APIs.
+
+<h3>JAD File Arguments</h3>
+
+The argument for the input JAD filename is "-inputjad" followed by a
+filename. The argument for the output JAD filename is "-outputjad" followed
+by a filename. The filenames can any valid name the file system allows.
+If a command only reads a JAD, it is an error to give an output JAD.
+If the input and output JAD filenames are the same the output JAD will
+replace the input JAD.
+<p>
+The default character encoding for a JAD is UTF-8, to the override this,
+use the argument "-encoding" followed by an alternate encoding.</p>
+
+<h3>Display Usage Help Text</h3>
+
+The command to display help text is "-help". There are no arguments for the
+command. The usage text is also displayed when JAD Tool arguments are 
+not in the correct format or missing. The usage text is:
+<blockquote><pre>
+JadTool arguments:
+-help
+-addcert
+        -alias &lt;key alias&gt; [-storepass &lt;password&gt;] [-keystore &lt;keystore&gt;]
+        [-certnum &lt;number&gt;] [-chainnum &lt;number&gt;]
+        [-encoding &lt;encoding&gt;] -inputjad &lt;filename&gt; -outputjad &lt;filename&gt;
+-addjarsig
+        [-jarfile &lt;filename&gt;] -keypass &lt;password&gt; -alias &lt;key alias&gt;
+        [-storepass &lt;password&gt;] [-keystore &lt;keystore&gt;] [-encoding &lt;encoding&gt;]
+         -inputjad &lt;filename&gt; -outputjad &lt;filename&gt;
+-showcert
+        [([-certnum &lt;number&gt;] [-chainnum &lt;number&gt;]) | -all]
+        [-encoding &lt;encoding&gt;]  -inputjad &lt;filename&gt;
+
+        The default for -encoding is UTF-8.
+        The default for -jarfile is the MIDlet-Jar-URL property in the JAD.
+        The default for -keystore is "$HOME/.keystore".
+        The default for -certnum is 1.
+        The default for -chainnum is 1.
+</pre></blockquote>
+
+<h3>Adding a Certificate to a JAD</h3>
+
+The command for adding a certificate to a JAD is "-addcert". In addition
+to the JAD file arguments above, the command has the following arguments:
+<ul>
+  <li>"-alias" followed by the alias of the certificate, this is required to
+    find the certificate in the keystore.</li>
+  <li>"-keystore" followed by the filename of a J2SE keystore from
+    which the get certificate. If not provided, the tool will assume
+    the filename of the keystore is $HOME/.keystore.
+    This is consistent with J2SE keytool.</li>
+  <li>"-storepass" followed by a password to unlock the keystore if
+    needed.</li>
+  <li>"-certnum" followed by number of certificate in the signer certificate
+    chain. This is only needed to replace a certificate, since if the number
+    is not given it will be calculated automatically to be the next number in
+    the chain. Numbers start at "1".</li>
+  <li>"-chainnum" followed by number of a signer certificate chain.
+    If not given, "1" is used.</li>
+</ul>
+Example of certificate attribute (line breaks added for readability):
+<blockquote><pre>
+MIDlet-Certificate-1-1: MIIC0zCCAbsCBDy0+uQwDQYJKoZIhvcNAQEEBQAwLjEZMBcGA1UEChM
+QU3VuIE1pY3Jvc3lzdGVtczERMA8GA1UEBhMIbXlzZXJ2ZXIwHhcNMDIwNDExMDI1NDI4WhcNMTIwND
+A4MDI1NDI4WjAuMRkwFwYDVQQKExBTdW4gTWljcm9zeXN0ZW1zMREwDwYDVQQGEwhteXNlcnZlcjCCA
+SIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAPGun98yp7isd+Si7YwplA0lBoTlBi8IhalPTwZ5
+k9UsDGpWPrGeI7+PFPm5c37T7NNJPx68MtxOQViq+oRqX4TbpMSQ6yXNl8EhfgIa9HGsmIv59bUiP7S
+EZKsFFTLaN01DlWqbO3GW01irzvSV8PgoKO8UI8ymfqV77C2W71ICFJsThAJg54gOmli4Ycc52+IBtK
+yQWrNJqP849XQphnVfv1jw/qdk20rch+SyAiVWtG7f/v3CKytWWcr99+jLt1oCN+jNJZl7CKQjM1MGa
+NE+5pOhk/H3VkXsMqlmEc+vB4vxlxoVoEnbbjM4u0w7aAIySZt+FoMXOgMhkbh19msCAwEAATANBgkq
+hkiG9w0BAQQFAAOCAQEArC0Cj9kK3SQzOJQgZYXwcpJWxfnw6p4ynMNaDz2EC2D7/SdcFkL7ZDbhZ9u
+6kcxUtGRpx727iEsNPDLq7M2L2dIqvPa3s4Qqp83iVKRvEA6/xcwdOWHB9tU5jXUdzrljfj99vTGysx
+EkpAxz6+HAxFK8rvv1sgfJGMQbXVOUQMkRJzS/7+8h8DWno6Kv5XKWUI/4hBzjlBP+Gh9mbYgF7lJ2f
+w+yTwmDFOK2X2vpnBZx6+dFFkGtCZQAnp1bZBYe67kKwxHzSA5iXKThANFyjQQr0pedwEVU0LVVH0V9
+PovndKRgFCLRTwkV7yChI+1P2YXDv1dp5UszG/o11BtPhg==
+</pre></blockquote>
+The following steps are performed when adding a certificate to a JAD.
+<ol>
+  <li>Read the input JAD into memory.</li>
+  <li>Get the certificate from the keystore.</li>
+  <li>Encode the certificate as base64.</li>
+  <li>Add the base64 encode certificate as the value of a
+    MIDlet-Certificate-m-&lt;n&gt; attribute to the JAD in memory,
+    where m is the given chain number and where n is the given certificate
+    number. If the certificate is already in the JAD is replaced.</li>
+  <li>Write the JAD in memory to the output JAD file.</li>
+</ol>
+
+<h3>Adding a JAR Signature to a JAD</h3>
+
+Adding a JAR signature to a JAD, also creates a the JAR signature using a
+private key from a J2SE keystore.
+<p>
+The command for adding the signature of a JAR to a JAD is "-addjarsig".
+In addition to the JAD file arguments above, the command has the following
+arguments:</p>
+<ul>
+  <li>"-alias" followed by the alias of the private key. This is required to
+    find the key in the keystore.</li>
+  <li>"-keystore" followed by the filename of a J2SE keystore from
+    which the get private key. If not provided, the tool will assume
+    the filename of the keystore is $HOME/.keystore.
+    This is consistent with J2SE keytool.</li>
+  <li>"-storepass" followed by a password to unlock the keystore, if
+    needed</li>
+  <li>"-keypass" followed by a password to unlock the private key
+    used to sign the JAR</li>
+  <li>"-jarfile" followed by the filename of the JAR.
+    If not given and the MIDlet-Jar-URL attribute is present and has a valid
+    HTTP URL, then the input JAR will downloaded using the URL over the
+    network.</li>
+</ul>
+Example of JAR signature attribute (line breaks added for readability):
+<blockquote><pre>
+MIDlet-Jar-RSA-SHA1: WhYZlroRQ4qdoHV9OuCBhwq2ICLix2IcebGOjrq8xNvYxH6233ZK13CyKJ
+iXnX/YjZ9e00vh3PCKz6UvRptB1HzUqL5tBGROIXO5YQK1fonDSzz2mz+bpoo36zzXEVZD1WXJtskxR
+LkUBxGLhOfISfvqDZs1hX22gYjQbEYFaTHofEBi00LfVIESrEpvHvsbB0rJqNQtm9M9m8igP6kDSuMn
+dF22JP/trh/1aH9Cf3g8Fj9fop72VKt/5dHn6ya/IVkXKDV5LRhNZMMU9hJgan/txIFuHrAkGVfU8tx
+mOc6TTxB6ucE3s9YBZ2YTC1Pm0pqCk+RouRdIhZD5Vvy2Aw==
+</pre></blockquote>
+The following steps are performed when adding the signature of JAR to a
+JAD.
+<ol>
+  <li>Read the input JAD into memory.</li>
+  <li>Get the private key from the keystore.</li>
+  <li>Open an input stream of the JAR for the signing step.</li>
+  <li>Sign the JAR using the EMSA-PKCS1-v1_5 encoding method of PKCS #1
+    version 2.0 standard[RFC2437] with the private key.</li>
+  <li>Encode the signature in base64.</li>
+  <li>Add the base64 encoded signature as the value a MIDlet-Jar-RSA-SHA1
+    attribute to the JAD in memory. If a signature attribute is already
+    in the JAD, it is replaced.</li>
+  <li>Write the JAD in memory to the output JAD file.</li>
+</ol>
+
+<h3>Displaying a Certificate from a JAD</h3>
+
+The command for displaying a certificate from a JAD is "-showcert". The
+command can also display all of the certificates in the JAD. In addition
+to the JAD input file and encoding arguments above, the command has the
+following arguments:
+<ul>
+  <li>"-certnum" followed by number of certificate in the signer certificate
+    chain. If not given "1" is used.</li>
+  <li>"-chainnum" followed by number of a signer certificate chain.
+    If not given, "1" is used.</li>
+  <li>"-all". Only valid when -certnum and "-chainnum" are not used.</li>
+</ul>
+Example of certificate display:
+<blockquote><pre>
+Subject: C=myserver, O=Sun Microsystems
+Issuer : C=myserver, O=Sun Microsystems
+Serial number: 3cb4fae4
+Valid from Wed Apr 10 22:54:28 EDT 2002 to Sat Apr 07 22:54:28 EDT 2012
+Certificate fingerprints:
+  MD5: 29:bc:e2:28:b9:7f:76:4a:b2:c5:b4:9c:aa:80:4e:be
+  SHA: b2:1c:4e:ec:47:7c:13:a4:62:46:f9:d7:cc:3a:e2:f4:f3:3a:6f:6f
+</pre></blockquote>
+It should be noted, that the attributes in the subject and issuer names in the
+example above are in reverse order from what is in the certificate. This
+is a side effect of using the J2SE certificate API to get the subject and
+issuer fields from the certificate, so display the name may not match other
+tools that display a certificate's subject.
+<p>
+The following steps are performed when displaying a certificate from a JAD.</p>
+<ol>
+  <li>Read the input JAD into memory.</li>
+  <li>If "-all" was given as argument get all of the certificates from the
+    JAD. If there are not certificate found display "No certificates found
+    in JAD." and exit. Otherwise skip the next step, and for each certificate
+    found perform the all the steps after the next.</li>
+  <li>Get the base64 encode certificate attribute
+    MIDlet-Certificate-m-&lt;n&gt; attribute from the JAD,
+    where m is the given chain number and where n is the given certificate
+    number.</li>
+  <li>Decode the certificate into a byte array.</li>
+  <li>Create a J2SE certificate object.</li>
+  <li>Print out to standard output, the subject, issuer, serial number,
+    and validity fields of the certificate object along with MD5 and SHA-1
+    fingerprints of the raw bytes of the certificate.</li>
+</ol>
+
+<h3>Error Conditions</h3>
+
+Not all error messages are created by the JAD Tool code, the
+tool relies on the java.security and java.io classes to generate messages.
+So only when an error condition has a message created by the MIDP implementation code,
+will the full message be specified. This is because the message not
+under control of the MIDP implementation can change at anytime and this cannot be
+considered a bug.
+ 
+<table border="1" cellspacing="1" cellpadding="5">
+  <tr>
+    <th width="50%">Error Condition</th>
+    <th width="50%">Message to User</th>
+  </tr>
+
+  <tr>
+    <td>There is no command or arguments.</td>
+    <td>No command given</td> 
+  </tr>
+
+  <tr>
+    <td>The first argument after the jar name is not a command.</td>
+    <td>Illegal command: &lt;invalid argument&gt;</td> 
+  </tr>
+
+  <tr>
+    <td>An argument for a command is not valid for that command.</td>
+    <td>Illegal option for &lt;command&gt;: &lt;invalid argument&gt;</td> 
+  </tr>
+
+  <tr>
+    <td>The arguments end after an option flag (command arguments that
+        start with "-") that should be followed by a value.</td>
+    <td>Missing value for &lt;last argument&gt;</td>
+  </tr>
+        
+  <tr>
+    <td>An input JAD was not given.</td>
+    <td>&lt;command&gt; requires an input JAD</td>
+  </tr>
+
+  <tr>
+    <td>The input JAD does not exist.</td>
+    <td>Input JAD does not exist: &lt;filename&gt;</td>
+  </tr>
+
+  <tr>
+    <td>The given encoding is not supported.</td>
+    <td>Encoding type &lt;encoding&gt; not supported</td>
+  </tr>
+
+  <tr>
+    <td>The input JAD cannot be parsed.</td>
+    <td>Error parsing input JAD: &lt;filename&gt;</td>
+  </tr>
+
+  <tr>
+    <td>The given keystore does not exist.</td>
+    <td>Keystore does not exist: &lt;filename&gt;</td>
+  </tr>
+
+  <tr>
+    <td>The keystore is empty.</td>
+    <td>Keystore exists, but is empty: &lt;filename&gt;</td>
+  </tr>
+
+  <tr>
+    <td>The output JAD is read-only.</td>
+    <td>Error opening output JAD: &lt;filename&gt;</td>
+  </tr>
+
+  <tr>
+    <td>An output JAD was not given and the command requires one.</td>
+    <td>&lt;command&gt; requires an output JAD</td>
+  </tr>
+
+  <tr>
+    <td>The alias was not given to the -addcert command.</td>
+    <td>-addcert requires -alias</td>
+  </tr>
+
+  <tr>
+    <td>Certificate not found in keystore.</td>
+    <td>-addcert failed: java.security.cert.CertificateException:
+      Certificate not found</td>
+  </tr>
+
+  <tr>
+    <td>General error adding the certificate to a JAD.</td>
+    <td>-addcert failed: &lt;exception message&gt;</td>
+  </tr>
+
+  <tr>
+    <td>A non-digit character in the certificate number argument or
+        the number is zero.</td>
+    <td>-certnum must be a positive number</td>
+  </tr>
+
+  <tr>
+    <td>A non-digit character in the certificate chain number
+        argument or the number is zero.</td>
+    <td>-chainnum must be a positive number</td>
+  </tr>
+
+  <tr>
+    <td>-showcert command could find the certificate to display in the
+        JAD.</td>
+    <td>Certificate &lt;chain number&gt;-&lt;certificate
+        number&gt; not in JAD</td>
+  </tr>
+
+  <tr>
+    <td>-all and -certnum or -chainnum were given to the -showcert
+      command.</td>
+    <td>-all cannot be used with -certnum or -chainnum</td>
+  </tr>
+
+  <tr>
+    <td>General error showing a certificate from a JAD.</td>
+    <td>-showcert failed: &lt;exception message&gt;</td>
+  </tr>
+
+  <tr>
+    <td>The alias was not given to the -addjarsig command.</td>
+    <td>-addjarsig requires -alias</td>
+  </tr>
+
+  <tr>
+    <td>The key password was not given to the -addjarsig command.</td>
+    <td>-addjarsig requires -keypass</td>
+  </tr>
+
+  <tr>
+    <td>-addjarsig could not load the keystore.</td>
+    <td>Keystore could not be loaded: &lt;exception message&gt;</td>
+  </tr>
+
+  <tr>
+    <td>The JAR file does not exist.</td>
+    <td>JAR does not exist: &lt;filename&gt;</td>
+  </tr>
+
+  <tr>
+    <td>General error adding a JAR signature to a JAD.</td>
+    <td>-addjarsig failed: &lt;exception message&gt;</td>
+  </tr>
+</table>
+</body>
+</html>

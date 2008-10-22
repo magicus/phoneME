@@ -1,0 +1,91 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+# Adds to global SUBSYSTEMS list
+#
+SUBSYSTEMS += gcf
+
+# Javadoc source path
+SUBSYSTEM_GCF_SOURCEPATH += $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes$(PATHSEP)$(SUBSYSTEM_DIR)/protocol/gcf/classes
+
+SUBSYSTEM_GCF_PACKAGES = \
+    javax.microedition.io \
+    com.sun.midp.io
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_GCF_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_GCF_PACKAGES)
+
+GROUP_PROTOCOL_JAVADOC_PACKAGES += \
+    $(SUBSYSTEM_GCF_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+    -group "Generic Connections" \
+        $(shell echo $(GROUP_PROTOCOL_JAVADOC_PACKAGES) |\
+	     xargs -n 1 | sort -u | xargs | tr ' ' $(PATHSEP))
+
+# vpath for ( gcf ) library
+#
+vpath % $(SUBSYSTEM_DIR)/protocol/gcf/reference/native
+
+$(GENERATED_DIR)/classes/com/sun/midp/io/ConnectionBaseAdapter.java: $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/ConnectionBaseAdapter.jpp
+	@$(call runjpp,$^,$@)
+
+
+# Java files for the ( gcf ) library
+#
+SUBSYSTEM_GCF_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/HttpUrl.java \
+     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/FileUrl.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/io/ConnectionBaseAdapter.java \
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/Util.java \
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/Base64.java \
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/NetworkConnectionBase.java \
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/BufferedConnectionAdapter.java \
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/FilterInputStream.java \
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/BufferedInputStream.java
+
+# Native files for the ( gcf ) library
+#
+
+SUBSYSTEM_GCF_NATIVE_FILES += \
+	gcf_export.c
+
+SUBSYSTEM_GCF_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_DIR)/protocol/gcf/include
+
+ifeq ($(USE_I3_TEST), true)
+  SUBSYSTEM_GCF_I3TEST_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/i3test/com/sun/midp/io/TestHttpUrl.java
+
+endif
