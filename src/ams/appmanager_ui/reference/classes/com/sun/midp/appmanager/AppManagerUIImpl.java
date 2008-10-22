@@ -1067,29 +1067,37 @@ class AppManagerUIImpl extends Form
      * @param si corresponding suite info
      */
     public void notifySuiteInstalled(RunningMIDletSuiteInfo si) {
-        if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED && false ) {
-            boolean askUser = true;
+        if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+            boolean userMidletExists = true;
+            boolean sysFgMidletExists = false;
 
             MIDletSuite suite = MIDletSuiteUtils.getSuite(si.suiteId);
             if (suite != null) {
+                userMidletExists = false;
                 int midletsNum = si.numberOfMidlets;
                 try {
                     for (int m = 1; m <= midletsNum; m++) {
-                        String prop = MIDletSuiteUtils.getSuiteProperty(
+                        String pwrProp = MIDletSuiteUtils.getSuiteProperty(
                             suite, m, MIDletSuite.LAUNCH_POWER_ON_PROP);
 
-                        if (!"yes".equalsIgnoreCase(prop)) {
-                            askUser = true;
-                            break;
+                        if ("yes".equalsIgnoreCase(pwrProp)) {
+                            String bgProp = MIDletSuiteUtils.getSuiteProperty(
+                                suite, m, MIDletSuite.LAUNCH_BG_PROP);
+
+                            if (!"yes".equalsIgnoreCase(bgProp)) {
+                                sysFgMidletExists = true;
+                                break;
+                            }
+                        } else {
+                            userMidletExists = true;
                         }
-                        askUser = false;
                     }
                 } finally {
                     suite.close();
                 }
             }
 
-            if (askUser) {
+            if (userMidletExists && !sysFgMidletExists) {
                 askUserIfLaunchMidlet();
             }
         } else {
