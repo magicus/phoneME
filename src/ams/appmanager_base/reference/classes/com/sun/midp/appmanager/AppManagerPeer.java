@@ -724,17 +724,6 @@ class AppManagerPeer implements CommandListener {
                 for (Enumeration e = midletsToStart.elements();
                         e.hasMoreElements() ;) {
                     manager.launchSuite(suiteInfo, (String)e.nextElement());
-
-                     /*
-                      * IMPL_NOTE: current implementation's
-                      * limitation is it allows to run only one
-                      * MIDlet from a suite.
-                      *
-                      * IMPL_NOTE: remove this break after
-                      * multiple running MIDlets from a single
-                      * suite is supported.
-                      */
-                      break; // run only one MIDLet from the suite
                 }
             }
         }

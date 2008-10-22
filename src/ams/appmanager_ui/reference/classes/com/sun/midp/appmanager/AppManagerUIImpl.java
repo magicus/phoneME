@@ -41,6 +41,7 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.payment.PAPICleanUp;
+import com.sun.midp.midlet.MIDletSuite;
 
 import java.util.*;
 
@@ -1066,7 +1067,34 @@ class AppManagerUIImpl extends Form
      * @param si corresponding suite info
      */
     public void notifySuiteInstalled(RunningMIDletSuiteInfo si) {
-        askUserIfLaunchMidlet();
+        if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED && false ) {
+            boolean askUser = true;
+
+            MIDletSuite suite = MIDletSuiteUtils.getSuite(si.suiteId);
+            if (suite != null) {
+                int midletsNum = si.numberOfMidlets;
+                try {
+                    for (int m = 1; m <= midletsNum; m++) {
+                        String prop = MIDletSuiteUtils.getSuiteProperty(
+                            suite, m, MIDletSuite.LAUNCH_POWER_ON_PROP);
+
+                        if (!"yes".equalsIgnoreCase(prop)) {
+                            askUser = true;
+                            break;
+                        }
+                        askUser = false;
+                    }
+                } finally {
+                    suite.close();
+                }
+            }
+
+            if (askUser) {
+                askUserIfLaunchMidlet();
+            }
+        } else {
+            askUserIfLaunchMidlet();
+        }
     }
 
     /**
