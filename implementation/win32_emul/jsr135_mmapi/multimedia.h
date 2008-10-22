@@ -131,6 +131,10 @@ javacall_media_format_type fmt_enum2str( jc_fmt                     fmt );
 javacall_result            fmt_str2mime(
         javacall_media_format_type fmt, char *buf, int buf_len);
 
+javacall_result get_int_param(javacall_const_utf16_string ptr, 
+                              javacall_const_utf16_string paramName, 
+                              int * value);
+
 /*****************************************************************************
  *                     M E T A D A T A   K E Y S
  *****************************************************************************/

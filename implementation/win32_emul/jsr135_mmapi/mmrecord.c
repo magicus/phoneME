@@ -72,34 +72,6 @@ void sendRSL(int appId, int playerId, long duration)
 
 /*******************************************************************************/
 
-
-/**
-* Get parameter from URI
-*/
-static javacall_result get_int_param(javacall_const_utf16_string ptr, 
-                                     javacall_const_utf16_string paramName, 
-                                     int * value)
-{
-    javacall_result result = JAVACALL_INVALID_ARGUMENT;
-
-    if ((ptr != NULL) && (paramName != NULL) && (value != NULL)) {
-
-        /// Here is supposed, that sizeof(utf16) == sizeof(wchar_t)
-        /// Search position of the first entrance of paramName
-        javacall_const_utf16_string pFnd = wcsstr(ptr, paramName);
-
-        if (pFnd) {
-            pFnd += wcslen(paramName);
-            if (1 == swscanf(pFnd, L"=%i", value))
-                result = JAVACALL_OK;
-            else 
-                result = JAVACALL_FAIL;
-        }
-    }
-
-    return result;
-}
-
 /**
  * Create native recorder
  */
