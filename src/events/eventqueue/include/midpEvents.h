@@ -208,6 +208,11 @@ extern "C" {
 #define CHANGE_LOCALE_EVENT				61
 
 
+/**
+ * JSR290 Fluid listener notification event
+ */
+#define FLUID_LISTENER_EVENT            62
+
 /** @} */
 
 /**

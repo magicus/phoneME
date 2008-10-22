@@ -239,6 +239,10 @@ public final class SecurityInitializer {
         "com.sun.j2me.content.CHManagerImpl$SecurityTrusted",
         // #endif ENABLE_JSR_211
 
+        // #ifdef ENABLE_JSR_290
+        "com.sun.fluid.FluidImageImpl$SecurityTrusted",
+        // #endif ENABLE_JSR_290
+
         // Pass the security token to the i3 test framework.
         // #ifdef ENABLE_I3_TEST
         "com.sun.midp.i3test.TestCase$SecurityTrusted",

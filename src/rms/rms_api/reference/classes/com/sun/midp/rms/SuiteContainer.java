@@ -1,5 +1,5 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,15 +24,33 @@
  * information or have any questions.
  */
 
-#include <kni.h>
-#include <midpCommandState.h>
+package com.sun.midp.rms;
 
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_midp_automation_AutomationInitializer_isVMRestarted) {
-#if ENABLE_MULTIPLE_ISOLATES
-    KNI_ReturnBoolean(KNI_FALSE);
-#else
-    MIDPCommandState* state = midpGetCommandState();
-    KNI_ReturnBoolean(state->vmRestarted);
-#endif
+/**
+ * Implemented byt he class running the suite so that it can be decoupled
+ * from the RMS library
+ */
+public interface SuiteContainer {
+    /**
+     * Get the suite ID of applicaiton on the current call stack.
+     */
+    int getCallersSuiteId();
+
+    /**
+     * Get the suite of identified by vendor and suite name.
+     */
+    int getSuiteId(String vendorName, String suiteName);
+
+    /**
+     * Get secure filename base to build a an RMS file name that will be
+     * deleted with the suite.
+     */
+    String getSecureFilenameBase(int suiteId);
+    
+    /**
+     * Get the storage area ID for a suite.
+     * This is only CLDC RescordStore implementations, any other implementations can just
+     * return 0.
+     */
+    int getStorageAreaId(int suiteId);
 }

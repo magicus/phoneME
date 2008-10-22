@@ -97,6 +97,7 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/MIDLETInstallerImpl.java \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/StorageAccessInterface.java \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/isolate/MIDletContainer.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/isolate/MidletSuiteContainer.java \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/midlet/MIDletPeer.java \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/midlet/MIDletStateHandler.java \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/midletsuite/MIDletSuiteStorageAccessor.java 

@@ -65,6 +65,8 @@ import com.sun.midp.midletsuite.*;
 
 import com.sun.midp.security.*;
 
+import com.sun.midp.rms.RmsEnvironment;
+
 /**
  * Application Container for the MIDlet app model.
  * <p>
@@ -158,6 +160,9 @@ public class MIDletContainer extends JUMPAppContainer implements
                                        eventQueue, 0, this);
 
         displayContainer = lcduiEnvironment.getDisplayContainer();
+        MidletSuiteContainer msc = new MidletSuiteContainer(suiteStorage);
+       
+        RmsEnvironment.init( msc); 
     }
 
     /**

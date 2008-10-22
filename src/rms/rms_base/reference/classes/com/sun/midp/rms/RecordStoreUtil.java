@@ -143,41 +143,41 @@ public class RecordStoreUtil {
      * Looks to see if the storage file for record store
      * identified by <code>uidPath</code> exists
      *
-     * @param suiteId ID of the MIDlet suite that owns the record store
+     * @param filenameBase base of the MIDlet suite that owns the record store
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
      * @return true if the file exists, false if it does not.
      */
-    native static boolean exists(int suiteId, String name, int extension);
+    native static boolean exists(String filenameBase, String name, int extension);
 
     /**
      * Removes the storage file for record store <code>filename</code>
      * if it exists.
      *
-     * @param suiteId ID of the MIDlet suite that owns the record store
+     * @param filenameBase base of the MIDlet suite that owns the record store
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
      * @throws RecordStoreException if deletion encountered an error
      *         internally.
      */
-    native static void deleteFile(int suiteId, String name, int extension)
+    native static void deleteFile(String filenameBase, String name, int extension)
             throws RecordStoreException;
 
     /**
      * Removes record store file without throwing an exception on failure.
      *
-     * @param suiteId ID of the MIDlet suite that owns the record store
+     * @param filenameBase base of the MIDlet suite that owns the record store
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
      * @return <code>true</code> if file was found and deleted successfully,
      *         <code>false</code> otherwise.
      */
-    static boolean quietDeleteFile(int suiteId, String name, int extension) {
+    static boolean quietDeleteFile(String filenameBase, String name, int extension) {
         try {
-            deleteFile(suiteId, name, extension);
+            deleteFile(filenameBase, name, extension);
         } catch (Throwable t) {
             return false;
         }

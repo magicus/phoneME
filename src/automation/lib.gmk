@@ -74,20 +74,22 @@ MIDP_JAVADOC_ALL += \
 
 
 # Subsystem's Java files
-SUBSYSTEM_AUTOMATION_JAVA_FILES = \
-	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutomationInitializer.java
 
-vpath % $(SUBSYSTEM_AUTOMATION_DIR)/reference/native
-SUBSYSTEM_AUTOMATION_NATIVE_FILES += \
-    midp_automation_initializer.c
-    
-ifneq ($(USE_ROMUL), true)
-SUBSYSTEM_AUTOMATION_JAVA_FILES += \
-	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/romul/ROMULInitializer.java
+# If Automation API isn't included, use stub version of AutomationInitializer
+ifneq ($(USE_AUTOMATION), true) 
+SUBSYSTEM_AUTOMATION_JAVA_FILES = \
+	$(SUBSYSTEM_AUTOMATION_DIR)/stubs/classes/com/sun/midp/automation/AutomationInitializer.java
 endif
+
 
 ifeq ($(USE_AUTOMATION), true) 
 
+# If ROMUL isn't included, use stub version of ROMULInitializer
+ifneq ($(USE_ROMUL), true)
+SUBSYSTEM_AUTOMATION_JAVA_FILES += \
+	$(SUBSYSTEM_AUTOMATION_DIR)/stubs/classes/com/sun/midp/automation/romul/ROMULInitializer.java
+endif
+ 
 SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/Automation.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventType.java \
@@ -101,6 +103,7 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventFactory.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventSequence.java \
 	\
+    $(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutomationInitializer.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutomationImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventFactoryImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventSequenceImpl.java \
@@ -114,6 +117,7 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoDelayEventFromArgsFactory.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoPenEventFromArgsFactory.java
 
+vpath % $(SUBSYSTEM_AUTOMATION_DIR)/reference/native
 SUBSYSTEM_AUTOMATION_NATIVE_FILES += \
     midp_automation.c
 

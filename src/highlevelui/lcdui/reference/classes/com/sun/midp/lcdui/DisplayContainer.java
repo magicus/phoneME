@@ -121,7 +121,7 @@ public class DisplayContainer {
      */
     public synchronized DisplayAccess findDisplayById(int displayId) {
         int size = displays.size();
-
+        
         for (int i = 0; i < size; i++) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
 
@@ -167,8 +167,30 @@ public class DisplayContainer {
         if (da == null) {
             return null;
         }
-
+        
         return da.getDisplayEventConsumer();
+    }
+    
+        /**
+     * Find all display event consumers.
+     *
+     * @return a display event consumer array object
+     */
+    public DisplayEventConsumer[] getAllDisplayEventConsumers() {
+                
+        int size = displays.size();
+        DisplayEventConsumer[] consumers = new DisplayEventConsumer[size];
+        DisplayAccess da;
+        
+        for (int i = 0; i < size; i++) {
+            da = (DisplayAccess)displays.elementAt(i);
+            
+            if (da != null) {
+                consumers[i] = da.getDisplayEventConsumer();
+            }
+        }
+       
+        return consumers;
     }
 
 

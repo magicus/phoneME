@@ -30,31 +30,51 @@ package com.sun.midp.automation;
  * Represents MIDlet's lifecycle state.
  */
 public final class AutoMIDletLifeCycleState {
+    /** External state name */
+    private String name;
+
     /**
      * State representing following condition:
      * MIDlet is paused.
      */
     public static final AutoMIDletLifeCycleState PAUSED = 
-        new AutoMIDletLifeCycleState();
+        new AutoMIDletLifeCycleState("paused");
 
     /**
      * State representing following condition:
      * MIDlet is active.
      */
     public static final AutoMIDletLifeCycleState ACTIVE = 
-        new AutoMIDletLifeCycleState();
+        new AutoMIDletLifeCycleState("active");
     
     /**
      * State representing following condition:
      * MIDlet is destroyed.
      */    
     public static final AutoMIDletLifeCycleState DESTROYED = 
-        new AutoMIDletLifeCycleState();
+        new AutoMIDletLifeCycleState("destroyed");
 
+    /**
+     * Returns a string representation of the state.
+     *
+     * @return string representation of the state
+     */
+    public String toString() {
+        return name;
+    }
 
     /**
      * Private constructor to prevent other states creation
      */
     private AutoMIDletLifeCycleState() {
     }
+
+    /**
+     * Constructor.
+     *
+     * @param name external state name
+     */
+    private AutoMIDletLifeCycleState(String name) {
+        this.name = name;
+    }    
 }

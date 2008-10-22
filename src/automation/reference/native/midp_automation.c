@@ -114,3 +114,13 @@ KNIDECL(com_sun_midp_automation_AutomationImpl_getForegroundIsolateAndDisplay) {
     KNI_EndHandles();
     KNI_ReturnVoid();    
 }
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_automation_AutomationInitializer_isVMRestarted) {
+#if ENABLE_MULTIPLE_ISOLATES
+    KNI_ReturnBoolean(KNI_FALSE);
+#else
+    MIDPCommandState* state = midpGetCommandState();
+    KNI_ReturnBoolean(state->vmRestarted);
+#endif
+}

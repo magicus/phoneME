@@ -387,4 +387,9 @@ public final class EventTypes {
      * This event is used for change current locale
      */
     public static final int CHANGE_LOCALE_EVENT	= 61;
+
+    /**
+     * JSR290 Fluid listener notification event
+     */
+    public static final int FLUID_LISTENER_EVENT = 62;
 }
