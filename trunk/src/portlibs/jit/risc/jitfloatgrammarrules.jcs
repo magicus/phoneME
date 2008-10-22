@@ -698,6 +698,8 @@ freg64: DNEG freg64 : 10 : : : :
 // the correct conditional instruction.
 
 %{
+#ifdef CVM_NEED_COMPARE_FLOATS_HELPER
+
 /* convert CVMJIT_XXX condition code to a CVMCPUCondCode */
 static CVMCPUCondCode
 mapFloatCondCode(CVMUint16 condition) {
@@ -755,12 +757,14 @@ compareFloats(
 #endif
     CVMRMunpinAllIncomingLocals(con, target);
 }
+
+#endif
 %}
 
-root: BCOND_FLOAT freg32 freg32 : 10 : : : : 
+root: BCOND_FLOAT freg32 freg32 : 10 : : : CVM_NEED_COMPARE_FLOATS_HELPER : 
 	compareFloats(con, $$, CVMCPU_FCMP_OPCODE);
 
-root: BCOND_DOUBLE freg64 freg64 : 10 : : : : 
+root: BCOND_DOUBLE freg64 freg64 : 10 : : : CVM_NEED_COMPARE_FLOATS_HELPER : 
 	compareFloats(con, $$, CVMCPU_DCMP_OPCODE);
 
 
