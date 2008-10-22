@@ -46,12 +46,16 @@ extern "C" {
  */
 
 /**
- * Returns the <code>index</code>th item in the collection. If 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
+ * returns the <code>index</code>th item in the collection. If 
  * <code>index</code> is greater than or equal to the number of nodes in 
  * the list, this returns <code>NULL</code>. The range of valid child
  *  node indices is 0 to <code>length-1</code> inclusive.
  * 
  * @param handle Pointer to the object representing this nodelist.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * @param index Index into the collection.
  * @param ret_value Pointer to the object representing 
  *   the node at the <code>index</code>th position in the 
@@ -59,26 +63,85 @@ extern "C" {
  *   index.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_nodelist_item_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_nodelist_item(javacall_handle handle,
-                           javacall_int32 index,
-                           /* OUT */ javacall_handle* ret_value);
+javacall_dom_nodelist_item_start(javacall_handle handle,
+                                 javacall_int32 invocation_id,
+                                 void **context,
+                                 javacall_int32 index,
+                                 /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Returns the <code>index</code>th item in the collection. If 
+ * <code>index</code> is greater than or equal to the number of nodes in 
+ * the list, this returns <code>NULL</code>. The range of valid child
+ *  node indices is 0 to <code>length-1</code> inclusive.
+ * 
+ * @param handle Pointer to the object representing this nodelist.
+ * @param context The context saved during asynchronous operation.
+ * @param index Index into the collection.
+ * @param ret_value Pointer to the object representing 
+ *   the node at the <code>index</code>th position in the 
+ *   <code>NodeList</code>, or <code>NULL</code> if that is not a valid 
+ *   index.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_nodelist_item_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_nodelist_item_finish(javacall_handle handle,
+                                  void *context,
+                                  javacall_int32 index,
+                                  /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
+ * returns the number of nodes in the list. The range of valid child node indices 
+ * is 0 to <code>length-1</code> inclusive. 
+ * 
+ * @param handle Pointer to the object representing this nodelist.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value The number of nodes in the list
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_nodelist_get_length_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_nodelist_get_length_start(javacall_handle handle,
+                                       javacall_int32 invocation_id,
+                                       void **context,
+                                       /* OUT */ javacall_int32* ret_value);
 
 /**
  * Returns the number of nodes in the list. The range of valid child node indices 
  * is 0 to <code>length-1</code> inclusive. 
  * 
  * @param handle Pointer to the object representing this nodelist.
+ * @param context The context saved during asynchronous operation.
  * @param ret_value The number of nodes in the list
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_nodelist_get_length_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_nodelist_get_length(javacall_handle handle,
-                                 /* OUT */ javacall_int32* ret_value);
+javacall_dom_nodelist_get_length_finish(javacall_handle handle,
+                                        void *context,
+                                        /* OUT */ javacall_int32* ret_value);
 
 /** 
  * Decrements ref counter of the native object specified number of times
