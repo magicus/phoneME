@@ -582,7 +582,9 @@ unlock_monitors(CVMExecEnv* threadEE) {
     while (li != NULL) {
 	mon = li->lock;
 	monNext = mon->next;
+#ifdef CVM_DEBUG
 	CVMassert(mon->state != CVM_OWNEDMON_FREE);
+#endif
 	if (mon->object != NULL) {
 	    CVMD_gcUnsafeExec(ee, {
 		    if(!CVMobjectTryUnlock(threadEE, mon->object)) {
