@@ -235,7 +235,7 @@ javacall_bool javacall_lcd_is_display_buildin(int hardwareId) {
  * Check if the display device supports pointer events
  * @param hardwareId unique id of hardware screen
  */
-javacall_bool javacall_lcd_is_display_ptr_supported(int hardwareId) {
+javacall_bool javacall_lcd_is_display_pen_supported(int hardwareId) {
     (void)hardwareId; 
     return JAVACALL_TRUE;
 }
@@ -244,7 +244,7 @@ javacall_bool javacall_lcd_is_display_ptr_supported(int hardwareId) {
  * Check if the display device supports pointer motion  events
  * @param hardwareId unique id of hardware screen
  */
-javacall_bool javacall_lcd_is_display_ptr_motion_supported(int hardwareId){
+javacall_bool javacall_lcd_is_display_pen_motion_supported(int hardwareId){
     (void)hardwareId; 
     return JAVACALL_TRUE;
 }
