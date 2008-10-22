@@ -844,6 +844,11 @@ CVMreadCheckedExceptions(CICcontext *context, CVMMethodBlock* mb,
 			 CVMCheckedExceptions* checkedExceptions);
 
 #ifdef CVM_SPLIT_VERIFY
+/* Read in JVMSv3-style StackMapTable attribute */
+static CVMsplitVerifyStackMaps*
+CVMreadStackMapTable(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock *mb,
+	     CVMUint32 length, CVMUint32 codeLength,
+	     CVMUint32 maxLocals, CVMUint32 maxStack);
 /* Read in CLDC-style StackMap attribute */
 static CVMsplitVerifyStackMaps*
 CVMreadStackMaps(CVMExecEnv* ee, CICcontext* context, CVMUint32 length,
@@ -2231,15 +2236,28 @@ CVMreadCode(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock* mb,
 	    CVMUtf8*  attrName = CVMcpGetUtf8(utf8Cp, cpIdx);
 	    CVMUint32 attrLength = get4bytes(context);
 #ifdef CVM_SPLIT_VERIFY
-	    if (context->needsVerify && !strcmp(attrName, "StackMap")){
-		CVMBool ok;
-		ok = CVMsplitVerifyAddMaps(ee, context->cb, mb,
-		    CVMreadStackMaps(ee, context, attrLength, codeLength,
-			maxLocals, maxStack));
-		if (!ok){
-		    CVMexceptionHandler(ee, context);
+	    if (context->needsVerify) {
+		if (!strcmp(attrName, "StackMapTable")) {
+		    CVMBool ok;
+		    ok = CVMsplitVerifyAddMaps(ee, context->cb, mb,
+			CVMreadStackMapTable(ee, context,
+			    mb, attrLength, codeLength,
+			    maxLocals, maxStack));
+		    if (!ok){
+			CVMexceptionHandler(ee, context);
+		    }
+		    continue;
 		}
-		continue;
+		if (!strcmp(attrName, "StackMap")) {
+		    CVMBool ok;
+		    ok = CVMsplitVerifyAddMaps(ee, context->cb, mb,
+			CVMreadStackMaps(ee, context, attrLength, codeLength,
+			    maxLocals, maxStack));
+		    if (!ok){
+			CVMexceptionHandler(ee, context);
+		    }
+		    continue;
+		}
 	    }
 #endif
 #ifdef CVM_DEBUG_CLASSINFO
@@ -2960,6 +2978,204 @@ CVMreadMapElements(
     return elementp;
 }
 
+/* Read in JVMSv3-style StackMapTable attribute */
+/*
+ * The code in verifyformat has already ensured that the offsets and
+ * constant pool references we're reading in make sense.
+ */
+static CVMsplitVerifyStackMaps*
+CVMreadStackMapTable(CVMExecEnv* ee, CICcontext* context,
+    CVMMethodBlock *mb, CVMUint32 length, CVMUint32 codeLength,
+    CVMUint32 maxLocals, CVMUint32 maxStack)
+{
+    CVMsplitVerifyStackMaps*	maps = NULL;
+    CVMsplitVerifyMap*		entry;
+    CVMUint32		  	nEntries;
+    CVMUint32		  	bytesPerMap;
+    int				lastPC = -1;
+    int				nLocalSlots = 0;
+    int				nStackSlots = 0;
+    CVMsplitVerifyMapElement	*locals;
+    CVMsplitVerifyMapElement	*stack;
+#ifdef CVM_DEBUG_ASSERTS
+    const CVMUint8*	  	startOffset = context->ptr;
+#endif
+    /*
+     * These asserts are here to remind us that the format of these
+     * things changes for big methods.
+     */
+    CVMassert(codeLength <= 65535);
+    CVMassert(maxLocals  <= 65535);
+    CVMassert(maxStack   <= 65535);
+
+    nEntries = get2bytes(context);
+    bytesPerMap = sizeof(CVMsplitVerifyMap) + 
+	      (sizeof(CVMsplitVerifyMapElement) * 
+	      (maxLocals + maxStack - 1));
+    /* Note: the below is slightly overgenerous, since it doesn't account
+     * for the trivial CVMsplitVerifyMap built into the 
+     * CVMsplitVerifyStackMaps
+     */
+    maps = (CVMsplitVerifyStackMaps*)calloc(1, 
+	    sizeof(struct CVMsplitVerifyStackMaps) + 
+	    bytesPerMap * nEntries);
+    if (maps == NULL){
+	CVMoutOfMemoryHandler(ee, context);
+    }
+    locals = (CVMsplitVerifyMapElement *)calloc(maxLocals, sizeof locals[0]);
+    if (locals == NULL){
+	free(maps);
+	CVMoutOfMemoryHandler(ee, context);
+    }
+    stack = (CVMsplitVerifyMapElement *)calloc(maxStack, sizeof stack[0]);
+    if (stack == NULL){
+	free(locals);
+	free(maps);
+	CVMoutOfMemoryHandler(ee, context);
+    }
+
+    /* Initialize locals from args */
+{
+    CVMSigIterator sig;
+    CVMClassTypeID cid;
+    CVMtypeidGetSignatureIterator(CVMmbNameAndTypeID(mb), &sig);
+
+    if (!CVMmbIs(mb, STATIC)) {
+	nLocalSlots = 1;
+	locals[0] = VERIFY_MAKE_OBJECT(CVMcbClassName(context->cb));
+    }
+    while ((cid = CVM_SIGNATURE_ITER_NEXT(sig))
+	!= CVM_TYPEID_ENDFUNC)
+    {
+	CVMClassTypeID t = cid;
+	if (!CVMtypeidIsPrimitive(cid)) {
+	    t = CVM_TYPEID_OBJ;
+	}
+	switch (t) {
+	case CVM_TYPEID_OBJ:
+	    locals[nLocalSlots++] =
+		VERIFY_MAKE_OBJECT(cid);
+	    break;
+	case CVM_TYPEID_BOOLEAN:
+	case CVM_TYPEID_BYTE:
+	case CVM_TYPEID_SHORT:
+	case CVM_TYPEID_CHAR:
+	case CVM_TYPEID_INT:
+	    locals[nLocalSlots++] = ITEM_Integer;
+	    break;
+	case CVM_TYPEID_FLOAT:
+	    locals[nLocalSlots++] = ITEM_Float;
+	    break;
+	case CVM_TYPEID_LONG:
+	    locals[nLocalSlots++] = ITEM_Long;
+	    locals[nLocalSlots++] = ITEM_Long_2;
+	    break;
+	case CVM_TYPEID_DOUBLE:
+	    locals[nLocalSlots++] = ITEM_Double;
+	    locals[nLocalSlots++] = ITEM_Double_2;
+	    break;
+	default:
+	    CVMassert(CVM_FALSE);
+	}
+    }
+}
+
+    CVMassert(nLocalSlots <= maxLocals);
+    CVMassert(nStackSlots <= maxStack);
+
+    maps->nEntries = nEntries;
+    maps->entrySize = bytesPerMap;
+    entry = &(maps->maps[0]);
+    while (nEntries-- > 0){
+	int tag, frame_type;
+	int offset_delta;
+	int pc;
+
+	tag = frame_type = get1byte(context);
+	if (tag < 64) {
+	    /* 0 .. 63 SAME */
+	    nStackSlots = 0;
+	    offset_delta = frame_type;
+	    pc = lastPC + offset_delta + 1;
+	} else if (tag < 128) {
+	    /* 64 .. 127 SAME_LOCALS_1_STACK_ITEM */
+	    offset_delta = frame_type - 64;
+	    pc = lastPC + offset_delta + 1;
+	    {
+		CVMsplitVerifyMapElement *e =
+		    CVMreadMapElements(ee, context, 1, codeLength, stack);
+		nStackSlots = e - stack;
+	    }
+	} else if (tag == 255) {
+	    /* 255 FULL_FRAME */
+	    int l, s;
+	    CVMsplitVerifyMapElement *e;
+
+	    offset_delta = get2bytes(context);
+	    pc = lastPC + offset_delta + 1;
+	    l = get2bytes(context);
+	    e = CVMreadMapElements(ee, context, l, codeLength, locals);
+	    nLocalSlots = e - locals;
+	    s = get2bytes(context);
+	    e = CVMreadMapElements(ee, context, s, codeLength, stack);
+	    nStackSlots = e - stack;
+	} else if (tag >= 252) {
+	    /* 252 .. 254 APPEND */
+	    CVMsplitVerifyMapElement *e;
+	    int k = frame_type - 251;
+	    offset_delta = get2bytes(context);
+	    nStackSlots = 0;
+	    pc = lastPC + offset_delta + 1;
+	    e = CVMreadMapElements(ee, context, k,
+		codeLength, locals + nLocalSlots);
+	    nLocalSlots = e - locals;
+	} else if (tag == 251) {
+	    /* 251 SAME_FRAME_EXTENDED */
+	    offset_delta = get2bytes(context);
+	    nStackSlots = 0;
+	    pc = lastPC + offset_delta + 1;
+	} else if (tag >= 248) {
+	    /* 248 .. 250 CHOP */
+	    int k = 251 - frame_type;
+	    while (k-- > 0) {
+		int t = locals[nLocalSlots - 1];
+		if (t == ITEM_Double_2 || t == ITEM_Long_2) {
+		    nLocalSlots -= 2;
+		} else {
+		    nLocalSlots -= 1;
+		}
+	    }
+	    offset_delta = get2bytes(context);
+	    nStackSlots = 0;
+	    pc = lastPC + offset_delta + 1;
+	} else if (tag == 247) {
+	    /* 247 SAME_LOCALS_1_STACK_ITEM_EXTENDED */
+	    CVMsplitVerifyMapElement *e;
+	    offset_delta = get2bytes(context);
+	    pc = lastPC + offset_delta + 1;
+	    e = CVMreadMapElements(ee, context, 1, codeLength, stack);
+	    nStackSlots = e - stack;
+	} else {
+	    CVMpanic("Stackmap entry unsupported tag value");
+	}
+
+	entry->pc = pc;
+	CVMassert(nLocalSlots <= maxLocals);
+	memcpy(entry->mapElements, locals, nLocalSlots * sizeof locals[0]);
+	entry->nLocals = nLocalSlots;
+	CVMassert(entry->nLocals <= maxLocals);
+	entry->sp = nStackSlots;
+	CVMassert(nStackSlots <= maxStack);
+	memcpy(entry->mapElements + nLocalSlots, stack,
+	    nStackSlots * sizeof stack[0]);
+	entry = (CVMsplitVerifyMap*)((char*)entry + bytesPerMap);
+	CVMassert(context->ptr <= startOffset + length);
+	lastPC = pc;
+    }
+    CVMassert(context->ptr == startOffset + length);
+    return maps;
+}
+
 /* Read in CLDC-style StackMap attribute */
 /*
  * The code in verifyformat has already ensured that the offsets and
@@ -3012,7 +3228,7 @@ CVMreadStackMaps(CVMExecEnv* ee, CICcontext* context, CVMUint32 length,
 			    &(entry->mapElements[0]));
 	entry->nLocals = t1 - &(entry->mapElements[0]);
 	CVMassert(entry->nLocals <= maxLocals);
-	entry->sp = nStackElements = get2bytes(context);
+	nStackElements = get2bytes(context);
 	CVMassert(nStackElements <= maxStack);
 	t2 = CVMreadMapElements(ee, context, nStackElements, codeLength, 
 			    t1);
@@ -3025,7 +3241,7 @@ CVMreadStackMaps(CVMExecEnv* ee, CICcontext* context, CVMUint32 length,
     return maps;
 }
 
-#endif
+#endif /* CVM_SPLIT_VERIFY */
 #endif /* CVM_CLASSLOADING */
 
 /*

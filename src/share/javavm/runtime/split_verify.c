@@ -4356,6 +4356,16 @@ Vfy_verifyMethodOrAbort(VfyContext* cntxt, const METHOD vMethod) {
                         Vfy_push(cntxt, ITEM_Float);
                         break;
                     }
+
+		    if (tag == CONSTANT_Class) {
+			if (cntxt->classBeingVerified->major_version >= 49) {
+			    CVMClassTypeID typeKey =
+				Vfy_getSystemVfyType(java_lang_Class);
+			    Vfy_push(cntxt, typeKey);
+			    break;
+			}
+		    }
+
                 }
                 Vfy_throw(cntxt, VE_BAD_LDC);
             }

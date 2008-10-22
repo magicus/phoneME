@@ -189,16 +189,37 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine)
 
     /* Verify the class if necessary. */
     if (CVM_NEED_VERIFY(CVMcbClassLoader(cb) != NULL)) {
+	CVMBool verified = CVM_FALSE;
 #ifdef CVM_SPLIT_VERIFY
-	if (CVMsplitVerifyClassHasMaps(ee, cb)){
-	    success = (CVMsplitVerifyClass(ee, cb) == 0);
-	}else{
-	    success = CVMclassVerify(ee, cb);
-	}
+	/*
+	 * JVM spec 3rd edition says there is an implicit empty
+	 * StackMapTable attribute if none is specified.
+	 */
+	if (CVMsplitVerifyClassHasMaps(ee, cb) || cb->major_version >= 50) {
+	    verified = (CVMsplitVerifyClass(ee, cb) == 0);
+#ifndef CVM_50_0_FALL_BACK
+	    if (!verified) {
+		success = CVM_FALSE;
+		goto unlock;
+	    }
 #else
-	success = CVMclassVerify(ee, cb);
+	    /* Falling back to full verifier is allowed for 50.0 */
+	    if (!verified) {
+		if (cb->major_version == 50 && cb->minor_version == 0) {
+		    CVMclearLocalException(ee);
+		} else {
+		    success = CVM_FALSE;
+		    goto unlock;
+		}
+	    }
 #endif
-        if (!success) {
+	}
+#endif
+	if (!verified) {
+	    verified = CVMclassVerify(ee, cb);
+	}
+        if (!verified) {
+	    success = CVM_FALSE;
 	    goto unlock;
 	}
     }
