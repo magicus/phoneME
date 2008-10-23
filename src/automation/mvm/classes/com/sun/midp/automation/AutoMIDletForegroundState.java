@@ -30,23 +30,44 @@ package com.sun.midp.automation;
  * Represents MIDlet's foreground state.
  */
 public class AutoMIDletForegroundState {
+    /** External state name */
+    private String name;
+
     /**
      * Get state representing following condition:
      * MIDlet is in foreground.
      */
     public static AutoMIDletForegroundState FOREGROUND = 
-        new AutoMIDletForegroundState();
+        new AutoMIDletForegroundState("foreground");
     
     /**
      * Get state representing following condition:
      * MIDlet is in background.
      */  
     public static AutoMIDletForegroundState BACKGROUND = 
-        new AutoMIDletForegroundState();
+        new AutoMIDletForegroundState("background");
+
+    /**
+     * Returns a string representation of the state.
+     *
+     * @return string representation of the state
+     */
+    public String toString() {
+        return name;
+    }
 
     /**
      * Private constructor to prevent other states creation
      */
     private AutoMIDletForegroundState() {
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param name external state name
+     */
+    private AutoMIDletForegroundState(String name) {
+        name = this.name;
     }
 }

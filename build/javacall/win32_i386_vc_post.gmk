@@ -38,6 +38,8 @@ wtkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
          $(WTK_BIN_DIR)/bin/)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/kdp.jar, \
          $(WTK_BIN_DIR)/wtklib/kdp.jar)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/memprof_client.jar, \
+         $(WTK_BIN_DIR)/wtklib/memprof_client.jar)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/appdb/_main.ks, \
          $(WTK_STORAGE_DIR)/_main.mks)
 	$(AT)$(call copy_file, \

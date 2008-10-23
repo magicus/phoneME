@@ -324,14 +324,22 @@ midp_remove_suite(SuiteIdType suiteId) {
     pcsl_string filename;
     char* pszError;
     pcsl_string suiteRoot;
-    int status;
+    MIDPError status;
     int operationStarted = 0;
     void* fileIteratorHandle = NULL;
     MidpProperties properties;
     pcsl_string* pproperty;
     MidletSuiteData* pData = NULL;
+    pcsl_string filenameBase;
 
     lockStorageList *node = NULL;
+
+    /* get the filename base from the suite id */
+    status = build_suite_filename(suiteId, &PCSL_STRING_EMPTY, 
+                                          &filenameBase);
+    if (status != ALL_OK) {
+        return status;
+    }
     node = find_storage_lock(suiteId);
     if (node != NULL) {
         if (node->update != KNI_TRUE) {
@@ -381,7 +389,7 @@ midp_remove_suite(SuiteIdType suiteId) {
 
         status = begin_transaction(TRANSACTION_REMOVE_SUITE, suiteId, NULL);
         if (status != ALL_OK) {
-            break;
+            return status;
         }
 
         /*
@@ -389,7 +397,7 @@ midp_remove_suite(SuiteIdType suiteId) {
          * Call the native RMS method to remove the RMS data.
          * This function call is needed for portability
          */
-        rc = rmsdb_remove_record_stores_for_suite(suiteId);
+        rc = rmsdb_remove_record_stores_for_suite(&filenameBase, suiteId);
         if (rc == KNI_FALSE) {
             status = SUITE_LOCKED;
             break;
@@ -732,7 +740,15 @@ midp_get_suite_storage_size(SuiteIdType suiteId) {
     StorageIdType storageId;
     MIDPError status;
     MidletSuiteData* pData;
+    pcsl_string filenameBase;
 
+    // get the filename base from the suite id
+    status = build_suite_filename(suiteId, &PCSL_STRING_EMPTY, 
+                                            &filenameBase);
+    
+    if (status != ALL_OK) {
+        return status;
+    }
     pData = get_suite_data(suiteId);
     if (pData) {
         used = (jint)pData->suiteSize;
@@ -762,7 +778,13 @@ midp_get_suite_storage_size(SuiteIdType suiteId) {
         }
 
         build_suite_filename(suiteId, &INSTALL_INFO_FILENAME, &filename[0]);
+        if (status != ALL_OK) {
+            return status;
+        }
         build_suite_filename(suiteId, &SETTINGS_FILENAME, &filename[1]);
+        if (status != ALL_OK) {
+            return status;
+        }
         midp_suite_get_class_path(suiteId, storageId, KNI_TRUE, &filename[2]);
         get_property_file(suiteId, KNI_TRUE, &filename[3]);
 
@@ -795,7 +817,7 @@ midp_get_suite_storage_size(SuiteIdType suiteId) {
         }
     }
 
-    rms = rmsdb_get_rms_storage_size(suiteId);
+    rms = rmsdb_get_rms_storage_size(&filenameBase, suiteId);
     if (rms == OUT_OF_MEM_LEN) {
         return OUT_OF_MEM_LEN;
     }

@@ -612,7 +612,7 @@ Java_com_sun_midp_events_EventQueue_sendNativeEventToIsolate(void) {
     cacheEventFieldIDs(eventObj, classObj);    
 
     event.type = KNI_GetIntField(eventObj, typeFieldID);
-
+      
     event.intParam1 = KNI_GetIntField(eventObj, intParam1FieldID);
     event.intParam2 = KNI_GetIntField(eventObj, intParam2FieldID);
     event.intParam3 = KNI_GetIntField(eventObj, intParam3FieldID);

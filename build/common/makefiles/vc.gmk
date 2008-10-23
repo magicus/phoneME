@@ -1,7 +1,5 @@
 #
-#  
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -46,10 +44,10 @@ CC		= cl
 CPP		= cl
 CC_OUTPUT	= -Fo
 
-ifeq ($(CREATE_JAVA_LIB), true)
-LD 		= lib
-else
-LD		= link
+LD 		= link
+
+ifeq ($(CREATE_MIDP_SHARED_LIB),true)
+LD_FLAGS 	+= /DLL
 endif
 
 LD_OUTPUT	= -out:

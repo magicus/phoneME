@@ -68,6 +68,9 @@ class AppManagerUIImpl implements AppManagerUI {
      * and informs AppManagerUI regarding changes in list through
      * itemAppended callback when new item is appended to the list.
      *
+     * The order in which the MIDlets are shown is up to the UI
+     * and need not be the order of itemAppended invocations.
+     *
      * @param suiteInfo the midlet suite info
      */
     public void itemAppended(RunningMIDletSuiteInfo suiteInfo) {
@@ -97,8 +100,9 @@ class AppManagerUIImpl implements AppManagerUI {
      * Called when a new midlet was launched.
      *
      * @param si corresponding midlet suite info
+     * @param className MIDlet class name
      */
-    public void notifyMidletStarted(RunningMIDletSuiteInfo si) {
+    public void notifyMidletStarted(RunningMIDletSuiteInfo si, String className) {
 
     }
 
@@ -192,6 +196,17 @@ class AppManagerUIImpl implements AppManagerUI {
      */
     public void notifyMidletStartError(int suiteId, String className, int errorCode,
                                 String errorDetails) {
+
+    }
+
+    /**
+     * Called when state of the midlet changes.
+     *
+     * @param si corresponding suite info
+     * @param newSi new suite info
+     */
+    public void notifyMIDletSuiteStateChanged(RunningMIDletSuiteInfo si,
+                                             RunningMIDletSuiteInfo newSi) {
 
     }
 

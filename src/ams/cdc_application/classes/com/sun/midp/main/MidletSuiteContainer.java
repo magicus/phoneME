@@ -24,42 +24,14 @@
  * information or have any questions.
  */
 
-package com.sun.midp.services;
+package com.sun.midp.main;
 
-/** Simple attribute storage describing a component */
-public interface ComponentInfo {
-    /** Component ID that is never used. */
-    public static final int UNUSED_COMPONENT_ID = -1;
+import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.midlet.MIDletStateHandler;
+import com.sun.midp.midletsuite.SuiteContainerAdapter;
 
-    /**
-     *
-     * @return ID of the component
-     */
-    public int getComponentId();
-
-    /**
-     *
-     * @return ID of the component
-     */
-    public int getSuiteId();
-
-    /**
-     * Returns true if this component is trusted, false otherwise.
-     *
-     * @return true if this component is trusted, false otherwise
-     */
-    public boolean isTrusted();
-    
-    /**
-     * Returns a string representation of the ComponentInfo object.
-     * For debug only.
-     */
-    public String toString();
-
-
-    /**
-     * Returns the display name of the component
-     * @return user-friendly name of the component
-     */
-    String getDisplayName();
+class MidletSuiteContainer extends SuiteContainerAdapter implements com.sun.midp.rms.SuiteContainer {
+    public MidletSuiteContainer(MIDletSuiteStorage storage) {
+        super(storage);
+    }
 }

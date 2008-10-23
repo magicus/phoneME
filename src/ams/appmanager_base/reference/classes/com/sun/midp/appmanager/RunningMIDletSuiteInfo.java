@@ -35,6 +35,7 @@ import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteImpl;
 import com.sun.midp.midletsuite.MIDletSuiteInfo;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.midlet.MIDletSuite;
 
 import javax.microedition.lcdui.Image;
 import java.util.Vector;
@@ -218,12 +219,36 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
     }
 
     /**
-     * Check if midlet belongs to the same suite.
+     * Check if midlet belongs to the same suite. If the suite id
+     * is INTERNAL_SUITE_ID, the MIDlet class name is also checked.
+     *
+     * Note that the "built-in MIDlets" are a special case: their suite id
+     * is INTERNAL_SUITE_ID and they are distinguished by the MIDlet class
+     * name. Although they belong to the same internal suite, they are
+     * described with different RunningMIDletSuiteInfo objects.
      * @param midlet the MIDlet proxy
-     * @return true if the MIDletProxy and this RunningMIDletSuiteInfo have the same suite id.
+     * @return true if the MIDletProxy and this RunningMIDletSuiteInfo have the
+     *      same suite id, and, if the suite is internal, if class names match.
      */
     public boolean sameSuite(MIDletProxy midlet) {
-         return suiteId == midlet.getSuiteId();
+        return sameSuiteId(midlet)
+            && (!isInternal()
+              // midletToRun must not be null for internal midlets 
+              || midletToRun != null && midletToRun.equals(midlet.getClassName()));
+    }
+
+    /**
+     * Compare suite ids of RunningMIDletSuiteInfo and MIDletProxy.
+     * Return true if they are equal.
+     * 
+     * Note that the MIDlets whose suite id is INTERNAL_SUITE_ID are
+     * distinguished by the MIDlet class name and are described with
+     * different RunningMIDletSuiteInfo objects.
+     * @param midlet describes a running MIDlet
+     * @return true if the suite ids match
+     */
+    public final boolean sameSuiteId(MIDletProxy midlet) {
+        return suiteId == midlet.getSuiteId();
     }
 
     /**
@@ -232,7 +257,7 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
      * @return true if the MIDlet proxy is found in the running MIDlet proxy list.
      */
     public boolean hasRunning(MIDletProxy midlet) {
-        if (!sameSuite(midlet)) {
+        if (suiteId != midlet.getSuiteId()) {
             return false;
         } else {
             synchronized (this) {

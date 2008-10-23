@@ -1075,7 +1075,7 @@ public class MIDletProxyList
          * not able to put the MIDlet to the foreground.
          */
         if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
-            if (newForeground.wasNotActive) {
+            if (newForeground != null && newForeground.wasNotActive) {
                 if (newForeground.getExtendedAttribute(
                         MIDletProxy.MIDLET_LAUNCH_BG)) {
                     return;

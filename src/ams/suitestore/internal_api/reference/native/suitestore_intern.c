@@ -116,6 +116,7 @@
 #include <midpInit.h>
 #include <midpStorage.h>
 #include <pcsl_memory.h>
+#include <midp_logging.h>
 
 #include <suitestore_intern.h>
 #include <suitestore_listeners.h>
@@ -550,6 +551,7 @@ read_suites_data(char** ppszError) {
     rc = pcsl_string_cat(storage_get_root(INTERNAL_STORAGE_ID),
                          &SUITE_DATA_FILENAME, &suitesDataFile);
     if (rc != PCSL_STRING_OK) {
+        REPORT_CRIT(LC_AMS,"read_suites_data(): OUT OF MEMORY !! (1)");
         return OUT_OF_MEMORY;
     }
 
@@ -568,6 +570,7 @@ read_suites_data(char** ppszError) {
     if (status == ALL_OK && bufferLen < (long) sizeof(int)) {
         pcsl_mem_free(buffer);
         status = SUITE_CORRUPTED_ERROR; /* _suites.dat is corrupted */
+        REPORT_ERROR(LC_AMS,"read_suites_data(): failed to read '_suites.dat', file is corrupted (1)");
     }
     if (status != ALL_OK) {
         return status;
@@ -582,6 +585,7 @@ read_suites_data(char** ppszError) {
         pData = (MidletSuiteData*) pcsl_mem_malloc(sizeof(MidletSuiteData));
         if (!pData) {
             status = OUT_OF_MEMORY;
+           REPORT_CRIT(LC_AMS,"read_suites_data(): OUT OF MEMORY !! (2)");
             break;
         }
 
@@ -594,6 +598,7 @@ read_suites_data(char** ppszError) {
         /* IMPL_NOTE: introduce pcsl_mem_copy() */
         if (bufferLen < (long)MIDLET_SUITE_DATA_SIZE) {
             status = IO_ERROR;
+            REPORT_ERROR(LC_AMS,"read_suites_data():_suites.dat - wrong file length. file is corrupted");
             break;
         }
         memcpy((char*)pData, (char*)&buffer[pos], MIDLET_SUITE_DATA_SIZE);
@@ -609,6 +614,7 @@ read_suites_data(char** ppszError) {
             pData->varSuiteData.pJarHash = pcsl_mem_malloc(pData->jarHashLen);
             if (pData->varSuiteData.pJarHash == NULL) {
                 status = OUT_OF_MEMORY;
+                REPORT_CRIT(LC_AMS,"read_suites_data(): OUT OF MEMORY !! (3)");
                 break;
             }
             memcpy(pData->varSuiteData.pJarHash, (char*)&buffer[pos],
@@ -638,6 +644,7 @@ read_suites_data(char** ppszError) {
                     i++) {
                 if (bufferLen < (long)sizeof(jint)) {
                     status = IO_ERROR; /* _suites.dat is corrupted */
+                    REPORT_ERROR(LC_AMS,"read_suites_data(): failed to read '_suites.dat', file is corrupted (2)");
                     break;
                 }
 
@@ -652,6 +659,7 @@ read_suites_data(char** ppszError) {
 
                 if (bufferLen < (long)strLen) {
                     status = IO_ERROR; /* _suites.dat is corrupted */
+                    REPORT_ERROR(LC_AMS,"read_suites_data(): failed to read '_suites.dat', file is corrupted (3)");
                     break;
                 }
 
@@ -661,6 +669,7 @@ read_suites_data(char** ppszError) {
 
                     if (rc != PCSL_STRING_OK) {
                         status = OUT_OF_MEMORY;
+                        REPORT_CRIT(LC_AMS,"read_suites_data(): OUT OF MEMORY !! (4)");
                         break;
                     }
                     ADJUST_POS_IN_BUF(pos, bufferLen, strLen * sizeof(jchar));

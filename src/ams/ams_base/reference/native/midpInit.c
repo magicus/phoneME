@@ -311,7 +311,7 @@ void midpFinalize() {
     midp_links_shutdown();
 #endif    
 
-    pcsl_network_finalize_start();
+    pcsl_network_finalize_start(NULL);
 
     midpAppDir = NULL;
     midpFinalizeMemory();

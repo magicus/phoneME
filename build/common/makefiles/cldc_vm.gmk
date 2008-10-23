@@ -177,6 +177,12 @@ CLDCTEST_CLASSES_ZIP = $(CLDC_DIST_DIR)/lib/cldctest_classes.zip
 #
 CLDC_KDP_CMD = $(CLDC_DIST_DIR)/bin/kdp.jar
 
+ifeq ($(ENABLE_MEMORY_PROFILER), true)
+# The memory profiler client
+#
+CLDC_MEMPROF_CMD = $(CLDC_DIST_DIR)/bin/memprof_client.jar
+endif
+
 # CLDC preverifier executable
 #
 CLDC_PREVERIFY_CMD = $(CLDC_DIST_DIR)/bin/preverify$(EXE)
@@ -199,6 +205,14 @@ $(PREVERIFY_CMD): $(CLDC_PREVERIFY_CMD)
 $(KDP_CMD): $(CLDC_KDP_CMD)
 	@cp -f $< $@ $(LOG)
 	@chmod a+x $@ $(LOG)
+
+ifeq ($(ENABLE_MEMORY_PROFILER), true)
+# Copy the CLDC memory profile client into MIDP bin directory
+#
+$(MEMPROF_CMD): $(CLDC_MEMPROF_CMD)
+	@cp -f $< $@ $(LOG)
+	@chmod a+x $@ $(LOG)
+endif
 
 $(MIDP_OUTPUT_DIR)/nativeFunctionTable.cpp: $(MIDP_CLASSES_ZIP) \
 					    $(JCC_CMD)

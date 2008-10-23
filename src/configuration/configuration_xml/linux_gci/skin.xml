@@ -1021,9 +1021,13 @@
           Key="KEYBOARD_WIDTH"
         Value="-1"/>
 
-     <integer
+    <integer
           Key="KEYBOARD_HEIGHT"
         Value="125"/>  
+
+    <integer
+        Key="KEYBOARD_COEFFICIENT"
+      Value="-1"/>
 
   <image
         Key="KEYBOARD_KEY"
@@ -1123,6 +1127,10 @@
   <font
         Key="KEYBOARD_FONT"
       Value="FontResources.SYS_B_M"/>
+
+  <integer
+        Key="TOUCH_RADIUS"
+      Value="10" />
 
   <integer
         Key="MENU_WIDTH"

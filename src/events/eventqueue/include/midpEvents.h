@@ -202,6 +202,17 @@ extern "C" {
  */
 #define NATIVE_UNBLOCK_INSTALLER        60
 
+/**
+ * This event is used for change current locale
+ */
+#define CHANGE_LOCALE_EVENT				61
+
+
+/**
+ * JSR290 Fluid listener notification event
+ */
+#define FLUID_LISTENER_EVENT            62
+
 /** @} */
 
 /**

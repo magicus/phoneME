@@ -33,7 +33,6 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.installer.*;
 import com.sun.midp.main.*;
 import com.sun.midp.midletsuite.*;
-import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
@@ -186,6 +185,11 @@ class AppManagerUIImpl extends Form
         new Command(Resource.getString(ResourceConstants.LAUNCH),
                     Command.ITEM, 1);
 
+    /** Command object for "Launch" CA manager app. */
+    private Command launchCompManagerCmd =
+        new Command(Resource.getString(ResourceConstants.LAUNCH),
+                    Command.ITEM, 1);
+
     /** Command object for "Launch" ODT Agent app. */
     private Command launchODTAgentCmd =
         new Command(Resource.getString(ResourceConstants.LAUNCH),
@@ -217,6 +221,10 @@ class AppManagerUIImpl extends Form
         new Command(Resource.
                     getString(ResourceConstants.AMS_MOVE_TO_INTERNAL_STORAGE),
                     Command.ITEM, 6);
+    /** Command object for "view components". */
+    private Command viewCompCmd =
+        new Command(Resource.getString(ResourceConstants.VIEW_COMP),
+                    Command.ITEM, 7);
 
 
     /** Command object for "Cancel" command for the remove form. */
@@ -270,7 +278,7 @@ class AppManagerUIImpl extends Form
                                            Command.ITEM, 1);
 
     // Current locale
-    private String locale = System.getProperty("microedition.locale");
+    private String locale;
 
     // Layout direction. True if direction is right-to-left
     private boolean RL_DIRECTION;
@@ -366,13 +374,6 @@ class AppManagerUIImpl extends Form
 
         setCommandListener(this);
         
-        if (locale != null && locale.equals("he-IL")) {
-            RL_DIRECTION = true;
-            TEXT_ORIENT = Graphics.RIGHT;
-        } else {
-            RL_DIRECTION = false;
-            TEXT_ORIENT = Graphics.LEFT;
-        }
     }
 
     /**
@@ -673,6 +674,10 @@ class AppManagerUIImpl extends Form
 
             manager.launchCaManager();
 
+        } else if (c == launchCompManagerCmd) {
+
+            manager.launchComponentManager();
+
         } else if (c == launchODTAgentCmd) {
 
             manager.launchODTAgent();
@@ -692,6 +697,12 @@ class AppManagerUIImpl extends Form
                 displayError.showErrorAlert(msi.displayName, t, null, null);
             }
 
+        } else if (c == viewCompCmd) {
+
+            // Installation of new components is a MIDlet's prerogative.
+            // Therefore, we specify the read-only mode (3rd arg).
+            ComponentManagerLauncher.componentView(msi.suiteId, display, false);
+
         } else if (c == removeCmd) {
 
             showConfirmRemoveDialog(msi);
@@ -703,9 +714,7 @@ class AppManagerUIImpl extends Form
         } else if (c == appSettingsCmd) {
 
             try {
-                AppSettings appSettings = new AppSettings(msi.suiteId, display,
-                                                          displayError, this);
-                display.setCurrent(appSettings);
+                appManager.showAppSettings(msi.suiteId, this);
 
             } catch (Throwable t) {
                 displayError.showErrorAlert(msi.displayName, t, null, null);
@@ -803,7 +812,7 @@ class AppManagerUIImpl extends Form
                      */
                     if (!proxy.getExtendedAttribute(
                             MIDletProxy.MIDLET_LAUNCH_BG)) {
-                        ci.setDefaultCommand(fgCmd);
+                        ci.addCommand(fgCmd);
                     }
 
                     /*
@@ -823,7 +832,7 @@ class AppManagerUIImpl extends Form
                     }
                 }
             } else {
-                ci.setDefaultCommand(fgCmd);
+                ci.addCommand(fgCmd);
                 ci.addCommand(endCmd);
             }
         } else {
@@ -836,14 +845,14 @@ class AppManagerUIImpl extends Form
      * This function encapsulates the logic of choosing the default command
      * (open or launch, whatever it means), depending on the midlet type
      * and enabled state.
-     * @param mci
+     * @param mci the form item whose set of menu commands will be modified 
      */
     private void setupDefaultCommand(AppManagerUIImpl.MidletCustomItem mci) {
         RunningMIDletSuiteInfo si = mci.msi;
         boolean running = si.hasRunningMidlet();
 
         // setDefaultCommand will add default command first
-        if (si.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+        if (si.isInternal()) {
             // midlets from the internal suite are never disabled
             if (!running) {
                 if (AppManagerPeer.DISCOVERY_APP.equals(mci.msi.midletToRun)) {
@@ -851,6 +860,9 @@ class AppManagerUIImpl extends Form
                 } else if (appManager.caManagerIncluded() &&
                            AppManagerPeer.CA_MANAGER.equals(mci.msi.midletToRun)) {
                     mci.setDefaultCommand(launchCaManagerCmd);
+                } else if (appManager.compManagerIncluded() &&
+                           AppManagerPeer.COMP_MANAGER.equals(mci.msi.midletToRun)) {
+                    mci.setDefaultCommand(launchCompManagerCmd);
                 } else if (appManager.oddEnabled() &&
                            AppManagerPeer.ODT_AGENT.equals(mci.msi.midletToRun)) {
                     mci.setDefaultCommand(launchODTAgentCmd);
@@ -863,6 +875,9 @@ class AppManagerUIImpl extends Form
                 mci.removeCommand(launchInstallCmd);
                 if (appManager.caManagerIncluded()) {
                     mci.removeCommand(launchCaManagerCmd);
+                }
+                if (appManager.compManagerIncluded()) {
+                    mci.removeCommand(launchCompManagerCmd);
                 }
                 if (appManager.oddEnabled()) {
                     mci.removeCommand(launchODTAgentCmd);
@@ -1171,13 +1186,16 @@ class AppManagerUIImpl extends Form
      * and informs AppManagerUI regarding changes in list through
      * itemAppended callback when new item is appended to the list.
      *
+     * The order in which the MIDlets are shown is up to the UI
+     * and need not be the order of itemAppended invocations.
+     *
      * @param suiteInfo the midlet suite info
      */
     public void itemAppended(RunningMIDletSuiteInfo suiteInfo) {
         MidletCustomItem ci = new MidletCustomItem(suiteInfo);
 
         setupDefaultCommand(ci);
-        if (suiteInfo.suiteId != MIDletSuite.INTERNAL_SUITE_ID) {
+        if (!suiteInfo.isInternal()) {
             ci.addCommand(infoCmd);
             ci.addCommand(removeCmd);
             ci.addCommand(updateCmd);
@@ -1187,6 +1205,9 @@ class AppManagerUIImpl extends Form
             }
             if (foldersOn) {
                 ci.addCommand(changeFolderCmd);
+            }
+            if (appManager.compManagerIncluded()) {
+                ci.addCommand(viewCompCmd);
             }
         }
 
@@ -1518,6 +1539,16 @@ class AppManagerUIImpl extends Form
             int cY = g.getClipY();
             int cW = g.getClipWidth();
             int cH = g.getClipHeight();
+            
+            locale = System.getProperty("microedition.locale");
+            
+            if (locale != null && locale.equals("he-IL")) {
+                RL_DIRECTION = true;
+                TEXT_ORIENT = Graphics.RIGHT;
+            } else {
+                RL_DIRECTION = false;
+                TEXT_ORIENT = Graphics.LEFT;
+            }
 
             if ((cW + cX) > bgIconW) {
                 if (text != null && h >= ICON_FONT.getHeight()) {
@@ -1757,7 +1788,7 @@ class AppManagerUIImpl extends Form
             // Icon for the Installer will be shown each time
             // the AppSelector is made current since it is the top
             // most icon and we reset the traversal to start from the top
-            if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+            if (msi.isInternal()) {
                 appManager.ensureNoInternalMIDletsRunning();
             }
         }

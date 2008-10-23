@@ -173,6 +173,53 @@ abstract class ItemLFImpl implements ItemLF {
                 myY >= 0 && myY <= contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2);
     }
 
+
+    /**
+     * Returns if the pointer location (x, y, w.r.t. the Form origin)
+     * is within the bounds of the 'clickable' area of this
+     * ItemLFImpl. We exclude non-interactive areas such as the
+     * label. <p>
+     *
+     * Most items can use this method. The only case that needs
+     * overriding is the ChoiceGroupPopupLFImpl.
+     */
+    int itemAcceptPointer(int x, int y) {
+
+        int contentX = bounds[X] + contentBounds[X] + ScreenSkin.PAD_FORM_ITEMS - 2;
+        int contentY = bounds[Y] + contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS - 2;
+
+        int myX = x - contentX;
+        int myY = y - contentY;
+
+        if ((myX >= -ScreenSkin.TOUCH_RADIUS) &&
+            (myX <= contentBounds[WIDTH] + ScreenSkin.PAD_FORM_ITEMS - 2 + ScreenSkin.TOUCH_RADIUS)) {
+            if ((myY < -ScreenSkin.TOUCH_RADIUS
+                    || myY > contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2 + ScreenSkin.TOUCH_RADIUS)) {
+                return -1;
+            } else {
+                if (myY >= 0
+                    && myY <= contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2 ) {
+                    return 0;
+                } else {
+                    return Math.max(Math.abs(myY),Math.abs(myY - contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2));
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    ItemLFImpl findNearestItem(ItemLFImpl secondItem, int x) {
+        int x1 = bounds[X] + contentBounds[WIDTH];
+        int x2 = secondItem.bounds[X];
+        if ((x - x1) <= (x2 - x)) {
+            return this;
+        } else {
+            return secondItem ;
+        }
+
+    }
+
     
     /**
      * Notifies L&F of a label change in the corresponding Item.
@@ -440,7 +487,6 @@ abstract class ItemLFImpl implements ItemLF {
         g.translate(-labelBounds[X] + contentBounds[X],
                     -labelBounds[Y] + contentBounds[Y]);
 
-        //        System.out.println("PRINT lCallPaint lPaintContent= contentBounds[WIDTH] " + contentBounds[WIDTH]);
         lPaintContent(g, contentBounds[WIDTH], contentBounds[HEIGHT]);
 
         g.translate(-contentBounds[X], -contentBounds[Y]);
@@ -1156,7 +1202,6 @@ abstract class ItemLFImpl implements ItemLF {
                        bounds[Y] + trY,
                        bounds[WIDTH],
                        bounds[HEIGHT]);
-
             paintTraversalIndicator(g, bounds[X] + trX, bounds[Y] + trY);
 
             g.setClip(clip[X], clip[Y], clip[WIDTH], clip[HEIGHT]);
@@ -1183,7 +1228,7 @@ abstract class ItemLFImpl implements ItemLF {
         
         // NTS: This may need to special case StringItem?
         g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
-
+         
         g.drawRect(x + 1, y + 1, bounds[WIDTH] - 2, bounds[HEIGHT]- 2);
     }
     
@@ -1342,6 +1387,16 @@ abstract class ItemLFImpl implements ItemLF {
         return item.lockedHeight + ScreenSkin.PAD_FORM_ITEMS + 
             ScreenSkin.PAD_FORM_ITEMS;
     }
+    
+    /**
+     * This method set up internal cycle.
+     *   
+     * @param cycle - show if internal cycle need in
+     * this item. 
+     */
+    void setInternalCycle(boolean cycle) {
+        this.isInternalCycle = cycle;   
+    }
 
     /** bounds[] array index to x coordinate */
     final static int X      = DisplayableLFImpl.X;
@@ -1460,4 +1515,7 @@ abstract class ItemLFImpl implements ItemLF {
 
     /** true is the item has been focused before pointer down */
     boolean itemWasPressed; // = false
+    
+    /** True if internal cycle need in this item.*/
+    boolean isInternalCycle;
 }
