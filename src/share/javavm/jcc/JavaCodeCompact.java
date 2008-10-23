@@ -720,7 +720,9 @@ public class JavaCodeCompact extends LinkerUtil {
 	    }
 	}
 	if (missingObjects.hasUnresolvedReferences()){
-	    missingObjects.print(System.err);
+	    if (verbosity > 0 || !unresolvedOk) {
+		missingObjects.print(System.err);
+	    }
 	    if (!unresolvedOk){
 		System.err.println(Localizer.getString(
 		    "javacodecompact.unresolved_references_not_allowed"));
