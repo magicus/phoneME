@@ -1053,6 +1053,7 @@ ParseStackMapTable(CFcontext *context, CVMUint32 codeLength,
 	    nStackSlots = ParseMapElements(context, 1,
 		codeLength, 0, maxStack);
 	} else {
+	    thisPC = -1;
 	    CFerror(context, "Stackmap entry unsupported tag value");
 	}
 
