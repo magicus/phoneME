@@ -3156,7 +3156,8 @@ CVMreadStackMapTable(CVMExecEnv* ee, CICcontext* context,
 	    e = CVMreadMapElements(ee, context, 1, codeLength, stack);
 	    nStackSlots = e - stack;
 	} else {
-	    CVMpanic("Stackmap entry unsupported tag value");
+	    pc = -1;
+	    CVMassert(CVM_FALSE);
 	}
 
 	entry->pc = pc;
