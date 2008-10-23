@@ -59,8 +59,6 @@ void* javacall_meminfo_malloc(unsigned int size, char* fileName, unsigned int li
 		add_mem_alloc_info(memInfo);
 
 		javaRetBuffer = completeBuffer + sizeof(mem_alloc_info);
-
-		memStat.currentMemeoryUsage += size;
 	}
 
 	return javaRetBuffer;
@@ -75,7 +73,6 @@ void  javacall_meminfo_free(void* ptr, char* fileName, unsigned int line){
 
 	remove_mem_alloc_info(memInfo);
 
-	memStat.currentMemeoryUsage -= memInfo->size;
 	javacall_os_free(completeBuffer);
 }
 
@@ -158,6 +155,13 @@ static void add_mem_alloc_info(mem_alloc_info* newMemInfo){
 
 	memInfoList = newMemInfo;
 
+	//update Memory Statistics
+	memStat.currentMemeoryUsage += newMemInfo->size;
+
+	if(memStat.currentMemeoryUsage > memStat.maxMemoryUsage) {
+		memStat.maxMemoryUsage = memStat.currentMemeoryUsage;
+	}
+
 }
 
 static void remove_mem_alloc_info(mem_alloc_info* remMemInfo){
@@ -175,6 +179,9 @@ static void remove_mem_alloc_info(mem_alloc_info* remMemInfo){
 
 		next->prev = remMemInfo->prev;
 	}
+
+	//update Memory Statistics
+	memStat.currentMemeoryUsage -= remMemInfo->size;
 }
 
 #ifdef __cplusplus
