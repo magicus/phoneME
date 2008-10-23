@@ -115,6 +115,7 @@
 #define CompiledMethodCache  JVMCompiledMethodCache
 #define CompiledMethodDesc  JVMCompiledMethodDesc
 #define Compiler  JVMCompiler
+#define CompilerContext  JVMCompilerContext
 #define CompilerLiteralAccessor  JVMCompilerLiteralAccessor
 #define CompilerState  JVMCompilerState
 #define CompilerStubs  JVMCompilerStubs
@@ -1787,9 +1788,9 @@ enum {
   template(x, CompilerState*, compiler_state)       \
   template(x, int,            compiler_bci)         \
                                                     \
-  template(x, BytecodeCompileClosure*,  compiler_closure)  \
-  template(x, int,            num_stack_lock_words)        \
-  template(x, address,        class_list_base)             \
+  template(x, Compiler*,      current_compiler)     \
+  template(x, int,            num_stack_lock_words) \
+  template(x, address,        class_list_base)      \
   template(x, address,        mirror_list_base)
 
 
@@ -1851,7 +1852,7 @@ struct JVMFastGlobals {
 #define _compiler_state               jvm_fast_globals.compiler_state
 #define _compiler_bci                 jvm_fast_globals.compiler_bci
 
-#define _compiler_closure             jvm_fast_globals.compiler_closure
+#define _current_compiler             jvm_fast_globals.current_compiler
 #define _num_stack_lock_words         jvm_fast_globals.num_stack_lock_words
 
 /* Variables used by the interpreter and compiler */

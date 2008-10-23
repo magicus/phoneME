@@ -33,79 +33,14 @@
 
 // The compiler translates bytecodes into native instructions.
 
-#define COMPILER_CONTEXT_HANDLES_DO(def) def( Method, method )
-
-#define GENERIC_COMPILER_CONTEXT_FIELDS_DO(template)\
-  template( CompilationQueueElement*, compilation_queue              )\
-  template( CompilationQueueElement*, current_element                )\
-  template( EntryTableType*,          entry_table                    )\
-  template( Compiler*,                parent                         )\
-  template( CompilerByteArray*,       entry_counts_table             )\
-  template( CompilerByteArray*,       bci_flags_table                )\
-  template( int,                      saved_bci                      )\
-  template( int,                      saved_num_stack_lock_words     )\
-  template( int,                      local_base                     )\
-  template( bool,                     in_loop                        )\
-  template( bool,                     has_loops                      )
-
-#if ENABLE_INLINE
-#define INLINER_COMPILER_CONTEXT_FIELDS_DO(template)  \
-  template( int, inline_return_label_encoding )
-#else
-#define INLINER_COMPILER_CONTEXT_FIELDS_DO(template)
-#endif
-
-#if ENABLE_CODE_OPTIMIZER && ENABLE_NPCE
-#define SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) \
-  template( CompilerIntArray*,  null_point_exception_ins_table       )\
-  template( int,                codes_can_throw_null_point_exception )\
-  template( int,                null_point_record_counter            )
-#else
-#define SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) 
-#endif
-
-#define COMPILER_CONTEXT_FIELDS_DO(template) \
-        GENERIC_COMPILER_CONTEXT_FIELDS_DO(template) \
-        INLINER_COMPILER_CONTEXT_FIELDS_DO(template) \
-        SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) 
-
-class CompilerContext {
-public:
-  typedef EntryArray EntryTableType;
-
-  #define DEFINE_FIELD( type, name ) \
-    type##Desc* _##name;    \
-    type* name ( void ) const           { return (type*) &_##name;     }  \
-    void clear_##name ( void )          { _##name = NULL;              }  \
-    void set_##name ( OopDesc* val )    { _##name = (type##Desc*) val; }  \
-    void set_##name ( const type* val ) { set_##name( val->obj() );    }
-  COMPILER_CONTEXT_HANDLES_DO(DEFINE_FIELD)
-  #undef DEFINE_FIELD
-
-  #define DEFINE_FIELD( type, name ) \
-    type _##name;             \
-    type name         ( void ) const { return _##name;  }\
-    void set_##name   ( type val )   { _##name = val;   }\
-    void clear_##name ( void )       { set_##name( 0 ); }
-  COMPILER_CONTEXT_FIELDS_DO(DEFINE_FIELD)
-  #undef DEFINE_FIELD
-
-  bool valid ( void ) const { return method()->not_null(); }
-
-  void oops_do( void do_oop(OopDesc**) );
-  void cleanup( void );
-
-#if USE_DEBUG_PRINTING
-  void print_on(Stream *st);
-#endif
-};
-
-class Compiler: public StackObj {
+class Compiler: public BytecodeCompileClosure {
  private:
-  static Compiler* _current;
+  Compiler* _parent;
+
 #if ENABLE_INLINE
   static Compiler* _root;
 #endif
+
 
   // Info used to tune down compilation for smoother animation.
   static jlong _estimated_frame_time;
@@ -114,8 +49,11 @@ class Compiler: public StackObj {
   static CompilerState* state( void ) { return _compiler_state;  }
 
  public:
-  static Compiler* current( void ) { return _current; }
-  static void set_current( Compiler* compiler ) { _current = compiler; }
+  Compiler* parent( void ) const { return _parent; }
+  void set_parent( Compiler* compiler ) { _parent = compiler; }
+
+  static Compiler* current( void ) { return _current_compiler; }
+  static void set_current( Compiler* compiler ) { _current_compiler = compiler;}
   
 #if ENABLE_INLINE
   static Compiler* root( void ) { return _root; }
@@ -140,16 +78,7 @@ class Compiler: public StackObj {
   COMPILER_CONTEXT_FIELDS_DO(DEFINE_ACCESSOR)
   #undef DEFINE_ACCESSOR
 
-  #define DEFINE_ACCESSOR( type, name ) \
-    type* name       ( void ) const      { return _context.name();     } \
-    void clear_##name( void )            { _context.clear_##name();    } \
-    void set_##name  ( OopDesc* val )    { _context.set_##name( val ); } \
-    void set_##name  ( const type* val ) { _context.set_##name( val ); } \
-    static type* current_##name ( void ) { return current()->name();   }
-  COMPILER_CONTEXT_HANDLES_DO(DEFINE_ACCESSOR)
-  #undef DEFINE_ACCESSOR
-
-  static Method* root_method( void ) { return root()->method(); }  
+  static Method* root_method( void ) { return state()->root_method(); }  
 
   // Constructor and deconstructor.
   Compiler( Method* method, const int active_bci );
@@ -163,8 +92,6 @@ class Compiler: public StackObj {
 
   // Called during VM start-up
   static void initialize( void ) {
-    jvm_memset(&_suspended_compiler_context, 0, 
-               sizeof _suspended_compiler_context);
 #if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
     jvm_memset(&comp_perf_counts, 0, sizeof comp_perf_counts );
 #endif
@@ -195,7 +122,7 @@ class Compiler: public StackObj {
     return code_generator()->compiled_method();
   }
   static BytecodeCompileClosure* closure( void ) {
-    return _compiler_closure;
+    return _current_compiler;
   }
 
   static VirtualStackFrame* get_cached_preserved_frame( void ) {
@@ -213,10 +140,6 @@ class Compiler: public StackObj {
       set_current_element( p );
     }
     return p;
-  }
-
-  CompilerContext* context( void ) {
-    return &_context;
   }
 
 #if ENABLE_NPCE
@@ -414,8 +337,6 @@ class Compiler: public StackObj {
   static CompilationFailure _failure;
   static void print_compilation_history() PRODUCT_RETURN;
 
- private:
-  static CompilerContext _suspended_compiler_context;
  public:
   static void on_timer_tick(bool is_real_time_tick JVM_TRAPS);
   static void process_interpretation_log();
@@ -436,13 +357,15 @@ class Compiler: public StackObj {
            (ExcessiveSuspendCompilation || Os::check_compiler_timer());
   }
   static CompilerContext* suspended_compiler_context( void ) {
-    return &_suspended_compiler_context;
+    return state()->suspended_compiler_context();
   }
   static bool is_suspended ( void ) {
     return state() != NULL;
   }
 
-  static void oops_do( void do_oop(OopDesc**) );
+  static void oops_do( void do_oop(OopDesc**) ) {
+    state()->oops_do( do_oop );
+  }
 
 #if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
   static void print_detailed_performance_counters();
@@ -455,8 +378,23 @@ class Compiler: public StackObj {
   FastOopInStackObj    __must_be_first_item__;
 #endif
 
-  BytecodeCompileClosure _closure;  // The compiler closure.
-  CompilerContext        _context;  // The compiler context.
+  CompilerContext _context;  // The compiler context.
+
+  CompilerContext* context( void ) {
+    return &_context;
+  }
+  const CompilerContext* context( void ) const {
+    return &_context;
+  }
+
+  void suspend( void ) const {
+    GUARANTEE(parent() == NULL, "Cannot suspend while inlining");
+    *suspended_compiler_context() = *context();
+  }
+  void resume ( void ) {
+    *context() = *suspended_compiler_context();
+    BytecodeCompileClosure::initialize( state()->root_method() );
+  }
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM &&ENABLE_CODE_OPTIMIZER
   CompilationQueueElement* _next_element;
@@ -641,11 +579,10 @@ class Compiler: public StackObj {
 
   ReturnOop allocate_and_compile( const int compiled_code_factor JVM_TRAPS );
 
-  inline void check_free_space ( JVM_SINGLE_ARG_TRAPS ) const;
-  void begin_compile           ( JVM_SINGLE_ARG_TRAPS );
-  void suspend                 ( void );
-  void restore_and_compile     ( JVM_SINGLE_ARG_TRAPS );
-  void optimize_code           ( JVM_SINGLE_ARG_TRAPS );
+  inline void check_free_space  ( JVM_SINGLE_ARG_TRAPS ) const;
+  void begin_compile            ( JVM_SINGLE_ARG_TRAPS );
+  
+  void optimize_code            ( JVM_SINGLE_ARG_TRAPS );
   void setup_for_compile( const Method::Attributes& attributes JVM_TRAPS );
 
   void process_compilation_queue ( JVM_SINGLE_ARG_TRAPS );
@@ -653,13 +590,6 @@ class Compiler: public StackObj {
   bool reserve_compiler_area(size_t compiled_method_size);
   void handle_out_of_memory( void );
   static void set_impossible_to_compile(Method *method, const char why[]);
-
-  void set_code_generator( CodeGenerator* gen ) {
-    _closure.set_code_generator( gen );
-  }
-  void set_code_generator( void ) {
-    set_code_generator( code_generator() );
-  }
 
 #if ENABLE_PERFORMANCE_COUNTERS
   void init_performance_counters(bool is_resume);

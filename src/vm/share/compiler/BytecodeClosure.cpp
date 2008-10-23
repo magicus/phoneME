@@ -27,11 +27,6 @@
 # include "incls/_precompiled.incl"
 # include "incls/_BytecodeClosure.cpp.incl"
 
-void BytecodeClosure::initialize(Method* method) {
-  _method = method->obj();
-  _cp     = method->constants();
-}
-
 void BytecodeClosure::illegal_code(JVM_SINGLE_ARG_TRAPS) { 
     JVM_IGNORE_TRAPS;
     SHOULD_NOT_REACH_HERE();

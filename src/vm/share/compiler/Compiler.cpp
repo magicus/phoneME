@@ -34,30 +34,9 @@
 
 #if ENABLE_COMPILER
 
-Compiler*       Compiler::_current;
 #if ENABLE_INLINE
 Compiler*       Compiler::_root;
 #endif
-CompilerContext Compiler::_suspended_compiler_context;
-
-inline void CompilerContext::oops_do( void do_oop(OopDesc**) ) {
-  for( CompilerContext* context = this; context->valid(); ) {
-    Compiler* parent = context->parent();
-
-    #define FIELD_DO( type, name ) do_oop( (OopDesc**)&_##name );
-    COMPILER_CONTEXT_HANDLES_DO(FIELD_DO)
-    #undef FIELD_DO
-
-    if( !parent ) break;
-    context = parent->context();
-  }
-}
-
-inline void CompilerContext::cleanup( void ) {
-  if( valid() ) {
-    jvm_memset( this, 0, sizeof *this );
-  }
-}
 
 jlong                         Compiler::_estimated_frame_time;
 jlong                         Compiler::_last_frame_time_stamp;
@@ -68,7 +47,7 @@ Compiler::CompilationHistory* Compiler::_history_tail;
 #endif
 
 Compiler::Compiler( Method* method, const int active_bci ) {
-  jvm_memset(&_context, 0, sizeof _context );
+  _context.cleanup();
   Compiler* compiler = current();
 #if ENABLE_INLINE
   if( compiler ) {
@@ -91,16 +70,14 @@ Compiler::Compiler( Method* method, const int active_bci ) {
   set_parent( compiler );
   set_current(this);
 
-  set_method( method );
   _failure = reservation_failed;
-  _closure.initialize(this, method, active_bci);
+  BytecodeCompileClosure::initialize(method, active_bci);
 
 #if ENABLE_CSE
   VirtualStackFrame::init_status_of_current_snippet_tracking();
   RegisterAllocator::wipe_all_notations();
 #endif
   _compiler_method  = method;
-  _compiler_closure = &_closure;
 }
 
 #ifndef PRODUCT
@@ -122,14 +99,13 @@ Compiler::~Compiler() {
   if (parent_compiler != NULL) {
 #ifdef AZZERT
     if (!CURRENT_HAS_PENDING_EXCEPTION) {
-      Signature::Raw signature = current_method()->signature();
+      Signature::Raw signature = method()->signature();
       const BasicType return_type = signature().return_type(true);
       GUARANTEE(frame()->virtual_stack_pointer() == 
                 local_base() - 1 + word_size_for(return_type), "Sanity");
     }
 #endif
 
-    _compiler_closure     = &parent_compiler->_closure;
     _compiler_method      = parent_compiler->method();
     _compiler_bci         = parent_compiler->saved_bci();
     _num_stack_lock_words = parent_compiler->saved_num_stack_lock_words();
@@ -303,17 +279,6 @@ void Compiler::process_interpretation_log() {
 #endif // ENABLE_INTERPRETATION_LOG
 
 
-void Compiler::oops_do( void do_oop(OopDesc**) ) {
-  _suspended_compiler_context.oops_do( do_oop );
-
-  Compiler* compiler = current();
-  if( compiler ) {
-    compiler->context()->oops_do( do_oop );
-  }
-
-  state()->oops_do( do_oop );
-}
-
 void Compiler::terminate ( OopDesc* result ) {
 #if ENABLE_TTY_TRACE
   if (PrintCompilation) {
@@ -333,7 +298,6 @@ void Compiler::terminate ( OopDesc* result ) {
 #endif
   }
   CompilerState::terminate();
-  _suspended_compiler_context.cleanup();
   ObjectHeap::update_compiler_area_top( result );
 }
 
@@ -370,8 +334,11 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
   }
 #endif
 
-  const jint size = align_allocation_size(1024 + (method()->code_size() *
-                                            compiled_code_factor));
+  const jint size = align_allocation_size(1024 +
+#ifdef PRODUCT
+    sizeof *_compiler_state +
+#endif
+    (method()->code_size() * compiled_code_factor));
 
   if (!reserve_compiler_area((size_t)size)) {
     // We don't have enough space (yet) to compile this method. We'll try to
@@ -401,8 +368,8 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
     }
     return NULL;
   }
-  set_code_generator();
-  current_compiled_method()->set_method(method());
+  state->set_root_method( method() );
+  current_compiled_method()->set_method( method() );
 
 #if USE_COMPILER_COMMENTS
   if (PrintCompilation || PrintCompiledCode || PrintCompiledCodeAsYouGo) {
@@ -596,11 +563,6 @@ inline void Compiler::begin_compile( JVM_SINGLE_ARG_TRAPS ) {
 
 inline void Compiler::handle_out_of_memory( void ) {
   method()->set_double_size();
-}
-
-inline void Compiler::suspend( void ) {
-  GUARANTEE(parent() == NULL, "Cannot suspend while inlining");
-  _suspended_compiler_context = *context();
 }
 
 #if  ENABLE_INTERNAL_CODE_OPTIMIZER
@@ -954,13 +916,6 @@ void Compiler::abort_active_compilation(bool is_permanent JVM_TRAPS) {
   Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW);
 }
 
-inline void Compiler::restore_and_compile( JVM_SINGLE_ARG_TRAPS ) {
-  set_code_generator();
-  *context() = _suspended_compiler_context;
-  GUARANTEE(parent() == NULL, "Cannot suspend while inlining");
-  process_compilation_queue( JVM_SINGLE_ARG_NO_CHECK );
-}
-
 // Resume a compilation that has been suspended.
 ReturnOop Compiler::resume_compilation(Method *method JVM_TRAPS) {
   EventLogger::start(EventLogger::COMPILE);
@@ -976,7 +931,8 @@ ReturnOop Compiler::resume_compilation(Method *method JVM_TRAPS) {
     // into unused space in compiler_area.
     Compiler compiler(method, 0);
     compiler.init_performance_counters(true);
-    compiler.restore_and_compile( JVM_SINGLE_ARG_NO_CHECK );
+    compiler.resume();
+    compiler.process_compilation_queue( JVM_SINGLE_ARG_NO_CHECK );
     Thread::clear_current_pending_exception();
     result = _failure == none ? current_compiled_method()->obj() : NULL;
     compiler.update_performance_counters(true, result);
@@ -1011,7 +967,7 @@ void Compiler::print_compilation_history( void ) {
   while( h ) {
     tty->print_cr("Compiled: #%d %s", i++, h->_method_name);
     CompilationHistory* next = h->_next;
-    OsMemory_free( h );
+    OsMemory_free( h ); 
     h = next;
   }
   _history_head = _history_tail = h;
@@ -1023,8 +979,6 @@ void Compiler::print_compilation_history( void ) {
 void Compiler::print_on(Stream *st) {
   st->print_cr("Compiler::_current = 0x%08x", current());
   state()->print_on(st);
-  st->print_cr("Compiler::_closure = 0x%08x", &_closure);
-  _closure.print_on(st);
 }
 
 void Compiler::p() {

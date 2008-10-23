@@ -40,35 +40,27 @@ BytecodeCompileClosure::PoppedValue::PoppedValue(BasicType type)
 }
 
 inline VirtualStackFrame* BytecodeCompileClosure::frame() const {
-  return _compiler->frame();
+  return compiler()->frame();
 }
 
-inline CodeGenerator* BytecodeCompileClosure::code_generator() const {
-  return _code_generator;
-}
-
-void BytecodeCompileClosure::initialize(Compiler* compiler, Method* method,
-                                        int active_bci) {
+void BytecodeCompileClosure::initialize(Method* method) {
   BytecodeClosure::initialize(method);
-  set_compiler(compiler);
-  set_active_bci(active_bci);
 #if ENABLE_ISOLATES
   set_has_clinit(false);
-  InstanceClass::Raw k = method->holder();
-  while(k.not_null()){
-    Method::Raw init =
-      k().find_local_method(Symbols::class_initializer_name(), 
-                            Symbols::void_signature());
-    if (!init.is_null()) {
-      _has_clinit = true;
-      break;
+  {
+    for (InstanceClass::Raw k = method->holder(); k.not_null(); k = k().super()){
+      Method::Raw init =
+        k().find_local_method(Symbols::class_initializer_name(), 
+                              Symbols::void_signature());
+      if (!init.is_null()) {
+        _has_clinit = true;
+        break;
+      }
     }
-    k = k().super();
   }
 #endif
   TypeArray::Raw exception_handlers = method->exception_table();
   _has_exception_handlers = (exception_handlers().length() != 0);
-  _code_generator = Compiler::code_generator();
 }
 
 void BytecodeCompileClosure::frame_push(Value &value) {
@@ -503,7 +495,7 @@ void BytecodeCompileClosure::convert(BasicType from, BasicType to JVM_TRAPS) {
   if (!CURRENT_HAS_PENDING_EXCEPTION) {
     // Some compiled code calls the interpreter.  The
     // check is to ensure we don't push garbage.
-    if (!Compiler::closure()->is_compilation_done()) {
+    if( !is_compilation_done() ) {
       frame_push(result);
     }
   }

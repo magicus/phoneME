@@ -40,11 +40,14 @@ class CompilerState: public CodeGenerator {
       ThrowExceptionStub::number_of_runtime_exceptions
   };
  private:
+  MethodDesc* _root_method;
+
   #define DECLARE_FIELD(type, name) type _##name;
   COMPILER_STATIC_FIELDS_DO(DECLARE_FIELD)
   #undef DECLARE_FIELD
 
   ThrowExceptionStub* _rte_handlers[number_of_runtime_exceptions];
+  CompilerContext     _suspended_compiler_context;
 
   void initialize( OopDesc* compiled_method ) {
     CodeGenerator::initialize( compiled_method );
@@ -53,7 +56,9 @@ class CompilerState: public CodeGenerator {
     COMPILER_STATIC_FIELDS_DO(INIT_FIELD)
     #undef INIT_FIELD
 
+    NOT_PRODUCT( clear_root_method(); )
     NOT_PRODUCT( jvm_memset( &_rte_handlers, 0, sizeof _rte_handlers ); )
+    NOT_PRODUCT( _suspended_compiler_context.cleanup(); )
   }
 
  public:
@@ -79,6 +84,18 @@ class CompilerState: public CodeGenerator {
     _compiler_state = NULL;
   }
   CodeGenerator* code_generator( void ) { return this; }
+
+  Method* root_method    ( void ) const       { return (Method*) &_root_method; }
+  void clear_root_method ( void )             { _root_method = NULL;            }
+  void set_root_method   ( OopDesc* m )       { _root_method = (MethodDesc*) m; }
+  void set_root_method   ( const Method* m )  { set_root_method( m->obj() );    }
+
+  CompilerContext* suspended_compiler_context( void ) {
+    return &_suspended_compiler_context;
+  }
+  const CompilerContext* suspended_compiler_context( void ) const {
+    return &_suspended_compiler_context;
+  }
 
   #define DEFINE_ACCESSOR(type, name) \
     type name       ( void ) const    { return _##name;    } \
@@ -115,6 +132,13 @@ class CompilerState: public CodeGenerator {
     #undef PRINT_FIELD
   }
 #endif
+
+  void oops_do( void do_oop(OopDesc**) ) {
+    if( this ) {
+      CodeGenerator::oops_do( do_oop );
+      do_oop( (OopDesc**) &_root_method );
+    }
+  }
 };
 
 inline VirtualStackFrame* CodeGenerator::frame ( void ) {

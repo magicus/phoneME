@@ -26,11 +26,11 @@
 
 class BytecodeClosure : public StackObj {
  public:
-  BytecodeClosure() {
+  BytecodeClosure( void ) {
     // The existence of this constructor helps GCC 2.9 generate
     // smaller code
   }
-  ~BytecodeClosure() {
+  ~BytecodeClosure( void ) {
     // The existence of this destructor helps GCC 2.9 generate
     // smaller code
   }
@@ -272,9 +272,12 @@ class BytecodeClosure : public StackObj {
     return method()->branch_destination( bci );
   }
 
-  void initialize(Method* method);
+  void initialize(Method* method) {
+    _method = method->obj();
+    _cp     = method->constants();
+  }
 
-  static void verify() {
+  static void verify( void ) {
 #ifdef AZZERT
     // This particular order is required by CodeGenerator_arm.cpp, among other
     // things, to reduce C++ code footprint.

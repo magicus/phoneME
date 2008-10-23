@@ -786,26 +786,27 @@ Relocation.hpp                   CompiledMethod.hpp
 Relocation.cpp                   Relocation.hpp
 Relocation.cpp                   CallInfo.hpp
 
-CompilerState.hpp                CodeGenerator.hpp
-CompilerState.hpp                CompilationQueue.hpp
-CompilerState.hpp                Entry.hpp
+CompilerContext.hpp              CompilationQueue.hpp
+CompilerContext.hpp              Entry.hpp
+CompilerContext.hpp              Method.hpp
 
+CompilerState.hpp                CodeGenerator.hpp
+CompilerState.hpp                CompilerContext.hpp
+
+Compiler.hpp                     BytecodeCompileClosure.hpp
 Compiler.hpp                     CompilerState.hpp
 Compiler.hpp                     MixedOop.hpp
 Compiler.hpp                     CodeOptimizer_<carch>.hpp
 
-Compiler.hpp                     Method.hpp
 #if ENABLE_JVMPI_PROFILE
 Compiler.cpp                     Globals.hpp
-#endif 
-
+#endif
 
 Compiler.cpp                     Compiler.hpp
 Compiler.cpp                     jvm.h
 Compiler.cpp                     CompiledMethodCache.hpp
 Compiler.cpp                     Timer.hpp
 Compiler.cpp                     ObjectHeap_<iarch>.hpp
-Compiler.cpp                     BytecodeCompileClosure.hpp
 Compiler.cpp                     InstanceClass.hpp
 Compiler.cpp                     Universe.hpp
 Compiler.cpp                     JVM.hpp
