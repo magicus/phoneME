@@ -53,6 +53,7 @@ extern "C" {
 #include <javacall_time.h>
 #include <javautil_unicode.h>
 #include <javacall_memory.h>
+#include <javacall_lcd.h>
 
 #ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
@@ -1147,9 +1148,9 @@ void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber
 }
 
 void /* OPTIONAL */ javanotify_rotation(int hardwareId) {
-    (void)hardwareId;
     midp_jc_event_union e;
 
+    (void)hardwareId;
     REPORT_INFO(LC_CORE, "javanotify_rotation() >>\n");
 
     e.eventType = MIDP_JC_EVENT_ROTATION;
@@ -1160,8 +1161,7 @@ void /* OPTIONAL */ javanotify_rotation(int hardwareId) {
   * The platform should invoke this function in platform context
   * to notify display device state change
   */
-void javanotify_display_device_state_changed(int hardwareId, javacall_lcd_display_device_state state) {
-    (void)hardwareId;
+void  /* OPTIONAL */ javanotify_display_device_state_changed(int hardwareId, javacall_lcd_display_device_state state) {
     midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_display_device_state_changed >>\n");
