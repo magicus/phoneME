@@ -240,6 +240,10 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
         argv[argc++] = "minimum";
     } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
         argv[argc++] = "maximum";
+    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_MANUFACTURER) {
+        argv[argc++] = "manufacturer";
+    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_OPERATOR) {
+        argv[argc++] = "operator";
     } else {
         REPORT_ERROR(LC_CORE, "javanotify_start_tck() Can not recognize TCK domain\n");
         REPORT_ERROR1(LC_CORE, "TCK domain type is %d. System will now exit\n", domain_type);
