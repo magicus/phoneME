@@ -155,7 +155,7 @@ class CldcMIDletStateListener implements MIDletStateListener {
             previouslyActive = true;
 
             if (Display.getDisplay(midlet).getCurrent() == null) {
-                displayContainer.requestForegroundForDisplay(midlet);
+                displayContainer.requestForegroundForDisplay(className);
             }
         }
 

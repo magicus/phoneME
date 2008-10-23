@@ -215,7 +215,7 @@ extern "C" {
 /**
  * JSR290 Fluid listener notification event
  */
-#define FLUID_LISTENER_EVENT            62
+#define FLUID_LISTENER_EVENT            63
 
 /** @} */
 

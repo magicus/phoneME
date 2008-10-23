@@ -49,5 +49,5 @@ int isForegroundDisplay(int displayId) {
 }
 #else
 /** Foreground display ID of current foreground MIDlet. */
-int gForegroundDisplayIds = 0;
+int gForegroundDisplayId = 0;
 #endif /* ENABLE_MULTIPLE_DISPLAYS */
