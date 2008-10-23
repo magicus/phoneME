@@ -165,6 +165,7 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
     const char* spaceProp;
     long totalSpace;
     int result = -1; /* error status by default */
+    int main_memory_chunk_size;
 
     if (initLevel >= level) {
         return 0;
@@ -187,8 +188,13 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
         } 
 
         if (level >= MEM_LEVEL && initLevel < MEM_LEVEL) {
+	    /* Get java heap memory size */
+	    main_memory_chunk_size = getInternalPropertyInt("MAIN_MEMORY_CHUNK_SIZE");
+	    if (main_memory_chunk_size == 0) {
+		main_memory_chunk_size = -1;
+	    }
             /* Do initialization for the next level: MEM_LEVEL */
-            if (midpInitializeMemory(-1) != 0) {
+            if (midpInitializeMemory(main_memory_chunk_size) != 0) {
                 break;
             }
             initLevel = MEM_LEVEL;
