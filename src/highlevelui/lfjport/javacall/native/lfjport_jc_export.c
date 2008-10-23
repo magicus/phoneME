@@ -253,3 +253,10 @@ int lfjport_get_display_capabilities(int hardwareId) {
 jint* lfjport_get_display_device_ids(jint* n) {
     return jcapp_get_display_device_ids(n);
 }
+
+/**
+ * Notify the display device state has been changed
+ */
+void lfjport_display_device_state_changed(int hardwareId, int state) {
+    jcapp_display_device_state_changed(hardwareId, state);
+}

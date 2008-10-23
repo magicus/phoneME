@@ -1165,8 +1165,8 @@ void  /* OPTIONAL */ javanotify_display_device_state_changed(int hardwareId, jav
     midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_display_device_state_changed >>\n");
-    e.data.midp_jc_event_display_device.hardwareId =  hardwareId;
-    e.data.midp_jc_event_display_device.state = state;
+    e.data.displayDeviceEvent.hardwareId =  hardwareId;
+    e.data.displayDeviceEvent.state = state;
     e.eventType = MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED;
     midp_jc_event_send(&e);
 }

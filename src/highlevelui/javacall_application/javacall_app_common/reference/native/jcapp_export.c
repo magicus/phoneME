@@ -267,3 +267,8 @@ int jcapp_get_display_capabilities(int hardwareId) {
 jint* jcapp_get_display_device_ids(jint* n) {
     return javacall_lcd_get_display_device_ids(n);
 }
+
+void jcapp_display_device_state_changed(int hardwareId, int state) {
+    (void)hardwareId;
+    (void)state;
+}
