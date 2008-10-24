@@ -27,10 +27,12 @@
 #include "kni.h"
 #include "midp_file_cache.h"
 #include <midpStorage.h>
+#include <midpServices.h>
 #include <midpMalloc.h>
 #include <midpInit.h>
 #include <midpRMS.h>
 #include <midpUtilKni.h>
+#include <midpEvents.h>
 #include <suitestore_rms.h>
 #include <limits.h> /* for LONG_MAX */
 #include <pcsl_esc.h>
@@ -189,6 +191,7 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END( IDX_EXTENSION );
 */
 
 static const char* const FILE_LOCK_ERROR = "File is locked, can not open";
+static const char* const FILE_LOCK_NOT_FOUND = "File lock not found, internal error";
 
 /*
  *! \struct lockFileList
@@ -199,6 +202,8 @@ static const char* const FILE_LOCK_ERROR = "File is locked, can not open";
  *
  */
 typedef struct _lockFileList {
+    int count;
+    int lockerId[MAX_ISOLATES];
     pcsl_string filenameBase;
     pcsl_string recordStoreName;
     int handle;      /* 32-bit file handle, useful in close operation */
@@ -213,6 +218,7 @@ typedef lockFileList olockFileList;
 static int recordStoreCreateLock(pcsl_string* filenameBase,
                                  const pcsl_string * name_str, int handle);
 static void recordStoreDeleteLock(int handle);
+static lockFileList * findLockByHandle(int handle);
 static lockFileList * findLockById(pcsl_string* filenameBase, const pcsl_string * name);
 static MIDPError buildSuiteFilename(pcsl_string * filenameBase,
                                     const pcsl_string* name, jint extension, 
@@ -676,9 +682,22 @@ rmsdb_record_store_open(char** ppszError, pcsl_string* filenameBase,
         /* linked list is already initialised for a db file */
         searchedNodePtr = findLockById(filenameBase, name_str);
         if (searchedNodePtr != NULL) {
+
+            addflag = 0;
+            int count = searchedNodePtr->count;
+            searchedNodePtr->lockerId[count] = getCurrentIsolateId();
+            searchedNodePtr->count = count + 1;
+            return searchedNodePtr->handle;
+
+            /* TODO: The policy for opening the same record store from
+             * different applications is changed - now it should be
+             * possible and proper locking mechanisms should guarantee
+             * consistency
+             */
+
             /* File is already opened by another isolate, return an error */
-            *ppszError = (char *)FILE_LOCK_ERROR;
-            return -2;
+            // *ppszError = (char *)FILE_LOCK_ERROR;
+            // return -2;
         } else { /* remember to add a node */
             addflag = 1;
         }
@@ -837,21 +856,41 @@ recordStoreRead(char** ppszError, int handle, char* buffer, long length) {
  */
 void
 recordStoreClose(char** ppszError, int handle) {
-
-    midp_file_cache_close(ppszError, handle);
-    /*
-     * Verify that there is no error in closing the file. In case of any errors
-     * there is no need to remove the node from the linked list
-     */
-     if (*ppszError != NULL) {
-         return;
+    int i, count;
+    int currentIsolateId = getCurrentIsolateId();
+    lockFileList* lockNodePtr = findLockByHandle(handle);
+    if (lockNodePtr == NULL) {
+        *ppszError = (char *)FILE_LOCK_NOT_FOUND;
+        return;
     }
 
-    /*
-     * Search the node based on handle. Delete the node upon file close
-     */
+    /* Find current caller among locker IDs */
+    count = lockNodePtr->count;
+    for (i = 0; i < count; i++) {
+        if (lockNodePtr->lockerId[i] == currentIsolateId) {
+            break;
+        }
+    }
+    /* Remove found locker ID from the list */
+    if (i < count) {
+        while(i < count - 1)
+            lockNodePtr->lockerId[i] = lockNodePtr->lockerId[i + 1];
+        lockNodePtr->lockerId[count] = -1;
+        lockNodePtr->count = count - 1;
+    }
 
-     recordStoreDeleteLock(handle);
+    if (lockNodePtr->count == 0) {
+        midp_file_cache_close(ppszError, handle);
+        /*
+         * Verify that there is no error in closing the file. In case of any errors
+         * there is no need to remove the node from the linked list
+         */
+         if (*ppszError != NULL) {
+             return;
+        }
+        /* Search the node based on handle. Delete the node upon file close */
+        recordStoreDeleteLock(handle);
+    }
 }
 
 /*
@@ -975,6 +1014,8 @@ recordStoreCreateLock(pcsl_string* filenameBase, const pcsl_string * name_str,
         return OUT_OF_MEM_LEN;
     }
 
+    newNodePtr->count = 1;
+    newNodePtr->lockerId[0] = getCurrentIsolateId();
     newNodePtr->filenameBase = *filenameBase;
 
     /*IMPL_NOTE: check for error codes instead of null strings*/
@@ -1070,6 +1111,23 @@ findLockById(pcsl_string* filenameBase, const pcsl_string * name_str) {
     return NULL;
 }
 
+/*
+ * Search for record store lock node by file handle
+ * @param handle : handle of record store file
+ * @return pointer to searched lock node, or NULL if not found 
+ */
+static lockFileList *findLockByHandle(int handle) {
+    lockFileList* currentNodePtr;
+    for (currentNodePtr = lockFileListPtr; currentNodePtr != NULL;
+         currentNodePtr = currentNodePtr->next) {
+        if (currentNodePtr->handle == handle) {
+            return currentNodePtr;
+        }
+    }
+    return NULL;
+}
+
+
 /* Utility function to build filename from filename base, name and extension
  * 
  * @param filenameBase base for the filename
@@ -1136,3 +1194,24 @@ static MIDPError buildSuiteFilename(pcsl_string* filenameBase,
     return ALL_OK;
 }
 
+void rmsdb_notify_record_store_changed(pcsl_string *filenameBase,
+        SuiteIdType suiteId, const pcsl_string *rmsName,
+        int changeType, int recordId) {
+
+    int i;
+    lockFileList *lockNodePtr = findLockById(filenameBase, rmsName);
+    if (lockNodePtr != NULL) {
+        for (i = 0; i < lockNodePtr->count; i++) {
+            MidpEvent evt;
+
+            MIDP_EVENT_INITIALIZE(evt);
+            evt.type = RECORD_STORE_CHANGED_EVENT;
+            evt.intParam1 = suiteId;
+            evt.intParam2 = changeType;
+            evt.intParam3 = recordId;
+            evt.stringParam1 = *rmsName;
+
+            StoreMIDPEventInVmThread(evt, lockNodePtr->lockerId[i]);
+        }
+    }
+}

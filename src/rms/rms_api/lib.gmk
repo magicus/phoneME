@@ -56,8 +56,9 @@ SUBSYSTEM_RMS_JAVA_FILES += \
     $(GENERATED_DIR)/classes/com/sun/midp/rms/RecordStoreFile.java \
     $(RMS_API_DIR)/reference/classes/com/sun/midp/rms/RecordStoreImpl.java \
     $(RMS_API_DIR)/reference/classes/com/sun/midp/rms/RmsEnvironment.java \
-    $(RMS_API_DIR)/reference/classes/com/sun/midp/rms/SuiteContainer.java
-
+    $(RMS_API_DIR)/reference/classes/com/sun/midp/rms/SuiteContainer.java \
+    $(RMS_API_DIR)/reference/classes/com/sun/midp/rms/RecordStoreEventListener.java \
+    $(RMS_API_DIR)/reference/classes/com/sun/midp/rms/RecordStoreEventConsumer.java
 
 # Native files for the ( rms_api ) library
 #

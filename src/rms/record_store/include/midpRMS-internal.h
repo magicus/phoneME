@@ -253,4 +253,11 @@ long recordStoreSizeOf(char** ppszError, int handle);
  */
 int rmsdb_suite_has_rms_data(pcsl_string* filenameBase);
 
+/**
+ * Notifies all users of the record store of its change
+ */
+void rmsdb_notify_record_store_changed(
+    pcsl_string* filenameBase, SuiteIdType suiteId,
+    const pcsl_string* rmsName, int changeType, int recordId);
+
 /* @} */

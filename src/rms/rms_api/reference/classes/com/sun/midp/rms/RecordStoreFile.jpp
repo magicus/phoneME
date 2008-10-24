@@ -44,7 +44,12 @@ import java.io.IOException;
  * RMS in the MIDP 1.0 release.  It exists now for
  * backwards compatibility with older ports.
  */
-class RecordStoreFile implements AbstractRecordStoreFile {
+public class RecordStoreFile implements AbstractRecordStoreFile {
+
+    /** Record store change types */
+    public final static int CHANGED = 1;
+    public final static int ADDED = 2;
+    public final static int DELETED = 3;    
 
     /** Handle to read/write record store data to */
     private int handle = -1;
@@ -68,6 +73,25 @@ class RecordStoreFile implements AbstractRecordStoreFile {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Notify all  
+     *
+     * @param suiteId
+     * @param name
+     * @param changeType
+     * @param recordId
+     */
+    private static native void notifyChanged0(
+        String fileNameBase, int suiteId, String name, int changeType, int recordId);
+
+    public static void notifyChanged(
+            int suiteId, String name, int changeType, int recordId) {
+
+        notifyChanged0(
+            RmsEnvironment.getSecureFilenameBase(suiteId),
+            suiteId, name, changeType, recordId);
     }
 
     /**

@@ -392,4 +392,10 @@ public final class EventTypes {
      * JSR290 Fluid listener notification event
      */
     public static final int FLUID_LISTENER_EVENT = 62;
+
+    /**
+     * This event is sent on RMS storage changing to asynchronously notify
+     * registered RMS listeners
+     */
+    public static final int RECORD_STORE_CHANGE_EVENT = 63;
 }

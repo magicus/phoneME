@@ -36,7 +36,9 @@ LIB_JAVA_FILES= \
     javax/microedition/rms/RecordFilter.java \
     com/sun/midp/rms/RecordStoreFactory.java \
     com/sun/midp/rms/RecordStoreFile.java \
-    com/sun/midp/rms/RecordStoreImpl.java
+    com/sun/midp/rms/RecordStoreImpl.java \
+    com/sun/midp/rms/RecordStoreEventListener.java \
+    com/sun/midp/rms/RecordStoreEventConsumer.java
 
 LIB_C_FILES= \
     native/recordStoreFile.c

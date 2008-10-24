@@ -213,6 +213,12 @@ extern "C" {
  */
 #define FLUID_LISTENER_EVENT            62
 
+/**
+ * The event is sent on record store change so that any registered listeners
+ * of the record store in any application should be notified of the change
+ */
+#define RECORD_STORE_CHANGED_EVENT      63
+
 /** @} */
 
 /**

@@ -128,8 +128,9 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
             eventQueue);
         
         MidletSuiteContainer msc = 
-                new MidletSuiteContainer(MIDletSuiteStorage.getMIDletSuiteStorage(internalSecurityToken));
-        RmsEnvironment.init(internalSecurityToken, msc);
+                new MidletSuiteContainer(
+                    MIDletSuiteStorage.getMIDletSuiteStorage(internalSecurityToken));
+        RmsEnvironment.init(internalSecurityToken, eventQueue, msc);
     }
 
     /**

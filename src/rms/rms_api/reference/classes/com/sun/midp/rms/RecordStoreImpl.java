@@ -1130,4 +1130,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                                            "file");
         }
     }
+
+    public static void notifyListeners(int handle, int changeType, int recordId) {
+        
+    }
+
 }

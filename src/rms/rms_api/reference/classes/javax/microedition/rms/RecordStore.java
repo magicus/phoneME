@@ -32,6 +32,9 @@ import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 import com.sun.midp.rms.RecordStoreImpl;
+import com.sun.midp.rms.RecordStoreFile;
+import com.sun.midp.rms.RecordStoreEventConsumer;
+import com.sun.midp.rms.RecordStoreEventListener;
 
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.SecurityToken;
@@ -149,6 +152,18 @@ public class RecordStore {
     private static SecurityToken classSecurityToken =
         SecurityInitializer.requestToken(new SecurityTrusted());
 
+    /** Consumer of record store change events */
+    // TODO: Create consumer on first request
+    private static RecordStoreEventConsumer recordStoreEventConsumer =
+        new RecordStoreEventConsumer() {
+            public void handleRecordStoreChange(
+                    int suiteId, String recordStoreName,
+                    int changeType, int recordId) {
+                RecordStore.handleRecordStoreChange(
+                    suiteId, recordStoreName, changeType, recordId);
+            }
+        };
+
     /*
      * RecordStore Constructors
      */
@@ -165,8 +180,8 @@ public class RecordStore {
      *          characters inclusive.
      */
     private RecordStore(int suiteId, String recordStoreName) {
-	this.suiteId = suiteId;
-	this.recordStoreName = recordStoreName;
+        this.suiteId = suiteId;
+        this.recordStoreName = recordStoreName;
         recordListener = new java.util.Vector(3);
     }
 
@@ -189,7 +204,7 @@ public class RecordStore {
      *          could not be found
      */
     public static void deleteRecordStore(String recordStoreName)
-            throws RecordStoreException, RecordStoreNotFoundException  {
+        throws RecordStoreException, RecordStoreNotFoundException {
         int id = MIDletStateHandler.getMidletStateHandler().
             getMIDletSuite().getID();
 
@@ -200,22 +215,22 @@ public class RecordStore {
         // Check the record store cache for a db with the same name
         synchronized (openRecordStores) {
             RecordStore db;
-	    int size = openRecordStores.size();
-	    for (int n = 0; n < size; n++) {
-                db = (RecordStore)openRecordStores.elementAt(n);
+            int size = openRecordStores.size();
+            for (int n = 0; n < size; n++) {
+                db = (RecordStore) openRecordStores.elementAt(n);
                 if (db.suiteId == id &&
-                        db.recordStoreName.equals(recordStoreName)) {
+                    db.recordStoreName.equals(recordStoreName)) {
                     // cannot delete an open record store
                     throw new RecordStoreException("deleteRecordStore error:"
-                                                   + " record store is"
-                                                   + " still open");
+                        + " record store is"
+                        + " still open");
                 }
             }
 
             // this record store is not currently open
-	    RecordStoreImpl.deleteRecordStore(
+            RecordStoreImpl.deleteRecordStore(
                 classSecurityToken, id, recordStoreName);
-	}
+        }
     }
 
     /**
@@ -249,7 +264,7 @@ public class RecordStore {
         int id = MIDletStateHandler.getMidletStateHandler().
             getMIDletSuite().getID();
 
-	return doOpen(id, recordStoreName, createIfNecessary);
+        return doOpen(id, recordStoreName, createIfNecessary);
     }
 
     /**
@@ -659,7 +674,7 @@ public class RecordStore {
      *          not open
      */
     public long getLastModified() throws RecordStoreNotOpenException {
-	checkOpen();
+	    checkOpen();
         return peer.getLastModified();
     }
 
@@ -673,10 +688,10 @@ public class RecordStore {
      */
     public void addRecordListener(RecordListener listener) {
         synchronized (recordListener) {
-	    if (!recordListener.contains(listener)) {
-		recordListener.addElement(listener);
-	    }
-	}
+            if (!recordListener.contains(listener)) {
+                recordListener.addElement(listener);
+            }
+        }
     }
 
     /**
@@ -688,8 +703,8 @@ public class RecordStore {
      */
     public void removeRecordListener(RecordListener listener) {
         synchronized (recordListener) {
-	    recordListener.removeElement(listener);
-	}
+	        recordListener.removeElement(listener);
+        }
     }
 
     /**
@@ -714,7 +729,7 @@ public class RecordStore {
     public int getNextRecordID()
         throws RecordStoreNotOpenException, RecordStoreException {
 
-	checkOpen();
+        checkOpen();
         return peer.getNextRecordID();
     }
 
@@ -744,39 +759,41 @@ public class RecordStore {
      *          to the RecordStore
      */
     public int addRecord(byte[] data, int offset, int numBytes)
-        throws RecordStoreNotOpenException, RecordStoreException,
-            RecordStoreFullException {
-	checkOpen();
+            throws RecordStoreNotOpenException, RecordStoreException,
+                RecordStoreFullException {
+        
+        checkOpen();
         checkWritable();
 
-	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-	    Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-			   "addRecord(data=" + data +
-			   ", offset=" + offset +
-			   ", numBytes=" + numBytes + ")");
-	}
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
+                "addRecord(data=" + data +
+                    ", offset=" + offset +
+                    ", numBytes=" + numBytes + ")");
+        }
 
-	// validate parameters
-	if ((data == null) && (numBytes > 0)) {
-	    throw new NullPointerException("illegal arguments: null " +
-					   "data,  numBytes > 0");
-	}
-	if ((offset < 0) || (numBytes < 0) ||
-	    ((data != null) && (offset + numBytes > data.length))) {
-	    throw new ArrayIndexOutOfBoundsException();
-	}
+        // validate parameters
+        if ((data == null) && (numBytes > 0)) {
+            throw new NullPointerException("illegal arguments: null " +
+                "data,  numBytes > 0");
+        }
+        if ((offset < 0) || (numBytes < 0) ||
+            ((data != null) && (offset + numBytes > data.length))) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
 
         int recordId = peer.addRecord(data, offset, numBytes);
 
-	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-	    Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-			   "recordId = " + recordId);
-	}
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
+                "recordId = " + recordId);
+        }
 
-	// tell listeners a record has been added
-	notifyRecordAddedListeners(recordId);
+        // Send notification to registered listeners
+        RecordStoreFile.notifyChanged(suiteId, recordStoreName,
+            RecordStoreFile.ADDED, recordId);
 
-	return recordId;
+        return recordId;
     }
 
     /**
@@ -795,18 +812,19 @@ public class RecordStore {
      */
     public void deleteRecord(int recordId)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
-            RecordStoreException {
+        RecordStoreException {
 
-	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-	    Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-			   "deleteRecord(" + recordId + ")");
-	}
-	checkOpen();
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
+                "deleteRecord(" + recordId + ")");
+        }
+        checkOpen();
         checkWritable();
         peer.deleteRecord(recordId);
 
-	// tell listeners a record has been deleted
-	notifyRecordDeletedListeners(recordId);
+        // Send notification to registered listeners
+        RecordStoreFile.notifyChanged(suiteId, recordStoreName,
+            RecordStoreFile.DELETED, recordId);
     }
 
     /**
@@ -826,13 +844,13 @@ public class RecordStore {
      */
     public int getRecordSize(int recordId)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
-            RecordStoreException {
-	checkOpen();
-	int size = peer.getRecordSize(recordId);
-	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-	    Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-			   "getSize(" + recordId + ") = " + size);
-	}
+        RecordStoreException {
+        checkOpen();
+        int size = peer.getRecordSize(recordId);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
+                "getSize(" + recordId + ") = " + size);
+        }
         return size;
     }
 
@@ -857,8 +875,8 @@ public class RecordStore {
      */
     public int getRecord(int recordId, byte[] buffer, int offset)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
-            RecordStoreException {
-	checkOpen();
+        RecordStoreException {
+        checkOpen();
         return peer.getRecord(recordId, buffer, offset);
     }
 
@@ -911,30 +929,31 @@ public class RecordStore {
     public void setRecord(int recordId, byte[] newData,
                           int offset, int numBytes)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
-            RecordStoreException, RecordStoreFullException {
+        RecordStoreException, RecordStoreFullException {
 
-	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-	    Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-			   "setRecord("+recordId+")");
-	}
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
+                "setRecord(" + recordId + ")");
+        }
 
-	// validate parameters
-	if ((newData == null) && (numBytes > 0)) {
-	    throw new NullPointerException("illegal arguments: null " +
-					   "data,  numBytes > 0");
-	}
-	if ((offset < 0) || (numBytes < 0) ||
-	    ((newData != null) && (offset + numBytes > newData.length))) {
-	    throw new ArrayIndexOutOfBoundsException();
-	}
+        // validate parameters
+        if ((newData == null) && (numBytes > 0)) {
+            throw new NullPointerException("illegal arguments: null " +
+                "data,  numBytes > 0");
+        }
+        if ((offset < 0) || (numBytes < 0) ||
+            ((newData != null) && (offset + numBytes > newData.length))) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
 
-	checkOpen();
+        checkOpen();
         checkWritable();
 
         peer.setRecord(recordId, newData, offset, numBytes);
 
-	// update database header info and sync to file
-	notifyRecordChangedListeners(recordId);
+        // Send notification to registered listeners
+        RecordStoreFile.notifyChanged(suiteId, recordStoreName,
+            RecordStoreFile.CHANGED, recordId);
     }
 
     /**
@@ -1076,66 +1095,49 @@ public class RecordStore {
     }
 
     /**
-     * Notifies all registered listeners that a record changed.
-     *
-     * @param recordId the record id of the changed record.
+     * Notifies registered record store listeners of the record store change
+     * @param changeType type of the change
+     * @param recordId changed record ID
      */
-    private void notifyRecordChangedListeners(int recordId)
-    {
+    private void notifyRecordListeners(final int changeType, final int recordId) {
         synchronized (recordListener) {
-
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-			       "notify Change # listener = " +
-			       recordListener.size());
-	    }
-	    int numListeners = recordListener.size();
-	    for (int i = 0; i < numListeners; i++) {
-		RecordListener rl = (RecordListener)recordListener.elementAt(i);
-		rl.recordChanged(this, recordId);
-	    }
-	}
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
+                "notify # listener = " + recordListener.size() +
+                    ", change type = " + changeType +
+                    ", record ID = " + recordId);
+            }
+            int nListeners = recordListener.size();
+            for (int i = 0; i < nListeners; i++) {
+                RecordListener rl = (RecordListener)recordListener.elementAt(i);
+                switch (changeType) {
+                    case RecordStoreFile.ADDED:
+                        rl.recordAdded(RecordStore.this, recordId);
+                        break;
+                    case RecordStoreFile.DELETED:
+                        rl.recordDeleted(RecordStore.this, recordId);
+                        break;
+                    case RecordStoreFile.CHANGED:
+                        rl.recordChanged(RecordStore.this, recordId);
+                        break;
+                }
+            }
+        }
     }
 
-    /**
-     * Notifies all registered listeners that a record was added.
-     *
-     * @param recordId the record id of the added record.
-     */
-    private void notifyRecordAddedListeners(int recordId) {
-        synchronized (recordListener) {
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-			       "notify Add # listener = " +
-			       recordListener.size());
-	    }
-	    int numListeners = recordListener.size();
-	    for (int i = 0; i < numListeners; i++) {
-		RecordListener rl =
-		    (RecordListener)recordListener.elementAt(i);
-		rl.recordAdded(this, recordId);
-	    }
-	}
-    }
-
-    /**
-     * Notifies all registered listeners that a record was deleted.
-     *
-     * @param recordId the record id of the changed record.
-     */
-    private void notifyRecordDeletedListeners(int recordId) {
-        synchronized (recordListener) {
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-			       "notify Delete # listener = " +
-			       recordListener.size());
-	    }
-	    int numListeners = recordListener.size();
-	    for (int i = 0; i < numListeners; i++) {
-		RecordListener rl = (RecordListener)recordListener.elementAt(i);
-		rl.recordDeleted(this, recordId);
-	    }
-	}
+    private static void handleRecordStoreChange(
+            int suiteId, String recordStoreName, int changeType, int recordId) {
+        synchronized (openRecordStores) {
+            int size = openRecordStores.size();
+            for (int n = 0; n < size; n++) {
+                RecordStore recordStore = (RecordStore)openRecordStores.elementAt(n);
+                if (recordStore.suiteId == suiteId &&
+                        recordStore.recordStoreName.equals(recordStoreName)) {
+                    recordStore.notifyRecordListeners(changeType, recordId);
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -1163,55 +1165,54 @@ public class RecordStore {
      *          recordStoreName is invalid
      */
     private static RecordStore doOpen(int suiteId,
-				      String recordStoreName,
-				      boolean createIfNecessary)
-        throws RecordStoreException, RecordStoreFullException,
-        RecordStoreNotFoundException {
+            String recordStoreName, boolean createIfNecessary)
+                throws RecordStoreException, RecordStoreFullException,
+                RecordStoreNotFoundException {
 
         RecordStore recordStore;
-
         if (recordStoreName.length() > 32 || recordStoreName.length() == 0) {
             throw new IllegalArgumentException();
         }
 
         synchronized (openRecordStores) {
-	    // Save record store instances and ensure that there is only
-	    // one record store object in memory for any given record
-	    // store file. This is good for memory use. This is NOT safe
-	    // in the situation where multiple VM's may be executing code
-	    // concurrently. In that case, you have to sync things through
-	    // file locking or something similar.
+            // Save record store instances and ensure that there is only
+            // one record store object in memory for any given record
+            // store file. This is good for memory use. This is NOT safe
+            // in the situation where multiple VM's may be executing code
+            // concurrently. In that case, you have to sync things through
+            // file locking or something similar.
 
-	    // Check the record store instance list for a db with the same name
-	    int size = openRecordStores.size();
-	    for (int n = 0; n < size; n++) {
-		recordStore = (RecordStore)openRecordStores.elementAt(n);
-		if (recordStore.suiteId == suiteId &&
-		    recordStore.recordStoreName.equals(recordStoreName)) {
-		    recordStore.opencount++;  // increment the open count
-		    return recordStore;  // return ref to cached record store
-		}
-	    }
+            // Check the record store instance list for a db with the same name
+            int size = openRecordStores.size();
+            for (int n = 0; n < size; n++) {
+                recordStore = (RecordStore) openRecordStores.elementAt(n);
+                if (recordStore.suiteId == suiteId &&
+                    recordStore.recordStoreName.equals(recordStoreName)) {
+                    recordStore.opencount++;  // increment the open count
+                    return recordStore;  // return ref to cached record store
+                }
+            }
 
-	    /*
-	     * Record store not found in cache, so create it.
-	     * If createIfNecessary is FALSE and the RecordStore
-	     * does not exists, a RecordStoreNotFoundException is
-	     * thrown.
-	     */
-	    recordStore = new RecordStore(suiteId, recordStoreName);
-	    recordStore.peer = RecordStoreImpl.openRecordStore(
+            /*
+            * Record store not found in cache, so create it.
+            * If createIfNecessary is FALSE and the RecordStore
+            * does not exists, a RecordStoreNotFoundException is
+            * thrown.
+            */
+            recordStore = new RecordStore(suiteId, recordStoreName);
+            recordStore.peer = RecordStoreImpl.openRecordStore(
                 classSecurityToken, suiteId, recordStoreName,
                 createIfNecessary);
 
-	    /*
-	     * Now add the new record store to the cache
-	     */
-	    recordStore.opencount = 1;
-	    openRecordStores.addElement(recordStore);
-	}
+            /*
+            * Now add the new record store to the cache
+            */
+            recordStore.opencount = 1;
+            openRecordStores.addElement(recordStore);
+            RecordStoreEventListener.setConsumer(recordStoreEventConsumer);
+        }
 
-	return recordStore;
+        return recordStore;
     }
 
     /**
