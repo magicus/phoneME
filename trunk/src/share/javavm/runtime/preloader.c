@@ -665,10 +665,15 @@ CVMpreloaderInit()
 
     	for (i = 0; i < CVM_nROMClasses; ++i) {
 	    const CVMClassBlock* cb 	= CVM_ROMClassblocks[i];
-	    CVMClassBlock* scb 		= CVMcbSuperclass(cb);
+	    CVMClassBlock* scb;
 
-	    if (scb == NULL || cb == NULL || CVMcbIs(cb, INTERFACE) 
-		|| CVMcbMethodTablePtr(scb) == NULL) {
+	    if (cb == NULL || CVMcbIs(cb, INTERFACE)) {
+		continue;
+	    }
+
+	    scb = CVMcbSuperclass(cb);
+
+	    if (scb == NULL || CVMcbMethodTablePtr(scb) == NULL) {
 		continue;
 	    }
 
