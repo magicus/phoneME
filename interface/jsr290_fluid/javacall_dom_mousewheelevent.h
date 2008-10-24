@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns indicates the number of "clicks" the wheel has been rotated. A positive 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns indicates the number of "clicks" the wheel has been rotated. A positive 
  * value indicates that the wheel has been rotated away from the user 
  * (or in a right-hand manner on horizontally aligned devices) and a 
  * negative value indicates that the wheel has been rotated towards the 
@@ -75,7 +75,8 @@ javacall_dom_mousewheelevent_get_wheel_delta_start(javacall_handle handle,
                                                    /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns indicates the number of "clicks" the wheel has been rotated. A positive 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns indicates the number of "clicks" the wheel has been rotated. A positive 
  * value indicates that the wheel has been rotated away from the user 
  * (or in a right-hand manner on horizontally aligned devices) and a 
  * negative value indicates that the wheel has been rotated towards the 
@@ -100,8 +101,8 @@ javacall_dom_mousewheelevent_get_wheel_delta_finish(javacall_handle handle,
                                                     /* OUT */ javacall_int32* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * the <code>initMouseWheelEventNS</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the <code>initMouseWheelEventNS</code> method is used to initialize the 
  * value of a <code>MouseWheelEvent</code> object and has the same
  * behavior as <code>Event.initEventNS()</code>. 
  *
@@ -170,7 +171,8 @@ javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_start(javacall_handle han
                                                              javacall_int32 wheel_delta_arg);
 
 /**
- * The <code>initMouseWheelEventNS</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the <code>initMouseWheelEventNS</code> method is used to initialize the 
  * value of a <code>MouseWheelEvent</code> object and has the same
  * behavior as <code>Event.initEventNS()</code>. 
  *

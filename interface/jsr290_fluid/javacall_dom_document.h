@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * the Document Type Declaration (see <code>DocumentType</code>) 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the Document Type Declaration (see <code>DocumentType</code>) 
  * associated with this document. For XML documents without a document
  * type declaration this returns <code>NULL</code>. For HTML documents,
  * a <code>DocumentType</code> object may be returned, independently of
@@ -85,7 +85,8 @@ javacall_dom_document_get_doctype_start(javacall_handle handle,
                                         /* OUT */ javacall_handle* ret_value);
 
 /**
- * The Document Type Declaration (see <code>DocumentType</code>) 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the Document Type Declaration (see <code>DocumentType</code>) 
  * associated with this document. For XML documents without a document
  * type declaration this returns <code>NULL</code>. For HTML documents,
  * a <code>DocumentType</code> object may be returned, independently of
@@ -120,8 +121,8 @@ javacall_dom_document_get_doctype_finish(javacall_handle handle,
                                          /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the <code>DOMImplementation</code> object that handles this document. A 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the <code>DOMImplementation</code> object that handles this document. A 
  * DOM application may use objects from multiple implementations.
  * 
  * @param handle Pointer to the object representing this document.
@@ -144,7 +145,8 @@ javacall_dom_document_get_implementation_start(javacall_handle handle,
                                                /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns the <code>DOMImplementation</code> object that handles this document. A 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the <code>DOMImplementation</code> object that handles this document. A 
  * DOM application may use objects from multiple implementations.
  * 
  * @param handle Pointer to the object representing this document.
@@ -164,8 +166,8 @@ javacall_dom_document_get_implementation_finish(javacall_handle handle,
                                                 /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns this is a convenience attribute that allows direct access to the child 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns this is a convenience attribute that allows direct access to the child 
  * node that is the root element of the document. 
  * 
  * @param handle Pointer to the object representing this document.
@@ -188,7 +190,8 @@ javacall_dom_document_get_document_element_start(javacall_handle handle,
                                                  /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns this is a convenience attribute that allows direct access to the child 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns this is a convenience attribute that allows direct access to the child 
  * node that is the root element of the document. 
  * 
  * @param handle Pointer to the object representing this document.
@@ -208,8 +211,8 @@ javacall_dom_document_get_document_element_finish(javacall_handle handle,
                                                   /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * creates an element of the type specified. Note that the instance 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an element of the type specified. Note that the instance 
  * returned implements the <code>Element</code> interface, so attributes 
  * can be specified directly on the returned object.
  * <br>In addition, if there are known attributes with default values, 
@@ -248,7 +251,8 @@ javacall_dom_document_create_element_start(javacall_handle handle,
                                            /* OUT */ javacall_handle* ret_value);
 
 /**
- * Creates an element of the type specified. Note that the instance 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an element of the type specified. Note that the instance 
  * returned implements the <code>Element</code> interface, so attributes 
  * can be specified directly on the returned object.
  * <br>In addition, if there are known attributes with default values, 
@@ -284,8 +288,8 @@ javacall_dom_document_create_element_finish(javacall_handle handle,
                                             /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * creates an empty <code>DocumentFragment</code> object. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an empty <code>DocumentFragment</code> object. 
  * 
  * @param handle Pointer to the object representing this document.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -307,7 +311,8 @@ javacall_dom_document_create_document_fragment_start(javacall_handle handle,
                                                      /* OUT */ javacall_handle* ret_value);
 
 /**
- * Creates an empty <code>DocumentFragment</code> object. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an empty <code>DocumentFragment</code> object. 
  * 
  * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
@@ -326,8 +331,8 @@ javacall_dom_document_create_document_fragment_finish(javacall_handle handle,
                                                       /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * creates a <code>Text</code> node given the specified string.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates a <code>Text</code> node given the specified string.
  * 
  * @param handle Pointer to the object representing this document.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -351,7 +356,8 @@ javacall_dom_document_create_text_node_start(javacall_handle handle,
                                              /* OUT */ javacall_handle* ret_value);
 
 /**
- * Creates a <code>Text</code> node given the specified string.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates a <code>Text</code> node given the specified string.
  * 
  * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
@@ -372,8 +378,8 @@ javacall_dom_document_create_text_node_finish(javacall_handle handle,
                                               /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * creates a <code>Comment</code> node given the specified string.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates a <code>Comment</code> node given the specified string.
  * 
  * @param handle Pointer to the object representing this document.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -397,7 +403,8 @@ javacall_dom_document_create_comment_start(javacall_handle handle,
                                            /* OUT */ javacall_handle* ret_value);
 
 /**
- * Creates a <code>Comment</code> node given the specified string.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates a <code>Comment</code> node given the specified string.
  * 
  * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
@@ -418,8 +425,8 @@ javacall_dom_document_create_comment_finish(javacall_handle handle,
                                             /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * creates a <code>CDATASection</code> node whose value is the specified 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates a <code>CDATASection</code> node whose value is the specified 
  * string.
  * 
  * @param handle Pointer to the object representing this document.
@@ -445,7 +452,8 @@ javacall_dom_document_create_cdata_section_start(javacall_handle handle,
                                                  /* OUT */ javacall_handle* ret_value);
 
 /**
- * Creates a <code>CDATASection</code> node whose value is the specified 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates a <code>CDATASection</code> node whose value is the specified 
  * string.
  * 
  * @param handle Pointer to the object representing this document.
@@ -468,8 +476,8 @@ javacall_dom_document_create_cdata_section_finish(javacall_handle handle,
                                                   /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * creates a <code>ProcessingInstruction</code> node given the specified 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates a <code>ProcessingInstruction</code> node given the specified 
  * name and data strings.
  * 
  * @param handle Pointer to the object representing this document.
@@ -506,7 +514,8 @@ javacall_dom_document_create_processing_instruction_start(javacall_handle handle
                                                           /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Creates a <code>ProcessingInstruction</code> node given the specified 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates a <code>ProcessingInstruction</code> node given the specified 
  * name and data strings.
  * 
  * @param handle Pointer to the object representing this document.
@@ -540,8 +549,8 @@ javacall_dom_document_create_processing_instruction_finish(javacall_handle handl
                                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * creates an <code>Attr</code> of the given name. Note that the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an <code>Attr</code> of the given name. Note that the 
  * <code>Attr</code> instance can then be set on an <code>Element</code> 
  * using the <code>setAttributeNode</code> method. 
  * <br>To create an attribute with a qualified name and namespace URI, use 
@@ -573,7 +582,8 @@ javacall_dom_document_create_attribute_start(javacall_handle handle,
                                              /* OUT */ javacall_handle* ret_value);
 
 /**
- * Creates an <code>Attr</code> of the given name. Note that the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an <code>Attr</code> of the given name. Note that the 
  * <code>Attr</code> instance can then be set on an <code>Element</code> 
  * using the <code>setAttributeNode</code> method. 
  * <br>To create an attribute with a qualified name and namespace URI, use 
@@ -602,8 +612,8 @@ javacall_dom_document_create_attribute_finish(javacall_handle handle,
                                               /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * creates an <code>EntityReference</code> object. In addition, if the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an <code>EntityReference</code> object. In addition, if the 
  * referenced entity is known, the child list of the 
  * <code>EntityReference</code> node is made the same as that of the 
  * corresponding <code>Entity</code> node. 
@@ -646,7 +656,8 @@ javacall_dom_document_create_entity_reference_start(javacall_handle handle,
                                                     /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Creates an <code>EntityReference</code> object. In addition, if the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an <code>EntityReference</code> object. In addition, if the 
  * referenced entity is known, the child list of the 
  * <code>EntityReference</code> node is made the same as that of the 
  * corresponding <code>Entity</code> node. 
@@ -686,8 +697,8 @@ javacall_dom_document_create_entity_reference_finish(javacall_handle handle,
                                                      /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns a <code>NodeList</code> of all the <code>Elements</code> with a 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NodeList</code> of all the <code>Elements</code> with a 
  * given tag name in the order in which they are encountered in a 
  * preorder traversal of the <code>Document</code> tree. 
  * 
@@ -717,7 +728,8 @@ javacall_dom_document_get_elements_by_tag_name_start(javacall_handle handle,
                                                      /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns a <code>NodeList</code> of all the <code>Elements</code> with a 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NodeList</code> of all the <code>Elements</code> with a 
  * given tag name in the order in which they are encountered in a 
  * preorder traversal of the <code>Document</code> tree. 
  * 
@@ -744,8 +756,8 @@ javacall_dom_document_get_elements_by_tag_name_finish(javacall_handle handle,
                                                       /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * imports a node from another document to this document, without altering 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR imports a node from another document to this document, without altering 
  * or removing the source node from the original document; this method 
  * creates a new copy of the source node. The returned node has no 
  * parent; (<code>parentNode</code> is <code>NULL</code>).
@@ -870,7 +882,8 @@ javacall_dom_document_import_node_start(javacall_handle handle,
                                         /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Imports a node from another document to this document, without altering 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR imports a node from another document to this document, without altering 
  * or removing the source node from the original document; this method 
  * creates a new copy of the source node. The returned node has no 
  * parent; (<code>parentNode</code> is <code>NULL</code>).
@@ -992,8 +1005,8 @@ javacall_dom_document_import_node_finish(javacall_handle handle,
                                          /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * creates an element of the given qualified name and namespace URI. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an element of the given qualified name and namespace URI. 
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
  * namespace_uri parameter for methods if they wish to have no namespace.
@@ -1064,7 +1077,8 @@ javacall_dom_document_create_element_ns_start(javacall_handle handle,
                                               /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Creates an element of the given qualified name and namespace URI. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an element of the given qualified name and namespace URI. 
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
  * namespace_uri parameter for methods if they wish to have no namespace.
@@ -1132,8 +1146,8 @@ javacall_dom_document_create_element_ns_finish(javacall_handle handle,
                                                /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * creates an attribute of the given qualified name and namespace URI. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an attribute of the given qualified name and namespace URI. 
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
  * <code>namespace_uri</code> parameter for methods if they wish to have 
@@ -1209,7 +1223,8 @@ javacall_dom_document_create_attribute_ns_start(javacall_handle handle,
                                                 /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Creates an attribute of the given qualified name and namespace URI. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an attribute of the given qualified name and namespace URI. 
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
  * <code>namespace_uri</code> parameter for methods if they wish to have 
@@ -1282,8 +1297,8 @@ javacall_dom_document_create_attribute_ns_finish(javacall_handle handle,
                                                  /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns a <code>NodeList</code> of all the <code>Elements</code> with a 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NodeList</code> of all the <code>Elements</code> with a 
  * given local name and namespace URI in document order.
  * 
  * @param handle Pointer to the object representing this document.
@@ -1313,7 +1328,8 @@ javacall_dom_document_get_elements_by_tag_name_ns_start(javacall_handle handle,
                                                         /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns a <code>NodeList</code> of all the <code>Elements</code> with a 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NodeList</code> of all the <code>Elements</code> with a 
  * given local name and namespace URI in document order.
  * 
  * @param handle Pointer to the object representing this document.
@@ -1340,8 +1356,8 @@ javacall_dom_document_get_elements_by_tag_name_ns_finish(javacall_handle handle,
                                                          /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the <code>Element</code>that has an ID attribute with the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the <code>Element</code>that has an ID attribute with the 
  *given value. If no such element exists, this returns <code>NULL</code>.
  * If more than one element has an ID attribute with that value, what 
  * is returned is undefined.
@@ -1374,7 +1390,8 @@ javacall_dom_document_get_element_by_id_start(javacall_handle handle,
                                               /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns the <code>Element</code>that has an ID attribute with the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the <code>Element</code>that has an ID attribute with the 
  *given value. If no such element exists, this returns <code>NULL</code>.
  * If more than one element has an ID attribute with that value, what 
  * is returned is undefined.
@@ -1404,8 +1421,8 @@ javacall_dom_document_get_element_by_id_finish(javacall_handle handle,
                                                /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  Attempts to adopt a node from another document to this document. If 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  Attempts to adopt a node from another document to this document. If 
  * supported, it changes the <code>ownerDocument</code> of the source 
  * node, its children, as well as the attached attribute nodes if there 
  * are any. If the source node has a parent it is first removed from the 
@@ -1492,7 +1509,8 @@ javacall_dom_document_adopt_node_start(javacall_handle handle,
                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- *  Attempts to adopt a node from another document to this document. If 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  Attempts to adopt a node from another document to this document. If 
  * supported, it changes the <code>ownerDocument</code> of the source 
  * node, its children, as well as the attached attribute nodes if there 
  * are any. If the source node has a parent it is first removed from the 
@@ -1576,8 +1594,8 @@ javacall_dom_document_adopt_node_finish(javacall_handle handle,
                                         /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * create an Event.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR create an Event.
  *
  * 
  * @param handle Pointer to the object representing this document.
@@ -1625,7 +1643,8 @@ javacall_dom_document_create_event_start(javacall_handle handle,
                                          /* OUT */ javacall_handle* ret_value);
 
 /**
- * Create an Event.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR create an Event.
  *
  * 
  * @param handle Pointer to the object representing this document.
@@ -1670,8 +1689,8 @@ javacall_dom_document_create_event_finish(javacall_handle handle,
                                           /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  Test if the implementation can generate events of a specified type. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  Test if the implementation can generate events of a specified type. 
  * 
  * @param handle Pointer to the object representing this document.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -1699,7 +1718,8 @@ javacall_dom_document_can_dispatch_start(javacall_handle handle,
                                          /* OUT */ javacall_bool* ret_value);
 
 /**
- *  Test if the implementation can generate events of a specified type. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  Test if the implementation can generate events of a specified type. 
  * 
  * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
@@ -1724,8 +1744,8 @@ javacall_dom_document_can_dispatch_finish(javacall_handle handle,
                                           /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the default <code>AbstractView</code> for this <code>Document</code>, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the default <code>AbstractView</code> for this <code>Document</code>, 
  * or <code>NULL</code> if none available.
  * 
  * @param handle Pointer to the object representing this document.
@@ -1746,7 +1766,8 @@ javacall_dom_document_get_default_view_start(javacall_handle handle,
                                              /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns the default <code>AbstractView</code> for this <code>Document</code>, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the default <code>AbstractView</code> for this <code>Document</code>, 
  * or <code>NULL</code> if none available.
  * 
  * @param handle Pointer to the object representing this document.

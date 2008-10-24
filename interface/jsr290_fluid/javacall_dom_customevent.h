@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  The <code>initCustomEventNS</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initCustomEventNS</code> method is used to initialize the 
  * value of a <code>CustomEvent</code> object and has the same behavior 
  * as <code>Event.initEventNS()</code>. 
  * 
@@ -82,7 +82,8 @@ javacall_dom_customevent_init_custom_event_ns_start(javacall_handle handle,
                                                     javacall_bool cancelable_arg);
 
 /**
- *  The <code>initCustomEventNS</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initCustomEventNS</code> method is used to initialize the 
  * value of a <code>CustomEvent</code> object and has the same behavior 
  * as <code>Event.initEventNS()</code>. 
  * 

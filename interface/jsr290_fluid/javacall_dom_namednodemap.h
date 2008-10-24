@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns retrieves a node specified by name.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves a node specified by name.
  * 
  * @param handle Pointer to the object representing this namednodemap.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -73,7 +73,8 @@ javacall_dom_namednodemap_get_named_item_start(javacall_handle handle,
                                                /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns retrieves a node specified by name.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves a node specified by name.
  * 
  * @param handle Pointer to the object representing this namednodemap.
  * @param context The context saved during asynchronous operation.
@@ -96,8 +97,8 @@ javacall_dom_namednodemap_get_named_item_finish(javacall_handle handle,
                                                 /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets adds a node using its <code>nodeName</code> attribute. If a node with 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets adds a node using its <code>nodeName</code> attribute. If a node with 
  * that name is already present in this map, it is replaced by the new 
  * one.
  * <br>As the <code>nodeName</code> attribute is used to derive the name 
@@ -141,7 +142,8 @@ javacall_dom_namednodemap_set_named_item_start(javacall_handle handle,
                                                /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets adds a node using its <code>nodeName</code> attribute. If a node with 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets adds a node using its <code>nodeName</code> attribute. If a node with 
  * that name is already present in this map, it is replaced by the new 
  * one.
  * <br>As the <code>nodeName</code> attribute is used to derive the name 
@@ -182,8 +184,8 @@ javacall_dom_namednodemap_set_named_item_finish(javacall_handle handle,
                                                 /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * removes a node specified by name. When this map contains the attributes 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR removes a node specified by name. When this map contains the attributes 
  * attached to an element, if the removed attribute is known to have a 
  * default value, an attribute immediately appears containing the 
  * default value as well as the corresponding namespace URI, local name, 
@@ -219,7 +221,8 @@ javacall_dom_namednodemap_remove_named_item_start(javacall_handle handle,
                                                   /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Removes a node specified by name. When this map contains the attributes 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR removes a node specified by name. When this map contains the attributes 
  * attached to an element, if the removed attribute is known to have a 
  * default value, an attribute immediately appears containing the 
  * default value as well as the corresponding namespace URI, local name, 
@@ -252,8 +255,8 @@ javacall_dom_namednodemap_remove_named_item_finish(javacall_handle handle,
                                                    /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the <code>index</code>th item in the map. If <code>index</code> 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the <code>index</code>th item in the map. If <code>index</code> 
  * is greater than or equal to the number of nodes in this map, this 
  * returns <code>NULL</code>.
  * 
@@ -280,7 +283,8 @@ javacall_dom_namednodemap_item_start(javacall_handle handle,
                                      /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns the <code>index</code>th item in the map. If <code>index</code> 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the <code>index</code>th item in the map. If <code>index</code> 
  * is greater than or equal to the number of nodes in this map, this 
  * returns <code>NULL</code>.
  * 
@@ -304,8 +308,8 @@ javacall_dom_namednodemap_item_finish(javacall_handle handle,
                                       /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the number of nodes in this map. The range of valid child node indices 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the number of nodes in this map. The range of valid child node indices 
  * is <code>0</code> to <code>length-1</code> inclusive. 
  * 
  * @param handle Pointer to the object representing this namednodemap.
@@ -327,7 +331,8 @@ javacall_dom_namednodemap_get_length_start(javacall_handle handle,
                                            /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns the number of nodes in this map. The range of valid child node indices 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the number of nodes in this map. The range of valid child node indices 
  * is <code>0</code> to <code>length-1</code> inclusive. 
  * 
  * @param handle Pointer to the object representing this namednodemap.
@@ -346,8 +351,8 @@ javacall_dom_namednodemap_get_length_finish(javacall_handle handle,
                                             /* OUT */ javacall_int32* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns retrieves a node specified by local name and namespace URI. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves a node specified by local name and namespace URI. 
  * 
  * @param handle Pointer to the object representing this namednodemap.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -375,7 +380,8 @@ javacall_dom_namednodemap_get_named_item_ns_start(javacall_handle handle,
                                                   /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns retrieves a node specified by local name and namespace URI. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves a node specified by local name and namespace URI. 
  * 
  * @param handle Pointer to the object representing this namednodemap.
  * @param context The context saved during asynchronous operation.
@@ -400,8 +406,8 @@ javacall_dom_namednodemap_get_named_item_ns_finish(javacall_handle handle,
                                                    /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets adds a node using its <code>namespaceURI</code> and 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets adds a node using its <code>namespaceURI</code> and 
  * <code>localName</code>. If a node with that namespace URI and that 
  * local name is already present in this map, it is replaced by the new 
  * one.
@@ -442,7 +448,8 @@ javacall_dom_namednodemap_set_named_item_ns_start(javacall_handle handle,
                                                   /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets adds a node using its <code>namespaceURI</code> and 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets adds a node using its <code>namespaceURI</code> and 
  * <code>localName</code>. If a node with that namespace URI and that 
  * local name is already present in this map, it is replaced by the new 
  * one.
@@ -480,8 +487,8 @@ javacall_dom_namednodemap_set_named_item_ns_finish(javacall_handle handle,
                                                    /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * removes a node specified by local name and namespace URI. A removed 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR removes a node specified by local name and namespace URI. A removed 
  * attribute may be known to have a default value when this map contains 
  * the attributes attached to an element, as returned by the attributes 
  * attribute of the <code>Node</code> interface. If so, an attribute 
@@ -520,7 +527,8 @@ javacall_dom_namednodemap_remove_named_item_ns_start(javacall_handle handle,
                                                      /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Removes a node specified by local name and namespace URI. A removed 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR removes a node specified by local name and namespace URI. A removed 
  * attribute may be known to have a default value when this map contains 
  * the attributes attached to an element, as returned by the attributes 
  * attribute of the <code>Node</code> interface. If so, an attribute 

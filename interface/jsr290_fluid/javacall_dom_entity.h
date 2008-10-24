@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the public identifier associated with the entity, if specified. If the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the public identifier associated with the entity, if specified. If the 
  * public identifier was not specified, this is <code>NULL</code>.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
@@ -77,7 +77,8 @@ javacall_dom_entity_get_public_id_start(javacall_handle handle,
                                         /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the public identifier associated with the entity, if specified. If the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the public identifier associated with the entity, if specified. If the 
  * public identifier was not specified, this is <code>NULL</code>.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
@@ -104,8 +105,8 @@ javacall_dom_entity_get_public_id_finish(javacall_handle handle,
                                          /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the system identifier associated with the entity, if specified. If the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the system identifier associated with the entity, if specified. If the 
  * system identifier was not specified, this is <code>NULL</code>.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
@@ -135,7 +136,8 @@ javacall_dom_entity_get_system_id_start(javacall_handle handle,
                                         /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the system identifier associated with the entity, if specified. If the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the system identifier associated with the entity, if specified. If the 
  * system identifier was not specified, this is <code>NULL</code>.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
@@ -162,8 +164,8 @@ javacall_dom_entity_get_system_id_finish(javacall_handle handle,
                                          /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns for unparsed entities, the name of the notation for the entity. For 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns for unparsed entities, the name of the notation for the entity. For 
  * parsed entities, this is <code>NULL</code>. 
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
@@ -193,7 +195,8 @@ javacall_dom_entity_get_notation_name_start(javacall_handle handle,
                                             /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns for unparsed entities, the name of the notation for the entity. For 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns for unparsed entities, the name of the notation for the entity. For 
  * parsed entities, this is <code>NULL</code>. 
  * 
  * Note: If ret_value_len is less then length of the returned string this function 

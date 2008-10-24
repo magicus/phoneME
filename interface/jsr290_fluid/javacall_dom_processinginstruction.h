@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the target of this processing instruction. XML defines this as being 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the target of this processing instruction. XML defines this as being 
  * the first token following the markup that begins the processing 
  * instruction.
  * 
@@ -78,7 +78,8 @@ javacall_dom_processinginstruction_get_target_start(javacall_handle handle,
                                                     /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the target of this processing instruction. XML defines this as being 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the target of this processing instruction. XML defines this as being 
  * the first token following the markup that begins the processing 
  * instruction.
  * 
@@ -106,8 +107,8 @@ javacall_dom_processinginstruction_get_target_finish(javacall_handle handle,
                                                      /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the content of this processing instruction. This is from the first non 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the content of this processing instruction. This is from the first non 
  * white space character after the target to the character immediately 
  * preceding the <code>?&gt;</code>.
  * 
@@ -138,7 +139,8 @@ javacall_dom_processinginstruction_get_data_start(javacall_handle handle,
                                                   /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the content of this processing instruction. This is from the first non 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the content of this processing instruction. This is from the first non 
  * white space character after the target to the character immediately 
  * preceding the <code>?&gt;</code>.
  * 
@@ -166,8 +168,8 @@ javacall_dom_processinginstruction_get_data_finish(javacall_handle handle,
                                                    /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets the content of this processing instruction. This is from the first non 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the content of this processing instruction. This is from the first non 
  * white space character after the target to the character immediately 
  * preceding the <code>?&gt;</code>.
  * 
@@ -191,7 +193,8 @@ javacall_dom_processinginstruction_set_data_start(javacall_handle handle,
                                                   javacall_const_utf16_string data);
 
 /**
- * Sets the content of this processing instruction. This is from the first non 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the content of this processing instruction. This is from the first non 
  * white space character after the target to the character immediately 
  * preceding the <code>?&gt;</code>.
  * 

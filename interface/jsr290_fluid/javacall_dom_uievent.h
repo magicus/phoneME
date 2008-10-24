@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  Specifies some detail information about the <code>Event</code>, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  Specifies some detail information about the <code>Event</code>, 
  * depending on the type of event. 
  * 
  * @param handle Pointer to the object representing this uievent.
@@ -68,7 +68,8 @@ javacall_dom_uievent_get_detail_start(javacall_handle handle,
                                       /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns  Specifies some detail information about the <code>Event</code>, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  Specifies some detail information about the <code>Event</code>, 
  * depending on the type of event. 
  * 
  * @param handle Pointer to the object representing this uievent.
@@ -86,8 +87,8 @@ javacall_dom_uievent_get_detail_finish(javacall_handle handle,
                                        /* OUT */ javacall_int32* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  The <code>initUIEvent</code> method is used to initialize the value of 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initUIEvent</code> method is used to initialize the value of 
  * a <code>UIEvent</code> object and has the same behavior as 
  * <code>Event.initEvent()</code>. 
  * 
@@ -119,7 +120,8 @@ javacall_dom_uievent_init_ui_event_start(javacall_handle handle,
                                          javacall_int32 detail_arg);
 
 /**
- *  The <code>initUIEvent</code> method is used to initialize the value of 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initUIEvent</code> method is used to initialize the value of 
  * a <code>UIEvent</code> object and has the same behavior as 
  * <code>Event.initEvent()</code>. 
  * 
@@ -148,8 +150,8 @@ javacall_dom_uievent_init_ui_event_finish(javacall_handle handle,
                                           javacall_int32 detail_arg);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  The <code>initUIEventNS</code> method is used to initialize the value 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initUIEventNS</code> method is used to initialize the value 
  * of a <code>UIEvent</code> object and has the same behavior as 
  * <code>Event.initEventNS()</code>. 
  * 
@@ -186,7 +188,8 @@ javacall_dom_uievent_init_ui_event_ns_start(javacall_handle handle,
                                             javacall_int32 detail_arg);
 
 /**
- *  The <code>initUIEventNS</code> method is used to initialize the value 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initUIEventNS</code> method is used to initialize the value 
  * of a <code>UIEvent</code> object and has the same behavior as 
  * <code>Event.initEventNS()</code>. 
  * 

@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns represents the current state of the corresponding form control, in an 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns represents the current state of the corresponding form control, in an 
  * interactive user agent. Changing this attribute changes the state of 
  * the form control, but does not change the value of the HTML selected 
  * attribute of the element.
@@ -70,7 +70,8 @@ javacall_dom_htmloptionelement_get_selected_start(javacall_handle handle,
                                                   /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns represents the current state of the corresponding form control, in an 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns represents the current state of the corresponding form control, in an 
  * interactive user agent. Changing this attribute changes the state of 
  * the form control, but does not change the value of the HTML selected 
  * attribute of the element.
@@ -90,8 +91,8 @@ javacall_dom_htmloptionelement_get_selected_finish(javacall_handle handle,
                                                    /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets represents the current state of the corresponding form control, in an 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets represents the current state of the corresponding form control, in an 
  * interactive user agent. Changing this attribute changes the state of 
  * the form control, but does not change the value of the HTML selected 
  * attribute of the element.
@@ -114,7 +115,8 @@ javacall_dom_htmloptionelement_set_selected_start(javacall_handle handle,
                                                   javacall_bool selected);
 
 /**
- * Sets represents the current state of the corresponding form control, in an 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets represents the current state of the corresponding form control, in an 
  * interactive user agent. Changing this attribute changes the state of 
  * the form control, but does not change the value of the HTML selected 
  * attribute of the element.

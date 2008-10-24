@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * the name of the element. If <code>Node.localName</code> is different
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the name of the element. If <code>Node.localName</code> is different
  * from <code>NULL</code>, this attribute is a qualified name.
  * For example, in: 
  * <pre> &lt;elementExample id="demo"&gt; ... 
@@ -85,7 +85,8 @@ javacall_dom_element_get_tag_name_start(javacall_handle handle,
                                         /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * The name of the element. If <code>Node.localName</code> is different
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the name of the element. If <code>Node.localName</code> is different
  * from <code>NULL</code>, this attribute is a qualified name.
  * For example, in: 
  * <pre> &lt;elementExample id="demo"&gt; ... 
@@ -120,8 +121,8 @@ javacall_dom_element_get_tag_name_finish(javacall_handle handle,
                                          /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns retrieves an attribute value by name.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves an attribute value by name.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
@@ -153,7 +154,8 @@ javacall_dom_element_get_attribute_start(javacall_handle handle,
                                          /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns retrieves an attribute value by name.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves an attribute value by name.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
@@ -182,8 +184,8 @@ javacall_dom_element_get_attribute_finish(javacall_handle handle,
                                           /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets adds a new attribute. If an attribute with that name is already present 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets adds a new attribute. If an attribute with that name is already present 
  * in the element, its value is changed to be that of the value 
  * parameter. This value is a simple string; it is not parsed as it is 
  * being set. So any markup (such as syntax to be recognized as an 
@@ -225,7 +227,8 @@ javacall_dom_element_set_attribute_start(javacall_handle handle,
                                          /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets adds a new attribute. If an attribute with that name is already present 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets adds a new attribute. If an attribute with that name is already present 
  * in the element, its value is changed to be that of the value 
  * parameter. This value is a simple string; it is not parsed as it is 
  * being set. So any markup (such as syntax to be recognized as an 
@@ -264,8 +267,8 @@ javacall_dom_element_set_attribute_finish(javacall_handle handle,
                                           /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * removes an attribute by name. If a default value for the removed 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR removes an attribute by name. If a default value for the removed 
  * attribute is defined in the DTD, a new attribute immediately appears 
  * with the default value as well as the corresponding namespace URI, 
  * local name, and prefix when applicable.
@@ -293,7 +296,8 @@ javacall_dom_element_remove_attribute_start(javacall_handle handle,
                                             javacall_const_utf16_string name);
 
 /**
- * Removes an attribute by name. If a default value for the removed 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR removes an attribute by name. If a default value for the removed 
  * attribute is defined in the DTD, a new attribute immediately appears 
  * with the default value as well as the corresponding namespace URI, 
  * local name, and prefix when applicable.
@@ -318,8 +322,8 @@ javacall_dom_element_remove_attribute_finish(javacall_handle handle,
                                              javacall_const_utf16_string name);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns retrieves an attribute node by name.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves an attribute node by name.
  * <br>To retrieve an attribute node by qualified name and namespace URI, 
  * use the <code>getAttributeNodeNS</code> method.
  * 
@@ -348,7 +352,8 @@ javacall_dom_element_get_attribute_node_start(javacall_handle handle,
                                               /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns retrieves an attribute node by name.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves an attribute node by name.
  * <br>To retrieve an attribute node by qualified name and namespace URI, 
  * use the <code>getAttributeNodeNS</code> method.
  * 
@@ -374,8 +379,8 @@ javacall_dom_element_get_attribute_node_finish(javacall_handle handle,
                                                /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets adds a new attribute node. If an attribute with that name (
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets adds a new attribute node. If an attribute with that name (
  * <code>nodeName</code>) is already present in the element, it is 
  * replaced by the new one. Replacing an attribute node by itself has no 
  * effect.
@@ -415,7 +420,8 @@ javacall_dom_element_set_attribute_node_start(javacall_handle handle,
                                               /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets adds a new attribute node. If an attribute with that name (
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets adds a new attribute node. If an attribute with that name (
  * <code>nodeName</code>) is already present in the element, it is 
  * replaced by the new one. Replacing an attribute node by itself has no 
  * effect.
@@ -452,8 +458,8 @@ javacall_dom_element_set_attribute_node_finish(javacall_handle handle,
                                                /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * removes the specified attribute node. If a default value for the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR removes the specified attribute node. If a default value for the 
  * removed <code>Attr</code> node is defined in the DTD, a new node 
  * immediately appears with the default value as well as the 
  * corresponding namespace URI, local name, and prefix when applicable. 
@@ -489,7 +495,8 @@ javacall_dom_element_remove_attribute_node_start(javacall_handle handle,
                                                  /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Removes the specified attribute node. If a default value for the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR removes the specified attribute node. If a default value for the 
  * removed <code>Attr</code> node is defined in the DTD, a new node 
  * immediately appears with the default value as well as the 
  * corresponding namespace URI, local name, and prefix when applicable. 
@@ -522,8 +529,8 @@ javacall_dom_element_remove_attribute_node_finish(javacall_handle handle,
                                                   /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns a <code>NodeList</code> of all descendant <code>Elements</code> 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NodeList</code> of all descendant <code>Elements</code> 
  * with a given tag name, in document order.
  * 
  * @param handle Pointer to the object representing this element.
@@ -549,7 +556,8 @@ javacall_dom_element_get_elements_by_tag_name_start(javacall_handle handle,
                                                     /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns a <code>NodeList</code> of all descendant <code>Elements</code> 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NodeList</code> of all descendant <code>Elements</code> 
  * with a given tag name, in document order.
  * 
  * @param handle Pointer to the object representing this element.
@@ -572,8 +580,8 @@ javacall_dom_element_get_elements_by_tag_name_finish(javacall_handle handle,
                                                      /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns retrieves an attribute value by local name and namespace URI. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves an attribute value by local name and namespace URI. 
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
  * <code>namespace_uri</code> parameter for methods if they wish to have 
@@ -612,7 +620,8 @@ javacall_dom_element_get_attribute_ns_start(javacall_handle handle,
                                             /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns retrieves an attribute value by local name and namespace URI. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves an attribute value by local name and namespace URI. 
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
  * <code>namespace_uri</code> parameter for methods if they wish to have 
@@ -648,8 +657,8 @@ javacall_dom_element_get_attribute_ns_finish(javacall_handle handle,
                                              /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets adds a new attribute. If an attribute with the same local name and 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets adds a new attribute. If an attribute with the same local name and 
  * namespace URI is already present on the element, its prefix is 
  * changed to be the prefix part of the <code>qualified_name</code>, and 
  * its value is changed to be the <code>value</code> parameter. This 
@@ -701,7 +710,8 @@ javacall_dom_element_set_attribute_ns_start(javacall_handle handle,
                                             /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets adds a new attribute. If an attribute with the same local name and 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets adds a new attribute. If an attribute with the same local name and 
  * namespace URI is already present on the element, its prefix is 
  * changed to be the prefix part of the <code>qualified_name</code>, and 
  * its value is changed to be the <code>value</code> parameter. This 
@@ -750,8 +760,8 @@ javacall_dom_element_set_attribute_ns_finish(javacall_handle handle,
                                              /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * removes an attribute by local name and namespace URI.If a default 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR removes an attribute by local name and namespace URI.If a default 
  * value for the removed attribute is defined in the DTD, a new 
  * attribute immediately appears with the default value as well as the 
  * corresponding namespace URI, local name, and prefix when applicable. 
@@ -790,7 +800,8 @@ javacall_dom_element_remove_attribute_ns_start(javacall_handle handle,
                                                /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Removes an attribute by local name and namespace URI.If a default 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR removes an attribute by local name and namespace URI.If a default 
  * value for the removed attribute is defined in the DTD, a new 
  * attribute immediately appears with the default value as well as the 
  * corresponding namespace URI, local name, and prefix when applicable. 
@@ -826,8 +837,8 @@ javacall_dom_element_remove_attribute_ns_finish(javacall_handle handle,
                                                 /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns retrieves an <code>Attr</code> node by local name and namespace URI.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves an <code>Attr</code> node by local name and namespace URI.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
  * <code>namespace_uri</code> parameter for methods if they wish to have 
@@ -860,7 +871,8 @@ javacall_dom_element_get_attribute_node_ns_start(javacall_handle handle,
                                                  /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns retrieves an <code>Attr</code> node by local name and namespace URI.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves an <code>Attr</code> node by local name and namespace URI.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
  * <code>namespace_uri</code> parameter for methods if they wish to have 
@@ -890,8 +902,8 @@ javacall_dom_element_get_attribute_node_ns_finish(javacall_handle handle,
                                                   /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets adds a new attribute. If an attribute with that local name and that 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets adds a new attribute. If an attribute with that local name and that 
  * namespace URI is already present in the element, it is replaced by 
  * the new one. Replacing an attribute node by itself has no effect.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
@@ -934,7 +946,8 @@ javacall_dom_element_set_attribute_node_ns_start(javacall_handle handle,
                                                  /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets adds a new attribute. If an attribute with that local name and that 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets adds a new attribute. If an attribute with that local name and that 
  * namespace URI is already present in the element, it is replaced by 
  * the new one. Replacing an attribute node by itself has no effect.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
@@ -974,8 +987,8 @@ javacall_dom_element_set_attribute_node_ns_finish(javacall_handle handle,
                                                   /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns a <code>NodeList</code> of all the descendant 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NodeList</code> of all the descendant 
  * <code>Elements</code> with a given local name and namespace URI in 
  * document order.
  * 
@@ -1007,7 +1020,8 @@ javacall_dom_element_get_elements_by_tag_name_ns_start(javacall_handle handle,
                                                        /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns a <code>NodeList</code> of all the descendant 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NodeList</code> of all the descendant 
  * <code>Elements</code> with a given local name and namespace URI in 
  * document order.
  * 
@@ -1036,8 +1050,8 @@ javacall_dom_element_get_elements_by_tag_name_ns_finish(javacall_handle handle,
                                                         /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns <code>true</code> when an attribute with a given name is 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns <code>true</code> when an attribute with a given name is 
  * specified on this element or has a default value, <code>false</code> 
  * otherwise.
  * 
@@ -1064,7 +1078,8 @@ javacall_dom_element_has_attribute_start(javacall_handle handle,
                                          /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns <code>true</code> when an attribute with a given name is 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns <code>true</code> when an attribute with a given name is 
  * specified on this element or has a default value, <code>false</code> 
  * otherwise.
  * 
@@ -1088,8 +1103,8 @@ javacall_dom_element_has_attribute_finish(javacall_handle handle,
                                           /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns <code>true</code> when an attribute with a given local name and 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns <code>true</code> when an attribute with a given local name and 
  * namespace URI is specified on this element or has a default value, 
  * <code>false</code> otherwise.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
@@ -1122,7 +1137,8 @@ javacall_dom_element_has_attribute_ns_start(javacall_handle handle,
                                             /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns <code>true</code> when an attribute with a given local name and 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns <code>true</code> when an attribute with a given local name and 
  * namespace URI is specified on this element or has a default value, 
  * <code>false</code> otherwise.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
@@ -1152,8 +1168,8 @@ javacall_dom_element_has_attribute_ns_finish(javacall_handle handle,
                                              /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
  * declares the specified attribute to be a user-determined ID attribute
  * . This affects the value of <code>Attr.is_id</code> and the behavior 
  * of <code>Document.getElementById</code>.
@@ -1191,7 +1207,8 @@ javacall_dom_element_set_id_attribute_start(javacall_handle handle,
                                             /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
  * declares the specified attribute to be a user-determined ID attribute
  * . This affects the value of <code>Attr.is_id</code> and the behavior 
  * of <code>Document.getElementById</code>.
@@ -1226,8 +1243,8 @@ javacall_dom_element_set_id_attribute_finish(javacall_handle handle,
                                              /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
  * declares the specified attribute to be a user-determined ID attribute
  * . This affects the value of <code>Attr.is_id</code> and the behavior 
  * of <code>Document.getElementById</code>.
@@ -1265,7 +1282,8 @@ javacall_dom_element_set_id_attribute_ns_start(javacall_handle handle,
                                                /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
  * declares the specified attribute to be a user-determined ID attribute
  * . This affects the value of <code>Attr.is_id</code> and the behavior 
  * of <code>Document.getElementById</code>.
@@ -1300,8 +1318,8 @@ javacall_dom_element_set_id_attribute_ns_finish(javacall_handle handle,
                                                 /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
  * declares the specified attribute to be a user-determined ID attribute
  * . This affects the value of <code>Attr.is_id</code> and the behavior 
  * of <code>Document.getElementById</code>.
@@ -1338,7 +1356,8 @@ javacall_dom_element_set_id_attribute_node_start(javacall_handle handle,
                                                  /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
  * declares the specified attribute to be a user-determined ID attribute
  * . This affects the value of <code>Attr.is_id</code> and the behavior 
  * of <code>Document.getElementById</code>.
@@ -1372,8 +1391,8 @@ javacall_dom_element_set_id_attribute_node_finish(javacall_handle handle,
                                                   /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns retrieves the number of child elements.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves the number of child elements.
  *
  * 
  * @param handle Pointer to the object representing this element.
@@ -1396,7 +1415,8 @@ javacall_dom_element_get_child_element_count_start(javacall_handle handle,
                                                    /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns retrieves the number of child elements.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves the number of child elements.
  *
  * 
  * @param handle Pointer to the object representing this element.
@@ -1416,8 +1436,8 @@ javacall_dom_element_get_child_element_count_finish(javacall_handle handle,
                                                     /* OUT */ javacall_int32* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns retrieves the first child element.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves the first child element.
  * 
  * 
  * @param handle Pointer to the object representing this element.
@@ -1441,7 +1461,8 @@ javacall_dom_element_get_first_element_child_start(javacall_handle handle,
                                                    /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns retrieves the first child element.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves the first child element.
  * 
  * 
  * @param handle Pointer to the object representing this element.
@@ -1462,8 +1483,8 @@ javacall_dom_element_get_first_element_child_finish(javacall_handle handle,
                                                     /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns retrieves the last child element.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves the last child element.
  *
  * 
  * @param handle Pointer to the object representing this element.
@@ -1487,7 +1508,8 @@ javacall_dom_element_get_last_element_child_start(javacall_handle handle,
                                                   /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns retrieves the last child element.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves the last child element.
  *
  * 
  * @param handle Pointer to the object representing this element.
@@ -1508,8 +1530,8 @@ javacall_dom_element_get_last_element_child_finish(javacall_handle handle,
                                                    /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns retrieves the next sibling element.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves the next sibling element.
  * 
  * 
  * @param handle Pointer to the object representing this element.
@@ -1534,7 +1556,8 @@ javacall_dom_element_get_next_element_sibling_start(javacall_handle handle,
                                                     /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns retrieves the next sibling element.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves the next sibling element.
  * 
  * 
  * @param handle Pointer to the object representing this element.
@@ -1556,8 +1579,8 @@ javacall_dom_element_get_next_element_sibling_finish(javacall_handle handle,
                                                      /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns retrieves the previous sibling element.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves the previous sibling element.
  * 
  * 
  * @param handle Pointer to the object representing this element.
@@ -1582,7 +1605,8 @@ javacall_dom_element_get_previous_element_sibling_start(javacall_handle handle,
                                                         /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns retrieves the previous sibling element.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns retrieves the previous sibling element.
  * 
  * 
  * @param handle Pointer to the object representing this element.

@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>keyIdentifier</code> holds the identifier of the key. The key 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>keyIdentifier</code> holds the identifier of the key. The key 
  * identifiers are defined in Appendix A.2 <a 
  * href="http://www.w3.org/TR/DOM-Level-3-Events/keyset.html#KeySet-Set">
  * "Key identifiers set"</a>. Implementations that are 
@@ -75,7 +75,8 @@ javacall_dom_keyboardevent_get_key_identifier_start(javacall_handle handle,
                                                     /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns  <code>keyIdentifier</code> holds the identifier of the key. The key 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>keyIdentifier</code> holds the identifier of the key. The key 
  * identifiers are defined in Appendix A.2 <a 
  * href="http://www.w3.org/TR/DOM-Level-3-Events/keyset.html#KeySet-Set">
  * "Key identifiers set"</a>. Implementations that are 
@@ -100,8 +101,8 @@ javacall_dom_keyboardevent_get_key_identifier_finish(javacall_handle handle,
                                                      /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  The <code>keyLocation</code> attribute contains an indication of the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The <code>keyLocation</code> attribute contains an indication of the 
  * location of they key on the device, as described in <a 
  * href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#ID-KeyboardEvent-KeyLocationCode">
  * Keyboard event types</a>. 
@@ -124,7 +125,8 @@ javacall_dom_keyboardevent_get_key_location_start(javacall_handle handle,
                                                   /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns  The <code>keyLocation</code> attribute contains an indication of the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The <code>keyLocation</code> attribute contains an indication of the 
  * location of they key on the device, as described in <a 
  * href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#ID-KeyboardEvent-KeyLocationCode">
  * Keyboard event types</a>. 
@@ -144,8 +146,8 @@ javacall_dom_keyboardevent_get_key_location_finish(javacall_handle handle,
                                                    /* OUT */ javacall_int32* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this keyboardevent.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -165,7 +167,8 @@ javacall_dom_keyboardevent_get_ctrl_key_start(javacall_handle handle,
                                               /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this keyboardevent.
  * @param context The context saved during asynchronous operation.
@@ -182,8 +185,8 @@ javacall_dom_keyboardevent_get_ctrl_key_finish(javacall_handle handle,
                                                /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>true</code> if the shift (Shift) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the shift (Shift) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this keyboardevent.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -203,7 +206,8 @@ javacall_dom_keyboardevent_get_shift_key_start(javacall_handle handle,
                                                /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  <code>true</code> if the shift (Shift) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the shift (Shift) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this keyboardevent.
  * @param context The context saved during asynchronous operation.
@@ -220,8 +224,8 @@ javacall_dom_keyboardevent_get_shift_key_finish(javacall_handle handle,
                                                 /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>true</code> if the alternative (Alt) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the alternative (Alt) key modifier is activated. 
  * <p ><b>Note:</b>  The Option key modifier on Macintosh systems must be 
  * represented using this key modifier. 
  * 
@@ -243,7 +247,8 @@ javacall_dom_keyboardevent_get_alt_key_start(javacall_handle handle,
                                              /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  <code>true</code> if the alternative (Alt) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the alternative (Alt) key modifier is activated. 
  * <p ><b>Note:</b>  The Option key modifier on Macintosh systems must be 
  * represented using this key modifier. 
  * 
@@ -262,8 +267,8 @@ javacall_dom_keyboardevent_get_alt_key_finish(javacall_handle handle,
                                               /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>true</code> if the meta (Meta) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the meta (Meta) key modifier is activated. 
  * <p ><b>Note:</b>  The Command key modifier on Macintosh systems must be 
  * represented using this key modifier. 
  * 
@@ -285,7 +290,8 @@ javacall_dom_keyboardevent_get_meta_key_start(javacall_handle handle,
                                               /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  <code>true</code> if the meta (Meta) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the meta (Meta) key modifier is activated. 
  * <p ><b>Note:</b>  The Command key modifier on Macintosh systems must be 
  * represented using this key modifier. 
  * 
@@ -304,8 +310,8 @@ javacall_dom_keyboardevent_get_meta_key_finish(javacall_handle handle,
                                                /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  The <code>initKeyboardEvent</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initKeyboardEvent</code> method is used to initialize the 
  * value of a <code>KeyboardEvent</code> object and has the same 
  * behavior as <code>UIEvent.initUIEvent()</code>. The value of 
  * <code>UIEvent.detail</code> remains undefined. 
@@ -350,7 +356,8 @@ javacall_dom_keyboardevent_init_keyboard_event_start(javacall_handle handle,
                                                      javacall_bool meta_key);
 
 /**
- *  The <code>initKeyboardEvent</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initKeyboardEvent</code> method is used to initialize the 
  * value of a <code>KeyboardEvent</code> object and has the same 
  * behavior as <code>UIEvent.initUIEvent()</code>. The value of 
  * <code>UIEvent.detail</code> remains undefined. 
@@ -392,8 +399,8 @@ javacall_dom_keyboardevent_init_keyboard_event_finish(javacall_handle handle,
                                                       javacall_bool meta_key);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  The <code>initKeyboardEventNS</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initKeyboardEventNS</code> method is used to initialize the 
  * value of a <code>KeyboardEvent</code> object and has the same 
  * behavior as <code>UIEvent.initUIEventNS()</code>. The value of 
  * <code>UIEvent.detail</code> remains undefined. 
@@ -444,7 +451,8 @@ javacall_dom_keyboardevent_init_keyboard_event_ns_start(javacall_handle handle,
                                                         javacall_bool meta_key);
 
 /**
- *  The <code>initKeyboardEventNS</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initKeyboardEventNS</code> method is used to initialize the 
  * value of a <code>KeyboardEvent</code> object and has the same 
  * behavior as <code>UIEvent.initUIEventNS()</code>. The value of 
  * <code>UIEvent.detail</code> remains undefined. 

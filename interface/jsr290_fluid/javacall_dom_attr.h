@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the name of this attribute. If <code>Node.localName</code> is 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the name of this attribute. If <code>Node.localName</code> is 
  * different from <code>NULL</code>, this attribute is a qualified name.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
@@ -77,7 +77,8 @@ javacall_dom_attr_get_name_start(javacall_handle handle,
                                  /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the name of this attribute. If <code>Node.localName</code> is 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the name of this attribute. If <code>Node.localName</code> is 
  * different from <code>NULL</code>, this attribute is a qualified name.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
@@ -104,8 +105,8 @@ javacall_dom_attr_get_name_finish(javacall_handle handle,
                                   /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns if this attribute was explicitly given a value in the original 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns if this attribute was explicitly given a value in the original 
  * document, this is <code>true</code>; otherwise, it is 
  * <code>false</code>. Note that the implementation is in charge of this 
  * attribute, not the user. If the user changes the value of the 
@@ -148,7 +149,8 @@ javacall_dom_attr_get_specified_start(javacall_handle handle,
                                       /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns if this attribute was explicitly given a value in the original 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns if this attribute was explicitly given a value in the original 
  * document, this is <code>true</code>; otherwise, it is 
  * <code>false</code>. Note that the implementation is in charge of this 
  * attribute, not the user. If the user changes the value of the 
@@ -188,8 +190,8 @@ javacall_dom_attr_get_specified_finish(javacall_handle handle,
                                        /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the value of this attribute. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the value of this attribute. 
  * On retrieval, the value of the attribute is returned as a string. 
  * Character and general entity references are replaced with their 
  * values. See also the method <code>getAttribute</code> on the 
@@ -230,7 +232,8 @@ javacall_dom_attr_get_value_start(javacall_handle handle,
                                   /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the value of this attribute. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the value of this attribute. 
  * On retrieval, the value of the attribute is returned as a string. 
  * Character and general entity references are replaced with their 
  * values. See also the method <code>getAttribute</code> on the 
@@ -268,8 +271,8 @@ javacall_dom_attr_get_value_finish(javacall_handle handle,
                                    /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets the value of this attribute. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the value of this attribute. 
  * On setting, this creates a <code>Text</code> node with the unparsed 
  * contents of the string. I.e. any characters that an XML processor 
  * would recognize as markup are instead treated as literal text. See 
@@ -299,7 +302,8 @@ javacall_dom_attr_set_value_start(javacall_handle handle,
                                   javacall_const_utf16_string value);
 
 /**
- * Sets the value of this attribute. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the value of this attribute. 
  * On setting, this creates a <code>Text</code> node with the unparsed 
  * contents of the string. I.e. any characters that an XML processor 
  * would recognize as markup are instead treated as literal text. See 
@@ -326,8 +330,8 @@ javacall_dom_attr_set_value_finish(javacall_handle handle,
                                    javacall_const_utf16_string value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the <code>Element</code> node this attribute is attached to or 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the <code>Element</code> node this attribute is attached to or 
  * <code>NULL</code> if this attribute is not in use.
  * 
  * @param handle Pointer to the object representing this attr.
@@ -350,7 +354,8 @@ javacall_dom_attr_get_owner_element_start(javacall_handle handle,
                                           /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns the <code>Element</code> node this attribute is attached to or 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the <code>Element</code> node this attribute is attached to or 
  * <code>NULL</code> if this attribute is not in use.
  * 
  * @param handle Pointer to the object representing this attr.
@@ -370,8 +375,8 @@ javacall_dom_attr_get_owner_element_finish(javacall_handle handle,
                                            /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns whether this attribute is known to be of type ID or not. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns whether this attribute is known to be of type ID or not. 
  * In other words, whether this attribute 
  * contains an identifier for its owner element or not. When it is and 
  * its value is unique, the <code>ownerElement</code> of this attribute 
@@ -405,7 +410,8 @@ javacall_dom_attr_is_id_start(javacall_handle handle,
                               /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns whether this attribute is known to be of type ID or not. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns whether this attribute is known to be of type ID or not. 
  * In other words, whether this attribute 
  * contains an identifier for its owner element or not. When it is and 
  * its value is unique, the <code>ownerElement</code> of this attribute 

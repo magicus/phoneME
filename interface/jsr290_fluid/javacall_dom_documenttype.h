@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the name of DTD; i.e., the name immediately following the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the name of DTD; i.e., the name immediately following the 
  * <code>DOCTYPE</code> keyword.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
@@ -77,7 +77,8 @@ javacall_dom_documenttype_get_name_start(javacall_handle handle,
                                          /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the name of DTD; i.e., the name immediately following the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the name of DTD; i.e., the name immediately following the 
  * <code>DOCTYPE</code> keyword.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
@@ -104,8 +105,8 @@ javacall_dom_documenttype_get_name_finish(javacall_handle handle,
                                           /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns a <code>NamedNodeMap</code> containing the general entities, both 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NamedNodeMap</code> containing the general entities, both 
  * external and internal, declared in the DTD. Parameter entities are 
  * not contained. Duplicates are discarded. For example in: 
  * <pre>&lt;!DOCTYPE 
@@ -140,7 +141,8 @@ javacall_dom_documenttype_get_entities_start(javacall_handle handle,
                                              /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns a <code>NamedNodeMap</code> containing the general entities, both 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NamedNodeMap</code> containing the general entities, both 
  * external and internal, declared in the DTD. Parameter entities are 
  * not contained. Duplicates are discarded. For example in: 
  * <pre>&lt;!DOCTYPE 
@@ -172,8 +174,8 @@ javacall_dom_documenttype_get_entities_finish(javacall_handle handle,
                                               /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns a <code>NamedNodeMap</code> containing the notations declared in the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NamedNodeMap</code> containing the notations declared in the 
  * DTD. Duplicates are discarded. Every node in this map also implements 
  * the <code>Notation</code> interface.
  * <br>The DOM Level 2 does not support editing notations, therefore 
@@ -199,7 +201,8 @@ javacall_dom_documenttype_get_notations_start(javacall_handle handle,
                                               /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns a <code>NamedNodeMap</code> containing the notations declared in the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NamedNodeMap</code> containing the notations declared in the 
  * DTD. Duplicates are discarded. Every node in this map also implements 
  * the <code>Notation</code> interface.
  * <br>The DOM Level 2 does not support editing notations, therefore 
@@ -222,8 +225,8 @@ javacall_dom_documenttype_get_notations_finish(javacall_handle handle,
                                                /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the public identifier of the external subset.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the public identifier of the external subset.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
@@ -252,7 +255,8 @@ javacall_dom_documenttype_get_public_id_start(javacall_handle handle,
                                               /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the public identifier of the external subset.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the public identifier of the external subset.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
@@ -278,8 +282,8 @@ javacall_dom_documenttype_get_public_id_finish(javacall_handle handle,
                                                /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the system identifier of the external subset.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the system identifier of the external subset.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
@@ -308,7 +312,8 @@ javacall_dom_documenttype_get_system_id_start(javacall_handle handle,
                                               /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the system identifier of the external subset.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the system identifier of the external subset.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
@@ -334,8 +339,8 @@ javacall_dom_documenttype_get_system_id_finish(javacall_handle handle,
                                                /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the internal subset as a string, or <code>NULL</code> if there is none.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the internal subset as a string, or <code>NULL</code> if there is none.
  * <p><b>Note:</b> The actual content returned depends on how much
  * information is available to the implementation. This may vary
  * depending on various parameters, including the XML processor used to
@@ -368,7 +373,8 @@ javacall_dom_documenttype_get_internal_subset_start(javacall_handle handle,
                                                     /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the internal subset as a string, or <code>NULL</code> if there is none.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the internal subset as a string, or <code>NULL</code> if there is none.
  * <p><b>Note:</b> The actual content returned depends on how much
  * information is available to the implementation. This may vary
  * depending on various parameters, including the XML processor used to

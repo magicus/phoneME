@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  The horizontal coordinate at which the event occurred relative to the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The horizontal coordinate at which the event occurred relative to the 
  * origin of the screen coordinate system. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
@@ -68,7 +68,8 @@ javacall_dom_mouseevent_get_screen_x_start(javacall_handle handle,
                                            /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns  The horizontal coordinate at which the event occurred relative to the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The horizontal coordinate at which the event occurred relative to the 
  * origin of the screen coordinate system. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
@@ -86,8 +87,8 @@ javacall_dom_mouseevent_get_screen_x_finish(javacall_handle handle,
                                             /* OUT */ javacall_int32* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  The vertical coordinate at which the event occurred relative to the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The vertical coordinate at which the event occurred relative to the 
  * origin of the screen coordinate system. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
@@ -108,7 +109,8 @@ javacall_dom_mouseevent_get_screen_y_start(javacall_handle handle,
                                            /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns  The vertical coordinate at which the event occurred relative to the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The vertical coordinate at which the event occurred relative to the 
  * origin of the screen coordinate system. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
@@ -126,8 +128,8 @@ javacall_dom_mouseevent_get_screen_y_finish(javacall_handle handle,
                                             /* OUT */ javacall_int32* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  The horizontal coordinate at which the event occurred relative to the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The horizontal coordinate at which the event occurred relative to the 
  * DOM implementation's client area. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
@@ -148,7 +150,8 @@ javacall_dom_mouseevent_get_client_x_start(javacall_handle handle,
                                            /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns  The horizontal coordinate at which the event occurred relative to the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The horizontal coordinate at which the event occurred relative to the 
  * DOM implementation's client area. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
@@ -166,8 +169,8 @@ javacall_dom_mouseevent_get_client_x_finish(javacall_handle handle,
                                             /* OUT */ javacall_int32* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  The vertical coordinate at which the event occurred relative to the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The vertical coordinate at which the event occurred relative to the 
  * DOM implementation's client area. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
@@ -188,7 +191,8 @@ javacall_dom_mouseevent_get_client_y_start(javacall_handle handle,
                                            /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns  The vertical coordinate at which the event occurred relative to the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The vertical coordinate at which the event occurred relative to the 
  * DOM implementation's client area. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
@@ -206,8 +210,8 @@ javacall_dom_mouseevent_get_client_y_finish(javacall_handle handle,
                                             /* OUT */ javacall_int32* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -227,7 +231,8 @@ javacall_dom_mouseevent_get_ctrl_key_start(javacall_handle handle,
                                            /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
  * @param context The context saved during asynchronous operation.
@@ -244,8 +249,8 @@ javacall_dom_mouseevent_get_ctrl_key_finish(javacall_handle handle,
                                             /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>true</code> if the shift (Shift) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the shift (Shift) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -265,7 +270,8 @@ javacall_dom_mouseevent_get_shift_key_start(javacall_handle handle,
                                             /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  <code>true</code> if the shift (Shift) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the shift (Shift) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
  * @param context The context saved during asynchronous operation.
@@ -282,8 +288,8 @@ javacall_dom_mouseevent_get_shift_key_finish(javacall_handle handle,
                                              /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>true</code> if the alt (alternative) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the alt (alternative) key modifier is activated. 
  * <p ><b>Note:</b>  The Option key modifier on Macintosh systems must be 
  * represented using this key modifier. 
  * 
@@ -305,7 +311,8 @@ javacall_dom_mouseevent_get_alt_key_start(javacall_handle handle,
                                           /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  <code>true</code> if the alt (alternative) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the alt (alternative) key modifier is activated. 
  * <p ><b>Note:</b>  The Option key modifier on Macintosh systems must be 
  * represented using this key modifier. 
  * 
@@ -324,8 +331,8 @@ javacall_dom_mouseevent_get_alt_key_finish(javacall_handle handle,
                                            /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>true</code> if the meta (Meta) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the meta (Meta) key modifier is activated. 
  * <p ><b>Note:</b>  The Command key modifier on Macintosh system must be 
  * represented using this meta key. 
  * 
@@ -347,7 +354,8 @@ javacall_dom_mouseevent_get_meta_key_start(javacall_handle handle,
                                            /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  <code>true</code> if the meta (Meta) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the meta (Meta) key modifier is activated. 
  * <p ><b>Note:</b>  The Command key modifier on Macintosh system must be 
  * represented using this meta key. 
  * 
@@ -366,8 +374,8 @@ javacall_dom_mouseevent_get_meta_key_finish(javacall_handle handle,
                                             /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  During mouse events caused by the depression or release of a mouse 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  During mouse events caused by the depression or release of a mouse 
  * button, <code>button</code> is used to indicate which mouse button 
  * changed state. <code>0</code> indicates the normal button of the 
  * mouse (in general on the left or the one button on Macintosh mice, 
@@ -397,7 +405,8 @@ javacall_dom_mouseevent_get_button_start(javacall_handle handle,
                                          /* OUT */ javacall_int16* ret_value);
 
 /**
- * Returns  During mouse events caused by the depression or release of a mouse 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  During mouse events caused by the depression or release of a mouse 
  * button, <code>button</code> is used to indicate which mouse button 
  * changed state. <code>0</code> indicates the normal button of the 
  * mouse (in general on the left or the one button on Macintosh mice, 
@@ -424,8 +433,8 @@ javacall_dom_mouseevent_get_button_finish(javacall_handle handle,
                                           /* OUT */ javacall_int16* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  Used to identify a secondary <code>EventTarget</code> related to a UI 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  Used to identify a secondary <code>EventTarget</code> related to a UI 
  * event, depending on the type of event. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
@@ -446,7 +455,8 @@ javacall_dom_mouseevent_get_related_target_start(javacall_handle handle,
                                                  /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns  Used to identify a secondary <code>EventTarget</code> related to a UI 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  Used to identify a secondary <code>EventTarget</code> related to a UI 
  * event, depending on the type of event. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
@@ -464,8 +474,8 @@ javacall_dom_mouseevent_get_related_target_finish(javacall_handle handle,
                                                   /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  The <code>initMouseEvent</code> method is used to initialize the value 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initMouseEvent</code> method is used to initialize the value 
  * of a <code>MouseEvent</code> object and has the same behavior as 
  * <code>UIEvent.initUIEvent()</code>. 
  * 
@@ -521,7 +531,8 @@ javacall_dom_mouseevent_init_mouse_event_start(javacall_handle handle,
                                                javacall_handle related_target_arg);
 
 /**
- *  The <code>initMouseEvent</code> method is used to initialize the value 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initMouseEvent</code> method is used to initialize the value 
  * of a <code>MouseEvent</code> object and has the same behavior as 
  * <code>UIEvent.initUIEvent()</code>. 
  * 
@@ -574,8 +585,8 @@ javacall_dom_mouseevent_init_mouse_event_finish(javacall_handle handle,
                                                 javacall_handle related_target_arg);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  The <code>initMouseEventNS</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initMouseEventNS</code> method is used to initialize the 
  * value of a <code>MouseEvent</code> object and has the same behavior 
  * as <code>UIEvent.initUIEventNS()</code>. 
  * 
@@ -642,7 +653,8 @@ javacall_dom_mouseevent_init_mouse_event_ns_start(javacall_handle handle,
                                                   javacall_const_utf16_string modifiers_list);
 
 /**
- *  The <code>initMouseEventNS</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initMouseEventNS</code> method is used to initialize the 
  * value of a <code>MouseEvent</code> object and has the same behavior 
  * as <code>UIEvent.initUIEventNS()</code>. 
  * 

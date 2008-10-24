@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns specifies whether the total size of the transfer is known.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns specifies whether the total size of the transfer is known.
  * 
  * @param handle Pointer to the object representing this progressevent.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -67,7 +67,8 @@ javacall_dom_progressevent_get_length_computable_start(javacall_handle handle,
                                                        /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns specifies whether the total size of the transfer is known.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns specifies whether the total size of the transfer is known.
  * 
  * @param handle Pointer to the object representing this progressevent.
  * @param context The context saved during asynchronous operation.
@@ -84,8 +85,8 @@ javacall_dom_progressevent_get_length_computable_finish(javacall_handle handle,
                                                         /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns specifies the number of bytes downloaded since the beginning of the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns specifies the number of bytes downloaded since the beginning of the 
  * download. This refers to the content, excluding headers and overhead 
  * from the transaction,
  * and where there is a content-encoding or transfer-encoding refers
@@ -110,7 +111,8 @@ javacall_dom_progressevent_get_loaded_start(javacall_handle handle,
                                             /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns specifies the number of bytes downloaded since the beginning of the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns specifies the number of bytes downloaded since the beginning of the 
  * download. This refers to the content, excluding headers and overhead 
  * from the transaction,
  * and where there is a content-encoding or transfer-encoding refers
@@ -132,8 +134,8 @@ javacall_dom_progressevent_get_loaded_finish(javacall_handle handle,
                                              /* OUT */ javacall_int32* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns specifies the expected total number of bytes of the content 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns specifies the expected total number of bytes of the content 
  * transferred in the operation. Where the size of the transfer is for
  * some reason unknown, the value of this attribute <em>must</em> be zero.
  * 
@@ -155,7 +157,8 @@ javacall_dom_progressevent_get_total_start(javacall_handle handle,
                                            /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns specifies the expected total number of bytes of the content 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns specifies the expected total number of bytes of the content 
  * transferred in the operation. Where the size of the transfer is for
  * some reason unknown, the value of this attribute <em>must</em> be zero.
  * 
@@ -174,8 +177,8 @@ javacall_dom_progressevent_get_total_finish(javacall_handle handle,
                                             /* OUT */ javacall_int32* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * the initProgressEvent method is used to initialize the value of a 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the initProgressEvent method is used to initialize the value of a 
  * progress event created through the DocumentEvent interface. 
  * If this method is called multiple times, the final invocation takes 
  * precedence .
@@ -238,7 +241,8 @@ javacall_dom_progressevent_init_progress_event_start(javacall_handle handle,
                                                      javacall_int32 total_arg);
 
 /**
- * The initProgressEvent method is used to initialize the value of a 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the initProgressEvent method is used to initialize the value of a 
  * progress event created through the DocumentEvent interface. 
  * If this method is called multiple times, the final invocation takes 
  * precedence .
@@ -298,8 +302,8 @@ javacall_dom_progressevent_init_progress_event_finish(javacall_handle handle,
                                                       javacall_int32 total_arg);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * the initProgressEventNS method is used to initialize the value of a 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the initProgressEventNS method is used to initialize the value of a 
  * namespaced progress event created through the DocumentEvent interface.
  * This method may only be called before the progress event has been 
  * dispatched via the dispatchEvent method, though it may be called 
@@ -372,7 +376,8 @@ javacall_dom_progressevent_init_progress_event_ns_start(javacall_handle handle,
                                                         javacall_int32 total_arg);
 
 /**
- * The initProgressEventNS method is used to initialize the value of a 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the initProgressEventNS method is used to initialize the value of a 
  * namespaced progress event created through the DocumentEvent interface.
  * This method may only be called before the progress event has been 
  * dispatched via the dispatchEvent method, though it may be called 

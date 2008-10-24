@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns represents the current contents of the corresponding form control, in 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns represents the current contents of the corresponding form control, in 
  * an interactive user agent. Changing this attribute changes the 
  * contents of the form control, but does not change the contents of the 
  * element. If the entirety of the data can not fit into a single 
@@ -74,7 +74,8 @@ javacall_dom_htmltextareaelement_get_value_start(javacall_handle handle,
                                                  /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns represents the current contents of the corresponding form control, in 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns represents the current contents of the corresponding form control, in 
  * an interactive user agent. Changing this attribute changes the 
  * contents of the form control, but does not change the contents of the 
  * element. If the entirety of the data can not fit into a single 
@@ -98,8 +99,8 @@ javacall_dom_htmltextareaelement_get_value_finish(javacall_handle handle,
                                                   /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * select the contents of the <code>TEXTAREA</code>.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR select the contents of the <code>TEXTAREA</code>.
  * 
  * @param handle Pointer to the object representing this htmltextareaelement.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -118,7 +119,8 @@ javacall_dom_htmltextareaelement_select_start(javacall_handle handle,
                                               void **context);
 
 /**
- * Select the contents of the <code>TEXTAREA</code>.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR select the contents of the <code>TEXTAREA</code>.
  * 
  * @param handle Pointer to the object representing this htmltextareaelement.
  * @param context The context saved during asynchronous operation.
@@ -134,8 +136,8 @@ javacall_dom_htmltextareaelement_select_finish(javacall_handle handle,
                                                void *context);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets represents the current contents of the corresponding form control, in 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets represents the current contents of the corresponding form control, in 
  * an interactive user agent. Changing this attribute changes the 
  * contents of the form control, but does not change the contents of the 
  * element. If the entirety of the data can not fit into a single 
@@ -159,7 +161,8 @@ javacall_dom_htmltextareaelement_set_value_start(javacall_handle handle,
                                                  javacall_const_utf16_string value);
 
 /**
- * Sets represents the current contents of the corresponding form control, in 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets represents the current contents of the corresponding form control, in 
  * an interactive user agent. Changing this attribute changes the 
  * contents of the form control, but does not change the contents of the 
  * element. If the entirety of the data can not fit into a single 

@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the class attribute of the element. This attribute has been renamed due 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the class attribute of the element. This attribute has been renamed due 
  * to conflicts with the "class" keyword exposed by many languages. See 
  * the class attribute definition in HTML 4.01.
  * 
@@ -72,7 +72,8 @@ javacall_dom_htmlelement_get_class_name_start(javacall_handle handle,
                                               /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the class attribute of the element. This attribute has been renamed due 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the class attribute of the element. This attribute has been renamed due 
  * to conflicts with the "class" keyword exposed by many languages. See 
  * the class attribute definition in HTML 4.01.
  * 
@@ -94,8 +95,8 @@ javacall_dom_htmlelement_get_class_name_finish(javacall_handle handle,
                                                /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the element's identifier. See the id attribute definition in HTML 4.01.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the element's identifier. See the id attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlelement.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -118,7 +119,8 @@ javacall_dom_htmlelement_get_id_start(javacall_handle handle,
                                       /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the element's identifier. See the id attribute definition in HTML 4.01.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the element's identifier. See the id attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlelement.
  * @param context The context saved during asynchronous operation.
@@ -138,8 +140,8 @@ javacall_dom_htmlelement_get_id_finish(javacall_handle handle,
                                        /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets the class attribute of the element. This attribute has been renamed due 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the class attribute of the element. This attribute has been renamed due 
  * to conflicts with the "class" keyword exposed by many languages. See 
  * the class attribute definition in HTML 4.01.
  * 
@@ -161,7 +163,8 @@ javacall_dom_htmlelement_set_class_name_start(javacall_handle handle,
                                               javacall_const_utf16_string class_name);
 
 /**
- * Sets the class attribute of the element. This attribute has been renamed due 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the class attribute of the element. This attribute has been renamed due 
  * to conflicts with the "class" keyword exposed by many languages. See 
  * the class attribute definition in HTML 4.01.
  * 
@@ -180,8 +183,8 @@ javacall_dom_htmlelement_set_class_name_finish(javacall_handle handle,
                                                javacall_const_utf16_string class_name);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets the element's identifier. See the id attribute definition in HTML 4.01.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the element's identifier. See the id attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlelement.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -201,7 +204,8 @@ javacall_dom_htmlelement_set_id_start(javacall_handle handle,
                                       javacall_const_utf16_string id);
 
 /**
- * Sets the element's identifier. See the id attribute definition in HTML 4.01.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the element's identifier. See the id attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlelement.
  * @param context The context saved during asynchronous operation.

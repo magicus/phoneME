@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the name of this node, depending on its type; see 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the name of this node, depending on its type; see 
  * <code>javacall_dom_node_types</code>. 
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
@@ -77,7 +77,8 @@ javacall_dom_node_get_node_name_start(javacall_handle handle,
                                       /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the name of this node, depending on its type; see 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the name of this node, depending on its type; see 
  * <code>javacall_dom_node_types</code>. 
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
@@ -104,8 +105,8 @@ javacall_dom_node_get_node_name_finish(javacall_handle handle,
                                        /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the value of this node, depending on its type; see 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the value of this node, depending on its type; see 
  * <code>javacall_dom_node_types</code>. 
  * When it is defined to be <code>NULL</code>, setting it has no effect.
  * 
@@ -137,7 +138,8 @@ javacall_dom_node_get_node_value_start(javacall_handle handle,
                                        /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the value of this node, depending on its type; see 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the value of this node, depending on its type; see 
  * <code>javacall_dom_node_types</code>. 
  * When it is defined to be <code>NULL</code>, setting it has no effect.
  * 
@@ -166,8 +168,8 @@ javacall_dom_node_get_node_value_finish(javacall_handle handle,
                                         /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets the value of this node, depending on its type; see 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the value of this node, depending on its type; see 
  * <code>javacall_dom_node_types</code>. 
  * When it is defined to be <code>NULL</code>, setting it has no effect,
  * including if the node is read-only.
@@ -192,7 +194,8 @@ javacall_dom_node_set_node_value_start(javacall_handle handle,
                                        javacall_const_utf16_string node_value);
 
 /**
- * Sets the value of this node, depending on its type; see 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the value of this node, depending on its type; see 
  * <code>javacall_dom_node_types</code>. 
  * When it is defined to be <code>NULL</code>, setting it has no effect,
  * including if the node is read-only.
@@ -214,8 +217,8 @@ javacall_dom_node_set_node_value_finish(javacall_handle handle,
                                         javacall_const_utf16_string node_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns a code representing the type of the underlying object, as defined in 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a code representing the type of the underlying object, as defined in 
  * <code>javacall_dom_node_types</code>.
  * 
  * @param handle Pointer to the object representing this node.
@@ -237,7 +240,8 @@ javacall_dom_node_get_node_type_start(javacall_handle handle,
                                       /* OUT */ javacall_dom_node_types* ret_value);
 
 /**
- * Returns a code representing the type of the underlying object, as defined in 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a code representing the type of the underlying object, as defined in 
  * <code>javacall_dom_node_types</code>.
  * 
  * @param handle Pointer to the object representing this node.
@@ -256,8 +260,8 @@ javacall_dom_node_get_node_type_finish(javacall_handle handle,
                                        /* OUT */ javacall_dom_node_types* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the parent of this node. All nodes, except <code>Attr</code>, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the parent of this node. All nodes, except <code>Attr</code>, 
  * <code>Document</code>, <code>DocumentFragment</code>, 
  * <code>Entity</code>, and <code>Notation</code> may have a parent. 
  * However, if a node has just been created and not yet added to the 
@@ -284,7 +288,8 @@ javacall_dom_node_get_parent_node_start(javacall_handle handle,
                                         /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns the parent of this node. All nodes, except <code>Attr</code>, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the parent of this node. All nodes, except <code>Attr</code>, 
  * <code>Document</code>, <code>DocumentFragment</code>, 
  * <code>Entity</code>, and <code>Notation</code> may have a parent. 
  * However, if a node has just been created and not yet added to the 
@@ -308,8 +313,8 @@ javacall_dom_node_get_parent_node_finish(javacall_handle handle,
                                          /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns a <code>NodeList</code> that contains all children of this node. If 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NodeList</code> that contains all children of this node. If 
  * there are no children, this is a <code>NodeList</code> containing no 
  * nodes.
  * 
@@ -333,7 +338,8 @@ javacall_dom_node_get_child_nodes_start(javacall_handle handle,
                                         /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns a <code>NodeList</code> that contains all children of this node. If 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NodeList</code> that contains all children of this node. If 
  * there are no children, this is a <code>NodeList</code> containing no 
  * nodes.
  * 
@@ -354,8 +360,8 @@ javacall_dom_node_get_child_nodes_finish(javacall_handle handle,
                                          /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * the first child of this node. If there is no such node, this returns 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the first child of this node. If there is no such node, this returns 
  * <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
@@ -378,7 +384,8 @@ javacall_dom_node_get_first_child_start(javacall_handle handle,
                                         /* OUT */ javacall_handle* ret_value);
 
 /**
- * The first child of this node. If there is no such node, this returns 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the first child of this node. If there is no such node, this returns 
  * <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
@@ -398,8 +405,8 @@ javacall_dom_node_get_first_child_finish(javacall_handle handle,
                                          /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * the last child of this node. If there is no such node, this returns 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the last child of this node. If there is no such node, this returns 
  * <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
@@ -422,7 +429,8 @@ javacall_dom_node_get_last_child_start(javacall_handle handle,
                                        /* OUT */ javacall_handle* ret_value);
 
 /**
- * The last child of this node. If there is no such node, this returns 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the last child of this node. If there is no such node, this returns 
  * <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
@@ -442,8 +450,8 @@ javacall_dom_node_get_last_child_finish(javacall_handle handle,
                                         /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * the node immediately preceding this node. If there is no such node, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the node immediately preceding this node. If there is no such node, 
  * this returns <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
@@ -466,7 +474,8 @@ javacall_dom_node_get_previous_sibling_start(javacall_handle handle,
                                              /* OUT */ javacall_handle* ret_value);
 
 /**
- * The node immediately preceding this node. If there is no such node, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the node immediately preceding this node. If there is no such node, 
  * this returns <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
@@ -486,8 +495,8 @@ javacall_dom_node_get_previous_sibling_finish(javacall_handle handle,
                                               /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * the node immediately following this node. If there is no such node, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the node immediately following this node. If there is no such node, 
  * this returns <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
@@ -510,7 +519,8 @@ javacall_dom_node_get_next_sibling_start(javacall_handle handle,
                                          /* OUT */ javacall_handle* ret_value);
 
 /**
- * The node immediately following this node. If there is no such node, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the node immediately following this node. If there is no such node, 
  * this returns <code>NULL</code>.
  * 
  * @param handle Pointer to the object representing this node.
@@ -530,8 +540,8 @@ javacall_dom_node_get_next_sibling_finish(javacall_handle handle,
                                           /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns a <code>NamedNodeMap</code> containing the attributes of this node (if 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NamedNodeMap</code> containing the attributes of this node (if 
  * it is an <code>Element</code>) or <code>NULL</code> otherwise. 
  * 
  * @param handle Pointer to the object representing this node.
@@ -554,7 +564,8 @@ javacall_dom_node_get_attributes_start(javacall_handle handle,
                                        /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns a <code>NamedNodeMap</code> containing the attributes of this node (if 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a <code>NamedNodeMap</code> containing the attributes of this node (if 
  * it is an <code>Element</code>) or <code>NULL</code> otherwise. 
  * 
  * @param handle Pointer to the object representing this node.
@@ -574,8 +585,8 @@ javacall_dom_node_get_attributes_finish(javacall_handle handle,
                                         /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the <code>Document</code> object associated with this node. This is 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the <code>Document</code> object associated with this node. This is 
  * also the <code>Document</code> object used to create new nodes. When 
  * this node is a <code>Document</code> or a <code>DocumentType</code> 
  * which is not used with any <code>Document</code> yet, this is 
@@ -601,7 +612,8 @@ javacall_dom_node_get_owner_document_start(javacall_handle handle,
                                            /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns the <code>Document</code> object associated with this node. This is 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the <code>Document</code> object associated with this node. This is 
  * also the <code>Document</code> object used to create new nodes. When 
  * this node is a <code>Document</code> or a <code>DocumentType</code> 
  * which is not used with any <code>Document</code> yet, this is 
@@ -624,8 +636,8 @@ javacall_dom_node_get_owner_document_finish(javacall_handle handle,
                                             /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * inserts the node <code>new_child</code> before the existing child node 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR inserts the node <code>new_child</code> before the existing child node 
  * <code>ref_child</code>. If <code>ref_child</code> is <code>NULL</code>, 
  * insert <code>new_child</code> at the end of the list of children.
  * <br>If <code>new_child</code> is a <code>DocumentFragment</code> object, 
@@ -672,7 +684,8 @@ javacall_dom_node_insert_before_start(javacall_handle handle,
                                       /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Inserts the node <code>new_child</code> before the existing child node 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR inserts the node <code>new_child</code> before the existing child node 
  * <code>ref_child</code>. If <code>ref_child</code> is <code>NULL</code>, 
  * insert <code>new_child</code> at the end of the list of children.
  * <br>If <code>new_child</code> is a <code>DocumentFragment</code> object, 
@@ -716,8 +729,8 @@ javacall_dom_node_insert_before_finish(javacall_handle handle,
                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * replaces the child node <code>old_child</code> with <code>new_child</code>
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR replaces the child node <code>old_child</code> with <code>new_child</code>
  *  in the list of children, and returns the <code>old_child</code> node.
  * <br>If <code>new_child</code> is a <code>DocumentFragment</code> object, 
  * <code>old_child</code> is replaced by all of the 
@@ -761,7 +774,8 @@ javacall_dom_node_replace_child_start(javacall_handle handle,
                                       /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Replaces the child node <code>old_child</code> with <code>new_child</code>
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR replaces the child node <code>old_child</code> with <code>new_child</code>
  *  in the list of children, and returns the <code>old_child</code> node.
  * <br>If <code>new_child</code> is a <code>DocumentFragment</code> object, 
  * <code>old_child</code> is replaced by all of the 
@@ -802,8 +816,8 @@ javacall_dom_node_replace_child_finish(javacall_handle handle,
                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * removes the child node indicated by <code>old_child</code> from the list 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR removes the child node indicated by <code>old_child</code> from the list 
  * of children, and returns it.
  * 
  * @param handle Pointer to the object representing this node.
@@ -837,7 +851,8 @@ javacall_dom_node_remove_child_start(javacall_handle handle,
                                      /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Removes the child node indicated by <code>old_child</code> from the list 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR removes the child node indicated by <code>old_child</code> from the list 
  * of children, and returns it.
  * 
  * @param handle Pointer to the object representing this node.
@@ -868,8 +883,8 @@ javacall_dom_node_remove_child_finish(javacall_handle handle,
                                       /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * adds the node <code>new_child</code> to the end of the list of children 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR adds the node <code>new_child</code> to the end of the list of children 
  * of this node. If the <code>new_child</code> is already in the tree, it 
  * is first removed.
  * 
@@ -907,7 +922,8 @@ javacall_dom_node_append_child_start(javacall_handle handle,
                                      /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Adds the node <code>new_child</code> to the end of the list of children 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR adds the node <code>new_child</code> to the end of the list of children 
  * of this node. If the <code>new_child</code> is already in the tree, it 
  * is first removed.
  * 
@@ -942,8 +958,8 @@ javacall_dom_node_append_child_finish(javacall_handle handle,
                                       /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns whether this node has any children.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns whether this node has any children.
  * 
  * @param handle Pointer to the object representing this node.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -965,7 +981,8 @@ javacall_dom_node_has_child_nodes_start(javacall_handle handle,
                                         /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns whether this node has any children.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns whether this node has any children.
  * 
  * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
@@ -984,8 +1001,8 @@ javacall_dom_node_has_child_nodes_finish(javacall_handle handle,
                                          /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns a duplicate of this node, i.e., serves as a generic copy 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a duplicate of this node, i.e., serves as a generic copy 
  * constructor for nodes. The duplicate node has no parent (
  * <code>parentNode</code> is <code>NULL</code>) and no user data. User 
  * data associated to the imported node is not carried over. However, if 
@@ -1038,7 +1055,8 @@ javacall_dom_node_clone_node_start(javacall_handle handle,
                                    /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns a duplicate of this node, i.e., serves as a generic copy 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a duplicate of this node, i.e., serves as a generic copy 
  * constructor for nodes. The duplicate node has no parent (
  * <code>parentNode</code> is <code>NULL</code>) and no user data. User 
  * data associated to the imported node is not carried over. However, if 
@@ -1088,8 +1106,8 @@ javacall_dom_node_clone_node_finish(javacall_handle handle,
                                     /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * puts all <code>Text</code> nodes in the full depth of the sub-tree 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR puts all <code>Text</code> nodes in the full depth of the sub-tree 
  * underneath this <code>Node</code>, including attribute nodes, into a 
  * "normal" form where only structure (e.g., elements, comments, 
  * processing instructions, CDATA sections, and entity references) 
@@ -1122,7 +1140,8 @@ javacall_dom_node_normalize_start(javacall_handle handle,
                                   void **context);
 
 /**
- * Puts all <code>Text</code> nodes in the full depth of the sub-tree 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR puts all <code>Text</code> nodes in the full depth of the sub-tree 
  * underneath this <code>Node</code>, including attribute nodes, into a 
  * "normal" form where only structure (e.g., elements, comments, 
  * processing instructions, CDATA sections, and entity references) 
@@ -1152,8 +1171,8 @@ javacall_dom_node_normalize_finish(javacall_handle handle,
                                    void *context);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * tests whether the DOM implementation implements a specific feature and 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR tests whether the DOM implementation implements a specific feature and 
  * that feature is supported by this node.
  * 
  * @param handle Pointer to the object representing this node.
@@ -1185,7 +1204,8 @@ javacall_dom_node_is_supported_start(javacall_handle handle,
                                      /* OUT */ javacall_bool* ret_value);
 
 /**
- * Tests whether the DOM implementation implements a specific feature and 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR tests whether the DOM implementation implements a specific feature and 
  * that feature is supported by this node.
  * 
  * @param handle Pointer to the object representing this node.
@@ -1214,8 +1234,8 @@ javacall_dom_node_is_supported_finish(javacall_handle handle,
                                       /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the namespace URI of this node, or <code>NULL</code> if it is 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the namespace URI of this node, or <code>NULL</code> if it is 
  * unspecified.
  * <br>This is not a computed value that is the result of a namespace 
  * lookup based on an examination of the namespace declarations in 
@@ -1256,7 +1276,8 @@ javacall_dom_node_get_namespace_uri_start(javacall_handle handle,
                                           /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the namespace URI of this node, or <code>NULL</code> if it is 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the namespace URI of this node, or <code>NULL</code> if it is 
  * unspecified.
  * <br>This is not a computed value that is the result of a namespace 
  * lookup based on an examination of the namespace declarations in 
@@ -1294,8 +1315,8 @@ javacall_dom_node_get_namespace_uri_finish(javacall_handle handle,
                                            /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the namespace prefix of this node, or <code>NULL</code> if it is 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the namespace prefix of this node, or <code>NULL</code> if it is 
  * unspecified. When it is defined to be <code>NULL</code>, setting it 
  * has no effect, including if the node is read-only.
  * <br>Note that setting this attribute, when permitted, changes the 
@@ -1341,7 +1362,8 @@ javacall_dom_node_get_prefix_start(javacall_handle handle,
                                    /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the namespace prefix of this node, or <code>NULL</code> if it is 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the namespace prefix of this node, or <code>NULL</code> if it is 
  * unspecified. When it is defined to be <code>NULL</code>, setting it 
  * has no effect, including if the node is read-only.
  * <br>Note that setting this attribute, when permitted, changes the 
@@ -1384,8 +1406,8 @@ javacall_dom_node_get_prefix_finish(javacall_handle handle,
                                     /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets the namespace prefix of this node, or <code>NULL</code> if it is 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the namespace prefix of this node, or <code>NULL</code> if it is 
  * unspecified. When it is defined to be <code>NULL</code>, setting it 
  * has no effect, including if the node is read-only. 
  * <i>Note: This means that the value of the prefix is not changed
@@ -1437,7 +1459,8 @@ javacall_dom_node_set_prefix_start(javacall_handle handle,
                                    /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets the namespace prefix of this node, or <code>NULL</code> if it is 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the namespace prefix of this node, or <code>NULL</code> if it is 
  * unspecified. When it is defined to be <code>NULL</code>, setting it 
  * has no effect, including if the node is read-only. 
  * <i>Note: This means that the value of the prefix is not changed
@@ -1486,8 +1509,8 @@ javacall_dom_node_set_prefix_finish(javacall_handle handle,
                                     /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the local part of the qualified name of this node.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the local part of the qualified name of this node.
  * <br>For nodes of any type other than <code>ELEMENT_NODE</code> and 
  * <code>ATTRIBUTE_NODE</code> and nodes created with a DOM Level 1 
  * method, such as <code>Document.createElement</code>, this is always
@@ -1520,7 +1543,8 @@ javacall_dom_node_get_local_name_start(javacall_handle handle,
                                        /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the local part of the qualified name of this node.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the local part of the qualified name of this node.
  * <br>For nodes of any type other than <code>ELEMENT_NODE</code> and 
  * <code>ATTRIBUTE_NODE</code> and nodes created with a DOM Level 1 
  * method, such as <code>Document.createElement</code>, this is always
@@ -1550,8 +1574,8 @@ javacall_dom_node_get_local_name_finish(javacall_handle handle,
                                         /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns whether this node (if it is an element) has any attributes.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns whether this node (if it is an element) has any attributes.
  * 
  * @param handle Pointer to the object representing this node.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -1573,7 +1597,8 @@ javacall_dom_node_has_attributes_start(javacall_handle handle,
                                        /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns whether this node (if it is an element) has any attributes.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns whether this node (if it is an element) has any attributes.
  * 
  * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
@@ -1592,8 +1617,8 @@ javacall_dom_node_has_attributes_finish(javacall_handle handle,
                                         /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * this attribute returns the text content of this node and its 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR this attribute returns the text content of this node and its 
  * descendants. When it is defined to be <code>NULL</code>, setting it 
  * has no effect. On setting, any possible children this node may have 
  * are removed and, if it the new string is not empty or 
@@ -1662,7 +1687,8 @@ javacall_dom_node_get_text_content_start(javacall_handle handle,
                                          /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * This attribute returns the text content of this node and its 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR this attribute returns the text content of this node and its 
  * descendants. When it is defined to be <code>NULL</code>, setting it 
  * has no effect. On setting, any possible children this node may have 
  * are removed and, if it the new string is not empty or 
@@ -1728,8 +1754,8 @@ javacall_dom_node_get_text_content_finish(javacall_handle handle,
                                           /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets this attribute returns the text content of this node and its 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets this attribute returns the text content of this node and its 
  * descendants. When it is defined to be <code>NULL</code>, setting it 
  * has no effect. On setting, any possible children this node may have 
  * are removed and, if it the new string is not empty or 
@@ -1790,7 +1816,8 @@ javacall_dom_node_set_text_content_start(javacall_handle handle,
                                          javacall_const_utf16_string text_content);
 
 /**
- * Sets this attribute returns the text content of this node and its 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets this attribute returns the text content of this node and its 
  * descendants. When it is defined to be <code>NULL</code>, setting it 
  * has no effect. On setting, any possible children this node may have 
  * are removed and, if it the new string is not empty or 
@@ -1848,8 +1875,8 @@ javacall_dom_node_set_text_content_finish(javacall_handle handle,
                                           javacall_const_utf16_string text_content);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  This method returns a specialized object which implements the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  This method returns a specialized object which implements the 
  * specialized APIs of the specified feature and version, as specified 
  * in <a href="http://www.w3.org/TR/DOM-Level-3-Core/core.html#DOMFeatures"> 
  * DOM Features</a>. The specialized object may also be obtained by using 
@@ -1896,7 +1923,8 @@ javacall_dom_node_get_feature_start(javacall_handle handle,
                                     /* OUT */ javacall_handle* ret_value);
 
 /**
- *  This method returns a specialized object which implements the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  This method returns a specialized object which implements the 
  * specialized APIs of the specified feature and version, as specified 
  * in <a href="http://www.w3.org/TR/DOM-Level-3-Core/core.html#DOMFeatures"> 
  * DOM Features</a>. The specialized object may also be obtained by using 
@@ -1940,8 +1968,8 @@ javacall_dom_node_get_feature_finish(javacall_handle handle,
                                      /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * this method allows the registration of event listeners on the event 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR this method allows the registration of event listeners on the event 
  * target. If an <code>EventListener</code> is added to an 
  * <code>EventTarget</code> while it is processing an event, it will not 
  * be triggered by the current actions but may be triggered during a 
@@ -1984,7 +2012,8 @@ javacall_dom_node_add_event_listener_start(javacall_handle handle,
                                            /* OUT */ javacall_int64* ret_value);
 
 /**
- * This method allows the registration of event listeners on the event 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR this method allows the registration of event listeners on the event 
  * target. If an <code>EventListener</code> is added to an 
  * <code>EventTarget</code> while it is processing an event, it will not 
  * be triggered by the current actions but may be triggered during a 
@@ -2024,8 +2053,8 @@ javacall_dom_node_add_event_listener_finish(javacall_handle handle,
                                             /* OUT */ javacall_int64* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * this method allows the removal of event listeners from the event 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR this method allows the removal of event listeners from the event 
  * target. If an <code>EventListener</code> is removed from an 
  * <code>EventTarget</code> while it is processing an event, it will not 
  * be triggered by the current actions. <code>EventListener</code>s can 
@@ -2061,7 +2090,8 @@ javacall_dom_node_remove_event_listener_start(javacall_handle handle,
                                               void **context);
 
 /**
- * This method allows the removal of event listeners from the event 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR this method allows the removal of event listeners from the event 
  * target. If an <code>EventListener</code> is removed from an 
  * <code>EventTarget</code> while it is processing an event, it will not 
  * be triggered by the current actions. <code>EventListener</code>s can 
@@ -2094,8 +2124,8 @@ javacall_dom_node_remove_event_listener_finish(javacall_handle handle,
                                                void *context);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  This method allows the dispatch of events into the implementation's 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  This method allows the dispatch of events into the implementation's 
  * event model. The event target of the event is the 
  * <code>EventTarget</code> object on which <code>dispatchEvent</code> 
  * is called. 
@@ -2140,7 +2170,8 @@ javacall_dom_node_dispatch_event_start(javacall_handle handle,
                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- *  This method allows the dispatch of events into the implementation's 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  This method allows the dispatch of events into the implementation's 
  * event model. The event target of the event is the 
  * <code>EventTarget</code> object on which <code>dispatchEvent</code> 
  * is called. 

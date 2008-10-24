@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * breaks this node into two nodes at the specified <code>offset</code>, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR breaks this node into two nodes at the specified <code>offset</code>, 
  * keeping both in the tree as siblings. After being split, this node 
  * will contain all the content up to the <code>offset</code> point. A 
  * new node of the same type, which contains all the content at and 
@@ -86,7 +86,8 @@ javacall_dom_text_split_text_start(javacall_handle handle,
                                    /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Breaks this node into two nodes at the specified <code>offset</code>, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR breaks this node into two nodes at the specified <code>offset</code>, 
  * keeping both in the tree as siblings. After being split, this node 
  * will contain all the content up to the <code>offset</code> point. A 
  * new node of the same type, which contains all the content at and 

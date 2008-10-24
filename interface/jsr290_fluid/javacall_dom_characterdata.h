@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the character data of the node that implements this interface. The DOM 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the character data of the node that implements this interface. The DOM 
  * implementation may not put arbitrary limits on the amount of data 
  * that may be stored in a <code>CharacterData</code> node. However, 
  * implementation limits may mean that the entirety of a node's data may 
@@ -83,7 +83,8 @@ javacall_dom_characterdata_get_data_start(javacall_handle handle,
                                           /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the character data of the node that implements this interface. The DOM 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the character data of the node that implements this interface. The DOM 
  * implementation may not put arbitrary limits on the amount of data 
  * that may be stored in a <code>CharacterData</code> node. However, 
  * implementation limits may mean that the entirety of a node's data may 
@@ -116,8 +117,8 @@ javacall_dom_characterdata_get_data_finish(javacall_handle handle,
                                            /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets the character data of the node that implements this interface. The DOM 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the character data of the node that implements this interface. The DOM 
  * implementation may not put arbitrary limits on the amount of data 
  * that may be stored in a <code>CharacterData</code> node. However, 
  * implementation limits may mean that the entirety of a node's data may 
@@ -151,7 +152,8 @@ javacall_dom_characterdata_set_data_start(javacall_handle handle,
                                           /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets the character data of the node that implements this interface. The DOM 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the character data of the node that implements this interface. The DOM 
  * implementation may not put arbitrary limits on the amount of data 
  * that may be stored in a <code>CharacterData</code> node. However, 
  * implementation limits may mean that the entirety of a node's data may 
@@ -182,8 +184,8 @@ javacall_dom_characterdata_set_data_finish(javacall_handle handle,
                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the number of 16-bit units that are available through <code>data</code> 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the number of 16-bit units that are available through <code>data</code> 
  * and the <code>substringData</code> method below. This may have the 
  * value zero, i.e., <code>CharacterData</code> nodes may be empty.
  * 
@@ -206,7 +208,8 @@ javacall_dom_characterdata_get_length_start(javacall_handle handle,
                                             /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns the number of 16-bit units that are available through <code>data</code> 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the number of 16-bit units that are available through <code>data</code> 
  * and the <code>substringData</code> method below. This may have the 
  * value zero, i.e., <code>CharacterData</code> nodes may be empty.
  * 
@@ -226,8 +229,8 @@ javacall_dom_characterdata_get_length_finish(javacall_handle handle,
                                              /* OUT */ javacall_int32* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * extracts a range of data from the node.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR extracts a range of data from the node.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
@@ -269,7 +272,8 @@ javacall_dom_characterdata_substring_data_start(javacall_handle handle,
                                                 /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Extracts a range of data from the node.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR extracts a range of data from the node.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
@@ -308,8 +312,8 @@ javacall_dom_characterdata_substring_data_finish(javacall_handle handle,
                                                  /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * append the string to the end of the character data of the node. Upon 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR append the string to the end of the character data of the node. Upon 
  * success, <code>data</code> provides access to the concatenation of 
  * <code>data</code> and the <code>DOMString</code> specified.
  * 
@@ -333,7 +337,8 @@ javacall_dom_characterdata_append_data_start(javacall_handle handle,
                                              javacall_const_utf16_string arg);
 
 /**
- * Append the string to the end of the character data of the node. Upon 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR append the string to the end of the character data of the node. Upon 
  * success, <code>data</code> provides access to the concatenation of 
  * <code>data</code> and the <code>DOMString</code> specified.
  * 
@@ -354,8 +359,8 @@ javacall_dom_characterdata_append_data_finish(javacall_handle handle,
                                               javacall_const_utf16_string arg);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * insert a string at the specified 16-bit unit offset.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR insert a string at the specified 16-bit unit offset.
  * 
  * @param handle Pointer to the object representing this characterdata.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -385,7 +390,8 @@ javacall_dom_characterdata_insert_data_start(javacall_handle handle,
                                              /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Insert a string at the specified 16-bit unit offset.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR insert a string at the specified 16-bit unit offset.
  * 
  * @param handle Pointer to the object representing this characterdata.
  * @param context The context saved during asynchronous operation.
@@ -412,8 +418,8 @@ javacall_dom_characterdata_insert_data_finish(javacall_handle handle,
                                               /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * remove a range of 16-bit units from the node. Upon success, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR remove a range of 16-bit units from the node. Upon success, 
  * <code>data</code> and <code>length</code> reflect the change.
  * 
  * @param handle Pointer to the object representing this characterdata.
@@ -447,7 +453,8 @@ javacall_dom_characterdata_delete_data_start(javacall_handle handle,
                                              /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Remove a range of 16-bit units from the node. Upon success, 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR remove a range of 16-bit units from the node. Upon success, 
  * <code>data</code> and <code>length</code> reflect the change.
  * 
  * @param handle Pointer to the object representing this characterdata.
@@ -478,8 +485,8 @@ javacall_dom_characterdata_delete_data_finish(javacall_handle handle,
                                               /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * replace the characters starting at the specified 16-bit unit offset 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR replace the characters starting at the specified 16-bit unit offset 
  * with the specified string.
  * 
  * @param handle Pointer to the object representing this characterdata.
@@ -518,7 +525,8 @@ javacall_dom_characterdata_replace_data_start(javacall_handle handle,
                                               /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Replace the characters starting at the specified 16-bit unit offset 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR replace the characters starting at the specified 16-bit unit offset 
  * with the specified string.
  * 
  * @param handle Pointer to the object representing this characterdata.

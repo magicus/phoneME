@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * test if the DOM implementation implements a specific feature.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR test if the DOM implementation implements a specific feature.
  * 
  * @param handle Pointer to the object representing this domimplementation.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -87,7 +87,8 @@ javacall_dom_domimplementation_has_feature_start(javacall_handle handle,
                                                  /* OUT */ javacall_bool* ret_value);
 
 /**
- * Test if the DOM implementation implements a specific feature.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR test if the DOM implementation implements a specific feature.
  * 
  * @param handle Pointer to the object representing this domimplementation.
  * @param context The context saved during asynchronous operation.
@@ -124,8 +125,8 @@ javacall_dom_domimplementation_has_feature_finish(javacall_handle handle,
                                                   /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * creates an empty <code>DocumentType</code> node. Entity declarations 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an empty <code>DocumentType</code> node. Entity declarations 
  * and notations are not made available. Entity reference expansions and 
  * default attribute additions do not occur. It is expected that a 
  * future version of the DOM will provide a way for populating a 
@@ -166,7 +167,8 @@ javacall_dom_domimplementation_create_document_type_start(javacall_handle handle
                                                           /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Creates an empty <code>DocumentType</code> node. Entity declarations 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an empty <code>DocumentType</code> node. Entity declarations 
  * and notations are not made available. Entity reference expansions and 
  * default attribute additions do not occur. It is expected that a 
  * future version of the DOM will provide a way for populating a 
@@ -204,8 +206,8 @@ javacall_dom_domimplementation_create_document_type_finish(javacall_handle handl
                                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * creates an XML <code>Document</code> object of the specified type with 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an XML <code>Document</code> object of the specified type with 
  * its document element. 
  * 
  * @param handle Pointer to the object representing this domimplementation.
@@ -247,7 +249,8 @@ javacall_dom_domimplementation_create_document_start(javacall_handle handle,
                                                      /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Creates an XML <code>Document</code> object of the specified type with 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR creates an XML <code>Document</code> object of the specified type with 
  * its document element. 
  * 
  * @param handle Pointer to the object representing this domimplementation.
@@ -286,8 +289,8 @@ javacall_dom_domimplementation_create_document_finish(javacall_handle handle,
                                                       /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  This method returns a specialized object which implements the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  This method returns a specialized object which implements the 
  * specialized APIs of the specified feature and version, as specified 
  * in <a href="http://www.w3.org/TR/DOM-Level-3-Core/core.html#DOMFeatures"
  * >DOM Features</a>. The specialized object may also be obtained by using 
@@ -337,7 +340,8 @@ javacall_dom_domimplementation_get_feature_start(javacall_handle handle,
                                                  /* OUT */ javacall_handle* ret_value);
 
 /**
- *  This method returns a specialized object which implements the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  This method returns a specialized object which implements the 
  * specialized APIs of the specified feature and version, as specified 
  * in <a href="http://www.w3.org/TR/DOM-Level-3-Core/core.html#DOMFeatures"
  * >DOM Features</a>. The specialized object may also be obtained by using 

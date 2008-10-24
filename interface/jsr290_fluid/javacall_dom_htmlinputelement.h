@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns when the <code>type</code> attribute of the element has the value 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns when the <code>type</code> attribute of the element has the value 
  * "radio" or "checkbox", this represents the current state of the form 
  * control, in an interactive user agent. Changes to this attribute 
  * change the state of the form control, but do not change the value of 
@@ -78,7 +78,8 @@ javacall_dom_htmlinputelement_get_checked_start(javacall_handle handle,
                                                 /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns when the <code>type</code> attribute of the element has the value 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns when the <code>type</code> attribute of the element has the value 
  * "radio" or "checkbox", this represents the current state of the form 
  * control, in an interactive user agent. Changes to this attribute 
  * change the state of the form control, but do not change the value of 
@@ -106,8 +107,8 @@ javacall_dom_htmlinputelement_get_checked_finish(javacall_handle handle,
                                                  /* OUT */ javacall_bool* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns when the <code>type</code> attribute of the element has the value 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns when the <code>type</code> attribute of the element has the value 
  * "text", "file" or "password", this represents the current contents of 
  * the corresponding form control, in an interactive user agent. 
  * Changing this attribute changes the contents of the form control, but 
@@ -138,7 +139,8 @@ javacall_dom_htmlinputelement_get_value_start(javacall_handle handle,
                                               /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns when the <code>type</code> attribute of the element has the value 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns when the <code>type</code> attribute of the element has the value 
  * "text", "file" or "password", this represents the current contents of 
  * the corresponding form control, in an interactive user agent. 
  * Changing this attribute changes the contents of the form control, but 
@@ -166,8 +168,8 @@ javacall_dom_htmlinputelement_get_value_finish(javacall_handle handle,
                                                /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * select the contents of the text area. For <code>INPUT</code> elements 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR select the contents of the text area. For <code>INPUT</code> elements 
  * whose <code>type</code> attribute has one of the following values: 
  * "text", "file", or "password".
  * 
@@ -188,7 +190,8 @@ javacall_dom_htmlinputelement_select_start(javacall_handle handle,
                                            void **context);
 
 /**
- * Select the contents of the text area. For <code>INPUT</code> elements 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR select the contents of the text area. For <code>INPUT</code> elements 
  * whose <code>type</code> attribute has one of the following values: 
  * "text", "file", or "password".
  * 
@@ -206,8 +209,8 @@ javacall_dom_htmlinputelement_select_finish(javacall_handle handle,
                                             void *context);
 
 /**
-  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets when the <code>type</code> attribute of the element has the value 
+  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets when the <code>type</code> attribute of the element has the value 
   * "radio" or "checkbox", this represents the current state of the form 
   * control, in an interactive user agent. Changes to this attribute 
   * change the state of the form control, but do not change the value of 
@@ -238,7 +241,8 @@ javacall_dom_htmlinputelement_set_checked_start(javacall_handle handle,
                                                 javacall_bool checked);
 
 /**
-  * Sets when the <code>type</code> attribute of the element has the value 
+  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets when the <code>type</code> attribute of the element has the value 
   * "radio" or "checkbox", this represents the current state of the form 
   * control, in an interactive user agent. Changes to this attribute 
   * change the state of the form control, but do not change the value of 
@@ -266,8 +270,8 @@ javacall_dom_htmlinputelement_set_checked_finish(javacall_handle handle,
                                                  javacall_bool checked);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * sets when the <code>type</code> attribute of the element has the value 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets when the <code>type</code> attribute of the element has the value 
  * "text", "file" or "password", this represents the current contents of 
  * the corresponding form control, in an interactive user agent. 
  * Changing this attribute changes the contents of the form control, but 
@@ -295,7 +299,8 @@ javacall_dom_htmlinputelement_set_value_start(javacall_handle handle,
                                               javacall_const_utf16_string value);
 
 /**
- * Sets when the <code>type</code> attribute of the element has the value 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets when the <code>type</code> attribute of the element has the value 
  * "text", "file" or "password", this represents the current contents of 
  * the corresponding form control, in an interactive user agent. 
  * Changing this attribute changes the contents of the form control, but 

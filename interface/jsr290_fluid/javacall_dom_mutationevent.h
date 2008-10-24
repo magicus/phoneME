@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>relatedNode</code> is used to identify a secondary node related 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>relatedNode</code> is used to identify a secondary node related 
  * to a mutation event. For example, if a mutation event is dispatched 
  * to a node indicating that its parent has changed, the 
  * <code>relatedNode</code> is the changed parent. If an event is 
@@ -74,7 +74,8 @@ javacall_dom_mutationevent_get_related_node_start(javacall_handle handle,
                                                   /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns  <code>relatedNode</code> is used to identify a secondary node related 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>relatedNode</code> is used to identify a secondary node related 
  * to a mutation event. For example, if a mutation event is dispatched 
  * to a node indicating that its parent has changed, the 
  * <code>relatedNode</code> is the changed parent. If an event is 
@@ -98,8 +99,8 @@ javacall_dom_mutationevent_get_related_node_finish(javacall_handle handle,
                                                    /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>prevValue</code> indicates the previous value of the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>prevValue</code> indicates the previous value of the 
  * <code>Attr</code> node in DOMAttrModified events, and of the 
  * <code>CharacterData</code> node in DOMCharDataModified events. 
  * 
@@ -124,7 +125,8 @@ javacall_dom_mutationevent_get_prev_value_start(javacall_handle handle,
                                                 /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns  <code>prevValue</code> indicates the previous value of the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>prevValue</code> indicates the previous value of the 
  * <code>Attr</code> node in DOMAttrModified events, and of the 
  * <code>CharacterData</code> node in DOMCharDataModified events. 
  * 
@@ -146,8 +148,8 @@ javacall_dom_mutationevent_get_prev_value_finish(javacall_handle handle,
                                                  /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>newValue</code> indicates the new value of the <code>Attr</code> 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>newValue</code> indicates the new value of the <code>Attr</code> 
  * node in DOMAttrModified events, and of the <code>CharacterData</code> 
  * node in DOMCharDataModified events. 
  * 
@@ -172,7 +174,8 @@ javacall_dom_mutationevent_get_new_value_start(javacall_handle handle,
                                                /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns  <code>newValue</code> indicates the new value of the <code>Attr</code> 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>newValue</code> indicates the new value of the <code>Attr</code> 
  * node in DOMAttrModified events, and of the <code>CharacterData</code> 
  * node in DOMCharDataModified events. 
  * 
@@ -194,8 +197,8 @@ javacall_dom_mutationevent_get_new_value_finish(javacall_handle handle,
                                                 /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>attrName</code> indicates the name of the changed 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>attrName</code> indicates the name of the changed 
  * <code>Attr</code> node in a DOMAttrModified event. 
  * 
  * @param handle Pointer to the object representing this mutationevent.
@@ -219,7 +222,8 @@ javacall_dom_mutationevent_get_attr_name_start(javacall_handle handle,
                                                /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns  <code>attrName</code> indicates the name of the changed 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>attrName</code> indicates the name of the changed 
  * <code>Attr</code> node in a DOMAttrModified event. 
  * 
  * @param handle Pointer to the object representing this mutationevent.
@@ -240,8 +244,8 @@ javacall_dom_mutationevent_get_attr_name_finish(javacall_handle handle,
                                                 /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns  <code>attrChange</code> indicates the type of change which triggered 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>attrChange</code> indicates the type of change which triggered 
  * the DOMAttrModified event. The values can be <code>MODIFICATION</code>
  * , <code>ADDITION</code>, or <code>REMOVAL</code>. 
  * 
@@ -263,7 +267,8 @@ javacall_dom_mutationevent_get_attr_change_start(javacall_handle handle,
                                                  /* OUT */ javacall_int16* ret_value);
 
 /**
- * Returns  <code>attrChange</code> indicates the type of change which triggered 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>attrChange</code> indicates the type of change which triggered 
  * the DOMAttrModified event. The values can be <code>MODIFICATION</code>
  * , <code>ADDITION</code>, or <code>REMOVAL</code>. 
  * 
@@ -282,8 +287,8 @@ javacall_dom_mutationevent_get_attr_change_finish(javacall_handle handle,
                                                   /* OUT */ javacall_int16* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  The <code>initMutationEvent</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initMutationEvent</code> method is used to initialize the 
  * value of a <code>MutationEvent</code> object and has the same 
  * behavior as <code>Event.initEvent()</code>. 
  * 
@@ -328,7 +333,8 @@ javacall_dom_mutationevent_init_mutation_event_start(javacall_handle handle,
                                                      javacall_int16 attr_change_arg);
 
 /**
- *  The <code>initMutationEvent</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initMutationEvent</code> method is used to initialize the 
  * value of a <code>MutationEvent</code> object and has the same 
  * behavior as <code>Event.initEvent()</code>. 
  * 
@@ -370,8 +376,8 @@ javacall_dom_mutationevent_init_mutation_event_finish(javacall_handle handle,
                                                       javacall_int16 attr_change_arg);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- *  The <code>initMutationEventNS</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initMutationEventNS</code> method is used to initialize the 
  * value of a <code>MutationEvent</code> object and has the same 
  * behavior as <code>Event.initEventNS()</code>. 
  * 
@@ -425,7 +431,8 @@ javacall_dom_mutationevent_init_mutation_event_ns_start(javacall_handle handle,
                                                         javacall_int16 attr_change_arg);
 
 /**
- *  The <code>initMutationEventNS</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initMutationEventNS</code> method is used to initialize the 
  * value of a <code>MutationEvent</code> object and has the same 
  * behavior as <code>Event.initEventNS()</code>. 
  * 

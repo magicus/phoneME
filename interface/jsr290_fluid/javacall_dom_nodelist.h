@@ -46,8 +46,8 @@ extern "C" {
  */
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the <code>index</code>th item in the collection. If 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the <code>index</code>th item in the collection. If 
  * <code>index</code> is greater than or equal to the number of nodes in 
  * the list, this returns <code>NULL</code>. The range of valid child
  *  node indices is 0 to <code>length-1</code> inclusive.
@@ -76,7 +76,8 @@ javacall_dom_nodelist_item_start(javacall_handle handle,
                                  /* OUT */ javacall_handle* ret_value);
 
 /**
- * Returns the <code>index</code>th item in the collection. If 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the <code>index</code>th item in the collection. If 
  * <code>index</code> is greater than or equal to the number of nodes in 
  * the list, this returns <code>NULL</code>. The range of valid child
  *  node indices is 0 to <code>length-1</code> inclusive.
@@ -102,8 +103,8 @@ javacall_dom_nodelist_item_finish(javacall_handle handle,
                                   /* OUT */ javacall_handle* ret_value);
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code OR
- * returns the number of nodes in the list. The range of valid child node indices 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the number of nodes in the list. The range of valid child node indices 
  * is 0 to <code>length-1</code> inclusive. 
  * 
  * @param handle Pointer to the object representing this nodelist.
@@ -125,7 +126,8 @@ javacall_dom_nodelist_get_length_start(javacall_handle handle,
                                        /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns the number of nodes in the list. The range of valid child node indices 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the number of nodes in the list. The range of valid child node indices 
  * is 0 to <code>length-1</code> inclusive. 
  * 
  * @param handle Pointer to the object representing this nodelist.
