@@ -266,6 +266,14 @@ jint* lfjport_get_display_device_ids(jint* n) {
 }
 
 
+/**
+ * Notify the display device state has been changed
+ */
+void lfjport_display_device_state_changed(int hardwareId, int state) {
+  (void)hardwareId;
+  (void)state;
+}
+
 #ifdef __cplusplus
 }
 #endif
