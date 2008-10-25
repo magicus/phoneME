@@ -429,7 +429,7 @@ class AppManagerPeer implements CommandListener {
 
                     appManagerUI.notifyMidletExited(si, midletClassName);
                     
-                    if (si.hasSingleMidlet()) {
+                    if (si.numberOfRunningMidlets() == 0) {
                         manager.notifySuiteExited(si, null);
                     }
 
