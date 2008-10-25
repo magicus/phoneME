@@ -32,6 +32,7 @@
 #include "javautil_string.h"
 #include "javacall_memory.h"
 #include "javacall_string.h"
+#include "javautil_unicode.h"
 
 /**
  * looks for first occurrence of <param>c</param> within <param>str</param>
@@ -279,7 +280,7 @@ javacall_utf16_string javautil_wcsdup(javacall_const_utf16_string src) {
     if (JAVACALL_OK != javautil_unicode_utf16_ulength (src, &length)) {
         length = 0;
     }
-    result = javacall_calloc((unsigned int)length + 1, sizeof(javacall_utf16));
+    result = javacall_malloc(((unsigned int)length + 1) * sizeof(javacall_utf16));
     memcpy(result, src, ((unsigned int)length + 1) * sizeof(javacall_utf16));
     return result;
 }
