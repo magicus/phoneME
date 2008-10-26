@@ -102,6 +102,18 @@ typedef enum {
     JAVACALL_LCD_SCREEN_EXTERNAL = 1601
 } javacall_lcd_screen_type;
 
+
+/**
+ * @enum javacall_lcd_screen_type
+ * @brief LCD screen type
+ */
+typedef enum {
+    /** Primary(usually internal) LCD type */
+    JAVACALL_LCD_DISPLAY_ENABLED = 2000,
+    JAVACALL_LCD_DISPLAY_DISABLED = 2001,
+    JAVACALL_LCD_DISPLAY_ABSENT = 2002
+} javacall_lcd_display_device_state;
+
 /**
  * The function javacall_lcd_init is called during Java VM startup, allowing the
  * platform to perform device specific initializations.
@@ -148,11 +160,7 @@ javacall_result javacall_lcd_finalize(void);
  * return the a pointer to the top-left pixel of the screen in the
  * corresponding mode.
  *
- * @param screenType can be any of the following types:
- *    - JAVACALL_LCD_SCREEN_PRIMARY :
- *      return primary screen size information
- *    - JAVACALL_LCD_SCREEN_EXTERNAL :
- *      return external screen size information if supported
+ * @param hardwareId unique id of hardware display
  * @param screenWidth output paramter to hold width of screen
  * @param screenHeight output paramter to hold height of screen
  * @param colorEncoding output paramenter to hold color encoding,
@@ -170,7 +178,7 @@ javacall_result javacall_lcd_finalize(void);
  *         ( screenWidth * screenHeight )
  *         or <code>NULL</code> in case of failure
  */
-javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
+javacall_pixel* javacall_lcd_get_screen(int hardwareId,
                                         int* screenWidth,
                                         int* screenHeight,
                                         javacall_lcd_color_encoding_type* colorEncoding);
@@ -184,22 +192,24 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
  * mode as well s the corresponding screen dimensions, after the screen mode has
  * changed.
  *
+ * @param hardwareId unique id of hardware display
  * @param useFullScreen if <code>JAVACALL_TRUE</code>, turn on full screen mode.
  *                      if <code>JAVACALL_FALSE</code>, use normal screen mode.
 
  * @retval JAVACALL_OK   success
  * @retval JAVACALL_FAIL failure
  */
-javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen);
+javacall_result javacall_lcd_set_full_screen_mode(int hardwareId, javacall_bool useFullScreen);
 
 /**
  * Checks screen mode status.
  *
+ * @param hardwareId unique id of hardware display
  * This function should return <code>JAVACALL_TRUE</code> if full screen
  * mode is turned on.  Otherwise it returns <code>JAVACALL_FALSE</code>
  *
  */
-javacall_bool javacall_lcd_get_full_screen_mode();
+javacall_bool javacall_lcd_get_full_screen_mode(int hardwareId);
 
 /**
  * The following function is used to flush the image from the Video RAM raster
@@ -207,10 +217,11 @@ javacall_bool javacall_lcd_get_full_screen_mode();
  * The function call should not be CPU time expensive, and should return
  * immediately. It should avoid memory bulk copying of the entire raster.
  *
+ * @param hardwareId unique id of hardware display
  * @retval JAVACALL_OK   success
  * @retval JAVACALL_FAIL fail
  */
-javacall_result javacall_lcd_flush(void);
+javacall_result javacall_lcd_flush(int hardwareId);
 
 /**
  * Flush the screen raster to the display.
@@ -219,23 +230,26 @@ javacall_result javacall_lcd_flush(void);
  * The following API uses partial flushing of the VRAM, thus may reduce the
  * runtime of the expensive flush operation.
  *
+ * @param hardwareId unique id of hardware display
  * @param ystart start vertical scan line to start from
  * @param yend last vertical scan line to refresh
  *
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_lcd_flush_partial(int ystart, int yend);
+javacall_result javacall_lcd_flush_partial(int hardwareId, int ystart, int yend);
 
 /**
-  * Reverse flag of rotation
-  */
-javacall_bool javacall_lcd_reverse_orientation(void);
+ * Reverse flag of rotation
+ * @param hardwareId unique id of hardware display
+ */
+javacall_bool javacall_lcd_reverse_orientation(int hardwareId);
 
 /**
-  * Get flag of rotation
-  */
-javacall_bool javacall_lcd_get_reverse_orientation(void);
+ * Get flag of rotation
+ * @param hardwareId unique id of hardware display
+ */
+javacall_bool javacall_lcd_get_reverse_orientation(int hardwareId);
 
 /**
  * checks the implementation supports native softbutton label.
@@ -261,20 +275,72 @@ javacall_result javacall_lcd_set_native_softbutton_label(const javacall_utf16* l
                                                          int len,
                                                          int index);
 /**
-  * Return width of screen
-  */
-int javacall_lcd_get_screen_width(void);
+ * Return width of screen
+ * @param hardwareId unique id of hardware display
+ */
+int javacall_lcd_get_screen_width(int hardwareId);
 
 /**
-  * Return height of screen
-  */
-int javacall_lcd_get_screen_height(void);
+ * Return height of screen
+ * @param hardwareId unique id of hardware display
+ */
+int javacall_lcd_get_screen_height(int hardwareId);
+
+/**
+ * get currently enabled hardware display id
+ */
+int javacall_lcd_get_current_hardwareId();
+
+/**
+ * Return display name
+ * @param hardwareId unique id of hardware display
+ */
+char* javacall_lcd_get_display_name(int hardwareId);
+
+
+
+/**
+ * Check if the display device is primary
+ * @param hardwareId unique id of hardware display
+ */
+javacall_bool javacall_lcd_is_display_primary(int hardwareId);
+
+/**
+ * Check if the display device is build-in
+ */
+javacall_bool javacall_lcd_is_display_buildin(int hardwareId);
+
+
+/**
+ * Check if the display device supports pointer events
+ */
+javacall_bool javacall_lcd_is_display_pen_supported(int hardwareId);
+
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+javacall_bool javacall_lcd_is_display_pen_motion_supported(int hardwareId);
+
+/**
+ * Get display device capabilities
+ */
+int javacall_lcd_get_display_capabilities(int hardwareId);
+
+int* javacall_lcd_get_display_device_ids(int* n);
+
 
 /**
  * The platform should invoke this function in platform context
  * to rotate the screen.
  */
-void javanotify_rotation(void);
+void javanotify_rotation(int hardwareId);
+
+/**
+ * The platform should invoke this function in platform context
+ * to notify display device state change 
+ */
+void javanotify_display_device_state_changed(int hardwareId, javacall_lcd_display_device_state state);
 
 /** @} */
 

@@ -82,10 +82,11 @@ javacall_result javacall_lcd_finalize(void){
  * @return pointer to video ram mapped memory region of size  
  *         ( LCDSGetScreenWidth() * LCDSGetScreenHeight() )  
  */
-javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
+  javacall_pixel* javacall_lcd_get_screen(int hardwareId,
                                         int* screenWidth,
                                         int* screenHeight,
                                         javacall_lcd_color_encoding_type* colorEncoding){
+    (void)hardwareId;
     *screenWidth   = 0;
     *screenHeight  = 0;
     *colorEncoding = JAVACALL_LCD_COLOR_RGB565;
@@ -101,7 +102,8 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_lcd_flush(void) {
+javacall_result javacall_lcd_flush(int hardwareId) {
+    (void)hardwareId;
     return JAVACALL_FAIL;
 }
     
@@ -121,7 +123,8 @@ javacall_result javacall_lcd_flush(void) {
  * @retval JAVACALL_OK   success
  * @retval JAVACALL_FAIL failure
  */
-javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
+javacall_result javacall_lcd_set_full_screen_mode(int hardwareId, javacall_bool useFullScreen) {
+    (void)hardwareId;
     return JAVACALL_FAIL;
 }
 
@@ -140,15 +143,18 @@ javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail 
  */
-javacall_result javacall_lcd_flush_partial(int ystart, int yend){
+javacall_result javacall_lcd_flush_partial(int hardwareId, int ystart, int yend){
+    (void)hardwareId;
     return JAVACALL_FAIL;
 }
     
-javacall_bool javacall_lcd_reverse_orientation() {
+javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
+    (void)hardwareId;
     return JAVACALL_FALSE;
 }
  
-javacall_bool javacall_lcd_get_reverse_orientation() {
+javacall_bool javacall_lcd_get_reverse_orientation(int hardwareId) {
+    (void)hardwareId;
     return JAVACALL_FALSE;
 }
 
@@ -179,13 +185,89 @@ javacall_result javacall_lcd_set_native_softbutton_label(const javacall_utf16* l
      return JAVACALL_FAIL;
 }
 
-int javacall_lcd_get_screen_width() {
+int javacall_lcd_get_screen_width(int hardwareId) {
+    (void)hardwareId;
     return 0;
 }
  
-int javacall_lcd_get_screen_height() {
+int javacall_lcd_get_screen_height(int hardwareId) {
+    (void)hardwareId;
     return 0;
 }
+
+/**
+ * get currently enabled hardware display id
+ */
+int javacall_lcd_get_current_hardwareId() {
+    return 0;  
+}
+
+
+/** 
+ * Get display device name by id
+ * @param hardwareId unique id of hardware screen
+ */
+char* javacall_lcd_get_display_name(int hardwareId) {
+  (void)hardwareId;
+  return NULL;
+}
+
+
+/**
+ * Check if the display device is primary
+ * @param hardwareId unique id of hardware screen
+ */
+javacall_bool javacall_lcd_is_display_primary(int hardwareId) {
+    (void)hardwareId;
+    return JAVACALL_TRUE;
+}
+
+/**
+ * Check if the display device is build-in
+ * @param hardwareId unique id of hardware screen
+ */
+javacall_bool javacall_lcd_is_display_buildin(int hardwareId) {
+    (void)hardwareId; 
+    return JAVACALL_TRUE;
+}
+
+/**
+ * Check if the display device supports pointer events
+ * @param hardwareId unique id of hardware screen
+ */
+javacall_bool javacall_lcd_is_display_pen_supported(int hardwareId) {
+    (void)hardwareId; 
+    return JAVACALL_TRUE;
+}
+
+/**
+ * Check if the display device supports pointer motion  events
+ * @param hardwareId unique id of hardware screen
+ */
+javacall_bool javacall_lcd_is_display_pen_motion_supported(int hardwareId){
+    (void)hardwareId; 
+    return JAVACALL_TRUE;
+}
+
+/**
+ * Get display device capabilities
+ * @param hardwareId unique id of hardware screen
+ */
+int javacall_lcd_get_display_capabilities(int hardwareId) {
+  return 0;
+}
+
+
+/**
+ * Get the list of screen ids
+ * @param return number of screens 
+ * @return the lit of ids 
+ */
+int* javacall_lcd_get_display_device_ids(int* n) {
+    return NULL;
+}
+
+
     
 #ifdef __cplusplus
 } //extern "C"
