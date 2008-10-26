@@ -163,55 +163,59 @@ extern "C" {
 #define AUTOTESTER_EVENT                53
 
 /**
+ * This event is sent when the display hardware state is changed.
+ */
+#define DISPLAY_DEVICE_STATE_CHANGED_EVENT  54
+
+/**
  * Notification sent by ODT agent indicating that it has installed a new
  * MIDlet suite.
  */
-#define MIDP_ODD_SUITE_INSTALLED_EVENT  54
+#define MIDP_ODD_SUITE_INSTALLED_EVENT  55
 
 /**
  * Notification sent by ODT agent indicating that it has removed
  * an installed MIDlet suite.
  */
-#define MIDP_ODD_SUITE_REMOVED_EVENT    55
+#define MIDP_ODD_SUITE_REMOVED_EVENT    56
 
 /**
  * Major ID for a request to restart a MIDlet event.
  */
-#define RESTART_MIDLET_EVENT            56
+#define RESTART_MIDLET_EVENT            57
 
 /**
  * This event is used for show or hide java virtual keyboard
  */
-#define VIRTUAL_KEYBOARD_EVENT          57
+#define VIRTUAL_KEYBOARD_EVENT          58
 
 /**
  * This event is sent by a native code to the Java installer to
  * enable or disable OCSP check.
  */
-#define NATIVE_ENABLE_OCSP_REQUEST      58
+#define NATIVE_ENABLE_OCSP_REQUEST      59
 
 /**
  * This event is sent by a native code to the Java installer to
  * check if OCSP is currently enabled.
  */
-#define NATIVE_CHECK_OCSP_ENABLED_REQUEST 59
+#define NATIVE_CHECK_OCSP_ENABLED_REQUEST 60
 
 /**
  * This event is sent by a native code to InstallerPeerMIDlet
  * to unblock the installer thread waiting for a user's answer.
  */
-#define NATIVE_UNBLOCK_INSTALLER        60
+#define NATIVE_UNBLOCK_INSTALLER        61
 
 /**
  * This event is used for change current locale
  */
-#define CHANGE_LOCALE_EVENT				61
-
+#define CHANGE_LOCALE_EVENT				62
 
 /**
  * JSR290 Fluid listener notification event
  */
-#define FLUID_LISTENER_EVENT            62
+#define FLUID_LISTENER_EVENT            63
 
 /** @} */
 

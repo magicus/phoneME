@@ -37,6 +37,12 @@
 #include <jvmconfig.h>
 #include <jvm.h>
 
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+#include <lcdlf_export.h>
+#endif /* ENABLE_MULTIPLE_DISPLAYS */
+
+
+
 #if ENABLE_ISOLATES
 // this is a work around for jvm.h that has wrong case for this prototype
 extern int JVM_CurrentIsolateId();
@@ -61,6 +67,10 @@ void midpStoreEventAndSignalAms(MidpEvent evt) {
  * @param evt The event to store
  */
 void midpStoreEventAndSignalForeground(MidpEvent evt) {
-    evt.DISPLAY = gForegroundDisplayId;
-    StoreMIDPEventInVmThread(evt, gForegroundIsolateId);
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+  evt.DISPLAY = gForegroundDisplayIds[lcdlf_get_current_hardwareId()];
+#else
+  evt.DISPLAY = gForegroundDisplayId;
+#endif // ENABLE_MULTIPLE_DISPLAYS
+  StoreMIDPEventInVmThread(evt, gForegroundIsolateId);
 }

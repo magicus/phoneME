@@ -97,7 +97,9 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEventListener.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironment.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/PhoneDial.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDevice.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayContainer.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDeviceContainer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventHandler.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ItemEventConsumer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventHandlerFactory.java \
@@ -180,4 +182,8 @@ endif
 # Define Jpp
 ifeq ($(USE_DIRECTDRAW), true)
   JPP_DEFS += -DENABLE_DIRECT_DRAW
+endif
+
+ifeq ($(USE_MULTIPLE_DISPLAYS), true)
+   JPP_DEFS     += -DENABLE_MULTIPLE_DISPLAYS
 endif

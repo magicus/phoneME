@@ -60,35 +60,35 @@ extern void jcapp_finalize();
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-extern void jcapp_refresh(int x, int y, int w, int h);
+extern void jcapp_refresh(int hardwareId, int x, int y, int w, int h);
 
 /**
  * set the screen mode either to fullscreen or normal.
  *
  * @param mode The screen mode
  */
-extern void jcapp_set_fullscreen_mode(jboolean mode);
+extern void jcapp_set_fullscreen_mode(int hardwareId, jboolean mode);
 
 /**
  * Change screen orientation flag
  */
-extern jboolean jcapp_reverse_orientation();
+extern jboolean jcapp_reverse_orientation(int hardwareId);
 
 /**
  * Get screen orientation flag
  */
-extern jboolean jcapp_get_reverse_orientation();
+extern jboolean jcapp_get_reverse_orientation(int hardwareId);
 
 
 /**
  * Return screen width
  */
-extern int jcapp_get_screen_width();
+extern int jcapp_get_screen_width(int hardwareId);
 
 /**
  *  Return screen height
  */
-extern int jcapp_get_screen_height();
+extern int jcapp_get_screen_height(int hardwareId);
 
 /**
  * Checks if soft button layer is supported
@@ -108,6 +108,45 @@ extern jboolean jcapp_is_native_softbutton_layer_supported();
 extern void jcapp_set_softbutton_label_on_native_layer (unsigned short *label,
                                                          int len,
                                                          int index);
+/**
+ * get currently enabled hardware display id
+ */
+extern int jcapp_get_current_hardwareId();
+
+/** 
+ * Get display device name by id
+ */
+extern char* jcapp_get_display_name(int hardwareId);
+
+/**
+ * Check if the display device is primary
+ */
+extern jboolean jcapp_is_display_primary(int hardwareId);
+
+/**
+ * Check if the display device is build-in
+ */
+extern jboolean jcapp_is_display_buildin(int hardwareId); 
+
+/**
+ * Check if the display device supports pointer events
+ */
+extern jboolean jcapp_is_display_pen_supported(int hardwareId);
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+extern jboolean jcapp_is_display_pen_motion_supported(int hardwareId);
+
+/**
+ * Get display device capabilities
+ */
+extern int jcapp_get_display_capabilities(int hardwareId); 
+
+extern jint* jcapp_get_display_device_ids(jint* n);
+
+extern void jcapp_display_device_state_changed(int hardwareId, int state)
+
 
 /**
  * A callback function to be called for notification of network

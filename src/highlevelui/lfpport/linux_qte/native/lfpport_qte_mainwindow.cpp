@@ -54,6 +54,10 @@
 #include "lfpport_qte_mscreen.h"
 #include "lfpport_qte_util.h"
 
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+#include <lcdlf_export.h>
+#endif /* ENABLE_MULTIPLE_DISPLAYS */
+
 #if (!defined(QT_NO_QWS_KEYBOARD) && defined(QT_KEYPAD_MODE))
 #include "lfpport_qte_inputmode.h"
 #include <qteapp_export.h>
@@ -208,7 +212,11 @@ PlatformMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
         
 #if ENABLE_MULTIPLE_ISOLATES
         evt.type = MIDLET_DESTROY_REQUEST_EVENT;
-        evt.DISPLAY = gForegroundDisplayId;
+#ifdef ENABLE_MULTIPLE_DISPLAYS  
+            evt.DISPLAY = gForegroundDisplayIds[lcdlf_get_current_hardwareId()];  
+#else  
+            evt.DISPLAY = gForegroundDisplayId;  
+#endif /* ENABLE_MULTIPLE_DISPLAYS */  
         evt.intParam1 = gForegroundIsolateId;
         midpStoreEventAndSignalAms(evt);
 #else

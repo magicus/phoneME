@@ -41,6 +41,9 @@
 #include <fbapp_export.h>
 #include <fbport_export.h>
 
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+#include <lcdlf_export.h>
+#endif /* ENABLE_MULTIPLE_DISPLAYS */
 
 /**
  * @file
@@ -104,7 +107,7 @@ void fbapp_init() {
 
     checkDeviceType();
     initScreenBuffer(
-        fbapp_get_screen_width(), fbapp_get_screen_height());
+        fbapp_get_screen_width(0), fbapp_get_screen_height(0));
     connectFrameBuffer();
 }
 
@@ -126,25 +129,27 @@ int fbapp_get_fb_device_type() {
 }
 
 /** Invert screen orientation flag */
-jboolean fbapp_reverse_orientation() {
+jboolean fbapp_reverse_orientation(int hardwareId) {
+    (void)hardwareId;
     reverse_orientation = !reverse_orientation;
     reverseScreenOrientation();
     return reverse_orientation;
 }
 
 /**Set full screen mode on/off */
-void fbapp_set_fullscreen_mode(int mode) {
+void fbapp_set_fullscreen_mode(int hardwareId, int mode) {
     if (isFullScreen != mode) {
         isFullScreen = mode;
         resizeScreenBuffer(
-            fbapp_get_screen_width(),
-            fbapp_get_screen_height());
+            fbapp_get_screen_width(hardwareId),
+            fbapp_get_screen_height(hardwareId));
         clearScreen();
     }
 }
 
 /** Return screen width */
-int fbapp_get_screen_width() {
+int fbapp_get_screen_width(int hardwareId) {
+    (void)hardwareId;
     if (reverse_orientation) {
         return (isFullScreen == 1) ?
             CHAM_FULLHEIGHT : CHAM_HEIGHT;
@@ -155,7 +160,8 @@ int fbapp_get_screen_width() {
 }
 
 /** Return screen height */
-int fbapp_get_screen_height() {
+int fbapp_get_screen_height(int hardwareId) {
+    (void)hardwareId;
     if (reverse_orientation) {
         return (isFullScreen == 1) ?
             CHAM_FULLWIDTH : CHAM_WIDTH;
@@ -166,24 +172,27 @@ int fbapp_get_screen_height() {
 }
 
 /** Return screen x */
-int fbapp_get_screen_x() {
+int fbapp_get_screen_x(int hardwareId) {
+    (void)hardwareId;
     return getScreenX(reverse_orientation);
 }
 
 /** Return screen x */
-int fbapp_get_screen_y() {
+int fbapp_get_screen_y(int hardwareId) {
+    (void)hardwareId;
     return getScreenY(reverse_orientation);
 }
 
 /** Return screen orientation flag */
-jboolean fbapp_get_reverse_orientation() {
+jboolean fbapp_get_reverse_orientation(int hardwareId) {
+    (void)hardwareId;
     return reverse_orientation;
 }
 
 /** Clip rectangle requested for refresh according to screen geometry */
-static void clipRect(int *x1, int *y1, int *x2, int *y2) {
-    int width = fbapp_get_screen_width();
-    int height = fbapp_get_screen_height();
+static void clipRect(int hardwareId, int *x1, int *y1, int *x2, int *y2) {
+    int width = fbapp_get_screen_width(hardwareId);
+    int height = fbapp_get_screen_height(hardwareId);
 
     if (*x1 < 0) { *x1 = 0; }
     if (*y1 < 0) { *y1 = 0; }
@@ -202,8 +211,8 @@ static void clipRect(int *x1, int *y1, int *x2, int *y2) {
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-void fbapp_refresh(int x1, int y1, int x2, int y2) {
-    clipRect(&x1, &y1, &x2, &y2);
+void fbapp_refresh(int hardwareId, int x1, int y1, int x2, int y2) {
+    clipRect(hardwareId, &x1, &y1, &x2, &y2);
     if (!reverse_orientation) {
         refreshScreenNormal(x1, y1, x2, y2);
     } else {
@@ -265,7 +274,12 @@ void fbapp_map_keycode_to_event(
         if (isPressed) {
             pNewSignal->waitingFor = AMS_SIGNAL;
             pNewMidpEvent->type = MIDLET_DESTROY_REQUEST_EVENT;
-            pNewMidpEvent->DISPLAY = gForegroundDisplayId;
+
+#ifdef ENABLE_MULTIPLE_DISPLAYS  
+            pNewMidpEvent->DISPLAY = gForegroundDisplayIds[lcdlf_get_current_hardwareId()];  
+#else  
+            pNewMidpEvent->DISPLAY = gForegroundDisplayId;  
+#endif /* ENABLE_MULTIPLE_DISPLAYS */  
             pNewMidpEvent->intParam1 = gForegroundIsolateId;
         } else {
             /* ignore it */
@@ -312,3 +326,70 @@ void fbapp_finalize() {
     clearScreen();
     finalizeFrameBuffer();
 }
+
+/** get currently enabled hardware display id */  
+int fbapp_get_current_hardwareId() {  
+    return 0;  
+}  
+  
+/** 
+ * Get display device name by id 
+ */  
+char * fbapp_get_display_name(int hardwareId) {  
+   (void)hardwareId;  
+   return 0;  
+}  
+  
+  
+/** 
+ * Check if the display device is primary 
+ */  
+jboolean fbapp_is_display_primary(int hardwareId) {  
+    (void)hardwareId;
+    return KNI_TRUE;
+
+}  
+  
+/** 
+ * Check if the display device is build-in 
+ */  
+jboolean fbapp_is_display_buildin(int hardwareId) {  
+  (void)hardwareId;  
+  return KNI_TRUE;
+}  
+  
+/** 
+ * Check if the display device supports pointer events 
+ */  
+jboolean fbapp_is_display_pen_supported(int hardwareId) {
+   (void)hardwareId;  
+    return KNI_TRUE;
+}  
+  
+/** 
+ * Check if the display device supports pointer motion  events 
+ */  
+jboolean fbapp_is_display_pen_motion_supported(int hardwareId) {  
+   (void)hardwareId;  
+    return KNI_TRUE;
+}  
+  
+/** 
+ * Get display device capabilities 
+ */  
+int fbapp_get_display_capabilities(int hardwareId) {  
+    (void)hardwareId;
+    return 255;
+}  
+  
+static jint display_device_ids[] = {0};
+  
+jint* fbapp_get_display_device_ids(jint* n) {  
+    *n = 1; 
+    return display_device_ids;
+}  
+  
+void fbapp_display_device_state_changed(int hardwareId, int state) {  
+    (void)hardwareId;
+    (void)state;
+}  

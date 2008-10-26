@@ -313,8 +313,8 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
         super.uCallInvalidate();
 
-        int new_width = Display.getScreenWidth0();
-        int new_height = Display.getScreenHeight0();
+        int new_width = currentDisplay.width; 
+        int new_height = currentDisplay.height; 
 
         // It could be that setCurrentItem() was called and we
         // have done an 'artificial' traversal. In this case, we

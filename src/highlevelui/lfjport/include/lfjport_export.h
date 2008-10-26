@@ -50,41 +50,41 @@ extern "C" {
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-void lfjport_refresh(int x, int y, int w, int h);
+void lfjport_refresh(int hardwareId, int x, int y, int w, int h);
 
 
 /**
  * Change screen orientation flag
  */
-jboolean lfjport_reverse_orientation();
+jboolean lfjport_reverse_orientation(int hardwareId);
 
 /**
  * Get screen orientation flag
  */
-jboolean lfjport_get_reverse_orientation();
+jboolean lfjport_get_reverse_orientation(int hardwareId);
 
 
 /**
  * Return screen width
  */
-int lfjport_get_screen_width();
+int lfjport_get_screen_width(int hardwareId);
 
 /**
  *  Return screen height
  */
-int lfjport_get_screen_height();
+int lfjport_get_screen_height(int hardwareId);
 
 /**
  * set the screen mode either to fullscreen or normal.
  *
  * @param mode The screen mode
  */
-void lfjport_set_fullscreen_mode(jboolean mode);
+void lfjport_set_fullscreen_mode(int hardwareId, jboolean mode);
 
 /**
  * Resets native resources when foreground is gained by a new display.
  */
-void lfjport_gained_foreground();
+void lfjport_gained_foreground(int hardwareId);
 
 /**
  * Initializes the window system.
@@ -111,7 +111,7 @@ void lfjport_ui_finalize();
  * @param h The height to be flushed
  * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
  */
-jboolean lfjport_direct_flush(const java_graphics *g, 
+jboolean lfjport_direct_flush(int hardwareId, const java_graphics *g, 
 		  	      const java_imagedata *offscreen_buffer, int h);
 
 /**
@@ -131,7 +131,51 @@ jboolean lfjport_is_native_softbutton_layer_supported();
 void lfjport_set_softbutton_label_on_native_layer (unsigned short *label, 
                                                  int len, 
                                                  int index);
+/**
+ * get currently enabled hardware display id
+ */
+int lfjport_get_current_hardwareId();
 
+/** 
+ * Get display device name by id
+ */
+char * lfjport_get_display_name(int hardwareId);
+
+
+/**
+ * Check if the display device is primary
+ */
+jboolean lfjport_is_display_primary(int hardwareId);
+
+/**
+ * Check if the display device is build-in
+ */
+jboolean lfjport_is_display_buildin(int hardwareId);
+
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean lfjport_is_display_pen_supported(int hardwareId);
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean lfjport_is_display_pen_motion_supported(int hardwareId);
+
+/**
+ * Get display device capabilities
+ */
+int lfjport_get_display_capabilities(int hardwareId);
+
+/**
+ * Get the list of display device ids
+ */
+jint* lfjport_get_display_device_ids(jint* n);
+
+/**
+ * Notify the display device state has been changed
+ */
+void lfjport_display_device_state_changed(int hardwareId, int state);
 
 #ifdef __cplusplus
 }

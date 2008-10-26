@@ -41,8 +41,8 @@
 extern "C" {
 #endif
 
-/**
- * Add a native MIDP event to Java event queue of the AMS Isolate.
+
+/*Add a native MIDP event to Java event queue of the AMS Isolate.
  * This is done asynchronously.
  *
  * @param evt The event to store
@@ -68,8 +68,13 @@ void midpStoreEventAndSignalForeground(MidpEvent evt);
  * @return true if Display object with <code>displayId</code> has 
  *         foreground, false - otherwise.
  */
-#define midpHasForeground(displayId) (displayId == gForegroundDisplayId)
 
+
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+#define midpHasForeground(displayId) (isForegroundDisplay(displayId))
+#else
+#define midpHasForeground(displayId) (displayId == gForegroundDisplayId)
+#endif /* ENABLE_MULTIPLE_DISPLAYS */
 #ifdef __cplusplus
 }
 #endif

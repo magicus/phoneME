@@ -875,8 +875,8 @@ abstract class ItemLFImpl implements ItemLF {
 	    // To make sure that happens we do the following check.
 	    // That check must be removed if FormLFImpl supports
 	    // dynamic change of the width available for layout.
-	    if (ownerLFImpl.width == Display.WIDTH &&
-		minimumHeight > Display.HEIGHT) {
+	    if (ownerLFImpl.width == ownerLFImpl.currentDisplay.width &&
+		minimumHeight > ownerLFImpl.currentDisplay.height) {
 	    
 		ownerLFImpl.width -= Constants.VERT_SCROLLBAR_WIDTH;
 	    }

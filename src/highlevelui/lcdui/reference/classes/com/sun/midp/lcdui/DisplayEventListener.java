@@ -36,6 +36,7 @@ import com.sun.midp.events.NativeEvent;
 
 import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.lcdui.DisplayContainer;
+import com.sun.midp.lcdui.DisplayDeviceContainer;
 import com.sun.midp.lcdui.DisplayEventConsumer;
 import com.sun.midp.lcdui.DisplayAccess;
 
@@ -50,7 +51,10 @@ public class DisplayEventListener implements EventListener {
     /** Active displays. */
     private DisplayContainer displayContainer;
     
-    /** Cached reference to the MIDP event queue. */
+     /** Display devices. */
+    private DisplayDeviceContainer displayDeviceContainer;
+ 
+   /** Cached reference to the MIDP event queue. */
     private EventQueue eventQueue;
 
     /**
@@ -61,10 +65,12 @@ public class DisplayEventListener implements EventListener {
      */
     public DisplayEventListener(
         EventQueue theEventQueue, 
-        DisplayContainer theDisplayContainer) {
-        
+        DisplayContainer theDisplayContainer,
+        DisplayDeviceContainer theDisplayDeviceContainer) {
+
         eventQueue = theEventQueue;
         displayContainer = theDisplayContainer;
+        displayDeviceContainer = theDisplayDeviceContainer;
 
         /*
          * All events handled by this object are of NativeEventClass
@@ -78,6 +84,7 @@ public class DisplayEventListener implements EventListener {
         eventQueue.registerEventListener(EventTypes.COMMAND_EVENT, this);
         eventQueue.registerEventListener(EventTypes.PEER_CHANGED_EVENT, this);
         eventQueue.registerEventListener(EventTypes.ROTATION_EVENT,this);
+        eventQueue.registerEventListener(EventTypes.DISPLAY_DEVICE_STATE_CHANGED_EVENT,this);
         eventQueue.registerEventListener(EventTypes.VIRTUAL_KEYBOARD_EVENT,this);
         eventQueue.registerEventListener(EventTypes.CHANGE_LOCALE_EVENT,this);
     }
@@ -119,6 +126,15 @@ public class DisplayEventListener implements EventListener {
         * Find DisplayEventConsumer instance by nativeEvent.intParam4
         * and (if not null) call DisplayEventConsumer methods ...
         */
+
+	if (event.getType() ==  EventTypes.DISPLAY_DEVICE_STATE_CHANGED_EVENT) {
+	    displayDeviceContainer.getDisplayDeviceById(nativeEvent.intParam1).setState(nativeEvent.intParam2);
+	    DisplayAccess das[] =  displayContainer.findDisplaysByHardwareId(nativeEvent.intParam1);
+	    for (int i = das.length; --i >= 0;) {
+		    das[i].getDisplayEventConsumer().handleDisplayDeviceStateChangedEvent(nativeEvent.intParam2);
+	    }
+	    return;
+	}
         DisplayEventConsumer dc =
                 displayContainer.findDisplayEventConsumer(nativeEvent.intParam4);
 

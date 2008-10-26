@@ -368,7 +368,8 @@ public class MenuLayer extends ScrollablePopupLayer {
      * Aligns the menu to the current screen.
      */ 
     protected void alignMenu() {
-        
+	if (owner == null) 
+	    return;
         bounds[W] = MenuSkin.WIDTH;
 
         switch (MenuSkin.ALIGN_X) {
@@ -376,26 +377,26 @@ public class MenuLayer extends ScrollablePopupLayer {
                 bounds[X] = 0;
                 break;
             case Graphics.HCENTER:
-                bounds[X] = (ScreenSkin.WIDTH - bounds[W]) / 2;
-                break;
+		bounds[X] = (owner.bounds[W] - bounds[W]) / 2;
+		break;
             case Graphics.RIGHT:
             default:
-                bounds[X] = ScreenSkin.WIDTH - bounds[W];
-                break;
+		bounds[X] = owner.bounds[W] - bounds[W];
+		break;
         }
         switch (MenuSkin.ALIGN_Y) {
             case Graphics.TOP:
                 bounds[Y] = 0;
                 break;
             case Graphics.VCENTER:
-                bounds[Y] = (ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                    bounds[H]) / 2;
-                break;
+		bounds[Y] = (owner.bounds[H] - SoftButtonSkin.HEIGHT -
+				 bounds[H]) / 2;
+		break;
             case Graphics.BOTTOM:
             default:
-                bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
+                bounds[Y] = owner.bounds[H] - SoftButtonSkin.HEIGHT -
                     bounds[H];
-                break;
+		break;
         }
     }
     /**
@@ -522,13 +523,15 @@ public class MenuLayer extends ScrollablePopupLayer {
         boolean ret = false;
         if (menuCmds[index] instanceof SubMenuCommand) {
             SubMenuCommand subMenu = (SubMenuCommand)menuCmds[index];
+
+            owner.addLayer(cascadeMenu);
             cascadeMenu.setMenuCommands(subMenu.getSubCommands(), this);
             cascadeMenu.setAnchorPoint(bounds[X],
                                        bounds[Y] + MenuSkin.ITEM_TOPOFFSET + 
                                        ((index - scrollIndex) *
                                         MenuSkin.ITEM_HEIGHT));
             cascadeMenuUp = true;
-            owner.addLayer(cascadeMenu);
+            cascadeMenu.requestRepaint();
             setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
             // IMPL_NOTE: fix layer inrteraction in removeLayer
             btnLayer.requestRepaint();

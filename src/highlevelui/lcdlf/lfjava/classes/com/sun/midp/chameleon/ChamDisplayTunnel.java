@@ -98,6 +98,18 @@ public interface ChamDisplayTunnel {
     public void updateScrollIndicator();
 
     /**
+     * Called to get current display width.
+     * @return Display width.
+     */
+    public int getDisplayWidth();
+	
+    /**
+     * Called to get current display height.
+     * @return Display height.
+     */
+    public int getDisplayHeight();
+
+    /**
      * This method is used by Chameleon to invoke
      * CanvasLFImpl.uCallKeyPressed() method.
      *

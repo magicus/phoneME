@@ -46,6 +46,10 @@ extern "C" {
 #include <midpEventUtil.h>
 }
 
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+#include <lcdlf_export.h>
+#endif /* ENABLE_MULTIPLE_DISPLAYS */
+
 #include <qteapp_key.h>
 #include "lfjport_qte_mainwindow.h"
 #include "lfjport_qte_mscreen.h"
@@ -119,7 +123,11 @@ bool ChameleonMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
 
 #if ENABLE_MULTIPLE_ISOLATES
         evt.type = MIDLET_DESTROY_REQUEST_EVENT;
-        evt.DISPLAY = gForegroundDisplayId;
+#ifdef ENABLE_MULTIPLE_DISPLAYS  
+            evt.DISPLAY = gForegroundDisplayIds[lcdlf_get_current_hardwareId()];  
+#else  
+            evt.DISPLAY = gForegroundDisplayId;  
+#endif /* ENABLE_MULTIPLE_DISPLAYS */  
         evt.intParam1 = gForegroundIsolateId;
         midpStoreEventAndSignalAms(evt);
 #else

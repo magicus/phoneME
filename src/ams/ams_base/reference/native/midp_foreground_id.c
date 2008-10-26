@@ -29,5 +29,25 @@
 /** Isolate ID of current foreground MIDlet. */
 int gForegroundIsolateId = 0;
 
-/** Display ID of current foreground MIDlet. */
+#ifdef ENABLE_MULTIPLE_DISPLAYS
+
+/** Foreground display IDs of current foreground MIDlet. */
+int *gForegroundDisplayIds;
+int maxDisplays = 2; /* Should be equal to number of the hardware displays */
+
+
+int isForegroundDisplay(int displayId) {
+  int ret = 0;
+  int i;
+  for (i = 0; i < maxDisplays; i++) {
+    if (gForegroundDisplayIds[i] == displayId) {
+      ret = 1;
+      break;
+    }
+  }
+  return ret;
+}
+#else
+/** Foreground display ID of current foreground MIDlet. */
 int gForegroundDisplayId = 0;
+#endif /* ENABLE_MULTIPLE_DISPLAYS */

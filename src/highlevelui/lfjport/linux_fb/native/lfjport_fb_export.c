@@ -69,41 +69,41 @@ void lfjport_ui_finalize() {
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-void lfjport_refresh(int x1, int y1, int x2, int y2)
+void lfjport_refresh(int hardwareId, int x1, int y1, int x2, int y2)
 {
-  fbapp_refresh(x1, y1, x2, y2);
+  fbapp_refresh(hardwareId, x1, y1, x2, y2);
 }
 
 /**
  * Bridge function to change screen orientation flag
  */
-jboolean lfjport_reverse_orientation()
+jboolean lfjport_reverse_orientation(int hardwareId)
 {
-    return fbapp_reverse_orientation();
+    return fbapp_reverse_orientation(hardwareId);
 }
 
 /**
  * Bridge function to get screen orientation flag
  */
-jboolean lfjport_get_reverse_orientation()
+jboolean lfjport_get_reverse_orientation(int hardwareId)
 {
-    return fbapp_get_reverse_orientation();
+    return fbapp_get_reverse_orientation(hardwareId);
 }
 
 /**
  * Bridge function to return screen width
  */
-int lfjport_get_screen_width()
+int lfjport_get_screen_width(int hardwareId)
 {
-    return fbapp_get_screen_width();
+    return fbapp_get_screen_width(hardwareId);
 }
 
 /**
  *  Bridge function to return screen height
  */
-int lfjport_get_screen_height()
+int lfjport_get_screen_height(int hardwareId)
 {
-    return fbapp_get_screen_height();
+    return fbapp_get_screen_height(hardwareId);
 }
 
 
@@ -133,8 +133,8 @@ int lfjport_set_vertical_scroll(
  * @param mode true for full screen mode
  *             false for normal
  */
-void lfjport_set_fullscreen_mode(jboolean mode) {
-    fbapp_set_fullscreen_mode(mode ? 1 : 0);
+void lfjport_set_fullscreen_mode(int hardwareId, jboolean mode) {
+    fbapp_set_fullscreen_mode(hardwareId, mode ? 1 : 0);
     inFullScreenMode = mode;
 }
 
@@ -143,13 +143,14 @@ void lfjport_set_fullscreen_mode(jboolean mode) {
  * status.
  */
 jboolean lfjport_is_fullscreen_mode() {
-  return inFullScreenMode;
+  return inFullScreenMode; // impl_note: implment for multiple displays
 }
 
 /**
  * Resets native resources when foreground is gained by a new display.
  */
-void lfjport_gained_foreground() {
+void lfjport_gained_foreground(int hardwareId) {
+  (void) hardwareId;
   REPORT_CALL_TRACE(LC_HIGHUI, "LF:STUB:gainedForeground()\n");
 }
 
@@ -165,8 +166,9 @@ void lfjport_gained_foreground() {
  * @param h The height to be flushed
  * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
  */
-jboolean lfjport_direct_flush(const java_graphics *g, 
+jboolean lfjport_direct_flush(int hardwareId, const java_graphics *g, 
 		  	      const java_imagedata *offscreen_buffer, int h) {
+  (void)hardwareId;
   (void)g; 
   (void)offscreen_buffer;
   (void)h;
@@ -195,6 +197,63 @@ void lfjport_set_softbutton_label_on_native_layer (unsigned short *label,
     (void)len;
     (void)index;
     // Not implemented
+}
+
+/** 
+ * Get display device name by id
+ */
+char * lfjport_get_display_name(int hardwareId) {
+    return fbapp_get_display_name(hardwareId);
+}
+
+/**
+ * get currently enabled hardware display id
+ */
+int lfjport_get_current_hardwareId() {
+    return  fbapp_get_current_hardwareId();
+}
+
+/**
+ * Check if the display device is primary
+ */
+jboolean lfjport_is_display_primary(int hardwareId) {
+  return fbapp_is_display_primary(hardwareId);
+}
+
+/**
+ * Check if the display device is build-in
+ */
+jboolean lfjport_is_display_buildin(int hardwareId) {
+  return fbapp_is_display_buildin(hardwareId);
+}
+
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean lfjport_is_display_pen_supported(int hardwareId) {
+  return fbapp_is_display_pen_supported(hardwareId);
+}
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean lfjport_is_display_pen_motion_supported(int hardwareId) {
+  return fbapp_is_display_pen_motion_supported(hardwareId);
+}
+
+/**
+ * Get display device capabilities
+ */
+int lfjport_get_display_capabilities(int hardwareId) {
+  return fbapp_get_display_capabilities(hardwareId);
+}
+
+jint* lfjport_get_display_device_ids(jint* n) {
+  return fbapp_get_display_device_ids(n);
+}
+
+void lfjport_display_device_state_changed(int hardwareId, int state) {
+  fbapp_display_device_state_changed(hardwareId, state);
 }
 
 #ifdef __cplusplus
