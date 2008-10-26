@@ -26,7 +26,8 @@
 #ifndef __JAVACALL_MEMORY_H_
 #define __JAVACALL_MEMORY_H_
 
-#undef JAVACALL_MEMINFO
+#undef JAVACALL_MEMINFO 
+
 /**
  * @file javacall_memory.h
  * @ingroup Memory
@@ -36,11 +37,14 @@
 //defines strcpy, __FILE__, __LINE__
 #include "javacall_os_specific.h"
 
+#ifdef JAVACALL_MEMINFO
+#include "javacall_meminfo.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
     
-#define JAVACALL_MEMINFO 1    
 
 /** 
  * @defgroup Memory Memory API
