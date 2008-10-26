@@ -188,6 +188,8 @@ runMidlet(int argc, char** commandlineArgs) {
     /* get midp application directory, set it */
     appDir = getApplicationDir(argv[0]);
     if (appDir == NULL) {
+		REPORT_ERROR(LC_AMS, "Failed to recieve midp application directory");
+        fprintf(stderr, "Failed to recieve midp application directory\n");
         return -1;
     }
 
@@ -196,6 +198,8 @@ runMidlet(int argc, char** commandlineArgs) {
     /* get midp configuration directory, set it */
     confDir = getConfigurationDir(argv[0]);
     if (confDir == NULL) {
+		REPORT_ERROR(LC_AMS, "Failed to recieve midp configuration directory");
+        fprintf(stderr, "Failed to recieve midp configuration directory\n");
         return -1;
     }
     
