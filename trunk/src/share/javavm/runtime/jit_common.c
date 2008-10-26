@@ -1075,6 +1075,7 @@ new_mb:
 
 	    if ((int)ret >= 0) {
 		topOfStack += (int)ret;
+		DECACHE_TOS(); 
 		CVMassert(frame == stack->currentFrame); (void)stack;
 		goto returnToCompiled;
 	    } else if (ret == CNI_NEW_TRANSITION_FRAME) {
