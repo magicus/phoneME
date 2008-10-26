@@ -372,7 +372,7 @@ public class APDUManager {
                 throw new ConnectionNotFoundException("Null implementation: " +
                         "J2ME device does not have the smart card slot");
             } else {                
-                throw e;
+                throw new IOException("Config error: " + e.getMessage());
             }
         }
     }
