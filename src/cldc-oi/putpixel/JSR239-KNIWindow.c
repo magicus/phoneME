@@ -144,8 +144,11 @@ JSR239_putWindowContents(jobject graphicsHandle,
         gxj_screen_buffer* gimg;
 
         // Obtain the dimensions of the destination.
-        jint dest_width = lcdlf_get_screen_width(lcdlf_get_current_hardwareId());
-        jint dest_height = lcdlf_get_screen_height(lcdlf_get_current_hardwareId());
+        // Revisit: multiple displays support. Obtain Id of display render surfane is
+        // bound to. Consider recalculations when display got changed.
+        int displayId = lcdlf_get_current_hardwareId();
+        jint dest_width = lcdlf_get_screen_width(displayId);
+        jint dest_height = lcdlf_get_screen_height(displayId);
 
         jint min_height = 0;
         

@@ -1235,6 +1235,8 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1putWindowContents() {
 */
 KNIEXPORT KNI_RETURNTYPE_INT
 Java_javax_microedition_khronos_egl_EGL10Impl__1getFullDisplayWidth() {
+    /* Revisit: multiple displays support. Obtain Id of display render surfane is
+       bound to. Consider recalculations when display got changed */
     KNI_ReturnInt(lcdlf_get_screen_width(lcdlf_get_current_hardwareId()));
 }
 
@@ -1243,6 +1245,8 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1getFullDisplayWidth() {
 */
 KNIEXPORT KNI_RETURNTYPE_INT
 Java_javax_microedition_khronos_egl_EGL10Impl__1getFullDisplayHeight() {
+    /* Revisit: multiple displays support. Obtain Id of display render surfane is
+       bound to. Consider recalculations when display got changed */
     KNI_ReturnInt(lcdlf_get_screen_height(lcdlf_get_current_hardwareId()));
 }
 
