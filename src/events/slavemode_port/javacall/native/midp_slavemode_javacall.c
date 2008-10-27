@@ -248,7 +248,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam2 = event->data.displayDeviceEvent.state;
         break;
     case MIDP_JC_EVENT_CHANGE_LOCALE:
-        pNewSignal->waitingFor = UI_SIGNAL:
+        pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = CHANGE_LOCALE_EVENT;
         break;
 
