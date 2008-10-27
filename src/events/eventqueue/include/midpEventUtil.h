@@ -70,7 +70,7 @@ void midpStoreEventAndSignalForeground(MidpEvent evt);
  */
 
 
-#ifdef ENABLE_MULTIPLE_DISPLAYS
+#if ENABLE_MULTIPLE_DISPLAYS
 #define midpHasForeground(displayId) (isForegroundDisplay(displayId))
 #else
 #define midpHasForeground(displayId) (displayId == gForegroundDisplayId)

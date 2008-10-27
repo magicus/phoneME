@@ -29,7 +29,7 @@
 /** Isolate ID of current foreground MIDlet. */
 int gForegroundIsolateId = 0;
 
-#ifdef ENABLE_MULTIPLE_DISPLAYS
+#if ENABLE_MULTIPLE_DISPLAYS
 
 /** Foreground display IDs of current foreground MIDlet. */
 int *gForegroundDisplayIds;

@@ -41,7 +41,7 @@
 #include <fbapp_export.h>
 #include <fbport_export.h>
 
-#ifdef ENABLE_MULTIPLE_DISPLAYS
+#if ENABLE_MULTIPLE_DISPLAYS
 #include <lcdlf_export.h>
 #endif /* ENABLE_MULTIPLE_DISPLAYS */
 
@@ -275,7 +275,7 @@ void fbapp_map_keycode_to_event(
             pNewSignal->waitingFor = AMS_SIGNAL;
             pNewMidpEvent->type = MIDLET_DESTROY_REQUEST_EVENT;
 
-#ifdef ENABLE_MULTIPLE_DISPLAYS  
+#if ENABLE_MULTIPLE_DISPLAYS  
             pNewMidpEvent->DISPLAY = gForegroundDisplayIds[lcdlf_get_current_hardwareId()];  
 #else  
             pNewMidpEvent->DISPLAY = gForegroundDisplayId;  

@@ -37,7 +37,7 @@
 #include <jvmconfig.h>
 #include <jvm.h>
 
-#ifdef ENABLE_MULTIPLE_DISPLAYS
+#if ENABLE_MULTIPLE_DISPLAYS
 #include <lcdlf_export.h>
 #endif /* ENABLE_MULTIPLE_DISPLAYS */
 
@@ -67,7 +67,7 @@ void midpStoreEventAndSignalAms(MidpEvent evt) {
  * @param evt The event to store
  */
 void midpStoreEventAndSignalForeground(MidpEvent evt) {
-#ifdef ENABLE_MULTIPLE_DISPLAYS
+#if ENABLE_MULTIPLE_DISPLAYS
   evt.DISPLAY = gForegroundDisplayIds[lcdlf_get_current_hardwareId()];
 #else
   evt.DISPLAY = gForegroundDisplayId;

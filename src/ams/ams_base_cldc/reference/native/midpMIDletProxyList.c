@@ -39,7 +39,7 @@
 
 /** Reset the MIDlet proxy list for the next run of the VM. */
 void midpMIDletProxyListReset() {
-#ifdef ENABLE_MULTIPLE_DISPLAYS
+#if ENABLE_MULTIPLE_DISPLAYS
     int sizeInBytes = maxDisplays * sizeof(int);
     gForegroundDisplayIds = midpMalloc(sizeInBytes);
     memset(gForegroundDisplayIds, 0, sizeInBytes);
@@ -57,7 +57,7 @@ void midpMIDletProxyListReset() {
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_main_MIDletProxyList_setForegroundInNativeState) {
-#ifdef ENABLE_MULTIPLE_DISPLAYS
+#if ENABLE_MULTIPLE_DISPLAYS
     int displayId = KNI_GetParameterAsInt(2);
     int i;
     for (i = 0; i < maxDisplays; i++) {
@@ -80,7 +80,7 @@ KNIDECL(com_sun_midp_main_MIDletProxyList_setForegroundInNativeState) {
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_main_MIDletProxyList_resetForegroundInNativeState) {
-#ifdef ENABLE_MULTIPLE_DISPLAYS
+#if ENABLE_MULTIPLE_DISPLAYS
   int i;  
   for (i = 0; i < maxDisplays; i++) {
     gForegroundDisplayIds[i] = -1;
