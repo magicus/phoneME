@@ -978,7 +978,7 @@ public:
   }
 };
 
-void ROMOptimizer::enable_precompile(char * pattern JVM_TRAPS) {
+void ROMOptimizer::enable_precompile(const char * pattern JVM_TRAPS) {
   PrecompileMatcher matcher(precompile_method_list());
   matcher.run(pattern JVM_NO_CHECK_AT_BOTTOM);
 }
