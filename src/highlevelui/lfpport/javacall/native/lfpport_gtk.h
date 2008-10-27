@@ -34,8 +34,10 @@
 #define _LFPPORT_GTK_H_
 
 
+#include <stdio.h>  //TODO@gd212247:  remove at release
+
 #ifndef __FUNCTION__
-#define __FUNCTION__
+#define __FUNCTION__ __FILE__
 #endif
 
 

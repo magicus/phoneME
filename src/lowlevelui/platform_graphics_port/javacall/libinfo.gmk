@@ -23,23 +23,7 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 #
-######################################################################
-#
-# Subsystem's Platform Configuration file
-#
-######################################################################
 
-JC_APP_COMMON_DIR=$(SUBSYSTEM_JAVACALL_APPLICATION_DIR)/javacall_app_common
-
-vpath % $(JC_APP_COMMON_DIR)/reference/native
-
-SUBSYSTEM_APP_NATIVE_FILES += \
-		javanotify_midp_jsr.c
-
-#TODO@gd212247:  Enable back support for java widgets configuration.
-#For example, using ifdef to enable compilation of this file.
-#    jcapp_export.c
-
-# highlevelui\subsystem.gmk requires to fill following variable
-SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(JC_APP_COMMON_DIR)/include
-
+LIB_STUBS_PLATFORM_GRAPHICS_PORT_DESCRIPTION=Javacall Platform Graphics Port Implementation
+LIB_STUBS_PLATFORM_GRAPHICS_PORT_VERSION=1.0
+LIB_STUBS_PLATFORM_GRAPHICS_PORT_DEPENDENCY=

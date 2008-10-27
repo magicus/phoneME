@@ -1,6 +1,5 @@
 #
 #
-#
 # Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
@@ -23,23 +22,26 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 #
-######################################################################
+
+############################################################
+# Module's Component PLATFORM Configuration file
 #
-# Subsystem's Platform Configuration file
+# Platform: stubs
+############################################################
+
+# vpath for sub-system
 #
-######################################################################
+vpath % $(SUBSYSTEM_DIR)/lowlevelui/platform_graphics_port/javacall
 
-JC_APP_COMMON_DIR=$(SUBSYSTEM_JAVACALL_APPLICATION_DIR)/javacall_app_common
+# Include path for the sub-system
+#
+SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_DIR)/lowlevelui/platform_graphics_port/include \
+    -I$(SUBSYSTEM_DIR)/lowlevelui/platform_graphics_port/javacall
 
-vpath % $(JC_APP_COMMON_DIR)/reference/native
-
-SUBSYSTEM_APP_NATIVE_FILES += \
-		javanotify_midp_jsr.c
-
-#TODO@gd212247:  Enable back support for java widgets configuration.
-#For example, using ifdef to enable compilation of this file.
-#    jcapp_export.c
-
-# highlevelui\subsystem.gmk requires to fill following variable
-SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(JC_APP_COMMON_DIR)/include
-
+# Native files for the sub-system
+#
+SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
+    gxpportst_graphics.c \
+    gxpportst_mutableimage.c \
+    gxpportst_immutableimage.c

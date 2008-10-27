@@ -28,64 +28,62 @@
  * @file
  * @ingroup highui_lfpport
  *
- * @brief Menu and soft-button porting functions and data structures.
+ * @brief ImageItem-specific porting functions and data structures.
  */
-#include <lfpport_component.h>
-#include <lfp_command.h>
+
+#include <lfpport_displayable.h>
+#include <lfpport_item.h>
+#include <lfpport_imageitem.h>
+
 #include "lfpport_gtk.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**********************
-  Menu functions
-**********************/
-
-
 /**
- * Called upon VM startup to allocate menu resource.
- */
-// void initMenus() {
-//     printf(">>>%s\n", __FUNCTION__);
-//     printf("<<<%s\n", __FUNCTION__);
-// }
-
-/**
- * Called upon VM exit to release menu resource.
- */
-// void finalizeMenus(){
-//     printf(">>>%s\n", __FUNCTION__);
-//     printf("<<<%s\n", __FUNCTION__);
-// }
-
-/**
- * Create native resources (like menu and/or soft buttons) to show
- * a set of commands.
+ * Creates an image item's native peer, but does not display it.
+ * When this function returns successfully, the fields in *itemPtr should
+ * be set.
  *
- * The resources should not be visible after the creation.
- * When this function returns successfully, *cmPtr should be populated.
+ * @param itemPtr pointer to the image item's MidpItem structure.
+ * @param ownerPtr pointer to the item's owner(form)'s MidpDisplayable
+ *                 structure.
+ * @param label the item label.
+ * @param layout the item layout directive.
+ * @param imgPtr pointer to the image used to create this item.
+ * @param altText alternative text to be displayed to the user in case of
+ *                an image not being displayed.
+ * @param appearanceMode appearance mode for the image
+ *                       item (eg. PLAIN/HYPERLINK).
  *
- * @param cmPtr pointer to the command manager's MidpFrame structure.
  * @return an indication of success or the reason for failure
  */
-MidpError cmdmanager_create(MidpFrame* cmPtr){
+MidpError lfpport_imageitem_create(MidpItem* itemPtr,
+				   MidpDisplayable* ownerPtr,
+				   const pcsl_string* label, int layout,
+				   unsigned char* imgPtr,
+				   const pcsl_string* altText, int appearanceMode){
     printf(">>>%s\n", __FUNCTION__);
     printf("<<<%s\n", __FUNCTION__);
     return -1;
 }
 
 /**
- * Update the contents of the given command manager.
+ * Notifies the native peer of a content change in the corresponding
+ * image item.
  *
- * @param cmPtr pointer to the MidpFrame structure.
- * @param cmds the array of commands the menu should contain
- * @param numCmds size of the array
+ * @param itemPtr pointer to the image item's MidpItem structure.
+ * @param imgPtr the new image
+ * @param altText the new alternative text
+ * @param appearanceMode the new appearance mode
  *
  * @return an indication of success or the reason for failure
  */
-MidpError cmdmanager_set_commands(MidpFrame* cmPtr,
-				  MidpCommand* cmds, int numCmds){
+MidpError lfpport_imageitem_set_content(MidpItem* itemPtr,
+					unsigned char* imgPtr,
+					const pcsl_string* altText,
+					int appearanceMode){
     printf(">>>%s\n", __FUNCTION__);
     printf("<<<%s\n", __FUNCTION__);
     return -1;
@@ -94,3 +92,4 @@ MidpError cmdmanager_set_commands(MidpFrame* cmPtr,
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
