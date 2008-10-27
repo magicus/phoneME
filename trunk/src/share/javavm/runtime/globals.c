@@ -1099,6 +1099,14 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     gs->measureGC = CVM_FALSE;
     gs->totalGCTime = CVMint2Long(0);
 
+#ifdef CVM_JIT
+    if (!CVMjitInit(ee, &gs->jit, options->jitAttributesStr)) {
+	CVMconsolePrintf("Cannot start VM "
+			 "(jit failed to initialize)\n");
+	return CVM_FALSE;
+    }
+#endif
+
     if (!CVMgcInitHeap(options)) {
 	goto out_of_memory;
     }
@@ -1174,11 +1182,6 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     }
 
 #ifdef CVM_JIT
-    if (!CVMjitInit(ee, &gs->jit, options->jitAttributesStr)) {
-	CVMconsolePrintf("Cannot start VM "
-			 "(jit failed to initialize)\n");
-	return CVM_FALSE;
-    }
     /* Initialize the invoker cost of all ROMized methods */
     CVMpreloaderInitInvokeCost();
 #endif
