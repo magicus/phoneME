@@ -98,9 +98,9 @@ jboolean JVMSPI_CheckExit(void);
  */
 void JVMSPI_DisplayUsage(char *message);
 
-char *JVMSPI_GetSystemProperty(char *property_name);
-void  JVMSPI_FreeSystemProperty(char *property_value);
-void  JVMSPI_SetSystemProperty(char *property_name, char *property_value);
+char *JVMSPI_GetSystemProperty(const char *property_name);
+void  JVMSPI_FreeSystemProperty(const char *property_value);
+void  JVMSPI_SetSystemProperty(const char *property_name, const char *property_value);
 
 #if ENABLE_JAVA_DEBUGGER
 void JVMSPI_DebuggerNotification(jboolean);
