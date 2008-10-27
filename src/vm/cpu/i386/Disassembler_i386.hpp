@@ -30,7 +30,7 @@ class DisassemblerEnv {
 private:
   CompiledMethod* _code;
   Oop             _oop;
-  const char*     _comment;  
+  char*           _comment;  
   char            _buffer[1024];
 
 public:
