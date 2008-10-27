@@ -25,6 +25,7 @@
  */
 
 package com.sun.midp.automation;
+import javax.microedition.lcdui.Image;
 
 /**
  * Entry point into Automation API, that is, one starts working
@@ -33,6 +34,9 @@ package com.sun.midp.automation;
  * and event factory class instances.
  */
 public abstract class Automation {
+    public static final int SCREENSHOT_FORMAT_RGB888 = 1;
+    public static final int SCREENSHOT_FORMAT_BMP = 2;
+
     /**
      * Gets instance of Automation class.
      *
@@ -185,4 +189,8 @@ public abstract class Automation {
      */
     public abstract void simulateDelayEvent(int msec) 
         throws IllegalArgumentException;
+
+    public abstract byte[] getScreenshot(int format);
+    public abstract int getScreenshotWidth();
+    public abstract int getScreenshotHeight();
 }

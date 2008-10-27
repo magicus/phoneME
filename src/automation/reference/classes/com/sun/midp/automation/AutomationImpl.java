@@ -26,6 +26,7 @@
 
 package com.sun.midp.automation;
 import com.sun.midp.events.*;
+import javax.microedition.lcdui.Image;
 
 /**
  * Implements Automation class abstract methods.
@@ -43,6 +44,8 @@ final class AutomationImpl extends Automation {
     /** index 0: foreground isolate id, index 1: foreground display id */
     private int[] foregroundIsolateAndDisplay;
     
+    private AutoScreenshotTaker screenshotTaker;
+
 
     /**
      * Gets instance of AutoSuiteStorage class.
@@ -316,6 +319,22 @@ final class AutomationImpl extends Automation {
         AutoEvent e =  eventFactory.createDelayEvent(msec);
         simulateEvents(e);        
     }
+
+    public Image getScreenshot() {
+        Image screen = null;
+
+        screenshotTaker.takeScreenshot();
+
+        int w = screenshotTaker.getScreenshotWidth();
+        int h = screenshotTaker.getScreenshotHeight();
+        int[] rgb = screenshotTaker.getScreenshotRGB();
+
+        if (rgb != null)  {
+            screen = Image.createRGBImage(rgb, w, h, false);
+        }
+
+        return screen;
+    }
     
     /**
      * Gets instance of Automation class.
@@ -353,5 +372,6 @@ final class AutomationImpl extends Automation {
         this.eventQueue = eventQueue;
         this.eventFactory = AutoEventFactoryImpl.getInstance();
         this.foregroundIsolateAndDisplay = new int[2];
+        this.screenshotTaker = new AutoScreenshotTaker();
     } 
 }
