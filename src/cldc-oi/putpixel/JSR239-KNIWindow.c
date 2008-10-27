@@ -144,8 +144,8 @@ JSR239_putWindowContents(jobject graphicsHandle,
         gxj_screen_buffer* gimg;
 
         // Obtain the dimensions of the destination.
-        jint dest_width = lcdlf_get_screen_width();
-        jint dest_height = lcdlf_get_screen_height();
+        jint dest_width = lcdlf_get_screen_width(lcdlf_get_current_hardwareId());
+        jint dest_height = lcdlf_get_screen_height(lcdlf_get_current_hardwareId());
 
         jint min_height = 0;
         

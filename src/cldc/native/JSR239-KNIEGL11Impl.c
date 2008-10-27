@@ -1235,7 +1235,7 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1putWindowContents() {
 */
 KNIEXPORT KNI_RETURNTYPE_INT
 Java_javax_microedition_khronos_egl_EGL10Impl__1getFullDisplayWidth() {
-    KNI_ReturnInt(lcdlf_get_screen_width());
+    KNI_ReturnInt(lcdlf_get_screen_width(lcdlf_get_current_hardwareId()));
 }
 
 /*  private native int _getFullDisplayHeight () ;
@@ -1243,7 +1243,7 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1getFullDisplayWidth() {
 */
 KNIEXPORT KNI_RETURNTYPE_INT
 Java_javax_microedition_khronos_egl_EGL10Impl__1getFullDisplayHeight() {
-    KNI_ReturnInt(lcdlf_get_screen_height());
+    KNI_ReturnInt(lcdlf_get_screen_height(lcdlf_get_current_hardwareId()));
 }
 
 /**
