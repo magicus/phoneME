@@ -55,9 +55,10 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
  * so they cannot be final 
  */
 /* Revisit: call native method to obtain screen dimensions */
+/* Revisit: consider support for multiple displays. Dimensions should be queried based on render surface
     private final int SCREEN_WIDTH  = ScreenSkin.WIDTH;   // nGetScreenWidth();
     private final int SCREEN_HEIGHT = ScreenSkin.HEIGHT;  // nGetScreenHeight();
-
+*/
     private final int DEFAULT_WIDTH  = 80;
     private final int DEFAULT_HEIGHT = 80;
 
@@ -647,8 +648,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             // Apply full screen dimensions and position settings
             dx = 0;
             dy = 0;
+            /*
+              Revisit: multiple display support
             dw = SCREEN_WIDTH;
             dh = SCREEN_HEIGHT;
+            */
         }
     };
 
@@ -704,10 +708,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             if (py + ph <= 0) {
                 return;
             }
-            if (px >= SCREEN_WIDTH) {
+            /* Revisit: multiple display support */
+            if (px >= dw/*SCREEN_WIDTH*/) {
                 return;
             }
-            if (py >= SCREEN_HEIGHT) {
+            if (py >= dh/*SCREEN_HEIGHT*/) {
                 return;
             }
             if (px < 0) {
@@ -718,11 +723,12 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
                 ph += py;
                 py = 0;
             }
-            if (px + pw > SCREEN_WIDTH) {
-                pw = SCREEN_WIDTH - px;
+            /* Revisit: multiple display support */
+            if (px + pw > dw/*SCREEN_WIDTH*/) {
+                pw = dw/*SCREEN_WIDTH*/ - px;
             }
-            if (py + ph > SCREEN_HEIGHT) {
-                ph = SCREEN_HEIGHT - py;
+            if (py + ph > dh/*SCREEN_HEIGHT*/) {
+                ph = dh/*SCREEN_HEIGHT*/ - py;
             }
 
             source.setVideoLocation(px, py, pw, ph);
