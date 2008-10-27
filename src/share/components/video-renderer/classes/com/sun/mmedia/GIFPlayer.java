@@ -1031,7 +1031,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
                 
                 if (imageData.length < idx + size) {
                     // increase image data buffer
-                    byte[] data = new byte[ idx + size ];
+                    byte[] data = new byte[ idx + ((size>1024)?size:1024) ];
                     System.arraycopy(imageData, 0, data, 0, idx);
                     imageData = data;
                 }
