@@ -150,12 +150,24 @@ CVMInt32 CVMfindAOTCodeCache()
          * Since mmap requires the address to be aligned at page
          * boundary when MAP_FIXED is used, so we need to use
          * 'addr-headersize' instead of 'addr'.
-         * The returned address is the same as 'addr-headersize'
-         * if mmap succeed when MAP_FIXED is used. 
          */
-	codeStart = mmap((void*)(addr-headersize), codeSize,
+        addr -= headersize;
+        /* This is to check if we can safely map at the same address
+         * that's specified in the AOT file.
+         */
+        codeStart = mmap((void*)addr, codeSize,
                          PROT_EXEC|PROT_READ,
-                         MAP_PRIVATE|MAP_FIXED, fd, 0);
+                         MAP_PRIVATE, fd, 0);
+	if (codeStart != (void*)addr) {
+	    if (codeStart != MAP_FAILED) {
+	        /* Failed to map the AOT code at the desired address. 
+                 * Unmap the file and set 'codeStart' to MAP_FAILED. */ 
+                CVMtraceJITStatus((
+                    "JS: Failed to map AOT code at 0x%x.\n", addr));
+                munmap(codeStart, codeSize);
+                codeStart = MAP_FAILED;
+	    }
+        }
 #else
         codeStart = mmap(0, codeSize,
                          PROT_EXEC|PROT_READ,
@@ -179,13 +191,15 @@ CVMInt32 CVMfindAOTCodeCache()
 
 notFound:
     {
+        int fd;
         void* alignedAddr;
         /* Couldn't found saved AOT code. Allocate the codecache
            for AOT compilation. */
-        alignedAddr = mmap(
-            0, jgs->codeCacheSize+headersize,
-            PROT_EXEC|PROT_READ|PROT_WRITE,
-	    MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
+        fd = open("/dev/zero", O_RDWR);
+        alignedAddr = mmap(0, jgs->codeCacheSize+headersize,
+                           PROT_EXEC|PROT_READ|PROT_WRITE,
+                           MAP_PRIVATE, fd, 0);
+        close(fd);
 
         jgs->codeCacheStart = alignedAddr + headersize;
         jgs->codeCacheAOTStart = 0;
