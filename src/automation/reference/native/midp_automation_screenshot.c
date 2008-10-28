@@ -27,9 +27,12 @@
 #include <jvmconfig.h>
 #include <kni.h>
 #include <jvm.h>
+#include <sni.h>
 #include <gxj_putpixel.h>
-
-#include <stdlib.h>
+#include <midpMalloc.h>
+#include <midpError.h>
+#include <string.h>
+#include <commonKNIMacros.h>
 
 static int gsScreenshotWidth;
 static int gsScreenshotHeight;
@@ -39,9 +42,29 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_takeScreenshot0) {
     int oldw = gsScreenshotWidth;
     int oldh = gsScreenshotHeight;
+    int sz;
     
     gsScreenshotWidth = gxj_system_screen_buffer.width;
     gsScreenshotHeight = gxj_system_screen_buffer.height;
+
+    if (oldw != gsScreenshotWidth || oldh != gsScreenshotHeight) {
+        if (gsScreenshotData != NULL) {
+            midpFree(gsScreenshotData);
+            gsScreenshotData = NULL;
+        }
+    }
+
+    sz = sizeof(gxj_pixel_type) * gsScreenshotWidth * gsScreenshotHeight;
+    if (gsScreenshotData == NULL) {
+        gsScreenshotData = (gxj_pixel_type*)midpMalloc(sz);
+        if (gsScreenshotData == NULL) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        }
+    }
+
+    if (gsScreenshotData != NULL) {
+        memcpy(gsScreenshotData, gxj_system_screen_buffer.pixelData, sz);
+    }
 
     KNI_ReturnVoid();
 }
@@ -58,13 +81,38 @@ KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_getScreenshotHeight0) {
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_getScreenshotRGB8880) {
+    int totalPixels;
+    int i;
+    jbyte* rgb888;
+    int rgb888Off;
+    jbyte r, g, b;
 
     KNI_StartHandles(1); 
-    KNI_DeclareHandle(objectHandle); 
+    KNI_DeclareHandle(returnArray); 
  
-    // Set the handle explicitly to NULL
-    KNI_ReleaseHandle(objectHandle); 
+    do {
+        totalPixels = gsScreenshotWidth * gsScreenshotHeight;
+
+        SNI_NewArray(SNI_BYTE_ARRAY, totalPixels * 3, returnArray);
+        if (KNI_IsNullHandle(returnArray)) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+            break;
+        }
+
+        rgb888 = JavaByteArray(returnArray); 
+        for (i = 0, rgb888Off = 0; i < totalPixels; ++i, rgb888Off += 3) {
+            gxj_pixel_type pixel = gsScreenshotData[i];
+            r = GXJ_GET_RED_FROM_PIXEL(pixel);
+            g = GXJ_GET_GREEN_FROM_PIXEL(pixel);
+            b = GXJ_GET_BLUE_FROM_PIXEL(pixel);
+
+            rgb888[rgb888Off] = r;
+            rgb888[rgb888Off + 1] = g;
+            rgb888[rgb888Off + 2] = b;
+        }
+        
+    } while (0);
  
     // Return the null reference to the calling Java method 
-    KNI_EndHandlesAndReturnObject(objectHandle); 
+    KNI_EndHandlesAndReturnObject(returnArray); 
 }

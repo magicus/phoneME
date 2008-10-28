@@ -34,7 +34,10 @@ import javax.microedition.lcdui.Image;
  * and event factory class instances.
  */
 public abstract class Automation {
+    /** Screenshot format: RGB888 */
     public static final int SCREENSHOT_FORMAT_RGB888 = 1;
+
+    /** Screenshot format: uncompressed Windows bitmap */ 
     public static final int SCREENSHOT_FORMAT_BMP = 2;
 
     /**
@@ -190,7 +193,26 @@ public abstract class Automation {
     public abstract void simulateDelayEvent(int msec) 
         throws IllegalArgumentException;
 
+    /**
+     * Gets screenshot in specified format.
+     * IMPL_NOTE: only implemented for putpixel based ports
+     *
+     * @param format screenshot format 
+     * @return screenshot data as byte array
+     */
     public abstract byte[] getScreenshot(int format);
+
+    /**
+     * Gets screenshot width.
+     *
+     * @return screenshot width
+     */
     public abstract int getScreenshotWidth();
+
+    /**
+     * Gets screenshot height.
+     *
+     * @return screenshot height
+     */
     public abstract int getScreenshotHeight();
 }

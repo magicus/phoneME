@@ -320,22 +320,45 @@ final class AutomationImpl extends Automation {
         simulateEvents(e);        
     }
 
-    public Image getScreenshot() {
-        Image screen = null;
+    /**
+     * Gets screenshot in specified format.
+     * IMPL_NOTE: only implemented for putpixel based ports
+     *
+     * @param format screenshot format 
+     * @return screenshot data as byte array
+     */   
+    public byte[] getScreenshot(int format) {
+        byte[] data = screenshotTaker.getScreenshotRGB888();
 
-        screenshotTaker.takeScreenshot();
-
-        int w = screenshotTaker.getScreenshotWidth();
-        int h = screenshotTaker.getScreenshotHeight();
-        int[] rgb = screenshotTaker.getScreenshotRGB();
-
-        if (rgb != null)  {
-            screen = Image.createRGBImage(rgb, w, h, false);
+        if (format == SCREENSHOT_FORMAT_BMP) {
+            int w = getScreenshotWidth();
+            int h = getScreenshotHeight();
+            BMPEncoder encoder = new BMPEncoder(data, w, h);
+            data = encoder.encode();
         }
 
-        return screen;
+        return data;
+    }
+
+    /**
+     * Gets screenshot width.
+     *
+     * @return screenshot width
+     */
+    public int getScreenshotWidth() {
+        return screenshotTaker.getScreenshotWidth();
+    }
+
+    /**
+     * Gets screenshot height.
+     *
+     * @return screenshot height
+     */
+    public int getScreenshotHeight() {
+        return screenshotTaker.getScreenshotHeight();
     }
     
+
     /**
      * Gets instance of Automation class.
      *

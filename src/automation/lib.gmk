@@ -116,7 +116,8 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoKeyEventFromArgsFactory.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoDelayEventFromArgsFactory.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoPenEventFromArgsFactory.java \
-	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoScreenshotTaker.java
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoScreenshotTaker.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/BMPEncoder.java
 
 vpath % $(SUBSYSTEM_AUTOMATION_DIR)/reference/native
 SUBSYSTEM_AUTOMATION_NATIVE_FILES += \
