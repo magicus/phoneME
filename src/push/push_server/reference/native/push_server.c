@@ -1664,7 +1664,7 @@ char *pushfindfd(int fd) {
                 REPORT_INFO1(LC_PROTOCOL,
                              "SIP Push Message: %s",
                              pushp->pCachedData->buffer);
-                /* restore state that will be processed separated at 
+                /* restore state that will be processed separately at 
                    pushApplySipFilter */
                 pushp->state = temp_state;
 
