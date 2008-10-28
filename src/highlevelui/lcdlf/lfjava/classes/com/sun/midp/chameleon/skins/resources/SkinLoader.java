@@ -15,11 +15,6 @@ public class SkinLoader {
     private static SkinResources skinResources = new SkinResourcesImpl();
 
     /**
-     * Display access helper class.
-     */
-    private static DisplayAccess displayAccess;
-
-    /**
      * This method is called by the Display class to hand out GraphicsAccess
      * tunnel instance created in the public javax.microedition.lcdui
      * package and needed for romized images loading.
@@ -28,38 +23,6 @@ public class SkinLoader {
      */
     public static void initGraphicsAccess(GraphicsAccess access) {
         skinResources.initGraphicsAccess(access);
-    }
-    /**
-     * This method is called by the Display class to initialize
-     * Display access tunnel class.
-     *
-     * @param access
-     */
-    public static void initDisplayAccess(DisplayAccess access) {
-        displayAccess = access;
-    }
-
-    /**
-     * Refresh skin after screen size is changed
-     */
-    public static void adjustScreen() {
-
-        setScreenSize(displayAccess.getDisplayWidth(),
-                      displayAccess.getDisplayHeight());
-        SoftButtonResources.load(true);
-        AlertResources.load(true);
-    }
-
-    /**
-     * This is method to be called before loadSkin to define the screen
-     * size while static initialization because no Display was created yet
-     * and there is no DisplayAccessor at that stage.
-     * @param width screen width
-     * @param height screen height
-     */
-    public static void setScreenSize(int width, int height) {
-        ScreenSkin.WIDTH = width;
-        ScreenSkin.HEIGHT = height;
     }
 
     /**

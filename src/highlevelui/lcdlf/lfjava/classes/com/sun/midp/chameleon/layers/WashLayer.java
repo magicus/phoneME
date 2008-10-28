@@ -51,7 +51,9 @@ public class WashLayer extends CLayer {
     
     protected void initialize() {
         super.initialize();
-        bounds[H] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT;        
+        if (owner != null) {
+            bounds[H] = owner.bounds[H] - SoftButtonSkin.HEIGHT;
+        }
     }
 
     /**
@@ -61,12 +63,13 @@ public class WashLayer extends CLayer {
      */
     public void update(CLayer[] layers) {
         super.update(layers);
-        bounds[W] = ScreenSkin.WIDTH;
-        if (layers[MIDPWindow.BTN_LAYER].isVisible()) {
-            bounds[H] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT;    
-        } else {
-            bounds[H] = ScreenSkin.HEIGHT;
-        }
+	if (owner != null) {
+	    bounds[W] = owner.bounds[W];
+	    bounds[H] = owner.bounds[H];
+	    if (layers[MIDPWindow.BTN_LAYER].isVisible()) {
+		bounds[H] -= SoftButtonSkin.HEIGHT;    
+	    } 
+	}
     }
 }
 

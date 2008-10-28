@@ -59,12 +59,6 @@ public class SoftButtonResources {
         
         SoftButtonSkin.BUTTON_ANCHOR_X = SkinLoader.getNumbersSequence(
                 SkinPropertiesIDs.SOFTBTN_BUTTON_ANCHOR_X);
-        for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
-            if (SoftButtonSkin.BUTTON_ANCHOR_X[i] < 0) {
-                SoftButtonSkin.BUTTON_ANCHOR_X[i] = ScreenSkin.WIDTH +
-                    SoftButtonSkin.BUTTON_ANCHOR_X[i];
-            }
-        }
         
         SoftButtonSkin.BUTTON_ANCHOR_Y = SkinLoader.getNumbersSequence(
                 SkinPropertiesIDs.SOFTBTN_BUTTON_ANCHOR_Y);

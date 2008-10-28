@@ -140,7 +140,8 @@ public class MIDPWindow extends CWindow {
      *               back into the Display object in another package
      */
     public MIDPWindow(ChamDisplayTunnel tunnel) {
-        super(ScreenSkin.IMAGE_BG, ScreenSkin.COLOR_BG);
+        super(ScreenSkin.IMAGE_BG, ScreenSkin.COLOR_BG, 
+	      tunnel.getDisplayWidth(), tunnel.getDisplayHeight());
 
         this.tunnel = tunnel;
 
@@ -305,26 +306,32 @@ public class MIDPWindow extends CWindow {
      */
     public boolean addLayer(CLayer layer) {
         boolean added = super.addLayer(layer);
-
-        if (added && layer instanceof PopupLayer) {
-            PopupLayer popup = (PopupLayer)layer;
-            popup.setDirty();
-            popup.visible = true;
-
-            Command[] cmds = popup.getCommands();
-            if (cmds != null) {
-                buttonLayer.updateCommandSet(
-                    null, 0, null, cmds, cmds.length,
-                    popup.getCommandListener());
-            }
-        }
-
-        if (added && layer instanceof PTILayer) {
-            ptiLayer = (PTILayer)layer;
-            mainLayers[PTI_LAYER] = layer;
-            resize();
-        }
-
+	if (added) {
+	    if (layer instanceof PopupLayer) {
+		PopupLayer popup = (PopupLayer)layer;
+		popup.setDirty();
+		popup.visible = true;
+		
+		Command[] cmds = popup.getCommands();
+		if (cmds != null) {
+		    buttonLayer.updateCommandSet(
+						 null, 0, null, cmds, cmds.length,
+						 popup.getCommandListener());
+		}
+	    }
+	    
+	    if (layer instanceof PTILayer) {
+		ptiLayer = (PTILayer)layer;
+		mainLayers[PTI_LAYER] = layer;
+		resize();
+	    } else if (layer instanceof VirtualKeyboardLayer) {
+		keyboardLayer = (VirtualKeyboardLayer)layer;
+		mainLayers[KEYBOARD_LAYER] = layer;
+		resize();
+	    } else {
+		layer.update(mainLayers);
+	    }
+	}
         if (added && layer instanceof VirtualKeyboardLayer) {
             keyboardLayer = (VirtualKeyboardLayer)layer;
             mainLayers[KEYBOARD_LAYER] = layer;
@@ -465,6 +472,9 @@ public class MIDPWindow extends CWindow {
         return screenMode == FULL_SCR_MODE;
     }
 
+
+
+
     /**
      * Called to paint a wash over the background of this window.
      * Used by SoftButtonLayer when the system menu pops up, and
@@ -473,8 +483,7 @@ public class MIDPWindow extends CWindow {
      * @param onOff A flag indicating if the wash should be on or off
      */
     public void paintWash(boolean onOff) {
-
-    if (alertLayer.visible) {
+	if (alertLayer.visible) {
             addLayer(washLayer);
             if (onOff) {
                 addLayer(alertWashLayer);
@@ -719,7 +728,7 @@ public class MIDPWindow extends CWindow {
      * titles, tickers, fullscreen mode, etc. change state.
      */
     public void resize() {
-        super.resize();
+        super.resize(tunnel.getDisplayWidth(), tunnel.getDisplayHeight());
 
         int oldHeight = bodyLayer.bounds[H];
         int oldWidth = bodyLayer.bounds[W];

@@ -26,7 +26,6 @@
 
 package com.sun.midp.chameleon;
 
-import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.layers.BackgroundLayer;
 import javax.microedition.lcdui.*;
 
@@ -53,7 +52,7 @@ public abstract class CWindow {
      * screen, it could do so by using the x and y coordinate values
      * of this window's bounds.
      */
-    protected int[]   bounds;
+    public int[]   bounds;
     
     /**
      * Flag indicating that at least one layer belonging to this
@@ -104,25 +103,25 @@ public abstract class CWindow {
      * @param bgColor the background fill color in 0xrrggbbaa format to use
      *          for the window background if the background image is null.
      */
-    public CWindow(Image bgImage, int bgColor) {
+    public CWindow(Image bgImage, int bgColor, int width, int height) {
         bounds = new int[4];
         bounds[X] = 0; bounds[Y] = 0;
-        bounds[W] = ScreenSkin.WIDTH;
-        bounds[H] = ScreenSkin.HEIGHT;
+        bounds[W] = width;
+        bounds[H] = height;
 
         layers = new CLayerList();
 
         /* Add the most bottom background layer */
         bgLayer = new BackgroundLayer(bgImage, bgColor);
-        bgLayer.setBounds(0, 0, ScreenSkin.WIDTH, ScreenSkin.HEIGHT);
+        bgLayer.setBounds(0, 0, width, height);
         addLayer(bgLayer);
     }
 
     /** Resize window and its background according to updated skin values */
-    public void resize() {
-        bounds[W] = ScreenSkin.WIDTH;
-        bounds[H] = ScreenSkin.HEIGHT;
-        bgLayer.setBounds(0, 0, ScreenSkin.WIDTH, ScreenSkin.HEIGHT);
+    public void resize(int width, int height) {
+        bounds[W] = width;
+        bounds[H] = height;
+        bgLayer.setBounds(0, 0, width, height);
     }
 
     /**

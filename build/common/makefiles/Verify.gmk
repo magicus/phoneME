@@ -389,6 +389,7 @@ BOOLEAN_OPTIONS = \
     USE_DIRECTDRAW \
     USE_FILE_SYSTEM \
 	USE_NATIVE_PTI \
+	USE_MULTIPLE_DISPLAYS \
 	USE_VERIFY_ONCE \
 	USE_EXTENDED_ATTRIBUTES \
 	USE_VM_PROFILES \
@@ -743,6 +744,7 @@ display:
 	@echo   "JPEG_DIR              = ""$(JPEG_DIR)" $(LOG)
 	@echo   "PCSL_OUTPUT_DIR       = ""$(PCSL_OUTPUT_DIR)" $(LOG)
 	@echo   "MIDP_OUTPUT_DIR       = ""$(MIDP_OUTPUT_DIR)" $(LOG)
+	@echo   "USE_MULTIPLE_DISPLAYS = ""$(USE_MULTIPLE_DISPLAYS)" $(LOG)
 	@echo "" $(LOG)
 	@echo "=======================================" $(LOG)
 	@echo "MIDP Subsystem and Module Configuration" $(LOG)

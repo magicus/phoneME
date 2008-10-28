@@ -27,7 +27,6 @@
 package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.chameleon.skins.SoftButtonSkin;
-import com.sun.midp.chameleon.skins.ScreenSkin;
 
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
@@ -70,19 +69,23 @@ public class ScrollArrowLayer extends ScrollIndLayer {
      * Calculate layer bounds depending on the scrollable
      */
     public void setBounds() {
+	if (owner == null) {
+	    return;
+	}
+	
         bounds[H] = SoftButtonSkin.HEIGHT;
         if (ScrollIndSkin.IMAGE_UP != null) {
             bounds[W] = ScrollIndSkin.IMAGE_UP.getWidth();
             bounds[H] = (2 * ScrollIndSkin.IMAGE_UP.getHeight());
             bounds[Y] = (SoftButtonSkin.HEIGHT - bounds[H]) / 3;
             bounds[H] += bounds[Y];
-            bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT +
+	    bounds[Y] = owner.bounds[H] - SoftButtonSkin.HEIGHT +
                 bounds[Y];
-        } else {
-            bounds[W] = ScrollIndSkin.WIDTH;
+	} else {
+	    bounds[W] = ScrollIndSkin.WIDTH;
             bounds[Y] = 3;
-        }
-        bounds[X] = (ScreenSkin.WIDTH - bounds[W]) / 2;
+	}
+	bounds[X] = (owner.bounds[W] - bounds[W]) / 2;
     }
 
     /**

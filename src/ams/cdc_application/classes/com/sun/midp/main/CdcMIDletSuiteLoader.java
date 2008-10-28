@@ -140,7 +140,7 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
         
        MidletSuiteContainer msc = new MidletSuiteContainer(mss);
        
-       RmsEnvironment.init( msc); 
+       RmsEnvironment.init( internalSecurityToken, msc); 
     }
 
     /**
@@ -385,7 +385,7 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
     public void midletDestroyed(MIDletSuite suite, String className,
                                 MIDlet midlet) {
         if (midlet != null) {
-            displayContainer.removeDisplay(midlet);
+            displayContainer.removeDisplaysByOwner(midlet);
         }
     }
 

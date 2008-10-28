@@ -118,8 +118,7 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
     protected void checkPermission(String host, int port, String file) 
         throws SecurityException {
         AccessController.checkPermission(HTTP_PERMISSION_NAME,
-                                         host + ":" +
-                                         port + file);
+                                         host + ":" + port);
         return;
     }
 

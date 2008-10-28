@@ -43,6 +43,7 @@ extern "C" {
 
 #define KEYMAP_MD_KEY_HOME       (KEYMAP_KEY_MACHINE_DEP)
 #define KEYMAP_MD_KEY_SWITCH_APP (KEYMAP_KEY_MACHINE_DEP - 1)
+#define KEYMAP_MD_NEXT_DISPLAY   (KEYMAP_KEY_MACHINE_DEP - 2)
 
 /**
  * Handle received keyboard/keypad signals
