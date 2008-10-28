@@ -2955,7 +2955,7 @@ public class Display {
 			    
 			   // #ifdef ENABLE_DIRECT_DRAW 
 			    if (d instanceof javax.microedition.lcdui.game.GameCanvas) {
-				if (x == 0 && x2 == this.width && y == 0 &&  
+				if (x == 0 && x2 == Display.this.width && y == 0 &&
 				    offscreen_buffer.getWidth() == Display.this.width && 
 				    offscreen_buffer.getHeight() == Display.this.height &&
 				    //check offscreen_buffer whether rotated
