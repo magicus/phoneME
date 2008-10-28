@@ -3038,7 +3038,7 @@ void JavaClassPatternMatcher::wildcard_match(JVM_SINGLE_ARG_TRAPS) {
 
 void JavaClassPatternMatcher::initialize(const char* pattern JVM_TRAPS) {
   GUARANTEE(pattern != NULL, "No empty pattern allowed");
-  char* delimiter;
+  const char* delimiter;
   int pos = 0;
 
   _as_package = false; 
