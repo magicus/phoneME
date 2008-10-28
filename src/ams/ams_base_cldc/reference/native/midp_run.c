@@ -267,7 +267,7 @@ static void setMonetClassPath(JvmPathChar **userClassPath, int pathLen) {
 #define MIDP_MAIN "com.sun.midp.main.MIDletSuiteLoader"
 
 char*
-JVMSPI_GetSystemProperty(const char* prop_name) {
+JVMSPI_GetSystemProperty(char* prop_name) {
 
     char *result = (char *)getSystemProperty(prop_name);
 
@@ -282,7 +282,7 @@ JVMSPI_GetSystemProperty(const char* prop_name) {
 }
 
 void
-JVMSPI_SetSystemProperty(const char* propName, const char* value) {
+JVMSPI_SetSystemProperty(char* propName, char* value) {
     /*
      * override internal configuration parameters.
      */
@@ -296,7 +296,7 @@ JVMSPI_SetSystemProperty(const char* propName, const char* value) {
 }
 
 void
-JVMSPI_FreeSystemProperty(const char* prop_value) {
+JVMSPI_FreeSystemProperty(char* prop_value) {
     (void)prop_value;    /* No-op */
 }
 
