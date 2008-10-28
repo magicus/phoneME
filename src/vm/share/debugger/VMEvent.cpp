@@ -1184,6 +1184,15 @@ void set_event_frame_pop()
 
 extern "C" {
 void handle_exception_info(Thread *thread) {
+  {
+    // Noop if the current task is not connected to the debugger
+    Task::Raw task = thread->task_for_thread();
+    Transport::Raw transport = task().transport();
+    if (transport.is_null()) {
+      return;
+    }
+  }
+
   UsingFastOops fast_oops;
 
   JavaFrame throw_frame(thread);
