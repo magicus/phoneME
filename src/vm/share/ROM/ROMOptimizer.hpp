@@ -390,7 +390,7 @@ private:
   }
   ReturnOop build_method_table(const ROMVector* methods JVM_TRAPS);
 #if USE_AOT_COMPILATION
-  void enable_precompile(char* pattern JVM_TRAPS);
+  void enable_precompile(const char* pattern JVM_TRAPS);
 #endif
 
   bool dont_rename_class(InstanceClass *klass) {
