@@ -399,4 +399,10 @@ public final class EventTypes {
      */
     public static final int FLUID_LISTENER_EVENT = 63;
 
+    /**
+     * This event is sent when the clamshell state is changed.
+     */
+
+    public static final int DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT = 64;
+
 }

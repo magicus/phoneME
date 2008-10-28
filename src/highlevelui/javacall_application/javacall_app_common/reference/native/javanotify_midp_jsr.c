@@ -1171,6 +1171,19 @@ void /* OPTIONAL */ javanotify_rotation(int hardwareId) {
     midp_jc_event_send(&e);
 }
 
+/**
+  * The platform should invoke this function in platform context
+  * to notify clamshell state change
+  */
+    void  /* OPTIONAL */ javanotify_clamshell_state_changed(javacall_lcd_clamshell_state state) {
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_clamshell_state_changed >>\n");
+    e.data.clamshellEvent.state = state;
+    e.eventType = MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED;
+    midp_jc_event_send(&e);
+}
+
 
 #ifdef ENABLE_API_EXTENSIONS
 

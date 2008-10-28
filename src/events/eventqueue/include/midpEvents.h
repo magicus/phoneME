@@ -217,6 +217,11 @@ extern "C" {
  */
 #define FLUID_LISTENER_EVENT            63
 
+/**
+ * This event is sent when the clamshell state is changed.
+ */
+#define DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT  64
+
 /** @} */
 
 /**

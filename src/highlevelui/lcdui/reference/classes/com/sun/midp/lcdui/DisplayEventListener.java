@@ -85,6 +85,7 @@ public class DisplayEventListener implements EventListener {
         eventQueue.registerEventListener(EventTypes.PEER_CHANGED_EVENT, this);
         eventQueue.registerEventListener(EventTypes.ROTATION_EVENT,this);
         eventQueue.registerEventListener(EventTypes.DISPLAY_DEVICE_STATE_CHANGED_EVENT,this);
+	eventQueue.registerEventListener(EventTypes.DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT,this);	
         eventQueue.registerEventListener(EventTypes.VIRTUAL_KEYBOARD_EVENT,this);
         eventQueue.registerEventListener(EventTypes.CHANGE_LOCALE_EVENT,this);
     }
@@ -135,6 +136,44 @@ public class DisplayEventListener implements EventListener {
 	    }
 	    return;
 	}
+	/** Sample implementation handling the clamshell scenario
+	 *  assuming two displays are available.
+	 *       */
+
+	if (event.getType() ==  EventTypes.DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT) {
+	    DisplayDevice[] display_devices = displayDeviceContainer.getDisplayDevices();
+	 		   
+	    if (display_devices.length == 2){
+		int primary = 0;
+		int secondary = 1;
+		if (display_devices[1].isPrimaryDisplay()) {
+		       primary = 0;
+		       secondary = 1;
+		} 
+		if (nativeEvent.intParam1 == EventConstants.CLAMSHELL_OPEN) {
+			display_devices[primary].setState(DisplayDevice.DISPLAY_DEVICE_ENABLED);
+			display_devices[secondary].setState(DisplayDevice.DISPLAY_DEVICE_DISABLED);
+		}else
+		{    
+		    display_devices[primary].setState(DisplayDevice.DISPLAY_DEVICE_DISABLED);
+		    display_devices[secondary].setState(DisplayDevice.DISPLAY_DEVICE_ENABLED);
+		}
+
+		//call to handle the new state for the primary display
+		DisplayAccess das[] =  displayContainer.findDisplaysByHardwareId(display_devices[primary].getHardwareId());
+		for (int i = das.length; --i >= 0;) {
+		    das[i].getDisplayEventConsumer().handleDisplayDeviceStateChangedEvent(display_devices[primary].getState());
+		}
+
+		//call to handle the new state for the secondary display
+		das =  displayContainer.findDisplaysByHardwareId(display_devices[secondary].getHardwareId());
+		for (int i = das.length; --i >= 0;) {
+		    das[i].getDisplayEventConsumer().handleDisplayDeviceStateChangedEvent(display_devices[secondary].getState());
+		}
+	    }
+	    return;
+	}
+
         DisplayEventConsumer dc =
                 displayContainer.findDisplayEventConsumer(nativeEvent.intParam4);
 
