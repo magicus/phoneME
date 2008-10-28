@@ -50,11 +50,11 @@ static jboolean disableRefresh=KNI_FALSE;
  * command manager.
  */
 
-int jcapp_get_screen_buffer() {
+int jcapp_get_screen_buffer(int hardwareId) {
      javacall_lcd_color_encoding_type color_encoding;
      gxj_system_screen_buffer.alphaData = NULL;
      gxj_system_screen_buffer.pixelData = 
-         javacall_lcd_get_screen (JAVACALL_LCD_SCREEN_PRIMARY,
+         javacall_lcd_get_screen (hardwareId,
                                   &gxj_system_screen_buffer.width,
                                   &gxj_system_screen_buffer.height,
                                   &color_encoding);                                
@@ -69,7 +69,7 @@ int jcapp_get_screen_buffer() {
 /**
  * Reset screen buffer content.
  */
-void static jcapp_reset_screen_buffer() {
+void static jcapp_reset_screen_buffer(int hardwareId) {
     memset (gxj_system_screen_buffer.pixelData, 0,
         gxj_system_screen_buffer.width * gxj_system_screen_buffer.height *
             sizeof (gxj_pixel_type));
@@ -84,6 +84,7 @@ void static jcapp_reset_screen_buffer() {
  */
 int jcapp_init() {
     javacall_lcd_color_encoding_type color_encoding;
+    int hardwareId = jcapp_get_current_hardwareId();
  
     if (!JAVACALL_SUCCEEDED(javacall_lcd_init ()))
         return -1;        
@@ -93,12 +94,12 @@ int jcapp_init() {
      *     implementation. Other values are reserved for future  use. Returning
      *     the buffer in other encoding will result in application termination.
      */
-    if (jcapp_get_screen_buffer() == -2) {
+    if (jcapp_get_screen_buffer(hardwareId) == -2) {
         REPORT_ERROR(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
         return -2;
     }    
 
-    jcapp_reset_screen_buffer();
+    jcapp_reset_screen_buffer(hardwareId);
     return 0;
 }
 
@@ -140,8 +141,8 @@ void jcapp_refresh(int hardwareId, int x1, int y1, int x2, int y2)
 void jcapp_set_fullscreen_mode(int hardwareId, jboolean mode) {    
 
     javacall_lcd_set_full_screen_mode(hardwareId, mode);
-    jcapp_get_screen_buffer();
-    jcapp_reset_screen_buffer();
+    jcapp_get_screen_buffer(hardwareId);
+    jcapp_reset_screen_buffer(hardwareId);
 }
 
 /**
@@ -152,10 +153,10 @@ jboolean jcapp_reverse_orientation(int hardwareId) {
     jboolean res = javacall_lcd_reverse_orientation(hardwareId); 
     jcapp_get_screen_buffer(hardwareId);
 
-	/** Whether current Displayable won't repaint the entire screen
-	*  on resize event, the artefacts from the old screen content
-	* can appear. That's why the buffer content is not preserved. 
-    */ 
+    /** Whether current Displayable won't repaint the entire screen
+     *  on resize event, the artefacts from the old screen content
+     * can appear. That's why the buffer content is not preserved. 
+     */ 
 
 	jcapp_reset_screen_buffer(hardwareId);
 	return res;
