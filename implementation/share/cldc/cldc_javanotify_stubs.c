@@ -85,6 +85,8 @@ void javanotify_rotation(int hardwareId) {}
 
 void javanotify_display_device_state_changed(int hardwareId, javacall_lcd_display_device_state state) {}
 
+void javanotify_clamshell_state_changed(javacall_lcd_clamshell_state state) {}
+
 void javanotify_pen_event(int x, int y, javacall_penevent_type type) {}
 
 void javanotify_start(void) {}
