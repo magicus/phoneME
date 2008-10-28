@@ -26,7 +26,6 @@
 
 package com.sun.midp.automation;
 import com.sun.midp.events.*;
-import javax.microedition.lcdui.Image;
 
 /**
  * Implements Automation class abstract methods.
@@ -44,8 +43,6 @@ final class AutomationImpl extends Automation {
     /** index 0: foreground isolate id, index 1: foreground display id */
     private int[] foregroundIsolateAndDisplay;
     
-    private AutoScreenshotTaker screenshotTaker;
-
 
     /**
      * Gets instance of AutoSuiteStorage class.
@@ -319,46 +316,7 @@ final class AutomationImpl extends Automation {
         AutoEvent e =  eventFactory.createDelayEvent(msec);
         simulateEvents(e);        
     }
-
-    /**
-     * Gets screenshot in specified format.
-     * IMPL_NOTE: only implemented for putpixel based ports
-     *
-     * @param format screenshot format 
-     * @return screenshot data as byte array
-     */   
-    public byte[] getScreenshot(int format) {
-        byte[] data = screenshotTaker.getScreenshotRGB888();
-
-        if (format == SCREENSHOT_FORMAT_BMP) {
-            int w = getScreenshotWidth();
-            int h = getScreenshotHeight();
-            BMPEncoder encoder = new BMPEncoder(data, w, h);
-            data = encoder.encode();
-        }
-
-        return data;
-    }
-
-    /**
-     * Gets screenshot width.
-     *
-     * @return screenshot width
-     */
-    public int getScreenshotWidth() {
-        return screenshotTaker.getScreenshotWidth();
-    }
-
-    /**
-     * Gets screenshot height.
-     *
-     * @return screenshot height
-     */
-    public int getScreenshotHeight() {
-        return screenshotTaker.getScreenshotHeight();
-    }
     
-
     /**
      * Gets instance of Automation class.
      *
@@ -395,6 +353,5 @@ final class AutomationImpl extends Automation {
         this.eventQueue = eventQueue;
         this.eventFactory = AutoEventFactoryImpl.getInstance();
         this.foregroundIsolateAndDisplay = new int[2];
-        this.screenshotTaker = new AutoScreenshotTaker();
     } 
 }

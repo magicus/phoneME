@@ -112,7 +112,7 @@ KNIDECL(com_sun_midp_automation_AutomationImpl_getForegroundIsolateAndDisplay) {
             1, (jint)gForegroundDisplayId);
     
     KNI_EndHandles();
-    KNI_ReturnVoid();
+    KNI_ReturnVoid();    
 }
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
