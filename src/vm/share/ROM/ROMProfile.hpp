@@ -75,7 +75,7 @@ public:
   DEFINE_ACCESSOR_OBJ(ROMProfile, ROMVector, restricted_packages)  
 
 public:
-  void initialize(char *name JVM_TRAPS);
+  void initialize(const char *name JVM_TRAPS);
   static int calc_bitmap_raw_size();
 };
 

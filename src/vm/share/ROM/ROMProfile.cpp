@@ -28,7 +28,7 @@
 #include "incls/_ROMProfile.cpp.incl"
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
-void ROMProfile::initialize(char *name JVM_TRAPS) {  
+void ROMProfile::initialize(const char *name JVM_TRAPS) {  
 
   // [1] Allocating Desc.
   OopDesc* obj = Universe::new_profile(JVM_SINGLE_ARG_CHECK);

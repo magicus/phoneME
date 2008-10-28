@@ -358,7 +358,7 @@ private:
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
   void create_profiles_hidden_bitmap(JVM_SINGLE_ARG_TRAPS);
-  int find_profile(char * name);
+  int find_profile(const char * name);
 #endif
 
 #if USE_SOURCE_IMAGE_GENERATOR

@@ -392,7 +392,7 @@ public:
 
   static bool is_restricted_package(const char* name, int len);
   static ReturnOop string_from_table(String *string, juint hash_value);
-  static ReturnOop symbol_for(utf8 s, juint hash_value, int len);
+  static ReturnOop symbol_for(const utf8 s, juint hash_value, int len);
 
   static int number_of_system_classes() { return _rom_number_of_java_classes; }
 
