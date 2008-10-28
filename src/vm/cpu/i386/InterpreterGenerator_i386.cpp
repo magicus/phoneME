@@ -566,7 +566,7 @@ InterpreterGenerator::generate_quick_native_method_entry(BasicType return_type)
 {
   GUARANTEE(word_size_for(return_type) <= 1,
             "two-word return values not supported");
-  const char *type;
+  char *type;
   switch (return_type) {
   case T_OBJECT:
     type = "obj";

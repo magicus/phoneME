@@ -366,23 +366,23 @@ private:
   void read_config_file(const JvmPathChar* config_file JVM_TRAPS);
   void read_hardcoded_config(JVM_SINGLE_ARG_TRAPS);
   void process_config_line(char * config_line JVM_TRAPS);
-  void include_config_file(const char* config_file JVM_TRAPS);
-  bool parse_config(char *line, const char**name, const char **value);
-  void add_class_to_list(ObjArray *list, const char *flag, const char *classname
+  void include_config_file(char* config_file JVM_TRAPS);
+  bool parse_config(char *line, char**name, char **value);
+  void add_class_to_list(ObjArray *list, char *flag, char *classname
                          JVM_TRAPS);
-  void add_package_to_list(ROMVector *vector, const char *pkgname JVM_TRAPS);
+  void add_package_to_list(ROMVector *vector, char *pkgname JVM_TRAPS);
   bool class_list_contains(ObjArray *list, InstanceClass *klass);
-  void enable_quick_natives(const char* pattern JVM_TRAPS);
+  void enable_quick_natives(char* pattern JVM_TRAPS);
   void write_quick_natives_log();
 
-  void enable_jni_natives(const char* pattern JVM_TRAPS);
+  void enable_jni_natives(char* pattern JVM_TRAPS);
   void write_jni_natives_log();
   void update_jni_natives_table(JVM_SINGLE_ARG_TRAPS) {
     *jni_native_methods_table() = build_method_table(_jni_natives_log 
                                                      JVM_NO_CHECK_AT_BOTTOM);
   }
 
-  void enable_kvm_natives(const char* pattern JVM_TRAPS);
+  void enable_kvm_natives(char* pattern JVM_TRAPS);
   void write_kvm_natives_log();
   void update_kvm_natives_table(JVM_SINGLE_ARG_TRAPS) {
     *kvm_native_methods_table() = build_method_table(_kvm_natives_log 
@@ -390,7 +390,7 @@ private:
   }
   ReturnOop build_method_table(const ROMVector* methods JVM_TRAPS);
 #if USE_AOT_COMPILATION
-  void enable_precompile(const char* pattern JVM_TRAPS);
+  void enable_precompile(char* pattern JVM_TRAPS);
 #endif
 
   bool dont_rename_class(InstanceClass *klass) {
@@ -411,7 +411,7 @@ private:
   bool dont_rename_methods_in_class(InstanceClass* /*klass*/) {return false;}
 #endif
 
-  void disable_compilation(const char* pattern JVM_TRAPS);
+  void disable_compilation(char* pattern JVM_TRAPS);
   void write_disable_compilation_log();
   void allocate_empty_arrays(JVM_SINGLE_ARG_TRAPS);
   void make_restricted_packages_final(JVM_SINGLE_ARG_TRAPS);
@@ -644,7 +644,7 @@ class JavaClassPatternMatcher {
 private:
   bool match(Symbol* pattern, Symbol* symbol);
 
-  void initialize(const char* pattern JVM_TRAPS);
+  void initialize(char* pattern JVM_TRAPS);
   void initialize_as_package(Symbol* class_name JVM_TRAPS);
 
   bool match_class(Symbol* symbol);
@@ -661,7 +661,7 @@ public:
     SHOULD_NOT_REACH_HERE();
   }
 
-  void run(const char *pattern JVM_TRAPS);
+  void run(char *pattern JVM_TRAPS);
 };
 
 #endif // ENABLE_ROM_GENERATOR

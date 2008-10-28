@@ -783,7 +783,7 @@ x86_disassembler::get_operand(unsigned mode, unsigned r_m, int wbit, int opindex
   int dispsize;                 // size of displacement in bytes 
   long dispvalue;               // value of the displacement 
   const char *resultreg;        // representation of index(es) 
-  const char *format;           // output format of result 
+  char *format;                 // output format of result 
   int s_i_b;                    // flag presence of scale-index-byte 
   unsigned ss;                  // scale-factor from opcode 
   unsigned index;               // index register number 
