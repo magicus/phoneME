@@ -39,6 +39,17 @@ jsr_172_source_bundle:: $(JSR_172_DIR)
 	$(AT)cp -f $(JSR_172_DIR)/build/subsystem_rules.gmk $(JSR_172_SOURCE_OUTPUT_DIR)/build/subsystem_rules.gmk
 	$(AT)cp -f $(JSR_172_DIR)/build/subsystem_defs.gmk $(JSR_172_SOURCE_OUTPUT_DIR)/build/subsystem_defs.gmk
 
+$(OUTPUT_DIR)/jsr172__stub-generator.jar : $(JAVAC_OUT_DIR) # $(INTERNAL_JSR_172_SG_RI_FILES) $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES)
+	@echo "build $@ ..."
+	$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
+		-classpath "$(INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST)" \
+		$(INTERNAL_JSR_172_SG_RI_FILES) || exit 1;
+	$(JAR_CMD) cf $@ $(JAVAC_OUT_DIR)/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/*.class
+
+#		-bootclasspath "$(BOOTCLASSPATH)"
+
+jsr172__stub-generator : $(OUTPUT_DIR)/jsr172__stub-generator.jar
+
 ifneq ($(TARGET_VM), cldc_vm)
 include $(JSR_172_DIR)/build/cdc_share/subsystem_rules.gmk
 endif
