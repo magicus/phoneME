@@ -115,11 +115,24 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventStringParser.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoKeyEventFromArgsFactory.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoDelayEventFromArgsFactory.java \
-	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoPenEventFromArgsFactory.java
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoPenEventFromArgsFactory.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoScreenshotTaker.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/BMPEncoder.java
 
 vpath % $(SUBSYSTEM_AUTOMATION_DIR)/reference/native
 SUBSYSTEM_AUTOMATION_NATIVE_FILES += \
     midp_automation.c
+
+# Taking screenshot is implemented only for putpixel
+ifeq ($(SUBSYSTEM_GRAPHICS_MODULES), gx_putpixel) 
+SUBSYSTEM_AUTOMATION_NATIVE_FILES += \
+    midp_automation_screenshot.c
+else
+vpath % $(SUBSYSTEM_AUTOMATION_DIR)/stubs/native
+SUBSYSTEM_AUTOMATION_NATIVE_FILES += \
+    midp_automation_screenshot.c
+endif
+
 
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
 include $(SUBSYSTEM_DIR)/automation/mvm/lib.gmk
