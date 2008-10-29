@@ -39,9 +39,11 @@ class AutoScreenshotTaker {
     }
 
     /**
-     * Gets screenshot data in RGB888 format.
+     * Gets screenshot data in RGB888 format after screenshot 
+     * has been taken.
      *
-     * @return screenshot data as byte array
+     * @return screenshot data as byte array, or null if taking
+     * screenshot is not implemented
      */
     byte[] getScreenshotRGB888() {
         return getScreenshotRGB8880();
@@ -64,9 +66,30 @@ class AutoScreenshotTaker {
     int getScreenshotHeight() {
         return getScreenshotHeight0();
     }
-
+    
+    /**
+     * Native nethod that does all the real screenshot-taking work
+     */
     private native void takeScreenshot0();
+
+    /**
+     * Native method that gets screenshot data in RGB888 format.
+     *
+     * @return screenshot data as byte array
+     */
     private native byte[] getScreenshotRGB8880();
+
+    /**
+     * Native method that gets screenshot width.
+     *
+     * @return screenshot width
+     */
     private native int getScreenshotWidth0();
+
+    /**
+     * Native method that gets screenshot height.
+     *
+     * @return screenshot width
+     */
     private native int getScreenshotHeight0();
 }

@@ -24,6 +24,12 @@
  * information or have any questions.
  */
 
+
+/**
+ * AutoScreenshotTaker native methods implementation for
+ * putpixel graphic library.
+ */
+
 #include <jvmconfig.h>
 #include <kni.h>
 #include <jvm.h>
@@ -34,8 +40,13 @@
 #include <string.h>
 #include <commonKNIMacros.h>
 
+/** Taken screenshot width */
 static int gsScreenshotWidth;
+
+/** Taken screenshot height */
 static int gsScreenshotHeight;
+
+/** Taken screenshot pixels data */
 static gxj_pixel_type* gsScreenshotData = NULL;
 
 KNIEXPORT KNI_RETURNTYPE_VOID
@@ -47,6 +58,7 @@ KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_takeScreenshot0) {
     gsScreenshotWidth = gxj_system_screen_buffer.width;
     gsScreenshotHeight = gxj_system_screen_buffer.height;
 
+    /* the dimensions of the screen may have changed */
     if (oldw != gsScreenshotWidth || oldh != gsScreenshotHeight) {
         if (gsScreenshotData != NULL) {
             midpFree(gsScreenshotData);
@@ -54,6 +66,7 @@ KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_takeScreenshot0) {
         }
     }
 
+    /* allocate memory for pixels data, if needed */
     sz = sizeof(gxj_pixel_type) * gsScreenshotWidth * gsScreenshotHeight;
     if (gsScreenshotData == NULL) {
         gsScreenshotData = (gxj_pixel_type*)midpMalloc(sz);
@@ -62,6 +75,7 @@ KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_takeScreenshot0) {
         }
     }
 
+    /* and save pixels data */
     if (gsScreenshotData != NULL) {
         memcpy(gsScreenshotData, gxj_system_screen_buffer.pixelData, sz);
     }
@@ -93,12 +107,14 @@ KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_getScreenshotRGB8880) {
     do {
         totalPixels = gsScreenshotWidth * gsScreenshotHeight;
 
+        /* create Java array we are going to return */
         SNI_NewArray(SNI_BYTE_ARRAY, totalPixels * 3, returnArray);
         if (KNI_IsNullHandle(returnArray)) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
             break;
         }
 
+        /* and fill it with pixels data */
         rgb888 = JavaByteArray(returnArray); 
         for (i = 0, rgb888Off = 0; i < totalPixels; ++i, rgb888Off += 3) {
             gxj_pixel_type pixel = gsScreenshotData[i];
@@ -113,6 +129,5 @@ KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_getScreenshotRGB8880) {
         
     } while (0);
  
-    // Return the null reference to the calling Java method 
     KNI_EndHandlesAndReturnObject(returnArray); 
 }

@@ -325,10 +325,14 @@ final class AutomationImpl extends Automation {
      * IMPL_NOTE: only implemented for putpixel based ports
      *
      * @param format screenshot format 
-     * @return screenshot data as byte array
+     * @return screenshot data as byte array, or null if taking
+     * screenshot is not implemented
      */   
     public byte[] getScreenshot(int format) {
         byte[] data = screenshotTaker.getScreenshotRGB888();
+        if (data == null) {
+            return null;
+        }
 
         if (format == SCREENSHOT_FORMAT_BMP) {
             int w = getScreenshotWidth();

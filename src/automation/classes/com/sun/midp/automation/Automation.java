@@ -198,7 +198,8 @@ public abstract class Automation {
      * IMPL_NOTE: only implemented for putpixel based ports
      *
      * @param format screenshot format 
-     * @return screenshot data as byte array
+     * @return screenshot data as byte array, or null if taking
+     * screenshot is not implemented
      */
     public abstract byte[] getScreenshot(int format);
 

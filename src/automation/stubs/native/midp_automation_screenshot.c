@@ -24,6 +24,12 @@
  * information or have any questions.
  */
 
+
+/**
+ * Stubs for AutoScreenshotTaker class native methods,
+ * used for ports that doesn't use putpixel.
+ */
+
 #include <jvmconfig.h>
 #include <kni.h>
 #include <jvm.h>
@@ -45,13 +51,12 @@ KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_getScreenshotHeight0) {
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_getScreenshotRGB8880) {
-
     KNI_StartHandles(1); 
     KNI_DeclareHandle(objectHandle); 
  
-    // Set the handle explicitly to NULL
+    /* Set the handle explicitly to null */
     KNI_ReleaseHandle(objectHandle); 
  
-    // Return the null reference to the calling Java method 
+    /* Return the null reference to the calling Java method */
     KNI_EndHandlesAndReturnObject(objectHandle); 
 }
