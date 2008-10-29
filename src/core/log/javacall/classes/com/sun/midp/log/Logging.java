@@ -140,7 +140,7 @@ public class Logging extends LoggingBase {
         int isolateID = MIDletSuiteUtils.getIsolateId();
 
         if(getAllowedSeverity(channelID) <= severity) {
-            report0(severity, channelID, isolateID, message);
+            report0(severity, channelID, message);
         }
 
     }
@@ -172,8 +172,7 @@ public class Logging extends LoggingBase {
      */
 
     private static native void report0(int severity, 
-                                       int channelID, 
-                                       int isolateID, 
+                                       int channelID,
                                        String message);
 
 

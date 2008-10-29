@@ -166,7 +166,7 @@
                     calls will be compiled out of the build."/>
   <constant Type="int"
             Name="REPORT_LEVEL"
-            Value="LOG_ERROR"
+            Value="LOG_INFORMATION"
             Comment="Threshhold for the severity level below which
                     log messages will not be recorded. Severity levels less
                     than this value can be compiled out of the build."/>

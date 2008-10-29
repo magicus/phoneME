@@ -88,7 +88,7 @@ extern "C" {
  * @param channelID topic of the report, from <tt>midp_constants_data.h</tt>.
  * @param message detail message to record; it should not be NULL.
  */
-void reportToLog(int severity, int channelID, int isolateID, char* message, ...);
+void reportToLog(int severity, int channelID, char* message, ...);
 
 /**
  * Log the native thread ID for debugging on multi-thread platforms.
@@ -133,7 +133,7 @@ int get_id_c();
  * LOG_INFORMATION</code>, and is otherwise empty.
  */
 #if REPORT_LEVEL <= LOG_INFORMATION
-#define PRINT_TO_LOG(msg) reportToLog(LOG_INFORMATION, LC_NONE,GET_ISOLATE_ID, "%s", msg)
+#define PRINT_TO_LOG(msg) reportToLog(LOG_INFORMATION, LC_NONE, "%s", msg)
 #else
 #define PRINT_TO_LOG(msg)
 #endif
@@ -146,22 +146,22 @@ int get_id_c();
  * @{
  */
 #if REPORT_LEVEL <= LOG_INFORMATION
-#define REPORT_INFO(ch, msg) reportToLog(LOG_INFORMATION, ch,GET_ISOLATE_ID, msg)
-#define REPORT_INFO1(ch, msg, a1) reportToLog(LOG_INFORMATION, ch,GET_ISOLATE_ID, msg, a1)
+#define REPORT_INFO(ch, msg) reportToLog(LOG_INFORMATION, ch, msg)
+#define REPORT_INFO1(ch, msg, a1) reportToLog(LOG_INFORMATION, ch, msg, a1)
 #define REPORT_INFO2(ch, msg, a1, a2) \
-  reportToLog(LOG_INFORMATION, ch,GET_ISOLATE_ID, msg, a1, a2)
+  reportToLog(LOG_INFORMATION, ch, msg, a1, a2)
 #define REPORT_INFO3(ch, msg, a1, a2, a3) \
-  reportToLog(LOG_INFORMATION, ch,GET_ISOLATE_ID, msg, a1, a2, a3)
+  reportToLog(LOG_INFORMATION, ch, msg, a1, a2, a3)
 #define REPORT_INFO4(ch, msg, a1, a2, a3, a4) \
-  reportToLog(LOG_INFORMATION, ch,GET_ISOLATE_ID, msg, a1, a2, a3, a4)
+  reportToLog(LOG_INFORMATION, ch, msg, a1, a2, a3, a4)
 #define REPORT_INFO5(ch, msg, a1, a2, a3, a4, a5) \
-  reportToLog(LOG_INFORMATION, ch,GET_ISOLATE_ID, msg, a1, a2, a3, a4, a5)
+  reportToLog(LOG_INFORMATION, ch, msg, a1, a2, a3, a4, a5)
 #define REPORT_INFO6(ch, msg, a1, a2, a3, a4, a5, a6) \
-  reportToLog(LOG_INFORMATION, ch,GET_ISOLATE_ID, msg, a1, a2, a3, a4, a5, a6)
+  reportToLog(LOG_INFORMATION, ch, msg, a1, a2, a3, a4, a5, a6)
 #define REPORT_INFO7(ch, msg, a1, a2, a3, a4, a5, a6, a7) \
-  reportToLog(LOG_INFORMATION, ch,GET_ISOLATE_ID, msg, a1, a2, a3, a4, a5, a6, a7)
+  reportToLog(LOG_INFORMATION, ch, msg, a1, a2, a3, a4, a5, a6, a7)
 #define REPORT_INFO8(ch, msg, a1, a2, a3, a4, a5, a6, a7, a8) \
-  reportToLog(LOG_INFORMATION, ch,GET_ISOLATE_ID, msg, a1, a2, a3, a4, a5, a6, a7, a8)
+  reportToLog(LOG_INFORMATION, ch, msg, a1, a2, a3, a4, a5, a6, a7, a8)
 #else
 #define REPORT_INFO(ch, msg)
 #define REPORT_INFO1(ch, msg, a1)
@@ -183,13 +183,13 @@ int get_id_c();
  * @{
  */
 #if REPORT_LEVEL <= LOG_WARNING
-#define REPORT_WARN(ch, msg) reportToLog(LOG_WARNING, ch,GET_ISOLATE_ID, msg)
-#define REPORT_WARN1(ch, msg, a1) reportToLog(LOG_WARNING,GET_ISOLATE_ID, ch, msg, a1)
-#define REPORT_WARN2(ch, msg, a1, a2) reportToLog(LOG_WARNING, ch,GET_ISOLATE_ID, msg, a1, a2)
+#define REPORT_WARN(ch, msg) reportToLog(LOG_WARNING, ch, msg)
+#define REPORT_WARN1(ch, msg, a1) reportToLog(LOG_WARNING, ch, msg, a1)
+#define REPORT_WARN2(ch, msg, a1, a2) reportToLog(LOG_WARNING, ch, msg, a1, a2)
 #define REPORT_WARN3(ch, msg, a1, a2, a3) \
-  reportToLog(LOG_WARNING, ch,GET_ISOLATE_ID, msg, a1, a2, a3)
+  reportToLog(LOG_WARNING, ch, msg, a1, a2, a3)
 #define REPORT_WARN4(ch, msg, a1, a2, a3, a4) \
-  reportToLog(LOG_WARNING, ch,GET_ISOLATE_ID, msg, a1, a2, a3, a4)
+  reportToLog(LOG_WARNING, ch, msg, a1, a2, a3, a4)
 #else
 #define REPORT_WARN(ch, msg)
 #define REPORT_WARN1(ch, msg, a1)
@@ -207,12 +207,12 @@ int get_id_c();
  * @{
  */
 #if REPORT_LEVEL <= LOG_ERROR
-#define REPORT_ERROR(ch, msg) reportToLog(LOG_ERROR, ch,GET_ISOLATE_ID, msg)
-#define REPORT_ERROR1(ch, msg, a1) reportToLog(LOG_ERROR, ch,GET_ISOLATE_ID, msg, a1)
+#define REPORT_ERROR(ch, msg) reportToLog(LOG_ERROR, ch, msg)
+#define REPORT_ERROR1(ch, msg, a1) reportToLog(LOG_ERROR, ch, msg, a1)
 #define REPORT_ERROR2(ch, msg, a1, a2) \
-  reportToLog(LOG_ERROR, ch,GET_ISOLATE_ID, msg, a1, a2)
+  reportToLog(LOG_ERROR, ch, msg, a1, a2)
 #define REPORT_ERROR3(ch, msg, a1, a2, a3) \
-  reportToLog(LOG_ERROR, ch,GET_ISOLATE_ID, msg, a1, a2, a3)
+  reportToLog(LOG_ERROR, ch, msg, a1, a2, a3)
 #else
 #define REPORT_ERROR(ch, msg)
 #define REPORT_ERROR1(ch, msg, a1)
@@ -229,12 +229,12 @@ int get_id_c();
  * @{
  */
 #if REPORT_LEVEL <= LOG_CRITICAL
-#define REPORT_CRIT(ch, msg) reportToLog(LOG_CRITICAL, ch,GET_ISOLATE_ID,msg)
-#define REPORT_CRIT1(ch, msg, a1) reportToLog(LOG_CRITICAL, ch,GET_ISOLATE_ID,msg, a1)
+#define REPORT_CRIT(ch, msg) reportToLog(LOG_CRITICAL, ch, msg)
+#define REPORT_CRIT1(ch, msg, a1) reportToLog(LOG_CRITICAL, ch,msg, a1)
 #define REPORT_CRIT2(ch, msg, a1, a2) \
-  reportToLog(LOG_CRITICAL, ch,GET_ISOLATE_ID, msg, a1, a2)
+  reportToLog(LOG_CRITICAL, msg, a1, a2)
 #define REPORT_CRIT3(ch, msg, a1, a2, a3) \
-  reportToLog(LOG_CRITICAL, ch,GET_ISOLATE_ID, msg, a1, a2, a3)
+  reportToLog(LOG_CRITICAL, ch, msg, a1, a2, a3)
 #else
 #define REPORT_CRIT(ch, msg)
 #define REPORT_CRIT1(ch, msg, a1)
