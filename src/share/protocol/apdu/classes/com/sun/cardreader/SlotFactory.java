@@ -62,7 +62,7 @@ public class SlotFactory {
      */
     public static void init() throws IOException, CardDeviceException {
         synchronized (syncObject) {
-            if (initialized.booleanValue()) {
+            if (initialized) {
                 return;
             }
         
@@ -118,7 +118,7 @@ public class SlotFactory {
             }
 
             slots = new CardSlot[slotCount];
-            initialized = Boolean.TRUE;
+            initialized = true;
         }
     }
     
@@ -134,7 +134,7 @@ public class SlotFactory {
 	throws IOException, CardDeviceException {
 
         synchronized (syncObject) {
-            if ((!initialized.booleanValue()) || 
+            if (!initialized || 
                 (slot < 0) || 
                 (slot >= slots.length)) {
                 return null;
@@ -198,7 +198,7 @@ public class SlotFactory {
      */
     public static boolean isSatSlot(int slot) throws IOException {
         synchronized (syncObject) {
-            if ((!initialized.booleanValue()) || 
+            if (!initialized || 
                 (slot < 0) || 
                 (slot >= slots.length)) {
                 throw new IllegalArgumentException("Slot does not exist");
@@ -227,7 +227,7 @@ public class SlotFactory {
     /**
      * Initialization flag.
      */
-    private static Boolean initialized = Boolean.FALSE;
+    private static boolean initialized = false;
     
     /**
      * Service object, used in synchronized().
