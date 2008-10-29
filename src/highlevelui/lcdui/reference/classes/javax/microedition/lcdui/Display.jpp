@@ -3600,6 +3600,7 @@ public class Display {
                 // Update hasForeground after uCallShow to allow
                 // isShown() to return false unitl now
                 hasForeground = true;
+                wantsForeground = WANTS_FOREGROUND;
 
                 displayDevice.gainedForeground(displayId);
 
