@@ -55,6 +55,9 @@ int create_wavhead(recorder* h, char *buffer, int buflen)
     wh->dc.chnk_id          = CHUNKID_data;
     wh->dc.chnk_ds          = h->recordLen;
 
+    // update full recodr data len
+    wh->rc.chnk_ds          += wh->fc.chnk_ds + 8 + 8 + h->recordLen;
+
     return sizeof(struct std_head);
 }
 
