@@ -100,8 +100,6 @@ void* javacall_malloc(unsigned int size);
  * @return	  a pointer to the reallocated memory or null if memory could not be reallocated
  */
 void* javacall_realloc(void* ptr, unsigned int size);
-    
-
 
 /**
  * Frees memory at the given pointer in the private JAVACALL memory pool.
@@ -109,36 +107,6 @@ void* javacall_realloc(void* ptr, unsigned int size);
  * @param    ptr	Pointer to allocated memory
  */
 void  javacall_free(void* ptr);
-        
-/** @} */
-    
-/******************************************************************************
- ******************************************************************************
- ******************************************************************************
-    OPTIONAL FUNCTIONS
- ******************************************************************************
- ******************************************************************************
- ******************************************************************************/
-    
-/** @defgroup OptionalMemory Optional Memory API
- *  @ingroup Memory
- * 
- * The following functions \n
- * - malloc \n
- * - free \n
- * - calloc \n
- * - realloc \n
- * - strdup \n
- * 
- * \n
- * can be implemented using basic malloc functionality, but using platform's optimized implementation is
- * preferred as these function are commonly-used functions.\n
- * The following definitions declare the standard memory allocation functions malloc and free
- * 
- *  @{
- */    
-
-
 
 /** 
  * Allocates and clears the given number of elements of the given size
@@ -148,27 +116,9 @@ void  javacall_free(void* ptr);
  * @param    elementSize Size of one element 
  * @return	  pointer to the newly allocated and cleared memory 
  */
-void* /*OPTIONAL*/ javacall_calloc(unsigned int numberOfElements, unsigned int elementSize );
-    
-/**
- * Re-allocates memory at the given pointer location in the private
- * JAVACALL memory pool (or null for new memory) so that it is the given
- * size.
- * 
- * @param  ptr		Original memory pointer
- * @param  size		New size 
- * @return	  pointer to the re-allocated memory 
- */
-void* /*OPTIONAL*/ javacall_realloc(void* ptr, unsigned int size);
-    
-    /**
- * Duplicates the given string after allocating the memory for it.
- * 
- * @param    str	String to duplicate
- * @return	pointer to the duplicate string
- */
-char* /*OPTIONAL*/ javacall_strdup(const char* str);
-    
+void* javacall_calloc(unsigned int numberOfElements, unsigned int elementSize );
+
+
 /** @} */
 
 /** @} */
