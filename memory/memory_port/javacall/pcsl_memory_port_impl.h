@@ -28,6 +28,7 @@
 #define _PCSL_MEMORY_PORT_IMPL_H_
 
 #include <javacall_memory.h>
+#include <javautil_string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -95,7 +96,7 @@ extern "C" {
  * @param    str	String to duplicate
  * @return	pointer to the duplicate string
  */
-#define pcsl_strdup_port_impl(x)            javacall_strdup((x))
+#define pcsl_strdup_port_impl(x)            javautil_string_duplicate((x))
 
 #ifdef __cplusplus
 }
