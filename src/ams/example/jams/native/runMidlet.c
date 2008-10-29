@@ -107,7 +107,6 @@ runMidlet(int argc, char** commandlineArgs) {
         char* pMsg = "WARNING: -port option has no effect, "
                      "set VmDebuggerPort property instead.\n";
         REPORT_ERROR(LC_AMS, pMsg);
-        fprintf(stderr, pMsg);
         return -1;
     }
 
@@ -140,7 +139,6 @@ runMidlet(int argc, char** commandlineArgs) {
      */
     if (argc > RUNMIDLET_MAX_ARGS) {
         REPORT_ERROR(LC_AMS, "Number of arguments exceeds supported limit");
-        fprintf(stderr, "Number of arguments exceeds supported limit\n");
         return -1;
     }
 
@@ -165,7 +163,6 @@ runMidlet(int argc, char** commandlineArgs) {
         /* the format of the string is "number:" */
         if (sscanf(chSuiteNum, "%d", &ordinalSuiteNumber) != 1) {
             REPORT_ERROR(LC_AMS, "Invalid suite number format");
-            fprintf(stderr, "Invalid suite number format: %s\n", chSuiteNum);
             return -1;
         }
     }
@@ -175,13 +172,11 @@ runMidlet(int argc, char** commandlineArgs) {
 
     if (argc == 1 && ordinalSuiteNumber == -1) {
         REPORT_ERROR(LC_AMS, "Too few arguments given.");
-        fprintf(stderr, runUsageText);
         return -1;
     }
 
     if (argc > 6) {
         REPORT_ERROR(LC_AMS, "Too many arguments given\n");
-        fprintf(stderr, "Too many arguments given\n%s", runUsageText);
         return -1;
     }
 
@@ -189,7 +184,6 @@ runMidlet(int argc, char** commandlineArgs) {
     appDir = getApplicationDir(argv[0]);
     if (appDir == NULL) {
 		REPORT_ERROR(LC_AMS, "Failed to recieve midp application directory");
-        fprintf(stderr, "Failed to recieve midp application directory\n");
         return -1;
     }
 
@@ -199,7 +193,6 @@ runMidlet(int argc, char** commandlineArgs) {
     confDir = getConfigurationDir(argv[0]);
     if (confDir == NULL) {
 		REPORT_ERROR(LC_AMS, "Failed to recieve midp configuration directory");
-        fprintf(stderr, "Failed to recieve midp configuration directory\n");
         return -1;
     }
     
@@ -207,7 +200,6 @@ runMidlet(int argc, char** commandlineArgs) {
 
     if (midpInitialize() != 0) {
         REPORT_ERROR(LC_AMS, "Not enough memory");
-        fprintf(stderr, "Not enough memory\n");
         return -1;
     }
 
@@ -219,7 +211,6 @@ runMidlet(int argc, char** commandlineArgs) {
         if (argc > 5) {
             if (PCSL_STRING_OK != pcsl_string_from_chars(argv[5], &arg2)) {
                 REPORT_ERROR(LC_AMS, "Out of Memory");
-                fprintf(stderr, "Out Of Memory\n");
                 break;
             }
         }
@@ -227,7 +218,6 @@ runMidlet(int argc, char** commandlineArgs) {
         if (argc > 4) {
             if (PCSL_STRING_OK != pcsl_string_from_chars(argv[4], &arg1)) {
                 REPORT_ERROR(LC_AMS, "Out of Memory");
-                fprintf(stderr, "Out Of Memory\n");
                 break;
             }
         }
@@ -235,7 +225,6 @@ runMidlet(int argc, char** commandlineArgs) {
         if (argc > 3) {
             if (PCSL_STRING_OK != pcsl_string_from_chars(argv[3], &arg0)) {
                 REPORT_ERROR(LC_AMS, "Out of Memory");
-                fprintf(stderr, "Out Of Memory\n");
                 break;
             }
         }
@@ -243,7 +232,6 @@ runMidlet(int argc, char** commandlineArgs) {
         if (argc > 2) {
             if (PCSL_STRING_OK != pcsl_string_from_chars(argv[2], &classname)) {
                 REPORT_ERROR(LC_AMS, "Out of Memory");
-                fprintf(stderr, "Out Of Memory\n");
                 break;
             }
 
@@ -265,8 +253,6 @@ runMidlet(int argc, char** commandlineArgs) {
             if (err != ALL_OK) {
                 REPORT_ERROR1(LC_AMS, "Error in midp_get_suite_ids(), code %d",
                               err);
-                fprintf(stderr, "Error in midp_get_suite_ids(), code %d.\n",
-                        err);
                 break;
             }
         }
@@ -275,7 +261,6 @@ runMidlet(int argc, char** commandlineArgs) {
             /* run the midlet suite by its ordinal number */
             if (ordinalSuiteNumber > numberOfSuites || ordinalSuiteNumber < 1) {
                 REPORT_ERROR(LC_AMS, "Suite number out of range");
-                fprintf(stderr, "Suite number out of range\n");
                 midp_free_suite_ids(pSuites, numberOfSuites);
                 break;
             }
@@ -288,7 +273,6 @@ runMidlet(int argc, char** commandlineArgs) {
             /* the format of the string is "number:" */
             if (sscanf(argv[1], "%d", &suiteId) != 1) {
                 REPORT_ERROR(LC_AMS, "Invalid suite ID format");
-                fprintf(stderr, "Invalid suite ID format\n");
                 break;
             }
 
@@ -300,7 +284,6 @@ runMidlet(int argc, char** commandlineArgs) {
 
             if (i == numberOfSuites) {
                 REPORT_ERROR(LC_AMS, "Suite with the given ID was not found");
-                fprintf(stderr, "Suite with the given ID was not found\n");
                 break;
             }
         } else {
@@ -324,13 +307,11 @@ runMidlet(int argc, char** commandlineArgs) {
             int res = find_midlet_class(suiteId, 1, &classname);
             if (OUT_OF_MEM_LEN == res) {
                 REPORT_ERROR(LC_AMS, "Out of Memory");
-                fprintf(stderr, "Out Of Memory\n");
                 break;
             }
 
             if (NULL_LEN == res) {
                 REPORT_ERROR(LC_AMS, "Could not find the first MIDlet");
-                fprintf(stderr, "Could not find the first MIDlet\n");
                 break;
             }
         }
@@ -358,12 +339,10 @@ runMidlet(int argc, char** commandlineArgs) {
 
     case MIDP_ERROR_STATUS:
         REPORT_ERROR(LC_AMS, "The MIDlet suite could not be run.");
-        fprintf(stderr, "The MIDlet suite could not be run.\n");
         break;
 
     case SUITE_NOT_FOUND_STATUS:
         REPORT_ERROR(LC_AMS, "The MIDlet suite was not found.");
-        fprintf(stderr, "The MIDlet suite was not found.\n");
         break;
 
     default:
