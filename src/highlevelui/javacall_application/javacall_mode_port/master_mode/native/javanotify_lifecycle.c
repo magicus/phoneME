@@ -177,17 +177,37 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
     }
 
 
-    if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
-        data->argv[data->argc++] = "untrusted";
-    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
-        data->argv[data->argc++] = "trusted";
-    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
-        data->argv[data->argc++] = "minimum";
-    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
-        data->argv[data->argc++] = "maximum";
-    } else {
+    switch (domain_type) {
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED: 
+        data->argv[data->argc] = "untrusted";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED:
+        data->argv[data->argc] = "trusted";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN:
+        data->argv[data->argc] = "minimum";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX:
+        data->argv[data->argc] = "maximum";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_MANUFACTURER:
+        data->argv[data->argc] = "manufacturer";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_OPERATOR:
+        data->argv[data->argc] = "operator";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_IDENTIFIED:
+        data->argv[data->argc] = "identified_third_party";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_UNIDENTIFIED:
+        data->argv[data->argc] = "unidentified_third_party";
+        break;
+    default:
+        REPORT_ERROR(LC_CORE, "javanotify_start_tck() Can not recognize TCK domain\n");
+        REPORT_ERROR(LC_CORE, "TCK domain type is %d. System will now exit\n", domain_type);
         return;
     }
+    data->argc++;
 
     midp_jc_event_send(&e);
 }
@@ -712,9 +732,9 @@ void decodeLanguage(char* str, short languageCode, short regionCode) {
  */
 void javanotify_change_locale(short languageCode, short regionCode) {
     const char tmp[6];
-	midp_jc_event_union e;
+    midp_jc_event_union e;
 
-	REPORT_INFO(LC_CORE, "javanotify_change_locale() >>\n");
+    REPORT_INFO(LC_CORE, "javanotify_change_locale() >>\n");
 
     e.eventType = MIDP_JC_EVENT_CHANGE_LOCALE;
 

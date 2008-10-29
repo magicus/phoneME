@@ -232,19 +232,37 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
         argv[argc++] = urlAddress;
     }
 
-    if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
-        argv[argc++] = "untrusted";
-    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
-        argv[argc++] = "trusted";
-    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
-        argv[argc++] = "minimum";
-    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
-        argv[argc++] = "maximum";
-    } else {
-        REPORT_ERROR(LC_CORE, "javanotify_start_tck() Can not recognize TCK domain\n");
-        REPORT_ERROR1(LC_CORE, "TCK domain type is %d. System will now exit\n", domain_type);
+    switch (domain_type) {
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED: 
+        argv[argc] = "untrusted";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED:
+        argv[argc] = "trusted";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN:
+        argv[argc] = "minimum";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX:
+        argv[argc] = "maximum";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_MANUFACTURER:
+        argv[argc] = "manufacturer";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_OPERATOR:
+        argv[argc] = "operator";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_IDENTIFIED:
+        argv[argc] = "identified_third_party";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_UNIDENTIFIED:
+        argv[argc] = "unidentified_third_party";
+        break;
+    default:
+        REPORT_ERROR(LC_CORE, "javanotify_start_tck() [slave mode] Can not recognize TCK domain\n");
+        REPORT_ERROR(LC_CORE, "TCK domain type is %d. System will now exit\n", domain_type);
         return;
     }
+    argc++;
 
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
 
@@ -699,7 +717,7 @@ void decodeLanguage(char* str, short languageCode, short regionCode) {
 void javanotify_change_locale(short languageCode, short regionCode) {
     const char tmp[6];
     midp_jc_event_union e;
-	
+    
     REPORT_INFO(LC_CORE, "javanotify_change_locale() >>\n");
 
     e.eventType = MIDP_JC_EVENT_CHANGE_LOCALE;
@@ -707,7 +725,7 @@ void javanotify_change_locale(short languageCode, short regionCode) {
     setSystemProperty(LOCALE, tmp);
 
     midp_jc_event_send(&e);
-	
+    
 }
 
 /**
