@@ -62,9 +62,9 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
 ifeq ($(TARGET_PLATFORM), javacall)
 # need revisit : javacall implementation requires runMidlet
 # even if USE_AMS_EXECUTABLE=false
-#ifeq ($(USE_AMS_EXECUTABLE),false)
-#SUBSYSTEM_AMS_NATIVE_FILES += \
-#    runMidlet.c
-#endif
+ifeq ($(USE_AMS_EXECUTABLE),false)
+SUBSYSTEM_AMS_NATIVE_FILES += \
+    runMidlet.c
+endif
 endif
 endif
