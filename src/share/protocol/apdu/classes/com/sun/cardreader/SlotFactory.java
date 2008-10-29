@@ -61,7 +61,7 @@ public class SlotFactory {
      * @throws IOException When the device creatiom failed
      */
     public static void init() throws IOException, CardDeviceException {
-        synchronized (initialized) {
+        synchronized (syncObject) {
             if (initialized.booleanValue()) {
                 return;
             }
@@ -133,7 +133,7 @@ public class SlotFactory {
     public static CardSlot getCardSlot(int slot)
 	throws IOException, CardDeviceException {
 
-        synchronized (initialized) {
+        synchronized (syncObject) {
             if ((!initialized.booleanValue()) || 
                 (slot < 0) || 
                 (slot >= slots.length)) {
@@ -171,7 +171,7 @@ public class SlotFactory {
      * @return Total number of card slots even if they are not created yet
      */
     public static int getCardSlotCount() {        
-        synchronized (initialized) {
+        synchronized (syncObject) {
             return slots.length;
         }
     }
@@ -182,7 +182,7 @@ public class SlotFactory {
      * @return Total number of configured devices
      */
     public static int getCardDeviceCount() {
-        synchronized (initialized) {
+        synchronized (syncObject) {
             return deviceRecords.length;
         }
     }
@@ -197,7 +197,7 @@ public class SlotFactory {
      * @exception IllegalArgumentException if illegal slot number provided
      */
     public static boolean isSatSlot(int slot) throws IOException {
-        synchronized (initialized) {
+        synchronized (syncObject) {
             if ((!initialized.booleanValue()) || 
                 (slot < 0) || 
                 (slot >= slots.length)) {
@@ -225,7 +225,12 @@ public class SlotFactory {
     private static CardSlot slots[] = new CardSlot[0];
 
     /**
-     * Initialization flag. Also used in synchronized().
+     * Initialization flag.
      */
     private static Boolean initialized = Boolean.FALSE;
+    
+    /**
+     * Service object, used in synchronized().
+     */
+    private static Object syncObject = new Object();
 }
