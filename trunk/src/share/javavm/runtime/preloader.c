@@ -1061,7 +1061,9 @@ CVMpreloaderIterateAllClasses(CVMExecEnv* ee,
 {
     int i;
     for (i = 0; i < CVM_nROMClasses; ++i) {
-	callback(ee, (CVMClassBlock*)CVM_ROMClassblocks[i], data);
+        if (CVM_ROMClassblocks[i] != NULL) {
+            callback(ee, (CVMClassBlock*)CVM_ROMClassblocks[i], data);
+        }
     }
 
 }
