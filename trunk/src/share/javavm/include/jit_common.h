@@ -200,6 +200,9 @@ typedef enum {
 /* NOTE: the default of -1 for lower code cache threshold is
    significant. See CVMJITcodeCacheInitOptions */
 #define CVMJIT_DEFAULT_LOWER_CCACHE_THR     -1
+#ifdef CVM_AOT
+#define CVMJIT_DEFAULT_AOT_CODE_CACHE_SIZE 672*1024
+#endif
 
 /*
  * Normally the CVMJIT_MAX_CODE_CACHE_SIZE is set to 32MB. The size shouldn't
@@ -443,6 +446,10 @@ typedef struct {
 
 #ifdef CVM_AOT
     /* AOT states  */
+    CVMBool    aotEnabled;
+    char*      aotFile;
+    CVMBool    recompileAOT;
+    CVMUint32  aotCodeCacheSize;  /* Code Cache Size for AOT compilation */
     CVMUint8*  codeCacheAOTStart; /* start of AOT code */
     CVMUint8*  codeCacheAOTEnd;   /* end of AOT code */
     CVMUint8*  codeCacheAOTGeneratedCodeStart;

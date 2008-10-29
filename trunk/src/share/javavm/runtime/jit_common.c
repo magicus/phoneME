@@ -1075,7 +1075,7 @@ new_mb:
 
 	    if ((int)ret >= 0) {
 		topOfStack += (int)ret;
-		DECACHE_TOS(); 
+                DECACHE_TOS();
 		CVMassert(frame == stack->currentFrame); (void)stack;
 		goto returnToCompiled;
 	    } else if (ret == CNI_NEW_TRANSITION_FRAME) {
@@ -1472,6 +1472,26 @@ static const CVMSubOptionData knownJitSubOptions[] = {
      &CVMglobals.jit.lowerCodeCacheThresholdPercent},
 
 #ifdef CVM_AOT
+    {"aot", "Enable AOT",
+     CVM_BOOLEAN_OPTION,
+     {{CVM_FALSE, CVM_TRUE, CVM_TRUE}},
+     &CVMglobals.jit.aotEnabled},
+
+    {"aotFile", "AOT File Path",
+     CVM_STRING_OPTION,
+     {{0, (CVMAddr)"<AOT file>", 0}},
+     &CVMglobals.jit.aotFile},
+
+    {"recompileAOT", "Recompile AOT code",
+     CVM_BOOLEAN_OPTION,
+     {{CVM_FALSE, CVM_TRUE, CVM_FALSE}},
+     &CVMglobals.jit.recompileAOT},
+
+    {"aotCodeCacheSize", "AOT Code Cache Size",
+     CVM_INTEGER_OPTION,
+     {{0, CVMJIT_MAX_CODE_CACHE_SIZE, CVMJIT_DEFAULT_AOT_CODE_CACHE_SIZE}},
+     &CVMglobals.jit.aotCodeCacheSize},
+
     {"aotMethodList", "List of Method to be compiled ahead of time", 
      CVM_STRING_OPTION, 
      {{0, (CVMAddr)"<filename>", 0}},
@@ -1763,27 +1783,33 @@ void CVMjitDumpSysInfo()
 void
 CVMjitCompileAOTCode(CVMExecEnv* ee)
 {
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
     JNIEnv* env = CVMexecEnv2JniEnv(ee);
     jstring jmlist;
 
-    if (CVMglobals.jit.codeCacheAOTCodeExist) {
+    if (!jgs->aotEnabled) {
+        return;
+    }
+
+    if (jgs->codeCacheAOTCodeExist) {
         CVMJITinitializeAOTCode();
-    } else {
-        if (CVMglobals.jit.aotMethodList == NULL) {
+    } else {  
+        CVMassert(jgs->isPrecompiling == CVM_TRUE);
+        if (jgs->aotMethodList == NULL) {
             const CVMProperties *sprops = CVMgetProperties();
-            CVMglobals.jit.aotMethodList = 
+            jgs->aotMethodList = 
                 (char*)malloc(strlen(sprops->library_path) +
                               strlen("/methodsList.txt") + 
                               1);
-            if (CVMglobals.jit.aotMethodList == NULL) {
+            if (jgs->aotMethodList == NULL) {
                 return;
             }
             *CVMglobals.jit.aotMethodList = '\0';
-            strcat(CVMglobals.jit.aotMethodList, sprops->library_path);
-            strcat(CVMglobals.jit.aotMethodList, "/methodsList.txt");
+            strcat(jgs->aotMethodList, sprops->library_path);
+            strcat(jgs->aotMethodList, "/methodsList.txt");
         }
 
-        jmlist = (*env)->NewStringUTF(env, CVMglobals.jit.aotMethodList);
+        jmlist = (*env)->NewStringUTF(env, jgs->aotMethodList);
         if ((*env)->ExceptionOccurred(env)) {
             return;
         }
@@ -1791,6 +1817,7 @@ CVMjitCompileAOTCode(CVMExecEnv* ee)
         CVMjniCallStaticVoidMethod(env,
             CVMcbJavaInstance(CVMsystemClass(sun_misc_Warmup)),
             CVMglobals.sun_misc_Warmup_runit, NULL, jmlist);
+
     }
 }
 #endif
@@ -3364,26 +3391,31 @@ CVMjitInit(CVMExecEnv* ee, CVMJITGlobalState* jgs,
      * The JIT policy is initialized after MTASK or AOT compile the methods
      * in the method list.
      */
-#ifdef CVM_MTASK
-    if (CVMglobals.isServer)
+#ifdef CVM_AOT
+    if (jgs->aotEnabled) 
 #endif
     {
+#ifdef CVM_MTASK
+        if (!CVMglobals.isServer) {
+	    goto initializeJITPolicy;
+        }
+#endif
         jgs->interpreterTransitionCost = 0;
         jgs->mixedTransitionCost = 0;
         jgs->backwardsBranchCost = 0;
         jgs->compileThreshold = CVMJIT_DEFAULT_CLIMIT;
     }
+#ifdef CVM_AOT
+    else
 #endif
-
-#ifdef CVM_MTASK
-    else /* !CVMglobals.isServer */
 #endif
     {
-#ifndef CVM_AOT
+#ifdef CVM_MTASK
+initializeJITPolicy:
+#endif
         if (!CVMjitPolicyInit(ee, jgs)) {
             return CVM_FALSE;
         }
-#endif
     }
     if (!CVMjitSetInliningThresholds(ee, jgs)) {
         return CVM_FALSE;
