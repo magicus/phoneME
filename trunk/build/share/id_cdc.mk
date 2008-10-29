@@ -47,4 +47,4 @@ endif
 endif
 
 # override with any id_project.mk that may haven been placed in this directory
--include $(CDC_DIR)/projects/build/share/id_project.mk
+-include $(CDC_DIR)/build/share/id_project.mk
