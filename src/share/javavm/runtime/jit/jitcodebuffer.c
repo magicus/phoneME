@@ -654,8 +654,18 @@ CVMJITcodeCacheInit(CVMExecEnv* ee, CVMJITGlobalState *jgs)
     jgs->codeCacheLowestForcedUtilization = jgs->codeCacheSize;
 
 #ifdef CVM_AOT
-    /* Find AOT codecache */
-    if (CVMfindAOTCodeCache(jgs))
+    /* Find existing AOT code. If it doesn't exist, 
+       CVMfindAOTCode allocates a big consecutive 
+       code cache for both AOT and dynamic
+       compilation. */
+    if (jgs->aotEnabled) {
+        if (!CVMfindAOTCode(jgs)) {
+	    /* No existing AOT code found. The code cache
+             * for AOT and JIT compilation has been allocated
+               by CVMfindAOTCode. */ 
+	    goto skipAllocateDynamicPart;
+        }
+    }
 #endif
     {
         /* Allocate the dynamic part */
@@ -675,6 +685,7 @@ CVMJITcodeCacheInit(CVMExecEnv* ee, CVMJITGlobalState *jgs)
         jgs->codeCacheStart = malloc(jgs->codeCacheSize);
 #endif
     }
+skipAllocateDynamicPart:
 
     if (jgs->codeCacheStart == NULL) {
 	    return CVM_FALSE;
@@ -1255,10 +1266,10 @@ CVMJITcodeCacheMakeRoomForMethod(CVMJITCompilationContext* con,
 
 #if defined(CVM_AOT) || defined(CVM_MTASK)
     if (CVMglobals.jit.isPrecompiling) {
-        CVMconsolePrintf("WARNING: Code cache full and decompilating "
-                         "is disabled during AOT compilation. Please "
-                         "use a larger code cache.\n");
-        goto done;
+        CVMconsolePrintf("WARNING: Code cache is full during AOT"
+                         "compilation. Please use a larger AOT "
+                         "code cache using -Xjit:aotCodeCacheSize=<size>.\n");
+        CVMabort();
     }
 #endif
 

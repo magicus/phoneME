@@ -360,9 +360,11 @@ CVMJITfreeCodeCache(void *start);
  *              jgs->codeCacheAOTEnd
  *              jgs->codeCacheAOTCodeExist
  *          The return value is the size of the AOT code.
+ *          If there is no existing AOT code, allocate a consecutive
+ *          code cache for both AOT and JIT compilation.
  */
 extern CVMInt32
-CVMfindAOTCodeCache();
+CVMfindAOTCode();
 
 /* 
  * The compiled code below the codeCacheDecompileStart will be saved

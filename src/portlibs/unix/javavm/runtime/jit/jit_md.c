@@ -77,24 +77,38 @@ CVMJITdisableRendezvousCallsTrapbased(CVMExecEnv* ee)
 #include "javavm/include/porting/io.h"
 #include "javavm/include/securehash.h"
 
-/* Find the AOT code from the persistent storage. */
-CVMInt32 CVMfindAOTCodeCache()
+/* Find existing AOT code. If there is no AOT code found,
+ * allocate a big consecutive code cache for both AOT and 
+ * JIT compilation.
+ */
+CVMInt32 CVMfindAOTCode()
 {
     CVMJITGlobalState* jgs = &CVMglobals.jit;
     const CVMProperties *sprops = CVMgetProperties();
-    char *aotfile;
+    char *aotfile = jgs->aotFile;
     int fd;
     /* codecache start addr + codecache size */
     int headersize = 2 * sizeof(CVMInt32);
 
-    aotfile = (char*)malloc(strlen(sprops->library_path) +
-                            strlen("/cvm.aot") + 1);
-    *aotfile = '\0';
-    strcat(aotfile, sprops->library_path);
-    strcat(aotfile, "/cvm.aot");
+    if (jgs->recompileAOT) {
+        goto notFound;
+    }
 
+    if (aotfile == NULL) {
+        aotfile = (char*)malloc(strlen(sprops->library_path) +
+                                strlen("/cvm.aot") + 1);
+        if (aotfile == NULL) {
+            goto notFound;
+        }
+        *aotfile = '\0';
+        strcat(aotfile, sprops->library_path);
+        strcat(aotfile, "/cvm.aot");
+    }
     fd = open(aotfile, O_RDONLY);
-    free(aotfile);
+    if (jgs->aotFile == NULL) {
+        free(aotfile);
+    }
+
     if (fd != -1) {
         /* Found persistent code store. */
         CVMInt32 codeSize;
@@ -193,21 +207,29 @@ notFound:
     {
         int fd;
         void* alignedAddr;
-        /* Couldn't found saved AOT code. Allocate the codecache
-           for AOT compilation. */
+
+        /* Couldn't find saved AOT code. Allocate one big consecutive
+           code cache for both AOT and JIT compilation. */
+        jgs->codeCacheSize += jgs->aotCodeCacheSize;
         fd = open("/dev/zero", O_RDWR);
         alignedAddr = mmap(0, jgs->codeCacheSize+headersize,
                            PROT_EXEC|PROT_READ|PROT_WRITE,
                            MAP_PRIVATE, fd, 0);
         close(fd);
 
-        jgs->codeCacheStart = alignedAddr + headersize;
+        if (alignedAddr == MAP_FAILED) {
+	    CVMconsolePrintf("Failed to mmap AOT code cache.\n");
+	    jgs->codeCacheStart = NULL;
+        } else {
+            jgs->codeCacheStart = alignedAddr + headersize;
+        }
         jgs->codeCacheAOTStart = 0;
         jgs->codeCacheAOTEnd = 0;
         jgs->codeCacheAOTCodeExist = CVM_FALSE;
         return 0;
     }
 }
+
 
 /* 
  * The compiled code above the codeCacheDecompileStart will be saved
@@ -236,21 +258,28 @@ CVMJITcodeCachePersist()
     CVMJITGlobalState* jgs = &CVMglobals.jit;
     /*CVMUint8* cbuf = jgs->codeCacheStart;*/
     const CVMProperties *sprops = CVMgetProperties();
-    char *aotfile;
+    char *aotfile = jgs->aotFile;
 
     if (jgs->codeCacheAOTCodeExist) {
         return;
     }
 
-    aotfile = (char*)malloc(strlen(sprops->library_path) +
+    if (aotfile == NULL) {
+        aotfile = (char*)malloc(strlen(sprops->library_path) +
                             strlen("/cvm.aot") + 1);
-    *aotfile = '\0';
-    strcat(aotfile, sprops->library_path);
-    strcat(aotfile, "/cvm.aot");
+        if (aotfile == NULL) {
+	    CVMconsolePrintf("Failed to malloc AOT file name.\n");
+	    CVMabort();
+	}
+        *aotfile = '\0';
+        strcat(aotfile, sprops->library_path);
+        strcat(aotfile, "/cvm.aot");
+    }
     fd = open(aotfile, O_WRONLY | O_CREAT | O_TRUNC, 0777);
 
     if (fd == -1) {
         CVMconsolePrintf("Could not create AOT file: %s.\n", aotfile);
+        CVMabort();
     } else {
         CVMUint8* start = jgs->codeCacheStart;
         CVMUint32 end = (CVMUint32)jgs->codeCacheDecompileStart;
@@ -272,6 +301,8 @@ CVMJITcodeCachePersist()
         close(fd);
         CVMtraceJITStatus(("JS: Finished writing AOT code.\n"));
     }
-    free(aotfile);
+    if (jgs->aotFile == NULL) {
+        free(aotfile);
+    }
 }
 #endif
