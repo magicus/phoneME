@@ -1184,6 +1184,9 @@ void set_event_frame_pop()
 
 extern "C" {
 void handle_exception_info(Thread *thread) {
+  GUARANTEE(_debugger_active, "No debugger connection");
+
+#if ENABLE_ISOLATES
   {
     // Noop if the current task is not connected to the debugger
     Task::Raw task = thread->task_for_thread();
@@ -1192,6 +1195,7 @@ void handle_exception_info(Thread *thread) {
       return;
     }
   }
+#endif
 
   UsingFastOops fast_oops;
 
