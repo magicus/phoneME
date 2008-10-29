@@ -61,7 +61,7 @@ void javacall_memory_heap_deallocate(void* heap) {
  * @param    size Number of byte to allocate
  * @return	  a pointer to the newly allocated memory
  */
-void* /*OPTIONAL*/ javacall_malloc(unsigned int size){ 
+void* javacall_malloc(unsigned int size){ 
     return 0 ;
 }
 
@@ -73,18 +73,30 @@ void* /*OPTIONAL*/ javacall_malloc(unsigned int size){
  * @param ptr	Pointer to previously allocated memory
  * @return a pointer to the reallocated memory or null if memory could not be reallocated
  */
-void* /*OPTIONAL*/  javacall_realloc(void* ptr, unsigned int size) {
+void* javacall_realloc(void* ptr, unsigned int size) {
     return 0;
 }
-
     
 /**
  * Frees memory at the given pointer in the private JAVACALL memory pool.
  * 
  * @param    ptr	Pointer to allocated memory
  */
-void  /*OPTIONAL*/ javacall_free(void* ptr) {
+void  javacall_free(void* ptr) {
 }
+
+/** 
+ * Allocates and clears the given number of elements of the given size
+ * from the private JAVACALL memory pool.
+ * 
+ * @param    numberOfElements Number of elements to allocate 
+ * @param    elementSize Size of one element 
+ * @return	  pointer to the newly allocated and cleared memory 
+ */
+void* javacall_calloc(unsigned int numberOfElements, unsigned int elementSize ) {
+    return 0;
+}
+
     
 #ifdef __cplusplus
 }
