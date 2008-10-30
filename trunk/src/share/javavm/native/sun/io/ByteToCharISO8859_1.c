@@ -48,7 +48,7 @@
         CVMoffsetOfsun_io_ByteToCharConverter_byteOff, \
         value)
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_io_ByteToCharISO8859_11_convert(CVMExecEnv* ee,
 				       CVMStackVal32 *arguments,
                                        CVMMethodBlock **p_mb)

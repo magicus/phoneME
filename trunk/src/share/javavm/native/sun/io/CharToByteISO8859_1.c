@@ -63,7 +63,7 @@
         CVMoffsetOfsun_io_CharToByteISO8859_1_highHalfZoneCode, \
         value);
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_io_CharToByteISO8859_11_convert(CVMExecEnv* ee, CVMStackVal32 *arguments,
                                        CVMMethodBlock **p_mb) 
 {

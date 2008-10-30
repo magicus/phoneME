@@ -236,7 +236,7 @@ unlock:
  * Method:	append
  * Signature:	([C)Ljava/lang/StringBuffer;
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_StringBuffer_append___3C(CVMExecEnv* ee, CVMStackVal32 *arguments,
                            CVMMethodBlock **p_mb)
 {
@@ -278,7 +278,7 @@ CNIjava_lang_StringBuffer_append___3C(CVMExecEnv* ee, CVMStackVal32 *arguments,
  * Method:	append
  * Signature:	([CII)Ljava/lang/StringBuffer;
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_StringBuffer_append___3CII(
     CVMExecEnv* ee, CVMStackVal32* arguments, CVMMethodBlock** p_mb)
 {
@@ -316,7 +316,7 @@ CNIjava_lang_StringBuffer_append___3CII(
  * Method:	expandCapacity
  * Signature:	(I)V
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_StringBuffer_expandCapacity(
     CVMExecEnv* ee, CVMStackVal32* arguments, CVMMethodBlock** p_mb)
 {

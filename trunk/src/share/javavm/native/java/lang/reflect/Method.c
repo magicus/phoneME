@@ -284,7 +284,7 @@ CVMinvokeMethod(CVMExecEnv* ee, CVMStackVal32 *arguments,
 /* The CVM methods implementing the native code for
    java.lang.reflect.Method can all share the same C code. */
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_reflect_Method_invokeV(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				    CVMMethodBlock **p_mb)
 {
@@ -296,7 +296,7 @@ CNIjava_lang_reflect_Method_invokeV(CVMExecEnv* ee, CVMStackVal32 *arguments,
 #endif /* CVM_REFLECT */
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_reflect_Method_invokeZ(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				    CVMMethodBlock **p_mb)
 {
@@ -308,7 +308,7 @@ CNIjava_lang_reflect_Method_invokeZ(CVMExecEnv* ee, CVMStackVal32 *arguments,
 #endif /* CVM_REFLECT */
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_reflect_Method_invokeC(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				    CVMMethodBlock **p_mb)
 {
@@ -320,7 +320,7 @@ CNIjava_lang_reflect_Method_invokeC(CVMExecEnv* ee, CVMStackVal32 *arguments,
 #endif /* CVM_REFLECT */
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_reflect_Method_invokeF(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				    CVMMethodBlock **p_mb)
 {
@@ -332,7 +332,7 @@ CNIjava_lang_reflect_Method_invokeF(CVMExecEnv* ee, CVMStackVal32 *arguments,
 #endif /* CVM_REFLECT */
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_reflect_Method_invokeD(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				    CVMMethodBlock **p_mb)
 {
@@ -344,7 +344,7 @@ CNIjava_lang_reflect_Method_invokeD(CVMExecEnv* ee, CVMStackVal32 *arguments,
 #endif /* CVM_REFLECT */
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_reflect_Method_invokeB(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				    CVMMethodBlock **p_mb)
 {
@@ -356,7 +356,7 @@ CNIjava_lang_reflect_Method_invokeB(CVMExecEnv* ee, CVMStackVal32 *arguments,
 #endif /* CVM_REFLECT */
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_reflect_Method_invokeS(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				    CVMMethodBlock **p_mb)
 {
@@ -368,7 +368,7 @@ CNIjava_lang_reflect_Method_invokeS(CVMExecEnv* ee, CVMStackVal32 *arguments,
 #endif /* CVM_REFLECT */
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_reflect_Method_invokeI(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				    CVMMethodBlock **p_mb)
 {
@@ -380,7 +380,7 @@ CNIjava_lang_reflect_Method_invokeI(CVMExecEnv* ee, CVMStackVal32 *arguments,
 #endif /* CVM_REFLECT */
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_reflect_Method_invokeL(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				    CVMMethodBlock **p_mb)
 {
@@ -392,7 +392,7 @@ CNIjava_lang_reflect_Method_invokeL(CVMExecEnv* ee, CVMStackVal32 *arguments,
 #endif /* CVM_REFLECT */
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_reflect_Method_invokeA(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				    CVMMethodBlock **p_mb)
 {
