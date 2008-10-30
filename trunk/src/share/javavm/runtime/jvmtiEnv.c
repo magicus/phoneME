@@ -5378,20 +5378,6 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	newKlass = classes[i];
 	newcb = CVMjvmtiClassRef2ClassBlock(ee, newKlass);
 	className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
-        /* verify number of methods/fields */
-	/* Phase 2 - check sig of each method/field */
-        if (CVMcbMethodCount(oldcb) < CVMcbMethodCount(newcb)) {
-            err = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_ADDED;
-            goto cleanup;
-        }
-        if (CVMcbMethodCount(oldcb) > CVMcbMethodCount(newcb)) {
-            err = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_DELETED;
-            goto cleanup;
-        }
-        if (CVMcbFieldCount(oldcb) != CVMcbFieldCount(newcb)) {
-            err = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
-            goto cleanup;
-        }
 	/* clear all breakpoints in this classes methods */
 	JVMTI_LOCK(ee);
 	CVMbagEnumerateOver(CVMglobals.jvmti.statics.breakpoints,
