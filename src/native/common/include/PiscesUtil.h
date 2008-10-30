@@ -98,11 +98,11 @@
 #define ALLOC3(array, type, len) ALLOC(array, type, len, len)
 
 /**
- * @def REALLOC(array, type, thresh, len)
+ * @def PISCES_REALLOC(array, type, thresh, len)
  * If 'array' is null or smaller than 'thresh', allocate with
  * length max(thresh, len).  Copy old contents into new storage.
  */
-#define REALLOC(array, type, thresh, len) do { \
+#define PISCES_REALLOC(array, type, thresh, len) do { \
   if (array == NULL || array##_length < (thresh)) { \
     jint nlen; \
     nlen = MAX(thresh, len); \

@@ -1991,7 +1991,8 @@ emitOval(Pipeline* pipeline, jint cx, jint cy, jint rx, jint ry,
 
     nPoints /= 4;
     nSize = 2*nPoints;
-    REALLOC(rdr->_ovalPoints, jint, nSize, rdr->_ovalPoints_length * 2);
+	
+    PISCES_REALLOC(rdr->_ovalPoints, jint, nSize, rdr->_ovalPoints_length * 2);
     ASSERT_ALLOC(rdr->_ovalPoints);
 
     points = rdr->_ovalPoints;
@@ -2033,7 +2034,7 @@ emitOffsetOval(Pipeline* pipeline, jint cx, jint cy, jint rx, jint ry,
 
     nPoints /= 4;
     nSize = 2*nPoints;
-    REALLOC(rdr->_ovalPoints, jint, nSize, rdr->_ovalPoints_length * 2);
+    PISCES_REALLOC(rdr->_ovalPoints, jint, nSize, rdr->_ovalPoints_length * 2);
     ASSERT_ALLOC(rdr->_ovalPoints);
 
     points = rdr->_ovalPoints;

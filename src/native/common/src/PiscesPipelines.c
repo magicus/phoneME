@@ -520,20 +520,20 @@ stroker_setParameters(Pipeline* pipeline, jint lineWidth,
     }
 
     numPenSegments = (jint)(3.14159f*lineWidth/65536.0f);
-    REALLOC(pipeline->stroker_pen_dx, jint, numPenSegments,
+    PISCES_REALLOC(pipeline->stroker_pen_dx, jint, numPenSegments,
             pipeline->stroker_pen_dx_length * 2);
     ASSERT_ALLOC(pipeline->stroker_pen_dx);
 
-    REALLOC(pipeline->stroker_pen_dy, jint, numPenSegments,
+    PISCES_REALLOC(pipeline->stroker_pen_dy, jint, numPenSegments,
             pipeline->stroker_pen_dy_length * 2);
     ASSERT_ALLOC(pipeline->stroker_pen_dy);
 
-    REALLOC(pipeline->stroker_penIncluded, jboolean, numPenSegments,
+    PISCES_REALLOC(pipeline->stroker_penIncluded, jboolean, numPenSegments,
             pipeline->stroker_penIncluded_length * 2);
     ASSERT_ALLOC(pipeline->stroker_penIncluded);
 
     newSize = 2 * numPenSegments;
-    REALLOC(pipeline->stroker_join, jint, newSize,
+    PISCES_REALLOC(pipeline->stroker_join, jint, newSize,
             pipeline->stroker_join_length * 2);
     ASSERT_ALLOC(pipeline->stroker_join);
 
@@ -1151,7 +1151,7 @@ stroker_emitLineTo(Pipeline* pipeline, jint x1, jint y1,
                    jboolean rev) {
     if (rev) {
         jint rindex = pipeline->stroker_rindex;
-        REALLOC(pipeline->stroker_reverse, jint, rindex + 2,
+        PISCES_REALLOC(pipeline->stroker_reverse, jint, rindex + 2,
                 pipeline->stroker_reverse_length * 2);
         ASSERT_ALLOC(pipeline->stroker_reverse);
 
