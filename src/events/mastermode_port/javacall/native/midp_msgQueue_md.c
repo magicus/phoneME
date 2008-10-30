@@ -279,17 +279,17 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr290FluidEvent.fluid_image;
         break;
     case JSR290_JC_EVENT_FLUID_LISTENER_COMPLETED:
-        pNewSignal->waitingFor   = JSR290_LISTENER_SIGNAL;
+        pNewSignal->waitingFor   = JSR290_IMAGE_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
-        pNewMidpEvent->type      = FLUID_LISTENER_EVENT;
+        pNewMidpEvent->type      = FLUID_IMAGE_EVENT;
         pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
         pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
         pNewMidpEvent->intParam1 = JSR290_LISTENER_COMPLETED;
         break;
     case JSR290_JC_EVENT_FLUID_LISTENER_FAILED:
-        pNewSignal->waitingFor   = JSR290_LISTENER_SIGNAL;
+        pNewSignal->waitingFor   = JSR290_IMAGE_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
-        pNewMidpEvent->type      = FLUID_LISTENER_EVENT;
+        pNewMidpEvent->type      = FLUID_IMAGE_EVENT;
         pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
         pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
         pNewMidpEvent->intParam1 = JSR290_LISTENER_FAILED;
@@ -304,26 +304,26 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         javacall_free(event->data.jsr290FluidEvent.text);
         break;
     case JSR290_JC_EVENT_FLUID_LISTENER_PERCENTAGE:
-        pNewSignal->waitingFor   = JSR290_LISTENER_SIGNAL;
+        pNewSignal->waitingFor   = JSR290_IMAGE_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
-        pNewMidpEvent->type      = FLUID_LISTENER_EVENT;
+        pNewMidpEvent->type      = FLUID_IMAGE_EVENT;
         pNewMidpEvent->intParam2 = (int)(((jlong)event->data.jsr290FluidEvent.fluid_image));
         pNewMidpEvent->intParam3 = (int)(((jlong)event->data.jsr290FluidEvent.fluid_image) >> 32);
         pNewMidpEvent->intParam1 = JSR290_LISTENER_PERCENTAGE;
         pNewMidpEvent->intParam4 = *((int*)&event->data.jsr290FluidEvent.percentage);
         break;
     case JSR290_JC_EVENT_FLUID_LISTENER_STARTED:
-        pNewSignal->waitingFor   = JSR290_LISTENER_SIGNAL;
+        pNewSignal->waitingFor   = JSR290_IMAGE_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
-        pNewMidpEvent->type      = FLUID_LISTENER_EVENT;
+        pNewMidpEvent->type      = FLUID_IMAGE_EVENT;
         pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
         pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
         pNewMidpEvent->intParam1 = JSR290_LISTENER_STARTED;
         break;
     case JSR290_JC_EVENT_FLUID_LISTENER_WARNING:
-        pNewSignal->waitingFor   = JSR290_LISTENER_SIGNAL;
+        pNewSignal->waitingFor   = JSR290_IMAGE_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
-        pNewMidpEvent->type      = FLUID_LISTENER_EVENT;
+        pNewMidpEvent->type      = FLUID_IMAGE_EVENT;
         pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
         pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
         pNewMidpEvent->intParam1 = JSR290_LISTENER_WARNING;
@@ -336,6 +336,33 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
                                            &pNewMidpEvent->stringParam1);
         }
         javacall_free(event->data.jsr290FluidEvent.text);
+        break;
+    case JSR290_JC_EVENT_REQUEST_RESOURCE:
+        pNewSignal->waitingFor   = JSR290_IMAGE_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
+        pNewMidpEvent->type      = FLUID_IMAGE_EVENT;
+        pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
+        pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
+        pNewMidpEvent->intParam4 = (int)((jlong)(event->data.jsr290FluidEvent.spare));
+        pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290FluidEvent.spare) >> 32);
+        pNewMidpEvent->intParam1 = JSR290_REQUEST_RESOURCE;
+        {
+            int len = 0;
+            if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text, &len)) {
+                len = 0;
+            }
+            pcsl_string_convert_from_utf16(event->data.jsr290FluidEvent.text, len,
+                                           &pNewMidpEvent->stringParam1);
+        }
+        javacall_free(event->data.jsr290FluidEvent.text);
+        break;
+    case JSR290_JC_EVENT_CANCEL_REQUEST:
+        pNewSignal->waitingFor   = JSR290_IMAGE_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
+        pNewMidpEvent->type      = FLUID_IMAGE_EVENT;
+        pNewMidpEvent->intParam4 = (int)((jlong)(event->data.jsr290FluidEvent.spare));
+        pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290FluidEvent.spare) >> 32);
+        pNewMidpEvent->intParam1 = JSR290_CANCEL_REQUEST;
         break;
 #endif /* ENABLE_JSR_290 */
 

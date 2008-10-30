@@ -1049,6 +1049,34 @@ javanotify_fluid_listener_warning (
     midp_jc_event_send(&e);
 }
 
+void
+javanotify_fluid_request_resource (
+    javacall_handle                       fluid_image,
+    javacall_handle                       request,
+    javacall_const_utf16_string           url
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_REQUEST_RESOURCE;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.spare       = request;
+    e.data.jsr290FluidEvent.text        = javautil_wcsdup(url);
+
+    midp_jc_event_send(&e);
+}
+
+void
+javanotify_fluid_cancel_request (
+    javacall_handle                       request
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_CANCEL_REQUEST;
+    e.data.jsr290FluidEvent.spare       = request;
+
+    midp_jc_event_send(&e);
+}       
+
 #endif /* ENABLE_JSR_290 */
 
 /**

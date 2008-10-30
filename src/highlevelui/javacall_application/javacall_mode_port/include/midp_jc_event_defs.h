@@ -168,6 +168,8 @@ typedef enum {
     JSR290_JC_EVENT_FLUID_LISTENER_PERCENTAGE,
     JSR290_JC_EVENT_FLUID_LISTENER_STARTED,
     JSR290_JC_EVENT_FLUID_LISTENER_WARNING,
+    JSR290_JC_EVENT_REQUEST_RESOURCE,
+    JSR290_JC_EVENT_CANCEL_REQUEST,
 #endif /*ENABLE_JSR_290*/
 } midp_jc_event_type;
 
@@ -335,6 +337,7 @@ typedef struct {
 #ifdef ENABLE_JSR_290
 typedef struct {
     javacall_handle             fluid_image;
+    javacall_handle             spare;
     javacall_utf16_string       text;
     float                       percentage;
     javacall_result             result;

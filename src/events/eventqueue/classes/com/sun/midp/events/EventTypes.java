@@ -397,6 +397,6 @@ public final class EventTypes {
     /**
      * JSR290 Fluid listener notification event
      */
-    public static final int FLUID_LISTENER_EVENT = 63;
+    public static final int FLUID_IMAGE_EVENT = 63;
 
 }
