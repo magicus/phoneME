@@ -1205,25 +1205,29 @@ void rmsdb_notify_record_store_changed(pcsl_string *filenameBase,
     int i;
     pcsl_string_status rc1, rc2;
     lockFileList *lockNodePtr = findLockById(filenameBase, rmsName);
+    int currentIsolateId = getCurrentIsolateId();
     if (lockNodePtr != NULL) {
         for (i = 0; i < lockNodePtr->count; i++) {
-            MidpEvent evt;
+            int lockerId = lockNodePtr->lockerId[i];
+            if (lockerId != currentIsolateId) {
+                MidpEvent evt;
 
-            MIDP_EVENT_INITIALIZE(evt);
-            evt.type = RECORD_STORE_CHANGE_EVENT;
-            evt.intParam1 = changeType;
-            evt.intParam2 = recordId;
-            rc1 = pcsl_string_dup(filenameBase, &evt.stringParam1);
-            rc2 = pcsl_string_dup(rmsName, &evt.stringParam2);
-            if (rc1 != PCSL_STRING_OK || rc2 != PCSL_STRING_OK) {
-                REPORT_CRIT(LC_RMS,
-                    "rmsdb_notify_record_store_changed(): OUT OF MEMORY");
-                return;
+                MIDP_EVENT_INITIALIZE(evt);
+                evt.type = RECORD_STORE_CHANGE_EVENT;
+                evt.intParam1 = changeType;
+                evt.intParam2 = recordId;
+                rc1 = pcsl_string_dup(filenameBase, &evt.stringParam1);
+                rc2 = pcsl_string_dup(rmsName, &evt.stringParam2);
+                if (rc1 != PCSL_STRING_OK || rc2 != PCSL_STRING_OK) {
+                    REPORT_CRIT(LC_RMS,
+                        "rmsdb_notify_record_store_changed(): OUT OF MEMORY");
+                    return;
+                }
+
+                REPORT_INFO1(LC_RMS, "rmsdb_notify_record_store_changed(): "
+                    "notify VM task %d of RMS changes", lockerId);
+                StoreMIDPEventInVmThread(evt, lockerId);
             }
-            
-            REPORT_INFO1(LC_RMS, "rmsdb_notify_record_store_changed(): "
-                "notify VM task %d of RMS changes", lockNodePtr->lockerId[i]);
-            StoreMIDPEventInVmThread(evt, lockNodePtr->lockerId[i]);
         }
     }
 }

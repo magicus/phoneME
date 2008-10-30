@@ -789,7 +789,10 @@ public class RecordStore {
                 "recordId = " + recordId);
         }
 
-        // Send notification to registered listeners
+
+        // Synchronously notify local registered listeners and
+        // send notification event to external registered listeners
+        notifyRecordListeners(RecordStoreFile.ADDED, recordId);
         RecordStoreFile.notifyChanged(suiteId, recordStoreName,
             RecordStoreFile.ADDED, recordId);
 
@@ -822,7 +825,9 @@ public class RecordStore {
         checkWritable();
         peer.deleteRecord(recordId);
 
-        // Send notification to registered listeners
+        // Synchronously notify local registered listeners and
+        // send notification event to external registered listeners
+        notifyRecordListeners(RecordStoreFile.DELETED, recordId);
         RecordStoreFile.notifyChanged(suiteId, recordStoreName,
             RecordStoreFile.DELETED, recordId);
     }
@@ -951,7 +956,9 @@ public class RecordStore {
 
         peer.setRecord(recordId, newData, offset, numBytes);
 
-        // Send notification to registered listeners
+        // Synchronously notify local registered listeners and
+        // send notification event to external registered listeners
+        notifyRecordListeners(RecordStoreFile.CHANGED, recordId);
         RecordStoreFile.notifyChanged(suiteId, recordStoreName,
             RecordStoreFile.CHANGED, recordId);
     }
