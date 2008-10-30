@@ -1,5 +1,4 @@
 /*
- * 
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -453,7 +452,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * called from Canvas.paint routine
      * We have to paint direct video region on Canvas
      * Notice: This have to be done before device painting action
-     * Zoran ESDK use mask color to draw direct video
      */
     public void paintVideo(Graphics g) {
         int x, y, w, h;
@@ -696,7 +694,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
             // Calculate positions
             // And, do a physical clipping
-            // Currently, Zoran chipset does not support negative position and exceed position
             px = x + diffx;
             py = y + diffy;
             pw = w;
