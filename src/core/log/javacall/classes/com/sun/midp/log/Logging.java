@@ -137,8 +137,6 @@ public class Logging extends LoggingBase {
    
     public static void report(int severity, int channelID, String message) {
 
-        int isolateID = MIDletSuiteUtils.getIsolateId();
-
         if(getAllowedSeverity(channelID) <= severity) {
             report0(severity, channelID, message);
         }
@@ -166,8 +164,7 @@ public class Logging extends LoggingBase {
      * No output will occur if <code>message</code> is null.
      *
      * @param severity severity level of report
-     * @param channelID area report relates to, from LogChannels.java
-     * @param isolateID, isolase's id number
+     * @param channelID area report relates to, from LogChannels.java 
      * @param message message to go with the report
      */
 
