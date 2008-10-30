@@ -74,11 +74,6 @@ MIDP_JAVADOC_ALL += \
 INTERNAL_JSR_172_RI_DIR    = $(JSR_172_DIR)/src/ri
 INTERNAL_JSR_172_CONFIG_DIR = $(JSR_172_DIR)/src/config
 
-# Jpp files that need preprocessing
-#
-$(JSR_172_GENERATED_DIR)/classes/%.java: $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/%.jpp
-	@$(call runjpp,$^,$@)
-
 JSR_172_PROPERTY_FILE = $(INTERNAL_JSR_172_CONFIG_DIR)/properties_jsr172.xml
 JSR_172_CONSTANT_FILE = $(INTERNAL_JSR_172_CONFIG_DIR)/constants_jsr172.xml
 
@@ -109,6 +104,21 @@ INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/ServerException.java \
         $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/MarshalException.java \
 
+INTERNAL_JSR_172_DEPENDENCIES += \
+	$(MOBILITY_PACK_JARS_DIR)/lib/cldcapi11.jar \
+	$(MOBILITY_PACK_JARS_DIR)/lib/midpapi20.jar \
+
+# All of them together to provide to main makefile
+SUBSYSTEM_JSR_172_JAVA_FILES += \
+    $(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) \
+    $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES) \
+
+
+# Create JSR 172 source in subdir 'jsr172/'
+JSR_172_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr172
+
+# separate Jars building support
+
 INTERNAL_JSR_172_SG_RI_PACKAGE = com.sun.j2mews.sg
 INTERNAL_JSR_172_SG_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/AbstractGenerator.java \
@@ -120,19 +130,13 @@ INTERNAL_JSR_172_SG_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/WSCompile.java \
 
 INTERNAL_JSR_172_SG_RI_DEPENDENCIES += \
-		$(MOBILITY_PACK_JARS_DIR)/bin/schema2beansdev.jar \
-		$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-api.jar \
-		$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-impl.jar \
-		$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-spi.jar \
-		$(MOBILITY_PACK_JARS_DIR)/lib/j2me-xmlrpc.jar \
+	$(MOBILITY_PACK_JARS_DIR)/bin/schema2beansdev.jar \
+	$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-api.jar \
+	$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-impl.jar \
+	$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-spi.jar \
+	$(MOBILITY_PACK_JARS_DIR)/lib/j2me-xmlrpc.jar \
 
-INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST = $(subst ; ,;,$(foreach jar,$(INTERNAL_JSR_172_SG_RI_DEPENDENCIES),$(jar);))
+ABSTRACTIONS_SRC_DIR=$(ABSTRACTIONS_DIR)/src/cldc_application/classes
 
-# All of them together to provide to main makefile
-SUBSYSTEM_JSR_172_JAVA_FILES += \
-    $(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) \
-    $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES) \
-
-
-# Create JSR 172 source in subdir 'jsr172/'
-JSR_172_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr172
+INTERNAL_JSR_172_REQUIRED_MIDP_FILES += \
+	$(ABSTRACTIONS_SRC_DIR)/com/sun/j2me/io/Base64.java \
