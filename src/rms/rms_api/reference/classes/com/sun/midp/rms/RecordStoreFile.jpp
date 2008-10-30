@@ -73,7 +73,7 @@ class RecordStoreFile implements AbstractRecordStoreFile {
     /**
      * Get the number of record stores for a MIDlet suite.
      *
-     * @param id ID of the suite
+     * @param filenameBase filename base of the suite
      *
      * @return the number of installed suites
      */
@@ -82,7 +82,7 @@ class RecordStoreFile implements AbstractRecordStoreFile {
     /**
      * Retrieves the list of record stores a MIDlet suites owns.
      *
-     * @param id ID of the suite
+     * @param filenameBase filename base of the suite
      * @param names an empty array of suite IDs to fill, call
      *     getNumberOfSuites to know how big to make the array
      */
@@ -111,7 +111,8 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      * stored in the MIDP memory space and include its size
      * in the total.
      *
-     * @param suiteId ID of the MIDlet suite that owns the record store
+     * @param filenameBase filename base of the MIDlet suite that owns the
+     *                     record store
      *
      * @return the approximate space available to create a
      *         record store in bytes.
@@ -168,7 +169,8 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      * pointer to register the cleanup routine. When we have full
      * native finalization, open() can be made 'static' again.
      *
-     * @param suiteId ID of the MIDlet suite that owns the record store
+     * @param filenameBase filename base of the MIDlet suite that owns the
+     *                     record store
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
@@ -209,7 +211,8 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      * in the total.
      *
      * @param handle to an open record store
-     * @param suiteId ID of the MIDlet suite that owns the record store
+     * @param filenameBase filename base of the MIDlet suite that owns the
+     *                     record store
      *
      * @return the approximate space available to grow the
      *         record store in bytes.
