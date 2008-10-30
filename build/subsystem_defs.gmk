@@ -105,6 +105,7 @@ INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/MarshalException.java \
 
 INTERNAL_JSR_172_DEPENDENCIES += \
+	$(OUTPUT_DIR)/xmlparser.jar \
 	$(MOBILITY_PACK_JARS_DIR)/lib/cldcapi11.jar \
 	$(MOBILITY_PACK_JARS_DIR)/lib/midpapi20.jar \
 
