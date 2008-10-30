@@ -44,3 +44,9 @@ $(XMLPARSER_GENERATED_DIR)/$(SUN_PATH)/%.java : $(XMLPARSER_SRC_DIR)/$(SUN_PATH)
 source_bundle::
 	@echo " ... xmlparser source bundle" $(LOG)
 	$(AT)$(call source_bundle_filter,$(XMLPARSER_DIR),$(XMLPARSER_SOURCE_OUTPUT_DIR),build/share src)
+
+$(OUTPUT_DIR)/xmlparser.jar : jpp $(JAVAC_OUT_DIR) $(XMLPARSER_JAVA_FILES)
+	@echo "build $@ ..."
+	$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) $(XMLPARSER_JAVA_FILES) || exit 1;
+	$(JAR_CMD) -cf $@ $(JAVAC_OUT_DIR) || exit 2;
+	$(shell rm -rf $(JAVAC_OUT_DIR)/*)
