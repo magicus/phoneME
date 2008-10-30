@@ -96,12 +96,12 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
         // check if file exists and delete it
         
-        if (RecordStoreUtil.exists(RmsEnvironment.getSecureFilenameBase(suiteId),
+        if (RecordStoreUtil.exists(RmsEnvironment.getSecureKeyBase(suiteId),
                                    recordStoreName,
                                    RecordStoreFile.DB_EXTENSION)) {
             boolean success = RecordStoreIndex.deleteIndex(
                 suiteId, recordStoreName);
-            RecordStoreUtil.deleteFile(RmsEnvironment.getSecureFilenameBase(suiteId),
+            RecordStoreUtil.deleteFile(RmsEnvironment.getSecureKeyBase(suiteId),
                 recordStoreName, RecordStoreFile.DB_EXTENSION);
 
             if (!success) {
@@ -1048,7 +1048,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         this.suiteId = suiteId;
         rsLock = new Object();
 
-        boolean exists = RecordStoreUtil.exists(RmsEnvironment.getSecureFilenameBase(suiteId),
+        boolean exists = RecordStoreUtil.exists(RmsEnvironment.getSecureKeyBase(suiteId),
                                                 recordStoreName,
                                                 RecordStoreFile.DB_EXTENSION);
 
@@ -1120,7 +1120,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
             if (!exists) {
                 // avoid preserving just created damaged files
-                RecordStoreUtil.quietDeleteFile(RmsEnvironment.getSecureFilenameBase(suiteId),
+                RecordStoreUtil.quietDeleteFile(RmsEnvironment.getSecureKeyBase(suiteId),
                     recordStoreName, RecordStoreFile.DB_EXTENSION);
                 RecordStoreIndex.deleteIndex(suiteId, recordStoreName);
             }
@@ -1131,8 +1131,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         }
     }
 
-    public static void notifyListeners(int handle, int changeType, int recordId) {
-        
+    /** Returns secure key base to access this record store */
+    public String getSecureKeyBase() {
+        return RmsEnvironment.getSecureKeyBase(suiteId);
     }
-
 }

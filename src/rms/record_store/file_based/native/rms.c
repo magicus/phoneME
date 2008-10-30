@@ -1005,8 +1005,10 @@ rmsdb_get_rms_storage_size(pcsl_string* filenameBase, SuiteIdType id) {
  *
  */
 static int
-recordStoreCreateLock(pcsl_string* filenameBase, const pcsl_string * name_str,
+recordStoreCreateLock(pcsl_string *filenameBase, const pcsl_string *name_str,
                       int handle) {
+
+    pcsl_string_status rc;
     lockFileList* newNodePtr;
 
     newNodePtr = (lockFileList *)midpMalloc(sizeof(lockFileList));
@@ -1016,11 +1018,14 @@ recordStoreCreateLock(pcsl_string* filenameBase, const pcsl_string * name_str,
 
     newNodePtr->count = 1;
     newNodePtr->lockerId[0] = getCurrentIsolateId();
-    newNodePtr->filenameBase = *filenameBase;
 
-    /*IMPL_NOTE: check for error codes instead of null strings*/
-    pcsl_string_dup(name_str, &newNodePtr->recordStoreName);
-    if (pcsl_string_is_null(&newNodePtr->recordStoreName)) {
+    rc = pcsl_string_dup(filenameBase, &newNodePtr->filenameBase);
+    if (rc != PCSL_STRING_OK) {
+        midpFree(newNodePtr);
+        return OUT_OF_MEM_LEN;
+    }
+    rc = pcsl_string_dup(name_str, &newNodePtr->recordStoreName);
+    if (rc != PCSL_STRING_OK) {
         midpFree(newNodePtr);
         return OUT_OF_MEM_LEN;
     }
@@ -1195,22 +1200,29 @@ static MIDPError buildSuiteFilename(pcsl_string* filenameBase,
 }
 
 void rmsdb_notify_record_store_changed(pcsl_string *filenameBase,
-        SuiteIdType suiteId, const pcsl_string *rmsName,
-        int changeType, int recordId) {
+        const pcsl_string *rmsName, int changeType, int recordId) {
 
     int i;
+    pcsl_string_status rc1, rc2;
     lockFileList *lockNodePtr = findLockById(filenameBase, rmsName);
     if (lockNodePtr != NULL) {
         for (i = 0; i < lockNodePtr->count; i++) {
             MidpEvent evt;
 
             MIDP_EVENT_INITIALIZE(evt);
-            evt.type = RECORD_STORE_CHANGED_EVENT;
-            evt.intParam1 = suiteId;
-            evt.intParam2 = changeType;
-            evt.intParam3 = recordId;
-            evt.stringParam1 = *rmsName;
-
+            evt.type = RECORD_STORE_CHANGE_EVENT;
+            evt.intParam1 = changeType;
+            evt.intParam2 = recordId;
+            rc1 = pcsl_string_dup(filenameBase, &evt.stringParam1);
+            rc2 = pcsl_string_dup(rmsName, &evt.stringParam2);
+            if (rc1 != PCSL_STRING_OK || rc2 != PCSL_STRING_OK) {
+                REPORT_CRIT(LC_RMS,
+                    "rmsdb_notify_record_store_changed(): OUT OF MEMORY");
+                return;
+            }
+            
+            REPORT_INFO1(LC_RMS, "rmsdb_notify_record_store_changed(): "
+                "notify VM task %d of RMS changes", lockNodePtr->lockerId[i]);
             StoreMIDPEventInVmThread(evt, lockNodePtr->lockerId[i]);
         }
     }

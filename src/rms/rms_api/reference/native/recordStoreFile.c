@@ -149,7 +149,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreFile_getRecordStoreList) {
 /**
  * Remove all the Record Stores for a suite.
  *
- * @param filenameBase filename base of the suite
+ * @param suiteId ID of the suite
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_rms_RecordStoreFile_removeRecordStores0) {
@@ -166,12 +166,12 @@ KNIDECL(com_sun_midp_rms_RecordStoreFile_removeRecordStores0) {
 /**
  * Returns true if the suite has created at least one record store.
  *
- * @param filenameBase filename base of the suite
+ * @param suiteId ID of the suite
  *
  * @return true if the suite has at least one record store
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_midp_rms_RecordStoreFactory_suiteHasRmsData0) {
+KNIDECL(com_sun_midp_rms_RecordStoreFactory_suiteHasRmsData) {
     jboolean exists = KNI_FALSE;
     int status;
 
@@ -490,16 +490,15 @@ KNIDECL(com_sun_midp_rms_RecordStoreFile_finalize) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_rms_RecordStoreFile_notifyChanged0) {
 
-    int suiteId =  KNI_GetParameterAsInt(2);
-    int changeType = KNI_GetParameterAsInt(4);
-    int recordId = KNI_GetParameterAsInt(5);
+    int changeType = KNI_GetParameterAsInt(3);
+    int recordId = KNI_GetParameterAsInt(4);
 
     KNI_StartHandles(2);
     GET_PARAMETER_AS_PCSL_STRING(1, filenameBase)
-    GET_PARAMETER_AS_PCSL_STRING(3, rmsName) {
+    GET_PARAMETER_AS_PCSL_STRING(2, rmsName) {
 
         rmsdb_notify_record_store_changed(
-            &filenameBase, suiteId, &rmsName, changeType, recordId);
+            &filenameBase, &rmsName, changeType, recordId);
     }
     RELEASE_PCSL_STRING_PARAMETER;
     RELEASE_PCSL_STRING_PARAMETER;

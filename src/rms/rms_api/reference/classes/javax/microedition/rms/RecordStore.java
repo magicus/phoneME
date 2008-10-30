@@ -157,10 +157,10 @@ public class RecordStore {
     private static RecordStoreEventConsumer recordStoreEventConsumer =
         new RecordStoreEventConsumer() {
             public void handleRecordStoreChange(
-                    int suiteId, String recordStoreName,
+                    String keyBase, String recordStoreName,
                     int changeType, int recordId) {
                 RecordStore.handleRecordStoreChange(
-                    suiteId, recordStoreName, changeType, recordId);
+                    keyBase, recordStoreName, changeType, recordId);
             }
         };
 
@@ -654,12 +654,12 @@ public class RecordStore {
      *          this record store to grow
      */
     public int getSizeAvailable() throws RecordStoreNotOpenException {
-	checkOpen();
-	int sizeAvailable = peer.getSizeAvailable();
-	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-	    Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-			   "getSizeAvailable() = " + sizeAvailable);
-	}
+        checkOpen();
+        int sizeAvailable = peer.getSizeAvailable();
+        if (true || Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
+                "getSizeAvailable() = " + sizeAvailable);
+        }
         return sizeAvailable;
     }
 
@@ -765,7 +765,7 @@ public class RecordStore {
         checkOpen();
         checkWritable();
 
-        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+        if (true || Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                 "addRecord(data=" + data +
                     ", offset=" + offset +
@@ -784,7 +784,7 @@ public class RecordStore {
 
         int recordId = peer.addRecord(data, offset, numBytes);
 
-        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+        if (true || Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                 "recordId = " + recordId);
         }
@@ -814,7 +814,7 @@ public class RecordStore {
         throws RecordStoreNotOpenException, InvalidRecordIDException,
         RecordStoreException {
 
-        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+        if (true || Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                 "deleteRecord(" + recordId + ")");
         }
@@ -847,7 +847,7 @@ public class RecordStore {
         RecordStoreException {
         checkOpen();
         int size = peer.getRecordSize(recordId);
-        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+        if (true || Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                 "getSize(" + recordId + ") = " + size);
         }
@@ -931,7 +931,7 @@ public class RecordStore {
         throws RecordStoreNotOpenException, InvalidRecordIDException,
         RecordStoreException, RecordStoreFullException {
 
-        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+        if (true || Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                 "setRecord(" + recordId + ")");
         }
@@ -1101,11 +1101,11 @@ public class RecordStore {
      */
     private void notifyRecordListeners(final int changeType, final int recordId) {
         synchronized (recordListener) {
-            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-            Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                "notify # listener = " + recordListener.size() +
-                    ", change type = " + changeType +
-                    ", record ID = " + recordId);
+            if (true || Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
+                    "notify # listener = " + recordListener.size() +
+                        ", change type = " + changeType +
+                        ", record ID = " + recordId);
             }
             int nListeners = recordListener.size();
             for (int i = 0; i < nListeners; i++) {
@@ -1126,13 +1126,25 @@ public class RecordStore {
     }
 
     private static void handleRecordStoreChange(
-            int suiteId, String recordStoreName, int changeType, int recordId) {
+            String keyBase, String recordStoreName, int changeType, int recordId) {
         synchronized (openRecordStores) {
+            if (true || Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
+                    "RecordStore.handleRecordStoreChange(): " +
+                        "keyBase = " + keyBase + ", "  +
+                        "storeName = " + recordStoreName + ", " +
+                        "changeType = " + changeType + ", " +
+                        "recordId = " + recordId);
+            }
             int size = openRecordStores.size();
+            System.out.println("Number of open record stores: " + size);
             for (int n = 0; n < size; n++) {
                 RecordStore recordStore = (RecordStore)openRecordStores.elementAt(n);
-                if (recordStore.suiteId == suiteId &&
-                        recordStore.recordStoreName.equals(recordStoreName)) {
+                String base = recordStore.peer.getSecureKeyBase();
+                String name = recordStore.recordStoreName;
+                System.out.println("Check record store: base = " +
+                    base + ", name = " + name);
+                if (keyBase.equals(base) && recordStoreName.equals(name)) {
                     recordStore.notifyRecordListeners(changeType, recordId);
                     break;
                 }

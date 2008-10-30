@@ -47,9 +47,11 @@ public class RmsEnvironment {
         internalInit(container);
 
         // Register listener for record store change events
-        RecordStoreEventListener rseListener = new RecordStoreEventListener();
+        System.out.println("Register record store event listener");
+        RecordStoreEventListener recordEventsListener =
+            new RecordStoreEventListener();
         eventQueue.registerEventListener(
-            EventTypes.RECORD_STORE_CHANGE_EVENT, rseListener);
+            EventTypes.RECORD_STORE_CHANGE_EVENT, recordEventsListener);
     }
 
     /* Called by the class running the suite. */
@@ -74,7 +76,7 @@ public class RmsEnvironment {
     }
 
     /* Called by com.sun.midp.rms.RecordStoreFile. */
-    static String getSecureFilenameBase(int suiteId) {
+    static String getSecureKeyBase(int suiteId) {
         return suiteContainer.getSecureFilenameBase(suiteId);
     }
     

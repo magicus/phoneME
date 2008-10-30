@@ -26,6 +26,9 @@
 
 package com.sun.midp.rms;
 
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
+
 import java.io.IOException;
 
 /**
@@ -64,11 +67,11 @@ public class RecordStoreFile implements AbstractRecordStoreFile {
      * @return an array of record store names.
      */
     static String[] listRecordStores(int suiteId) {
-        String filenameBase = RmsEnvironment.getSecureFilenameBase(suiteId);
-        String[] array = new String[getNumberOfStores(filenameBase)];
+        String keyBase = RmsEnvironment.getSecureKeyBase(suiteId);
+        String[] array = new String[getNumberOfStores(keyBase)];
 
         if (array.length > 0) {
-            getRecordStoreList(filenameBase, array);
+            getRecordStoreList(keyBase, array);
             return array;
         } else {
             return null;
@@ -76,56 +79,61 @@ public class RecordStoreFile implements AbstractRecordStoreFile {
     }
 
     /**
-     * Notify all  
-     *
-     * @param suiteId
-     * @param name
-     * @param changeType
-     * @param recordId
+     * Notify all registered listeners of record store file about its changes
+     * @param keyBase secure key to access record stores of MIDlet suite
+     * @param rmsName name of the canged record store
+     * @param changeType type of change, record can be added, deleted or changed
+     * @param recordId ID of the changed record
      */
     private static native void notifyChanged0(
-        String fileNameBase, int suiteId, String name, int changeType, int recordId);
+        String keyBase, String rmsName, int changeType, int recordId);
 
     public static void notifyChanged(
             int suiteId, String name, int changeType, int recordId) {
 
-        notifyChanged0(
-            RmsEnvironment.getSecureFilenameBase(suiteId),
-            suiteId, name, changeType, recordId);
+        if (true || Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
+                "RecordStoreFile.notifyChanged(): " +
+                    "suiteId = " + suiteId + ", "  +
+                    "storeName = " + name + ", " +
+                    "changeType = " + changeType + ", " +
+                    "recordId = " + recordId);
+        }
+
+        notifyChanged0(RmsEnvironment.getSecureKeyBase(suiteId),
+            name, changeType, recordId);
     }
 
     /**
      * Get the number of record stores for a MIDlet suite.
      *
-     * @param filenameBase filename base of the suite
-     *
+     * @param keyBase secure key to access record stores of MIDlet suite
      * @return the number of installed suites
      */
-    private static native int getNumberOfStores(String filenameBase);
+    private static native int getNumberOfStores(String keyBase);
 
     /**
      * Retrieves the list of record stores a MIDlet suites owns.
      *
-     * @param filenameBase filename base of the suite
+     * @param keyBase secure key to access record stores of MIDlet suite
      * @param names an empty array of suite IDs to fill, call
      *     getNumberOfSuites to know how big to make the array
      */
-    private static native void getRecordStoreList(String filenameBase, 
-                                                  String[] names);
+    private static native void getRecordStoreList(String keyBase, String[] names);
 
     /**
      * Remove all the Record Stores for a suite.
      *
-     * @param filenameBase filename base of the suite
+     * @param keyBase secure key to access record stores of MIDlet suite
      */
-    static native void removeRecordStores0(String filenameBase);
+    static native void removeRecordStores0(String keyBase);
 
-    /** Pass-through method to allow conversion of suite id to filename base
+    /** Pass-through method to allow conversion of suite id to key base
      *
      * @param suiteId ID of the suite
      */
     static void removeRecordStores(int suiteId) {
-        removeRecordStores0(RmsEnvironment.getSecureFilenameBase(suiteId));
+        removeRecordStores0(RmsEnvironment.getSecureKeyBase(suiteId));
     }
     /**
      * Approximation of remaining space in storage for a new record store.
@@ -135,13 +143,13 @@ public class RecordStoreFile implements AbstractRecordStoreFile {
      * stored in the MIDP memory space and include its size
      * in the total.
      *
-     * @param filenameBase filename base of the MIDlet suite that owns the
-     *                     record store
+     * @param keyBase secure key to access record stores of MIDlet suite
+     * @param storageId ID of record store
      *
      * @return the approximate space available to create a
      *         record store in bytes.
      */
-    static native int spaceAvailableNewRecordStore0(String filenameBase,
+    static native int spaceAvailableNewRecordStore0(String keyBase,
                                                    int storageId);
 
     /** Pass through method to enable getting the storage id to pass into
@@ -150,7 +158,7 @@ public class RecordStoreFile implements AbstractRecordStoreFile {
     static int spaceAvailableNewRecordStore(int suiteId) {
 
         return spaceAvailableNewRecordStore0(
-            RmsEnvironment.getSecureFilenameBase(suiteId), 
+            RmsEnvironment.getSecureKeyBase(suiteId),
             RmsEnvironment.getStorageAreaId(suiteId));
     }
 
@@ -182,7 +190,7 @@ public class RecordStoreFile implements AbstractRecordStoreFile {
     RecordStoreFile(int suiteId, String name,
                     int extension) throws IOException {
         handle = openRecordStoreFile(
-                     RmsEnvironment.getSecureFilenameBase(suiteId), 
+                     RmsEnvironment.getSecureKeyBase(suiteId),
                      name, extension);
     }
 
@@ -193,8 +201,7 @@ public class RecordStoreFile implements AbstractRecordStoreFile {
      * pointer to register the cleanup routine. When we have full
      * native finalization, open() can be made 'static' again.
      *
-     * @param filenameBase filename base of the MIDlet suite that owns the
-     *                     record store
+     * @param keyBase secure key to access record stores of MIDlet suite
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
@@ -202,7 +209,7 @@ public class RecordStoreFile implements AbstractRecordStoreFile {
      *
      * @exception IOException if there is an error opening the file.
      */
-    private native int openRecordStoreFile(String filenameBase,
+    private native int openRecordStoreFile(String keyBase,
                                            String name,
                                            int extension) throws IOException;
 
@@ -222,7 +229,7 @@ public class RecordStoreFile implements AbstractRecordStoreFile {
      */
     public int spaceAvailable(int suiteId) {
         return spaceAvailableRecordStore(handle, 
-                   RmsEnvironment.getSecureFilenameBase(suiteId),
+                   RmsEnvironment.getSecureKeyBase(suiteId),
                    RmsEnvironment.getStorageAreaId(suiteId));
     }
 
@@ -235,14 +242,13 @@ public class RecordStoreFile implements AbstractRecordStoreFile {
      * in the total.
      *
      * @param handle to an open record store
-     * @param filenameBase filename base of the MIDlet suite that owns the
-     *                     record store
+     * @param keyBase secure key to access record stores of MIDlet suite
      *
      * @return the approximate space available to grow the
      *         record store in bytes.
      */
     private static native int spaceAvailableRecordStore(int handle,
-                                                        String filenameBase,
+                                                        String keyBase,
                                                         int storageId);
 
     /**

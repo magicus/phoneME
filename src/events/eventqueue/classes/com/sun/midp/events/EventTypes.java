@@ -404,5 +404,5 @@ public final class EventTypes {
      * This event is sent on RMS storage changing to asynchronously notify
      * registered RMS listeners
      */
-    public static final int RECORD_STORE_CHANGE_EVENT = 63;
+    public static final int RECORD_STORE_CHANGE_EVENT = 64;
 }
