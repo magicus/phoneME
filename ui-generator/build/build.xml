@@ -52,16 +52,6 @@ information or have any questions.
     <property name="xslt.main"              location="../xslt/${toolkit}/main.xsl"/>
     <property name="xsd"                    location="../xslt/screens.xsd"/>
 
-
-    <!--
-        Optional JAD/JAR tasks (http://antenna.sourceforge.net/)
-
-        WARNING: Don't use antenna v1.0.0 - it has a bug: http://forum.java.sun.com/thread.jspa?threadID=5227164&tstart=195,
-        use v0.9.14 instead.
-    -->
-    <taskdef resource="antenna.properties"/>
-
-
     <target name="gen">
         <description>Generate UI screen sources from XML with/without unit tests
         </description>
@@ -229,6 +219,14 @@ information or have any questions.
     <target name="build-test-midlet" depends="javac">
         <description>Builds JAD/JAR with the test midlet
         </description>
+
+        <!--
+        Optional JAD/JAR tasks (http://antenna.sourceforge.net/)
+
+        WARNING: Don't use antenna v1.0.0 - it has a bug: http://forum.java.sun.com/thread.jspa?threadID=5227164&tstart=195,
+        use v0.9.14 instead.
+        -->
+        <taskdef resource="antenna.properties"/>
 
         <wtkjad jadfile="${out.root}/test.jad"
                 jarfile="${out.root}/test.jar"
