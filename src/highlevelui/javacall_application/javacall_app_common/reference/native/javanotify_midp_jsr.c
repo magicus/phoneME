@@ -1124,7 +1124,7 @@ void javanotify_vscl_incoming_event(javacall_vscl_event_type type,
  *                    In case the user dismissed the phonebook without making a
  *                    selection, this sting is <tt>NULL</tt>
  */
-void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber) {
+void javanotify_textfield_phonenumber_selection(char* phoneNumber) {
     midp_jc_event_union e;
     int length;
 
@@ -1147,7 +1147,7 @@ void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber
     midp_jc_event_send(&e);
 }
 
-void /* OPTIONAL */ javanotify_rotation(int hardwareId) {
+void javanotify_rotation(int hardwareId) {
     midp_jc_event_union e;
 
     (void)hardwareId;
@@ -1161,7 +1161,7 @@ void /* OPTIONAL */ javanotify_rotation(int hardwareId) {
   * The platform should invoke this function in platform context
   * to notify display device state change
   */
-    void  /* OPTIONAL */ javanotify_display_device_state_changed(int hardwareId, javacall_lcd_display_device_state state) {
+void javanotify_display_device_state_changed(int hardwareId, javacall_lcd_display_device_state state) {
     midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_display_device_state_changed >>\n");
