@@ -24,30 +24,39 @@
  * information or have any questions.
  */
 
-#include <midp_foreground_id.h>
 
-/** Isolate ID of current foreground MIDlet. */
-int gForegroundIsolateId = 0;
+/**
+ * Stubs for AutoScreenshotTaker class native methods,
+ * used for ports that doesn't use putpixel.
+ */
 
-#if ENABLE_MULTIPLE_DISPLAYS
+#include <jvmconfig.h>
+#include <kni.h>
+#include <jvm.h>
 
-/** Foreground display IDs of current foreground MIDlet. */
-int *gForegroundDisplayIds;
-int maxDisplays = 2; /* Should be equal to number of the hardware displays */
-
-
-int isForegroundDisplay(int displayId) {
-  int ret = 0;
-  int i;
-  for (i = 0; i < maxDisplays; i++) {
-    if (gForegroundDisplayIds[i] == displayId) {
-      ret = 1;
-      break;
-    }
-  }
-  return ret;
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_takeScreenshot0) {
+    KNI_ReturnVoid();
 }
-#else
-/** Foreground display ID of current foreground MIDlet. */
-int gForegroundDisplayId = 0;
-#endif /* ENABLE_MULTIPLE_DISPLAYS */
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_getScreenshotWidth0) {
+    KNI_ReturnInt(0);    
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_getScreenshotHeight0) {
+    KNI_ReturnInt(0);    
+}
+
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_midp_automation_AutoScreenshotTaker_getScreenshotRGB8880) {
+    KNI_StartHandles(1); 
+    KNI_DeclareHandle(objectHandle); 
+ 
+    /* Set the handle explicitly to null */
+    KNI_ReleaseHandle(objectHandle); 
+ 
+    /* Return the null reference to the calling Java method */
+    KNI_EndHandlesAndReturnObject(objectHandle); 
+}

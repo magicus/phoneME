@@ -149,7 +149,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreFile_getRecordStoreList) {
 /**
  * Remove all the Record Stores for a suite.
  *
- * @param suiteId ID of the suite
+ * @param filenameBase filename base of the suite
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_rms_RecordStoreFile_removeRecordStores0) {
@@ -166,12 +166,12 @@ KNIDECL(com_sun_midp_rms_RecordStoreFile_removeRecordStores0) {
 /**
  * Returns true if the suite has created at least one record store.
  *
- * @param suiteId ID of the suite
+ * @param filenameBase filename base of the suite
  *
  * @return true if the suite has at least one record store
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_midp_rms_RecordStoreFactory_suiteHasRmsData) {
+KNIDECL(com_sun_midp_rms_RecordStoreFactory_suiteHasRmsData0) {
     jboolean exists = KNI_FALSE;
     int status;
 

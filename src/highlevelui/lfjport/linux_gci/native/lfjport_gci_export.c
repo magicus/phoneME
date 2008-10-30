@@ -54,14 +54,16 @@ void lfjport_ui_finalize() {
  * Bridge function to request a repaint 
  * of the area specified.
  *
+ * @param hardwareId hardware ID of the display device
  * @param x1 top-left x coordinate of the area to refresh
  * @param y1 top-left y coordinate of the area to refresh
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-void lfjport_refresh(int x1, int y1, int x2, int y2)
+void lfjport_refresh(int hardwareId, int x1, int y1, int x2, int y2)
 {
-  (int)x1, y1, x2, y2;
+    (void)hardwareId;
+    (int)x1, y1, x2, y2;
 }
 
 /**
@@ -85,50 +87,60 @@ int lfjport_set_vertical_scroll(int scrollPosition, int scrollProportion)
 /**
  * Turn on or off the full screen mode
  *
+ * @param hardwareId hardware ID of the display device
  * @param mode true for full screen mode
  *             false for normal
  */
-void lfjport_set_fullscreen_mode(jboolean mode) {
-
+void lfjport_set_fullscreen_mode(int hardwareId, jboolean mode) {
+    (void)hardwareId;
     (void)mode;
     return;
 }
 
 /**
  * Resets native resources when foreground is gained by a new display.
+ * @param hardwareId hardware ID of the display device
  */
-void lfjport_gained_foreground() {
-
+void lfjport_gained_foreground(int hardwareId) {
+    (void)hardwareId;
 }
 
 /**
  * Change screen orientation flag
+ * @param hardwareId hardware ID of the display device
  */
-jboolean lfjport_reverse_orientation() {
+jboolean lfjport_reverse_orientation(int hardwareId) {
+    (void)hardwareId;
     return 0;
 }
 
 /**
  * Bridge function to get screen orientation flag
+ * @param hardwareId hardware ID of the display device
  */
-jboolean lfjport_get_reverse_orientation()
+jboolean lfjport_get_reverse_orientation(int hardwareId)
 {
+    (void)hardwareId;
     return 0;
 }
 
 /**
  * Return screen width
+ * @param hardwareId hardware ID of the display device
  */
-int lfjport_get_screen_width() {
+int lfjport_get_screen_width(int hardwareId) {
   /* TODO need to be ported */
+    (void)hardwareId;
     return 176;
 }
 
 /**
  *  Return screen height
+ * @param hardwareId hardware ID of the display device
  */
-int lfjport_get_screen_height() {
+int lfjport_get_screen_height(int hardwareId) {
   /* TODO need to be ported */
+    (void)hardwareId;
     return 210;
 }
 
@@ -141,11 +153,14 @@ int lfjport_get_screen_height() {
  * @param graphics The Graphics handle associated with the screen.
  * @param offscreen_buffer The ImageData handle associated with 
  *                         the offscreen buffer to be flushed
+ *
+ * @param hardwareId hardware ID of the display device
  * @param h The height to be flushed
  * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
  */
-jboolean lfjport_direct_flush(const java_graphics *g, 
+jboolean lfjport_direct_flush(int hardwareId, const java_graphics *g,
 		  	      const java_imagedata *offscreen_buffer, int h) {
+    (void)hardwareId;
    return KNI_FALSE;
 }
 
@@ -172,4 +187,82 @@ void lfjport_set_softbutton_label_on_native_layer (unsigned short *label,
     (void)len;
     (void)index;
     // Not implemented
+}
+
+/**
+ * get currently enabled hardware display id
+ */
+int lfjport_get_current_hardwareId() {
+    return  0;  // just one display  is supported
+}
+
+/**
+ * Get display device name by id
+ */
+char * lfjport_get_display_name(int hardwareId) {
+    (void)hardwareId;
+    // Not implemented
+    return 0;
+}
+
+
+/**
+ * Check if the display device is primary
+ */
+jboolean lfjport_is_display_primary(int hardwareId) {
+    (void)hardwareId;
+    // Not implemented
+    return KNI_TRUE;
+}
+/**
+ * Check if the display device is build-in
+ */
+jboolean lfjport_is_display_buildin(int hardwareId) {
+    (void)hardwareId;
+    // Not implemented
+    return KNI_TRUE;
+}
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean lfjport_is_display_pen_supported(int hardwareId) {
+    (void)hardwareId;
+    // Not implemented
+    return KNI_FALSE;
+}
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean lfjport_is_display_pen_motion_supported(int hardwareId) {
+    (void)hardwareId;
+    // Not implemented
+    return KNI_FALSE;
+}
+/**
+ * Get display device capabilities
+ */
+int lfjport_get_display_capabilities(int hardwareId) {
+    (void)hardwareId;
+    // Not implemented
+    return 0;
+}
+
+
+static jint display_device_ids[] = {0};
+
+/**
+ * Get the list of display device ids
+ */
+
+jint* lfjport_get_display_device_ids(jint* n) {
+    *n = 1;
+    return display_device_ids;
+}
+
+/**
+ * Notify the display device state has been changed
+ */
+void lfjport_display_device_state_changed(int hardwareId, int state) {
+  (void)hardwareId;
+  (void)state;
 }

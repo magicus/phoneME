@@ -55,6 +55,7 @@ extern "C" {
 typedef enum midp_SignalType {
     NO_SIGNAL,
     UI_SIGNAL,
+    DISPLAY_DEVICE_SIGNAL,
     UI_ALL_SIGNAL,
     INSTALLER_UI_SIGNAL,
     NETWORK_READ_SIGNAL,

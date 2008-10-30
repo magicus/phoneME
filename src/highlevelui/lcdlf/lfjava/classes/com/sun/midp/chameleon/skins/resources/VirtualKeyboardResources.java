@@ -28,8 +28,6 @@ package com.sun.midp.chameleon.skins.resources;
 
 import com.sun.midp.chameleon.skins.SkinPropertiesIDs;
 import com.sun.midp.chameleon.skins.VirtualKeyboardSkin;
-import com.sun.midp.chameleon.skins.AlertSkin;
-import com.sun.midp.chameleon.skins.ScreenSkin;
 
 /** Resources for virtual keyboard layer */
 public class VirtualKeyboardResources {
@@ -58,10 +56,6 @@ public class VirtualKeyboardResources {
 
         VirtualKeyboardSkin.WIDTH = SkinLoader.getInt(
                 SkinPropertiesIDs.KEYBOARD_WIDTH);
-        if (VirtualKeyboardSkin.WIDTH == -1) {
-            VirtualKeyboardSkin.WIDTH = (int)(.95 * ScreenSkin.WIDTH);
-        }
-
         VirtualKeyboardSkin.HEIGHT = SkinLoader.getInt(
                 SkinPropertiesIDs.KEYBOARD_HEIGHT);
 

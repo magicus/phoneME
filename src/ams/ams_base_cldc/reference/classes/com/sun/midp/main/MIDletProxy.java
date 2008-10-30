@@ -35,6 +35,7 @@ import com.sun.midp.suspend.SuspendDependency;
 import java.util.Timer;
 import java.util.TimerTask;
 
+
 /**
  * Represents the state of a running MIDlet and its Display so that objects
  * do not have to be shared across Isolates. The states in this object are
@@ -65,8 +66,11 @@ public class MIDletProxy implements SuspendDependency {
     /** ID of the Isolate the MIDlet is running in. */
     private int isolateId;
 
-    /** ID of the MIDlet's Display. */
-    private int displayId;
+    /** IDs of the MIDlet's Displays. */
+    private int[] displayIds = new int[1];
+
+    /** Number of MIDlet's Displays. */
+    private int numOfDisplays = 0;
 
     /** ID of the suite the MIDlet belongs to. */
     private int suiteId;
@@ -142,7 +146,7 @@ public class MIDletProxy implements SuspendDependency {
         foregroundEventProducer = theForegroundEventProducer;
         midletEventProducer = theMIDletEventProducer;
     }
-
+    
     /**
      * Construct a new MIDletProxy.
      *
@@ -155,9 +159,9 @@ public class MIDletProxy implements SuspendDependency {
      * @param  theMidletState MIDlet lifecycle state.
      */
     MIDletProxy(MIDletProxyList theParentList, int theExternalAppId,
-         int theIsolateId, int theSuiteId,
-         String theClassName, String theDisplayName, int theMidletState) {
-
+		int theIsolateId, int theSuiteId,
+		String theClassName, String theDisplayName, int theMidletState) {
+	
         parent = theParentList;
         externalId = theExternalAppId;
         isolateId = theIsolateId;
@@ -193,16 +197,53 @@ public class MIDletProxy implements SuspendDependency {
      * @param id of the MIDlet's Display
      */
     void setDisplayId(int id) {
-        displayId = id;
+	if (numOfDisplays == displayIds.length) {
+	    int[] newTable = new int[numOfDisplays + 2];
+	    
+	    /* Grow the display ids table. */
+	    for (int i = 0; i < numOfDisplays; i++) {
+		newTable[i] = displayIds[i];
+	    }
+	    
+	    displayIds = newTable;
+	}
+
+        displayIds[numOfDisplays] = id;
+	numOfDisplays++;
     }
 
     /**
-     * Get the ID of the MIDlet's Display. Public for testing purposes.
+     * Get the IDs of the MIDlet's Displays. Public for testing purposes.
      *
-     * @return ID of the MIDlet's Display
+     * @return IDs of the MIDlet's Displays
      */
-    public int getDisplayId() {
-        return displayId;
+    public int[] getDisplayIds() {
+	int[] ret;
+	if (numOfDisplays == displayIds.length) {
+	    ret = displayIds;
+	} else {
+	    ret = new int[numOfDisplays];
+	    for (int i = 0; i < numOfDisplays; i++ ) {
+		ret[i] = displayIds[i];
+	    }
+	}
+        return ret;
+    }
+    
+    /**
+     * Check if the specified display id is added to the list of the displays
+     * @param displayId display id 
+     * @return true if the display is in the list , false - otherwise
+     */
+    public boolean containsDisplay(int displayId) {
+	boolean ret = false;
+	for (int i = numOfDisplays; --i >= 0;) {
+	    if (displayIds[i] == displayId) {
+		ret = true;
+		break;
+	    }
+	}
+	return ret;
     }
 
     /**
@@ -288,7 +329,7 @@ public class MIDletProxy implements SuspendDependency {
      * @return true if the MIDlet has no display.
      */
     public boolean noDisplay() {
-        return displayId == 0;
+        return numOfDisplays == 0;
     }
 
     /**
@@ -440,11 +481,15 @@ public class MIDletProxy implements SuspendDependency {
     void notifyMIDletHasForeground(boolean hasForeground) {
         if (hasForeground) {
             alertWaiting = false;
-            foregroundEventProducer.sendDisplayForegroundNotifyEvent(
-                isolateId, displayId);
+	    for (int i = displayIds.length; --i >= 0;) { 
+		foregroundEventProducer.sendDisplayForegroundNotifyEvent(
+							  isolateId, displayIds[i]);
+	    }
         } else {
-            foregroundEventProducer.sendDisplayBackgroundNotifyEvent(
-                isolateId, displayId);
+	    for (int i = displayIds.length; --i >= 0;) { 
+		foregroundEventProducer.sendDisplayBackgroundNotifyEvent(
+							  isolateId, displayIds[i]);
+	    }
         }
     }
 
@@ -504,11 +549,20 @@ public class MIDletProxy implements SuspendDependency {
      * @return printable representation of the state of this object
      */
     public String toString() {
+	String displays = "";
+	for (int i = 0; i < numOfDisplays; i++) {
+	    displays += displayIds[i];
+	    if (i < numOfDisplays - 1) {
+		displays += ", ";
+	    }
+	}
+
         return "MIDletProxy: suite id = " + suiteId +
             "\n    class name = " + className +
             "\n    display name = " + displayName +
             "\n    isolate id = " + isolateId +
-            ", display id = " + displayId +
+            ", number of displays  = " + numOfDisplays +
+	    ", display ids = " + displays +
             ", midlet state = " + midletState +
             ", wantsForeground = " + wantsForegroundState +
             ", requestedForeground = " + requestedForeground +

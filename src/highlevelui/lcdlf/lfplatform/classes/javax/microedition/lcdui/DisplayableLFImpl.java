@@ -270,9 +270,12 @@ abstract class DisplayableLFImpl implements DisplayableLF {
                 requestRepaint = true;
             }
         }
-        // This may call into app code, so do it outside LCDUILock
-        uCallSizeChanged(Display.WIDTH, Display.HEIGHT);
-
+        if (currentDisplay != null) {
+            // This may call into app code, so do it outside LCDUILock
+            uCallSizeChanged(currentDisplay.width, currentDisplay.height);
+        } else {
+            uCallSizeChanged(Display.WIDTH, Display.HEIGHT);
+        }
         // app's sizeChanged has to be called before repaint
         synchronized (Display.LCDUILock) {
             if (requestRepaint) {
@@ -295,8 +298,8 @@ abstract class DisplayableLFImpl implements DisplayableLF {
             // Assure correct screen mode
             currentDisplay.lSetFullScreen(owner.isInFullScreenMode);
             // display dimentions may change as the resulr of lSetFullScreen
-            width = Display.WIDTH;
-            height = Display.HEIGHT;
+            width = currentDisplay.width;
+            height = currentDisplay.height;
             if (owner.isInFullScreenMode) {
                 setTicker(null);
             } else if (owner.ticker != null) {

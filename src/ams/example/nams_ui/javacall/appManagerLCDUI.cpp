@@ -89,13 +89,7 @@ javacall_result javacall_lcd_finalize(void) {
 /**
  * Get screen raster pointer
  *
- * @param screenType can be any of the following types:
- * <ul>
- *   <li> <code>JAVACALL_LCD_SCREEN_PRIMARY</code> -
- *        return primary screen size information </li>
- *   <li> <code>JAVACALL_LCD_SCREEN_EXTERNAL</code> -
- *        return external screen size information if supported </li>
- * </ul>
+ * @param hardwareId id of hardware display
  * @param screenWidth output paramter to hold width of screen
  * @param screenHeight output paramter to hold height of screen
  * @param colorEncoding output paramenter to hold color encoding,
@@ -110,10 +104,11 @@ javacall_result javacall_lcd_finalize(void) {
  *         ( screenWidth * screenHeight )
  *         or <code>NULL</code> in case of failure
  */
-javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
+javacall_pixel* javacall_lcd_get_screen(int hardwareId,
                                         int* screenWidth,
                                         int* screenHeight,
                                         javacall_lcd_color_encoding_type* colorEncoding) {
+   (void)hardwareId;
     if (screenWidth != NULL) {
         *screenWidth = VRAM.width;
     }
@@ -145,7 +140,8 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
  * @retval JAVACALL_OK   success
  * @retval JAVACALL_FAIL failure
  */
-javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
+javacall_result javacall_lcd_set_full_screen_mode(int hardwareId, javacall_bool useFullScreen) {
+    (void)hardwareId;
     return JAVACALL_OK;
 }
 
@@ -156,7 +152,8 @@ javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
  *
  * @return <tt>1</tt> on success, <tt>0</tt> on failure or invalid screen
  */
-javacall_result javacall_lcd_flush() {
+javacall_result javacall_lcd_flush(int hardwareId) {
+    (void)hardwareId;
     RefreshScreen(0, 0,
                   MAIN_WINDOW_CHILD_AREA_WIDTH,
                   MAIN_WINDOW_CHILD_AREA_HEIGHT);
@@ -176,7 +173,8 @@ javacall_result javacall_lcd_flush() {
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int ystart, int yend) {
+javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int hardwareId, int ystart, int yend) {
+    (void)hardwareId;
     RefreshScreen(0, 0,
                   MAIN_WINDOW_CHILD_AREA_WIDTH,
                   MAIN_WINDOW_CHILD_AREA_HEIGHT); 
@@ -186,15 +184,17 @@ javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int ystart, int yend) {
 /**
  * Changes display orientation
  */
-javacall_bool javacall_lcd_reverse_orientation() {
+javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
+    (void)hardwareId;
     return JAVACALL_FALSE;
 }
  
 /**
  * Returns display orientation
  */
-javacall_bool javacall_lcd_get_reverse_orientation() {
-     return JAVACALL_FALSE;
+javacall_bool javacall_lcd_get_reverse_orientation(int hardwareId) {
+    (void)hardwareId;   
+    return JAVACALL_FALSE;
 }
 
 /**
@@ -229,15 +229,93 @@ javacall_lcd_set_native_softbutton_label(const javacall_utf16* label,
 /**
  * Returns available display width
  */
-int javacall_lcd_get_screen_width() {
+int javacall_lcd_get_screen_width(int hardwareId) {
+    (void)hardwareId;
     return MAIN_WINDOW_CHILD_AREA_WIDTH;
 }
 
 /**
  * Returns available display height
  */
-int javacall_lcd_get_screen_height() {
+int javacall_lcd_get_screen_height(int hardwareId) {
+    (void)hardwareId; 
     return MAIN_WINDOW_CHILD_AREA_HEIGHT;
+}
+
+/**
+ * get currently enabled hardware display id
+ */
+  int javacall_lcd_get_current_hardwareId() {
+    return 0;
+  }
+
+/**
+ * Return display name
+ * @param hardwareId unique id of hardware display
+ */
+char* javacall_lcd_get_display_name(int hardwareId) {
+    (void)hardwareId;
+    return NULL;
+}
+
+
+
+/**
+ * Check if the display device is primary
+ * @param hardwareId unique id of hardware display
+ */
+javacall_bool javacall_lcd_is_display_primary(int hardwareId) {
+    (void)hardwareId;
+    return JAVACALL_TRUE;
+}
+
+/**
+ * Check if the display device is build-in
+ */
+javacall_bool javacall_lcd_is_display_buildin(int hardwareId) {
+    (void)hardwareId;  
+    return JAVACALL_TRUE;
+}
+
+
+/**
+ * Check if the display device supports pointer events
+ */
+javacall_bool javacall_lcd_is_display_pen_supported(int hardwareId) {
+    (void)hardwareId;
+    return JAVACALL_TRUE;
+}
+
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+javacall_bool javacall_lcd_is_display_pen_motion_supported(int hardwareId) {
+    (void)hardwareId;
+    return JAVACALL_FALSE;
+}
+
+/**
+ * Get display device capabilities
+ */
+int javacall_lcd_get_display_capabilities(int hardwareId) {
+    (void)hardwareId;
+    return 255;
+}
+
+static int screen_ids[] =
+{
+  0
+};
+
+/**
+ * Get the list of screen ids
+ * @param return number of screens 
+ * @return the lit of ids 
+ */
+int* javacall_lcd_get_display_device_ids(int* n) {
+  *n = 1;
+    return screen_ids;
 }
 
 }; // extern "C"
