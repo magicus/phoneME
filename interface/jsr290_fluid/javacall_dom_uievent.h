@@ -72,7 +72,6 @@ javacall_dom_uievent_get_detail_start(javacall_handle handle,
  * OR returns  Specifies some detail information about the <code>Event</code>, 
  * depending on the type of event. 
  * 
- * @param handle Pointer to the object representing this uievent.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -82,8 +81,7 @@ javacall_dom_uievent_get_detail_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_uievent_get_detail_finish(javacall_handle handle,
-                                       void *context,
+javacall_dom_uievent_get_detail_finish(void *context,
                                        /* OUT */ javacall_int32* ret_value);
 
 /**
@@ -125,15 +123,7 @@ javacall_dom_uievent_init_ui_event_start(javacall_handle handle,
  * a <code>UIEvent</code> object and has the same behavior as 
  * <code>Event.initEvent()</code>. 
  * 
- * @param handle Pointer to the object representing this uievent.
  * @param context The context saved during asynchronous operation.
- * @param type_arg  Refer to the <code>Event.initEvent()</code> method for 
- *   a description of this parameter. 
- * @param can_bubble_arg  Refer to the <code>Event.initEvent()</code> 
- *   method for a description of this parameter. 
- * @param cancelable_arg  Refer to the <code>Event.initEvent()</code> 
- *   method for a description of this parameter. 
- * @param detail_arg  Specifies <code>UIEvent.detail</code>.   
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -142,12 +132,7 @@ javacall_dom_uievent_init_ui_event_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_uievent_init_ui_event_finish(javacall_handle handle,
-                                          void *context,
-                                          javacall_const_utf16_string type_arg,
-                                          javacall_bool can_bubble_arg,
-                                          javacall_bool cancelable_arg,
-                                          javacall_int32 detail_arg);
+javacall_dom_uievent_init_ui_event_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -193,17 +178,7 @@ javacall_dom_uievent_init_ui_event_ns_start(javacall_handle handle,
  * of a <code>UIEvent</code> object and has the same behavior as 
  * <code>Event.initEventNS()</code>. 
  * 
- * @param handle Pointer to the object representing this uievent.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri  Refer to the <code>Event.initEventNS()</code> 
- *   method for a description of this parameter. 
- * @param type_arg  Refer to the <code>Event.initEventNS()</code> method 
- *   for a description of this parameter. 
- * @param can_bubble_arg  Refer to the <code>Event.initEventNS()</code> 
- *   method for a description of this parameter. 
- * @param cancelable_arg  Refer to the <code>Event.initEventNS()</code> 
- *   method for a description of this parameter. 
- * @param detail_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
  *   method for a description of this parameter.
  *
  * 
@@ -214,13 +189,7 @@ javacall_dom_uievent_init_ui_event_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_uievent_init_ui_event_ns_finish(javacall_handle handle,
-                                             void *context,
-                                             javacall_const_utf16_string namespace_uri,
-                                             javacall_const_utf16_string type_arg,
-                                             javacall_bool can_bubble_arg,
-                                             javacall_bool cancelable_arg,
-                                             javacall_int32 detail_arg);
+javacall_dom_uievent_init_ui_event_ns_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

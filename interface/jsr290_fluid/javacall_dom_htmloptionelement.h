@@ -76,7 +76,6 @@ javacall_dom_htmloptionelement_get_selected_start(javacall_handle handle,
  * the form control, but does not change the value of the HTML selected 
  * attribute of the element.
  * 
- * @param handle Pointer to the object representing this htmloptionelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -86,8 +85,7 @@ javacall_dom_htmloptionelement_get_selected_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmloptionelement_get_selected_finish(javacall_handle handle,
-                                                   void *context,
+javacall_dom_htmloptionelement_get_selected_finish(void *context,
                                                    /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -121,7 +119,6 @@ javacall_dom_htmloptionelement_set_selected_start(javacall_handle handle,
  * the form control, but does not change the value of the HTML selected 
  * attribute of the element.
  * 
- * @param handle Pointer to the object representing this htmloptionelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -131,9 +128,7 @@ javacall_dom_htmloptionelement_set_selected_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmloptionelement_set_selected_finish(javacall_handle handle,
-                                                   void *context,
-                                                   javacall_bool selected);
+javacall_dom_htmloptionelement_set_selected_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

@@ -104,7 +104,6 @@ javacall_dom_document_get_doctype_start(javacall_handle handle,
  * changing it afterwards is very unlikely to result in a change of the 
  * features supported.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the Document Type Declaration associated with this document, or <code>NULL</code>
@@ -116,8 +115,7 @@ javacall_dom_document_get_doctype_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_get_doctype_finish(javacall_handle handle,
-                                         void *context,
+javacall_dom_document_get_doctype_finish(void *context,
                                          /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -149,7 +147,6 @@ javacall_dom_document_get_implementation_start(javacall_handle handle,
  * OR returns the <code>DOMImplementation</code> object that handles this document. A 
  * DOM application may use objects from multiple implementations.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the <code>DOMImplementation</code> object that handles this document
@@ -161,8 +158,7 @@ javacall_dom_document_get_implementation_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_get_implementation_finish(javacall_handle handle,
-                                                void *context,
+javacall_dom_document_get_implementation_finish(void *context,
                                                 /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -194,7 +190,6 @@ javacall_dom_document_get_document_element_start(javacall_handle handle,
  * OR returns this is a convenience attribute that allows direct access to the child 
  * node that is the root element of the document. 
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the child node that is the root element of the document
@@ -206,8 +201,7 @@ javacall_dom_document_get_document_element_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_get_document_element_finish(javacall_handle handle,
-                                                  void *context,
+javacall_dom_document_get_document_element_finish(void *context,
                                                   /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -261,16 +255,14 @@ javacall_dom_document_create_element_start(javacall_handle handle,
  * <br>To create an element with a qualified name and namespace URI, use 
  * the <code>createElementNS</code> method.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param tag_name The name of the element type to instantiate. For XML, 
  *   this is case-sensitive. otherwise it depends on the 
  *   case-sensitivity of the markup language in use. In that case, the 
  *   name is mapped to the canonical form of that markup by the DOM 
  *   implementation.
  * @param ret_value Pointer to the object representing 
  *   a new <code>Element</code> object with the 
- *   <code>nodeName</code> attribute set to <code>tag_name</code>, and 
+ *   <code>nodeName</code> attribute set to <code>tagName</code>, and 
  *   <code>localName</code>, <code>prefix</code>, and 
  *   <code>namespaceURI</code> set to <code>NULL</code>.
  * 
@@ -282,9 +274,7 @@ javacall_dom_document_create_element_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_create_element_finish(javacall_handle handle,
-                                            void *context,
-                                            javacall_const_utf16_string tag_name,
+javacall_dom_document_create_element_finish(void *context,
                                             /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -314,7 +304,6 @@ javacall_dom_document_create_document_fragment_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR creates an empty <code>DocumentFragment</code> object. 
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   a new <code>DocumentFragment</code>.
@@ -326,8 +315,7 @@ javacall_dom_document_create_document_fragment_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_create_document_fragment_finish(javacall_handle handle,
-                                                      void *context,
+javacall_dom_document_create_document_fragment_finish(void *context,
                                                       /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -359,9 +347,7 @@ javacall_dom_document_create_text_node_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR creates a <code>Text</code> node given the specified string.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param data The data for the node.
  * @param ret_value Pointer to the object representing 
  *   the new <code>Text</code> object.
  * 
@@ -372,9 +358,7 @@ javacall_dom_document_create_text_node_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_create_text_node_finish(javacall_handle handle,
-                                              void *context,
-                                              javacall_const_utf16_string data,
+javacall_dom_document_create_text_node_finish(void *context,
                                               /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -406,9 +390,7 @@ javacall_dom_document_create_comment_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR creates a <code>Comment</code> node given the specified string.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param data The data for the node.
  * @param ret_value Pointer to the object representing 
  *   the new <code>Comment</code> object.
  * 
@@ -419,9 +401,7 @@ javacall_dom_document_create_comment_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_create_comment_finish(javacall_handle handle,
-                                            void *context,
-                                            javacall_const_utf16_string data,
+javacall_dom_document_create_comment_finish(void *context,
                                             /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -456,9 +436,7 @@ javacall_dom_document_create_cdata_section_start(javacall_handle handle,
  * OR creates a <code>CDATASection</code> node whose value is the specified 
  * string.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param data The data for the <code>CDATASection</code> contents.
  * @param ret_value Pointer to the object representing 
  *   the new <code>CDATASection</code> object.
  * 
@@ -470,9 +448,7 @@ javacall_dom_document_create_cdata_section_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_create_cdata_section_finish(javacall_handle handle,
-                                                  void *context,
-                                                  javacall_const_utf16_string data,
+javacall_dom_document_create_cdata_section_finish(void *context,
                                                   /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -518,13 +494,7 @@ javacall_dom_document_create_processing_instruction_start(javacall_handle handle
  * OR creates a <code>ProcessingInstruction</code> node given the specified 
  * name and data strings.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param target The target part of the processing instruction. Unlike 
- *   <code>Document.createElementNS</code> or 
- *   <code>Document.createAttributeNS</code>, no namespace well-formed 
- *   checking is done on the target name.
- * @param data The data for the node.
  * @param ret_value Pointer to the object representing 
  *   the new <code>ProcessingInstruction</code> object.
  * @param exception_code Code of the error if function fails; the following 
@@ -541,10 +511,7 @@ javacall_dom_document_create_processing_instruction_start(javacall_handle handle
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_create_processing_instruction_finish(javacall_handle handle,
-                                                           void *context,
-                                                           javacall_const_utf16_string target,
-                                                           javacall_const_utf16_string data,
+javacall_dom_document_create_processing_instruction_finish(void *context,
                                                            /* OUT */ javacall_handle* ret_value,
                                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -589,9 +556,7 @@ javacall_dom_document_create_attribute_start(javacall_handle handle,
  * <br>To create an attribute with a qualified name and namespace URI, use 
  * the <code>createAttributeNS</code> method.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param name The name of the attribute.
  * @param ret_value Pointer to the object representing 
  *   a new <code>Attr</code> object with the <code>nodeName</code> 
  *   attribute set to <code>name</code>, and <code>localName</code>, 
@@ -606,9 +571,7 @@ javacall_dom_document_create_attribute_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_create_attribute_finish(javacall_handle handle,
-                                              void *context,
-                                              javacall_const_utf16_string name,
+javacall_dom_document_create_attribute_finish(void *context,
                                               /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -668,9 +631,7 @@ javacall_dom_document_create_entity_reference_start(javacall_handle handle,
  * 3 do not support any mechanism to resolve namespace prefixes in this 
  * case.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param name The name of the entity to reference. Unlike 
  *   <code>Document.createElementNS</code> or 
  *   <code>Document.createAttributeNS</code>, no namespace well-formed 
  *   checking is done on the entity name.
@@ -690,9 +651,7 @@ javacall_dom_document_create_entity_reference_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_create_entity_reference_finish(javacall_handle handle,
-                                                     void *context,
-                                                     javacall_const_utf16_string name,
+javacall_dom_document_create_entity_reference_finish(void *context,
                                                      /* OUT */ javacall_handle* ret_value,
                                                      /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -733,9 +692,7 @@ javacall_dom_document_get_elements_by_tag_name_start(javacall_handle handle,
  * given tag name in the order in which they are encountered in a 
  * preorder traversal of the <code>Document</code> tree. 
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param tagname The name of the tag to match on. The special value "*" 
  *   matches all tags. For XML, the <code>tagname</code> parameter is 
  *   case-sensitive, otherwise it depends on the case-sensitivity of the 
  *   markup language in use.
@@ -750,9 +707,7 @@ javacall_dom_document_get_elements_by_tag_name_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_get_elements_by_tag_name_finish(javacall_handle handle,
-                                                      void *context,
-                                                      javacall_const_utf16_string tagname,
+javacall_dom_document_get_elements_by_tag_name_finish(void *context,
                                                       /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -972,11 +927,7 @@ javacall_dom_document_import_node_start(javacall_handle handle,
  * on this type of nodes since they cannot have any children.</dd>
  * </dl> 
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param imported_node Pointer to the object of
- *   the node to import.
- * @param deep If <code>true</code>, recursively import the subtree under 
  *   the specified node; if <code>false</code>, import only the node 
  *   itself, as explained above. This has no effect on nodes that cannot 
  *   have any children, and on <code>Attr</code>, and 
@@ -997,10 +948,7 @@ javacall_dom_document_import_node_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_import_node_finish(javacall_handle handle,
-                                         void *context,
-                                         javacall_handle imported_node,
-                                         javacall_bool deep,
+javacall_dom_document_import_node_finish(void *context,
                                          /* OUT */ javacall_handle* ret_value,
                                          /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -1081,12 +1029,9 @@ javacall_dom_document_create_element_ns_start(javacall_handle handle,
  * OR creates an element of the given qualified name and namespace URI. 
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
- * namespace_uri parameter for methods if they wish to have no namespace.
+ * namespaceURI parameter for methods if they wish to have no namespace.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the element to create.
- * @param qualified_name The qualified name of the element type to 
  *   instantiate.
  * @param ret_value Pointer to the object representing 
  *   a new <code>Element</code> object with the following 
@@ -1099,28 +1044,28 @@ javacall_dom_document_create_element_ns_start(javacall_handle handle,
  * <tr>
  * <td valign='top' rowspan='1' colspan='1'><code>Node.nodeName</code></td>
  * <td valign='top' rowspan='1' colspan='1'>
- *   <code>qualified_name</code></td>
+ *   <code>qualifiedName</code></td>
  * </tr>
  * <tr>
- * <td valign='top' rowspan='1' colspan='1'><code>Node.namespace_uri</code></td>
+ * <td valign='top' rowspan='1' colspan='1'><code>Node.namespaceURI</code></td>
  * <td valign='top' rowspan='1' colspan='1'>
- *   <code>namespace_uri</code></td>
+ *   <code>namespaceURI</code></td>
  * </tr>
  * <tr>
  * <td valign='top' rowspan='1' colspan='1'><code>Node.prefix</code></td>
  * <td valign='top' rowspan='1' colspan='1'>prefix, extracted 
- *   from <code>qualified_name</code>, or <code>NULL</code> if there is 
+ *   from <code>qualifiedName</code>, or <code>NULL</code> if there is 
  *   no prefix</td>
  * </tr>
  * <tr>
  * <td valign='top' rowspan='1' colspan='1'><code>Node.localName</code></td>
  * <td valign='top' rowspan='1' colspan='1'>local name, extracted from 
- *   <code>qualified_name</code></td>
+ *   <code>qualifiedName</code></td>
  * </tr>
  * <tr>
  * <td valign='top' rowspan='1' colspan='1'><code>Element.tagName</code></td>
  * <td valign='top' rowspan='1' colspan='1'>
- *   <code>qualified_name</code></td>
+ *   <code>qualifiedName</code></td>
  * </tr>
  * </table>
  * @param exception_code Code of the error if function fails; the following 
@@ -1138,10 +1083,7 @@ javacall_dom_document_create_element_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_create_element_ns_finish(javacall_handle handle,
-                                               void *context,
-                                               javacall_const_utf16_string namespace_uri,
-                                               javacall_const_utf16_string qualified_name,
+javacall_dom_document_create_element_ns_finish(void *context,
                                                /* OUT */ javacall_handle* ret_value,
                                                /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -1227,13 +1169,10 @@ javacall_dom_document_create_attribute_ns_start(javacall_handle handle,
  * OR creates an attribute of the given qualified name and namespace URI. 
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
- * <code>namespace_uri</code> parameter for methods if they wish to have 
+ * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the attribute to create.
- * @param qualified_name The qualified name of the attribute to instantiate.
  * @param ret_value Pointer to the object representing 
  *   a new <code>Attr</code> object with the following attributes:
  * <table border='1' cellpadding='3'>
@@ -1244,29 +1183,29 @@ javacall_dom_document_create_attribute_ns_start(javacall_handle handle,
  * </tr>
  * <tr>
  * <td valign='top' rowspan='1' colspan='1'><code>Node.nodeName</code></td>
- * <td valign='top' rowspan='1' colspan='1'>qualified_name</td>
+ * <td valign='top' rowspan='1' colspan='1'>qualifiedName</td>
  * </tr>
  * <tr>
  * <td valign='top' rowspan='1' colspan='1'>
- *   <code>Node.namespace_uri</code></td>
- * <td valign='top' rowspan='1' colspan='1'><code>namespace_uri</code></td>
+ *   <code>Node.namespaceURI</code></td>
+ * <td valign='top' rowspan='1' colspan='1'><code>namespaceURI</code></td>
  * </tr>
  * <tr>
  * <td valign='top' rowspan='1' colspan='1'>
  *   <code>Node.prefix</code></td>
  * <td valign='top' rowspan='1' colspan='1'>prefix, extracted from 
- *   <code>qualified_name</code>, or <code>NULL</code> if there is no 
+ *   <code>qualifiedName</code>, or <code>NULL</code> if there is no 
  *   prefix</td>
  * </tr>
  * <tr>
  * <td valign='top' rowspan='1' colspan='1'><code>Node.localName</code></td>
  * <td valign='top' rowspan='1' colspan='1'>local name, extracted from 
- *   <code>qualified_name</code></td>
+ *   <code>qualifiedName</code></td>
  * </tr>
  * <tr>
  * <td valign='top' rowspan='1' colspan='1'><code>Attr.name</code></td>
  * <td valign='top' rowspan='1' colspan='1'>
- *   <code>qualified_name</code></td>
+ *   <code>qualifiedName</code></td>
  * </tr>
  * <tr>
  * <td valign='top' rowspan='1' colspan='1'><code>Node.nodeValue</code></td>
@@ -1289,10 +1228,7 @@ javacall_dom_document_create_attribute_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_create_attribute_ns_finish(javacall_handle handle,
-                                                 void *context,
-                                                 javacall_const_utf16_string namespace_uri,
-                                                 javacall_const_utf16_string qualified_name,
+javacall_dom_document_create_attribute_ns_finish(void *context,
                                                  /* OUT */ javacall_handle* ret_value,
                                                  /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -1332,11 +1268,7 @@ javacall_dom_document_get_elements_by_tag_name_ns_start(javacall_handle handle,
  * OR returns a <code>NodeList</code> of all the <code>Elements</code> with a 
  * given local name and namespace URI in document order.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the elements to match on. The 
- *   special value <code>"*"</code> matches all namespaces.
- * @param local_name The local name of the elements to match on. The 
  *   special value <code>"*"</code> matches all local names.
  * @param ret_value Pointer to the object representing 
  *   a new <code>NodeList</code> object containing all the matched 
@@ -1349,10 +1281,7 @@ javacall_dom_document_get_elements_by_tag_name_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_get_elements_by_tag_name_ns_finish(javacall_handle handle,
-                                                         void *context,
-                                                         javacall_const_utf16_string namespace_uri,
-                                                         javacall_const_utf16_string local_name,
+javacall_dom_document_get_elements_by_tag_name_ns_finish(void *context,
                                                          /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -1402,9 +1331,7 @@ javacall_dom_document_get_element_by_id_start(javacall_handle handle,
  * Implementations that do not know whether attributes are of type ID or 
  * not are expected to return <code>NULL</code>.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param element_id The unique <code>id</code> value for an element.
  * @param ret_value Pointer to the object representing 
  *   the matching element or <code>NULL</code> if there is none.
  * 
@@ -1415,9 +1342,7 @@ javacall_dom_document_get_element_by_id_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_get_element_by_id_finish(javacall_handle handle,
-                                               void *context,
-                                               javacall_const_utf16_string element_id,
+javacall_dom_document_get_element_by_id_finish(void *context,
                                                /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -1565,10 +1490,7 @@ javacall_dom_document_adopt_node_start(javacall_handle handle,
  * <code>Document.importNode()</code> method, this method does not raise 
  * an <code>INVALID_CHARACTER_ERR</code> exception.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param source Pointer to the object of
- *   the node to move into this document.
  * @param ret_value Pointer to the object representing 
  *   the adopted node, or <code>NULL</code> if this operation 
  *   fails, such as when the source node comes from a different 
@@ -1587,9 +1509,7 @@ javacall_dom_document_adopt_node_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_adopt_node_finish(javacall_handle handle,
-                                        void *context,
-                                        javacall_handle source,
+javacall_dom_document_adopt_node_finish(void *context,
                                         /* OUT */ javacall_handle* ret_value,
                                         /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -1647,9 +1567,7 @@ javacall_dom_document_create_event_start(javacall_handle handle,
  * OR create an Event.
  *
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param event_type  The <code>event_type</code> parameter specifies the 
  *   name of the DOM Events interface to be supported by the created 
  *   event object, e.g. <code>"Event"</code>, <code>"MouseEvent"</code>, 
  *   <code>"MutationEvent"</code> and so on. If the <code>Event</code> 
@@ -1666,7 +1584,7 @@ javacall_dom_document_create_event_start(javacall_handle handle,
  *   <code>UIEvent.detail</code> in this example. 
  * <p><b>Note:</b>For backward compatibility reason, "UIEvents", 
  *   "MouseEvents", "MutationEvents", and "HTMLEvents" feature names are 
- *   valid values for the parameter <code>event_type</code> and represent 
+ *   valid values for the parameter <code>eventType</code> and represent 
  *   respectively the interfaces "UIEvent", "MouseEvent", 
  *   "MutationEvent", and "Event". 
  * <p><b>Note:</b>  JSR 280 follows the DOM 3 rule for <code>Event.type</code>
@@ -1683,9 +1601,7 @@ javacall_dom_document_create_event_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_create_event_finish(javacall_handle handle,
-                                          void *context,
-                                          javacall_const_utf16_string event_type,
+javacall_dom_document_create_event_finish(void *context,
                                           /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -1721,11 +1637,7 @@ javacall_dom_document_can_dispatch_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR  Test if the implementation can generate events of a specified type. 
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri  Specifies the <code>Event.namespace_uri</code> of 
- *   the event, may be NULL. 
- * @param type  Specifies the <code>Event.type</code> of the event. 
  * @param ret_value  <code>true</code> if the implementation can generate and 
  *   dispatch this event type, <code>false</code> otherwise. 
  *
@@ -1737,10 +1649,7 @@ javacall_dom_document_can_dispatch_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_can_dispatch_finish(javacall_handle handle,
-                                          void *context,
-                                          javacall_const_utf16_string namespace_uri,
-                                          javacall_const_utf16_string type,
+javacall_dom_document_can_dispatch_finish(void *context,
                                           /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -1770,7 +1679,6 @@ javacall_dom_document_get_default_view_start(javacall_handle handle,
  * OR returns the default <code>AbstractView</code> for this <code>Document</code>, 
  * or <code>NULL</code> if none available.
  * 
- * @param handle Pointer to the object representing this document.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -1780,8 +1688,7 @@ javacall_dom_document_get_default_view_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_get_default_view_finish(javacall_handle handle,
-                                              void *context,
+javacall_dom_document_get_default_view_finish(void *context,
                                               /* OUT */ javacall_handle* ret_value);
 
 /** 

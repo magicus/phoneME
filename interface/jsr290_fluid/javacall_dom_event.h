@@ -73,7 +73,6 @@ javacall_dom_event_get_type_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns the name of the event (case-sensitive). The name must be an XML name.
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -85,8 +84,7 @@ javacall_dom_event_get_type_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_get_type_finish(javacall_handle handle,
-                                   void *context,
+javacall_dom_event_get_type_finish(void *context,
                                    /* OUT */ javacall_utf16_string ret_value,
                                    /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -117,7 +115,6 @@ javacall_dom_event_get_target_start(javacall_handle handle,
  * OR returns used to indicate the <code>EventTarget</code> to which the event was 
  * originally dispatched. 
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -127,8 +124,7 @@ javacall_dom_event_get_target_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_get_target_finish(javacall_handle handle,
-                                     void *context,
+javacall_dom_event_get_target_finish(void *context,
                                      /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -160,7 +156,6 @@ javacall_dom_event_get_current_target_start(javacall_handle handle,
  * <code>EventListeners</code> are currently being processed. This is 
  * particularly useful during capturing and bubbling. 
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -170,8 +165,7 @@ javacall_dom_event_get_current_target_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_get_current_target_finish(javacall_handle handle,
-                                             void *context,
+javacall_dom_event_get_current_target_finish(void *context,
                                              /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -208,7 +202,6 @@ javacall_dom_event_get_namespace_uri_start(javacall_handle handle,
  * <br> For events initialized with a DOM Level 2 Events method 
  * this is always <code>NULL</code>. 
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -220,8 +213,7 @@ javacall_dom_event_get_namespace_uri_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_get_namespace_uri_finish(javacall_handle handle,
-                                            void *context,
+javacall_dom_event_get_namespace_uri_finish(void *context,
                                             /* OUT */ javacall_utf16_string ret_value,
                                             /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -252,7 +244,6 @@ javacall_dom_event_get_event_phase_start(javacall_handle handle,
  * OR returns used to indicate which phase of event flow is currently being 
  * evaluated. 
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -262,8 +253,7 @@ javacall_dom_event_get_event_phase_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_get_event_phase_finish(javacall_handle handle,
-                                          void *context,
+javacall_dom_event_get_event_phase_finish(void *context,
                                           /* OUT */ javacall_int16* ret_value);
 
 /**
@@ -293,7 +283,6 @@ javacall_dom_event_get_bubbles_start(javacall_handle handle,
  * OR returns used to indicate whether or not an event is a bubbling event. If the 
  * event can bubble the value is true, else the value is false. 
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -303,8 +292,7 @@ javacall_dom_event_get_bubbles_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_get_bubbles_finish(javacall_handle handle,
-                                      void *context,
+javacall_dom_event_get_bubbles_finish(void *context,
                                       /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -336,7 +324,6 @@ javacall_dom_event_get_cancelable_start(javacall_handle handle,
  * prevented. If the default action can be prevented the value is true, 
  * else the value is false. 
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -346,8 +333,7 @@ javacall_dom_event_get_cancelable_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_get_cancelable_finish(javacall_handle handle,
-                                         void *context,
+javacall_dom_event_get_cancelable_finish(void *context,
                                          /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -381,7 +367,6 @@ javacall_dom_event_get_default_prevented_start(javacall_handle handle,
  * <p><b>Note:</b>  Calling  <code>Event.preventDefault()</code> 
  * for a non-cancelable event has no effect.
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -391,8 +376,7 @@ javacall_dom_event_get_default_prevented_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_get_default_prevented_finish(javacall_handle handle,
-                                                void *context,
+javacall_dom_event_get_default_prevented_finish(void *context,
                                                 /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -430,7 +414,6 @@ javacall_dom_event_get_time_stamp_start(javacall_handle handle,
  * will be returned. Examples of epoch time are the time of the system 
  * start or 0:0:0 UTC 1st January 1970. 
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -440,8 +423,7 @@ javacall_dom_event_get_time_stamp_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_get_time_stamp_finish(javacall_handle handle,
-                                         void *context,
+javacall_dom_event_get_time_stamp_finish(void *context,
                                          /* OUT */ javacall_int64* ret_value);
 
 /**
@@ -478,7 +460,6 @@ javacall_dom_event_stop_propagation_start(javacall_handle handle,
  * on the current <code>EventTarget</code> before event flow stops. This 
  * method may be used during any stage of event flow.
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -488,8 +469,7 @@ javacall_dom_event_stop_propagation_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_stop_propagation_finish(javacall_handle handle,
-                                           void *context);
+javacall_dom_event_stop_propagation_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -533,7 +513,6 @@ javacall_dom_event_prevent_default_start(javacall_handle handle,
  * throughout the remainder of the event's propagation. This method may 
  * be used during any stage of event flow. 
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -543,8 +522,7 @@ javacall_dom_event_prevent_default_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_prevent_default_finish(javacall_handle handle,
-                                          void *context);
+javacall_dom_event_prevent_default_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -602,18 +580,7 @@ javacall_dom_event_init_event_start(javacall_handle handle,
  * <code>initEvent</code> method are modified, all other attributes are 
  * left unchanged.
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
- * @param event_type_arg Specifies the event type. This type may be any 
- *   event type currently defined in this specification or a new event 
- *   type.. The string must be an XML name. Any new event type must not 
- *   begin with any upper, lower, or mixed case version of the string 
- *   "DOM". This prefix is reserved for future DOM event sets. It is 
- *   also strongly recommended that third parties adding their own 
- *   events use their own prefix to avoid confusion and lessen the 
- *   probability of conflicts with other new events.
- * @param can_bubble_arg Specifies whether or not the event can bubble.
- * @param cancelable_arg Specifies whether or not the event's default 
  *   action can be prevented.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -623,11 +590,7 @@ javacall_dom_event_init_event_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_init_event_finish(javacall_handle handle,
-                                     void *context,
-                                     javacall_const_utf16_string event_type_arg,
-                                     javacall_bool can_bubble_arg,
-                                     javacall_bool cancelable_arg);
+javacall_dom_event_init_event_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -671,16 +634,7 @@ javacall_dom_event_init_event_ns_start(javacall_handle handle,
  * an <code>Event</code> object and has the same behavior as 
  * <code>Event.initEvent()</code>. 
  * 
- * @param handle Pointer to the object representing this event.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri_arg  Specifies <code>Event.namespaceURI</code>, the 
- *   namespace URI associated with this event, or <code>NULL</code> if 
- *   no namespace. 
- * @param event_type_arg  Refer to the <code>Event.initEvent()</code> 
- *   method for a description of this parameter. 
- * @param can_bubble_arg  Refer to the <code>Event.initEvent()</code> 
- *   method for a description of this parameter. 
- * @param cancelable_arg  Refer to the <code>Event.initEvent()</code> 
  *   method for a description of this parameter.
  *
  * 
@@ -691,12 +645,7 @@ javacall_dom_event_init_event_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_event_init_event_ns_finish(javacall_handle handle,
-                                        void *context,
-                                        javacall_const_utf16_string namespace_uri_arg,
-                                        javacall_const_utf16_string event_type_arg,
-                                        javacall_bool can_bubble_arg,
-                                        javacall_bool cancelable_arg);
+javacall_dom_event_init_event_ns_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

@@ -85,7 +85,6 @@ javacall_dom_notation_get_public_id_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this notation.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The public identifier of this notation, or <code>NULL</code>
  * @param ret_value_len Length of the returned string
@@ -99,8 +98,7 @@ javacall_dom_notation_get_public_id_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_notation_get_public_id_finish(javacall_handle handle,
-                                           void *context,
+javacall_dom_notation_get_public_id_finish(void *context,
                                            /* OUT */ javacall_utf16_string ret_value,
                                            /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -144,7 +142,6 @@ javacall_dom_notation_get_system_id_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this notation.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The system identifier of this notation, or <code>NULL</code>
  * @param ret_value_len Length of the returned string
@@ -158,8 +155,7 @@ javacall_dom_notation_get_system_id_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_notation_get_system_id_finish(javacall_handle handle,
-                                           void *context,
+javacall_dom_notation_get_system_id_finish(void *context,
                                            /* OUT */ javacall_utf16_string ret_value,
                                            /* INOUT */ javacall_uint32* ret_value_len);
 

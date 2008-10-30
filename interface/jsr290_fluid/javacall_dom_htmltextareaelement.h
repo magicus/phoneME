@@ -81,7 +81,6 @@ javacall_dom_htmltextareaelement_get_value_start(javacall_handle handle,
  * element. If the entirety of the data can not fit into a single 
  * <code>DOMString</code>, the implementation may truncate the data.
  * 
- * @param handle Pointer to the object representing this htmltextareaelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -93,8 +92,7 @@ javacall_dom_htmltextareaelement_get_value_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmltextareaelement_get_value_finish(javacall_handle handle,
-                                                  void *context,
+javacall_dom_htmltextareaelement_get_value_finish(void *context,
                                                   /* OUT */ javacall_utf16_string ret_value,
                                                   /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -122,7 +120,6 @@ javacall_dom_htmltextareaelement_select_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR select the contents of the <code>TEXTAREA</code>.
  * 
- * @param handle Pointer to the object representing this htmltextareaelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -132,8 +129,7 @@ javacall_dom_htmltextareaelement_select_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmltextareaelement_select_finish(javacall_handle handle,
-                                               void *context);
+javacall_dom_htmltextareaelement_select_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -168,7 +164,6 @@ javacall_dom_htmltextareaelement_set_value_start(javacall_handle handle,
  * element. If the entirety of the data can not fit into a single 
  * <code>DOMString</code>, the implementation may truncate the data.
  * 
- * @param handle Pointer to the object representing this htmltextareaelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -178,9 +173,7 @@ javacall_dom_htmltextareaelement_set_value_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmltextareaelement_set_value_finish(javacall_handle handle,
-                                                  void *context,
-                                                  javacall_const_utf16_string value);
+javacall_dom_htmltextareaelement_set_value_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

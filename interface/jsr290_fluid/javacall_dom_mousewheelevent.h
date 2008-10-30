@@ -86,7 +86,6 @@ javacall_dom_mousewheelevent_get_wheel_delta_start(javacall_handle handle,
  * is a finite physical step. On devices with smooth rotation, a "click" 
  * becomes the smallest measurable amount of rotation.</p>
  * 
- * @param handle Pointer to the object representing this mousewheelevent.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -96,8 +95,7 @@ javacall_dom_mousewheelevent_get_wheel_delta_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mousewheelevent_get_wheel_delta_finish(javacall_handle handle,
-                                                    void *context,
+javacall_dom_mousewheelevent_get_wheel_delta_finish(void *context,
                                                     /* OUT */ javacall_int32* ret_value);
 
 /**
@@ -182,34 +180,7 @@ javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_start(javacall_handle han
  * device does not have a pointer, but does have a wheel). 
  *
  * 
- * @param handle Pointer to the object representing this mousewheelevent.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri_arg  Refer to the <code>Event.initEventNS()</code> 
- *   method for a description of this parameter. 
- * @param type_arg  Refer to the <code>Event.initEventNS()</code> method 
- *   for a description of this parameter. 
- * @param can_bubble_arg  Refer to the <code>Event.initEventNS()</code> 
- *   method for a description of this parameter. 
- * @param cancelable_arg  Refer to the <code>Event.initEventNS()</code> 
- *   method for a description of this parameter. 
- * @param detail_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
- *   method for a description of this parameter.
- * @param screen_x_arg Refer to the <code>MouseEvent.initMouseEventNS()</code>
- *   method for a description of this parameter.
- * @param screen_y_arg Refer to the <code>MouseEvent.initMouseEventNS()</code>
- *   method for a description of this parameter.
- * @param client_x_arg Refer to the <code>MouseEvent.initMouseEventNS()</code>
- *   method for a description of this parameter.
- * @param client_y_arg Refer to the <code>MouseEvent.initMouseEventNS()</code>
- *   method for a description of this parameter.
- * @param button_arg Refer to the <code>MouseEvent.initMouseEventNS()</code>
- *   method for a description of this parameter.
- * @param related_target_arg Pointer to the object of
- *   refer to the <code>MouseEvent.initMouseEventNS()</code>
- *   method for a description of this parameter.
- * @param modifiers_list_arg Refer to the <code>MouseEvent.initMouseEventNS()</code>
- *   method for a description of this parameter.
- * @param wheel_delta_arg  A number indicating the distance in "clicks"
  *   (positive means rotated away from the user, negative means rotated
  *   towards the user). The default value of the wheelDelta attribute is 0. 
  *
@@ -221,21 +192,7 @@ javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_start(javacall_handle han
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_finish(javacall_handle handle,
-                                                              void *context,
-                                                              javacall_const_utf16_string namespace_uri_arg,
-                                                              javacall_const_utf16_string type_arg,
-                                                              javacall_bool can_bubble_arg,
-                                                              javacall_bool cancelable_arg,
-                                                              javacall_int32 detail_arg,
-                                                              javacall_int32 screen_x_arg,
-                                                              javacall_int32 screen_y_arg,
-                                                              javacall_int32 client_x_arg,
-                                                              javacall_int32 client_y_arg,
-                                                              javacall_int16 button_arg,
-                                                              javacall_handle related_target_arg,
-                                                              javacall_const_utf16_string modifiers_list_arg,
-                                                              javacall_int32 wheel_delta_arg);
+javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

@@ -84,7 +84,6 @@ javacall_dom_mutationevent_get_related_node_start(javacall_handle handle,
  * the DOMAttrModified event it indicates the <code>Attr</code> node 
  * which was modified, added, or removed. 
  * 
- * @param handle Pointer to the object representing this mutationevent.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -94,8 +93,7 @@ javacall_dom_mutationevent_get_related_node_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mutationevent_get_related_node_finish(javacall_handle handle,
-                                                   void *context,
+javacall_dom_mutationevent_get_related_node_finish(void *context,
                                                    /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -130,7 +128,6 @@ javacall_dom_mutationevent_get_prev_value_start(javacall_handle handle,
  * <code>Attr</code> node in DOMAttrModified events, and of the 
  * <code>CharacterData</code> node in DOMCharDataModified events. 
  * 
- * @param handle Pointer to the object representing this mutationevent.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -142,8 +139,7 @@ javacall_dom_mutationevent_get_prev_value_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mutationevent_get_prev_value_finish(javacall_handle handle,
-                                                 void *context,
+javacall_dom_mutationevent_get_prev_value_finish(void *context,
                                                  /* OUT */ javacall_utf16_string ret_value,
                                                  /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -179,7 +175,6 @@ javacall_dom_mutationevent_get_new_value_start(javacall_handle handle,
  * node in DOMAttrModified events, and of the <code>CharacterData</code> 
  * node in DOMCharDataModified events. 
  * 
- * @param handle Pointer to the object representing this mutationevent.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -191,8 +186,7 @@ javacall_dom_mutationevent_get_new_value_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mutationevent_get_new_value_finish(javacall_handle handle,
-                                                void *context,
+javacall_dom_mutationevent_get_new_value_finish(void *context,
                                                 /* OUT */ javacall_utf16_string ret_value,
                                                 /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -226,7 +220,6 @@ javacall_dom_mutationevent_get_attr_name_start(javacall_handle handle,
  * OR returns  <code>attrName</code> indicates the name of the changed 
  * <code>Attr</code> node in a DOMAttrModified event. 
  * 
- * @param handle Pointer to the object representing this mutationevent.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -238,8 +231,7 @@ javacall_dom_mutationevent_get_attr_name_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mutationevent_get_attr_name_finish(javacall_handle handle,
-                                                void *context,
+javacall_dom_mutationevent_get_attr_name_finish(void *context,
                                                 /* OUT */ javacall_utf16_string ret_value,
                                                 /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -272,7 +264,6 @@ javacall_dom_mutationevent_get_attr_change_start(javacall_handle handle,
  * the DOMAttrModified event. The values can be <code>MODIFICATION</code>
  * , <code>ADDITION</code>, or <code>REMOVAL</code>. 
  * 
- * @param handle Pointer to the object representing this mutationevent.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -282,8 +273,7 @@ javacall_dom_mutationevent_get_attr_change_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mutationevent_get_attr_change_finish(javacall_handle handle,
-                                                  void *context,
+javacall_dom_mutationevent_get_attr_change_finish(void *context,
                                                   /* OUT */ javacall_int16* ret_value);
 
 /**
@@ -338,24 +328,7 @@ javacall_dom_mutationevent_init_mutation_event_start(javacall_handle handle,
  * value of a <code>MutationEvent</code> object and has the same 
  * behavior as <code>Event.initEvent()</code>. 
  * 
- * @param handle Pointer to the object representing this mutationevent.
  * @param context The context saved during asynchronous operation.
- * @param type_arg  Refer to the <code>Event.initEvent()</code> method for 
- *   a description of this parameter. 
- * @param can_bubble_arg  Refer to the <code>Event.initEvent()</code> 
- *   method for a description of this parameter. 
- * @param cancelable_arg  Refer to the <code>Event.initEvent()</code> 
- *   method for a description of this parameter. 
- * @param related_node_arg Pointer to the object of
- *    Specifies <code>MutationEvent.relatedNode</code>.
- *   This value may be NULL.
- * @param prev_value_arg  Specifies <code>MutationEvent.prevValue</code>. 
- *   This value may be NULL. 
- * @param new_value_arg  Specifies <code>MutationEvent.newValue</code>. 
- *   This value may be NULL. 
- * @param attr_name_arg  Specifies <code>MutationEvent.attrname</code>. 
- *   This value may be NULL. 
- * @param attr_change_arg  Specifies <code>MutationEvent.attrChange</code>. 
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -364,16 +337,7 @@ javacall_dom_mutationevent_init_mutation_event_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mutationevent_init_mutation_event_finish(javacall_handle handle,
-                                                      void *context,
-                                                      javacall_const_utf16_string type_arg,
-                                                      javacall_bool can_bubble_arg,
-                                                      javacall_bool cancelable_arg,
-                                                      javacall_handle related_node_arg,
-                                                      javacall_const_utf16_string prev_value_arg,
-                                                      javacall_const_utf16_string new_value_arg,
-                                                      javacall_const_utf16_string attr_name_arg,
-                                                      javacall_int16 attr_change_arg);
+javacall_dom_mutationevent_init_mutation_event_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -436,30 +400,7 @@ javacall_dom_mutationevent_init_mutation_event_ns_start(javacall_handle handle,
  * value of a <code>MutationEvent</code> object and has the same 
  * behavior as <code>Event.initEventNS()</code>. 
  * 
- * @param handle Pointer to the object representing this mutationevent.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri_arg  Refer to the <code>Event.initEventNS()</code> 
- *   method for a description of this parameter. 
- * @param type_arg  Refer to the <code>Event.initEventNS()</code> method 
- *   for a description of this parameter. 
- * @param can_bubble_arg  Refer to the <code>Event.initEventNS()</code> 
- *   method for a description of this parameter. 
- * @param cancelable_arg  Refer to the <code>Event.initEventNS()</code> 
- *   method for a description of this parameter. 
- * @param related_node_arg Pointer to the object of
- *    Refer to the 
- *   <code>MutationEvent.initMutationEvent()</code> method for a 
- *   description of this parameter. 
- * @param prev_value_arg  Refer to the 
- *   <code>MutationEvent.initMutationEvent()</code> method for a 
- *   description of this parameter. 
- * @param new_value_arg  Refer to the 
- *   <code>MutationEvent.initMutationEvent()</code> method for a 
- *   description of this parameter. 
- * @param attr_name_arg  Refer to the 
- *   <code>MutationEvent.initMutationEvent()</code> method for a 
- *   description of this parameter. 
- * @param attr_change_arg  Refer to the 
  *   <code>MutationEvent.initMutationEvent()</code> method for a 
  *   description of this parameter.
  * 
@@ -470,17 +411,7 @@ javacall_dom_mutationevent_init_mutation_event_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mutationevent_init_mutation_event_ns_finish(javacall_handle handle,
-                                                         void *context,
-                                                         javacall_const_utf16_string namespace_uri_arg,
-                                                         javacall_const_utf16_string type_arg,
-                                                         javacall_bool can_bubble_arg,
-                                                         javacall_bool cancelable_arg,
-                                                         javacall_handle related_node_arg,
-                                                         javacall_const_utf16_string prev_value_arg,
-                                                         javacall_const_utf16_string new_value_arg,
-                                                         javacall_const_utf16_string attr_name_arg,
-                                                         javacall_int16 attr_change_arg);
+javacall_dom_mutationevent_init_mutation_event_ns_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

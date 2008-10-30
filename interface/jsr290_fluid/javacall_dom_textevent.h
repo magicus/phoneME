@@ -83,7 +83,6 @@ javacall_dom_textevent_get_data_start(javacall_handle handle,
  * [<a href='http://www.unicode.org/reports/tr15/'>UAX #15</a>]. This 
  * attribute cannot be NULL or contain the empty string. 
  * 
- * @param handle Pointer to the object representing this textevent.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -95,8 +94,7 @@ javacall_dom_textevent_get_data_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_textevent_get_data_finish(javacall_handle handle,
-                                       void *context,
+javacall_dom_textevent_get_data_finish(void *context,
                                        /* OUT */ javacall_utf16_string ret_value,
                                        /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -141,15 +139,7 @@ javacall_dom_textevent_init_text_event_start(javacall_handle handle,
  * <code>UIEvent.initUIEvent()</code>. The value of 
  * <code>UIEvent.detail</code> remains undefined. 
  * 
- * @param handle Pointer to the object representing this textevent.
  * @param context The context saved during asynchronous operation.
- * @param type_arg  Refer to the <code>UIEvent.initUIEvent()</code> method 
- *   for a description of this parameter. 
- * @param can_bubble_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
- *   method for a description of this parameter. 
- * @param cancelable_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
- *   method for a description of this parameter. 
- * @param data_arg  Specifies <code>TextEvent.data</code>. 
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -158,12 +148,7 @@ javacall_dom_textevent_init_text_event_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_textevent_init_text_event_finish(javacall_handle handle,
-                                              void *context,
-                                              javacall_const_utf16_string type_arg,
-                                              javacall_bool can_bubble_arg,
-                                              javacall_bool cancelable_arg,
-                                              javacall_const_utf16_string data_arg);
+javacall_dom_textevent_init_text_event_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -210,17 +195,7 @@ javacall_dom_textevent_init_text_event_ns_start(javacall_handle handle,
  * <code>UIEvent.initUIEventNS()</code>. The value of 
  * <code>UIEvent.detail</code> remains undefined. 
  * 
- * @param handle Pointer to the object representing this textevent.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri_arg  Refer to the <code>UIEvent.initUIEventNS()</code> 
- *   method for a description of this parameter. 
- * @param type_arg  Refer to the <code>UIEvent.initUIEventNS()</code> method 
- *   for a description of this parameter. 
- * @param can_bubble_arg  Refer to the <code>UIEvent.initUIEventNS()</code> 
- *   method for a description of this parameter. 
- * @param cancelable_arg  Refer to the <code>UIEvent.initUIEventNS()</code>
- *   method for a description of this parameter. 
- * @param data_arg  Refer to the <code>TextEvent.initTextEvent()</code> 
  *   method for a description of this parameter. 
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -230,13 +205,7 @@ javacall_dom_textevent_init_text_event_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_textevent_init_text_event_ns_finish(javacall_handle handle,
-                                                 void *context,
-                                                 javacall_const_utf16_string namespace_uri_arg,
-                                                 javacall_const_utf16_string type_arg,
-                                                 javacall_bool can_bubble_arg,
-                                                 javacall_bool cancelable_arg,
-                                                 javacall_const_utf16_string data_arg);
+javacall_dom_textevent_init_text_event_ns_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

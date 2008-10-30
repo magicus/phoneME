@@ -85,7 +85,6 @@ javacall_dom_documenttype_get_name_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this documenttype.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the name of the DTD
  * @param ret_value_len Length of the returned string
@@ -99,8 +98,7 @@ javacall_dom_documenttype_get_name_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_documenttype_get_name_finish(javacall_handle handle,
-                                          void *context,
+javacall_dom_documenttype_get_name_finish(void *context,
                                           /* OUT */ javacall_utf16_string ret_value,
                                           /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -156,7 +154,6 @@ javacall_dom_documenttype_get_entities_start(javacall_handle handle,
  * <br>The DOM Level 2 does not support editing entities, therefore 
  * <code>entities</code> cannot be altered in any way.
  * 
- * @param handle Pointer to the object representing this documenttype.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   a <code>NamedNodeMap</code> containing the general entities 
@@ -169,8 +166,7 @@ javacall_dom_documenttype_get_entities_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_documenttype_get_entities_finish(javacall_handle handle,
-                                              void *context,
+javacall_dom_documenttype_get_entities_finish(void *context,
                                               /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -208,7 +204,6 @@ javacall_dom_documenttype_get_notations_start(javacall_handle handle,
  * <br>The DOM Level 2 does not support editing notations, therefore 
  * <code>notations</code> cannot be altered in any way.
  * 
- * @param handle Pointer to the object representing this documenttype.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   a <code>NamedNodeMap</code> containing the notations declared in the DTD
@@ -220,8 +215,7 @@ javacall_dom_documenttype_get_notations_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_documenttype_get_notations_finish(javacall_handle handle,
-                                               void *context,
+javacall_dom_documenttype_get_notations_finish(void *context,
                                                /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -262,7 +256,6 @@ javacall_dom_documenttype_get_public_id_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this documenttype.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the public identifier of the external subset
  * @param ret_value_len Length of the returned string
@@ -276,8 +269,7 @@ javacall_dom_documenttype_get_public_id_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_documenttype_get_public_id_finish(javacall_handle handle,
-                                               void *context,
+javacall_dom_documenttype_get_public_id_finish(void *context,
                                                /* OUT */ javacall_utf16_string ret_value,
                                                /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -319,7 +311,6 @@ javacall_dom_documenttype_get_system_id_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this documenttype.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The system identifier of the external subset
  * @param ret_value_len Length of the returned string
@@ -333,8 +324,7 @@ javacall_dom_documenttype_get_system_id_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_documenttype_get_system_id_finish(javacall_handle handle,
-                                               void *context,
+javacall_dom_documenttype_get_system_id_finish(void *context,
                                                /* OUT */ javacall_utf16_string ret_value,
                                                /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -384,7 +374,6 @@ javacall_dom_documenttype_get_internal_subset_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this documenttype.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing a representation of the internal subset
  * @param ret_value_len Length of the returned string
@@ -398,8 +387,7 @@ javacall_dom_documenttype_get_internal_subset_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_documenttype_get_internal_subset_finish(javacall_handle handle,
-                                                     void *context,
+javacall_dom_documenttype_get_internal_subset_finish(void *context,
                                                      /* OUT */ javacall_utf16_string ret_value,
                                                      /* INOUT */ javacall_uint32* ret_value_len);
 

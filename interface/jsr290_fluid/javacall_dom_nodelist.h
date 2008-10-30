@@ -82,9 +82,7 @@ javacall_dom_nodelist_item_start(javacall_handle handle,
  * the list, this returns <code>NULL</code>. The range of valid child
  *  node indices is 0 to <code>length-1</code> inclusive.
  * 
- * @param handle Pointer to the object representing this nodelist.
  * @param context The context saved during asynchronous operation.
- * @param index Index into the collection.
  * @param ret_value Pointer to the object representing 
  *   the node at the <code>index</code>th position in the 
  *   <code>NodeList</code>, or <code>NULL</code> if that is not a valid 
@@ -97,9 +95,7 @@ javacall_dom_nodelist_item_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_nodelist_item_finish(javacall_handle handle,
-                                  void *context,
-                                  javacall_int32 index,
+javacall_dom_nodelist_item_finish(void *context,
                                   /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -130,7 +126,6 @@ javacall_dom_nodelist_get_length_start(javacall_handle handle,
  * OR returns the number of nodes in the list. The range of valid child node indices 
  * is 0 to <code>length-1</code> inclusive. 
  * 
- * @param handle Pointer to the object representing this nodelist.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The number of nodes in the list
  * 
@@ -141,8 +136,7 @@ javacall_dom_nodelist_get_length_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_nodelist_get_length_finish(javacall_handle handle,
-                                        void *context,
+javacall_dom_nodelist_get_length_finish(void *context,
                                         /* OUT */ javacall_int32* ret_value);
 
 /** 

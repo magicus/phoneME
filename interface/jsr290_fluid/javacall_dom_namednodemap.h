@@ -76,9 +76,7 @@ javacall_dom_namednodemap_get_named_item_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns retrieves a node specified by name.
  * 
- * @param handle Pointer to the object representing this namednodemap.
  * @param context The context saved during asynchronous operation.
- * @param name The <code>nodeName</code> of a node to retrieve.
  * @param ret_value Pointer to the object representing 
  *   a <code>Node</code> (of any type) with the specified 
  *   <code>nodeName</code>, or <code>NULL</code> if it does not identify 
@@ -91,9 +89,7 @@ javacall_dom_namednodemap_get_named_item_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_namednodemap_get_named_item_finish(javacall_handle handle,
-                                                void *context,
-                                                javacall_const_utf16_string name,
+javacall_dom_namednodemap_get_named_item_finish(void *context,
                                                 /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -152,10 +148,7 @@ javacall_dom_namednodemap_set_named_item_start(javacall_handle handle,
  * names would clash. This is seen as preferable to allowing nodes to be 
  * aliased.
  * 
- * @param handle Pointer to the object representing this namednodemap.
  * @param context The context saved during asynchronous operation.
- * @param arg Pointer to the object of
- *   a node to store in this map. The node will later be 
  *   accessible using the value of its <code>nodeName</code> attribute.
  * @param ret_value Pointer to the object representing 
  *   if the new <code>Node</code> replaces an existing node the 
@@ -177,9 +170,7 @@ javacall_dom_namednodemap_set_named_item_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_namednodemap_set_named_item_finish(javacall_handle handle,
-                                                void *context,
-                                                javacall_handle arg,
+javacall_dom_namednodemap_set_named_item_finish(void *context,
                                                 /* OUT */ javacall_handle* ret_value,
                                                 /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -228,9 +219,7 @@ javacall_dom_namednodemap_remove_named_item_start(javacall_handle handle,
  * default value as well as the corresponding namespace URI, local name, 
  * and prefix when applicable.
  * 
- * @param handle Pointer to the object representing this namednodemap.
  * @param context The context saved during asynchronous operation.
- * @param name The <code>nodeName</code> of the node to remove.
  * @param ret_value Pointer to the object representing 
  *   the node removed from this map if a node with such a name 
  *   exists.
@@ -248,9 +237,7 @@ javacall_dom_namednodemap_remove_named_item_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_namednodemap_remove_named_item_finish(javacall_handle handle,
-                                                   void *context,
-                                                   javacall_const_utf16_string name,
+javacall_dom_namednodemap_remove_named_item_finish(void *context,
                                                    /* OUT */ javacall_handle* ret_value,
                                                    /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -288,9 +275,7 @@ javacall_dom_namednodemap_item_start(javacall_handle handle,
  * is greater than or equal to the number of nodes in this map, this 
  * returns <code>NULL</code>.
  * 
- * @param handle Pointer to the object representing this namednodemap.
  * @param context The context saved during asynchronous operation.
- * @param index Index into this map.
  * @param ret_value Pointer to the object representing 
  *   the node at the <code>index</code>th position in the map, or 
  *   <code>NULL</code> if that is not a valid index.
@@ -302,9 +287,7 @@ javacall_dom_namednodemap_item_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_namednodemap_item_finish(javacall_handle handle,
-                                      void *context,
-                                      javacall_int32 index,
+javacall_dom_namednodemap_item_finish(void *context,
                                       /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -335,7 +318,6 @@ javacall_dom_namednodemap_get_length_start(javacall_handle handle,
  * OR returns the number of nodes in this map. The range of valid child node indices 
  * is <code>0</code> to <code>length-1</code> inclusive. 
  * 
- * @param handle Pointer to the object representing this namednodemap.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The number of nodes in this map
  * 
@@ -346,8 +328,7 @@ javacall_dom_namednodemap_get_length_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_namednodemap_get_length_finish(javacall_handle handle,
-                                            void *context,
+javacall_dom_namednodemap_get_length_finish(void *context,
                                             /* OUT */ javacall_int32* ret_value);
 
 /**
@@ -383,10 +364,7 @@ javacall_dom_namednodemap_get_named_item_ns_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns retrieves a node specified by local name and namespace URI. 
  * 
- * @param handle Pointer to the object representing this namednodemap.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the node to retrieve.
- * @param local_name The local name of the node to retrieve.
  * @param ret_value Pointer to the object representing 
  *   a <code>Node</code> (of any type) with the specified local 
  *   name and namespace URI, or <code>NULL</code> if they do not 
@@ -399,10 +377,7 @@ javacall_dom_namednodemap_get_named_item_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_namednodemap_get_named_item_ns_finish(javacall_handle handle,
-                                                   void *context,
-                                                   javacall_const_utf16_string namespace_uri,
-                                                   javacall_const_utf16_string local_name,
+javacall_dom_namednodemap_get_named_item_ns_finish(void *context,
                                                    /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -454,10 +429,7 @@ javacall_dom_namednodemap_set_named_item_ns_start(javacall_handle handle,
  * local name is already present in this map, it is replaced by the new 
  * one.
  * 
- * @param handle Pointer to the object representing this namednodemap.
  * @param context The context saved during asynchronous operation.
- * @param arg Pointer to the object of
- *   a node to store in this map. The node will later be 
  *   accessible using the value of its <code>namespaceURI</code> and 
  *   <code>localName</code> attributes.
  * @param ret_value Pointer to the object representing 
@@ -480,9 +452,7 @@ javacall_dom_namednodemap_set_named_item_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_namednodemap_set_named_item_ns_finish(javacall_handle handle,
-                                                   void *context,
-                                                   javacall_handle arg,
+javacall_dom_namednodemap_set_named_item_ns_finish(void *context,
                                                    /* OUT */ javacall_handle* ret_value,
                                                    /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -535,10 +505,7 @@ javacall_dom_namednodemap_remove_named_item_ns_start(javacall_handle handle,
  * immediately appears containing the default value as well as the 
  * corresponding namespace URI, local name, and prefix when applicable.
  * 
- * @param handle Pointer to the object representing this namednodemap.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the node to remove.
- * @param local_name The local name of the node to remove.
  * @param ret_value Pointer to the object representing 
  *   the node removed from this map if a node with such a local 
  *   name and namespace URI exists.
@@ -556,10 +523,7 @@ javacall_dom_namednodemap_remove_named_item_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_namednodemap_remove_named_item_ns_finish(javacall_handle handle,
-                                                      void *context,
-                                                      javacall_const_utf16_string namespace_uri,
-                                                      javacall_const_utf16_string local_name,
+javacall_dom_namednodemap_remove_named_item_ns_finish(void *context,
                                                       /* OUT */ javacall_handle* ret_value,
                                                       /* OUT */ javacall_dom_exceptions* exception_code);
 

@@ -85,7 +85,6 @@ javacall_dom_node_get_node_name_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the name of this node
  * @param ret_value_len Length of the returned string
@@ -99,8 +98,7 @@ javacall_dom_node_get_node_name_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_node_name_finish(javacall_handle handle,
-                                       void *context,
+javacall_dom_node_get_node_name_finish(void *context,
                                        /* OUT */ javacall_utf16_string ret_value,
                                        /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -147,7 +145,6 @@ javacall_dom_node_get_node_value_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the value of this node
  * @param ret_value_len Length of the returned string
@@ -162,8 +159,7 @@ javacall_dom_node_get_node_value_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_node_value_finish(javacall_handle handle,
-                                        void *context,
+javacall_dom_node_get_node_value_finish(void *context,
                                         /* OUT */ javacall_utf16_string ret_value,
                                         /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -200,9 +196,7 @@ javacall_dom_node_set_node_value_start(javacall_handle handle,
  * When it is defined to be <code>NULL</code>, setting it has no effect,
  * including if the node is read-only.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
- * @param node_value the value of the node
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
@@ -212,9 +206,7 @@ javacall_dom_node_set_node_value_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_set_node_value_finish(javacall_handle handle,
-                                        void *context,
-                                        javacall_const_utf16_string node_value);
+javacall_dom_node_set_node_value_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -244,7 +236,6 @@ javacall_dom_node_get_node_type_start(javacall_handle handle,
  * OR returns a code representing the type of the underlying object, as defined in 
  * <code>javacall_dom_node_types</code>.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value A code representing the type of the underlying object
  * 
@@ -255,8 +246,7 @@ javacall_dom_node_get_node_type_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_node_type_finish(javacall_handle handle,
-                                       void *context,
+javacall_dom_node_get_node_type_finish(void *context,
                                        /* OUT */ javacall_dom_node_types* ret_value);
 
 /**
@@ -296,7 +286,6 @@ javacall_dom_node_get_parent_node_start(javacall_handle handle,
  * tree, or if it has been removed from the tree, this is 
  * <code>NULL</code>.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the parent of this node, or <code>NULL</code>
@@ -308,8 +297,7 @@ javacall_dom_node_get_parent_node_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_parent_node_finish(javacall_handle handle,
-                                         void *context,
+javacall_dom_node_get_parent_node_finish(void *context,
                                          /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -343,7 +331,6 @@ javacall_dom_node_get_child_nodes_start(javacall_handle handle,
  * there are no children, this is a <code>NodeList</code> containing no 
  * nodes.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   a <code>NodeList</code> that contains all children of this node.
@@ -355,8 +342,7 @@ javacall_dom_node_get_child_nodes_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_child_nodes_finish(javacall_handle handle,
-                                         void *context,
+javacall_dom_node_get_child_nodes_finish(void *context,
                                          /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -388,7 +374,6 @@ javacall_dom_node_get_first_child_start(javacall_handle handle,
  * OR the first child of this node. If there is no such node, this returns 
  * <code>NULL</code>.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the first child of this node or <code>NULL</code>
@@ -400,8 +385,7 @@ javacall_dom_node_get_first_child_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_first_child_finish(javacall_handle handle,
-                                         void *context,
+javacall_dom_node_get_first_child_finish(void *context,
                                          /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -433,7 +417,6 @@ javacall_dom_node_get_last_child_start(javacall_handle handle,
  * OR the last child of this node. If there is no such node, this returns 
  * <code>NULL</code>.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the last child of this node or <code>NULL</code>.
@@ -445,8 +428,7 @@ javacall_dom_node_get_last_child_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_last_child_finish(javacall_handle handle,
-                                        void *context,
+javacall_dom_node_get_last_child_finish(void *context,
                                         /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -478,7 +460,6 @@ javacall_dom_node_get_previous_sibling_start(javacall_handle handle,
  * OR the node immediately preceding this node. If there is no such node, 
  * this returns <code>NULL</code>.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the node immediately preceding this node or <code>NULL</code>
@@ -490,8 +471,7 @@ javacall_dom_node_get_previous_sibling_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_previous_sibling_finish(javacall_handle handle,
-                                              void *context,
+javacall_dom_node_get_previous_sibling_finish(void *context,
                                               /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -523,7 +503,6 @@ javacall_dom_node_get_next_sibling_start(javacall_handle handle,
  * OR the node immediately following this node. If there is no such node, 
  * this returns <code>NULL</code>.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the node immediately following this node or <code>NULL</code>
@@ -535,8 +514,7 @@ javacall_dom_node_get_next_sibling_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_next_sibling_finish(javacall_handle handle,
-                                          void *context,
+javacall_dom_node_get_next_sibling_finish(void *context,
                                           /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -568,7 +546,6 @@ javacall_dom_node_get_attributes_start(javacall_handle handle,
  * OR returns a <code>NamedNodeMap</code> containing the attributes of this node (if 
  * it is an <code>Element</code>) or <code>NULL</code> otherwise. 
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   a <code>NamedNodeMap</code> containing the attributes of this node, or  <code>NULL</code>
@@ -580,8 +557,7 @@ javacall_dom_node_get_attributes_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_attributes_finish(javacall_handle handle,
-                                        void *context,
+javacall_dom_node_get_attributes_finish(void *context,
                                         /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -619,7 +595,6 @@ javacall_dom_node_get_owner_document_start(javacall_handle handle,
  * which is not used with any <code>Document</code> yet, this is 
  * <code>NULL</code>.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the <code>Document</code> object associated with this node, or <code>NULL</code>
@@ -631,8 +606,7 @@ javacall_dom_node_get_owner_document_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_owner_document_finish(javacall_handle handle,
-                                            void *context,
+javacall_dom_node_get_owner_document_finish(void *context,
                                             /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -685,22 +659,17 @@ javacall_dom_node_insert_before_start(javacall_handle handle,
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR inserts the node <code>new_child</code> before the existing child node 
- * <code>ref_child</code>. If <code>ref_child</code> is <code>NULL</code>, 
- * insert <code>new_child</code> at the end of the list of children.
- * <br>If <code>new_child</code> is a <code>DocumentFragment</code> object, 
+ * OR inserts the node <code>newChild</code> before the existing child node 
+ * <code>refChild</code>. If <code>refChild</code> is <code>NULL</code>, 
+ * insert <code>newChild</code> at the end of the list of children.
+ * <br>If <code>newChild</code> is a <code>DocumentFragment</code> object, 
  * all of its children are inserted, in the same order, before 
- * <code>ref_child</code>. If the <code>new_child</code> is already in the 
+ * <code>refChild</code>. If the <code>newChild</code> is already in the 
  * tree, it is first removed.
  * <p ><b>Note:</b>  Inserting a node before itself is implementation 
  * dependent. 
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
- * @param new_child Pointer to the object of
- *   the node to insert.
- * @param ref_child Pointer to the object of
- *   the reference node, i.e., the node before which the new 
  *   node must be inserted.
  * @param ret_value Pointer to the object representing 
  *   the node being inserted.
@@ -721,10 +690,7 @@ javacall_dom_node_insert_before_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_insert_before_finish(javacall_handle handle,
-                                       void *context,
-                                       javacall_handle new_child,
-                                       javacall_handle ref_child,
+javacall_dom_node_insert_before_finish(void *context,
                                        /* OUT */ javacall_handle* ret_value,
                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -775,20 +741,15 @@ javacall_dom_node_replace_child_start(javacall_handle handle,
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR replaces the child node <code>old_child</code> with <code>new_child</code>
- *  in the list of children, and returns the <code>old_child</code> node.
- * <br>If <code>new_child</code> is a <code>DocumentFragment</code> object, 
- * <code>old_child</code> is replaced by all of the 
+ * OR replaces the child node <code>oldChild</code> with <code>newChild</code>
+ *  in the list of children, and returns the <code>oldChild</code> node.
+ * <br>If <code>newChild</code> is a <code>DocumentFragment</code> object, 
+ * <code>oldChild</code> is replaced by all of the 
  * <code>DocumentFragment</code> children, which are inserted in the 
- * same order. If the <code>new_child</code> is already in the tree, it 
+ * same order. If the <code>newChild</code> is already in the tree, it 
  * is first removed.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
- * @param new_child Pointer to the object of
- *   the new node to put in the child list.
- * @param old_child Pointer to the object of
- *   the node being replaced in the list.
  * @param ret_value Pointer to the object representing 
  *   the node replaced.
  * @param exception_code Code of the error if function fails; the following 
@@ -808,10 +769,7 @@ javacall_dom_node_replace_child_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_replace_child_finish(javacall_handle handle,
-                                       void *context,
-                                       javacall_handle new_child,
-                                       javacall_handle old_child,
+javacall_dom_node_replace_child_finish(void *context,
                                        /* OUT */ javacall_handle* ret_value,
                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -852,13 +810,10 @@ javacall_dom_node_remove_child_start(javacall_handle handle,
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR removes the child node indicated by <code>old_child</code> from the list 
+ * OR removes the child node indicated by <code>oldChild</code> from the list 
  * of children, and returns it.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
- * @param old_child Pointer to the object of
- *   the node being removed.
  * @param ret_value Pointer to the object representing 
  *   the node removed.
  * @param exception_code Code of the error if function fails; the following 
@@ -876,9 +831,7 @@ javacall_dom_node_remove_child_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_remove_child_finish(javacall_handle handle,
-                                      void *context,
-                                      javacall_handle old_child,
+javacall_dom_node_remove_child_finish(void *context,
                                       /* OUT */ javacall_handle* ret_value,
                                       /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -923,14 +876,11 @@ javacall_dom_node_append_child_start(javacall_handle handle,
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR adds the node <code>new_child</code> to the end of the list of children 
- * of this node. If the <code>new_child</code> is already in the tree, it 
+ * OR adds the node <code>newChild</code> to the end of the list of children 
+ * of this node. If the <code>newChild</code> is already in the tree, it 
  * is first removed.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
- * @param new_child Pointer to the object of
- *   the node to add.If it is a <code>DocumentFragment</code>
  *   object, the entire contents of the document fragment are moved 
  *   into the child list of this node
  * @param ret_value Pointer to the object representing 
@@ -951,9 +901,7 @@ javacall_dom_node_append_child_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_append_child_finish(javacall_handle handle,
-                                      void *context,
-                                      javacall_handle new_child,
+javacall_dom_node_append_child_finish(void *context,
                                       /* OUT */ javacall_handle* ret_value,
                                       /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -984,7 +932,6 @@ javacall_dom_node_has_child_nodes_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns whether this node has any children.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value  <code>true</code> if this node has any children, 
  *   <code>false</code> otherwise.
@@ -996,8 +943,7 @@ javacall_dom_node_has_child_nodes_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_has_child_nodes_finish(javacall_handle handle,
-                                         void *context,
+javacall_dom_node_has_child_nodes_finish(void *context,
                                          /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -1085,9 +1031,7 @@ javacall_dom_node_clone_node_start(javacall_handle handle,
  * <code>DocumentType</code>, <code>Entity</code>, and 
  * <code>Notation</code> nodes is implementation dependent.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
- * @param deep If <code>true</code>, recursively clone the subtree under 
  *   the specified node; if <code>false</code>, clone only the node 
  *   itself (and its attributes, if it is an <code>Element</code>).
  * @param ret_value Pointer to the object representing 
@@ -1100,9 +1044,7 @@ javacall_dom_node_clone_node_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_clone_node_finish(javacall_handle handle,
-                                    void *context,
-                                    javacall_bool deep,
+javacall_dom_node_clone_node_finish(void *context,
                                     /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -1157,7 +1099,6 @@ javacall_dom_node_normalize_start(javacall_handle handle,
  * sufficient, since XPointers do not differentiate between 
  * <code>Text</code> nodes and <code>CDATASection</code> nodes.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -1167,8 +1108,7 @@ javacall_dom_node_normalize_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_normalize_finish(javacall_handle handle,
-                                   void *context);
+javacall_dom_node_normalize_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1208,12 +1148,7 @@ javacall_dom_node_is_supported_start(javacall_handle handle,
  * OR tests whether the DOM implementation implements a specific feature and 
  * that feature is supported by this node.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
- * @param feature The name of the feature to test. This is the same name 
- *   which can be passed to the method <code>hasFeature</code> on 
- *   <code>DOMImplementation</code>.
- * @param version This is the version number of the feature to test. In 
  *   Level 2, version 1, this is the string "2.0". If the version is not 
  *   specified, supporting any version of the feature will cause the 
  *   method to return <code>true</code>.
@@ -1227,10 +1162,7 @@ javacall_dom_node_is_supported_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_is_supported_finish(javacall_handle handle,
-                                      void *context,
-                                      javacall_const_utf16_string feature,
-                                      javacall_const_utf16_string version,
+javacall_dom_node_is_supported_finish(void *context,
                                       /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -1295,7 +1227,6 @@ javacall_dom_node_get_namespace_uri_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value  The namespace URI of this node, or <code>NULL</code>
  * @param ret_value_len Length of the returned string
@@ -1309,8 +1240,7 @@ javacall_dom_node_get_namespace_uri_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_namespace_uri_finish(javacall_handle handle,
-                                           void *context,
+javacall_dom_node_get_namespace_uri_finish(void *context,
                                            /* OUT */ javacall_utf16_string ret_value,
                                            /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -1386,7 +1316,6 @@ javacall_dom_node_get_prefix_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The namespace prefix of this node, or <code>NULL</code>
  * @param ret_value_len Length of the returned string
@@ -1400,8 +1329,7 @@ javacall_dom_node_get_prefix_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_prefix_finish(javacall_handle handle,
-                                    void *context,
+javacall_dom_node_get_prefix_finish(void *context,
                                     /* OUT */ javacall_utf16_string ret_value,
                                     /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -1485,9 +1413,7 @@ javacall_dom_node_set_prefix_start(javacall_handle handle,
  * exception.</i>
  * 
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
- * @param prefix This node namespace prefix.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
@@ -1503,9 +1429,7 @@ javacall_dom_node_set_prefix_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_set_prefix_finish(javacall_handle handle,
-                                    void *context,
-                                    javacall_const_utf16_string prefix,
+javacall_dom_node_set_prefix_finish(void *context,
                                     /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -1554,7 +1478,6 @@ javacall_dom_node_get_local_name_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the local part of the qualified name of this node
  * @param ret_value_len Length of the returned string
@@ -1568,8 +1491,7 @@ javacall_dom_node_get_local_name_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_local_name_finish(javacall_handle handle,
-                                        void *context,
+javacall_dom_node_get_local_name_finish(void *context,
                                         /* OUT */ javacall_utf16_string ret_value,
                                         /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -1600,7 +1522,6 @@ javacall_dom_node_has_attributes_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns whether this node (if it is an element) has any attributes.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value <code>true</code> if this node has any attributes, 
  *   <code>false</code> otherwise.
@@ -1612,8 +1533,7 @@ javacall_dom_node_has_attributes_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_has_attributes_finish(javacall_handle handle,
-                                        void *context,
+javacall_dom_node_has_attributes_finish(void *context,
                                         /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -1733,7 +1653,6 @@ javacall_dom_node_get_text_content_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the text content of this node and its descendants
  * @param ret_value_len Length of the returned string
@@ -1748,8 +1667,7 @@ javacall_dom_node_get_text_content_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_text_content_finish(javacall_handle handle,
-                                          void *context,
+javacall_dom_node_get_text_content_finish(void *context,
                                           /* OUT */ javacall_utf16_string ret_value,
                                           /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -1841,7 +1759,7 @@ javacall_dom_node_set_text_content_start(javacall_handle handle,
  * <td valign='top' rowspan='1' colspan='1'>
  * ELEMENT_NODE, ATTRIBUTE_NODE, ENTITY_NODE, ENTITY_REFERENCE_NODE, 
  * DOCUMENT_FRAGMENT_NODE</td>
- * <td valign='top' rowspan='1' colspan='1'>concatenation of the <code>text_content</code> 
+ * <td valign='top' rowspan='1' colspan='1'>concatenation of the <code>textContent</code> 
  * attribute value of every child node, excluding COMMENT_NODE and 
  * PROCESSING_INSTRUCTION_NODE nodes. This is the empty string if the 
  * node has no children.</td>
@@ -1858,9 +1776,7 @@ javacall_dom_node_set_text_content_start(javacall_handle handle,
  * </tr>
  * </table>
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
- * @param text_content a String containing the new text content for this node
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
@@ -1870,9 +1786,7 @@ javacall_dom_node_set_text_content_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_set_text_content_finish(javacall_handle handle,
-                                          void *context,
-                                          javacall_const_utf16_string text_content);
+javacall_dom_node_set_text_content_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1938,12 +1852,7 @@ javacall_dom_node_get_feature_start(javacall_handle handle,
  * for the version parameter if they don't wish to specify a particular
  * version for the specified feature.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
- * @param feature  The name of the feature requested. Note that any plus 
- *   sign "+" prepended to the name of the feature will be ignored since 
- *   it is not significant in the context of this method. 
- * @param version  This is the version number of the feature to test. 
  * @param ret_value Pointer to the object representing 
  *     an object which implements the specialized APIs of 
  *   the specified feature and version, if any, or <code>NULL</code> if 
@@ -1961,10 +1870,7 @@ javacall_dom_node_get_feature_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_get_feature_finish(javacall_handle handle,
-                                     void *context,
-                                     javacall_const_utf16_string feature,
-                                     javacall_const_utf16_string version,
+javacall_dom_node_get_feature_finish(void *context,
                                      /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -2025,13 +1931,10 @@ javacall_dom_node_add_event_listener_start(javacall_handle handle,
  * discarded they do not need to be removed with the 
  * <code>removeEventListener</code> method. 
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
- * @param type The event type for which the user is registering
  * @param listener The <code>listener</code> parameter takes an interface 
  *   implemented by the user which contains the methods to be called 
  *   when the event occurs.
- * @param use_capture If true, <code>use_capture</code> indicates that the 
  *   user wishes to initiate capture. After initiating capture, all 
  *   events of the specified type will be dispatched to the registered 
  *   <code>EventListener</code> before being dispatched to any 
@@ -2046,10 +1949,7 @@ javacall_dom_node_add_event_listener_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_add_event_listener_finish(javacall_handle handle,
-                                            void *context,
-                                            javacall_const_utf16_string type,
-                                            javacall_bool use_capture,
+javacall_dom_node_add_event_listener_finish(void *context,
                                             /* OUT */ javacall_int64* ret_value);
 
 /**
@@ -2100,7 +2000,6 @@ javacall_dom_node_remove_event_listener_start(javacall_handle handle,
  * not identify any currently registered <code>EventListener</code> on 
  * the <code>EventTarget</code> has no effect.
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
  * @param type Specifies the event type of the <code>EventListener</code> 
  *   being removed. 
@@ -2120,8 +2019,7 @@ javacall_dom_node_remove_event_listener_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_remove_event_listener_finish(javacall_handle handle,
-                                               void *context);
+javacall_dom_node_remove_event_listener_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -2182,10 +2080,7 @@ javacall_dom_node_dispatch_event_start(javacall_handle handle,
  * implementation.
  *
  * 
- * @param handle Pointer to the object representing this node.
  * @param context The context saved during asynchronous operation.
- * @param evt Pointer to the object of
- *    The event to be dispatched. 
  * @param ret_value  Indicates whether any of the listeners which handled the 
  *   event called <code>Event.preventDefault()</code>. If 
  *   <code>Event.preventDefault()</code> was called the returned value 
@@ -2206,9 +2101,7 @@ javacall_dom_node_dispatch_event_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_dispatch_event_finish(javacall_handle handle,
-                                        void *context,
-                                        javacall_handle evt,
+javacall_dom_node_dispatch_event_finish(void *context,
                                         /* OUT */ javacall_bool* ret_value,
                                         /* OUT */ javacall_dom_exceptions* exception_code);
 

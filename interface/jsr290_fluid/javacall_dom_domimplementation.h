@@ -90,19 +90,7 @@ javacall_dom_domimplementation_has_feature_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR test if the DOM implementation implements a specific feature.
  * 
- * @param handle Pointer to the object representing this domimplementation.
  * @param context The context saved during asynchronous operation.
- * @param feature The name of the feature to test (case-insensitive). The 
- *   values used by DOM features are defined throughout the DOM Level 2 
- *   specifications and listed in the  section. The name must be an XML 
- *   name. To avoid possible conflicts, as a convention, names referring 
- *   to features defined outside the DOM specification should be made 
- *   unique by reversing the name of the Internet domain name of the 
- *   person (or the organization that the person belongs to) who defines 
- *   the feature, component by component, and using this as a prefix. 
- *   For instance, the W3C SVG Working Group defines the feature 
- *   "org.w3c.dom.svg".
- * @param version This is the version number of the feature to test. In 
  *   Level 2, the string can be either "2.0" or "1.0". If the version is 
  *   not specified (parameter is either NULL or the empty string, as per 
  *   http://www.w3.org/TR/DOM-Level-3-Events/events.html#Conformance), 
@@ -118,10 +106,7 @@ javacall_dom_domimplementation_has_feature_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_domimplementation_has_feature_finish(javacall_handle handle,
-                                                  void *context,
-                                                  javacall_const_utf16_string feature,
-                                                  javacall_const_utf16_string version,
+javacall_dom_domimplementation_has_feature_finish(void *context,
                                                   /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -174,12 +159,7 @@ javacall_dom_domimplementation_create_document_type_start(javacall_handle handle
  * future version of the DOM will provide a way for populating a 
  * <code>DocumentType</code>.
  * 
- * @param handle Pointer to the object representing this domimplementation.
  * @param context The context saved during asynchronous operation.
- * @param qualified_name The qualified name of the document type to be 
- *   created. 
- * @param public_id The external subset public identifier.
- * @param system_id The external subset system identifier.
  * @param ret_value Pointer to the object representing 
  *   a new <code>DocumentType</code> node with 
  *   <code>Node.ownerDocument</code> set to <code>NULL</code>.
@@ -197,11 +177,7 @@ javacall_dom_domimplementation_create_document_type_start(javacall_handle handle
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_domimplementation_create_document_type_finish(javacall_handle handle,
-                                                           void *context,
-                                                           javacall_const_utf16_string qualified_name,
-                                                           javacall_const_utf16_string public_id,
-                                                           javacall_const_utf16_string system_id,
+javacall_dom_domimplementation_create_document_type_finish(void *context,
                                                            /* OUT */ javacall_handle* ret_value,
                                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -253,13 +229,7 @@ javacall_dom_domimplementation_create_document_start(javacall_handle handle,
  * OR creates an XML <code>Document</code> object of the specified type with 
  * its document element. 
  * 
- * @param handle Pointer to the object representing this domimplementation.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the document element to create.
- * @param qualified_name The qualified name of the document element to be 
- *   created.
- * @param doctype Pointer to the object of
- *   the type of document to be created or <code>NULL</code>.
  *   When <code>doctype</code> is not <code>NULL</code>, its 
  *   <code>Node.ownerDocument</code> attribute is set to the document 
  *   being created.
@@ -280,11 +250,7 @@ javacall_dom_domimplementation_create_document_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_domimplementation_create_document_finish(javacall_handle handle,
-                                                      void *context,
-                                                      javacall_const_utf16_string namespace_uri,
-                                                      javacall_const_utf16_string qualified_name,
-                                                      javacall_handle doctype,
+javacall_dom_domimplementation_create_document_finish(void *context,
                                                       /* OUT */ javacall_handle* ret_value,
                                                       /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -357,12 +323,7 @@ javacall_dom_domimplementation_get_feature_start(javacall_handle handle,
  * for the version parameter if they don't wish to specify a particular
  * version for the specified feature.
  * 
- * @param handle Pointer to the object representing this domimplementation.
  * @param context The context saved during asynchronous operation.
- * @param feature  The name of the feature requested. Note that any plus 
- *   sign "+" prepended to the name of the feature will be ignored since 
- *   it is not significant in the context of this method. 
- * @param version  This is the version number of the feature to test. 
  * @param ret_value Pointer to the object representing 
  *     an object which implements the specialized APIs of 
  *   the specified feature and version, if any, or <code>NULL</code> if 
@@ -381,10 +342,7 @@ javacall_dom_domimplementation_get_feature_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_domimplementation_get_feature_finish(javacall_handle handle,
-                                                  void *context,
-                                                  javacall_const_utf16_string feature,
-                                                  javacall_const_utf16_string version,
+javacall_dom_domimplementation_get_feature_finish(void *context,
                                                   /* OUT */ javacall_handle* ret_value);
 
 /** 

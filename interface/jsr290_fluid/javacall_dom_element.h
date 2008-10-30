@@ -101,7 +101,6 @@ javacall_dom_element_get_tag_name_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the name of the element
  * @param ret_value_len Length of the returned string
@@ -115,8 +114,7 @@ javacall_dom_element_get_tag_name_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_get_tag_name_finish(javacall_handle handle,
-                                         void *context,
+javacall_dom_element_get_tag_name_finish(void *context,
                                          /* OUT */ javacall_utf16_string ret_value,
                                          /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -161,9 +159,7 @@ javacall_dom_element_get_attribute_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param name The name of the attribute to retrieve.
  * @param ret_value The <code>Attr</code> value as a string, or the empty string 
  *   if that attribute does not have a specified or default value.
  * @param ret_value_len Length of the returned string
@@ -177,9 +173,7 @@ javacall_dom_element_get_attribute_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_get_attribute_finish(javacall_handle handle,
-                                          void *context,
-                                          javacall_const_utf16_string name,
+javacall_dom_element_get_attribute_finish(void *context,
                                           /* OUT */ javacall_utf16_string ret_value,
                                           /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -242,10 +236,7 @@ javacall_dom_element_set_attribute_start(javacall_handle handle,
  * <br>To set an attribute with a qualified name and namespace URI, use 
  * the <code>setAttributeNS</code> method.
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param name The name of the attribute to create or alter.
- * @param value Value to set in string form.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
@@ -260,10 +251,7 @@ javacall_dom_element_set_attribute_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_set_attribute_finish(javacall_handle handle,
-                                          void *context,
-                                          javacall_const_utf16_string name,
-                                          javacall_const_utf16_string value,
+javacall_dom_element_set_attribute_finish(void *context,
                                           /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -305,9 +293,7 @@ javacall_dom_element_remove_attribute_start(javacall_handle handle,
  * <br>To remove an attribute by local name and namespace URI, use the 
  * <code>removeAttributeNS</code> method.
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param name The name of the attribute to remove.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
@@ -317,9 +303,7 @@ javacall_dom_element_remove_attribute_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_remove_attribute_finish(javacall_handle handle,
-                                             void *context,
-                                             javacall_const_utf16_string name);
+javacall_dom_element_remove_attribute_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -357,9 +341,7 @@ javacall_dom_element_get_attribute_node_start(javacall_handle handle,
  * <br>To retrieve an attribute node by qualified name and namespace URI, 
  * use the <code>getAttributeNodeNS</code> method.
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param name The name (<code>nodeName</code>) of the attribute to 
  *   retrieve.
  * @param ret_value Pointer to the object representing 
  *   the <code>Attr</code> node with the specified name (
@@ -373,9 +355,7 @@ javacall_dom_element_get_attribute_node_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_get_attribute_node_finish(javacall_handle handle,
-                                               void *context,
-                                               javacall_const_utf16_string name,
+javacall_dom_element_get_attribute_node_finish(void *context,
                                                /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -428,12 +408,9 @@ javacall_dom_element_set_attribute_node_start(javacall_handle handle,
  * <br>To add a new attribute node with a qualified name and namespace 
  * URI, use the <code>setAttributeNodeNS</code> method.
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param new_attr Pointer to the object of
- *   the <code>Attr</code> node to add to the attribute list.
  * @param ret_value Pointer to the object representing 
- *   if the <code>new_attr</code> attribute replaces an existing 
+ *   if the <code>newAttr</code> attribute replaces an existing 
  *   attribute, the replaced <code>Attr</code> node is returned, 
  *   otherwise <code>NULL</code> is returned.
  * @param exception_code Code of the error if function fails; the following 
@@ -451,9 +428,7 @@ javacall_dom_element_set_attribute_node_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_set_attribute_node_finish(javacall_handle handle,
-                                               void *context,
-                                               javacall_handle new_attr,
+javacall_dom_element_set_attribute_node_finish(void *context,
                                                /* OUT */ javacall_handle* ret_value,
                                                /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -501,10 +476,7 @@ javacall_dom_element_remove_attribute_node_start(javacall_handle handle,
  * immediately appears with the default value as well as the 
  * corresponding namespace URI, local name, and prefix when applicable. 
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param old_attr Pointer to the object of
- *   the <code>Attr</code> node to remove from the attribute 
  *   list.
  * @param ret_value Pointer to the object representing 
  *   the <code>Attr</code> node that was removed.
@@ -522,9 +494,7 @@ javacall_dom_element_remove_attribute_node_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_remove_attribute_node_finish(javacall_handle handle,
-                                                  void *context,
-                                                  javacall_handle old_attr,
+javacall_dom_element_remove_attribute_node_finish(void *context,
                                                   /* OUT */ javacall_handle* ret_value,
                                                   /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -560,9 +530,7 @@ javacall_dom_element_get_elements_by_tag_name_start(javacall_handle handle,
  * OR returns a <code>NodeList</code> of all descendant <code>Elements</code> 
  * with a given tag name, in document order.
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param name The name of the tag to match on. The special value "*" 
  *   matches all tags.
  * @param ret_value Pointer to the object representing 
  *   a list of matching <code>Element</code> nodes.
@@ -574,9 +542,7 @@ javacall_dom_element_get_elements_by_tag_name_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_get_elements_by_tag_name_finish(javacall_handle handle,
-                                                     void *context,
-                                                     javacall_const_utf16_string name,
+javacall_dom_element_get_elements_by_tag_name_finish(void *context,
                                                      /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -624,17 +590,14 @@ javacall_dom_element_get_attribute_ns_start(javacall_handle handle,
  * OR returns retrieves an attribute value by local name and namespace URI. 
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
- * <code>namespace_uri</code> parameter for methods if they wish to have 
+ * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace.
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the attribute to retrieve.
- * @param local_name The local name of the attribute to retrieve.
  * @param ret_value The <code>Attr</code> value as a string, or the empty string 
  *   if that attribute does not have a specified or default value.
  * @param ret_value_len Length of the returned string
@@ -649,10 +612,7 @@ javacall_dom_element_get_attribute_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_get_attribute_ns_finish(javacall_handle handle,
-                                             void *context,
-                                             javacall_const_utf16_string namespace_uri,
-                                             javacall_const_utf16_string local_name,
+javacall_dom_element_get_attribute_ns_finish(void *context,
                                              /* OUT */ javacall_utf16_string ret_value,
                                              /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -713,7 +673,7 @@ javacall_dom_element_set_attribute_ns_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR sets adds a new attribute. If an attribute with the same local name and 
  * namespace URI is already present on the element, its prefix is 
- * changed to be the prefix part of the <code>qualified_name</code>, and 
+ * changed to be the prefix part of the <code>qualifiedName</code>, and 
  * its value is changed to be the <code>value</code> parameter. This 
  * value is a simple string; it is not parsed as it is being set. So any 
  * markup (such as syntax to be recognized as an entity reference) is 
@@ -727,16 +687,10 @@ javacall_dom_element_set_attribute_ns_start(javacall_handle handle,
  * attribute.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
- * <code>namespace_uri</code> parameter for methods if they wish to have 
+ * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace.
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the attribute to create or 
- *   alter.
- * @param qualified_name The qualified name of the attribute to create or 
- *   alter.
- * @param value The value to set in string form.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
@@ -752,11 +706,7 @@ javacall_dom_element_set_attribute_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_set_attribute_ns_finish(javacall_handle handle,
-                                             void *context,
-                                             javacall_const_utf16_string namespace_uri,
-                                             javacall_const_utf16_string qualified_name,
-                                             javacall_const_utf16_string value,
+javacall_dom_element_set_attribute_ns_finish(void *context,
                                              /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -809,13 +759,10 @@ javacall_dom_element_remove_attribute_ns_start(javacall_handle handle,
  * this method has no effect.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
- * <code>namespace_uri</code> parameter for methods if they wish to have 
+ * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace.
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the attribute to remove.
- * @param local_name The local name of the attribute to remove.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
@@ -830,10 +777,7 @@ javacall_dom_element_remove_attribute_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_remove_attribute_ns_finish(javacall_handle handle,
-                                                void *context,
-                                                javacall_const_utf16_string namespace_uri,
-                                                javacall_const_utf16_string local_name,
+javacall_dom_element_remove_attribute_ns_finish(void *context,
                                                 /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -875,13 +819,10 @@ javacall_dom_element_get_attribute_node_ns_start(javacall_handle handle,
  * OR returns retrieves an <code>Attr</code> node by local name and namespace URI.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
- * <code>namespace_uri</code> parameter for methods if they wish to have 
+ * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace. 
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the attribute to retrieve.
- * @param local_name The local name of the attribute to retrieve.
  * @param ret_value Pointer to the object representing 
  *   the <code>Attr</code> node with the specified attribute local 
  *   name and namespace URI or <code>NULL</code> if there is no such 
@@ -895,10 +836,7 @@ javacall_dom_element_get_attribute_node_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_get_attribute_node_ns_finish(javacall_handle handle,
-                                                  void *context,
-                                                  javacall_const_utf16_string namespace_uri,
-                                                  javacall_const_utf16_string local_name,
+javacall_dom_element_get_attribute_node_ns_finish(void *context,
                                                   /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -955,12 +893,9 @@ javacall_dom_element_set_attribute_node_ns_start(javacall_handle handle,
  * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace.
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param new_attr Pointer to the object of
- *   the <code>Attr</code> node to add to the attribute list.
  * @param ret_value Pointer to the object representing 
- *   if the <code>new_attr</code> attribute replaces an existing 
+ *   if the <code>newAttr</code> attribute replaces an existing 
  *   attribute with the same local name and namespace URI, the replaced 
  *   <code>Attr</code> node is returned, otherwise <code>NULL</code> is 
  *   returned.
@@ -980,9 +915,7 @@ javacall_dom_element_set_attribute_node_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_set_attribute_node_ns_finish(javacall_handle handle,
-                                                  void *context,
-                                                  javacall_handle new_attr,
+javacall_dom_element_set_attribute_node_ns_finish(void *context,
                                                   /* OUT */ javacall_handle* ret_value,
                                                   /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -1025,11 +958,7 @@ javacall_dom_element_get_elements_by_tag_name_ns_start(javacall_handle handle,
  * <code>Elements</code> with a given local name and namespace URI in 
  * document order.
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the elements to match on. The 
- *   special value "*" matches all namespaces.
- * @param local_name The local name of the elements to match on. The 
  *   special value "*" matches all local names.
  * @param ret_value Pointer to the object representing 
  *   a new <code>NodeList</code> object containing all the matched 
@@ -1043,10 +972,7 @@ javacall_dom_element_get_elements_by_tag_name_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_get_elements_by_tag_name_ns_finish(javacall_handle handle,
-                                                        void *context,
-                                                        javacall_const_utf16_string namespace_uri,
-                                                        javacall_const_utf16_string local_name,
+javacall_dom_element_get_elements_by_tag_name_ns_finish(void *context,
                                                         /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -1083,9 +1009,7 @@ javacall_dom_element_has_attribute_start(javacall_handle handle,
  * specified on this element or has a default value, <code>false</code> 
  * otherwise.
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param name The name of the attribute to look for.
  * @param ret_value <code>true</code> if an attribute with the given name is 
  *   specified on this element or has a default value, <code>false</code>
  *   otherwise.
@@ -1097,9 +1021,7 @@ javacall_dom_element_has_attribute_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_has_attribute_finish(javacall_handle handle,
-                                          void *context,
-                                          javacall_const_utf16_string name,
+javacall_dom_element_has_attribute_finish(void *context,
                                           /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -1143,13 +1065,10 @@ javacall_dom_element_has_attribute_ns_start(javacall_handle handle,
  * <code>false</code> otherwise.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
- * <code>namespace_uri</code> parameter for methods if they wish to have 
+ * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace.
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the attribute to look for.
- * @param local_name The local name of the attribute to look for.
  * @param ret_value <code>true</code> if an attribute with the given local name 
  *   and namespace URI is specified or has a default value on this 
  *   element, <code>false</code> otherwise.
@@ -1161,10 +1080,7 @@ javacall_dom_element_has_attribute_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_has_attribute_ns_finish(javacall_handle handle,
-                                             void *context,
-                                             javacall_const_utf16_string namespace_uri,
-                                             javacall_const_utf16_string local_name,
+javacall_dom_element_has_attribute_ns_finish(void *context,
                                              /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -1208,20 +1124,17 @@ javacall_dom_element_set_id_attribute_start(javacall_handle handle,
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
+ * OR sets  If the parameter <code>isId</code> is <code>true</code>, this method 
  * declares the specified attribute to be a user-determined ID attribute
- * . This affects the value of <code>Attr.is_id</code> and the behavior 
+ * . This affects the value of <code>Attr.isId</code> and the behavior 
  * of <code>Document.getElementById</code>.
  * Use the value <code>false</code> for the parameter 
- * <code>is_id</code> to undeclare an attribute for being a 
+ * <code>isId</code> to undeclare an attribute for being a 
  * user-determined ID attribute. 
  * <br> To specify an attribute by local name and namespace URI, use the 
  * <code>setIdAttributeNS</code> method. 
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param name The name of the attribute.
- * @param is_id Whether the attribute is a of type ID.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
@@ -1236,10 +1149,7 @@ javacall_dom_element_set_id_attribute_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_set_id_attribute_finish(javacall_handle handle,
-                                             void *context,
-                                             javacall_const_utf16_string name,
-                                             javacall_bool is_id,
+javacall_dom_element_set_id_attribute_finish(void *context,
                                              /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -1283,19 +1193,15 @@ javacall_dom_element_set_id_attribute_ns_start(javacall_handle handle,
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
+ * OR sets  If the parameter <code>isId</code> is <code>true</code>, this method 
  * declares the specified attribute to be a user-determined ID attribute
- * . This affects the value of <code>Attr.is_id</code> and the behavior 
+ * . This affects the value of <code>Attr.isId</code> and the behavior 
  * of <code>Document.getElementById</code>.
  * Use the value <code>false</code> for the parameter 
- * <code>is_id</code> to undeclare an attribute for being a 
+ * <code>isId</code> to undeclare an attribute for being a 
  * user-determined ID attribute. 
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri The namespace URI of the attribute.
- * @param local_name The local name of the attribute.
- * @param is_id Whether the attribute is a of type ID.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
@@ -1310,11 +1216,7 @@ javacall_dom_element_set_id_attribute_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_set_id_attribute_ns_finish(javacall_handle handle,
-                                                void *context,
-                                                javacall_const_utf16_string namespace_uri,
-                                                javacall_const_utf16_string local_name,
-                                                javacall_bool is_id,
+javacall_dom_element_set_id_attribute_ns_finish(void *context,
                                                 /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -1357,19 +1259,15 @@ javacall_dom_element_set_id_attribute_node_start(javacall_handle handle,
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
+ * OR sets  If the parameter <code>isId</code> is <code>true</code>, this method 
  * declares the specified attribute to be a user-determined ID attribute
- * . This affects the value of <code>Attr.is_id</code> and the behavior 
+ * . This affects the value of <code>Attr.isId</code> and the behavior 
  * of <code>Document.getElementById</code>.
  * Use the value <code>false</code> for the parameter 
- * <code>is_id</code> to undeclare an attribute for being a 
+ * <code>isId</code> to undeclare an attribute for being a 
  * user-determined ID attribute. 
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
- * @param id_attr Pointer to the object of
- *   the attribute node.
- * @param is_id Whether the attribute is a of type ID.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
@@ -1384,10 +1282,7 @@ javacall_dom_element_set_id_attribute_node_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_set_id_attribute_node_finish(javacall_handle handle,
-                                                  void *context,
-                                                  javacall_handle id_attr,
-                                                  javacall_bool is_id,
+javacall_dom_element_set_id_attribute_node_finish(void *context,
                                                   /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -1419,7 +1314,6 @@ javacall_dom_element_get_child_element_count_start(javacall_handle handle,
  * OR returns retrieves the number of child elements.
  *
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the current number of element nodes that are immediate children
  * of this element. <code>0</code> if this element has no child elements.
@@ -1431,8 +1325,7 @@ javacall_dom_element_get_child_element_count_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_get_child_element_count_finish(javacall_handle handle,
-                                                    void *context,
+javacall_dom_element_get_child_element_count_finish(void *context,
                                                     /* OUT */ javacall_int32* ret_value);
 
 /**
@@ -1465,7 +1358,6 @@ javacall_dom_element_get_first_element_child_start(javacall_handle handle,
  * OR returns retrieves the first child element.
  * 
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the first child element node of this element.
@@ -1478,8 +1370,7 @@ javacall_dom_element_get_first_element_child_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_get_first_element_child_finish(javacall_handle handle,
-                                                    void *context,
+javacall_dom_element_get_first_element_child_finish(void *context,
                                                     /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -1512,7 +1403,6 @@ javacall_dom_element_get_last_element_child_start(javacall_handle handle,
  * OR returns retrieves the last child element.
  *
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the last child element node of this element.
@@ -1525,8 +1415,7 @@ javacall_dom_element_get_last_element_child_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_get_last_element_child_finish(javacall_handle handle,
-                                                   void *context,
+javacall_dom_element_get_last_element_child_finish(void *context,
                                                    /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -1560,7 +1449,6 @@ javacall_dom_element_get_next_element_sibling_start(javacall_handle handle,
  * OR returns retrieves the next sibling element.
  * 
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the next sibling element node of this element.
@@ -1574,8 +1462,7 @@ javacall_dom_element_get_next_element_sibling_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_get_next_element_sibling_finish(javacall_handle handle,
-                                                     void *context,
+javacall_dom_element_get_next_element_sibling_finish(void *context,
                                                      /* OUT */ javacall_handle* ret_value);
 
 /**
@@ -1609,7 +1496,6 @@ javacall_dom_element_get_previous_element_sibling_start(javacall_handle handle,
  * OR returns retrieves the previous sibling element.
  * 
  * 
- * @param handle Pointer to the object representing this element.
  * @param context The context saved during asynchronous operation.
  * @param ret_value Pointer to the object representing 
  *   the previous sibling element node of this element.
@@ -1623,8 +1509,7 @@ javacall_dom_element_get_previous_element_sibling_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_get_previous_element_sibling_finish(javacall_handle handle,
-                                                         void *context,
+javacall_dom_element_get_previous_element_sibling_finish(void *context,
                                                          /* OUT */ javacall_handle* ret_value);
 
 /** 

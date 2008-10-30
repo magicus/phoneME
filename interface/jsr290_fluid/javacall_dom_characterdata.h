@@ -96,7 +96,6 @@ javacall_dom_characterdata_get_data_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this characterdata.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The specified substring.
  * @param ret_value_len Length of the returned string
@@ -111,8 +110,7 @@ javacall_dom_characterdata_get_data_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_characterdata_get_data_finish(javacall_handle handle,
-                                           void *context,
+javacall_dom_characterdata_get_data_finish(void *context,
                                            /* OUT */ javacall_utf16_string ret_value,
                                            /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -161,9 +159,7 @@ javacall_dom_characterdata_set_data_start(javacall_handle handle,
  * may call <code>substringData</code> to retrieve the data in 
  * appropriately sized pieces.
  * 
- * @param handle Pointer to the object representing this characterdata.
  * @param context The context saved during asynchronous operation.
- * @param data character data to add to the node, may not be NULL
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
@@ -178,9 +174,7 @@ javacall_dom_characterdata_set_data_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_characterdata_set_data_finish(javacall_handle handle,
-                                           void *context,
-                                           javacall_const_utf16_string data,
+javacall_dom_characterdata_set_data_finish(void *context,
                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -213,7 +207,6 @@ javacall_dom_characterdata_get_length_start(javacall_handle handle,
  * and the <code>substringData</code> method below. This may have the 
  * value zero, i.e., <code>CharacterData</code> nodes may be empty.
  * 
- * @param handle Pointer to the object representing this characterdata.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the number of 16-bit units available in the CharacterData
  * 
@@ -224,8 +217,7 @@ javacall_dom_characterdata_get_length_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_characterdata_get_length_finish(javacall_handle handle,
-                                             void *context,
+javacall_dom_characterdata_get_length_finish(void *context,
                                              /* OUT */ javacall_int32* ret_value);
 
 /**
@@ -279,10 +271,7 @@ javacall_dom_characterdata_substring_data_start(javacall_handle handle,
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
- * @param handle Pointer to the object representing this characterdata.
  * @param context The context saved during asynchronous operation.
- * @param offset Start offset of substring to extract.
- * @param count The number of 16-bit units to extract.
  * @param ret_value The specified substring. If the sum of <code>offset</code> and 
  *   <code>count</code> exceeds the <code>length</code>, then all 16-bit 
  *   units to the end of the data are returned.
@@ -303,10 +292,7 @@ javacall_dom_characterdata_substring_data_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_characterdata_substring_data_finish(javacall_handle handle,
-                                                 void *context,
-                                                 javacall_int32 offset,
-                                                 javacall_int32 count,
+javacall_dom_characterdata_substring_data_finish(void *context,
                                                  /* OUT */ javacall_utf16_string ret_value,
                                                  /* INOUT */ javacall_uint32* ret_value_len,
                                                  /* OUT */ javacall_dom_exceptions* exception_code);
@@ -342,9 +328,7 @@ javacall_dom_characterdata_append_data_start(javacall_handle handle,
  * success, <code>data</code> provides access to the concatenation of 
  * <code>data</code> and the <code>DOMString</code> specified.
  * 
- * @param handle Pointer to the object representing this characterdata.
  * @param context The context saved during asynchronous operation.
- * @param arg The <code>DOMString</code> to append.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
@@ -354,9 +338,7 @@ javacall_dom_characterdata_append_data_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_characterdata_append_data_finish(javacall_handle handle,
-                                              void *context,
-                                              javacall_const_utf16_string arg);
+javacall_dom_characterdata_append_data_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -393,10 +375,7 @@ javacall_dom_characterdata_insert_data_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR insert a string at the specified 16-bit unit offset.
  * 
- * @param handle Pointer to the object representing this characterdata.
  * @param context The context saved during asynchronous operation.
- * @param offset The character offset at which to insert.
- * @param arg The <code>DOMString</code> to insert.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_INDEX_SIZE_ERR
@@ -411,10 +390,7 @@ javacall_dom_characterdata_insert_data_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_characterdata_insert_data_finish(javacall_handle handle,
-                                              void *context,
-                                              javacall_int32 offset,
-                                              javacall_const_utf16_string arg,
+javacall_dom_characterdata_insert_data_finish(void *context,
                                               /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -457,10 +433,7 @@ javacall_dom_characterdata_delete_data_start(javacall_handle handle,
  * OR remove a range of 16-bit units from the node. Upon success, 
  * <code>data</code> and <code>length</code> reflect the change.
  * 
- * @param handle Pointer to the object representing this characterdata.
  * @param context The context saved during asynchronous operation.
- * @param offset The offset from which to start removing.
- * @param count The number of 16-bit units to delete. If the sum of 
  *   <code>offset</code> and <code>count</code> exceeds 
  *   <code>length</code> then all 16-bit units from <code>offset</code> 
  *   to the end of the data are deleted.
@@ -478,10 +451,7 @@ javacall_dom_characterdata_delete_data_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_characterdata_delete_data_finish(javacall_handle handle,
-                                              void *context,
-                                              javacall_int32 offset,
-                                              javacall_int32 count,
+javacall_dom_characterdata_delete_data_finish(void *context,
                                               /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -529,16 +499,7 @@ javacall_dom_characterdata_replace_data_start(javacall_handle handle,
  * OR replace the characters starting at the specified 16-bit unit offset 
  * with the specified string.
  * 
- * @param handle Pointer to the object representing this characterdata.
  * @param context The context saved during asynchronous operation.
- * @param offset The offset from which to start replacing.
- * @param count The number of 16-bit units to replace. If the sum of 
- *   <code>offset</code> and <code>count</code> exceeds 
- *   <code>length</code>, then all 16-bit units to the end of the data 
- *   are replaced; (i.e., the effect is the same as a <code>remove</code>
- *   method call with the same range, followed by an <code>append</code>
- *   method invocation).
- * @param arg The <code>DOMString</code> with which the range must be 
  *   replaced.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
@@ -554,11 +515,7 @@ javacall_dom_characterdata_replace_data_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_characterdata_replace_data_finish(javacall_handle handle,
-                                               void *context,
-                                               javacall_int32 offset,
-                                               javacall_int32 count,
-                                               javacall_const_utf16_string arg,
+javacall_dom_characterdata_replace_data_finish(void *context,
                                                /* OUT */ javacall_dom_exceptions* exception_code);
 
 /** 

@@ -79,13 +79,11 @@ javacall_dom_htmldocument_get_elements_by_name_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR  With [<a href='http://www.w3.org/TR/1999/REC-html401-19991224'>HTML 4.01</a>] documents, this method returns the (possibly empty) collection 
  * of elements whose <code>name</code> value is given by 
- * <code>element_name</code>. In [<a href='http://www.w3.org/TR/2002/REC-xhtml1-20020801'>XHTML 1.0</a>] documents, this methods only return the 
+ * <code>elementName</code>. In [<a href='http://www.w3.org/TR/2002/REC-xhtml1-20020801'>XHTML 1.0</a>] documents, this methods only return the 
  * (possibly empty) collection of form controls with matching name. This 
  * method is case sensitive. 
  * 
- * @param handle Pointer to the object representing this htmldocument.
  * @param context The context saved during asynchronous operation.
- * @param element_name The <code>name</code> attribute value for an 
  *   element.
  * @param ret_value Pointer to the object representing 
  *   the matching elements.
@@ -97,9 +95,7 @@ javacall_dom_htmldocument_get_elements_by_name_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmldocument_get_elements_by_name_finish(javacall_handle handle,
-                                                      void *context,
-                                                      javacall_const_utf16_string element_name,
+javacall_dom_htmldocument_get_elements_by_name_finish(void *context,
                                                       /* OUT */ javacall_handle* ret_value);
 
 /** 

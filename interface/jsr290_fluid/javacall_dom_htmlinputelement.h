@@ -92,7 +92,6 @@ javacall_dom_htmlinputelement_get_checked_start(javacall_handle handle,
  * that the value of this property during the handling of click events 
  * is implementation dependent.
  * 
- * @param handle Pointer to the object representing this htmlinputelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -102,8 +101,7 @@ javacall_dom_htmlinputelement_get_checked_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlinputelement_get_checked_finish(javacall_handle handle,
-                                                 void *context,
+javacall_dom_htmlinputelement_get_checked_finish(void *context,
                                                  /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -150,7 +148,6 @@ javacall_dom_htmlinputelement_get_value_start(javacall_handle handle,
  * "radio", this represents the HTML value attribute of the element. See 
  * the value attribute definition in HTML 4.01.
  * 
- * @param handle Pointer to the object representing this htmlinputelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -162,8 +159,7 @@ javacall_dom_htmlinputelement_get_value_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlinputelement_get_value_finish(javacall_handle handle,
-                                               void *context,
+javacall_dom_htmlinputelement_get_value_finish(void *context,
                                                /* OUT */ javacall_utf16_string ret_value,
                                                /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -195,7 +191,6 @@ javacall_dom_htmlinputelement_select_start(javacall_handle handle,
  * whose <code>type</code> attribute has one of the following values: 
  * "text", "file", or "password".
  * 
- * @param handle Pointer to the object representing this htmlinputelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -205,8 +200,7 @@ javacall_dom_htmlinputelement_select_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlinputelement_select_finish(javacall_handle handle,
-                                            void *context);
+javacall_dom_htmlinputelement_select_finish(void *context);
 
 /**
   * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -255,7 +249,6 @@ javacall_dom_htmlinputelement_set_checked_start(javacall_handle handle,
   * that the value of this property during the handling of click events 
   * is implementation dependent.
   * 
- * @param handle Pointer to the object representing this htmlinputelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -265,9 +258,7 @@ javacall_dom_htmlinputelement_set_checked_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlinputelement_set_checked_finish(javacall_handle handle,
-                                                 void *context,
-                                                 javacall_bool checked);
+javacall_dom_htmlinputelement_set_checked_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -310,7 +301,6 @@ javacall_dom_htmlinputelement_set_value_start(javacall_handle handle,
  * "radio", this represents the HTML value attribute of the element. See 
  * the value attribute definition in HTML 4.01.
  * 
- * @param handle Pointer to the object representing this htmlinputelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -320,9 +310,7 @@ javacall_dom_htmlinputelement_set_value_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlinputelement_set_value_finish(javacall_handle handle,
-                                               void *context,
-                                               javacall_const_utf16_string value);
+javacall_dom_htmlinputelement_set_value_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

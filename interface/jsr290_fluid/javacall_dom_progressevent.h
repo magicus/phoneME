@@ -70,7 +70,6 @@ javacall_dom_progressevent_get_length_computable_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns specifies whether the total size of the transfer is known.
  * 
- * @param handle Pointer to the object representing this progressevent.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -80,8 +79,7 @@ javacall_dom_progressevent_get_length_computable_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_progressevent_get_length_computable_finish(javacall_handle handle,
-                                                        void *context,
+javacall_dom_progressevent_get_length_computable_finish(void *context,
                                                         /* OUT */ javacall_bool* ret_value);
 
 /**
@@ -119,7 +117,6 @@ javacall_dom_progressevent_get_loaded_start(javacall_handle handle,
  * to the number of bytes to be transferred, i.e. with the relevant
  * encodings applied. For more details on HTTP see [RFC2616].
  * 
- * @param handle Pointer to the object representing this progressevent.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -129,8 +126,7 @@ javacall_dom_progressevent_get_loaded_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_progressevent_get_loaded_finish(javacall_handle handle,
-                                             void *context,
+javacall_dom_progressevent_get_loaded_finish(void *context,
                                              /* OUT */ javacall_int32* ret_value);
 
 /**
@@ -162,7 +158,6 @@ javacall_dom_progressevent_get_total_start(javacall_handle handle,
  * transferred in the operation. Where the size of the transfer is for
  * some reason unknown, the value of this attribute <em>must</em> be zero.
  * 
- * @param handle Pointer to the object representing this progressevent.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -172,8 +167,7 @@ javacall_dom_progressevent_get_total_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_progressevent_get_total_finish(javacall_handle handle,
-                                            void *context,
+javacall_dom_progressevent_get_total_finish(void *context,
                                             /* OUT */ javacall_int32* ret_value);
 
 /**
@@ -248,33 +242,7 @@ javacall_dom_progressevent_init_progress_event_start(javacall_handle handle,
  * precedence .
  *
  * 
- * @param handle Pointer to the object representing this progressevent.
  * @param context The context saved during asynchronous operation.
- * @param type_arg  
- *   This <em>must</em> be one of <code>loadstart</code>, 
- *   <code>progress</code>, <code>error</code>, <code>abort</code>,
- *   <code>load</code>. If it is not one of those values then this
- *   specification does not define the resulting event.
- * @param can_bubble_arg
- *   This <em>must</em> be <var>false</var>. Where a
- *   value of <var>true</var> is passed, implementations
- *   <em>must</em> override that and change the value to
- *   <var>false</var>.
- * @param cancelable_arg
- *   This <em>must</em> be <var>false</var>. Where a
- *   value of <var>true</var> is passed, implementations 
- *   <em>must</em> override that and change the value to
- *   <var>false</var>.
- * @param length_computable_arg
- *   If the implementation has reliable information about
- *   the value of <code>total</code>, then this should be <var>true</var>. 
- *   If the implementation does not have reliable information about
- *   the value of <code>total</code>, this should be <var>false</var>.
- * @param loaded_arg
- *   Specifies the total number of bytes already loaded. If this value 
- *   is not a non-negative number, 
- *   the implementation <em>must</em> change it to zero.
- * @param total_arg
  *   Specifies the total number of bytes to be
  *   loaded. If <code>lengthComputable</code> is <var>false</var>, 
  *   this <em>must</em> be zero. If any other parameter is passed, and
@@ -292,14 +260,7 @@ javacall_dom_progressevent_init_progress_event_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_progressevent_init_progress_event_finish(javacall_handle handle,
-                                                      void *context,
-                                                      javacall_const_utf16_string type_arg,
-                                                      javacall_bool can_bubble_arg,
-                                                      javacall_bool cancelable_arg,
-                                                      javacall_bool length_computable_arg,
-                                                      javacall_int32 loaded_arg,
-                                                      javacall_int32 total_arg);
+javacall_dom_progressevent_init_progress_event_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -385,39 +346,7 @@ javacall_dom_progressevent_init_progress_event_ns_start(javacall_handle handle,
  * times, the final invocation takes precedence.
  *
  * 
- * @param handle Pointer to the object representing this progressevent.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri_arg 
- *   Specifies the URI for the namespace of the event.
- *   For all events defined in this specification, the
- *   value of this parameter is <code>NULL</code>.
- * @param type_arg
- *   This must be one of <code>loadstart</code>, 
- *   <code>progress</code>, <code>error</code>,
- *   <code>abort</code>, <code>load</code>. If it is not one
- *   of those values then this specification does not define 
- *   the resulting event.
- * @param can_bubble_arg
- *   This <em>must</em> be <var>false</var>. Where a
- *   value of <var>true</var> is passed, implementations
- *   <em>must</em> override that and change the value to
- *   <var>false</var>.
- * @param cancelable_arg
- *   This <em>must</em> be <var>false</var>. Where a
- *   value of <var>true</var> is passed, implementations
- *   <em>must</em> override that and change the value to
- *   <var>false</var>.
- * @param length_computable_arg
- *   If the implementation has reliable information about
- *   the value of total, then this should be <var>true</var>. If the
- *   implementation does not have reliable information about
- *   the value of total, this should be <var>false</var>.
- * @param loaded_arg
- *   This parameter specifies the total number of bytes
- *   already loaded.
- *   If this value is not a non-negative number, the implementation 
- *   <em>must</em> change it to zero.
- * @param total_arg
  *   This specifies the total number of bytes to be
  *   loaded. If <code>lengthComputable</code> is <var>false</var>, 
  *   this <em>must</em> be zero. If any other parameter is passed,
@@ -436,15 +365,7 @@ javacall_dom_progressevent_init_progress_event_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_progressevent_init_progress_event_ns_finish(javacall_handle handle,
-                                                         void *context,
-                                                         javacall_const_utf16_string namespace_uri_arg,
-                                                         javacall_const_utf16_string type_arg,
-                                                         javacall_bool can_bubble_arg,
-                                                         javacall_bool cancelable_arg,
-                                                         javacall_bool length_computable_arg,
-                                                         javacall_int32 loaded_arg,
-                                                         javacall_int32 total_arg);
+javacall_dom_progressevent_init_progress_event_ns_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

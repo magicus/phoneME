@@ -87,17 +87,7 @@ javacall_dom_customevent_init_custom_event_ns_start(javacall_handle handle,
  * value of a <code>CustomEvent</code> object and has the same behavior 
  * as <code>Event.initEventNS()</code>. 
  * 
- * @param handle Pointer to the object representing this customevent.
  * @param context The context saved during asynchronous operation.
- * @param namespace_uri_arg  Refer to the <code>Event.initEventNS()</code> 
- *   method for a description of this parameter. 
- * @param type_arg  Refer to the <code>Event.initEventNS()</code> method 
- *   for a description of this parameter. 
- * @param can_bubble_arg  Refer to the <code>Event.initEventNS()</code> 
- *   method for a description of this parameter. 
- * @param cancelable_arg  Refer to the <code>Event.initEventNS()</code> 
- *   method for a description of this parameter. 
- * @param detailArg  Specifies <code>CustomEvent.detail</code>. This 
  *   value may be <code>NULL</code>.   
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -107,12 +97,7 @@ javacall_dom_customevent_init_custom_event_ns_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_customevent_init_custom_event_ns_finish(javacall_handle handle,
-                                                     void *context,
-                                                     javacall_const_utf16_string namespace_uri_arg,
-                                                     javacall_const_utf16_string type_arg,
-                                                     javacall_bool can_bubble_arg,
-                                                     javacall_bool cancelable_arg);
+javacall_dom_customevent_init_custom_event_ns_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

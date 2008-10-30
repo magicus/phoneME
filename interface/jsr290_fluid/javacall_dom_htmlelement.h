@@ -77,7 +77,6 @@ javacall_dom_htmlelement_get_class_name_start(javacall_handle handle,
  * to conflicts with the "class" keyword exposed by many languages. See 
  * the class attribute definition in HTML 4.01.
  * 
- * @param handle Pointer to the object representing this htmlelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -89,8 +88,7 @@ javacall_dom_htmlelement_get_class_name_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlelement_get_class_name_finish(javacall_handle handle,
-                                               void *context,
+javacall_dom_htmlelement_get_class_name_finish(void *context,
                                                /* OUT */ javacall_utf16_string ret_value,
                                                /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -122,7 +120,6 @@ javacall_dom_htmlelement_get_id_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns the element's identifier. See the id attribute definition in HTML 4.01.
  * 
- * @param handle Pointer to the object representing this htmlelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -134,8 +131,7 @@ javacall_dom_htmlelement_get_id_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlelement_get_id_finish(javacall_handle handle,
-                                       void *context,
+javacall_dom_htmlelement_get_id_finish(void *context,
                                        /* OUT */ javacall_utf16_string ret_value,
                                        /* INOUT */ javacall_uint32* ret_value_len);
 
@@ -168,7 +164,6 @@ javacall_dom_htmlelement_set_class_name_start(javacall_handle handle,
  * to conflicts with the "class" keyword exposed by many languages. See 
  * the class attribute definition in HTML 4.01.
  * 
- * @param handle Pointer to the object representing this htmlelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -178,9 +173,7 @@ javacall_dom_htmlelement_set_class_name_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlelement_set_class_name_finish(javacall_handle handle,
-                                               void *context,
-                                               javacall_const_utf16_string class_name);
+javacall_dom_htmlelement_set_class_name_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -207,7 +200,6 @@ javacall_dom_htmlelement_set_id_start(javacall_handle handle,
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR sets the element's identifier. See the id attribute definition in HTML 4.01.
  * 
- * @param handle Pointer to the object representing this htmlelement.
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -217,9 +209,7 @@ javacall_dom_htmlelement_set_id_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlelement_set_id_finish(javacall_handle handle,
-                                       void *context,
-                                       javacall_const_utf16_string id);
+javacall_dom_htmlelement_set_id_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

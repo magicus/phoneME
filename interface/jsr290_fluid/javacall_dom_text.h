@@ -96,9 +96,7 @@ javacall_dom_text_split_text_start(javacall_handle handle,
  * of the original node. When the <code>offset</code> is equal to the 
  * length of this node, the new node has no data.
  * 
- * @param handle Pointer to the object representing this text.
  * @param context The context saved during asynchronous operation.
- * @param offset The 16-bit unit offset at which to split, starting from 
  *   <code>0</code>.
  * @param ret_value Pointer to the object representing 
  *   the new node, of the same type as this node.
@@ -116,9 +114,7 @@ javacall_dom_text_split_text_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_text_split_text_finish(javacall_handle handle,
-                                    void *context,
-                                    javacall_int32 offset,
+javacall_dom_text_split_text_finish(void *context,
                                     /* OUT */ javacall_handle* ret_value,
                                     /* OUT */ javacall_dom_exceptions* exception_code);
 
