@@ -104,7 +104,7 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   void mov_imm(Register rd, int imm32, Condition cond = al) {
     Macros::mov_imm(rd, imm32, no_CC, cond);
   }
-  void mov_imm(Register rd, int imm32, const LiteralAccessor* la, Condition cond=al){
+  void mov_imm(Register rd, int imm32, LiteralAccessor* la, Condition cond=al){
     Macros::mov_imm(rd, imm32, la, no_CC, cond);
   }
 

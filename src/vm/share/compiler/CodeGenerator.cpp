@@ -118,7 +118,7 @@ void CodeGenerator::check_free_space(JVM_SINGLE_ARG_TRAPS) {
 void CodeGenerator::ensure_sufficient_stack_for(int index, BasicType kind) {
   int adjusted_index = index + (is_two_word(kind) ? 1 : 0);
   const int max_execution_stack_count =
-    root_method()->max_execution_stack_count();
+    Compiler::root_method()->max_execution_stack_count();
 
   int inliner_stack_count = 2;
 #if ENABLE_INLINE
@@ -217,7 +217,7 @@ void CodeGenerator::osr_entry(bool force JVM_TRAPS) {
             "OSR stubs not supported for inlined methods");
 
   if (!omit_stack_frame() &&
-      !GenerateROMImage && (force || (!compiler()->in_loop()))) {
+      !GenerateROMImage && (force || (!Compiler::is_in_loop()))) {
     // Make sure it's possible to conform to this entry.
     frame()->conformance_entry(false);
 
@@ -228,8 +228,7 @@ void CodeGenerator::osr_entry(bool force JVM_TRAPS) {
     Label osr_entry;
     bind(osr_entry);
 
-    OSRStub* stub = OSRStub::allocate( compiler()->bci(),
-                                       osr_entry JVM_NO_CHECK );
+    OSRStub* stub = OSRStub::allocate( bci(), osr_entry JVM_NO_CHECK );
     if( stub ) {
       stub->insert();
     }
@@ -620,9 +619,8 @@ static bool compare( const BytecodeClosure::cond_op condition, const int x, cons
 void CodeGenerator::branch(int destination JVM_TRAPS) {
   COMPILER_COMMENT(("Branching to location %d", destination));
 
-  Compiler* compiler = Compiler::current();
-  compiler->set_next_bytecode_index(destination);
-  if (destination <= compiler->bci()) {
+  Compiler::closure()->set_next_bytecode_index(destination);
+  if (destination <= Compiler::bci()) {
      check_timer_tick(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
   }
 }
@@ -677,7 +675,7 @@ void CodeGenerator::branch_if(BytecodeClosure::cond_op condition,
 }
 
 bool CodeGenerator::is_inline_exception_allowed(int rte JVM_TRAPS) {
-  Method* m = root_method();
+  Method* m = Compiler::root_method();
   const bool has_monitors = m->access_flags().is_synchronized() ||
                             m->access_flags().has_monitor_bytecodes();
   if (has_monitors) {
@@ -693,8 +691,7 @@ bool CodeGenerator::is_inline_exception_allowed(int rte JVM_TRAPS) {
             rte == ThrowExceptionStub::rte_array_index_out_of_bounds,"sanity");
 
   const int handler_bci = m->exception_handler_bci_for(
-    ThrowExceptionStub::exception_class(rte),
-    Compiler::current()->bci() JVM_NO_CHECK);
+    ThrowExceptionStub::exception_class(rte), bci() JVM_NO_CHECK);
   return handler_bci == -1;
 }
 
@@ -744,15 +741,14 @@ void CodeGenerator::conditional_jump(const BytecodeClosure::cond_op condition,
                                      const int destination,
                                      const bool assume_backward_jumps_are_taken
                                      JVM_TRAPS) {
-  const Compiler* compiler = Compiler::current();
-  if ((assume_backward_jumps_are_taken && destination <= compiler->bci()) ||
-      compiler->is_branch_taken(compiler->bci())) {
+  if ((assume_backward_jumps_are_taken && destination <= bci()) ||
+      Compiler::current()->is_branch_taken(bci())) {
     Label fall_through;
     conditional_jump_do(BytecodeClosure::negate(condition), fall_through);
     COMPILER_COMMENT(("Creating continuation for fallthrough to bci = %d",
-                      compiler->next_bci() ));
+                      next_bci() ));
     CompilationContinuation::insert(
-                      compiler->next_bci(), fall_through JVM_CHECK);
+                      next_bci(), fall_through JVM_CHECK);
     branch(destination JVM_NO_CHECK_AT_BOTTOM);
   } else {
     Label branch_taken;
@@ -768,7 +764,7 @@ void CodeGenerator::conditional_jump(const BytecodeClosure::cond_op condition,
 void CodeGenerator::append_callinfo_record(const int code_offset
                                            JVM_TRAPS) {
   const int number_of_tags = frame()->virtual_stack_pointer() + 1;
-  const int root_bci = Compiler::root()->bci();
+  const int root_bci = Compiler::root()->compiler_bci();
 
   callinfo_writer()->start_record(code_offset, root_bci,
                                 number_of_tags JVM_CHECK);

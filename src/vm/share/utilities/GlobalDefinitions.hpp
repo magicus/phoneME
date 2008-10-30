@@ -1784,10 +1784,12 @@ enum {
   template(x, OopDesc**, compiler_area_temp_bottom) \
                                                     \
   /* frequently used values by Compiler*/           \
+  template(x, Method*,        compiler_method)      \
   template(x, CompilerState*, compiler_state)       \
+  template(x, int,            compiler_bci)         \
+                                                    \
   template(x, Compiler*,      current_compiler)     \
   template(x, int,            num_stack_lock_words) \
-                                                    \
   template(x, address,        class_list_base)      \
   template(x, address,        mirror_list_base)
 
@@ -1846,7 +1848,10 @@ struct JVMFastGlobals {
 #define _compiler_area_temp_top       jvm_fast_globals.compiler_area_temp_top
 #define _compiler_area_temp_bottom    jvm_fast_globals.compiler_area_temp_bottom
 
+#define _compiler_method              jvm_fast_globals.compiler_method
 #define _compiler_state               jvm_fast_globals.compiler_state
+#define _compiler_bci                 jvm_fast_globals.compiler_bci
+
 #define _current_compiler             jvm_fast_globals.current_compiler
 #define _num_stack_lock_words         jvm_fast_globals.num_stack_lock_words
 

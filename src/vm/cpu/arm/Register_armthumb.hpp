@@ -65,18 +65,18 @@
     sbz =  r0,
     sbo = r15,
 
-    no_reg                      =  -1,
-    first_register              =  r0,
+    no_reg			=  -1,
+    first_register		=  r0,
 #if ENABLE_ARM_VFP
-    last_register               = s31,
-    number_of_float_registers   =  32,
+    last_register		= s31,
+    number_of_float_registers	=  32,
 #else
-    last_register               = r15,
-    number_of_float_registers   =   0,
+    last_register		= r15,
+    number_of_float_registers	=   0,
 #endif
-    number_of_gp_registers      =  16,
+    number_of_gp_registers	=  16,
 
-    first_allocatable_register  = r0,
-    method_return_type          = r2,
+    first_allocatable_register	= r0,
+    method_return_type		= r2,
 
-    _force_32bit_Register       = 0x10000000,   // for ADS compiler
+    _force_32bit_Register	= 0x10000000,	// for ADS compiler

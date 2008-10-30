@@ -161,7 +161,7 @@ const struct OpcodeInfo OpcodeInfo::table[16] = {
  */
 
 void Macros::arith_imm(Opcode opcode, Register rd, Register rn, int imm32,
-                       const LiteralAccessor* la, CCMode s, Condition cond) {
+                       LiteralAccessor* la, CCMode s, Condition cond) {
   GUARANTEE(rd <= r15 && rn <= r15, "Invalid register used");
   
   Address1 result;

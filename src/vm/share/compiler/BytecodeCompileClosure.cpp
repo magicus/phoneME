@@ -36,7 +36,7 @@
 BytecodeCompileClosure::PoppedValue::PoppedValue(BasicType type)
   : Value(type)
 {
-  _compiler_state->frame()->pop(*this);
+  Compiler::frame()->pop(*this);
 }
 
 inline VirtualStackFrame* BytecodeCompileClosure::frame() const {
@@ -282,7 +282,7 @@ void BytecodeCompileClosure::branch_if_flags(JVM_SINGLE_ARG_TRAPS) {
       const int dest = branch_destination(bci);
       set_bytecode(bci);
       set_default_next_bytecode_index(bci);
-      compiler()->set_bci(bci); // Is it really necessary?
+      Compiler::set_bci(bci); // Is it really necessary?
 
       // Insert OSR entries for backward branches.
       if( dest < bci || is_active_bci() ) {
@@ -766,7 +766,7 @@ void BytecodeCompileClosure::instance_of(int index JVM_TRAPS) {
     const Bytecodes::Code nextbc = bytecode_at(nextbci);
     if (nextbc == Bytecodes::_ifeq) {
       const int fallthrough_bci = next_bci(nextbci);
-      compiler()->set_bci(nextbci);
+      Compiler::set_bci(nextbci);
       // Recursive invocation to find out if the compiler takes the branch
       compile(JVM_SINGLE_ARG_CHECK);
       if (next_bytecode_index() == fallthrough_bci) {
@@ -781,7 +781,9 @@ void BytecodeCompileClosure::instance_of(int index JVM_TRAPS) {
 void BytecodeCompileClosure::return_op(BasicType kind JVM_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(return_op);
 #if ENABLE_INLINE
-  if (compiler()->is_inlining()) {
+  if (Compiler::is_inlining()) {
+    Compiler * compiler = Compiler::current();
+
     {
       Signature::Raw signature = method()->signature();
       BasicType type  = signature().return_type();
@@ -796,21 +798,21 @@ void BytecodeCompileClosure::return_op(BasicType kind JVM_TRAPS) {
         frame()->push(temp);
       }
 
-      VirtualStackFrame* return_frame = compiler()->parent_frame();
+      VirtualStackFrame* return_frame = compiler->parent_frame();
       if( !return_frame ) {
         frame()->conformance_entry(true);
         return_frame = frame()->clone(JVM_SINGLE_ARG_CHECK);
-        compiler()->set_parent_frame( return_frame );
+        compiler->set_parent_frame( return_frame );
       } else {
         frame()->conform_to( return_frame );
       }
     }
 
-    BinaryAssembler::Label return_label = compiler()->inline_return_label();
-    if( compiler()->compilation_queue() != NULL ) {
+    BinaryAssembler::Label return_label = compiler->inline_return_label();
+    if( compiler->compilation_queue() != NULL ) {
       code_generator()->jmp( return_label );    
     } 
-    compiler()->set_inline_return_label( return_label );
+    compiler->set_inline_return_label( return_label );
     return;    
   }
 #endif // ENABLE_INLINE
@@ -1690,10 +1692,13 @@ void BytecodeCompileClosure::do_direct_invoke(Method * callee,
           frame()->receiver(receiver, size_of_parameters);
           // IMPL_NOTE: use maybe_null_check_1/2 on ARM
           code_generator()->maybe_null_check(receiver JVM_CHECK);
+        } else {
+          //do nothing
         }
 
         //create a new compiler to compile the inlined method
-        Compiler compiler(callee);
+        Compiler compiler(callee, 0);
+            
         compiler.internal_compile_inlined(method_attributes 
                                           JVM_NO_CHECK_AT_BOTTOM);
 
@@ -2145,15 +2150,15 @@ BytecodeCompileClosure::check_exception_handler_start(JVM_SINGLE_ARG_TRAPS) {
   for (int i = exception_table().length() - 4; i >= 0; i-=4) {
     const int start_bci = exception_table().ushort_at(i);
     if( bci() == start_bci &&
-            !compiler()->exception_has_osr_entry(start_bci) ) {
-      compiler()->set_exception_has_osr_entry(start_bci);
+            !Compiler::current()->exception_has_osr_entry(start_bci) ) {
+      Compiler::current()->set_exception_has_osr_entry(start_bci);
       const int handler_bci = exception_table().ushort_at(i + 2);
 
       VirtualStackFrame* exception_frame = 
         frame()->clone_for_exception(handler_bci JVM_ZCHECK(exception_frame));
 
       VirtualStackFrame* old_frame = frame();
-      compiler()->set_frame( exception_frame );
+      Compiler::set_frame( exception_frame );
       {
         BinaryAssembler::Label unused;
 
@@ -2165,7 +2170,7 @@ BytecodeCompileClosure::check_exception_handler_start(JVM_SINGLE_ARG_TRAPS) {
           stub->set_is_exception_handler();
         }
       }
-      compiler()->set_frame( old_frame );
+      Compiler::set_frame( old_frame );
     }
   }
 }
@@ -2186,7 +2191,7 @@ void BytecodeCompileClosure::bytecode_epilog(JVM_SINGLE_ARG_TRAPS) {
 
 void BytecodeCompileClosure::throw_null_pointer_exception(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_INLINE
-  if( compiler()->is_inlining() ) {
+  if (Compiler::is_inlining()) {
     // Cannot handle abruptly terminated methods when inlining.
     // Deferencing null is a rare case for real-world applications anyway,
     // so we just abort current compilation discarding any generated code.
@@ -2251,7 +2256,7 @@ BytecodeCompileClosure::set_default_next_bytecode_index(const jint bci) {
 }
 
 bool BytecodeCompileClosure::compile(JVM_SINGLE_ARG_TRAPS) {
-  const int bci = compiler()->bci();
+  const int bci = Compiler::bci();
   GUARANTEE( bci >= 0 && bci < method_size(),
             "Bytecode index must be within bounds");
     code_generator()->ensure_compiled_method_space();
@@ -2264,11 +2269,11 @@ bool BytecodeCompileClosure::compile(JVM_SINGLE_ARG_TRAPS) {
   if( !code_eliminate_prologue(code) ) {
     // Compile current bytecode
     // Must use Compiler::bci() because bci could change
-    method()->iterate_bytecode(compiler()->bci(), this, code JVM_CHECK_(false));
+    method()->iterate_bytecode(Compiler::bci(), this, code JVM_CHECK_(false));
     code_eliminate_epilogue(code);
 
     // Update current bytecode index
-    compiler()->set_bci(next_bytecode_index());
+    Compiler::set_bci(next_bytecode_index());
   }
 
   // Return whether or not the compilation should continue.
@@ -2279,7 +2284,7 @@ bool BytecodeCompileClosure::compile(JVM_SINGLE_ARG_TRAPS) {
 int BytecodeCompileClosure::get_next_bci( void ) const {
   const int nextbci = next_bci( bci() );
   return nextbci < method_size() &&
-         compiler()->entry_count_for(nextbci) == 1
+         Compiler::current()->entry_count_for(nextbci) == 1
          ? nextbci : -1;
 }
 
@@ -2300,14 +2305,14 @@ void BytecodeCompileClosure::record_passable_statue_of_osr_entry(int dest) {
    if (dest >= bci() && is_active_bci()) {
      //for non loop osr
      //we should try to keep the cse values
-     VERBOSE_CSE(("mask osr passable bci = %d", compiler()->bci()));
+     VERBOSE_CSE(("mask osr passable bci = %d", Compiler::current()->bci()));
      VirtualStackFrame::mark_as_passable();
    }
 } 
 
 bool BytecodeCompileClosure::code_eliminate_prologue(Bytecodes::Code code) {
   // IMPL_NOTE: need to revisit for inlining
-  if (!compiler()->is_inlining()) {
+  if (!Compiler::is_inlining()) {
     jint bci_after_elimination = not_found;
     //can_decrease_stack mean the code will
     //consume the items of the operation stack
@@ -2319,12 +2324,12 @@ bool BytecodeCompileClosure::code_eliminate_prologue(Bytecodes::Code code) {
       GUARANTEE(bci_after_elimination != not_found, "cse match error")
       //next bci to be compiled, cse will skip some byte code here.
       set_default_next_bytecode_index(bci_after_elimination);
-      compiler()->set_bci(next_bytecode_index());
+      Compiler::set_bci(next_bytecode_index());
       //skip the compilation of current bci
       return true;
     }
     
-    method()->wipe_out_dirty_recorded_snippet(compiler()->bci(), code);
+    method()->wipe_out_dirty_recorded_snippet(Compiler::bci(), code);
   }
 
   //if we aborted in previous bci, we reset and start a new code snippet tracking.
@@ -2334,7 +2339,7 @@ bool BytecodeCompileClosure::code_eliminate_prologue(Bytecodes::Code code) {
 
 void BytecodeCompileClosure::code_eliminate_epilogue(Bytecodes::Code code) {
   // IMPL_NOTE: need to revisit for inlining
-  if( !Compiler::is_inlining()) {
+  if (!Compiler::is_inlining()) {
     if (Bytecodes::is_kind_of_eliminable(code)) {
       record_current_code_snippet();       
     }
@@ -2440,7 +2445,7 @@ bool BytecodeCompileClosure::is_following_codes_can_be_eliminated(jint& bci_afte
    jint end_bci;
    jint longest_next_bci = 0;
    jint longest_length = 0;
-   jint bci = compiler()->bci();
+   jint bci = Compiler::bci();
    Assembler::Register longest = Assembler::first_register;
    Assembler::Register reg = Assembler::first_register;
    if ( !RegisterAllocator::is_notated()) {
@@ -2458,10 +2463,10 @@ bool BytecodeCompileClosure::is_following_codes_can_be_eliminated(jint& bci_afte
    for (reg ;
         reg <= Assembler::last_register;
         reg = (Assembler::Register) ((int) reg + 1)) {
-     if( RegisterAllocator::is_notated(reg)) {
-       RegisterAllocator::get_notation(reg, begin_bci, end_bci);
-       if( method()->compare_bytecode( begin_bci, end_bci,
-             bci, bci_after_elimination) ) { 
+     if ( RegisterAllocator::is_notated(reg)) {
+           RegisterAllocator::get_notation(reg, begin_bci, end_bci);
+       if( Compiler::current()->method()->compare_bytecode(
+             begin_bci, end_bci, bci, bci_after_elimination) ) { 
         //one match;
         if ( (end_bci - begin_bci) > longest_length) {
            if ( longest_length != 0 ) {

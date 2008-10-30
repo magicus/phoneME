@@ -106,7 +106,7 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   NOT_PRODUCT(virtual)
   void ldr_big_integer(Register rd, int imm32, Condition cond = al);
 
-  void mov_imm(Register rd, int imm32, const LiteralAccessor &la, Condition cond=al);
+  void mov_imm(Register rd, int imm32, LiteralAccessor &la, Condition cond=al);
   void ldr_address(Register rd, address addr, Condition cond = al);
 
 protected:

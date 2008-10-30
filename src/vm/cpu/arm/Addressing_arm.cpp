@@ -223,9 +223,7 @@ bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
   int base_offset;
   int actual_index;
 
-  CodeGenerator* gen = code_generator() ;
-
-  if (gen->omit_stack_frame()) {
+  if (code_generator()->omit_stack_frame()) {
     // Everything is accessed using jsp
     actual_index = frame()->stack_pointer() - index();
     fixed_offset = JavaFrame::arg_offset_from_sp(actual_index);     
@@ -236,15 +234,15 @@ bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
       // The offset from the fp that would have it point at the end of the
       // locals block 
       base_offset = JavaFrame::end_of_locals_offset();
-      actual_index = gen->root_method()->max_locals() - 1 - index();
+      actual_index = Compiler::root_method()->max_locals() - 1 - index();
     } else {
       if (Assembler::jsp == Assembler::sp) {
         // We need to make sure that we don't put something beyond
         // the current end of stack
-        gen->ensure_sufficient_stack_for(index(), type());
+        code_generator()->ensure_sufficient_stack_for(index(), type());
       } 
       base_offset = 0;
-      actual_index = gen->frame()->stack_pointer() - index();
+      actual_index = frame()->stack_pointer() - index();
     }
     fixed_offset = base_offset + JavaFrame::arg_offset_from_sp(actual_index);
   }
@@ -268,7 +266,7 @@ jint LocationAddress::get_fixed_offset() {
 }
 
 inline bool LocationAddress::is_local() const { 
-  return code_generator()->root_method()->is_local(index()); 
+  return Compiler::root_method()->is_local(index()); 
 }
 
 #endif /*#if !ENABLE_THUMB_COMPILER && ENABLE_COMPILER */

@@ -60,15 +60,15 @@ public:
 
 class CompilerLiteralAccessor : public LiteralAccessor {
 public:
-  virtual bool has_literal(int imm32, Assembler::Register& result) const;
+  virtual bool has_literal(int imm32, Assembler::Register& result);
 
-  virtual Assembler::Register get_literal(int imm32) const {
+  virtual Assembler::Register get_literal(int imm32) {
     return frame()->get_literal(imm32, *this);
   }
-  CompilerLiteralAccessor( void ): _frame( CodeGenerator::current()->frame() ) {}
 private:
-  VirtualStackFrame* const _frame;
-  VirtualStackFrame* frame( void ) const { return _frame; }
+  VirtualStackFrame* frame() {
+    return Compiler::current()->code_generator()->frame();
+  }
 };
 
 #if ENABLE_ISOLATES
@@ -212,7 +212,7 @@ extern "C" {
 
 
 bool CompilerLiteralAccessor::has_literal(int imm32,
-                                          Assembler::Register& result) const {
+                                          Assembler::Register& result) {
   LiteralElementStream les(frame());
   for ( ; !les.eos() ; les.next()) {
     if (les.value() == imm32) {
@@ -300,7 +300,7 @@ void CodeGenerator::store_to_address(Value& value, BasicType type,
   GUARANTEE(stack_type_for(type) == value.stack_type(),
              "types must match (taking stack types into account)");
   Register reg;
-  const CompilerLiteralAccessor cla;
+  CompilerLiteralAccessor cla;
 
   if (value.is_immediate()) {
     reg = cla.get_literal(value.lo_bits());
@@ -898,7 +898,7 @@ void CodeGenerator::arithmetic(Opcode opcode,
   }
 
   if (op2.is_immediate()) {
-    const CompilerLiteralAccessor cla;
+    CompilerLiteralAccessor cla;
     arith_imm(opcode, result.lo_register(), op2.as_int(), cla);
   } else {
     arith(opcode, result.lo_register(), op2.lo_register());
@@ -1579,7 +1579,7 @@ void CodeGenerator::cmp_values(Value& op1, Value& op2) {
             "op2 must be in a register or an immediate");
 
   if (op2.is_immediate()) {
-    const CompilerLiteralAccessor cla;
+    CompilerLiteralAccessor cla;
     cmp_imm(op1.lo_register(), op2.as_int());
   } else {
     cmp(op1.lo_register(), reg(op2.lo_register()));
@@ -2194,7 +2194,7 @@ void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
 
   write_literals_if_desperate();
 
-  const CompilerLiteralAccessor cla;
+  CompilerLiteralAccessor cla;
   NOT_PRODUCT(comment("Point at the object of the topmost stack lock"));
   ldr(lock, fp, JavaFrame::stack_bottom_pointer_offset());
   add(end, fp,
@@ -2296,7 +2296,7 @@ void CodeGenerator::lookup_switch(Value& index, jint table_index,
   write_literals(true);
   bind(skip_literals);
 
-  const CompilerLiteralAccessor cla;
+  CompilerLiteralAccessor cla;
   for (int i = 0, offset = table_index + 8;
        i < num_of_pairs;
        i++, offset += 8) {
@@ -2325,7 +2325,7 @@ void CodeGenerator::lookup_switch(Value& index, jint table_index,
 void CodeGenerator::lookup_switch(Register index, jint table_index,
                                   jint start, jint end,
                                   jint default_dest JVM_TRAPS) {
-  const CompilerLiteralAccessor cla;
+  CompilerLiteralAccessor cla;
 #ifndef PRODUCT
   char buffer[200];
   int num_of_pairs  = method()->get_java_switch_int(table_index + 4);

@@ -166,7 +166,7 @@ const struct OpcodeInfo OpcodeInfo::table[20] = {
  */
 
 void Macros::arith_imm(Opcode opcode, Register rd, int imm32,
-                       const LiteralAccessor& la) {
+                       LiteralAccessor& la) {
   Register  result;
 
   int alt_opcode_type = OpcodeInfo::table[opcode].alt_opcode_type;
@@ -275,7 +275,7 @@ void Macros::rsb(Register rd, Register rm, int imm) {
 }
 
 void Macros::rsb_imm(Register /*rd*/, Register /*rm*/, int /*imm32*/,
-                     const LiteralAccessor& /*la*/){
+                     LiteralAccessor& /*la*/){
   SHOULD_NOT_REACH_HERE();
 }
 
@@ -292,7 +292,7 @@ void Macros::rsc(Register rd, Register rm, int imm) {
   }
 }
 
-void Macros::cmp_imm_literal(Register rn, int imm32, const LiteralAccessor& la) {
+void Macros::cmp_imm_literal(Register rn, int imm32, LiteralAccessor& la) {
   Register rm;
   if (la.has_literal(imm32, rm)) {
     Assembler::cmp_imm(rn, rm);

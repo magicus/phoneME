@@ -28,7 +28,7 @@
 #if ENABLE_COMPILER
 
 inline FPURegisterMap& BinaryAssembler::fpu_register_map( void ) {
-  return frame()->fpu_register_map();
+  return Compiler::frame()->fpu_register_map();
 }
 
 inline jint BinaryAssembler::long_at(const int position) const {
@@ -996,7 +996,7 @@ void BinaryAssembler::fdivrp(Register dst, Register src) {
 void BinaryAssembler::fremp(Register src, Register dst) {
   DisassemblerInfo print_me(this);
   FPURegisterMap& fpu_map = fpu_register_map(); 
-  bool must_save_eax = frame()->is_mapping_something(eax);
+  bool must_save_eax = Compiler::frame()->is_mapping_something(eax);
 
   GUARANTEE(fpu_map.is_top_of_stack(src),
             "Destination register must be on top of FPU stack");

@@ -36,10 +36,6 @@ class Location;
 
 class Value : public StackObj {
  public:
-  static CodeGenerator* code_generator( void ) {
-    return (CodeGenerator*) _compiler_state;
-  }
-
   // creation/destruction
   Value(const BasicType type = T_ILLEGAL)   { initialize(type); }
   Value(RawLocation* loc, const int index)  { initialize(loc, index); }

@@ -34,9 +34,13 @@ void BinaryLabel::print_value_on(Stream* s) const {
     s->print_cr(" unused");
   } else {
     const int pos = position();
-    s->print_cr(" %s, pos=%d, addr=0x%x", is_linked() ? "linked" : "bound",
-                  pos, CodeGenerator::current()->addr_at(pos));
-    GUARANTEE(is_linked() || is_bound(), "sanity");
+    const address p = Compiler::code_generator()->addr_at(pos);
+    if (is_linked()) {
+      s->print_cr(" linked, pos=%d, addr=0x%x", pos, p);
+    } else {
+      GUARANTEE(is_bound(), "sanity");
+      s->print_cr(" bound, pos=%d, addr=0x%x",  pos, p );
+    }
   }
 }
 void BinaryLabel::p( void ) const {

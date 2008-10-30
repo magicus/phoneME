@@ -686,13 +686,13 @@ class Macros;
 class LiteralAccessor {
 #if !defined(PRODUCT) || ENABLE_COMPILER
 public:
-  virtual bool has_literal(int /*imm32*/, Assembler::Register& /*result*/) const {
+  virtual bool has_literal(int /*imm32*/, Assembler::Register& /*result*/) {
     return false;
   }
-  virtual Assembler::Register get_literal(int /*imm32*/) const {
+  virtual Assembler::Register get_literal(int /*imm32*/) {
     return Assembler::no_reg;
   }
-  virtual void free_literal( void ) const {}
+  virtual void free_literal() {}
 #endif
 };
 
@@ -711,7 +711,7 @@ class Macros: public Assembler {
  public:
 
   void arith_imm(Opcode opcode, Register rd, int imm32,
-                 const LiteralAccessor& la);
+                 LiteralAccessor& la);
 
   void tst_imm(Register rm, int rn_val) {
     Register rn = alloc_tmp_register(false);
@@ -728,10 +728,10 @@ class Macros: public Assembler {
   }
 
   void rsb(Register rd, Register rm, int imm);
-  void rsb_imm(Register rd, Register rm, int imm, const LiteralAccessor& la);
+  void rsb_imm(Register rd, Register rm, int imm, LiteralAccessor& la);
   void rsc(Register rd, Register rm, int imm);
 
-  void cmp_imm_literal(Register rn, int imm32, const LiteralAccessor& la);
+  void cmp_imm_literal(Register rn, int imm32, LiteralAccessor& la);
 
   // immediate operands for multiplication
   void mul_imm(Register rd, Register rm, int imm32, Register tmp);

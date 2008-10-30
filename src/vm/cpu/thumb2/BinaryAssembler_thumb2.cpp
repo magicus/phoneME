@@ -465,7 +465,7 @@ bool BinaryAssembler::CodeInterleaver::emit() {
   return false;
 }
 
-void BinaryAssembler::mov_imm(Register rd, int imm, const LiteralAccessor& la,
+void BinaryAssembler::mov_imm(Register rd, int imm, LiteralAccessor& la,
                               Condition cond) {
   Register rm;
 

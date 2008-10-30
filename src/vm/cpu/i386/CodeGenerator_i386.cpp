@@ -2641,9 +2641,9 @@ CodeGenerator::convert_condition( const BytecodeClosure::cond_op condition) {
 
 #ifndef PRODUCT
 
-void CodeGenerator::verify_fpu( void ) {
+void CodeGenerator::verify_fpu() {
 #if ENABLE_FLOAT
-  GUARANTEE(frame()->fpu_register_map().is_empty(),
+  GUARANTEE(Compiler::frame()->fpu_register_map().is_empty(),
             "FPU stack must be empty");
 #endif
 }

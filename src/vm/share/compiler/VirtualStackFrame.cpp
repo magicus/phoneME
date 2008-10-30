@@ -36,6 +36,8 @@
 
 int VirtualStackFrame::_location_map_size;
 
+Method* VirtualStackFrame::method( void ) { return Compiler::root_method(); }
+
 #if ENABLE_CSE
 
 void VirtualStackFrame::push_tag() {
@@ -1439,7 +1441,7 @@ void TransferGraph::generate_move(const Register dst_reg,
             dst_reg != Assembler::no_reg, "Sanity");
   GUARANTEE(src_reg != dst_reg, "No loops allowed");
 
-  CodeGenerator::current()->move(dst_reg, src_reg);
+  Compiler::code_generator()->move(dst_reg, src_reg);
 }
 
 void TransferGraph::generate_transfer_operations(const Register src_reg,
@@ -1448,10 +1450,14 @@ void TransferGraph::generate_transfer_operations(const Register src_reg,
 
   do {
     if (src_for(dst_reg) == src_reg && mark(dst_reg) == reg_mark) {
+
       uninstall_link(src_reg, dst_reg);
+
       generate_transfer_operations(dst_reg, reg_mark);
+
       generate_move(dst_reg, src_reg);
     }
+
     dst_reg = next_allocatable_register(dst_reg);
   } while (_transfer_count > 0 &&
            dst_reg != first_allocatable_register());
@@ -1648,7 +1654,7 @@ inline void VirtualStackFrame::conform_to_phase_three(VirtualStackFrame* other) 
         Value dst_value(dst, index);
 
         // do the register store
-        code_generator()->move(dst_value, src_value);
+        Compiler::code_generator()->move(dst_value, src_value);
       }
     }
   FOR_EACH_LOCATION_DONE(src, dst, index);
@@ -2263,7 +2269,7 @@ void VirtualStackFrame::set_value_class(Value &value, JavaClass * java_class) {
 
 #if USE_COMPILER_LITERALS_MAP
 Assembler::Register VirtualStackFrame::get_literal(int imm32,
-                                                   const LiteralAccessor& la) {
+                                                   LiteralAccessor& la) {
   LiteralElementStream les(this);
   for ( ; !les.eos() ; les.next()) {
     if (les.value() == imm32) {
@@ -2491,7 +2497,7 @@ Assembler::Register VirtualStackFrame::cached_array_length(Assembler::Register a
    array.set_register(array_base);
    RegisterAllocator::reference(array_base);
    SETUP_ERROR_CHECKER_ARG;
-   code_generator()->load_from_object(result, array,
+   Compiler::code_generator()->load_from_object(result, array,
                                      Array::length_offset(), false JVM_NO_CHECK);
    length = result.lo_register();
   }
@@ -2641,8 +2647,10 @@ void VirtualStackFrame::recache_array_length(Assembler::Register array_base,
     length.set_is_not_first_time_access();
 
     SETUP_ERROR_CHECKER_ARG;
-    code_generator()->load_from_object(length, array, Array::length_offset(),
-                                       false JVM_NO_CHECK);
+    Compiler::code_generator()->load_from_object(length,
+                                            array,
+                                            Array::length_offset(),
+                                            false JVM_NO_CHECK);
   }
 }
 

@@ -84,10 +84,10 @@ class MemoryAddress: public GenericAddress {
    // has_fixed_offset returns true iff the field we want is a fixed distance
    // from the start of the object (excluding the base_offset().  If true,
    // it also sets fixed_offset to that fixed offset value.  
-  virtual bool has_fixed_offset(jint& /*fixed_offset*/) const JVM_PURE_VIRTUAL_0;
+  virtual bool has_fixed_offset(jint& /*fixed_offset*/) JVM_PURE_VIRTUAL_0;
  
   // Returns the register from which we're calculating the offset
-  virtual Assembler::Register fixed_register( void ) const
+  virtual Assembler::Register fixed_register() 
       JVM_PURE_VIRTUAL_((Assembler::Register)0);
 
   // Allocate an address register and initialize its value.
@@ -146,8 +146,8 @@ class FieldAddress: public HeapAddress {
       HeapAddress(type), _object(&object), _offset(offset) { }
 
  protected:
-  virtual Assembler::Register fixed_register( void ) const;
-  virtual bool                has_fixed_offset(jint& fixed_offset) const;
+  virtual Assembler::Register fixed_register();
+  virtual bool                has_fixed_offset(jint& fixed_offset);
   virtual void                destroy_nonaddress_registers();
 
  private:
@@ -166,8 +166,8 @@ class IndexedAddress: public HeapAddress {
 
  protected:
   // Determine register and offset for access with address register
-  virtual Assembler::Register fixed_register( void ) const;
-  virtual bool                has_fixed_offset(jint& fixed_offset) const;
+  virtual Assembler::Register fixed_register();
+  virtual bool                has_fixed_offset(jint& fixed_offset);
 
   // fill in the address register
   virtual void fill_in_address_register();
@@ -175,18 +175,18 @@ class IndexedAddress: public HeapAddress {
   virtual void destroy_nonaddress_registers();
 
   // override the base offset defined in memory address
-  virtual jint base_offset( void ) const { return Array::base_offset(); }
+  virtual jint base_offset() const { return Array::base_offset(); }
 
  private:
   Value* _array;
   Value* _index;
 
   // accessors for the array and index
-  Value*  array( void )       const { return _array; }
-  Value*  index( void )       const { return _index; }
+  Value*  array()       const { return _array; }
+  Value*  index()       const { return _index; }
 
   // get the number of bits to shift the index with 
-  jint    index_shift( void ) const { return jvm_log2(byte_size_for(type())); }
+  jint    index_shift() const { return jvm_log2(byte_size_for(type())); }
 };
 
 class LocationAddress: public MemoryAddress {
@@ -195,29 +195,29 @@ class LocationAddress: public MemoryAddress {
   LocationAddress(jint index, BasicType type) : 
      MemoryAddress(type), _index(index) {}
 
-  int get_fixed_offset( void ) const;
+  int get_fixed_offset();
       
  protected:
    // Determine register and offset for access with address register
-  virtual Assembler::Register fixed_register( void ) const;
-  virtual bool has_fixed_offset(jint& fixed_offset) const;
+  virtual Assembler::Register fixed_register();
+  virtual bool                has_fixed_offset(jint& fixed_offset);
 
-  virtual jint lo_offset() const { 
+  virtual jint lo_offset()   const { 
     return JavaStackDirection < 0 ? (is_two_word() ? -BytesPerStackElement : 0)
                                   : 0;
   }
-  virtual jint hi_offset() const { 
+  virtual jint hi_offset()   const { 
     GUARANTEE(is_two_word(), "sanity"); 
     return JavaStackDirection < 0 ? 0 : BytesPerStackElement;
   }
 
  private:
-  const jint _index;
-  jint index( void ) const { return _index; }
+  jint   _index;
+  jint    index()       const { return _index; }
 
   // check if the location address is the address of a local (as opposed to
   // an expression stack element) 
-  inline bool is_local( void ) const;
+  bool       is_local()    const { return method()->is_local(index()); }
 };
 
 #endif

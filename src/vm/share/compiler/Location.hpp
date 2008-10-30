@@ -37,6 +37,7 @@
  * but it works only when GC doesn't occur. For the general case, use the
  * Location class instead (see Location.hpp)
  */
+class CodeGenerator;
 class RawLocation : public RawLocationData {
 public:
   enum Status {
@@ -246,9 +247,7 @@ public:
 
  private:
   inline Actions merge_actions( const RawLocation* other ) const;
-  static CodeGenerator* code_generator( void ) {
-    return (CodeGenerator*) _compiler_state;
-  }
+  static inline CodeGenerator* code_generator( void );
 
   RawLocation *next_location(void) {
     return this + 1;

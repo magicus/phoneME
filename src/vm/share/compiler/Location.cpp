@@ -29,6 +29,10 @@
 
 #if ENABLE_COMPILER
 
+inline CodeGenerator* RawLocation::code_generator( void ) {
+  return Compiler::code_generator();
+}
+
 inline RawLocation::Actions 
 RawLocation::merge_actions( const RawLocation* other ) const {
   #define ACTIONS_POS( src, dst )       ( ((src)*3 + (dst)) * 3 )

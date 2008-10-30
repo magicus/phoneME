@@ -138,7 +138,7 @@ public:
 
   virtual void write_objects(JVM_SINGLE_ARG_TRAPS);
   virtual void find_offsets(JVM_SINGLE_ARG_TRAPS);
-  virtual void write_subtype_range(const char *name, int skip_header_words, 
+  virtual void write_subtype_range(char *name, int skip_header_words, 
                            int start, int end);
   virtual int  write_rom_hashtable(const char *table_name, 
                                    const char *element_name,
@@ -154,7 +154,7 @@ public:
   virtual int  print_rom_hashtable_content(const char *element_name,
                                            ObjArray *table JVM_TRAPS);
 
-  void print_separator(const char * section);
+  void print_separator(char * section);
   void write_original_class_info_table(JVM_SINGLE_ARG_TRAPS);
   void write_original_info_strings(JVM_SINGLE_ARG_TRAPS);
   void write_constant_string(Symbol* s JVM_TRAPS);
@@ -288,7 +288,7 @@ public:
   }
 
   void put_separator();
-  void start_block_comments(const char *block_name);
+  void start_block_comments(char *block_name);
   virtual void start_block(ROMWriter::BlockType type, int preset_count JVM_TRAPS);
   virtual void end_block(JVM_SINGLE_ARG_TRAPS);
 
@@ -310,13 +310,13 @@ public:
     ObjArray::Raw table = _writer->_optimizer.jni_native_methods_table();
     return is_method_in_table(method, &table);
   }
-  void write_jni_method_adapter(Method *method, const char *name);
+  void write_jni_method_adapter(Method *method, char *name);
 
   bool is_kvm_native(const Method * method) {
     ObjArray::Raw table = _writer->_optimizer.kvm_native_methods_table();
     return is_method_in_table(method, &table);
   }
-  void write_kvm_method_stub(Method *method, const char *name);
+  void write_kvm_method_stub(Method *method, char *name);
   void put_c_function(Method *owner, address addr, Stream *stream JVM_TRAPS);
   void put_oopmap(Oop *owner, address addr);
   void put_method_symbolic(Method *method, int offset JVM_TRAPS);

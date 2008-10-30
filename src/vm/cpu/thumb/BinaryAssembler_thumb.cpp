@@ -709,7 +709,7 @@ int is_multiple(int imm32) {
   return (val % 256) ? 0 : imm32/256;
 }
 
-void BinaryAssembler::mov_imm(Register rd, int imm32, const LiteralAccessor& la, 
+void BinaryAssembler::mov_imm(Register rd, int imm32, LiteralAccessor& la, 
                               Condition cond) {
   Register rm;
 

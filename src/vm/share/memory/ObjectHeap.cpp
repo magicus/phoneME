@@ -2010,7 +2010,7 @@ void ObjectHeap::roots_do_to( void do_oop(OopDesc**), const bool young_only,
     CompiledMethodDesc* cm  = (CompiledMethodDesc*)_compiler_area_start;
     CompiledMethodDesc* end = (CompiledMethodDesc*)_compiler_area_top;
     {
-      const CodeGenerator* gen = CodeGenerator::current();
+      const CodeGenerator* gen = Compiler::code_generator();
       if( gen ) {
         end = (CompiledMethodDesc*)gen->compiled_method()->obj();
       }
