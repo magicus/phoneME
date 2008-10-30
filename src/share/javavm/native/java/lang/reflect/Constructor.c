@@ -250,7 +250,7 @@ CVMinvokeConstructor(CVMExecEnv* ee, CVMStackVal32 *arguments,
 }
 #endif /* CVM_REFLECT */
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_reflect_Constructor_allocateUninitializedObject(
 	CVMExecEnv* ee,
 	CVMStackVal32 *arguments,
@@ -318,7 +318,7 @@ CNIjava_lang_reflect_Constructor_allocateUninitializedObject(
 #endif /* CVM_REFLECT */
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_reflect_Constructor_invokeConstructor(CVMExecEnv* ee,
 						   CVMStackVal32 *arguments,
 						   CVMMethodBlock **p_mb)

@@ -29,6 +29,7 @@
 #define _INCLUDED_CNI_H
 
 #include "javavm/include/defs.h"
+#include "javavm/include/porting/jni.h"
 
 /*****************************************************************
  * Support for CNI native methods. 07/13/99 
@@ -150,4 +151,7 @@ typedef enum {
 typedef CNIResultCode CNINativeMethod(CVMExecEnv* ee,
 				      CVMStackVal32* arguments,
 				      CVMMethodBlock** p_mb);
+
+#define CNIEXPORT JNIEXPORT
+
 #endif /* _INCLUDED_CNI_H */

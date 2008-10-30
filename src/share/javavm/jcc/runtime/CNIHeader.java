@@ -76,7 +76,7 @@ public class CNIHeader extends HeaderDump{
 		}
 	    }
 	    // print return type and name.
-	    o.print("CNINativeMethod ");
+	    o.print("CNIEXPORT CNINativeMethod ");
 	    String name =
 		Util.convertToJNIName( className, m.name.string, nameParams );
 	    name = "CNI" + name.substring(5);

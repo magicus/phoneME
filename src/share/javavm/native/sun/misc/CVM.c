@@ -66,7 +66,7 @@
 #endif
 
 /* Set the systemClassLoader */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_setSystemClassLoader(CVMExecEnv*ee, CVMStackVal32 *arguments,
                                      CVMMethodBlock **p_mb)
 {
@@ -115,7 +115,7 @@ CNIsun_misc_CVM_setSystemClassLoader(CVMExecEnv*ee, CVMStackVal32 *arguments,
 #define CVMassertOKToCopyArrayOfType(expectedType_)
 #endif
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_copyBooleanArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
                                  CVMMethodBlock **p_mb)
 {
@@ -137,7 +137,7 @@ CNIsun_misc_CVM_copyBooleanArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_copyByteArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
                               CVMMethodBlock **p_mb)
 {
@@ -159,7 +159,7 @@ CNIsun_misc_CVM_copyByteArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_copyShortArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
                                CVMMethodBlock **p_mb)
 {
@@ -181,7 +181,7 @@ CNIsun_misc_CVM_copyShortArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_copyCharArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
                               CVMMethodBlock **p_mb)
 {
@@ -203,7 +203,7 @@ CNIsun_misc_CVM_copyCharArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_copyIntArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
                              CVMMethodBlock **p_mb)
 {
@@ -225,7 +225,7 @@ CNIsun_misc_CVM_copyIntArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_copyLongArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
                               CVMMethodBlock **p_mb)
 {
@@ -247,7 +247,7 @@ CNIsun_misc_CVM_copyLongArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_copyFloatArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
                                CVMMethodBlock **p_mb)
 {
@@ -269,7 +269,7 @@ CNIsun_misc_CVM_copyFloatArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_copyDoubleArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
                                 CVMMethodBlock **p_mb)
 {
@@ -302,7 +302,7 @@ CNIsun_misc_CVM_copyDoubleArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
    If the condition of these checks and restrictions are not taken cared of
    by the caller, copyObjectArray() can fail in unpredictable ways.
 */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_copyObjectArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
                                 CVMMethodBlock **p_mb)
 {
@@ -324,7 +324,7 @@ CNIsun_misc_CVM_copyObjectArray(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_checkDebugFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				CVMMethodBlock **p_mb)
 {
@@ -337,7 +337,7 @@ CNIsun_misc_CVM_checkDebugFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_setDebugFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			      CVMMethodBlock **p_mb)
 {
@@ -350,7 +350,7 @@ CNIsun_misc_CVM_setDebugFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_clearDebugFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				CVMMethodBlock **p_mb)
 {
@@ -363,7 +363,7 @@ CNIsun_misc_CVM_clearDebugFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_restoreDebugFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				  CVMMethodBlock **p_mb)
 {
@@ -377,7 +377,7 @@ CNIsun_misc_CVM_restoreDebugFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_checkDebugJITFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
                                    CVMMethodBlock **p_mb)
 {
@@ -390,7 +390,7 @@ CNIsun_misc_CVM_checkDebugJITFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_setDebugJITFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
                                  CVMMethodBlock **p_mb)
 {
@@ -403,7 +403,7 @@ CNIsun_misc_CVM_setDebugJITFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_clearDebugJITFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
                                    CVMMethodBlock **p_mb)
 {
@@ -416,7 +416,7 @@ CNIsun_misc_CVM_clearDebugJITFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_restoreDebugJITFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
                                      CVMMethodBlock **p_mb)
 {
@@ -438,7 +438,7 @@ CNIsun_misc_CVM_restoreDebugJITFlags(CVMExecEnv* ee, CVMStackVal32 *arguments,
  * method in *p_mb, and return CVM_NEW_MB to the interpreter. This
  * signals the interpreter to invoke the method stored in *p_mb.
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_executeClinit(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			      CVMMethodBlock **p_mb)
 {
@@ -470,7 +470,7 @@ CNIsun_misc_CVM_executeClinit(CVMExecEnv* ee, CVMStackVal32 *arguments,
  * go through the motions anyway.)
  */
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_freeClinit(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			   CVMMethodBlock **p_mb)
 {
@@ -525,7 +525,7 @@ CNIsun_misc_CVM_freeClinit(CVMExecEnv* ee, CVMStackVal32 *arguments,
  * interpreter. This signals the interpreter to invoke the method
  * stored in *p_mb. 
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_executeLoadSuperClasses(
     CVMExecEnv* ee, CVMStackVal32 *arguments, CVMMethodBlock **p_mb)
 {
@@ -535,7 +535,7 @@ CNIsun_misc_CVM_executeLoadSuperClasses(
 }
 
 #ifdef FOR_EXAMPLE
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_arraycopy(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			  CVMMethodBlock **p_mb)
 {
@@ -555,7 +555,7 @@ CNIsun_misc_CVM_arraycopy(CVMExecEnv* ee, CVMStackVal32 *arguments,
 }
 #endif
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_disableRemoteExceptions(CVMExecEnv* ee,
 					CVMStackVal32 *arguments,
 					CVMMethodBlock **p_mb)
@@ -564,7 +564,7 @@ CNIsun_misc_CVM_disableRemoteExceptions(CVMExecEnv* ee,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_enableRemoteExceptions(CVMExecEnv* ee,
 				       CVMStackVal32 *arguments,
 				       CVMMethodBlock **p_mb)
@@ -578,7 +578,7 @@ CNIsun_misc_CVM_enableRemoteExceptions(CVMExecEnv* ee,
     }
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_throwRemoteException(CVMExecEnv* ee,
 				     CVMStackVal32 *arguments,
 				     CVMMethodBlock **p_mb)
@@ -606,7 +606,7 @@ CNIsun_misc_CVM_throwRemoteException(CVMExecEnv* ee,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_throwLocalException(CVMExecEnv* ee,
 				    CVMStackVal32 *arguments,
 				    CVMMethodBlock **p_mb)
@@ -618,7 +618,7 @@ CNIsun_misc_CVM_throwLocalException(CVMExecEnv* ee,
     return CNI_EXCEPTION;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_callerCLIsMIDCLs(CVMExecEnv* ee,
                                    CVMStackVal32 *arguments,
                                    CVMMethodBlock **p_mb)
@@ -642,7 +642,7 @@ CNIsun_misc_CVM_callerCLIsMIDCLs(CVMExecEnv* ee,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_isMIDPContext(CVMExecEnv* ee,
                               CVMStackVal32 *arguments,
                               CVMMethodBlock **p_mb)
@@ -684,7 +684,7 @@ CNIsun_misc_CVM_isMIDPContext(CVMExecEnv* ee,
 }
 
 /* %begin lvm */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_inMainLVM(CVMExecEnv* ee,
 			  CVMStackVal32 *arguments,
 			  CVMMethodBlock **p_mb)
@@ -701,7 +701,7 @@ CNIsun_misc_CVM_inMainLVM(CVMExecEnv* ee,
 }
 /* %end lvm */
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_gcDumpHeapSimple(CVMExecEnv* ee,
 				 CVMStackVal32 *arguments,
 				 CVMMethodBlock **p_mb)
@@ -715,7 +715,7 @@ CNIsun_misc_CVM_gcDumpHeapSimple(CVMExecEnv* ee,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_gcDumpHeapVerbose(CVMExecEnv* ee,
 				  CVMStackVal32 *arguments,
 				  CVMMethodBlock **p_mb)
@@ -729,7 +729,7 @@ CNIsun_misc_CVM_gcDumpHeapVerbose(CVMExecEnv* ee,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_gcDumpHeapStats(CVMExecEnv* ee,
 				CVMStackVal32 *arguments,
 				CVMMethodBlock **p_mb)
@@ -751,7 +751,7 @@ CNIsun_misc_CVM_gcDumpHeapStats(CVMExecEnv* ee,
 static CVMInt64 millis[TRACE_SIZE];
 static int id[TRACE_SIZE];
 static int indx;
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_trace(CVMExecEnv *ee,
 		      CVMStackVal32 *arguments,
 		      CVMMethodBlock **p_mb)
@@ -779,7 +779,7 @@ CNIsun_misc_CVM_trace(CVMExecEnv *ee,
     return CNI_VOID;
 }
 #else
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_trace(CVMExecEnv *ee,
 		      CVMStackVal32 *arguments,
 		      CVMMethodBlock **p_mb)
@@ -789,7 +789,7 @@ CNIsun_misc_CVM_trace(CVMExecEnv *ee,
 #endif /* !DEBUG */
 
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_setDebugEvents(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
 {
@@ -801,7 +801,7 @@ CNIsun_misc_CVM_setDebugEvents(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_postThreadExit(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
 {
@@ -811,7 +811,7 @@ CNIsun_misc_CVM_postThreadExit(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_setContextArtificial(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				     CVMMethodBlock **p_mb)
 {
@@ -822,7 +822,7 @@ CNIsun_misc_CVM_setContextArtificial(CVMExecEnv* ee, CVMStackVal32 *arguments,
 /*
  * Inflates an object's monitor and marks it sticky so it's never freed.
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_objectInflatePermanently(CVMExecEnv* ee,
 					 CVMStackVal32 *arguments,
 					 CVMMethodBlock **p_mb)
@@ -844,7 +844,7 @@ CNIsun_misc_CVM_objectInflatePermanently(CVMExecEnv* ee,
 /*
  * enable/disable compilations by current thread
  */
-CNIResultCode 
+CNIEXPORT CNIResultCode 
 CNIsun_misc_CVM_setThreadNoCompilationsFlag(CVMExecEnv* ee,
 					    CVMStackVal32 *arguments,
 					    CVMMethodBlock **p_mb)
@@ -855,7 +855,8 @@ CNIsun_misc_CVM_setThreadNoCompilationsFlag(CVMExecEnv* ee,
 #endif    
     return CNI_VOID;
 }
-CNIResultCode
+
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_getCallerClass(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
 {
@@ -875,7 +876,7 @@ CNIsun_misc_CVM_getCallerClass(CVMExecEnv* ee, CVMStackVal32 *arguments,
 /*
  * Is the compiler built in?
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_isCompilerSupported(CVMExecEnv* ee,
 				    CVMStackVal32 *arguments,
 				    CVMMethodBlock **p_mb)
@@ -891,7 +892,7 @@ CNIsun_misc_CVM_isCompilerSupported(CVMExecEnv* ee,
 /*
  * Request a dump of the profiling data collected by the compiler if available.
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_dumpCompilerProfileData(CVMExecEnv* ee,
 				        CVMStackVal32 *arguments,
 				        CVMMethodBlock **p_mb)
@@ -907,7 +908,7 @@ CNIsun_misc_CVM_dumpCompilerProfileData(CVMExecEnv* ee,
 /*
  * Dump misc. stats
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_dumpStats(CVMExecEnv* ee,
 			  CVMStackVal32 *arguments,
 			  CVMMethodBlock **p_mb)
@@ -925,7 +926,7 @@ CNIsun_misc_CVM_dumpStats(CVMExecEnv* ee,
 /*
  * Mark the code buffer
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_markCodeBuffer(CVMExecEnv* ee,
 			       CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
@@ -949,7 +950,7 @@ CNIsun_misc_CVM_markCodeBuffer(CVMExecEnv* ee,
 /*
  * Enable compilation
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_initializeJITPolicy(CVMExecEnv* ee,
 			          CVMStackVal32 *arguments,
 			          CVMMethodBlock **p_m)
@@ -966,7 +967,7 @@ CNIsun_misc_CVM_initializeJITPolicy(CVMExecEnv* ee,
 /*
  * Initialize pre-compiled code.
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_initializeAOTCode(CVMExecEnv* ee,
                                   CVMStackVal32 *arguments,
                                   CVMMethodBlock **p_m)
@@ -983,7 +984,7 @@ CNIsun_misc_CVM_initializeAOTCode(CVMExecEnv* ee,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_maskInterrupts(CVMExecEnv* ee,
 			       CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
@@ -994,7 +995,7 @@ CNIsun_misc_CVM_maskInterrupts(CVMExecEnv* ee,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_unmaskInterrupts(CVMExecEnv* ee,
 			       CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
@@ -1006,7 +1007,7 @@ CNIsun_misc_CVM_unmaskInterrupts(CVMExecEnv* ee,
 }
 
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_parseVerifyOptions(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				   CVMMethodBlock **p_mb)
 {
@@ -1029,7 +1030,7 @@ CNIsun_misc_CVM_parseVerifyOptions(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_parseXoptOptions(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				   CVMMethodBlock **p_mb)
 {
@@ -1048,7 +1049,7 @@ CNIsun_misc_CVM_parseXoptOptions(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_parseXssOption(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
 {
@@ -1067,7 +1068,7 @@ CNIsun_misc_CVM_parseXssOption(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_parseXgcOptions(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				CVMMethodBlock **p_mb)
 {
@@ -1090,7 +1091,7 @@ CNIsun_misc_CVM_parseXgcOptions(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_parseAssertionOptions(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				      CVMMethodBlock **p_mb)
 {
@@ -1159,7 +1160,7 @@ done:
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_agentlibSupported(CVMExecEnv* ee,
 			      CVMStackVal32 *arguments,
 			      CVMMethodBlock **p_mb)
@@ -1173,7 +1174,7 @@ CNIsun_misc_CVM_agentlibSupported(CVMExecEnv* ee,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_agentlibInitialize(CVMExecEnv* ee,
 			      CVMStackVal32 *arguments,
 			      CVMMethodBlock **p_mb)
@@ -1193,7 +1194,7 @@ CNIsun_misc_CVM_agentlibInitialize(CVMExecEnv* ee,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_agentlibProcess(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			    CVMMethodBlock **p_mb)
 {
@@ -1231,7 +1232,7 @@ CNIsun_misc_CVM_agentlibProcess(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_xrunSupported(CVMExecEnv* ee,
 			      CVMStackVal32 *arguments,
 			      CVMMethodBlock **p_mb)
@@ -1246,7 +1247,7 @@ CNIsun_misc_CVM_xrunSupported(CVMExecEnv* ee,
 }
 
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_xrunInitialize(CVMExecEnv* ee,
 			      CVMStackVal32 *arguments,
 			      CVMMethodBlock **p_mb)
@@ -1266,7 +1267,7 @@ CNIsun_misc_CVM_xrunInitialize(CVMExecEnv* ee,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_xrunProcess(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			    CVMMethodBlock **p_mb)
 {
@@ -1297,7 +1298,7 @@ CNIsun_misc_CVM_xrunProcess(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_xdebugSet(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			  CVMMethodBlock **p_mb)
 {
@@ -1319,7 +1320,7 @@ CNIsun_misc_CVM_xdebugSet(CVMExecEnv* ee, CVMStackVal32 *arguments,
 #include "jni_util.h"
 
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_00024Preloader_getClassLoaderNames(CVMExecEnv* ee,
     CVMStackVal32 *arguments,
     CVMMethodBlock **p_mb)
@@ -1355,7 +1356,7 @@ CNIsun_misc_CVM_00024Preloader_getClassLoaderNames(CVMExecEnv* ee,
     return result;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_00024Preloader_registerClassLoader0(CVMExecEnv* ee,
     CVMStackVal32 *arguments,
     CVMMethodBlock **p_mb)
@@ -1367,7 +1368,7 @@ CNIsun_misc_CVM_00024Preloader_registerClassLoader0(CVMExecEnv* ee,
     return CNI_VOID;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_nanoTime(CVMExecEnv* ee, CVMStackVal32 *arguments, CVMMethodBlock **p_mb)
 {
     jlong time;
@@ -1388,7 +1389,7 @@ CNIsun_misc_CVM_nanoTime(CVMExecEnv* ee, CVMStackVal32 *arguments, CVMMethodBloc
  * case they are implemented as intrinsics emitters.
  */
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_simpleLockGrab(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb) {
     CVMassert(CVM_FALSE);
@@ -1396,7 +1397,7 @@ CNIsun_misc_CVM_simpleLockGrab(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_simpleLockRelease(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				  CVMMethodBlock **p_mb)
 {
@@ -1446,7 +1447,7 @@ extern void dumpMBs() {
 }
 
 /* NOTE: this code is disabled. See comment above */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_simpleLockGrab(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
 {
@@ -1469,7 +1470,7 @@ CNIsun_misc_CVM_simpleLockGrab(CVMExecEnv* ee, CVMStackVal32 *arguments,
 }
 
 /* NOTE: this code is disabled. See comment above */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_simpleLockRelease(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				  CVMMethodBlock **p_mb)
 {
@@ -1479,7 +1480,7 @@ CNIsun_misc_CVM_simpleLockRelease(CVMExecEnv* ee, CVMStackVal32 *arguments,
 #endif
 
 /* Gets the VM build options as a Java string. */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_getBuildOptionString(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				     CVMMethodBlock **p_mb)
 {
@@ -1507,7 +1508,7 @@ CNIsun_misc_CVM_getBuildOptionString(CVMExecEnv* ee, CVMStackVal32 *arguments,
  * Sets java.net.URLConnection.defaultUseCaches to the boolean
  * argument passed in.
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_setURLConnectionDefaultUseCaches(CVMExecEnv* ee,
 						 CVMStackVal32 *arguments,
 						 CVMMethodBlock **p_mb)
@@ -1528,7 +1529,7 @@ CNIsun_misc_CVM_setURLConnectionDefaultUseCaches(CVMExecEnv* ee,
  */
 #include "generated/offsets/java_net_URLClassLoader.h"
 extern const CVMClassBlock java_net_URLConnection_Classblock;
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_clearURLClassLoaderUcpField(CVMExecEnv* ee,
 					    CVMStackVal32 *arguments,
 					    CVMMethodBlock **p_mb)

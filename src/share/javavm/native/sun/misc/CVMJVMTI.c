@@ -32,7 +32,7 @@
 #include "javavm/include/jvmtiExport.h"
 
 /* Purpose: Posts the JVMTI_EVENT_DATA_DUMP_REQUEST event. */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVMJVMTI_postDataDumpRequestEvent(CVMExecEnv* ee, 
                                               CVMStackVal32 *arguments,
                                               CVMMethodBlock **p_mb)

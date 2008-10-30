@@ -67,7 +67,7 @@
  * Method:      charAt
  * Signature:   (I)C
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_String_charAt(CVMExecEnv* ee, CVMStackVal32 *arguments,
                            CVMMethodBlock **p_mb)
 {
@@ -110,7 +110,7 @@ CNIjava_lang_String_charAt(CVMExecEnv* ee, CVMStackVal32 *arguments,
  * Method:      getChars
  * Signature:   (II[CI)V
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_String_getChars(CVMExecEnv* ee, CVMStackVal32 *arguments,
                              CVMMethodBlock **p_mb)
 {
@@ -188,7 +188,7 @@ CNIjava_lang_String_getChars(CVMExecEnv* ee, CVMStackVal32 *arguments,
  * Method:      equals
  * Signature:   (Ljava/lang/Object;)Z
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_String_equals(CVMExecEnv* ee, CVMStackVal32 *arguments,
                            CVMMethodBlock **p_mb)
 {
@@ -261,7 +261,7 @@ CNIjava_lang_String_equals(CVMExecEnv* ee, CVMStackVal32 *arguments,
  * Method:      compareTo
  * Signature:   (Ljava/lang/String;)I
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_String_compareTo(CVMExecEnv* ee, CVMStackVal32 *arguments,
                               CVMMethodBlock **p_mb) 
 {
@@ -343,7 +343,7 @@ CNIjava_lang_String_compareTo(CVMExecEnv* ee, CVMStackVal32 *arguments,
  * Method:      hashCode
  * Signature:   ()I
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_String_hashCode(CVMExecEnv* ee, CVMStackVal32 *arguments,
                              CVMMethodBlock **p_mb)
 {
@@ -415,7 +415,7 @@ stringIndexOfHelper1(CVMExecEnv* ee,  CVMObjectICell *thisICell,
  * Method:      indexOf
  * Signature:   (I)I
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_String_indexOf__I(CVMExecEnv* ee, CVMStackVal32 *arguments,
                                CVMMethodBlock **p_mb)
 {
@@ -431,7 +431,7 @@ CNIjava_lang_String_indexOf__I(CVMExecEnv* ee, CVMStackVal32 *arguments,
  * Method:      indexOf
  * Signature:   (II)I
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_String_indexOf__II(CVMExecEnv* ee, CVMStackVal32 *arguments,
                                 CVMMethodBlock **p_mb)
 {
@@ -538,7 +538,7 @@ stringIndexOfHelper2(CVMExecEnv* ee, CVMObjectICell *thisICell,
  * Method:      indexOf
  * Signature:   (Ljava/lang/String;)I
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_String_indexOf__Ljava_lang_String_2(CVMExecEnv* ee,
                                                  CVMStackVal32 *arguments,
                                                  CVMMethodBlock **p_mb)
@@ -561,7 +561,7 @@ CNIjava_lang_String_indexOf__Ljava_lang_String_2(CVMExecEnv* ee,
  * Method:      indexOf
  * Signature:   (Ljava/lang/String;I)I
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_String_indexOf__Ljava_lang_String_2I(CVMExecEnv* ee, 
                                                   CVMStackVal32 *arguments,
                                                   CVMMethodBlock **p_mb)
@@ -585,7 +585,7 @@ CNIjava_lang_String_indexOf__Ljava_lang_String_2I(CVMExecEnv* ee,
  * Method:      intern
  * Signature:   ()Ljava/lang/String;
  */
-CNIResultCode
+CNIEXPORT CNIResultCode
 CNIjava_lang_String_intern(CVMExecEnv* ee, CVMStackVal32 *arguments,
                            CVMMethodBlock **p_mb)
 {
