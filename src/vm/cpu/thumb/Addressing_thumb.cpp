@@ -185,12 +185,12 @@ void HeapAddress::write_barrier_epilog() {
   code_generator()->mov(Assembler::gp, Assembler::r12);
 }
 
-bool FieldAddress::has_fixed_offset(jint& fixed_offset) {
+bool FieldAddress::has_fixed_offset(jint& fixed_offset) const {
   fixed_offset = offset(); 
   return true;
 }
 
-Assembler::Register FieldAddress::fixed_register() { 
+Assembler::Register FieldAddress::fixed_register( void ) const { 
   return object()->lo_register();
 }
 
@@ -199,7 +199,7 @@ void FieldAddress::destroy_nonaddress_registers() {
 }
 
 
-bool IndexedAddress::has_fixed_offset(jint& fixed_offset) {
+bool IndexedAddress::has_fixed_offset(jint& fixed_offset) const {
   if (index()->is_immediate()) {
     fixed_offset = (index()->as_int() << index_shift());
     return true;
@@ -208,7 +208,7 @@ bool IndexedAddress::has_fixed_offset(jint& fixed_offset) {
   }
 }
 
-Assembler::Register IndexedAddress::fixed_register() { 
+Assembler::Register IndexedAddress::fixed_register( void ) const { 
   return array()->lo_register();
 }
 
@@ -233,11 +233,17 @@ void IndexedAddress::destroy_nonaddress_registers() {
   array()->destroy();
 }
 
-bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
+bool LocationAddress::is_local( void ) const {
+  return code_generator()->method()->is_local(index());
+}
+
+bool LocationAddress::has_fixed_offset(jint& fixed_offset) const {
   int base_offset;
   int actual_index;
 
-  if (code_generator()->omit_stack_frame()) {
+  CodeGenerator* gen = code_generator();
+
+  if( gen->omit_stack_frame()) {
     // Everything is accessed using jsp
     fixed_offset = frame()->stack_pointer() - index();
     fixed_offset *= BytesPerStackElement;
@@ -246,39 +252,33 @@ bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
       // The offset from the fp that would have it point at the end of the
       // locals block 
       base_offset = JavaFrame::end_of_locals_offset();
-      actual_index = method()->max_locals() - 1 - index();
+      actual_index = gen->method()->max_locals() - 1 - index();
     } else {
       // We need to make sure that we don't put something beyond
       // the current end of stack
-      code_generator()->ensure_sufficient_stack_for(index(), type());
+      gen->ensure_sufficient_stack_for(index(), type());
 
       base_offset = 0;
-      actual_index = frame()->stack_pointer() - index();
+      actual_index = gen->frame()->stack_pointer() - index();
     }
     fixed_offset = base_offset + JavaFrame::arg_offset_from_sp(actual_index);
   }
   return true;
 }
     
-Assembler::Register LocationAddress::fixed_register() { 
-  if (code_generator()->omit_stack_frame()) {
-    return Assembler::jsp;
-  }
-  else {
-    return is_local() ? Assembler::fp : Assembler::jsp; 
-  }
+Assembler::Register LocationAddress::fixed_register( void ) const { 
+  return code_generator()->omit_stack_frame() || !is_local() ? Assembler::jsp
+                                                             : Assembler::fp;
 }
 
-jint LocationAddress::get_fixed_offset() {
+jint LocationAddress::get_fixed_offset( void ) const {
   jint fixed_offset;
   if (has_fixed_offset(fixed_offset)) { 
     return fixed_offset;
-  } else { 
-    SHOULD_NOT_REACH_HERE();
-    return 0;
   }
+  
+  SHOULD_NOT_REACH_HERE();
+  return 0;
 }
-
-
 
 #endif

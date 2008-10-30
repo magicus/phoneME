@@ -402,7 +402,7 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   }
 
  private:
-  static FPURegisterMap& fpu_register_map( void );
+  FPURegisterMap& fpu_register_map( void );
 
   jint  long_at    (const int position) const;
   void  word_at_put(const int position, const jshort value) const;

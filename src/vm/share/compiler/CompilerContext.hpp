@@ -33,7 +33,7 @@
   template( EntryTableType*,          entry_table                    )\
   template( CompilerByteArray*,       entry_counts_table             )\
   template( CompilerByteArray*,       bci_flags_table                )\
-  template( int,                      saved_bci                      )\
+  template( int,                      bci                            )\
   template( int,                      saved_num_stack_lock_words     )\
   template( int,                      local_base                     )\
   template( bool,                     in_loop                        )\

@@ -596,7 +596,7 @@ class VirtualStackFrame: public CompilerObject {
   }
 
 #if USE_COMPILER_LITERALS_MAP
-  Assembler::Register get_literal(int imm32, LiteralAccessor& la);
+  Assembler::Register get_literal(int imm32, const LiteralAccessor& la);
 
   void set_has_literal_value(Assembler::Register reg, const int imm32) {
     GUARANTEE((int)reg >= 0 && (int)reg < literals_map_size, "range");

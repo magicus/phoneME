@@ -80,10 +80,10 @@ class MemoryAddress: public GenericAddress {
    // has_fixed_offset returns true iff the field we want is a fixed distance
    // from the start of the object (excluding the base_offset().  If true,
    // it also sets fixed_offset to that fixed offset value.
-  virtual bool has_fixed_offset(jint& fixed_offset) JVM_PURE_VIRTUAL_0;
+  virtual bool has_fixed_offset(jint& fixed_offset) const JVM_PURE_VIRTUAL_0;
 
   // Returns the register from which we're calculating the offset
-  virtual Assembler::Register fixed_register( void )
+  virtual Assembler::Register fixed_register( void ) const
       JVM_PURE_VIRTUAL_((Assembler::Register)0);
 
   // Allocate an address register and initialize its value.
@@ -163,7 +163,7 @@ class IndexedAddress: public HeapAddress {
  protected:
   // Determine register and offset for access with address register
   virtual Assembler::Register fixed_register( void );
-  virtual bool                has_fixed_offset(jint& fixed_offset);
+  virtual bool has_fixed_offset(jint& fixed_offset);
 
   // fill in the address register
   virtual void fill_in_address_register( void );
@@ -210,12 +210,12 @@ class LocationAddress: public MemoryAddress {
  private:
   Assembler::Register _fixed_register;
 
-  jint   _index;
-  jint    index( void ) const { return _index; }
+  jint _index;
+  jint index( void ) const { return _index; }
 
   // check if the location address is the address of a local (as opposed to
   // an expression stack element)
-  bool    is_local( void )    const { return method()->is_local(index()); }
+  inline bool is_local( void ) const;
 };
 
 #endif

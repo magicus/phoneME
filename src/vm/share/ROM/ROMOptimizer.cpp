@@ -2806,7 +2806,7 @@ public:
   }
 };
 
-void ROMOptimizer::disable_compilation(char * pattern JVM_TRAPS) {
+void ROMOptimizer::disable_compilation(const char * pattern JVM_TRAPS) {
   DisableCompilationMatcher matcher(_disable_compilation_log);
   matcher.run(pattern JVM_CHECK);
 }
@@ -2966,7 +2966,7 @@ void ROMHashtableManager::add_to_bucket(ObjArray *rom_table, int index,
   SHOULD_NOT_REACH_HERE();
 }
 
-void JavaClassPatternMatcher::run(char *pattern JVM_TRAPS) {
+void JavaClassPatternMatcher::run(const char *pattern JVM_TRAPS) {
   initialize(pattern JVM_CHECK);
 
   if (!_has_wildcards) {
@@ -3036,7 +3036,7 @@ void JavaClassPatternMatcher::wildcard_match(JVM_SINGLE_ARG_TRAPS) {
   }
 } 
 
-void JavaClassPatternMatcher::initialize(char* pattern JVM_TRAPS) {
+void JavaClassPatternMatcher::initialize(const char* pattern JVM_TRAPS) {
   GUARANTEE(pattern != NULL, "No empty pattern allowed");
   char* delimiter;
   int pos = 0;

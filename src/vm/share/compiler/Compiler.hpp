@@ -46,26 +46,24 @@ class Compiler: public BytecodeCompileClosure {
   static jlong _estimated_frame_time;
   static jlong _last_frame_time_stamp;
 
-  static CompilerState* state( void ) { return _compiler_state;  }
-
  public:
   Compiler* parent( void ) const { return _parent; }
   void set_parent( Compiler* compiler ) { _parent = compiler; }
 
   static Compiler* current( void ) { return _current_compiler; }
   static void set_current( Compiler* compiler ) { _current_compiler = compiler;}
-  
+
 #if ENABLE_INLINE
   static Compiler* root( void ) { return _root; }
   static void set_root( Compiler* compiler ) { _root = compiler; }
 #else
-  static Compiler* root( void ) { return _current; }
+  static Compiler* root( void ) { return current(); }
   static void set_root( Compiler* ) {}
 #endif
 
   #define DEFINE_ACCESSOR( type, name ) \
-    static type name       (void)      { return state()->name();    } \
-    static void set_##name (type name) { state()->set_##name(name); }
+    type name       (void)      const { return state()->name();    } \
+    void set_##name (type name) const { state()->set_##name(name); }
   COMPILER_STATIC_FIELDS_DO(DEFINE_ACCESSOR)
   #undef DEFINE_ACCESSOR
 
@@ -78,10 +76,17 @@ class Compiler: public BytecodeCompileClosure {
   COMPILER_CONTEXT_FIELDS_DO(DEFINE_ACCESSOR)
   #undef DEFINE_ACCESSOR
 
-  static Method* root_method( void ) { return state()->root_method(); }  
+  Method* root_method( void ) const { return state()->root_method(); }  
+
+  jint next_bci ( const jint bci ) const {
+    return method()->next_bci( bci );
+  }
+  jint next_bci ( void ) const {
+    return next_bci( bci() );
+  }
 
   // Constructor and deconstructor.
-  Compiler( Method* method, const int active_bci );
+  Compiler( Method* method, const int active_bci = 0 );
 
 #ifndef PRODUCT
   // Create a dummy compiler that does nothing, but just make is_active()
@@ -115,17 +120,14 @@ class Compiler: public BytecodeCompileClosure {
   // an unimplemented feature is used.
   static void abort_active_compilation(bool is_permanent JVM_TRAPS);
 
-  static CodeGenerator* code_generator( void ) {
-    return state()->code_generator();
-  }
-  static CompiledMethod* current_compiled_method( void ) {
+  CompiledMethod* current_compiled_method( void ) const {
     return code_generator()->compiled_method();
   }
   static BytecodeCompileClosure* closure( void ) {
     return _current_compiler;
   }
 
-  static VirtualStackFrame* get_cached_preserved_frame( void ) {
+  VirtualStackFrame* get_cached_preserved_frame( void ) const {
     VirtualStackFrame* p = cached_preserved_frame();
     set_cached_preserved_frame( NULL );
     return p;
@@ -237,6 +239,9 @@ class Compiler: public BytecodeCompileClosure {
   void set_entry_for(const jint bci, Entry* entry) {
     entry_table()->at_put( bci, entry );
   }
+  void set_entry_for_current_bci(Entry* entry) {
+    set_entry_for( bci(), entry);
+  }
 
   bool method_aborted_for_exception_at(const int bci) {
     const AccessFlags flags = method()->access_flags();
@@ -251,10 +256,10 @@ class Compiler: public BytecodeCompileClosure {
 
   // Support for sharing of exception thrower stubs.
   typedef ThrowExceptionStub::RuntimeException RuntimeException;
-  static ThrowExceptionStub* rte_handler(const RuntimeException rte) {
+  ThrowExceptionStub* rte_handler(const RuntimeException rte) const {
     return state()->rte_handler(rte);
   }
-  static void set_rte_handler(const RuntimeException rte, ThrowExceptionStub* value) {
+  void set_rte_handler(const RuntimeException rte, ThrowExceptionStub* value) const {
     state()->set_rte_handler(rte, value);
   }
 #if ENABLE_INLINE
@@ -290,13 +295,6 @@ class Compiler: public BytecodeCompileClosure {
   }
  public:
 #endif
-  static int bci( void ) {
-    return _compiler_bci;
-  }
-  static void set_bci( int bci ) {
-    _compiler_bci = bci;
-  }
-
   static int  num_stack_lock_words(void) {
     return _num_stack_lock_words;
   }
@@ -320,10 +318,6 @@ class Compiler: public BytecodeCompileClosure {
 #else
     return false;
 #endif
-  }
-
-  int compiler_bci( void ) const {
-    return current() == this ? bci() : saved_bci();
   }
 
   enum CompilationFailure {
@@ -356,15 +350,15 @@ class Compiler: public BytecodeCompileClosure {
     return !is_inlining() &&
            (ExcessiveSuspendCompilation || Os::check_compiler_timer());
   }
-  static CompilerContext* suspended_compiler_context( void ) {
+  CompilerContext* suspended_compiler_context( void ) const {
     return state()->suspended_compiler_context();
   }
   static bool is_suspended ( void ) {
-    return state() != NULL;
+    return _compiler_state != NULL;
   }
 
   static void oops_do( void do_oop(OopDesc**) ) {
-    state()->oops_do( do_oop );
+    _compiler_state->oops_do( do_oop );
   }
 
 #if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
@@ -393,7 +387,6 @@ class Compiler: public BytecodeCompileClosure {
   }
   void resume ( void ) {
     *context() = *suspended_compiler_context();
-    BytecodeCompileClosure::initialize( state()->root_method() );
   }
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM &&ENABLE_CODE_OPTIMIZER
@@ -577,7 +570,10 @@ class Compiler: public BytecodeCompileClosure {
   static ReturnOop try_to_compile(Method* method, const int active_bci,
                                   const int compiled_code_factor JVM_TRAPS);
 
-  ReturnOop allocate_and_compile( const int compiled_code_factor JVM_TRAPS );
+  ReturnOop compilation_result( void );
+
+  static void begin( void );
+  static void end  ( OopDesc* result );
 
   inline void check_free_space  ( JVM_SINGLE_ARG_TRAPS ) const;
   void begin_compile            ( JVM_SINGLE_ARG_TRAPS );
@@ -587,7 +583,6 @@ class Compiler: public BytecodeCompileClosure {
 
   void process_compilation_queue ( JVM_SINGLE_ARG_TRAPS );
   static void terminate ( OopDesc* result );
-  bool reserve_compiler_area(size_t compiled_method_size);
   void handle_out_of_memory( void );
   static void set_impossible_to_compile(Method *method, const char why[]);
 
@@ -647,16 +642,17 @@ private:
 class VirtualStackFrameContext: public StackObj {
  private:
   VirtualStackFrame* _saved_frame;
+  static CompilerState* state( void ) { return _compiler_state; }
  
  public:
   VirtualStackFrameContext( VirtualStackFrame* context ) {
     GUARANTEE(context != NULL, "Sanity");
-    _saved_frame = Compiler::frame();
-    Compiler::set_frame(context);
+    _saved_frame = state()->frame();
+    state()->set_frame(context);
   }
  ~VirtualStackFrameContext( void ) {
-    Compiler::frame()->conform_to(_saved_frame);
-    Compiler::set_frame(_saved_frame);
+    state()->frame()->conform_to(_saved_frame);
+    state()->set_frame(_saved_frame);
   }
 };
 
@@ -852,6 +848,10 @@ FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_LEVEL)
 #define INCREMENT_COMPILER_PERFORMANCE_COUNTER(name, value)
 #define COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(name) 
 #endif
+
+inline jint CodeGenerator::bci ( void ) const {
+  return compiler()->bci();
+}
 
 #else
 // !ENABLE_COMPILER

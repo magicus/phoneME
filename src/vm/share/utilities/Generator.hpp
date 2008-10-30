@@ -49,7 +49,7 @@ class Generator {
   // Generate a C function, to be used by non-product builds, to check
   // that loopgen/romgen has the same C structure layout as the target
   // VM.
-  static void generate_oopmap_checks(char *c_function_prefix, Stream* stream);
+  static void generate_oopmap_checks(const char *c_function_prefix, Stream* stream);
  private:
   static BasicType _prev_type;
   static size_t    _prev_offset;

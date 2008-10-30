@@ -497,7 +497,7 @@ void Task::terminate_current_isolate(Thread *thread JVM_TRAPS) {
 #if ENABLE_COMPILER
   {
     // if we own some suspended compilation - clear it
-    const CodeGenerator* gen = Compiler::code_generator();
+    const CodeGenerator* gen = CodeGenerator::current();
     if( gen && gen->task_id() == current_id() ) {
       Compiler::abort_suspended_compilation();
     }

@@ -47,15 +47,15 @@ Compiler::CompilationHistory* Compiler::_history_tail;
 #endif
 
 Compiler::Compiler( Method* method, const int active_bci ) {
+  set_state( _compiler_state );
   _context.cleanup();
   Compiler* compiler = current();
 #if ENABLE_INLINE
   if( compiler ) {
     // Dump cached values to the context
-    compiler->set_saved_bci(Compiler::bci());
     compiler->set_saved_num_stack_lock_words(Compiler::num_stack_lock_words());
 
-    // Set local base for the new compiler
+    // Set state and local base for the new compiler
     GUARANTEE(frame() != NULL, "Frame must be created by the caller");
     set_local_base(frame()->virtual_stack_pointer() - 
                    method->size_of_parameters() + 1);
@@ -64,11 +64,11 @@ Compiler::Compiler( Method* method, const int active_bci ) {
   GUARANTEE(!is_active(), "Only one compiler at a time");
 #endif
   {
-    set_root(this);
-    set_local_base(0);
+    set_root( this );
+    set_local_base( 0 );
   }
   set_parent( compiler );
-  set_current(this);
+  set_current( this );
 
   _failure = reservation_failed;
   BytecodeCompileClosure::initialize(method, active_bci);
@@ -77,7 +77,6 @@ Compiler::Compiler( Method* method, const int active_bci ) {
   VirtualStackFrame::init_status_of_current_snippet_tracking();
   RegisterAllocator::wipe_all_notations();
 #endif
-  _compiler_method  = method;
 }
 
 #ifndef PRODUCT
@@ -106,8 +105,7 @@ Compiler::~Compiler() {
     }
 #endif
 
-    _compiler_method      = parent_compiler->method();
-    _compiler_bci         = parent_compiler->saved_bci();
+    code_generator()->set_method( parent_compiler->method() );
     _num_stack_lock_words = parent_compiler->saved_num_stack_lock_words();
   } else {
     set_root(NULL);
@@ -175,7 +173,7 @@ void Compiler::on_timer_tick(bool is_real_time_tick JVM_TRAPS) {
     //        (2) if current_compiling is the current method, set active_bci
     //            so that it can be more easily OSR'ed.
     CompiledMethod::Raw suspended_compiled_method = 
-      Compiler::current_compiled_method();
+      _compiler_state->compiled_method();
     if (suspended_compiled_method.not_null()) {
       current_compiling = suspended_compiled_method().method();
     }
@@ -289,14 +287,14 @@ void Compiler::terminate ( OopDesc* result ) {
     }
   }
 #endif
-  if(_failure != none || result == NULL) {
 #if ENABLE_TRAMPOLINE
+  if(_failure != none || result == NULL) {
     if (!GenerateROMImage) {
       BranchTable::revoke(
         (address) Compiler::current_compiled_method()->obj());
     }
-#endif
   }
+#endif
   CompilerState::terminate();
   ObjectHeap::update_compiler_area_top( result );
 }
@@ -323,77 +321,14 @@ inline void Compiler::check_free_space( JVM_SINGLE_ARG_TRAPS ) const {
   code_generator()->check_free_space( JVM_SINGLE_ARG_NO_CHECK );
 }
 
-inline
-ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
-                                         JVM_TRAPS) {
-#ifndef PRODUCT
-  if( TraceCompiledMethodCache ) {
-    tty->print( "\n*** Compiler::allocate_and_compile( " );
-    method()->print_name_on( tty );
-    tty->print_cr( ") beg ***" );
-  }
-#endif
-
-  const jint size = align_allocation_size(1024 +
-#ifdef PRODUCT
-    sizeof *_compiler_state +
-#endif
-    (method()->code_size() * compiled_code_factor));
-
-  if (!reserve_compiler_area((size_t)size)) {
-    // We don't have enough space (yet) to compile this method. We'll try to
-    // compile it later.
-    return NULL;
+ReturnOop Compiler::compilation_result( void ) {
+  if (PrintCompilationAtExit) {
+    append_compilation_history();
   }
 
-  if( CompiledMethodCache::alloc() == CompiledMethodCache::UndefIndex ) {
-    if( TraceCompiledMethodCache ) {
-      TTY_TRACE_CR(("out of cache indices"));
-    };
-    return NULL;
-  }
+  Thread::clear_current_pending_exception();
 
-  if( TraceCompiledMethodCache ) {
-    TTY_TRACE_CR(( "allocation size: %d, CompiledCodeFactor: %d",
-        size, compiled_code_factor ));
-  };
-
-  set_bci(0);
-
-  // Allocate static compiler state & compiled method
-  CompilerState* state = CompilerState::allocate(size JVM_NO_CHECK);
-  if( state == NULL ) {
-    if( TraceCompiledMethodCache ) {
-      TTY_TRACE_CR(( "Compilation FAILED - out of memory" ));
-    }
-    return NULL;
-  }
-  state->set_root_method( method() );
-  current_compiled_method()->set_method( method() );
-
-#if USE_COMPILER_COMMENTS
-  if (PrintCompilation || PrintCompiledCode || PrintCompiledCodeAsYouGo) {
-#if ENABLE_PERFORMANCE_COUNTERS
-    if (VerbosePointers) {
-      tty->print("#%d: ", jvm_perf_count.num_of_compilations);
-    }
-#endif
-    tty->print("(bci=%d) Compiling ", 
-               closure()->active_bci());
-    method()->print_name_on(tty);
-    tty->cr();
-  }
-#endif
-
-  begin_compile( JVM_SINGLE_ARG_NO_CHECK );
-  if( CURRENT_HAS_PENDING_EXCEPTION ) {
-    handle_out_of_memory();
-  } else {
-    process_compilation_queue( JVM_SINGLE_ARG_NO_CHECK );
-  }
-
-  UsingFastOops fast_oops;
-  CompiledMethod::Fast result = current_compiled_method();
+  CompiledMethod::Raw result = current_compiled_method();
   switch( _failure ) {
     default:
       // Zap the unused contents in order not to confuse ObjectHeap::verify()
@@ -407,28 +342,113 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
     case none:
       break;
   }
-
-  if (PrintCompilationAtExit) {
-    append_compilation_history();
-  }
   return result;
 }
+
+inline void Compiler::begin( void ) {
+  EventLogger::start(EventLogger::COMPILE);
+}
+
+inline void Compiler::end( OopDesc* result ) {
+  if( _failure != out_of_time ) {
+    terminate( result );
+  }
+
+  EventLogger::end(EventLogger::COMPILE);
+}
+
 
 inline ReturnOop Compiler::try_to_compile(Method* method,
   const int active_bci, const int compiled_code_factor JVM_TRAPS)
 {
-  OopDesc* result;
+#ifndef PRODUCT
+  if( TraceCompiledMethodCache ) {
+    tty->print( "\n*** Compiler::allocate_and_compile( " );
+    method->print_name_on( tty );
+    tty->print_cr( ") beg ***" );
+  }
+#endif
+
+  const jint code_size = method->code_size();
+  const jint compiled_size =
+    align_allocation_size( code_size * compiled_code_factor + 1024 );
+
   {
-    Compiler compiler( method, active_bci );
-    compiler.init_performance_counters(false);
-    result = compiler.allocate_and_compile(compiled_code_factor JVM_NO_CHECK);
-    compiler.update_performance_counters(false, result);
-    Thread::clear_current_pending_exception();
+    // We need about 75 bytes of compiler data buffer per byte of Java
+    // bytecode for small methods (less than ~1000 bytes). The factor
+    // for larger methods is typically smaller because we can re-use
+    // CompilationQueueElements.
+    const size_t temp_factor = 75;
+    size_t temp_data_size = temp_factor * code_size;
+#ifdef PRODUCT
+    temp_data_size += sizeof *_compiler_state;
+#endif      
+    const size_t max_temp_data = HeapCapacity * CompilerAreaPercentage/100/4;
+    if( temp_data_size > max_temp_data ) {
+      // Don't use more than a quarter of the compiler area to compile any
+      // method. This means very big methods would fail to compile and
+      // would be marked as impossible to compile.
+      temp_data_size = max_temp_data;
+    }
+    const int needed = compiled_size + temp_data_size;
+
+    // IMPL_NOTE: make sure that we don't thrash with compiler_area_collect if
+    // we're interpreting a large method but we can't collect enough space
+    // at every timer tick.
+    if( ObjectHeap::compiler_area_soft_collect(needed) < needed ) {
+      // We don't have enough space (yet) to compile this method. We'll try to
+      // compile it later.
+      return NULL;
+    }
   }
 
-  if( _failure != out_of_time ) {
-    terminate( result );
+  if( CompiledMethodCache::alloc() == CompiledMethodCache::UndefIndex ) {
+    if( TraceCompiledMethodCache ) {
+      TTY_TRACE_CR(("out of cache indices"));
+    };
+    return NULL;
   }
+
+  if( TraceCompiledMethodCache ) {
+    TTY_TRACE_CR(( "allocation size: %d, CompiledCodeFactor: %d",
+        compiled_size, compiled_code_factor ));
+  };
+
+  // Allocate static compiler state & compiled method
+  CompilerState* state = CompilerState::allocate(compiled_size JVM_NO_CHECK);
+  if( state == NULL ) {
+    if( TraceCompiledMethodCache ) {
+      TTY_TRACE_CR(( "Compilation FAILED - out of memory" ));
+    }
+    return NULL;
+  }
+  state->set_root_method( method );
+
+#if USE_COMPILER_COMMENTS
+  if (PrintCompilation || PrintCompiledCode || PrintCompiledCodeAsYouGo) {
+#if ENABLE_PERFORMANCE_COUNTERS
+    if (VerbosePointers) {
+      tty->print("#%d: ", jvm_perf_count.num_of_compilations);
+    }
+#endif
+    tty->print("(bci=%d) Compiling ", active_bci);
+    method->print_name_on(tty);
+    tty->cr();
+  }
+#endif
+
+  Compiler compiler( method, active_bci );
+  compiler.init_performance_counters(false);
+  compiler.set_bci(0);
+  compiler.begin_compile( JVM_SINGLE_ARG_NO_CHECK );
+  if( CURRENT_HAS_PENDING_EXCEPTION ) {
+    compiler.handle_out_of_memory();
+  } else {
+    compiler.process_compilation_queue( JVM_SINGLE_ARG_NO_CHECK );
+  }
+
+  OopDesc* result = compiler.compilation_result();
+  compiler.update_performance_counters(false, result);
   return result;
 }
 
@@ -436,7 +456,6 @@ inline ReturnOop Compiler::try_to_compile(Method* method,
  * The chain of command:
  * Compiler::compile()
  *  calls Compiler::try_to_compile()
- *   calls Compiler::allocate_and_compile()
  *    calls - begin_compile()
  *          - process_compilation_queue()
  */
@@ -447,11 +466,9 @@ ReturnOop Compiler::compile(Method* method, int active_bci JVM_TRAPS) {
   }
 
   EnforceCompilerJavaStackDirection enfore_java_stack_direction;
-
-  EventLogger::start(EventLogger::COMPILE);
-
   ObjectHeap::save_compiler_area_top();
 
+  begin();
   // We need a bigger compiled code factor if any of these are set.
   // The following values are justs guesses.  They may need to be fixed.
   int compiled_code_factor = CompiledCodeFactor * (1 + 10 * (
@@ -462,11 +479,11 @@ ReturnOop Compiler::compile(Method* method, int active_bci JVM_TRAPS) {
     compiled_code_factor <<= 1;
   }
 
-  CompiledMethod::Raw result =
-    try_to_compile( method, active_bci, compiled_code_factor JVM_MUST_SUCCEED);
+  OopDesc* result =
+    try_to_compile( method, active_bci, compiled_code_factor JVM_NO_CHECK);
+  end( result );
 
-  EventLogger::end(EventLogger::COMPILE);
-  return result();
+  return result;
 }
 
 inline void Compiler::setup_for_compile( const Method::Attributes& attributes
@@ -794,8 +811,6 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
 Failure:
   if( _failure == out_of_memory ) {
     handle_out_of_memory();
-
-    method()->set_double_size();
   }
 }
 
@@ -834,28 +849,6 @@ void Compiler::internal_compile_inlined( Method::Attributes& attributes
   Compiler::set_frame( parent_frame() );
 }
 #endif  
-
-inline bool Compiler::reserve_compiler_area(size_t compiled_method_size) {
-  // We need about 75 bytes of compiler data buffer per byte of Java
-  // bytecode for small methods (less than ~1000 bytes). The factor
-  // for larger methods is typically smaller because we can re-use
-  // CompilationQueueElements.
-  const size_t factor = 75;
-  size_t temp_data_size = factor * method()->code_size();
-  size_t max_temp_data = HeapCapacity * CompilerAreaPercentage / 100 / 4;
-  if (temp_data_size > max_temp_data) {
-    // Don't use more than a quarter of the compiler area to compile any
-    // method. This means very big methods would fail to compile and
-    // would be marked as impossible to compile.
-    temp_data_size = max_temp_data;
-  }
-  const int needed = compiled_method_size + temp_data_size;
-
-  // IMPL_NOTE: make sure that we don't thrash with compiler_area_collect if
-  // we're interpreting a large method but we can't collect enough space
-  // at every timer tick.
-  return ObjectHeap::compiler_area_soft_collect(needed) >= needed;
-}
 
 #if !ENABLE_INTERNAL_CODE_OPTIMIZER      
 inline void Compiler::optimize_code( JVM_SINGLE_ARG_TRAPS ) {
@@ -918,7 +911,7 @@ void Compiler::abort_active_compilation(bool is_permanent JVM_TRAPS) {
 
 // Resume a compilation that has been suspended.
 ReturnOop Compiler::resume_compilation(Method *method JVM_TRAPS) {
-  EventLogger::start(EventLogger::COMPILE);
+  begin();
 
   OopDesc* result;
 
@@ -929,20 +922,15 @@ ReturnOop Compiler::resume_compilation(Method *method JVM_TRAPS) {
     // Put the handles in a separate scope, so when we call
     // ObjectHeap::update_compiler_area_top() we have no more handles pointing
     // into unused space in compiler_area.
-    Compiler compiler(method, 0);
-    compiler.init_performance_counters(true);
+    Compiler compiler(method);
     compiler.resume();
+    compiler.init_performance_counters(true);
     compiler.process_compilation_queue( JVM_SINGLE_ARG_NO_CHECK );
-    Thread::clear_current_pending_exception();
-    result = _failure == none ? current_compiled_method()->obj() : NULL;
+    result = compiler.compilation_result();
     compiler.update_performance_counters(true, result);
   }
 
-  if( _failure != out_of_time ) {
-    terminate( result );
-  }
-  EventLogger::end(EventLogger::COMPILE);
-
+  end( result );
   return result;
 }
 

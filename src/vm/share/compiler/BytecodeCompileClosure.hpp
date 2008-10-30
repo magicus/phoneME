@@ -28,11 +28,12 @@
 
 class BytecodeCompileClosure: public BytecodeClosure {
  private:
-  int       _active_bci;
-  jubyte    _has_exception_handlers;
-  bool      _has_clinit;   // if this or any super has clinit 
+  CompilerState*  _state;
+  int             _active_bci;
+  jubyte          _has_exception_handlers;
+  bool            _has_clinit;   // if this or any super has clinit 
 #if ENABLE_CODE_PATCHING
-  static int _jump_from_bci;
+  static int      _jump_from_bci;
 #endif
 
  public:
@@ -43,6 +44,16 @@ class BytecodeCompileClosure: public BytecodeClosure {
   void initialize(Method* method, int active_bci) {
     initialize( method );
     set_active_bci( active_bci );
+  }
+
+  CompilerState* state( void ) const {
+    return _state;
+  }
+  CodeGenerator* code_generator( void ) const {
+    return (CodeGenerator*)state();
+  }
+  void set_state( CompilerState* state ) {
+    _state = state;
   }
 
 #if ENABLE_CODE_PATCHING
@@ -237,8 +248,8 @@ class BytecodeCompileClosure: public BytecodeClosure {
   inline VirtualStackFrame* frame     ( void ) const;
 
   // Accessors for the code generator used to do the compilation.
-  static CodeGenerator* code_generator( void ) {
-    return (CodeGenerator*) _compiler_state;
+  Compiler* compiler( void ) {
+    return (Compiler*) this;
   }
   const Compiler* compiler( void ) const {
     return (const Compiler*) this;
