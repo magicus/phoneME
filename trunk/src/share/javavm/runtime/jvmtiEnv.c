@@ -58,6 +58,7 @@
 #include "javavm/include/jvmtiEnv.h"
 #include "javavm/include/jvmtiDumper.h"
 #include "javavm/include/jvmtiCapabilities.h"
+#include "javavm/include/verify.h"
 
 #ifdef CVM_HW
 #include "include/hw.h"
@@ -87,6 +88,11 @@
 #else
 #define CVMextraAssert(x) 
 #endif
+
+/* differences in flags from java class version */
+#define CVM_CLASS_FLAG_DIFFS  (CVM_CLASS_ACC_SUPER |            \
+                               CVM_CLASS_ACC_REFERENCE |        \
+                               CVM_CLASS_ACC_FINALIZABLE)
 
 #define INITIAL_BAG_SIZE 4
 
@@ -974,7 +980,7 @@ jvmti_Allocate(jvmtiEnv* jvmtienv,
 	return JVMTI_ERROR_OUT_OF_MEMORY;
     }
 
-    mem = (unsigned char*)malloc(intSize);
+    mem = (unsigned char*)calloc(intSize, 1);
     if (mem == NULL) {
 	return JVMTI_ERROR_OUT_OF_MEMORY;
     }
@@ -5151,6 +5157,82 @@ fixupCallback(CVMExecEnv* ee,
     }
 }
 
+static jvmtiError
+jvmtiCheckSchemas(CVMClassBlock *oldcb, CVMClassBlock *newcb)
+{
+    CVMClassBlock *newSupercb, *oldSupercb, *oldIcb, *newIcb;
+    CVMMethodBlock *oldmb, *newmb;
+    CVMFieldBlock *oldfb, *newfb;
+    int i;
+
+    /* Check for circularity and that hierarchy is still the same */
+    newSupercb = CVMcbSuperclass(newcb);
+    oldSupercb = CVMcbSuperclass(oldcb);
+    while (newSupercb != NULL) {
+        if (newSupercb == oldcb) {
+            return JVMTI_ERROR_CIRCULAR_CLASS_DEFINITION;
+        }
+        if (newSupercb != oldSupercb) {
+            return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;
+        }
+        newSupercb = CVMcbSuperclass(newSupercb);
+        oldSupercb = CVMcbSuperclass(oldSupercb);
+    }
+    /* count direct superinterfaces */
+    if (CVMcbImplementsCount(oldcb) != CVMcbImplementsCount(newcb)) {
+        return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;
+    }
+    for (i = 0; i < CVMcbImplementsCount(oldcb); i++) {
+        oldIcb = CVMcbInterfacecb(oldcb, i);
+        newIcb = CVMcbInterfacecb(newcb, i);
+        if (oldIcb != newIcb) {
+            return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;
+        }
+    }
+    /* verify number of methods/fields */
+    if (CVMcbMethodCount(oldcb) < CVMcbMethodCount(newcb)) {
+        return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_ADDED;
+    }
+    if (CVMcbMethodCount(oldcb) > CVMcbMethodCount(newcb)) {
+        return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_DELETED;
+    }
+    if (CVMcbFieldCount(oldcb) != CVMcbFieldCount(newcb)) {
+        return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
+    }
+    /* check sig of each method/field */
+    for (i = 0; i < CVMcbMethodCount(oldcb); i++) {
+        CVMUint16 oldFlags, newFlags;
+
+        oldmb = CVMcbMethodSlot(oldcb, i);
+        newmb = CVMcbMethodSlot(newcb, i);
+        if (CVMmbNameAndTypeID(oldmb) != CVMmbNameAndTypeID(newmb)) {
+            return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
+        }
+        oldFlags = CVMmbAccessFlags(oldmb);
+        newFlags = CVMmbAccessFlags(newmb);
+        if (oldFlags != newFlags) {
+            return
+                JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_MODIFIERS_CHANGED;
+        }
+    }
+    for (i = 0; i < CVMcbFieldCount(oldcb); i++) {
+        CVMUint8 oldFlags, newFlags;
+
+        oldfb = CVMcbFieldSlot(oldcb, i);
+        newfb = CVMcbFieldSlot(newcb, i);
+        if (CVMfbNameAndTypeID(oldfb) != CVMfbNameAndTypeID(newfb)) {
+            return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
+        }
+        oldFlags = CVMfbAccessFlags(oldfb);
+        newFlags = CVMfbAccessFlags(newfb);
+        if (oldFlags != newFlags) {
+            return
+                JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
+        }
+    }
+    return JVMTI_ERROR_NONE;
+}
+
 static jvmtiError JNICALL
 jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 		      jint classCount,
@@ -5158,7 +5240,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 {
     CVMExecEnv* ee = CVMgetEE();
     CVMClassBlock *oldcb, *newcb;
-    char *className;
+    char *className = NULL;
     int i, j;
     jclass klass;
     jclass *classes;
@@ -5172,8 +5254,12 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
     jlong threadBits;
     jmethodID loaderRemoveClass;
     cpFixupData cpFixup;
+    class_size_info class_size;
+    jint res;
     jint threadCount;
     jthread *threads;
+    CVMUint16 oldFlags, newFlags;
+
     CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
@@ -5206,6 +5292,8 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
     node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
     CVMassert(node != NULL);
     for (i = 0; i < classCount; i++) {
+        char buf[200];
+
 	klass = classDefinitions[i].klass;
 	if (klass == NULL) {
 	    err = JVMTI_ERROR_INVALID_CLASS;
@@ -5220,14 +5308,41 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	    err = JVMTI_ERROR_NULL_POINTER;
 	    goto cleanup;
 	}
-	/* remove this test if profiling all classes */
+        /* Netbeans will sometimes issue system classes to be redefined
+         * even if the system class filter is in place. We cannot redefine
+         * system classes since they are read-only in romized space
+         */
 	if (CVMcbIsInROM(oldcb)) {
-	    err = JVMTI_ERROR_UNMODIFIABLE_CLASS;
-	    goto cleanup;
+            continue;
 	}
 	node->oldCb = oldcb;
         className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
 	loader = CVMcbClassLoader(oldcb);
+        res = CVMverifyClassFormat(className,
+                                   classDefinitions[i].class_bytes,
+                                   classDefinitions[i].class_byte_count,
+                                   &class_size, buf, sizeof(buf), CVM_TRUE,
+#ifdef CVM_DUAL_STACK
+                                   CVM_FALSE,
+#endif
+                                   CVM_TRUE);
+	if (res == -1) { /* nomem */
+	    err = JVMTI_ERROR_OUT_OF_MEMORY;
+            goto cleanup;
+	}
+	if (res == -2) { /* format error */
+	    err = JVMTI_ERROR_INVALID_CLASS_FORMAT;
+            goto cleanup;
+	}
+	if (res == -3) { /* unsupported class version error */
+            err = JVMTI_ERROR_UNSUPPORTED_VERSION;
+            goto cleanup;
+	}
+	if (res == -4) { /* bad name */
+	    err = JVMTI_ERROR_NAMES_DONT_MATCH;
+            goto cleanup;
+	}
+
 	/*
 	 * loader is 'NULL' since we don't want Class.java to call
 	 * addClass which would create a reference to the javaInstance
@@ -5247,16 +5362,22 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	}
 	/* newKlass is a local ref */
 	classes[i] = newKlass;
+        oldFlags = CVMcbAccessFlags(oldcb);
+        newFlags = CVMcbAccessFlags(CVMjvmtiClassRef2ClassBlock(ee, newKlass));
+        if (((oldFlags & ~(CVM_CLASS_FLAG_DIFFS)) ^
+             (newFlags & ~(CVM_CLASS_FLAG_DIFFS))) != 0) {
+            err = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_MODIFIERS_CHANGED;
+            goto cleanup;
+        }
+        free(className);
+        className = NULL;
     }
-    for (i = 0; i < classCount; i++) {
+    for (i = 0; i < classCount && classes[i] != NULL; i++) {
 	klass = classDefinitions[i].klass;
 	oldcb = CVMjvmtiClassRef2ClassBlock(ee, klass);
 	newKlass = classes[i];
 	newcb = CVMjvmtiClassRef2ClassBlock(ee, newKlass);
 	className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
-	if (strncmp(className, "java/lang", 9) == 0) {
-	    continue;
-	}
         /* verify number of methods/fields */
 	/* Phase 2 - check sig of each method/field */
         if (CVMcbMethodCount(oldcb) < CVMcbMethodCount(newcb)) {
@@ -5302,6 +5423,15 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 		goto cleanup;
 	    }
 	}
+        if ((err = jvmtiCheckSchemas(oldcb, newcb)) != JVMTI_ERROR_NONE) {
+            goto cleanup;
+        }
+	/* clear all breakpoints in this classes methods */
+	JVMTI_LOCK(ee);
+	CVMbagEnumerateOver(CVMglobals.jvmti.statics.breakpoints,
+			    redefineClearBreakpoints, (void *)klass);
+	JVMTI_UNLOCK(ee);
+
 	newClassRoot = CVMID_getGlobalRoot(ee);
 	if (newClassRoot == NULL) {
 	    err = JVMTI_ERROR_OUT_OF_MEMORY;
@@ -5321,23 +5451,32 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 		       threadBits & ~CLASS_PREPARE_BIT);
 	if (!CVMclassLink(ee, newcb, CVM_TRUE)) {
             err = JVMTI_ERROR_INVALID_CLASS;
+            if (CVMlocalExceptionOccurred(ee)) {
+                CVMD_gcUnsafeExec(ee, {
+                    if (CVMobjectGetClass(CVMgetLocalExceptionObj(ee)) ==
+                        CVMsystemClass(java_lang_VerifyError)) {
+                        err = JVMTI_ERROR_FAILS_VERIFICATION;
+                    }
+                });
+                (*env)->ExceptionClear(env);
+            }
 	    CVMjvmtiSetShouldPostAnyThreadEvent(ee, threadBits);
+            CVMID_freeGlobalRoot(ee, newClassRoot);
 	    goto cleanup;
 	}
 	CVMjvmtiSetShouldPostAnyThreadEvent(ee, threadBits);
 	CVMcbJavaInstance(newcb) = NULL;
 	/* done with this global root */
 	CVMID_freeGlobalRoot(ee, newClassRoot);
+        free(className);
+        className = NULL;
     }
-    for (i = 0; i < classCount; i++) {
+    for (i = 0; i < classCount && classes[i] != NULL; i++) {
 	klass = classDefinitions[i].klass;
 	oldcb = CVMjvmtiClassRef2ClassBlock(ee, klass);
 	newKlass = classes[i];
 	newcb = CVMjvmtiClassRef2ClassBlock(ee, newKlass);
 	className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
-	if (strncmp(className, "java/lang", 9) == 0) {
-	    continue;
-	}
 	/* 
 	 * This class's old methods  may have quickened bytecodes with
 	 * resolved entries.  Some stack frames will continue to execute
@@ -5448,8 +5587,13 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	/* Free all the malloc'd memory we don't need */
 	CVMclassFree(ee, newcb, CVM_TRUE);
 #endif
+        free(className);
+        className = NULL;
     }
  cleanup:
+    if (className != NULL) {
+        free(className);
+    }
     if (node != NULL) {
 	node->oldCb = NULL;
 	node->redefineCb = NULL;
