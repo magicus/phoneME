@@ -259,7 +259,7 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
         break;
     default:
         REPORT_ERROR(LC_CORE, "javanotify_start_tck() [slave mode] Can not recognize TCK domain\n");
-        REPORT_ERROR(LC_CORE, "TCK domain type is %d. System will now exit\n", domain_type);
+        REPORT_ERROR1(LC_CORE, "TCK domain type is %d. System will now exit\n", domain_type);
         return;
     }
     argc++;
