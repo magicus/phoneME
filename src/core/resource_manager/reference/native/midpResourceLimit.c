@@ -410,7 +410,7 @@ int midpDecResourceCount(RscType type, int delta) {
         return 1; /* succeeded */
     }
 
-    REPORT_INFO3(LC_CORE, "RESOURCES [%d] midpDecResourceCount FAILED" \
+    REPORT_INFO2(LC_CORE, "RESOURCES [%d] midpDecResourceCount FAILED" \
                  "  used=unknown  global=%d\n",
                  isolateId,
                  gResourcesAvailable[type]);
