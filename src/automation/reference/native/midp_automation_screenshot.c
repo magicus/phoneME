@@ -41,10 +41,10 @@
 #include <commonKNIMacros.h>
 
 /** Taken screenshot width */
-static int gsScreenshotWidth;
+static int gsScreenshotWidth = 0;
 
 /** Taken screenshot height */
-static int gsScreenshotHeight;
+static int gsScreenshotHeight = 0;
 
 /** Taken screenshot pixels data */
 static gxj_pixel_type* gsScreenshotData = NULL;
