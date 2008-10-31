@@ -88,21 +88,6 @@ public interface PlayerListener {
      */
     String STOPPED = "stopped";
 
-
-    /**
-     * Posted when a <code>Player</code> is stopped as responding to
-     * the <code>setStopTime</code> call using the 
-     * <code>StopTimeControl</code>.
-     * When this event is received, the <code>eventData</code> parameter
-     * will be a <code>Long</code> object designating the media 
-     * time when the <code>Player</code> is stopped.
-     * <p>
-     * Value <code>stoppedAtTime</code> is assigned to 
-     * <code>STOPPED_AT_TIME</code>.
-     */
-    String STOPPED_AT_TIME = "stoppedAtTime";
-
-
     /**
      * Posted when a <code>Player</code> has reached the
      * end of the media.
@@ -191,21 +176,6 @@ public interface PlayerListener {
 
 
     /**
-     * Posted when the size of the video is changed either because
-     * the source video size or the display size is changed.  
-     * When this event is received, the <code>eventData</code> parameter
-     * will be a <a href="control/VideoControl.html">
-     * <code>VideoControl</code></a>
-     * object.  The new sizes
-     * can be queried from the <code>VideoControl</code>.
-     * <p>
-     * Value <code>sizeChanged</code> is assigned to 
-     * <code>SIZE_CHANGED</code>.
-     */
-    String SIZE_CHANGED = "sizeChanged";
-
-
-    /**
      * Posted when an error had occurred.
      * When this event is received, the <code>eventData</code> parameter
      * will be a <code>String</code> object specifying the error message.
@@ -222,71 +192,6 @@ public interface PlayerListener {
      * Value <code>closed</code> is assigned to <code>CLOSED</code>.
      */
     String CLOSED = "closed";
-
-
-    /**
-     * Posted when recording is started.
-     * <p>
-     * When this event is received, the <code>eventData</code> parameter
-     * will be a <code>Long</code> object designating the media
-     * time when the recording is started.
-     * <p>
-     * Value <code>recordStarted</code> is assigned to 
-     * <code>RECORD_STARTED</code>.
-     */
-    String RECORD_STARTED = "recordStarted";
-
-    /**
-     * Posted when recording is stopped.
-     * <p>
-     * When this event is received, the <code>eventData</code> parameter
-     * will be a <code>Long</code> object designating the media 
-     * time when the recording stopped.
-     * <p>
-     * Value <code>recordStopped</code> is assigned to 
-     * <code>RECORD_STOPPED</code>.
-     */
-    String RECORD_STOPPED = "recordStopped";
-
-    /**
-     * Posted when an error occurs during the recording.
-     * The current recording will be discarded.  The 
-     * application may set a new record location or
-     * stream to start recording again.
-     * When this event is received, the <code>eventData</code> parameter
-     * will be a <code>String</code> object specifying the error message.
-     * <p>
-     * Value <code>recordError</code> is assigned to
-     * <code>RECORD_ERROR</code>.
-     */
-    String RECORD_ERROR = "recordError";
-
-    /**
-     * Posted when the <code>Player</code> enters into a buffering mode.
-     * Applications may require this event to handle other tasks.
-     * <p>
-     * When this event is received, the <code>eventData</code> parameter
-     * will be a <code>Long</code> object designating the media
-     * time when the buffering is started.
-     * <p>
-     * Value <code>bufferingStarted</code> is assigned to 
-     * <code>BUFFERING_STARTED</code>.
-     */
-    String BUFFERING_STARTED = "bufferingStarted";
-
-    /**
-     * Posted when the <code>Player</code> leaves the buffering mode.
-     * Applications may require this event to handle other tasks.
-     * <p>
-     * When this event is received, the <code>eventData</code> parameter
-     * will be a <code>Long</code> object designating the media 
-     * time when the buffering stopped.
-     * <p>
-     * Value <code>bufferingStopped</code> is assigned to 
-     * <code>BUFFERING_STOPPED</code>.
-     */
-    String BUFFERING_STOPPED = "bufferingStopped";
-
 
     /**
      * This method is called to deliver an event to a registered
