@@ -32,9 +32,9 @@ import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 import com.sun.midp.rms.RecordStoreImpl;
-import com.sun.midp.rms.RecordStoreFile;
 import com.sun.midp.rms.RecordStoreEventConsumer;
 import com.sun.midp.rms.RecordStoreEventListener;
+import com.sun.midp.rms.RecordStoreRegistry;
 
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.SecurityToken;
@@ -120,6 +120,11 @@ import com.sun.midp.log.LogChannels;
 
 public class RecordStore {
 
+    /** Record store change types */
+    final static int CHANGED = 1;
+    final static int ADDED = 2;
+    final static int DELETED = 3;    
+
     /** cache of open RecordStore instances */
     private static java.util.Vector openRecordStores = new java.util.Vector(3);
 
@@ -157,10 +162,10 @@ public class RecordStore {
     private static RecordStoreEventConsumer recordStoreEventConsumer =
         new RecordStoreEventConsumer() {
             public void handleRecordStoreChange(
-                    String keyBase, String recordStoreName,
+                    int suiteId, String recordStoreName,
                     int changeType, int recordId) {
                 RecordStore.handleRecordStoreChange(
-                    keyBase, recordStoreName, changeType, recordId);
+                    suiteId, recordStoreName, changeType, recordId);
             }
         };
 
@@ -230,6 +235,7 @@ public class RecordStore {
             // this record store is not currently open
             RecordStoreImpl.deleteRecordStore(
                 classSecurityToken, id, recordStoreName);
+
         }
     }
 
@@ -532,19 +538,20 @@ public class RecordStore {
      *          store-related exception occurred
      */
     public void closeRecordStore()
-	throws RecordStoreNotOpenException, RecordStoreException {
+        throws RecordStoreNotOpenException, RecordStoreException {
 
-	checkOpen();
-	synchronized (openRecordStores) {
+        checkOpen();
+        synchronized (openRecordStores) {
 
-	    if (--opencount <= 0) {  // free stuff - final close
-		openRecordStores.removeElement(this);
-		peer.closeRecordStore();
+            if (--opencount <= 0) {  // free stuff - final close
+                stopRecordStoreListening();
+                openRecordStores.removeElement(this);
+                peer.closeRecordStore();
 
-		// mark this RecordStore as closed
-		peer = null;
-	    }
-	}
+                // mark this RecordStore as closed
+                peer = null;
+            }
+        }
     }
 
     /**
@@ -678,6 +685,23 @@ public class RecordStore {
         return peer.getLastModified();
     }
 
+
+    /** Starts listening for record store changes in other execution contexts */
+    private void startRecordStoreListening() {
+        int currentId = MIDletStateHandler.getMidletStateHandler().
+            getMIDletSuite().getID();
+        RecordStoreRegistry.startRecordStoreListening(
+            classSecurityToken, currentId, recordStoreName);
+    }
+
+    /** Stops listening for record store changes in other execution contexts */
+    private void stopRecordStoreListening() {
+        int currentId = MIDletStateHandler.getMidletStateHandler().
+            getMIDletSuite().getID();
+        RecordStoreRegistry.stopRecordStoreListening(
+            classSecurityToken, currentId, recordStoreName);
+    }
+
     /**
      * Adds the specified RecordListener. If the specified listener
      * is already registered, it will not be added a second time.
@@ -688,6 +712,9 @@ public class RecordStore {
      */
     public void addRecordListener(RecordListener listener) {
         synchronized (recordListener) {
+            if (recordListener.isEmpty()) {
+                startRecordStoreListening();
+            }
             if (!recordListener.contains(listener)) {
                 recordListener.addElement(listener);
             }
@@ -704,6 +731,10 @@ public class RecordStore {
     public void removeRecordListener(RecordListener listener) {
         synchronized (recordListener) {
 	        recordListener.removeElement(listener);
+            if (recordListener.isEmpty()) {
+                stopRecordStoreListening();
+            }
+
         }
     }
 
@@ -732,6 +763,26 @@ public class RecordStore {
         checkOpen();
         return peer.getNextRecordID();
     }
+
+    /**
+     * Notifyies all record store listeners of record store change.
+     *
+     * Local listeners, i.e. the ones within theexecution context of record 
+     * store changer, are notified synchronously. Other possible listeners
+     * within other execution contexts are notified asynchronously over system
+     * event sending.
+     *
+     * @param changeType
+     * @param recordId
+     */
+    private void notifyAllRecordListeners(int changeType, int recordId) {
+
+        notifyRecordListeners(changeType, recordId);
+        RecordStoreRegistry.notifyRecordStoreChange(
+            classSecurityToken, suiteId, recordStoreName,
+            changeType, recordId);
+    }
+
 
     /**
      * Adds a new record to the record store. The recordId for this
@@ -788,14 +839,8 @@ public class RecordStore {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                 "recordId = " + recordId);
         }
-
-
-        // Synchronously notify local registered listeners and
-        // send notification event to external registered listeners
-        notifyRecordListeners(RecordStoreFile.ADDED, recordId);
-        RecordStoreFile.notifyChanged(suiteId, recordStoreName,
-            RecordStoreFile.ADDED, recordId);
-
+        
+        notifyAllRecordListeners(ADDED, recordId);
         return recordId;
     }
 
@@ -824,12 +869,7 @@ public class RecordStore {
         checkOpen();
         checkWritable();
         peer.deleteRecord(recordId);
-
-        // Synchronously notify local registered listeners and
-        // send notification event to external registered listeners
-        notifyRecordListeners(RecordStoreFile.DELETED, recordId);
-        RecordStoreFile.notifyChanged(suiteId, recordStoreName,
-            RecordStoreFile.DELETED, recordId);
+        notifyAllRecordListeners(DELETED, recordId);
     }
 
     /**
@@ -955,12 +995,7 @@ public class RecordStore {
         checkWritable();
 
         peer.setRecord(recordId, newData, offset, numBytes);
-
-        // Synchronously notify local registered listeners and
-        // send notification event to external registered listeners
-        notifyRecordListeners(RecordStoreFile.CHANGED, recordId);
-        RecordStoreFile.notifyChanged(suiteId, recordStoreName,
-            RecordStoreFile.CHANGED, recordId);
+        notifyAllRecordListeners(CHANGED, recordId);
     }
 
     /**
@@ -1103,6 +1138,9 @@ public class RecordStore {
 
     /**
      * Notifies registered record store listeners of the record store change
+     * Only listeners within caller's execution context are notified,
+     * possible listeners in other VM tasks are not involved.
+     *
      * @param changeType type of the change
      * @param recordId changed record ID
      */
@@ -1118,13 +1156,13 @@ public class RecordStore {
             for (int i = 0; i < nListeners; i++) {
                 RecordListener rl = (RecordListener)recordListener.elementAt(i);
                 switch (changeType) {
-                    case RecordStoreFile.ADDED:
+                    case ADDED:
                         rl.recordAdded(RecordStore.this, recordId);
                         break;
-                    case RecordStoreFile.DELETED:
+                    case DELETED:
                         rl.recordDeleted(RecordStore.this, recordId);
                         break;
-                    case RecordStoreFile.CHANGED:
+                    case CHANGED:
                         rl.recordChanged(RecordStore.this, recordId);
                         break;
                 }
@@ -1133,12 +1171,12 @@ public class RecordStore {
     }
 
     private static void handleRecordStoreChange(
-            String keyBase, String recordStoreName, int changeType, int recordId) {
+            int suiteId, String recordStoreName, int changeType, int recordId) {
         synchronized (openRecordStores) {
             if (true || Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                     "RecordStore.handleRecordStoreChange(): " +
-                        "keyBase = " + keyBase + ", "  +
+                        "suiteId = " + suiteId + ", "  +
                         "storeName = " + recordStoreName + ", " +
                         "changeType = " + changeType + ", " +
                         "recordId = " + recordId);
@@ -1147,11 +1185,8 @@ public class RecordStore {
             System.out.println("Number of open record stores: " + size);
             for (int n = 0; n < size; n++) {
                 RecordStore recordStore = (RecordStore)openRecordStores.elementAt(n);
-                String base = recordStore.peer.getSecureKeyBase();
-                String name = recordStore.recordStoreName;
-                System.out.println("Check record store: base = " +
-                    base + ", name = " + name);
-                if (keyBase.equals(base) && recordStoreName.equals(name)) {
+                if (suiteId == recordStore.suiteId &&
+                        recordStoreName.equals(recordStore.recordStoreName)) {
                     recordStore.notifyRecordListeners(changeType, recordId);
                     break;
                 }

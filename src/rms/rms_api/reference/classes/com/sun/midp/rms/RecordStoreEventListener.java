@@ -27,20 +27,20 @@ public class RecordStoreEventListener implements EventListener {
             RecordStoreEventConsumer consumer = recordStoreEventConsumer;
             NativeEvent nativeEvent = (NativeEvent) event;
             if (event.getType() == EventTypes.RECORD_STORE_CHANGE_EVENT) {
-                int changeType = nativeEvent.intParam1;
-                int recordId = nativeEvent.intParam2;
-                String keyBase = nativeEvent.stringParam1;
-                String recordStoreName = nativeEvent.stringParam2;
+                int suiteId = nativeEvent.intParam1;
+                int changeType = nativeEvent.intParam2;
+                int recordId = nativeEvent.intParam3;
+                String recordStoreName = nativeEvent.stringParam1;
                 if (true || Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                         "RecordStoreEventListener.process(): " +
-                            "keyBase = " + keyBase + ", "  +
+                            "suiteId = " + suiteId + ", "  +
                             "storeName = " + recordStoreName + ", " +
                             "changeType = " + changeType + ", " +
                             "recordId = " + recordId);
                 }
                 consumer.handleRecordStoreChange(
-                    keyBase, recordStoreName, changeType, recordId);
+                    suiteId, recordStoreName, changeType, recordId);
             }
         }
     }

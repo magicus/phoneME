@@ -76,7 +76,7 @@ public class RmsEnvironment {
     }
 
     /* Called by com.sun.midp.rms.RecordStoreFile. */
-    static String getSecureKeyBase(int suiteId) {
+    static String getSecureFilenameBase(int suiteId) {
         return suiteContainer.getSecureFilenameBase(suiteId);
     }
     

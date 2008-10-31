@@ -474,35 +474,3 @@ KNIDECL(com_sun_midp_rms_RecordStoreFile_finalize) {
 
     KNI_ReturnVoid();
 }
-
-/**
- * Sends notification event about changing of record store
- * The processing of this event should cause invocation of all
- * registered listeners of the record store, listeners can be
- * registered in a different execution contexts and should be
- * invoked within their contexts accordingly.
- *
- * @param filenameBase suite dependent filename base
- * @param rmsName name of the record store that changed
- * @param changeType type of record change (added, deleted, changed)
- * @param recordId ID of the changed record
- */
-KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_rms_RecordStoreFile_notifyChanged0) {
-
-    int changeType = KNI_GetParameterAsInt(3);
-    int recordId = KNI_GetParameterAsInt(4);
-
-    KNI_StartHandles(2);
-    GET_PARAMETER_AS_PCSL_STRING(1, filenameBase)
-    GET_PARAMETER_AS_PCSL_STRING(2, rmsName) {
-
-        rmsdb_notify_record_store_changed(
-            &filenameBase, &rmsName, changeType, recordId);
-    }
-    RELEASE_PCSL_STRING_PARAMETER;
-    RELEASE_PCSL_STRING_PARAMETER;
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
