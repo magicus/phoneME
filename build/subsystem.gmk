@@ -28,6 +28,8 @@
 #
 ######################################################################
 
+ABSTRACTIONS_SRC_DIR=$(ABSTRACTIONS_DIR)/src/cldc_application/classes
+
 include $(JSR_172_DIR)/build/subsystem_defs.gmk
 include $(JSR_172_DIR)/build/subsystem_rules.gmk
 
