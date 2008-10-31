@@ -40,10 +40,12 @@ vpath % $(RECORD_STORE_DIR)/file_based/native
 
 SUBSYSTEM_RMS_EXTRA_INCLUDES += -I$(RECORD_STORE_DIR)/file_based/native
 
+EXTRA_CFLAGS += -DENABLE_RECORDSTORE_FILE_LOCK=1
 
 # Native files for the ( recored_store/file_based) library
 #
 SUBSYSTEM_RMS_NATIVE_FILES += \
     rms.c \
+    rms_file_lock.c \
     midp_file_cache.c
 
