@@ -312,7 +312,7 @@ void ROMOptimizer::read_hardcoded_config(JVM_SINGLE_ARG_TRAPS) {
 }
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-int ROMOptimizer::find_profile(char * name) {  
+int ROMOptimizer::find_profile(const char name[] ) {  
   const int vector_size = profiles_vector()->size();
   for (int p = 0; p < vector_size; p++) {
     ROMProfile::Raw rom_profile = profiles_vector()->element_at(p);
