@@ -180,6 +180,16 @@ include $(SUBSYSTEM_CORE_DIR)/services/$(LIB_MAKE_FILE)
 endif
 endif
 
+#####################################################################
+# Inter-Isolate mutex library
+# Description: Provides simple Isolates synchronization
+#####################################################################
+
+ifneq ($(TARGET_VM), cdc_vm)
+include $(SUBSYSTEM_CORE_DIR)/interisolate_mutex/$(LIB_MAKE_FILE)
+endif
+
+
 ####################################################################
 
 SUBSYSTEM_CORE_JAVA_FILES += \
@@ -199,7 +209,8 @@ SUBSYSTEM_CORE_JAVA_FILES += \
     $(SUBSYSTEM_MEMORY_JAVA_FILES) \
     $(SUBSYSTEM_STORAGE_JAVA_FILES) \
     $(SUBSYSTEM_STRING_JAVA_FILES) \
-    $(SUBSYSTEM_SERVICES_JAVA_FILES)
+    $(SUBSYSTEM_SERVICES_JAVA_FILES) \
+    $(SUBSYSTEM_INTERISOLATE_MUTEX_JAVA_FILES)
 
 SUBSYSTEM_CORE_I3TEST_JAVA_FILES += \
     $(SUBSYSTEM_CRC32_I3TEST_JAVA_FILES) \
@@ -236,7 +247,8 @@ SUBSYSTEM_CORE_NATIVE_FILES += \
     $(SUBSYSTEM_VMSERVICES_NATIVE_FILES) \
     $(SUBSYSTEM_MEMORY_NATIVE_FILES) \
     $(SUBSYSTEM_STORAGE_NATIVE_FILES) \
-    $(SUBSYSTEM_STRING_NATIVE_FILES)
+    $(SUBSYSTEM_STRING_NATIVE_FILES) \
+    $(SUBSYSTEM_INTERISOLATE_MUTEX_NATIVE_FILES)
 
 SUBSYSTEM_CORE_EXTRA_INCLUDES += \
     $(SUBSYSTEM_CRC32_EXTRA_INCLUDES) \
