@@ -337,7 +337,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         }
         javacall_free(event->data.jsr290FluidEvent.text);
         break;
-    case JSR290_JC_EVENT_REQUEST_RESOURCE:
+    case JSR290_JC_EVENT_FLUID_REQUEST_RESOURCE:
         pNewSignal->waitingFor   = JSR290_IMAGE_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
         pNewMidpEvent->type      = FLUID_IMAGE_EVENT;
@@ -356,7 +356,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         }
         javacall_free(event->data.jsr290FluidEvent.text);
         break;
-    case JSR290_JC_EVENT_CANCEL_REQUEST:
+    case JSR290_JC_EVENT_FLUID_CANCEL_REQUEST:
         pNewSignal->waitingFor   = JSR290_IMAGE_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
         pNewMidpEvent->type      = FLUID_IMAGE_EVENT;
