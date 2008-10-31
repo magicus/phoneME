@@ -1080,7 +1080,7 @@ LABEL(_syncReturnMicrolockMPSafe)
 	ldrex	TEMP2, [MICROLOCK]
 	cmp	TEMP2, #CVM_MICROLOCK_UNLOCKED /* is the lock free? */
 	bne	_fastUnlockAcquireMicrolock    /* already locked */
-	strex	TEMP2, TEMP, [MICROLOCK]       /* acquire the lock */
+	strex	TEMP2, r3, [MICROLOCK]       /* acquire the lock */
 	cmp	TEMP2, #0                      /* strex succeed? */
 	bne	_syncReturnMicrolockMPSafe     /* No. Try again */
 	mcr	p15, 0, TEMP2, c7, c10, 5      /* memory barrier */
