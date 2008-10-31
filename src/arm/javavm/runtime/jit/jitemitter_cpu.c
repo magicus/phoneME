@@ -2745,7 +2745,6 @@ CVMCPUemitAtomicSwap(CVMJITCompilationContext* con,
  
     /* top of retry loop in case ldrex/strex operation is interrupted. */
     CVMtraceJITCodegen(("\t\tretry:\n"));
-    retryLogicalPC = CVMJITcbufGetLogicalPC(con);
 
     scratchRes1 = CVMRMgetResource(CVMRM_INT_REGS(con),
                                    CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
@@ -2753,6 +2752,8 @@ CVMCPUemitAtomicSwap(CVMJITCompilationContext* con,
                                    CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
     scratchReg1 = CVMRMgetRegisterNumber(scratchRes1);
     scratchReg2 = CVMRMgetRegisterNumber(scratchRes2);
+
+    retryLogicalPC = CVMJITcbufGetLogicalPC(con);
 
     /* emit ldrex instruction */
     emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
