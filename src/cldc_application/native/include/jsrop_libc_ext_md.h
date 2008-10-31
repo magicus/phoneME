@@ -25,7 +25,6 @@
 #define __JSROP_LIBC_EXT_MD_H
 
 #include "midp_libc_ext.h"
-#include "kni_globals.h"
 
 #define JAVAME_SNPRINTF midp_snprintf
 

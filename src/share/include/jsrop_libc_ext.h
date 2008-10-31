@@ -25,11 +25,8 @@
 #define __JSROP_LIBC_EXT_H
 
 /** 
- *  The following macroses are defined in the <platform>/native/include/jsrop_memory_md.h file
- *  #define JAVAME_MALLOC(size)
- *  #define JAVAME_FREE(addr)
- *  #define JAVAME_CALLOC(sizex, sizey)
- *  #define JAVAME_REALLOC(addr, size)
+ *  The following macroses are defined in the <platform>/native/include/jsrop_libc_ext_md.h file
+ *  #define JAVAME_SNPRINTF
  */
 #include <jsrop_libc_ext_md.h>
 

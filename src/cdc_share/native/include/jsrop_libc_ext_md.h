@@ -27,7 +27,6 @@
 #include "midp_libc_ext.h"
 
 #define JAVAME_SNPRINTF midp_snprintf
-//#define JAVAME_SNPRINTF _snprintf
 
 #endif /* __JSROP_LIBC_EXT_MD_H */
 
