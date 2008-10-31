@@ -51,13 +51,6 @@ public class ScreenResources {
             return;
         }
 
-        if ((ScreenSkin.WIDTH <= 0) || (ScreenSkin.HEIGHT <= 0)) {
-            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                Logging.report(Logging.WARNING, LogChannels.LC_HIGHUI,
-                        "Screen dimentions not set.");
-            }
-        }
-
         int textOrient = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_TEXT_ORIENT);
         ScreenSkin.TEXT_ORIENT = SkinLoader.resourceConstantsToGraphics(
@@ -104,6 +97,9 @@ public class ScreenResources {
                 SkinPropertiesIDs.SCREEN_IMAGE_WASH);
         ScreenSkin.IMAGE_BG = SkinLoader.getImage(
                 SkinPropertiesIDs.SCREEN_IMAGE_BG);
+
+        ScreenSkin.TOUCH_RADIUS = SkinLoader.getInt(
+                 SkinPropertiesIDs.TOUCH_RADIUS);
 
         /*
         Uncomment if 9 pc screen background images are used

@@ -100,7 +100,7 @@ Java_com_sun_midp_main_NativeDisplayControllerPeer_forwardBackgroundRequest
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     eventData.event  = MIDP_NAMS_EVENT_STATE_CHANGED;
     eventData.appId  = KNI_GetParameterAsInt(1);
-    eventData.state  = MIDP_DISPLAY_STATE_BACKGROUND;
+    eventData.state  = MIDP_DISPLAY_STATE_BACKGROUND_REQUEST;
     eventData.reason = 0;
     
     nams_listeners_notify(DISPLAY_EVENT_LISTENER, &eventData);

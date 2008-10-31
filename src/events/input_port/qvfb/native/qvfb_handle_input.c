@@ -31,13 +31,13 @@
 
 #include <kni.h>
 
-#include <sys/time.h>
+#include <sys/time.h> 
 #include <sys/types.h>
 #include <unistd.h>
-
+#include <stdio.h>
 #include <midpServices.h>
-#include <midpEvents.h>
-#include <midpEventUtil.h>
+#include <midpEvents.h> 
+#include <midpEventUtil.h> 
 #include <fbapp_export.h>
 #include <keymap_input.h>
 
@@ -89,7 +89,6 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
     int midpKeyCode;
     jboolean isPressed;
     jboolean repeatSupport;
-
     struct QVFbKeyEvent {
         unsigned int unicode;
         unsigned int modifiers;
@@ -99,12 +98,14 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
 
     /* IMPL_NOTE: We don't handle repeats, but this seems OK. When you hold */
     /* down a key, QVFB passes a stream of simulated keyups an keydowns */
-
     read(fbapp_get_keyboard_fd(), &qvfbKeyEvent, sizeof(qvfbKeyEvent));
     midpKeyCode = map_raw_keycode(qvfbKeyEvent.unicode);
-    isPressed = qvfbKeyEvent.press ? KNI_TRUE : KNI_FALSE;
-    repeatSupport = KNI_FALSE;
+    /* There is a patch. When a button was released qvfbKeyEvent.press equales*/
+    /* a big number instead of 0. But when a button was pressed this value equals 1.*/
+    isPressed = (qvfbKeyEvent.press > 0) ? KNI_TRUE : KNI_FALSE;
 
+    repeatSupport = KNI_FALSE;
+   
     fbapp_map_keycode_to_event(
         pNewSignal, pNewMidpEvent,
         midpKeyCode, isPressed, repeatSupport);
@@ -127,6 +128,7 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
 void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
     int maxX, maxY, screenX, screenY, d1, d2;
     int n;
+    int id;
     static const int mouseBufSize = 12;
     unsigned char mouseBuf[mouseBufSize];
     int mouseIdx = 0;
@@ -137,10 +139,11 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
         int y;
     } pointer;
 
-    do {
+
+    do {    
         n = read(fbapp_get_mouse_fd(), mouseBuf + mouseIdx, 
                 mouseBufSize - mouseIdx);
-	if ( n > 0 )
+        if ( n > 0 )
 	    mouseIdx += n;
     } while ( n > 0 );
 
@@ -156,11 +159,11 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
         return;
 
     pNewMidpEvent->type = MIDP_PEN_EVENT;
-
-    screenX = fbapp_get_screen_x();
-    screenY = fbapp_get_screen_y();
-    maxX = fbapp_get_screen_width();
-    maxY = fbapp_get_screen_height();
+    id = fbapp_get_current_hardwareId();
+    screenX = fbapp_get_screen_x(id);
+    screenY = fbapp_get_screen_y(id);
+    maxX = fbapp_get_screen_width(id);
+    maxY = fbapp_get_screen_height(id);
 
     d1 = (((int)mouseBuf[3]) << 24) +
         (((int)mouseBuf[2]) << 16) +
@@ -172,7 +175,7 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
         (((int)mouseBuf[5]) << 8) +
         (int)mouseBuf[4];
     
-    if (fbapp_get_reverse_orientation()) {
+    if (fbapp_get_reverse_orientation(id)) {
         pNewMidpEvent->X_POS = min(maxX - d2, maxX) + screenX;
         pNewMidpEvent->Y_POS = min(d1 - screenY, maxY);
     } else {

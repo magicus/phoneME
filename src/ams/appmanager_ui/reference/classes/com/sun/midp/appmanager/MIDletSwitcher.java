@@ -24,13 +24,13 @@
 
 package com.sun.midp.appmanager;
 
-import java.util.*;
 import javax.microedition.lcdui.*;
-import com.sun.midp.midletsuite.*;
+
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.main.Configuration;
+import com.sun.midp.main.MIDletProxy;
 
 /**
  * The Graphical MIDlet swicher.
@@ -48,7 +48,7 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
     /**
      * MIDlet information, class, name, icon; one per MIDlet.
      */
-    private RunningMIDletSuiteInfo[] minfo;
+    private MidletListEntry[] minfo;
     
     /** Number of reserved elements in minfo array. */
     private final int pitch = 4;
@@ -80,7 +80,7 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
         this.managerUI = managerUI;
         this.display = display;
         mcount = 0;
-        minfo = new RunningMIDletSuiteInfo[Configuration.
+        minfo = new MidletListEntry[Configuration.
             getPositiveIntProperty("MAX_ISOLATES", Constants.MAX_ISOLATES)];
 
         setSelectCommand(fgCmd);
@@ -92,11 +92,18 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
      * Append launched suite info to the list.
      *
      * @param msi RunningMIDletSuiteInfo to append
+     * @param className the MIDlet class name
      */
-    synchronized void append(RunningMIDletSuiteInfo msi) {
+    synchronized void append(RunningMIDletSuiteInfo msi, String className) {
         checkInfoArraySize();
-        minfo[mcount++] = msi;
-        append(msi.displayName, msi.icon);
+        minfo[mcount++] = new MidletListEntry(msi, className);
+        final MIDletProxy midletProxy = msi.getProxyFor(className);
+        StringBuffer name = new StringBuffer(msi.displayName);
+        if (midletProxy != null) {
+            name.append('/');
+            name.append(midletProxy.getDisplayName());
+        }
+        append(name.toString(), msi.icon);
     }
 
     /**
@@ -108,25 +115,33 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
      */
     synchronized void update(RunningMIDletSuiteInfo oldMsi,
                              RunningMIDletSuiteInfo newMsi) {
-        for (int i = 0; i < mcount; i++) {
-            if (minfo[i] == oldMsi) {
-                minfo[i] = newMsi;
-                break;
-            }
-        }
+        // IMPL_NOTE: our implementation stores a reference
+        // to the RunningMIDletSuiteInfo object that gets modified elsewhere;
+        // therefore, we do not need to copy any information from newMsi
+        // to oldMsi.
+        // Note also that our implementation implies that the
+        // RunningMIDletSuiteInfo objects are unique, one per midlet suite,
+        // and compares them using ==.
+
+        // IMPL_NOTE: The fields that may be changed are all mentioned in
+        // AppManagerPeer.updateContent().
     }
 
     /**
      * Remove suite info from the list.
      *
      * @param msi RunningMIDletSuiteInfo to remove
+     * @param className the MIDlet class name
      */
-    synchronized void remove(RunningMIDletSuiteInfo msi) {
+    synchronized void remove(RunningMIDletSuiteInfo msi, String className) {
         int pos = -1;
+
         for (int i = 0; i < mcount; i++) {
-            if (minfo[i] == msi) {
+            // IMPL_NOTE: the suiteId check will be removed as soon as we maintain all RunningMIDletSuiteInfo lists
+            if ((minfo[i].suite == msi || minfo[i].suite.suiteId == msi.suiteId)
+             && (minfo[i].className == null || className == null || minfo[i].className.equals(className))) {
                 pos = i;
-                break;
+                break; // IMPL_NOTE: two instances of the same MIDlet cannot be running
             }
         }
         if (pos >= 0) {
@@ -144,17 +159,16 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
      */
     private void checkInfoArraySize() {
         if ((mcount+pitch < minfo.length) || (mcount >= minfo.length)) { 
-            RunningMIDletSuiteInfo[] n =
-                new RunningMIDletSuiteInfo[mcount+pitch];
+            MidletListEntry[] n =
+                new MidletListEntry[mcount+pitch];
             System.arraycopy(minfo, 0, n, 0, mcount);
             minfo = n;
         }
     }
     
     /**
-     * If switcher hase any items.
-     *
-     * equivalent statement - if there is any launched MIDlet
+     * Check if the switcher has any items, that is, if there are any running MIDlet(s).
+     * @return true if MIDlet(s) are running
      */
     synchronized boolean hasItems() {
         return (mcount > 0);
@@ -171,10 +185,19 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
             //bring to foreground appropriate midlet
             int ind = getSelectedIndex();
             if (ind != -1) {
-                manager.moveToForeground(minfo[ind]);
+                manager.moveToForeground(minfo[ind].suite, minfo[ind].className);
             }
             display.setCurrent(managerUI.getMainDisplayable());
         }
     }
 
+    private class MidletListEntry {
+        RunningMIDletSuiteInfo suite;
+        String className;
+
+        public MidletListEntry(RunningMIDletSuiteInfo msi, String midletClassName) {
+            suite = msi;
+            className = midletClassName;
+        }
+    }
 }

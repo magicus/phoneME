@@ -61,6 +61,8 @@ public class LCDUIEnvironment {
         displayContainer = new DisplayContainer(
             internalSecurityToken, isolateId);
 
+        DisplayDeviceContainer displayDeviceContainer = new DisplayDeviceContainer();
+
         /*
          * Because the display handler is implemented in a javax
          * package it cannot created outside of the package, so
@@ -71,11 +73,13 @@ public class LCDUIEnvironment {
 	    displayEventProducer,
             foregroundController,
             repaintEventProducer,
-            displayContainer);
+            displayContainer,
+	    displayDeviceContainer);
 
         DisplayEventListener displayEventListener = new DisplayEventListener(
             eventQueue,
-            displayContainer);
+            displayContainer,
+	    displayDeviceContainer);
 
         /* Bad style of type casting, but DisplayEventHandlerImpl
          * implements both DisplayEventHandler & ItemEventConsumer IFs 

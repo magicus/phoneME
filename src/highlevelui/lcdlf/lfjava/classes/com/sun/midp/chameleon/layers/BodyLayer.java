@@ -317,29 +317,36 @@ public class BodyLayer extends CLayer
      */
     public void update(CLayer[] layers) {
         super.update(layers);
-
+	if (owner == null) {
+	    return;
+	}
         bounds[X] = 0;
-        bounds[W] = ScreenSkin.WIDTH;
-        bounds[H] = ScreenSkin.HEIGHT;
-
-        if (layers[MIDPWindow.PTI_LAYER] != null && layers[MIDPWindow.PTI_LAYER].isVisible()) {
-            bounds[H] -= layers[MIDPWindow.PTI_LAYER].bounds[H];
+	bounds[W] = owner.bounds[W];
+	bounds[H] = owner.bounds[H];
+	CLayer l = layers[MIDPWindow.PTI_LAYER];
+        if (l != null && l.isVisible()) {
+            bounds[H] -= l.bounds[H];
         }
-        if (layers[MIDPWindow.KEYBOARD_LAYER] != null && layers[MIDPWindow.KEYBOARD_LAYER].isVisible()) {
-            bounds[H] -= layers[MIDPWindow.KEYBOARD_LAYER].bounds[H];
+	l = layers[MIDPWindow.KEYBOARD_LAYER];
+        if (l != null && l.isVisible()) {
+            bounds[H] -= l.bounds[H];
         }
-        bounds[Y] = layers[MIDPWindow.TITLE_LAYER].bounds[Y];
-        if (layers[MIDPWindow.TITLE_LAYER].isVisible()) {
-            bounds[Y] += layers[MIDPWindow.TITLE_LAYER].bounds[H];
-            bounds[H] -= layers[MIDPWindow.TITLE_LAYER].bounds[H];
-        }
-        
-        if (layers[MIDPWindow.TICKER_LAYER].isVisible()) {
-            bounds[H] -= layers[MIDPWindow.TICKER_LAYER].bounds[H];
-        }
-        if (layers[MIDPWindow.BTN_LAYER].isVisible()) {
-            bounds[H] -= layers[MIDPWindow.BTN_LAYER].bounds[H];
-        }
+	l = layers[MIDPWindow.TITLE_LAYER];
+	if (l != null) {
+	    bounds[Y] = l.bounds[Y];
+	    if (l.isVisible()) {
+		bounds[Y] += l.bounds[H];
+		bounds[H] -= l.bounds[H];
+	    }	
+	}
+	l = layers[MIDPWindow.TICKER_LAYER];
+        if (l != null && l.isVisible()) {
+	    bounds[H] -= l.bounds[H];
+	}
+	l = layers[MIDPWindow.BTN_LAYER];
+	if (l != null && l.isVisible()) {
+	    bounds[H] -= l.bounds[H];
+	}
 
         if (scrollInd != null) {
             scrollInd.update(layers);

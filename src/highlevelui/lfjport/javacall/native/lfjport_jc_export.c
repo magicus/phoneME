@@ -58,14 +58,15 @@ void lfjport_ui_finalize() {
  * Bridge function to request a repaint 
  * of the area specified.
  *
+ * @param hardwareId unique id of hardware display
  * @param x1 top-left x coordinate of the area to refresh
  * @param y1 top-left y coordinate of the area to refresh
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-void lfjport_refresh(int x1, int y1, int x2, int y2)
+void lfjport_refresh(int hardwareId, int x1, int y1, int x2, int y2)
 {
-    jcapp_refresh (x1, y1, x2, y2);
+    jcapp_refresh (hardwareId, x1, y1, x2, y2);
 }
 
 /**
@@ -91,52 +92,60 @@ int lfjport_set_vertical_scroll(int scrollPosition, int scrollProportion)
 /**
  * Turn on or off the full screen mode
  *
+ * @param hardwareId unique id of hardware display
+ *
  * @param mode true for full screen mode
  *             false for normal
  */
-void lfjport_set_fullscreen_mode(jboolean mode) {
+void lfjport_set_fullscreen_mode(int hardwareId, jboolean mode) {
     REPORT_CALL_TRACE1(LC_HIGHUI, "LF:STUB:lfjport_ui_setFullScreenMode(%1)\n",
                        mode);
 
     /* Suppress unused parameter warnings */
-    jcapp_set_fullscreen_mode(mode);
+    jcapp_set_fullscreen_mode(hardwareId, mode);
     return;
 }
 
 /**
  * Resets native resources when foreground is gained by a new display.
+ * @param hardwareId unique id of hardware display
  */
-void lfjport_gained_foreground() {
+void lfjport_gained_foreground(int hardwareId) {
+  (void)hardwareId;  
     REPORT_CALL_TRACE(LC_HIGHUI, "LF:STUB:gainedForeground()\n");
 }
 
 /**
  * Change screen orientation flag
+ * @param hardwareId unique id of hardware display
  */
-jboolean lfjport_reverse_orientation() {
-    return jcapp_reverse_orientation();
+jboolean lfjport_reverse_orientation(int hardwareId) {
+    return jcapp_reverse_orientation(hardwareId);
 }
 
 /**
  * Bridge function to get screen orientation flag
+ * @param hardwareId unique id of hardware display
  */
-jboolean lfjport_get_reverse_orientation()
+jboolean lfjport_get_reverse_orientation(int hardwareId)
 {
-    return jcapp_get_reverse_orientation();
+    return jcapp_get_reverse_orientation(hardwareId);
 }
 
 /**
  * Return screen width
+ * @param hardwareId unique id of hardware display
  */
-int lfjport_get_screen_width() {
-    return jcapp_get_screen_width();
+int lfjport_get_screen_width(int hardwareId) {
+    return jcapp_get_screen_width(hardwareId);
 }
 
 /**
  *  Return screen height
+ * @param hardwareId unique id of hardware display
  */
-int lfjport_get_screen_height() {
-    return jcapp_get_screen_height();
+int lfjport_get_screen_height(int hardwareId) {
+    return jcapp_get_screen_height(hardwareId);
 }
 
 /**
@@ -149,9 +158,10 @@ int lfjport_get_screen_height() {
  * @param offscreen_buffer The ImageData handle associated with 
  *                         the offscreen buffer to be flushed
  * @param height The height to be flushed
+ * @param hardwareId unique id of hardware display
  * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
  */
-jboolean lfjport_direct_flush(const java_graphics *g, 
+jboolean lfjport_direct_flush(int hardwareId, const java_graphics *g, 
 		  	      const java_imagedata *offscreen_buffer, int h) {
 
     (void)g;
@@ -183,4 +193,70 @@ void lfjport_set_softbutton_label_on_native_layer (unsigned short *label,
                                                  int len, 
                                                  int index) {
     jcapp_set_softbutton_label_on_native_layer(label,len,index);
+}
+
+
+/**
+ * get currently enabled hardware display id
+ */
+int lfjport_get_current_hardwareId() {
+    return  jcapp_get_current_hardwareId();  
+}
+
+/** 
+ * Get display device name by id
+ */
+char* lfjport_get_display_name(int hardwareId) {
+    return jcapp_get_display_name(hardwareId);
+}
+
+
+/**
+ * Check if the display device is primary
+ */
+jboolean lfjport_is_display_primary(int hardwareId) {
+    return jcapp_is_display_primary(hardwareId);
+}
+
+/**
+ * Check if the display device is build-in
+ */
+jboolean lfjport_is_display_buildin(int hardwareId) {
+    return jcapp_is_display_buildin(hardwareId);
+}
+
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean lfjport_is_display_pen_supported(int hardwareId) {
+    return jcapp_is_display_pen_supported(hardwareId);
+}
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean lfjport_is_display_pen_motion_supported(int hardwareId) {
+    return jcapp_is_display_pen_motion_supported(hardwareId);
+}
+
+/**
+ * Get display device capabilities
+ */
+int lfjport_get_display_capabilities(int hardwareId) {
+  return jcapp_get_display_capabilities(hardwareId);
+}
+
+
+/**
+ * Get the list of display device ids
+ */
+jint* lfjport_get_display_device_ids(jint* n) {
+    return jcapp_get_display_device_ids(n);
+}
+
+/**
+ * Notify the display device state has been changed
+ */
+void lfjport_display_device_state_changed(int hardwareId, int state) {
+    jcapp_display_device_state_changed(hardwareId, state);
 }

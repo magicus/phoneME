@@ -29,6 +29,7 @@ package com.sun.midp.midletsuite;
 import com.sun.midp.main.*;
 
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.midlet.MIDletSuite;
 
 /** Simple attribute storage for MIDlet suites */
 public class MIDletSuiteInfo {
@@ -52,6 +53,26 @@ public class MIDletSuiteInfo {
     public boolean preinstalled = false;
     /** Icon's name for this suite. */
     public String iconName = null;
+
+    /**
+     * Copy all information from another such object.
+     * @param that the source object
+     */
+    final public void copyFieldsFrom(MIDletSuiteInfo that) {
+        // IMPL_NOTE: this method is final to prevent inheritance from
+        // RunningMIDletSuiteInfo: this method deals only with
+        // persistent properties.
+        this.suiteId = that.suiteId;
+        this.storageId = that.storageId;
+        this.folderId = that.folderId;
+        this.displayName = that.displayName;
+        this.midletToRun = that.midletToRun;
+        this.numberOfMidlets = that.numberOfMidlets;
+        this.enabled = that.enabled;
+        this.trusted = that.trusted;
+        this.preinstalled = that.preinstalled;
+        this.iconName = that.iconName;
+    }
 
     /**
      * Constructs a MIDletSuiteInfo object for a suite.
@@ -136,5 +157,16 @@ public class MIDletSuiteInfo {
         b.append(", folderId = " + folderId);
         b.append(", midletToRun = " + midletToRun);
         return b.toString();
+    }
+
+    /**
+     * Check if this MIDletSuiteInfo object describes a MIDlet from the
+     * internal suite (rather than from an installed suite).
+     * The internal MIDlets are a special case: there is one MIDletSuiteInfo
+     * per MIDlet, and they share the same suite id.
+     * @return true if the suite id is INTERNAL_SUITE_ID
+     */
+    final public boolean isInternal() {
+        return suiteId == MIDletSuite.INTERNAL_SUITE_ID;
     }
 }

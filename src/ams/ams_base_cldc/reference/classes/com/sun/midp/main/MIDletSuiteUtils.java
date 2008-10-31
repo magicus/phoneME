@@ -28,11 +28,14 @@ package com.sun.midp.main;
 
 import com.sun.j2me.security.AccessController;
 
-import com.sun.midp.lcdui.DisplayEventHandler;
 import com.sun.midp.lcdui.SystemAlert;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.midletsuite.MIDletSuiteLockedException;
+import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
+import com.sun.midp.midletsuite.MIDletInfo;
+import com.sun.midp.midlet.MIDletSuite;
 
 import javax.microedition.lcdui.AlertType;
 
@@ -646,5 +649,183 @@ public class MIDletSuiteUtils {
             throw new RuntimeException(
                 "Display initialization has failed");
         }
+    }
+
+    /**
+     * Returns sequence number of MIDlet.
+     *
+     * @param suite suite the MIDLet belongs to
+     * @param midletClassName class name of the MIDlet to get serial number for
+     *
+     * @return 0 if MIDlet with specified class name is not found,
+     *         the MIDLet's serial number otherwise.
+     *
+     * @see #getMIDletClassName
+     */
+    public static int getMIDletSerialNumber(MIDletSuite suite,
+            String midletClassName) {
+
+        String midlet;
+        MIDletInfo midletInfo;
+
+        for (int i = 1; ; i++) {
+            midlet = suite.getProperty("MIDlet-" + i);
+            if (midlet == null) {
+                return 0; // We went past the last MIDlet
+            }
+
+            /* Check if the names match. */
+            midletInfo = new MIDletInfo(midlet);
+            if (midletInfo.classname.equals(midletClassName)) {
+                return i;
+            }
+        }
+    }
+
+    /**
+     * Returns class name of MIDlet with specified sequence number.
+     *
+     * @param suite suite the MIDLet belongs to
+     * @param midletSerialNum MIDLet's serial number
+     * 
+     * @return the MIDlet's class name or null if there is no MIDlet with the
+     *         specified serial number
+     *
+     * @see #getMIDletSerialNumber
+     */
+    public static String getMIDletClassName(MIDletSuite suite,
+            int midletSerialNum) {
+        if (suite != null) {
+            String midlet = suite.getProperty("MIDlet-" + midletSerialNum);
+            if (midlet != null) {
+                MIDletInfo midletInfo = new MIDletInfo(midlet);
+                return midletInfo.classname;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Seeks and returns suite with the specifed ID.
+     *
+     * @param suiteId suite ID
+     *
+     * @return MIDletSuite which ID equals to the specified ID or null if such
+     *         suite is not found
+     *
+     * @throws SecurityException if caller has no permission to invoke
+     *                           the method (AMS permission is needed)
+     *
+     * @see #getSuiteProperty(com.sun.midp.midlet.MIDletSuite, int, String)
+     */
+    public static MIDletSuite getSuite(int suiteId) throws SecurityException {
+        // Don't open internal or dummy suites
+        if (suiteId == MIDletSuite.INTERNAL_SUITE_ID ||
+                suiteId == MIDletSuite.UNUSED_SUITE_ID) {
+            return null;
+        }
+
+        // Note: getMIDletSuiteStorage performs an AMS permission check
+        MIDletSuiteStorage storage = MIDletSuiteStorage.getMIDletSuiteStorage();
+
+        MIDletSuite suite = null;
+        try {
+            suite = storage.getMIDletSuite(suiteId, false);
+        } catch (MIDletSuiteLockedException e) {
+            // ignore this exception, null is returned by the method in
+            // this case
+        } catch (MIDletSuiteCorruptedException e) {
+            // ignore this exception, null is returned by the method in
+            // this case
+        }
+
+        return suite;
+    }
+
+    /**
+     * Returns property with the specifed name, search is done in the specified
+     * suite.
+     *
+     * @param suite suite instance
+     * @param midletSerialNum sequence number of MIDlet in the suite
+     * @param propName property key
+     *
+     * @return the property value or null if the suite is untrusted or there is
+     *         no such property defined in the suite
+     *
+     * @throws SecurityException if caller has no permission to invoke
+     *                           the method (AMS permission is needed)
+     *
+     * @see #getSuite
+     */
+    public static String getSuiteProperty(MIDletSuite suite,
+            int midletSerialNum, String propName) throws SecurityException {
+
+        if (suite != null) {
+            if (suite.isTrusted()) {
+                if (midletSerialNum > 0) {
+                    return suite.getProperty(propName + "-" + midletSerialNum);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns property with the specified name searhing in the specified
+     * suite.
+     *
+     * @param suiteId ID of installed suite
+     * @param midletClassName class name of MIDlet
+     * @param propName name of property to get value for
+     *
+     * @return the property value or null if the suite is untrusted or there is
+     *         no such property defined in the suite
+     * 
+     * @throws SecurityException if caller has no permission to invoke
+     *                           the method (AMS permission is needed)
+     */
+    public static String getSuiteProperty(int suiteId, String midletClassName,
+            String propName) throws SecurityException {
+
+        String property = null;
+        MIDletSuite suite = getSuite(suiteId);
+        if (suite != null) {
+            int serial = getMIDletSerialNumber(suite, midletClassName);
+            property = getSuiteProperty(suite, serial, propName);
+            suite.close();
+        }
+
+        return property;
+    }
+
+    /**
+     * Returns property with the specified name.
+     *
+     * @param proxy proxy of the MIDlet
+     * @param propName name of property to get value for
+     *
+     * @return the property value or null if the suite is untrusted or there is
+     *         no such property defined in the suite
+     *
+     * @throws SecurityException if caller has no permission to invoke
+     *                           the method (AMS permission is needed)
+     */
+    public static String getSuiteProperty(MIDletProxy proxy, String propName)
+            throws SecurityException {
+
+        String property = null;
+        if (proxy != null) {
+            MIDletSuite suite = getSuite(proxy.getSuiteId());
+            if (suite != null) {
+                int serial = getMIDletSerialNumber(suite, proxy.getClassName());
+                property = getSuiteProperty(suite, serial, propName);
+                suite.close();
+            }
+        }
+
+        return property;
     }
 }

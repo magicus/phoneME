@@ -37,6 +37,9 @@ interface AppManagerUI {
      * The AppManagerPeer manages list of available MIDlet suites
      * and informs AppManagerUI regarding changes in list through
      * itemAppended callback when new item is appended to the list.
+     *
+     * The order in which the MIDlets are shown is up to the UI
+     * and need not be the order of itemAppended invocations.
      *  
      * @param suiteInfo the midlet suite info
      */
@@ -62,15 +65,17 @@ interface AppManagerUI {
      * Called when a new midlet was launched.
      *
      * @param si corresponding midlet suite info
+     * @param className MIDlet class name
      */
-    void notifyMidletStarted(RunningMIDletSuiteInfo si);
+    void notifyMidletStarted(RunningMIDletSuiteInfo si, String className);
 
     /**
      * Called when state of a running midlet has changed.
      *
      * @param si corresponding midlet suite info
+     * @param midlet
      */
-    void notifyMidletStateChanged(RunningMIDletSuiteInfo si);
+    void notifyMidletStateChanged(RunningMIDletSuiteInfo si, MIDletProxy midlet);
 
     /**
      * Called when a running internal midlet exited.
@@ -142,7 +147,7 @@ interface AppManagerUI {
      * @param si corresponding suite info
      * @param newSi new suite info
      */
-    void notifyMIDletSuiteStateChaged(RunningMIDletSuiteInfo si,
+    void notifyMIDletSuiteStateChanged(RunningMIDletSuiteInfo si,
                                              RunningMIDletSuiteInfo newSi);
 
     /**

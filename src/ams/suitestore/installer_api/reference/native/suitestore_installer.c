@@ -90,7 +90,7 @@ static MIDPError create_unique_id(ComponentType idType, void* pId);
  * Returns a unique identifier of MIDlet suite.
  *
  * @param pSuiteId [out] receives the platform-specific storage name of the
- *          application given by vendorName and appName
+ *                       application given by vendorName and appName
  *
  * @return ALL_OK if success, else an error code
  */

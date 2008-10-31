@@ -95,4 +95,12 @@ public class VirtualKeyboard {
      */
     public void paint(Graphics g) {
     }
+
+    /**
+     * Set up new coefficients of shrink and resize keyboard. Move keys in new coordinates.
+     * @param kshrinkX - coefficient of shrink on X-dimension
+     * @param kshrinkY - coefficient of shrink on Y-dimension
+     */
+    public void resize(double kshrinkX, double kshrinkY) {
+    }   
 }

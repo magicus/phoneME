@@ -49,40 +49,40 @@ extern "C" {
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-void lcdlf_refresh(int x, int y, int w, int h);
+void lcdlf_refresh(int hardwareId, int x, int y, int w, int h);
 
 /**
  * Change screen orientation flag
  */
-jboolean lcdlf_reverse_orientation();
+jboolean lcdlf_reverse_orientation(int hardwareId);
 
 /**
  * Change screen orientation flag
  */
-jboolean lcdlf_get_reverse_orientation();
+jboolean lcdlf_get_reverse_orientation(int hardwareId);
 
 
 /**
  * Return screen width
  */
-int lcdlf_get_screen_width();
+int lcdlf_get_screen_width(int hardwareId);
 
 /**
  *  Return screen height
  */
-int lcdlf_get_screen_height();
+int lcdlf_get_screen_height(int hardwareId);
 
 /**
  * set the screen mode either to fullscreen or normal.
  *
  * @param mode The screen mode
  */
-void lcdlf_set_fullscreen_mode(jboolean mode);
+void lcdlf_set_fullscreen_mode(int hardwareId, jboolean mode);
 
 /**
  * Resets native resources when foreground is gained by a new display.
  */
-void lcdlf_gained_foreground();
+void lcdlf_gained_foreground(int hardwareId);
 
 /**
  * Initializes the window system.
@@ -109,7 +109,7 @@ void lcdlf_ui_finalize();
  * @param height The height to be flushed
  * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
  */
-jboolean lcdlf_direct_flush(const java_graphics *g, 
+jboolean lcdlf_direct_flush(int hardwareId, const java_graphics *g, 
 			    const java_imagedata *offscreen_buffer, int h);
 
 
@@ -130,6 +130,50 @@ jboolean lcdlf_is_native_softbutton_layer_supported();
 void lcdlf_set_softbutton_label_on_native_layer (unsigned short *label, 
                                                  int len, 
                                                  int index);
+
+/** get currently enabled hardware display id */
+int lcdlf_get_current_hardwareId();
+
+/** 
+ * Get display device name by id
+ */
+char* lcdlf_get_display_name(int hardwareId);
+
+
+/**
+ * Check if the display device is primary
+ */
+jboolean lcdlf_is_display_primary(int hardwareId);
+
+/**
+ * Check if the display device is build-in
+ */
+jboolean lcdlf_is_display_buildin(int hardwareId);
+
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean lcdlf_is_display_pen_supported(int hardwareId);
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean lcdlf_is_display_pen_motion_supported(int hardwareId);
+
+/**
+ * Get display device capabilities
+ */
+int lcdlf_get_display_capabilities(int hardwareId);
+
+/**
+ * Get the list of display device ids
+ */
+jint* lcdlf_get_display_device_ids(jint* n);
+/**
+ * Notify the state of the display device has been changed
+ */
+void lcdlf_display_device_state_changed(int hardwareId, int state);
+
 
 #ifdef __cplusplus
 }

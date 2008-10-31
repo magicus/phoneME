@@ -172,7 +172,13 @@ public interface DisplayEventConsumer {
       * Called by event delivery when size of screen was changed.
       */
      public void handleRotationEvent();
+    
 
+     /*
+      * Called by event delivery when state of display device is changed.
+      */
+ 
+     public void handleDisplayDeviceStateChangedEvent(int state);
      /*
       * Called by event delivery when full screen repaint is requested.
       */
@@ -182,4 +188,9 @@ public interface DisplayEventConsumer {
       * Called by event delivery when need to show or hide virtual keyboard
       */
      public void handleVirtualKeyboardEvent();
+
+    /*
+     * Called by event delivery when locale is changed
+     */
+    public void handleChangeLocaleEvent();
 }

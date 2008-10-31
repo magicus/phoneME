@@ -133,6 +133,9 @@
             Name="CA_MANAGER_APP"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
+            Name="COMP_MANAGER_APP"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
             Name="FOREGROUND"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
@@ -141,6 +144,12 @@
   <constant Type="int"
             Name="OPTIONS"
             Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="OPEN"
+            Comment="Abstract Commands and other general strings"/>
+    <constant Type="int"
+              Name="VIEW_COMP"
+              Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
             Name="MANUFACTURER"
             Comment="General strings"/>

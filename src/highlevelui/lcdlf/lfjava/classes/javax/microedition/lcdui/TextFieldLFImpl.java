@@ -148,11 +148,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
     private boolean pressedIn = false;
 
     /**
-     * Cached display instance
-     */
-    private Display oldDisplay = null;
-
-    /**
      * Creates TextFieldLF for the passed in TextField.
      * @param tf The TextField associated with this TextFieldLF
      */
@@ -1663,10 +1658,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         if (currentDisplay != null) {
             hidePTILayer();
             hideKeyboardLayer();
-            currentDisplay.hidePopup(inputModeIndicator);
-        } else if (oldDisplay != null) {
-            oldDisplay.hidePopup(inputModeIndicator);
-            oldDisplay = null;
+        currentDisplay.hidePopup(inputModeIndicator);
         }
      }
 
@@ -1679,7 +1671,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
         Display currentDisplay;
         synchronized (Display.LCDUILock) {
             currentDisplay = getCurrentDisplay();
-            oldDisplay = currentDisplay;
             needToShow = showIMPopup && 
                 inputModeIndicator.getDisplayMode() != null && 
                 currentDisplay != null; 

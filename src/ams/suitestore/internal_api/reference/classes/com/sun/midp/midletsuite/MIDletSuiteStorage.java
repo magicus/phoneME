@@ -159,7 +159,7 @@ public class MIDletSuiteStorage {
      * corrupted
      * @exception MIDletSuiteCorruptedException if the suite is corrupted
      *
-     * @return MIDlet Suite reference
+     * @return MIDlet Suite reference or null if the suite doesn't exist
      */
     public synchronized MIDletSuiteImpl getMIDletSuite(int id,
             boolean update)
@@ -742,4 +742,11 @@ public class MIDletSuiteStorage {
      *     getNumberOfSuites to know how big to make the array
      */
     private native void getSuiteList(int[] suites);
+    
+    /*
+     * Gets a secure filename base (including path separator if needed)
+     * for the suite. File build with the base will be automatically deleted
+     * when the suite is removed.
+     */
+    public native String getSecureFilenameBase(int suiteId);
 }

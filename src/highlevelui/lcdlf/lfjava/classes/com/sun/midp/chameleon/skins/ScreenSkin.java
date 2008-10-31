@@ -37,17 +37,6 @@ import com.sun.midp.configurator.Constants;
 public class    ScreenSkin {
     
     /**
-     * The overall width of the screen available for use
-     */
-    public static int WIDTH;
-    
-    /**
-     * The overall height of the screen available for use in
-     * "normal" mode, ie, non-fullscreen
-     */
-    public static int HEIGHT;
-    
-    /**
      * This field corresponds to SCREEN_TEXT_ORIENT skin property.
      * See its comment for further details.
      */
@@ -207,6 +196,11 @@ public class    ScreenSkin {
      * Layout diraction. True if current diraction is right-to-left
      */
     public static boolean RL_DIRECTION;
+
+    /**
+     * Radius of finger if finger support is on
+     */
+    public static int TOUCH_RADIUS;
     
 
     // private constructor

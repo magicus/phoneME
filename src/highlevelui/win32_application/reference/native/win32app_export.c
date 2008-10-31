@@ -600,7 +600,7 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
     return KEYMAP_KEY_INVALID;
 }
 
-#if ENABLE_NATIVE_AMS
+#if ENABLE_NATIVE_APP_MANAGER
 void nams_process_command(int command, int param);
 #endif
 
@@ -941,7 +941,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         pSignalResult->waitingFor = VM_DEBUG_SIGNAL;
         return 0;
 
-#if ENABLE_NATIVE_AMS
+#if ENABLE_NATIVE_APP_MANAGER
     case WM_TEST:
         nams_process_command(wParam, lParam);
 
