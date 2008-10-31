@@ -50,7 +50,7 @@ static jfieldID gsMutexIDField = 0;
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_util_isolate_InterIsolateMutex_getID0) {
-    InterIsolateMutexList* mutex;
+    InterIsolateMutexList* mutex = NULL;
 
     KNI_StartHandles(1);
     GET_PARAMETER_AS_PCSL_STRING(1, mutexName)
@@ -78,7 +78,7 @@ KNIDECL(com_sun_midp_util_isolate_InterIsolateMutex_getID0) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_util_isolate_InterIsolateMutex_lock0) {
     jint mutexID;
-    InterIsolateMutexList* mutex;
+    InterIsolateMutexList* mutex = NULL;
     jint isolateID;
     int status;
 
@@ -110,7 +110,7 @@ KNIDECL(com_sun_midp_util_isolate_InterIsolateMutex_lock0) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_util_isolate_InterIsolateMutex_unlock0) {
     jint mutexID;
-    InterIsolateMutexList* mutex;
+    InterIsolateMutexList* mutex = NULL;
     jint isolateID;
     int status;
 
@@ -146,7 +146,7 @@ KNIDECL(com_sun_midp_util_isolate_InterIsolateMutex_unlock0) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_util_isolate_InterIsolateMutex_finalize) {
     jint mutexID;
-    InterIsolateMutexList* mutex;
+    InterIsolateMutexList* mutex = NULL;
     int isolateID;
 
     KNI_StartHandles(2);
