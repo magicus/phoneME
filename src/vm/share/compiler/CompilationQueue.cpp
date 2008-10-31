@@ -42,9 +42,8 @@
 CompilationQueueElement* CompilationQueueElement::allocate(
   const CompilationQueueElementType type, const jint bci JVM_TRAPS )
 {
-  VirtualStackFrame* frame = Compiler::frame();
-
-  CompilerState* state = Compiler::state();
+  CompilerState* state = _compiler_state;
+  VirtualStackFrame* frame = state->frame();
   CompilationQueueElement* element = state->compilation_queue_pool();
   if( element ) {
     // Reuse CompilationQueueElement
@@ -82,11 +81,14 @@ CompilationQueueElement* CompilationQueueElement::allocate(
 
 bool CompilationQueueElement::compile(JVM_SINGLE_ARG_TRAPS) {
   // Set the virtual stack frame and the bytecode index in the compiler.
-  if (!is_suspended()) {
-    Compiler::current()->set_bci(bci());
+  Compiler* compiler = this->compiler();
+  if( !is_suspended() ) {
+    compiler->set_bci(bci());
   }
-  Compiler::set_frame( frame() );
-  Compiler::code_generator()->ensure_compiled_method_space();
+  compiler->set_frame( frame() );
+
+  CodeGenerator* code_gen = this->code_generator();
+  code_gen->ensure_compiled_method_space();
 
   typedef void (CompilationQueueElement::*compile_func)(JVM_SINGLE_ARG_TRAPS);
 
@@ -113,22 +115,20 @@ bool CompilationQueueElement::compile(JVM_SINGLE_ARG_TRAPS) {
     // are compiling a very long sequence of bytecode.
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
     // IMPL_NOTE: need to revisit for inlining
-    if (!Compiler::is_inlining()) {
+    if (!compiler->is_inlining()) {
       if (!is_suspended()) {
           //entry to internal code optimizer
-        Compiler::current()->prepare_for_scheduling_of_current_cc( Compiler::current()->
-                             code_generator()->compiled_method());
+        compiler->prepare_for_scheduling_of_current_cc( code_gen->compiled_method() );
       }
     }
    finished =  
      CompilationContinuation::cast(this)->compile(JVM_SINGLE_ARG_CHECK_(true));
     // IMPL_NOTE: need to revisit for inlining
-    if (!Compiler::is_inlining()) {
+    if (!compiler->is_inlining()) {
       // could add !is_suspended() && if problem happens
       if( finished ) {
         //if the CompliationConinuation is suspended, we skiped the schedule stage
-        Compiler::current()->schedule_current_cc( Compiler::current()->
-          code_generator()->compiled_method() JVM_CHECK_(true));
+        compiler->schedule_current_cc( code_gen->compiled_method() JVM_CHECK_(true));
       }
     }
 #else
@@ -149,8 +149,8 @@ bool CompilationQueueElement::compile(JVM_SINGLE_ARG_TRAPS) {
   return finished;
 }
 
-void CompilationQueueElement::insert() {
-  Compiler::current()->insert_compilation_queue_element(this);
+void CompilationQueueElement::insert( void ) {
+  compiler()->insert_compilation_queue_element(this);
 }
 
 void CheckCastStub::insert( const int bci, const int class_id,
@@ -162,12 +162,12 @@ void CheckCastStub::insert( const int bci, const int class_id,
   stub->set_class_id(class_id);
   stub->set_entry_label(entry_label);
   stub->set_return_label(return_label);
-  Compiler::current()->insert_compilation_queue_element(stub);
+  stub->CompilationQueueElement::insert();
 }
 
 CompilationContinuation* CompilationContinuation::insert( 
     const jint bci, const BinaryAssembler::Label entry_label JVM_TRAPS) {
-  return insert(Compiler::current(), bci, entry_label JVM_NO_CHECK_AT_BOTTOM);
+  return insert(compiler(), bci, entry_label JVM_NO_CHECK_AT_BOTTOM);
 }
 
 CompilationContinuation* CompilationContinuation::insert( Compiler * const compiler,
@@ -177,7 +177,7 @@ CompilationContinuation* CompilationContinuation::insert( Compiler * const compi
     CompilationQueueElement::allocate( compilation_continuation, bci
                                        JVM_ZCHECK_0(stub));
   stub->set_entry_label(entry_label);
-  if( compiler->compiler_bci() < bci ) {
+  if( compiler->bci() < bci ) {
     // Mark the continuation as a forward branch target to disable 
     // loop peeling for it.
     stub->set_forward_branch_target();
@@ -192,8 +192,9 @@ CompilationContinuation* CompilationContinuation::insert( Compiler * const compi
 void CompilationContinuation::begin_compile(JVM_SINGLE_ARG_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(begin_compile);
 
-  CodeGenerator* gen = Compiler::code_generator();
-  VirtualStackFrame* frame = Compiler::frame();
+  CodeGenerator* gen = code_generator();
+  Compiler* compiler = this->compiler();
+  VirtualStackFrame* frame = compiler->frame();
   frame->clear_flush_count();
 
   // If run_immediately() is true, then the preceding CompilerStub is expecting
@@ -201,7 +202,7 @@ void CompilationContinuation::begin_compile(JVM_SINGLE_ARG_TRAPS) {
   // if this code ever changes, be careful
 
 #if USE_COMPILER_COMMENTS
-  COMPILER_COMMENT(("CompilationContinuation: bci = %d", Compiler::bci()));
+  COMPILER_COMMENT(("CompilationContinuation: bci = %d", compiler->bci()));
   if (GenerateCompilerComments) {
     frame->dump(true);
   }
@@ -219,12 +220,14 @@ void CompilationContinuation::begin_compile(JVM_SINGLE_ARG_TRAPS) {
 // Returns true if the element finished compilation, false if it
 // has been suspended and needs to be resumed in the future.
 bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
-  CodeGenerator* gen = Compiler::code_generator();
+  Compiler* compiler = this->compiler();
+  CompilerState* state = compiler->state();
+  CodeGenerator* gen = state->code_generator();
 
   // Compilation loop.
   for(;;) {
     // Get the entry from the compiler.
-    Entry* entry = Compiler::current()->entry_for(Compiler::bci());
+    Entry* entry = compiler->entry_for(compiler->bci());
     if( entry ) {      
       //flush all the cached regiser
       VERBOSE_CSE(("clear notation for has_entry"));
@@ -234,7 +237,7 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
       // We will not compile this closure again, but we may need to emit
       // additional merging code
       VirtualStackFrame* entry_frame = entry->frame();
-      VirtualStackFrame* frame = Compiler::frame();
+      VirtualStackFrame* frame = compiler->frame();
 
       // If we're not already in a loop and the entry we've found is on
       // the current (fall-through) compilation string we assume we've
@@ -246,24 +249,24 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
       // (frame->flush_count() != entry_frame.flush_count()).
 
       if (OptimizeLoops && !forward_branch_target()
-          && !Compiler::is_in_loop() && entry->bci() == bci()
+          && !compiler->is_in_loop() && entry->bci() == compiler->bci()
           && frame->flush_count() == entry_frame->flush_count()
           && gen->code_size() - entry->code_size() <= LoopPeelingSizeLimit) {
 #if ENABLE_CODE_PATCHING
-        const int end_bci = BytecodeCompileClosure::jump_from_bci(); 
-        if (!Compiler::can_patch(Compiler::bci(), end_bci)) {
-          BytecodeCompileClosure::set_jump_from_bci(0);
+        const int end_bci = compiler->jump_from_bci(); 
+        if (!compiler->can_patch(compiler->bci(), end_bci)) {
+          compiler->set_jump_from_bci(0);
         }
 #endif
-        Compiler::mark_as_in_loop();
+        compiler->mark_as_in_loop();
       } else {
         // Otherwise, we emit frame merge code and jump to the entry.
-        Compiler::set_conforming_frame( entry_frame );
+        state->set_conforming_frame( entry_frame );
         {
           COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(conform_to_entry);
           frame->conform_to( entry_frame );
         }
-        Compiler::set_conforming_frame( NULL );
+        state->set_conforming_frame( NULL );
         BinaryAssembler::Label branch_label = entry->label();
 
         BinaryAssembler::Label compile_entry_label = entry_label();
@@ -279,7 +282,7 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_LOOP_OPTIMIZATION && ARM
         //create a Label bind to current  position
         bool need_jmp = true;
-        if ( Compiler::current()->has_loops() ) {
+        if ( compiler->has_loops() ) {
           BinaryAssembler::Label cur_label;
           gen->bind(cur_label);
     
@@ -352,7 +355,6 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
                 branch_label.bind_to(next_pos);
               
                 int jmp_bci = -1;
-                Compiler* const compiler = Compiler::current();
                 CompilationQueueElement* element =
                   compiler->get_first_compilation_queue_element();  
                 
@@ -365,7 +367,7 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
                     if( pre_element != element ) {
                       CompilationQueueElement* next = element->next();
                       pre_element->set_next(next);
-                      compiler->insert_compilation_queue_element(element);
+                      element->insert();
                     }
                     need_jmp = false;
                     break;
@@ -395,14 +397,14 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
         }
 #endif
         // Terminate this compilation string and any loops.
-        Compiler::mark_as_outside_loop();
+        compiler->mark_as_outside_loop();
         BytecodeCompileClosure::set_jump_from_bci(0);
         return true;
       }
     }
 
-    if (Compiler::current()->entry_count_for(Compiler::bci()) > 1) {
-      VirtualStackFrame* frame = Compiler::frame();
+    if (compiler->entry_count_for(compiler->bci()) > 1) {
+      VirtualStackFrame* frame = compiler->frame();
       // Make sure any other frame can be made conformant to this one.
       {
         COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(conformance_entry);
@@ -411,7 +413,7 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
 
       // Emit code for an entry.
       BinaryAssembler::Label entry_label;
-      if (Compiler::is_in_loop()) {
+      if (compiler->is_in_loop()) {
         gen->bind(entry_label, oopSize);
       } else {
         gen->bind(entry_label);
@@ -421,7 +423,7 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
         Entry* entry = Entry::allocate(bci(), frame, entry_label,
                                            gen->code_size()
                                            JVM_ZCHECK_0(entry));
-        Compiler::current()->set_entry_for(Compiler::bci(), entry);
+        compiler->set_entry_for_current_bci(entry);
       }
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
       {
@@ -438,7 +440,7 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
       tty->cr();
     }
     const bool continue_compilation =
-      Compiler::closure()->compile(JVM_SINGLE_ARG_CHECK_0);
+      compiler->closure()->compile(JVM_SINGLE_ARG_CHECK_0);
     if( !continue_compilation ) {
       return true; // compilation has finished
     }
@@ -451,13 +453,10 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
 
 void CompilationContinuation::end_compile( void ) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(end_compile);
-
-  CodeGenerator* gen = Compiler::code_generator();
-
   // Bind the entry label, if we haven't already done so.
   if (!entry_has_been_bound()) { 
     BinaryAssembler::Label compile_entry_label = entry_label();
-    gen->bind_to(compile_entry_label, code_size_before());
+    code_generator()->bind_to(compile_entry_label, code_size_before());
   }
 }
 
@@ -484,17 +483,17 @@ void OSRStub::compile(JVM_SINGLE_ARG_TRAPS) {
 
   COMPILER_COMMENT(("OSR bci = %d: Restore register mapping and continue in "
                    "compiled code", bci()));
-
-  CodeGenerator* gen = Compiler::code_generator();
+  CodeGenerator* gen = code_generator();
   emit_osr_entry_and_callinfo(gen JVM_CHECK);
 
-  VirtualStackFrame* frame = Compiler::current()->frame();
+  Compiler* compiler = this->compiler();
+  VirtualStackFrame* frame = compiler->frame();
   VirtualStackFrame* new_frame = frame->clone(JVM_SINGLE_ARG_ZCHECK(new_frame));
   new_frame->mark_as_flushed();
   new_frame->set_real_stack_pointer( frame->virtual_stack_pointer() );
 
   // make the new frame the current one
-  Compiler::current()->set_frame( new_frame );
+  compiler->set_frame( new_frame );
 
 #ifndef USE_COMPILER_COMMENTS
   if (GenerateCompilerComments) {
@@ -521,14 +520,14 @@ void CompilationQueueElement::generic_compile(address addr,
                                               JVM_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(generic_compile);
 
-  CodeGenerator* gen = Compiler::code_generator();
-  VirtualStackFrame* frame = Compiler::current()->frame();
+  CodeGenerator* gen = code_generator();
+  VirtualStackFrame* frame = compiler()->frame();
 
   BinaryAssembler::Label stub = entry_label();
   gen->bind(stub);
   { 
     PreserveVirtualStackFrameState state(frame JVM_CHECK);
-    if (reg_arg != Assembler::no_reg) {
+    if( reg_arg != Assembler::no_reg ) {
       gen->call_vm_extra_arg(reg_arg);
     }
     gen->call_vm(addr, T_VOID JVM_CHECK);
@@ -542,29 +541,29 @@ void CompilationQueueElement::custom_compile(custom_compile_func func
                                              JVM_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(custom_compile);
 
-  CodeGenerator* gen = Compiler::code_generator();
-  VirtualStackFrame* frame = Compiler::current()->frame();
+  CodeGenerator* gen = code_generator();
+  VirtualStackFrame* frame = compiler()->frame();
 
   BinaryAssembler::Label stub = entry_label();
   gen->bind(stub);
 
   Assembler::Register result_register = register_0();
-  if (result_register == Assembler::no_reg) {
+  if( result_register == Assembler::no_reg ) {
     PreserveVirtualStackFrameState state(frame JVM_CHECK);
     (gen->*func)(this JVM_CHECK);
   } else {
     {
       PreserveVirtualStackFrameState state(frame JVM_CHECK);
       (gen->*func)(this JVM_CHECK);
-      if (result_register != BinaryAssembler::return_register) {
-        gen->move(result_register, BinaryAssembler::return_register);
+      if( result_register != BinaryAssembler::return_register ) {
+        gen->move( result_register, BinaryAssembler::return_register );
       }
 
       // Add a reference to prevent result_register from being reused during 
       // the VSF merge.
-      RegisterAllocator::reference(result_register);
+      RegisterAllocator::reference( result_register );
     }
-    RegisterAllocator::dereference(result_register);
+    RegisterAllocator::dereference( result_register );
   }
 
   BinaryAssembler::Label returner = return_label();
@@ -575,10 +574,10 @@ void StackOverflowStub::compile(JVM_SINGLE_ARG_TRAPS) {
   JVM_IGNORE_TRAPS;
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(stack_overflow_stub);
 
-  CodeGenerator* gen = Compiler::code_generator();
   COMPILER_COMMENT(("Stack overflow check failed"));
-
   BinaryAssembler::Label stub = entry_label();
+  CodeGenerator* gen = code_generator();
+
   gen->bind(stub);
   // pass stack_pointer and method
   gen->overflow(register_0(), register_1());  // ain't never returning here...
@@ -601,16 +600,18 @@ void QuickCatchStub::compile(JVM_SINGLE_ARG_TRAPS) {
 
   const int handler_bci = info();
   BinaryAssembler::Label stub = entry_label();
-  Compiler::code_generator()->bind(stub);
+  CodeGenerator* gen = code_generator();
+
+  gen->bind(stub);
 
 #ifdef AZZERT
   GUARANTEE( frame()->virtual_stack_pointer() ==
-             Compiler::root_method()->max_locals(),
+             gen->root_method()->max_locals(),
              "must have exactly one stack item");
 #endif
 
   BinaryAssembler::Label branch_label;
-  Compiler::code_generator()->jmp(branch_label);
+  gen->jmp(branch_label);
   CompilationContinuation::insert(handler_bci, branch_label
                                   JVM_NO_CHECK_AT_BOTTOM);
 }
@@ -622,7 +623,7 @@ void TimerTickStub::compile(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_CODE_PATCHING
   const int instr_offset = info();
   if (instr_offset >= 0) {
-    CodeGenerator* gen = Compiler::code_generator();
+    CodeGenerator* gen = code_generator();
     gen->emit_checkpoint_info_record(instr_offset, 
         gen->code_size() - instr_offset);
   }
@@ -686,12 +687,11 @@ ThrowExceptionStub* ThrowExceptionStub::allocate(const RuntimeException rte,
 
 ThrowExceptionStub*
 ThrowExceptionStub::allocate_or_share(const RuntimeException rte JVM_TRAPS) {
-  Compiler * const compiler = Compiler::root();
-  const jint bci = compiler->compiler_bci();
+  Compiler* const compiler = Compiler::root();
+  const jint bci = compiler->bci();
   bool set_rte_handler = false;
-  if( ShareExceptionStubs && 
-      compiler->method_aborted_for_exception_at(bci)) {
-    ThrowExceptionStub* stub = Compiler::rte_handler(rte);
+  if( ShareExceptionStubs && compiler->method_aborted_for_exception_at(bci)) {
+    ThrowExceptionStub* stub = compiler->rte_handler(rte);
     if( stub ) { 
       return stub;
     } else { 
@@ -704,7 +704,7 @@ ThrowExceptionStub::allocate_or_share(const RuntimeException rte JVM_TRAPS) {
     compiler->insert_compilation_queue_element(stub);
     if( set_rte_handler ) { 
       stub->set_is_persistent();
-      Compiler::set_rte_handler( rte, stub );
+      compiler->set_rte_handler( rte, stub );
     }
   }
   return stub;
@@ -731,8 +731,8 @@ ThrowExceptionStub::allocate_or_share(const RuntimeException rte JVM_TRAPS) {
 void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(throw_exception_stub);
 
-  CodeGenerator* gen = Compiler::code_generator();
-  VirtualStackFrame* frame = Compiler::frame();
+  CodeGenerator* gen = code_generator();
+  VirtualStackFrame* frame = gen->frame();
 
   // We don't support inlining of methods with exception handlers,
   // so only root method can have exception handlers
@@ -741,7 +741,7 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
 
   UsingFastOops fast_oops;  
   Method::Fast method = root->method();
-  const int current_bci = root->compiler_bci();
+  const int current_bci = root->bci();
 
   Value exception(T_OBJECT);
   const int handler_bci = method().exception_handler_bci_for(
@@ -763,12 +763,9 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
   } else {
 #endif //ENABLE_NPCE
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
-  if (get_rte() == rte_array_index_out_of_bounds) {
-       if(is_persistent()) {
-                Compiler::current()->code_generator()->
-               emit_pre_load_item(0);
-         }
-  }
+    if( get_rte() == rte_array_index_out_of_bounds && is_persistent() ) {
+      gen->emit_pre_load_item( 0 );
+    }
 #endif
     gen->bind(stub);
 #if ENABLE_NPCE
@@ -786,8 +783,8 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
     char buffer[200];
     Symbol::Raw exception_name = klass().name();
     exception_name().string_copy(buffer, sizeof(buffer));
-    bool has_monitors = method().access_flags().is_synchronized() ||
-                        method().access_flags().has_monitor_bytecodes();
+    const bool has_monitors = method().access_flags().is_synchronized() ||
+                              method().access_flags().has_monitor_bytecodes();
     jvm_sprintf(buffer + jvm_strlen(buffer), 
                 " bci=%d, max_locals=%d, handler=%d%s", 
                 current_bci, method().max_locals(), handler_bci, 
@@ -842,9 +839,9 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
     }
   } else {
     const bool has_monitors = method().access_flags().is_synchronized() ||
-                        method().access_flags().has_monitor_bytecodes();
+                              method().access_flags().has_monitor_bytecodes();
     // Generate code. . . .
-    if (!has_monitors) {
+    if( !has_monitors ) {
       // We are immediately returning from this method
       gen->throw_simple_exception(get_rte() JVM_NO_CHECK_AT_BOTTOM);
     } else {
@@ -888,7 +885,6 @@ ReturnOop ThrowExceptionStub::exception_class(int rte) {
             rte_division_by_zero, "sanity");
   GUARANTEE(Universe::incompatible_class_change_error_class_index - n ==
             rte_incompatible_class_change, "sanity");
-
   GUARANTEE(rte >= rte_null_pointer &&
             rte <= rte_incompatible_class_change, "sanity");
 #endif

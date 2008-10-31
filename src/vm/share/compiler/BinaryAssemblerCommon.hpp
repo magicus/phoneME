@@ -124,6 +124,8 @@ class BinaryAssemblerCommon: public Macros {
     return (CompiledMethod*) &_compiled_method;
   }
 
+  inline VirtualStackFrame* frame( void ) const;
+
 #if ENABLE_ISOLATES
   int task_id( void ) const { return _task_id; }
 #endif

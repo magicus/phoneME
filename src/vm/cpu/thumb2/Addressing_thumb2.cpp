@@ -230,9 +230,16 @@ void IndexedAddress::destroy_nonaddress_registers() {
   array()->destroy();
 }
 
+inline bool LocationAddress::is_local( void ) const {
+  return code_generator()->method()->is_local(index());
+}
+
+
 bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
   int base_offset;
   int actual_index;
+
+  CodeGenerator* const gen = code_generator();
 
 #if ENABLE_ARM_V7
   if (is_local()) {
@@ -244,11 +251,11 @@ bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
     // Note: in the example above, frame()->stack_pointer() == 5.
     //
     int offset_from_jsp =
-        (frame()->stack_pointer() - index()) * BytesPerStackElement +
+        (gen->frame()->stack_pointer() - index()) * BytesPerStackElement +
         JavaFrame::frame_desc_size();
     if (!ENABLE_INCREASING_JAVA_STACK && ENABLE_FULL_STACK &&
-        !method()->access_flags().is_synchronized() &&
-        !method()->access_flags().has_monitor_bytecodes() &&
+        !gen->method()->access_flags().is_synchronized() &&
+        !gen->method()->access_flags().has_monitor_bytecodes() &&
         offset_from_jsp < 0xff) {
       // We will try to use jsp (r9) to access the local if possible, so that
       // it can be done with one 16-bit instruction. We don't do it for
@@ -264,15 +271,15 @@ bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
     // The offset from the fp that would have it point at the end of the
     // locals block
     base_offset = JavaFrame::end_of_locals_offset();
-    actual_index = method()->max_locals() - 1 - index();
+    actual_index = gen->method()->max_locals() - 1 - index();
     _fixed_register = Assembler::fp;
   } else {
     // We need to make sure that we don't put something beyond
     // the current end of stack
-    code_generator()->ensure_sufficient_stack_for(index(), type());
+    gen->ensure_sufficient_stack_for(index(), type());
 
     base_offset = 0;
-    actual_index = frame()->stack_pointer() - index();
+    actual_index = gen->frame()->stack_pointer() - index();
     _fixed_register = Assembler::jsp;
   }
   fixed_offset = base_offset + JavaFrame::arg_offset_from_sp(actual_index);

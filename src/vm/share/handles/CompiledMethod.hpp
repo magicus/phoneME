@@ -68,8 +68,11 @@ class CompiledMethod : public Oop {
   ReturnOop method() const {
     return obj_field(method_offset());
   }
-  void set_method(Oop* value) {
+  void set_method(OopDesc* value) {
     obj_field_put(method_offset(), value);
+  }
+  void set_method(Oop* value) {
+    set_method( value->obj() );
   }
 
   // Returns the size of the dynamic part

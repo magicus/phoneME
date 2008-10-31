@@ -143,7 +143,7 @@ void RawLocation::read_value(Value& v, int index) {
   v.destroy();
 
   if (is_flushed()) {
-    Compiler::code_generator()->load_from_location(v, index);
+    code_generator()->load_from_location(v, index);
     v.set_flags(flags());
     v.set_length(length());
 #if ENABLE_COMPILER_TYPE_INFO

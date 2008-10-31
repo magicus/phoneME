@@ -40,8 +40,6 @@ class CompilerState: public CodeGenerator {
       ThrowExceptionStub::number_of_runtime_exceptions
   };
  private:
-  MethodDesc* _root_method;
-
   #define DECLARE_FIELD(type, name) type _##name;
   COMPILER_STATIC_FIELDS_DO(DECLARE_FIELD)
   #undef DECLARE_FIELD
@@ -56,7 +54,6 @@ class CompilerState: public CodeGenerator {
     COMPILER_STATIC_FIELDS_DO(INIT_FIELD)
     #undef INIT_FIELD
 
-    NOT_PRODUCT( clear_root_method(); )
     NOT_PRODUCT( jvm_memset( &_rte_handlers, 0, sizeof _rte_handlers ); )
     NOT_PRODUCT( _suspended_compiler_context.cleanup(); )
   }
@@ -84,11 +81,6 @@ class CompilerState: public CodeGenerator {
     _compiler_state = NULL;
   }
   CodeGenerator* code_generator( void ) { return this; }
-
-  Method* root_method    ( void ) const       { return (Method*) &_root_method; }
-  void clear_root_method ( void )             { _root_method = NULL;            }
-  void set_root_method   ( OopDesc* m )       { _root_method = (MethodDesc*) m; }
-  void set_root_method   ( const Method* m )  { set_root_method( m->obj() );    }
 
   CompilerContext* suspended_compiler_context( void ) {
     return &_suspended_compiler_context;
@@ -136,18 +128,22 @@ class CompilerState: public CodeGenerator {
   void oops_do( void do_oop(OopDesc**) ) {
     if( this ) {
       CodeGenerator::oops_do( do_oop );
-      do_oop( (OopDesc**) &_root_method );
     }
   }
 };
 
-inline VirtualStackFrame* CodeGenerator::frame ( void ) {
-  return _compiler_state->frame();
+inline VirtualStackFrame* BinaryAssemblerCommon::frame ( void ) const {
+  return ((CompilerState*)this)->frame();
 }
 
 inline VirtualStackFrame* GenericAddress::frame ( void ) {
   return _compiler_state->frame();
 }
+
+inline Method* VirtualStackFrame::method( void ) {
+  return _compiler_state->root_method();
+}
+
 
 inline void CompilationQueueElement::free( void ) {
   if( !( type() == CompilationQueueElement::throw_exception_stub &&

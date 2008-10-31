@@ -29,35 +29,32 @@
 // the generic address is a platform independant abstraction over addresses 
 class GenericAddress: public StackObj {
  public:
-  GenericAddress(BasicType type) : _type(type) { } 
+  GenericAddress(const BasicType type): _type( type ) {} 
 
   // virtuals for write barrier implementation
-  virtual void write_barrier_prolog() { /* by default there's no write barrier */ }
-  virtual void write_barrier_epilog() { /* by default there's no write barrier */ }
+  virtual void write_barrier_prolog( void ) {/* no write barrier by default */}
+  virtual void write_barrier_epilog( void ) {/* no write barrier by default */}
 
  protected:
   static inline VirtualStackFrame* frame ( void );
 
-  static inline CodeGenerator* code_generator ( void ) {
+  static CodeGenerator* code_generator ( void ) {
     return (CodeGenerator*)_compiler_state;
-  }
-  static inline Method* method ( void ) {
-    return _compiler_method;
   }
 
   // default offsets to the low and high parts of the generic address
-  virtual jint       lo_offset()      const { return 0 * BytesPerWord; }
-  virtual jint       hi_offset()      const { return 1 * BytesPerWord; }
+  virtual jint  lo_offset   ( void ) const { return 0 * BytesPerWord; }
+  virtual jint  hi_offset   ( void ) const { return 1 * BytesPerWord; }
 
   // accessor for the type of this abstract address
-  BasicType          type()           const { return _type; }
-  BasicType          stack_type()     const { return stack_type_for(type()); }
+  BasicType     type        ( void ) const { return _type; }
+  BasicType     stack_type  ( void ) const { return stack_type_for(type()); }
 
   // checks if this abstract address is addressing two words
-  bool               is_two_word()    const { return ::is_two_word(type()); }
+  bool          is_two_word ( void ) const { return ::is_two_word(type()); }
 
  private:
-  BasicType         _type; 
+  const BasicType _type;
 };
 
 #endif

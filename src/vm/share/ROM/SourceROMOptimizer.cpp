@@ -328,7 +328,7 @@ int ROMOptimizer::find_profile(char * name) {
 // Parse and process the config line.
 void ROMOptimizer::process_config_line(char * s JVM_TRAPS) {
   set_config_parsing_line_number(config_parsing_line_number() + 1);
-  char *name, *value;
+  const char *name, *value;
   if (parse_config(s, &name, &value)) {
 
     if (jvm_strcmp(name, "If") == 0) {
@@ -484,7 +484,7 @@ void ROMOptimizer::process_config_line(char * s JVM_TRAPS) {
   }
 }
 
-void ROMOptimizer::include_config_file(char *config_file JVM_TRAPS) {
+void ROMOptimizer::include_config_file(const char *config_file JVM_TRAPS) {
 #if defined(WIN32) || defined(LINUX)
 
 #if USE_UNICODE_FOR_FILENAMES
@@ -500,7 +500,7 @@ void ROMOptimizer::include_config_file(char *config_file JVM_TRAPS) {
     fn_config_file[len] = 0;
   }
 #else
-  char *fn_config_file = config_file;
+  const char *fn_config_file = config_file;
 #endif
 
   // (1) Check if it's in current path
@@ -531,7 +531,7 @@ void ROMOptimizer::include_config_file(char *config_file JVM_TRAPS) {
 #endif
 }
 
-bool ROMOptimizer::parse_config(char *line, char**name, char **value) {
+bool ROMOptimizer::parse_config(char *line, const char**name, const char**value) {
   if (*line == '#') {
     return false;
   }
@@ -567,8 +567,8 @@ bool ROMOptimizer::parse_config(char *line, char**name, char **value) {
   return true;
 }
 
-void ROMOptimizer::add_class_to_list(ObjArray *list, char *flag, 
-                                     char *classname JVM_TRAPS) {
+void ROMOptimizer::add_class_to_list(ObjArray *list, const char *flag, 
+                                     const char *classname JVM_TRAPS) {
   UsingFastOops level1;
   Symbol::Fast symbol = SymbolTable::slashified_symbol_for((utf8)classname JVM_CHECK);
   
@@ -596,7 +596,7 @@ void ROMOptimizer::add_class_to_list(ObjArray *list, char *flag,
 }
 
 // IMPL_NOTE: Make list ROMVector, not ObjArray. Here and everywhere!!!
-void ROMOptimizer::add_package_to_list(ROMVector *vector, char *pkgname 
+void ROMOptimizer::add_package_to_list(ROMVector *vector, const char *pkgname 
                                        JVM_TRAPS) {
   int len = jvm_strlen(pkgname) + 1;
   if (len > 255) {
@@ -935,7 +935,7 @@ void ROMOptimizer::record_original_method_info(Method *method JVM_TRAPS) {
 }
 
 
-void ROMOptimizer::enable_quick_natives(char * pattern JVM_TRAPS) {
+void ROMOptimizer::enable_quick_natives(const char * pattern JVM_TRAPS) {
   QuickNativesMatcher matcher(_quick_natives_log);
   matcher.run(pattern JVM_CHECK);
 }
@@ -978,7 +978,7 @@ public:
   }
 };
 
-void ROMOptimizer::enable_precompile(char * pattern JVM_TRAPS) {
+void ROMOptimizer::enable_precompile(const char pattern[] JVM_TRAPS) {
   PrecompileMatcher matcher(precompile_method_list());
   matcher.run(pattern JVM_NO_CHECK_AT_BOTTOM);
 }
@@ -1002,7 +1002,7 @@ public:
 };
 
 
-void ROMOptimizer::enable_kvm_natives(char * pattern JVM_TRAPS) {
+void ROMOptimizer::enable_kvm_natives(const char * pattern JVM_TRAPS) {
   KvmNativesMatcher matcher(_kvm_natives_log);
   matcher.run(pattern JVM_CHECK);
 }
@@ -1062,7 +1062,7 @@ public:
 };
 
 
-void ROMOptimizer::enable_jni_natives(char * pattern JVM_TRAPS) {
+void ROMOptimizer::enable_jni_natives(const char * pattern JVM_TRAPS) {
   JniNativesMatcher matcher(_jni_natives_log);
   matcher.run(pattern JVM_CHECK);
 }

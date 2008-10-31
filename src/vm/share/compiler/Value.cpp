@@ -97,7 +97,7 @@ void Value::set_obj(Oop* value) {
   } else {
     assign_register();
     // move the immediate object into the register
-    Compiler::code_generator()->move(*this, value);
+    code_generator()->move(*this, value);
     if (!ObjectHeap::contains_moveable(value->obj())) {
       set_not_on_heap();
     }
@@ -281,7 +281,7 @@ void Value::force_to_byte_register( void ) {
   GUARANTEE(in_register(), "must be in register");
   if (!Assembler::is_valid_byte_register(lo_register())) {
     Assembler::Register byte_register = RegisterAllocator::allocate_byte_register();
-    Compiler::code_generator()->movl(byte_register, lo_register());
+    code_generator()->movl(byte_register, lo_register());
     set_register(byte_register);
   }
 }
@@ -294,7 +294,7 @@ void Value::materialize( void ) {
 
     Value result(type());
     result.assign_register();
-    Compiler::code_generator()->move(result, *this);
+    code_generator()->move(result, *this);
     result.copy(*this);
   }
 }
@@ -347,7 +347,7 @@ void Value::writable_copy(Value& result) {
     } else {
       // allocate two new registers and copy the value of these registers into it.
       result.set_registers(RegisterAllocator::allocate(), RegisterAllocator::allocate());
-      Compiler::code_generator()->move(result, *this);
+      code_generator()->move(result, *this);
     }
   } else {
    if (RegisterAllocator::references(lo_register()) == 1) {
@@ -360,7 +360,7 @@ void Value::writable_copy(Value& result) {
     } else {
       // allocate a new register and copy the value of this register into it.
       result.assign_register();
-      Compiler::code_generator()->move(result, *this);
+      code_generator()->move(result, *this);
     }
   }
 }

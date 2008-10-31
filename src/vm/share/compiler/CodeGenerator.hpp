@@ -40,10 +40,50 @@ class CodeGenerator: public BinaryAssembler {
   static CodeGenerator* current( void ) {
     return (CodeGenerator*)_compiler_state;
   }
+
+  static Compiler* compiler ( void ) {
+    return _current_compiler;
+  }
+
+  CompilerState* state( void ) {
+    return (CompilerState*) this;
+  }
+  const CompilerState* state( void ) const {
+    return (CompilerState*) this;
+  }
+
+  // Current method of Compiler is frequently used by CodeGenerator.
+  // It is cached here to speed up the access.
+  Method* method        ( void ) const      { return (Method*) &_method;      }
+  void set_method       ( OopDesc* m )      { _method = (MethodDesc*) m;      }
+  void set_method       ( const Method* m ) { set_method( m->obj() );         }
+
+  Method* root_method ( void ) const {
+#if ENABLE_INLINE
+    return (Method*) &_root_method;
+#else
+    return method();
+#endif
+  }
+
+  void set_root_method ( OopDesc* m ) {
+#if ENABLE_INLINE
+    _root_method = (MethodDesc*) m;
+#endif
+    set_method( m );
+    compiled_method()->set_method( m );    
+  }
+  void set_root_method ( const Method* m ) {
+    set_root_method( m->obj() );
+  }
+
+  inline jint bci ( void ) const;
+
   // generate the jmp to interpreter_method_entry for overflow
   void overflow(const Assembler::Register&, const Assembler::Register&);
+
   // generate the code for the method entry of the given method
-  void method_entry       (Method* method JVM_TRAPS);
+  void method_entry (Method* method JVM_TRAPS);
 
 #if ENABLE_REMEMBER_ARRAY_LENGTH
   //preload the first array object which appears in the method
@@ -432,6 +472,11 @@ public:
 #endif
 
  private:
+  MethodDesc* _method;
+#if ENABLE_INLINE
+  MethodDesc* _root_method;
+#endif
+
 
   // store value to the given memory address
   void store_to_address (Value& value, BasicType type,
@@ -447,26 +492,11 @@ public:
   void conditional_jump_do(BytecodeClosure::cond_op condition,
                            Label& destination);
 
-  static inline VirtualStackFrame* frame ( void );
-  static void set_has_literal_value( const Assembler::Register reg, const int imm32 )
 #if USE_COMPILER_LITERALS_MAP
-    ;
+  void set_has_literal_value( const Assembler::Register reg, const int imm32 );
 #else
-    {}
+  static void set_has_literal_value( const Assembler::Register reg, const int imm32 ) {}
 #endif
-
-  static jint bci ( void ) {
-    return jvm_fast_globals.compiler_bci;
-  }
-  static Method* method ( void ) {
-    return jvm_fast_globals.compiler_method;
-  }
-  static jint next_bci ( const jint bci ) {
-    return method()->next_bci( bci );
-  }
-  static jint next_bci ( void ) {
-    return next_bci( bci() );
-  }
 
   void flush_frame(JVM_SINGLE_ARG_TRAPS);
 
@@ -489,7 +519,19 @@ public:
 #if ENABLE_APPENDED_CALLINFO
     _callinfo_writer.initialize( this->compiled_method() );
 #endif
-    _omit_stack_frame = false;
+    NOT_PRODUCT( _method = NULL; )
+#if ENABLE_INLINE
+    NOT_PRODUCT( _root_method = NULL; )
+#endif
+    NOT_PRODUCT( _omit_stack_frame = false; )
+  }
+
+  void oops_do( void do_oop(OopDesc**) ) {
+    BinaryAssembler::oops_do( do_oop );
+    do_oop( (OopDesc**) &_method      );
+#if ENABLE_INLINE
+    do_oop( (OopDesc**) &_root_method );
+#endif
   }
 };
 

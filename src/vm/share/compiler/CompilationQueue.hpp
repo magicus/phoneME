@@ -83,7 +83,6 @@ class CompilationQueueElement: public CompilerObject {
   void iterate(OopVisitor* visitor);
 #endif
 
-
  protected:
   void generic_compile(address addr JVM_TRAPS);
   void generic_compile(address addr,
@@ -190,6 +189,16 @@ public:
   }
   void set_next( CompilationQueueElement* value ) {
     _next = value;
+  }
+
+  static CompilerState* state( void ) {
+    return _compiler_state;
+  }
+  static CodeGenerator* code_generator( void ) {
+    return (CodeGenerator*) state();
+  }
+  static Compiler* compiler( void ) {
+    return _current_compiler;
   }
 };
 

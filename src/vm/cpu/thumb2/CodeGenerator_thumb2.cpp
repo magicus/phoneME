@@ -67,18 +67,19 @@ public:
 
 class CompilerLiteralAccessor : public LiteralAccessor {
 public:
-  virtual bool has_literal(int imm32, Assembler::Register& result);
+  virtual bool has_literal(int imm32, Assembler::Register& result) const;
 
-  virtual Assembler::Register get_literal(int imm32) {
+  virtual Assembler::Register get_literal(int imm32) const {
     return frame()->get_literal(imm32, *this);
   }
 #if ENABLE_ARM_VFP
   Assembler::Register has_vfp_literal( const int imm32 ) const;
 #endif
+
+  CompilerLiteralAccessor( void ): _frame( CodeGenerator::current()->frame() ) {}
 private:
-  VirtualStackFrame* frame( void ) const {
-    return Compiler::current()->code_generator()->frame();
-  }
+  VirtualStackFrame* const _frame;
+  VirtualStackFrame* frame( void ) const { return _frame; }
 };
 
 #if ENABLE_ISOLATES
@@ -233,7 +234,7 @@ extern "C" {
 
 
 bool CompilerLiteralAccessor::has_literal(int imm32,
-                                          Assembler::Register& result) {
+                                          Assembler::Register& result) const {
   for( LiteralElementStream les( frame() ); !les.eos(); les.next() ) {
     if( les.value() == imm32) {
       const Assembler::Register reg( les.reg() );
@@ -349,7 +350,7 @@ void CodeGenerator::store_to_address(Value& value, BasicType type,
   GUARANTEE(stack_type_for(type) == value.stack_type(),
              "types must match (taking stack types into account)");
   Register reg;
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
 
   if (value.is_immediate()) {
     reg = cla.get_literal(value.lo_bits());
@@ -463,7 +464,7 @@ void CodeGenerator::store_to_address(Value& value, BasicType type,
 
 #if ENABLE_ARM_VFP
 void CodeGenerator::move_vfp_immediate(const Register dst, const jint src) {
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
   {
     const Assembler::Register reg = cla.has_vfp_literal(src);
     if( reg != Assembler::no_reg ) {
@@ -587,7 +588,7 @@ CodeGenerator::move_double_immediate(const Register dst,
     }
   }
   {
-    CompilerLiteralAccessor cla;
+    const CompilerLiteralAccessor cla;
     const Register reg_lo = cla.has_vfp_literal(src_lo);
     const Register reg_hi = cla.has_vfp_literal(src_hi);
     if (is_arm_register(reg_lo) && is_arm_register(reg_hi)) {
@@ -1200,7 +1201,7 @@ void CodeGenerator::arithmetic(Opcode opcode,
   }
 
   if (op2.is_immediate()) {
-    CompilerLiteralAccessor cla;
+    const CompilerLiteralAccessor cla;
     arith_imm(opcode, result.lo_register(), op2.as_int(), cla);
   } else {
     arith(opcode, result.lo_register(), op2.lo_register());
@@ -2161,7 +2162,7 @@ void CodeGenerator::cmp_values(Value& op1, Value& op2) {
             "op2 must be in a register or an immediate");
 
   if (op2.is_immediate()) {
-    CompilerLiteralAccessor cla;
+    const CompilerLiteralAccessor cla;
     cmp(op1.lo_register(), op2.as_int());
   } else {
     cmp(op1.lo_register(), reg(op2.lo_register()));
@@ -2759,7 +2760,7 @@ void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
 
   write_literals_if_desperate();
 
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
   NOT_PRODUCT(comment("Point at the object of the topmost stack lock"));
   ldr(lock, fp, JavaFrame::stack_bottom_pointer_offset());
   add(end, fp,
@@ -2847,7 +2848,7 @@ void CodeGenerator::lookup_switch(Value& index, jint table_index,
   write_literals(true);
   bind(skip_literals);
 
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
   for (int i = 0, offset = table_index + 8;
        i < num_of_pairs;
        i++, offset += 8) {
@@ -2876,7 +2877,7 @@ void CodeGenerator::lookup_switch(Value& index, jint table_index,
 void CodeGenerator::lookup_switch(Register index, jint table_index,
                                   jint start, jint end,
                                   jint default_dest JVM_TRAPS) {
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
 #ifndef PRODUCT
   char buffer[200];
   int num_of_pairs  = method()->get_java_switch_int(table_index + 4);
@@ -3830,7 +3831,7 @@ void CodeGenerator::store_to_array(Value& value, Value& array, Value& index) {
   GUARANTEE(stack_type_for(type) == value.stack_type(),
              "types must match (taking stack types into account)");
   Register value_reg;
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
 
   if (value.is_immediate()) {
     value_reg = cla.get_literal(value.lo_bits());
