@@ -108,7 +108,7 @@ class Symbol: public Oop {
 #endif
 
 #if ENABLE_ROM_GENERATOR
-  bool eq(char *str);
+  bool eq(const char *str);
 #endif
 
 #if ENABLE_ROM_GENERATOR || ENABLE_PERFORMANCE_COUNTERS

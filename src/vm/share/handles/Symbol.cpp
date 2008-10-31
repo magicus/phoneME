@@ -392,7 +392,7 @@ int Symbol::generate_fieldmap(TypeArray* field_map) {
 #endif /* #if ENABLE_ROM_GENERATOR */
 
 #if ENABLE_ROM_GENERATOR
-bool Symbol::eq(char *str) {
+bool Symbol::eq(const char *str) {
   if (length() != jvm_strlen(str)) {
     return false;
   }
