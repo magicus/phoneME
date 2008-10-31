@@ -128,6 +128,7 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
 void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
     int maxX, maxY, screenX, screenY, d1, d2;
     int n;
+    int id;
     static const int mouseBufSize = 12;
     unsigned char mouseBuf[mouseBufSize];
     int mouseIdx = 0;
@@ -137,6 +138,7 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
         int x;
         int y;
     } pointer;
+
 
     do {    
         n = read(fbapp_get_mouse_fd(), mouseBuf + mouseIdx, 
@@ -157,7 +159,7 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
         return;
 
     pNewMidpEvent->type = MIDP_PEN_EVENT;
-    int id = fbapp_get_current_hardwareId();
+    id = fbapp_get_current_hardwareId();
     screenX = fbapp_get_screen_x(id);
     screenY = fbapp_get_screen_y(id);
     maxX = fbapp_get_screen_width(id);
