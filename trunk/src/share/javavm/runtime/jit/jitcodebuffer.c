@@ -685,7 +685,9 @@ CVMJITcodeCacheInit(CVMExecEnv* ee, CVMJITGlobalState *jgs)
         jgs->codeCacheStart = malloc(jgs->codeCacheSize);
 #endif
     }
+#ifdef CVM_AOT
 skipAllocateDynamicPart:
+#endif
 
     if (jgs->codeCacheStart == NULL) {
 	    return CVM_FALSE;
