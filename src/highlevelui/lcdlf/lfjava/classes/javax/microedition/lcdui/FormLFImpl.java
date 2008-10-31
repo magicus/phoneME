@@ -1824,7 +1824,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                     //cyclic down
                     if (!cyclingPageDown(traverseIndexCopy, itemsCopy) && isBottomShown) {
                         // page down
-                        pageScroll(dir, traverseIndexCopy, itemsCopy);
+                        pageScroll(Canvas.DOWN, traverseIndexCopy, itemsCopy);
                     }
                     return;
                 }
