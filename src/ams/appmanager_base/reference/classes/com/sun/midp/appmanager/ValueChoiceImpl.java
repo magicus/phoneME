@@ -1,5 +1,7 @@
 package com.sun.midp.appmanager;
 
+import com.sun.midp.security.PermissionGroup;
+
 import java.util.Vector;
 
 /**
@@ -20,16 +22,20 @@ class ValueChoiceImpl implements ValueChoice {
     private Vector labels;
 
     /** Id of selected item. */
-    int selectedID;
+    private int selectedID;
+
+    /** Correspondent permission group. */
+    private PermissionGroup permissionGroup;
 
     /**
      * Creates empty ValueChoice
      * @param title of the choice
      */
-    ValueChoiceImpl(String title) {
+    ValueChoiceImpl(PermissionGroup permissionGroup, String title) {
         this.title = title;
         ids = new Vector(5);
         labels = new Vector(5);
+        this.permissionGroup = permissionGroup;
     }
 
     /**
@@ -93,6 +99,14 @@ class ValueChoiceImpl implements ValueChoice {
      */
     public String getTitle() {
         return title;
+    }
+
+    /**
+     * Returns correspondent permission group.
+     * @return permission group
+     */
+    public PermissionGroup getPermissionGroup() {
+        return permissionGroup;
     }
 
 }
