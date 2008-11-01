@@ -137,6 +137,10 @@ ifeq ($(USE_NETMON), true)
 CFLAGS += -DUSE_NETMON
 endif
 
+# Memmon flag
+ifeq ($(USE_MEMMON), true)
+CFLAGS += -DUSE_MEMMON
+endif
 
 SPECIFIC_DEFINITIONS += $(filter -DENABLE_JSR%, $(foreach jsr,$(JSR_LIST), \
     $(if $(PREFIX_$(USE_$(jsr))), -DENABLE_$(jsr)=1)))
