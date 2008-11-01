@@ -315,6 +315,8 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             // this will raise sizeChanged event
             // and sizeChanged shall raise paint event also
             item.setPreferredSize( width, height );
+        } else {
+            repaint();
         }
     }
     
