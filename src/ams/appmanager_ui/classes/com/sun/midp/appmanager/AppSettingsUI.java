@@ -62,4 +62,5 @@ interface AppSettingsUI {
      * @param  valueID id of selected value
      */
     void changeSettingValue(int settingID, int valueID);
+
 }
