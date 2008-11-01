@@ -514,10 +514,14 @@ CVM_BT_FILES0 = $(wildcard \
       $(CVM_BUILDTIME_CLASSESDIR)/*/*/*/*/*/*.class)
 CVM_BT_FILES = $(CVM_BT_FILES0)
 
+ifeq ($(CVM_PRELOAD_FULL_CLOSURE), true)
+$(CVM_BUILD_TOP)/.btclasses.plist : $(CVM_BT_FILES)
+endif
+
 CVM_BT_CLASS_FILES = $(patsubst %,%.class,$(BUILDTIME_CLASS0))
 
 .move.extra.btclasses: $(CLASSLIB_JAR_FILES)
-	@$(MAKE) .move.extra.btclasses2
+	$(AT)$(MAKE) .move.extra.btclasses2
 
 # javac problably found some dependencies that are not on
 # our list, so copy them to libclasses so they end up in
@@ -552,20 +556,23 @@ CVM_BT_BOOTCLASSPATH = \
     $(CVM_BUILDTIME_CLASSESDIR)$(PS)$(OPTPKGS_CLASSPATH)
 
 .cvm_bt_files:
-	@$(MAKE) .cvm_bt_files2
+	$(AT)$(MAKE) .cvm_bt_files_check
+	$(AT)$(MAKE) $(CVM_BUILD_TOP)/.btclasses.list
 
 # We have files in btclasses/ but how about
 # btclasses.zip?
-.cvm_bt_files2 : $(CVM_BT_FILES)
+.cvm_bt_files_check :
 ifneq ($(words $(CVM_BT_FILES)), 0)
 	@if [ ! -f $(CVM_BUILDTIME_CLASSESZIP) ]; then			\
-	    echo 'btclasses.zip is missing.  Try a clean build.';	\
-	    false;							\
+	    echo 'btclasses.zip is missing.  Cleaning up.';		\
+	    rm -rf $(CVM_BUILDTIME_CLASSESDIR);				\
+	    mkdir $(CVM_BUILDTIME_CLASSESDIR);				\
 	fi
+else
+	@true
 endif
 
-
-.compile.btclasses: $(CVM_BUILD_TOP)/.btclasses.list .cvm_bt_files
+.compile.btclasses: .cvm_bt_files
 	$(AT)if [ -s $(CVM_BUILD_TOP)/.btclasses.list ] ; then		\
 		echo "Compiling build-time classes...";			\
 		$(JAVAC_CMD)						\
