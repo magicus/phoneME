@@ -403,4 +403,10 @@ public final class EventTypes {
      * JSR290 DOM object finalize notification event
      */
     public static final int DOM_FINALIZE_EVENT = 64;
+
+    /**
+     * This event is sent on RMS storage changing to
+     * asynchronously notify registered RMS listeners
+     */
+    public static final int RECORD_STORE_CHANGE_EVENT = 65;
 }

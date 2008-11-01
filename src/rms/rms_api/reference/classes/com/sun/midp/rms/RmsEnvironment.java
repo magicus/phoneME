@@ -28,6 +28,8 @@ package com.sun.midp.rms;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
+import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.EventTypes;
 import com.sun.j2me.security.AccessController;
 
 public class RmsEnvironment { 
@@ -38,9 +40,17 @@ public class RmsEnvironment {
     }
  
     /* Called by the class running the suite. */
-    public static void init(SecurityToken token, SuiteContainer container) {
+    public static void init(
+            SecurityToken token, EventQueue eventQueue, SuiteContainer container) {
+
         token.checkIfPermissionAllowed(Permissions.MIDP);
         internalInit(container);
+
+        // Register listener for record store change events
+        RecordStoreEventListener recordEventListener =
+            new RecordStoreEventListener();
+        eventQueue.registerEventListener(
+            EventTypes.RECORD_STORE_CHANGE_EVENT, recordEventListener);
     }
 
     /* Called by the class running the suite. */
