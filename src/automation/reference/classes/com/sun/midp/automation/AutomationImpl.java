@@ -329,6 +329,8 @@ final class AutomationImpl extends Automation {
      * screenshot is not implemented
      */   
     public byte[] getScreenshot(int format) {
+        screenshotTaker.takeScreenshot();
+
         byte[] data = screenshotTaker.getScreenshotRGB888();
         if (data == null) {
             return null;
