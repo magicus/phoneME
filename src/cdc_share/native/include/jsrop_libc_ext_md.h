@@ -24,9 +24,12 @@
 #ifndef __JSROP_LIBC_EXT_MD_H
 #define __JSROP_LIBC_EXT_MD_H
 
-#include "midp_libc_ext.h"
-
-#define JAVAME_SNPRINTF midp_snprintf
+#if ( WIN32 || _WIN32 )
+  #ifndef snprintf
+  #define snprintf _snprintf
+  #endif
+#endif
+#define JAVAME_SNPRINTF snprintf
 
 #endif /* __JSROP_LIBC_EXT_MD_H */
 
