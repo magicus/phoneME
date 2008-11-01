@@ -1048,6 +1048,18 @@ javanotify_fluid_listener_warning (
     midp_jc_event_send(&e);
 }
 
+void
+javanotify_dom_completion_notification (
+    javacall_int32			              invocation_id
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_COMPLETION_NOTIFICATION;
+    e.data.jsr290NotificationEvent.invocation_id = invocation_id;
+
+    midp_jc_event_send(&e);
+}
+
 #endif /* ENABLE_JSR_290 */
 
 /**

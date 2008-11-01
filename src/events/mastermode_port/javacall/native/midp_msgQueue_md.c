@@ -330,6 +330,10 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         }
         javacall_free(event->data.jsr290FluidEvent.text);
         break;
+	case JSR290_JC_EVENT_COMPLETION_NOTIFICATION:
+        pNewSignal->waitingFor   = JSR290_INVOCATION_COMPLETION_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290NotificationEvent.invocation_id;
+        break;
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_177
