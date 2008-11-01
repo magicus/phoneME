@@ -398,6 +398,15 @@ class Bytecodes: public AllStatic {
     NoPatching      = 0x100,
     NoInlining      = 0x200,
 
+    // Some bytecodes require the method frame, since on all ports except ARM
+    // the shared stubs called from the generated code use the frame 
+    // to get bci. See InterpreterRuntime.cpp
+#if defined (ARM) && !ENABLE_THUMB_COMPILER
+    NeedsFrameExARM = 0,
+#else
+    NeedsFrameExARM = NoInlining,
+#endif
+
     // For stack frame omission, mark as throwing exceptions the bytecodes which:
     // 1. allocate memory (including exception throwing)
     // 2. yield to the scheduler
