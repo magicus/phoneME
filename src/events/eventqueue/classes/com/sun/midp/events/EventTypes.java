@@ -399,4 +399,8 @@ public final class EventTypes {
      */
     public static final int FLUID_LISTENER_EVENT = 63;
 
+    /**
+     * JSR290 DOM object finalize notification event
+     */
+    public static final int DOM_FINALIZE_EVENT = 64;
 }

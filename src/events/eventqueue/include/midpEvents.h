@@ -217,6 +217,12 @@ extern "C" {
  */
 #define FLUID_LISTENER_EVENT            63
 
+/**
+ * JSR290 DOM object finalize notification event
+ */
+#define DOM_FINALIZE_EVENT              64;
+
+
 /** @} */
 
 /**
