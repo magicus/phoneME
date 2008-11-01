@@ -266,6 +266,8 @@
 //
 // ENABLE_MEMORY_PROFILER        0,0  Add Memory Profiler support.
 //
+// ENABLE_MEMORY_MONITOR        0,0  Add Memory Monitor support.
+//
 // ENABLE_ROM_JAVA_DEBUGGER      0,0  Add Java debugger support for ROMized.
 //                                    classes
 //

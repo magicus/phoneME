@@ -198,7 +198,7 @@ static inline juint encode_heap_method(Method* m) {
   return (((juint)i) << 16) | holder_id;
 }
 
-static inline juint encode_id(Method* m, jushort& flags) {
+juint WTKProfiler::encode_id(Method* m, jushort& flags) {
   // methods in ROM never move
   if (ROM::system_text_contains(m->obj())) {
     flags |= METHOD_IN_ROM;
@@ -208,7 +208,7 @@ static inline juint encode_id(Method* m, jushort& flags) {
   return encode_heap_method(m);
 }
 
-static inline ReturnOop decode_id(juint id, jushort flags) {
+ReturnOop WTKProfiler::decode_id(juint id, jushort flags) {
   if (flags & METHOD_IN_ROM) {
     return (ReturnOop)id;
   }
@@ -453,7 +453,7 @@ static inline WTKCallRecord* call_record_from_frame(JavaFrame*     frame,
 
   Method::Raw m = frame->method();
   jushort flags = 0;
-  juint id = encode_id(&m, flags);
+  juint id = WTKProfiler::encode_id(&m, flags);
 
   return lookup_record(level, parent, id, flags);
 }
@@ -560,6 +560,19 @@ static inline void update_from_frame(JavaFrame* frame,
     rec->totalTime += delta;
     rec = rec->parent;
   }
+#if ENABLE_MEMORY_MONITOR 
+  if(Arguments::_monitor_memory && (delta == (jlong)1 || delta == (jlong)-1)) {
+    int threadId = frame->thread()->id();
+    Method::Raw m = frame->method();
+    jushort flags = 0;
+    juint id = WTKProfiler::encode_id(&m, flags);
+	if (delta == (jlong)1) { // enter method
+        MonitorMemory::memmonitor_enterMethod(id, threadId);
+	} else if (delta == (jlong)-1) {
+	    MonitorMemory::memmonitor_exitMethod(id, threadId);
+	}
+  }
+#endif
 }
 
 static inline void update_in_thread(Thread* thread, jlong delta) {

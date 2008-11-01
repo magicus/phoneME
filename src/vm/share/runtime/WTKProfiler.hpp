@@ -77,6 +77,11 @@ public:
   // in SVM case the only reasonable value for task_id is -1
   static int dump_and_clear_profile_data(int task_id);
 
+  // encode/decode method
+  static juint encode_id(Method* m, jushort& flags);
+  static ReturnOop decode_id(juint id, jushort flags);
+  
+
 };
 
 #endif

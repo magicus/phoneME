@@ -769,6 +769,7 @@ CPP_INCLUDE_DIRS = \
   -I"$(WorkSpace)/src/vm/share/float"       \
   -I"$(WorkSpace)/src/vm/os/utilities"      \
   -I"$(WorkSpace)/src/vm/share/memoryprofiler" \
+  -I"$(WorkSpace)/src/vm/share/memorymonitor" \
   -I"$(WorkSpace)/src/vm/os/$(os_family)"   \
   -I"$(WorkSpace)/src/midp"                 \
   -I"$(WorkSpace)/src/vm/cpu/arm"           \
@@ -780,6 +781,10 @@ CPP_INCLUDE_DIRS = \
   -I"$(WorkSpace)/src/anilib/share"         \
   -I"$(WorkSpace)/src/anilib/$(os_family)"  \
   -I"$(WorkSpace)/src/tools/ads_extender"
+
+ifeq ($(ENABLE_MEMORY_MONITOR), true)
+CPP_INCLUDE_DIRS += -I"$(LIME_INCLUDE_DIR)"
+endif
 
 # Don't use PCSL for the generators. This way you don't need to build
 # two versions of PCSL (host and target) just to build the VM.
@@ -829,6 +834,7 @@ vpath $(VPATH_PATTERNS) $(WorkSpace)/src/vm/share/runtime
 vpath $(VPATH_PATTERNS) $(WorkSpace)/src/vm/share/verifier
 vpath $(VPATH_PATTERNS) $(WorkSpace)/src/vm/share/utilities
 vpath $(VPATH_PATTERNS) $(WorkSpace)/src/vm/share/memoryprofiler
+vpath $(VPATH_PATTERNS) $(WorkSpace)/src/vm/share/memorymonitor
 vpath $(VPATH_PATTERNS) $(WorkSpace)/src/vm/share/float
 vpath $(VPATH_PATTERNS) $(WorkSpace)/src/anilib/share
 vpath $(VPATH_PATTERNS) $(WorkSpace)/src/anilib/$(os_family)
@@ -2378,6 +2384,9 @@ endif
 	$(BUILD_C_TARGET)
 
 %$(OBJ_SUFFIX): $(WorkSpace)/src/vm/share/memoryprofiler/%.cpp
+	$(BUILD_C_TARGET)
+
+%$(OBJ_SUFFIX): $(WorkSpace)/src/vm/share/memorymonitor/%.cpp
 	$(BUILD_C_TARGET)
 
 %$(OBJ_SUFFIX): $(WorkSpace)/src/vm/share/float/%.cpp

@@ -129,6 +129,14 @@ void JVM::set_arguments2(const JvmPathChar *classpath, char *main_class,
     _argc = argc;
     _u_argv = u_argv;
   }
+  while (true) {
+    int n = JVM_ParseOneArg(argc, argv);
+    if (n <= 0) {
+      break;
+    }
+    argc -= n;
+    argv += n;
+  }
 }
 
 // Abruptly stops the execution of all threads in the VM, including
@@ -460,6 +468,11 @@ int JVM::start() {
     ::initialize_cpu_variant();
   }
 #endif
+#if ENABLE_MEMORY_MONITOR 
+  if(Arguments::_monitor_memory) {
+    MonitorMemory::memmonitor_startup();
+  }
+#endif
 
   if (Scheduler::is_slave_mode()) {
     _is_started = true;
@@ -482,6 +495,13 @@ int JVM::start() {
   }
 
 done:
+
+#if ENABLE_MEMORY_MONITOR 
+  if(Arguments::_monitor_memory) 
+  {
+    MonitorMemory::memmonitor_shutdown();
+  }
+#endif
 
   if (!Scheduler::is_slave_mode()) {
     // In slave mode, we're not ready to clean up yet -- the VM is still

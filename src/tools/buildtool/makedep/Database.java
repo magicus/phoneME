@@ -171,6 +171,7 @@ public class Database {
       addVpath(workspace + "/src/vm/share/isolate");
       addVpath(workspace + "/src/vm/share/dynupdate");
       addVpath(workspace + "/src/vm/share/memoryprofiler");
+      addVpath(workspace + "/src/vm/share/memorymonitor");
     }
 
     private void addVpath(String path) {

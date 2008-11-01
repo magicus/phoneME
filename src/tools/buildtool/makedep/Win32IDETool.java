@@ -1081,6 +1081,7 @@ class VMSourceHandler {
         addVpath("/src/vm/share/isolate");
         addVpath("/src/vm/share/dynupdate");
         addVpath("/src/vm/share/memoryprofiler");
+        addVpath("/src/vm/share/memorymonitor");
     }
 
     public String resolveFileForProject(String fileName) {

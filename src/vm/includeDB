@@ -483,6 +483,9 @@ WTKProfiler.cpp                  MixedOopDesc.hpp
 WTKProfiler.cpp                  Universe.hpp
 WTKProfiler.cpp                  StackUtils.hpp
 WTKProfiler.cpp                  jvmspi.h
+#if ENABLE_MEMORY_MONITOR
+WTKProfiler.cpp                  MonitorMemory.hpp
+#endif
 
 #if ENABLE_XSCALE_WMMX_INSTRUCTIONS
 Disassembler_wmmx.cpp            Disassembler_<carch>.hpp
@@ -1050,6 +1053,11 @@ OsMemory.cpp                     OsMemory.hpp
 OsMemory_<os_family>.cpp         OsMemory.hpp
 OsMemory_<os_family>.cpp         OS_<os_family>.hpp
 
+#if ENABLE_MEMORY_MONITOR
+MonitorMemoryMd_<os_family>.cpp  MonitorMemoryMd.hpp
+MonitorMemoryMd_<os_family>.cpp  MonitorMemoryMd_<os_family>.hpp
+#endif
+
 OsMisc.hpp                       Debug.hpp
 OsMisc.hpp                       OsMisc_<os_family>.hpp
 OsMisc_<os_family>.hpp           OS_<os_family>.hpp
@@ -1148,6 +1156,9 @@ ObjectHeap.cpp                   EventLogger.hpp
 ObjectHeap.cpp                   JarFileParser.hpp
 ObjectHeap.cpp                   Task.hpp
 ObjectHeap.cpp                   JniFrame.hpp
+#if ENABLE_MEMORY_MONITOR 
+ObjectHeap.cpp                   MonitorMemory.hpp
+#endif
 
 ConstantTag.hpp                  ArrayDesc.hpp
 ConstantTag.hpp                  GlobalDefinitions.hpp
@@ -1695,6 +1706,10 @@ GlobalDefinitions_<iarch>.hpp    generate_platform_dependent_include
 GlobalDefinitions_<iarch>.cpp    GlobalDefinitions.hpp
 GlobalDefinitions_<iarch>.cpp    ObjectHeap_<iarch>.hpp
 GlobalDefinitions_<iarch>.cpp    JavaClass.hpp
+
+#if ENABLE_MEMORY_MONITOR
+MonitorMemoryMd.cpp              MonitorMemoryMd.hpp
+#endif
 
 Stream.hpp                       Allocation.hpp
 Stream.hpp                       GlobalDefinitions.hpp
@@ -2591,6 +2606,9 @@ JVM.cpp                        Task.hpp
 JVM.cpp                        Stream.hpp
 #endif
 JVM.cpp                        SegmentedSourceROMWriter.hpp
+#if ENABLE_MEMORY_MONITOR
+JVM.cpp                        MonitorMemory.hpp
+#endif
 
 JVM_<os_family>.hpp            Allocation.hpp
 JVM_<os_family>.cpp            JVM_<os_family>.hpp
@@ -2624,6 +2642,13 @@ Main_<os_family>.cpp           OS_<os_family>.hpp
 Main_<os_family>.cpp           Globals.hpp
 Main_<os_family>.cpp           OsMemory.hpp
 Main_<os_family>.cpp           OsMisc_<os_family>.hpp
+
+// memorymonitor
+#if ENABLE_MEMORY_MONITOR
+MonitorMemory.cpp              MonitorMemory.hpp
+MonitorMemory.cpp              MonitorMemoryMd.hpp
+MonitorMemory.cpp              WTKProfiler.hpp
+#endif
 
 jvm.h                          kni.h
 jvm.h                          GlobalDefinitions.hpp
