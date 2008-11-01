@@ -63,7 +63,7 @@ struct SystemProperty {
 
 static SystemProperty * system_properties = NULL;
 
-void JVMSPI_SetSystemProperty(char *property_name, char *property_value) {
+void JVMSPI_SetSystemProperty(const char *property_name, const char *property_value) {
   if (property_name == NULL || property_value == NULL) {
     // IMPL_NOTE: need to report an error
     return;
@@ -80,7 +80,7 @@ void JVMSPI_SetSystemProperty(char *property_name, char *property_value) {
   jvm_strcpy(prop->value, property_value);
 }
 
-char *JVMSPI_GetSystemProperty(char *property_name) {
+char *JVMSPI_GetSystemProperty(const char *property_name) {
   SystemProperty *prop;
 
   for (prop = system_properties; prop; prop = prop->next) {
@@ -91,7 +91,7 @@ char *JVMSPI_GetSystemProperty(char *property_name) {
   return NULL;
 }
 
-void JVMSPI_FreeSystemProperty(char * /*prop_value*/) {
+void JVMSPI_FreeSystemProperty(const char * /*prop_value*/) {
   // do nothing
 }
 
