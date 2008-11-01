@@ -899,6 +899,12 @@
             Name="PERMISSION_MUTUALLY_EXCLUSIVE_ERROR_MESSAGE"
             Comment="Security: Mutually exclusive permission error message"/>
   <constant Type="int"
+            Name="PERMISSION_MUTUALLY_EXCLUSIVE_SELECT_MESSAGE"
+            Comment="Security: Mutually exclusive permission select message"/>
+  <constant Type="int"
+            Name="PERMISSION_SECURITY_WARNING_ERROR_MESSAGE"
+            Comment="Security: Potentially dangerous permission error message"/>
+  <constant Type="int"
             Name="PERMISSION_NET_ACCESS_DIALOG_TITLE"
             Comment="Security: Titles used for the user permission form"/>
   <constant Type="int"
