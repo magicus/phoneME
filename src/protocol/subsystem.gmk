@@ -150,8 +150,7 @@ SUBSYSTEM_PROTOCOL_EXTRA_INCLUDES += $(SUBSYSTEM_GCF_EXTRA_INCLUDES) \
 	$(SUBSYSTEM_SOCKET_NOTIFY_EXTRA_INCLUDES) \
 	$(SUBSYSTEM_SSOCKET_EXTRA_INCLUDES) \
 	$(SUBSYSTEM_SECURE_CONNECTION_EXTRA_INCLUDES) \
-	$(SUBSYSTEM_UDP_EXTRA_INCLUDES) \
-	$(SUBSYSTEM_NETMON_EXTRA_INCLUDES)
+	$(SUBSYSTEM_UDP_EXTRA_INCLUDES) 
 
 SUBSYSTEM_PROTOCOL_EXTRA_CFLAGS += $(SUBSYSTEM_GCF_EXTRA_CFLAGS) \
 	$(SUBSYSTEM_FILE_EXTRA_CFLAGS) \
@@ -166,11 +165,10 @@ SUBSYSTEM_PROTOCOL_EXTRA_CFLAGS += $(SUBSYSTEM_GCF_EXTRA_CFLAGS) \
 	$(SUBSYSTEM_UDP_EXTRA_CFLAGS) \
 	$(SUBSYSTEM_UDP_EXTRA_CFLAGS)
 
-
 ifeq ($(USE_NETMON), true)
 #####################################################################
 # Network monitor
-# Description: Notifying the WTK about any protocol action.
+# Description: Notifying the SDK/WTK about any protocol action.
 #####################################################################
 include $(SUBSYSTEM_PROTOCOL_DIR)/netmon/$(LIB_MAKE_FILE)
 

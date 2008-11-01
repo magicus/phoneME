@@ -428,10 +428,10 @@ midpInitializeDebugger(void) {
         char* argv[2];
 
         /* memory profiler */
-		if (getInternalProperty("VmMemoryProfiler") != NULL) {
-		    argv[0] = "-memory_profiler";
+        if (getInternalProperty("VmMemoryProfiler") != NULL) {
+            argv[0] = "-memory_profiler";
             (void)JVM_ParseOneArg(1, argv);
-		}
+        }
 
         /* Get the VM debugger port property. */
         argv[1] = (char *)getInternalProperty("VmDebuggerPort");
@@ -763,7 +763,16 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
          *
          * Arguments to MIDlets are pass in the command state.
          */
+#if ENABLE_MEMMON
+        if (getInternalProperty("MemoryMonitor") != NULL) {
+            static const char* optMemoryMonitor = "-monitormemory";
+            vmStatus = midpRunVm(classPath, MIDP_MAIN, 1, &optMemoryMonitor);
+        } else {
+            vmStatus = midpRunVm(classPath, MIDP_MAIN, 0, NULL);
+        }
+#else
         vmStatus = midpRunVm(classPath, MIDP_MAIN, 0, NULL);
+#endif
 
         measureStack(KNI_FALSE);
 
