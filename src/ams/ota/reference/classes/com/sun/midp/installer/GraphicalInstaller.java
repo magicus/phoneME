@@ -456,6 +456,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                     return;
                 }
 
+                // IMPL_NOTE: "installer" instance is not created yet but
+                // it will be in the updateSuite method itself. 
                 updateSuite(suiteId);
                 return;
             } else if("FI".equals(arg0)) {
@@ -736,12 +738,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                 MIDletSuiteStorage.getMIDletSuiteStorage()
                     .getMIDletSuite(id, false);
 
-            InstallInfo installInfo = midletSuite.getInstallInfo();
-            MIDletInfo midletInfo;
             String name;
-
             if (midletSuite.getNumberOfMIDlets() == 1) {
-                midletInfo =
+                MIDletInfo midletInfo =
                     new MIDletInfo(midletSuite.getProperty("MIDlet-1"));
                 name = midletInfo.name;
             } else {
@@ -753,10 +752,16 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             finishingMessage =
                 Resource.getString(ResourceConstants.AMS_GRA_INTLR_FIN_UPD);
 
+            InstallInfo installInfo = midletSuite.getInstallInfo();
+            String url = installInfo.getDownloadUrl();
+
+            // Create an installer instance corresponding to the URL
+            installer = InstallerResource.getInstaller(url);
+
             installSuiteCommon(Resource.getString
                                (ResourceConstants.AMS_GRA_INTLR_UPDATING),
                                name,
-                               installInfo.getDownloadUrl(),
+                               url,
                                MIDletSuiteStorage.getMidletSuiteStorageId(id),
                                name + Resource.getString
                                (ResourceConstants.AMS_GRA_INTLR_SUCC_UPDATED),
@@ -775,7 +780,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             a.setTimeout(Alert.FOREVER);
             a.setCommandListener(this);
             display.setCurrent(a, new Form(""));
-                // this Form is never displayed
+            // this Form is never displayed
         } finally {
             if (midletSuite != null) {
                 midletSuite.close();
