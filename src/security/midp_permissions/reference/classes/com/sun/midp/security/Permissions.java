@@ -139,6 +139,25 @@ public final class Permissions {
     private static PermissionGroup READ_USER_DATA_GROUP;
     private static PermissionGroup MULTIMEDIA_GROUP;
     private static PermissionGroup LOCAL_CONN_GROUP;
+
+    /** artificially constructed group for Push Interrupt Group. */
+    private static final PermissionGroup PUSH_INTERRUPT_GROUP =
+            new PermissionGroup(
+        Resource.getString(ResourceConstants.AMS_MGR_INTRUPT),
+        Resource.getString(ResourceConstants.AMS_MGR_INTRUPT_QUE),
+        Resource.getString(ResourceConstants.AMS_MGR_INTRUPT_QUE_DONT),
+        Resource.getString(ResourceConstants.PERMISSION_AUTO_START_DIALOG_TITLE),
+        Resource.getString(ResourceConstants.PERMISSION_AUTO_START_QUE),
+        null);
+    
+    /**
+     * Retuns artificially constructed group for Push Interrupt Group
+     * @return Push Interrupt Group
+     */
+    public static PermissionGroup getPushInterruptGroup() {
+         return PUSH_INTERRUPT_GROUP;
+    }
+
     /**
      * Get the name of a permission.
      *
@@ -366,8 +385,12 @@ public final class Permissions {
     public static void setPermissionGroup(byte[] current,
             byte pushInterruptLevel, PermissionGroup group, byte level)
             throws SecurityException {
-        checkForMutuallyExclusiveCombination(current, pushInterruptLevel,
-                                             group, level);
+
+        PermissionGroup[] pg = checkForMutuallyExclusiveCombination(current,
+                pushInterruptLevel, group, level);
+        if (pg != null) {
+            throw new SecurityException(createMutuallyExclusiveErrorMessage(pg[0], pg[1]));
+        }
 
         for (int i = 0; i < permissionSpecs.length; i++) {
             if (permissionSpecs[i].group == group) {
@@ -481,6 +504,40 @@ public final class Permissions {
     }
 
     /**
+     * Check to see if a given push interrupt level would produce a mutually
+     * exclusive combination for the current security policy. If so, throw
+     * an exception.
+     * <p>
+     * This is a policy dependent function for permission grouping.</p>
+     *
+     * The mutually combination is the push interrupt level set to Blanket and
+     * Net Access set to Blanket.
+     *
+     * @param current current permission levels
+     * @param pushInterruptLevel Push interrupt level
+     * @return mutually exclusive groups
+     */
+    public static PermissionGroup[] checkForMutuallyExclusiveCombination(byte[] current,
+            byte pushInterruptLevel) {
+
+        byte level;
+
+        if (pushInterruptLevel != BLANKET_GRANTED) {
+            return null;
+        }
+
+        level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
+        if (level == BLANKET_GRANTED || level == BLANKET) {
+            PermissionGroup[] ret = new PermissionGroup[2];
+            ret[0] = PUSH_INTERRUPT_GROUP;
+            ret[1] = NET_ACCESS_GROUP;
+            return ret;
+        }
+
+        return null;
+    }
+
+    /**
      * Set the level the permission if the permission is not set to NEVER
      * or ALLOW.
      *
@@ -497,8 +554,8 @@ public final class Permissions {
 
     /**
      * Check to see if a given level for a group would produce a mutually
-     * exclusive combination for the current security policy. If so, throw
-     * an exception.
+     * exclusive combination for the current security policy. If so,
+     * return mutually exclusive groups.
      * <p>
      * This is a policy dependent function for permission grouping.</p>
      *
@@ -515,112 +572,161 @@ public final class Permissions {
      * @param pushInterruptLevel Push interrupt level
      * @param group desired permission group
      * @param newLevel permission level
-     *
-     * @exception SecurityException if the change would produce a mutually
-     *                              exclusive combination
+     * @return mutually exclusive groups
      */
-    private static void checkForMutuallyExclusiveCombination(byte[] current,
+    public static PermissionGroup[] checkForMutuallyExclusiveCombination(byte[] current,
+            byte pushInterruptLevel, PermissionGroup group, byte newLevel) {
+
+        byte level;
+
+        if (newLevel != BLANKET_GRANTED) {
+            return null;
+        }
+
+        if (group == NET_ACCESS_GROUP) {
+            if (pushInterruptLevel == BLANKET_GRANTED ||
+                   pushInterruptLevel == BLANKET) {
+                PermissionGroup[] ret = new PermissionGroup[2];
+                ret[0] = NET_ACCESS_GROUP;
+                ret[1] = PUSH_INTERRUPT_GROUP;
+                return ret;
+            }
+
+            level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
+            if (level == BLANKET_GRANTED || level == BLANKET) {
+                PermissionGroup[] ret = new PermissionGroup[2];
+                ret[0] = NET_ACCESS_GROUP;
+                ret[1] = AUTO_INVOCATION_GROUP;
+                return ret;
+            }
+
+            return null;
+        }
+
+        if (group == AUTO_INVOCATION_GROUP) {
+            level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
+            if (level == BLANKET_GRANTED || level == BLANKET) {
+                PermissionGroup[] ret = new PermissionGroup[2];
+                ret[0] = AUTO_INVOCATION_GROUP;
+                ret[1] = NET_ACCESS_GROUP;
+                return ret;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Check to see if a given level for a group would produce a potentially
+     * dangerous combination for the current security policy. If so,
+     * return a warning message, else - null.
+     * <p>
+     * This is a policy dependent function for permission grouping.</p>
+     *
+     * The following combinations of permissions are potentially dangerous:
+     * <ul>
+     * <li> Any of Net Access, Messaging or Local Connectivity set to Blanket
+     *      in combination with any of Multimedia recording or Read User Data
+     *      Access set to Blanket</li>
+     * </ul>
+     *
+     * @param current current permission levels
+     * @param pushInterruptLevel Push interrupt level
+     * @param group desired permission group
+     * @param newLevel permission level
+     *
+     * @return warning message if the change would produce a potentially
+     *         dangerous combination or null otherwise
+     */
+    public static String getInsecureCombinationWarning(byte[] current,
             byte pushInterruptLevel, PermissionGroup group, byte newLevel)
             throws SecurityException {
 
         byte level;
 
         if (newLevel != BLANKET_GRANTED) {
-            return;
+            return null;
         }
 
         if (group == NET_ACCESS_GROUP) {
             if (pushInterruptLevel == BLANKET_GRANTED ||
                    pushInterruptLevel == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(
+                return createInsecureCombinationWarningMessage(
                         NET_ACCESS_GROUP.getName(),
-                        Resource.getString(ResourceConstants.AMS_MGR_INTRUPT)));
-            }
-
-            level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(NET_ACCESS_GROUP,
-                        AUTO_INVOCATION_GROUP));
+                        Resource.getString(ResourceConstants.AMS_MGR_INTRUPT));
             }
 
             level = getPermissionGroupLevel(current, READ_USER_DATA_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(NET_ACCESS_GROUP,
-                        READ_USER_DATA_GROUP));
+                return createInsecureCombinationWarningMessage(
+                        NET_ACCESS_GROUP, READ_USER_DATA_GROUP);
             }
 
             level = getPermissionGroupLevel(current, MULTIMEDIA_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(NET_ACCESS_GROUP,
-                        MULTIMEDIA_GROUP));
+                return createInsecureCombinationWarningMessage(
+                        NET_ACCESS_GROUP, MULTIMEDIA_GROUP);
             }
 
-            return;
+            level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
+            if (level == BLANKET_GRANTED || level == BLANKET) {
+                return createMutuallyExclusiveErrorMessage(NET_ACCESS_GROUP,
+                        AUTO_INVOCATION_GROUP);
+            }
         }
 
         if (group == LOCAL_CONN_GROUP) {
             level = getPermissionGroupLevel(current, READ_USER_DATA_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(LOCAL_CONN_GROUP,
-                        READ_USER_DATA_GROUP));
+                return createInsecureCombinationWarningMessage(
+                    LOCAL_CONN_GROUP,READ_USER_DATA_GROUP);
             }
 
 
             level = getPermissionGroupLevel(current, MULTIMEDIA_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(LOCAL_CONN_GROUP,
-                        MULTIMEDIA_GROUP));
-            }
-
-            return;
-        }
-
-        if (group == AUTO_INVOCATION_GROUP) {
-            level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(AUTO_INVOCATION_GROUP,
-                        NET_ACCESS_GROUP));
+                return createInsecureCombinationWarningMessage(
+                    LOCAL_CONN_GROUP, MULTIMEDIA_GROUP);
             }
         }
 
         if (group == READ_USER_DATA_GROUP) {
             level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(READ_USER_DATA_GROUP,
-                        NET_ACCESS_GROUP));
+                return createInsecureCombinationWarningMessage(
+                    READ_USER_DATA_GROUP, NET_ACCESS_GROUP);
             }
 
             level = getPermissionGroupLevel(current, LOCAL_CONN_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(READ_USER_DATA_GROUP,
-                        LOCAL_CONN_GROUP));
+                return createInsecureCombinationWarningMessage(
+                    READ_USER_DATA_GROUP, LOCAL_CONN_GROUP);
             }
         }
 
         if (group == MULTIMEDIA_GROUP) {
             level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(MULTIMEDIA_GROUP,
-                        NET_ACCESS_GROUP));
+                return createInsecureCombinationWarningMessage(
+                    MULTIMEDIA_GROUP, NET_ACCESS_GROUP);
             }
 
             level = getPermissionGroupLevel(current, LOCAL_CONN_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(MULTIMEDIA_GROUP,
-                        LOCAL_CONN_GROUP));
+                return createInsecureCombinationWarningMessage(
+                    MULTIMEDIA_GROUP, LOCAL_CONN_GROUP);
             }
         }
+        
+        if (group == AUTO_INVOCATION_GROUP) {
+            level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
+            if (level == BLANKET_GRANTED || level == BLANKET) {
+                return createMutuallyExclusiveErrorMessage(AUTO_INVOCATION_GROUP,
+                        NET_ACCESS_GROUP);
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -639,20 +745,38 @@ public final class Permissions {
     }
 
     /**
+     * Create a potentially dangerous permission setting warning message.
+     *
+     * @param groupToSet Group that is to be set
+     * @param blanketGroup The a mutually exclusive group that was set to
+     *                     blanket
+     *
+     * @return Translated error message with both group names in it
+     */
+    private static String createInsecureCombinationWarningMessage(
+            PermissionGroup groupToSet, PermissionGroup blanketGroup) {
+
+        return createInsecureCombinationWarningMessage(groupToSet.getName(),
+            blanketGroup.getName());
+    }
+
+    /**
      * Create a mutally exclusive permission setting error message.
      *
-     * @param nameId ID of the first group in the message
-     * @param otherNameId ID of the name of other group
+     * @param name name of the first group in the message
+     * @param otherName name of other group
      *
      * @return Translated error message with both group names in it
      */
     private static String createMutuallyExclusiveErrorMessage(
-            String nameId, String otherNameId) {
-        String[] values = {nameId, otherNameId};
+            String name, String otherName) {
+        String[] values = {name, otherName};
         return Resource.getString(
             ResourceConstants.PERMISSION_MUTUALLY_EXCLUSIVE_ERROR_MESSAGE,
                 values);
     }
+
+
 
     private static void init() {
         try {
@@ -774,6 +898,26 @@ public final class Permissions {
     static native byte      getMaxValue(String domain, String group);
     static native byte      getDefaultValue(String domain, String group);
     static native void      loadingFinished();
+
+
+    /**
+     * Create a potentially dangerous permission setting warning message.
+     *
+     * @param name name of the first group in the message
+     * @param otherName name of other group
+     *
+     * @return Translated error message with both group names in it
+     */
+    private static String createInsecureCombinationWarningMessage(
+            String name, String otherName) {
+
+        String[] values = {name, otherName};
+
+        return Resource.getString(
+            ResourceConstants.PERMISSION_SECURITY_WARNING_ERROR_MESSAGE,
+                values);
+    }
+
 }
 
 /** Specifies a permission name and its group. */
