@@ -29,6 +29,7 @@
 #include <javacall_memory.h>
 #include <pcsl_memory.h>
 #include <pcsl_file.h>
+#include <pcsl_network.h>
 #include <pcsl_print.h>
 #include <javacall_logging.h>
 #include <stdio.h>
@@ -43,7 +44,9 @@
  */
 int
 pcsl_file_init() {
+		
     int ret = javacall_file_init();
+    pcsl_network_init();
 
 #ifdef PCSL_DEBUG
     if (ret != JAVACALL_OK)
