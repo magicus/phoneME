@@ -193,6 +193,7 @@ LABEL(_objectHashCodeSlowAcquireMicrolock)
         str     MICROLOCK, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
         str     OBJ, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4]
         str     lr, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+8]
+        mov     r0, MICROLOCK
         CALL_VM_FUNCTION(CVMmicrolockLockImpl)
         ldr     MICROLOCK, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
         ldr     OBJ, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4]
@@ -400,6 +401,7 @@ _objectHashCodeSlowAcquireMicrolock
         str     MICROLOCK, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
         str     OBJ, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4]
         str     lr, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+8]
+        mov     r0, MICROLOCK
         CALL_VM_FUNCTION(CVMmicrolockLockImpl)
         ldr     MICROLOCK, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
         ldr     OBJ, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4]
