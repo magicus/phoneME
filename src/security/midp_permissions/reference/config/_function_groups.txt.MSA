@@ -19,12 +19,19 @@ call_control:
  Is it OK to open a restricted network connection?,
  %1 wants to open a restricted network connection.\n\nIs it OK to open a restricted network connection?
 
-messaging:
+messaging_send:
  Messaging,
  How often should %1 ask for permission before sending or receiving text messages?,
  Don't send or receive messages and don't ask,
  Is it OK to Send Messages?,
  %1 wants to send text message(s). This could result in charges.%3 message(s) will be sent to %2.\n\nIs it OK to send messages?
+
+messaging_receive:
+ Messaging,
+ How often should %1 ask for permission before sending or receiving text messages?,
+ Don't send or receive messages and don't ask,
+ Is it OK to  %3  Messages?,
+ %1 wants to  %3  message(s). This could result in charges.%3 message(s) will be sent to %3.\n\nIs it OK to send messages?
 
 group: restricted_messaging
  Secured Messaging,
