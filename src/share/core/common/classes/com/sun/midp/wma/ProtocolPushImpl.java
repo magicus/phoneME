@@ -140,7 +140,7 @@ public class ProtocolPushImpl extends ProtocolPush {
              */
             try {
                 midletSuite.checkForPermission(WMAPermission.SMS_SERVER.getName(),
-                   connection);
+                   connection, WMAPermission.SMS_SERVER.getExtraValue());
             } catch (InterruptedException ie) {
                 throw new InterruptedIOException(
                     "Interrupted while trying to ask the user permission");
@@ -155,7 +155,7 @@ public class ProtocolPushImpl extends ProtocolPush {
 
             try {
                 midletSuite.checkForPermission(WMAPermission.CBS_SERVER.getName(),
-                   connection);
+                   connection, WMAPermission.CBS_SERVER.getExtraValue());
             } catch (InterruptedException ie) {
                 throw new InterruptedIOException(
                     "Interrupted while trying to ask the user permission");
