@@ -30,7 +30,7 @@ package com.sun.j2me.security;
 public class WMAPermission extends Permission {
 
     static public WMAPermission SMS_SERVER = new WMAPermission(
-        "javax.microedition.io.Connector.sms", "sms:open");
+        "javax.microedition.io.Connector.sms", "sms:open", "Communicate via text");
 
     static public WMAPermission getSmsSendPermission(String host, int numSeg) {
         return new WMAPermission(
@@ -38,18 +38,18 @@ public class WMAPermission extends Permission {
     }
 
     static public WMAPermission SMS_RECEIVE = new WMAPermission(
-        "javax.wireless.messaging.sms.receive", "sms:receive");
+        "javax.wireless.messaging.sms.receive", "sms:receive", "receive text");
 
 
     static public WMAPermission CBS_SERVER = new WMAPermission(
-        "javax.microedition.io.Connector.cbs", "cbs:open");
+        "javax.microedition.io.Connector.cbs", "cbs:open", "Communicate via");
 
     static public WMAPermission CBS_RECEIVE = new WMAPermission(
-        "javax.wireless.messaging.cbs.receive", "cbs:receive");
+        "javax.wireless.messaging.cbs.receive", "cbs:receive", "");
 
 
     static public WMAPermission MMS_SERVER = new WMAPermission(
-        "javax.microedition.io.Connector.mms", "mms:open");
+        "javax.microedition.io.Connector.mms", "mms:open", "Communicate via multimedia");
 
     static public WMAPermission getMmsSendPermission(String addresses, String numSeg) {
         return new WMAPermission(
@@ -57,7 +57,7 @@ public class WMAPermission extends Permission {
     }
 
     static public WMAPermission MMS_RECEIVE = new WMAPermission(
-        "javax.wireless.messaging.mms.receive", "mms:receive");
+        "javax.wireless.messaging.mms.receive", "mms:receive", "receive multimedia");
 
     public WMAPermission(String name, String resource) {
         super(name, resource);
