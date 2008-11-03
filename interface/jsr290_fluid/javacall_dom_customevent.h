@@ -67,6 +67,8 @@ extern "C" {
  *   value may be <code>NULL</code>.   
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_customevent_init_custom_event_ns_finish function to complete the 
  *             operation,

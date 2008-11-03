@@ -63,7 +63,8 @@ extern "C" {
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_processinginstruction_get_target_finish function to complete the 
@@ -122,7 +123,8 @@ javacall_dom_processinginstruction_get_target_finish(void *context,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_processinginstruction_get_data_finish function to complete the 
@@ -176,6 +178,8 @@ javacall_dom_processinginstruction_get_data_finish(void *context,
  * @param data character data to add to the node, may not be NULL
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_processinginstruction_set_data_finish function to complete the 

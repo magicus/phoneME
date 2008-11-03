@@ -62,7 +62,8 @@ extern "C" {
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_attr_get_name_finish function to complete the 
@@ -135,6 +136,8 @@ javacall_dom_attr_get_name_finish(void *context,
  * @param ret_value <code>true</code> if this attribute was explicitly specified, otherwise <code>false</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_attr_get_specified_finish function to complete the 
  *             operation,
@@ -213,7 +216,8 @@ javacall_dom_attr_get_specified_finish(void *context,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_attr_get_value_finish function to complete the 
@@ -283,6 +287,8 @@ javacall_dom_attr_get_value_finish(void *context,
  * @param value a String containing the value of this attribute
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_attr_set_value_finish function to complete the 
@@ -332,6 +338,8 @@ javacall_dom_attr_set_value_finish(void *context);
  *   the <code>Element</code> node this attribute is attached to, or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_attr_get_owner_element_finish function to complete the 
  *             operation,
@@ -386,6 +394,8 @@ javacall_dom_attr_get_owner_element_finish(void *context,
  * @param ret_value <code>true</code> if the attribute is of type ID, otherwise <code>false</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_attr_is_id_finish function to complete the 
  *             operation,
