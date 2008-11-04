@@ -121,10 +121,6 @@ public:
   void write_as_location(PacketOutputStream *out);
 
 #if ENABLE_ISOLATES
-  int task_id() {
-    return _task_id;
-  }
-
   void set_task_id(int id) {
     _task_id = id;
   }
