@@ -46,111 +46,320 @@ extern "C" {
  */
 
 /**
- * Returns  The horizontal coordinate at which the event occurred relative to the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The horizontal coordinate at which the event occurred relative to the 
  * origin of the screen coordinate system. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_screen_x_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mouseevent_get_screen_x(javacall_handle handle,
-                                     /* OUT */ javacall_int32* ret_value);
+javacall_dom_mouseevent_get_screen_x_start(javacall_handle handle,
+                                           javacall_int32 invocation_id,
+                                           void **context,
+                                           /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns  The vertical coordinate at which the event occurred relative to the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The horizontal coordinate at which the event occurred relative to the 
+ * origin of the screen coordinate system. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_screen_x_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mouseevent_get_screen_x_finish(void *context,
+                                            /* OUT */ javacall_int32* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The vertical coordinate at which the event occurred relative to the 
  * origin of the screen coordinate system. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_screen_y_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mouseevent_get_screen_y(javacall_handle handle,
-                                     /* OUT */ javacall_int32* ret_value);
+javacall_dom_mouseevent_get_screen_y_start(javacall_handle handle,
+                                           javacall_int32 invocation_id,
+                                           void **context,
+                                           /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns  The horizontal coordinate at which the event occurred relative to the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The vertical coordinate at which the event occurred relative to the 
+ * origin of the screen coordinate system. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_screen_y_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mouseevent_get_screen_y_finish(void *context,
+                                            /* OUT */ javacall_int32* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The horizontal coordinate at which the event occurred relative to the 
  * DOM implementation's client area. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_client_x_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mouseevent_get_client_x(javacall_handle handle,
-                                     /* OUT */ javacall_int32* ret_value);
+javacall_dom_mouseevent_get_client_x_start(javacall_handle handle,
+                                           javacall_int32 invocation_id,
+                                           void **context,
+                                           /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns  The vertical coordinate at which the event occurred relative to the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The horizontal coordinate at which the event occurred relative to the 
+ * DOM implementation's client area. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_client_x_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mouseevent_get_client_x_finish(void *context,
+                                            /* OUT */ javacall_int32* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The vertical coordinate at which the event occurred relative to the 
  * DOM implementation's client area. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_client_y_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mouseevent_get_client_y(javacall_handle handle,
-                                     /* OUT */ javacall_int32* ret_value);
+javacall_dom_mouseevent_get_client_y_start(javacall_handle handle,
+                                           javacall_int32 invocation_id,
+                                           void **context,
+                                           /* OUT */ javacall_int32* ret_value);
 
 /**
- * Returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The vertical coordinate at which the event occurred relative to the 
+ * DOM implementation's client area. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_client_y_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mouseevent_get_client_y_finish(void *context,
+                                            /* OUT */ javacall_int32* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_ctrl_key_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mouseevent_get_ctrl_key(javacall_handle handle,
-                                     /* OUT */ javacall_bool* ret_value);
+javacall_dom_mouseevent_get_ctrl_key_start(javacall_handle handle,
+                                           javacall_int32 invocation_id,
+                                           void **context,
+                                           /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  <code>true</code> if the shift (Shift) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the control (Ctrl) key modifier is activated. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_ctrl_key_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mouseevent_get_ctrl_key_finish(void *context,
+                                            /* OUT */ javacall_bool* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the shift (Shift) key modifier is activated. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_shift_key_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mouseevent_get_shift_key(javacall_handle handle,
-                                      /* OUT */ javacall_bool* ret_value);
+javacall_dom_mouseevent_get_shift_key_start(javacall_handle handle,
+                                            javacall_int32 invocation_id,
+                                            void **context,
+                                            /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  <code>true</code> if the alt (alternative) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the shift (Shift) key modifier is activated. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_shift_key_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mouseevent_get_shift_key_finish(void *context,
+                                             /* OUT */ javacall_bool* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the alt (alternative) key modifier is activated. 
  * <p ><b>Note:</b>  The Option key modifier on Macintosh systems must be 
  * represented using this key modifier. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_alt_key_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mouseevent_get_alt_key(javacall_handle handle,
-                                    /* OUT */ javacall_bool* ret_value);
+javacall_dom_mouseevent_get_alt_key_start(javacall_handle handle,
+                                          javacall_int32 invocation_id,
+                                          void **context,
+                                          /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  <code>true</code> if the meta (Meta) key modifier is activated. 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the alt (alternative) key modifier is activated. 
+ * <p ><b>Note:</b>  The Option key modifier on Macintosh systems must be 
+ * represented using this key modifier. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_alt_key_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mouseevent_get_alt_key_finish(void *context,
+                                           /* OUT */ javacall_bool* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the meta (Meta) key modifier is activated. 
  * <p ><b>Note:</b>  The Command key modifier on Macintosh system must be 
  * represented using this meta key. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_meta_key_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mouseevent_get_meta_key(javacall_handle handle,
-                                     /* OUT */ javacall_bool* ret_value);
+javacall_dom_mouseevent_get_meta_key_start(javacall_handle handle,
+                                           javacall_int32 invocation_id,
+                                           void **context,
+                                           /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  During mouse events caused by the depression or release of a mouse 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  <code>true</code> if the meta (Meta) key modifier is activated. 
+ * <p ><b>Note:</b>  The Command key modifier on Macintosh system must be 
+ * represented using this meta key. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_meta_key_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mouseevent_get_meta_key_finish(void *context,
+                                            /* OUT */ javacall_bool* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  During mouse events caused by the depression or release of a mouse 
  * button, <code>button</code> is used to indicate which mouse button 
  * changed state. <code>0</code> indicates the normal button of the 
  * mouse (in general on the left or the one button on Macintosh mice, 
@@ -163,33 +372,97 @@ javacall_dom_mouseevent_get_meta_key(javacall_handle handle,
  * represent such buttons. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_button_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mouseevent_get_button(javacall_handle handle,
-                                   /* OUT */ javacall_int16* ret_value);
+javacall_dom_mouseevent_get_button_start(javacall_handle handle,
+                                         javacall_int32 invocation_id,
+                                         void **context,
+                                         /* OUT */ javacall_int16* ret_value);
 
 /**
- * Returns  Used to identify a secondary <code>EventTarget</code> related to a UI 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  During mouse events caused by the depression or release of a mouse 
+ * button, <code>button</code> is used to indicate which mouse button 
+ * changed state. <code>0</code> indicates the normal button of the 
+ * mouse (in general on the left or the one button on Macintosh mice, 
+ * used to activate a button or select text). <code>2</code> indicates 
+ * the contextual property (in general on the right, used to display a 
+ * context menu) button of the mouse if present. <code>1</code> 
+ * indicates the extra (in general in the middle and often combined with 
+ * the mouse wheel) button. Some mice may provide or simulate more 
+ * buttons, and values higher than <code>2</code> can be used to 
+ * represent such buttons. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_button_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mouseevent_get_button_finish(void *context,
+                                          /* OUT */ javacall_int16* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  Used to identify a secondary <code>EventTarget</code> related to a UI 
  * event, depending on the type of event. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_related_target_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mouseevent_get_related_target(javacall_handle handle,
-                                           /* OUT */ javacall_handle* ret_value);
+javacall_dom_mouseevent_get_related_target_start(javacall_handle handle,
+                                                 javacall_int32 invocation_id,
+                                                 void **context,
+                                                 /* OUT */ javacall_handle* ret_value);
 
 /**
- *  The <code>initMouseEvent</code> method is used to initialize the value 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  Used to identify a secondary <code>EventTarget</code> related to a UI 
+ * event, depending on the type of event. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_get_related_target_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mouseevent_get_related_target_finish(void *context,
+                                                  /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initMouseEvent</code> method is used to initialize the value 
  * of a <code>MouseEvent</code> object and has the same behavior as 
  * <code>UIEvent.initUIEvent()</code>. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * @param type_arg  Refer to the <code>UIEvent.initUIEvent()</code> method 
  *   for a description of this parameter. 
  * @param can_bubble_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
@@ -213,31 +486,59 @@ javacall_dom_mouseevent_get_related_target(javacall_handle handle,
  *   <code>NULL</code>.   
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_init_mouse_event_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mouseevent_init_mouse_event(javacall_handle handle,
-                                         javacall_const_utf16_string type_arg,
-                                         javacall_bool can_bubble_arg,
-                                         javacall_bool cancelable_arg,
-                                         javacall_int32 detail_arg,
-                                         javacall_int32 screen_x_arg,
-                                         javacall_int32 screen_y_arg,
-                                         javacall_int32 client_x_arg,
-                                         javacall_int32 client_y_arg,
-                                         javacall_bool ctrl_key_arg,
-                                         javacall_bool alt_key_arg,
-                                         javacall_bool shift_key_arg,
-                                         javacall_bool meta_key_arg,
-                                         javacall_int16 button_arg,
-                                         javacall_handle related_target_arg);
+javacall_dom_mouseevent_init_mouse_event_start(javacall_handle handle,
+                                               javacall_int32 invocation_id,
+                                               void **context,
+                                               javacall_const_utf16_string type_arg,
+                                               javacall_bool can_bubble_arg,
+                                               javacall_bool cancelable_arg,
+                                               javacall_int32 detail_arg,
+                                               javacall_int32 screen_x_arg,
+                                               javacall_int32 screen_y_arg,
+                                               javacall_int32 client_x_arg,
+                                               javacall_int32 client_y_arg,
+                                               javacall_bool ctrl_key_arg,
+                                               javacall_bool alt_key_arg,
+                                               javacall_bool shift_key_arg,
+                                               javacall_bool meta_key_arg,
+                                               javacall_int16 button_arg,
+                                               javacall_handle related_target_arg);
 
 /**
- *  The <code>initMouseEventNS</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initMouseEvent</code> method is used to initialize the value 
+ * of a <code>MouseEvent</code> object and has the same behavior as 
+ * <code>UIEvent.initUIEvent()</code>. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ *   <code>MouseEvent.relatedTarget</code>. This value may be 
+ *   <code>NULL</code>.   
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_init_mouse_event_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mouseevent_init_mouse_event_finish(void *context);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initMouseEventNS</code> method is used to initialize the 
  * value of a <code>MouseEvent</code> object and has the same behavior 
  * as <code>UIEvent.initUIEventNS()</code>. 
  * 
  * @param handle Pointer to the object representing this mouseevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * @param namespace_uri  Refer to the <code>UIEvent.initUIEventNS()</code> 
  *   method for a description of this parameter. 
  * @param type_arg  Refer to the <code>UIEvent.initUIEventNS()</code> 
@@ -274,22 +575,49 @@ javacall_dom_mouseevent_init_mouse_event(javacall_handle handle,
  *
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_init_mouse_event_ns_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mouseevent_init_mouse_event_ns(javacall_handle handle,
-                                            javacall_const_utf16_string namespace_uri,
-                                            javacall_const_utf16_string type_arg,
-                                            javacall_bool can_bubble_arg,
-                                            javacall_bool cancelable_arg,
-                                            javacall_int32 detail_arg,
-                                            javacall_int32 screen_x_arg,
-                                            javacall_int32 screen_y_arg,
-                                            javacall_int32 client_x_arg,
-                                            javacall_int32 client_y_arg,
-                                            javacall_int16 button_arg,
-                                            javacall_handle related_target_arg,
-                                            javacall_const_utf16_string modifiers_list);
+javacall_dom_mouseevent_init_mouse_event_ns_start(javacall_handle handle,
+                                                  javacall_int32 invocation_id,
+                                                  void **context,
+                                                  javacall_const_utf16_string namespace_uri,
+                                                  javacall_const_utf16_string type_arg,
+                                                  javacall_bool can_bubble_arg,
+                                                  javacall_bool cancelable_arg,
+                                                  javacall_int32 detail_arg,
+                                                  javacall_int32 screen_x_arg,
+                                                  javacall_int32 screen_y_arg,
+                                                  javacall_int32 client_x_arg,
+                                                  javacall_int32 client_y_arg,
+                                                  javacall_int16 button_arg,
+                                                  javacall_handle related_target_arg,
+                                                  javacall_const_utf16_string modifiers_list);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR  The <code>initMouseEventNS</code> method is used to initialize the 
+ * value of a <code>MouseEvent</code> object and has the same behavior 
+ * as <code>UIEvent.initUIEventNS()</code>. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ *   <a href='http://www.w3.org/TR/2004/REC-xml-20040204/#NT-S'>
+ *   white space</a> separated list of modifier key identifiers to be 
+ *   activated on this object. As an example, <code>"Control Alt"</code> 
+ *   will activated the control and alt modifiers.
+ *
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mouseevent_init_mouse_event_ns_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mouseevent_init_mouse_event_ns_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

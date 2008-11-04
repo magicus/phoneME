@@ -46,50 +46,134 @@ extern "C" {
  */
 
 /**
- * Returns represents the current contents of the corresponding form control, in 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns represents the current contents of the corresponding form control, in 
  * an interactive user agent. Changing this attribute changes the 
  * contents of the form control, but does not change the contents of the 
  * element. If the entirety of the data can not fit into a single 
  * <code>DOMString</code>, the implementation may truncate the data.
  * 
  * @param handle Pointer to the object representing this htmltextareaelement.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in ret_value_len,
+ *             specified in ret_value_len,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmltextareaelement_get_value_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmltextareaelement_get_value(javacall_handle handle,
-                                           /* OUT */ javacall_utf16_string ret_value,
-                                           /* INOUT */ javacall_uint32* ret_value_len);
+javacall_dom_htmltextareaelement_get_value_start(javacall_handle handle,
+                                                 javacall_int32 invocation_id,
+                                                 void **context,
+                                                 /* OUT */ javacall_utf16_string ret_value,
+                                                 /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Select the contents of the <code>TEXTAREA</code>.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns represents the current contents of the corresponding form control, in 
+ * an interactive user agent. Changing this attribute changes the 
+ * contents of the form control, but does not change the contents of the 
+ * element. If the entirety of the data can not fit into a single 
+ * <code>DOMString</code>, the implementation may truncate the data.
  * 
- * @param handle Pointer to the object representing this htmltextareaelement.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *             specified in ret_value_len,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmltextareaelement_get_value_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmltextareaelement_select(javacall_handle handle);
+javacall_dom_htmltextareaelement_get_value_finish(void *context,
+                                                  /* OUT */ javacall_utf16_string ret_value,
+                                                  /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Sets represents the current contents of the corresponding form control, in 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR select the contents of the <code>TEXTAREA</code>.
+ * 
+ * @param handle Pointer to the object representing this htmltextareaelement.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmltextareaelement_select_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmltextareaelement_select_start(javacall_handle handle,
+                                              javacall_int32 invocation_id,
+                                              void **context);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR select the contents of the <code>TEXTAREA</code>.
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmltextareaelement_select_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmltextareaelement_select_finish(void *context);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets represents the current contents of the corresponding form control, in 
  * an interactive user agent. Changing this attribute changes the 
  * contents of the form control, but does not change the contents of the 
  * element. If the entirety of the data can not fit into a single 
  * <code>DOMString</code>, the implementation may truncate the data.
  * 
  * @param handle Pointer to the object representing this htmltextareaelement.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmltextareaelement_set_value_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmltextareaelement_set_value(javacall_handle handle,
-                                           javacall_const_utf16_string value);
+javacall_dom_htmltextareaelement_set_value_start(javacall_handle handle,
+                                                 javacall_int32 invocation_id,
+                                                 void **context,
+                                                 javacall_const_utf16_string value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets represents the current contents of the corresponding form control, in 
+ * an interactive user agent. Changing this attribute changes the 
+ * contents of the form control, but does not change the contents of the 
+ * element. If the entirety of the data can not fit into a single 
+ * <code>DOMString</code>, the implementation may truncate the data.
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmltextareaelement_set_value_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmltextareaelement_set_value_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

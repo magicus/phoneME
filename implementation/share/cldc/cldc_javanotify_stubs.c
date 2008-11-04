@@ -81,7 +81,9 @@ void javanotify_switch_to_ams(void) {}
 
 void javanotify_key_event(javacall_key key, javacall_keypress_type type) {}
 
-void javanotify_rotation(void) {}
+void javanotify_rotation(int hardwareId) {}
+
+void javanotify_display_device_state_changed(int hardwareId, javacall_lcd_display_device_state state) {}
 
 void javanotify_pen_event(int x, int y, javacall_penevent_type type) {}
 

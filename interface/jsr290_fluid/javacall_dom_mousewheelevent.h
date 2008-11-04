@@ -46,7 +46,8 @@ extern "C" {
  */
 
 /**
- * Returns indicates the number of "clicks" the wheel has been rotated. A positive 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns indicates the number of "clicks" the wheel has been rotated. A positive 
  * value indicates that the wheel has been rotated away from the user 
  * (or in a right-hand manner on horizontally aligned devices) and a 
  * negative value indicates that the wheel has been rotated towards the 
@@ -57,16 +58,49 @@ extern "C" {
  * becomes the smallest measurable amount of rotation.</p>
  * 
  * @param handle Pointer to the object representing this mousewheelevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mousewheelevent_get_wheel_delta_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mousewheelevent_get_wheel_delta(javacall_handle handle,
-                                             /* OUT */ javacall_int32* ret_value);
+javacall_dom_mousewheelevent_get_wheel_delta_start(javacall_handle handle,
+                                                   javacall_int32 invocation_id,
+                                                   void **context,
+                                                   /* OUT */ javacall_int32* ret_value);
 
 /**
- * The <code>initMouseWheelEventNS</code> method is used to initialize the 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns indicates the number of "clicks" the wheel has been rotated. A positive 
+ * value indicates that the wheel has been rotated away from the user 
+ * (or in a right-hand manner on horizontally aligned devices) and a 
+ * negative value indicates that the wheel has been rotated towards the 
+ * user (or in a left-hand manner on horizontally aligned devices).
+ *
+ * <p>A "click" is defined to be a unit of rotation. On some devices this 
+ * is a finite physical step. On devices with smooth rotation, a "click" 
+ * becomes the smallest measurable amount of rotation.</p>
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mousewheelevent_get_wheel_delta_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mousewheelevent_get_wheel_delta_finish(void *context,
+                                                    /* OUT */ javacall_int32* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the <code>initMouseWheelEventNS</code> method is used to initialize the 
  * value of a <code>MouseWheelEvent</code> object and has the same
  * behavior as <code>Event.initEventNS()</code>. 
  *
@@ -77,6 +111,9 @@ javacall_dom_mousewheelevent_get_wheel_delta(javacall_handle handle,
  *
  * 
  * @param handle Pointer to the object representing this mousewheelevent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * @param namespace_uri_arg  Refer to the <code>Event.initEventNS()</code> 
  *   method for a description of this parameter. 
  * @param type_arg  Refer to the <code>Event.initEventNS()</code> method 
@@ -108,23 +145,54 @@ javacall_dom_mousewheelevent_get_wheel_delta(javacall_handle handle,
  *
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mousewheelevent_init_mouse_wheel_event_ns(javacall_handle handle,
-                                                       javacall_const_utf16_string namespace_uri_arg,
-                                                       javacall_const_utf16_string type_arg,
-                                                       javacall_bool can_bubble_arg,
-                                                       javacall_bool cancelable_arg,
-                                                       javacall_int32 detail_arg,
-                                                       javacall_int32 screen_x_arg,
-                                                       javacall_int32 screen_y_arg,
-                                                       javacall_int32 client_x_arg,
-                                                       javacall_int32 client_y_arg,
-                                                       javacall_int16 button_arg,
-                                                       javacall_handle related_target_arg,
-                                                       javacall_const_utf16_string modifiers_list_arg,
-                                                       javacall_int32 wheel_delta_arg);
+javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_start(javacall_handle handle,
+                                                             javacall_int32 invocation_id,
+                                                             void **context,
+                                                             javacall_const_utf16_string namespace_uri_arg,
+                                                             javacall_const_utf16_string type_arg,
+                                                             javacall_bool can_bubble_arg,
+                                                             javacall_bool cancelable_arg,
+                                                             javacall_int32 detail_arg,
+                                                             javacall_int32 screen_x_arg,
+                                                             javacall_int32 screen_y_arg,
+                                                             javacall_int32 client_x_arg,
+                                                             javacall_int32 client_y_arg,
+                                                             javacall_int16 button_arg,
+                                                             javacall_handle related_target_arg,
+                                                             javacall_const_utf16_string modifiers_list_arg,
+                                                             javacall_int32 wheel_delta_arg);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR the <code>initMouseWheelEventNS</code> method is used to initialize the 
+ * value of a <code>MouseWheelEvent</code> object and has the same
+ * behavior as <code>Event.initEventNS()</code>. 
+ *
+ * For <code>mousewheel</code>, <code>MouseEvent.getRelatedTarget</code>
+ * must indicate the element over which the pointer is located, or
+ * <code>NULL</code> if there is no such element (in the case where the
+ * device does not have a pointer, but does have a wheel). 
+ *
+ * 
+ * @param context The context saved during asynchronous operation.
+ *   (positive means rotated away from the user, negative means rotated
+ *   towards the user). The default value of the wheelDelta attribute is 0. 
+ *
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times

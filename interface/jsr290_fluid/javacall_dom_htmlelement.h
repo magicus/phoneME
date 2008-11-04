@@ -46,62 +46,170 @@ extern "C" {
  */
 
 /**
- * Returns the class attribute of the element. This attribute has been renamed due 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the class attribute of the element. This attribute has been renamed due 
  * to conflicts with the "class" keyword exposed by many languages. See 
  * the class attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlelement.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in ret_value_len,
+ *             specified in ret_value_len,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlelement_get_class_name_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlelement_get_class_name(javacall_handle handle,
-                                        /* OUT */ javacall_utf16_string ret_value,
-                                        /* INOUT */ javacall_uint32* ret_value_len);
+javacall_dom_htmlelement_get_class_name_start(javacall_handle handle,
+                                              javacall_int32 invocation_id,
+                                              void **context,
+                                              /* OUT */ javacall_utf16_string ret_value,
+                                              /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Returns the element's identifier. See the id attribute definition in HTML 4.01.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the class attribute of the element. This attribute has been renamed due 
+ * to conflicts with the "class" keyword exposed by many languages. See 
+ * the class attribute definition in HTML 4.01.
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *             specified in ret_value_len,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlelement_get_class_name_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlelement_get_class_name_finish(void *context,
+                                               /* OUT */ javacall_utf16_string ret_value,
+                                               /* INOUT */ javacall_uint32* ret_value_len);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the element's identifier. See the id attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlelement.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in ret_value_len,
+ *             specified in ret_value_len,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlelement_get_id_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlelement_get_id(javacall_handle handle,
-                                /* OUT */ javacall_utf16_string ret_value,
-                                /* INOUT */ javacall_uint32* ret_value_len);
+javacall_dom_htmlelement_get_id_start(javacall_handle handle,
+                                      javacall_int32 invocation_id,
+                                      void **context,
+                                      /* OUT */ javacall_utf16_string ret_value,
+                                      /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
- * Sets the class attribute of the element. This attribute has been renamed due 
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the element's identifier. See the id attribute definition in HTML 4.01.
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *             specified in ret_value_len,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlelement_get_id_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlelement_get_id_finish(void *context,
+                                       /* OUT */ javacall_utf16_string ret_value,
+                                       /* INOUT */ javacall_uint32* ret_value_len);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the class attribute of the element. This attribute has been renamed due 
  * to conflicts with the "class" keyword exposed by many languages. See 
  * the class attribute definition in HTML 4.01.
  * 
  * @param handle Pointer to the object representing this htmlelement.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlelement_set_class_name_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlelement_set_class_name(javacall_handle handle,
-                                        javacall_const_utf16_string class_name);
+javacall_dom_htmlelement_set_class_name_start(javacall_handle handle,
+                                              javacall_int32 invocation_id,
+                                              void **context,
+                                              javacall_const_utf16_string class_name);
 
 /**
- * Sets the element's identifier. See the id attribute definition in HTML 4.01.
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the class attribute of the element. This attribute has been renamed due 
+ * to conflicts with the "class" keyword exposed by many languages. See 
+ * the class attribute definition in HTML 4.01.
  * 
- * @param handle Pointer to the object representing this htmlelement.
+ * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlelement_set_class_name_finish function to complete the 
+ *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_htmlelement_set_id(javacall_handle handle,
-                                javacall_const_utf16_string id);
+javacall_dom_htmlelement_set_class_name_finish(void *context);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the element's identifier. See the id attribute definition in HTML 4.01.
+ * 
+ * @param handle Pointer to the object representing this htmlelement.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlelement_set_id_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlelement_set_id_start(javacall_handle handle,
+                                      javacall_int32 invocation_id,
+                                      void **context,
+                                      javacall_const_utf16_string id);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets the element's identifier. See the id attribute definition in HTML 4.01.
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlelement_set_id_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlelement_set_id_finish(void *context);
 
 /** 
  * Decrements ref counter of the native object specified number of times
