@@ -159,7 +159,7 @@ public:
 
   static void process_suspend_policy(jbyte policy, Thread *thread, 
                                      jboolean forceWait) {
-    process_suspend_policy(policy, thread, -1, forceWait);
+    process_suspend_policy(policy, thread, thread->task_id(), forceWait);
   }
   static void process_suspend_policy(jbyte policy, int task_id, 
                                      jboolean forceWait) {

@@ -1499,14 +1499,7 @@ void VMEvent::send_event(DebuggerEvent *d_event) {
   }
   out.send_packet();
 
-  switch(suspend_policy) {
-    case JDWP_SuspendPolicy_ALL:
-      JavaDebugger::process_suspend_policy(suspend_policy, d_event->task_id(), false);
-      break;
-    default:
-      JavaDebugger::process_suspend_policy(suspend_policy, &thread, false);
-      break;
-  }
+  JavaDebugger::process_suspend_policy(suspend_policy, &thread, false);
 }
 
 
