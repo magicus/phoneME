@@ -32,7 +32,7 @@
  * @brief Javacall os specific macros
  */
 
-#include "AEEAppGen.h"
+//#include "AEEAppGen.h"
 #include "AEEHeap.h"
 
 
