@@ -2036,6 +2036,17 @@ public abstract class Installer {
     }
 
     /**
+     * Sets a flag which indicates whether to install suites as temporary or
+     * not.
+     * 
+     * @param temporary true if the suites should be installed as temporary, 
+     *      false otherwise
+     */
+    public void setInstallTemporarySuites(final boolean temporary) {
+        info.temporary = temporary;
+    }
+    
+    /**
      * Checks to see that if any properties that are both in the JAD and
      * JAR manifest are not equal and throw a exception and notify the
      * server when a mismatch is found. Only used for trusted suites.
