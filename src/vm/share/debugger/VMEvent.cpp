@@ -1498,7 +1498,6 @@ void VMEvent::send_event(DebuggerEvent *d_event) {
     ep = ep().send_next();
   }
   out.send_packet();
-
   JavaDebugger::process_suspend_policy(suspend_policy, &thread, false);
 }
 
