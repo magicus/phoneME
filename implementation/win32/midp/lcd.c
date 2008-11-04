@@ -239,7 +239,13 @@ javacall_result javacall_lcd_finalize(void) {
 /**
  * Get screen raster pointer
  *
- * @param hardwareId unique id of hardware screen
+ * @param screenType can be any of the following types:
+ * <ul>
+ *   <li> <code>JAVACALL_LCD_SCREEN_PRIMARY</code> -
+ *        return primary screen size information </li>
+ *   <li> <code>JAVACALL_LCD_SCREEN_EXTERNAL</code> -
+ *        return external screen size information if supported </li>
+ * </ul>
  * @param screenWidth output paramter to hold width of screen
  * @param screenHeight output paramter to hold height of screen
  * @param colorEncoding output paramenter to hold color encoding,
@@ -254,11 +260,10 @@ javacall_result javacall_lcd_finalize(void) {
  *         ( screenWidth * screenHeight )
  *         or <code>NULL</code> in case of failure
  */
-javacall_pixel* javacall_lcd_get_screen(int hardwareId,
+javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
                                         int* screenWidth,
                                         int* screenHeight,
                                         javacall_lcd_color_encoding_type* colorEncoding) {
-  (void)hardwareId;
     if(JAVACALL_TRUE == initialized) {
         int yOffset = topBarOn ? topBarHeight : 0;
         if(screenWidth) {
@@ -314,15 +319,14 @@ javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight) {
  * mode as well s the corresponding screen dimensions, after the screen mode has
  * changed.
  *
- * @param hardwareId unique id of hardware screen
  * @param useFullScreen if <code>JAVACALL_TRUE</code>, turn on full screen mode.
  *                      if <code>JAVACALL_FALSE</code>, use normal screen mode.
 
  * @retval JAVACALL_OK   success
  * @retval JAVACALL_FAIL failure
  */
-javacall_result javacall_lcd_set_full_screen_mode(int hardwareId, javacall_bool useFullScreen) {
-  (void)hardwareId;
+javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
+
     inFullScreenMode = useFullScreen;
     /*
      At the moment we draw top bar only if
@@ -346,11 +350,9 @@ javacall_result javacall_lcd_set_full_screen_mode(int hardwareId, javacall_bool 
  * This function should not be CPU intensive and should not perform bulk memory
  * copy operations.
  *
- * @param hardwareId unique id of hardware screen
  * @return <tt>1</tt> on success, <tt>0</tt> on failure or invalid screen
  */
-javacall_result javacall_lcd_flush(int hardwareId) {
-  (void)hardwareId;
+javacall_result javacall_lcd_flush() {
 
     RefreshScreen(0, 0, currentSkin->displayRect.width, currentSkin->displayRect.height); 
 
@@ -366,16 +368,15 @@ javacall_result javacall_lcd_flush(int hardwareId) {
  * runtime of the expensive flush operation: It should be implemented on
  * platforms that support it
  *
- * @param hardwareId unique id of hardware screen
  * @param ystart start vertical scan line to start from
  * @param yend last vertical scan line to refresh
  *
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int hardwareId, int ystart,
+javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int ystart,
                                                         int yend) {
-  (void)hardwareId;
+
     RefreshScreen(0, 0, currentSkin->displayRect.width, currentSkin->displayRect.height); 
 
     return JAVACALL_OK;
@@ -675,7 +676,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 break;
             /* F3 key used for rotation. */ 
             } else if(VK_F3 == wParam) {                 
-                javanotify_rotation(javacall_lcd_get_current_hardwareId());
+                javanotify_rotation();
                 break;
             }
         }
@@ -820,7 +821,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 if(iMsg == WM_LBUTTONUP) {
                     return 0;
                 }
-                javanotify_rotation(javacall_lcd_get_current_hardwareId());
+                javanotify_rotation();
                 return 0;
 
             case KEY_HOME:
@@ -1434,10 +1435,9 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
  
 /**
  * Changes display orientation
- * @param hardwareId unique id of hardware screen
  */
-javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
-  (void)hardwareId;
+javacall_bool javacall_lcd_reverse_orientation() {
+
     reverse_orientation = !reverse_orientation;    
     if (reverse_orientation) {
         setCurrentSkin(&HSkin);
@@ -1449,10 +1449,9 @@ javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
  
 /**
  * Returns display orientation
- * @param hardwareId unique id of hardware screen
  */
-javacall_bool javacall_lcd_get_reverse_orientation(int hardwareId) {
-  (void)hardwareId;
+javacall_bool javacall_lcd_get_reverse_orientation() {
+
      return reverse_orientation;
 }
 
@@ -1486,94 +1485,18 @@ javacall_result javacall_lcd_set_native_softbutton_label(const javacall_utf16* l
 
 /**
  * Returns available display width
- * @param hardwareId unique id of hardware screen
  */
-int javacall_lcd_get_screen_width(int hardwareId) {
-  (void)hardwareId;
+int javacall_lcd_get_screen_width() {
+
     return currentSkin->displayRect.width;
 }
 
 /**
  * Returns available display height
- * @param hardwareId unique id of hardware screen
  */
-int javacall_lcd_get_screen_height(int hardwareId) {
-  (void)hardwareId;
+int javacall_lcd_get_screen_height() {
+
     return topBarOn ? (currentSkin->displayRect.height - topBarHeight) : 
         currentSkin->displayRect.height;
 }
 
-/**
- * get currently enabled hardware display id
- */
-int javacall_lcd_get_current_hardwareId() {
-  return 0;
-}
-/** 
- * Get display device name by id
- * @param hardwareId unique id of hardware screen
- */
-char* javacall_lcd_get_display_name(int hardwareId) {
-  (void)hardwareId;
-  return NULL;
-}
-
-
-/**
- * Check if the display device is primary
- * @param hardwareId unique id of hardware screen
- */
-javacall_bool javacall_lcd_is_display_primary(int hardwareId) {
-    (void)hardwareId;
-    return JAVACALL_TRUE;
-}
-
-/**
- * Check if the display device is build-in
- * @param hardwareId unique id of hardware screen
- */
-javacall_bool javacall_lcd_is_display_buildin(int hardwareId) {
-    (void)hardwareId; 
-    return JAVACALL_TRUE;
-}
-
-/**
- * Check if the display device supports pointer events
- * @param hardwareId unique id of hardware screen
- */
-javacall_bool javacall_lcd_is_display_pen_supported(int hardwareId) {
-    (void)hardwareId; 
-    return JAVACALL_TRUE;
-}
-
-/**
- * Check if the display device supports pointer motion  events
- * @param hardwareId unique id of hardware screen
- */
-javacall_bool javacall_lcd_is_display_pen_motion_supported(int hardwareId){
-    (void)hardwareId; 
-    return JAVACALL_TRUE;
-}
-
-/**
- * Get display device capabilities
- * @param hardwareId unique id of hardware screen
- */
-int javacall_lcd_get_display_capabilities(int hardwareId) {
-  return 255;
-}
-
-static int screen_ids[] =
-{
-  0
-};
-
-/**
- * Get the list of screen ids
- * @param return number of screens 
- * @return the lit of ids 
- */
-int* javacall_lcd_get_display_device_ids(int* n) {
-  *n = 1;
-    return screen_ids;
-}
