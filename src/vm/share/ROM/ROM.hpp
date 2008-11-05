@@ -288,9 +288,9 @@ extern ROM_PerformanceCounters rom_perf_counts;
 
 #if ENABLE_DETAILED_PERFORMANCE_COUNTERS
   #define ROM_DETAILED_PERFORMANCE_COUNTER_START() \
-    jlong __start_time = Os::elapsed_counter() 
+    const jlong __start_time = Os::elapsed_counter() 
   #define ROM_DETAILED_PERFORMANCE_COUNTER_END(x)  \
-    rom_perf_counts.x  += Os::elapsed_counter() - __start_time
+    rom_perf_counts.x += Os::elapsed_counter() - __start_time
 #else
   #define ROM_DETAILED_PERFORMANCE_COUNTER_START()
   #define ROM_DETAILED_PERFORMANCE_COUNTER_END(x)

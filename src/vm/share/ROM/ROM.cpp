@@ -1222,8 +1222,6 @@ void ROM::ROM_print_hrticks(void print_hrticks(const char *name,
   ROM_PRINT_TICKS(is_rom_method);
   ROM_PRINT_TICKS(has_compact_method);
   ROM_PRINT_TICKS(heap_contains);
-  ROM_PRINT_TICKS(oop_from_offset);
-  ROM_PRINT_TICKS(offset_of);
   ROM_PRINT_TICKS(get_max_offset);
   ROM_PRINT_TICKS(string_from_table);
   ROM_PRINT_TICKS(symbol_for);
