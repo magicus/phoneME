@@ -36,143 +36,10 @@
 #include <pcsl_esc.h>
 #include <pcsl_string.h>
 
-/**
- * @file
- *
- * <h2>
- * <center> Sequential Access in RMS </center>
- * </h2>
- *
- * <p>
- * In case of MVM, there is a potential issue of accessing the same record
- * store file by multiple isolates at the same time. In the following,
- * a sequential access to the RMS record store is implemented to maintain
- * the data integrity in MVM. It is based on the assumption that two isolates
- * can share a single record store file but can not access it
- * simultaneously at the same time. If two isolates try to access
- * the same record store file at the same time, the later one will get a
- * RecordStoreException.
- * </p>
- *
- * <h3> Implementation Details </h3>
- * <p>
- * Native calls are serialized across isolates. In this
- * approach, a linked list is maintained for all open files in native
- * code. Before opening or deleting any file, the isolate must verify if
- * the file is already open or not. The calling isolate will receive a
- * RecordStoreException if the file is already open.
- * </p>
- *
- * <p>
- * A linked list is maintained to store the locks for every
- * filenameBase/recordStoreName as follows:
- * </p>
- *
- * <p>
- * typedef struct _lockFileList { <br>
- *     &nbsp;&nbsp;&nbsp;pcsl_string filenameBase; <br>
- *     &nbsp;&nbsp;&nbsp;pcsl_string recordStoreName; <br>
- *     &nbsp;&nbsp;&nbsp;int handle; <br>
- *     &nbsp;&nbsp;&nbsp;_lockFileList* next; <br>
- *} lockFileList;
- * </p>
- *
- * <p>
- * lockFileList* lockFileListPtr;
- * </p>
- *
- * <p>
- * lockFileListPtr will always point to the head of the linked list.
- * </p>
- *
- * <ol>
- * <h3>
- * <li>
- * openRecordStore
- * </li>
- * </h3>
- *
- * <p>
- * The peer implementation of openRecordStore() [RecordStoreImpl
- * constructor] calls a native function, viz. openRecordStoreFile() in
- * RecordStoreFile.c. This function calls rmsdb_record_store_open() in rms.c.
- * The access to the recordstore file can be verified at this point.
- * </p>
- * <ol>
- * <li>
- * If the lockFileListPtr is NULL, the linked list is initialised and
- * a node is added to the lockFileList.
- * </li>
- *
- * <li>
- * If (lockFileListPtr != NULL) , the linked list is searched for
- * the node based on filenameBase and recordStoreName. If the node is found, it means
- * that the file is already opened by another isolate and a RecordStoreException
- * is thrown to the calling isolate.
- * </li>
- *
- * <li>
- * If (lockFileListPtr != NULL) and the node is not found for the
- * corresponding filenameBase and recordStoreName, then a new node will be
- * added to the linked list.
- * </li>
- * </ol>
- *
- * <h3>
- * <li>
- * closeRecordStore
- * </li>
- * </h3>
- *
- * <p>
- * In this case, a node is searched in the linked list based on filenameBase
- * and recordStoreName. The node is just removed from the linked list.
- * </p>
- *
- * <h3>
- * <li>
- * deleteRecordStore
- * </li>
- * </h3>
- *
- * <p>
- * In MVM mode, the record store file should not be deleted if it is in
- * use by another isolate.  A node is searched in the linked list based
- * on filenameBase and recordStoreName. If (lockFileListPtr != NULL) and a node
- * is found, a RecordStoreException in thrown to the calling isolate.
- * </p>
- *
- * <h3>
- * <li>
- * Important Notes
- * </li>
- * </h3>
- *
- * <ol>
- * <li>
- * The individual record operations like addRecord(), getRecord(),
- * setRecord() will not be affected due to the new locking mechanism.
- * </li>
- *
- * <li>
- * If the record store file is already in use by any isolate, the calling
- * isolate will just receive an exception. There won't be any retries or
- * waiting mechanism till the record store file becomes available.
- * </li>
- *
- * <li>
- * There is very less probability of introducing memory leaks with this
- * mechanism. In normal scenario, every isolate closes the file after it
- * is done with its read/write operations which will automatically flush
- * the memory for the node. Note that native finalizer for RecordStoreFile
- * also calls recordStoreClose() which in turn removes the node from
- * the linked list.
- * </li>
- * </ol>
- *
- * </ol>
- *
- ***/
+#if ENABLE_RECORDSTORE_FILE_LOCK
+#include "rms_file_lock.h"
+#endif
+
 
 /** Easily recognize record store files in the file system */
 static const int DB_EXTENSION_INDEX = 0;
@@ -190,30 +57,9 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END( IDX_EXTENSION );
 
 static const char* const FILE_LOCK_ERROR = "File is locked, can not open";
 
-/*
- *! \struct lockFileList
- *
- * Maintain a linked list of nodes representing open files. If a node is present
- * in list, then it means that the file is opened by some isolate and no
- * other isolate can access it.
- *
- */
-typedef struct _lockFileList {
-    pcsl_string filenameBase;
-    pcsl_string recordStoreName;
-    int handle;      /* 32-bit file handle, useful in close operation */
-    struct _lockFileList* next;
-} lockFileList;
-static lockFileList* lockFileListPtr = NULL;
-
-typedef lockFileList olockFileList;
 
 /* Forward declarations for local functions */
 
-static int recordStoreCreateLock(pcsl_string* filenameBase,
-                                 const pcsl_string * name_str, int handle);
-static void recordStoreDeleteLock(int handle);
-static lockFileList * findLockById(pcsl_string* filenameBase, const pcsl_string * name);
 static MIDPError buildSuiteFilename(pcsl_string * filenameBase,
                                     const pcsl_string* name, jint extension, 
                                     pcsl_string * pFileName);
@@ -341,26 +187,26 @@ rmsdb_record_store_delete(char** ppszError,
                           const pcsl_string* name_str,
                           int extension) {
     pcsl_string filename_str;
-    lockFileList* searchedNodePtr = NULL;
-
     *ppszError = NULL;
 
-    if ((extension == DB_EXTENSION_INDEX) && (lockFileListPtr != NULL)) {
-        /* linked list is already initialised for a db file */
-        searchedNodePtr = findLockById(filenameBase, name_str);
+#if ENABLE_RECORDSTORE_FILE_LOCK
+    lockFileList* searchedNodePtr = NULL;
+    if (extension == DB_EXTENSION_INDEX) {
+        searchedNodePtr = rmsdb_find_file_lock_by_id(filenameBase, name_str);
         if (searchedNodePtr != NULL) {
             /* File is in use by another isolate */
             *ppszError = (char *)FILE_LOCK_ERROR;
             return -1;
         }
     }
+#endif
 
     /*
      * IMPL_NOTE: for security reasons the record store is always
      * located in the internal storage.
      */
-    if (MIDP_ERROR_NONE != rmsdb_get_unique_id_path(filenameBase, INTERNAL_STORAGE_ID,
-            name_str, extension, &filename_str)) {
+    if (MIDP_ERROR_NONE != rmsdb_get_unique_id_path(filenameBase, 
+                INTERNAL_STORAGE_ID, name_str, extension, &filename_str)) {
         return -2;
     }
     storage_delete_file(ppszError, &filename_str);
@@ -591,11 +437,11 @@ rmsdb_remove_record_stores_for_suite(pcsl_string* filenameBase, SuiteIdType id) 
         if (rmsdb_record_store_delete(&pszError, filenameBase, &pNames[i], 
             IDX_EXTENSION_INDEX) <= 0) {
             /*
-	     * Since index file is optional, ignore error here.
-	     *
-	    result = 0;
+         * Since index file is optional, ignore error here.
+         *
+        result = 0;
             break;
-	    */
+        */
         }
     }
 
@@ -667,29 +513,27 @@ rmsdb_record_store_open(char** ppszError, pcsl_string* filenameBase,
                         const pcsl_string * name_str, int extension) {
     pcsl_string filename_str;
     int handle;
-    lockFileList* searchedNodePtr = NULL;
-    int addflag = 0;
-
     *ppszError = NULL;
 
-    if ((extension == DB_EXTENSION_INDEX) && (lockFileListPtr != NULL)) {
-        /* linked list is already initialised for a db file */
-        searchedNodePtr = findLockById(filenameBase, name_str);
+#if ENABLE_RECORDSTORE_FILE_LOCK
+    lockFileList* searchedNodePtr = NULL;
+    
+    if (extension == DB_EXTENSION_INDEX) {
+        searchedNodePtr = rmsdb_find_file_lock_by_id(filenameBase, name_str);
         if (searchedNodePtr != NULL) {
             /* File is already opened by another isolate, return an error */
             *ppszError = (char *)FILE_LOCK_ERROR;
             return -2;
-        } else { /* remember to add a node */
-            addflag = 1;
         }
     }
+#endif
 
     /*
      * IMPL_NOTE: for security reasons the record store is always
      * located in the internal storage.
      */
-    if (MIDP_ERROR_NONE != rmsdb_get_unique_id_path(filenameBase, INTERNAL_STORAGE_ID,
-            name_str, extension, &filename_str)) {
+    if (MIDP_ERROR_NONE != rmsdb_get_unique_id_path(filenameBase, 
+                INTERNAL_STORAGE_ID, name_str, extension, &filename_str)) {
         return -1;
     }
     handle = midp_file_cache_open(ppszError, INTERNAL_STORAGE_ID,
@@ -700,16 +544,13 @@ rmsdb_record_store_open(char** ppszError, pcsl_string* filenameBase,
         return -1;
     }
 
-    /*
-     * Add the node only if it's a db file AND lockFileListPtr is NULL or
-     * addflag is 1
-     */
-    if ((extension == DB_EXTENSION_INDEX)&&
-        ( (lockFileListPtr == NULL) || (addflag == 1)) ) {
-            if (recordStoreCreateLock(filenameBase, name_str, handle) != 0) {
-                return -1;
-            }
+#if ENABLE_RECORDSTORE_FILE_LOCK
+    if (extension == DB_EXTENSION_INDEX) {
+        if (rmsdb_create_file_lock(filenameBase, name_str, handle) != 0) {
+            return -1;
+        }
     }
+#endif    
 
     return handle;
 }
@@ -847,11 +688,13 @@ recordStoreClose(char** ppszError, int handle) {
          return;
     }
 
+#if ENABLE_RECORDSTORE_FILE_LOCK
     /*
      * Search the node based on handle. Delete the node upon file close
      */
 
-     recordStoreDeleteLock(handle);
+     rmsdb_delete_file_lock(handle);
+#endif     
 }
 
 /*
@@ -954,121 +797,6 @@ rmsdb_get_rms_storage_size(pcsl_string* filenameBase, SuiteIdType id) {
     return used;
 }
 
-/*
- * Insert a new node to the front of the linked list
- *
- * @param filenameBase : filename base of the suite
- * @param name : Name of the record store
- * @param handle : Handle of the opened file
- *
- * @return 0 if node is successfully inserted
- *  return  OUT_OF_MEM_LEN if memory allocation fails
- *
- */
-static int
-recordStoreCreateLock(pcsl_string* filenameBase, const pcsl_string * name_str,
-                      int handle) {
-    lockFileList* newNodePtr;
-
-    newNodePtr = (lockFileList *)midpMalloc(sizeof(lockFileList));
-    if (newNodePtr == NULL) {
-        return OUT_OF_MEM_LEN;
-    }
-
-    newNodePtr->filenameBase = *filenameBase;
-
-    /*IMPL_NOTE: check for error codes instead of null strings*/
-    pcsl_string_dup(name_str, &newNodePtr->recordStoreName);
-    if (pcsl_string_is_null(&newNodePtr->recordStoreName)) {
-        midpFree(newNodePtr);
-        return OUT_OF_MEM_LEN;
-    }
-
-    newNodePtr->handle = handle;
-    newNodePtr->next = NULL;
-
-    if (lockFileListPtr == NULL) {
-        lockFileListPtr = newNodePtr;
-    } else {
-        newNodePtr->next = lockFileListPtr;
-        lockFileListPtr = newNodePtr;
-    }
-
-    return 0;
-}
-
-/**
- * 
- a node from the linked list
- *
- * @param handle : handle of the file
- *
- */
-static void
-recordStoreDeleteLock(int handle) {
-    lockFileList* previousNodePtr;
-    lockFileList* currentNodePtr = NULL;
-
-    /*
-     * Very important to check that lockFileListPtr is NOT null as this function
-     * is invoked two times : once during close of a db file and again for
-     * deleting index file. The linked list node either does not exist or
-     * lockFileListPtr pointer is NULL during second call.
-     */
-    if (lockFileListPtr == NULL) {
-        return;
-    }
-
-    /* If it's first node, delete it and re-assign head pointer */
-    if (lockFileListPtr->handle == handle) {
-        currentNodePtr = lockFileListPtr;
-        lockFileListPtr = currentNodePtr->next;
-        pcsl_string_free(&currentNodePtr->recordStoreName);
-        midpFree(currentNodePtr);
-        return;
-    }
-
-    for (previousNodePtr = lockFileListPtr; previousNodePtr->next != NULL;
-         previousNodePtr = previousNodePtr->next) {
-        if (previousNodePtr->next->handle == handle) {
-                currentNodePtr = previousNodePtr->next;
-                break;
-            }
-    }
-
-    /* Current node needs to be deleted */
-    if (currentNodePtr != NULL) {
-        previousNodePtr->next = currentNodePtr->next;
-        pcsl_string_free(&currentNodePtr->recordStoreName);
-        midpFree(currentNodePtr);
-    }
-}
-
-/*
- * Search for the node to the linked list
- *
- * @param filenameBase : filename base of the suite
- * @param name : Name of the record store
- *
- * @return the searched node pointer if match exist for filenameBase and
- * recordStoreName
- *  return NULL if node does not exist
- *
- */
-static lockFileList *
-findLockById(pcsl_string* filenameBase, const pcsl_string * name_str) {
-    lockFileList* currentNodePtr;
-
-    for (currentNodePtr = lockFileListPtr; currentNodePtr != NULL;
-         currentNodePtr = currentNodePtr->next) {
-        if (pcsl_string_equals(&currentNodePtr->filenameBase, filenameBase) &&
-            pcsl_string_equals(&currentNodePtr->recordStoreName, name_str)) {
-            return currentNodePtr;
-        }
-    }
-
-    return NULL;
-}
 
 /* Utility function to build filename from filename base, name and extension
  * 
