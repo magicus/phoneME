@@ -34,6 +34,7 @@ extern "C" {
 
 typedef struct _mem_alloc_info {
     int size;
+	void* buffer;
     char fileName[MAX_FILE_NAME_LENGTH];
 	unsigned int line;
 	struct _malloc_info* next;

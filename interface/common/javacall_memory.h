@@ -26,7 +26,7 @@
 #ifndef __JAVACALL_MEMORY_H_
 #define __JAVACALL_MEMORY_H_
 
-#undef JAVACALL_MEMINFO 
+#define JAVACALL_MEMINFO 1
 
 /**
  * @file javacall_memory.h
