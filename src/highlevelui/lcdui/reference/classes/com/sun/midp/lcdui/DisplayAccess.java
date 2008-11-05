@@ -116,6 +116,13 @@ public interface DisplayAccess {
     public int getDisplayId();
 
     /**
+     * Get the display device object.
+     *
+     * @return Hardware display object
+     */
+    public DisplayDevice getDisplayDevice();
+
+    /**
      * Sets the ID of this display.
      * Shall be called only from DisplayContainer.addDisplay() during 
      * Display construction and registration in the container.

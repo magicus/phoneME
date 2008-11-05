@@ -32,7 +32,6 @@ import com.sun.midp.lcdui.Text;
 import javax.microedition.lcdui.*;
 
 import com.sun.midp.chameleon.skins.SoftButtonSkin;
-import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
 import com.sun.midp.chameleon.skins.resources.MenuResources;
 
@@ -539,10 +538,20 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * Sets the anchor constraints for rendering operation.
      */
     public void setAnchor() {
+	if (owner == null)
+	    return;
         bounds[X] = 0;
-        bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT;
-        bounds[W] = ScreenSkin.WIDTH;
-        bounds[H] = SoftButtonSkin.HEIGHT;
+	for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
+	    if (SoftButtonSkin.BUTTON_ANCHOR_X[i] < 0) {
+		SoftButtonSkin.BUTTON_ANCHOR_X[i] = owner.bounds[W] +
+		    SoftButtonSkin.BUTTON_ANCHOR_X[i];
+	    }
+	}
+	
+	
+	bounds[Y] = owner.bounds[H] - SoftButtonSkin.HEIGHT;
+	bounds[W] = owner.bounds[W];
+	bounds[H] = SoftButtonSkin.HEIGHT;
     }
 
     /**
@@ -611,6 +620,8 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                 // Show the menu
                 if (owner != null) {
                     owner.addLayer(menuLayer);
+		    menuLayer.alignMenu();           
+		    menuLayer.requestRepaint();
                     menuLayer.setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
                 }
                 

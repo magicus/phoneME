@@ -241,6 +241,7 @@ public final class SecurityInitializer {
 
         // #ifdef ENABLE_JSR_290
         "com.sun.fluid.FluidImageImpl$SecurityTrusted",
+        "com.sun.j2me.dom.DOMFactory$SecurityTrusted",
         // #endif ENABLE_JSR_290
 
         // Pass the security token to the i3 test framework.

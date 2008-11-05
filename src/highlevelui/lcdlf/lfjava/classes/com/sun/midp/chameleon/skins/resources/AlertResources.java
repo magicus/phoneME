@@ -51,14 +51,9 @@ public class AlertResources {
         
         AlertSkin.WIDTH = SkinLoader.getInt(
                 SkinPropertiesIDs.ALERT_WIDTH);
-        if (AlertSkin.WIDTH == -1) {
-            AlertSkin.WIDTH = (int)(.95 * ScreenSkin.WIDTH);
-        }
+
         AlertSkin.HEIGHT = SkinLoader.getInt(
                 SkinPropertiesIDs.ALERT_HEIGHT);
-        if (AlertSkin.HEIGHT == -1) {
-            AlertSkin.HEIGHT = (int)(.75 * ScreenSkin.HEIGHT);
-        }
 
         int alignX = SkinLoader.getInt(
                 SkinPropertiesIDs.ALERT_ALIGN_X);

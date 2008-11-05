@@ -108,8 +108,8 @@ public class TestSizeChanged extends TestCase {
     public TestSizeChanged() {
         // Initialize the constants
         
-        STD_WIDTH = ScreenSkin.WIDTH;
-        STD_HEIGHT = ScreenSkin.HEIGHT;
+        STD_WIDTH = Display.WIDTH;
+        STD_HEIGHT = Display.HEIGHT;
         FS_HEIGHT = ScreenSkin.FULLHEIGHT;
         TITLE_HEIGHT = TitleSkin.HEIGHT;
         TICKER_HEIGHT = TickerSkin.HEIGHT;

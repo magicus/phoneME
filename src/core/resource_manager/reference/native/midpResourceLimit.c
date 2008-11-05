@@ -356,12 +356,17 @@ int midpIncResourceCount(RscType type, int delta) {
             return 1; /* succeeded */
         }
     }
-
-    REPORT_INFO3(LC_CORE, "RESOURCES [%d] midpIncResourceCount FAILED" \
+    if (entry != 0) {
+        REPORT_INFO3(LC_CORE, "RESOURCES [%d] midpIncResourceCount FAILED" \
                  "  used=%d  global=%d\n",
                  isolateId, entry->resourceUsage[type],
                  gResourcesAvailable[type]);
-
+    } else {
+        REPORT_ERROR2(LC_CORE, "RESOURCES [%d] midpDecResourceCount FAILED" \
+                 "  used=unknown  global=%d\n",
+                 isolateId,
+                 gResourcesAvailable[type]);
+    }
     return 0; /* failed */
 }
 
@@ -410,9 +415,9 @@ int midpDecResourceCount(RscType type, int delta) {
         return 1; /* succeeded */
     }
 
-    REPORT_INFO3(LC_CORE, "RESOURCES [%d] midpDecResourceCount FAILED" \
-                 "  used=%d  global=%d\n",
-                 isolateId, entry->resourceUsage[type],
+    REPORT_ERROR2(LC_CORE, "RESOURCES [%d] midpDecResourceCount FAILED" \
+                 "  used=unknown  global=%d\n",
+                 isolateId,
                  gResourcesAvailable[type]);
 
     return 0; /* failed */

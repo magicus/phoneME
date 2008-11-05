@@ -448,34 +448,6 @@ public final class Manager {
      */
     public final static String TONE_DEVICE_LOCATOR = "device://tone";
 
-    /**
-     * The locator to create a MIDI <code>Player</code>
-     * which gives access to the MIDI device by making
-     * {@link javax.microedition.media.control.MIDIControl MIDIControl}
-     * available.  For example,
-     * <pre>
-     * try {
-     *     Player p = Manager.createPlayer(Manager.MIDI_DEVICE_LOCATOR);
-     *     p.prefetch(); // opens the MIDI device
-     *     MIDIControl m = (MIDIControl)p.getControl("MIDIControl");
-     * } catch (IOException ioe) {
-     * } catch (MediaException me) {}
-     * </pre>
-     *
-     * The MIDI <code>Player</code> returned does not carry any
-     * media data.  <code>getDuration</code> returns 0 for this
-     * <code>Player</code>.
-     * <p>
-     * The content type of the <code>Player</code> created from this
-     * locator is <code>audio/midi</code>.
-     * <p>
-     * A <code>Player</code> for this locator may not be supported
-     * for all implementations.
-     * <p>
-     * Value "device://midi" is assigned to <code>MIDI_DEVICE_LOCATOR</code>.
-     */
-    public final static String MIDI_DEVICE_LOCATOR = "device://midi";
-
     // private final static String RADIO_CAPTURE_LOCATOR = "capture://radio";
 
     private final static String DS_ERR = "Cannot create a DataSource for: ";    

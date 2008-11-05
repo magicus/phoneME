@@ -338,10 +338,9 @@ class DisplayController {
                 continue;
             }
 
-            if (temp.getDisplayId() != displayId) {
-                continue;
-            }
-
+	    if (!temp.containsDisplay(displayId)) {
+		continue;
+	    }
             preempting = temp;
 
             current.setPreemptingDisplay(null);
