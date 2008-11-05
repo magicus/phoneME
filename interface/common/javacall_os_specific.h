@@ -40,9 +40,10 @@
 extern "C" {
 #endif
 
-#define OS__FILE__ __FILE__
-#define OS__LINE__ __LINE__
-#define OS_STRCPY STRCPY
+#define OS__FILE__ 	__FILE__
+#define OS__LINE__ 	__LINE__
+#define OS_STRCPY 	STRCPY
+#define OS_STRLEN 	STRLEN
 
 #ifdef __cplusplus
 }

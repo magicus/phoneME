@@ -135,7 +135,14 @@ void* javacall_meminfo_realloc(void* ptr, unsigned int size, char* fileName, uns
 #endif
 
 void* javacall_meminfo_strdup(const char* str, char* fileName, unsigned int line){
-	return NULL;
+	int size = OS_STRLEN(str);
+	char* newBuffer = javacall_meminfo_malloc(size, fileName,line);
+
+	if(newBuffer != NULL) {
+		OS_STRCPY(newBuffer, str);
+	}
+
+	return newBuffer;
 }
 
 static void initMemInfo(mem_alloc_info* memInfo){
