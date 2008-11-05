@@ -369,12 +369,9 @@ public class MVMManager extends MIDlet
                     odtAgentMidlet.getIsolateId());
         }
 
-        /* IMPL NOTE: Disabling this code forces only one MIDlet in debug 
-         * mode per whole life of the agent. This avoids problems 
-         * with starting MIDlets in debug mode (CR 6736719) */
-//        if (suiteUnderDebugId == suiteInfo.suiteId) {
-//            suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
-//        }
+        if (suiteUnderDebugId == suiteInfo.suiteId) {
+            suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
+        }
         
         appManager.notifySuiteExited(suiteInfo);
 
