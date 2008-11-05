@@ -24,6 +24,7 @@
  */
 
 #include <stdio.h>
+#include "javacall_logging.h"
 #include "javacall_meminfo.h"
 #include "javacall_memory.h"
 
@@ -39,6 +40,15 @@ void initMemInfo(mem_alloc_info* memInfo);
 static mem_alloc_info* buffer_2_meminfo(void* buffer);
 void add_mem_alloc_info(mem_alloc_info* newMemInfo);
 void remove_mem_alloc_info(mem_alloc_info* remMemInfo);
+
+void* javacall_meminfo_memory_heap_allocate(long size, /*OUT*/ long* outSize){
+	javacall_os_memory_heap_allocate(size,outSize);
+}
+
+void javacall_meminfo_memory_heap_deallocate(void* heap){
+	javacall_os_memory_heap_deallocate(heap);
+	print_memory_alloc_report();
+}
 
 void* javacall_meminfo_malloc(unsigned int size, char* fileName, unsigned int line){
 	unsigned char* retBuffer = NULL;
@@ -208,6 +218,36 @@ static void remove_mem_alloc_info(mem_alloc_info* remMemInfo){
 
 	//update Memory Statistics
 	memStat.currentMemeoryUsage -= remMemInfo->size;
+}
+
+void print_memory_alloc_report(){
+	mem_alloc_info* memInfo = NULL;
+	char line[1024];
+
+	javacall_print("\n------------------------\n\0");
+
+	sprintf(line, "Max Memory usage was %d\n\0", memStat.maxMemoryUsage);
+	javacall_print(line);
+
+	sprintf(line, "Current Memory usage is %d\n\0", memStat.currentMemeoryUsage);
+	javacall_print(line);
+
+	if(memStat.currentMemeoryUsage != 0) {
+
+		javacall_print("Memory Leak from:\n\0");
+
+		memInfo = memInfoList;
+
+		while(memInfo != NULL) {
+
+			sprintf(line, "\t%s:%d\n\0", memInfo->fileName, memInfo->line);
+			javacall_print(line);
+
+			memInfo = memInfo->next;
+		}
+	}
+
+	javacall_print("------------------------\n\0");
 }
 
 #ifdef __cplusplus

@@ -79,8 +79,14 @@ extern "C" {
  * @param    outSize actual size of memory allocated
  * @return	  a pointer to the newly allocated memory, or <tt>0</tt> if not available
  */
-void* javacall_memory_heap_allocate(long size, /*OUT*/ long* outSize);
-    
+void* javacall_os_memory_heap_allocate(long size, /*OUT*/ long* outSize);
+
+#ifdef JAVACALL_MEMINFO
+#define javacall_memory_heap_allocate(size, outSize) javacall_meminfo_memory_heap_allocate(size, outSize)
+#else
+#define javacall_memory_heap_allocate(size, outSize) javacall_os_memory_heap_allocate(size, outSize)
+#endif
+
 /** 
  * Free large memory heap
  * VM will call this function once when VM is shutdown to free large memory heap 
@@ -88,8 +94,14 @@ void* javacall_memory_heap_allocate(long size, /*OUT*/ long* outSize);
  * 
  * @param    heap memory pointer to free
  */
-void javacall_memory_heap_deallocate(void* heap);
-    
+void javacall_os_memory_heap_deallocate(void* heap);
+
+#ifdef JAVACALL_MEMINFO
+#define javacall_memory_heap_deallocate(heap) javacall_meminfo_memory_heap_deallocate(heap)
+#else
+#define javacall_memory_heap_deallocate(heap) javacall_os_memory_heap_deallocate(heap)
+#endif
+
 /** 
  * Allocates memory of the given size from the private JAVACALL memory
  * pool.

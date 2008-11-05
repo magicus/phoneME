@@ -46,12 +46,15 @@ typedef struct _meminfo_stat{
 	int currentMemeoryUsage;
 }meminfo_stat;
 
-
+void* javacall_meminfo_memory_heap_allocate(long size, /*OUT*/ long* outSize);
+void javacall_meminfo_memory_heap_deallocate(void* heap);
 void* javacall_meminfo_malloc(unsigned int size, char* fileName, unsigned int line);
 void  javacall_meminfo_free(void* ptr, char* fileName, unsigned int line);
 void* javacall_meminfo_realloc(void* ptr, unsigned int size, char* fileName, unsigned int line);
 void* javacall_meminfo_calloc(unsigned int numberOfElements, unsigned int elementSize, char* fileName, unsigned int line);
 void* javacall_meminfo_strdup(const char* str, char* fileName, unsigned int line);
+
+void print_memory_alloc_report();
 
 #ifdef __cplusplus
 }
