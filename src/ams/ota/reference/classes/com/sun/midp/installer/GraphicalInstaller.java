@@ -500,8 +500,10 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
         int validStorageCnt = Constants.MAX_STORAGE_NUM;
         for (int i = 1; i < Constants.MAX_STORAGE_NUM; i++) {
-            /* IMPL_NOTE: here we should check if storage is accessible and
-               update validStorageCnt accordingly */
+            /*
+             * IMPL_NOTE: here we should check if storage is accessible and
+             * update validStorageCnt accordingly
+             */
             storageListBox.append(storagePrefix + i, null);
         }
 
