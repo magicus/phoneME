@@ -1148,11 +1148,13 @@ CVMpreloaderIteratePreloadedObjects(CVMExecEnv* ee,
     /* Iterate over preloaded classes: */
     for (i = 0; i < CVM_nROMClasses; ++i) {
         const CVMClassBlock *cb = CVM_ROMClassblocks[i];
-        CVMObject *currObj = *(CVMObject **)CVMcbJavaInstance(cb);
-        CVMClassBlock *currCb = CVMobjectGetClass(currObj);
-        CVMUint32  objSize    = CVMobjectSizeGivenClass(currObj, currCb);
-        if (!callback(currObj, currCb, objSize, callbackData)) {
-            return CVM_FALSE;
+        if (cb != NULL) {
+            CVMObject *currObj = *(CVMObject **)CVMcbJavaInstance(cb);
+            CVMClassBlock *currCb = CVMobjectGetClass(currObj);
+            CVMUint32  objSize = CVMobjectSizeGivenClass(currObj, currCb);
+            if (!callback(currObj, currCb, objSize, callbackData)) {
+                return CVM_FALSE;
+            }
         }
     }
 
@@ -1220,11 +1222,13 @@ CVMpreloaderDestroy()
 
     for (i = 0; i < CVM_nROMClasses; ++i) {
 	const CVMClassBlock * cb = CVM_ROMClassblocks[i];
-	CVMtraceClassLoading(("CL: Destroying methods for preloaded class %C (cb=0x%x)\n", cb, cb));
+        if (cb != NULL) {
+            CVMtraceClassLoading(("CL: Destroying methods for preloaded class %C (cb=0x%x)\n", cb, cb));
 #ifdef CVM_JIT
-	CVMclassFreeCompiledMethods(NULL, (CVMClassBlock*)cb);
+            CVMclassFreeCompiledMethods(NULL, (CVMClassBlock*)cb);
 #endif
-	CVMclassFreeJavaMethods(NULL, (CVMClassBlock*)cb, CVM_TRUE);
+            CVMclassFreeJavaMethods(NULL, (CVMClassBlock*)cb, CVM_TRUE);
+        }
     }
 }
 
