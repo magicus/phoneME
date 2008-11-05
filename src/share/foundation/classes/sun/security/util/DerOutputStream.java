@@ -198,12 +198,12 @@ extends ByteArrayOutputStream implements DerEncoder {
 	// Reduce them to the least number of bytes needed to
 	// represent this int
 	
-        if (bytes[0] == 0xff) {
+        if (bytes[0] == (byte)0xff) {
 	    
 	    // Eliminate redundant 0xff 
 
             for (int j = 0; j < 3; j++) {
-                if ((bytes[j] == 0xff) && 
+                if ((bytes[j] == (byte)0xff) && 
 		    ((bytes[j+1] & 0x80) == 0x80)) 
                     start++;
                 else
