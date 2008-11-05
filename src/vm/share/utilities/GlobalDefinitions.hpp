@@ -2269,7 +2269,14 @@ NAME_BUFFER_SIZE = 270
 #if ENABLE_FLOAT
 
 static inline jint float_bits(jfloat f) {
-  return *(jint*)&f;
+  union {
+    jint output;
+    jfloat input;
+  } convert;
+ 
+  convert.input = f;
+
+  return convert.output;
 }
 
 static inline jlong double_bits(jdouble d) {
