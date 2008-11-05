@@ -187,10 +187,13 @@ rmsdb_record_store_delete(char** ppszError,
                           const pcsl_string* name_str,
                           int extension) {
     pcsl_string filename_str;
+#if ENABLE_RECORDSTORE_FILE_LOCK
+    lockFileList* searchedNodePtr = NULL;
+#endif
+
     *ppszError = NULL;
 
 #if ENABLE_RECORDSTORE_FILE_LOCK
-    lockFileList* searchedNodePtr = NULL;
     if (extension == DB_EXTENSION_INDEX) {
         searchedNodePtr = rmsdb_find_file_lock_by_id(filenameBase, name_str);
         if (searchedNodePtr != NULL) {
@@ -513,11 +516,13 @@ rmsdb_record_store_open(char** ppszError, pcsl_string* filenameBase,
                         const pcsl_string * name_str, int extension) {
     pcsl_string filename_str;
     int handle;
+#if ENABLE_RECORDSTORE_FILE_LOCK
+    lockFileList* searchedNodePtr = NULL;
+#endif
+
     *ppszError = NULL;
 
 #if ENABLE_RECORDSTORE_FILE_LOCK
-    lockFileList* searchedNodePtr = NULL;
-    
     if (extension == DB_EXTENSION_INDEX) {
         searchedNodePtr = rmsdb_find_file_lock_by_id(filenameBase, name_str);
         if (searchedNodePtr != NULL) {
