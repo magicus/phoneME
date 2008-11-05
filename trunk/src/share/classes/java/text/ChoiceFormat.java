@@ -198,7 +198,7 @@ public class ChoiceFormat extends NumberFormat {
             } else if (inQuote) {
                 segments[part].append(ch);
             } else if (ch == '<' || ch == '#' || ch == '\u2264') {
-                if (segments[0].equals("")) {
+                if (segments[0].length() == 0) {
                     throw new IllegalArgumentException();
                 }
                 try {
