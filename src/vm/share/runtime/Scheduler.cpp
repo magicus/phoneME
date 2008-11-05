@@ -312,16 +312,16 @@ void Scheduler::adjust_priority_list(Thread *thread, bool is_add) {
 }
 
 void Scheduler::add_to_active(Thread* thread) {
-  if (_debugger_active) {
-    thread->set_active();
-  }
+#if ENABLE_JAVA_DEBUGGER
+  thread->set_active();
+#endif
   adjust_priority_list(thread, true);
 }
 
 void Scheduler::remove_from_active(Thread* thread) {
-  if (_debugger_active) {
-    thread->set_suspended();
-  }
+#if ENABLE_JAVA_DEBUGGER
+  thread->set_suspended();
+#endif
   adjust_priority_list(thread, false);
 }
 
@@ -551,10 +551,10 @@ void Scheduler::remove_waiting_thread(Thread* thread) {
 
 
 void Scheduler::add_to_sleeping(Thread* thread) {
-  if (_debugger_active) {
-    thread->set_status((thread->status() &
+#if ENABLE_JAVA_DEBUGGER
+  thread->set_status((thread->status() &
                         ~THREAD_NOT_ACTIVE_MASK) | THREAD_SLEEPING);
-  }
+#endif
   // First list is the sleep queue.
   Thread::Raw current = Universe::scheduler_waiting();
   Thread::Raw next = current().next();
@@ -961,9 +961,9 @@ void Scheduler::wait(JavaOop* obj, jlong millis JVM_TRAPS) {
     // Store waiters information in thread so we can find it again, when waking
     thread->set_wait_stack_lock(stack_lock);
   }
-  if (_debugger_active) {
-    thread->set_status((thread->status() & ~THREAD_NOT_ACTIVE_MASK) |THREAD_CONVAR_WAIT);
-    }
+#if ENABLE_JAVA_DEBUGGER
+  thread->set_status((thread->status() & ~THREAD_NOT_ACTIVE_MASK) |THREAD_CONVAR_WAIT);
+#endif
 
   Thread::Fast pending_waiters = add_waiting_thread(thread, obj);
 
@@ -1250,9 +1250,9 @@ void Scheduler::start(Thread* thread JVM_TRAPS) {
     obj().clear_stillborn();
   }
 
-  if (_debugger_active) {
+#if ENABLE_JAVA_DEBUGGER
     thread->set_status(THREAD_JUST_BORN);
-  }
+#endif
 }
 /**  Called from Natives.cpp to move this thread from one priority to another.
 */
@@ -2077,13 +2077,17 @@ extern "C" void switch_thread(Thread* thread) {
   // We are switching away from a thread.  If the JUST_BORN bit is
   // set, clear it and send an event.  The stack pointers are now
   // set in the thread structure.
-  if (_debugger_active && thread->status() & THREAD_JUST_BORN) {
+#if ENABLE_JAVA_DEBUGGER
+  if (thread->status() & THREAD_JUST_BORN) {
     thread->set_status(thread->status() & ~THREAD_JUST_BORN);
-    VMEvent::thread_event(thread, true);
+    if (_debugger_active) {
+      VMEvent::thread_event(thread, true);
+    }
     // more than likely we suspended all threads so null this out so we
     // do the right thing below
     _next_runnable_thread = NULL;
   }
+#endif
 
   Thread *next_thread;
   if (*(next_thread = (Thread *)&_next_runnable_thread) == NULL) {
