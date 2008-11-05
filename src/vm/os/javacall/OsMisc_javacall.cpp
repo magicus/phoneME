@@ -35,6 +35,7 @@
 #endif
 
 #include <javacall_os.h>
+#include <javacall_logging.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,39 +53,17 @@ const JvmPathChar *OsMisc_get_classpath() {
 
 
 void OsMisc_flush_icache(address start, int size) {
-#if defined(_WIN32_WCE)
-  /* Currently the PocketPC API doesn't seem to support selective
-     flushing of the icache => ignore start, size for now */
-  BOOL ret = FlushInstructionCache(GetCurrentProcess(), 0, 0);
-#else
   javacall_os_flush_icache((unsigned char*)start, size);
-#endif
 }
 
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 const char *OsMisc_jlong_format_specifier() {
-#if defined(_WIN32_WCE)
-  return "%I64d";
-#endif
-  /*
-   * Return jlong-specifier prefixes are used with type characters in
-   * printf functions or wprintf functions to specify interpretation
-   * of jlong e.g. for win32 is "%I64d", for linux is "%lld"
-   */
-  return "%lld";
+  return javacall_jlong_format_specifier();
 }
 
 const char *OsMisc_julong_format_specifier() {
-#if defined(_WIN32_WCE)
-  return "%I64u";
-#endif
-  /*
-   * Return julong-specifier prefixes are used with type characters in
-   * printf functions or wprintf functions to specify interpretation
-   * of julong e.g. for win32 is "%I64u", for linux is "%llu"
-   */
-  return "%llu";
+  return javacall_julong_format_specifier();
 }
 
 #endif // PRODUCT
