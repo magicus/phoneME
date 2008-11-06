@@ -40,6 +40,7 @@ import com.sun.midp.chameleon.skins.ScreenSkin;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
+import javax.microedition.lcdui.Display;
 
 
 /**
@@ -638,25 +639,24 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             // Apply full screen dimensions and position settings
             dx = 0;
             dy = 0;
-/* Revisit: these can swap when device screen orientation changes,
- * so they cannot be final 
- */
-/* Revisit: call native method to obtain screen dimensions */
-/* Revisit: consider support for multiple displays. Dimensions should be queried based on render surface
-    private final int SCREEN_WIDTH  = ScreenSkin.WIDTH;   // nGetScreenWidth();
-    private final int SCREEN_HEIGHT = ScreenSkin.HEIGHT;  // nGetScreenHeight();
-*/
+
+            /*
+             * Revisit: these can swap when device screen orientation changes or
+             * UI object got moved to another Display.
+             */
             Display myDisplay;
             switch (displayMode) {
             case USE_DIRECT_VIDEO:
-                display = canvas;
+                myDisplay = mmh.getDisplayFor(canvas);
                 break;
             case USE_GUI_PRIMITIVE:
+                myDisplay = mmh.getDisplayFor(item);
                 break;
             default:
+                myDisplay = null;
             }
-            dw = ;
-            dh = ;
+            dw = mmh.getDisplayWidth(myDisplay);
+            dh = mmh.getDisplayHeight(myDisplay);
         }
     };
 
@@ -726,12 +726,30 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
                 ph += py;
                 py = 0;
             }
-            /* Revisit: multiple display support */
-            if (px + pw > dw/*SCREEN_WIDTH*/) {
-                pw = dw/*SCREEN_WIDTH*/ - px;
+
+            /*
+             * Revisit: these can swap when device screen orientation changes or
+             * UI object got moved to another Display.
+             */
+            Display myDisplay;
+            switch (displayMode) {
+            case USE_DIRECT_VIDEO:
+                myDisplay = mmh.getDisplayFor(canvas);
+                break;
+            case USE_GUI_PRIMITIVE:
+                myDisplay = mmh.getDisplayFor(item);
+                break;
+            default:
+                myDisplay = null;
             }
-            if (py + ph > dh/*SCREEN_HEIGHT*/) {
-                ph = dh/*SCREEN_HEIGHT*/ - py;
+            int displayWidth = mmh.getDisplayWidth(myDisplay);
+            int displayHeight = mmh.getDisplayHeight(myDisplay);
+            
+            if (px + pw > displayWidth) {
+                pw = displayWidth - px;
+            }
+            if (py + ph > displayHeight) {
+                ph = displayHeight - py;
             }
 
             source.setVideoLocation(px, py, pw, ph);
