@@ -27,13 +27,15 @@
 #include "javacall_logging.h"
 #include "javacall_meminfo.h"
 #include "javacall_memory.h"
+#include "javacall_time.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-mem_alloc_info* memInfoList = NULL;
+static mem_alloc_info* memInfoList = NULL;
 static meminfo_stat memStat;
+static javacall_handle pariodic_timer_handle = 0;
 
 /* memInfo List functions*/
 void initMemInfo(mem_alloc_info* memInfo);
@@ -41,12 +43,22 @@ static mem_alloc_info* buffer_2_meminfo(void* buffer);
 void add_mem_alloc_info(mem_alloc_info* newMemInfo);
 void remove_mem_alloc_info(mem_alloc_info* remMemInfo);
 
+void print_pariodic_mem_info(javacall_handle handle);
+
 void* javacall_meminfo_memory_heap_allocate(long size, /*OUT*/ long* outSize){
-	javacall_os_memory_heap_allocate(size,outSize);
+	void *heap = NULL;
+
+	heap = javacall_os_memory_heap_allocate(size,outSize);
+
+	javacall_time_initialize_timer(1000, 1, print_pariodic_mem_info, &pariodic_timer_handle);
+
+	return heap;
 }
 
 void javacall_meminfo_memory_heap_deallocate(void* heap){
 	javacall_os_memory_heap_deallocate(heap);
+
+	javacall_time_finalize_timer(pariodic_timer_handle);
 	print_memory_alloc_report();
 }
 
@@ -80,15 +92,20 @@ void* javacall_meminfo_malloc(unsigned int size, char* fileName, unsigned int li
 }
 
 void  javacall_meminfo_free(void* ptr, char* fileName, unsigned int line){
-	unsigned char* completeBuffer = NULL;
+	char lineBuffer[1024];
 	mem_alloc_info* memInfo = NULL;
 
 	memInfo = buffer_2_meminfo(ptr);
 
-	remove_mem_alloc_info(memInfo);
+	if(memInfo != NULL) {
+		remove_mem_alloc_info(memInfo);
 
-	javacall_os_free(memInfo->buffer);
-	javacall_os_free(memInfo);
+		javacall_os_free(memInfo->buffer);
+		javacall_os_free(memInfo);
+	}else{
+		sprintf(lineBuffer, "Try to free unregister memory in %s:%d\n", fileName, line);
+		javacall_print(lineBuffer);
+	}
 }
 
 void* javacall_meminfo_realloc(void* ptr, unsigned int size, char* fileName, unsigned int line){
@@ -229,10 +246,10 @@ void print_memory_alloc_report(){
 	sprintf(line, "Max Memory usage was %d\n\0", memStat.maxMemoryUsage);
 	javacall_print(line);
 
-	sprintf(line, "Current Memory usage is %d\n\0", memStat.currentMemeoryUsage);
-	javacall_print(line);
-
 	if(memStat.currentMemeoryUsage != 0) {
+
+		sprintf(line, "Current Memory usage is %d\n\0", memStat.currentMemeoryUsage);
+		javacall_print(line);
 
 		javacall_print("Memory Leak from:\n\0");
 
@@ -245,9 +262,19 @@ void print_memory_alloc_report(){
 
 			memInfo = memInfo->next;
 		}
+	}else{
+		javacall_print("No Memory Leak Detected\n\0");
 	}
 
 	javacall_print("------------------------\n\0");
+}
+
+void print_pariodic_mem_info(javacall_handle handle){
+  char line[1024];
+
+  sprintf(line, "Current Memory usage is %d\n\0", memStat.currentMemeoryUsage);
+  javacall_print(line);
+
 }
 
 #ifdef __cplusplus
