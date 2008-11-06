@@ -52,9 +52,9 @@ public class RecordStoreEventListener implements EventListener {
      * @param event async record store change event
      */
     public void process(Event event) {
-        if (recordStoreEventConsumer != null) {
-            // Remember consumer, it can be changed before we call it
-            RecordStoreEventConsumer consumer = recordStoreEventConsumer;
+        // Copy consumer locally to do no synchronization
+        RecordStoreEventConsumer consumer = recordStoreEventConsumer;
+        if (consumer != null) {
             NativeEvent nativeEvent = (NativeEvent) event;
             if (event.getType() == EventTypes.RECORD_STORE_CHANGE_EVENT) {
                 int suiteId = nativeEvent.intParam1;
