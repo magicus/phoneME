@@ -1780,19 +1780,21 @@ void CVMjitDumpSysInfo()
  * CVMglobals.jit.aotMethodList. The compiled methods will be save 
  * as the AOT code.
  */
-void
+CVMBool
 CVMjitCompileAOTCode(CVMExecEnv* ee)
 {
     CVMJITGlobalState* jgs = &CVMglobals.jit;
     JNIEnv* env = CVMexecEnv2JniEnv(ee);
     jstring jmlist;
 
+    CVMassert(!jgs->aotCompileFailed);
+
     if (!jgs->aotEnabled) {
-        return;
+        return CVM_TRUE;
     }
 
     if (jgs->codeCacheAOTCodeExist) {
-        CVMJITinitializeAOTCode();
+        return CVMJITinitializeAOTCode();
     } else {  
         CVMassert(jgs->isPrecompiling == CVM_TRUE);
         if (jgs->aotMethodList == NULL) {
@@ -1802,7 +1804,7 @@ CVMjitCompileAOTCode(CVMExecEnv* ee)
                               strlen("/methodsList.txt") + 
                               1);
             if (jgs->aotMethodList == NULL) {
-                return;
+                return CVM_TRUE;
             }
             *CVMglobals.jit.aotMethodList = '\0';
             strcat(jgs->aotMethodList, sprops->library_path);
@@ -1811,13 +1813,18 @@ CVMjitCompileAOTCode(CVMExecEnv* ee)
 
         jmlist = (*env)->NewStringUTF(env, jgs->aotMethodList);
         if ((*env)->ExceptionOccurred(env)) {
-            return;
+            return CVM_FALSE;
         }
 
         CVMjniCallStaticVoidMethod(env,
             CVMcbJavaInstance(CVMsystemClass(sun_misc_Warmup)),
             CVMglobals.sun_misc_Warmup_runit, NULL, jmlist);
 
+        if (jgs->aotCompileFailed) {
+	    return CVM_FALSE;
+	}
+
+        return CVM_TRUE;
     }
 }
 #endif
@@ -3382,6 +3389,10 @@ CVMjitInit(CVMExecEnv* ee, CVMJITGlobalState* jgs,
     }
 
     handleDoPrivileged();
+
+#ifdef CVM_AOT
+    jgs->aotCompileFailed = CVM_FALSE;
+#endif
     
     /* Do the following after parsing options: */
 #if defined(CVM_MTASK) || defined(CVM_AOT)

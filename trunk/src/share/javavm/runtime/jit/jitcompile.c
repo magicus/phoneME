@@ -499,6 +499,21 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
     CVMJITdebugInitCompilation(ee, mb);
 #endif
 
+#ifdef CVM_AOT
+    /* AOT requires ROMization. If we are doing AOT compilation,
+     * we better make sure the method is a ROMized method.
+     */
+    if (CVMglobals.jit.isPrecompiling) {
+        if (!CVMcbIsInROM(CVMmbClassBlock(mb))) {
+	    CVMconsolePrintf("CANNOT AOT NON-ROMIZED %C.%M\n",
+                              CVMmbClassBlock(mb), mb);
+            CVMglobals.jit.aotCompileFailed = CVM_TRUE;
+            retVal = CVMJIT_SUCCESS;
+            goto done;
+        }
+    }
+#endif
+
 #ifdef CVM_JVMTI
     if (CVMjvmtiIsInDebugMode()) {
 	retVal = CVMJIT_CANNOT_COMPILE;
