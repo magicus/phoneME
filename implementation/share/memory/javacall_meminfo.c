@@ -64,7 +64,10 @@ void* javacall_meminfo_memory_heap_allocate(long size, /*OUT*/ long* outSize){
 void javacall_meminfo_memory_heap_deallocate(void* heap){
 	javacall_os_memory_heap_deallocate(heap);
 
+#ifdef JAVACALL_MEMINFO_PERIODIC
 	javacall_time_finalize_timer(pariodic_timer_handle);
+#endif /* JAVACALL_MEMINFO_PERIODIC*/
+
 	print_memory_alloc_report();
 }
 
