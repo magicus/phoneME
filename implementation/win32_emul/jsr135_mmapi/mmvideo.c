@@ -392,9 +392,10 @@ static javacall_result video_set_video_location(javacall_handle handle, long x, 
 }
  
 /**********************************************************************************/
+
 static long  dataLength;
-static char* data;
-    
+static char* snapshot_buffer = NULL; // this buffer will hold the snapshot
+
 /**
  * 
  */
@@ -402,8 +403,12 @@ static javacall_result video_start_video_snapshot(javacall_handle handle,
                                                   const javacall_utf16* imageType, long length)
 {
     audio_handle* pHandle = (audio_handle*)handle;
+    char* data;
     static LimeFunction *f = NULL;
     
+    if (snapshot_buffer != NULL) {
+        return JAVACALL_FAIL;
+    }
     
     if (f == NULL) {
         f = NewLimeFunction(LIME_MMAPI_PACKAGE,
@@ -416,10 +421,15 @@ static javacall_result video_start_video_snapshot(javacall_handle handle,
     if(data == NULL){
         dataLength = -1;
     }
-
+    
+    snapshot_buffer = (char *) malloc(dataLength);
+    memcpy(snapshot_buffer, data, dataLength);
+    
     javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED,
         pHandle->isolateId, pHandle->playerId, NULL == data ? JAVACALL_FAIL :
         JAVACALL_OK, NULL);
+    
+    
     return JAVACALL_OK; 
 }
 
@@ -437,8 +447,15 @@ static javacall_result video_get_video_snapshot_data_size(javacall_handle handle
  */
 static javacall_result video_get_video_snapshot_data(javacall_handle handle, char* buffer, long size)
 {
-    memcpy(buffer, data, size);
-    return JAVACALL_OK;
+    if (snapshot_buffer != NULL) {
+        memcpy(buffer, snapshot_buffer, size);
+        free(snapshot_buffer);
+        snapshot_buffer = NULL;
+        return JAVACALL_OK;
+    }
+    else {
+        return JAVACALL_FAIL;
+    }
 }
 
 static javacall_result video_set_video_fullscreenmode( javacall_handle handle, javacall_bool fullScreenMode )
