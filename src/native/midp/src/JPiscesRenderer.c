@@ -39,6 +39,7 @@
 #include <sni.h>
 #include <commonKNIMacros.h>
 
+
 #define RENDERER_NATIVE_PTR 0
 #define RENDERER_SURFACE 1
 #define RENDERER_LAST RENDERER_SURFACE
@@ -588,6 +589,190 @@ Java_com_sun_pisces_PiscesRenderer_setTextureImpl() {
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_pisces_PiscesRenderer_setTextureFromImageImpl() {
+    KNI_StartHandles(8);
+    KNI_DeclareHandle(objectHandle);
+    KNI_DeclareHandle(imageHandle);
+    KNI_DeclareHandle(transformHandle);
+    KNI_DeclareHandle(imageData);
+    KNI_DeclareHandle(pixelData);
+    KNI_DeclareHandle(alphaData);
+    KNI_DeclareHandle(ImageClass);
+    KNI_DeclareHandle(ImageDataClass);
+    
+    jint width = KNI_GetParameterAsInt(2);
+    jint height = KNI_GetParameterAsInt(3);
+    jint offset = KNI_GetParameterAsInt(4);
+    jint stride = KNI_GetParameterAsInt(5);
+    
+
+    Renderer* rdr;
+
+    //buffers to store 565 image data and optionaly alpha data (if provided by image)
+    jbyte* data = NULL;
+    jbyte* aData = NULL;
+    
+    Transform6 textureTransform;
+    
+    jfieldID imageDataFieldId;    
+    jfieldID imageDataPixelDataId;
+    jfieldID imageDataAlphaDataId;
+    
+    jint success = 0;
+
+    KNI_GetThisPointer(objectHandle);
+    KNI_GetParameterAsObject(1, imageHandle);
+    KNI_GetParameterAsObject(6, transformHandle);
+
+    // let's get Image's class 
+    if (!KNI_IsNullHandle(imageHandle)) {  
+        KNI_GetObjectClass(imageHandle, ImageClass);
+    
+        if (!KNI_IsNullHandle(ImageClass)) {      
+            imageDataFieldId = KNI_GetFieldID(ImageClass, "imageData", "Ljavax/microedition/lcdui/ImageData;");
+            if (imageDataFieldId != NULL) {        
+                KNI_GetObjectField(imageHandle, imageDataFieldId, imageData);
+                if (!KNI_IsNullHandle(imageData)) {
+      
+                    KNI_GetObjectClass(imageData, ImageDataClass);
+                    if (!KNI_IsNullHandle(ImageDataClass)) {
+                        imageDataPixelDataId = 
+                            KNI_GetFieldID(ImageDataClass, "pixelData", "[B");
+                        imageDataAlphaDataId = 
+                            KNI_GetFieldID(ImageDataClass, "alphaData", "[B");
+                        if (imageDataPixelDataId == NULL || 
+                            imageDataAlphaDataId == NULL) {
+                        } else {
+                            KNI_GetObjectField(imageData, 
+                                               imageDataPixelDataId, pixelData);
+                            KNI_GetObjectField(imageData, 
+                                               imageDataAlphaDataId, alphaData);
+                            success = 1; //we have got pixelData, alphaData object handles successfuly
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    if (success) {
+        if (!KNI_IsNullHandle(pixelData)) {
+            //565 in ImageData is stored as 2bytes per pixel
+            data = (jbyte*)PISCESmalloc((width + 2) * (height + 2) * 2);
+            
+            if (data == NULL) {
+                KNI_ThrowNew("java/lang/OutOfMemoryError",
+                     "Allocation of renderer memory for texture failed.");
+            }
+        }
+    
+        if (!KNI_IsNullHandle(alphaData)) {   
+            //possibly with alpha channel
+            if (KNI_GetArrayLength(alphaData) > 0) {
+                //we allocate this buffer only if needed 
+                aData = (jbyte*)PISCESmalloc((width + 2) * (height + 2));           
+                if (NULL == aData) {
+                    KNI_ThrowNew("java/lang/OutOfMemoryError",
+                    "Allocation of renderer memory for texture alpha data failed.");
+                }
+            }
+        }
+    
+        rdr = (Renderer*)JLongToPointer(KNI_GetLongField(objectHandle,
+                                        fieldIds[RENDERER_NATIVE_PTR]));
+
+        //NOTE : data is freed at finalization time by renderer_dispose() or when paint mode changes
+
+        if (NULL != data) {
+            jint sidx = offset << 1;
+            jint sadd = stride << 1;
+            jint size = width << 1;
+            jint dadd = (width + 2) << 1;
+            jbyte* dest = data + dadd;
+            
+            jint h2 = height;
+            
+            jint copyToLastCol;
+            jint copyToFirstRow;
+            jint copyToLastRow;
+    
+            /* prepare additional pixels for interpolation */
+            
+            copyToLastCol = (width - 1) << 1;
+            copyToFirstRow = 0;
+            copyToLastRow = (height - 1);
+            
+            if (aData == NULL) {
+                for (; h2 > 0; --h2) {
+                    KNI_GetRawArrayRegion(pixelData, sidx, size, 
+                                          (jbyte*)(dest + 2));
+                    dest[0] = dest[2];
+                    dest[1] = dest[3];
+                    dest[size + 1] = dest[copyToLastCol + 1];
+                    dest[size + 2] = dest[copyToLastCol + 2];
+                    dest += dadd;
+                    sidx += sadd;
+                }
+                memcpy(data, data + dadd,
+                       size + 4);
+                memcpy(dest, data + (copyToLastRow + 1) * dadd,
+                       size + 4);
+            } else {
+                jint sidxalpha = offset;
+                jint salphaadd = stride;
+                jint sizealpha = width;
+                jint dalphaadd = width + 2;
+                jbyte* destAlpha =  aData + dalphaadd;
+                jint copyToLastColAlpha = width - 1;
+                
+                for (; h2 > 0; --h2) {
+                    KNI_GetRawArrayRegion(pixelData, sidx, size, 
+                                          (jbyte*)(dest + 2));
+                    dest[0] = dest[2];
+                    dest[1] = dest[3];
+                    dest[size + 1] = dest[copyToLastCol + 1];
+                    dest[size + 2] = dest[copyToLastCol + 2];
+                    
+                    KNI_GetRawArrayRegion(alphaData, sidxalpha, sizealpha, 
+                                          (jbyte*)(destAlpha + 1));
+                    destAlpha[0] = destAlpha[1];
+                    destAlpha[sizealpha + 1] = destAlpha[copyToLastColAlpha + 1];
+                    
+                    destAlpha += dalphaadd;
+                    sidxalpha += salphaadd;    
+                    
+                    dest += dadd;
+                    sidx += sadd;
+                }
+                
+                memcpy(data, data + dadd,
+                       size + 4);
+                memcpy(dest, data + (copyToLastRow + 1) * dadd,
+                       size + 4);          
+                memcpy(aData, aData + dalphaadd,
+                       sizealpha + 2);
+                memcpy(destAlpha, aData + (copyToLastRow + 1) * dalphaadd,
+                       sizealpha + 2);                  
+            }
+        
+            transform_get6(&textureTransform, transformHandle);
+            
+            renderer_setTextureViaImage(rdr, data, aData, width, height, KNI_FALSE, 
+                                &textureTransform);
+            
+            if (KNI_TRUE == readAndClearMemErrorFlag()) {
+                KNI_ThrowNew("java/lang/OutOfMemoryError",
+                             "Allocation of internal renderer buffer failed.");
+            }
+        }
+    }
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_PiscesRenderer_setLinearGradientImpl() {

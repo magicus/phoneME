@@ -135,6 +135,10 @@
                 (( (x) & 0x0000FC00) >> 5) | \
                 (( (x) & 0x000000F8) >> 3) )
 
+/** Convert 16-bit (565) color to 24-bit RGB color */
+#define CONVERT_565_TO_888(x) ( ((x & 0x001F) << 3) | ((x & 0x001C) >> 2) |\
+                              ((x & 0x07E0) << 5) | ((x & 0x0600) >> 1) |\
+                              ((x & 0xF800) << 8) | ((x & 0xE000) << 3) )
 
 extern jint PISCES_STROKE_X_BIAS;
 extern jint PISCES_STROKE_Y_BIAS;

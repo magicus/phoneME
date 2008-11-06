@@ -139,6 +139,9 @@ static INLINE void renderer_setTexture(Renderer* rdr, jint* data, jint width,
                                        jint height, jboolean repeat,
                                        const Transform6* transform);
 
+static INLINE void renderer_setTextureFromImage(Renderer* rdr, jbyte* data, jbyte* alphaData, jint width, jint height, jboolean repeat, const Transform6* transform);
+
+
 static INLINE void renderer_moveTo(Renderer* rdr, jint x0, jint y0);
 static INLINE void renderer_lineJoin(Renderer* rdr);
 static INLINE void renderer_lineTo(Renderer* rdr, jint x1, jint y1);
@@ -247,6 +250,8 @@ renderer_dispose(Renderer* rdr) {
     my_free(rdr->_ovalPoints);
 
     my_free(rdr->_texture_intData);
+    my_free(rdr->_texture_byteData);
+    my_free(rdr->_texture_alphaData);
     my_free(rdr->_dashArray);
 
     my_free(rdr->_paint);
@@ -396,7 +401,7 @@ renderer_resetClip(Renderer* rdr) {
  * @param transform new transformation matrix  
  * @see Transform6
  * @todo for now (because of Perseus test framework) transformation to fills is 
- * applied only to textures (rdr->_paintMode == PAINT_TEXTURE); 
+ * applied only to textures (rdr->_paintMode == (PAINT_TEXTURE8888 | PAINT_TEXTURE565ALPHA | PAINT_TEXTURE565NOALPHA)); 
  * it should be applied in other modes too (PAINT_LINEAR_GRADIENT,  
  * PAINT_RADIAL_GRADIENT)
  * @see renderer_getTransform(Renderer *),  Transform6
@@ -454,7 +459,9 @@ renderer_setTransform(Renderer* rdr, const Transform6* transform) {
           pisces_transform_assign(&rdr->_gradient_inverse_transform, 
                                   &compoundTransform);
         */
-    } else if (rdr->_paintMode == PAINT_TEXTURE) {
+    } else if (rdr->_paintMode == PAINT_TEXTURE8888 ||
+               rdr->_paintMode == PAINT_TEXTURE565ALPHA ||
+               rdr->_paintMode == PAINT_TEXTURE565NOALPHA) {
         pisces_transform_assign(&compoundTransform, &rdr->_transform);
         pisces_transform_multiply(&compoundTransform, &rdr->_paint_transform);
         pisces_transform_invert(&compoundTransform);
@@ -705,10 +712,78 @@ renderer_setTexture(Renderer* rdr, jint* data, jint width, jint height,
     pisces_transform_multiply(&compoundTransform, transform);
     pisces_transform_invert(&compoundTransform);
 
-    setPaintMode(rdr, PAINT_TEXTURE);
+    setPaintMode(rdr, PAINT_TEXTURE8888);
 
     my_free(rdr->_texture_intData);
+    my_free(rdr->_texture_byteData);
+    my_free(rdr->_texture_alphaData);
+    
     rdr->_texture_intData = data;
+    rdr->_texture_byteData = NULL;
+    rdr->_texture_alphaData = NULL;
+    
+    rdr->_texture_imageWidth = width;
+    rdr->_texture_imageHeight = height;
+    rdr->_texture_stride = width + 2;
+    rdr->_texture_repeat = repeat;
+
+    rdr->_texture_m00 = compoundTransform.m00;
+    rdr->_texture_m01 = compoundTransform.m01;
+    rdr->_texture_m10 = compoundTransform.m10;
+    rdr->_texture_m11 = compoundTransform.m11;
+    rdr->_texture_m02 = compoundTransform.m02 +
+                        (rdr->_texture_m00 >> 1) + (rdr->_texture_m01 >> 1);
+    rdr->_texture_m12 = compoundTransform.m12 +
+                        (rdr->_texture_m10 >> 1) + (rdr->_texture_m11 >> 1);
+
+    rdr->_texture_interpolate = XNI_TRUE;
+    rdr->_texture_m02 -= 32768;   // interpolate == true
+    rdr->_texture_m12 -= 32768;   // interpolate == true
+
+    iw = width;
+    wshift = 0;
+    while (iw > 0) {
+        iw >>= 1;
+        ++wshift;
+    }
+    rdr->_texture_wmask = 0xffffffff << (wshift - 1);
+
+    ih = height;
+    hshift = 0;
+    while (ih > 0) {
+        ih >>= 1;
+        ++hshift;
+    }
+    rdr->_texture_hmask = 0xffffffff << (hshift - 1);
+}
+
+static INLINE void
+renderer_setTextureViaImage(Renderer* rdr, jbyte* data, jbyte* alphaData, jint width, jint height, jboolean repeat, const Transform6* transform) {
+    Transform6 compoundTransform;
+
+    jint iw, wshift;
+    jint ih, hshift;
+
+    pisces_transform_assign(&rdr->_paint_transform, transform);
+
+    pisces_transform_assign(&compoundTransform, &rdr->_transform);
+    pisces_transform_multiply(&compoundTransform, transform);
+    pisces_transform_invert(&compoundTransform);
+
+    if (alphaData == NULL) {
+      setPaintMode(rdr, PAINT_TEXTURE565NOALPHA);
+    } else {
+      setPaintMode(rdr, PAINT_TEXTURE565ALPHA);
+    }
+    
+    my_free(rdr->_texture_intData);
+    my_free(rdr->_texture_byteData);
+    my_free(rdr->_texture_alphaData);
+    
+    rdr->_texture_intData = NULL;
+    rdr->_texture_byteData = data;
+    rdr->_texture_alphaData = alphaData;
+    
     rdr->_texture_imageWidth = width;
     rdr->_texture_imageHeight = height;
     rdr->_texture_stride = width + 2;
@@ -1191,8 +1266,16 @@ updatePaintDependedRoutines(Renderer* rdr) {
             rdr->_genPaint = genRadialGradientPaint;
             rdr->_emitRows = rdr->_bl_PT;
             break;
-        case PAINT_TEXTURE:
-            rdr->_genPaint = genTexturePaint;
+        case PAINT_TEXTURE8888:
+              rdr->_genPaint = genTexturePaint;
+              rdr->_emitRows = rdr->_bl_PT;
+            break;
+        case PAINT_TEXTURE565ALPHA:    
+              rdr->_genPaint = genTexturePaint565WithAlpha;
+              rdr->_emitRows = rdr->_bl_PT;
+            break;
+        case PAINT_TEXTURE565NOALPHA:            
+            rdr->_genPaint = genTexturePaint565NoAlpha;
             rdr->_emitRows = rdr->_bl_PT;
             break;
         case PAINT_FLAT_COLOR:
@@ -1211,7 +1294,11 @@ static void
 setPaintMode(Renderer* rdr, jint newPaintMode) {
     if (rdr->_paintMode != newPaintMode) {
         my_free(rdr->_texture_intData);
+        my_free(rdr->_texture_byteData);
+        my_free(rdr->_texture_alphaData);
         rdr->_texture_intData = NULL;
+        rdr->_texture_byteData = NULL;
+        rdr->_texture_alphaData = NULL;
         
         // when changing paint mode, the alpha maps should be checked
         rdr->_rendererState |= VALIDATE_ALPHA_MAP | 
@@ -1255,7 +1342,9 @@ validateAlphaMap(Renderer* rdr) {
         default:       
             // PAINT_LINEAR_GRADIENT
             // PAINT_RADIAL_GRADIENT
-            // PAINT_TEXTURE
+            // PAINT_TEXTURE8888
+            // PAINT_TEXTURE565ALPHA
+            // PAINT_TEXTURE565NOALPHA
             if (rdr->_rendererState & INVALID_PAINT_ALPHA_MAP) {
                 if ((rdr->_compositeRule == COMPOSITE_SRC_OVER) || 
                         (((rdr->_compositeRule == COMPOSITE_CLEAR) ||
@@ -1782,6 +1871,7 @@ emitRow(Renderer* rdr, jint minX, jint maxX, jboolean forceOutput) {
     rdr->_rowNum++;
     if (forceOutput || rdr->_rowNum == NUM_ALPHA_ROWS) {
         if (rdr->_genPaint) {
+            
             rdr->_genPaint(rdr, rdr->_rowNum);
         }
 
