@@ -260,7 +260,7 @@ CVMJITcodeCachePersist()
     const CVMProperties *sprops = CVMgetProperties();
     char *aotfile = jgs->aotFile;
 
-    if (jgs->codeCacheAOTCodeExist) {
+    if (jgs->aotCompileFailed || jgs->codeCacheAOTCodeExist) {
         return;
     }
 

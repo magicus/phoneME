@@ -4539,7 +4539,11 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     if (!CVMjvmtiIsInDebugMode())
 #endif
     {
-        CVMjitCompileAOTCode(ee);
+        if (!CVMjitCompileAOTCode(ee)) {
+	    errorStr = "error during AOT compilation";
+            errorNo = JNI_ERR;
+            goto done;
+        }
     }
 #endif
     

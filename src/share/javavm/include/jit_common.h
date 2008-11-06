@@ -448,6 +448,7 @@ typedef struct {
     /* AOT states  */
     CVMBool    aotEnabled;
     char*      aotFile;
+    CVMBool    aotCompileFailed;
     CVMBool    recompileAOT;
     CVMUint32  aotCodeCacheSize;  /* Code Cache Size for AOT compilation */
     CVMUint8*  codeCacheAOTStart; /* start of AOT code */
@@ -585,7 +586,7 @@ extern void CVMjitDumpSysInfo();
 /* If there is no existing AOT code, compile a list of methods. The
  * compiled methods will be saved as AOT code.
  */
-void
+extern CVMBool
 CVMjitCompileAOTCode(CVMExecEnv* ee);
 #endif
 
