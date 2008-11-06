@@ -96,7 +96,7 @@ jsrop_jstring_from_utf16_string(KNIDECLARGS const javacall_utf16_string utf16_st
     javacall_result res = JAVACALL_FAIL;
     javacall_int32 string_length;
     
-    if (JAVACALL_OK == javautil_unicode_utf16_chlength(utf16_str, 
+    if (JAVACALL_OK == javautil_unicode_utf16_ulength(utf16_str, 
                                                     &string_length)) {
         KNI_NewString(utf16_str, string_length, java_str);
         res = JAVACALL_OK;
