@@ -1,0 +1,298 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+
+# This is a scenario file for automating LWUITDemo MIDlet.
+# You can download LWUIT from
+# https://lwuit.dev.java.net/
+# This scenario was written for LWUIT release from 2008-08-14,
+# so there is no guarantee that it will work for earlier or later
+# releases.
+# In order to use this scenario, make sure that SJWC is compiled
+# with jpeg support.
+# The "msec" argument for pen and key events specifies delay in
+# milliseconds _before_ simulating that event. It is used to 
+# give our MIDP implementation time to handle simulated events.
+
+delay msec: 1000
+
+# Select "Themes" icon
+key code: select, state: clicked
+
+# Switch to "Business" theme
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+pen x: 75, y: 150, state: clicked, msec: 600
+
+# Switch to "Star" theme
+pen x: 65, y: 70, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+pen x: 75, y: 140, state: clicked, msec: 600
+
+# Switch to "Ocean fish" theme and let the fish 
+# swim for a few secs
+pen x: 30, y: 90, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+pen x: 75, y: 140, state: clicked, msec: 600
+delay msec: 2000
+
+# Switch back to "Java" theme
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+pen x: 75, y: 140, state: clicked, msec: 600
+
+# And go back to the main screen
+key code: soft2, state: clicked, msec: 600
+
+# Select "Rendering" icon
+key code: right, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Scroll through the list
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+
+# Select "WidgetRenderer"
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Select "FisheyeRenderer"
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Go up a bit
+key code: up, state: clicked, msec: 600
+key code: up, state: clicked, msec: 600
+key code: up, state: clicked, msec: 600
+
+# And back to the main screen
+key code: soft2, state: clicked, msec: 600
+key code: 2, state: clicked, msec: 600
+
+# Select "Animations" icon and let it play a bit
+key code: right, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+delay msec: 2000
+
+# Go back to the main screen
+key code: soft2, state: clicked, msec: 600
+
+# Select "Buttons" icon
+key code: right, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Press stuff
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: up, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Go back to the main screen
+key code: soft2, state: clicked, msec: 600
+
+# Select "Transitions" icon
+key code: right, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Fire transition and go back after a while
+pen x: 95, y: 175, state: clicked, msec: 600
+delay msec: 800
+key code: soft1, state: clicked, msec: 600
+
+# Select another transition, fire it and go
+# back after a while
+pen x: 65, y: 50, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+pen x: 95, y: 175, state: clicked, msec: 600
+delay msec: 800
+key code: soft1, state: clicked, msec: 600
+
+# Select another transition, fire it and go
+# back after a while
+pen x: 65, y: 50, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+pen x: 95, y: 175, state: clicked, msec: 600
+delay msec: 800
+key code: soft1, state: clicked, msec: 600
+
+# Apply transition
+pen x: 65, y: 50, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Go back to the main screen
+key code: soft2, state: clicked, msec: 600
+
+# Select "Fonts" icon
+key code: right, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Scroll down
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+
+# Go back to the main screen
+key code: soft2, state: clicked, msec: 600
+
+# Select "Tabs" icon
+key code: right, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Switch tabs
+key code: right, state: clicked, msec: 600
+delay msec: 600
+key code: right, state: clicked, msec: 600
+delay msec: 600
+key code: right, state: clicked, msec: 600
+delay msec: 600
+pen x: 50, y: 35, state: clicked, msec: 600
+pen x: 30, y: 110, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+pen x: 155, y: 35, state: clicked, msec: 600
+delay msec: 600
+pen x: 155, y: 60, state: clicked, msec: 600
+delay msec: 600
+pen x: 155, y: 85, state: clicked, msec: 600
+delay msec: 600
+pen x: 155, y: 105, state: clicked, msec: 600
+
+# Go back to the main screen
+key code: soft2, state: clicked, msec: 600
+
+# Select "Dialogs" icon
+key code: right, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Change dialog params
+pen x: 110, y: 160, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Show alert
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Dismiss alert
+delay msec: 500
+key code: soft1, state: clicked, msec: 600
+
+# Go back to main screen
+# without that delay click below doesn't work
+delay msec: 1000 
+key code: soft2, state: clicked, msec: 600
+
+# Select "Layouts" icon
+key code: right, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Choose different layouts
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: right, state: clicked, msec: 600
+key code: right, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Go back to main screen
+key code: soft2, state: clicked, msec: 600
+
+# Select "Scrolling" icon
+key code: right, state: clicked, msec: 600
+key code: select, state: clicked, msec: 600
+
+# Scroll a bit
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: down, state: clicked, msec: 600
+key code: up, state: clicked, msec: 600
+key code: up, state: clicked, msec: 600
+key code: up, state: clicked, msec: 600
+key code: up, state: clicked, msec: 600
+key code: up, state: clicked, msec: 600
+
+
+# Go back to main screen
+key code: soft2, state: clicked, msec: 600
+key code: 3, state: clicked, msec: 600
+
+delay msec: 1000
