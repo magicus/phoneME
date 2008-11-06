@@ -947,7 +947,9 @@ class DisplayableLFImpl implements DisplayableLF {
             currentDisplay.getDisplayableHeight() :
             Display.HEIGHT;
         } else {
-            h = Display.HEIGHT;
+            h = currentDisplay != null ?
+            currentDisplay.getDisplayHeight() :
+                Display.HEIGHT;
         }
         return h;
     }
