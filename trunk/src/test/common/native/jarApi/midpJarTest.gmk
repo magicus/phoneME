@@ -1,0 +1,99 @@
+#
+# 	
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+# This is a test of shared midpJar code that has no OS ifdefs,
+# so it is not expected to be run a device.
+# Currently only for Linux i386
+
+define verify_directory
+    @if [ ! -d "$($@)" ]; then \
+        echo "ERROR: $@ ($($@)) does not point to a valid directory"; \
+        /bin/false; \
+    fi
+endef
+
+OS = linux
+
+CPU = i386
+
+TARGET_DEVICE = x86
+
+OS_CFLAGS = -DLINUX 
+
+INCLUDES = \
+	-I$(CLDC_DIR)/bin/$(OS)_$(CPU)/include \
+	-I../../src/ams/common/native/inc      \
+	-I../../src/core/native/inc            \
+	-I../../src/core/native/share
+
+vpath % .
+vpath %.c ../../src/core/native/share
+vpath %.c ../../src/core/native/$(OS)
+vpath %.c ../../src/ams/common/native/share
+vpath %.h ../../src/core/native/share
+vpath %.h ../../src/core/native/inc
+vpath %.h ../../src/ams/common/native/inc
+
+CC = gcc
+
+CFLAGS = -DENABLE_MIDP_MALLOC=0 -w -fno-gnu-keywords $(INCLUDES) $(OS_CFLAGS)
+
+LD = g++
+
+LD_FLAGS = 
+
+LIBS =
+
+OBJ_FILES = midpJarTest.o midpJar.o midpString.o storagePosix.o midpUtilUTF.o \
+	storagePosix_md.o jar.o midpInflate.o
+
+run: verify_cldc_dir midpJarTest
+	@echo "... run $<"
+	@midpJarTest
+
+midpJarTest: $(OBJ_FILES)
+	@echo "... link $@"
+	@$(LD) $(LD_FLAGS) -o $@ $(OBJ_FILES) $(LIBS)
+
+midpJarTest.o:: midpJar.h midpMalloc.h midpString.h midpJarTest.gmk
+
+midpJar.o:: midpJar.h jar.h midpMalloc.h midpStorage.h midpString.h \
+	midpUtilUTF.h midpJarTest.gmk
+
+midpInflate.o:: jar.h midpInflateint.h midpInflatetables.h midpJarTest.gmk
+
+storagePosix.o:: midpStorage.h storagePosix_md.h midpJarTest.gmk
+
+jar.o storagePosix_md.o midpString.o midpUtilUTF.o: %.o: %.c %.h midpJarTest.gmk
+
+%.o: %.c
+	@echo "... create $@ from $<"
+	@$(CC) $(CFLAGS) -c -o $@ $<
+
+CLDC_DIR:
+	$(verify_directory)
+
+verify_cldc_dir: CLDC_DIR

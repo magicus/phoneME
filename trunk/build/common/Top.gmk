@@ -1,0 +1,133 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Top level shared Makefile for all platforms
+#
+# Following variables should have been set before including this file:
+#
+# HOST_PLATFORM,   HOST_OS,   HOST_CPU,   HOST_COMPILER
+# TARGET_PLATFORM, TARGET_OS, TARGET_CPU, TARGET_COMPILER, TARGET_VM
+# MIDP_DIR MIDP_OUTPUT_DIR
+#
+######################################################################
+
+USE_JAVAUTIL_LOG_IMPLEMENTATION ?= false
+
+ifndef JWC_WORK_SPACE
+JWC_WORK_SPACE=$(MIDP_DIR)
+endif
+
+# Definitions exported from an earlier build (if specified)
+ifdef VAR_IMPORT_FROM
+include $(VAR_IMPORT_FROM)
+endif
+
+
+include $(JWC_WORK_SPACE)/build/common/TopDefs.gmk
+
+# Project speficic definitions
+ifndef PROJECT_MIDP_DIR
+PROJECT_MIDP_DIR=$(MIDP_DIR)
+endif
+
+include $(PROJECT_MIDP_DIR)/build/common/project.gmk
+
+# If you know your build environment is set up correctly, you can
+# make the build go faster with
+#    make VERIFY_BUILD_ENV= DISPLAY_BUILD_ENV= ...
+VERIFY_BUILD_ENV  = verify
+DISPLAY_BUILD_ENV = display
+
+# Default build target
+# It must be defined before any other includes. In paralle builds
+# the verify and display are already checked when the build is in
+# single-process mode.
+
+ifndef IN_PARALLEL_BUILD
+all:: $(VERIFY_BUILD_ENV) $(DISPLAY_BUILD_ENV)
+endif
+all:: midp
+
+# Host platform specific defines
+ifneq ($(HOST_OS), $(TARGET_OS))
+include $(MIDP_DIR)/build/common/makefiles/$(HOST_OS).gmk
+endif
+
+ifneq ($(HOST_COMPILER), $(TARGET_COMPILER))
+include $(MIDP_DIR)/build/common/makefiles/$(HOST_COMPILER).gmk
+endif
+
+# Target platform generic defines
+include $(MIDP_DIR)/build/common/makefiles/$(TARGET_OS).gmk
+include $(MIDP_DIR)/build/common/makefiles/$(TARGET_COMPILER).gmk
+
+# Generic defines
+include $(MIDP_DIR)/build/common/makefiles/Defs.gmk
+
+# Shared defines that depends on contents of Defs.gmk
+include $(MIDP_DIR)/build/common/makefiles/$(TARGET_COMPILER)-jtwi.gmk
+include $(MIDP_DIR)/build/common/makefiles/$(TARGET_VM).gmk
+
+# Make variables verifying rules
+include $(MIDP_DIR)/build/common/makefiles/Verify.gmk
+
+# Core MIDP targets
+include $(MIDP_DIR)/build/common/makefiles/MIDP.gmk
+
+# Documentation targets 
+include $(MIDP_DIR)/build/common/makefiles/Docs.gmk
+
+# Release bundle targets
+include $(MIDP_DIR)/build/common/makefiles/Release.gmk
+
+
+# Export of makefile variable values
+#
+# the target 'varexport' is temporarily disabled for cygwin/win32:
+# it causes segment violation in sh on some versions of cygwin
+#
+# you may override the below choices specifying USE_VAREXPORT=true or false
+# from the command line
+#
+ifneq ($(HOST_OS), win32)
+USE_VAREXPORT=true
+else
+USE_VAREXPORT=false
+endif
+#
+ifeq ($(USE_VAREXPORT), true)
+include $(MIDP_DIR)/build/common/makefiles/varexport.gmk
+endif
+
+ifeq ($(USE_AMS_EXECUTABLE), true)
+
+# Build AMS executables after everything else ae built
+# This additional build targets must be defined after all includes
+# so that Make variables are fully populated by each subsystem
+all:: $(SUBSYSTEM_AMS_EXECUTABLES)
+
+endif
