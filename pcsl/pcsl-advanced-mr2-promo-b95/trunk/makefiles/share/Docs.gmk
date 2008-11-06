@@ -1,0 +1,101 @@
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Makefile for doxygen documentation. To be included into
+# the top level makefile.
+# Include top.gmk prior to including Docs.gmk, so that
+# NETWORK_DIR, FILE_DIR are all defined.
+#
+######################################################################
+
+DOC_DIR             = $(PCSL_OUTPUT_DIR)/doc
+CFG_SRC_DIR         = $(PCSL_DIR)/makefiles/share
+PROJECT_CFG_SRC_DIR = $(PROJECT_PCSL_DIR)/makefiles/share
+
+#
+GROUPNAME =Portable Common Service Layer 
+
+# Variables used for building doxygen documentation
+#
+DOXYGEN_DIR = $(DOC_DIR)/doxygen
+
+# The default location of doxygen binary
+# Note: User should change this (or overwrite
+# in command line mode) in order to use it.
+#
+DOXYGEN_CMD = /usr/bin/doxygen
+
+DOXYGEN_CFG = $(CFG_SRC_DIR)/doxygen.conf
+DOXYGEN_CONFIG_FILE = $(DOXYGEN_DIR)/doxygen.conf
+
+DOXYGEN_EXCLUDE_LIST =
+
+# Makes sure to tell users to use their copy of doxygen
+#
+VERIFY_DOXYGEN_CMD:
+	@if [ ! -f "$(DOXYGEN_CMD)" ]; then \
+	   echo "ERROR: Please set DOXYGEN_CMD to point to your doxygen executable"; \
+	   /bin/false; \
+	fi;
+
+# Style sheets and other configuration templates
+#
+DOXYGEN_SUPPORT_LIST += \
+    $(DOXYGEN_DIR)/doxygen_style.css
+
+PROJECT_DOXYGEN_SUPPORT_LIST += \
+    $(DOXYGEN_DIR)/doxygen_header.txt \
+    $(DOXYGEN_DIR)/doxygen_footer.txt
+
+$(DOXYGEN_SUPPORT_LIST): $(DOXYGEN_DIR)/%: $(CFG_SRC_DIR)/%
+	@(cp $< $@)
+
+$(PROJECT_DOXYGEN_SUPPORT_LIST): $(DOXYGEN_DIR)/%: $(PROJECT_CFG_SRC_DIR)/%
+	@(cp $< $@) $(LOG)
+
+$(DOXYGEN_CONFIG_FILE): $(DOXYGEN_DIR) $(DOXYGEN_CFG) $(FRC_DOC_REBUILD)
+	-@(sed -e 'sz<OUTPUT_DIR>z$(DOXYGEN_DIR)z' \
+	    -e 'sz<INPUT_LIST>z$(DOXYGEN_INPUT_LIST)z' \
+	    -e 'sz<EXCLUDE_LIST>z$(DOXYGEN_EXCLUDE_LIST)z' \
+	    -e 'sz<DOXYGEN_DIR>z$(DOXYGEN_DIR)z' \
+	< $(DOXYGEN_CFG) > $@)
+
+# dummy target. Can be used to force rebuild
+force_doc_rebuild :
+
+# doc is dependent on "file print memory network"
+doc:  \
+     verify VERIFY_DOXYGEN_CMD $(DOXYGEN_DIR) $(DOXYGEN_CONFIG_FILE) $(DOXYGEN_SUPPORT_LIST) $(PROJECT_DOXYGEN_SUPPORT_LIST)
+	@echo +++ $(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE)
+	 -@($(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE))
+
+$(DOXYGEN_DIR):
+	-@(mkdir -p $@)
+
+# Avoid accidents
+#
+.PHONY: doc
