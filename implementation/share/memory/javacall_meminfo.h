@@ -31,6 +31,7 @@ extern "C" {
 #endif
 
 #define MAX_FILE_NAME_LENGTH 4096
+#define CURRENT_PRINT_EVERY_MILLISEC 1000
 
 typedef struct _mem_alloc_info {
     int size;

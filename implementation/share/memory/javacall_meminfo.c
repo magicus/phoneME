@@ -50,7 +50,13 @@ void* javacall_meminfo_memory_heap_allocate(long size, /*OUT*/ long* outSize){
 
 	heap = javacall_os_memory_heap_allocate(size,outSize);
 
-	javacall_time_initialize_timer(1000, 1, print_pariodic_mem_info, &pariodic_timer_handle);
+#ifdef JAVACALL_MEMINFO_PERIODIC
+	javacall_time_initialize_timer(CURRENT_PRINT_EVERY_MILLISEC, 
+								   1, 
+								   print_pariodic_mem_info, 
+								   &pariodic_timer_handle);
+
+#endif /* JAVACALL_MEMINFO_PERIODIC*/
 
 	return heap;
 }
@@ -269,7 +275,7 @@ void print_memory_alloc_report(){
 	javacall_print("------------------------\n\0");
 }
 
-void print_pariodic_mem_info(javacall_handle handle){
+static void print_pariodic_mem_info(javacall_handle handle){
   char line[1024];
 
   sprintf(line, "Current Memory usage is %d\n\0", memStat.currentMemeoryUsage);

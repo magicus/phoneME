@@ -26,8 +26,8 @@
 #ifndef __JAVACALL_MEMORY_H_
 #define __JAVACALL_MEMORY_H_
 
-#define JAVACALL_MEMINFO 1
-
+#define JAVACALL_MEMINFO 
+#undef JAVACALL_MEMINFO_PERIODIC 
 /**
  * @file javacall_memory.h
  * @ingroup Memory
