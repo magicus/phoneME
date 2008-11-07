@@ -114,14 +114,43 @@ final class MMHelperImpl extends MMHelper {
     /**
      * Get Display being used for Item painting. Platform-dependent.
      */
-    public Display getItemDisplay(Item item) {
-        Display display = null;
-
+    public Display getDisplayFor(Item item) {
         if (item.owner == null)
             return null;
 
         return item.owner.getLF().lGetCurrentDisplay();
-    }    
+    }
+
+    /**
+     * Get Display being used for painting of given Displayable. Platform-dependent.
+     */
+    public Display getDisplayFor(Displayable displayable) {
+        return displayable.getLF().lGetCurrentDisplay();
+    }
+
+    /**
+     * Get width of given display.
+     * @param display
+     * @return number of pixels Display occupies horizontally
+     */
+    public int getDisplayWidth(Display display) {
+        int res =  display != null ?
+            display.getDisplayWidth() :
+            Display.getPrimaryDisplayWidth();
+        return res;
+    }
+
+    /**
+     * Get height of given display.
+     * @param display
+     * @return number of pixels Display occupies vertically
+     */
+    public int getDisplayHeight(Display display) {
+        int res = display != null ?
+            display.getDisplayHeight() :
+            Display.getPrimaryDisplayHeight();
+        return res;
+    }
 
     /**
      * Is current Display (playing video) overlapped by system layers

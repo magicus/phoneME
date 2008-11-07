@@ -2564,6 +2564,38 @@ public class Display {
         return  (current instanceof AlertLF) ? window.getAlertHeight() : window.getBodyHeight();
     }
 
+    /**
+     * Called to get current display width.
+     * @return Display width.
+     */
+    int getDisplayWidth() {
+        return width;
+    }
+
+    /**
+     * Called to get current display height.
+     * @return Display height.
+     */
+    int getDisplayHeight() {
+        return height;
+    }
+
+    /**
+     * Called to get current display width.
+     * @return Display width.
+     */
+    static int getPrimaryDisplayWidth() {
+        return WIDTH;
+    }
+
+    /**
+     * Called to get current display height.
+     * @return Display height.
+     */
+    static int getPrimaryDisplayHeight() {
+        return HEIGHT;
+    }
+
     // #endif ENABLE_CHAMELEON
 
 // #ifdef ENABLE_CDC
