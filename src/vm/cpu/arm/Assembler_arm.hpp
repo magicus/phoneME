@@ -616,13 +616,13 @@ class Macros;
 class LiteralAccessor {
 #if !defined(PRODUCT) || ENABLE_COMPILER
 public:
-  virtual bool has_literal(int /*imm32*/, Assembler::Address1& /*result*/) {
+  virtual bool has_literal(int /*imm32*/, Assembler::Address1& /*result*/) const {
     return false;
   }
-  virtual Assembler::Register get_literal(int /*imm32*/) {
+  virtual Assembler::Register get_literal(int /*imm32*/) const {
     return Assembler::no_reg;
   }
-  virtual void free_literal() {}
+  virtual void free_literal() const {}
 #endif
 };
 
@@ -654,13 +654,13 @@ class Macros: public Assembler {
     arith_imm(_mov, rd, sbz, imm32, NULL, no_CC, cond);
   }
   void mov_imm(Register rd, int imm32,
-               LiteralAccessor* la, CCMode s = no_CC, Condition cond=al) {
+               const LiteralAccessor* la, CCMode s = no_CC, Condition cond=al) {
     arith_imm(_mov, rd, sbz, imm32, la, s, cond);
   }
 
   // immediate operands for compare & test data-processing instructions (form 2)
 #define F(mnemonic, opcode) \
-  void mnemonic(Register rn, int imm32, LiteralAccessor* la,    \
+  void mnemonic(Register rn, int imm32, const LiteralAccessor* la,    \
                 Condition cond = al) {                          \
     arith_imm(opcode, sbz, rn, imm32, la, set_CC, cond);        \
   }
@@ -676,7 +676,7 @@ class Macros: public Assembler {
                 CCMode s = no_CC, Condition cond = al) {                  \
     arith_imm(opcode, rd, rn, imm32, NULL, s, cond);                      \
   }                                                                       \
-  void mnemonic(Register rd, Register rn, int imm32, LiteralAccessor* la, \
+  void mnemonic(Register rd, Register rn, int imm32, const LiteralAccessor* la, \
                 CCMode s = no_CC, Condition cond = al) {                  \
     arith_imm(opcode, rd, rn, imm32, la, s, cond);                        \
   }
@@ -694,7 +694,7 @@ class Macros: public Assembler {
 #undef F
 
   void arith_imm(Opcode opcode, Register rd, Register rn, int imm32,
-                 LiteralAccessor* la, CCMode s = no_CC, Condition cond = al);
+                 const LiteralAccessor* la, CCMode s = no_CC, Condition cond = al);
 
   // immediate operands for multiplication
   void mul_imm(Register rd, Register rm, int imm32, Register tmp,

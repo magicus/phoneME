@@ -28,6 +28,11 @@ class TransportDesc : public MixedOopDesc {
 #if ENABLE_JAVA_DEBUGGER
 public:
   ReturnOop            _next;
+#if ENABLE_PCSL
+  ReturnOop            _read_ahead_buffer;
+  // number of bytes occupied by data in _read_ahead_buffer
+  int                  _bytes_cached_for_read;
+#endif // ENABLE_PCSL
   address              _ops;
   int                  _task_id;
   int                  _flags;
@@ -35,7 +40,7 @@ public:
 #endif
 protected:
   static jint header_size() { return sizeof(TransportDesc); }
-  static int pointer_count() { return 1;}
+  static int pointer_count() { return ENABLE_PCSL ? 2 : 1; }
 
 private:
   static size_t allocation_size() {

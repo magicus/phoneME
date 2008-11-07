@@ -263,6 +263,7 @@ ReturnOop JarFileParser::get(const JvmPathChar* jar_file_name1,
 
   if (!parser().find_end_of_central_header()) {
     // The jar file is corrupted. Stop parsing it.
+    parser().dispose();
     return NULL;
   }
 

@@ -404,6 +404,10 @@ SocketTransport.cpp              SocketTransport.hpp
 SocketTransport.cpp              JavaDebugger.hpp
 SocketTransport.cpp              ObjectHeap_<iarch>.hpp
 
+PCSLSocketTransport.cpp          SocketTransport.hpp
+PCSLSocketTransport.cpp          JavaDebugger.hpp
+PCSLSocketTransport.cpp          ObjectHeap_<iarch>.hpp
+
 TransportDesc.hpp                MixedOopDesc.hpp
 
 Transport.hpp                    TransportDesc.hpp
@@ -782,23 +786,27 @@ Relocation.hpp                   CompiledMethod.hpp
 Relocation.cpp                   Relocation.hpp
 Relocation.cpp                   CallInfo.hpp
 
-Compiler.hpp                     CompilationQueue.hpp
-Compiler.hpp                     Method.hpp
-Compiler.hpp                     CodeGenerator.hpp
-Compiler.hpp                     Entry.hpp
+CompilerContext.hpp              CompilationQueue.hpp
+CompilerContext.hpp              Entry.hpp
+CompilerContext.hpp              Method.hpp
+
+CompilerState.hpp                CodeGenerator.hpp
+CompilerState.hpp                CompilerContext.hpp
+
+Compiler.hpp                     BytecodeCompileClosure.hpp
+Compiler.hpp                     CompilerState.hpp
 Compiler.hpp                     MixedOop.hpp
 Compiler.hpp                     CodeOptimizer_<carch>.hpp
+
 #if ENABLE_JVMPI_PROFILE
 Compiler.cpp                     Globals.hpp
-#endif 
-
+#endif
 
 Compiler.cpp                     Compiler.hpp
 Compiler.cpp                     jvm.h
 Compiler.cpp                     CompiledMethodCache.hpp
 Compiler.cpp                     Timer.hpp
 Compiler.cpp                     ObjectHeap_<iarch>.hpp
-Compiler.cpp                     BytecodeCompileClosure.hpp
 Compiler.cpp                     InstanceClass.hpp
 Compiler.cpp                     Universe.hpp
 Compiler.cpp                     JVM.hpp
@@ -2806,6 +2814,11 @@ BSDSocket.cpp                    sni.h
 BSDSocket.cpp                    OS.hpp
 BSDSocket.cpp                    Globals.hpp
 
+#if ENABLE_JAVA_DEBUGGER
+BSDSocket.cpp                    Transport.hpp
+BSDSocket.cpp                    SocketTransport.hpp
+#endif
+
 PCSLSocket.cpp                   GlobalDefinitions.hpp
 PCSLSocket.cpp                   jvm.h
 PCSLSocket.cpp                   sni.h
@@ -3062,6 +3075,8 @@ ReflectionNatives.cpp           SystemDictionary.hpp
 ReflectionNatives.cpp           Throw.hpp
 ReflectionNatives.cpp           TypeArrayClass.hpp
 ReflectionNatives.cpp           Universe.hpp
+ReflectionNatives.cpp           ClassParserState.hpp
+ReflectionNatives.cpp           ClassFileParser.hpp
 
 ParsedTypeSymbol.hpp            TypeSymbol.hpp
 ParsedTypeSymbol.cpp            ParsedTypeSymbol.hpp

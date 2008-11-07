@@ -74,20 +74,20 @@ public:
 
 class CompilerLiteralAccessor : public LiteralAccessor {
 public:
-  virtual bool has_literal(int imm32, Assembler::Address1& result);
+  virtual bool has_literal(int imm32, Assembler::Address1& result) const;
 
-  virtual Assembler::Register get_literal(int imm32) {
+  virtual Assembler::Register get_literal(int imm32) const {
     return frame()->get_literal(imm32, *this);
   }
 
 #if ENABLE_ARM_VFP
-  Assembler::Register has_vfp_literal(const int imm32);
+  Assembler::Register has_vfp_literal(const int imm32) const;
 #endif
 
+  CompilerLiteralAccessor( void ): _frame( CodeGenerator::current()->frame() ) {}
 private:
-  VirtualStackFrame* frame() {
-    return Compiler::frame();
-  }
+  VirtualStackFrame* const _frame;
+  VirtualStackFrame* frame( void ) const { return _frame; }
 };
 
 // target_ptr must be one of gp_xxx_ptr. They are declared in
@@ -226,7 +226,7 @@ extern "C" {
 }
 
 bool CompilerLiteralAccessor::has_literal(int imm32,
-                                          Assembler::Address1& result) {
+                                          Assembler::Address1& result) const {
   LiteralElementStream les(frame());
   for ( ; !les.eos() ; les.next()) {
     if (les.value() == imm32) {
@@ -269,7 +269,7 @@ bool CompilerLiteralAccessor::has_literal(int imm32,
 }
 
 #if ENABLE_ARM_VFP
-Assembler::Register CompilerLiteralAccessor::has_vfp_literal(int imm32) {
+Assembler::Register CompilerLiteralAccessor::has_vfp_literal(int imm32) const {
   LiteralElementStream les(frame());
   for ( ; !les.eos() ; les.next()) {
     if (les.value() == imm32) {
@@ -344,6 +344,7 @@ void CodeGenerator::load_from_address(Value& result, BasicType type,
       int len = method()->code_size();
 
       if (bc == Bytecodes::_baload && nextbci + 1 < len) {
+        Compiler* const compiler = this->compiler();
         Bytecodes::Code bc1 = method()->bytecode_at(nextbci);
         Bytecodes::Code bc2 = method()->bytecode_at(nextbci+1);
         if ((bc1 == Bytecodes::_i2s  && bc2 == Bytecodes::_iand) ||
@@ -359,8 +360,8 @@ void CodeGenerator::load_from_address(Value& result, BasicType type,
           // into an "unsigned load byte". The only case we cannot do this is
           // when the iand or i2s bytecode sits at a branch target, so we check
           // it with the Compiler::entry_count_for() lines below.
-          if (Compiler::current()->entry_count_for(nextbci) == 1 &&
-              Compiler::current()->entry_count_for(nextbci+1) == 1) {
+          if (compiler->entry_count_for(nextbci) == 1 &&
+              compiler->entry_count_for(nextbci+1) == 1) {
             // At this point, the operands to the baload bytecode have already
             // been popped. The top of stack is the operand to the iand.
             Value iand_operand(T_INT);
@@ -368,23 +369,23 @@ void CodeGenerator::load_from_address(Value& result, BasicType type,
             frame()->value_at(iand_operand, operand_index);
             if (iand_operand.is_immediate() && iand_operand.as_int() == 0xff) {
               frame()->pop();
-              Compiler::closure()->set_next_bytecode_index(nextbci+2);
+              compiler->set_next_bytecode_index(nextbci+2);
               is_signed = false;
             }
           }
         } else if (bc1 == Bytecodes::_sipush &&
                    method()->get_java_short(nextbci+1) == 0xff &&
-                   Compiler::current()->entry_count_for(nextbci) == 1 &&
+                   compiler->entry_count_for(nextbci) == 1 &&
                    nextbci + 3 < len &&
                    method()->bytecode_at(nextbci+3) == Bytecodes::_iand &&
-                   Compiler::current()->entry_count_for(nextbci+3) == 1) {
+                   compiler->entry_count_for(nextbci+3) == 1) {
           // Detect a common code pattern:
           //     aload array
           //     iload index
           //     baload array    <<< we are here
           //     sipush 0xff
           //     iand
-          Compiler::closure()->set_next_bytecode_index(nextbci+4);
+          compiler->set_next_bytecode_index(nextbci+4);
           is_signed = false;
         }
       }
@@ -419,7 +420,7 @@ void CodeGenerator::store_to_address(Value& value, BasicType type,
   GUARANTEE(stack_type_for(type) == value.stack_type(),
              "types must match (taking stack types into account)");
   Register reg;
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
 
   if (value.is_immediate()) {
     reg = cla.get_literal(value.lo_bits());
@@ -531,7 +532,7 @@ void CodeGenerator::store_to_address_and_record_offset_of_exception_instr(Value&
   GUARANTEE(stack_type_for(type) == value.stack_type(),
              "types must match (taking stack types into account)");
   Register reg;
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
 
   if (value.is_immediate()) {
     reg = cla.get_literal(value.lo_bits());
@@ -546,7 +547,7 @@ void CodeGenerator::store_to_address_and_record_offset_of_exception_instr(Value&
 
   jint old_code_size = 0;
   NullCheckStub* unlinked_npe_stub =
-    Compiler::current()->get_unlinked_exception_stub(bci());
+    compiler()->get_unlinked_exception_stub(bci());
 
   if (unlinked_npe_stub) {
     need_npe_check = true;
@@ -637,7 +638,7 @@ void CodeGenerator::store_to_address_and_record_offset_of_exception_instr(Value&
 #if ENABLE_ARM_VFP
 void CodeGenerator::move_vfp_immediate(const Register dst,
                                        const jint src, const Condition cond) {
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
   const Assembler::Register reg = cla.has_vfp_literal(src);
 
   if (reg != Assembler::no_reg) {
@@ -734,7 +735,7 @@ CodeGenerator::move_double_immediate(const Register dst,
     }
   }
   {
-    CompilerLiteralAccessor cla;
+    const CompilerLiteralAccessor cla;
     const Register reg_lo = cla.has_vfp_literal(src_lo);
     const Register reg_hi = cla.has_vfp_literal(src_hi);
     if (is_arm_register(reg_lo) && is_arm_register(reg_hi)) {
@@ -799,7 +800,7 @@ CodeGenerator::move(const Value& dst, const Value& src, const Condition cond) {
     else
 #endif  // ENABLE_ARM_VFP
     {
-      CompilerLiteralAccessor cla;
+      const CompilerLiteralAccessor cla;
 #if ENABLE_ARM_VFP
       const Assembler::Register reg = cla.has_vfp_literal(src.lo_bits());
       if( reg != Assembler::no_reg && reg > Assembler::r15 ) {
@@ -943,7 +944,7 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
   }
 
   if (index.is_immediate()) {
-    CompilerLiteralAccessor cla;
+    const CompilerLiteralAccessor cla;
     cmp_imm(length, index.as_int(), &cla);
   } else {
     cmp(length, reg(index.lo_register()));
@@ -971,7 +972,7 @@ int CodeGenerator::get_inline_thrower_gp_index(int rte JVM_TRAPS) {
     return -1;
   }
 
-  const int locals = Compiler::root()->method()->max_locals();
+  const int locals = state()->root_method()->max_locals();
 
   if (locals < MAX_INLINE_THROWER_METHOD_LOCALS) {
     long offset;
@@ -1370,12 +1371,13 @@ void CodeGenerator::imla(Value& result,
 
 bool CodeGenerator::fold_arithmetic(Value& result,
                                     Value& op1, Value& op2 JVM_TRAPS) {
-  const int start_bci = Compiler::bci();
-  Method * const mth = method();
+  Compiler* const compiler = Compiler::current();
+  const int start_bci = compiler->bci();
+  Method* const mth = method();
   const Bytecodes::Code code = mth->bytecode_at(start_bci);
   int next_bci = start_bci + Bytecodes::length_for(code);
 
-  if (Compiler::current()->entry_count_for(next_bci) > 1) {
+  if (compiler->entry_count_for(next_bci) > 1) {
     return false;
   }
 
@@ -1396,9 +1398,9 @@ bool CodeGenerator::fold_arithmetic(Value& result,
       next_bci = next_bci + Bytecodes::length_for(mth, next_bci);
 
       Value summand(T_INT);
-      Compiler::frame()->pop(summand);
+      state()->frame()->pop(summand);
       imla(result, op1, op2, summand JVM_CHECK_0);
-      Compiler::closure()->set_next_bytecode_index(next_bci);
+      compiler->closure()->set_next_bytecode_index(next_bci);
       return true;
     }
   }
@@ -1653,7 +1655,7 @@ void CodeGenerator::arithmetic(Opcode opcode,
   const Register resReg = result.lo_register();
   const Register op1Reg  = op1.lo_register();
   if (op2.is_immediate()) {
-    CompilerLiteralAccessor cla;
+    const CompilerLiteralAccessor cla;
     arith_imm(opcode,
               resReg, op1Reg, op2.as_int(), &cla, cc);
   } else {
@@ -1700,7 +1702,7 @@ void CodeGenerator::idiv_rem(Value& result, Value& op1, Value& op2,
     ZeroDivisorCheckStub* zero =
       ZeroDivisorCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(zero));
     b(zero);
-    Compiler::current()->closure()->terminate_compilation();
+    compiler()->closure()->terminate_compilation();
   } else if (divisor == 1) {
     if (isRemainder) {
       result.set_int(0);
@@ -2691,7 +2693,7 @@ void CodeGenerator::larithmetic(Opcode opcode1, Opcode opcode2,
   CCMode mode = (opcode1 == opcode2) ? no_CC : set_CC;
 
   if (op2.is_immediate()) {
-    CompilerLiteralAccessor cla;
+    const CompilerLiteralAccessor cla;
     arith_imm(opcode1, R1, A1, op2.lsw_bits(), &cla, mode);
     arith_imm(opcode2, R2, A2, op2.msw_bits(), &cla);
   } else {
@@ -2870,7 +2872,7 @@ void CodeGenerator::cmp_values(Value& op1, Value& op2,
 
   const Register op1_lo_reg = op1.lo_register();
   if (op2.is_immediate()) {
-    CompilerLiteralAccessor cla;
+    const CompilerLiteralAccessor cla;
     cmp_imm(op1_lo_reg, op2.as_int(), &cla, cond);
   } else {
     cmp(op1_lo_reg, reg(op2.lo_register()), cond);
@@ -2894,7 +2896,7 @@ void CodeGenerator::long_cmp(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
   // the lcmp and ifXX as a single byte code, without producing an
   // intermediate result.  But the compiler is not yet set up to do that
   // easily
-  int next_bci = Compiler::current()->closure()->next_bytecode_index();
+  int next_bci = compiler()->next_bytecode_index();
   bool negate = false;
   switch(method()->bytecode_at(next_bci)) {
     case Bytecodes::_ifeq:
@@ -2912,7 +2914,7 @@ void CodeGenerator::long_cmp(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
         if (value == 0) {
           orr(rreg, arg1->lsw_register(), reg(arg1->msw_register()));
         } else {
-          CompilerLiteralAccessor cla;
+          const CompilerLiteralAccessor cla;
           eor_imm(rreg, arg1->lsw_register(), arg2->lsw_bits(), &cla, set_CC);
           eor_imm(rreg, arg1->msw_register(), arg2->msw_bits(), &cla, no_CC, eq);
         }
@@ -2932,7 +2934,7 @@ void CodeGenerator::long_cmp(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
       // Note that in the !negate case, only the sign of the result is
       // important
       if (arg1->is_immediate()) {
-        CompilerLiteralAccessor cla;
+        const CompilerLiteralAccessor cla;
         // rreg is a temporary.  We're just setting the condition codes
         rsb_imm(rreg, arg2->lsw_register(), arg1->lsw_bits(), &cla, set_CC);
         rsc_imm(rreg, arg2->msw_register(), arg1->msw_bits(), &cla, set_CC);
@@ -2954,7 +2956,7 @@ void CodeGenerator::long_cmp(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
           break;
         }
       } else {
-        CompilerLiteralAccessor cla;
+        const CompilerLiteralAccessor cla;
         cmp_imm(      arg1->lsw_register(), arg2->lsw_bits(), &cla);
         sbc_imm(rreg, arg1->msw_register(), arg2->msw_bits(), &cla, set_CC);
       }
@@ -3070,7 +3072,8 @@ void CodeGenerator::check_timer_tick(JVM_SINGLE_ARG_TRAPS) {
 bind(done);
 
   TimerTickStub* stub =
-    TimerTickStub::allocate(Compiler::bci(), timer_tick, done JVM_ZCHECK(stub));
+    TimerTickStub::allocate(compiler()->bci(), timer_tick,
+                            done JVM_ZCHECK(stub));
   stub->insert();
   frame()->clear_literals();
 }
@@ -3284,7 +3287,7 @@ void CodeGenerator::new_object(Value& result, JavaClass* klass JVM_TRAPS) {
   RegisterAllocator::dereference(old_end);
 
   NewObjectStub* stub =
-    NewObjectStub::allocate(Compiler::bci(), obj, jnear,
+    NewObjectStub::allocate(compiler()->bci(), obj, jnear,
                               slow_case, done JVM_ZCHECK(stub));
   stub->insert();
 
@@ -3401,7 +3404,7 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
   RegisterAllocator::dereference(old_end);
 
   NewTypeArrayStub* stub =
-    NewTypeArrayStub::allocate(Compiler::bci(), obj, jnear, len,
+    NewTypeArrayStub::allocate(compiler()->bci(), obj, jnear, len,
                                  slow_case, done JVM_ZCHECK(stub));
   stub->insert();
 
@@ -3710,7 +3713,7 @@ void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
 
   write_literals_if_desperate();
 
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
   COMPILER_COMMENT(("Point at the object of the topmost stack lock"));
   ldr_imm_index(lock, fp, JavaFrame::stack_bottom_pointer_offset());
   add_imm(end, fp,
@@ -3761,7 +3764,7 @@ void CodeGenerator::table_switch(Value& index, jint table_index,
   Register entry = RegisterAllocator::allocate();
   sub_imm(entry, index.lo_register(), low);
 
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
   cmp_imm(entry, high - low, &cla);
 
   add(pc, pc, imm_shift(entry, lsl, 2), ls);
@@ -3818,7 +3821,7 @@ bool CodeGenerator::dense_lookup_switch(Value& index, jint table_index,
   int total_bytes = jump_table_bytes  + 128; // be conservative and use 128 byte pad
   write_literals_if_desperate(total_bytes);
 
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
   cmp_imm(index.lo_register(), last_dense, &cla);
 
   Label slow_lookup;
@@ -3869,7 +3872,7 @@ void CodeGenerator::lookup_switch(Value& index, jint table_index,
   }
 
   // (3) compile it the slow way
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
   for (i = 0, offset = table_index + 8; i < num_of_pairs; i++, offset += 8) {
     int key = method()->get_java_switch_int(offset);
     int jump_offset = method()->get_java_switch_int(offset + 4);
@@ -3891,7 +3894,7 @@ void CodeGenerator::lookup_switch(Value& index, jint table_index,
 void CodeGenerator::lookup_switch(Register index, jint table_index,
                                   jint start, jint end,
                                   jint default_dest JVM_TRAPS) {
-  CompilerLiteralAccessor cla;
+  const CompilerLiteralAccessor cla;
 #if USE_COMPILER_COMMENTS
   char buffer[200];
   int num_of_pairs  = method()->get_java_switch_int(table_index + 4);
@@ -4585,7 +4588,8 @@ bool CodeGenerator::quick_catch_exception(const Value &exception_obj,
   ldr(tmp1, imm_index(exception_obj.lo_register()));          // near object
   ldr(tmp1, imm_index(tmp1, JavaNear::class_info_offset()));  // class_info
   ldrh(tmp1, imm_index3(tmp1, ClassInfo::class_id_offset())); // class_id
-  CompilerLiteralAccessor cla;
+
+  const CompilerLiteralAccessor cla;
   cmp_imm(tmp1, class_id, &cla);
   b(quick_case, eq);
 
@@ -4828,7 +4832,7 @@ void CodeGenerator::vsetup_c_args(va_list ap) {
 
   // Write the immediate values.
   {
-    CompilerLiteralAccessor cla;
+    const CompilerLiteralAccessor cla;
     for( int i = 0; i < immCount; i++ ) {
       mov_imm(dstImm[i], srcImm[i], &cla);
     }
@@ -4964,7 +4968,7 @@ void CodeGenerator::init_static_array(Value& result JVM_TRAPS) {
   }
 
   Method::Raw cur_method =
-    Compiler::current()->current_compiled_method()->method();
+    compiler()->current_compiled_method()->method();
   if (src == result.lo_register()) {
     add(dst, result.lo_register(), imm(Array::base_offset()));
     ldr_oop(src, &cur_method);
@@ -5733,7 +5737,7 @@ bool CodeGenerator::unchecked_arraycopy(BasicType array_element_type
       if (inline_length_limit >= 0) {
         need_length_limit_check = true;
 
-        CompilerLiteralAccessor cla;
+        const CompilerLiteralAccessor cla;
         cmp_imm(length.lo_register(), inline_length_limit, &cla);
         b(bailout, ge);
       }
@@ -6031,7 +6035,7 @@ Assembler::Register CodeGenerator::RegisterSetIterator::next() {
 void
 CodeGenerator::verify_location_is_constant(jint index, const Value& constant) {
   if (GenerateCompilerAssertions) {
-    CompilerLiteralAccessor cla;
+    const CompilerLiteralAccessor cla;
     LocationAddress address(index, constant.type());
     TempRegister tmp;
     ldr(tmp, address.lo_address_2());

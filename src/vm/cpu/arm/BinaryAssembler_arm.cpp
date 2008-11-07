@@ -251,7 +251,7 @@ extern "C" {
 }
 
 void BinaryAssembler::ldr_imm_index(Register rd, Register rn, int offset_12) {
-  ((BinaryAssembler*)_compiler_code_generator)->ldr(rd, imm_index(rn, offset_12));
+  ((BinaryAssembler*)_compiler_state)->ldr(rd, imm_index(rn, offset_12));
 }
 
 void BinaryAssembler::mov_imm(Register rd, address target, Condition cond) {

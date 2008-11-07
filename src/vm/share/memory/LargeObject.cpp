@@ -207,9 +207,9 @@ void LargeObject::compact( LargeObject* table_beg[], LargeObject* table_end[] ){
 
   update_pointers( (OopDesc*) _heap_start, (OopDesc*) _inline_allocation_top );
 
-  // Update global_refs_array
-  RefArray::current()->oops_do( update_pointer,
-                                ObjectHeap::STRONG|ObjectHeap::WEAK );
+  // Update weak references
+  ObjectHeap::weak_refs_do( update_pointer );
+
   // Update GC roots
   ObjectHeap::roots_do( update_pointer );
 
@@ -388,9 +388,9 @@ void LargeObject::move ( const int delta, const LargeObject limit[] ) {
 
   update_pointers( (OopDesc*) _heap_start, (OopDesc*) _inline_allocation_top );
 
-  // Update global_refs_array
-  RefArray::current()->oops_do( update_pointer,
-                                ObjectHeap::STRONG|ObjectHeap::WEAK );
+  // Update weak references
+  ObjectHeap::weak_refs_do( update_pointer );
+
   // Update GC roots
   ObjectHeap::roots_do( update_pointer );
 

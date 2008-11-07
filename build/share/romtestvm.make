@@ -168,24 +168,24 @@ endif
 $(ROMTESTVM): $(SNI_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB)
 	@echo linking $@ ...
 	@$(LINK) $(SNI_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
-		$(EXTRA_LIBS) $(THREAD_LIBS) $(LINK_FLAGS) $(LINK_OUT_SWITCH1) $(LINK_OUT_SWITCH2)$@
+		$(EXTRA_LIBS) $(THREAD_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ) $(LINK_OUT_SWITCH1) $(LINK_OUT_SWITCH2)$@
 	@echo ... generated $@
 
 $(AMS_ROMTESTVM): $(AMS_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB)
 	@echo linking $@ ...
 	@$(LINK) $(AMS_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
-		$(EXTRA_LIBS) $(THREAD_LIBS) $(LINK_FLAGS) $(LINK_OUT_SWITCH1) $(LINK_OUT_SWITCH2)$@
+		$(EXTRA_LIBS) $(THREAD_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ) $(LINK_OUT_SWITCH1) $(LINK_OUT_SWITCH2)$@
 	@echo ... generated $@
 
 ## IMPL_NOTE: linux specific!
 $(TEST_DLL): $(DLL_OBJS)
-	$(LINK) $(LINK_FLAGS) -shared $(DLL_OBJS) -o $@
+	$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) -shared $(DLL_OBJS) -o $@
 	@echo ... generated $@
 
 $(ANI_ROMTESTVM): $(ANI_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB)
 	@echo linking $@ ...
 	@$(LINK) $(ANI_OBJS) $(ANIX_LIB) $(ANI_LIB) $(JVM_LIB) \
-	       	$(EXTRA_LIBS) $(THREAD_LIBS) $(LINK_FLAGS)     \
+	       	$(EXTRA_LIBS) $(THREAD_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ) \
                 $(LINK_OUT_SWITCH1) $(LINK_OUT_SWITCH2)$@
 	@echo ... generated $@
 

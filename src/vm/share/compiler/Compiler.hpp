@@ -31,122 +31,235 @@
 
 #if ENABLE_COMPILER
 
+#if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
+
+#define FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(template) \
+  template(method_entry, 0)                             \
+  template(begin_compile, 0)                            \
+  template(end_compile, 0)                              \
+  template(conformance_entry, 0)                        \
+  template(conform_to_entry, 0)                         \
+  template(jmp_to_entry, 0)                             \
+                                                        \
+  template(bytecode_compile, 0)                         \
+  template(bytecode_prolog, 0)                          \
+  template(bytecode_epilog, 0)                          \
+                                                        \
+  template(push_int, 0)                                 \
+  template(push_long, 0)                                \
+  template(push_obj, 0)                                 \
+  template(push_float, 0)                               \
+  template(push_double, 0)                              \
+                                                        \
+  template(load_local, 0)                               \
+  template(store_local, 0)                              \
+  template(increment_local_int, 0)                      \
+                                                        \
+  template(array_length, 0)                             \
+  template(load_array, 0)                               \
+  template(store_array, 0)                              \
+                                                        \
+  template(binary, 1)                                   \
+  template(unary, 0)                                    \
+  template(convert, 0)                                  \
+                                                        \
+  template(pop, 0)                                      \
+  template(pop_and_npe_if_null, 0)                      \
+  template(pop2, 0)                                     \
+  template(dup, 0)                                      \
+  template(dup2, 0)                                     \
+  template(dup_x1, 0)                                   \
+  template(dup2_x1, 0)                                  \
+  template(dup_x2, 0)                                   \
+  template(dup2_x2, 0)                                  \
+  template(swap, 0)                                     \
+                                                        \
+  template(branch, 0)                                   \
+  template(branch_if, 0)                                \
+  template(branch_if_icmp, 0)                           \
+  template(branch_if_acmp, 0)                           \
+                                                        \
+  template(compare, 0)                                  \
+                                                        \
+  template(check_cast, 0)                               \
+  template(instance_of, 0)                              \
+  template(throw_exception, 0)                          \
+  template(return_op, 0)                                \
+  template(table_switch, 0)                             \
+  template(lookup_switch, 0)                            \
+                                                        \
+  template(get_field, 0)                                \
+  template(put_field, 0)                                \
+  template(fast_get_field, 0)                           \
+  template(fast_put_field, 0)                           \
+                                                        \
+  template(get_static, 0)                               \
+  template(put_static, 0)                               \
+                                                        \
+  template(new_object, 0)                               \
+  template(new_basic_array, 0)                          \
+  template(new_object_array, 0)                         \
+  template(new_multi_array, 0)                          \
+                                                        \
+  template(monitor_enter, 0)                            \
+  template(monitor_exit, 0)                             \
+                                                        \
+  template(invoke_static, 0)                            \
+  template(invoke_interface, 0)                         \
+  template(fast_invoke_virtual, 0)                      \
+  template(fast_invoke_virtual_final, 0)                \
+  template(fast_invoke_special, 0)                      \
+  template(invoke_native, 0)                            \
+                                                        \
+  template(invoke_special, 0)                           \
+  template(invoke_virtual, 0)                           \
+                                                        \
+  template(throw_exception_stub, 0)                     \
+  template(check_cast_stub, 0)                          \
+  template(osr_stub, 0)                                 \
+                                                        \
+  template(instance_of_stub, 0)                         \
+  template(type_check_stub, 0)                          \
+  template(stack_overflow_stub, 0)                      \
+  template(timer_tick_stub, 0)                          \
+                                                        \
+  template(new_object_stub, 0)                          \
+  template(new_type_array_stub, 0)                      \
+                                                        \
+  template(generic_compile, 1)                          \
+  template(custom_compile, 1)                           \
+                                                        \
+  template(sentinel, 0)                                 \
+  template(relocation, 0)                               \
+  template(init_static_array, 0)
+
+#define DEFINE_COUNTER_FIELDS(name, counter_level) \
+  julong name ## _time;                            \
+  jint   name ## _size;                            \
+  jint   name ## _count;
+
+struct Compiler_PerformanceCounters {
+  int level;
+  FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_FIELDS)
+};
+
+#undef DEFINE_COUNTER_FIELDS
+
+extern Compiler_PerformanceCounters comp_perf_counts;
+
+#define DEFINE_COUNTER_WRAPPER_CLASS(name, counter_level)\
+class counter_##name {                                              \
+public:                                                             \
+  counter_##name( void ) {                                          \
+    _start_offset = CodeGenerator::current()->code_size();          \
+    _start_time = Os::elapsed_counter();                            \
+  }                                                                 \
+                                                                    \
+  ~counter_##name( void ) {                                         \
+    comp_perf_counts.name ## _time +=                               \
+      Os::elapsed_counter() - _start_time;                          \
+    comp_perf_counts.name ## _size +=                               \
+      CodeGenerator::current()->code_size() - _start_offset;        \
+    comp_perf_counts.name ## _count++;                              \
+  }                                                                 \
+private:                                                            \
+  jlong _start_time;                                                \
+  jint  _start_offset;                                              \
+  int   _level;                                                     \
+};
+
+FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_WRAPPER_CLASS)
+
+#undef DEFINE_COUNTER_WRAPPER_CLASS
+
+#define DEFINE_COUNTER_LEVEL(name, counter_level) \
+const int name ## _level = counter_level;
+
+FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_LEVEL)
+
+#undef DEFINE_COUNTER_LEVEL
+
+#define COMPILER_PERFORMANCE_COUNTER_ACTIVE() (comp_perf_counts.level > 0)
+
+#define COMPILER_PERFORMANCE_COUNTER_START(name)                    \
+    GUARANTEE(comp_perf_counts.level <= name ## _level, "Sanity");  \
+    int _level = comp_perf_counts.level;                            \
+    comp_perf_counts.level = name ## _level + 1;                    \
+                                                                    \
+    jint  __start_offset = CodeGenerator::current()->code_size();   \                                        \
+    jlong __start_time = Os::elapsed_counter()
+
+#define COMPILER_PERFORMANCE_COUNTER_END(name)                      \
+    comp_perf_counts.name ## _time +=                               \
+      Os::elapsed_counter() - __start_time;                         \
+    comp_perf_counts.name ## _size +=                               \
+      CodeGenerator::current()->code_size() - __start_offset;       \
+    comp_perf_counts.name ## _count++;                              \
+                                                                    \
+    GUARANTEE(comp_perf_counts.level > name ## _level, "Sanity");   \
+    GUARANTEE(_level <= name ## _level, "Sanity");                  \
+    comp_perf_counts.level = _level                           
+
+#define INCREMENT_COMPILER_PERFORMANCE_COUNTER(name, value) \
+    comp_perf_counts.name ## _size += (value);              \
+    comp_perf_counts.name ## _count++;
+
+#define COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(name) \
+  counter_ ## name __counter_ ## name;
+
+#else
+#define COMPILER_PERFORMANCE_COUNTER_ACTIVE() false
+
+#define COMPILER_PERFORMANCE_COUNTER_START()
+#define COMPILER_PERFORMANCE_COUNTER_END(name)
+#define INCREMENT_COMPILER_PERFORMANCE_COUNTER(name, value)
+#define COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(name) 
+#endif
+
 // The compiler translates bytecodes into native instructions.
 
-#define COMPILER_CONTEXT_HANDLES FIELD( Method, method )
-
-class CompilerContextPointers {
-  #define FIELD( type, name ) \
-    type##Desc* _##name;    \
-    type* name ( void ) const           { return (type*) &_##name;     }  \
-    void clear_##name ( void )          { _##name = NULL;              }  \
-    void set_##name ( OopDesc* val )    { _##name = (type##Desc*) val; }  \
-    void set_##name ( const type* val ) { set_##name( val->obj() );    }
-
-public:
-  COMPILER_CONTEXT_HANDLES
-  #undef FIELD
-
-  static int pointer_count( void ) {
-    return sizeof(CompilerContextPointers) / sizeof(OopDesc*);
-  }
-};
-
-#define GENERIC_COMPILER_CONTEXT_FIELDS_DO(template)\
-  template( CompilationQueueElement*, compilation_queue              )\
-  template( CompilationQueueElement*, current_element                )\
-  template( EntryTableType*,          entry_table                    )\
-  template( Compiler*,                parent                         )\
-  template( CompilerByteArray*,       entry_counts_table             )\
-  template( CompilerByteArray*,       bci_flags_table                )\
-  template( int,                      saved_bci                      )\
-  template( int,                      saved_num_stack_lock_words     )\
-  template( int,                      local_base                     )\
-  template( bool,                     in_loop                        )\
-  template( bool,                     has_loops                      )
+class Compiler: public BytecodeCompileClosure {
+ private:
+  Compiler* _parent;
 
 #if ENABLE_INLINE
-#define INLINER_COMPILER_CONTEXT_FIELDS_DO(template)  \
-  template( int, inline_return_label_encoding )
-#else
-#define INLINER_COMPILER_CONTEXT_FIELDS_DO(template)
+  static Compiler* _root;
+
+  int       _local_base;
 #endif
-
-#if ENABLE_CODE_OPTIMIZER && ENABLE_NPCE
-#define SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) \
-  template( CompilerIntArray*,  null_point_exception_ins_table       )\
-  template( int,                codes_can_throw_null_point_exception )\
-  template( int,                null_point_record_counter            )
-#else
-#define SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) 
-#endif
-
-#define COMPILER_CONTEXT_FIELDS_DO(template) \
-        GENERIC_COMPILER_CONTEXT_FIELDS_DO(template) \
-        INLINER_COMPILER_CONTEXT_FIELDS_DO(template) \
-        SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) 
-
-class CompilerContext: public CompilerContextPointers {
-public:
-  typedef EntryArray EntryTableType;
-
-  #define FIELD( type, name ) \
-    type _##name;             \
-    type name         ( void ) const { return _##name;  }\
-    void set_##name   ( type val )   { _##name = val;   }\
-    void clear_##name ( void )       { set_##name( 0 ); }
-
-  COMPILER_CONTEXT_FIELDS_DO(FIELD)
-  #undef FIELD
-
-  bool valid ( void ) const { return method()->not_null(); }
-
-  void oops_do( void do_oop(OopDesc**) );
-  void cleanup( void );
-
-#if USE_DEBUG_PRINTING
-  void print_on(Stream *st);
-#endif
-};
-
-#define COMPILER_STATIC_FIELDS_DO(template)\
-  template( VirtualStackFrame*, frame                   )\
-  template( VirtualStackFrame*, conforming_frame        )\
-  template( VirtualStackFrame*, cached_preserved_frame  )\
-  template( Compiler*,          root                    )\
-  template( Compiler*,          current                 )
-
-class CompilerStatic {
- public:
-  #define DECLARE_FIELD( type, name ) type _##name;
-  COMPILER_STATIC_FIELDS_DO(DECLARE_FIELD)
-
-  ThrowExceptionStub* _rte_handlers[ThrowExceptionStub::number_of_runtime_exceptions];
-
-#if USE_DEBUG_PRINTING
-  void print_on(Stream *st);
-#endif
-  void cleanup( void );
-};
-
-class Compiler: public StackObj {
- private:
-  // The compiler state.
-  static CompilerStatic _state;
 
   // Info used to tune down compilation for smoother animation.
-  static jlong          _estimated_frame_time;
-  static jlong          _last_frame_time_stamp;
+  static jlong _estimated_frame_time;
+  static jlong _last_frame_time_stamp;
 
  public:
-  typedef CompilerContext::EntryTableType EntryTableType;
+  Compiler* parent( void ) const { return _parent; }
+  void set_parent( Compiler* compiler ) { _parent = compiler; }
+
+  static Compiler* current( void ) { return _current_compiler; }
+  static void set_current( Compiler* compiler ) { _current_compiler = compiler;}
+
+#if ENABLE_INLINE
+  static Compiler* root( void ) { return _root; }
+  static void set_root( Compiler* compiler ) { _root = compiler; }
+
+  void set_local_base( const int local_base ) { _local_base = local_base; }
+  int local_base( void ) const { return _local_base; }
+#else
+  static Compiler* root( void ) { return current(); }
+  static void set_root( Compiler* ) {}
+
+  static void set_local_base( const int /*local_base*/ ) {}
+  static int local_base( void ) { return 0; }
+#endif
 
   #define DEFINE_ACCESSOR( type, name ) \
-    static type name       ( void )          { return _state._##name;    } \
-    static void set_##name ( type name )     { _state._##name = name;    }
+    type name       (void)      const { return state()->name();    } \
+    void set_##name (type name) const { state()->set_##name(name); }
   COMPILER_STATIC_FIELDS_DO(DEFINE_ACCESSOR)
   #undef DEFINE_ACCESSOR
 
+  typedef CompilerContext::EntryTableType EntryTableType;
   #define DEFINE_ACCESSOR( type, name ) \
     type name                  ( void ) const { return _context.name();   } \
     void set_##name            ( type name )  { _context.set_##name(name);} \
@@ -155,17 +268,17 @@ class Compiler: public StackObj {
   COMPILER_CONTEXT_FIELDS_DO(DEFINE_ACCESSOR)
   #undef DEFINE_ACCESSOR
 
-  #define FIELD( type, name ) \
-    type* name       ( void ) const      { return _context.name();     } \
-    void clear_##name( void )            { _context.clear_##name();    } \
-    void set_##name  ( OopDesc* val )    { _context.set_##name( val ); } \
-    void set_##name  ( const type* val ) { _context.set_##name( val ); } \
-    static type* current_##name ( void ) { return current()->name();   }
-  COMPILER_CONTEXT_HANDLES
-  #undef FIELD
+  Method* root_method( void ) const { return state()->root_method(); }  
+
+  jint next_bci ( const jint bci ) const {
+    return method()->next_bci( bci );
+  }
+  jint next_bci ( void ) const {
+    return next_bci( bci() );
+  }
 
   // Constructor and deconstructor.
-  Compiler( Method* method, const int active_bci );
+  Compiler( Method* method, const int active_bci = 0 );
 
 #ifndef PRODUCT
   // Create a dummy compiler that does nothing, but just make is_active()
@@ -176,9 +289,6 @@ class Compiler: public StackObj {
 
   // Called during VM start-up
   static void initialize( void ) {
-    jvm_memset(&_state, 0, sizeof _state);
-    jvm_memset(&_suspended_compiler_context, 0, 
-               sizeof _suspended_compiler_context);
 #if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
     jvm_memset(&comp_perf_counts, 0, sizeof comp_perf_counts );
 #endif
@@ -202,19 +312,14 @@ class Compiler: public StackObj {
   // an unimplemented feature is used.
   static void abort_active_compilation(bool is_permanent JVM_TRAPS);
 
-  static CodeGenerator* code_generator( void ) {
-    return _compiler_code_generator;
-  }
-
-  static CompiledMethod* current_compiled_method( void ) {
+  CompiledMethod* current_compiled_method( void ) const {
     return code_generator()->compiled_method();
   }
-
   static BytecodeCompileClosure* closure( void ) {
-    return _compiler_closure;
+    return _current_compiler;
   }
 
-  static VirtualStackFrame* get_cached_preserved_frame( void ) {
+  VirtualStackFrame* get_cached_preserved_frame( void ) const {
     VirtualStackFrame* p = cached_preserved_frame();
     set_cached_preserved_frame( NULL );
     return p;
@@ -229,10 +334,6 @@ class Compiler: public StackObj {
       set_current_element( p );
     }
     return p;
-  }
-
-  CompilerContext* context( void ) {
-    return &_context;
   }
 
 #if ENABLE_NPCE
@@ -330,6 +431,9 @@ class Compiler: public StackObj {
   void set_entry_for(const jint bci, Entry* entry) {
     entry_table()->at_put( bci, entry );
   }
+  void set_entry_for_current_bci(Entry* entry) {
+    set_entry_for( bci(), entry);
+  }
 
   bool method_aborted_for_exception_at(const int bci) {
     const AccessFlags flags = method()->access_flags();
@@ -344,11 +448,11 @@ class Compiler: public StackObj {
 
   // Support for sharing of exception thrower stubs.
   typedef ThrowExceptionStub::RuntimeException RuntimeException;
-  static ThrowExceptionStub* rte_handler(const RuntimeException rte) {
-    return _state._rte_handlers[rte];
+  ThrowExceptionStub* rte_handler(const RuntimeException rte) const {
+    return state()->rte_handler(rte);
   }
-  static void set_rte_handler(const RuntimeException rte, ThrowExceptionStub* value) {
-    _state._rte_handlers[rte] = value;
+  void set_rte_handler(const RuntimeException rte, ThrowExceptionStub* value) const {
+    state()->set_rte_handler(rte, value);
   }
 #if ENABLE_INLINE
   void internal_compile_inlined( Method::Attributes& attributes JVM_TRAPS );
@@ -358,46 +462,31 @@ class Compiler: public StackObj {
     label._encoding = inline_return_label_encoding();
     return label;
   }
-
   void set_inline_return_label(const BinaryAssembler::Label label) {
     set_inline_return_label_encoding(label._encoding );
   }
 
  private:
+  CompilationQueueElement* parent_element( void ) const {
+    GUARANTEE(is_inlining(), "Can only be called during inlining");
+    const Compiler* parent_compiler = parent();
+    GUARANTEE(parent_compiler != NULL, "Cannot be null when inlining");
+    GUARANTEE(parent_compiler != this, "Sanity");
+    CompilationQueueElement* p = parent_compiler->current_element();
+    GUARANTEE(p, "Cannot be null when inlining");
+    return p;
+  }
   VirtualStackFrame* parent_frame( void ) const {
-    GUARANTEE(is_inlining(), "Can only be called during inlining");
-    const Compiler* parent_compiler = parent();
-    GUARANTEE(parent_compiler != NULL, "Cannot be null when inlining");
-    GUARANTEE(parent_compiler != this, "Sanity");
-    const CompilationQueueElement* parent_element = 
-      parent_compiler->current_element();
-    GUARANTEE(parent_element, "Cannot be null when inlining");
-    return parent_element->frame();
+    return parent_element()->frame();
   }
-
   void set_parent_frame( VirtualStackFrame* frame ) {
-    GUARANTEE(is_inlining(), "Can only be called during inlining");
-    const Compiler* parent_compiler = parent();
-    GUARANTEE(parent_compiler != NULL, "Cannot be null when inlining");
-    GUARANTEE(parent_compiler != this, "Sanity");
-    CompilationQueueElement* parent_element = 
-      parent_compiler->current_element();
-    GUARANTEE(parent_element, "Cannot be null when inlining");
-    parent_element->set_frame( frame );
+    parent_element()->set_frame( frame );
   }
-
   void clear_parent_frame( void ) {
     set_parent_frame( NULL );
   }
  public:
 #endif
-  static int bci( void ) {
-    return _compiler_bci;
-  }
-  static void set_bci( int bci ) {
-    _compiler_bci = bci;
-  }
-
   static int  num_stack_lock_words(void) {
     return _num_stack_lock_words;
   }
@@ -416,11 +505,11 @@ class Compiler: public StackObj {
   }
 
   static bool is_inlining( void ) { 
+#if ENABLE_INLINE
     return current() != root();
-  }
-
-  int compiler_bci( void ) const {
-    return current() == this ? bci() : saved_bci();
+#else
+    return false;
+#endif
   }
 
   enum CompilationFailure {
@@ -434,8 +523,6 @@ class Compiler: public StackObj {
   static CompilationFailure _failure;
   static void print_compilation_history() PRODUCT_RETURN;
 
- private:
-  static CompilerContext _suspended_compiler_context;
  public:
   static void on_timer_tick(bool is_real_time_tick JVM_TRAPS);
   static void process_interpretation_log();
@@ -455,14 +542,16 @@ class Compiler: public StackObj {
     return !is_inlining() &&
            (ExcessiveSuspendCompilation || Os::check_compiler_timer());
   }
-  static CompilerContext* suspended_compiler_context( void ) {
-    return &_suspended_compiler_context;
+  CompilerContext* suspended_compiler_context( void ) const {
+    return state()->suspended_compiler_context();
   }
   static bool is_suspended ( void ) {
-    return _compiler_code_generator != NULL;
+    return _compiler_state != NULL;
   }
 
-  static void oops_do( void do_oop(OopDesc**) );
+  static void oops_do( void do_oop(OopDesc**) ) {
+    _compiler_state->oops_do( do_oop );
+  }
 
 #if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
   static void print_detailed_performance_counters();
@@ -475,11 +564,22 @@ class Compiler: public StackObj {
   FastOopInStackObj    __must_be_first_item__;
 #endif
 
-  // The compiler closure.
-  BytecodeCompileClosure _closure;
+  CompilerContext _context;  // The compiler context.
 
-  // The compiler context.
-  CompilerContext        _context;
+  CompilerContext* context( void ) {
+    return &_context;
+  }
+  const CompilerContext* context( void ) const {
+    return &_context;
+  }
+
+  void suspend( void ) const {
+    GUARANTEE(parent() == NULL, "Cannot suspend while inlining");
+    *suspended_compiler_context() = *context();
+  }
+  void resume ( void ) {
+    *context() = *suspended_compiler_context();
+  }
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM &&ENABLE_CODE_OPTIMIZER
   CompilationQueueElement* _next_element;
@@ -662,27 +762,21 @@ class Compiler: public StackObj {
   static ReturnOop try_to_compile(Method* method, const int active_bci,
                                   const int compiled_code_factor JVM_TRAPS);
 
-  ReturnOop allocate_and_compile( const int compiled_code_factor JVM_TRAPS );
+  ReturnOop compilation_result( void );
 
-  inline void check_free_space ( JVM_SINGLE_ARG_TRAPS ) const;
-  void begin_compile           ( JVM_SINGLE_ARG_TRAPS );
-  void suspend                 ( void );
-  void restore_and_compile     ( JVM_SINGLE_ARG_TRAPS );
-  void optimize_code           ( JVM_SINGLE_ARG_TRAPS );
+  static void begin( void );
+  static void end  ( OopDesc* result );
+
+  inline void check_free_space  ( JVM_SINGLE_ARG_TRAPS ) const;
+  void begin_compile            ( JVM_SINGLE_ARG_TRAPS );
+  
+  void optimize_code            ( JVM_SINGLE_ARG_TRAPS );
   void setup_for_compile( const Method::Attributes& attributes JVM_TRAPS );
 
   void process_compilation_queue ( JVM_SINGLE_ARG_TRAPS );
   static void terminate ( OopDesc* result );
-  bool reserve_compiler_area(size_t compiled_method_size);
   void handle_out_of_memory( void );
   static void set_impossible_to_compile(Method *method, const char why[]);
-
-  void set_code_generator( CodeGenerator* gen ) {
-    _closure.set_code_generator( gen );
-  }
-  void set_code_generator( void ) {
-    set_code_generator( _compiler_code_generator );
-  }
 
 #if ENABLE_PERFORMANCE_COUNTERS
   void init_performance_counters(bool is_resume);
@@ -737,222 +831,26 @@ private:
 #endif
 };
 
-inline VirtualStackFrame* CodeGenerator::frame ( void ) {
-  return Compiler::current()->frame();
-}
-
-inline VirtualStackFrame* GenericAddress::frame ( void ) {
-  return Compiler::current()->frame();
-}
-
 class VirtualStackFrameContext: public StackObj {
  private:
   VirtualStackFrame* _saved_frame;
+  static CompilerState* state( void ) { return _compiler_state; }
  
  public:
   VirtualStackFrameContext( VirtualStackFrame* context ) {
     GUARANTEE(context != NULL, "Sanity");
-    _saved_frame = Compiler::frame();
-    Compiler::set_frame(context);
+    _saved_frame = state()->frame();
+    state()->set_frame(context);
   }
  ~VirtualStackFrameContext( void ) {
-    Compiler::frame()->conform_to(_saved_frame);
-    Compiler::set_frame(_saved_frame);
+    state()->frame()->conform_to(_saved_frame);
+    state()->set_frame(_saved_frame);
   }
 };
 
-#if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
-
-#define FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(template) \
-  template(method_entry, 0)                             \
-  template(begin_compile, 0)                            \
-  template(end_compile, 0)                              \
-  template(conformance_entry, 0)                        \
-  template(conform_to_entry, 0)                         \
-  template(jmp_to_entry, 0)                             \
-                                                        \
-  template(bytecode_compile, 0)                         \
-  template(bytecode_prolog, 0)                          \
-  template(bytecode_epilog, 0)                          \
-                                                        \
-  template(push_int, 0)                                 \
-  template(push_long, 0)                                \
-  template(push_obj, 0)                                 \
-  template(push_float, 0)                               \
-  template(push_double, 0)                              \
-                                                        \
-  template(load_local, 0)                               \
-  template(store_local, 0)                              \
-  template(increment_local_int, 0)                      \
-                                                        \
-  template(array_length, 0)                             \
-  template(load_array, 0)                               \
-  template(store_array, 0)                              \
-                                                        \
-  template(binary, 1)                                   \
-  template(unary, 0)                                    \
-  template(convert, 0)                                  \
-                                                        \
-  template(pop, 0)                                      \
-  template(pop_and_npe_if_null, 0)                      \
-  template(pop2, 0)                                     \
-  template(dup, 0)                                      \
-  template(dup2, 0)                                     \
-  template(dup_x1, 0)                                   \
-  template(dup2_x1, 0)                                  \
-  template(dup_x2, 0)                                   \
-  template(dup2_x2, 0)                                  \
-  template(swap, 0)                                     \
-                                                        \
-  template(branch, 0)                                   \
-  template(branch_if, 0)                                \
-  template(branch_if_icmp, 0)                           \
-  template(branch_if_acmp, 0)                           \
-                                                        \
-  template(compare, 0)                                  \
-                                                        \
-  template(check_cast, 0)                               \
-  template(instance_of, 0)                              \
-  template(throw_exception, 0)                          \
-  template(return_op, 0)                                \
-  template(table_switch, 0)                             \
-  template(lookup_switch, 0)                            \
-                                                        \
-  template(get_field, 0)                                \
-  template(put_field, 0)                                \
-  template(fast_get_field, 0)                           \
-  template(fast_put_field, 0)                           \
-                                                        \
-  template(get_static, 0)                               \
-  template(put_static, 0)                               \
-                                                        \
-  template(new_object, 0)                               \
-  template(new_basic_array, 0)                          \
-  template(new_object_array, 0)                         \
-  template(new_multi_array, 0)                          \
-                                                        \
-  template(monitor_enter, 0)                            \
-  template(monitor_exit, 0)                             \
-                                                        \
-  template(invoke_static, 0)                            \
-  template(invoke_interface, 0)                         \
-  template(fast_invoke_virtual, 0)                      \
-  template(fast_invoke_virtual_final, 0)                \
-  template(fast_invoke_special, 0)                      \
-  template(invoke_native, 0)                            \
-                                                        \
-  template(invoke_special, 0)                           \
-  template(invoke_virtual, 0)                           \
-                                                        \
-  template(throw_exception_stub, 0)                     \
-  template(check_cast_stub, 0)                          \
-  template(osr_stub, 0)                                 \
-                                                        \
-  template(instance_of_stub, 0)                         \
-  template(type_check_stub, 0)                          \
-  template(stack_overflow_stub, 0)                      \
-  template(timer_tick_stub, 0)                          \
-                                                        \
-  template(new_object_stub, 0)                          \
-  template(new_type_array_stub, 0)                      \
-                                                        \
-  template(generic_compile, 1)                          \
-  template(custom_compile, 1)                           \
-                                                        \
-  template(sentinel, 0)                                 \
-  template(relocation, 0)                               \
-  template(init_static_array, 0)
-
-#define DEFINE_COUNTER_FIELDS(name, counter_level) \
-  julong name ## _time;                            \
-  jint   name ## _size;                            \
-  jint   name ## _count;
-
-struct Compiler_PerformanceCounters {
-  int level;
-  FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_FIELDS)
-};
-
-#undef DEFINE_COUNTER_FIELDS
-
-extern Compiler_PerformanceCounters comp_perf_counts;
-
-#define DEFINE_COUNTER_WRAPPER_CLASS(name, counter_level)                  \
-class counter_ ## name {                                                   \
-public:                                                                    \
-  counter_ ## name() {                                                     \
-    GUARANTEE(comp_perf_counts.level <= counter_level, "Sanity");          \
-    _level = comp_perf_counts.level;                                       \
-    comp_perf_counts.level = counter_level + 1;                            \
-                                                                           \
-    _start_offset = Compiler::current()->code_generator()->code_size();    \
-    _start_time = Os::elapsed_counter();                                   \
-  }                                                                        \
-                                                                           \
-  ~counter_ ## name() {                                                    \
-    comp_perf_counts.name ## _time +=                                      \
-      Os::elapsed_counter() - _start_time;                                 \
-    comp_perf_counts.name ## _size +=                                      \
-      Compiler::current()->code_generator()->code_size() - _start_offset;  \
-    comp_perf_counts.name ## _count++;                                     \
-                                                                           \
-    GUARANTEE(comp_perf_counts.level > counter_level, "Sanity");           \
-    comp_perf_counts.level = _level;                                       \
-  }                                                                        \
-private:                                                                   \
-  jlong _start_time;                                                       \
-  jint  _start_offset;                                                     \
-  int   _level;                                                            \
-};
-
-FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_WRAPPER_CLASS)
-
-#undef DEFINE_COUNTER_WRAPPER_CLASS
-
-#define DEFINE_COUNTER_LEVEL(name, counter_level) \
-const int name ## _level = counter_level;
-
-FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_LEVEL)
-
-#undef DEFINE_COUNTER_LEVEL
-
-#define COMPILER_PERFORMANCE_COUNTER_ACTIVE() (comp_perf_counts.level > 0)
-
-#define COMPILER_PERFORMANCE_COUNTER_START(name)                   \
-    GUARANTEE(comp_perf_counts.level <= name ## _level, "Sanity"); \
-    int _level = comp_perf_counts.level;                           \
-    comp_perf_counts.level = name ## _level + 1;                   \
-                                                                   \
-    jint  __start_offset =                                         \
-      Compiler::current()->code_generator()->code_size();          \
-    jlong __start_time = Os::elapsed_counter()
-
-#define COMPILER_PERFORMANCE_COUNTER_END(name)                             \
-    comp_perf_counts.name ## _time +=                                      \
-      Os::elapsed_counter() - __start_time;                                \
-    comp_perf_counts.name ## _size +=                                      \
-      Compiler::current()->code_generator()->code_size() - __start_offset; \
-    comp_perf_counts.name ## _count++;                                     \
-                                                                           \
-    GUARANTEE(comp_perf_counts.level > name ## _level, "Sanity");          \
-    GUARANTEE(_level <= name ## _level, "Sanity");                         \
-    comp_perf_counts.level = _level                           
-
-#define INCREMENT_COMPILER_PERFORMANCE_COUNTER(name, value) \
-    comp_perf_counts.name ## _size += (value);              \
-    comp_perf_counts.name ## _count++;
-
-#define COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(name) \
-  counter_ ## name __counter_ ## name;
-
-#else
-#define COMPILER_PERFORMANCE_COUNTER_ACTIVE() false
-
-#define COMPILER_PERFORMANCE_COUNTER_START()
-#define COMPILER_PERFORMANCE_COUNTER_END(name)
-#define INCREMENT_COMPILER_PERFORMANCE_COUNTER(name, value)
-#define COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(name) 
-#endif
+inline jint CodeGenerator::bci ( void ) const {
+  return compiler()->bci();
+}
 
 #else
 // !ENABLE_COMPILER

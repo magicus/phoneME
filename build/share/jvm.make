@@ -1186,7 +1186,7 @@ $(JVMTEST_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBTEST_OBJS)
 
 $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVM_LIB) $(JVMTEST_LIB) \
 	    $(EXE_OBJS)
-	$(A)$(LINK) $(LINK_FLAGS) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVM_LIB) \
+	$(A)$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVM_LIB) \
 		$(JVMTEST_LIB) $(PCSL_LIBS)
 	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
@@ -1515,7 +1515,7 @@ $(JVMTEST_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBTEST_OBJS)
 
 $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVMTEST_LIB) \
             $(JVM_LIB) $(EXE_OBJS)
-	$(A)$(LINK) $(LINK_FLAGS) /out:$@ $(EXE_OBJS) $(JVMX_LIB) \
+	$(A)$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ $(EXE_OBJS) $(JVMX_LIB) \
             $(JVMTEST_LIB) $(JVM_LIB) $(LINK_OPT_FLAGS_$(BUILD)) \
             $(LIBS) $(PCSL_LIBS)
 
@@ -1798,7 +1798,7 @@ $(JVM_EXE):
 	$(A)touch $@
 else
 $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) $(EXE_OBJS)
-	$(LINK) $(LINK_FLAGS) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
+	$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
 		$(PCSL_LIBS) $(JAVACALL_LIBS)
 	$(A)if test "$(arch)-$(BUILD)" = "arm-product"; then \
 	    echo running pdstrip ...; \
@@ -2262,13 +2262,13 @@ $(ANIX_LIB): $(JVM_LIB) $(ANIX_OBJS)
 $(JVM_EXE): $(CLDC_ZIP) $(EXE_OBJS) $(JVM_LIB) $(JVMX_LIB) $(JVMTEST_LIB)
 	$(A)echo "linking $@ ... "
 	$(A)$(LINK) -o $@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
-	     $(PCSL_LIBS) $(LINK_FLAGS)
+	     $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ)
 	$(A)if [ "$(ENABLE_MAP_FILE)" != "false" ] &&             \
             [ "$(host_os)" != "solaris" ] &&                      \
 	     [ "$(host_os)" != "darwin" ]; then                   \
 	 echo "linking $@ with MAP file ... ";                    \
 	 $(LINK) -o $@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB)     \
-	     $(JVM_LIB)  $(PCSL_LIBS) $(LINK_FLAGS)               \
+	     $(JVM_LIB)  $(PCSL_LIBS) $(LINK_FLAGS) $(JC_STUBS_OBJ) \
 	     -Xlinker -M 2> $(JVM_MAP);                           \
         fi
 	$(A)echo generated `pwd`/$@
@@ -2424,6 +2424,10 @@ DIST_FILES   = $(DIST_BIN_DIR)/NativesTableGen.jar \
                $(DIST_INC_DIR)/kvmcompat.h \
                $(DIST_INC_DIR)/NativesTable.hpp \
                $(DIST_INC_DIR)/ROMImage.hpp
+
+ifeq ($(ENABLE_MEMORY_PROFILER), true)
+  DIST_FILES += $(DIST_BIN_DIR)/memprof_client.jar
+endif
 
 ifeq ($(IsTarget)+$(ENABLE_JNI), true+true)
   DIST_FILES += $(DIST_INC_DIR)/jni.h
@@ -2628,6 +2632,22 @@ $(DIST_BIN_DIR)/kdp.jar: $(SHARE_DIR)/bin/kdp.jar
 	$(A)cp $< $@
 	$(A)$(CHMOD) u+w $@
 	$(A)echo installed $@
+
+ifeq ($(ENABLE_MEMORY_PROFILER), true)
+
+$(WorkSpace)/src/tools/memprof_client/memprof_client.jar: 
+	$(A)echo building memprof_client.jar ...
+	$(A)make -C $(WorkSpace)/src/tools/memprof_client client
+	$(A)echo built $@
+
+$(DIST_BIN_DIR)/memprof_client.jar: $(WorkSpace)/src/tools/memprof_client/memprof_client.jar
+	$(A)echo installing memprof_client.jar ...
+	$(A)rm -f $@
+	$(A)cp $< $@
+	$(A)$(CHMOD) u+w $@
+	$(A)echo installed $@
+
+endif
 
 $(PREVERIFY): $(PREVERIFY_ORIGINAL)
 	$(A)rm -f $@

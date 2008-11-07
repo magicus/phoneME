@@ -1451,14 +1451,13 @@ class Macros;
 class LiteralAccessor {
 #if !PRODUCT || ENABLE_COMPILER
 public:
-  virtual bool has_literal(int imm32,
-                           Assembler::Register& result) {
+  virtual bool has_literal(int imm32, Assembler::Register& result) const {
     return false;
   }
-  virtual Assembler::Register get_literal(int imm32) {
+  virtual Assembler::Register get_literal(int imm32) const {
     return Assembler::no_reg;
   }
-  virtual void free_literal() {}
+  virtual void free_literal() const {}
 #endif
 };
 
@@ -1982,7 +1981,7 @@ public:
 #endif
 
   void arith_imm(Opcode opcode, Register rd, int imm32,
-                 LiteralAccessor& la);
+                 const LiteralAccessor& la);
 
   // IMPL_NOTE: implent proper Macros for instructions below
   void orr(Register rd, Register rm) {
@@ -2025,7 +2024,7 @@ public:
     bic_imm12_w(rd, rn, modified_imm12(imm));
   }
 
-  void cmp_imm_literal(Register rn, int imm32, LiteralAccessor& la);
+  void cmp_imm_literal(Register rn, int imm32, const LiteralAccessor& la);
 
   // immediate operands for multiplication
   void mul_imm(Register rd, Register rm, int imm32, Register tmp);

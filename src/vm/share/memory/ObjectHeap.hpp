@@ -313,9 +313,9 @@ public:
   };
 
   static int make_reference(unsigned type, unsigned owner, unsigned index);
-  static unsigned get_reference_type(const int ref_index);
-  static unsigned get_reference_owner(const int ref_index);
-  static unsigned get_reference_index(const int ref_index);
+  static unsigned get_reference_type  (const int ref_index);
+  static unsigned get_reference_owner (const int ref_index);
+  static unsigned get_reference_index (const int ref_index);
   static ReturnOop get_reference_array(const int ref_index);
 
   static ReturnOop get_reference_array(unsigned type, unsigned owner);
@@ -583,6 +583,9 @@ public:
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR
   static void iterate(ObjectHeapVisitor* visitor);
   static void iterate(ObjectHeapVisitor* visitor, OopDesc** from, OopDesc** to);
+#  if ENABLE_ISOLATES
+  static void iterate_for_task(ObjectHeapVisitor* visitor, const int task_id);
+#  endif
 #else
   static void iterate(ObjectHeapVisitor*) PRODUCT_RETURN;
 #endif
@@ -596,6 +599,9 @@ public:
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE
   static void print(Stream* = tty);
   static void print_all_objects(Stream* = tty);
+#if ENABLE_ISOLATES
+  static void print_task_objects(const int task_id, Stream* st = tty);
+#endif
   static void print_all_objects(const JvmPathChar* /*file*/);
   static void print_all_classes();
   static void print_task_usage(Stream* = tty);
@@ -610,6 +616,10 @@ public:
 #else
   static void print(Stream* = tty) PRODUCT_RETURN;
   static void print_all_objects(Stream* = tty) PRODUCT_RETURN;
+#if ENABLE_ISOLATES
+  static void print_task_objects(const int /*task_id*/, Stream* = tty)
+                                                        PRODUCT_RETURN;
+#endif
   static void print_all_objects(const JvmPathChar* /*file*/) PRODUCT_RETURN;
   static void print_all_classes() PRODUCT_RETURN;
   static void print_task_usage(Stream* = tty) PRODUCT_RETURN;

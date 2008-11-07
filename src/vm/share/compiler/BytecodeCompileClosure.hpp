@@ -28,26 +28,34 @@
 
 class BytecodeCompileClosure: public BytecodeClosure {
  private:
-  Compiler* _compiler;
-  CodeGenerator* _code_generator;
-  int       _active_bci;
-  jubyte    _has_exception_handlers;
-  bool      _has_clinit;   // if this or any super has clinit 
+  CompilerState*  _state;
+  int             _active_bci;
+  jubyte          _has_exception_handlers;
+  bool            _has_clinit;   // if this or any super has clinit 
 #if ENABLE_CODE_PATCHING
-  static int _jump_from_bci;
+  static int      _jump_from_bci;
 #endif
 
  public:
-  BytecodeCompileClosure() {
+  BytecodeCompileClosure( void ) {
     _active_bci = -10000;
   }
-  void initialize(Compiler* compiler, Method* method, int active_bci);
-  void set_code_generator(CodeGenerator* value) {
-    _code_generator = value;
+  void initialize(Method* method);
+  void initialize(Method* method, int active_bci) {
+    initialize( method );
+    set_active_bci( active_bci );
   }
-  void set_compiler(Compiler* compiler) {
-    _compiler = compiler;
+
+  CompilerState* state( void ) const {
+    return _state;
   }
+  CodeGenerator* code_generator( void ) const {
+    return (CodeGenerator*)state();
+  }
+  void set_state( CompilerState* state ) {
+    _state = state;
+  }
+
 #if ENABLE_CODE_PATCHING
   static int jump_from_bci(void) {
     return _jump_from_bci;
@@ -240,7 +248,12 @@ class BytecodeCompileClosure: public BytecodeClosure {
   inline VirtualStackFrame* frame     ( void ) const;
 
   // Accessors for the code generator used to do the compilation.
-  inline CodeGenerator* code_generator( void ) const;
+  Compiler* compiler( void ) {
+    return (Compiler*) this;
+  }
+  const Compiler* compiler( void ) const {
+    return (const Compiler*) this;
+  }
 
   friend class CodeGenerator;
   friend class ForwardBranchOptimizer;

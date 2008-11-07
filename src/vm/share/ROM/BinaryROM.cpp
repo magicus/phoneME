@@ -968,7 +968,7 @@ void ROMBundle::remove_from_global_binary_images( void ) {
 
   ObjArray::Raw list = Universe::global_binary_images();
   int i = list().length(); 
-  while( list().obj_at( --i ) ) {
+  while( list().obj_at( --i ) == NULL ) {
     GUARANTEE( i > 0, "must have at least one item in the list");
   }
 
@@ -977,19 +977,19 @@ void ROMBundle::remove_from_global_binary_images( void ) {
     GUARANTEE( i > 0, "'this' must be in the list");
   }
   
-#if USE_IMAGE_MAPPING
+#if USE_IMAGE_MAPPING && ENABLE_LIB_IMAGES
   TypeArray::Raw handles = Universe::global_image_handles();
   OsFile_UnmapImage( (OsFile_MappedImage*) handles().int_at( i ) );
 #endif
 
   if( i != last ) {
     list().smart_obj_at_put( i, list().obj_at(last) );
-#if USE_IMAGE_MAPPING
+#if USE_IMAGE_MAPPING && ENABLE_LIB_IMAGES
     handles().int_at_put( i, handles().int_at( last ) );
 #endif
   }
   list().obj_at_clear( last );
-#if USE_IMAGE_MAPPING
+#if USE_IMAGE_MAPPING && ENABLE_LIB_IMAGES
   handles().int_at_put( last, 0 );
 #endif
 }

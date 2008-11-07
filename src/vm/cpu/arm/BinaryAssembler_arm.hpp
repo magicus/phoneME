@@ -104,7 +104,7 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   void mov_imm(Register rd, int imm32, Condition cond = al) {
     Macros::mov_imm(rd, imm32, no_CC, cond);
   }
-  void mov_imm(Register rd, int imm32, LiteralAccessor* la, Condition cond=al){
+  void mov_imm(Register rd, int imm32, const LiteralAccessor* la, Condition cond=al){
     Macros::mov_imm(rd, imm32, la, no_CC, cond);
   }
 
@@ -359,7 +359,7 @@ private:
 
 #if defined(PRODUCT) && !USE_COMPILER_COMMENTS
 inline void Assembler::emit(int instr) {
-  ((BinaryAssembler*)_compiler_code_generator)->emit_int(instr);
+  ((BinaryAssembler*)_compiler_state)->emit_int(instr);
 }
 #endif // defined(PRODUCT) && !USE_COMPILER_COMMENTS
 

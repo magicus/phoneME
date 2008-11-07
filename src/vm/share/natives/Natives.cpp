@@ -690,7 +690,7 @@ void Java_java_lang_Runtime_gc(JVM_SINGLE_ARG_TRAPS) {
   *   com.sun.cldc.cldc1_1.functional.lang.ref.WeakReferenceTest.Get
   * 2) call ObjectHeap::full_collect() unconditionally.
 **/
-#if !ENABLE_FREQUENT_FORCED_GC_SUPPRESSION
+#if ENABLE_FREQUENT_FORCED_GC_SUPPRESSION
   const jlong free = ObjectHeap::available_for_current_task();
   enum { min_free = 2 * 1024 * 1024 };  
   if( free < min_free ) {
@@ -1509,6 +1509,10 @@ jint Java_com_sun_cldchi_jvm_JVM_verifyNextChunk(JVM_SINGLE_ARG_TRAPS) {
   return -1;
 
 #endif
+}
+
+void Java_com_sun_cldchi_jvm_JVM_flushJarCaches(JVM_SINGLE_ARG_TRAPS) {
+  JarFileParser::flush_caches();
 }
 
 } // extern "C"

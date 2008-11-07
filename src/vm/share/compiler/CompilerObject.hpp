@@ -35,7 +35,7 @@
   template( CompilationQueueElement ) \
   template( VirtualStackFrame       ) \
   template( LiteralPoolElement      ) \
-  template( CodeGenerator           )
+  template( CompilerState           )
 
 #ifdef DEBUG
 # define USE_COMPILER_OBJECT_HEADER 1

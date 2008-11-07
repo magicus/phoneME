@@ -467,8 +467,10 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
 #if defined(AZZERT) || USE_BINARY_IMAGE_LOADER
   ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK);
 #if ENABLE_ISOLATES
-  GUARANTEE( ObjectHeap::get_task_memory_usage(id) <= 
-             BoundaryDesc::allocation_size(), "Leftover objects" );
+  if( ObjectHeap::get_task_memory_usage(id) > BoundaryDesc::allocation_size() ) {
+    ObjectHeap::print_task_objects( id );
+    GUARANTEE( 0, "Leftover objects" );
+  }
 #endif
 #endif
 
@@ -495,7 +497,7 @@ void Task::terminate_current_isolate(Thread *thread JVM_TRAPS) {
 #if ENABLE_COMPILER
   {
     // if we own some suspended compilation - clear it
-    const CodeGenerator* gen = _compiler_code_generator;
+    const CodeGenerator* gen = CodeGenerator::current();
     if( gen && gen->task_id() == current_id() ) {
       Compiler::abort_suspended_compilation();
     }

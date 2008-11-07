@@ -53,6 +53,10 @@ class FPURegisterMap {
     return Register( (value & item_mask) + item_base );
   }
 
+  static CodeGenerator* code_generator( void ) {
+    return (CodeGenerator*) _compiler_state;
+  }
+
  public:
   void reset( void ) { _stack = empty_stack; }
 

@@ -58,6 +58,8 @@ public:
   static Transport::transport_op_def_t socket_transport_ops;
   static ReturnOop new_transport(JVM_SINGLE_ARG_TRAPS);
 
+  static void network_initialized_callback(int isInit, int status);
+
   int debugger_socket() {
     return int_field(debugger_socket_offset());
   }
@@ -80,8 +82,57 @@ public:
                                    SocketTransportDesc::pointer_count()
                                    JVM_NO_CHECK_AT_BOTTOM);
   }
+
+#if ENABLE_PCSL
+  void reset_read_ahead_buffer() {
+    obj_field_clear(read_ahead_buffer_offset());
+    set_bytes_cached_for_read(0);
+  }
+
+  ReturnOop read_ahead_buffer() {
+    return obj_field(read_ahead_buffer_offset());
+  }
+
+  int bytes_cached_for_read() {
+    return int_field(bytes_cached_for_read_offset());
+  }
+
+  int read_ahead_buffer_size() {
+    TypeArray::Raw tmp = read_ahead_buffer();
+    return tmp.is_null() ? 0 : tmp().length();
+  }
+
+  void set_bytes_cached_for_read(int new_size) {
+    int_field_put(bytes_cached_for_read_offset(),
+                  (new_size >= 0 ? new_size : 0));
+  }
+
+  bool add_to_read_ahead_buffer(unsigned char* buf_to_add, int len);
+#endif // ENABLE_PCSL
+
 private:
-  static bool _first_time;
+#if ENABLE_PCSL
+  void set_read_ahead_buffer(TypeArray* new_buffer) {
+    obj_field_put(read_ahead_buffer_offset(), new_buffer->obj());
+  }
+
+  static int read_bytes_impl(Transport *t, void *buf, int len,
+                             bool blockflag, bool peekOnly);
+
+  static int read_ahead_buffer_offset() {
+    return (FIELD_OFFSET(SocketTransportDesc, _read_ahead_buffer));
+  }
+
+  static int bytes_cached_for_read_offset() {
+    return (FIELD_OFFSET(SocketTransportDesc, _bytes_cached_for_read));
+  }
+
+  static bool _network_is_up;
+  static bool _wait_for_network_init;
+  static bool _wait_for_accept;
+  static bool _wait_for_read;
+  static bool _wait_for_write;
+#endif // ENABLE_PCSL
 
   static int debugger_socket_offset() {
     return (FIELD_OFFSET(SocketTransportDesc, _debugger_socket));
@@ -89,5 +140,9 @@ private:
   static int listener_socket_offset() {
     return (FIELD_OFFSET(SocketTransportDesc, _listener_socket));
   }
+
+  static bool _first_time;
+  static void* _listen_handle;
+
 };
 #endif

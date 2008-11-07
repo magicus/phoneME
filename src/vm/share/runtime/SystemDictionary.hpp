@@ -121,12 +121,12 @@ class SystemDictionary : public AllStatic {
   static ReturnOop find_array_class(jushort class_id);
 #endif
 
+  static void insert(LoaderContext *loader_ctx, InstanceClass* instance_class
+                     JVM_TRAPS);
 #ifndef PRODUCT
   static char _last_class_loaded[];
 #endif
  private:
-  static void insert(LoaderContext *loader_ctx, InstanceClass* instance_class
-                     JVM_TRAPS);
   static ReturnOop load_system_class(LoaderContext *loader_ctx JVM_TRAPS);
 
   static ReturnOop fetch_buffer(LoaderContext *loader_ctx JVM_TRAPS);

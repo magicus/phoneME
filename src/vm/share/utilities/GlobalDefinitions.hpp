@@ -115,10 +115,9 @@
 #define CompiledMethodCache  JVMCompiledMethodCache
 #define CompiledMethodDesc  JVMCompiledMethodDesc
 #define Compiler  JVMCompiler
+#define CompilerContext  JVMCompilerContext
 #define CompilerLiteralAccessor  JVMCompilerLiteralAccessor
-#define CompilerStatePointers  JVMCompilerStatePointers
-#define CompilerStatic  JVMCompilerStatic
-#define CompilerStaticPointers  JVMCompilerStaticPointers
+#define CompilerState  JVMCompilerState
 #define CompilerStubs  JVMCompilerStubs
 #define CompilerTest  JVMCompilerTest
 #define ConcatenatedStream  JVMConcatenatedStream
@@ -499,6 +498,7 @@ class CompilationQueueElement;
 class CompiledMethod;
 class CompiledMethodDesc;
 class Compiler;
+class CompilerState;
 class CodeGenerator;
 class ConstantPool;
 class ConstantPoolDesc;
@@ -1782,16 +1782,14 @@ enum {
   template(x, OopDesc**, large_object_area_bottom)  \
   template(x, OopDesc**, compiler_area_temp_top)    \
   template(x, OopDesc**, compiler_area_temp_bottom) \
-                                                           \
-  /* frequently used values by Compiler*/                  \
-  template(x, Method*,            compiler_method)         \
-  template(x, CodeGenerator*,     compiler_code_generator) \
-  template(x, int,                compiler_bci)            \
-                                                           \
-  template(x, BytecodeCompileClosure*,  compiler_closure)  \
-  template(x, int,                num_stack_lock_words)    \
-  template(x, address,   class_list_base)           \
-  template(x, address,   mirror_list_base)
+                                                    \
+  /* frequently used values by Compiler*/           \
+  template(x, CompilerState*, compiler_state)       \
+  template(x, Compiler*,      current_compiler)     \
+  template(x, int,            num_stack_lock_words) \
+                                                    \
+  template(x, address,        class_list_base)      \
+  template(x, address,        mirror_list_base)
 
 
 #define DECLARE_FAST_GLOBAL_FIELD(DUMMY, type, name) type name;
@@ -1848,11 +1846,8 @@ struct JVMFastGlobals {
 #define _compiler_area_temp_top       jvm_fast_globals.compiler_area_temp_top
 #define _compiler_area_temp_bottom    jvm_fast_globals.compiler_area_temp_bottom
 
-#define _compiler_method              jvm_fast_globals.compiler_method
-#define _compiler_code_generator      jvm_fast_globals.compiler_code_generator
-#define _compiler_bci                 jvm_fast_globals.compiler_bci
-
-#define _compiler_closure             jvm_fast_globals.compiler_closure
+#define _compiler_state               jvm_fast_globals.compiler_state
+#define _current_compiler             jvm_fast_globals.current_compiler
 #define _num_stack_lock_words         jvm_fast_globals.num_stack_lock_words
 
 /* Variables used by the interpreter and compiler */
@@ -2274,7 +2269,14 @@ NAME_BUFFER_SIZE = 270
 #if ENABLE_FLOAT
 
 static inline jint float_bits(jfloat f) {
-  return *(jint*)&f;
+  union {
+    jint output;
+    jfloat input;
+  } convert;
+ 
+  convert.input = f;
+
+  return convert.output;
 }
 
 static inline jlong double_bits(jdouble d) {

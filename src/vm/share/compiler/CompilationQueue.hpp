@@ -83,7 +83,6 @@ class CompilationQueueElement: public CompilerObject {
   void iterate(OopVisitor* visitor);
 #endif
 
-
  protected:
   void generic_compile(address addr JVM_TRAPS);
   void generic_compile(address addr,
@@ -118,13 +117,8 @@ public:
     _return_label = 0;
   }
 
- private:  
-  static CompilationQueueElement* _pool;  // Pool of recycled elements
- public:
-  static void reset_pool ( void ) { _pool = NULL; }
-
   // Recycled elements are kept live in the pool until
-  // the end of current compilation or a GC
+  // the end of current compilation
   inline void free( void );
 
   // CompilationQueueElement
@@ -195,6 +189,16 @@ public:
   }
   void set_next( CompilationQueueElement* value ) {
     _next = value;
+  }
+
+  static CompilerState* state( void ) {
+    return _compiler_state;
+  }
+  static CodeGenerator* code_generator( void ) {
+    return (CodeGenerator*) state();
+  }
+  static Compiler* compiler( void ) {
+    return _current_compiler;
   }
 };
 
@@ -312,14 +316,6 @@ public:
   friend class Compiler;
 #endif  
 };
-
-inline void CompilationQueueElement::free( void ) {
-  if( !( type() == CompilationQueueElement::throw_exception_stub &&
-         ThrowExceptionStub::cast(this)->is_persistent() ) ) {
-    _next = _pool;
-    _pool = this;
-  }
-}
 
 #define BEGIN_THROW_EXCEPTION_STUB_SUBCLASS( name, type )\
 class name: public ThrowExceptionStub {                   \

@@ -101,7 +101,7 @@ class VirtualStackFrame: public CompilerObject {
   static Method* method( void );
 
   static CodeGenerator* code_generator( void ) {
-    return _compiler_code_generator;
+    return (CodeGenerator*) _compiler_state;
   }
 
   static int num_stack_lock_words( void ) {
@@ -292,12 +292,18 @@ class VirtualStackFrame: public CompilerObject {
 
   //the tag corresponding to the index of item on the operation stack
   jint* tag_at(const int index)  {
-    GUARANTEE( unsigned(index) < unsigned(method()->max_execution_stack_count()),
+    // Note: 2 additional stack elements are needed,
+    // see VirtualStackFrame::create() for details
+    GUARANTEE( unsigned(index) < 
+               unsigned(method()->max_execution_stack_count()) + 2,
                "Tag index out of bounds" );
     return bci_stack_base() + index;
   }
   const jint* tag_at(const int index) const {
-    GUARANTEE( unsigned(index) < unsigned(method()->max_execution_stack_count()),
+    // Note: 2 additional stack elements are needed,
+    // see VirtualStackFrame::create() for details
+    GUARANTEE( unsigned(index) < 
+               unsigned(method()->max_execution_stack_count()) + 2,
                "Tag index out of bounds" );
     return bci_stack_base() + index;
   }
@@ -590,7 +596,7 @@ class VirtualStackFrame: public CompilerObject {
   }
 
 #if USE_COMPILER_LITERALS_MAP
-  Assembler::Register get_literal(int imm32, LiteralAccessor& la);
+  Assembler::Register get_literal(int imm32, const LiteralAccessor& la);
 
   void set_has_literal_value(Assembler::Register reg, const int imm32) {
     GUARANTEE((int)reg >= 0 && (int)reg < literals_map_size, "range");

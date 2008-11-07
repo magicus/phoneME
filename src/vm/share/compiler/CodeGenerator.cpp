@@ -118,7 +118,7 @@ void CodeGenerator::check_free_space(JVM_SINGLE_ARG_TRAPS) {
 void CodeGenerator::ensure_sufficient_stack_for(int index, BasicType kind) {
   int adjusted_index = index + (is_two_word(kind) ? 1 : 0);
   const int max_execution_stack_count =
-    Compiler::root()->method()->max_execution_stack_count();
+    root_method()->max_execution_stack_count();
 
   int inliner_stack_count = 2;
 #if ENABLE_INLINE
@@ -217,7 +217,7 @@ void CodeGenerator::osr_entry(bool force JVM_TRAPS) {
             "OSR stubs not supported for inlined methods");
 
   if (!omit_stack_frame() &&
-      !GenerateROMImage && (force || (!Compiler::is_in_loop()))) {
+      !GenerateROMImage && (force || (!compiler()->in_loop()))) {
     // Make sure it's possible to conform to this entry.
     frame()->conformance_entry(false);
 
@@ -228,7 +228,8 @@ void CodeGenerator::osr_entry(bool force JVM_TRAPS) {
     Label osr_entry;
     bind(osr_entry);
 
-    OSRStub* stub = OSRStub::allocate( bci(), osr_entry JVM_NO_CHECK );
+    OSRStub* stub = OSRStub::allocate( compiler()->bci(),
+                                       osr_entry JVM_NO_CHECK );
     if( stub ) {
       stub->insert();
     }
@@ -619,8 +620,9 @@ static bool compare( const BytecodeClosure::cond_op condition, const int x, cons
 void CodeGenerator::branch(int destination JVM_TRAPS) {
   COMPILER_COMMENT(("Branching to location %d", destination));
 
-  Compiler::closure()->set_next_bytecode_index(destination);
-  if (destination <= Compiler::bci()) {
+  Compiler* compiler = Compiler::current();
+  compiler->set_next_bytecode_index(destination);
+  if (destination <= compiler->bci()) {
      check_timer_tick(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
   }
 }
@@ -675,7 +677,7 @@ void CodeGenerator::branch_if(BytecodeClosure::cond_op condition,
 }
 
 bool CodeGenerator::is_inline_exception_allowed(int rte JVM_TRAPS) {
-  Method* m = Compiler::root()->method();
+  Method* m = root_method();
   const bool has_monitors = m->access_flags().is_synchronized() ||
                             m->access_flags().has_monitor_bytecodes();
   if (has_monitors) {
@@ -691,7 +693,8 @@ bool CodeGenerator::is_inline_exception_allowed(int rte JVM_TRAPS) {
             rte == ThrowExceptionStub::rte_array_index_out_of_bounds,"sanity");
 
   const int handler_bci = m->exception_handler_bci_for(
-    ThrowExceptionStub::exception_class(rte), bci() JVM_NO_CHECK);
+    ThrowExceptionStub::exception_class(rte),
+    Compiler::current()->bci() JVM_NO_CHECK);
   return handler_bci == -1;
 }
 
@@ -741,14 +744,15 @@ void CodeGenerator::conditional_jump(const BytecodeClosure::cond_op condition,
                                      const int destination,
                                      const bool assume_backward_jumps_are_taken
                                      JVM_TRAPS) {
-  if ((assume_backward_jumps_are_taken && destination <= bci()) ||
-      Compiler::current()->is_branch_taken(bci())) {
+  const Compiler* compiler = Compiler::current();
+  if ((assume_backward_jumps_are_taken && destination <= compiler->bci()) ||
+      compiler->is_branch_taken(compiler->bci())) {
     Label fall_through;
     conditional_jump_do(BytecodeClosure::negate(condition), fall_through);
     COMPILER_COMMENT(("Creating continuation for fallthrough to bci = %d",
-                      next_bci() ));
+                      compiler->next_bci() ));
     CompilationContinuation::insert(
-                      next_bci(), fall_through JVM_CHECK);
+                      compiler->next_bci(), fall_through JVM_CHECK);
     branch(destination JVM_NO_CHECK_AT_BOTTOM);
   } else {
     Label branch_taken;
@@ -764,7 +768,7 @@ void CodeGenerator::conditional_jump(const BytecodeClosure::cond_op condition,
 void CodeGenerator::append_callinfo_record(const int code_offset
                                            JVM_TRAPS) {
   const int number_of_tags = frame()->virtual_stack_pointer() + 1;
-  const int root_bci = Compiler::root()->compiler_bci();
+  const int root_bci = Compiler::root()->bci();
 
   callinfo_writer()->start_record(code_offset, root_bci,
                                 number_of_tags JVM_CHECK);
@@ -819,6 +823,7 @@ OopDesc* CodeGenerator::finish( void ) {
 }
 
 class ForwardBranchOptimizer : public BytecodeClosure {
+private:
   CodeGenerator* _cg;
   enum State {
     Start, Abort,
@@ -834,7 +839,7 @@ class ForwardBranchOptimizer : public BytecodeClosure {
   ExtendedValue  _load_false, _load_true;
 
 public:
-  bool run(Method* method, CodeGenerator* cg,
+  bool run(Method* method, CodeGenerator* code_generator,
               int start_bci,
               BytecodeClosure::cond_op condition,
               int destination, Value& op1, Value& op2 JVM_TRAPS);
@@ -958,6 +963,16 @@ private:
 #else
   void show_comments(int /*bci*/, int /*end*/) {}
 #endif
+
+#if ENABLE_INLINE
+  int _local_base;
+
+  void set_local_base( const int local_base ) { _local_base = local_base; }
+  int local_base( void ) const { return _local_base; }
+#else
+  static void set_local_base( const int /*local_base*/ ) {}
+  static int local_base( void ) { return 0; }
+#endif
 };
 
 bool CodeGenerator::forward_branch_optimize(int next_bci,
@@ -979,6 +994,8 @@ bool ForwardBranchOptimizer::run(Method* method, CodeGenerator* cg,
   _final_bci = destination;
   _state = Start;
   _cg    = cg;
+
+  set_local_base( Compiler::current()->local_base() );
 
   for (int i = 0; bci < _final_bci; i++) {
     _next_bci = method->next_bci(bci);
@@ -1100,7 +1117,7 @@ void ForwardBranchOptimizer::load_local(BasicType kind, int index JVM_TRAPS)  {
   ExtendedValue* current_load = push_simple(kind);
   if (current_load != NULL) {
     VirtualStackFrame* frame = _cg->frame();
-    frame->value_at(*current_load, Compiler::current_local_base() + index);
+    frame->value_at(*current_load, local_base() + index);
   }
 }
 
@@ -1143,7 +1160,7 @@ void ForwardBranchOptimizer::store_local(BasicType /*kind*/, int index JVM_TRAPS
   if (_state == Load && _next_bci == _final_bci) {
     // Optimize Load + Store as if it were an if-then-else
     VirtualStackFrame* frame = _cg->frame();
-    const int real_index = Compiler::current_local_base() + index;
+    const int real_index = local_base() + index;
     // TRUE:   local = local
     frame->value_at(_load_true, real_index);
     frame->clear(real_index);
@@ -1160,7 +1177,7 @@ void ForwardBranchOptimizer::increment_local_int(int index, jint offset JVM_TRAP
   if (_state == Start && _next_bci == _final_bci) {
     // Optimize this if it is the sole instruction
     _next_state = Iinc;
-    _iinc_index = Compiler::current_local_base() + index;
+    _iinc_index = local_base() + index;
     _iinc_delta = offset;
   } else {
     simple_instruction(false);

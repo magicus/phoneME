@@ -38,7 +38,6 @@ extern "C" {
 
 #include "../utilities/JVM_Malloc.hpp"
 
-#include <javacall_logging.h>
 
 void JVMSPI_PrintRaw(const char* s) {
   /* Print the string to the standard output device */
@@ -116,9 +115,4 @@ end:
 #endif
 
   return code;
-}
-
-void JVMSPI_CheckEvents(JVMSPI_BlockedThreadInfo * /*blocked_threads*/,
-                        int /*blocked_threads_count*/, jlong /*timeout_ms*/) {
-  // IMPL_NOTE: consider whether it should be fixed. 
 }

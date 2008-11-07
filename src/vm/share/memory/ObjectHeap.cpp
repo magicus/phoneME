@@ -508,7 +508,7 @@ OopDesc* ObjectHeap::dead_task;
 
 inline bool ObjectHeap::compiler_area_in_use( void ) {
 #if ENABLE_COMPILER
-  return Compiler::is_active() || Compiler::is_suspended();
+  return Compiler::is_suspended();
 #else
   return false;
 #endif
@@ -768,7 +768,6 @@ ObjectHeap::get_reference_array(const int ref_index) {
   GUARANTEE(is_encoded_reference(ref_index), "Must be encoded ref");
   const unsigned type = get_reference_type(ref_index);
   const unsigned owner = get_reference_owner(ref_index);
-
   return get_reference_array(type, owner);
 }
 
@@ -1314,7 +1313,7 @@ bool ObjectHeap::expand_current_compiled_method(const int delta) {
 
 #endif
 
-void ObjectHeap::dispose() {
+void ObjectHeap::dispose( void ) {
   _inline_allocation_top = NULL;
   set_inline_allocation_end(NULL);
   _bitvector_base        = NULL;
@@ -1413,6 +1412,10 @@ bool ObjectHeap::create() {
   }
 
   GUARANTEE(!YoungGenerationAtEndOfHeap, "sanity");
+
+  _compiler_state = NULL;
+  Compiler::set_current( NULL );
+  Compiler::set_root( NULL );
 #endif
 
 #ifndef PRODUCT
@@ -2007,7 +2010,7 @@ void ObjectHeap::roots_do_to( void do_oop(OopDesc**), const bool young_only,
     CompiledMethodDesc* cm  = (CompiledMethodDesc*)_compiler_area_start;
     CompiledMethodDesc* end = (CompiledMethodDesc*)_compiler_area_top;
     {
-      const CodeGenerator* gen = _compiler_code_generator;
+      const CodeGenerator* gen = CodeGenerator::current();
       if( gen ) {
         end = (CompiledMethodDesc*)gen->compiled_method()->obj();
       }
@@ -4312,7 +4315,27 @@ void ObjectHeap::iterate(ObjectHeapVisitor* visitor) {
   }
 #endif
 }
+
+#if ENABLE_ISOLATES
+void ObjectHeap::iterate_for_task(ObjectHeapVisitor* visitor, const int task) {
+  OopDesc** const classes = get_boundary_classes();
+  const int boundary_size = BoundaryDesc::allocation_size();
+
+  OopDesc** upb = _inline_allocation_top;
+  int id = _previous_task_id;
+
+  for( const BoundaryDesc* p = *get_boundary_list(); p; p = p->_next ) {
+    if( id == task ) {
+      iterate (visitor, DERIVED(OopDesc**, p, boundary_size), upb );
+    }
+    id = get_owner( p, classes );
+    upb = (OopDesc**) p;
+  }
+}
 #endif
+
+#endif  // !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR
+
 
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
@@ -4638,58 +4661,58 @@ void ObjectHeap::verify() {
   }
 }
 
-class CountObjects : public ObjectHeapVisitor {
-  public:
-      CountObjects() { _n = 0; }
-      virtual void do_obj(Oop* obj) { _n++; (void)obj; }
-      int result() { return _n; }
-  private:
-      int _n;
+class CountObjects: public ObjectHeapVisitor {
+ public:
+  CountObjects( void ): _n( 0 ) {}
+  virtual void do_obj( Oop* /*obj*/ ) { _n++; }
+  int result( void ) const { return _n; }
+ private:
+  int _n;
 };
 
-class CodeSummary : public ObjectHeapVisitor {
-  public:
-      CodeSummary() { _total = 0; }
+class CodeSummary: public ObjectHeapVisitor {
+ public:
+  CodeSummary( void ): _total( 0 ) {}
 
-      virtual void do_obj(Oop* obj) {
-        if (obj->is_compiled_method()) {
-            _total += obj->object_size();
-        }
-      }
+  virtual void do_obj( Oop* obj ) {
+    if (obj->is_compiled_method()) {
+      _total += obj->object_size();
+    }
+  }
 
-      int result() { return _total; }
-  private:
-      int _total;
+  int result( void ) const { return _total; }
+ private:
+  int _total;
 };
 
-class CodeItemSummary : public ObjectHeapVisitor {
-  public:
-      CodeItemSummary() { _total = 0; }
+class CodeItemSummary: public ObjectHeapVisitor {
+ public:
+  CodeItemSummary( void ): _total( 0 ) {}
 
-      virtual void do_obj(Oop* obj) {
-        if (obj->is_compiled_method()) {
-            _total ++;
-        }
-      }
+  virtual void do_obj( Oop* obj ) {
+    if (obj->is_compiled_method()) {
+      _total ++;
+    }
+  }
 
-      int result() { return _total; }
-  private:
-      int _total;
+  int result( void ) const { return _total; }
+ private:
+  int _total;
 };
 
-int ObjectHeap::code_size_summary() {
+int ObjectHeap::code_size_summary( void ) {
   CodeSummary closure;
   ObjectHeap::iterate(&closure);
   return closure.result();
 }
 
-int ObjectHeap::code_item_summary() {
+int ObjectHeap::code_item_summary( void ) {
   CodeItemSummary closure;
   ObjectHeap::iterate(&closure);
   return closure.result();
 }
 
-int ObjectHeap::count_objects() {
+int ObjectHeap::count_objects( void ) {
   CountObjects closure;
   ObjectHeap::iterate(&closure);
   return closure.result();
@@ -4914,7 +4937,15 @@ void ObjectHeap::print_all_objects(Stream *st) {
   ObjectHeap::iterate(&closure);
 }
 
-class PrintClasses : public ObjectHeapVisitor {
+#if ENABLE_ISOLATES
+void ObjectHeap::print_task_objects(const int task_id, Stream *st) {
+  st->print_cr( "*** task %d objects ***", task_id );
+  PrintObjects closure(st);
+  ObjectHeap::iterate_for_task(&closure, task_id);
+}
+#endif
+
+class PrintClasses: public ObjectHeapVisitor {
   virtual void do_obj(Oop* obj) {
     if (obj->is_instance_class()) obj->print();
   }

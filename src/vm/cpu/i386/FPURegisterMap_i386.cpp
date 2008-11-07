@@ -32,7 +32,7 @@
 void FPURegisterMap::clear( void ) {
   unsigned x = _stack;
   for( ; x != empty_stack; x >>= item_bits ) {
-    Compiler::code_generator()->ffree( decode( x ) );
+    code_generator()->ffree( decode( x ) );
   }
   _stack = x;
 }
@@ -74,7 +74,7 @@ void FPURegisterMap::dump( const bool as_comment ) const {
   }
   sprintf(str, "%s]", str);
   if (as_comment) {
-    Compiler::code_generator()->comment(str);
+    code_generator()->comment(str);
     return;
   }
   tty->print(str);
