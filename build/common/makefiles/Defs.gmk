@@ -466,6 +466,7 @@ OBJ_FILES += $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(filter %.cpp,$(JTWI_NATIVE_FILES)
 override REBUILD_JAVA_LIST=$(MIDP_OUTPUT_DIR)/javalist.txt
 override SUBSET_API_JAVA_LIST=$(MIDP_OUTPUT_DIR)/subsetjavalist.txt
 override SUPERSET_API_JAVA_LIST=$(MIDP_OUTPUT_DIR)/supersetjavalist.txt
+override ALL_JAVA_LIST=$(MIDP_OUTPUT_DIR)/alljavalist.txt
 
 override GENERATED_JAVA_LIST=$(MIDP_OUTPUT_DIR)/genjavalist.txt
 
@@ -495,14 +496,17 @@ endef
 
 define appendjavafiles
     @$(call appendfiles,$(REBUILD_JAVA_LIST)) 
+    @$(call appendfiles,$(ALL_JAVA_LIST)) 
 endef
 
 define appendsubsetjavafiles
     @$(call appendfiles,$(SUBSET_API_JAVA_LIST)) 
+    @$(call appendfiles,$(ALL_JAVA_LIST)) 
 endef
 
 define appendsupersetjavafiles
     @$(call appendfiles,$(SUPERSET_API_JAVA_LIST)) 
+    @$(call appendfiles,$(ALL_JAVA_LIST)) 
 endef
 
 # Distinguish between normal java files from generated one 
