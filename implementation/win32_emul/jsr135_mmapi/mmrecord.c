@@ -48,8 +48,8 @@ int create_wavhead(recorder* h, char *buffer, int buflen)
     wh->fc.compression_code = 1;
     wh->fc.num_channels     = h->channels;
     wh->fc.sample_rate      = h->rate;
-    wh->fc.bytes_per_second = 0;          /* ??? NEED REVISIT */
-    wh->fc.block_align      = 0;          /* ?? NEED REVISIT */
+    wh->fc.bytes_per_second = h->rate * h->channels * h->bits / 8;
+    wh->fc.block_align      = h->channels * h->bits / 8;
     wh->fc.bits             = h->bits;
 
     wh->dc.chnk_id          = CHUNKID_data;
