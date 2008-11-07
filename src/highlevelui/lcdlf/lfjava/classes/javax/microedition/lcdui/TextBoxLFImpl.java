@@ -548,7 +548,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         
         if (myInfo.topVis < 0) {
             myInfo.topVis = 0;
-        } else if (myInfo.topVis - myInfo.visLines > myInfo.numLines) {
+        } else if (myInfo.topVis + myInfo.visLines > myInfo.numLines) {
             myInfo.topVis = myInfo.numLines - myInfo.visLines;
         }
         
