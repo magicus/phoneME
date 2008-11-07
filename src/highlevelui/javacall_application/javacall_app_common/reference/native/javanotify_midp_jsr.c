@@ -1172,6 +1172,15 @@ void  /* OPTIONAL */ javanotify_display_device_state_changed(int hardwareId, jav
 }
 
 
+void javanotify_virtual_keyboard() {
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_virtual_keyboard() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_VIRTUAL_KEYBOARD;
+    midp_jc_event_send(&e);
+}
+
 #ifdef ENABLE_API_EXTENSIONS
 
 /**

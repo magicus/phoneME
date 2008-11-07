@@ -136,6 +136,10 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = CHANGE_LOCALE_EVENT;
         break;
+    case MIDP_JC_EVENT_VIRTUAL_KEYBOARD:
+        pNewSignal->waitingFor = UI_SIGNAL;
+        pNewMidpEvent->type    = VIRTUAL_KEYBOARD_EVENT;
+        break;
 
     case MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED:
         pNewSignal->waitingFor = DISPLAY_DEVICE_SIGNAL;

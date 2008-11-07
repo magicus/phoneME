@@ -111,6 +111,7 @@ typedef enum {
     MIDP_JC_EVENT_PAUSE                ,
     MIDP_JC_EVENT_RESUME               ,
     MIDP_JC_EVENT_CHANGE_LOCALE		   ,
+    MIDP_JC_EVENT_VIRTUAL_KEYBOARD	   ,
     MIDP_JC_EVENT_INTERNAL_PAUSE       ,
     MIDP_JC_EVENT_INTERNAL_RESUME      ,
     MIDP_JC_EVENT_TEXTFIELD            ,

@@ -98,6 +98,10 @@ int mapKey(QKeyEvent *key) {
         unicode = KEYMAP_KEY_SCREEN_ROT;
         break;
 
+    case Qt::Key_Context6:
+        unicode = KEYMAP_KEY_VIRT_KEYB;
+        break;
+
     case Qt::Key_Back:
         unicode = KEYMAP_KEY_BACKSPACE;
         break;
@@ -139,6 +143,10 @@ int mapKey(QKeyEvent *key) {
     // rotation
     case Qt::Key_F3:
         unicode = KEYMAP_KEY_SCREEN_ROT;
+        break;
+    // virtual keyboard
+    case Qt::Key_F6:
+        unicode = KEYMAP_KEY_VIRT_KEYB;
         break;
     // Calendar
     case Qt::Key_F9:

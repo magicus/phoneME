@@ -270,6 +270,15 @@ void fbapp_map_keycode_to_event(
         }
         break;
 
+    case KEYMAP_MD_KEY_VIRT_KEYB:
+        if (isPressed) {
+            pNewMidpEvent->type = VIRTUAL_KEYBOARD_EVENT;
+            pNewSignal->waitingFor = UI_SIGNAL;
+        } else {
+            /* ignore it */
+        }
+        break;
+
     case KEYMAP_KEY_END:
         if (isPressed) {
             pNewSignal->waitingFor = AMS_SIGNAL;
