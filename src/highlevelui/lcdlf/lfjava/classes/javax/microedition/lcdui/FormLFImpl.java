@@ -1143,12 +1143,18 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                         nextIndex = curIndex;
                     }
                 } else {
-                    // no more interractive items on the screen 
+                    // no more interractive items on the screen
+                    if (nextIndex > -1) {
+                        int rate  = howMuchItemVisible(itemsCopy[nextIndex]);
+                        if (rate == 0) {
+                            nextIndex = curIndex;
+                        } 
+                    }
                     break;
                 }
             }
             
-            if (nextIndex != traverseIndexCopy && traverseIndexCopy > -1 && nextIndex > -1) {
+            if (nextIndex != traverseIndexCopy && traverseIndexCopy > -1) {
                 // It could be we need to traverse out of a current
                 // item before paging
                 itemsCopy[traverseIndexCopy].uCallTraverseOut();
@@ -1819,7 +1825,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                     //cyclic down
                     if (!cyclingPageDown(traverseIndexCopy, itemsCopy) && isBottomShown) {
                         // page down
-                        pageScroll(dir, traverseIndexCopy, itemsCopy);
+                        pageScroll(Canvas.DOWN, traverseIndexCopy, itemsCopy);
                     }
                     return;
                 }
