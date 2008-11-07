@@ -44,7 +44,7 @@
  */
 static javacall_opcode midp_operation2javacall(jint midpOpcode);
 
-static javacall_midlet_state
+static javacall_lifecycle_state
 midp_midlet_state2javacall(jint midpMidletState);
 
 static javacall_midlet_ui_state
@@ -54,8 +54,9 @@ static javacall_change_reason
 midp_midlet_event_reason2javacall(jint midpEventReason);
 
 void midp_listener_ams_system_status(const NamsEventData* pEventData);
+void midp_listener_ams_operation_completed(const NamsEventData* pEventData);
 void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData);
-void midp_listener_ams_ui_state_changed(const NamsEventData* pEventData);
+void midp_listener_ams_midlet_ui_state_changed(const NamsEventData* pEventData);
 
 /**
  * Platform invokes this function to start the MIDP system.
@@ -65,42 +66,43 @@ void midp_listener_ams_ui_state_changed(const NamsEventData* pEventData);
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result javanotify_ams_system_start() {
-    MIDPError res;
+    MIDPError res = midp_system_initialize();
 
-    /* get midp home directory, set it */
-    char* dir = getApplicationDir(NULL);
-    if (dir == NULL) {
-        return JAVACALL_FAIL;
-    }
-    /* set up appDir before calling initialize */
-    midpSetAppDir(dir);
-
-    /* get midp config directory, set it */
-    dir = getConfigurationDir(NULL);
-    /* set up confDir before calling initialize */
-    midpSetConfigDir(dir);
-
-    res = midp_system_initialize();
     if (res != ALL_OK) {
         return JAVACALL_FAIL;
     }
 
-    midp_add_event_listener(midp_listener_ams_system_status,
-                            SYSTEM_EVENT_LISTENER);
-    midp_add_event_listener(midp_listener_ams_ui_state_changed,
-                            DISPLAY_EVENT_LISTENER);
-    midp_add_event_listener(midp_listener_ams_midlet_state_changed,
-                            MIDLET_EVENT_LISTENER);
+    if (midp_add_event_listener(midp_listener_ams_system_status,
+                                SYSTEM_EVENT_LISTENER) != ALL_OK ||
+        midp_add_event_listener(midp_listener_ams_operation_completed,
+                                SYSTEM_EVENT_LISTENER) != ALL_OK ||
+        midp_add_event_listener(midp_listener_ams_midlet_ui_state_changed,
+                                DISPLAY_EVENT_LISTENER) != ALL_OK ||
+        midp_add_event_listener(midp_listener_ams_midlet_state_changed,
+                                MIDLET_EVENT_LISTENER) != ALL_OK) {
+        return JAVACALL_FAIL;
+    }
 
-    return midp_system_start();
+    return (midp_system_start() == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
+}
+
+/**
+ * Platform invokes this function to stop the MIDP system.
+ *
+ * @return <tt>JAVACALL_OK</tt> if successful,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result javanotify_ams_system_stop() {
+    MIDPError res = midp_system_stop();
+    return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 /**
  * Platform invokes this function to inform VM to start a specific MIDlet
  * suite.
  *
- * @param suiteID      ID of the suite to start
- * @param appID        ID of runtime midlet, ID must not be Zero
+ * @param suiteId      ID of the suite to start
+ * @param appId        ID of runtime midlet, ID must not be Zero
  * @param className    Fully qualified name of the MIDlet class
  * @param pRuntimeInfo Quotas and profile to set for the new application
  * @return <tt>JAVACALL_OK</tt> if all parameter are valid,
@@ -110,11 +112,11 @@ javacall_result javanotify_ams_system_start() {
  *       by <link>javacall_ams_midlet_stateChanged</link>
  */
 javacall_result
-javanotify_ams_midlet_start(const javacall_suite_id suiteID,
-                            const javacall_app_id appID,
-                            const javacall_utf16_string className,
+javanotify_ams_midlet_start(javacall_suite_id suiteId,
+                            javacall_app_id appId,
+                            javacall_const_utf16_string className,
                             const javacall_midlet_runtime_info* pRuntimeInfo) {
-    return javanotify_ams_midlet_start_with_args(suiteID, appID,
+    return javanotify_ams_midlet_start_with_args(suiteId, appId,
         className, NULL, 0, pRuntimeInfo);
 }
 
@@ -122,8 +124,8 @@ javanotify_ams_midlet_start(const javacall_suite_id suiteID,
  * Platform invokes this function to inform VM to start a specific MIDlet
  * suite with arguments.
  *
- * @param suiteID      ID of the suite to start with
- * @param appID        ID of runtime midlet
+ * @param suiteId      ID of the suite to start with
+ * @param appId        ID of runtime midlet
  * @param className    Fully qualified name of the MIDlet class
  * @param args         An array containning up to 3 arguments for
  *                     the MIDlet to be run
@@ -136,13 +138,13 @@ javanotify_ams_midlet_start(const javacall_suite_id suiteID,
  *        <link>javacall_ams_midlet_stateChanged</link>
  */
 javacall_result
-javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
-                                      const javacall_app_id appID,
-                                      const javacall_utf16_string className,
-                                      const javacall_utf16_string *args,
+javanotify_ams_midlet_start_with_args(javacall_suite_id suiteId,
+                                      javacall_app_id appId,
+                                      javacall_const_utf16_string className,
+                                      javacall_const_utf16_string *args,
                                       int argsNum,
                                       const javacall_midlet_runtime_info*
-                                          pRuntimeInfo) {
+                                      pRuntimeInfo) {
     MIDPError res;                                          
     MidletRuntimeInfo mri, *pMri = NULL;
     javacall_result jcRes;
@@ -158,40 +160,42 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
         return JAVACALL_FAIL;
     }
 
-    /* converting the class name from javacall_utf16_string to jchar* */
+    /* javacall_utf16_string and jchar* is actually the same */
     jcRes = javautil_unicode_utf16_ulength(className, &utf16Len);
     if (jcRes != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
 
-    jcRes = javautil_unicode_utf16_to_utf8(className, utf16Len,
-        (unsigned char*) pClassName, sizeof(pClassName) / sizeof(jchar) - 1,
-            (javacall_int32*) &classNameLen);
-    if (jcRes != JAVACALL_OK) {
+    if (utf16Len + 1 >= MAX_CLASS_NAME_LEN) {
         return JAVACALL_FAIL;
     }
 
-    pClassName[classNameLen] = 0;
+    memcpy((unsigned char*)pClassName, (unsigned char*)className,
+           utf16Len << 1);
 
-    /* converting the midlet's arguments */
+    classNameLen = utf16Len;
+    pClassName[utf16Len] = (jchar)0;
+
+    /* copying the midlet's arguments */
     for (i = 0; i < argsNum; i++) {
         if (args[i] == 0) {
             return JAVACALL_FAIL;
         }
 
-        jcRes = javautil_unicode_utf16_utf8length(args[i], &utf16Len);
+        jcRes = javautil_unicode_utf16_ulength(args[i], &utf16Len);
         if (jcRes != JAVACALL_OK) {
             return JAVACALL_FAIL;
         }
 
-        jcRes = javautil_unicode_utf16_to_utf8(args[i],
-            utf16Len, (unsigned char*) chArgs[i],
-                MAX_ARG_LEN - 1, (javacall_int32*) &argsLen[i]);
-        if (jcRes != JAVACALL_OK) {
+        if (utf16Len + 1 >= MAX_ARG_LEN) {
             return JAVACALL_FAIL;
         }
 
-        chArgs[i][argsLen[i]] = 0;
+        memcpy((unsigned char*)chArgs[i], (unsigned char*)args[i],
+               utf16Len << 1);
+
+        argsLen[i] = utf16Len;
+        chArgs[i][utf16Len] = (jchar)0;
     }
 
     /*
@@ -204,7 +208,7 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
         mri.usedMemory     = (jint) pRuntimeInfo->usedMemory;
         mri.priority       = (jint) pRuntimeInfo->priority;
 
-        /* converting profileName from javacall_utf16_string to jchar* */
+        /* handling profileName */
         jcRes = javautil_unicode_utf16_ulength(pRuntimeInfo->profileName,
             &utf16Len);
         if (jcRes != JAVACALL_OK) {
@@ -212,17 +216,17 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
         }
 
         if (utf16Len > 0 && pRuntimeInfo->profileName != NULL) {
-            jcRes = javautil_unicode_utf16_to_utf8(pRuntimeInfo->profileName,
-                (javacall_int32) mri.profileNameLen,
-                (unsigned char*) mri.profileName,
-                sizeof(pProfileNameBuf) / sizeof(jchar) - 1,
-                (javacall_int32*) &mri.profileNameLen);
-
-            if (jcRes != JAVACALL_OK) {
+            if (utf16Len + 1 >= MAX_CLASS_NAME_LEN) {
                 return JAVACALL_FAIL;
             }
 
-            pProfileNameBuf[mri.profileNameLen] = 0;
+            memcpy((unsigned char*)pProfileNameBuf,
+                   (unsigned char*)pRuntimeInfo->profileName,
+                   utf16Len << 1);
+
+            mri.profileNameLen = utf16Len;
+            pProfileNameBuf[utf16Len] = 0;
+
             mri.profileName = pProfileNameBuf;
         } else {
             mri.profileNameLen = 0;
@@ -232,9 +236,9 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
         pMri = &mri;
     }
     
-    res = midp_midlet_create_start_with_args((SuiteIdType)suiteID,
+    res = midp_midlet_create_start_with_args((SuiteIdType)suiteId,
         (const jchar*)pClassName, classNameLen, (const jchar**)args, argsLen,
-            (jint)argsNum, (jint)appID, pMri);
+            (jint)argsNum, (jint)appId, pMri);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
@@ -243,17 +247,17 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
  * running MIDlet. If it doesn't exit in the specified amount of milliseconds,
  * it will be forcefully terminated.
  *
- * @param appID appID of the suite to shutdown
+ * @param appId appId of the suite to shutdown
  * @param timeoutMillSecond shutdown the suite in timeout millseconds
- * @return <tt>JAVACALL_OK</tt> if <code>suiteID</code> has a proper value
+ * @return <tt>JAVACALL_OK</tt> if <code>suiteId</code> has a proper value
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note the real status of operation will be notified by
- *       <link>javacall_ams_midlet_stateChanged</link>
+ *       <link>javacall_ams_midlet_state_changed</link>
  */
 javacall_result
-javanotify_ams_midlet_shutdown(const javacall_app_id appID,
+javanotify_ams_midlet_shutdown(javacall_app_id appId,
                                int timeoutMillSeconds) {
-    MIDPError res = midp_midlet_destroy((jint)appID, (jint)timeoutMillSeconds);
+    MIDPError res = midp_midlet_destroy((jint)appId, (jint)timeoutMillSeconds);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;                                   
 }
 
@@ -261,16 +265,16 @@ javanotify_ams_midlet_shutdown(const javacall_app_id appID,
  * Platform invokes this function to inform VM to switch a specific MIDlet
  * suite to foreground.
  *
- * @param appID appID of the suite to switch
+ * @param appId appId of the suite to switch
  *
- * @return <tt>JAVACALL_OK</tt> if <code>suiteID</code> has a proper value
+ * @return <tt>JAVACALL_OK</tt> if <code>suiteId</code> has a proper value
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
 javacall_result
-javanotify_ams_midlet_switch_foreground(const javacall_app_id appID) {
-    MIDPError res = midp_midlet_set_foreground((jint)appID);
+javanotify_ams_midlet_switch_foreground(javacall_app_id appId) {
+    MIDPError res = midp_midlet_set_foreground((jint)appId);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
@@ -278,7 +282,7 @@ javanotify_ams_midlet_switch_foreground(const javacall_app_id appID) {
  * Platform invokes this function to inform VM to switch current MIDlet
  * suite to background, and no MIDlet will switch to foregound.
  *
- * @return <tt>JAVACALL_OK</tt> if <code>suiteID</code> has a proper value
+ * @return <tt>JAVACALL_OK</tt> if <code>suiteId</code> has a proper value
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
@@ -291,86 +295,58 @@ javacall_result javanotify_ams_midlet_switch_background() {
 /**
  * Platform invokes this function to inform VM to pause a specific MIDlet
  *
- * @param appID appID of the suite to pause
- * @return <tt>JAVACALL_OK</tt> if <code>suiteID</code> has a proper value
+ * @param appId appId of the suite to pause
+ * @return <tt>JAVACALL_OK</tt> if <code>suiteId</code> has a proper value
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
-javacall_result javanotify_ams_midlet_pause(const javacall_app_id appID) {
-    MIDPError res = midp_midlet_pause((jint)appID);
+javacall_result javanotify_ams_midlet_pause(javacall_app_id appId) {
+    MIDPError res = midp_midlet_pause((jint)appId);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 /**
  * Platform invokes this function to inform VM to resume a specific MIDlet
  *
- * @param appID appID of the suite to resume
- * @return <tt>JAVACALL_OK</tt> if <code>suiteID</code> has a proper value
+ * @param appId appId of the suite to resume
+ * @return <tt>JAVACALL_OK</tt> if <code>suiteId</code> has a proper value
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
-javacall_result javanotify_ams_midlet_resume(const javacall_app_id appID) {
-    MIDPError res = midp_midlet_resume((jint)appID);
+javacall_result javanotify_ams_midlet_resume(javacall_app_id appId) {
+    MIDPError res = midp_midlet_resume((jint)appId);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 /**
- * Platform invokes this function to get information about the suite containing
- * the specified running MIDlet. This call is synchronous.
+ * App Manager invokes this function to get information about the suite
+ * containing the specified running MIDlet. This call is synchronous.
  *
- * @param appId The ID used to identify the application
- *
- * @param pSuiteData [out] pointer to a structure where static information
- *                         about the midlet will be stored
+ * @param appId    [in]  the ID used to identify the application
+ * @param pSuiteId [out] on exit will hold an ID of the suite the midlet
+ *                       belongs to
  *
  * @return error code: <tt>JAVACALL_OK</tt> if successful,
  *                     <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-javanotify_ams_midlet_get_suite_info(const javacall_app_id appID,
-                                     javacall_ams_suite_data* pSuiteData) {
-    MidletSuiteData midpSuiteData;
-    MIDPError res;
+javanotify_ams_midlet_get_app_suite_id(javacall_app_id appId,
+                                       javacall_suite_id* pSuiteId) {
+    MIDPError status;
+    SuiteIdType midpSuiteId;
 
-    if (pSuiteData == NULL) {
+    if (pSuiteId == NULL) {
         return JAVACALL_FAIL;
     }
 
-    res = midp_midlet_get_suite_info((jint)appID, &midpSuiteData);
-    if (res != JAVACALL_OK) {
+    status = midp_midlet_get_suite_id((jint)appId, &midpSuiteId);
+    if (status != ALL_OK) {
         return JAVACALL_FAIL;
     }
 
-    /* copy data from the midp structure to the javacall one */
-    pSuiteData->suiteId   = (javacall_suite_id) midpSuiteData.suiteId;
-    pSuiteData->storageId = (javacall_int32) midpSuiteData.storageId;
-    pSuiteData->isEnabled = (javacall_bool) midpSuiteData.isEnabled;
-    pSuiteData->isEnabled = (javacall_bool) midpSuiteData.isTrusted;
-    pSuiteData->numberOfMidlets =
-                            (javacall_int32) midpSuiteData.numberOfMidlets;
-    pSuiteData->installTime = (long) midpSuiteData.installTime;
-    pSuiteData->jadSize = (javacall_int32) midpSuiteData.jadSize;
-    pSuiteData->jarSize = (javacall_int32) midpSuiteData.jarSize;
-    pSuiteData->jarHashLen = (javacall_int32) midpSuiteData.jarHashLen;
-    /* IMPL_NOTE: structure of javacall_ams_suite_data should be revised */
-    pSuiteData->isPreinstalled = (javacall_bool)
-        (midpSuiteData.type == COMPONENT_PREINSTALLED_SUITE);
-
-    pSuiteData->varSuiteData.pJarHash = midpSuiteData.varSuiteData.pJarHash;
-
-    /*
-     * IMPL_NOTE: the strings from midpSuiteData should be converted from
-     *            pcsl_string and copied into the bellowing strings.
-     */
-    pSuiteData->varSuiteData.midletClassName = NULL;
-    pSuiteData->varSuiteData.displayName = NULL;
-    pSuiteData->varSuiteData.iconName = NULL;
-    pSuiteData->varSuiteData.suiteVendor = NULL;
-    pSuiteData->varSuiteData.suiteName = NULL;
-    pSuiteData->varSuiteData.pathToJar = NULL;
-    pSuiteData->varSuiteData.pathToSettings = NULL;
+    *pSuiteId = (javacall_suite_id)midpSuiteId;
 
     return JAVACALL_OK;
 }
@@ -382,33 +358,32 @@ javanotify_ams_midlet_get_suite_info(const javacall_app_id appID,
  * This call is asynchronous, the result will be reported later through
  * passing a MIDLET_INFO_READY_EVENT event to SYSTEM_EVENT_LISTENER.
  *
- * @param appID The ID used to identify the application
+ * @param appId The ID used to identify the application
  *
  * @return error code: <tt>JAVACALL_OK<tt> if successful (operation started),
  *                     <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-javanotify_ams_midlet_request_runtime_info(const javacall_app_id appID) {
-    MIDPError res = midp_midlet_request_runtime_info((jint)appID);
+javanotify_ams_midlet_request_runtime_info(javacall_app_id appId) {
+    MIDPError res = midp_midlet_request_runtime_info((jint)appId);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 /**
  * Platform inform the VM to create the images cache.
- * @param suiteID  unique ID of the MIDlet suite
+ * @param suiteId  unique ID of the MIDlet suite
  *
  * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javanotify_ams_create_resource_cache(const javacall_suite_id suiteID) {
-    (void) suiteID;
+javanotify_ams_create_resource_cache(javacall_suite_id suiteId) {
+    (void) suiteId;
     return JAVACALL_FAIL;
 }
 
 /**
- * MIDP proxy for the javacall_ams_system_state_change() and
- * javacall_ams_operation_completed() listener.
+ * MIDP proxy for the javacall_ams_system_state_changed() listener.
  *
  * @param pEventData full data about the event and about the application
  *                   caused this event
@@ -420,38 +395,54 @@ void midp_listener_ams_system_status(const NamsEventData* pEventData) {
         return;
     }
 
-    if ( MIDP_NAMS_EVENT_STATE_CHANGED == pEventData->event) {
+    if (pEventData->event == MIDP_NAMS_EVENT_STATE_CHANGED) {
         javacall_system_state state;
+
         switch (pEventData->state) {
-        case MIDP_SYSTEM_STATE_ACTIVE:
-            state = JAVACALL_SYSTEM_STATE_ACTIVE;
-            break;
-        case MIDP_SYSTEM_STATE_SUSPENDED:
-            state = JAVACALL_SYSTEM_STATE_SUSPENDED;
-            break;
-        case MIDP_SYSTEM_STATE_STOPPED:
-            state = JAVACALL_SYSTEM_STATE_STOPPED;
-            break;
-        default:
-            state = JAVACALL_SYSTEM_STATE_ERROR;
-            break;
+            case MIDP_SYSTEM_STATE_ACTIVE:
+                state = JAVACALL_SYSTEM_STATE_ACTIVE;
+                break;
+            case MIDP_SYSTEM_STATE_SUSPENDED:
+                state = JAVACALL_SYSTEM_STATE_SUSPENDED;
+                break;
+            case MIDP_SYSTEM_STATE_STOPPED:
+                state = JAVACALL_SYSTEM_STATE_STOPPED;
+                break;
+            default:
+                state = JAVACALL_SYSTEM_STATE_ERROR;
+                break;
         }
+
         javacall_ams_system_state_changed(state);
-    } else if (MIDP_NAMS_EVENT_OPERATION_COMPLETED == pEventData->event) {
-    if (pEventData->state == ALL_OK) {
-        if (pEventData->reason == NATIVE_MIDLET_GETINFO_REQUEST) {
-            pResult = pEventData->pRuntimeInfo;
-        }
-    }
-    javacall_ams_operation_completed(
-        midp_operation2javacall(pEventData->reason),
-        (javacall_app_id)pEventData->appId,
-        pResult);
-    } else {
-        REPORT_ERROR(LC_AMS, "Invalid system status");
     }
 }
 
+/**
+ * MIDP proxy for the javacall_ams_operation_completed() listener.
+ *
+ * @param pEventData full data about the event and about the application
+ *                   caused this event
+ */
+void midp_listener_ams_operation_completed(const NamsEventData* pEventData) {
+    void* pResult = NULL;
+
+    if (pEventData == NULL) {
+        return;
+    }
+
+    if (pEventData->event == MIDP_NAMS_EVENT_OPERATION_COMPLETED) {
+        if (pEventData->state == ALL_OK) {
+            if (pEventData->reason == NATIVE_MIDLET_GETINFO_REQUEST) {
+                pResult = pEventData->pRuntimeInfo;
+            }
+        }
+
+        javacall_ams_operation_completed(
+            midp_operation2javacall(pEventData->reason),
+            (javacall_app_id)pEventData->appId,
+            pResult);
+    }
+}
 
 /**
  * MIDP proxy for the javacall_ams_midlet_state_changed() listener.
@@ -476,12 +467,13 @@ void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
  * @param pEventData full data about the event and about the application
  *                   caused this event
  */
-void midp_listener_ams_ui_state_changed(const NamsEventData* pEventData) {
+void midp_listener_ams_midlet_ui_state_changed(
+        const NamsEventData* pEventData) {
     if (pEventData == NULL) {
         return;
     }
 
-    javacall_ams_midlet_state_changed(
+    javacall_ams_midlet_ui_state_changed(
         midp_midlet_ui_state2javacall(pEventData->state),
         (javacall_app_id)pEventData->appId,
         midp_midlet_event_reason2javacall(pEventData->reason));
@@ -527,7 +519,7 @@ midp_midlet_event_reason2javacall(jint midpEventReason) {
             break;
         }
         case MIDLET_CLASS_NOT_FOUND: {
-            jcEventReason = JAVACALL_MIDLET_STATE_DESTROYED;
+            jcEventReason = JAVACALL_MIDLET_CLASS_NOT_FOUND;
             break;
         }
         case MIDLET_INSTANTIATION_EXCEPTION: {
@@ -543,7 +535,7 @@ midp_midlet_event_reason2javacall(jint midpEventReason) {
             break;
         }
         case MIDLET_RESOURCE_LIMIT: {
-            jcEventReason = JAVACALL_MIDLET_STATE_ERROR;
+            jcEventReason = JAVACALL_MIDLET_RESOURCE_LIMIT;
             break;
         }
         case MIDLET_ISOLATE_RESOURCE_LIMIT: {
@@ -597,8 +589,9 @@ static javacall_opcode midp_operation2javacall(jint midpOpcode) {
  *
  * @return Javacall midlet state constant corresponding to the given MIDP one
  */
-static javacall_midlet_state midp_midlet_state2javacall(jint midpMidletState) {
-    javacall_midlet_state jcMidletState;
+static javacall_lifecycle_state
+midp_midlet_state2javacall(jint midpMidletState) {
+    javacall_lifecycle_state jcMidletState;
 
     /*
      * We can't assume that the MIDP and Javacall constants are identical,
@@ -606,23 +599,23 @@ static javacall_midlet_state midp_midlet_state2javacall(jint midpMidletState) {
      */
     switch (midpMidletState) {
         case MIDP_MIDLET_STATE_ACTIVE: {
-            jcMidletState = JAVACALL_MIDLET_STATE_ACTIVE;
+            jcMidletState = JAVACALL_LIFECYCLE_MIDLET_STARTED;
             break;
         }
         case MIDP_MIDLET_STATE_PAUSED: {
-            jcMidletState = JAVACALL_MIDLET_STATE_PAUSED;
+            jcMidletState = JAVACALL_LIFECYCLE_MIDLET_PAUSED;
             break;
         }
         case MIDP_MIDLET_STATE_DESTROYED: {
-            jcMidletState = JAVACALL_MIDLET_STATE_DESTROYED;
+            jcMidletState = JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN;
             break;
         }
         case MIDP_MIDLET_STATE_ERROR: {
-            jcMidletState = JAVACALL_MIDLET_STATE_ERROR;
+            jcMidletState = JAVACALL_LIFECYCLE_MIDLET_ERROR;
             break;
         }
         default: {
-            jcMidletState = JAVACALL_MIDLET_STATE_ERROR;
+            jcMidletState = JAVACALL_LIFECYCLE_MIDLET_ERROR;
         }
     }
 

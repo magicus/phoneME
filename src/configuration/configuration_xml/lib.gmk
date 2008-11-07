@@ -122,6 +122,20 @@ else
 INT_XML_FILES += $(INT_COMMON_XML_DIR)/verify_once_disabled.xml
 endif
 
+# Extended MIDlet attributes files
+ifeq ($(USE_EXTENDED_ATTRIBUTES), true)
+INT_XML_FILES += $(INT_COMMON_XML_DIR)/extended_attrs_enabled.xml
+else
+INT_XML_FILES += $(INT_COMMON_XML_DIR)/extended_attrs_disabled.xml
+endif
+
+# Chech finger touch support
+ ifeq ($(USE_FINGER_TOUCH), true)
+ INT_XML_FILES += $(INT_COMMON_XML_DIR)/finger_touch_enabled.xml
+ else
+ INT_XML_FILES += $(INT_COMMON_XML_DIR)/finger_touch_disabled.xml
+ endif
+
 # Resource policy input file
 ifeq ($(USE_FIXED), true)
 INT_XML_FILES += $(INT_XML_DIR)/constants_fixed.xml
@@ -359,6 +373,14 @@ GENERATE_L10N_STRINGS = \
 	-xml $(INT_MERGED_XML_FILE) \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/l10n)`
 
+ifeq ($(GENERATE_CHAMELEON_ELEMENTS), true)
+# transformation for generating .java file with chameleon to elements mapping
+GENERATE_CHAMELEMENT_SOURCE = \
+      -xml $(INT_MERGED_XML_FILE) \
+      -xsl $(INT_XSL_DIR)/cldc/chameleonElements.xsl \
+      -out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/ChameleonVsElements.java)`
+endif
+
 define generate_configuration
 	@echo " ... generating configuration files"
 	@$(INT_INVOKE_TRANSFORMER) \
@@ -370,7 +392,8 @@ define generate_configuration
 		$(GENERATE_PROPERTIES_CALLOUTS) \
 		$(GENERATE_PERMISSIONS_JAVA_SOURCE) \
 		$(GENERATE_PERMISSIONS_NATIVE_SOURCE) \
-		$(GENERATE_KEYBOARDS_SOURCE)
+		$(GENERATE_KEYBOARDS_SOURCE) \
+		$(GENERATE_CHAMELEMENT_SOURCE)
 	@echo " ... generating localized strings"
 	@$(INT_INVOKE_L10N_GENERATOR) \
 		$(GENERATE_L10N_STRINGS)

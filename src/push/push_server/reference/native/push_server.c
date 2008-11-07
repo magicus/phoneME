@@ -37,7 +37,7 @@
  */
 
 #ifndef _WIN32_WCE
-#include <errno.h>
+    #include <errno.h>
 #endif
 #include <string.h>
 #include <java_types.h>
@@ -68,40 +68,40 @@
 #include <timer_export.h>
 
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
-#include <wmaPushRegistry.h>
-#include <stdio.h>
+    #include <wmaPushRegistry.h>
+    #include <stdio.h>
 #endif
 
 #if ENABLE_JSR_180
-#include <SipPushRegistry.h>
+    #include <SipPushRegistry.h>
 #endif
 
 #if ENABLE_JSR_82
-#include <stdio.h>
-#include "btPush.h"
+    #include <stdio.h>
+    #include "btPush.h"
 #endif
 
 #if ENABLE_I3_TEST
-#include <midpUtilKni.h>
+    #include <midpUtilKni.h>
 #endif
 
 #ifndef MAX_CACHED_DATA_SIZE
-#define MAX_CACHED_DATA_SIZE 1500
+    #define MAX_CACHED_DATA_SIZE 1500
 #endif /* MAX_CACHED_DATA_SIZE */
 
 /** For build a parameter string. */
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(COMMA_STRING)
-    {',', '\0'}
+{',', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(COMMA_STRING);
 
 /** Filename to save the push connections. ("pushlist.txt") */
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(PUSH_LIST_FILENAME)
-    {'p', 'u', 's', 'h', 'l', 'i', 's', 't', '.', 't', 'x', 't', '\0'}
+{'p', 'u', 's', 'h', 'l', 'i', 's', 't', '.', 't', 'x', 't', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(PUSH_LIST_FILENAME);
 
 /** Filename to save the alarms. ("alarmlist.txt") */
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(ALARM_LIST_FILENAME)
-    {'a', 'l', 'a', 'r', 'm', 'l', 'i', 's', 't', '.', 't', 'x', 't', '\0'}
+{'a', 'l', 'a', 'r', 'm', 'l', 'i', 's', 't', '.', 't', 'x', 't', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(ALARM_LIST_FILENAME);
 
 /** Pathname for persistent push connection list. */
@@ -121,16 +121,16 @@ static char *errStr = NULL;
  * registry for use by the midlet after it is invoked by push.
  */
 typedef struct _packetentry {
-  /** The IP Address of the sender. */
-  int ipAddress;
-  /** The port ID on which the packet was received. */
-  int senderport;
-  /** The length of data in the buffer. */
-  int length;
-  /** The offset in the buffer where the read pointer is located. */
-  int offs;
-  /** The buffer that holds the data of the datagram. */
-  char buffer[MAX_CACHED_DATA_SIZE];
+    /** The IP Address of the sender. */
+    int ipAddress;
+    /** The port ID on which the packet was received. */
+    int senderport;
+    /** The length of data in the buffer. */
+    int length;
+    /** The offset in the buffer where the read pointer is located. */
+    int offs;
+    /** The buffer that holds the data of the datagram. */
+    char buffer[MAX_CACHED_DATA_SIZE];
 } PacketEntry;
 
 /**
@@ -141,35 +141,37 @@ typedef struct _packetentry {
  * subsequently written to persistent storage.
  */
 typedef struct _pushentry {
-  /** Pointer to the next entry in the list. Last entry has NULL here. */
-  struct _pushentry *next;
-  /** The full text entry from the persistent store. */
-  char *value;
-  /** The name of the midletsuitestorage persistent store. */
-  char *storagename;
-  /** The filter with which to filter ip addresses. */
-  char *filter;
-  /** The socket to listen to. */
-  int fd;
-  /** The socket to use for the connection. */
-  int fdsock;
-  /** The socket that is used when buffering the incoming TCP packet. */
-  int fdAccepted;
-  /** Port id to listen to. */
-  int port;
-  /** MMS application ID. */
-  char *appID;
-  /** Current state of the connection. */
-  int state;
-  /** Pointers for packets that have already arrived. */
-  PacketEntry *pCachedData;
-  /** Flag denoting whether a WMA message has arrived and been cached. */
-  jboolean isWMAMessCached;
-  /** True if this entry should be handled by WMA rather then by MIDP Push. */
-  jboolean isWMAEntry;
+    /** Pointer to the next entry in the list. Last entry has NULL here. */
+    struct _pushentry *next;
+    /** The full text entry from the persistent store. */
+    char *value;
+    /** The name of the midletsuitestorage persistent store. */
+    char *storagename;
+    /** The filter with which to filter ip addresses. */
+    char *filter;
+    /** The socket to listen to. */
+    int fd;
+    /** The socket to use for the connection. */
+    int fdsock;
+    /** The socket that is used when buffering the incoming TCP packet. */
+    int fdAccepted;
+    /** Port id to listen to. */
+    int port;
+    /** MMS application ID. */
+    char *appID;
+    /** Current state of the connection. */
+    int state;
+    /** Pointers for packets that have already arrived. */
+    PacketEntry *pCachedData;
+    /** Flag denoting whether a WMA message has arrived and been cached. */
+    jboolean isWMAMessCached;
+    /** True if this entry should be handled by WMA rather then by MIDP Push. */
+    jboolean isWMAEntry;
 #if ENABLE_JSR_180
-  /** True if this entry is a SIP-entry. */
-  jboolean isSIPEntry;
+    /** True if this entry is a SIP-entry. */
+    jboolean isSIPEntry;
+    /** Marks shared connection for quick search */
+    jboolean isShared;
 #endif
 } PushEntry;
 
@@ -182,36 +184,59 @@ typedef struct _pushentry {
  * subsequently written to persistent storage.
  */
 typedef struct _alarmentry {
-  /** Pointer to the next entry in the list. Last entry has NULL here. */
-  struct _alarmentry *next;
-  /**
-   * Pointer to a string containing the name of the MIDlet to be
-   * wakened.
-   */
-  char *midlet;
-  /**
-   * Pointer to a string containing the persistent store name of the
-   * MIDletSuite.
-   */
-  char *storagename;
-  /** Absolute time after which this alarm is to be fired. */
-  jlong wakeup;
-  /** Handle to the Timer instance currently counting this alarm. */
-  int timerHandle;
-  /** The state of the current alarm. */
-  int state;
+    /** Pointer to the next entry in the list. Last entry has NULL here. */
+    struct _alarmentry *next;
+    /**
+     * Pointer to a string containing the name of the MIDlet to be
+     * wakened.
+     */
+    char *midlet;
+    /**
+     * Pointer to a string containing the persistent store name of the
+     * MIDletSuite.
+     */
+    char *storagename;
+    /** Absolute time after which this alarm is to be fired. */
+    jlong wakeup;
+    /** Handle to the Timer instance currently counting this alarm. */
+    int timerHandle;
+    /** The state of the current alarm. */
+    int state;
 } AlarmEntry;
 
 static PushEntry *pushlist = NULL;
 static AlarmEntry *alarmlist = NULL;
 
+typedef enum {
+    NET_STATUS_DOWN       = -3,
+    NET_STATUS_GOING_DOWN = -2, /* network finalization is in progress */
+    NET_STATUS_ERROR      = -1,
+    NET_STATUS_UNKNOWN    = 0,
+    NET_STATUS_GOING_UP   = 1, /* network initialization is in progress */
+    NET_STATUS_UP         = 2
+} network_status_t;
+
+
+/**
+ * Current network status.
+ */
+static network_status_t networkStatus = NET_STATUS_UNKNOWN;
+
+/**
+ * Checks current status of the network.
+ *
+ * @return <tt>1</tt> if network is enabled, <tt>0</tt> otherwise
+ */
+static int isNetworkUp();
+
 static int pushlength = 0;
-static int pushProcessPort(char *buffer, PushEntry* pe);
+static int pushProcessPort(PushEntry* pe);
+static void pushStartListening();
 static int alarmopen();
 static void alarmsave();
 static void pushListFree();
 static void alarmListFree();
-static int parsePushList(int, int);
+static int parsePushList(int);
 static int parseAlarmList(int);
 static int checkfilter(char *filter, char *ip);
 static void pushcheckinentry(PushEntry *p);
@@ -222,6 +247,8 @@ static int pushOpenInternal(int startListening);
 static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext);
 static void alarmstart(AlarmEntry *entry, jlong alarm);
 static long readLine(char** ppszError, int handle, char* buffer, long length);
+
+static void pcsl_network_initialized(int isInit, int status);
 
 /**
  * Parses and extracts a field from the registry entry string.
@@ -291,7 +318,7 @@ static char *pushfilter(char *value) {
     /* Push entry contains "connection, midletname, filter, storage" */
     for (ptr = filter; *ptr; ptr++) {
         if (*ptr == ',')
-        break;
+            break;
     }
     *ptr = '\0';
     filter_dup = midpStrdup(filter);
@@ -300,7 +327,7 @@ static char *pushfilter(char *value) {
 }
 
 /**
- * Parses and extracta the MIDlet class name field from connection entry
+ * Parses and extract the MIDlet class name field from connection entry
  * string.
  *
  * @param value address of connection entry string
@@ -320,7 +347,7 @@ static char *pushclassname(char *value, int *pLength) {
             classname = classfield + 1;
 
             for (classfield++; *classfield != 0 && *classfield != ',';
-                 classfield++, length++);
+                classfield++, length++);
 
             break;
         }
@@ -439,75 +466,83 @@ int pushopen() {
  * @return 0 for success else non-zero if a resource problem
  */
 static int pushOpenInternal(int startListening) {
-    int  pushfd;
-    int status;
+    int pushfd;
+    int status, push_status, alarm_status;
 
-    if (startListening) {
-        /* Make sure the network is properly in initialized. */
+    push_status = alarm_status = 0;
 
-        if (pcsl_network_init_start() != PCSL_NET_SUCCESS) {
-            return -1;
-        }
-    }
-
-    /* Get the storage directory. */
-    if (PCSL_FALSE == pcsl_string_is_null(&pushpathname)) {
-        /* already done */
-        return 0;
-    }
-
-    status = 0;
-    do {
+    /* Check whether the alarm file has been already read. */
+    if (PCSL_TRUE == pcsl_string_is_null(&alarmpathname)) {
         /*
-         * Initialize the fully qualified pathnames
-         * of the push and alarm persistent files.
+         * Initialize the fully qualified pathname
+         * of the push persistent file.
          */
         if (PCSL_STRING_OK != pcsl_string_cat(
-                storage_get_root(INTERNAL_STORAGE_ID),
-                    &PUSH_LIST_FILENAME, &pushpathname)) {
-            status = -1;
-            break;
-        }
-
-        if (PCSL_STRING_OK != pcsl_string_cat(
-                storage_get_root(INTERNAL_STORAGE_ID),
-                    &ALARM_LIST_FILENAME, &alarmpathname)) {
-            status = -1;
-            break;
-        }
-
-        /* Now read the registered connections. */
-        pushfd = storage_open(&errStr, &pushpathname, OPEN_READ);
-        if (errStr == NULL) {
-            /* Read through the file one line at a time */
-            status = parsePushList(pushfd, startListening);
-
-            /* Close the storage handle */
-            storageClose (&errStr, pushfd);
-            storageFreeError(errStr);
-
-            if (-1 == status) {
-                break;
-            }
+                                             storage_get_root(INTERNAL_STORAGE_ID),
+                                             &ALARM_LIST_FILENAME, &alarmpathname)) {
+            alarm_status = -1;
         } else {
-            REPORT_WARN1(LC_PROTOCOL,
-                "Warning: could not open push registration file: %s",
-                errStr);
-            /* This is normal until the first push registration
-             * when it will be created. */
-            storageFreeError(errStr);
+            alarm_status = alarmopen();
         }
 
-        status = alarmopen();
-    } while (0);
+        if (alarm_status != 0) {
+            REPORT_ERROR(LC_PROTOCOL, "Error: alarm open failed");
+            pcsl_string_free(&alarmpathname);
+        }
 
-    if (status != 0) {
-        REPORT_ERROR(LC_PROTOCOL, "Error: pushopen out of memory");
-        pcsl_string_free(&pushpathname);
-        pcsl_string_free(&alarmpathname);
     }
 
-    return status;
+    /* Check whether the push file has been already read. */
+    if (PCSL_TRUE == pcsl_string_is_null(&pushpathname)) {
+        /*
+         * Initialize the fully qualified pathname
+         * of the push persistent file.
+         */
+        if (PCSL_STRING_OK != pcsl_string_cat(
+                                             storage_get_root(INTERNAL_STORAGE_ID),
+                                             &PUSH_LIST_FILENAME, &pushpathname)) {
+            push_status = -1;
+        } else {
+            /* Now read the registered connections. */
+            pushfd = storage_open(&errStr, &pushpathname, OPEN_READ);
+            if (errStr == NULL) {
+                /* Read through the file one line at a time */
+                status = parsePushList(pushfd);
+
+                /* Close the storage handle */
+                storageClose (&errStr, pushfd);
+                storageFreeError(errStr);
+
+                /*
+                 * IMPL_NOTE: don't check for -1 because in this case some
+                 * entries can be read anyway
+                 */
+                if (status != -2) { /* out of memory */
+                    if (startListening) {
+                        pushStartListening();
+                    }
+                } else {
+                    push_status = -1;
+                }
+            } else {
+                REPORT_WARN1(LC_PROTOCOL,
+                             "Warning: could not open push registration file: %s",
+                             errStr);
+                /* 
+                 * This is normal until the first push registration
+                 * is created.
+                 */
+                storageFreeError(errStr);
+            }
+        }
+
+        if (push_status != 0) {
+            REPORT_ERROR(LC_PROTOCOL, "Error: push open failed");
+            pcsl_string_free(&pushpathname);
+        }
+    }
+
+    return(!push_status && !alarm_status) ? 0 : -1;
 }
 
 /**
@@ -543,8 +578,8 @@ static void pushsave() {
         storageClose (&errStr, pushfd);
     } else {
         REPORT_WARN1(LC_PROTOCOL,
-             "Warning: could not write push registration file: %s",
-             errStr);
+                     "Warning: could not write push registration file: %s",
+                     errStr);
         storageFreeError(errStr);
     }
 }
@@ -583,10 +618,10 @@ int midpAddPushEntry(SuiteIdType suiteId,
     }
 
     total_len = pcsl_string_length(connection)
-              + pcsl_string_length(midlet)
-              + pcsl_string_length(filter)
-              + GET_SUITE_ID_LEN(suiteId)
-              + PCSL_STRING_LITERAL_LENGTH(COMMA_STRING) * 3;
+                + pcsl_string_length(midlet)
+                + pcsl_string_length(filter)
+                + GET_SUITE_ID_LEN(suiteId)
+                + PCSL_STRING_LITERAL_LENGTH(COMMA_STRING) * 3;
 
     pcsl_string_predict_size(&temp, total_len);
 
@@ -617,7 +652,7 @@ int midpAddPushEntry(SuiteIdType suiteId,
         }
 
         if (PCSL_STRING_OK != pcsl_string_append(&temp,
-                midp_suiteid2pcsl_string(suiteId))) {
+                                                 midp_suiteid2pcsl_string(suiteId))) {
             break;
         }
 
@@ -647,7 +682,7 @@ int midpAddPushEntry(SuiteIdType suiteId,
 /**
  * Adds one entry to the push registry.
  * If the entry already exists return an error.
- * On succesful registration, write a new copy of the file to disk.
+ * On successful registration, write a new copy of the file to disk.
  *
  * @param str A push entry string.
  * @return <tt>0</tt> if successful,
@@ -659,7 +694,6 @@ int pushadd(char *str) {
     PushEntry *pe;
     int comma;
     char *cp;
-    int ret;
 
     /* Count the characters up to the first comma. */
     for (comma = 0, cp = str; *cp; comma++, cp++) {
@@ -713,25 +747,25 @@ int pushadd(char *str) {
     bt_push_register_url(str, NULL, 0);
 #endif
     */
-    ret = pushProcessPort(str, pe);
+    pushProcessPort(pe);
     if (pe->fd == -1) {
 #if ENABLE_JSR_82
         bt_push_unregister_url(str);
 #endif
-        /* port in use by a native application, reject the registration */
-        midpFree(pe->value);
-        midpFree(pe->storagename);
-        midpFree(pe->filter);
-        midpFree(pe);
-        return ret;
+        /* 
+         * Don't reject the registration.
+         * Port may be in use by a native application but we can't check this,
+         * there is a chance network is just not up yet.
+         */
+    } else {
+        pe->state = CHECKED_IN;
+        pushAddNetworkNotifier(pe);
     }
 
     pe->next = pushlist;
     pushlist = pe;
     pushlength++;
-    pe->state = CHECKED_IN;
 
-    pushAddNetworkNotifier(pe);
     pushsave();
 
     return 0;
@@ -784,11 +818,11 @@ int pushdel(char *str, char *store) {
 static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext) {
     void *context = NULL;
     if (p->fd != -1) {
-    /*
-     * Cleanup any connections before closing
-     * the server socket.
-     */
-    if (p->state != CHECKED_OUT) {
+        /*
+         * Cleanup any connections before closing
+         * the server socket.
+         */
+        if (p->state != CHECKED_OUT) {
             /* pushcleanupentry sets the state to CHECKED_IN */
             pushcleanupentry(p);
 
@@ -799,7 +833,7 @@ static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext) {
                 /* Update the resource count */
                 if (midpDecResourceCount(RSC_TYPE_TCP_SER, 1) == 0) {
                     REPORT_INFO(LC_PROTOCOL, "(Push)TCP Server : Resource limit"
-                                             " update error");
+                                " update error");
                 }
 #endif
             } else if (pushIsDatagramConnection(p->value)) {
@@ -807,14 +841,14 @@ static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext) {
                 /* Update the resource count */
                 if (midpDecResourceCount(RSC_TYPE_UDP, 1) == 0) {
                     REPORT_INFO(LC_PROTOCOL, "(Push)Datagram : Resource limit"
-                                             " update error");
+                                " update error");
                 }
             }
         }
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
         /* Check for sms,cbs or mms connection. */
         wmaPushCloseEntry(p->state, p->value, p->port,
-            suiteIdFromChars(p->storagename), p->appID, p->fd);
+                          suiteIdFromChars(p->storagename), p->appID, p->fd);
 #endif
         p->fd = -1;
     }
@@ -850,8 +884,8 @@ int pushcacheddatasize(int fd) {
 
     for (p = pushlist; p != NULL ; p = p->next) {
         if ((p->fd == fd && p->pCachedData != NULL) ||
-                (p->fdAccepted == fd && p->pCachedData != NULL)) {
-            return (p->pCachedData->length - p->pCachedData->offs);
+            (p->fdAccepted == fd && p->pCachedData != NULL)) {
+            return(p->pCachedData->length - p->pCachedData->offs);
         }
     }
 
@@ -876,7 +910,7 @@ int pushgetcachedpacket(int fd, int *ip, int *sndport, char *buf, int len) {
     /* Find the entry to pass off the open file descriptor. */
     for (p = pushlist; p != NULL; p = p->next) {
         if (((p->fd == fd && p->fdAccepted == -1) || (p->fdAccepted == fd)) &&
-                (p->pCachedData != NULL)) {
+            (p->pCachedData != NULL)) {
             /* Return the cached data. */
             *ip = p->pCachedData->ipAddress;
             *sndport = p->pCachedData->senderport;
@@ -954,7 +988,7 @@ int pushcheckout(char* protocol, int port, char * store) {
     for (p = pushlist; p != NULL ; p = p->next) {
 #if ENABLE_JSR_82
         if (is_bluetooth == BT_BOOL_TRUE &&
-                !strncmp(p->value, protocol, strlen(protocol))) {
+            !strncmp(p->value, protocol, strlen(protocol))) {
             if (strcmp(store, p->storagename)) {
                 return -2;
             }
@@ -973,13 +1007,15 @@ int pushcheckout(char* protocol, int port, char * store) {
          * connection for UDP transport and 'socket' connection for TCP.
          */
         standardProtocol = (p->port == port &&
-            (strncmp(p->value, protocol, strlen(protocol)) == 0 ||
-                (strncmp(p->value, "sip", 3) == 0 &&
-                    ((strncmp("datagram", protocol, strlen(protocol)) == 0) ||
-                     (strncmp("socket", protocol, strlen(protocol)) == 0))
-                )
-            )
-        );
+                            (!strncmp(p->value, protocol, strlen(protocol)) ||
+                             (strncmp(p->value, "sip", 3) == 0 &&
+                              ((!strncmp("datagram", protocol, strlen(protocol)) && 
+                                pushIsDatagramConnection(p->value)) ||
+                               (!strncmp("socket", protocol, strlen(protocol)) && 
+                                pushIsSocketConnection(p->value)))
+                             )
+                            )
+                           );
 #else
         /* Port and protocol must match before other checks are done. */
         standardProtocol = (p->port == port &&
@@ -1187,7 +1223,7 @@ static void pushcleanupentry(PushEntry *p) {
          */
         if (midpDecResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
             REPORT_INFO(LC_PROTOCOL, "(Push)TCP Client : Resource limit"
-                                     " update error");
+                        " update error");
         }
 #endif
         p->fdsock = -1;
@@ -1215,8 +1251,9 @@ static char* pushApplySipFilter(PushEntry* pushp) {
     unsigned char *acceptcontact_type = NULL;
     unsigned char *required_type = NULL;
     char *p;
-    char *end = NULL;
     int required_type_len;
+    PushEntry* next;
+    jboolean found = KNI_FALSE;
 
     /*
      * SIP Datagram and Socket connections use the SIP
@@ -1227,84 +1264,86 @@ static char* pushApplySipFilter(PushEntry* pushp) {
     sender = getSipFromHeaderURI((unsigned char *)
                                  pushp->pCachedData->buffer,
                                  pushp->pCachedData->length);
+    next = pushp;
+    do {
+        if (next->isSIPEntry) {
+            if (checksipfilter((unsigned char *)next->filter, sender)) {
+                /*
+                 * If a media type tag was specified in the connection URI,
+                 * then the message is only dispatched if it contains
+                 * an Accept-Contact header with a matching media feature
+                 * tag.
+                 */
+                required_type_len = getMIMEType(next->value, &p);
+                if (required_type_len) {
+                    required_type = (unsigned char *)
+                                    pcsl_mem_malloc(required_type_len + 1);
 
-    if (checksipfilter((unsigned char *)pushp->filter, sender)) {
-        /*
-         * Check if a media type filter is also needed.
-         */
-        for (p = pushp->value; *p; p++) {
-            if (midp_strncasecmp(
-                    p, "type=\"application/", 18) == 0 ) {
-                /* Extract just the quoted media type. */
-                p += 18;
-                for (end = p; *end; end++) {
-                    if (*end == '"') {
-                        /* Found end of media type subfield. */
+                    if (required_type != NULL) {
+                        strncpy((char *)required_type, p, required_type_len);
+                        required_type[required_type_len] = '\0';
+                    }
+
+                    /*
+                     * Extract the message media type.
+                     */
+                    acceptcontact_type = 
+                    getSipAcceptContactType(
+                                           (unsigned char *) pushp->pCachedData->buffer,
+                                           pushp->pCachedData->length);
+
+                    if (acceptcontact_type != NULL &&
+                        midp_strcasecmp((char *)required_type,
+                                        (char*)acceptcontact_type) == 0) {
+                        REPORT_INFO2(LC_PROTOCOL,
+                                     "SIP Push Message Media Type Matched: %s == %s",
+                                     required_type,acceptcontact_type);
+
+
+                        /* Required type matched. */
+                        found = KNI_TRUE;
                         break;
                     }
+
+                    REPORT_INFO2(LC_PROTOCOL,
+                                 "SIP Push Message Media Type Filtered: %s != %s",
+                                 required_type, acceptcontact_type);
+
+                } else {
+                    /* No type required. */
+                    found = KNI_TRUE;
+                    break;
                 }
-                /* Stop scanning after media type subfield is located. */
+            }
+            if (!pushp->isShared || NULL == next->next) {
+                /* for dedicated connection 
+                   and last entry of shared connections chain */
+                pushcheckinentry(next);
+                /* and clear chached data for shared connection */
+                midpFree(pushp->pCachedData);
+                pushp->pCachedData = NULL;
                 break;
+            } else if (pushp == next) {
+                /*  mark first chain element as checked in and look for
+                    next element */
+                next->state = CHECKED_IN;
+            } else {
+                /*  keep the state for the rest:
+                    non-sip and  intermediate chanin member */
             }
         }
+        /* scan for entries shared the same connection */
+        next = next->next;
+    } while (pushp->isShared);
 
-        /*
-         * If a media type tag was specified in the connection URI,
-         * then the message is only dispatched if it contains
-         * an Accept-Contact header with a matching media feature
-         * tag.
-         */
-        if (*p != '\0') {
-            required_type_len = end - p;
-            required_type = (unsigned char *)
-                pcsl_mem_malloc(required_type_len + 1);
-
-            if (required_type != NULL) {
-                strncpy((char *)required_type, p,
-                        required_type_len);
-                required_type[required_type_len] = '\0';
-            }
-
-            /*
-             * Extract the message media type.
-             */
-            acceptcontact_type = getSipAcceptContactType(
-                (unsigned char *) pushp->pCachedData->buffer,
-                pushp->pCachedData->length);
-
-            if (acceptcontact_type != NULL &&
-                    midp_strcasecmp((char *)required_type,
-                                    (char*)acceptcontact_type) == 0) {
-                REPORT_INFO2(LC_PROTOCOL,
-                    "SIP Push Message Media Type Matched: %s == %s",
-                    required_type,acceptcontact_type);
-                midpFree(sender);
-                midpFree(acceptcontact_type);
-                midpFree(required_type);
-
-                /* Required type matched. */
-                return midpStrdup(pushp->value);
-            }
-
-            REPORT_INFO2(LC_PROTOCOL,
-                "SIP Push Message Media Type Filtered: %s != %s",
-                required_type, acceptcontact_type);
-
-            midpFree(required_type);
-        } else {
-            /* No type required. */
-            midpFree(sender);
-            return midpStrdup(pushp->value);
-        }
-    }
-
+    midpFree(acceptcontact_type);
+    midpFree(required_type);
     midpFree(sender);
 
-    /*
-     * Dispose of the filtered push request.
-     * Release any cached packets.
-     */
-    pushcheckinentry(pushp);
+    if (found && LAUNCH_PENDING != next->state) {
+        next->state = LAUNCH_PENDING;
+        return midpStrdup(next->value);
+    }
 
     return NULL;
 }
@@ -1337,7 +1376,7 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
      */
     if (midpCheckResourceLimit(RSC_TYPE_TCP_CLI, 1) == 0) {
         REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded for"
-                                 " TCP client sockets");
+                    " TCP client sockets");
         pushp->fdsock = -1;
         pushp->state = prevState;
         return NULL;
@@ -1347,9 +1386,9 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
     if (prevState == RECEIVED_EVENT && pushp->pCachedData != NULL) {
         pushp->fdAccepted = pushp->fdsock;
         status = pcsl_socket_read_finish(
-            (void *)pushp->fdsock, (unsigned char *)pushp->pCachedData->buffer,
-            MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length),
-            &context);
+                                        (void *)pushp->fdsock, (unsigned char *)pushp->pCachedData->buffer,
+                                        MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length),
+                                        &context);
 
         if (status != PCSL_NET_SUCCESS) {
             /*
@@ -1357,8 +1396,8 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
              * Cancel the launch pending.
              */
             REPORT_ERROR1(LC_PUSH,
-                "(Push) Cannot receive data, errno = %d\n",
-                pcsl_network_error((void*)pushp->fdsock));
+                          "(Push) Cannot receive data, errno = %d\n",
+                          pcsl_network_error((void*)pushp->fdsock));
             pushcheckinentry(pushp);
             return NULL;
         }
@@ -1372,7 +1411,7 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
          * socket connection so the end point filter can be checked.
          */
         status = pcsl_serversocket_accept_start((void*)pushp->fd,
-            &clientHandle, &context);
+                                                &clientHandle, &context);
 
         if (status != PCSL_NET_SUCCESS) {
             /*
@@ -1380,8 +1419,8 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
              * Cancel the launch pending.
              */
             REPORT_ERROR1(LC_PUSH,
-                "(Push) Cannot accept serversocket, errno = %d\n",
-                pcsl_network_error((void*)pushp->fd));
+                          "(Push) Cannot accept serversocket, errno = %d\n",
+                          pcsl_network_error((void*)pushp->fd));
             pushcheckinentry(pushp);
             return NULL;
         }
@@ -1418,14 +1457,14 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
         strcpy(ipAddress, pcsl_inet_ntoa(&ipBytes));
 
         status = pcsl_socket_read_start(
-            (void *)pushp->fdsock, (unsigned char *)pushp->pCachedData->buffer,
-            MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length), &context);
+                                       (void *)pushp->fdsock, (unsigned char *)pushp->pCachedData->buffer,
+                                       MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length), &context);
 
         if (status == PCSL_NET_SUCCESS) {
             status = pcsl_socket_read_finish(
-                (void *)pushp->fdsock, (unsigned char *)pushp->pCachedData->buffer,
-                MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length),
-                &context);
+                                            (void *)pushp->fdsock, (unsigned char *)pushp->pCachedData->buffer,
+                                            MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length),
+                                            &context);
 
             if (status != PCSL_NET_SUCCESS) {
                 /*
@@ -1433,16 +1472,16 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
                  * Cancel the launch pending.
                  */
                 REPORT_ERROR1(LC_PUSH,
-                    "(Push) Cannot receive data, errno = %d\n",
-                    pcsl_network_error((void*)pushp->fdsock));
+                              "(Push) Cannot receive data, errno = %d\n",
+                              pcsl_network_error((void*)pushp->fdsock));
                 pushcheckinentry(pushp);
                 return NULL;
             }
 
             return pushApplySipFilter(pushp);
-        } if (status == PCSL_NET_WOULDBLOCK) {
+        }if (status == PCSL_NET_WOULDBLOCK) {
             pcsl_add_network_notifier((void *)pushp->fdsock,
-                PCSL_NET_CHECK_READ);
+                                      PCSL_NET_CHECK_READ);
             return NULL;
         } else {
             pushcheckinentry(pushp);
@@ -1450,9 +1489,9 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
         }
     } else
 #endif
-    /* Datagram and Socket connections use the IP filter. */
-    /* SIP has its own filtering mechanism applied above. */
-    if (checkfilter(pushp->filter, ipAddress)) {
+        /* Datagram and Socket connections use the IP filter. */
+        /* SIP has its own filtering mechanism applied above. */
+        if (checkfilter(pushp->filter, ipAddress)) {
         return midpStrdup(pushp->value);
     }
 
@@ -1508,7 +1547,7 @@ char *pushfindfd(int fd) {
                 bt_pushid_t id = bt_push_find_server((bt_handle_t)fd);
                 if (id != BT_INVALID_PUSH_HANDLE) {
                     if (bt_push_accept(id, pushp->filter,
-                            (bt_handle_t *)(void*)&pushp->fdsock)) {
+                                       (bt_handle_t *)(void*)&pushp->fdsock)) {
                         return midpStrdup(pushp->value);
                     }
                 }
@@ -1527,7 +1566,7 @@ char *pushfindfd(int fd) {
                  * This is a one datagram message queue.
                  */
                 pushp->pCachedData = (PacketEntry*)
-                    midpMalloc(sizeof (PacketEntry));
+                                     midpMalloc(sizeof (PacketEntry));
                 if (pushp->pCachedData == NULL) {
                     pushp->state = temp_state;
                     return NULL;
@@ -1536,13 +1575,13 @@ char *pushfindfd(int fd) {
                 pushp->pCachedData->offs = 0;
 
                 status = pcsl_datagram_read_finish(
-                        (void *)pushp->fd,
-                        ipBytes,
-                        &(pushp->pCachedData->senderport),
-                        pushp->pCachedData->buffer,
-                        MAX_CACHED_DATA_SIZE,
-                        &(pushp->pCachedData->length),
-                        context);
+                                                  (void *)pushp->fd,
+                                                  ipBytes,
+                                                  &(pushp->pCachedData->senderport),
+                                                  pushp->pCachedData->buffer,
+                                                  MAX_CACHED_DATA_SIZE,
+                                                  &(pushp->pCachedData->length),
+                                                  context);
 
                 if (status != PCSL_NET_SUCCESS) {
                     /*
@@ -1581,13 +1620,16 @@ char *pushfindfd(int fd) {
 #if ENABLE_JSR_180
             /* Check for JSR180 SIP/SIPS connections (UDP). */
             else if (pushp->isSIPEntry) {
+
+                /* Special case: shared connection. Cached datagram is stored 
+                   at first push entry buffer */
                 /*
                  * Read the SIP datagram and save it til the
                  * application reads it.
                  * This is a one SIP datagram message queue.
                  */
                 pushp->pCachedData = (PacketEntry*)
-                    midpMalloc(sizeof (PacketEntry));
+                                     midpMalloc(sizeof (PacketEntry));
                 if (pushp->pCachedData == NULL) {
                     pushp->state = temp_state;
                     return NULL;
@@ -1596,13 +1638,13 @@ char *pushfindfd(int fd) {
                 pushp->pCachedData->offs = 0;
 
                 status = pcsl_datagram_read_finish(
-                    (void *)pushp->fd,
-                    ipBytes,
-                    &(pushp->pCachedData->senderport),
-                    pushp->pCachedData->buffer,
-                    MAX_CACHED_DATA_SIZE,
-                    &(pushp->pCachedData->length),
-                    context);
+                                                  (void *)pushp->fd,
+                                                  ipBytes,
+                                                  &(pushp->pCachedData->senderport),
+                                                  pushp->pCachedData->buffer,
+                                                  MAX_CACHED_DATA_SIZE,
+                                                  &(pushp->pCachedData->length),
+                                                  context);
 
                 if (status != PCSL_NET_SUCCESS) {
                     /*
@@ -1615,24 +1657,31 @@ char *pushfindfd(int fd) {
                     return NULL;
                 }
 
+                /* Set the raw IP address */
+                memcpy(&(pushp->pCachedData->ipAddress),
+                       ipBytes, MAX_ADDR_LENGTH);
+
                 REPORT_INFO1(LC_PROTOCOL,
                              "SIP Push Message: %s",
                              pushp->pCachedData->buffer);
+                /* restore state that will be processed separately at 
+                   pushApplySipFilter */
+                pushp->state = temp_state;
 
                 return pushApplySipFilter(pushp);
             }
 #endif
 
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
-            else {
+            else{
                 /*
                  * Return a valid push entry, if the WMA message has been
                  * succesfully received (which for sms, mms includes a
                  * filter check); otherwise return NULL.
                  */
-                if (pushp->isWMAMessCached) {
+                if (pushp->isWMAMessCached){
                     return getWmaPushEntry(pushp->value);
-                } else {
+                } else{
                     pushp->state = temp_state;
                     return NULL;
                 }
@@ -1647,15 +1696,15 @@ char *pushfindfd(int fd) {
      * an alarm time. If found, clear the entry so it will
      * not fire again.
      */
-    for (alarmp = alarmlist; alarmp != NULL; alarmp = alarmtmp) {
+    for (alarmp = alarmlist; alarmp != NULL; alarmp = alarmtmp){
         alarmtmp = alarmp->next;
-        if (alarmp->timerHandle == fd) {
+        if (alarmp->timerHandle == fd){
             alarmentry = midpStrdup(alarmp->midlet);
-            if (alarmentry) {
+            if (alarmentry){
                 jlong lastalarm;
                 alarmadd(alarmentry, 0, &lastalarm);
                 return alarmentry;
-            } else {
+            } else{
                 destroyTimerHandle(alarmp->timerHandle);
 
                 alarmp->wakeup = 0;
@@ -1674,12 +1723,12 @@ char *pushfindfd(int fd) {
  * @param str the connection URL
  * @return the full-text push entry from the registry
  */
-char *pushfindconn(char *str) {
+char *pushfindconn(char *str){
     PushEntry *p;
 
     /* Find the entry that has matching connection URL. */
-    for (p = pushlist; p != NULL ; p = p->next) {
-        if (strncmp (str, p->value, strlen(str)) == 0) {
+    for (p = pushlist; p != NULL ; p = p->next){
+        if (strncmp (str, p->value, strlen(str)) == 0){
             return p->value;
         }
     }
@@ -1695,13 +1744,13 @@ char *pushfindconn(char *str) {
  * @param port the port number to match
  * @return the filter from the registry
  */
-char *pushgetfilter(char *conn, int port) {
+char *pushgetfilter(char *conn, int port){
     PushEntry *p;
 
     /* Find the entry that has matching connection and port. */
-    for (p = pushlist; p != NULL ; p = p->next) {
+    for (p = pushlist; p != NULL ; p = p->next){
         if ((strncmp (conn, p->value, strlen(conn)) == 0) &&
-             (p->port == port)) {
+            (p->port == port)){
             /* Find the matching filter */
             return pushfilter(p->value);
         }
@@ -1718,13 +1767,13 @@ char *pushgetfilter(char *conn, int port) {
  * @param appID The MMS application ID to match
  * @return the filter from the registry
  */
-char *pushgetfiltermms(char *conn, char *appID) {
+char *pushgetfiltermms(char *conn, char *appID){
     PushEntry *p;
 
     /* Find the entry that has matching connection and port. */
-    for (p = pushlist; p != NULL ; p = p->next) {
+    for (p = pushlist; p != NULL ; p = p->next){
         if ((strncmp (conn, p->value, strlen(conn)) == 0) &&
-            (strcmp(appID, p->appID) == 0)) {
+            (strcmp(appID, p->appID) == 0)){
             /* Find the matching filter */
             return pushfilter(p->value);
         }
@@ -1742,13 +1791,13 @@ char *pushgetfiltermms(char *conn, char *appID) {
  * @param conn the connection string
  * @param port the port number to match
  */
-void pushsetcachedflag(char *conn, int port) {
+void pushsetcachedflag(char *conn, int port){
     PushEntry *p;
 
     /* Find the entry that has matching connection and port. */
-    for (p = pushlist; p != NULL ; p = p->next) {
+    for (p = pushlist; p != NULL ; p = p->next){
         if ((strncmp (conn, p->value, strlen(conn)) == 0) &&
-             (p->port == port)) {
+            (p->port == port)){
             p->isWMAMessCached = KNI_TRUE;
         }
     }
@@ -1763,13 +1812,13 @@ void pushsetcachedflag(char *conn, int port) {
  * @param conn the connection string
  * @param appId The MMS application ID to match
  */
-void pushsetcachedflagmms(char *conn, char *appID) {
+void pushsetcachedflagmms(char *conn, char *appID){
     PushEntry *p;
 
     /* Find the entry that has matching connection and port. */
-    for (p = pushlist; p != NULL ; p = p->next) {
+    for (p = pushlist; p != NULL ; p = p->next){
         if ((strncmp (conn, p->value, strlen(conn)) == 0) &&
-             (strcmp(appID, p->appID) == 0)) {
+            (strcmp(appID, p->appID) == 0)){
             p->isWMAMessCached = KNI_TRUE;
         }
     }
@@ -1785,7 +1834,7 @@ void pushsetcachedflagmms(char *conn, char *appID) {
  *
  * @return A comma delimited list of full-text push entries
  */
-char *pushfindsuite(char *store, int available) {
+char *pushfindsuite(char *store, int available){
     PushEntry *p;
     char *ret = NULL;
     char *ptr;
@@ -1793,11 +1842,11 @@ char *pushfindsuite(char *store, int available) {
     char *connlist = NULL;
 
     /* Find the entry to pass off the open file descriptor. */
-    for (p = pushlist; p != NULL ; p = p->next) {
-        if (strcmp(store, p->storagename) == 0) {
+    for (p = pushlist; p != NULL ; p = p->next){
+        if (strcmp(store, p->storagename) == 0){
             ret = midpStrdup(p->value);
-            for (ptr = ret, len=0; *ptr; ptr++, len++) {
-                if (*ptr == ',') {
+            for (ptr = ret, len=0; *ptr; ptr++, len++){
+                if (*ptr == ','){
                     *ptr = '\0';
                     break;
                 }
@@ -1808,9 +1857,9 @@ char *pushfindsuite(char *store, int available) {
              * current file descriptor. e.g. an accepted socket
              * or a cache datagram.
              */
-            if (available && (p->fd != -1)) {
+            if (available && (p->fd != -1)){
                 if ((p->fdsock == -1) && (p->pCachedData == NULL) &&
-                    (!p->isWMAMessCached)) {
+                    (!p->isWMAMessCached)){
                     midpFree(ret);
                     ret = NULL;
                     continue;
@@ -1820,9 +1869,9 @@ char *pushfindsuite(char *store, int available) {
             /*
              * Append the entries together in a single list.
              */
-            if (connlist == NULL) {
+            if (connlist == NULL){
                 connlist= ret;
-            } else {
+            } else{
                 strcat(connlist, ",");
                 strcat(connlist, ret);
                 midpFree(ret);
@@ -1840,20 +1889,18 @@ char *pushfindsuite(char *store, int available) {
  * in memory cache representation.
  *
  * @param pushfd file descriptor for reading
- * @param startListening if KNI_TRUE the push system will listen for incoming
- *                       data on the push connections.
  * @return <tt>0</tt> if successful, <tt>-1</tt> if there was an error opening
  * the push registry file, <tt>-2</tt> if there was a memory allocation failure
  */
-static int parsePushList(int pushfd, int startListening) {
+static int parsePushList(int pushfd){
     char buffer[MAX_LINE+1];
     char *errStr = NULL;
     PushEntry *pe;
 
     /* Read a line at a time */
-    while (readLine(&errStr, pushfd, buffer, sizeof(buffer)) != 0) {
+    while (readLine(&errStr, pushfd, buffer, sizeof(buffer)) != 0){
 
-        if (errStr != NULL) {
+        if (errStr != NULL){
             REPORT_WARN2(LC_PROTOCOL,
                          "Warning: could not read push registration: %s; buffer = '%s'",
                          errStr, buffer);
@@ -1863,7 +1910,7 @@ static int parsePushList(int pushfd, int startListening) {
 
         pe = (PushEntry *) midpMalloc (sizeof(PushEntry));
 
-        if (pe == NULL) {
+        if (pe == NULL){
             pushListFree();
             return -2;
         }
@@ -1872,13 +1919,13 @@ static int parsePushList(int pushfd, int startListening) {
         pe->value = midpStrdup(buffer);
         pe->storagename = midpStrdup(pushstorage(pe->value, 3));
 
-        if ((pe->value == NULL) || (pe->storagename == NULL)) {
+        if ((pe->value == NULL) || (pe->storagename == NULL)){
             midpFree(pe->value);
             midpFree(pe->storagename);
             midpFree(pe);
             pushListFree();
             return -2;
-        } else {
+        } else{
             pe->filter = pushfilter(pe->value);
             pe->fd = -1;
             pe->fdsock = -1;
@@ -1890,15 +1937,9 @@ static int parsePushList(int pushfd, int startListening) {
             pe->appID = NULL;
 #if ENABLE_JSR_180
             pe->isSIPEntry = KNI_FALSE;
+            pe->isShared = KNI_FALSE;
 #endif
 
-            if (startListening) {
-                pushProcessPort(buffer, pe);
-                if (pe->fd != -1) {
-                    pe->state = CHECKED_IN;
-                    pushAddNetworkNotifier(pe);
-                }
-            }
         }
 
         /*
@@ -1911,7 +1952,7 @@ static int parsePushList(int pushfd, int startListening) {
 
     /* This check is required for the case when readLine() didn't put
        any characters into the buffer and while() was not executed */
-    if (errStr != NULL) {
+    if (errStr != NULL){
         REPORT_WARN1(LC_PROTOCOL,
                      "Warning: could not read push registration: %s",
                      errStr);
@@ -1922,22 +1963,36 @@ static int parsePushList(int pushfd, int startListening) {
     return 0;
 }
 
+static void pushStartListening(){
+    PushEntry *pe;
+
+    for (pe = pushlist; pe != NULL ; pe = pe->next){
+        if (pe->state == AVAILABLE){
+            pushProcessPort(pe);
+            if (pe->fd != -1){
+                pe->state = CHECKED_IN;
+                pushAddNetworkNotifier(pe);
+            }
+        }
+    }
+}
+
 /**
  * Parses the URL port.
  *
  * buffer A full-text push entry string from the registry ("mms://12345:11")
  * @return port or <tt>-1</tt> on parse error
  */
-static int getUrlPort(char* buffer) {
+static int getUrlPort(char* buffer){
 
     char* p = buffer;
     int colon_found = 0;
-    for (; *p != '\0' ; p++) {
-        if (*p == ':') {
+    for (; *p != '\0' ; p++){
+        if (*p == ':'){
             colon_found++ ;
         }
 
-        if (colon_found == 2) {
+        if (colon_found == 2){
             p++ ;
             /*
             * Parse the port number from the
@@ -1950,6 +2005,80 @@ static int getUrlPort(char* buffer) {
 }
 
 /**
+ * Checks current status of the network.
+ *
+ * @return <tt>1</tt> if network is enabled, <tt>0</tt> otherwise
+ */
+static int isNetworkUp(){
+    int res, status;
+
+    res = 0;
+
+    switch (networkStatus){
+    case NET_STATUS_UP:
+        res = 1;
+        break;
+
+    case NET_STATUS_GOING_UP:{
+            status = pcsl_network_init_finish();
+
+            switch (status){
+            case PCSL_NET_SUCCESS:
+                networkStatus = NET_STATUS_UP;
+                res = 1;
+                break;
+
+            case PCSL_NET_WOULDBLOCK:
+                /* network is still going up. */
+                break;
+
+            default:
+                /* network error, try later */
+                networkStatus = NET_STATUS_ERROR;
+                break;
+            }
+            break;
+        }
+
+    case NET_STATUS_UNKNOWN:
+    case NET_STATUS_ERROR:{
+            status = pcsl_network_init_start(pcsl_network_initialized);
+
+            switch (status){
+            case PCSL_NET_SUCCESS:
+                networkStatus = NET_STATUS_UP;
+                res = 1;
+                break;
+
+            case PCSL_NET_WOULDBLOCK:
+                networkStatus = NET_STATUS_GOING_UP;
+                break;
+
+            default:
+                /* network error, try later */
+                networkStatus = NET_STATUS_ERROR;
+                break;
+            }
+
+            break;
+        }
+
+    case NET_STATUS_GOING_DOWN:
+    case NET_STATUS_DOWN:
+        /* 
+         * don't prevent network from going down as well as don't try to
+         * bring it up if MIDP has put it down. 
+         */
+        break;
+
+    default:
+        break;
+    }
+
+    return res;
+}
+
+/**
  * Parses the port number from the connection field
  * and uses it for the connection appropriate open
  * call. The handle will be included in
@@ -1958,7 +2087,7 @@ static int getUrlPort(char* buffer) {
  *
  * @param pe push entry; the following fields are used:
  * <ul>
- * <li>buffer A full-text push entry string from the registry</li>
+ * <li>value A full-text push entry string from the registry</li>
  * <li>fd A pointer to a handle. Used to return the open handle</li>
  * <li>port A pointer to a portId. Used to return the port to the caller</li>
  * <li>appID Application ID</li>
@@ -1967,23 +2096,26 @@ static int getUrlPort(char* buffer) {
                   KNI_FALSE otherwise</li>
  *
  * @return <tt>0</tt> if successful,
- *         <tt>-1</tt> if the entry already exists,
+ *         <tt>-1</tt> connection error,
  *         <tt>-2</tt> if out of memory
  *         <tt>-3</tt> if illegal arguments or unknown connection type
  * </ul>
  */
-static int pushProcessPort(char *buffer, PushEntry* pe) {
-    char *p;
+static int pushProcessPort(PushEntry* pe){
+    char *p, *buffer;
     void *handle;
     void *context = NULL;
-    char *exception = NULL;
     int status;
 
-    if (buffer == NULL || pe == NULL) {
+    if (pe == NULL || pe->value == NULL){
         return -3;
     }
 
-    pe->isWMAEntry = KNI_FALSE;
+    /* Make sure the network is properly initialized. */
+    if (!isNetworkUp()){
+        pe->fd = -1;
+        return -1;
+    }
 
     /*
      * Open the file descriptor so it can be monitored
@@ -1992,15 +2124,19 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
      * With WMA 2.0 sms, cbs and mms connections are also
      * allowed.
      */
-    p = buffer;
+
+    p = buffer = pe->value;
+
+    pe->isWMAEntry = KNI_FALSE;
     pe->port = -1;
+
 
 #if ENABLE_JSR_82
     {
         bt_port_t port;
-        if (bt_push_parse_url(buffer, &port, NULL) == BT_RESULT_SUCCESS) {
+        if (bt_push_parse_url(buffer, &port, NULL) == BT_RESULT_SUCCESS){
             bt_handle_t handle = bt_push_start_server(&port);
-            if (handle == BT_INVALID_HANDLE) {
+            if (handle == BT_INVALID_HANDLE){
                 pe->fd = -1;
                 return -1;
             }
@@ -2013,12 +2149,12 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
 #if ENABLE_JSR_180
     /* Check for JSR180 SIP/SIPS connections. */
     if ((strncmp(buffer, "sips:", 5) == 0) ||
-            (strncmp(buffer, "sip:", 4) == 0)) {
+        (strncmp(buffer, "sip:", 4) == 0)){
         pe->isSIPEntry = KNI_TRUE;
 
-        if (strncmp(buffer, "sips:", 5) == 0) {
+        if (strncmp(buffer, "sips:", 5) == 0){
             p += 5;
-        } else {
+        } else{
             p += 4;
         }
 
@@ -2028,10 +2164,56 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
          *   sip:5080;type="application/x-chess"
          *   sip:*;type="application/x-cannons"
          */
-        if (*p == '*') {
+        if (*p == '*'){
+            PushEntry *pushp;
+            /* first conection uses shared port */
+            PushEntry* sharedP = NULL;
+            char* mime;
+            int mime_len;
+            /* Get type */
+            mime_len = getMIMEType(buffer, &mime);
+            if (0 == mime_len){
+                /* media must be present */
+                REPORT_ERROR(LC_PUSH, "Shared connection must include media.");
+                pe->fd = -1;
+                return -3;
+            }
+            /* check if given MIME is registered already */
+            if (pushlength > 0 ){
+                /* scan up to current record (VM startup case)
+                   or until end of records (installation case) */
+                for (pushp = pushlist; pushp != pe, pushp != NULL; pushp = pushp->next){
+                    if (pushp->isSIPEntry && pushp->isShared){
+                        char* tmp;
+                        /* compare mime type */
+                        if (0 == mime_len - getMIMEType(pushp->value, &tmp)){
+                            if (0 == strncmp(mime, tmp, mime_len)){
+                                /* there is an application with given mime type */
+                                REPORT_ERROR1(LC_PUSH, 
+                                              "There is registered application "
+                                              "with MIME: ", mime);
+                                return -1;
+                            }
+                        }
+                        if (NULL == sharedP){
+                            sharedP = pushp;
+                        }
+                    }
+                }
+            }
             /* Shared connections must include media. */
             pe->port = 5060;
-        } else {
+            /* mark for quick search */
+            pe->isShared = KNI_TRUE;
+            /* don't create new connection if there is SIP connection 
+               shared the same port */
+            if (NULL  != sharedP){
+                pe->fd = sharedP->fd;
+                return 0;
+            }
+
+
+        } else{
             /* Dedicated ports may also include media. */
             pe->port = atoi(p);
         }
@@ -2040,100 +2222,102 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
     }
 #endif
 
-    if (pushIsDatagramConnection(buffer)) {
-        if (pe->port == -1) {
+    if (pushIsDatagramConnection(buffer)){
+        if (pe->port == -1){
             pe->port = getUrlPort(buffer);
         }
         /**
          * Verify that the resource is available well within limit as per
          * the policy in ResourceLimiter
          */
-        if (midpCheckResourceLimit(RSC_TYPE_UDP, 1) == 0) {
+        if (midpCheckResourceLimit(RSC_TYPE_UDP, 1) == 0){
             REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded for"
-                                     " datagrams");
+                        " datagrams");
             pe->fd = -1;
-            exception = (char *)midpIOException;
-        } else {
+        } else{
             status = pcsl_datagram_open_start(pe->port,
                                               &handle, &context);
 
-            if (status == PCSL_NET_SUCCESS) {
+            if (status == PCSL_NET_SUCCESS){
                 pe->fd = (int) handle;
                 /* Update the resource count  */
-                if (midpIncResourceCount(RSC_TYPE_UDP, 1) == 0) {
+                if (midpIncResourceCount(RSC_TYPE_UDP, 1) == 0){
                     REPORT_INFO(LC_PROTOCOL, "(Push)Datagrams: Resource"
-                                             " limit update error");
+                                " limit update error");
                 }
-            } else {
+            } else{
                 pe->fd = -1;
-                exception = (char *)midpIOException;
             }
         }
 #if ENABLE_SERVER_SOCKET
-    } else if (pushIsSocketConnection(buffer)) {
-        if (pe->port == -1) {
+
+    } else if (pushIsSocketConnection(buffer)){
+        if (pe->port == -1){
             pe->port = getUrlPort(buffer);
         }
         /**
          * Verify that the resource is available well within limit as per
          * the policy in ResourceLimiter
          */
-        if (midpCheckResourceLimit(RSC_TYPE_TCP_SER, 1) == 0) {
+        if (midpCheckResourceLimit(RSC_TYPE_TCP_SER, 1) == 0){
             REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded"
-                                     " for TCP server sockets");
+                        " for TCP server sockets");
             pe->fd = -1;
-            exception = (char *)midpIOException;
-        } else {
+        } else{
             /* Open the server socket */
             status = pcsl_serversocket_open(pe->port, &handle);
 
-            if (status == PCSL_NET_SUCCESS) {
+            if (status == PCSL_NET_SUCCESS){
                 pe->fd = (int) handle;
 
                 /* Update the resource count  */
-                if (midpIncResourceCount(RSC_TYPE_TCP_SER, 1) == 0) {
+                if (midpIncResourceCount(RSC_TYPE_TCP_SER, 1) == 0){
                     REPORT_INFO(LC_PROTOCOL, "(Push)TCP Server: "
                                 "Resource limit update error");
                 }
-            } else {
+            } else{
                 /**
                  * pcsl_serversocket_open can never return WOULDBLOCK
                  * thus anything other that PCSL_NET_SUCCESS is an
                  * indication of an error
                  */
                 midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
-                    "IOError in push::serversocket::open = %d\n",
-                    pcsl_network_error(handle));
+                              "IOError in push::serversocket::open = %d\n",
+                              pcsl_network_error(handle));
                 REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
-                exception = (char *)midpIOException;
+
+                pe->fd = -1;
             }
         }
 #endif
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
+
     } else if ((strncmp(buffer, "sms://:", 7) == 0) ||
-               (strncmp(buffer, "cbs://:", 7) == 0)) {
+               (strncmp(buffer, "cbs://:", 7) == 0)){
 
         pe->port = getUrlPort(buffer);
 
         /* check for sms or cbs connection */
         wmaPushProcessPort(buffer, &pe->fd, pe->port,
-            suiteIdFromChars(pushstorage(buffer, 3)), pe->appID);
-        if (pe->fd != -1) {
+                           suiteIdFromChars(pushstorage(buffer, 3)), pe->appID);
+        if (pe->fd != -1){
             pe->isWMAEntry = KNI_TRUE;
         }
 #endif
 #if (ENABLE_JSR_205)
-    } else if (strncmp(buffer, "mms://:", 7) == 0) {
+
+    } else if (strncmp(buffer, "mms://:", 7) == 0){
 
         pe->appID = getMMSAppID(buffer);
         /* check for mms connection */
         wmaPushProcessPort(buffer, &pe->fd, pe->port,
-            suiteIdFromChars(pushstorage(buffer, 3)), pe->appID);
-        if (pe->fd != -1) {
+                           suiteIdFromChars(pushstorage(buffer, 3)), pe->appID);
+        if (pe->fd != -1){
             pe->isWMAEntry = KNI_TRUE;
         }
 #endif
-    } else {
+
+    } else{
         midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
                       "Error in push::serversocket::open: "
                       "unknown connection type.\n");
@@ -2141,7 +2325,7 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
         return -3;
     }
 
-    return -3;
+    return(pe->fd != -1) ? 0 : -1;
 }
 
 /**
@@ -2150,7 +2334,7 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
  * @param ip The incoming ip to be tested by the filter
  * @return <tt>1</tt> if the comparison is successful, <tt>0</tt> if it fails
  */
-static int checkfilter(char *filter, char *ip) {
+static int checkfilter(char *filter, char *ip){
     char *p1 = NULL;
     char *p2 = NULL;
 
@@ -2166,21 +2350,21 @@ static int checkfilter(char *filter, char *ip) {
      * IP address pointer is incremented as characters and wildcards
      * are matched.
      */
-    for (p1=filter, p2=ip; *p1 && *p2; p1++) {
+    for (p1=filter, p2=ip; *p1 && *p2; p1++){
         /*
          * For an asterisk, consume all the characters up to
          * a matching next character.
          */
-        if (*p1 == '*') {
+        if (*p1 == '*'){
             /* Initialize the next two filter characters. */
             char f1 = *(p1+1);
             char f2 = '\0';
-            if (f1 != '\0') {
+            if (f1 != '\0'){
                 f2 = *(p1+2);
             }
 
             /* Skip multiple wild cards. */
-            if (f1 == '*') {
+            if (f1 == '*'){
                 continue;
             }
 
@@ -2189,9 +2373,9 @@ static int checkfilter(char *filter, char *ip) {
              * character from the filter string. Stop consuming
              * characters, if the ip address is fully consumed.
              */
-            while (*p2) {
+            while (*p2){
                 /* Stop matching at field boundaries. */
-                if (*p2 == '.') {
+                if (*p2 == '.'){
                     p1++;
                     p2++;
                     break;
@@ -2202,12 +2386,12 @@ static int checkfilter(char *filter, char *ip) {
                  * from the filter string. If it does not match, continue
                  * consuming characters from the ip address string.
                  */
-                if(*p2 == f1 || f1 == '?') {
-                    if (*(p2+1) == f2 || f2 == '?' || f2 == '*') {
+                if (*p2 == f1 || f1 == '?'){
+                    if (*(p2+1) == f2 || f2 == '?' || f2 == '*'){
                         /* Always consume an IP character. */
                         p2++;
                         if (f2 == '*' || *p2 == '.' || *p2 == '\0' ||
-                            *(p2+1) == '.' || *(p2+1) == '\0') {
+                            *(p2+1) == '.' || *(p2+1) == '\0'){
                             /* Also, consume a filter character. */
                             p1++;
                         }
@@ -2216,22 +2400,22 @@ static int checkfilter(char *filter, char *ip) {
                 }
                 p2++;
             }
-        } else if (*p1 == '?') {
+        } else if (*p1 == '?'){
             /* Filter may have upto 3 '?" characters. If coresponding byte in
              * the IPaddress does not have three characters, comparison will
              * fail. Examples : filter = 10.???.32.19 and ipaddress = 10.5.32.19
              */
-            if (*p2 != '.') {
+            if (*p2 != '.'){
                 p2 ++;
             }
-        } else if (*p1 != *p2) {
+        } else if (*p1 != *p2){
             /* If characters do not match, filter failed. */
             return 0;
-        } else {
+        } else{
             p2 ++;
         }
     }
-    if (*p1 != *p2 && *p1 != '*') {
+    if (*p1 != *p2 && *p1 != '*'){
         /* IP address was longer than filter string. */
         return 0;
     }
@@ -2240,13 +2424,13 @@ static int checkfilter(char *filter, char *ip) {
 }
 
 /**
- * Walks through and frees all the alarmEntries in the alarm list.
+ * Walks through and frees all the alarm entries in the alarm list.
  */
-static void alarmListFree() {
+static void alarmListFree(){
     AlarmEntry *alarmp, *alarmtmp;
 
     /* clean up the list */
-    for (alarmp = alarmlist; alarmp != NULL; alarmp = alarmtmp) {
+    for (alarmp = alarmlist; alarmp != NULL; alarmp = alarmtmp){
         alarmtmp = alarmp->next;
 
         midpFree(alarmp->midlet);
@@ -2258,13 +2442,13 @@ static void alarmListFree() {
 }
 
 /**
- * Walks through and frees all the pushEntries in the push list.
+ * Walks through and frees all the push entries in the push list.
  */
-static void pushListFree() {
+static void pushListFree(){
     PushEntry *pushp;
 
     /* clean up the list */
-    for (pushp = pushlist; pushp != NULL; pushp = pushlist) {
+    for (pushp = pushlist; pushp != NULL; pushp = pushlist){
         pushDeleteEntry(pushp, &pushlist);
     }
 }
@@ -2279,17 +2463,17 @@ static void pushListFree() {
  * @return <tt>0</tt> if no entry is found. Otherwise, <tt>handle</tt> is
  *         returned
  */
-int findPushBlockedHandle(int handle) {
+int findPushBlockedHandle(int handle){
     PushEntry *pushp, *pushtmp;
-    if (pushlength > 0 ) {
-        for (pushp = pushlist; pushp != NULL; pushp = pushtmp) {
+    if (pushlength > 0 ){
+        for (pushp = pushlist; pushp != NULL; pushp = pushtmp){
             pushtmp = pushp->next;
             if ((handle == pushp->fd &&
-                pushp->state != CHECKED_OUT &&
-                pushp->state != LAUNCH_PENDING) ||
-                (handle == pushp->fdsock && pushp->state == WAITING_DATA)) {
-                    pushp->state = RECEIVED_EVENT;
-                    return handle;
+                 pushp->state != CHECKED_OUT &&
+                 pushp->state != LAUNCH_PENDING) ||
+                (handle == pushp->fdsock && pushp->state == WAITING_DATA)){
+                pushp->state = RECEIVED_EVENT;
+                return handle;
             }
         }
     }
@@ -2307,16 +2491,16 @@ int findPushBlockedHandle(int handle) {
  * @return <tt>0</tt> if no entry is found. Otherwise, <tt>handle</tt> is
  *          returned
  */
-int findPushTimerBlockedHandle(int handle) {
+int findPushTimerBlockedHandle(int handle){
     AlarmEntry *alarmp;
     AlarmEntry *alarmtmp;
 
-    for (alarmp = alarmlist; alarmp != NULL ; alarmp = alarmtmp) {
+    for (alarmp = alarmlist; alarmp != NULL ; alarmp = alarmtmp){
         alarmtmp = alarmp->next;
         ASSERT((alarmp->state == CHECKED_IN) || (alarmp->state == AVAILABLE));
 
         /* alarmp->state == AVAILABLE iff timer has been canceled or updated */
-        if ((handle == alarmp->timerHandle) && (alarmp->state == CHECKED_IN)) {
+        if ((handle == alarmp->timerHandle) && (alarmp->state == CHECKED_IN)){
             alarmp->state = RECEIVED_EVENT;
 
             return handle;
@@ -2334,7 +2518,7 @@ int findPushTimerBlockedHandle(int handle) {
  * @return a <tt>handle</tt> to a push entry if an event is pending, or
  *         <tt>-1</tt> if the currently running Java thread is to block.
  */
-int pushpoll() {
+int pushpoll(){
     int i;
     PushEntry * pe;
 
@@ -2349,24 +2533,24 @@ int pushpoll() {
      */
 
     /* Find pending network push. */
-    if (pushlength > 0 ) {
-        for (i = 0, pe = pushlist; i < pushlength && pe != NULL; i++) {
-            if (pe->state == AVAILABLE) {
+    if (pushlength > 0 ){
+        for (i = 0, pe = pushlist; i < pushlength && pe != NULL; i++){
+            if (pe->state == AVAILABLE){
                 /*
                  * When pushopen was called the port for this entry was busy,
                  * so try again.
                  */
-                pushProcessPort(pe->value, pe);
-                if (pe->fd != -1) {
+                pushProcessPort(pe);
+                if (pe->fd != -1){
                     REPORT_INFO1(LC_PUSH,
-                        "Push network signal on descriptor %x", pe->fd);
+                                 "Push network signal on descriptor %x", pe->fd);
 
                     pe->state = CHECKED_IN;
                     pushAddNetworkNotifier(pe);
                 }
             }
 
-            if (pe->state == RECEIVED_EVENT) {
+            if (pe->state == RECEIVED_EVENT){
                 return pe->fd;
             }
 
@@ -2375,12 +2559,12 @@ int pushpoll() {
     }
 
     /* Find pending timer push. */
-    for (alarmp = alarmlist; alarmp != NULL ; alarmp = alarmtmp) {
+    for (alarmp = alarmlist; alarmp != NULL ; alarmp = alarmtmp){
         alarmtmp = alarmp->next;
-        if (alarmp->state == RECEIVED_EVENT) {
+        if (alarmp->state == RECEIVED_EVENT){
             REPORT_INFO1(LC_PUSH,
-                "Push timer alarm with handle %x", alarmp->timerHandle);
-            return (alarmp->timerHandle);
+                         "Push timer alarm with handle %x", alarmp->timerHandle);
+            return(alarmp->timerHandle);
         }
     }
 
@@ -2398,13 +2582,13 @@ int pushpoll() {
  *
  * @param id The suite ID to be removed from the push registry
  */
-void pushdeletesuite(SuiteIdType id) {
-    if ((pushlist != NULL) || (alarmlist != NULL)) {
+void pushdeletesuite(SuiteIdType id){
+    if ((pushlist != NULL) || (alarmlist != NULL)){
         pushDeleteSuiteLive(id);
         return;
     }
 
-    if (PCSL_FALSE != pcsl_string_is_null(&pushpathname)) {
+    if (PCSL_FALSE != pcsl_string_is_null(&pushpathname)){
         pushDeleteSuiteNoVM(id);
     }
 }
@@ -2415,9 +2599,9 @@ void pushdeletesuite(SuiteIdType id) {
  *
  * @param id The suite ID to be removed from the push registry
  */
-static void pushDeleteSuiteNoVM(SuiteIdType id) {
+static void pushDeleteSuiteNoVM(SuiteIdType id){
     /* Tell push open not to start listening to connections. */
-    if (pushOpenInternal(0) != 0) {
+    if (pushOpenInternal(0) != 0){
         return;
     }
 
@@ -2432,7 +2616,7 @@ static void pushDeleteSuiteNoVM(SuiteIdType id) {
  *
  * @param id The suite ID to be removed from the push registry
  */
-static void pushDeleteSuiteLive(SuiteIdType id) {
+static void pushDeleteSuiteLive(SuiteIdType id){
     PushEntry *pushp;
     PushEntry **pPrevNext = &pushlist;
     PushEntry *pushnext;
@@ -2443,14 +2627,14 @@ static void pushDeleteSuiteLive(SuiteIdType id) {
     const pcsl_string* strId = midp_suiteid2pcsl_string(id);
     const char* pszID = (char*)pcsl_string_get_utf8_data(strId);
 
-    if (pszID == NULL) {
+    if (pszID == NULL){
         return;
     }
 
     /* Find all of the entries to remove. */
-    for (pushp = pushlist; pushp != NULL; pushp = pushnext) {
+    for (pushp = pushlist; pushp != NULL; pushp = pushnext){
         pushnext = pushp->next;
-        if (strcmp(pszID, pushp->storagename) == 0) {
+        if (strcmp(pszID, pushp->storagename) == 0){
 #if ENABLE_JSR_82
             bt_push_unregister_url(pushp->value);
 #endif
@@ -2465,9 +2649,9 @@ static void pushDeleteSuiteLive(SuiteIdType id) {
     pushsave();
 
     /* Find all of the alarm entries to remove. */
-    for (alarmp = alarmlist; alarmp != NULL; alarmp = alarmnext) {
+    for (alarmp = alarmlist; alarmp != NULL; alarmp = alarmnext){
         alarmnext = alarmp->next;
-        if (strcmp(pszID, alarmp->storagename) == 0) {
+        if (strcmp(pszID, alarmp->storagename) == 0){
             *alarmpPrevNext = alarmp->next;
 
             midpFree(alarmp->midlet);
@@ -2494,7 +2678,7 @@ static void pushDeleteSuiteLive(SuiteIdType id) {
  * @return <tt>0</tt> if successful, <tt>-1</tt> if an I/O error occurs,
  * <tt>-2</tt> if out of memory
  */
-static int parseAlarmList(int pushfd) {
+static int parseAlarmList(int pushfd){
     char buffer[MAX_LINE+1];
     char *errStr = NULL;
     jlong alarm  = 0;
@@ -2502,9 +2686,9 @@ static int parseAlarmList(int pushfd) {
     char *p;
 
     /* Read a line at a time. */
-    while( readLine(&errStr, pushfd, buffer, sizeof(buffer)) != 0 ) {
+    while ( readLine(&errStr, pushfd, buffer, sizeof(buffer)) != 0 ){
 
-        if (errStr != NULL) {
+        if (errStr != NULL){
             REPORT_WARN2(LC_PROTOCOL,
                          "Warning: could not read alarm registration: %s; buffer = '%s'",
                          errStr, buffer);
@@ -2513,8 +2697,8 @@ static int parseAlarmList(int pushfd) {
         }
 
         /* Find the alarm time field. */
-        for (p = buffer; *p != 0; p++) {
-            if (*p == ',') {
+        for (p = buffer; *p != 0; p++){
+            if (*p == ','){
                 p++;
                 sscanf(p, PCSL_LLD, &alarm);
                 break;
@@ -2525,13 +2709,13 @@ static int parseAlarmList(int pushfd) {
      * Check if the alarm time field was found
      * and continue if it was not.
      */
-        if (*p == 0) {
+        if (*p == 0){
             continue;
         }
 
         /* Create an alarm registry entry. */
         pe = (AlarmEntry *) midpMalloc (sizeof(AlarmEntry));
-        if (pe == NULL) {
+        if (pe == NULL){
             alarmListFree();
             return -2;
         }
@@ -2541,7 +2725,7 @@ static int parseAlarmList(int pushfd) {
         alarmstart(pe, alarm);
         pe->storagename = midpStrdup(pushstorage(pe->midlet, 2));
 
-        if ((pe->midlet == NULL) || (pe->storagename == NULL)) {
+        if ((pe->midlet == NULL) || (pe->storagename == NULL)){
             midpFree(pe->midlet);
             midpFree(pe->storagename);
             midpFree(pe);
@@ -2553,14 +2737,14 @@ static int parseAlarmList(int pushfd) {
          * Add the new entry to the top of the alarm cached
          * list.
          */
-         alarmlist = pe;
+        alarmlist = pe;
     }
 
     /*
      * This check is required for the case when readLine() didn't put
      * any characters into the buffer and while() was not executed.
      */
-    if (errStr != NULL) {
+    if (errStr != NULL){
         REPORT_WARN1(LC_PROTOCOL,
                      "Warning: could not read alarm registration: %s",
                      errStr);
@@ -2577,7 +2761,7 @@ static int parseAlarmList(int pushfd) {
  *
  * @return <tt>0</tt> if successful, <tt>-1</tt> if a memory error occurred
  */
-static int alarmopen() {
+static int alarmopen(){
     int  pushfd;
     int status = 0;
 
@@ -2590,16 +2774,17 @@ static int alarmopen() {
         /* Close the storage handle. */
         storageClose (&errStr, pushfd);
         storageFreeError(errStr);
-        if (status == -2) {
+        if (status == -2){
             REPORT_ERROR(LC_PROTOCOL,
-                "Error: alarmopen out of memory when parsing alarm list");
+                         "Error: alarmopen out of memory when parsing alarm list");
             return -1;
         }
 
-    } else {
+
+    } else{
         REPORT_WARN1(LC_PROTOCOL,
-            "Warning: could not open alarm registration file: %s",
-            errStr);
+                     "Warning: could not open alarm registration file: %s",
+                     errStr);
         storageFreeError(errStr);
     }
 
@@ -2610,15 +2795,15 @@ static int alarmopen() {
  * Saves the in memory cache of alarm registrations to a persistent
  * file for use in subsequent runs.
  */
-static void alarmsave() {
+static void alarmsave(){
     int pushfd;
     AlarmEntry *alarmp;
     AlarmEntry *alarmtmp=NULL;
 
     pushfd = storage_open(&errStr, &alarmpathname, OPEN_READ_WRITE_TRUNCATE);
-    if (errStr == NULL) {
+    if (errStr == NULL){
         /* Write a new list of push registrations to the persistent file */
-        for (alarmp = alarmlist; alarmp != NULL ; alarmp = alarmtmp) {
+        for (alarmp = alarmlist; alarmp != NULL ; alarmp = alarmtmp){
             alarmtmp = alarmp->next;
             storageWrite(&errStr, pushfd, alarmp->midlet,
                          strlen(alarmp->midlet));
@@ -2627,12 +2812,12 @@ static void alarmsave() {
 
         /* Close the storage handle */
         storageClose (&errStr, pushfd);
-    } else {
+    } else{
         REPORT_WARN1(LC_PROTOCOL,
-             "Warning: could not write alarm registration file: %s",
-             errStr);
-    storageFreeError(errStr);
-    return;
+                     "Warning: could not write alarm registration file: %s",
+                     errStr);
+        storageFreeError(errStr);
+        return;
     }
 }
 /**
@@ -2641,17 +2826,17 @@ static void alarmsave() {
  * @param entry A pointer to an AlarmEntry
  * @param  alarm The absolute time at which this alarm is fired
  */
-static void alarmstart(AlarmEntry *entry, jlong alarm) {
+static void alarmstart(AlarmEntry *entry, jlong alarm){
     jlong time;
 
     entry->wakeup = alarm;
     time = alarm - (jlong)midp_getCurrentTime();
 
-    if (time >= 0) {
+    if (time >= 0){
         /* if not expired, check timer event */
         entry->state = CHECKED_IN;
         entry->timerHandle = createTimerHandle((int)entry, time);
-    } else {
+    } else{
         /* if expired, flag the timer as triggered */
         entry->state = RECEIVED_EVENT;
         entry->timerHandle = 0;
@@ -2679,38 +2864,38 @@ int alarmadd(char *str, jlong alarm, jlong *lastalarm){
     int len;
 
     /* Find the length of the midlet field. */
-    for (ptr = str, len = 0; *ptr != 0 ; ptr++, len++) {
+    for (ptr = str, len = 0; *ptr != 0 ; ptr++, len++){
         if (*ptr == ',') break;
     }
 
     /* Check if the entry already exists? */
-    for (alarmp = alarmlist; alarmp != NULL ; alarmp = alarmtmp) {
+    for (alarmp = alarmlist; alarmp != NULL ; alarmp = alarmtmp){
         alarmtmp = alarmp->next;
-        if (strncmp (str, alarmp->midlet, len) == 0) {
+        if (strncmp (str, alarmp->midlet, len) == 0){
             jlong temp = alarmp->wakeup;
-            if(alarm == 0) {
+            if (alarm == 0){
                 /* Remove an entry. */
-                if (alarmp->timerHandle != 0) {
+                if (alarmp->timerHandle != 0){
                     destroyTimerHandle(alarmp->timerHandle);
                     alarmp->timerHandle = 0;
                 }
                 if (lastp == alarmlist){
                     alarmlist = alarmp->next;
-                } else {
+                } else{
                     lastp->next = alarmp->next;
                 }
                 midpFree(alarmp->midlet);
                 midpFree(alarmp->storagename);
                 midpFree(alarmp);
                 alarmsave();
-            } else {
+            } else{
                 /*
          * Replace an entry.
          * State must change first in case timer events occur
          * between destroyTimerHandle calls.
          */
                 alarmp->state = AVAILABLE;
-                if (alarmp->timerHandle != 0) {
+                if (alarmp->timerHandle != 0){
                     destroyTimerHandle(alarmp->timerHandle);
                     alarmp->timerHandle = 0;
                 }
@@ -2731,7 +2916,7 @@ int alarmadd(char *str, jlong alarm, jlong *lastalarm){
     *lastalarm = 0;
 
     /* If no alarm to set; return success. */
-    if (alarm == 0) {
+    if (alarm == 0){
         return 0;
     }
 
@@ -2740,19 +2925,18 @@ int alarmadd(char *str, jlong alarm, jlong *lastalarm){
         pe->next = alarmlist ;
         pe->midlet = midpStrdup(str);
         pe->storagename = midpStrdup(pushstorage(pe->midlet, 2));
-        if ((pe->midlet == NULL) || (pe->storagename == NULL)) {
+        if ((pe->midlet == NULL) || (pe->storagename == NULL)){
             midpFree(pe->midlet);
             midpFree(pe->storagename);
             midpFree(pe);
             pe = NULL;
-        }
-        else {
-        alarmstart(pe,alarm);
+        } else{
+            alarmstart(pe,alarm);
             alarmlist = pe ;
         }
     }
 
-    if (pe == NULL) {
+    if (pe == NULL){
         return -2;
     }
 
@@ -2768,28 +2952,27 @@ int alarmadd(char *str, jlong alarm, jlong *lastalarm){
  * on success it will be set to NULL.
  */
 static long
-readLine(char** ppszError, int handle, char* buffer, long length) {
+readLine(char** ppszError, int handle, char* buffer, long length){
     long pos = 0;
     char ch;
     jboolean comments_on = KNI_FALSE;
 
     /* Buffer must be at least 2 bytes long to keep the ending zero. */
-    if (length <= 1) {
+    if (length <= 1){
         *ppszError = NULL;
         return 0;
     }
 
-    while( storageRead(ppszError, handle, &ch, 1) != -1 )
-    {
-        if (*ppszError != NULL) {
+    while ( storageRead(ppszError, handle, &ch, 1) != -1 ){
+        if (*ppszError != NULL){
             break;
         }
 
         /* End of Line. */
-        if ( ch == '\n' ) {
+        if ( ch == '\n' ){
 
             /* If the current line is a comment, go to the next one. */
-            if (comments_on == KNI_TRUE) {
+            if (comments_on == KNI_TRUE){
                 comments_on = KNI_FALSE;
                 continue;
             }
@@ -2798,22 +2981,23 @@ readLine(char** ppszError, int handle, char* buffer, long length) {
         }
 
         /* Ignore carriage returns and skip comment lines. */
-        if (ch == '\r' || comments_on == KNI_TRUE) {
+        if (ch == '\r' || comments_on == KNI_TRUE){
             continue;
         }
 
         /* Skip comment lines which begin with '#'. */
-        if (ch == '#' && pos == 0) {
+        if (ch == '#' && pos == 0){
             comments_on = KNI_TRUE;
             continue;
         }
 
-       buffer[pos] = ch;
+        buffer[pos] = ch;
 
-       pos++;
-       if (pos == length-1) {
-           break;
-       }
+        pos++;
+        if (pos == length-1){
+            break;
+        }
+
 
     }
 
@@ -2828,7 +3012,7 @@ readLine(char** ppszError, int handle, char* buffer, long length) {
  * @param str The string for comparing
  * @return <tt>1</tt> if the comparison is successful, <tt>0</tt> if it fails
  */
-int wildComp(const char *pattern, const char *str) {
+int wildComp(const char *pattern, const char *str){
     /* Current compare position of the pattern */
     const char *p1 = NULL;
     /* Current compare position of the string */
@@ -2852,77 +3036,77 @@ int wildComp(const char *pattern, const char *str) {
      * string pointer is incremented as characters and wildcards
      * are matched.
      */
-    for (p1=pattern, p2=str; *p1 && *p2; ) {
-        switch (tmp = *p1) {
-            case '*' :
-        /*
-         * For an asterisk, consume all the characters up to
-         * a matching next character.
-         */
-                num_quest = 0;
-                posStar = p1; /* Save asterisk position in pattern */
-                posCmp = p2;
-                posCmp++;    /* Pointer to next position in string */
-                do {
-                    tmp = *++p1;
-                    if (tmp == '?') {
-                        num_quest++; /* number of question symbols */
-                    }
-                } while ((tmp == '*') || (tmp == '?'));
-                for (i = 0; i < num_quest; i++) {
-                    if (*p2++ == 0) { /* EOL before questions number was exhausted */
-                        return 0;
-                    }
+    for (p1=pattern, p2=str; *p1 && *p2; ){
+        switch (tmp = *p1){
+        case '*' :
+            /*
+             * For an asterisk, consume all the characters up to
+             * a matching next character.
+             */
+            num_quest = 0;
+            posStar = p1; /* Save asterisk position in pattern */
+            posCmp = p2;
+            posCmp++;    /* Pointer to next position in string */
+            do{
+                tmp = *++p1;
+                if (tmp == '?'){
+                    num_quest++; /* number of question symbols */
                 }
-                if (tmp == 0) { /* end of pattern */
-                    return 1;
-                }
-                /* tmp is a next non-wildcard symbol */
-                /* search it in the str */
-                while (((tmp1 = *p2) != 0) && (tmp1 != tmp)) {
-                    p2++;
-                }
-                if (tmp1 == 0) { /* no match symbols in str */
+            } while ((tmp == '*') || (tmp == '?'));
+            for (i = 0; i < num_quest; i++){
+                if (*p2++ == 0){ /* EOL before questions number was exhausted */
                     return 0;
                 }
-                /* symbol found - goto next symbols */
-                break;
+            }
+            if (tmp == 0){ /* end of pattern */
+                return 1;
+            }
+            /* tmp is a next non-wildcard symbol */
+            /* search it in the str */
+            while (((tmp1 = *p2) != 0) && (tmp1 != tmp)){
+                p2++;
+            }
+            if (tmp1 == 0){ /* no match symbols in str */
+                return 0;
+            }
+            /* symbol found - goto next symbols */
+            break;
 
-            case '?' :
-                /*
-                 * Skip a single symbol of str.
-                 * p1 and p2 points to non-EOL symbol
-                 */
+        case '?' :
+            /*
+             * Skip a single symbol of str.
+             * p1 and p2 points to non-EOL symbol
+             */
+            p1++;
+            p2++;
+            break;
+
+        default :
+            /*
+             * Any other symbol - compare.
+             * p1 and p2 points to non-EOL symbol
+             */
+            if (tmp != *p2){ /* symbol is not match */
+                if (posStar == NULL){ /* No previous stars */
+                    return 0;
+                } else{ /* Return to the previous star position */
+                    if (posCmp < p2){
+                        p2 = posCmp++;
+                    }
+                    p1 = posStar;
+                }
+            } else{ /* match symbol */
                 p1++;
                 p2++;
-                break;
-
-            default :
-                /*
-                 * Any other symbol - compare.
-                 * p1 and p2 points to non-EOL symbol
-                 */
-                if (tmp != *p2) { /* symbol is not match */
-                    if (posStar == NULL) { /* No previous stars */
-                        return 0;
-                    } else { /* Return to the previous star position */
-                        if (posCmp < p2) {
-                            p2 = posCmp++;
-                        }
-                        p1 = posStar;
-                    }
-                } else { /* match symbol */
-                  p1++;
-                  p2++;
-                }
-                break;
+            }
+            break;
         } /* end if switch */
 
-        if ((*p1 == 0) && (*p2 != 0)) {
-            if (posStar == NULL) { /* end of pattern */
+        if ((*p1 == 0) && (*p2 != 0)){
+            if (posStar == NULL){ /* end of pattern */
                 return 0;
-            } else {
-                if (posCmp < p2) {
+            } else{
+                if (posCmp < p2){
                     p2 = posCmp++;
                 }
                 p1 = posStar;
@@ -2930,14 +3114,14 @@ int wildComp(const char *pattern, const char *str) {
         }
     } /* end of loop */
 
-    if (*p2 != 0) { /* symbols remainder in str - not match */
+    if (*p2 != 0){ /* symbols remainder in str - not match */
         return 0;
     }
 
-    if (*p1 != 0) { /* symbols remainder in pattern */
-        while (*p1++ == '*') { /* Skip multiple wildcard symbols. */
+    if (*p1 != 0){ /* symbols remainder in pattern */
+        while (*p1++ == '*'){ /* Skip multiple wildcard symbols. */
         }
-        if (*--p1 != 0) { /* symbols remainder in pattern - not match */
+        if (*--p1 != 0){ /* symbols remainder in pattern - not match */
             return 0;
         }
     }
@@ -2953,7 +3137,7 @@ int wildComp(const char *pattern, const char *str) {
  * @return <tt>true</tt> if the comparison is successful, <tt>false</tt> if it fails
              */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_i3test_TestCompWildcard_cmpWildCard() {
+Java_com_sun_midp_i3test_TestCompWildcard_cmpWildCard(){
     const char *pPattern = NULL;
     int patLen = 0, convFltLen;
     const char *pStr = NULL;
@@ -2976,41 +3160,60 @@ Java_com_sun_midp_i3test_TestCompWildcard_cmpWildCard() {
 
     KNI_EndHandles();
 
-    if (PCSL_STRING_OK == rc1 && PCSL_STRING_OK == rc2 ) {
+    if (PCSL_STRING_OK == rc1 && PCSL_STRING_OK == rc2 ){
         patLen = pcsl_string_utf8_length(&pcslFilter) + 1;
         strLen = pcsl_string_utf8_length(&pcslIp) + 1;
-        if ((patLen > 0) && (strLen > 0)) {
+        if ((patLen > 0) && (strLen > 0)){
             pPattern = (char*)midpMalloc(patLen);
             pStr = (char*)midpMalloc(strLen);
         }
     }
 
-    if (pPattern != NULL && pStr != NULL) {
+    if (pPattern != NULL && pStr != NULL){
         rc3 = pcsl_string_convert_to_utf8(&pcslFilter, (jbyte*)pPattern,
-            patLen, &convFltLen);
+                                          patLen, &convFltLen);
         rc4 = pcsl_string_convert_to_utf8(&pcslIp, (jbyte*)pStr,
-            strLen, &convIpLen);
+                                          strLen, &convIpLen);
     }
 
-    if (PCSL_STRING_OK == rc1) {
+    if (PCSL_STRING_OK == rc1){
         pcsl_string_free(&pcslFilter);
     }
-    if (PCSL_STRING_OK == rc2) {
+    if (PCSL_STRING_OK == rc2){
         pcsl_string_free(&pcslIp);
     }
 
     if (PCSL_STRING_OK == rc3 && PCSL_STRING_OK == rc4 &&
-        patLen == convFltLen + 1 && strLen == convIpLen + 1) {
+        patLen == convFltLen + 1 && strLen == convIpLen + 1){
         ret = wildComp(pPattern, pStr);
-}
+    }
 
-    if (pPattern != NULL) {
+    if (pPattern != NULL){
         midpFree((jchar*)pPattern);
     }
-    if (pStr != NULL) {
+    if (pStr != NULL){
         midpFree((jchar*)pStr);
     }
 
     KNI_ReturnBoolean(ret);
 }
 #endif
+
+/**
+ * This function is called when the network initialization or finalization is
+ * completed.
+ *
+ * @param isInit 0 if the network finalization has been finished,
+ *               not 0 - if the initialization
+ * @param status one of PCSL_NET_* completion codes
+ */
+static void pcsl_network_initialized(int isInit, int status){
+    if (isInit){
+        networkStatus = (status == PCSL_NET_SUCCESS) ?
+                        NET_STATUS_UP : NET_STATUS_ERROR;
+    } else{
+        networkStatus = (status == PCSL_NET_SUCCESS) ?
+                        NET_STATUS_DOWN : NET_STATUS_ERROR;
+    }
+}
+

@@ -50,6 +50,7 @@ endif
 # Suffix
 LIB_SUFFIX  = .lib
 OBJ_SUFFIX  = obj
+LIB_PREFIX  = 
 
 # GCC
 USE_GCC		= false

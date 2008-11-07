@@ -89,6 +89,15 @@ else
         ifneq ($(TARGET_VM), cdc_vm)
             $(error "Unknown target VM")
         endif
+        
+        # Push interfaces that JSRs should implement to support push connections
+        SUBSYSTEM_PUSH_API_JAVA_FILES += \
+            $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/com/sun/midp/push/reservation/ConnectionReservation.java \
+            $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/com/sun/midp/push/reservation/DataAvailableListener.java \
+            $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/com/sun/midp/push/reservation/ReservationDescriptor.java \
+            $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/com/sun/midp/push/reservation/ProtocolFactory.java
+
+        MIDP_BOOTCLASSPATH_PACKAGES_LIST += com.sun.midp.push.reservation
 
         ifeq ($(USE_JUMP), true)
             # NOTE: there is no native files for JUMP configuration

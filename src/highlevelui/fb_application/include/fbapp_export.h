@@ -61,22 +61,22 @@ extern void fbapp_finalize();
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-extern void fbapp_refresh(int x, int y, int w, int h);
+extern void fbapp_refresh(int hardwareId, int x, int y, int w, int h);
 
 /**
  * Invert screen orientation flag
  */
-extern jboolean fbapp_reverse_orientation();
+extern jboolean fbapp_reverse_orientation(int hardwareId);
 
 /*
  * Return screen orientation flag
  */
-extern jboolean fbapp_get_reverse_orientation();
+extern jboolean fbapp_get_reverse_orientation(int hardwareId);
 
 /**
  * Set full screen mode on/off
  */
-extern void fbapp_set_fullscreen_mode(int mode);
+extern void fbapp_set_fullscreen_mode(int hardwareId, int mode);
 
 /**
  * Returns the file descriptor for reading the mouse. 
@@ -117,22 +117,69 @@ extern void fbapp_map_keycode_to_event(
 /**
  * Query frame buffer device for screen width
  */ 
-extern int fbapp_get_screen_width();
+extern int fbapp_get_screen_width(int hardwareId);
 
 /**
  * Query frame buffer device for screen height
  */ 
-extern int fbapp_get_screen_height();
+extern int fbapp_get_screen_height(int hardwareId);
 
 /**
  * Query frame buffer device for screen x
  */ 
-extern int fbapp_get_screen_x();
+extern int fbapp_get_screen_x(int hardwareId);
 
 /**
  * Query frame buffer device for screen y
  */ 
-extern int fbapp_get_screen_y();
+extern int fbapp_get_screen_y(int hardwareId);
+
+
+/** 
+ * Get display device name by id
+ */
+extern char* fbapp_get_display_name(int hardwareId);
+
+
+/**
+ * Check if the display device is primary
+ */
+extern jboolean fbapp_is_display_primary(int hardwareId);
+
+/**
+ * Check if the display device is build-in
+ */
+extern jboolean fbapp_is_display_buildin(int hardwareId);
+
+/**
+ * Check if the display device supports pointer events
+ */
+extern jboolean fbapp_is_display_pen_supported(int hardwareId);
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+extern jboolean fbapp_is_display_pen_motion_supported(int hardwareId);
+
+/**
+* Get hardware id of  curently enabled display
+*/
+extern int fbapp_get_current_hardwareId();
+
+/**
+ * Get display device capabilities
+ */
+extern int fbapp_get_display_capabilities(int hardwareId);
+
+extern jint* fbapp_get_display_device_ids(jint* n);
+
+extern void fbapp_display_device_state_changed(int hardwareId, int state);
+
+typedef enum {
+    DISPLAY_DEVICE_ENABLED = 0,
+    DISPLAY_DEVICE_DISABLED = 1
+} DisplayDeviceStates;
+
 
 #ifdef __cplusplus
 }

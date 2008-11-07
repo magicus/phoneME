@@ -70,6 +70,7 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcAccessControlContext.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletLoader.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletSuiteLoader.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/MidletSuiteContainer.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/NativeForegroundState.java

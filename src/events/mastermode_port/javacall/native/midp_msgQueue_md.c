@@ -49,6 +49,12 @@ extern void notifyDisksChanged();
 #include <javanotify_multimedia_advanced.h>
 #endif /*ENABLE_JSR_234*/
 
+#ifdef ENABLE_JSR_290
+#include <jsr290_midp_interface.h>
+#include <javautil_unicode.h>
+#include <javacall_memory.h>
+#endif /* ENABLE_JSR_290 */
+
 /*
  * This function is called by the VM periodically. It has to check if
  * system has sent a signal to MIDP and return the result in the
@@ -126,6 +132,21 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = ROTATION_EVENT;
         break;
+    case MIDP_JC_EVENT_CHANGE_LOCALE:
+        pNewSignal->waitingFor = UI_SIGNAL;
+        pNewMidpEvent->type    = CHANGE_LOCALE_EVENT;
+        break;
+    case MIDP_JC_EVENT_VIRTUAL_KEYBOARD:
+        pNewSignal->waitingFor = UI_SIGNAL;
+        pNewMidpEvent->type    = VIRTUAL_KEYBOARD_EVENT;
+        break;
+
+    case MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED:
+        pNewSignal->waitingFor = DISPLAY_DEVICE_SIGNAL;
+        pNewMidpEvent->type    = DISPLAY_DEVICE_STATE_CHANGED_EVENT;
+        pNewMidpEvent->intParam1 = event->data.displayDeviceEvent.hardwareId;
+        pNewMidpEvent->intParam2 = event->data.displayDeviceEvent.state;
+        break;
 
 #if ENABLE_ON_DEVICE_DEBUG
     case MIDP_JC_ENABLE_ODD_EVENT:
@@ -169,20 +190,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
     case MIDP_JC_EVENT_MULTIMEDIA:
 #if ENABLE_JSR_135
-
-        if( JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED == event->data.multimediaEvent.mediaType ) {
-            pNewSignal->waitingFor = MEDIA_SNAPSHOT_SIGNAL;
-            /*
-            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16)
-                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
-            */
-
-            REPORT_CALL_TRACE1(LC_NONE, "[media event] JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED %d\n",
-                               pNewSignal->descriptor);
-        } else {
-            pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
-        }
-
+        pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
         pNewSignal->status = JAVACALL_OK;
 
         pNewMidpEvent->type         = MMAPI_EVENT;
@@ -270,13 +278,68 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 #endif /* ENABLE_JSR_211 */
 
 #ifdef ENABLE_JSR_290
-    case JSR290_JC_EVENT_FLUID_LOAD_FINISHED:
-        pNewSignal->waitingFor = JSR290_LOAD_FINISH_SIGNAL;
-        pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
-        break;
     case JSR290_JC_EVENT_FLUID_INVALIDATE:
         pNewSignal->waitingFor = JSR290_INVALIDATE_SIGNAL;
-        pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
+        pNewSignal->descriptor = (int)event->data.jsr290FluidEvent.fluid_image;
+        break;
+    case JSR290_JC_EVENT_FLUID_LISTENER_COMPLETED:
+        pNewSignal->waitingFor   = JSR290_LISTENER_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
+        pNewMidpEvent->type      = FLUID_LISTENER_EVENT;
+        pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
+        pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
+        pNewMidpEvent->intParam1 = JSR290_LISTENER_COMPLETED;
+        break;
+    case JSR290_JC_EVENT_FLUID_LISTENER_FAILED:
+        pNewSignal->waitingFor   = JSR290_LISTENER_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
+        pNewMidpEvent->type      = FLUID_LISTENER_EVENT;
+        pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
+        pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
+        pNewMidpEvent->intParam1 = JSR290_LISTENER_FAILED;
+        {
+            int len = 0;
+            if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text, &len)) {
+                len = 0;
+            }
+            pcsl_string_convert_from_utf16(event->data.jsr290FluidEvent.text, len,
+                                           &pNewMidpEvent->stringParam1);
+        }
+        javacall_free(event->data.jsr290FluidEvent.text);
+        break;
+    case JSR290_JC_EVENT_FLUID_LISTENER_PERCENTAGE:
+        pNewSignal->waitingFor   = JSR290_LISTENER_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
+        pNewMidpEvent->type      = FLUID_LISTENER_EVENT;
+        pNewMidpEvent->intParam2 = (int)(((jlong)event->data.jsr290FluidEvent.fluid_image));
+        pNewMidpEvent->intParam3 = (int)(((jlong)event->data.jsr290FluidEvent.fluid_image) >> 32);
+        pNewMidpEvent->intParam1 = JSR290_LISTENER_PERCENTAGE;
+        pNewMidpEvent->intParam4 = *((int*)&event->data.jsr290FluidEvent.percentage);
+        break;
+    case JSR290_JC_EVENT_FLUID_LISTENER_STARTED:
+        pNewSignal->waitingFor   = JSR290_LISTENER_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
+        pNewMidpEvent->type      = FLUID_LISTENER_EVENT;
+        pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
+        pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
+        pNewMidpEvent->intParam1 = JSR290_LISTENER_STARTED;
+        break;
+    case JSR290_JC_EVENT_FLUID_LISTENER_WARNING:
+        pNewSignal->waitingFor   = JSR290_LISTENER_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
+        pNewMidpEvent->type      = FLUID_LISTENER_EVENT;
+        pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
+        pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
+        pNewMidpEvent->intParam1 = JSR290_LISTENER_WARNING;
+        {
+            int len = 0;
+            if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text, &len)) {
+                len = 0;
+            }
+            pcsl_string_convert_from_utf16(event->data.jsr290FluidEvent.text, len,
+                                           &pNewMidpEvent->stringParam1);
+        }
+        javacall_free(event->data.jsr290FluidEvent.text);
         break;
 #endif /* ENABLE_JSR_290 */
 

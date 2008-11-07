@@ -110,6 +110,8 @@ typedef enum {
     MIDP_JC_EVENT_MULTIMEDIA           ,
     MIDP_JC_EVENT_PAUSE                ,
     MIDP_JC_EVENT_RESUME               ,
+    MIDP_JC_EVENT_CHANGE_LOCALE		   ,
+    MIDP_JC_EVENT_VIRTUAL_KEYBOARD	   ,
     MIDP_JC_EVENT_INTERNAL_PAUSE       ,
     MIDP_JC_EVENT_INTERNAL_RESUME      ,
     MIDP_JC_EVENT_TEXTFIELD            ,
@@ -123,7 +125,7 @@ typedef enum {
 #ifdef ENABLE_API_EXTENSIONS
     MIDP_JC_EVENT_VOLUME 			   ,
 #endif /* ENABLE_API_EXTENSIONS */
-    MIDP_JC_EVENT_STATE_CHANGE  	   ,
+    MIDP_JC_EVENT_STATE_CHANGE         ,
     MIDP_JC_EVENT_PHONEBOOK            ,
     MIDP_JC_EVENT_INSTALL_CONTENT      ,
     MIDP_JC_EVENT_SWITCH_FOREGROUND    ,
@@ -135,8 +137,8 @@ typedef enum {
     MIDP_JC_EVENT_SELECT_APP           ,
 #endif /*ENABLE_MULTIPLE_ISOLATES*/
 #ifdef ENABLE_JSR_211
-    JSR211_JC_EVENT_PLATFORM_FINISH      ,
-    JSR211_JC_EVENT_JAVA_INVOKE          ,
+    JSR211_JC_EVENT_PLATFORM_FINISH    ,
+    JSR211_JC_EVENT_JAVA_INVOKE        ,
 #endif
 #if ENABLE_JSR_234
     MIDP_JC_EVENT_ADVANCED_MULTIMEDIA  ,
@@ -146,6 +148,7 @@ typedef enum {
     MIDP_JC_ENABLE_ODD_EVENT           ,
 #endif /* ENABLE_ON_DEVICE_DEBUG */
     MIDP_JC_EVENT_ROTATION             ,
+    MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED,
     MIDP_JC_EVENT_MENU_SELECTION,
     MIDP_JC_EVENT_SET_VM_ARGS          ,
     MIDP_JC_EVENT_SET_HEAP_SIZE        ,
@@ -153,16 +156,19 @@ typedef enum {
     MIDP_JC_EVENT_LIST_STORAGE_NAMES   ,
     MIDP_JC_EVENT_REMOVE_MIDLET        ,
     MIDP_JC_EVENT_DRM_RO_RECEIVED      ,
-    MIDP_JC_EVENT_PEER_CHANGED
-
+    MIDP_JC_EVENT_PEER_CHANGED         ,
 #if ENABLE_JSR_256
-    ,JSR256_JC_EVENT_SENSOR_AVAILABLE  ,
+    JSR256_JC_EVENT_SENSOR_AVAILABLE   ,
     JSR256_JC_EVENT_SENSOR_OPEN_CLOSE  ,
-    JSR256_JC_EVENT_SENSOR_DATA_READY
+    JSR256_JC_EVENT_SENSOR_DATA_READY  ,
 #endif /*ENABLE_JSR_256*/
 #if ENABLE_JSR_290
-    ,JSR290_JC_EVENT_FLUID_LOAD_FINISHED
-    ,JSR290_JC_EVENT_FLUID_INVALIDATE
+    JSR290_JC_EVENT_FLUID_INVALIDATE   ,
+    JSR290_JC_EVENT_FLUID_LISTENER_COMPLETED,
+    JSR290_JC_EVENT_FLUID_LISTENER_FAILED,
+    JSR290_JC_EVENT_FLUID_LISTENER_PERCENTAGE,
+    JSR290_JC_EVENT_FLUID_LISTENER_STARTED,
+    JSR290_JC_EVENT_FLUID_LISTENER_WARNING,
 #endif /*ENABLE_JSR_290*/
 } midp_jc_event_type;
 
@@ -229,6 +235,11 @@ typedef struct {
 typedef struct {
     int            alarmHandle;
 } midp_jc_event_push;
+
+typedef struct {
+    int            hardwareId;
+    int            state;
+} midp_jc_event_display_device;
 
 #ifdef ENABLE_JSR_120
 typedef struct {
@@ -324,8 +335,10 @@ typedef struct {
 
 #ifdef ENABLE_JSR_290
 typedef struct {
-    javacall_handle fluid_image;
-    javacall_result result;
+    javacall_handle             fluid_image;
+    javacall_utf16_string       text;
+    float                       percentage;
+    javacall_result             result;
 } jsr290_jc_event_fluid;
 #endif /* ENABLE_JSR_290 */
 
@@ -377,6 +390,7 @@ typedef struct {
         midp_jc_event_network              networkEvent;
         midp_jc_event_timer                timerEvent;
         midp_jc_event_push                 pushEvent;
+        midp_jc_event_display_device       displayDeviceEvent;
 #ifdef ENABLE_JSR_120
         midp_jc_event_sms_sending_result   smsSendingResultEvent;
         midp_jc_event_sms_incoming         smsIncomingEvent;
@@ -449,6 +463,3 @@ midp_jc_event_send(midp_jc_event_union *event);
 #endif
 
 #endif
-
-
-

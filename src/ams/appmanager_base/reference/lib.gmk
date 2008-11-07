@@ -42,7 +42,8 @@ MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_BASE_IMPL_DIR)/classes
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/AppManagerPeer.java \
     $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/DisplayError.java \
-    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/AppSettings.java \
+    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/AppSettingsImpl.java \
+    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/ValueChoiceImpl.java \
     $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/CaManager.java \
     $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/RunningMIDletSuiteInfo.java
 

@@ -28,8 +28,6 @@ package com.sun.midp.appmanager;
 
 import javax.microedition.lcdui.*;
 
-import com.sun.midp.configurator.Constants;
-
 import com.sun.midp.installer.*;
 import com.sun.midp.main.*;
 import com.sun.midp.midletsuite.*;
@@ -39,8 +37,7 @@ import com.sun.midp.io.j2me.push.PushRegistryInternal;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
-import com.sun.midp.log.Logging;
-import com.sun.midp.log.LogChannels;
+import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.payment.PAPICleanUp;
 
@@ -108,6 +105,10 @@ class AppManagerPeer implements CommandListener {
     public static final String CA_MANAGER =
         "com.sun.midp.appmanager.CaManager";
 
+    /** Constant for the component manager class name */
+    public static final String COMP_MANAGER =
+        "com.sun.midp.appmanager.ComponentManager";
+
     /** Constant for the graphical installer class name. */
     public static final String INSTALLER =
         "com.sun.midp.installer.GraphicalInstaller";
@@ -150,6 +151,9 @@ class AppManagerPeer implements CommandListener {
     /** True, if the CA manager is included. */
     private boolean caManagerIncluded;
 
+    /** True, if the CA manager is included. */
+    private boolean compManagerIncluded;
+    
     /** If there are folders */
     private boolean foldersOn;
 
@@ -162,8 +166,6 @@ class AppManagerPeer implements CommandListener {
     private Command enableOddNoCmd = new Command(Resource.getString
                                            (ResourceConstants.NO),
                                            Command.BACK, 1);
-    
-    
 
     /**
      * Creates and populates the Application Selector Screen.
@@ -182,6 +184,7 @@ class AppManagerPeer implements CommandListener {
         msiVector = new Vector();
         this.displayError = displayError;
         this.manager = manager;
+        
         this.display = display;
         Vector folders = FolderManager.getFolders();
         foldersOn = (folders != null) ? folders.size() > 0 : false;
@@ -189,6 +192,11 @@ class AppManagerPeer implements CommandListener {
             caManagerIncluded = Class.forName(CA_MANAGER) != null;
         } catch (ClassNotFoundException e) {
             // keep caManagerIncluded false
+        }
+        try {
+            compManagerIncluded = Class.forName(COMP_MANAGER) != null;
+        } catch (ClassNotFoundException e) {
+            // keep compManagerIncluded false
         }
 
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
@@ -231,12 +239,11 @@ class AppManagerPeer implements CommandListener {
         } else {
             if (ms != null) {
                 // Find item to select
-                if (ms.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+                if (ms.isInternal()) {
                     for (int i = 0; i < msiVector.size(); i++) {
                         RunningMIDletSuiteInfo mi =
                                 (RunningMIDletSuiteInfo)msiVector.elementAt(i);
-                        if ((mi.suiteId ==
-                                MIDletSuite.INTERNAL_SUITE_ID) &&
+                        if ((mi.isInternal()) &&
                                 mi.midletToRun.equals(ms.midletToRun)) {
                             currentItem = mi;
                             break;
@@ -272,6 +279,27 @@ class AppManagerPeer implements CommandListener {
      */
     public boolean caManagerIncluded() {
         return caManagerIncluded;
+    }
+
+    /**
+     * Returns true, if the CA manager is included.
+     * @return
+     */
+    public boolean compManagerIncluded() {
+        return compManagerIncluded;
+    }
+
+    /**
+     * Shows requested application settings.
+     * @param suiteId suite ID
+     * @param nextScreen displayable that is to be shown
+     *  after settings dialog is dismissed
+     */
+    public void showAppSettings(int suiteId,
+                       Displayable nextScreen)
+            throws MIDletSuiteLockedException, MIDletSuiteCorruptedException {
+        AppSettings appSettings = new AppSettingsImpl(suiteId, display,
+                                                  displayError, nextScreen);
     }
 
     /**
@@ -321,6 +349,7 @@ class AppManagerPeer implements CommandListener {
         } else if (c == enableOddNoCmd) {
             // user doesn't want to enable on device debug, do nothing
         }
+        display.setCurrent(appManagerUI.getMainDisplayable());
     }
 
     /**
@@ -339,6 +368,7 @@ class AppManagerPeer implements CommandListener {
                 !midletClassName.equals(DISCOVERY_APP) &&
                 !midletClassName.equals(INSTALLER) &&
                 !midletClassName.equals(CA_MANAGER) &&
+                !midletClassName.equals(COMP_MANAGER) &&
                 !midletClassName.equals(ODT_AGENT)) {
             appManagerMidlet = midlet;
             appManagerUI.notifyInternalMidletStarted(midlet);
@@ -347,9 +377,9 @@ class AppManagerPeer implements CommandListener {
             for (int i = 0; i < msiVector.size(); i++) {
                 si = (RunningMIDletSuiteInfo)msiVector.elementAt(i);
 
-                if (si.equals(midlet)) {
-                    si.proxy = midlet;
-                    appManagerUI.notifyMidletStarted(si);
+                if (si.sameSuite(midlet)) {
+                    si.addProxy(midlet);
+                    appManagerUI.notifyMidletStarted(si, midletClassName);
                     return;
                 }
             }
@@ -366,8 +396,8 @@ class AppManagerPeer implements CommandListener {
 
         for (int i = 0; i < msiVector.size(); i++) {
             msi = (RunningMIDletSuiteInfo)msiVector.elementAt(i);
-            if (msi.proxy == midlet) {
-                appManagerUI.notifyMidletStateChanged(msi);
+            if (msi.hasProxy(midlet)) {
+                appManagerUI.notifyMidletStateChanged(msi, midlet);
             }
         }
     }
@@ -384,6 +414,7 @@ class AppManagerPeer implements CommandListener {
                 !midletClassName.equals(DISCOVERY_APP) &&
                 !midletClassName.equals(INSTALLER) &&
                 !midletClassName.equals(CA_MANAGER) &&
+                !midletClassName.equals(COMP_MANAGER) &&
                 !midletClassName.equals(ODT_AGENT)) {
             appManagerMidlet = null;
             appManagerUI.notifyInternalMidletExited(midlet);
@@ -393,17 +424,19 @@ class AppManagerPeer implements CommandListener {
             for (int i = 0; i < msiVector.size(); i++) {
                 si = (RunningMIDletSuiteInfo)msiVector.elementAt(i);
 
-                if (si.equals(midlet)) {
-                    si.proxy = null;
+                if (si.hasProxy(midlet)) {
+                    si.removeProxy(midlet);
 
                     appManagerUI.notifyMidletExited(si, midletClassName);
                     
-                    if (si.hasSingleMidlet()) {
-                        manager.notifySuiteExited(si);
+                    if (si.numberOfRunningMidlets() == 0) {
+                        manager.notifySuiteExited(si, null);
                     }
 
-                    if (removeMsi != null && removeMsi.equals(midlet)) {
-                        remove(removeMsi);
+                    // remove the suite scheduled for removal after the midlet has exited
+                    // note that in the case of two running midlets, we must wait till the last midlet exits
+                    if (removeMsi != null && removeMsi.sameSuite(midlet) && !removeMsi.hasRunningMidlet()) {
+                        removeSuite(removeMsi);
                     }
 
                     /*
@@ -425,7 +458,7 @@ class AppManagerPeer implements CommandListener {
                             appManagerUI.notifySuiteInstalled(msi);
                             return;
                         }
-                    } else if (CA_MANAGER.equals(midletClassName)) {
+                    } else if (CA_MANAGER.equals(midletClassName) || COMP_MANAGER.equals(midletClassName)) {
                         updateContent();
                     }
 
@@ -490,27 +523,27 @@ class AppManagerPeer implements CommandListener {
     private void updateContent() {
         int[] suiteIds;
         RunningMIDletSuiteInfo msi = null;
-        boolean newlyAdded;
 
         suiteIds = midletSuiteStorage.getListOfSuites();
 
+        /*
+         * IMPL_NOTE: Sorting MIDlet suite names is up to implementations
+         * of the AppManagerUI interface. AppManagerPeer notifies the UI
+         * via the append() function about added internal MIDlets and
+         * user-added MIDlet suites, and this happens to be "internal
+         * MIDlets first, then user-installed MIDlet suites in the order
+         * of suite IDs", but the UI can sort the suite names on the
+         * screen in any other way.  
+         */
+        
         // Add the Installer as the first installed midlet
-        if (msiVector.size() > 0) {
-            msi = (RunningMIDletSuiteInfo)msiVector.elementAt(0);
-        }
-
-        if (msi == null || msi.midletToRun == null ||
-            !msi.midletToRun.equals(DISCOVERY_APP)) {
+        if (null == findInternalMidletRmsi(DISCOVERY_APP)) {
 
             msi = new RunningMIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
                 DISCOVERY_APP,
                 Resource.getString(ResourceConstants.INSTALL_APPLICATION),
                 true) {
-                    public boolean equals(MIDletProxy midlet) {
-                        if (super.equals(midlet)) {
-                            return true;
-                        }
-
+                    public boolean sameSuite(MIDletProxy midlet) {
                         // there is one exception when 2 midlets belong to the
                         // same icon: Discovery app & Graphical installer.
                         // Graphical Installer can be launched by Discover app
@@ -522,7 +555,10 @@ class AppManagerPeer implements CommandListener {
                         // notifyMidletExited() will not find corresponding
                         // icon in the list of MidletCustomItems.
                         // (that midlet exit will be ignored).
-                        return (INSTALLER.equals(midlet.getClassName()));
+
+                        return sameSuiteId(midlet)
+                            && (INSTALLER.equals(midlet.getClassName())
+                                || DISCOVERY_APP.equals(midlet.getClassName()));
                     }
                 };
 
@@ -531,12 +567,8 @@ class AppManagerPeer implements CommandListener {
 
         if (caManagerIncluded) {
             // Add the CA manager as the second installed midlet
-            if (msiVector.size() > 1) {
-                msi = (RunningMIDletSuiteInfo)msiVector.elementAt(1);
-            }
+            if (null == findInternalMidletRmsi(CA_MANAGER)) {
 
-            if (msi == null || msi.midletToRun == null ||
-                !msi.midletToRun.equals(CA_MANAGER)) {
                 msi = new RunningMIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
                   CA_MANAGER,
                   Resource.getString(ResourceConstants.CA_MANAGER_APP), true);
@@ -544,14 +576,21 @@ class AppManagerPeer implements CommandListener {
             }
         }
 
-        if (oddEnabled) {
-            // Add the ODT Agent midlet as the third installed midlet
-            if (msiVector.size() > 2) {
-                msi = (RunningMIDletSuiteInfo)msiVector.elementAt(2);
-            }
+        if (compManagerIncluded) {
+            // Add the component manager as the next installed midlet
+            if (null == findInternalMidletRmsi(COMP_MANAGER)) {
 
-            if (msi == null || msi.midletToRun == null ||
-                !msi.midletToRun.equals(ODT_AGENT)) {
+                msi = new RunningMIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
+                  COMP_MANAGER,
+                  Resource.getString(ResourceConstants.COMP_MANAGER_APP), true);
+                append(msi);
+            }
+        }
+
+        if (oddEnabled) {
+            // Add the ODT Agent midlet as the next installed midlet
+            if (null == findInternalMidletRmsi(ODT_AGENT)) {
+
                 msi = new RunningMIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
                   ODT_AGENT,
                   Resource.getString(ResourceConstants.ODT_AGENT_MIDLET), true);
@@ -561,7 +600,6 @@ class AppManagerPeer implements CommandListener {
 
         // Add the rest of the installed midlets
         for (int lowest, i = 0; i < suiteIds.length; i++) {
-
             lowest = i;
 
             for (int k = i + 1; k < suiteIds.length; k++) {
@@ -569,59 +607,45 @@ class AppManagerPeer implements CommandListener {
                     lowest = k;
                 }
             }
-
             try {
-                MIDletSuiteInfo temp =
-                    midletSuiteStorage.getMIDletSuiteInfo(suiteIds[lowest]);
 
-                RunningMIDletSuiteInfo suiteInfo =
-                    new RunningMIDletSuiteInfo(temp, midletSuiteStorage);
+                RunningMIDletSuiteInfo updatedMsi =
+                    new RunningMIDletSuiteInfo(
+                            midletSuiteStorage.getMIDletSuiteInfo(suiteIds[lowest]),
+                            midletSuiteStorage);
 
-                newlyAdded = true;
-                for (int k = 0; k < msiVector.size(); k++) {
-                    msi =
-                        (RunningMIDletSuiteInfo)msiVector.elementAt(k);
+                msi = findUserInstalledSuiteRmsi(suiteIds[lowest]);
+                if (null == msi) {
+                    // newly added
+                    append(updatedMsi);
+                    launchSuite(updatedMsi);
+                } else {
+                    MIDletSuiteInfo oldMsi = new MIDletSuiteInfo(msi.suiteId);
+                    oldMsi.copyFieldsFrom(msi);
 
-                    if (suiteIds[lowest] == msi.suiteId) {
-                        newlyAdded = false;
-                        boolean isEnabled = suiteInfo.enabled;
+                    appManagerUI.notifyMIDletSuiteStateChanged(msi, updatedMsi);
 
-                        if (msi.enabled != isEnabled) {
-                            msi.enabled = isEnabled;
+                    msi.copyFieldsFrom(updatedMsi);
 
-                            // MIDlet suite being enabled
-                            appManagerUI.notifyMIDletSuiteEnabled(msi);
-                            // running MIDlets will continue to run
-                            // even when disabled
-                        }
-
-                        // Update all information about the suite;
-                        // if the suite's icon was changed, reload it.
-                        String oldIconName = msi.iconName;
-                        int oldNumberOfMidlets = msi.numberOfMidlets;
-                        MIDletProxy oldProxy = msi.proxy;
-
-                        appManagerUI.notifyMIDletSuiteStateChaged(msi, suiteInfo);
-
-                        msi = suiteInfo;
-                        msi.proxy = oldProxy;
-
-                        if ((suiteInfo.iconName != null &&
-                                !suiteInfo.iconName.equals(oldIconName)) ||
-                            (suiteInfo.iconName == null &&
-                                suiteInfo.numberOfMidlets != oldNumberOfMidlets)
-                        ) {
-                            msi.icon = null;
-                            msi.loadIcon(midletSuiteStorage);
-                            appManagerUI.notifyMIDletSuiteIconChaged(msi);
-                        }
-
-                        break;
+                    // Update all information about the suite;
+                    // if the suite's icon was changed, reload it.
+                    if (oldMsi.enabled != updatedMsi.enabled) {
+                        // MIDlet suite being enabled
+                        appManagerUI.notifyMIDletSuiteEnabled(msi);
+                        // running MIDlets will continue to run
+                        // even when disabled
                     }
-                }
 
-                if (newlyAdded) {
-                    append(suiteInfo);
+                    if ((updatedMsi.iconName != null &&
+                            !updatedMsi.iconName.equals(oldMsi.iconName)) ||
+                        (updatedMsi.iconName == null &&
+                            updatedMsi.numberOfMidlets != oldMsi.numberOfMidlets)
+                    ) {
+                        msi.icon = null;
+                        msi.loadIcon(midletSuiteStorage);
+                        appManagerUI.notifyMIDletSuiteIconChaged(updatedMsi);
+                    }
+
                 }
 
             } catch (Exception e) {
@@ -644,11 +668,60 @@ class AppManagerPeer implements CommandListener {
     }
 
     /**
-     * Removes a midlet from the App Selector Screen
+     * If extended MIDlet attributes support enabled, launch all MIDlets from
+     * the suite that have MIDlet-Launch-Power-On attribute set to true.
+     * <p/>
+     * This method is used during JVM start-up to run all such MIDlets from all
+     * installed suites. The method is also utilzied for newly installed
+     * MIDlets that have the attribute to launch them right after installation
+     * process is completed.
+     *
+     * @param suiteInfo describes the suite
+     */
+    private void launchSuite(RunningMIDletSuiteInfo suiteInfo) {
+        if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+            // IMPL_NOTE: for better performance open suite only one time
+            MIDletSuite suite = MIDletSuiteUtils.getSuite(suiteInfo.suiteId);
+
+            if (suite != null) {
+                /**
+                 * Calling to MIDletSuiteUtils.getSuite locks the
+                 * suite this makes impossible to launch a MIDlet
+                 * from it. So we have to iterate over all MIDlets
+                 * in the suite and remember which of them must be
+                 * started upon JVM start-up.
+                 */
+                int midletsNum = suiteInfo.numberOfMidlets;
+                Vector midletsToStart = new Vector(midletsNum);
+                try {
+                    for (int m = 1; m <= midletsNum; m++) {
+                        String prop = MIDletSuiteUtils.getSuiteProperty(
+                            suite, m, MIDletSuite.LAUNCH_POWER_ON_PROP);
+
+                        if ("yes".equalsIgnoreCase(prop)) {
+                            String className =
+                                MIDletSuiteUtils.getMIDletClassName(suite, m);
+                            midletsToStart.addElement(className);
+                        }
+                    }
+                } finally {
+                    suite.close();
+                }
+
+                for (Enumeration e = midletsToStart.elements();
+                        e.hasMoreElements() ;) {
+                    manager.launchSuite(suiteInfo, (String)e.nextElement());
+                }
+            }
+        }
+    }
+
+    /**
+     * Removes a suite from the App Selector Screen
      *
      * @param suiteInfo the midlet suite info of a recently removed MIDlet
      */
-    public void remove(RunningMIDletSuiteInfo suiteInfo) {
+    public void removeSuite(RunningMIDletSuiteInfo suiteInfo) {
         if (suiteInfo == null) {
             // Invalid parameter, should not happen.
             return;
@@ -660,8 +733,10 @@ class AppManagerPeer implements CommandListener {
             if (msi == suiteInfo) {
                 PAPICleanUp.removeMissedTransaction(suiteInfo.suiteId);
 
-                if (msi.proxy != null) {
-                    msi.proxy.destroyMidlet();
+                while (msi.hasRunningMidlet()) {
+                    MIDletProxy proxy = msi.getFirstProxy();
+                    proxy.destroyMidlet();
+                    msi.removeProxy(proxy);
                 }
 
                 try {
@@ -835,11 +910,17 @@ class AppManagerPeer implements CommandListener {
     }
 
     /**
-     * Searches running midlet suite info for given suite id.
+     * Find a running midlet suite info object for a user-installed suite
+     * with the specified suite id. Since all internal MIDlets share
+     * the same suite id (MIDletSuite.INTERNAL_SUITE_ID), this function
+     * is not meaningful for internal MIDlets.
      * @param suiteId Suite ID to search info for
      * @return the matching info, null if not found.
      */
-    private RunningMIDletSuiteInfo getRunningMidletSuiteInfo(int suiteId) {
+    private RunningMIDletSuiteInfo findUserInstalledSuiteRmsi(int suiteId) {
+        if (suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+            return null;
+        }
         int size = msiVector.size();
         for (int i = 0; i < size; i++) {
             RunningMIDletSuiteInfo info = 
@@ -852,6 +933,25 @@ class AppManagerPeer implements CommandListener {
     }
     
     /**
+     * Find a running midlet suite info object for an internal MIDlet
+     * whose class name is specified as the parameter.
+     * @param midletToRun the class name of the main MIDlet
+     * @return the matching info, null if not found.
+     */
+    private RunningMIDletSuiteInfo findInternalMidletRmsi(String midletToRun) {
+        int size = msiVector.size();
+        for (int i = 0; i < size; i++) {
+            RunningMIDletSuiteInfo info =
+                    (RunningMIDletSuiteInfo) msiVector.elementAt(i);
+            if (info.isInternal() && info.midletToRun.equals(midletToRun)) {
+                return info;
+            }
+        }
+        return null;
+    }
+
+    
+    /**
      * Launches the midlet suite determined by the suite ID.
      * @param suiteId ID of the suite to launch
      * @param midletClassname MIDlet to run, may be null, then will be launched
@@ -859,7 +959,7 @@ class AppManagerPeer implements CommandListener {
      */
     void launchSuite(int suiteId, String midletClassname, boolean isDebugMode) {
 
-        RunningMIDletSuiteInfo msi = getRunningMidletSuiteInfo(suiteId);
+        RunningMIDletSuiteInfo msi = findUserInstalledSuiteRmsi(suiteId);
         if (msi == null) {
             if (midletClassname == null) {
                 /* unknown suite, classname not specified: cannot say what to 
@@ -895,9 +995,10 @@ class AppManagerPeer implements CommandListener {
 
         for (int i = 0; i < msiVector.size(); i++) {
             msi = (RunningMIDletSuiteInfo)msiVector.elementAt(i);
-            if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID &&
-                msi.proxy != null && (DISCOVERY_APP.equals(msi.midletToRun) ||
-                                      INSTALLER.equals(msi.midletToRun))) {
+            if (msi.isInternal() &&
+                msi.hasRunningMidlet() &&
+                    (DISCOVERY_APP.equals(msi.midletToRun) ||
+                     INSTALLER.equals(msi.midletToRun))) {
                 return true;
             }
         }

@@ -27,29 +27,34 @@
 package com.sun.midp.automation;
 
 /**
- * Represents event in event queue.
+ * Represents generic event. Serves as base interface for all specific
+ * event interfaces.
  */
 public interface AutoEvent {
     /**
-     * Waits (blocks) until event reaches specified state.
+     * Gets event type.
      *
-     * @param state state to wait for
+     * @return AutoEventType representing event type
      */
-    public void waitFor(AutoEventState state)
-        throws IllegalStateException;
-        
+    public AutoEventType getType();
+
     /**
-     * Gets current event's state.
+     * Gets string representation of event. The format is following:
+     * <br>&nbsp;&nbsp;
+     * <i>type_name arg1_name: arg1_value, arg2_name: arg2_value, ...</i>
+     * <br>
+     * where <i>arg1_name</i>, <i>arg2_name</i> and so on are event argument 
+     * (properties) names, and <i>arg1_value</i>, <i>arg2_value</i> and so on
+     * are argument values.
+     * <br>
+     * For example:
+     * <br>&nbsp;&nbsp;
+     * <b>pen x: 20, y: 100, state: pressed</b>
+     * <br>
+     * In this example, <b>pen</b> is type name, <b>x</b> and <b>y</b> are 
+     * argument names, and <b>20</b> and <b>100</b> are argument values.
      *
-     * @return AutoEventState representing current
-     * event's state
+     * @return string representation of event
      */
-    public AutoEventState getEventState();
-    
-    /**
-     * Gets event's data.
-     *
-     * @return AutoEventData representing event's data
-     */
-    public AutoEventData getEventData();
+    public String toString();
 }

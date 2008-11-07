@@ -153,10 +153,11 @@ public final class SecurityInitializer {
         "com.sun.midp.jump.isolate.MIDletContainer$SecurityTrusted",
 // #endif ENABLE_CDC
 
-        // #ifdef ENABLE_NATIVE_AMS
+        // #ifdef ENABLE_NATIVE_APP_MANAGER
         // The main security token consumer in the case of native AMS
         "com.sun.midp.main.NativeAppManagerPeer$SecurityTrusted",
-        // #endif ENABLE_NATIVE_AMS
+        "com.sun.midp.installer.InstallerPeerMIDlet$SecurityTrusted",
+        // #endif ENABLE_NATIVE_APP_MANAGER
 
         // #ifdef ENABLE_NAMS_TEST_SERVICE
         "com.sun.midp.main.NamsTestServiceMidlet$SecurityTrusted",
@@ -165,7 +166,7 @@ public final class SecurityInitializer {
         "com.sun.midp.main.TrustedMIDletIcon$SecurityTrusted",
 
         // #ifdef ENABLE_CHAMELEON
-        "com.sun.midp.chameleon.skins.resources.SkinResources$SecurityTrusted",
+        "com.sun.midp.chameleon.skins.resources.SkinResourcesImpl$SecurityTrusted",
         // #endif ENABLE_CHAMELEON
 
         // #ifndef ENABLE_CHAMELEON
@@ -237,6 +238,11 @@ public final class SecurityInitializer {
         "com.sun.jsr211.security.SecurityInitializer$SecurityTrusted",
         "com.sun.j2me.content.CHManagerImpl$SecurityTrusted",
         // #endif ENABLE_JSR_211
+
+        // #ifdef ENABLE_JSR_290
+        "com.sun.fluid.FluidImageImpl$SecurityTrusted",
+        "com.sun.j2me.dom.DOMFactory$SecurityTrusted",
+        // #endif ENABLE_JSR_290
 
         // Pass the security token to the i3 test framework.
         // #ifdef ENABLE_I3_TEST

@@ -33,11 +33,12 @@
  * Javacall NAMS API instead of MIDP NAMS API is created.
  */
 
-#include <javacall_nams.h>
+#include <javacall_native_ams.h>
 
 /**
  * Inform on completion of the previously requested operation.
  *
+ * @param operation code of the completed operation
  * @param appID The ID used to identify the application
  * @param pResult Pointer to a static buffer containing
  *                operation-dependent result
@@ -62,8 +63,8 @@ void javacall_ams_operation_completed(javacall_opcode operation,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_midlet_state_changed(javacall_midlet_state state,
-                                       const javacall_app_id appID,
+void javacall_ams_midlet_state_changed(javacall_lifecycle_state state,
+                                       javacall_app_id appID,
                                        javacall_change_reason reason) {
 }
                                       
@@ -81,23 +82,33 @@ void javacall_ams_midlet_state_changed(javacall_midlet_state state,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_ui_state_changed(javacall_midlet_ui_state state,
-                                   const javacall_app_id appID,
-                                   javacall_change_reason reason) {
+void javacall_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
+                                          javacall_app_id appID,
+                                          javacall_change_reason reason) {
 }
 
 /**
- * Get path name of the directory which holds suite's RMS files 
- * @param suiteID Unique ID of the MIDlet suite
- * @param path  A buffer allocated to contain the returned path name string.
- *                The returned string must be double-'\0' terminated.
- * @param maxPath Buffer length of path
- * @return <tt>JAVACALL_OK</tt> on success, 
+ * Java invokes this function to get path name of the directory which
+ * holds the suite's RMS files.
+ *
+ * The Platform must provide an implementation of this function if the
+ * RMS is on the MIDP side.
+ *
+ * Note that memory for the parameter pRmsPath is allocated
+ * by the callee. The caller is responsible for freeing it
+ * using javacall_free().
+ *
+ * @param suiteId  [in]  unique ID of the MIDlet suite
+ * @param pRmsPath [out] a place to hold a pointer to the buffer containing
+ *                       the returned RMS path string.
+ *                       The returned string must be double-'\0' terminated.
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID, 
-                                          javacall_utf16_string path, 
-                                          int maxPath) {
+javacall_result
+javacall_ams_get_rms_path(javacall_suite_id suiteId,
+                          javacall_utf16_string* pRmsPath) {
     return JAVACALL_OK;
 }
 
@@ -110,8 +121,8 @@ javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID,
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result javacall_ams_get_domain(javacall_suite_id suiteID,
-                                        javacall_ams_domain* pDomain) {
+javacall_result java_ams_get_domain(javacall_suite_id suiteID,
+                                    javacall_ams_domain* pDomain) {
     return JAVACALL_OK;
 }
 
@@ -124,8 +135,8 @@ javacall_result javacall_ams_get_domain(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_get_permissions(javacall_suite_id suiteID,
-                             javacall_ams_permission_set* pPermissions) {
+java_ams_get_permissions(javacall_suite_id suiteID,
+                         javacall_ams_permission_set* pPermissions) {
     return JAVACALL_OK;
 }
 
@@ -138,9 +149,9 @@ javacall_ams_get_permissions(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_set_permission(javacall_suite_id suiteID,
-                            javacall_ams_permission permission,
-                            javacall_ams_permission_val value) {
+java_ams_set_permission(javacall_suite_id suiteID,
+                        javacall_ams_permission permission,
+                        javacall_ams_permission_val value) {
     return JAVACALL_OK;
 }
 
@@ -153,8 +164,8 @@ javacall_ams_set_permission(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_set_permissions(javacall_suite_id suiteID,
-                             javacall_ams_permission_set* pPermissions) {
+java_ams_set_permissions(javacall_suite_id suiteID,
+                         javacall_ams_permission_set* pPermissions) {
     return JAVACALL_OK;
 }
 
@@ -168,10 +179,10 @@ javacall_ams_set_permissions(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_get_suite_property(const javacall_suite_id suiteID,
-                                const javacall_utf16_string key,
-                                javacall_utf16_string value,
-                                int maxValue) {
+java_ams_get_suite_property(javacall_suite_id suiteID,
+                            javacall_const_utf16_string key,
+                            javacall_utf16_string value,
+                            int maxValue) {
     return JAVACALL_OK;
 }
 
@@ -185,9 +196,9 @@ javacall_ams_get_suite_property(const javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
-                          const javacall_utf16_string suiteName,
-                          javacall_suite_id* pSuiteID) {
+java_ams_get_suite_id(javacall_const_utf16_string vendorName,
+                      javacall_const_utf16_string suiteName,
+                      javacall_suite_id* pSuiteID) {
     return JAVACALL_OK;
 }
 
@@ -201,8 +212,7 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_get_resource_cache_path(const javacall_suite_id suiteID,
-                                     javacall_utf16_string cachePath,
-                                     int cachePathLen) {
+javacall_ams_get_resource_cache_path(javacall_suite_id suiteID,
+                                     javacall_utf16_string* pCachePath) {
     return JAVACALL_OK;
 }

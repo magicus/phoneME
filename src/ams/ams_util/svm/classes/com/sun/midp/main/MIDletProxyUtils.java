@@ -68,6 +68,17 @@ public class MIDletProxyUtils {
     }
 
     /**
+     * Loads extended MIDlet attributes accessed during MIDlet execution
+     * (not the ones that used during MIDlet's start up only) then saves
+     * them to MIDletProxy instance to reach better performance.
+     *
+     * @param mp MIDletProxy for running MIDlet to load and cache
+     *           extended attributes for
+     */
+    public static void setupExtendedAttributes(MIDletProxy mp) {
+    }
+
+    /**
      * Requests VM to stop.
      */
     private static native void requestVMStop();

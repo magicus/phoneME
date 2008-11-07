@@ -55,6 +55,7 @@
 # LD            - Linker command
 # CC            - Compiler command
 # KDP_CMD       - Command for the CLDC Debug Proxy
+# MEMPROF_CMD   - Command for the CLDC memory profiler client
 #
 # Other variables that may be defined elsewhere:
 #
@@ -113,6 +114,18 @@ MIDP_CLASSES_ZIP ?= $(MIDP_OUTPUT_DIR)/classes.zip
 ifeq ($(TARGET_VM), cdc_vm)
    ifneq ($(CVM_STATICLINK_LIBS), true)
       MIDP_SHARED_LIB ?= $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
+      MIDP_SHARED_LIB_FILES += $(OBJLIB)
+      CREATE_MIDP_SHARED_LIB = true
+   endif
+else
+   MIDP_LIB_NAME ?= $(LIB_PREFIX)midp
+   ifeq ($(CREATE_MIDP_SHARED_LIB),true)
+      MIDP_SHARED_LIB = $(BINDIR)/$(MIDP_LIB_NAME)$(SHARED_LIB_SUFFIX)
+      MIDP_SHARED_LIB_FILES += $(OBJLIB) $(AMS_RUNMIDLET_OBJ_FILES)
+   endif
+   ifeq ($(CREATE_MIDP_LIB),true)
+      MIDP_LIB = $(BINDIR)/$(MIDP_LIB_NAME)$(LIB_SUFFIX)
+      MIDP_LIB_FILES += $(OBJLIB) $(AMS_RUNMIDLET_OBJ_FILES)
    endif
 endif
 
@@ -173,6 +186,9 @@ JAVADOC_CMD  = $(JDK_DIR)/bin/javadoc$(EXE)
 ifeq ($(TARGET_VM), cldc_vm)
    PREVERIFY_CMD        = $(BINDIR)/preverify$(EXE)
    KDP_CMD              = $(BINDIR)/kdp.jar
+   ifeq ($(ENABLE_MEMORY_PROFILER), true)
+     MEMPROF_CMD        = $(BINDIR)/memprof_client.jar
+   endif
    J2ME_CONFIGURATION   = cldc
    EXTRA_CFLAGS        += -DENABLE_CDC=0
 else
@@ -233,15 +249,21 @@ else
    EXTRA_CFLAGS += -DENABLE_MULTIPLE_ISOLATES=0
 endif
 
+ifeq ($(USE_MULTIPLE_DISPLAYS), true)
+   EXTRA_CFLAGS += -DENABLE_MULTIPLE_DISPLAYS=1
+else
+   EXTRA_CFLAGS += -DENABLE_MULTIPLE_DISPLAYS=0
+endif
+
 ifeq ($(USE_JAVA_DEBUGGER), true)
    EXTRA_CFLAGS += -DENABLE_JAVA_DEBUGGER=1
-else
+else               
    EXTRA_CFLAGS += -DENABLE_JAVA_DEBUGGER=0
 endif
 
-ifeq ($(USE_NATIVE_AMS), true)
-   EXTRA_CFLAGS += -DENABLE_NATIVE_AMS=1
-   JPP_DEFS	+= -DENABLE_NATIVE_AMS
+ifeq ($(USE_NATIVE_APP_MANAGER), true)
+   EXTRA_CFLAGS += -DENABLE_NATIVE_APP_MANAGER=1
+   JPP_DEFS	+= -DENABLE_NATIVE_APP_MANAGER
 
 ifeq ($(USE_NAMS_TEST_SERVICE), true)
    EXTRA_CFLAGS += -DENABLE_NAMS_TEST_SERVICE=1
@@ -249,9 +271,35 @@ ifeq ($(USE_NAMS_TEST_SERVICE), true)
 else
    EXTRA_CFLAGS += -DENABLE_NAMS_TEST_SERVICE=0
 endif
-   
+
+# Remove the WTK dependency when building with Native App. Manager
+ifeq ($(MIDP_BIN_TARGET), wtk)
+    MIDP_BIN_TARGET=
+endif
+
 else
-   EXTRA_CFLAGS += -DENABLE_NATIVE_AMS=0 -DENABLE_NAMS_TEST_SERVICE=0
+   EXTRA_CFLAGS += -DENABLE_NATIVE_APP_MANAGER=0 -DENABLE_NAMS_TEST_SERVICE=0
+endif
+
+ifeq ($(USE_NATIVE_INSTALLER), true)
+   EXTRA_CFLAGS += -DENABLE_NATIVE_INSTALLER=1
+   JPP_DEFS	+= -DENABLE_NATIVE_INSTALLER
+else   
+   EXTRA_CFLAGS += -DENABLE_NATIVE_INSTALLER=0
+endif
+
+ifeq ($(USE_NATIVE_SUITE_STORAGE), true)
+   EXTRA_CFLAGS += -DENABLE_NATIVE_SUITE_STORAGE=1
+   JPP_DEFS	+= -DENABLE_NATIVE_SUITE_STORAGE
+else   
+   EXTRA_CFLAGS += -DENABLE_NATIVE_SUITE_STORAGE=0
+endif
+
+ifeq ($(USE_NATIVE_RMS), true)
+   EXTRA_CFLAGS += -DENABLE_NATIVE_RMS=1
+   JPP_DEFS	+= -DENABLE_NATIVE_RMS
+else   
+   EXTRA_CFLAGS += -DENABLE_NATIVE_RMS=0
 endif
 
 ifeq ($(USE_NATIVE_PTI), true)
@@ -431,16 +479,16 @@ override GENERATED_JAVA_LIST=$(MIDP_OUTPUT_DIR)/genjavalist.txt
 # This is not guaranteed to help in all cases, but at least reduce the 
 # possibility of it happening.
 define appendfiles
-    @if [ $(words $?) -gt 200 ]; then \
-        echo "ERROR: Java files list exceeds 200 words limit."; \
+    @if [ $(words $?) -gt 250 ]; then \
+        echo "ERROR: Java files list exceeds 250 words limit."; \
         echo "To increase the limit, edit appendfiles variable definition in Defs.gmk"; \
         exit 1; \
     fi
-    @_javalist="$(wordlist 1,100,$?)"; \
+    @_javalist="$(wordlist 1,125,$?)"; \
     if [ -n "$$_javalist" ]; then \
         echo "$$_javalist" >> $(1); \
     fi
-    @_javalist="$(wordlist 101,200,$?)"; \
+    @_javalist="$(wordlist 126,250,$?)"; \
     if [ -n "$$_javalist" ]; then \
         echo "$$_javalist" >> $(1); \
     fi

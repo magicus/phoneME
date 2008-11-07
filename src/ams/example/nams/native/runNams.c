@@ -109,7 +109,7 @@ static SuiteIdType suiteIDToRun = UNUSED_SUITE_ID;
 static pcsl_string classNameToRun = PCSL_STRING_NULL_INITIALIZER;
 static pcsl_string* const aclassNameToRun = &classNameToRun;
 static SuiteIdType* pSuiteIds = NULL;
-static jint numberOfSuiteIds = 0;
+static int numberOfSuiteIds = 0;
 static jint *pSuiteRunState = NULL;
 static jint foregroundAppId = 0;
 
@@ -716,8 +716,6 @@ static MIDPError runMainClass(int argc, char* argv[]) {
  */
 int runNams(int argc, char* argv[]) {
     MIDPError status;
-    char* appDir;
-    char* confDir;
     int used;
     int savedArgc;
     char **savedArgv;
@@ -725,24 +723,6 @@ int runNams(int argc, char* argv[]) {
 
     savedArgc = argc;
     savedArgv = argv;
-
-    /* For development platforms MIDP_HOME is dynamic. */
-    appDir = getApplicationDir(argv[0]);
-    if (appDir == NULL) {
-        /* getApplicationDir has already issued an error message */
-        return -1;
-    }
-
-    /* set up appDir before calling midp_system_start */
-    midpSetAppDir(appDir);
-
-    /* get midp configuration directory, set it */
-    confDir = getConfigurationDir(argv[0]);
-    if (confDir == NULL) {
-        return -1;
-    }
-
-    midpSetConfigDir(confDir);
 
     /* initialize the system */
     status = midp_system_initialize();

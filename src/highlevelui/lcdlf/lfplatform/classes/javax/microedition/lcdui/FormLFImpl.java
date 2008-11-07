@@ -313,8 +313,8 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
         super.uCallInvalidate();
 
-        int new_width = Display.getScreenWidth0();
-        int new_height = Display.getScreenHeight0();
+        int new_width = currentDisplay.width; 
+        int new_height = currentDisplay.height; 
 
         // It could be that setCurrentItem() was called and we
         // have done an 'artificial' traversal. In this case, we
@@ -361,7 +361,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         // 2. We are on event dispatch thread, call paint synchronously.
         // 3. Since we could call into app's functions, like traverse(),
         //    showNotify() and paint(), do this outside LCDUILock block.
-        currentDisplay.callPaint(0, 0, width, height, null);
+        currentDisplay.callPaint(0, 0, width, height, null);        
     }
 
     /**

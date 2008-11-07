@@ -87,4 +87,13 @@ public class ComponentInfoImpl implements ComponentInfo {
         b.append(", trusted = " + trusted);
         return b.toString();
     }
+
+
+    /**
+     * Returns the display name of the component
+     * @return user-friendly name of the component
+     */
+    public String getDisplayName() {
+        return displayName;
+    }
 }

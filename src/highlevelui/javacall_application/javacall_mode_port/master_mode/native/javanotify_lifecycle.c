@@ -37,11 +37,14 @@ extern "C" {
 #include <midp_logging.h>
 #include <localeMethod.h>
 #include <midp_jc_event_defs.h>
+#include <midp_properties_port.h>
 
 #include <javacall_events.h>
 #include <javacall_lifecycle.h>
 #include <javacall_time.h>
 #include <javautil_unicode.h>
+
+#define LOCALE "microedition.locale"
 
 char urlAddress[BINARY_BUFFER_MAX_LEN];
 static char localResAddress[BINARY_BUFFER_MAX_LEN];
@@ -174,17 +177,37 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
     }
 
 
-    if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
-        data->argv[data->argc++] = "untrusted";
-    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
-        data->argv[data->argc++] = "trusted";
-    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
-        data->argv[data->argc++] = "minimum";
-    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
-        data->argv[data->argc++] = "maximum";
-    } else {
+    switch (domain_type) {
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED: 
+        data->argv[data->argc] = "untrusted";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED:
+        data->argv[data->argc] = "trusted";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN:
+        data->argv[data->argc] = "minimum";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX:
+        data->argv[data->argc] = "maximum";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_MANUFACTURER:
+        data->argv[data->argc] = "manufacturer";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_OPERATOR:
+        data->argv[data->argc] = "operator";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_IDENTIFIED:
+        data->argv[data->argc] = "identified_third_party";
+        break;
+    case JAVACALL_LIFECYCLE_TCK_DOMAIN_UNIDENTIFIED:
+        data->argv[data->argc] = "unidentified_third_party";
+        break;
+    default:
+        REPORT_ERROR(LC_CORE, "javanotify_start_tck() Can not recognize TCK domain\n");
+        REPORT_ERROR1(LC_CORE, "TCK domain type is %d. System will now exit\n", domain_type);
         return;
     }
+    data->argc++;
 
     midp_jc_event_send(&e);
 }
@@ -677,6 +700,47 @@ void javanotify_resume(void) {
     REPORT_INFO(LC_CORE, "javanotify_resume() >>\n");
 
     e.eventType = MIDP_JC_EVENT_RESUME;
+
+    midp_jc_event_send(&e);
+}
+
+/**
+ * Decode integer parameters to locale string
+ */
+void decodeLanguage(char* str, short languageCode, short regionCode) {
+    int i;
+
+    str[1] = (languageCode & 0xFF);
+    languageCode >>= 8;
+
+    str[0] = (languageCode & 0xFF);
+    languageCode >>= 8;
+
+    str[2] = '-';
+
+    str[4] = (regionCode & 0xFF);
+    regionCode >>= 8;
+
+    str[3] = (regionCode & 0xFF);
+    regionCode >>= 8;
+
+    str[5] = '\0';
+}
+
+/**
+ * The platform should invoke this function for locale changing
+ */
+void javanotify_change_locale(short languageCode, short regionCode) {
+    const char tmp[6];
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_change_locale() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_CHANGE_LOCALE;
+
+    decodeLanguage(tmp, languageCode, regionCode);
+
+    setSystemProperty(LOCALE, tmp);
 
     midp_jc_event_send(&e);
 }

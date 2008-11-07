@@ -62,6 +62,8 @@ typedef struct _MIDPCommandState {
     pcsl_string midletClassName;
     /** Has the application manager MIDlet displayed the Java logo yet? */
     jboolean logoDisplayed;
+    /** true, if VM has been restarted to let next MIDlet run **/
+    jboolean vmRestarted;
     /** The ID of suite to load when there is no other queued. */
     SuiteIdType lastSuiteId;
     /** The MIDlet class name for the suite to load. */

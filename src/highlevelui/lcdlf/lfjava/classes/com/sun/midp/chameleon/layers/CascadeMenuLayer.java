@@ -190,8 +190,7 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
         // return 'true' indicating it has handled the key
         // event except for the soft button keys for which it
         // returns 'false'
-        
-        if (keyCode == EventConstants.SOFT_BUTTON1 || 
+    	if (keyCode == EventConstants.SOFT_BUTTON1 || 
             keyCode == EventConstants.SOFT_BUTTON2) {
             return false;
         }
@@ -206,20 +205,28 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
                 if (selI < scrollIndex && scrollIndex > 0) {
                     scrollIndex--;
                 }
-                updateScrollIndicator();
-                requestRepaint();
+            } else {
+                selI = menuCmds.length - 1; 
+                scrollIndex = menuCmds.length - MenuSkin.MAX_ITEMS;
+                scrollIndex = (scrollIndex > 0) ? scrollIndex : 0;
             }
+            updateScrollIndicator();
+            requestRepaint();
         } else if (keyCode == Constants.KEYCODE_DOWN) {
             if (selI < (menuCmds.length - 1)) {
                 selI++;
                 if (selI >= MenuSkin.MAX_ITEMS &&
                     scrollIndex < (menuCmds.length - MenuSkin.MAX_ITEMS))
                 {
-                        scrollIndex++;
-                } 
-                updateScrollIndicator();
-                requestRepaint();
+                    scrollIndex++;
+                }
+                
+            } else {
+                selI = 0;
+                scrollIndex = 0;
             }
+            updateScrollIndicator();
+            requestRepaint();
         } else if (keyCode == Constants.KEYCODE_RIGHT) {
             menuLayer.dismissCascadeMenu();
         } else if (keyCode == Constants.KEYCODE_SELECT) {
@@ -292,17 +299,20 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
     }
         
     protected void alignMenu() {
+	if (owner == null)
+	    return;
         switch (MenuSkin.ALIGN_X) {
-            case Graphics.LEFT:
-                bounds[X] = 0;
-                break;
-            case Graphics.HCENTER:
-                bounds[X] = (ScreenSkin.WIDTH - bounds[W]) / 2;
-                break;
-            case Graphics.RIGHT:
+	case Graphics.LEFT:
+	    bounds[X] = 0;
+	    break;
+	case Graphics.HCENTER:
+	    bounds[X] = (owner.bounds[W] - bounds[W]) / 2;
+	    
+	    break;
+	case Graphics.RIGHT:
             default:
-                bounds[X] = ScreenSkin.WIDTH - bounds[W] - MenuSkin.WIDTH + 5;
-                break;
+		
+		break;
         }
         if (bounds[X] < 0) {
             bounds[X] = 0;
@@ -312,13 +322,13 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
                 bounds[Y] = 0;
                 break;
             case Graphics.VCENTER:
-                bounds[Y] = (ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                    bounds[H]) / 2;
+		bounds[Y] = (owner.bounds[H] - SoftButtonSkin.HEIGHT -
+				 bounds[H]) / 2;
                 break;
             case Graphics.BOTTOM:
             default:
-                bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                    bounds[H];
+		bounds[Y] = owner.bounds[H] - SoftButtonSkin.HEIGHT -
+		    bounds[H];
                 break;
         }
         if (bounds[Y] < 0) {
@@ -409,5 +419,7 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
     public void update(CLayer[] layers) {
         alignMenu();
     }
+
+
 }
 

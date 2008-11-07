@@ -71,6 +71,10 @@ public class Manager extends MIDlet implements ApplicationManager,
     private static final String CA_MANAGER =
         "com.sun.midp.appmanager.CaManager";
 
+    /** Constant for the component manager class name. */
+    private static final String COMP_MANAGER =
+        "com.sun.midp.appmanager.ComponentManager";
+
     /** Constant for the ODT Agent class name. */
     private static final String ODT_AGENT =
         "com.sun.midp.odd.ODTAgentMIDlet";
@@ -252,6 +256,20 @@ public class Manager extends MIDlet implements ApplicationManager,
     }
 
     /**
+     * Launch the component manager.
+     */
+    public void launchComponentManager() {
+        try {
+            MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID,
+                COMP_MANAGER,
+                Resource.getString(ResourceConstants.COMP_MANAGER_APP));
+        } catch (Exception ex) {
+            displayError.showErrorAlert(Resource.getString(
+                ResourceConstants.COMP_MANAGER_APP), ex, null, null);
+        }
+    }
+
+    /**
      * Launch ODT Agent.
      */
     public void launchODTAgent() {
@@ -335,23 +353,26 @@ public class Manager extends MIDlet implements ApplicationManager,
      * foreground.
      *
      * @param suiteInfo information for the midlet to be put to foreground
+     * @param className the running MIDlet class name
      */
-    public void moveToForeground(RunningMIDletSuiteInfo suiteInfo) {}
+    public void moveToForeground(RunningMIDletSuiteInfo suiteInfo, String className) {}
 
 
     /**
      * Exit the midlet with the passed in midlet suite info.
      *
      * @param suiteInfo information for the midlet to be terminated
+     * @param className the running MIDlet class name
      */
-    public void exitMidlet(RunningMIDletSuiteInfo suiteInfo) {}
+    public void exitMidlet(RunningMIDletSuiteInfo suiteInfo, String className) {}
 
     /**
      * Handle exit of MIDlet suite (the only MIDlet in sute exited or MIDlet
      * selector exited).
      * @param suiteInfo Containing ID of exited suite
+     * @param className the running MIDlet class name
      */
-    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {}
+    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {}
     
     // ==============================================================
     // ----------------- PRIVATE methods ---------------------------
@@ -380,7 +401,7 @@ public class Manager extends MIDlet implements ApplicationManager,
                     getClass().getName(), null, null);
         } else {
             String midletToRun = null;
-            if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+            if (msi.isInternal()) {
                 midletToRun = msi.midletToRun;
             }
             MIDletSuiteUtils.setLastSuiteToRun(MIDletStateHandler.

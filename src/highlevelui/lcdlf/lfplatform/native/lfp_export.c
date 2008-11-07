@@ -42,36 +42,36 @@ extern "C" {
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-void lcdlf_refresh(int x, int y, int w, int h) {
-  lfpport_refresh(x, y, w, h);
+void lcdlf_refresh(int hardwareId, int x, int y, int w, int h) {
+  lfpport_refresh(hardwareId, x, y, w, h);
 }
 
 /**
  * Change screen orientation flag
  */
-jboolean lcdlf_reverse_orientation() {
-  return lfpport_reverse_orientation();
+jboolean lcdlf_reverse_orientation(int hardwareId) {
+  return lfpport_reverse_orientation(hardwareId);
 }
 
 /**
  * Change screen orientation flag
  */
-jboolean lcdlf_get_reverse_orientation() {
-  return lfpport_get_reverse_orientation();
+jboolean lcdlf_get_reverse_orientation(int hardwareId) {
+  return lfpport_get_reverse_orientation(hardwareId);
 }
 
 /**
  * Return screen width
  */
-int lcdlf_get_screen_width() {
-  return lfpport_get_screen_width();
+int lcdlf_get_screen_width(int hardwareId) {
+  return lfpport_get_screen_width(hardwareId);
 }
 
 /**
  *  Return screen height
  */
-int lcdlf_get_screen_height() {
-  return lfpport_get_screen_height();
+int lcdlf_get_screen_height(int hardwareId) {
+  return lfpport_get_screen_height(hardwareId);
 }
 
 /**
@@ -79,15 +79,15 @@ int lcdlf_get_screen_height() {
  *
  * @param mode The screen mode
  */
-void lcdlf_set_fullscreen_mode(jboolean mode) {
-  lfpport_set_fullscreen_mode(mode);
+void lcdlf_set_fullscreen_mode(int hardwareId, jboolean mode) {
+  lfpport_set_fullscreen_mode(hardwareId, mode);
 }
 
 /**
  * Resets native resources when foreground is gained by a new display.
  */
-void lcdlf_gained_foreground() {
-  lfpport_gained_foreground();
+void lcdlf_gained_foreground(int hardwareId) {
+  lfpport_gained_foreground(hardwareId);
 }
 
 /**
@@ -120,10 +120,76 @@ void lcdlf_ui_finalize() {
  * @param height The height to be flushed
  * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
  */
-jboolean lcdlf_direct_flush(const java_graphics *g, 
+jboolean lcdlf_direct_flush(int hardwareId, const java_graphics *g, 
 			    const java_imagedata *offscreen_buffer, int h) {
-  return lfpport_direct_flush(g, offscreen_buffer, h);
+  return lfpport_direct_flush(hardwareId, g, offscreen_buffer, h);
 }
+
+
+/**
+ * get currently enabled hardware display id
+ */
+int lcdlf_get_current_hardwareId() {
+    return 0; 
+}
+
+/** 
+ * Get display device name by id
+ */
+char * lcdlf_get_display_name(int hardwareId) {
+    return lfpport_get_display_name(hardwareId);
+}
+
+/**
+ * Check if the display device is primary
+ */
+jboolean lcdlf_is_display_primary(int hardwareId) {
+    return lfpport_is_display_primary(hardwareId);
+}
+
+/**
+ * Check if the display device is build-in
+ */
+jboolean lcdlf_is_display_buildin(int hardwareId) {
+    return lfpport_is_display_buildin(hardwareId);
+}
+
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean lcdlf_is_display_pen_supported(int hardwareId) {
+    return lfpport_is_display_pen_supported(hardwareId);
+}
+
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean lcdlf_is_display_pen_motion_supported(int hardwareId) {
+  return lfpport_is_display_pen_motion_supported(hardwareId);
+}
+/**
+ * Get display device capabilities
+ */
+int lcdlf_get_display_capabilities(int hardwareId) {
+    return lfpport_get_display_capabilities(hardwareId);
+}
+
+/**
+ * Get the list of display device ids
+ */
+jint* lcdlf_get_display_device_ids(jint* n) {
+    return lfpport_get_display_device_ids(n);
+}
+
+/**
+* Notify that display device state has ben changed
+*/
+void lcdlf_display_device_state_changed(int hardwareId, int state) {
+    lfpport_display_device_state_changed(hardwareId, state);
+}
+
+
 #ifdef __cplusplus
 }
 #endif

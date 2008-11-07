@@ -94,7 +94,7 @@
  * @param message detail message to go with the report
  *                should not be NULL
  */
-void reportToLog(int severity, int channelID, int isolateID, char* message, ...) {
+void reportToLog(int severity, int channelID, char* message, ...) {
     va_list ap;
     
     if(message == NULL) {
@@ -103,7 +103,7 @@ void reportToLog(int severity, int channelID, int isolateID, char* message, ...)
 
     if(get_allowed_severity_c(channelID) <= severity) {
         va_start(ap, message);
-        javautil_vprintf(severity, channelID, isolateID, message, ap);
+        javautil_vprintf(severity, channelID, GET_ISOLATE_ID, message, ap);
         va_end(ap);
     }
 }

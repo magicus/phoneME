@@ -55,4 +55,11 @@ public interface ComponentInfo {
      * For debug only.
      */
     public String toString();
+
+
+    /**
+     * Returns the display name of the component
+     * @return user-friendly name of the component
+     */
+    String getDisplayName();
 }

@@ -58,11 +58,18 @@ void JavaTask(void) {
     javacall_bool JavaTaskIsGoOn = JAVACALL_TRUE;
     long timeTowaitInMillisec = -1;
     int outEventLen;
+    int main_memory_chunk_size;
+
+    /* Get java heap memory size */
+    main_memory_chunk_size = getInternalPropertyInt("MAIN_MEMORY_CHUNK_SIZE");
+    if (main_memory_chunk_size == 0) {
+	main_memory_chunk_size = -1;
+    }
 
     /* Outer Event Loop */
     while (JavaTaskIsGoOn) {
 
-        if (midpInitializeMemory(-1) != 0) {
+        if (midpInitializeMemory(main_memory_chunk_size) != 0) {
             REPORT_CRIT(LC_CORE,"JavaTask() >> midpInitializeMemory()  Not enough memory.\n");
             break;
         }

@@ -44,6 +44,7 @@ extern "C" {
 #include <javacall_datagram.h>
 #include <javacall_events.h>
 #include <javacall_input.h>
+
 #include <javacall_keypress.h>
 #include <javacall_network.h>
 #include <javacall_penevent.h>
@@ -51,6 +52,8 @@ extern "C" {
 #include <javacall_socket.h>
 #include <javacall_time.h>
 #include <javautil_unicode.h>
+#include <javacall_memory.h>
+#include <javacall_lcd.h>
 
 #ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
@@ -82,6 +85,7 @@ extern "C" {
 #endif /* ENABLE_ON_DEVICE_DEBUG */
 
 #define MAX_PHONE_NUMBER_LENGTH 48
+
 static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
 
 /**
@@ -138,23 +142,24 @@ void javanotify_alarm_expiration() {
     midp_jc_event_send(&e);
 }
 
-
-
- /**
+/**
  * A callback function to be called for notification of network
  * conenction related events, such as network going down or up.
  * The platform will invoke the call back in platform context.
- * @param event the type of network-related event that occured
- *              JAVACALL_NETWORK_DOWN if the network became unavailable
- *              JAVACALL_NETWORK_UP if the network is now available
  *
+ * @param isInit 0 if the network finalization has been finished,
+ *               not 0 - if the initialization
+ * @param status one of PCSL_NET_* completion codes
  */
-void javanotify_network_event(javacall_network_event netEvent) {
+void jcapp_network_event_received(int isInit, int status) {
     midp_jc_event_union e;
 
-    REPORT_INFO(LC_CORE, "javanotify_network_event() >>\n");
+    REPORT_INFO(LC_CORE, "jc_network_event() >>\n");
+
+    (void)status;
+    
     e.eventType = MIDP_JC_EVENT_NETWORK;
-    if (netEvent == JAVACALL_NETWORK_UP) {
+    if (isInit) {
         e.data.networkEvent.netType = MIDP_NETWORK_UP;
     } else {
         e.data.networkEvent.netType = MIDP_NETWORK_DOWN;
@@ -489,6 +494,7 @@ void javanotify_socket_event(javacall_socket_callback_type type,
     midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_socket_event() >>\n");
+
     e.eventType = MIDP_JC_EVENT_SOCKET;
     e.data.socketEvent.handle = socket_handle;
     e.data.socketEvent.status = operation_result;
@@ -603,6 +609,7 @@ void javanotify_datagram_event(javacall_datagram_callback_type type,
     midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_datagram_event() >>\n");
+
     e.eventType = MIDP_JC_EVENT_SOCKET;
     e.data.socketEvent.handle = handle;
     e.data.socketEvent.status = operation_result;
@@ -680,9 +687,19 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
     case JAVACALL_EVENT_AMMS_SNAP_SHOOTING_STOPPED:
     case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
         {
-            size_t size = sizeof( javacall_utf16 ) * ( 1 + wcslen( (javacall_utf16_string)data ) );
-            e.data.multimediaEvent.data.str16 = (javacall_utf16_string)malloc( size );
-            wcscpy( e.data.multimediaEvent.data.str16, (javacall_utf16_string)data );
+            int i = 0;
+            size_t size = 0;
+            javacall_utf16_string str16 = ( javacall_utf16_string )data;
+            
+            javautil_unicode_utf16_utf8length( str16, &size );
+            ++size;
+            
+            e.data.multimediaEvent.data.str16 = ( javacall_utf16_string )
+                javacall_malloc( size * sizeof( javacall_utf16 ) );
+            for( i = 0; i < size; i++ )
+            {
+                e.data.multimediaEvent.data.str16[i] = str16[i];
+            }
         }
         break;
     default:
@@ -720,20 +737,20 @@ void javanotify_on_image_decode_end(javacall_handle handle, javacall_result resu
 #endif
 }
 
+#ifdef ENABLE_JSR_75
 /**
  * A callback function to be called by the platform in order to notify
  * about changes in the available file system roots (new root was added/
  * a root on removed).
  */
 void javanotify_fileconnection_root_changed(void) {
-#ifdef ENABLE_JSR_75
     midp_jc_event_union e;
     REPORT_INFO(LC_CORE, "javanotify_fileconnection_root_changed() >>\n");
     e.eventType = JSR75_FC_JC_EVENT_ROOTCHANGED;
 
     midp_jc_event_send(&e);
-#endif
 }
+#endif
 
 #ifdef ENABLE_JSR_179
 /**
@@ -831,25 +848,6 @@ void /*OPTIONAL*/javanotify_location_proximity(
 #endif /* ENABLE_JSR_179 */
 
 #ifdef ENABLE_JSR_211
-
-/*
- * Copies source javacall_utf16_string string into newly allocated memory buffer
- * @param src source javacall_utf16_string
- * @return pointer to newly allocated memory containing copy of source string
- */
-static javacall_utf16_string
-copy_jc_utf16_string(javacall_const_utf16_string src) {
-    javacall_int32 length = 0;
-    javacall_utf16_string result;
-    if( src == NULL ) return NULL;
-    if (JAVACALL_OK != javautil_unicode_utf16_ulength (src, &length)) {
-        length = 0;
-    }
-    result = javacall_calloc((unsigned int)length + 1, sizeof(javacall_utf16));
-    memcpy(result, src, ((unsigned int)length + 1) * sizeof(javacall_utf16));
-    return result;
-}
-
 /*
  * Called by platform to notify java VM that invocation of native handler
  * is finished. This is <code>ContentHandlerServer.finish()</code> substitute
@@ -885,7 +883,7 @@ void javanotify_chapi_platform_finish(
         e.data.jsr211PlatformEvent.jsr211event->handler_id = NULL;
 
         inv = &e.data.jsr211PlatformEvent.jsr211event->invocation;
-        inv->url               = copy_jc_utf16_string (url);
+        inv->url               = javautil_wcsdup (url);
         inv->type              = NULL;
         inv->action            = NULL;
         inv->invokingAppName   = NULL;
@@ -897,7 +895,7 @@ void javanotify_chapi_platform_finish(
             javacall_calloc (sizeof(javacall_utf16_string), inv->argsLen);
         if (NULL != inv->args) {
             for (i = 0; i < inv->argsLen; i++) {
-                inv->args[i] = copy_jc_utf16_string(args[i]);
+                inv->args[i] = javautil_wcsdup(args[i]);
             }
         }
         inv->dataLen           = dataLen;
@@ -934,26 +932,26 @@ void javanotify_chapi_java_invoke(
         javacall_malloc (sizeof(*e.data.jsr211PlatformEvent.jsr211event));
     if (NULL != e.data.jsr211PlatformEvent.jsr211event) {
         e.data.jsr211PlatformEvent.jsr211event->handler_id =
-            copy_jc_utf16_string(handler_id);
+            javautil_wcsdup(handler_id);
         e.data.jsr211PlatformEvent.jsr211event->status     =
             INVOCATION_STATUS_ERROR;
 
         inv = &e.data.jsr211PlatformEvent.jsr211event->invocation;
-        inv->url             = copy_jc_utf16_string(invocation->url);
-        inv->type            = copy_jc_utf16_string(invocation->type);
-        inv->action          = copy_jc_utf16_string(invocation->action);
+        inv->url             = javautil_wcsdup(invocation->url);
+        inv->type            = javautil_wcsdup(invocation->type);
+        inv->action          = javautil_wcsdup(invocation->action);
         inv->invokingAppName =
-            copy_jc_utf16_string(invocation->invokingAppName);
+            javautil_wcsdup(invocation->invokingAppName);
         inv->invokingAuthority =
-            copy_jc_utf16_string(invocation->invokingAuthority);
-        inv->username        = copy_jc_utf16_string(invocation->username);
-        inv->password        = copy_jc_utf16_string(invocation->password);
+            javautil_wcsdup(invocation->invokingAuthority);
+        inv->username        = javautil_wcsdup(invocation->username);
+        inv->password        = javautil_wcsdup(invocation->password);
         inv->argsLen         = invocation->argsLen;
         inv->args            =
             javacall_calloc (sizeof(javacall_utf16_string), inv->argsLen);
         if (NULL != inv->args) {
             for (i = 0; i < inv->argsLen; i++) {
-                inv->args[i] = copy_jc_utf16_string(invocation->args[i]);
+                inv->args[i] = javautil_wcsdup(invocation->args[i]);
             }
         }
         inv->dataLen           = invocation->dataLen;
@@ -972,23 +970,6 @@ void javanotify_chapi_java_invoke(
 #ifdef ENABLE_JSR_290
 
 void
-javanotify_fluid_load_image_finished (
-    javacall_handle                       fluid_image,
-    javacall_result                       result
-    ) {
-    midp_jc_event_union e;
-
-    /* TODO: the result parameter is ignored and is a subject
-             to be removed from javacall API. */
-
-    e.eventType = JSR290_JC_EVENT_FLUID_LOAD_FINISHED;
-    e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.result      = 0;
-
-    midp_jc_event_send(&e);
-}
-
-void
 javanotify_fluid_image_notify_dirty (
     javacall_handle                       fluid_image
     ) {
@@ -998,6 +979,72 @@ javanotify_fluid_image_notify_dirty (
     e.eventType = JSR290_JC_EVENT_FLUID_INVALIDATE;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
     e.data.jsr290FluidEvent.result      = 0;
+
+    midp_jc_event_send(&e);
+}
+
+void
+javanotify_fluid_listener_completed (
+    javacall_handle                       fluid_image
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_COMPLETED;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+
+    midp_jc_event_send(&e);
+}
+    
+void
+javanotify_fluid_listener_failed (
+    javacall_handle                       fluid_image,
+    javacall_const_utf16_string           failure
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_FAILED;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.text = javautil_wcsdup(failure);
+
+    midp_jc_event_send(&e);
+}
+
+void
+javanotify_fluid_listener_percentage (
+    javacall_handle                       fluid_image,
+    float                                 percentage
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_PERCENTAGE;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.percentage = percentage;
+
+    midp_jc_event_send(&e);
+}
+    
+void
+javanotify_fluid_listener_started (
+    javacall_handle                       fluid_image
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_STARTED;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+
+    midp_jc_event_send(&e);
+}
+    
+void
+javanotify_fluid_listener_warning (
+    javacall_handle                       fluid_image,
+    javacall_const_utf16_string           warning
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_WARNING;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.text = javautil_wcsdup(warning);
 
     midp_jc_event_send(&e);
 }
@@ -1100,12 +1147,37 @@ void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber
     midp_jc_event_send(&e);
 }
 
-void /* OPTIONAL */ javanotify_rotation() {
+void /* OPTIONAL */ javanotify_rotation(int hardwareId) {
     midp_jc_event_union e;
 
+    (void)hardwareId;
     REPORT_INFO(LC_CORE, "javanotify_rotation() >>\n");
 
     e.eventType = MIDP_JC_EVENT_ROTATION;
+    midp_jc_event_send(&e);
+}
+
+/**
+  * The platform should invoke this function in platform context
+  * to notify display device state change
+  */
+void  /* OPTIONAL */ javanotify_display_device_state_changed(int hardwareId, javacall_lcd_display_device_state state) {
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_display_device_state_changed >>\n");
+    e.data.displayDeviceEvent.hardwareId =  hardwareId;
+    e.data.displayDeviceEvent.state = state;
+    e.eventType = MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED;
+    midp_jc_event_send(&e);
+}
+
+
+void javanotify_virtual_keyboard() {
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_virtual_keyboard() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_VIRTUAL_KEYBOARD;
     midp_jc_event_send(&e);
 }
 
@@ -1126,10 +1198,11 @@ void javanotify_prompt_volume_finish(void) {
                  JAVACALL_OK);
     e.eventType = MIDP_JC_EVENT_VOLUME;
     e.data.VolumeEvent.stub = 0;
-    midp_jc_event_send(&e);
 
 }
+
 #endif /*ENABLE_API_EXTENSIONS*/
+
 
 void javanotify_widget_menu_selection(int cmd) {
     // This command comes from a menu item dynamically

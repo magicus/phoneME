@@ -50,16 +50,15 @@
  *=======================================================================*/
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_log_LoggingBase_report) {
-    reportToLog(LOG_ERROR, 0, 0, "%s", "LoggingBase.report was called directly\n");
+    reportToLog(LOG_ERROR, 0, "%s", "LoggingBase.report was called directly\n");
     KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_log_Logging_report0) {
     KNI_StartHandles(1);
-    GET_PARAMETER_AS_PCSL_STRING(4,message_str) {
+    GET_PARAMETER_AS_PCSL_STRING(3,message_str) {
         const jbyte * tmpmsg = pcsl_string_get_utf8_data(&message_str);
-        int isolateID = KNI_GetParameterAsInt(3);
         int channelID = KNI_GetParameterAsInt(2);
         int severity = KNI_GetParameterAsInt(1);
 
@@ -68,7 +67,7 @@ KNIDECL(com_sun_midp_log_Logging_report0) {
          * printf(s) fails, but
          * printf("%s", s) is safe
          */
-        reportToLog(severity, channelID, isolateID, "%s", tmpmsg);
+        reportToLog(severity, channelID, "%s", tmpmsg);
 
         pcsl_string_release_utf8_data(tmpmsg,&message_str);
     } RELEASE_PCSL_STRING_PARAMETER
