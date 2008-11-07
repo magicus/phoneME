@@ -226,14 +226,14 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             }
         }
 
+        if (mmh == null) {
+            mmh = MMHelper.getMMHelper();
+            if (mmh == null) {
+                throw new RuntimeException("initDisplayMode: unable to set the display mode");
+            }
+        }
         if (mode == USE_DIRECT_VIDEO) {
             canvas = (Canvas)container;
-            if (mmh == null) {
-                mmh = MMHelper.getMMHelper();
-                if (mmh == null) {
-                    throw new RuntimeException("initDisplayMode: unable to set the display mode");
-                }
-            }
             if (!canvas.isShown()) {
                 hidden = true;
             }
@@ -696,8 +696,8 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             // And, do a physical clipping
             px = x + diffx;
             py = y + diffy;
-            pw = w;
-            ph = h;
+            pw = dw;
+            ph = dh;
 
             if (px + pw <= 0) {
                 return;
@@ -729,21 +729,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             }
             if (py >= displayHeight) {
                 return;
-            }
-            if (px < 0) {
-                pw += px;
-                px = 0;
-            }
-            if (py < 0) {
-                ph += py;
-                py = 0;
-            }
-
-            if (px + pw > displayWidth) {
-                pw = displayWidth - px;
-            }
-            if (py + ph > displayHeight) {
-                ph = displayHeight - py;
             }
 
             source.setVideoLocation(px, py, pw, ph);
