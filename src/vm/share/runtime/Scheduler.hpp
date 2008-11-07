@@ -46,7 +46,7 @@ typedef void (*do_thread_proc)(Thread*, void do_oop(OopDesc**));
 class Scheduler : public AllStatic {
 private:
 #ifndef PRODUCT
-  static void trace(const char* msg, Thread* first, Thread* second = NULL);
+  static void trace(const char* msg, Thread* first, JavaOop* second = NULL);
 #else
   static void trace(const char*, Thread*, Thread* second = NULL) {
     (void)second;

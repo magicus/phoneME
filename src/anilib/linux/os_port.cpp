@@ -79,7 +79,7 @@ jint Os_WaitForEventOrTimeout(Os_Event event, jlong ms) {
   pthread_mutex_lock(&event->mutex);
   gettimeofday(&now, NULL);
 
-  if (ms == 0) {
+  if (ms != 0) {
     timeout.tv_sec = now.tv_sec;
     timeout.tv_nsec = now.tv_usec * 1000;  
 
@@ -89,9 +89,6 @@ jint Os_WaitForEventOrTimeout(Os_Event event, jlong ms) {
       ms -= (ms/1000)*1000;
     }
     timeout.tv_nsec += ((int)ms * 1000000);
-  } else {
-    timeout.tv_sec = 0;
-    timeout.tv_nsec = 0;
   }
 
   if (event->signaled == 0) {

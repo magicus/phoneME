@@ -932,7 +932,7 @@ void Scheduler::wait(JavaOop* obj, jlong millis JVM_TRAPS) {
   UsingFastOops fast_oops;
 
   Thread *thread = Thread::current();
-  NOT_PRODUCT(trace("enter wait", thread, (Thread *)obj));
+  NOT_PRODUCT(trace("enter wait", thread, obj));
   if (obj->klass() == _interned_string_near_addr) {
     JavaOop::Raw lock_object =
       Synchronizer::get_lock_object_ref(obj, thread, true JVM_CHECK);
@@ -946,7 +946,7 @@ void Scheduler::wait(JavaOop* obj, jlong millis JVM_TRAPS) {
 
 #if ENABLE_CLDC_11
   if (thread->is_pending_interrupt()) {
-    NOT_PRODUCT(trace("wait: pending interrupt", thread, (Thread *)obj));
+    NOT_PRODUCT(trace("wait: pending interrupt", thread, obj));
     Scheduler::handle_pending_interrupt(JVM_SINGLE_ARG_NO_CHECK);
     return;
   }
@@ -1728,19 +1728,19 @@ void Scheduler::check_deadlocks() {
   }
 }
 
-void Scheduler::trace(const char* msg, Thread* first, Thread* second) {
+void Scheduler::trace(const char* msg, Thread* first, JavaOop* second) {
 #if USE_DEBUG_PRINTING
   if (!TraceThreadEvents) return;
 
-  tty->print("0x%lx Scheduler::%s ", first->obj(), msg);
   if (first) {
+    tty->print("0x%lx Scheduler::%s ", first->obj(), msg);
     first->print_value();
+    if (second) {
+      tty->print(" ");
+      second->print_value_on(tty);
+    }
+    tty->cr();
   }
-  if (second) {
-    tty->print(" ");
-    second->print_value();
-  }
-  tty->cr();
 #endif
 }
 

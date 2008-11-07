@@ -260,7 +260,10 @@ void ROMOptimizer::read_config_file(const JvmPathChar * config_file JVM_TRAPS)
     *s = 0;
     s = buff;
 
-    process_config_line(s JVM_CHECK);
+    process_config_line(s JVM_NO_CHECK);
+    if(CURRENT_HAS_PENDING_EXCEPTION){
+      break;
+    }
   }
 
   // Reset the config parsing context.
@@ -272,6 +275,7 @@ void ROMOptimizer::read_config_file(const JvmPathChar * config_file JVM_TRAPS)
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
   OsFile_close(f);
+  JVM_DELAYED_CHECK;
 #endif
 }
 
