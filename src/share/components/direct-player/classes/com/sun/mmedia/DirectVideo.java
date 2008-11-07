@@ -114,8 +114,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         else dw = sw;
         if (sh <= 0) dh = DEFAULT_HEIGHT;
         else dh = sh;
-
-        System.err.println("DirectVideo init");
     }
     
     /**
@@ -642,7 +640,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             dx = 0;
             dy = 0;
 
-            System.err.println("DirectVideo activate full screen");
             /*
              * Revisit: these can swap when device screen orientation changes or
              * UI object got moved to another Display.
@@ -658,7 +655,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             default:
                 myDisplay = null;
             }
-            System.err.println("DirectVideo activate full screen. Display " + myDisplay);
             dw = mmh.getDisplayWidth(myDisplay);
             dh = mmh.getDisplayHeight(myDisplay);
         }
@@ -720,7 +716,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
              * Revisit: these can swap when device screen orientation changes or
              * UI object got moved to another Display.
              */
-            System.err.println("DirectVideo activate window");
             Display myDisplay;
             switch (displayMode) {
             case USE_DIRECT_VIDEO:
@@ -732,7 +727,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             default:
                 myDisplay = null;
             }
-            System.err.println("DirectVideo activate window. Display " + myDisplay);
             int displayWidth = mmh.getDisplayWidth(myDisplay);
             int displayHeight = mmh.getDisplayHeight(myDisplay);
 
