@@ -49,6 +49,11 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     private static VirtualKeyboard vk = null;
 
     /**
+     * if virtualKeyboardVisible = true Virtual Keyboard Layer is visible
+     */
+    private boolean virtualKeyboardVisible;
+
+    /**
      * Create an instance of KeyboardLayer
      */
     public VirtualKeyboardLayer() {
@@ -237,6 +242,14 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      */
     public void repaintVirtualKeyboard() {
         requestRepaint();
+    }
+
+    public boolean isVirtualKeyboardVisible() {
+        return virtualKeyboardVisible;
+    }
+
+    public void setVirtualKeyboardVisible(boolean visible) {
+        virtualKeyboardVisible = visible;
     }
 
 }
