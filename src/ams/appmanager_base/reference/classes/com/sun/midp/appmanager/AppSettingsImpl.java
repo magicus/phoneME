@@ -47,7 +47,7 @@ import java.util.Vector;
 /**
  * The Graphical MIDlet suite settings form.
  */
-class AppSettingsImpl implements AppSettings {
+class AppSettingsImpl implements AppSettings, CommandListener {
 
     /** Application settings UI */
     AppSettingsUI settingsUI;
@@ -62,6 +62,11 @@ class AppSettingsImpl implements AppSettings {
     private ValueChoiceImpl groupChoice;
     /** The application interruption setting. */
     private ValueChoiceImpl interruptChoice;
+
+    /** The previous current choice value. */
+    private int prevValueID;
+    /** The currently active choice group ID. */
+    private int curChoiceID;    
     /** The application permission settings. */
     private ValueChoiceImpl[] groupSettings;
     /** The number of group permission settings. */
@@ -73,15 +78,23 @@ class AppSettingsImpl implements AppSettings {
     private byte[] maxLevels;
     /** Holds the updated permissions. */
     private byte[] curLevels;
+   /** Holds the permissions selected by user for validation. */
+    private byte[] tmpLevels;
+    /** Holds the previous permissions selected by user for validation. */
+    private byte[] prevTmpLevels;    
     /** Holds the PUSH permission index */
 	private int PUSH_ID;
     /** Holds the updated push interrupt level. */
     private byte pushInterruptSetting;
+    /** Holds the selected push interrupt level for validation. */
+    private byte tmpPushInterruptSetting;    
     /** Holds the updated push options. */
     private int pushOptions;
 
     /** Permission group information. */
     private PermissionGroup[] groups;
+    /** Mutually exclusive permission groups currently selected by user */
+    private PermissionGroup[] groupsInConflict;    
 
     /** MIDlet Suite storage object. */
     MIDletSuiteStorage midletSuiteStorage;
@@ -104,8 +117,30 @@ class AppSettingsImpl implements AppSettings {
     /** Installation information of the suite. */
     InstallInfo installInfo;
 
-    /** Icon to display for the suite */
-    Image icon;
+    /** Command object for "OK" command for the alert
+     * that is shown during choice selection validation. */
+    private Command okChoiceSelectionCmd =
+        new Command(Resource.getString(ResourceConstants.OK),
+                    Command.OK, 1);
+    /** Command object for "Cancel" command for  the alert
+     * that is shown during choice selection validation. */
+    private Command cancelChoiceSelectionCmd =
+        new Command(Resource.getString(ResourceConstants.CANCEL),
+                    Command.CANCEL, 1);
+    /**
+     * Command object for "OK" command for the alert
+     * that is shown during exclusive group conflict.
+     */
+    private Command okExclusiveChoiceSelectionCmd =
+        new Command(Resource.getString(ResourceConstants.YES),
+                    Command.OK, 1);
+     /**
+     * Command object for "NO" command for the alert
+     * that is shown during exclusive group conflict.
+     */
+    private Command noExclusiveChoiceSelectionCmd =
+        new Command(Resource.getString(ResourceConstants.NO),
+                    Command.CANCEL, 1);
 
     /**
      * Create and initialize a new application settings MIDlet.
@@ -138,6 +173,103 @@ class AppSettingsImpl implements AppSettings {
 
 
     /**
+     * Called when interrupt choice selection changed
+     */
+    void onInterruptChoiceChanged() {
+        byte maxInterruptSetting;
+        int interruptSetting = interruptChoice.getSelectedID();
+
+        if (maxLevels[PUSH_ID] == Permissions.ALLOW) {
+            maxInterruptSetting = Permissions.BLANKET_GRANTED;
+        } else {
+            maxInterruptSetting = maxLevels[PUSH_ID];
+        }
+
+        int newInterruptSettings;
+        if (interruptSetting == PUSH_OPTION_1_ID) {
+            newInterruptSettings = maxInterruptSetting;
+        } else {
+            newInterruptSettings = (byte)interruptSetting;
+        }
+
+        groupsInConflict = Permissions.checkForMutuallyExclusiveCombination(
+                tmpLevels, (byte)newInterruptSettings);
+        if (groupsInConflict != null) {
+            showGroupsInConflictAlert();
+        } else {
+            tmpPushInterruptSetting = (byte)newInterruptSettings;
+        }
+    }
+
+
+    /**
+     * Called when  setting group selection changed
+     *
+     * @param c setting value choice
+     * @param prevValID ID of previously selected value
+     */
+    private void onChoiceGroupSelectionChanged(ValueChoiceImpl c, int prevValID) {
+        if (c == interruptChoice) {
+            onInterruptChoiceChanged();
+        } else {
+            for (int i = 0; i < groupSettings.length; i++) {
+                if (groupSettings[i] == c) {
+                    byte newSetting =
+                        (byte)groupSettings[i].getSelectedID();
+                    onChoiceGroupSelectionChanged(i, prevValID, newSetting);
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
+     * Called when  setting group selection changed
+     * @param settingID ID of setting
+     * @param lastSelectedID ID of previously selected value
+     * @param newSetting ID of new value
+     */
+    private void onChoiceGroupSelectionChanged(int settingID,
+                                       int lastSelectedID,
+                                       byte newSetting) {
+
+        // store previous values if we need to roll back
+        System.arraycopy(tmpLevels, 0, prevTmpLevels, 0, tmpLevels.length);
+        groupsInConflict = Permissions.checkForMutuallyExclusiveCombination(tmpLevels,
+                tmpPushInterruptSetting, groups[settingID], newSetting);
+        if (groupsInConflict != null) {
+            showGroupsInConflictAlert();
+            return;
+        }
+
+        try {
+            Permissions.setPermissionGroup(tmpLevels,
+                tmpPushInterruptSetting, groups[settingID], newSetting);
+        } catch (SecurityException e) {
+            // returning to previous selection
+            groupSettings[settingID].setSelectedID(lastSelectedID);
+            // nothing else to do
+            return;
+         }
+
+        String warning = Permissions.getInsecureCombinationWarning(tmpLevels,
+            tmpPushInterruptSetting, groups[settingID], newSetting);
+        if (warning != null) {
+            // set up variables used afterAlert been dismissed
+            prevValueID = lastSelectedID;
+            curChoiceID = settingID;
+            // show Alert
+            Alert alert = new Alert(Resource.getString(ResourceConstants.WARNING),
+                    warning, null, AlertType.WARNING);
+            alert.addCommand(okChoiceSelectionCmd);
+            alert.addCommand(cancelChoiceSelectionCmd);
+            alert.setCommandListener(this);
+            alert.setTimeout(Alert.FOREVER);
+            display.setCurrent(alert);
+        }
+    }
+
+    /**
      * Called by UI when value of particular application setting has been
      * changed by user. AppSettings validates the user input and If value
      * is not acceptable, for example due to exclusive combination selected,
@@ -153,13 +285,117 @@ class AppSettingsImpl implements AppSettings {
     public void onSettingChanged(int settingID, int valueID) {
 
         if (settingID == INTERRUPT_CHOICE_ID) {
-            interruptChoice.setSelectedID(valueID);
+            if (interruptChoice != null) {
+                interruptChoice.setSelectedID(valueID);
+                onInterruptChoiceChanged();
+            }
+
         } else {
             //else ID of group is equivalent to index in array
+            int lastSelectedID = groupSettings[settingID].getSelectedID();
             groupSettings[settingID].setSelectedID(valueID);
+
+
+            byte newSetting =
+                (byte)groupSettings[settingID].getSelectedID();
+
+            if (newSetting != lastSelectedID) {
+                onChoiceGroupSelectionChanged(settingID, lastSelectedID, newSetting);
+            }
         }
 
     }
+
+    /**
+     * Respond to a command issued on any Screen.
+     *
+     * @param c command activated by the user
+     * @param s the Displayable the command was on.
+     */
+    public void commandAction(Command c, Displayable s) {
+        if (c == cancelChoiceSelectionCmd) {
+            // roll back group levels
+            System.arraycopy(prevTmpLevels, 0, tmpLevels, 0, tmpLevels.length);            
+            // restore choice selection
+            if (curChoiceID >= 0 && curChoiceID < groupSettings.length) {
+                ValueChoiceImpl curChoice = groupSettings[curChoiceID];
+                curChoice.setSelectedID(prevValueID);
+                settingsUI.changeSettingValue(curChoiceID, curChoice.getSelectedID());
+            }
+        } else if (c == okExclusiveChoiceSelectionCmd) {
+            if (groupsInConflict != null) {
+                // set [0] to blanket, [1] to session
+                ValueChoiceImpl  bs1 = findChoice(groupsInConflict[1]);
+                int prevValID1 = bs1.getSelectedID();
+                bs1.setSelectedID(Permissions.SESSION);
+                ValueChoiceImpl  bs2 = findChoice(groupsInConflict[0]);
+                int prevValID2 = bs2.getSelectedID();
+                bs2.setSelectedID(Permissions.BLANKET_GRANTED);
+                onChoiceGroupSelectionChanged(bs1, prevValID1);
+                onChoiceGroupSelectionChanged(bs2, prevValID2);
+                settingsUI.changeSettingValue(bs1.getPermissionGroupID(), bs1.getSelectedID());
+                settingsUI.changeSettingValue(bs2.getPermissionGroupID(), bs2.getSelectedID());
+                //display.setCurrent(settingsUI.getDisplayable());
+            }
+        } else if (c == noExclusiveChoiceSelectionCmd) {
+            if (groupsInConflict != null) {
+                // set [1] to blanket, [0] to session
+                ValueChoiceImpl  bs1 = findChoice(groupsInConflict[0]);
+                int prevValID1 = bs1.getSelectedID();
+                bs1.setSelectedID(Permissions.SESSION);
+                ValueChoiceImpl  bs2 = findChoice(groupsInConflict[1]);
+                int prevValID2 = bs2.getSelectedID();
+                bs2.setSelectedID(Permissions.BLANKET_GRANTED);
+                onChoiceGroupSelectionChanged(bs1, prevValID1);
+                onChoiceGroupSelectionChanged(bs2, prevValID2);
+                settingsUI.changeSettingValue(bs1.getPermissionGroupID(), bs1.getSelectedID());
+                settingsUI.changeSettingValue(bs2.getPermissionGroupID(), bs2.getSelectedID());
+                //display.setCurrent(settingsUI.getDisplayable());
+            }
+        }
+   }
+
+
+    /**
+     * Returns choice for specified permission group.
+     *
+     * @param pg permission group
+     * @return vlue choice
+     */
+    private ValueChoiceImpl findChoice(PermissionGroup pg) {
+
+        if (pg == Permissions.getPushInterruptGroup()) {
+            return interruptChoice;
+        }
+        for (int i = 0; i < groupSettings.length; i++) {
+            if ((groupSettings[i] != null) &&
+                    (groupSettings[i].getPermissionGroup() == pg)) {
+                return groupSettings[i];
+             }
+         }
+         return null;
+     }
+
+    /**
+     * Show alert when mutullu exclusive setting combination
+     * accured.
+     */
+     private void showGroupsInConflictAlert() {
+
+        String[] values = {groupsInConflict[0].getName(),
+                groupsInConflict[1].getName()};
+
+        String txt = Resource.getString(
+                ResourceConstants.PERMISSION_MUTUALLY_EXCLUSIVE_SELECT_MESSAGE, values);
+        Alert alert = new Alert(Resource.getString(ResourceConstants.WARNING),
+                txt, null, AlertType.WARNING);
+        alert.addCommand(noExclusiveChoiceSelectionCmd);
+        alert.addCommand(okExclusiveChoiceSelectionCmd);
+        alert.setCommandListener(this);
+        alert.setTimeout(Alert.FOREVER);
+        display.setCurrent(alert);
+    }
+
 
     /**
      * Returns ValueChoice that contains set of available application
@@ -233,10 +469,15 @@ class AppSettingsImpl implements AppSettings {
                 (Permissions.forDomain(installInfo.getSecurityDomain()))
                    [Permissions.MAX_LEVELS];
             curLevels = midletSuite.getPermissions();
+            tmpLevels = new byte[curLevels.length];
+            System.arraycopy(curLevels, 0, tmpLevels, 0, curLevels.length);
+            prevTmpLevels = new byte[curLevels.length];
+            
             pushInterruptSetting = midletSuite.getPushInterruptSetting();
+            tmpPushInterruptSetting= pushInterruptSetting;
             pushOptions = midletSuite.getPushOptions();
 
-            groupChoice = new ValueChoiceImpl(
+            groupChoice = new ValueChoiceImpl(null, -1,
                 Resource.getString(ResourceConstants.AMS_MGR_PREFERENCES));
 
             if (maxLevels[PUSH_ID] == Permissions.ALLOW) {
@@ -254,10 +495,8 @@ class AppSettingsImpl implements AppSettings {
 
             interruptChoice =
                 newSettingChoice(
-                    Resource.getString(ResourceConstants.AMS_MGR_INTRUPT),
+                    Permissions.getPushInterruptGroup(),
                     INTERRUPT_CHOICE_ID,
-                    Resource.getString(ResourceConstants.AMS_MGR_INTRUPT_QUE),
-                    Resource.getString(ResourceConstants.AMS_MGR_INTRUPT_QUE_DONT),
                     maxLevel,
                     interruptSetting, suiteDisplayName,
                     ResourceConstants.AMS_MGR_SETTINGS_PUSH_OPT_ANSWER,
@@ -278,10 +517,8 @@ class AppSettingsImpl implements AppSettings {
                                            curLevels, groups[i]);
 
                 groupSettings[i] = newSettingChoice(
-                    groups[i].getName(),
+                    groups[i],
                     i,
-                    groups[i].getSettingsQuestion(),
-                    groups[i].getDisableSettingChoice(),
                     maxGroupSetting,
                     currentGroupSetting,
                     suiteDisplayName,
@@ -305,13 +542,8 @@ class AppSettingsImpl implements AppSettings {
      * Creates a new choice info if it is user settable,
      * with the 3 preset choices and a initial one selected.
      *
-     * @param groupName name to add to popup
-     *                i18N will be translated
+     * @param permissionGroup  correspondent permission group
      * @param groupID button ID of group in settings popup,
-     * @param question label for the choice, i18N will be translated,
-     *        if <= 0, then skip this choice
-     * @param denyAnswer answer for the deny choice of this setting,
-     *                   i18N will be translated
      * @param maxLevel maximum permission level
      * @param level current permission level
      * @param name name of suite
@@ -321,23 +553,25 @@ class AppSettingsImpl implements AppSettings {
      *
      * @return choice info or null if setting cannot be modified
      */
-    private ValueChoiceImpl newSettingChoice(String groupName, int groupID,
-            String question, String denyAnswer, int maxLevel, int level,
+    private ValueChoiceImpl newSettingChoice(
+            PermissionGroup permissionGroup, int groupID,
+            int maxLevel, int level,
             String name, int extraAnswer, int extraAnswerId) {
         String[] values = {name};
         int initValue;
         ValueChoiceImpl choice;
 
-        if (question == null ||
+        if (permissionGroup.getSettingsQuestion() == null ||
             maxLevel == Permissions.ALLOW || maxLevel == Permissions.NEVER ||
             level == Permissions.ALLOW || level == Permissions.NEVER) {
 
             return null;
         }
 
-        choice = new ValueChoiceImpl(Resource.getString(question, values));
+        choice = new ValueChoiceImpl(permissionGroup, groupID,
+                Resource.getString(permissionGroup.getSettingsQuestion(), values));
 
-        groupChoice.append(groupName, groupID);
+        groupChoice.append(permissionGroup.getName(), groupID);
 
         switch (maxLevel) {
         case Permissions.BLANKET:
@@ -363,14 +597,14 @@ class AppSettingsImpl implements AppSettings {
                 choice.append(Resource.getString(extraAnswer), extraAnswerId);
             }
 
-            choice.append(denyAnswer,
+            choice.append(permissionGroup.getDisableSettingChoice(),
                           Permissions.BLANKET_DENIED);
             break;
         }
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_AMS,
-                "AppSettings: " + groupName +
+                "AppSettings: " + permissionGroup.getName() +
                 " level = " + level);
         }
 
@@ -443,7 +677,7 @@ class AppSettingsImpl implements AppSettings {
                     pushInterruptSetting = maxInterruptSetting;
                 } else {
                     pushOptions = 0;
-                    Permissions.checkPushInterruptLevel(curLevels,
+                    Permissions.checkPushInterruptLevel(tmpLevels,
                         (byte)interruptSetting);
                     pushInterruptSetting = (byte)interruptSetting;
                 }
@@ -456,12 +690,33 @@ class AppSettingsImpl implements AppSettings {
 
                     if (newSetting != Permissions.getPermissionGroupLevel(
                             curLevels, groups[i])) {
-                        Permissions.setPermissionGroup(curLevels,
-                            pushInterruptSetting, groups[i], newSetting);
+                        if (newSetting != Permissions.BLANKET_GRANTED) {
+                            /*
+                             * first apply only weak permissions to avoid mutual
+                             * exclusive combination
+                             */
+                            Permissions.setPermissionGroup(curLevels,
+                                pushInterruptSetting, groups[i], newSetting);
+                        }
                     }
                 }
             }
 
+
+            for (int i = 0; i < groups.length; i++) {
+                if (groupSettings[i] != null) {
+                    byte newSetting =
+                        (byte)groupSettings[i].getSelectedID();
+                    
+                    if (newSetting != Permissions.getPermissionGroupLevel(
+                            curLevels, groups[i])) {
+                        if (newSetting == Permissions.BLANKET_GRANTED) {
+                            Permissions.setPermissionGroup(curLevels,
+                                pushInterruptSetting, groups[i], newSetting);
+                        }
+                    }
+                }
+            }
 
             if (numberOfSettings > 0) {
                 midletSuiteStorage.saveSuiteSettings(midletSuite.getID(),
