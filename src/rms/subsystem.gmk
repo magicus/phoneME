@@ -80,3 +80,4 @@ include $(SUBSYSTEM_RMS_DIR)/rms_api/lib.gmk
 include $(SUBSYSTEM_RMS_DIR)/rms_exc/lib.gmk
 include $(SUBSYSTEM_RMS_DIR)/record_index/lib.gmk
 include $(SUBSYSTEM_RMS_DIR)/record_store/lib.gmk
+include $(SUBSYSTEM_RMS_DIR)/record_store_lock/lib.gmk
