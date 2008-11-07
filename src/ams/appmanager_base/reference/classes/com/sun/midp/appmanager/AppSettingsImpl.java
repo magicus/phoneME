@@ -331,9 +331,11 @@ class AppSettingsImpl implements AppSettings, CommandListener {
                 ValueChoiceImpl  bs2 = findChoice(groupsInConflict[0]);
                 int prevValID2 = bs2.getSelectedID();
                 bs2.setSelectedID(Permissions.BLANKET_GRANTED);
-                //display.setCurrent(this);
                 onChoiceGroupSelectionChanged(bs1, prevValID1);
                 onChoiceGroupSelectionChanged(bs2, prevValID2);
+                settingsUI.changeSettingValue(bs1.getPermissionGroupID(), bs1.getSelectedID());
+                settingsUI.changeSettingValue(bs2.getPermissionGroupID(), bs2.getSelectedID());
+                //display.setCurrent(settingsUI.getDisplayable());
             }
         } else if (c == noExclusiveChoiceSelectionCmd) {
             if (groupsInConflict != null) {
@@ -344,9 +346,11 @@ class AppSettingsImpl implements AppSettings, CommandListener {
                 ValueChoiceImpl  bs2 = findChoice(groupsInConflict[1]);
                 int prevValID2 = bs2.getSelectedID();
                 bs2.setSelectedID(Permissions.BLANKET_GRANTED);
-                //display.setCurrent(this);
                 onChoiceGroupSelectionChanged(bs1, prevValID1);
                 onChoiceGroupSelectionChanged(bs2, prevValID2);
+                settingsUI.changeSettingValue(bs1.getPermissionGroupID(), bs1.getSelectedID());
+                settingsUI.changeSettingValue(bs2.getPermissionGroupID(), bs2.getSelectedID());
+                //display.setCurrent(settingsUI.getDisplayable());
             }
         }
    }
@@ -473,7 +477,7 @@ class AppSettingsImpl implements AppSettings, CommandListener {
             tmpPushInterruptSetting= pushInterruptSetting;
             pushOptions = midletSuite.getPushOptions();
 
-            groupChoice = new ValueChoiceImpl(null,
+            groupChoice = new ValueChoiceImpl(null, -1,
                 Resource.getString(ResourceConstants.AMS_MGR_PREFERENCES));
 
             if (maxLevels[PUSH_ID] == Permissions.ALLOW) {
@@ -564,8 +568,8 @@ class AppSettingsImpl implements AppSettings, CommandListener {
             return null;
         }
 
-        choice = new ValueChoiceImpl(permissionGroup, Resource.getString(
-                permissionGroup.getSettingsQuestion(), values));
+        choice = new ValueChoiceImpl(permissionGroup, groupID,
+                Resource.getString(permissionGroup.getSettingsQuestion(), values));
 
         groupChoice.append(permissionGroup.getName(), groupID);
 

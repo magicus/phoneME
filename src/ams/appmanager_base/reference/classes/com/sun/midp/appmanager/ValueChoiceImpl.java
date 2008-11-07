@@ -27,15 +27,20 @@ class ValueChoiceImpl implements ValueChoice {
     /** Correspondent permission group. */
     private PermissionGroup permissionGroup;
 
+    /** ID of the permission group */
+    private int permissionGroupID;
+
     /**
      * Creates empty ValueChoice
      * @param title of the choice
      */
-    ValueChoiceImpl(PermissionGroup permissionGroup, String title) {
+    ValueChoiceImpl(PermissionGroup permissionGroup,
+                    int permissionGroupID, String title) {
         this.title = title;
         ids = new Vector(5);
         labels = new Vector(5);
         this.permissionGroup = permissionGroup;
+        this.permissionGroupID = permissionGroupID;
     }
 
     /**
@@ -102,11 +107,19 @@ class ValueChoiceImpl implements ValueChoice {
     }
 
     /**
-     * Returns correspondent permission group.
+     * Returns corresponding permission group.
      * @return permission group
      */
     public PermissionGroup getPermissionGroup() {
         return permissionGroup;
+    }
+
+    /**
+     * Returns corresponding permission group ID.
+     * @return permission group ID
+     */
+    public int getPermissionGroupID() {
+        return permissionGroupID;
     }
 
 }
