@@ -142,7 +142,21 @@ class MediaDownload {
             }
             
             if (buffer == null || newJavaBufSize > buffer.length) {
-                buffer = new byte[ newJavaBufSize ];
+                do {
+                    try {
+                        buffer = new byte[ newJavaBufSize ];
+                    } catch(OutOfMemoryError er) {
+                        if (newJavaBufSize == packetSize) {
+                            throw new MediaException("Not enough memory");
+                        } else {
+                            newJavaBufSize = newJavaBufSize/2;
+                            if (newJavaBufSize < packetSize) {
+                                newJavaBufSize = packetSize;
+                            }
+                        }
+                    };
+                }while (buffer == null);
+
                 javaBufSize = newJavaBufSize;
             }
 
