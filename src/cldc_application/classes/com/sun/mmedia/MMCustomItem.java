@@ -65,7 +65,7 @@ public abstract class MMCustomItem extends CustomItem {
             if (mmh == null)
                 return null;
 
-            display = mmh.getItemDisplay(this);
+            display = mmh.getDisplayFor(this);
             if (display == null)
                 return null;
         }
