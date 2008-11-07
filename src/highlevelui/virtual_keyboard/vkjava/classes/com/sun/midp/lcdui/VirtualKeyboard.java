@@ -110,12 +110,12 @@ public class VirtualKeyboard {
     }
 
     /**
-     * traverse the virtual keyboard according to key pressed.
+     * Handle input from a keyboard
      *
      * @param type    type of keypress
      * @param keyCode key code of key pressed
      */
-    public boolean traverse(int type, int keyCode) {
+    public boolean keyInput(int type, int keyCode) {
 
         boolean ret = false;
 
@@ -125,55 +125,10 @@ public class VirtualKeyboard {
 
         } else {
             switch (keyCode) {
-                case Constants.KEYCODE_RIGHT:
-                    column++;
-                    if (column > currentKeyboard[line].length - 1)
-                        if (line < currentKeyboard.length - 1) {
-                            column = 0;
-                            line++;
-                        } else {
-                            column--;
-                        }
-                    currentKey = currentKeyboard[line][column];
-                    ret = true;
-                    break;
-                case Constants.KEYCODE_LEFT:
-                    column--;
-                    if (column < 0) {
-                        if (line > 0) {
-                            line--;
-                            column = currentKeyboard[line].length - 1;
-                        } else {
-                            column++;
-                        }
-                        currentKey = currentKeyboard[line][column];
-                        ret = true;
-                    }
-
-                    break;
-                case Constants.KEYCODE_UP:
-                    if (line > 0) {
-                        line--;
-                        if (column > currentKeyboard[line].length - 1) {
-                            column = currentKeyboard[line].length - 1;
-                        }
-                    }
-                    currentKey = currentKeyboard[line][column];
-                    ret = true;
-                    break;
-                case Constants.KEYCODE_DOWN:
-                    if (line < currentKeyboard.length - 1) {
-                        line++;
-                        if (column > currentKeyboard[line].length - 1) {
-                            column = currentKeyboard[line].length - 1;
-                        }
-                    }
-                    currentKey = currentKeyboard[line][column];
-                    ret = true;
-                    break;
                 case Constants.KEYCODE_SELECT:
                     if (currentKey != null) {
                         int key = currentKey.getKey();
+                        ret = true;
                         switch (key) {
                             case Key.CAPS_KEY:
                                 if (type == EventConstants.PRESSED) break;
@@ -208,18 +163,19 @@ public class VirtualKeyboard {
 
                             default:
                                 if (type == EventConstants.PRESSED) {
-
                                     vkl.virtualKeyPressed(key);
                                 } else {
                                     vkl.virtualKeyReleased(currentKey.getKey());
                                 }
+                                ret = false;
                         }
                     }
-                    ret = true;
             }
         }
 
-        vkl.repaintVirtualKeyboard();
+        if (ret) {
+            vkl.repaintVirtualKeyboard();
+        }
         return ret;
     }
 
@@ -296,17 +252,13 @@ public class VirtualKeyboard {
                 if (newKey != null) {
                     currentKey = newKey;
                     // press on valid key
-                    traverse(type, Constants.KEYCODE_SELECT);
-                    vkl.repaintVirtualKeyboard();
-
+                    keyInput(type, Constants.KEYCODE_SELECT);
                 }
                 break;
             case EventConstants.RELEASED:
                 if (newKey != null) {
                     currentKey = newKey;
-                    traverse(type, Constants.KEYCODE_SELECT);
-                    vkl.repaintVirtualKeyboard();
-
+                    keyInput(type, Constants.KEYCODE_SELECT);
                 }
 
                 break;
