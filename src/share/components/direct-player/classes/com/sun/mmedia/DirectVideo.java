@@ -24,19 +24,11 @@
 
 package com.sun.mmedia;
 
-import java.util.*;
-import java.lang.IllegalArgumentException;
-import java.lang.IllegalStateException;
-import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.Item;
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.CustomItem;
-import javax.microedition.media.Control;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.VideoControl;
-import javax.microedition.media.PlayerListener;
-import com.sun.midp.chameleon.skins.ScreenSkin;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
