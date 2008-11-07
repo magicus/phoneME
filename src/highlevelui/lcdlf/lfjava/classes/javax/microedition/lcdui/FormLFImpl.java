@@ -2108,7 +2108,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         if (bounds[HEIGHT] >= viewport[HEIGHT] &&
             viewable[Y] != bounds[Y])
         {
-            viewable[Y] = bounds[Y];
+            int maxViewableY = viewable[HEIGHT] - viewport[HEIGHT];
+            viewable[Y] = (maxViewableY <= bounds[Y]) ? maxViewableY : bounds[Y];
             return true;
         }
 
