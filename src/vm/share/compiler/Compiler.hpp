@@ -361,7 +361,7 @@ class Compiler: public BytecodeCompileClosure {
     return state()->suspended_compiler_context();
   }
   static bool is_suspended ( void ) {
-    return _compiler_state != NULL;
+    return !is_active() && _compiler_state != NULL;
   }
 
   static void oops_do( void do_oop(OopDesc**) ) {
