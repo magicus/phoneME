@@ -141,21 +141,23 @@ public final class Permissions {
     private static PermissionGroup LOCAL_CONN_GROUP;
 
     /** artificially constructed group for Push Interrupt Group. */
-    private static final PermissionGroup PUSH_INTERRUPT_GROUP =
-            new PermissionGroup(
-        Resource.getString(ResourceConstants.AMS_MGR_INTRUPT),
-        Resource.getString(ResourceConstants.AMS_MGR_INTRUPT_QUE),
-        Resource.getString(ResourceConstants.AMS_MGR_INTRUPT_QUE_DONT),
-        Resource.getString(ResourceConstants.PERMISSION_AUTO_START_DIALOG_TITLE),
-        Resource.getString(ResourceConstants.PERMISSION_AUTO_START_QUE),
-        null);
-    
+    private static PermissionGroup PUSH_INTERRUPT_GROUP;
+
     /**
      * Retuns artificially constructed group for Push Interrupt Group
      * @return Push Interrupt Group
      */
     public static PermissionGroup getPushInterruptGroup() {
-         return PUSH_INTERRUPT_GROUP;
+        if (PUSH_INTERRUPT_GROUP == null) {
+            PUSH_INTERRUPT_GROUP = new PermissionGroup(
+                Resource.getString(ResourceConstants.AMS_MGR_INTRUPT),
+                Resource.getString(ResourceConstants.AMS_MGR_INTRUPT_QUE),
+                Resource.getString(ResourceConstants.AMS_MGR_INTRUPT_QUE_DONT),
+                Resource.getString(ResourceConstants.PERMISSION_AUTO_START_DIALOG_TITLE),
+                Resource.getString(ResourceConstants.PERMISSION_AUTO_START_QUE),
+                null);
+        }
+        return PUSH_INTERRUPT_GROUP;
     }
 
     /**
