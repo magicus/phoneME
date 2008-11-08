@@ -58,7 +58,7 @@ JSR_177_ERRORS :=
 # Default values for options
 #
 # ACL from another implementation text files={true|false}
-USE_JSR_177_ACL_TEXT ?= false
+USE_JSR_177_ACL_TEXT ?= true
 
 # APDUManager={carddevice|simple}
 JSR_177_APDU_MANAGER ?= carddevice
