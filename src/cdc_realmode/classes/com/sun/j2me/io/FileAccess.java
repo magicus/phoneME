@@ -78,6 +78,20 @@ public class FileAccess {
         return storagePath;
     }
 
+    /**
+     * Returns the root to build config storage filenames including an needed
+     * file separators, abstracting difference of the file systems
+     * of development and device platforms. Note the root is never null.
+     *
+     * @param storageId ID of the storage the root of which should be returned
+     *
+     * @return root of any filename for accessing device config
+     *         storage.
+     */
+    public static String getConfigRoot(int storageId) {
+        return File.getStorageRoot(storageId);
+    }
+
     public static FileAccess getInstance(String fileName, Token securityToken) {
         return new FileAccess(fileName, securityToken);
     }
