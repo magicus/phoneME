@@ -44,16 +44,12 @@ jsr_172_source_bundle:: $(JSR_172_DIR)
 	$(AT)cp -f $(JSR_172_DIR)/build/subsystem_rules.gmk $(JSR_172_SOURCE_OUTPUT_DIR)/build/subsystem_rules.gmk
 	$(AT)cp -f $(JSR_172_DIR)/build/subsystem_defs.gmk $(JSR_172_SOURCE_OUTPUT_DIR)/build/subsystem_defs.gmk
 
-$(OUTPUT_DIR)/jsr172__stub-generator.jar : $(JAVAC_OUT_DIR) $(INTERNAL_JSR_172_SG_RI_FILES) $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES)
-	@echo "build $@ ..."
-	$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
-		-classpath "$(INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST)" \
-		$(INTERNAL_JSR_172_SG_RI_FILES) || exit 1;
-	$(JAR_CMD) cf $@ $(JAVAC_OUT_DIR)/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/*.class
+$(EXTRA_JAVAC_OUT_DIR) $(JSR172_JAVAC_OUT_DIR):
+	$(AT)mkdir -p $@
 
 EXTRA_JAVAC_OUT_DIR = $(JAVAC_OUT_DIR)/extra
 JSR172_JAVAC_OUT_DIR = $(JAVAC_OUT_DIR)/jsr172
-$(OUTPUT_DIR)/jsr172.jar : jpp $(INTERNAL_JSR_172_DEPENDENCIES) $(CONFIGURATOR_JAR_FILE) \
+$(OUTPUT_DIR)/jsr172.jar : $(INTERNAL_JSR_172_DEPENDENCIES) $(CONFIGURATOR_JAR_FILE) \
 		$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES) $(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES)
 	@echo "build $@ ..."
 	$(call generateConstantClasses, $(JSR_172_GENERATED_DIR), $(JSR_172_CONSTANT_FILE))
@@ -71,10 +67,10 @@ $(OUTPUT_DIR)/jsr172.jar : jpp $(INTERNAL_JSR_172_DEPENDENCIES) $(CONFIGURATOR_J
 		|| exit 2;
 	$(JAR_CMD) -cf $@ -C $(JSR172_JAVAC_OUT_DIR) . || exit 3
 
-INTERNAL_JSR_172_DEPENDENCIES_CPLIST = $(subst ; ,;,$(foreach jar,$(INTERNAL_JSR_172_DEPENDENCIES),$(call POSIX2WIN,$(jar));))
-INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST = $(subst ; ,;,$(foreach jar,$(INTERNAL_JSR_172_SG_RI_DEPENDENCIES),$(jar);))
+space?=$(empty) $(empty)
+INTERNAL_JSR_172_DEPENDENCIES_CPLIST = \
+    $(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(INTERNAL_JSR_172_DEPENDENCIES))))
 
-jsr172__stub-generator : $(OUTPUT_DIR)/jsr172__stub-generator.jar
 jsr172-jar : $(OUTPUT_DIR)/jsr172.jar
 
 ifneq ($(TARGET_VM), cldc_vm)

@@ -35,6 +35,30 @@ INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/RemoteException.java \
         $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/Remote.java
 
+# JSR 172 stub generator definitions
+JSR_172_OUTPUT_DIR ?= $(JSR_172_DIR)/output
+JSR_172_SG_OUTPUT_DIR ?= $(JSR_172_OUTPUT_DIR)/jsr172_sg
+
+INTERNAL_JSR_172_SG_RI_DEPENDENCIES += \
+	$(MOBILITY_PACK_JARS_DIR)/bin/schema2beansdev.jar \
+	$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-api.jar \
+	$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-impl.jar \
+	$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-spi.jar \
+	$(MOBILITY_PACK_JARS_DIR)/lib/j2me-xmlrpc.jar \
+
+INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST = \
+    $(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES))))
+
+
 # Copy and filter JSR 172 source in JSR_172_SOURCE_OUTPUT_DIR
 jsr_172_source_bundle:: $(JSR_172_DIR)
 	$(AT)$(call source_bundle_filter,$(JSR_172_DIR),$(JSR_172_SOURCE_OUTPUT_DIR), build/cldc_application)	
+
+# JSR 172 stub generator rules
+jsr172__stub-generator: $(JSR_172_SG_OUTPUT_DIR)/jsr172__stub-generator.jar
+$(JSR_172_SG_OUTPUT_DIR)/jsr172__stub-generator.jar: $(INTERNAL_JSR_172_SG_RI_FILES)
+	@echo "build $@ ..."
+	$(AT)$(call compileJavaClasses,$(JSR_172_SG_OUTPUT_DIR),$(INTERNAL_JSR_172_SG_RI_FILES), \
+		-g$(JAVAC_DEBUG) -classpath $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST))
+	$(AT)$(call createJarFile,$@,$(JSR_172_SG_OUTPUT_DIR)/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE)),.)
+
