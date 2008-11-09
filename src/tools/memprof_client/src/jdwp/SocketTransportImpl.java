@@ -254,19 +254,24 @@ class SocketTransportImpl extends Thread {
                 ((((int)buf[1]) & 0xFF ) << 16) |
                 ((((int)buf[2]) & 0xFF ) << 8) |
                 (((int)buf[3]) & 0xFF));
-                bytesRead = 0;
-                while(bytesRead != size - Packet.PacketHeaderSize){
-                    int bytesReadDuringLastRead =
-                    inputStream.read(buf, bytesRead + Packet.PacketHeaderSize, 
-                    size - Packet.PacketHeaderSize - bytesRead);
-                    bytesRead += bytesReadDuringLastRead;
-                    if(bytesReadDuringLastRead  == -1){
-                        throw new IOException("Connection closed");
-                    }
-                }
-                
-                //System.out.println("data read");
-                
+				bytesRead = 0;
+
+				while (bytesRead != size - Packet.PacketHeaderSize) {
+					// If the initial buffer is insufficient, enlarge it
+					if (bytesRead + Packet.PacketHeaderSize + size - Packet.PacketHeaderSize - bytesRead > buf.length) {
+						byte[] buf2 = new byte[buf.length * 2];
+						System.arraycopy(buf,0,buf2,0,buf.length);
+						buf = buf2;
+					}
+					int bytesReadDuringLastRead =inputStream.read(buf, 
+																  bytesRead + Packet.PacketHeaderSize,
+																  size - Packet.PacketHeaderSize - bytesRead);  
+					bytesRead += bytesReadDuringLastRead;
+					if (bytesReadDuringLastRead  == -1) {
+						throw new IOException("Connection closed");
+					}
+				}
+                              
                 Reply r = new Reply();
                 r.resetBuffer();
                 r.addBytes(buf,0,size);
