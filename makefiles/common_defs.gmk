@@ -62,6 +62,12 @@ define source_bundle_filter
 		done
 endef
 
+# Macro to pre-process Jpp file into Java file
+# runjpp(<input_jpp_file>, <output_java_file>)
+define runjpp
+    $(JAVA_CMD) -classpath $(TOOLS_OUTPUT_DIR) Jpp $(JPP_DEFS) -o `$(call POSIX2HOST_CMD,$(2))` `$(call POSIX2HOST_CMD,$(1))`
+endef
+
 # compileJavaClasses(outputDir, javaFiles, extraJavacOptions)
 define compileJavaClasses
 	mkdir -p `$(call WIN2POSIX_CMD,$(1))`
