@@ -180,10 +180,10 @@ typedef enum {
     VK_SUSPEND_ALL      = 1,
     VK_RESUME_ALL       = 2,
     VK_SHUTDOWN         = 3,
-    VK_SUSPEND_CURRENT  = 4,
-    VK_RESUME_PREVIOUS  = 5,
+    VK_HOME             = 4,
+    VK_SELECT_APP       = 5,
     VK_KILL_CURRENT     = 6,
-    VK_CHANGE_LOCALE	= 7,
+    VK_CHANGE_LOCALE    = 7,
 
     KEY_USER1    = -32,
     KEY_USER2    = -33,

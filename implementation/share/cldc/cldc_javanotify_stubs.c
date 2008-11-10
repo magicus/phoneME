@@ -79,6 +79,12 @@ void javanotify_pause(void) {}
 
 void javanotify_switch_to_ams(void) {}
 
+/**
+ * The platform should invoke this function in platform context
+ * to select another running application to be the foreground.
+ */
+void javanotify_select_foreground_app(void) {}
+
 void javanotify_key_event(javacall_key key, javacall_keypress_type type) {}
 
 void javanotify_rotation(int hardwareId) {}
