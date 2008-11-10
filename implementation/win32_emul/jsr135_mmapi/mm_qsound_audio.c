@@ -73,13 +73,15 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms);
 
 #define MAX_METADATA_KEYS 64
 
-#define WAV_METADATA_KEYS_COUNT 4
+#define WAV_METADATA_KEYS_COUNT 6
 
 javacall_const_utf16_string s_wav_metadata_keys[WAV_METADATA_KEYS_COUNT] = {
     METADATA_KEY_AUTHOR,
     METADATA_KEY_COPYRIGHT,
     METADATA_KEY_DATE,
-    METADATA_KEY_TITLE
+    METADATA_KEY_TITLE,
+    METADATA_KEY_COMMENT,
+    METADATA_KEY_SOFTWARE
 };
 
 /******************************************************************************/
@@ -2267,16 +2269,14 @@ static javacall_result audio_qs_get_metadata_key_counts(javacall_handle handle,
 
         case JC_FMT_MS_PCM:
         {
-            int i = 0;
-            if (h->wav.metaData.iartData)
-                i++;
-            if (h->wav.metaData.icopData)
-                i++;
-            if (h->wav.metaData.icrdData)
-                i++;
-            if (h->wav.metaData.inamData)
-                i++;
-            *keyCounts = (long)i;
+            char **key = &(h->wav.metaData.iartData);
+            int i=0;
+            *keyCounts = 0;
+            for (; i < WAV_METADATA_KEYS_COUNT; i++) {
+                if (key[i]) {
+                    (*keyCounts)++;
+                }
+            }
         }
         break;
 
@@ -2328,17 +2328,18 @@ static javacall_result audio_qs_get_metadata_key(javacall_handle handle,
         case JC_FMT_MS_PCM:
         {
             char **key = &(h->wav.metaData.iartData);
-            int i = 0, len;
+            int i=0, j=0, len;
             for (; i < WAV_METADATA_KEYS_COUNT; i++) {
                 if (key[i]) {
-                    if (index == 0) {
+                    if (index == j) {
                         len = wcslen(s_wav_metadata_keys[i]);
                         if (bufLength <= len)
                             len = bufLength - 1;
                         memcpy(buf, s_wav_metadata_keys[i], len * sizeof(javacall_utf16));
                         buf[len] = 0;
-                    } else
-                        index--;
+                        break;
+                    }
+                    j++;
                 }
             }
         }
@@ -2406,12 +2407,16 @@ static javacall_result audio_qs_get_metadata(javacall_handle handle,
                 if (0 == wcscmp(s_wav_metadata_keys[i], key)) {
                     if (value[i]) {
                         r = JAVACALL_OK;
-                        javautil_unicode_utf8_to_utf16(value[i], strlen(value[i]), buf, bufLength, &newl);
-                        if (newl < bufLength)
-                            buf[newl] = 0;
-                        else
-                            buf[bufLength - 1] = 0;
+                        if (javautil_unicode_utf8_to_utf16(value[i], strlen(value[i]), buf, bufLength, &newl) == JAVACALL_OK) {
+                            if (newl < bufLength) 
+                                buf[newl] = 0;
+                            else
+                                buf[bufLength - 1] = 0;
+                        } else {
+                            r = JAVACALL_OUT_OF_MEMORY;
+                        }
                     }
+                    break;
                 }
             }
         }

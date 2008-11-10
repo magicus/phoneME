@@ -69,6 +69,10 @@ int wav_setStreamPlayerData(ah_wav *wav) {
                 /* data chunk finished. Going to the next chunk */
                 wav->playBufferLen = dc->chnk_ds;
                 data = wav->playBuffer + dc->chnk_ds;
+                /* verify if data chunk alignment is required */
+                if (dc->chnk_ds % 2) {
+                    data++;
+                }
             }
         }
 
@@ -113,6 +117,12 @@ int wav_setStreamPlayerData(ah_wav *wav) {
                             case INFOID_INAM:
                                 str = &(wav->metaData.inamData);
                             break;
+                            case INFOID_ICMT:
+                                str = &(wav->metaData.icmtData);
+                            break;
+                            case INFOID_ISFT:
+                                str = &(wav->metaData.isftData);
+                            break;
                         }
                         if (str != NULL) {
                             *str = REALLOC(*str, tmpChnk->chnk_ds + 1);
@@ -120,6 +130,10 @@ int wav_setStreamPlayerData(ah_wav *wav) {
                             (*str)[tmpChnk->chnk_ds] = '\0';
                         }
                         tmpData += tmpChnk->chnk_ds;
+                        /* verify if data chunk alignment is required */
+                        if (tmpChnk->chnk_ds % 2) {
+                            tmpData++;
+                        }
                     }
                 }
             break; /* CHUNKID_LIST */
@@ -137,6 +151,10 @@ int wav_setStreamPlayerData(ah_wav *wav) {
             } /* default */
             } /* switch (wc->chnk_id) */
             data += sizeof(struct wavechnk) + wc->chnk_ds;
+            /* verify if data chunk alignment is required */
+            if (wc->chnk_ds % 2) {
+                data++;
+            }
         } else {
             break;
         }
