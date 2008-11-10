@@ -310,6 +310,9 @@ class VirtualStackFrame: public CompilerObject {
 
   //clean the register notations whose value should be cleaned due to multi-entry
   void wipe_notation_for_osr_entry();
+
+  //clean notations for registers not mapped to any location
+  void wipe_notation_for_unmapped();
 #else
  private:
   void   push_tag() {}
@@ -317,6 +320,7 @@ class VirtualStackFrame: public CompilerObject {
   static jint size_of_tag_stack(Method* method) {return 0;}
  public:
   void wipe_notation_for_osr_entry() {}
+  void wipe_notation_for_unmapped() {}
 #endif
   // copy this virtual stack frame to dst
   void copy_to(VirtualStackFrame* dst) const {

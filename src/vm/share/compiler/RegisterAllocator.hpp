@@ -232,6 +232,7 @@ class RegisterAllocator {
   static void dump_notation(Register reg){}
 #endif
 #else
+  static inline void wipe_all_notations() {}
   static inline void wipe_notation_of(const Register reg) {}
   static void move_notation(const Register reg, const Register new_reg) {}
   static inline void clear_check_status() {}

@@ -102,6 +102,35 @@ void VirtualStackFrame::wipe_notation_for_osr_entry() {
   }
   VirtualStackFrame::mark_as_unpassable();
 }
+
+void VirtualStackFrame::wipe_notation_for_unmapped() {
+  const RawLocation* raw_location = raw_location_at(0);
+  const RawLocation* end  = raw_location_end(raw_location);
+
+  jint register_bitmap = 0 ;
+
+  while (raw_location < end) {
+    if (!raw_location->is_flushed() && raw_location->in_register()) {
+      register_bitmap |= 1 << raw_location->get_register();
+      if (raw_location->is_two_word()) {
+        raw_location ++;
+        register_bitmap |= 1 << raw_location->get_register();
+      }
+    } else if (raw_location->is_two_word()) {
+      raw_location ++;
+    }
+    raw_location ++;
+  }
+
+  for (Assembler::Register reg = Assembler::first_register;
+       reg <= Assembler::last_register;
+       reg = (Assembler::Register) ((int) reg + 1)) {
+    if ((register_bitmap & (1<<reg)) == 0) {
+      RegisterAllocator::wipe_notation_of(reg);
+    }
+  }
+}
+
 #define ABORT_CSE_TRACKING VirtualStackFrame::abort_tracking_of_current_snippet();\
       RegisterAllocator::wipe_all_notations();
 #else
@@ -436,6 +465,9 @@ void VirtualStackFrame::dirtify(Assembler::Register reg) {
       location.mark_as_changed();
     }
   }
+
+  //cse
+  RegisterAllocator::wipe_notation_of(reg);
 }
 #endif
 
@@ -499,6 +531,8 @@ void VirtualStackFrame::mark_as_flushed() {
 
   //remember array length: clear cached value
   clear_bound();
+
+  RegisterAllocator::wipe_all_notations();
 }
 
 void VirtualStackFrame::conform_to_stack_map(int bci) {
@@ -700,6 +734,8 @@ inline void VirtualStackFrame::conform_to_prologue(VirtualStackFrame* other) {
 
   //remember array length: clear cached value
   clear_bound();
+
+  RegisterAllocator::wipe_all_notations();
 
   // This optimization prevents a lot of sp thrashing
   if (stack_pointer() < other->stack_pointer()) {
@@ -1811,6 +1847,7 @@ void VirtualStackFrame::spill_register(Assembler::Register reg) {
     }
   }
 
+  RegisterAllocator::wipe_notation_of(reg);
 }
 
 // Modify a frame so that it doesn't use a particular register.
@@ -1827,6 +1864,8 @@ void VirtualStackFrame::unuse_register(Assembler::Register reg) {
       clear_bound();
     }
   }
+
+  RegisterAllocator::wipe_notation_of(reg);
 
   for (VSFStream s(this); !s.eos(); s.next()) {
     if (is_mapped_by(s.index(), reg)) {

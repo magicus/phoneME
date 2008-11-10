@@ -482,7 +482,7 @@
 //                                          the Xscale which has branch
 //                                          prediction.
 //
-// ENABLE_CSE                           0,0 Eliminate memory access related
+// ENABLE_CSE                           1,1 Eliminate memory access related
 //                                          common byte code
 //
 // ENABLE_HARDWARE_TIMER_FOR_TICKS      0,0 Nucleus-XScale only.  Include code
