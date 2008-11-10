@@ -200,6 +200,19 @@ CVMJITcbufAllocate(CVMJITCompilationContext* con, CVMSize extraSpace)
 
     /* find a free buffer to generate code into */
     cbuf = CVMJITcodeCacheFindFreeBuffer(con, bufSizeEstimate, CVM_TRUE);
+#ifdef CVM_AOT
+    if (CVMglobals.jit.isPrecompiling) {
+        /* If we are doing AOT compilation, make sure the cbuf is
+         * allocated within the AOT code cache */
+        if (cbuf == NULL ||
+            (cbuf + bufSizeEstimate) > CVMglobals.jit.codeCacheAOTEnd) {
+            CVMconsolePrintf("WARNING: Code cache is full during AOT"
+                             "compilation. Please use a larger AOT "
+                             "code cache using -Xjit:aotCodeCacheSize=<size>.\n");
+            CVMabort();
+        }
+    }
+#endif
     if (cbuf == NULL) {
 	/* Make sure there is enough memory in the code cache */
 	CVMJITcodeCacheMakeRoomForMethod(con, bufSizeEstimate);
@@ -275,6 +288,19 @@ CVMJITcbufCommit(CVMJITCompilationContext* con)
 	bufSize = origBufSize;
 	CVMJITcbufSetCommittedBufSize(cbuf, bufSize); /* commit the buffer */
     }
+
+#ifdef CVM_AOT
+    if (CVMglobals.jit.isPrecompiling) {
+        /* If we are doing AOT compilation, make sure the cbuf is
+         * allocated within the AOT code cache */
+        if ((cbuf + CVMJITcbufSize(cbuf)) > CVMglobals.jit.codeCacheAOTEnd) {
+            CVMconsolePrintf("WARNING: Code cache is full during AOT"
+                             "compilation. Please use a larger AOT "
+                             "code cache using-Xjit:aotCodeCacheSize=<size>.\n");
+            CVMabort();
+        }
+    }
+#endif
 
     /* Update the total bytes of the cache that are allocated */
     CVMglobals.jit.codeCacheBytesAllocated += CVMJITcbufSize(cbuf);
@@ -1265,15 +1291,6 @@ CVMJITcodeCacheMakeRoomForMethod(CVMJITCompilationContext* con,
 {
     CVMJITGlobalState* jgs = &CVMglobals.jit;
     CVMBool success = CVM_FALSE;
-
-#if defined(CVM_AOT) || defined(CVM_MTASK)
-    if (CVMglobals.jit.isPrecompiling) {
-        CVMconsolePrintf("WARNING: Code cache is full during AOT"
-                         "compilation. Please use a larger AOT "
-                         "code cache using -Xjit:aotCodeCacheSize=<size>.\n");
-        CVMabort();
-    }
-#endif
 
     if (!jgs->policyTriggeredDecompilations) {
 	CVMtraceJITStatus(("JS: Code cache full and decompilation "
