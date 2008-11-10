@@ -490,7 +490,7 @@ class AppProxy extends CLDCAppID {
 	    	LOGGER.println("AppProxy.launch(): " + (MIDletSuiteUtils.isAmsIsolate()?"":"NOT ") + "isAmsIsolate()");
     	if( isInSvmMode && !MIDletSuiteUtils.isAmsIsolate() )
     		return false;
-    	if( isSuiteRunning(suiteID) )
+    	if( suiteID != MIDletSuite.INTERNAL_SUITE_ID && isSuiteRunning(suiteID) )
     		return false;
     	if( LOGGER != null )
         	LOGGER.println("AppProxy.launch(): send 'launch' request {" + suiteID + ", '" + className + "'}");
