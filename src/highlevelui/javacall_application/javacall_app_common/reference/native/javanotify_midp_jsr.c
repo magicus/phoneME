@@ -1067,11 +1067,13 @@ javanotify_fluid_request_resource (
 
 void
 javanotify_fluid_cancel_request (
+    javacall_handle                       fluid_image,
     javacall_handle                       request
     ) {
     midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_CANCEL_REQUEST;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
     e.data.jsr290FluidEvent.spare       = request;
 
     midp_jc_event_send(&e);

@@ -360,6 +360,8 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor   = JSR290_IMAGE_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
         pNewMidpEvent->type      = FLUID_IMAGE_EVENT;
+        pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
+        pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
         pNewMidpEvent->intParam4 = (int)((jlong)(event->data.jsr290FluidEvent.spare));
         pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290FluidEvent.spare) >> 32);
         pNewMidpEvent->intParam1 = JSR290_CANCEL_REQUEST;
