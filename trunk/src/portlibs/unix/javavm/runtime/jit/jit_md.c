@@ -222,9 +222,9 @@ notFound:
 	    jgs->codeCacheStart = NULL;
         } else {
             jgs->codeCacheStart = alignedAddr + headersize;
+            jgs->codeCacheAOTStart = jgs->codeCacheStart;
+            jgs->codeCacheAOTEnd = &jgs->codeCacheStart[jgs->aotCodeCacheSize];
         }
-        jgs->codeCacheAOTStart = 0;
-        jgs->codeCacheAOTEnd = 0;
         jgs->codeCacheAOTCodeExist = CVM_FALSE;
         return 0;
     }
