@@ -251,9 +251,9 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = CHANGE_LOCALE_EVENT;
         break;
-    case MIDP_JC_EVENT_VIRTUAL_KEYBAORD:
+    case MIDP_JC_EVENT_VIRTUAL_KEYBOARD:
         pNewSignal->waitingFor = UI_SIGNAL;
-        pNewMidpEvent->type    = VIRTUAL_KEYBAORD_EVENT;
+        pNewMidpEvent->type    = VIRTUAL_KEYBOARD_EVENT;
         break;
 
 #ifdef ENABLE_JSR_75

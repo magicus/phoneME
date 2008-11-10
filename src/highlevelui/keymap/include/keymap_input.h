@@ -118,7 +118,14 @@ typedef enum {
      * and is never passed to application.
      **/
     KEYMAP_KEY_DEBUG_TRACE1 = -21,
+    
     KEYMAP_KEY_SCREEN_ROT   = -22,
+
+    /* This key event is generated when platform requests to show
+     * virtual keyboard. Is intended to be converted from key event
+     * into appropriate MIDP event
+     */
+    KEYMAP_KEY_VIRT_KEYB    = -23,
 
     /* This is the last enum. Please shift
      * it if you are adding new values.
@@ -126,7 +133,7 @@ typedef enum {
      * can be used for associations with platform
      * dependent keys (for example KEYMAP_MD_KEY_HOME).
      **/
-    KEYMAP_KEY_MACHINE_DEP  = -23
+    KEYMAP_KEY_MACHINE_DEP  = -24
 
 } KeymapKeyCode;
 /** @} */

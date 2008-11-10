@@ -51,7 +51,7 @@ KeyMapping qvfb_keys[] = {
     {KEYMAP_KEY_SCREEN_ROT,    0x1032},    /* F3 key */
     {KEYMAP_MD_KEY_SWITCH_APP, 0x1033},    /* F4 key */
     {KEYMAP_MD_NEXT_DISPLAY,   0x1034},    /* F5 key */
-    {KEYMAP_MD_KEY_VIRT_KEYB,  0x1035},    /* F6 key */
+    {KEYMAP_KEY_VIRT_KEYB,     0x1035},    /* F6 key */
     {KEYMAP_KEY_GAMEA,         0x1038},    /* F9 key */
     {KEYMAP_KEY_GAMEB,         0x1039},    /* F10 key */
     {KEYMAP_KEY_GAMEC,         0x103a},    /* F11 key */
