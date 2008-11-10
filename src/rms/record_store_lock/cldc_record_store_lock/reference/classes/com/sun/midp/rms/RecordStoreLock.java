@@ -25,14 +25,26 @@
  */
 
 package com.sun.midp.rms;
+import com.sun.midp.util.isolate.InterIsolateMutex;
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.Permissions;
 
 class RecordStoreLock implements AbstractRecordStoreLock {
+    private InterIsolateMutex mutex;
+
     public void obtain() {
+        mutex.lock();
     }
 
     public void release() {
+        mutex.unlock();
     }
 
     private RecordStoreLock() {
+        mutex = null;
+    }
+
+    private RecordStoreLock(SecurityToken token, String name) {
+        mutex = InterIsolateMutex.getInstance(token, name);
     }
 }

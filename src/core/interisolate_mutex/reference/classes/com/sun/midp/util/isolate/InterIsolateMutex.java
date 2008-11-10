@@ -54,7 +54,7 @@ public class InterIsolateMutex {
      * @return mutex instance
      */
     public static synchronized InterIsolateMutex getInstance(
-            String mutexName, SecurityToken token) {
+            SecurityToken token, String mutexName) {
 
         token.checkIfPermissionAllowed(Permissions.MIDP);        
 

@@ -33,8 +33,10 @@ class RecordStoreLockFactory {
             SecurityToken token, int suiteId, String storeName) {
 
         token.checkIfPermissionAllowed(Permissions.MIDP);
+        String base = RmsEnvironment.getSecureFilenameBase(suiteId);
+        String lockName = base + "#" + storeName;
 
-        return null;
+        return new RecordStoreLock(token, lockName);
     }
 
     private void RecordStoreLockFactory() {
