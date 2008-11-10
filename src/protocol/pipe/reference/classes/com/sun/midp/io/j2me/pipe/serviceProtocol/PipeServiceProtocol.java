@@ -1,5 +1,7 @@
 /*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -42,6 +44,11 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import javax.microedition.io.ConnectionNotFoundException;
 
+/**
+ * Implementation of low-level inter-isolate protocol to manage Pipes.
+ * Both AMS-side and client-side code is provided by this class
+ * to minimize chance of making protocol out-of-sync.
+ */
 public class PipeServiceProtocol {
 
     static final String SERVICE_ID = "com.sun.midp.io.pipe";

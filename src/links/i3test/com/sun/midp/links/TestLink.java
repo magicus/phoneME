@@ -23,6 +23,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
+
 package com.sun.midp.links;
 
 import com.sun.cldc.isolate.Isolate;
@@ -31,10 +32,12 @@ import com.sun.midp.i3test.TestCase;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 
+
 /**
  * Tests basic operations on the Link class.
  */
 public class TestLink extends TestCase {
+
 
     /**
      * Tests creation, isOpen(), and close().
@@ -48,6 +51,7 @@ public class TestLink extends TestCase {
         link.close();
         assertFalse("link should be closed", link.isOpen());
     }
+
 
     /**
      * Tests nulls.
@@ -89,6 +93,7 @@ public class TestLink extends TestCase {
         assertFalse("i,i should not throw NPE", thrown);
     }
 
+
     /**
      * Tests for equals() and hashCode().
      */
@@ -106,6 +111,7 @@ public class TestLink extends TestCase {
         link2.close();
         assertTrue("two closed links should be equal", link.equals(link2));
     }
+
 
     /**
      * Tests receive() on a closed link.
@@ -125,6 +131,7 @@ public class TestLink extends TestCase {
         assertTrue("exception should be thrown", thrown);
     }
 
+
     /**
      * Tests send() on a closed link.
      */
@@ -142,6 +149,7 @@ public class TestLink extends TestCase {
 
         assertTrue("exception should be thrown", thrown);
     }
+
 
     /**
      * Tests receive() followed by a send().
@@ -167,6 +175,7 @@ public class TestLink extends TestCase {
         assertEquals("strings should be equal", sendstr, recvstr);
     }
 
+
     /**
      * Tests send() followed by a receive().
      */
@@ -175,7 +184,7 @@ public class TestLink extends TestCase {
         Isolate i = Isolate.currentIsolate();
         Link link = Link.newLink(i, i);
         Sender sender = new Sender(link,
-                LinkMessage.newStringMessage(sendstr));
+            LinkMessage.newStringMessage(sendstr));
 
         assertFalse("sender should be blocked", sender.done);
         assertNull("sender should have no exceptions", sender.exception);
@@ -190,6 +199,7 @@ public class TestLink extends TestCase {
         assertTrue("strings shouldn't be identical", sendstr != recvstr);
         assertEquals("strings should be equal", sendstr, recvstr);
     }
+
 
     /**
      * Tests that close() will unblock a thread blocked in receive().
@@ -207,13 +217,14 @@ public class TestLink extends TestCase {
         assertTrue("receiver should be done", receiver.done);
 
         boolean wasIIOE =
-                receiver.exception instanceof InterruptedIOException;
+            receiver.exception instanceof InterruptedIOException;
         assertTrue("receiver should have gotten InterruptedIOException",
-                wasIIOE);
+            wasIIOE);
         if (!wasIIOE) {
             System.out.println("### receiver got " + receiver.exception);
         }
     }
+
 
     /**
      * Tests that close() will unblock a thread blocked in send().
@@ -222,7 +233,7 @@ public class TestLink extends TestCase {
         Isolate i = Isolate.currentIsolate();
         Link link = Link.newLink(i, i);
         Sender sender = new Sender(link,
-                LinkMessage.newStringMessage("foobar"));
+            LinkMessage.newStringMessage("foobar"));
 
         assertFalse("sender should be blocked", sender.done);
         assertNull("sender should have no exceptions", sender.exception);
@@ -232,155 +243,14 @@ public class TestLink extends TestCase {
         assertTrue("sender should be done", sender.done);
 
         boolean wasIIOE =
-                sender.exception instanceof InterruptedIOException;
+            sender.exception instanceof InterruptedIOException;
         assertTrue("sender should have gotten InterruptedIOException",
-                wasIIOE);
+            wasIIOE);
         if (!wasIIOE) {
             System.out.println("### sender got " + sender.exception);
         }
     }
 
-    /**
-     * Tests that close() on receiver side will not interrupt send() which was already
-     * completed.
-     */
-    void testSendReceiveClose() throws IOException {
-        Isolate i = Isolate.currentIsolate();
-        // check send-receive-close
-        Link link = Link.newLink(i, i);
-        Sender sender = new Sender(link,
-                LinkMessage.newStringMessage("foobar"));
-
-        assertFalse("sender should be blocked", sender.done);
-        assertNull("sender should have no exceptions", sender.exception);
-
-        LinkMessage lm = link.receive();
-        link.close();
-        sender.await();
-        assertTrue("sender should be done", sender.done);
-        assertNull("sender should have no exceptions", sender.exception);
-
-        // check the reverse - receive-send-close
-        Exception exc = null;
-        final Link link2 = Link.newLink(i, i);
-        // spawn a receiver and get it chance to hang on receive()
-        Receiver receiver = new Receiver(link2, 100) {
-
-            public void completed(LinkMessage msg, Throwable str) {
-                link2.close();
-            }
-        };
-        try {
-            link2.send(lm);
-        } catch (IOException iOException) {
-            exc = iOException;
-        }
-        assertNull("sender should have no exceptions", exc);
-    }
-
-    /**
-     * Tests that close() on sender side will not interrupt receive() which was already
-     * completed.
-     */
-    void testReceiveSendClose() throws IOException {
-        Isolate i = Isolate.currentIsolate();
-        Exception exc = null;
-        // check send-receive-close
-        final Link link = Link.newLink(i, i);
-        Sender sender = new Sender(link,
-                LinkMessage.newStringMessage("foobar")) {
-
-            public void completed(LinkMessage msg, Throwable str) {
-                link.close();
-            }
-        };
-
-        assertFalse("sender should be blocked", sender.done);
-        assertNull("sender should have no exceptions", sender.exception);
-
-        LinkMessage lm = null;
-        try {
-            lm = link.receive();
-        } catch (IOException iOException) {
-            exc = iOException;
-        }
-        sender.await();
-        assertTrue("sender should be done", sender.done);
-        assertNull("receiver should have no exceptions", exc);
-
-        // check the reverse - receive-send-close
-        Link link2 = Link.newLink(i, i);
-        // spawn a receiver and get it chance to hang on receive()
-        Receiver receiver = new Receiver(link2, 100);
-        try {
-            link2.send(lm);
-            link2.close();
-        } catch (IOException iOException) {
-            exc = iOException;
-        }
-        assertNull("sender should have no exceptions", exc);
-        assertNull("receiver should have no exceptions", receiver.exception);
-    }
-    
-    /**
-     * Tests mutiple send operations performed simultaneously
-     */
-    void testMutipleSend() throws IOException {
-        Isolate i = Isolate.currentIsolate();
-        Link link = Link.newLink(i, i);
-        LinkMessage lmShared = LinkMessage.newStringMessage("1");
-        LinkMessage lmPrivate = LinkMessage.newStringMessage("2");
-        Sender s1 = new Sender(link, lmShared);
-        Sender s2 = new Sender(link, lmPrivate);
-        Sender s3 = new Sender(link, lmShared);
-        
-        StringBuffer response = new StringBuffer();
-        LinkMessage lm;
-        lm = link.receive();
-        response.append(lm.extractString());
-        lm = link.receive();
-        response.append(lm.extractString());
-        lm = link.receive();
-        response.append(lm.extractString());
-        
-        int hash = response.charAt(0) + response.charAt(1) + response.charAt(2);
-        assertTrue("multiple simultaneously sent messages have content received incorrectly",
-                hash == '1' + '2' + '1');
-
-        // test correct close of the link with regards to pending send request
-        s1 = new Sender(link, lmShared);
-        s2 = new Sender(link, lmPrivate);
-        s3 = new Sender(link, lmShared);
-        
-        response = new StringBuffer();
-        lm = link.receive();
-        response.append(lm.extractString());
-        lm = link.receive();
-        link.close();
-        response.append(lm.extractString());
-        
-        s1.await();
-        s2.await();
-        s3.await();
-
-        hash = response.charAt(0) + response.charAt(1);
-        assertTrue("multiple simultaneously sent messages have content received incorrectly",
-                (hash == '1' + '2') || (hash == '1' + '1'));
-        assertTrue("all senders shall finish", 
-                s1.done && s2.done && s3.done);
-        int overallDone =
-                (s1.exception == null ? 1 : 0) +
-                (s2.exception == null ? 1 : 0) +
-                (s3.exception == null ? 1 : 0);
-        assertEquals("two of three senders shall succeed", 2, overallDone);
-        Throwable exc = s1.exception;
-        if (exc == null)
-            exc = s2.exception;
-        if (exc == null)
-            exc = s3.exception;
-        assertTrue("One of senders should got IIOE", 
-                exc.getClass().getName().equals("java.io.InterruptedIOException"));
-    }
 
     /**
      * Tests that the native rendezvous point structure is getting cleaned up 
@@ -403,6 +273,7 @@ public class TestLink extends TestCase {
             assertEquals("freed rp must match", rp, freed[0]);
         }
     }
+
 
     /**
      * Tests link creation with isolates in different states.
@@ -466,6 +337,7 @@ public class TestLink extends TestCase {
         assertTrue("terminated,started should throw ISE", thrown);
     }
 
+
     /**
      * Tests receiver and sender isolate access for a link.
      */
@@ -495,6 +367,7 @@ public class TestLink extends TestCase {
 
         i2.exit(0);
     }
+
 
     /**
      * Runs all tests.
@@ -527,12 +400,6 @@ public class TestLink extends TestCase {
         declare("testSendClose");
         testSendClose();
 
-        declare("testSendReceiveClose");
-        testSendReceiveClose();
-
-        declare("testReceiveSendClose");
-        testReceiveSendClose();
-
         declare("testCleanup");
         testCleanup();
 
@@ -541,8 +408,5 @@ public class TestLink extends TestCase {
 
         declare("testAccess");
         testAccess();
-        
-        declare("testMutipleSend");
-        testMutipleSend();
     }
 }

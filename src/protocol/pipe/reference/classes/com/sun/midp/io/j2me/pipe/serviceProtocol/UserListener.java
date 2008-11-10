@@ -1,5 +1,7 @@
 /*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -39,7 +41,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 /**
- *
+ * Part of AMS-side Pipe service. Each UserListner serves particular
+ * client MIDlet (i.e. all pipe instances of that MIDlet). Together
+ * with Pipe*ConnectionImpl classes this classes provides high-level
+ * pipe connection negotiation protocol. It uses PipeServiceProtocol
+ * for low-level communication.
  */
 public class UserListener implements SystemServiceConnectionListener {
 

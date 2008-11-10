@@ -1,5 +1,7 @@
 /*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -25,7 +27,8 @@
 package com.sun.midp.io.j2me.pipe.serviceProtocol;
 
 /**
- *
+ * Client pipe connection endpoint entity. Used by Dispatcher to
+ * keep track of open pipe connections to match server/client pipes.
  */
 class ClientEndpoint extends Endpoint {
     

@@ -29,6 +29,11 @@ import java.io.IOException;
 import javax.microedition.io.StreamConnection;
 import com.sun.midp.security.SecurityToken;
 
+/**
+ * Implementation of PipeServerConnection interface. Uses Links as bearer. Uses
+ * com.sun.midp.io.j2me.pipe.serviceProtocol.* for organazing messaging over
+ * bearer.
+ */
 class PipeServerConnectionImpl implements PipeServerConnection {
     private String name;
     private String version;
