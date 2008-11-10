@@ -252,7 +252,7 @@ void ChameleonMScreen::keyPressEvent(QKeyEvent *key)
             if (evt.CHR == KEYMAP_KEY_SCREEN_ROT) {
                 evt.type = ROTATION_EVENT;
             } else if (evt.CHR == KEYMAP_KEY_VIRT_KEYB) {
-                evt.type = VIRTUAL_KEYBAORD_EVENT;
+                evt.type = VIRTUAL_KEYBOARD_EVENT;
             } else {
                 evt.type = MIDP_KEY_EVENT;
             }
