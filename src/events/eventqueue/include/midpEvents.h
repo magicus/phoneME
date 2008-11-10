@@ -220,8 +220,12 @@ extern "C" {
 /**
  * JSR290 DOM object finalize notification event
  */
-#define DOM_FINALIZE_EVENT              64;
+#define DOM_FINALIZE_EVENT              64
 
+/**
+ * Request to exit a running midlet from the debug agent to AMS.
+ */
+#define MIDP_ODD_EXIT_MIDLET_EVENT      65
 
 /** @} */
 

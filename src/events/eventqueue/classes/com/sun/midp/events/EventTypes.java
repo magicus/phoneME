@@ -403,4 +403,9 @@ public final class EventTypes {
      * JSR290 DOM object finalize notification event
      */
     public static final int DOM_FINALIZE_EVENT = 64;
+
+    /**
+     * Request to exit a running midlet from the debug agent to AMS.
+     */
+    public static final int MIDP_ODD_EXIT_MIDLET_EVENT = 65;
 }
