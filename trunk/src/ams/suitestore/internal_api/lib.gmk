@@ -1,0 +1,78 @@
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+INTERNAL_API_LIB = internal_api
+LIB_SET += $(INTERNAL_API_LIB)
+
+INTERNAL_API_DIR = $(SUBSYSTEM_SUITESTORE_DIR)/$(INTERNAL_API_LIB)
+
+SUBSYSTEM_AMS_SOURCEPATH += $(INTERNAL_API_DIR)/reference/classes$(PATHSEP)$(INTERNAL_API_DIR)/classes
+
+$(GENERATED_DIR)/classes/com/sun/midp/midletsuite/MIDletSuiteImpl.java: \
+    $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/MIDletSuiteImpl.jpp
+	@$(call runjpp,$^,$@)
+
+# Java files for (common) module 
+SUBSYSTEM_AMS_JAVA_FILES += \
+    $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/MIDletInfo.java \
+    $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/InstallInfo.java \
+    $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/SuiteProperties.java \
+    $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/SuiteSettings.java \
+    $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/MIDletSuiteLockedException.java \
+    $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/MIDletSuiteCorruptedException.java \
+    $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/SuiteContainerAdapter.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/midletsuite/MIDletSuiteImpl.java \
+    $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/MIDletSuiteStorage.java \
+    $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/installer/InternalMIDletSuiteImpl.java
+
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_AMS_I3TEST_JAVA_FILES += 
+endif
+
+# vpath for ( common ) module 
+vpath % $(INTERNAL_API_DIR)/reference/native
+
+# Native files for the ( common ) module
+SUBSYSTEM_AMS_NATIVE_FILES += \
+    suitestore_intern.c \
+    suitestore_locks.c \
+    suitestore_midletsuiteimpl_kni.c \
+    suitestore_midletsuitestorage_kni.c \
+    suitestore_otanotifier_db.c \
+    suitestore_otanotifier_kni.c \
+    suitestore_verify_hash.c
+
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+    -I$(INTERNAL_API_DIR)/include \
+    -I$(INTERNAL_API_DIR)/reference/native
