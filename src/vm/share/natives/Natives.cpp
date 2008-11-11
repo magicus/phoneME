@@ -738,70 +738,7 @@ OopDesc* Java_java_lang_Class_getName(JVM_SINGLE_ARG_TRAPS) {
 #endif
 
   JavaClass::Fast c = receiver().java_class();
-
-  int dimension = 0;
-  int instance_pad = 0;
-  Symbol::Fast name;
-  String::Fast result;
-
-  if (c().is_array_class()) {
-    for (;;) {
-      if (c().is_type_array_class()) {
-        static const char table[] = {
-          /* T_BOOLEAN */ 'Z',
-          /* T_CHAR    */ 'C',
-          /* T_FLOAT   */ 'F',
-          /* T_DOUBLE  */ 'D',
-          /* T_BYTE    */ 'B',
-          /* T_SHORT   */ 'S',
-          /* T_INT     */ 'I',
-          /* T_LONG    */ 'J',
-        };
-
-        dimension++;
-        TypeArrayClass::Raw tac = c.obj();
-        int type = (int)tac().type();
-        GUARANTEE(T_BOOLEAN <= type && type <= T_LONG, "sanity");
-
-        LiteralStream ls((char*)(table + type - T_BOOLEAN), 0, 1);
-        result = Universe::new_string(&ls, dimension, 0 JVM_CHECK_0);
-        break;
-      } else if (c().is_instance_class()) {
-        InstanceClass::Raw ic = c.obj();
-        name = ic().name();
-        instance_pad = 1;
-        break;
-      } else if (c().is_obj_array_class()) {
-        dimension++;
-        ObjArrayClass::Raw oac = c.obj();
-        c = oac().element_class();
-      }
-    }
-  } else {
-    name = c().name();
-  }
-
-  if (name.not_null()) {
-    SymbolStream us(&name);
-    us.set_translation('/', '.');
-    result = Universe::new_string(&us, dimension+instance_pad, instance_pad
-                                  JVM_CHECK_0);
-  } else {
-    GUARANTEE(result.not_null(), "should have been set");
-  }
-
-  {
-    TypeArray::Raw t = result().value();
-    if (instance_pad) {
-      t().char_at_put(dimension, 'L');
-      t().char_at_put(t().length()-1, ';');
-    }
-    for (int i=0; i<dimension; i++) {
-      t().char_at_put(i, '[');
-    }
-  }
-
-  return result;
+  return c().getStringName();
 }
 
 // public static native Class forName(String className)

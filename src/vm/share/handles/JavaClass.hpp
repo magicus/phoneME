@@ -265,6 +265,9 @@ public:
     ClassInfo::Raw info = class_info();
     info().set_name(value);
   }
+  
+  String getStringName();
+  
   AccessFlags access_flags() const {
     return raw_class_info()->_access_flags;
   }

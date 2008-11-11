@@ -1983,6 +1983,7 @@ JavaClass.cpp                    Symbols.hpp
 JavaClass.cpp                    ClassInfo.hpp
 JavaClass.cpp                    VMEvent.hpp
 JavaClass.cpp                    SystemDictionary.hpp
+JavaClass.cpp                    Universe.hpp
 #if ENABLE_ISOLATES
 JavaClass.hpp                    TaskMirrorDesc.hpp
 JavaClass.hpp                    TaskMirror.hpp
@@ -2645,6 +2646,9 @@ Main_<os_family>.cpp           OsMisc_<os_family>.hpp
 
 // memorymonitor
 #if ENABLE_MEMORY_MONITOR
+MonitorMemory.cpp              Oop.hpp
+MonitorMemory.cpp              JavaClass.hpp
+MonitorMemory.cpp              MonitorMemory.hpp
 MonitorMemory.cpp              MonitorMemory.hpp
 MonitorMemory.cpp              MonitorMemoryMd.hpp
 MonitorMemory.cpp              WTKProfiler.hpp

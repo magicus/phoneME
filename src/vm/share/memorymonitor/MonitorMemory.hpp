@@ -42,8 +42,8 @@ public:
     static void memmonitor_flushBuffer(void);
     static void memmonitor_startup();
     static void memmonitor_shutdown();
-    static void memmonitor_enterMethod(juint id, int threadId);
-    static void memmonitor_exitMethod(juint id, int threadId);
+    static void memmonitor_enterMethod(Method* m);
+    static void memmonitor_exitMethod(Method* m);
 
 private:
 /**
@@ -90,41 +90,29 @@ static const int EXIT_METHOD     = 4;
  */  
 static char sendBuffer[MONITOR_BUFFER_SIZE];
 
-// static int isVmInternal(int type);
 static void flushBuffer();
 static void bufferInit(int heapSize);
-static void bufferEnterMethod(juint id, int threadId);
+static void bufferEnterMethod(Method* m, int threadId);
 static void bufferExitMethod(juint id, int threadId);
-// static void bufferAllocateObject(int pointer, int classId, int nameLength, 
-//         char* className, int allocSize, int threadId);
-// static void bufferFreeObject(int pointer, int classId, int allocSize);
+static void bufferFreeObject(int pointer, int classId, int allocSize);
 
 static int findCallStack(int threadId);
 static int findReserveCallStack(int threadId);
 static void flushCallStack(int stackIndex);
+static int getMethodId(Method* m);
 
 /**
  * This header file declares callback functions which need to be called at the
  * proper time for the memory monitor to work properly. This is done in log.c. 
  */ 
 
+void memmonitor_allocateObject(Oop* obj);
+void memmonitor_freeObject(Oop* obj);
 /*
-void memmonitor_allocateObject(long pointer, CLASS clazz, long cells, int type, 
-        long ID, long memoryFree);
-void memmonitor_freeObject(long pointer, INSTANCE_CLASS clazz, long cells);
 void memmonitor_throwException();
 */
 
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <kni.h>
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

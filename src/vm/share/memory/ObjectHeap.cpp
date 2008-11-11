@@ -551,11 +551,13 @@ void ObjectHeap::update_interior_pointers( FinalizerConsDesc** list ) {
   }
 }
 
-void ObjectHeap::register_finalizer_reachable_object(Oop* referent JVM_TRAPS) {
+void ObjectHeap::register_finalizer_reachable_object(Oop* referent,
+   int isFinalize JVM_TRAPS) {
   // Link finalizer reachable objects using cons cells. For now we
   // just use a 2-element object array as the cons cell.
   FinalizerConsDesc* cons = (FinalizerConsDesc*)
     Universe::new_obj_array(FinalizerConsDesc::Size JVM_CHECK);
+  cons->isFinalize = isFinalize;
   cons->set_referent(referent->obj());
 
 #if ENABLE_ISOLATES
@@ -629,9 +631,16 @@ void ObjectHeap::finalize( FinalizerConsDesc** list, const int task_id ) {
     TaskGCContext tmp(task_id);
 #endif
     do {
-      AZZERT_ONLY(_is_finalizing = true);
-      p->run_finalizer();
-      AZZERT_ONLY(_is_finalizing = false);
+      if (p->isFinalize) {
+        AZZERT_ONLY(_is_finalizing = true);
+        p->run_finalizer();
+        AZZERT_ONLY(_is_finalizing = false);
+	  }
+#if ENABLE_MEMORY_MONITOR 
+      if(Arguments::_monitor_memory) {
+        memmonitor_freeObject(p->referent());
+	  }
+#endif
     } while( (p = p->next()) != NULL );
     *list = p;
   }

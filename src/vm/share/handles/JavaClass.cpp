@@ -428,6 +428,79 @@ JavaClass::AccessType JavaClass::vtable_accessibility_at(int index) {
   return (AccessType)max((int)acc, (int)super_acc);
 }
 
+String JavaClass::getStringName() {
+  
+  int dimension = 0;
+  int instance_pad = 0;
+  UsingFastOops fast_oops;
+  Symbol::Fast name;
+  String::Fast result;
+  JavaClass::Fast c = obj();
+
+  if (c().is_array_class()) {
+    for (;;) {
+      if (c().is_type_array_class()) {
+        static const char table[] = {
+          /* T_BOOLEAN */ 'Z',
+          /* T_CHAR    */ 'C',
+          /* T_FLOAT   */ 'F',
+          /* T_DOUBLE  */ 'D',
+          /* T_BYTE    */ 'B',
+          /* T_SHORT   */ 'S',
+          /* T_INT     */ 'I',
+          /* T_LONG    */ 'J',
+        };
+
+        dimension++;
+        TypeArrayClass::Raw tac = c.obj();
+        int type = (int)tac().type();
+        GUARANTEE(T_BOOLEAN <= type && type <= T_LONG, "sanity");
+
+        LiteralStream ls((char*)(table + type - T_BOOLEAN), 0, 1);
+		{
+		    SETUP_ERROR_CHECKER_ARG;
+            result = Universe::new_string(&ls, dimension, 0 JVM_NO_CHECK);
+		}
+        break;
+      } else if (c().is_instance_class()) {
+        InstanceClass::Raw ic = c.obj();
+        name = ic().name();
+        instance_pad = 1;
+        break;
+      } else if (c().is_obj_array_class()) {
+        dimension++;
+        ObjArrayClass::Raw oac = c.obj();
+        c = oac().element_class();
+      }
+    }
+  } else {
+    name = c().name();
+  }
+
+  if (name.not_null()) {
+    SETUP_ERROR_CHECKER_ARG;
+    SymbolStream us(&name);
+    us.set_translation('/', '.');
+    result = Universe::new_string(&us, dimension+instance_pad, instance_pad
+                                  JVM_NO_CHECK);
+  } else {
+    GUARANTEE(result.not_null(), "should have been set");
+  }
+
+  {
+    TypeArray::Raw t = result().value();
+    if (instance_pad) {
+      t().char_at_put(dimension, 'L');
+      t().char_at_put(t().length()-1, ';');
+    }
+    for (int i=0; i<dimension; i++) {
+      t().char_at_put(i, '[');
+    }
+  }
+
+  return result;
+}
+
 #ifndef PRODUCT
 
 void JavaClass::iterate(OopVisitor* visitor) {

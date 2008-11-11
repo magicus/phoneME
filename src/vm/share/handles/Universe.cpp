@@ -1358,8 +1358,15 @@ ReturnOop Universe::new_instance(InstanceClass* klass JVM_TRAPS) {
       Throw::unsatisfied_link_error(&finalize_method JVM_THROW_0)
 #endif
     }
-    ObjectHeap::register_finalizer_reachable_object(&obj JVM_CHECK_0);
+    ObjectHeap::register_finalizer_reachable_object(&obj, 1 JVM_CHECK_0);
     return obj;
+#if ENABLE_MEMORY_MONITOR 
+  } else if(Arguments::_monitor_memory) {
+    UsingFastOops fast_oops;
+    Oop::Fast obj(result);  // create handle, call below can gc
+    ObjectHeap::register_finalizer_reachable_object(&obj, 0 JVM_CHECK_0);
+    MonitorMemory::memmonitor_allocateObject(&obj);
+#endif
   }
   return result;
 }
@@ -1924,6 +1931,14 @@ ReturnOop Universe::generic_allocate_array(Allocator* allocate,
     ArrayDesc* result = (ArrayDesc*) (*allocate)(size JVM_NO_CHECK);
     if (result) {
       result->initialize(klass->prototypical_near(), length);
+#if ENABLE_MEMORY_MONITOR 
+      if(Arguments::_monitor_memory) {
+        UsingFastOops fast_oops;
+        Oop::Fast obj(result);  // create handle, call below can gc
+        ObjectHeap::register_finalizer_reachable_object(&obj JVM_CHECK_0, 0);
+	    MonitorMemory::memmonitor_allocateObject(&obj);
+	  }
+#endif
     }
     return result;
   }

@@ -562,14 +562,11 @@ static inline void update_from_frame(JavaFrame* frame,
   }
 #if ENABLE_MEMORY_MONITOR 
   if(Arguments::_monitor_memory && (delta == (jlong)1 || delta == (jlong)-1)) {
-    int threadId = frame->thread()->id();
     Method::Raw m = frame->method();
-    jushort flags = 0;
-    juint id = WTKProfiler::encode_id(&m, flags);
 	if (delta == (jlong)1) { // enter method
-        MonitorMemory::memmonitor_enterMethod(id, threadId);
+        MonitorMemory::memmonitor_enterMethod(m());
 	} else if (delta == (jlong)-1) {
-	    MonitorMemory::memmonitor_exitMethod(id, threadId);
+	    MonitorMemory::memmonitor_exitMethod(m());
 	}
   }
 #endif

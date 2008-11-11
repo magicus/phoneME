@@ -139,30 +139,30 @@ MonitorMemory::memmonitor_flushBuffer() {
 /**
  * This function is called when a method is entered.
  * 
- * @param id method id
- * @param threadId thread id
+ * @param m method pointer
  */
 void
-MonitorMemory::memmonitor_enterMethod(juint id, int threadId) {
+MonitorMemory::memmonitor_enterMethod(Method* m) {
+	int threadId = (int)(Thread::current()->id());
+	int methodId = getMethodId(m);
     int stackIndex = findReserveCallStack(threadId);
 
     if (stackIndex != -1) {
        int count = callStackLength[stackIndex];
        if (count == MONITOR_CALLSTACK_LEN) {
-           // no room for the call
-           memmonitor_lock();
-           flushCallStack(stackIndex);
-           memmonitor_unlock();
-           // reuse the stack
-           count = 0;
-           callStackThread[stackIndex] = threadId;            
-       }
-        
-       callStack[stackIndex][count++] = threadId;
-       callStackLength[stackIndex] = count;
-   } else {
+            // no room for the call
+            memmonitor_lock();
+            flushCallStack(stackIndex);
+            memmonitor_unlock();
+            // reuse the stack
+            count = 0;
+            callStackThread[stackIndex] = threadId;
+		}
+        callStack[stackIndex][count++] = methodId;
+        callStackLength[stackIndex] = count;
+    } else {
        memmonitor_lock();
-       bufferEnterMethod(id, threadId);
+       bufferEnterMethod(m, threadId);
        memmonitor_unlock();
    }
     
@@ -172,11 +172,12 @@ MonitorMemory::memmonitor_enterMethod(juint id, int threadId) {
 /**
  * This function is called when a method is exited.
  * 
- * @param id method id
- * @param threadId thread id
+ * @param m method instance
  */
 void
-MonitorMemory::memmonitor_exitMethod(juint id, int threadId) {
+MonitorMemory::memmonitor_exitMethod(Method* m) {
+	int threadId = (int)(Thread::current()->id());
+	int methodId = getMethodId(m);
     int stackIndex = findCallStack(threadId);
      if (stackIndex != -1) {
         int last = callStackLength[stackIndex] - 1; // last >= 0
@@ -191,144 +192,31 @@ MonitorMemory::memmonitor_exitMethod(juint id, int threadId) {
         } else {
             memmonitor_lock();
             flushCallStack(stackIndex);
-            bufferExitMethod(id, threadId);
+            bufferExitMethod(methodId, threadId);
             memmonitor_unlock();
         }        
     } else {
         memmonitor_lock();
-        bufferExitMethod(id, threadId);
+        bufferExitMethod(methodId, threadId);
         memmonitor_unlock();
     }
 }
 
 /**
- * This function is called when a new object is allocated.
- * 
- * @param pointer the pointer to the new object
- * @param clazz the object class
- * @param cells the size of the object specified as the number of CELLs it 
- *      requires in the heap
- * @param type the type of the object
- * @param ID the identifier of the object in the heap
- * @param memoryFree the amount of free memory after the allocation 
- */        
-// void 
-// memmonitor_allocateObject(long pointer, CLASS clazz, long cells, int type, 
-//         long ID, long memoryFree) {
-//     char className[256]; 
-//     int classLength = 0;
-// 
-//     long threadUniqueId;
-// 
-//     int stackIndex;
-// 
-//     getClassName_inBuffer(clazz, className);
-//     classLength = strlen(className);
-//     
-//     /* A unique number that identifies the thread */
-//     threadUniqueId = (CurrentThread == NULL ?
-//         0 : 
-//         objectHashCode((OBJECT) (CurrentThread->javaThread->name)));
-//      stackIndex = findCallStack(threadUniqueId);
-//     memmonitor_lock();
-//     if (stackIndex != -1) {
-//         // there is an allocation, flush the corresponding call stack
-//         flushCallStack(stackIndex);
-//     }
-//     bufferAllocateObject(pointer, (int)clazz, classLength, className, 
-//             cells * CELL, threadUniqueId);
-//     memmonitor_unlock();
-// }
-        
-/**
- * This function is called when an allocated object is freed.
- * 
- * @param pointer the pointer to the object
- * @param clazz the object class
- * @param cells the number of heap CELLs deallocated when the object is freed
- */     
-// void 
-// memmonitor_freeObject(long pointer, INSTANCE_CLASS clazz, long cells) {
-//     if (!isVmInternal(TYPE(*((cell*)pointer)))) {        
-//         memmonitor_lock();
-//         bufferFreeObject(pointer, (int)clazz, cells * CELL);
-//         memmonitor_unlock();
-//     } else {
-//         memmonitor_lock();
-//         bufferFreeObject(pointer, 0, cells * CELL);
-//         memmonitor_unlock();
-//     }
-// }
-
-/**
  * This function is called when an exception is thrown.
  */ 
-// void 
-// memmonitor_throwException() {
-//     /* A unique number that identifies the thread */
-//     long threadUniqueId = (CurrentThread == NULL ?
-//             0 : 
-//             objectHashCode((OBJECT) (CurrentThread->javaThread->name)));
-//     int stackIndex = findCallStack(threadUniqueId);
-//     
-//     if (stackIndex != -1) {
-//         memmonitor_lock();
-//         flushCallStack(stackIndex);
-//         memmonitor_unlock();
-//     }    
-// }
-
-/**
- * Gets the method name for the given method and stores the result into the
- * buffer provided by the caller.
- * 
- * @param thisMethod the method
- * @param methodName the buffer
- * @return the value of the methodName
- */      
-// static char* 
-// getMethodName(METHOD thisMethod, char* methodName) {
-//     char *p = methodName;
-// 
-//     unsigned short nameKey = thisMethod->nameTypeKey.nt.nameKey;
-//     unsigned short typeKey = thisMethod->nameTypeKey.nt.typeKey;
-//     p = getClassName_inBuffer((CLASS)(thisMethod->ofClass), p);
-//     *p++ = '/';
-//     strcpy(p, change_Key_to_Name(nameKey, NULL));
-//     p += strlen(p);
-//     change_Key_to_MethodSignature_inBuffer(typeKey, p);
-// 
-//     return methodName;
-// }
-
-/**
- * Returns 1 if the given object type is VM internal, 0 if it is not.
- *
- * @param type the object type
- * @return 1 if the given object type is VM internal, 0 if it is not
- */ 
-// static int 
-// isVmInternal(int type) {
-//     switch (type) {
-//         case GCT_INSTANCE:
-//         case GCT_ARRAY:
-//         case GCT_OBJECTARRAY:
-//         /** GCT_WEAKREFERENCE is actually VM Internal object, but for
-//             Memory monitor a special care should be taken.
-//             When a new WeakReference instance is created, it is reported
-//             to Memory Monitor as GCT_INSTANCE (with class name).
-//             Then, its native method is called that changes its GC type
-//             from GCT_INSTANCE to GCT_WEAKREFERENCE.
-//             memmonitor_freeObject should pass the class name (WeakReference)
-//             to memory monitor, and to make it do so, we should return 0
-//             from this function.
-//             Take care if you want to use isVmInternal() from other places. */ 
-//         case GCT_WEAKREFERENCE:
-//             return 0;
-//         default:
-//             return 1;
-//     }
-// }
+void 
+memmonitor_throwException() {
+    /* A unique number that identifies the thread */
+	int threadId = (int)(Thread::current()->id());
+    int stackIndex = findCallStack(threadId);
+    
+    if (stackIndex != -1) {
+        memmonitor_lock();
+        flushCallStack(stackIndex);
+        memmonitor_unlock();
+    }    
+}
 
 /**
  * Sends all buffered command to the server site of the memory monitor (J2SE
@@ -368,18 +256,25 @@ MonitorMemory::bufferInit(int heapSize) {
     ++numCommands;
 } 
 
+int MonitorMemory::getMethodId(Method* m) {
+    UsingFastOops fast_oops;
+    Symbol::Fast method_name = m->name();
+    InstanceClass::Fast holder = m().holder();
+    Symbol::Fast class_name = holder().name();
+    return (int)(method_name().hash() + class_name().hash());
+}
+
 /**
  * Stores the ENTER_METHOD command (enterMethod) into the send buffer. Flushes 
  * the buffer if necessary. 
  * 
- * @param id method id
+ * @param m method pointer
  * @param threadId thread id
  */    
 void 
-MonitorMemory::bufferEnterMethod(juint id, int threadId) {
+MonitorMemory::bufferEnterMethod(Method* m, int threadId) {
     UsingFastOops fast_oops;
-    Method::Fast m = WTKProfiler::decode_id(id, 0);
-    Symbol::Fast method_name = m().name();
+    Symbol::Fast method_name = m->name();
     InstanceClass::Fast holder = m().holder();
     Symbol::Fast class_name = holder().name();
 	int lengthClassName = class_name().length();
@@ -397,15 +292,15 @@ MonitorMemory::bufferEnterMethod(juint id, int threadId) {
   
     *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)ENTER_METHOD);
     sendOffset += sizeof(u_long);       // command  
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)id);
+    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)getMethodId(m));
     sendOffset += sizeof(u_long);       // methodId
     *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)length);
     sendOffset += sizeof(u_long);       // nameLength
-    memcpy(sendBuffer + sendOffset, class_name().utf8_data(), lengthClassName);
+    class_name().string_copy(sendBuffer + sendOffset, lengthClassName);
     sendOffset += lengthClassName;      // className
 	*(char*)(sendBuffer + sendOffset) = '.';
 	sendOffset++;
-    memcpy(sendBuffer + sendOffset, method_name().utf8_data(), lengthMetodName);
+    method_name().string_copy(sendBuffer + sendOffset, lengthMetodName);
     sendOffset += lengthMetodName;      // methodName
     *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)threadId);
     sendOffset += sizeof(u_long);       // threadId    
@@ -421,7 +316,7 @@ MonitorMemory::bufferEnterMethod(juint id, int threadId) {
  * @param threadId thread id
  */    
 void 
-MonitorMemory::bufferExitMethod(juint id, int threadId) {
+MonitorMemory::bufferExitMethod(int id, int threadId) {
     int size = sizeof(u_long) +         // command
             sizeof(u_long) +            // methodId
             sizeof(u_long);             // threadId 
@@ -443,74 +338,99 @@ MonitorMemory::bufferExitMethod(juint id, int threadId) {
  * Stores the ALLOCATE_OBJECT command (allocateObject) into the send buffer. 
  * Flushes the buffer if necessary. 
  * 
- * @param pointer the object pointer
- * @param classId the id of the object class
- * @param nameLength the length of the object class name
- * @param className the class name
- * @param allocSize the allocated size    
- * @param threadId the id of the thread in which the object has been allocated  
+ * @param obj the object pointer
  */    
-// static void 
-// bufferAllocateObject(int pointer, int classId, int nameLength, 
-//         char* className, int allocSize, int threadId) {
-//     int size = sizeof(u_long) +         // command
-//             sizeof(u_long) +            // pointer
-//             sizeof(u_long) +            // classId
-//             sizeof(u_long) +            // nameLength
-//             nameLength +                // className
-//             sizeof(u_long) +            // allocSize
-//             sizeof(u_long);             // threadId
-//     if ((sendOffset + size) > MONITOR_BUFFER_SIZE) {
-//         flushBuffer();
-//     }
-  // 
-//     *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)ALLOCATE_OBJECT);
-//     sendOffset += sizeof(u_long);       // command  
-//     *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)pointer);
-//     sendOffset += sizeof(u_long);       // pointer
-//     *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)classId);
-//     sendOffset += sizeof(u_long);       // classId
-//     *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)nameLength);
-//     sendOffset += sizeof(u_long);       // nameLength
-//     memcpy(sendBuffer + sendOffset, className, nameLength);
-//     sendOffset += nameLength;           // className
-//     *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)allocSize);
-//     sendOffset += sizeof(u_long);       // allocSize    
-//     *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)threadId);
-//     sendOffset += sizeof(u_long);       // threadId
-  // 
-//     ++numCommands;
-// }
+static void 
+memmonitor_allocateObject(Oop* obj) {
+
+    if (obj == NULL) {
+	  return;
+	}
+	if (!obj->is_instance() && !obj->is_array()) {
+	  return;
+	}
+	JavaClass jc = obj->blueprint();
+    u_long classId = (u_long)jc.class_id();
+    UsingFastOops fast;
+    String::Fast class_name = jc.getStringName();
+	TypeArray::Fast cstring_name = class_name().to_cstring(JVM_SINGLE_ARG_NO_CHECK);
+	const char *className = (char *) cstring_name().base_address();
+	u_long nameLength = (u_long)(class_name().length());
+    u_long pointer = (u_long)(obj->obj());
+	u_long threadId = (u_long)(Thread::current()->id());
+	u_long allocSize = (u_long)(obj->object_size());
+
+    memmonitor_lock();
+    int size = sizeof(u_long) +         // command
+            sizeof(u_long) +            // pointer
+            sizeof(u_long) +            // classId
+            sizeof(u_long) +            // nameLength
+            nameLength +                // className
+            sizeof(u_long) +            // allocSize
+            sizeof(u_long);             // threadId
+    if ((sendOffset + size) > MONITOR_BUFFER_SIZE) {
+        flushBuffer();
+    }
+ 
+    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)ALLOCATE_OBJECT);
+    sendOffset += sizeof(u_long);       // command  
+    *(u_long*)(sendBuffer + sendOffset) = htonl_m(pointer);
+    sendOffset += sizeof(u_long);       // pointer
+    *(u_long*)(sendBuffer + sendOffset) = htonl_m(classId);
+    sendOffset += sizeof(u_long);       // classId
+    *(u_long*)(sendBuffer + sendOffset) = htonl_m(nameLength);
+    sendOffset += sizeof(u_long);       // nameLength
+    memcpy(sendBuffer + sendOffset, className, nameLength);
+    sendOffset += nameLength;           // className
+    *(u_long*)(sendBuffer + sendOffset) = htonl_m(allocSize);
+    sendOffset += sizeof(u_long);       // allocSize    
+    *(u_long*)(sendBuffer + sendOffset) = htonl_m(threadId);
+    sendOffset += sizeof(u_long);       // threadId
+ 
+    ++numCommands;
+    memmonitor_unlock();
+}
 
 /**
  * Stores the FREE_OBJECT command (freeObject) into the send buffer. Flushes 
  * the buffer if necessary. 
  * 
- * @param pointer the object pointer
- * @param classId the id of the object class
- * @param allocSize the allocated size    
+ * @param obj the object pointer
  */    
-// static void 
-// bufferFreeObject(int pointer, int classId, int allocSize) {
-//     int size = sizeof(u_long) +         // command
-//             sizeof(u_long) +            // pointer
-//             sizeof(u_long) +            // classId
-//             sizeof(u_long);             // allocSize
-//   if ((sendOffset + size) > MONITOR_BUFFER_SIZE) {
-//     flushBuffer();
-//   }
-  // 
-//   *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)FREE_OBJECT);
-//   sendOffset += sizeof(u_long);         // command  
-//   *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)pointer);
-//   sendOffset += sizeof(u_long);         // pointer
-//   *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)classId);
-//   sendOffset += sizeof(u_long);         // classId
-//   *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)allocSize);
-//   sendOffset += sizeof(u_long);         // allocSize
-  // 
-//   ++numCommands;
-// }
+static void 
+memmonitor_freeObject(Oop* obj) {
+
+    if (obj == NULL) {
+	  return;
+	}
+	if (!obj->is_instance() && !obj->is_array()) {
+	  return;
+	}
+    u_long pointer = (u_long)(obj->obj());
+	u_long allocSize = (u_long)(obj->object_size());
+	JavaClass jc = obj->blueprint();
+    u_long classId = (u_long)jc.class_id();
+    memmonitor_lock();
+    int size = sizeof(u_long) +         // command
+            sizeof(u_long) +            // pointer
+            sizeof(u_long) +            // classId
+            sizeof(u_long);             // allocSize
+  if ((sendOffset + size) > MONITOR_BUFFER_SIZE) {
+    flushBuffer();
+  }
+ 
+  *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)FREE_OBJECT);
+  sendOffset += sizeof(u_long);         // command  
+  *(u_long*)(sendBuffer + sendOffset) = htonl_m(pointer);
+  sendOffset += sizeof(u_long);         // pointer
+  *(u_long*)(sendBuffer + sendOffset) = htonl_m(classId);
+  sendOffset += sizeof(u_long);         // classId
+  *(u_long*)(sendBuffer + sendOffset) = htonl_m(allocSize);
+  sendOffset += sizeof(u_long);         // allocSize
+ 
+  ++numCommands;
+  memmonitor_unlock();
+}
 
 /**
  * Returns the index of the corresponding call stack for the given thread id or
