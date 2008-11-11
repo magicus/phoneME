@@ -321,9 +321,10 @@ pcsl_string_status pcsl_string_convert_from_utf8(const jbyte * buffer,
 
   {
     jsize utf16_length = 0;
+    /* we specify max_utf16_length - 1 to leave room for a terminating zero */
     pcsl_string_status status = pcsl_utf8_convert_to_utf16(buffer, buffer_length,
 						      utf16_buffer,
-						      max_utf16_length,
+						      max_utf16_length - 1,
 						      &utf16_length);
 
     if (status != PCSL_STRING_OK) {
@@ -332,11 +333,6 @@ pcsl_string_status pcsl_string_convert_from_utf8(const jbyte * buffer,
       return status;
     } else {
       /* Append terminating zero character. */
-      if (utf16_length + 1 > max_utf16_length) {
-	* string = PCSL_STRING_NULL;
-	return PCSL_STRING_ERR;
-      }
-
       utf16_buffer[utf16_length] = 0;
       utf16_length++;
 
