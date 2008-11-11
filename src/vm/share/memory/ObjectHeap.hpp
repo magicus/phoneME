@@ -653,16 +653,11 @@ public:
   static bool contains(const OopDesc* target)  {
       return contains((OopDesc**) target);
   }
-  static bool in_collection_area(OopDesc** target) {
-    return _debugger_active && _collection_area_start <= target
-#if ENABLE_COMPILER
-      && target < compiler_area_end()
-#endif
-      ;
+  static bool in_collection_area(OopDesc** obj) {
+    return _collection_area_start <= obj && obj < mark_area_end();
   }
   static bool in_collection_area_unmarked( OopDesc** obj ) {
-    return _collection_area_start <= obj && obj < mark_area_end()
-      && !test_bit_for( obj );
+    return in_collection_area( obj ) && !test_bit_for( obj );
   }
   static bool in_collection_area_unmarked( const OopDesc* obj ) {
     return in_collection_area_unmarked( (OopDesc**) obj );

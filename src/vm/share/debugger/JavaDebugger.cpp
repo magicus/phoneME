@@ -385,6 +385,10 @@ void JavaDebugger::flush_refnodes()
   GUARANTEE(ObjectHeap::is_gc_active(),
             "flush_refnodes Must be called during GC");
 
+  if( !_debugger_active ) {
+    return;
+  }
+  
   ObjArrayDesc *refMap =
     (ObjArrayDesc*)(Universe::objects_by_ref_map()->obj());
 
@@ -399,7 +403,7 @@ void JavaDebugger::flush_refnodes()
     node = (RefNodeDesc *)(refnodes[i]);
     while (node != NULL && node->_ref_obj != NULL) {
       p = (OopDesc **)(node->_ref_obj);
-      if (ObjectHeap::in_collection_area(p) && !ObjectHeap::test_bit_for(p)) {
+      if( ObjectHeap::in_collection_area_unmarked(p) ) {
         node->_ref_obj = NULL;
       }
       node = (RefNodeDesc *)(node->_next_by_ref);
@@ -413,7 +417,7 @@ void JavaDebugger::flush_refnodes()
     node = (RefNodeDesc *)(IDnodes[i]);
     while (node != NULL && node->_ref_obj != NULL) {
       p = (OopDesc **)(node->_ref_obj);
-      if (ObjectHeap::in_collection_area(p) && !ObjectHeap::test_bit_for(p)) {
+      if( ObjectHeap::in_collection_area_unmarked(p) ) {
         node->_ref_obj = NULL;
       }
       node = (RefNodeDesc *)(node->_next_by_id);
