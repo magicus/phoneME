@@ -24,27 +24,4 @@
 # information or have any questions.
 #
 
-LIB_DESCRIPTION=RMS Libary reference implementation
-LIB_VERSION=1.0
-LIB_DEPENDENCIES=rms/record_store rms/record_index rms/rms_base
-LIB_JAVA_FILES= \
-    javax/microedition/rms/RecordEnumeration.java \
-    javax/microedition/rms/RecordEnumerationImpl.java \
-    javax/microedition/rms/RecordStore.java \
-    javax/microedition/rms/RecordComparator.java \
-    javax/microedition/rms/RecordListener.java \
-    javax/microedition/rms/RecordFilter.java \
-    com/sun/midp/rms/RecordStoreFactory.java \
-    com/sun/midp/rms/RecordStoreFile.java \
-    com/sun/midp/rms/RecordStoreImpl.java \
-    com/sun/midp/rms/RecordStoreEventListener.java \
-    com/sun/midp/rms/RecordStoreEventConsumer.java
-
-LIB_C_FILES= \
-    native/recordStoreFile.c \
-    native/recordStoreRegistry.c
-
-#
-# IMPL_NOTE: revome when decoupling is complete
-#
-LIB_USES_LEGACY_CLASSES=true
+include $(CURDIR)/../../../build/share/genroot.make

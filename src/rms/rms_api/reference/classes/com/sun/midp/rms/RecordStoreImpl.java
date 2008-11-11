@@ -1079,6 +1079,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
             if (exists) {
                 // load header
+                dbFile.seek(0);
                 dbFile.read(dbHeader);
 
                 /*

@@ -1,7 +1,7 @@
 #
-#   
+#  
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -23,28 +23,22 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 #
-
-LIB_DESCRIPTION=RMS Libary reference implementation
-LIB_VERSION=1.0
-LIB_DEPENDENCIES=rms/record_store rms/record_index rms/rms_base
-LIB_JAVA_FILES= \
-    javax/microedition/rms/RecordEnumeration.java \
-    javax/microedition/rms/RecordEnumerationImpl.java \
-    javax/microedition/rms/RecordStore.java \
-    javax/microedition/rms/RecordComparator.java \
-    javax/microedition/rms/RecordListener.java \
-    javax/microedition/rms/RecordFilter.java \
-    com/sun/midp/rms/RecordStoreFactory.java \
-    com/sun/midp/rms/RecordStoreFile.java \
-    com/sun/midp/rms/RecordStoreImpl.java \
-    com/sun/midp/rms/RecordStoreEventListener.java \
-    com/sun/midp/rms/RecordStoreEventConsumer.java
-
-LIB_C_FILES= \
-    native/recordStoreFile.c \
-    native/recordStoreRegistry.c
-
+######################################################################
 #
-# IMPL_NOTE: revome when decoupling is complete
+# Module's Component Configuration file
 #
-LIB_USES_LEGACY_CLASSES=true
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+# vpath for ( rms_registry/stubs ) library
+#
+vpath % $(RMS_REGISTRY_IMPL_DIR)/native
+
+# Native files for the ( rms_registry/stubs ) library
+#
+SUBSYSTEM_RMS_NATIVE_FILES += \
+    rms_registry.c
