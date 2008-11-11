@@ -127,7 +127,7 @@ class VirtualStackFrame: public CompilerObject {
     low_bit = 16,
     low_mask = 0xffff,
     high_bit = 16,
-    high_mask = (0xffff<<16)
+    high_mask = 0xffff0000
   };
 
   //tag popped from tag stack
