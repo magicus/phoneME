@@ -94,6 +94,8 @@ struct wav_meta_data {
     char *icopData; /* copyright -> COPYRIGHT_KEY */
     char *icrdData; /* creation date -> DATE_KEY */
     char *inamData; /* name -> TITLE_KEY */
+    char *icmtData; /* comments -> COMMENT_KEY */
+    char *isftData; /* software -> SOFTWARE_KEY */
 };
 
 typedef struct {

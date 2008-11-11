@@ -143,6 +143,8 @@ javacall_result get_int_param(javacall_const_utf16_string ptr,
 #define METADATA_KEY_COPYRIGHT L"copyright"
 #define METADATA_KEY_DATE      L"date"
 #define METADATA_KEY_TITLE     L"title"
+#define METADATA_KEY_COMMENT   L"comment"
+#define METADATA_KEY_SOFTWARE  L"software"
 
 /*****************************************************************************
  *                  M A I N   W I N D O W   A C C E S S
