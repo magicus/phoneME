@@ -285,7 +285,13 @@ void SendEvent (KVMEventType *evt) {
         case VK_SHUTDOWN:
             javanotify_shutdown();
             break;
-	case VK_CHANGE_LOCALE:
+        case VK_HOME:
+            javanotify_switch_to_ams();
+            break;
+        case VK_SELECT_APP:
+            javanotify_select_foreground_app();
+            break;
+        case VK_CHANGE_LOCALE:
             javanotify_change_locale(evt->screenX, evt->screenY);
             break;
 #if ENABLE_JSR_179
