@@ -73,8 +73,7 @@ bool VirtualStackFrame::_abort = false;
 jint VirtualStackFrame::_passable_entry = 0;
 jint RegisterAllocator::_notation_map = 0;
 jint RegisterAllocator::_status_checked = 0;
-RegisterNotation RegisterAllocator::_register_notation_table[Assembler::number_of_registers] 
-  = {};
+RegisterNotation RegisterAllocator::_register_notation_table[Assembler::number_of_registers];
 #endif
 
 
