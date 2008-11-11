@@ -601,9 +601,6 @@ Locked_InitializeClass(ClassClass * cb, char **detail)
 #endif
 
     noLoader = (cbLoader(cb) == 0);
-    if (cbFieldsCount(cb) > 2000) {
-    return JAVAPKG "ClassFormatError";
-    }
     if ((strcmp(cbName(cb), CLS_RESLV_INIT_CLASS) == 0) && noLoader) {
     /* Temporarily disable class circularity checks */
     ExecEnv *ee = EE();
