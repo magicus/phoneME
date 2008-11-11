@@ -35,7 +35,13 @@ endif
 endif
 
 ifneq ($(USE_JSR_229), true)
-# Include stub implementation of JSR229 clean class
+# Include stub implementation of JSR 229 cleaning class
     LIB_EXPORT_JAVA_FILES += \
         com/sun/midp/payment/PAPICleanUp.java
+endif
+
+ifneq ($(USE_JSR_75), true)
+# Include stub implementation of JSR 75 cleaning class
+    LIB_EXPORT_JAVA_FILES += \
+        com/sun/midp/jsr075/FileConnectionCleanup.java
 endif

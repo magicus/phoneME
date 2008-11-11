@@ -1283,7 +1283,7 @@ class AppManagerUIImpl extends Form
             confirmForm.append(item);
 
             extraConfirmMsg =
-                PAPICleanUp.checkMissedTransactions(midletSuite.getID());
+                PAPICleanUp.checkMissedTransactions(suiteInfo.suiteId);
             if (extraConfirmMsg != null) {
                 temp.setLength(0);
                 temp.append(" \n");
@@ -1325,6 +1325,18 @@ class AppManagerUIImpl extends Form
                 item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
                 confirmForm.append(item);
                 appendRecordStoresToForm(recordStores, confirmForm);
+            }
+
+            boolean privateDataExists =
+                FileConnectionCleanup.suiteHasPrivateData(suiteInfo.suiteId);
+            if (privateDataExists) {
+                temp.setLength(0);
+                temp.append(" \n");
+                temp.append(Resource.getString
+                            (ResourceConstants.AMS_MGR_SUITE_PRIVATE_DATA));
+                item = new StringItem(null, temp.toString());
+                item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
+                confirmForm.append(item);
             }
 
             temp.setLength(0);
