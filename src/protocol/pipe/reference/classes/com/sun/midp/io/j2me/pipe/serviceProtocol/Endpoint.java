@@ -24,23 +24,27 @@
  * information or have any questions.
  */
 
-package com.sun.midp.services;
+package com.sun.midp.io.j2me.pipe.serviceProtocol;
 
-import java.io.*;
+/**
+ * Abstract class representing endpoint - entity used
+ * by Dispatcher to keep track of client and server pipe connections
+ * originated by MIDlets. Contains functionality common for server and client
+ * endpoints.
+ */
+abstract class Endpoint {
+    UserListener connectionListener;
+    Endpoint next;
+    long id;
 
-final class SystemServiceReadMessage extends SystemServiceDataMessage {
-    private DataInputStream dataStream = null;
-
-    SystemServiceReadMessage(byte[] data) {
-        ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
-        dataStream = new DataInputStream(byteStream);
+    Endpoint(UserListener connectionListener, long id) {
+        this.connectionListener = connectionListener;
+        this.id = id;
     }
 
-    public DataInput getDataInput() {
-        return dataStream;
-    }
+    abstract void close();
 
-    public DataOutput getDataOutput() {
-        throw new IllegalStateException();
+    long getId() {
+        return id;
     }
 }

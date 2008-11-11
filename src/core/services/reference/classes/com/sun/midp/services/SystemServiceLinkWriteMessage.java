@@ -1,6 +1,6 @@
 /*
  *
- *
+ * 
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -26,21 +26,20 @@
 
 package com.sun.midp.services;
 
-import java.io.*;
+import com.sun.midp.links.Link;
 
-final class SystemServiceReadMessage extends SystemServiceDataMessage {
-    private DataInputStream dataStream = null;
+public class SystemServiceLinkWriteMessage extends SystemServiceLinkMessage {
+    private Link link;
 
-    SystemServiceReadMessage(byte[] data) {
-        ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
-        dataStream = new DataInputStream(byteStream);
-    }
-
-    public DataInput getDataInput() {
-        return dataStream;
-    }
-
-    public DataOutput getDataOutput() {
+    public Link getLink() {
         throw new IllegalStateException();
+    }
+
+    public void setLink(Link theLink) {
+        link = theLink;
+    }
+
+    Link getLinkInternal() {
+        return link;
     }
 }

@@ -24,23 +24,21 @@
  * information or have any questions.
  */
 
-package com.sun.midp.services;
+package com.sun.midp.io.j2me.pipe;
 
-import java.io.*;
+import com.sun.midp.security.*;
 
-final class SystemServiceReadMessage extends SystemServiceDataMessage {
-    private DataInputStream dataStream = null;
+/**
+ * Utility class to make it easy to obtain security token.
+ */
+class SecurityTokenProvider {
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
 
-    SystemServiceReadMessage(byte[] data) {
-        ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
-        dataStream = new DataInputStream(byteStream);
-    }
+    private static SecurityToken token = 
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
-    public DataInput getDataInput() {
-        return dataStream;
-    }
-
-    public DataOutput getDataOutput() {
-        throw new IllegalStateException();
+    static SecurityToken getToken() {
+        return token;
     }
 }

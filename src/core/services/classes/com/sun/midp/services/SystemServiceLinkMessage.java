@@ -23,24 +23,25 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 package com.sun.midp.services;
 
-import java.io.*;
+import com.sun.midp.links.Link;
 
-final class SystemServiceReadMessage extends SystemServiceDataMessage {
-    private DataInputStream dataStream = null;
+/**
+ * Link message is what is a special kind of passed between service 
+ * and client. It is capable of carrying of single Link object.
+ */
+public abstract class SystemServiceLinkMessage extends SystemServiceMessage {
 
-    SystemServiceReadMessage(byte[] data) {
-        ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
-        dataStream = new DataInputStream(byteStream);
-    }
+    /**
+     * Gets Link object from the body of the message.
+     * 
+     * @return link object obtained from message
+     */
+    abstract public Link getLink();
 
-    public DataInput getDataInput() {
-        return dataStream;
-    }
-
-    public DataOutput getDataOutput() {
-        throw new IllegalStateException();
-    }
+    /**
+     * Sets specified Link object into the body of the message.
+     */
+    abstract public void setLink(Link theLink);
 }

@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -35,8 +35,15 @@ import com.sun.midp.midletsuite.DynamicComponentStorage;
 
 import com.sun.midp.configurator.Constants;
 
+import com.sun.midp.links.Link;
+import com.sun.midp.links.LinkPortal;
 import com.sun.midp.log.Logging;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.SecurityToken;
 import com.sun.midp.services.ComponentInfo;
+import com.sun.midp.services.SystemServiceLinkPortal;
+import com.sun.midp.services.SystemServiceManager;
 
 /**
  * Implements utilities that are different for SVM and MVM modes.
@@ -59,7 +66,10 @@ public class AmsUtil {
 
     /** Cached reference to the MIDletProxyList. */
     private static MIDletProxyList midletProxyList;
-
+    
+    private static class SecurityTrusted implements ImplicitlyTrustedClass {};
+    private static SecurityToken trustedToken;
+    
     /**
      * Initializes AmsUtil class. shall only be called from
      * MIDletSuiteLoader's main() in MVM AMS isolate
@@ -341,9 +351,15 @@ public class AmsUtil {
             }
 
             isolate.setDebug(isDebugMode);
-
+            
             isolate.setAPIAccess(true);
             isolate.start();
+
+            // Ability to launch midlet implies right to use Service API for negotiations
+            // with isolate being run
+            Link[] isolateLinks = 
+                    SystemServiceLinkPortal.establishLinksFor(isolate, getTrustedToken());
+            LinkPortal.setLinks(isolate, isolateLinks);
         } catch (Throwable t) {
             int errorCode;
             String msg;
@@ -455,5 +471,13 @@ public class AmsUtil {
         if (isolate != null) {
             isolate.exit(0);
         }
+    }
+    
+    private static SecurityToken getTrustedToken() {
+        if (trustedToken == null) {
+            trustedToken = SecurityInitializer.requestToken(new SecurityTrusted());
+        }
+        
+        return trustedToken;
     }
 }

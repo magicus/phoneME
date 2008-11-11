@@ -24,23 +24,19 @@
  * information or have any questions.
  */
 
-package com.sun.midp.services;
+package com.sun.midp.io.j2me.pipe.serviceProtocol;
 
-import java.io.*;
-
-final class SystemServiceReadMessage extends SystemServiceDataMessage {
-    private DataInputStream dataStream = null;
-
-    SystemServiceReadMessage(byte[] data) {
-        ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
-        dataStream = new DataInputStream(byteStream);
+/**
+ * Client pipe connection endpoint entity. Used by Dispatcher to
+ * keep track of open pipe connections to match server/client pipes.
+ */
+class ClientEndpoint extends Endpoint {
+    
+    ClientEndpoint(UserListener clientListener, long endpointId) {
+        super(clientListener, endpointId);
     }
 
-    public DataInput getDataInput() {
-        return dataStream;
+    void close() {
     }
 
-    public DataOutput getDataOutput() {
-        throw new IllegalStateException();
-    }
 }
