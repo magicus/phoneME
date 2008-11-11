@@ -25,47 +25,31 @@
  */
 
 package com.sun.midp.rms;
-import com.sun.midp.util.isolate.InterIsolateMutex;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
 /**
- * AbstractRecordStoreLock interface implementation for
- * MIDP on CLDC.
+ * Factory that creates AbstractRecordStoreLock implementation 
+ * instances.
  */
-class RecordStoreLock implements AbstractRecordStoreLock {
-    /** Inter-isolate mutex that provides locking */
-    private InterIsolateMutex mutex;
-
+final class RecordStoreLockFactory {
     /**
-     * Obtains the lock. Blocks if another MIDlet is holding the lock.
-     */    
-    public void obtain() {
-        mutex.lock();
-    }
-
-    /**
-     * Releases the lock and unblocks waiters.
-     */
-    public void release() {
-        mutex.unlock();
-    }
-
-    /**
-     * Constructor.
+     * Gets stub AbstractRecordStoreLock implementation.
      *
      * @param token security token
-     * @name lock name
-     */
-    RecordStoreLock(SecurityToken token, String name) {
-        mutex = InterIsolateMutex.getInstance(token, name);
-    }    
+     * @param suiteId ID of the MIDlet suite that owns the record store
+     * @param storeName record store name
+     * @return stub AbstractRecordStoreLock implementation. 
+     */    
+    final static synchronized AbstractRecordStoreLock getLockInstance(
+            SecurityToken token, int suiteId, String storeName) {
+
+        return new RecordStoreLock();
+    }
 
     /**
-     * Private constructor to prevent creating uninitialized
-     * class instances.
-     */
-    private RecordStoreLock() {
-        mutex = null;
+     * Private constructor toprevent creating class instances.
+     */    
+    private void RecordStoreLockFactory() {
     }
 }

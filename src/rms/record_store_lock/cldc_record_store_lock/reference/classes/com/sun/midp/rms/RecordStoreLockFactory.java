@@ -28,8 +28,22 @@ package com.sun.midp.rms;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
-class RecordStoreLockFactory {
-    static AbstractRecordStoreLock getLockInstance(
+/**
+ * Factory that creates AbstractRecordStoreLock implementation 
+ * instances.
+ */
+final class RecordStoreLockFactory {
+    /**
+     * Gets lock instance for locking record store corresponding 
+     * to the specified suite id and record store name.
+     *
+     * @param token security token
+     * @param suiteId ID of the MIDlet suite that owns the record store
+     * @param storeName record store name
+     * @return lock for record store corresponding to the specified 
+     * suite id and record store name
+     */
+    static final synchronized AbstractRecordStoreLock getLockInstance(
             SecurityToken token, int suiteId, String storeName) {
 
         token.checkIfPermissionAllowed(Permissions.MIDP);
@@ -39,6 +53,9 @@ class RecordStoreLockFactory {
         return new RecordStoreLock(token, lockName);
     }
 
+    /**
+     * Private constructor toprevent creating class instances.
+     */
     private void RecordStoreLockFactory() {
     }
 }

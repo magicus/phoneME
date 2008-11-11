@@ -26,7 +26,20 @@
 
 package com.sun.midp.rms;
 
+/**
+ * Interface for record store lock. Used for synchronizing access
+ * to the same record store between concurrently running MIDlets.
+ * You MUST NOT use it for synchronizing threads within single MIDlet,
+ * because some implementations of this interface might not support it.
+ */
 interface AbstractRecordStoreLock {
+    /**
+     * Obtains the lock. Blocks if another MIDlet is holding the lock.
+     */
     void obtain();
+
+    /**
+     * Releases the lock and unblocks waiters.
+     */
     void release();
 }

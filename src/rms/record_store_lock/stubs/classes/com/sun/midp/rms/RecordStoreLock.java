@@ -25,47 +25,19 @@
  */
 
 package com.sun.midp.rms;
-import com.sun.midp.util.isolate.InterIsolateMutex;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
 /**
- * AbstractRecordStoreLock interface implementation for
- * MIDP on CLDC.
+ * Stub implementation of AbstractRecordStoreLock interface.
  */
 class RecordStoreLock implements AbstractRecordStoreLock {
-    /** Inter-isolate mutex that provides locking */
-    private InterIsolateMutex mutex;
-
-    /**
-     * Obtains the lock. Blocks if another MIDlet is holding the lock.
-     */    
     public void obtain() {
-        mutex.lock();
     }
 
-    /**
-     * Releases the lock and unblocks waiters.
-     */
     public void release() {
-        mutex.unlock();
     }
 
-    /**
-     * Constructor.
-     *
-     * @param token security token
-     * @name lock name
-     */
-    RecordStoreLock(SecurityToken token, String name) {
-        mutex = InterIsolateMutex.getInstance(token, name);
-    }    
-
-    /**
-     * Private constructor to prevent creating uninitialized
-     * class instances.
-     */
-    private RecordStoreLock() {
-        mutex = null;
+    RecordStoreLock() {
     }
 }
