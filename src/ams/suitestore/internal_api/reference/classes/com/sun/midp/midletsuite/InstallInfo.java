@@ -80,7 +80,7 @@ public class InstallInfo {
     public boolean trusted;
 
     /** 
-     * Flag for temorary suites. All temporary suites can be uninstalled at 
+     * Flag for temporary suites. All temporary suites can be uninstalled at 
      * once.
      */
     public boolean temporary;
