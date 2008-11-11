@@ -41,6 +41,7 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.payment.PAPICleanUp;
+import com.sun.midp.jsr075.FileConnectionCleanup;
 
 import java.util.*;
 
@@ -1327,6 +1328,9 @@ class AppManagerUIImpl extends Form
                 appendRecordStoresToForm(recordStores, confirmForm);
             }
 
+            // IMPL_NOTE: uncomment this code once suiteHasPrivateData has
+            // sensible implementation. 
+            /*
             boolean privateDataExists =
                 FileConnectionCleanup.suiteHasPrivateData(suiteInfo.suiteId);
             if (privateDataExists) {
@@ -1338,6 +1342,7 @@ class AppManagerUIImpl extends Form
                 item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
                 confirmForm.append(item);
             }
+            */
 
             temp.setLength(0);
             temp.append(" \n");

@@ -64,6 +64,7 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.jsr075.FileConnectionCleanup;
 
 /**
  * An Installer manages MIDlet suites and libraries
@@ -1771,7 +1772,8 @@ public abstract class Installer {
      * @exception IOException if the install is stopped
      */
     protected void processPreviousRMS() throws IOException {
-        if (!RecordStoreFactory.suiteHasRmsData(info.id)) {
+        if (!RecordStoreFactory.suiteHasRmsData(info.id) &&
+                !FileConnectionCleanup.suiteHasPrivateData(info.id)) {
             return;
         }
 
