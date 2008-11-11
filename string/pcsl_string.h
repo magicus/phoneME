@@ -81,6 +81,16 @@ extern "C" {
 /**
  * Opaque type that represents strings in PCSL.
  * The definition of this type is implementation-dependent.
+ * It is required that filling a pcsl_string with zeroes
+ * sets the string to PCSL_STRING_NULL, for example,
+ * <pre>
+ * pcsl_string my_pcsl_string;
+ * memset(&my_pcsl_string, 0, sizeof(my_pcsl_string));
+ * </pre>
+ * is equivalent to
+ * <pre>
+ * pcsl_string my_pcsl_string = PCSL_STRING_NULL_INITIALIZER;
+ * </pre>
  */
 typedef pcsl_string_md pcsl_string;
 
