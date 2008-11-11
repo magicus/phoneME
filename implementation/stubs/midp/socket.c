@@ -186,7 +186,7 @@ javacall_result javacall_socket_close_finish(void *handle,void *context) {
  */
 javacall_result javacall_socket_available(javacall_handle handle,
                                           int *pBytesAvailable) {
-    return JAVACALL_NOT_IMPLEMENTED;
+    return JAVACALL_FAIL;
 }
 
 /******************************************************************************
