@@ -1,0 +1,76 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# MIDP specific directories and libraries defines
+# Generic compiler defines are in gcc.gmk
+# This file should be included after common/makefiles/Defs.gmk
+#
+######################################################################
+#
+# Variables required to be defined here:
+#
+# LIBS          Four specific libraries to be linked with; location and name: 
+#               1. The cldc_vm library;
+#               2. If in mvm mode and USE_I3_TEST= true,
+#                    the cldc_vmtest library
+#               3. The PCSL libraries
+#
+# EXTRA_INCLUDES   The location of the PCSL include files
+#              
+######################################################################
+ifndef _GCC_JTWI_GMK_
+_GCC_JTWI_GMK_	= true
+
+ifeq ($(TARGET_VM), cldc_vm)
+# the VM library
+LIBS		+= -L$(CLDC_DIST_DIR)/lib -lcldc_vm$(g)$(r)
+MIDP_DEPS       += $(CLDC_DIST_DIR)/lib/libcldc_vm$(g)$(r).a
+ifeq ($(USE_MULTIPLE_ISOLATES)+$(USE_I3_TEST), true+true)
+LIBS		+= -lcldc_vmtest$(g)$(r)
+MIDP_DEPS       += $(CLDC_DIST_DIR)/lib/libcldc_vmtest$(g)$(r).a
+endif
+endif
+
+# PCSL library
+# GCC requires all dependent file been specified before the implementation
+# library to avoid skipping of unreferenced functions. 
+# Since libcldc_vm.a also depends on PCSL library, this block must be after
+# the VM block above.
+PCSL_TARGET_DIR ?= $(PCSL_OUTPUT_DIR)/$(TARGET_OS)_$(TARGET_CPU)
+EXTRA_INCLUDES	+= -I$(PCSL_TARGET_DIR)/inc
+LIBS		+= -L$(PCSL_TARGET_DIR)/lib \
+		   -lpcsl_escfilenames -lpcsl_file -lpcsl_memory \
+		   -lpcsl_network -lpcsl_print -lpcsl_string
+
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_escfilenames.a
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_file.a
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_memory.a
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_network.a
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_print.a
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_string.a
+
+endif
