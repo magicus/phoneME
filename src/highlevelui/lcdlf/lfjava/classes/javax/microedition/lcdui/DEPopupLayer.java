@@ -153,7 +153,12 @@ class DEPopupLayer extends ScrollablePopupLayer {
             } else if (itemIndexWhenPressed >= 0 &&
                 // press on valid item
                 hilightedIndex != itemIndexWhenPressed + startIndex) { 
-                hilightedIndex = itemIndexWhenPressed + startIndex;
+                int newHilightedIndex = itemIndexWhenPressed + startIndex;  
+                if (newHilightedIndex > endIndex) {
+                    itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS;
+                } else {
+                    hilightedIndex = newHilightedIndex;                    
+                }
                 requestRepaint();
             } 
             break;
