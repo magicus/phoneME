@@ -177,6 +177,9 @@ javacall_result javacall_socket_close_finish(void *handle,void *context) {
  * Gets the number of bytes available to be read from the platform-specific
  * socket without causing the system to block. If it is not possible to find
  * out the actual number of available bytes then the resulting number is 0.
+ * <b>IMPORTANT</b>: Some features of the product (not convered by spec but still essential,
+ * for example java debugging) might not work if this function does not return
+ * actual value.
  *
  * @param handle handle of an open connection
  * @param pBytesAvailable returns the number of available bytes
@@ -186,7 +189,7 @@ javacall_result javacall_socket_close_finish(void *handle,void *context) {
  */
 javacall_result javacall_socket_available(javacall_handle handle,
                                           int *pBytesAvailable) {
-    return JAVACALL_NOT_IMPLEMENTED;
+    return JAVACALL_FAIL;
 }
 
 /******************************************************************************
