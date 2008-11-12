@@ -336,6 +336,9 @@ _JNI_NewGlobalRef(JNIEnv* env, jobject obj) {
 
   const int ref_index = 
     ObjectHeap::register_strong_reference(&oop JVM_MUST_SUCCEED);
+  if (ref_index < 0) {
+    Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW_0);
+  }
   
   return (jobject)ref_index;
 }
@@ -1745,8 +1748,10 @@ _JNI_NewWeakGlobalRef(JNIEnv* env, jobject obj) {
 
   const int ref_index = 
     ObjectHeap::register_weak_reference(&oop JVM_MUST_SUCCEED);
+  if (ref_index < 0) {
+    Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW_0);
+  }
 
-  // IMPL_NOTE: throw OutOfMemoryError in case of failure
   return (jobject)ref_index;
 }
 
