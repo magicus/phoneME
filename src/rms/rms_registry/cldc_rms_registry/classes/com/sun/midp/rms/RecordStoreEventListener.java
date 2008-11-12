@@ -17,27 +17,16 @@ import com.sun.midp.main.MIDletSuiteUtils;
  * execution contexts. 
  */
 public class RecordStoreEventListener implements EventListener {
+
     /** Security token to access restricted APIs */
     private SecurityToken securityToken; 
-
     /** Event consumer for record store change events */
-    static private RecordStoreEventConsumer
-        recordStoreEventConsumer;
+    private RecordStoreEventConsumer recordStoreEventConsumer;
 
     /** Constructs record store listener instance */
-    public RecordStoreEventListener(SecurityToken token) {
-        securityToken = token;
-    }
-
-    /**
-     * Sets consumer for record store change events
-     * @param token security token to restrict usage of the method
-     * @param consumer record store events consumer instance
-     */
-    public static void setConsumer(
+    public RecordStoreEventListener(
             SecurityToken token, RecordStoreEventConsumer consumer) {
-
-        token.checkIfPermissionAllowed(Permissions.MIDP);
+        securityToken = token;
         recordStoreEventConsumer = consumer;
     }
 
@@ -61,9 +50,7 @@ public class RecordStoreEventListener implements EventListener {
      * @param event async record store change event
      */
     public void process(Event event) {
-        // Copy consumer locally to do no synchronization
-        RecordStoreEventConsumer consumer = recordStoreEventConsumer;
-        if (consumer != null) {
+        if (recordStoreEventConsumer != null) {
             NativeEvent nativeEvent = (NativeEvent) event;
             if (event.getType() == EventTypes.RECORD_STORE_CHANGE_EVENT) {
                 int suiteId = nativeEvent.intParam1;
@@ -89,7 +76,7 @@ public class RecordStoreEventListener implements EventListener {
                     RecordStoreRegistry.acknowledgeRecordStoreNotifications(
                         securityToken);
                 }
-                consumer.handleRecordStoreChange(
+                recordStoreEventConsumer.handleRecordStoreChange(
                     suiteId, recordStoreName, changeType, recordId);
             }
         }

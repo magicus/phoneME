@@ -284,7 +284,7 @@
             Name="RECORD_STORE_NOTIFICATION_QUEUE_SIZE"
             Value="10"
             Comment="Maximal number of notifications about record store changes
-                       that can be placed into event queue of VM task."/>
+                     that can be placed into event queue of VM task."/>
   <constant Type="int"
             Name="RECORD_STORE_NOTIFICATION_TIMEOUT"
             Value="1000"

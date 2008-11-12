@@ -35,7 +35,9 @@
 ######################################################################
 
 RMS_REGISTRY_DIR = $(SUBSYSTEM_RMS_DIR)/rms_registry
-SUBSYSTEM_RMS_EXTRA_INCLUDES += -I$(RMS_REGISTRY_DIR)/include
+
+SUBSYSTEM_RMS_JAVA_FILES += \
+    $(RMS_REGISTRY_DIR)/classes/com/sun/midp/rms/RecordStoreEventConsumer.java
 
 ifeq ($(TARGET_VM), cldc_vm)
   RMS_REGISTRY_IMPL_DIR ?= $(RMS_REGISTRY_DIR)/cldc_rms_registry

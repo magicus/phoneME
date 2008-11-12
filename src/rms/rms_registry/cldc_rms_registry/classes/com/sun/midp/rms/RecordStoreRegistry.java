@@ -46,6 +46,22 @@ import com.sun.midp.main.MIDletSuiteUtils;
 public class RecordStoreRegistry {
 
     /**
+     * Registers listener and consumer of record store change events
+     * @param token security token to restrict usage of the method
+     * @param consumer record store events consumer
+     */
+    public static void registerRecordStoreEventConsumer(
+            SecurityToken token, RecordStoreEventConsumer consumer) {
+
+        token.checkIfPermissionAllowed(Permissions.MIDP);
+        EventQueue eventQueue = EventQueue.getEventQueue(token);
+        RecordStoreEventListener recordEventListener =
+            new RecordStoreEventListener(token, consumer);
+        eventQueue.registerEventListener(
+            EventTypes.RECORD_STORE_CHANGE_EVENT, recordEventListener);
+    }
+
+    /**
      * Starts listening of asynchronous changes of record store
      *
      * @param token security token to restrict usage of the method
@@ -79,7 +95,8 @@ public class RecordStoreRegistry {
      * @param suiteId suite ID of changed record store
      * @param storeName name of changed record store
      * @param changeType type of record change: ADDED, DELETED or CHANGED
-     * @param recordId ID of changed record 
+     * @param recordId ID of changed record
+     * @see #notifyRecordStoreChangeImpl
      */
     public static void notifyRecordStoreChange(
             SecurityToken token, int suiteId, String storeName,
@@ -89,7 +106,7 @@ public class RecordStoreRegistry {
     }
 
     /**
-     * Acknowledges delivery of record store notifications to the callers VM task
+     * Acknowledges delivery of record store notifications
      * @param token security token to restrict usage of the method
      */
     public static void acknowledgeRecordStoreNotifications(SecurityToken token) {
@@ -195,11 +212,11 @@ public class RecordStoreRegistry {
      * by sender it tries to wait for it. If not acknowled reports the problem to
      * AMS then.
      *
-     * @param token
-     * @param suiteId
-     * @param storeName
-     * @param changeType
-     * @param recordId
+     * @param token security token to restrict usage of the method
+     * @param suiteId suite ID of changed record store
+     * @param storeName name of changed record store
+     * @param changeType type of record change, can be ADDED, DELETED or CHANGED
+     * @param recordId ID of the changed record
      */
     private static void notifyRecordStoreChangeImpl(
             SecurityToken token,

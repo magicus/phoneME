@@ -38,7 +38,14 @@
 #
 vpath % $(RMS_REGISTRY_IMPL_DIR)/native
 
-# Native files for the ( rms_regisrty/cldc_rms_registry ) library
+# Java files for the ( rms_registry/cldc_rms_registry ) implementation
+#
+SUBSYSTEM_RMS_JAVA_FILES += \
+    $(RMS_REGISTRY_IMPL_DIR)/classes/com/sun/midp/rms/RecordStoreRegistry.java \
+    $(RMS_REGISTRY_IMPL_DIR)/classes/com/sun/midp/rms/RecordStoreEventListener.java
+
+# Native files for the ( rms_registry/cldc_rms_registry ) implementation
 #
 SUBSYSTEM_RMS_NATIVE_FILES += \
+    recordStoreRegistry.c \
     rms_registry.c

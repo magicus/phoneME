@@ -33,7 +33,8 @@
 #include <midpRMS.h>
 #include <midpUtilKni.h>
 #include <midpError.h>
-#include <rms_registry.h>
+
+#include "rms_registry.h"
 
 /**
  * Sends asynchronous notification about change of record store done

@@ -34,11 +34,8 @@
 #
 ######################################################################
 
-# vpath for ( rms_registry/stubs ) library
+# Java files for the ( rms_registry/stubs ) implementation
 #
-vpath % $(RMS_REGISTRY_IMPL_DIR)/native
+SUBSYSTEM_RMS_JAVA_FILES += \
+    $(RMS_REGISTRY_IMPL_DIR)/classes/com/sun/midp/rms/RecordStoreRegistry.java
 
-# Native files for the ( rms_registry/stubs ) library
-#
-SUBSYSTEM_RMS_NATIVE_FILES += \
-    rms_registry.c

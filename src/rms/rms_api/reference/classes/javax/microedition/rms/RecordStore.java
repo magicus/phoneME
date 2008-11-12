@@ -33,7 +33,6 @@ import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 import com.sun.midp.rms.RecordStoreImpl;
 import com.sun.midp.rms.RecordStoreEventConsumer;
-import com.sun.midp.rms.RecordStoreEventListener;
 import com.sun.midp.rms.RecordStoreRegistry;
 
 import com.sun.midp.security.SecurityInitializer;
@@ -679,18 +678,22 @@ public class RecordStore {
     private void startRecordStoreListening() {
 
         // Initialize consumer of asynchronous record
-        // store events on first request to listen for them 
+        // store events on first request to listen for them
         if (recordStoreEventConsumer == null) {
-            recordStoreEventConsumer =
-                new RecordStoreEventConsumer() {
-                    public void handleRecordStoreChange(
-                            int suiteId, String recordStoreName,
-                            int changeType, int recordId) {
-                        RecordStore.handleRecordStoreChange(
-                            suiteId, recordStoreName, changeType, recordId);
-                    }
-                };
-            RecordStoreEventListener.setConsumer(
+
+            // IMPL: No additional synchronization is needed here since the method
+            //   is called on registration of new record store listener only,
+            //   under synchronization lock already.
+            
+            recordStoreEventConsumer = new RecordStoreEventConsumer() {
+                public void handleRecordStoreChange(
+                        int suiteId, String recordStoreName,
+                        int changeType, int recordId) {
+                    RecordStore.handleRecordStoreChange(
+                        suiteId, recordStoreName, changeType, recordId);
+                }
+            };
+            RecordStoreRegistry.registerRecordStoreEventConsumer(
                 classSecurityToken, recordStoreEventConsumer);
         }
         // Start listening of async notifications 

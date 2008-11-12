@@ -29,7 +29,8 @@
 #include <midpMalloc.h>
 #include <midpEvents.h>
 #include <midpInit.h>
-#include <rms_registry.h>
+
+#include "rms_registry.h"
 
 /**
  * List of pairs <ID, counter> corresponding to number of
@@ -262,10 +263,10 @@ void rms_registry_send_record_store_change_event(
                 MidpEvent evt;
                 int requiresAcknowledgment = 0;
 
-                /* Request acknowledgment from reciever after sending series
-                 * of notifications to protect reciever from queue overflow */
+                /* Request acknowledgment from receiver after sending a series
+                 * of notifications to protect receiver from queue overflow. */
                 counter = incNotificationCounter(listenerId);
-                if (counter == RECORD_STORE_NOTIFICATION_QUEUE_SIZE) {
+                if (counter == RECORD_STORE_NOTIFICATION_QUEUE_SIZE / 2) {
                     requiresAcknowledgment = 1;
                 }
 
