@@ -830,6 +830,7 @@ public abstract class Installer {
                     verifyMIDlet(midletInfo.classname);
                 } catch (InvalidJadException ije) {
                     if (ije.getReason() == InvalidJadException.INVALID_VALUE) {
+                        // The MIDlet-n attribute may present in Manifest only
                         if (state.jadProps != null &&
                                 state.jadProps.getProperty(key) != null) {
                             postInstallMsgBackToProvider(
@@ -846,7 +847,7 @@ public abstract class Installer {
                 }
             }
 
-            // move on to the next step after a warning
+            // Move on to the next step after a warning
             state.nextStep++;
 
             // Check Manifest entries against .jad file
