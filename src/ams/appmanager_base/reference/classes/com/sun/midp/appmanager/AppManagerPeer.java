@@ -428,6 +428,11 @@ class AppManagerPeer implements CommandListener {
                 si = (RunningMIDletSuiteInfo)msiVector.elementAt(i);
 
                 if (si.hasProxy(midlet)) {
+                    
+                    if (si.hasSingleMidlet()) {
+                        si.unlock();
+                    }
+
                     si.removeProxy(midlet);
 
                     appManagerUI.notifyMidletExited(si, midletClassName);
@@ -509,12 +514,19 @@ class AppManagerPeer implements CommandListener {
     }
     
     /**
-     * Called when a suite exited (the only MIDlet in suite exited or the
-     * MIDlet selector exited).
+     * Called when a suite exited (last running MIDlet in suite exited).
      * @param suiteInfo Suite which just exited
      */
     void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
         appManagerUI.notifySuiteExited(suiteInfo);
+    }
+
+    /**
+     * Called when MIDlet selector exited.
+     * @param suiteInfo Suite whose selector just exited
+     */
+    void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {
+        appManagerUI.notifyMIDletSelectorExited(suiteInfo);
     }
     
     // ------------------------------------------------------------------
@@ -959,8 +971,11 @@ class AppManagerPeer implements CommandListener {
      * @param suiteId ID of the suite to launch
      * @param midletClassname MIDlet to run, may be null, then will be launched
      *        the single MIDlet or MIDlet selector
+     * @param isDebugMode whether the suite should be launched in debug mode
+     * @param lock whether the running suite should be locked
      */
-    void launchSuite(int suiteId, String midletClassname, boolean isDebugMode) {
+    void launchSuite(int suiteId, String midletClassname, boolean isDebugMode,
+            boolean lock) {
 
         RunningMIDletSuiteInfo msi = findUserInstalledSuiteRmsi(suiteId);
         if (msi == null) {
@@ -980,6 +995,11 @@ class AppManagerPeer implements CommandListener {
         }
         
         msi.isDebugMode = isDebugMode;
+
+        if (lock) {
+            msi.lock();
+        }
+        
         if (midletClassname != null) {
             manager.launchSuite(msi, midletClassname);
         } else {
