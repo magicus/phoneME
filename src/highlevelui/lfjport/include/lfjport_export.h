@@ -59,6 +59,11 @@ void lfjport_refresh(int hardwareId, int x, int y, int w, int h);
 jboolean lfjport_reverse_orientation(int hardwareId);
 
 /**
+ * Handle clamshell event
+ */
+void lfjport_handle_clamshell_event();
+
+/**
  * Get screen orientation flag
  */
 jboolean lfjport_get_reverse_orientation(int hardwareId);

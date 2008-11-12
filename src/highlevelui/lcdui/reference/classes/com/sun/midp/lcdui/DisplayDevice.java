@@ -239,6 +239,13 @@ public class DisplayDevice {
 	return reverseOrientation0(hardwareId);
     }
 
+      /** 
+     * Handle clamshell event.
+     */
+    public void clamshellHandling() {
+	clamshellHandling0();
+    }
+
     /**
      * Redraw a portion of the display.
      *
@@ -319,6 +326,7 @@ public class DisplayDevice {
     private native boolean isDisplayPenSupported0(int hardwareId);
     private native boolean isDisplayPenMotionSupported0(int hardwareId);
     private native void displayStateChanged0(int hardwareId, int state);
+    private native void clamshellHandling0();
 
 }
 

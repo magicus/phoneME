@@ -164,6 +164,17 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_reverseOrientation0) {
 }
 
 /**
+ * Calls platform specific function to handle clamshell event 
+*/
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_clamshellHandling0) {
+    lcdlf_handle_clamshell_event();
+}
+
+
+
+
+/**
  * Calls platform specific function to invert screen orientation flag
  * Java parameters:
  * <pre>

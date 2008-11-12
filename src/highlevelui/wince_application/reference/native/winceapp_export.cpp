@@ -1393,6 +1393,12 @@ jboolean winceapp_reverse_orientation() {
 }
 
 /**
+ * Handle clamshell event
+ */
+void winceapp_hadle_clamshell_event() {
+}
+
+/**
  * Invert screen rotation flag
  */
 jboolean winceapp_get_reverse_orientation() {
