@@ -743,6 +743,56 @@ inline void ObjectHeap::weak_refs_do(void do_oop(OopDesc**)) {
 #endif
 }
 
+#if USE_SOFT_REFERENCES
+inline void ObjectHeap::soft_refs_do(void do_oop(OopDesc**)) {
+#if ENABLE_ISOLATES
+  ForTask( task ) {
+    Task::Raw t = Task::get_task(task);
+    if (t.not_null()) {
+      SoftRefArray::Raw refs = t().soft_references();
+      if (refs.not_null()) {
+        refs().oops_do(do_oop);
+      }
+    }
+  }
+#else
+  {
+    SoftRefArray::Raw refs = Universe::soft_references()->obj();
+    if (refs.not_null()) {
+      refs().oops_do(do_oop);
+    }
+  }
+#endif
+}
+
+inline void ObjectHeap::mark_soft_refs(bool is_full_collect) {
+#if ENABLE_ISOLATES
+  ForTask( task ) {
+    Task::Raw t = Task::get_task(task);
+    if (t.not_null()) {
+      SoftRefArray::Raw refs = t().soft_references();
+      if (refs.not_null()) {
+        refs().mark(is_full_collect);
+      }
+    }
+  }
+#else
+  {
+    SoftRefArray::Raw refs = Universe::soft_references()->obj();
+    if (refs.not_null()) {
+      refs().mark(is_full_collect);
+    }
+  }
+#endif
+}
+
+void ObjectHeap::soft_ref_increase_counter(int refIndex){
+  SoftRefArray::Raw array = get_reference_array(refIndex);
+  const unsigned index = get_reference_index(refIndex);
+  array().increase_counter(index);
+}
+#endif//  USE_SOFT_REFERENCES
+
 inline int 
 ObjectHeap::make_reference(unsigned type, unsigned owner, unsigned index) {
   (void)owner;
@@ -791,9 +841,21 @@ ObjectHeap::is_weak_reference(const int ref_index) {
   return get_reference_type(ref_index) == WeakGlobalRefType;
 }
 
+#if USE_SOFT_REFERENCES
+inline bool 
+ObjectHeap::is_soft_reference(const int ref_index) {
+  return get_reference_type(ref_index) == SoftGlobalRefType;
+}
+#endif
+
 inline bool 
 ObjectHeap::is_global_reference(const int ref_index) {
+#if USE_SOFT_REFERENCES
+  return is_strong_reference(ref_index) || is_weak_reference(ref_index) 
+    || is_soft_reference(ref_index);
+#else
   return is_strong_reference(ref_index) || is_weak_reference(ref_index);
+#endif
 }
 
 inline unsigned 
@@ -824,19 +886,38 @@ ObjectHeap::get_reference_array(unsigned type, unsigned owner) {
   } else 
 #endif
   {
-    GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType, 
-              "Invalid ref type");
+    GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType 
+#if USE_SOFT_REFERENCES
+      || type == SoftGlobalRefType
+#endif
+      , "Invalid ref type");
 #if ENABLE_ISOLATES
     GUARANTEE(0 < owner && owner < MAX_TASKS, "Invalid owner");
     Task::Raw task = Task::get_task( owner );
     GUARANTEE( task.not_null(), "Wrong task" );
-    return (type == WeakGlobalRefType) ? 
-      task().weak_references() : task().strong_references();
+    switch(type) {
+    case WeakGlobalRefType:
+      return task().weak_references();
+#if USE_SOFT_REFERENCES
+    case SoftGlobalRefType:
+      return task().soft_references();
+#endif
+    default:
+      return task().strong_references();
+    }
 #else
     (void)owner;
-    return (type == WeakGlobalRefType) ? 
-      Universe::weak_references()->obj() : 
-      Universe::strong_references()->obj();
+    switch(type) {
+    case WeakGlobalRefType:
+      return Universe::weak_references()->obj();
+#if USE_SOFT_REFERENCES
+    case SoftGlobalRefType:
+      return Universe::soft_references()->obj();
+#endif
+    default:
+      return Universe::strong_references()->obj();
+    }
+
 #endif
   }
 }
@@ -850,22 +931,39 @@ ObjectHeap::set_reference_array(unsigned type, unsigned owner, Array* array) {
   } else 
 #endif
   {
-    GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType, 
-              "Invalid ref type");
+    GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType
+#if USE_SOFT_REFERENCES
+      || type == SoftGlobalRefType
+#endif
+      , "Invalid ref type");
 #if ENABLE_ISOLATES
     GUARANTEE(0 < owner && owner < MAX_TASKS, "Invalid owner");
     Task::Raw task = Task::get_task( owner );
     GUARANTEE( task.not_null(), "Wrong task" );
-    if (type == WeakGlobalRefType) {
+    switch(type) {
+    case WeakGlobalRefType:
       task().set_weak_references(array->obj()); 
-    } else {
+      break;
+#if USE_SOFT_REFERENCES
+    case SoftGlobalRefType:
+      task().set_soft_references(array->obj()); 
+      break;
+#endif
+    default:
       task().set_strong_references(array->obj());
     }
 #else
     (void)owner;
-    if (type == WeakGlobalRefType) {
+    switch(type) {
+    case WeakGlobalRefType:
       *Universe::weak_references() = array->obj(); 
-    } else {
+      break;
+#if USE_SOFT_REFERENCES
+    case SoftGlobalRefType:
+      *Universe::soft_references() = array->obj(); 
+      break;
+#endif
+    default:
       *Universe::strong_references() = array->obj();
     }
 #endif
@@ -1021,6 +1119,54 @@ int ObjectHeap::register_weak_reference(Oop* referent JVM_TRAPS) {
   return make_reference(WeakGlobalRefType, owner, index);
 }
 
+#if USE_SOFT_REFERENCES
+int ObjectHeap::register_soft_reference(Oop* referent JVM_TRAPS) {
+  const unsigned owner = TaskContext::current_task_id();
+
+  UsingFastOops fast_oops;
+  SoftRefArray::Fast array = get_reference_array(SoftGlobalRefType, owner);
+
+  if (array.is_null()) {
+    array = SoftRefArray::create(JVM_SINGLE_ARG_NO_CHECK);
+    if (array.is_null()) {
+      Thread::clear_current_pending_exception();
+      return 0;
+    }
+  }
+
+  int index = 0;
+
+  if (referent->not_null()) {
+    const int length = array().length();
+
+    for (index = 1; index < length; index++) {
+      if (array().obj_at(index) == SoftRefArray::unused()) {
+        break;
+      }
+    }
+
+    if (index >= length) {
+      SoftRefArray::Raw new_array = 
+        SoftRefArray::create(length * 2 JVM_NO_CHECK);
+      if (new_array.is_null()) {
+        Thread::clear_current_pending_exception();
+        return 0;
+      }
+      TypeArray::array_copy((TypeArray*)&array, 0, 
+                            (TypeArray*)&new_array, 0, length, 
+                            sizeof(jobject));
+      array = new_array;
+    }
+
+    array().obj_at_put(index, referent);
+  }
+
+  set_reference_array(SoftGlobalRefType, owner, &array);
+
+  return make_reference(SoftGlobalRefType, owner, index);
+}
+#endif
+
 void ObjectHeap::unregister_strong_reference(const int ref_index) {
   GUARANTEE(is_strong_reference(ref_index), "Must be a strong reference");
   
@@ -1039,11 +1185,26 @@ void ObjectHeap::unregister_weak_reference(const int ref_index) {
   array().remove(index);  
 }
 
+#if USE_SOFT_REFERENCES
+void ObjectHeap::unregister_soft_reference(const int ref_index) {
+  GUARANTEE(is_soft_reference(ref_index), "Must be a soft reference");
+
+  SoftRefArray::Raw array = get_reference_array(ref_index);  
+  const unsigned index = get_reference_index(ref_index);
+
+  array().remove(index);  
+}
+#endif
+
 int ObjectHeap::register_global_ref_object(Oop* referent,
                                            ReferenceType type JVM_TRAPS) {
   switch (type) {
   case WEAK: 
     return register_weak_reference(referent JVM_NO_CHECK_AT_BOTTOM);
+#if USE_SOFT_REFERENCES
+  case SOFT: 
+    return register_soft_reference(referent JVM_NO_CHECK_AT_BOTTOM);
+#endif
   default:
     GUARANTEE(type == STRONG, "Invalid global reference type");
     return register_strong_reference(referent JVM_NO_CHECK_AT_BOTTOM);
@@ -1053,6 +1214,10 @@ int ObjectHeap::register_global_ref_object(Oop* referent,
 void ObjectHeap::unregister_global_ref_object(const int ref_index) {
   if (is_weak_reference(ref_index)) {
     unregister_weak_reference(ref_index);
+#if USE_SOFT_REFERENCES
+  } else if (is_soft_reference(ref_index)) {
+    unregister_soft_reference(ref_index);
+#endif
   } else {
     GUARANTEE(is_strong_reference(ref_index), 
               "Invalid global reference type");
@@ -1061,7 +1226,11 @@ void ObjectHeap::unregister_global_ref_object(const int ref_index) {
 }
 
 OopDesc* ObjectHeap::get_global_ref_object(const int ref_index) {
+#if USE_SOFT_REFERENCES
+  return SoftRefArray::get_value(*decode_reference(ref_index));
+#else
   return *decode_reference(ref_index);
+#endif
 }
 
 int ObjectHeap::get_global_reference_owner(const int ref_index) {
@@ -2075,6 +2244,10 @@ inline void ObjectHeap::mark_objects( const bool is_full_collect ) {
     // Mark "young generation" objects referred from "old generation"
     mark_remembered_set();
   }
+#if USE_SOFT_REFERENCES
+  // Mark soft referenced objects
+  mark_soft_refs(is_full_collect);
+#endif
 
   // All non-finalizer-reachable roots are marked, handle potential marking
   // stack overflow
@@ -2102,11 +2275,14 @@ inline void ObjectHeap::mark_objects( const bool is_full_collect ) {
 #endif
 
   // Temporarily unmark the pending finalizers (just them, nothing else)
-  // so that weak references to them can be cleared in the next statement below
+  // so that weak and soft references to them can be cleared in the next statement below
   unmark_pending_finalizers();
 
-  // Clear all unmarked weak references
+  // Clear all unmarked weak and soft references
   weak_refs_do(WeakRefArray::clear_non_marked);
+#if USE_SOFT_REFERENCES
+  soft_refs_do(SoftRefArray::clear_non_marked);
+#endif
 
   // Mark the pending finalizers once again,
   // so that finalization can happen with them around
@@ -2486,6 +2662,10 @@ inline void
 ObjectHeap::update_other_interior_pointers( const bool is_full_collect ) {
   TRACE_OTHER_UPDATE_INTERIOR("weak_references");
   weak_refs_do(update_interior_pointer);
+#if USE_SOFT_REFERENCES
+  TRACE_OTHER_UPDATE_INTERIOR("soft_references");
+  soft_refs_do(update_interior_pointer);
+#endif
 
   TRACE_OTHER_UPDATE_INTERIOR("Roots");
   roots_do( update_interior_pointer, !is_full_collect );

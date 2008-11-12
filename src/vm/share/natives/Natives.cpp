@@ -1462,6 +1462,61 @@ void Java_java_lang_ref_WeakReference_finalize() {
   }
 }
 
+#if USE_SOFT_REFERENCES
+// native void initializeSoftReference(Object referent);
+void
+Java_java_lang_ref_SoftReference_initializeSoftReference(JVM_SINGLE_ARG_TRAPS)
+{
+  UsingFastOops fast_oops;
+  WeakReference::Fast thisObj = GET_PARAMETER_AS_OOP(0);
+  Oop::Fast referent = GET_PARAMETER_AS_OOP(1);
+
+  thisObj().set_referent_index(-1); // in case of failure, or if referent==NULL
+
+  if (referent.not_null()) {
+    const ObjectHeap::ReferenceType type = ObjectHeap::SOFT;
+    const int refIndex = ObjectHeap::register_global_ref_object(&referent,
+      type JVM_MUST_SUCCEED);
+    if( refIndex < 0 ) {
+      Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW);
+    }
+    thisObj().set_referent_index(refIndex);
+  }
+}
+
+// native Object get();
+ReturnOop Java_java_lang_ref_SoftReference_get() {
+  WeakReference::Raw thisObj = GET_PARAMETER_AS_OOP(0);
+  jint refIndex = thisObj().referent_index();
+  if (refIndex < 0) {
+    return NULL;
+  } else {
+    ObjectHeap::soft_ref_increase_counter(refIndex);
+    return ObjectHeap::get_global_ref_object(refIndex);
+  }
+}
+
+// native void clear();
+void Java_java_lang_ref_SoftReference_clear() {
+  WeakReference::Raw thisObj = GET_PARAMETER_AS_OOP(0);
+  jint refIndex = thisObj().referent_index();
+  if (refIndex >= 0) {
+    ObjectHeap::unregister_global_ref_object(refIndex);
+    thisObj().set_referent_index(-1);
+  }
+}
+
+// native void finalize();
+void Java_java_lang_ref_SoftReference_finalize() {
+  WeakReference::Raw thisObj = GET_PARAMETER_AS_OOP(0);
+  jint refIndex = thisObj().referent_index();
+  if (refIndex >= 0) {
+    ObjectHeap::unregister_global_ref_object(refIndex);
+    thisObj().set_referent_index(-1); // just for sanity
+  }
+}
+#endif
+
 ReturnOop Java_java_lang_String_intern(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   String::Fast thisObj = GET_PARAMETER_AS_OOP(0);

@@ -2185,6 +2185,7 @@ Universe.hpp                     OopDesc.hpp
 Universe.hpp                     Thread.hpp
 Universe.hpp                     TaskContext.hpp
 Universe.hpp                     WeakRefArray.hpp
+Universe.hpp                     SoftRefArray.hpp
 Universe.cpp                     Bytecodes.hpp
 Universe.cpp                     BytecodeClosure.hpp
 Universe.cpp                     CharacterStream.hpp
@@ -3204,3 +3205,8 @@ WeakRefArray.hpp                Array.hpp
 WeakRefArray.cpp                ObjectHeap.hpp
 WeakRefArray.cpp                Universe.hpp
 WeakRefArray.cpp                WeakRefArray.hpp
+
+SoftRefArray.hpp                Array.hpp
+SoftRefArray.cpp                ObjectHeap.hpp
+SoftRefArray.cpp                Universe.hpp
+SoftRefArray.cpp                SoftRefArray.hpp

@@ -317,6 +317,11 @@ private:
   static int weak_references_offset(void) {
     return FIELD_OFFSET(TaskDesc, _weak_references);
   }
+#if USE_SOFT_REFERENCES
+  static int soft_references_offset(void) {
+    return FIELD_OFFSET(TaskDesc, _soft_references);
+  }
+#endif
 public:
 #define  SUSPEND_STATUS  (unsigned(1)<<31)
 
@@ -649,6 +654,18 @@ public:
   void set_weak_references(OopDesc* value) {
     obj_field_put(weak_references_offset(), value);
   }
+
+#if USE_SOFT_REFERENCES
+  ReturnOop soft_references(void) const {
+    return obj_field(soft_references_offset());
+  }
+  void set_soft_references(Oop* value) {
+    obj_field_put(soft_references_offset(), value);
+  }
+  void set_soft_references(OopDesc* value) {
+    obj_field_put(soft_references_offset(), value);
+  }
+#endif
 
   static int get_num_tasks() {
     return _num_tasks;

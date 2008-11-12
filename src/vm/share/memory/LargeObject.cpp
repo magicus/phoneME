@@ -209,7 +209,11 @@ void LargeObject::compact( LargeObject* table_beg[], LargeObject* table_end[] ){
 
   // Update weak references
   ObjectHeap::weak_refs_do( update_pointer );
-
+#if USE_SOFT_REFERENCES
+  // Update soft references
+  ObjectHeap::soft_refs_do( update_pointer );
+#endif
+  
   // Update GC roots
   ObjectHeap::roots_do( update_pointer );
 
@@ -390,6 +394,10 @@ void LargeObject::move ( const int delta, const LargeObject limit[] ) {
 
   // Update weak references
   ObjectHeap::weak_refs_do( update_pointer );
+#if USE_SOFT_REFERENCES
+  // Update soft references
+  ObjectHeap::soft_refs_do( update_pointer );
+#endif
 
   // Update GC roots
   ObjectHeap::roots_do( update_pointer );

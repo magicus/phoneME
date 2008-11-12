@@ -82,6 +82,10 @@ protected:
                                         // for this task
   OopDesc*          _weak_references;   // weak global references 
                                         // for this task
+#if USE_SOFT_REFERENCES
+  OopDesc*          _soft_references;   // soft global references 
+                                        // for this task
+#endif //  USE_SOFT_REFERENCES
 #endif //  ENABLE_ISOLATES
 };
 

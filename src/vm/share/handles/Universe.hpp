@@ -533,11 +533,17 @@ private:
 #define UNIVERSE_ISOLATES_HANDLES_DO(template)
 #define UNIVERSE_ISOLATES_HANDLES_SKIP_DO(template)
 
+#if USE_SOFT_REFERENCES
+#define UNIVERSE_GLOBAL_REF_HANDLES_DO(template)         \
+  template(strong_references,             ObjArray)      \
+  template(weak_references,               WeakRefArray)  \
+  template(soft_references,               SoftRefArray)
+#else
 #define UNIVERSE_GLOBAL_REF_HANDLES_DO(template)         \
   template(strong_references,             ObjArray)      \
   template(weak_references,               WeakRefArray)
-
-#endif
+#endif//  USE_SOFT_REFERENCES
+#endif//  ENABLE_ISOLATES
 
 #define UNIVERSE_HANDLES_DO(template)          \
    UNIVERSE_DEBUGGER_HANDLES_DO(template)      \

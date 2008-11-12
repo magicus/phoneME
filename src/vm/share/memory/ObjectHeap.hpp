@@ -294,6 +294,9 @@ public:
   enum ReferenceType {
     STRONG = 0x01,
     WEAK   = 0x02
+#if USE_SOFT_REFERENCES
+    ,SOFT   = 0x04
+#endif
   };
 
  private:
@@ -301,6 +304,9 @@ public:
     EncodedRefFlag = 0x1,
     StrongGlobalRefFlag = 0x2,
     WeakGlobalRefFlag = 0x4,
+#if USE_SOFT_REFERENCES
+    SoftGlobalRefFlag = 0x6,
+#endif
     RefOwnerOffset = 3,
     RefIndexOffset = 
       RefOwnerOffset + (ENABLE_ISOLATES ? LOG_MAX_TASKS : 0),
@@ -310,6 +316,9 @@ public:
     LocalRefType        = EncodedRefFlag,
     StrongGlobalRefType = EncodedRefFlag | StrongGlobalRefFlag,
     WeakGlobalRefType   = EncodedRefFlag | WeakGlobalRefFlag,
+#if USE_SOFT_REFERENCES
+    SoftGlobalRefType   = EncodedRefFlag | SoftGlobalRefFlag,
+#endif
   };
 
   static int make_reference(unsigned type, unsigned owner, unsigned index);
@@ -326,6 +335,9 @@ public:
   static bool is_strong_reference(const int ref_index);
   static bool is_weak_reference(const int ref_index);
   static bool is_global_reference(const int ref_index);
+#if USE_SOFT_REFERENCES
+  static bool is_soft_reference(const int ref_index);
+#endif
 
  public:
 
@@ -334,6 +346,11 @@ public:
 #if ENABLE_JNI
   static int register_local_reference(Oop* referent);
   static void unregister_local_reference(const int ref_index);
+#endif
+
+#if USE_SOFT_REFERENCES
+  static int register_soft_reference(Oop* referent JVM_TRAPS);
+  static void unregister_soft_reference(const int ref_index);
 #endif
 
   static int register_strong_reference(Oop* referent JVM_TRAPS);
@@ -864,6 +881,16 @@ private:
 
   // Weak reference support
   static void weak_refs_do(void do_oop(OopDesc**));
+
+#if USE_SOFT_REFERENCES
+  // Soft reference support
+  friend class SoftRefArray;
+  static void soft_refs_do(void do_oop(OopDesc**));
+  static void mark_soft_refs(bool is_full_collect);
+public:
+  static void soft_ref_increase_counter(int refIndex);
+private:
+#endif
 
   // Finalization support
   static void discover_finalizer_reachable_objects();
