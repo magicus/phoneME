@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -28,8 +26,18 @@
 #
 ######################################################################
 
-#Generated dir for JSR 172
-JSR_172_GENERATED_DIR=$(GENERATED_DIR)
+TARGET_VM=cldc_vm
+
+JSR_172_LIB_NAME        = jsr172
+JSR_172_BUILD_DIR       = $(JSROP_BUILD_DIR)/$(JSR_172_LIB_NAME)
+ifneq ($(GENERATED_DIR),)
+JSR_172_GENERATED_DIR  = $(GENERATED_DIR)/classes
+else
+JSR_172_GENERATED_DIR   = $(JSR_172_BUILD_DIR)/generated
+endif
+JSR_172_JAR             = $(JSROP_JAR_DIR)/$(JSR_172_LIB_NAME).jar
+
+include $(JSR_172_DIR)/build/subsystem_defs.gmk
 
 INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/RemoteException.java \
@@ -39,6 +47,19 @@ INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
 JSR_172_OUTPUT_DIR ?= $(JSR_172_DIR)/output
 JSR_172_SG_OUTPUT_DIR ?= $(JSR_172_OUTPUT_DIR)/jsr172_sg
 
+# rmi (for ri_jaxrpc)
+INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/ServerException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/MarshalException.java \
+
+INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES += \
+	$(ABSTRACTIONS_DIR)/src/cldc_application/classes/com/sun/j2me/io/Base64.java
+
+INTERNAL_JSR_172_DEPENDENCIES += \
+	$(JSROP_JAR_DIR)/xmlparser.jar \
+	$(MOBILITY_PACK_JARS_DIR)/lib/cldcapi11.jar \
+	$(MOBILITY_PACK_JARS_DIR)/lib/midpapi20.jar \
+
 INTERNAL_JSR_172_SG_RI_DEPENDENCIES += \
 	$(MOBILITY_PACK_JARS_DIR)/bin/schema2beansdev.jar \
 	$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-api.jar \
@@ -46,15 +67,35 @@ INTERNAL_JSR_172_SG_RI_DEPENDENCIES += \
 	$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-spi.jar \
 	$(MOBILITY_PACK_JARS_DIR)/lib/j2me-xmlrpc.jar \
 
+# separate Jars building support
+
+INTERNAL_JSR_172_SG_RI_PACKAGE = com.sun.j2mews.sg
+INTERNAL_JSR_172_SG_RI_FILES += \
+        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/AbstractGenerator.java \
+        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/CompileTool172.java \
+        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/MakeCldc1_0.java \
+        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/NullProcessorAction.java \
+        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/RemoteInterfaceGenerator.java \
+        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/StubGenerator.java \
+        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/WSCompile.java \
+
+space?=$(empty) $(empty)
 INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST = \
     $(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES))))
 
+INTERNAL_JSR_172_DEPENDENCIES_CPLIST = \
+    $(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(INTERNAL_JSR_172_DEPENDENCIES))))
+
+include $(TOOLS_DIR)/tools.gmk
+
+include $(JSR_172_DIR)/build/subsystem_rules.gmk
 
 # Copy and filter JSR 172 source in JSR_172_SOURCE_OUTPUT_DIR
 jsr_172_source_bundle:: $(JSR_172_DIR)
 	$(AT)$(call source_bundle_filter,$(JSR_172_DIR),$(JSR_172_SOURCE_OUTPUT_DIR), build/cldc_application)	
 
 # JSR 172 stub generator rules
+
 jsr172__stub-generator: $(JSR_172_SG_OUTPUT_DIR)/jsr172__stub-generator.jar
 $(JSR_172_SG_OUTPUT_DIR)/jsr172__stub-generator.jar: $(INTERNAL_JSR_172_SG_RI_FILES)
 	@echo "build $@ ..."
@@ -62,3 +103,51 @@ $(JSR_172_SG_OUTPUT_DIR)/jsr172__stub-generator.jar: $(INTERNAL_JSR_172_SG_RI_FI
 		-g$(JAVAC_DEBUG) -classpath $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST))
 	$(AT)$(call createJarFile,$@,$(JSR_172_SG_OUTPUT_DIR)/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE)),.)
 
+#-----------------------------------------------------------------
+$(EXTRA_JAVAC_OUT_DIR) $(JSR172_JAVAC_OUT_DIR):
+	$(AT)mkdir -p $@
+
+EXTRA_JAVAC_OUT_DIR = $(JAVAC_OUT_DIR)/extra
+JSR172_JAVAC_OUT_DIR = $(JAVAC_OUT_DIR)/jsr172
+
+$(JSR_172_JAR) :  $(CONFIGURATOR_JAR_FILE) \
+		$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES) $(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES)
+	@echo "build $@ ..."
+	$(call generateConstantClasses, $(JSR_172_GENERATED_DIR), $(JSR_172_CONSTANT_FILE))
+	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR),$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES), \
+		-classpath "$(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)")
+	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR), \
+		$(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES) \
+		$(foreach class, $(shell cat $(call constantClassesListFile, $(JSR_172_GENERATED_DIR))), \
+		$(JSR_172_GENERATED_DIR)/classes/$(subst .,/,$(class)).java) , \
+		-classpath "$(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)$(PS)$(JSR_172_BUILD_DIR)" )
+	$(AT)$(shell mkdir -p $(dir $@))
+	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR),.)
+
+test:
+	echo $(INTERNAL_JSR_172_DEPENDENCIES)
+	echo INTERNAL_JSR_172_DEPENDENCIES_CPLIST $(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)
+
+jsr172_jar : $(JSR_172_JAR)
+
+# Generate constant classes
+# generateConstantClasses(generatedDirectory, constantsXmlFile)
+define generateConstantClasses
+    $(foreach class, $(shell \
+        $(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
+            -xml $(2) \
+            -xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantClasses.xsl \
+            -out $(call constantClassesListFile, $(1));) \
+        cat $(call constantClassesListFile, $(1))), \
+	    $(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
+            -xml $(2) \
+            -xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
+            -params fullClassName $(class) \
+            -out $(1)/classes/$(subst .,/,$(class)).java;))
+endef
+
+# Returns the name of a file which contains a list of classes generated from an XML constant file
+# constantClassesListFile(generatedDirectory)
+define constantClassesListFile
+    $(1)/.constant.class.list
+endef

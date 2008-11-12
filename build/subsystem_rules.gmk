@@ -33,8 +33,8 @@ source_bundle:: jsr_172_source_bundle
 
 # Jpp files that need preprocessing
 #
-$(JSR_172_GENERATED_DIR)/classes/%.java: $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/%.jpp
-	@$(call runjpp,$^,$@)
+$(JSR_172_GENERATED_DIR)/classes/%.java: $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/%.jpp $(JPP_CLASS_FILES)
+	$(AT)$(call runjpp,$^,$@)
 
 # Copy and filter JSR 172 source in JSR_172_SOURCE_OUTPUT_DIR
 jsr_172_source_bundle:: $(JSR_172_DIR)
@@ -44,62 +44,6 @@ jsr_172_source_bundle:: $(JSR_172_DIR)
 	$(AT)cp -f $(JSR_172_DIR)/build/subsystem_rules.gmk $(JSR_172_SOURCE_OUTPUT_DIR)/build/subsystem_rules.gmk
 	$(AT)cp -f $(JSR_172_DIR)/build/subsystem_defs.gmk $(JSR_172_SOURCE_OUTPUT_DIR)/build/subsystem_defs.gmk
 
-$(EXTRA_JAVAC_OUT_DIR) $(JSR172_JAVAC_OUT_DIR):
-	$(AT)mkdir -p $@
-
-EXTRA_JAVAC_OUT_DIR = $(JAVAC_OUT_DIR)/extra
-JSR172_JAVAC_OUT_DIR = $(JAVAC_OUT_DIR)/jsr172
-$(OUTPUT_DIR)/jsr172.jar : $(INTERNAL_JSR_172_DEPENDENCIES) $(CONFIGURATOR_JAR_FILE) \
-		$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES) $(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES)
-	@echo "build $@ ..."
-	$(call generateConstantClasses, $(JSR_172_GENERATED_DIR), $(JSR_172_CONSTANT_FILE))
-	$(AT)mkdir -p $(EXTRA_JAVAC_OUT_DIR)
-	$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(EXTRA_JAVAC_OUT_DIR) \
-		-classpath "$(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)" \
-		$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES) \
-		|| exit 1;
-	$(AT)mkdir -p $(JSR172_JAVAC_OUT_DIR)
-	$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JSR172_JAVAC_OUT_DIR) \
-		-classpath "$(INTERNAL_JSR_172_DEPENDENCIES_CPLIST);$(EXTRA_JAVAC_OUT_DIR)" \
-		$(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES) \
-		$(foreach class, $(shell cat $(call constantClassesListFile, $(JSR_172_GENERATED_DIR))), \
-			$(JSR_172_GENERATED_DIR)/classes/$(subst .,/,$(class)).java) \
-		|| exit 2;
-	$(JAR_CMD) -cf $@ -C $(JSR172_JAVAC_OUT_DIR) . || exit 3
-
-space?=$(empty) $(empty)
-INTERNAL_JSR_172_DEPENDENCIES_CPLIST = \
-    $(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(INTERNAL_JSR_172_DEPENDENCIES))))
-
-jsr172-jar : $(OUTPUT_DIR)/jsr172.jar
-
 ifneq ($(TARGET_VM), cldc_vm)
 include $(JSR_172_DIR)/build/cdc_share/subsystem_rules.gmk
 endif
-
-# runJarFile(jarFile,options)
-define runJarFile
-	$(JAVA_CMD) -jar `$(call POSIX2HOST_CMD,$(1))` $(2)
-endef
-
-# Generate constant classes
-# generateConstantClasses(generatedDirectory, constantsXmlFile)
-define generateConstantClasses
-    $(foreach class, $(shell \
-        $(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
-            -xml $(2) \
-            -xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantClasses.xsl \
-            -out $(call constantClassesListFile, $(1));) \
-        cat $(call constantClassesListFile, $(1))), \
-	    $(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
-            -xml $(2) \
-            -xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
-            -params fullClassName $(class) \
-            -out $(1)/classes/$(subst .,/,$(class)).java;))
-endef
-
-# Returns the name of a file which contains a list of classes generated from an XML constant file
-# constantClassesListFile(generatedDirectory)
-define constantClassesListFile
-    $(1)/.constant.class.list
-endef
