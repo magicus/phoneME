@@ -1043,7 +1043,7 @@ int ObjectHeap::register_strong_reference(Oop* referent JVM_TRAPS) {
     array = Universe::new_obj_array(16 JVM_NO_CHECK);
     if (array.is_null()) {
       Thread::clear_current_pending_exception();
-      return 0;
+      return -1;
     }
   }
 
@@ -1063,7 +1063,7 @@ int ObjectHeap::register_strong_reference(Oop* referent JVM_TRAPS) {
         Universe::new_obj_array(length * 2 JVM_NO_CHECK);
       if (new_array.is_null()) {
         Thread::clear_current_pending_exception();
-        return 0;
+        return -1;
       }
       ObjArray::array_copy(&array, 0, &new_array, 0, length JVM_MUST_SUCCEED);
       array = new_array;
@@ -1087,7 +1087,7 @@ int ObjectHeap::register_weak_reference(Oop* referent JVM_TRAPS) {
     array = WeakRefArray::create(JVM_SINGLE_ARG_NO_CHECK);
     if (array.is_null()) {
       Thread::clear_current_pending_exception();
-      return 0;
+      return -1;
     }
   }
 
@@ -1107,7 +1107,7 @@ int ObjectHeap::register_weak_reference(Oop* referent JVM_TRAPS) {
         WeakRefArray::create(length * 2 JVM_NO_CHECK);
       if (new_array.is_null()) {
         Thread::clear_current_pending_exception();
-        return 0;
+        return -1;
       }
       TypeArray::array_copy((TypeArray*)&array, 0, 
                             (TypeArray*)&new_array, 0, length, 
@@ -1134,7 +1134,7 @@ int ObjectHeap::register_soft_reference(Oop* referent JVM_TRAPS) {
     array = SoftRefArray::create(JVM_SINGLE_ARG_NO_CHECK);
     if (array.is_null()) {
       Thread::clear_current_pending_exception();
-      return 0;
+      return -1;
     }
   }
 
@@ -1154,7 +1154,7 @@ int ObjectHeap::register_soft_reference(Oop* referent JVM_TRAPS) {
         SoftRefArray::create(length * 2 JVM_NO_CHECK);
       if (new_array.is_null()) {
         Thread::clear_current_pending_exception();
-        return 0;
+        return -1;
       }
       TypeArray::array_copy((TypeArray*)&array, 0, 
                             (TypeArray*)&new_array, 0, length, 
@@ -1204,14 +1204,14 @@ int ObjectHeap::register_global_ref_object(Oop* referent,
                                            ReferenceType type JVM_TRAPS) {
   switch (type) {
   case WEAK: 
-    return register_weak_reference(referent JVM_NO_CHECK_AT_BOTTOM);
+    return register_weak_reference(referent JVM_MUST_SUCCEED);
 #if USE_SOFT_REFERENCES
   case SOFT: 
-    return register_soft_reference(referent JVM_NO_CHECK_AT_BOTTOM);
+    return register_soft_reference(referent JVM_MUST_SUCCEED);
 #endif
   default:
     GUARANTEE(type == STRONG, "Invalid global reference type");
-    return register_strong_reference(referent JVM_NO_CHECK_AT_BOTTOM);
+    return register_strong_reference(referent JVM_MUST_SUCCEED);
   }
 }
  
