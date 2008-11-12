@@ -24,9 +24,10 @@
  * information or have any questions.
  */
 
-#if USE_SOFT_REFERENCES
 # include "incls/_precompiled.incl"
 # include "incls/_SoftRefArray.cpp.incl"
+
+#if USE_SOFT_REFERENCES
 
 HANDLE_CHECK(SoftRefArray, is_type_array())
 
