@@ -813,7 +813,8 @@ public abstract class Installer {
             }
 
             for (int i = 1; ; i++) {
-                midlet = state.getAppProperty("MIDlet-" + i);
+                String key = "MIDlet-" + i;
+                midlet = state.getAppProperty(key);
                 if (midlet == null) {
                     break;
                 }
@@ -829,8 +830,14 @@ public abstract class Installer {
                     verifyMIDlet(midletInfo.classname);
                 } catch (InvalidJadException ije) {
                     if (ije.getReason() == InvalidJadException.INVALID_VALUE) {
-                        postInstallMsgBackToProvider(
-                            OtaNotifier.INVALID_JAD_MSG);
+                        if (state.jadProps != null &&
+                                state.jadProps.getProperty(key) != null) {
+                            postInstallMsgBackToProvider(
+                                OtaNotifier.INVALID_JAD_MSG);
+                        } else {
+                            postInstallMsgBackToProvider(
+                                OtaNotifier.INVALID_JAR_MSG);
+                        }
                     } else {
                         postInstallMsgBackToProvider(
                             OtaNotifier.INVALID_JAR_MSG);
