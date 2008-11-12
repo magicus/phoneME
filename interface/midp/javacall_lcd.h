@@ -252,6 +252,10 @@ javacall_result javacall_lcd_flush_partial(int hardwareId, int ystart, int yend)
  * @param hardwareId unique id of hardware display
  */
 javacall_bool javacall_lcd_reverse_orientation(int hardwareId);
+/**
+ * Handle clamshell event
+ */
+void javacall_lcd_handle_clamshell();
 
 /**
  * Get flag of rotation
