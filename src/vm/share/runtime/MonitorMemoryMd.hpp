@@ -28,6 +28,24 @@
 /*
  * MonitorMemoryMd.hpp:
  */
+
+typedef unsigned long u_long;
+
+class MonitorMemoryMd {
+public:
+    static void startup(void);
+    static void shutdown(void);
+    static void startFlushThread(void);
+    static void stopFlushThread(void);
+    static void lock(void);
+    static void unlock(void);
+private:
+    static volatile int memmonitor_flushed;
+    static u_long htonl_m(u_long);
+    friend class MonitorMemory;
+
+}
+ 
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,21 +53,7 @@ extern "C" {
 #include <kvmcompat.h>
 #define BOOL_DEFINED
 #include <lime.h>
-#include <limeioMemMon.h>
-
-extern volatile int memmonitor_flushed;
-
-typedef unsigned long u_long;
-u_long htonl_m(u_long hostlong);
-
-void memmonitor_flushBuffer();
-void memmonitor_md_startup();
-void memmonitor_md_shutdown();
-void memmonitor_md_startFlushThread();
-void memmonitor_md_stopFlushThread();
-
-void memmonitor_lock();
-void memmonitor_unlock();
+#include <limesocket.h>
 
 #ifdef __cplusplus
 }

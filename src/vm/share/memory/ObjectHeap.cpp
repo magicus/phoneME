@@ -638,7 +638,7 @@ void ObjectHeap::finalize( FinalizerConsDesc** list, const int task_id ) {
 	  }
 #if ENABLE_MEMORY_MONITOR 
       if(Arguments::_monitor_memory) {
-        memmonitor_freeObject(p->referent());
+        freeObject(p->referent());
 	  }
 #endif
     } while( (p = p->next()) != NULL );
@@ -1599,7 +1599,7 @@ bool ObjectHeap::create() {
 
 #if ENABLE_MEMORY_MONITOR 
   if(Arguments::_monitor_memory) {
-      MonitorMemory::memmonitor_allocateHeap(total_memory());
+      MonitorMemory::allocateHeap(total_memory());
   }
 #endif
 
@@ -1819,7 +1819,7 @@ void ObjectHeap::force_full_collect() {
   _collection_area_start = _heap_start;
 #if ENABLE_MEMORY_MONITOR 
   if(Arguments::_monitor_memory) {
-      MonitorMemory::memmonitor_flushBuffer();
+      MonitorMemory::flushBuffer();
   }
 #endif
 }
@@ -2860,7 +2860,7 @@ void ObjectHeap::full_collect(JVM_SINGLE_ARG_TRAPS) {
             Universe::interned_string_near()->obj(), "must be the same");
 #if ENABLE_MEMORY_MONITOR 
   if(Arguments::_monitor_memory) {
-      MonitorMemory::memmonitor_flushBuffer();
+      MonitorMemory::flushBuffer();
   }
 #endif
 }
@@ -3103,7 +3103,7 @@ void ObjectHeap::collect(size_t min_free_after_collection JVM_TRAPS) {
         _inline_allocation_end = p;
 #if ENABLE_MEMORY_MONITOR 
         if(Arguments::_monitor_memory) {
-            MonitorMemory::memmonitor_flushBuffer();
+            MonitorMemory::flushBuffer();
         }
 #endif
         return;
@@ -3159,7 +3159,7 @@ void ObjectHeap::collect(size_t min_free_after_collection JVM_TRAPS) {
         free_memory() > min_free_after_collection) {
 #if ENABLE_MEMORY_MONITOR 
         if(Arguments::_monitor_memory) {
-            MonitorMemory::memmonitor_flushBuffer();
+            MonitorMemory::flushBuffer();
         }
 #endif
       return;
@@ -3191,7 +3191,7 @@ void ObjectHeap::collect(size_t min_free_after_collection JVM_TRAPS) {
   if( memory_to_free <= 0 ) {
 #if ENABLE_MEMORY_MONITOR 
     if(Arguments::_monitor_memory) {
-        MonitorMemory::memmonitor_flushBuffer();
+        MonitorMemory::flushBuffer();
     }
 #endif
     return;
@@ -3206,7 +3206,7 @@ void ObjectHeap::collect(size_t min_free_after_collection JVM_TRAPS) {
     set_collection_area_boundary(min_free_after_collection, false);
 #if ENABLE_MEMORY_MONITOR 
     if(Arguments::_monitor_memory) {
-        MonitorMemory::memmonitor_flushBuffer();
+        MonitorMemory::flushBuffer();
     }
 #endif
     return;
@@ -3249,7 +3249,7 @@ void ObjectHeap::collect(size_t min_free_after_collection JVM_TRAPS) {
 #undef DETECT_QUOTA_VIOLATIONS
 #if ENABLE_MEMORY_MONITOR 
   if(Arguments::_monitor_memory) {
-      MonitorMemory::memmonitor_flushBuffer();
+      MonitorMemory::flushBuffer();
   }
 #endif
 } 
@@ -3646,7 +3646,7 @@ bool ObjectHeap::internal_collect(size_t min_free_after_collection JVM_TRAPS) {
   verify_layout();
 #if ENABLE_MEMORY_MONITOR 
   if(Arguments::_monitor_memory) {
-      MonitorMemory::memmonitor_flushBuffer();
+      MonitorMemory::flushBuffer();
   }
 #endif
   return is_full_collect;
@@ -3882,7 +3882,7 @@ int ObjectHeap::compiler_area_soft_collect(size_t min_free_after_collection){
   if (free_bytes >= min_free_after_collection) {
 #if ENABLE_MEMORY_MONITOR 
     if(Arguments::_monitor_memory) {
-        MonitorMemory::memmonitor_flushBuffer();
+        MonitorMemory::flushBuffer();
    }
 #endif
     return free_bytes;
@@ -3905,7 +3905,7 @@ int ObjectHeap::compiler_area_soft_collect(size_t min_free_after_collection){
   enable_allocation_trap( allocation_end );
 #if ENABLE_MEMORY_MONITOR 
   if(Arguments::_monitor_memory) {
-      MonitorMemory::memmonitor_flushBuffer();
+      MonitorMemory::flushBuffer();
   }
 #endif
   return int(free_bytes);

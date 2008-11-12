@@ -37,22 +37,86 @@
 extern "C" {
 #endif
 
-void memmonitor_lock() {
-    pthread_mutex_lock(&memmonitorMutex);
-}
+/** 
+ * The maximum time in nanoseconds between two flushes of the memory monitor
+ * send buffer.
+ */ 
+#define FLUSH_PERIOD 500000000 
 
-void memmonitor_unlock() {
-    pthread_mutex_unlock(&memmonitorMutex);
-}
+static pthread_mutex_t memmonitorMutex;
 
-u_long htonl_m(u_long hostlong) {
-    return htonl(hostlong);
-}
+static pthread_t flushThread;
+static int threadStarted = 0;
+static int exitThread = 0;
 
-#include "memMonitor_md.c"
+/**
+ * This thread ensures that the memory monitor send buffer is flushed (send to 
+ * the server site) at least once in FLUSH_PERIOD milliseconds.
+ * 
+ * @param args not used  
+ */  
+static void*
+memmonitor_flushThread(void* args) { 
+    struct timespec sleepTime;
+    struct timespec remainingTime;
+
+	(void)args;
+    sleepTime.tv_sec = 0;
+    sleepTime.tv_nsec = FLUSH_PERIOD;
+
+    while (!exitThread) {
+        nanosleep(&sleepTime, &remainingTime);
+
+        if (!memmonitor_flushed) {
+            memmonitor_flushBuffer();
+        }
+        
+        memmonitor_flushed = 0;
+    }
+
+    pthread_exit(NULL);
+    return NULL;
+}
 
 #ifdef __cplusplus
 }
 #endif
+
+void MonitorMemoryMd::startup() {
+    memset(&memmonitorMutex, 0, sizeof(memmonitorMutex));
+    pthread_mutex_init(&memmonitorMutex, NULL);
+}
+
+void MonitorMemoryMd::shutdown() {
+    pthread_mutex_destroy(&memmonitorMutex);
+}
+
+void MonitorMemoryMd::startFlushThread() {
+    if (pthread_create(&flushThread, NULL, memmonitor_flushThread, NULL) 
+            == 0) {
+        threadStarted = 1;
+    }
+}
+
+void MonitorMemoryMd::stopFlushThread() {
+    if (threadStarted) {
+        exitThread = 1;
+        pthread_join(flushThread, NULL);
+        threadStarted = 0;
+        exitThread = 0;
+    }
+}
+
+void MonitorMemoryMd::lock() {
+    pthread_mutex_lock(&memmonitorMutex);
+}
+
+void MonitorMemoryMd::unlock() {
+    pthread_mutex_unlock(&memmonitorMutex);
+}
+
+u_long MonitorMemoryMd::htonl_m(u_long hostlong) {
+    return htonl(hostlong);
+}
 
 #endif // ENABLE_MEMORY_MONITOR

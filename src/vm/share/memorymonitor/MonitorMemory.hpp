@@ -38,12 +38,15 @@
 
 class MonitorMemory {
 public:
-    static void memmonitor_allocateHeap(long heapSize);
-    static void memmonitor_flushBuffer(void);
-    static void memmonitor_startup();
-    static void memmonitor_shutdown();
-    static void memmonitor_enterMethod(Method* m);
-    static void memmonitor_exitMethod(Method* m);
+    static void allocateHeap(long heapSize);
+    static void flushBuffer(void);
+    static void startup(void);
+    static void shutdown(void);
+    static void enterMethod(Method* m);
+    static void exitMethod(Method* m);
+    static void throwException(void);
+    static void allocateObject(Oop* obj);
+    static void freeObject(Oop* obj);
 
 private:
 /**
@@ -91,6 +94,7 @@ static const int EXIT_METHOD     = 4;
 static char sendBuffer[MONITOR_BUFFER_SIZE];
 
 static void flushBuffer();
+static void flushBufferInt();
 static void bufferInit(int heapSize);
 static void bufferEnterMethod(Method* m, int threadId);
 static void bufferExitMethod(juint id, int threadId);
@@ -100,17 +104,6 @@ static int findCallStack(int threadId);
 static int findReserveCallStack(int threadId);
 static void flushCallStack(int stackIndex);
 static int getMethodId(Method* m);
-
-/**
- * This header file declares callback functions which need to be called at the
- * proper time for the memory monitor to work properly. This is done in log.c. 
- */ 
-
-void memmonitor_allocateObject(Oop* obj);
-void memmonitor_freeObject(Oop* obj);
-/*
-void memmonitor_throwException();
-*/
 
 };
 

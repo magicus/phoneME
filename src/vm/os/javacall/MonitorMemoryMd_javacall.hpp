@@ -38,8 +38,6 @@ extern "C" {
 #include <process.h>
 #include <winsock2.h>
 
-extern HANDLE memmonitorMutex;
-
 #ifdef __cplusplus
 }
 #endif

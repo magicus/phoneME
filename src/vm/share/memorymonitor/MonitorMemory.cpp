@@ -64,10 +64,10 @@ volatile int memmonitor_flushed = 0;
  * other memmonitor_* functions can be called.
  */  
 void 
-MonitorMemory::memmonitor_startup() {
+MonitorMemory::startup() {
     memset(callStackThread, 0, sizeof(callStackThread));
     // do the platform depended initialization
-    memmonitor_md_startup();
+    MonitorMemoryMd::startup();
 }
 
 /**
@@ -75,20 +75,20 @@ MonitorMemory::memmonitor_startup() {
  * work properly.
  */  
 void 
-MonitorMemory::memmonitor_shutdown() {
+MonitorMemory::shutdown() {
     if (isSocketInitialized()) {
         // stop the memory monitor buffer flushing thread
-        memmonitor_md_stopFlushThread();
+        MonitorMemoryMd::stopFlushThread();
 
-        memmonitor_lock();
-        flushBuffer();
-        memmonitor_unlock();
+        MonitorMemoryMd::lock();
+        flushBufferInt();
+        MonitorMemoryMd::unlock();
 
         socketDisconnect(); 
     }
 
     // do the platform depended deinitialization
-    memmonitor_md_shutdown();
+    MonitorMemoryMd::shutdown();
 }
 
 /**
@@ -98,7 +98,7 @@ MonitorMemory::memmonitor_shutdown() {
  * @param heapSize the allocated size
  */       
 void
-MonitorMemory::memmonitor_allocateHeap(long heapSize) {
+MonitorMemory::allocateHeap(long heapSize) {
     LimeFunction *f;
     int port;
 
@@ -112,7 +112,7 @@ MonitorMemory::memmonitor_allocateHeap(long heapSize) {
         if (port != -1) {
             socketConnect(port, server);
             if (isSocketInitialized()) {
-                memmonitor_md_startFlushThread();
+                MonitorMemoryMd::startFlushThread();
             } else {
                 fprintf(stderr, "Cannot open socket for monitoring events on "
                         "port %i\n", port);
@@ -120,9 +120,9 @@ MonitorMemory::memmonitor_allocateHeap(long heapSize) {
         }
     }
     
-    memmonitor_lock();
+    MonitorMemoryMd::lock();
     bufferInit(heapSize);			
-    memmonitor_unlock();
+    MonitorMemoryMd::unlock();
 }
 
 /**
@@ -130,10 +130,10 @@ MonitorMemory::memmonitor_allocateHeap(long heapSize) {
  * memory monitor (J2SE GUI).
  */  
 void
-MonitorMemory::memmonitor_flushBuffer() {
-    memmonitor_lock();
-    flushBuffer();
-    memmonitor_unlock();
+MonitorMemory::flushBuffer() {
+    MonitorMemoryMd::lock();
+    flushBufferInt();
+    MonitorMemoryMd::unlock();
 }
 
 /**
@@ -142,7 +142,7 @@ MonitorMemory::memmonitor_flushBuffer() {
  * @param m method pointer
  */
 void
-MonitorMemory::memmonitor_enterMethod(Method* m) {
+MonitorMemory::enterMethod(Method* m) {
 	int threadId = (int)(Thread::current()->id());
 	int methodId = getMethodId(m);
     int stackIndex = findReserveCallStack(threadId);
@@ -151,9 +151,9 @@ MonitorMemory::memmonitor_enterMethod(Method* m) {
        int count = callStackLength[stackIndex];
        if (count == MONITOR_CALLSTACK_LEN) {
             // no room for the call
-            memmonitor_lock();
+            MonitorMemoryMd::lock();
             flushCallStack(stackIndex);
-            memmonitor_unlock();
+            MonitorMemoryMd::unlock();
             // reuse the stack
             count = 0;
             callStackThread[stackIndex] = threadId;
@@ -161,9 +161,9 @@ MonitorMemory::memmonitor_enterMethod(Method* m) {
         callStack[stackIndex][count++] = methodId;
         callStackLength[stackIndex] = count;
     } else {
-       memmonitor_lock();
+       MonitorMemoryMd::lock();
        bufferEnterMethod(m, threadId);
-       memmonitor_unlock();
+       MonitorMemoryMd::unlock();
    }
     
    lastEnterMethodThread = threadId;
@@ -175,7 +175,7 @@ MonitorMemory::memmonitor_enterMethod(Method* m) {
  * @param m method instance
  */
 void
-MonitorMemory::memmonitor_exitMethod(Method* m) {
+MonitorMemory::exitMethod(Method* m) {
 	int threadId = (int)(Thread::current()->id());
 	int methodId = getMethodId(m);
     int stackIndex = findCallStack(threadId);
@@ -190,15 +190,15 @@ MonitorMemory::memmonitor_exitMethod(Method* m) {
                 callStackThread[stackIndex] = 0;
             }
         } else {
-            memmonitor_lock();
+            MonitorMemoryMd::lock();
             flushCallStack(stackIndex);
             bufferExitMethod(methodId, threadId);
-            memmonitor_unlock();
+            MonitorMemoryMd::unlock();
         }        
     } else {
-        memmonitor_lock();
+        MonitorMemoryMd::lock();
         bufferExitMethod(methodId, threadId);
-        memmonitor_unlock();
+        MonitorMemoryMd::unlock();
     }
 }
 
@@ -206,15 +206,15 @@ MonitorMemory::memmonitor_exitMethod(Method* m) {
  * This function is called when an exception is thrown.
  */ 
 void 
-memmonitor_throwException() {
+throwException() {
     /* A unique number that identifies the thread */
 	int threadId = (int)(Thread::current()->id());
     int stackIndex = findCallStack(threadId);
     
     if (stackIndex != -1) {
-        memmonitor_lock();
+        MonitorMemoryMd::lock();
         flushCallStack(stackIndex);
-        memmonitor_unlock();
+        MonitorMemoryMd::unlock();
     }    
 }
 
@@ -223,7 +223,7 @@ memmonitor_throwException() {
  * GUI). After sending the buffer is emptied.
  */  
 void
-MonitorMemory::flushBuffer() {
+MonitorMemory::flushBufferInt() {
     if (numCommands == 0) {
         // nothing to send
         memmonitor_flushed = 1;
@@ -246,11 +246,11 @@ MonitorMemory::flushBuffer() {
 void 
 MonitorMemory::bufferInit(int heapSize) {
     // always flush
-    flushBuffer();
+    flushBufferInt();
   
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)INIT);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m((u_long)INIT);
     sendOffset += sizeof(u_long);       // command  
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)heapSize);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m((u_long)heapSize);
     sendOffset += sizeof(u_long);       // heapSize
   
     ++numCommands;
@@ -287,14 +287,14 @@ MonitorMemory::bufferEnterMethod(Method* m, int threadId) {
             length + // methodName
             sizeof(u_long);             // threadId
     if ((sendOffset + size) > MONITOR_BUFFER_SIZE) {
-        flushBuffer();
+        flushBufferInt();
     }
   
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)ENTER_METHOD);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m((u_long)ENTER_METHOD);
     sendOffset += sizeof(u_long);       // command  
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)getMethodId(m));
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m((u_long)getMethodId(m));
     sendOffset += sizeof(u_long);       // methodId
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)length);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m((u_long)length);
     sendOffset += sizeof(u_long);       // nameLength
     class_name().string_copy(sendBuffer + sendOffset, lengthClassName);
     sendOffset += lengthClassName;      // className
@@ -302,7 +302,7 @@ MonitorMemory::bufferEnterMethod(Method* m, int threadId) {
 	sendOffset++;
     method_name().string_copy(sendBuffer + sendOffset, lengthMetodName);
     sendOffset += lengthMetodName;      // methodName
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)threadId);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m((u_long)threadId);
     sendOffset += sizeof(u_long);       // threadId    
  
     ++numCommands;
@@ -321,14 +321,14 @@ MonitorMemory::bufferExitMethod(int id, int threadId) {
             sizeof(u_long) +            // methodId
             sizeof(u_long);             // threadId 
     if ((sendOffset + size) > MONITOR_BUFFER_SIZE) {
-        flushBuffer();
+        flushBufferInt();
     }
   
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)EXIT_METHOD);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m((u_long)EXIT_METHOD);
     sendOffset += sizeof(u_long);       // command  
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)id);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m((u_long)id);
     sendOffset += sizeof(u_long);       // methodId
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)threadId);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m((u_long)threadId);
     sendOffset += sizeof(u_long);       // threadId
   
     ++numCommands;
@@ -341,7 +341,7 @@ MonitorMemory::bufferExitMethod(int id, int threadId) {
  * @param obj the object pointer
  */    
 static void 
-memmonitor_allocateObject(Oop* obj) {
+allocateObject(Oop* obj) {
 
     if (obj == NULL) {
 	  return;
@@ -352,7 +352,7 @@ memmonitor_allocateObject(Oop* obj) {
 	JavaClass jc = obj->blueprint();
     u_long classId = (u_long)jc.class_id();
     UsingFastOops fast;
-    String::Fast class_name = jc.getStringName();
+    String::Fast class_name = jc.getStringName(JVM_SINGLE_ARG_CHECK);
 	TypeArray::Fast cstring_name = class_name().to_cstring(JVM_SINGLE_ARG_NO_CHECK);
 	const char *className = (char *) cstring_name().base_address();
 	u_long nameLength = (u_long)(class_name().length());
@@ -360,7 +360,7 @@ memmonitor_allocateObject(Oop* obj) {
 	u_long threadId = (u_long)(Thread::current()->id());
 	u_long allocSize = (u_long)(obj->object_size());
 
-    memmonitor_lock();
+    MonitorMemoryMd::lock();
     int size = sizeof(u_long) +         // command
             sizeof(u_long) +            // pointer
             sizeof(u_long) +            // classId
@@ -369,26 +369,26 @@ memmonitor_allocateObject(Oop* obj) {
             sizeof(u_long) +            // allocSize
             sizeof(u_long);             // threadId
     if ((sendOffset + size) > MONITOR_BUFFER_SIZE) {
-        flushBuffer();
+        flushBufferInt();
     }
  
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)ALLOCATE_OBJECT);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m((u_long)ALLOCATE_OBJECT);
     sendOffset += sizeof(u_long);       // command  
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m(pointer);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m(pointer);
     sendOffset += sizeof(u_long);       // pointer
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m(classId);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m(classId);
     sendOffset += sizeof(u_long);       // classId
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m(nameLength);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m(nameLength);
     sendOffset += sizeof(u_long);       // nameLength
     memcpy(sendBuffer + sendOffset, className, nameLength);
     sendOffset += nameLength;           // className
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m(allocSize);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m(allocSize);
     sendOffset += sizeof(u_long);       // allocSize    
-    *(u_long*)(sendBuffer + sendOffset) = htonl_m(threadId);
+    *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m(threadId);
     sendOffset += sizeof(u_long);       // threadId
  
     ++numCommands;
-    memmonitor_unlock();
+    MonitorMemoryMd::unlock();
 }
 
 /**
@@ -398,7 +398,7 @@ memmonitor_allocateObject(Oop* obj) {
  * @param obj the object pointer
  */    
 static void 
-memmonitor_freeObject(Oop* obj) {
+freeObject(Oop* obj) {
 
     if (obj == NULL) {
 	  return;
@@ -410,26 +410,26 @@ memmonitor_freeObject(Oop* obj) {
 	u_long allocSize = (u_long)(obj->object_size());
 	JavaClass jc = obj->blueprint();
     u_long classId = (u_long)jc.class_id();
-    memmonitor_lock();
+    MonitorMemoryMd::lock();
     int size = sizeof(u_long) +         // command
             sizeof(u_long) +            // pointer
             sizeof(u_long) +            // classId
             sizeof(u_long);             // allocSize
   if ((sendOffset + size) > MONITOR_BUFFER_SIZE) {
-    flushBuffer();
+    flushBufferInt();
   }
  
-  *(u_long*)(sendBuffer + sendOffset) = htonl_m((u_long)FREE_OBJECT);
+  *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m((u_long)FREE_OBJECT);
   sendOffset += sizeof(u_long);         // command  
-  *(u_long*)(sendBuffer + sendOffset) = htonl_m(pointer);
+  *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m(pointer);
   sendOffset += sizeof(u_long);         // pointer
-  *(u_long*)(sendBuffer + sendOffset) = htonl_m(classId);
+  *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m(classId);
   sendOffset += sizeof(u_long);         // classId
-  *(u_long*)(sendBuffer + sendOffset) = htonl_m(allocSize);
+  *(u_long*)(sendBuffer + sendOffset) = MonitorMemoryMd::htonl_m(allocSize);
   sendOffset += sizeof(u_long);         // allocSize
  
   ++numCommands;
-  memmonitor_unlock();
+  MonitorMemoryMd::unlock();
 }
 
 /**

@@ -266,7 +266,7 @@ public:
     info().set_name(value);
   }
   
-  String getStringName();
+  ReturnOop getStringName(JVM_SINGLE_ARG_TRAPS);
   
   AccessFlags access_flags() const {
     return raw_class_info()->_access_flags;

@@ -34,10 +34,9 @@
 extern "C" {
 #endif
 
+#include <time.h>
 #include <arpa/inet.h>
 #include <pthread.h>
-
-extern pthread_mutex_t memmonitorMutex;
 
 #ifdef __cplusplus
 }

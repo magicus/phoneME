@@ -30,14 +30,4 @@
 
 #if ENABLE_MEMORY_MONITOR
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-u_long htonl(u_long hostlong);
-
-#ifdef __cplusplus
-}
-#endif
-
 #endif // ENABLE_MEMORY_MONITOR

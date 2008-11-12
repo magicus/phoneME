@@ -428,7 +428,7 @@ JavaClass::AccessType JavaClass::vtable_accessibility_at(int index) {
   return (AccessType)max((int)acc, (int)super_acc);
 }
 
-String JavaClass::getStringName() {
+ReturnOop JavaClass::getStringName(JVM_SINGLE_ARG_TRAPS) {
   
   int dimension = 0;
   int instance_pad = 0;
@@ -457,10 +457,7 @@ String JavaClass::getStringName() {
         GUARANTEE(T_BOOLEAN <= type && type <= T_LONG, "sanity");
 
         LiteralStream ls((char*)(table + type - T_BOOLEAN), 0, 1);
-		{
-		    SETUP_ERROR_CHECKER_ARG;
-            result = Universe::new_string(&ls, dimension, 0 JVM_NO_CHECK);
-		}
+        result = Universe::new_string(&ls, dimension, 0 JVM_CHECK_0);
         break;
       } else if (c().is_instance_class()) {
         InstanceClass::Raw ic = c.obj();
@@ -478,11 +475,10 @@ String JavaClass::getStringName() {
   }
 
   if (name.not_null()) {
-    SETUP_ERROR_CHECKER_ARG;
     SymbolStream us(&name);
     us.set_translation('/', '.');
     result = Universe::new_string(&us, dimension+instance_pad, instance_pad
-                                  JVM_NO_CHECK);
+                                  JVM_CHECK_0);
   } else {
     GUARANTEE(result.not_null(), "should have been set");
   }

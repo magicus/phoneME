@@ -33,20 +33,20 @@
 
 #if ENABLE_MEMORY_MONITOR
 
+void MonitorMemoryMd::startup() {}
+void MonitorMemoryMd::shutdown() {}
+void MonitorMemoryMd::startFlushThread() {}
+void MonitorMemoryMd::stopFlushThread() {}
+void MonitorMemoryMd::lock() {}
+void MonitorMemoryMd::unlock() {}
+u_long MonitorMemoryMd::htonl_m(u_long hostlong) {
+    return hostlong;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-u_long htonl_m(u_long hostlong) {
-    return hostlong;
-}
-
-void memmonitor_md_startup(){}
-void memmonitor_md_shutdown(){}
-void memmonitor_md_startFlushThread(){}
-void memmonitor_md_stopFlushThread(){}
-void memmonitor_lock() {}
-void memmonitor_unlock() {}
 void DeleteLimeFunction(LimeFunction *f){}
 
 LimeFunction *NewLimeFunction(const char *packageName,

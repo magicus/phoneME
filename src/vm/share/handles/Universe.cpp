@@ -1365,7 +1365,7 @@ ReturnOop Universe::new_instance(InstanceClass* klass JVM_TRAPS) {
     UsingFastOops fast_oops;
     Oop::Fast obj(result);  // create handle, call below can gc
     ObjectHeap::register_finalizer_reachable_object(&obj, 0 JVM_CHECK_0);
-    MonitorMemory::memmonitor_allocateObject(&obj);
+    MonitorMemory::allocateObject(&obj);
 #endif
   }
   return result;
@@ -1936,7 +1936,7 @@ ReturnOop Universe::generic_allocate_array(Allocator* allocate,
         UsingFastOops fast_oops;
         Oop::Fast obj(result);  // create handle, call below can gc
         ObjectHeap::register_finalizer_reachable_object(&obj JVM_CHECK_0, 0);
-	    MonitorMemory::memmonitor_allocateObject(&obj);
+	    MonitorMemory::allocateObject(&obj);
 	  }
 #endif
     }

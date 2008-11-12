@@ -470,7 +470,7 @@ int JVM::start() {
 #endif
 #if ENABLE_MEMORY_MONITOR 
   if(Arguments::_monitor_memory) {
-    MonitorMemory::memmonitor_startup();
+    MonitorMemory::startup();
   }
 #endif
 
@@ -499,7 +499,7 @@ done:
 #if ENABLE_MEMORY_MONITOR 
   if(Arguments::_monitor_memory) 
   {
-    MonitorMemory::memmonitor_shutdown();
+    MonitorMemory::shutdown();
   }
 #endif
 

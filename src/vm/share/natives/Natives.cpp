@@ -738,7 +738,8 @@ OopDesc* Java_java_lang_Class_getName(JVM_SINGLE_ARG_TRAPS) {
 #endif
 
   JavaClass::Fast c = receiver().java_class();
-  return c().getStringName();
+  String::Fast result = c().getStringName(JVM_SINGLE_ARG_CHECK_0);
+  return result;
 }
 
 // public static native Class forName(String className)

@@ -1022,6 +1022,9 @@ Throw.cpp                        ErrorMessage.hpp
 Throw.cpp                        InstanceClass.hpp
 Throw.cpp                        Throwable.hpp
 Throw.cpp                        ObjectHeap_<iarch>.hpp
+#if ENABLE_MEMORY_MONITOR
+Throw.cpp                        MonitorMemory.hpp
+#endif
 
 Timer.hpp                        Top.hpp
 Timer.cpp                        Timer.hpp

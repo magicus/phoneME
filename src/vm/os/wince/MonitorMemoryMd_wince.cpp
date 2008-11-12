@@ -25,16 +25,43 @@
  */
 
 /*
- * MonitorMemoryMd_wince.hpp:
+ * MonitorMemoryMd_wince.cpp:
  */
 
+#include "incls/_precompiled.incl"
+#include "incls/_MonitorMemoryMd_wince.cpp.incl"
+
 #if ENABLE_MEMORY_MONITOR
+
+void MonitorMemoryMd::startup() {}
+void MonitorMemoryMd::shutdown() {}
+void MonitorMemoryMd::startFlushThread() {}
+void MonitorMemoryMd::stopFlushThread() {}
+void MonitorMemoryMd::lock() {}
+void MonitorMemoryMd::unlock() {}
+u_long MonitorMemoryMd::htonl_m(u_long hostlong) {
+    return hostlong;
+}
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-u_long htonl(u_long hostlong);
+void DeleteLimeFunction(LimeFunction *f){}
+
+LimeFunction *NewLimeFunction(const char *packageName,
+                              const char *className,
+                              const char *methodName) {
+    return NULL;
+}
+
+int isSocketInitialized(void) {
+  return 0;
+}
+
+void socketConnect(int port, const char *server) {}
+void socketDisconnect(void) {}
+void socketSendCommandData(int numCommands, int sendOffset, char* sendBuffer) {}
 
 #ifdef __cplusplus
 }

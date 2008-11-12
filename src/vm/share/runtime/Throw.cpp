@@ -36,6 +36,13 @@ Throw::new_exception(Symbol* class_name, String* message JVM_TRAPS) {
   // sure that they are cleared, even in non-debug builds
   Thread::clear_current_pending_exception();
 
+#if ENABLE_MEMORY_MONITOR 
+  if(Arguments::_monitor_memory) 
+  {
+    MonitorMemory::throwException();
+  }
+#endif
+
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE
   if (TraceExceptions || GenerateROMImage) {
     tty->print("TraceExceptions: ");
