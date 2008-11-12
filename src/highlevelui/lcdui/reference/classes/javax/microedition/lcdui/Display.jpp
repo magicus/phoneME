@@ -3489,13 +3489,14 @@ public class Display {
                 // #ifndef ENABLE_GCI
 		Display.this.displayDevice.clamshellHandling();
 
-                Display.this.width = Display.this.displayDevice.getWidth(); 
+		Display.this.width = Display.this.displayDevice.getWidth(); 
                 Display.this.height = Display.this.displayDevice.getHeight();
-             
+
+		if (Display.this.displayDevice.isPrimaryDisplay()){
                 Display.this.WIDTH = Display.this.width;
                 Display.this.HEIGHT = Display.this.height;
-                
-                
+		}
+          
                 // #else
                 // TBD: not implemented for GCI yet
                 // #endif ENABLE_GCI
@@ -3533,10 +3534,11 @@ public class Display {
                 currentCopy.uCallSizeChanged(Display.this.width, Display.this.height);
             }
 	    /*This will result in calls to MIDlet code*/
-	    Displayable currentDisplayable = getCurrent();
-	    if (currentDisplayable instanceof Canvas){
-		currentDisplayable.sizeChanged(Display.this.width, Display.this.height);
-	    }
+	    //Displayable currentDisplayable = getCurrent();
+	    //if (currentDisplayable instanceof Canvas){
+		//currentDisplayable.sizeChanged(Display.this.width, Display.this.height);
+	    //}
+	    
             // #endif ENABLE_CHAMELEON
 
         }
