@@ -886,11 +886,13 @@ ObjectHeap::get_reference_array(unsigned type, unsigned owner) {
   } else 
 #endif
   {
-    GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType 
 #if USE_SOFT_REFERENCES
-      || type == SoftGlobalRefType
+    GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType 
+           || type == SoftGlobalRefType, "Invalid ref type");
+#else
+    GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType,
+              "Invalid ref type");
 #endif
-      , "Invalid ref type");
 #if ENABLE_ISOLATES
     GUARANTEE(0 < owner && owner < MAX_TASKS, "Invalid owner");
     Task::Raw task = Task::get_task( owner );
@@ -931,11 +933,13 @@ ObjectHeap::set_reference_array(unsigned type, unsigned owner, Array* array) {
   } else 
 #endif
   {
-    GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType
 #if USE_SOFT_REFERENCES
-      || type == SoftGlobalRefType
+    GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType 
+           || type == SoftGlobalRefType, "Invalid ref type");
+#else
+    GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType,
+              "Invalid ref type");
 #endif
-      , "Invalid ref type");
 #if ENABLE_ISOLATES
     GUARANTEE(0 < owner && owner < MAX_TASKS, "Invalid owner");
     Task::Raw task = Task::get_task( owner );
