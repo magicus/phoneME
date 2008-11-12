@@ -117,6 +117,13 @@ void rms_registry_reset_record_store_notification_counter(int taskId);
  */
 void rms_registry_acknowledge_record_store_notifications(int taskId);
 
+/**
+ * Stops listening for any record store changes in VM task
+ * @param taskId ID of VM task  
+ */
+void rms_regisrty_stop_task_listeners(int taskId);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -85,6 +85,13 @@ public class RecordStoreRegistry {
      * @param token security token to restrict usage of the method
      */
     public static void acknowledgeRecordStoreNotifications(SecurityToken token) {
-        token.checkIfPermissionAllowed(Permissions.MIDP);
     }
+
+    /**
+     * Shutdowns record store registry for this VM task
+     * @param token security token to restrict usage of the method
+     */
+    public static void shutdown(SecurityToken token) {
+    }
+
 }

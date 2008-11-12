@@ -245,7 +245,7 @@ void rms_registry_stop_record_store_listening(int suiteId, pcsl_string *storeNam
     }
 }
 
-/** Notifies registered record store listeneres about record store change */
+/** Notifies registered record store listeneres about record store change */                                
 void rms_registry_send_record_store_change_event(
         int suiteId, pcsl_string *storeName, int changeType, int recordId) {
 
@@ -322,4 +322,33 @@ void rms_registry_reset_record_store_notification_counter(int taskId) {
 /** Acknowledges delivery of record store notifications */
 void rms_registry_acknowledge_record_store_notifications(int taskId) {
     resetNotificationCounter(taskId);
+}
+
+/** Stops listening for any record store changes in the VM task */
+void rms_regisrty_stop_task_listeners(int taskId) {
+    RecordStoreListener *listenerNodePtr;
+    RecordStoreListener **listenerNodeRef;
+
+    /* Reset notification counter of the VM task */
+    resetNotificationCounter(taskId);
+    
+    /* Remove task ID from all record store listener structures */ 
+    listenerNodeRef = &rootListenerPtr;
+    while((listenerNodePtr = *listenerNodeRef) != NULL) {
+        int i, count;
+        count = listenerNodePtr->count;
+        for (i = 0; i < count; i++) {
+            if (listenerNodePtr->listenerId[i] == taskId) {
+                if (--count == 0) {
+                    /* Remove record store listener entry */
+                    *listenerNodeRef = listenerNodePtr->next;
+                } else {
+                    listenerNodePtr->listenerId[i] =
+                        listenerNodePtr->listenerId[count];
+                }
+                break;
+            }
+        }
+        listenerNodeRef = &(listenerNodePtr->next);
+    }
 }

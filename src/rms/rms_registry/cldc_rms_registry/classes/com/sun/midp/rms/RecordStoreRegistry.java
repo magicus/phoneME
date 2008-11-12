@@ -295,4 +295,20 @@ public class RecordStoreRegistry {
             suiteId, storeName, changeType, recordId);
     }
 
+    /**
+     * Shutdowns record store registry for this VM task
+     * @param token security token to restrict usage of the method 
+     */
+    public static void shutdown(SecurityToken token) {
+        token.checkIfPermissionAllowed(Permissions.MIDP);
+        int taskId = MIDletSuiteUtils.getIsolateId();
+        stopAllRecordStoreListeners(taskId);
+    }
+
+    /**
+     * Stops listening for any record store changes in VM task
+     * @param taskId ID of VM task
+     */
+    private static native void stopAllRecordStoreListeners(int taskId);
+
 }

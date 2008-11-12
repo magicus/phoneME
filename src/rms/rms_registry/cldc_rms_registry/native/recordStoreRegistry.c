@@ -178,3 +178,14 @@ KNIDECL(com_sun_midp_rms_RecordStoreRegistry_acknowledgeNotificationsDelivery) {
     rms_registry_acknowledge_record_store_notifications(taskId);
     KNI_ReturnVoid();
 }
+
+/**
+ * Stops listening for any record store changes in VM task
+ * @param taskId ID of VM task
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_rms_RecordStoreRegistry_stopAllRecordStoreListeners) {
+    int taskId = KNI_GetParameterAsInt(1);
+    rms_regisrty_stop_task_listeners(taskId);
+    KNI_ReturnVoid();
+}
