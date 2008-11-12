@@ -55,14 +55,11 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     /** unique id for suite that owns this record store */
     int suiteId;
 
-    /** lock used to synchronize this record store between threads */
-    Object threadsLock;
-
     /** 
      * lock used to synchronize this record store between concurrently 
      * running MIDlets 
      */
-    AbstractRecordStoreLock midletsLock; 
+    AbstractRecordStoreLock recordStoreLock; 
 
     /** data block header stored here */
     byte[] dbHeader;
@@ -196,8 +193,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public void setMode(int authmode, boolean writable)
         throws RecordStoreException {
 
-        synchronized (threadsLock) {
-            midletsLock.obtain();
+        synchronized (recordStoreLock) {
+            recordStoreLock.obtain();
             try {
                 int newAuthMode = authmode;
                 if ((authmode == RecordStore.AUTHMODE_ANY) &&
@@ -217,7 +214,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                             "store attributes");
                 }
             } finally {
-                midletsLock.release();
+                recordStoreLock.release();
             }
         }
     }
@@ -244,8 +241,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public void closeRecordStore()
         throws RecordStoreNotOpenException, RecordStoreException {
 
-        synchronized (threadsLock) {
-            midletsLock.obtain();
+        synchronized (recordStoreLock) {
+            recordStoreLock.obtain();
             try {
                 // close native fd
                 compactRecords();  // compact before close
@@ -257,7 +254,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 throw new RecordStoreException("error closing .db file. "
                         + ioe);
             } finally {
-                midletsLock.release();
+                recordStoreLock.release();
                 dbFile = null;
             }
         }
@@ -415,8 +412,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         throws RecordStoreNotOpenException, RecordStoreException,
             RecordStoreFullException {
 
-        synchronized (threadsLock) {
-            midletsLock.obtain();
+        synchronized (recordStoreLock) {
+            recordStoreLock.obtain();
             try {
                 int recordId = getNextRecordID();
 
@@ -445,7 +442,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 // Return the new record id
                 return recordId;
             } finally {
-                midletsLock.release();
+                recordStoreLock.release();
             }
         }
     }
@@ -467,8 +464,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public void deleteRecord(int recordId)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
             RecordStoreException {
-        synchronized (threadsLock) {
-            midletsLock.obtain();
+        synchronized (recordStoreLock) {
+            recordStoreLock.obtain();
             try {
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
@@ -495,7 +492,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 throw new RecordStoreException("error updating file after" +
                         " record deletion");
             } finally {
-                midletsLock.release();
+                recordStoreLock.release();
             }
         }
     }
@@ -518,8 +515,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public int getRecordSize(int recordId)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
                RecordStoreException {
-        synchronized (threadsLock) {
-            midletsLock.obtain();
+        synchronized (recordStoreLock) {
+            recordStoreLock.obtain();
             try {
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
 
@@ -531,7 +528,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
                 return RecordStoreUtil.getInt(header, 4);
             } finally {
-                midletsLock.release();
+                recordStoreLock.release();
             }
         }
     }
@@ -558,8 +555,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public int getRecord(int recordId, byte[] buffer, int offset)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
             RecordStoreException {
-        synchronized (threadsLock) {
-            midletsLock.obtain();
+        synchronized (recordStoreLock) {
+            recordStoreLock.obtain();
             try {
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
@@ -571,7 +568,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error reading record data");
             } finally {
-                midletsLock.release();
+                recordStoreLock.release();
             }
         }
     }
@@ -594,7 +591,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public byte[] getRecord(int recordId)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
                RecordStoreException {
-        synchronized (threadsLock) {
+        synchronized (recordStoreLock) {
+            recordStoreLock.obtain();
             try {
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
@@ -613,7 +611,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error reading record data");
             } finally {
-                midletsLock.release();
+                recordStoreLock.release();
             }
         }
     }
@@ -647,8 +645,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         throws RecordStoreNotOpenException, InvalidRecordIDException,
             RecordStoreException, RecordStoreFullException {
 
-        synchronized (threadsLock) {
-            midletsLock.obtain();
+        synchronized (recordStoreLock) {
+            recordStoreLock.obtain();
             try {
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
@@ -680,7 +678,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error setting record data");
             } finally {
-                midletsLock.release();
+                recordStoreLock.release();
             }
         }
     }
@@ -692,12 +690,12 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *         or null if the record store is closed.
      */
     public int[] getRecordIDs() {
-        synchronized (threadsLock) {
-            midletsLock.obtain();
+        synchronized (recordStoreLock) {
+            recordStoreLock.obtain();
             try {
                 return dbIndex.getRecordIDs();
             } finally {
-                midletsLock.release();
+                recordStoreLock.release();
             }
         }
     }
@@ -1090,15 +1088,16 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         throws RecordStoreException, RecordStoreNotFoundException {
 
         this.suiteId = suiteId;
-        threadsLock = new Object();
-        midletsLock = RecordStoreLockFactory.getLockInstance(
+        recordStoreLock = RecordStoreLockFactory.getLockInstance(
                 token, suiteId, recordStoreName);
 
-        // even if this MIDlet doesn't have this record store opened yet,
-        // it is possible that some other MIDlet already opened it and 
-        // is in process of writing something into it, so we have to obtain 
-        // a lock before proceeding further
-        midletsLock.obtain();
+        /*
+         * Even if this MIDlet doesn't have this record store opened yet,
+         * it is possible that some other MIDlet already opened it and 
+         * is in process of writing something into it, so we have to obtain 
+         * a lock before proceeding further.
+         */
+        recordStoreLock.obtain();
 
         try {
             boolean exists = RecordStoreUtil.exists(
@@ -1185,7 +1184,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                         "file");
             }
         } finally {
-            midletsLock.release();
+            recordStoreLock.release();
         }
     }
 }
