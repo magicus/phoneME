@@ -205,7 +205,10 @@ class AppManagerPeer implements CommandListener {
 
         if (first) {
             appManagerUI = new AppManagerUIImpl(manager, this, display, displayError, foldersOn);
-        } else {
+ 
+            // cleanup the storage from the previous execution
+            midletSuiteStorage.removeTemporarySuites();
+       } else {
             // if a MIDlet was just installed
             // getLastInstalledMidletItem() will return RunningMIDletSuiteInfo
             // corresponding to this suite, then we have to prompt

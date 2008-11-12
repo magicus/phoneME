@@ -1462,6 +1462,9 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
                            midp_get_field_id(KNIPASSARGS clazz,
                                "verifyHash", "[B"), verifyHashObj);
         suiteData.jarHashLen = KNI_GetArrayLength(verifyHashObj);
+        
+        KNI_SAVE_BOOLEAN_FIELD(javaInstallInfo, clazz, "temporary",
+                               suiteData.isTemporary);
 
         /* 2 - from javaSuiteSettings object */
         KNI_GetObjectClass(javaSuiteSettings, clazz);
@@ -1700,6 +1703,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMIDletSuiteInfoImpl0) {
             pData->numberOfMidlets);
         KNI_RESTORE_BOOLEAN_FIELD(msi, clazz, "enabled", pData->isEnabled);
         KNI_RESTORE_BOOLEAN_FIELD(msi, clazz, "trusted", pData->isTrusted);
+        KNI_RESTORE_BOOLEAN_FIELD(msi, clazz, "temporary", pData->isTemporary);
     } while (0);
 
     KNI_EndHandles();
