@@ -178,4 +178,12 @@ public class MIDletSuiteLauncher extends MIDlet implements ApplicationManager {
      */
     public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {
     }
+    
+    /**
+     * Handle exit of MIDlet selector.
+     * @param suiteInfo Containing ID of suite
+     */
+    public void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {
+    }
+    
 }
