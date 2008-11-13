@@ -500,9 +500,9 @@ class AppSettingsImpl implements AppSettings, CommandListener {
                     ResourceConstants.AMS_MGR_SETTINGS_PUSH_OPT_ANSWER,
                     PUSH_OPTION_1_ID);
 
-           groups = Permissions.getSettingGroups(curLevels);
+            groups = Permissions.getSettingGroups(curLevels);
             
-           groupSettings = new ValueChoiceImpl[groups.length];
+            groupSettings = new ValueChoiceImpl[groups.length];
 
             if (interruptChoice != null) {
                 numberOfSettings = 1;
@@ -511,8 +511,9 @@ class AppSettingsImpl implements AppSettings, CommandListener {
             }
 
             for (int i = 0; i < groups.length; i++) {
-                byte maxGroupSetting = Permissions.getPermissionGroupLevel(
-                                       maxLevels, groups[i], true);
+                byte maxGroupSetting =
+                        Permissions.getMaximumPermissionGroupLevel(
+                                maxLevels, groups[i]);
                 byte currentGroupSetting = Permissions.getPermissionGroupLevel(
                                            curLevels, groups[i]);
 

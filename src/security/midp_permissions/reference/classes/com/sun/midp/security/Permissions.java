@@ -402,14 +402,14 @@ public final class Permissions {
      *
      * @param levels array of permission levels
      * @param group desired permission group
-     * @param isMaxLevels true to return the effective level for
-     *        READ_[RESTRICTED_]MESSAGE_GROUP instead of the one visible
-     *        for the user (i.e., ONESHOT), false otherwise
+     * @param currentLevels true if the levels is the current permission levels,
+     *                      false if the levels is an array of maximum allowed
+     *                      permission levels.
      *
      * @return permission level
      */
-    public static byte getPermissionGroupLevel(byte[] levels,
-            PermissionGroup group, boolean isMaxLevels) {
+    private static byte getPermissionGroupLevelImpl(byte[] levels,
+            PermissionGroup group, boolean currentLevels) {
         byte maxLevel = NEVER;
 
         for (int i = 0; i < permissionSpecs.length; i++) {
@@ -431,7 +431,7 @@ public final class Permissions {
         if ((group == READ_MESSAGE_GROUP ||
                 group == READ_RESTRICTED_MESSAGE_GROUP) &&
                     (maxLevel == BLANKET)) {
-            if (!isMaxLevels) {
+            if (currentLevels) {
                 maxLevel = ONESHOT;
             }
         }
@@ -440,7 +440,7 @@ public final class Permissions {
     }
 
     /**
-     * Find the max level of all the permissions in the same group.
+     * Find the max level of all the current permissions in the group.
      *
      * This is a policy dependent function for permission grouping.
      *
@@ -451,7 +451,22 @@ public final class Permissions {
      */
     public static byte getPermissionGroupLevel(byte[] levels,
             PermissionGroup group) {
-        return getPermissionGroupLevel(levels, group, false);
+        return getPermissionGroupLevelImpl(levels, group, true);
+    }
+
+    /**
+     * Find the max level of all the maximum allowed permissions in the group.
+     *
+     * This is a policy dependent function for permission grouping.
+     *
+     * @param levels array of permission levels
+     * @param group desired permission group
+     *
+     * @return permission level
+     */
+    public static byte getMaximumPermissionGroupLevel(byte[] levels,
+            PermissionGroup group) {
+        return getPermissionGroupLevelImpl(levels, group, false);
     }
 
     /**
@@ -903,8 +918,6 @@ public final class Permissions {
             ResourceConstants.PERMISSION_MUTUALLY_EXCLUSIVE_ERROR_MESSAGE,
                 values);
     }
-
-
 
     private static void init() {
         try {
