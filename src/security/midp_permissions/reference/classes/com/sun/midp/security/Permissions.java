@@ -494,12 +494,13 @@ public final class Permissions {
      */
     public static void setPermissionGroup(byte[] current,
             byte pushInterruptLevel, PermissionGroup group, byte level)
-            throws SecurityException {
+                    throws SecurityException {
 
         PermissionGroup[] pg = checkForMutuallyExclusiveCombination(current,
                 pushInterruptLevel, group, level);
         if (pg != null) {
-            throw new SecurityException(createMutuallyExclusiveErrorMessage(pg[0], pg[1]));
+            throw new SecurityException(
+                    createMutuallyExclusiveErrorMessage(pg[0], pg[1]));
         }
 
         for (int i = 0; i < permissionSpecs.length; i++) {
@@ -515,7 +516,7 @@ public final class Permissions {
          * that must be kept in synch. The setting dialog only presents
          * the send message group, see the getSettingGroups method.
          */
-        PermissionGroup sendGroup = null, readGroup = null;
+        PermissionGroup readGroup = null;
 
         if (group == SEND_MESSAGE_GROUP) {
             readGroup = READ_MESSAGE_GROUP;
@@ -524,8 +525,6 @@ public final class Permissions {
         }
 
         if (readGroup != null) {
-            sendGroup = group;
-
             /*
              * Since the send group have a max level of oneshot, this method
              * will only code get used by the settings dialog, when a user
@@ -540,7 +539,7 @@ public final class Permissions {
             }
 
             for (int i = 0; i < permissionSpecs.length; i++) {
-                if (permissionSpecs[i].group == sendGroup) {
+                if (permissionSpecs[i].group == readGroup) {
                     setPermission(current, i, level);
                 }
             }
@@ -548,8 +547,15 @@ public final class Permissions {
             return;
         }
 
-        if (group == READ_MESSAGE_GROUP ||
-                group == READ_RESTRICTED_MESSAGE_GROUP) {
+        PermissionGroup sendGroup = null;
+
+        if (group == READ_MESSAGE_GROUP) {
+            sendGroup = SEND_MESSAGE_GROUP;
+        } else if (group == READ_RESTRICTED_MESSAGE_GROUP) {
+            sendGroup = SEND_RESTRICTED_MESSAGE_GROUP;
+        }
+
+        if (sendGroup != null) {
             if (level == ONESHOT) {
                 for (int i = 0; i < permissionSpecs.length; i++) {
                     if (permissionSpecs[i].group == group) {
