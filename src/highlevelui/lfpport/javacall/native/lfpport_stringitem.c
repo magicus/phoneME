@@ -37,9 +37,102 @@
 #include <lfpport_stringitem.h>
 #include "lfpport_gtk.h"
 
+#include <gtk/gtk.h>
+#include <gdk/gdk.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern GtkVBox *main_container;
+extern GtkWidget *main_window;
+
+MidpError lfpport_string_item_show_cb(MidpItem* itemPtr){
+    printf(">>>%s 1\n", __FUNCTION__);
+    GtkWidget *string_item = (GtkWidget*)itemPtr->widgetPtr;
+    MidpDisplayable* ownerPtr = itemPtr->ownerPtr;
+    printf(">>>%s\n", __FUNCTION__);
+
+    gtk_widget_show(string_item);
+
+    gtk_box_pack_start(GTK_BOX(ownerPtr->frame.widgetPtr),
+                       string_item,
+                       FALSE, FALSE, 0);
+
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+MidpError lfpport_string_item_hide_cb(MidpItem* itemPtr){
+    GtkWidget *string_item = (GtkWidget*)itemPtr->widgetPtr;
+    printf(">>>%s\n", __FUNCTION__);
+
+    gtk_widget_hide((GtkWidget *)string_item);
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_string_item_set_label_cb(MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
+    return -1;
+}
+MidpError lfpport_string_item_destroy_cb(MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
+    return -1;
+}
+
+MidpError lfpport_string_item_get_min_height_cb(int *height, MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    *height = STUB_MIN_HEIGHT;
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_string_item_get_min_width_cb(int *width, MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    *width = STUB_MIN_WIDTH;
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_string_item_get_pref_height_cb(int* height,
+                                                 MidpItem* itemPtr,
+                                                 int lockedWidth){
+    printf(">>>%s\n", __FUNCTION__);
+    *height = STUB_PREF_HEIGHT;
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_string_item_get_pref_width_cb(int* width,
+                                                MidpItem* itemPtr,
+                                                int lockedHeight){
+    printf(">>>%s\n", __FUNCTION__);
+    *width = STUB_PREF_WIDTH;
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_string_item_handle_event_cb(MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
+    return -1;
+}
+
+MidpError lfpport_string_item_relocate_cb(MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
+    return -1;
+}
+
+MidpError lfpport_string_item_resize_cb(MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
+    return -1;
+}
+
+
 
 /**
  * Creates a string item's native peer, but does not display it.  When
@@ -64,9 +157,50 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
 				    const pcsl_string* text,
 				    PlatformFontPtr fontPtr,
 				    int appearanceMode){
+    GtkWidget *box;
+    GtkWidget *string_item_label;
+    GtkWidget *string_item_text;
+    int label_len, text_len;
+
+    gchar label_buf[MAX_TEXT_LENGTH];
+    gchar text_buf[MAX_TEXT_LENGTH];
+
     printf(">>>%s\n", __FUNCTION__);
+
+    pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
+    pcsl_string_convert_to_utf8(text, text_buf,  MAX_TEXT_LENGTH, &text_len);
+
+
+    box = gtk_hbox_new(FALSE, 0);
+    string_item_label = gtk_label_new(label_buf);
+    string_item_text = gtk_label_new(text_buf);
+    gtk_widget_show(string_item_label);
+    gtk_widget_show(string_item_text);
+
+    gtk_box_pack_start(GTK_BOX (box), string_item_label, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX (box), string_item_text, FALSE, FALSE, 0);
+
+    /* set font */
+    itemPtr->widgetPtr = box;
+    itemPtr->ownerPtr = ownerPtr;
+    itemPtr->layout = layout;
+
+    itemPtr->show = lfpport_string_item_show_cb;
+    itemPtr->hide = lfpport_string_item_hide_cb;
+    itemPtr->setLabel = lfpport_string_item_set_label_cb;
+    itemPtr->destroy = lfpport_string_item_destroy_cb;
+
+    //itemPtr->component
+    itemPtr->getMinimumHeight = lfpport_string_item_get_min_height_cb;
+    itemPtr->getMinimumWidth = lfpport_string_item_get_min_width_cb;
+    itemPtr->getPreferredHeight = lfpport_string_item_get_pref_height_cb;
+    itemPtr->getPreferredWidth = lfpport_string_item_get_pref_width_cb;
+    itemPtr->handleEvent = lfpport_string_item_handle_event_cb;
+    itemPtr->relocate = lfpport_string_item_relocate_cb;
+    itemPtr->resize = lfpport_string_item_resize_cb;
+
     printf("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 
@@ -84,7 +218,7 @@ MidpError lfpport_stringitem_set_content(MidpItem* itemPtr,
 					 int appearanceMode){
     printf(">>>%s\n", __FUNCTION__);
     printf("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -99,8 +233,9 @@ MidpError lfpport_stringitem_set_font(MidpItem* itemPtr,
 				      PlatformFontPtr fontPtr){
     printf(">>>%s\n", __FUNCTION__);
     printf("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
+
 
 #ifdef __cplusplus
 } /* extern "C" */

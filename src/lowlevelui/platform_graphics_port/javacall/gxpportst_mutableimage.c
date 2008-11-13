@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -38,17 +38,18 @@
  *        process. This function sets creationErrorPtr's value.
  */
 void gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
-                                            int width, 
+                                            int width,
                                             int height,
-                                            img_native_error_codes* 
+                                            img_native_error_codes*
                                             creationErrorPtr) {
-    REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:gxpport_create_mutable()\n");
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)newImagePtr;
     (void)width;
     (void)height;
-    
+
     /* Not yet implemented */
     *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
@@ -69,7 +70,8 @@ void gxpport_render_mutableimage(gxpport_mutableimage_native_handle srcImagePtr,
 				 gxpport_mutableimage_native_handle dstImagePtr,
 				 const jshort *clip,
 				 int x_dest, int y_dest) {
-    REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:gxpport_render_mutableimage()\n");
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcImagePtr;
@@ -100,11 +102,12 @@ void
 gxpport_render_mutableregion(gxpport_mutableimage_native_handle srcImagePtr,
 			     gxpport_mutableimage_native_handle dstImagePtr,
 			     const jshort *clip,
-			     int x_dest, int y_dest, 
+			     int x_dest, int y_dest,
 			     int width, int height,
 			     int x_src, int y_src,
 			     int transform) {
-    REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:gxpport_render_mutableregion()\n");
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcImagePtr;
@@ -139,8 +142,9 @@ void gxpport_get_mutable_argb(gxpport_mutableimage_native_handle imagePtr,
 			      int x, int y, int width, int height,
 			      img_native_error_codes* errorPtr) {
 
-    REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:gxpport_get_mutable_argb()\n");
-    
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
+
     /* Suppress unused parameter warning */
     (void)imagePtr;
     (void)rgbBuffer;
@@ -159,11 +163,12 @@ void gxpport_get_mutable_argb(gxpport_mutableimage_native_handle imagePtr,
  * Cleans up any native resources to prepare the image to be garbage collected.
  *
  * @param imagePtr the mutable image.
- * @param errorPtr pointer for a status code set on return 
+ * @param errorPtr pointer for a status code set on return
  */
 void gxpport_destroy_mutable(gxpport_mutableimage_native_handle imagePtr) {
-    REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:gxpport_destroy_mutable()\n");
-    
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
+
     /* Suppress unused parameter warning */
     (void)imagePtr;
 }

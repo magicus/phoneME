@@ -37,16 +37,40 @@
 #include <imgapi_image.h>
 #include <lfpport_export.h>
 #include "lfpport_gtk.h"
+#include <gtk/gtk.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
+extern gint screen_width;
+extern gint screen_height;
+extern GtkWidget *main_window;
+extern GtkLabel  *ticker;
+
+#define LFPPORT_SCREEN_HEIGHT       320
+#define LFPPORT_SCREEN_WIDTH        240
+
+/* DS to pass information between GTK and java tasks */
+typedef struct {
+    int is_orientation_reversed;
+    int screen_width;
+    int screen_height;
+    int font_face;
+    int font_style;
+    int font_size;
+    pthread_mutex_t mutex;  /* protect access to the struct */
+} lfpport_shared_ds;
+
+ /**
  * Refresh the given area.  For double buffering purposes.
  */
 void lfpport_refresh(int x, int y, int w, int h){
     printf(">>>%s\n", __FUNCTION__);
+    (void)x;
+    (void)y;
+    (void)w;
+    (void)h;
     printf("<<<%s\n", __FUNCTION__);
 }
 
@@ -57,6 +81,7 @@ void lfpport_refresh(int x, int y, int w, int h){
  */
 void lfpport_set_fullscreen_mode(jboolean mode){
     printf(">>>%s\n", __FUNCTION__);
+    (void)mode;
     printf("<<<%s\n", __FUNCTION__);
 }
 
@@ -83,8 +108,8 @@ jboolean lfpport_get_reverse_orientation(){
  */
 int lfpport_get_screen_width(){
     printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
-    return 0;
+    printf("<<<%s returning %d\n", __FUNCTION__, screen_width);
+    return screen_width;
 }
 
 /**
@@ -92,8 +117,8 @@ int lfpport_get_screen_width(){
  */
 int lfpport_get_screen_height(){
     printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
-    return 0;
+    printf("<<<%s returning %d\n", __FUNCTION__, screen_height);
+    return screen_height;
 }
 
 /**
@@ -109,6 +134,8 @@ void lfpport_gained_foreground(){
  */
 void lfpport_ui_init(){
     printf(">>>%s\n", __FUNCTION__);
+    stub_func();
+
     printf("<<<%s\n", __FUNCTION__);
 }
 

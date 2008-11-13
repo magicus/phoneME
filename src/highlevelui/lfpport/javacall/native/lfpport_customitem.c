@@ -60,7 +60,7 @@ MidpError lfpport_customitem_create(MidpItem* itemPtr,
 				    const pcsl_string* label, int layout) {
     printf(">>>%s\n", __FUNCTION__);
     printf("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -147,7 +147,7 @@ MidpError lfpport_customitem_set_content_buffer(MidpItem* ciPtr,
 						unsigned char* imgPtr){
     printf(">>>%s\n", __FUNCTION__);
     printf("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 #ifdef __cplusplus
 } /* extern "C" */

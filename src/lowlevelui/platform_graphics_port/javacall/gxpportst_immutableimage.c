@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -46,8 +46,8 @@ void gxpport_createimmutable_from_mutable
     gxpport_image_native_handle *newImmutableImagePtr,
      img_native_error_codes* creationErrorPtr) {
 
-    REPORT_CALL_TRACE(LC_LOWUI,
-		      "LF:STUB:gxpport_createimmutable_from_mutable()\n");
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcMutableImagePtr;
@@ -75,14 +75,14 @@ void gxpport_createimmutable_from_mutable
 void
 gxpport_createimmutable_from_immutableregion
 (gxpport_image_native_handle srcImmutableImagePtr,
- int src_x, int src_y, 
+ int src_x, int src_y,
  int src_width, int src_height,
  int transform,
  gxpport_image_native_handle *newImmutableImagePtr,
  img_native_error_codes* creationErrorPtr) {
 
-    REPORT_CALL_TRACE(LC_LOWUI,
-        "LF:STUB:gxpport_createimmutable_from_immutableregion()\n");
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcImmutableImagePtr;
@@ -116,14 +116,14 @@ gxpport_createimmutable_from_immutableregion
 void
 gxpport_createimmutable_from_mutableregion
 (gxpport_mutableimage_native_handle srcMutableImagePtr,
- int src_x, int src_y, 
+ int src_x, int src_y,
  int src_width, int src_height,
  int transform,
  gxpport_image_native_handle *newImmutableImagePtr,
  img_native_error_codes* creationErrorPtr) {
- 
-    REPORT_CALL_TRACE(LC_LOWUI,
-       "LF:STUB:gxpport_createimmutable_from_mutableregion()\n");
+
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcMutableImagePtr;
@@ -142,7 +142,7 @@ gxpport_createimmutable_from_mutableregion
  * Decodes the given input data into a storage format used by immutable
  * images.  The input data should be in a self-identifying format; that is,
  * the data must contain a description of the decoding process.
- * 
+ *
  *  @param srcBuffer input data to be decoded.
  *  @param length length of the input data.
  *  @param ret_imgWidth pointer to the width of the decoded image when the
@@ -158,14 +158,12 @@ gxpport_createimmutable_from_mutableregion
  */
 void
 gxpport_decodeimmutable_from_selfidentifying
-(unsigned char *srcBuffer, int length, 
+(unsigned char *srcBuffer, int length,
  int* imgWidth, int* imgHeight,
  gxpport_image_native_handle *newImmutableImagePtr,
  img_native_error_codes* creationErrorPtr) {
 
-    REPORT_CALL_TRACE(LC_LOWUI,
-        "LF:STUB:gxpport_decodeimmutable_from_selfidentifying()\n");
-
+    printf(">>>%s\n", __FUNCTION__);
     /* Suppress unused parameter warnings */
     (void)srcBuffer;
     (void)length;
@@ -173,14 +171,15 @@ gxpport_decodeimmutable_from_selfidentifying
     (void)imgHeight;
     (void)newImmutableImagePtr;
 
-    /* Not yet implemented */
-    *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *newImmutableImagePtr = (void*)1;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
+    printf("<<<%s\n", __FUNCTION__);
 }
 
 /**
  * Decodes the ARGB input data into a storage format used by immutable images.
  * The array consists of values in the form of 0xAARRGGBB.
- *  
+ *
  * @param srcBuffer input data to be decoded.
  * @param width width of the image, in pixels.
  * @param height height of the image, in pixels.
@@ -194,9 +193,9 @@ void gxpport_decodeimmutable_from_argb(jint* srcBuffer,
          int width, int height, jboolean processAlpha,
          gxpport_image_native_handle *newImmutableImagePtr,
          img_native_error_codes* creationErrorPtr) {
-    REPORT_CALL_TRACE(LC_LOWUI,
-		      "LF:STUB:gxpport_decodeimmutable_from_argb()\n");
 
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
     /* Suppress unused parameter warnings */
     (void)srcBuffer;
     (void)width;
@@ -226,7 +225,8 @@ gxpport_render_immutableimage
  const jshort *clip,
  int x_dest, int y_dest) {
 
-    REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB gxpport_render_immutableimage()\n");
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcImmutableImagePtr;
@@ -258,13 +258,13 @@ gxpport_render_immutableregion
 (gxpport_image_native_handle srcImmutableImagePtr,
  gxpport_mutableimage_native_handle dstMutableImagePtr,
  const jshort *clip,
- int x_dest, int y_dest, 
+ int x_dest, int y_dest,
  int width, int height,
  int x_src, int y_src,
  int transform) {
 
-    REPORT_CALL_TRACE(LC_LOWUI,
-		     "LF:STUB:gxpport_render_immutableregion()\n");
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcImmutableImagePtr;
@@ -298,7 +298,9 @@ void gxpport_get_immutable_argb(gxpport_image_native_handle immutableImagePtr,
         jint* rgbBuffer, int offset, int scanLength,
         int x, int y, int width, int height,
         img_native_error_codes* errorPtr) {
-    REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:gxpport_get_immutable_argb()\n");
+
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)immutableImagePtr;
@@ -321,20 +323,21 @@ void gxpport_get_immutable_argb(gxpport_image_native_handle immutableImagePtr,
 void
 gxpport_destroy_immutable(gxpport_image_native_handle immutableImagePtr) {
 
-    REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:ImmutableImage_destroy()\n");
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warning */
     (void)immutableImagePtr;
 }
 
 /**
- * Decodes the given input data into a native platform representation that can 
+ * Decodes the given input data into a native platform representation that can
  * be saved.  The input data should be in a self-identifying format; that is,
  * the data must contain a description of the decoding process.
- * 
+ *
  *  @param srcBuffer input data to be decoded.
  *  @param length length of the input data.
- *  @param ret_dataBuffer pointer to the platform representation data that 
+ *  @param ret_dataBuffer pointer to the platform representation data that
  *         be saved.
  *  @param ret_length pointer to the length of the return data.
  *  @param creationErrorPtr pointer to the status of the decoding
@@ -342,12 +345,12 @@ gxpport_destroy_immutable(gxpport_image_native_handle immutableImagePtr) {
  */
 void
 gxpport_decodeimmutable_to_platformbuffer
-(unsigned char *srcBuffer, long length, 
+(unsigned char *srcBuffer, long length,
  unsigned char **ret_dataBuffer, long* ret_length,
  img_native_error_codes* creationErrorPtr) {
 
-    REPORT_CALL_TRACE(LC_LOWUI,
-		      "LF:STUB:gxpport_decodeimmutable_to_platformbuffer()\n");
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warning */
     (void)srcBuffer;
@@ -362,7 +365,7 @@ gxpport_decodeimmutable_to_platformbuffer
 /**
  * Loads the given input data into a storage format used by immutable
  * images.  The input data should be the native platform representation.
- * 
+ *
  *  @param newImmutableImage pointer to a structure to hold the loaded image.
  *  @param srcBuffer input data to be loaded.
  *  @param length length of the input data.
@@ -385,8 +388,8 @@ gxpport_loadimmutable_from_platformbuffer
  gxpport_image_native_handle *newImmutableImagePtr,
  img_native_error_codes* creationErrorPtr) {
 
-    REPORT_CALL_TRACE(LC_LOWUI,
-		      "LF:STUB:gxpport_loadimmutable_from_platformbuffer()\n");
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warning */
     (void)srcBuffer;

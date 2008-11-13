@@ -22,29 +22,26 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
- */
-
-/**
- * @file
- * @ingroup lfpport_gtk.h
  *
- * @brief general header file
+ * This source file is specific for Qt-based configurations.
  */
-#ifndef _LFPPORT_GTK_H_
-#define _LFPPORT_GTK_H_
 
+#include <midpMalloc.h>
+#include <midpUtilKni.h>
+#include <pcsl_string.h>
+#include <lfpport_error.h>
+#include "lfpport_gtk.h"
 
-#define     STUB_MIN_HEIGHT     20
-#define     STUB_MIN_WIDTH      20
-#define     STUB_PREF_HEIGHT    20
-#define     STUB_PREF_WIDTH     20
-
-#define MAX_TEXT_LENGTH 256
-
-#include <stdio.h>  //TODO@gd212247:  remove at release
-#include <gtk/gtk.h>
-
-
-#define PRINT_IN() LIMO_PRINTF(">>>" )
-#endif //_LFPPORT_GTK_H_
+MidpError gchar_to_pcsl_string(gchar *src, pcsl_string *dst) {
+    pcsl_string_status pe;
+    if (src == NULL) {
+	    *dst = PCSL_STRING_NULL;
+    } else if (!strcmp(src, "")) {
+	    *dst = PCSL_STRING_EMPTY;
+    } else {
+        jint length = strlen(src);
+        pe = pcsl_string_convert_from_utf8(src, length, dst);
+    }
+    return KNI_OK;
+}
 

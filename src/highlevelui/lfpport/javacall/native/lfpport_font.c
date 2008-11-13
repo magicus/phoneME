@@ -30,15 +30,31 @@
  *
  * @brief Font-specific porting functions and data structures.
  */
-
+#include <midpMalloc.h>
 #include <lfpport_error.h>
 #include <lfpport_font.h>
 #include "lfpport_gtk.h"
+
+#include <pango/pango.h>
+#include <glib.h>
+
+typedef struct {
+    int face;
+    int style;
+    int size;
+    PlatformFontPtr fontPtr;
+} MidpFont;
+
+
+GList *fonts_list = NULL;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/* IMPL_NOTE: see
+ * http://library.gnome.org/devel/pango/stable/pango-Text-Attributes.html#PangoAttrList
+ */
 
 /**
  * Gets the font type. The bit values of the font attributes are
@@ -57,7 +73,75 @@ extern "C" {
  */
 MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
 			   int face, int style, int size){
+    MidpFont *f;
+    PangoFontDescription *font_descr;
+    PangoStyle pango_style;
+    gint font_size;
+    GList *tmp;
+    PangoWeight pango_weight;
+
     printf(">>>%s\n", __FUNCTION__);
+
+    // look through allocated font to see if the font is there already
+    for (tmp = g_list_first(fonts_list); tmp != 0; tmp = g_list_next(fonts_list)) {
+        if (((MidpFont*)tmp->data)->face == face &&
+            ((MidpFont*)tmp->data)->style == style &&
+            ((MidpFont*)tmp->data)->size == size) {
+            *fontPtr = ((MidpFont*)tmp->data)->fontPtr;
+            return KNI_OK;
+        }
+    }
+
+    f = (MidpFont *)midpMalloc(sizeof(MidpFont));
+    font_descr = pango_font_description_new();
+
+    if (f != NULL && font_descr != NULL) {
+        f->size = size;
+        f->style = style;
+        f->face = face;
+
+        /* set size */
+        font_size = 13; /* for SIZE_MEDIUM */
+        if (size == SIZE_SMALL) {
+            font_size = face == FACE_MONOSPACE ? 7: 11;
+        } else if (size == SIZE_LARGE) {
+            font_size = 17;
+        }
+        //pango_font_description_set_size(font_descr, font_size);
+
+        /* set style */
+        pango_style = PANGO_STYLE_NORMAL;       /* STYLE_PLAIN */
+        if (style & STYLE_ITALIC) {             /* STYLE_ITALIC */
+            pango_style = PANGO_STYLE_ITALIC;
+        }
+        pango_font_description_set_style(font_descr, pango_style);
+        pango_weight = PANGO_WEIGHT_NORMAL;     /* STYLE_BOLD */
+        if (style & STYLE_BOLD) {
+            pango_weight = PANGO_WEIGHT_BOLD;
+        }
+        pango_font_description_set_weight(font_descr, pango_weight);
+
+        /* TODO:  set face */
+//         if (face == FACE_MONOSPACE) {
+//             pango_font_description_set_family(font_descr, );
+//        }
+
+
+        /* TODO:  set underline */
+//       if ((style & STYLE_UNDERLINED) != 0) {
+//       }
+
+
+        /* insert font to the list */
+        f->fontPtr = font_descr;
+        fonts_list = g_list_prepend(fonts_list, f);
+
+        /* return the font */
+        *fontPtr = font_descr;
+        printf("<<<%s\n", __FUNCTION__);
+        return KNI_OK;
+    }
+
     printf("<<<%s\n", __FUNCTION__);
     return -1;
 }
@@ -66,7 +150,14 @@ MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
  * Frees native resources used by the system for font registry
  */
 void lfpport_font_finalize(){
+    GList *tmp;
     printf(">>>%s\n", __FUNCTION__);
+
+    /* free the allocated memory */
+    for (tmp = g_list_first(fonts_list); tmp != 0; tmp = g_list_next(fonts_list)) {
+        midpFree(tmp->data);
+    }
+
     printf("<<<%s\n", __FUNCTION__);
 }
 

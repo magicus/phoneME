@@ -31,14 +31,125 @@
  * @brief TextField-specific porting functions and data structures.
  */
 
+#include <midpMalloc.h>
 #include <lfpport_displayable.h>
 #include <lfpport_item.h>
 #include <lfpport_textfield.h>
 #include "lfpport_gtk.h"
 
+#include <gtk/gtk.h>
+#include <gdk/gdk.h>
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern GtkVBox *main_container;
+extern GtkWidget *main_window;
+
+extern MidpError gchar_to_pcsl_string(gchar *src, pcsl_string *dst);
+
+typedef struct {
+    GtkWidget *container;
+    int maxSize;
+    int conststaints;
+} TextFieldItem;
+
+
+MidpError lfpport_text_field_show_cb(MidpItem* itemPtr){
+    GtkWidget *text_field;
+    MidpDisplayable* ownerPtr = itemPtr->ownerPtr;
+    printf(">>>%s\n", __FUNCTION__);
+
+    text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
+    gtk_widget_show(text_field);
+
+    gtk_box_pack_start(GTK_BOX(ownerPtr->frame.widgetPtr),
+                       text_field,
+                       FALSE, FALSE, 0);
+
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+
+MidpError lfpport_text_field_hide_cb(MidpItem* itemPtr){
+    GtkWidget *text_field;
+
+    printf(">>>%s\n", __FUNCTION__);
+    text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
+    gtk_widget_hide(text_field);
+    printf("<<<%s\n", __FUNCTION__);
+
+    return KNI_OK;
+}
+
+MidpError lfpport_text_field_set_label_cb(MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
+    return -1;
+}
+
+
+MidpError lfpport_text_field_destroy_cb(MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
+    return -1;
+}
+
+
+MidpError lfpport_text_field_get_min_height_cb(int *height, MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    *height = STUB_MIN_HEIGHT;
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+
+MidpError lfpport_text_field_get_min_width_cb(int *width, MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    *width = STUB_MIN_WIDTH;
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_text_field_get_pref_height_cb(int* height,
+                                                 MidpItem* itemPtr,
+                                                 int lockedWidth){
+    printf(">>>%s\n", __FUNCTION__);
+    *height = STUB_PREF_HEIGHT;
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_text_field_get_pref_width_cb(int* width,
+                                                MidpItem* itemPtr,
+                                                int lockedHeight){
+    printf(">>>%s\n", __FUNCTION__);
+    *width = STUB_PREF_WIDTH;
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_text_field_handle_event_cb(MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
+    return -1;
+}
+
+MidpError lfpport_text_field_relocate_cb(MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_text_field_resize_cb(MidpItem* itemPtr){
+    printf(">>>%s\n", __FUNCTION__);
+    printf("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
 
 
 /**
@@ -65,9 +176,62 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
 				   const pcsl_string* text, int maxSize,
 				   int constraints,
 				   const pcsl_string* initialInputMode){
+
+    GtkWidget *box;
+    GtkWidget *text_field_label;
+    GtkWidget *text_field_text;
+    int label_len, text_len;
+
+    TextFieldItem *text_field_item;
+
+    gchar label_buf[MAX_TEXT_LENGTH];
+    gchar text_buf[MAX_TEXT_LENGTH];
+
     printf(">>>%s\n", __FUNCTION__);
+
+    text_field_item = (TextFieldItem *)midpMalloc(sizeof(TextFieldItem));
+
+    pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
+    pcsl_string_convert_to_utf8(text, text_buf,  MAX_TEXT_LENGTH, &text_len);
+
+
+    box = gtk_hbox_new(FALSE, 0);
+    text_field_label = gtk_label_new(label_buf);
+    //gtk_entry_set_text(text_field_label, label_buf);
+    //gtk_entry_set_editable(text_field_label, FALSE);
+    text_field_text = gtk_entry_new();
+    gtk_entry_set_text(text_field_text, text_buf);
+    gtk_entry_set_editable(text_field_text, TRUE);
+    gtk_widget_show(text_field_label);
+    gtk_widget_show(text_field_text);
+    gtk_box_pack_start(GTK_BOX (box), text_field_label, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX (box), text_field_text, FALSE, FALSE, 0);
+
+    text_field_item->container = box;
+    text_field_item->conststaints = constraints;
+    text_field_item->maxSize = maxSize;
+
+    /* set font */
+    itemPtr->widgetPtr = text_field_item;
+    itemPtr->ownerPtr = ownerPtr;
+    itemPtr->layout = layout;
+
+    itemPtr->show = lfpport_text_field_show_cb;
+    itemPtr->hide = lfpport_text_field_hide_cb;
+    itemPtr->setLabel = lfpport_text_field_set_label_cb;
+    itemPtr->destroy = lfpport_text_field_destroy_cb;
+
+    //itemPtr->component
+    itemPtr->getMinimumHeight = lfpport_text_field_get_min_height_cb;
+    itemPtr->getMinimumWidth = lfpport_text_field_get_min_width_cb;
+    itemPtr->getPreferredHeight = lfpport_text_field_get_pref_height_cb;
+    itemPtr->getPreferredWidth = lfpport_text_field_get_pref_width_cb;
+    itemPtr->handleEvent = lfpport_text_field_handle_event_cb;
+    itemPtr->relocate = lfpport_text_field_relocate_cb;
+    itemPtr->resize = lfpport_text_field_resize_cb;
+
     printf("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -79,9 +243,23 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_textfield_set_string(MidpItem* itemPtr, const pcsl_string* text){
+    GtkWidget *text_field;
+    MidpError status;
+    GList *list;
+    GList *textWidget;
+    gchar buf[MAX_TEXT_LENGTH];
+    int length;
+
     printf(">>>%s\n", __FUNCTION__);
+
+    text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
+    list = gtk_container_get_children(text_field);
+    textWidget = g_list_nth(list, 1);
+    pcsl_string_convert_to_utf8(text, buf, MAX_TEXT_LENGTH, &length);
+    gtk_entry_set_text(textWidget->data, buf);
+
     printf("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -98,9 +276,23 @@ MidpError lfpport_textfield_set_string(MidpItem* itemPtr, const pcsl_string* tex
  */
 MidpError lfpport_textfield_get_string(pcsl_string* text, jboolean* newChange,
 				       MidpItem* itemPtr){
+    GtkWidget *text_field;
+    MidpError status;
+    GList *list;
+    GList *textWidget;
+
     printf(">>>%s\n", __FUNCTION__);
+
+    text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
+    list = gtk_container_get_children(text_field);
+    textWidget = g_list_nth(list, 1);
+
+    status = gchar_to_pcsl_string(textWidget->data, text);
+
+    printf("Text is %s\n", text);
+
     printf("<<<%s\n", __FUNCTION__);
-    return -1;
+    return status;
 }
 
 /**

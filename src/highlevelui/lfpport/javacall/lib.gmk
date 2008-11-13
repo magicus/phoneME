@@ -42,7 +42,7 @@ LFPPORT_JAVACALL_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(LFPPORT_JAVACALL_NAME)
 LIB_SET += $(LFPPORT_JAVACALL_NAME)
 
 # Export include files
-# SUBSYSTEM_LFPPORT_EXTRA_INCLUDES +=
+SUBSYSTEM_LFPPORT_EXTRA_INCLUDES += $$(pkg-config gtk+-2.0 --cflags-only-I)
 
 # Native files for the library
 #
@@ -59,6 +59,7 @@ SUBSYSTEM_LFPPORT_NATIVE_FILES += \
     lfpport_imageitem.c \
     lfpport_stringitem.c \
     lfpport_textfield.c \
+    lfpport_util.c \
     lfpport_export.c
 
 
