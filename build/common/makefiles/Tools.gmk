@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -61,7 +59,7 @@ JADTOOL_MAIN_CLASS    = com.sun.midp.jadtool.JadTool
 JADTOOL_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/JadTool.manifest
 JADTOOL_JAR_FILE      = $(BINDIR)/JadTool.jar
 
--include $(TOOLS_DIR)/tools.gmk
+include $(TOOLS_DIR)/tools.gmk
 
 # Localized strings generator settings
 #
@@ -92,12 +90,6 @@ ifeq ($(TARGET_VM), cdc_vm)
 else
   IDENTIFIED_DOMAIN_NAME = identified_third_party
 endif
-
-# Macro to pre-process Jpp file into Java file
-# runjpp(<input_jpp_file>, <output_java_file>)
-define runjpp
-    $(JAVA_CMD) -classpath $(TOOLS_OUTPUT_DIR) Jpp $(JPP_DEFS) -o `$(call fixcygpath,$(2))` `$(call fixcygpath,$(1))`
-endef
 
 # Targets
 #
@@ -264,8 +256,8 @@ define convert_images_to_raw
 	    $(JAVA_CMD) -Djava.awt.headless=true \
 		-classpath $(TOOLS_CLASSPATH) \
 		$(IMAGE2RAW_MAIN_CLASS) \
-    		-format $(GENERATED_DIR)/merged.xml \
-        	-out $(STORAGEDIR)) $(LOG)
+		-format $(GENERATED_DIR)/merged.xml \
+		-out $(STORAGEDIR)) $(LOG)
 endef									    
 
 
@@ -293,7 +285,7 @@ $(ROMIZER_MANIFEST_FILE):
 	@$(verify_tools_class_directory) $(LOG)
 	@(echo "Main-Class: com.sun.midp.romization.Romizer" > $@) $(LOG)
 
-    
+
 # Java Pre-processor
 #
 jpp: $(JPP_CLASS_FILES)
