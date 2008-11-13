@@ -36,6 +36,7 @@ else
 JSR_172_GENERATED_DIR   = $(JSR_172_BUILD_DIR)/generated
 endif
 JSR_172_JAR             = $(JSROP_JAR_DIR)/$(JSR_172_LIB_NAME).jar
+JSR_172_SG_JAR          = $(JSROP_JAR_DIR)/jsr172__stub-generator.jar
 
 include $(JSR_172_DIR)/build/subsystem_defs.gmk
 
@@ -45,12 +46,6 @@ INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
 
 # JSR 172 stub generator definitions
 JSR_172_OUTPUT_DIR ?= $(JSR_172_DIR)/output
-JSR_172_SG_OUTPUT_DIR ?= $(JSR_172_OUTPUT_DIR)/jsr172_sg
-
-# rmi (for ri_jaxrpc)
-INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
-        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/ServerException.java \
-        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/MarshalException.java \
 
 INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES += \
 	$(ABSTRACTIONS_DIR)/src/cldc_application/classes/com/sun/j2me/io/Base64.java
@@ -95,20 +90,15 @@ jsr_172_source_bundle:: $(JSR_172_DIR)
 	$(AT)$(call source_bundle_filter,$(JSR_172_DIR),$(JSR_172_SOURCE_OUTPUT_DIR), build/cldc_application)	
 
 # JSR 172 stub generator rules
-
-jsr172__stub-generator: $(JSR_172_SG_OUTPUT_DIR)/jsr172__stub-generator.jar
-$(JSR_172_SG_OUTPUT_DIR)/jsr172__stub-generator.jar: $(INTERNAL_JSR_172_SG_RI_FILES)
+jsr172__stub-generator: $(JSR_172_SG_JAR)
+$(JSR_172_SG_JAR): $(INTERNAL_JSR_172_SG_RI_FILES)
 	@echo "build $@ ..."
-	$(AT)$(call compileJavaClasses,$(JSR_172_SG_OUTPUT_DIR),$(INTERNAL_JSR_172_SG_RI_FILES), \
+	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR),$(INTERNAL_JSR_172_SG_RI_FILES), \
 		-g$(JAVAC_DEBUG) -classpath $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST))
-	$(AT)$(call createJarFile,$@,$(JSR_172_SG_OUTPUT_DIR)/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE)),.)
+	$(AT)$(shell mkdir -p $(dir $@))
+	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR)/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE)),.)
 
-#-----------------------------------------------------------------
-$(EXTRA_JAVAC_OUT_DIR) $(JSR172_JAVAC_OUT_DIR):
-	$(AT)mkdir -p $@
-
-EXTRA_JAVAC_OUT_DIR = $(JAVAC_OUT_DIR)/extra
-JSR172_JAVAC_OUT_DIR = $(JAVAC_OUT_DIR)/jsr172
+jsr172_jar : $(JSR_172_JAR)
 
 $(JSR_172_JAR) :  $(CONFIGURATOR_JAR_FILE) \
 		$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES) $(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES)
@@ -123,12 +113,6 @@ $(JSR_172_JAR) :  $(CONFIGURATOR_JAR_FILE) \
 		-classpath "$(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)$(PS)$(JSR_172_BUILD_DIR)" )
 	$(AT)$(shell mkdir -p $(dir $@))
 	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR),.)
-
-test:
-	echo $(INTERNAL_JSR_172_DEPENDENCIES)
-	echo INTERNAL_JSR_172_DEPENDENCIES_CPLIST $(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)
-
-jsr172_jar : $(JSR_172_JAR)
 
 # Generate constant classes
 # generateConstantClasses(generatedDirectory, constantsXmlFile)
