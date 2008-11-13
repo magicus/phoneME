@@ -144,9 +144,6 @@ public class DomainPolicy {
                 if (groupDefValues[i1] == Permissions.ONESHOT) {
                     groupDefValues[i1] = Permissions.BLANKET;
                 }
-                if (groupMaxValues[i1] == Permissions.ONESHOT) {
-                    groupMaxValues[i1] = Permissions.BLANKET;
-                }
             }
         }
 
