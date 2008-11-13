@@ -119,14 +119,35 @@ public class DomainPolicy {
 
         for (int i1 = 0; i1 < list.length; i1++) {
             String nativeName = list[i1].getNativeName();
-            if (nativeName.endsWith("_messaging")) {
+            boolean isMessagingGroup = nativeName.endsWith("_messaging");
+            boolean isReadGroup = false;
+
+            if (isMessagingGroup) {
+                if (nativeName.startsWith("read_")) {
+                    isReadGroup = true;
+                }
                 // skip "send"/"read" prefix
                 nativeName = nativeName.substring(5);
             }
+
             groupDefValues[i1] =
                     Permissions.getDefaultValue(name, nativeName);
             groupMaxValues[i1] =
                     Permissions.getMaxValue(name, nativeName);
+
+            if (isReadGroup) {
+                /*
+                 * For MSA compliance, we need to hard-code BLANKET effective
+                 * mode for READ_[RESTRICTED_]MESSAGING_GROUP if current
+                 * interaction mode for this group is set to ONESHOT.
+                 */
+                if (groupDefValues[i1] == Permissions.ONESHOT) {
+                    groupDefValues[i1] = Permissions.BLANKET;
+                }
+                if (groupMaxValues[i1] == Permissions.ONESHOT) {
+                    groupMaxValues[i1] = Permissions.BLANKET;
+                }
+            }
         }
 
         defValues = new byte[Permissions.NUMBER_OF_PERMISSIONS];
