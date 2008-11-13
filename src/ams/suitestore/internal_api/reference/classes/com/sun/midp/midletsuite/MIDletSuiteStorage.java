@@ -542,6 +542,27 @@ public class MIDletSuiteStorage {
                    IOException, OutOfMemoryError;
 
     /**
+     * Removes all suites with the temporary flag set to true.
+     */
+    public synchronized void removeTemporarySuites() {
+        final int[] suiteIds = getListOfSuites();
+        
+        for (int i = 0; i < suiteIds.length; ++i) {
+            try {
+                final MIDletSuiteInfo suiteInfo = 
+                        getMIDletSuiteInfo(suiteIds[i]);
+                if (suiteInfo.temporary) {
+                    remove(suiteIds[i]);
+                }
+            } catch (final IOException e) {
+                // skip this suite
+            } catch (final MIDletSuiteLockedException e) {
+                // skip this suite
+            }
+        }
+    }
+    
+    /**
      * Implementation for storeSuite() and storeSuiteComponent().
      * Stores or updates a midlet suite or a dynamic component.
      *

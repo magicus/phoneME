@@ -69,7 +69,26 @@ public abstract class MMHelper {
     /**
      * Get Display being used for Item painting. Platform-dependent.
      */
-    public abstract Display getItemDisplay(Item item);
+    public abstract Display getDisplayFor(Item item);
+
+    /**
+     * Get Display being used for painting of given Displayable. Platform-dependent.
+     */
+    public abstract Display getDisplayFor(Displayable displayable);
+
+    /**
+     * Get width of given display.
+     * @param display
+     * @return number of pixels Display occupies horizontally
+     */
+    public abstract int getDisplayWidth(Display display);
+
+    /**
+     * Get height of given display.
+     * @param display
+     * @return number of pixels Display occupies vertically
+     */
+    public abstract int getDisplayHeight(Display display);
 
     /**
      * Is current Display (playing video) overlapped by system layers

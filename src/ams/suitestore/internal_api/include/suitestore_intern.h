@@ -92,13 +92,14 @@ extern int g_numberOfSuites;
 extern MidletSuiteData* g_pSuitesData;
 
 /**
- * Reads the given file into the given buffer.
+ * Allocates a memory buffer enough to hold the whole file
+ * and reads the given file into the buffer.
  * File contents is read as one piece.
  *
  * @param ppszError pointer to character string pointer to accept an error
  * @param pFileName file to read
- * @param outBuffer buffer where the file contents should be stored
- * @param outBufferLen length of the outBuffer
+ * @param outBuffer receives the address of a buffer where the file contents are stored, NULL on error
+ * @param outBufferLen receives the length of outBuffer, 0 on error
  *
  * @return status code (ALL_OK if there was no errors)
  */

@@ -605,6 +605,10 @@
                 Value="The security domain has not been entered."/>
 <localized_string Key="PERMISSION_MUTUALLY_EXCLUSIVE_ERROR_MESSAGE"
                 Value="%1 can't be set to not ask because it is not secure when %2 is set to not ask."/>
+<localized_string Key="PERMISSION_MUTUALLY_EXCLUSIVE_SELECT_MESSAGE"
+                Value="It is not secure when %1 and %2 both are set to not ask. Press YES to set %1 to not ask and %2 to ask once per application use. Press NO to do vice versa."/>
+<localized_string Key="PERMISSION_SECURITY_WARNING_ERROR_MESSAGE"
+                Value="It is not secure when %1 and %2 are allowed simultaneously. Proceed anyway?"/>
 <localized_string Key="PERMISSION_NET_ACCESS_DIALOG_TITLE"
                 Value="Is it OK to Use Airtime?"/>
 <localized_string Key="PERMISSION_NET_ACCESS_QUE"

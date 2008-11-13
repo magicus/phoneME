@@ -2566,6 +2566,46 @@ public class Display {
 
     // #endif ENABLE_CHAMELEON
 
+    /**
+     * Called to get current display width.
+     * @return Display width.
+     */
+    int getDisplayWidth() {
+        // #ifdef ENABLE_GCI
+        return WIDTH;
+        // #else
+        return width;
+        // #endif
+    }
+
+    /**
+     * Called to get current display height.
+     * @return Display height.
+     */
+    int getDisplayHeight() {
+        // #ifdef ENABLE_GCI
+        return HEIGHT;
+        // #else
+        return height;
+        // #endif
+    }
+
+    /**
+     * Called to get current display width.
+     * @return Display width.
+     */
+    static int getPrimaryDisplayWidth() {
+        return WIDTH;
+    }
+
+    /**
+     * Called to get current display height.
+     * @return Display height.
+     */
+    static int getPrimaryDisplayHeight() {
+        return HEIGHT;
+    }
+
 // #ifdef ENABLE_CDC
     /**
      * Play an Alert sound.
@@ -3511,11 +3551,27 @@ public class Display {
          * Called by event delivery when need to show or hide virtual keyboard
          */
         public void handleVirtualKeyboardEvent() {
+
             // #ifdef ENABLE_CHAMELEON
-            Display.this.getVirtualKeyboardPopup();
-            if (keyboardLayer != null) {
-                keyboardLayer.setVirtualKeyboardLayerListener((VirtualKeyListener)Display.this.current);
+
+            if (!(Display.this.current instanceof CanvasLFImpl)) {
+                return;
+            }
+
+            VirtualKeyListener listener = (VirtualKeyListener)Display.this.current;
+
+            keyboardLayer = Display.this.getVirtualKeyboardPopup();
+
+            if (keyboardLayer != null && listener != null) {
+                keyboardLayer.setVirtualKeyboardLayerListener(listener);
                 keyboardLayer.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
+                if (keyboardLayer.isVirtualKeyboardVisible()) {
+                    Display.this.hidePopup(keyboardLayer);
+                    keyboardLayer.setVirtualKeyboardVisible(false);
+                } else {
+                    Display.this.showPopup(keyboardLayer);
+                    keyboardLayer.setVirtualKeyboardVisible(true);
+                }
             }
             // #endif ENABLE_CHAMELEON
         }
