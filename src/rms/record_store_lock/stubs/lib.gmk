@@ -34,26 +34,10 @@
 #
 ######################################################################
 
-# vpath for ( rms_store/file_based ) library
-#
-vpath % $(RECORD_STORE_DIR)/file_based/native
+STUBS_RECORD_STORE_LOCK_DIR = $(RECORD_STORE_LOCK_DIR)/stubs
 
-SUBSYSTEM_RMS_EXTRA_INCLUDES += -I$(RECORD_STORE_DIR)/file_based/native
-
-# Native files for the ( recored_store/file_based) library
-#
-SUBSYSTEM_RMS_NATIVE_FILES += \
-    rms.c \
-    midp_file_cache.c
-
-
-# Use file locking for ports that don't have 
-# AbstractRecordStoreLock interface implemented
-# (currently, MIDP on CDC)
-ifneq ($(TARGET_VM), cldc_vm)
-EXTRA_CFLAGS += -DENABLE_RECORDSTORE_FILE_LOCK=1
-
-SUBSYSTEM_RMS_NATIVE_FILES += \
-    rms_file_lock.c
-endif
+# Java files for the cldc_record_store_lock library
+SUBSYSTEM_RMS_JAVA_FILES += \
+    $(STUBS_RECORD_STORE_LOCK_DIR)/classes/com/sun/midp/rms/RecordStoreLock.java \
+    $(STUBS_RECORD_STORE_LOCK_DIR)/classes/com/sun/midp/rms/RecordStoreLockFactory.java
 

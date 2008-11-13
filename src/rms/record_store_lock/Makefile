@@ -1,5 +1,5 @@
 #
-#  
+#   
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,37 +23,5 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 #
-######################################################################
-#
-# Module's Component Configuration file
-#
-# Remember: It is up to the module itself to impose rules of
-# how to compile the options. All the global Makefile needs
-# is the final def. of Java and native file lists and some
-# other def. (like VPATH)
-#
-######################################################################
 
-# vpath for ( rms_store/file_based ) library
-#
-vpath % $(RECORD_STORE_DIR)/file_based/native
-
-SUBSYSTEM_RMS_EXTRA_INCLUDES += -I$(RECORD_STORE_DIR)/file_based/native
-
-# Native files for the ( recored_store/file_based) library
-#
-SUBSYSTEM_RMS_NATIVE_FILES += \
-    rms.c \
-    midp_file_cache.c
-
-
-# Use file locking for ports that don't have 
-# AbstractRecordStoreLock interface implemented
-# (currently, MIDP on CDC)
-ifneq ($(TARGET_VM), cldc_vm)
-EXTRA_CFLAGS += -DENABLE_RECORDSTORE_FILE_LOCK=1
-
-SUBSYSTEM_RMS_NATIVE_FILES += \
-    rms_file_lock.c
-endif
-
+include $(CURDIR)/../../../build/share/genroot.make

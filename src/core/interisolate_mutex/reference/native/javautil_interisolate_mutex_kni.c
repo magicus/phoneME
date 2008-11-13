@@ -93,7 +93,7 @@ KNIDECL(com_sun_midp_util_isolate_InterIsolateMutex_lock0) {
         if (status != JAVAUTIL_MUTEX_OK) {
             if (status == JAVAUTIL_MUTEX_ALREADY_LOCKED) {
                 KNI_ThrowNew(midpRuntimeException, 
-                    "Attempting to lock mutex twice withing the same Isolate");
+                    "Attempting to lock mutex twice within the same Isolate");
             } else {
                 KNI_ThrowNew(midpRuntimeException, 
                     "Unknown error while attempting to lock mutex");
