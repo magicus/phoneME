@@ -373,7 +373,7 @@ class RegisterAllocator {
   }
 #endif
 
-#if USE_DEBUG_PRINTING
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   static const char* register_name( const Assembler::Register reg ) {
 #if ARM || defined(HITACHI_SH)
     return Disassembler::register_name(reg);

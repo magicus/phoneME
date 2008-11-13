@@ -145,7 +145,7 @@ class Assembler: public AssemblerCommon {
   // for platform-independant code
   static Register reg(Register r)               { return r; }
 
-#if USE_DEBUG_PRINTING
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   // Name accessors.
   static const char* name_for_byte_register(const Register reg);
   static const char* name_for_work_register(const Register reg);

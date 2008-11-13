@@ -4468,7 +4468,7 @@ void ObjectHeap::shrink_with_compiler_area( const int size ) {
 }
 #endif
 
-#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR
+#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || ENABLE_TTY_TRACE
 void
 ObjectHeap::iterate(ObjectHeapVisitor* visitor, OopDesc** p, OopDesc** to) {
 #if !defined(PRODUCT) && !defined(UNDER_ADS)
@@ -4500,24 +4500,6 @@ void ObjectHeap::iterate(ObjectHeapVisitor* visitor) {
 #endif
 }
 
-#if ENABLE_ISOLATES
-void ObjectHeap::iterate_for_task(ObjectHeapVisitor* visitor, const int task) {
-  OopDesc** const classes = get_boundary_classes();
-  const int boundary_size = BoundaryDesc::allocation_size();
-
-  OopDesc** upb = _inline_allocation_top;
-  int id = _previous_task_id;
-
-  for( const BoundaryDesc* p = *get_boundary_list(); p; p = p->_next ) {
-    if( id == task ) {
-      iterate (visitor, DERIVED(OopDesc**, p, boundary_size), upb );
-    }
-    id = get_owner( p, classes );
-    upb = (OopDesc**) p;
-  }
-}
-#endif
-
 #endif  // !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR
 
 
@@ -4537,6 +4519,24 @@ bool ObjectHeap::contains_live(OopDesc** target) {
 #endif
   return false;
 }
+
+#if ENABLE_ISOLATES
+void ObjectHeap::iterate_for_task(ObjectHeapVisitor* visitor, const int task) {
+  OopDesc** const classes = get_boundary_classes();
+  const int boundary_size = BoundaryDesc::allocation_size();
+
+  OopDesc** upb = _inline_allocation_top;
+  int id = _previous_task_id;
+
+  for( const BoundaryDesc* p = *get_boundary_list(); p; p = p->_next ) {
+    if( id == task ) {
+      iterate (visitor, DERIVED(OopDesc**, p, boundary_size), upb );
+    }
+    id = get_owner( p, classes );
+    upb = (OopDesc**) p;
+  }
+}
+#endif
 
 #endif
 
