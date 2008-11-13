@@ -672,7 +672,7 @@ media_interface g_video_itf = {
     &_video_snapshot_itf,
     NULL,
     NULL,
-    &_video_rate_itf,
+    NULL, // IMPL_NOTE: _video_rate_itf excluded because of problems with Java StopTimeControl
     NULL,
     NULL,
     NULL,
