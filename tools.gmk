@@ -58,14 +58,12 @@ endef
 #
 $(JPP_CLASS_FILES): $(JPP_JAVA_FILES)
 	@echo " ... building Jpp"
-	@$(verify_tools_output_directory) $(LOG)
 	$(call compileJavaClasses, $(TOOLS_OUTPUT_DIR), $(JPP_JAVA_FILES), -g)
 
 # CodeTransformer build rules
 #
 $(CONFIGURATOR_JAR_FILE): $(CONFIGURATOR_JAVA_FILES) $(CONFIGURATOR_MANIFEST_FILE)
 	@echo " ... building CodeTransformer"
-	@$(verify_tools_output_directory) $(LOG)
 	@$(call compileJavaClasses, \
 		$(TOOLS_OUTPUT_DIR), $(CONFIGURATOR_JAVA_FILES), -g)
 	@echo " ... $@ " $(LOG)
