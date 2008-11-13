@@ -492,8 +492,6 @@ inline void Compiler::setup_for_compile( const Method::Attributes& attributes
                                          JVM_TRAPS ) {
   // Mark the compiler as being outside any loops.
   mark_as_outside_loop();
-
-  BytecodeCompileClosure::set_jump_from_bci(0);
   
   Compiler::set_entry_counts_table( attributes.entry_counts );
   Compiler::set_bci_flags_table( attributes.bci_flags );

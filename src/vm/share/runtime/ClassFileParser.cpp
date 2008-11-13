@@ -35,12 +35,12 @@
 #define HAS_BIT(bitmask, index) ((bitmask & (1 << index)) != 0)
 #define SET_BIT(bitmask, index) bitmask |= (1 << index)
 
-ClassFileParser* ClassFileParser::_head = NULL;
+ClassFileParser* ClassFileParser::_head;
 
 #if ENABLE_ROM_GENERATOR
-int ClassFileParser::_total_classfile_bytes = 0;
-int ClassFileParser::_total_bytecode_bytes  = 0;
-int ClassFileParser::_total_stackmap_bytes  = 0;
+int ClassFileParser::_total_classfile_bytes;
+int ClassFileParser::_total_bytecode_bytes;
+int ClassFileParser::_total_stackmap_bytes;
 #endif
 
 #ifndef PRODUCT

@@ -110,7 +110,7 @@ class ProfilerNode {
     }
     
     out->print("%5.1f%% %6d.%03d %8d %8d",
-	       scale(ticks, total), (unsigned int)sec, (unsigned int)msec,
+               scale(ticks, total), (unsigned int)sec, (unsigned int)msec,
                ticks_in_interpeted, ticks_in_compiled);
     out->fill_to(36);
     print_title_on(out);

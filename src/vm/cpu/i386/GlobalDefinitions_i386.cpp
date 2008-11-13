@@ -44,25 +44,25 @@ unsigned char   _method_execution_sensor[ method_execution_sensor_size ];
 
 OopDesc**       _old_generation_end;
 
-address         _current_stack_limit       = NULL;
-address         _compiler_stack_limit      = NULL;
-int             _rt_timer_ticks            = 0;
-address         _primordial_sp             = NULL;
-OopDesc*        _interned_string_near_addr = NULL;
-OopDesc**       _persistent_handles_addr   = NULL;
-char*           _jvm_quick_native_exception =NULL;
-int             _jvm_in_quick_native_method =0;
+address         _current_stack_limit;
+address         _compiler_stack_limit;
+int             _rt_timer_ticks;
+address         _primordial_sp;
+OopDesc*        _interned_string_near_addr;
+OopDesc**       _persistent_handles_addr;
+char*           _jvm_quick_native_exception;
+int             _jvm_in_quick_native_method;
 
 #if ENABLE_ISOLATES
-OopDesc*        _current_task = NULL;
+OopDesc*        _current_task;
 // table holding the pointer to the task mirror of all classes for the current task
 
 // where the address of the being initialized marker is kept for the interpreter
-OopDesc*         _task_class_init_marker = NULL;
+OopDesc*         _task_class_init_marker;
 #endif //ENABLE_ISOLATES
 
 #if ENABLE_JAVA_DEBUGGER
-int             _debugger_active = 0;
+int             _debugger_active;
 #endif
 
 }

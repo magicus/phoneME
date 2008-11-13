@@ -24,22 +24,38 @@
  * information or have any questions.
  */
 
-/** \class ClassPathAccess
- * Used to read classfiles or resources from the classpath (from file
- * system, or from JAR files.
-*/
+#if ENABLE_COMPILER
+class CompiledMethodDependency: public CompilerObject {
+ private:
+  CompiledMethodDependency* _next;
+  MethodDesc* _method;
 
-class ClassPathAccess : public AllStatic {
-public:
-  // Read the given entry from the system classpath.
-  static ReturnOop open_entry(Symbol* entry_name, const bool is_class_file
-                                                                JVM_TRAPS);                              
-private:
-  static ReturnOop open_entry(Symbol* entry_name, const bool is_class_file,
-                                              OopDesc* classpath JVM_TRAPS);
-  static ReturnOop open_jar_entry(JarFileParser *parser, Symbol * entry_name,
-                                  const bool is_class_file JVM_TRAPS);
-  static ReturnOop open_local_file(PathChar* path_name, Symbol * entry_name,
-                                  const bool is_class_file JVM_TRAPS);
-  enum { NAME_BUFFER_SIZE = 270 };
+ public:
+  CompiledMethodDependency* next ( void ) const {
+    return _next;
+  }
+  void set_next ( CompiledMethodDependency* next ) {
+    _next = next;
+  }
+
+  MethodDesc* method ( void ) const {
+    return _method;
+  }
+  void set_method ( MethodDesc* method ) {
+    _method = method;
+  }
+     
+  static const CompiledMethodDependency*
+  find( const CompiledMethodDependency* p, const MethodDesc* method ) {
+    for( ; p && p->method() != method; p = p->next() ) {
+    }
+    return p;
+  }
+
+  static void oops_do( CompiledMethodDependency* p, void do_oop(OopDesc**) ) {
+    for( ; p; p = p->next() ) {    
+      do_oop( (OopDesc**) &p->_method );
+    }
+  }
 };
+#endif

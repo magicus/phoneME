@@ -427,8 +427,8 @@ void TemplateTable::initialize_60(SourceMacros* assembler) {
         bc_ldiv);
 #if ENABLE_FLOAT
   def_0(Bytecodes::_fdiv,
-	align_code_base | does_fp,
-	bc_fdiv);
+        align_code_base | does_fp,
+        bc_fdiv);
   def_0(Bytecodes::_ddiv,
         align_code_base | does_fp,
         bc_ddiv);

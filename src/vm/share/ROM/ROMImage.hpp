@@ -132,8 +132,8 @@ extern const int              _rom_task_mirrors_bitmap[];
 extern const unsigned short   _rom_strings_src[];
 extern const int              _rom_strings_count;
 extern const int              _rom_method_variable_parts_src[];
-extern const int*             _rom_constant_pool;
-extern       int              _gc_stackmap_size;
+extern const int* const       _rom_constant_pool;
+extern const int              _gc_stackmap_size;
 extern       int              _rom_method_variable_parts[];
 
 extern const int*             _rom_symbols_start;

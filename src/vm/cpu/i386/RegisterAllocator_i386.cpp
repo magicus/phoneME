@@ -29,7 +29,7 @@
 #if ENABLE_COMPILER
 #include "incls/_RegisterAllocator_i386.cpp.incl"
 
-static Assembler::Register 
+static const Assembler::Register 
 next_register_table[Assembler::number_of_registers] = {
   Assembler::ecx,    // eax -> ecx
   Assembler::edx,    // ecx -> edx

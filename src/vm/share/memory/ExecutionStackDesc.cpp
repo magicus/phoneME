@@ -102,8 +102,8 @@ void ExecutionStackDesc::relocate_internal_pointers(int delta,
 // with pointers to new_stack and also fixing new_stack->_next_stack
 // to actually point where it should point to
 void ExecutionStackDesc::update_list(ExecutionStackDesc* old_stack,
-				     ExecutionStackDesc* old_stack_next,
-				     ExecutionStackDesc* new_stack) {
+                                     ExecutionStackDesc* old_stack_next,
+                                     ExecutionStackDesc* new_stack) {
   ExecutionStackDesc *this_stack = _stack_list;
 
   // if replacing list head - give it a special treatment

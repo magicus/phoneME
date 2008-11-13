@@ -30,13 +30,13 @@
 OopDesc* persistent_handles[Universe::__number_of_persistent_handles];
 
 bool Universe::_is_compilation_allowed = true;
-int  Universe::_compilation_abstinence_ticks = 0;
-bool Universe::_is_bootstrapping  = true;
-bool Universe::_before_main       = true;
-bool Universe::_is_stopping       = false;
+int  Universe::_compilation_abstinence_ticks;
+bool Universe::_is_bootstrapping = true;
+bool Universe::_before_main = true;
+bool Universe::_is_stopping;
 
 #if ENABLE_JVMPI_PROFILE
-jint Universe::_number_of_java_methods = 0;
+jint Universe::_number_of_java_methods;
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT

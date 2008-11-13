@@ -1837,7 +1837,7 @@ void CodeGenerator::double_unary_do(Value& result, Value& op1,
 #endif
 
 BinaryAssembler::generic_binary_op_1 CodeGenerator::convert_to_generic_binary_1(BytecodeClosure::binary_op op) {
-  static BinaryAssembler::generic_binary_op_1 conversion_table[BytecodeClosure::number_of_binary_ops] =
+  static const BinaryAssembler::generic_binary_op_1 conversion_table[BytecodeClosure::number_of_binary_ops] =
   {
       BinaryAssembler::bin_add,
       BinaryAssembler::bin_sub,

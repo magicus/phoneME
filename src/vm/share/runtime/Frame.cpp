@@ -42,9 +42,8 @@ extern "C" {
   void invoke5_deoptimization_entry_4();
 }
 
-bool Frame::_in_gc_state = false;
-
-Frame* Frame::_last_frame = NULL;
+bool Frame::_in_gc_state;
+Frame* Frame::_last_frame;
 
 #define STACK_LOCK_SIZE (StackLock::size() + 4)
 

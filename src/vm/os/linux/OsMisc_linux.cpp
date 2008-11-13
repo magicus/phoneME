@@ -39,7 +39,7 @@ const JvmPathChar *OsMisc_get_classpath() {
   // If classpath is allocated, just keep it during the entire lifetime
   // of the VM (even if VM is restarted). Environment variables won't be
   // changed during VM execution so classpath won't change.
-  static JvmPathChar* classpath = NULL;
+  static JvmPathChar* classpath;
   if (classpath == NULL) {
     char *ascii;
     if ((ascii = getenv("CLASSPATH")) != NULL) {

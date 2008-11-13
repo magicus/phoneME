@@ -83,13 +83,13 @@ void BytecodeHistogram::print(float cutoff) {
       if (Bytecodes::is_defined(code)) {
         jlong absolute = count;
         float relative = jvm_fdiv(jvm_fmul(jvm_l2f(absolute), 100.0F),
-				  jvm_l2f(total));
+                                  jvm_l2f(total));
         if (!jvm_fcmpg(cutoff, relative)) {
           tty->print_cr(FLL "  %7.2f%%    0x%02x    %s", 
-			absolute, 
-			jvm_f2d(relative), 
-			code, 
-			Bytecodes::name(Bytecodes::cast(code)));
+                        absolute, 
+                        jvm_f2d(relative), 
+                        code, 
+                        Bytecodes::name(Bytecodes::cast(code)));
           absolute_sum += absolute;
         }
       }
@@ -98,11 +98,11 @@ void BytecodeHistogram::print(float cutoff) {
   tty->print_cr("----------------------------------------------------------------------");
   if (total > 0) {  
     float relative_sum = jvm_fdiv(jvm_fmul(jvm_l2f(absolute_sum), 100.0F),
-				  jvm_l2f(total));
+                                  jvm_l2f(total));
     tty->print_cr(FLL " %7.2f%%    cutoff = %.2f%%", 
-		  absolute_sum, 
-		  jvm_f2d(relative_sum), 
-		  jvm_f2d(cutoff));
+                  absolute_sum, 
+                  jvm_f2d(relative_sum), 
+                  jvm_f2d(cutoff));
     tty->print_cr(FLL " %7.2f%%    total", total, 100.0, 0.0);
   }
   tty->cr();

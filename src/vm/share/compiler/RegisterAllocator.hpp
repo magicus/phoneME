@@ -304,7 +304,7 @@ class RegisterAllocator {
       return has_free(count, _next_register_table, _next_allocate, spill);
   }
 
-  static bool has_free(int count, Register* next_table,
+  static bool has_free(int count, const Register* next_table,
                                             Register next, bool spill = false);
 
   static Register next_for(Register reg) {
@@ -320,8 +320,8 @@ class RegisterAllocator {
     memset( _register_references, 0, sizeof _register_references );
   }
 
-  static Register *_next_register_table;      // CPU-dependent
-  static Register *_next_byte_register_table; // CPU-dependent
+  static const Register* _next_register_table;      // CPU-dependent
+  static const Register* _next_byte_register_table; // CPU-dependent
 
   // Next round-robin allocation attempt
   static Register _next_allocate;
@@ -348,7 +348,7 @@ class RegisterAllocator {
 #endif
 
   // Allocate any suitable register in range.
-  static Register allocate(Register* next_table, Register& next_alloc,
+  static Register allocate(const Register* next_table, Register& next_alloc,
                            Register& next_spill);
 
   // Allocate any suitable register in range.
@@ -357,11 +357,11 @@ class RegisterAllocator {
   friend class Compiler;
   friend class VSFMergeTest;
 
-  static Register allocate_or_fail(Register* next_table, Register& next);
+  static Register allocate_or_fail(const Register* next_table, Register& next);
 
   // Spill any suitable register in range, and return the chosen register.
   // Returns no_reg if all registers are referenced.
-  static Register spill(Register* next_table, Register& next);
+  static Register spill(const Register* next_table, Register& next);
 
 #if ENABLE_ARM_VFP
   static Assembler::Register next_vfp_register(Register r, const unsigned step) {

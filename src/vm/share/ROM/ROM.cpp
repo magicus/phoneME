@@ -201,9 +201,9 @@ int ROM::text_segment_of(const OopDesc* obj) {
  * the same flags as the VM.
  */
 #if !USE_BINARY_IMAGE_LOADER
-const int* rom_linkcheck_hle  = &_ROM_LINKCHECK_HLE;
-const int* rom_linkcheck_mffl = &_ROM_LINKCHECK_MFFL;
-const int* rom_linkcheck_mffd = &_ROM_LINKCHECK_MFFD;
+const int* const rom_linkcheck_hle  = &_ROM_LINKCHECK_HLE;
+const int* const rom_linkcheck_mffl = &_ROM_LINKCHECK_MFFL;
+const int* const rom_linkcheck_mffd = &_ROM_LINKCHECK_MFFD;
 #endif
 
 #if USE_BINARY_IMAGE_GENERATOR

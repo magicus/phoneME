@@ -60,8 +60,8 @@ bool is_one_double(jdouble d) {
 
 const  int max_float_constants    = 16;
 const  int max_double_constants   = 16;
-static int float_constants_index  = 0;
-static int double_constants_index = 0;
+static int float_constants_index;
+static int double_constants_index;
 static jint  float_constants [max_float_constants ];
 static jlong double_constants[max_double_constants];
 

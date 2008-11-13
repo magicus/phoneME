@@ -125,7 +125,7 @@ jboolean JVMSPI_IsPrecompilationTarget(const char * class_name,
   (void)code_size;
   return KNI_TRUE;
 }
-#endif				      
+#endif                                
 
 static void P(const char* x) {
   tty->print_cr(x);

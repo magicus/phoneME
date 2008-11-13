@@ -34,7 +34,7 @@
 
 HANDLE_CHECK(ConstantPool, is_constant_pool())
 
-bool ConstantPool::_class_loading_suspended = false;
+bool ConstantPool::_class_loading_suspended;
 
 void ConstantPool::throw_invalid_constant_error(JVM_SINGLE_ARG_TRAPS) {
   Throw::error(invalid_constant JVM_THROW);

@@ -41,8 +41,8 @@
 #include "incls/_precompiled.incl"
 #include "incls/_Verifier.cpp.incl"
 
-bool Verifier::_is_active = false;
-bool Verifier::_is_cache_active = false;
+bool Verifier::_is_active;
+bool Verifier::_is_cache_active;
 
 /**
  * Perform byte-code verification of a given class. 

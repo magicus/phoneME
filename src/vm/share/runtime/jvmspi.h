@@ -152,7 +152,7 @@ jboolean JVMSPI_IsPrecompilationTarget(const char * class_name,
                                        const char * descriptor, 
                                        int descriptor_length,
                                        int code_size);
-#endif				      
+#endif                                
 
 #ifdef __cplusplus
 }

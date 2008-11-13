@@ -27,7 +27,7 @@
 # include "incls/_precompiled.incl"
 # include "incls/_Scheduler.cpp.incl"
 
-Thread *global_null_thread = NULL;
+Thread *global_null_thread;
 
 int        Scheduler::_active_count;
 int        Scheduler::_async_count;
@@ -1735,12 +1735,12 @@ void Scheduler::trace(const char* msg, Thread* first, JavaOop* second) {
   if (first) {
     tty->print("0x%lx Scheduler::%s ", first->obj(), msg);
     first->print_value();
-    if (second) {
-      tty->print(" ");
-      second->print_value_on(tty);
-    }
-    tty->cr();
   }
+  if (second) {
+    tty->print(" ");
+    second->print_value_on(tty);
+  }
+  tty->cr();
 #endif
 }
 

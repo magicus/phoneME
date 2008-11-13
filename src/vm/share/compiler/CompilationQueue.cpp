@@ -33,12 +33,15 @@
 # include "incls/_CompilationQueue.cpp.incl"
 
 #if ENABLE_COMPILER
+
 #if ENABLE_CSE
-#define ABORT_CSE_TRACKING VirtualStackFrame::abort_tracking_of_current_snippet();\
-      RegisterAllocator::wipe_all_notations();
+# define ABORT_CSE_TRACKING \
+    VirtualStackFrame::abort_tracking_of_current_snippet();\
+    RegisterAllocator::wipe_all_notations();
 #else
-#define ABORT_CSE_TRACKING
+# define ABORT_CSE_TRACKING
 #endif
+
 CompilationQueueElement* CompilationQueueElement::allocate(
   const CompilationQueueElementType type, const jint bci JVM_TRAPS )
 {
@@ -249,7 +252,7 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
       // (frame->flush_count() != entry_frame.flush_count()).
 
       if (OptimizeLoops && !forward_branch_target()
-          && !compiler->is_in_loop() && entry->bci() == compiler->bci()
+          && !compiler->in_loop() && entry->bci() == compiler->bci()
           && frame->flush_count() == entry_frame->flush_count()
           && gen->code_size() - entry->code_size() <= LoopPeelingSizeLimit) {
 #if ENABLE_CODE_PATCHING
@@ -398,7 +401,6 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
 #endif
         // Terminate this compilation string and any loops.
         compiler->mark_as_outside_loop();
-        BytecodeCompileClosure::set_jump_from_bci(0);
         return true;
       }
     }
@@ -413,7 +415,7 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
 
       // Emit code for an entry.
       BinaryAssembler::Label entry_label;
-      if (compiler->is_in_loop()) {
+      if (compiler->in_loop()) {
         gen->bind(entry_label, oopSize);
       } else {
         gen->bind(entry_label);
@@ -440,7 +442,7 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
       tty->cr();
     }
     const bool continue_compilation =
-      compiler->closure()->compile(JVM_SINGLE_ARG_CHECK_0);
+      ((BytecodeCompileClosure*)compiler)->compile(JVM_SINGLE_ARG_CHECK_0);
     if( !continue_compilation ) {
       return true; // compilation has finished
     }

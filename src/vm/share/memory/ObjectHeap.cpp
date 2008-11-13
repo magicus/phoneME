@@ -42,8 +42,8 @@ size_t    ObjectHeap::_glue_code_size;
 
 address   ObjectHeap::_preallocated_space;
 address   ObjectHeap::_glue_code;
-address   ObjectHeap::_heap_chunk = NULL;
-address   ObjectHeap::_bitv_chunk = NULL;
+address   ObjectHeap::_heap_chunk;
+address   ObjectHeap::_bitv_chunk;
 address   ObjectHeap::_bitvector_start;
 
 bool      ObjectHeap::_is_gc_active;
@@ -850,12 +850,15 @@ ObjectHeap::is_soft_reference(const int ref_index) {
 
 inline bool 
 ObjectHeap::is_global_reference(const int ref_index) {
+  switch( get_reference_type(ref_index) ) {
+    case StrongGlobalRefType:
+    case WeakGlobalRefType:
 #if USE_SOFT_REFERENCES
-  return is_strong_reference(ref_index) || is_weak_reference(ref_index) 
-    || is_soft_reference(ref_index);
-#else
-  return is_strong_reference(ref_index) || is_weak_reference(ref_index);
+    case SoftGlobalRefType:
 #endif
+      return true;
+  }
+  return false;
 }
 
 inline unsigned 
@@ -890,7 +893,7 @@ ObjectHeap::get_reference_array(unsigned type, unsigned owner) {
     GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType 
            || type == SoftGlobalRefType, "Invalid ref type");
 #else
-    GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType,
+    GUARANTEE(type == StrongGlobalRefType || type == WeakGlobalRefType, 
               "Invalid ref type");
 #endif
 #if ENABLE_ISOLATES
@@ -3176,18 +3179,18 @@ void ObjectHeap::try_to_grow(int requested_free_memory,
 #if ENABLE_COMPILER
 // Returns the actual number of bytes freed from compiler usage.
 size_t ObjectHeap::reduce_compiler_usage(size_t requested) {
-  if (GenerateROMImage && USE_AOT_COMPILATION) {
+  if( GenerateROMImage && USE_AOT_COMPILATION ) {
     // Never evict compiled methods when doing AOT
+    return 0;
+  }
+
+  if( Compiler::is_active() ) {
+    // We don't know how to collect temporary compiler data.
     return 0;
   }
 
   allocation_trap_must_be_disabled();
   Compiler::abort_suspended_compilation();
-
-  if (Compiler::is_active()) {
-    // We don't know how to collect temporary compiler data.
-    return 0;
-  }
 
   {
     // Add a little slack, so we don't need to come back here over

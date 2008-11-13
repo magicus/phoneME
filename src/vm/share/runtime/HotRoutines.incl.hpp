@@ -50,9 +50,9 @@
 // fast memory.
 
 #if USE_HOT_ROUTINES
-_KNI_HandleInfo*  last_kni_handle_info = NULL;
-int               _rom_text_block_size_fast = 0;
-int               _rom_data_block_size_fast = 0;
+_KNI_HandleInfo*  last_kni_handle_info;
+int               _rom_text_block_size_fast;
+int               _rom_data_block_size_fast;
 
 int       Verifier::_stackmap_cache_max;
 
@@ -63,16 +63,16 @@ ObjectHeap::QuickVars ObjectHeap::_quick_vars;
 InternalCodeOptimizer* InternalCodeOptimizer::_current = NULL;
 int InternalCodeOptimizer::_start_code_offset = 0;
 CompiledMethod* InternalCodeOptimizer::_start_method = NULL;
-int OptimizerInstruction::latency_dty[] ={ 0, 1, 0, 3, 1, 2, 2, 5, 3, 
+const int OptimizerInstruction::latency_dty[] ={ 0, 1, 0, 3, 1, 2, 2, 5, 3, 
     1, 0, 0, 0}; 
 #endif 
 #if ENABLE_CSE
 jint VirtualStackFrame::_pop_bci = -1;
-jint VirtualStackFrame::_cse_tag = 0;
-bool VirtualStackFrame::_abort = false;
-jint VirtualStackFrame::_passable_entry = 0;
-jint RegisterAllocator::_notation_map = 0;
-jint RegisterAllocator::_status_checked = 0;
+jint VirtualStackFrame::_cse_tag;
+bool VirtualStackFrame::_abort;
+jint VirtualStackFrame::_passable_entry;
+jint RegisterAllocator::_notation_map;
+jint RegisterAllocator::_status_checked;
 RegisterNotation RegisterAllocator::_register_notation_table[Assembler::number_of_registers];
 #endif
 

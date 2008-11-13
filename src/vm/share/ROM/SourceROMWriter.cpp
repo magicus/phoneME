@@ -1631,14 +1631,14 @@ void SourceROMWriter::write_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
 // write references to global singletons
 void SourceROMWriter::write_global_singletons(JVM_SINGLE_ARG_TRAPS) {
   // write pointer to ROM constant pool
-  main_stream()->print("const int* _rom_constant_pool = (const int*)");
+  main_stream()->print("const int* const _rom_constant_pool = (const int*)");
   if (skipped_constant_pool()->not_null()) {
     write_reference(skipped_constant_pool(), TEXT_BLOCK, main_stream() JVM_CHECK);
   } else {
     main_stream()->print("0");
   }
   main_stream()->print_cr(";");
-  main_stream()->print("int _gc_stackmap_size = ");
+  main_stream()->print("const int _gc_stackmap_size = ");
   main_stream()->print("%d", _gc_stackmap_size);
   main_stream()->print_cr(";");
   

@@ -113,6 +113,7 @@
 #define CompilationQueueElement  JVMCompilationQueueElement
 #define CompiledMethod  JVMCompiledMethod
 #define CompiledMethodCache  JVMCompiledMethodCache
+#define CompiledMethodDependency  JVMCompiledMethodDependency
 #define CompiledMethodDesc  JVMCompiledMethodDesc
 #define Compiler  JVMCompiler
 #define CompilerContext  JVMCompilerContext

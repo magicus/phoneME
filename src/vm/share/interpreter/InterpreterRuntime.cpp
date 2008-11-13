@@ -826,7 +826,7 @@ extern "C" {
           InstanceClass::Raw holder_class = real_method().holder();
           if(!((ROMWriter::_singleton)->_optimizer).is_overridden(&holder_class, 
                                              &real_method))  {
-	    if (!real_method().is_abstract()) {
+            if (!real_method().is_abstract()) {
               is_final = true;
               cp().resolved_static_method_at_put(index, &real_method);
 #ifndef PRODUCT
@@ -836,7 +836,7 @@ extern "C" {
                 TTY_TRACE_CR((""));
               }
 #endif
-	    }
+            }
           }
         }
 #endif

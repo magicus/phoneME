@@ -320,9 +320,7 @@ class Compiler: public BytecodeCompileClosure {
   }
 
   VirtualStackFrame* get_cached_preserved_frame( void ) const {
-    VirtualStackFrame* p = cached_preserved_frame();
-    set_cached_preserved_frame( NULL );
-    return p;
+    return state()->get_cached_preserved_frame();
   }
 
   // Accessors for the compilation queue.
@@ -411,7 +409,6 @@ class Compiler: public BytecodeCompileClosure {
     return (bci_flags_table()->at(bci) &
             Method::bci_exception_has_osr_entry) != 0;
   }
-
   void set_exception_has_osr_entry(const jint bci) const {
     bci_flags_table()->at(bci) |= Method::bci_exception_has_osr_entry;
   }
@@ -419,7 +416,6 @@ class Compiler: public BytecodeCompileClosure {
   bool is_branch_taken(const jint bci) const {
     return (bci_flags_table()->at(bci) & Method::bci_branch_taken) != 0;
   }
-
   void set_branch_taken(const jint bci) const {
     bci_flags_table()->at(bci) |= Method::bci_branch_taken;
   }
@@ -435,7 +431,7 @@ class Compiler: public BytecodeCompileClosure {
     set_entry_for( bci(), entry);
   }
 
-  bool method_aborted_for_exception_at(const int bci) {
+  bool method_aborted_for_exception_at(const int bci) const {
     const AccessFlags flags = method()->access_flags();
     return !( flags.is_synchronized()
            || flags.has_monitor_bytecodes()
@@ -494,14 +490,12 @@ class Compiler: public BytecodeCompileClosure {
     _num_stack_lock_words = num_lock_words;
   }
 
-  static bool is_in_loop           ( void ) { 
-    return Compiler::current()->in_loop();     
+  void mark_as_in_loop ( void ) {
+    set_in_loop( true );
   }
-  static void mark_as_in_loop      ( void ) { 
-    Compiler::current()->set_in_loop( true );  
-  }
-  static void mark_as_outside_loop ( void ) { 
-    Compiler::current()->set_in_loop( false ); 
+  void mark_as_outside_loop ( void ) {
+    set_in_loop( false );
+    set_jump_from_bci( 0 );
   }
 
   static bool is_inlining( void ) { 
@@ -542,11 +536,8 @@ class Compiler: public BytecodeCompileClosure {
     return !is_inlining() &&
            (ExcessiveSuspendCompilation || Os::check_compiler_timer());
   }
-  CompilerContext* suspended_compiler_context( void ) const {
-    return state()->suspended_compiler_context();
-  }
   static bool is_suspended ( void ) {
-    return !is_active() && _compiler_state != NULL;
+    return _compiler_state != NULL;
   }
 
   static void oops_do( void do_oop(OopDesc**) ) {
@@ -565,23 +556,18 @@ class Compiler: public BytecodeCompileClosure {
 #endif
 
   CompilerContext _context;  // The compiler context.
-
-  CompilerContext* context( void ) {
-    return &_context;
+  CompilerContext* suspended_compiler_context( void ) const {
+    return state()->suspended_compiler_context();
   }
-  const CompilerContext* context( void ) const {
-    return &_context;
-  }
-
   void suspend( void ) const {
     GUARANTEE(parent() == NULL, "Cannot suspend while inlining");
-    *suspended_compiler_context() = *context();
+    *suspended_compiler_context() = _context;
   }
   void resume ( void ) {
-    *context() = *suspended_compiler_context();
+    _context = *suspended_compiler_context();
   }
 
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM &&ENABLE_CODE_OPTIMIZER
+#if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM && ENABLE_CODE_OPTIMIZER
   CompilationQueueElement* _next_element;
   CompilationQueueElement* _cur_element;
   LiteralPoolElement*      _next_bound_literal;

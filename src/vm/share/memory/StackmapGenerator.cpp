@@ -437,8 +437,8 @@ void StackmapGenerator::rewrite_stackmap_bcis(Method* method,
 
 #ifndef PRODUCT
       if (TraceStackmapsVerbose) {
-	tty->print_cr("StackmapGenerator: Shifting stackmap old_bci=%d new_bci=%d",
-		      map_bci, map_bci + bci_shift);
+        tty->print_cr("StackmapGenerator: Shifting stackmap old_bci=%d new_bci=%d",
+                      map_bci, map_bci + bci_shift);
       }
 #endif
 
@@ -451,7 +451,7 @@ void StackmapGenerator::rewrite_stackmap_bcis(Method* method,
                                                           map_bci + bci_shift);
 
       if (!is_short && method_stackmaps().is_short_map(i)) {
-	convert_short_to_long_map(&method_stackmaps, i JVM_CHECK);
+        convert_short_to_long_map(&method_stackmaps, i JVM_CHECK);
       }
       // IMPL_NOTE: try to convert long map to short map if possible
       method_stackmaps().set_bci(i, map_bci + bci_shift);
@@ -1236,7 +1236,7 @@ void StackmapGenerator::print_map_internal(const char *name, int index,
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || USE_DEBUG_PRINTING
 
 bool StackmapChecker::is_redundant(Method* method,
-				   int stackmap_index JVM_TRAPS) {
+                                   int stackmap_index JVM_TRAPS) {
   TypeArray gc_stackmap = Universe::gc_block_stackmap();   
   bool was_null = gc_stackmap.is_null();
   jubyte temp[1000];

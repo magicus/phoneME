@@ -118,7 +118,7 @@ extern "C" void init_jvm_chunk_manager();
 #define MAX_PATH 256
 void* Os::loadLibrary(const char* libName) {
   char full_lib_name[MAX_PATH];
-  char lib_ext[] = {'.','s','o','\0'};
+  static const char lib_ext[] = {'.','s','o','\0'};
   if (strlen(libName) + strlen(lib_ext) >= MAX_PATH) {
 #if ENABLE_TTY_TRACE
     tty->print_cr("Library name is too long. %d chars maximum!", MAX_PATH - strlen(lib_ext) - 1);
@@ -176,7 +176,7 @@ static bool   ticker_stopped = false;
 AZZERT_ONLY(static bool is_processing_timer_tick = false;)
 
 #if ENABLE_COMPILER
-static bool   _compiler_timer_has_ticked = false;
+static bool   _compiler_timer_has_ticked;
 static jlong  _compiler_timer_start;
 #endif
 

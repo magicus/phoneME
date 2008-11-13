@@ -64,7 +64,7 @@ class BytecodeCompileClosure: public BytecodeClosure {
     _jump_from_bci = bci;
   }
   void set_jump_from_current_bci(const int dest) {
-    const int current= bci();
+    const int current = bci();
     if( dest < current ) {
       set_jump_from_bci( bci );
     }

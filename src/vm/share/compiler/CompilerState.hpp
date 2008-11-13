@@ -44,6 +44,10 @@ class CompilerState: public CodeGenerator {
   COMPILER_STATIC_FIELDS_DO(DECLARE_FIELD)
   #undef DECLARE_FIELD
 
+#if USE_COMPILED_METHOD_DEPENDENCIES
+  CompiledMethodDependency* _dependencies;
+#endif
+
   ThrowExceptionStub* _rte_handlers[number_of_runtime_exceptions];
   CompilerContext     _suspended_compiler_context;
 
@@ -54,6 +58,9 @@ class CompilerState: public CodeGenerator {
     COMPILER_STATIC_FIELDS_DO(INIT_FIELD)
     #undef INIT_FIELD
 
+#if USE_COMPILED_METHOD_DEPENDENCIES
+    NOT_PRODUCT( _dependencies = NULL; )
+#endif
     NOT_PRODUCT( jvm_memset( &_rte_handlers, 0, sizeof _rte_handlers ); )
     NOT_PRODUCT( _suspended_compiler_context.cleanup(); )
   }
@@ -125,8 +132,25 @@ class CompilerState: public CodeGenerator {
   }
 #endif
 
+#if USE_COMPILED_METHOD_DEPENDENCIES
+  void add_dependency( MethodDesc* method JVM_TRAPS) {
+    if( !CompiledMethodDependency::find( _dependencies, method ) ) {
+      CompiledMethodDependency* dep =
+        COMPILER_OBJECT_ALLOCATE(CompiledMethodDependency);
+      if( dep ) {
+        dep->set_method( method );
+        dep->set_next( _dependencies );
+        _dependencies = dep;
+      }
+    }
+  }
+#endif
+
   void oops_do( void do_oop(OopDesc**) ) {
     if( this ) {
+#if USE_COMPILED_METHOD_DEPENDENCIES
+      CompiledMethodDependency::oops_do( _dependencies, do_oop );
+#endif
       CodeGenerator::oops_do( do_oop );
     }
   }

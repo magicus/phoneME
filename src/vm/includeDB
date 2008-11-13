@@ -792,6 +792,7 @@ CompilerContext.hpp              Method.hpp
 
 CompilerState.hpp                CodeGenerator.hpp
 CompilerState.hpp                CompilerContext.hpp
+CompilerState.hpp                CompiledMethodDependency.hpp
 
 Compiler.hpp                     BytecodeCompileClosure.hpp
 Compiler.hpp                     CompilerState.hpp
@@ -827,6 +828,8 @@ CompilerTest.cpp                 FilePath.hpp
 
 CompilerObject.hpp               ObjectHeap.hpp
 CompilerObject.cpp               CompilerObject.hpp
+
+CompiledMethodDependency.hpp     CompilerObject.hpp
 
 CompilationQueue.hpp             VirtualStackFrame.hpp
 CompilationQueue.hpp             BinaryAssembler_<carch>.hpp

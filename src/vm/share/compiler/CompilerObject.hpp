@@ -35,6 +35,7 @@
   template( CompilationQueueElement ) \
   template( VirtualStackFrame       ) \
   template( LiteralPoolElement      ) \
+  template( CompiledMethodDependency) \
   template( CompilerState           )
 
 #ifdef DEBUG

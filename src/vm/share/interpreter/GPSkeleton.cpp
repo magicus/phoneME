@@ -132,8 +132,8 @@ extern "C" {
   int             _gp_bytecode_counter;
   jint            _bytecode_counter;
 
-  int		  _jvm_in_quick_native_method;
-  char*		  _jvm_quick_native_exception;
+  int             _jvm_in_quick_native_method;
+  char*           _jvm_quick_native_exception;
 
 #if ENABLE_THUMB_GP_TABLE
   jlong jvm_ladd(jlong op1, jlong op2) {return (jlong)0;}

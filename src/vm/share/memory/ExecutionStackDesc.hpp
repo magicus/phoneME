@@ -70,8 +70,8 @@ class ExecutionStackDesc: public OopDesc {
   // update stack list replacing old_stack with new_stack
   // old_stack_next argument needed as content of old_stack is corrupted
   static void update_list(ExecutionStackDesc* old_stack,
-			  ExecutionStackDesc* old_stack_next,
-			  ExecutionStackDesc* new_stack);
+                          ExecutionStackDesc* old_stack_next,
+                          ExecutionStackDesc* new_stack);
 
   jint                _length;
   OopDesc*            _thread;

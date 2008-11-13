@@ -374,13 +374,13 @@ int VerifierFrame::pop_invoke_arguments(Signature* method_signature JVM_TRAPS)
           bool result = compute_is_subtype_of(&actual_name,
                                               &expected_name JVM_CHECK_0);
           if (!result) {
-			  // CLEANUP
-			  tty->print("Verifier error: actual name = "); 
-			  actual_name().print_symbol_on(tty); 
-			  tty->print(", expected name = "); 
-			  expected_name().print_symbol_on(tty); 
-			  tty->print_cr("");
-			  // CLEANUP
+                          // CLEANUP
+                          tty->print("Verifier error: actual name = "); 
+                          actual_name().print_symbol_on(tty); 
+                          tty->print(", expected name = "); 
+                          expected_name().print_symbol_on(tty); 
+                          tty->print_cr("");
+                          // CLEANUP
             VFY_ERROR_0(ve_stack_bad_type);
           }
         } else {

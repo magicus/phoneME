@@ -57,7 +57,7 @@ void BytecodePrintClosure::bytecode_prolog(JVM_SINGLE_ARG_TRAPS) {
 
           bool redundant =
               StackmapChecker::is_redundant(method(), i JVM_CHECK);
-	  _st->print_cr(redundant ? "**REDUNDANT**" : "**NECESSARY**");
+          _st->print_cr(redundant ? "**REDUNDANT**" : "**NECESSARY**");
 
           _st->print("     ");
           stack_maps.print_entry_on(_st, i, false);

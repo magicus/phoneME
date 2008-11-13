@@ -33,8 +33,8 @@
 #include "incls/_RegisterAllocator.cpp.incl"
 
 #if ENABLE_COMPILER
-Assembler::Register*RegisterAllocator::_next_register_table      = NULL;
-Assembler::Register*RegisterAllocator::_next_byte_register_table = NULL;
+const Assembler::Register* RegisterAllocator::_next_register_table;
+const Assembler::Register* RegisterAllocator::_next_byte_register_table;
 
 Assembler::Register RegisterAllocator::_next_allocate;
 Assembler::Register RegisterAllocator::_next_byte_allocate;
@@ -44,18 +44,19 @@ Assembler::Register RegisterAllocator::_next_spill;
 Assembler::Register RegisterAllocator::_next_byte_spill;
 Assembler::Register RegisterAllocator::_next_float_spill;
 
-bool RegisterAllocator::is_mapping_something(Assembler::Register reg) {
-  return Compiler::current()->frame()->is_mapping_something(reg) ||
-    (Compiler::current()->conforming_frame() != NULL &&
-     Compiler::current()->conforming_frame()->is_mapping_something(reg));
+bool RegisterAllocator::is_mapping_something(const Assembler::Register reg) {
+  const CompilerState* state = _compiler_state;
+  return state->frame()->is_mapping_something(reg) ||
+         ( state->conforming_frame() != NULL &&
+           state->conforming_frame()->is_mapping_something(reg) );
 }
 
-Assembler::Register RegisterAllocator::allocate() {
+Assembler::Register RegisterAllocator::allocate( void ) {
   return allocate(_next_register_table, _next_allocate, _next_spill);
 }
 
 #ifndef ARM
-Assembler::Register RegisterAllocator::allocate_byte_register() {
+Assembler::Register RegisterAllocator::allocate_byte_register( void ) {
   return allocate(_next_byte_register_table, _next_byte_allocate,
                   _next_byte_spill);
 }
@@ -221,7 +222,7 @@ Assembler::Register RegisterAllocator::allocate_double_register() {
 #endif // ENABLE_ARM_VFP
 
 Assembler::Register
-RegisterAllocator::allocate(Assembler::Register* next_table,
+RegisterAllocator::allocate(const Assembler::Register* next_table,
     Assembler::Register& next_alloc, Assembler::Register& next_spill) {
   Register reg = allocate_or_fail(next_table, next_alloc);
   if (reg == Assembler::no_reg) {
@@ -274,8 +275,9 @@ void RegisterAllocator::spill(Assembler::Register reg) {
 
 #define REFERENCE_AND_RETURN(reg)         reference(reg);\
         return reg;
-Assembler::Register RegisterAllocator::allocate_or_fail(Assembler::Register* next_table, Assembler::Register& next) {
-
+Assembler::Register
+RegisterAllocator::allocate_or_fail(const Assembler::Register* next_table,
+                                    Assembler::Register& next) {
 #if ENABLE_CSE
   //try to free the free register without notation firstly.
   Register next_with_notation = Assembler::no_reg;
@@ -313,7 +315,9 @@ Assembler::Register RegisterAllocator::allocate_or_fail(Assembler::Register* nex
 }
 #undef REFERENCE_AND_RETURN
 
-Assembler::Register RegisterAllocator::spill(Assembler::Register* next_table, Assembler::Register& next) {
+Assembler::Register
+RegisterAllocator::spill(const Assembler::Register* next_table,
+                         Assembler::Register& next) {
   // Use a round-robin strategy to spill the registers.
   const Register current = next;
   do {
@@ -331,7 +335,7 @@ Assembler::Register RegisterAllocator::spill(Assembler::Register* next_table, As
 }
 
 bool RegisterAllocator::has_free(int count,
-                                 Assembler::Register* next_table,
+                                 const Assembler::Register* next_table,
                                  Assembler::Register next, bool spill) {
   const Register current = next;
   do {

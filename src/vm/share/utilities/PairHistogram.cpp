@@ -91,16 +91,16 @@ void PairHistogram::print(float cutoff) {
       jlong count            = sorted_histogram[i].count;
       if (Bytecodes::is_defined(first) && Bytecodes::is_defined(second)) {
         jlong absolute = count;
-	float relative = jvm_fdiv(jvm_fmul(jvm_l2f(absolute), 100.0F),
-				  jvm_l2f(total));
+        float relative = jvm_fdiv(jvm_fmul(jvm_l2f(absolute), 100.0F),
+                                  jvm_l2f(total));
         if (!jvm_fcmpg(cutoff, relative)) {
           tty->print_cr(FLL " %7.2f%%    (0x%02x,0x%02x)    (%s,%s)", 
-			absolute, 
-			jvm_f2d(relative), 
-			first, 
-			second, 
+                        absolute, 
+                        jvm_f2d(relative), 
+                        first, 
+                        second, 
                         Bytecodes::name(Bytecodes::cast(first)), 
-			Bytecodes::name(Bytecodes::cast(second)));
+                        Bytecodes::name(Bytecodes::cast(second)));
           absolute_sum += absolute;
         }
       }
@@ -110,11 +110,11 @@ void PairHistogram::print(float cutoff) {
   if (total > 0) {
     // relative_sum = (absolute_sum * 100.0) / total
     float relative_sum = jvm_fdiv(jvm_fmul(jvm_l2f(absolute_sum), 100.0F),
-				  jvm_l2f(total));
+                                  jvm_l2f(total));
     tty->print_cr(FLL " %7.2f%%    cutoff = %.2f%%", 
-		  absolute_sum, 
-		  jvm_f2d(relative_sum), 
-		  jvm_f2d(cutoff));
+                  absolute_sum, 
+                  jvm_f2d(relative_sum), 
+                  jvm_f2d(cutoff));
     tty->print_cr(FLL " %7.2f%%    total", total, 100.0, 0.0);
   }
   tty->cr();
