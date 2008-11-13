@@ -213,19 +213,17 @@ class AppSettingsImpl implements AppSettings {
      * Load the MIDlet suite settings as choice group infos.
      *
      * @param suiteId ID for suite
-     * @throws Throwable
+     * @throws MIDletSuiteLockedException if the suite is locked
+     * @throws MIDletSuiteCorruptedException if the suite is corrupted
      */
     private void loadApplicationSettings(int suiteId)
-            throws MIDletSuiteLockedException, MIDletSuiteCorruptedException 
-       {
+            throws MIDletSuiteLockedException, MIDletSuiteCorruptedException {
 
         int maxLevel;
         int interruptSetting;
         boolean loadDone = false;
 
         try {
-            groups = Permissions.getSettingGroups();
-
             midletSuite = midletSuiteStorage.getMIDletSuite(suiteId, false);
             initMidletSuiteInfo(midletSuite);
 
@@ -263,6 +261,8 @@ class AppSettingsImpl implements AppSettings {
                     ResourceConstants.AMS_MGR_SETTINGS_PUSH_OPT_ANSWER,
                     PUSH_OPTION_1_ID);
 
+           groups = Permissions.getSettingGroups(curLevels);
+            
            groupSettings = new ValueChoiceImpl[groups.length];
 
             if (interruptChoice != null) {
@@ -273,7 +273,7 @@ class AppSettingsImpl implements AppSettings {
 
             for (int i = 0; i < groups.length; i++) {
                 byte maxGroupSetting = Permissions.getPermissionGroupLevel(
-                                       maxLevels, groups[i]);
+                                       maxLevels, groups[i], true);
                 byte currentGroupSetting = Permissions.getPermissionGroupLevel(
                                            curLevels, groups[i]);
 
