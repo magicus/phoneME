@@ -758,8 +758,7 @@ public final class Permissions {
      *         dangerous combination or null otherwise
      */
     public static String getInsecureCombinationWarning(byte[] current,
-            byte pushInterruptLevel, PermissionGroup group, byte newLevel)
-            throws SecurityException {
+            byte pushInterruptLevel, PermissionGroup group, byte newLevel) {
 
         if (newLevel != BLANKET_GRANTED) {
             return null;
@@ -813,17 +812,6 @@ public final class Permissions {
             NET_ACCESS_GROUP, LOW_LEVEL_NET_ACCESS_GROUP
         };
 
-        if (group == AUTO_INVOCATION_GROUP) {
-            for (int i = 0; i < netGroups.length; i++) {
-                level = getPermissionGroupLevel(current, netGroups[i]);
-                if (level == BLANKET_GRANTED || level == BLANKET) {
-                    throw new SecurityException(
-                        createMutuallyExclusiveErrorMessage(
-                                AUTO_INVOCATION_GROUP, netGroups[i]));
-                }
-            }
-        }
-
         if (group == READ_USER_DATA_GROUP) {
             for (int i = 0; i < netGroups.length; i++) {
                 level = getPermissionGroupLevel(current, netGroups[i]);
@@ -857,10 +845,12 @@ public final class Permissions {
         }
         
         if (group == AUTO_INVOCATION_GROUP) {
-            level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createMutuallyExclusiveErrorMessage(AUTO_INVOCATION_GROUP,
-                        NET_ACCESS_GROUP);
+            for (int i = 0; i < netGroups.length; i++) {
+                level = getPermissionGroupLevel(current, netGroups[i]);
+                if (level == BLANKET_GRANTED || level == BLANKET) {
+                    return createMutuallyExclusiveErrorMessage(
+                        AUTO_INVOCATION_GROUP, netGroups[i]);
+                }
             }
         }
 
