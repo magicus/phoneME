@@ -1,6 +1,5 @@
 #
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -53,5 +52,6 @@ endif
 HOST2POSIX        = $(WIN2POSIX)
 POSIX2HOST 	  = $(POSIX2WIN)
 POSIX2HOST_CMD	  = $(POSIX2WIN_CMD)
+HOST2POSIX_CMD	  = $(WIN2POSIX_CMD)
 HOST2POSIX_FILTER = $(WIN2POSIX_FILTER)
 POSIX2HOST_FILTER = $(POSIX2WIN_FILTER)
