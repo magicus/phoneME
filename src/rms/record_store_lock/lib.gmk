@@ -40,7 +40,7 @@ SUBSYSTEM_RMS_JAVA_FILES += \
     $(RECORD_STORE_LOCK_DIR)/classes/com/sun/midp/rms/AbstractRecordStoreLock.java
 
 ifeq ($(TARGET_VM), cldc_vm)
-RECORD_STORE_LOCK_IMPL_DIR ?= $(RECORD_STORE_LOCK_DIR)/stubs
+RECORD_STORE_LOCK_IMPL_DIR ?= $(RECORD_STORE_LOCK_DIR)/cldc_record_store_lock
 else
 RECORD_STORE_LOCK_IMPL_DIR ?= $(RECORD_STORE_LOCK_DIR)/stubs
 endif
