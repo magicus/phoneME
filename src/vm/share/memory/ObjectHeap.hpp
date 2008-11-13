@@ -597,12 +597,9 @@ public:
   static void rom_init_heap_bounds(OopDesc **init_heap_bound, 
                                    OopDesc **permanent_top);
   // Iteration
-#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR
+#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || ENABLE_TTY_TRACE
   static void iterate(ObjectHeapVisitor* visitor);
   static void iterate(ObjectHeapVisitor* visitor, OopDesc** from, OopDesc** to);
-#  if ENABLE_ISOLATES
-  static void iterate_for_task(ObjectHeapVisitor* visitor, const int task_id);
-#  endif
 #else
   static void iterate(ObjectHeapVisitor*) PRODUCT_RETURN;
 #endif
@@ -630,6 +627,9 @@ public:
                                int /*parent*/);
   static bool reach_seen(OopDesc* /*n*/, ReachLink* /*stack*/,
                          int /*endstack*/);
+#if ENABLE_ISOLATES
+  static void iterate_for_task(ObjectHeapVisitor* visitor, const int task_id);
+#endif
 #else
   static void print(Stream* = tty) PRODUCT_RETURN;
   static void print_all_objects(Stream* = tty) PRODUCT_RETURN;
