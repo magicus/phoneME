@@ -89,7 +89,7 @@ public class StreamConnectionPool {
      * @param connectionLingerTime how many milliseconds a connection should
      *       stay in the pool after its last use
      */
-    StreamConnectionPool(int number_of_connections,
+    protected StreamConnectionPool(int number_of_connections,
                          long connectionLingerTime) {
         this.m_max_connections = number_of_connections;
         this.m_connectionLingerTime = connectionLingerTime;
@@ -161,10 +161,16 @@ public class StreamConnectionPool {
             oldestNotInUse.close();
             m_connections.removeElement(oldestNotInUse);
         }
-     
-        m_connections.addElement(new StreamConnectionElement(p_protocol,
-                          p_host, p_port, sc, dos, dis));
+        
+        m_connections.addElement(newElement(p_protocol, p_host, p_port, sc, dos, dis));
         return true;
+    }
+
+    protected StreamConnection newElement(String p_protocol,
+            String p_host, int p_port, StreamConnection sc,
+            DataOutputStream dos, DataInputStream dis) {
+        return new StreamConnectionElement(p_protocol,
+                          p_host, p_port, sc, dos, dis);
     }
     
     /**

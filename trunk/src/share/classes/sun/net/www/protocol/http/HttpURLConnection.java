@@ -821,6 +821,10 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 	    throw e;
 	} catch (IOException e) {
 	    rememberedException = e;
+        if (inputStream != null) {
+            inputStream.close();
+            inputStream = null;
+        }
 	    throw e;
 	} finally {
 	    if (respCode == HTTP_PROXY_AUTH && proxyAuthentication != null) {
