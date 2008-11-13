@@ -582,7 +582,7 @@ public final class Permissions {
      *
      * @return array of permission groups
      */
-    public static PermissionGroup[] getSettingGroups() {
+    static PermissionGroup[] getSettingGroups() {
         PermissionGroup[] groups = new PermissionGroup[13];
 
         groups[0] = NET_ACCESS_GROUP;
@@ -598,6 +598,32 @@ public final class Permissions {
         groups[10] = AUTHENTICATION_GROUP;
         groups[11] = CALL_CONTROL_GROUP;
         groups[12] = SENSOR_GROUP;
+
+        return groups;
+    }
+
+    /**
+     * Get a list of all permission groups for the settings dialog.
+     *
+     * @param levels current permission levels
+     *
+     * @return array of permission groups
+     */
+    public static PermissionGroup[] getSettingGroups(byte[] levels) {
+        PermissionGroup[] groups = getSettingGroups();
+
+        /*
+         * The setting dialog only presents one message group since the spec
+         * doesn't separate send and receive message groups. In most cases,
+         * it's the send group. The exception from this rule if there are no
+         * send permissions present in MIDlet suite properties. If so, the read
+         * message group is displayed in the dialog.
+         */
+        if (getPermissionGroupLevel(levels, SEND_MESSAGE_GROUP) != NEVER) {
+            groups[1] = SEND_MESSAGE_GROUP;
+        } else {
+            groups[1] = READ_MESSAGE_GROUP;
+        }
 
         return groups;
     }
