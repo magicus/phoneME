@@ -47,6 +47,7 @@ import javax.microedition.io.Connector;
 import com.sun.cdc.io.ConnectionBase;
 import com.sun.cdc.io.DateParser;
 
+import java.net.UnknownHostException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import javax.microedition.io.ConnectionNotFoundException;
@@ -84,19 +85,19 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      * In/Out Streams used to buffer input and output
      */
     private PrivateInputStream privateIn;
-    private PrivateOutputStream privateOut;
+    protected PrivateOutputStream privateOut;
 
     /*
      * The streams from the underlying socket connection.
      */
-    private StreamConnection streamConnection;
-    private DataOutputStream streamOutput;
-    private DataInputStream streamInput;
+    protected StreamConnection streamConnection;
+    protected DataOutputStream streamOutput;
+    protected DataInputStream streamInput;
 
     /** Maximum number of persistent connections. */
-    private static int maxNumberOfPersistentConnections;
+    protected static int maxNumberOfPersistentConnections;
     /** Connection linger time in the pool, default 60 seconds. */
-    private static long connectionLingerTime;
+    protected static long connectionLingerTime;
     protected static StreamConnectionPool connectionPool;
     static {
         maxNumberOfPersistentConnections = Integer.parseInt(
@@ -107,6 +108,10 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             (String) AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction(
                 "microedition.connlinger", "60000")));
+        createConnectionPool();
+    }
+
+    protected static void createConnectionPool() {
         connectionPool = new StreamConnectionPool(
                                  maxNumberOfPersistentConnections,
                                  connectionLingerTime);
@@ -114,12 +119,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     /*
      * A shared temporary buffer used in a couple of places
      */
-    private StringBuffer stringbuffer;
+    protected StringBuffer stringbuffer;
 
     private String proxyHost = null;
     private int proxyPort = 80;
 
-    private String httpVersion = "HTTP/1.1";
+    protected final String httpVersion = "HTTP/1.1";
 
     /** Used when appl calls setRequestProperty("Connection", "close"). */
     private boolean ConnectionCloseFlag;
@@ -224,7 +229,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     private void validateHost() {
         final String ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyz-";
         final String DIGITS = "0123456789";
-        final String HEX = "abcdefx";
+        final String HEX = "abcdef";
         final int TLD = -1;
         if (host.endsWith(".") || host.startsWith(".")) {
             throw new IllegalArgumentException("Invalid host name: "+host);
@@ -233,39 +238,52 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         int[] ip4addr = new int[4];
         int ip4n = 0;
         boolean ip4 = true;
+        boolean ip6 = host.startsWith("[") && host.endsWith("]");
+        if (ip6) {
+            // remove [ and ] for IPv6:
+            host = host.substring(1, host.length()-1);
+            ip4 = false;
+        }
         try {
             boolean error = false;
+            String sep = ip6 ? ":" : ".";
             do {
-                int n = host.indexOf('.', i+1); // -1 means top-level domain
-
+                int n = host.indexOf(sep, i); // -1 means top-level domain
                 String domain = host.substring(i, n == TLD ? host.length() : n);
-                if (domain.equals("") || !match(domain, ALPHANUM)
-                    // Minus sign cannot be first or last symbol
-                    || domain.startsWith("-") || domain.endsWith("-")
-                    // TLD cannot start with a digit
-                    || (n == TLD && !ip4
-                                 && match(domain.substring(0, 1), DIGITS))
-                    // Only for numbers in IPv4 address
-                    || (ip4 && ip4n >= 4)) {
-                    error = true;
-                    break;
-                }
-
-                if (ip4 && match(domain, DIGITS+HEX)) {
-                    if (match(domain, DIGITS)) { // decimal
-                        ip4addr[ip4n] = Integer.parseInt(domain, 10);
-                    } else {
-                        if (domain.startsWith("0x")) { // hexadecimal
-                            ip4addr[ip4n] =
-                                Integer.parseInt(domain.substring(2), 16);
-                        } else {
-                            ip4 = false;
-                        }
+                if (ip6) {
+                    if (!match(domain, DIGITS+HEX) && !"".equals(domain)){
+                        error = true;
+                        break;
                     }
                 } else {
-                    ip4 = false;
+                    if (domain.equals("") || !match(domain, ALPHANUM)
+                        // Minus sign cannot be first or last symbol
+                        || domain.startsWith("-") || domain.endsWith("-")
+                        // TLD cannot start with a digit
+                        || (n == TLD && !ip4
+                                     && match(domain.substring(0, 1), DIGITS))
+                        // Only for numbers in IPv4 address
+                        || (ip4 && ip4n >= 4)) {
+                        error = true;
+                        break;
+                    }
+
+                    if (ip4 && match(domain, DIGITS+HEX+'x')) {
+                        if (match(domain, DIGITS)) { // decimal
+                            ip4addr[ip4n] = Integer.parseInt(domain, 10);
+                        } else {
+                            if (domain.startsWith("0x")) { // hexadecimal
+                                ip4addr[ip4n] =
+                                    Integer.parseInt(domain.substring(2), 16);
+                            } else {
+                                ip4 = false;
+                            }
+                        }
+                    } else {
+                        ip4 = false;
+                    }
+                    ip4n++;
                 }
-                ip4n++;
                 i = n+1;
             } while (i != 0);
             if (error) {
@@ -288,7 +306,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
     public void open(String url, int mode, boolean timeouts)
         throws IOException {
-        // DEBUG: System.out.println ("open " + url); 
+        // DEBUG: System.out.println ("open " + url);
         if (opens > 0) {
             throw new IOException("already connected");
         }
@@ -312,9 +330,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         if (streamConnection == null) {
             try {
                 streamConnection = connectSocket();
-            } catch (IOException ex) {
+            } catch (UnknownHostException ex) {
                 throw new ConnectionNotFoundException(
-                        "Cannot connect to "+host+" on port "+port);
+                        "Cannot connect to "+host+" on port "+port+": "+ex);
             }
         }
 
@@ -422,7 +440,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     /**
      * PrivateInputStream to handle chunking for HTTP/1.1.
      */
-    class PrivateInputStream extends InputStream {
+    protected class PrivateInputStream extends InputStream {
         int bytesleft;          // Number of bytes left in current chunk
         boolean chunked;        // true if Transfer-Encoding: chunked
         boolean eof;            // true if eof seen
@@ -650,7 +668,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      * Private OutputStream to allow the buffering of output
      * so the "Content-Length" header can be supplied.
      */
-    class PrivateOutputStream extends OutputStream {
+    protected class PrivateOutputStream extends OutputStream {
         private ByteArrayOutputStream output;
 
         public PrivateOutputStream() {
@@ -1053,7 +1071,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         if (privateOut != null) {
     	    streamOutput.write(privateOut.toByteArray());
-            privateOut.reset();
+            resetOutput();
             // ***Bug 4485901*** streamOutput.write("\r\n".getBytes());
             /*
              DEBUG: System.out.println("Request: "
@@ -1070,8 +1088,11 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
     }
 
+    protected void resetOutput() {
+        privateOut.reset();
+    }
 
-    private void readResponseMessage() throws IOException {
+    protected void readResponseMessage() throws IOException {
         String line = readLine(streamInput);
         int httpEnd, codeEnd;
 
@@ -1111,11 +1132,11 @@ malformed: {
             responseMsg = line.substring(codeEnd + 1);
             return;
         }
-
+        disconnect();
         throw new InterruptedIOException("malformed response message");
     }
     
-    private void readHeaders() throws IOException {
+    protected void readHeaders() throws IOException {
         String line, key = null, value = null;
         int index;
 
@@ -1166,7 +1187,7 @@ malformed: {
      * Uses the shared stringbuffer to read a line
      * terminated by <cr><lf> and return it as string.
      */
-    private String readLine(InputStream in) {
+    protected String readLine(InputStream in) {
         int c;
         stringbuffer.setLength(0);
         for (;;) {

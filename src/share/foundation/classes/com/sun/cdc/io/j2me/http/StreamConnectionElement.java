@@ -75,7 +75,7 @@ public class StreamConnectionElement
      * @param p_dos      data output stream from the stream connection
      * @param p_dis      data input stream from the stream connection
      */
-    StreamConnectionElement(String p_protocol,
+    protected StreamConnectionElement(String p_protocol,
                             String p_host,
                             int p_port,
                             StreamConnection p_sc,
