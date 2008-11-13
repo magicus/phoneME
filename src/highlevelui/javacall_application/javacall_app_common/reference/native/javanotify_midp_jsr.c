@@ -1049,7 +1049,7 @@ javanotify_fluid_listener_warning (
 }
 
 void
-javanotify_dom_completion_notification (
+javanotify_method_completion_notification (
     javacall_int32			              invocation_id
     ) {
     midp_jc_event_union e;
