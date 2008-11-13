@@ -27,6 +27,7 @@
 package com.sun.midp.util.isolate;
 import com.sun.midp.i3test.*;
 import com.sun.midp.security.*;
+import com.sun.cldc.isolate.*;
 
 public class TestInterIsolateMutex extends TestCase {
     /**
@@ -45,10 +46,46 @@ public class TestInterIsolateMutex extends TestCase {
         try {
             m.unlock();
         } catch (Exception e) {
-            e.printStackTrace();
             exceptionThrown = true;
         }
         assertTrue("Unlocked not locked mutex", exceptionThrown);
+
+        declare("Lock mutex twice");
+        exceptionThrown = false;
+        try {
+            m.lock();
+            m.lock();
+        } catch (Exception e) {
+            exceptionThrown = true;
+        } finally {
+            m.unlock();
+        }
+        assertTrue("Locked mutex twice", exceptionThrown);
+ 
+        declare("Unlock the mutex locked by another Isolate");
+        exceptionThrown = false;
+        Isolate iso = null;
+        try {
+            // start slave Isolate
+            IsolateSynch.init();
+            iso = new Isolate("com.sun.midp.util.isolate.InterIsolateMutexTestIsolate", null);
+            iso.start();
+
+            // wait till slave Isolate locks the mutex
+            IsolateSynch.awaitReady();
+
+            // try to unlock the mutex
+            m.unlock();
+        } catch (Exception e) {
+            exceptionThrown = true;
+        } finally {
+            // unblock slave Isolate to let it unblock the mutex and exit
+            IsolateSynch.signalContinue();
+            iso.waitForExit();
+            IsolateSynch.fini();
+        }
+        assertTrue("Unlocked the mutex locked by another Isolate", 
+                exceptionThrown);
     }
 
     /**
