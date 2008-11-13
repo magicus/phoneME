@@ -320,6 +320,7 @@ class DisplayController {
         MIDletProxy foreground;
         MIDletProxy preempted;
         MIDletProxy preempting = null;
+        MIDletProxy candidate = null;
 
         /*
          * Stop preempting all of the MIDlets that were preempted.
@@ -328,6 +329,12 @@ class DisplayController {
         while (midlets.hasMoreElements()) {
             MIDletProxy current = (MIDletProxy)midlets.nextElement();
             MIDletProxy temp;
+
+            if (current.getIsolateId() == isolateId &&
+                !current.containsDisplay(displayId)) {
+                //candidate foreground midlet in the same isolate as preempting display
+                candidate = current;
+            }
 
             temp = current.getPreemptingDisplay();
             if (temp == null) {
@@ -338,9 +345,9 @@ class DisplayController {
                 continue;
             }
 
-	    if (!temp.containsDisplay(displayId)) {
-		continue;
-	    }
+            if (!temp.containsDisplay(displayId)) {
+                continue;
+            }
             preempting = temp;
 
             current.setPreemptingDisplay(null);
@@ -354,10 +361,8 @@ class DisplayController {
         }
 
         if (preempting == null) {
-            return foreground;
+            return (candidate != null? candidate : foreground);
         }
-
-        preempted = preempting.getPreemptedMidlet();
 
         // if the preempting display is not in the foreground then do nothing
         if (foreground != preempting) {
