@@ -67,7 +67,9 @@ public class AmsUtil {
     /** Cached reference to the MIDletProxyList. */
     private static MIDletProxyList midletProxyList;
     
+    /** Own trusted class to be able to request SecurityToken for priviledged operations */
     private static class SecurityTrusted implements ImplicitlyTrustedClass {};
+    /** The instance of SecurityToken for priviledged operations */
     private static SecurityToken trustedToken;
     
     /**
@@ -473,6 +475,11 @@ public class AmsUtil {
         }
     }
     
+    /**
+     * Obtains trusted instance of SecurityToken
+     *
+     * @return instance of SecurityToken
+     */
     private static SecurityToken getTrustedToken() {
         if (trustedToken == null) {
             trustedToken = SecurityInitializer.requestToken(new SecurityTrusted());

@@ -81,7 +81,7 @@ class PipeServerConnectionImpl implements PipeServerConnection {
     void establish(int mode) throws IOException {
         pipe = PipeServiceProtocol.getService(token);
         
-        pipe.connectServer(name, version);
+        pipe.bindServer(name, version);
 
         this.mode = mode;
     }

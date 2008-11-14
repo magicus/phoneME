@@ -43,7 +43,7 @@ public class Protocol implements ConnectionBaseInterface {
                       "Protocol must start with \"//\"");
 
         // server. format is: "pipe://:server-name:server-version;"
-        // client. format is: "pipe://[suite-id|*]:server-name:server-version;"
+        // client. format is: "pipe://(suite-id|*):server-name:server-version;"
         // suite-id is midlet suite's "vendor:name:version" triplet
         int colon2 = name.lastIndexOf(':');
         int colon1 = name.lastIndexOf(':', colon2-1);

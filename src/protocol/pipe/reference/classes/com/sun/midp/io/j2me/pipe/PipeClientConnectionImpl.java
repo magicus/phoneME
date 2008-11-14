@@ -37,6 +37,7 @@ import java.io.InterruptedIOException;
 import javax.microedition.io.Connection;
 import com.sun.midp.security.SecurityToken;
 import java.util.Vector;
+import javax.microedition.io.Connector;
 
 /**
  * Implementation of PipeConnection interface. Uses Links as bearer. Uses
@@ -81,16 +82,19 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
         sendLink = pipe.getOutboundLink();
 
         initStreamConnection(mode);
+
+        if (mode == Connector.READ || mode == Connector.READ_WRITE) {
+            receiver = new Receiver();
+            receiverThread = new Thread(receiver);
+            receiveStatus = null;
+            receiverThread.start();
+        }
+
     }
 
     public InputStream openInputStream() throws IOException {
         InputStream is = super.openInputStream();
 
-        receiver = new Receiver();
-        receiverThread = new Thread(receiver);
-        receiveStatus = null;
-        receiverThread.start();
-        
         return is;
     }
 
@@ -119,7 +123,7 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
 
     void establish(int mode) throws IOException {
         pipe = PipeServiceProtocol.getService(token);
-        pipe.connectClient(serverName, version);
+        pipe.bindClient(serverName, version);
 
         establishTransfer(mode);
     }
@@ -131,8 +135,6 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
     protected void disconnect() throws IOException {
         if (DEBUG)
             debugPrint("disconnected");
-
-        connectionOpen = false;
 
         synchronized (receiver) {
             receiver.notify();
@@ -206,22 +208,23 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
 
                 // get bytes from receive queue
                 byte[] bufferedMsg = (byte[]) receiveQueue.elementAt(0);
-                int remainingData = bufferedMsg.length - topReceivedMsgOffset;
+                int chunkSize = bufferedMsg.length - topReceivedMsgOffset;
                 if (DEBUG)
-                    debugPrint("readBytes: fetching data. " + remainingData + " bytes remain in next message");
-                if (remainingData >= len) {
-                    remainingData = len;
+                    debugPrint("readBytes: fetching data. " + chunkSize + " bytes remain in next message");
+                if (chunkSize >= len) {
+                    chunkSize = len;
                 }
-                System.arraycopy(bufferedMsg, topReceivedMsgOffset, b, off, remainingData);
-                topReceivedMsgOffset += remainingData;
+                System.arraycopy(bufferedMsg, topReceivedMsgOffset, b, off, chunkSize);
+                topReceivedMsgOffset += chunkSize;
                 if (topReceivedMsgOffset == bufferedMsg.length) {
                     receiveQueue.removeElementAt(0);
                     topReceivedMsgOffset = 0;
                 }
                 if (DEBUG)
-                    debugPrint("readBytes len=" + len + ", read " + remainingData);
-                len -= remainingData;
-                off += remainingData;
+                    debugPrint("readBytes len=" + len + ", read " + chunkSize);
+                len -= chunkSize;
+                off += chunkSize;
+                receiveQueueByteCount -= chunkSize;
             }
         }
 
@@ -281,7 +284,8 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
     private class Receiver implements Runnable {
 
         public void run() {
-            while (iStreams > 0 && !receivedEOF && receiveStatus == null) {
+
+            while (!receivedEOF && receiveStatus == null) {
                 LinkMessage lm;
                 byte[] data = null;
                 try {
@@ -295,6 +299,10 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
                         String command = lm.extractString();
                         if (CLOSE_OUTPUT_COMMAND.equals(command)) {
                             receivedEOF = true;
+                        } else {
+                            // we should never get here but for the sake of consistency let's handle
+                            // this case
+                            receiveStatus = new IOException("Unsupported: " + command);
                         }
                     } else {
                         data = lm.extractData();
@@ -313,7 +321,7 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
                         receiveQueue.addElement(data);
                         receiveQueueByteCount += data.length;
                     }
-                    this.notify();
+                    notify();
                 }
             }
             if (DEBUG)

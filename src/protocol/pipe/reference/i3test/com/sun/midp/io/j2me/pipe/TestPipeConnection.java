@@ -35,6 +35,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.Vector;
 import javax.microedition.io.Connector;
 
 /**
@@ -202,6 +203,8 @@ public class TestPipeConnection extends TestCase {
     void testLocalTransferDeferredOpen() throws IOException, InterruptedException {
         PipeServiceProtocol.registerService(token);
 
+        final Vector status = new Vector(1);
+
         new Thread(new Server() {
 
             void communicate(PipeConnection dataConn) throws IOException {
@@ -209,6 +212,8 @@ public class TestPipeConnection extends TestCase {
 
                 out.writeUTF("1");
                 out.close();
+
+                assertEquals("Receiver should have not received message by this moment", 0, status.size());
 
                 DataInputStream in = dataConn.openDataInputStream();
                 assertEquals("invalid data response", "2", in.readUTF());
@@ -221,10 +226,15 @@ public class TestPipeConnection extends TestCase {
             PipeConnection clientConn =
                     (PipeConnection) Connector.open("pipe://*:TestPipeConnection:1.0;");
 
+            // give a chance for writer to write into buffer
+            Thread.sleep(100);
+
             DataInputStream in = clientConn.openDataInputStream();
             DataOutputStream out = clientConn.openDataOutputStream();
 
             assertEquals("invalid message from server", "1", in.readUTF());
+            status.addElement("1");
+
             out.writeUTF("2");
             out.close();
 

@@ -65,7 +65,7 @@ public class UserListener implements SystemServiceConnectionListener {
         try {
             DataInput in = ((SystemServiceDataMessage) msg).getDataInput();
             switch (in.readInt()) {
-            case PipeServiceProtocol.MAGIC_REGISTER_PIPE_CLIENT:
+            case PipeServiceProtocol.MAGIC_BIND_PIPE_CLIENT:
                  {
                     // connection yield itself as pipe client. no need to keep track of it
                     String serverName = in.readUTF();
@@ -82,7 +82,7 @@ public class UserListener implements SystemServiceConnectionListener {
                 }
                 break;
 
-            case PipeServiceProtocol.MAGIC_REGISTER_PIPE_SERVER:
+            case PipeServiceProtocol.MAGIC_BIND_PIPE_SERVER:
                  {
                     String serverName = in.readUTF();
                     String serverVersion = in.readUTF();
@@ -115,8 +115,8 @@ public class UserListener implements SystemServiceConnectionListener {
                     Isolate serverIsolate = getIsolateById(server.getTargetIsolateId());
                     Link serverAcceptLink = Link.newLink(Isolate.currentIsolate(), serverIsolate);
                     linkMsg.setLink(serverAcceptLink);
-                    conn.send(linkMsg);
                     server.setAcceptLink(serverAcceptLink);
+                    conn.send(linkMsg);
                 }
                 break;
 
@@ -190,6 +190,7 @@ public class UserListener implements SystemServiceConnectionListener {
         if (serverAcceptLink == null || !serverAcceptLink.isOpen()) {
             fail("The requested server is not accepting connections");
         } else {
+            serverPipe.setAcceptLink(null);
             Link linkToClient = Link.newLink(server, client);
             Link linkFromClient = Link.newLink(client, server);
             SystemServiceLinkMessage linkMsg;
@@ -212,7 +213,7 @@ public class UserListener implements SystemServiceConnectionListener {
             // send ptp links to server
             ByteArrayOutputStream outStr = new ByteArrayOutputStream();
             out = new DataOutputStream(outStr);
-            out.writeInt(PipeServiceProtocol.MAGIC_REGISTER_PIPE_CLIENT);
+            out.writeInt(PipeServiceProtocol.MAGIC_BIND_PIPE_CLIENT);
             out.writeUTF(serverVersionRequested);
             LinkMessage lmMsg = LinkMessage.newDataMessage(outStr.toByteArray());
 
@@ -221,6 +222,7 @@ public class UserListener implements SystemServiceConnectionListener {
             serverAcceptLink.send(lmMsg);
             lmMsg = LinkMessage.newLinkMessage(linkToClient);
             serverAcceptLink.send(lmMsg);
+            serverAcceptLink.close();
         }
     }
 

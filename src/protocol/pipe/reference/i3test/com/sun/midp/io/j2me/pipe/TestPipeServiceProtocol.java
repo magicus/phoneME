@@ -53,7 +53,7 @@ public class TestPipeServiceProtocol extends TestCase {
             
             try {
                 PipeServiceProtocol client = PipeServiceProtocol.getService(token);
-                client.connectClient("SERVER", "1.0");
+                client.bindClient("SERVER", "1.0");
                 Link lIC = client.getInboundLink();
                 Link lOC = client.getOutboundLink();
                 LinkMessage msgIn = lIC.receive();
@@ -90,7 +90,7 @@ public class TestPipeServiceProtocol extends TestCase {
 
 
         PipeServiceProtocol server = PipeServiceProtocol.getService(token);
-        server.connectServer("SERVER", "1.0");
+        server.bindServer("SERVER", "1.0");
 
         one.start();
         Link[] oneLinks = 
@@ -125,7 +125,7 @@ public class TestPipeServiceProtocol extends TestCase {
         PipeServiceProtocol.registerService(token);
         
         final PipeServiceProtocol server = PipeServiceProtocol.getService(token);
-        server.connectServer("SERVER", "1.0");
+        server.bindServer("SERVER", "1.0");
         
         new Thread(new Runnable() {
 

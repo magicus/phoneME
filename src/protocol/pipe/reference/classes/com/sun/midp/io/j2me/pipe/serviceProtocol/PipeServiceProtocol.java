@@ -52,8 +52,8 @@ import javax.microedition.io.ConnectionNotFoundException;
 public class PipeServiceProtocol {
 
     static final String SERVICE_ID = "com.sun.midp.io.pipe";
-    static final int MAGIC_REGISTER_PIPE_SERVER = 0x49587001;
-    static final int MAGIC_REGISTER_PIPE_CLIENT = 0x49587002;
+    static final int MAGIC_BIND_PIPE_SERVER = 0x49587001;
+    static final int MAGIC_BIND_PIPE_CLIENT = 0x49587002;
     static final int MAGIC_CLOSE_PIPE_SERVER = 0x49587003;
     static final int MAGIC_ACCEPT_PIPE_SERVER = 0x49587004;
     static final int MAGIC_OK = 0x49587011;
@@ -69,21 +69,31 @@ public class PipeServiceProtocol {
     private String serverVersionActual;
     private Link inboundLink;
     private Link outboundLink;
-    private static SystemServiceConnection conn;
+    private static SystemServiceConnection serviceConn;         // connection to/from pipe service
+    private static final Object serviceConnLock = new Object(); // lock which guards serviceConn
     private long serverInstanceId;
     private Link acceptLink;
+    private final Object acceptLock = new Object();             // guards method accept()
 
     private PipeServiceProtocol(SecurityToken token) {
         this.token = token;
         debugInstanceId = nextDebugInstanceId++;
     }
 
+    /**
+     * On the side of user task (i.e. in MIDlet's execusion context) obtains protocol instance
+     * connected to pipe service. Shall not be used on side of service task.
+     *
+     * @param token priviledged instance of SecurityToken
+     * @return instance of PipeServiceProtocol properly initialized to be able to communicate
+     * to pipe service
+     */
     public static synchronized PipeServiceProtocol getService(SecurityToken token) {
-        if (conn == null) {
+        if (serviceConn == null) {
             SystemServiceRequestor serviceRequestor =
                     SystemServiceRequestor.getInstance(token);
-            conn = serviceRequestor.requestService(SERVICE_ID);
-            if (conn == null) {
+            serviceConn = serviceRequestor.requestService(SERVICE_ID);
+            if (serviceConn == null) {
                 if (DEBUG)
                     debugPrintS(" ERR: service not found");
                 throw new IllegalStateException("Pipe service not found");
@@ -95,6 +105,12 @@ public class PipeServiceProtocol {
         return service;
     }
 
+    /**
+     * Registers pipe service with System Service API. To be used only in context of service task
+     * (e.g. AMS Isolate).
+     *
+     * @param token priviledged instance of SecurityToken
+     */
     public static void registerService(SecurityToken token) {
         Dispatcher dispatcher = new Dispatcher(token);
         SystemServiceManager manager = SystemServiceManager.getInstance(token);
@@ -103,130 +119,170 @@ public class PipeServiceProtocol {
             debugPrintS(" service registered");
     }
 
-    public synchronized void connectClient(String serverName, String serverVersionRequested)
+    /**
+     * Binds given task as pipe client and tries to establish pipe connection.
+     * Parameters provided are used by pipe service to search for
+     * appropriate pipe server connection. If appopriate server it's connected with data Links so
+     * {@link #getInboundLink()} and {@link #getOutboundLink()} to be used to fetch them.
+     *
+     * @param serverName name of pipe server to search for
+     * @param serverVersionRequested version of the server to search for
+     * @throws java.io.IOException if requested server cannot be found (i.e. connection not found) or
+     * there is some problem commnucating with pipe service.
+     */
+    public void bindClient(String serverName, String serverVersionRequested)
             throws IOException {
         if (DEBUG)
             debugPrint(" connectClient " + serverName + ' ' + serverVersionRequested);
-        try {
-            SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
-            DataOutput out = msg.getDataOutput();
-            out.writeInt(MAGIC_REGISTER_PIPE_CLIENT);
-            out.writeUTF(serverName);
-            out.writeUTF(serverVersionRequested);
-            out.writeLong(Isolate.currentIsolate().uniqueId());
-            conn.send(msg);
+        synchronized (serviceConnLock) {
+            try {
+                SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
+                DataOutput out = msg.getDataOutput();
+                out.writeInt(MAGIC_BIND_PIPE_CLIENT);
+                out.writeUTF(serverName);
+                out.writeUTF(serverVersionRequested);
+                out.writeLong(Isolate.currentIsolate().uniqueId());
+                serviceConn.send(msg);
 
-            msg = (SystemServiceDataMessage) conn.receive();
-            DataInput in = msg.getDataInput();
-            int result = in.readInt();
-            if (result != MAGIC_OK) {
-                throw new ConnectionNotFoundException(in.readUTF());
-            }
-            serverVersionActual = in.readUTF();
+                msg = (SystemServiceDataMessage) serviceConn.receive();
+                DataInput in = msg.getDataInput();
+                int result = in.readInt();
+                if (result != MAGIC_OK) {
+                    throw new ConnectionNotFoundException(in.readUTF());
+                }
+                serverVersionActual = in.readUTF();
 
-            this.serverName = serverName;
-            this.serverVersionRequested = serverVersionRequested;
-            SystemServiceLinkMessage linkMsg = (SystemServiceLinkMessage) conn.receive();
-            inboundLink = linkMsg.getLink();
-            linkMsg = (SystemServiceLinkMessage) conn.receive();
-            outboundLink = linkMsg.getLink();
-        } catch (SystemServiceConnectionClosedException cause) {
-            if (DEBUG) {
-                debugPrint(" ERR:");
-                cause.printStackTrace();
+                this.serverName = serverName;
+                this.serverVersionRequested = serverVersionRequested;
+                SystemServiceLinkMessage linkMsg = (SystemServiceLinkMessage) serviceConn.receive();
+                inboundLink = linkMsg.getLink();
+                linkMsg = (SystemServiceLinkMessage) serviceConn.receive();
+                outboundLink = linkMsg.getLink();
+            } catch (SystemServiceConnectionClosedException cause) {
+                if (DEBUG) {
+                    debugPrint(" ERR:");
+                    cause.printStackTrace();
+                }
+                throw new IOException("Cannot communicate with pipe service: " + cause);
             }
-            throw new IOException("Cannot communicate with pipe service: " + cause);
         }
         if (DEBUG)
             debugPrint(" connectClient " + serverName + ' ' + serverVersionRequested + " completed");
     }
 
-    public synchronized void connectServer(String serverName, String serverVersion)
+    /**
+     * Binds given task as pipe server and registers server within pipe service.
+     *
+     * @param serverName name of the server to register
+     * @param serverVersion version of the server to register
+     * @throws java.io.IOException if server cannot be bound with pipe service
+     */
+    public void bindServer(String serverName, String serverVersion)
             throws IOException {
         if (DEBUG)
             debugPrint(" connectServer " + serverName + ' ' + serverVersion);
-        try {
-            SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
-            DataOutput out = msg.getDataOutput();
-            out.writeInt(MAGIC_REGISTER_PIPE_SERVER);
-            out.writeUTF(serverName);
-            out.writeUTF(serverVersion);
-            out.writeLong(Isolate.currentIsolate().uniqueId());
-            conn.send(msg);
+        synchronized (serviceConnLock) {
+            try {
+                SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
+                DataOutput out = msg.getDataOutput();
+                out.writeInt(MAGIC_BIND_PIPE_SERVER);
+                out.writeUTF(serverName);
+                out.writeUTF(serverVersion);
+                out.writeLong(Isolate.currentIsolate().uniqueId());
+                serviceConn.send(msg);
 
-            msg = (SystemServiceDataMessage) conn.receive();
-            DataInput in = msg.getDataInput();
-            int result = in.readInt();
-            if (result != MAGIC_OK) {
-                throw new ConnectionNotFoundException(in.readUTF());
-            }
-            serverInstanceId = in.readLong();
+                msg = (SystemServiceDataMessage) serviceConn.receive();
+                DataInput in = msg.getDataInput();
+                int result = in.readInt();
+                if (result != MAGIC_OK) {
+                    throw new ConnectionNotFoundException(in.readUTF());
+                }
+                serverInstanceId = in.readLong();
 
-            this.serverName = serverName;
-            this.serverVersionActual = serverVersion;
-        } catch (SystemServiceConnectionClosedException cause) {
-            if (DEBUG) {
-                debugPrint(" ERR:");
-                cause.printStackTrace();
+                this.serverName = serverName;
+                this.serverVersionActual = serverVersion;
+            } catch (SystemServiceConnectionClosedException cause) {
+                if (DEBUG) {
+                    debugPrint(" ERR:");
+                    cause.printStackTrace();
+                }
+                throw new IOException("Cannot communicate with pipe service: " + cause);
             }
-            throw new IOException("Cannot communicate with pipe service: " + cause);
         }
         if (DEBUG)
             debugPrint(" connectServer " + serverName + ' ' + serverVersion + " completed");
     }
 
+    /**
+     * Given that given instance of PipeServiceProtocol bound as pipe server this method blocks
+     * execution of current thread until appropriate pipe client is bound and connected to this
+     * server connection.
+     *
+     * @return newly created PipeServiceProtocol instance for communication with connected client
+     * @throws java.io.IOException if accept operation failed for some reason or if connection
+     * was closed
+     */
     public PipeServiceProtocol acceptByServer() throws IOException {
-        if (DEBUG)
-            debugPrint(" acceptByServer");
-        try {
-            synchronized (this) {
-                SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
-                DataOutput out = msg.getDataOutput();
-                out.writeInt(MAGIC_ACCEPT_PIPE_SERVER);
-                out.writeLong(serverInstanceId);
-                conn.send(msg);
-                SystemServiceLinkMessage linkMsg = (SystemServiceLinkMessage) conn.receive();
-                acceptLink = linkMsg.getLink();
-            }
+        synchronized (acceptLock) {
+            if (DEBUG)
+                debugPrint(" acceptByServer");
+            try {
+                synchronized (serviceConnLock) {
+                    SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
+                    DataOutput out = msg.getDataOutput();
+                    out.writeInt(MAGIC_ACCEPT_PIPE_SERVER);
+                    out.writeLong(serverInstanceId);
+                    serviceConn.send(msg);
+                    SystemServiceLinkMessage linkMsg = (SystemServiceLinkMessage) serviceConn.receive();
+                    acceptLink = linkMsg.getLink();
+                }
 
-            // now block waiting for client to come
-            LinkMessage lMsg = acceptLink.receive();
-            DataInput in = new DataInputStream(new ByteArrayInputStream(lMsg.extractData()));
-            if (in.readInt() == MAGIC_REGISTER_PIPE_CLIENT) {
-                PipeServiceProtocol service = new PipeServiceProtocol(token);
-                service.serverVersionRequested = in.readUTF();
-                lMsg = acceptLink.receive();
-                service.inboundLink = lMsg.extractLink();
-                lMsg = acceptLink.receive();
-                service.outboundLink = lMsg.extractLink();
+                // now block waiting for client to come
+                LinkMessage lMsg = acceptLink.receive();
+                DataInput in = new DataInputStream(new ByteArrayInputStream(lMsg.extractData()));
+                if (in.readInt() == MAGIC_BIND_PIPE_CLIENT) {
+                    PipeServiceProtocol service = new PipeServiceProtocol(token);
+                    service.serverVersionRequested = in.readUTF();
+                    lMsg = acceptLink.receive();
+                    service.inboundLink = lMsg.extractLink();
+                    lMsg = acceptLink.receive();
+                    service.outboundLink = lMsg.extractLink();
 
+                    if (DEBUG)
+                        debugPrint(" acceptByServer completed");
+
+                    return service;
+                } else {
+                    throw new IOException();
+                }
+            } catch (SystemServiceConnectionClosedException cause) {
+                if (DEBUG) {
+                    debugPrint(" ERR:");
+                    cause.printStackTrace();
+                }
+                throw new IOException("Cannot communicate with pipe service: " + cause);
+            } catch (InterruptedIOException cause) {
                 if (DEBUG)
-                    debugPrint(" acceptByServer completed");
-
-                return service;
-            } else {
-                throw new IOException();
+                    debugPrint(" acceptByServer aborted for " + serverInstanceId);
+                throw cause;
+            } catch (IOException cause) {
+                if (DEBUG) {
+                    debugPrint(" ERR:");
+                    cause.printStackTrace();
+                }
+                throw new IOException("Cannot communicate with pipe service: " + cause);
+            } finally {
+                acceptLink = null;
             }
-        } catch (SystemServiceConnectionClosedException cause) {
-            if (DEBUG) {
-                debugPrint(" ERR:");
-                cause.printStackTrace();
-            }
-            throw new IOException("Cannot communicate with pipe service: " + cause);
-        } catch (InterruptedIOException cause) {
-            if (DEBUG) 
-                debugPrint(" acceptByServer aborted for " + serverInstanceId);
-            throw cause;
-        } catch (IOException cause) {
-            if (DEBUG) {
-                debugPrint(" ERR:");
-                cause.printStackTrace();
-            }
-            throw new IOException("Cannot communicate with pipe service: " + cause);
         }
     }
 
-    public synchronized void closeServer() throws IOException {
+    /**
+     * Unregisters given server connection from pipe service unblocking accept operation as needed.
+     *
+     * @throws java.io.IOException if there is any problem executing request
+     */
+    public void closeServer() throws IOException {
         if (DEBUG)
             debugPrint(" closeServer");
         
@@ -239,28 +295,35 @@ public class PipeServiceProtocol {
         }
 
         // send notification to the pipe service
-        try {
-            SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
-            DataOutput out = msg.getDataOutput();
-            out.writeInt(MAGIC_CLOSE_PIPE_SERVER);
-            out.writeLong(serverInstanceId);
-            conn.send(msg);
+        synchronized (serviceConnLock) {
+            try {
+                SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
+                DataOutput out = msg.getDataOutput();
+                out.writeInt(MAGIC_CLOSE_PIPE_SERVER);
+                out.writeLong(serverInstanceId);
+                serviceConn.send(msg);
 
-            msg = (SystemServiceDataMessage) conn.receive();
-            DataInput in = msg.getDataInput();
-            int result = in.readInt();
-            if (result != MAGIC_OK) {
-                throw new IOException(in.readUTF());
+                msg = (SystemServiceDataMessage) serviceConn.receive();
+                DataInput in = msg.getDataInput();
+                int result = in.readInt();
+                if (result != MAGIC_OK) {
+                    throw new IOException(in.readUTF());
+                }
+            } catch (SystemServiceConnectionClosedException cause) {
+                if (DEBUG) {
+                    debugPrint(" ERR:");
+                    cause.printStackTrace();
+                }
+                throw new IOException("Cannot communicate with pipe service: " + cause);
             }
-        } catch (SystemServiceConnectionClosedException cause) {
-            if (DEBUG) {
-                debugPrint(" ERR:");
-                cause.printStackTrace();
-            }
-            throw new IOException("Cannot communicate with pipe service: " + cause);
         }
     }
 
+    /**
+     * Unregisters given client connection and closes data links.
+     *
+     * @throws java.io.IOException if there is any problem executing operation
+     */
     public void closeClient() throws IOException {
         if (inboundLink != null)
             inboundLink.close();
@@ -299,22 +362,49 @@ public class PipeServiceProtocol {
         return nextEndpointIdToIssue++;
     }
 
+    /**
+     * Returns outbound link for given client connection. It's up to caller to ensure this connection
+     * is client one and that it was already bound and connected to pipe server.
+     *
+     * @return outbound link
+     */
     public Link getOutboundLink() {
         return outboundLink;
     }
 
+    /**
+     * Returns inbound link for given client connection. It's up to caller to ensure this connection
+     * is client one and that it was already bound and connected to pipe server.
+     *
+     * @return outbound link
+     */
     public Link getInboundLink() {
         return inboundLink;
     }
 
+    /**
+     * Obtains name of the pipe server connection.
+     *
+     * @return pipe server name
+     */
     public String getServerName() {
         return serverName;
     }
 
+    /**
+     * Obtains actual version of pipe server. Applicable to both server and client connections.
+     *
+     * @return actual version of pipe server
+     */
     public String getServerVersionActual() {
         return serverVersionActual;
     }
 
+    /**
+     * Obtains version of the server connection which was requested by client.
+     *
+     * @return requested version of pipe server
+     */
     public String getServerVersionRequested() {
         return serverVersionRequested;
     }
