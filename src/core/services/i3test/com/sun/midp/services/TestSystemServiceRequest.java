@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -99,10 +99,11 @@ public class TestSystemServiceRequest extends TestCase {
         IsolateSystemServiceRequestHandler isolateRequestHandler = 
             requestHandler.newIsolateRequestHandler(clientIsolate);
 
-        Link namedPortalLink = Link.newLink(serviceIsolate, clientIsolate);
-        Link[] clientLinks = { namedPortalLink };
-        LinkPortal.setLinks(clientIsolate, clientLinks);
-        NamedLinkPortal.sendLinks(namedPortalLink);
+        SystemServiceConnectionLinks links = isolateRequestHandler.getSendReceiveLinks();
+        Link[] linkArray = new Link[2];
+        linkArray[0] = links.getSendLink();
+        linkArray[1] = links.getReceiveLink();
+        LinkPortal.setLinks(clientIsolate, linkArray);
 
         requestHandler.handleIsolateRequests(isolateRequestHandler);
 

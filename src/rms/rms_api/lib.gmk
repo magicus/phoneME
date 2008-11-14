@@ -70,7 +70,8 @@ SUBSYSTEM_RMS_NATIVE_FILES += \
 # Note that the test case classes must be named to begin with 'Test'.
 ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_RMS_I3TEST_JAVA_FILES += \
-    $(RMS_API_DIR)/reference/i3test/javax/microedition/rms/TestRecordStore.java 
+    $(RMS_API_DIR)/reference/i3test/javax/microedition/rms/TestRecordStore.java
+# The following file should be updated to match changed API \
 #    $(RMS_API_DIR)/reference/i3test/com/sun/midp/rms/TestFileRscLimit.java
 endif
 

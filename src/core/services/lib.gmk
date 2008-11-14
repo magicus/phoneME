@@ -59,9 +59,11 @@ SUBSYSTEM_SERVICES_JAVA_FILES += \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceConnectionListener.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceManager.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceMessage.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceDataMessage.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceLinkMessage.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceRequestor.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceConnectionClosedException.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/links/NamedLinkPortal.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceLinkPortal.java \
     $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestProtocolClient.java \
     $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestProtocolAMS.java \
     $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestListener.java \
@@ -73,12 +75,13 @@ SUBSYSTEM_SERVICES_JAVA_FILES += \
     $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestorLocal.java \
     $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceManagerImpl.java \
     $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceReadMessage.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceWriteMessage.java
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceWriteMessage.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceLinkReadMessage.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceLinkWriteMessage.java
 
 ifeq ($(USE_I3_TEST), true)
 
 SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES = \
-    $(SERVICES_DIR)/i3test/com/sun/midp/links/TestNamedLinkPortal.java \
     $(SERVICES_DIR)/i3test/com/sun/midp/services/TestServiceRequestProtocol.java \
     $(SERVICES_DIR)/i3test/com/sun/midp/services/TestSystemServiceRequest.java \
     $(SERVICES_DIR)/i3test/com/sun/midp/services/SystemServiceRequestIsolate.java \
@@ -86,6 +89,8 @@ SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES = \
     $(SERVICES_DIR)/i3test/com/sun/midp/services/TestSystemService.java \
     $(SERVICES_DIR)/i3test/com/sun/midp/services/SystemServiceIsolate.java \
     $(SERVICES_DIR)/i3test/com/sun/midp/services/SecurityTokenProvider.java
+#    $(SERVICES_DIR)/i3test/com/sun/midp/links/TestNamedLinkPortal.java \
+
 else
 
 SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES =
