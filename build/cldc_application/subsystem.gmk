@@ -31,12 +31,13 @@ TARGET_VM=cldc_vm
 JSR_172_LIB_NAME        = jsr172
 JSR_172_BUILD_DIR       = $(JSROP_BUILD_DIR)/$(JSR_172_LIB_NAME)
 ifneq ($(GENERATED_DIR),)
-JSR_172_GENERATED_DIR  = $(GENERATED_DIR)/classes
+JSR_172_GENERATED_DIR   = $(GENERATED_DIR)/classes
 else
 JSR_172_GENERATED_DIR   = $(JSR_172_BUILD_DIR)/generated
 endif
 JSR_172_JAR             = $(JSROP_JAR_DIR)/$(JSR_172_LIB_NAME).jar
 JSR_172_SG_JAR          = $(JSROP_JAR_DIR)/jsr172__stub-generator.jar
+JSR_172_BUILD_EXTRA_DIR = $(JSR_172_BUILD_DIR)/../jsr172-extra
 
 include $(JSR_172_DIR)/build/subsystem_defs.gmk
 
@@ -65,14 +66,15 @@ INTERNAL_JSR_172_SG_RI_DEPENDENCIES += \
 # separate Jars building support
 
 INTERNAL_JSR_172_SG_RI_PACKAGE = com.sun.j2mews.sg
+INTERNAL_JSR_172_SG_PATH = $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))
 INTERNAL_JSR_172_SG_RI_FILES += \
-        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/AbstractGenerator.java \
-        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/CompileTool172.java \
-        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/MakeCldc1_0.java \
-        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/NullProcessorAction.java \
-        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/RemoteInterfaceGenerator.java \
-        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/StubGenerator.java \
-        $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))/WSCompile.java \
+        $(INTERNAL_JSR_172_SG_PATH)/AbstractGenerator.java \
+        $(INTERNAL_JSR_172_SG_PATH)/CompileTool172.java \
+        $(INTERNAL_JSR_172_SG_PATH)/MakeCldc1_0.java \
+        $(INTERNAL_JSR_172_SG_PATH)/NullProcessorAction.java \
+        $(INTERNAL_JSR_172_SG_PATH)/RemoteInterfaceGenerator.java \
+        $(INTERNAL_JSR_172_SG_PATH)/StubGenerator.java \
+        $(INTERNAL_JSR_172_SG_PATH)/WSCompile.java \
 
 space?=$(empty) $(empty)
 INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST = \
@@ -89,9 +91,12 @@ include $(JSR_172_DIR)/build/subsystem_rules.gmk
 jsr_172_source_bundle:: $(JSR_172_DIR)
 	$(AT)$(call source_bundle_filter,$(JSR_172_DIR),$(JSR_172_SOURCE_OUTPUT_DIR), build/cldc_application)	
 
+$(JSR_172_BUILD_DIR) $(JSR_172_GENERATED_DIR) $(JSR_172_BUILD_EXTRA_DIR):
+	$(AT)mkdir -p $@
+
 # JSR 172 stub generator rules
 jsr172__stub-generator: $(JSR_172_SG_JAR)
-$(JSR_172_SG_JAR): $(INTERNAL_JSR_172_SG_RI_FILES)
+$(JSR_172_SG_JAR): $(JSR_172_BUILD_DIR) $(INTERNAL_JSR_172_SG_RI_FILES)
 	@echo "build $@ ..."
 	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR),$(INTERNAL_JSR_172_SG_RI_FILES), \
 		-g$(JAVAC_DEBUG) -classpath $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST))
@@ -100,17 +105,17 @@ $(JSR_172_SG_JAR): $(INTERNAL_JSR_172_SG_RI_FILES)
 
 jsr172_jar : $(JSR_172_JAR)
 
-$(JSR_172_JAR) :  $(CONFIGURATOR_JAR_FILE) \
+$(JSR_172_JAR) : $(JSR_172_BUILD_DIR) $(JSR_172_GENERATED_DIR) $(JSR_172_BUILD_EXTRA_DIR) $(CONFIGURATOR_JAR_FILE) \
 		$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES) $(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES)
 	@echo "build $@ ..."
-	$(call generateConstantClasses, $(JSR_172_GENERATED_DIR), $(JSR_172_CONSTANT_FILE))
-	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR),$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES), \
+	$(AT)$(call generateConstantClasses, $(JSR_172_GENERATED_DIR), $(JSR_172_CONSTANT_FILE))
+	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_EXTRA_DIR),$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES), \
 		-classpath "$(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)")
 	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR), \
 		$(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES) \
 		$(foreach class, $(shell cat $(call constantClassesListFile, $(JSR_172_GENERATED_DIR))), \
 		$(JSR_172_GENERATED_DIR)/classes/$(subst .,/,$(class)).java) , \
-		-classpath "$(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)$(PS)$(JSR_172_BUILD_DIR)" )
+		-classpath "$(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)$(PS)$(JSR_172_BUILD_DIR)$(PS)$(JSR_172_BUILD_EXTRA_DIR)" )
 	$(AT)$(shell mkdir -p $(dir $@))
 	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR),.)
 
