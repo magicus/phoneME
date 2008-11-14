@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -110,6 +110,9 @@ typedef enum {
     RECEIVING,      /* a thread has called receive() and awaits a sender */
     RENDEZVOUS,     /* receiver and sender threads have rendezvoused */
     DONE,           /* the receiver is done with the transfer */
+    SENT_CLOSED,    /* the receiver is done with the transfer and closed connection */
+                    /* no further operations permitted except send0 method are */
+                    /* allowed to gracefully exit for the succeeded send */
     CLOSED          /* no further operations permitted */
 } state_t;
 
@@ -433,16 +436,21 @@ Java_com_sun_midp_links_Link_close(void)
     /* ignore if closed twice */
     if (rp != NULL) {
         if (rp->sender == JVM_CurrentIsolateID()
-                && rp->msg != INVALID_REFERENCE_ID) {
-            /* we're the sender, make sure to clean out our message */
+                && rp->msg != INVALID_REFERENCE_ID
+            && rp->state != DONE) {
+            /* we're the sender and there is no pending completion of send0,
+               make sure to clean out our message */
             SNI_DeleteReference(rp->msg);
             rp->msg = INVALID_REFERENCE_ID;
         }
 
-        rp->state = CLOSED;
+        rp->state = rp->state == DONE ? SENT_CLOSED : CLOSED;
         midp_thread_signal(LINK_READY_SIGNAL, (int)rp, 0);
-        setNativePointer(thisObj, NULL);
-        rp_decref(rp);
+        /* if there is pending send0 let it do clean-up; otherwise do it now */
+        if (rp->state == CLOSED) {
+            setNativePointer(thisObj, NULL);
+            rp_decref(rp);
+        }
     }
 
     KNI_EndHandles();
@@ -507,7 +515,7 @@ Java_com_sun_midp_links_Link_isOpen(void)
     if (rp == NULL) {
         retval = KNI_FALSE;
     } else {
-        retval = (rp->state != CLOSED);
+        retval = (rp->state < SENT_CLOSED);
     }
 
     KNI_EndHandles();
@@ -588,6 +596,7 @@ Java_com_sun_midp_links_Link_receive0(void)
                 midp_thread_wait(LINK_READY_SIGNAL, (int)rp, NULL);
                 break;
 
+            case SENT_CLOSED:
             case CLOSED:
                 setNativePointer(thisObj, NULL);
                 rp_decref(rp);
@@ -668,8 +677,29 @@ Java_com_sun_midp_links_Link_send0(void)
                     /* somebody else's message, just go back to sleep */
                     midp_thread_wait(LINK_READY_SIGNAL, (int)rp, NULL);
                 }
-
                 break;
+
+            case SENT_CLOSED:
+                getReference(rp->msg, "send0/SENT_CLOSED", otherMessageObj);
+                if (KNI_IsSameObject(messageObj, otherMessageObj)) {
+                    /* it's our message, finish processing */
+                    SNI_DeleteReference(rp->msg);
+                    rp->msg = INVALID_REFERENCE_ID;
+
+                    if (rp->retcode != OK) {
+                        KNI_ThrowNew(midpIOException, NULL);
+                    }
+
+                    /* and clean up */
+                    setNativePointer(thisObj, NULL);
+                    rp->state = CLOSED;
+                    rp_decref(rp);
+
+                    midp_thread_signal(LINK_READY_SIGNAL, (int)rp, 0);
+                    
+                    break;
+                }
+                /* intentional fall-through. other senders should receive IIOE */
             case CLOSED:
                 setNativePointer(thisObj, NULL);
                 if (rp->msg != INVALID_REFERENCE_ID) {
@@ -748,7 +778,7 @@ Java_com_sun_midp_links_LinkPortal_setLinks0(void)
     for (i = 0; i < len; i++) {
         KNI_GetObjectArrayElement(linkArray, i, linkObj);
         rp = getNativePointer(linkObj);
-        if (rp == NULL || rp->state == CLOSED) {
+        if (rp == NULL || rp->state >= SENT_CLOSED) {
             ok = 0;
             KNI_ThrowNew(midpIllegalArgumentException, NULL);
             break;
