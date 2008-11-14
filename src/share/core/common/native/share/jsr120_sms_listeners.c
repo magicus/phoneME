@@ -453,16 +453,16 @@ WMA_STATUS jsr120_sms_unblock_thread(jint handle, jint waitingFor) {
 }
 
 /**
- * Delete all SMS messages cached in the pool for the specified
- * midlet suite. The linked list with the (msid, port number)
- * pairings has to be specified. Cleans up listeners list also.
+ * Clean internal data on midlet exiting:
+ * delete all SMS messages cached in the pool for the specified
+ * midlet suite and removes internal listeners data from the list.
+ * It is supposed that connections was already closed and native
+ * port was released.
  *
  * @param msid Midlet Suite ID.
- * @param listeners Head of linked list, that has (msid, port number)
- *             pairings.
  *
  */
-static void jsr120_sms_delete_all_msgs(AppIdType msid, ListElement* listeners) {
+void jsr120_sms_cleanup_midlet_suite(AppIdType msid) {
 
     ListElement *elem = NULL;
 
@@ -471,26 +471,18 @@ static void jsr120_sms_delete_all_msgs(AppIdType msid, ListElement* listeners) {
      * mapping, which is useful to cleanup unused sms messages on midlet exiting.
      * Here we are cleaning up both listeners list and list of messages.           */
 
-    while ((elem = jsr120_list_remove_first_by_msID(&listeners, msid)) != NULL) {
+    while ((elem = jsr120_list_remove_first_by_msID(&sms_midlet_listeners, msid)) != NULL) {
+
         /*
          * If the dequeued element has a valid port number,
          * then delete all SMS messages stored for that port.
          */
         if (elem->id > 0) {
-            jsr120_sms_pool_remove_all_msgs(elem->id);
+            if (WMA_ERR == jsr120_is_sms_listener_registered(elem->id, sms_push_listeners)) {
+                jsr120_sms_pool_remove_all_msgs(elem->id);
+            }
         }
     }
-}
-
-/**
- * Delete all SMS messages cached in the pool for the specified
- * midlet suite
- *
- * @param msid Midlet Suite ID.
- *
- */
-void jsr120_sms_delete_midlet_suite_msg(AppIdType msid) {
-    jsr120_sms_delete_all_msgs(msid, sms_midlet_listeners);
 }
 
 /**
@@ -500,9 +492,13 @@ void jsr120_sms_delete_midlet_suite_msg(AppIdType msid) {
  * @param msid Midlet Suite ID.
  *
  */
-void jsr120_sms_delete_push_msg(AppIdType msid) {
-    jsr120_sms_delete_all_msgs(msid, sms_push_listeners);
-}
+void jsr120_sms_push_release_port(int port) {
 
+    if (WMA_ERR == jsr120_is_sms_listener_registered(port, sms_midlet_listeners)) {
+       jsr120_sms_pool_remove_all_msgs(port);
+       jsr120_remove_sms_listening_port(port);
+    }
+    jsr120_list_remove_first_by_number(&sms_push_listeners, port); 
+}
 
 

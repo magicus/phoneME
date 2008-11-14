@@ -149,22 +149,25 @@ WMA_STATUS jsr120_unregister_sms_push_listener(jchar port);
 WMA_STATUS jsr120_sms_unblock_thread(jint handle, jint waitingFor);
 
 /**
- * Delete all SMS messages cached in the pool for the specified
- * midlet suite
+ * Clean internal data on midlet exiting:
+ * delete all SMS messages cached in the pool for the specified
+ * midlet suite and removes internal listeners data from the list
+ * It is supposed that connections was already closed and native
+ * port was released.
  *
  * @param msid Midlet Suite ID.
  *
  */
-void jsr120_sms_delete_midlet_suite_msg(AppIdType msid);
+void jsr120_sms_cleanup_midlet_suite(AppIdType msid);
 
 /**
  * Delete all SMS messages cached in the pool for the specified
- * midlet suite, by the Push subsystem.
+ * midlet suite, by the Push subsystem and unregister sms port.
  *
  * @param msid Midlet Suite ID.
  *
  */
-void jsr120_sms_delete_push_msg(AppIdType msid);
+void jsr120_sms_push_release_port(int port);
 
 #ifdef __cplusplus
 }

@@ -53,7 +53,6 @@
 #include <kni.h>
 
 static int registerSMSEntry(int port, AppIdType msid);
-static void unregisterSMSEntry(int port, int handle);
 static int registerCBSEntry(int msgID, AppIdType msid);
 static void unregisterCBSEntry(int msgID, int handle);
 #if ENABLE_JSR_205
@@ -81,13 +80,10 @@ void wmaPushCloseEntry(int state, char *entry, int port,
 
     if (state != CHECKED_OUT ) {
         if(strncmp(entry,"sms://:",7) == 0) {
-            /*
-             * Delete all SMS messages cached for the
-             * specified midlet suite.
-             */
-            jsr120_sms_delete_push_msg(msid);
-            /* unregister this sms push entry */
-            unregisterSMSEntry(port, fd);
+            jsr120_sms_push_release_port(port);
+            if (fd) {
+                pcsl_mem_free((void*)fd);
+            }
 	} else if(strncmp(entry,"cbs://:",7) == 0) {
             /*
              * Delete all CBS messages cached for the
@@ -243,17 +239,6 @@ static int registerSMSEntry(int port, AppIdType msid) {
     }
 
     return handle;
-}
-
-static void unregisterSMSEntry(int port, int handle) {
-
-    /** unregister SMS port from SMS pool */
-    jsr120_unregister_sms_push_listener((jchar)port);
-
-    /* Release the handle associated with this connection. */
-    if (handle) {
-        pcsl_mem_free((void *)handle);
-    }
 }
 
 static int registerCBSEntry(int msgID, AppIdType msid) {
