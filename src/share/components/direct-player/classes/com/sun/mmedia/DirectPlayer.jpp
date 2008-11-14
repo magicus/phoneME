@@ -609,19 +609,19 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             if (nIsMIDIControlSupported(hNative)) {
                 if (midiControl == null) 
                     midiControl = new DirectMIDIControl(this);
-                return midiControl;
+                return midiControl.getMIDIControl();
             }
         } else if (shortType.equals(picName)) {
             if (nIsPitchControlSupported(hNative)) {
                 if (midiControl == null) 
                     midiControl = new DirectMIDIControl(this);
-                return midiControl;
+                return midiControl.getPitchControl();
             }
         } else if (shortType.equals(racName)) {
             if (nIsRateControlSupported(hNative)) {
                 if (midiControl == null) 
                     midiControl = new DirectMIDIControl(this);
-                return midiControl;
+                return midiControl.getRateControl();
             }
         } else if (shortType.equals(recName)) {
             if (nIsRecordControlSupported(hNative)) {
@@ -638,7 +638,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             if (nIsTempoControlSupported(hNative)) {
                 if (midiControl == null) 
                     midiControl = new DirectMIDIControl(this);
-                return midiControl;
+                return midiControl.getTempoControl();
             }
         } else if (shortType.equals(vicName)) {
 //            if (nIsVideoControlSupported(hNative)) {
