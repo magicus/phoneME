@@ -206,7 +206,7 @@ static void deleteListenerNode(RecordStoreListener *listenerNodePtr) {
     listenerNodeRef = &rootListenerPtr;
     while (*listenerNodeRef != listenerNodePtr) {
         /* No check for NULL, the function is called for list nodes only */
-        listenerNodeRef = (*listenerNodeRef)->next;
+        listenerNodeRef = &((*listenerNodeRef)->next);
     }
     deleteListenerNodeByRef(listenerNodeRef);
 }
