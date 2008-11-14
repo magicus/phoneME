@@ -49,6 +49,8 @@ public class MIDletSuiteInfo {
     public boolean enabled = false;
     /** Is this suite trusted. */
     public boolean trusted = false;
+    /** Is this suite temporary. */
+    public boolean temporary = false;
     /** Is this suite preinstalled. */
     public boolean preinstalled = false;
     /** Icon's name for this suite. */
@@ -70,6 +72,7 @@ public class MIDletSuiteInfo {
         this.numberOfMidlets = that.numberOfMidlets;
         this.enabled = that.enabled;
         this.trusted = that.trusted;
+        this.temporary = that.temporary;
         this.preinstalled = that.preinstalled;
         this.iconName = that.iconName;
     }

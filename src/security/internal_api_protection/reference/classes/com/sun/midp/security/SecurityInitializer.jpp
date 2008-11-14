@@ -239,12 +239,18 @@ public final class SecurityInitializer {
         "com.sun.j2me.content.CHManagerImpl$SecurityTrusted",
         // #endif ENABLE_JSR_211
 
+        // #ifdef ENABLE_JSR_290
+        "com.sun.fluid.FluidImageImpl$SecurityTrusted",
+        "com.sun.j2me.dom.DOMFactory$SecurityTrusted",
+        // #endif ENABLE_JSR_290
+
         // Pass the security token to the i3 test framework.
         // #ifdef ENABLE_I3_TEST
         "com.sun.midp.i3test.TestCase$SecurityTrusted",
         "com.sun.midp.i3test.SelfTest$TestRequestSecurityToken$SecurityTrusted",
         "com.sun.midp.suspend.test.TestUtil$SecurityTrusted",
         "com.sun.midp.services.SecurityTokenProvider$SecurityTrusted",
+        "com.sun.midp.util.isolate.SecurityTokenProvider$SecurityTrusted",        
         // IMPL NOTE: PauseTest is temporarily disabled.
         // Pass the security token to the standalone pause test.
         // "com.sun.midp.internal.test.PauseTest",

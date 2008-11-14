@@ -67,10 +67,20 @@ public final class AutomationInitializer {
             midletControllerEventProducer = theMidletControllerEventProducer;
             isInitialized = true;
 
-            ROMULInitializer.init();
+            boolean vmRestarted = isVMRestarted();
+            ROMULInitializer.init(vmRestarted);
         }
     }
 
+    /**
+     * Tells us if VM is in SVM mode and has been restarted, 
+     * so the MIDlet could be started.
+     *
+     * @return in SVM mode, true if VM has been restarted, 
+     * false if its a first VM start. In MVM mode, always 
+     * returns false.
+     */
+    private static native boolean isVMRestarted();
 
     /**
      * Gets event queue.

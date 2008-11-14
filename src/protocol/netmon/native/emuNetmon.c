@@ -1740,12 +1740,10 @@ Java_com_sun_kvem_io_j2me_apdu_Protocol_open0() {
 
     jint returnValue = 0;
 
-    KNI_StartHandles(2);
+    KNI_StartHandles(1);
     KNI_DeclareHandle(bufHandle);
-    KNI_DeclareHandle(thisHandle);
 
     KNI_GetParameterAsObject(1, bufHandle);
-    KNI_GetThisPointer(thisHandle);
 	groupid = KNI_GetParameterAsLong(2);
 
     if (f == NULL) {
@@ -1821,12 +1819,10 @@ Java_com_sun_kvem_io_j2me_jcrmi_Protocol_open0() {
 
     jint returnValue = 0;
 
-    KNI_StartHandles(2);
+    KNI_StartHandles(1);
     KNI_DeclareHandle(bufHandle);
-    KNI_DeclareHandle(thisHandle);
 
     KNI_GetParameterAsObject(1, bufHandle);
-    KNI_GetThisPointer(thisHandle);
 	groupid = KNI_GetParameterAsLong(2);
 
     if (f == NULL) {
@@ -1912,23 +1908,25 @@ Java_com_sun_kvem_io_j2me_jcrmi_Protocol_response0() {
     DEBUG_PRINT("in jcrmi_Protocol_invoke1\n");
 
     length = KNI_GetArrayLength(buf);
-    data = (jbyte*) midpMalloc(length * sizeof(jbyte));
+	if (length > 0) {
+        data = (jbyte*) midpMalloc(length * sizeof(jbyte));
 
-    if (data == NULL) {
-        KNI_ThrowNew("java/lang/OutOfMemoryError", "");
-    } else {
-        static LimeFunction *f = NULL;
+        if (data == NULL) {
+            KNI_ThrowNew("java/lang/OutOfMemoryError", "");
+        } else {
+            static LimeFunction *f = NULL;
 
-        KNI_GetRawArrayRegion(buf, 0, length * sizeof(jbyte), data);
+            KNI_GetRawArrayRegion(buf, 0, length * sizeof(jbyte), data);
 
-        if (f == NULL) {
-			f = NewLimeFunction(NETMON_JCRMI_PACKAGE,
+            if (f == NULL) {
+			    f = NewLimeFunction(NETMON_JCRMI_PACKAGE,
 						JCRMI_RECEIVER,
 						"response");
-		}
-        f->call(f, NULL, md, data, length, -1);
-        midpFree(data);
-    }
+		    }
+            f->call(f, NULL, md, data, length, -1);
+            midpFree(data);
+        }
+	}
     KNI_EndHandles();
     KNI_ReturnVoid();
 }

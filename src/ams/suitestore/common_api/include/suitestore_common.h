@@ -206,6 +206,9 @@ typedef struct _midletSuiteData {
     /** True if the suite is trusted, false otherwise. */
     jboolean isTrusted;
 
+    /** True if the suite is temporary, false otherwise. */
+    jboolean isTemporary;
+
     /** Number of midlets in this suite. */
     jint numberOfMidlets;
 

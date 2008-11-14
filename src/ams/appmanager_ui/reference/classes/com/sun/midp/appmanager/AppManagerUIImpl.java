@@ -41,6 +41,7 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.payment.PAPICleanUp;
+import com.sun.midp.midlet.MIDletSuite;
 
 import java.util.*;
 
@@ -278,7 +279,7 @@ class AppManagerUIImpl extends Form
                                            Command.ITEM, 1);
 
     // Current locale
-    private String locale = System.getProperty("microedition.locale");
+    private String locale;
 
     // Layout direction. True if direction is right-to-left
     private boolean RL_DIRECTION;
@@ -374,13 +375,6 @@ class AppManagerUIImpl extends Form
 
         setCommandListener(this);
         
-        if (locale != null && locale.equals("he-IL")) {
-            RL_DIRECTION = true;
-            TEXT_ORIENT = Graphics.RIGHT;
-        } else {
-            RL_DIRECTION = false;
-            TEXT_ORIENT = Graphics.LEFT;
-        }
     }
 
     /**
@@ -1066,7 +1060,42 @@ class AppManagerUIImpl extends Form
      * @param si corresponding suite info
      */
     public void notifySuiteInstalled(RunningMIDletSuiteInfo si) {
-        askUserIfLaunchMidlet();
+        if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+            boolean userMidletExists = true;
+            boolean sysFgMidletExists = false;
+
+            MIDletSuite suite = MIDletSuiteUtils.getSuite(si.suiteId);
+            if (suite != null) {
+                userMidletExists = false;
+                int midletsNum = si.numberOfMidlets;
+                try {
+                    for (int m = 1; m <= midletsNum; m++) {
+                        String pwrProp = MIDletSuiteUtils.getSuiteProperty(
+                            suite, m, MIDletSuite.LAUNCH_POWER_ON_PROP);
+
+                        if ("yes".equalsIgnoreCase(pwrProp)) {
+                            String bgProp = MIDletSuiteUtils.getSuiteProperty(
+                                suite, m, MIDletSuite.LAUNCH_BG_PROP);
+
+                            if (!"yes".equalsIgnoreCase(bgProp)) {
+                                sysFgMidletExists = true;
+                                break;
+                            }
+                        } else {
+                            userMidletExists = true;
+                        }
+                    }
+                } finally {
+                    suite.close();
+                }
+            }
+
+            if (userMidletExists && !sysFgMidletExists) {
+                askUserIfLaunchMidlet();
+            }
+        } else {
+            askUserIfLaunchMidlet();
+        }
     }
 
     /**
@@ -1192,6 +1221,9 @@ class AppManagerUIImpl extends Form
      * The AppManagerPeer manages list of available MIDlet suites
      * and informs AppManagerUI regarding changes in list through
      * itemAppended callback when new item is appended to the list.
+     *
+     * The order in which the MIDlets are shown is up to the UI
+     * and need not be the order of itemAppended invocations.
      *
      * @param suiteInfo the midlet suite info
      */
@@ -1543,6 +1575,16 @@ class AppManagerUIImpl extends Form
             int cY = g.getClipY();
             int cW = g.getClipWidth();
             int cH = g.getClipHeight();
+            
+            locale = System.getProperty("microedition.locale");
+            
+            if (locale != null && locale.equals("he-IL")) {
+                RL_DIRECTION = true;
+                TEXT_ORIENT = Graphics.RIGHT;
+            } else {
+                RL_DIRECTION = false;
+                TEXT_ORIENT = Graphics.LEFT;
+            }
 
             if ((cW + cX) > bgIconW) {
                 if (text != null && h >= ICON_FONT.getHeight()) {

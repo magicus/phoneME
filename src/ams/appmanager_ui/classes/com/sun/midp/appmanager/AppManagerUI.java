@@ -37,6 +37,9 @@ interface AppManagerUI {
      * The AppManagerPeer manages list of available MIDlet suites
      * and informs AppManagerUI regarding changes in list through
      * itemAppended callback when new item is appended to the list.
+     *
+     * The order in which the MIDlets are shown is up to the UI
+     * and need not be the order of itemAppended invocations.
      *  
      * @param suiteInfo the midlet suite info
      */

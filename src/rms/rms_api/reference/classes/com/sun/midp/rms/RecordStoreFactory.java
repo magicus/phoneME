@@ -74,5 +74,23 @@ public class RecordStoreFactory {
      *
      * @return true if the suite has at least one record store
      */
-    public static native boolean suiteHasRmsData(int id);
+    public static boolean suiteHasRmsData(int id) {
+        String fileNameBase = RmsEnvironment.getSecureFilenameBase(id);
+
+        if (fileNameBase == null) {
+            return false;
+        }
+
+        return suiteHasRmsData0(fileNameBase);
+    }
+
+    /**
+     * Returns true if the suite has created at least one record store.
+     * Called by the installer when updating a suite.
+     *
+     * @param filenameBase filename base of the suite
+     *
+     * @return true if the suite has at least one record store
+     */
+    private static native boolean suiteHasRmsData0(String fileNameBase);
 }

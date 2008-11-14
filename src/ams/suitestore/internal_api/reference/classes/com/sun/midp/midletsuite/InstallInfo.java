@@ -79,6 +79,12 @@ public class InstallInfo {
     /** Flag for trusted suites. If true the system trust icon is displayed. */
     public boolean trusted;
 
+    /** 
+     * Flag for temporary suites. All temporary suites can be uninstalled at 
+     * once.
+     */
+    public boolean temporary;
+    
     /** Hash value of the suite with preverified classes */
     public byte[] verifyHash;
 
@@ -161,7 +167,16 @@ public class InstallInfo {
         return trusted;
     }
 
-
+    /**
+     * Indicates whether this suite is temporary. All temporary suites can 
+     * be uninstalled at once.
+     *
+     * @return true if the suite is temporary, false if not
+     */
+    public boolean isTemporary() {
+        return temporary;
+    }
+    
     /**
      * Gets hash value for the suite with all classes successfully
      * verified during the suite installation, otherwise null value

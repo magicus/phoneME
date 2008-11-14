@@ -1,5 +1,5 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,21 +24,33 @@
  * information or have any questions.
  */
 
-package com.sun.midp.automation.romul;
+package com.sun.midp.rms;
 
 /**
- * Initializes ROMUL API (stub)
+ * Implemented byt he class running the suite so that it can be decoupled
+ * from the RMS library
  */
-public final class ROMULInitializer {
+public interface SuiteContainer {
     /**
-     * Initializes ROMUL API.
+     * Get the suite ID of applicaiton on the current call stack.
      */
-    public static void init() {
-    }
+    int getCallersSuiteId();
 
     /**
-     * Private constructor to prevent creating class instances
+     * Get the suite of identified by vendor and suite name.
      */
-    private ROMULInitializer() {
-    }
+    int getSuiteId(String vendorName, String suiteName);
+
+    /**
+     * Get secure filename base to build a an RMS file name that will be
+     * deleted with the suite.
+     */
+    String getSecureFilenameBase(int suiteId);
+    
+    /**
+     * Get the storage area ID for a suite.
+     * This is only CLDC RescordStore implementations, any other implementations can just
+     * return 0.
+     */
+    int getStorageAreaId(int suiteId);
 }

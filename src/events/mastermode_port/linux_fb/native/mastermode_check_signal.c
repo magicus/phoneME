@@ -307,7 +307,7 @@ jboolean checkForAllSignals(MidpReentryData* pNewSignal,
                 return KNI_TRUE;
             }
             /* Timeout shouldn't be exceeded */
-            spentTime += timeoutPerChecker;
+            spentTime += timeoutPerChecker != 0 ? timeoutPerChecker : 1;
             if (timeout > 0 && spentTime >= timeout) {
                 break;
             }

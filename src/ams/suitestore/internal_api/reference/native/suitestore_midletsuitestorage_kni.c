@@ -1462,6 +1462,9 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
                            midp_get_field_id(KNIPASSARGS clazz,
                                "verifyHash", "[B"), verifyHashObj);
         suiteData.jarHashLen = KNI_GetArrayLength(verifyHashObj);
+        
+        KNI_SAVE_BOOLEAN_FIELD(javaInstallInfo, clazz, "temporary",
+                               suiteData.isTemporary);
 
         /* 2 - from javaSuiteSettings object */
         KNI_GetObjectClass(javaSuiteSettings, clazz);
@@ -1700,6 +1703,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMIDletSuiteInfoImpl0) {
             pData->numberOfMidlets);
         KNI_RESTORE_BOOLEAN_FIELD(msi, clazz, "enabled", pData->isEnabled);
         KNI_RESTORE_BOOLEAN_FIELD(msi, clazz, "trusted", pData->isTrusted);
+        KNI_RESTORE_BOOLEAN_FIELD(msi, clazz, "temporary", pData->isTemporary);
     } while (0);
 
     KNI_EndHandles();
@@ -1823,3 +1827,45 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMIDletSuiteIcon0) {
     KNI_EndHandlesAndReturnObject(iconBytesArray);
 #endif
 }
+
+/**
+ * Get the filename base for a suite.
+ *
+ * @param suiteId unique ID of the suite
+ *
+ * @return filename base for the suite id
+ */
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSecureFilenameBase) {
+    pcsl_string filenameBase = PCSL_STRING_NULL;
+    SuiteIdType suiteId;
+    MIDPError errorCode;
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(tempHandle);
+
+    suiteId = KNI_GetParameterAsInt(1);
+    do {
+
+        errorCode = build_suite_filename(suiteId, &PCSL_STRING_EMPTY, 
+                                         &filenameBase);
+
+        if (errorCode == OUT_OF_MEMORY) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+            break;
+        } else if (errorCode == SUITE_CORRUPTED_ERROR) {
+            KNI_ThrowNew(midpIOException, NULL);
+            break;
+        }
+
+        if (errorCode != ALL_OK) {
+            break;
+        }
+
+        midp_jstring_from_pcsl_string(KNIPASSARGS &filenameBase, tempHandle);
+    } while (0);
+
+    pcsl_string_free(&filenameBase);
+    KNI_EndHandlesAndReturnObject(tempHandle);
+}
+

@@ -220,7 +220,7 @@ class CldcMIDletStateListener implements MIDletStateListener {
     public void midletDestroyed(MIDletSuite suite, String className,
                                 MIDlet midlet) {
         if (midlet != null) {
-            displayContainer.removeDisplay(midlet);
+            displayContainer.removeDisplaysByOwner(midlet);
         }
 
         midletControllerEventProducer.sendMIDletDestroyNotifyEvent(
