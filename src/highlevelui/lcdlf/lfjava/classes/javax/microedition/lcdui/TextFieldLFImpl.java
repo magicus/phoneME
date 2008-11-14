@@ -1669,6 +1669,11 @@ class TextFieldLFImpl extends ItemLFImpl implements
             oldDisplay.hidePopup(inputModeIndicator);
             oldDisplay = null;
         }
+        
+        inputModeAnchor[0] = 0;
+        inputModeAnchor[1] = 0;
+        inputModeAnchor[2] = 0;
+        inputModeAnchor[3] = 0;
      }
 
    /**
