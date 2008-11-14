@@ -70,7 +70,6 @@ endef
 
 # compileJavaClasses(outputDir, javaFiles, extraJavacOptions)
 define compileJavaClasses
-	mkdir -p `$(call HOST2POSIX_CMD,$(1))`
 	$(JAVAC_CMD) $(3) -d `$(call POSIX2HOST_CMD,$(1))` \
 		     `$(call POSIX2HOST_CMD,$(2))`
 endef
