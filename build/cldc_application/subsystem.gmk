@@ -29,11 +29,11 @@
 TARGET_VM=cldc_vm
 
 JSR_172_LIB_NAME        = jsr172
-JSR_172_BUILD_DIR       = $(JSROP_BUILD_DIR)/$(JSR_172_LIB_NAME)
+JSR_172_BUILD_DIR       = $(JSROP_BUILD_DIR)/$(JSR_172_LIB_NAME)/build
 ifneq ($(GENERATED_DIR),)
 JSR_172_GENERATED_DIR   = $(GENERATED_DIR)/classes
 else
-JSR_172_GENERATED_DIR   = $(JSR_172_BUILD_DIR)/generated
+JSR_172_GENERATED_DIR   = $(JSR_172_BUILD_DIR)/../generated
 endif
 JSR_172_JAR             = $(JSROP_JAR_DIR)/$(JSR_172_LIB_NAME).jar
 JSR_172_SG_JAR          = $(JSROP_JAR_DIR)/jsr172__stub-generator.jar
@@ -101,7 +101,7 @@ $(JSR_172_SG_JAR): $(JSR_172_BUILD_DIR) $(INTERNAL_JSR_172_SG_RI_FILES)
 	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR),$(INTERNAL_JSR_172_SG_RI_FILES), \
 		-g$(JAVAC_DEBUG) -classpath $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST))
 	$(AT)$(shell mkdir -p $(dir $@))
-	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR)/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE)),.)
+	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR),.)
 
 jsr172_jar : $(JSR_172_JAR)
 
@@ -114,7 +114,7 @@ $(JSR_172_JAR) : $(JSR_172_BUILD_DIR) $(JSR_172_GENERATED_DIR) $(JSR_172_BUILD_E
 	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR), \
 		$(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES) \
 		$(foreach class, $(shell cat $(call constantClassesListFile, $(JSR_172_GENERATED_DIR))), \
-		$(JSR_172_GENERATED_DIR)/classes/$(subst .,/,$(class)).java) , \
+		$(JSR_172_GENERATED_DIR)/$(subst .,/,$(class)).java) , \
 		-classpath "$(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)$(PS)$(JSR_172_BUILD_DIR)$(PS)$(JSR_172_BUILD_EXTRA_DIR)" )
 	$(AT)$(shell mkdir -p $(dir $@))
 	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR),.)
@@ -132,7 +132,7 @@ define generateConstantClasses
             -xml $(2) \
             -xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
             -params fullClassName $(class) \
-            -out $(1)/classes/$(subst .,/,$(class)).java;))
+            -out $(1)/$(subst .,/,$(class)).java;))
 endef
 
 # Returns the name of a file which contains a list of classes generated from an XML constant file
