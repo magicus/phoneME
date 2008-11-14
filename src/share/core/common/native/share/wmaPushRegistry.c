@@ -531,7 +531,7 @@ KNIDECL(com_sun_midp_wma_PushConnectionsPool_removePushPort) {
     int port = KNI_GetParameterAsInt(1);
     int handle = 0;
     handle = unregister_filter(port);
-    unregisterSMSEntry(port, handle);
+/*    unregisterSMSEntry(port, handle);*/
 
     KNI_ReturnInt(1);
 }
