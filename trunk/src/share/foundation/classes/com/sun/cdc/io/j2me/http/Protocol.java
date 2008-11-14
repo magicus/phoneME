@@ -47,6 +47,7 @@ import javax.microedition.io.Connector;
 import com.sun.cdc.io.ConnectionBase;
 import com.sun.cdc.io.DateParser;
 
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -331,6 +332,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             try {
                 streamConnection = connectSocket();
             } catch (UnknownHostException ex) {
+                throw new ConnectionNotFoundException(
+                        "Cannot connect to "+host+" on port "+port+": "+ex);
+            } catch (SocketException ex) {
                 throw new ConnectionNotFoundException(
                         "Cannot connect to "+host+" on port "+port+": "+ex);
             }
@@ -1000,7 +1004,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         
         // Check for illegal empty string for host
         if (host.equals("")) {
-            throw new IllegalArgumentException("Host not recognized."+host);
+            throw new IllegalArgumentException("Host not recognized: "+host);
         }
 
         // Open socket connection.
@@ -1041,7 +1045,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         String reqLine;
         
-	if (proxyHost == null) {
+        if (proxyHost == null) {
             reqLine = method + " " + (getFile() == null ? "/" : getFile())
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
@@ -1217,7 +1221,8 @@ malformed: {
 
         if (streamConnection != null) {
             String connectionField = (String) headerFields.get("connection");
-            if (connectionField != null &&
+            if (privateIn == null || privateIn.available() > 0
+                    || connectionField != null &&
                     (connectionField.equalsIgnoreCase("close") ||
                     (responseProtocol != null
                         && responseProtocol.equalsIgnoreCase("HTTP/1.0")
