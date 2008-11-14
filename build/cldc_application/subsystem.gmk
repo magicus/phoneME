@@ -44,8 +44,10 @@ include $(TOOLS_DIR)/tools.gmk
 $(XMLPARSER_GENERATED_JAVA_FILES) : $(JPP_CLASS_FILES)
 
 xmlparser_jar: $(XMLPARSER_JAR)
+
 $(XMLPARSER_JAR) : $(XMLPARSER_JAVA_FILES)
 	@echo "build $@ ..."
+	$(AT)mkdir -p $(XMLPARSER_BUILD_DIR)
 	$(AT)$(call compileJavaClasses,$(XMLPARSER_BUILD_DIR),$(XMLPARSER_JAVA_FILES),)
 	$(AT)$(shell mkdir -p $(dir $@))
 	$(AT)$(call createJarFile,$@,$(XMLPARSER_BUILD_DIR),.)
