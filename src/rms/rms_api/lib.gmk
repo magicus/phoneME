@@ -58,12 +58,10 @@ SUBSYSTEM_RMS_JAVA_FILES += \
     $(RMS_API_DIR)/reference/classes/com/sun/midp/rms/RmsEnvironment.java \
     $(RMS_API_DIR)/reference/classes/com/sun/midp/rms/SuiteContainer.java
 
-
 # Native files for the ( rms_api ) library
 #
 SUBSYSTEM_RMS_NATIVE_FILES += \
     recordStoreFile.c
-
 
 # I3test files for the ( rms ) subsystem
 #

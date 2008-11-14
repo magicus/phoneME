@@ -403,4 +403,17 @@ public final class EventTypes {
      * JSR290 DOM object finalize notification event
      */
     public static final int DOM_FINALIZE_EVENT = 64;
+
+    /**
+     * This event is sent on RMS storage changing to
+     * asynchronously notify registered RMS listeners
+     */
+    public static final int RECORD_STORE_CHANGE_EVENT = 65;
+
+    /**
+     * This event is sent to AMS task when asynchronous notification
+     * of record store changes can not be delivered to listener task
+     * during predefined timeout period 
+     */
+    public static final int RECORD_STORE_FAILED_NOTIFICATION_EVENT = 66;
 }

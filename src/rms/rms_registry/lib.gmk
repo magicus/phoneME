@@ -1,5 +1,5 @@
 #
-#   
+#  
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -34,51 +34,15 @@
 #
 ######################################################################
 
-# Adds to global SUBSYSTEMS list
-#
-SUBSYSTEMS += rms
+RMS_REGISTRY_DIR = $(SUBSYSTEM_RMS_DIR)/rms_registry
 
-SUBSYSTEM_RMS_DIR = $(SUBSYSTEM_DIR)/rms
+SUBSYSTEM_RMS_JAVA_FILES += \
+    $(RMS_REGISTRY_DIR)/classes/com/sun/midp/rms/RecordStoreEventConsumer.java
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += \
-    $(SUBSYSTEM_RMS_DIR)/rms_api/classes \
-    $(SUBSYSTEM_RMS_DIR)/rms_api/reference/classes \
-    $(SUBSYSTEM_RMS_DIR)/rms_exc/reference/classes
-
-ifeq ($(USE_RMS_TREE_INDEX), true)
-  MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_RMS_DIR)/record_index/tree_index/classes
- else
-  MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_RMS_DIR)/record_index/linear_index/classes
- endif 
-
-SUBSYSTEM_RMS_PACKAGES = \
-    javax.microedition.rms \
-    com.sun.midp.rms 
-
-MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_RMS_PACKAGES)
-
-MIDP_JAVADOC_ALL += \
-        -group "Persistence Package" \
-	$(shell echo $(SUBSYSTEM_RMS_PACKAGES) | tr ' ' $(PATHSEP))
-
-# This specifies the option you choose for this build 
-#
-# linear_index - original linear search
-# tree_index   - tree based search (faster)
-#
-SUBSYSTEM_RMS_MODULES = common
-
-ifeq ($(USE_RMS_TREE_INDEX), true)
-SUBSYSTEM_RMS_MODULES += tree_index
+ifeq ($(TARGET_VM), cldc_vm)
+  RMS_REGISTRY_IMPL_DIR ?= $(RMS_REGISTRY_DIR)/cldc_rms_registry
 else
-SUBSYSTEM_RMS_MODULES += linear_index
+  RMS_REGISTRY_IMPL_DIR ?= $(RMS_REGISTRY_DIR)/stubs
 endif
 
-include $(SUBSYSTEM_RMS_DIR)/rms_base/lib.gmk
-include $(SUBSYSTEM_RMS_DIR)/rms_api/lib.gmk
-include $(SUBSYSTEM_RMS_DIR)/rms_exc/lib.gmk
-include $(SUBSYSTEM_RMS_DIR)/record_index/lib.gmk
-include $(SUBSYSTEM_RMS_DIR)/record_store/lib.gmk
-include $(SUBSYSTEM_RMS_DIR)/rms_registry/lib.gmk
-include $(SUBSYSTEM_RMS_DIR)/record_store_lock/lib.gmk
+include $(RMS_REGISTRY_IMPL_DIR)/lib.gmk
