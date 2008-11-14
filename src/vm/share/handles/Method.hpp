@@ -914,7 +914,7 @@ public:
     }
   }
 
-#if ENABLE_CSE
+#if ENABLE_COMPILER && ENABLE_CSE
   //scan the byte code snippet start from begin bci to end bci.  If the snippet contains
   //byte code which can't be skipped based on semantic or constraint of our 
   //implementation. We return false. Otherwise, we fill the three kinds of dependency

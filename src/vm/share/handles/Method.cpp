@@ -2996,7 +2996,8 @@ void Method::iterate_oopmaps(oopmaps_doer do_map, void* param) {
 }
 #endif
 
-#if ENABLE_CSE
+#if ENABLE_COMPILER && ENABLE_CSE
+
 bool Method::is_snippet_can_be_elminate(jint begin_bci, jint end_bci, int& local_mask, int& constant_mask, 
                            int& array_type_mask) {
  AllocationDisabler raw_pointers_used_in_this_function;
