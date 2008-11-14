@@ -127,7 +127,8 @@ EXTRA_CFLAGS	+= -Werror
 endif
 endif
 
-EXTRA_CFLAGS	+= -W -Wall
+include $(MIDP_DIR)/build/common/makefiles/gcc-warnings.gmk
+
 EXTRA_CFLAGS	+= -DGCC
 
 ifeq ($(TARGET_VM), cdc_vm)
