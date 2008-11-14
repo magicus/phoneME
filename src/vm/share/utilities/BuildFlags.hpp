@@ -720,6 +720,10 @@
 #error "TIMER_INTERRUPT is not supported in this configuration"
 #endif
 
+#if ENABLE_CPU_VARIANT && ENABLE_THUMB_VM
+#error "ENABLE_CPU_VARIANT is not currently supported for ENABLE_THUMB_VM"
+#endif
+
 //
 // USE_SINGLE_METHOD_FLUSHING         During code patching use the single
 //                                    flush icache for the method instead of
