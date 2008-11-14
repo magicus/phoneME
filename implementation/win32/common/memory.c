@@ -105,3 +105,15 @@ void* javacall_realloc(void* ptr, unsigned int size) {
 void  javacall_free(void* ptr) {
     free(ptr);
 }
+
+/** 
+ * Allocates and clears the given number of elements of the given size
+ * from the private JAVACALL memory pool.
+ * 
+ * @param    numberOfElements Number of elements to allocate 
+ * @param    elementSize Size of one element 
+ * @return	  pointer to the newly allocated and cleared memory 
+ */
+void* javacall_calloc(unsigned int numberOfElements, unsigned int elementSize ) {
+    calloc(numberOfElements, elementSize);
+}
