@@ -54,6 +54,13 @@ jboolean lcdlf_reverse_orientation(int hardwareId) {
 }
 
 /**
+ * Handle clamshell event
+ */
+void lcdlf_handle_clamshell_event() {
+  return lfpport_handle_clamshell_event();
+}
+
+/**
  * Change screen orientation flag
  */
 jboolean lcdlf_get_reverse_orientation(int hardwareId) {

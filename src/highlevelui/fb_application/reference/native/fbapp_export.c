@@ -136,6 +136,10 @@ jboolean fbapp_reverse_orientation(int hardwareId) {
     return reverse_orientation;
 }
 
+/** Handle clamshell event */
+void fbapp_handle_clamshell_event() {
+}
+
 /**Set full screen mode on/off */
 void fbapp_set_fullscreen_mode(int hardwareId, int mode) {
     if (isFullScreen != mode) {

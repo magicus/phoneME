@@ -149,6 +149,7 @@ typedef enum {
 #endif /* ENABLE_ON_DEVICE_DEBUG */
     MIDP_JC_EVENT_ROTATION             ,
     MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED,
+	MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED,
     MIDP_JC_EVENT_MENU_SELECTION,
     MIDP_JC_EVENT_SET_VM_ARGS          ,
     MIDP_JC_EVENT_SET_HEAP_SIZE        ,
@@ -242,6 +243,10 @@ typedef struct {
     int            hardwareId;
     int            state;
 } midp_jc_event_display_device;
+
+typedef struct {
+    int            state;
+} midp_jc_event_clamshell;
 
 #ifdef ENABLE_JSR_120
 typedef struct {
@@ -394,6 +399,7 @@ typedef struct {
         midp_jc_event_timer                timerEvent;
         midp_jc_event_push                 pushEvent;
         midp_jc_event_display_device       displayDeviceEvent;
+		midp_jc_event_clamshell            clamshellEvent;
 #ifdef ENABLE_JSR_120
         midp_jc_event_sms_sending_result   smsSendingResultEvent;
         midp_jc_event_sms_incoming         smsIncomingEvent;

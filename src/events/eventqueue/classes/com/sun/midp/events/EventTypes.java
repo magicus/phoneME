@@ -416,4 +416,10 @@ public final class EventTypes {
      * during predefined timeout period 
      */
     public static final int RECORD_STORE_FAILED_NOTIFICATION_EVENT = 66;
+    /**
+     * This event is sent when the clamshell state is changed.
+     */
+
+    public static final int DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT = 67;
+
 }

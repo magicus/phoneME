@@ -128,6 +128,13 @@ jboolean lfjport_reverse_orientation(int hardwareId) {
 }
 
 /**
+ * Handle clamshell event
+ */
+void lfjport_handle_clamshell_event() {
+    winceapp_hadle_clamshell_event();
+}
+
+/**
  * Get screen orientation flag
  */
 jboolean lfjport_get_reverse_orientation(int hardwareId) {

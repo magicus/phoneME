@@ -115,6 +115,12 @@ jboolean lfjport_reverse_orientation(int hardwareId) {
 }
 
 /**
+ * Handle clamshell event
+ */
+void lfjport_handle_clamshell_event() {
+}
+
+/**
  * Bridge function to get screen orientation flag
  * @param hardwareId hardware ID of the display device
  */

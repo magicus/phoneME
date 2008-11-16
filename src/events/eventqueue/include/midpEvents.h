@@ -236,6 +236,11 @@ extern "C" {
 #define RECORD_STORE_FAILED_NOTIFICATION_EVENT  66;
 
 
+/**
+ * This event is sent when the clamshell state is changed.
+ */
+#define DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT  67
+
 /** @} */
 
 /**
