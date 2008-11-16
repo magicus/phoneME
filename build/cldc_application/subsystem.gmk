@@ -110,12 +110,12 @@ $(JSR_172_JAR) : $(JSR_172_BUILD_DIR) $(JSR_172_GENERATED_DIR) $(JSR_172_BUILD_E
 	@echo "build $@ ..."
 	$(AT)$(call generateConstantClasses, $(JSR_172_GENERATED_DIR), $(JSR_172_CONSTANT_FILE))
 	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_EXTRA_DIR),$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES), \
-		-classpath "$(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)")
+		-classpath $(INTERNAL_JSR_172_DEPENDENCIES_CPLIST))
 	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR), \
 		$(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES) \
 		$(foreach class, $(shell cat $(call constantClassesListFile, $(JSR_172_GENERATED_DIR))), \
 		$(JSR_172_GENERATED_DIR)/$(subst .,/,$(class)).java) , \
-		-classpath "$(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)$(PS)$(JSR_172_BUILD_DIR)$(PS)$(JSR_172_BUILD_EXTRA_DIR)" )
+		-classpath $(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)$(PS)$(JSR_172_BUILD_DIR)$(PS)$(JSR_172_BUILD_EXTRA_DIR) )
 	$(AT)$(shell mkdir -p $(dir $@))
 	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR),.)
 
