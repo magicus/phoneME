@@ -115,6 +115,14 @@ typedef enum {
 } javacall_lcd_display_device_state;
 
 /**
+ * @enum javacall_lcd_clamshell_state 
+ */
+typedef enum {
+    JAVACALL_LCD_CLAMSHELL_OPEN = 3000,
+    JAVACALL_LCD_CLAMSHELL_CLOSE = 3001
+}javacall_lcd_clamshell_state;
+
+/**
  * The function javacall_lcd_init is called during Java VM startup, allowing the
  * platform to perform device specific initializations.
  *
@@ -244,6 +252,10 @@ javacall_result javacall_lcd_flush_partial(int hardwareId, int ystart, int yend)
  * @param hardwareId unique id of hardware display
  */
 javacall_bool javacall_lcd_reverse_orientation(int hardwareId);
+/**
+ * Handle clamshell event
+ */
+void javacall_lcd_handle_clamshell();
 
 /**
  * Get flag of rotation
@@ -341,6 +353,12 @@ void javanotify_rotation(int hardwareId);
  * to notify display device state change 
  */
 void javanotify_display_device_state_changed(int hardwareId, javacall_lcd_display_device_state state);
+
+/**
+  * The platform should invoke this function in platform context
+  * to notify clamshell state change
+  */
+void javanotify_clamshell_state_changed(javacall_lcd_clamshell_state state);
 
 /** @} */
 

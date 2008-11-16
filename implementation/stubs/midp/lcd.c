@@ -152,6 +152,10 @@ javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
     (void)hardwareId;
     return JAVACALL_FALSE;
 }
+
+void javacall_lcd_handle_clamshell() {
+    //Not implemented
+}
  
 javacall_bool javacall_lcd_get_reverse_orientation(int hardwareId) {
     (void)hardwareId;
