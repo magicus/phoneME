@@ -145,7 +145,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         break;
 
 	case MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED:
-        pNewSignal->waitingFor = DISPLAY_DEVICE_SIGNAL;
+        pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT;
         pNewMidpEvent->intParam1 = event->data.clamshellEvent.state;
         break;
