@@ -114,6 +114,7 @@ MIDPError ams_get_startup_params(char*** pppParams, int* pNumberOfParams) {
             while (i < fileSize) {
                 if (pBuffer[i] == 0x0a) {
 		    if (i == lastPos) {
+		        lastPos++;
   		        i++;
 		        continue;
 		    }
@@ -131,7 +132,6 @@ MIDPError ams_get_startup_params(char*** pppParams, int* pNumberOfParams) {
                     memcpy(ppParamsRead[linesNum], &pBuffer[lastPos], i - lastPos);
                     ppParamsRead[linesNum][i - lastPos] = 0;
 
-                    lastPos = i + 1;
                     linesNum++;
 		    
 		    if (linesNum > MAX_AMS_PARAMS) {
@@ -142,6 +142,8 @@ MIDPError ams_get_startup_params(char*** pppParams, int* pNumberOfParams) {
 		    if (i + 1 < fileSize && pBuffer[i + 1] == 0x0d) {
 		        i++;
 		    }
+
+                    lastPos = i + 1;
                 }
 		
 		i++;
