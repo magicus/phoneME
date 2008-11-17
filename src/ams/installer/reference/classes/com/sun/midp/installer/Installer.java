@@ -1586,6 +1586,10 @@ public abstract class Installer {
                 OtaNotifier.INVALID_JAD_MSG);
             throw new
                 InvalidJadException(InvalidJadException.INVALID_VERSION);
+        } catch (MIDletSuiteLockedException msle) {
+            // this was an attempt to update a locked suite, set the correct ID
+            info.id = id;
+            throw msle;
         }
     }
 

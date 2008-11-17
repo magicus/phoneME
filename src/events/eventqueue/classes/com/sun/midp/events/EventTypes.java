@@ -416,10 +416,21 @@ public final class EventTypes {
      * during predefined timeout period 
      */
     public static final int RECORD_STORE_FAILED_NOTIFICATION_EVENT = 66;
+
     /**
      * This event is sent when the clamshell state is changed.
      */
 
     public static final int DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT = 67;
 
+    /**
+     * Request to AMS to terminate all running midlets from the given suite.
+     */
+    public static final int MIDP_KILL_MIDLETS_EVENT = 68;
+
+     /**
+      * Notification sent by AMS to inform the listeners that
+      * the midlets from the given suite were killed.
+      */
+    public static final int MIDP_MIDLETS_KILLED_EVENT = 69;
 }

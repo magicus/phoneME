@@ -291,7 +291,7 @@ class CldcPlatformRequest implements PlatformRequest {
     private boolean dispatchMidletSuiteUrl(String url) {
         return MIDletSuiteUtils.executeWithArgs(securityToken,
             MIDletSuite.INTERNAL_SUITE_ID, INSTALLER_CLASS,
-                "MIDlet Suite Installer", "I", url, null);
+                "MIDlet Suite Installer", "PR", url, null);
     }
 
     /**

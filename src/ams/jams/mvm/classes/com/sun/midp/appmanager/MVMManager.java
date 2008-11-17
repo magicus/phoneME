@@ -26,6 +26,8 @@
 
 package com.sun.midp.appmanager;
 
+import java.util.Enumeration;
+
 import javax.microedition.midlet.*;
 
 import javax.microedition.lcdui.*;
@@ -60,7 +62,8 @@ public class MVMManager extends MIDlet
                 DisplayControllerListener, 
                 ApplicationManager,
                 ODTControllerEventConsumer,
-                AMSServicesEventConsumer {
+                AMSServicesEventConsumer,
+                InstallerEventConsumer {
 
     /** Constant for the discovery application class name. */
     private static final String DISCOVERY_APP =
@@ -96,6 +99,9 @@ public class MVMManager extends MIDlet
     /** A thread waiting until a midlet is terminated. Can be null. */
     private Thread waitForDestroyThread;
 
+    /** A synchronization object. */
+    private static final Object waitForDestroy = new Object();
+
     /**
      * Create and initialize a new MVMManager MIDlet.
      */
@@ -105,6 +111,7 @@ public class MVMManager extends MIDlet
         EventQueue eq = EventQueue.getEventQueue();
         new ODTControllerEventListener(eq, this);
         new AMSServicesEventListener(eq, this);
+        new InstallerEventListener(eq, this);
 
         midletProxyList = MIDletProxyList.getMIDletProxyList();
 
@@ -214,6 +221,49 @@ public class MVMManager extends MIDlet
      */
     public void handleODDSuiteRemovedEvent(int suiteId) {
         appManager.notifySuiteRemoved(suiteId);
+    }
+
+    /**
+     * Processes MIDP_KILL_MIDLETS_EVENT.
+     *
+     * @param suiteId ID of the midlet suite from which the midlets
+     *                must be killed
+     * @param isolateId ID of the isolate requested this operation
+     */
+    public void handleKillMIDletsEvent(int suiteId, int isolateId) {
+        try {
+            int timeout = 1000 * Configuration.getIntProperty(
+                    "destoryMIDletTimeout", 5);
+            Enumeration proxies = midletProxyList.getMIDlets();
+
+            while (proxies.hasMoreElements()) {
+                MIDletProxy mp = (MIDletProxy)proxies.nextElement();
+                if (mp.getSuiteId() != suiteId) {
+                    continue;
+                }
+
+                // kill the running midlet and wait until it is destroyed
+                mp.destroyMidlet();
+
+                try {
+                    synchronized(waitForDestroy) {
+                        waitForDestroy.wait(timeout);
+                    }
+                } catch (InterruptedException ie) {
+                    // ignore
+                }
+            }
+        } catch (Exception ex) {
+            displayError.showErrorAlert(null, ex, null, null);
+        } finally {
+            // notify the listeners that the midlets were killed
+            NativeEvent event = new NativeEvent(
+                    EventTypes.MIDP_MIDLETS_KILLED_EVENT);
+            event.intParam1 = suiteId;
+
+            EventQueue eq = EventQueue.getEventQueue();
+            eq.sendNativeEventToIsolate(event, isolateId);
+        }
     }
 
     /**
@@ -346,6 +396,10 @@ public class MVMManager extends MIDlet
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
+        synchronized(waitForDestroy) {
+            waitForDestroy.notify();
+        }
+        
         appManager.notifyMidletExited(midlet);
     }
 
