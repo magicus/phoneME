@@ -250,8 +250,8 @@ void VerifierFrame::check_local2(int index,  StackMapKind kind JVM_TRAPS) {
   if (vlocals_tags_at(index) != kind) {
     VFY_ERROR(ve_locals_bad_type);
   }
-  GUARANTEE(   kind == ITEM_Long && vlocals_tags_at(index + 1) == ITEM_Long_2
-            || kind == ITEM_Double && vlocals_tags_at(index + 1) == ITEM_Double_2,
+  GUARANTEE(   ((kind == ITEM_Long && vlocals_tags_at(index + 1) == ITEM_Long_2)
+            || (kind == ITEM_Double && vlocals_tags_at(index + 1) == ITEM_Double_2)),
            "Verifier assertions");
 }
 

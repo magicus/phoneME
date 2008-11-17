@@ -169,7 +169,7 @@ inline int g_isfinite(jdouble f)                 { return finite(f); }
 // specific)
 
 const jlong min_jlong = ((long long)1 << 63);
-const jlong max_jlong = (min_jlong - 1);
+const jlong max_jlong = ~min_jlong ;
 
 //---------------------------------------------------------------------------
 // Miscellaneous
