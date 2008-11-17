@@ -1,7 +1,7 @@
 /*
  * @(#)GenSrc.java	1.7 06/10/10
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@ class GenSrc extends BackEnd {
 	"import sun.util.calendar.ZoneInfo;\n\n";
     private static final String m_header = 
     "/*\n"+
-    " * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.\n" +
+    " * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.\n" +
     " * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER\n" +
     " * \n" +
     " * This program is free software; you can redistribute it and/or\n" +
