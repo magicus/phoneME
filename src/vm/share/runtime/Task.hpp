@@ -142,7 +142,7 @@ public:
 
   void free_binary_images(void) const;
 #if ENABLE_LIB_IMAGES
-void Task::remove_shared_images( void ) const;
+  void remove_shared_images( void ) const;
   static int classes_in_images_offset() {
     return FIELD_OFFSET(TaskDesc, _classes_in_images);
   }
