@@ -22,11 +22,11 @@
  * information or have any questions.
  */
 
-#ifndef __JAVACALL_DOM_EVENTDISPATCHER_H_
-#define __JAVACALL_DOM_EVENTDISPATCHER_H_
+#ifndef __JAVACALL_dom_eventsdispatcher_H_
+#define __JAVACALL_dom_eventsdispatcher_H_
 
 /**
- * @file javacall_dom_eventdispatcher.h
+ * @file javacall_dom_eventsdispatcher.h
  * @ingroup JSR290DOM
  * @brief Javacall DOM interfaces for Node
  */
@@ -69,12 +69,12 @@ extern "C" {
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_eventdispatcher_add_event_listener_finish function to complete the 
+ *             javacall_dom_eventsdispatcher_add_event_listener_finish function to complete the 
  *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_eventdispatcher_add_event_listener_start(javacall_handle handle,
+javacall_dom_eventsdispatcher_add_event_listener_start(javacall_handle handle,
                                            javacall_int32 invocation_id,
                                            void **context,
                                            javacall_const_utf16_string type,
@@ -108,12 +108,12 @@ javacall_dom_eventdispatcher_add_event_listener_start(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_eventdispatcher_add_event_listener_finish function to complete the 
+ *             javacall_dom_eventsdispatcher_add_event_listener_finish function to complete the 
  *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_eventdispatcher_add_event_listener_finish(void *context,
+javacall_dom_eventsdispatcher_add_event_listener_finish(void *context,
                                             /* OUT */ javacall_int64* ret_value);
 
 /**
@@ -144,14 +144,17 @@ javacall_dom_eventdispatcher_add_event_listener_finish(void *context,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_eventdispatcher_remove_event_listener_finish function to complete the 
+ *             javacall_dom_eventsdispatcher_remove_event_listener_finish function to complete the 
  *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_eventdispatcher_remove_event_listener_start(javacall_handle handle,
+javacall_dom_eventsdispatcher_remove_event_listener_start(javacall_handle handle,
                                               javacall_int32 invocation_id,
-                                              void **context);
+                                              void **context,
+											  javacall_const_utf16_string type,
+                                              javacall_bool use_capture,
+                                              javacall_handle listener);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -178,12 +181,12 @@ javacall_dom_eventdispatcher_remove_event_listener_start(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_eventdispatcher_remove_event_listener_finish function to complete the 
+ *             javacall_dom_eventsdispatcher_remove_event_listener_finish function to complete the 
  *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_eventdispatcher_remove_event_listener_finish(void *context);
+javacall_dom_eventsdispatcher_remove_event_listener_finish(void *context);
 
 
 /** @} */
@@ -192,4 +195,4 @@ javacall_dom_eventdispatcher_remove_event_listener_finish(void *context);
 }
 #endif
 
-#endif /* ifndef __JAVACALL_DOM_EVENTDISPATCHER_H_ */
+#endif /* ifndef __JAVACALL_dom_eventsdispatcher_H_ */
