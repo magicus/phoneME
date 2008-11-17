@@ -1,7 +1,7 @@
 // This file was generated AUTOMATICALLY from a template file Fri Jun 20 12:51:09 PDT 2003
 /* @(#)Character.java.template	1.7 03/01/13
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
