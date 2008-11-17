@@ -75,7 +75,7 @@ KNIDECL(com_sun_midp_automation_AutoKeyCode_getMIDPKeyCodeForName) {
     KNI_StartHandles(1);
     GET_PARAMETER_AS_PCSL_STRING(1, keyCodeNamePCSL)
 
-    keyCodeName = pcsl_string_get_utf8_data(&keyCodeNamePCSL);
+    keyCodeName = (const char*)pcsl_string_get_utf8_data(&keyCodeNamePCSL);
  
     for (i = 0; i < sz; ++i) {
         const char* name = keyCodeNameToMIDPKeyCode[i].name;
