@@ -46,7 +46,6 @@ char MonitorMemory::sendBuffer[];
  */  
 void 
 MonitorMemory::startup() {
-    tty->print_cr("MonitorMemory::startup");
     memset(callStackThread, 0, sizeof(callStackThread));
     // do the platform depended initialization
     MonitorMemoryMd::startup();
@@ -58,7 +57,6 @@ MonitorMemory::startup() {
  */  
 void 
 MonitorMemory::shutdown() {
-    tty->print_cr("MonitorMemory::shutdown");
     if (isSocketInitialized()) {
         // stop the memory monitor buffer flushing thread
         MonitorMemoryMd::stopFlushThread();
@@ -84,7 +82,6 @@ void
 MonitorMemory::allocateHeap(long heapSize) {
     LimeFunction *f;
     int port;
-    tty->print_cr("MonitorMemory::allocateHeap");
     if (!isSocketInitialized()) {
         f = NewLimeFunction(MEMORY_MONITOR_PACKAGE,
                 MEMORY_LISTENER_CLASS,
@@ -282,7 +279,6 @@ MonitorMemory::bufferEnterMethod(Method* m, int threadId) {
 	int lengthClassName = class_name().length();
 	int lengthMetodName = method_name().length();
 	int length = lengthClassName + 1 + lengthMetodName; // class.method
-    tty->print_cr("MonitorMemory::bufferEnterMethod methodId = %d threadId = %d", getMethodId(m), threadId);
 	
     int size = sizeof(u_long) +         // command
             sizeof(u_long) +            // methodId
@@ -320,7 +316,6 @@ MonitorMemory::bufferEnterMethod(Method* m, int threadId) {
  */    
 void 
 MonitorMemory::bufferExitMethod(juint id, int threadId) {
-    tty->print_cr("MonitorMemory::bufferExitMethod methodId = %d threadId = %d", id, threadId);
     int size = sizeof(u_long) +         // command
             sizeof(u_long) +            // methodId
             sizeof(u_long);             // threadId 
@@ -368,7 +363,6 @@ MonitorMemory::allocateObject(Oop* referent JVM_TRAPS) {
 	className[nameLength] = (char)0;
     u_long pointer = (u_long)(referent->obj());
 	u_long allocSize = (u_long)(referent->obj()->object_size());
-    tty->print_cr("MonitorMemory::allocateObject classId = %d threadId = %d className = %s", classId, threadId, className);
 
     MonitorMemoryMd::lock();
     int size = sizeof(u_long) +         // command
@@ -418,7 +412,6 @@ MonitorMemory::freeObject(Oop* referent) {
 	u_long allocSize = (u_long)(referent->obj()->object_size());
 	JavaClass jc = referent->obj()->blueprint();
     u_long classId = (u_long)jc.class_id();
-    tty->print_cr("MonitorMemory::freeObject classId = %d", classId);
     MonitorMemoryMd::lock();
     int size = sizeof(u_long) +         // command
             sizeof(u_long) +            // pointer
