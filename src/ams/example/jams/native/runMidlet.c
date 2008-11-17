@@ -122,7 +122,13 @@ runMidlet(int argc, char** commandlineArgs) {
             ppParamsFromPlatform += used;
         }
 
-        for (i = 0; i < numberOfParams; i++) {
+        if (numberOfParams + 1 > RUNMIDLET_MAX_ARGS) {
+            REPORT_ERROR(LC_AMS, "(1) Number of arguments exceeds supported limit");
+	    ams_free_startup_params(ppSavedParams, numberOfParams);
+	    return -1;
+	}
+				
+	for (i = 0; i < numberOfParams; i++) {
             /* argv[0] is the program name */
             argv[i + 1] = ppParamsFromPlatform[i];
         }

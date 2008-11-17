@@ -30,10 +30,12 @@
  * Retrieves an array of parameters to be handled by runMidlet.
  * If some parameter with the same name is passed to runMidlet
  * via the command line, it overrides the parameter read by this
- * function.
+ * function (this behavior is implemented in the calling function).
+ * Note that the memory to hold the parameters is allocated by this
+ * function and must be freed by the caller using ams_get_startup_params().
  * 
  * @param pParams         [out] if successful, will hold an array of
-                                startup parameters
+ *                              startup parameters
  * @param pNumberOfParams [out] if successful, will hold a number of
  *                              parameters read
  *
