@@ -1834,6 +1834,14 @@ GCC_PREFIX_powerpc =
 GCC_PREFIX_c       = $(GCC_PREFIX_$(target_arch))
 GCC_PREFIX         = $(GCC_PREFIX_$(gcc_arch))
 
+# GCC 4.2 and 4.3 issue false positive warnings about uninitialized variables
+ENABLE_GCC_WUNINITIALIZED = true
+ifeq ($(ENABLE_GCC_WUNINITIALIZED), true)
+GCC_WUNINITIALIZED = -Wuninitialized
+else
+GCC_WUNINITIALIZED =
+endif
+
 # for now GCC_VERSION is relevant only on i386
 GCC_POSTFIX_i386   = $(GCC_VERSION)
 GCC_POSTFIX        = $(GCC_POSTFIX_$(gcc_arch))
@@ -1884,7 +1892,7 @@ endif
 
 ifeq ($(NO_DEBUG_SYMBOLS), true)
     DEBUG_SYMBOLS_FLAGS     =
-    CPP_OPT_FLAGS_debug     = -O2 -Wuninitialized -fexpensive-optimizations
+    CPP_OPT_FLAGS_debug     = -O2 $(GCC_WUNINITIALIZED) -fexpensive-optimizations
     ifneq ($(PROFILING), true)
     CPP_OPT_FLAGS_debug    += -fomit-frame-pointer
     endif
@@ -1899,8 +1907,8 @@ ifeq ($(PRODUCT_DEBUG), true)
 CPP_OPT_FLAGS_release   += -g
 CPP_OPT_FLAGS_product   += -g
 else
-CPP_OPT_FLAGS_release   = -O2 -Wuninitialized
-CPP_OPT_FLAGS_product   = -O2 -Wuninitialized \
+CPP_OPT_FLAGS_release   = -O2 $(GCC_WUNINITIALIZED)
+CPP_OPT_FLAGS_product   = -O2 $(GCC_WUNINITIALIZED) \
                           -fexpensive-optimizations
   ifneq ($(PROFILING), true)
   CPP_OPT_FLAGS_product+= -fomit-frame-pointer
