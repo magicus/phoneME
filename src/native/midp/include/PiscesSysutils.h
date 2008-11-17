@@ -36,7 +36,7 @@
 /* for sqrt, sin, cos */
 #include <jvm.h>
 #include <kni.h>
-//#include <math.h>
+#include <math.h>
 
 jboolean readAndClearMemErrorFlag();
 jboolean readMemErrorFlag();
