@@ -368,7 +368,7 @@ private:
 
   static void init_finalizers( void );
 
-  static void register_finalizer_reachable_object(Oop* referent, int isFinalize JVM_TRAPS);
+  static void register_finalizer_reachable_object(Oop* referent JVM_TRAPS);
   static void mark_finalizers( FinalizerConsDesc** list );
   static void unmark_pending_finalizers( void );
   static void update_interior_pointers( FinalizerConsDesc** list );

@@ -96,6 +96,7 @@ public:
 
   // simple type tests:
   inline bool is_instance() const;
+  inline bool is_array() const;
   inline bool is_bool_array() const;
   inline bool is_char_array() const;
   inline bool is_int_array() const;

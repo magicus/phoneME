@@ -60,11 +60,9 @@ memmonitor_flushThread(void* args) {
     while (!exitThread) {
         Sleep(FLUSH_PERIOD);
         
-        if (!memmonitor_flushed) {
-            memmonitor_flushBuffer();
-        }
+        MonitorMemory::flushBuffer();
         
-        memmonitor_flushed = 0;
+        MonitorMemory::setFlushed(0);
     }
 
     _endthreadex(0);

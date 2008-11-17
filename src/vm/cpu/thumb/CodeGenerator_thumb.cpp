@@ -1866,7 +1866,11 @@ void CodeGenerator::new_object(Value& result, JavaClass* klass JVM_TRAPS) {
   frame()->flush(JVM_SINGLE_ARG_CHECK);
 
   // Handle finalization by going slow-case for objects with finalizers.
-  if (klass->has_finalizer()) {
+  if (klass->has_finalizer()
+#if ENABLE_MEMORY_MONITOR 
+      || Arguments::_monitor_memory
+#endif
+    ) {
     // _newobject(Thread&, raw_class);
     RegisterAllocator::reference(r1);
     ldr_oop(r1, klass);

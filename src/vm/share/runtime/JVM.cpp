@@ -345,6 +345,12 @@ inline bool JVM::initialize( void ) {
     initialize_standalone_rom_generator();
   }
 
+#if ENABLE_MEMORY_MONITOR 
+  if(Arguments::_monitor_memory) {
+    MonitorMemory::startup();
+  }
+#endif
+
   if (!Universe::bootstrap(_classpath)) {
     _exit_code = -1;
     return false;
@@ -466,11 +472,6 @@ int JVM::start() {
 #if ENABLE_CPU_VARIANT && !CROSS_GENERATOR
   if (EnableCPUVariant) {
     ::initialize_cpu_variant();
-  }
-#endif
-#if ENABLE_MEMORY_MONITOR 
-  if(Arguments::_monitor_memory) {
-    MonitorMemory::startup();
   }
 #endif
 
@@ -1470,3 +1471,17 @@ void JVM::measure_native_stack(bool measure) {
 }
 
 #endif // ENABLE_MEASURE_NATIVE_STACK
+
+#if ENABLE_MEMORY_MONITOR 
+extern "C" void javanotify_run_GC() {
+  if(Arguments::_monitor_memory) {
+    JVM_GarbageCollect(0, 0);
+  }
+}
+
+extern "C" void javanotify_stop_memmon() {
+  if(Arguments::_monitor_memory) {
+    MonitorMemory::shutdown();
+  }
+}
+#endif

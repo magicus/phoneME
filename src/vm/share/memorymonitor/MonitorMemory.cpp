@@ -28,43 +28,25 @@
 # include "incls/_MonitorMemory.cpp.incl"
 
 #if ENABLE_MEMORY_MONITOR
+// #include <windows.h> 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+int MonitorMemory::callStackThread[];
+int MonitorMemory::callStackLength[];
+Method* MonitorMemory::callStack[MONITOR_CALLSTACK_CNT][MONITOR_CALLSTACK_LEN];
+volatile int MonitorMemory::is_flushed = 0;
+int MonitorMemory::sendOffset = 0;
+int MonitorMemory::numCommands = 0;
+int MonitorMemory::lastEnterMethodThread = -1;
+char MonitorMemory::sendBuffer[];
 
-/* The IP address of the server */
-static const char *server = "127.0.0.1";
-
-/**
- * The offset to the send buffer, where the next command will be placed.
- */ 
-static int sendOffset = 0;
-
-/**
- * The number of commands stored in the send buffer.
- */ 
-static int numCommands = 0;
-
-static int lastEnterMethodThread = -1;
-
-/**
- * A flag which indicates if the memory monitor bufer has been flushed from the
- * last time this flag was cleared. It's used in the memory monitor flushing 
- * thread (see memMonitor_md.c).
- */   
-volatile int memmonitor_flushed = 0;
-
-#ifdef __cplusplus
-}
-#endif
 
 /**
  * This function initializes the memory monitor. After the initialization, the
- * other memmonitor_* functions can be called.
+ * other functions can be called.
  */  
 void 
 MonitorMemory::startup() {
+    tty->print_cr("MonitorMemory::startup");
     memset(callStackThread, 0, sizeof(callStackThread));
     // do the platform depended initialization
     MonitorMemoryMd::startup();
@@ -76,6 +58,7 @@ MonitorMemory::startup() {
  */  
 void 
 MonitorMemory::shutdown() {
+    tty->print_cr("MonitorMemory::shutdown");
     if (isSocketInitialized()) {
         // stop the memory monitor buffer flushing thread
         MonitorMemoryMd::stopFlushThread();
@@ -101,7 +84,7 @@ void
 MonitorMemory::allocateHeap(long heapSize) {
     LimeFunction *f;
     int port;
-
+    tty->print_cr("MonitorMemory::allocateHeap");
     if (!isSocketInitialized()) {
         f = NewLimeFunction(MEMORY_MONITOR_PACKAGE,
                 MEMORY_LISTENER_CLASS,
@@ -110,7 +93,7 @@ MonitorMemory::allocateHeap(long heapSize) {
         DeleteLimeFunction(f);
 
         if (port != -1) {
-            socketConnect(port, server);
+            socketConnect(port, "127.0.0.1");
             if (isSocketInitialized()) {
                 MonitorMemoryMd::startFlushThread();
             } else {
@@ -131,9 +114,17 @@ MonitorMemory::allocateHeap(long heapSize) {
  */  
 void
 MonitorMemory::flushBuffer() {
-    MonitorMemoryMd::lock();
-    flushBufferInt();
-    MonitorMemoryMd::unlock();
+    if (!is_flushed) {
+        MonitorMemoryMd::lock();
+        flushBufferInt();
+		is_flushed = 1;
+        MonitorMemoryMd::unlock();
+	}
+}
+
+void
+MonitorMemory::setFlushed(int isFlushed) {
+    is_flushed = isFlushed;
 }
 
 /**
@@ -143,8 +134,11 @@ MonitorMemory::flushBuffer() {
  */
 void
 MonitorMemory::enterMethod(Method* m) {
+    if (Thread::current()->obj() == NULL) {
+	    return;
+	}
 	int threadId = (int)(Thread::current()->id());
-	int methodId = getMethodId(m);
+	threadId = 0;
     int stackIndex = findReserveCallStack(threadId);
 
     if (stackIndex != -1) {
@@ -158,7 +152,7 @@ MonitorMemory::enterMethod(Method* m) {
             count = 0;
             callStackThread[stackIndex] = threadId;
 		}
-        callStack[stackIndex][count++] = methodId;
+        callStack[stackIndex][count++] = m;
         callStackLength[stackIndex] = count;
     } else {
        MonitorMemoryMd::lock();
@@ -176,12 +170,16 @@ MonitorMemory::enterMethod(Method* m) {
  */
 void
 MonitorMemory::exitMethod(Method* m) {
+    if (Thread::current()->obj() == NULL) {
+	    return;
+	}
 	int threadId = (int)(Thread::current()->id());
+	threadId = 0;
 	int methodId = getMethodId(m);
     int stackIndex = findCallStack(threadId);
      if (stackIndex != -1) {
         int last = callStackLength[stackIndex] - 1; // last >= 0
-        if (callStack[stackIndex][last] == threadId) {
+        if (getMethodId(callStack[stackIndex][last]) == methodId) {
             // there has been no allocation in that method, remove it from the
             // call stack
             callStackLength[stackIndex] = last;
@@ -206,9 +204,13 @@ MonitorMemory::exitMethod(Method* m) {
  * This function is called when an exception is thrown.
  */ 
 void 
-throwException() {
+MonitorMemory::throwException() {
+    if (Thread::current()->obj() == NULL) {
+	    return;
+	}
     /* A unique number that identifies the thread */
 	int threadId = (int)(Thread::current()->id());
+	threadId = 0;
     int stackIndex = findCallStack(threadId);
     
     if (stackIndex != -1) {
@@ -226,7 +228,7 @@ void
 MonitorMemory::flushBufferInt() {
     if (numCommands == 0) {
         // nothing to send
-        memmonitor_flushed = 1;
+        is_flushed = 1;
         return;
     }
 
@@ -234,7 +236,7 @@ MonitorMemory::flushBufferInt() {
   
     sendOffset = 0;
     numCommands = 0;
-    memmonitor_flushed = 1;
+    is_flushed = 1;
 }
 
 /**
@@ -259,7 +261,7 @@ MonitorMemory::bufferInit(int heapSize) {
 int MonitorMemory::getMethodId(Method* m) {
     UsingFastOops fast_oops;
     Symbol::Fast method_name = m->name();
-    InstanceClass::Fast holder = m().holder();
+    InstanceClass::Fast holder = m->holder();
     Symbol::Fast class_name = holder().name();
     return (int)(method_name().hash() + class_name().hash());
 }
@@ -275,11 +277,12 @@ void
 MonitorMemory::bufferEnterMethod(Method* m, int threadId) {
     UsingFastOops fast_oops;
     Symbol::Fast method_name = m->name();
-    InstanceClass::Fast holder = m().holder();
+    InstanceClass::Fast holder = m->holder();
     Symbol::Fast class_name = holder().name();
 	int lengthClassName = class_name().length();
 	int lengthMetodName = method_name().length();
 	int length = lengthClassName + 1 + lengthMetodName; // class.method
+    tty->print_cr("MonitorMemory::bufferEnterMethod methodId = %d threadId = %d", getMethodId(m), threadId);
 	
     int size = sizeof(u_long) +         // command
             sizeof(u_long) +            // methodId
@@ -316,7 +319,8 @@ MonitorMemory::bufferEnterMethod(Method* m, int threadId) {
  * @param threadId thread id
  */    
 void 
-MonitorMemory::bufferExitMethod(int id, int threadId) {
+MonitorMemory::bufferExitMethod(juint id, int threadId) {
+    tty->print_cr("MonitorMemory::bufferExitMethod methodId = %d threadId = %d", id, threadId);
     int size = sizeof(u_long) +         // command
             sizeof(u_long) +            // methodId
             sizeof(u_long);             // threadId 
@@ -340,25 +344,31 @@ MonitorMemory::bufferExitMethod(int id, int threadId) {
  * 
  * @param obj the object pointer
  */    
-static void 
-allocateObject(Oop* obj) {
+void 
+MonitorMemory::allocateObject(Oop* referent JVM_TRAPS) {
 
-    if (obj == NULL) {
+	if (!referent->obj()->is_instance() && !referent->obj()->is_array()) {
 	  return;
 	}
-	if (!obj->is_instance() && !obj->is_array()) {
-	  return;
+    if (Thread::current()->obj() == NULL) {
+	    return;
 	}
-	JavaClass jc = obj->blueprint();
+	JavaClass jc = referent->obj()->blueprint();
     u_long classId = (u_long)jc.class_id();
     UsingFastOops fast;
     String::Fast class_name = jc.getStringName(JVM_SINGLE_ARG_CHECK);
 	TypeArray::Fast cstring_name = class_name().to_cstring(JVM_SINGLE_ARG_NO_CHECK);
-	const char *className = (char *) cstring_name().base_address();
-	u_long nameLength = (u_long)(class_name().length());
-    u_long pointer = (u_long)(obj->obj());
+	char *className = (char *) cstring_name().base_address();
 	u_long threadId = (u_long)(Thread::current()->id());
-	u_long allocSize = (u_long)(obj->object_size());
+    threadId = 0;
+	u_long nameLength = (u_long)(class_name().length());
+	if (!nameLength) {
+	    return;
+	}
+	className[nameLength] = (char)0;
+    u_long pointer = (u_long)(referent->obj());
+	u_long allocSize = (u_long)(referent->obj()->object_size());
+    tty->print_cr("MonitorMemory::allocateObject classId = %d threadId = %d className = %s", classId, threadId, className);
 
     MonitorMemoryMd::lock();
     int size = sizeof(u_long) +         // command
@@ -389,6 +399,7 @@ allocateObject(Oop* obj) {
  
     ++numCommands;
     MonitorMemoryMd::unlock();
+    // ::Sleep(2000);
 }
 
 /**
@@ -397,19 +408,17 @@ allocateObject(Oop* obj) {
  * 
  * @param obj the object pointer
  */    
-static void 
-freeObject(Oop* obj) {
+void 
+MonitorMemory::freeObject(Oop* referent) {
 
-    if (obj == NULL) {
+	if (!referent->obj()->is_instance() && !referent->obj()->is_array()) {
 	  return;
 	}
-	if (!obj->is_instance() && !obj->is_array()) {
-	  return;
-	}
-    u_long pointer = (u_long)(obj->obj());
-	u_long allocSize = (u_long)(obj->object_size());
-	JavaClass jc = obj->blueprint();
+    u_long pointer = (u_long)(referent->obj());
+	u_long allocSize = (u_long)(referent->obj()->object_size());
+	JavaClass jc = referent->obj()->blueprint();
     u_long classId = (u_long)jc.class_id();
+    tty->print_cr("MonitorMemory::freeObject classId = %d", classId);
     MonitorMemoryMd::lock();
     int size = sizeof(u_long) +         // command
             sizeof(u_long) +            // pointer

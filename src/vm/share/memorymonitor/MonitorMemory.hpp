@@ -45,8 +45,9 @@ public:
     static void enterMethod(Method* m);
     static void exitMethod(Method* m);
     static void throwException(void);
-    static void allocateObject(Oop* obj);
-    static void freeObject(Oop* obj);
+    static void allocateObject(Oop* referent JVM_TRAPS);
+    static void freeObject(Oop* referent);
+    static void setFlushed(int);
 
 private:
 /**
@@ -73,7 +74,7 @@ static int callStackLength[MONITOR_CALLSTACK_CNT];
  * array, one dimension representing different call stacks (belonging to 
  * different threads) and the other methods for the given thread.
  */  
-static juint callStack[MONITOR_CALLSTACK_CNT][MONITOR_CALLSTACK_LEN]; 
+static Method* callStack[MONITOR_CALLSTACK_CNT][MONITOR_CALLSTACK_LEN]; 
 
 /** The notification command id for allocateHeap. */
 static const int INIT            = 0;
@@ -87,13 +88,31 @@ static const int ENTER_METHOD    = 3;
 static const int EXIT_METHOD     = 4;
 
 /**
+ * A flag which indicates if the memory monitor bufer has been flushed from the
+ * last time this flag was cleared. It's used in the memory monitor flushing 
+ * thread (see memMonitor_md.c).
+ */   
+static volatile int is_flushed;
+
+/**
+ * The offset to the send buffer, where the next command will be placed.
+ */ 
+static int sendOffset;
+
+/**
+ * The number of commands stored in the send buffer.
+ */ 
+static int numCommands;
+
+static int lastEnterMethodThread;
+
+/**
  * The buffer in which notifications (commands) from the VM are stored and
  * which is sent to the server site of the memory monitor when it gets full or
  * when some predefined time elapses.
  */  
 static char sendBuffer[MONITOR_BUFFER_SIZE];
 
-static void flushBuffer();
 static void flushBufferInt();
 static void bufferInit(int heapSize);
 static void bufferEnterMethod(Method* m, int threadId);

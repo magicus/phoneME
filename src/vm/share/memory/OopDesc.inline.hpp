@@ -137,7 +137,12 @@ bool OopDesc::is_type_array(void) const {
   return instance_size >= InstanceSize::size_type_array_8
       && instance_size <= InstanceSize::size_type_array_1;
 }
-  
+bool OopDesc::is_array(void) const { 
+    return is_bool_array() || is_char_array() || is_int_array() ||
+	    is_byte_array() || is_short_array() || is_long_array() ||
+		is_float_array() || is_double_array() || is_obj_array() ||
+		is_type_array();
+}
 
 // Specific instance types
 bool OopDesc::is_string(void) const {

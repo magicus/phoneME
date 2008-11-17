@@ -34,6 +34,9 @@ int  Universe::_compilation_abstinence_ticks = 0;
 bool Universe::_is_bootstrapping  = true;
 bool Universe::_before_main       = true;
 bool Universe::_is_stopping       = false;
+#if ENABLE_MEMORY_MONITOR 
+  int Universe::isMonitorMemoryRegister = 0;
+#endif
 
 #if ENABLE_JVMPI_PROFILE
 jint Universe::_number_of_java_methods = 0;
@@ -1358,14 +1361,26 @@ ReturnOop Universe::new_instance(InstanceClass* klass JVM_TRAPS) {
       Throw::unsatisfied_link_error(&finalize_method JVM_THROW_0)
 #endif
     }
-    ObjectHeap::register_finalizer_reachable_object(&obj, 1 JVM_CHECK_0);
+    ObjectHeap::register_finalizer_reachable_object(&obj JVM_CHECK_0);
+#if ENABLE_MEMORY_MONITOR 
+    if(Arguments::_monitor_memory && Thread::current()->obj() != NULL) {
+	    isMonitorMemoryRegister++;
+        MonitorMemory::allocateObject(&obj JVM_CHECK_0);
+	    isMonitorMemoryRegister--;
+	}
+#endif
     return obj;
 #if ENABLE_MEMORY_MONITOR 
-  } else if(Arguments::_monitor_memory) {
+  } else if(Arguments::_monitor_memory && !isMonitorMemoryRegister &&
+    Thread::current()->obj() != NULL) {
     UsingFastOops fast_oops;
     Oop::Fast obj(result);  // create handle, call below can gc
-    ObjectHeap::register_finalizer_reachable_object(&obj, 0 JVM_CHECK_0);
-    MonitorMemory::allocateObject(&obj);
+	if (obj.obj()->is_instance() || obj.obj()->is_array()) {
+	    isMonitorMemoryRegister++;
+        ObjectHeap::register_finalizer_reachable_object(&obj JVM_CHECK_0);
+        MonitorMemory::allocateObject(&obj JVM_CHECK_0);
+	    isMonitorMemoryRegister--;
+	}
 #endif
   }
   return result;
@@ -1932,11 +1947,14 @@ ReturnOop Universe::generic_allocate_array(Allocator* allocate,
     if (result) {
       result->initialize(klass->prototypical_near(), length);
 #if ENABLE_MEMORY_MONITOR 
-      if(Arguments::_monitor_memory) {
+      if(Arguments::_monitor_memory && !isMonitorMemoryRegister &&
+        Thread::current()->obj() != NULL) {
         UsingFastOops fast_oops;
         Oop::Fast obj(result);  // create handle, call below can gc
-        ObjectHeap::register_finalizer_reachable_object(&obj JVM_CHECK_0, 0);
-	    MonitorMemory::allocateObject(&obj);
+		isMonitorMemoryRegister++;
+        ObjectHeap::register_finalizer_reachable_object(&obj JVM_CHECK_0);
+	    MonitorMemory::allocateObject(&obj JVM_CHECK_0);
+		isMonitorMemoryRegister--;
 	  }
 #endif
     }

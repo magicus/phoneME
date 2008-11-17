@@ -67,11 +67,9 @@ memmonitor_flushThread(void* args) {
     while (!exitThread) {
         nanosleep(&sleepTime, &remainingTime);
 
-        if (!memmonitor_flushed) {
-            memmonitor_flushBuffer();
-        }
+        MonitorMemory::flushBuffer();
         
-        memmonitor_flushed = 0;
+        MonitorMemory::setFlushed(0);
     }
 
     pthread_exit(NULL);

@@ -213,6 +213,13 @@ void Throw::out_of_memory_error(JVM_SINGLE_ARG_TRAPS) {
   }
 #endif
 
+#if ENABLE_MEMORY_MONITOR 
+  if(Arguments::_monitor_memory) 
+  {
+    MonitorMemory::throwException();
+  }
+#endif
+
   Thread::set_current_pending_exception(
       Universe::out_of_memory_error_instance());
 }

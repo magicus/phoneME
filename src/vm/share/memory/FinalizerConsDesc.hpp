@@ -34,7 +34,6 @@ class FinalizerConsDesc: public ObjArrayDesc {
     Size           = 2
   };
 
-  int isFinalize;
   OopDesc** base ( void ) {
     return DERIVED( OopDesc**, this, ArrayDesc::header_size() );
   }

@@ -1057,6 +1057,7 @@ OsMemory_<os_family>.cpp         OsMemory.hpp
 OsMemory_<os_family>.cpp         OS_<os_family>.hpp
 
 #if ENABLE_MEMORY_MONITOR
+MonitorMemoryMd_<os_family>.cpp  MonitorMemory.hpp
 MonitorMemoryMd_<os_family>.cpp  MonitorMemoryMd.hpp
 MonitorMemoryMd_<os_family>.cpp  MonitorMemoryMd_<os_family>.hpp
 #endif
@@ -2274,6 +2275,9 @@ Universe.cpp                     UpdateManager.hpp
 #endif
 Universe.cpp                     ROM.hpp
 Universe.cpp                     StackUtils.hpp
+#if ENABLE_MEMORY_MONITOR
+Universe.cpp                     MonitorMemory.hpp
+#endif
 
 // Romizer
 MetaObjTypeDesc.hpp              MixedOopDesc.hpp

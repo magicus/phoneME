@@ -40,11 +40,10 @@ public:
     static void lock(void);
     static void unlock(void);
 private:
-    static volatile int memmonitor_flushed;
     static u_long htonl_m(u_long);
     friend class MonitorMemory;
 
-}
+};
  
 #ifdef __cplusplus
 extern "C" {

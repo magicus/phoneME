@@ -612,6 +612,9 @@ private:
   static void setup_mirrors(JVM_SINGLE_ARG_TRAPS);
   static void setup_thread_priority_list(JVM_SINGLE_ARG_TRAPS);
   static void setup_thread(Thread *thread);
+#if ENABLE_MEMORY_MONITOR 
+  static int isMonitorMemoryRegister;
+#endif
 
   friend class SymbolTable;
   friend class Symbols;

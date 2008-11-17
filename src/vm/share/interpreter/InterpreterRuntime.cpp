@@ -242,7 +242,11 @@ extern "C" {
 
     Bytecodes::Code bc = method().bytecode_at(bci);
     if (bc == Bytecodes::_new) {
-      if (instance_class().has_finalizer()) {
+      if (instance_class().has_finalizer()
+#if ENABLE_MEMORY_MONITOR 
+        || Arguments::_monitor_memory
+#endif
+	    ) {
         // Classes with finalize() method will continue to go slow-case
       } else {
         if (ENABLE_ISOLATES || instance_class().is_initialized()) {
@@ -279,7 +283,11 @@ extern "C" {
     
     GUARANTEE(method.bytecode_at(bci) == Bytecodes::_new, "Sanity check");
 
-    if (instance_class.has_finalizer()) {
+    if (instance_class.has_finalizer()
+#if ENABLE_MEMORY_MONITOR 
+      || Arguments::_monitor_memory
+#endif
+	  ) {
       // Classes with finalize() method will continue to go slow-case
     } else {
       Bytecodes::Code bc;

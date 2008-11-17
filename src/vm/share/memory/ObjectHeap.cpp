@@ -458,7 +458,7 @@ void ObjectHeap::safe_collect(size_t min_free_after_collection JVM_TRAPS) {
   enable_allocation_trap( allocation_end );
 #if ENABLE_MEMORY_MONITOR 
   if(Arguments::_monitor_memory) {
-      MonitorMemory::memmonitor_flushBuffer();
+      MonitorMemory::flushBuffer();
   }
 #endif
 }
@@ -551,13 +551,11 @@ void ObjectHeap::update_interior_pointers( FinalizerConsDesc** list ) {
   }
 }
 
-void ObjectHeap::register_finalizer_reachable_object(Oop* referent,
-   int isFinalize JVM_TRAPS) {
+void ObjectHeap::register_finalizer_reachable_object(Oop* referent JVM_TRAPS) {
   // Link finalizer reachable objects using cons cells. For now we
   // just use a 2-element object array as the cons cell.
   FinalizerConsDesc* cons = (FinalizerConsDesc*)
     Universe::new_obj_array(FinalizerConsDesc::Size JVM_CHECK);
-  cons->isFinalize = isFinalize;
   cons->set_referent(referent->obj());
 
 #if ENABLE_ISOLATES
@@ -631,14 +629,19 @@ void ObjectHeap::finalize( FinalizerConsDesc** list, const int task_id ) {
     TaskGCContext tmp(task_id);
 #endif
     do {
-      if (p->isFinalize) {
-        AZZERT_ONLY(_is_finalizing = true);
-        p->run_finalizer();
-        AZZERT_ONLY(_is_finalizing = false);
+      JavaOop::Raw r = p->referent();
+	  if (r.is_instance_class()) {
+        InstanceClass::Raw referent_class = r.blueprint();
+        if (referent_class().has_finalizer()) {
+          AZZERT_ONLY(_is_finalizing = true);
+          p->run_finalizer();
+          AZZERT_ONLY(_is_finalizing = false);
+	    }
 	  }
 #if ENABLE_MEMORY_MONITOR 
       if(Arguments::_monitor_memory) {
-        freeObject(p->referent());
+	    Oop obj = r;
+        MonitorMemory::freeObject(&obj);
 	  }
 #endif
     } while( (p = p->next()) != NULL );
@@ -1597,8 +1600,11 @@ bool ObjectHeap::create() {
   }
 #endif
 
+
 #if ENABLE_MEMORY_MONITOR 
+ tty->print_cr("ObjectHeap: 1");
   if(Arguments::_monitor_memory) {
+ tty->print_cr("ObjectHeap: 2");
       MonitorMemory::allocateHeap(total_memory());
   }
 #endif

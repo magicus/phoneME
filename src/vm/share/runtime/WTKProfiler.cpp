@@ -564,9 +564,9 @@ static inline void update_from_frame(JavaFrame* frame,
   if(Arguments::_monitor_memory && (delta == (jlong)1 || delta == (jlong)-1)) {
     Method::Raw m = frame->method();
 	if (delta == (jlong)1) { // enter method
-        MonitorMemory::enterMethod(m());
+        MonitorMemory::enterMethod(&m());
 	} else if (delta == (jlong)-1) {
-	    MonitorMemory::exitMethod(m());
+	    MonitorMemory::exitMethod(&m());
 	}
   }
 #endif
