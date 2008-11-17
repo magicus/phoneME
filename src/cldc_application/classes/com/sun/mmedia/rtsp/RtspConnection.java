@@ -49,8 +49,9 @@ public class RtspConnection extends RtspConnectionBase {
     }
 
     protected void closeStreams() {
-        is = null;
-        os = null;
+
+        super.closeStreams();
+
         if (null != sock_conn) {
             try {
                 sock_conn.close();

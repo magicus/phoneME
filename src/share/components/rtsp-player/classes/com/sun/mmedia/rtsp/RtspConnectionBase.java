@@ -29,6 +29,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 
+import com.sun.j2me.log.Logging;
+import com.sun.j2me.log.LogChannels;
+
 /** 
  * RtspConnectionBase is a portable base for RtspConnection platform-specific
  *  classes that represent a TCP/IP connection to an RTSP Server.
@@ -48,7 +51,32 @@ public abstract class RtspConnectionBase extends Thread implements Runnable {
      * to create 'is' and 'os' objects
      */
     protected abstract void openStreams(RtspUrl url) throws IOException;
-    protected abstract void closeStreams();
+
+    protected void closeStreams() {
+        if (null != is) {
+            try {
+                is.close();
+            } catch (IOException e) {
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                        "IOException in RtspConnection.closeStreams(): " + e.getMessage());
+                }
+            }
+            is = null;
+        }
+
+        if (null != os) {
+            try {
+                os.close();
+            } catch (IOException e) {
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                        "IOException in RtspConnection.closeStreams(): " + e.getMessage());
+                }
+            }
+            os = null;
+        }
+    }
 
     /** Creates a new RTSP connection.
      *
