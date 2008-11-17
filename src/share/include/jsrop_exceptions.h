@@ -32,6 +32,7 @@
  *  const char* const jsropIllegalArgumentException;
  *  const char* const jsropIOException;
  *  const char* const jsropInterruptedIOException;
+ *  const char* const jsropIllegalStateException;
  */
 #include <jsrop_exceptions_md.h>
 

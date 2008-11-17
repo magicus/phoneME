@@ -40,6 +40,8 @@ extern const char* const jsropIllegalArgumentException;
 extern const char* const jsropIOException;
 /** 'C' string for java.io.InterruptedIOException */
 extern const char* const jsropInterruptedIOException;
+/** 'C' string for java.io.jsropIllegalStateException */
+extern const char* const jsropIllegalStateException;
 
 #if defined __cplusplus 
 } 
