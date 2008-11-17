@@ -93,7 +93,10 @@ runMidlet(int argc, char** commandlineArgs) {
     int ordinalSuiteNumber = -1;
     char* chSuiteNum = NULL;
     int midp_heap_requirement;
-    
+    MIDPError errCode;
+    char** ppParamsFromPlatform;
+    int numberOfParams;
+
     JVM_Initialize(); /* It's OK to call this more than once */
 
     midp_heap_requirement = getHeapRequirement();
@@ -102,6 +105,23 @@ runMidlet(int argc, char** commandlineArgs) {
      * Set Java heap capacity now so it can been overridden from command line.
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
+
+    /*
+     * Check if there are some parameters passed to us from the platform
+     * (i.e., in the current implementation, they are read from a file).
+     */
+    errCode = ams_get_startup_params(&numberOfParams, &ppParamsFromPlatform);
+    if (errCode == ALL_OK && numberOfParams > 0) {
+        char** ppSavedParams = ppParamsFromPlatform;
+
+        while ((used = JVM_ParseOneArg(numberOfParams,
+                                       ppParamsFromPlatform)) > 0) {
+            numberOfParams -= used;
+            ppParamsFromPlatform += used;
+        }
+
+        ams_free_startup_params(ppSavedParams, numberOfParams);
+    }
 
     if (midpRemoveOptionFlag("-port", commandlineArgs, &argc) != NULL) {
         char* pMsg = "WARNING: -port option has no effect, "
