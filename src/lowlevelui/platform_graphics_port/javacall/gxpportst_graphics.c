@@ -30,7 +30,7 @@
 
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
-
+#include <syslog.h>
 
 extern GtkDrawingArea *main_canvas;
 
@@ -62,8 +62,8 @@ extern void gxpport_fill_triangle(
                                  int x2, int y2,
                                  int x3, int y3) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
 
     /* Suppress unused parameter warnings */
@@ -87,8 +87,8 @@ extern void gxpport_copy_area(
                              int x_src, int y_src, int width, int height,
                              int x_dest, int y_dest) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
 
     /* Suppress unused parameter warnings */
@@ -111,8 +111,8 @@ extern void gxpport_draw_rgb(
                             jint offset, jint scanlen, jint x, jint y,
                             jint width, jint height, jboolean processAlpha) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)clip;
@@ -149,8 +149,8 @@ extern void gxpport_draw_line(
                              int dotted, int x1, int y1, int x2, int y2)
 {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)pixel;
@@ -176,8 +176,8 @@ extern void gxpport_draw_rect(
                              int dotted, int x, int y, int width, int height)
 {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)pixel;
@@ -202,8 +202,8 @@ extern void gxpport_fill_rect(
     GdkGC *gc;          /* graphic context */
     GdkLineStyle line_style;
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* create graphic context */
     line_style == dotted ? GDK_LINE_ON_OFF_DASH : GDK_LINE_SOLID;
@@ -250,8 +250,8 @@ extern void gxpport_draw_roundrect(
                                   int arcWidth, int arcHeight)
 {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)pixel;
@@ -278,8 +278,8 @@ extern void gxpport_fill_roundrect(
                                   int arcWidth, int arcHeight)
 {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)pixel;
@@ -310,8 +310,8 @@ extern void gxpport_draw_arc(
                             int startAngle, int arcAngle)
 {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)pixel;
@@ -339,8 +339,8 @@ extern void gxpport_fill_arc(
                             int startAngle, int arcAngle)
 {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)pixel;
@@ -404,8 +404,8 @@ extern void gxpport_draw_chars(
                               int x, int y, int anchor,
                               const jchar *charArray, int n) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)pixel;
@@ -472,8 +472,8 @@ extern int gxpport_get_charswidth(
                                  int face, int style, int size,
                                  const jchar *charArray, int n) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)face;

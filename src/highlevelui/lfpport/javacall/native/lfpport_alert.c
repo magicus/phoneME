@@ -66,8 +66,8 @@ MidpError lfpport_alert_create(MidpDisplayable* alertPtr,
                                const pcsl_string* title,
 			       const pcsl_string* tickerText,
 			       MidpComponentType alertType) {
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -96,8 +96,8 @@ MidpError lfpport_alert_set_contents(MidpDisplayable* alertPtr,
 				     unsigned char* imgPtr,
 				     int* gaugeBounds,
 				     const pcsl_string* text){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -114,8 +114,8 @@ MidpError lfpport_alert_set_contents(MidpDisplayable* alertPtr,
  */
 MidpError lfpport_alert_need_scrolling(jboolean* needScrolling,
 				       MidpDisplayable* alertPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -130,8 +130,8 @@ MidpError lfpport_alert_need_scrolling(jboolean* needScrolling,
  */
 MidpError lfpport_alert_set_commands(MidpFrame* alertPtr,
 				     MidpCommand* cmds, int numCmds){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 #ifdef __cplusplus

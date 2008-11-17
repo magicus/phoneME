@@ -31,6 +31,7 @@
 
 #include <gxpport_immutableimage.h>
 #include <midp_logging.h>
+#include <syslog.h>
 
 /**
  * Creates a copy of the specified mutable image
@@ -46,8 +47,8 @@ void gxpport_createimmutable_from_mutable
     gxpport_image_native_handle *newImmutableImagePtr,
      img_native_error_codes* creationErrorPtr) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcMutableImagePtr;
@@ -81,8 +82,8 @@ gxpport_createimmutable_from_immutableregion
  gxpport_image_native_handle *newImmutableImagePtr,
  img_native_error_codes* creationErrorPtr) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcImmutableImagePtr;
@@ -122,8 +123,8 @@ gxpport_createimmutable_from_mutableregion
  gxpport_image_native_handle *newImmutableImagePtr,
  img_native_error_codes* creationErrorPtr) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcMutableImagePtr;
@@ -163,7 +164,7 @@ gxpport_decodeimmutable_from_selfidentifying
  gxpport_image_native_handle *newImmutableImagePtr,
  img_native_error_codes* creationErrorPtr) {
 
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     /* Suppress unused parameter warnings */
     (void)srcBuffer;
     (void)length;
@@ -173,7 +174,7 @@ gxpport_decodeimmutable_from_selfidentifying
 
     *newImmutableImagePtr = (void*)1;
     *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 }
 
 /**
@@ -194,8 +195,8 @@ void gxpport_decodeimmutable_from_argb(jint* srcBuffer,
          gxpport_image_native_handle *newImmutableImagePtr,
          img_native_error_codes* creationErrorPtr) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     /* Suppress unused parameter warnings */
     (void)srcBuffer;
     (void)width;
@@ -225,8 +226,8 @@ gxpport_render_immutableimage
  const jshort *clip,
  int x_dest, int y_dest) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcImmutableImagePtr;
@@ -263,8 +264,8 @@ gxpport_render_immutableregion
  int x_src, int y_src,
  int transform) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcImmutableImagePtr;
@@ -299,8 +300,8 @@ void gxpport_get_immutable_argb(gxpport_image_native_handle immutableImagePtr,
         int x, int y, int width, int height,
         img_native_error_codes* errorPtr) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)immutableImagePtr;
@@ -323,8 +324,8 @@ void gxpport_get_immutable_argb(gxpport_image_native_handle immutableImagePtr,
 void
 gxpport_destroy_immutable(gxpport_image_native_handle immutableImagePtr) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warning */
     (void)immutableImagePtr;
@@ -349,8 +350,8 @@ gxpport_decodeimmutable_to_platformbuffer
  unsigned char **ret_dataBuffer, long* ret_length,
  img_native_error_codes* creationErrorPtr) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warning */
     (void)srcBuffer;
@@ -388,8 +389,8 @@ gxpport_loadimmutable_from_platformbuffer
  gxpport_image_native_handle *newImmutableImagePtr,
  img_native_error_codes* creationErrorPtr) {
 
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warning */
     (void)srcBuffer;

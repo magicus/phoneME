@@ -61,8 +61,8 @@ MidpError lfpport_gauge_create(MidpItem* gaugePtr, MidpDisplayable* ownerPtr,
 			       const pcsl_string* label, int layout,
 			       jboolean interactive,
 			       int maxValue, int initialValue){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -76,8 +76,8 @@ MidpError lfpport_gauge_create(MidpItem* gaugePtr, MidpDisplayable* ownerPtr,
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_gauge_set_value(MidpItem* gaugePtr, int value, int maxValue){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -91,8 +91,8 @@ MidpError lfpport_gauge_set_value(MidpItem* gaugePtr, int value, int maxValue){
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_gauge_get_value(int* value, MidpItem* gaugePtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 

@@ -47,16 +47,16 @@ extern "C" {
  * Called upon VM startup to allocate menu resource.
  */
 // void initMenus() {
-//     printf(">>>%s\n", __FUNCTION__);
-//     printf("<<<%s\n", __FUNCTION__);
+//     syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+//     syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 // }
 
 /**
  * Called upon VM exit to release menu resource.
  */
 // void finalizeMenus(){
-//     printf(">>>%s\n", __FUNCTION__);
-//     printf("<<<%s\n", __FUNCTION__);
+//     syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+//     syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 // }
 
 /**
@@ -70,8 +70,8 @@ extern "C" {
  * @return an indication of success or the reason for failure
  */
 MidpError cmdmanager_create(MidpFrame* cmPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -86,8 +86,8 @@ MidpError cmdmanager_create(MidpFrame* cmPtr){
  */
 MidpError cmdmanager_set_commands(MidpFrame* cmPtr,
 				  MidpCommand* cmds, int numCmds){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 

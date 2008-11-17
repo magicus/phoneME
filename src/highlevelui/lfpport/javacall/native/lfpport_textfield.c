@@ -58,95 +58,88 @@ typedef struct {
 
 
 MidpError lfpport_text_field_show_cb(MidpItem* itemPtr){
-    GtkWidget *text_field;
-    MidpDisplayable* ownerPtr = itemPtr->ownerPtr;
-    printf(">>>%s\n", __FUNCTION__);
-
-    text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
+    GtkWidget *text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     gtk_widget_show(text_field);
-
-    gtk_box_pack_start(GTK_BOX(ownerPtr->frame.widgetPtr),
-                       text_field,
-                       FALSE, FALSE, 0);
-
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
+
 
 
 MidpError lfpport_text_field_hide_cb(MidpItem* itemPtr){
     GtkWidget *text_field;
 
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
     gtk_widget_hide(text_field);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
 
     return KNI_OK;
 }
 
 MidpError lfpport_text_field_set_label_cb(MidpItem* itemPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
 
 MidpError lfpport_text_field_destroy_cb(MidpItem* itemPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
 
 MidpError lfpport_text_field_get_min_height_cb(int *height, MidpItem* itemPtr){
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     *height = STUB_MIN_HEIGHT;
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
 
 MidpError lfpport_text_field_get_min_width_cb(int *width, MidpItem* itemPtr){
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     *width = STUB_MIN_WIDTH;
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
 MidpError lfpport_text_field_get_pref_height_cb(int* height,
                                                  MidpItem* itemPtr,
                                                  int lockedWidth){
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     *height = STUB_PREF_HEIGHT;
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
 MidpError lfpport_text_field_get_pref_width_cb(int* width,
                                                 MidpItem* itemPtr,
                                                 int lockedHeight){
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     *width = STUB_PREF_WIDTH;
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
 MidpError lfpport_text_field_handle_event_cb(MidpItem* itemPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
 MidpError lfpport_text_field_relocate_cb(MidpItem* itemPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
 MidpError lfpport_text_field_resize_cb(MidpItem* itemPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -178,6 +171,8 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
 				   const pcsl_string* initialInputMode){
 
     GtkWidget *box;
+    GtkWidget *vbox;
+    GtkWidget *form;
     GtkWidget *text_field_label;
     GtkWidget *text_field_text;
     int label_len, text_len;
@@ -187,7 +182,7 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
     gchar label_buf[MAX_TEXT_LENGTH];
     gchar text_buf[MAX_TEXT_LENGTH];
 
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
 
     text_field_item = (TextFieldItem *)midpMalloc(sizeof(TextFieldItem));
 
@@ -197,8 +192,6 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
 
     box = gtk_hbox_new(FALSE, 0);
     text_field_label = gtk_label_new(label_buf);
-    //gtk_entry_set_text(text_field_label, label_buf);
-    //gtk_entry_set_editable(text_field_label, FALSE);
     text_field_text = gtk_entry_new();
     gtk_entry_set_text(text_field_text, text_buf);
     gtk_entry_set_editable(text_field_text, TRUE);
@@ -211,7 +204,16 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
     text_field_item->conststaints = constraints;
     text_field_item->maxSize = maxSize;
 
+    form = (GtkWidget*)ownerPtr->frame.widgetPtr;
+    vbox = gtk_object_get_user_data(form);
+
+    syslog(LOG_INFO, "%s user_data is %d\n", __FUNCTION__, vbox);
+    gtk_box_pack_start(GTK_BOX(vbox),
+                       box,
+                       FALSE, FALSE, 0);
+
     /* set font */
+    syslog(LOG_INFO, "%s setting textfield container to  %d\n", __FUNCTION__, box);
     itemPtr->widgetPtr = text_field_item;
     itemPtr->ownerPtr = ownerPtr;
     itemPtr->layout = layout;
@@ -230,7 +232,7 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
     itemPtr->relocate = lfpport_text_field_relocate_cb;
     itemPtr->resize = lfpport_text_field_resize_cb;
 
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -250,7 +252,7 @@ MidpError lfpport_textfield_set_string(MidpItem* itemPtr, const pcsl_string* tex
     gchar buf[MAX_TEXT_LENGTH];
     int length;
 
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
 
     text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
     list = gtk_container_get_children(text_field);
@@ -258,7 +260,7 @@ MidpError lfpport_textfield_set_string(MidpItem* itemPtr, const pcsl_string* tex
     pcsl_string_convert_to_utf8(text, buf, MAX_TEXT_LENGTH, &length);
     gtk_entry_set_text(textWidget->data, buf);
 
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -281,17 +283,16 @@ MidpError lfpport_textfield_get_string(pcsl_string* text, jboolean* newChange,
     GList *list;
     GList *textWidget;
 
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
 
     text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
     list = gtk_container_get_children(text_field);
     textWidget = g_list_nth(list, 1);
 
-    status = gchar_to_pcsl_string(textWidget->data, text);
+    status = gchar_to_pcsl_string(gtk_entry_get_text((GtkEntry* )textWidget->data),
+                                   text);
 
-    printf("Text is %s\n", text);
-
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return status;
 }
 
@@ -304,8 +305,8 @@ MidpError lfpport_textfield_get_string(pcsl_string* text, jboolean* newChange,
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_textfield_set_max_size(MidpItem* itemPtr, int maxSize){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -320,8 +321,8 @@ MidpError lfpport_textfield_set_max_size(MidpItem* itemPtr, int maxSize){
  */
 MidpError lfpport_textfield_get_caret_position(int *position,
 					       MidpItem* itemPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -335,8 +336,8 @@ MidpError lfpport_textfield_get_caret_position(int *position,
  */
 MidpError lfpport_textfield_set_constraints(MidpItem* itemPtr,
 					    int constraints){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 

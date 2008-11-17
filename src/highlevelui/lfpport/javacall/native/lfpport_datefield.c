@@ -62,8 +62,8 @@ MidpError lfpport_datefield_create(MidpItem* datefieldPtr,
 				const pcsl_string* label, int layout,
 				int input_mode,
 				long time, const pcsl_string* timezoneID) {
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -76,8 +76,8 @@ MidpError lfpport_datefield_create(MidpItem* datefieldPtr,
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_datefield_set_date(MidpItem* datefieldPtr, long time){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -92,8 +92,8 @@ MidpError lfpport_datefield_set_date(MidpItem* datefieldPtr, long time){
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_datefield_get_date(long* time, MidpItem* datefieldPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -108,8 +108,8 @@ MidpError lfpport_datefield_get_date(long* time, MidpItem* datefieldPtr){
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_datefield_set_input_mode(MidpItem* datefieldPtr, int mode){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 

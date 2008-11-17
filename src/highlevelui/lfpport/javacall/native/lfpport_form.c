@@ -60,28 +60,22 @@ gint screen_height;
 
 
 MidpError form_show(MidpFrame* framePtr) {
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     GtkWidget *label;
+    GtkWidget *form;
+    form = (GtkWidget *)framePtr->widgetPtr;
 
-    /* set first child of main container here */
-//     gtk_table_attach(GTK_TABLE(main_container),
-//                 framePtr->widgetPtr,
-//                 /* X direction */       /* Y direction */
-//                 0, 1,                   0, 1,
-//                 GTK_EXPAND | GTK_FILL,  0,
-//                 0,                      0);
+    syslog(LOG_INFO, "%showing form %d\n", __FUNCTION__, form);
 
-//    gtk_widget_show_all(main_window);
-    //gtk_box_pack_start(GTK_BOX (main_container), framePtr->widgetPtr, TRUE, TRUE, 0);
-    gtk_widget_show(framePtr->widgetPtr);
-    printf("<<<%s\n", __FUNCTION__);
+    gtk_main_window_set_current_form(main_window, GTK_FORM(form));
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
 
 MidpError form_hide_and_delete(MidpFrame* framePtr, jboolean onExit) {
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -89,10 +83,13 @@ MidpError displayable_set_title(MidpDisplayable* screenPtr,
                                 const pcsl_string* title) {
     gchar buf[MAX_TITLE_LENGTH];
     int len;
-    printf(">>>%s\n", __FUNCTION__);
+
+    GtkWidget *form;
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     pcsl_string_convert_to_utf8(title, buf, MAX_TITLE_LENGTH, &len);
-    gtk_window_set_title(GTK_WINDOW(main_window), buf);
-    printf("<<<%s\n", __FUNCTION__);
+    form = screenPtr->frame.widgetPtr;
+    gtk_form_set_title(GTK_FORM(form), buf);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -100,7 +97,7 @@ MidpError displayable_set_ticker(MidpDisplayable* dispPtr, const pcsl_string* te
     gchar buf[MAX_TICKER_LENGTH];
     int len;
 
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
 
     //pcsl_string_convert_to_utf8(text, buf, MAX_TITLE_LENGTH, &len);
     //gtk_label_set_text(ticker, "tmp ticker");
@@ -115,7 +112,7 @@ MidpError displayable_set_ticker(MidpDisplayable* dispPtr, const pcsl_string* te
     //gtk_widget_show(ticker);
 
     //show label
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -137,29 +134,34 @@ MidpError displayable_set_ticker(MidpDisplayable* dispPtr, const pcsl_string* te
 MidpError lfpport_form_create(MidpDisplayable* dispPtr,
 			      const pcsl_string* title, const pcsl_string* tickerText){
     GtkVBox  *gtkVBox;  /* form contents */
-    GtkWidget *label;
+    GtkWidget *form;
+    GtkWidget *vbox;
 
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
 
     gtkVBox = gtk_vbox_new(FALSE, /* not equal space allotments */
                            2);    /* spacing between children */
+    form = gtk_form_new(TRUE);
+//    gtk_widget_set_size_request(GTK_WIDGET(form), 220, 240);
+    gtk_widget_show(gtkVBox);
+    gtk_container_add(GTK_CONTAINER(form), gtkVBox);
 
     // Fill in MidpDisplayable structure
-    dispPtr->frame.widgetPtr = gtkVBox;
+    dispPtr->frame.widgetPtr = form;
     dispPtr->frame.show = form_show;
     dispPtr->frame.hideAndDelete = form_hide_and_delete;
-    dispPtr->frame.handleEvent	 = NULL; // Not used in Qt
+    dispPtr->frame.handleEvent	 = NULL;
     dispPtr->setTitle = displayable_set_title;
     dispPtr->setTicker = displayable_set_ticker;
 
-//     dispPtr->setTitle(dispPtr, title);
-//     dispPtr->setTicker(dispPtr, tickerText);
-
+    gtk_object_set_user_data(form, gtkVBox);
+    gtk_main_window_add_form(main_window, GTK_FORM(form));
     lfpport_form_set_content_size(dispPtr,
                                   screen_width,
                                   screen_height);
-    gtk_container_add (GTK_CONTAINER (main_container), dispPtr->frame.widgetPtr);
-    printf("<<<%s\n", __FUNCTION__);
+
+    dispPtr->setTitle(dispPtr, title);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -175,11 +177,11 @@ MidpError lfpport_form_create(MidpDisplayable* dispPtr,
  */
 MidpError lfpport_form_set_content_size(MidpDisplayable* formPtr,
 					int w, int h){
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     gtk_widget_set_size_request(formPtr->frame.widgetPtr,
                                 w,
                                 h);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -193,10 +195,10 @@ MidpError lfpport_form_set_content_size(MidpDisplayable* formPtr,
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_form_set_current_item(MidpItem* itemPtr, int yOffset){
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     (void)itemPtr;
     (void)yOffset;
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -209,9 +211,9 @@ MidpError lfpport_form_set_current_item(MidpItem* itemPtr, int yOffset){
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_form_get_scroll_position(int *pos){
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     *pos = 0;
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -222,9 +224,9 @@ MidpError lfpport_form_get_scroll_position(int *pos){
  *
  */
 MidpError lfpport_form_set_scroll_position(int pos) {
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     (void)pos;
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -237,9 +239,9 @@ MidpError lfpport_form_set_scroll_position(int pos) {
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_form_get_viewport_height(int *pHeight){
-    printf(">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
     *pHeight = screen_height;
-    printf("<<<%s returning %d\n", __FUNCTION__, screen_height);
+    syslog(LOG_INFO, "<<<%s returning %d\n", __FUNCTION__, screen_height);
     return KNI_OK;
 }
 

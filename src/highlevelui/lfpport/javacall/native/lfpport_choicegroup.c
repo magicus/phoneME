@@ -75,8 +75,8 @@ MidpError lfpport_choicegroup_create(MidpItem* cgPtr,
 				     int numOfChoices,
 				     int selectedIndex,
 				     int fitPolicy){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -93,8 +93,8 @@ MidpError lfpport_choicegroup_create(MidpItem* cgPtr,
 MidpError lfpport_choicegroup_insert(MidpItem* cgPtr,
 				     int elementNum,
 				     MidpChoiceGroupElement element){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -110,8 +110,8 @@ MidpError lfpport_choicegroup_insert(MidpItem* cgPtr,
  */
 MidpError lfpport_choicegroup_delete(MidpItem* cgPtr, int elementNum,
 				     int selectedIndex){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -124,8 +124,8 @@ MidpError lfpport_choicegroup_delete(MidpItem* cgPtr, int elementNum,
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_choicegroup_delete_all(MidpItem* cgPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -142,8 +142,8 @@ MidpError lfpport_choicegroup_delete_all(MidpItem* cgPtr){
 MidpError lfpport_choicegroup_set(MidpItem* cgPtr,
 				  int elementNum,
 				  MidpChoiceGroupElement element){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -161,8 +161,8 @@ MidpError lfpport_choicegroup_set(MidpItem* cgPtr,
 MidpError lfpport_choicegroup_set_selected_index(MidpItem* cgPtr,
 						 int elementNum,
 						 jboolean selected){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -177,8 +177,8 @@ MidpError lfpport_choicegroup_set_selected_index(MidpItem* cgPtr,
  */
 MidpError lfpport_choicegroup_get_selected_index(int* elementNum,
 						 MidpItem* cgPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -196,8 +196,8 @@ MidpError lfpport_choicegroup_get_selected_index(int* elementNum,
 MidpError lfpport_choicegroup_set_selected_flags(MidpItem* cgPtr,
 						 jboolean* selectedArray,
 						 int selectedArrayNum){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -217,8 +217,8 @@ MidpError lfpport_choicegroup_get_selected_flags(int *numSelected,
 						 MidpItem* cgPtr,
 					     jboolean* selectedArray_return,
 						 int selectedArrayLength){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -235,8 +235,8 @@ MidpError lfpport_choicegroup_get_selected_flags(int *numSelected,
  */
 MidpError lfpport_choicegroup_is_selected(jboolean *selected, MidpItem* cgPtr,
 					  int elementNum){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -251,8 +251,8 @@ MidpError lfpport_choicegroup_is_selected(jboolean *selected, MidpItem* cgPtr,
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_choicegroup_set_fit_policy(MidpItem* cgPtr, int fitPolicy){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -269,8 +269,8 @@ MidpError lfpport_choicegroup_set_fit_policy(MidpItem* cgPtr, int fitPolicy){
 MidpError lfpport_choicegroup_set_font(MidpItem* cgPtr,
 				       int elementNum,
 				       PlatformFontPtr fontPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -280,8 +280,8 @@ MidpError lfpport_choicegroup_set_font(MidpItem* cgPtr,
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_choicegroup_dismiss_popup(){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 

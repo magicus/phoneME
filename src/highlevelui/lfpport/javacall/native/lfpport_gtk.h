@@ -42,9 +42,9 @@
 #define MAX_TEXT_LENGTH 256
 
 #include <stdio.h>  //TODO@gd212247:  remove at release
+#include <syslog.h>
 #include <gtk/gtk.h>
 
 
-#define PRINT_IN() LIMO_PRINTF(">>>" )
 #endif //_LFPPORT_GTK_H_
 

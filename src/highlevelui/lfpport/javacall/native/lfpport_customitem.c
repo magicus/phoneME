@@ -58,8 +58,8 @@ extern "C" {
 MidpError lfpport_customitem_create(MidpItem* itemPtr,
 				    MidpDisplayable* ownerPtr,
 				    const pcsl_string* label, int layout) {
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -79,8 +79,8 @@ MidpError lfpport_customitem_create(MidpItem* itemPtr,
 MidpError lfpport_customitem_refresh(MidpItem* itemPtr,
 				     int x, int y,
 				     int width, int height){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -97,8 +97,8 @@ MidpError lfpport_customitem_refresh(MidpItem* itemPtr,
 MidpError lfpport_customitem_get_label_width(int *widthRet,
 					     int width,
 					     MidpItem* ciPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -115,8 +115,8 @@ MidpError lfpport_customitem_get_label_width(int *widthRet,
 MidpError lfpport_customitem_get_label_height(int width,
 					      int *heightRet,
 					      MidpItem* ciPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -129,8 +129,8 @@ MidpError lfpport_customitem_get_label_height(int width,
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_customitem_get_item_pad(int *pad, MidpItem* ciPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -145,8 +145,8 @@ MidpError lfpport_customitem_get_item_pad(int *pad, MidpItem* ciPtr){
  */
 MidpError lfpport_customitem_set_content_buffer(MidpItem* ciPtr,
 						unsigned char* imgPtr){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 #ifdef __cplusplus

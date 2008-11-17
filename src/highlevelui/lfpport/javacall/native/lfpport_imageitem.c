@@ -64,8 +64,8 @@ MidpError lfpport_imageitem_create(MidpItem* itemPtr,
 				   const pcsl_string* label, int layout,
 				   unsigned char* imgPtr,
 				   const pcsl_string* altText, int appearanceMode){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -84,8 +84,8 @@ MidpError lfpport_imageitem_set_content(MidpItem* itemPtr,
 					unsigned char* imgPtr,
 					const pcsl_string* altText,
 					int appearanceMode){
-    printf(">>>%s\n", __FUNCTION__);
-    printf("<<<%s\n", __FUNCTION__);
+    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return -1;
 }
 
