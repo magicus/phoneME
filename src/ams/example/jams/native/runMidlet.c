@@ -37,6 +37,7 @@
 #include <commandLineUtil.h>
 #include <commandLineUtil_md.h>
 #include <heap.h>
+#include <ams_params.h>
 
 /** Maximum number of command line arguments. */
 #define RUNMIDLET_MAX_ARGS 32
@@ -93,7 +94,11 @@ runMidlet(int argc, char** commandlineArgs) {
     int ordinalSuiteNumber = -1;
     char* chSuiteNum = NULL;
     int midp_heap_requirement;
-    
+    MIDPError errCode;
+    char** ppParamsFromPlatform;
+    char** ppSavedParams = NULL;
+    int savedNumberOfParams = 0, numberOfParams = 0;
+
     JVM_Initialize(); /* It's OK to call this more than once */
 
     midp_heap_requirement = getHeapRequirement();
@@ -103,10 +108,38 @@ runMidlet(int argc, char** commandlineArgs) {
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
 
+    /*
+     * Check if there are some parameters passed to us from the platform
+     * (i.e., in the current implementation, they are read from a file).
+     */
+    errCode = ams_get_startup_params(&ppParamsFromPlatform, &numberOfParams);
+    if (errCode == ALL_OK && numberOfParams > 0) {
+        savedNumberOfParams = numberOfParams;
+        ppSavedParams = ppParamsFromPlatform;
+
+        while ((used = JVM_ParseOneArg(numberOfParams,
+                                       ppParamsFromPlatform)) > 0) {
+            numberOfParams -= used;
+            ppParamsFromPlatform += used;
+        }
+
+        if (numberOfParams + 1 > RUNMIDLET_MAX_ARGS) {
+            REPORT_ERROR(LC_AMS, "(1) Number of arguments exceeds supported limit");
+	    ams_free_startup_params(ppSavedParams, savedNumberOfParams);
+	    return -1;
+	}
+				
+	for (i = 0; i < numberOfParams; i++) {
+            /* argv[0] is the program name */
+            argv[i + 1] = ppParamsFromPlatform[i];
+        }
+    }
+
     if (midpRemoveOptionFlag("-port", commandlineArgs, &argc) != NULL) {
         char* pMsg = "WARNING: -port option has no effect, "
                      "set VmDebuggerPort property instead.\n";
         REPORT_ERROR(LC_AMS, pMsg);
+        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
         return -1;
     }
 
@@ -137,14 +170,17 @@ runMidlet(int argc, char** commandlineArgs) {
      * Not all platforms allow rewriting the command line arg array,
      * make a copy
      */
-    if (argc > RUNMIDLET_MAX_ARGS) {
+    if (argc + numberOfParams > RUNMIDLET_MAX_ARGS) {
         REPORT_ERROR(LC_AMS, "Number of arguments exceeds supported limit");
+        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
         return -1;
     }
 
-    for (i = 0; i < argc; i++) {
-        argv[i] = commandlineArgs[i];
+    argv[0] = commandlineArgs[0];
+    for (i = 1; i < argc; i++) {
+        argv[i + numberOfParams] = commandlineArgs[i];
     }
+    argc += numberOfParams;
 
     /*
      * IMPL_NOTE: corresponding VM option is called "-debugger"
@@ -163,6 +199,7 @@ runMidlet(int argc, char** commandlineArgs) {
         /* the format of the string is "number:" */
         if (sscanf(chSuiteNum, "%d", &ordinalSuiteNumber) != 1) {
             REPORT_ERROR(LC_AMS, "Invalid suite number format");
+            ams_free_startup_params(ppSavedParams, savedNumberOfParams);
             return -1;
         }
     }
@@ -172,18 +209,21 @@ runMidlet(int argc, char** commandlineArgs) {
 
     if (argc == 1 && ordinalSuiteNumber == -1) {
         REPORT_ERROR(LC_AMS, "Too few arguments given.");
+        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
         return -1;
     }
 
     if (argc > 6) {
         REPORT_ERROR(LC_AMS, "Too many arguments given\n");
+        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
         return -1;
     }
 
     /* get midp application directory, set it */
     appDir = getApplicationDir(argv[0]);
     if (appDir == NULL) {
-		REPORT_ERROR(LC_AMS, "Failed to recieve midp application directory");
+        REPORT_ERROR(LC_AMS, "Failed to recieve midp application directory");
+        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
         return -1;
     }
 
@@ -192,7 +232,8 @@ runMidlet(int argc, char** commandlineArgs) {
     /* get midp configuration directory, set it */
     confDir = getConfigurationDir(argv[0]);
     if (confDir == NULL) {
-		REPORT_ERROR(LC_AMS, "Failed to recieve midp configuration directory");
+        REPORT_ERROR(LC_AMS, "Failed to recieve midp configuration directory");
+        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
         return -1;
     }
     
@@ -200,6 +241,7 @@ runMidlet(int argc, char** commandlineArgs) {
 
     if (midpInitialize() != 0) {
         REPORT_ERROR(LC_AMS, "Not enough memory");
+        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
         return -1;
     }
 
@@ -353,5 +395,7 @@ runMidlet(int argc, char** commandlineArgs) {
         midpFinalize();
     }
 
+    ams_free_startup_params(ppSavedParams, savedNumberOfParams);
+    
     return status;
 }
