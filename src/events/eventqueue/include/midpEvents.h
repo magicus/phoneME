@@ -233,8 +233,18 @@ extern "C" {
  * of record store changes can not be delivered to listener task
  * during predefined timeout period
  */
-#define RECORD_STORE_FAILED_NOTIFICATION_EVENT  66;
+#define RECORD_STORE_FAILED_NOTIFICATION_EVENT  66
 
+/**
+ * Request to AMS to terminate all running midlets from the given suite.
+ */
+#define MIDP_KILL_MIDLETS_EVENT         67
+
+/**
+ * Notification sent by AMS to inform the listeners that
+ * the midlets from the given suite were killed.
+ */
+#define MIDP_MIDLETS_KILLED_EVENT       68
 
 /** @} */
 

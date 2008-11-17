@@ -41,6 +41,7 @@ import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.main.TrustedMIDletIcon;
+import com.sun.midp.main.MIDletSuiteUtils;
 
 import com.sun.midp.midlet.MIDletSuite;
 
@@ -53,6 +54,11 @@ import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.util.ResourceHandler;
 
+import com.sun.midp.events.Event;
+import com.sun.midp.events.NativeEvent;
+import com.sun.midp.events.EventTypes;
+import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.EventListener;
 
 /**
  * The Graphical MIDlet suite installer.
@@ -67,7 +73,9 @@ import com.sun.midp.util.ResourceHandler;
  * <p>
  * The MIDlet uses certain application properties as arguments: </p>
  * <ol>
- *   <li>arg-0: "U" for update "I" or anything else for install</li>
+ *   <li>arg-0: "U" for update, "I" for install, "FI" for forced install,
+ *              "FU" for forced update, "PR" for install or update
+ *              initiated by platformRequest</li>
  *   <li>arg-1: Suite ID for updating, URL for installing
  *   <li>arg-2: For installing a name to put in the title bar when installing
  * </ol>
@@ -154,15 +162,16 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         new Command(Resource.getString(ResourceConstants.NO),
                     Command.CANCEL, 1);
 
-    /* Suite name */
+    /** Suite name */
     private String label;
-    /* Url to install from */
+    /** Url to install from */
     private String url;
-    /* true if update should be forced without user confirmation */
+    /** true if update should be forced without user confirmation */
     private boolean forceUpdate = false;
-    /* true if user confirmation should be presented */
+    /** true if user confirmation should be presented */
     private boolean noConfirmation = false;
-
+    /** true if runnning midlets from the suite being updated must be killed */
+    private boolean killRunningMIDletIfUpdate = false;
             
     /**
      * Gets an image from the internal storage.
@@ -461,15 +470,22 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                 updateSuite(suiteId);
                 return;
             } else if("FI".equals(arg0)) {
-                /* force installation without user confirmation */
+                // force installation without user confirmation
                 noConfirmation = true;
-                /* force installation without user confirmation and force update */
+                // force installation without user confirmation and force update
                 forceUpdate = false;
             } else if("FU".equals(arg0)) {
-                /* force installation without user confirmation */
+                // force installation without user confirmation */
                 noConfirmation = true;
-                /* force installation without user confirmation and force update */
+                // force installation without user confirmation and force update
                 forceUpdate = true;
+            } else if("PR".equals(arg0)) {
+                /*
+                 * This URL was dispatched by a Platform Request, so if an
+                 * update is requested, we have to kill any running midlet
+                 * from the suite that is going to be updated.
+                 */
+                killRunningMIDletIfUpdate = true;
             }
 
             url = getAppProperty("arg-1");
@@ -1780,15 +1796,88 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                         msg = GraphicalInstaller.translateJadException(
                             ije, name, null, null, url);
                     } catch (MIDletSuiteLockedException msle) {
-                        String[] values = new String[1];
-                        values[0] = name;
+                        if (!killRunningMIDletIfUpdate) {
+                            String[] values = new String[1];
+                            values[0] = name;
 
-                        if (!update) {
-                            msg = Resource.getString(
-                              ResourceConstants.AMS_DISC_APP_LOCKED, values);
+                            if (!update) {
+                                msg = Resource.getString(
+                                    ResourceConstants.AMS_DISC_APP_LOCKED,
+                                        values);
+                            } else {
+                                msg = Resource.getString(
+                                    ResourceConstants.AMS_GRA_INTLR_LOCKED,
+                                        values);
+                            }
                         } else {
-                            msg = Resource.getString(
-                              ResourceConstants.AMS_GRA_INTLR_LOCKED, values);
+                             /*
+                              * Kill running midlets from the suite being
+                              * installed or updated.
+                              */
+                             NativeEvent event = new NativeEvent(
+                                     EventTypes.MIDP_KILL_MIDLETS_EVENT);
+                             event.intParam1 = parent.installer.info.getID();
+                             event.intParam2 =
+                                     MIDletSuiteUtils.getIsolateId();
+
+                             final EventQueue eq = EventQueue.getEventQueue();
+                             final Object waitUntilKilled = new Object();
+                             final boolean[] midletKilled = new boolean[] {false};
+
+                             final class KilledNotificationListener
+                                     implements EventListener {
+
+                                 KilledNotificationListener() { }
+
+                                 void startListen() {
+                                     eq.registerEventListener(
+                                         EventTypes.MIDP_MIDLETS_KILLED_EVENT,
+                                             this);
+                                 }
+
+                                 void endListen() {
+                                     eq.remove(
+                                         EventTypes.MIDP_MIDLETS_KILLED_EVENT);
+                                 }
+
+                                 public boolean preprocess(Event event,
+                                                           Event waitingEvent) {
+                                     return true;
+                                 }
+
+                                 public void process(Event event) {
+                                     if (event.getType() ==
+                                         EventTypes.MIDP_MIDLETS_KILLED_EVENT
+                                     ) {
+                                         synchronized (waitUntilKilled) {
+                                             midletKilled[0] = true;
+                                             waitUntilKilled.notify();
+                                         }
+                                     }
+                                 }
+                             }
+
+                             final KilledNotificationListener listener =
+                                     new KilledNotificationListener();
+                             listener.startListen();
+
+                             // ask AMS to kill the midlet
+                             eq.sendNativeEventToIsolate(event,
+                                 MIDletSuiteUtils.getAmsIsolateId());
+
+                             synchronized (waitUntilKilled) {
+                                 do {
+                                     try {
+                                         waitUntilKilled.wait();
+                                     } catch (InterruptedException ie) {
+                                         // ignore
+                                     }
+                                 } while (!midletKilled[0]);
+                             }
+
+                             listener.endListen();
+
+                             tryAgain = true;
                         }
                     } catch (IOException ioe) {
                         if (parent.installer != null &&

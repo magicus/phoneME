@@ -416,4 +416,15 @@ public final class EventTypes {
      * during predefined timeout period 
      */
     public static final int RECORD_STORE_FAILED_NOTIFICATION_EVENT = 66;
+
+    /**
+     * Request to AMS to terminate all running midlets from the given suite.
+     */
+    public static final int MIDP_KILL_MIDLETS_EVENT = 67;
+
+     /**
+      * Notification sent by AMS to inform the listeners that
+      * the midlets from the given suite were killed.
+      */
+     public static final int MIDP_MIDLETS_KILLED_EVENT = 68;
 }
