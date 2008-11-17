@@ -29,6 +29,8 @@
 #include <midpStorage.h>
 #include <pcsl_memory.h>
 
+#define MAX_AMS_PARAMS 100
+
 /**
  * Name of file containing the parameters to be passed to runMidlet.
  */
@@ -49,7 +51,7 @@ PCSL_DEFINE_ASCII_STRING_LITERAL_END(PARAMS_FILE_NAME);
  *
  * @return ALL_OK if no errors or an implementation-specific error code
  */
-MIDPError ams_get_startup_params(char** pppParams, int* pNumberOfParams) {
+MIDPError ams_get_startup_params(char*** pppParams, int* pNumberOfParams) {
     int handle, status = ALL_OK;
     long fileSize, len;
     char* pszTemp;
@@ -67,7 +69,8 @@ MIDPError ams_get_startup_params(char** pppParams, int* pNumberOfParams) {
 
     /* open the file */
     handle = storage_open(&pszError, &PARAMS_FILE_NAME, OPEN_READ);
-    if (*ppszError != NULL) {
+    if (pszError != NULL) {
+        storageFreeError(pszError);
         if (!storage_file_exists(&PARAMS_FILE_NAME)) {
             return NOT_FOUND;
         }
@@ -76,8 +79,9 @@ MIDPError ams_get_startup_params(char** pppParams, int* pNumberOfParams) {
 
     do {
         /* get the size of file */
-        fileSize = storageSizeOf(ppszError, handle);
-        if (*ppszError != NULL) {
+        fileSize = storageSizeOf(&pszError, handle);
+        if (pszError != NULL) {
+            storageFreeError(pszError);
             status = IO_ERROR;
             break;
         }
@@ -91,18 +95,26 @@ MIDPError ams_get_startup_params(char** pppParams, int* pNumberOfParams) {
             }
 
             /* read the whole file */
-            len = storageRead(ppszError, handle, pBuffer, fileSize);
-            if (*ppszError != NULL || len != fileSize) {
+            len = storageRead(&pszError, handle, pBuffer, fileSize);
+            if (pszError != NULL || len != fileSize) {
+	        storageFreeError(pszError);
                 status = IO_ERROR;
                 break;
             }
 
             /* parse the file */
+            ppParamsRead = pcsl_mem_malloc(sizeof(char*) * MAX_AMS_PARAMS);
+
             linesNum = 0;
             lastPos = 0;
-
-            for (i = 0; i < fileSize; i++) {
+            i = 0;
+	    
+            while (i < fileSize) {
                 if (pBuffer[i] == 0x0a) {
+		    if (i == lastPos) {
+  		        i++;
+		        continue;
+		    }
                     ppParamsRead[linesNum] = pcsl_mem_malloc(i - lastPos + 1);
                     if (ppParamsRead[linesNum] == NULL) {
                         int j;
@@ -114,21 +126,27 @@ MIDPError ams_get_startup_params(char** pppParams, int* pNumberOfParams) {
                         break;
                     }
 
-                    memcpy(ppParamsRead[linesNum], i - lastPos, pBuffer[lastPos]);
-                    ppParamsRead[linesNum][i - lastPos] = NULL;
+                    memcpy(ppParamsRead[linesNum], &pBuffer[lastPos], i - lastPos);
+                    ppParamsRead[linesNum][i - lastPos] = 0;
 
-                    lastPos = i;
+                    lastPos = i + 1;
                     linesNum++;
+		    
+		    if (linesNum > MAX_AMS_PARAMS) {
+		        status = ALL_OK;
+		        break;
+		    }
+		    
+		    if (i + 1 < fileSize && pBuffer[i + 1] == 0x0d) {
+		        i++;
+		    }
                 }
+		
+		i++;
             }
 
             if (i < fileSize) {
                 break;
-            }
-
-            if (linesNum == 0) {
-                /* no line end after the first and only line */
-                linesNum = 1;
             }
         }
 
@@ -163,5 +181,6 @@ void ams_free_startup_params(char** ppParams, int numberOfParams) {
         for (i = 0; i < numberOfParams; i++) {
             pcsl_mem_free(ppParams[i]);
         }
+        pcsl_mem_free(ppParams);
     }
 }

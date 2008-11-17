@@ -24,6 +24,8 @@
  * information or have any questions.
  */
 
+#include <midp_global_status.h>
+
 /**
  * Retrieves an array of parameters to be handled by runMidlet.
  * If some parameter with the same name is passed to runMidlet
