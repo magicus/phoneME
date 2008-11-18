@@ -36,7 +36,7 @@ bool SourceAssembler::_in_glue_code = false;
 static int GenerateSDTCode = 0;
 
 void SourceAssembler::Label::import(Stream* s) {
-  char *cmd;
+  const char *cmd;
   if (GenerateGNUCode) {
     cmd = ".extern";
   } else {
@@ -53,7 +53,7 @@ void SourceAssembler::Label::import(Stream* s) {
 }
 
 void SourceAssembler::Label::global(Stream* s) {
-  char *cmd;
+  const char *cmd;
   if (GenerateGNUCode) {
     cmd = ".global";
   } else {
@@ -156,7 +156,7 @@ void SourceAssembler::Literal::print_value_on(SourceAssembler* sasm) {
       sasm->define_bytes(_svalue);
       break;
     case label  : {
-      char *tag;
+      const char *tag;
       if (GenerateGNUCode) {
         tag = ".word";
       } else {
@@ -476,7 +476,7 @@ void SourceAssembler::define_byte(int x) {
 }
 
 void SourceAssembler::define_long(int x) {
-  char *tag, *spec = "0x%x";
+  const char *tag, *spec = "0x%x";
   if (GenerateGNUCode) {
     tag = ".long";
   } else {
@@ -489,7 +489,7 @@ void SourceAssembler::define_long(int x) {
 }
 
 void SourceAssembler::define_long(const Label& L) {
-  char *tag;
+  const char *tag;
   if (GenerateGNUCode) {
     tag = ".long";
   } else {

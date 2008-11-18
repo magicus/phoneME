@@ -1835,11 +1835,11 @@ GCC_PREFIX_c       = $(GCC_PREFIX_$(target_arch))
 GCC_PREFIX         = $(GCC_PREFIX_$(gcc_arch))
 
 # GCC 4.2 and 4.3 issue false positive warnings about uninitialized variables
-ENABLE_GCC_WUNINITIALIZED = true
-ifeq ($(ENABLE_GCC_WUNINITIALIZED), true)
-GCC_WUNINITIALIZED = -Wuninitialized
+ENABLE_WEAK_GCC_WARNINGS = false
+ifeq ($(ENABLE_WEAK_GCC_WARNINGS), true)
+ GCC_WUNINITIALIZED =
 else
-GCC_WUNINITIALIZED =
+ GCC_WUNINITIALIZED = -Wuninitialized
 endif
 
 # for now GCC_VERSION is relevant only on i386

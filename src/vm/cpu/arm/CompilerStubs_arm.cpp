@@ -542,14 +542,14 @@ bind(division_by_zero_compiler);
 void CompilerStubs::generate_compiler_throw_exceptions() {
   Segment seg(this, code_segment, "Compiler exceptions");
 
-  static char* names[] = {
+  static const char* names[] = {
     "NullPointerException",
     "ArrayIndexOutOfBoundsException",
   };
 
   for (int i=0; i<2; i++) {
     char buff[100];
-    char *exception_name = names[i];
+    const char *exception_name = names[i];
     jvm_sprintf(buff, "compiler_throw_%s", exception_name);
 
   bind_global(buff);

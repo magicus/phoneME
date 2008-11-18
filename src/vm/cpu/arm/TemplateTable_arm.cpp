@@ -2477,7 +2477,7 @@ void bc_i2f::generate() {
 }
 
 void bc_dcmp::generate(int arg) {
-  char* name;
+  const char* name;
   switch(arg) {
     case -1:  name = "jvm_dcmpl"; break;
     case 1:   name = "jvm_dcmpg"; break;
@@ -2487,7 +2487,7 @@ void bc_dcmp::generate(int arg) {
 }
 
 void bc_fcmp::generate(int arg) {
-  char* name;
+  const char* name;
   switch(arg) {
     case -1:  name = "jvm_fcmpl"; break;
     case 1:   name = "jvm_fcmpg"; break;
