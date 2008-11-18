@@ -24,6 +24,7 @@
  * information or have any questions.
  */
 
+#include <string.h>
 #include <midp_global_status.h>
 
 /**
@@ -42,8 +43,12 @@
  * @return ALL_OK if no errors or an implementation-specific error code
  */
 MIDPError ams_get_startup_params(char*** pppParams, int* pNumberOfParams) {
-    (void)pppParams;
-    (void)pNumberOfParams;
+    if (pppParams == NULL || pNumberOfParams == NULL) {
+        return BAD_PARAMS;
+    }
+    
+    *pNumberOfParams = 0;
+    *pppParams = NULL;
 
     return ALL_OK;
 }
