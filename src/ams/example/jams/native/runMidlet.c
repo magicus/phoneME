@@ -125,62 +125,72 @@ runMidlet(int argc, char** commandlineArgs) {
 
         if (numberOfParams + 1 > RUNMIDLET_MAX_ARGS) {
             REPORT_ERROR(LC_AMS, "(1) Number of arguments exceeds supported limit");
-	    ams_free_startup_params(ppSavedParams, savedNumberOfParams);
-	    return -1;
-	}
-				
-	for (i = 0; i < numberOfParams; i++) {
+	        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
+	        return -1;
+	    }
+
+        argv[0] = progName; 
+	    for (i = 0; i < numberOfParams; i++) {
             /* argv[0] is the program name */
             argv[i + 1] = ppParamsFromPlatform[i];
         }
     }
 
-    if (midpRemoveOptionFlag("-port", commandlineArgs, &argc) != NULL) {
-        char* pMsg = "WARNING: -port option has no effect, "
-                     "set VmDebuggerPort property instead.\n";
-        REPORT_ERROR(LC_AMS, pMsg);
-        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
-        return -1;
+    /* if savedNumberOfParams > 0, ignore the command-line parameters */
+    if (savedNumberOfParams <= 0) {
+        if (midpRemoveOptionFlag("-port", commandlineArgs, &argc) != NULL) {
+            char* pMsg = "WARNING: -port option has no effect, "
+                         "set VmDebuggerPort property instead.\n";
+            REPORT_ERROR(LC_AMS, pMsg);
+            return -1;
+        }
+
+        /*
+         * Parse options for the VM. This is desirable on a 'development' platform
+         * such as linux_qte. For actual device ports, copy this block of code only
+         * if your device can handle command-line arguments.
+         */
+
+        /*
+         * JVM_ParseOneArg expects commandlineArgs[0] to contain the first actual
+         * parameter
+         */
+        argc --;
+        commandlineArgs ++;
+
+        while ((used = JVM_ParseOneArg(argc, commandlineArgs)) > 0) {
+            argc -= used;
+            commandlineArgs += used;
+        }
+
+        /* Restore commandlineArgs[0] to contain the program name. */
+        argc ++;
+        commandlineArgs --;
+        commandlineArgs[0] = progName;
     }
-
-    /*
-     * Parse options for the VM. This is desirable on a 'development' platform
-     * such as linux_qte. For actual device ports, copy this block of code only
-     * if your device can handle command-line arguments.
-     */
-
-    /*
-     * JVM_ParseOneArg expects commandlineArgs[0] to contain the first actual
-     * parameter
-     */
-    argc --;
-    commandlineArgs ++;
-
-    while ((used = JVM_ParseOneArg(argc, commandlineArgs)) > 0) {
-        argc -= used;
-        commandlineArgs += used;
-    }
-
-    /* Restore commandlineArgs[0] to contain the program name. */
-    argc ++;
-    commandlineArgs --;
-    commandlineArgs[0] = progName;
 
     /*
      * Not all platforms allow rewriting the command line arg array,
      * make a copy
      */
-    if (argc + numberOfParams > RUNMIDLET_MAX_ARGS) {
+    if ((numberOfParams <= 0 && argc > RUNMIDLET_MAX_ARGS) ||
+        (numberOfParams > RUNMIDLET_MAX_ARGS)) {
         REPORT_ERROR(LC_AMS, "Number of arguments exceeds supported limit");
         ams_free_startup_params(ppSavedParams, savedNumberOfParams);
         return -1;
     }
 
-    argv[0] = commandlineArgs[0];
-    for (i = 1; i < argc; i++) {
-        argv[i + numberOfParams] = commandlineArgs[i];
+    if (savedNumberOfParams <= 0) {
+        for (i = 0; i < argc; i++) {
+            argv[i] = commandlineArgs[i];
+        }
+    } else {
+        /*
+         * if savedNumberOfParams is greater than zero, command-line parameters
+         * are ignored
+         */
+        argc = numberOfParams + 1; /* +1 because argv[0] is the program name */
     }
-    argc += numberOfParams;
 
     /*
      * IMPL_NOTE: corresponding VM option is called "-debugger"
