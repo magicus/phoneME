@@ -550,7 +550,7 @@ InterpreterGenerator::generate_quick_native_method_entry(BasicType return_type)
 {
   Segment seg(this, code_segment);
   GUARANTEE(word_size_for(return_type) <= 1, "2-word return not supported");
-  char *type;
+  const char *type;
   char name[64];
 
   switch (return_type) {

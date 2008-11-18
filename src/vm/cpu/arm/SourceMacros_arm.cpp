@@ -1084,7 +1084,7 @@ void SourceMacros::generate_call(Register entry,
                                  Label& label,
                                  int result_type,
                                  int prefetch_size,
-                                 char* deoptimization_entry_name) {
+                                 const char* deoptimization_entry_name) {
   bind(label);
 
   if (!USE_FP_RESULT_IN_VFP_REGISTER &&
@@ -1118,7 +1118,7 @@ void SourceMacros::generate_call(Register entry,
 
 void SourceMacros::invoke_method(Register method,  Register entry,
                                  Register tmp, int prefetch_size,
-                                 char *deoptimization_entry_name) {
+                                 const char *deoptimization_entry_name) {
   // callee must contain the method
   GUARANTEE(method == callee, "sanity");
   ldrh(tmp, imm_index3(method,
