@@ -109,6 +109,7 @@ $(JSR_172_SG_JAR): $(JSR_172_BUILD_DIR) $(INTERNAL_JSR_172_SG_RI_FILES) property
 	@echo "build $@ ..."
 	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR),$(INTERNAL_JSR_172_SG_RI_FILES), \
 		-g$(JAVAC_DEBUG) -classpath $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST))
+	$(AT)$(shell cp $(INTERNAL_JSR_172_SG_PATH)/*.properties $(JSR_172_BUILD_DIR))
 	$(AT)$(shell mkdir -p $(dir $@))
 	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR),.)
 
