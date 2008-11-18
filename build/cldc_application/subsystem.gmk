@@ -96,12 +96,12 @@ $(JSR_172_BUILD_DIR) $(JSR_172_GENERATED_DIR) $(JSR_172_BUILD_EXTRA_DIR):
 
 # JSR 172 stub generator rules
 
-property_files : $(JSR_172_BUILD_DIR)/jwc_properties.ini
+jsr172_property_files : $(JSR_172_BUILD_DIR)/jwc_properties.ini
 
 $(JSR_172_BUILD_DIR)/jwc_properties.ini: $(CONFIGURATOR_JAR_FILE)
 	$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
 		-xml $(JSR_172_PROPERTY_FILE) \
-		-xsl $(INT_XSL_DIR)/cldc/propertiesIni.xsl \
+		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesIni.xsl \
 		-out $@)
 
 jsr172__stub-generator: $(JSR_172_SG_JAR)
@@ -109,7 +109,7 @@ $(JSR_172_SG_JAR): $(JSR_172_BUILD_DIR) $(INTERNAL_JSR_172_SG_RI_FILES)
 	@echo "build $@ ..."
 	$(AT)$(shell mkdir -p $(dir $@))
 	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR),$(INTERNAL_JSR_172_SG_RI_FILES), \
-		-g$(JAVAC_DEBUG) -classpath $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST))
+		-classpath $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST))
 	$(AT)cp $(INTERNAL_JSR_172_SG_PATH)/*.properties $(JSR_172_BUILD_DIR)/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))
 	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR),.)
 
@@ -119,7 +119,7 @@ $(JSR_172_JAR) : $(JSR_172_BUILD_DIR) $(JSR_172_GENERATED_DIR) $(JSR_172_BUILD_E
 		$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES) \
 		$(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) \
 		$(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES) \
-		property_files
+		jsr172_property_files
 	@echo "build $@ ..."
 	$(AT)$(call generateConstantClasses, $(JSR_172_GENERATED_DIR), $(JSR_172_CONSTANT_FILE))
 	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_EXTRA_DIR),$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES), \
