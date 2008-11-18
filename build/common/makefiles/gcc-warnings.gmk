@@ -39,45 +39,17 @@
 # do not want to add unnecessary initialization of arrays
 # in the code that affects performance.
 
-ifneq ($(GCC_WARNINGS_TUNED),true)
+# all warnings by default
+USE_WEAK_GCC_WARNINGS = false
 
-# just all+extra warnings
-GCC_WARNING_FLAGS = -W -Wall
-
+ifneq ($(USE_WEAK_GCC_WARNINGS), true)
+  # just all+extra warnings
+  GCC_WARNING_FLAGS = -W -Wall
 else
-
-# select warnings that cause no problems with GCC vrsion >= 4.2
-
-# common for C and C++, normally enabled by -Wall:
-GCC_WALL = -Waddress -Warray-bounds -Wchar-subscripts -Wcomment -Wformat \
-    -Wmain -Wmissing-braces -Wparentheses -Wreturn-type -Wsequence-point \
-    -Wsign-compare -Wstrict-aliasing -Wstrict-overflow=1 -Wswitch \
-    -Wtrigraphs -Wunknown-pragmas -Wunused-function -Wunused-label \
-    -Wunused-value -Wunused-variable
-
-# common for C and C++, normally enabled by -Wextra (same as -W):
-GCC_WEXTRA = -Wclobbered -Wempty-body -Wignored-qualifiers \
-    -Wmissing-field-initializers -Wsign-compare -Wtype-limits -Wunused-parameter
-
-# C++ only:
-GCC_CPP_ONLY_W = -Wc++0x-compat -Wreorder
-
-# C only:
-GCC_C_ONLY_W = -Wimplicit-int -Wimplicit-function-declaration -Wnonnull \
-    -Wpointer-sign -Wmissing-parameter-type -Wold-style-declaration \
-    -Woverride-init 
-
-# disabled:
-# -Wuninitialized 
-
-GCC_WARNING_FLAGS = $(GCC_WALL) $(GCC_WEXTRA) -fdiagnostics-show-option
-
+  # deselect warnings that cause problems with GCC version >= 4.2
+  # !!! the order is important: -Wno-something *after* -Wall
+  GCC_WARNING_FLAGS = -W -Wall -Wno-uninitialized
 endif
-
-
-CONLYFLAGS += $(GCC_C_ONLY_W)
-
-EXTRA_CPPFLAGS += $(GCC_CPP_ONLY_W)
 
 EXTRA_CFLAGS += $(GCC_WARNING_FLAGS)
 

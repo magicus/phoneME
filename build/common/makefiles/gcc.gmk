@@ -160,3 +160,8 @@ ifeq ($(USE_NATIVE_PROFILER), false)
 EXTRA_CFLAGS	+= -s -fomit-frame-pointer
 endif
 endif
+
+# command to display information about GCC
+DISPLAY_CC_VERSION = `$(CC) --version | head -n 1`
+DISPLAY_CPP_VERSION = `$(CPP) --version | head -n 1`
+

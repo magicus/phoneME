@@ -686,13 +686,15 @@ display:
 	@$(foreach v, $(BOOLEAN_OPTIONS), \
 		$(shell printf "%-21s = %s\n" "$(v)" "$($(v))" >> $(tmplogfile))) cat $(tmplogfile) $(LOG)
 	@echo   "" $(LOG)
-	@echo   "CFLAGS                = ""$(CONLYFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(CMDLINE_CFLAGS)" $(LOG)
+	@echo   "CFLAGS                = ""$(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(CMDLINE_CFLAGS)" $(LOG)
 	@echo   "" $(LOG)
 	@echo   "CPPFLAGS              = ""$(EXTRA_CPPFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(CMDLINE_CFLAGS)" $(LOG)
 	@echo   "" $(LOG)
 	@echo   "LD_FLAGS              = ""$(LD_FLAGS)" $(LOG)
 	@echo   "" $(LOG)
-	@echo   "GCC_WARNINGS_TUNED    = ""$(GCC_WARNINGS_TUNED)" $(LOG)
+	@echo   "C compiler            = ""$(DISPLAY_CC_VERSION)" $(LOG)
+	@echo   "C++ compiler          = ""$(DISPLAY_CPP_VERSION)" $(LOG)
+	@echo   "USE_WEAK_GCC_WARNINGS = ""$(USE_WEAK_GCC_WARNINGS)" $(LOG)
 	@printf "JDK_DIR               = %s    (v%s)\n" \
 		"$(JDK_DIR)" `$(JDK_DIR)/bin/java -version < /dev/null 2>&1 | awk -F'"' '{ print $$2 }' | head -1` $(LOG)
 	@echo   "TARGET_VM             = ""$(TARGET_VM)" $(LOG)
