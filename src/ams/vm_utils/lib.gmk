@@ -37,8 +37,6 @@
 VM_UTILS_LIB = vm_utils
 LIB_SET += $(VM_UTILS_LIB)
 
-VM_UTILS_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(VM_UTILS_LIB)
-
 # Common classes
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(VM_UTILS_DIR)/classes/com/sun/midp/ams/VMUtils.java
+    $(SUBSYSTEM_AMS_DIR)/$(VM_UTILS_LIB)/$(TARGET_VM)/classes/com/sun/midp/ams/VMUtils.java
