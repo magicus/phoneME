@@ -41,7 +41,6 @@ import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.main.TrustedMIDletIcon;
-import com.sun.midp.main.MIDletSuiteUtils;
 
 import com.sun.midp.midlet.MIDletSuite;
 
@@ -59,6 +58,7 @@ import com.sun.midp.events.NativeEvent;
 import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.EventQueue;
 import com.sun.midp.events.EventListener;
+import com.sun.midp.ams.VMUtils;
 
 /**
  * The Graphical MIDlet suite installer.
@@ -1818,7 +1818,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                      EventTypes.MIDP_KILL_MIDLETS_EVENT);
                              event.intParam1 = parent.installer.info.getID();
                              event.intParam2 =
-                                     MIDletSuiteUtils.getIsolateId();
+                                     VMUtils.getIsolateId();
 
                              final EventQueue eq = EventQueue.getEventQueue();
                              final Object waitUntilKilled = new Object();
@@ -1863,7 +1863,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
                              // ask AMS to kill the midlet
                              eq.sendNativeEventToIsolate(event,
-                                 MIDletSuiteUtils.getAmsIsolateId());
+                                 VMUtils.getAmsIsolateId());
 
                              synchronized (waitUntilKilled) {
                                  do {
