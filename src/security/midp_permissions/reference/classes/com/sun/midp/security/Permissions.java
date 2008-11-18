@@ -968,9 +968,27 @@ public final class Permissions {
                 throw new IOException("Policy file not found");
             }
 
-            // +2 because "[restricted_]messaging" groups
-            // will be splitted into 2 subgroups
-            groupsAll = new PermissionGroup[list.length + 2];
+            /*
+             * Later in the code "[restricted_]messaging" groups, if they
+             * present in the list of the loaded groups, will be split
+             * into 2 subgroups (send_* and receive_*).
+             * Now we'll count how many extra groups will be added in the
+             * result of this split.
+             */
+            int extraGroups = 0;
+
+            for (i1 = 0; i1 < list.length; i1++) {
+                if ("messaging".equals(list[i1]) ||
+                        "restricted_messaging".equals(list[i1])) {
+                    extraGroups++;
+                }
+            }
+
+            /*
+             * Create an array of permission groups and split "messaging"
+             * group(s), if any.
+             */
+            groupsAll = new PermissionGroup[list.length + extraGroups];
             String [] messages = new String[6];
             int n = 0;
 
