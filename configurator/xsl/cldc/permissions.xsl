@@ -79,7 +79,7 @@ public final class PermissionsStrings {</xsl:text>
     </xsl:for-each>
 </xsl:variable>
 
-<xsl:variable name="perm_number" select="55"/>
+<xsl:variable name="perm_number" select="59"/>
 
 <xsl:if test="$output='native'">
 <xsl:text>/** Total number of permissions. */
@@ -150,7 +150,7 @@ public final class PermissionsStrings {</xsl:text>
         "javax.microedition.sensor.PrivateSensor",
         "javax.microedition.sensor.ProtectedSensor",
         "javax.microedition.contactless.DiscoveryManager",
-        "javax.microedition.contactless.ndef.NDEFTagConnection",
+        "javax.microedition.contactless.ndef.NDEFTagConnection.write",
         "javax.microedition.io.Connector.ndef",
         "javax.microedition.io.Connector.rf",
         "javax.microedition.io.Connector.sc",
