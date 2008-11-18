@@ -78,6 +78,9 @@ extern "C" {
 #ifdef ENABLE_JSR_256
 #include "javacall_sensor.h"
 #endif /* ENABLE_JSR_256 */
+#ifdef ENABLE_JSR_257
+#include <javacall_contactless.h>
+#endif /* ENABLE_JSR_257 */
 
 
 #define MIDP_RUNMIDLET_MAXIMUM_ARGS 10
@@ -164,9 +167,12 @@ typedef enum {
     ,JSR290_JC_EVENT_FLUID_LOAD_FINISHED
     ,JSR290_JC_EVENT_FLUID_INVALIDATE
 #endif /*ENABLE_JSR_290*/
+#ifdef ENABLE_JSR_257
+    ,JSR257_JC_EVENT_CONTACTLESS
+#endif /*ENABLE_JSR_257*/
 } midp_jc_event_type;
 
-
+ 
 typedef struct {
     int stub;
 } midp_event_volume;
@@ -187,6 +193,7 @@ typedef enum {
     MIDP_CARDDEVICE_UNLOCK
 } midp_carddevice_event_type;
 #endif /* ENABLE_JSR_177 */
+
 typedef struct {
     javacall_key             key; /* '0'-'9','*','# */
     javacall_keypress_type  keyEventType; /* presed, released, repeated ... */
@@ -355,6 +362,13 @@ typedef struct {
 } midp_jc_event_carddevice;
 #endif /* ENABLE_JSR_177 */
 
+#ifdef ENABLE_JSR_257
+typedef struct {
+    jsr257_contactless_event_type eventType;
+    javacall_handle eventData;
+} jsr257_jc_event_contactless;
+#endif /* ENABLE_JSR_257 */
+
 typedef struct {
     char* phoneNumber;
 } midp_jc_event_phonebook;
@@ -423,6 +437,11 @@ typedef struct {
 #ifdef ENABLE_JSR_290
         jsr290_jc_event_fluid              jsr290FluidEvent;
 #endif /* ENABLE_JSR_290 */
+
+#ifdef ENABLE_JSR_257
+        jsr257_jc_event_contactless        jsr257Event;
+#endif /* ENABLE_JSR_257 */
+
         midp_jc_event_menu_selection    menuSelectionEvent;
     } data;
 

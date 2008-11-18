@@ -77,6 +77,10 @@ extern "C" {
 #include <javanotify_multimedia_advanced.h>
 #endif
 
+#ifdef ENABLE_JSR_257
+#include <javacall_contactless.h>
+#endif
+
 #ifdef ENABLE_ON_DEVICE_DEBUG
 #include <javacall_odd.h>
 #endif /* ENABLE_ON_DEVICE_DEBUG */
@@ -1003,6 +1007,18 @@ javanotify_fluid_image_notify_dirty (
 }
 
 #endif /* ENABLE_JSR_290 */
+
+#ifdef ENABLE_JSR_257
+void javanotify_contactless_event(jsr257_contactless_event_type event) {
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_contactless_event() >>\n");
+    e.eventType = JSR257_JC_EVENT_CONTACTLESS;
+    e.data.jsr257Event.eventType = event;
+    midp_jc_event_send(&e);
+    return;
+}
+#endif /* ENABLE_JSR_257 */
 
 /**
  * The platform calls this callback notify function when the permission dialog
