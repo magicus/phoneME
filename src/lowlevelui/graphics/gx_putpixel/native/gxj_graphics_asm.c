@@ -177,7 +177,10 @@ void unclipped_blit(unsigned short *dstRaster, int dstSpan,
         bne    height_test;
         tst    r0, #2;
         bne    height_test;
-        cmp    r2, #32; 
+        mov    r4, dstSpan;
+        tst    r4, #2;
+        bne    height_test;
+        cmp    r2, #32;
         bne    height_test;
         cmp    r2, srcSpan; 
         bne    height_test;
