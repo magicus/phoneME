@@ -156,4 +156,30 @@
  */
 #define CVMCPU_NUM_CCM_PATCH_POINTS   3
 
+#ifdef CVMJIT_INTRINSICS
+#ifndef CVM_JIT_CCM_USE_C_HELPER
+#ifndef _ASM
+#ifdef USE_CDC_COM
+/*
+ * CVMJITintrinsicsList: define this value to be the name of the CPU
+ * specific intrinsics config list if one if available.  If the OS/platform
+ * does not define it, then the CVMJITmipsIntrinsicsList will be used.
+ */
+#ifndef CVMJITintrinsicsList
+#define CVMJITintrinsicsList CVMJITmipsIntrinsicsList
+#endif
+
+extern const CVMJITIntrinsicConfigList CVMJITmipsIntrinsicsList;
+
+/*
+ * CVMJITriscParentIntrinsicsList: Leave this value alone because the
+ * OS/platform may wish to override it.
+ */
+/* #undef CVMJITriscParentIntrinsicsList */
+#endif
+#endif /* _ASM */
+#endif /* CVM_JIT_CCM_USE_C_HELPER */
+#endif /* CVMJIT_INTRINSICS */
+
+
 #endif /* _INCLUDED_MIPS_JIT_CPU_H */
