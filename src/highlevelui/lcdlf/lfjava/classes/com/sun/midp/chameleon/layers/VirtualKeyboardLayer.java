@@ -49,6 +49,11 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     private boolean virtualKeyboardVisible;
 
     /**
+     * Default width of virtual keyboard that is used for calculation of key buttons position
+     */
+    private int defaultWidth;
+
+    /**
      * Create an instance of KeyboardLayer
      */
     public VirtualKeyboardLayer() {
@@ -111,12 +116,16 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      */
     private void setAnchor() {
         if (owner == null) {
-	    return;
+            return;
         }
-	bounds[W] = (int)(.95 * owner.bounds[W]);
-	bounds[H] = VirtualKeyboardSkin.HEIGHT;
+        bounds[W] = owner.bounds[W];
+        bounds[H] = VirtualKeyboardSkin.HEIGHT;
         bounds[X] = (owner.bounds[W] - bounds[W]) >> 1;
         bounds[Y] = owner.bounds[H] - bounds[H];
+
+        if (defaultWidth == 0) {
+            defaultWidth = bounds[W];
+        }
     }
 
     /**
@@ -186,7 +195,7 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
             bounds[H] = (bounds[H] > VirtualKeyboardSkin.HEIGHT) ?
                     VirtualKeyboardSkin.HEIGHT : bounds[H];
             bounds[Y] += (screenBounds - bounds[H]);
-            double khrinkX = ((double) bounds[W]) / VirtualKeyboardSkin.WIDTH;
+            double khrinkX = ((double) bounds[W]) / defaultWidth;
             double kshrinkY = ((double) bounds[H]) / VirtualKeyboardSkin.HEIGHT;
             this.vk.resize(khrinkX, kshrinkY);
         }
