@@ -34,11 +34,6 @@ import javax.microedition.lcdui.Font;
  */
 public class VirtualKeyboardSkin {
 
-    /**
-     * This field corresponds to KEYBOARD_WIDTH skin property.
-     * See its comment for further details.
-     */
-    public static int WIDTH;
 
     /**
      * This field corresponds to KEYBOARD_HEIGHT skin property.
