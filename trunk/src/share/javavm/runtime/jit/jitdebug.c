@@ -94,8 +94,8 @@ CVMJIT_DEBUG_METHOD_LIST_BEGIN(methodsToCompile)
        insertion of breakpoints for debugging:
        { "java.lang.String.<init>(Ljava/lang/StringBuffer;)V" },
     */
-    { "java.lang.System.getSecurityManager()Ljava/lang/SecurityManager;" },
-    { "java.util.Properties.setProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;" },
+    { "java.lang.System.getSecurityManager()Ljava/lang/SecurityManager;", 0, 0 },
+    { "java.util.Properties.setProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;", 0, 0 },
 CVMJIT_DEBUG_METHOD_LIST_END(methodsToCompile)
 
 #endif /* USE_COMPILATION_LIST_FILTER */
@@ -134,7 +134,7 @@ CVMJIT_DEBUG_METHOD_LIST_BEGIN(methodsToTraceCompilation)
        insertion of breakpoints for debugging:
        { "java.lang.String.<init>(Ljava/lang/StringBuffer;)V" },
     */
-    { "java.lang.String.<init>(Ljava/lang/StringBuffer;)V" },
+    { "java.lang.String.<init>(Ljava/lang/StringBuffer;)V", 0 ,0 },
 CVMJIT_DEBUG_METHOD_LIST_END(methodsToTraceCompilation)
 
 #endif /* USE_TRACING_LIST_FILTER */
