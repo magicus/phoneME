@@ -208,6 +208,7 @@ static javacall_result rtp_get_player_controls(javacall_handle handle,
 {
     rtp_player* p = (rtp_player*)handle;
     OutputDebugString( "*** get controls ***\n" );
+    *controls = 0;
     return JAVACALL_OK;
 }
 
