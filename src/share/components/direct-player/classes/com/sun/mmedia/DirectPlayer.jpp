@@ -70,6 +70,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     private long remained;      // remained content length
 
     private Timer stopTimer;    // To support StopTimeControl
+    private static final long STOP_TIME_ADVANCE = 200; // ms
     // #ifdef RECORD [
     private DirectRecord recordControl = null;
     // #endif ]
@@ -214,19 +215,45 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             stopTimer.cancel();
             stopTimer = null;
 
-        } else if (state == STARTED) {
+        } else if (time != StopTimeControl.RESET && state == STARTED) {
             long currentTime = doGetMediaTime();
             long duration = doGetDuration();
             if (currentTime != TIME_UNKNOWN && time >= currentTime) {
+                long tempo = 100000, rate = 100000;
+                boolean isRateControlSupported = false;
+                boolean isTempoControlSupported = false;
+                
+                if (hNative != 0) {
+                    isRateControlSupported = nIsRateControlSupported(hNative);
+                    isTempoControlSupported = nIsTempoControlSupported(hNative);
+                }
+                if (midiControl == null &&
+                        (isRateControlSupported || isTempoControlSupported)) {
+                    midiControl = new DirectMIDIControl(this);
+                }
+                if (midiControl != null) {
+                    if (isRateControlSupported) {
+                        rate = midiControl.getRateControl().getRate();
+                    }
+                    if (isTempoControlSupported) {
+                        tempo = midiControl.getTempoControl().getTempo();
+                    }
+                }
+                
                 if (stopTimer != null) {
                     stopTimer.cancel();
+                    stopTimer = null;
                 }
-                stopTimer = new Timer();
-                long scheduleTime = time/1000 - currentTime/1000;
+                long scheduleTime = (time/1000 - currentTime/1000) * 100000 * 100000 / (rate * tempo);
                 if (scheduleTime <= 0) {
                     scheduleTime = 1;
                 }
-                stopTimer.schedule(new StopTimeController(), scheduleTime);
+                if (scheduleTime <= STOP_TIME_ADVANCE) {
+                    (new StopTimeController()).run();
+                } else {
+                    stopTimer = new Timer();
+                    stopTimer.schedule(new StopTimeController(), scheduleTime);
+                }
             }
         }
     }
@@ -886,7 +913,9 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                 long mt  = doGetMediaTime();
                 long dur = doGetDuration();
                 
-                while( mt != -1 && mt < stopTime && ( dur <= 0 || mt < dur ) ) {
+                while ((mt != -1) && 
+                        (mt < stopTime - STOP_TIME_ADVANCE * 1000) && 
+                        (dur <= 0 || mt < dur)) {
                     try	{
                         java.lang.Thread.sleep( 10 );
                     } catch( InterruptedException e ) {
