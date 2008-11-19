@@ -301,7 +301,7 @@ endif
 #####################################################################
 ifeq ($(USE_JSR_172), true)
 JPP_DEFS += -DENABLE_JSR_172
-include $(JSR_172_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_172_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -536,6 +536,5 @@ endif
 
 # xmlparser component
 ifeq ($(USE_XMLPARSER),true)
-include $(XMLPARSER_DIR)/build/share/defs.gmk
-include $(XMLPARSER_DIR)/build/share/rules.gmk
+include $(XMLPARSER_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
