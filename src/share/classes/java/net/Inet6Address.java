@@ -485,7 +485,8 @@ class Inet6Address extends InetAddress {
      */
     static byte[] textToNumericFormat(String src)
     {
-	if (src.length() == 0) {
+        // Shortest valid string is "::", hence at least 2 chars
+        if (src.length() < 2) {
 	    return null;
 	}
 
