@@ -988,6 +988,37 @@ class AppManagerPeer implements CommandListener {
     }
 
     /**
+     * Exits a MIDlet from the specified suite or all runing MIDlets of that
+     * suite.
+     * 
+     * @param suiteId the id of the suite to exit
+     * @param midletClassname the class name of the MIDlet to exit or 
+     *      <code>null</code> if all running MIDlets of the specified suite 
+     *      should be exited
+     */
+    void exitSuite(final int suiteId, final String midletClassname) {
+        final RunningMIDletSuiteInfo msi = findUserInstalledSuiteRmsi(suiteId);
+        if (msi == null) {
+            // already exited?
+            return;
+        }
+        
+        if (midletClassname != null) {
+            // destroy a single MIDlet from the suite
+            final MIDletProxy proxy = msi.getProxyFor(midletClassname);
+            if (proxy != null) {
+                proxy.destroyMidlet();
+            }
+            return;
+        }
+
+        final MIDletProxy[] proxies = msi.getProxies();
+        for (int i = 0; i < proxies.length; ++i) {
+            proxies[i].destroyMidlet();
+        }
+    }
+    
+    /**
      * Checks if the installer is currently running.
      *
      * @return true if the installer or discovery application is running,

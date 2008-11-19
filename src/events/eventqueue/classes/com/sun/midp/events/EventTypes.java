@@ -433,4 +433,9 @@ public final class EventTypes {
       * the midlets from the given suite were killed.
       */
     public static final int MIDP_MIDLETS_KILLED_EVENT = 69;
+
+    /**
+     * Request to exit a running midlet from the debug agent to AMS.
+     */
+    public static final int MIDP_ODD_EXIT_MIDLET_EVENT = 70;
 }

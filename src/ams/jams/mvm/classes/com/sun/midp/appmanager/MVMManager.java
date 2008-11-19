@@ -202,6 +202,18 @@ public class MVMManager extends MIDlet
     }
 
     /**
+     * Processes MIDP_ODD_EXIT_MIDLET_EVENT.
+     *
+     * @param suiteId ID of the midlet suite
+     * @param className class name of the midlet to exit or <code>NULL</code>
+     *      if all MIDlets from the suite should be exited
+     */
+    public void handleODDExitMidletEvent(final int suiteId, 
+                                         final String className) {
+        appManager.exitSuite(suiteId, className);
+    }
+    
+    /**
      * Processes MIDP_ODD_SUITE_INSTALLED_EVENT. This event indicates that
      * a new MIDlet suite has been installed by ODT agent. It is signal for 
      * the application manager to update the displayed list of MIDlets.

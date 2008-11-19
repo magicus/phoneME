@@ -198,6 +198,19 @@ public class Manager extends MIDlet implements ApplicationManager,
     }
 
     /**
+     * Processes MIDP_ODD_EXIT_MIDLET_EVENT.
+     *
+     * @param suiteId ID of the midlet suite
+     * @param className class name of the midlet to exit or <code>NULL</code>
+     *      if all MIDlets from the suite should be exited
+     */
+    public void handleODDExitMidletEvent(int suiteId, String className) {
+        /*
+         * Not used in SVM: ODT agent doesn't send messages to AMS in SVM mode.
+         */
+    }
+    
+    /**
      * Processes MIDP_ODD_SUITE_INSTALLED_EVENT. This event indicates that
      * a new MIDlet suite has been installed by ODT agent.
      * 
