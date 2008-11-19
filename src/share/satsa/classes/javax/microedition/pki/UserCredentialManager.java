@@ -431,7 +431,7 @@ final public class UserCredentialManager
      * @throws  CMSMessageSignatureServiceException if an
      * error occurs while signing the certificate request
     */
-    public static final byte[] generateCSR(String nameInfo, 
+    public static byte[] generateCSR(String nameInfo, 
                                            String algorithm,
                                            int keyLen, 
                                            int keyUsage, 
@@ -565,7 +565,7 @@ final public class UserCredentialManager
      * credential was cancelled by the user
      * before completion. 
      */
-    public static final boolean addCredential(String certDisplayName,
+    public static boolean addCredential(String certDisplayName,
                                               byte[] pkiPath, String uri)
             throws UserCredentialManagerException {
         return com.sun.satsa.pki.PKIManager.addCredential(certDisplayName,
@@ -649,7 +649,7 @@ final public class UserCredentialManager
      * credential was cancelled by the user
      * before completion. 
      */
-    public static final boolean removeCredential(String certDisplayName,
+    public static boolean removeCredential(String certDisplayName,
         byte[] issuerAndSerialNumber, String securityElementID,
         String securityElementPrompt)
             throws UserCredentialManagerException {
