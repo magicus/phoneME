@@ -90,13 +90,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      */
     protected SubMenuCommand subMenu;
 
-    /**
-     * keep scrollable and scrollListener to recover them after menu dismiss
-     */
-    private CLayer cachedScrollable;
-    private ScrollListener cachedListener;
-
-    private VirtualKeyboardLayer keyboardPopup;
+    private int[] cached_button_anchor_x;
 
     /**
      * A set of weights assigned to each of the types of Commands.
@@ -444,6 +438,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * @return true always
      */
     public boolean pointerInput(int type, int x, int y) {
+
         if (type != EventConstants.PRESSED) {
             return true;
         }
@@ -451,15 +446,15 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
             switch (SoftButtonSkin.BUTTON_ALIGN_X[i]) {
                 case Graphics.LEFT:
-                    if (x < SoftButtonSkin.BUTTON_ANCHOR_X[i] ||
-                            (x > SoftButtonSkin.BUTTON_ANCHOR_X[i] +
+                    if (x < cached_button_anchor_x[i] ||
+                            (x > cached_button_anchor_x[i] +
                                     SoftButtonSkin.BUTTON_MAX_WIDTH[i])) {
                         continue;
                     }
                     break;
                 case Graphics.RIGHT:
-                    if (x > SoftButtonSkin.BUTTON_ANCHOR_X[i] ||
-                            (x < SoftButtonSkin.BUTTON_ANCHOR_X[i] -
+                    if (x > cached_button_anchor_x[i] ||
+                            (x < cached_button_anchor_x[i] -
                                     SoftButtonSkin.BUTTON_MAX_WIDTH[i])) {
                         continue;
                     }
@@ -538,20 +533,26 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * Sets the anchor constraints for rendering operation.
      */
     public void setAnchor() {
-	if (owner == null)
-	    return;
+
+        int anchor_x;
+
+        if (owner == null)
+            return;
+
         bounds[X] = 0;
-	for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
-	    if (SoftButtonSkin.BUTTON_ANCHOR_X[i] < 0) {
-		SoftButtonSkin.BUTTON_ANCHOR_X[i] = owner.bounds[W] +
-		    SoftButtonSkin.BUTTON_ANCHOR_X[i];
-	    }
-	}
-	
-	
-	bounds[Y] = owner.bounds[H] - SoftButtonSkin.HEIGHT;
-	bounds[W] = owner.bounds[W];
-	bounds[H] = SoftButtonSkin.HEIGHT;
+
+        for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
+            anchor_x = SoftButtonSkin.BUTTON_ANCHOR_X[i];
+            if (anchor_x < 0) {
+                anchor_x += owner.bounds[W];
+            }
+            cached_button_anchor_x[i] = anchor_x;
+        }
+
+
+        bounds[Y] = owner.bounds[H] - SoftButtonSkin.HEIGHT;
+        bounds[W] = owner.bounds[W];
+        bounds[H] = SoftButtonSkin.HEIGHT;
     }
 
     /**
@@ -833,6 +834,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
 */
     protected void initialize() {
         super.initialize();
+        cached_button_anchor_x = new int[SoftButtonSkin.NUM_BUTTONS];
         setAnchor();
     }
 
@@ -864,14 +866,14 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             switch (SoftButtonSkin.BUTTON_ALIGN_X[i]) {
                 case Graphics.HCENTER:
                     buttonx =
-                            SoftButtonSkin.BUTTON_ANCHOR_X[i] - (buttonw / 2);
+                            cached_button_anchor_x[i] - (buttonw / 2);
                     break;
                 case Graphics.RIGHT:
-                    buttonx = SoftButtonSkin.BUTTON_ANCHOR_X[i] - buttonw;
+                    buttonx = cached_button_anchor_x[i] - buttonw;
                     break;
                 case Graphics.LEFT:
                 default:
-                    buttonx = SoftButtonSkin.BUTTON_ANCHOR_X[i];
+                    buttonx = cached_button_anchor_x[i];
                     break;
             }
             buttony = SoftButtonSkin.BUTTON_ANCHOR_Y[i];
