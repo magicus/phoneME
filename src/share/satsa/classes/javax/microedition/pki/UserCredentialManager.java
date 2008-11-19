@@ -432,12 +432,12 @@ final public class UserCredentialManager
      * error occurs while signing the certificate request
     */
     public static byte[] generateCSR(String nameInfo, 
-                                           String algorithm,
-                                           int keyLen, 
-                                           int keyUsage, 
-                                           String securityElementID,
-                                           String securityElementPrompt, 
-                                           boolean forceKeyGen)
+                                     String algorithm,
+                                     int keyLen, 
+                                     int keyUsage, 
+                                     String securityElementID,
+                                     String securityElementPrompt, 
+                                     boolean forceKeyGen)
         throws UserCredentialManagerException,
 	CMSMessageSignatureServiceException
     {
@@ -566,7 +566,7 @@ final public class UserCredentialManager
      * before completion. 
      */
     public static boolean addCredential(String certDisplayName,
-                                              byte[] pkiPath, String uri)
+                                        byte[] pkiPath, String uri)
             throws UserCredentialManagerException {
         return com.sun.satsa.pki.PKIManager.addCredential(certDisplayName,
                 pkiPath, uri);
