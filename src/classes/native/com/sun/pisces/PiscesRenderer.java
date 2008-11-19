@@ -26,6 +26,50 @@
  
 package com.sun.pisces;
 
+/**
+ * PiscesRenderer class is basic public API accessing Pisces library capabilities.
+ * 
+ * Pisces renderer is intended to draw directly into underlying data buffer of AbstractSurface. 
+ * Basic implementation of AbstractSurface is e.g. GraphicsSurface.
+ *
+ * All coordinates are in 15.16 representation. ie. 13 will be passed as 13<<16.
+ * Simple use-case for PiscesRenderer together with GraphicsSurface would be e.g. -
+ *<br/>
+ *
+ *  <code>
+ *  <br/>
+ *	GraphicsSurface surface = new GraphicsSurface();<br/>
+ *  <br/>
+ *	PiscesRenderer pr = new PiscesRenderer(surface);<br/>
+ *	</code>
+ *  <br/>
+ *  <br/>
+ *  Now, when we have instances ready, we can render something from our paint(Graphics g) method 
+ *  <br/><br/>
+ *  <code><br/>
+ *	void paint(Graphics g) {<br/>
+ *	<dd>   surface.bindTarget(g);<br/>
+ *		//we set stroke color<br/>
+ *		pr.setColor(0xFF, 0x00, 0xAF);<br/>
+ *		// we set required Porter-Duff Compositing Rule<br/>
+ *		pr.setComposite(RendererBase.COMPOSITE_SRC_OVER);<br/>
+ *      <br/>
+ *		//switch antialising on/off as required<br/>
+ *		pr.setAntialiasing(true); // on<br/>
+ *		<br/>
+ *		pr.setTransform(ourTransform6Matrix);<br/>		
+ *      <br/>
+ *		//and now let's draw something finally<br/>
+ *		pr.beginRendering(RendererBase.WIND_EVEN_ODD);<br/>
+ *			pr.moveTo(50 << 16, 100 << 16); //		<br/>
+ *			pr.lineTo(30<<16, 1<<16);
+ *		pr.endRendering();<br/>
+ *	    <br/>
+ *      surface.releaseTarget();<br/>
+ *      </dd>
+ *	}<br/>
+ *  </code>
+ */
 public final class PiscesRenderer extends PathSink 
         implements NativeFinalization {
     static {
