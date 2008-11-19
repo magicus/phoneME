@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-package com.sun.midp.jsr75;
+package com.sun.midp.jsr075;
 
 /*
  * Class provides an interface to clean up file connection data upon suite
