@@ -39,7 +39,11 @@ import java.io.IOException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 import java.util.Vector;
 import java.net.MalformedURLException;
 import java.util.HashSet;
@@ -78,7 +82,7 @@ class MIDPConfig{
         String libdir = System.getProperty("java.home") + 
             File.separator + "lib" + File.separator;
         String jars[] = split(System.getProperty(
-            "com.sun.midp.implementation"));
+            "com.sun.midp.implementation"), ' ');
         int num = jars.length;
         File files[] = new File[num];
 
@@ -122,26 +126,8 @@ class MIDPConfig{
 	}
     }
 
-    /* Read the permitted class list. */
-    private static HashSet
-    getPermittedClasses(){
-	if (allowedClasses != null){
-	    return allowedClasses;
-	}
-
-	BufferedReader infile;
-	Vector classnames;
-	int    nnames = 0;
-	String filename =
-		System.getProperty("java.home") + File.separator +
-		"lib" + File.separator + "MIDPPermittedClasses.txt";
-	try{
-	    infile = new BufferedReader(new FileReader(filename));
-	}catch(java.io.IOException e){
-	    /*DEBUG*/ System.err.println("Could not open "+filename);
-	    return null;
-	}
-	classnames = new Vector();
+    private static void
+    readPermittedClassFile(BufferedReader infile) {
 	try{
 	    while(true){
 		String inline = infile.readLine();
@@ -151,22 +137,60 @@ class MIDPConfig{
 		    continue; // blank line
 		if (inline.charAt(0) == '#')
 		    continue; // comment
-		classnames.add(inline);
-		nnames += 1;
+		allowedClasses.add(inline.intern());
 	    }
-	    infile.close();
 	}catch(java.io.IOException e){
-	    /*DEBUG*/ System.err.println("Exception while reading "+filename);
-	    return null;
+	}
+    }
+
+    /* Read the permitted class list. */
+    private static void
+    getPermittedClasses() {
+        BufferedReader infile;
+
+	if (allowedClasses != null){
+	    return;
 	}
 
-	allowedClasses = new HashSet();
-	for (int i = 0; i<classnames.size(); i++){
-	    String classname = ((String)classnames.elementAt(i)).intern();
-	    allowedClasses.add(classname);
-	}
+        allowedClasses = new HashSet();
 
-	return allowedClasses;
+        /* First, read the default lib/MIDPPermittedClasses.txt */
+        try {
+	    String filename =
+		System.getProperty("java.home") + File.separator +
+		"lib" + File.separator + "MIDPPermittedClasses.txt";
+
+	    infile = new BufferedReader(new FileReader(filename));
+            readPermittedClassFile(infile);
+            infile.close();
+        } catch (IOException ie) {
+            throw new InternalError(
+                "Failed to read lib/MIDPPermittedClasses.txt");
+        }
+        
+        /* Then, search the jar files in the bootclasspath to see if
+         * there are additional class lists. */
+        String jarfiles[] = split(
+                System.getProperty("sun.boot.class.path"),
+                File.pathSeparatorChar);
+        int num = jarfiles.length;
+
+        for (int i = 0; i < num; i++) {
+            try {
+                JarFile jarfile = new JarFile(jarfiles[i]);
+                ZipEntry entry = jarfile.getEntry("MIDPPermittedClasses.txt");
+                if (entry != null) {
+                    InputStream jis = jarfile.getInputStream(entry);
+                    infile = new BufferedReader(new InputStreamReader(jis));
+                    readPermittedClassFile(infile);
+                    infile.close();
+                }
+            } catch (IOException ioe) {
+                throw new InternalError(
+                        "Failed to read " + jarfiles[i] +
+                        "MIDPPermittedClasses.txt");
+            }
+        }
     }
 
     public static MIDPImplementationClassLoader
@@ -256,9 +280,9 @@ class MIDPConfig{
      */
 
     static String[]
-    split(String path){
+    split(String path, char separator){
 	int nComponents = 1;
-        char separator = ' ';
+        //char separator = ' ';
 	String components[];
 	int length = path.length();
 	int start;
