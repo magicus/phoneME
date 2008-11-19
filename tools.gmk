@@ -1,5 +1,4 @@
 #
-#
 # Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -25,6 +24,9 @@
 # Tools Component Configuration file
 #
 ######################################################################
+
+ifndef _tools_gmk_
+_tools_gmk_ = defined
 
 include $(TOOLS_DIR)/makefiles/common_defs.gmk
 
@@ -94,3 +96,4 @@ tools_source_bundle:
 clean::
 	@rm -rf $(TOOLS_OUTPUT_DIR)
 
+endif #_tools_gmk_

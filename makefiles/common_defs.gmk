@@ -1,5 +1,4 @@
 #
-#
 # Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -61,6 +60,12 @@ define source_bundle_filter
 			    cp -rp $(1)/$$i/* $(2)/$$i; \
             fi \
 		done
+endef
+
+# Macro to pre-process Jpp file into Java file
+# runjpp(<input_jpp_file>, <output_java_file>)
+define runjpp
+    $(JAVA_CMD) -classpath $(TOOLS_OUTPUT_DIR) Jpp $(JPP_DEFS) -o `$(call POSIX2HOST_CMD,$(2))` `$(call POSIX2HOST_CMD,$(1))`
 endef
 
 # compileJavaClasses(outputDir, javaFiles, extraJavacOptions)
