@@ -192,7 +192,7 @@ public class MVMManager extends MIDlet
         }
 
         try {
-            appManager.launchSuite(suiteId, className, isDebugMode);
+            appManager.launchSuite(suiteId, className, isDebugMode, true);
             if (isDebugMode) {
                 suiteUnderDebugId = suiteId;
             }
@@ -416,12 +416,10 @@ public class MVMManager extends MIDlet
     }
 
     /**
-     * Called when a suite exited (the only MIDlet in suite exited or the
-     * MIDlet selector exited).
-     * @param suiteInfo Suite which just exited
-     * @param className the running MIDlet class name
+     * Requests ODT agent to exit running commands for the given suite.
+     * @param suiteInfo Suite whose commands should be exited.
      */
-    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {
+    private void exitODTCommand(RunningMIDletSuiteInfo suiteInfo) {
         MIDletProxy odtAgentMidlet = midletProxyList.findMIDletProxy(
             MIDletSuite.INTERNAL_SUITE_ID, ODT_AGENT);
 
@@ -438,6 +436,17 @@ public class MVMManager extends MIDlet
         if (suiteUnderDebugId == suiteInfo.suiteId) {
             suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
         }
+    }
+    
+    /**
+     * Called when a suite exited (last running MIDlet in suite exited).
+     * @param suiteInfo Suite which just exited
+     * @param className the running MIDlet class name
+     */
+    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {
+        if (!suiteInfo.isLocked()) {
+            exitODTCommand(suiteInfo);
+        }
         
         appManager.notifySuiteExited(suiteInfo);
 
@@ -447,6 +456,18 @@ public class MVMManager extends MIDlet
                 waitForDestroyThread = null;
             }
         }
+    }
+
+    /**
+     * Handle exit of MIDlet selector.
+     * @param suiteInfo Containing ID of suite
+     */
+    public void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {
+        if (!suiteInfo.isLocked()) {
+            exitODTCommand(suiteInfo);
+        }
+        
+        appManager.notifyMIDletSelectorExited(suiteInfo);
     }
 
     /**

@@ -380,13 +380,18 @@ public class Manager extends MIDlet implements ApplicationManager,
     public void exitMidlet(RunningMIDletSuiteInfo suiteInfo, String className) {}
 
     /**
-     * Handle exit of MIDlet suite (the only MIDlet in sute exited or MIDlet
-     * selector exited).
+     * Handle exit of MIDlet suite (last running MIDlet in sute exited).
      * @param suiteInfo Containing ID of exited suite
      * @param className the running MIDlet class name
      */
     public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {}
     
+    /**
+     * Handle exit of MIDlet selector.
+     * @param suiteInfo Containing ID of suite
+     */
+    void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {}
+
     // ==============================================================
     // ----------------- PRIVATE methods ---------------------------
 

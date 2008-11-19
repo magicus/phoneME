@@ -143,6 +143,12 @@ final class MIDletSelector implements CommandListener {
         display.setCurrent(mlist);
         
         runningMidlets = new Vector();
+        
+        /* for locked suite, we need storage lock until some MIDlet is launched.
+         * This prevents reinstallation of the locked suite. */
+        if (suiteInfo.isLocked()) {
+            suiteInfo.grabStorageLock();
+        }
     }
 
     /**
@@ -168,7 +174,14 @@ final class MIDletSelector implements CommandListener {
      * @param midlet ClassName of MIDlet which just exited
      */
     public void notifyMidletExited(String midlet) {
-        runningMidlets.removeElement(midlet);
+        runningMidlets.removeElement(midlet);        
+        
+        /* If no more MIDlets are running from a locked suite, we need 
+         * the storage lock until another MIDlet is launched. This prevents 
+         * reinstallation of the locked suite. */
+        if (runningMidlets.isEmpty() && suiteInfo.isLocked()) {
+            suiteInfo.grabStorageLock();
+        }
     }
 
     /**
@@ -176,7 +189,13 @@ final class MIDletSelector implements CommandListener {
      */
     public void exitIfNoMidletRuns() {
         if (runningMidlets.isEmpty()) {
-            manager.notifySuiteExited(suiteInfo, null);
+            if (suiteInfo.holdsStorageLock()) {
+                suiteInfo.releaseStorageLock();
+            }
+            if (suiteInfo.isLocked()) {
+                suiteInfo.unlock();
+            }
+            manager.notifyMIDletSelectorExited(suiteInfo);
         }
     }
     
@@ -206,6 +225,12 @@ final class MIDletSelector implements CommandListener {
                 return;
             }
 
+            /* if we hold a storage lock, release it to allow the started MIDlet 
+             * to take it */
+            if (suiteInfo.holdsStorageLock()) {
+                suiteInfo.releaseStorageLock();
+            }
+            
             runningMidlets.addElement(minfo[selectedMidlet].classname);
             manager.launchSuite(suiteInfo, minfo[selectedMidlet].classname);
             selectedMidlet = -1;
