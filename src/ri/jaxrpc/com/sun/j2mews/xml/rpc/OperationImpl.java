@@ -38,7 +38,6 @@ import java.rmi.MarshalException;
 import java.rmi.ServerException;
 
 import com.sun.j2me.io.Base64;
-import com.sun.j2me.log.Logging;
 
 /**
  * The <code>OperationImpl</code> class is an implementation
@@ -299,25 +298,19 @@ public class OperationImpl extends Operation {
             if (ostream != null) {
                 try {
                     ostream.close();
-                } catch (Exception t1) {
-                	if (Logging.TRACE_ENABLED) Logging.trace(t1, ""); 
-                }
+                } catch (Exception t1) {}
                 ostream = null;
             }
             if (istream != null) {
                 try {
                     istream.close();
-                } catch (Exception t1) { 
-                	if (Logging.TRACE_ENABLED) Logging.trace(t1, ""); 
-                }
+                } catch (Exception t1) {}
                 istream = null;
             }
             if (http != null) {
                 try {
                     http.close();
-                } catch (Exception t1) { 
-                	if (Logging.TRACE_ENABLED) Logging.trace(t1, ""); 
-                }
+                } catch (Exception t1) {}
                 http = null;
             }
             // Re-throw whatever error/exception occurs as a new

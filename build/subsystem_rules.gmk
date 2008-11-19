@@ -31,6 +31,11 @@
 # Append JSR 172 source bundle creation to target
 source_bundle:: jsr_172_source_bundle
 
+# Jpp files that need preprocessing
+#
+$(JSR_172_GENERATED_DIR)/classes/%.java: $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/%.jpp $(JPP_CLASS_FILES)
+	$(AT)$(call runjpp,$^,$@)
+
 # Copy and filter JSR 172 source in JSR_172_SOURCE_OUTPUT_DIR
 jsr_172_source_bundle:: $(JSR_172_DIR)
 	@echo " ... JSR 172 source bundle" $(LOG)
