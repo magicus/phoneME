@@ -73,12 +73,6 @@ define constantClassesListFile
     $(1)/.constant.class.list
 endef
 
-# Macro to pre-process Jpp file into Java file
-# runjpp(<input_jpp_file>, <output_java_file>)
-define runjpp
-    $(CVM_JAVA) -classpath $(TOOLS_OUTPUT_DIR) Jpp $(JPP_DEFS) -o $(2) $(1)
-endef
-
 # compileJSROP(jsrXXX,distDir,FILES,EXTRA_CLASSPATH)
 define compileJSROP
 	@echo "Compiling "$(1)" classes...";			\
