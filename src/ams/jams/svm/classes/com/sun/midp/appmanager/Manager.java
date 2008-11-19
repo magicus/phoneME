@@ -390,7 +390,7 @@ public class Manager extends MIDlet implements ApplicationManager,
      * Handle exit of MIDlet selector.
      * @param suiteInfo Containing ID of suite
      */
-    void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {}
+    public void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {}
 
     // ==============================================================
     // ----------------- PRIVATE methods ---------------------------
