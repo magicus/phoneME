@@ -310,6 +310,7 @@ class DirectMIDIControl implements DirectControls {
                     millirate = min;
             }
 
+            recalculateStopTime();
             if (_player.state >= Player.STARTED) {
                     _cachedRate = -1;
                     return nSetRate(_player.hNative, millirate);
@@ -403,6 +404,7 @@ class DirectMIDIControl implements DirectControls {
                 millitempo = 0;
             }
 
+            recalculateStopTime();
             if (_player != null && _player.hNative != 0) {
                 return nSetTempo(_player.hNative, millitempo);
             } else {
@@ -415,6 +417,17 @@ class DirectMIDIControl implements DirectControls {
                 return nGetTempo(_player.hNative);
             } else {
                 return 0;
+            }
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////
+    private void recalculateStopTime() {
+        if (_player != null) {
+            long stopTime = _player.getStopTime();
+            if (stopTime != StopTimeControl.RESET) {
+                _player.setStopTime(StopTimeControl.RESET);
+                _player.setStopTime(stopTime);
             }
         }
     }
