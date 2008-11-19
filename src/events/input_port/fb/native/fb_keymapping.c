@@ -170,6 +170,6 @@ KeyMapping omap_730_keys[] = {
     {KEYMAP_KEY_POUND,         65536,   0},
     {KEYMAP_KEY_SCREEN_ROT,      512,   0},    /* Left side down button */
     {KEYMAP_MD_KEY_SWITCH_APP,  2048,   0},    /* Right side button */
-    {KEYMAP_MD_KEY_VIRT_KEYB,   1024,   0},    /* Left side up button */
+    {KEYMAP_KEY_VIRT_KEYB,      1024,   0},    /* Left side up button */
     {KEYMAP_KEY_INVALID,           0,   0},    /* end of table */
 };

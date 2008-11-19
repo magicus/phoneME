@@ -58,6 +58,8 @@ SUBSYSTEM_SUSPEND_RESUME_JAVA_FILES += \
     $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/SuspendResumeUI.java
 
 ifeq ($(USE_I3_TEST), true)
+ifneq ($(TARGET_PLATFORM), javacall)
+
     vpath % $(SR_MAIN_DIR)/default/i3test/com/sun/midp/suspend
     SUBSYSTEM_SUSPEND_RESUME_NATIVE_FILES += \
         native.c
@@ -68,5 +70,6 @@ ifeq ($(USE_I3_TEST), true)
     SUBSYSTEM_SUSPEND_RESUME_I3TEST_JAVA_FILES += \
         $(SR_MAIN_DIR)/default/i3test/com/sun/midp/suspend/TestDummy.java \
         $(SR_MAIN_DIR)/default/i3test/com/sun/midp/suspend/TestConnectionSuspend.java
+endif
 endif
 

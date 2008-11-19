@@ -2564,12 +2564,18 @@ public class Display {
         return  (current instanceof AlertLF) ? window.getAlertHeight() : window.getBodyHeight();
     }
 
+    // #endif ENABLE_CHAMELEON
+
     /**
      * Called to get current display width.
      * @return Display width.
      */
     int getDisplayWidth() {
+        // #ifdef ENABLE_GCI
+        return WIDTH;
+        // #else
         return width;
+        // #endif
     }
 
     /**
@@ -2577,7 +2583,11 @@ public class Display {
      * @return Display height.
      */
     int getDisplayHeight() {
+        // #ifdef ENABLE_GCI
+        return HEIGHT;
+        // #else
         return height;
+        // #endif
     }
 
     /**
@@ -2595,8 +2605,6 @@ public class Display {
     static int getPrimaryDisplayHeight() {
         return HEIGHT;
     }
-
-    // #endif ENABLE_CHAMELEON
 
 // #ifdef ENABLE_CDC
     /**
@@ -3465,7 +3473,7 @@ public class Display {
         public void handleRotationEvent() {
             synchronized (LCDUILock) {
                 // #ifndef ENABLE_GCI
-                wantRotation = Display.this.displayDevice.reverseOrientation() ;
+                wantRotation = Display.this.displayDevice.reverseOrientation();
                 isRotatedKnown = true;
                 Display.this.width = Display.this.displayDevice.getWidth(); 
                 Display.this.height = Display.this.displayDevice.getHeight();
@@ -3511,8 +3519,70 @@ public class Display {
                 currentCopy.uCallSizeChanged(Display.this.width, Display.this.height);
             }
             // #endif ENABLE_CHAMELEON
+        }
+
+      /**
+      * Called by event delivery when clamshell event occurs.
+      */
+        public void handleClamshellEvent() {
+            synchronized (LCDUILock) {
+                // #ifndef ENABLE_GCI
+		Display.this.displayDevice.clamshellHandling();
+
+		Display.this.width = Display.this.displayDevice.getWidth(); 
+                Display.this.height = Display.this.displayDevice.getHeight();
+
+		if (Display.this.displayDevice.isPrimaryDisplay()){
+                Display.this.WIDTH = Display.this.width;
+                Display.this.HEIGHT = Display.this.height;
+		}
+          
+                // #else
+                // TBD: not implemented for GCI yet
+                // #endif ENABLE_GCI
+                
+                screenGraphics.setDimensions(Display.this.width, Display.this.height);
+            }
+            // #ifdef ENABLE_CHAMELEON
+
+            MIDPWindow windowCopy;
+            DisplayableLF currentCopy;
+            synchronized (LCDUILock) {
+                windowCopy = window;
+                currentCopy = Display.this.current;
+            }
+
+            windowCopy.resize();
+            if (currentCopy != null) {
+            // IMPL_NOTE: uCallSizeChanged was added to prevent form content reculculation before size changing of
+            // Displayable (Form)
+                currentCopy.uCallSizeChanged(Display.this.width, Display.this.height);
+                currentCopy.uCallInvalidate();
+            }
+
+            // IMPL_NOTE: The entire screen repaint is requested instead
+            //   of usual repaint of the current Displayable over callPaint().
+            //   It is done so because various layers can logically belong
+            //   to the Displayable, but be beyond of its area. For instance,
+            //   date editor popup dialogs can intersect with soft buttons
+            //   layer, thus require repaint for all layers involved.
+            requestScreenRepaint();
+
+            // #else
+            DisplayableLF currentCopy = getCurrent().displayableLF;
+            if (currentCopy != null) {
+                currentCopy.uCallSizeChanged(Display.this.width, Display.this.height);
+            }
+	    /*This will result in calls to MIDlet code*/
+	    //Displayable currentDisplayable = getCurrent();
+	    //if (currentDisplayable instanceof Canvas){
+		//currentDisplayable.sizeChanged(Display.this.width, Display.this.height);
+	    //}
+	    
+            // #endif ENABLE_CHAMELEON
 
         }
+	    
 
         /**
          * Called by event delivery to process a Form invalidation.

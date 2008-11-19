@@ -279,6 +279,23 @@
             Value="80"
             Comment="The period in milliseconds of processing the last delayed
                      call to GameCanvas.flush()."/>
+
+  <constant Type="int"
+            Name="RECORD_STORE_NOTIFICATION_QUEUE_SIZE"
+            Value="10"
+            Comment="Maximal number of notifications about record store changes
+                     that can be placed into event queue of VM task."/>
+  <constant Type="int"
+            Name="RECORD_STORE_NOTIFICATION_TIMEOUT"
+            Value="1000"
+            Comment="Allowed time in milliseconds to block record store changer until
+                     its notifications are acknowledged by receiver VM task."/>
+  <constant Type="int"
+            Name="RECORD_STORE_NOTIFICATION_ATTEMPTS"
+            Value="5"
+            Comment="Number of attempts to send notification event about record store
+                     change in the case there is receiver VM task that cannot accept
+                     the event."/>
 </constant_class>
 </constants>
 </configuration>

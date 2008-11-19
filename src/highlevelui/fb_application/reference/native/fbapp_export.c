@@ -136,6 +136,10 @@ jboolean fbapp_reverse_orientation(int hardwareId) {
     return reverse_orientation;
 }
 
+/** Handle clamshell event */
+void fbapp_handle_clamshell_event() {
+}
+
 /**Set full screen mode on/off */
 void fbapp_set_fullscreen_mode(int hardwareId, int mode) {
     if (isFullScreen != mode) {
@@ -270,7 +274,7 @@ void fbapp_map_keycode_to_event(
         }
         break;
 
-    case KEYMAP_MD_KEY_VIRT_KEYB:
+    case KEYMAP_KEY_VIRT_KEYB:
         if (isPressed) {
             pNewMidpEvent->type = VIRTUAL_KEYBOARD_EVENT;
             pNewSignal->waitingFor = UI_SIGNAL;

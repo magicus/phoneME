@@ -229,8 +229,8 @@ SUBSYSTEM_LCDLF_I3TEST_JAVA_FILES += \
 endif
 
 ifneq ($(TARGET_PLATFORM), javacall)
-SUBSYSTEM_LCDLF_I3TEST_JAVA_FILES += \
-    $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestCanvasSizing.java
+#SUBSYSTEM_LCDLF_I3TEST_JAVA_FILES += \
+#    $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestCanvasSizing.java
 endif
 
 endif

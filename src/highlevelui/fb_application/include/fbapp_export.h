@@ -67,6 +67,10 @@ extern void fbapp_refresh(int hardwareId, int x, int y, int w, int h);
  * Invert screen orientation flag
  */
 extern jboolean fbapp_reverse_orientation(int hardwareId);
+/**
+ * Handle clamshell event
+ */
+extern void fbapp_handle_clamshell_event();
 
 /*
  * Return screen orientation flag

@@ -197,6 +197,8 @@ public:
 
     virtual jboolean reverse_orientation() = 0;
 
+	virtual void handle_clamshell() = 0;
+
     virtual jboolean get_reverse_orientation() const = 0;
 
     virtual ~MScreen(){ };

@@ -188,6 +188,11 @@ javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
     (void)hardwareId;
     return JAVACALL_FALSE;
 }
+/**
+ * Handles clamshell event
+ */
+void  javacall_lcd_handle_clamshell(){
+}
  
 /**
  * Returns display orientation

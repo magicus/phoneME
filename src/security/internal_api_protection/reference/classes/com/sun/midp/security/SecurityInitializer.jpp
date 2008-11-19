@@ -240,7 +240,7 @@ public final class SecurityInitializer {
         // #endif ENABLE_JSR_211
 
         // #ifdef ENABLE_JSR_290
-        "com.sun.fluid.FluidImageImpl$SecurityTrusted",
+        "com.sun.fluid.FluidMidpEventDispatcher$SecurityTrusted",
         "com.sun.j2me.dom.DOMFactory$SecurityTrusted",
         // #endif ENABLE_JSR_290
 
@@ -250,6 +250,10 @@ public final class SecurityInitializer {
         "com.sun.midp.i3test.SelfTest$TestRequestSecurityToken$SecurityTrusted",
         "com.sun.midp.suspend.test.TestUtil$SecurityTrusted",
         "com.sun.midp.services.SecurityTokenProvider$SecurityTrusted",
+        // #ifdef ENABLE_MULTIPLE_ISOLATES
+        "com.sun.midp.util.isolate.SecurityTokenProvider$SecurityTrusted",
+        "com.sun.midp.io.j2me.pipe.SecurityTokenProvider$SecurityTrusted",
+        // #endif
         // IMPL NOTE: PauseTest is temporarily disabled.
         // Pass the security token to the standalone pause test.
         // "com.sun.midp.internal.test.PauseTest",
@@ -257,6 +261,11 @@ public final class SecurityInitializer {
 
         // MMAPI event handler stabbed in MIDP in the case of no JSR 135/234
         "com.sun.mmedia.MMEventHandler$SecurityTrusted",
+
+        // #ifdef ENABLE_MULTIPLE_ISOLATES
+        "com.sun.midp.main.AmsUtil$SecurityTrusted",
+        "com.sun.midp.io.j2me.pipe.Protocol$SecurityTrusted",
+        // #endif
 
         "com.sun.midp.suspend.AbstractSubsystem$SecurityTrusted",
         "com.sun.midp.io.j2me.socket.Protocol$SecurityTrusted",

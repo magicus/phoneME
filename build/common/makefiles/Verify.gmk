@@ -394,7 +394,6 @@ BOOLEAN_OPTIONS = \
 	USE_EXTENDED_ATTRIBUTES \
 	USE_VM_PROFILES \
 	USE_SERVER_SOCKET \
-	USE_LINKS \
 	USE_ON_DEVICE_DEBUG \
 	USE_WTK_DEBUG \
 	USE_OCSP \
@@ -693,6 +692,9 @@ display:
 	@echo   "" $(LOG)
 	@echo   "LD_FLAGS              = ""$(LD_FLAGS)" $(LOG)
 	@echo   "" $(LOG)
+	@echo   "C compiler            = ""$(DISPLAY_CC_VERSION)" $(LOG)
+	@echo   "C++ compiler          = ""$(DISPLAY_CPP_VERSION)" $(LOG)
+	@echo   "USE_WEAK_GCC_WARNINGS = ""$(USE_WEAK_GCC_WARNINGS)" $(LOG)
 	@printf "JDK_DIR               = %s    (v%s)\n" \
 		"$(JDK_DIR)" `$(JDK_DIR)/bin/java -version < /dev/null 2>&1 | awk -F'"' '{ print $$2 }' | head -1` $(LOG)
 	@echo   "TARGET_VM             = ""$(TARGET_VM)" $(LOG)
@@ -730,8 +732,8 @@ display:
 	@echo   "PROJECT_JSR_238_DIR   = ""$(PROJECT_JSR_238_DIR)" $(LOG)
 	@echo   "JSR_239_DIR           = ""$(JSR_239_DIR)" $(LOG)
 	@echo   "PROJECT_JSR_239_DIR   = ""$(PROJECT_JSR_239_DIR)" $(LOG)
-	@echo   "JSR_280_DIR            = ""$(JSR_280_DIR)" $(LOG)
-	@echo   "PROJECT_JSR_280_DIR    = ""$(PROJECT_JSR_280_DIR)" $(LOG)
+	@echo   "JSR_280_DIR           = ""$(JSR_280_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_280_DIR   = ""$(PROJECT_JSR_280_DIR)" $(LOG)
 	@echo	"JSR_256_DIR           = ""$(JSR_256_DIR)" $(LOG)
 	@echo	"PROJECT_JSR_256_DIR   = ""$(PROJECT_JSR_256_DIR)" $(LOG)
 	@echo	"JSR_257_DIR           = ""$(JSR_257_DIR)" $(LOG)

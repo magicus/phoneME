@@ -26,6 +26,8 @@
 
 package com.sun.midp.appmanager;
 
+import java.util.Enumeration;
+
 import javax.microedition.midlet.*;
 
 import javax.microedition.lcdui.*;
@@ -60,7 +62,8 @@ public class MVMManager extends MIDlet
                 DisplayControllerListener, 
                 ApplicationManager,
                 ODTControllerEventConsumer,
-                AMSServicesEventConsumer {
+                AMSServicesEventConsumer,
+                InstallerEventConsumer {
 
     /** Constant for the discovery application class name. */
     private static final String DISCOVERY_APP =
@@ -96,6 +99,9 @@ public class MVMManager extends MIDlet
     /** A thread waiting until a midlet is terminated. Can be null. */
     private Thread waitForDestroyThread;
 
+    /** A synchronization object. */
+    private static final Object waitForDestroy = new Object();
+
     /**
      * Create and initialize a new MVMManager MIDlet.
      */
@@ -105,6 +111,7 @@ public class MVMManager extends MIDlet
         EventQueue eq = EventQueue.getEventQueue();
         new ODTControllerEventListener(eq, this);
         new AMSServicesEventListener(eq, this);
+        new InstallerEventListener(eq, this);
 
         midletProxyList = MIDletProxyList.getMIDletProxyList();
 
@@ -185,7 +192,7 @@ public class MVMManager extends MIDlet
         }
 
         try {
-            appManager.launchSuite(suiteId, className, isDebugMode);
+            appManager.launchSuite(suiteId, className, isDebugMode, true);
             if (isDebugMode) {
                 suiteUnderDebugId = suiteId;
             }
@@ -194,6 +201,18 @@ public class MVMManager extends MIDlet
         }
     }
 
+    /**
+     * Processes MIDP_ODD_EXIT_MIDLET_EVENT.
+     *
+     * @param suiteId ID of the midlet suite
+     * @param className class name of the midlet to exit or <code>NULL</code>
+     *      if all MIDlets from the suite should be exited
+     */
+    public void handleODDExitMidletEvent(final int suiteId, 
+                                         final String className) {
+        appManager.exitSuite(suiteId, className);
+    }
+    
     /**
      * Processes MIDP_ODD_SUITE_INSTALLED_EVENT. This event indicates that
      * a new MIDlet suite has been installed by ODT agent. It is signal for 
@@ -214,6 +233,49 @@ public class MVMManager extends MIDlet
      */
     public void handleODDSuiteRemovedEvent(int suiteId) {
         appManager.notifySuiteRemoved(suiteId);
+    }
+
+    /**
+     * Processes MIDP_KILL_MIDLETS_EVENT.
+     *
+     * @param suiteId ID of the midlet suite from which the midlets
+     *                must be killed
+     * @param isolateId ID of the isolate requested this operation
+     */
+    public void handleKillMIDletsEvent(int suiteId, int isolateId) {
+        try {
+            int timeout = 1000 * Configuration.getIntProperty(
+                    "destoryMIDletTimeout", 5);
+            Enumeration proxies = midletProxyList.getMIDlets();
+
+            while (proxies.hasMoreElements()) {
+                MIDletProxy mp = (MIDletProxy)proxies.nextElement();
+                if (mp.getSuiteId() != suiteId) {
+                    continue;
+                }
+
+                // kill the running midlet and wait until it is destroyed
+                mp.destroyMidlet();
+
+                try {
+                    synchronized(waitForDestroy) {
+                        waitForDestroy.wait(timeout);
+                    }
+                } catch (InterruptedException ie) {
+                    // ignore
+                }
+            }
+        } catch (Exception ex) {
+            displayError.showErrorAlert(null, ex, null, null);
+        } finally {
+            // notify the listeners that the midlets were killed
+            NativeEvent event = new NativeEvent(
+                    EventTypes.MIDP_MIDLETS_KILLED_EVENT);
+            event.intParam1 = suiteId;
+
+            EventQueue eq = EventQueue.getEventQueue();
+            eq.sendNativeEventToIsolate(event, isolateId);
+        }
     }
 
     /**
@@ -346,16 +408,18 @@ public class MVMManager extends MIDlet
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
+        synchronized(waitForDestroy) {
+            waitForDestroy.notify();
+        }
+        
         appManager.notifyMidletExited(midlet);
     }
 
     /**
-     * Called when a suite exited (the only MIDlet in suite exited or the
-     * MIDlet selector exited).
-     * @param suiteInfo Suite which just exited
-     * @param className the running MIDlet class name
+     * Requests ODT agent to exit running commands for the given suite.
+     * @param suiteInfo Suite whose commands should be exited.
      */
-    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {
+    private void exitODTCommand(RunningMIDletSuiteInfo suiteInfo) {
         MIDletProxy odtAgentMidlet = midletProxyList.findMIDletProxy(
             MIDletSuite.INTERNAL_SUITE_ID, ODT_AGENT);
 
@@ -372,6 +436,17 @@ public class MVMManager extends MIDlet
         if (suiteUnderDebugId == suiteInfo.suiteId) {
             suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
         }
+    }
+    
+    /**
+     * Called when a suite exited (last running MIDlet in suite exited).
+     * @param suiteInfo Suite which just exited
+     * @param className the running MIDlet class name
+     */
+    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {
+        if (!suiteInfo.isLocked()) {
+            exitODTCommand(suiteInfo);
+        }
         
         appManager.notifySuiteExited(suiteInfo);
 
@@ -381,6 +456,18 @@ public class MVMManager extends MIDlet
                 waitForDestroyThread = null;
             }
         }
+    }
+
+    /**
+     * Handle exit of MIDlet selector.
+     * @param suiteInfo Containing ID of suite
+     */
+    public void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {
+        if (!suiteInfo.isLocked()) {
+            exitODTCommand(suiteInfo);
+        }
+        
+        appManager.notifyMIDletSelectorExited(suiteInfo);
     }
 
     /**

@@ -397,10 +397,45 @@ public final class EventTypes {
     /**
      * JSR290 Fluid listener notification event
      */
-    public static final int FLUID_LISTENER_EVENT = 63;
+    public static final int FLUID_EVENT = 63;
 
     /**
      * JSR290 DOM object finalize notification event
      */
     public static final int DOM_FINALIZE_EVENT = 64;
+
+    /**
+     * This event is sent on RMS storage changing to
+     * asynchronously notify registered RMS listeners
+     */
+    public static final int RECORD_STORE_CHANGE_EVENT = 65;
+
+    /**
+     * This event is sent to AMS task when asynchronous notification
+     * of record store changes can not be delivered to listener task
+     * during predefined timeout period 
+     */
+    public static final int RECORD_STORE_FAILED_NOTIFICATION_EVENT = 66;
+
+    /**
+     * This event is sent when the clamshell state is changed.
+     */
+
+    public static final int DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT = 67;
+
+    /**
+     * Request to AMS to terminate all running midlets from the given suite.
+     */
+    public static final int MIDP_KILL_MIDLETS_EVENT = 68;
+
+     /**
+      * Notification sent by AMS to inform the listeners that
+      * the midlets from the given suite were killed.
+      */
+    public static final int MIDP_MIDLETS_KILLED_EVENT = 69;
+
+    /**
+     * Request to exit a running midlet from the debug agent to AMS.
+     */
+    public static final int MIDP_ODD_EXIT_MIDLET_EVENT = 70;
 }

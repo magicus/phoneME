@@ -338,9 +338,9 @@ class DisplayController {
                 continue;
             }
 
-	    if (!temp.containsDisplay(displayId)) {
-		continue;
-	    }
+            if (!temp.containsDisplay(displayId)) {
+                continue;
+            }
             preempting = temp;
 
             current.setPreemptingDisplay(null);
@@ -354,10 +354,8 @@ class DisplayController {
         }
 
         if (preempting == null) {
-            return foreground;
+            return null;
         }
-
-        preempted = preempting.getPreemptedMidlet();
 
         // if the preempting display is not in the foreground then do nothing
         if (foreground != preempting) {

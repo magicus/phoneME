@@ -40,7 +40,7 @@ public class InputModeFactory {
     protected static int [] inputModeIds = getInputModeIds();
 
     public static InputMode createInputMode(int id) {
-        if(id < NATIVE_INPUT_MODE_START) {
+        if (id < NATIVE_INPUT_MODE_START) {
             InputMode im;
             switch(id) {
                 case KEYBOARD_INPUT_MODE: im = new KeyboardInputMode(); break;
@@ -65,7 +65,7 @@ public class InputModeFactory {
         final int nModes = inputModeIds.length;
         InputMode[] ims = new InputMode[nModes];
         for (int i=0; i<nModes; i++) {
-                ims[i] = createInputMode(inputModeIds[i]);
+            ims[i] = createInputMode(inputModeIds[i]);
         }
         return ims;
      }

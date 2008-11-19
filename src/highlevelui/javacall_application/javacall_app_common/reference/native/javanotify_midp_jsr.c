@@ -52,6 +52,7 @@ extern "C" {
 #include <javacall_socket.h>
 #include <javacall_time.h>
 #include <javautil_unicode.h>
+#include <javautil_string.h>
 #include <javacall_memory.h>
 #include <javacall_lcd.h>
 
@@ -1049,6 +1050,36 @@ javanotify_fluid_listener_warning (
     midp_jc_event_send(&e);
 }
 
+void
+javanotify_fluid_request_resource (
+    javacall_handle                       fluid_image,
+    javacall_handle                       request,
+    javacall_const_utf16_string           url
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_REQUEST_RESOURCE;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.spare       = request;
+    e.data.jsr290FluidEvent.text        = javautil_wcsdup(url);
+
+    midp_jc_event_send(&e);
+}
+
+void
+javanotify_fluid_cancel_request (
+    javacall_handle                       fluid_image,
+    javacall_handle                       request
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_CANCEL_REQUEST;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.spare       = request;
+
+    midp_jc_event_send(&e);
+}
+
 #endif /* ENABLE_JSR_290 */
 
 /**
@@ -1168,6 +1199,19 @@ void  /* OPTIONAL */ javanotify_display_device_state_changed(int hardwareId, jav
     e.data.displayDeviceEvent.hardwareId =  hardwareId;
     e.data.displayDeviceEvent.state = state;
     e.eventType = MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED;
+    midp_jc_event_send(&e);
+}
+
+/**
+  * The platform should invoke this function in platform context
+  * to notify clamshell state change
+  */
+    void  /* OPTIONAL */ javanotify_clamshell_state_changed(javacall_lcd_clamshell_state state) {
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_clamshell_state_changed >>\n");
+    e.data.clamshellEvent.state = state;
+    e.eventType = MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED;
     midp_jc_event_send(&e);
 }
 

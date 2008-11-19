@@ -95,10 +95,18 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
         int press;
         int repeat;
     } qvfbKeyEvent;
+    size_t nread;
 
     /* IMPL_NOTE: We don't handle repeats, but this seems OK. When you hold */
     /* down a key, QVFB passes a stream of simulated keyups an keydowns */
-    read(fbapp_get_keyboard_fd(), &qvfbKeyEvent, sizeof(qvfbKeyEvent));
+    /* IMPL_NOTE: this function is called only when we are sure that there is 
+     * data to read, so we don't have to check the return value.
+     * In fact, if there is an error in the stream (the number of bytes
+     * available is different from sizeof(qvfbKeyEvent)),
+     * there is no way to recover from that error because we will not know where
+     * the next, valid qvfbKeyEvent would begin. */
+    nread = read(fbapp_get_keyboard_fd(), &qvfbKeyEvent, sizeof(qvfbKeyEvent));
+    (void)nread;
     midpKeyCode = map_raw_keycode(qvfbKeyEvent.unicode);
     /* There is a patch. When a button was released qvfbKeyEvent.press equales*/
     /* a big number instead of 0. But when a button was pressed this value equals 1.*/

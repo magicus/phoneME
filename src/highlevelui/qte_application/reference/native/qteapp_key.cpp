@@ -98,7 +98,7 @@ int mapKey(QKeyEvent *key) {
         unicode = KEYMAP_KEY_SCREEN_ROT;
         break;
 
-    case Qt::Key_Context6:
+    case Qt::Key_Context3:
         unicode = KEYMAP_KEY_VIRT_KEYB;
         break;
 

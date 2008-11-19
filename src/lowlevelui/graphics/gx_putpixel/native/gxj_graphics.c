@@ -128,74 +128,40 @@ gx_copy_area(const jshort *clip,
 		   x_src, y_src, 0);
 }
 
-/**
- * Premultiply color components by it's corresponding alpha component.
+/* 
+ * For A in [0..0xffff] 
  *
- * Formula: Cs = Csr * As (for source pixel),
- *          Cd = Cdr * Ad (analog for destination pixel).
+ *        A / 255 == A / 256 + ((A / 256) + (A % 256) + 1) / 256
  *
- * @param C one of the raw color components of the pixel (Csr or Cdr in the formula).
- * @param A the alpha component of the source pixel (As or Ad in the formula).
- * @return color component in premultiplied form.
  */
-#define PREMULTUPLY_ALPHA(C, A) \
-    (unsigned char)( ((int)(C)) * (A) / 0xff )
+#define div(x)  (((x) >> 8) + ((((x) >> 8) + ((x) & 0xff) + 1) >> 8))
 
-/**
- * The source is composited over the destination (Porter-Duff Source Over 
- * Destination rule).
- *
- * Formula: Cr = Cs + Cd*(1-As)
- *
- * Note: the result is always equal or less than 0xff, i.e. overflow is impossible.
- *
- * @param Cs a color component of the source pixel in premultiplied form
- * @param As the alpha component of the source pixel
- * @param Cd a color component of the destination pixel in premultiplied form
- * @return a color component of the result in premultiplied form
- */
-#define ADD_PREMULTIPLIEDCOLORS_SRCOVER(Cs, As, Cd) \
-    (unsigned char)( ((int)(Cs)) + ((int)(Cd)) * (0xff - (As)) / 0xff )
+static unsigned short alphaComposition(jint src, 
+                                       unsigned short dst, 
+                                       unsigned char As) {
+  unsigned char Rs = (unsigned char)(src >> 16);
+  unsigned char Rd = (unsigned char)
+    ((((dst & 0xF800) << 5) | (dst & 0xE000)) >> 13);
+  int pRr = ((int)Rs - Rd) * As + Rd * 0xff;
+  unsigned char Rr = 
+    (unsigned char)( div(pRr) );
 
-/**
- * Combine separate source and destination color components.
- *
- * Note: all backround pixels are treated as full opaque.
- *
- * @param Csr one of the raw color components of the source pixel
- * @param As the alpha component of the source pixel
- * @param Cdr one of the raw color components of the destination pixel
- * @return a color component of the result in premultiplied form
- */
-#define ADD_COLORS(Csr, As, Cdr) \
-    ADD_PREMULTIPLIEDCOLORS_SRCOVER( \
-            PREMULTUPLY_ALPHA(Csr, As), \
-            As, \
-            PREMULTUPLY_ALPHA(Cdr, 0xff) )
+  unsigned char Gs = (unsigned char)(src >> 8);
+  unsigned char Gd = (unsigned char)
+    (((dst & 0x07E0) >> 3) | ((dst & 0x0600) >> 9));
+  int pGr = ((int)Gs - Gd) * As + Gd * 0xff;
+  unsigned char Gr = 
+    (unsigned char)( div(pGr) );
 
+  unsigned char Bs = (unsigned char)(src);
+  unsigned char Bd = (unsigned char)
+    ((dst & 0x001F) << 3) | ((dst & 0x001C) >> 2);
+  int pBr = ((int)Bs - Bd) * As + Bd * 0xff;
+  unsigned char Br = 
+    (unsigned char)( div(pBr) );
 
-/**
- * Combine source and destination colors to achieve blending and transparency
- * effects.
- *
- * @param src source pixel value in 32bit ARGB format.
- * @param dst destination pixel value in 32bit RGB format.
- * @return result pixel value in 32bit RGB format.
- */
-static jint alphaComposition(jint src, jint dst) {
-    unsigned char As = (unsigned char)(src >> 24);
-
-    unsigned char Rr = ADD_COLORS(
-            (unsigned char)(src >> 16), As, (unsigned char)(dst >> 16) );
-
-    unsigned char Gr = ADD_COLORS(
-            (unsigned char)(src >> 8), As, (unsigned char)(dst >> 8) );
-
-    unsigned char Br = ADD_COLORS(
-            (unsigned char)src, As, (unsigned char)dst );
-
-    /* compose RGB from separate color components */
-    return (((jint)Rr) << 16) | (((jint)Gr) << 8) | Br;
+  /* compose RGB from separate color components */
+  return ((Rr & 0xF8) << 8) + ((Gr & 0xFC) << 3) + (Br >> 3);
 }
 
 
@@ -210,13 +176,12 @@ gx_draw_rgb(const jshort *clip,
 	     const java_imagedata *dst, jint *rgbData,
              jint offset, jint scanlen, jint x, jint y,
              jint width, jint height, jboolean processAlpha) {
-    int a, b, diff;
-    int dataRowIndex, sbufRowIndex;
+    int diff;
 
     gxj_screen_buffer screen_buffer;
     gxj_screen_buffer* sbuf = (gxj_screen_buffer*) getScreenBuffer(
       gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL));
-    int sbufWidth = sbuf->width;
+    const int sbufWidth = sbuf->width;
 
     const jshort clipX1 = clip[0];
     const jshort clipY1 = clip[1];
@@ -257,31 +222,51 @@ gx_draw_rgb(const jshort *clip,
 #endif
 
     CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
-    dataRowIndex = 0;
-    sbufRowIndex = y * sbufWidth;
 
-    for (b = y; b < y + height;
-        b++, dataRowIndex += scanlen,
-        sbufRowIndex += sbufWidth) {
+    {
+      gxj_pixel_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
+      jint * psrc = &rgbData[offset];
+      int pdst_delta = sbufWidth - width;
+      int psrc_delta = scanlen - width;
+      gxj_pixel_type * pdst_end = pdst + height * sbufWidth;
 
-        for (a = x; a < x + width; a++) {
-            jint value = rgbData[offset + (a - x) + dataRowIndex];
-            int idx = sbufRowIndex + a;
+      if (pdst_delta < 0 || psrc_delta < 0) {
+        return;
+      }
 
-            CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
+      if (!processAlpha) {
+	do {
+	  gxj_pixel_type * pdst_stop = pdst + width;
+	  
+	  do {
+	    jint src = *psrc++;
 
-            if (!processAlpha || (value & 0xff000000) == 0xff000000) {
-                // Pixel has no alpha or no transparency
-                sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
-            } else {
-                if ((value & 0xff000000) != 0) {
-                    jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]);
-                    jint composition = alphaComposition(value, background);
-                    sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
-                }
-            }
-        } /* loop by rgb data columns */
-    } /* loop by rgb data rows */
+	    CHECK_PTR_CLIP(sbuf, pdst);
+
+	    *pdst = GXJ_RGB24TORGB16(src);
+	  } while (++pdst < pdst_stop);
+
+	  psrc += psrc_delta;
+	  pdst += pdst_delta;
+	} while (pdst < pdst_end);
+      } else {
+	do {
+	  gxj_pixel_type * pdst_stop = pdst + width;
+	
+	  do {
+	    jint src = *psrc++;
+	    unsigned char As = (unsigned char)(src >> 24);
+
+	    CHECK_PTR_CLIP(sbuf, pdst);
+
+	    *pdst = alphaComposition(src, *pdst, As);
+	  } while (++pdst < pdst_stop);
+
+	  psrc += psrc_delta;
+	  pdst += pdst_delta;
+	} while (pdst < pdst_end);
+      }
+    }
 }
 
 /**

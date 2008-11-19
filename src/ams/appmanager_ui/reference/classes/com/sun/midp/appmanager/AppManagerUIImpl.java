@@ -41,7 +41,10 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.payment.PAPICleanUp;
+
 import com.sun.midp.jsr075.FileConnectionCleanup;
+
+import com.sun.midp.midlet.MIDletSuite;
 
 import java.util.*;
 
@@ -103,6 +106,14 @@ class AppManagerUIImpl extends Form
     private static final Font ICON_FONT = Font.getFont(Font.FACE_SYSTEM,
                                                          Font.STYLE_BOLD,
                                                          Font.SIZE_SMALL);
+
+    /**
+     * The font used to paint midlet names in the AppSelector.
+     * Inner class cannot have static variables thus it has to be here.
+     */
+    private static final Font ICON_FONT_UL = Font.getFont(Font.FACE_SYSTEM,
+                            Font.STYLE_BOLD | Font.STYLE_UNDERLINED,
+                            Font.SIZE_SMALL);
 
     /**
      * The image used to draw background for the midlet representation.
@@ -947,20 +958,27 @@ class AppManagerUIImpl extends Form
                 /* notify the selector that MIDlet was exited */
                 selector.notifyMidletExited(midletClassName);
 
-                /* if MIDlet exited from AMS menu, stay there. Otherwise
-                 * return back to the selector */
                 if (exitingMidletSuiteId == si.suiteId &&
                         exitingMidletClassName.equals(midletClassName)) {
                     exitingMidletSuiteId = 0;
                     exitingMidletClassName = null;
                     selector.exitIfNoMidletRuns();
-                } else {
-                    selector.show();
                 }
             }
         }
     }
 
+    /**
+     * Removes MIDlet selector from the list of active selectors.
+     * @param suiteInfo suite whose selector should be removed
+     */
+    private void removeMIDletSelector(RunningMIDletSuiteInfo suiteInfo) {
+        MIDletSelector selector = getMidletSelector(suiteInfo.suiteId);
+        if (selector != null) {
+            midletSelectors.removeElement(selector);
+        }
+    }
+    
     /**
      * Called when a suite exited (the only MIDlet in suite exited or the
      * MIDlet selector exited).
@@ -968,9 +986,19 @@ class AppManagerUIImpl extends Form
      * @param suiteInfo Suite which just exited
      */
     public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
-        MIDletSelector selector = getMidletSelector(suiteInfo.suiteId);
-        if (selector != null) {
-            midletSelectors.removeElement(selector);
+        if (!suiteInfo.isLocked()) {
+            removeMIDletSelector(suiteInfo);
+        }
+    }
+
+    /**
+     * Called when MIDlet selector exited.
+     * Removes appropriate MIDlet selector from list of active selectors.
+     * @param suiteInfo Containing ID of suite
+     */
+    public void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {
+        if (!suiteInfo.isLocked()) {
+            removeMIDletSelector(suiteInfo);
         }
     }
 
@@ -1060,7 +1088,42 @@ class AppManagerUIImpl extends Form
      * @param si corresponding suite info
      */
     public void notifySuiteInstalled(RunningMIDletSuiteInfo si) {
-        askUserIfLaunchMidlet();
+        if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+            boolean userMidletExists = true;
+            boolean sysFgMidletExists = false;
+
+            MIDletSuite suite = MIDletSuiteUtils.getSuite(si.suiteId);
+            if (suite != null) {
+                userMidletExists = false;
+                int midletsNum = si.numberOfMidlets;
+                try {
+                    for (int m = 1; m <= midletsNum; m++) {
+                        String pwrProp = MIDletSuiteUtils.getSuiteProperty(
+                            suite, m, MIDletSuite.LAUNCH_POWER_ON_PROP);
+
+                        if ("yes".equalsIgnoreCase(pwrProp)) {
+                            String bgProp = MIDletSuiteUtils.getSuiteProperty(
+                                suite, m, MIDletSuite.LAUNCH_BG_PROP);
+
+                            if (!"yes".equalsIgnoreCase(bgProp)) {
+                                sysFgMidletExists = true;
+                                break;
+                            }
+                        } else {
+                            userMidletExists = true;
+                        }
+                    }
+                } finally {
+                    suite.close();
+                }
+            }
+
+            if (userMidletExists && !sysFgMidletExists) {
+                askUserIfLaunchMidlet();
+            }
+        } else {
+            askUserIfLaunchMidlet();
+        }
     }
 
     /**
@@ -1579,7 +1642,7 @@ class AppManagerUIImpl extends Form
                     }
 
                     g.setColor(color);
-                    g.setFont(ICON_FONT);
+                    g.setFont(msi.isLocked() ? ICON_FONT_UL : ICON_FONT);
 
 
                     boolean truncate = (xScrollOffset == 0) && truncated;

@@ -694,6 +694,7 @@ int pushadd(char *str) {
     PushEntry *pe;
     int comma;
     char *cp;
+    int ret;
 
     /* Count the characters up to the first comma. */
     for (comma = 0, cp = str; *cp; comma++, cp++) {
@@ -720,7 +721,7 @@ int pushadd(char *str) {
     pe->filter = pushfilter(str);
 
     if ((pe->value == NULL) || (pe->storagename == NULL) ||
-        (pe->filter == NULL)) {
+            (pe->filter == NULL)) {
         midpFree(pe->value);
         midpFree(pe->storagename);
         midpFree(pe->filter);
@@ -747,11 +748,23 @@ int pushadd(char *str) {
     bt_push_register_url(str, NULL, 0);
 #endif
     */
-    pushProcessPort(pe);
+    ret = pushProcessPort(pe);
     if (pe->fd == -1) {
 #if ENABLE_JSR_82
         bt_push_unregister_url(str);
 #endif
+        if (ret == -3) {
+            /* 
+             * Reject the registration and return error code (-3) for above
+             * code to raise IllegalArgumentException exception.
+             */
+            midpFree(pe->value);
+            midpFree(pe->storagename);
+            midpFree(pe->filter);
+            midpFree(pe);
+            return -3;
+        }
+
         /* 
          * Don't reject the registration.
          * Port may be in use by a native application but we can't check this,

@@ -1016,10 +1016,6 @@
       Value="imageitem.image_btn"
      Pieces="9"
     Romized="true"/>
-
-  <integer
-        Key="KEYBOARD_WIDTH"
-      Value="235"/>
   
   <integer
         Key="KEYBOARD_HEIGHT"

@@ -1676,10 +1676,6 @@
                      and line border are used instead of background image."/>
 
   <constant Type="int"
-            Name="KEYBOARD_WIDTH"
-            Comment="Width of virtual keyboard"/>
-
-  <constant Type="int"
             Name="KEYBOARD_HEIGHT"
             Comment="Height of virtual keyboard"/>
 
