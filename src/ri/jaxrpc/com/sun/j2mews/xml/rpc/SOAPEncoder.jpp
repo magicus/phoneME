@@ -334,7 +334,7 @@ public class SOAPEncoder {
             }
             break;
         case 5:
-// #ifdef ENABLE_CLDC_11
+// #ifndef ENABLE_CLDC_10
             if (value instanceof float[]) {
                 float[] values = (float[])value;
                 checkArraySize(parent, values.length);
@@ -344,10 +344,10 @@ public class SOAPEncoder {
                 }
                 return;
             }
-// #endif ENABLE_CLDC_11
+// #endif ENABLE_CLDC_10
             break;
         case 6:
-// #ifdef ENABLE_CLDC_11
+// #ifndef ENABLE_CLDC_10
 			if (value instanceof double[]) {
 	            double[] values = (double[])value;
 	            checkArraySize(parent, values.length);
@@ -357,7 +357,7 @@ public class SOAPEncoder {
 	            }
 	            return;
 	        }
-// #endif ENABLE_CLDC_11
+// #endif ENABLE_CLDC_10
             break;
         }
         errString = "Invalid values for primitive array for " +
@@ -435,12 +435,12 @@ public class SOAPEncoder {
             return (value instanceof Integer);
         case 4:
             return (value instanceof Long);
-// #ifdef ENABLE_CLDC_11
+// #ifndef ENABLE_CLDC_10
         case 5:
             return (value instanceof Float);
         case 6:
 	        return (value instanceof Double);
-// #endif ENABLE_CLDC_11
+// #endif ENABLE_CLDC_10
         case 7:
             return (value instanceof String);
         default:
@@ -469,12 +469,12 @@ public class SOAPEncoder {
             return (value instanceof int[]);
         case 4:
             return (value instanceof long[]);
-// #ifdef ENABLE_CLDC_11
+// #ifndef ENABLE_CLDC_10
         case 5:
             return (value instanceof float[]);
         case 6:
             return (value instanceof double[]);
-// #endif ENABLE_CLDC_11
+// #endif ENABLE_CLDC_10
         default:
             return false;
         }
