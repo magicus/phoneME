@@ -244,7 +244,8 @@ public final class PiscesRenderer extends PathSink
     /**
      * Java2D-style linear gradient creation. The color changes proportionally
      * between point P0 (color0) nad P1 (color1). Cycle method constants are
-     * defined in GradientColorMap (CYCLE_*). This          
+     * defined in GradientColorMap (CYCLE_*). This is convenience method only. Same as if setLinearGradient method with 8 parameters was called with
+     * fractions = {0x0000, 0x10000}, rgba = {color0, color1} and identity transformation matrix.           
      *
      * @param x0 x coordinate of point P0
      * @param y0 y coordinate of point P0     
@@ -253,7 +254,8 @@ public final class PiscesRenderer extends PathSink
      * @param y1 y coordinate of point P1     
      * @param color1 color of P1
      * @param cycleMethod type of cycling of the gradient (NONE, REFLECT, REPEAT)
-     *          
+     * 
+     * As Pisces Gradient support was added to support features introduced in SVG, see e.g. http://www.w3.org/TR/SVG11/pservers.html for more information and examples.         
      */
     public void setLinearGradient(int x0, int y0, int color0, 
                                   int x1, int y1, int color1,
@@ -270,6 +272,22 @@ public final class PiscesRenderer extends PathSink
                                               int cycleMethod,
                                               Transform6 gradientTransform);
 
+    /**
+     * This method sets radial gradient paint data to be used in subsequent rendering. Radial gradient data generated will be used to fill the touched pixels of the path we draw.
+     * 
+     * @param cx cx, cy and radius triplet defines the largest circle for the gradient. 100% gradient stop is mapped to perimeter of this circle. 
+     * @param cy 
+     * @param fx fx,fy defines focal point of the gradient. ie. 0% gradient stop is mapped to fx,fy point. If cx == fx and cy == fy, then gradient consists of homocentric circles. If these relations are not met, gradient field is deformed and eccentric ovals can be observed. 
+     * @param fy
+     * @param radius @see cx
+     * @param fractions @see setLinearGradient
+     * @param rgba @see setLinearGradient
+     * @param cycleMethod @see setLinearGradient
+     * @param gradientTransform @see setLinearGradient
+     * 
+     * As Pisces Gradient support was added to support features introduced in SVG, see e.g. http://www.w3.org/TR/SVG11/pservers.html for more information and examples. 
+     */
+    
     public void setRadialGradient(int cx, int cy, int fx, int fy,
                                   int radius,
                                   int[] fractions, int[] rgba,
@@ -281,21 +299,25 @@ public final class PiscesRenderer extends PathSink
                               gradientTransform);
     }
 
+    /**
+     * Sets opacity (ie. 1.0f - alpha) factor to be used while painting texture. NOT IMPLEMENTED.  
+     * @param opacity
+     */
     public void setTextureOpacity(float opacity) {
-	notImplemented();
+    	notImplemented();
     }
 
     /**
      * Sets texture to be used in following render operations. For example to draw image as it is
      * we set identity transformation matrix on the PiscesRenderer, call setTexture with imageData 
-     * @param imageType tells PiscesRenderer what is the pixel format of passed @param imageData. It can be ARGB 
-     * @param imageData
-     * @param width
-     * @param height
-     * @param offset
-     * @param stride
-     * @param textureTransform
-     * @param repeat
+     * @param imageType tells PiscesRenderer what is the pixel format of passed @param imageData. It can be one of <code>RendererBase.TYPE_*</code> values.
+     * @param imageData image data. either int[] or byte[]. Real type recognition is based on imageType.
+     * @param width texture image width
+     * @param height texture image height
+     * @param offset offset in imageData array, ie. position from which the data are interesting 
+     * @param stride scanline length. Add stride to pixel index in order to get to pixel with the same x in the next row  
+     * @param textureTransform transformation matrix 
+     * @param repeat texture repetition  
      */
     public void setTexture(int imageType,
                            Object imageData, 
@@ -314,7 +336,16 @@ public final class PiscesRenderer extends PathSink
             Transform6 textureTransform, boolean repeat);
     
     
-    //Convenience method which work directly with ImageData (of the image), rather then with ARGB[] got as image.getRGB(). This we use e.g. in SVG Perseus implementation in order to reduce the number of buffers with image data copies. We pass it as Object so we can use same iface here for both CDC (java.awt.Image)/ CLDC (javax.microedition.lcdui.Image).  
+    /**
+     * Flavour of setTexture method which works directly with ImageData (java.lcdui.Image), rather then with ARGB[] got as image.getRGB(). 
+     * This method reduces number of buffers used while working with textures. Use thi method only when you are sure what you are doing.
+     * @param image 
+     * @param width
+     * @param height
+     * @param offset
+     * @param stride
+     * @param textureTransform
+     */
     public void setTexture(Object image, int width, int height, int offset, int stride, Transform6 textureTransform) {
         if (image != null) {
             setTextureFromImageImpl(image, width, height, offset, stride, textureTransform);
@@ -323,16 +354,28 @@ public final class PiscesRenderer extends PathSink
     
     private native void setTextureFromImageImpl(Object image, int width, int height, int offset, int stride, Transform6 textureTransform);
 
+    /**
+     * NOT IMPLEMENTED
+     * @return null
+     */
     public PathSink getStroker() {
         notImplemented();
         return null;
     }
 
+    /**
+     * NOT IMPLEMENTED
+     * @return nulll
+     */
     public PathSink getFiller() {
         notImplemented();
         return null;
     }
 
+    /**
+     * NOT IMPLEMENTED
+     * @return null
+     */
     public PathSink getTextFiller() {
         notImplemented();
         return null;
@@ -391,6 +434,30 @@ public final class PiscesRenderer extends PathSink
      */
     public native void resetClip();
 
+    /**
+     * @defgroup WindingRules Winding rules - shape interior  
+     * Winding rule determines what part of shape is determined as interior. This is 
+     * important to determine what part of shape to fill. 
+     * @def WIND_EVEN_ODD
+     * @ingroup WindingRules
+     * This define represents the even-odd winding rule. To see how this winding 
+     * rule works, draw any closed shape and draw a line through the entire shape. 
+     * Each time the line crosses the shape's border, increment a counter. When the 
+     * counter is even, the line is outside the shape. When the counter is odd,
+     * the line is in the interior of the shape.
+     * @def WIND_NON_ZERO
+     * @ingroup WindingRules
+     * This define represents the non-zero winding rule. Similar to even-odd. 
+     * We draw line through the entire shape. If intersecting edge is drawn from
+     * left-to-right, we add 1 to counter. If it goes from right to left we add -1.
+     * Everytime the counter is not zero, we assume it's interior part of shape.      
+     */
+    
+    /**
+     * Starts rendering session using windingRule when filling.
+     * @param windingRule
+     * @see WindingRules
+     */
     public void beginRendering(int windingRule) {
         beginRenderingI(windingRule);
     }
@@ -402,6 +469,7 @@ public final class PiscesRenderer extends PathSink
      * bounds are intersected against the current clip rectangle and
      * the destination image bounds; only pixels within the resulting
      * rectangle may be written to.
+     * @see WindingRules
      */
     public void beginRendering(int minX, int minY, 
             int width, int height, int windingRule) {
@@ -413,7 +481,7 @@ public final class PiscesRenderer extends PathSink
 
     /**
      * Completes the rendering of path data.  Destination pixels will
-     * be written at this time.
+     * be written at this time. Basicly all renderin between pair on beginRendering and endRendering method calls can be understood as an atomic transaction.
      */
     public native void endRendering();
 
@@ -425,23 +493,35 @@ public final class PiscesRenderer extends PathSink
      */
     public native void getBoundingBox(int[] bbox);
     
+    /**
+     * Ensures stroker is used. It only sets it active and reuses stroker's previous settings (lineWidth, capStyle, ...).  
+     */
     public void setStroke() {
         setStrokeImplNoParam();
     }
     private native void setStrokeImplNoParam();
     
+    /**
+     * Ensures filler is used. Uses settings applied to filler previously.
+     */
     public native void setFill();
 
+    /**
+     * NOT IMPLEMENTED
+     */
     public void setTextFill() {
         notImplemented();
     }
 
+    
     public native void moveTo(int x0, int y0);
-
+    
     public native void lineTo(int x1, int y1);
 
+    
     public native void lineJoin();
 
+    
     public native void quadTo(int x1, int y1, int x2, int y2);
 
     public native void cubicTo(int x1, int y1, int x2, int y2, int x3, int y3);
@@ -453,6 +533,7 @@ public final class PiscesRenderer extends PathSink
     public native void drawLine(int x0, int y0, int x1, int y1);
 
     /**
+     * Draws filled rectangle using current filler settings: compositing rule, gradient, solid or texture fill ...
      * 
      * @param x the X coordinate in S15.16 format.
      * @param y the Y coordinate in S15.16 format.
@@ -461,21 +542,82 @@ public final class PiscesRenderer extends PathSink
      */
     public native void fillRect(int x, int y, int w, int h);
 
+    /**
+     * Draws nonfilled rectangle using current filler/stroker settings: compositing rule, gradient, solid or texture fill ...
+     * 
+     * @param x the X coordinate in S15.16 format.
+     * @param y the Y coordinate in S15.16 format.
+     * @param w the width in S15.16 format.
+     * @param h the height in S15.16 format.
+     */
     public native void drawRect(int x, int y, int w, int h);
 
+    /**
+     * Draws oval border.
+     * @param x top left corner of bounding rectangle
+     * @param y top left corner of bounding rectangle
+     * @param w width of bounding rectangle
+     * @param h height of bounding rectangle
+     */
     public native void drawOval(int x, int y, int w, int h);
-
+    
+    /**
+     * Draws filled oval.
+     * @param x top left corner of bounding rectangle
+     * @param y top left corner of bounding rectangle
+     * @param w width of bounding rectangle
+     * @param h height of bounding rectangle
+     */
     public native void fillOval(int x, int y, int w, int h);
 
+    /**
+     * Draws filled rectangle using current filler/stroker settings: compositing rule, gradient, solid or texture fill ...
+     * Corners are being drawn using ROUND join.
+     * @param x the X coordinate in S15.16 format.
+     * @param y the Y coordinate in S15.16 format.
+     * @param w the width in S15.16 format.
+     * @param h the height in S15.16 format.
+     * @param aw width of corner arc
+     * @param aw height of corner arc
+     */
     public native void fillRoundRect(int x, int y, int w, int h, 
             int aw, int ah);
 
+    /**
+     * @see fillRoundRect
+     * @param x
+     * @param y
+     * @param w
+     * @param h
+     * @param aw
+     * @param ah
+     */
     public native void drawRoundRect(int x, int y, int w, int h, 
             int aw, int ah);
 
+    /**
+     * 
+     * @param x
+     * @param y
+     * @param width
+     * @param height
+     * @param startAngle
+     * @param arcAngle
+     * @param arcType
+     */
     public native void drawArc(int x, int y, int width, int height,
             int startAngle, int arcAngle, int arcType);
 
+    /**
+     * 
+     * @param x
+     * @param y
+     * @param width
+     * @param height
+     * @param startAngle
+     * @param arcAngle
+     * @param arcType
+     */
     public native void fillArc(int x, int y, int width, int height,
             int startAngle, int arcAngle, int arcType);
 
@@ -483,10 +625,22 @@ public final class PiscesRenderer extends PathSink
         notImplemented();
     }
     
+    /**
+     * Clears rectangle (x, y, x + w, y + h). Clear sets all pixels to transparent black (0x00000000 ARGB).
+     */
     public native void clearRect(int x, int y, int w, int h);
 
+    /**
+     * Parses commands and data into sequence of moveTo, LineTo, quadTo and other path calls.
+     * @param data
+     * @param commands
+     * @param nCommands
+     */
     public native void setPathData(float[] data, byte[] commands, 
             int nCommands);
 
+    /**
+     * Native finalizer. Releases native memory used by PiscesRenderer at lifetime.
+     */
     public native void nativeFinalize();
 }
