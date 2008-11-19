@@ -26,7 +26,6 @@
 #
 ######################################################################
 
-XMLPARSER_GENERATED_DIR = $(GENERATED_DIR)/classes
 XMLPARSER_SRC_DIR = $(XMLPARSER_DIR)/src
 
 ORG_PACKAGE = org.xml.sax
