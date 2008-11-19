@@ -63,6 +63,8 @@ void fillRectSrcOver(Renderer* rdr,
 void genLinearGradientPaint(Renderer *rdr, jint height);
 void genRadialGradientPaint(Renderer *rdr, jint height);
 void genTexturePaint(Renderer *rdr, jint height);
+void genTexturePaint565NoAlpha(Renderer *rdr, jint height);
+void genTexturePaint565WithAlpha(Renderer *rdr, jint height);
 
 void blitSrc888(Renderer *rdr, jint height);
 void blitSrc8888_pre(Renderer *rdr, jint height);

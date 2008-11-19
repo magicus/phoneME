@@ -115,7 +115,9 @@
  * @ingroup PaintMethods
  * Paint method. Source color value is precalculated radial gradients color.
  * @see setRadialGradient
- * @def PAINT_TEXTURE
+ * @def PAINT_TEXTURE8888
+ * @def PAINT_TEXTURE565ALPHA
+ * @def PAINT_TEXTURE565NOALPHA  
  * @ingroup PaintMethods 
  * Paint method. Source color value is texture. 
  * @see setTexture
@@ -123,7 +125,9 @@
 #define PAINT_FLAT_COLOR 0
 #define PAINT_LINEAR_GRADIENT 1
 #define PAINT_RADIAL_GRADIENT 2
-#define PAINT_TEXTURE 3
+#define PAINT_TEXTURE8888 3
+#define PAINT_TEXTURE565ALPHA 4
+#define PAINT_TEXTURE565NOALPHA 5
 
 #define LG_GRADIENT_MAP_SIZE 8
 #define GRADIENT_MAP_SIZE (1 << LG_GRADIENT_MAP_SIZE)
@@ -431,6 +435,11 @@ typedef struct _Renderer {
 
     // Texture paint
     jint* _texture_intData;
+    
+    // 565 convenience alternative to _texture_intData 
+    jbyte* _texture_byteData;
+    jbyte* _texture_alphaData;
+    
     jint _texture_imageWidth;
     jint _texture_imageHeight;
     jint _texture_stride;

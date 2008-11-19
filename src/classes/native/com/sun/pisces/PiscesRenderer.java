@@ -33,7 +33,6 @@ public final class PiscesRenderer extends PathSink
     }
 
     private static boolean messageShown = false;
-
     public static final int ARC_OPEN = 0;
     public static final int ARC_CHORD = 1;
     public static final int ARC_PIE = 2;
@@ -309,15 +308,21 @@ public final class PiscesRenderer extends PathSink
                     stride, textureTransform, repeat);
         }
     }
-
-     private native void setTextureImpl(int imageType, int[] imageData,
+    
+    private native void setTextureImpl(int imageType, int[] imageData,
             int width, int height, int offset, int stride,
             Transform6 textureTransform, boolean repeat);
     
-    /**
-     * 
-     * @return
-     */
+    
+    //Convenience method which work directly with ImageData (of the image), rather then with ARGB[] got as image.getRGB(). This we use e.g. in SVG Perseus implementation in order to reduce the number of buffers with image data copies. We pass it as Object so we can use same iface here for both CDC (java.awt.Image)/ CLDC (javax.microedition.lcdui.Image).  
+    public void setTexture(Object image, int width, int height, int offset, int stride, Transform6 textureTransform) {
+        if (image != null) {
+            setTextureFromImageImpl(image, width, height, offset, stride, textureTransform);
+        }
+    }
+    
+    private native void setTextureFromImageImpl(Object image, int width, int height, int offset, int stride, Transform6 textureTransform);
+
     public PathSink getStroker() {
         notImplemented();
         return null;

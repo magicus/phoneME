@@ -1818,6 +1818,304 @@ genTexturePaint(Renderer *rdr, jint height) {
     }
 }
 
+
+void
+genTexturePaint565NoAlpha(Renderer *rdr, jint height) {
+    jint j;
+    jint minX, maxX, w;
+    jint cval, pidx;
+
+    jint *paint = rdr->_paint;
+    jint paintOffset = 0;
+    jint paintStride = rdr->_alphaWidth;
+    jint width = rdr->_alphaWidth;
+    jint *minTouched = rdr->_minTouched;
+    jint *maxTouched = rdr->_maxTouched;
+
+    jint *a, *am;
+
+    jint x, y;
+    jlong ltx, lty;
+    jbyte* txtData = rdr->_texture_byteData;
+
+    y = rdr->_currY;
+    for (j = 0; j < height; j++, y++) {
+        minX = minTouched[j];
+        maxX = maxTouched[j];
+        pidx = paintOffset + minX;
+
+        w = (maxX >= minX) ? (maxX - minX + 1) : 0;
+        if ((w > 0) && (w + minX > width)) {
+            w = width - minX;
+        }
+
+        x = rdr->_currX + minX;
+
+        ltx = x * rdr->_texture_m00 + y * rdr->_texture_m01 + rdr->_texture_m02;
+        lty = x * rdr->_texture_m10 + y * rdr->_texture_m11 + rdr->_texture_m12;
+
+        a = paint + pidx;
+        am = a + w;
+        while (a < am) {
+            jint tx = (jint)(ltx >> 16);
+            jint ty = (jint)(lty >> 16);
+
+            jint hfrac = (jint)(ltx & 0xffff);
+            jint vfrac = (jint)(lty & 0xffff);
+
+            jboolean inBounds = XNI_TRUE;
+
+            if ((tx & rdr->_texture_wmask) != 0) {
+                if (tx < -1 || tx >= rdr->_texture_imageWidth) {
+                    if (rdr->_texture_repeat) {
+                        ltx = lmod(ltx, rdr->_texture_imageWidth << 16);
+                        tx = (jint)(ltx >> 16);
+                    } else {
+                        inBounds = XNI_FALSE;
+                    }
+                }
+            }
+            if ((ty & rdr->_texture_hmask) != 0) {
+                if (ty < -1 || ty >= rdr->_texture_imageHeight) {
+                    if (rdr->_texture_repeat) {
+                        lty = lmod(lty, rdr->_texture_imageHeight << 16);
+                        ty = (jint)(lty >> 16);
+                    } else {
+                        inBounds = XNI_FALSE;
+                    }
+                }
+            }
+
+            if (inBounds) {
+                jint sidx = (ty + 1) * rdr->_texture_stride + tx + 1;
+                jint sidx_2 = sidx << 1;
+                jint p00 = CONVERT_565_TO_888((((txtData[sidx_2] & 0xff)) | ((txtData[sidx_2 + 1] & 0xff) << 8) )) | 0xff000000;
+                
+                jint aa;
+                if (rdr->_texture_interpolate) {
+                    jint sidx2 = sidx + rdr->_texture_stride;
+                    jint sidx1_2 = (sidx + 1) << 1;
+                    jint sidx2_2 = sidx2 << 1;
+                    jint sidx2_22 = (sidx2+1) << 1;
+                    
+                    jint p01 = CONVERT_565_TO_888(((txtData[sidx1_2] & 0xff)|(txtData[sidx1_2 + 1] & 0xff) << 8)) | 0xff000000;
+                    jint p10 = CONVERT_565_TO_888(((txtData[sidx2_2] & 0xff) | (txtData[sidx2_2 + 1] & 0xff) << 8 )) | 0xff000000;
+                    jint p11 = CONVERT_565_TO_888(((txtData[sidx2_22] & 0xff)| (txtData[sidx2_22 + 1] & 0xff) << 8)) | 0xff000000;
+
+                    jint a00 = (p00 >> 24) & 0xff;
+                    jint r00 = (p00 >> 16) & 0xff;
+                    jint g00 = (p00 >> 8)  & 0xff;
+                    jint b00 =  p00        & 0xff;
+
+                    jint a01 = (p01 >> 24) & 0xff;
+                    jint r01 = (p01 >> 16) & 0xff;
+                    jint g01 = (p01 >> 8)  & 0xff;
+                    jint b01 =  p01        & 0xff;
+
+                    jint a0 = interp(a00, a01, hfrac);
+                    jint r0 = interp(r00, r01, hfrac);
+                    jint g0 = interp(g00, g01, hfrac);
+                    jint b0 = interp(b00, b01, hfrac);
+
+                    jint a10 = (p10 >> 24) & 0xff;
+                    jint r10 = (p10 >> 16) & 0xff;
+                    jint g10 = (p10 >> 8)  & 0xff;
+                    jint b10 =  p10        & 0xff;
+
+                    jint a11 = (p11 >> 24) & 0xff;
+                    jint r11 = (p11 >> 16) & 0xff;
+                    jint g11 = (p11 >> 8)  & 0xff;
+                    jint b11 =  p11        & 0xff;
+
+                    jint a1 = interp(a10, a11, hfrac);
+                    jint r1 = interp(r10, r11, hfrac);
+                    jint g1 = interp(g10, g11, hfrac);
+                    jint b1 = interp(b10, b11, hfrac);
+
+                    jint rr = interp(r0, r1, vfrac);
+                    jint gg = interp(g0, g1, vfrac);
+                    jint bb = interp(b0, b1, vfrac);
+
+                    aa = interp(a0, a1, vfrac);
+                    cval = (aa << 24) | (rr << 16) | (gg << 8) | bb;
+
+                    assert(pidx >= 0);
+                    assert(pidx < rdr->_paint_length / 4);
+
+                    paint[pidx] = cval;
+                } else {
+                    assert(pidx >= 0);
+                    assert(pidx < rdr->_paint_length / 4);
+
+                    paint[pidx] = p00;
+                }
+            } else {
+                assert(pidx >= 0);
+                assert(pidx < rdr->_paint_length / 4);
+
+                paint[pidx] = 0x00000000;
+            }
+
+            ++a;
+            ++pidx;
+
+            ltx += rdr->_texture_m00;
+            lty += rdr->_texture_m10;
+        }
+
+        paintOffset += paintStride;
+    }
+}
+
+void
+genTexturePaint565WithAlpha(Renderer *rdr, jint height) {
+    jint j;
+    jint minX, maxX, w;
+    jint cval, pidx;
+
+    jint *paint = rdr->_paint;
+    jint paintOffset = 0;
+    jint paintStride = rdr->_alphaWidth;
+    jint width = rdr->_alphaWidth;
+    jint *minTouched = rdr->_minTouched;
+    jint *maxTouched = rdr->_maxTouched;
+
+    jint *a, *am;
+
+    jint x, y;
+    jlong ltx, lty;
+    jbyte* txtData = rdr->_texture_byteData;
+    jbyte* alphaData = rdr->_texture_alphaData;
+
+    y = rdr->_currY;
+    for (j = 0; j < height; j++, y++) {
+        minX = minTouched[j];
+        maxX = maxTouched[j];
+        pidx = paintOffset + minX;
+
+        w = (maxX >= minX) ? (maxX - minX + 1) : 0;
+        if ((w > 0) && (w + minX > width)) {
+            w = width - minX;
+        }
+
+        x = rdr->_currX + minX;
+
+        ltx = x * rdr->_texture_m00 + y * rdr->_texture_m01 + rdr->_texture_m02;
+        lty = x * rdr->_texture_m10 + y * rdr->_texture_m11 + rdr->_texture_m12;
+
+        a = paint + pidx;
+        am = a + w;
+        while (a < am) {
+            jint tx = (jint)(ltx >> 16);
+            jint ty = (jint)(lty >> 16);
+
+            jint hfrac = (jint)(ltx & 0xffff);
+            jint vfrac = (jint)(lty & 0xffff);
+
+            jboolean inBounds = XNI_TRUE;
+
+            if ((tx & rdr->_texture_wmask) != 0) {
+                if (tx < -1 || tx >= rdr->_texture_imageWidth) {
+                    if (rdr->_texture_repeat) {
+                        ltx = lmod(ltx, rdr->_texture_imageWidth << 16);
+                        tx = (jint)(ltx >> 16);
+                    } else {
+                        inBounds = XNI_FALSE;
+                    }
+                }
+            }
+            if ((ty & rdr->_texture_hmask) != 0) {
+                if (ty < -1 || ty >= rdr->_texture_imageHeight) {
+                    if (rdr->_texture_repeat) {
+                        lty = lmod(lty, rdr->_texture_imageHeight << 16);
+                        ty = (jint)(lty >> 16);
+                    } else {
+                        inBounds = XNI_FALSE;
+                    }
+                }
+            }
+
+            if (inBounds) {
+                jint sidx = (ty + 1) * rdr->_texture_stride + tx + 1;
+                jint sidx_2 = sidx << 1;
+                jint p00 = CONVERT_565_TO_888((((txtData[sidx_2] & 0xff)) | ((txtData[sidx_2 + 1] & 0xff) << 8) )) | ((alphaData[sidx] & 0xff) << 24);
+                
+                jint aa;
+                if (rdr->_texture_interpolate) {
+                    jint sidx2 = sidx + rdr->_texture_stride;
+                    jint sidx1_2 = (sidx + 1) << 1;
+                    jint sidx2_2 = sidx2 << 1;
+                    jint sidx2_22 = (sidx2+1) << 1;
+                    
+                    jint p01 = CONVERT_565_TO_888(((txtData[sidx1_2] & 0xff)|(txtData[sidx1_2 + 1] & 0xff) << 8)) | ((alphaData[sidx + 1] & 0xff) << 24);
+                    jint p10 = CONVERT_565_TO_888(((txtData[sidx2_2] & 0xff) | (txtData[sidx2_2 + 1] & 0xff) << 8 )) | ((alphaData[sidx2] & 0xff) << 24);
+                    jint p11 = CONVERT_565_TO_888(((txtData[sidx2_22] & 0xff)| (txtData[sidx2_22 + 1] & 0xff) << 8)) | ((alphaData[sidx2 + 1] & 0xff) << 24);
+
+                    jint a00 = (p00 >> 24) & 0xff;
+                    jint r00 = (p00 >> 16) & 0xff;
+                    jint g00 = (p00 >> 8)  & 0xff;
+                    jint b00 =  p00        & 0xff;
+
+                    jint a01 = (p01 >> 24) & 0xff;
+                    jint r01 = (p01 >> 16) & 0xff;
+                    jint g01 = (p01 >> 8)  & 0xff;
+                    jint b01 =  p01        & 0xff;
+
+                    jint a0 = interp(a00, a01, hfrac);
+                    jint r0 = interp(r00, r01, hfrac);
+                    jint g0 = interp(g00, g01, hfrac);
+                    jint b0 = interp(b00, b01, hfrac);
+
+                    jint a10 = (p10 >> 24) & 0xff;
+                    jint r10 = (p10 >> 16) & 0xff;
+                    jint g10 = (p10 >> 8)  & 0xff;
+                    jint b10 =  p10        & 0xff;
+
+                    jint a11 = (p11 >> 24) & 0xff;
+                    jint r11 = (p11 >> 16) & 0xff;
+                    jint g11 = (p11 >> 8)  & 0xff;
+                    jint b11 =  p11        & 0xff;
+
+                    jint a1 = interp(a10, a11, hfrac);
+                    jint r1 = interp(r10, r11, hfrac);
+                    jint g1 = interp(g10, g11, hfrac);
+                    jint b1 = interp(b10, b11, hfrac);
+
+                    jint rr = interp(r0, r1, vfrac);
+                    jint gg = interp(g0, g1, vfrac);
+                    jint bb = interp(b0, b1, vfrac);
+
+                    aa = interp(a0, a1, vfrac);
+                    cval = (aa << 24) | (rr << 16) | (gg << 8) | bb;
+
+                    assert(pidx >= 0);
+                    assert(pidx < rdr->_paint_length / 4);
+
+                    paint[pidx] = cval;
+                } else {
+                    assert(pidx >= 0);
+                    assert(pidx < rdr->_paint_length / 4);
+
+                    paint[pidx] = p00;
+                }
+            } else {
+                assert(pidx >= 0);
+                assert(pidx < rdr->_paint_length / 4);
+
+                paint[pidx] = 0x00000000;
+            }
+
+            ++a;
+            ++pidx;
+
+            ltx += rdr->_texture_m00;
+            lty += rdr->_texture_m10;
+        }
+
+        paintOffset += paintStride;
+    }
+}
+
 void
 blitPTSrcOver888(Renderer *rdr, jint height) {
     jint j;
