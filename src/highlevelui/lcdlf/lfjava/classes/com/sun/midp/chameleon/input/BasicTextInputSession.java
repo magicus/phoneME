@@ -398,11 +398,11 @@ public class BasicTextInputSession implements
                     int index = 0;
                     String is = textComponent.getInitialInputMode();
                     for (; index < INPUT_SUBSETS.length; index++) {
-                        if (INPUT_SUBSETS[index].equals(is))
+                        if (INPUT_SUBSETS[index].equals(is)) {
                             break;
+                        }
                     }
-                    int constraint = constraints &
-                        TextField.CONSTRAINT_MASK;
+                    int constraint = constraints & TextField.CONSTRAINT_MASK;
                     if (constraint < TextInputSession.MAX_CONSTRAINTS &&
                         map[index][constraint]) {
                         newMode = inputModeSet[i];
