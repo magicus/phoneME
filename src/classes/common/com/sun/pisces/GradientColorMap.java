@@ -26,7 +26,28 @@
 package com.sun.pisces;
 
 public class GradientColorMap {
-
+	/**
+	 * @defgroup CycleMethods Gradient cycle methods
+	 * Gradient cycle methods. Specifies wheteher to repeat gradient fill in cycle 
+	 * or not. We will explain possible methods on linear gradient behaviour.
+	 * @see setLinearGradient, setRadialGradient  
+	 * @def CYCLE_NONE
+	 * @ingroup CycleMethods 
+	 * Gradient without repetition. Imagine linear gradient from blue to red color.
+	 * Color of start point (line perpendicular to vector(start,end)) will be blue. 
+	 * Color of end point (line) will be red. Between these two points (lines), 
+	 * there will be smooth color gradient. Outside gradient area everything will be
+	 * blue or red when CYCLE_NONE used. It works similar way with radial gradient.       
+	 * @def CYCLE_REPEAT 
+	 * @ingroup CycleMethods
+	 * Gradient with repetition. Gradient fill is repeated with period given by 
+	 * start,end distance.
+	 * @def CYCLE_REFLECT
+	 * @ingroup CycleMethods 
+	 * Gradient is repeated. Start and end color in new cycle are swaped. Gradient 
+	 * fill is repeated with period given by start,end distance. You can imagine 
+	 * this as if you'd put mirror to end point (line).
+	 */
     public static final int CYCLE_NONE = 0;
     public static final int CYCLE_REPEAT = 1;
     public static final int CYCLE_REFLECT = 2;
@@ -39,21 +60,8 @@ public class GradientColorMap {
     public int[] rgba = null;
     public int[] colors = null;
 
-//     private static void printArray(int[] arr, String name) {
-//         System.out.print(name + " = {");
-//         System.out.print(arr[0]);
-//         for (int i = 1; i < arr.length; i++) {
-//             System.out.print(", " + arr[i]);
-//         }
-//         System.out.println("}");
-//     }
-
     public GradientColorMap(int[] fractions, int[] rgba, int cycleMethod) {
         this.cycleMethod = cycleMethod;
-
-//         System.out.println("GCM ctor:");
-//         printArray(fractions, "fractions before");
-//         printArray(rgba, "rgba before");
     
         int numStops = fractions.length;
         if (fractions[0] != 0) {
@@ -78,9 +86,6 @@ public class GradientColorMap {
             fractions = nfractions;
             rgba = nrgba;
         }
-
-//         printArray(fractions, "fractions after");
-//         printArray(rgba, "rgba after");
 
         this.fractions = new int[fractions.length];
         System.arraycopy(fractions, 0, this.fractions, 0, fractions.length);

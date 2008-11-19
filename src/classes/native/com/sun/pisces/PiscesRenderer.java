@@ -91,7 +91,12 @@ public final class PiscesRenderer extends PathSink
                           int type) {
         this((AbstractSurface)data);
     }
-
+    
+    /**
+     * Creates a renderer that will write into a given surface.
+     *
+     * @param surface destination surface
+     */
     public PiscesRenderer(AbstractSurface surface) {
         if (!messageShown) {
             System.out.println("Using Pisces Renderer (native version)");
@@ -108,8 +113,16 @@ public final class PiscesRenderer extends PathSink
 
     private native void initialize();
     
+    /**
+     * Turns antialiasing on/off. 
+     * @param antialiasingOn <code>true</code> switches antialiasing ON. <code>false</code> OFF
+     */
     public native void setAntialiasing(boolean antialiasingOn);
 
+    /**
+     * Returns <code>true</true> if antialiasing support is currently switched on. <code>false</code> otherwise.
+     * @return state of antialising support
+     */
     public native boolean getAntialiasing();
 
     /**
@@ -123,7 +136,10 @@ public final class PiscesRenderer extends PathSink
     public native void setColor(int red, int green, int blue, int alpha);
 
     /**
-     * Sets the current paint color.  An alpha value of 255 is used.
+     * Sets the current paint color.  An alpha value of 255 is used. Calling <code>setColor</code> also switches 
+     * painting mode - i.e. if we have specified gradient, or texture previously, this will be overcome with <code>setColor</code>
+     * call. Also note, that 3-param <code>setColor</code> sets fully opaque RGB color. To draw with semi-transparent color
+     * use 4-param convenience method. 
      *
      * @param red a value between 0 and 255.
      * @param green a value between 0 and 255.
@@ -133,8 +149,21 @@ public final class PiscesRenderer extends PathSink
         setColor(red, green, blue, 255);
     }
     
+    /**
+     * Sets current Compositing Rule (Porter-Duff) to be used in following rendering operation. Note that <code>compositeAlpha</code>
+     * is not changed. 
+     * @param compositeRule one of <code>RendererBase.COMPOSITE_*</code> constants.
+     */
     public native void setCompositeRule(int compositeRule);
 
+    /**
+     * Function sets Renderer's compositing rule to compositeRule and composite alpha 
+     * to alpha. Note, that setting alpha has effect for all compositing rules. This means that destination pixel is first calculated
+     * due to current compositeRule and result is yet multiplied by composite alpha. This way we can add semitransparency to textures and so on.  
+     * @param compositeRule compositing rule
+     * @param alpha composite alpha. Value must be from 0.0 to 1.0.  
+     * @see For supported values of compositeRule see CompositingRules, setComposite(int, float) 
+     */
     public native void setComposite(int compositeRule, float alpha);
 
     int[] gcm_fractions = null;
@@ -189,6 +218,20 @@ public final class PiscesRenderer extends PathSink
                                               int cycleMethod,
                                               Transform6 gradientTransform);
 
+    /**
+     * This method sets linear color-gradient data to be used as paint data in following rendering operation.
+     * Imagine, we want to draw simple gradient from blue to red color. Each pixel on line perpendicular to line L = [[x0,y0], [x1, y1]] will have same constant color.
+     * Pixels on perpendicular-line which passes [x0, y0] will be blue. Those on line passing [x1, y1] will be red. Colors on lines in between will be interpolated by <code>fractions</code>.
+     * @param x0 x-coordinate of the starting point of the linear gradient
+     * @param y0 y-coordinate of the starting point of the linear gradient
+     * @param x1 x-coordinate of the end point of the linear gradient
+     * @param y0 y-coordinate of the end point of the linear gradient
+     * @param fractions this array defines normalized distances in which color (rgba[i]) starts to fade into next color (rgba[i+1]). This distance from the point [x0,y0] is given as fraction[i]*l, where l is length of line [[x0,y0], [x1,y1]]. fraction[i+1] says, in what distance fraction[i+1]*l from [x0,y0] should color already have firm value of rgba[i+1]. Values passed in fractions should be from interval <0.0, 1.0>, in 15.16 format.  
+     * @param rgba colors which the linear gradient passes through. Generally should be fulfilled this formula <code>rgba.length == fractions.length</code>
+     * @param cycleMethod some value from <code>GradientColorMap.CYCLE_*</code>. @see GradienColorMap
+     * @param gradientTransform transformation applied to gradient paint data. This way we can either transform gradient fill together with filled object or leave it as if transformed gradient-filled object was a window through which we observe gradient area.
+     * @see GradienColorMap
+     */
     public void setLinearGradient(int x0, int y0, int x1, int y1,
                                   int[] fractions, int[] rgba,
                                   int cycleMethod,
@@ -202,7 +245,7 @@ public final class PiscesRenderer extends PathSink
     /**
      * Java2D-style linear gradient creation. The color changes proportionally
      * between point P0 (color0) nad P1 (color1). Cycle method constants are
-     * defined in GradientColorMap (CYCLE_*).          
+     * defined in GradientColorMap (CYCLE_*). This          
      *
      * @param x0 x coordinate of point P0
      * @param y0 y coordinate of point P0     
@@ -243,6 +286,18 @@ public final class PiscesRenderer extends PathSink
 	notImplemented();
     }
 
+    /**
+     * Sets texture to be used in following render operations. For example to draw image as it is
+     * we set identity transformation matrix on the PiscesRenderer, call setTexture with imageData 
+     * @param imageType tells PiscesRenderer what is the pixel format of passed @param imageData. It can be ARGB 
+     * @param imageData
+     * @param width
+     * @param height
+     * @param offset
+     * @param stride
+     * @param textureTransform
+     * @param repeat
+     */
     public void setTexture(int imageType,
                            Object imageData, 
                            int width, int height,
@@ -259,6 +314,10 @@ public final class PiscesRenderer extends PathSink
             int width, int height, int offset, int stride,
             Transform6 textureTransform, boolean repeat);
     
+    /**
+     * 
+     * @return
+     */
     public PathSink getStroker() {
         notImplemented();
         return null;
@@ -302,6 +361,10 @@ public final class PiscesRenderer extends PathSink
      */
     public native void setTransform(Transform6 transform);
     
+    /**
+     * Returns current transformation in user cooordinates.
+     * @return <code>Transform6</code>
+     */
     public Transform6 getTransform() {
         Transform6 transform = new Transform6();
         getTransformImpl(transform);
