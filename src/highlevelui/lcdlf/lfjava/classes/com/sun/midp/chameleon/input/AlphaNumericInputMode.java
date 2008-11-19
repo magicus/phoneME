@@ -264,7 +264,7 @@ public class AlphaNumericInputMode extends BasicInputMode {
         { false, false, false, false, false, false }, // IS_TRADITIONAL_HANZI
         { true,  true,  false, false, true,  false }, // MIDP_UPPERCASE_LATIN
         { true,  true,  false, false, true,  false }, // MIDP_LOWERCASE_LATIN
-        { false, false, false, false, false, false }  // NULL
+        { true,  true,  false, false, true,  false }  // NULL
     };
     
     /**
