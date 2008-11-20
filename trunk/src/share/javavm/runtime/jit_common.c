@@ -1797,19 +1797,7 @@ CVMjitCompileAOTCode(CVMExecEnv* ee)
         return CVMJITinitializeAOTCode();
     } else {  
         CVMassert(jgs->isPrecompiling == CVM_TRUE);
-        if (jgs->aotMethodList == NULL) {
-            const CVMProperties *sprops = CVMgetProperties();
-            jgs->aotMethodList = 
-                (char*)malloc(strlen(sprops->library_path) +
-                              strlen("/methodsList.txt") + 
-                              1);
-            if (jgs->aotMethodList == NULL) {
-                return CVM_TRUE;
-            }
-            *CVMglobals.jit.aotMethodList = '\0';
-            strcat(jgs->aotMethodList, sprops->library_path);
-            strcat(jgs->aotMethodList, "/methodsList.txt");
-        }
+        CVMassert(jgs->aotMethodList != NULL);
 
         jmlist = (*env)->NewStringUTF(env, jgs->aotMethodList);
         if ((*env)->ExceptionOccurred(env)) {
@@ -3362,6 +3350,42 @@ CVMJITPMIdumpMethodCalleeInfo(CVMMethodBlock* callerMb,
 
 #endif /* CVM_JIT_PATCHED_METHOD_INVOCATIONS */
 
+
+#ifdef CVM_AOT
+static CVMBool
+CVMjitInitializeAOTGlobals(CVMJITGlobalState* jgs)
+{
+    const CVMProperties *sprops = CVMgetProperties();
+    const char *libpath = sprops->library_path;
+
+    jgs->aotCompileFailed = CVM_FALSE;
+
+    if (jgs->aotFile == NULL) {
+        jgs->aotFile = (char*)malloc(strlen(libpath) +
+                                     strlen("/cvm.aot") + 1);
+        if (jgs->aotFile == NULL) {
+            return CVM_FALSE;
+        }
+        *jgs->aotFile = '\0';
+        strcat(jgs->aotFile, libpath);
+        strcat(jgs->aotFile, "/cvm.aot");
+    }
+
+    if (jgs->aotMethodList == NULL) {
+        jgs->aotMethodList = (char*)malloc(strlen(libpath) +
+            strlen("/methodsList.txt") + 1);
+        if (jgs->aotMethodList == NULL) {
+            return CVM_FALSE;
+        }
+        *jgs->aotMethodList = '\0';
+        strcat(jgs->aotMethodList, libpath);
+        strcat(jgs->aotMethodList, "/methodsList.txt");
+    }
+
+    return CVM_TRUE;
+}
+#endif
+
 CVMBool
 CVMjitInit(CVMExecEnv* ee, CVMJITGlobalState* jgs,
 	   const char* subOptionsString)
@@ -3388,10 +3412,11 @@ CVMjitInit(CVMExecEnv* ee, CVMJITGlobalState* jgs,
 	return CVM_FALSE;
     }
 
+
     handleDoPrivileged();
 
 #ifdef CVM_AOT
-    jgs->aotCompileFailed = CVM_FALSE;
+    CVMjitInitializeAOTGlobals(jgs);
 #endif
     
     /* Do the following after parsing options: */
