@@ -1627,7 +1627,17 @@ public class Protocol extends ConnectionBaseAdapter
      * @exception IOException is thrown if the connection cannot be opened
      */
     protected void streamConnect() throws IOException {
-        streamConnection = connect();
+        if (!permissionChecked) {
+            throw new SecurityException("The permission check was bypassed");
+        }
+
+        streamConnection = connectionPool.get(classSecurityToken, protocol,
+                                              url.host, url.port);
+
+
+        if (streamConnection == null) {
+            streamConnection = connect();
+        }
 
         /*
          * Because StreamConnection.open*Stream cannot be called twice
