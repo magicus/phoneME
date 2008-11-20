@@ -583,17 +583,6 @@ static int gmInit(int isolateID, int gmIdx)
      */
 
     g_QSoundGM[gmIdx].isolateId  = isolateID;
-    g_QSoundGM[gmIdx].pcm_handle = pcm_out_open_channel( ENV_BITS,
-                                                 ENV_CHANNELS,
-                                                 ENV_RATE,
-                                                 ENV_BLOCK_BYTES,
-                                                 mmaudio_get_isolate_mix,
-                                                 (void*)isolateID );
-
-    JC_MM_DEBUG_PRINT1( "# pcm_out_open_channel returned 0x%08X\n",
-            (int)(g_QSoundGM[gmIdx].pcm_handle) );
-    JC_MM_ASSERT(NULL != g_QSoundGM[gmIdx].pcm_handle);
-
     g_QSoundGM[gmIdx].isolateRefs = 1;
 
     return gmIdx;
@@ -761,6 +750,9 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             newHandle->hdr.wholeContentSize = -1;
             newHandle->hdr.dataStopped      = JAVACALL_TRUE;
             newHandle->hdr.dataEnded        = JAVACALL_FALSE;
+
+            newHandle->hdr.pcm_handle       = NULL;
+
             // need some data to recognize sp-midi
             if (mediaType == JC_FMT_MIDI) {
                 newHandle->hdr.needProcessHeader = JAVACALL_TRUE;
@@ -812,6 +804,8 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             newHandle->hdr.dataEnded        = JAVACALL_FALSE;
             newHandle->wav.em               = NULL;
             newHandle->wav.buffering        = JAVACALL_FALSE;
+
+            newHandle->hdr.pcm_handle       = NULL;
 
             ef = g_QSoundGM[gmIdx].EM135;
 
@@ -987,6 +981,20 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
 
     MQ234_ERROR e;
     int         sRate;
+
+    if (h->hdr.pcm_handle == NULL) {
+        h->hdr.pcm_handle = pcm_out_open_channel( ENV_BITS,
+                                                 ENV_CHANNELS,
+                                                 ENV_RATE,
+                                                 ENV_BLOCK_BYTES,
+                                                 mmaudio_get_isolate_mix,
+                                                 (void*)g_QSoundGM[gmIdx].isolateId );
+
+        JC_MM_DEBUG_PRINT1( "# pcm_out_open_channel returned 0x%08X\n",
+                          (int)(h->hdr.pcm_handle) );
+        JC_MM_ASSERT(NULL != h->hdr.pcm_handle);
+    }
+
     switch(h->hdr.mediaType)
     {
         case JC_FMT_TONE:
@@ -1286,6 +1294,10 @@ static javacall_result audio_qs_release_device(javacall_handle handle){
         h->hdr.dataBuffer = NULL;
     }
 
+    if (h->hdr.pcm_handle != NULL) {
+        pcm_out_close_channel( h->hdr.pcm_handle );
+        h->hdr.pcm_handle = NULL;
+    }
     return JAVACALL_OK;
 }
 
