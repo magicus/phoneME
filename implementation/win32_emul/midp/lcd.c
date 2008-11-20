@@ -188,7 +188,7 @@ javacall_result javacall_lcd_flush(int hardwareId) {
         clip[3] = VRAM.full_height;
     }
 
-    if ((isPhoneRotated && isLCDRotated) || top_down) {
+    if (isLCDRotated || top_down) {
         current_hdc = VRAM.hdc_rotated;
         rotate_offscreen_buffer(current_hdc,
                                 VRAM.hdc,
@@ -228,7 +228,7 @@ javacall_result javacall_lcd_flush(int hardwareId) {
 
 static void rotate_offscreen_buffer(javacall_pixel* dst, javacall_pixel *src, int src_width, int src_height) {
     int buffer_length = src_width*src_height;
-    if (isPhoneRotated && isLCDRotated) {
+    if (isLCDRotated) {
         if (!top_down) {
             javacall_pixel *src_end = src + buffer_length;
             javacall_pixel *dst_end = dst + buffer_length;
@@ -432,7 +432,7 @@ void RotateDisplay(short code) {
 
 javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
       (void)hardwareId;
-      isLCDRotated = isPhoneRotated;
+      isLCDRotated = !isLCDRotated;
       return isLCDRotated;
 }
 /**

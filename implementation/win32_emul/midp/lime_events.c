@@ -25,6 +25,7 @@
 #include "stdio.h"
 #include "lime.h"
 #include "defaultLCDUI.h"
+#include "lcd.h"
 #include "javacall_keypress.h"
 #include "javacall_lifecycle.h"
 #if ENABLE_JSR_179
@@ -66,23 +67,10 @@ extern void HandleLocationProviderStateEvent(int state);
 
 void SendEvent(KVMEventType *evt);
 javacall_bool generateSoftButtonKeys(int x, int y, javacall_penevent_type pentype);
-/*
- * Translates screen coordinates into displayable coordinate system.
- */
-void getScreenCoordinates(short screenX, short screenY, short* x, short* y);
 
 /* global varaiable to determine if the application 
  * is running locally or via OTA */
 extern javacall_bool isRunningLocal;
-
-/* Rotates display according to code.
- * If code is 0 no screen transformations made;
- * If code is 1 then screen orientation is reversed.
- * if code is 2 then screen is turned upside-down.
- * If code is 3 then both screen orientation is reversed
- * and screen is turned upside-down.
- */
-extern void RotateDisplay(short code);
 
 #if ENABLE_ON_DEVICE_DEBUG
 static const char pStartOddKeySequence[] = "#1*2";

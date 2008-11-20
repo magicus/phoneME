@@ -25,6 +25,19 @@
 #ifndef _LCD_H_
 #define _LCD_H_
 
+/*
+ * Translates screen coordinates into displayable coordinate system.
+ */
+void getScreenCoordinates(short screenX, short screenY, short* x, short* y);
+
+/* Rotates display according to code.
+ * If code is 0 no screen transformations made;
+ * If code is 1 then screen orientation is reversed.
+ * if code is 2 then screen is turned upside-down.
+ * If code is 3 then both screen orientation is reversed
+ * and screen is turned upside-down.
+ */
+void RotateDisplay(short code);
 
 
 #endif /* _LCD_H_ */
