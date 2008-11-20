@@ -1328,11 +1328,12 @@ class AppManagerUIImpl extends Form
                 appendRecordStoresToForm(recordStores, confirmForm);
             }
 
-            // IMPL_NOTE: uncomment this code once suiteHasPrivateData has
-            // sensible implementation. 
+            // IMPL_NOTE: uncomment this code once 
+            // FileConnectionCleanupImpl.suiteHasPrivateData has sensible
+            // (not stubbed) implementation.
             /*
             boolean privateDataExists =
-                FileConnectionCleanup.suiteHasPrivateData(suiteInfo.suiteId);
+                Installer.FileConnectionHasPrivateData(suiteInfo.suiteId);
             if (privateDataExists) {
                 temp.setLength(0);
                 temp.append(" \n");

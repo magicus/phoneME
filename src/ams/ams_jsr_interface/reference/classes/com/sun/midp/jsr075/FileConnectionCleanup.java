@@ -27,18 +27,19 @@
 package com.sun.midp.jsr075;
 
 /*
- * Class provides an interface to clean up file connection data upon suite
+ * Interface provides an interface to clean up file connection data upon suite
  * removal.
  *
- * Note:
- *     The class has no method to delete data but just check whether the data
- * exists due to private data removal is performed via MIDP listener mechanism.
+ * CLDC Note:
+ *     The interface has no method to delete data but just check whether the
+ * data exists due to private data removal is performed via MIDP listener
+ * mechanism.
  *     That listener is registered by JSR-75 code in the way like this:
  * midp_suite_add_listener(jsr75_remove_listener,
  *                         SUITESTORE_LISTENER_TYPE_REMOVE,
  *                         SUITESTORE_OPERATION_END);
  */
-public class FileConnectionCleanup {
+public interface FileConnectionCleanup {
 
     /**
      * The function checks whether suite has private data.
@@ -47,8 +48,6 @@ public class FileConnectionCleanup {
      *
      * @return true if the suite's private directory exists, false otherwise.
      */
-    public static boolean suiteHasPrivateData(int suiteId) {
-        return false;
-    }
+    public boolean suiteHasPrivateData(int suiteId);
 
 }

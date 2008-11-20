@@ -1736,6 +1736,34 @@ public abstract class Installer {
     protected abstract boolean isSameUrl(String url1, String url2);
 
     /**
+     * The method checks if it's necessary to clean up file connection
+     * data upon suite.
+     *
+     * It detects whether JSR-75 is included, if so, invokes dedicated JSR's
+     * class.
+     *
+     * @param suiteId ID of suite to check data presence for
+     * @return true if JSR data exists for the suite, false otherwise
+     */
+    private static boolean FileConnectionHasPrivateData(int suiteId) {
+        FileConnectionCleanup fcc;
+
+        try {
+            Class fccClass =
+                Class.forName("com.sun.midp.jsr075.FileConnectionCleanupImpl");
+            fcc = (FileConnectionCleanup)(fccClass.newInstance());
+        } catch (ClassNotFoundException cnfe){
+            return false;
+        } catch (IllegalAccessException iae) {
+            return false;
+        } catch (InstantiationException ie) {
+            return false;
+        }
+
+        return fcc.suiteHasPrivateData(suiteId);
+    }
+
+    /**
      * If this is an update, make sure the RMS data is handle correctly
      * according to the OTA spec.
      * <p>
@@ -1773,7 +1801,7 @@ public abstract class Installer {
      */
     protected void processPreviousRMS() throws IOException {
         if (!RecordStoreFactory.suiteHasRmsData(info.id) &&
-                !FileConnectionCleanup.suiteHasPrivateData(info.id)) {
+                !FileConnectionHasPrivateData(info.id)) {
             return;
         }
 

@@ -35,11 +35,9 @@
 #
 # Common CDC/CLDC code
 
-ifneq ($(USE_JSR_75), true)
-# Include stub implementation of JSR 75 cleaning class
-    SUBSYSTEM_AMS_JAVA_FILES += \
-        $(AMS_JSR_INTERFACE_IMPL_DIR)/classes/com/sun/midp/jsr075/FileConnectionCleanup.java
-endif
+# Include JSR 75 cleaning interface
+SUBSYSTEM_AMS_JAVA_FILES += \
+    $(AMS_JSR_INTERFACE_IMPL_DIR)/classes/com/sun/midp/jsr075/FileConnectionCleanup.java
 
 #
 # CLDC specific code
