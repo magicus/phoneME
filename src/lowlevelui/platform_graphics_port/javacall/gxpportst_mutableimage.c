@@ -27,6 +27,8 @@
 #include <gxpport_mutableimage.h>
 #include <midp_logging.h>
 #include <syslog.h>
+#include "lfpport_gtk.h"
+
 
 /**
  * Initializes the internal members of the native image structure, as required
@@ -43,8 +45,8 @@ void gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
                                             int height,
                                             img_native_error_codes*
                                             creationErrorPtr) {
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)newImagePtr;
@@ -71,8 +73,8 @@ void gxpport_render_mutableimage(gxpport_mutableimage_native_handle srcImagePtr,
 				 gxpport_mutableimage_native_handle dstImagePtr,
 				 const jshort *clip,
 				 int x_dest, int y_dest) {
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcImagePtr;
@@ -107,8 +109,8 @@ gxpport_render_mutableregion(gxpport_mutableimage_native_handle srcImagePtr,
 			     int width, int height,
 			     int x_src, int y_src,
 			     int transform) {
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warnings */
     (void)srcImagePtr;
@@ -143,8 +145,8 @@ void gxpport_get_mutable_argb(gxpport_mutableimage_native_handle imagePtr,
 			      int x, int y, int width, int height,
 			      img_native_error_codes* errorPtr) {
 
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warning */
     (void)imagePtr;
@@ -167,8 +169,8 @@ void gxpport_get_mutable_argb(gxpport_mutableimage_native_handle imagePtr,
  * @param errorPtr pointer for a status code set on return
  */
 void gxpport_destroy_mutable(gxpport_mutableimage_native_handle imagePtr) {
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 
     /* Suppress unused parameter warning */
     (void)imagePtr;

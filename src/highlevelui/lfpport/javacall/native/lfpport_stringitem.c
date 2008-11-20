@@ -49,78 +49,78 @@ extern GtkWidget *main_window;
 
 MidpError lfpport_string_item_show_cb(MidpItem* itemPtr){
     GtkWidget *string_item = (GtkWidget*)itemPtr->widgetPtr;
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     gtk_widget_show(string_item);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 MidpError lfpport_string_item_hide_cb(MidpItem* itemPtr){
     GtkWidget *string_item = (GtkWidget*)itemPtr->widgetPtr;
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
     gtk_widget_hide((GtkWidget *)string_item);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
 MidpError lfpport_string_item_set_label_cb(MidpItem* itemPtr){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return -1;
 }
 MidpError lfpport_string_item_destroy_cb(MidpItem* itemPtr){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return -1;
 }
 
 MidpError lfpport_string_item_get_min_height_cb(int *height, MidpItem* itemPtr){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     *height = STUB_MIN_HEIGHT;
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
 MidpError lfpport_string_item_get_min_width_cb(int *width, MidpItem* itemPtr){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     *width = STUB_MIN_WIDTH;
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
 MidpError lfpport_string_item_get_pref_height_cb(int* height,
                                                  MidpItem* itemPtr,
                                                  int lockedWidth){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     *height = STUB_PREF_HEIGHT;
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
 MidpError lfpport_string_item_get_pref_width_cb(int* width,
                                                 MidpItem* itemPtr,
                                                 int lockedHeight){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     *width = STUB_PREF_WIDTH;
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
 MidpError lfpport_string_item_handle_event_cb(MidpItem* itemPtr){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return -1;
 }
 
 MidpError lfpport_string_item_relocate_cb(MidpItem* itemPtr){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return -1;
 }
 
 MidpError lfpport_string_item_resize_cb(MidpItem* itemPtr){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -159,7 +159,7 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
     gchar label_buf[MAX_TEXT_LENGTH];
     gchar text_buf[MAX_TEXT_LENGTH];
 
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
     pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
     pcsl_string_convert_to_utf8(text, text_buf,  MAX_TEXT_LENGTH, &text_len);
@@ -199,7 +199,7 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
     itemPtr->relocate = lfpport_string_item_relocate_cb;
     itemPtr->resize = lfpport_string_item_resize_cb;
 
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -216,8 +216,8 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
 MidpError lfpport_stringitem_set_content(MidpItem* itemPtr,
 					 const pcsl_string* text,
 					 int appearanceMode){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -231,8 +231,8 @@ MidpError lfpport_stringitem_set_content(MidpItem* itemPtr,
  */
 MidpError lfpport_stringitem_set_font(MidpItem* itemPtr,
 				      PlatformFontPtr fontPtr){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 

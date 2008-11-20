@@ -60,21 +60,18 @@ gint screen_height;
 
 
 MidpError form_show(MidpFrame* framePtr) {
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     GtkWidget *label;
     GtkWidget *form;
     form = (GtkWidget *)framePtr->widgetPtr;
-
-    syslog(LOG_INFO, "%showing form %d\n", __FUNCTION__, form);
-
     gtk_main_window_set_current_form(main_window, GTK_FORM(form));
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
 
 MidpError form_hide_and_delete(MidpFrame* framePtr, jboolean onExit) {
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -85,7 +82,7 @@ MidpError displayable_set_title(MidpDisplayable* screenPtr,
     int len;
 
     GtkWidget *form;
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     pcsl_string_convert_to_utf8(title, buf, MAX_TITLE_LENGTH, &len);
     form = screenPtr->frame.widgetPtr;
     gtk_form_set_title(GTK_FORM(form), buf);
@@ -97,7 +94,7 @@ MidpError displayable_set_ticker(MidpDisplayable* dispPtr, const pcsl_string* te
     gchar buf[MAX_TICKER_LENGTH];
     int len;
 
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
     //pcsl_string_convert_to_utf8(text, buf, MAX_TITLE_LENGTH, &len);
     //gtk_label_set_text(ticker, "tmp ticker");
@@ -137,7 +134,7 @@ MidpError lfpport_form_create(MidpDisplayable* dispPtr,
     GtkWidget *form;
     GtkWidget *vbox;
 
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
     gtkVBox = gtk_vbox_new(FALSE, /* not equal space allotments */
                            2);    /* spacing between children */
@@ -177,7 +174,7 @@ MidpError lfpport_form_create(MidpDisplayable* dispPtr,
  */
 MidpError lfpport_form_set_content_size(MidpDisplayable* formPtr,
 					int w, int h){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     gtk_widget_set_size_request(formPtr->frame.widgetPtr,
                                 w,
                                 h);
@@ -195,7 +192,7 @@ MidpError lfpport_form_set_content_size(MidpDisplayable* formPtr,
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_form_set_current_item(MidpItem* itemPtr, int yOffset){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     (void)itemPtr;
     (void)yOffset;
     syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
@@ -211,7 +208,7 @@ MidpError lfpport_form_set_current_item(MidpItem* itemPtr, int yOffset){
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_form_get_scroll_position(int *pos){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     *pos = 0;
     syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
@@ -224,7 +221,7 @@ MidpError lfpport_form_get_scroll_position(int *pos){
  *
  */
 MidpError lfpport_form_set_scroll_position(int pos) {
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     (void)pos;
     syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
     return KNI_OK;
@@ -239,7 +236,7 @@ MidpError lfpport_form_set_scroll_position(int pos) {
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_form_get_viewport_height(int *pHeight){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     *pHeight = screen_height;
     syslog(LOG_INFO, "<<<%s returning %d\n", __FUNCTION__, screen_height);
     return KNI_OK;

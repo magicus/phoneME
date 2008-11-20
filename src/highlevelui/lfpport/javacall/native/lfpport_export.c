@@ -66,12 +66,12 @@ typedef struct {
  * Refresh the given area.  For double buffering purposes.
  */
 void lfpport_refresh(int x, int y, int w, int h){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     (void)x;
     (void)y;
     (void)w;
     (void)h;
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 /**
@@ -80,17 +80,17 @@ void lfpport_refresh(int x, int y, int w, int h){
  * @param mode The screen mode
  */
 void lfpport_set_fullscreen_mode(jboolean mode){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     (void)mode;
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 /**
  * Change screen orientation flag
  */
 jboolean lfpport_reverse_orientation(){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return 0;
 }
 
@@ -98,8 +98,8 @@ jboolean lfpport_reverse_orientation(){
  * Get screen orientation flag
  */
 jboolean lfpport_get_reverse_orientation(){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return 0;
 }
 
@@ -107,7 +107,7 @@ jboolean lfpport_get_reverse_orientation(){
  * Return screen width
  */
 int lfpport_get_screen_width(){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     printf("<<<%s returning %d\n", __FUNCTION__, screen_width);
     return screen_width;
 }
@@ -116,7 +116,7 @@ int lfpport_get_screen_width(){
  *  Return screen height
  */
 int lfpport_get_screen_height(){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     printf("<<<%s returning %d\n", __FUNCTION__, screen_height);
     return screen_height;
 }
@@ -125,26 +125,26 @@ int lfpport_get_screen_height(){
  * Resets native resources when foreground is gained by a new display.
  */
 void lfpport_gained_foreground(){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 /**
  * Initializes the window system.
  */
 void lfpport_ui_init(){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     stub_func();
 
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 /**
  * Finalize the window system.
  */
 void lfpport_ui_finalize(){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 /**
@@ -161,8 +161,8 @@ void lfpport_ui_finalize(){
  */
 jboolean lfpport_direct_flush(const java_graphics *g,
 		  	      const java_imagedata *offscreen_buffer, int h){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return 0;
 }
 

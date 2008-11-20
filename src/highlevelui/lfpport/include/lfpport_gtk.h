@@ -42,8 +42,23 @@
 #define MAX_TEXT_LENGTH 256
 
 #include <stdio.h>  //TODO@gd212247:  remove at release
+#include <fcntl.h>
 #include <syslog.h>
 #include <gtk/gtk.h>
+
+extern char *DEBUG_FNAME;
+extern char debug_buff[1024];
+extern int  debug_fid;
+
+
+#define LIMO_TRACE(...) do { \
+                   if (debug_fid < 0 ) \
+                       debug_fid = open(DEBUG_FNAME, O_CREAT|O_WRONLY, (int)0x0666); \
+                   if (debug_fid >= 0 ) { \
+                       sprintf(debug_buff,  __VA_ARGS__); \
+                       write(debug_fid, debug_buff, strlen(debug_buff)); \
+                   } \
+                   } while (0)
 
 
 #endif //_LFPPORT_GTK_H_

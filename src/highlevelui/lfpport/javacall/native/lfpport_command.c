@@ -33,31 +33,46 @@
 #include <lfpport_component.h>
 #include <lfp_command.h>
 #include "lfpport_gtk.h"
+#include "javacall_keypress.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**********************
-  Menu functions
-**********************/
+extern GtkWidget *main_window;
 
 
 /**
- * Called upon VM startup to allocate menu resource.
+ * Show the menu upon Java's request.
+ *
+ * @param cmPtr pointer to menu native peer
+ * @return status of this call
  */
-// void initMenus() {
-//     syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-//     syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
-// }
+MidpError cmdmanager_show(MidpFrame *cmPtr) {
+    /* Suppress unused-parameter warning */
+    (void)cmPtr;
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
 
 /**
- * Called upon VM exit to release menu resource.
+ * Hide and delete resource function pointer.
+ * This function should notify its Items to hide as well.
+ *
+ * @param cmPtr pointer to menu native peer
+ * @param onExit  true if this is called during VM exit.
+ * 		  All native resource must be deleted in this case.
+ * @return status of this call
  */
-// void finalizeMenus(){
-//     syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-//     syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
-// }
+MidpError
+cmdmanager_hide_and_delete(MidpFrame* cmPtr, jboolean onExit) {
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+
 
 /**
  * Create native resources (like menu and/or soft buttons) to show
@@ -70,9 +85,50 @@ extern "C" {
  * @return an indication of success or the reason for failure
  */
 MidpError cmdmanager_create(MidpFrame* cmPtr){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
-    return -1;
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    cmPtr->widgetPtr = main_window;
+
+    cmPtr->show = cmdmanager_show;
+    cmPtr->hideAndDelete = cmdmanager_hide_and_delete;
+    cmPtr->handleEvent = NULL;
+
+//    cmdManager.setCommands = cmdmanager_set_commands;
+
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+
+    if (cmPtr->widgetPtr == NULL) {
+        return KNI_ENOMEM;
+    }
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+static int priorities[] = {
+    8, /* COMMAND_TYPE_NONE */
+    8, /* COMMAND_TYPE_SCREEN */
+    0, /* COMMAND_TYPE_BACK */
+    2, /* COMMAND_TYPE_CANCEL */
+    8, /* COMMAND_TYPE_OK */
+    8, /* COMMAND_TYPE_HELP */
+    3, /* COMMAND_TYPE_STOP */
+    1, /* COMMAND_TYPE_EXIT */
+    8  /* COMMAND_TYPE_ITEM */
+};
+
+gint softkey_cb(GtkWidget *widget, GtkSoftkeyPosition softkey_position, gpointer data) {
+    LIMO_TRACE(">>>%s id\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s id is %d\n", __FUNCTION__, (int)data);
+    javanotify_widget_menu_selection((int)data);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return 0;
+}
+
+//void menuitem_activate(void){
+void menuitem_activate(GtkWidget *widget, gpointer data){
+//    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s id is %d\n", __FUNCTION__, (int)data);
+    javanotify_widget_menu_selection((int)data);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 /**
@@ -86,8 +142,82 @@ MidpError cmdmanager_create(MidpFrame* cmPtr){
  */
 MidpError cmdmanager_set_commands(MidpFrame* cmPtr,
 				  MidpCommand* cmds, int numCmds){
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    GtkMainWindow* gtkMainWindow;
+    GtkForm *form;
+    GtkWidget *gtkSoftKeyBar;
+    GtkWidget *menu;
+    GtkWidget *menuitem;
+    int menuIsNeededFlag = 0;
+    int priority, place;
+    gchar label_buf[MAX_TEXT_LENGTH];
+    int i;
+    int label_len;
+
+    gtkMainWindow = (GtkMainWindow* )cmPtr->widgetPtr;
+    form = gtk_main_window_get_current_form(main_window);
+    gtkSoftKeyBar = form->softkeybar;
+
+    if (numCmds <= 0) {
+        return KNI_OK;
+    }
+
+    gtk_widget_show (gtkSoftKeyBar);
+
+    //find (if any) command to populate the left softbutton
+    place = -1;
+    priority = 8;
+    for (i = 0; i < numCmds; i++) {
+        if (priority > priorities[cmds[i].type]) {
+            priority = priorities[cmds[i].type];
+            place = i;
+        }
+    }
+    //set left softbutton
+    if (place != -1) {
+        pcsl_string_convert_to_utf8(&cmds[place].shortLabel_str,
+                                    label_buf, MAX_TEXT_LENGTH, &label_len);
+        gtk_softkey_bar_set_softkey(gtkSoftKeyBar, LEFT_SOFTKEY, label_buf,
+             NULL, SOFTKEY_CALLBACK, softkey_cb, cmds[place].id);
+    }
+
+    //determine whether the right softbutton is a pop-up menu or a command
+    if (numCmds == 2 && place == -1 ||
+        numCmds > 2) {
+        menuIsNeededFlag = 1;
+    }
+    //create menu - if needed
+    if (menuIsNeededFlag == 1) {
+        menu = gtk_menu_new();
+        gtk_widget_show(menu);
+        for (i = 0; i < numCmds; i++) {
+            if (i != place) {
+                pcsl_string_convert_to_utf8(&cmds[i].shortLabel_str,
+                                            label_buf, MAX_TEXT_LENGTH, &label_len);
+                menuitem = gtk_menu_item_new_with_label(label_buf);
+                g_signal_connect(G_OBJECT (menuitem),"activate",
+                           G_CALLBACK(menuitem_activate), cmds[i].id);
+//                 g_signal_connect(G_OBJECT (menuitem),"activate",
+//                            G_CALLBACK(menuitem_activate), NULL);
+                gtk_widget_show(menuitem);
+                gtk_menu_shell_append(GTK_MENU_SHELL (menu), menuitem);
+            }
+        }
+        gtk_softkey_bar_set_softkey(gtkSoftKeyBar, RIGHT_SOFTKEY, "Menu",
+                   NULL, SOFTKEY_MENU, menu, NULL);
+    }
+    else {  //set right softbutton
+        /* find the command for left softkey */
+        for (i = 0; i < numCmds; i++) {
+            if (i != place) {
+                pcsl_string_convert_to_utf8(&cmds[i].shortLabel_str,
+                                            label_buf, MAX_TEXT_LENGTH, &label_len);
+                gtk_softkey_bar_set_softkey(gtkSoftKeyBar, RIGHT_SOFTKEY, label_buf,
+                     NULL, SOFTKEY_CALLBACK, softkey_cb, cmds[i].id);
+            }
+        }
+    }
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return -1;
 }
 

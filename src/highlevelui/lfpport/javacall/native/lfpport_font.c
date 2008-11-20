@@ -80,7 +80,7 @@ MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
     GList *tmp;
     PangoWeight pango_weight;
 
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
     // look through allocated font to see if the font is there already
     for (tmp = g_list_first(fonts_list); tmp != 0; tmp = g_list_next(fonts_list)) {
@@ -138,11 +138,11 @@ MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
 
         /* return the font */
         *fontPtr = font_descr;
-        syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+        LIMO_TRACE("<<<%s\n", __FUNCTION__);
         return KNI_OK;
     }
 
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return -1;
 }
 
@@ -151,14 +151,14 @@ MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
  */
 void lfpport_font_finalize(){
     GList *tmp;
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
     /* free the allocated memory */
     for (tmp = g_list_first(fonts_list); tmp != 0; tmp = g_list_next(fonts_list)) {
         midpFree(tmp->data);
     }
 
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 #ifdef __cplusplus

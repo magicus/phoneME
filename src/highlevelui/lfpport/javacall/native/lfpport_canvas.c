@@ -52,8 +52,8 @@ extern "C" {
  */
 MidpError lfpport_canvas_create(MidpDisplayable* canvasPtr,
                 const pcsl_string* title, const pcsl_string* tickerText) {
-    syslog(LOG_INFO, ">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return -1;
 }
 #ifdef __cplusplus
