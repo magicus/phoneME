@@ -1313,7 +1313,12 @@ remove_from_list_and_save_impl(SuiteIdType suiteId, ComponentIdType componentId,
     (void)removeSuiteAndComponents;
 #endif
 
-    if (suiteId == UNUSED_SUITE_ID || suiteId == INTERNAL_SUITE_ID) {
+    if (suiteId == UNUSED_SUITE_ID
+#if !ENABLE_DYNAMIC_COMPONENTS
+        /* a dynamic component may belong to an internal midlet suite */
+        || suiteId == INTERNAL_SUITE_ID
+#endif
+    ) {
         return 0; /* suite was not in the list */
     }
 

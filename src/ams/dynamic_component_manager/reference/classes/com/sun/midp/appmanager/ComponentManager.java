@@ -209,7 +209,7 @@ public class ComponentManager extends MIDlet {
         private MIDlet midlet;
 
         /** ID of the MIDlet suite whose components we are interested in. */
-        private int  suiteId;
+        private int suiteId;
 
         /** false for read-only access, true for full access. */
         private boolean mayModify;
@@ -287,17 +287,18 @@ public class ComponentManager extends MIDlet {
          */
         private void makeInstallDialog() {
             if (installUrlForm == null) {
-                    installUrlForm = new Form("Install Component");
-                    String componentUrl = "http://127.0.0.1/DynComponent1.jar";
-                    installUrlField = new TextField("Enter URL to install from:",
-                                                 componentUrl, 1024,
-                                                 TextField.URL);
-                    nameField = new TextField("Enter component name:",
-                                             "asdf", 1024,
-                                             TextField.ANY);
-                    installUrlForm.append(installUrlField);
-                    installUrlForm.append(nameField);
+                installUrlForm = new Form("Install Component");
+                String componentUrl = "http://127.0.0.1/DynComponent1.jar";
+                installUrlField = new TextField("Enter URL to install from:",
+                                                componentUrl, 1024,
+                                                TextField.URL);
+                nameField = new TextField("Enter component name:",
+                                          "asdf", 1024,
+                                          TextField.ANY);
+                installUrlForm.append(installUrlField);
+                installUrlForm.append(nameField);
             }
+
             installUrlForm.addCommand(installNoCmd);
             installUrlForm.addCommand(installYesCmd);
             display.setCurrent(installUrlForm);
@@ -338,8 +339,8 @@ public class ComponentManager extends MIDlet {
          }
 
         /**
-         * Re-read the information about installed components, update the form compList
-         * and the array ci.
+         * Re-read the information about installed components, update
+         * the form compList and the array ci.
          */
         private void updateContent() {
              DynamicComponentStorage dcs =
@@ -352,14 +353,18 @@ public class ComponentManager extends MIDlet {
                  ci = null;
              }
 
-             compList.setTitle(ci == null ? "Components: none" : "Components: " + ci.length);
+             compList.setTitle(ci == null ? "Components: none" :
+                                            "Components: " + ci.length);
              if (ci != null) {
                  for (int i = 0; i < ci.length; i++) {
                      if (i >= compList.size()) {
-                         compList.append(new StringItem(null,ci[i].getDisplayName()+"\n"));
+                         compList.append(new StringItem(
+                             null,ci[i].getDisplayName() + "\n"));
                      } else {
-                         ((StringItem)compList.get(i)).setText(ci[i].getDisplayName()+"\n");
+                         ((StringItem)compList.get(i)).setText(
+                             ci[i].getDisplayName()+"\n");
                      }
+
                      //compList.get(i).addCommand(backCmd);
                      compList.get(i).setDefaultCommand(openCmd);
                      if (mayModify) {
@@ -409,8 +414,8 @@ public class ComponentManager extends MIDlet {
             } else if (c == installYesCmd) {
                 DynamicComponentInstaller installer = new DynamicComponentInstaller();
                 try {
-                        int componentId = installer.installComponent(suiteId,
-                                                                 installUrlField.getString(), nameField.getString());
+                    int componentId = installer.installComponent(suiteId,
+                            installUrlField.getString(), nameField.getString());
                 } catch (IOException e) {
                     showError(e.toString());
                     return;
