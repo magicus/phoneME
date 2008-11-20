@@ -1,0 +1,102 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# compiler specific designs
+#
+######################################################################
+
+ifeq ($(USE_VS2005), true)
+    ifeq ($(PCSL_CPU), arm)
+	EVC_LIB_PATH    = $(VS2005_CE_ARM_LIB)
+	EVC_INCLUDE_PATH= $(VS2005_CE_ARM_INCLUDE)
+	EVC_ARCH_PATH   = $(VS2005_CE_ARM_PATH)
+        CC              = cl.exe
+    else
+	EVC_LIB_PATH    = $(VS2005_CE_I386_LIB)
+	EVC_INCLUDE_PATH= $(VS2005_CE_I386_INCLUDE)
+	EVC_ARCH_PATH   = $(VS2005_CE_I386_PATH)
+        CC              = cl.exe
+    endif
+
+    CPP                := $(EVC_ARCH_PATH)/$(CC)
+    CC                 := $(EVC_ARCH_PATH)/$(CC)
+    LD                 := $(EVC_ARCH_PATH)/link.exe
+    AR                 := $(EVC_ARCH_PATH)/lib.exe
+
+    CFLAGS             += -D_WIN32_WCE=0x501 -DUNDER_CE=0x501 /GS-
+else
+    ifeq ($(PCSL_CPU), arm)
+	EVC_LIB_PATH    = $(EVC_ARM_LIB)
+	EVC_INCLUDE_PATH= $(EVC_ARM_INCLUDE)
+	EVC_ARCH_PATH   = $(EVC_ARM_PATH)
+        CC              = clarm.exe
+    else
+	EVC_LIB_PATH    = $(EVC_I386_LIB)
+	EVC_INCLUDE_PATH= $(EVC_I386_INCLUDE)
+	EVC_ARCH_PATH   = $(EVC_I386_PATH)
+        CC              = cl.exe
+    endif
+
+    CPP                := $(EVC_ARCH_PATH)/$(CC)
+    CC                 := $(EVC_ARCH_PATH)/$(CC)
+    LD                 := $(EVC_ARCH_PATH)/link.exe
+    AR                 := $(EVC_ARCH_PATH)/lib.exe
+    CFLAGS             += -D_WIN32_WCE=400 -DUNDER_CE=400
+endif
+
+# Flag descriptions:
+#
+# /WX     ??
+# /c      ??
+# /W3     ??
+# -Zi     ??
+# -Od     ??
+# -MDd    debug on
+#
+ifeq ($(USE_DEBUG), true)
+CFLAGS += -Zi 
+else
+CFLAGS += /Ot
+endif
+
+CFLAGS += /X /I"${EVC_INCLUDE_PATH}"
+
+ifeq ($(PCSL_CPU), i386)
+CFLAGS += -D_X86_ -D_X86 -Dx86 
+else
+CFLAGS += -DARM -D_ARM -D_ARM_ 
+endif
+
+CFLAGS += /c /W3 -DUNICODE -D_UNICODE /nologo
+
+LD_FLAGS=
+
+CC_OUTPUT=/Fo
+AR_OUTPUT=/OUT:
+LD_OUTPUT=/OUT:
+
+LIB_EXT=.lib
