@@ -2395,6 +2395,45 @@ Zone    Asia/Calcutta   5:53:28 -       LMT     1880	# Kolkata
                         5:30    -       IST     1942 Sep
                         5:30    1:00    IST     1945 Oct 15
                         5:30    -       IST
+
+# E-Eur differs from EU only in that E-Eur switches at midnight local time.
+Rule    E-Eur   1977    1980    -       Apr     Sun>=1   0:00   1:00    S
+Rule    E-Eur   1977    only    -       Sep     lastSun  0:00   0       -
+Rule    E-Eur   1978    only    -       Oct      1       0:00   0       -
+Rule    E-Eur   1979    1995    -       Sep     lastSun  0:00   0       -
+Rule    E-Eur   1981    max     -       Mar     lastSun  0:00   1:00    S
+Rule    E-Eur   1996    max     -       Oct     lastSun  0:00   0       -
+
+# Rule  NAME    FROM    TO      TYPE    IN      ON      AT      SAVE    LETTER/S
+Rule    Russia  1917    only    -       Jul      1      23:00   1:00    MST
+# Moscow Summer Time
+Rule    Russia  1917    only    -       Dec     28       0:00   0       MMT
+# Moscow Mean Time
+Rule    Russia  1918    only    -       May     31      22:00   2:00    MDST
+# Moscow Double Summer Time
+Rule    Russia  1918    only    -       Sep     16       1:00   1:00    MST
+Rule    Russia  1919    only    -       May     31      23:00   2:00    MDST
+Rule    Russia  1919    only    -       Jul      1       2:00   1:00    S
+Rule    Russia  1919    only    -       Aug     16       0:00   0       -
+Rule    Russia  1921    only    -       Feb     14      23:00   1:00    S
+Rule    Russia  1921    only    -       Mar     20      23:00   2:00    M # Mids
+ummer
+Rule    Russia  1921    only    -       Sep      1       0:00   1:00    S
+Rule    Russia  1921    only    -       Oct      1       0:00   0       -
+# Act No.925 of the Council of Ministers of the USSR (1980-10-24):
+Rule    Russia  1981    1984    -       Apr      1       0:00   1:00    S
+Rule    Russia  1981    1983    -       Oct      1       0:00   0       -
+# Act No.967 of the Council of Ministers of the USSR (1984-09-13), repeated in
+# Act No.227 of the Council of Ministers of the USSR (1989-03-14):
+Rule    Russia  1984    1991    -       Sep     lastSun  2:00s  0       -
+Rule    Russia  1985    1991    -       Mar     lastSun  2:00s  1:00    S
+#
+Rule    Russia  1992    only    -       Mar     lastSat  23:00  1:00    S
+Rule    Russia  1992    only    -       Sep     lastSat  23:00  0       -
+Rule    Russia  1993    max     -       Mar     lastSun  2:00s  1:00    S
+Rule    Russia  1993    1995    -       Sep     lastSun  2:00s  0       -
+Rule    Russia  1996    max     -       Oct     lastSun  2:00s  0       -
+
 # The following are like Asia/Calcutta:
 #       Andaman Is
 #       Lakshadweep (Laccadive, Minicoy and Amindivi Is)
