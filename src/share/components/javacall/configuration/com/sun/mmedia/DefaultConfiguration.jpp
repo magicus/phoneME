@@ -57,8 +57,83 @@ public class DefaultConfiguration extends Configuration {
      */
     private static ImageAccess imageAccessor;
 
+    private final static String[] JAVA_PROTOCOLS = new String[] {    
+                                                                 // #ifdef USE_FILE_CONNECTION [
+                                                                 "file",
+                                                                 // #endif ]
+                                                                 // #ifdef USE_RTSP [
+                                                                 "rtsp",
+                                                                 // #endif ]
+                                                                 "http",
+                                                                 "https"
+                                                               };
+
+    private static boolean isJavaProtocol(String protocol) {
+        for (int i = 0; i < JAVA_PROTOCOLS.length; i++) {
+            if (protocol.toUpperCase().equals(JAVA_PROTOCOLS[i].toUpperCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private final static String[] JAVA_CONTENT_TYPES = new String[] {
+        MIME_IMAGE_GIF
+    };
+
+    private static boolean isJavaContent(String mime) {
+        for (int i = 0; i < JAVA_CONTENT_TYPES.length; i++) {
+            if (mime.toUpperCase().startsWith(JAVA_CONTENT_TYPES[i].toUpperCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private final static String[] RTP_PROTOCOLS = new String[] { "rtp", "rtsp" };
+
+    private static boolean isRtpProtocol(String protocol) {
+        for (int i = 0; i < RTP_PROTOCOLS.length; i++) {
+            if (protocol.toUpperCase().equals(RTP_PROTOCOLS[i].toUpperCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private final static String[] RTP_CONTENT_TYPES = new String[] {
+      "audio/DVI4",      "audio/G722",    "audio/G723",    "audio/G726-16",
+      "audio/G726-24",   "audio/G726-32", "audio/G726-40", "audio/G728",
+      "audio/G729",      "audio/G729D",   "audio/G729E",   "audio/GSM",
+      "audio/GSM-EFR",   "audio/L8",      "audio/L16",     "audio/LPC",
+      "audio/MPA",       "audio/PCMA",    "audio/PCMU",    "audio/QCELP",
+      "audio/RED",       "audio/VDVI",    "video/BT656",   "video/CelB",
+      "video/JPEG",      "video/H261",    "video/H263",    "video/H263-1998",
+      "video/H263-2000", "video/MPV",     "video/MP2T",    "video/MP1S",
+      "video/MP2P",      "video/BMPEG",   "video/nv"
+    };
+
+    private static boolean isRtpContent(String mime) {
+        String uMime = mime.toUpperCase();
+        for (int i = 0; i < RTP_CONTENT_TYPES.length; i++) {
+            String uRtpType = RTP_CONTENT_TYPES[i].toUpperCase();
+            if (uMime.equals(uRtpType) || uMime.startsWith(uRtpType+";")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
-     *Constructor for the DefaultConfiguration object
+     * Allows RTP-specific content types to by tranferred only via RTP/RTSP,
+     * while all other content types only via protocols other than RTP/RTSP
+     */
+    private static boolean allowed(String ctype, String protocol) {
+        return isRtpContent(ctype) == isRtpProtocol(protocol);
+    }
+
+    /**
+     * Constructor for the DefaultConfiguration object
      */
     public DefaultConfiguration() {
         super();
@@ -127,52 +202,117 @@ public class DefaultConfiguration extends Configuration {
      */
     public String[] getSupportedContentTypes(String protocol) {
 
-        // #ifndef USE_FILE_CONNECTION [
-        if (protocol != null && protocol.equals("file")) {
-            return new String[0];
-        }
-        // #endif ]
+        Vector ctypes = new Vector();
 
-        String arr[] = super.getSupportedContentTypes(protocol);
-        Vector v = new Vector(arr.length);
-        for (int i=0; i<arr.length; i++) v.addElement(arr[i]);
-
-        String ll_protocol[] = new String[] {protocol};
-        if (protocol != null) {
-            for (int i=0; i<Configuration.INTERNAL_PROTOCOLS.length; i++) {
-                if (protocol.equals(Configuration.INTERNAL_PROTOCOLS[i])) {
-                    ll_protocol = new String[] {"file", "memory"};
-                    break;
+        if (null == protocol || isJavaProtocol(protocol)) {
+            // add content types supported by Java
+            for (int c = 0; c < JAVA_CONTENT_TYPES.length; c++) {
+                if (null == protocol || allowed(JAVA_CONTENT_TYPES[c],protocol)) {
+                    ctypes.addElement(JAVA_CONTENT_TYPES[c]);
                 }
             }
-            if(protocol.equals("rtsp")) {
-                ll_protocol = new String[] {"rtp", "rtsp"};
-            }
         }
 
-        for (int k=0; k<ll_protocol.length; k++) {
-            int hdlr = nListContentTypesOpen(ll_protocol[k]);
-            if (hdlr != 0) {
-                String s;
-                boolean found=false;
-
-                while ((s = nListContentTypesNext(hdlr)) != null) {
-                    for (int i=0; i<v.size() && !found; i++) {
-                        found = s.equals((String)v.elementAt(i));
-                    }
-                    if (!found) {
-                        v.addElement(s);
-                    }
+        if (null == protocol) {
+            // add content types supported by javacall
+            int hList = nListContentTypesOpen(null);
+            if (hList != 0) {
+                String ctype;
+                while (null != (ctype = nListContentTypesNext(hList))) {
+                    addIfNotExists(ctypes, ctype);
                 }
-                nListContentTypesClose(hdlr);
+                nListContentTypesClose(hList);
+            }
+        } else {
+            // add content types directly supported by javacall for this protocol
+            int hList = nListContentTypesOpen(protocol);
+            if (hList != 0) {
+                String ctype;
+                while ((ctype = nListContentTypesNext(hList)) != null) {
+                    addIfNotExists(ctypes, ctype);
+                }
+                nListContentTypesClose(hList);
+            }
+
+            if (isJavaProtocol(protocol)) {
+                // add content types supported by javacall via memory streaming.
+                hList = nListContentTypesOpen("memory");
+                if (hList != 0) {
+                    String ctype;
+                    while ((ctype = nListContentTypesNext(hList)) != null) {
+                        if (allowed(ctype,protocol)) {
+                            addIfNotExists(ctypes, ctype);
+                        }
+                    }
+                    nListContentTypesClose(hList);
+                }
             }
         }
 
-        arr = new String[v.size()];
-        v.copyInto(arr);
+        String ret[] = new String[ctypes.size()];
+        ctypes.copyInto(ret);
+        return ret;
+    }
 
-        /* Add java only implementations */
-        return arr;
+    /**
+     *  Gets the supportedProtocols attribute of the DefaultConfiguration object
+     *
+     * @param  ctype  Description of the Parameter
+     * @return        The supportedProtocols value
+     */
+    public String[] getSupportedProtocols(String ctype) {
+
+        Vector protocols = new Vector();
+
+        if (null == ctype || isJavaContent(ctype)) {
+            // add protocols supported by java
+            for (int p = 0; p < JAVA_PROTOCOLS.length; p++) {
+                if (null == ctype || allowed(ctype, JAVA_PROTOCOLS[p])) {
+                    protocols.addElement(JAVA_PROTOCOLS[p]);
+                }
+            }
+        }
+
+        // add protocols supported by javacall
+        int hList = nListProtocolsOpen(ctype);
+        if (0 != hList) {
+            String protocol;
+
+            while (null != (protocol = nListProtocolsNext(hList))) {
+                if ("memory".equals(protocol)) {
+                    // if javacall supports this ctype via memory streaming,
+                    // add all protocols supported by java
+                    for (int p = 0; p < JAVA_PROTOCOLS.length; p++) {
+                        if (null==ctype || allowed(ctype, JAVA_PROTOCOLS[p])) {
+                            addIfNotExists(protocols, JAVA_PROTOCOLS[p]);
+                        }
+                    }
+                } else {
+                    addIfNotExists(protocols, protocol);
+                }
+            }
+            nListProtocolsClose(hList);
+        }
+
+        String[] ret = new String[protocols.size()];
+        protocols.copyInto(ret);
+        return ret;
+    }
+
+    public boolean isRadioSupported()
+    {
+        return nIsRadioSupported();
+    }
+    
+    private native boolean nIsRadioSupported();
+
+    /**
+     * Hepler function adds string s to vector v if it's not already there
+     */
+    private static void addIfNotExists(Vector v, String s) {
+        if (-1 == v.indexOf( s )) {
+            v.addElement(s);
+        }
     }
 
     /**
@@ -189,64 +329,10 @@ public class DefaultConfiguration extends Configuration {
             } else if (locator.equals(Configuration.VIDEO_CAPTURE_LOCATOR)) {
                 return DefaultConfiguration.MIME_IMAGE_PNG;
             }
-        }    
+        }
 
         return "";
     }
-
-    /**
-     *  Gets the supportedProtocols attribute of the DefaultConfiguration object
-     *
-     * @param  content_type  Description of the Parameter
-     * @return               The supportedProtocols value
-     */
-    public String[] getSupportedProtocols(String content_type) {
-
-        String arr[] = super.getSupportedProtocols(content_type);
-
-        int hdlr = nListProtocolsOpen(content_type);
-        if (hdlr != 0) {
-            String s;
-
-            Vector v = new Vector(arr.length);
-            for (int i=0; i<arr.length; i++) v.addElement(arr[i]);
-
-            while ((s = nListProtocolsNext(hdlr)) != null) {
-                if (s.equals("file") || s.equals("memory")) {
-                    for (int i=0; i<Configuration.INTERNAL_PROTOCOLS.length; i++) {
-                        addIfNotExist(v, Configuration.INTERNAL_PROTOCOLS[i]);
-                    }
-                } else if (s.equals("rtp")) {
-                    addIfNotExist(v, "rtsp");    
-                } else {
-                    addIfNotExist(v, s);    
-                }
-            }
-            nListProtocolsClose(hdlr);
-
-            arr = new String[v.size()];
-            v.copyInto(arr);
-        }
-        return arr;
-    }
-
-    public boolean isRadioSupported()
-    {
-        return nIsRadioSupported();
-    }
-    
-    private native boolean nIsRadioSupported();
-    
-    private void addIfNotExist(Vector v, String s) {
-        boolean found = false;
-        for (int i=0; i<v.size() && !found; i++) {
-            found = s.equals((String)v.elementAt(i));
-        }
-        if (!found) {
-            v.addElement(s);
-        }
-    }
-
 
     public ImageAccess getImageAccessor() {
         return imageAccessor;
