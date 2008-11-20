@@ -184,6 +184,12 @@ public class MVMManager extends MIDlet
     public void handleODDStartMidletEvent(int suiteId, String className,
                                           String displayName,
                                           boolean isDebugMode) {
+        /* For the case of showing MIDlet selector, we need AMS to have
+         * foreground. */
+        MIDletProxy thisMidlet = midletProxyList.findMIDletProxy(
+            MIDletSuite.INTERNAL_SUITE_ID, this.getClass().getName());
+        midletProxyList.setForegroundMIDlet(thisMidlet);
+
         if (suiteUnderDebugId != MIDletSuite.UNUSED_SUITE_ID) {
             /* IMPL NOTE: this forces only one running MIDlet in debug mode - 
              * the VM currently does not support more MIDlets in debug mode 
