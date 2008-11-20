@@ -78,8 +78,6 @@ typedef struct {
     IControl*               controls[CONT_MAX];
     javacall_bool           needProcessHeader;
     player_state_enum       state;
-
-    pcm_handle_t            pcm_handle;
 } ah_common;
 
 typedef struct {
@@ -132,6 +130,7 @@ typedef struct
 
     int                     isolateId;      // id of isolate to which this GM belongs
     int                     isolateRefs;
+    pcm_handle_t            pcm_handle;
 
     IEffectModule           *EM135;
     javacall_int64          players135[20];
