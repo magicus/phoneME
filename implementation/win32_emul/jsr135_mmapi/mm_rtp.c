@@ -115,7 +115,7 @@ size_t rtp_pcm_callback( void* buf, size_t size, void* param )
                 p->buffering = TRUE;
                 OutputDebugString( "  -------- buffering started --------\n" );
                 javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_BUFFERING_STARTED,
-                    p->appId, p->playerId, JAVACALL_OK, mt );
+                    p->appId, p->playerId, JAVACALL_OK, (void*)mt );
             }
 
             // TODO: this is a stub. need some other method to determine EOM
@@ -123,7 +123,7 @@ size_t rtp_pcm_callback( void* buf, size_t size, void* param )
             {
                 OutputDebugString( "  -------- end of media      --------\n" );
                 javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
-                    p->appId, p->playerId, JAVACALL_OK, mt );
+                    p->appId, p->playerId, JAVACALL_OK, (void*)mt );
             }
         }
     }
@@ -256,7 +256,7 @@ static javacall_result rtp_realize(javacall_handle handle,
         p->rate = 44100;
         p->channels = 1;
 
-        p->mediaType = JC_FMT_MS_PCM; // TODO: maybe we need separate types for RTP.
+        p->mediaType = JC_FMT_RTP_L16;
 
         get_int_param( mime, L"channels", &(p->channels) );
         get_int_param( mime, L"rate", &(p->rate) );
@@ -361,7 +361,7 @@ static javacall_result rtp_do_buffering(javacall_handle handle,
                 OutputDebugString( "  -------- buffering stopped --------\n" );
                 p->buffering = FALSE;
                 javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED,
-                    p->appId, p->playerId, JAVACALL_OK, p->mediaTime );
+                    p->appId, p->playerId, JAVACALL_OK, (void*)(p->mediaTime) );
             }
             sprintf( str, ">> %li %i %i %i\n", *length, p->queue_size, p->playing, p->buffering );
             OutputDebugString( str );
