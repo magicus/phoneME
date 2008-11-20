@@ -84,7 +84,6 @@ CVMJITdisableRendezvousCallsTrapbased(CVMExecEnv* ee)
 CVMInt32 CVMfindAOTCode()
 {
     CVMJITGlobalState* jgs = &CVMglobals.jit;
-    const CVMProperties *sprops = CVMgetProperties();
     char *aotfile = jgs->aotFile;
     int fd;
     /* codecache start addr + codecache size */
@@ -94,20 +93,9 @@ CVMInt32 CVMfindAOTCode()
         goto notFound;
     }
 
-    if (aotfile == NULL) {
-        aotfile = (char*)malloc(strlen(sprops->library_path) +
-                                strlen("/cvm.aot") + 1);
-        if (aotfile == NULL) {
-            goto notFound;
-        }
-        *aotfile = '\0';
-        strcat(aotfile, sprops->library_path);
-        strcat(aotfile, "/cvm.aot");
-    }
+    CVMassert(aotfile != NULL);
+
     fd = open(aotfile, O_RDONLY);
-    if (jgs->aotFile == NULL) {
-        free(aotfile);
-    }
 
     if (fd != -1) {
         /* Found persistent code store. */
@@ -257,24 +245,14 @@ CVMJITcodeCachePersist()
     int fd;
     CVMJITGlobalState* jgs = &CVMglobals.jit;
     /*CVMUint8* cbuf = jgs->codeCacheStart;*/
-    const CVMProperties *sprops = CVMgetProperties();
     char *aotfile = jgs->aotFile;
+
+    CVMassert(aotfile != NULL);
 
     if (jgs->aotCompileFailed || jgs->codeCacheAOTCodeExist) {
         return;
     }
 
-    if (aotfile == NULL) {
-        aotfile = (char*)malloc(strlen(sprops->library_path) +
-                            strlen("/cvm.aot") + 1);
-        if (aotfile == NULL) {
-	    CVMconsolePrintf("Failed to malloc AOT file name.\n");
-	    CVMabort();
-	}
-        *aotfile = '\0';
-        strcat(aotfile, sprops->library_path);
-        strcat(aotfile, "/cvm.aot");
-    }
     fd = open(aotfile, O_WRONLY | O_CREAT | O_TRUNC, 0777);
 
     if (fd == -1) {
@@ -300,9 +278,6 @@ CVMJITcodeCachePersist()
 
         close(fd);
         CVMtraceJITStatus(("JS: Finished writing AOT code.\n"));
-    }
-    if (jgs->aotFile == NULL) {
-        free(aotfile);
     }
 }
 #endif
