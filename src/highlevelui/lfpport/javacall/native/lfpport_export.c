@@ -47,6 +47,7 @@ extern gint screen_width;
 extern gint screen_height;
 extern GtkWidget *main_window;
 extern GtkLabel  *ticker;
+extern GMainLoop *main_loop;
 
 #define LFPPORT_SCREEN_HEIGHT       320
 #define LFPPORT_SCREEN_WIDTH        240
@@ -135,7 +136,6 @@ void lfpport_gained_foreground(){
 void lfpport_ui_init(){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     stub_func();
-
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
@@ -144,6 +144,8 @@ void lfpport_ui_init(){
  */
 void lfpport_ui_finalize(){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    gtk_widget_destroy(main_window);
+    g_main_loop_quit(main_loop);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
