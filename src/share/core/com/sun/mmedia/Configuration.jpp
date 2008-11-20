@@ -140,16 +140,6 @@ public abstract class Configuration {
     public final static String AUDIO_CAPTURE_LOCATOR = "capture://audio";
     public final static String VIDEO_CAPTURE_LOCATOR = "capture://video";
 
-    public final static String[] INTERNAL_PROTOCOLS = new String[] {    
-                                                                     // #ifdef USE_FILE_CONNECTION [
-                                                                     "file",
-                                                                     // #endif ]
-                                                                     // #ifdef USE_RTSP [
-                                                                     "rtsp",
-                                                                     // #endif ]
-                                                                     "http",
-                                                                     "https"
-                                                                   };
     /**
      * A hash table of the protocol handlers.
      */
@@ -202,37 +192,20 @@ public abstract class Configuration {
 
 
     /**
-     *  Gets the supportedContentTypes attribute of the Configuration object
+     *  Gets supported content types for given protocol
      *
-     * @param  protocol  Description of the Parameter
-     * @return           The supportedContentTypes value
+     * @param  protocol  protocol
+     * @return           array of supported content types
      */
-    public String[] getSupportedContentTypes(String protocol) {
-        if (protocol == null) {
-            return new String[]{MIME_IMAGE_GIF};
-        }
-        for (int i=0; i<INTERNAL_PROTOCOLS.length; i++) {
-            if (protocol.equals(INTERNAL_PROTOCOLS[i])) {
-                return new String[]{MIME_IMAGE_GIF};
-            }
-        }
-        return new String[0];
-    }
-
+    public abstract String[] getSupportedContentTypes(String protocol);
 
     /**
-     *  Gets the supportedProtocols attribute of the Configuration class
+     *  Gets supported protocols for given content type
      *
-     * @param  content_types  Description of the Parameter
-     * @return                The supportedProtocols value
+     * @param  ctype  content type
+     * @return        array of supported protocols
      */
-    public String[] getSupportedProtocols(String content_types) {
-        if ((content_types == null) || 
-            (content_types!= null && content_types.equals(MIME_IMAGE_GIF))) {
-            return INTERNAL_PROTOCOLS;
-        }
-        return new String[0];
-    }
+    public abstract String[] getSupportedProtocols(String ctype);
 
     public abstract String getProperty(String key);
 
