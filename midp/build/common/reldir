@@ -1,0 +1,255 @@
+#!/bin/sh
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+# convert an absolute path to relative path
+######################################################################
+
+if [ -z $AWK ]
+then
+AWK=gawk
+fi
+
+# $1 -- path to be converted to relative
+# $2 -- dash, necessary to detect an empty $1
+# $3 -- base path
+# $4 -- limit path -- return an empty string if $1 is not a subdirectory of $3
+# $5 -- directory separator character, optional, "/" unless "\\" is specified
+# $6 -- variable name for the base path in the output;
+#       for example, if it is MYDIR, the output path will start with "$(MYDIR)/"
+echo "$1" "$2" "$3" "$4" "$5" "$6" | $AWK '
+
+# remove the trailing slash from path
+# path -- path to be modified
+function striptrailingslash(path) {
+    gsub(/\/$/,"",path);
+    return path;
+}
+
+# if sep == "\\", replace backslashes in path with slashes
+# also, if sep == "\\", lowercase the path
+# path -- path to be modified
+# sep -- separator, either "/" or "\\"
+function toslash(path,sep) {
+    if(sep == "\\") {
+        gsub(/\\/,"/",path);
+        path = tolower(path);
+    }
+    return path;
+}
+
+# return true (1) if path is absolute
+# path - file path, with "/" used as separator
+# examples:
+# /foo c:/foo //WINCOMP/DISKNAME/file http://foo.com/foo -- absolute
+# foo ./foo ../foo c:.. c:foo c:./foo -- relative
+function isabsolutepath(path) {
+    return path~/^\//;
+    # || path~/^[a-zA-Z_0-9]+\:\//
+}
+
+# append "/" to path, unless path is empty or "/" is already there
+# Note: make sure that path contains no protocol (ftp:) or drive (c:)
+function appendslash(path) {
+    if(path~/[^\/]$/)path=path "/";
+    return path;
+}
+
+# extract device or protocol from path
+# examples: "c:" for "c:/foo"; "ftp:" for "ftp://foo.com/pub"
+function drive(path,   dev) {
+    dev = "";
+    if(match(path,/^[a-zA-Z_0-9]+\:/)) {
+        dev=substr(path,RSTART,RLENGTH);
+    }
+    return dev;
+}
+
+
+# remove device or protocol from path
+# examples: "/foo" for "c:/foo"; "//foo.com/pub" for "ftp://foo.com/pub"
+function afterdrive(path) {
+    if(match(path,/^[a-zA-Z_0-9]+\:/)) {
+        path=substr(path,RSTART+RLENGTH);
+    }
+    return path;
+}
+
+# remove /../ and /./ from path;
+# path -- path, from which /../ and /./ is to be removed
+function stripdir(path, pathprefix)
+{
+    pathprefix = "";
+    # separate drive letter ("c:") or protocol ("http:"), if any
+    if(match(path,/^[a-zA-Z_0-9]+\:/)) {
+	pathprefix=substr(path,RSTART,RLENGTH);
+	path=substr(path,RSTART+RLENGTH);
+    }
+
+    if(match(path,/^\/+/)) {
+	# move all leading "/" to pathprefix
+	pathprefix=pathprefix substr(path,RSTART,RLENGTH);
+	path=substr(path,RSTART+RLENGTH);
+    }
+
+    # append "/", unless path is empty or "/" is already there
+    path = appendslash(path);
+
+    # move all leading ./ and ../ to pathprefix
+    while( path~/^\.\// || path~/^\.\.\// ) {
+	if(path~/^\.\//) {
+	    sub(/^\.\//,"",path);
+	} else {
+	    sub(/^\.\.\//,"",path);
+	    pathprefix = pathprefix "../"
+	}
+    }
+
+    # remove duplicate slashes
+    while(path~/\/\//)sub(/\/\//,"/",path);
+    # remove /./
+    while(path~/\/\.\//)sub(/\/\.\//,"/",path);
+    # temporarily prepend path with "/"
+    path = "/" path;
+    
+    # remove pairs dirname/..
+    # NB this will not work if dirname is "..." (3 dots, or more)
+    while(path~/\/[^\/]*[^\/\.][^\/]*\/\.\.\//) {
+	sub(/\/[^\/]*[^\/\.][^\/]*\/\.\.\//,"/",path);
+    }
+    # remove pairs .../.. (easier to do this than to document a defect)
+    while(path~/\/\.\.\.+\/\.\.\//) {
+	sub(/\/\.\.\.+\/\.\.\//,"/",path);
+    }
+    # remove the temporary "/" in the beginning
+    path = substr(path,2);
+    return pathprefix path;
+}
+
+function commonroot(first, second,    drv)
+{
+    if(drive(first)!=drive(second)) {
+	return "";
+    }
+    drv = drive(first);
+    first = afterdrive(first);
+    second = afterdrive(second);
+    if(first~/^\.\.\// || second~/^\.\.\//) {
+	return "";
+    }
+    if(first!~/\//) {
+	first = "./" first;
+    }
+    if(second!~/\//) {
+	second = "./" second;
+    }
+    first = appendslash(first);
+    second = appendslash(second);
+
+    while(second!=first) {
+	# concatenation with a null string is a workaround for a bug
+	# (on some systems, the reported length does not change 
+	# as the string changes)
+    	if(length("" second)>length("" first)) {
+	    sub(/\/[^\/]*\/$/,"/",second);
+	} else {
+	    sub(/\/[^\/]*\/$/,"/",first);
+    }	}
+    return drv first;
+}
+
+# return true if subdir is a subdirectory of parentdir;
+# false means that the algorithm could not find it out for sure,
+# for example, ../../foo/bar/x may be or not be a subdirectory of ../bar
+function sureissubdir(subdir,parentdir) {
+    subdir = stripdir(appendslash(subdir));
+    parentdir = stripdir(appendslash(parentdir));
+    return parentdir==substr(subdir,1,length("" parentdir)) \
+        && substr(subdir,1+length("" parentdir))!~/\.\.\//;
+}
+
+
+function reldir(targetpath,base,    root,relpath,fromroot)
+{
+    if(base == "" || targetpath == "") {
+	return targetpath;
+    }
+
+    # convert to "canonic" form
+    targetpath = stripdir(targetpath);
+    base = stripdir(base);
+
+    if(drive(targetpath) != drive(base)) {
+	return "";
+    }
+
+    if(substr(afterdrive(targetpath),1,1)!="/") {
+      targetpath = stripdir(base afterdrive(targetpath));
+    }
+
+    if(targetpath==base) {
+	return "./"
+    }
+
+    root = commonroot(targetpath,base);
+
+    # relpath = relative path to root
+    relpath = "";
+    while(stripdir(base relpath)!=root) {
+	relpath = relpath "../"
+    }
+
+    # relative path from root to targetpath
+    fromroot = substr(targetpath,length("" root)+1,length("" targetpath)-length("" root));
+    
+    relpath = relpath fromroot;
+    return relpath;
+}
+
+function fmain(targetpath,dash,base,limit,sep,varname) {
+    if(targetpath=="") {
+	return "";
+    }
+    if(dash!="-") {
+	return "";
+    }
+    targetpath = stripdir(toslash(targetpath,sep));
+    base = stripdir(toslash(base,sep));
+    limit = stripdir(toslash(limit,sep));
+    
+    if(! (sureissubdir(targetpath,limit) && sureissubdir(base,limit)) ) {
+	return "";
+    }
+
+    if(varname!="") {
+	varname = "$(" varname ")/"
+    }
+    return varname reldir(targetpath,base);
+}
+BEGIN { FS=" ";}
+{
+    print striptrailingslash(fmain($1, $2, $3, $4, $5, $6));
+}
+'
