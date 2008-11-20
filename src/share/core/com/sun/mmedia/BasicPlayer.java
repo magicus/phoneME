@@ -530,6 +530,7 @@ public abstract class BasicPlayer
         }
 
         if (isDevicePlayer() && !hasToneSequenceSet) {
+            sendEvent(PlayerListener.STARTED, new Long(0));
             sendEvent( PlayerListener.END_OF_MEDIA, new Long(0) );
             return;
         }
