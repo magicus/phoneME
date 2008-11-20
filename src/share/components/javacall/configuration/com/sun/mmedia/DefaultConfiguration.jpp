@@ -83,7 +83,7 @@ public class DefaultConfiguration extends Configuration {
 
     private static boolean isJavaContent(String mime) {
         for (int i = 0; i < JAVA_CONTENT_TYPES.length; i++) {
-            if (mime.toUpperCase().startsWith(JAVA_CONTENT_TYPES[i].toUpperCase())) {
+            if (mime.toUpperCase().equals(JAVA_CONTENT_TYPES[i].toUpperCase())) {
                 return true;
             }
         }
