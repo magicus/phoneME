@@ -307,6 +307,13 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
     public void open(String url, int mode, boolean timeouts)
         throws IOException {
+        open1(url, mode, timeouts);
+        getStreamConnection();
+    }
+
+    public void open1(String url, int mode, boolean timeouts)
+        throws IOException {
+
         // DEBUG: System.out.println ("open " + url);
         if (opens > 0) {
             throw new IOException("already connected");
@@ -328,6 +335,11 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         // Check permission. The permission method wants the URL
         checkPermission(host, port, file);
+
+    }
+
+    protected void getStreamConnection()
+        throws IOException {
         if (streamConnection == null) {
             try {
                 streamConnection = connectSocket();
