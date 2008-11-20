@@ -419,22 +419,17 @@ void on_screen_rotated() {
  * and screen is turned upside-down.
  */
 void RotateDisplay(short code) {
-    javacall_bool prev_top_down;
-    prev_top_down = top_down;
     top_down = code & 0x02;
     if ((code & 0x01) != reverse_orientation) {
+        reverse_orientation = !reverse_orientation;
         javanotify_rotation(javacall_lcd_get_current_hardwareId());
-    } else if (prev_top_down != top_down) {
-        //we should initiate screen refresh
-        on_screen_rotated();
-        javacall_lcd_flush(javacall_lcd_get_current_hardwareId());                
     }
+    javacall_lcd_flush(javacall_lcd_get_current_hardwareId());
+    on_screen_rotated();
 }
 
 javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
       (void)hardwareId;
-      reverse_orientation = !reverse_orientation;
-      on_screen_rotated();
       return reverse_orientation;
 }
 /**
@@ -449,7 +444,7 @@ javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
  */
  
 javacall_bool javacall_lcd_get_reverse_orientation(int hardwareId) {
-  (void)hardwareId;
+    (void)hardwareId;
      return reverse_orientation;
 }
   
