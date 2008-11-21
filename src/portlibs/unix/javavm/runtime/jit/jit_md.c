@@ -64,7 +64,7 @@ CVMJITdisableRendezvousCallsTrapbased(CVMExecEnv* ee)
     int result =
 	mprotect(CVMglobals.jit.gcTrapAddr - CVMJIT_MAX_GCTRAPADDR_WORD_OFFSET,
 		 sizeof(void*) * 2 * CVMJIT_MAX_GCTRAPADDR_WORD_OFFSET,
-		 PROT_READ);
+		 PROT_READ | PROT_WRITE);
     CVMassert(result == 0);
     (void)result;
 }
