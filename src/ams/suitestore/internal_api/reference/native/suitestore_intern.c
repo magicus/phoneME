@@ -553,7 +553,7 @@ read_suites_data(char** ppszError) {
     rc = pcsl_string_cat(storage_get_root(INTERNAL_STORAGE_ID),
                          &SUITE_DATA_FILENAME, &suitesDataFile);
     if (rc != PCSL_STRING_OK) {
-        REPORT_CRIT(LC_AMS,"read_suites_data(): OUT OF MEMORY !! (1)");
+        REPORT_CRIT(LC_AMS, "read_suites_data(): OUT OF MEMORY !! (1)");
         return OUT_OF_MEMORY;
     }
 
@@ -572,10 +572,14 @@ read_suites_data(char** ppszError) {
     if (status == ALL_OK && bufferLen < (long) sizeof(int)) {
         pcsl_mem_free(buffer);
         status = SUITE_CORRUPTED_ERROR; /* _suites.dat is corrupted */
-        REPORT_ERROR(LC_AMS,"read_suites_data(): failed to read '_suites.dat', file is corrupted (1)");
+        REPORT_ERROR(LC_AMS, "read_suites_data(): failed to read "
+                             "'_suites.dat', file is corrupted (1)");
     }
     if (status != ALL_OK) {
-	/* if read_file() returned not ALL_OK, buffer is NULL, no need to free it */
+        /*
+         * if read_file() returned not ALL_OK, buffer is NULL,
+         * no need to free it
+         */
         return status;
     }
 
@@ -587,25 +591,28 @@ read_suites_data(char** ppszError) {
     for (i = 0; i < numOfSuites; i++) {
         if (bufferLen < (long)MIDLET_SUITE_DATA_SIZE) {
             status = SUITE_CORRUPTED_ERROR;
-            REPORT_ERROR(LC_AMS,"read_suites_data():_suites.dat - wrong file length. file is corrupted");
+            REPORT_ERROR(LC_AMS, "read_suites_data(): _suites.dat - "
+                                 "wrong file length. File is corrupted.");
             break;
         }
 
         pData = (MidletSuiteData*) pcsl_mem_malloc(sizeof(MidletSuiteData));
         if (!pData) {
             status = OUT_OF_MEMORY;
-            REPORT_CRIT(LC_AMS,"read_suites_data(): OUT OF MEMORY !! (2)");
+            REPORT_CRIT(LC_AMS, "read_suites_data(): OUT OF MEMORY !! (2)");
             break;
         }
 
         /* IMPL_NOTE: introduce pcsl_mem_copy() */
         memcpy((char*)pData, (char*)&buffer[pos], MIDLET_SUITE_DATA_SIZE);
         ADJUST_POS_IN_BUF(pos, bufferLen, MIDLET_SUITE_DATA_SIZE);
-	/* IMPL_NOTE: we set the pointer to NULL and pcsl_strings
-	 * to PCSL_STRING_NULL by filling memory with zeroes.
-	 * We have to avoid garbage in pointers because in case of an error
-	 * we will free all allocated structures.
-	 */
+        
+        /*
+         * IMPL_NOTE: we set the pointer to NULL and pcsl_strings
+         *            to PCSL_STRING_NULL by filling memory with zeroes.
+         *            We have to avoid garbage in pointers because in case
+         *            of an error we will free all allocated structures.
+         */
         memset(&pData->varSuiteData, 0, sizeof(pData->varSuiteData));
         if (pPrevData) {
             pPrevData->nextEntry = pData;
@@ -620,10 +627,17 @@ read_suites_data(char** ppszError) {
 
         /* setup pJarHash */
         if (pData->jarHashLen > 0) {
+            if (bufferLen < (long)pData->jarHashLen) {
+                status = SUITE_CORRUPTED_ERROR;
+                REPORT_ERROR(LC_AMS, "read_suites_data(): _suites.dat - "
+                                     "invalid jarHashLen. File is corrupted.");
+                break;
+            }
+
             pData->varSuiteData.pJarHash = pcsl_mem_malloc(pData->jarHashLen);
             if (pData->varSuiteData.pJarHash == NULL) {
                 status = OUT_OF_MEMORY;
-                REPORT_CRIT(LC_AMS,"read_suites_data(): OUT OF MEMORY !! (3)");
+                REPORT_CRIT(LC_AMS, "read_suites_data(): OUT OF MEMORY !! (3)");
                 break;
             }
             memcpy(pData->varSuiteData.pJarHash, (char*)&buffer[pos],
@@ -652,8 +666,10 @@ read_suites_data(char** ppszError) {
             for (i = 0; i < (int) (sizeof(pStrings) / sizeof(pStrings[0]));
                     i++) {
                 if (bufferLen < (long)sizeof(jint)) {
-                    status = IO_ERROR; /* _suites.dat is corrupted */
-                    REPORT_ERROR(LC_AMS,"read_suites_data(): failed to read '_suites.dat', file is corrupted (2)");
+                    /* _suites.dat is corrupted */
+                    status = SUITE_CORRUPTED_ERROR;
+                    REPORT_ERROR(LC_AMS, "read_suites_data(): failed to read "
+                                 "'_suites.dat', file is corrupted (2)");
                     break;
                 }
 
@@ -667,8 +683,10 @@ read_suites_data(char** ppszError) {
                 ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(jint));
 
                 if (bufferLen < (long)strLen) {
-                    status = IO_ERROR; /* _suites.dat is corrupted */
-                    REPORT_ERROR(LC_AMS,"read_suites_data(): failed to read '_suites.dat', file is corrupted (3)");
+                    /* _suites.dat is corrupted */
+                    status = SUITE_CORRUPTED_ERROR;
+                    REPORT_ERROR(LC_AMS, "read_suites_data(): failed to read "
+                                 "'_suites.dat', file is corrupted (3)");
                     break;
                 }
 
@@ -678,7 +696,8 @@ read_suites_data(char** ppszError) {
 
                     if (rc != PCSL_STRING_OK) {
                         status = OUT_OF_MEMORY;
-                        REPORT_CRIT(LC_AMS,"read_suites_data(): OUT OF MEMORY !! (4)");
+                        REPORT_CRIT(LC_AMS,
+                                    "read_suites_data(): OUT OF MEMORY !! (4)");
                         break;
                     }
                     ADJUST_POS_IN_BUF(pos, bufferLen, strLen * sizeof(jchar));

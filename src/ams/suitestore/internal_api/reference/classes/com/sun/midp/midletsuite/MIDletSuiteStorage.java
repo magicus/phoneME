@@ -127,7 +127,7 @@ public class MIDletSuiteStorage {
      */
     private static MIDletSuiteStorage getMasterStorage() {
         if (masterStorage == null) {
-            masterStorage    = new MIDletSuiteStorage();
+            masterStorage = new MIDletSuiteStorage();
 
             int status = loadSuitesIcons0();
             if (Logging.REPORT_LEVEL <= Logging.ERROR) {
@@ -764,10 +764,32 @@ public class MIDletSuiteStorage {
      */
     private native void getSuiteList(int[] suites);
     
-    /*
+    /**
      * Gets a secure filename base (including path separator if needed)
      * for the suite. File build with the base will be automatically deleted
      * when the suite is removed.
+     *
+     * @param suiteId unique ID of the suite
+     *
+     * @return secure filename base for the suite having the given ID
      */
     public native String getSecureFilenameBase(int suiteId);
+
+    /**
+     * Checks the integrity of the suite storage database and of the
+     * installed suites.
+     *
+     * @param fullCheck 0 to check just an integrity of the database,
+     *                    other value for full check
+     * @param delCorruptedSuites != 0 to delete the corrupted suites,
+     *                           0 - to keep them (for re-installation).
+     *
+     * @return 0 if no errors,
+     *         1 if the suite database was corrupted but has been successfully
+     *           repaired,
+     *         a negative value if the database is corrupted and could not
+     *         be repaired
+     */
+    public native int checkSuitesIntegrity(boolean fullCheck,
+                                           boolean delCorruptedSuites);
 }
