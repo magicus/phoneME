@@ -32,7 +32,18 @@
 # other def. (like VPATH)
 ############################################################
 
+#
+# Common CDC/CLDC code
+
+# Include JSR 75 cleaning interface
+SUBSYSTEM_AMS_JAVA_FILES += \
+    $(AMS_JSR_INTERFACE_IMPL_DIR)/classes/com/sun/midp/jsr075/FileConnectionCleanup.java
+
+#
+# CLDC specific code
+
 ifeq ($(TARGET_VM), cldc_vm)
+
 $(GENERATED_DIR)/classes/com/sun/midp/jsr/JSRInitializer.java: \
     $(AMS_JSR_INTERFACE_IMPL_DIR)/classes/com/sun/midp/jsr/JSRInitializer.jpp
 	@$(call runjpp,$^,$@)
@@ -49,10 +60,11 @@ ifneq ($(USE_JSR_120), true)
         $(AMS_JSR_INTERFACE_IMPL_DIR)/classes/com/sun/midp/wma/WMACleanupMonitor.java
 endif
 endif
+
 ifneq ($(USE_JSR_229), true)
-# Include stub implementation of JSR229 clean class
+# Include stub implementation of JSR 229 cleaning class
     SUBSYSTEM_AMS_JAVA_FILES += \
         $(AMS_JSR_INTERFACE_IMPL_DIR)/classes/com/sun/midp/payment/PAPICleanUp.java
 endif
-endif
 
+endif
