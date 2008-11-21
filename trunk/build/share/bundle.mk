@@ -234,6 +234,7 @@ BUILDDIR_PATTERNS += \
 	defs.mk \
 	rules.mk \
 	jdwp*.mk \
+	jvmti*.mk \
 	hprof.mk
 
 SRCDIR_PATTERNS += \
