@@ -511,6 +511,47 @@ void javanotify_install_midlet_wparams(const char* httpUrl,
 }
 
 /**
+ * A notification function for telling Java to perform the update of
+ * a MIDlet with parameters
+ *
+ * @param suite_id : suite id to update
+ * @param forceUpdate updates the MIDlet even if it already exist regardless
+ *                    of version
+ */
+void javanotify_update_midlet_wparams(char* suite_id, int forceUpdate) {
+    int argc = 0;
+    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
+    javacall_result res;
+    int length;
+
+    REPORT_INFO2(LC_CORE,"javanotify_update_midlet_wparams() >> "
+                         "suite_id = %s, forceUpdate = %d\n",
+                         suite_id, forceUpdate);
+
+    JVM_Initialize();
+
+    if (initialize_memory_slavemode() != JAVACALL_OK) {
+        return;
+    }
+
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "-1";
+    argv[argc++] = "com.sun.midp.installer.GraphicalInstaller";
+
+    if (forceUpdate == 1) {
+        argv[data->argc++] = "FU";
+    } else {
+        argv[data->argc++] = "U";
+    }
+
+    argv[argc++]  = suite_id;
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    res = runMidlet(argc, argv);
+}
+
+
+/**
  * The platform should invoke this function in platform context to start
  * the Java VM with arbitrary arguments.
  *

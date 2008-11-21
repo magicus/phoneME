@@ -40,6 +40,7 @@
 #include <suitestore_task_manager.h>
 #include <suitestore_rms.h>
 #include <suitestore_kni_util.h>
+#include "javacall_lifecycle.h"
 
 #if ENABLE_ICON_CACHE
 #include <suitestore_icon_cache.h>
@@ -1138,6 +1139,12 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_remove0) {
         KNI_ThrowNew(midpRuntimeException, "Remove failed");
     }
 
+    if (ALL_OK == status) {
+        javacall_lifecycle_uninstall(
+            suiteId
+        );
+    }
+
     KNI_ReturnVoid();
 }
 
@@ -1599,6 +1606,21 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
     if (status == ALL_OK) {
         /* store the suite */
         status = midp_store_suite(&installInfo, &suiteSettings, &suiteData);
+    }
+
+    /* Additonal post processing for native layer as like the creation of shortcut */
+    if (status == ALL_OK) {
+        int suiteID = (int) suiteData.suiteId;
+        
+        javacall_lifecycle_install(
+            suiteData.varSuiteData.displayName.data, // Display name
+            suiteData.varSuiteData.displayName.length, 
+            suiteData.varSuiteData.midletClassName.data, // Main class name
+            suiteData.varSuiteData.midletClassName.length, 
+            suiteID, // Suite ID
+            NULL, // Icon file
+            0
+         );
     }
 
     /* cleanup */
