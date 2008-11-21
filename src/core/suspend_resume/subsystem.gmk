@@ -35,6 +35,7 @@
 
 SUSPEND_RESUME_DIR = $(SUBSYSTEM_CORE_DIR)/suspend_resume
 
+include $(SUSPEND_RESUME_DIR)/sr_lcdui/$(LIB_MAKE_FILE)
 include $(SUSPEND_RESUME_DIR)/sr_main/$(LIB_MAKE_FILE)
 include $(SUSPEND_RESUME_DIR)/sr_vm/$(LIB_MAKE_FILE)
 include $(SUSPEND_RESUME_DIR)/sr_port/$(LIB_MAKE_FILE)
