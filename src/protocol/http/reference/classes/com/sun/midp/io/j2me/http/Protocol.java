@@ -991,8 +991,6 @@ public class Protocol extends ConnectionBaseAdapter
      *             an <code>IOException</code> is thrown if the output
      *             stream is closed.
      *
-     * @exception  IllegalStateException if an attempt was made to
-     *             write after the request has finished.
      */
     protected int writeBytes(byte b[], int off, int len)
             throws IOException {
@@ -1000,7 +998,7 @@ public class Protocol extends ConnectionBaseAdapter
         int bytesToCopy;
 
         if (requestFinished) {
-            throw new IllegalStateException(
+            throw new IOException(
                 "Write attempted after request finished");
         }
 
@@ -1034,8 +1032,6 @@ public class Protocol extends ConnectionBaseAdapter
      *
      * @exception IOException if an I/O error occurs
      *
-     * @exception IllegalStateException if there was an attempt was made to
-     *            flush after the request has finished.
      */
     public void flush() throws IOException {
 
@@ -1044,7 +1040,7 @@ public class Protocol extends ConnectionBaseAdapter
         }
 
         if (requestFinished) {
-            throw new IllegalStateException(
+            throw new IOException(
                  "Flush attempted after request finished");
         }
 
