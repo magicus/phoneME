@@ -258,6 +258,8 @@ BUNDLE_INCLUDE_LIST += \
 		src/$(os)/tools/hprof) \
 	$(foreach os,$(BUNDLE_OS_PORTS) share, \
 		src/$(os)/tools/jpda) \
+	$(foreach os,$(BUNDLE_OS_PORTS) share, \
+		src/$(os)/tools/jvmti) \
 	$(foreach os,$(BUNDLE_OS_PORTS), \
 		src/$(os)/lib/tzmappings) \
 	$(foreach os,$(BUNDLE_OS_PORTS), \
