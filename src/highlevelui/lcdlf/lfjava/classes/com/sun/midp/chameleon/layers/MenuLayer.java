@@ -617,6 +617,10 @@ public class MenuLayer extends ScrollablePopupLayer {
                 selI = scrollIndex + MenuSkin.MAX_ITEMS - 1;
             }
 
+            if (cascadeMenuUp) {
+                dismissCascadeMenu();
+            }
+
             updateScrollIndicator();
             requestRepaint();
         }
