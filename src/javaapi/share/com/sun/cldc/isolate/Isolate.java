@@ -308,11 +308,13 @@ public final class Isolate {
 
     private int             _ConnectDebugger = 0;
 
-
+    
     private int             _UseVerifier = 1;
 
     private int             _profileId = DEFAULT_PROFILE_ID;
 
+    private int             _SuspendDebugging = 0;
+    
      /**
       * ID of default profile.
       */
@@ -336,6 +338,21 @@ public final class Isolate {
      * The maximum priority that an Isolate can have.
      */
     public final static int MAX_PRIORITY = 3;
+
+    /**
+     * Isolate is not in debugging mode
+     */
+    public final static int NO_DEBUG = 0;
+    
+    /** 
+     * Isolate is in debugging mode without initial suspend
+     */
+    public final static int DEBUG_NO_SUSPEND = 1;
+    
+    /**
+     * Isolate is in debug mode with initial suspend
+     */
+    public final static int DEBUG_SUSPEND = 2;
 
     /**
      * Creates a new isolated java application with a default configuration.
@@ -486,6 +503,10 @@ public final class Isolate {
             throw new IsolateStartupException("Isolate has already started");
         }
 
+        if (_SuspendDebugging == 1) {
+            setSuspend0();
+        }
+        
         try {
             nativeStart();
         } catch (IsolateResourceError e) {
@@ -944,8 +965,16 @@ public final class Isolate {
         }
     }
 
-    public void setDebug(boolean mode) {
-        _ConnectDebugger = (mode == true ? 1 : 0);
+    /**
+     * Sets debug mode for this isolate
+     * @param mode can have one of these arguments:
+     *      0: non-debug mode
+     *      1: debud mode wihtout initial suspend
+     *      2: debug mode with initial suspend
+     */
+    public void setDebug(int mode) {
+        _ConnectDebugger = (mode != NO_DEBUG ? 1 : 0);
+        _SuspendDebugging = (mode == DEBUG_SUSPEND ? 1 : 0);
     }
 
     public void attachDebugger() {
@@ -1100,4 +1129,5 @@ public final class Isolate {
     }
 
     private native void attachDebugger0(Isolate obj);
+    private native void setSuspend0();
 }

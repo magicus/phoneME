@@ -70,6 +70,8 @@ ReturnOop IsolateObj::duplicate(JVM_SINGLE_ARG_TRAPS) const {
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   dup().set_profile_id( profile_id() );
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+  dup().set_connect_debugger( connect_debugger() );
+  dup().set_suspend_debugging( suspend_debugging() );
 
   OopDesc* p;
   // Do not use JVM_ZCHECK because result can be NULL
@@ -78,7 +80,7 @@ ReturnOop IsolateObj::duplicate(JVM_SINGLE_ARG_TRAPS) const {
   p = Universe::deep_copy(main_args() JVM_CHECK_0);
   dup().set_main_args(p);
   p = Universe::deep_copy(app_classpath() JVM_CHECK_0);
-  dup().set_app_classpath(p);
+  dup().set_app_classpath(p);  
 
   return dup.obj();
 }
