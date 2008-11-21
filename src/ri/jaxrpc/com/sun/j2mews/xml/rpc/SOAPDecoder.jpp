@@ -552,7 +552,7 @@ public class SOAPDecoder extends DefaultHandler
                 retObj = (Object) new Long(0);
                 break;
 
-// #ifdef ENABLE_CLDC_11
+// #ifndef ENABLE_CLDC_10
             case 5: // Type.FLOAT
                 retObj = (Object) new Float(0.0f);
                 break;
@@ -560,7 +560,7 @@ public class SOAPDecoder extends DefaultHandler
             case 6: // Type.DOUBLE
                 retObj = (Object) new Double(0.0d);
                 break;
-// #endif ENABLE_CLDC_11
+// #endif ENABLE_CLDC_10
         }
         return retObj;
     }
@@ -914,7 +914,7 @@ public class SOAPDecoder extends DefaultHandler
                             set[i] = tmp;
                         }
                         break;
-// #ifdef ENABLE_CLDC_11
+// #ifndef ENABLE_CLDC_10
                     case 5: // Type.FLOAT
                         if (v.nillable) {
                             Float[] tmp = new Float[len];
@@ -957,7 +957,7 @@ public class SOAPDecoder extends DefaultHandler
                             set[i] = tmp;
                         }
                         break;
-// #endif ENABLE_CLDC_11
+// #endif ENABLE_CLDC_10
                     case 7: // Type.STRING
                         // According to the section 8.2.4 of J2ME Web Services
                         // 1.0 spec, array of String must be encoded into array
@@ -1090,7 +1090,7 @@ public class SOAPDecoder extends DefaultHandler
                 errString = "Expected Long, received: " + token;
                 throw new RuntimeException();
             }
-// #ifdef ENABLE_CLDC_11
+// #ifndef ENABLE_CLDC_10
         case 5: // Type.FLOAT
             try {
                 if (token.startsWith("+")) {
@@ -1127,7 +1127,7 @@ public class SOAPDecoder extends DefaultHandler
                 errString = "Expected Double, received: " + token;
                 throw new RuntimeException();
             }
-// #endif ENABLE_CLDC_11
+// #endif ENABLE_CLDC_10
 
         case 7: // Type.STRING
             return token;
