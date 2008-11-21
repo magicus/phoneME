@@ -131,6 +131,11 @@ CVM_CNI_CLASSES += com.sun.j2me.crypto.ARC4 \
 endif
 
 ABSTRACTIONS_WRAPPER_CLASSES += \
+    -package com.sun.j2me.proxy.lcdui \
+        -i javax.microedition.lcdui.CustomItem \
+        javax.microedition.lcdui.Display \
+        javax.microedition.lcdui.Graphics \
+        -i javax.microedition.lcdui.Canvas \
     -package com.sun.j2me.proxy.security \
         com.sun.midp.security.SecurityToken \
         com.sun.midp.security.SecurityInitializer \
