@@ -931,6 +931,23 @@ static javacall_result audio_qs_close(javacall_handle handle){
     javacall_result r = JAVACALL_FAIL;
     int gmIdx         = h->hdr.gmIdx;
 
+    switch(h->hdr.mediaType)
+    {
+        case JC_FMT_TONE:
+        case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
+        {
+            if( h->midi.synth != NULL )
+            {
+                mQ234_DetachSynthPlayer(g_QSoundGM[gmIdx].gm, h->midi.synth);    
+                mQ234_PlayControl_Destroy(h->midi.synth);
+                h->midi.synth = NULL;
+            }
+            break;
+        }
+    }
     JC_MM_DEBUG_PRINT2("audio_close: h:%d  mt:%d\n", (int)handle, h->hdr.mediaType);
     h->hdr.state = PL135_CLOSED;
 
@@ -1215,12 +1232,6 @@ static javacall_result audio_qs_release_device(javacall_handle handle){
             {
                 mQ234_EventTrigger_Destroy(h->midi.doneCallback);
                 h->midi.doneCallback = NULL;
-            }
-            if( h->midi.synth != NULL )
-            {
-                mQ234_DetachSynthPlayer(g_QSoundGM[gmIdx].gm, h->midi.synth);    
-                mQ234_PlayControl_Destroy(h->midi.synth);
-                h->midi.synth = NULL;
             }
             if( h->midi.midiStream != NULL )
             {
