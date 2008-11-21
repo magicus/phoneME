@@ -76,13 +76,13 @@
 /** The name of the internal property file */
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(IMPL_PROPERTY_FILE)
     {'i', 'n', 't', 'e', 'r', 'n', 'a', 'l', '.',
-     'c', 'o', 'n', 'f', 'i', 'g', '\0'};
+     'c', 'o', 'n', 'f', 'i', 'g', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(IMPL_PROPERTY_FILE);
 
 /** The name of the application property file */
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(APPL_PROPERTY_FILE)
     {'s', 'y', 's', 't', 'e', 'm', '.',
-     'c', 'o', 'n', 'f', 'i', 'g', '\0'};
+     'c', 'o', 'n', 'f', 'i', 'g', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(APPL_PROPERTY_FILE);
 
 /** Storage structure for a property set */
