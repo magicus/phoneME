@@ -335,7 +335,7 @@ class AppSettingsImpl implements AppSettings, CommandListener {
                 onChoiceGroupSelectionChanged(bs2, prevValID2);
                 settingsUI.changeSettingValue(bs1.getPermissionGroupID(), bs1.getSelectedID());
                 settingsUI.changeSettingValue(bs2.getPermissionGroupID(), bs2.getSelectedID());
-                //display.setCurrent(settingsUI.getDisplayable());
+                display.setCurrent(settingsUI.getMainDisplayable());
             }
         } else if (c == noExclusiveChoiceSelectionCmd) {
             if (groupsInConflict != null) {
@@ -350,7 +350,7 @@ class AppSettingsImpl implements AppSettings, CommandListener {
                 onChoiceGroupSelectionChanged(bs2, prevValID2);
                 settingsUI.changeSettingValue(bs1.getPermissionGroupID(), bs1.getSelectedID());
                 settingsUI.changeSettingValue(bs2.getPermissionGroupID(), bs2.getSelectedID());
-                //display.setCurrent(settingsUI.getDisplayable());
+                display.setCurrent(settingsUI.getMainDisplayable());
             }
         }
    }

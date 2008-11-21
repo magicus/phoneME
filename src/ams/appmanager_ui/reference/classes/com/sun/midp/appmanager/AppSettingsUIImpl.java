@@ -195,6 +195,15 @@ class AppSettingsUIImpl extends Form
         
         display.setCurrent(this);
     }
+
+    /**
+     * Returns the main displayable of the AppSettingsUI.
+     * @return main screen
+     */
+    public Displayable getMainDisplayable() {
+        return this;
+    }
+
 }
 
 /**
