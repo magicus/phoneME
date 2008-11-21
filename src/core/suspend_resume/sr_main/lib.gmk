@@ -34,7 +34,7 @@
 ######################################################################
 
 SR_MAIN_LIB = sr_main
-LIB_SET += $(SUSPEND_RESUME_LIB)
+LIB_SET += $(SR_MAIN_LIB)
 
 SR_MAIN_DIR = $(SUSPEND_RESUME_DIR)/$(SR_MAIN_LIB)
 
