@@ -464,7 +464,7 @@ class AppManagerPeer implements CommandListener {
                 si = (RunningMIDletSuiteInfo)msiVector.elementAt(i);
 
                 if (si.hasProxy(midlet)) {
-                    
+
                     if (si.hasSingleMidlet()) {
                         si.unlock();
                     }
@@ -477,10 +477,14 @@ class AppManagerPeer implements CommandListener {
                         manager.notifySuiteExited(si, null);
                     }
 
-                    // remove the suite scheduled for removal after the midlet has exited
-                    // note that in the case of two running midlets, we must wait till the last midlet exits
-                    if (removeMsi != null && removeMsi.sameSuite(midlet) && !removeMsi.hasRunningMidlet()) {
-                        removeSuite(removeMsi);
+                    /*
+                     * Remove the suite scheduled for removal after the midlet
+                     * has exited. Note that in the case of two running midlets,
+                     * we must wait till the last midlet exits.
+                     */
+                    if (removeMsi != null && removeMsi.sameSuite(midlet) &&
+                            !removeMsi.hasRunningMidlet()) {
+                        removeSuiteImpl(removeMsi);
                     }
 
                     /*
@@ -778,17 +782,47 @@ class AppManagerPeer implements CommandListener {
             return;
         }
 
+        if (suiteInfo.hasRunningMidlet()) {
+            /*
+             * Schedule the midlet suite for removal after all running midlets
+             * from it are destroyed.
+             * The removing routine is called from notifyMidletExited(). 
+             */
+            removeMsi = suiteInfo;
+
+            // destroy all running midlets from the suite being removed
+            MIDletProxy[] runningMidlets = suiteInfo.getProxies();
+            if (runningMidlets != null) {
+                for (int i = 0; i < runningMidlets.length; i++) {
+                    runningMidlets[i].destroyMidlet();
+                }
+            }
+        } else {
+            /*
+             * There are no running midlets belonging to the suite
+             * being removed, so remove the suite immediately.
+             */
+            removeSuiteImpl(suiteInfo);
+        }
+    }
+
+    /**
+     * Removes a suite from the App Selector Screen
+     *
+     * @param suiteInfo the midlet suite info of a recently removed MIDlet
+     */
+    private void removeSuiteImpl(RunningMIDletSuiteInfo suiteInfo) {
+        if (suiteInfo == null) {
+            // Invalid parameter, should not happen.
+            return;
+        }
+
         // the last item in AppSelector is time
         for (int i = 0; i < msiVector.size(); i++) {
-            RunningMIDletSuiteInfo msi = (RunningMIDletSuiteInfo)msiVector.elementAt(i);
+            RunningMIDletSuiteInfo msi =
+                    (RunningMIDletSuiteInfo)msiVector.elementAt(i);
             if (msi == suiteInfo) {
                 PAPICleanUp.removeMissedTransaction(suiteInfo.suiteId);
-
-                while (msi.hasRunningMidlet()) {
-                    MIDletProxy proxy = msi.getFirstProxy();
-                    proxy.destroyMidlet();
-                    msi.removeProxy(proxy);
-                }
 
                 try {
                     midletSuiteStorage.remove(suiteInfo.suiteId);
@@ -837,6 +871,8 @@ class AppManagerPeer implements CommandListener {
      * Appends a names of all the MIDlets in a suite to a Form, one per line.
      *
      * @param midletSuite information of a suite of MIDlets
+     *
+     * @return array of strings to be appended to a Form
      */
     public String[] getMIDletsNames(MIDletSuiteImpl midletSuite) {
         int numberOfMidlets;
