@@ -22,7 +22,6 @@
  * information or have any questions.
  */
 
-#include <stdio.h>
 #include "javacall_lcd.h" 
 #include "javacall_logging.h" 
 #include "lime.h"
@@ -99,7 +98,7 @@ javacall_result javacall_lcd_init(void) {
 	MAIN_DISPLAY_SIZE.height = res[1];
 	MAIN_DISPLAY_SIZE.full_height = res[2];
 
-	f->call(f, NULL, EXTE_DISPLAY_SIZE, &res, &resLen);
+	f->call(f, &res, &resLen, EXTE_DISPLAY_ID);
 
     EXTE_DISPLAY_SIZE.width = res[0];
 	EXTE_DISPLAY_SIZE.height = res[1];
@@ -481,7 +480,8 @@ javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
  * Handle clamshell event
  */
 void javacall_lcd_handle_clamshell() {
-fprintf(stderr, "KRIS: javacall_lcd_handle_clamshell\n");
+javautil_debug_print(JAVACALL_LOG_WARNING, "lcd", 
+    "KRIS: javacall_lcd_handle_clamshell\n");
     if (clamshell_opened == JAVACALL_FALSE) {
         VRAM.width = MAIN_DISPLAY_SIZE.width;
         VRAM.height = MAIN_DISPLAY_SIZE.height;

@@ -22,7 +22,6 @@
  * information or have any questions.
  */
 
-#include "stdio.h"
 #include "lime.h"
 #include "defaultLCDUI.h"
 #include "javacall_lcd.h"
@@ -296,7 +295,6 @@ void SendEvent (KVMEventType *evt) {
             javanotify_change_locale(evt->screenX, evt->screenY);
             break;
         case VK_CLAMSHELL:
-fprintf(stderr, "KRIS: VK_CLAMSHELL, evt->screenX = %d\n", evt->screenX);
             if (evt->screenX == 2) {
                 /* IMPL_NOTE: two displays are active - subject to implement. */
             } else {
