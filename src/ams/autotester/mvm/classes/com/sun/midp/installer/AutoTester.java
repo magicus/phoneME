@@ -66,12 +66,15 @@ import com.sun.midp.events.*;
  * the arguments.</p>
  */
 public final class AutoTester extends AutoTesterBase {
+    private AutoTesterHelper helper;
 
     /**
      * Create and initialize a new auto tester MIDlet.
      */
     public AutoTester() {
-        super(new AutoTesterHelper());
+        super();
+
+        helper = new AutoTesterHelper();
 
         if (url != null) {
             startBackgroundTester(true);
@@ -93,11 +96,15 @@ public final class AutoTester extends AutoTesterBase {
         try {
             helper.installAndPerformTests();
         } catch (Throwable t) {
-            String errorMessage = helper.getInstallerExceptionMessage(t); 
-            handleInstallerException(errorMessage);
+            int suiteId = helper.getSuiteId();
+            String message = helper.getInstallerExceptionMessage(suiteId, t);
+            displayInstallerError(message);
         }
 
         notifyDestroyed();        
     }
 
+    AutoTesterHelperBase getHelper() {
+        return helper;
+    }
 }

@@ -52,9 +52,6 @@ abstract class AutoTesterHelperBase {
     /** How many iterations to run the suite */
     protected int loopCount = -1;
 
-    /** ID of the suite being installed */
-    protected int suiteId = MIDletSuite.UNUSED_SUITE_ID;
-   
     AutoTesterHelperBase() {
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
         installer = new HttpInstaller();
@@ -95,12 +92,11 @@ abstract class AutoTesterHelperBase {
      * suite.
      *
      * @param suiteId ID of the MIDlet Suite
-     * @param midletSuiteStorage MIDlet suite storage to look up properties
      *
      * @return an object with the class name and display name of
      * the suite's MIDlet-1 property
      */
-    protected MIDletInfo getFirstMIDletOfSuite() {
+    protected MIDletInfo getFirstMIDletOfSuite(int suiteId) {
         MIDletSuite ms = null;
         String name = null;
 
@@ -123,7 +119,7 @@ abstract class AutoTesterHelperBase {
         return new MIDletInfo(name);
     }
 
-    protected String getInstallerExceptionMessage(Throwable ex) {
+    protected String getInstallerExceptionMessage(int suiteId, Throwable ex) {
         String message = null;
 
         if (ex instanceof InvalidJadException) {

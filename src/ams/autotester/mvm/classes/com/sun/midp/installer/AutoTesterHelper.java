@@ -53,6 +53,9 @@ class AutoTesterHelper extends AutoTesterHelperBase
     /** Our event queue. */
     private EventQueue eventQueue;
 
+    /** ID of the test suite being run */
+    private int suiteId = MIDletSuite.UNUSED_SUITE_ID;
+
     /**
      * Constructor.
      *
@@ -75,10 +78,10 @@ class AutoTesterHelper extends AutoTesterHelperBase
 
         for (; loopCount != 0; ) {
             // force an overwrite and remove the RMS data
-            suiteId = installer.installJad(url, Constants.INTERNAL_STORAGE_ID, 
-                    true, true, null);
+            suiteId = installer.installJad(url, 
+                    Constants.INTERNAL_STORAGE_ID, true, true, null);
 
-            MIDletInfo midletInfo = getFirstMIDletOfSuite();
+            MIDletInfo midletInfo = getFirstMIDletOfSuite(suiteId);
             Isolate[] isolatesBefore = Isolate.getIsolates();
 
             Isolate testIsolate = AmsUtil.startMidletInNewIsolate(suiteId,
@@ -174,6 +177,10 @@ class AutoTesterHelper extends AutoTesterHelperBase
      */
     boolean restoreSession() {
         return false;
+    }
+
+    int getSuiteId() {
+        return suiteId;
     }
 
     /**

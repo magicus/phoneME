@@ -69,41 +69,44 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
     Runnable {
 
     /** Standard timeout for alerts. */
-    static final int ALERT_TIMEOUT = 5000;
+    private static final int ALERT_TIMEOUT = 5000;
     /** Contains the default URL. */
-    static final String defaultUrl = "http://";
+    private static final String defaultUrl = "http://";
 
     /** Display for this MIDlet. */
-    Display display;
+    protected Display display;
+
     /** Parameter form if there is not URL parameter given. */
-    Form parameterForm;
+    private Form parameterForm;
+
     /** Contains the URL the user typed in. */
-    TextField urlTextField;
+    private TextField urlTextField;
+
     /** Contains the domain the user typed in. */
-    TextField domainTextField;
+    private TextField domainTextField;
+
     /** Command object for "Exit" command in the URL screen. */
-    Command endCmd = new Command(Resource.getString
+    private Command endCmd = new Command(Resource.getString
                                          (ResourceConstants.EXIT),
                                          Command.EXIT, 1);
     /** Command object for URL screen start testing. */
-    Command testCmd =
+    private Command testCmd =
         new Command(Resource.getString(ResourceConstants.GO),
                     Command.SCREEN, 1);
-    /** URL of the test suite. */
-    String url;
-    /** Security domain to assign to unsigned suites. */
-    String domain = Permissions.getUnsignedDomain();
-    /** How many iterations to run the suite */
-    int loopCount = -1;
 
-    AutoTesterHelperBase helper;
+    /** URL of the test suite. */
+    protected String url;
+
+    /** Security domain to assign to unsigned suites. */
+    private String domain = Permissions.getUnsignedDomain();
+
+    /** How many iterations to run the suite */
+    private int loopCount = -1;
 
     /**
      * Create and initialize a new auto tester MIDlet.
      */
-    AutoTesterBase(AutoTesterHelperBase inp_helper) {
-        helper = inp_helper;
-
+    protected AutoTesterBase() {
         display = Display.getDisplay(this);
 
         // The arg-<n> properties are generic command arguments
@@ -177,11 +180,12 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
     }
 
     abstract public void run();
+    abstract AutoTesterHelperBase getHelper();
 
     /**
      * Ask the user for the URL.
      */
-    void getUrl() {
+    protected void getUrl() {
         try {
             parameterForm = new
                 Form(Resource.getString
@@ -207,7 +211,7 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
 
             display.setCurrent(parameterForm);
         } catch (Exception ex) {
-            displayException(Resource.getString(ResourceConstants.EXCEPTION),
+            displayError(Resource.getString(ResourceConstants.EXCEPTION),
                              ex.toString());
         }
     }
@@ -215,7 +219,7 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
     /**
      * Save the URL setting the user entered in to the urlTextBox.
      */
-    void getURLTextAndTest() {
+    private void getURLTextAndTest() {
         url = urlTextField.getString();
 
         if (url == null || url.length() == 0) {
@@ -248,6 +252,7 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
      */
     void startBackgroundTester(boolean setTestRunParams) {
         if (setTestRunParams) {
+            AutoTesterHelperBase helper = getHelper();
             helper.setTestRunParams(url, domain, loopCount);
         }
         new Thread(this).start();
@@ -258,10 +263,10 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
      *
      * @param message error message
      */
-    void handleInstallerException(String message) {
+    protected void displayInstallerError(String message) {
         if (message != null) {
-            displayException(Resource.getString(ResourceConstants.ERROR),
-                             message);
+            displayError(Resource.getString(ResourceConstants.ERROR), 
+                    message);
 
             long start = System.currentTimeMillis();
             long time_left = ALERT_TIMEOUT;
@@ -285,7 +290,7 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
      * @param title exception form's title
      * @param message exception message
      */
-    void displayException(String title, String message) {
+    private void displayError(String title, String message) {
         Alert a = new Alert(title, message, null, AlertType.ERROR);
 
         // This application must log always.
