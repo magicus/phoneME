@@ -495,6 +495,9 @@ javautil_debug_print(JAVACALL_LOG_WARNING, "lcd",
         currDisplayId = EXTE_DISPLAY_ID;
         clamshell_opened = JAVACALL_FALSE;
     }
+
+    javacall_lcd_flush(currDisplayId);                
+
 }
 
 /**

@@ -202,6 +202,13 @@ void SendEvent (KVMEventType *evt) {
     case keyDownKVMEvent:
         if (evt->chr == KEY_USER2) { 
             RotateDisplay(evt->screenX);     
+        } else if (evt->chr == VK_CLAMSHELL) {
+            if (evt->screenX == 2) {
+                /* IMPL_NOTE: two displays are active - subject to implement. */
+            } else {
+                javanotify_clamshell_state_changed(evt->screenX == 0 ?
+                   JAVACALL_LCD_CLAMSHELL_OPEN : JAVACALL_LCD_CLAMSHELL_CLOSE);
+            }
         } else if ((evt->chr != KEY_END)) {
             javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
         } else if (isRunningLocal == JAVACALL_FALSE) {
@@ -293,14 +300,6 @@ void SendEvent (KVMEventType *evt) {
             break;
         case VK_CHANGE_LOCALE:
             javanotify_change_locale(evt->screenX, evt->screenY);
-            break;
-        case VK_CLAMSHELL:
-            if (evt->screenX == 2) {
-                /* IMPL_NOTE: two displays are active - subject to implement. */
-            } else {
-                javanotify_clamshell_state_changed(evt->screenX == 0 ?
-                   JAVACALL_LCD_CLAMSHELL_OPEN : JAVACALL_LCD_CLAMSHELL_CLOSE);
-            }
             break;
 #if ENABLE_JSR_179
         case STATE_AVAILABLE:
