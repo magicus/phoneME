@@ -381,10 +381,12 @@ $ret_s32:
 	li	v0, 1	/* 1 indicates single-word return */
 	RETURN
 
+#ifndef __mips_soft_float
 $ret_f32:
 	swc1	$f0, (a3)
 	li	v0, 1	/* 1 indicates single-word return */
 	RETURN
+#endif
 
 $ret_s64:
 #ifdef CVMCPU_HAS_64BIT_REGISTERS
@@ -396,6 +398,7 @@ $ret_s64:
 	li	v0, 2	/* 2 indicates double-word return */
 	RETURN
 
+#ifndef __mips_soft_float
 $ret_f64:
 #ifdef CVMMIPS_HAS_64BIT_FP_REGISTERS
 	sdc1	$f0, (a3)
@@ -410,6 +413,7 @@ $ret_f64:
 #endif
 	li	v0, 2   /* 2 indicates double-word return */
 	RETURN
+#endif
 
 $ret_void:
 	li	v0, 0	/* 0 indicates void return */
@@ -424,8 +428,13 @@ $ret_jumps:
 	.word	$ret_s32	/* char */
 	.word	$ret_s64	/* long */
 	.word	$ret_s32	/* byte */
+#ifndef __mips_soft_float
 	.word	$ret_f32	/* float */
 	.word	$ret_f64	/* double */
+#else
+	.word	$ret_s32	/* float */
+	.word	$ret_s64	/* double */
+#endif
 	.word	$ret_s32	/* bool */
 	.word	$ret_obj
 	.word	$ret_void	/* this is invalid and shouldn't get called */
