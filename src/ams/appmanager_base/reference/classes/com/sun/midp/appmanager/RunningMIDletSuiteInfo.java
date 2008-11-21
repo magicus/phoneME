@@ -49,8 +49,12 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
     private Vector proxies = new Vector(Constants.MAX_ISOLATES);
     /** Icon for this suite. */
     public Image icon = null;
-    /** Whether suite is under debug */
-    public boolean isDebugMode = false;
+    /** Debug mode: 
+     *  0: no debug
+     *  1: debug mode without initial suspend
+     *  2: debug mode with initial suspend
+     */
+    public int debugMode = 0;
     /** Whether the running suite is locked */
     private boolean locked = false;
     /* corresponding suite */

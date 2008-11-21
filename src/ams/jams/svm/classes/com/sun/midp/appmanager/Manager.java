@@ -185,12 +185,12 @@ public class Manager extends MIDlet implements ApplicationManager,
      * @param suiteId ID of the midlet suite
      * @param className class name of the midlet to run
      * @param displayName display name of the midlet to run
-     * @param isDebugMode true if the midlet must be started in debug mode,
-     *                    false otherwise
+     * @param debugMode 1 if the midlet must be started in debug mode,
+     *      2 for start in debug mode with initial suspend, 0 for non-debug mode
      */
     public void handleODDStartMidletEvent(int suiteId, String className,
                                           String displayName,
-                                          boolean isDebugMode) {
+                                          int debugMode) {
         /*
          * Not used in SVM: midlet is started directly instead of sending
          * a message to AMS.

@@ -98,10 +98,10 @@ class CommandState {
     /** The argument for a MIDlet in the suite, will be app property arg-2. */
     String arg2;
     /**
-     * true if the new midlet must be started in debug
-     * mode, false otherwise.
+     * 1 if the new midlet must be started in debug mode, 2 for debug mode with 
+     * initial suspend, 0 for non-debug mode.
      */
-    boolean isDebugMode;
+    int debugMode;
     /** Structure containing the run time information about the midlet. */
     RuntimeInfo runtimeInfo = new RuntimeInfo();
 
@@ -136,6 +136,6 @@ class CommandState {
             "\n  memory total: " + runtimeInfo.memoryTotal +
             "\n  priority:" + runtimeInfo.priority +
             "\n  profile name: " + runtimeInfo.profileName +
-            "\n  debug mode:" + isDebugMode;
+            "\n  debug mode:" + debugMode;
     }
 }

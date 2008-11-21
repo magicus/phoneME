@@ -109,10 +109,10 @@ public class MIDletSuiteUtils {
     static String profileName;
 
     /**
-     * true if the new midlet must be started in debug
-     * mode, false otherwise.
+     * 1 if the new midlet must be started in debug mode, 
+     * 2 for debug mode with initial suspend, 0 for non-debug mode.
      */
-    static boolean isDebugMode;
+    static int debugMode;
 
     /**
      * Display an exception to the user.
@@ -153,7 +153,7 @@ public class MIDletSuiteUtils {
     public static boolean execute(
             int id, String midlet, String displayName) {
         return executeWithArgs(
-            id, midlet, displayName, null, null, null, false);
+            id, midlet, displayName, null, null, null, 0);
     }
 
     /**
@@ -169,8 +169,8 @@ public class MIDletSuiteUtils {
      * @param id ID of an installed suite
      * @param midlet class name of MIDlet to invoke
      * @param displayName name to display to the user
-     * @param isDebugMode true if the new midlet must be started in debug
-     *                    mode, false otherwise
+     * @param debugMode 1 if the new midlet must be started in debug mode, 
+     *      2 for debug mode with initial suspend, 0 for non-debug mode
      *
      * @return true if the MIDlet suite MUST first exit before the
      * MIDlet is run
@@ -179,9 +179,9 @@ public class MIDletSuiteUtils {
      *   to manage midlets
      */
     public static boolean execute(
-            int id, String midlet, String displayName, boolean isDebugMode) {
+            int id, String midlet, String displayName, int debugMode) {
         return executeWithArgs(
-            id, midlet, displayName, null, null, null, isDebugMode);
+            id, midlet, displayName, null, null, null, debugMode);
     }
 
     /**
@@ -212,7 +212,7 @@ public class MIDletSuiteUtils {
 
         return executeWithArgs(
             securityToken, suiteId, midlet,
-            displayName, null, null, null, false);
+            displayName, null, null, null, 0);
     }
 
     /**
@@ -230,8 +230,8 @@ public class MIDletSuiteUtils {
      * @param suiteId ID of an installed suite
      * @param midlet class name of MIDlet to invoke
      * @param displayName name to display to the user
-     * @param isDebugMode true if the new midlet must be started in debug
-     *                    mode, false otherwise
+     * @param debugMode 1 if the new midlet must be started in debug mode, 
+     *      2 for debug mode with initial suspend, 0 for non-debug mode
      *
      * @return true if the MIDlet suite MUST first exit before the
      * MIDlet is run
@@ -241,11 +241,11 @@ public class MIDletSuiteUtils {
      */
     public static boolean execute(
             SecurityToken securityToken, int suiteId,
-            String midlet, String displayName, boolean isDebugMode) {
+            String midlet, String displayName, int debugMode) {
 
         return executeWithArgs(
             securityToken, suiteId, midlet,
-            displayName, null, null, null, isDebugMode);
+            displayName, null, null, null, debugMode);
     }
 
     /**
@@ -279,7 +279,7 @@ public class MIDletSuiteUtils {
             String arg0, String arg1, String arg2) {
 
         return executeWithArgs(
-            null, suiteId, midlet, displayName, arg0, arg1, arg2, false);
+            null, suiteId, midlet, displayName, arg0, arg1, arg2, 0);
     }
 
     /**
@@ -301,8 +301,8 @@ public class MIDletSuiteUtils {
      *             MIDlet as application property arg-1
      * @param arg2 if not null, this parameter will be available to the
      *             MIDlet as application property arg-2
-     * @param isDebugMode true if the new midlet must be started in debug
-     *                    mode, false otherwise
+     * @param debugMode 1 if the new midlet must be started in debug mode, 
+     *      2 for debug mode with initial suspend, 0 for non-debug mode
      *
      * @return true if the MIDlet suite MUST first exit before the
      * MIDlet is run
@@ -312,10 +312,10 @@ public class MIDletSuiteUtils {
      */
     public static boolean executeWithArgs(
             int suiteId, String midlet, String displayName,
-            String arg0, String arg1, String arg2, boolean isDebugMode) {
+            String arg0, String arg1, String arg2, int debugMode) {
 
         return executeWithArgs(
-            null, suiteId, midlet, displayName, arg0, arg1, arg2, isDebugMode);
+            null, suiteId, midlet, displayName, arg0, arg1, arg2, debugMode);
     }
 
     /**
@@ -351,7 +351,7 @@ public class MIDletSuiteUtils {
 
         return executeWithArgs(
             securityToken, 0, suiteId, midlet,
-            displayName, arg0, arg1, arg2, false);
+            displayName, arg0, arg1, arg2, 0);
     }
 
     /**
@@ -374,8 +374,8 @@ public class MIDletSuiteUtils {
      *             MIDlet as application property arg-1
      * @param arg2 if not null, this parameter will be available to the
      *             MIDlet as application property arg-2
-     * @param isDebugMode true if the new midlet must be started in debug
-     *                    mode, false otherwise
+     * @param debugMode 1 if the new midlet must be started in debug mode, 
+     *      2 for debug mode with initial suspend, 0 for non-debug mode
      *
      * @return true if the MIDlet suite MUST first exit before the
      * MIDlet is run
@@ -386,11 +386,11 @@ public class MIDletSuiteUtils {
     public static boolean executeWithArgs(
             SecurityToken securityToken, int suiteId, String midlet,
             String displayName, String arg0, String arg1, String arg2,
-            boolean isDebugMode) {
+            int debugMode) {
 
         return executeWithArgs(
             securityToken, 0, suiteId, midlet,
-            displayName, arg0, arg1, arg2, isDebugMode);
+            displayName, arg0, arg1, arg2, debugMode);
     }
 
     /**
@@ -415,8 +415,8 @@ public class MIDletSuiteUtils {
      *             MIDlet as application property arg-1
      * @param arg2 if not null, this parameter will be available to the
      *             MIDlet as application property arg-2
-     * @param isDebugMode true if the new midlet must be started in debug
-     *                    mode, false otherwise
+     * @param debugMode 1 if the new midlet must be started in debug mode, 
+     *      2 for debug mode with initial suspend, 0 for non-debug mode
      *
      * @return true if the MIDlet suite MUST first exit before the
      * MIDlet is run
@@ -428,11 +428,11 @@ public class MIDletSuiteUtils {
             SecurityToken securityToken, int externalAppId,
             int suiteId, String midlet, String displayName,
             String arg0, String arg1, String arg2,
-            boolean isDebugMode) {
+            int debugMode) {
 
         return executeWithArgs(
             securityToken, externalAppId, suiteId, midlet, displayName,
-            arg0, arg1, arg2, -1, -1, -1, null, isDebugMode);
+            arg0, arg1, arg2, -1, -1, -1, null, debugMode);
     }
 
     /**
@@ -465,8 +465,8 @@ public class MIDletSuiteUtils {
      *                 &lt;= 0 if not used
      * @param profileName name of the profile to set for the new isolate;
      *                    null if not used
-     * @param isDebugMode true if the new midlet must be started in debug
-     *                    mode, false otherwise
+     * @param debugMode 1 if the new midlet must be started in debug mode, 
+     *      2 for debug mode with initial suspend, 0 for non-debug mode
      *
      * @return true if the MIDlet suite MUST first exit before the
      * MIDlet is run
@@ -480,7 +480,7 @@ public class MIDletSuiteUtils {
             String arg0, String arg1, String arg2,
             int memoryReserved, int memoryTotal, int priority,
             String profileName,
-            boolean isDebugMode) {
+            int debugMode) {
 
         MIDletSuiteStorage midletSuiteStorage;
 
@@ -495,7 +495,7 @@ public class MIDletSuiteUtils {
         return AmsUtil.executeWithArgs(
             midletSuiteStorage, externalAppId, suiteId,
             midlet, displayName, arg0, arg1, arg2,
-            memoryReserved, memoryTotal, priority, profileName, isDebugMode);
+            memoryReserved, memoryTotal, priority, profileName, debugMode);
     }
 
     /**

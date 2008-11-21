@@ -178,12 +178,12 @@ public class MVMManager extends MIDlet
      * @param suiteId ID of the midlet suite
      * @param className class name of the midlet to run
      * @param displayName display name of the midlet to run
-     * @param isDebugMode true if the midlet must be started in debug mode,
-     *                    false otherwise
+     * @param debugMode 1 if the new midlet must be started in debug mode, 
+     *      2 for debug mode with initial suspend, 0 for non-debug mode
      */
     public void handleODDStartMidletEvent(int suiteId, String className,
                                           String displayName,
-                                          boolean isDebugMode) {
+                                          int debugMode) {
         /* For the case of showing MIDlet selector, we need AMS to have
          * foreground. */
         MIDletProxy thisMidlet = midletProxyList.findMIDletProxy(
@@ -194,12 +194,12 @@ public class MVMManager extends MIDlet
             /* IMPL NOTE: this forces only one running MIDlet in debug mode - 
              * the VM currently does not support more MIDlets in debug mode 
              * at the same time. */
-            isDebugMode = false;
+            debugMode = 0;
         }
 
         try {
-            appManager.launchSuite(suiteId, className, isDebugMode, true);
-            if (isDebugMode) {
+            appManager.launchSuite(suiteId, className, debugMode, true);
+            if (debugMode != 0) {
                 suiteUnderDebugId = suiteId;
             }
         } catch (Exception ex) {
@@ -554,7 +554,7 @@ public class MVMManager extends MIDlet
             // Create an instance of the MIDlet class
             // All other initialization happens in MIDlet constructor
             MIDletSuiteUtils.execute(suiteInfo.suiteId, midletToRun, null, 
-                    suiteInfo.isDebugMode);
+                    suiteInfo.debugMode);
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
         }

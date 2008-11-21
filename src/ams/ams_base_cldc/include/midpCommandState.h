@@ -88,8 +88,9 @@ typedef struct _MIDPCommandState {
     pcsl_string profileName;
     /** Memory quotas to set before starting the VM. */
     MidletRuntimeInfo runtimeInfo;
-    /** true if the new midlet must be started in debug mode, false otherwise */
-    jboolean isDebugMode;
+    /** 1 if the new midlet must be started in debug mode, 
+     * 2 for debug mode with initial suspend, 0 for non-debug mode */
+    int debugMode;
 } MIDPCommandState;
 
 /**
