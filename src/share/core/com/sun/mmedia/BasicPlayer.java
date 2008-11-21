@@ -529,6 +529,12 @@ public abstract class BasicPlayer
             prefetch();
         }
 
+        if (isDevicePlayer() && !hasToneSequenceSet) {
+            sendEvent(PlayerListener.STARTED, new Long(0));
+            sendEvent( PlayerListener.END_OF_MEDIA, new Long(0) );
+            return;
+        }
+
         // Update the time base to use the player's
         // media time before starting.
         updateTimeBase(true);
@@ -564,10 +570,6 @@ public abstract class BasicPlayer
         // generate events before the STARTED event is delivered
         doPostStart();
 
-        if (isDevicePlayer() && !hasToneSequenceSet) {
-            sendEvent(PlayerListener.END_OF_MEDIA, new Long(getMediaTime()));
-                stop();
-        }
     }
 
 
