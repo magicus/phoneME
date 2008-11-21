@@ -70,7 +70,6 @@ ReturnOop IsolateObj::duplicate(JVM_SINGLE_ARG_TRAPS) const {
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   dup().set_profile_id( profile_id() );
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
-  dup().set_connect_debugger( connect_debugger() );
   dup().set_suspend_debugging( suspend_debugging() );
 
   OopDesc* p;
