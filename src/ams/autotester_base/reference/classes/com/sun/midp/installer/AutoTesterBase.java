@@ -290,7 +290,7 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
      * @param title exception form's title
      * @param message exception message
      */
-    private void displayError(String title, String message) {
+    protected void displayError(String title, String message) {
         Alert a = new Alert(title, message, null, AlertType.ERROR);
 
         // This application must log always.

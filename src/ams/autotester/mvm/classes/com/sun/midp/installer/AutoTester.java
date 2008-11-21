@@ -91,6 +91,7 @@ public final class AutoTester extends AutoTesterBase {
         }
     }
 
+
     /** Run the installer. */
     public void run() {
         try {

@@ -83,9 +83,10 @@ abstract class AutoTesterHelperBase {
     }
 
     abstract void installAndPerformTests() 
-        throws IOException, MIDletSuiteLockedException;
+        throws Exception;
 
-    abstract boolean restoreSession();
+    abstract boolean restoreSession() 
+        throws Exception;
 
     /**
      * Returns the class name of the first MIDlet of the newly installed

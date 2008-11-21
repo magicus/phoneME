@@ -47,4 +47,5 @@ MIDP_JAVADOC_SOURCEPATH += $(AUTOTESTER_SVM_DIR)/classes
 # Java files for the library
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AUTOTESTER_SVM_DIR)/classes/com/sun/midp/installer/AutoTester.java
+    $(AUTOTESTER_SVM_DIR)/classes/com/sun/midp/installer/AutoTester.java \
+    $(AUTOTESTER_SVM_DIR)/classes/com/sun/midp/installer/AutoTesterHelper.java
