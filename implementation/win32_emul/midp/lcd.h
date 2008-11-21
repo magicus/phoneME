@@ -25,6 +25,13 @@
 #ifndef _LCD_H_
 #define _LCD_H_
 
+
+#define WM_DEBUGGER      (WM_USER)
+#define WM_HOST_RESOLVED (WM_USER + 1)
+#define WM_NETWORK       (WM_USER + 2)
+
+extern HWND midpGetWindowHandle();
+
 /*
  * Translates screen coordinates into displayable coordinate system.
  */
