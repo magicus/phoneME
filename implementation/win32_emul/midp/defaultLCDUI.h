@@ -184,6 +184,7 @@ typedef enum {
     VK_SELECT_APP       = 5,
     VK_KILL_CURRENT     = 6,
     VK_CHANGE_LOCALE    = 7,
+    VK_CLAMSHELL        = 8,
 
     KEY_USER1    = -32,
     KEY_USER2    = -33,

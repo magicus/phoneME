@@ -22,6 +22,7 @@
  * information or have any questions.
  */
 
+#include <stdio.h>
 #include "javacall_lcd.h" 
 #include "javacall_logging.h" 
 #include "lime.h"
@@ -86,7 +87,7 @@ javacall_result javacall_lcd_init(void) {
     isLCDActive = JAVACALL_TRUE;
     inFullScreenMode = JAVACALL_FALSE;
     top_down = JAVACALL_FALSE;
-    clamshell_opened = JAVACALL_FALSE;
+    clamshell_opened = JAVACALL_TRUE;
 
 	f = NewLimeFunction(LIME_PACKAGE,
 						LIME_GRAPHICS_CLASS,
@@ -480,18 +481,19 @@ javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
  * Handle clamshell event
  */
 void javacall_lcd_handle_clamshell() {
-    if (clamshell_opened == JAVACALL_TRUE) {
+fprintf(stderr, "KRIS: javacall_lcd_handle_clamshell\n");
+    if (clamshell_opened == JAVACALL_FALSE) {
         VRAM.width = MAIN_DISPLAY_SIZE.width;
         VRAM.height = MAIN_DISPLAY_SIZE.height;
         VRAM.full_height = MAIN_DISPLAY_SIZE.full_height;
         currDisplayId = MAIN_DISPLAY_ID;
-        clamshell_opened = JAVACALL_FALSE;
+        clamshell_opened = JAVACALL_TRUE;
     } else {
         VRAM.width = EXTE_DISPLAY_SIZE.width;
         VRAM.height = EXTE_DISPLAY_SIZE.height;
         VRAM.full_height = EXTE_DISPLAY_SIZE.full_height;
         currDisplayId = EXTE_DISPLAY_ID;
-        clamshell_opened = JAVACALL_TRUE;
+        clamshell_opened = JAVACALL_FALSE;
     }
 }
 
