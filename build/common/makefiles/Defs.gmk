@@ -319,6 +319,7 @@ ifeq ($(USE_CLDC_11), true)
     JPP_DEFS	 += -DENABLE_CLDC_11
 else
     EXTRA_CFLAGS += -DENABLE_CLDC_11=0
+    JPP_DEFS	 += -DENABLE_CLDC_10
 endif
 
 ifeq ($(USE_VM_PROFILES), true)
