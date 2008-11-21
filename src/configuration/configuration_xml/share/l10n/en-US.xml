@@ -441,6 +441,12 @@
                 Value="On Device Debug is a potentially dangerous feature that may compromise the security of the system. Do you really want to enable it?"/>
 <localized_string Key="AMS_MGR_SUCC_SUITE_STORAGE_CHANGED"
                 Value=" was successfully moved to phone memory"/>
+<localized_string Key="AMS_MGR_SUITE_DB_ALERT_TITLE"
+                Value="Application Manager"/>
+<localized_string Key="AMS_MGR_SUITE_DB_FATAL_ERROR"
+                Value="The suite database cannot be loaded. Try to quit some other application and then start Java again."/>
+<localized_string Key="AMS_MGR_SUITE_DB_REPAIRED"
+                Value="The suite database was corrupted and has been repaired, some suites may be lost and need to be reinstalled."/>
 <localized_string Key="AMS_DISC_APP_WEBSITE_INSTALL"
                 Value="Enter a website to Install From:"/>
 <localized_string Key="AMS_DISC_APP_SELECT_INSTALL"

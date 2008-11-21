@@ -204,8 +204,43 @@ class AppManagerPeer implements CommandListener {
         RunningMIDletSuiteInfo currentItem = null;
 
         if (first) {
-            appManagerUI = new AppManagerUIImpl(manager, this, display, displayError, foldersOn);
- 
+            appManagerUI = new AppManagerUIImpl(manager, this, display,
+                                                displayError, foldersOn);
+
+            // ensure that the suite database is not corrupted 
+            int status = midletSuiteStorage.checkSuitesIntegrity(false, true);
+            if (status == 1) {
+                /*
+                 * The suite database was corrupted and has been repaired,
+                 * some suites may be lost. Inform the user about it.
+                 */
+                final String alertTitle = Resource.getString(
+                        ResourceConstants.AMS_MGR_SUITE_DB_ALERT_TITLE);
+                final String errMsg = Resource.getString(
+                        ResourceConstants.AMS_MGR_SUITE_DB_REPAIRED);
+
+                Alert a = new Alert(alertTitle, errMsg,
+                                    null, AlertType.WARNING);
+                a.setTimeout(Alert.FOREVER);
+                display.setCurrent(a);
+            } else if (status < 0) {
+                /*
+                 * An unrecoverable error has happened,
+                 * display the error message.
+                 */
+                final String alertTitle = Resource.getString(
+                        ResourceConstants.EXIT);
+                final String errMsg = Resource.getString(
+                        ResourceConstants.AMS_MGR_SUITE_DB_FATAL_ERROR);
+
+                Alert a = new Alert(alertTitle, errMsg,
+                                    null, AlertType.ERROR);
+                a.setTimeout(Alert.FOREVER);
+                display.setCurrent(a);
+
+                throw new RuntimeException(errMsg);
+            }
+
             // cleanup the storage from the previous execution
             midletSuiteStorage.removeTemporarySuites();
        } else {
@@ -222,7 +257,8 @@ class AppManagerPeer implements CommandListener {
                                 FolderManager.getDefaultFolderId());
                         msi.folderId = FolderManager.getDefaultFolderId();
                     } catch (Throwable t) {
-                        displayError.showErrorAlert(msi.displayName, t, null, null);
+                        displayError.showErrorAlert(msi.displayName, t,
+                                                    null, null);
                     }
                 }
                 appManagerUI = new AppManagerUIImpl(manager, this, display,
