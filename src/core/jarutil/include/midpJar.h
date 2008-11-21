@@ -87,8 +87,8 @@ long midpGetJarSize(void* handle);
  * @param name name of the entry to get
  * @param ppEntry where to put the entry, free data with midpFree
  *
- * @return size of data if found, 0 and ppEntry null if not found
- * than zero if an error
+ * @return size of data if found, 0 and ppEntry null if not found,
+ *         less than zero and ppEntry null if an error
  */
 long midpGetJarEntry(void* handle, const pcsl_string * name,
                      unsigned char** ppEntry);

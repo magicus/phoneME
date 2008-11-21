@@ -132,13 +132,16 @@ static jboolean png_filter(const pcsl_string * entry) {
  */
 static jboolean png_cache_action(const pcsl_string * entry) {
     unsigned char *pngBufPtr = NULL;
-    unsigned int pngBufLen = 0;
+    int pngBufLen = 0;
     unsigned char *nativeBufPtr = NULL;
     unsigned int nativeBufLen = 0;
     jboolean status = KNI_FALSE;
 
     do {
         pngBufLen = midpGetJarEntry(handle, entry, &pngBufPtr);
+        if (pngBufLen < 0) {
+            break;
+	}
 
         if (img_decode_data2cache(pngBufPtr, pngBufLen,
                 &nativeBufPtr, &nativeBufLen) != MIDP_ERROR_NONE) {
@@ -151,12 +154,13 @@ static jboolean png_cache_action(const pcsl_string * entry) {
         }
 
         /* write native buffer to persistent store */
+        /* status = KNI_TRUE on success */
         status = storeImageToCache(globalSuiteId, globalStorageId, entry,
                                    nativeBufPtr, nativeBufLen);
 
     } while (0);
 
-    if (status == 1) {
+    if (status != KNI_FALSE) {
         remainingSpace -= nativeBufLen;
         cachedDataSize += nativeBufLen;
     }
@@ -168,6 +172,7 @@ static jboolean png_cache_action(const pcsl_string * entry) {
         midpFree(pngBufPtr);
     }
 
+    /* IMPL_NOTE: our policy is to stop caching on the first error */
     return status;
 }
 
@@ -176,7 +181,7 @@ static jboolean png_cache_action(const pcsl_string * entry) {
  *
  * @param  jarFileName   The name of the jar file
  * @param  filter        Pointer to filter function
- * @param  action        Pointer to action function
+ * @param  action        Pointer to action function (returns KNI_FALSE to stop iteration)
  * @return               1 if all was successful, <= 0 if some error
  */
 static int loadAndCacheJarFileEntries(const pcsl_string * jarFileName,
