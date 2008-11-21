@@ -981,8 +981,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         int traverseIndexCopy = -1;
         
         synchronized (Display.LCDUILock) {
-            keepFocusOnTheScreen = traverseIndex != -1 ?
-                itemPartiallyVisible(itemLFs[traverseIndex]) : false;
+            keepFocusOnTheScreen = (traverseIndex != -1);
             
             if (firstShown) {
                 super.layout(); // moved from LayoutManager
