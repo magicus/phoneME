@@ -3326,6 +3326,7 @@ void
 CVMclassFreeCompiledMethods(CVMExecEnv* ee, CVMClassBlock* cb)
 {
     int i;
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
     for (i = 0; i < CVMcbMethodCount(cb); i++) {
 	CVMMethodBlock* mb = CVMcbMethodSlot(cb, i);
 	if (CVMmbIsJava(mb)) {
@@ -3341,7 +3342,11 @@ CVMclassFreeCompiledMethods(CVMExecEnv* ee, CVMClassBlock* cb)
 		/* Now check for IsCompiled again just in case someone
 		   beat us to it */
 		if (CVMmbIsCompiled(mb)) {
-		    CVMJITdecompileMethod(ee, mb);
+                    CVMUint8* pc = CVMmbStartPC(mb);
+                    /* don't decompile if it is an AOT method */
+                    if (pc >= jgs->codeCacheStart && pc < jgs->codeCacheEnd) {
+                        CVMJITdecompileMethod(ee, mb);
+                    }
 		}
 		if (ee != NULL) {
 		    CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
