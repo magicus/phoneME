@@ -48,8 +48,10 @@ static struct {
 
 static javacall_bool inFullScreenMode;
 static javacall_bool isLCDActive = JAVACALL_FALSE;
-/* if display orientation is reversed */
-static javacall_bool reverse_orientation;
+/* If lcd display is rotated */
+static javacall_bool isLCDRotated = JAVACALL_FALSE;
+/* If emulator skin is rotated */
+static javacall_bool isPhoneRotated = JAVACALL_FALSE;
 /* if display content should be turned upside down */
 static javacall_bool top_down;
 
@@ -139,7 +141,7 @@ javacall_pixel* javacall_lcd_get_screen(int hardwareId,
 
     /* as status bar does not rotate client area rotates without distortion */
   (void)hardwareId;
-    if (reverse_orientation) {
+    if (isPhoneRotated) {
         int* temp = screenWidth;
         screenWidth = screenHeight;
         screenHeight = temp;
@@ -186,7 +188,7 @@ javacall_result javacall_lcd_flush(int hardwareId) {
         clip[3] = VRAM.full_height;
     }
 
-    if (reverse_orientation || top_down) {
+    if (isLCDRotated || top_down) {
         current_hdc = VRAM.hdc_rotated;
         rotate_offscreen_buffer(current_hdc,
                                 VRAM.hdc,
@@ -226,7 +228,7 @@ javacall_result javacall_lcd_flush(int hardwareId) {
 
 static void rotate_offscreen_buffer(javacall_pixel* dst, javacall_pixel *src, int src_width, int src_height) {
     int buffer_length = src_width*src_height;
-    if (reverse_orientation) {
+    if (isLCDRotated) {
         if (!top_down) {
             javacall_pixel *src_end = src + buffer_length;
             javacall_pixel *dst_end = dst + buffer_length;
@@ -408,10 +410,11 @@ void on_screen_rotated() {
       static LimeFunction *f = NULL;
       f = NewLimeFunction(LIME_PACKAGE, LIME_GRAPHICS_CLASS, "screenRotated");
       /* IMPL NOTE: call on the proper screen ID with multiple screen support */
-      f->call(f, NULL, 0 /*screen id*/, reverse_orientation, top_down);
+      f->call(f, NULL, 0 /*screen id*/, isPhoneRotated, top_down);
 }
 
-/* Rotates display according to code.
+/**
+ * Rotates display according to code.
  * If code is 0 no screen transformations made;
  * If code is 1 then screen orientation is reversed.
  * if code is 2 then screen is turned upside-down.
@@ -419,23 +422,21 @@ void on_screen_rotated() {
  * and screen is turned upside-down.
  */
 void RotateDisplay(short code) {
-    javacall_bool prev_top_down;
-    prev_top_down = top_down;
     top_down = code & 0x02;
-    if ((code & 0x01) != reverse_orientation) {
+    if ((code & 0x01) != isPhoneRotated) {
+        isPhoneRotated = !isPhoneRotated;
         javanotify_rotation(javacall_lcd_get_current_hardwareId());
-    } else if (prev_top_down != top_down) {
-        //we should initiate screen refresh
-        on_screen_rotated();
-        javacall_lcd_flush(javacall_lcd_get_current_hardwareId());                
     }
+    javacall_lcd_flush(javacall_lcd_get_current_hardwareId());
+    on_screen_rotated();
 }
-
+/**
+ * Called by the system when lcdui display changed its orientation.
+ */
 javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
       (void)hardwareId;
-      reverse_orientation = !reverse_orientation;
-      on_screen_rotated();
-      return reverse_orientation;
+      isLCDRotated = !isLCDRotated;
+      return isLCDRotated;
 }
 /**
  * Handle clamshell event
@@ -449,13 +450,13 @@ javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
  */
  
 javacall_bool javacall_lcd_get_reverse_orientation(int hardwareId) {
-  (void)hardwareId;
-     return reverse_orientation;
+    (void)hardwareId;
+     return isPhoneRotated;
 }
   
 int javacall_lcd_get_screen_height(int hardwareId) {
   (void)hardwareId;
-    if (reverse_orientation) {
+    if (isPhoneRotated) {
         return VRAM.width;
     } else {
         if(inFullScreenMode) {
@@ -468,7 +469,7 @@ int javacall_lcd_get_screen_height(int hardwareId) {
   
 int javacall_lcd_get_screen_width(int hardwareId) {
   (void)hardwareId;
-    if (reverse_orientation) {
+    if (isPhoneRotated) {
         if(inFullScreenMode) {
             return VRAM.full_height;
         } else {
@@ -509,7 +510,7 @@ void getScreenCoordinates(short screenX, short screenY, short* x, short* y) {
         }
     }
 
-    if (reverse_orientation) {
+    if (isPhoneRotated) {
         short prevX = *x;
         *x = *y;
         *y = VRAM.width - prevX;
