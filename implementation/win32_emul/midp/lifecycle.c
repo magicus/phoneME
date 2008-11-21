@@ -165,3 +165,37 @@ void javacall_lifecycle_state_changed(javacall_lifecycle_state state,
     }
 
 } /* javacall_lifecycle_state_changed */
+
+/**
+ * Inform on installation of a new Midlet.
+ *
+ * Java invokes this function when an installation of a new
+ * Midlet completes successfully.
+ * Allows the platform to create shortcuts for the installed Midlets which enables one click
+ * launch of a Midlet
+ *
+ * @param midletName     Midlet name string (as appears in the *.jad file)
+ * @param className       First Midlet class name (as appears in the *.jad file)
+ * @param suiteID            Midlet Suite ID
+ * @param midletIcon       Icon file name to use (It should be valid icon path or NULL)
+ */
+void javacall_lifecycle_install(
+    javacall_utf16 *midletName,
+    int midletNameLen,
+    javacall_utf16 *className,
+    int classNameLen,
+    int  suiteID,
+    javacall_utf16* midletIcon,
+    int midletIconLen
+){
+}
+
+/**
+ * Inform on uninstallation of a Midlet.
+ *
+ * @param suiteID            Midlet Suite ID
+ */
+void javacall_lifecycle_uninstall(int suiteID
+){
+}
+

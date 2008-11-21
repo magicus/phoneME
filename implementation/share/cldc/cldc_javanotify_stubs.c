@@ -111,6 +111,7 @@ void javanotify_list_midlets(void) {}
 void javanotify_start_suite(char* suiteId) {}
 void javanotify_install_midlet_wparams(const char* httpUrl,
                                        int silentInstall, int forceUpdate) {}
+void javanotify_update_midlet_wparams(char* suite_id, int forceUpdate) {}
 void javanotify_start_local(char* classname, char* descriptor,
                             char* classpath, javacall_bool debug) {}
 void javanotify_set_vm_args(int argc, char* argv[]) {}
