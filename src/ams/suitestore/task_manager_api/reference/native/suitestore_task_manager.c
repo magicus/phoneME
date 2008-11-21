@@ -777,11 +777,11 @@ midp_get_suite_storage_size(SuiteIdType suiteId) {
             return OUT_OF_MEM_LEN;
         }
 
-        build_suite_filename(suiteId, &INSTALL_INFO_FILENAME, &filename[0]);
+        status = build_suite_filename(suiteId, &INSTALL_INFO_FILENAME, &filename[0]);
         if (status != ALL_OK) {
             return status;
         }
-        build_suite_filename(suiteId, &SETTINGS_FILENAME, &filename[1]);
+        status = build_suite_filename(suiteId, &SETTINGS_FILENAME, &filename[1]);
         if (status != ALL_OK) {
             return status;
         }
