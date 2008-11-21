@@ -312,6 +312,8 @@
                 Value="This suite contains"/>
 <localized_string Key="AMS_MGR_SUITE_RECORD_STORES"
                 Value="The following record stores will be removed"/>
+<localized_string Key="AMS_MGR_SUITE_PRIVATE_DATA"
+                Value="All data in the private work directory of the suite will be removed."/>
 <localized_string Key="AMS_MGR_REM_REINSTALL"
                 Value="Once removed, %1 will have to be reinstalled."/>
 <localized_string Key="AMS_MGR_INTRUPT"
