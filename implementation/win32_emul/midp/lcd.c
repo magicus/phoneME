@@ -429,7 +429,9 @@ void RotateDisplay(short code) {
     javacall_lcd_flush(javacall_lcd_get_current_hardwareId());
     on_screen_rotated();
 }
-
+/**
+ * Called by the system when lcdui display changed its orientation.
+ */
 javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
       (void)hardwareId;
       isLCDRotated = !isLCDRotated;
