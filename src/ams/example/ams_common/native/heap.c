@@ -26,6 +26,50 @@
 
 #include <midp_constants_data.h>
 #include <midp_properties_port.h>
+#include <midp_logging.h>
+
+#if ENABLE_MULTIPLE_ISOLATES
+/**
+ * Reads AMS_MEMORY_RESERVED_MVM property and returns the amount of Java
+ * heap memory reserved for AMS isolate. Whether the property is not found,
+ * the same name hardcoded constant is used instead.
+ *
+ * @return total heap size in bytes available for AMS isolate,
+ *    or -1 if unlimitted
+ */
+int getAmsHeapReserved() {
+    int reserved;
+    reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
+    if (0 == reserved) {
+        REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");
+        reserved = AMS_MEMORY_RESERVED_MVM;
+    }
+    reserved = reserved * 1024;
+    return reserved;
+}
+
+/**
+ * Reads AMS_MEMORY_LIMIT_MVM property and returns the maximal Java heap size
+ * avilable for AMS isolate. Whether the property is not found, the same name
+ * hardcoded constant is used instead.
+ *
+ * @return total heap size available for AMS isolate
+ */
+int getAmsHeapLimit() {
+    int limit;
+    limit = getInternalPropertyInt("AMS_MEMORY_LIMIT_MVM");
+    if (0 == limit) {
+        REPORT_ERROR(LC_AMS, "AMS_MEMORY_LIMIT_MVM property not set");
+        limit = AMS_MEMORY_LIMIT_MVM;
+    }
+    if (limit <= 0) {
+        limit = 0x7FFFFFFF;  /* MAX_INT */
+    } else {
+        limit = limit * 1024;
+    }
+    return limit;
+}
+#endif
 
 /**
  * Reads JAVA_HEAP_SIZE property and returns it as required heap size.

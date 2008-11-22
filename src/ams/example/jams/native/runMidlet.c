@@ -93,7 +93,7 @@ runMidlet(int argc, char** commandlineArgs) {
     int numberOfSuites = 0;
     int ordinalSuiteNumber = -1;
     char* chSuiteNum = NULL;
-    int midp_heap_requirement;
+    int midpHeapRequirement;
     MIDPError errCode;
     char** ppParamsFromPlatform;
     char** ppSavedParams = NULL;
@@ -101,12 +101,19 @@ runMidlet(int argc, char** commandlineArgs) {
 
     JVM_Initialize(); /* It's OK to call this more than once */
 
-    midp_heap_requirement = getHeapRequirement();
+    /* Set Java heap capacity now so it can been overridden from command line */
+    midpHeapRequirement = getHeapRequirement();
+    JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midpHeapRequirement);
 
-    /*
-     * Set Java heap capacity now so it can been overridden from command line.
-     */
-    JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
+#if ENABLE_MULTIPLE_ISOLATES
+{
+    /* Set Java heap limits for AMS now so it can been overridden from command line */
+    int amsHeapReserved = getAmsHeapReserved();
+    int amsHeapLimit = getAmsHeapLimit();
+    JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY, amsHeapReserved);
+    JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_TOTAL_MEMORY, amsHeapLimit);
+}
+#endif
 
     /*
      * Check if there are some parameters passed to us from the platform
