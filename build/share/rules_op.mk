@@ -160,10 +160,44 @@ $(JSR_CDCRESTRICTED_CLASSLIST): $(JSROP_JARS)
 # class' public members.
 #
 API_EXTENSIONS_CLASSLIST = $(subst $(space),$(comma),$(API_EXTENSIONS_LIST))
+
+define genMIDPPermittedJSRClasses
+    $(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
+        -listapi:include=java/*,include=javax/*,include=javacard/*,include=org/xml/sax/*,include=org/w3c/dom/*,$(API_EXTENSIONS_CLASSLIST),input=$(1),cout=$(2)
+endef
+
+ifeq ($(CVM_PRELOAD_LIB), true)
+#
+# FOR CVM_PRELOAD_LIB=true build, generate JSR_MIDPPERMITTED_CLASSLIST.
+# The list will be appended to the main CVM_MIDPCLASSLIST.
+#
 $(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS) $(JSROP_EXTRA_JARS)
 	@echo "Generating MIDP permitted JSR class list ...";
-	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
-	    -listapi:include=java/*,include=javax/*,include=javacard/*,include=org/xml/sax/*,include=org/w3c/dom/*,$(API_EXTENSIONS_CLASSLIST),input=$(JSROP_JARS_LIST),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
+	$(call genMIDPPermittedJSRClasses,$(JSROP_JARS_LIST),$(JSR_MIDPPERMITTED_CLASSLIST))
+else
+#
+# For non-ROMized build:
+# For each jar file in the JSROP_JARS_LIST, generate the
+# CVM_MIDPCLASSLIST and add that to the jar file. So each JSR jar
+# file contains its own CVM_MIDPCLASSLIST. The API hiding 
+# layer lookes into individual jar file in the bootclasspath for 
+# its CVM_MIDPCLASSLIST besides the main CVM_MIDPCLASSLIST in
+# the lib/ directory. This is mainly for supporting downloaded
+# JSRs.
+#
+define addMIDPPermittedJSRClassList
+    $(call genMIDPPermittedJSRClasses,$(1),$(CVM_MIDPCLASSLISTNAME))
+    $(AT)$(CVM_JAR) -uf $(1) $(CVM_MIDPCLASSLISTNAME)
+    $(AT)rm -rf $(CVM_MIDPCLASSLISTNAME);
+endef
+
+$(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS) $(JSROP_EXTRA_JARS)
+	@echo "Updating JSR jar files with MIDP permitted JSR class list...";
+	$(AT)rm -rf $@
+	$(foreach jarfile, $^, \
+            $(call addMIDPPermittedJSRClassList,$(jarfile)))
+	$(AT)touch $@
+endif
 endif
 
 clean::
