@@ -44,8 +44,6 @@ import com.sun.midp.payment.PAPICleanUp;
 
 import com.sun.midp.midlet.MIDletSuite;
 
-import com.sun.midp.jsr075.FileConnectionCleanup;
-
 import java.util.*;
 
 /**
@@ -1347,7 +1345,7 @@ class AppManagerUIImpl extends Form
             confirmForm.append(item);
 
             extraConfirmMsg =
-                PAPICleanUp.checkMissedTransactions(suiteInfo.suiteId);
+                PAPICleanUp.checkMissedTransactions(midletSuite.getID());
             if (extraConfirmMsg != null) {
                 temp.setLength(0);
                 temp.append(" \n");
@@ -1390,23 +1388,6 @@ class AppManagerUIImpl extends Form
                 confirmForm.append(item);
                 appendRecordStoresToForm(recordStores, confirmForm);
             }
-
-            // IMPL_NOTE: uncomment this code once 
-            // FileConnectionCleanupImpl.suiteHasPrivateData has sensible
-            // (not stubbed) implementation.
-            /*
-            boolean privateDataExists =
-                Installer.FileConnectionHasPrivateData(suiteInfo.suiteId);
-            if (privateDataExists) {
-                temp.setLength(0);
-                temp.append(" \n");
-                temp.append(Resource.getString
-                            (ResourceConstants.AMS_MGR_SUITE_PRIVATE_DATA));
-                item = new StringItem(null, temp.toString());
-                item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
-                confirmForm.append(item);
-            }
-            */
 
             temp.setLength(0);
             temp.append(" \n");

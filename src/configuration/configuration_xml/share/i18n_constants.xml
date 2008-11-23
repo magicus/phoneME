@@ -460,9 +460,6 @@
             Name="AMS_MGR_SUITE_RECORD_STORES"
             Comment="AMS: com.sun.midp.appmanager.Manager"/>
   <constant Type="int"
-            Name="AMS_MGR_SUITE_PRIVATE_DATA"
-            Comment="AMS: com.sun.midp.appmanager.Manager"/>
-  <constant Type="int"
             Name="AMS_MGR_REM_REINSTALL"
             Comment="AMS: com.sun.midp.appmanager.Manager"/>
   <constant Type="int"
