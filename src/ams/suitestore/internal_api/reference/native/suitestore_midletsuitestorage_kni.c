@@ -40,7 +40,6 @@
 #include <suitestore_task_manager.h>
 #include <suitestore_rms.h>
 #include <suitestore_kni_util.h>
-#include "javacall_lifecycle.h"
 
 #if ENABLE_ICON_CACHE
 #include <suitestore_icon_cache.h>
@@ -55,6 +54,8 @@
 #error Contradictory build settings: ENABLE_MONET=true and VERIFY_ONCE=true.
 #endif /* VERIFY_ONCE */
 #endif /* ENABLE_MONET */
+
+#include "platform_install_notifier.h"
 
 /* ---------------------- IMPL_NOTE: remove midpport_... ---------------------- */
 
@@ -1140,9 +1141,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_remove0) {
     }
 
     if (ALL_OK == status) {
-        javacall_lifecycle_uninstall(
-            suiteId
-        );
+        native_lifecycle_uninstall_notify(suiteId);
     }
 
     KNI_ReturnVoid();
@@ -1612,7 +1611,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
     if (status == ALL_OK) {
         int suiteID = (int) suiteData.suiteId;
         
-        javacall_lifecycle_install(
+        platform_install_notify(
             suiteData.varSuiteData.displayName.data, // Display name
             suiteData.varSuiteData.displayName.length, 
             suiteData.varSuiteData.midletClassName.data, // Main class name
