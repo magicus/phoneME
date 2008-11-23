@@ -300,10 +300,6 @@ public final class Permissions {
      *     for each permission supported
      */
     public static byte[][] forDomain(String name) {
-        if (domainsAll == null) {
-            init();
-        }
-                
         byte[] maximums = new byte[NUMBER_OF_PERMISSIONS];
         byte[] defaults = new byte[NUMBER_OF_PERMISSIONS];
         byte[][] permissions = {maximums, defaults};
@@ -316,6 +312,10 @@ public final class Permissions {
             return permissions;
         }
 
+        if (domainsAll == null) {
+            init();
+        }
+                
         for (int i1 = 0; i1 < domainsAll.length; i1++) {
             if (domainsAll[i1].getName().equals(name)) {
                 domainsAll[i1].getPermissionlevels(defaults, CUR_LEVELS);
@@ -925,12 +925,10 @@ public final class Permissions {
                 values);
     }
 
-    private static void init() {
+    static {
         try {
-            // initialization process
-            // step 1: permissions list and hashtable
-            int i1, i2;
-            String [] list;
+            // init permissions list and hashtable
+            int i1;
 
             /*
              * IMPL_NOTE:
@@ -961,8 +959,17 @@ public final class Permissions {
                 permissionSpecs[i1] = new PermissionSpec(permList[i1 - 2],
                                                          NEVER_GROUP);
             }
+        } catch (Throwable e) {
+            // e.printStackTrace();
+            System.out.println("Permissions init0() error: " + e.toString());
+        }
+    }
 
-            // step 2: groups list
+    private static void init() {
+	try {
+            String [] list;
+	    int i1, i2;
+            // step 1: groups list
             list = loadGroupList();
             if (list == null) {
                 throw new IOException("Policy file not found");
@@ -1022,7 +1029,7 @@ public final class Permissions {
                 }
             }
 
-            // step 3: group's permissions members
+            // step 2: group's permissions members
             String [] members;
             for (i1 = 0; i1 < groupsAll.length; i1++) {
                 String groupNativeName = groupsAll[i1].getNativeName();
@@ -1068,7 +1075,7 @@ public final class Permissions {
                 }
             }
                         
-            // step 4: Domains list
+            // step 3: Domains list
             list = loadDomainList();
             DomainPolicy[] domains = new DomainPolicy[list.length + 1];
             // internal 'manufacturer' domain always exists
