@@ -26,6 +26,7 @@
 
 package com.sun.midp.appmanager;
 
+import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Display;
 
 interface AppSettingsUI {
@@ -62,4 +63,11 @@ interface AppSettingsUI {
      * @param  valueID id of selected value
      */
     void changeSettingValue(int settingID, int valueID);
+
+    /**
+     * Returns the main displayable of the AppSettingsUI.
+     * @return main screen
+     */
+    Displayable getMainDisplayable();
+
 }
