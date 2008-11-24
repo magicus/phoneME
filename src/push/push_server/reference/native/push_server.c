@@ -1254,20 +1254,19 @@ static void pushcleanupentry(PushEntry *p) {
 
 /**
  * Checks if SIP header is chached into buffer. End-of-data
- * marker is duoble CRLF
+ * marker is double CRLF
  * 
  * @param buffer    buffer to check
- * @param len       a lenght of the buffer
+ * @param len       a length of the buffer
  * 
- * @return TRUE if SIP header if present at the buffer
- *         wholly, FALSE otherwise
+ * @return KNI_TRUE if SIP header is present at the buffer
+ *         wholly, KNI_FALSE otherwise
  */
 static jboolean checkForEndOfHeader(char* buffer, int len) {
-    char tmp = '\r';
     while (len--) {
-        // can't just read unsigned double word because some platform has 
-        // address alignment
-        if ('\r' == *buffer && len > 3) {
+        /* can't just read unsigned double word because some platform has 
+           address alignment */
+        if ('\r' == *buffer && len > 2) {
             if ('\n' == buffer[1] && '\r' == buffer[2] && '\n' == buffer[3]) {
                 return KNI_TRUE;
 
@@ -1430,8 +1429,8 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
                                         &context);
 
         if (status == PCSL_NET_WOULDBLOCK) {
-            // do nothing
-            // the case will  be procedded below
+            /* do nothing
+             the case will  be proceeded below */
         } else if (status != PCSL_NET_SUCCESS) {
             /*
              * Receive failed - no data available.
@@ -1443,21 +1442,18 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
             pushcheckinentry(pushp);
             return NULL;
         }
-        printf("Checking for end of header1\n");
         if (checkForEndOfHeader(pushp->pCachedData->buffer, 
                                 MAX_CACHED_DATA_SIZE)){
-            printf("Got whole header, verifiung\n");
             pushp->fdAccepted = pushp->fdsock;
             pushp->state = prevState;
             return pushApplySipFilter(pushp);
         } else {
-            printf("Waiting for the rest of packet\n");
             pushp->state = WAITING_DATA;
-            // wait for end of header
+            /* wait for end of header */
             pcsl_add_network_notifier((void *)pushp->fdsock,
                                       PCSL_NET_CHECK_READ);
         }
-        // wait for end of header
+        /* wait for end of header */
         return NULL;
 
     } else
@@ -1534,19 +1530,16 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
                 pushcheckinentry(pushp);
                 return NULL;
             }
-            printf("Checking for end of header2\n");
             if (checkForEndOfHeader(pushp->pCachedData->buffer, 
                                     MAX_CACHED_DATA_SIZE)){
-                printf("End of read, checking\n");
                 pushp->fdAccepted = pushp->fdsock;
                 pushp->state = prevState;
             return pushApplySipFilter(pushp);
             }
-            // notifier will be added below
+            /* notifier will be added below */
         }
         if (status == PCSL_NET_WOULDBLOCK) {
             pushp->state = WAITING_DATA;
-            printf("Not enought data at the buffer\n");
             pcsl_add_network_notifier((void *)pushp->fdsock,
                                       PCSL_NET_CHECK_READ);
             return NULL;
