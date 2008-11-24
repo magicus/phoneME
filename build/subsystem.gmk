@@ -44,6 +44,8 @@ endif
 # Directories for each internal workspace
 INTERNAL_PISCES_DIR=$(PISCES_DIR)
 
+INTERNAL_PISCES_ROM_CONFIG_DIR=$(INTERNAL_PISCES_DIR)/build/config
+
 # Pisces defines
 ifeq ($(PISCES_USE_JWC_OLD_IMPLEMENTATION), true)
   EXTRA_CFLAGS += -DPISCES_USE_JWC_OLD_IMPLEMENTATION
@@ -169,7 +171,7 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), pure_java)
     # Specify romizer configuration file for the jsr
     # and path where the file is located
     #
-    ROMGEN_INCLUDE_PATHS += $(INTERNAL_PISCES_DIR)/build/config
+    ROMGEN_INCLUDE_PATHS += $(INTERNAL_PISCES_ROM_CONFIG_DIR)
     ROMGEN_CFG_FILES     += pisces_pure_java_rom.cfg
 
 endif
@@ -234,7 +236,7 @@ endif
     # Specify romizer configuration file for the jsr
     # and path where the file is located
     #
-    ROMGEN_INCLUDE_PATHS += $(INTERNAL_PISCES_DIR)/build/config
+    ROMGEN_INCLUDE_PATHS += $(INTERNAL_PISCES_ROM_CONFIG_DIR)
     ROMGEN_CFG_FILES     += pisces_rom.cfg
 
     ifdef PISCES_JAVA_SURFACE_SUPPORT
