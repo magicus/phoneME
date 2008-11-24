@@ -48,6 +48,9 @@ import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
 
+/**
+ * Implements auto testing for SVM.
+ */
 class AutoTesterHelper extends AutoTesterHelperBase {
     /** Settings database name. */
     private static final String AUTOTEST_STORE = "autotest";
@@ -66,6 +69,18 @@ class AutoTesterHelper extends AutoTesterHelperBase {
 
     /** ID of the test suite being run */
     private int suiteId = MIDletSuite.UNUSED_SUITE_ID;   
+
+    /** AutoTester MIDlet */
+    private AutoTester autoTester;
+
+    /**
+     * Constructor.
+     *
+     * @param inp_autoTester AutoTester MIDlet instance
+     */
+    AutoTesterHelper(AutoTester inp_autoTester) {
+        autoTester = inp_autoTester;
+    }
 
 
     /**
@@ -94,7 +109,7 @@ class AutoTesterHelper extends AutoTesterHelperBase {
             MIDletSuiteUtils.setLastSuiteToRun(
                     MIDletStateHandler.getMidletStateHandler().
                     getMIDletSuite().getID(),
-                    getClass().getName(), null, null);
+                    autoTester.getClass().getName(), null, null);
 
             if (loopCount > 0) {
                 loopCount -= 1;
@@ -186,7 +201,12 @@ class AutoTesterHelper extends AutoTesterHelperBase {
         return false;
     }
     
-    int getSuiteId() {
+    /**
+     * Gets ID of current test suite.
+     *
+     * @return ID of current test suite 
+     */
+    int getTestSuiteId() {
         return suiteId;
     }    
 

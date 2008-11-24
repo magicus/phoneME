@@ -71,8 +71,8 @@ import com.sun.midp.log.LogChannels;
  * the arguments.</p>
  */
 public class AutoTester extends AutoTesterBase {
+    /** AutoTesterHelper instance */
     private AutoTesterHelper helper;
-
 
     /**
      * Create and initialize a new auto tester MIDlet.
@@ -80,7 +80,7 @@ public class AutoTester extends AutoTesterBase {
     public AutoTester() {
         super();
 
-        helper = new AutoTesterHelper();       
+        helper = new AutoTesterHelper(this);       
 
         if (url != null) {
             startBackgroundTester(true);
@@ -114,7 +114,7 @@ public class AutoTester extends AutoTesterBase {
         try {
             helper.installAndPerformTests();
         } catch (Throwable t) {
-            int suiteId = helper.getSuiteId();
+            int suiteId = helper.getTestSuiteId();
             String message = helper.getInstallerExceptionMessage(suiteId, t);
             displayInstallerError(message);
         }
@@ -122,6 +122,11 @@ public class AutoTester extends AutoTesterBase {
         notifyDestroyed();        
     }
 
+    /**
+     * Gets AutoTesterHelperBase instance
+     *
+     * @return AutotesterHelperBase instance
+     */
     AutoTesterHelperBase getHelper() {
         return helper;
     }
