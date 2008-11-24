@@ -200,7 +200,9 @@ void SendEvent (KVMEventType *evt) {
         break;
 
     case keyDownKVMEvent:
-        if ((evt->chr != KEY_END)) {
+        if (evt->chr == KEY_USER2) {
+            RotateDisplay(evt->screenX);
+        } else if ((evt->chr != KEY_END)) {
             javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
         } else if (isRunningLocal == JAVACALL_FALSE) {
             javanotify_switch_to_ams();
