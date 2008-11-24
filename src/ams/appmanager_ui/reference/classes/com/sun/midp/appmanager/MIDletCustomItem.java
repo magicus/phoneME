@@ -73,6 +73,9 @@ class MIDletCustomItem extends CustomItem {
     private static final Image ICON_BG =
         GraphicalInstaller.getImageFromInternalStorage("_ch_hilight_bg");
 
+    /** The pad between custom item's icon and background icon image */
+    private static final int ICON_PAD = 1;
+
     /** Cached background image width */
     private static final int bgIconW = ICON_BG.getWidth();
 
@@ -254,7 +257,10 @@ class MIDletCustomItem extends CustomItem {
         return false;
     }
 
-
+    /**
+     * True if this MIDlet or MIDlet suite item is enabled
+     * @return true if the item is enabled
+     */
     boolean isEnabled() {
         return true;
     }
@@ -340,9 +346,13 @@ class MIDletCustomItem extends CustomItem {
                 }
 
                 if (icon != null) {
+                    g.clipRect(
+                        w - bgIconW + ICON_PAD, h - bgIconH + ICON_PAD,
+                        bgIconW - 2 * ICON_PAD, bgIconH - 2 * ICON_PAD);
                     g.drawImage(icon, w - (bgIconW - icon.getWidth())/2,
                                 (bgIconH - icon.getHeight())/2,
                                 Graphics.TOP | Graphics.RIGHT);
+                    g.setClip(cX, cY, cW, cH);
                 }
                 // Draw special icon if user attention is requested and
                 // that midlet needs to be brought into foreground by the user
@@ -366,9 +376,12 @@ class MIDletCustomItem extends CustomItem {
                 }
 
                 if (icon != null) {
+                    g.clipRect(ICON_PAD, ICON_PAD,
+                        bgIconW - 2 * ICON_PAD, bgIconH - 2 * ICON_PAD);
                     g.drawImage(icon, (bgIconW - icon.getWidth())/2,
                                 (bgIconH - icon.getHeight())/2,
                                 Graphics.TOP | Graphics.LEFT);
+                    g.setClip(cX, cY, cW, cH);
                 }
 
                 // Draw special icon if user attention is requested and
