@@ -183,6 +183,7 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_close0(void) {
     int status = PCSL_NET_INVALID;
     void* context = NULL;
     MidpReentryData* info;
+    int resUpdate = 0;
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(thisObject);
@@ -212,10 +213,13 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_close0(void) {
             if (pushcheckin(serverSocketHandle) == -1) {
                 status = pcsl_socket_close_start((void*)serverSocketHandle,
                                                  &context);
-
-                /* Server socket should be monitored for read events only */
-                midp_thread_signal(NETWORK_READ_SIGNAL, serverSocketHandle, 0);
+                resUpdate = 1;
+            } else {
+                status = PCSL_NET_SUCCESS;
             }
+            /* Server socket should be monitored for read events only */
+            midp_thread_signal(NETWORK_READ_SIGNAL, serverSocketHandle, 0);
+
             getMidpServerSocketProtocolPtr(thisObject)->nativeHandle =
                 (jint)INVALID_HANDLE;
         }
@@ -230,10 +234,12 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_close0(void) {
 
     if (serverSocketHandle != (int)INVALID_HANDLE) {
         if (status == PCSL_NET_SUCCESS) {
+          if (resUpdate) {
             if (midpDecResourceCount(RSC_TYPE_TCP_SER, 1) == 0) {
                 REPORT_INFO(LC_PROTOCOL,
                             "TCP Server: Resource limit update error");
             }
+          }
         } else if (status == PCSL_NET_WOULDBLOCK) {
             REPORT_INFO1(LC_PROTOCOL, "serversocket::close = 0x%x blocked\n",
                          serverSocketHandle);
