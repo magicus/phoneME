@@ -75,7 +75,8 @@ void getScreenCoordinates(short screenX, short screenY, short* x, short* y);
  * is running locally or via OTA */
 extern javacall_bool isRunningLocal;
 
-/* Rotates display according to code.
+/**
+ * Rotates display according to code.
  * If code is 0 no screen transformations made;
  * If code is 1 then screen orientation is reversed.
  * if code is 2 then screen is turned upside-down.
@@ -83,6 +84,13 @@ extern javacall_bool isRunningLocal;
  * and screen is turned upside-down.
  */
 extern void RotateDisplay(short code);
+
+/**
+ * Called when clamshell state changed
+ * to switch from internal display to external
+ * or vice versa.
+ */
+extern void ClamshellStateChanged(short state);
 
 #if ENABLE_ON_DEVICE_DEBUG
 static const char pStartOddKeySequence[] = "#1*2";
@@ -203,12 +211,7 @@ void SendEvent (KVMEventType *evt) {
         if (evt->chr == KEY_USER2) { 
             RotateDisplay(evt->screenX);     
         } else if (evt->chr == VK_CLAMSHELL) {
-            if (evt->screenX == 2) {
-                /* IMPL_NOTE: two displays are active - subject to implement. */
-            } else {
-                javanotify_clamshell_state_changed(evt->screenX == 0 ?
-                   JAVACALL_LCD_CLAMSHELL_OPEN : JAVACALL_LCD_CLAMSHELL_CLOSE);
-            }
+            ClamshellStateChanged(evt->screenX);
         } else if ((evt->chr != KEY_END)) {
             javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
         } else if (isRunningLocal == JAVACALL_FALSE) {

@@ -449,7 +449,8 @@ void on_screen_rotated() {
       f->call(f, NULL, currDisplayId, reverse_orientation, top_down);
 }
 
-/* Rotates display according to code.
+/**
+ * Rotates display according to code.
  * If code is 0 no screen transformations made;
  * If code is 1 then screen orientation is reversed.
  * if code is 2 then screen is turned upside-down.
@@ -477,11 +478,34 @@ javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
 }
 
 /**
+ * Called when clamshell state changed
+ * to switch from internal display to external
+ * or vice versa.
+ */
+void ClamshellStateChanged(short state) {
+    if (state == 2) {
+       /* IMPL_NOTE: two displays are active - subject to implement.
+        * For now we move to main display. 
+        */
+        if (clamshell_opened == JAVACALL_FALSE) {
+            javanotify_clamshell_state_changed(JAVACALL_LCD_CLAMSHELL_OPEN);
+        } 
+    } else if (state == 0) {
+        if (clamshell_opened == JAVACALL_FALSE) {
+           javanotify_clamshell_state_changed(JAVACALL_LCD_CLAMSHELL_OPEN);
+        }
+    } else {
+        if (clamshell_opened == JAVACALL_TRUE) {
+           javanotify_clamshell_state_changed(JAVACALL_LCD_CLAMSHELL_CLOSE);
+        }
+    }
+}
+
+
+/**
  * Handle clamshell event
  */
 void javacall_lcd_handle_clamshell() {
-javautil_debug_print(JAVACALL_LOG_WARNING, "lcd", 
-    "KRIS: javacall_lcd_handle_clamshell\n");
     if (clamshell_opened == JAVACALL_FALSE) {
         VRAM.width = MAIN_DISPLAY_SIZE.width;
         VRAM.height = MAIN_DISPLAY_SIZE.height;
