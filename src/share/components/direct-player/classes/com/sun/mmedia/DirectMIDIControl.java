@@ -143,9 +143,15 @@ class DirectMIDIControl implements DirectControls {
 
     // MIDIControl ///////////////////////////////////////////////////////
 
-    public MIDIControl getMIDIControl() {
-        return new MIDIControlImpl();
+    private MIDIControlImpl midiCtl = null;
+
+    public synchronized MIDIControl getMIDIControl() {
+        if (null == midiCtl) {
+            midiCtl = new MIDIControlImpl();
+        }
+        return midiCtl;
     }
+
     class MIDIControlImpl implements MIDIControl {
         public synchronized boolean isBankQuerySupported() {
             return nIsBankQuerySupported(_player.hNative);
@@ -288,9 +294,15 @@ class DirectMIDIControl implements DirectControls {
 
     // RateControl ///////////////////////////////////////////////////////
 
-    public RateControl getRateControl() {
-        return new RateControlImpl();
+    private RateControlImpl rateCtl = null;
+
+    public synchronized RateControl getRateControl() {
+        if (null == rateCtl) {
+            rateCtl = new RateControlImpl();
+        }
+        return rateCtl;
     }
+
     class RateControlImpl implements RateControl {
         //
         // SPEC:
@@ -347,9 +359,15 @@ class DirectMIDIControl implements DirectControls {
 
     // PitchControl //////////////////////////////////////////////////////
 
-    public PitchControl getPitchControl() {
-        return new PitchControlImpl();
+    private PitchControlImpl pitchCtl = null;
+
+    public synchronized PitchControl getPitchControl() {
+        if (null == pitchCtl) {
+            pitchCtl = new PitchControlImpl();
+        }
+        return pitchCtl;
     }
+
     class PitchControlImpl implements PitchControl {
         public synchronized int setPitch(int millisemitones) {
             int max = getMaxPitch();
@@ -395,9 +413,15 @@ class DirectMIDIControl implements DirectControls {
 
     // TempoControl //////////////////////////////////////////////////////
 
-    public TempoControl getTempoControl() {
-        return new TempoControlImpl();
+    private TempoControlImpl tempoCtl = null;
+
+    public synchronized TempoControl getTempoControl() {
+        if (null == tempoCtl) {
+            tempoCtl = new TempoControlImpl();
+        }
+        return tempoCtl;
     }
+
     class TempoControlImpl extends RateControlImpl implements TempoControl {
         public synchronized int setTempo(int millitempo) {
             if (millitempo < 0) {
