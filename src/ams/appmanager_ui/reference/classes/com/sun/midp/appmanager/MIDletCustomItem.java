@@ -338,49 +338,55 @@ class MIDletCustomItem extends CustomItem {
             }
         }
 
+        int anchorY = (h - bgIconH)/2;
+        final int ICON_PAD2 = ICON_PAD * 2;
+
         if (cX < bgIconW) {
             if (rtlDirection) {
                 if (hasFocus) {
-                    g.drawImage(ICON_BG, w - bgIconW, (h - bgIconH)/2,
-                                Graphics.TOP | Graphics.LEFT);
+                    g.drawImage(ICON_BG, w - bgIconW, anchorY,
+                        Graphics.TOP | Graphics.LEFT);
                 }
 
                 if (icon != null) {
                     g.clipRect(
-                        w - bgIconW + ICON_PAD, h - bgIconH + ICON_PAD,
-                        bgIconW - 2 * ICON_PAD, bgIconH - 2 * ICON_PAD);
-                    g.drawImage(icon, w - (bgIconW - icon.getWidth())/2,
-                                (bgIconH - icon.getHeight())/2,
-                                Graphics.TOP | Graphics.RIGHT);
+                        w - bgIconW + ICON_PAD, anchorY + ICON_PAD,
+                        bgIconW - ICON_PAD2, bgIconH - ICON_PAD2);
+                    g.drawImage(icon,
+                        w - (bgIconW - icon.getWidth())/2,
+                        anchorY + (bgIconH - icon.getHeight())/2,
+                        Graphics.TOP | Graphics.RIGHT);
                     g.setClip(cX, cY, cW, cH);
                 }
                 // Draw special icon if user attention is requested and
                 // that midlet needs to be brought into foreground by the user
                 if (isAnyAlertWaiting()) {
                     g.drawImage(FG_REQUESTED,
-                                w - (bgIconW - FG_REQUESTED.getWidth()), 0,
-                                Graphics.TOP | Graphics.LEFT);
+                        w - (bgIconW - FG_REQUESTED.getWidth()), 0,
+                        Graphics.TOP | Graphics.LEFT);
                 }
 
                 if (!isEnabled()) {
                     // indicate that this suite is disabled
                     g.drawImage(DISABLED_IMAGE,
-                                w - (bgIconW - DISABLED_IMAGE.getWidth())/2,
-                                (bgIconH - DISABLED_IMAGE.getHeight())/2,
-                                Graphics.TOP | Graphics.LEFT);
+                        w - (bgIconW - DISABLED_IMAGE.getWidth())/2,
+                        anchorY + (bgIconH - DISABLED_IMAGE.getHeight())/2,
+                        Graphics.TOP | Graphics.LEFT);
                 }
             } else {
                 if (hasFocus) {
-                    g.drawImage(ICON_BG, 0, (h - bgIconH)/2,
-                                Graphics.TOP | Graphics.LEFT);
+                    g.drawImage(ICON_BG, 0, anchorY,
+                        Graphics.TOP | Graphics.LEFT);
                 }
 
                 if (icon != null) {
-                    g.clipRect(ICON_PAD, ICON_PAD,
-                        bgIconW - 2 * ICON_PAD, bgIconH - 2 * ICON_PAD);
-                    g.drawImage(icon, (bgIconW - icon.getWidth())/2,
-                                (bgIconH - icon.getHeight())/2,
-                                Graphics.TOP | Graphics.LEFT);
+                    g.clipRect(
+                        ICON_PAD, anchorY + ICON_PAD,
+                        bgIconW - ICON_PAD2, bgIconH - ICON_PAD2);
+                    g.drawImage(icon,
+                        (bgIconW - icon.getWidth())/2,
+                        anchorY + (bgIconH - icon.getHeight())/2,
+                        Graphics.TOP | Graphics.LEFT);
                     g.setClip(cX, cY, cW, cH);
                 }
 
@@ -388,16 +394,16 @@ class MIDletCustomItem extends CustomItem {
                 // that midlet needs to be brought into foreground by the user
                 if (isAnyAlertWaiting()) {
                     g.drawImage(FG_REQUESTED,
-                                bgIconW - FG_REQUESTED.getWidth(), 0,
-                                Graphics.TOP | Graphics.LEFT);
+                        bgIconW - FG_REQUESTED.getWidth(), 0,
+                        Graphics.TOP | Graphics.LEFT);
                 }
 
                 if (!isEnabled()) {
                     // indicate that this suite is disabled
                     g.drawImage(DISABLED_IMAGE,
-                                (bgIconW - DISABLED_IMAGE.getWidth())/2,
-                                (bgIconH - DISABLED_IMAGE.getHeight())/2,
-                                Graphics.TOP | Graphics.LEFT);
+                        (bgIconW - DISABLED_IMAGE.getWidth())/2,
+                        anchorY + (bgIconH - DISABLED_IMAGE.getHeight())/2,
+                        Graphics.TOP | Graphics.LEFT);
                 }
             }
         }
