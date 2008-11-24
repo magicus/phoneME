@@ -62,6 +62,9 @@ typedef struct
     int                   missing;
 
     long                  mediaTime;
+
+    long                  volume;
+    javacall_bool         mute;
 } rtp_player;
 
 size_t rtp_pcm_callback( void* buf, size_t size, void* param )
@@ -99,7 +102,14 @@ size_t rtp_pcm_callback( void* buf, size_t size, void* param )
 
     if( NULL != xbuf )
     {
-        memcpy( buf, xbuf->data, size );
+        if( JAVACALL_TRUE == p->mute || 0 == p->volume )
+        {
+            memset( buf, 0, size );
+        }
+        else
+        {
+            memcpy( buf, xbuf->data, size );
+        }
         FREE( xbuf );
 
         p->missing = 0;
@@ -155,6 +165,8 @@ static javacall_handle rtp_create(int appId,
     p->buffering   = TRUE;
     p->missing     = 0;
     p->mediaTime   = 0;
+    p->volume      = 100;
+    p->mute        = JAVACALL_FALSE;
 
     InitializeCriticalSection( &(p->cs) );
 
@@ -208,7 +220,7 @@ static javacall_result rtp_get_player_controls(javacall_handle handle,
 {
     rtp_player* p = (rtp_player*)handle;
     OutputDebugString( "*** get controls ***\n" );
-    *controls = 0;
+    *controls = JAVACALL_MEDIA_CTRL_VOLUME;
     return JAVACALL_OK;
 }
 
@@ -470,11 +482,11 @@ static javacall_result rtp_switch_to_background(javacall_handle handle,
                          V O L U M E   C O N T R O L
 \*****************************************************************************/
 
-/*
 static javacall_result rtp_get_volume(javacall_handle handle, 
                                       long* level)
 {
     rtp_player* p = (rtp_player*)handle;
+    *level = p->volume;
     return JAVACALL_OK;
 }
 
@@ -482,6 +494,7 @@ static javacall_result rtp_set_volume(javacall_handle handle,
                                       long* level)
 {
     rtp_player* p = (rtp_player*)handle;
+    p->volume = *level;
     return JAVACALL_OK;
 }
 
@@ -489,6 +502,7 @@ static javacall_result rtp_is_mute(javacall_handle handle,
                                    javacall_bool* mute )
 {
     rtp_player* p = (rtp_player*)handle;
+    *mute = p->mute;
     return JAVACALL_OK;
 }
 
@@ -496,9 +510,9 @@ static javacall_result rtp_set_mute(javacall_handle handle,
                                     javacall_bool mute)
 {
     rtp_player* p = (rtp_player*)handle;
+    p->mute = mute;
     return JAVACALL_OK;
 }
-*/
 
 /*****************************************************************************\
                         I N T E R F A C E   T A B L E S
@@ -531,19 +545,17 @@ static media_basic_interface _rtp_basic_itf =
     rtp_switch_to_background
 };
 
-/*
 static media_volume_interface _rtp_volume_itf = {
     rtp_get_volume,
     rtp_set_volume,
     rtp_is_mute,
     rtp_set_mute
 };
-*/
 
 media_interface g_rtp_itf =
 {
     &_rtp_basic_itf,
-    NULL, //&_rtp_volume_itf,
+    &_rtp_volume_itf,
     NULL,
     NULL,
     NULL,
