@@ -161,7 +161,7 @@ class MIDletCustomItem extends CustomItem {
         textLen = displayName.length();
         truncWidth = ICON_FONT.charWidth(truncationMark);
         truncated = false;
-        textScrollTimer = new Timer();
+        textScrollTimer = null;
         xScrollOffset = 0;
     }
 
@@ -412,6 +412,9 @@ class MIDletCustomItem extends CustomItem {
             return;
         }
         stopScroll();
+        if (textScrollTimer == null) {
+            textScrollTimer = new Timer();
+        }
         textScrollPainter = new TextScrollPainter();
         textScrollTimer.schedule(textScrollPainter, SCROLL_DELAY, SCROLL_RATE);
     }
@@ -513,7 +516,9 @@ class MIDletCustomItem extends CustomItem {
      * generation of repaint events.
      */
     public void cleanUp() {
-        textScrollTimer.cancel();
+        if (textScrollTimer != null) {
+            textScrollTimer.cancel();
+        }
     }
 
     /**
