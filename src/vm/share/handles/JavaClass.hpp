@@ -233,7 +233,7 @@ public:
 
   void iterate(OopVisitor* /*visitor*/) PRODUCT_RETURN;
 #if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE ||\
-                         ENABLE_PERFORMANCE_COUNTERS
+                         ENABLE_PERFORMANCE_COUNTERS || USE_DEBUG_PRINTING
   void print_name_on(Stream*);
 #endif
   static void iterate_oopmaps(oopmaps_doer /*do_map*/, void* /*param*/) 

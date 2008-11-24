@@ -266,6 +266,8 @@
 //
 // ENABLE_MEMORY_PROFILER        0,0  Add Memory Profiler support.
 //
+// ENABLE_MEMORY_MONITOR         0,0  Add Memory Monitor support.
+//
 // ENABLE_ROM_JAVA_DEBUGGER      0,0  Add Java debugger support for ROMized.
 //                                    classes
 //
@@ -1059,6 +1061,11 @@
 #  define USE_COMPILER_COMMENTS     (ENABLE_COMPILER && ENABLE_TTY_TRACE)
 #  define USE_COMPILER_DISASSEMBLER (ENABLE_COMPILER && ENABLE_TTY_TRACE)
 #  define USE_OOP_VISITOR           USE_DEBUG_PRINTING
+#endif
+
+#if !USE_DEBUG_PRINTING && ENABLE_MEMORY_MONITOR
+#  undef USE_DEBUG_PRINTING
+#  define USE_DEBUG_PRINTING 1
 #endif
 
 #if defined(PRODUCT) || (!ENABLE_TTY_TRACE)

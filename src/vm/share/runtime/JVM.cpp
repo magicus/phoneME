@@ -424,7 +424,6 @@ int JVM::start() {
   } else {
     ok = load_main_class(JVM_SINGLE_ARG_NO_CHECK);
   }
-
   if (!ok) {
     if (CURRENT_HAS_PENDING_EXCEPTION) {
       tty->print(MSG_UNCAUGHT_EXCEPTIONS);

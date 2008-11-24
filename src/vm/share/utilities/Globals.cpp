@@ -248,7 +248,7 @@ void Globals::verify() {
 }
 #endif // PRODUCT
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 int __cdecl compare_flags(const void* a, const void* b) {
   return jvm_strcmp((*((JVMFlag**) a))->name, (*((JVMFlag**) b))->name);
 }

@@ -1131,7 +1131,6 @@ ObjectHeap.cpp                   OopDesc.inline.hpp
 ObjectHeap.cpp                   ROM.hpp
 ObjectHeap.cpp                   ObjArray.hpp
 ObjectHeap.cpp                   ROMWriter.hpp
-
 ObjectHeap.cpp                   Throw.hpp
 ObjectHeap.cpp                   Timer.hpp
 ObjectHeap.cpp                   Method.hpp
@@ -1146,6 +1145,9 @@ ObjectHeap.cpp                   ClassFileParser.hpp
 ObjectHeap.cpp                   Verifier.hpp
 ObjectHeap.cpp                   TypeSymbol.hpp
 ObjectHeap.cpp                   JavaDebugger.hpp
+#if ENABLE_MEMORY_MONITOR
+ObjectHeap.cpp                   MemoryMonitor.hpp
+#endif
 ObjectHeap.cpp                   Boundary.hpp
 ObjectHeap.cpp                   CompiledMethodDesc.hpp
 ObjectHeap.cpp                   EventLogger.hpp
@@ -3179,6 +3181,10 @@ JarFileParser.cpp               ObjectHeap_<iarch>.hpp
 JarFileParser.cpp               FilePath.hpp
 JarFileParser.cpp               OopVisitor.hpp
 JarFileParser.cpp               InstanceClass.hpp
+
+MemoryMonitor.hpp               GlobalDefinitions.hpp
+MemoryMonitor.cpp               MemoryMonitor.hpp
+MemoryMonitor.cpp               Universe.hpp
 
 MemoryProfiler.hpp              DebuggerStream.hpp
 MemoryProfiler.hpp              Frame.hpp

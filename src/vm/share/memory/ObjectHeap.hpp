@@ -282,11 +282,31 @@ public:
   }
 
   static void accumulate_current_task_memory_usage( void )
-#if ENABLE_ISOLATES
+#if ENABLE_ISOLATES || ENABLE_MEMORY_MONITOR
   ;
 #else
   {}
 #endif
+
+#if ENABLE_MEMORY_MONITOR
+  static void notify_objects_created  ( const OopDesc* const* from,
+                                        const OopDesc* const* to );
+  static void notify_objects_disposed ( const OopDesc* const* from,
+                                        const OopDesc* const* to,
+                                        const bool all );
+#if ENABLE_ISOLATES
+  static void notify_objects_disposed ( const OopDesc* const* from,
+                                        const OopDesc* const* to,
+                                        const int task_id, const bool all );
+  static void notify_task_objects_disposed( const int task_id );
+#endif
+
+  static void notify_objects_created  ( void );
+  static void notify_objects_disposed ( void );
+#else // ENABLE_MEMORY_MONITOR
+  static void notify_objects_created  ( void ) {}
+  static void notify_objects_disposed ( void ) {}
+#endif // ENABLE_MEMORY_MONITOR
 
   static int compiler_area_soft_collect(size_t min_free_after_collection);
 
@@ -769,12 +789,15 @@ private:
     return ((unsigned*)bitvector_base)[ bitvector_word_index( i ) ];
   }
 
+#if ENABLE_ISOLATES || ENABLE_MEMORY_MONITOR
+  static OopDesc**_task_allocation_start;
+#endif
+
 #if ENABLE_ISOLATES
   static int      _current_task_id;          // Current resource owner
   static int      _previous_task_id;         // Previous task that allocated memory
 
   static OopDesc**_real_inline_allocation_end;
-  static OopDesc**_task_allocation_start;
 
   static unsigned _reserved_memory_deficit;
   static unsigned _current_deficit;
@@ -1038,7 +1061,7 @@ private:
   static OopDesc** _saved_compiler_area_top_quick;
 #endif
 
-#if ENABLE_PERFORMANCE_COUNTERS || ENABLE_TTY_TRACE
+#if ENABLE_PERFORMANCE_COUNTERS || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
   static jlong  _internal_collect_start_time;
   static size_t _old_gen_size_before;
   static size_t _young_gen_size_before;

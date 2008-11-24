@@ -2627,7 +2627,7 @@ bool Method::is_overloaded() const {
 }
 #endif
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 
 void Method::iterate(OopVisitor* visitor) {
 #if USE_OOP_VISITOR

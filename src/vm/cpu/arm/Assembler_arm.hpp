@@ -163,8 +163,8 @@ class Assembler: public AssemblerCommon {
   static Address1 reg(Register rm) { return imm_shift(rm, lsl, 0); }
   static Address1 imm_slow(int imm_32);
 #define imm(imm_32) \
-        ((imm_32 & 0xFFFFFF00) == 0 ?  imm_rotate(imm_32, 0) \
-                                     : imm_slow(imm_32))
+        (((imm_32) & 0xFFFFFF00) == 0 ?  imm_rotate((imm_32), 0) \
+                                     : imm_slow((imm_32)))
 
   // addressing mode 2 - load and store word or unsigned byte
   enum Address2 {

@@ -119,12 +119,121 @@ OopDesc** ObjectHeap::_saved_compiler_area_top_quick;
   bitword = *++bitvector_word_ptr;
 
 inline void ObjectHeap::set_task_allocation_start( OopDesc** p ) {
-#if ENABLE_ISOLATES
+#if ENABLE_ISOLATES || ENABLE_MEMORY_MONITOR
   _task_allocation_start = p;
 #else
   (void)p;
 #endif
 }
+
+#if ENABLE_MEMORY_MONITOR
+inline void ObjectHeap::notify_objects_created  ( const OopDesc* const* from,
+                                                  const OopDesc* const* to ) {
+  do {
+    const int size = ((const OopDesc*)from)->object_size();
+    MemoryMonitor::notify_object( (const OopDesc*)from, size, true );
+    from = DERIVED( const OopDesc* const*, from, size );
+  } while( from < to );
+}
+
+inline void ObjectHeap::notify_objects_disposed ( const OopDesc* const* from,
+                                                  const OopDesc* const* to,
+                                                  const bool all ) {
+  do {
+    const int size = ((const OopDesc*)from)->object_size();
+    if( all || test_bit_for( (OopDesc**) from ) ) {
+      MemoryMonitor::notify_object( (const OopDesc*)from, size, false );
+    }
+    from = DERIVED( const OopDesc* const*, from, size );
+  } while( from < to );
+}
+
+#if ENABLE_ISOLATES
+void ObjectHeap::notify_objects_disposed ( const OopDesc* const* from,
+                                           const OopDesc* const* to,
+                                           const int task_id,
+                                           const bool all ) {
+  if( from < to && Universe::task_from_id( task_id ) != NULL ) {
+    const int saved_task = TaskContext::current_task_id();
+    TaskContext::set_current_task( task_id );
+    notify_objects_disposed( from, to, all );
+    TaskContext::set_current_task( saved_task );
+  }
+}
+
+void ObjectHeap::notify_task_objects_disposed( const int task_id ) {
+  const int saved_task = TaskContext::current_task_id();
+  TaskContext::set_current_task( task_id );
+
+  OopDesc** const classes = get_boundary_classes();
+  const int boundary_size = BoundaryDesc::allocation_size();
+
+  const OopDesc* const* upb = _inline_allocation_top;
+  int id = _previous_task_id;
+
+  for( const BoundaryDesc* bound = *get_boundary_list();
+                           bound; bound = bound->_next ) {
+    const OopDesc* const* from =
+      DERIVED(const OopDesc* const*, bound, boundary_size);
+    if( from < upb ) {
+      notify_objects_disposed( from, upb, true );
+    }
+    id = get_owner( bound, classes );
+    upb = (const OopDesc* const*) bound;
+  }
+  TaskContext::set_current_task( saved_task );
+}
+#endif
+
+
+inline void ObjectHeap::notify_objects_created( void ) {
+  // IMPL_NOTE: Objects created during bootstrap are ignored.
+  // They could be processed after bootstrap is complete.
+  if( !Universe::before_main() ) {
+    const OopDesc* const* from = _task_allocation_start;
+    const OopDesc* const* to   = _inline_allocation_top;
+    if( from < to ) {
+#if ENABLE_ISOLATES
+      const int saved_task = TaskContext::current_task_id();
+      TaskContext::set_current_task( _current_task_id );
+#endif
+      notify_objects_created( from, to );
+#if ENABLE_ISOLATES
+      TaskContext::set_current_task( saved_task );
+#endif
+    }
+  }
+}
+
+inline void ObjectHeap::notify_objects_disposed ( void ) {
+#if ENABLE_ISOLATES
+  OopDesc** const classes = get_boundary_classes();
+  const int boundary_size = BoundaryDesc::allocation_size();
+
+  const OopDesc* const* upb = _inline_allocation_top;
+  const OopDesc* const* lwb = _collection_area_start;
+
+  int id = _previous_task_id;
+  for( const BoundaryDesc* bound = *get_boundary_list();
+             bound > (const BoundaryDesc*) lwb; bound = bound->_next ) {
+    const OopDesc* const* from =
+      DERIVED(const OopDesc* const*, bound, boundary_size);
+    notify_objects_disposed( from, upb, id, false );
+    id = get_owner( bound, classes );
+    upb = (const OopDesc* const*) bound;
+  }
+  notify_objects_disposed( lwb, upb, id, false );  
+#else
+  const OopDesc* const* from = _collection_area_start;
+  const OopDesc* const* to   = _inline_allocation_top;
+  if( from < to ) {
+    notify_objects_disposed( from, to, false);
+  }
+#endif  // ENABLE_ISOLATES
+}
+
+#endif  // ENABLE_MEMORY_MONITOR
+
 
 #if ENABLE_ISOLATES
 int       ObjectHeap::_current_task_id;
@@ -239,6 +348,8 @@ void ObjectHeap::accumulate_memory_usage( OopDesc* _lwb[], OopDesc* _upb[] ) {
 }
 
 void ObjectHeap::accumulate_current_task_memory_usage( void ) {
+  notify_objects_created();
+
   const int current_task_id = _current_task_id;
   TaskMemoryInfo& task_info = get_task_info( current_task_id );
   int reserved_memory_deficit = int(_reserved_memory_deficit);
@@ -331,6 +442,9 @@ void ObjectHeap::on_task_termination ( OopDesc* p ) {
 #endif
   _some_tasks_terminated = true;
   reset_task_memory_usage( task_id );
+#if ENABLE_MEMORY_MONITOR
+  notify_task_objects_disposed( task_id );
+#endif
 }
 
 #if ENABLE_ISOLATES && ENABLE_MONET && ENABLE_LIB_IMAGES
@@ -504,6 +618,16 @@ const OopDesc* ObjectHeap::dead_range_end;
 OopDesc* ObjectHeap::dead_task;
 #endif // USE_IMAGE_MAPPING || USE_LARGE_OBJECT_AREA
 
+#else  // !ENABLE_ISOLATES
+
+#if ENABLE_MEMORY_MONITOR
+OopDesc** ObjectHeap::_task_allocation_start;
+void ObjectHeap::accumulate_current_task_memory_usage( void ) {
+  notify_objects_created();
+  _task_allocation_start = _inline_allocation_top;
+}
+#endif  // ENABLE_MEMORY_MONITOR
+
 #endif  // ENABLE_ISOLATES
 
 inline bool ObjectHeap::compiler_area_in_use( void ) {
@@ -638,7 +762,7 @@ void ObjectHeap::finalize( FinalizerConsDesc** list ) {
   }
 }
 
-#if ENABLE_PERFORMANCE_COUNTERS || ENABLE_TTY_TRACE
+#if ENABLE_PERFORMANCE_COUNTERS || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 jlong     ObjectHeap::_internal_collect_start_time;
 size_t    ObjectHeap::_old_gen_size_before;
 size_t    ObjectHeap::_young_gen_size_before;
@@ -1490,6 +1614,10 @@ bool ObjectHeap::expand_current_compiled_method(const int delta) {
 #endif
 
 void ObjectHeap::dispose( void ) {
+#if ENABLE_MEMORY_MONITOR
+  MemoryMonitor::notify_heap_disposed();
+#endif
+
   _inline_allocation_top = NULL;
   set_inline_allocation_end(NULL);
   _bitvector_base        = NULL;
@@ -1555,10 +1683,9 @@ void ObjectHeap::dispose( void ) {
 #ifndef PRODUCT
   _heap_start_bitvector_verify = NULL;
 #endif
-
 }
 
-bool ObjectHeap::create() {
+bool ObjectHeap::create( void ) {
 #if USE_SET_HEAP_LIMIT
   HeapMin = HeapCapacity;
 #endif 
@@ -1757,6 +1884,10 @@ bool ObjectHeap::create() {
     jvm_memcpy(_glue_code, address(&compiler_glue_code_start), copy_size);
     OsMisc_flush_icache(_glue_code, copy_size);
   }
+#endif
+
+#if ENABLE_MEMORY_MONITOR
+  MemoryMonitor::notify_heap_created();
 #endif
 
   return true;
@@ -2325,6 +2456,7 @@ inline void ObjectHeap::mark_objects( const bool is_full_collect ) {
 #endif
   }
 #endif
+  notify_objects_disposed();
 }
 
 void ObjectHeap::check_marking_stack_overflow() {

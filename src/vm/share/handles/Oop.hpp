@@ -160,7 +160,7 @@ public:
   static int klass_offset() { return FIELD_OFFSET(OopDesc, _klass); }
   void set_klass(BasicOop* value) { obj_field_put(klass_offset(), value); }
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
   void print_value_on(Stream* st);
   void iterate(OopVisitor* visitor);
   static void iterate_one_oopmap_entry(BasicType type, void *param, 

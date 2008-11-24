@@ -771,7 +771,7 @@ public:
 
   bool is_overloaded() const;
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
   void print_name_on_tty() const {
     print_name_on(tty);
   }

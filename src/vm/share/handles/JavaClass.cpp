@@ -469,8 +469,8 @@ void JavaClass::iterate(OopVisitor* visitor) {
 
 #endif
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE ||\
-                         ENABLE_PERFORMANCE_COUNTERS
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_PERFORMANCE_COUNTERS \
+    || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 void JavaClass::print_name_on(Stream* st) {
   ClassInfo::Raw info = class_info();
   info().print_name_on(st);

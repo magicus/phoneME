@@ -158,10 +158,9 @@ void CompiledMethod::print_value_on(Stream* st) {
   st->print("Compiled");
   Method::Fast m = method();
 
-  bool saved = Verbose;
-  Verbose = false;
+  NOT_PRODUCT( const bool saved = Verbose; Verbose = false; )
   m().print_value_on(st);
-  Verbose = saved;
+  NOT_PRODUCT( Verbose = saved; )
 #endif
 }
 

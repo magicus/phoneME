@@ -311,7 +311,8 @@ class ClassInfo: public Oop {
     return sizeof(ClassInfoDesc);
   }
 
-#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR \
+    || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
   // used by romizer
   int itable_end_offset() const {
     return ushort_field(object_size_offset());
@@ -320,11 +321,11 @@ class ClassInfo: public Oop {
 #endif
 
 #if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE ||\
-                         ENABLE_PERFORMANCE_COUNTERS
+                         ENABLE_PERFORMANCE_COUNTERS || USE_DEBUG_PRINTING
   void print_name_on(Stream* st);
 #endif
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
   void print_value_on(Stream* st);
 #endif
 

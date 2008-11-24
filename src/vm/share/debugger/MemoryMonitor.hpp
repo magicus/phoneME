@@ -24,41 +24,12 @@
  * information or have any questions.
  */
 
-/*
- * OsMisc_ads.cpp:
- */
-
-#include "incls/_precompiled.incl"
-#include "incls/_OsMisc_ads.cpp.incl"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-const JvmPathChar *OsMisc_get_classpath() {
-  return NULL;
-}
-
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
-const char *OsMisc_jlong_format_specifier() {
-  return "%lld";
-}
-
-const char *OsMisc_julong_format_specifier() {
-  return "%llu";
-}
-#endif
-
-#if ENABLE_PAGE_PROTECTION
-void OsMisc_page_protect() {
-  UNIMPLEMENTED();
-}
-
-void OsMisc_page_unprotect() {
-  UNIMPLEMENTED();
-}
-#endif // ENABLE_PAGE_PROTECTION
-
-#ifdef __cplusplus
-}
+#if ENABLE_MEMORY_MONITOR
+class MemoryMonitor: AllStatic {
+  public:
+   static void notify_object( const OopDesc* obj, const int size,
+                              const bool create );
+   static void notify_heap_created      ( void ) {}
+   static void notify_heap_disposed     ( void ) {}
+};
 #endif

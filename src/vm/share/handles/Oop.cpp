@@ -124,7 +124,7 @@ bool BasicOop::rom_contains(OopDesc *p) {
 }
 #endif
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 
 #if USE_OOP_VISITOR
 class OopDispatcher : public StackObj {
@@ -550,7 +550,7 @@ bool BasicOop::check_valid_for_print(Stream* st) {
 
 #endif
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 
 void BasicOop::iterate(OopVisitor* visitor) {
 #if USE_OOP_VISITOR

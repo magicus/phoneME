@@ -54,7 +54,7 @@
 // Note: For bytecodes with variable length, the format string is the
 // empty string.
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 #define def(name, length, format, wide_length, wide_format, flags) \
   { _ ## name, #name, (jbyte)length, format, (jushort)(wide_length|flags), \
     wide_format }

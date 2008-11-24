@@ -826,11 +826,16 @@ bool Universe::bootstrap_without_rom(const JvmPathChar* classpath) {
   setup_thread_priority_list(JVM_SINGLE_ARG_CHECK_0);
 
   {
+#if !ENABLE_ISOLATES
     OopDesc* dictionary = Universe::new_obj_array(64 JVM_CHECK_0);
     *current_dictionary() = dictionary;
+#endif
 
     // When we're generating the system library image, only want one dictionary
     if( !GenerateROMImage ) {
+#if ENABLE_ISOLATES
+      OopDesc* dictionary = *current_dictionary();
+#endif
       *system_dictionary() = dictionary;
     }
   }
@@ -1017,6 +1022,7 @@ bool Universe::bootstrap_without_rom(const JvmPathChar* classpath) {
   if (VerifyGC) {
     ObjectHeap::verify();
   }
+
   _before_main = false;
 
   *inlined_stackmaps() = new_stackmap_list(1 JVM_CHECK_0);

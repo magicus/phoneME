@@ -55,8 +55,7 @@ const JvmPathChar *OsMisc_get_classpath() {
   return classpath;
 }
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
-
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 const char *OsMisc_jlong_format_specifier() {
   return "%lld";
 }
@@ -64,7 +63,6 @@ const char *OsMisc_jlong_format_specifier() {
 const char *OsMisc_julong_format_specifier() {
   return "%llu";
 }
-
 #endif
 
 #if ENABLE_PAGE_PROTECTION

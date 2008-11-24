@@ -54,8 +54,7 @@ void OsMisc_flush_icache(address start, int size) {
    */
 }
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
-
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 const char *OsMisc_jlong_format_specifier() {
   /* 
    * Return jlong-specifier prefixes are used with type characters in
@@ -73,7 +72,6 @@ const char *OsMisc_julong_format_specifier() {
    */
   return "";
 }
-
 #endif // PRODUCT
 
 #if ENABLE_PAGE_PROTECTION

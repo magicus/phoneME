@@ -61,8 +61,7 @@ void OsMisc_flush_icache(address start, int size) {
 #endif
 }
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
-
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 const char *OsMisc_jlong_format_specifier() {
 #if defined(_WIN32_WCE)
   return "%I64d";
@@ -86,7 +85,6 @@ const char *OsMisc_julong_format_specifier() {
    */
   return "%llu";
 }
-
 #endif // PRODUCT
 
 #ifdef __cplusplus

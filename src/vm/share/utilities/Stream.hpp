@@ -84,7 +84,7 @@ class Stream: public GlobalObj {
   virtual int current_position() { return 0; }
   
 public:
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
   // sizing
   int width()    const { return _width;    }
   int position() const { return _position; }
@@ -106,8 +106,9 @@ public:
   }
 #endif
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE || ENABLE_PERFORMANCE_COUNTERS \
-    || ENABLE_WTK_PROFILER || USE_AOT_COMPILATION
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING \
+    || ENABLE_PERFORMANCE_COUNTERS || ENABLE_WTK_PROFILER \
+    || USE_AOT_COMPILATION
   void put(char ch);
 #endif
 
@@ -139,7 +140,8 @@ public:
 
 extern Stream* tty;        // tty output
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_MEMORY_PROFILER \
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR \
+    || ENABLE_MEMORY_PROFILER || ENABLE_MEMORY_MONITOR \
     || ENABLE_WTK_PROFILER || ENABLE_PERFORMANCE_COUNTERS || ENABLE_PROFILER \
     || ENABLE_DYNAMIC_NATIVE_METHODS || ENABLE_TTY_TRACE || USE_EVENT_LOGGER
 

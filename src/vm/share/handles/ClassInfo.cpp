@@ -46,8 +46,8 @@ jint ClassInfo::itable_size(int nof_interfaces, int nof_methods) {
        + nof_methods    * sizeof(jobject);
 }
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE ||\
-                         ENABLE_PERFORMANCE_COUNTERS
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_PERFORMANCE_COUNTERS \
+    || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING                         
 void ClassInfo::print_name_on(Stream* st) {
 #if ENABLE_TTY_TRACE
   if (!check_valid_for_print(st)) {
@@ -69,7 +69,8 @@ void ClassInfo::print_name_on(Stream* st) {
 }
 #endif
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR \
+    || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 void ClassInfo::print_value_on(Stream* st) {
 #if ENABLE_TTY_TRACE
   st->print("ClassInfo ");
@@ -188,7 +189,8 @@ void ClassInfo::iterate_oopmaps(oopmaps_doer do_map, void* param) {
 
 #endif /* #ifndef PRODUCT*/
 
-#if USE_OOP_VISITOR || USE_BINARY_IMAGE_GENERATOR || ENABLE_TTY_TRACE
+#if USE_OOP_VISITOR || USE_BINARY_IMAGE_GENERATOR \
+    || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 void ClassInfo::iterate_tables(OopROMVisitor* visitor) {
   int index = 0;
   if (vtable_length() > 0) {
