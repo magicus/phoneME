@@ -246,6 +246,17 @@ public class Connector {
         boolean timeouts)
         throws IOException, ClassNotFoundException {
 
+        /* Test for correct mode value */
+		if (mode != READ && 
+		    mode != WRITE &&
+			mode != READ_WRITE) {
+            throw new IllegalArgumentException(
+/* #ifdef VERBOSE_EXCEPTIONS */
+/// skipped                       "Wrong mode value"
+/* #endif */
+            );
+		}
+
         /* Test for null argument */
         if (name == null) {
             throw new IllegalArgumentException(
