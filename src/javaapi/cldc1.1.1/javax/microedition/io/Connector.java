@@ -92,7 +92,7 @@ public class Connector {
  * <code>com.sun.cldc.io.{platform}.{protocol}.Protocol</code>
  * <p>
  * The platform name is derived from the system by looking for
- * the system property "microedition.platform".  If this property
+ * the system property "microedition.platformimpl".  If this property
  * key is not found or the associated class is not present, then
  * "j2me" is used by default.
  * <p>
@@ -139,7 +139,7 @@ public class Connector {
      */
     static {
         /* Set up the platform name */
-        platform = System.getProperty("microedition.platform");
+        platform = System.getProperty("microedition.platformimpl");
         if ((platform == null) || (platform.equals("generic"))) {
             platform = "j2me";
         }

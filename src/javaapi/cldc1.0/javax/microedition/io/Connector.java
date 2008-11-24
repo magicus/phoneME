@@ -137,7 +137,7 @@ public class Connector {
      */
     static {
         /* Set up the platform name */
-        platform = System.getProperty("microedition.platform");
+        platform = System.getProperty("microedition.platformimpl");
         if (platform == null) {
             platform = "j2me";
         }
