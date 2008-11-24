@@ -103,17 +103,9 @@ abstract class AutoTesterHelperBase {
     }
 
     /**
-     * Installs and performs the tests.
+     * Installs and performs the tests. 
      */    
     abstract void installAndPerformTests() 
-        throws Exception;
-
-    /**
-     * Restores the data from the last session.
-     *
-     * @return true if there was data saved from the last session
-     */    
-    abstract boolean restoreSession() 
         throws Exception;
 
     /**

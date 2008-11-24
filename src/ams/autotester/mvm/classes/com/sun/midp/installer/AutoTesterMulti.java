@@ -102,9 +102,6 @@ public final class AutoTesterMulti extends AutoTesterBase
         
         if (url != null) {
             startBackgroundTester(true);
-        } else if (helper.restoreSession()) {
-            // continuation of a previous session
-            startBackgroundTester(false);
         } else {
             /**
              * No URL has been provided, ask the user.

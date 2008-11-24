@@ -205,16 +205,6 @@ class AutoTesterHelper extends AutoTesterHelperBase
     }
 
     /**
-     * Restores the data from the last session, since this version of the
-     * autotester does not have sessions it just returns false.
-     *
-     * @return true if there was data saved from the last session
-     */
-    boolean restoreSession() {
-        return false;
-    }
-
-    /**
      * Gets ID of the current test suite.
      *
      * @return ID of the current test suite

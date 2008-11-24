@@ -113,16 +113,6 @@ final class AutoTesterMultiHelper extends AutoTesterHelperBase {
     }
 
     /**
-     * Restore the data from the last session, since this version of the
-     * autotester does not have sessions it just returns false.
-     *
-     * @return true if there was data saved from the last session
-     */
-    public boolean restoreSession() {
-        return false;
-    }
-
-    /**
      * Go to given URL, fetch and parse html page with links
      * to tests suites. If there was error while fetching
      * or parsing, display an alert.

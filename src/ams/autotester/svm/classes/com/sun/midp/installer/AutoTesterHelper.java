@@ -141,7 +141,7 @@ class AutoTesterHelper extends AutoTesterHelperBase {
      *
      * @return true if there was data saved from the last session
      */
-    public boolean restoreSession() 
+    private boolean restoreSession() 
         throws Exception {
 
         RecordStore settings = null;
