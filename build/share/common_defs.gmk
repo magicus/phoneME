@@ -1,0 +1,141 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+# JSR_239_DIR = point to the root of this workspace
+#
+######################################################################
+
+# Adds to global SUBSYSTEMS list
+#
+SUBSYSTEMS += jsr239
+
+# Javadoc source path
+JSR_239_SOURCEPATH += \
+    ${JSR_239_DIR}/src/share/classes
+
+JSR_239_PACKAGES += \
+    java.lang \
+    java.nio \
+    javax.microedition.khronos.egl \
+    javax.microedition.khronos.opengles \
+    com.sun.jsr239 \
+    com.sun.midp.demos \
+    com.sun.midp.demos.glesdemo
+
+JAVADOC_ALL_SOURCEPATH += $(JSR_239_SOURCEPATH)
+JAVADOC_ALL_PACKAGES +=  $(JSR_239_PACKAGES)
+
+GROUP_DOC_ALL += \
+        -group "JSR239 OpenGL ES Bindings" \
+	$(shell echo $(JSR_239_PACKAGES) | tr ' ' $(PATHSEP))
+
+# System and internal properties
+#
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+    $(JSR_239_DIR)/build/share/properties_jsr239.xml
+
+# Platform definitions
+#
+#ifdef PROJECT_JSR_239_DIR
+#include $(PROJECT_JSR_239_DIR)/src/config/$(TARGET_OS).gmk
+#else
+#include $(JSR_239_DIR)/src/cldc-oi/config/sample.gmk
+#endif
+
+# Java files for the ( jsr239 ) module
+#
+
+JSR_239_SHARE_JAVA_DIR = $(JSR_239_DIR)/src/share/classes
+
+# Public API classes
+#
+MODULE_JSR_239_API_JAVA_FILES = \
+    ${JSR_239_SHARE_JAVA_DIR}/java/lang/Comparable.java \
+    ${JSR_239_SHARE_JAVA_DIR}/java/nio/Buffer.java \
+    ${JSR_239_SHARE_JAVA_DIR}/java/nio/BufferOverflowException.java \
+    ${JSR_239_SHARE_JAVA_DIR}/java/nio/BufferUnderflowException.java \
+    ${JSR_239_SHARE_JAVA_DIR}/java/nio/ByteBuffer.java \
+    ${JSR_239_SHARE_JAVA_DIR}/java/nio/FloatBuffer.java \
+    ${JSR_239_SHARE_JAVA_DIR}/java/nio/IntBuffer.java \
+    ${JSR_239_SHARE_JAVA_DIR}/java/nio/ShortBuffer.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/egl/EGL.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/egl/EGL10.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/egl/EGL11.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/egl/EGLConfig.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/egl/EGLContext.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/egl/EGLDisplay.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/egl/EGLSurface.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/opengles/GL.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/opengles/GL10.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/opengles/GL10Ext.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/opengles/GL11.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/opengles/GL11Ext.java \
+    ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/opengles/GL11ExtensionPack.java
+
+ifneq ($(USE_JSR_177), true)
+# IMPL_NOTE: temporary fix: remove this class as it is also defined by JSR 177
+MODULE_JSR_239_API_JAVA_FILES += \
+    ${JSR_239_SHARE_JAVA_DIR}/java/lang/UnsupportedOperationException.java
+endif
+
+# Determines what option we have made and assigns it to the
+# variable that the global makefile recognizes.
+#
+SUBSYSTEM_JSR_239_JAVA_FILES += \
+    $(MODULE_JSR_239_API_JAVA_FILES) 
+
+# I3test files for the ( JSR239 ) subsystem
+#
+# Note that the test case classes must be named to begin with 'Test'.
+ifeq ($(USE_I3_TEST), true)
+    SUBSYSTEM_JSR_239_I3TEST_JAVA_FILES +=
+endif
+
+# Specify romizer configuration file for the jsr
+# and path where the file is located
+# Note: config file name must be unique
+#
+ROMGEN_CFG_FILES     += jsr239_rom.cfg
+
+# Create JSR 239 source in subdir 'jsr239/'
+JSR_239_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr239
+
+# For some JSR the code below is located in 
+# $(MIDP_DIR)/build/common/makefiles/SubsystemDefs.gmk
+#
+     
+JTWI_I3TEST_JAVA_FILES += $(SUBSYSTEM_JSR_239_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES      += $(SUBSYSTEM_JSR_239_NATIVE_FILES)
+EXTRA_INCLUDES         += $(SUBSYSTEM_JSR_239_EXTRA_INCLUDES)
+
