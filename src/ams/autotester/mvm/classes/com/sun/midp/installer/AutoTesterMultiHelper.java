@@ -74,7 +74,11 @@ final class AutoTesterMultiHelper extends AutoTesterHelperBase {
      *
      * @param inp_autoTester AutoTesterMulti instance
      */
-    AutoTesterMultiHelper(AutoTesterMulti inp_autoTester) {
+    AutoTesterMultiHelper(AutoTesterMulti inp_autoTester, 
+            String inp_url, String inp_domain, int inp_count) {
+
+        super(inp_url, inp_domain, inp_count);
+
         autoTester = inp_autoTester;
         installList = new Vector();
     }

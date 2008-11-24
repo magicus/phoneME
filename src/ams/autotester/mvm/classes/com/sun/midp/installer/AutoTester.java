@@ -68,7 +68,6 @@ import com.sun.midp.events.*;
 public final class AutoTester extends AutoTesterBase 
     implements Runnable {
 
-    /** AutoTesterHelper instance */
     private AutoTesterHelper helper;
 
     /**
@@ -76,8 +75,6 @@ public final class AutoTester extends AutoTesterBase
      */
     public AutoTester() {
         super();
-
-        helper = new AutoTesterHelper();
 
         if (url != null) {
             startBackgroundTester();
@@ -111,7 +108,7 @@ public final class AutoTester extends AutoTesterBase
      * Starts the background tester.
      */
     void startBackgroundTester() {
-        helper.setTestRunParams(url, domain, loopCount);
+        helper = new AutoTesterHelper(url, domain, loopCount);
         new Thread(this).start();
     }
 }

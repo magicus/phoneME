@@ -64,29 +64,21 @@ abstract class AutoTesterHelperBase {
 
     /**
      * Constructor.
-     */
-    protected AutoTesterHelperBase() {
-        midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
-        installer = new HttpInstaller();
-
-        url = null;
-        domain = null;
-    }
-
-    /**
-     * Sets auto testing parameters.
      *
      * @param inp_url URL of the test suite
      * @param inp_domain security domain to assign to unsigned suites
      * @param inp_count how many iterations to run the suite
      */
-    void setTestRunParams(String inp_url, String inp_domain, 
+    protected AutoTesterHelperBase(String inp_url, String inp_domain, 
             int inp_count) {
+
+        midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
+        installer = new HttpInstaller();
 
         url = inp_url;
         domain = inp_domain;
-        loopCount = inp_count;       
-
+        loopCount = inp_count; 
+        
         if (domain != null) {
             String additionalPermissions = null;
             int index = domain.indexOf(":");
@@ -99,7 +91,7 @@ abstract class AutoTesterHelperBase {
 
             installer.setUnsignedSecurityDomain(domain);
             installer.setExtraPermissions(additionalPermissions);
-        }
+        }        
     }
 
     /**

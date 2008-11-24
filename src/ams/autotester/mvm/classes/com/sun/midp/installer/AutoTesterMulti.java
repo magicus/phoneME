@@ -98,8 +98,6 @@ public final class AutoTesterMulti extends AutoTesterBase
     public AutoTesterMulti() {
         super();
 
-        helper = new AutoTesterMultiHelper(this);
-        
         if (url != null) {
             startBackgroundTester();
         } else {
@@ -125,7 +123,7 @@ public final class AutoTesterMulti extends AutoTesterBase
      * Starts the background tester.
      */
     void startBackgroundTester() {
-        helper.setTestRunParams(url, domain, loopCount);
+        helper = new AutoTesterMultiHelper(this, url, domain, loopCount);       
         new Thread(this).start();
     }   
 
