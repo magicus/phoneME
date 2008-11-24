@@ -76,29 +76,27 @@ public class AutoTester extends AutoTesterBase
     /** AutoTesterHelper instance */
     private AutoTesterHelper helper;
 
-    /** Indicates if session has been restored */
-    private boolean sessionRestored = false;
-
     /**
      * Create and initialize a new auto tester MIDlet.
      */
     public AutoTester() {
         super();
 
-        helper = new AutoTesterHelper(this);       
+        helper = null;
 
         if (url != null) {
             startBackgroundTester();
         } else {
             try {
-                sessionRestored = helper.restoreSession();
+                helper = AutoTesterHelper.restoreSession(
+                        this.getClass().getName());
             } catch (Exception ex) {
                 String title = Resource.getString(ResourceConstants.EXCEPTION);
                 String message = ex.toString();
                 displayError(title, message);
             }
             
-            if (sessionRestored) {
+            if (helper != null) {
                 // continuation of a previous session
                 startBackgroundTester();
             } else {
@@ -132,8 +130,9 @@ public class AutoTester extends AutoTesterBase
      * Starts the background tester.
      */
     void startBackgroundTester() {
-        if (!sessionRestored) {
-            helper.setTestRunParams(url, domain, loopCount);
+        if (helper == null) {
+            helper = new AutoTesterHelper(this.getClass().getName(), 
+                    url, domain, loopCount);
         }
         new Thread(this).start();
     }
