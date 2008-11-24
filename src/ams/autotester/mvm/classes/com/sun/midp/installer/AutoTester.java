@@ -65,7 +65,9 @@ import com.sun.midp.events.*;
  * If arg-0 is not given then a form will be used to query the tester for
  * the arguments.</p>
  */
-public final class AutoTester extends AutoTesterBase {
+public final class AutoTester extends AutoTesterBase 
+    implements Runnable {
+
     /** AutoTesterHelper instance */
     private AutoTesterHelper helper;
 
@@ -109,10 +111,16 @@ public final class AutoTester extends AutoTesterBase {
     }
 
     /**
-     * Gets AutoTesterHelperBase instance.
-     * @return AutoTesterHelperBase instance. 
+     * Starts the background tester.
+     *
+     * @param setTestRunParams true if we need to set auto testing parameters
+     * before starting background tester, false otherwise (this means that
+     * auto tester session has been restored from previous run)
      */
-    AutoTesterHelperBase getHelper() {
-        return helper;
+    void startBackgroundTester(boolean setTestRunParams) {
+        if (setTestRunParams) {
+            helper.setTestRunParams(url, domain, loopCount);
+        }
+        new Thread(this).start();
     }
 }

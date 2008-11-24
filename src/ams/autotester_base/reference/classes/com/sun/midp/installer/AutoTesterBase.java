@@ -49,7 +49,7 @@ import com.sun.midp.log.LogChannels;
  * Base class for AutoTester MIDlet.
  */
 abstract class AutoTesterBase extends MIDlet 
-    implements CommandListener, Runnable {
+    implements CommandListener {
 
     /** Standard timeout for alerts. */
     private static final int ALERT_TIMEOUT = 5000;
@@ -59,6 +59,12 @@ abstract class AutoTesterBase extends MIDlet
 
     /** URL of the test suite. */
     protected String url;    
+
+    /** Security domain to assign to unsigned suites. */
+    protected String domain = Permissions.getUnsignedDomain();
+
+    /** How many iterations to run the suite */
+    protected int loopCount = -1;    
 
     /** Display for this MIDlet. */
     protected Display display;
@@ -80,12 +86,6 @@ abstract class AutoTesterBase extends MIDlet
     private Command testCmd =
         new Command(Resource.getString(ResourceConstants.GO),
                     Command.SCREEN, 1);
-
-    /** Security domain to assign to unsigned suites. */
-    private String domain = Permissions.getUnsignedDomain();
-
-    /** How many iterations to run the suite */
-    private int loopCount = -1;
 
     /**
      * Create and initialize a new auto tester MIDlet.
@@ -164,17 +164,14 @@ abstract class AutoTesterBase extends MIDlet
     }
 
     /**
-     * Runnable interface implementation. 
-     * Installs and performs tests in new thread.
-     */
-    abstract public void run();
-
-    /**
-     * Gets AutoTesterHelperBase instance.
+     * Start the background tester.
      *
-     * @return AutoTesterHelperBase instance. 
+     * @param setTestRunParams true, if we need to set auto testing parameters
+     * before starting background tester, false otherwise (this means that
+     * auto tester session has been restored from previous run)
      */
-    abstract AutoTesterHelperBase getHelper();
+    abstract void startBackgroundTester(boolean setTestRunParams);
+    
 
     /**
      * Ask the user for the URL.
@@ -239,21 +236,6 @@ abstract class AutoTesterBase extends MIDlet
         }
 
         startBackgroundTester(true);
-    }
-
-    /**
-     * Start the background tester.
-     *
-     * @param setTestRunParams true if we need to set auto testing parameters
-     * before starting background tester, false otherwise (this means that
-     * auto tester session has been restored from previous run)
-     */
-    protected void startBackgroundTester(boolean setTestRunParams) {
-        if (setTestRunParams) {
-            AutoTesterHelperBase helper = getHelper();
-            helper.setTestRunParams(url, domain, loopCount);
-        }
-        new Thread(this).start();
     }
 
     /**
