@@ -1,0 +1,380 @@
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<!--
+ @(#)package.html	1.37 06/10/25
+
+Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+-->
+
+<html>
+  <head>
+    <title>Generic Connection Framework for J2ME CDC/Foundation Profile</title>
+    <!-- Changed on 17-Jan-2005 -->
+  </head>
+  <body bgcolor="white">
+
+Provides a simplified mechanism for applications to use various types of I/O 
+protocols in resource-constrained environments.  I/O is performed by means of 
+Connections obtained through the Connector factory class.  Connections are 
+dynamically created based on URIs of the form: <code> {scheme}:[{target}][{params}] </code> Please see the Connector class for more information.
+
+    <H2>Protocol Support (CDC)</H2>
+    <a name="Protocol_Support"></a>
+      The following connection protocols must be supported for CDC:
+    </p>
+    <ul>
+      <li>File - as defined by the J2ME CDC java.io.File* specifications
+	and the Generic Connection Framework "file:" protocol (see below) </li>
+      <li> Datagram Socket - as defined by the J2ME CDC
+	java.net.DatagramSocket specification and Generic Connection Framework
+	"datagram:" (see below) </li>
+      <li> Supports the following javax.microedition.io.Connector
+	protocols: <br>
+	"file:" and "datagram:" (see below for more information on format)
+	<p></p>
+
+	<pre>The Generic Connection Framework of J2ME CDC must behave as defined<br>below for the following protocols:
+
+1. File URLs as defined by RFC 1738
+(<a
+ href="http://www.w3.org/Addressing/rfc1738.txt">http://www.w3.org/Addressing/rfc1738.txt</a>) of the form "file://{path}" must return an object that 
+implements either javax.microedition.io.InputConnection (for "read"
+mode), javax.microedition.io.OutputConnection (for "write" mode) or
+javax.microedition.io.StreamConnection (for "read/write" mode). At least the
+"read" mode must be supported by the implementation.
+
+2. Datagram Socket as defined by
+javax.microedition.io.UDPDatagramConnection with the format
+"datagram://[{host}]:{port}" must return an object with behavior that
+follows the javax.microedition.io.UDPDatagramConnection interface
+specification which extends the javax.microedition.io.DatagramConnection
+interface.
+
+3. Communication Port 
+The implementation of the GCF CommConnection interface is optional, 
+as it has a dependency on a serial connection of the device and it
+is up to the device manufacturer whether to include it or not. 
+</pre>
+      </li>
+    </ul>
+    <br>
+    For the protocols above, the <code>{host}</code> parameter can either 
+    be a machine name, such as "www.jcp.org", or a string representing 
+    its IP address, such as "206.26.48.100".
+    <br>
+    <p>
+
+    <H2>Protocol Support (CDC/Foundation Profile)</H2>
+    <a name="Protocol_Support_FP"></a>
+<p> The following connection protocols must be supported for CDC/Foundation Profile (only when Foundation Profile is present): </p>
+ 
+<ul>
+   <li> All protocols as defined by the J2ME CDC Specification </li>
+   <li> Socket - as defined by the J2ME Foundation Profile java.net.Socket
+specification and Generic Connection Framework "socket:" (see below) </li>
+   <li>HTTP - Hypertext Transfer Protocol as defined by the J2ME Foundation
+Profile java.net.URLConnection for HTTP specification and Generic Connection
+Framework: "http:" (see below) </li>
+   <li>Supports the following javax.microedition.io.Connector protocols: 
+   <br>
+ From CDC: "file:" and "datagram:" (see CDC Overview for more information
+on format) <br>
+ "socket:" and "http:" (see below for more information on format)     
+    <p></p>
+     
+    <pre>The Generic Connection Framework of J2ME Foundation Profile must behave<br>as defined below for the following protocols:
+
+1. All protocols as defined by the J2ME CDC specification regarding the<br>Generic Connection Framework.
+
+2.  TCP/IP Client Socket. URIs of the form <code>"socket://{host}:{port}"</code> must 
+return an object with behavior that follows the 
+<code>javax.microedition.io.StreamConnection</code> interface specification. 
+The streams provided by this connection are functionally equivalent 
+to the streams provided by the <code>java.net.Socket</code> class when the 
+<code>Socket(String, int)</code> constructor is used and no socket options are set. 
+
+TCP/IP Server Socket. URIs of the form <code>"socket:// | socket://:{port}"</code> 
+must return an object with behavior that follows the 
+<code>javax.microedition.io.StreamConnectionNotifier</code> interface specification. 
+The streams provided by this connection are functionally equivalent to 
+the streams provided by the <code>java.net.Socket</code> class returned by the 
+<code>java.net.ServerSocket.accept()</code> method when the ServerSocket(int) 
+constructor is used to create the ServerSocket instance.
+
+3. HTTP as defined by the Mobile Information Device Profile (MIDP)<br>javax.microedition.io.HttpConnection interface with the format<br>that follows the MIDP javax.microedition.io.HttpConnection URL<br>specification and must return an object with behavior that follows<br>the javax.microedition.io.HttpConnection interface specification.<br></pre>
+   </li>
+ 
+</ul>
+ 
+<p>
+The implementation of the following MIDP interfaces are optional, as they
+have a dependency on SSL protocol.
+<br>
+ </p>
+<ul>
+  <li>SecureConnection</li>
+  <li>HttpsConnection</li>
+</ul>
+<p>
+If either one or the other of SecureConnection or HttpsConnection
+is implemented, or if the Java Secure Socket Extension (JSSE) part
+of the J2ME Security Optional Package is present, both of these
+two specific interfaces (SecureConnection and HttpsConnection) must
+be implemented as well.
+<br>
+ </p>
+
+<br>
+For the protocols above, the <code>{host}</code> parameter can either be a machine name, such as "www.jcp.org", or a string representing its IP address, such as "206.26.48.100".
+<br>
+<p>
+
+
+    <a name="Security"><H2>Generic Connection Framework (GCF) Security Checks (for CDC)</H2>
+    </a>
+
+Access to connections of the required protocol types via the methods of <code>javax.microedition.io.Connector</code> is governed by certain <code>java.lang.SecurityManager</code> checks, as described below for CDC:
+<p>
+<table cellpadding="2" cellspacing="0" border="1"
+ style="text-align: left; width: 100%;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><b>Protocol</b></td>
+      <td style="vertical-align: top;"><b>URI Form</b></td>
+
+      <td style="vertical-align: top;"><b>Security Check</b></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">File I/O</td>
+      <td style="vertical-align: top;"><code>file://{path}</code> (reading)<br><br><code>file://{path}</code> (writing)</td>
+
+      <td style="vertical-align: top;"><code>checkRead({path})</code><br><br><code>checkWrite({path})</code></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Datagram Socket</td>
+      <td style="vertical-align: top;"><code>datagram://{host}:{port}</code><br><br><code>datagram://:{port}</code></td>
+      <td style="vertical-align: top;"><code>checkListen(0)</code><br><br><code>checkListen({port})</code></td>
+
+    </tr>
+  </tbody>
+</table>
+
+<br>
+<p>
+The methods <code>javax.microedition.io.InputConnection.openDataInputStream()</code> and <code>javax.microedition.io.InputConnection.openInputStream()</code> result in security checks, as described below:
+<p>
+<table cellpadding="2" cellspacing="0" border="1"
+ style="text-align: left; width: 100%;">
+
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><b>Protocol</b></td>
+      <td style="vertical-align: top;"><b>URI Form</b></td>
+      <td style="vertical-align: top;"><b>Security Check</b></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">File Input</td>
+
+      <td style="vertical-align: top;"><code>file://{path}</code></td>
+      <td style="vertical-align: top;"><code>checkRead({path})</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<br>
+<p>
+The methods <code>javax.microedition.io.OutputConnection.openDataOutputStream()</code> and <code>javax.microedition.io.OutputConnection.openOutputStream()</code> result in security checks, as described below:
+
+<p>
+<table cellpadding="2" cellspacing="0" border="1"
+ style="text-align: left; width: 100%;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><b>Protocol</b></td>
+      <td style="vertical-align: top;"><b>URI Form</b></td>
+      <td style="vertical-align: top;"><b>Security Check</b></td>
+    </tr>
+    <tr>
+
+      <td style="vertical-align: top;">File Output</td>
+      <td style="vertical-align: top;"><code>file://{path}</code></td>
+      <td style="vertical-align: top;"><code>checkWrite({path})</code></td>
+    </tr>
+  </tbody>
+</table>
+<P>
+</p>
+<p></p>
+<font size="-1"></font>
+<br>
+<p>    
+
+    <a name="Security_FP"><H2>Generic Connection Framework (GCF) Security Checks (for CDC/Foundation Profile)</H2>
+    </a>
+
+Access to connections of the required protocol types via the methods of <code>javax.microedition.io.Connector</code> is governed by certain <code>java.lang.SecurityManager</code> checks, as described below for CDC/Foundation Profile (only when Foundation Profile is present):
+<p>
+<table cellpadding="2" cellspacing="0" border="1"
+ style="text-align: left; width: 100%;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><b>Protocol</b></td>
+      <td style="vertical-align: top;"><b>URI Form</b></td>
+
+      <td style="vertical-align: top;"><b>Security Check</b></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">TCP/IP Client Socket</td>
+      <td style="vertical-align: top;"><code>socket://{host}:{port}</code></td>
+      <td style="vertical-align: top;"><code>checkConnect({host}, {port})</code></td>
+    </tr>
+
+    <tr>
+      <td style="vertical-align: top;">TCP/IP Server Socket</td>
+      <td style="vertical-align: top;"><code>socket://:{port}</code></td>
+      <td style="vertical-align: top;"><code>checkListen({port})</code></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">HTTP 1.1</td>
+
+      <td style="vertical-align: top;"><code>http://{host}[{path}]</code><br><br><code>http://{host}:{port}[{path}]</code></td>
+      <td style="vertical-align: top;"><code>checkConnect({host}, 80)</code><br><br><code>checkConnect({host}, {port})</code></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">HTTPS</td>
+
+      <td style="vertical-align: top;"><code>https://{host}[{path}]</code><br><br><code>http://{host}:{port}[{path}]</code></td>
+      <td style="vertical-align: top;"><code>checkConnect({host}, 443)</code><br><br><code>checkConnect({host}, {port})</code></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Secure Socket</td>
+      <td style="vertical-align: top;"><code>ssl://{host}:{port}</code></td>
+      <td style="vertical-align: top;"><code>checkConnect({host}, {port})</code></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">File I/O</td>
+      <td style="vertical-align: top;"><code>file://{path}</code> (reading)<br><br><code>file://{path}</code> (writing)</td>
+
+      <td style="vertical-align: top;"><code>checkRead({path})</code><br><br><code>checkWrite({path})</code></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Datagram Socket</td>
+      <td style="vertical-align: top;"><code>datagram://{host}:{port}</code><br><br><code>datagram://:{port}</code></td>
+      <td style="vertical-align: top;"><code>checkListen(0)</code><br><br><code>checkListen({port})</code></td>
+
+    </tr>
+  </tbody>
+</table>
+
+<br>
+<p>
+The methods <code>javax.microedition.io.InputConnection.openDataInputStream()</code> and <code>javax.microedition.io.InputConnection.openInputStream()</code> result in security checks, as described below:
+<p>
+<table cellpadding="2" cellspacing="0" border="1"
+ style="text-align: left; width: 100%;">
+
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><b>Protocol</b></td>
+      <td style="vertical-align: top;"><b>URI Form</b></td>
+      <td style="vertical-align: top;"><b>Security Check</b></td>
+    </tr>
+    <tr>
+
+      <td style="vertical-align: top;">HTTP 1.1</td>
+      <td style="vertical-align: top;"><code>http://{host}[{path}]</code><br><br><code>http://{host}:{port}[{path}]</code></td>
+      <td style="vertical-align: top;"><code>checkConnect({host}, 80)</code><br><br><code>checkConnect({host}, {port})</code></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">HTTPS</td>
+
+      <td style="vertical-align: top;"><code>https://{host}[{path}]</code><br><br><code>http://{host}:{port}[{path}]</code></td>
+      <td style="vertical-align: top;"><code>checkConnect({host}, 443)</code><br><br><code>checkConnect({host}, {port})</code></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Secure Socket</td>
+      <td style="vertical-align: top;"><code>ssl://{host}:{port}</code></td>
+      <td style="vertical-align: top;"><code>checkConnect({host}, {port})</code></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">File Input</td>
+
+      <td style="vertical-align: top;"><code>file://{path}</code></td>
+      <td style="vertical-align: top;"><code>checkRead({path})</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<br>
+<p>
+The methods <code>javax.microedition.io.OutputConnection.openDataOutputStream()</code> and <code>javax.microedition.io.OutputConnection.openOutputStream()</code> result in security checks, as described below:
+
+<p>
+<table cellpadding="2" cellspacing="0" border="1"
+ style="text-align: left; width: 100%;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><b>Protocol</b></td>
+      <td style="vertical-align: top;"><b>URI Form</b></td>
+      <td style="vertical-align: top;"><b>Security Check</b></td>
+    </tr>
+
+    <tr>
+      <td style="vertical-align: top;">HTTP 1.1</td>
+      <td style="vertical-align: top;"><code>http://{host}[{path}]</code><br><br><code>http://{host}:{port}[{path}]</code></td>
+      <td style="vertical-align: top;"><code>checkConnect({host}, 80)</code><br><br><code>checkConnect({host}, {port})</code></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">HTTPS</td>
+
+      <td style="vertical-align: top;"><code>https://{host}[{path}]</code><br><br><code>http://{host}:{port}[{path}]</code></td>
+      <td style="vertical-align: top;"><code>checkConnect({host}, 443)</code><br><br><code>checkConnect({host}, {port})</code></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Secure Socket</td>
+      <td style="vertical-align: top;"><code>ssl://{host}:{port}</code></td>
+      <td style="vertical-align: top;"><code>checkConnect({host}, {port})</code></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">File Output</td>
+      <td style="vertical-align: top;"><code>file://{path}</code></td>
+      <td style="vertical-align: top;"><code>checkWrite({path})</code></td>
+    </tr>
+  </tbody>
+</table>
+<P>
+<br>
+ 
+<p></p>
+ <font size="-1"> </font> <br>
+<br>
+<p>
+
+    <H2>StreamConnection Behavior</H2>
+    
+    <P>
+      Opening a <code>DataInputStream</code> counts as opening an
+      <code>InputStream</code> and opening a
+      <code>DataOutputStream</code> counts as opening an
+      <code>OutputStream</code>. 
+      
+      In Foundation Profile, multiple streams may be opened by one
+      <code>StreamConnection</code>.  Trying to open another 
+      <code>InputStream</code> or another <code>OutputStream</code> 
+      from a <code>StreamConnection</code> must not cause any exception.
+      
+      Trying to open  <code>InputStream</code> or 
+      <code>OutputStream</code> after they have been closed
+      causes an <CODE>IOException</CODE>.
+    </P>
+    
+    <P>After calling the <code>close</code> method, regardless of open
+      streams, further method calls to connection will result in
+      <code>IOExceptions</code> for those methods that are declared to
+      throw <code>IOExceptions</code>. 
+      For the methods that do not throw exceptions, unknown
+      results may be returned.
+    </P>
+
+  </body>
+</html>
+
