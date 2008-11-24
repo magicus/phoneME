@@ -101,7 +101,7 @@ public final class AutoTesterMulti extends AutoTesterBase
         helper = new AutoTesterMultiHelper(this);
         
         if (url != null) {
-            startBackgroundTester(true);
+            startBackgroundTester();
         } else {
             /**
              * No URL has been provided, ask the user.
@@ -123,15 +123,9 @@ public final class AutoTesterMulti extends AutoTesterBase
 
     /**
      * Starts the background tester.
-     *
-     * @param setTestRunParams true if we need to set auto testing parameters
-     * before starting background tester, false otherwise (this means that
-     * auto tester session has been restored from previous run)
      */
-    void startBackgroundTester(boolean setTestRunParams) {
-        if (setTestRunParams) {
-            helper.setTestRunParams(url, domain, loopCount);
-        }
+    void startBackgroundTester() {
+        helper.setTestRunParams(url, domain, loopCount);
         new Thread(this).start();
     }   
 

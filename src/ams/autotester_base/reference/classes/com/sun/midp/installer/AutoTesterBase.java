@@ -165,12 +165,8 @@ abstract class AutoTesterBase extends MIDlet
 
     /**
      * Start the background tester.
-     *
-     * @param setTestRunParams true, if we need to set auto testing parameters
-     * before starting background tester, false otherwise (this means that
-     * auto tester session has been restored from previous run)
      */
-    abstract void startBackgroundTester(boolean setTestRunParams);
+    abstract void startBackgroundTester();
     
 
     /**
@@ -235,7 +231,7 @@ abstract class AutoTesterBase extends MIDlet
             return;
         }
 
-        startBackgroundTester(true);
+        startBackgroundTester();
     }
 
     /**

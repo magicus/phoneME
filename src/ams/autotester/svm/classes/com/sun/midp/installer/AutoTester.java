@@ -76,6 +76,9 @@ public class AutoTester extends AutoTesterBase
     /** AutoTesterHelper instance */
     private AutoTesterHelper helper;
 
+    /** Indicates if session has been restored */
+    private boolean sessionRestored = false;
+
     /**
      * Create and initialize a new auto tester MIDlet.
      */
@@ -85,9 +88,8 @@ public class AutoTester extends AutoTesterBase
         helper = new AutoTesterHelper(this);       
 
         if (url != null) {
-            startBackgroundTester(true);
+            startBackgroundTester();
         } else {
-            boolean sessionRestored = false;
             try {
                 sessionRestored = helper.restoreSession();
             } catch (Exception ex) {
@@ -98,7 +100,7 @@ public class AutoTester extends AutoTesterBase
             
             if (sessionRestored) {
                 // continuation of a previous session
-                startBackgroundTester(false);
+                startBackgroundTester();
             } else {
                 /**
                  * No URL has been provided, ask the user.
@@ -128,13 +130,9 @@ public class AutoTester extends AutoTesterBase
 
     /**
      * Starts the background tester.
-     *
-     * @param setTestRunParams true if we need to set auto testing parameters
-     * before starting background tester, false otherwise (this means that
-     * auto tester session has been restored from previous run)
      */
-    void startBackgroundTester(boolean setTestRunParams) {
-        if (setTestRunParams) {
+    void startBackgroundTester() {
+        if (!sessionRestored) {
             helper.setTestRunParams(url, domain, loopCount);
         }
         new Thread(this).start();
