@@ -73,6 +73,14 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
     suitestore_otanotifier_kni.c \
     suitestore_verify_hash.c
 
+ifeq ($(TARGET_OS), javacall)
+vpath % $(INTERNAL_API_DIR)/reference/native/javacall
+else
+vpath % $(INTERNAL_API_DIR)/reference/native/default
+endif
+
+SUBSYSTEM_AMS_NATIVE_FILES+=platform_install_notifier.c
+
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
     -I$(INTERNAL_API_DIR)/include \
     -I$(INTERNAL_API_DIR)/reference/native

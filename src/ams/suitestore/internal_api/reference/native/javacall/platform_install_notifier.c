@@ -1,7 +1,7 @@
 #include <kni.h>
 #include <javacall_lifecycle.h>
 
-void platform_lifecycle_install(
+void platform_lifecycle_install_notify(
      jchar *midletName,
      jsize midletNameLen,
      jchar *className,
@@ -23,7 +23,7 @@ void platform_lifecycle_install(
 
 
 
-void platform_uninstall_notify(int suiteId) {
+void platform_lifecycle_uninstall_notify(int suiteId) {
         javacall_lifecycle_uninstall(
             suiteId
         );

@@ -1141,7 +1141,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_remove0) {
     }
 
     if (ALL_OK == status) {
-        native_lifecycle_uninstall_notify(suiteId);
+        platform_lifecycle_uninstall_notify(suiteId);
     }
 
     KNI_ReturnVoid();
@@ -1611,7 +1611,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
     if (status == ALL_OK) {
         int suiteID = (int) suiteData.suiteId;
         
-        platform_install_notify(
+        platform_lifecycle_install_notify(
             suiteData.varSuiteData.displayName.data, // Display name
             suiteData.varSuiteData.displayName.length, 
             suiteData.varSuiteData.midletClassName.data, // Main class name
