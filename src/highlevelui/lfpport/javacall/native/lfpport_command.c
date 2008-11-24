@@ -139,7 +139,6 @@ void menuitem_activate(GtkWidget *widget, gpointer data){
  */
 MidpError cmdmanager_set_commands(MidpFrame* cmPtr,
 				  MidpCommand* cmds, int numCmds){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     GtkMainWindow* gtkMainWindow;
     GtkForm *form;
     GtkWidget *gtkSoftKeyBar;
@@ -151,8 +150,12 @@ MidpError cmdmanager_set_commands(MidpFrame* cmPtr,
     int i;
     int label_len;
 
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     gtkMainWindow = (GtkMainWindow* )cmPtr->widgetPtr;
     form = gtk_main_window_get_current_form(main_window);
+    if (form == NULL) {
+        return KNI_OK;
+    }
     gtkSoftKeyBar = form->softkeybar;
 
     if (numCmds <= 0) {
