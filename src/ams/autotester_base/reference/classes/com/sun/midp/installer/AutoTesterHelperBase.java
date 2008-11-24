@@ -39,20 +39,33 @@ import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 import com.sun.midp.security.Permissions;
 
+/**
+ * This class and its subclasses implement actual auto testing
+ * functionality. We need subclasses because there is a difference 
+ * between how auto testing works in SVM and MVM modes. 
+ * This difference is expressed in how abstract methods of 
+ * AutoTesterHelperBase are implemented in its subclasses.
+ */
 abstract class AutoTesterHelperBase {
     /** MIDlet suite storage object. */
     protected MIDletSuiteStorage midletSuiteStorage;
+
     /** The installer. */
     protected Installer installer;
 
     /** URL of the test suite. */
     protected String url;
+
     /** Security domain to assign to unsigned suites. */
     protected String domain;
+
     /** How many iterations to run the suite */
     protected int loopCount = -1;
 
-    AutoTesterHelperBase() {
+    /**
+     * Constructor.
+     */
+    protected AutoTesterHelperBase() {
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
         installer = new HttpInstaller();
 
@@ -60,6 +73,13 @@ abstract class AutoTesterHelperBase {
         domain = null;
     }
 
+    /**
+     * Sets auto testing parameters.
+     *
+     * @param inp_url URL of the test suite
+     * @param inp_domain security domain to assign to unsigned suites
+     * @param inp_count how many iterations to run the suite
+     */
     void setTestRunParams(String inp_url, String inp_domain, 
             int inp_count) {
 
@@ -82,9 +102,17 @@ abstract class AutoTesterHelperBase {
         }
     }
 
+    /**
+     * Installs and performs the tests.
+     */    
     abstract void installAndPerformTests() 
         throws Exception;
 
+    /**
+     * Restores the data from the last session.
+     *
+     * @return true if there was data saved from the last session
+     */    
     abstract boolean restoreSession() 
         throws Exception;
 
@@ -120,7 +148,17 @@ abstract class AutoTesterHelperBase {
         return new MIDletInfo(name);
     }
 
-    protected String getInstallerExceptionMessage(int suiteId, Throwable ex) {
+   
+    /**
+     * Returns the associated message for the given installer exception.
+     *
+     * @param suiteId ID of the MIDlet Suite that caused exception
+     * @param ex exception instance
+     * @return associated message for given installer exception.
+     */
+    protected static String getInstallerExceptionMessage(int suiteId, 
+            Throwable ex) {
+
         String message = null;
 
         if (ex instanceof InvalidJadException) {

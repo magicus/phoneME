@@ -87,6 +87,7 @@ import com.sun.midp.log.LogChannels;
  * the arguments.</p>
  */
 public final class AutoTesterMulti extends AutoTesterBase {
+    /** AutoTesterMultiHelper instance */
     private AutoTesterMultiHelper helper;
 
     /**
@@ -112,16 +113,30 @@ public final class AutoTesterMulti extends AutoTesterBase {
         }
     }
 
-    /** Run the installer. */
+    /** 
+     * Runs the installer. 
+     */
     public void run() {
         helper.installAndPerformTests();
         notifyDestroyed();        
     }
 
+
+    /**
+     * Gets AutoTesterHelperBase instance.
+     *
+     * @return AutoTesterHelperBase instance. 
+     */    
     AutoTesterHelperBase getHelper() {
         return helper;
     }
 
+    /**
+     * Displays message about error that happened during 
+     * fetching list of suites to run.
+     *
+     * @param message message to display
+     */
     void displayFetchInstallListError(String message) {
         Alert a = new Alert(Resource.getString(ResourceConstants.ERROR),
                 message, null, AlertType.ERROR);

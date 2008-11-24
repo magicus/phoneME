@@ -46,32 +46,19 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 /**
- * Installs/Updates a test suite, runs the first MIDlet in the suite in a loop
- * until the new version of the suite is not found, then removes the suite.
- * <p>
- * The MIDlet uses these application properties as arguments: </p>
- * <ol>
- *   <li>arg-0: URL for the test suite
- *   <li>arg-1: Used to override the default domain used when installing
- *    an unsigned suite. The default is maximum to allow the runtime API tests
- *    be performed automatically without tester interaction. The domain name
- *    may be followed by a colon and a list of permissions that must be allowed
- *    even if they are not listed in the MIDlet-Permissions attribute in the
- *    application descriptor file. Instead of the list a keyword "all" can be
- *    specified indicating that all permissions must be allowed, for example:
- *    operator:all.
- * </ol>
- * <p>
- * If arg-0 is not given then a form will be used to query the tester for
- * the arguments.</p>
+ * Base class for AutoTester MIDlet.
  */
-abstract class AutoTesterBase extends MIDlet implements CommandListener,
-    Runnable {
+abstract class AutoTesterBase extends MIDlet 
+    implements CommandListener, Runnable {
 
     /** Standard timeout for alerts. */
     private static final int ALERT_TIMEOUT = 5000;
+
     /** Contains the default URL. */
     private static final String defaultUrl = "http://";
+
+    /** URL of the test suite. */
+    protected String url;    
 
     /** Display for this MIDlet. */
     protected Display display;
@@ -93,9 +80,6 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
     private Command testCmd =
         new Command(Resource.getString(ResourceConstants.GO),
                     Command.SCREEN, 1);
-
-    /** URL of the test suite. */
-    protected String url;
 
     /** Security domain to assign to unsigned suites. */
     private String domain = Permissions.getUnsignedDomain();
@@ -179,7 +163,17 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
         }
     }
 
+    /**
+     * Runnable interface implementation. 
+     * Installs and performs tests in new thread.
+     */
     abstract public void run();
+
+    /**
+     * Gets AutoTesterHelperBase instance.
+     *
+     * @return AutoTesterHelperBase instance. 
+     */
     abstract AutoTesterHelperBase getHelper();
 
     /**
@@ -249,8 +243,12 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
 
     /**
      * Start the background tester.
+     *
+     * @param setTestRunParams true if we need to set auto testing parameters
+     * before starting background tester, false otherwise (this means that
+     * auto tester session has been restored from previous run)
      */
-    void startBackgroundTester(boolean setTestRunParams) {
+    protected void startBackgroundTester(boolean setTestRunParams) {
         if (setTestRunParams) {
             AutoTesterHelperBase helper = getHelper();
             helper.setTestRunParams(url, domain, loopCount);
@@ -259,7 +257,7 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
     }
 
     /**
-     * Handles an installer exceptions.
+     * Displays an installer error.
      *
      * @param message error message
      */
@@ -285,7 +283,7 @@ abstract class AutoTesterBase extends MIDlet implements CommandListener,
     }
 
     /**
-     * Display an exception to the user, with a done command.
+     * Display generic error to the user, with a done command.
      *
      * @param title exception form's title
      * @param message exception message

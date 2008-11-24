@@ -44,6 +44,9 @@ import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.events.*;
 
+/**
+ * Implements auto testing functionality for MVM mode.
+ */
 class AutoTesterHelper extends AutoTesterHelperBase 
     implements EventListener {
 
@@ -58,10 +61,6 @@ class AutoTesterHelper extends AutoTesterHelperBase
 
     /**
      * Constructor.
-     *
-     * @param inp_url URL of the test suite
-     * @param inp_domain security domain
-     * @param inp_count test loop count 
      */
     AutoTesterHelper() {
         super();
@@ -71,10 +70,46 @@ class AutoTesterHelper extends AutoTesterHelperBase
     }
 
     /**
+     * Preprocess an event that is being posted to the event queue.
+     * This method will get called in the thread that posted the event.
+     *
+     * @param event event being posted
+     *
+     * @param waitingEvent previous event of this type waiting in the
+     *     queue to be processed
+     *
+     * @return true to allow the post to continue, false to not post the
+     *     event to the queue
+     */
+    public boolean preprocess(Event event, Event waitingEvent) {
+        return true;
+    }
+
+    /**
+     * Process an event.
+     * This method will get called in the event queue processing thread.
+     *
+     * @param event event to process
+     */
+    public void process(Event event) {
+        NativeEvent nativeEvent = (NativeEvent)event;
+
+        switch (nativeEvent.getType()) {
+            case EventTypes.AUTOTESTER_EVENT: {
+                synchronized (this) {
+                    eventsInQueueProcessed = true;
+                    notify();
+                }
+                break;
+            }
+        }
+    }    
+
+    /**
      * Installs and performs the tests.
      */
     void installAndPerformTests() 
-        throws IOException, MIDletSuiteLockedException {
+        throws Exception {
 
         for (; loopCount != 0; ) {
             // force an overwrite and remove the RMS data
@@ -170,7 +205,7 @@ class AutoTesterHelper extends AutoTesterHelperBase
     }
 
     /**
-     * Restore the data from the last session, since this version of the
+     * Restores the data from the last session, since this version of the
      * autotester does not have sessions it just returns false.
      *
      * @return true if there was data saved from the last session
@@ -179,44 +214,12 @@ class AutoTesterHelper extends AutoTesterHelperBase
         return false;
     }
 
-    int getSuiteId() {
+    /**
+     * Gets ID of the current test suite.
+     *
+     * @return ID of the current test suite
+     */
+    int getTestSuiteId() {
         return suiteId;
     }
-
-    /**
-     * Preprocess an event that is being posted to the event queue.
-     * This method will get called in the thread that posted the event.
-     *
-     * @param event event being posted
-     *
-     * @param waitingEvent previous event of this type waiting in the
-     *     queue to be processed
-     *
-     * @return true to allow the post to continue, false to not post the
-     *     event to the queue
-     */
-    public boolean preprocess(Event event, Event waitingEvent) {
-        return true;
-    }
-
-    /**
-     * Process an event.
-     * This method will get called in the event queue processing thread.
-     *
-     * @param event event to process
-     */
-    public void process(Event event) {
-        NativeEvent nativeEvent = (NativeEvent)event;
-
-        switch (nativeEvent.getType()) {
-            case EventTypes.AUTOTESTER_EVENT: {
-                synchronized (this) {
-                    eventsInQueueProcessed = true;
-                    notify();
-                }
-                break;
-            }
-        }
-    }
-    
 }

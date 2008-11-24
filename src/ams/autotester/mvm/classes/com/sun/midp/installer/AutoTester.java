@@ -66,10 +66,11 @@ import com.sun.midp.events.*;
  * the arguments.</p>
  */
 public final class AutoTester extends AutoTesterBase {
+    /** AutoTesterHelper instance */
     private AutoTesterHelper helper;
 
     /**
-     * Create and initialize a new auto tester MIDlet.
+     * Creates and initializes a new auto tester MIDlet.
      */
     public AutoTester() {
         super();
@@ -92,12 +93,14 @@ public final class AutoTester extends AutoTesterBase {
     }
 
 
-    /** Run the installer. */
+    /** 
+     * Runs the installer.
+     */
     public void run() {
         try {
             helper.installAndPerformTests();
         } catch (Throwable t) {
-            int suiteId = helper.getSuiteId();
+            int suiteId = helper.getTestSuiteId();
             String message = helper.getInstallerExceptionMessage(suiteId, t);
             displayInstallerError(message);
         }
@@ -105,6 +108,10 @@ public final class AutoTester extends AutoTesterBase {
         notifyDestroyed();        
     }
 
+    /**
+     * Gets AutoTesterHelperBase instance.
+     * @return AutoTesterHelperBase instance. 
+     */
     AutoTesterHelperBase getHelper() {
         return helper;
     }

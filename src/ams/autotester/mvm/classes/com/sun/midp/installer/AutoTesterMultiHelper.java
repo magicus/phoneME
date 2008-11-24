@@ -58,35 +58,10 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 /**
- * Fetches a list of URLs pointing to test suites to install, then,
- * for each specified test suite in parallel, installs/updates the suite,
- * runs the first MIDlet in the suite in a loop specified number of iterations
- * or until the new version of the suite is not found, then removes the suite.
- * <p>
- * The MIDlet uses these application properties as arguments: </p>
- * <ol>
- *   <li>arg-0: URL for html page with links to test suites. This html page
- *    looks like this:
- *      <a href="http://localhost/suite1.jad">Suite1</a>
- *      <a href="http://localhost/suite2.jad">Suite2</a>
- *   <li>arg-1: Used to override the default domain used when installing
- *    an unsigned suite. The default is maximum to allow the runtime API tests
- *    be performed automatically without tester interaction. The domain name
- *    may be followed by a colon and a list of permissions that must be allowed
- *    even if they are not listed in the MIDlet-Permissions attribute in the
- *    application descriptor file. Instead of the list a keyword "all" can be
- *    specified indicating that all permissions must be allowed, for example:
- *    operator:all.
- *    <li>arg-2: Integer number, specifying how many iterations to run
- *    the suite. If argument is not given or less then zero, then suite
- *    will be run until the new version of the suite is not found.
- * </ol>
- * <p>
- * If arg-0 is not given then a form will be used to query the tester for
- * the arguments.</p>
+ * Implements auto testing multi functionality.
  */
-
 final class AutoTesterMultiHelper extends AutoTesterHelperBase {
+    /** AutoTesterMulti instance for displaying error messages */
     private AutoTesterMulti autoTester;
 
     /**
@@ -94,14 +69,19 @@ final class AutoTesterMultiHelper extends AutoTesterHelperBase {
      */
     private Vector installList;
 
+    /**
+     * Constructor.
+     *
+     * @param inp_autoTester AutoTesterMulti instance
+     */
     AutoTesterMultiHelper(AutoTesterMulti inp_autoTester) {
         autoTester = inp_autoTester;
         installList = new Vector();
     }
 
     /**
-     * Get list of test suites, for each suite start a thread
-     * that performs testing, wait until all threads have finished.
+     * Gets list of test suites, for each suite starts a thread
+     * that performs testing, waits until all threads have finished.
      */    
     void installAndPerformTests() {
         fetchInstallList(url);
