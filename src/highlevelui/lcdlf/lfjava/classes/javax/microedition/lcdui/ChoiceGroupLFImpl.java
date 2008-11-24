@@ -648,9 +648,9 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 return;
             }
 
-            switch (cg.choiceType) {            
+            switch (cg.choiceType) {
                 case Choice.EXCLUSIVE:
-                    if (hilightedIndex == selectedIndex) {
+                    if (hilightedIndex == selectedIndex || hilightedIndex < 0) {
                         return;
                     }
                     setSelectedIndex(hilightedIndex, true);
@@ -660,6 +660,9 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                     break;
 
                 case Choice.MULTIPLE:
+                    if (hilightedIndex < 0) {
+                        return;
+                    }
                     setSelectedIndex(hilightedIndex,
                         !cg.cgElements[hilightedIndex].selected);
                     if (cg.owner instanceof Form) {
