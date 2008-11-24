@@ -243,15 +243,6 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
     }
 
     /**
-     * Gets default MIDlet icon
-     * @return Image with default icon
-     */
-    private static Image getDefaultIcon() {
-        return GraphicalInstaller.
-            getImageFromInternalStorage("_ch_single");
-    }
-
-    /**
      * Reads the set of MIDlet names, icons and classes
      * Fill in the list.
      *
@@ -269,10 +260,6 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
                 if (minfo[i].icon != null) {
                     icon = RunningMIDletSuiteInfo.getIcon(
                         suiteInfo.suiteId, minfo[i].icon, mss);
-                }
-                // Provide default icon if needed
-                if (icon == null) {
-                    icon = getDefaultIcon();
                 }
                 // the MIDlet is running iff the MIDlet proxy is found
                 MIDletProxy mp = mpl.findMIDletProxy(

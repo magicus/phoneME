@@ -140,10 +140,20 @@ class MIDletCustomItem extends CustomItem {
     private static int SCROLL_DELAY = 500;
     private static int SCROLL_SPEED = 10;
 
+    /** Default constructor */
+    protected MIDletCustomItem() {
+        super(null);
+    }
+
     /** Constructs a MIDlet representation item */
     MIDletCustomItem(String displayName, Image midletIcon) {
         super(null);
-        icon = midletIcon;
+        init(displayName, midletIcon);
+    }
+
+    /** Init item instance */
+    protected void init(String displayName, Image midletIcon) {
+        icon = (midletIcon != null) ? midletIcon : getDefaultIcon();
         text = displayName.toCharArray();
         textLen = displayName.length();
         truncWidth = ICON_FONT.charWidth(truncationMark);
@@ -208,6 +218,15 @@ class MIDletCustomItem extends CustomItem {
         truncated = displayNameWidth > widthForText;
     }
 
+    /**
+     * Gets default MIDlet icon
+     * @return Image with default icon
+     */
+    private static Image getDefaultIcon() {
+        return GraphicalInstaller.
+            getImageFromInternalStorage("_ch_single");
+    }
+    
     /**
      * Gets running state of the MIDlet or MIDlte suite.
      * @return true is MIDlet is running or associated MIDlet suite has running
