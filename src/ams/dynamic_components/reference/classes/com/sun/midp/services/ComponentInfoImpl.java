@@ -29,7 +29,7 @@ package com.sun.midp.services;
 /** Simple attribute storage describing a component */
 public class ComponentInfoImpl implements ComponentInfo {
     /** ID of this component. */
-    public int componentId;
+    public int componentId = ComponentInfo.UNUSED_COMPONENT_ID;
     /** ID of the MIDlet suite which the component belongs to. */
     public int suiteId;
     /** User-friendly name of the component. */
@@ -42,10 +42,15 @@ public class ComponentInfoImpl implements ComponentInfo {
      *
      * @param compId ID of the component
      * @param sId ID of the midlet suite which the component belongs to
+     * @param name user-friendly name of the component
+     * @param isTrusted true if this component is trusted, false otherwise
      */
-    public ComponentInfoImpl(int compId, int sId) {
+    public ComponentInfoImpl(int compId, int sId,
+                             String name, boolean isTrusted) {
         componentId = compId;
         suiteId = sId;
+        displayName = name;
+        trusted = isTrusted;
     }
 
     /**
@@ -64,6 +69,14 @@ public class ComponentInfoImpl implements ComponentInfo {
      */
     public int getSuiteId() {
         return suiteId;
+    }
+
+    /**
+     * Returns the display name of the component
+     * @return user-friendly name of the component
+     */
+    public String getDisplayName() {
+        return displayName;
     }
 
     /**
@@ -86,14 +99,5 @@ public class ComponentInfoImpl implements ComponentInfo {
         b.append(", displayName = " + displayName);
         b.append(", trusted = " + trusted);
         return b.toString();
-    }
-
-
-    /**
-     * Returns the display name of the component
-     * @return user-friendly name of the component
-     */
-    public String getDisplayName() {
-        return displayName;
     }
 }
