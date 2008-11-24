@@ -92,8 +92,6 @@ MidpError cmdmanager_create(MidpFrame* cmPtr){
     cmPtr->hideAndDelete = cmdmanager_hide_and_delete;
     cmPtr->handleEvent = NULL;
 
-//    cmdManager.setCommands = cmdmanager_set_commands;
-
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 
     if (cmPtr->widgetPtr == NULL) {
@@ -125,7 +123,6 @@ gint softkey_cb(GtkWidget *widget, GtkSoftkeyPosition softkey_position, gpointer
 
 //void menuitem_activate(void){
 void menuitem_activate(GtkWidget *widget, gpointer data){
-//    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE(">>>%s id is %d\n", __FUNCTION__, (int)data);
     javanotify_widget_menu_selection((int)data);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
@@ -218,7 +215,7 @@ MidpError cmdmanager_set_commands(MidpFrame* cmPtr,
         }
     }
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 #ifdef __cplusplus
