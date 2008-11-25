@@ -164,6 +164,8 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         if (runningMidlets.isEmpty() && suiteInfo.isLocked()) {
             suiteInfo.grabStorageLock();
         }
+            
+        refreshList();
     }
 
     /** If no MIDlet is running, exits the suite */
@@ -288,6 +290,7 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
             MIDletProxy mp = mpl.findMIDletProxy(
                 suiteInfo.suiteId, minfo[index].classname);
             mci.setDisplayName(encodeMIDletName(mp, minfo[index].name));
+            mci.update();
         }
     }
 
