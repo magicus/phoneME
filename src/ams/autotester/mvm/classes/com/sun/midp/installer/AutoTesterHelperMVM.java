@@ -53,14 +53,14 @@ import com.sun.midp.events.*;
 abstract class AutoTesterHelperMVM extends AutoTesterHelperBase 
     implements EventListener {
 
+    /** ID of the test suite being run */
+    protected int suiteId = MIDletSuite.UNUSED_SUITE_ID;
+
     /** True if all events in our queue were processed. */
     private boolean eventsInQueueProcessed;
 
     /** Our event queue. */
     private EventQueue eventQueue;
-
-    /** ID of the test suite being run */
-    private int suiteId = MIDletSuite.UNUSED_SUITE_ID;
 
     /**
      * Constructor.
@@ -73,7 +73,7 @@ abstract class AutoTesterHelperMVM extends AutoTesterHelperBase
         super(inp_url, inp_domain, inp_count);
 
         eventQueue = EventQueue.getEventQueue();
-        eventQueue.registerEventListener(EventTypes.AUTOTESTER_EVENT, this);        
+        eventQueue.registerEventListener(EventTypes.AUTOTESTER_EVENT, this);
     }
 
     /**
@@ -120,98 +120,106 @@ abstract class AutoTesterHelperMVM extends AutoTesterHelperBase
 
         onTestingStarted();
 
-        for (; loopCount != 0; ) {
-            // force an overwrite and remove the RMS data
-            suiteId = installer.installJad(url, 
-                    Constants.INTERNAL_STORAGE_ID, true, true, null);
+        try {
+            setDomain();
+//            installer.setInstallTemporarySuites(true);
 
-            onTestSuiteInstalled();
+            for (; loopCount != 0; ) {
+                // force an overwrite and remove the RMS data
+                suiteId = installer.installJad(url, 
+                        Constants.INTERNAL_STORAGE_ID, true, true, null);
+                onTestSuiteInstalled();
 
-            Isolate[] isolatesBefore = Isolate.getIsolates();
+                Isolate[] isolatesBefore = Isolate.getIsolates();
 
-            startTestSuite();
-            waitForTestSuiteToExit();
+                startTestSuite();
+                waitForTestSuiteToExit();
 
-            boolean newIsolatesFound;
-            do {
-                newIsolatesFound = false;
+                boolean newIsolatesFound;
+                do {
+                    newIsolatesFound = false;
 
-                /*
-                 * Send an event to ourselves.
-                 * Main idea of it is to process all events that are in the
-                 * queue at the moment when the test isolate has exited
-                 * (because when testing CHAPI there may be requests to
-                 * start new isolates). When this event arrives, all events
-                 * that were placed in the queue before it are guaranteed
-                 * to be processed.
-                 */
-                synchronized (this) {
-                    eventsInQueueProcessed = false;
+                    /*
+                     * Send an event to ourselves.
+                     * Main idea of it is to process all events that are in the
+                     * queue at the moment when the test isolate has exited
+                     * (because when testing CHAPI there may be requests to
+                     * start new isolates). When this event arrives, all events
+                     * that were placed in the queue before it are guaranteed
+                     * to be processed.
+                     */
+                    synchronized (this) {
+                        eventsInQueueProcessed = false;
 
-                    NativeEvent event = new NativeEvent(
-                            EventTypes.AUTOTESTER_EVENT);
-                    eventQueue.sendNativeEventToIsolate(event,
-                            MIDletSuiteUtils.getIsolateId());
+                        NativeEvent event = new NativeEvent(
+                                EventTypes.AUTOTESTER_EVENT);
+                        eventQueue.sendNativeEventToIsolate(event,
+                                MIDletSuiteUtils.getIsolateId());
                     
-                    // and wait until it arrives
-                    do {
-                        try {
-                            wait();
-                        } catch(InterruptedException ie) {
-                            // ignore
-                        }
-                    } while (!eventsInQueueProcessed);
-                }
+                        // and wait until it arrives
+                        do {
+                            try {
+                                wait();
+                            } catch(InterruptedException ie) {
+                                // ignore
+                            }
+                        } while (!eventsInQueueProcessed);
+                    }
 
-                Isolate[] isolatesAfter = Isolate.getIsolates();
+                    Isolate[] isolatesAfter = Isolate.getIsolates();
 
-                /*
-                 * Wait for termination of all isolates contained in
-                 * isolatesAfter[], but not in isolatesBefore[].
-                 * This is needed to pass some tests (for example, CHAPI)
-                 * that starting several isolates.
-                 */
-                int i, j;
-                for (i = 0; i < isolatesAfter.length; i++) {
-                    for (j = 0; j < isolatesBefore.length; j++) {
-                        try {
-                            if (isolatesBefore[j].equals(isolatesAfter[i])) {
+                    /*
+                     * Wait for termination of all isolates contained in
+                     * isolatesAfter[], but not in isolatesBefore[].
+                     * This is needed to pass some tests (for example, CHAPI)
+                     * that starting several isolates.
+                     */
+                    int i, j;
+                    for (i = 0; i < isolatesAfter.length; i++) {
+                        for (j = 0; j < isolatesBefore.length; j++) {
+                            try {
+                                if (isolatesBefore[j].equals(
+                                            isolatesAfter[i])) {
+                                    break;
+                                }
+                            } catch (Exception e) {
+                                // isolatesAfter[i] might already exit,
+                                // no need to wait for it
                                 break;
                             }
-                        } catch (Exception e) {
-                            // isolatesAfter[i] might already exit,
-                            // no need to wait for it
-                            break;
                         }
-                    }
 
-                    if (j == isolatesBefore.length) {
-                        try {
-                            newIsolatesFound = true;
-                            isolatesAfter[i].waitForExit();
-                        } catch (Exception e) {
-                            // ignore: the isolate might already exit
+                        if (j == isolatesBefore.length) {
+                            try {
+                                newIsolatesFound = true;
+                                isolatesAfter[i].waitForExit();
+                            } catch (Exception e) {
+                                // ignore: the isolate might already exit
+                            }
                         }
                     }
+                } while (newIsolatesFound);
+
+                if (loopCount > 0) {
+                    loopCount -= 1;
                 }
-            } while (newIsolatesFound);
-
-            if (loopCount > 0) {
-                loopCount -= 1;
             }
-        }
 
-        if (midletSuiteStorage != null &&
-                suiteId != MIDletSuite.UNUSED_SUITE_ID) {
-            try {
-                midletSuiteStorage.remove(suiteId);
-                onTestSuiteRemoved();
-            } catch (Throwable ex) {
-                // ignore
+            if (midletSuiteStorage != null &&
+                    suiteId != MIDletSuite.UNUSED_SUITE_ID) {
+                try {
+                    midletSuiteStorage.remove(suiteId);
+                    onTestSuiteRemoved();
+                } catch (Throwable ex) {
+                    // ignore
+                }
             }
-        }
+        } finally {
+            setDefaultDomain();
+//            installer.setInstallTemporarySuites(false);
 
-        onTestingFinished();
+            onTestingFinished();
+        }
     }
 
     /**
@@ -239,17 +247,17 @@ abstract class AutoTesterHelperMVM extends AutoTesterHelperBase
     abstract void onTestSuiteRemoved();
 
     /** 
-     * Called after testing cycle has completed .
+     * Called after testing cycle has been completed.
      */
     abstract void onTestingFinished();
 
-    abstract void startTestSuite() {
-        MIDletInfo midletInfo = getFirstMIDletOfSuite(suiteId);
-        Isolate testIsolate = AmsUtil.startMidletInNewIsolate(suiteId,
-                midletInfo.classname, midletInfo.name, null, null, null);
-    }
+    /**
+     * Starts installed test suite.
+     */
+    abstract void startTestSuite();
 
-    abstract void waitForTestSuiteToExit() {
-        testIsolate.waitForExit();
-    }
+    /**
+     * Waits until running test suite has exited.
+     */
+    abstract void waitForTestSuiteToExit();
 }

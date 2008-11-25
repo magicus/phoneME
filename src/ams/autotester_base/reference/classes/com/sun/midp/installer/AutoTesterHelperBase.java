@@ -78,20 +78,6 @@ abstract class AutoTesterHelperBase {
         url = inp_url;
         domain = inp_domain;
         loopCount = inp_count; 
-        
-        if (domain != null) {
-            String additionalPermissions = null;
-            int index = domain.indexOf(":");
-            int len = domain.length();
-
-            if (index > 0 && index + 1 < len) {
-                additionalPermissions = domain.substring(index + 1, len);
-                domain = domain.substring(0, index);
-            }
-
-            installer.setUnsignedSecurityDomain(domain);
-            installer.setExtraPermissions(additionalPermissions);
-        }        
     }
 
     /**
@@ -132,7 +118,33 @@ abstract class AutoTesterHelperBase {
         return new MIDletInfo(name);
     }
 
-   
+    /**
+     * Sets security domain.
+     */
+    protected void setDomain() {
+        if (domain != null) {
+            String additionalPermissions = null;
+            int index = domain.indexOf(":");
+            int len = domain.length();
+
+            if (index > 0 && index + 1 < len) {
+                additionalPermissions = domain.substring(index + 1, len);
+                domain = domain.substring(0, index);
+            }
+
+            installer.setUnsignedSecurityDomain(domain);
+            installer.setExtraPermissions(additionalPermissions);
+        }
+    }
+
+    /**
+     * Sets security domain to default value.
+     */         
+    protected void setDefaultDomain() {
+        installer.setUnsignedSecurityDomain(
+                Permissions.getUnsignedDomain());
+    }    
+
     /**
      * Returns the associated message for the given installer exception.
      *
