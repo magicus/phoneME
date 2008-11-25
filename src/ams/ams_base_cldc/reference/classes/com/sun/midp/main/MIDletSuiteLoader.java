@@ -118,6 +118,9 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
 
         // Initialize WMA's cleanup monitor
         WMACleanupMonitor.init(midletProxyList);
+
+        // Initialize Pipe service
+        com.sun.midp.io.j2me.pipe.Protocol.registerService(internalSecurityToken);
     }
 
     /**
