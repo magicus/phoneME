@@ -33,7 +33,6 @@ import com.sun.midp.log.LogChannels;
 import com.sun.midp.chameleon.CGraphicsUtil;
 import com.sun.midp.chameleon.input.*;
 import com.sun.midp.chameleon.skins.*;
-import com.sun.midp.chameleon.skins.resources.*;
 import com.sun.midp.chameleon.layers.ScrollBarLayer;
 
 /**
@@ -564,6 +563,31 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
             updateTextInfo();
         }
     }
+
+    /**
+     * Called by the system to indicate traversal has left this Item
+     *
+     * @see #getInteractionModes
+     * @see #traverse
+     * @see #TRAVERSE_HORIZONTAL
+     * @see #TRAVERSE_VERTICAL
+     */
+
+    void uCallTraverseOut() {
+        synchronized (Display.LCDUILock) {
+            lCallTraverseOut();
+        }
+    }
+
+    /**
+     * Called by the system to notify this Item it is being hidden.
+     * This function simply calls lCallHideNotify() after obtaining LCDUILock.
+     */
+    void uCallHideNotify() {
+        super.uCallHideNotify();
+        disableLayers();
+    }
+
 
     /**
      * Move the text cursor in the given direction
