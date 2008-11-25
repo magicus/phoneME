@@ -63,26 +63,41 @@ public final class AutoTesterServiceProtocolClient {
 
     /**
      * Sends test run parameters to service.
+     *
+     * @param theURL URL of the test suite
+     * @param theDomain security domain to assign to unsigned suites
+     * @param theLoopCount how many iterations to run the suite
      */
-    public void sendTestRunParams(String inp_url, String inp_domain, 
-            int inp_loopCount) 
+    public void sendTestRunParams(String theURL, String theDomain, 
+            int theLoopCount) 
         throws SystemServiceConnectionClosedException, IOException {
 
         SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
-        msg.getDataOutput().writeUTF(inp_url == null? "" : inp_url);
-        msg.getDataOutput().writeUTF(inp_domain == null? "" : inp_domain);
-        msg.getDataOutput().writeInt(inp_loopCount);
+        msg.getDataOutput().writeUTF(theURL == null? "" : theURL);
+        msg.getDataOutput().writeUTF(theDomain == null? "" : theDomain);
+        msg.getDataOutput().writeInt(theLoopCount);
 
         con.send(msg);
     }
 
+    /**
+     * Receives status string from service.
+     *
+     * @return status strin received
+     */
     public String receiveStatus() 
         throws SystemServiceConnectionClosedException, IOException {
 
         return SystemServiceUtil.receiveString(con);
     }
 
-    private AutoTesterServiceProtocolClient(SystemServiceConnection inp_con) {
-        con = inp_con;
+    /**
+     * Constructor.
+     *
+     * @param theConnection AutoTester service connection
+     */
+    private AutoTesterServiceProtocolClient(SystemServiceConnection 
+            theConnection) {
+        con = theConnection;
     }    
 }

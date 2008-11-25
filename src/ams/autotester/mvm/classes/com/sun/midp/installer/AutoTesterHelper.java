@@ -54,12 +54,12 @@ final class AutoTesterHelper extends AutoTesterHelperMVM {
     /**
      * Constructor.
      *
-     * @param inp_url URL of the test suite
-     * @param inp_domain security domain to assign to unsigned suites
-     * @param inp_count how many iterations to run the suite
+     * @param theURL URL of the test suite
+     * @param theDomain security domain to assign to unsigned suites
+     * @param theLoopCount how many iterations to run the suite
      */
-    AutoTesterHelper(String inp_url, String inp_domain, int inp_count) {
-        super(inp_url, inp_domain, inp_count);
+    AutoTesterHelper(String theURL, String theDomain, int theLoopCount) {
+        super(theURL, theDomain, theLoopCount);
     }
 
     /**

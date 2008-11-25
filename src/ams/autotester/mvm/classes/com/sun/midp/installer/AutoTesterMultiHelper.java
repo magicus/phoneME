@@ -72,14 +72,17 @@ final class AutoTesterMultiHelper extends AutoTesterHelperBase {
     /**
      * Constructor.
      *
-     * @param inp_autoTester AutoTesterMulti instance
+     * @param theAutoTester AutoTesterMulti instance
+     * @param theURL URL of the test suite
+     * @param theDomain security domain to assign to unsigned suites
+     * @param theLoopCount how many iterations to run the suite
      */
-    AutoTesterMultiHelper(AutoTesterMulti inp_autoTester, 
-            String inp_url, String inp_domain, int inp_count) {
+    AutoTesterMultiHelper(AutoTesterMulti theAutoTester, 
+            String theURL, String theDomain, int theLoopCount) {
 
-        super(inp_url, inp_domain, inp_count);
+        super(theURL, theDomain, theLoopCount);
 
-        autoTester = inp_autoTester;
+        autoTester = theAutoTester;
         installList = new Vector();
     }
 
@@ -185,10 +188,10 @@ final class AutoTesterMultiHelper extends AutoTesterHelperBase {
         /**
          * Constructor.
          *
-         * @param theUrl URL for the test suite
+         * @param theURL URL for the test suite
          */
-        private AutoTesterRunner(String inp_url) {
-            url = inp_url;
+        private AutoTesterRunner(String theURL) {
+            url = theURL;
         }
 
         /**

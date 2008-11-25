@@ -76,38 +76,38 @@ class AutoTesterHelper extends AutoTesterHelperBase {
     /**
      * Constructor for creating class instance in case of new session.
      *
-     * @param inp_midletClassName class name of the MIDlet that uses 
+     * @param theMIDletClassName class name of the MIDlet that uses 
      * this AutoTesterHelper instance
-     * @param inp_url URL of the test suite
-     * @param inp_domain security domain to assign to unsigned suites
-     * @param inp_count how many iterations to run the suite
+     * @param theURL URL of the test suite
+     * @param theDomain security domain to assign to unsigned suites
+     * @param theLoopCount how many iterations to run the suite
      */
-    AutoTesterHelper(String inp_midletClassName, String inp_url, 
-            String inp_domain, int inp_count) {
+    AutoTesterHelper(String theMIDletClassName, String theURL, 
+            String theDomain, int theLoopCount) {
 
-        super(inp_url, inp_domain, inp_count);
+        super(theURL, theDomain, theLoopCount);
 
         suiteId = MIDletSuite.UNUSED_SUITE_ID;
-        midletClassName = inp_midletClassName;
+        midletClassName = theMIDletClassName;
     }   
 
     /**
      * Constructor for creating class instance in case of restored session.
      *
-     * @param inp_midletClassName class name of the MIDlet that uses 
+     * @param theMIDletClassName class name of the MIDlet that uses 
      * this AutoTesterHelper instance
-     * @param inp_url URL of the test suite
-     * @param inp_domain security domain to assign to unsigned suites
-     * @param inp_count how many iterations to run the suite
-     * @param suiteId ID of the tests suite
+     * @param theURL URL of the test suite
+     * @param theDomain security domain to assign to unsigned suites
+     * @param theLoopCount how many iterations to run the suite
+     * @param theSuiteId ID of the tests suite
      */
-    AutoTesterHelper(String inp_midletClassName, String inp_url, 
-            String inp_domain, int inp_count, int inp_suiteId) {
+    AutoTesterHelper(String theMIDletClassName, String theURL, 
+            String theDomain, int theLoopCount, int theSuiteId) {
 
-        super(inp_url, inp_domain, inp_count);
+        super(theURL, theDomain, theLoopCount);
 
-        suiteId = inp_suiteId;
-        midletClassName = inp_midletClassName;
+        suiteId = theSuiteId;
+        midletClassName = theMIDletClassName;
     }
 
     /**
@@ -176,13 +176,13 @@ class AutoTesterHelper extends AutoTesterHelperBase {
     /**
      * Restores the data from the last session.
      *
-     * @param inp_midletClassName class name of the MIDlet that uses 
+     * @param theMIDletClassName class name of the MIDlet that uses 
      * this AutoTesterHelper instance. This name is not expected to
      * change within single session and therefore not saved
      * @return AutoTesterHelper instance if there was data saved from 
      * the last session, null otherwise
      */
-    static AutoTesterHelper restoreSession(String inp_midletClassName)
+    static AutoTesterHelper restoreSession(String theMIDletClassName)
         throws Exception {
 
         RecordStore settings = null;
@@ -228,7 +228,7 @@ class AutoTesterHelper extends AutoTesterHelperBase {
                 loopCount = dis.readInt();
             }
 
-            return new AutoTesterHelper(inp_midletClassName, 
+            return new AutoTesterHelper(theMIDletClassName, 
                     url, domain, loopCount, suiteId);
 
         } catch (RecordStoreNotFoundException rsnfe) {

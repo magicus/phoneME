@@ -73,16 +73,16 @@ class AutoTesterService implements SystemService, Runnable  {
      * start doing its thing. Note: you shouldn't block in this
      * method.
      *
-     * @param connection connection between client and service
+     * @param theConnection connection between client and service
      */
-    public void acceptConnection(SystemServiceConnection inp_con) {
+    public void acceptConnection(SystemServiceConnection theConnection) {
         synchronized (this) {
             // only one connection is allowed and expected
             if (protocol != null) {
                 return;
             }
 
-            protocol = new AutoTesterServiceProtocolAMS(inp_con);
+            protocol = new AutoTesterServiceProtocolAMS(theConnection);
         }
 
         new Thread(this).start();

@@ -51,10 +51,10 @@ final class AutoTesterServiceProtocolAMS {
     /**
      * Constructor.
      *
-     * @param inp_con connection between service and client
+     * @param theConnection connection between service and client
      */
-    AutoTesterServiceProtocolAMS(SystemServiceConnection inp_con) {
-        con = inp_con;
+    AutoTesterServiceProtocolAMS(SystemServiceConnection theConnection) {
+        con = theConnection;
 
         url = null;
         domain = null;

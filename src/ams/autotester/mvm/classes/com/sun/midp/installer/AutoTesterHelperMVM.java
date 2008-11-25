@@ -65,12 +65,12 @@ abstract class AutoTesterHelperMVM extends AutoTesterHelperBase
     /**
      * Constructor.
      *
-     * @param inp_url URL of the test suite
-     * @param inp_domain security domain to assign to unsigned suites
-     * @param inp_count how many iterations to run the suite
+     * @param theURL URL of the test suite
+     * @param theDomain security domain to assign to unsigned suites
+     * @param theLoopCount how many iterations to run the suite
      */
-    AutoTesterHelperMVM(String inp_url, String inp_domain, int inp_count) {
-        super(inp_url, inp_domain, inp_count);
+    AutoTesterHelperMVM(String theURL, String theDomain, int theLoopCount) {
+        super(theURL, theDomain, theLoopCount);
 
         eventQueue = EventQueue.getEventQueue();
         eventQueue.registerEventListener(EventTypes.AUTOTESTER_EVENT, this);
