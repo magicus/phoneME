@@ -152,8 +152,8 @@ public class Connector {
         if (classRoot == null) {
             classRoot = "com.sun.cldc.io";
         }
-		classRootFallback = System.getProperty(
-		    "javax.microedition.io.Connector.protocolpath.fallback");
+        classRootFallback = System.getProperty(
+            "javax.microedition.io.Connector.protocolpath.fallback");
     }
 
     /**
@@ -243,16 +243,16 @@ public class Connector {
         throws IOException, ClassNotFoundException {
 
         /* Test for correct mode value */
-		if (mode != READ && 
-		    mode != WRITE &&
-			mode != READ_WRITE) {
+        if (mode != READ && 
+            mode != WRITE &&
+            mode != READ_WRITE) {
             throw new IllegalArgumentException(
 /* #ifdef VERBOSE_EXCEPTIONS */
 /// skipped                       "Wrong mode value"
 /* #endif */
             );
-		}
-		
+        }
+        
         /* Test for null argument */
         if (name == null) {
             throw new IllegalArgumentException(
@@ -306,20 +306,20 @@ public class Connector {
             /* a class to implement the connection */
             Class clazz;
             try {
-			    clazz =
+                clazz =
                     Class.forName(classRoot +
                               "." + platform +
                               "." + protocol + ".Protocol");
-			} catch (ClassNotFoundException exc) {
+            } catch (ClassNotFoundException exc) {
                 if (classRootFallback != null) {
-			        clazz =
+                    clazz =
                         Class.forName(classRootFallback +
                               "." + platform +
                               "." + protocol + ".Protocol");
-				} else {
+                } else {
                     throw exc;
-				}
-			}
+                }
+            }
 
             /* Construct a new instance */
             ConnectionBaseInterface uc =
