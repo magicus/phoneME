@@ -38,6 +38,7 @@ import com.sun.midp.security.SecurityToken;
 public class Protocol implements ConnectionBaseInterface {
     private static class SecurityTrusted implements ImplicitlyTrustedClass {};
     private static SecurityToken token;
+    static Isolate currentIsolate;
 
     private static final boolean DEBUG = false;
 
@@ -60,6 +61,8 @@ public class Protocol implements ConnectionBaseInterface {
         if (token == null) {
             token = SecurityInitializer.requestToken(new SecurityTrusted());
         }
+
+        PipeServiceProtocol.setCurrentIsolate(currentIsolate);
 
         // check if we deal with server or client connection
         if (colon1 == 2) {
@@ -97,5 +100,13 @@ public class Protocol implements ConnectionBaseInterface {
      */
     public static void registerService(SecurityToken token) {
         PipeServiceProtocol.registerService(token);
+    }
+
+    /**
+     * Initializes pipe service in context of user MIDlet (e.g. Isolate user MIDlet
+     * is about to start in).
+     */
+    public static void initUserContext() {
+        currentIsolate = Isolate.currentIsolate();
     }
 }
