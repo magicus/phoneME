@@ -48,6 +48,7 @@ MIDP_JAVADOC_SOURCEPATH += $(AUTOTESTER_MVM_DIR)/classes
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTester.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterHelperMVM.java \
     $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterHelper.java \
     $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterService.java \
     $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterServiceProtocolAMS.java \

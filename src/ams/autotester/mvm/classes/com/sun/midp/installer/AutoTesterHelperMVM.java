@@ -45,9 +45,12 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.events.*;
 
 /**
- * Implements auto testing functionality for MVM mode.
+ * Abstract class that implements most of auto testing functionality 
+ * for MVM mode. The rest of functionality is implemented by subclasses. 
+ * Provides bunch of progress notification callbacks that are needed 
+ * for some of the subclasses (ODT auto tester, for example).
  */
-class AutoTesterHelper extends AutoTesterHelperBase 
+abstract class AutoTesterHelperMVM extends AutoTesterHelperBase 
     implements EventListener {
 
     /** True if all events in our queue were processed. */
@@ -66,7 +69,7 @@ class AutoTesterHelper extends AutoTesterHelperBase
      * @param inp_domain security domain to assign to unsigned suites
      * @param inp_count how many iterations to run the suite
      */
-    AutoTesterHelper(String inp_url, String inp_domain, int inp_count) {
+    AutoTesterHelperMVM(String inp_url, String inp_domain, int inp_count) {
         super(inp_url, inp_domain, inp_count);
 
         eventQueue = EventQueue.getEventQueue();
@@ -115,20 +118,20 @@ class AutoTesterHelper extends AutoTesterHelperBase
     void installAndPerformTests() 
         throws Exception {
 
+        onTestingStarted();
+
         for (; loopCount != 0; ) {
             // force an overwrite and remove the RMS data
             suiteId = installer.installJad(url, 
                     Constants.INTERNAL_STORAGE_ID, true, true, null);
 
-            MIDletInfo midletInfo = getFirstMIDletOfSuite(suiteId);
+            onTestSuiteInstalled();
+
             Isolate[] isolatesBefore = Isolate.getIsolates();
 
-            Isolate testIsolate = AmsUtil.startMidletInNewIsolate(suiteId,
-                    midletInfo.classname, midletInfo.name, null,
-                    null, null);
+            startTestSuite();
+            waitForTestSuiteToExit();
 
-            testIsolate.waitForExit();
-            
             boolean newIsolatesFound;
             do {
                 newIsolatesFound = false;
@@ -202,10 +205,13 @@ class AutoTesterHelper extends AutoTesterHelperBase
                 suiteId != MIDletSuite.UNUSED_SUITE_ID) {
             try {
                 midletSuiteStorage.remove(suiteId);
+                onTestSuiteRemoved();
             } catch (Throwable ex) {
                 // ignore
             }
         }
+
+        onTestingFinished();
     }
 
     /**
@@ -215,5 +221,35 @@ class AutoTesterHelper extends AutoTesterHelperBase
      */
     int getTestSuiteId() {
         return suiteId;
+    }
+
+    /**
+     * Called before starting auto testing cycle.
+     */
+    abstract void onTestingStarted();
+
+    /**
+     * Called after test suite has been installed (updated).
+     */
+    abstract void onTestSuiteInstalled();
+
+    /**
+     * Called after test suite has been removed from storage (uninstalled).
+     */
+    abstract void onTestSuiteRemoved();
+
+    /** 
+     * Called after testing cycle has completed .
+     */
+    abstract void onTestingFinished();
+
+    abstract void startTestSuite() {
+        MIDletInfo midletInfo = getFirstMIDletOfSuite(suiteId);
+        Isolate testIsolate = AmsUtil.startMidletInNewIsolate(suiteId,
+                midletInfo.classname, midletInfo.name, null, null, null);
+    }
+
+    abstract void waitForTestSuiteToExit() {
+        testIsolate.waitForExit();
     }
 }
