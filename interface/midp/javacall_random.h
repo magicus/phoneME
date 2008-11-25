@@ -33,6 +33,7 @@ extern "C" {
  * @file javacall_random.h
  * @ingroup Security
  * @brief Javacall interfaces for prand, a pseudo random number generator used for cryptography
+ * @{
  */
 
 #include "javacall_defs.h"
@@ -44,10 +45,6 @@ extern "C" {
  * 
  */
 long javacall_random_get_seed(unsigned char* outbuf, int bufsize);
-
-
-/** @} */
-
 
 
 /** @} */
