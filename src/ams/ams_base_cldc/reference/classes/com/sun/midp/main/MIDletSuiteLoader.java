@@ -118,6 +118,10 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
 
         // Initialize WMA's cleanup monitor
         WMACleanupMonitor.init(midletProxyList);
+        
+        // Initialize AutoTester service
+        com.sun.midp.installer.AutoTesterServiceInitializer.init(
+                internalSecurityToken);
     }
 
     /**

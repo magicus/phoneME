@@ -40,6 +40,9 @@ import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.events.*;
+import com.sun.midp.services.*;
+import com.sun.midp.security.*;
+import java.io.*;
 
 /**
  * Installs/Updates a test suite, runs the first MIDlet in the suite in a loop
@@ -68,7 +71,14 @@ import com.sun.midp.events.*;
 public final class AutoTester extends AutoTesterBase 
     implements Runnable {
 
-    private AutoTesterHelper helper;
+    /** We need security token for connecting to AutoTetser service */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
+    private static SecurityToken token = null;    
+
+    /** Connection to AutoTesterService */
+    private SystemServiceConnection con = null;
 
     /**
      * Creates and initializes a new auto tester MIDlet.
@@ -93,12 +103,13 @@ public final class AutoTester extends AutoTesterBase
      * Runs the installer.
      */
     public void run() {
-        try {
-            helper.installAndPerformTests();
-        } catch (Throwable t) {
-            int suiteId = helper.getTestSuiteId();
-            String message = helper.getInstallerExceptionMessage(suiteId, t);
-            displayInstallerError(message);
+        String response;
+
+        sendTestRunParams();
+        response = receiveResponse();
+
+        if (response != null) {
+            displayInstallerError(response);
         }
 
         notifyDestroyed();        
@@ -108,7 +119,72 @@ public final class AutoTester extends AutoTesterBase
      * Starts the background tester.
      */
     void startBackgroundTester() {
-        helper = new AutoTesterHelper(url, domain, loopCount);
-        new Thread(this).start();
+        connectToService();
+
+        if (con != null) {
+            new Thread(this).start();
+        } else {
+            displayError(Resource.getString(ResourceConstants.EXCEPTION),
+                "Failed to connect to AutoTester service");
+        }
+    }
+
+    private static SecurityToken getSecurityToken() {
+        if (token == null) {
+            token = SecurityInitializer.requestToken(new SecurityTrusted());
+        }
+
+        return token;
+    }
+
+    private void connectToService() {
+        SystemServiceRequestor serviceRequestor = 
+            SystemServiceRequestor.getInstance(getSecurityToken());
+
+        con = serviceRequestor.requestService(AutoTesterService.SERVICE_ID);
+    }
+
+    private void sendTestRunParams() {
+        SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
+
+        try {
+            msg.getDataOutput().writeUTF(url == null? "" : url);
+            msg.getDataOutput().writeUTF(domain == null? "" : domain);
+            msg.getDataOutput().writeInt(loopCount);
+        } catch (IOException ex) {
+            // ignore
+        }
+
+        try {
+            con.send(msg);
+        } catch (SystemServiceConnectionClosedException ex) {
+            // ignore
+        }        
+    }
+
+    private String receiveResponse() {
+        String response = null;
+
+        SystemServiceDataMessage msg = null;
+        try {
+            msg = (SystemServiceDataMessage)con.receive();
+        } catch (SystemServiceConnectionClosedException ex) {
+            // ignore
+        }
+
+        if (msg == null) {
+            return response;
+        }
+
+        try {
+            response = msg.getDataInput().readUTF();
+            if (response.length() == 0) {
+                response = null;
+            }
+        } catch (IOException ex) {
+            // ignore
+        }
+
+       return response; 
     }
 }
