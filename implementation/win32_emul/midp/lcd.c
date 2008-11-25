@@ -489,14 +489,17 @@ void ClamshellStateChanged(short state) {
         */
         if (clamshell_opened == JAVACALL_FALSE) {
             javanotify_clamshell_state_changed(JAVACALL_LCD_CLAMSHELL_OPEN);
+            clamshell_opened = JAVACALL_TRUE;
         } 
     } else if (state == 0) {
         if (clamshell_opened == JAVACALL_FALSE) {
            javanotify_clamshell_state_changed(JAVACALL_LCD_CLAMSHELL_OPEN);
+           clamshell_opened = JAVACALL_TRUE;
         }
     } else {
         if (clamshell_opened == JAVACALL_TRUE) {
            javanotify_clamshell_state_changed(JAVACALL_LCD_CLAMSHELL_CLOSE);
+           clamshell_opened = JAVACALL_FALSE;
         }
     }
 }
@@ -506,22 +509,22 @@ void ClamshellStateChanged(short state) {
  * Handle clamshell event
  */
 void javacall_lcd_handle_clamshell() {
-    if (clamshell_opened == JAVACALL_FALSE) {
+
+    if (clamshell_opened == JAVACALL_TRUE
+            && currDisplayId == EXTE_DISPLAY_ID) {
         VRAM.width = MAIN_DISPLAY_SIZE.width;
         VRAM.height = MAIN_DISPLAY_SIZE.height;
         VRAM.full_height = MAIN_DISPLAY_SIZE.full_height;
         currDisplayId = MAIN_DISPLAY_ID;
-        clamshell_opened = JAVACALL_TRUE;
-    } else {
+        javacall_lcd_flush(currDisplayId);                
+    } else if (clamshell_opened == JAVACALL_FALSE 
+                   && currDisplayId == MAIN_DISPLAY_ID) {
         VRAM.width = EXTE_DISPLAY_SIZE.width;
         VRAM.height = EXTE_DISPLAY_SIZE.height;
         VRAM.full_height = EXTE_DISPLAY_SIZE.full_height;
         currDisplayId = EXTE_DISPLAY_ID;
-        clamshell_opened = JAVACALL_FALSE;
+        javacall_lcd_flush(currDisplayId);                
     }
-
-    javacall_lcd_flush(currDisplayId);                
-
 }
 
 /**
