@@ -469,7 +469,7 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
 #if ENABLE_ISOLATES
   if( ObjectHeap::get_task_memory_usage(id) > BoundaryDesc::allocation_size() ) {
     ObjectHeap::print_task_objects( id );
-    GUARANTEE( 0, "Leftover objects" );
+    //GUARANTEE( 0, "Leftover objects" );
   }
 #endif
 #endif

@@ -482,6 +482,7 @@ public final class Isolate {
      */
     public synchronized void start() throws IsolateStartupException
     {
+System.out.println("Isolate.start");	
         if (getStatus() > NEW) {
             throw new IsolateStartupException("Isolate has already started");
         }
@@ -538,6 +539,7 @@ public final class Isolate {
      *               code indicates abnormal termination.
      **/
     public void exit(int status) {
+System.out.println("Isolate.exit");	
         try {
             stop(status, this == currentIsolate() ?
                  EXIT_REASON_SELF_EXIT :
