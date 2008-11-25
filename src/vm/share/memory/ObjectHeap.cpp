@@ -195,7 +195,7 @@ inline void ObjectHeap::notify_objects_created( void ) {
     if( from < to ) {
 #if ENABLE_ISOLATES
       const int saved_task = TaskContext::current_task_id();
-      TaskContext::set_current_task( _current_task_id );
+      TaskContext::set_current_task( _previous_task_id );
 #endif
       notify_objects_created( from, to );
 #if ENABLE_ISOLATES
@@ -203,6 +203,36 @@ inline void ObjectHeap::notify_objects_created( void ) {
 #endif
     }
   }
+}
+
+void ObjectHeap::notify_bootstrap_complete( void ) {
+#if ENABLE_ISOLATES
+  OopDesc** const classes = get_boundary_classes();
+  const int boundary_size = BoundaryDesc::allocation_size();
+
+  const OopDesc* const* upb = _task_allocation_start;
+
+  int id = _previous_task_id;
+  for( const BoundaryDesc* bound = *get_boundary_list();
+                           bound; bound = bound->_next ) {
+    const OopDesc* const* from =
+      DERIVED(const OopDesc* const*, bound, boundary_size);
+    if( from < upb ) {
+      const int saved_task = TaskContext::current_task_id();
+      TaskContext::set_current_task( id );
+      notify_objects_created( from, upb );
+      TaskContext::set_current_task( saved_task );
+    }
+    id = get_owner( bound, classes );
+    upb = (const OopDesc* const*) bound;
+  }
+#else
+  const OopDesc* const* from = _heap_start;
+  const OopDesc* const* to   = _task_allocation_start;
+  if( from < to ) {
+    notify_objects_created( from, to );
+  }
+#endif  // ENABLE_ISOLATES
 }
 
 inline void ObjectHeap::notify_objects_disposed ( void ) {

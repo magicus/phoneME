@@ -1145,9 +1145,7 @@ ObjectHeap.cpp                   ClassFileParser.hpp
 ObjectHeap.cpp                   Verifier.hpp
 ObjectHeap.cpp                   TypeSymbol.hpp
 ObjectHeap.cpp                   JavaDebugger.hpp
-#if ENABLE_MEMORY_MONITOR
 ObjectHeap.cpp                   MemoryMonitor.hpp
-#endif
 ObjectHeap.cpp                   Boundary.hpp
 ObjectHeap.cpp                   CompiledMethodDesc.hpp
 ObjectHeap.cpp                   EventLogger.hpp

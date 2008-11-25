@@ -581,6 +581,7 @@ bool Universe::bootstrap(const JvmPathChar* classpath) {
   kvmcompat_initialize();
 #endif
 
+
   if (!GenerateROMImage) {
     // System.<clinit> calls System.getProperty(). We cannot do that
     // during Romization (which happens on the development host)
@@ -709,6 +710,7 @@ bool Universe::bootstrap_with_rom(const JvmPathChar* classpath) {
 
   _is_bootstrapping = false;
   _before_main = false;
+  ObjectHeap::notify_bootstrap_complete();
 
   if (VerboseGC || TraceGC || TraceHeapSize) {
     TTY_TRACE_CR(("young gen min (actual)   = %dK",
@@ -1024,6 +1026,7 @@ bool Universe::bootstrap_without_rom(const JvmPathChar* classpath) {
   }
 
   _before_main = false;
+  ObjectHeap::notify_bootstrap_complete();
 
   *inlined_stackmaps() = new_stackmap_list(1 JVM_CHECK_0);
   inlined_stackmaps()->set_short_map(0, 0);
