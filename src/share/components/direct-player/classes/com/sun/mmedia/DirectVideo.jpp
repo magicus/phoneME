@@ -24,15 +24,21 @@
 
 package com.sun.mmedia;
 
+// #ifdef ENABLE_CDC [
+import com.sun.j2me.proxy.lcdui.*;
+import com.sun.j2me.proxy.mmedia.*;
+// #else ][
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.CustomItem;
+import javax.microedition.lcdui.Display;
+// #endif ]
+
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.VideoControl;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
-import javax.microedition.lcdui.Display;
 
 
 /**
@@ -214,7 +220,12 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         if (mode != USE_DIRECT_VIDEO && mode != USE_GUI_PRIMITIVE) {
             throw new IllegalArgumentException("unsupported mode");
         }
-        if (mode == USE_DIRECT_VIDEO && !Canvas.class.isInstance(container)) {
+// #ifdef ENABLE_CDC [
+        boolean containerIsCanvas = Canvas.__getMyClass().isInstance(container);
+// #else ][
+        boolean containerIsCanvas = Canvas.class.isInstance(container);
+// #endif ]
+        if (mode == USE_DIRECT_VIDEO && !containerIsCanvas) {
             throw new IllegalArgumentException("container needs to be a Canvas");
         }
         if (mode == USE_GUI_PRIMITIVE && container != null) {
@@ -233,7 +244,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             }
         }
         if (mode == USE_DIRECT_VIDEO) {
+// #ifdef ENABLE_CDC [
+            canvas = (Canvas)Canvas.__getInstance(container);
+// #else ][
             canvas = (Canvas)container;
+// #endif ]
             if (!canvas.isShown()) {
                 hidden = true;
             }
@@ -245,7 +260,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         } else {
             displayMode = mode;
             item = new DVItem(null);
+// #ifdef ENABLE_CDC [
+            ret = (Object)item.__getInternal();
+// #else ][
             ret = (Object)item;
+// #endif ]
             visible = true;
         }
         
@@ -515,7 +534,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             repaint();
         }
         
-        protected void paint(Graphics g, int w, int h) {
+        public void paint(Graphics g, int w, int h) {
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                     "DVItem.paint visible=" + visible); 
@@ -533,23 +552,23 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             }
         }
         
-        protected int getMinContentWidth() {
+        public int getMinContentWidth() {
             return 1;
         }
         
-        protected int getMinContentHeight() {
+        public int getMinContentHeight() {
             return 1;
         }
         
-        protected int getPrefContentWidth(int height) {
+        public int getPrefContentWidth(int height) {
             return dw;
         }
         
-        protected int getPrefContentHeight(int width) {
+        public int getPrefContentHeight(int width) {
             return dh;
         }
 
-        protected void sizeChanged(int w, int h) {
+        public void sizeChanged(int w, int h) {
             synchronized(boundLock) {
                 dw = w;
                 dh = h;
@@ -559,7 +578,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
         // Now this function used to control visible state of direct video preview
         // Called from MIDPWindow class
-        protected void showNotify() {
+        public void showNotify() {
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "showNotify"); 
             }        
@@ -569,7 +588,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
         // Now this function used to control visible state of direct video preview
         // Called from MIDPWindow class
-        protected void hideNotify() {
+        public void hideNotify() {
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "hideNotify"); 
             }        
