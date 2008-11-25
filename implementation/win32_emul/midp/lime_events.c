@@ -22,10 +22,10 @@
  * information or have any questions.
  */
 
-#include "stdio.h"
 #include "lime.h"
 #include "defaultLCDUI.h"
-#include "javacall_keypress.h"
+#include "javacall_lcd.h"
+#include "javacall_keypress.h"                      
 #include "javacall_lifecycle.h"
 #if ENABLE_JSR_179
 #include "javacall_location.h"
@@ -75,7 +75,8 @@ void getScreenCoordinates(short screenX, short screenY, short* x, short* y);
  * is running locally or via OTA */
 extern javacall_bool isRunningLocal;
 
-/* Rotates display according to code.
+/**
+ * Rotates display according to code.
  * If code is 0 no screen transformations made;
  * If code is 1 then screen orientation is reversed.
  * if code is 2 then screen is turned upside-down.
@@ -83,6 +84,13 @@ extern javacall_bool isRunningLocal;
  * and screen is turned upside-down.
  */
 extern void RotateDisplay(short code);
+
+/**
+ * Called when clamshell state changed
+ * to switch from internal display to external
+ * or vice versa.
+ */
+extern void ClamshellStateChanged(short state);
 
 #if ENABLE_ON_DEVICE_DEBUG
 static const char pStartOddKeySequence[] = "#1*2";
@@ -202,6 +210,8 @@ void SendEvent (KVMEventType *evt) {
     case keyDownKVMEvent:
         if (evt->chr == KEY_USER2) {
             RotateDisplay(evt->screenX);
+        } else if (evt->chr == VK_CLAMSHELL) {
+            ClamshellStateChanged(evt->screenX);
         } else if ((evt->chr != KEY_END)) {
             javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
         } else if (isRunningLocal == JAVACALL_FALSE) {
