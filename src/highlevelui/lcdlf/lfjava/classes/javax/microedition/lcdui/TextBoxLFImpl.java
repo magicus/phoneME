@@ -386,7 +386,8 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 
         if (usePreferredX) {
             cursor.preferredX = cursor.x +
-                (myInfo.lineStart[myInfo.cursorLine] == cursor.index ?
+                ((myInfo.lineStart[myInfo.cursorLine] == cursor.index &&
+                    cursor.index < tf.buffer.length()) ?
                  ScreenSkin.FONT_INPUT_TEXT.charWidth(
                                                       tf.buffer.charAt(cursor.index)) :
                  0);
