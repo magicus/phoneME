@@ -187,8 +187,8 @@ class MIDPConfig{
                 }
             } catch (IOException ioe) {
                 throw new InternalError(
-                        "Failed to read " + jarfiles[i] +
-                        "MIDPPermittedClasses.txt");
+                        "Failed to read MIDPPermittedClasses.txt in " +
+                        jarfiles[i]);
             }
         }
     }
