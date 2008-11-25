@@ -28,10 +28,15 @@
 #include "javacall_properties.h"
 #include "javacall_events.h"
 #include "javacall_logging.h"
+#include "javacall_memory.h"
 
 #ifdef ENABLE_OUTPUT_REDIRECTION
 #include "io_sockets.h"
 #endif /* ENABLE_OUTPUT_REDIRECTION */
+
+#ifdef ENABLE_MONITOR_PARENT_PROCESS
+#include "parproc_monitor.h"
+#endif /* ENABLE_MONITOR_PARENT_PROCESS */
 
 #if ENABLE_JSR_120
 extern javacall_result finalize_wma_emulator();
@@ -634,7 +639,15 @@ main(int argc, char *argv[]) {
 #endif /* ENABLE_OUTPUT_REDIRECTION */
     }
 
+#ifdef ENABLE_MONITOR_PARENT_PROCESS
+    startParentProcessMonitor();
+#endif /* ENABLE_MONITOR_PARENT_PROCESS */
+
     JavaTask();
+
+#ifdef ENABLE_MONITOR_PARENT_PROCESS
+    stopParentProcessMonitor();
+#endif /* ENABLE_MONITOR_PARENT_PROCESS */
 
 #ifdef ENABLE_OUTPUT_REDIRECTION
     if ((stdoutPort != -1) || (stderrPort != -1)) {
