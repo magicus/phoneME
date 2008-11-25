@@ -159,7 +159,7 @@ MIDP_ERROR midpport_push_list_entries(SuiteIdType suiteId,
 
     if (JAVACALL_SUCCEEDED(res)) {
 
-        // default values
+        /* default values */
         *pNumOfConnections = 0;
         *entries = NULL;
         res = MIDP_ERROR_NONE;
@@ -180,7 +180,7 @@ MIDP_ERROR midpport_push_list_entries(SuiteIdType suiteId,
                                (pentry[i].connectionLen)*sizeof(jchar));
                         _entries[i].connectionLen = pentry[i].connectionLen;
                     } else {
-                        // rollback all allocation
+                        /* rollback all allocation */
                         while (i--) {
                             midpFree(_entries[i].connection);
                             midpFree(_entries[i].midlet);
@@ -193,7 +193,7 @@ MIDP_ERROR midpport_push_list_entries(SuiteIdType suiteId,
                     }
                 }
                 *entries = _entries;
-                // i would be 0 if there was an error
+                /* i would be 0 if there was an error */
                 *pNumOfConnections = i;
             }
         }

@@ -204,14 +204,14 @@ KNIDECL(com_sun_midp_io_j2me_push_PushRegistryImpl_list0) {
                               tmp);
                 if (KNI_IsNullHandle(tmp)) {
                     KNI_ThrowNew(midpOutOfMemoryError, NULL);
-                    // JVM will take care about created String[]
+                    /* JVM will take care about created String[] */
                     break;
                 } else {
                     KNI_SetObjectArrayElement(strArr, i, tmp);
                 }
             }
         }
-        // release allocated MIDP_PUSH_ENTRY array
+        /* release allocated MIDP_PUSH_ENTRY array */
         while (len--) {
             midpFree(entries[len].connection);
             midpFree(entries[len].midlet);
@@ -259,13 +259,13 @@ static jboolean _get_entry(jint suite_id, pcsl_string* connection,
                 }
                 if (!i) {
                     found = KNI_TRUE;
-                    // copy data
+                    /* copy data */
                     *pentry = entries[len];
-                    // don't release this entry data
+                    /* don't release this entry data */
                     continue;
                 }
             }
-            // delete processed record
+            /* delete processed record */
             midpFree(entries[len].connection);
             midpFree(entries[len].midlet);
             midpFree(entries[len].filter);
@@ -298,14 +298,14 @@ KNIDECL(com_sun_midp_io_j2me_push_PushRegistryImpl_getMidlet0) {
     KNI_DeclareHandle(result);
     GET_PARAMETER_AS_PCSL_STRING(2, connection)
     if (_get_entry(suite_id, &connection, &entry)) {
-        // found, create jstring
+        /* found, create jstring */
         KNI_NewString(entry.midlet, 
                       entry.midletLen,
                       result);
         if (KNI_IsNullHandle(result)) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
         }
-        // release the rest of the data
+        /* release the rest of the data */
         midpFree(entry.connection);
         midpFree(entry.midlet);
         midpFree(entry.filter);
@@ -336,14 +336,14 @@ KNIDECL(com_sun_midp_io_j2me_push_PushRegistryImpl_getFilter0) {
     KNI_DeclareHandle(result);
     GET_PARAMETER_AS_PCSL_STRING(2, connection)
     if (_get_entry(suite_id, &connection, &entry)) {
-        // found, create jstring
+        /* found, create jstring */
         KNI_NewString(entry.filter, 
                       entry.filterLen,
                       result);
         if (KNI_IsNullHandle(result)) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
         }
-        // release the rest of the data
+        /* release the rest of the data */
         midpFree(entry.connection);
         midpFree(entry.midlet);
         midpFree(entry.filter);
