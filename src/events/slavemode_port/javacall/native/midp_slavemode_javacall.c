@@ -247,6 +247,12 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam1 = event->data.displayDeviceEvent.hardwareId;
         pNewMidpEvent->intParam2 = event->data.displayDeviceEvent.state;
         break;
+#if ENABLE_ON_DEVICE_DEBUG
+    case MIDP_JC_ENABLE_ODD_EVENT:
+        pNewSignal->waitingFor = AMS_SIGNAL;
+        pNewMidpEvent->type = MIDP_ENABLE_ODD_EVENT;
+        break;
+#endif
 	case MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED:
         pNewSignal->waitingFor = DISPLAY_DEVICE_SIGNAL;
         pNewMidpEvent->type    = DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT;

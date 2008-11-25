@@ -54,6 +54,7 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
      * @param args the arguments passed to main class of the Isolate
      */
     private AppIsolateMIDletSuiteLoader(String args[]) {
+System.out.println("+AppIsolateMIDletSuiteLoader.<init>");		
         this.suiteId = Integer.parseInt(args[0]);
         this.midletClassName = args[1];
         this.midletDisplayName = args[2];
@@ -162,6 +163,7 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
      *             arg[5] optional MIDlet arg 2
      */
     public static void main(String args[]) {
+System.out.println("+AppIsolateMIDletSuiteLoader.main");	
         try {
             /* This class shouldn't be used more than once. */
             if (inUse) {

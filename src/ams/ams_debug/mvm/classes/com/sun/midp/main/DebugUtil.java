@@ -38,6 +38,7 @@ class DebugUtil {
      * to connect to this isolate.
      */
     static void attachDebugger() {
+try{throw new Exception();}catch(Exception e){System.out.println("------ attachDebugger 1"); e.printStackTrace();}
         Isolate currentIsolate = Isolate.currentIsolate();
         currentIsolate.attachDebugger();
     }
