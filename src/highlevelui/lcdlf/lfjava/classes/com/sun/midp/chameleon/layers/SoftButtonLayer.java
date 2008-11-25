@@ -917,7 +917,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         return containsPoint(x,y) ||
             (menuLayer != null && 
              (menuLayer.containsPoint(x,y) ||
-              (menuLayer.cascadeMenu != null &&
+              (menuLayer.cascadeMenu != null && menuLayer.cascadeMenuUp &&
                menuLayer.cascadeMenu.containsPoint(x,y))
               )
              );
