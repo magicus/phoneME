@@ -144,7 +144,9 @@ public final class AutoTester extends AutoTesterBase
         con = serviceRequestor.requestService(AutoTesterService.SERVICE_ID);
     }
 
-    private void sendTestRunParams() {
+    private void sendTestRunParams() 
+        throws SystemServiceConnectionClosedException {
+
         SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
 
         try {
@@ -155,36 +157,48 @@ public final class AutoTester extends AutoTesterBase
             // ignore
         }
 
-        try {
-            con.send(msg);
-        } catch (SystemServiceConnectionClosedException ex) {
-            // ignore
-        }        
+        con.send(msg);
     }
 
-    private String receiveResponse() {
-        String response = null;
+    private String receiveHandshake() 
+        throws SystemServiceConnectionClosedException {
 
-        SystemServiceDataMessage msg = null;
+        return receiveString();
+    }
+
+    private String receiveResponse() 
+        throws SystemServiceConnectionClosedException {
+
+        return receiveString();
+    }
+
+    private String receiveString() 
+        throws SystemServiceConnectionClosedException {
+
+        String str = null;
+
+        SystemServiceDataMessage msg = (SystemServiceDataMessage)con.receive();
+
         try {
-            msg = (SystemServiceDataMessage)con.receive();
-        } catch (SystemServiceConnectionClosedException ex) {
-            // ignore
-        }
-
-        if (msg == null) {
-            return response;
-        }
-
-        try {
-            response = msg.getDataInput().readUTF();
-            if (response.length() == 0) {
-                response = null;
-            }
+            str = msg.getDataInput().readUTF();
         } catch (IOException ex) {
             // ignore
         }
 
-       return response; 
+        return str;
+    }
+
+    private void sendString(String str) 
+        throws SystemServiceConnectionClosedException {
+
+        SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
+
+        try {
+            msg.getDataOutput().writeUTF(str);
+        } catch (IOException ex) {
+            // ignore
+        }
+
+        con.send(msg);
     }
 }
