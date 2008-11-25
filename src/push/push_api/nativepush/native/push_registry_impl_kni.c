@@ -112,7 +112,7 @@ KNIDECL(com_sun_midp_io_j2me_push_PushRegistryImpl_add0) {
     GET_PARAMETER_AS_PCSL_STRING(3, midlet)
     GET_PARAMETER_AS_PCSL_STRING(4, filter)
 
-    /* it is memory safety to use pcsl_string_get_utf16_data */
+    /* it is safe to use pcsl_string_get_utf16_data - no memory allocation preformed */
     entry.connection = (jchar*)pcsl_string_get_utf16_data(&connection);
     entry.connectionLen = pcsl_string_length(&connection);
     entry.midlet = (jchar*)pcsl_string_get_utf16_data(&midlet);
