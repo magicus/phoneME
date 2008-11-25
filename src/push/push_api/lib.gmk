@@ -71,12 +71,10 @@ ifeq ($(USE_NATIVE_PUSH), true)
     SUBSYSTEM_PUSH_API_NATIVE_FILES = \
             push_registry_impl_kni.c
 
-   #    SUBSYSTEM_PUSH_API_JAVA_FILES += \
    SUBSYSTEM_PUSH_API_JAVA_FILES += $(SHARED_JAVA_FILES) \
         $(SUBSYSTEM_PUSH_DIR)/push_api/nativepush/classes/javax/microedition/io/PushRegistry.java \
         $(SUBSYSTEM_PUSH_DIR)/push_api/nativepush/classes/com/sun/midp/io/j2me/push/PushRegistryImpl.java \
-        $(SUBSYSTEM_PUSH_DIR)/push_api/nativepush/classes/com/sun/midp/io/j2me/push/PushRegistryInternal.java \
-
+        $(SUBSYSTEM_PUSH_DIR)/push_api/nativepush/classes/com/sun/midp/io/j2me/push/PushRegistryInternal.java
 else
     # Shared file for non stub configurations
     SHARED_JAVA_FILES += \
