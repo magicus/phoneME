@@ -32,8 +32,6 @@
 # other def. (like VPATH)
 ############################################################
 
-!!!checking whether the lib is included on CDC!!!!
-
 #
 # Common CDC/CLDC code
 
