@@ -722,6 +722,10 @@ public abstract class Installer {
         MIDletInfo midletInfo;
         String midlet;
         
+System.out.println("*** installstep 5 *** out");
+System.err.println("*** installstep 5 *** err");
+new Exception("*** installstep 5 *** ").printStackTrace();
+
         // Send out delete notifications that have been queued, first
         OtaNotifier.postQueuedDeleteMsgsBackToProvider(state.proxyUsername,
             state.proxyPassword);
@@ -813,8 +817,7 @@ public abstract class Installer {
             }
 
             for (int i = 1; ; i++) {
-                String key = "MIDlet-" + i;
-                midlet = state.getAppProperty(key);
+                midlet = state.getAppProperty("MIDlet-" + i);
                 if (midlet == null) {
                     break;
                 }
@@ -830,15 +833,8 @@ public abstract class Installer {
                     verifyMIDlet(midletInfo.classname);
                 } catch (InvalidJadException ije) {
                     if (ije.getReason() == InvalidJadException.INVALID_VALUE) {
-                        // The MIDlet-n attribute may present in Manifest only
-                        if (state.jadProps != null &&
-                                state.jadProps.getProperty(key) != null) {
-                            postInstallMsgBackToProvider(
-                                OtaNotifier.INVALID_JAD_MSG);
-                        } else {
-                            postInstallMsgBackToProvider(
-                                OtaNotifier.INVALID_JAR_MSG);
-                        }
+                        postInstallMsgBackToProvider(
+                            OtaNotifier.INVALID_JAD_MSG);
                     } else {
                         postInstallMsgBackToProvider(
                             OtaNotifier.INVALID_JAR_MSG);
@@ -847,7 +843,7 @@ public abstract class Installer {
                 }
             }
 
-            // Move on to the next step after a warning
+            // move on to the next step after a warning
             state.nextStep++;
 
             // Check Manifest entries against .jad file
@@ -1586,10 +1582,6 @@ public abstract class Installer {
                 OtaNotifier.INVALID_JAD_MSG);
             throw new
                 InvalidJadException(InvalidJadException.INVALID_VERSION);
-        } catch (MIDletSuiteLockedException msle) {
-            // this was an attempt to update a locked suite, set the correct ID
-            info.id = id;
-            throw msle;
         }
     }
 
