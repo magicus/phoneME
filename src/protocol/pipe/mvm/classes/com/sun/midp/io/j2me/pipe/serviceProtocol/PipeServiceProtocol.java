@@ -76,8 +76,8 @@ public class PipeServiceProtocol {
     private final Object acceptLock = new Object();             // guards method accept()
     private static Isolate currentIsolate;
 
-    public static void setCurrentIsolate(Isolate curretIsolate) {
-        this.currentIsolate = currentIsolate;
+    public static void setCurrentIsolate(Isolate currentIsolate) {
+        PipeServiceProtocol.currentIsolate = currentIsolate;
     }
     
     private PipeServiceProtocol(SecurityToken token) {

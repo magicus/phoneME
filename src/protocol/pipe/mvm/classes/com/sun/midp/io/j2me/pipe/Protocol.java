@@ -30,6 +30,7 @@ import java.io.IOException;
 import javax.microedition.io.Connection;
 
 import com.sun.cldc.io.ConnectionBaseInterface;
+import com.sun.cldc.isolate.Isolate;
 import com.sun.midp.io.j2me.pipe.serviceProtocol.PipeServiceProtocol;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 import com.sun.midp.security.SecurityInitializer;
@@ -38,7 +39,7 @@ import com.sun.midp.security.SecurityToken;
 public class Protocol implements ConnectionBaseInterface {
     private static class SecurityTrusted implements ImplicitlyTrustedClass {};
     private static SecurityToken token;
-    static Isolate currentIsolate;
+    private static Isolate currentIsolate;
 
     private static final boolean DEBUG = false;
 
@@ -61,6 +62,11 @@ public class Protocol implements ConnectionBaseInterface {
         if (token == null) {
             token = SecurityInitializer.requestToken(new SecurityTrusted());
         }
+
+        System.out.println(">>>>>>>>Setting isolate to pipe " + currentIsolate);
+
+        if (currentIsolate == null)
+            throw new IllegalStateException();
 
         PipeServiceProtocol.setCurrentIsolate(currentIsolate);
 
@@ -108,5 +114,6 @@ public class Protocol implements ConnectionBaseInterface {
      */
     public static void initUserContext() {
         currentIsolate = Isolate.currentIsolate();
+        System.out.println(">>>>>>>>Setting isolate from ams " + currentIsolate);
     }
 }
