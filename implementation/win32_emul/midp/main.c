@@ -501,10 +501,18 @@ main(int argc, char *argv[]) {
                               "com.sun.kvem.io",
                               JAVACALL_TRUE,
                               JAVACALL_APPLICATION_PROPERTY);
+        javacall_set_property("javax.microedition.io.Connector.protocolpath.fallback",
+                              "com.sun.midp.io",
+                              JAVACALL_TRUE,
+                              JAVACALL_APPLICATION_PROPERTY);
     } else {
 #endif
         javacall_set_property("javax.microedition.io.Connector.protocolpath",
                               "com.sun.midp.io",
+                              JAVACALL_TRUE,
+                              JAVACALL_APPLICATION_PROPERTY);
+        javacall_set_property("javax.microedition.io.Connector.protocolpath.fallback",
+                              NULL,
                               JAVACALL_TRUE,
                               JAVACALL_APPLICATION_PROPERTY);
 #ifdef USE_NETMON
