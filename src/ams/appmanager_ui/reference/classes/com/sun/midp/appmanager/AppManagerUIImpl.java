@@ -807,7 +807,11 @@ class AppManagerUIImpl extends Form
             // running MIDlets will continue to run
             // even when disabled
             if (mci.msi.enabled || mci.msi.hasRunningMidlet()) {
-                mci.setDefaultCommand(openCmd);
+                if (mci.msi.hasRunningMidlet() && mci.msi.hasSingleMidlet()) {
+                    mci.setDefaultCommand(fgCmd);
+                } else {
+                    mci.setDefaultCommand(openCmd);
+                }
             } else {
                 mci.setDefaultCommand(infoCmd);
                 mci.removeCommand(openCmd);
