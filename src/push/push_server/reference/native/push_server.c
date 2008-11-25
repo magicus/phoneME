@@ -694,6 +694,7 @@ int pushadd(char *str) {
     PushEntry *pe;
     int comma;
     char *cp;
+    int ret;
 
     /* Count the characters up to the first comma. */
     for (comma = 0, cp = str; *cp; comma++, cp++) {
@@ -720,7 +721,7 @@ int pushadd(char *str) {
     pe->filter = pushfilter(str);
 
     if ((pe->value == NULL) || (pe->storagename == NULL) ||
-        (pe->filter == NULL)) {
+            (pe->filter == NULL)) {
         midpFree(pe->value);
         midpFree(pe->storagename);
         midpFree(pe->filter);
@@ -747,11 +748,23 @@ int pushadd(char *str) {
     bt_push_register_url(str, NULL, 0);
 #endif
     */
-    pushProcessPort(pe);
+    ret = pushProcessPort(pe);
     if (pe->fd == -1) {
 #if ENABLE_JSR_82
         bt_push_unregister_url(str);
 #endif
+        if (ret == -3) {
+            /* 
+             * Reject the registration and return error code (-3) for above
+             * code to raise IllegalArgumentException exception.
+             */
+            midpFree(pe->value);
+            midpFree(pe->storagename);
+            midpFree(pe->filter);
+            midpFree(pe);
+            return -3;
+        }
+
         /* 
          * Don't reject the registration.
          * Port may be in use by a native application but we can't check this,
@@ -1238,6 +1251,32 @@ static void pushcleanupentry(PushEntry *p) {
 }
 
 #if ENABLE_JSR_180
+
+/**
+ * Checks if SIP header is chached into buffer. End-of-data
+ * marker is double CRLF
+ * 
+ * @param buffer    buffer to check
+ * @param len       a length of the buffer
+ * 
+ * @return KNI_TRUE if SIP header is present at the buffer
+ *         wholly, KNI_FALSE otherwise
+ */
+static jboolean checkForEndOfHeader(char* buffer, int len) {
+    while (len--) {
+        /* can't just read unsigned double word because some platform has 
+           address alignment */
+        if ('\r' == *buffer && len > 2) {
+            if ('\n' == buffer[1] && '\r' == buffer[2] && '\n' == buffer[3]) {
+                return KNI_TRUE;
+
+            }
+        }
+        buffer++;
+    }
+    return KNI_FALSE;
+}
+
 /**
  * Applies SIP filtering rules on the given push entry.
  * IMPL_NOTE: it should be moved to JSR 180 workspace.
@@ -1384,13 +1423,15 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
 
 #ifdef ENABLE_JSR_180
     if (prevState == RECEIVED_EVENT && pushp->pCachedData != NULL) {
-        pushp->fdAccepted = pushp->fdsock;
         status = pcsl_socket_read_finish(
                                         (void *)pushp->fdsock, (unsigned char *)pushp->pCachedData->buffer,
                                         MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length),
                                         &context);
 
-        if (status != PCSL_NET_SUCCESS) {
+        if (status == PCSL_NET_WOULDBLOCK) {
+            /* do nothing
+             the case will  be proceeded below */
+        } else if (status != PCSL_NET_SUCCESS) {
             /*
              * Receive failed - no data available.
              * Cancel the launch pending.
@@ -1401,8 +1442,20 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
             pushcheckinentry(pushp);
             return NULL;
         }
+        if (checkForEndOfHeader(pushp->pCachedData->buffer, 
+                                MAX_CACHED_DATA_SIZE)){
+            pushp->fdAccepted = pushp->fdsock;
+            pushp->state = prevState;
+            return pushApplySipFilter(pushp);
+        } else {
+            pushp->state = WAITING_DATA;
+            /* wait for end of header */
+            pcsl_add_network_notifier((void *)pushp->fdsock,
+                                      PCSL_NET_CHECK_READ);
+        }
+        /* wait for end of header */
+        return NULL;
 
-        return pushApplySipFilter(pushp);
     } else
 #endif /* ENABLE_JSR_180 */
     {
@@ -1440,7 +1493,6 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
     if (pushp->isSIPEntry) {
         unsigned char ipBytes[MAX_ADDR_LENGTH];
 
-        pushp->state = WAITING_DATA;
 
         pushp->pCachedData = (PacketEntry*) midpMalloc(sizeof (PacketEntry));
         if (pushp->pCachedData == NULL) {
@@ -1466,7 +1518,8 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
                                             MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length),
                                             &context);
 
-            if (status != PCSL_NET_SUCCESS) {
+            if (status != PCSL_NET_WOULDBLOCK &&
+                status != PCSL_NET_SUCCESS) {
                 /*
                  * Receive failed - no data available.
                  * Cancel the launch pending.
@@ -1477,9 +1530,16 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
                 pushcheckinentry(pushp);
                 return NULL;
             }
-
+            if (checkForEndOfHeader(pushp->pCachedData->buffer, 
+                                    MAX_CACHED_DATA_SIZE)){
+                pushp->fdAccepted = pushp->fdsock;
+                pushp->state = prevState;
             return pushApplySipFilter(pushp);
-        }if (status == PCSL_NET_WOULDBLOCK) {
+            }
+            /* notifier will be added below */
+        }
+        if (status == PCSL_NET_WOULDBLOCK) {
+            pushp->state = WAITING_DATA;
             pcsl_add_network_notifier((void *)pushp->fdsock,
                                       PCSL_NET_CHECK_READ);
             return NULL;

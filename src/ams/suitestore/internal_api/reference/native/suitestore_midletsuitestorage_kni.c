@@ -1844,7 +1844,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSecureFilenameBase) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(tempHandle);
 
-    suiteId = KNI_GetParameterAsInt(1);
+    suiteId = (SuiteIdType)KNI_GetParameterAsInt(1);
     do {
 
         errorCode = build_suite_filename(suiteId, &PCSL_STRING_EMPTY, 
@@ -1869,3 +1869,46 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSecureFilenameBase) {
     KNI_EndHandlesAndReturnObject(tempHandle);
 }
 
+/**
+ * Checks the integrity of the suite storage database and of the
+ * installed suites.
+ *
+ * @param fullCheck 0 to check just an integrity of the database,
+ *                    other value for full check
+ * @param delCorruptedSuites != 0 to delete the corrupted suites,
+ *                           0 - to keep them (for re-installation).
+ *
+ * @return 0 if no errors,
+ *         1 if the suite database was corrupted but has been successfully
+ *           repaired,
+ *         a negative value if the database is corrupted and could not
+ *         be repaired
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_checkSuitesIntegrity) {
+    jboolean fullCheck, delCorruptedSuites, retCode;
+    MIDPError status;
+
+    fullCheck = KNI_GetParameterAsBoolean(1);
+    delCorruptedSuites = KNI_GetParameterAsInt(2);
+
+    status = midp_check_suites_integrity((fullCheck == KNI_TRUE),
+                                         (delCorruptedSuites == KNI_TRUE));
+
+    if (status == ALL_OK) {
+        retCode = 0;
+    } else if (status == SUITE_CORRUPTED_ERROR) {
+        retCode = 1;
+    } else {
+        retCode = (jint)status;
+        if (retCode > 0) {
+            /*
+             * to guarantee that this function will return a negative
+             * value in case of error
+             */
+            retCode = -retCode;
+        }
+    }
+
+    KNI_ReturnInt(retCode);
+}

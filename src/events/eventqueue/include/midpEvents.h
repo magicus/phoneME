@@ -220,7 +220,7 @@ extern "C" {
 /**
  * JSR290 DOM object finalize notification event
  */
-#define DOM_FINALIZE_EVENT              64;
+#define DOM_FINALIZE_EVENT              64
 
 /**
  * This event is sent on RMS storage changing to
@@ -250,6 +250,11 @@ extern "C" {
  * the midlets from the given suite were killed.
  */
 #define MIDP_MIDLETS_KILLED_EVENT       69
+
+/**
+ * Request to exit a running midlet from the debug agent to AMS.
+ */
+#define MIDP_ODD_EXIT_MIDLET_EVENT      70
 
 /** @} */
 

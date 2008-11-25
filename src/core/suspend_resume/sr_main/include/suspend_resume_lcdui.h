@@ -3,63 +3,63 @@
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
 
-package com.sun.midp.services;
+#ifndef _SUSPEND_RESUME_LCDUI_H_
+#define _SUSPEND_RESUME_LCDUI_H_
 
-/** Simple attribute storage describing a component */
-public interface ComponentInfo {
-    /** Component ID that is never used. */
-    public static final int UNUSED_COMPONENT_ID = -1;
+#include <kni.h>
+#include <midpError.h>
 
-    /**
-     *
-     * @return ID of the component
-     */
-    public int getComponentId();
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+/**
+ * Structure type defined to represent system state that affects lcdui.
+ */
+typedef struct _lcduiState {
     /**
-     *
-     * @return ID of the component
+     * Identifies whether display was rotated or not.
      */
-    public int getSuiteId();
+    jboolean isDisplayRotated;
+} LCDUIState;
 
-    /**
-     * Returns the display name of the component.
-     *
-     * @return user-friendly name of the component
-     */
-    public String getDisplayName();
+/**
+ * Suspends lcdui, saves current sytem state to analize changes after resume.
+ * This function is registered in suspend/resume system as suspending
+ * routine for the LCDUIState.
+ */
+extern MIDPError suspend_lcdui(void *resource);
 
-    /**
-     * Returns true if this component is trusted, false otherwise.
-     *
-     * @return true if this component is trusted, false otherwise
-     */
-    public boolean isTrusted();
-    
-    /**
-     * Returns a string representation of the ComponentInfo object.
-     * For debug only.
-     */
-    public String toString();
+/**
+ * Resumes lcdui state.
+ * This function is registered in suspend/resume system as resuming
+ * routine for the LCDUIState.
+ */
+extern MIDPError resume_lcdui(void *resource);
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif // _SUSPEND_RESUME_LCDUI_H_

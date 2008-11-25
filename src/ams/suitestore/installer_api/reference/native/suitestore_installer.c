@@ -797,9 +797,17 @@ add_to_suite_list_and_save(MidletSuiteData* pMsd) {
     MidletSuiteData* pExistingSuite;
     MidletSuiteData* pPrev = g_pSuitesData;
 
-    if (!pMsd || pMsd->suiteId == UNUSED_SUITE_ID ||
-            pMsd->suiteId == INTERNAL_SUITE_ID) {
-        return ALL_OK;
+    if (pMsd == NULL) {
+        return BAD_PARAMS;
+    }
+
+    if ((pMsd->suiteId == UNUSED_SUITE_ID) || (
+#if ENABLE_DYNAMIC_COMPONENTS
+            /* a dynamic component may belong to an internal midlet suite */
+            pMsd->type != COMPONENT_DYNAMIC &&
+#endif
+            pMsd->suiteId == INTERNAL_SUITE_ID)) {
+        return BAD_PARAMS;
     }
 
     /*

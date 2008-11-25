@@ -583,7 +583,8 @@ class ImageDataFactory implements AbstractImageDataFactory {
             if ((byte) (imageBytes[idx + 1] & 0xf0) == (byte) 0xc0) {
                 byte code = imageBytes[idx + 1];
 
-                if (code != (byte) 0xc4 || code != (byte) 0xcc) {
+                if (code != (byte) 0xc4 && code != (byte) 0xc8 &&
+                        code != (byte) 0xcc) {
                     /* Big endian */
                     height = ((imageBytes[idx + 5] & 0xff) << 8) +
                             (imageBytes[idx + 6] & 0xff);

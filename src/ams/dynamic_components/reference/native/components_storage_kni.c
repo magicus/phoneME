@@ -154,6 +154,8 @@ delete_components_files(SuiteIdType suiteId, ComponentIdType componentId) {
     /* handle the list entries having the given suiteId */
     while (pData != NULL) {
         if (pData->suiteId == suiteId) {
+            suiteFound = 1;
+            
             if (pData->type == COMPONENT_DYNAMIC &&
                     (componentId == UNUSED_COMPONENT_ID ||
                         pData->componentId == componentId)) {
@@ -165,15 +167,18 @@ delete_components_files(SuiteIdType suiteId, ComponentIdType componentId) {
                 }
 
                 storage_delete_file(&pszError, &componentFileName);
-                pcsl_string_free(&componentFileName);
 
                 if (pszError != NULL) {
                     storageFreeError(pszError);
-                    status = IO_ERROR;
-                    break;
+                    /* it's an error only if the file exists */
+                    if (storage_file_exists(&componentFileName)) {
+                        status = IO_ERROR;
+                        pcsl_string_free(&componentFileName);
+                        break;
+                    }
                 }
-            } else {
-                suiteFound = 1;
+
+                pcsl_string_free(&componentFileName);
             }
         }
 

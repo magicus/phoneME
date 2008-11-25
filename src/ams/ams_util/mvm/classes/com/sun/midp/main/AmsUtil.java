@@ -45,6 +45,8 @@ import com.sun.midp.services.ComponentInfo;
 import com.sun.midp.services.SystemServiceLinkPortal;
 import com.sun.midp.services.SystemServiceManager;
 
+import java.util.Vector;
+
 /**
  * Implements utilities that are different for SVM and MVM modes.
  * Utilities to start a MIDlet in a suite. If not the called from the
@@ -268,13 +270,42 @@ public class AmsUtil {
 
         /*
          * Include paths to dynamic components belonging to this suite
-         * into class path for the new Isolate.
+         * and to the "internal" suite (actually, to AMS) into class
+         * path for the new Isolate.
          */
         DynamicComponentStorage componentStorage =
                 DynamicComponentStorage.getComponentStorage();
         ComponentInfo[] ci = componentStorage.getListOfSuiteComponents(id);
+        ComponentInfo[] ciAms = componentStorage.getListOfSuiteComponents(
+                MIDletSuite.INTERNAL_SUITE_ID);
+        int numOfComponents = 0;
 
-        if (ci != null && ci.length > 0) {
+        // calculate the number of the components to be added to the class path
+        if (ci != null) {
+            numOfComponents += ci.length;
+        }
+
+        if (ciAms != null) {
+            numOfComponents += ciAms.length;
+        }
+
+        if (numOfComponents > 0) {
+            Vector ciVector = new Vector(numOfComponents);
+
+            // add the suite's own components
+            if (ci != null) {
+                for (int i = 0; i < ci.length; i++) {
+                    ciVector.addElement(ci[i]);
+                }
+            }
+
+            // add the shared (belonging to AMS) components
+            if (ciAms != null) {
+                for (int i = 0; i < ciAms.length; i++) {
+                    ciVector.addElement(ciAms[i]);
+                }
+            }
+
             /*
              * IMPL_NOTE: currently is assumed that each component may have
              *            not more than 1 entry in class path.
@@ -283,16 +314,18 @@ public class AmsUtil {
              */
             int n = 0;
             if (isolateClassPath != null) {
-                classpathext = new String[ci.length + 1];
+                classpathext = new String[ciVector.size() + 1];
                 classpathext[n++] = isolateClassPath;
             } else {
-                classpathext = new String[ci.length];
+                classpathext = new String[ciVector.size()];
             }
 
-            for (int i = 0; i < ci.length; i++) {
-                String[] componentPath =
+            for (int i = 0; i < ciVector.size(); i++) {
+                final ComponentInfo nextComponent =
+                        ((ComponentInfo)ciVector.elementAt(i));
+                final String[] componentPath =
                         componentStorage.getComponentClassPath(
-                                ci[i].getComponentId());
+                                nextComponent.getComponentId());
                 if (componentPath != null) {
                     for (int j = 0; j < componentPath.length; j++) {
                         classpathext[n++] = componentPath[j];

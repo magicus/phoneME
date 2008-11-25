@@ -34,7 +34,7 @@
 ######################################################################
 
 SR_MAIN_LIB = sr_main
-LIB_SET += $(SUSPEND_RESUME_LIB)
+LIB_SET += $(SR_MAIN_LIB)
 
 SR_MAIN_DIR = $(SUSPEND_RESUME_DIR)/$(SR_MAIN_LIB)
 
@@ -44,7 +44,7 @@ SUBSYSTEM_SUSPEND_RESUME_EXTRA_INCLUDES += \
 vpath % $(SR_MAIN_DIR)/default/native
 
 SUBSYSTEM_SUSPEND_RESUME_NATIVE_FILES += \
-    suspend_resume.c
+    suspend_resume.c suspend_resume_lcdui.c
 
 SUBSYSTEM_SUSPEND_RESUME_JAVA_FILES += \
     $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/Subsystem.java \

@@ -184,6 +184,12 @@ public class MVMManager extends MIDlet
     public void handleODDStartMidletEvent(int suiteId, String className,
                                           String displayName,
                                           boolean isDebugMode) {
+        /* For the case of showing MIDlet selector, we need AMS to have
+         * foreground. */
+        MIDletProxy thisMidlet = midletProxyList.findMIDletProxy(
+            MIDletSuite.INTERNAL_SUITE_ID, this.getClass().getName());
+        midletProxyList.setForegroundMIDlet(thisMidlet);
+
         if (suiteUnderDebugId != MIDletSuite.UNUSED_SUITE_ID) {
             /* IMPL NOTE: this forces only one running MIDlet in debug mode - 
              * the VM currently does not support more MIDlets in debug mode 
@@ -192,7 +198,7 @@ public class MVMManager extends MIDlet
         }
 
         try {
-            appManager.launchSuite(suiteId, className, isDebugMode);
+            appManager.launchSuite(suiteId, className, isDebugMode, true);
             if (isDebugMode) {
                 suiteUnderDebugId = suiteId;
             }
@@ -201,6 +207,18 @@ public class MVMManager extends MIDlet
         }
     }
 
+    /**
+     * Processes MIDP_ODD_EXIT_MIDLET_EVENT.
+     *
+     * @param suiteId ID of the midlet suite
+     * @param className class name of the midlet to exit or <code>NULL</code>
+     *      if all MIDlets from the suite should be exited
+     */
+    public void handleODDExitMidletEvent(final int suiteId, 
+                                         final String className) {
+        appManager.exitSuite(suiteId, className);
+    }
+    
     /**
      * Processes MIDP_ODD_SUITE_INSTALLED_EVENT. This event indicates that
      * a new MIDlet suite has been installed by ODT agent. It is signal for 
@@ -404,12 +422,10 @@ public class MVMManager extends MIDlet
     }
 
     /**
-     * Called when a suite exited (the only MIDlet in suite exited or the
-     * MIDlet selector exited).
-     * @param suiteInfo Suite which just exited
-     * @param className the running MIDlet class name
+     * Requests ODT agent to exit running commands for the given suite.
+     * @param suiteInfo Suite whose commands should be exited.
      */
-    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {
+    private void exitODTCommand(RunningMIDletSuiteInfo suiteInfo) {
         MIDletProxy odtAgentMidlet = midletProxyList.findMIDletProxy(
             MIDletSuite.INTERNAL_SUITE_ID, ODT_AGENT);
 
@@ -426,6 +442,17 @@ public class MVMManager extends MIDlet
         if (suiteUnderDebugId == suiteInfo.suiteId) {
             suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
         }
+    }
+    
+    /**
+     * Called when a suite exited (last running MIDlet in suite exited).
+     * @param suiteInfo Suite which just exited
+     * @param className the running MIDlet class name
+     */
+    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {
+        if (!suiteInfo.isLocked()) {
+            exitODTCommand(suiteInfo);
+        }
         
         appManager.notifySuiteExited(suiteInfo);
 
@@ -435,6 +462,18 @@ public class MVMManager extends MIDlet
                 waitForDestroyThread = null;
             }
         }
+    }
+
+    /**
+     * Handle exit of MIDlet selector.
+     * @param suiteInfo Containing ID of suite
+     */
+    public void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {
+        if (!suiteInfo.isLocked()) {
+            exitODTCommand(suiteInfo);
+        }
+        
+        appManager.notifyMIDletSelectorExited(suiteInfo);
     }
 
     /**

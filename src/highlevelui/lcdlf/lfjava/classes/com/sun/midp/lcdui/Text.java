@@ -667,7 +667,7 @@ public class Text {
                     if (truncate) {
                         g.drawChar(truncationMark,
                                     offset + font.charsWidth(
-                                        text, lineStart, lineEnd),
+                                        text, lineStart, (lineEnd - lineStart)),
                                     height,
                                     Graphics.BOTTOM | ScreenSkin.TEXT_ORIENT);
                     }

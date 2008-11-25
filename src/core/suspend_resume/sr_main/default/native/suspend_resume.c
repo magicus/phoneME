@@ -27,6 +27,7 @@
 #include <suspend_resume.h>
 #include <suspend_resume_vm.h>
 #include <suspend_resume_port.h>
+#include <suspend_resume_lcdui.h>
 #include <midpEvents.h>
 #include <midpEventUtil.h>
 #include <midpInit.h>
@@ -36,6 +37,8 @@
 
 /** Suspendable resource that reprsents the VM. */
 VM vm = { KNI_FALSE };
+/** Suspendable resource that reprsents the LCDUI. */
+LCDUIState lcduiState;
 
 /** Java stack state from suspend/resume point of view. */
 static int sr_state = SR_INVALID;
@@ -259,6 +262,7 @@ void sr_unregisterResource(void *resource) {
 void sr_initSystem() {
     if (SR_INVALID == sr_state) {
         sr_registerResource((void*)&vm, &suspend_vm, &resume_vm);
+        sr_registerResource((void*)&lcduiState, &suspend_lcdui, &resume_lcdui);        
         sr_state = SR_ACTIVE;
     }
 }

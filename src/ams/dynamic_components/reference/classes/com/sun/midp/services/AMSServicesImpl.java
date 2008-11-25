@@ -220,7 +220,8 @@ final public class AMSServicesImpl implements AMSServices {
                 DynamicComponentStorage.getComponentStorage();
 
         ComponentInfo ci = new ComponentInfoImpl(
-                ComponentInfo.UNUSED_COMPONENT_ID, MIDletSuite.UNUSED_SUITE_ID);
+                ComponentInfo.UNUSED_COMPONENT_ID, MIDletSuite.UNUSED_SUITE_ID,
+                "", false);
         dcs.getComponentInfo(componentId, ci);
 
         return ci;

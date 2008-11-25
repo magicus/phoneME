@@ -204,8 +204,43 @@ class AppManagerPeer implements CommandListener {
         RunningMIDletSuiteInfo currentItem = null;
 
         if (first) {
-            appManagerUI = new AppManagerUIImpl(manager, this, display, displayError, foldersOn);
- 
+            appManagerUI = new AppManagerUIImpl(manager, this, display,
+                                                displayError, foldersOn);
+
+            // ensure that the suite database is not corrupted 
+            int status = midletSuiteStorage.checkSuitesIntegrity(false, true);
+            if (status == 1) {
+                /*
+                 * The suite database was corrupted and has been repaired,
+                 * some suites may be lost. Inform the user about it.
+                 */
+                final String alertTitle = Resource.getString(
+                        ResourceConstants.AMS_MGR_SUITE_DB_ALERT_TITLE);
+                final String errMsg = Resource.getString(
+                        ResourceConstants.AMS_MGR_SUITE_DB_REPAIRED);
+
+                Alert a = new Alert(alertTitle, errMsg,
+                                    null, AlertType.WARNING);
+                a.setTimeout(Alert.FOREVER);
+                display.setCurrent(a);
+            } else if (status < 0) {
+                /*
+                 * An unrecoverable error has happened,
+                 * display the error message.
+                 */
+                final String alertTitle = Resource.getString(
+                        ResourceConstants.EXIT);
+                final String errMsg = Resource.getString(
+                        ResourceConstants.AMS_MGR_SUITE_DB_FATAL_ERROR);
+
+                Alert a = new Alert(alertTitle, errMsg,
+                                    null, AlertType.ERROR);
+                a.setTimeout(Alert.FOREVER);
+                display.setCurrent(a);
+
+                throw new RuntimeException(errMsg);
+            }
+
             // cleanup the storage from the previous execution
             midletSuiteStorage.removeTemporarySuites();
        } else {
@@ -222,7 +257,8 @@ class AppManagerPeer implements CommandListener {
                                 FolderManager.getDefaultFolderId());
                         msi.folderId = FolderManager.getDefaultFolderId();
                     } catch (Throwable t) {
-                        displayError.showErrorAlert(msi.displayName, t, null, null);
+                        displayError.showErrorAlert(msi.displayName, t,
+                                                    null, null);
                     }
                 }
                 appManagerUI = new AppManagerUIImpl(manager, this, display,
@@ -428,6 +464,11 @@ class AppManagerPeer implements CommandListener {
                 si = (RunningMIDletSuiteInfo)msiVector.elementAt(i);
 
                 if (si.hasProxy(midlet)) {
+
+                    if (si.hasSingleMidlet()) {
+                        si.unlock();
+                    }
+
                     si.removeProxy(midlet);
 
                     appManagerUI.notifyMidletExited(si, midletClassName);
@@ -436,10 +477,14 @@ class AppManagerPeer implements CommandListener {
                         manager.notifySuiteExited(si, null);
                     }
 
-                    // remove the suite scheduled for removal after the midlet has exited
-                    // note that in the case of two running midlets, we must wait till the last midlet exits
-                    if (removeMsi != null && removeMsi.sameSuite(midlet) && !removeMsi.hasRunningMidlet()) {
-                        removeSuite(removeMsi);
+                    /*
+                     * Remove the suite scheduled for removal after the midlet
+                     * has exited. Note that in the case of two running midlets,
+                     * we must wait till the last midlet exits.
+                     */
+                    if (removeMsi != null && removeMsi.sameSuite(midlet) &&
+                            !removeMsi.hasRunningMidlet()) {
+                        removeSuiteImpl(removeMsi);
                     }
 
                     /*
@@ -509,12 +554,19 @@ class AppManagerPeer implements CommandListener {
     }
     
     /**
-     * Called when a suite exited (the only MIDlet in suite exited or the
-     * MIDlet selector exited).
+     * Called when a suite exited (last running MIDlet in suite exited).
      * @param suiteInfo Suite which just exited
      */
     void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
         appManagerUI.notifySuiteExited(suiteInfo);
+    }
+
+    /**
+     * Called when MIDlet selector exited.
+     * @param suiteInfo Suite whose selector just exited
+     */
+    void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {
+        appManagerUI.notifyMIDletSelectorExited(suiteInfo);
     }
     
     // ------------------------------------------------------------------
@@ -730,17 +782,47 @@ class AppManagerPeer implements CommandListener {
             return;
         }
 
+        if (suiteInfo.hasRunningMidlet()) {
+            /*
+             * Schedule the midlet suite for removal after all running midlets
+             * from it are destroyed.
+             * The removing routine is called from notifyMidletExited(). 
+             */
+            removeMsi = suiteInfo;
+
+            // destroy all running midlets from the suite being removed
+            MIDletProxy[] runningMidlets = suiteInfo.getProxies();
+            if (runningMidlets != null) {
+                for (int i = 0; i < runningMidlets.length; i++) {
+                    runningMidlets[i].destroyMidlet();
+                }
+            }
+        } else {
+            /*
+             * There are no running midlets belonging to the suite
+             * being removed, so remove the suite immediately.
+             */
+            removeSuiteImpl(suiteInfo);
+        }
+    }
+
+    /**
+     * Removes a suite from the App Selector Screen
+     *
+     * @param suiteInfo the midlet suite info of a recently removed MIDlet
+     */
+    private void removeSuiteImpl(RunningMIDletSuiteInfo suiteInfo) {
+        if (suiteInfo == null) {
+            // Invalid parameter, should not happen.
+            return;
+        }
+
         // the last item in AppSelector is time
         for (int i = 0; i < msiVector.size(); i++) {
-            RunningMIDletSuiteInfo msi = (RunningMIDletSuiteInfo)msiVector.elementAt(i);
+            RunningMIDletSuiteInfo msi =
+                    (RunningMIDletSuiteInfo)msiVector.elementAt(i);
             if (msi == suiteInfo) {
                 PAPICleanUp.removeMissedTransaction(suiteInfo.suiteId);
-
-                while (msi.hasRunningMidlet()) {
-                    MIDletProxy proxy = msi.getFirstProxy();
-                    proxy.destroyMidlet();
-                    msi.removeProxy(proxy);
-                }
 
                 try {
                     midletSuiteStorage.remove(suiteInfo.suiteId);
@@ -789,6 +871,8 @@ class AppManagerPeer implements CommandListener {
      * Appends a names of all the MIDlets in a suite to a Form, one per line.
      *
      * @param midletSuite information of a suite of MIDlets
+     *
+     * @return array of strings to be appended to a Form
      */
     public String[] getMIDletsNames(MIDletSuiteImpl midletSuite) {
         int numberOfMidlets;
@@ -959,8 +1043,11 @@ class AppManagerPeer implements CommandListener {
      * @param suiteId ID of the suite to launch
      * @param midletClassname MIDlet to run, may be null, then will be launched
      *        the single MIDlet or MIDlet selector
+     * @param isDebugMode whether the suite should be launched in debug mode
+     * @param lock whether the running suite should be locked
      */
-    void launchSuite(int suiteId, String midletClassname, boolean isDebugMode) {
+    void launchSuite(int suiteId, String midletClassname, boolean isDebugMode,
+            boolean lock) {
 
         RunningMIDletSuiteInfo msi = findUserInstalledSuiteRmsi(suiteId);
         if (msi == null) {
@@ -980,6 +1067,11 @@ class AppManagerPeer implements CommandListener {
         }
         
         msi.isDebugMode = isDebugMode;
+
+        if (lock) {
+            msi.lock();
+        }
+        
         if (midletClassname != null) {
             manager.launchSuite(msi, midletClassname);
         } else {
@@ -987,6 +1079,37 @@ class AppManagerPeer implements CommandListener {
         }
     }
 
+    /**
+     * Exits a MIDlet from the specified suite or all runing MIDlets of that
+     * suite.
+     * 
+     * @param suiteId the id of the suite to exit
+     * @param midletClassname the class name of the MIDlet to exit or 
+     *      <code>null</code> if all running MIDlets of the specified suite 
+     *      should be exited
+     */
+    void exitSuite(final int suiteId, final String midletClassname) {
+        final RunningMIDletSuiteInfo msi = findUserInstalledSuiteRmsi(suiteId);
+        if (msi == null) {
+            // already exited?
+            return;
+        }
+        
+        if (midletClassname != null) {
+            // destroy a single MIDlet from the suite
+            final MIDletProxy proxy = msi.getProxyFor(midletClassname);
+            if (proxy != null) {
+                proxy.destroyMidlet();
+            }
+            return;
+        }
+
+        final MIDletProxy[] proxies = msi.getProxies();
+        for (int i = 0; i < proxies.length; ++i) {
+            proxies[i].destroyMidlet();
+        }
+    }
+    
     /**
      * Checks if the installer is currently running.
      *
