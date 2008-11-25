@@ -73,6 +73,8 @@ extern "C" {
  *   specified version, <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_domimplementation_has_feature_finish function to complete the 
  *             operation,
@@ -134,6 +136,8 @@ javacall_dom_domimplementation_has_feature_finish(void *context,
  *                            JAVACALL_DOM_NAMESPACE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *             filled,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -207,6 +211,8 @@ javacall_dom_domimplementation_create_document_type_finish(void *context,
  *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *             filled,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -292,6 +298,8 @@ javacall_dom_domimplementation_create_document_finish(void *context,
  *   <code>getFeature</code>, etc. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_domimplementation_get_feature_finish function to complete the 
  *             operation,

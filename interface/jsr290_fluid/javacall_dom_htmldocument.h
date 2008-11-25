@@ -63,6 +63,8 @@ extern "C" {
  *   the matching elements.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_htmldocument_get_elements_by_name_finish function to complete the 
  *             operation,

@@ -70,6 +70,8 @@ extern "C" {
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *             filled,
  *         JAVACALL_WOULD_BLOCK caller must call the 
