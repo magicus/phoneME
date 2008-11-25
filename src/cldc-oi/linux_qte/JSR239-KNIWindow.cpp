@@ -128,7 +128,9 @@ extern "C"
 void
 JSR239_putWindowContents(jobject graphicsHandle,
                          jint delta_height,
-                         JSR239_Pixmap *src, jint flipY) {
+                         JSR239_Pixmap *src, 
+                         jint clipX, jint clipY, jint clipWidth, jint clipHeight,
+                         jint flipY) {
 
     void* s;
     void* d;
@@ -169,7 +171,10 @@ JSR239_putWindowContents(jobject graphicsHandle,
 #endif
 
         /* IMPL_NOTE: get clip sizes into account. */
-        copyToScreenBuffer(src, delta_height, flipY);
+        copyToScreenBuffer(src, delta_height, 
+                           clipX, clipY, 
+                           clipWidth, clipHeight, 
+                           flipY);
 
         /* src->screen_buffer is an output of copyToScreenBuffer function. */
         s = (void*)src->screen_buffer;

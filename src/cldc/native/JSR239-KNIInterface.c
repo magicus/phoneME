@@ -414,7 +414,9 @@ CONVERT_8888_TO_565(jint argb) {
 }
 
 void
-copyToScreenBuffer(JSR239_Pixmap *src, jint deltaHeight, jint flipY) {
+copyToScreenBuffer(JSR239_Pixmap *src, jint deltaHeight, 
+                   jint clipX, jint clipY, jint clipWidth, jint clipHeight,
+                   jint flipY) {
 
     jint width = src->width;
     jint height= src->height;
@@ -462,18 +464,20 @@ copyToScreenBuffer(JSR239_Pixmap *src, jint deltaHeight, jint flipY) {
       (flipY ? src->stride*(height - 1) : 0);
     sstride = flipY ? -src->stride : src->stride;
 
-    srcPtr += sstride * deltaHeight;
-    height -= deltaHeight;    
+    srcPtr += sstride * (clipY == 0 ? deltaHeight : clipY);
+    if (clipY + clipHeight > height - deltaHeight) {
+        clipHeight = height - clipY - deltaHeight;
+    }
 
 #if PUT_DEPTH == 16
-    dstPtr16 = (jshort *)src->screen_buffer;
+    dstPtr16 = (jshort *)src->screen_buffer + width * clipY;
 #endif
 #if PUT_DEPTH == 32
-    dstPtr32 = (jint *)src->screen_buffer;
+    dstPtr32 = (jint *)src->screen_buffer + width * clipY;
 #endif
 
-    for (y = 0; y < height; y++) {
-        for (x = 0; x < width; x++) {
+    for (y = clipY; y < clipY + clipHeight; y++) {
+        for (x = clipX; x < clipX + clipWidth; x++) {
             if (src->pixelBytes == 2) {
                 pixel = (jint)(*((jshort *)srcPtr + x));
             } else if (src->pixelBytes == 4) {

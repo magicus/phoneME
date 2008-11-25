@@ -913,6 +913,10 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1eglCopyBuffers() {
     jint width = KNI_GetParameterAsInt(4);
     jint height = KNI_GetParameterAsInt(5);
     jint delta_height = KNI_GetParameterAsInt(6);
+    jint clipX = KNI_GetParameterAsInt(7);
+    jint clipY = KNI_GetParameterAsInt(8);
+    jint clipWidth = KNI_GetParameterAsInt(9);
+    jint clipHeight = KNI_GetParameterAsInt(10);
     JSR239_Pixmap* pixmap;
 
     // eglCopyBuffers copies the EGL surface color buffer to a native pixmap.
@@ -959,7 +963,9 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1eglCopyBuffers() {
     // starting at location pixels. Thus we should flip the data returned by
     // glReadPixels
     JSR239_putWindowContents(graphicsHandle, delta_height, 
-                             pixmap, 1 /*should do flip*/);
+                             pixmap, 
+                             clipX, clipY, clipWidth, clipHeight,
+                             1 /*should do flip*/);
     JSR239_destroyPixmap(pixmap);
     
  exit:
@@ -1214,6 +1220,10 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1putWindowContents() {
 
     jint deltaHeight = KNI_GetParameterAsInt(2);
     jint pixmap = KNI_GetParameterAsInt(3);
+    jint clipX = KNI_GetParameterAsInt(4);
+    jint clipY = KNI_GetParameterAsInt(5);
+    jint clipWidth = KNI_GetParameterAsInt(6);
+    jint clipHeight = KNI_GetParameterAsInt(7);
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(graphicsHandle);
@@ -1224,7 +1234,9 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1putWindowContents() {
 	   graphicsHandle, pixmap);
 #endif
     JSR239_putWindowContents(graphicsHandle, deltaHeight,
-        (JSR239_Pixmap *)pixmap, 0);
+        (JSR239_Pixmap *)pixmap, 
+        clipX, clipY, clipWidth, clipHeight,
+        0);
 
     KNI_EndHandles();
     KNI_ReturnVoid();

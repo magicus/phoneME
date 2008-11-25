@@ -121,7 +121,10 @@ JSR239_getWindowContents(jobject graphicsHandle, jint deltaHeight,
 void
 JSR239_putWindowContents(jobject graphicsHandle,
                          jint delta_height,
-                         JSR239_Pixmap *src, jint flipY) {
+                         JSR239_Pixmap *src, 
+                         jint clipX, jint clipY, 
+                         jint clipWidth, jint clipHeight,
+                         jint flipY) {
 
     void* s;
     void* d;
@@ -166,21 +169,28 @@ JSR239_putWindowContents(jobject graphicsHandle,
         printf("  min height = %d\n", min_height);
 #endif
 
-        /* IMPL_NOTE: get clip sizes into account. */
-        copyToScreenBuffer(src, delta_height, flipY);
-
         /* src->screen_buffer is an output of copyToScreenBuffer function. */
         s = (void*)src->screen_buffer;
         d = (void*)getGraphicsBuffer(graphicsHandle);
 
         min_height = (dest_height > src->height) ? src->height : dest_height;
 
-        if ((src->width  != dest_width) ||
-            (sizeof(gxj_pixel_type) != 2)) {
+        if ((src->width == dest_width) && (sizeof(gxj_pixel_type) == 2)) {
+            /* Source data must be in 16bit 565 format. */
+            JSR239_memcpy(s, d,
+                dest_width * min_height * sizeof(gxj_pixel_type));
+        } else {
 #ifdef DEBUG
         printf("JSR239: offscreen buffer data is incorrect.\n");
 #endif
-        } else {
+        }
+
+        /* IMPL_NOTE: get clip sizes into account. */
+        copyToScreenBuffer(src, delta_height, 
+                           clipX, clipY, clipWidth, clipHeight,
+                           flipY);
+
+        if ((src->width == dest_width) && (sizeof(gxj_pixel_type) == 2)) {
             /* Source data must be in 16bit 565 format. */
             JSR239_memcpy(d, s,
                 dest_width * min_height * sizeof(gxj_pixel_type));
