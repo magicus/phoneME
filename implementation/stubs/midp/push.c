@@ -135,19 +135,12 @@ javacall_push_listentries(const javacall_suite_id suiteID,
                           const javacall_bool available,
                           javacall_push_entry const** entries,
                           int* const  pNumOfConnections) {
-    static javacall_utf16_string con = L"sms:///:12345";
-    static javacall_utf16_string mid = L"com.sun.midlet";
-    static javacall_utf16_string fil = L"*";
-    javacall_push_entry* entry = javacall_malloc(sizeof(javacall_push_entry));
-    entry->connection = con;
-    entry->connectionLen = sizeof(con)/sizeof(javacall_utf16);
-    entry->connection = mid;
-    entry->connectionLen = sizeof(mid)/sizeof(javacall_utf16);
-    entry->connection = fil;
-    entry->connectionLen = sizeof(fil)/sizeof(javacall_utf16);
-    *entries = entry;
-    *pNumOfConnections = 1;
-    return JAVACALL_PUSH_OK;
+    
+    (void)suiteId;
+    (void)available;
+    (void)entries;
+    (void)pNumOfConnections;
+    return JAVACALL_PUSH_UNSUPPORTED;
 }
 
 /**
@@ -160,12 +153,8 @@ javacall_push_listentries(const javacall_suite_id suiteID,
  */
 void javacall_push_release_entries(const javacall_push_entry* entries,
                                    int pNumOfConnections) {
-    while (pNumOfConnections--) {
-        javacall_free(entries[pNumOfConnections].connection);
-        javacall_free(entries[pNumOfConnections].midlet);
-        javacall_free(entries[pNumOfConnections].filter);
-    }
-    javacall_free(entries);
+    (void)entries;
+    (void) pNumOfConnections;
 }
     
 
