@@ -71,14 +71,14 @@ import java.io.*;
 public final class AutoTester extends AutoTesterBase 
     implements Runnable {
 
-    /** We need security token for connecting to AutoTetser service */
+    /** We need security token for connecting to AutoTester service */
     static private class SecurityTrusted
         implements ImplicitlyTrustedClass {};
 
     private static SecurityToken token = null;    
 
-    /** Connection to AutoTesterService */
-    private SystemServiceConnection con = null;
+    /** Client-side data exchange protocol instance */
+    private AutoTesterServiceProtocolClient protocol = null;
 
     /**
      * Creates and initializes a new auto tester MIDlet.
@@ -103,25 +103,35 @@ public final class AutoTester extends AutoTesterBase
      * Runs the installer.
      */
     public void run() {
-        String response;
+        String status;
 
-        sendTestRunParams();
-        response = receiveResponse();
+        try {
+            protocol.sendTestRunParams(url, domain, loopCount);
+            status = protocol.receiveStatus();
 
-        if (response != null) {
-            displayInstallerError(response);
+            if (!status.equals(AutoTesterServiceProtocolClient.STATUS_OK)) {
+                displayInstallerError(status);
+            }
+        } catch (SystemServiceConnectionClosedException ccex) {
+            displayError(Resource.getString(ResourceConstants.EXCEPTION), 
+                    "Connection to AutoTester service closed unexpectedly");
+        } catch (Exception ex) {
+            String message = ex.getMessage();
+            displayError(Resource.getString(ResourceConstants.EXCEPTION), 
+                    message);
+        } finally {
+            notifyDestroyed();
         }
-
-        notifyDestroyed();        
     }
 
     /**
      * Starts the background tester.
      */
     void startBackgroundTester() {
-        connectToService();
+        protocol = AutoTesterServiceProtocolClient.connectToService(
+                getSecurityToken());
 
-        if (con != null) {
+        if (protocol != null) {
             new Thread(this).start();
         } else {
             displayError(Resource.getString(ResourceConstants.EXCEPTION),
@@ -135,70 +145,5 @@ public final class AutoTester extends AutoTesterBase
         }
 
         return token;
-    }
-
-    private void connectToService() {
-        SystemServiceRequestor serviceRequestor = 
-            SystemServiceRequestor.getInstance(getSecurityToken());
-
-        con = serviceRequestor.requestService(AutoTesterService.SERVICE_ID);
-    }
-
-    private void sendTestRunParams() 
-        throws SystemServiceConnectionClosedException {
-
-        SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
-
-        try {
-            msg.getDataOutput().writeUTF(url == null? "" : url);
-            msg.getDataOutput().writeUTF(domain == null? "" : domain);
-            msg.getDataOutput().writeInt(loopCount);
-        } catch (IOException ex) {
-            // ignore
-        }
-
-        con.send(msg);
-    }
-
-    private String receiveHandshake() 
-        throws SystemServiceConnectionClosedException {
-
-        return receiveString();
-    }
-
-    private String receiveResponse() 
-        throws SystemServiceConnectionClosedException {
-
-        return receiveString();
-    }
-
-    private String receiveString() 
-        throws SystemServiceConnectionClosedException {
-
-        String str = null;
-
-        SystemServiceDataMessage msg = (SystemServiceDataMessage)con.receive();
-
-        try {
-            str = msg.getDataInput().readUTF();
-        } catch (IOException ex) {
-            // ignore
-        }
-
-        return str;
-    }
-
-    private void sendString(String str) 
-        throws SystemServiceConnectionClosedException {
-
-        SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
-
-        try {
-            msg.getDataOutput().writeUTF(str);
-        } catch (IOException ex) {
-            // ignore
-        }
-
-        con.send(msg);
     }
 }

@@ -54,6 +54,7 @@ MIDP_JAVADOC_ALL += \
 
 
 SUBSYSTEM_SERVICES_JAVA_FILES += \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceUtil.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemService.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceConnection.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceConnectionListener.java \
