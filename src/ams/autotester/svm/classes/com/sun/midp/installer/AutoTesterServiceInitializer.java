@@ -31,26 +31,11 @@ import java.io.*;
 import com.sun.midp.security.*;
 
 /**
- * AutoTester service initializer.
+ * Dummy AutoTester service initializer. AutoTester service 
+ * is not used in SVM, so this class does nothing.
  */
 public class AutoTesterServiceInitializer {
-    /**
-     * Intitalizes AutoTester service initializer.
-     *
-     * @param token security token.
-     */
     public static void init(SecurityToken token) {
-        registerService(token);
     }
-
-    /**
-     * Registers AutoTester service with service manager.
-     *
-     * @param token security token
-     */
-    private static void registerService(SecurityToken token) {
-        SystemServiceManager manager = SystemServiceManager.getInstance(token);
-        manager.registerService(new AutoTesterService());
-    }    
 }
 
