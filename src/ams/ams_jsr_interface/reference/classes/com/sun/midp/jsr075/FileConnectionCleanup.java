@@ -24,34 +24,30 @@
  * information or have any questions.
  */
 
-package com.sun.midp.payment;
+package com.sun.midp.jsr075;
 
-/**
- * Stub interface to handle MIDlet Payment functionality.
+/*
+ * Interface provides an interface to clean up file connection data upon suite
+ * removal.
+ *
+ * CLDC Note:
+ *     The interface has no method to delete data but just check whether the
+ * data exists due to private data removal is performed via MIDP listener
+ * mechanism.
+ *     That listener is registered by JSR-75 code in the way like this:
+ * midp_suite_add_listener(jsr75_remove_listener,
+ *                         SUITESTORE_LISTENER_TYPE_REMOVE,
+ *                         SUITESTORE_OPERATION_END);
  */
-public class PAPICleanUp {
-
-    /** Public constructor */
-    public PAPICleanUp() {
-    }
+public interface FileConnectionCleanup {
 
     /**
-     * The function for a Missed Transactions  validation.
+     * The function checks whether suite has private data.
      *
      * @param suiteId MIDlet suite ID
      *
-     * @return null if no pending Transactions for this Suite
-     *         otherwise returns list of missed transactions
+     * @return true if the suite's private directory exists, false otherwise.
      */
-    public static String checkMissedTransactions(int suiteId) {
-        return null;
-    }
+    public boolean suiteHasPrivateData(int suiteId);
 
-    /**
-     * Remove missed transaction for give midlet suite
-     *
-     * @param suiteId MIDlet suite ID
-     */
-    public static void removeMissedTransaction(int suiteId) {
-    }
 }

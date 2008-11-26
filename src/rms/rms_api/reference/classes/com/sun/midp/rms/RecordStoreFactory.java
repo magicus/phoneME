@@ -26,14 +26,10 @@
 
 package com.sun.midp.rms;
 
-import javax.microedition.rms.*;
-
 import com.sun.j2me.security.AccessController;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
-
-import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 /**
  * A utility class for checking and removing record stores.
@@ -88,7 +84,7 @@ public class RecordStoreFactory {
      * Returns true if the suite has created at least one record store.
      * Called by the installer when updating a suite.
      *
-     * @param filenameBase filename base of the suite
+     * @param fileNameBase filename base of the suite
      *
      * @return true if the suite has at least one record store
      */
