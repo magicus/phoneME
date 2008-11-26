@@ -793,6 +793,7 @@ class AppManagerUIImpl extends Form
                     mci.setDefaultCommand(infoCmd);
                 }
             } else {
+                mci.setDefaultCommand(fgCmd);
                 mci.removeCommand(launchInstallCmd);
                 if (appManager.caManagerIncluded()) {
                     mci.removeCommand(launchCaManagerCmd);
@@ -807,8 +808,8 @@ class AppManagerUIImpl extends Form
         } else { // not internal suite
             // running MIDlets will continue to run
             // even when disabled
-            if (mci.msi.enabled || mci.msi.hasRunningMidlet()) {
-                if (mci.msi.hasRunningMidlet() && mci.msi.hasSingleMidlet()) {
+            if (si.enabled || running) {
+                if (running && si.hasSingleMidlet()) {
                     mci.setDefaultCommand(fgCmd);
                 } else {
                     mci.setDefaultCommand(openCmd);
