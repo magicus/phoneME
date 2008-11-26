@@ -90,6 +90,21 @@ javacall_result javacall_lcd_init(void) {
     top_down = JAVACALL_FALSE;
     clamshell_opened = JAVACALL_TRUE;
 
+#ifdef USE_ONE_DISPLAY
+
+    f = NewLimeFunction(LIME_PACKAGE,
+                        LIME_GRAPHICS_CLASS,
+                       "getDisplayParams");
+    f->call(f, &res, &resLen);
+
+    VRAM.width = res[0];
+    VRAM.height = res[1];
+    VRAM.full_height = res[2];
+
+    bufferSize = VRAM.width * VRAM.full_height * sizeof(javacall_pixel);
+
+#else
+
 	f = NewLimeFunction(LIME_PACKAGE,
 						LIME_GRAPHICS_CLASS,
 						"getScreenParams");
@@ -120,6 +135,8 @@ javacall_result javacall_lcd_init(void) {
         bufferSize = (mainBufferSize > exteBufferSize ? 
                          mainBufferSize : exteBufferSize) * sizeof(javacall_pixel);
     }
+#endif
+
     VRAM.hdc = (javacall_pixel*)malloc(bufferSize);
     memset(VRAM.hdc, 0x11, bufferSize);
     /* assuming for win32_emul configuration we have no need to minimize memory consumption */
@@ -233,12 +250,31 @@ javacall_result javacall_lcd_flush(int hardwareId) {
         current_hdc = VRAM.hdc;
     }
 
-    if (f == NULL) {
-        f = NewLimeFunction(LIME_PACKAGE,
-                            LIME_GRAPHICS_CLASS,
-                            "drawRGB16Buffer");
-    }
-  
+#ifdef USE_ONE_DISPLAY
+
+   f = NewLimeFunction(LIME_PACKAGE,
+                       LIME_GRAPHICS_CLASS,
+                       "drawRGB16");
+   if(inFullScreenMode) {
+       f->call(f, NULL, 0, 0, clip, 4, 0, current_hdc, (VRAM.width * VRAM.full_height) << 1, 0, 0, VRAM.width, VRAM.full_height);
+   } else {
+       f->call(f, NULL, 0, 0, clip, 4, 0, current_hdc, (VRAM.width * VRAM.height) << 1, 0, 0, VRAM.width, VRAM.height);
+   }
+
+   f1 = NewLimeFunction(LIME_PACKAGE,
+                        LIME_GRAPHICS_CLASS,
+                       "refresh");
+   if(inFullScreenMode) {
+       f1->call(f1, NULL, 0, 0, VRAM.width, VRAM.full_height);
+   } else {
+       f1->call(f1, NULL, 0, 0, VRAM.width, VRAM.height);
+   }
+
+#else
+
+    f = NewLimeFunction(LIME_PACKAGE,
+                        LIME_GRAPHICS_CLASS,
+                       "drawRGB16Buffer");
     if(inFullScreenMode) {
         f->call(f, NULL, currDisplayId, 0, 0, clip, 4, 0, current_hdc, 
                     (VRAM.width * VRAM.full_height) << 1, 0, 0, 
@@ -249,17 +285,16 @@ javacall_result javacall_lcd_flush(int hardwareId) {
                      VRAM.width, VRAM.height);
     }
 
-    if (f1==NULL)
-    {
-        f1 = NewLimeFunction(LIME_PACKAGE,
-                             LIME_GRAPHICS_CLASS,
-                             "refreshDisplay");
-    }
+    f1 = NewLimeFunction(LIME_PACKAGE,
+                         LIME_GRAPHICS_CLASS,
+                        "refreshDisplay");
     if(inFullScreenMode) {
         f1->call(f1, NULL, currDisplayId, 0, 0, VRAM.width, VRAM.full_height);
     } else {
         f1->call(f1, NULL, currDisplayId, 0, 0, VRAM.width, VRAM.height);
     }
+
+#endif
 
     return JAVACALL_OK;
 }
@@ -483,6 +518,7 @@ javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
  * or vice versa.
  */
 void ClamshellStateChanged(short state) {
+#ifndef USE_ONE_DISPLAY
     if (state == 2) {
        /* IMPL_NOTE: two displays are active - subject to implement.
         * For now we move to main display. 
@@ -502,6 +538,7 @@ void ClamshellStateChanged(short state) {
            clamshell_opened = JAVACALL_FALSE;
         }
     }
+#endif
 }
 
 
@@ -510,6 +547,7 @@ void ClamshellStateChanged(short state) {
  */
 void javacall_lcd_handle_clamshell() {
 
+#ifndef USE_ONE_DISPLAY
     if (clamshell_opened == JAVACALL_TRUE
             && currDisplayId == EXTE_DISPLAY_ID) {
         VRAM.width = MAIN_DISPLAY_SIZE.width;
@@ -525,6 +563,7 @@ void javacall_lcd_handle_clamshell() {
         currDisplayId = EXTE_DISPLAY_ID;
         javacall_lcd_flush(currDisplayId);                
     }
+#endif
 }
 
 /**
