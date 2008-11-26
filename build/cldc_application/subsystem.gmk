@@ -111,7 +111,7 @@ $(JSR_172_BUILD_DIR)/jwc_properties.ini: $(CONFIGURATOR_JAR_FILE)
 	@echo "build $@ ..."
 	$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
 		-xml $(JSR_172_PROPERTY_FILE) \
-		-xsl $(INT_XSL_DIR)/cldc/propertiesIni.xsl \
+		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesIni.xsl \
 		-out $@)
 
 $(JSR_172_GENERATED_DIR)/manifest.mf : $(JSR_172_GENERATED_DIR)
@@ -123,7 +123,7 @@ $(JSR_172_GENERATED_DIR)/manifest.mf : $(JSR_172_GENERATED_DIR)
 	@echo "MicroEdition-Configuration: CLDC-1.1" >> $@
 	@echo "MicroEdition-Profile: MIDP-2.1" >> $@
 
-PREVERIFY.EXE = $(MOBILITY_PACK_JARS_DIR)/bin/preverify.exe
+INTERNAL_JSR_172_PREVERIFY.EXE = $(MOBILITY_PACK_JARS_DIR)/bin/preverify.exe
 JSR_172_PREVERIFY_DEPENDENCIES = \
 	$(INTERNAL_JSR_172_DEPENDENCIES) \
 
@@ -148,7 +148,7 @@ $(JSR_172_JAR) : $(JSR_172_BUILD_DIR) $(JSR_172_GENERATED_DIR) $(JSR_172_BUILD_E
 		$(foreach class, $(shell cat $(call constantClassesListFile, $(JSR_172_GENERATED_DIR))), \
 		$(JSR_172_GENERATED_DIR)/$(subst .,/,$(class)).java) , \
 		-classpath $(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)$(PS)$(JSR_172_BUILD_DIR)$(PS)$(JSR_172_BUILD_EXTRA_DIR) )
-	$(AT)$(PREVERIFY.EXE) -classpath $(JSR_172_PREVERIFY_CPLIST) -d $(JSR_172_PREVERIFYOUT_DIR) $(JSR_172_BUILD_DIR)
+	$(AT)$(INTERNAL_JSR_172_PREVERIFY.EXE) -classpath $(JSR_172_PREVERIFY_CPLIST) -d $(JSR_172_PREVERIFYOUT_DIR) $(JSR_172_BUILD_DIR)
 	$(AT)cp -R $(JSR_172_PREVERIFYOUT_DIR)/* $(JSR_172_BUILD_DIR)
 	$(AT)$(call createJarFileWithManifest,$@,$(JSR_172_BUILD_DIR),.,$(call POSIX2HOST,$(JSR_172_GENERATED_DIR)/manifest.mf))
 
