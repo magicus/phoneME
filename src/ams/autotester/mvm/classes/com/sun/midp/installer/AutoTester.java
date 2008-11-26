@@ -69,7 +69,7 @@ import java.io.*;
  * the arguments.</p>
  */
 public final class AutoTester extends AutoTesterBase 
-    implements Runnable {
+    implements Runnable, EventListener {
 
     /** We need security token for connecting to AutoTester service */
     static private class SecurityTrusted
@@ -86,6 +86,16 @@ public final class AutoTester extends AutoTesterBase
     public AutoTester() {
         super();
 
+        /**
+         * When running AutoTester MIDlet with ODD enabled we will receive
+         * these events. Handle them to avoid "no event listener" errors.
+         */
+        EventQueue eq = EventQueue.getEventQueue();
+        eq.registerEventListener(
+                EventTypes.MIDP_ODD_SUITE_INSTALLED_EVENT, this);
+        eq.registerEventListener(
+                EventTypes.MIDP_ODD_SUITE_REMOVED_EVENT, this);
+
         if (url != null) {
             startBackgroundTester();
         } else {
@@ -98,6 +108,34 @@ public final class AutoTester extends AutoTesterBase
         }
     }
 
+    /**
+     * Preprocess an event that is being posted to the event queue.
+     * This method will get called in the thread that posted the event.
+     *
+     * @param event event being posted
+     *
+     * @param waitingEvent previous event of this type waiting in the
+     *     queue to be processed
+     *
+     * @return true to allow the post to continue, false to not post the
+     *     event to the queue
+     */
+    public boolean preprocess(Event event, Event waitingEvent) {
+        return true;
+    }
+
+    /**
+     * Process an event.
+     * This method will get called in the event queue processing thread.
+     *
+     * @param event event to process
+     */
+    public void process(Event event) {
+        /**
+         * Do nothing. We aren't interested in ODD events.
+         * We just want to avoid unhandled events situation.
+         */
+    }
 
     /** 
      * Runs the installer.

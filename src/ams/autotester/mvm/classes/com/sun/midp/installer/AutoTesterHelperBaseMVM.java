@@ -128,8 +128,11 @@ abstract class AutoTesterHelperBaseMVM extends AutoTesterHelperBase
 
             Isolate[] isolatesBefore = Isolate.getIsolates();
 
-            startTestSuite();
-            waitForTestSuiteToExit();
+            MIDletInfo midletInfo = getFirstMIDletOfSuite(suiteId);
+            Isolate testIsolate = AmsUtil.startMidletInNewIsolate(suiteId,
+                midletInfo.classname, midletInfo.name, null, null, null);
+
+            testIsolate.waitForExit();
 
             boolean newIsolatesFound;
             do {
@@ -229,14 +232,4 @@ abstract class AutoTesterHelperBaseMVM extends AutoTesterHelperBase
      * Called after test suite has been removed from storage (uninstalled).
      */
     abstract void onTestSuiteRemoved();
-
-    /**
-     * Starts installed test suite.
-     */
-    abstract void startTestSuite();
-
-    /**
-     * Waits until running test suite has exited.
-     */
-    abstract void waitForTestSuiteToExit();
 }

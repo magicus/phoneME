@@ -48,9 +48,6 @@ import com.sun.midp.events.*;
  * Implements auto testing functionality not covered by AutoTesterHelperBaseMVM.
  */
 final class AutoTesterHelper extends AutoTesterHelperBaseMVM {
-    /** Test suite Isolate */
-    private Isolate testIsolate;
-
     /**
      * Constructor.
      *
@@ -74,21 +71,5 @@ final class AutoTesterHelper extends AutoTesterHelperBaseMVM {
      */
     void onTestSuiteRemoved() {
         // not interested in
-    }
-
-    /**
-     * Starts installed test suite.
-     */
-    void startTestSuite() {
-        MIDletInfo midletInfo = getFirstMIDletOfSuite(suiteId);
-        testIsolate = AmsUtil.startMidletInNewIsolate(suiteId,
-                midletInfo.classname, midletInfo.name, null, null, null);
-    }
-
-    /**
-     * Waits until running test suite has exited.
-     */
-    void waitForTestSuiteToExit() {
-        testIsolate.waitForExit();
     }
 }
