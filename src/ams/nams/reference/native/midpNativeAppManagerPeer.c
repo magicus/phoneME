@@ -89,15 +89,11 @@ nams_listeners_notify(NamsListenerType listenerType,
  */
 MIDPError midp_system_initialize(void) {
     char *pAppDir, *pConfDir;
-	int midp_heap_requirement = getHeapRequirement();
 
     JVM_Initialize();
 
-    /*
-     * Set Java heap capacity now so it can been overridden from command
-     * line.
-     */
-    JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
+    /* set Java heap parameters now so they can been overridden from command line */
+    setHeapParameters();
 
     /* set up appDir before calling midp_system_start */
     pAppDir = getApplicationDir(NULL);

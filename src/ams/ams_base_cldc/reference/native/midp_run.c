@@ -358,44 +358,6 @@ void JVMSPI_PrintRaw(const char* s) {
 }
 
 /**
- * Initializes the AMS.
- */
-static void
-midpInitializeAMS(void) {
-    /*
-     * Set AMS memory limits
-     */
-#if ENABLE_MULTIPLE_ISOLATES
-    {
-        int reserved;
-        int limit;
-
-        reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
-        if (0 == reserved) {
-            REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");
-            reserved = AMS_MEMORY_RESERVED_MVM;
-        }
-
-        limit = getInternalPropertyInt("AMS_MEMORY_LIMIT_MVM");
-        if (0 == limit) {
-            REPORT_ERROR(LC_AMS, "AMS_MEMORY_LIMIT_MVM property not set");
-            limit = AMS_MEMORY_LIMIT_MVM;
-        }
-
-        reserved = reserved * 1024;
-        JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY, reserved);
-
-        if (limit <= 0) {
-            limit = 0x7FFFFFFF;  /* MAX_INT */
-        } else {
-            limit = limit * 1024;
-        }
-        JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_TOTAL_MEMORY, limit);
-    }
-#endif
-}
-
-/**
  * Initializes the Debugger.
  */
 static void
@@ -486,8 +448,6 @@ midpInitializeVM(void) {
      * function. e.g. initLocaleMethod();
      */
 
-    midpInitializeAMS();
-
     midpInitializeDebugger();
 
     if (pushopen() != 0) {
@@ -510,8 +470,8 @@ midpFinalizeAMS(void) {
 
     /*
      * Note: the AMS isolate will have been registered by a native method
-     * call, so there is no corresponding midpRegisterAmsIsolateId in the
-     * midpInitializeAMS() function.
+     * call, so there is no corresponding midpRegisterAmsIsolateId in VM
+     * initialization code.
      */
     midpUnregisterAmsIsolateId();
 }
