@@ -38,4 +38,6 @@ const char* const jsropIllegalArgumentException = "java/lang/IllegalArgumentExce
 const char* const jsropIOException = "java/io/IOException";
 /** 'C' string for java.io.InterruptedIOException */
 const char* const jsropInterruptedIOException = "java/io/InterruptedIOException";
+/** 'C' string for java.lang.IllegalStateException */
+const char* const jsropIllegalStateException = "java/lang/IllegalStateException";
 

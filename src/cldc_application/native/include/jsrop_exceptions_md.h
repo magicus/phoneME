@@ -42,7 +42,7 @@ extern "C" {
 #define jsropIOException midpIOException
 /** 'C' string for java.io.InterruptedIOException */
 #define jsropInterruptedIOException midpInterruptedIOException
-/** 'C' string for java.io.jsropIllegalStateException */
+/** 'C' string for java.lang.IllegalStateException */
 #define jsropIllegalStateException midpIllegalStateException
 
 #if defined __cplusplus 
