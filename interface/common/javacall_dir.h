@@ -57,9 +57,15 @@ extern "C" {
  */
         
 /**
- * returns a handle to a file list. This handle can be used in
- * subsequent calls to javacall_dir_get_next() to iterate through
- * the file list and get the names of files that match the given string.
+ * Returns a handle to a file list. This handle can be used in
+ * subsequent calls to <code>javacall_dir_get_next()</code> to iterate 
+ * through the file list and get the names of files that match 
+ * the given string. 
+ * This function must support repeated calls from the Java 
+ * layer, which means the handle returned would not be affected
+ * by subsequent calls to <code>javacall_dir_open()</code> and 
+ * the file list/iterator will not be affected. 
+ *  
  * 
  * @param path the name of a directory, but it can be a
  *             partial file name
@@ -87,8 +93,9 @@ void javacall_dir_close(javacall_handle handle);
  * underlying file system. Current and parent directory links 
  * ("." and "..") must not be returned. This function must 
  * behave correctly (e.g. not skip any existing files) even if 
- * some files are deleted from the directory between subsequent 
- * calls to <code>javacall_dir_get_next()</code>.
+ * some files are deleted from the directory, or 
+ * <code>javacall_dir_open()</code> is called between 
+ * subsequent calls to <code>javacall_dir_get_next()</code>. 
  * 
  * On success, the resulting file will be copied to user supplied buffer.
  * The filename returned will omit the file's path
