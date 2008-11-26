@@ -148,11 +148,9 @@ public class DynamicComponentStorage {
                 SuiteSettings suiteSettings, String displayName,
                     Properties jadProps, Properties jarProps)
                         throws IOException, MIDletSuiteLockedException {
-        ComponentInfoImpl ci =
-                new ComponentInfoImpl(installInfo.componentId, installInfo.id);
-
-        ci.displayName = displayName;
-        ci.trusted = installInfo.trusted;
+        ComponentInfoImpl ci = new ComponentInfoImpl(
+                installInfo.componentId, installInfo.id,
+                displayName, installInfo.trusted);
 
         /*
          * Convert the property args to String arrays to save
@@ -252,7 +250,8 @@ public class DynamicComponentStorage {
             for (int i = 0; i < n; i++) {
                 components[i] = new ComponentInfoImpl(
                         ComponentInfo.UNUSED_COMPONENT_ID,
-                        MIDletSuite.UNUSED_SUITE_ID);
+                        MIDletSuite.UNUSED_SUITE_ID,
+                        "", false);
             }
 
             try {

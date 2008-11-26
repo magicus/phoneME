@@ -97,89 +97,6 @@ import java.util.*;
 class AppManagerUIImpl extends Form
     implements AppManagerUI, ItemCommandListener, CommandListener {
 
-    /**
-     * The font used to paint midlet names in the AppSelector.
-     * Inner class cannot have static variables thus it has to be here.
-     */
-    private static final Font ICON_FONT = Font.getFont(Font.FACE_SYSTEM,
-                                                         Font.STYLE_BOLD,
-                                                         Font.SIZE_SMALL);
-
-    /**
-     * The font used to paint midlet names in the AppSelector.
-     * Inner class cannot have static variables thus it has to be here.
-     */
-    private static final Font ICON_FONT_UL = Font.getFont(Font.FACE_SYSTEM,
-                            Font.STYLE_BOLD | Font.STYLE_UNDERLINED,
-                            Font.SIZE_SMALL);
-
-    /**
-     * The image used to draw background for the midlet representation.
-     * IMPL NOTE: it is assumed that background image is larger or equal
-     * than all other images that are painted over it
-     */
-    private static final Image ICON_BG =
-        GraphicalInstaller.getImageFromInternalStorage("_ch_hilight_bg");
-
-    /**
-     * Cashed background image width.
-     */
-    private static final int bgIconW = ICON_BG.getWidth();
-
-    /**
-     * Cashed background image height.
-     */
-    private static final int bgIconH = ICON_BG.getHeight();
-
-    /**
-     * The icon used to display that user attention is requested
-     * and that midlet needs to brought into foreground.
-     */
-    private static final Image FG_REQUESTED =
-        GraphicalInstaller.getImageFromInternalStorage("_ch_fg_requested");
-
-    /**
-     * The image used to draw disable midlet representation.
-     */
-    private static final Image DISABLED_IMAGE =
-        GraphicalInstaller.getImageFromInternalStorage("_ch_disabled");
-
-    /**
-     * The color used to draw midlet name
-     * for the hilighted non-running running midlet representation.
-     */
-    private static final int ICON_HL_TEXT = 0x000B2876;
-
-    /**
-     * The color used to draw the shadow of the midlet name
-     * for the non hilighted non-running midlet representation.
-     */
-    private static final int ICON_TEXT = 0x003177E2;
-
-    /**
-     * The color used to draw the midlet name
-     * for the non hilighted running midlet representation.
-     */
-    private static final int ICON_RUNNING_TEXT = 0xbb0000;
-
-    /**
-     * The color used to draw the midlet name
-     * for the hilighted running midlet representation.
-     */
-    private static final int ICON_RUNNING_HL_TEXT = 0xff0000;
-
-    /**
-     * Tha pad between custom item's icon and text
-     */
-    private static final int ITEM_PAD = 2;
-
-    /**
-     * Cashed truncation mark
-     */
-    private static final char truncationMark =
-        Resource.getString(ResourceConstants.TRUNCATION_MARK).charAt(0);
-
-
     /** Command object for "Exit" command for splash screen. */
     private Command exitCmd =
         new Command(Resource.getString(ResourceConstants.EXIT),
@@ -287,15 +204,6 @@ class AppManagerUIImpl extends Form
                                            (ResourceConstants.AMS_CHANGE_FOLDER),
                                            Command.ITEM, 1);
 
-    // Current locale
-    private String locale;
-
-    // Layout direction. True if direction is right-to-left
-    private boolean RL_DIRECTION;
-
-    // Orientation of text, can be Graphics.RIGHT or Graphics.Left
-    private int TEXT_ORIENT;
-
     /** Display for the Manager MIDlet. */
     ApplicationManager manager;
 
@@ -335,7 +243,7 @@ class AppManagerUIImpl extends Form
     private boolean foldersOn;
 
     /** custom item for which command to change folder was activated */
-    private MidletCustomItem mciToChangeFolder;
+    private AppManagerMIDletCustomItem mciToChangeFolder;
 
     /** running MIDlet selectors */
     private Vector midletSelectors;
@@ -440,7 +348,8 @@ class AppManagerUIImpl extends Form
      */
     public void setCurrentItem(RunningMIDletSuiteInfo msi) {
         for (int i = 0; i < mciVector.size(); i++) {
-            MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
+            AppManagerMIDletCustomItem mci =
+                (AppManagerMIDletCustomItem)mciVector.elementAt(i);
             if (mci.msi == msi) {
                 selectItem(mci);
                 break;
@@ -452,7 +361,7 @@ class AppManagerUIImpl extends Form
     /**
      * Selects specified item. If necessary changes folder to items folder. 
      */
-    private void selectItem(MidletCustomItem mi) {
+    private void selectItem(AppManagerMIDletCustomItem mi) {
         if (foldersOn) {
             if (currentFolderId != mi.msi.folderId) {
                 setFolder(mi.msi.folderId);
@@ -472,7 +381,8 @@ class AppManagerUIImpl extends Form
             currentFolderId = fid;
             deleteAll();
             for (int i = 0; i < mciVector.size(); i++) {
-                MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
+                AppManagerMIDletCustomItem mci =
+                    (AppManagerMIDletCustomItem)mciVector.elementAt(i);
                 if (currentFolderId == mci.msi.folderId) {
                     append(mci);
                 }
@@ -671,7 +581,7 @@ class AppManagerUIImpl extends Form
      * @param item the Item the command was on.
      */
     public void commandAction(Command c, Item item) {
-        RunningMIDletSuiteInfo msi = ((MidletCustomItem)item).msi;
+        RunningMIDletSuiteInfo msi = ((AppManagerMIDletCustomItem)item).msi;
         if (msi == null) {
             return;
         }
@@ -739,7 +649,7 @@ class AppManagerUIImpl extends Form
                  *  to copy non DRM-protected MIDlet suite to external storage.
                  */
                 
-                ((MidletCustomItem)item).removeCommand(moveToInternalStorageCmd);
+                item.removeCommand(moveToInternalStorageCmd);
                 msi.storageId = Constants.INTERNAL_STORAGE_ID;
                 displaySuccessMessage(Resource.getString(
                     ResourceConstants.APPLICATION) + Resource.getString(
@@ -768,7 +678,7 @@ class AppManagerUIImpl extends Form
                 folderList.removeCommand(selectFolderCmd);
                 folderList.addCommand(selectItemFolderCmd);
                 folderList.setSelectCommand(selectItemFolderCmd);
-                mciToChangeFolder = (MidletCustomItem)item;
+                mciToChangeFolder = (AppManagerMIDletCustomItem)item;
                 folderList.setSelectedFolder(currentFolderId);
                 display.setCurrent(folderList);
             }
@@ -791,7 +701,7 @@ class AppManagerUIImpl extends Form
      * @param className MIDlet class name
      */
     public void notifyMidletStarted(RunningMIDletSuiteInfo si, String className) {
-        MidletCustomItem ci = findItem(si);
+        AppManagerMIDletCustomItem ci = findItem(si);
         if (null != ci) {
             setupDefaultCommand(ci);
             setupRunStateDependentCommands(ci);
@@ -807,7 +717,7 @@ class AppManagerUIImpl extends Form
      *
      * @param ci midlet custom item
      */
-    private void setupRunStateDependentCommands(AppManagerUIImpl.MidletCustomItem ci) {
+    private void setupRunStateDependentCommands(AppManagerMIDletCustomItem ci) {
         // IMPL_NOTE: we decide to have the "Open" command default for all cases,
         // just to make the life easier for both the programmer and the user.
         RunningMIDletSuiteInfo si = ci.msi;
@@ -857,7 +767,7 @@ class AppManagerUIImpl extends Form
      * and enabled state.
      * @param mci the form item whose set of menu commands will be modified 
      */
-    private void setupDefaultCommand(AppManagerUIImpl.MidletCustomItem mci) {
+    private void setupDefaultCommand(AppManagerMIDletCustomItem mci) {
         RunningMIDletSuiteInfo si = mci.msi;
         boolean running = si.hasRunningMidlet();
 
@@ -912,10 +822,9 @@ class AppManagerUIImpl extends Form
      * @param midlet specifies which midlet has changed its state
      */
     public void notifyMidletStateChanged(RunningMIDletSuiteInfo si, MIDletProxy midlet) {
-        MidletCustomItem mci = null;
-
+        AppManagerMIDletCustomItem mci;
         for (int i = 0; i < mciVector.size(); i++) {
-            mci = (MidletCustomItem)mciVector.elementAt(i);
+            mci = (AppManagerMIDletCustomItem)mciVector.elementAt(i);
             if (mci.msi == si) {
                 mci.update();
             }
@@ -936,7 +845,7 @@ class AppManagerUIImpl extends Form
      * @param midletClassName Class name of the exited midlet
      */
     public void notifyMidletExited(RunningMIDletSuiteInfo si, String midletClassName) {
-        MidletCustomItem mci = findItem(si);
+        AppManagerMIDletCustomItem mci = findItem(si);
         if (mci == null) {
             // Midlet quitted; display the application Selector
             display.setCurrent(this);
@@ -1131,7 +1040,8 @@ class AppManagerUIImpl extends Form
     public void notifySuiteInstalledExt(RunningMIDletSuiteInfo si) {
         int size = mciVector.size();
         for (int i = 0; i < size; i++) {
-            MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
+            AppManagerMIDletCustomItem mci =
+                (AppManagerMIDletCustomItem)mciVector.elementAt(i);
             if (mci.msi == si) {
                 display.setCurrentItem(mci);
                 break;
@@ -1156,10 +1066,10 @@ class AppManagerUIImpl extends Form
      * @param suiteInfo the midlet suite info
      */
     public void itemRemoved(RunningMIDletSuiteInfo suiteInfo) {
-        MidletCustomItem mci = null;
+        AppManagerMIDletCustomItem mci = null;
         int i = 0;
         for (; i < mciVector.size(); i++) {
-            mci = (MidletCustomItem)mciVector.elementAt(i);
+            mci = (AppManagerMIDletCustomItem)mciVector.elementAt(i);
             if (mci.msi == suiteInfo) {
                 break;
             }
@@ -1208,7 +1118,7 @@ class AppManagerUIImpl extends Form
      * @param si corresponding suite info
      */
     public void notifyMIDletSuiteIconChaged(RunningMIDletSuiteInfo si) {
-        MidletCustomItem mci = findItem(si);
+        AppManagerMIDletCustomItem mci = findItem(si);
         mci.icon = si.icon;
     }
 
@@ -1217,9 +1127,10 @@ class AppManagerUIImpl extends Form
      * @param si corresponding suite info
      * @return the custom item that points to the suite info, or null if not found
      */
-    private MidletCustomItem findItem(RunningMIDletSuiteInfo si) {
+    private AppManagerMIDletCustomItem findItem(RunningMIDletSuiteInfo si) {
         for (int i = 0; i < mciVector.size(); i++) {
-            MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
+            AppManagerMIDletCustomItem mci =
+                (AppManagerMIDletCustomItem)mciVector.elementAt(i);
             if (mci.msi == si) {
                 return mci;
             }
@@ -1254,7 +1165,8 @@ class AppManagerUIImpl extends Form
      * @param suiteInfo the midlet suite info
      */
     public void itemAppended(RunningMIDletSuiteInfo suiteInfo) {
-        MidletCustomItem ci = new MidletCustomItem(suiteInfo);
+        AppManagerMIDletCustomItem ci =
+            new AppManagerMIDletCustomItem(suiteInfo);
 
         setupDefaultCommand(ci);
         if (!suiteInfo.isInternal()) {
@@ -1477,455 +1389,91 @@ class AppManagerUIImpl extends Form
         return this;
     }
 
-    /**
-     * Called by Manager when destroyApp happens to clean up data.
-     * Timer that shedules scrolling text repainting should be
-     * canceled when AMS MIDlet is about to be destroyed to avoid
-     * generation of repaint events.
-     */
+    /** Called by Manager when destroyApp happens to clean up data */
     public void cleanUp() {
-        textScrollTimer.cancel();
+        AppManagerMIDletCustomItem ci =
+            findItem(lastSelectedMsi);
+        ci.cleanUp();
     }
 
-    /** A Timer which will handle firing repaints of the ScrollPainter */
-    protected static Timer textScrollTimer;
-
-    /** Text auto-scrolling parameters */
-    private static int SCROLL_RATE = 250;
-
-    private static int SCROLL_DELAY = 500;
-
-    private static int SCROLL_SPEED = 10;
-
     /**
-     * Inner class used to display a running midlet in the AppSelector.
-     * MidletCustomItem consists of an icon and name associated with the
-     * corresponding midlet. In addition if a midlet requests to be
-     * put into foreground (requires user attention) an additional                  
-     * system provided icon will be displayed.
+     * The inner class to represent MIDlet and MIDlet suite items
+     * in the Application Selector screen
      */
-    class MidletCustomItem extends CustomItem {
+    class AppManagerMIDletCustomItem extends MIDletCustomItem {
+
+        /** The MIDletSuiteInfo associated with the item */
+        RunningMIDletSuiteInfo msi;
 
         /**
          * Constructs a midlet representation for the App Selector Screen.
-         * @param msi The MIDletSuiteInfo for which representation has
-         *            to be created
+         * @param msi The MIDletSuiteInfo for which representation has to be created
          */
-        MidletCustomItem(RunningMIDletSuiteInfo msi) {
-            super(null);
+        AppManagerMIDletCustomItem(RunningMIDletSuiteInfo msi) {
+            super(msi.displayName, msi.icon);
             this.msi = msi;
-            icon = msi.icon;
-            text = msi.displayName.toCharArray();
-            textLen = msi.displayName.length();
-            truncWidth = ICON_FONT.charWidth(truncationMark);
-            truncated = false;
-            if (textScrollTimer == null) {
-                textScrollTimer = new Timer();
-            }
-
-            xScrollOffset = 0;
-
         }
 
         /**
-         * Gets the minimum width of a midlet representation in
-         * the App Selector Screen.
-         * @return the minimum width of a midlet representation
-         *         in the App Selector Screen.
+         * Returns running state of the MIDlet or MIDlte suite.
+         * @return true is MIDlet is running or associated MIDlet suite has running
+         *   MIDlets, false otherwise
          */
-        protected int getMinContentWidth() {
-            return AppManagerUIImpl.this.getWidth();
+        boolean isRunning() {
+            return msi.hasRunningMidlet();
         }
 
         /**
-         * Gets the minimum height of a midlet representation in
-         * the App Selector Screen.
-         * @return the minimum height of a midlet representation
-         *         in the App Selector Screen.
+         * Returns locked state of the MIDlet or MIDlet suite.
+         * Locked states limits operations available for this item.
+         * @return true if MIDlet or MIDlet suite is locked, false otherwise
          */
-        protected int getMinContentHeight() {
-            return ICON_BG.getHeight() > ICON_FONT.getHeight() ?
-                ICON_BG.getHeight() : ICON_FONT.getHeight();
+        boolean isLocked() {
+            return msi.isLocked();
         }
 
         /**
-         * Gets the preferred width of a midlet representation in
-         * the App Selector Screen based on the passed in height.
-         * @param height the amount of height available for this Item
-         * @return the minimum width of a midlet representation
-         *         in the App Selector Screen.
+         * True if alert is waiting for the foreground in at
+         * least of one of the MIDlets from this suite.
+         * @return true if there is a waiting alert
          */
-        protected int getPrefContentWidth(int height) {
-            return AppManagerUIImpl.this.getWidth();
+        boolean isAnyAlertWaiting() {
+            return msi.isAnyAlertWaiting();
         }
 
         /**
-         * Gets the preferred height of a midlet representation in
-         * the App Selector Screen based on the passed in width.
-         * @param width the amount of width available for this Item
-         * @return the minimum height of a midlet representation
-         *         in the App Selector Screen.
+         * True if this MIDlet or MIDlet suite item is enabled
+         * @return true if the item is enabled
          */
-        protected int getPrefContentHeight(int width) {
-            return ICON_BG.getHeight() > ICON_FONT.getHeight() ?
-                ICON_BG.getHeight() : ICON_FONT.getHeight();
+        boolean isEnabled() {
+            return msi.enabled;
         }
 
-        /**
-         * On size change event we define the item's text
-         * according to item's new width
-         * @param w The current width of this Item
-         * @param h The current height of this Item
-         */
-        protected void sizeChanged(int w, int h) {
-            stopScroll();
-            width = w;
-            height = h;
-            int widthForText = w - ITEM_PAD - ICON_BG.getWidth();
-            int msiNameWidth = ICON_FONT.charsWidth(text, 0, textLen);
-            scrollWidth = msiNameWidth - widthForText + w/5;
-            truncated = msiNameWidth > widthForText;
-        }
-
-        /**
-         * Paints the content of a midlet representation in
-         * the App Selector Screen.
-         * Note that icon representing that foreground was requested
-         * is painted on to of the existing ickon.
-         * @param g The graphics context where painting should be done
-         * @param w The width available to this Item
-         * @param h The height available to this Item
-         */
-        protected void paint(Graphics g, int w, int h) {
-            int cX = g.getClipX();
-            int cY = g.getClipY();
-            int cW = g.getClipWidth();
-            int cH = g.getClipHeight();
-            
-            locale = System.getProperty("microedition.locale");
-            
-            if (locale != null && locale.equals("he-IL")) {
-                RL_DIRECTION = true;
-                TEXT_ORIENT = Graphics.RIGHT;
-            } else {
-                RL_DIRECTION = false;
-                TEXT_ORIENT = Graphics.LEFT;
-            }
-
-            if ((cW + cX) > bgIconW) {
-                if (text != null && h >= ICON_FONT.getHeight()) {
-
-                    int color;
-                    if (msi.hasRunningMidlet()) {
-                        color = hasFocus ?
-                                ICON_RUNNING_HL_TEXT : ICON_RUNNING_TEXT;
-                    } else {
-                        color = hasFocus ? ICON_HL_TEXT : ICON_TEXT;
-                    }
-
-                    g.setColor(color);
-                    g.setFont(msi.isLocked() ? ICON_FONT_UL : ICON_FONT);
-
-
-                    boolean truncate = (xScrollOffset == 0) && truncated;
-
-                    if (RL_DIRECTION) {
-                        g.clipRect(truncate ? truncWidth + ITEM_PAD : ITEM_PAD, 0,
-                            truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD :
-                                    w - bgIconW - 2 * ITEM_PAD, h);
-                        g.drawChars(text, 0, textLen,
-                            w - (bgIconW + ITEM_PAD + xScrollOffset), (h - ICON_FONT.getHeight())/2,
-                                TEXT_ORIENT | Graphics.TOP);
-                        g.setClip(cX, cY, cW, cH);
-
-                        if (truncate) {
-                            g.drawChar(truncationMark, truncWidth,
-                                (h - ICON_FONT.getHeight())/2, Graphics.RIGHT | Graphics.TOP);
-                        }
-                    } else {                        
-                        g.clipRect(bgIconW + ITEM_PAD, 0,
-                        truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD :
-                                   w - bgIconW - 2 * ITEM_PAD, h);
-                        g.drawChars(text, 0, textLen,
-                            bgIconW + ITEM_PAD + xScrollOffset, (h - ICON_FONT.getHeight())/2,
-                                Graphics.LEFT | Graphics.TOP);
-                        g.setClip(cX, cY, cW, cH);
-
-                        if (truncate) {
-                            g.drawChar(truncationMark, w - truncWidth,
-                                (h - ICON_FONT.getHeight())/2, Graphics.LEFT | Graphics.TOP);
-                        }
-                    }
-
-                }
-            }
-
-            if (cX < bgIconW) {
-                if (RL_DIRECTION) {
-                    if (hasFocus) {
-                        g.drawImage(ICON_BG, w - bgIconW, (h - bgIconH)/2,
-                                    Graphics.TOP | Graphics.LEFT);
-                    }
-
-                    if (icon != null) {
-                        g.drawImage(icon, w - (bgIconW - icon.getWidth())/2,
-                                    (bgIconH - icon.getHeight())/2,
-                                    Graphics.TOP | Graphics.RIGHT);
-                    }
-                    // Draw special icon if user attention is requested and
-                    // that midlet needs to be brought into foreground by the user
-                    if (msi.isAnyAlertWaiting()) {
-                        g.drawImage(FG_REQUESTED,
-                                    w - (bgIconW - FG_REQUESTED.getWidth()), 0,
-                                    Graphics.TOP | Graphics.LEFT);
-                    }
-
-                    if (!msi.enabled) {
-                        // indicate that this suite is disabled
-                        g.drawImage(DISABLED_IMAGE,
-                                    w - (bgIconW - DISABLED_IMAGE.getWidth())/2,
-                                    (bgIconH - DISABLED_IMAGE.getHeight())/2,
-                                    Graphics.TOP | Graphics.LEFT);
-                    }
-                } else {
-                    if (hasFocus) {
-                        g.drawImage(ICON_BG, 0, (h - bgIconH)/2,
-                                    Graphics.TOP | Graphics.LEFT);
-                    }
-
-                    if (icon != null) {
-                        g.drawImage(icon, (bgIconW - icon.getWidth())/2,
-                                    (bgIconH - icon.getHeight())/2,
-                                    Graphics.TOP | Graphics.LEFT);
-                    }
-
-                    // Draw special icon if user attention is requested and
-                    // that midlet needs to be brought into foreground by the user
-                    if (msi.isAnyAlertWaiting()) {
-                        g.drawImage(FG_REQUESTED,
-                                    bgIconW - FG_REQUESTED.getWidth(), 0,
-                                    Graphics.TOP | Graphics.LEFT);
-                    }
-
-                    if (!msi.enabled) {
-                        // indicate that this suite is disabled
-                        g.drawImage(DISABLED_IMAGE,
-                                    (bgIconW - DISABLED_IMAGE.getWidth())/2,
-                                    (bgIconH - DISABLED_IMAGE.getHeight())/2,
-                                    Graphics.TOP | Graphics.LEFT);
-                    }
-                }
-            }
-
-        }
-
-        /**
-        * Start the scrolling of the text
-        */
-        protected void startScroll() {
-            if (!hasFocus || !truncated) {
-                return;
-            }
-            stopScroll();
-            textScrollPainter = new TextScrollPainter();
-            textScrollTimer.schedule(textScrollPainter, SCROLL_DELAY, SCROLL_RATE);
-        }
-
-        /**
-        * Stop the scrolling of the text
-        */
-        protected void stopScroll() {
-            if (textScrollPainter == null) {
-                return;
-            }
-            xScrollOffset = 0;
-            textScrollPainter.cancel();
-            textScrollPainter = null;
-            if (RL_DIRECTION) {
-                    repaint(0, 0, width, height);
-                } else {
-                    repaint(bgIconW, 0, width, height);
-                }
-        }
-
-        /**
-        * Called repeatedly to animate a side-scroll effect for text
-        */
-        protected void repaintScrollText() {
-            if (-xScrollOffset < scrollWidth) {
-                    xScrollOffset -= SCROLL_SPEED;
-                if (RL_DIRECTION) {
-                    repaint(0, 0, width, height);
-                } else {
-                    repaint(bgIconW, 0, width, height);
-                }
-
-            } else {
-                // already scrolled to the end of text
-                stopScroll();
-            }
-        }
-
-        /**
-         * Handles traversal.
-         * @param dir The direction of traversal (Canvas.UP, Canvas.DOWN,
-         *            Canvas.LEFT, Canvas.RIGHT)
-         * @param viewportWidth The width of the viewport in the AppSelector
-         * @param viewportHeight The height of the viewport in the AppSelector
-         * @param visRect_inout The return array that tells AppSelector
-         *        which portion of the MidletCustomItem has to be made visible
-         * @return true if traversal was handled in this method
-         *         (this MidletCustomItem just got focus or there was an
-         *         internal traversal), otherwise false - to transfer focus
-         *         to the next item
-         */
-        protected boolean traverse(int dir,
-                                   int viewportWidth, int viewportHeight,
-                                   int visRect_inout[]) {
-            // entirely visible and hasFocus
-            if (!hasFocus) {
-                hasFocus = true;
-                lastSelectedMsi = this.msi;
-            }
-
-            visRect_inout[0] = 0;
-            visRect_inout[1] = 0;
-            visRect_inout[2] = width;
-            visRect_inout[3] = height;
-
-            startScroll();
-
-            return false;
-        }
-
-        /**
-         * Handles traversal out. This method is called when this
-         * MidletCustomItem looses focus.
-         */
-        protected void traverseOut() {
-            hasFocus = false;
-            stopScroll();
-        }
-
-        /**
-         * Repaints MidletCustomItem. Called when internal state changes.
-         */
-        public void update() {
-            repaint();
-        }
-
-        /**
-         * Sets the owner (AppManagerUIImpl) of this MidletCustomItem
-         * @param hs The AppSelector in which this MidletCustomItem is shown
-         */
-        void setOwner(AppManagerUIImpl hs) {
-            owner = hs;
-        }
-
-        /**
-         * Sets default <code>Command</code> for this <code>Item</code>.
-         *
-         * @param c the command to be used as this <code>Item's</code> default
-         * <code>Command</code>, or <code>null</code> if there is to
-         * be no default command
-         */
-        public void setDefaultCommand(Command c) {
-            defaultCommand = c;
-            super.setDefaultCommand(c);
-        }
-
-        /**
-         * Called when MidletCustomItem is shown.
-         */
+        /** Called when MidletCustomItem is shown */
         public void showNotify() {
-
-            // Unfortunately there is no Form.showNotify  method where
-            // this could have been done.
-
-            // When icon for the Installer
-            // is shown we want to make sure
-            // that there are no running midlets from the "internal" suite.
-            // The only 2 midlets that can run in bg from
-            // "internal" suite are the DiscoveryApp and the Installer.
-            // Icon for the Installer will be shown each time
-            // the AppSelector is made current since it is the top
-            // most icon and we reset the traversal to start from the top
+            // Unfortunately there is no Form.showNotify  method where this could
+            // have been done.
+            //
+            // When icon for the Installer is shown we want to make sure that there
+            // are no running midlets from the "internal" suite. The only 2 midlets
+            // that can run in bg from "internal" suite are the DiscoveryApp and
+            // the Installer. Icon for the Installer will be shown each time the
+            // AppSelector is made current since it is the top most icon and we
+            // reset the traversal to start from the top
             if (msi.isInternal()) {
                 appManager.ensureNoInternalMIDletsRunning();
             }
         }
 
-        /** A TimerTask which will repaint scrolling text  on a repeated basis */
-        protected TextScrollPainter textScrollPainter;
-
         /**
-         * Width of the scroll area for text
+         * Overrides #MIDletCustomItem.traverse() to remember
+         * last selected item of the form 
          */
-        protected int scrollWidth;
-
-        /**
-         * If text is truncated
-         */
-        boolean truncated;
-
-        /**
-         * pixel offset to the start of the text field  (for example,  if
-         * xScrollOffset is -60 it means means that the text in this
-         * text field is scrolled 60 pixels left of the left edge of the
-         * text field)
-         */
-        protected int xScrollOffset;
-
-        /**
-         * Helper class used to repaint scrolling text
-         * if needed.
-         */
-        private class TextScrollPainter extends TimerTask {
-            /**
-             * Repaint the item text
-             */
-            public final void run() {
-                repaintScrollText();
-            }
+        protected boolean traverse(
+                int dir, int viewportWidth, int viewportHeight, int visRect_inout[]) {
+            lastSelectedMsi = this.msi;
+            return super.traverse(
+                dir, viewportWidth, viewportHeight, visRect_inout);
         }
-
-        /** True if this MidletCustomItem has focus, and false - otherwise */
-        boolean hasFocus; // = false;
-
-        /**
-         * The owner of this MidletCustomItem
-         * IMPL_NOTE:
-         *   This field has the same name with package private
-         *   Item.owner, however the field values are independent.
-         */
-        AppManagerUIImpl owner; // = false
-
-        /** The MIDletSuiteInfo associated with this MidletCustomItem */
-        RunningMIDletSuiteInfo msi; // = null
-
-        /** The width of this MidletCustomItem */
-        int width; // = 0
-        /** The height of this MIDletSuiteInfo */
-        int height; // = 0
-
-        /** Cashed width of the truncation mark */
-        int truncWidth;
-
-        /** The text of this MidletCustomItem */
-        char[] text;
-
-        /** Length of the text */
-        int textLen;
-
-        /**
-         * The icon to be used to draw this midlet representation.
-         */
-        Image icon; // = null
-        
-        /** current default command */
-        Command defaultCommand; // = null
     }
-
 }
-
-

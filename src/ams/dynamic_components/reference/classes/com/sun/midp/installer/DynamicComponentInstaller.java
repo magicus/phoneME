@@ -60,8 +60,10 @@ public class DynamicComponentInstaller extends HttpInstaller {
      *
      * @return unique component identifier
      *
+     * @throws IllegalArgumentException if a suite with the given ID
+     *                                  was not found
      * @throws java.io.IOException if the installation failed
-     * @throws InvalidJadException if the downloaded JAR is invalid
+     * @throws InvalidJadException if the downloaded JAD or JAR is invalid
      * @throws com.sun.midp.midletsuite.MIDletSuiteLockedException is thrown,
      *            if the MIDletSuite is locked
      * @throws SecurityException if the caller does not have permission
@@ -141,8 +143,13 @@ public class DynamicComponentInstaller extends HttpInstaller {
      * @throws MIDletSuiteLockedException if the suite is locked
      */
     protected void storeUnit() throws IOException, MIDletSuiteLockedException {
+        String displayName = info.suiteName;
+        if (displayName == null) {
+            displayName = state.getDisplayName();
+        }
+
         componentStorage.storeComponent(state.midletSuiteStorage, info,
-            settings, state.getDisplayName(), state.jadProps, state.jarProps);
+            settings, displayName, state.jadProps, state.jarProps);
     }
 
     /**
