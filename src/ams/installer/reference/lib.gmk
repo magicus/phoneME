@@ -48,3 +48,6 @@ SUBSYSTEM_AMS_JAVA_FILES += \
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(INSTALLER_IMPL_DIR)/classes
+
+# Get interface allowing to detect presence and clean up JSR-75 data
+include $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/lib.gmk

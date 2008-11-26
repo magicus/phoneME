@@ -72,7 +72,6 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
         $(SUBSYSTEM_AMS_DIR)/ams_base/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/ams_base_cldc/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/ams_util/lib.gmk \
-        $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/app_image_gen_base/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/app_image_gen/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/autotester_base/lib.gmk \
