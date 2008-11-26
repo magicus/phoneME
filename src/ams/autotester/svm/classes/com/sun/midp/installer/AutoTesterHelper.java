@@ -113,7 +113,7 @@ class AutoTesterHelper extends AutoTesterHelperBase {
     /**
      * Installs and performs the tests.
      */
-    public void installAndPerformTests() 
+    void installAndPerformTests() 
         throws Exception {
 
         if (url == null) {
@@ -190,9 +190,9 @@ class AutoTesterHelper extends AutoTesterHelperBase {
 
         try {
             String url = null;
-            String domain = null;;
+            String domain = null;
             int suiteId = MIDletSuite.UNUSED_SUITE_ID;
-            int loopCount = -1;;
+            int loopCount = -1;
 
             settings = RecordStore.openRecordStore(AUTOTEST_STORE, false);
 
