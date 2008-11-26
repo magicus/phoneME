@@ -82,19 +82,19 @@ javacall_handle javacall_dir_open(const javacall_utf16* path,
 void javacall_dir_close(javacall_handle handle);
     
 /**
- * Returns the next filename (and/or sub directory) in directory
- * path (UNICODE format). The order is defined by the underlying 
- * file system. Current and parent directory links ("." and 
- * "..") must not be returned. This function must behave 
- * correctly (e.g. not skip any existing files) even if some 
- * files are deleted from the directory between subsequent 
+ * Returns the next filename or sub directory in the directory
+ * path (in UNICODE format). The order is defined by the 
+ * underlying file system. Current and parent directory links 
+ * ("." and "..") must not be returned. This function must 
+ * behave correctly (e.g. not skip any existing files) even if 
+ * some files are deleted from the directory between subsequent 
  * calls to <code>javacall_dir_get_next()</code>.
  * 
  * On success, the resulting file will be copied to user supplied buffer.
  * The filename returned will omit the file's path
  * 
- * NOTE: Some platform distinguish between files and directories, 
- * this function treat them as one type (files). 
+ * This function must not distinguish files and directories, 
+ * regardless of native file system behavior. 
  *  
  * @param handle pointer to filelist struct returned by javacall_dir_open
  * @param outFilenameLength will be filled with number of chars written 
