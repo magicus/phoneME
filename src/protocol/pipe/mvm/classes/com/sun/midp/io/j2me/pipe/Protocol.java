@@ -63,8 +63,6 @@ public class Protocol implements ConnectionBaseInterface {
             token = SecurityInitializer.requestToken(new SecurityTrusted());
         }
 
-        System.out.println(">>>>>>>>Setting isolate to pipe " + currentIsolate);
-
         if (currentIsolate == null)
             throw new IllegalStateException();
 
@@ -114,6 +112,5 @@ public class Protocol implements ConnectionBaseInterface {
      */
     public static void initUserContext() {
         currentIsolate = Isolate.currentIsolate();
-        System.out.println(">>>>>>>>Setting isolate from ams " + currentIsolate);
     }
 }
