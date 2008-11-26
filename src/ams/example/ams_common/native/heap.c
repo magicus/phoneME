@@ -27,6 +27,7 @@
 #include <midp_constants_data.h>
 #include <midp_properties_port.h>
 #include <midp_logging.h>
+#include <jvm.h>
 
 #if ENABLE_MULTIPLE_ISOLATES
 
