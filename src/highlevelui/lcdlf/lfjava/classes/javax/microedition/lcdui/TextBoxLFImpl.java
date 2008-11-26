@@ -575,9 +575,6 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
      */
 
     void uCallTraverseOut() {
-        synchronized (Display.LCDUILock) {
-            lCallTraverseOut();
-        }
     }
 
     /**
