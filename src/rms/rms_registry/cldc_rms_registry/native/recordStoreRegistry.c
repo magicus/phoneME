@@ -33,6 +33,7 @@
 #include <midpRMS.h>
 #include <midpUtilKni.h>
 #include <midpError.h>
+#include <midpServices.h>
 
 #include "rms_registry.h"
 
@@ -128,21 +129,28 @@ KNIDECL(com_sun_midp_rms_RecordStoreRegistry_getRecordStoreListeners) {
     GET_PARAMETER_AS_PCSL_STRING(2, storeName) {
 
         int length;
-        int listeners[MAX_ISOLATES * 2];
+        int *listeners;
+        int maxIsolates;
 
-        rms_registry_get_record_store_listeners(
-            suiteId, &storeName, listeners, &length);
+        maxIsolates = getMaxIsolates();
+        listeners = (int *)midpMalloc(2 * maxIsolates * sizeof(int));
+        if (listeners != NULL) {
+            rms_registry_get_record_store_listeners(
+                suiteId, &storeName, listeners, &length);
 
-        if (length != 0) {
-            SNI_NewArray(SNI_INT_ARRAY, length, listenersArray);
-            if (KNI_IsNullHandle(listenersArray)) {
-                KNI_ThrowNew(midpOutOfMemoryError, NULL);
-            } else KNI_SetRawArrayRegion(
-                listenersArray, 0, length * sizeof(jint), (jbyte *)listeners);
+            if (length != 0) {
+                SNI_NewArray(SNI_INT_ARRAY, length, listenersArray);
+                if (KNI_IsNullHandle(listenersArray)) {
+                    KNI_ThrowNew(midpOutOfMemoryError, NULL);
+                } else KNI_SetRawArrayRegion(
+                    listenersArray, 0, length * sizeof(jint), (jbyte *)listeners);
+            } else {
+                KNI_ReleaseHandle(listenersArray);
+            }
+            midpFree(listeners);
         } else {
-            KNI_ReleaseHandle(listenersArray);
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
         }
-
     }
     RELEASE_PCSL_STRING_PARAMETER;
     KNI_EndHandlesAndReturnObject(listenersArray);

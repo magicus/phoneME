@@ -36,6 +36,7 @@ import com.sun.midp.midletsuite.MIDletSuiteImpl;
 import com.sun.midp.midletsuite.MIDletSuiteInfo;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 import com.sun.midp.main.MIDletSuiteUtils;
+import com.sun.midp.main.Configuration;
 import com.sun.midp.midlet.MIDletSuite;
 
 import javax.microedition.lcdui.Image;
@@ -46,7 +47,10 @@ import java.util.Vector;
 public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
     // IMPL_NOTE: currently this value is 4, no need to specify a different initial size.
     /** The list of MIDlet proxies, one for each running MIDlet. It is set from AppManagerUI.java. */
-    private Vector proxies = new Vector(Constants.MAX_ISOLATES);
+    private Vector proxies = new Vector(
+        Configuration.getPositiveIntProperty(
+            "MAX_ISOLATES", Constants.MAX_ISOLATES));
+
     /** Icon for this suite. */
     public Image icon = null;
     /** Whether suite is under debug */
