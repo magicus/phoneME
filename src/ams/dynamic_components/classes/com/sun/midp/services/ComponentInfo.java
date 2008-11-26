@@ -51,6 +51,13 @@ public interface ComponentInfo {
     public String getDisplayName();
 
     /**
+     * Returns the version of the component.
+     *
+     * @return version of the component
+     */
+    public String getVersion();
+
+    /**
      * Returns true if this component is trusted, false otherwise.
      *
      * @return true if this component is trusted, false otherwise

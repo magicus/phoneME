@@ -210,6 +210,7 @@ free_suite_data_entry(MidletSuiteData* pData) {
         pcsl_string_free(&pData->varSuiteData.iconName);
         pcsl_string_free(&pData->varSuiteData.suiteVendor);
         pcsl_string_free(&pData->varSuiteData.suiteName);
+        pcsl_string_free(&pData->varSuiteData.suiteVersion);
         pcsl_string_free(&pData->varSuiteData.pathToJar);
         pcsl_string_free(&pData->varSuiteData.pathToSettings);
 
@@ -658,8 +659,9 @@ read_suites_data(char** ppszError) {
             pStrings[2] = &pData->varSuiteData.iconName;
             pStrings[3] = &pData->varSuiteData.suiteVendor;
             pStrings[4] = &pData->varSuiteData.suiteName;
-            pStrings[5] = &pData->varSuiteData.pathToJar;
-            pStrings[6] = &pData->varSuiteData.pathToSettings;
+            pStrings[5] = &pData->varSuiteData.suiteVersion;
+            pStrings[6] = &pData->varSuiteData.pathToJar;
+            pStrings[7] = &pData->varSuiteData.pathToSettings;
 
             status = ALL_OK;
 
@@ -804,8 +806,9 @@ write_suites_data(char** ppszError) {
             pStrings[2] = &pData->varSuiteData.iconName;
             pStrings[3] = &pData->varSuiteData.suiteVendor;
             pStrings[4] = &pData->varSuiteData.suiteName;
-            pStrings[5] = &pData->varSuiteData.pathToJar;
-            pStrings[6] = &pData->varSuiteData.pathToSettings;
+            pStrings[5] = &pData->varSuiteData.suiteVersion;
+            pStrings[6] = &pData->varSuiteData.pathToJar;
+            pStrings[7] = &pData->varSuiteData.pathToSettings;
                 
             status = ALL_OK;
 

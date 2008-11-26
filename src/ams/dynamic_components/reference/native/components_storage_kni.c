@@ -373,6 +373,10 @@ KNIDECL(
                                      "displayName",
                                       &(pData->varSuiteData.displayName),
                                       tmpHandle);
+        KNI_RESTORE_PCSL_STRING_FIELD(componentInfoObject, componentInfoClass,
+                                     "version",
+                                      &(pData->varSuiteData.suiteVersion),
+                                      tmpHandle);
         KNI_RESTORE_BOOLEAN_FIELD(componentInfoObject, componentInfoClass,
                                   "trusted", pData->isTrusted);
     } while (0);
@@ -442,6 +446,11 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getSuiteComponentsList)
                                       componentObjClass,
                                       "displayName",
                                       &(pData->varSuiteData.displayName),
+                                      tmpHandle);
+                KNI_RESTORE_PCSL_STRING_FIELD(componentObj,
+                                      componentObjClass,
+                                      "version",
+                                      &(pData->varSuiteData.suiteVersion),
                                       tmpHandle);
 
                 numberOfComponents++;

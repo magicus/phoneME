@@ -2146,7 +2146,7 @@ public abstract class Installer {
      * @exception NumberFormatException if either <code>ver1</code> or
      * <code>ver2</code> contain characters that are not numbers or periods
      */
-    private static int vercmp(String ver1, String ver2)
+    protected static int vercmp(String ver1, String ver2)
             throws NumberFormatException {
         String strVal1;
         String strVal2;
@@ -2232,7 +2232,7 @@ public abstract class Installer {
      * @exception NumberFormatException if <code>ver</code>
      *     contains any characters that are not numbers or periods
      */
-    private static void checkVersionFormat(String ver)
+    protected static void checkVersionFormat(String ver)
             throws NumberFormatException {
         int length;
         int start = 0;
@@ -3046,10 +3046,14 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      * @return suite's name that will be displayed to the user
      */
     public String getDisplayName() {
-        String displayName = getAppProperty(MIDletSuite.SUITE_NAME_PROP);
+        String displayName = installInfo.displayName;
 
-        if (displayName == null) {
-            displayName = String.valueOf(installInfo.id);
+        if (displayName == null || "".equals(displayName)) {
+            displayName = getAppProperty(MIDletSuite.SUITE_NAME_PROP);
+
+            if (displayName == null) {
+                displayName = String.valueOf(installInfo.id);
+            }
         }
 
         return displayName;
