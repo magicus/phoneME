@@ -34,7 +34,7 @@ import java.io.*;
  */
 final class AutoTesterServiceProtocolAMS {
     /** OK status constant */
-    final static String STATUS_OK = ""; 
+    public final static String STATUS_OK = ""; 
 
     /** Connection between service and client */
     private SystemServiceConnection con;

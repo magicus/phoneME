@@ -75,7 +75,7 @@ public final class AutoTester extends AutoTesterBase
     static private class SecurityTrusted
         implements ImplicitlyTrustedClass {};
 
-    private static SecurityToken token = null;    
+    private static SecurityToken token = null;
 
     /** Client-side data exchange protocol instance */
     private AutoTesterServiceProtocolClient protocol = null;

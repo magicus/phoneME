@@ -265,6 +265,12 @@ public final class SecurityInitializer {
         "com.sun.midp.installer.AutoTester$SecurityTrusted",
         // #endif
 
+        // #ifdef ENABLE_ON_DEVICE_DEBUG
+        // #ifdef ENABLE_MULTIPLE_ISOLATES
+        "com.sun.midp.odd.ODDEngine$SecurityTrusted", 
+        // #endif
+        // #endif
+
         "com.sun.midp.suspend.AbstractSubsystem$SecurityTrusted",
         "com.sun.midp.io.j2me.socket.Protocol$SecurityTrusted",
         "com.sun.midp.io.j2me.pipe.Protocol$SecurityTrusted",

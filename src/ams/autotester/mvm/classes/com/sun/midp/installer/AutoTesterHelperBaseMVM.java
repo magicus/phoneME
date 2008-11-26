@@ -50,7 +50,7 @@ import com.sun.midp.events.*;
  * Provides bunch of progress notification callbacks that are needed 
  * for some of the subclasses (ODT auto tester, for example).
  */
-abstract class AutoTesterHelperMVM extends AutoTesterHelperBase 
+abstract class AutoTesterHelperBaseMVM extends AutoTesterHelperBase 
     implements EventListener {
 
     /** ID of the test suite being run */
@@ -69,7 +69,9 @@ abstract class AutoTesterHelperMVM extends AutoTesterHelperBase
      * @param theDomain security domain to assign to unsigned suites
      * @param theLoopCount how many iterations to run the suite
      */
-    AutoTesterHelperMVM(String theURL, String theDomain, int theLoopCount) {
+    AutoTesterHelperBaseMVM(String theURL, String theDomain, 
+            int theLoopCount) {
+
         super(theURL, theDomain, theLoopCount);
 
         eventQueue = EventQueue.getEventQueue();
@@ -117,8 +119,6 @@ abstract class AutoTesterHelperMVM extends AutoTesterHelperBase
      */
     void installAndPerformTests() 
         throws Exception {
-
-        onTestingStarted();
 
         try {
             setDomain();
@@ -217,8 +217,6 @@ abstract class AutoTesterHelperMVM extends AutoTesterHelperBase
         } finally {
             setDefaultDomain();
 //            installer.setInstallTemporarySuites(false);
-
-            onTestingFinished();
         }
     }
 
@@ -232,11 +230,6 @@ abstract class AutoTesterHelperMVM extends AutoTesterHelperBase
     }
 
     /**
-     * Called before starting auto testing cycle.
-     */
-    abstract void onTestingStarted();
-
-    /**
      * Called after test suite has been installed (updated).
      */
     abstract void onTestSuiteInstalled();
@@ -245,11 +238,6 @@ abstract class AutoTesterHelperMVM extends AutoTesterHelperBase
      * Called after test suite has been removed from storage (uninstalled).
      */
     abstract void onTestSuiteRemoved();
-
-    /** 
-     * Called after testing cycle has been completed.
-     */
-    abstract void onTestingFinished();
 
     /**
      * Starts installed test suite.

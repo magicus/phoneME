@@ -45,9 +45,9 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.events.*;
 
 /**
- * Implements auto testing functionality not covered by AutoTesterHelperMVM.
+ * Implements auto testing functionality not covered by AutoTesterHelperBaseMVM.
  */
-final class AutoTesterHelper extends AutoTesterHelperMVM {
+final class AutoTesterHelper extends AutoTesterHelperBaseMVM {
     /** Test suite Isolate */
     private Isolate testIsolate;
 
@@ -63,13 +63,6 @@ final class AutoTesterHelper extends AutoTesterHelperMVM {
     }
 
     /**
-     * Called before starting auto testing cycle.
-     */
-    void onTestingStarted() {
-        // not interested in
-    }
-
-    /**
      * Called after test suite has been installed (updated).
      */
     void onTestSuiteInstalled() {
@@ -80,13 +73,6 @@ final class AutoTesterHelper extends AutoTesterHelperMVM {
      * Called after test suite has been removed from storage (uninstalled).
      */
     void onTestSuiteRemoved() {
-        // not interested in
-    }
-
-    /** 
-     * Called after testing cycle has been completed.
-     */
-    void onTestingFinished() {
         // not interested in
     }
 

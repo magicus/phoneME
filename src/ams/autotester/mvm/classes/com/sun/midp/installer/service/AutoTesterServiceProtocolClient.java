@@ -35,7 +35,7 @@ import com.sun.midp.security.*;
  */
 public final class AutoTesterServiceProtocolClient {
     /** OK status constant */
-    final static String STATUS_OK = 
+    public final static String STATUS_OK = 
         AutoTesterServiceProtocolAMS.STATUS_OK;
 
     /** Connection between service and client */
@@ -48,7 +48,7 @@ public final class AutoTesterServiceProtocolClient {
      * @return AutoTesterServiceProtocolAMS instance if connection
      * has been established, null otherwise
      */
-    static AutoTesterServiceProtocolClient connectToService(SecurityToken token) {
+    public static AutoTesterServiceProtocolClient connectToService(SecurityToken token) {
         SystemServiceRequestor serviceRequestor = 
             SystemServiceRequestor.getInstance(token);
 
