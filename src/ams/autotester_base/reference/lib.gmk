@@ -36,7 +36,8 @@
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-        $(AUTOTESTER_BASE_IMPL_DIR)/classes/com/sun/midp/installer/AutoTesterBase.java
+        $(AUTOTESTER_BASE_IMPL_DIR)/classes/com/sun/midp/installer/AutoTesterBase.java \
+        $(AUTOTESTER_BASE_IMPL_DIR)/classes/com/sun/midp/installer/AutoTesterHelperBase.java        
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AUTOTESTER_BASE_IMPL_DIR)/classes

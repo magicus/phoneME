@@ -162,7 +162,7 @@ public abstract class Installer {
 
     /** An alias for more state.installInfo to get more compact record. */
     protected InstallInfo info;
-
+    
     /** An alias for more state.suiteSettings to get more compact record. */
     protected SuiteSettings settings;
 
