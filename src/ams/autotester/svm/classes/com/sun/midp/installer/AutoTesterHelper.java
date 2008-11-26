@@ -124,8 +124,6 @@ class AutoTesterHelper extends AutoTesterHelperBase {
         String message = null;
 
         if (loopCount != 0) {
-            setDomain();
-
             // force an overwrite and remove the RMS data
             suiteId = installer.installJad(url, Constants.INTERNAL_STORAGE_ID,
                     true, true, null);
