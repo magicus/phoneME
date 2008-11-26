@@ -29,7 +29,8 @@ class MemoryMonitor: AllStatic {
   public:
    static void notify_object( const OopDesc* obj, const int size,
                               const bool create );
-   static void notify_heap_created      ( void ) {}
-   static void notify_heap_disposed     ( void ) {}
+   static void notify_object_moved  ( const void* dst, const void* src ) {}
+   static void notify_heap_created  ( const void* start, const int size ) {}
+   static void notify_heap_disposed ( void ) {}
 };
 #endif

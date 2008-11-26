@@ -1917,7 +1917,7 @@ bool ObjectHeap::create( void ) {
 #endif
 
 #if ENABLE_MEMORY_MONITOR
-  MemoryMonitor::notify_heap_created();
+  MemoryMonitor::notify_heap_created(_heap_start, _heap_capacity);
 #endif
 
   return true;
@@ -2650,6 +2650,11 @@ inline void ObjectHeap::compute_new_object_locations() {
     }
     if (test_bit_for(p, bitvector_base)) {
       // Current object is live
+#if ENABLE_MEMORY_MONITOR
+      if( p != compaction_top ) {
+        MemoryMonitor::notify_object_moved( compaction_top, p );
+      }
+#endif
       OopDesc* obj = (OopDesc*) p;
       size_t size = obj->object_size_for(decode_far_class_with_real_near(obj));
       // Did we start compacting? If so this object is moving.
