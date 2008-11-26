@@ -41,6 +41,12 @@ extern "C" {
  */
 int getHeapRequirement();
 
+/** 
+ * Reads properties with Java heap parameters
+ * and passes them to VM.
+ */
+void setHeapParameters();
+
 #if ENABLE_MULTIPLE_ISOLATES
 
 /**
