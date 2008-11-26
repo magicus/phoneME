@@ -25,26 +25,7 @@
 
 #include "javacall_time.h"
 
-/* IMPL_NOTE: The current implementation is unsafe and must be replaced
- * by something else by the porting engineers, and the replacement code
- * will be platform-specific.
- *
- * The problem this function solves is to obtain a set of really
- * unpredictable bits for use in cryptography.
- * Current time must not be used for that purpose because time is
- * predictable with a good precision, the accuracy of measurement
- * is limited (for example, a function that returns time in microseconds
- * may be just multiplying tenths of second by 100000), which makes the number
- * of really unpredictable bits small.
- */
-
 long javacall_random_get_seed(unsigned char* outbuf, int bufsize) {
-	javacall_int64 res = javacall_time_get_milliseconds_since_1970();
-	int m = bufsize > sizeof(res) ? sizeof(res) : bufsize;
-	int i;
-	for(i=0; i<m; i++) {
-		outbuf[i] = ((unsigned char*)(void*)&res)[i];
-	}
-	return m;
+	return -1;
 }
 
