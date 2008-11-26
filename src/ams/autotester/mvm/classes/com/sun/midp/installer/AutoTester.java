@@ -40,6 +40,9 @@ import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.events.*;
+import com.sun.midp.services.*;
+import com.sun.midp.security.*;
+import java.io.*;
 
 /**
  * Installs/Updates a test suite, runs the first MIDlet in the suite in a loop
@@ -65,27 +68,25 @@ import com.sun.midp.events.*;
  * If arg-0 is not given then a form will be used to query the tester for
  * the arguments.</p>
  */
-public class AutoTester extends AutoTesterBase
-        implements AutoTesterInterface, EventListener {
-    /** True if all events in our queue were processed. */
-    private boolean eventsInQueueProcessed;
+public final class AutoTester extends AutoTesterBase 
+    implements Runnable {
 
-    /** Our event queue. */
-    EventQueue eventQueue;
+    /** We need security token for connecting to AutoTester service */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
+    private static SecurityToken token = null;
+
+    /** Client-side data exchange protocol instance */
+    private AutoTesterServiceProtocolClient protocol = null;
 
     /**
-     * Create and initialize a new auto tester MIDlet.
+     * Creates and initializes a new auto tester MIDlet.
      */
     public AutoTester() {
         super();
 
-        eventQueue = EventQueue.getEventQueue();
-        eventQueue.registerEventListener(EventTypes.AUTOTESTER_EVENT, this);
-
         if (url != null) {
-            startBackgroundTester();
-        } else if (restoreSession()) {
-            // continuation of a previous session
             startBackgroundTester();
         } else {
             /**
@@ -97,174 +98,52 @@ public class AutoTester extends AutoTesterBase
         }
     }
 
-    /** Run the installer. */
+
+    /** 
+     * Runs the installer.
+     */
     public void run() {
-        installAndPerformTests(midletSuiteStorage, installer, url);
-    }
-
-    /**
-     * Restore the data from the last session, since this version of the
-     * autotester does not have sessions it just returns false.
-     *
-     * @return true if there was data saved from the last session
-     */
-    public boolean restoreSession() {
-        return false;
-    }
-
-    /**
-     * Installs and performs the tests.
-     *
-     * @param midletSuiteStorage MIDletSuiteStorage object
-     * @param inp_installer Installer object
-     * @param inp_url URL of the test suite
-     */
-    public void installAndPerformTests(
-        MIDletSuiteStorage midletSuiteStorage,
-        Installer inp_installer, String inp_url) {
-
-        MIDletInfo midletInfo;
-        int suiteId = MIDletSuite.UNUSED_SUITE_ID;
+        String status;
 
         try {
-            Isolate testIsolate;
+            protocol.sendTestRunParams(url, domain, loopCount);
+            status = protocol.receiveStatus();
 
-            for (; loopCount != 0; ) {
-                // force an overwrite and remove the RMS data
-                suiteId = inp_installer.installJad(inp_url,
-                    Constants.INTERNAL_STORAGE_ID, true, true, null);
-
-                midletInfo = getFirstMIDletOfSuite(suiteId,
-                                                   midletSuiteStorage);
-
-                Isolate[] isolatesBefore = Isolate.getIsolates();
-
-                testIsolate =
-                    AmsUtil.startMidletInNewIsolate(suiteId,
-                        midletInfo.classname, midletInfo.name, null,
-                        null, null);
-
-                testIsolate.waitForExit();
-
-                boolean newIsolatesFound;
-
-                do {
-                    newIsolatesFound = false;
-
-                    /*
-                     * Send an event to ourselves.
-                     * Main idea of it is to process all events that are in the
-                     * queue at the moment when the test isolate has exited
-                     * (because when testing CHAPI there may be requests to
-                     * start new isolates). When this event arrives, all events
-                     * that were placed in the queue before it are guaranteed
-                     * to be processed.
-                     */
-                    synchronized (this) {
-                        eventsInQueueProcessed = false;
-
-                        NativeEvent event = new NativeEvent(
-                                EventTypes.AUTOTESTER_EVENT);
-                        eventQueue.sendNativeEventToIsolate(event,
-                                MIDletSuiteUtils.getIsolateId());
-
-                        // and wait until it arrives
-                        do {
-                            try {
-                                wait();
-                            } catch(InterruptedException ie) {
-                                // ignore
-                            }
-                        } while (!eventsInQueueProcessed);
-                    }
-
-                    Isolate[] isolatesAfter = Isolate.getIsolates();
-
-                    /*
-                     * Wait for termination of all isolates contained in
-                     * isolatesAfter[], but not in isolatesBefore[].
-                     * This is needed to pass some tests (for example, CHAPI)
-                     * that starting several isolates.
-                     */
-                    int i, j;
-                    for (i = 0; i < isolatesAfter.length; i++) {
-                        for (j = 0; j < isolatesBefore.length; j++) {
-                            try {
-                                if (isolatesBefore[j].equals(
-                                        isolatesAfter[i])) {
-                                    break;
-                                }
-                            } catch (Exception e) {
-                                // isolatesAfter[i] might already exit,
-                                // no need to wait for it
-                                break;
-                            }
-                        }
-
-                        if (j == isolatesBefore.length) {
-                            try {
-                                newIsolatesFound = true;
-                                isolatesAfter[i].waitForExit();
-                            } catch (Exception e) {
-                                // ignore: the isolate might already exit
-                            }
-                        }
-                    }
-                } while (newIsolatesFound);
-
-                if (loopCount > 0) {
-                    loopCount -= 1;
-                }
+            if (!status.equals(AutoTesterServiceProtocolClient.STATUS_OK)) {
+                displayInstallerError(status);
             }
-        } catch (Throwable t) {
-            handleInstallerException(suiteId, t);
+        } catch (SystemServiceConnectionClosedException ccex) {
+            displayError(Resource.getString(ResourceConstants.EXCEPTION), 
+                    "Connection to AutoTester service closed unexpectedly");
+        } catch (Exception ex) {
+            String message = ex.getMessage();
+            displayError(Resource.getString(ResourceConstants.EXCEPTION), 
+                    message);
+        } finally {
+            notifyDestroyed();
         }
-
-        if (midletSuiteStorage != null &&
-                suiteId != MIDletSuite.UNUSED_SUITE_ID) {
-            try {
-                midletSuiteStorage.remove(suiteId);
-            } catch (Throwable ex) {
-                // ignore
-            }
-        }
-
-        notifyDestroyed();
     }
 
     /**
-     * Preprocess an event that is being posted to the event queue.
-     * This method will get called in the thread that posted the event.
-     *
-     * @param event event being posted
-     *
-     * @param waitingEvent previous event of this type waiting in the
-     *     queue to be processed
-     *
-     * @return true to allow the post to continue, false to not post the
-     *     event to the queue
+     * Starts the background tester.
      */
-    public boolean preprocess(Event event, Event waitingEvent) {
-        return true;
+    void startBackgroundTester() {
+        protocol = AutoTesterServiceProtocolClient.connectToService(
+                getSecurityToken());
+
+        if (protocol != null) {
+            new Thread(this).start();
+        } else {
+            displayError(Resource.getString(ResourceConstants.EXCEPTION),
+                "Failed to connect to AutoTester service");
+        }
     }
 
-    /**
-     * Process an event.
-     * This method will get called in the event queue processing thread.
-     *
-     * @param event event to process
-     */
-    public void process(Event event) {
-        NativeEvent nativeEvent = (NativeEvent)event;
-
-        switch (nativeEvent.getType()) {
-            case EventTypes.AUTOTESTER_EVENT: {
-                synchronized (this) {
-                    eventsInQueueProcessed = true;
-                    notify();
-                }
-                break;
-            }
+    private static SecurityToken getSecurityToken() {
+        if (token == null) {
+            token = SecurityInitializer.requestToken(new SecurityTrusted());
         }
+
+        return token;
     }
 }
