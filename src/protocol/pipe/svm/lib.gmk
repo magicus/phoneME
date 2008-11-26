@@ -34,39 +34,10 @@
 #
 ######################################################################
 
-# Adds to global SUBSYSTEMS list
-#
-SUBSYSTEMS += pipe
-
 # Javadoc source path
-SUBSYSTEM_PIPE_SOURCEPATH += $(SUBSYSTEM_DIR)/protocol/pipe/classes
-
-SUBSYSTEM_PIPE_PACKAGES = \
-    com.sun.midp.io.j2me.pipe 
-
-MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_PIPE_SOURCEPATH)
-MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_PIPE_PACKAGES)
-
-GROUP_PROTOCOL_JAVADOC_PACKAGES += \
-	$(SUBSYSTEM_PIPE_PACKAGES)
-
-# vpath for ( pipe ) subsystem
-#
-#vpath % $(SUBSYSTEM_DIR)/protocol/pipe/reference/native
+SUBSYSTEM_PIPE_SOURCEPATH += $(SUBSYSTEM_DIR)/protocol/pipe/svm/classes
 
 # Java files for the ( pipe ) module
 #
 SUBSYSTEM_PIPE_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/protocol/pipe/classes/com/sun/midp/io/pipe/PipeConnection.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/classes/com/sun/midp/io/pipe/PipeServerConnection.java
-
-# Native files for the ( pipe ) module
-#
-
-ifeq ($(USE_MULTIPLE_ISOLATES), true)
-  PROTOCOL_PIPE_IMPL=mvm
-else
-  PROTOCOL_PIPE_IMPL=svm
-endif
-
-include $(SUBSYSTEM_PROTOCOL_DIR)/pipe/$(PROTOCOL_PIPE_IMPL)/lib.gmk
+    $(SUBSYSTEM_DIR)/protocol/pipe/svm/classes/com/sun/midp/io/j2me/pipe/Protocol.java

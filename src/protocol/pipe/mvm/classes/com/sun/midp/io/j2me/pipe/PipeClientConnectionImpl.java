@@ -210,7 +210,7 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
                 byte[] bufferedMsg = (byte[]) receiveQueue.elementAt(0);
                 int chunkSize = bufferedMsg.length - topReceivedMsgOffset;
                 if (DEBUG)
-                    debugPrint("readBytes: fetching data. " + chunkSize + " bytes remain in next message");
+                    debugPrint("readBytes: fetching data. " + chunkSize + " bytes available in message");
                 if (chunkSize >= len) {
                     chunkSize = len;
                 }
@@ -225,6 +225,14 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
                 len -= chunkSize;
                 off += chunkSize;
                 receiveQueueByteCount -= chunkSize;
+
+                if (receiveQueue.size() == 0) {
+                    // check if we've provided requested data
+                    // readBytes should block only if no data is available
+                    // if single byte has been read it should return
+
+                    break;
+                }
             }
         }
 

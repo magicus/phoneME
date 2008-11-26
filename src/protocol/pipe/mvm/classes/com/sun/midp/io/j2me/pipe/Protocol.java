@@ -26,16 +26,22 @@
 
 package com.sun.midp.io.j2me.pipe;
 
-import com.sun.cldc.io.ConnectionBaseInterface;
-import com.sun.midp.security.ImplicitlyTrustedClass;
-import com.sun.midp.security.SecurityInitializer;
 import java.io.IOException;
 import javax.microedition.io.Connection;
+
+import com.sun.cldc.io.ConnectionBaseInterface;
+import com.sun.cldc.isolate.Isolate;
+import com.sun.midp.io.j2me.pipe.serviceProtocol.PipeServiceProtocol;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.SecurityToken;
 
 public class Protocol implements ConnectionBaseInterface {
     private static class SecurityTrusted implements ImplicitlyTrustedClass {};
     private static SecurityToken token;
+    private static Isolate currentIsolate;
+
+    private static final boolean DEBUG = false;
 
     public Connection openPrim(String name, int mode, boolean timeouts) throws IOException {
         if (name.charAt(0) != '/' || name.charAt(1) != '/')
@@ -56,6 +62,11 @@ public class Protocol implements ConnectionBaseInterface {
         if (token == null) {
             token = SecurityInitializer.requestToken(new SecurityTrusted());
         }
+
+        if (currentIsolate == null)
+            throw new IllegalStateException();
+
+        PipeServiceProtocol.setCurrentIsolate(currentIsolate);
 
         // check if we deal with server or client connection
         if (colon1 == 2) {
@@ -83,5 +94,23 @@ public class Protocol implements ConnectionBaseInterface {
             
             return connection;
         }
+    }
+
+    /**
+     * Registers pipe service with System Service API. To be used only in context of service task
+     * (e.g. AMS Isolate).
+     *
+     * @param token priviledged instance of SecurityToken
+     */
+    public static void registerService(SecurityToken token) {
+        PipeServiceProtocol.registerService(token);
+    }
+
+    /**
+     * Initializes pipe service in context of user MIDlet (e.g. Isolate user MIDlet
+     * is about to start in).
+     */
+    public static void initUserContext() {
+        currentIsolate = Isolate.currentIsolate();
     }
 }
