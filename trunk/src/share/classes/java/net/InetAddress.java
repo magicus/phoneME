@@ -718,6 +718,40 @@ class InetAddress implements java.io.Serializable {
 
 	    return entry;
 	}
+
+	boolean containsDomainMatch(String domain, InetAddress ia) {
+	    Iterator i = cache.keySet().iterator();
+	    long now = System.currentTimeMillis();
+	    while (i.hasNext()) {
+		String key = (String)i.next();
+		CacheEntry entry = (CacheEntry)cache.get(key);
+
+		if (entry.expiration >= 0 && entry.expiration < now) {
+		    // expired? ignore.
+		    continue;
+		}
+
+		InetAddress[] addrs = (InetAddress[])entry.address;
+		if (addrs.length == 1) {
+		    // Optimize for common case
+		    if (ia.equals(addrs[0]) &&
+			SocketPermission.checkDomain(key, domain))
+		    {
+			return true;
+		    }
+		} else {
+		    if (SocketPermission.checkDomain(key, domain)) {
+			for (int j = 0; j < addrs.length; ++j) {
+			    if (ia.equals(addrs[j])) {
+				return true;
+			    }
+			}
+		    }
+		}
+	    }
+	    return false;
+	}
+
     }
 
     /*
@@ -745,7 +779,7 @@ class InetAddress implements java.io.Serializable {
      */
     private static void cacheAddress(String hostname, Object address,
 				     boolean success) {
-
+        hostname = hostname.toLowerCase();
 	synchronized (addressCache) {
 	    cacheInitIfNeeded();
 	    if (success) {
@@ -782,6 +816,12 @@ class InetAddress implements java.io.Serializable {
 
 	// not found
 	return null;
+    }
+
+    static boolean containsDomainMatch(String domain, InetAddress i) {
+	synchronized (addressCache) {
+	    return addressCache.containsDomainMatch(domain, i);
+	}
     }
 
     static {

@@ -42,6 +42,8 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.io.IOException;
 import sun.security.util.SecurityConstants;
+import java.security.AccessController;
+import sun.security.action.GetBooleanAction;
 
 
 /**
@@ -216,10 +218,20 @@ implements java.io.Serializable
     // true if the trustProxy system property is set
     private static boolean trustProxy;
 
+    // true if the sun.net.trustUnresolvedWildcardMatch system property is set
+    private static boolean trustUnresolvedWildcardMatch;
+
     static {
-	Boolean tmp = (Boolean) java.security.AccessController.doPrivileged(
-                new sun.security.action.GetBooleanAction("trustProxy"));
-	trustProxy = tmp.booleanValue();
+	{
+	    Boolean tmp = (Boolean) AccessController.doPrivileged(
+		new GetBooleanAction("trustProxy"));
+	    trustProxy = tmp.booleanValue();
+	}
+	{
+	    Boolean tmp = (Boolean) AccessController.doPrivileged(
+		new GetBooleanAction("sun.net.trustUnresolvedWildcardMatch"));
+	    trustUnresolvedWildcardMatch = tmp.booleanValue();
+	}
     }
 
     /**
@@ -411,6 +423,9 @@ implements java.io.Serializable
 	    } else {
 	      throw new 
 	       IllegalArgumentException("invalid host wildcard specification");
+	    }
+	    if (trustUnresolvedWildcardMatch) {
+		addresses = new InetAddress[0];
 	    }
 	    return;
 	} else {
@@ -756,6 +771,33 @@ implements java.io.Serializable
 		if (that.wildcard)
 		    return false;
 
+		if (trustUnresolvedWildcardMatch) {
+		    if (!that.init_with_ip) {
+			if (!checkDomain(that.hostname, this.cname)) {
+			    return false;
+			}
+			if (that.addresses == null) {
+			    that.getIP();
+			}
+			// Being optimistic, add only the first address
+			add(that.addresses[0]);
+			return true;
+		    } else {
+			InetAddress[] addrs = addresses;
+			InetAddress ia = that.addresses[0];
+			for (i = 0; i < addrs.length; ++i) {
+			    if (addrs[i].equals(ia)) {
+				return true;
+			    }
+			}
+			if (InetAddress.containsDomainMatch(cname, ia)) {
+			    // cache for next time
+			    add(ia);
+			    return true;
+			}
+		    }
+		}
+
 		// this is a wildcard, lets see if that's cname ends with
 		// it...
 		if (that.cname == null) {
@@ -801,6 +843,21 @@ implements java.io.Serializable
 	// false. If not, uncomment the return false in the above catch.
 
 	return false; 
+    }
+
+    static final boolean checkDomain(String host, String domain) {
+	int hl = host.length();
+	int dl = domain.length();
+	return hl > dl && host.regionMatches(true, hl - dl, domain, 0, dl);
+    }
+
+    private synchronized void add(InetAddress ia) {
+	// prepend to list
+	InetAddress[] src = addresses;
+	InetAddress[] dst = new InetAddress[src.length + 1]; 
+        System.arraycopy(src, 0, dst, 1, src.length);
+	dst[0] = ia;
+	addresses = dst;
     }
 
     private boolean inProxyWeTrust(SocketPermission that) {
