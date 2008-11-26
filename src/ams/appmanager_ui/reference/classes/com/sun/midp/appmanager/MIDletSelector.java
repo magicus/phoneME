@@ -34,7 +34,6 @@ import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
-import com.sun.midp.installer.GraphicalInstaller;
 
 import javax.microedition.lcdui.*;
 import java.util.Vector;
@@ -267,9 +266,10 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
                 MIDletProxy mp = mpl.findMIDletProxy(
                     suiteInfo.suiteId, minfo[i].classname);
 
-                SelectorMIDletCustomItem mci = new SelectorMIDletCustomItem(
-                    encodeMIDletName(mp, minfo[i].name), icon, i);
+                SelectorMIDletCustomItem mci =
+                    new SelectorMIDletCustomItem(minfo[i].name, icon, i);
 
+                mci.updateState(mp);
                 mci.addCommand(launchCmd);
                 mci.addCommand(endCmd);
                 mci.setDefaultCommand(launchCmd);
@@ -289,24 +289,9 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
             int index = mci.index;
             MIDletProxy mp = mpl.findMIDletProxy(
                 suiteInfo.suiteId, minfo[index].classname);
-            mci.setDisplayName(encodeMIDletName(mp, minfo[index].name));
+            mci.updateState(mp);
             mci.update();
         }
-    }
-
-    /**
-     * Composes a MIDlet entry title from the MIDlet name and MIDlet status
-     * @param mp the proxy of running MIDlet
-     * @param name the display name of the MIDlet
-     * @return a human-readable string including MIDlet status and name
-     */
-    private String encodeMIDletName(MIDletProxy mp, String name) {
-        int state;
-        return ((mp == null) ? "o "
-            : (MIDletProxy.MIDLET_ACTIVE == (state = mp.getMidletState())) ? "* "
-            : (MIDletProxy.MIDLET_PAUSED == state) ? "P "
-            : (MIDletProxy.MIDLET_DESTROYED == state) ? "D "
-            : "? ") + name;
     }
 
     /**
@@ -354,9 +339,10 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
 
     /** The inner class to represent MIDlet items in the MIDlet Selector screen */
     class SelectorMIDletCustomItem extends MIDletCustomItem {
-        
         /** Predefined index of the item in the form */
         int index;
+        /** Running state of the item */
+        boolean isActive;
 
         /**
          * Constructs new item
@@ -370,14 +356,19 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         }
 
         /**
-         * Sets new display name for the item
-         * @param displayName
+         * Updates state of the MIDlet item 
+         * @param midletProxy MIDlet proxy of running MIDlet item
          */
-        void setDisplayName(String displayName) {
-            text = displayName.toCharArray();
-            textLen = displayName.length();
-            sizeChanged(width, height);
+        void updateState(MIDletProxy midletProxy) {
+            isActive = (midletProxy != null &&
+                MIDletProxy.MIDLET_ACTIVE == midletProxy.getMidletState());
         }
+
+        /** Overrides #MIDletCustomItem.isRunning() */
+        boolean isRunning() {
+            return isActive;
+        }
+
     }
 
 }
