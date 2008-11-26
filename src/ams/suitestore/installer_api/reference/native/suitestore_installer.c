@@ -65,8 +65,8 @@ getImageForIconCache(SuiteIdType suiteId, const pcsl_string* pImageName,
 
 /* Description of these internal functions can be found bellow in the code. */
 static MIDPError store_install_properties(SuiteIdType suiteId,
-    const MidpProperties* pJadProps, const MidpProperties* pJarProps,
-        jint* pOutDataSize);
+        const MidpProperties* pJadProps, const MidpProperties* pJarProps,
+                jint* pOutDataSize);
 
 static MIDPError store_jar(char** ppszError, ComponentType type,
     SuiteIdType suiteId, ComponentIdType componentId, StorageIdType storageId,
@@ -310,6 +310,7 @@ midp_get_suite_install_info(SuiteIdType suiteId) {
  *     jarFilename - name of the downloaded MIDlet suite jar file;
  *     suiteName - name of the suite;
  *     suiteVendor - vendor of the suite;
+ *     suiteVersion - version of the suite;
  *     authPath - authPath if signed, the authorization path starting
  *                with the most trusted authority;
  *     domain - security domain of the suite;
@@ -519,7 +520,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
         if (pMsd->type == COMPONENT_REGULAR_SUITE) {
 #endif
             status = store_install_properties(suiteId, &pInstallInfo->jadProps,
-                            &pInstallInfo->jarProps, &tmpSize);
+                    &pInstallInfo->jarProps, &tmpSize);
             if (status != ALL_OK) {
                 break;
             }
@@ -990,7 +991,7 @@ write_install_info(char** ppszError, ComponentType type, SuiteIdType suiteId,
  *    <length of property value as int>
  *    <property value as jchars>
  * </pre>
- * @param suiteId  ID of the suite
+ * @param suiteId      ID of the suite
  * @param pJadProps an array of strings, in a pair pattern of key and value
  * @param pJarProps an array of strings, in a pair pattern of key and value
  * @param pOutDataSize [out] points to a place where the size of the
@@ -999,8 +1000,10 @@ write_install_info(char** ppszError, ComponentType type, SuiteIdType suiteId,
  * @return error code (ALL_OK for success)
  */
 static MIDPError
-store_install_properties(SuiteIdType suiteId, const MidpProperties* pJadProps,
-                         const MidpProperties* pJarProps, jint* pOutDataSize) {
+store_install_properties(SuiteIdType suiteId,
+                         const MidpProperties* pJadProps,
+                         const MidpProperties* pJarProps,
+                         jint* pOutDataSize) {
     pcsl_string filename;
     char* pszError = NULL;
     int handle;

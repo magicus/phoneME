@@ -26,6 +26,8 @@
 
 package com.sun.midp.services;
 
+import com.sun.midp.midlet.MIDletSuite;
+
 /** Simple attribute storage describing a component */
 public class ComponentInfoImpl implements ComponentInfo {
     /** ID of this component. */
@@ -34,8 +36,21 @@ public class ComponentInfoImpl implements ComponentInfo {
     public int suiteId;
     /** User-friendly name of the component. */
     public String displayName = null;
+    /** Version of the component. */
+    public String version = null;
     /** Is this component is trusted. */
     public boolean trusted = false;
+
+    /**
+     * Constructs an empty ComponentInfo object.
+     */
+    public ComponentInfoImpl() {
+        componentId = ComponentInfo.UNUSED_COMPONENT_ID;
+        suiteId = MIDletSuite.UNUSED_SUITE_ID;
+        displayName = "";
+        version = "";
+        trusted = false;
+    }
 
     /**
      * Constructs a ComponentInfo object.
@@ -43,13 +58,15 @@ public class ComponentInfoImpl implements ComponentInfo {
      * @param compId ID of the component
      * @param sId ID of the midlet suite which the component belongs to
      * @param name user-friendly name of the component
+     * @param ver version of the component
      * @param isTrusted true if this component is trusted, false otherwise
      */
-    public ComponentInfoImpl(int compId, int sId,
-                             String name, boolean isTrusted) {
+    public ComponentInfoImpl(int compId, int sId, String name,
+                             String ver, boolean isTrusted) {
         componentId = compId;
         suiteId = sId;
         displayName = name;
+        version = ver;
         trusted = isTrusted;
     }
 
@@ -80,6 +97,15 @@ public class ComponentInfoImpl implements ComponentInfo {
     }
 
     /**
+     * Returns the version of the component.
+     *
+     * @return version of the component
+     */
+    public String getVersion() {
+        return version;
+    }
+
+    /**
      * Returns true if this component is trusted, false otherwise.
      *
      * @return true if this component is trusted, false otherwise
@@ -97,6 +123,7 @@ public class ComponentInfoImpl implements ComponentInfo {
         b.append("componentId = " + componentId);
         b.append(", suiteId  = " + suiteId);
         b.append(", displayName = " + displayName);
+        b.append(", version = " + version);
         b.append(", trusted = " + trusted);
         return b.toString();
     }
