@@ -136,7 +136,7 @@ javacall_push_listentries(const javacall_suite_id suiteID,
                           javacall_push_entry const** entries,
                           int* const  pNumOfConnections) {
     
-    (void)suiteId;
+    (void)suiteID;
     (void)available;
     (void)entries;
     (void)pNumOfConnections;
