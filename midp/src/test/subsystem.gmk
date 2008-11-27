@@ -1,0 +1,111 @@
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+######################################################################
+#
+# Module's Component Configuration file
+#
+######################################################################
+
+# Add to global SUBSYSTEMS list
+#
+SUBSYSTEMS += test
+
+# Currently, there are no modules for subsystem ( test )
+#
+
+# Test framework java files
+#
+SUBSYSTEM_TEST_JAVA_FILES := \
+    $(SUBSYSTEM_DIR)/test/common/classes/com/sun/midp/i3test/Framework.java \
+    $(SUBSYSTEM_DIR)/test/common/classes/com/sun/midp/i3test/SelfTest.java \
+    $(SUBSYSTEM_DIR)/test/common/classes/com/sun/midp/i3test/TestCase.java
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+SUBSYSTEM_TEST_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/test/common/classes/com/sun/midp/i3test/IsolateSynch.java
+
+    ifeq ($(USE_NATIVE_APP_MANAGER), true)
+    SUBSYSTEM_TEST_JAVA_FILES += \
+        $(SUBSYSTEM_DIR)/test/common/classes/com/sun/midp/i3test/NamsFramework.java \
+        $(SUBSYSTEM_DIR)/test/common/classes/com/sun/midp/i3test/NamsTestCase.java
+    endif
+endif
+
+# Java files for actual tests
+#
+SUBSYSTEM_TEST_I3TEST_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/Baton.java \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/FailTest.java \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/LcduiTestCanvas.java \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/LiveTracer.java \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/LiveTraceCallback.java \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/LiveTraceListener.java \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/SerialCallback.java \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/i3test/TestCompWildcard.java \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/io/TestUrl.java
+
+ifeq ($(TARGET_VM), cldc_vm)
+SUBSYSTEM_TEST_I3TEST_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/DummyMIDlet.java \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/DummyMIDlet2.java \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/LcduiTestMIDlet.java \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/test/TestSemaphore.java 
+endif
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+    SUBSYSTEM_TEST_I3TEST_JAVA_FILES += \
+	$(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/test/TestReflect.java \
+	$(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/test/ReflectSlave.java \
+	$(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/i3test/TestIsolateSynch.java \
+	$(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/i3test/TestUtfReaders.java
+endif
+
+# Test code for Pause/Resume
+#
+# IMPL NOTE:
+# The pause test classes have problems building with the current
+# redesign of the Display classes and so have been removed.
+#
+# INTERNAL_TEST_JAVA_FILES_PAUSE := \
+#     $(SUBSYSTEM_DIR)/test/common/i3test/PauseTest.java \
+#     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/events/UnitTestEvent.java
+# 
+INTERNAL_TEST_JAVA_FILES_PAUSE :=
+
+# All of them together to provide to main makefile
+#
+
+SUBSYSTEM_TEST_JAVA_FILES += \
+    $(INTERNAL_TEST_JAVA_FILES_PAUSE)
+
+# Native files and vpath
+#
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+
+vpath % $(SUBSYSTEM_DIR)/test/common/native/share
+
+SUBSYSTEM_TEST_NATIVE_FILES = \
+    midpI3Test.c
+endif
