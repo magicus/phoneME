@@ -780,9 +780,6 @@ public abstract class JUMPInstaller {
         try {
             state.storage = new RandomAccessStream();
 
-System.out.println("*** installstep 5 *** out");
-System.err.println("*** installstep 5 *** err");
-new Exception("*** installstep 5 *** ");
             state.installInfo.authPath =
                 verifier.verifyJar(state.storage, info.jarFilename);
 

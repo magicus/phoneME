@@ -722,10 +722,6 @@ public abstract class Installer {
         MIDletInfo midletInfo;
         String midlet;
         
-System.out.println("*** installstep 5 *** out");
-System.err.println("*** installstep 5 *** err");
-new Exception("*** installstep 5 *** ").printStackTrace();
-
         // Send out delete notifications that have been queued, first
         OtaNotifier.postQueuedDeleteMsgsBackToProvider(state.proxyUsername,
             state.proxyPassword);
@@ -817,7 +813,8 @@ new Exception("*** installstep 5 *** ").printStackTrace();
             }
 
             for (int i = 1; ; i++) {
-                midlet = state.getAppProperty("MIDlet-" + i);
+                String key = "MIDlet-" + i;
+                midlet = state.getAppProperty(key);
                 if (midlet == null) {
                     break;
                 }
@@ -833,8 +830,15 @@ new Exception("*** installstep 5 *** ").printStackTrace();
                     verifyMIDlet(midletInfo.classname);
                 } catch (InvalidJadException ije) {
                     if (ije.getReason() == InvalidJadException.INVALID_VALUE) {
-                        postInstallMsgBackToProvider(
-                            OtaNotifier.INVALID_JAD_MSG);
+                        // The MIDlet-n attribute may present in Manifest only
+                        if (state.jadProps != null &&
+                                state.jadProps.getProperty(key) != null) {
+                            postInstallMsgBackToProvider(
+                                OtaNotifier.INVALID_JAD_MSG);
+                        } else {
+                            postInstallMsgBackToProvider(
+                                OtaNotifier.INVALID_JAR_MSG);
+                        }
                     } else {
                         postInstallMsgBackToProvider(
                             OtaNotifier.INVALID_JAR_MSG);
@@ -843,7 +847,7 @@ new Exception("*** installstep 5 *** ").printStackTrace();
                 }
             }
 
-            // move on to the next step after a warning
+            // Move on to the next step after a warning
             state.nextStep++;
 
             // Check Manifest entries against .jad file
@@ -1582,6 +1586,10 @@ new Exception("*** installstep 5 *** ").printStackTrace();
                 OtaNotifier.INVALID_JAD_MSG);
             throw new
                 InvalidJadException(InvalidJadException.INVALID_VERSION);
+        } catch (MIDletSuiteLockedException msle) {
+            // this was an attempt to update a locked suite, set the correct ID
+            info.id = id;
+            throw msle;
         }
     }
 
