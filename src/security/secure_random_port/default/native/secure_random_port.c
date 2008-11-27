@@ -26,18 +26,18 @@
 #include <secure_random_port.h>
 #include <sys/time.h>
 #include <stdio.h>
+#include <kni.h>
 
-jint get_random_bytes_port(unsigned char*buffer, jint bufsize) {
+jboolean get_random_bytes_port(unsigned char*buffer, jint bufsize) {
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
 	jlong res = tv.tv_usec + (1000000 * tv.tv_sec);
-	int m = bufsize>(int)sizeof(res) ? (int)sizeof(res) : bufsize;
 	int i;
-	for(i=0; i<m; i++) {
-		buffer[i] = ((unsigned char*)(void*)&res)[i];
+	for(i=0; i<bufsize; i++) {
+		buffer[i] = (unsigned char)res;
+		res >>= 8;
 	}
-fprintf(stderr,"$$$ get_random_bytes_port $$$ --> %x", (unsigned) res);
-	return m;
+	return KNI_TRUE;
 }
 
 

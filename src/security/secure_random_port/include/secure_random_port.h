@@ -32,16 +32,15 @@ extern "C" {
 
 /**
  * Perform a platform-defined procedure for obtaining random bytes
- * and store the obtained bytes into buffer, starting from index 0,
- * total at most (size) bytes.
+ * and store the obtained bytes into buffer, total (size) bytes.
  * (see IETF RFC 1750, Randomness Recommendations for Security,
  *  http://www.ietf.org/rfc/rfc1750.txt)
  * @param buffer array that receives random bytes
  * @param size the number of random bytes to receive, must not be less than size of buffer
- * @return the number of actually obtained random bytes, -1 in case of an error
+ * @return true if success, false on failure
  */
 
-jint get_random_bytes_port(unsigned char*buffer, jint size);
+jboolean get_random_bytes_port(unsigned char*buffer, jint size);
 
 
 

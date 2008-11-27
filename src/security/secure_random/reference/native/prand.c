@@ -39,9 +39,10 @@
  * @param nbytes the number of random bytes to receive, must not be less than size of b
  * @return the number of actually obtained random bytes, -1 in case of an error
  */
-KNIEXPORT KNI_RETURNTYPE_INT
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_midp_crypto_PRand_getRandomBytes) {
-    jint size, realSize = -1;
+    jint size;
+    jboolean res = KNI_FALSE;
     unsigned char* buffer;
 
     KNI_StartHandles(1);
@@ -55,14 +56,14 @@ KNIDECL(com_sun_midp_crypto_PRand_getRandomBytes) {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     } else {
         int i;
-        realSize = get_random_bytes_port(buffer, size);
-        for(i=0; i<realSize; i++) {
+        res = get_random_bytes_port(buffer, size);
+        for(i=0; i<size; i++) {
             KNI_SetByteArrayElement(hBytes,i,(jbyte)buffer[i]);
         }
         pcsl_mem_free(buffer);
     }
     
     KNI_EndHandles();
-    KNI_ReturnInt(realSize);
+    KNI_ReturnBoolean(res);
 }
 
