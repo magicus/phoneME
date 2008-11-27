@@ -25,20 +25,37 @@
 
 #include "javacall_time.h"
 
-/* IMPL_NOTE: The current implementation is unsafe and must be replaced
- * by something else by the porting engineers, and the replacement code
- * will be platform-specific.
+/**
+ * Get an unpredictable sequence of bytes, suitable as cryptographic seed.
+ * (see IETF RFC 1750, Randomness Recommendations for Security,
+ *  http://www.ietf.org/rfc/rfc1750.txt)
  *
- * The problem this function solves is to obtain a set of really
- * unpredictable bits for use in cryptography.
- * Current time must not be used for that purpose because time is
- * predictable with a good precision, the accuracy of measurement
- * is limited (for example, a function that returns time in microseconds
- * may be just multiplying tenths of second by 100000), which makes the number
- * of really unpredictable bits small.
+ * @param outbuf buffer to receive random bytes, starting at index 0
+ * @param bufsize  the size of outbuf
+ * @return the number of random bytes actually stored in outbuf,
+ *         -1 in case of an error
  */
-
 long javacall_random_get_seed(unsigned char* outbuf, int bufsize) {
+
+  /* DO NOT USE THIS TIME-BASED CODE FOR END USER PRODUCTS !!! */
+
+  /* IMPL_NOTE: The current implementation is unsafe and MUST be replaced
+   * by something else by the porting engineers, and the replacement code
+   * will be platform-specific.
+   *
+   * The problem this function must solve is to obtain a set of really
+   * unpredictable bits for use in cryptography.
+   * Current time MUST NOT be used for that purpose because time is
+   * predictable with a good precision, the accuracy of measurement
+   * is limited (for example, a function that returns time in microseconds
+   * may be just multiplying tenths of second by 100000), which makes
+   * the number of really unpredictable bits small.
+   *
+   * System configuration parameters also are not a suitable source
+   * of randomness because they may be learned from real-world sources
+   * or obtained by an installed MIDlet.
+   */
+
 	javacall_int64 res = javacall_time_get_milliseconds_since_1970();
 	int m = bufsize > sizeof(res) ? sizeof(res) : bufsize;
 	int i;

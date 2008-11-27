@@ -42,7 +42,13 @@ extern "C" {
 
 /**
  * Get an unpredictable sequence of bytes, suitable as cryptographic seed.
- * 
+ * (see IETF RFC 1750, Randomness Recommendations for Security,
+ *  http://www.ietf.org/rfc/rfc1750.txt)
+ *
+ * @param outbuf buffer to receive random bytes, starting at index 0
+ * @param bufsize  the size of outbuf
+ * @return the number of random bytes actually stored in outbuf,
+ *         -1 in case of an error
  */
 long javacall_random_get_seed(unsigned char* outbuf, int bufsize);
 
