@@ -1,0 +1,117 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+
+-include $(TOOLS_DIR)/makefiles/hostdefs_$(HOST_OS).gmk
+
+# Java tools
+JAR_CMD ?= $(JDK_DIR)/bin/jar
+JAVA_CMD ?= $(JDK_DIR)/bin/java
+JAVAC_CMD ?= $(JDK_DIR)/bin/javac
+
+# classpath separator for java and javac commands.
+PS ?= :
+
+#
+# Functions for converting between host paths and POSIX paths.
+# For POSIX platforms, this is a no-op. These macros can be overridden
+# in commond_hostdefs_$(HOST_OS).gmk.
+#
+HOST2POSIX ?= $(1)
+POSIX2HOST ?= $(1)
+POSIX2HOST_CMD ?= echo $(1)
+POSIX2HOST_FILTER ?= cat
+HOST2POSIX_CMD ?= echo $(1)
+HOST2POSIX_FILTER ?= cat
+
+ifneq ($(USE_VERBOSE_MAKE), true)
+	AT=@
+	MAKE_NO_PRINT_DIRECTORY=--no-print-directory
+endif
+
+# Default filter rule for source release :
+# Copy files from specified sub directories that are under svn controlled.
+# Usage: source_bundle_filter(src_dir, output_dir, sub_dir_list)
+define source_bundle_filter
+		for i in $(3); do \
+		    mkdir -p $(2)/$$i; \
+            if [ -d "$(1)/.svn" ]; then \
+			    svn export --force -q $(1)/$$i $(2)/$$i; \
+            else \
+			    cp -rp $(1)/$$i/* $(2)/$$i; \
+            fi \
+		done
+endef
+
+# Macro to pre-process Jpp file into Java file
+# runjpp(<input_jpp_file>, <output_java_file>)
+define runjpp
+    $(JAVA_CMD) -classpath $(TOOLS_OUTPUT_DIR) Jpp $(JPP_DEFS) -o `$(call POSIX2HOST_CMD,$(2))` `$(call POSIX2HOST_CMD,$(1))`
+endef
+
+# compileJavaClasses(outputDir, javaFiles, extraJavacOptions)
+define compileJavaClasses
+	$(JAVAC_CMD) $(3) -d `$(call POSIX2HOST_CMD,$(1))` \
+		     `$(call POSIX2HOST_CMD,$(2))`
+endef
+
+# createJarFile(jarFile,directory,files)
+define createJarFile
+	(cd $(2); $(JAR_CMD) cf `$(call POSIX2HOST_CMD,$(1))` $(3))
+endef
+
+# createJarFileWithManifest(jarFile,directory,files,manifest)
+define createJarFileWithManifest
+	(cd $(2); $(JAR_CMD) cfm `$(call POSIX2HOST_CMD,$(1))` \
+			     `$(call POSIX2HOST_CMD,$(4))` $(3))
+endef
+
+# extractJarFile(jarFile,directory,files)
+define extractJarFile
+	(cd $(2); $(JAR_CMD) xf `$(call POSIX2HOST_CMD,$(1))` $(3))
+endef
+
+# runJarFile(jarFile,options)
+define runJarFile
+	$(JAVA_CMD) -jar `$(call POSIX2HOST_CMD,$(1))` $(2)
+endef
+
+# abs2rel(abspaths)
+# Converts <abspaths> to paths that are relative the the current directory.
+# Useful for compiler source file arguments so the compiler saves source
+# file information using relative paths instead of absolute paths. Also
+# useful if you don't want to have to worry about later calling POSIX2HOST
+# on a path.
+define abs2rel
+    $(shell echo $(1) | tr ' ' '\n' | \
+            awk -F/ -f $(TOOLS_DIR)/makefiles/abs2rel.awk PWD=`pwd`)
+endef
+
+# makeIncludeFlags(includeDirs)
+# Converts the paths specified in includeDirs to -I arguments for the 
+# compiler. It also converts them to relative paths so command lines
+# are shorter and we don't need to convert to a host path. If -I is
+# not appropriate for the platform, it is expected that a target
+# specific makefile will override this macro.
+define makeIncludeFlags
+	$(patsubst %,-I%,$(call abs2rel,$(1)))
+endef
