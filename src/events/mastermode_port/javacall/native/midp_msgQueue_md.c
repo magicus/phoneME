@@ -406,6 +406,31 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         }
         break;
 #endif /* ENABLE_JSR_177 */
+
+#ifdef ENABLE_JSR_257
+    case JSR257_JC_EVENT_CONTACTLESS:
+        if(event->data.jsr257Event.eventType < JSR257_EVENTS_NUM) {
+            pNewSignal->waitingFor = JSR257_CONTACTLESS_SIGNAL;
+            switch(event->data.jsr257Event.eventType) {
+            case JSR257_STOP_TARGET_DISCOVERY:
+                pNewSignal->descriptor = JSR257_TARGET_DISCOVERED;
+                pNewSignal->status     = JSR257_STOP_TARGET_DISCOVERY;
+                break;
+            case JSR257_STOP_NDEF_RECORD_DISCOVERY:
+                pNewSignal->descriptor = JSR257_NDEF_RECORD_DISCOVERED;
+                pNewSignal->status     = JSR257_STOP_NDEF_RECORD_DISCOVERY;
+                break;
+            default:
+                pNewSignal->descriptor = event->data.jsr257Event.eventType;
+                break;
+            }
+        } else {
+            REPORT_ERROR1(LC_CORE,"Invalid contactless event type: %d\n", 
+                event->data.jsr257Event.eventType);
+        }
+        break;
+#endif /* ENABLE_JSR_257 */
+
 #if ENABLE_MULTIPLE_ISOLATES
     case MIDP_JC_EVENT_SWITCH_FOREGROUND:
         pNewSignal->waitingFor = AMS_SIGNAL;
