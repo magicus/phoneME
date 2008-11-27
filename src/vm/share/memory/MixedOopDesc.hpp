@@ -54,6 +54,7 @@ public:
   template(FileDecoder,             file_decoder)              \
   template(Inflater,                inflater)                  \
   template(JarFileParser,           jar_file_parser)           \
+  template(JavaDebuggerContext,     java_debugger_context)     \
   template(PacketDataBuffer,        packet_data_buffer)        \
   template(PendingLink,             pending_link)              \
   template(ROMizerHashEntry,        romizer_hashentry)         \

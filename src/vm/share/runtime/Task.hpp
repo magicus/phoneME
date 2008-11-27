@@ -193,6 +193,11 @@ public:
  public:
 #endif
 
+#if ENABLE_JAVA_DEBUGGER
+  DEFINE_ACCESSOR_OBJ(Task, JavaDebuggerContext, debugger_context);
+ public:
+#endif
+
   void iterate(OopVisitor* /*visitor*/) PRODUCT_RETURN;
   static void iterate_oopmaps(oopmaps_doer /*do_map*/, void* /*param*/)
               PRODUCT_RETURN;

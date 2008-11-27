@@ -290,6 +290,13 @@ JavaDebugger.cpp                 ObjArrayDesc.hpp
 JavaDebugger.cpp                 JVM.hpp
 JavaDebugger.cpp                 LineVarTable.hpp
 
+JavaDebuggerContext.hpp          MixedOop.hpp
+JavaDebuggerContext.hpp          RefNode.hpp
+
+JavaDebuggerContext.cpp          JavaDebugger.hpp
+JavaDebuggerContext.cpp          JavaDebuggerContext.hpp
+JavaDebuggerContext.cpp          ObjArray.hpp
+
 VMImpl.cpp                       JavaDebugger.hpp
 VMImpl.cpp                       VMImpl.hpp
 VMImpl.cpp                       JDWP.hpp
@@ -1397,11 +1404,13 @@ TaskDesc.hpp                     OopDesc.hpp
 TaskDesc.hpp                     MixedOopDesc.hpp
 TaskDesc.hpp                     ObjArrayDesc.hpp
 TaskDesc.hpp                     ArrayDesc.hpp
+TaskDesc.hpp                     JavaDebuggerContext.hpp
 
 Task.hpp                         TaskDesc.hpp
 Task.hpp                         MixedOop.hpp
 Task.hpp                         Universe.hpp
 Task.hpp                         OopCons.hpp
+Task.hpp                         JavaDebuggerContext.hpp
 Task.cpp                         Task.hpp
 Task.cpp                         BoundaryDesc.hpp
 Task.cpp                         ObjArrayDesc.hpp
