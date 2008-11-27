@@ -464,7 +464,7 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
 #endif
   }
   // 'task' handle is now destroyed so no references to binary image
-#if defined(AZZERT) || USE_BINARY_IMAGE_LOADER
+#if defined(AZZERT) || USE_BINARY_IMAGE_LOADER || ENABLE_FULL_GC_ON_ISOLATE_END
   ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK);
 #if ENABLE_ISOLATES
   if( ObjectHeap::get_task_memory_usage(id) > BoundaryDesc::allocation_size() ) {

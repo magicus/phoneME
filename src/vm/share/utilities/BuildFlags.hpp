@@ -520,6 +520,9 @@
 //
 // ENABLE_JNI                           0,0 Enable (partial) JNI support.
 //
+//
+// ENABLE_FULL_GC_ON_ISOLATE_END         0,0 Enable full GC when ISOLATE destroyed
+//
 //============================================================================
 // ENABLE_FLAGS_END }}
 //============================================================================
