@@ -38,6 +38,7 @@ endif
 JSR_172_JAR             = $(JSROP_JAR_DIR)/$(JSR_172_LIB_NAME).jar
 JSR_172_SG_JAR          = $(JSROP_JAR_DIR)/jsr172__stub-generator.jar
 JSR_172_BUILD_EXTRA_DIR = $(JSR_172_BUILD_DIR)/../jsr172-extra
+JSR_172_PREVERIFYOUT_DIR = $(JSR_172_BUILD_DIR)/../preverify-out
 
 include $(JSR_172_DIR)/build/subsystem_defs.gmk
 
@@ -96,14 +97,6 @@ $(JSR_172_BUILD_DIR) $(JSR_172_GENERATED_DIR) $(JSR_172_BUILD_EXTRA_DIR):
 
 # JSR 172 stub generator rules
 
-jsr172_property_files : $(JSR_172_BUILD_DIR)/jwc_properties.ini
-
-$(JSR_172_BUILD_DIR)/jwc_properties.ini: $(CONFIGURATOR_JAR_FILE)
-	$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
-		-xml $(JSR_172_PROPERTY_FILE) \
-		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesIni.xsl \
-		-out $@)
-
 jsr172__stub-generator: $(JSR_172_SG_JAR)
 $(JSR_172_SG_JAR): $(JSR_172_BUILD_DIR) $(INTERNAL_JSR_172_SG_RI_FILES)
 	@echo "build $@ ..."
@@ -113,13 +106,39 @@ $(JSR_172_SG_JAR): $(JSR_172_BUILD_DIR) $(INTERNAL_JSR_172_SG_RI_FILES)
 	$(AT)cp $(INTERNAL_JSR_172_SG_PATH)/*.properties $(JSR_172_BUILD_DIR)/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))
 	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR),.)
 
-jsr172_jar : $(JSR_172_JAR)
+jsr172_property_files : $(JSR_172_BUILD_DIR)/jwc_properties.ini
+$(JSR_172_BUILD_DIR)/jwc_properties.ini: $(CONFIGURATOR_JAR_FILE)
+	@echo "build $@ ..."
+	$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
+		-xml $(JSR_172_PROPERTY_FILE) \
+		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesIni.xsl \
+		-out $@)
 
+$(JSR_172_GENERATED_DIR)/manifest.mf : $(JSR_172_GENERATED_DIR)
+	@echo "build $@ ..."
+	@echo "Manifest-Version: 1.0" > $@
+	@echo "MIDlet-Vendor: Sun Microsystems, Inc." >> $@
+	@echo "MIDlet-Name: jsr172" >> $@
+	@echo "MIDlet-Version: 1.0" >> $@
+	@echo "MicroEdition-Configuration: CLDC-1.1" >> $@
+	@echo "MicroEdition-Profile: MIDP-2.1" >> $@
+
+INTERNAL_JSR_172_PREVERIFY.EXE = $(MOBILITY_PACK_JARS_DIR)/bin/preverify.exe
+JSR_172_PREVERIFY_DEPENDENCIES = \
+	$(INTERNAL_JSR_172_DEPENDENCIES) \
+
+JSR_172_PREVERIFY_CPLIST = \
+    $(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(JSR_172_PREVERIFY_DEPENDENCIES))))
+
+jsr172_jar : $(JSR_172_JAR)
 $(JSR_172_JAR) : $(JSR_172_BUILD_DIR) $(JSR_172_GENERATED_DIR) $(JSR_172_BUILD_EXTRA_DIR) $(CONFIGURATOR_JAR_FILE) \
 		$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES) \
 		$(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) \
 		$(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES) \
-		jsr172_property_files
+		$(JSROP_JAR_DIR)/xmlparser.jar \
+		jsr172_property_files \
+		$(JSR_172_GENERATED_DIR)/manifest.mf 
+	$(AT)$(shell mkdir -p $(dir $@))
 	@echo "build $@ ..."
 	$(AT)$(call generateConstantClasses, $(JSR_172_GENERATED_DIR), $(JSR_172_CONSTANT_FILE))
 	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_EXTRA_DIR),$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES), \
@@ -129,8 +148,9 @@ $(JSR_172_JAR) : $(JSR_172_BUILD_DIR) $(JSR_172_GENERATED_DIR) $(JSR_172_BUILD_E
 		$(foreach class, $(shell cat $(call constantClassesListFile, $(JSR_172_GENERATED_DIR))), \
 		$(JSR_172_GENERATED_DIR)/$(subst .,/,$(class)).java) , \
 		-classpath $(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)$(PS)$(JSR_172_BUILD_DIR)$(PS)$(JSR_172_BUILD_EXTRA_DIR) )
-	$(AT)$(shell mkdir -p $(dir $@))
-	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR),.)
+	$(AT)$(INTERNAL_JSR_172_PREVERIFY.EXE) -classpath $(JSR_172_PREVERIFY_CPLIST) -d $(JSR_172_PREVERIFYOUT_DIR) $(JSR_172_BUILD_DIR)
+	$(AT)cp -R $(JSR_172_PREVERIFYOUT_DIR)/* $(JSR_172_BUILD_DIR)
+	$(AT)$(call createJarFileWithManifest,$@,$(JSR_172_BUILD_DIR),.,$(call POSIX2HOST,$(JSR_172_GENERATED_DIR)/manifest.mf))
 
 # Generate constant classes
 # generateConstantClasses(generatedDirectory, constantsXmlFile)
