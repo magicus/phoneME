@@ -172,6 +172,7 @@ typedef enum {
     JSR290_JC_EVENT_FLUID_LISTENER_WARNING,
     JSR290_JC_EVENT_FLUID_REQUEST_RESOURCE,
     JSR290_JC_EVENT_FLUID_CANCEL_REQUEST,
+    JSR290_JC_EVENT_HANDLE_EVENT,
 #endif /*ENABLE_JSR_290*/
 } midp_jc_event_type;
 
@@ -348,6 +349,11 @@ typedef struct {
     float                       percentage;
     javacall_result             result;
 } jsr290_jc_event_fluid;
+
+typedef struct {
+	javacall_handle             native_event_listener_handle;
+	javacall_handle	            native_event_handle;
+} jsr290_jc_event_handle_event;
 #endif /* ENABLE_JSR_290 */
 
 typedef struct {
@@ -445,6 +451,7 @@ typedef struct {
 
 #ifdef ENABLE_JSR_290
         jsr290_jc_event_fluid              jsr290FluidEvent;
+        jsr290_jc_event_handle_event	   jsr290HandleEvent;
 #endif /* ENABLE_JSR_290 */
         midp_jc_event_menu_selection    menuSelectionEvent;
     } data;

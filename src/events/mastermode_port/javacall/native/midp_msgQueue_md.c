@@ -376,6 +376,14 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290FluidEvent.spare) >> 32);
         pNewMidpEvent->intParam1 = JSR290_CANCEL_REQUEST;
         break;
+    case JSR290_JC_EVENT_HANDLE_EVENT:
+        pNewSignal->waitingFor   = JSR290_HANDLE_EVENT_SIGNAL;
+    	pNewMidpEvent->type = FLUID_EVENT;
+        pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290HandleEvent.native_event_listener_handle));
+        pNewMidpEvent->intParam4 = (int)((jlong)(event->data.jsr290HandleEvent.native_event_listener_handle) >> 32);
+        pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290HandleEvent.native_event_handle));
+        pNewMidpEvent->intParam6 = (int)((jlong)(event->data.jsr290HandleEvent.native_event_handle) >> 32);
+    	break;
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_177

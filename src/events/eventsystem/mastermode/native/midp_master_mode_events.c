@@ -269,6 +269,9 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
     case JSR290_FLUID_EVENT_SIGNAL:
         StoreMIDPEventInVmThread(newMidpEvent, -1);
         break;
+    case JSR290_HANDLE_EVENT_SIGNAL:
+        StoreMIDPEventInVmThread(newMidpEvent, -1);
+        break;
 #endif /* ENABLE_JSR_290 */
     default:
 #ifdef ENABLE_API_EXTENSIONS

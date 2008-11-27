@@ -1080,6 +1080,16 @@ javanotify_fluid_cancel_request (
     midp_jc_event_send(&e);
 }
 
+void javanotify_fluid_handle_event (
+		javacall_handle  native_event_listener_handle,
+		javacall_handle native_event_handle
+		) {
+	midp_jc_event_union e;
+	e.eventType = JSR290_JC_EVENT_HANDLE_EVENT;
+	e.data.jsr290HandleEvent.native_event_listener_handle = native_event_listener_handle;
+	e.data.jsr290HandleEvent.native_event_handle = native_event_handle;
+}
+
 #endif /* ENABLE_JSR_290 */
 
 /**
