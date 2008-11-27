@@ -567,6 +567,12 @@ public class MIDletSuiteUtils {
     public static native boolean isAmsIsolate();
 
     /**
+     * Get maximal number of Isolates allowed by AMS
+     * @return maximal Isolates number
+     */
+    public static native int getMaxIsolates();
+
+    /**
      * Register the Isolate ID of the AMS Isolate by making a native
      * method call that will call JVM_CurrentIsolateId and set
      * it in the proper native variable.

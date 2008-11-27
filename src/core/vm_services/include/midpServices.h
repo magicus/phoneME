@@ -173,13 +173,20 @@ jboolean midp_isDebuggerActive(void);
 #endif /* ENABLE_JAVA_DEBUGGER */
 
 /**
- * Get the current isolate ID from VM in case of MVM mode. 
+ * Gets the current isolate ID from VM in case of MVM mode.
  * For SVM, simply return 0 as an isolate ID.
  *
  * @return isolated : Isolate ID
  * 
  */
-extern int getCurrentIsolateId();
+int getCurrentIsolateId();
+
+/**
+ * Gets maximal allowed number of isolates in the case of MVM mode.
+ * For SVM, simply return 1.
+ */
+int getMaxIsolates();
+
 
 #ifdef __cplusplus
 }

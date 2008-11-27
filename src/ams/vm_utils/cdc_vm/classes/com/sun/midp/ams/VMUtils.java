@@ -48,4 +48,14 @@ public class VMUtils {
     public static int getIsolateId() {
         return 0;
     }
+
+    /**
+     * Get maximal number of Isolates allowed by AMS.
+     * 
+     * @return maximal Isolates number.
+     */
+    public static int getMaxIsolates() {
+        return 1;
+    }
+
 }

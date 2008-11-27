@@ -37,6 +37,7 @@
 #include <midpServices.h>
 #include <midp_logging.h>
 #include <midp_constants_data.h>
+#include <midp_properties_port.h>
 #include <midpMidletSuiteUtils.h>
 #include <midpUtilKni.h>
 
@@ -165,6 +166,47 @@ int getCurrentIsolateId() {
     return ((amsIsolateId == 0)? 0:JVM_CurrentIsolateId());
 #else
     return amsIsolateId;
+#endif /* ENABLE_MULTIPLE_ISOLATES */
+}
+
+#if ENABLE_MULTIPLE_ISOLATES
+/** Sets new value of MAX_ISOLATES property */
+static void setMaxIsolates(int value) {
+    char valueStr[5];
+    sprintf(valueStr, "%d", value);
+    setInternalProperty("MAX_ISOLATES", valueStr);
+}
+#endif /* ENABLE_MULTIPLE_ISOLATES */
+
+/**
+ * Get maximal allowed number of isolates in the case of MVM mode.
+ * For SVM, simply return 1.
+ */
+int getMaxIsolates() {
+
+#if ENABLE_MULTIPLE_ISOLATES
+
+    static int midpMaxIsolates = 0;
+    if (midpMaxIsolates == 0) {
+        int jvmMaxIsolates = JVM_MaxIsolates();
+        midpMaxIsolates  = getInternalPropertyInt("MAX_ISOLATES");
+        if (0 == midpMaxIsolates) {
+            REPORT_INFO(LC_AMS, "MAX_ISOLATES property not set");
+            midpMaxIsolates = MAX_ISOLATES;
+        }
+        if (midpMaxIsolates > jvmMaxIsolates){
+            REPORT_WARN1(LC_AMS,
+                "MAX_ISOLATES exceeds VM limit %d, decreased", jvmMaxIsolate);
+            midpMaxIsolates = jvmMaxIsolates;
+        }
+        setMaxIsolates(midpMaxIsolates);
+    }
+    return midpMaxIsolates;
+
+#else
+
+    return 1;
+
 #endif /* ENABLE_MULTIPLE_ISOLATES */
 }
 

@@ -27,6 +27,7 @@
 #include <midp_constants_data.h>
 #include <midp_properties_port.h>
 #include <midp_logging.h>
+#include <midpServices.h>
 #include <jvm.h>
 
 #if ENABLE_MULTIPLE_ISOLATES
@@ -98,14 +99,7 @@ int getAmsHeapLimit() {
         return midpHeapRequirement;
     }
 
-#if ENABLE_MULTIPLE_ISOLATES 
-    maxIsolates = getInternalPropertyInt("MAX_ISOLATES"); 
-    if (maxIsolates <= 0) { 
-        maxIsolates = MAX_ISOLATES; 
-    } 
-#else 
-    maxIsolates = 1; 
-#endif
+    maxIsolates = getMaxIsolates();
 
     /*
      * Calculate heap size.

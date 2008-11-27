@@ -83,6 +83,15 @@ KNIDECL(com_sun_midp_main_MIDletSuiteUtils_isAmsIsolate) {
 }
 
 /**
+ * Get maximal number of Isolates allowed by AMS
+ * @return maximal Isolates number
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_main_MIDletSuiteUtils_getMaxIsolates) {
+    KNI_ReturnInt(getMaxIsolates());
+}
+
+/**
  * Registers the currently running isolate as the AMS isolate. This function 
  * must be called from within the context of a native method.
  */
