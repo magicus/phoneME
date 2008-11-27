@@ -25,7 +25,27 @@
 
 #include "javacall_time.h"
 
-long javacall_random_get_seed(unsigned char* outbuf, int bufsize) {
-	return -1;
+javacall_result javacall_random_get_seed(unsigned char* outbuf, int bufsize) {
+  /* IMPL_NOTE:
+   * The problem this function must solve is to obtain a set of really
+   * unpredictable bits for use in cryptography.
+   * There is no portable solution to this problem.
+   *
+   * Current time MUST NOT be used for seed generation because time is
+   * predictable with a good precision, the accuracy of measurement
+   * is limited (for example, a function that returns time in microseconds
+   * may be just multiplying tenths of second by 100000), which makes
+   * the number of really unpredictable bits small.
+   *
+   * System configuration parameters also are not a suitable source
+   * of randomness because they may be learned from real-world sources
+   * or obtained by an installed MIDlet.
+   * External events, such as network packet arrival times, can
+   * also be manipulated by adversary.
+   *
+   * (see IETF RFC 1750, Randomness Recommendations for Security,
+   *  http://www.ietf.org/rfc/rfc1750.txt)
+   */
+	return JAVACALL_NOT_IMPLEMENTED;
 }
 

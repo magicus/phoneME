@@ -47,10 +47,11 @@ extern "C" {
  *
  * @param outbuf buffer to receive random bytes, starting at index 0
  * @param bufsize  the size of outbuf
- * @return the number of random bytes actually stored in outbuf,
- *         -1 in case of an error
+ * @retval JAVACALL_OK if success,
+ * @retval JAVACALL_FAIL in case of an error
+ * @retval JAVACALL_NOT_IMPLEMENTED if not implemented (this must never happen on end user's device)
  */
-long javacall_random_get_seed(unsigned char* outbuf, int bufsize);
+javacall_result javacall_random_get_seed(unsigned char* outbuf, int bufsize);
 
 
 /** @} */
