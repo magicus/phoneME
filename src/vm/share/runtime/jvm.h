@@ -256,6 +256,7 @@ jint JVM_CreateAppImage(const JvmPathChar *jarFile, const JvmPathChar *binFile,
 #define JVM_CONFIG_USE_ROM                      5
 #define JVM_CONFIG_DEBUGGER_PORT                6
 #define JVM_CONFIG_ASYNC_DATA_SIZE              7
+#define JVM_CONFIG_TICK_INTERVAL                8
 
 #if ENABLE_ISOLATES
 #define JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY 8

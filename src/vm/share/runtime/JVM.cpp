@@ -879,6 +879,8 @@ extern "C" int JVM_GetConfig(int name) {
 #endif
  case JVM_CONFIG_ASYNC_DATA_SIZE:
     return CachedAsyncDataSize;
+  case JVM_CONFIG_TICK_INTERVAL:
+    return TickInterval;
   default:
     SHOULD_NOT_REACH_HERE();
     return 0;
@@ -917,6 +919,9 @@ extern "C" void JVM_SetConfig(int name, int value) {
     TotalMemory = value;
     break;
 #endif
+  case JVM_CONFIG_TICK_INTERVAL:
+    TickInterval = value;
+	break;
   default:
     SHOULD_NOT_REACH_HERE();
   }
