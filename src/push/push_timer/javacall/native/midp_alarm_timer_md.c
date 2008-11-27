@@ -71,7 +71,7 @@ push_alarm_handler(javacall_handle handle) {
  */
 int
 createTimerHandle(int alarmHandle, jlong time) {
-    // alarmHandle is really an address to push entry
+    /* alarmHandle is really an address to push entry */
     javacall_handle handle;
 
     (void)alarmHandle;

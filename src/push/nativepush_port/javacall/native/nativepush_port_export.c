@@ -35,8 +35,45 @@
 #include <jvmspi.h>
 #include <jvm.h>
 #include <sni.h>
+
+#include <string.h>
+
 #include <java_types.h>
+#include <pcsl_string.h>
 #include <nativepush_port_export.h>
+#include <midp_global_status.h>
+#include <midpMalloc.h>
+#include <javacall_push.h>
+
+static MIDP_ERROR javacall2midp_error(javacall_push_result val){
+    MIDP_ERROR res;
+    switch (val) {
+    case JAVACALL_PUSH_OK:
+        res = MIDP_ERROR_NONE;
+        break;
+    case JAVACALL_PUSH_UNSUPPORTED:
+        res = MIDP_ERROR_UNSUPPORTED;
+        break;
+    case JAVACALL_PUSH_MIDLET_NOT_FOUND:
+        res = MIDP_ERROR_AMS_MIDLET_NOT_FOUND;
+        break;
+    case JAVACALL_PUSH_SUITE_NOT_FOUND:
+        res = MIDP_ERROR_AMS_SUITE_NOT_FOUND;
+        break;
+    case JAVACALL_PUSH_CONNECTION_IN_USE:
+        res = MIDP_ERROR_PUSH_CONNECTION_IN_USE;
+        break;
+    case JAVACALL_PUSH_PERMISSION_DENIED:
+        res = MIDP_ERROR_PERMISSION_DENIED;
+        break;
+    default:
+        res = MIDP_ERROR_ILLEGAL_ARGUMENT;
+        break;
+    }
+
+    return res;
+}
+
 
 /**
  * Register a dynamic connection with the native Push software.
@@ -56,9 +93,19 @@
  */
 MIDP_ERROR midpport_push_register_connection(SuiteIdType suiteId,
                                              MIDP_PUSH_ENTRY* entry) {
-    (void)suiteId;
-    (void)entry;
-    return MIDP_ERROR_UNSUPPORTED;
+    javacall_push_entry jc_entry = {
+        (const javacall_utf16_string)entry->connection,
+        (javacall_int32)entry->connectionLen,
+        (const javacall_utf16_string)entry->midlet,
+        (javacall_int32)entry->midletLen,
+        (const javacall_utf16_string)entry->filter,
+        (javacall_int32)entry->filterLen,
+    };
+    int res = 
+    javacall_push_register((const javacall_suite_id) suiteId,
+                           &jc_entry);
+
+    return javacall2midp_error(res);
 }
 
 /**
@@ -66,7 +113,6 @@ MIDP_ERROR midpport_push_register_connection(SuiteIdType suiteId,
  *
  * @param suiteId    - The application suite ID string
  * @param connection - generic connection protocol, host and port number (optional parameters may be included separated with semi-colons (;))
- * @param connectionLen - number of chars in connection string
  *
  * @return one of the error codes:
  *        MIDP_ERROR_NONE
@@ -77,9 +123,14 @@ MIDP_ERROR midpport_push_register_connection(SuiteIdType suiteId,
  */
 MIDP_ERROR midpport_push_unregister_connection(SuiteIdType suiteId,
                                                pcsl_string* connection) {
-    (void)suiteId;
-    (void)connection.;
-    return MIDP_ERROR_NONE;
+    javacall_utf16_string conn_str = 
+        (javacall_utf16_string)pcsl_string_get_utf16_data(connection);
+    int res = 
+        javacall_push_unregister((const javacall_suite_id)suiteId,
+                                 (const javacall_utf16_string)conn_str);
+    pcsl_string_release_utf16_data(conn_str, connection);
+
+    return javacall2midp_error(res);
 }
 
 /**
@@ -99,12 +150,60 @@ MIDP_ERROR midpport_push_list_entries(SuiteIdType suiteId,
                                       jboolean available,
                                       MIDP_PUSH_ENTRY** entries,
                                       jint* pNumOfConnections) {
-    (void)suiteId;
-    (void)available;
-    (void)entries;
-    (void)pNumOfConnections;
+    javacall_push_entry* pentry;
+    int noc;
+    int res = javacall_push_listentries((const javacall_suite_id)suiteId,
+                                        (const javacall_bool)available,
+                                        &pentry,
+                                        &noc);
 
-    return MIDP_ERROR_OUT_OF_RESOURCE;
+    if (JAVACALL_SUCCEEDED(res)) {
+
+        /* default values */
+        *pNumOfConnections = 0;
+        *entries = NULL;
+        res = MIDP_ERROR_NONE;
+
+        if (0 != noc) {
+            MIDP_PUSH_ENTRY *_entries = 
+                (MIDP_PUSH_ENTRY*)midpMalloc(noc * sizeof(MIDP_PUSH_ENTRY));
+            if (NULL == _entries) {
+                res = MIDP_ERROR_OUT_OF_RESOURCE;
+            } else {
+                int i = 0;
+                for (; i < noc; i++) {
+                    _entries[i].connection = (jchar*)
+                        midpMalloc(pentry[i].connectionLen * sizeof(jchar));
+                    if (NULL != _entries[i].connection) {
+                        memcpy(_entries[i].connection, 
+                               pentry[i].connection,
+                               (pentry[i].connectionLen)*sizeof(jchar));
+                        _entries[i].connectionLen = pentry[i].connectionLen;
+                    } else {
+                        /* rollback all allocation */
+                        while (i--) {
+                            midpFree(_entries[i].connection);
+                            midpFree(_entries[i].midlet);
+                            midpFree(_entries[i].filter);
+                        }
+                        midpFree(_entries);
+                        _entries = NULL;
+                        res = MIDP_ERROR_OUT_OF_RESOURCE;
+                        break;
+                    }
+                }
+                *entries = _entries;
+                /* i would be 0 if there was an error */
+                *pNumOfConnections = i;
+            }
+        }
+    } else {
+        res = javacall2midp_error(res);
+    }
+
+    javacall_push_release_entries(pentry, noc);
+
+    return res;
 }
 
 /**
@@ -125,10 +224,18 @@ MIDP_ERROR midpport_push_list_entries(SuiteIdType suiteId,
 MIDP_ERROR midpport_push_register_alarm(SuiteIdType suiteId,
                                         pcsl_string* midlet,
                                         jlong time, jlong* previousTime) {
-    (void)suiteId;
-    (void)midlet;
-    (void)time;
-    (void)previousTime;
+    javacall_int64 prev_time;
+    javacall_utf16_string str = 
+        (javacall_utf16_string)pcsl_string_get_utf16_data(midlet);
 
-    return MIDP_ERROR_UNSUPPORTED;
+    int res = 
+        javacall_push_alarm_register((const javacall_suite_id)suiteId,
+                                     (const javacall_utf16_string) str,
+                                     (javacall_int64) time,
+                                     &prev_time);
+    pcsl_string_release_utf16_data(str, midlet);
+
+    *previousTime = (jlong)prev_time;
+
+    return javacall2midp_error(res);
 }

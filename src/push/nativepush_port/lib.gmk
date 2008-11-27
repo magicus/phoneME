@@ -41,7 +41,11 @@ LIB_SET += $(NATIVE_PUSH_LIB)
 
 # vpath for ( nativepush_port ) subsystem
 #
+ifeq ($(TARGET_PLATFORM), javacall)
+vpath % $(SUBSYSTEM_PUSH_DIR)/nativepush_port/javacall/native
+else
 vpath % $(SUBSYSTEM_PUSH_DIR)/nativepush_port/reference/native
+endif
 
 # Native files for the ( nativepush_port ) subsystem
 #
