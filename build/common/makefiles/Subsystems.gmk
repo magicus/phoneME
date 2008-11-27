@@ -438,7 +438,7 @@ endif
 # Description: JSR 234
 #####################################################################
 ifeq ($(USE_JSR_234), true)
-include $(JSR_234_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_234_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
