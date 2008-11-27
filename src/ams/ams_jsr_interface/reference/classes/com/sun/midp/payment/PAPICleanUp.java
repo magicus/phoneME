@@ -31,25 +31,26 @@ package com.sun.midp.payment;
  */
 public class PAPICleanUp {
 
-		/** Public constructor */
+    /** Public constructor */
     public PAPICleanUp() {
     }
 
     /**
      * The function for a Missed Transactions  validation.
      *
-     * @param suiteId The MIDletSuite ID
+     * @param suiteId MIDlet suite ID
+     *
      * @return null if no pending Transactions for this Suite
      *         otherwise returns list of missed transactions
      */
     public static String checkMissedTransactions(int suiteId) {
-    		return null;
+        return null;
     }
 
     /**
      * Remove missed transaction for give midlet suite
      *
-     * @param suiteId midlet suite id
+     * @param suiteId MIDlet suite ID
      */
     public static void removeMissedTransaction(int suiteId) {
     }

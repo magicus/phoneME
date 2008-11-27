@@ -1394,6 +1394,7 @@ int fileInstaller(int argc, char* argv[]) {
         suiteData.varSuiteData.pJarHash = NULL;
         suiteData.varSuiteData.midletClassName = PCSL_STRING_NULL;
         suiteData.varSuiteData.displayName = PCSL_STRING_NULL;
+        suiteData.varSuiteData.suiteVersion = PCSL_STRING_NULL;
         suiteData.varSuiteData.iconName = PCSL_STRING_NULL;
         suiteData.varSuiteData.pathToJar = TEMP_JAR_NAME;
         suiteData.varSuiteData.pathToSettings = PCSL_STRING_NULL;

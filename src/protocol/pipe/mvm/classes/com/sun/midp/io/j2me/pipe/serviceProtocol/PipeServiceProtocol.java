@@ -74,7 +74,12 @@ public class PipeServiceProtocol {
     private long serverInstanceId;
     private Link acceptLink;
     private final Object acceptLock = new Object();             // guards method accept()
+    private static Isolate currentIsolate;
 
+    public static void setCurrentIsolate(Isolate currentIsolate) {
+        PipeServiceProtocol.currentIsolate = currentIsolate;
+    }
+    
     private PipeServiceProtocol(SecurityToken token) {
         this.token = token;
         debugInstanceId = nextDebugInstanceId++;
@@ -141,7 +146,7 @@ public class PipeServiceProtocol {
                 out.writeInt(MAGIC_BIND_PIPE_CLIENT);
                 out.writeUTF(serverName);
                 out.writeUTF(serverVersionRequested);
-                out.writeLong(Isolate.currentIsolate().uniqueId());
+                out.writeLong(currentIsolate.uniqueId());
                 serviceConn.send(msg);
 
                 msg = (SystemServiceDataMessage) serviceConn.receive();
@@ -188,7 +193,7 @@ public class PipeServiceProtocol {
                 out.writeInt(MAGIC_BIND_PIPE_SERVER);
                 out.writeUTF(serverName);
                 out.writeUTF(serverVersion);
-                out.writeLong(Isolate.currentIsolate().uniqueId());
+                out.writeLong(currentIsolate.uniqueId());
                 serviceConn.send(msg);
 
                 msg = (SystemServiceDataMessage) serviceConn.receive();
@@ -332,11 +337,11 @@ public class PipeServiceProtocol {
     }
 
     private void debugPrint(String msg) {
-        System.out.println("[pipe " + Isolate.currentIsolate().id() + '/' + debugInstanceId + "] " + msg);
+        System.out.println("[pipe " + currentIsolate.id() + '/' + debugInstanceId + "] " + msg);
     }
 
     static void debugPrintS(String msg) {
-        System.out.println("[pipe " + Isolate.currentIsolate().id() + "] " + msg);
+        System.out.println("[pipe " + currentIsolate.id() + "] " + msg);
     }
 
     static int parseVersion(String str) {

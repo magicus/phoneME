@@ -58,26 +58,15 @@ GROUP_PROTOCOL_JAVADOC_PACKAGES += \
 #
 SUBSYSTEM_PIPE_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/pipe/classes/com/sun/midp/io/pipe/PipeConnection.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/classes/com/sun/midp/io/pipe/PipeServerConnection.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/Protocol.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/PipeClientConnectionImpl.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/PipeServerConnectionImpl.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/serviceProtocol/Endpoint.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/serviceProtocol/PipeServiceProtocol.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/serviceProtocol/Dispatcher.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/serviceProtocol/UserListener.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/serviceProtocol/ClientEndpoint.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/serviceProtocol/ServerEndpoint.java
+    $(SUBSYSTEM_DIR)/protocol/pipe/classes/com/sun/midp/io/pipe/PipeServerConnection.java
 
 # Native files for the ( pipe ) module
 #
 
-ifeq ($(USE_I3_TEST), true)
-
-SUBSYSTEM_PIPE_I3TEST_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/protocol/pipe/reference/i3test/com/sun/midp/io/j2me/pipe/SecurityTokenProvider.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/reference/i3test/com/sun/midp/io/j2me/pipe/TestPipeServiceProtocol.java \
-    $(SUBSYSTEM_DIR)/protocol/pipe/reference/i3test/com/sun/midp/io/j2me/pipe/TestPipeConnection.java
-#    $(SUBSYSTEM_DIR)/protocol/pipe/reference/i3test/com/sun/midp/io/j2me/pipe/TestInterruptedIO.java
-
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+  PROTOCOL_PIPE_IMPL=mvm
+else
+  PROTOCOL_PIPE_IMPL=svm
 endif
+
+include $(SUBSYSTEM_PROTOCOL_DIR)/pipe/$(PROTOCOL_PIPE_IMPL)/lib.gmk

@@ -104,6 +104,13 @@ sensor:
  Is it OK to Use Sensors ?,
  %1 wants to connect to sensor %2.\n\nIs it OK to use sensor? 
 
+nfc_write_access:
+ NFC Write Access,
+ How often should %1 ask for permission to write to an NFC target?,
+ Don't write to an NFC target and don't ask,
+ Is it OK to write to an NFC target?,
+ Application %1 wants to write to an NFC target.\n\nIs it OK to write to an NFC target?
+
 group: payment
 
 group: satsa

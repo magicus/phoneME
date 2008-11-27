@@ -41,6 +41,35 @@ extern "C" {
  */
 int getHeapRequirement();
 
+/** 
+ * Reads properties with Java heap parameters
+ * and passes them to VM.
+ */
+void setHeapParameters();
+
+#if ENABLE_MULTIPLE_ISOLATES
+
+/**
+ * Reads AMS_MEMORY_RESERVED_MVM property and returns the amount of Java
+ * heap memory reserved for AMS isolate. Whether the property is not found,
+ * the same name hardcoded constant is used instead.
+ *
+ * @return total heap size in bytes available for AMS isolate,
+ *    or -1 if unlimitted
+ */
+int getAmsHeapReserved();
+
+/**
+ * Reads AMS_MEMORY_LIMIT_MVM property and returns the maximal Java heap size
+ * avilable for AMS isolate. Whether the property is not found, the same name
+ * hardcoded constant is used instead.
+ *
+ * @return total heap size available for AMS isolate
+ */
+int getAmsHeapLimit();
+
+#endif /* ENABLE_MULTIPLE_ISOLATES */
+
 #ifdef __cplusplus
 }
 #endif

@@ -35,10 +35,10 @@ _ADS_JTWI_GMK_   =
 
 # the VM library
 ifeq ($(TARGET_VM), cldc_vm)
-ADS_JTWI_LIBS   += $(CLDC_DIST_DIR)/lib/cldc_vm$(g)$(r)$(LIB_SUFFIX)
+ADS_JTWI_LIBS   += $(CLDC_DIST_DIR)/lib/cldc_vm$(cldc_g)$(cldc_r)$(LIB_SUFFIX)
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
 ifeq ($(USE_I3_TEST), true)
-ADS_JTWI_LIBS   += $(CLDC_DIST_DIR)/lib/cldc_vmtest$(g)$(r)$(LIB_SUFFIX)
+ADS_JTWI_LIBS   += $(CLDC_DIST_DIR)/lib/cldc_vmtest$(cldc_g)$(cldc_r)$(LIB_SUFFIX)
 endif
 endif
 endif

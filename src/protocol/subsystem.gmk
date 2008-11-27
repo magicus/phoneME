@@ -108,9 +108,7 @@ include $(SUBSYSTEM_PROTOCOL_DIR)/udp/$(LIB_MAKE_FILE)
 # Inter-application communication
 # Description: PIPE protocol
 #####################################################################
-ifeq ($(USE_MULTIPLE_ISOLATES), true)
 include $(SUBSYSTEM_PROTOCOL_DIR)/pipe/$(LIB_MAKE_FILE)
-endif
 
 SUBSYSTEM_PROTOCOL_JAVA_FILES = $(SUBSYSTEM_GCF_JAVA_FILES) \
 	$(SUBSYSTEM_FILE_JAVA_FILES) \

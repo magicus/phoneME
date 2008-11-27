@@ -109,7 +109,7 @@ define verify_cldc
         exit -1; \
     fi; \
     \
-    makfile=$(CLDC_DIST_DIR)/lib/cldc_vm$(g)$(r).make; \
+    makfile=$(CLDC_DIST_DIR)/lib/cldc_vm$(cldc_g)$(cldc_r).make; \
     if grep "VM_arch.*=.*\($(TARGET_CPU)\|c\)" $$makfile > /dev/null; then \
        true; \
     else \
@@ -279,7 +279,7 @@ $(CLDC_TEST_REFLECT_CLASS): $(CLDCTEST_CLASSES_ZIP)
 # Include C and LD flags exported by the VM build process. This is
 # important in configuring the word ordering of double precision floating point
 # variables in the ROM image, among other things.
--include $(CLDC_DIST_DIR)/lib/cldc_vm$(g)$(r).make
+-include $(CLDC_DIST_DIR)/lib/cldc_vm$(cldc_g)$(cldc_r).make
 LD_FLAGS       += ${JVM_LINK_FLAGS}
 EXTRA_CFLAGS   += ${JVM_CC_FLAGS}
 EXTRA_CPPFLAGS += ${JVM_CPP_FLAGS}

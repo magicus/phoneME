@@ -56,6 +56,7 @@ include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
 include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
 include $(SUBSYSTEM_AMS_DIR)/vm_utils/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/lib.gmk
 
 # Local module directory
 CDC_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/cdc_application

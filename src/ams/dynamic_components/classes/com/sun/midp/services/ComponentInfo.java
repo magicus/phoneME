@@ -44,6 +44,20 @@ public interface ComponentInfo {
     public int getSuiteId();
 
     /**
+     * Returns the display name of the component.
+     *
+     * @return user-friendly name of the component
+     */
+    public String getDisplayName();
+
+    /**
+     * Returns the version of the component.
+     *
+     * @return version of the component
+     */
+    public String getVersion();
+
+    /**
      * Returns true if this component is trusted, false otherwise.
      *
      * @return true if this component is trusted, false otherwise
@@ -55,11 +69,4 @@ public interface ComponentInfo {
      * For debug only.
      */
     public String toString();
-
-
-    /**
-     * Returns the display name of the component
-     * @return user-friendly name of the component
-     */
-    String getDisplayName();
 }

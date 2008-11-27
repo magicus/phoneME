@@ -1581,7 +1581,7 @@ char *pushfindfd(int fd) {
                 pushp->pCachedData = (PacketEntry*)
                                      midpMalloc(sizeof (PacketEntry));
                 if (pushp->pCachedData == NULL) {
-                    pushp->state = temp_state;
+                    pushcheckinentry(pushp);
                     return NULL;
                 }
 
@@ -1600,10 +1600,10 @@ char *pushfindfd(int fd) {
                     /*
                      * Receive failed - no data available.
                      * cancel the launch pending
+                     * set listening state to CHECKED_IN
+                     * to prevent forever loop
                      */
-                    midpFree(pushp->pCachedData);
-                    pushp->pCachedData = NULL;
-                    pushp->state = temp_state;
+                    pushcheckinentry(pushp);
                     return NULL;
                 }
 
@@ -1644,7 +1644,7 @@ char *pushfindfd(int fd) {
                 pushp->pCachedData = (PacketEntry*)
                                      midpMalloc(sizeof (PacketEntry));
                 if (pushp->pCachedData == NULL) {
-                    pushp->state = temp_state;
+                    pushcheckinentry(pushp);
                     return NULL;
                 }
 
@@ -1664,9 +1664,7 @@ char *pushfindfd(int fd) {
                      * Receive failed - no data available.
                      * cancel the launch pending
                      */
-                    midpFree(pushp->pCachedData);
-                    pushp->pCachedData = NULL;
-                    pushp->state = temp_state;
+                    pushcheckinentry(pushp);
                     return NULL;
                 }
 
