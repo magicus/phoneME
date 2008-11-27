@@ -39,7 +39,7 @@ SOURCE_OUTPUT_LIST+=$(JAVACALL_DIR)/implementation/share/cldc javacall/implement
 endif
 
 ifeq ($(USE_WTK), true)
-EXTRA_CFLAGS += -DUSE_ONE_DISPLAY=1
+CFLAGS += -DENABLE_WTK=1
 endif
 
 include $(TOOLS_DIR)/tools.gmk

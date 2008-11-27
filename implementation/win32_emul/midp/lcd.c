@@ -90,7 +90,7 @@ javacall_result javacall_lcd_init(void) {
     top_down = JAVACALL_FALSE;
     clamshell_opened = JAVACALL_TRUE;
 
-#ifdef USE_ONE_DISPLAY
+#ifdef ENABLE_WTK
 
     f = NewLimeFunction(LIME_PACKAGE,
                         LIME_GRAPHICS_CLASS,
@@ -250,7 +250,7 @@ javacall_result javacall_lcd_flush(int hardwareId) {
         current_hdc = VRAM.hdc;
     }
 
-#ifdef USE_ONE_DISPLAY
+#ifdef ENABLE_WTK
 
    f = NewLimeFunction(LIME_PACKAGE,
                        LIME_GRAPHICS_CLASS,
@@ -518,7 +518,7 @@ javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
  * or vice versa.
  */
 void ClamshellStateChanged(short state) {
-#ifndef USE_ONE_DISPLAY
+#ifndef ENABLE_WTK
     if (state == 2) {
        /* IMPL_NOTE: two displays are active - subject to implement.
         * For now we move to main display. 
@@ -547,7 +547,7 @@ void ClamshellStateChanged(short state) {
  */
 void javacall_lcd_handle_clamshell() {
 
-#ifndef USE_ONE_DISPLAY
+#ifndef ENABLE_WTK
     if (clamshell_opened == JAVACALL_TRUE
             && currDisplayId == EXTE_DISPLAY_ID) {
         VRAM.width = MAIN_DISPLAY_SIZE.width;
