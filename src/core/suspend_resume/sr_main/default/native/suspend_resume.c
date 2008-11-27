@@ -261,6 +261,7 @@ void sr_unregisterResource(void *resource) {
 
 void sr_initSystem() {
     if (SR_INVALID == sr_state) {
+        lcduiState.locale = NULL;
         sr_registerResource((void*)&vm, &suspend_vm, &resume_vm);
         sr_registerResource((void*)&lcduiState, &suspend_lcdui, &resume_lcdui);        
         sr_state = SR_ACTIVE;
