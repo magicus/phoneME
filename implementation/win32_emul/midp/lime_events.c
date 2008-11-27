@@ -40,6 +40,10 @@
 #include "javacall_odd.h"
 #endif
 
+#ifdef USE_MEMMON
+#include "javacall_memmon.h"
+#endif
+
 #define LIME_PACKAGE "com.sun.kvem.midp"
 #define LIME_EVENT_CLASS "EventBridge"
 
@@ -347,6 +351,14 @@ void SendEvent (KVMEventType *evt) {
             break;
         } /* switch(evt->chr) */
 
+#ifdef USE_MEMMON
+	case runGC:
+        javanotify_run_GC();
+		break;
+	case stopMonMemory:
+	    javanotify_stop_memmon();
+		break;
+#endif
     default: /* do nothing, but continue in loop */
         break;
     } /* switch (evt->type) */

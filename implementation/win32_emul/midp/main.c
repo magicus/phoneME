@@ -169,6 +169,10 @@ main(int argc, char *argv[]) {
     int propFileNameLen = 0;
     int isMemoryProfiler = 0;
 
+#ifdef USE_MEMMON
+	int isMemoryMonitor = 0;
+#endif
+
     /* uncomment this like to force the debugger to start */
     /* _asm int 3; */
 
@@ -251,7 +255,7 @@ main(int argc, char *argv[]) {
             if (strcmp(key,"com.sun.midp.io.j2me.apdu.hostsandports") == 0 ) {
                 key = "com.sun.io.j2me.apdu.hostsandports";
                 property_type = JAVACALL_INTERNAL_PROPERTY;
-            } else if (!isMemoryProfiler && strcmp(key,"memmonport") == 0) {
+            } else if (!isMemoryProfiler && strcmp(key,"memprofport") == 0) {
                 int j = strlen(value);
                 if (j > 0 && j < 6) { /* port length is correct */
 				    j++;
@@ -265,14 +269,20 @@ main(int argc, char *argv[]) {
                                       JAVACALL_INTERNAL_PROPERTY);
                     isMemoryProfiler = 1;
                 }
-            }
-            javacall_set_property(key, value, JAVACALL_TRUE,property_type);
+#ifdef USE_MEMMON
+            } else if (strcmp(key,"monitormemory") == 0) {
+                javacall_set_property("MemoryMonitor",
+                                  "true", JAVACALL_TRUE,
+                                  JAVACALL_INTERNAL_PROPERTY);
+	            isMemoryMonitor=1;
+#endif
+			} else {
+              javacall_set_property(key, value, JAVACALL_TRUE,property_type);
+			}
         } else if (strcmp(argv[i], "-profile") == 0) {
                 /* ROM profile name is passed here */ 
                 vmArgv[vmArgc++] = argv[i++];
                 vmArgv[vmArgc++] = argv[i];
-				} else if (strcmp(argv[i], "-monitormemory") == 0) {
-            /* old argument  - ignore it */
         } else if (strcmp(argv[i], "-memory_profiler") == 0) {
 
             /* It is a CLDC arg, add to CLDC arguments list */
@@ -478,6 +488,14 @@ main(int argc, char *argv[]) {
                             NULL, JAVACALL_TRUE,
                             JAVACALL_INTERNAL_PROPERTY);
     }
+
+#ifdef USE_MEMMON
+    if (!isMemoryMonitor) {
+	    javacall_set_property("MemoryMonitor",
+                            NULL, JAVACALL_TRUE,
+                            JAVACALL_INTERNAL_PROPERTY);
+    }
+#endif
 	
     if (vmArgc > 0 ) {
         /* set VM args */
