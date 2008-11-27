@@ -53,8 +53,10 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
     public boolean isDebugMode = false;
     /** Whether the running suite is locked */
     private boolean locked = false;
-    /* corresponding suite */
+    /** Corresponding suite */
     private MIDletSuite msi = null;
+    /** Main MIDlet's class name of the suite. Can be null. */
+    private String mainMidlet;
 
     /**
      * Constructs a RunningMIDletSuiteInfo object for a suite.
@@ -443,5 +445,27 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
      */
     public boolean holdsStorageLock() {
         return msi != null;
+    }
+
+    /**
+     * @return classname of main MIDlet
+     */
+    public String getMainMidlet() {
+        return mainMidlet;
+    }
+
+    /**
+     * Sets classname of main MIDlet.
+     * @param mainMidlet class name of main MIDlet
+     */
+    public void setMainMidlet(String mainMidlet) {
+        this.mainMidlet = mainMidlet;
+    }
+    
+    /**
+     * @return true if main MIDlet is set
+     */
+    public boolean hasMainMidlet() {
+        return mainMidlet != null;
     }
 }
