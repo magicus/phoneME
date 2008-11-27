@@ -1,0 +1,817 @@
+//
+// Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
+//
+// @(#)jitgrammardefs.jcs	1.35 06/10/10
+//
+// converting CVM IR subset to RISC assembler
+//
+
+%{
+
+/*
+    #define CVMJITCompileExpression_DEBUG 1
+    #define id(p) ((p)->tag)
+*/
+
+#ifndef CVM_INLINE
+#define CVM_INLINE /* */
+#ifdef __GNUC__
+#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 90)
+#undef  CVM_INLINE
+#define CVM_INLINE inline
+#endif
+#endif /* __GNUC__ */
+#endif /* CVM_INLINE */
+
+/*
+ * Some macros that create the regman register mask for some registers we use.
+ */
+#undef  ARG1
+#undef  ARG2
+#undef  ARG3
+#undef  ARG4
+#undef  RESULT1
+#undef  RESULT2
+#define ARG1    (1U<<CVMCPU_ARG1_REG)
+#define ARG2    (1U<<CVMCPU_ARG2_REG)
+#define ARG3    (1U<<CVMCPU_ARG3_REG)
+#define ARG4    (1U<<CVMCPU_ARG4_REG)
+#define RESULT1 (1U<<CVMCPU_RESULT1_REG)
+#define RESULT2 (1U<<CVMCPU_RESULT2_REG)
+
+/*
+ * Some useful constants.
+ */
+/* offset of length field in array */
+#undef  ARRAY_LENGTH_OFFSET
+#define ARRAY_LENGTH_OFFSET  offsetof(CVMArrayOfAnyType, length)
+/* Array data offset */
+#undef  ARRAY_DATA_OFFSET
+#define ARRAY_DATA_OFFSET     offsetof(CVMArrayOfAnyType, elems)
+/* cb's offset in the object header */
+#undef  OBJECT_CB_OFFSET
+#define OBJECT_CB_OFFSET     offsetof(CVMObjectHeader, clas)
+/* MethodTable offset in cb */ 
+#undef  CB_VTBL_OFFSET
+#define CB_VTBL_OFFSET       offsetof(CVMClassBlock, methodTablePtrX)
+
+#ifdef CVM_SEGMENTED_HEAP
+    /* The offset */
+#undef GC_SEGMENT_CTV_OFFSET
+#define GC_SEGMENT_CTV_OFFSET offsetof(CVMGenSegment, cardTableVirtual)
+#endif
+
+/* Purpose: Verifies the condition, else throws a JIT error. */
+#define validateStack(condition, stackName) { \
+    CVMassert(condition);                    \
+    if (!(condition)) {                      \
+        CVMJITerror(con, CANNOT_COMPILE, #stackName " stack too small"); \
+    } \
+}
+
+#ifdef CVM_TRACE_JIT
+/* The following strings are used to emit codegen comments for the checks for
+   each of the type of exceptions listed in the CVMJITIRTrapID enum list: */
+const char *const trapCheckComments[CVMJITIR_NUM_TRAP_IDS] = {
+    "NULL check",
+    "ArrayIndexOutOfBounds check",
+    "DivideByZero check",
+};
+#endif
+
+#define IRRecordState(p,v)	(p)->curRootCnt = (v)
+#define IRGetState(p)		((p)->curRootCnt)
+
+/* The following are for collecting stats about compilation stack usage: */
+#ifdef CVM_JIT_COLLECT_STATS
+
+#define INITIALIZE_STACK_STATS(name) \
+    int name##StackElements = 0;
+
+#define statsPushStack(name) { \
+    name##StackElements++;  \
+    CVMJITstatsRecordUpdateMax(con, CVMJIT_STATS_ACTUAL_##name##_STACK_MAX, \
+                               name##StackElements);                        \
+}
+#define statsPopStack(name) { \
+    name##StackElements--; \
+}
+
+#define statsPushResource() { \
+    int stackElements; \
+    stackElements = ((CVMInt8*)con->cgsp - (CVMInt8*)con->cgstackInit) / \
+                    sizeof(struct CVMJITStackElement);                   \
+    CVMJITstatsRecordUpdateMax(con, CVMJIT_STATS_ACTUAL_RESOURCE_STACK_MAX, \
+                               stackElements); \
+}
+#define statsPopResource()
+
+#else /* !CVM_JIT_COLLECT_STATS */
+#define INITIALIZE_STACK_STATS(name)
+#define statsPushStack(name)
+#define statsPopStack(name)
+#define statsPushResource()
+#define statsPopResource()
+#endif /* CVM_JIT_COLLECT_STATS */
+
+#define INITIALIZE_MATCH_STACK \
+    INITIALIZE_STACK_STATS(MATCH) \
+    struct CVMJITCompileExpression_match_computation_state* mcp = \
+	(struct CVMJITCompileExpression_match_computation_state*)\
+	(con->compilationStateStack);
+
+#define MATCH_PUSH( _p, op, l, r, n, arity ){ \
+    mcp->p = (_p); \
+    mcp->opcode = (op); \
+    mcp->subtrees[0] = (l); \
+    mcp->subtrees[1] = (r); \
+    mcp->which_submatch = (n); \
+    mcp++->n_submatch = (arity); \
+    statsPushStack(MATCH); \
+    validateStack(((void*)mcp < (void*)con->cgstackInit), Match); \
+}
+
+#define MATCH_POP( _p, op, l, r, n ) { \
+    statsPopStack(MATCH); \
+    _p = (--mcp)->p; \
+    op = mcp->opcode; \
+    l = mcp->subtrees[0]; \
+    r = mcp->subtrees[1]; \
+    n = mcp->which_submatch; \
+    CVMassert( (void*)mcp >= con->compilationStateStack );\
+}
+
+#define GET_MATCH_STACK_TOP	(mcp-1)
+
+#define MATCH_STACK_EMPTY	(mcp == con->compilationStateStack)
+
+#define INITIALIZE_GOAL_STACK \
+    goal_top = \
+	(struct CVMJITCompileExpression_rule_computation_state*)\
+	(con->compilationStateStack);
+
+#define GOAL_STACK_TOP \
+    ((struct CVMJITCompileExpression_rule_computation_state*)con->cgstackInit)
+
+#define GOAL_STACK_EMPTY 	(goal_top == con->compilationStateStack)
+
+
+/*
+ * Return the set of registers that the value should be computed into.
+ * The main purpose of the function is to examine any decoration that
+ * was put on the node to see if this node will have special register
+ * requirements.
+	computeTargetRegs((con), &(goal_top->attributes[0].u.rs), thisNode); \
+ */
+static void
+computeTargetRegs(
+    CVMJITCompilationContext* con,
+    CVMJITCompileExpression_attribute * attr,
+    CVMJITIRNode* node)
+{
+    node = CVMJITirnodeValueOf(node);
+#if 0
+    CVMconsolePrintf("computeTargetRegs: nodeID(%d)\n", node->nodeID);
+#endif
+    switch (node->decorationType) {
+        case CVMJIT_REGHINT_DECORATION: {
+	    CVMInt16 targetReg = node->decorationData.regHint;
+	    if (targetReg == -1) {
+		attr->u.rs.target = CVMRM_ANY_SET;
+#ifdef CVM_JIT_USE_FP_HARDWARE
+		attr->u.rs.float_target = CVMRM_FP_ANY_SET;
+#endif
+	    } else {
+#ifdef CVM_JIT_USE_FP_HARDWARE
+		int tag = CVMJITgetTypeTag(node);
+		if (tag == CVM_TYPEID_FLOAT || tag == CVM_TYPEID_DOUBLE) {
+		    attr->u.rs.target = CVMRM_ANY_SET;
+		    attr->u.rs.float_target =  1U << targetReg;
+		} else {
+		    attr->u.rs.target =  1U << targetReg;
+		    attr->u.rs.float_target = CVMRM_FP_ANY_SET;
+		}
+#else
+		attr->u.rs.target =  1U << targetReg;
+#endif
+	    }
+	    break;
+	}
+        default:
+	    attr->u.rs.target = CVMRM_ANY_SET;
+#ifdef CVM_JIT_USE_FP_HARDWARE
+	    attr->u.rs.float_target = CVMRM_FP_ANY_SET;
+#endif
+	    break;
+    }
+}
+
+#ifdef CVM_DEBUG_ASSERTS
+#define SET_ATTRIBUTE_TYPE(n, type_) \
+        goal_top->attributes[n].type = (type_)
+#else
+#define SET_ATTRIBUTE_TYPE(n, type_) ((void)0)
+#endif
+
+/* Purpose: Default synthesis action for chain rules */
+#define DEFAULT_SYNTHESIS_CHAIN(con, thisNode) \
+	DEFAULT_SYNTHESIS1(con, thisNode)
+
+/* Purpose: Default synthesis action for a rule with a unary node. */
+#define DEFAULT_SYNTHESIS1(con, thisNode) \
+	(thisNode)->regsRequired = submatch_roots[0]->regsRequired
+
+/* Purpose: Default synthesis action for a rule with a binary node. */
+#define DEFAULT_SYNTHESIS2(con, thisNode) \
+	(thisNode)->regsRequired = (submatch_roots[0]->regsRequired | \
+	     submatch_roots[1]->regsRequired)
+
+#define DEFINE_SYNTHESIS(con, thisNode_)				    \
+     DEFAULT_SYNTHESIS1(con, thisNode_);				    \
+     {									    \
+	 CVMJITIRNode* lhs =						    \
+             CVMJITirnodeValueOf(CVMJITirnodeGetLeftSubtree(thisNode_));    \
+	 /* see if lhs is a USED node at the same spill location as the	    \
+	  * DEFINE node. If so, then eager loading of the USED node is	    \
+	  * a bad idea because it is already up-to-date and will never	    \
+	  * be stored.							    \
+	  */								    \
+	 if (CVMJITirnodeIsEndInlining(lhs)) {				    \
+             lhs = CVMJITirnodeGetLeftSubtree(lhs);			    \
+         }								    \
+	 if (CVMJITirnodeIsUsedNode(lhs)) {				    \
+	     CVMJITDefineOp* defineOp = CVMJITirnodeGetDefineOp(thisNode_); \
+	     CVMJITUsedOp* usedOp = CVMJITirnodeGetUsedOp(lhs);		    \
+	     if (usedOp->spillLocation ==				    \
+		 CVMJITirnodeGetUsedOp(CVMJITirnodeValueOf(		    \
+                     defineOp->usedNode))->spillLocation)		    \
+	     {								    \
+		 /* this will prevent eager loading of the USED node	    \
+		  * which may not get used before block exit. */	    \
+		 lhs->regsRequired = CVMCPU_AVOID_METHOD_CALL;		    \
+	     }								    \
+	 }								    \
+     }
+
+/* Purpose: Default inheritance action for chain rules */
+#define DEFAULT_INHERITANCE_CHAIN(con, thisNode) {			 \
+    if (GOAL_STACK_EMPTY) {						 \
+        SET_ATTRIBUTE_TYPE(0, CVMJIT_EXPRESSION_ATTRIBUTE_TARGET_AVOID); \
+	computeTargetRegs((con), &(goal_top->attributes[0]), thisNode);	 \
+	goal_top->attributes[0].u.rs.avoid = CVMCPU_AVOID_NONE;		 \
+    } else {								 \
+        goal_top->attributes[0] = *goal_top[-1].curr_attribute;		 \
+    }									 \
+}
+
+/* Purpose: Default inheritance action for a rule with arity 1. */
+#define DEFAULT_INHERITANCE1(con, thisNode_) {				 \
+	CVMassert(subgoals_todo == 1);					 \
+        SET_ATTRIBUTE_TYPE(0, CVMJIT_EXPRESSION_ATTRIBUTE_TARGET_AVOID); \
+	computeTargetRegs((con), &(goal_top->attributes[0]),		 \
+				 goal_top->submatch_roots[0]);		 \
+	goal_top->attributes[0].u.rs.avoid = CVMCPU_AVOID_NONE;		 \
+}
+
+/* Purpose: Default inheritance action for a rule with arity 2. */
+#define DEFAULT_INHERITANCE2(con, thisNode_) {				 \
+	CVMJITIRNodePtr n0 = goal_top->submatch_roots[0];		 \
+	CVMJITIRNodePtr n1 = goal_top->submatch_roots[1];		 \
+        CVMassert(subgoals_todo == 2);                                   \
+        SET_ATTRIBUTE_TYPE(0, CVMJIT_EXPRESSION_ATTRIBUTE_TARGET_AVOID); \
+        SET_ATTRIBUTE_TYPE(1, CVMJIT_EXPRESSION_ATTRIBUTE_TARGET_AVOID); \
+        computeTargetRegs((con), &(goal_top->attributes[0]), n0);	 \
+        goal_top->attributes[0].u.rs.avoid = n1->regsRequired;		 \
+        computeTargetRegs((con), &(goal_top->attributes[1]), n1);	 \
+        goal_top->attributes[1].u.rs.avoid = CVMCPU_AVOID_NONE;          \
+}
+
+/* Purpose: Default inheritance action for a rule with a binary node,
+            but we only want to target the rhs. */
+#define ASSIGN_INHERITANCE(con, thisNode_) {				 \
+	CVMJITIRNode *thisNode = (thisNode_);				 \
+	CVMassert(subgoals_todo == 1);					 \
+        SET_ATTRIBUTE_TYPE(0, CVMJIT_EXPRESSION_ATTRIBUTE_TARGET_AVOID); \
+	computeTargetRegs((con), &(goal_top->attributes[0]),		 \
+				 CVMJITirnodeGetRightSubtree(thisNode)); \
+	goal_top->attributes[0].u.rs.avoid = CVMCPU_AVOID_NONE;		 \
+}
+
+/* Purpose: Default synthesis action for a rule with a flattened tree
+            containing a unary node with a binary node as its child. */
+#define L_BINARY_SYNTHESIS(con, thisNode_) { \
+    CVMJITIRNode *thisNode = (thisNode_);				\
+    CVMJITIRNode *lhs = CVMJITirnodeGetLeftSubtree(thisNode);		\
+    DEFAULT_SYNTHESIS2((con), lhs);					\
+    thisNode->regsRequired = lhs->regsRequired;				\
+}
+
+/* Purpose: Default inheritance action for a rule with a flattened tree
+            containing a unary node with a binary node as its child. */
+#define L_BINARY_INHERITANCE(con, thisNode) \
+    DEFAULT_INHERITANCE2((con), CVMJITirnodeGetLeftSubtree(thisNode))
+
+/* Purpose: Default synthesis and inheritance actions for a rule with a
+            unary node, with another unary node as its left subtree. */
+#define UNARY_UNARY_reg_SYNTHESIS(con, thisNode_) {		\
+    CVMJITIRNode *thisNode = (thisNode_);			\
+    CVMJITIRNode *lhs = CVMJITirnodeGetLeftSubtree(thisNode);	\
+    DEFAULT_SYNTHESIS1((con), lhs);				\
+    thisNode->regsRequired = lhs->regsRequired;			\
+}
+#define UNARY_UNARY_reg_INHERITANCE DEFAULT_INHERITANCE1
+
+/* Purpose: Default synthesis and inheritance actions for a rule with a
+            flattened tree containing a binary node with another binary
+            node as its left hand side child */
+#define L_BINARY_R_UNARY_SYNTHESIS BINARY_BINARY_reg_reg_reg_SYNTHESIS
+#define BINARY_BINARY_reg_reg_reg_SYNTHESIS(con, thisNode_) { \
+    CVMJITIRNode *thisNode = (thisNode_);				\
+    CVMJITIRNode *lhs = CVMJITirnodeGetLeftSubtree(thisNode);		\
+    CVMJITIRNode *rhs = CVMJITirnodeGetRightSubtree(thisNode);		\
+    DEFAULT_SYNTHESIS2((con), lhs);					\
+    DEFAULT_SYNTHESIS1((con), rhs);					\
+    thisNode->regsRequired = lhs->regsRequired | rhs->regsRequired;	\
+}
+#define L_BINARY_R_UNARY_INHERITANCE BINARY_BINARY_reg_reg_reg_INHERITANCE
+#define BINARY_BINARY_reg_reg_reg_INHERITANCE DEFAULT_INHERITANCE3
+#define DEFAULT_INHERITANCE3(con, thisNode) {				    \
+    SET_ATTRIBUTE_TYPE(0, CVMJIT_EXPRESSION_ATTRIBUTE_TARGET_AVOID);        \
+    SET_ATTRIBUTE_TYPE(1, CVMJIT_EXPRESSION_ATTRIBUTE_TARGET_AVOID);        \
+    SET_ATTRIBUTE_TYPE(2, CVMJIT_EXPRESSION_ATTRIBUTE_TARGET_AVOID);        \
+    /* The left operand should avoid the next two operands: */		    \
+    computeTargetRegs((con), &(goal_top->attributes[0]),        	    \
+        goal_top->submatch_roots[0]);					    \
+    goal_top->attributes[0].u.rs.avoid  =				    \
+	goal_top->submatch_roots[1]->regsRequired |			    \
+	goal_top->submatch_roots[2]->regsRequired;			    \
+    /* The mid operand should avoid the right operand: */		    \
+    computeTargetRegs((con), &(goal_top->attributes[1]),        	    \
+        goal_top->submatch_roots[1]);					    \
+    goal_top->attributes[1].u.rs.avoid  =				    \
+	goal_top->submatch_roots[2]->regsRequired;			    \
+    /* The right operand doesn't need to avoid anything: */		    \
+    computeTargetRegs((con), &(goal_top->attributes[2]),        	    \
+         goal_top->submatch_roots[2]);					    \
+    goal_top->attributes[2].u.rs.avoid = CVMCPU_AVOID_NONE;                 \
+}
+
+/* Purpose: Default synthesis and inheritance actions for a rule with a
+            flattened tree containing a binary node with another binary
+            node as its right hand side child */
+#define BINARY_reg_BINARY_reg_reg_SYNTHESIS(con, thisNode_) { \
+    CVMJITIRNode *thisNode = (thisNode_);				\
+    CVMJITIRNode *lhs = CVMJITirnodeGetLeftSubtree(thisNode);		\
+    CVMJITIRNode *rhs = CVMJITirnodeGetRightSubtree(thisNode);		\
+    DEFAULT_SYNTHESIS1((con), lhs);					\
+    DEFAULT_SYNTHESIS2((con), rhs);					\
+    thisNode->regsRequired = lhs->regsRequired | rhs->regsRequired;	\
+}
+#define BINARY_reg_BINARY_reg_reg_INHERITANCE DEFAULT_INHERITANCE3
+
+/* Purpose: Default synthesis and inheritance actions for a rule with a
+            flattened tree containing a binary node with another binary
+            node as its right hand side child */
+#define BINARY_UNARY_BINARY_reg_reg_reg_SYNTHESIS(con, thisNode_) {	  \
+    CVMJITIRNode *thisNode = (thisNode_);				  \
+    CVMJITIRNode *lhs =							  \
+        CVMJITirnodeGetLeftSubtree(CVMJITirnodeGetLeftSubtree(thisNode)); \
+    CVMJITIRNode *rhs = CVMJITirnodeGetRightSubtree(thisNode);		  \
+    DEFAULT_SYNTHESIS2((con), lhs);					  \
+    DEFAULT_SYNTHESIS1((con), rhs);					  \
+    thisNode->regsRequired = lhs->regsRequired | rhs->regsRequired;	  \
+}
+#define BINARY_UNARY_BINARY_reg_reg_reg_INHERITANCE DEFAULT_INHERITANCE3
+
+/* Purpose: Default synthesis and inheritance actions for a rule with a
+            flattened tree containing a binary node with a unary
+            node as its left hand side child, a binary node as it
+            rhigh hand side child. */
+#define BINARY_UNARY_reg_BINARY_reg_reg_SYNTHESIS(con, thisNode_) {	  \
+    CVMJITIRNode *thisNode = (thisNode_);				  \
+    CVMJITIRNode *lhs =							  \
+        CVMJITirnodeGetLeftSubtree(CVMJITirnodeGetLeftSubtree(thisNode)); \
+    CVMJITIRNode *rhs =	CVMJITirnodeGetRightSubtree(thisNode);		  \
+    DEFAULT_SYNTHESIS1((con), lhs);					  \
+    DEFAULT_SYNTHESIS2((con), rhs);					  \
+    thisNode->regsRequired = lhs->regsRequired | rhs->regsRequired;	  \
+}
+#define BINARY_UNARY_reg_BINARY_reg_reg_INHERITANCE DEFAULT_INHERITANCE3
+
+/*
+ * TARGETING: Macros for specifying preferred target registers for an IR node.
+ */
+
+/* NOTE: _SET_TARGET() is private and only to be called by other macros. */
+#define _SET_TARGET(n, regset) { \
+        SET_ATTRIBUTE_TYPE(n, CVMJIT_EXPRESSION_ATTRIBUTE_TARGET_AVOID); \
+	goal_top->attributes[n].u.rs.target = regset;   \
+}
+
+#define SET_TARGET1(thisNode, regset) {			\
+	DEFAULT_INHERITANCE1(con, (thisNode));		\
+	_SET_TARGET(0, (regset));			\
+}
+
+#define SET_TARGET2(thisNode, regset1, regset2) {	\
+	DEFAULT_INHERITANCE2(con, (thisNode));		\
+	_SET_TARGET(0, (regset1));			\
+	_SET_TARGET(1, (regset2));			\
+}
+
+/* Set the register targetting information without doing any inheritance work. */
+#define SET_TARGET3_WO_INHERITANCE(thisNode, regset1, regset2, regset3) { \
+	_SET_TARGET(0, (regset1));			\
+	_SET_TARGET(1, (regset2));			\
+	_SET_TARGET(2, (regset3));			\
+}
+
+#define SET_TARGET2_0(thisNode, regset1) {		\
+	DEFAULT_INHERITANCE2(con, (thisNode));		\
+	_SET_TARGET(0, (regset1));			\
+}
+
+#define SET_TARGET2_1(thisNode, regset2) {		\
+	DEFAULT_INHERITANCE2(con, (thisNode));		\
+	_SET_TARGET(1, (regset2));			\
+}
+
+/* 
+ * AVOIDING: Macros for specifying registers that the IR node prefers to avoid
+ * when doing register targeting.
+ *
+ * Targeting above is handled with full register sets. Avoiding below
+ * is handled using predefined register sets. This allows us to encode
+ * the avoid sets using just a few bits rather than 32-bits for GPRs
+ * plus 32-bits for FPRs. This is significant because the avoid set has
+ * to be stored in the regsRequired field if the IR node, so storing
+ * in just a few bits saves us two words in each node.
+ */
+
+#define CVMCPU_NUM_AVOID_SETS 4
+const CVMRMregset CVMCPUavoidSets[CVMCPU_NUM_AVOID_SETS] = {
+    CVMRM_EMPTY_SET,   /* nothing to avoid */
+    ~CVMRM_SAFE_SET,   /* AVOID_C_CALL */
+    CVMRM_ANY_SET,     /* AVOID_METHOD_CALL */
+    CVMRM_ANY_SET      /* AVOID_C_CALL and AVOID_METHOD_CALL */
+};
+
+#define CVMCPUconvertAvoidBitsToAvoidSet(avoidBits)		\
+    (CVMassert((CVMUint32)avoidBits < CVMCPU_NUM_AVOID_SETS),	\
+     CVMCPUavoidSets[avoidBits])
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+const CVMRMregset CVMCPUfloatAvoidSets[CVMCPU_NUM_AVOID_SETS] = {
+    CVMRM_EMPTY_SET,      /* nothing to avoid */
+    ~CVMRM_FP_SAFE_SET,   /* AVOID_C_CALL */
+    CVMRM_FP_ANY_SET,     /* AVOID_METHOD_CALL */
+    CVMRM_FP_ANY_SET      /* AVOID_C_CALL and AVOID_METHOD_CALL */
+};
+
+#define CVMCPUconvertAvoidBitsToFloatAvoidSet(avoidBits)	\
+    (CVMassert((CVMUint32)avoidBits < CVMCPU_NUM_AVOID_SETS),	\
+     CVMCPUfloatAvoidSets[avoidBits])
+#endif /* CVM_JIT_USE_FP_HARDWARE */
+
+
+#define SET_AVOID(n, regset) \
+	((n)->regsRequired = (regset))
+
+#define SET_AVOID_C_CALL(n) \
+	SET_AVOID((n), CVMCPU_AVOID_C_CALL)
+
+#define SET_AVOID_METHOD_CALL(n) \
+	SET_AVOID((n), CVMCPU_AVOID_METHOD_CALL)
+
+#define SET_CALL_CONTEXT(n, callContext_) \
+        SET_ATTRIBUTE_TYPE(n, CVMJIT_EXPRESSION_ATTRIBUTE_CALL_CONTEXT), \
+        goal_top->attributes[n].u.callContext = (callContext_)
+
+#define GET_CALL_CONTEXT(con) \
+        (CVMassert(((goal_top-1)->curr_attribute)->type == \
+                  CVMJIT_EXPRESSION_ATTRIBUTE_CALL_CONTEXT), \
+         (CVMCPUCallContext *)(((goal_top-1)->curr_attribute)->u.callContext))
+
+#define SET_TARGET_IARG(con, node) \
+        iargTarget((con), (node), goal_top, subgoals_todo)
+
+#define END_TARGET_IARG(con, node) \
+        iargTarget((con), (node), goal_top, subgoals_todo)
+
+#define SET_AVOID_INTRINSIC_CALL(con, node) \
+        SET_AVOID((node), intrinsicRequired((con), (node), submatch_roots))
+
+#define SET_TARGET_INTRINSIC_CALL(con, node) \
+        DEFAULT_INHERITANCE2((con), (node))
+
+#ifdef CVMJIT_INTRINSICS
+
+#ifdef CVMJIT_INTRINSICS_HAVE_PLATFORM_SPECIFIC_REG_ARGS
+#define GET_REG_ARGS(properties) \
+	(((properties) & CVMJITINTRINSIC_REG_ARGS) != 0)
+#else
+#define GET_REG_ARGS(properties)	CVM_FALSE
+#endif
+
+static CVMJITRegsRequiredType
+intrinsicRequired(CVMJITCompilationContext *con, CVMJITIRNode *intrinsicNode,
+                  CVMJITIRNodePtr *submatch_roots)
+{
+    CVMJITRegsRequiredType required;
+    CVMUint16 intrinsicID = CVMJITirnodeGetBinaryOp(intrinsicNode)->data;
+    CVMJITIntrinsic *irec = &CVMglobals.jit.intrinsics[intrinsicID - 1];
+    const CVMJITIntrinsicConfig *config = irec->config;
+    CVMUint16 properties = config->properties;
+    required = submatch_roots[0]->regsRequired |
+	       submatch_roots[1]->regsRequired;
+
+    if ((properties & CVMJITINTRINSIC_OPERATOR_ARGS) != 0) {
+        const CVMJITIntrinsicEmitterVtbl *emitter;
+        emitter = (const CVMJITIntrinsicEmitterVtbl *)
+                      config->emitterOrCCMRuntimeHelper;
+        required = emitter->getRequired(con, intrinsicNode, required);
+    } else {
+        /* Just like a C call, we avoid the safe set because we'll be
+           effectively making a C call to the helper: */
+	CVMBool useRegArgs = GET_REG_ARGS(properties);
+        required = CVMCPUCCALLgetRequired(con, required, intrinsicNode,
+					  irec, useRegArgs);
+    }
+    return required;
+}
+
+static void
+iargTarget(CVMJITCompilationContext *con, CVMJITIRNode *iargNode,
+           struct CVMJITCompileExpression_rule_computation_state *goal_top,
+           int subgoals_todo)
+{
+    CVMUint16 intrinsicID;
+    CVMJITIntrinsic *irec;
+    const CVMJITIntrinsicConfig *config;
+    CVMUint16 properties;
+
+    if (iargNode->tag != CVMJIT_ENCODE_NULL_IARG) {
+        intrinsicID = CVMJIT_IARG_INTRINSIC_ID(iargNode);
+    } else {
+        intrinsicID = CVMJIT_NULL_IARG_INTRINSIC_ID(iargNode);
+    }
+
+    irec = &CVMglobals.jit.intrinsics[intrinsicID - 1];
+    config = irec->config;
+    properties = config->properties;
+
+    if (iargNode->tag != CVMJIT_ENCODE_NULL_IARG) {
+        int argType = CVMJITgetTypeTag(iargNode);
+        int argNo = CVMJIT_IARG_ARG_NUMBER(iargNode);
+        int argWordIndex = CVMJIT_IARG_WORD_INDEX(iargNode);
+        CVMRMregset targetSet;
+
+        CVMassert(CVMJITgetOpcode(iargNode) ==
+                  (CVMJIT_IARG << CVMJIT_SHIFT_OPCODE));
+        if ((properties & CVMJITINTRINSIC_OPERATOR_ARGS) != 0) {
+            const CVMJITIntrinsicEmitterVtbl *emitter =
+                         (const CVMJITIntrinsicEmitterVtbl *)
+                             config->emitterOrCCMRuntimeHelper;
+            targetSet = emitter->getArgTarget(con, argType, argNo,
+                                              argWordIndex);
+            SET_TARGET2_0(iargNode, targetSet);
+
+        } else {
+            CVMCPUCallContext *callContext;
+            CVMBool useRegArgs = GET_REG_ARGS(properties);
+            CVMassert((properties & CVMJITINTRINSIC_C_ARGS) != 0 ||
+		      useRegArgs);
+            if (argNo == 0) {
+                callContext = CVMCPUCCallnewContext(con);
+                CVMCPUCCALLinitArgs(con, callContext, irec, CVM_TRUE,
+				    useRegArgs);
+            } else {
+                callContext = GET_CALL_CONTEXT(con);
+            }
+            targetSet = CVMCPUCCALLgetArgTarget(con, callContext,
+		            argType, argNo, argWordIndex, useRegArgs);
+            SET_TARGET2_0(iargNode, targetSet);
+            SET_CALL_CONTEXT(1, callContext);
+        }
+    } else {
+        if ((properties & CVMJITINTRINSIC_C_ARGS) != 0) {
+            if (irec->numberOfArgs != 0) {
+		CVMBool useRegArgs = GET_REG_ARGS(properties);
+                CVMCPUCallContext *callContext = GET_CALL_CONTEXT(con);
+                CVMCPUCCALLdestroyArgs(con, callContext, irec, CVM_TRUE,
+				       useRegArgs);
+            }
+        }
+    }
+}
+
+#else
+#define intrinsicRequired(con, node, submatch_roots)    (CVMCPU_AVOID_NONE)
+#define iargTarget(con, node, goal_top, subgoals_todo)
+#endif /* CVMJIT_INTRINSICS */
+
+#define GET_REGISTER_GOALS					\
+        (CVMassert((goal_top-1)->curr_attribute->type ==	\
+                  CVMJIT_EXPRESSION_ATTRIBUTE_TARGET_AVOID),	\
+         (goal_top-1)->curr_attribute->u.rs.target),		\
+         CVMCPUconvertAvoidBitsToAvoidSet(			\
+             (goal_top-1)->curr_attribute->u.rs.avoid)
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+#define GET_FLOAT_REGISTER_GOALS				\
+        (CVMassert((goal_top-1)->curr_attribute->type ==	\
+                    CVMJIT_EXPRESSION_ATTRIBUTE_TARGET_AVOID),	\
+         (goal_top-1)->curr_attribute->u.rs.float_target),	\
+        CVMCPUconvertAvoidBitsToFloatAvoidSet(			\
+              (goal_top-1)->curr_attribute->u.rs.avoid)
+#endif
+
+#define FLUSH_GOAL_TOP(con) \
+        ((con)->goal_top = goal_top)
+
+/**********************************************************************
+ * RISC common definition of the codegen-time expression stack and
+ * operations on it.
+ * ( Optimization: all references to tag should be ifdef DEBUG, so we don't
+ * even set it if we're not going to do the assertions. )
+ */
+
+/* Purpose: Pushes a resource. */
+CVM_INLINE static void
+pushResource(CVMJITCompilationContext* con, CVMRMResource* rp) 
+{
+    struct CVMJITStackElement* sp = ++(con->cgsp);
+    statsPushResource();
+#ifdef CVM_DEBUG_ASSERTS
+    sp->tag = CVMJITStackTagResource;
+#endif
+    CVMassert(CVMRMgetRefCount(con, rp) > 0);
+    sp->u.r = rp;
+    validateStack((sp < con->cgstackLimit), Resource);
+}
+
+/* Purpose: Pops a resource. */
+CVM_INLINE static CVMRMResource*
+popResource(CVMJITCompilationContext* con)
+{
+    CVMRMResource* rp;
+    struct CVMJITStackElement* sp = (con->cgsp)--;
+    statsPopResource();
+    CVMassert(sp >= con->cgstackInit);
+    CVMassert(sp->tag == CVMJITStackTagResource);
+    rp = sp->u.r;
+    CVMassert(CVMRMgetRefCount(con, rp) > 0);
+    return rp;
+}
+
+/* Purpose: Pushes a condition operand. */
+CVM_INLINE static void
+pushIConst32(CVMJITCompilationContext* con, CVMInt32 value)
+{
+    struct CVMJITStackElement* sp = ++(con->cgsp);
+    statsPushResource();
+#ifdef CVM_DEBUG_ASSERTS
+    sp->tag = CVMJITStackTagConstant;
+#endif
+    sp->u.i = value;
+    validateStack((sp < con->cgstackLimit), Resource);
+}
+
+/* Purpose: Pops a condition operand. */
+CVM_INLINE static CVMInt32
+popIConst32(CVMJITCompilationContext* con)
+{
+    struct CVMJITStackElement* sp = (con->cgsp)--;
+    statsPopResource();
+    CVMassert(sp >= con->cgstackInit);
+    CVMassert(sp->tag == CVMJITStackTagConstant);
+    return sp->u.i;
+}
+
+/* Purpose: Pushes an ALURhs operand. */
+CVM_INLINE static void
+pushALURhs(CVMJITCompilationContext* con, CVMCPUALURhs* ap)
+{
+    struct CVMJITStackElement* sp = ++(con->cgsp);
+    statsPushResource();
+#ifdef CVM_DEBUG_ASSERTS
+    sp->tag = CVMJITStackTagALURhs;
+#endif
+    sp->u.aluRhs = ap;
+    validateStack((sp < con->cgstackLimit), Resource);
+}
+
+/* Purpose: Pops an ALURhs operand. */
+CVM_INLINE static CVMCPUALURhs*
+popALURhs(CVMJITCompilationContext* con)
+{
+    struct CVMJITStackElement* sp = (con->cgsp)--;
+    statsPopResource();
+    CVMassert(sp >= con->cgstackInit);
+    CVMassert(sp->tag == CVMJITStackTagALURhs);
+    return sp->u.aluRhs;
+}
+
+/* Purpose: Pushes a MemSpec operand. */
+CVM_INLINE static void
+pushMemSpec(CVMJITCompilationContext *con, CVMCPUMemSpec *mp)
+{
+    struct CVMJITStackElement *sp = ++(con->cgsp);
+    statsPushResource();
+#ifdef CVM_DEBUG_ASSERTS
+    sp->tag = CVMJITStackTagMemSpec;
+#endif
+    sp->u.memSpec = mp;
+    validateStack((sp < con->cgstackLimit), Resource);
+}
+
+/* Purpose: Pops a MemSpec operand. */
+CVM_INLINE static CVMCPUMemSpec *
+popMemSpec(CVMJITCompilationContext *con)
+{
+    struct CVMJITStackElement* sp = (con->cgsp)--;
+    statsPopResource();
+    CVMassert(sp >= con->cgstackInit);
+    CVMassert(sp->tag == CVMJITStackTagMemSpec);
+    return sp->u.memSpec;
+}
+
+/* Push an Address */
+CVM_INLINE static void
+pushAddress(CVMJITCompilationContext *con, CVMAddr p)
+{
+    struct CVMJITStackElement *sp = ++(con->cgsp);
+    statsPushResource();
+#ifdef CVM_DEBUG_ASSERTS
+    sp->tag = CVMJITStackTagAddress;
+#endif
+    sp->u.p = p;
+    validateStack((sp < con->cgstackLimit), Resource);
+}
+
+/* Purpose: Pops a pointer to anything. */
+CVM_INLINE static CVMAddr
+popAddress(CVMJITCompilationContext *con)
+{
+    struct CVMJITStackElement* sp = (con->cgsp)--;
+    statsPopResource();
+    CVMassert(sp >= con->cgstackInit);
+    CVMassert(sp->tag == CVMJITStackTagAddress);
+    return sp->u.p;
+}
+
+/*
+ * "Convenience" functions.
+ */
+/* Purpose: Pushes an ALURhs register operand. */
+CVM_INLINE static void
+pushALURhsResource(CVMJITCompilationContext* con, CVMRMResource* rp)
+{
+    pushALURhs(con, CVMCPUalurhsNewRegister(con, rp));
+}
+
+/* Purpose: Pushes an ALURhs constant operand. */
+CVM_INLINE static void
+pushALURhsConstant(CVMJITCompilationContext* con, CVMInt32 cv)
+{
+    pushALURhs(con, CVMCPUalurhsNewConstant(con, cv));
+}
+
+/* Purpose: Pushes a MemSpec immediate operand. */
+CVM_INLINE static void
+pushMemSpecImmediate(CVMJITCompilationContext *con, CVMInt32 value)
+{
+    pushMemSpec(con, CVMCPUmemspecNewImmediate(con, value));
+}
+
+/* Purpose: Pushes a MemSpec register operand. */
+CVM_INLINE static void
+pushMemSpecRegister(CVMJITCompilationContext *con, CVMBool offsetIsToBeAdded,
+                    CVMRMResource *offsetReg)
+{
+    pushMemSpec(con,
+                CVMCPUmemspecNewRegister(con, offsetIsToBeAdded, offsetReg));
+}
+
+%}
+
