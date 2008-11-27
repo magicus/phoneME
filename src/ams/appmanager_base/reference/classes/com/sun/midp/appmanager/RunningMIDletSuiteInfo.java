@@ -38,6 +38,7 @@ import com.sun.midp.midletsuite.MIDletSuiteStorage;
 import com.sun.midp.main.MIDletSuiteUtils;
 import com.sun.midp.main.Configuration;
 import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.ams.VMUtils;
 
 import javax.microedition.lcdui.Image;
 import java.util.Vector;
@@ -45,11 +46,13 @@ import java.util.Vector;
 
 /** Simple attribute storage for MIDlet suites */
 public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
-    // IMPL_NOTE: currently this value is 4, no need to specify a different initial size.
-    /** The list of MIDlet proxies, one for each running MIDlet. It is set from AppManagerUI.java. */
+    /**
+     * The list of MIDlet proxies, one for each running MIDlet.
+     * It is set from AppManagerUI.java and has maximal allowed
+     * number of concurrent VM tasks as initial capacity.
+     */
     private Vector proxies = new Vector(
-        Configuration.getPositiveIntProperty(
-            "MAX_ISOLATES", Constants.MAX_ISOLATES));
+        VMUtils.getMaxIsolates());
 
     /** Icon for this suite. */
     public Image icon = null;

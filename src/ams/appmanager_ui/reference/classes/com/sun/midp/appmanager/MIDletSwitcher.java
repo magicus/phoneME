@@ -29,8 +29,8 @@ import javax.microedition.lcdui.*;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.configurator.Constants;
-import com.sun.midp.main.Configuration;
 import com.sun.midp.main.MIDletProxy;
+import com.sun.midp.ams.VMUtils;
 
 /**
  * The Graphical MIDlet swicher.
@@ -77,8 +77,7 @@ class MIDletSwitcher extends javax.microedition.lcdui.Form
         this.managerUI = managerUI;
         this.display = display;
         mcount = 0;
-        minfo = new MidletListEntry[Configuration.
-            getPositiveIntProperty("MAX_ISOLATES", Constants.MAX_ISOLATES)];
+        minfo = new MidletListEntry[VMUtils.getMaxIsolates()];
     }
 
     /**

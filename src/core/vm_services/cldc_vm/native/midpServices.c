@@ -169,12 +169,14 @@ int getCurrentIsolateId() {
 #endif /* ENABLE_MULTIPLE_ISOLATES */
 }
 
+#if ENABLE_MULTIPLE_ISOLATES
 /** Sets new value of MAX_ISOLATES property */
 static void setMaxIsolates(int value) {
     char valueStr[5];
     sprintf(valueStr, "%d", value);
     setInternalProperty("MAX_ISOLATES", valueStr);
 }
+#endif /* ENABLE_MULTIPLE_ISOLATES */
 
 /**
  * Get maximal allowed number of isolates in the case of MVM mode.
