@@ -791,20 +791,6 @@ bool Universe::bootstrap_without_rom(const JvmPathChar* classpath) {
   // Meta hierarchy is now in place, initialize Thread::current()->klass().
   Thread::current()->initialize_main(JVM_SINGLE_ARG_NO_CHECK);
 
-#if ENABLE_JAVA_DEBUGGER
-  // create object mapping array for debugger code
-  {
-    ObjArray::Raw p =
-      Universe::new_obj_array(JavaDebugger::HASH_SLOT_SIZE JVM_CHECK_0);
-    *Universe::objects_by_id_map() = p;
-  }
-  {
-    ObjArray::Raw p =
-      Universe::new_obj_array(JavaDebugger::HASH_SLOT_SIZE JVM_CHECK_0);
-    *Universe::objects_by_ref_map() = p;
-  }
-#endif
-
 #if ENABLE_MEMORY_PROFILER
   *mp_stack_list() = Universe::new_obj_array(16 JVM_CHECK_0);
 #endif
@@ -2244,6 +2230,14 @@ void Universe::create_first_task(const JvmPathChar* classpath JVM_TRAPS) {
   ObjArray::Raw cp = setup_classpath(&path JVM_CHECK);
   Task::current()->set_app_classpath(cp());
   Task::current()->set_sys_classpath(Universe::empty_obj_array()->obj());
+
+#if ENABLE_JAVA_DEBUGGER
+  {
+    JavaDebuggerContext::Raw context = 
+      JavaDebuggerContext::allocate(JVM_SINGLE_ARG_CHECK);
+    Task::current()->set_debugger_context(&context);
+  }
+#endif
 }
 
 #if ENABLE_ISOLATES
