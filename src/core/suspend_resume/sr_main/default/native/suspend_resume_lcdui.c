@@ -62,7 +62,7 @@ MIDPError suspend_lcdui(void *resource) {
  * Default implementation of resuming routine for the LCDUI.
  */
 MIDPError resume_lcdui(void *resource) {
-    char* locale;
+    const char* locale;
     int len;
     MidpEvent midpEvent;    
     LCDUIState *st = (LCDUIState*) resource;
@@ -78,7 +78,7 @@ MIDPError resume_lcdui(void *resource) {
     locale = getSystemProperty(_locale_str);
     len = strlen(locale);
       
-    if (len != strlen(st->locale) || strncmp(locale, st->locale, len) != 0) {
+    if (len != (int)strlen(st->locale) || strncmp(locale, st->locale, len) != 0) {
        MIDP_EVENT_INITIALIZE(midpEvent);
        midpEvent.type    = CHANGE_LOCALE_EVENT;
        StoreMIDPEventInVmThread(midpEvent, -1);
