@@ -29,7 +29,7 @@ package com.sun.midp.services;
 /** Simple attribute storage describing a component */
 public interface ComponentInfo {
     /** Component ID that is never used. */
-    public static final int UNUSED_COMPONENT_ID = -1;
+    public static final int UNUSED_COMPONENT_ID = 0;
 
     /**
      *

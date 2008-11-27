@@ -218,7 +218,6 @@ public class DynamicComponentInstaller extends HttpInstaller {
                 DynamicComponentStorage.getComponentStorage();
 
         id = dcs.getComponentId(info.suiteVendor, info.suiteName);
-
         if (id == ComponentInfo.UNUSED_COMPONENT_ID) {
             // there is no previous version
             return;
@@ -231,7 +230,7 @@ public class DynamicComponentInstaller extends HttpInstaller {
         ComponentInfo ci = new ComponentInfoImpl();
         try {
             dcs.getComponentInfo(id, ci);
-        } catch (IOException ioe) {
+        } catch (Exception e) {
             // ignore and force an overwrite
             return;
         }

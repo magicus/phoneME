@@ -412,7 +412,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMidletSuiteFolderId) {
  * @param name name of the suite, as given in a JAD file
  *
  * @return ID of the midlet suite given by vendor and name or
- *         MIDletSuite.UNUSED_SUITE_ID if the suite doesn not exist
+ *         MIDletSuite.UNUSED_SUITE_ID if the suite does not exist
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSuiteID) {
@@ -433,7 +433,9 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSuiteID) {
         case SUITE_CORRUPTED_ERROR:
             KNI_ThrowNew(midpIOException, NULL);
             break;
-        case NOT_FOUND: /* this is ok, a new suite ID was created */
+        case NOT_FOUND:
+            suiteId = UNUSED_SUITE_ID;
+            break;
         default:
             break;
     }
