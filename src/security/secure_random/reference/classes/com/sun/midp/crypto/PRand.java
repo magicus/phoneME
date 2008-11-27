@@ -117,9 +117,9 @@ final class PRand extends SecureRandom {
      *  http://www.ietf.org/rfc/rfc1750.txt)
      * @param b array that receives random bytes
      * @param nbytes the number of random bytes to receive, must not be less than size of b
-     * @return the number of actually obtained random bytes, -1 in case of an error
+     * @return true if successful
      */
-    private native static int getRandomBytes(byte[] b, int nbytes);
+    private native static boolean getRandomBytes(byte[] b, int nbytes);
 
     /**
      * Set the random number seed.
@@ -147,16 +147,10 @@ final class PRand extends SecureRandom {
     private void updateSeed() {
         byte[] tmp = new byte[8];
 
-        int ntmp = getRandomBytes(tmp, tmp.length);
-System.err.println("*** PRand.updateSeed: ntmp="+ntmp);
-new Exception("*** PRand.updateSeed: ntmp="+ntmp).printStackTrace();        
-        if (ntmp <= 0) {
-            long t = System.currentTimeMillis();
-            // Convert the long value into a byte array
-            for (int i = 0; i < 8; i++) {
-                tmp[i] = (byte) (t & 0xff);
-                t = (t >>> 8);
-            }
+        boolean haveSeed = getRandomBytes(tmp, tmp.length);
+
+        if (!haveSeed) {
+            throw new RuntimeException("could not obtain a random seed");
         }
 
         md.update(seed, 0, seed.length);
