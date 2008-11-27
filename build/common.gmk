@@ -38,6 +38,10 @@ VPATH+=$(JAVACALL_DIR)/implementation/share/cldc
 SOURCE_OUTPUT_LIST+=$(JAVACALL_DIR)/implementation/share/cldc javacall/implementation/share
 endif
 
+ifeq ($(USE_WTK), true)
+CFLAGS += -DENABLE_WTK=1
+endif
+
 include $(TOOLS_DIR)/tools.gmk
 
 include $(JAVACALL_DIR)/build/list.gmk
