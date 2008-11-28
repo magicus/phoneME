@@ -1079,7 +1079,7 @@ public abstract class Installer {
                      * then they aare lso present in the manifest (their equality
                      * was already checked by checkForJadManifestMismatches()).
                      */
-                    String[] ext_keys = {
+                    String[] extKeys = {
                         MIDletSuite.HEAP_SIZE_PROP,
                         MIDletSuite.BACKGROUND_PAUSE_PROP,
                         MIDletSuite.NO_EXIT_PROP,
@@ -1088,16 +1088,16 @@ public abstract class Installer {
                     };
 
                     int midletNum = state.getNumberOfMIDlets();
-                    for (int i = 0; i < ext_keys.length; i++) {
-                        for (int j = 1; j < midletNum; j++) {
-                            String ext_key = ext_keys[i] + "-" + j;
-                            if (state.jadProps.getProperty(ext_key) != null) {
-                                if (state.jarProps.getProperty(ext_key) == null) {
+                    for (int i = 0; i < extKeys.length; i++) {
+                        for (int j = 1; j <= midletNum; j++) {
+                            String extKey = extKeys[i] + "-" + j;
+                            if (state.jadProps.getProperty(extKey) != null) {
+                                if (state.jarProps.getProperty(extKey) == null) {
                                     postInstallMsgBackToProvider(
                                         OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
                                     throw new InvalidJadException(
                                         InvalidJadException.ATTRIBUTE_MISMATCH,
-                                            ext_key);
+                                            extKey);
                                 }
                             }
                         }
