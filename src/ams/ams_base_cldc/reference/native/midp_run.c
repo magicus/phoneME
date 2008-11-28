@@ -358,44 +358,6 @@ void JVMSPI_PrintRaw(const char* s) {
 }
 
 /**
- * Initializes the AMS.
- */
-static void
-midpInitializeAMS(void) {
-    /*
-     * Set AMS memory limits
-     */
-#if ENABLE_MULTIPLE_ISOLATES
-    {
-        int reserved;
-        int limit;
-
-        reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
-        if (0 == reserved) {
-            REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");
-            reserved = AMS_MEMORY_RESERVED_MVM;
-        }
-
-        limit = getInternalPropertyInt("AMS_MEMORY_LIMIT_MVM");
-        if (0 == limit) {
-            REPORT_ERROR(LC_AMS, "AMS_MEMORY_LIMIT_MVM property not set");
-            limit = AMS_MEMORY_LIMIT_MVM;
-        }
-
-        reserved = reserved * 1024;
-        JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY, reserved);
-
-        if (limit <= 0) {
-            limit = 0x7FFFFFFF;  /* MAX_INT */
-        } else {
-            limit = limit * 1024;
-        }
-        JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_TOTAL_MEMORY, limit);
-    }
-#endif
-}
-
-/**
  * Initializes the Debugger.
  */
 static void
@@ -429,10 +391,10 @@ midpInitializeDebugger(void) {
         char* argv[2];
 
         /* memory profiler */
-		if (getInternalProperty("VmMemoryProfiler") != NULL) {
-		    argv[0] = "-memory_profiler";
+        if (getInternalProperty("VmMemoryProfiler") != NULL) {
+            argv[0] = "-memory_profiler";
             (void)JVM_ParseOneArg(1, argv);
-		}
+        }
 
         /* Get the VM debugger port property. */
         argv[1] = (char *)getInternalProperty("VmDebuggerPort");
@@ -440,6 +402,13 @@ midpInitializeDebugger(void) {
             argv[0] = "-port";
             (void)JVM_ParseOneArg(2, argv);
         }
+    }
+#endif
+#if ENABLE_MEMMON
+    if (getInternalProperty("MemoryMonitor") != NULL) {
+        char* argv[1];
+        argv[0] = "-monitormemory";
+        (void)JVM_ParseOneArg(1, argv);
     }
 #endif
 }
@@ -486,8 +455,6 @@ midpInitializeVM(void) {
      * function. e.g. initLocaleMethod();
      */
 
-    midpInitializeAMS();
-
     midpInitializeDebugger();
 
     if (pushopen() != 0) {
@@ -510,8 +477,8 @@ midpFinalizeAMS(void) {
 
     /*
      * Note: the AMS isolate will have been registered by a native method
-     * call, so there is no corresponding midpRegisterAmsIsolateId in the
-     * midpInitializeAMS() function.
+     * call, so there is no corresponding midpRegisterAmsIsolateId in VM
+     * initialization code.
      */
     midpUnregisterAmsIsolateId();
 }

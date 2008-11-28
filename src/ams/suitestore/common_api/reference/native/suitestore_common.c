@@ -819,7 +819,7 @@ get_suite_or_component_id(ComponentType type, const pcsl_string* vendor,
         pData = pData->nextEntry;
     }
 
-    /* suite or comonent was not found - create a new suite or component ID */
+    /* suite or component was not found - create a new suite or component ID */
 #if ENABLE_DYNAMIC_COMPONENTS
     if (type != COMPONENT_DYNAMIC) {
         status = midp_create_suite_id((SuiteIdType*)pId);

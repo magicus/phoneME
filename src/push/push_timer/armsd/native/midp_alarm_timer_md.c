@@ -43,7 +43,7 @@
 
 int
 createTimerHandle(int alarmHandle, jlong time) {
-    // alarmHandle is really an address to push entry
+    /* alarmHandle is really an address to push entry */
     REPORT_WARN(LC_PUSH, "createTimerHandle: Stubbed out.");
     (void)alarmHandle;
     (void)time;

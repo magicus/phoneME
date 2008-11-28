@@ -42,6 +42,13 @@ typedef struct _lcduiState {
      * Identifies whether display was rotated or not.
      */
     jboolean isDisplayRotated;
+    
+    /**
+     * Cached value of locale microedition.locale system variable
+     */
+     char* locale;
+       
+
 } LCDUIState;
 
 /**

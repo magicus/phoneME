@@ -120,7 +120,9 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getComponentId) {
         case SUITE_CORRUPTED_ERROR:
             KNI_ThrowNew(midpIOException, NULL);
             break;
-        case NOT_FOUND: /* this is ok, a new component ID was created */
+        case NOT_FOUND:
+            componentId = UNUSED_COMPONENT_ID;
+            break;
         default:
             break;
     }
@@ -373,6 +375,10 @@ KNIDECL(
                                      "displayName",
                                       &(pData->varSuiteData.displayName),
                                       tmpHandle);
+        KNI_RESTORE_PCSL_STRING_FIELD(componentInfoObject, componentInfoClass,
+                                     "version",
+                                      &(pData->varSuiteData.suiteVersion),
+                                      tmpHandle);
         KNI_RESTORE_BOOLEAN_FIELD(componentInfoObject, componentInfoClass,
                                   "trusted", pData->isTrusted);
     } while (0);
@@ -442,6 +448,11 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getSuiteComponentsList)
                                       componentObjClass,
                                       "displayName",
                                       &(pData->varSuiteData.displayName),
+                                      tmpHandle);
+                KNI_RESTORE_PCSL_STRING_FIELD(componentObj,
+                                      componentObjClass,
+                                      "version",
+                                      &(pData->varSuiteData.suiteVersion),
                                       tmpHandle);
 
                 numberOfComponents++;

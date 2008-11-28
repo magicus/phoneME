@@ -26,6 +26,61 @@
 
 #include <midp_constants_data.h>
 #include <midp_properties_port.h>
+#include <midp_logging.h>
+#include <midpServices.h>
+#include <jvm.h>
+
+#if ENABLE_MULTIPLE_ISOLATES
+
+/**
+ * Reads named property with heap size parameter and returns it in bytes.
+ * When the property is not found provided default value is used instead.
+ *
+ * @param propertyName name of heap size property
+ * @param defaultValue default value for the case of missing property
+ * @return size value in bytes
+ */
+static int getHeapSizeProperty(const char *propertyName, int defaultValue) {
+
+    int value;
+    value = getInternalPropertyInt(propertyName);
+    if (0 == value) {
+        REPORT_WARN1(LC_AMS, "%s property not set", propertyName);
+        value = defaultValue;
+    }
+    /* Check overflow */
+    value = (value < 0 || value > 0x200000) ?
+        0x7FFFFFFF /* MAX_INT */ :
+        value * 1024;
+    return value;
+}
+
+/**
+ * Reads AMS_MEMORY_RESERVED_MVM property and returns the amount of Java
+ * heap memory reserved for AMS isolate. Whether the property is not found,
+ * the same name hardcoded constant is used instead.
+ *
+ * @return total heap size in bytes available for AMS isolate,
+ *   0 means no memory is reserved for AMS isolate
+ *
+ */
+int getAmsHeapReserved() {
+    return getHeapSizeProperty(
+        "AMS_MEMORY_RESERVED_MVM", AMS_MEMORY_RESERVED_MVM);
+}
+
+/**
+ * Reads AMS_MEMORY_LIMIT_MVM property and returns the maximal Java heap size
+ * available for AMS isolate. Whether the property is not found, the same name
+ * hardcoded constant is used instead.
+ *
+ * @return total heap size available for AMS isolate
+ */
+int getAmsHeapLimit() {
+    return getHeapSizeProperty(
+        "AMS_MEMORY_LIMIT_MVM", AMS_MEMORY_LIMIT_MVM);
+}
+#endif
 
 /**
  * Reads JAVA_HEAP_SIZE property and returns it as required heap size.
@@ -36,22 +91,15 @@
  * @return <tt>heap size</tt>
  */
  int getHeapRequirement() {
-    int max_isolates;
-    int midp_heap_requirement;
+    int maxIsolates;
+    int midpHeapRequirement;
 
-    midp_heap_requirement = getInternalPropertyInt("JAVA_HEAP_SIZE");
-    if (midp_heap_requirement > 0) {
-        return midp_heap_requirement;
+    midpHeapRequirement = getInternalPropertyInt("JAVA_HEAP_SIZE");
+    if (midpHeapRequirement > 0) {
+        return midpHeapRequirement;
     }
 
-#if ENABLE_MULTIPLE_ISOLATES
-    max_isolates = getInternalPropertyInt("MAX_ISOLATES");
-    if (max_isolates <= 0) {
-        max_isolates = MAX_ISOLATES;
-    }
-#else
-    max_isolates = 1;
-#endif
+    maxIsolates = getMaxIsolates();
 
     /*
      * Calculate heap size.
@@ -68,14 +116,36 @@
      * Actually, when using NAMS, AMS isolate requires less then 1024K memory,
      * so the value bellow can be tuned for each particular project.
      */
-    midp_heap_requirement = max_isolates * 1024 * 1024;
+    midpHeapRequirement = maxIsolates * 1024 * 1024;
 #else
     /*
      * In JAMS AMS isolate requires a little bit more memory because
      * it holds skin images that are shared among all isolates.
      */
-    midp_heap_requirement = 1280 * 1024 + (max_isolates - 1) * 1024 * 1024;
+    midpHeapRequirement = 1280 * 1024 + (maxIsolates - 1) * 1024 * 1024;
 #endif
 
-    return midp_heap_requirement;
+    return midpHeapRequirement;
+}
+
+/**
+ * Reads properties with Java heap parameters
+ * and passes them to VM.
+ */
+void setHeapParameters() {
+    int midpHeapRequirement;
+
+    /* Sets Java heap size for VM */
+    midpHeapRequirement = getHeapRequirement();
+    JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midpHeapRequirement);
+
+#if ENABLE_MULTIPLE_ISOLATES
+{
+    /* Sets Java heap parameters for AMS */
+    int amsHeapReserved = getAmsHeapReserved();
+    int amsHeapLimit = getAmsHeapLimit();
+    JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY, amsHeapReserved);
+    JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_TOTAL_MEMORY, amsHeapLimit);
+}
+#endif
 }

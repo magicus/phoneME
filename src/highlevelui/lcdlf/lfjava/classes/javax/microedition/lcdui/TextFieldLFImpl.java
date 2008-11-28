@@ -1651,7 +1651,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * Disable all active layers. This method should be called outside of 
      * LCDUILock to avoid deadlocking with Chameleon internal lock 'layers'.
      */
-    private void disableLayers() {
+    protected void disableLayers() {
         Display currentDisplay;
 
         

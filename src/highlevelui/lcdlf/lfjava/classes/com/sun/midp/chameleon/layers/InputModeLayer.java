@@ -62,7 +62,7 @@ public class InputModeLayer extends PopupLayer {
      * @param mode the display name of the currently selected input mode
      */
     public void setDisplayMode(String mode) {
-        if (this.mode != mode) {
+        if (this.mode == null || !this.mode.equals(mode)) {
             this.mode = mode;
             if (mode != null) {
                 stringWidth = InputModeSkin.FONT.stringWidth(mode);

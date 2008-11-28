@@ -108,9 +108,7 @@ include $(SUBSYSTEM_PROTOCOL_DIR)/udp/$(LIB_MAKE_FILE)
 # Inter-application communication
 # Description: PIPE protocol
 #####################################################################
-ifeq ($(USE_MULTIPLE_ISOLATES), true)
 include $(SUBSYSTEM_PROTOCOL_DIR)/pipe/$(LIB_MAKE_FILE)
-endif
 
 SUBSYSTEM_PROTOCOL_JAVA_FILES = $(SUBSYSTEM_GCF_JAVA_FILES) \
 	$(SUBSYSTEM_FILE_JAVA_FILES) \
@@ -177,11 +175,10 @@ SUBSYSTEM_PROTOCOL_EXTRA_CFLAGS += $(SUBSYSTEM_GCF_EXTRA_CFLAGS) \
 	$(SUBSYSTEM_UDP_EXTRA_CFLAGS) \
 	$(SUBSYSTEM_PIPE_EXTRA_CFLAGS)
 
-
 ifeq ($(USE_NETMON), true)
 #####################################################################
 # Network monitor
-# Description: Notifying the WTK about any protocol action.
+# Description: Notifying the SDK/WTK about any protocol action.
 #####################################################################
 include $(SUBSYSTEM_PROTOCOL_DIR)/netmon/$(LIB_MAKE_FILE)
 
