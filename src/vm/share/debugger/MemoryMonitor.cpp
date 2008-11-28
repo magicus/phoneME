@@ -193,25 +193,25 @@ void MemoryMonitor::notify_object( const OopDesc* obj, const int sizeObject,
       break;
     CASE( type_array_1      ) // boolean[], byte[]
       if (create) {
-        strcpy(type_name, "Arrays of bytes or booleans");
+        strcpy(type_name, "Arrays of bytes/booleans");
       }
       classId = ARRAY_BYTE_BOOL_ID;
       break;
     CASE( type_array_2      ) // short[], char[]
       if (create) {
-        strcpy(type_name, "Arrays of chars or shorts");
+        strcpy(type_name, "Arrays of chars/shorts");
       }
       classId = ARRAY_CHAR_SHORT_ID;
       break;
     CASE( type_array_4      ) // int[], float[]
       if (create) {
-        strcpy(type_name, "Arrays of ints or floats");
+        strcpy(type_name, "Arrays of ints/floats");
       }
       classId = ARRAY_INT_FLOAT_ID;
       break;
     CASE( type_array_8      ) // long[], double[]    
       if (create) {
-        strcpy(type_name, "Arrays of longs or doubles");
+        strcpy(type_name, "Arrays of longs/doubles");
       }
       classId = ARRAY_LONG_DOUBLE_ID;
       break;
@@ -281,6 +281,7 @@ void MemoryMonitor::notify_object( const OopDesc* obj, const int sizeObject,
     MemoryMonitorMd::unlock();
     
   } else { // free object
+
     MemoryMonitorMd::lock();
     int size = sizeof(u_long) +         // command
             sizeof(u_long) +            // pointer
