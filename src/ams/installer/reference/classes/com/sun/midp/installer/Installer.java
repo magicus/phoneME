@@ -1073,6 +1073,36 @@ public abstract class Installer {
                             }
                         }
                     }
+
+                    /*
+                     * Check that if extended properties are present in jad
+                     * then they aare lso present in the manifest (their equality
+                     * was already checked by checkForJadManifestMismatches()).
+                     */
+                    String[] extKeys = {
+                        MIDletSuite.HEAP_SIZE_PROP,
+                        MIDletSuite.BACKGROUND_PAUSE_PROP,
+                        MIDletSuite.NO_EXIT_PROP,
+                        MIDletSuite.LAUNCH_BG_PROP,
+                        MIDletSuite.LAUNCH_POWER_ON_PROP
+                    };
+
+                    int midletNum = state.getNumberOfMIDlets();
+                    for (int i = 0; i < extKeys.length; i++) {
+                        for (int j = 1; j <= midletNum; j++) {
+                            String extKey = extKeys[i] + "-" + j;
+                            if (state.jadProps.getProperty(extKey) != null) {
+                                if (state.jarProps.getProperty(extKey) == null) {
+                                    postInstallMsgBackToProvider(
+                                        OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
+                                    throw new InvalidJadException(
+                                        InvalidJadException.ATTRIBUTE_MISMATCH,
+                                            extKey);
+                                }
+                            }
+                        }
+                    }
+
                 }
 
                 /*
