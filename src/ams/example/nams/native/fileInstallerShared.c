@@ -160,7 +160,7 @@ void convertChar2JChar(char* char_buf, jchar* jchar_buf, int char_buf_size) {
  *                  size of the char buf
  */
 void convertJChar2Char(jchar* jchar_buf, char* char_buf, int jchar_buf_size) {
-    int i = 0;
+    int i;
     for (i = 0; i < jchar_buf_size; i++) {
         *(char_buf+i) = (char)(*(jchar_buf+i));
     }
@@ -1427,7 +1427,7 @@ int fileInstaller(int argc, char* argv[]) {
                 suiteId, &VERIFY_HASH_RESOURCENAME,
                 verifyHash, verifyHashLen);
             midpFree(verifyHash);
-            if (res != 0) {
+            if (res != ALL_OK) {
                 REPORT_ERROR(LC_AMS,
                   "Cannot store hash value for verified suite");
                 break;
