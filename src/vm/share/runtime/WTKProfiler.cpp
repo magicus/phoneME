@@ -687,7 +687,7 @@ void  WTKProfiler::resume() {
 
 
 int WTKProfiler::dump_and_clear_profile_data(int id) {
-  Task::Raw task = Universe::task_for_id(id);
+  Task::Raw task = Universe::task_from_id(id);
   if (UseExactProfiler && task().use_profiler()) {
     bool do_suspend_resume = _lastCycles != 0;
     if (do_suspend_resume) {
