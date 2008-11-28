@@ -276,9 +276,8 @@ main(int argc, char *argv[]) {
                                   JAVACALL_INTERNAL_PROPERTY);
 	            isMemoryMonitor=1;
 #endif
-			} else {
-              javacall_set_property(key, value, JAVACALL_TRUE,property_type);
 			}
+            javacall_set_property(key, value, JAVACALL_TRUE,property_type);
         } else if (strcmp(argv[i], "-profile") == 0) {
                 /* ROM profile name is passed here */ 
                 vmArgv[vmArgc++] = argv[i++];
