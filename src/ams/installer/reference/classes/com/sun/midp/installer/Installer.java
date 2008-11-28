@@ -1053,14 +1053,33 @@ public abstract class Installer {
                     checkForJadManifestMismatches();
 
                     /*
-                     * Check that if MIDlet-Permissions[-Opt] and extended
-                     * properties present in jad then they also present in the
-                     * manifest (their equality was already checked by 
-                     * checkForJadManifestMismatches()).
+                     * Check that if MIDlet-Permissions[-Opt] presents in jad
+                     * then it also presents in the manifest (their equality
+                     * was already checked by checkForJadManifestMismatches()).
                      */
                     String[] keys = {
                         MIDletSuite.PERMISSIONS_PROP,
-                        MIDletSuite.PERMISSIONS_OPT_PROP,
+                        MIDletSuite.PERMISSIONS_OPT_PROP
+                    };
+
+                    for (int i = 0; i < keys.length; i++) {
+                        if (state.jadProps.getProperty(keys[i]) != null) {
+                            if (state.jarProps.getProperty(keys[i]) == null) {
+                                postInstallMsgBackToProvider(
+                                    OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
+                                throw new InvalidJadException(
+                                    InvalidJadException.ATTRIBUTE_MISMATCH,
+                                        keys[i]);
+                            }
+                        }
+                    }
+
+                    /*
+                     * Check that if extended properties are present in jad
+                     * then they aare lso present in the manifest (their equality
+                     * was already checked by checkForJadManifestMismatches()).
+                     */
+                    String[] ext_keys = {
                         MIDletSuite.HEAP_SIZE_PROP,
                         MIDletSuite.BACKGROUND_PAUSE_PROP,
                         MIDletSuite.NO_EXIT_PROP,
@@ -1068,23 +1087,22 @@ public abstract class Installer {
                         MIDletSuite.LAUNCH_POWER_ON_PROP
                     };
 
-                    for (int i = 0; i < state.jadProps.size(); i++) {
-                        String key = state.jadProps.getKeyAt(i);
-
-                        for (int j = 0; j < keys.length; j++) {
-                            if (key.startsWith(keys[j])) {
-                                if (state.jadProps.getValueAt(i) != null) {
-                                    if (state.jarProps.getProperty(key) == null) {
-                                        postInstallMsgBackToProvider(
-                                            OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
-                                        throw new InvalidJadException(
-                                            InvalidJadException.ATTRIBUTE_MISMATCH,
-                                                key);
-                                    }
+                    int midletNum = state.getNumberOfMIDlets();
+                    for (int i = 0; i < ext_keys.length; i++) {
+                        for (int j = 1; j < midletNum; j++) {
+                            String ext_key = ext_keys[i] + "-" + j;
+                            if (state.jadProps.getProperty(ext_key) != null) {
+                                if (state.jarProps.getProperty(ext_key) == null) {
+                                    postInstallMsgBackToProvider(
+                                        OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
+                                    throw new InvalidJadException(
+                                        InvalidJadException.ATTRIBUTE_MISMATCH,
+                                            ext_key);
                                 }
                             }
                         }
                     }
+
                 }
 
                 /*
