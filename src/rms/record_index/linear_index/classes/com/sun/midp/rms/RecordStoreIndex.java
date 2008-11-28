@@ -325,7 +325,7 @@ class RecordStoreIndex {
                 calculateBlockSize(RecordStoreUtil.getInt(header, 4));
 
             if (null != recordIdOffsets) {
-                recordIdOffsets.setElementAt(currentOffset, currentId);
+                recordIdOffsets.setElementAt(currentOffset, recordId);
                 recordIdOffsets.LastSeenOffset = currentOffset;
                 // if we had to repeat search from the beginning, there has been
                 // something wrong, and it's ok to forget where we have been.

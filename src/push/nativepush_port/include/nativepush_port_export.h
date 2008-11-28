@@ -48,7 +48,6 @@
 
 #include <midpError.h>
 #include <suitestore_common.h>
-#include <pcsl_string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -113,6 +112,7 @@ MIDP_ERROR midpport_push_register_connection(SuiteIdType suiteId,
  * @param suiteId The application suite ID string
  * @param connection Generic connection protocol, host and port number
  *                   (optional parameters may be included separated with semi-colons (;))
+ * @param connectionLen The number of chars in connection string
  *
  * @return one of the error codes:
  * <pre>
@@ -126,7 +126,8 @@ MIDP_ERROR midpport_push_register_connection(SuiteIdType suiteId,
  * </pre>
  */
 MIDP_ERROR midpport_push_unregister_connection(SuiteIdType suiteId,
-                                               pcsl_string* connection);
+                                               jchar* connection,
+                                               jint connectionLen);
 
 /**
  * Return a list of registered connections for the current MIDlet suite.
@@ -170,7 +171,7 @@ MIDP_ERROR midpport_push_list_entries(SuiteIdType suiteId,
  * </pre>
  */
 MIDP_ERROR midpport_push_register_alarm(SuiteIdType suiteId,
-                                        pcsl_string* midlet,
+                                        jchar* midlet, jint midletLen,
                                         jlong time, jlong* previousTime);
 #ifdef __cplusplus
 }

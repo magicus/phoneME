@@ -335,7 +335,7 @@ class AppSettingsImpl implements AppSettings, CommandListener {
                 onChoiceGroupSelectionChanged(bs2, prevValID2);
                 settingsUI.changeSettingValue(bs1.getPermissionGroupID(), bs1.getSelectedID());
                 settingsUI.changeSettingValue(bs2.getPermissionGroupID(), bs2.getSelectedID());
-                display.setCurrent(settingsUI.getMainDisplayable());
+                //display.setCurrent(settingsUI.getDisplayable());
             }
         } else if (c == noExclusiveChoiceSelectionCmd) {
             if (groupsInConflict != null) {
@@ -350,7 +350,7 @@ class AppSettingsImpl implements AppSettings, CommandListener {
                 onChoiceGroupSelectionChanged(bs2, prevValID2);
                 settingsUI.changeSettingValue(bs1.getPermissionGroupID(), bs1.getSelectedID());
                 settingsUI.changeSettingValue(bs2.getPermissionGroupID(), bs2.getSelectedID());
-                display.setCurrent(settingsUI.getMainDisplayable());
+                //display.setCurrent(settingsUI.getDisplayable());
             }
         }
    }
@@ -449,17 +449,19 @@ class AppSettingsImpl implements AppSettings, CommandListener {
      * Load the MIDlet suite settings as choice group infos.
      *
      * @param suiteId ID for suite
-     * @throws MIDletSuiteLockedException if the suite is locked
-     * @throws MIDletSuiteCorruptedException if the suite is corrupted
+     * @throws Throwable
      */
     private void loadApplicationSettings(int suiteId)
-            throws MIDletSuiteLockedException, MIDletSuiteCorruptedException {
+            throws MIDletSuiteLockedException, MIDletSuiteCorruptedException 
+       {
 
         int maxLevel;
         int interruptSetting;
         boolean loadDone = false;
 
         try {
+            groups = Permissions.getSettingGroups();
+
             midletSuite = midletSuiteStorage.getMIDletSuite(suiteId, false);
             initMidletSuiteInfo(midletSuite);
 
@@ -500,9 +502,7 @@ class AppSettingsImpl implements AppSettings, CommandListener {
                     ResourceConstants.AMS_MGR_SETTINGS_PUSH_OPT_ANSWER,
                     PUSH_OPTION_1_ID);
 
-            groups = Permissions.getSettingGroups(curLevels);
-            
-            groupSettings = new ValueChoiceImpl[groups.length];
+           groupSettings = new ValueChoiceImpl[groups.length];
 
             if (interruptChoice != null) {
                 numberOfSettings = 1;
@@ -511,9 +511,8 @@ class AppSettingsImpl implements AppSettings, CommandListener {
             }
 
             for (int i = 0; i < groups.length; i++) {
-                byte maxGroupSetting =
-                        Permissions.getMaximumPermissionGroupLevel(
-                                maxLevels, groups[i]);
+                byte maxGroupSetting = Permissions.getPermissionGroupLevel(
+                                       maxLevels, groups[i]);
                 byte currentGroupSetting = Permissions.getPermissionGroupLevel(
                                            curLevels, groups[i]);
 

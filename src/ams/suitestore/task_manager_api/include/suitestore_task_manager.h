@@ -187,11 +187,7 @@ long midp_get_suite_storage_size(SuiteIdType suiteId);
  * @param delCorruptedSuites != 0 to delete the corrupted suites,
  *                           0 - to keep them (for re-installation).
  *
- * @return ALL_OK if no errors,
- *         SUITE_CORRUPTED_ERROR if the suite database was corrupted
- *                               but has been successfully repaired,
- *         another error code if the database is corrupted and
- *         could not be repaired
+ * @return ALL_OK if no errors or an error code
  */
 MIDPError midp_check_suites_integrity(int fullCheck, int delCorruptedSuites);
 

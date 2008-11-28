@@ -123,10 +123,6 @@ jboolean lfjport_reverse_orientation(int hardwareId)
    return r;
 }
 
-void lfjport_handle_clamshell_event(){
-}
-
-
 jboolean lfjport_get_reverse_orientation(int hardwareId)
 {
   (void)hardwareId;

@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ public abstract class SystemServiceRequestor {
      * Establishes connection to service
      *
      * @param serviceID unique service ID
-     * @return connection to service or null if service could not be found
+     * @return connection to service
      */
     abstract public SystemServiceConnection requestService(String serviceID);
 
@@ -57,8 +57,10 @@ public abstract class SystemServiceRequestor {
 
         if (instance == null) {
             if (!MIDletSuiteUtils.isAmsIsolate()) {
-                Link receiveLink = SystemServiceLinkPortal.getToClientLink();
-                Link sendLink = SystemServiceLinkPortal.getToServiceLink();
+                Link receiveLink = NamedLinkPortal.getLink(
+                    SystemServiceRequestHandler.SERVICE_TO_CLIENT_LINK_NAME);
+                Link sendLink = NamedLinkPortal.getLink(
+                    SystemServiceRequestHandler.CLIENT_TO_SERVICE_LINK_NAME);
                 SystemServiceConnectionLinks requestLinks = null;
                 requestLinks = new SystemServiceConnectionLinks(
                         sendLink, receiveLink);

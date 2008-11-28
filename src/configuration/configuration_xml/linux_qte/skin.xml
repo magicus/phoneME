@@ -1021,6 +1021,10 @@
     Romized="true"/>
 
   <integer
+        Key="KEYBOARD_WIDTH"
+      Value="-1"/>
+
+  <integer
         Key="KEYBOARD_HEIGHT"
       Value="125"/>  
 

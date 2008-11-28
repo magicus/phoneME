@@ -60,11 +60,6 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
      */
     protected int maxOStreams = 1;
 
-    public void open(String url, int mode, boolean timeouts)
-        throws IOException {
-        open1(url, mode, timeouts);
-    }
-
     /*
      * Open the input stream if it has not already been opened.
      * @exception IOException is thrown if it has already been
@@ -84,6 +79,7 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
             throw new IOException("no more input streams available");
         }
         DataInputStream i = super.openDataInputStream();
+        maxIStreams--;
         return i;
     }
 
@@ -97,6 +93,7 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
             throw new IOException("no more output streams available");
         }
         OutputStream o = super.openOutputStream();
+        maxOStreams--;
         return o;
     }
     
@@ -162,7 +159,6 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
             }
             reqProperties.put("User-Agent", newUserAgentValue);
         }
-        getStreamConnection();
         super.connect();
     }
 

@@ -394,15 +394,11 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
             yOffset = labelBounds[HEIGHT] - lFont.getHeight();
             g.translate(0, yOffset);
         }
-        int mode = Text.NORMAL;
-        if ((lGetLockedHeight() != -1) || (lGetLockedWidth() != -1)) {
-            mode |= Text.TRUNCATE;	
-        } 
 
         Text.paint(g, strItem.str, strItem.font,
                    getForeground(appearanceMode),
                    getForegroundHilight(appearanceMode),
-                   width, height - yOffset, xOffset, mode, null);
+                   width, height - yOffset, xOffset, Text.NORMAL, null);
 
         g.translate(0, -yOffset);
            

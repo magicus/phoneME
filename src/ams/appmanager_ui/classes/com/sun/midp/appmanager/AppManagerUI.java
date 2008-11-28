@@ -106,16 +106,11 @@ interface AppManagerUI {
     void notifySuiteInstalledExt(RunningMIDletSuiteInfo si);
 
     /**
-     * Called when a suite exited (lastr running MIDlet in suite exited).
+     * Called when a suite exited (the only MIDlet in suite exited or the
+     * MIDlet selector exited).
      * @param suiteInfo Suite which just exited
      */
     void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo);
-
-    /**
-     * Called when MIDlet selector exited.
-     * @param suiteInfo Containing ID of suite
-     */
-    void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo);
     
     /**
      * Called when a MIDlet suite has been removed externally.

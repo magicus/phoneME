@@ -40,6 +40,9 @@
 #include <gxapi_graphics.h>
 #include <imgapi_image.h>
 
+
+#include <stdio.h>
+
 /**
  * Calls platform specific function to redraw a portion of the display.
  * <p>
@@ -81,6 +84,8 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_refresh0) {
     if (midpHasForeground(displayId)) {
       // Paint only if this is the foreground MIDlet
       lcdlf_refresh(hardwareId, x1, y1, x2, y2);
+    } else {
+      printf("display %d not in foreground\n", displayId);
     }
 
     KNI_ReturnVoid();
@@ -157,17 +162,6 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_reverseOrientation0) {
     res = lcdlf_reverse_orientation(hardwareId);
     KNI_ReturnBoolean(res);
 }
-
-/**
- * Calls platform specific function to handle clamshell event 
-*/
-KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_lcdui_DisplayDevice_clamshellHandling0) {
-    lcdlf_handle_clamshell_event();
-}
-
-
-
 
 /**
  * Calls platform specific function to invert screen orientation flag

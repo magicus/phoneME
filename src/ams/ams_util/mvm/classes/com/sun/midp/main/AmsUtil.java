@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -35,19 +35,8 @@ import com.sun.midp.midletsuite.DynamicComponentStorage;
 
 import com.sun.midp.configurator.Constants;
 
-import com.sun.midp.links.Link;
-import com.sun.midp.links.LinkPortal;
-
-import com.sun.midp.security.ImplicitlyTrustedClass;
-import com.sun.midp.security.SecurityInitializer;
-import com.sun.midp.security.SecurityToken;
-import com.sun.midp.services.ComponentInfo;
-import com.sun.midp.services.SystemServiceLinkPortal;
-
 import com.sun.midp.log.Logging;
-import com.sun.midp.log.LogChannels;
-
-import java.util.Vector;
+import com.sun.midp.services.ComponentInfo;
 
 /**
  * Implements utilities that are different for SVM and MVM modes.
@@ -70,12 +59,7 @@ public class AmsUtil {
 
     /** Cached reference to the MIDletProxyList. */
     private static MIDletProxyList midletProxyList;
-    
-    /** Own trusted class to be able to request SecurityToken for priviledged operations */
-    private static class SecurityTrusted implements ImplicitlyTrustedClass {}
-    /** The instance of SecurityToken for priviledged operations */
-    private static SecurityToken trustedToken;
-    
+
     /**
      * Initializes AmsUtil class. shall only be called from
      * MIDletSuiteLoader's main() in MVM AMS isolate
@@ -272,42 +256,13 @@ public class AmsUtil {
 
         /*
          * Include paths to dynamic components belonging to this suite
-         * and to the "internal" suite (actually, to AMS) into class
-         * path for the new Isolate.
+         * into class path for the new Isolate.
          */
         DynamicComponentStorage componentStorage =
                 DynamicComponentStorage.getComponentStorage();
         ComponentInfo[] ci = componentStorage.getListOfSuiteComponents(id);
-        ComponentInfo[] ciAms = componentStorage.getListOfSuiteComponents(
-                MIDletSuite.INTERNAL_SUITE_ID);
-        int numOfComponents = 0;
 
-        // calculate the number of the components to be added to the class path
-        if (ci != null) {
-            numOfComponents += ci.length;
-        }
-
-        if (ciAms != null) {
-            numOfComponents += ciAms.length;
-        }
-
-        if (numOfComponents > 0) {
-            Vector ciVector = new Vector(numOfComponents);
-
-            // add the suite's own components
-            if (ci != null) {
-                for (int i = 0; i < ci.length; i++) {
-                    ciVector.addElement(ci[i]);
-                }
-            }
-
-            // add the shared (belonging to AMS) components
-            if (ciAms != null) {
-                for (int i = 0; i < ciAms.length; i++) {
-                    ciVector.addElement(ciAms[i]);
-                }
-            }
-
+        if (ci != null && ci.length > 0) {
             /*
              * IMPL_NOTE: currently is assumed that each component may have
              *            not more than 1 entry in class path.
@@ -316,42 +271,20 @@ public class AmsUtil {
              */
             int n = 0;
             if (isolateClassPath != null) {
-                classpathext = new String[ciVector.size() + 1];
+                classpathext = new String[ci.length + 1];
                 classpathext[n++] = isolateClassPath;
             } else {
-                classpathext = new String[ciVector.size()];
+                classpathext = new String[ci.length];
             }
 
-            try {
-                for (int i = 0; i < ciVector.size(); i++) {
-                    final ComponentInfo nextComponent =
-                            ((ComponentInfo)ciVector.elementAt(i));
-                    final String[] componentPath =
-                            componentStorage.getComponentClassPath(
-                                    nextComponent.getComponentId());
-                    if (componentPath != null) {
-                        for (int j = 0; j < componentPath.length; j++) {
-                            classpathext[n++] = componentPath[j];
-                        }
+            for (int i = 0; i < ci.length; i++) {
+                String[] componentPath =
+                        componentStorage.getComponentClassPath(
+                                ci[i].getComponentId());
+                if (componentPath != null) {
+                    for (int j = 0; j < componentPath.length; j++) {
+                        classpathext[n++] = componentPath[j];
                     }
-                }
-            } catch (Exception e) {
-                /*
-                 * if something is wrong with a dynamic component, just
-                 * don't use the components, this error is not fatal
-                 */
-                if (isolateClassPath != null) {
-                    classpathext = new String[1];
-                    classpathext[0] = isolateClassPath;
-                } else {
-                    classpathext = null;
-                }
-
-                if (Logging.REPORT_LEVEL <= Logging.ERROR) {
-                    e.printStackTrace();
-                    Logging.report(Logging.ERROR, LogChannels.LC_AMS,
-                        "Cannot use a dynamic component when starting '" +
-                        midlet + "' from the suite with id = " + id);
                 }
             }
         }
@@ -408,15 +341,9 @@ public class AmsUtil {
             }
 
             isolate.setDebug(isDebugMode);
-            
+
             isolate.setAPIAccess(true);
             isolate.start();
-
-            // Ability to launch midlet implies right to use Service API
-            // for negotiations with isolate being run
-            Link[] isolateLinks = SystemServiceLinkPortal.establishLinksFor( 
-                    isolate, getTrustedToken());
-            LinkPortal.setLinks(isolate, isolateLinks);
         } catch (Throwable t) {
             int errorCode;
             String msg;
@@ -528,18 +455,5 @@ public class AmsUtil {
         if (isolate != null) {
             isolate.exit(0);
         }
-    }
-    
-    /**
-     * Obtains trusted instance of SecurityToken
-     *
-     * @return instance of SecurityToken
-     */
-    private static SecurityToken getTrustedToken() {
-        if (trustedToken == null) {
-            trustedToken = SecurityInitializer.requestToken(new SecurityTrusted());
-        }
-        
-        return trustedToken;
     }
 }

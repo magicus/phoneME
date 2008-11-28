@@ -57,11 +57,6 @@ void lcdlf_refresh(int hardwareId, int x, int y, int w, int h);
 jboolean lcdlf_reverse_orientation(int hardwareId);
 
 /**
- * Handle clamshell event
- */
-void lcdlf_handle_clamshell_event();
-
-/**
  * Change screen orientation flag
  */
 jboolean lcdlf_get_reverse_orientation(int hardwareId);
@@ -178,10 +173,6 @@ jint* lcdlf_get_display_device_ids(jint* n);
  * Notify the state of the display device has been changed
  */
 void lcdlf_display_device_state_changed(int hardwareId, int state);
-/**
- * Handle clamshell event.
- */
-void lcdlf_handle_clamshell_event();
 
 
 #ifdef __cplusplus

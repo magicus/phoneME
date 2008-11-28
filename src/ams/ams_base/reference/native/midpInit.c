@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include <pcsl_print.h>
 #endif
-#if ENABLE_MULTIPLE_ISOLATES
+#if ENABLE_LINKS
 #include <midp_links.h>
 #endif
 
@@ -313,7 +313,7 @@ void midpFinalize() {
         storageFinalize();
     }
 
-#if ENABLE_MULTIPLE_ISOLATES
+#if ENABLE_LINKS
     midp_links_shutdown();
 #endif    
 

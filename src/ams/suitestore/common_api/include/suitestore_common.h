@@ -159,12 +159,6 @@ typedef struct _variableLenSuiteData {
 
     /**
      * jint (length) + UTF16 string
-     * Version of the midlet suite.
-     */
-    pcsl_string suiteVersion;
-
-    /**
-     * jint (length) + UTF16 string
      * Full path to suite's jar file.
      */
     pcsl_string pathToJar;

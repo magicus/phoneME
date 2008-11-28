@@ -25,18 +25,15 @@
 package com.sun.midp.io.j2me.push;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 
 import javax.microedition.io.ConnectionNotFoundException;
 
 import com.sun.j2me.security.AccessControlContext;
 import com.sun.j2me.security.AccessController;
-import com.sun.j2me.security.InterruptedSecurityException;
 
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.Permissions;
 
 /**
  * Stubbed implementation for NAMS variant of CLDC stack
@@ -53,16 +50,6 @@ public final class PushRegistryInternal {
      * Hides the default constructor.
      */
     private PushRegistryInternal() { }
-
-    /**
-      * Validates that the method is invoked allowed party.
-      * <p>
-      * Method requires com.sun.midp.ams permission.
-      */
-    private static void checkInvocationAllowed() {
-        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
-    }
-
 
     /**
      * Start listening for push notifications. Will throw a security
@@ -122,29 +109,7 @@ public final class PushRegistryInternal {
                                                   String filter,
                                                   boolean bypassChecks)
             throws ClassNotFoundException, IOException {
-
-        checkInvocationAllowed();
-
-        if (filter == null) {
-            throw new IllegalArgumentException("filter is null");
-        }
-
-        if (!bypassChecks) {
-            try {
-                context.checkPermission(PushRegistryImpl.PUSH_PERMISSION_NAME);
-            } catch (InterruptedSecurityException ise) {
-                throw new InterruptedIOException(
-                    "Interrupted while trying to ask the user permission");
-            }
-
-            PushRegistryImpl.checkMidletRegistered(midletSuite, midlet);
-        }
-
-        PushRegistryImpl.registerConnectionInternal(
-                midletSuite,
-                connection, midlet, filter,
-                !bypassChecks);
-
+        throw new ConnectionNotFoundException("not supported");
     }
 
     /**
@@ -169,23 +134,9 @@ public final class PushRegistryInternal {
      *       where each connection is represented by the generic connection
      *       <em>protocol</em>, <em>host</em> and <em>port number</em>
      *       identification
-     *  
-     * @exception SecurityException if the
-     *       <code>MIDlet</code> does not have permission to
-     *       register a connection
      */
     public static String listConnections(int id, boolean available) {
-        checkInvocationAllowed();
-        String[] conns = PushRegistryImpl.listConnections(id, available);
-        if (null != conns && 0 != conns.length) {
-            StringBuffer result = new StringBuffer(conns[0]);
-            for (int i = 1; i < conns.length; i++) {
-                result.append(",").append(conns[i]);
-            }
-            return result.toString();
-        } else {
-            return null;
-        }
+        return "";
     }
 
     /**
@@ -193,14 +144,8 @@ public final class PushRegistryInternal {
      *
      * @param id identifies the specific <code>MIDlet</code>
      *               suite
-     *  
-     * @exception SecurityException if the <code>MIDlet</code> does not
-     *              have permission to register a connection  
      */
     public static void unregisterConnections(int id) {
-        checkInvocationAllowed();
-        PushRegistryImpl.deleteConnections(id);
-
     }
 
     /**
@@ -241,7 +186,6 @@ public final class PushRegistryInternal {
      */
     public static boolean checkInConnectionInternal(SecurityToken token,
                                                     String connection) {
-        // NAMS takes care about push connections
         return false;
     }
 

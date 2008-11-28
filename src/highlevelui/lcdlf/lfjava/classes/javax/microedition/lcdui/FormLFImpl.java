@@ -209,9 +209,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 viewable[Y] = itemLF.bounds[Y];
                 if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
                     viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
+                    uHideShowItems(itemsCopy);
                 }
-                uHideShowItems(itemsCopy);
-                setupScroll(); 
             }
 
             // If complex item need extra scrolling we should make it
@@ -982,7 +981,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         int traverseIndexCopy = -1;
         
         synchronized (Display.LCDUILock) {
-            keepFocusOnTheScreen = (traverseIndex != -1);
+            keepFocusOnTheScreen = traverseIndex != -1 ?
+                itemPartiallyVisible(itemLFs[traverseIndex]) : false;
             
             if (firstShown) {
                 super.layout(); // moved from LayoutManager

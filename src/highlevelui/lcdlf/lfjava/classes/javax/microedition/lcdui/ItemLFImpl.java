@@ -819,14 +819,12 @@ abstract class ItemLFImpl implements ItemLF {
 
     /**
      *  If hilighted element of item is not completely visible should make it visible
-     * @param viewport the viewport coordinates
+     * @param viewport
      * @param visRect the in/out rectangle for the internal traversal location
-     * @return true if visRect was changed
+     * @return
      */
     boolean lScrollToItem(int[] viewport, int[] visRect) {
-        visRect[Y] = bounds[Y];
-        visRect[HEIGHT] = bounds[HEIGHT];
-        return true;
+        return false;
     }
         
     /**

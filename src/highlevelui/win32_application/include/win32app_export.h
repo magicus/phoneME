@@ -115,11 +115,6 @@ extern int win32app_get_screen_height();
 extern jboolean win32app_reverse_orientation();
 
 /**
- * Handle clamshell event
- */
-extern void win32app_handle_clamshell_event();
-
-/**
  * Get screen rotation flag
  */
 extern jboolean win32app_get_reverse_orientation();

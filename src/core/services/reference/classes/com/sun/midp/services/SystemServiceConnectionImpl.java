@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@ package com.sun.midp.services;
 
 import com.sun.midp.links.*;
 import java.io.*;
+import java.lang.*;
 
 final class SystemServiceConnectionImpl 
     implements SystemServiceConnection {
@@ -58,11 +59,9 @@ final class SystemServiceConnectionImpl
         try { 
             Link receiveLink = connectionLinks.getReceiveLink();
             LinkMessage msg = receiveLink.receive(); 
-            if (msg.containsData()) {
-                return new SystemServiceReadMessage(msg.extractData());
-            } else {
-                return new SystemServiceLinkReadMessage(msg.extractLink());
-            }
+            byte[] data = msg.extractData();
+
+            return new SystemServiceReadMessage(data);
         } catch (ClosedLinkException e) {
             throw new SystemServiceConnectionClosedException();
         } catch (InterruptedIOException e) {
@@ -78,16 +77,10 @@ final class SystemServiceConnectionImpl
         throws SystemServiceConnectionClosedException {
 
         try {
-            LinkMessage linkMsg;
-            if (msg instanceof SystemServiceWriteMessage) {
-                SystemServiceWriteMessage writeMsg = (SystemServiceWriteMessage)msg;
-                byte[] data = writeMsg.getData();
-                linkMsg = LinkMessage.newDataMessage(data);
-            } else {
-                SystemServiceLinkWriteMessage writeMsg = (SystemServiceLinkWriteMessage)msg;
-                Link link = writeMsg.getLinkInternal();
-                linkMsg = LinkMessage.newLinkMessage(link);
-            }
+            SystemServiceWriteMessage writeMsg = (SystemServiceWriteMessage)msg;
+            byte[] data = writeMsg.getData();
+
+            LinkMessage linkMsg = LinkMessage.newDataMessage(data);
             Link sendLink = connectionLinks.getSendLink();
             sendLink.send(linkMsg);
         } catch (ClosedLinkException e) {

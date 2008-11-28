@@ -92,7 +92,6 @@ public final class PermissionGroup {
         disableSettingChoice = Resource.getString(theDisableSettingChoice);
         runtimeDialogTitle = Resource.getString(theRuntimeDialogTitle);
         runtimeQuestion = Resource.getString(theRuntimeQuestion);
-        runtimeOneshotQuestion = Resource.getString(theRuntimeOneshotQuestion); 
         identifiedMaxiumLevel = theIdentifiedMaxiumLevel;
         identifiedDefaultLevel = theIdentifiedDefaultLevel;
         unidentifiedMaxiumLevel = theUnidentifiedMaxiumLevel;

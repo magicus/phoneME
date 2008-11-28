@@ -29,7 +29,7 @@ package com.sun.midp.services;
 /** Simple attribute storage describing a component */
 public interface ComponentInfo {
     /** Component ID that is never used. */
-    public static final int UNUSED_COMPONENT_ID = 0;
+    public static final int UNUSED_COMPONENT_ID = -1;
 
     /**
      *
@@ -44,20 +44,6 @@ public interface ComponentInfo {
     public int getSuiteId();
 
     /**
-     * Returns the display name of the component.
-     *
-     * @return user-friendly name of the component
-     */
-    public String getDisplayName();
-
-    /**
-     * Returns the version of the component.
-     *
-     * @return version of the component
-     */
-    public String getVersion();
-
-    /**
      * Returns true if this component is trusted, false otherwise.
      *
      * @return true if this component is trusted, false otherwise
@@ -69,4 +55,11 @@ public interface ComponentInfo {
      * For debug only.
      */
     public String toString();
+
+
+    /**
+     * Returns the display name of the component
+     * @return user-friendly name of the component
+     */
+    String getDisplayName();
 }

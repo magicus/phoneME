@@ -694,9 +694,9 @@ public class SymbolInputMode implements InputMode {
         return false;
     }
 
-    /** this mode is not set as default. So the map is initialized by false */
+    /** this mode is not set as default. So the map is initialoized by false */
     private static final boolean[][] isMap =
-        new boolean[TextInputSession.INPUT_SUBSETS.length + 1]
+        new boolean[TextInputSession.INPUT_SUBSETS.length]
         [TextInputSession.MAX_CONSTRAINTS];
 
     /**

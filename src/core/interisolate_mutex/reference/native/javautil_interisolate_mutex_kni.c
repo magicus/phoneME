@@ -51,7 +51,6 @@ static jfieldID gsMutexIDField = 0;
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_util_isolate_InterIsolateMutex_getID0) {
     InterIsolateMutexList* mutex = NULL;
-    jint mutexID = -1;
 
     KNI_StartHandles(1);
     GET_PARAMETER_AS_PCSL_STRING(1, mutexName)
@@ -65,13 +64,12 @@ KNIDECL(com_sun_midp_util_isolate_InterIsolateMutex_getID0) {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     } else {
         javautil_inc_mutex_refcount(mutex);
-        mutexID = mutex->mutexID;
     }
 
     RELEASE_PCSL_STRING_PARAMETER
     KNI_EndHandles();
 
-    KNI_ReturnInt(mutexID);
+    KNI_ReturnInt(mutex->mutexID);
 }
 
 /**
@@ -95,7 +93,7 @@ KNIDECL(com_sun_midp_util_isolate_InterIsolateMutex_lock0) {
         if (status != JAVAUTIL_MUTEX_OK) {
             if (status == JAVAUTIL_MUTEX_ALREADY_LOCKED) {
                 KNI_ThrowNew(midpRuntimeException, 
-                    "Attempting to lock mutex twice within the same Isolate");
+                    "Attempting to lock mutex twice withing the same Isolate");
             } else {
                 KNI_ThrowNew(midpRuntimeException, 
                     "Unknown error while attempting to lock mutex");

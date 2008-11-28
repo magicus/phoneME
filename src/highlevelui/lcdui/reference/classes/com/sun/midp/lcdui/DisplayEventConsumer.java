@@ -172,11 +172,6 @@ public interface DisplayEventConsumer {
       * Called by event delivery when size of screen was changed.
       */
      public void handleRotationEvent();
-
-     /*
-      * Called by event delivery when clamshell event occurs.
-      */
-     public void handleClamshellEvent();
     
 
      /*

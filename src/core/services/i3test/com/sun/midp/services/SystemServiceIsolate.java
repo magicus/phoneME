@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ public class SystemServiceIsolate  {
                IOException {
 
         Link[] isolateLinks = LinkPortal.getLinks();
-        SystemServiceLinkPortal.linksObtained(isolateLinks);
+        NamedLinkPortal.receiveLinks(isolateLinks[0]);
 
         SystemServiceRequestor serviceRequestor = 
             SystemServiceRequestor.getInstance(token);
@@ -53,11 +53,11 @@ public class SystemServiceIsolate  {
 
         try {
             // receive string from service
-            SystemServiceDataMessage msg = (SystemServiceDataMessage)con.receive();
+            SystemServiceMessage msg = con.receive();
             String testString = msg.getDataInput().readUTF();
 
             // convert string to upper case and sent it back to service
-            msg = SystemServiceMessage.newDataMessage();
+            msg = SystemServiceMessage.newMessage();
             msg.getDataOutput().writeUTF(testString.toUpperCase());
             con.send(msg);
         } catch (Throwable t) {

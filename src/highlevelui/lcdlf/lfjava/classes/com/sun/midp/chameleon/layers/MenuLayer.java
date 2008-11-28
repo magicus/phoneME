@@ -178,8 +178,12 @@ public class MenuLayer extends ScrollablePopupLayer {
         case EventConstants.PRESSED:
             itemIndexWhenPressed =  itemIndexAtPointerPosition(x, y);
 
-            if (itemIndexWhenPressed != PRESS_OUT_OF_BOUNDS && itemIndexWhenPressed >= 0) {
-                // press on valid menu item
+            // dismiss the menu layer if the user pressed outside the menu
+            if (itemIndexWhenPressed == PRESS_OUT_OF_BOUNDS) {
+                if (btnLayer != null) {
+                    btnLayer.dismissMenu();
+                }
+            } else if (itemIndexWhenPressed >= 0) { // press on valid menu item
                 selI = scrollIndex + itemIndexWhenPressed;
                 requestRepaint();
                 // if (btnLayer != null) btnLayer.serviceRepaints();
@@ -187,14 +191,6 @@ public class MenuLayer extends ScrollablePopupLayer {
             break;
         case EventConstants.RELEASED:
             int itemIndexWhenReleased = itemIndexAtPointerPosition(x, y);
-
-            // dismiss the menu layer if the user pressed outside the menu
-            if (itemIndexWhenReleased == PRESS_OUT_OF_BOUNDS) {
-                if (btnLayer != null) {
-                    btnLayer.dismissMenu();
-                }
-                break;
-            }
             
             if (itemIndexWhenReleased == itemIndexWhenPressed) {
                 if (itemIndexWhenPressed >= 0) {
@@ -619,10 +615,6 @@ public class MenuLayer extends ScrollablePopupLayer {
                 selI = scrollIndex;
             } else if (selI >= (scrollIndex + MenuSkin.MAX_ITEMS)) {
                 selI = scrollIndex + MenuSkin.MAX_ITEMS - 1;
-            }
-
-            if (cascadeMenuUp) {
-                dismissCascadeMenu();
             }
 
             updateScrollIndicator();

@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 
 package com.sun.midp.links;
 
-import com.sun.midp.services.SystemServiceLinkPortal;
 import java.util.Hashtable;
 import java.util.Enumeration;
 import java.io.IOException;
@@ -66,7 +65,7 @@ public class TestNamedLinkPortal extends TestCase {
 
         public void run() {
             try {
-                SystemServiceLinkPortal.receiveLinks(receiveLink);
+                NamedLinkPortal.receiveLinks(receiveLink);
             } catch (Throwable t) {
                 result = t;
             }
@@ -93,7 +92,7 @@ public class TestNamedLinkPortal extends TestCase {
 
         thrown = false;
         try {
-            SystemServiceLinkPortal.putLink(null, links[0]);
+            NamedLinkPortal.putLink(null, links[0]);
         } catch (IllegalArgumentException iae) {
             thrown = true;
         }
@@ -101,7 +100,7 @@ public class TestNamedLinkPortal extends TestCase {
 
         thrown = false;
         try {
-            SystemServiceLinkPortal.putLink("link1", null);
+            NamedLinkPortal.putLink("link1", null);
         } catch (IllegalArgumentException iae) {
             thrown = true;
         }
@@ -109,19 +108,19 @@ public class TestNamedLinkPortal extends TestCase {
 
         thrown = false;
         try {
-            SystemServiceLinkPortal.sendLinks(null);
+            NamedLinkPortal.sendLinks(null);
         } catch (IllegalArgumentException iae) {
             thrown = true;
         }
         assertTrue("null send link should throw IAE", thrown);
 
-        SystemServiceLinkPortal.putLink("link0", links[0]);
-        SystemServiceLinkPortal.putLink("link1", links[1]);
-        SystemServiceLinkPortal.putLink("link2", links[2]);
+        NamedLinkPortal.putLink("link0", links[0]);
+        NamedLinkPortal.putLink("link1", links[1]);
+        NamedLinkPortal.putLink("link2", links[2]);
 
         thrown = false;
         try {
-            Link l = SystemServiceLinkPortal.getLink("link1");
+            Link l = NamedLinkPortal.getLink("link1");
         } catch (IllegalStateException ise) {
             thrown = true;
         }
@@ -131,7 +130,7 @@ public class TestNamedLinkPortal extends TestCase {
         thrown = false;
         links[1].close();
         try {
-            SystemServiceLinkPortal.sendLinks(sendLink);
+            NamedLinkPortal.sendLinks(sendLink);
         } catch (IllegalStateException ise) {
             thrown = true;
         }
@@ -154,16 +153,16 @@ public class TestNamedLinkPortal extends TestCase {
         LinksReceiver lr = new LinksReceiver(sendLink);
         assertFalse("LinksReceiver should be blocked", lr.done);
 
-        SystemServiceLinkPortal.putLink("link0", links[0]);
-        SystemServiceLinkPortal.putLink("link1", links[1]);
-        SystemServiceLinkPortal.putLink("link2", links[2]);     
-        SystemServiceLinkPortal.sendLinks(sendLink);
+        NamedLinkPortal.putLink("link0", links[0]);
+        NamedLinkPortal.putLink("link1", links[1]);
+        NamedLinkPortal.putLink("link2", links[2]);     
+        NamedLinkPortal.sendLinks(sendLink);
 
         Object result = lr.await();
         assertTrue("links received without error", result == null);
 
         for (int i = 0; i < 3; i++) {
-            Link l = SystemServiceLinkPortal.getLink("link" + i);
+            Link l = NamedLinkPortal.getLink("link" + i);
 
             assertNotSame("link not same", l, links[i]);
             assertTrue("links equal", l.equals(links[i]));
@@ -181,7 +180,7 @@ public class TestNamedLinkPortal extends TestCase {
 
         thrown = false;
         try {
-            SystemServiceLinkPortal.putLink("link", l);
+            NamedLinkPortal.putLink("link", l);
         } catch (IllegalStateException iae) {
             thrown = true;
         }
@@ -190,7 +189,7 @@ public class TestNamedLinkPortal extends TestCase {
 
         thrown = false;
         try {
-            SystemServiceLinkPortal.sendLinks(sendLink);
+            NamedLinkPortal.sendLinks(sendLink);
         } catch (IllegalStateException iae) {
             thrown = true;
         }

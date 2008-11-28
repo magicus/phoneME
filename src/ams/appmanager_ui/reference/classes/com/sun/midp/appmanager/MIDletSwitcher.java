@@ -29,8 +29,8 @@ import javax.microedition.lcdui.*;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.main.Configuration;
 import com.sun.midp.main.MIDletProxy;
-import com.sun.midp.ams.VMUtils;
 
 /**
  * The Graphical MIDlet swicher.
@@ -39,30 +39,33 @@ import com.sun.midp.ams.VMUtils;
  * bring into foreground from the list of running midlets.
  */
 
-class MIDletSwitcher extends javax.microedition.lcdui.Form
-        implements ItemCommandListener {
-
-     /** Number of midlets in minfo */
+class MIDletSwitcher extends javax.microedition.lcdui.List 
+        implements CommandListener {
+     /**
+     * Number of midlets in minfo.
+     */
     private int mcount;
-
-    /** MIDlet information, class, name, icon; one per MIDlet */
+    /**
+     * MIDlet information, class, name, icon; one per MIDlet.
+     */
     private MidletListEntry[] minfo;
     
-    /** Number of reserved elements in minfo array */
+    /** Number of reserved elements in minfo array. */
     private final int pitch = 4;
  
-    /** Application Manager */
+    /** Application Manager. */
     ApplicationManager manager;
 
-    /** Application Manager main form */
+    /** Application Manager main form. */
     AppManagerUI managerUI;
 
-    /** Display for the Manager MIDlet */
+    /** Display for the Manager MIDlet. */
     Display display; // = null
 
     /** Command object for "Bring to foreground". */
     private Command fgCmd = new Command(Resource.getString
-        (ResourceConstants.AMS_SWITCHER_SEL), Command.ITEM, 1);
+                                        (ResourceConstants.AMS_SWITCHER_SEL),
+                                        Command.ITEM, 1);
     /**
      * Create and initialize a new MIDlet Switcher.
      *
@@ -72,12 +75,17 @@ class MIDletSwitcher extends javax.microedition.lcdui.Form
      */
     MIDletSwitcher(AppManagerUI managerUI, ApplicationManager manager,
                    Display display) {
-        super("");
+        super("", Choice.IMPLICIT);
         this.manager = manager;
         this.managerUI = managerUI;
         this.display = display;
         mcount = 0;
-        minfo = new MidletListEntry[VMUtils.getMaxIsolates()];
+        minfo = new MidletListEntry[Configuration.
+            getPositiveIntProperty("MAX_ISOLATES", Constants.MAX_ISOLATES)];
+
+        setSelectCommand(fgCmd);
+        setFitPolicy(TEXT_WRAP_OFF);
+        setCommandListener(this); // Listen for the selection
     }
 
     /**
@@ -88,15 +96,14 @@ class MIDletSwitcher extends javax.microedition.lcdui.Form
      */
     synchronized void append(RunningMIDletSuiteInfo msi, String className) {
         checkInfoArraySize();
-        MidletListEntry mle = new MidletListEntry(msi, className);
-        minfo[mcount++] = mle;
-
-        SwitcherMIDletCustomItem mci = new SwitcherMIDletCustomItem(mle);
-        mci.setItemCommandListener(this);
-        mci.setDefaultCommand(fgCmd);
-        mci.addCommand(fgCmd);
-        mci.setOwner(this);
-        append(mci);
+        minfo[mcount++] = new MidletListEntry(msi, className);
+        final MIDletProxy midletProxy = msi.getProxyFor(className);
+        StringBuffer name = new StringBuffer(msi.displayName);
+        if (midletProxy != null) {
+            name.append('/');
+            name.append(midletProxy.getDisplayName());
+        }
+        append(name.toString(), msi.icon);
     }
 
     /**
@@ -130,16 +137,11 @@ class MIDletSwitcher extends javax.microedition.lcdui.Form
         int pos = -1;
 
         for (int i = 0; i < mcount; i++) {
-            // IMPL_NOTE: the suiteId check will be removed as soon
-            // as we maintain all RunningMIDletSuiteInfo lists
+            // IMPL_NOTE: the suiteId check will be removed as soon as we maintain all RunningMIDletSuiteInfo lists
             if ((minfo[i].suite == msi || minfo[i].suite.suiteId == msi.suiteId)
-             && (minfo[i].className == null || className == null ||
-                    minfo[i].className.equals(className))) {
-
-                // IMPL_NOTE: two instances of
-                // the same MIDlet cannot be running
+             && (minfo[i].className == null || className == null || minfo[i].className.equals(className))) {
                 pos = i;
-                break;
+                break; // IMPL_NOTE: two instances of the same MIDlet cannot be running
             }
         }
         if (pos >= 0) {
@@ -152,7 +154,9 @@ class MIDletSwitcher extends javax.microedition.lcdui.Form
         }
     }
 
-    /** Ensures that info array has enough capacity */
+    /**
+     * Ensures that info array has enough capacity.
+     */
     private void checkInfoArraySize() {
         if ((mcount+pitch < minfo.length) || (mcount >= minfo.length)) { 
             MidletListEntry[] n =
@@ -171,48 +175,29 @@ class MIDletSwitcher extends javax.microedition.lcdui.Form
     }
 
     /**
-     * Respond to a command issued on form item
-     * @param command command activated by the user
-     * @param item form item to apply command to
+     * Respond to a command issued on any Screen.
+     *
+     * @param c command activated by the user
+     * @param s the Displayable the command was on.
      */
-    public synchronized void commandAction(Command command, Item item) {
-        if (command == fgCmd) {
+    public synchronized void commandAction(Command c, Displayable s) {
+        if (c == fgCmd) {
             //bring to foreground appropriate midlet
-            MidletListEntry mle = ((SwitcherMIDletCustomItem)item).mle;
-            manager.moveToForeground(mle.suite, mle.className);
+            int ind = getSelectedIndex();
+            if (ind != -1) {
+                manager.moveToForeground(minfo[ind].suite, minfo[ind].className);
+            }
             display.setCurrent(managerUI.getMainDisplayable());
         }
     }
 
-    class MidletListEntry {
+    private class MidletListEntry {
         RunningMIDletSuiteInfo suite;
         String className;
 
         public MidletListEntry(RunningMIDletSuiteInfo msi, String midletClassName) {
             suite = msi;
             className = midletClassName;
-        }
-    }
-
-    class SwitcherMIDletCustomItem extends MIDletCustomItem {
-        /** MIDlet list entry associated with the item*/
-        MidletListEntry mle;
-
-        /**
-         * Constructs new MIDlet item
-         * @param midletListEntry MIDlet list entry to create item for
-         */
-        SwitcherMIDletCustomItem(MidletListEntry midletListEntry) {
-            String className = midletListEntry.className;
-            RunningMIDletSuiteInfo msi = midletListEntry.suite;
-            MIDletProxy midletProxy = msi.getProxyFor(className);
-            StringBuffer name = new StringBuffer(msi.displayName);
-            if (midletProxy != null) {
-                name.append('/');
-                name.append(midletProxy.getDisplayName());
-            }
-            init(name.toString(), msi.icon);
-            this.mle = midletListEntry;
         }
     }
 }

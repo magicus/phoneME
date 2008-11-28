@@ -79,11 +79,6 @@ extern jboolean jcapp_reverse_orientation(int hardwareId);
  */
 extern jboolean jcapp_get_reverse_orientation(int hardwareId);
 
-/**
- * Handle clamshell event
- */
-extern void jcapp_handle_clamshell_event();
-
 
 /**
  * Return screen width

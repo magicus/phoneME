@@ -64,6 +64,10 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.ByteArrayOutputStream;
+
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 import javax.microedition.io.SocketConnection;
 import javax.microedition.io.StreamConnection;
@@ -78,8 +82,10 @@ import com.sun.midp.main.Configuration;
 
 import com.sun.midp.io.ConnectionBaseAdapter;
 import com.sun.midp.io.HttpUrl;
+import com.sun.midp.io.NetworkConnectionBase;
 
 import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 
@@ -109,7 +115,7 @@ public class Protocol extends ConnectionBaseAdapter
      * SecurityInitializer should be able to check this inner class name.
      */
     static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {}
+        implements ImplicitlyTrustedClass {};
 
     /** This class has a different security domain than the MIDlet suite */
     private static SecurityToken classSecurityToken =
@@ -135,18 +141,15 @@ public class Protocol extends ConnectionBaseAdapter
     private static boolean nonPersistentFlag;
     /**
      * The methods other than openPrim need to know that the
-     * permission occurred. com.sun.midp.io.j2me.https.Protocol
-     * class also uses this field.
+     * permission occurred.
      */
-    protected boolean permissionChecked;
-    /**
-     * True if the owner of this connection is trusted.
-     * com.sun.midp.io.j2me.https.Protocol class also uses this field.
-     */
-    protected boolean ownerTrusted;
+    private boolean permissionChecked;
+    /** True if the owner of this connection is trusted. */
+    private boolean ownerTrusted;
 
     /** Get the configuration values for this class. */
     static {
+        String prop;
         int temp;
 
         /*
@@ -417,7 +420,7 @@ public class Protocol extends ConnectionBaseAdapter
      *
      * @param name name of resource to insert into the permission question
      *
-     * @exception InterruptedIOException if another thread interrupts the
+     * @exception IOInterruptedException if another thread interrupts the
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
@@ -988,6 +991,8 @@ public class Protocol extends ConnectionBaseAdapter
      *             an <code>IOException</code> is thrown if the output
      *             stream is closed.
      *
+     * @exception  IllegalStateException if an attempt was made to
+     *             write after the request has finished.
      */
     protected int writeBytes(byte b[], int off, int len)
             throws IOException {
@@ -995,7 +1000,7 @@ public class Protocol extends ConnectionBaseAdapter
         int bytesToCopy;
 
         if (requestFinished) {
-            throw new IOException(
+            throw new IllegalStateException(
                 "Write attempted after request finished");
         }
 
@@ -1029,6 +1034,8 @@ public class Protocol extends ConnectionBaseAdapter
      *
      * @exception IOException if an I/O error occurs
      *
+     * @exception IllegalStateException if there was an attempt was made to
+     *            flush after the request has finished.
      */
     public void flush() throws IOException {
 
@@ -1037,7 +1044,7 @@ public class Protocol extends ConnectionBaseAdapter
         }
 
         if (requestFinished) {
-            throw new IOException(
+            throw new IllegalStateException(
                  "Flush attempted after request finished");
         }
 
@@ -1620,17 +1627,7 @@ public class Protocol extends ConnectionBaseAdapter
      * @exception IOException is thrown if the connection cannot be opened
      */
     protected void streamConnect() throws IOException {
-        if (!permissionChecked) {
-            throw new SecurityException("The permission check was bypassed");
-        }
-
-        streamConnection = connectionPool.get(classSecurityToken, protocol,
-                                              url.host, url.port);
-
-
-        if (streamConnection == null) {
-            streamConnection = connect();
-        }
+        streamConnection = connect();
 
         /*
          * Because StreamConnection.open*Stream cannot be called twice

@@ -35,10 +35,7 @@ import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteImpl;
 import com.sun.midp.midletsuite.MIDletSuiteInfo;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
-import com.sun.midp.main.MIDletSuiteUtils;
-import com.sun.midp.main.Configuration;
 import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.ams.VMUtils;
 
 import javax.microedition.lcdui.Image;
 import java.util.Vector;
@@ -46,22 +43,13 @@ import java.util.Vector;
 
 /** Simple attribute storage for MIDlet suites */
 public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
-    /**
-     * The list of MIDlet proxies, one for each running MIDlet.
-     * It is set from AppManagerUI.java and has maximal allowed
-     * number of concurrent VM tasks as initial capacity.
-     */
-    private Vector proxies = new Vector(
-        VMUtils.getMaxIsolates());
-
+    // IMPL_NOTE: currently this value is 4, no need to specify a different initial size.
+    /** The list of MIDlet proxies, one for each running MIDlet. It is set from AppManagerUI.java. */
+    private Vector proxies = new Vector(Constants.MAX_ISOLATES);
     /** Icon for this suite. */
     public Image icon = null;
     /** Whether suite is under debug */
     public boolean isDebugMode = false;
-    /** Whether the running suite is locked */
-    private boolean locked = false;
-    /* corresponding suite */
-    private MIDletSuite msi = null;
 
     /**
      * Constructs a RunningMIDletSuiteInfo object for a suite.
@@ -394,61 +382,5 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
      */
     synchronized public void removeProxy(MIDletProxy proxy) {
         proxies.removeElement(proxy);
-    }
-    
-    /**
-     * Locks the running suite.
-     */
-    public void lock() {
-        locked = true;
-    }
-
-    /**
-     * Unlocks the running suite.
-     */
-    public void unlock() {
-        locked = false;
-    }
-
-    /**
-     * @return true if the suite is locked
-     */
-    public boolean isLocked() {
-        return locked;
-    }
-    
-    /**
-     * Grabs the storage lock for the suite if it is free.
-     */
-    public void grabStorageLock() {
-        if (msi == null) {
-            try {
-                msi = MIDletSuiteUtils.getSuite(suiteId);
-            } catch (SecurityException e) {
-                /* not critical */
-            }
-        }
-    }
-
-    /**
-     * Releases storage lock for the suite (only if previously locked by 
-     * grabStorageLock())
-     */
-    public void releaseStorageLock() {
-        if (msi != null) {
-            try {
-                msi.close();
-            } catch (Exception e) {
-                /* not critical */
-            }
-            msi = null;
-        }
-    }
-    
-    /**
-     * @return true if this object holds storage lock for the suite
-     */
-    public boolean holdsStorageLock() {
-        return msi != null;
     }
 }

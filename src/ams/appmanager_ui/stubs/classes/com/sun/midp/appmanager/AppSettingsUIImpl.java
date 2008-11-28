@@ -52,6 +52,14 @@ class AppSettingsUIImpl implements AppSettingsUI {
     }
 
     /**
+     * Returns the main displayable of the AppSettingsUI.
+     * @return main screen
+     */
+    public Displayable getMainDisplayable() {
+        return null;
+    }
+    
+    /**
      * Shows UI with application settings.
      * All information regarding available settings, possible setting values
      * and current setting value should be queried from AppSettings peer.
@@ -74,13 +82,4 @@ class AppSettingsUIImpl implements AppSettingsUI {
                          Display display, DisplayError displayError) {
         
     }
-
-    /**
-     * Returns the main displayable of the AppSettingsUI.
-     * @return main screen
-     */
-    public Displayable getMainDisplayable() {
-        return null;
-    }
-    
 }

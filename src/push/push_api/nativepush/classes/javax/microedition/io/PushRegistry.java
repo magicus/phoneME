@@ -24,17 +24,7 @@
 
 package javax.microedition.io;
 
-import java.lang.ClassNotFoundException;
-import java.lang.IllegalStateException;
-import java.lang.IllegalArgumentException;
-import java.lang.String;
 import java.io.IOException;
-import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import com.sun.midp.io.Util;
-import com.sun.midp.io.j2me.push.PushRegistryImpl;
 
 /**
  * The <code>PushRegistry</code> maintains a list of inbound
@@ -593,6 +583,10 @@ import com.sun.midp.io.j2me.push.PushRegistryImpl;
  */
 
 public class PushRegistry {
+    /*
+     * Currently stubbed just to make TCK signature test
+     * pass and NAMS build configuration fine
+     */
 
     /** Prevent instantiation of the push registry. */
     private PushRegistry() { };
@@ -647,8 +641,7 @@ public class PushRegistry {
 					   String filter)
 	throws ClassNotFoundException,
 	        IOException {
-
-	PushRegistryImpl.registerConnection(connection, midlet, filter);
+        throw new ConnectionNotFoundException("not supported");
     }
 
     /**
@@ -665,8 +658,7 @@ public class PushRegistry {
      * @see #registerConnection
      */
     public static boolean unregisterConnection(String connection) {
-
-        return PushRegistryImpl.unregisterConnection(connection);
+        return false;
     }
 
     /**
@@ -682,7 +674,7 @@ public class PushRegistry {
      *       <em>host</em> and <em>port number</em> identification
      */
     public static String[] listConnections(boolean available) {
-        return PushRegistryImpl.listConnections(available);
+        return new String [0];
     }
 
     /**
@@ -700,8 +692,7 @@ public class PushRegistry {
      * @see #registerConnection
      */
     public static String getMIDlet(String connection) {
-        // Delegate to implementation class for native lookup
-        return 	PushRegistryImpl.getMIDlet(connection);
+        return null;
     }
 
     /**
@@ -719,8 +710,7 @@ public class PushRegistry {
      * @see #registerConnection
      */
     public static String getFilter(String connection) {
-        // Delegate to implementation class for native lookup
-        return 	PushRegistryImpl.getFilter(connection);
+        return null;
     }
 
     /**
@@ -763,7 +753,6 @@ public class PushRegistry {
      */
     public static long registerAlarm(String midlet, long time)
 	 throws ClassNotFoundException, ConnectionNotFoundException {
-        // Delegate to implementation class for native registration
-        return 	PushRegistryImpl.registerAlarm(midlet, time);
+        throw new ConnectionNotFoundException("not supported");
     }
 }

@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -26,24 +26,37 @@
 
 package com.sun.midp.services;
 
-public abstract class SystemServiceMessage {
+import java.io.DataInput;
+import java.io.DataOutput;
 
+/**
+ * Message is what is passed between service and client. At low 
+ * level message body is just array of bytes. It is also possible 
+ * to write/extract a sequence of primitive types from the message. 
+ * In other words, message body can be seen as data stream from which
+ * you can read/write primitive types.
+ */
+public abstract class SystemServiceMessage {
     /**
-     * Creates an empty message capable of carrying stream of
-     * primitive data.
+     * Creates an empty message.
      *
      * @return empty message
      */
-    public static SystemServiceDataMessage newDataMessage() {
+    public static SystemServiceMessage newMessage() {
         return new SystemServiceWriteMessage();
     }
 
     /**
-     * Creates an empty message capable of carrying Link object.
+     * Gets message body as DataInput.
      *
-     * @return empty message
+     * @return DataInput interface for reading data from message
      */
-    public static SystemServiceLinkMessage newLinkMessage() {
-        return new SystemServiceLinkWriteMessage();
-    }
+    abstract public DataInput getDataInput();
+
+    /**
+     * Gets message body as DataOutput.
+     *
+     * @return DataOutput interface for writing data to message
+     */
+    abstract public DataOutput getDataOutput();
 }

@@ -108,23 +108,22 @@ public class DynamicComponentStorage {
      *     id - unique ID of the suite;
      *     jadUrl - where the JAD came from, can be null;
      *     jarUrl - where the JAR came from;
-     *     jarFilename - name of the downloaded component's jar file;
-     *     suiteName - name of the component;
-     *     suiteVendor - vendor of the component;
-     *     suiteVersion - version of the component;
+     *     jarFilename - name of the downloaded MIDlet suite jar file;
+     *     suiteName - name of the suite;
+     *     suiteVendor - vendor of the suite;
      *     authPath - authPath if signed, the authorization path starting
      *                with the most trusted authority;
-     *     domain - security domain of the component (currently unused);
-     *     trusted - true if component is trusted;
-     *     verifyHash - may contain hash value of the component with
+     *     domain - security domain of the suite;
+     *     trusted - true if suite is trusted;
+     *     verifyHash - may contain hash value of the suite with
      *                  preverified classes or may be NULL;
      * </pre>
      *
      * @param suiteSettings structure containing the following information:<br>
      * <pre>
-     *     permissions - permissions for the component (currently unused);
-     *     pushInterruptSetting - defines if this MIDlet component interrupt
-     *                            other components;
+     *     permissions - permissions for the suite;
+     *     pushInterruptSetting - defines if this MIDlet suite interrupt
+     *                            other suites;
      *     pushOptions - user options for push interrupts;
      *     suiteId - unique ID of the suite, must be equal to the one given
      *               in installInfo;
@@ -140,8 +139,8 @@ public class DynamicComponentStorage {
      *        in key/value pair order
      *
      * @exception IOException is thrown, if an I/O error occurs during
-     * storing the component
-     * @exception MIDletSuiteLockedException is thrown, if the component is
+     * storing the suite
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
      * locked
      */
     public synchronized void storeComponent(
@@ -149,9 +148,11 @@ public class DynamicComponentStorage {
                 SuiteSettings suiteSettings, String displayName,
                     Properties jadProps, Properties jarProps)
                         throws IOException, MIDletSuiteLockedException {
-        ComponentInfoImpl ci = new ComponentInfoImpl(
-                installInfo.componentId, installInfo.id, displayName,
-                installInfo.suiteVersion, installInfo.trusted);
+        ComponentInfoImpl ci =
+                new ComponentInfoImpl(installInfo.componentId, installInfo.id);
+
+        ci.displayName = displayName;
+        ci.trusted = installInfo.trusted;
 
         /*
          * Convert the property args to String arrays to save
@@ -249,7 +250,9 @@ public class DynamicComponentStorage {
             components = new ComponentInfo[n];
 
             for (int i = 0; i < n; i++) {
-                components[i] = new ComponentInfoImpl();
+                components[i] = new ComponentInfoImpl(
+                        ComponentInfo.UNUSED_COMPONENT_ID,
+                        MIDletSuite.UNUSED_SUITE_ID);
             }
 
             try {

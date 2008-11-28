@@ -92,13 +92,12 @@ typedef enum midp_SignalType {
     JSR256_SIGNAL,
     VOLUME_SIGNAL,
     JSR290_INVALIDATE_SIGNAL,
-    JSR290_FLUID_EVENT_SIGNAL,
+    JSR290_LISTENER_SIGNAL,
     JSR290_INVOCATION_COMPLETION_SIGNAL,
     JSR179_PROXIMITY_SIGNAL,
     JSR179_ORIENTATION_SIGNAL,
     JSR234_SNAPSHOT_STARTED_SIGNAL,
     JSR234_TUNER_SOUGHT_SIGNAL,
-    JSR257_CONTACTLESS_SIGNAL,
     NETWORK_STATUS_SIGNAL,
     INTERISOLATE_MUTEX_SIGNAL
 } midpSignalType;
@@ -173,20 +172,13 @@ jboolean midp_isDebuggerActive(void);
 #endif /* ENABLE_JAVA_DEBUGGER */
 
 /**
- * Gets the current isolate ID from VM in case of MVM mode.
+ * Get the current isolate ID from VM in case of MVM mode. 
  * For SVM, simply return 0 as an isolate ID.
  *
  * @return isolated : Isolate ID
  * 
  */
-int getCurrentIsolateId();
-
-/**
- * Gets maximal allowed number of isolates in the case of MVM mode.
- * For SVM, simply return 1.
- */
-int getMaxIsolates();
-
+extern int getCurrentIsolateId();
 
 #ifdef __cplusplus
 }

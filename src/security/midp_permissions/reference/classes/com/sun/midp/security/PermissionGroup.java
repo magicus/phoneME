@@ -78,31 +78,21 @@ public final class PermissionGroup {
 
         this.nativeName = nativeName;
         name = theName;
-
         settingsQuestion = theSettingsQuestion;
-        if (settingsQuestion == null) {
+        if (settingsQuestion == null)
             settingsQuestion = "n/a";
-        }
-
         disableSettingChoice = theDisableSettingChoice;
-        if (disableSettingChoice == null) {
+        if (disableSettingChoice == null)
             disableSettingChoice = "n/a";
-        }
-
         runtimeDialogTitle = theRuntimeDialogTitle;
-        if (runtimeDialogTitle == null) {
+        if (runtimeDialogTitle == null)
             runtimeDialogTitle = "n/a";
-        }
-
         runtimeQuestion = theRuntimeQuestion;
-        if (runtimeQuestion == null) {
+        if (runtimeQuestion == null)
             runtimeQuestion = "n/a";
-        }
-        
         runtimeOneshotQuestion = theRuntimeOneshotQuestion;
-        if (runtimeOneshotQuestion == null) {
+        if (runtimeOneshotQuestion == null)
             runtimeOneshotQuestion = runtimeQuestion;
-        }
     }
     /**
      * Get the name string ID.
@@ -161,4 +151,7 @@ public final class PermissionGroup {
     public String getRuntimeOneshotQuestion() {
         return runtimeOneshotQuestion;
     }
+
 }
+
+
