@@ -136,13 +136,23 @@ struct WTKCallRecord {
   jushort          task_id;   /* isolate owning this record */
 #endif
   
-  WTKCallRecord(juint          id,
-                WTKCallRecord* parent,
-                juint          level, 
-                jushort        flags) : 
-    thisTime(0), totalTime(0), next(NULL), child(NULL), parent(parent), 
-    cached_method(NULL),
-    id(id), level(level), numCalls(0), flags(flags) {
+  WTKCallRecord(juint          _id,
+                WTKCallRecord* _parent,
+                juint          _level, 
+                jushort        _flags) {
+    if (this == NULL) {
+      return;
+    }
+    thisTime = 0;
+    totalTime = 0;
+    next = NULL;
+    child = NULL;
+    parent = _parent;
+    cached_method = NULL;
+    id = _id;
+    level = _level;
+    numCalls = 0;
+    flags = _flags;
     index = ++numCallRecords;
     endTime = startTime = Os::elapsed_counter();
 #if ENABLE_ISOLATES
@@ -481,7 +491,8 @@ static inline void update_from_frame(JavaFrame* frame,
     top = build_call_tree(frame, currentDepth);
     // out of memory
     if (top == NULL) {
-      return;
+      //WTKProfiler can't continue working correctly
+      JVM_FATAL(generic_fatal_error);
     }
     thread_record->set_top_call_record(top);
     thread_record->set_stack_depth(currentDepth);
@@ -511,7 +522,8 @@ static inline void update_from_frame(JavaFrame* frame,
       }
       // out of memory
       if (rec == NULL) {
-        return;
+        //WTKProfiler can't continue working correctly.
+        JVM_FATAL(generic_fatal_error);
       }
       rec->cached_method = frame->method();
     record_found:
@@ -675,13 +687,14 @@ void  WTKProfiler::resume() {
 
 
 int WTKProfiler::dump_and_clear_profile_data(int id) {
-  if (UseExactProfiler) {
+  Task::Raw task = Universe::task_for_id(id);
+  if (UseExactProfiler && task().use_profiler()) {
     bool do_suspend_resume = _lastCycles != 0;
     if (do_suspend_resume) {
       suspend();
     }
 
-  bool empty = true;
+    bool empty = true;
     for (int i=0; i<TABLE_SIZE; i++) {
       if (profilerTable[i] != NULL) {
         empty = false;
