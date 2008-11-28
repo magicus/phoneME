@@ -55,8 +55,8 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
     private boolean locked = false;
     /** Corresponding suite */
     private MIDletSuite msi = null;
-    /** Main MIDlet's class name of the suite. Can be null. */
-    private String mainMidlet;
+    /** Whether the suite has main MIDlet. */
+    private boolean hasMainMidlet = false;
 
     /**
      * Constructs a RunningMIDletSuiteInfo object for a suite.
@@ -448,24 +448,17 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
     }
 
     /**
-     * @return classname of main MIDlet
+     * Sets main MIDlet flag.
+     * @param mainMidlet Determines whether this suite has main MIDlet
      */
-    public String getMainMidlet() {
-        return mainMidlet;
-    }
-
-    /**
-     * Sets classname of main MIDlet.
-     * @param mainMidlet class name of main MIDlet
-     */
-    public void setMainMidlet(String mainMidlet) {
-        this.mainMidlet = mainMidlet;
+    public void setMainMidlet(boolean hasMainMidlet) {
+        this.hasMainMidlet = hasMainMidlet;
     }
     
     /**
      * @return true if main MIDlet is set
      */
     public boolean hasMainMidlet() {
-        return mainMidlet != null;
+        return hasMainMidlet;
     }
 }

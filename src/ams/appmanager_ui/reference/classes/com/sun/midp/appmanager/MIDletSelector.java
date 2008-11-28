@@ -129,7 +129,9 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         runningMidlets = new Vector();
         MIDletProxy[] proxies = suiteInfo.getProxies();
         for (int i = 0; i < proxies.length; i++) {
-            runningMidlets.addElement(proxies[i].getClassName());
+            if (proxies[i].getMidletState() != MIDletProxy.MIDLET_DESTROYED) {
+                runningMidlets.addElement(proxies[i].getClassName());
+            }
         }
         
         /* for locked suite, we need storage lock until some MIDlet is launched.
