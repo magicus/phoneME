@@ -206,6 +206,7 @@ OPTIONVARLIST = $(sort \
   USE_VERIFY_ONCE \
   USE_VM_PROFILES \
   USE_MULTIPLE_DISPLAYS \
+  USE_AUTOTESTER \
   )
 
 ######################################################################

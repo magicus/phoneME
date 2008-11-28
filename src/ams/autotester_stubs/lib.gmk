@@ -1,4 +1,3 @@
-#
 #   
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
@@ -23,29 +22,27 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 #
-######################################################################
+
+############################################################
+# Module's Component Configuration file
 #
-# AutoTester Library
-#
-######################################################################
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+############################################################
 
-# Name of the library
-AUTOTESTER_SVM_NAME = autotester/svm
-AUTOTESTER_SVM_DIR = $(SUBSYSTEM_AMS_DIR)/$(AUTOTESTER_SVM_NAME)
+# Library name
+AUTOTESTER_STUBS_NAME = autotester_stubs
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(AUTOTESTER_SVM_DIR)/classes
+# Local module directory
+AUTOTESTER_STUBS_DIR = $(SUBSYSTEM_AMS_DIR)/$(AUTOTESTER_STUBS_NAME)
 
-#AUTOTESTER_SVM_PACKAGES = \
-#    com.sun.midp.installer
 
-#MIDP_JAVADOC_PACKAGES += $(AUTOTESTER_SVM_PACKAGES)
-#MIDP_JAVADOC_ALL += \
-#        -group "AutoTester" \
-#	 $(shell echo $(AUTOTESTER_SVM_PACKAGES) |tr ' ' $(PATHSEP))
-
-# Java files for the library
+# Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AUTOTESTER_SVM_DIR)/classes/com/sun/midp/installer/AutoTester.java \
-    $(AUTOTESTER_SVM_DIR)/classes/com/sun/midp/installer/AutoTesterHelper.java
+    $(AUTOTESTER_STUBS_DIR)/stubs/classes/com/sun/midp/installer/service/AutoTesterServiceInitializer.java
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(AUTOTESTER_STUBS_DIR)/classes

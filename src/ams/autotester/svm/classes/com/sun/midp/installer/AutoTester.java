@@ -119,8 +119,12 @@ public class AutoTester extends AutoTesterBase
             helper.installAndPerformTests();
         } catch (Throwable t) {
             int suiteId = helper.getTestSuiteId();
+
+            // may return null, this means that exception should be ignored            
             String message = helper.getInstallerExceptionMessage(suiteId, t);
-            displayInstallerError(message);
+            if (message != null) {
+                displayInstallerError(message);
+            }
         }
 
         notifyDestroyed();        

@@ -127,7 +127,8 @@ abstract class AutoTesterHelperBase {
      *
      * @param suiteId ID of the MIDlet Suite that caused exception
      * @param ex exception instance
-     * @return associated message for given installer exception.
+     * @return associated message for given installer exception,
+     * null if this exception should be ignored
      */
     protected static String getInstallerExceptionMessage(int suiteId, 
             Throwable ex) {
@@ -140,7 +141,7 @@ abstract class AutoTesterHelperBase {
             /*
              * The server will signal the end of testing with not found
              * status. However print out the JAD not found error if this
-             * is the first download. (suiteId == null)
+             * is the first download. (suiteId == unused)
              */
             int reason = ije.getReason();
             if ((reason != InvalidJadException.JAD_NOT_FOUND &&

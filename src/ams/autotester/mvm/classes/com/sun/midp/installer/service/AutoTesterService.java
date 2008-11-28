@@ -96,19 +96,33 @@ class AutoTesterService implements SystemService, Runnable  {
             int loopCount = protocol.getLoopCount();
 
             if (url == null) {
+                Logging.report(Logging.CRITICAL, LogChannels.LC_CORE, 
+                    "AutoTester service: no test URL");
                 return;
             }
 
             AutoTesterHelper helper = new AutoTesterHelper(
                     url, domain, loopCount);
 
+            String errorMessage = null;
             try {
                 helper.installAndPerformTests();
-                protocol.sendOKStatus();
             } catch (Throwable t) {
                 int suiteId = helper.getTestSuiteId();
-                String msg = helper.getInstallerExceptionMessage(suiteId, t);
-                protocol.sendErrorStatus(msg);
+
+                // may return null, this means that exception should be ignored
+                errorMessage = helper.getInstallerExceptionMessage(suiteId, t);
+            } finally {
+                try {
+                    if (errorMessage == null) {
+                        protocol.sendOKStatus();
+                    } else {
+                        protocol.sendErrorStatus(errorMessage);
+                    }
+                } catch (InterruptedIOException ioex) {
+                    // ignore: client already exited before service got
+                    // ack that client has received message we sent
+                }                                
             }
         } catch (SystemServiceConnectionClosedException ccex) {
             Logging.report(Logging.CRITICAL, LogChannels.LC_CORE, 
