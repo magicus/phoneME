@@ -235,7 +235,7 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         } else if (c == endCmd) {
 
             int selected = ((SelectorMIDletCustomItem)item).index;
-            if (selected > 0 && selected < mform.size()) {
+            if (selected >= 0 && selected < mform.size()) {
                 String midletClassName = minfo[selected].classname;
                 manager.exitMidlet(suiteInfo, midletClassName);
             }

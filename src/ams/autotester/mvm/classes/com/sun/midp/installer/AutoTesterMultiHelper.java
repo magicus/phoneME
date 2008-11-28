@@ -281,7 +281,9 @@ final class AutoTesterMultiHelper extends AutoTesterHelperBase {
                     } else {
                         String message = getInstallerExceptionMessage(
                                 suiteId, t);
-                        autoTester.displayInstallerError(message);
+                        if (message != null) {
+                            autoTester.displayInstallerError(message);
+                        }
                     }
                 }
             }

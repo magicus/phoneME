@@ -58,6 +58,7 @@ include $(SUBSYSTEM_SECURITY_DIR)/permission_dialog/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/pki/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/publickeystore/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/secure_random/lib.gmk
+include $(SUBSYSTEM_SECURITY_DIR)/secure_random_port/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/access_controller_cldc_port/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/der/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/ocsp/lib.gmk

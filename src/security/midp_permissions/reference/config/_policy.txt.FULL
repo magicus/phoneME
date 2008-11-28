@@ -94,7 +94,7 @@ alias: contactless
 
 alias: nfc_write_access
   javax.microedition.contactless.ndef.NDEFTagConnection.write
-  	
+
 domain: minimum,unsecured
 
 domain: maximum,unsecured

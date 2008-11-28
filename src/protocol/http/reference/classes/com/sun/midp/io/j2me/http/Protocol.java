@@ -64,10 +64,6 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.ByteArrayOutputStream;
-
-import java.util.Enumeration;
-import java.util.Hashtable;
 
 import javax.microedition.io.SocketConnection;
 import javax.microedition.io.StreamConnection;
@@ -82,10 +78,8 @@ import com.sun.midp.main.Configuration;
 
 import com.sun.midp.io.ConnectionBaseAdapter;
 import com.sun.midp.io.HttpUrl;
-import com.sun.midp.io.NetworkConnectionBase;
 
 import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 
@@ -115,7 +109,7 @@ public class Protocol extends ConnectionBaseAdapter
      * SecurityInitializer should be able to check this inner class name.
      */
     static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
+        implements ImplicitlyTrustedClass {}
 
     /** This class has a different security domain than the MIDlet suite */
     private static SecurityToken classSecurityToken =
@@ -141,15 +135,18 @@ public class Protocol extends ConnectionBaseAdapter
     private static boolean nonPersistentFlag;
     /**
      * The methods other than openPrim need to know that the
-     * permission occurred.
+     * permission occurred. com.sun.midp.io.j2me.https.Protocol
+     * class also uses this field.
      */
-    private boolean permissionChecked;
-    /** True if the owner of this connection is trusted. */
-    private boolean ownerTrusted;
+    protected boolean permissionChecked;
+    /**
+     * True if the owner of this connection is trusted.
+     * com.sun.midp.io.j2me.https.Protocol class also uses this field.
+     */
+    protected boolean ownerTrusted;
 
     /** Get the configuration values for this class. */
     static {
-        String prop;
         int temp;
 
         /*
@@ -420,7 +417,7 @@ public class Protocol extends ConnectionBaseAdapter
      *
      * @param name name of resource to insert into the permission question
      *
-     * @exception IOInterruptedException if another thread interrupts the
+     * @exception InterruptedIOException if another thread interrupts the
      *   calling thread while this method is waiting to preempt the
      *   display.
      */

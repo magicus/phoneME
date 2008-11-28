@@ -391,10 +391,10 @@ midpInitializeDebugger(void) {
         char* argv[2];
 
         /* memory profiler */
-		if (getInternalProperty("VmMemoryProfiler") != NULL) {
-		    argv[0] = "-memory_profiler";
+        if (getInternalProperty("VmMemoryProfiler") != NULL) {
+            argv[0] = "-memory_profiler";
             (void)JVM_ParseOneArg(1, argv);
-		}
+        }
 
         /* Get the VM debugger port property. */
         argv[1] = (char *)getInternalProperty("VmDebuggerPort");
@@ -402,6 +402,13 @@ midpInitializeDebugger(void) {
             argv[0] = "-port";
             (void)JVM_ParseOneArg(2, argv);
         }
+    }
+#endif
+#if ENABLE_MEMMON
+    if (getInternalProperty("MemoryMonitor") != NULL) {
+        char* argv[1];
+        argv[0] = "-monitormemory";
+        (void)JVM_ParseOneArg(1, argv);
     }
 #endif
 }
