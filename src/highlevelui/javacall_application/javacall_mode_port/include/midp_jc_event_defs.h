@@ -351,8 +351,7 @@ typedef struct {
 } jsr290_jc_event_fluid;
 
 typedef struct {
-	javacall_handle             native_event_listener_handle;
-	javacall_handle	            native_event_handle;
+	javacall_handle	            handle_event_request_handle;
 } jsr290_jc_event_handle_event;
 #endif /* ENABLE_JSR_290 */
 
