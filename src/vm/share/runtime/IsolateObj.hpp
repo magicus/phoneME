@@ -76,7 +76,6 @@ public:
   INT_FIELD ( connect_debugger,    15 )
   INT_FIELD ( use_verifier,        16 )
   INT_FIELD ( profile_id,          17 )  
-  INT_FIELD ( use_profiler,        18 )
 
   STATIC_INT_FIELD( api_access, 0 )
 

@@ -480,9 +480,7 @@ private:
   template(packet_buffer_list,                   ObjArray)            \
   template(transport_head,                       Oop)                 \
   template(refnode_class,                        FarClass)            \
-  template(objects_by_id_map,                    ObjArray)            \
   template(dbg_class,                            InstanceClass)       \
-  template(objects_by_ref_map,                   ObjArray)            \
   template(mp_stack_list,                        ObjArray)
 
 #else

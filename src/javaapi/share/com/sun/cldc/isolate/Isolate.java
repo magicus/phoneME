@@ -312,8 +312,6 @@ public final class Isolate {
     private int             _UseVerifier = 1;
 
     private int             _profileId = DEFAULT_PROFILE_ID;
-    
-    private int             _UseProfiler = 1;
 
      /**
       * ID of default profile.
@@ -1099,14 +1097,6 @@ public final class Isolate {
             throw new IllegalIsolateStateException("Can only set restricted packages before Isolate starts");
         }
       _restricted_packages = package_names;
-    }
-    
-    /**
-     * Sets whether isolate should be profiled or not.
-     *
-     */
-    public void setUseProfiler(boolean useProfiler) {
-      _UseProfiler = (useProfiler == true ? 1 : 0);
     }
 
     private native void attachDebugger0(Isolate obj);

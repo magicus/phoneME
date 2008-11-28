@@ -193,6 +193,11 @@ public:
  public:
 #endif
 
+#if ENABLE_JAVA_DEBUGGER
+  DEFINE_ACCESSOR_OBJ(Task, JavaDebuggerContext, debugger_context);
+ public:
+#endif
+
   void iterate(OopVisitor* /*visitor*/) PRODUCT_RETURN;
   static void iterate_oopmaps(oopmaps_doer /*do_map*/, void* /*param*/)
               PRODUCT_RETURN;
@@ -278,9 +283,6 @@ private:
     return FIELD_OFFSET(TaskDesc, _profile_id);
   }
 #endif
-  static int use_profiler_offset() {
-    return FIELD_OFFSET(TaskDesc, _use_profiler);
-  }
 
   static int class_list_offset() {
     return FIELD_OFFSET(TaskDesc, _class_list);
@@ -488,14 +490,6 @@ public:
     int_field_put(profile_id_offset(), id);
   }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
-  int use_profiler() const {
-    return int_field(use_profiler_offset());
-  }
-
-  void set_use_profiler(int flag) {
-    int_field_put(use_profiler_offset(), flag);
-  }
-
   void set_class_count(const int id) {
     int_field_put(class_count_offset(), id);
   }

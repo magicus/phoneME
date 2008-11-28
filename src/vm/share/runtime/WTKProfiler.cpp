@@ -687,14 +687,13 @@ void  WTKProfiler::resume() {
 
 
 int WTKProfiler::dump_and_clear_profile_data(int id) {
-  Task::Raw task = Universe::task_from_id(id);
-  if (UseExactProfiler && task().use_profiler()) {
+  if (UseExactProfiler) {
     bool do_suspend_resume = _lastCycles != 0;
     if (do_suspend_resume) {
       suspend();
     }
 
-    bool empty = true;
+  bool empty = true;
     for (int i=0; i<TABLE_SIZE; i++) {
       if (profilerTable[i] != NULL) {
         empty = false;

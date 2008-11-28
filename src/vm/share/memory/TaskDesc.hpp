@@ -45,6 +45,10 @@ protected:
   ObjArrayDesc*     _direct_callers;
 #endif
 
+#if ENABLE_JAVA_DEBUGGER
+  JavaDebuggerContextDesc*  _debugger_context;
+#endif
+
 #if ENABLE_ISOLATES
   // All information regarding a task can be found in the current isolate
   // object of that task, referenced from the static variable Isolate._current.
@@ -124,7 +128,6 @@ private:
   // Current profile ID.
   jint              _profile_id;
 #endif
-  jint              _use_profiler;
 
   // Number of Java classes loaded by this Task (including the
   // romized classes). This is equal to the number of non-null items
