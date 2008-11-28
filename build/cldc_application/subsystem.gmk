@@ -55,7 +55,7 @@ INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES += \
 INTERNAL_JSR_172_DEPENDENCIES += \
 	$(JSROP_JAR_DIR)/xmlparser.jar \
 	$(MOBILITY_PACK_JARS_DIR)/lib/cldcapi11.jar \
-	$(MOBILITY_PACK_JARS_DIR)/lib/midpapi20.jar \
+	$(MOBILITY_PACK_JARS_DIR)/lib/midpapi21.jar \
 
 INTERNAL_JSR_172_SG_RI_DEPENDENCIES += \
 	$(MOBILITY_PACK_JARS_DIR)/bin/schema2beansdev.jar \
@@ -114,12 +114,13 @@ $(JSR_172_BUILD_DIR)/jwc_properties.ini: $(CONFIGURATOR_JAR_FILE)
 		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesIni.xsl \
 		-out $@)
 
+INT_JSR_172_COMPONENT_STRING = "Component"
 $(JSR_172_GENERATED_DIR)/manifest.mf : $(JSR_172_GENERATED_DIR)
 	@echo "build $@ ..."
 	@echo "Manifest-Version: 1.0" > $@
-	@echo "MIDlet-Vendor: Sun Microsystems, Inc." >> $@
-	@echo "MIDlet-Name: jsr172" >> $@
-	@echo "MIDlet-Version: 1.0" >> $@
+	@echo "$(INT_JSR_172_COMPONENT_STRING)-Vendor: Sun Microsystems, Inc." >> $@
+	@echo "$(INT_JSR_172_COMPONENT_STRING)-Name: jsr172" >> $@
+	@echo "$(INT_JSR_172_COMPONENT_STRING)-Version: 1.0" >> $@
 	@echo "MicroEdition-Configuration: CLDC-1.1" >> $@
 	@echo "MicroEdition-Profile: MIDP-2.1" >> $@
 
