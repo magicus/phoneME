@@ -77,7 +77,7 @@ class AppSettingsUIImpl extends Form
         // create popup with available settings
         ValueChoice settings = appSettings.getSettings();
         if (settings.getCount() == 0) {
-            //no settings available
+            // no settings available
             return;
         }
         groupChoice = new RadioButtonSet(settings.getTitle(), true);
