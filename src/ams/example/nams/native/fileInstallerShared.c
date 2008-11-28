@@ -1426,6 +1426,7 @@ int fileInstaller(int argc, char* argv[]) {
             res = midp_suite_write_secure_resource(
                 suiteId, &VERIFY_HASH_RESOURCENAME,
                 verifyHash, verifyHashLen);
+            midpFree(verifyHash);
             if (res != 0) {
                 REPORT_ERROR(LC_AMS,
                   "Cannot store hash value for verified suite");
