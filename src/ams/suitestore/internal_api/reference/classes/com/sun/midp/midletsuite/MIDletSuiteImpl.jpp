@@ -244,7 +244,7 @@ public final class MIDletSuiteImpl implements MIDletSuite {
      * Checks for permission and throw an exception if not allowed.
      * May block to ask the user a question.
      *
-     * @param permission ID of the permission to check for,
+     * @param permissionStr ID of the permission to check for,
      *      the ID must be from
      *      {@link com.sun.midp.security.Permissions}
      * @param name name of the suite, %1 in the question

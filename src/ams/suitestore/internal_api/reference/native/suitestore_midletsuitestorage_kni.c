@@ -412,7 +412,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMidletSuiteFolderId) {
  * @param name name of the suite, as given in a JAD file
  *
  * @return ID of the midlet suite given by vendor and name or
- *         MIDletSuite.UNUSED_SUITE_ID if the suite doesn not exist
+ *         MIDletSuite.UNUSED_SUITE_ID if the suite does not exist
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSuiteID) {
@@ -433,7 +433,9 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSuiteID) {
         case SUITE_CORRUPTED_ERROR:
             KNI_ThrowNew(midpIOException, NULL);
             break;
-        case NOT_FOUND: /* this is ok, a new suite ID was created */
+        case NOT_FOUND:
+            suiteId = UNUSED_SUITE_ID;
+            break;
         default:
             break;
     }
@@ -1337,6 +1339,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_moveSuiteToFolder) {
  *     jarFilename - name of the downloaded MIDlet suite jar file;
  *     suiteName - name of the suite;
  *     suiteVendor - vendor of the suite;
+ *     suiteVersion - version of the suite;
  *     authPath - authPath if signed, the authorization path starting
  *                with the most trusted authority;
  *     domain - security domain of the suite;
@@ -1451,6 +1454,8 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
             &suiteData.varSuiteData.suiteName, tmpHandle);
         KNI_SAVE_PCSL_STRING_FIELD(javaInstallInfo, clazz, "suiteVendor",
             &suiteData.varSuiteData.suiteVendor, tmpHandle);
+        KNI_SAVE_PCSL_STRING_FIELD(javaInstallInfo, clazz, "suiteVersion",
+            &suiteData.varSuiteData.suiteVersion, tmpHandle);
         KNI_SAVE_INT_FIELD(javaInstallInfo, clazz, "expectedJarSize",
                            suiteData.jarSize);
         KNI_GetObjectField(javaInstallInfo,
@@ -1844,7 +1849,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSecureFilenameBase) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(tempHandle);
 
-    suiteId = KNI_GetParameterAsInt(1);
+    suiteId = (SuiteIdType)KNI_GetParameterAsInt(1);
     do {
 
         errorCode = build_suite_filename(suiteId, &PCSL_STRING_EMPTY, 
@@ -1869,3 +1874,46 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSecureFilenameBase) {
     KNI_EndHandlesAndReturnObject(tempHandle);
 }
 
+/**
+ * Checks the integrity of the suite storage database and of the
+ * installed suites.
+ *
+ * @param fullCheck 0 to check just an integrity of the database,
+ *                    other value for full check
+ * @param delCorruptedSuites != 0 to delete the corrupted suites,
+ *                           0 - to keep them (for re-installation).
+ *
+ * @return 0 if no errors,
+ *         1 if the suite database was corrupted but has been successfully
+ *           repaired,
+ *         a negative value if the database is corrupted and could not
+ *         be repaired
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_checkSuitesIntegrity) {
+    jboolean fullCheck, delCorruptedSuites, retCode;
+    MIDPError status;
+
+    fullCheck = KNI_GetParameterAsBoolean(1);
+    delCorruptedSuites = KNI_GetParameterAsInt(2);
+
+    status = midp_check_suites_integrity((fullCheck == KNI_TRUE),
+                                         (delCorruptedSuites == KNI_TRUE));
+
+    if (status == ALL_OK) {
+        retCode = 0;
+    } else if (status == SUITE_CORRUPTED_ERROR) {
+        retCode = 1;
+    } else {
+        retCode = (jint)status;
+        if (retCode > 0) {
+            /*
+             * to guarantee that this function will return a negative
+             * value in case of error
+             */
+            retCode = -retCode;
+        }
+    }
+
+    KNI_ReturnInt(retCode);
+}

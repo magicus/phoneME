@@ -64,6 +64,7 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.jsr075.FileConnectionCleanup;
 
 /**
  * An Installer manages MIDlet suites and libraries
@@ -161,7 +162,7 @@ public abstract class Installer {
 
     /** An alias for more state.installInfo to get more compact record. */
     protected InstallInfo info;
-
+    
     /** An alias for more state.suiteSettings to get more compact record. */
     protected SuiteSettings settings;
 
@@ -813,7 +814,8 @@ public abstract class Installer {
             }
 
             for (int i = 1; ; i++) {
-                midlet = state.getAppProperty("MIDlet-" + i);
+                String key = "MIDlet-" + i;
+                midlet = state.getAppProperty(key);
                 if (midlet == null) {
                     break;
                 }
@@ -829,8 +831,15 @@ public abstract class Installer {
                     verifyMIDlet(midletInfo.classname);
                 } catch (InvalidJadException ije) {
                     if (ije.getReason() == InvalidJadException.INVALID_VALUE) {
-                        postInstallMsgBackToProvider(
-                            OtaNotifier.INVALID_JAD_MSG);
+                        // The MIDlet-n attribute may present in Manifest only
+                        if (state.jadProps != null &&
+                                state.jadProps.getProperty(key) != null) {
+                            postInstallMsgBackToProvider(
+                                OtaNotifier.INVALID_JAD_MSG);
+                        } else {
+                            postInstallMsgBackToProvider(
+                                OtaNotifier.INVALID_JAR_MSG);
+                        }
                     } else {
                         postInstallMsgBackToProvider(
                             OtaNotifier.INVALID_JAR_MSG);
@@ -839,7 +848,7 @@ public abstract class Installer {
                 }
             }
 
-            // move on to the next step after a warning
+            // Move on to the next step after a warning
             state.nextStep++;
 
             // Check Manifest entries against .jad file
@@ -1064,6 +1073,36 @@ public abstract class Installer {
                             }
                         }
                     }
+
+                    /*
+                     * Check that if extended properties are present in jad
+                     * then they aare lso present in the manifest (their equality
+                     * was already checked by checkForJadManifestMismatches()).
+                     */
+                    String[] extKeys = {
+                        MIDletSuite.HEAP_SIZE_PROP,
+                        MIDletSuite.BACKGROUND_PAUSE_PROP,
+                        MIDletSuite.NO_EXIT_PROP,
+                        MIDletSuite.LAUNCH_BG_PROP,
+                        MIDletSuite.LAUNCH_POWER_ON_PROP
+                    };
+
+                    int midletNum = state.getNumberOfMIDlets();
+                    for (int i = 0; i < extKeys.length; i++) {
+                        for (int j = 1; j <= midletNum; j++) {
+                            String extKey = extKeys[i] + "-" + j;
+                            if (state.jadProps.getProperty(extKey) != null) {
+                                if (state.jarProps.getProperty(extKey) == null) {
+                                    postInstallMsgBackToProvider(
+                                        OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
+                                    throw new InvalidJadException(
+                                        InvalidJadException.ATTRIBUTE_MISMATCH,
+                                            extKey);
+                                }
+                            }
+                        }
+                    }
+
                 }
 
                 /*
@@ -1578,6 +1617,10 @@ public abstract class Installer {
                 OtaNotifier.INVALID_JAD_MSG);
             throw new
                 InvalidJadException(InvalidJadException.INVALID_VERSION);
+        } catch (MIDletSuiteLockedException msle) {
+            // this was an attempt to update a locked suite, set the correct ID
+            info.id = id;
+            throw msle;
         }
     }
 
@@ -1735,6 +1778,34 @@ public abstract class Installer {
     protected abstract boolean isSameUrl(String url1, String url2);
 
     /**
+     * The method checks if it's necessary to clean up file connection
+     * data upon suite.
+     *
+     * It detects whether JSR-75 is included, if so, invokes dedicated JSR's
+     * class.
+     *
+     * @param suiteId ID of suite to check data presence for
+     * @return true if JSR data exists for the suite, false otherwise
+     */
+    private static boolean FileConnectionHasPrivateData(int suiteId) {
+        FileConnectionCleanup fcc;
+
+        try {
+            Class fccClass =
+                Class.forName("com.sun.midp.jsr075.FileConnectionCleanupImpl");
+            fcc = (FileConnectionCleanup)(fccClass.newInstance());
+        } catch (ClassNotFoundException cnfe){
+            return false;
+        } catch (IllegalAccessException iae) {
+            return false;
+        } catch (InstantiationException ie) {
+            return false;
+        }
+
+        return fcc.suiteHasPrivateData(suiteId);
+    }
+
+    /**
      * If this is an update, make sure the RMS data is handle correctly
      * according to the OTA spec.
      * <p>
@@ -1771,7 +1842,8 @@ public abstract class Installer {
      * @exception IOException if the install is stopped
      */
     protected void processPreviousRMS() throws IOException {
-        if (!RecordStoreFactory.suiteHasRmsData(info.id)) {
+        if (!RecordStoreFactory.suiteHasRmsData(info.id) &&
+                !FileConnectionHasPrivateData(info.id)) {
             return;
         }
 
@@ -2104,7 +2176,7 @@ public abstract class Installer {
      * @exception NumberFormatException if either <code>ver1</code> or
      * <code>ver2</code> contain characters that are not numbers or periods
      */
-    private static int vercmp(String ver1, String ver2)
+    protected static int vercmp(String ver1, String ver2)
             throws NumberFormatException {
         String strVal1;
         String strVal2;
@@ -2190,7 +2262,7 @@ public abstract class Installer {
      * @exception NumberFormatException if <code>ver</code>
      *     contains any characters that are not numbers or periods
      */
-    private static void checkVersionFormat(String ver)
+    protected static void checkVersionFormat(String ver)
             throws NumberFormatException {
         int length;
         int start = 0;
@@ -3004,10 +3076,14 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      * @return suite's name that will be displayed to the user
      */
     public String getDisplayName() {
-        String displayName = getAppProperty(MIDletSuite.SUITE_NAME_PROP);
+        String displayName = installInfo.displayName;
 
-        if (displayName == null) {
-            displayName = String.valueOf(installInfo.id);
+        if (displayName == null || "".equals(displayName)) {
+            displayName = getAppProperty(MIDletSuite.SUITE_NAME_PROP);
+
+            if (displayName == null) {
+                displayName = String.valueOf(installInfo.id);
+            }
         }
 
         return displayName;

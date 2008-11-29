@@ -246,6 +246,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             // and return true on the initial traverse, false on subsequent
             // traverses
             if (popupLayer.isPopupOpen()) {
+                traversedIn = true;
                 ret = super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
             } else {
                  visRect[X] = 0;
@@ -731,7 +732,11 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 //                setBackground(sbVisible ? null : ChoiceGroupSkin.IMAGE_POPUP_BG,
 //                              ChoiceGroupSkin.COLOR_BG);
             }
-            updatePopupLayer(viewable[Y]);
+            int newY = viewable[Y];
+            if (newY > viewable[HEIGHT] - viewport[HEIGHT]) {
+                newY = viewable[HEIGHT] - viewport[HEIGHT];
+            }
+            updatePopupLayer(newY);
         }
 
         /**

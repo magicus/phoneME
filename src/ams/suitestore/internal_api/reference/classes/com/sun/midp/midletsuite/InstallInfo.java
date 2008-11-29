@@ -58,6 +58,9 @@ public class InstallInfo {
     /** Name of the suite. */
     public String suiteName;
 
+    /** User-friendly name of the suite or component being installed. */
+    public String displayName;
+
     /** Vendor of the suite. */
     public String suiteVendor;
 

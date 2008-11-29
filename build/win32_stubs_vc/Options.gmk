@@ -121,8 +121,9 @@ USE_VERIFY_ONCE         = false
 # EXTENDED MIDLET ATTRIBUTES
 USE_EXTENDED_ATTRIBUTES = false
 
-# Links
-USE_LINKS               = true
-
 # ABB
 USE_MIDP_ABB            = false
+
+# Auto tester
+USE_AUTOTESTER          = true
+

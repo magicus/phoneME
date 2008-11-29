@@ -120,7 +120,9 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getComponentId) {
         case SUITE_CORRUPTED_ERROR:
             KNI_ThrowNew(midpIOException, NULL);
             break;
-        case NOT_FOUND: /* this is ok, a new component ID was created */
+        case NOT_FOUND:
+            componentId = UNUSED_COMPONENT_ID;
+            break;
         default:
             break;
     }
@@ -154,6 +156,8 @@ delete_components_files(SuiteIdType suiteId, ComponentIdType componentId) {
     /* handle the list entries having the given suiteId */
     while (pData != NULL) {
         if (pData->suiteId == suiteId) {
+            suiteFound = 1;
+            
             if (pData->type == COMPONENT_DYNAMIC &&
                     (componentId == UNUSED_COMPONENT_ID ||
                         pData->componentId == componentId)) {
@@ -165,15 +169,18 @@ delete_components_files(SuiteIdType suiteId, ComponentIdType componentId) {
                 }
 
                 storage_delete_file(&pszError, &componentFileName);
-                pcsl_string_free(&componentFileName);
 
                 if (pszError != NULL) {
                     storageFreeError(pszError);
-                    status = IO_ERROR;
-                    break;
+                    /* it's an error only if the file exists */
+                    if (storage_file_exists(&componentFileName)) {
+                        status = IO_ERROR;
+                        pcsl_string_free(&componentFileName);
+                        break;
+                    }
                 }
-            } else {
-                suiteFound = 1;
+
+                pcsl_string_free(&componentFileName);
             }
         }
 
@@ -368,6 +375,10 @@ KNIDECL(
                                      "displayName",
                                       &(pData->varSuiteData.displayName),
                                       tmpHandle);
+        KNI_RESTORE_PCSL_STRING_FIELD(componentInfoObject, componentInfoClass,
+                                     "version",
+                                      &(pData->varSuiteData.suiteVersion),
+                                      tmpHandle);
         KNI_RESTORE_BOOLEAN_FIELD(componentInfoObject, componentInfoClass,
                                   "trusted", pData->isTrusted);
     } while (0);
@@ -437,6 +448,11 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getSuiteComponentsList)
                                       componentObjClass,
                                       "displayName",
                                       &(pData->varSuiteData.displayName),
+                                      tmpHandle);
+                KNI_RESTORE_PCSL_STRING_FIELD(componentObj,
+                                      componentObjClass,
+                                      "version",
+                                      &(pData->varSuiteData.suiteVersion),
                                       tmpHandle);
 
                 numberOfComponents++;

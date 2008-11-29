@@ -24,6 +24,15 @@
  * information or have any questions.
  */
 
+
+/**
+ * IMPL_NOTE: 
+ * This locking mechanism is used for ports that doesn't have 
+ * AbstractRecordStoreLock interface implemented (currently, 
+ * MIDP on CDC). In this case, only exclusive record store 
+ * usage is allowed (see comment below).
+ */
+
 /**
  * @file
  *

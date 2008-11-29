@@ -127,7 +127,8 @@ EXTRA_CFLAGS	+= -Werror
 endif
 endif
 
-EXTRA_CFLAGS	+= -W -Wall
+include $(MIDP_DIR)/build/common/makefiles/gcc-warnings.gmk
+
 EXTRA_CFLAGS	+= -DGCC
 
 ifeq ($(TARGET_VM), cdc_vm)
@@ -159,3 +160,8 @@ ifeq ($(USE_NATIVE_PROFILER), false)
 EXTRA_CFLAGS	+= -s -fomit-frame-pointer
 endif
 endif
+
+# command to display information about GCC
+DISPLAY_CC_VERSION = `$(CC) --version | head -n 1`
+DISPLAY_CPP_VERSION = `$(CPP) --version | head -n 1`
+

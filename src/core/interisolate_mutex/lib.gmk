@@ -62,7 +62,8 @@ SUBSYSTEM_INTERISOLATE_MUTEX_NATIVE_FILES += \
     javautil_interisolate_mutex_kni.c
 
 ifeq ($(USE_I3_TEST), true)
-#SUBSYSTEM_INTERISOLATE_MUTEX_I3TEST_JAVA_FILES = \
-#$(INTERISOLATE_MUTEX_DIR)/reference/i3test/com/sun/midp/util/TestInterIsolateMutex.java \
-#$(INTERISOLATE_MUTEX_DIR)/reference/i3test/com/sun/midp/util/InterIsolateMutexTestIsolate.java
+SUBSYSTEM_INTERISOLATE_MUTEX_I3TEST_JAVA_FILES = \
+    $(INTERISOLATE_MUTEX_DIR)/reference/i3test/com/sun/midp/util/isolate/TestInterIsolateMutex.java \
+    $(INTERISOLATE_MUTEX_DIR)/reference/i3test/com/sun/midp/util/isolate/SecurityTokenProvider.java \
+    $(INTERISOLATE_MUTEX_DIR)/reference/i3test/com/sun/midp/util/isolate/InterIsolateMutexTestIsolate.java
 endif

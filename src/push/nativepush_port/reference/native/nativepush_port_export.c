@@ -35,7 +35,6 @@
 #include <jvmspi.h>
 #include <jvm.h>
 #include <sni.h>
-
 #include <java_types.h>
 #include <nativepush_port_export.h>
 
@@ -77,12 +76,9 @@ MIDP_ERROR midpport_push_register_connection(SuiteIdType suiteId,
  *        MIDP_ERROR_PERMISSION_DENIED - if the connection was registered by another MIDlet suite
  */
 MIDP_ERROR midpport_push_unregister_connection(SuiteIdType suiteId,
-                                               jchar* connection,
-                                               jint connectionLen) {
+                                               pcsl_string* connection) {
     (void)suiteId;
-    (void)connection;
-    (void)connectionLen;
-
+    (void)connection.;
     return MIDP_ERROR_NONE;
 }
 
@@ -127,11 +123,10 @@ MIDP_ERROR midpport_push_list_entries(SuiteIdType suiteId,
  *        MIDP_ERROR_SUITE_NOT_FOUND
  */
 MIDP_ERROR midpport_push_register_alarm(SuiteIdType suiteId,
-                                        jchar* midlet, jint midletLen,
+                                        pcsl_string* midlet,
                                         jlong time, jlong* previousTime) {
     (void)suiteId;
     (void)midlet;
-    (void)midletLen;
     (void)time;
     (void)previousTime;
 

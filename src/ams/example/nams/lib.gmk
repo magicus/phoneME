@@ -191,8 +191,12 @@ $(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/batch/%
 	$(A)chmod +x $@
 
 SUBSYSTEM_AMS_EXECUTABLES += \
-	$(BINDIR)/autotest$(g)$(BAT) \
 	$(BINDIR)/installMidlet$(g)$(BAT)
+
+ifeq ($(USE_AUTOTESTER), true)
+  SUBSYSTEM_AMS_EXECUTABLES += \
+	$(BINDIR)/autotest$(g)$(BAT)
+endif
 
 ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_AMS_EXECUTABLES += \

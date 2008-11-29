@@ -39,6 +39,7 @@ import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.EventQueue;
 import com.sun.midp.events.NativeEvent;
 import com.sun.midp.main.MIDletSuiteUtils;
+import com.sun.cldchi.jvm.JVM;
 
 import java.io.IOException;
 
@@ -95,6 +96,8 @@ final public class AMSServicesImpl implements AMSServices {
         MIDletSuite currSuite = msh.getMIDletSuite();
 
         try {
+            // unlock the component if it exists and belongs to this suite
+            JVM.flushJarCaches();
             componentId = installer.installComponent(currSuite.getID(),
                                                      url, name);
         } catch (MIDletSuiteLockedException msle) {
@@ -133,6 +136,8 @@ final public class AMSServicesImpl implements AMSServices {
         DynamicComponentStorage dcs =
                 DynamicComponentStorage.getComponentStorage();
         try {
+            // unlock the component if it exists and belongs to this suite
+            JVM.flushJarCaches();
             dcs.removeComponent(componentId);
         } catch (MIDletSuiteLockedException msle) {
             throw new IOException("Component is in use: " + msle.getMessage());
@@ -156,6 +161,8 @@ final public class AMSServicesImpl implements AMSServices {
                 DynamicComponentStorage.getComponentStorage();
 
         try {
+            // unlock the component if it exists and belongs to this suite
+            JVM.flushJarCaches();
             dcs.removeAllComponents(currSuite.getID());
         } catch (MIDletSuiteLockedException msle) {
             throw new IOException("One or more components are in use: "
@@ -212,8 +219,7 @@ final public class AMSServicesImpl implements AMSServices {
         DynamicComponentStorage dcs =
                 DynamicComponentStorage.getComponentStorage();
 
-        ComponentInfo ci = new ComponentInfoImpl(
-                ComponentInfo.UNUSED_COMPONENT_ID, MIDletSuite.UNUSED_SUITE_ID);
+        ComponentInfo ci = new ComponentInfoImpl();
         dcs.getComponentInfo(componentId, ci);
 
         return ci;

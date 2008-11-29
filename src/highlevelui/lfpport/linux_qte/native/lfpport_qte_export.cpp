@@ -137,6 +137,9 @@ jboolean lfpport_reverse_orientation(int hardwareId)
     return res;
 }
 
+void lfpport_handle_clamshell_event(){
+}
+
 jboolean lfpport_get_reverse_orientation(int hardwareId)
 {
   (void)hardwareId;

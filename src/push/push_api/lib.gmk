@@ -64,11 +64,16 @@ vpath % $(SUBSYSTEM_PUSH_DIR)/push_api/$(LIB_PUSH_API_IMPL)/native
 # Java files for the ( push ) subsystem
 #
 ifeq ($(USE_NATIVE_PUSH), true)
-    # NOTE: as currently NAMS push is stubbed there is no native files to build
-    SUBSYSTEM_PUSH_API_NATIVE_FILES =
+    # Shared file for non stub configurations
+    SHARED_JAVA_FILES += \
+        $(SUBSYSTEM_PUSH_DIR)/push_api/javapush/classes/com/sun/midp/io/j2me/push/ProtocolPush.java
     
-    SUBSYSTEM_PUSH_API_JAVA_FILES += \
+    SUBSYSTEM_PUSH_API_NATIVE_FILES = \
+            push_registry_impl_kni.c
+
+   SUBSYSTEM_PUSH_API_JAVA_FILES += $(SHARED_JAVA_FILES) \
         $(SUBSYSTEM_PUSH_DIR)/push_api/nativepush/classes/javax/microedition/io/PushRegistry.java \
+        $(SUBSYSTEM_PUSH_DIR)/push_api/nativepush/classes/com/sun/midp/io/j2me/push/PushRegistryImpl.java \
         $(SUBSYSTEM_PUSH_DIR)/push_api/nativepush/classes/com/sun/midp/io/j2me/push/PushRegistryInternal.java
 else
     # Shared file for non stub configurations

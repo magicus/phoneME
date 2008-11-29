@@ -54,8 +54,6 @@ public class VirtualKeyboardResources {
             return;
         }
 
-        VirtualKeyboardSkin.WIDTH = SkinLoader.getInt(
-                SkinPropertiesIDs.KEYBOARD_WIDTH);
         VirtualKeyboardSkin.HEIGHT = SkinLoader.getInt(
                 SkinPropertiesIDs.KEYBOARD_HEIGHT);
 

@@ -919,9 +919,7 @@ public class MIDletProxyList
                 midletIsolateId,
                 midletDisplayId);
 
-        if (nextForeground != null) {
-            setForegroundMIDlet(nextForeground);
-        }
+        setForegroundMIDlet(nextForeground);
     }
 
     /**

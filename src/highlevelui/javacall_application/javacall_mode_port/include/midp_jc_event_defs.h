@@ -78,6 +78,9 @@ extern "C" {
 #ifdef ENABLE_JSR_256
 #include "javacall_sensor.h"
 #endif /* ENABLE_JSR_256 */
+#ifdef ENABLE_JSR_257
+#include <javacall_contactless.h>
+#endif /* ENABLE_JSR_257 */
 
 
 #define MIDP_RUNMIDLET_MAXIMUM_ARGS 10
@@ -149,6 +152,7 @@ typedef enum {
 #endif /* ENABLE_ON_DEVICE_DEBUG */
     MIDP_JC_EVENT_ROTATION             ,
     MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED,
+	MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED,
     MIDP_JC_EVENT_MENU_SELECTION,
     MIDP_JC_EVENT_SET_VM_ARGS          ,
     MIDP_JC_EVENT_SET_HEAP_SIZE        ,
@@ -169,10 +173,15 @@ typedef enum {
     JSR290_JC_EVENT_FLUID_LISTENER_PERCENTAGE,
     JSR290_JC_EVENT_FLUID_LISTENER_STARTED,
     JSR290_JC_EVENT_FLUID_LISTENER_WARNING,
+    JSR290_JC_EVENT_FLUID_REQUEST_RESOURCE,
+    JSR290_JC_EVENT_FLUID_CANCEL_REQUEST,
 #endif /*ENABLE_JSR_290*/
+#ifdef ENABLE_JSR_257
+    JSR257_JC_EVENT_CONTACTLESS, 
+#endif /*ENABLE_JSR_257*/
 } midp_jc_event_type;
 
-
+ 
 typedef struct {
     int stub;
 } midp_event_volume;
@@ -193,6 +202,7 @@ typedef enum {
     MIDP_CARDDEVICE_UNLOCK
 } midp_carddevice_event_type;
 #endif /* ENABLE_JSR_177 */
+
 typedef struct {
     javacall_key             key; /* '0'-'9','*','# */
     javacall_keypress_type  keyEventType; /* presed, released, repeated ... */
@@ -240,6 +250,10 @@ typedef struct {
     int            hardwareId;
     int            state;
 } midp_jc_event_display_device;
+
+typedef struct {
+    int            state;
+} midp_jc_event_clamshell;
 
 #ifdef ENABLE_JSR_120
 typedef struct {
@@ -336,6 +350,7 @@ typedef struct {
 #ifdef ENABLE_JSR_290
 typedef struct {
     javacall_handle             fluid_image;
+    javacall_handle             spare;
     javacall_utf16_string       text;
     float                       percentage;
     javacall_result             result;
@@ -368,6 +383,13 @@ typedef struct {
 } midp_jc_event_carddevice;
 #endif /* ENABLE_JSR_177 */
 
+#ifdef ENABLE_JSR_257
+typedef struct {
+    jsr257_contactless_event_type eventType;
+    javacall_handle eventData;
+} jsr257_jc_event_contactless;
+#endif /* ENABLE_JSR_257 */
+
 typedef struct {
     char* phoneNumber;
 } midp_jc_event_phonebook;
@@ -391,6 +413,7 @@ typedef struct {
         midp_jc_event_timer                timerEvent;
         midp_jc_event_push                 pushEvent;
         midp_jc_event_display_device       displayDeviceEvent;
+		midp_jc_event_clamshell            clamshellEvent;
 #ifdef ENABLE_JSR_120
         midp_jc_event_sms_sending_result   smsSendingResultEvent;
         midp_jc_event_sms_incoming         smsIncomingEvent;
@@ -437,6 +460,11 @@ typedef struct {
 #ifdef ENABLE_JSR_290
         jsr290_jc_event_fluid              jsr290FluidEvent;
 #endif /* ENABLE_JSR_290 */
+
+#ifdef ENABLE_JSR_257
+        jsr257_jc_event_contactless        jsr257Event;
+#endif /* ENABLE_JSR_257 */
+
         midp_jc_event_menu_selection    menuSelectionEvent;
     } data;
 

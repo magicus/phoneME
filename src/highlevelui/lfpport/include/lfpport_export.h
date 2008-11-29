@@ -60,6 +60,10 @@ void lfpport_set_fullscreen_mode(int hardwareId, jboolean mode);
 jboolean lfpport_reverse_orientation(int hardwareId);
 
 /**
+ * Handle clamshell event
+ */
+void lfpport_handle_clamshell_event();
+/**
  * Get screen orientation flag
  */
 jboolean lfpport_get_reverse_orientation(int hardwareId);

@@ -977,7 +977,6 @@ javanotify_ams_suite_get_info(javacall_suite_id suiteId,
             pTmpSuiteInfo->suiteName = NULL;
         }
 
-        /*
         if (!pcsl_string_is_null(&pMidpSuiteData->varSuiteData.suiteVersion)) {
             status = midp_pcsl_str2javacall_str(
                 &pMidpSuiteData->varSuiteData.suiteVersion,
@@ -988,9 +987,6 @@ javanotify_ams_suite_get_info(javacall_suite_id suiteId,
         } else {
             pTmpSuiteInfo->suiteVersion = NULL;
         }
-        */
-
-        pTmpSuiteInfo->suiteVersion = NULL;
     } while (0);
 
     if (status != ALL_OK) {

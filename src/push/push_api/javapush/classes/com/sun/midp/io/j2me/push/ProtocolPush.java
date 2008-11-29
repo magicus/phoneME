@@ -164,7 +164,7 @@ public abstract class ProtocolPush {
         }
 
         if (checkPort && url.port == -1) {
-            new IllegalArgumentException("Port missing");
+            throw new IllegalArgumentException("Port missing");
         }
     }
 

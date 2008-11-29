@@ -101,6 +101,11 @@ extern int winceapp_get_screen_height();
 extern jboolean winceapp_reverse_orientation();
 
 /**
+ * Handle clamshell event
+ */
+extern void winceapp_hadle_clamshell_event();
+
+/**
  * Get screen rotation flag
  */
 extern jboolean winceapp_get_reverse_orientation();

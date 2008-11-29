@@ -435,6 +435,12 @@ jboolean win32app_get_reverse_orientation() {
 }
 
 /**
+ * Handle clamshell events
+ */
+void win32app_handle_clamshell_event() {
+}
+
+/**
  * Set full screen mode on/off
  */
 void win32app_set_fullscreen_mode(jboolean mode) {

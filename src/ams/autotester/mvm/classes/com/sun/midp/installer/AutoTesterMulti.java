@@ -86,12 +86,11 @@ import com.sun.midp.log.LogChannels;
  * If arg-0 is not given then a form will be used to query the tester for
  * the arguments.</p>
  */
-public class AutoTesterMulti extends AutoTesterBase
-        implements AutoTesterInterface {
-    /**
-     * Info about suites to install
-     */
-    Vector installList = new Vector();
+public final class AutoTesterMulti extends AutoTesterBase 
+    implements Runnable {
+
+    /** AutoTesterMultiHelper instance */
+    private AutoTesterMultiHelper helper;
 
     /**
      * Create and initialize a new auto tester MIDlet.
@@ -100,9 +99,6 @@ public class AutoTesterMulti extends AutoTesterBase
         super();
 
         if (url != null) {
-            startBackgroundTester();
-        } else if (restoreSession()) {
-            // continuation of a previous session
             startBackgroundTester();
         } else {
             /**
@@ -114,250 +110,34 @@ public class AutoTesterMulti extends AutoTesterBase
         }
     }
 
-    /** Run the installer. */
+    /** 
+     * Runs the installer. 
+     */
     public void run() {
-        installAndPerformTests(midletSuiteStorage, installer, url);
-    }
-
-    /**
-     * Restore the data from the last session, since this version of the
-     * autotester does not have sessions it just returns false.
-     *
-     * @return true if there was data saved from the last session
-     */
-    public boolean restoreSession() {
-        return false;
-    }
-
-    /**
-     * Get list of test suites, for each suite start a thread
-     * that performs testing, wait until all threads have finished.
-     *
-     * @param inp_storage MIDletSuiteStorage object
-     * @param inp_installer Installer object
-     * @param inp_url URL for the html page with links to suites
-     */
-    public void installAndPerformTests(
-        MIDletSuiteStorage inp_storage,
-        Installer inp_installer, String inp_url) {
-
-        fetchInstallList(url);
-        int totalSuites = installList.size();
-        if (totalSuites > 0) {
-            Thread[] threads = new Thread[totalSuites];
-
-            // create threads
-            for (int i = 0; i < totalSuites; i++) {
-                SuiteDownloadInfo suite =
-                    (SuiteDownloadInfo)installList.elementAt(i);
-                threads[i] = new Thread(new AutoTesterRunner(
-                    suite.url, inp_storage, inp_installer));
-            }
-
-            // start threads
-            for (int i = 0; i < totalSuites; i++) {
-                threads[i].start();
-            }
-
-            // wait for threads to finish
-            for (int i = 0; i < totalSuites; i++) {
-                try {
-                    threads[i].join();
-                } catch (Exception ex) {
-                    // just ignore
-                }
-            }
-
-            notifyDestroyed();
-            return;
-        }
+        helper.installAndPerformTests();
+        notifyDestroyed();        
     }
 
 
     /**
-     * Go to given URL, fetch and parse html page with links
-     * to tests suites. If there was error while fetching
-     * or parsing, display an alert.
-     *
-     * @param url URL for html page with links to suites
+     * Starts the background tester.
      */
-    private void fetchInstallList(String url) {
-        StreamConnection conn = null;
-        InputStreamReader in = null;
-        String errorMessage;
+    void startBackgroundTester() {
+        helper = new AutoTesterMultiHelper(this, url, domain, loopCount);       
+        new Thread(this).start();
+    }   
 
-        try {
-            conn = (StreamConnection)Connector.open(url, Connector.READ);
-            in = new InputStreamReader(conn.openInputStream());
-            try {
-                installList = SuiteDownloadInfo.getDownloadInfoFromPage(in);
-                if (installList.size() > 0) {
-                    return;
-                }
-                errorMessage = Resource.getString(
-                        ResourceConstants.AMS_DISC_APP_CHECK_URL_MSG);
-            } catch (IllegalArgumentException ex) {
-                errorMessage = Resource.getString(
-                        ResourceConstants.AMS_DISC_APP_URL_FORMAT_MSG);
-            } catch (Exception ex) {
-                errorMessage = ex.getMessage();
-            }
-        } catch (Exception ex) {
-            errorMessage = Resource.getString(
-                    ResourceConstants.AMS_DISC_APP_CONN_FAILED_MSG);
-        } finally {
-            try {
-                conn.close();
-                in.close();
-            } catch (Exception e) {
-                if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                    Logging.report(Logging.WARNING, LogChannels.LC_AMS,
-                            "close threw an Exception");
-                }
-            }
-        }
-
+    /**
+     * Displays message about error that happened during 
+     * fetching list of suites to run.
+     *
+     * @param message message to display
+     */
+    void displayFetchInstallListError(String message) {
         Alert a = new Alert(Resource.getString(ResourceConstants.ERROR),
-                errorMessage, null, AlertType.ERROR);
+                message, null, AlertType.ERROR);
         a.setTimeout(Alert.FOREVER);
         display.setCurrent(a);
-    }
-
-
-    /**
-     * An runnable class that runs specified test suite in a loop.
-     */
-    private class AutoTesterRunner implements Runnable {
-        /**
-         * Number of retries to fetch a suite from given URL before exiting
-         */
-        private final static int MAX_RETRIES = 20;
-
-        /**
-         * Time to wait before trying to fetch a suite again
-         */
-        private final static int RETRY_WAIT_TIME = 30000;
-
-        /**
-         * URL for the test suite
-         */
-        private String url;
-
-        /**
-         * MIDletSuiteStorage object
-         */
-        MIDletSuiteStorage storage;
-
-        /**
-         * Installer object
-         */
-        Installer installer;
-
-
-        /**
-         * Constructor.
-         *
-         * @param theUrl URL for the test suite
-         * @param theStorage MIDletSuiteStorage object to use
-         * @param theInstaller Installer object to use
-         */
-        private AutoTesterRunner(String theUrl,
-                MIDletSuiteStorage theStorage, Installer theInstaller) {
-            url = theUrl;
-            storage = theStorage;
-            installer = theInstaller;
-        }
-
-        /**
-         * In a loop, install/update the suite and run it until
-         * new version of the suite is not found.
-         */
-        public void run() {
-            // when installing suite for the first time,
-            // do not retry because URL may be wrong and
-            // we want immediately tell user about it.
-            boolean retry = false;
-            boolean hasSuite = true;
-
-            int suiteId = MIDletSuite.UNUSED_SUITE_ID;
-            int lastSuiteId = MIDletSuite.UNUSED_SUITE_ID;
-
-            MIDletInfo midletInfo;
-            Isolate testIsolate;
-
-            for (; loopCount != 0 && hasSuite; ) {
-                suiteId = installSuite(retry);
-                if (suiteId != MIDletSuite.UNUSED_SUITE_ID) {
-                    midletInfo = getFirstMIDletOfSuite(suiteId, storage);
-                    testIsolate = AmsUtil.startMidletInNewIsolate(suiteId,
-                            midletInfo.classname, midletInfo.name, null,
-                            null, null);
-
-                    testIsolate.waitForExit();
-
-                    if (loopCount > 0) {
-                        loopCount -= 1;
-                    }
-
-                    lastSuiteId = suiteId;
-
-                    // suite has been found, so URL isn't wrong.
-                    // next time if there is no suite, do retries.
-                    retry = true;
-                } else {
-                    hasSuite = false;
-                }
-            }
-
-            if (midletSuiteStorage != null &&
-                    lastSuiteId != MIDletSuite.UNUSED_SUITE_ID) {
-                try {
-                    midletSuiteStorage.remove(lastSuiteId);
-                } catch (Throwable ex) {
-                    // ignore
-                }
-            }
-        }
-
-        /**
-         * Install the suite.
-         *
-         * @param retry if true, do a number of retries to
-         * install a suite in case it hasn't been found.
-         *
-         * @return suiteId if the suite has been installed
-         */
-        private int installSuite(boolean retry) {
-            int maxRetries = retry? MAX_RETRIES : 1;
-            int retryCount = 0;
-            int suiteId = MIDletSuite.UNUSED_SUITE_ID;
-
-            for (; retryCount < maxRetries; ++retryCount) {
-                try {
-                    synchronized (installer) {
-                        // force an overwrite and remove the RMS data
-                        suiteId = installer.installJad(url,
-                            Constants.INTERNAL_STORAGE_ID, true,
-                                true, null);
-                    }
-                    return suiteId;
-
-                } catch (Throwable t) {
-                    // if retrying, just ignore exception and wait,
-                    // otherwise display error message to user.
-                    if (retry) {
-                        try {
-                            Thread.sleep(RETRY_WAIT_TIME);
-                        } catch (Exception ex) {
-                        }
-                    } else {
-                        handleInstallerException(suiteId, t);
-                    }
-                }
-            }
-
-            return MIDletSuite.UNUSED_SUITE_ID;
-        }
     }
 }
 

@@ -41,10 +41,6 @@ AUTOTESTER_DIR = $(SUBSYSTEM_AMS_DIR)/$(AUTOTESTER_NAME)
 # JavaDoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AUTOTESTER_DIR)/classes
 
-# Statically include interfaces to be available for all implementations
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AUTOTESTER_DIR)/classes/com/sun/midp/installer/AutoTesterInterface.java
-
 # IMPL NOTE: Use library configuration file to select switch library
 #
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
@@ -54,3 +50,4 @@ else
 endif
 
 include $(AUTOTESTER_IMPL_DIR)/lib.gmk
+

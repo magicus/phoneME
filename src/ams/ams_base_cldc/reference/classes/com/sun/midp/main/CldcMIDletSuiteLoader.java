@@ -43,10 +43,10 @@ import com.sun.midp.installer.ManifestProperties;
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
 import com.sun.midp.jarutil.JarReader;
 import com.sun.midp.log.*;
-import com.sun.midp.main.Configuration;
 import com.sun.midp.publickeystore.WebPublicKeyStore;
 import com.sun.midp.util.Properties;
 import com.sun.midp.rms.RmsEnvironment;
+import com.sun.midp.rms.RecordStoreRegistry;
 
 
 /**
@@ -130,6 +130,13 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
         MidletSuiteContainer msc = 
                 new MidletSuiteContainer(MIDletSuiteStorage.getMIDletSuiteStorage(internalSecurityToken));
         RmsEnvironment.init(internalSecurityToken, msc);
+    }
+
+    /** Final actions to finish a MIDlet suite loader */
+    protected void done() {
+        RecordStoreRegistry.shutdown(
+            internalSecurityToken);
+        super.done();
     }
 
     /**

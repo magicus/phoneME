@@ -76,6 +76,10 @@ class AppSettingsUIImpl extends Form
     private void loadApplicationSettings() {
         // create popup with available settings
         ValueChoice settings = appSettings.getSettings();
+        if (settings.getCount() == 0) {
+            // no settings available
+            return;
+        }
         groupChoice = new RadioButtonSet(settings.getTitle(), true);
         groupSettings = new RadioButtonSet[settings.getCount()];
         for (int i = 0; i < settings.getCount(); i++) {
@@ -187,14 +191,24 @@ class AppSettingsUIImpl extends Form
         setTitle(title);
         this.appSettings = appSettings;
         loadApplicationSettings();
-        addCommand(saveAppSettingsCmd);
+        if (groupChoice != null) {
+            setItemStateListener(this);
+            addCommand(saveAppSettingsCmd);
+        }
         addCommand(cancelCmd);
         setCommandListener(this);
 
-        setItemStateListener(this);
-        
         display.setCurrent(this);
     }
+
+    /**
+     * Returns the main displayable of the AppSettingsUI.
+     * @return main screen
+     */
+    public Displayable getMainDisplayable() {
+        return this;
+    }
+
 }
 
 /**

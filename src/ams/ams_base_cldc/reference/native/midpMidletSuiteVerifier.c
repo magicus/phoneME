@@ -126,6 +126,7 @@ KNIDECL(com_sun_midp_main_MIDletSuiteVerifier_checkJarHash) {
             if (hash_len == jar_hash_len) {
                 res = (memcmp(jar_hash, hash, hash_len) == 0);
             }
+            midpFree(jar_hash);
         } else if (status == MIDP_HASH_IO_ERROR) {
             KNI_ThrowNew(midpIOException, NULL);
         } else {

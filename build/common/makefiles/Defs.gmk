@@ -319,6 +319,7 @@ ifeq ($(USE_CLDC_11), true)
     JPP_DEFS	 += -DENABLE_CLDC_11
 else
     EXTRA_CFLAGS += -DENABLE_CLDC_11=0
+    JPP_DEFS	 += -DENABLE_CLDC_10
 endif
 
 ifeq ($(USE_VM_PROFILES), true)
@@ -360,6 +361,7 @@ endif
 
 ifeq ($(USE_ON_DEVICE_DEBUG), true)
    EXTRA_CFLAGS += -DENABLE_ON_DEVICE_DEBUG=1
+   JPP_DEFS += -DENABLE_ON_DEVICE_DEBUG
 else
    EXTRA_CFLAGS += -DENABLE_ON_DEVICE_DEBUG=0
 endif
@@ -388,16 +390,6 @@ else
    EXTRA_CFLAGS += -DENABLE_DYNAMIC_COMPONENTS=0
 endif
 
-ifeq ($(USE_MULTIPLE_ISOLATES), true)
-ifeq ($(USE_LINKS), true)
-   EXTRA_CFLAGS += -DENABLE_LINKS=1
-else
-   EXTRA_CFLAGS += -DENABLE_LINKS=0
-endif
-else
-   EXTRA_CFLAGS += -DENABLE_LINKS=0
-endif
-
 EXTRA_CFLAGS += -DPROJECT_NAME='"$(PROJECT_NAME)"'
 
 ifeq ($(USE_NATIVE_PROFILER), true)
@@ -405,12 +397,6 @@ ifeq ($(USE_NATIVE_PROFILER), true)
 else
    p =
 endif
-
-ifeq ($(USE_CLDC_RELEASE), true)
-   r = _r
-else 
-   r = 
-endif 
 
 ifeq ($(USE_DEBUG), true)
     EXTRA_CFLAGS += -DAZZERT=1 -DENABLE_DEBUG=1
@@ -426,6 +412,14 @@ else
     JAVAC_DEBUG = :none
     g = 
 endif
+
+ifeq ($(USE_CLDC_RELEASE), true)
+   cldc_g =
+   cldc_r = _r
+else 
+   cldc_g = $(g)
+   cldc_r = 
+endif 
 
 ifeq ($(USE_CONTROL_ARGS_FROM_JAD), true)
     EXTRA_CFLAGS += -DENABLE_CONTROL_ARGS_FROM_JAD=1

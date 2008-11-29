@@ -44,8 +44,10 @@ public class WashLayer extends CLayer {
     public void setVisible(boolean visible) {
         if (ScreenSkin.IMAGE_WASH != null) {
             super.setVisible(visible);
+            setSupportsInput(visible);
         } else {
             super.setVisible(false);
+            setSupportsInput(false);
         }
     }
     
@@ -71,5 +73,19 @@ public class WashLayer extends CLayer {
 	    } 
 	}
     }
+
+    /**
+     * Handle input from a pen tap.
+     * Wash layer filters all pointer event and doesn't pass them to layers under it
+     *     
+     * @param type the type of pen event
+     * @param x the x coordinate of the event
+     * @param y the y coordinate of the event
+     * @return
+     */
+    public boolean pointerInput(int type, int x, int y) {
+        return true;
+    }
+
 }
 

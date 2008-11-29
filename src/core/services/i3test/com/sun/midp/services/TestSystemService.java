@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -72,12 +72,12 @@ public class TestSystemService extends TestCase {
         public void run() {
             try {
                 // send test string to client
-                SystemServiceMessage msg = SystemServiceMessage.newMessage();
+                SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
                 msg.getDataOutput().writeUTF(testString);
                 con.send(msg);
 
                 // get a response string from client
-                msg = con.receive();
+                msg = (SystemServiceDataMessage)con.receive();
                 String responseString = msg.getDataInput().readUTF();
 
                 // compare strings
@@ -97,23 +97,12 @@ public class TestSystemService extends TestCase {
         SimpleSystemService service = new SimpleSystemService();
         manager.registerService(service);
 
-        SystemServiceRequestHandler requestHandler = 
-            new SystemServiceRequestHandler(manager);
-
-        Isolate serviceIsolate = Isolate.currentIsolate();
         Isolate clientIsolate = new Isolate(
                 "com.sun.midp.services.SystemServiceIsolate", null);
         clientIsolate.start();
 
-        IsolateSystemServiceRequestHandler isolateRequestHandler = 
-            requestHandler.newIsolateRequestHandler(clientIsolate);
-
-        Link namedPortalLink = Link.newLink(serviceIsolate, clientIsolate);
-        Link[] clientLinks = { namedPortalLink };
+        Link[] clientLinks = SystemServiceLinkPortal.establishLinksFor(clientIsolate, token);
         LinkPortal.setLinks(clientIsolate, clientLinks);
-        NamedLinkPortal.sendLinks(namedPortalLink);
-
-        requestHandler.handleIsolateRequests(isolateRequestHandler);
 
         clientIsolate.waitForExit();
         
@@ -136,11 +125,11 @@ public class TestSystemService extends TestCase {
 
         try {
             // receive string from service
-            SystemServiceMessage msg = con.receive();
+            SystemServiceDataMessage msg = (SystemServiceDataMessage)con.receive();
             String testString = msg.getDataInput().readUTF();
 
             // convert string to upper case and sent it back to service
-            msg = SystemServiceMessage.newMessage();
+            msg = SystemServiceMessage.newDataMessage();
             msg.getDataOutput().writeUTF(testString.toUpperCase());
             con.send(msg);
         } catch (Throwable t) {

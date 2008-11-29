@@ -279,16 +279,7 @@ InitializeEvents(void) {
     }
 
 #if ENABLE_MULTIPLE_ISOLATES
-    maxIsolates = getInternalPropertyInt("MAX_ISOLATES");
-    if (0 == maxIsolates) {
-        char maxIsolatesStr[5];
-        REPORT_INFO(LC_AMS, "MAX_ISOLATES property not set");
-        /* set XML constant value as property value */
-        maxIsolates = MAX_ISOLATES;
-        sprintf(maxIsolatesStr, "%d", maxIsolates);
-        setInternalProperty("MAX_ISOLATES", maxIsolatesStr);
-    }
-
+    maxIsolates = getMaxIsolates();
     /*
      * In MVM the first isolate has number 1, but 0 still can be returned
      * by midpGetAmsIsolate() if JVM is not running. So in MVM we allocate
