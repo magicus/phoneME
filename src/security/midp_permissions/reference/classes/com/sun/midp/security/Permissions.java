@@ -464,7 +464,7 @@ public final class Permissions {
      *
      * @return permission level
      */
-    public static byte getMaximumPermissionGroupLevel(byte[] levels,
+    public static byte getMaximumPermissionGroupLevel (byte[] levels,
             PermissionGroup group) {
         return getPermissionGroupLevelImpl(levels, group, false);
     }
@@ -810,7 +810,7 @@ public final class Permissions {
 
             level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createMutuallyExclusiveErrorMessage(group,
+                return createInsecureCombinationWarningMessage(group,
                         AUTO_INVOCATION_GROUP);
             }
         }
@@ -869,7 +869,7 @@ public final class Permissions {
             for (int i = 0; i < netGroups.length; i++) {
                 level = getPermissionGroupLevel(current, netGroups[i]);
                 if (level == BLANKET_GRANTED || level == BLANKET) {
-                    return createMutuallyExclusiveErrorMessage(
+                    return createInsecureCombinationWarningMessage(
                         AUTO_INVOCATION_GROUP, netGroups[i]);
                 }
             }
