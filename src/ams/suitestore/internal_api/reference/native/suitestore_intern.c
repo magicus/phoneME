@@ -534,7 +534,7 @@ read_suites_data(char** ppszError) {
     long bufferLen, pos;
     char* buffer = NULL;
     pcsl_string_status rc;
-    pcsl_string suitesDataFile = PCSL_STRING_NULL_INITIALIZER;
+    pcsl_string suitesDataFile;
     MidletSuiteData *pSuitesData = NULL;
     MidletSuiteData *pData, *pPrevData = NULL;
     int numOfSuites = 0;
