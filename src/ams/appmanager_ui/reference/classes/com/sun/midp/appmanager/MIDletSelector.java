@@ -82,9 +82,6 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
                                          (ResourceConstants.END),
                                          Command.ITEM, 1);
 
-    /** Index of the selected MIDlet, starts at -1 for non-selected. */
-    private int selectedMidlet = -1;
-
     /** List of midlets executed from this selector. */
     private Vector runningMidlets;
 
@@ -136,7 +133,8 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
 
     /**
      * Gets structure containing information about suite accessible by this
-     * selector
+     * selector.
+     * @return the suite info
      */
     public RunningMIDletSuiteInfo getSuiteInfo() {
         return suiteInfo;
@@ -206,18 +204,15 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
      * @param item the Item the command was on.
      */
     public void commandAction(Command c, Item item) {
-        if (c == launchCmd) {
-            synchronized (this) {
-                if (selectedMidlet != -1) {
-                    // the previous selected MIDlet is being launched
-                    return;
-                }
-                selectedMidlet =
-                    ((SelectorMIDletCustomItem)item).index;
-            }
+        int selected = ((SelectorMIDletCustomItem)item).index;
+        if (selected < 0 || selected >= mcount) {
+            return;
+        }
 
-            String midletClassName = minfo[selectedMidlet].classname;
-            if(runningMidlets.contains(midletClassName)) {
+        String midletClassName = minfo[selected].classname;
+        if (c == launchCmd) {
+
+            if (runningMidlets.contains(midletClassName)) {
                 manager.moveToForeground(suiteInfo, midletClassName);
                 return;
             }
@@ -228,17 +223,12 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
                 suiteInfo.releaseStorageLock();
             }
 
-            runningMidlets.addElement(minfo[selectedMidlet].classname);
-            manager.launchSuite(suiteInfo, minfo[selectedMidlet].classname);
-            selectedMidlet = -1;
+            manager.launchSuite(suiteInfo, midletClassName);
+            runningMidlets.addElement(midletClassName);
 
         } else if (c == endCmd) {
 
-            int selected = ((SelectorMIDletCustomItem)item).index;
-            if (selected >= 0 && selected < mform.size()) {
-                String midletClassName = minfo[selected].classname;
-                manager.exitMidlet(suiteInfo, midletClassName);
-            }
+            manager.exitMidlet(suiteInfo, midletClassName);
             display.setCurrent(mform);
         }
     }
