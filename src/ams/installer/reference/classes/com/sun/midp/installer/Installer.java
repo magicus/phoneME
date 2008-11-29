@@ -716,9 +716,11 @@ public abstract class Installer {
      * descriptor or jar file download
      * @exception InvalidJadException is thrown, if the descriptor file is not
      * properly formatted or does not contain the required
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     * already installed and is locked
      */
     private void installStep5()
-            throws IOException, InvalidJadException {
+            throws IOException, InvalidJadException, MIDletSuiteLockedException {
         int bytesDownloaded;
         MIDletInfo midletInfo;
         String midlet;
@@ -897,6 +899,10 @@ public abstract class Installer {
 
             if (e instanceof IOException) {
                 throw (IOException)e;
+            }
+
+            if (e instanceof MIDletSuiteLockedException) {
+                throw (MIDletSuiteLockedException)e;
             }
 
             if (e instanceof RuntimeException) {
