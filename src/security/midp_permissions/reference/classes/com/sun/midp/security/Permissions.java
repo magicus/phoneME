@@ -817,8 +817,8 @@ public final class Permissions {
 
             level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException("mutual excluseve combination was considered " +
-                        "to be just potentially dangerous combination ");
+                throw new SecurityException("mutually exclusive combination was considered " +
+                        "to be just potentially dangerous combination");
             }
         }
 
@@ -876,8 +876,8 @@ public final class Permissions {
             for (int i = 0; i < netGroups.length; i++) {
                 level = getPermissionGroupLevel(current, netGroups[i]);
                 if (level == BLANKET_GRANTED || level == BLANKET) {
-                    throw new SecurityException("mutual excluseve combination was considered " +
-                            "to be just potentially dangerous combination ");
+                    throw new SecurityException("mutually exclusive combination was considered " +
+                            "to be just potentially dangerous combination");
                 }
             }
         }
