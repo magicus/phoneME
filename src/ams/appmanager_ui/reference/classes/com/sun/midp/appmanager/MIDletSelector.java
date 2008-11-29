@@ -204,19 +204,15 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
      * @param item the Item the command was on.
      */
     public void commandAction(Command c, Item item) {
-        if (item == null) {
-            return;
-        }
-
         int selected = ((SelectorMIDletCustomItem)item).index;
-        if (selected < 0 || selected >= mform.size()) {
+        if (selected < 0 || selected >= mcount) {
             return;
         }
 
         String midletClassName = minfo[selected].classname;
         if (c == launchCmd) {
 
-            if(runningMidlets.contains(midletClassName)) {
+            if (runningMidlets.contains(midletClassName)) {
                 manager.moveToForeground(suiteInfo, midletClassName);
                 return;
             }
