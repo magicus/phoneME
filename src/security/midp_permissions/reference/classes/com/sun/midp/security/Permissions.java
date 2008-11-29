@@ -430,7 +430,7 @@ public final class Permissions {
          */
         if ((group == READ_MESSAGE_GROUP ||
                 group == READ_RESTRICTED_MESSAGE_GROUP) &&
-                    (maxLevel == BLANKET)) {
+                    (maxLevel == BLANKET || maxLevel == BLANKET_GRANTED)) {
             if (currentLevels) {
                 maxLevel = ONESHOT;
             }
