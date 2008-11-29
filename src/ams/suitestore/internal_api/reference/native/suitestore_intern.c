@@ -534,7 +534,7 @@ read_suites_data(char** ppszError) {
     long bufferLen, pos;
     char* buffer = NULL;
     pcsl_string_status rc;
-    pcsl_string suitesDataFile;
+    pcsl_string suitesDataFile = PCSL_STRING_NULL_INITIALIZER;
     MidletSuiteData *pSuitesData = NULL;
     MidletSuiteData *pData, *pPrevData = NULL;
     int numOfSuites = 0;
@@ -652,7 +652,7 @@ read_suites_data(char** ppszError) {
         {
             int i;
             jint strLen;
-            pcsl_string* pStrings[7];
+            pcsl_string* pStrings[8];
 
             pStrings[0] = &pData->varSuiteData.midletClassName;
             pStrings[1] = &pData->varSuiteData.displayName;
@@ -799,7 +799,7 @@ write_suites_data(char** ppszError) {
         {
             int i, convertedLen;
             jint strLen;
-            pcsl_string* pStrings[7];
+            pcsl_string* pStrings[8];
 
             pStrings[0] = &pData->varSuiteData.midletClassName;
             pStrings[1] = &pData->varSuiteData.displayName;
