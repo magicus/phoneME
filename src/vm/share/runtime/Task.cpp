@@ -228,6 +228,7 @@ ReturnOop Task::create_task(const int id, IsolateObj* isolate JVM_TRAPS) {
   }
 #endif
   
+  task().set_use_profiler(isolate->use_profiler());
   GUARANTEE(!Universe::java_lang_Class_class()->is_null(),
              "Mirror class not initialized");
 

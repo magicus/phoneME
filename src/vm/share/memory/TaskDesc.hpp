@@ -128,6 +128,7 @@ private:
   // Current profile ID.
   jint              _profile_id;
 #endif
+  jint              _use_profiler;
 
   // Number of Java classes loaded by this Task (including the
   // romized classes). This is equal to the number of non-null items
