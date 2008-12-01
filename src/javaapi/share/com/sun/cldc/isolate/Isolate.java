@@ -1102,7 +1102,8 @@ public final class Isolate {
     }
     
     /**
-     * Sets whether isolate should be profiled or not.
+     * Sets whether isolate should be profiled or not. By default all isolates are profiled.
+     * Should be set before task for isolate is created.
      *
      */
     public void setUseProfiler(boolean useProfiler) {

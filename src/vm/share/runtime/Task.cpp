@@ -220,6 +220,10 @@ ReturnOop Task::create_task(const int id, IsolateObj* isolate JVM_TRAPS) {
   task().set_profile_id(isolate->profile_id()); // Set current active profile
 #endif
 
+#if ENABLE_WTK_PROFILER && ENABLE_ISOLATES
+  task().set_use_profiler(isolate->use_profiler());
+#endif
+
 #if ENABLE_JAVA_DEBUGGER
   {
     JavaDebuggerContext::Raw context = 

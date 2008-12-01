@@ -283,10 +283,12 @@ private:
     return FIELD_OFFSET(TaskDesc, _profile_id);
   }
 #endif
+
+#if ENABLE_WTK_PROFILER && ENABLE_ISOLATES
   static int use_profiler_offset() {
     return FIELD_OFFSET(TaskDesc, _use_profiler);
   }
-
+#endif
   static int class_list_offset() {
     return FIELD_OFFSET(TaskDesc, _class_list);
   }
@@ -493,6 +495,8 @@ public:
     int_field_put(profile_id_offset(), id);
   }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
+#if ENABLE_WTK_PROFILER && ENABLE_ISOLATES
   int use_profiler() const {
     return int_field(use_profiler_offset());
   }
@@ -500,7 +504,7 @@ public:
   void set_use_profiler(int flag) {
     int_field_put(use_profiler_offset(), flag);
   }
-
+#endif
   void set_class_count(const int id) {
     int_field_put(class_count_offset(), id);
   }
