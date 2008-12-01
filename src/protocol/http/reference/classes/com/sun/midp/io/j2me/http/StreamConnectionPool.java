@@ -123,9 +123,6 @@ public class StreamConnectionPool {
 
         StreamConnectionElement oldestNotInUse = null;
 
-        System.out.println("### Connection.add: " +p_protocol +
-                           ", " + p_host + ", " + p_port);
-
         // find the last unused element
         Enumeration cons = m_connections.elements();
         while (cons.hasMoreElements()) {
@@ -134,7 +131,6 @@ public class StreamConnectionPool {
 
             if (sce.m_in_use) {
                 if (p_host.equals(sce.m_host) && p_port == sce.m_port) {
-                    System.out.println("### Connection.add: false");
                     return false;
                 }
 
@@ -170,11 +166,9 @@ public class StreamConnectionPool {
             oldestNotInUse.close();
             m_connections.removeElement(oldestNotInUse);
         }
-
-        StreamConnectionElement sce = new StreamConnectionElement(p_protocol,
-                                                                  p_host, p_port, sc, dos, dis);
-        m_connections.addElement(sce);
-        System.out.println("### Connection.add: true, " + sce);
+     
+        m_connections.addElement(new StreamConnectionElement(p_protocol,
+                          p_host, p_port, sc, dos, dis));
         return true;
     }
     
@@ -185,7 +179,6 @@ public class StreamConnectionPool {
      * @param sce                 The stream connection element to remove
      */
     synchronized void remove(StreamConnectionElement sce) {
-        System.out.println("### Connection.remove " + sce);
 	sce.close();
         m_connections.removeElement(sce);
     }
@@ -219,7 +212,6 @@ public class StreamConnectionPool {
                 (StreamConnectionElement)cons.nextElement();
             
             if ((c_time - sce.m_time) > m_connectionLingerTime) {
-                System.out.println("### Connection.get: " + sce + " is no more. inuse " + sce.m_in_use);
                 if (!sce.m_in_use) {
                     sce.close();
                 } else {
@@ -244,9 +236,6 @@ public class StreamConnectionPool {
             result.m_in_use = true;
         }
 
-        System.out.println("### Connection.get: " + p_protocol + ", " + p_host +
-                           ", " + p_port + ": " + result);
-
         return result;
     }
 
@@ -263,13 +252,9 @@ public class StreamConnectionPool {
         if (returned.m_removed) {
             // the connection was out too long
             returned.close();
-            System.out.println("### Connection.return: closed");
-        
             return;
         }
 
         returned.m_time = System.currentTimeMillis();
-        System.out.println("### Connection.returned: for reuse");
-        
     }
 }
