@@ -688,10 +688,15 @@ void  WTKProfiler::resume() {
 
 
 int WTKProfiler::dump_and_clear_profile_data(int id) {
-  Task::Raw task = Universe::task_from_id(id);
+#if ENABLE_ISOLATES
+  Task::Raw task;
+  if ( id != -1) {
+    task = Universe::task_from_id(id);
+  }
+#endif
   if (UseExactProfiler
 #if ENABLE_ISOLATES
-    && (task().use_profiler() || id == -1)
+    && (id == -1 || task().use_profiler())
 #endif
     ) {
     bool do_suspend_resume = _lastCycles != 0;
