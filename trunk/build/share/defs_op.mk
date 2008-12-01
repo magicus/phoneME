@@ -267,7 +267,7 @@ endif
 # Include JSR 234
 ifeq ($(USE_JSR_234), true)
 export JSR_234_DIR ?= $(COMPONENTS_DIR)/jsr234
-JSR_234_MAKE_FILE = $(JSR_234_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+JSR_234_MAKE_FILE = $(JSR_234_DIR)/build/cdc_share/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(JSR_234_MAKE_FILE)),)
 $(error JSR_234_DIR must point to a directory containing JSR 234 sources)
 endif
