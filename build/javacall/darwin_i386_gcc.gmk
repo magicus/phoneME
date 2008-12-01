@@ -49,3 +49,5 @@ EXTRA_CPPFLAGS +=
 LD_FLAGS +=
 EXTRA_LIBS += 
 
+# Darwin javacall implementation does not have text rendering support
+PUTPIXEL_PORT_IMPL = reference
