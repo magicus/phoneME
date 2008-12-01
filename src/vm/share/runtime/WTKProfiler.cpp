@@ -321,7 +321,6 @@ void WTKProfiler::print(Stream* out, int id) {
       // switch to proper isolate, if we have data for multiple isolates 
       // in here
       if (id == -1) {   
-        tty->print_cr("PROFILING: id = -1 switching to task %d", rec->task_id);
         Universe::set_current_task(rec->task_id);
       } 
 #endif
@@ -690,13 +689,13 @@ void  WTKProfiler::resume() {
 int WTKProfiler::dump_and_clear_profile_data(int id) {
 #if ENABLE_ISOLATES
   Task::Raw task;
-  if ( id != -1) {
-    task = Universe::task_from_id(id);
+  if ( id == -1) {
+    task = Universe::task_from_id(1);
   }
 #endif
   if (UseExactProfiler
 #if ENABLE_ISOLATES
-    && (id == -1 || task().use_profiler())
+    && task().use_profiler()
 #endif
     ) {
     bool do_suspend_resume = _lastCycles != 0;
