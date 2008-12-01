@@ -58,9 +58,10 @@ jboolean get_random_bytes_port(unsigned char*buffer, jint bufsize) {
    *  http://www.ietf.org/rfc/rfc1750.txt)
    */
 
-        SYSTEMTIME st;
-        GetSystemTime(&st);
-	jlong res = (jlong)(st.wMilliseconds + st.wSecond * 1000);
+    SYSTEMTIME st;
+    jlong res;
+    GetSystemTime(&st);
+    res = (jlong)(st.wMilliseconds + st.wSecond * 1000);
 	int i;
 	for(i=0; i<bufsize; i++) {
 		buffer[i] = (unsigned char)res;
