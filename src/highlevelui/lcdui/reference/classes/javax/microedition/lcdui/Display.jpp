@@ -2363,7 +2363,6 @@ public class Display {
 
         // #ifndef ENABLE_GCI
         displayDevice.setFullScreen(displayId, wantFullScnMode);
-
         width = displayDevice.getWidth(); 
         height = displayDevice.getHeight();
         if (displayDevice.isPrimaryDisplay()) {
@@ -2563,6 +2562,33 @@ public class Display {
     int getDisplayableHeight() {
         return  (current instanceof AlertLF) ? window.getAlertHeight() : window.getBodyHeight();
     }
+
+    /** Get the width of some default displayable depending on the screen mode and 
+     * the layers attached to the screen 
+     * @param isFullScn true if the full screen is set for the displayable      
+     * @param withScrollBar true if the scroll bar is in use for the  displayable
+     * @return width of the paticular displayable
+     */
+    static int getDefaultDisplayableWidth(boolean isFullScn, boolean withScrollBar) {
+	return MIDPWindow.getDefaultBodyWidth(WIDTH, isFullScn, withScrollBar);
+    }
+    
+    /** 
+     * Get the height of some default displayable depending on the screen mode and 
+     * the layers attached to the screen 
+     * @param isFullScn true if the full screen is set for the body layer      
+     * @param withTitle true if the title is attached      
+     * @param withTicker true if the ticker is attached 
+     * @param withCmds true if command layer is visible
+     * @return height of the paticular body layer
+     */
+    static int getDefaultDisplayableHeight(boolean isFullScn, 
+					   boolean withTitle, 
+					   boolean withTicker, 
+					   boolean withCmds) {
+	return MIDPWindow.getDefaultBodyHeight(HEIGHT, isFullScn, withTitle, withTicker, withCmds);
+    }
+    
 
     // #endif ENABLE_CHAMELEON
 

@@ -427,6 +427,7 @@ public class MIDPWindow extends CWindow {
                                   itemCmdListener,
                                   scrCommands, scrCmdCount,
                                   scrCmdListener);
+	resize();
     }
 
     /**
@@ -617,6 +618,55 @@ public class MIDPWindow extends CWindow {
         return bodyLayer.bounds[H];
     }
 
+    /** 
+     * Calculate the width of some default Body layer wich is still not rendered on the screen
+     * depending on the screen mode and the layers attached to the screen
+     * @param width screen width 
+     * @param isFullScn true if the full scren is set for the body layer      
+     * @param scrollBarIsVisible true if the scroll bar is in use for the body layer 
+     * @return width of the paticular body layer
+     */
+    public static int getDefaultBodyWidth(int width, 
+					  boolean isFullScn, 
+					  boolean scrollBarIsVisible) {
+	int w = width;
+	// TODO: scroll arrows (bar? ) indicator has to be hidden?
+	if (scrollBarIsVisible) {
+	    w -= ScrollIndSkin.WIDTH;
+	}
+	return w;
+    }
+    
+    /** 
+     * Calculate the height of some default Body layer wich is still not rendered on the screen 
+     * depending on the screen mode and the layers attached to the screen
+     * param height scren height
+     * @param isFullScn true if the full scren is set for the body layer      
+     * @param titleIsVisible true if the title is attached      
+     * @param tickerIsVisible true if the ticker is attached 
+     * @param softBtnLayerIsVisible true if command layer is visible
+     * @return height of the paticular body layer
+     */
+    public static int getDefaultBodyHeight(int height,
+					   boolean isFullScn, 
+					   boolean titleIsVisible, 
+					   boolean tickerIsVisible, 
+					   boolean softBtnLayerIsVisible) {
+	int h = height;
+	if (!isFullScn) {
+	    if (titleIsVisible) {
+		h -= TitleSkin.HEIGHT;
+	    }
+	    if (tickerIsVisible) {
+		h -= TickerSkin.HEIGHT;
+	    }
+	    if (softBtnLayerIsVisible) {
+		h -= SoftButtonSkin.HEIGHT;
+	    }
+	}
+	return h;
+    }
+    
 
     /**
      * Get the current width of the alert layer (the body
@@ -733,7 +783,9 @@ public class MIDPWindow extends CWindow {
                     (titleLayer.getTitle() != null);
                 tickerLayer.visible =
                     (tickerLayer.getText() != null);
-                buttonLayer.visible = true;
+		buttonLayer.visible = !bodyLayer.opaque || 
+		    getSoftOne() != null ||  
+		    getSoftTwo() != null; 
                 break;
             default:
                 Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,
