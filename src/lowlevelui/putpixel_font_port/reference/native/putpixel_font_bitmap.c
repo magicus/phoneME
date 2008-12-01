@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-#include "gxj_intern_font_bitmap.h"
+#include "putpixel_font_bitmap.h"
 // starts off with width, height, ascent, descent, leading, range_high_byte, first_code_low_byte, last_code_low_byte, then data
 unsigned char TheFontBitmap0000[2024] = {
 0x09,0x0e,0x0b,0x03,0x00,0x00,0x00,0x7f,/* data starts here */

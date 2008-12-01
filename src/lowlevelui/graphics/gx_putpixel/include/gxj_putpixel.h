@@ -131,6 +131,10 @@ gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
 						    gxj_screen_buffer *sbuf,
 						    jobject graphics);
 
+/** Text output directions */
+#define LEFT_TO_RIGHT    1
+#define RIGHT_TO_LEFT   -1
+
 
 #ifdef __cplusplus
 }

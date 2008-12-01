@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <memory.h>
 #include <stdlib.h>
-#include "gxj_intern_font_bitmap.h"
+#include "putpixel_font_bitmap.h"
 
 #define BUFSIZE 256
 #define MAXFONTBITMAPCOUNT 1024
@@ -227,7 +227,7 @@ void print_bitmap()
         " * information or have any questions.\n"
         " */\n"
         "\n"
-        "#include \"gxj_intern_font_bitmap.h\"\n";
+        "#include \"putpixel_font_bitmap.h\"\n";
 
     printf("%s", heading);
     for (printRangeIndex = 0; printRangeIndex <= rangeIndex; printRangeIndex++) {

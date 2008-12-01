@@ -40,7 +40,7 @@ extern "C" {
 
 #include "gxj_intern_graphics.h"
 #include "gxj_intern_putpixel.h"
-#include "gxj_intern_font_bitmap.h"
+#include "putpixel_font_bitmap.h"
 
 #include "gx_font.h"
 #include "gxj_putpixel.h"
