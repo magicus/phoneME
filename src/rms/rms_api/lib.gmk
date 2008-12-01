@@ -63,7 +63,9 @@ SUBSYSTEM_RMS_JAVA_FILES += \
 # Native files for the ( rms_api ) library
 #
 SUBSYSTEM_RMS_NATIVE_FILES += \
-    recordStoreFile.c
+    recordStoreFile.c \
+    rms_shared_db_header.c \
+    rms_shared_db_header_kni.c
 
 
 # I3test files for the ( rms ) subsystem

@@ -1194,6 +1194,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
                     dbHeader = new RecordStoreSharedDBHeader(suiteId, 
                             recordStoreName, dbHeaderData);
+                    dbHeader.headerUpdated(dbHeaderData);
 
                 }
 
