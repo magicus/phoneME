@@ -877,6 +877,11 @@ KNIDECL(com_sun_midp_midletsuite_SuiteSettings_save0) {
     permissionsLen = (int)KNI_GetArrayLength(permissionsObj);
 
     do {
+        if (permissionsLen < 0) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+            break;
+        }
+
         pPermissions = (jbyte*)midpMalloc(permissionsLen);
         if (pPermissions == NULL) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
@@ -911,7 +916,9 @@ KNIDECL(com_sun_midp_midletsuite_SuiteSettings_save0) {
         }
     } while (0);
 
-    midpFree(pPermissions);
+    if (pPermissions != NULL) {
+        midpFree(pPermissions);
+    }
 
     KNI_EndHandles();
     KNI_ReturnVoid();
