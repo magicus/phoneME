@@ -1,0 +1,204 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+# vpath for ( example ) module
+#
+
+vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common/native
+vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/native
+vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native
+
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_AMS_DIR)/example/ams_common/include \
+    -I$(SUBSYSTEM_AMS_DIR)/example/ams_common_port/include \
+    -I$(SUBSYSTEM_AMS_DIR)/example/jams/include
+
+# Don't include exe files to MIDP source file list
+# since we want to link different obj files for different exe
+#
+
+# Native files for the ( example ) module
+#
+ifeq ($(TARGET_VM), cldc_vm)
+  AMS_RUNMIDLET_NATIVE_FILES = \
+    runMidlet.c
+
+  AMS_RUNMIDLET_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,\
+    $(AMS_RUNMIDLET_NATIVE_FILES))
+endif
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+  VM_MODE = mvm
+else
+  VM_MODE = svm
+endif
+
+ifeq ($(TARGET_VM), cldc_vm)
+  SUBSYSTEM_AMS_LAZY_MAKEFILES += \
+    $(SUBSYSTEM_AMS_DIR)/example/jams/runMidlet.gmk
+
+SUBSYSTEM_AMS_EXECUTABLES = \
+    $(BINDIR)/runMidlet$(g)$(p)$(EXE) \
+    $(BINDIR)/../../runPhoneME$(g)$(BAT)
+
+  $(BINDIR)/../../runPhoneME$(g): $(SUBSYSTEM_AMS_DIR)/example/jams/shell/runPhoneME$(BAT)
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+	@echo
+	@echo "" >> $@
+	@echo "if [ -f ./usertest$(g) ] ; then" >> $@
+	@echo "    ./usertest$(g)" >> $@
+	@echo "    exit" >> $@
+	@echo "fi" >> $@
+	@echo "" >> $@
+	@echo "if [ -d ./$(TARGET_CPU) ] ; then" >> $@
+	@echo "    cd ./$(TARGET_CPU)" >> $@
+	@echo "fi" >> $@
+	@echo "" >> $@
+	@echo "if [ -f ./usertest$(g) ] ; then" >> $@
+	@echo "    ./usertest$(g)" >> $@
+	@echo "else" >> $@
+	@echo "    echo usertest$(g) not found in \`pwd\`." >> $@
+	@echo "fi" >> $@
+	@echo "" >> $@
+
+  $(BINDIR)/../../runPhoneME$(g).bat: $(SUBSYSTEM_AMS_DIR)/example/jams/batch/runPhoneME$(BAT)
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+	@echo
+	@echo "" >> $@
+	@echo "dir usertest$(g)$(BAT) 1> nul 2>nul" >> $@
+	@echo "if ERRORLEVEL 1 goto :go_inside" >> $@
+	@echo "goto :run_it" >> $@
+	@echo "" >> $@
+	@echo ":run_it" >> $@
+	@echo "usertest$(g)$(BAT)" >> $@
+	@echo "goto :EOF" >> $@
+	@echo "" >> $@
+	@echo "endlocal" >> $@
+	@echo "" >> $@
+
+endif
+
+# Other platforms like stubs don't need scripts
+ifeq ($(PLATFORM), linux_qte)
+  INCLUDE_SHELL_SCRIPTS = true
+endif
+
+ifeq ($(PLATFORM), linux_fb)
+  INCLUDE_SHELL_SCRIPTS = true
+endif
+
+ifeq ($(PLATFORM), win32)
+  INCLUDE_SHELL_SCRIPTS = true
+endif
+
+ifeq ($(PLATFORM), win32_gci)
+  INCLUDE_SHELL_SCRIPTS = true
+endif
+
+ifeq ($(PLATFORM), wince)
+  INCLUDE_SHELL_SCRIPTS = true
+endif
+
+ifeq ($(PLATFORM), javacall)
+  INCLUDE_SHELL_SCRIPTS = true
+endif
+
+ifeq ($(PLATFORM), linux_gci)
+  INCLUDE_SHELL_SCRIPTS = true
+endif
+
+ifdef INCLUDE_SHELL_SCRIPTS
+  $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/example/jams/shell/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
+  $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/example/jams/scripts/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
+  $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/jams/$(VM_MODE)/shell/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
+  $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/jams/$(VM_MODE)/batch/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
+  $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/example/jams/batch/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
+  SUBSYSTEM_AMS_EXECUTABLES += \
+    $(BINDIR)/listMidlets.sh \
+    $(BINDIR)/removeMidlet.sh
+
+  ifeq ($(TARGET_VM), cldc_vm)
+    SUBSYSTEM_AMS_EXECUTABLES += \
+      $(BINDIR)/installMidlet$(g)$(BAT) \
+      $(BINDIR)/usertest$(g)$(BAT)
+
+    ifeq ($(USE_AUTOTESTER), true)
+      SUBSYSTEM_AMS_EXECUTABLES += \
+         $(BINDIR)/autotest$(g)$(BAT)
+    endif
+
+    ifeq ($(USE_MULTIPLE_ISOLATES), true)
+    ifeq ($(USE_AUTOTESTER), true)
+      SUBSYSTEM_AMS_EXECUTABLES += \
+         $(BINDIR)/autotestm$(g)$(BAT)
+    endif
+    endif
+  endif
+
+  USE_SCRIPT_UTILS = true
+
+  ifeq ($(USE_I3_TEST), true)
+    SUBSYSTEM_AMS_EXECUTABLES += $(BINDIR)/i3test$(g)$(BAT)
+  endif
+endif
+
+ifeq ($(USE_SCRIPT_UTILS), true)
+  SUBSYSTEM_AMS_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/ams/example/jams/classes/com/sun/midp/scriptutil/HttpJadInstaller.java \
+    $(SUBSYSTEM_DIR)/ams/example/jams/classes/com/sun/midp/scriptutil/SuiteLister.java \
+    $(SUBSYSTEM_DIR)/ams/example/jams/classes/com/sun/midp/scriptutil/SuiteRemover.java \
+    $(SUBSYSTEM_DIR)/ams/example/jams/classes/com/sun/midp/scriptutil/CommandLineInstaller.java
+endif

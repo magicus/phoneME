@@ -1,0 +1,110 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+######################################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+# Add to global SUBSYSTEMS list
+#
+SUBSYSTEMS += tool
+
+# This specifies the option you choose for this build 
+#
+SUBSYSTEM_TOOL_MODULES = keytool jadtool imageutil skinromization l10n_generator romizer
+
+INT_KEYTOOL_DIR = $(SUBSYSTEM_DIR)/tool/mekeytool/classes/com/sun/midp/mekeytool
+INT_KEYSTORE_DIR = $(SUBSYSTEM_DIR)/security/publickeystore/reference/classes/com/sun/midp/publickeystore
+INT_JADTOOL_DIR = $(SUBSYSTEM_DIR)/tool/jadtool/classes/com/sun/midp/jadtool
+INT_AMS_DIR = $(SUBSYSTEM_DIR)/ams/installer/reference/classes
+INT_JAVAUTIL_DIR = $(SUBSYSTEM_DIR)/core/javautil/reference/classes
+INT_IMAGEUTIL_DIR = $(SUBSYSTEM_DIR)/tool/imageutil/classes/com/sun/midp/imageutil
+INT_SKINROMIZATION_DIR = $(SUBSYSTEM_DIR)/tool/chameleon/classes/com/sun/midp/skinromization
+INT_LCDLF_J_DIR = $(SUBSYSTEM_DIR)/highlevelui/lcdlf/lfjava/classes
+INT_L10N_GENERATOR_DIR = $(SUBSYSTEM_DIR)/tool/l10ngen/classes/com/sun/midp/l10n/generator
+INT_ROMIZER_DIR = $(SUBSYSTEM_DIR)/tool/romizer/classes/com/sun/midp/romization
+
+# Java files for the ( mekeytool ) module
+#
+MODULE_TOOL_KEYTOOL_JAVA_FILES = \
+	$(INT_KEYTOOL_DIR)/MEKeyTool.java \
+	$(INT_KEYSTORE_DIR)/PublicKeyStoreBuilderBase.java \
+	$(INT_KEYSTORE_DIR)/OutputStorage.java \
+	$(INT_KEYSTORE_DIR)/PublicKeyStore.java \
+	$(INT_KEYSTORE_DIR)/PublicKeyInfo.java \
+	$(INT_KEYSTORE_DIR)/InputStorage.java \
+	$(INT_KEYSTORE_DIR)/Storage.java
+
+
+# Java files for the ( jadtool ) module
+#
+MODULE_TOOL_JADTOOL_JAVA_FILES = \
+	$(INT_JADTOOL_DIR)/AppDescriptor.java \
+	$(INT_JADTOOL_DIR)/AppDescriptorException.java \
+	$(INT_JADTOOL_DIR)/Base64.java \
+	$(INT_JADTOOL_DIR)/JadWriter.java \
+	$(INT_JADTOOL_DIR)/JadTool.java \
+	$(INT_JADTOOL_DIR)/SignCert.java \
+	$(INT_JAVAUTIL_DIR)/com/sun/midp/util/Properties.java \
+	$(INT_AMS_DIR)/com/sun/midp/installer/JadProperties.java \
+	$(INT_AMS_DIR)/com/sun/midp/installer/InvalidJadException.java
+
+
+# Java files for the ( image to raw converter tool ) module
+#
+MODULE_TOOL_IMAGE2RAW_JAVA_FILES = \
+	$(INT_IMAGEUTIL_DIR)/ImageToRawConverter.java \
+	$(INT_IMAGEUTIL_DIR)/ImageToRawTool.java
+
+# Java files for the ( skin romization tool ) module
+#
+MODULE_TOOL_SKINROMIZATION_JAVA_FILES = \
+	$(INT_IMAGEUTIL_DIR)/ImageToRawConverter.java \
+	$(INT_ROMIZER_DIR)/BinaryOutputStream.java \
+	$(INT_ROMIZER_DIR)/RomizedByteArray.java \
+	$(INT_ROMIZER_DIR)/RomUtil.java \
+	$(INT_SKINROMIZATION_DIR)/SkinRomizationTool.java \
+    $(INT_LCDLF_J_DIR)/com/sun/midp/chameleon/skins/resources/FontResourcesConstants.java \
+    $(INT_LCDLF_J_DIR)/com/sun/midp/chameleon/skins/resources/SkinResourcesConstants.java \
+    $(INT_LCDLF_J_DIR)/com/sun/midp/chameleon/skins/resources/ScrollIndResourcesConstants.java
+
+# Java files for the ( l10n generator ) module
+#
+MODULE_TOOL_L10N_GENERATOR_JAVA_FILES = \
+	$(INT_L10N_GENERATOR_DIR)/LocalizedStringsGenerator.java
+
+# Java files for the ( romizer ) module
+#
+MODULE_TOOL_ROMIZER_JAVA_FILES = \
+	$(INT_ROMIZER_DIR)/BinaryOutputStream.java \
+	$(INT_ROMIZER_DIR)/RomizedByteArray.java \
+	$(INT_ROMIZER_DIR)/RomUtil.java \
+	$(INT_ROMIZER_DIR)/Romizer.java
