@@ -329,9 +329,14 @@ midp_resetEvents(void) {
     /* The Event ID may have changed for each VM startup*/
     eventFieldIDsObtained = KNI_FALSE;
 
-    for (i = 0; i < maxIsolates; i++) {
+#if ENABLE_MULTIPLE_ISOLATES
+    for (i = 1; i <= maxIsolates; i++) {
         resetEventQueue(i);
     }
+#else
+    resetEventQueue(0);
+#endif
+
 }
 
 /**
@@ -410,8 +415,13 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
     if( -1 != isolateId ) {
         StoreMIDPEventInVmThreadImp(event, isolateId);
     } else {
-        for (isolateId = 0; isolateId < maxIsolates; ++isolateId)
-            StoreMIDPEventInVmThreadImp(event, isolateId);
+#if ENABLE_MULTIPLE_ISOLATES
+    for (isolateId = 1; isolateId <= maxIsolates; isolateId++)
+        StoreMIDPEventInVmThreadImp(event, isolateId);
+#else
+        StoreMIDPEventInVmThreadImp(event, 0);
+#endif
+
     }
 }
 
