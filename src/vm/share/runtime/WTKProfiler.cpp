@@ -687,118 +687,120 @@ void  WTKProfiler::resume() {
 
 
 int WTKProfiler::dump_and_clear_profile_data(int id) {
+  if (UseExactProfiler) {
 #if ENABLE_ISOLATES
-  Task::Raw task;
-  if ( id == -1 ) {
-    task = Universe::task_from_id(1);
-  } else {
-    task = Universe::task_from_id(id);
-  }
-#endif
-  if (UseExactProfiler
-#if ENABLE_ISOLATES
-    && task().use_profiler()
-#endif
-    ) {
-    bool do_suspend_resume = _lastCycles != 0;
-    if (do_suspend_resume) {
-      suspend();
+    Task::Raw task;
+    if ( id == -1 ) {
+      task = Universe::task_from_id(1);
+    } else {
+      task = Universe::task_from_id(id);
     }
-
-    bool empty = true;
-    for (int i=0; i<TABLE_SIZE; i++) {
-      if (profilerTable[i] != NULL) {
-        empty = false;
-        break;
+    if( task().use_profiler() ) {
+#endif
+      bool do_suspend_resume = _lastCycles != 0;
+      if (do_suspend_resume) {
+        suspend();
       }
-    }
 
-    if (empty) {
-        return -1;
-    }
+      bool empty = true;
+      for (int i=0; i<TABLE_SIZE; i++) {
+        if (profilerTable[i] != NULL) {
+          empty = false;
+          break;
+        }
+      }
 
-    static JvmPathChar filenamen[] = {
-      'g','r','a','p','h','?','?','.','p','r','f',0
-    };
-    static const JvmPathChar filename0[] = {
-      'g','r','a','p','h','.','p','r','f',0
-    };
-    const JvmPathChar* filename;
-    // name of profile information file received from a property
-    char * property_value = NULL;
-    JvmPathChar* filename_property = NULL;
+      if (empty) {
+          return -1;
+      }
+
+      static JvmPathChar filenamen[] = {
+        'g','r','a','p','h','?','?','.','p','r','f',0
+      };
+      static const JvmPathChar filename0[] = {
+        'g','r','a','p','h','.','p','r','f',0
+      };
+      const JvmPathChar* filename;
+      // name of profile information file received from a property
+      char * property_value = NULL;
+      JvmPathChar* filename_property = NULL;
 
 #if !ENABLE_ISOLATES
-    if (!SaveSerialProfiles) {
-      filename = filename0;
-      _dumpedProfiles = 0;
-    } else 
+      if (!SaveSerialProfiles) {
+        filename = filename0;
+        _dumpedProfiles = 0;
+      } else 
 #endif
-    {
-      property_value = JVMSPI_GetSystemProperty("profiler.filename");
-      if (property_value != NULL) {
-          unsigned  i;
-        unsigned int len = strlen(property_value);
-          size_t size = (len+1) * sizeof(JvmPathChar);
+      {
+        property_value = JVMSPI_GetSystemProperty("profiler.filename");
+        if (property_value != NULL) {
+            unsigned  i;
+          unsigned int len = strlen(property_value);
+            size_t size = (len+1) * sizeof(JvmPathChar);
 
-        filename_property = (JvmPathChar*)OsMemory_allocate(size);
-        if (filename_property == NULL) {
-              return -1;
-          }
+          filename_property = (JvmPathChar*)OsMemory_allocate(size);
+          if (filename_property == NULL) {
+                return -1;
+            }
 
-          for (i = 0; i < len; i++) {
-          filename_property[i] = (JvmPathChar) property_value[i];
-          }
-        filename_property[i] = 0;
-              
-        filename = filename_property;
-      } else { // Use default filename
-        /*
-         * If the VM is re-started in the same process, we write the profile
-         * information to a new file.
-         */
-          const int n = _dumpedProfiles % 100;
-          filenamen[5] = (JvmPathChar)((n / 10) + '0');
-          filenamen[6] = (JvmPathChar)((n % 10) + '0');
-          filename = filenamen;
-      }
-    }
-
-    Stream* out = NULL;
-    // for GBA we don't have file system
-#ifdef GBA
-    out = tty;
-#else
-    // to have enough width for profiler info
-    FileStream s(filename, 200);
-
-    // all this only to allow Unicode filenames
-    tty->print("*** Storing profile data to ");
-    if (filename == filename0) {
-       tty->print_cr("graph.prf");
-    } else if (filename == filename_property) {
-      tty->print_cr("%s", property_value);
-    } else {
-      tty->print_cr("graph%02d.prf", 
-                    _dumpedProfiles % 100);
-    }
-    out = &s;
-#endif
-
-    if (filename_property != NULL ) {
-      OsMemory_free((void *)filename_property);
-      filename_property = NULL;
-      filename = NULL;
+            for (i = 0; i < len; i++) {
+            filename_property[i] = (JvmPathChar) property_value[i];
+            }
+          filename_property[i] = 0;
+                
+          filename = filename_property;
+        } else { // Use default filename
+          /*
+           * If the VM is re-started in the same process, we write the profile
+           * information to a new file.
+           */
+            const int n = _dumpedProfiles % 100;
+            filenamen[5] = (JvmPathChar)((n / 10) + '0');
+            filenamen[6] = (JvmPathChar)((n % 10) + '0');
+            filename = filenamen;
         }
+      }
 
-    print(out, id);
-    
-    dispose(id);
-    if (do_suspend_resume) {
-      resume();
+      Stream* out = NULL;
+      // for GBA we don't have file system
+#ifdef GBA
+      out = tty;
+#else
+      // to have enough width for profiler info
+      FileStream s(filename, 200);
+
+      // all this only to allow Unicode filenames
+      tty->print("*** Storing profile data to ");
+      if (filename == filename0) {
+         tty->print_cr("graph.prf");
+      } else if (filename == filename_property) {
+        tty->print_cr("%s", property_value);
+      } else {
+        tty->print_cr("graph%02d.prf", 
+                      _dumpedProfiles % 100);
+      }
+      out = &s;
+#endif
+
+      if (filename_property != NULL ) {
+        OsMemory_free((void *)filename_property);
+        filename_property = NULL;
+        filename = NULL;
+          }
+
+      print(out, id);
+      
+      dispose(id);
+      if (do_suspend_resume) {
+        resume();
+      }
+
+      return _dumpedProfiles++;
+#if ENABLE_ISOLATES
+    } else {
+      dispose(id);
     }
-
-    return _dumpedProfiles++;
+#endif
   } else {
     return -1;
   }
