@@ -689,8 +689,10 @@ void  WTKProfiler::resume() {
 int WTKProfiler::dump_and_clear_profile_data(int id) {
 #if ENABLE_ISOLATES
   Task::Raw task;
-  if ( id == -1) {
+  if ( id == -1 ) {
     task = Universe::task_from_id(1);
+  } else {
+    task = Universe::task_from_id(id);
   }
 #endif
   if (UseExactProfiler
