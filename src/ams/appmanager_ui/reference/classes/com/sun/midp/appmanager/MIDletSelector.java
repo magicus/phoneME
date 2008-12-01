@@ -122,7 +122,14 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
 
         display.setCurrent(mform);
         
+        /* some MIDlet may already run when showing selector. */
         runningMidlets = new Vector();
+        MIDletProxy[] proxies = suiteInfo.getProxies();
+        for (int i = 0; i < proxies.length; i++) {
+            if (proxies[i].getMidletState() != MIDletProxy.MIDLET_DESTROYED) {
+                runningMidlets.addElement(proxies[i].getClassName());
+            }
+        }
         
         /* for locked suite, we need storage lock until some MIDlet is launched.
          * This prevents reinstallation of the locked suite. */
@@ -154,6 +161,13 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
      */
     public void notifyMidletExited(String midlet) {
         runningMidlets.removeElement(midlet);        
+        
+        /* If main MIDlet is exited and all other MIDlets as well, exit the
+         * selector. */
+        if (runningMidlets.isEmpty() && suiteInfo.hasMainMidlet()) {
+            leaveSelector();
+            return;
+        }
         
         /* If no more MIDlets are running from a locked suite, we need 
          * the storage lock until another MIDlet is launched. This prevents 
@@ -189,15 +203,22 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
      */
     public void commandAction(Command c, Displayable s) {
         if (c == backCmd) {
-            if (parentDisplayable != null) {
-                display.setCurrent(parentDisplayable);
-            } else {
-                manager.shutDown();
-            }
-            exitIfNoMidletRuns();
+            leaveSelector();
         }
     }
 
+    /**
+     * Leaves the MIDlet selector.
+     */
+    public void leaveSelector() {
+        if (parentDisplayable != null) {
+            display.setCurrent(parentDisplayable);
+        } else {
+            manager.shutDown();
+        }
+        exitIfNoMidletRuns();
+    }
+    
     /**
      * Responds to a command issued on an Item in MIDlet selector
      * @param c command activated by the user
