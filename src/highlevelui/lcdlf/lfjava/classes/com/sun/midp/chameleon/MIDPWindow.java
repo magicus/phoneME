@@ -490,13 +490,6 @@ public class MIDPWindow extends CWindow {
             } else {
                 removeLayer(alertWashLayer);
 
-
-                // IMPL_NOTES: interface has to be fixed
-                 alertLayer.setScrollInd(
-                     ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
-                
-                // IMPL_NOTES: need to be removed as soon as removeLayer algorithm
-                // takes into account layers interaction
                 tickerLayer.addDirtyRegion();
                 alertLayer.addDirtyRegion();
             }
@@ -507,11 +500,6 @@ public class MIDPWindow extends CWindow {
             } else {
                 removeLayer(washLayer);
 
-                // IMPL_NOTES: interface has to be fixed
-                 bodyLayer.setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
-                                
-                // IMPL_NOTES: need to be removed as soon as removeLayer algorithm
-                // takes into account layers interaction
                 tickerLayer.addDirtyRegion();
                 titleLayer.addDirtyRegion();
 

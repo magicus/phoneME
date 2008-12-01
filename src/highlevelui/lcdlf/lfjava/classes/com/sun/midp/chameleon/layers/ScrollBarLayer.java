@@ -161,9 +161,9 @@ public class ScrollBarLayer extends ScrollIndLayer {
                 shift =  1; 
             }
             if (ScreenSkin.RL_DIRECTION){
-                bounds[X] = scrollableBounds[X] + shift;
+                bounds[X] = scrollableBounds[X] - bounds[W] + shift;
             } else {
-                bounds[X] = scrollableBounds[X] + scrollableBounds[W] - bounds[W] - shift;
+                bounds[X] = scrollableBounds[X] + scrollableBounds[W] - shift;
             }
 
             // the scrollbar move left one pixel as the docking layer draws its bound one pixel less                

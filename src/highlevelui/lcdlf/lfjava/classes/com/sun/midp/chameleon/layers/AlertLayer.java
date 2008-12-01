@@ -107,13 +107,14 @@ public class AlertLayer extends BodyLayer {
 
         bounds[W] = AlertSkin.WIDTH;
         bounds[H] = AlertSkin.HEIGHT;
-        
+
         switch (AlertSkin.ALIGN_X) {
         case Graphics.LEFT:
             bounds[X] = 0;
             break;
         case Graphics.RIGHT:
-	    bounds[X] = owner.bounds[W] - bounds[W];
+            bounds[X] = owner.bounds[W] - bounds[W];
+            break;
         case Graphics.HCENTER:
         default:
 	    bounds[X] = (owner.bounds[W] - bounds[W]) >> 1;
@@ -146,6 +147,7 @@ public class AlertLayer extends BodyLayer {
             }
             break;
         }
+        updateBoundsByScrollInd();
 
     }
 
@@ -158,16 +160,30 @@ public class AlertLayer extends BodyLayer {
      * @param layers - current layer can be dependant on this parameter
      */
     public void update(CLayer[] layers) {
+        super.update(layers);
         setAnchor();
-        if (visible) {
-            addDirtyRegion();
-        }
-        if (scrollInd != null) {
-            scrollInd.update(layers);
-            if (scrollInd.isVisible() && ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR ) {
-                bounds[W] -= scrollInd.bounds[W];
+    }
+
+    /**
+     *  * Update bounds of layer depend on visability of scroll indicator layer
+     */
+    public void updateBoundsByScrollInd() {
+        bounds[W] = AlertSkin.WIDTH;
+        if (owner != null) {
+            switch (AlertSkin.ALIGN_X) {
+                case Graphics.LEFT:
+                    bounds[X] = 0;
+                    break;
+                case Graphics.RIGHT:
+                    bounds[X] = owner.bounds[W] - bounds[W];
+                    break;
+                case Graphics.HCENTER:
+                default:
+                    bounds[X] = (owner.bounds[W] - bounds[W]) >> 1;
+                    break;
             }
         }
+        super.updateBoundsByScrollInd();
     }
 }
 

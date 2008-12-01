@@ -28,10 +28,8 @@ package javax.microedition.lcdui;
 
 import com.sun.midp.lcdui.EventConstants;
 
-import com.sun.midp.lcdui.*;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.DateEditorSkin;
-import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.layers.ScrollIndLayer;
 import com.sun.midp.chameleon.layers.ScrollablePopupLayer;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
@@ -117,6 +115,7 @@ class DEPopupLayer extends ScrollablePopupLayer {
             elementsToFit = numElements;
             sbVisible = false;
         }
+        updateBoundsByScrollInd();
     }
 
    /**
@@ -260,7 +259,7 @@ class DEPopupLayer extends ScrollablePopupLayer {
         }
 
         if (ScreenSkin.RL_DIRECTION) {
-            textOffset = elementWidth - textOffset;
+            textOffset = elementWidth - textOffset - ScrollIndSkin.WIDTH + 3;
         }
 
         g.setFont(DateEditorSkin.FONT_POPUPS);

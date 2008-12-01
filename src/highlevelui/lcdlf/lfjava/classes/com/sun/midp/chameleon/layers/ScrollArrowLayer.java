@@ -66,6 +66,14 @@ public class ScrollArrowLayer extends ScrollIndLayer {
     }
 
     /**
+     * Called by MIDPWindow to initialize this layer
+     */
+    protected void initialize() {
+        super.initialize();
+        setBounds();
+    }
+
+    /**
      * Calculate layer bounds depending on the scrollable
      */
     public void setBounds() {
@@ -219,4 +227,15 @@ public class ScrollArrowLayer extends ScrollIndLayer {
         upViz = downViz = false;
         return ret;
     }
+
+    /**
+     * Update bounds of layer
+     *
+     * @param layers - current layer can be dependant on this parameter
+     */
+    public void update(CLayer[] layers) {
+        super.update(layers);
+        setBounds();
+    }
+
 }

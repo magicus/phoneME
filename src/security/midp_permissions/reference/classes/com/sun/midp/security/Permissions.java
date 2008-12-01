@@ -723,11 +723,11 @@ public final class Permissions {
             return null;
         }
 
-        if (group == NET_ACCESS_GROUP) {
+        if (group == NET_ACCESS_GROUP || group == LOW_LEVEL_NET_ACCESS_GROUP) {
             if (pushInterruptLevel == BLANKET_GRANTED ||
                    pushInterruptLevel == BLANKET) {
                 PermissionGroup[] ret = new PermissionGroup[2];
-                ret[0] = NET_ACCESS_GROUP;
+                ret[0] = group;
                 ret[1] = PUSH_INTERRUPT_GROUP;
                 return ret;
             }
@@ -735,7 +735,7 @@ public final class Permissions {
             level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
                 PermissionGroup[] ret = new PermissionGroup[2];
-                ret[0] = NET_ACCESS_GROUP;
+                ret[0] = group;
                 ret[1] = AUTO_INVOCATION_GROUP;
                 return ret;
             }
@@ -744,13 +744,20 @@ public final class Permissions {
         }
 
         if (group == AUTO_INVOCATION_GROUP) {
-            level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                PermissionGroup[] ret = new PermissionGroup[2];
-                ret[0] = AUTO_INVOCATION_GROUP;
-                ret[1] = NET_ACCESS_GROUP;
-                return ret;
-            }
+
+           final PermissionGroup[] netGroups = {
+               NET_ACCESS_GROUP, LOW_LEVEL_NET_ACCESS_GROUP
+           };
+
+           for (int i = 0; i < netGroups.length; i++) {
+               level = getPermissionGroupLevel(current, netGroups[i]);
+               if (level == BLANKET_GRANTED || level == BLANKET) {
+                   PermissionGroup[] ret = new PermissionGroup[2];
+                   ret[0] = AUTO_INVOCATION_GROUP;
+                   ret[1] = netGroups[i];
+                   return ret;
+               }
+           }
         }
         
         return null;
@@ -810,8 +817,8 @@ public final class Permissions {
 
             level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createMutuallyExclusiveErrorMessage(group,
-                        AUTO_INVOCATION_GROUP);
+                throw new SecurityException("mutually exclusive combination was considered " +
+                        "to be just potentially dangerous combination");
             }
         }
 
@@ -869,8 +876,8 @@ public final class Permissions {
             for (int i = 0; i < netGroups.length; i++) {
                 level = getPermissionGroupLevel(current, netGroups[i]);
                 if (level == BLANKET_GRANTED || level == BLANKET) {
-                    return createMutuallyExclusiveErrorMessage(
-                        AUTO_INVOCATION_GROUP, netGroups[i]);
+                    throw new SecurityException("mutually exclusive combination was considered " +
+                            "to be just potentially dangerous combination");
                 }
             }
         }
