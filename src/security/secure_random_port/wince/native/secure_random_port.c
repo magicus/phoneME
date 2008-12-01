@@ -24,8 +24,7 @@
 #include <stddef.h>
 #include <java_types.h>
 #include <secure_random_port.h>
-#include <sys/time.h>
-#include <stdio.h>
+#include <Winbase.h>
 #include <kni.h>
 
 jboolean get_random_bytes_port(unsigned char*buffer, jint bufsize) {
@@ -59,10 +58,10 @@ jboolean get_random_bytes_port(unsigned char*buffer, jint bufsize) {
    *  http://www.ietf.org/rfc/rfc1750.txt)
    */
 
-    struct timeval tv;
+    SYSTEMTIME st;
     jlong res;
-    gettimeofday(&tv,NULL);
-    res = tv.tv_usec + (1000000 * tv.tv_sec);
+    GetSystemTime(&st);
+    res = (jlong)(st.wMilliseconds + st.wSecond * 1000);
     int i;
     for(i=0; i<bufsize; i++) {
         buffer[i] = (unsigned char)res;
