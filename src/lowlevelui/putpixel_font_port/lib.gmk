@@ -1,6 +1,6 @@
 #  
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -32,18 +32,16 @@
 # other def. (like VPATH)
 ############################################################
 
+
+PUTPIXEL_FONT_PORT_LIB = putpixel_font_port
+LIB_SET += $(PUTPIXEL_FONT_PORT_LIB)
+
 # Local module directory
-PUTPIXEL_PORT_STUBS_DIR = $(SUBSYSTEM_LOWUI_DIR)/putpixel_port/wince
+PUTPIXEL_FONT_PORT_DIR = $(SUBSYSTEM_LOWUI_DIR)/putpixel_font_port
 
-# vpath for sub-system
+# Include path for the sub-system
 #
-vpath % $(PUTPIXEL_PORT_STUBS_DIR)/native
+SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
+    -I$(PUTPIXEL_FONT_PORT_DIR)/include
 
-REQUIRE_PUTPIXEL_FONT = true
-
-# Native files for the sub-system
-#
-SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
-    gxjport_text.c \
-    font.c
-
+include $(PUTPIXEL_FONT_PORT_DIR)/reference/$(LIB_MAKE_FILE)

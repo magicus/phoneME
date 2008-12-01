@@ -55,6 +55,7 @@
  * @param x The x coordinate of the top left font coordinate
  * @param y The y coordinate of the top left font coordinate
  * @param anchor
+ * @param direction text output direction (LEFT_TO_RIGHT | RIGHT_TO_LEFT)
  * @param chararray Pointer to the characters to be drawn
  * @param n The number of characters to be drawn
  *
@@ -63,7 +64,7 @@
  */
 int gxjport_draw_chars(int pixel, const jshort *clip, gxj_screen_buffer *dst,
                        int dotted, int face, int style, int size,
-                       int x, int y, int anchor,
+                       int x, int y, int anchor, int direction,
                        const jchar *chararray, int n) {
 
     javacall_result result;
