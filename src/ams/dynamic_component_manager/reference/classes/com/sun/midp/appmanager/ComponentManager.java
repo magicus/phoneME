@@ -26,6 +26,7 @@
 
 package com.sun.midp.appmanager;
 
+import com.sun.midp.configurator.Constants;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.installer.DynamicComponentInstaller;
@@ -287,14 +288,24 @@ public class ComponentManager extends MIDlet {
          */
         private void makeInstallDialog() {
             if (installUrlForm == null) {
-                installUrlForm = new Form("Install Component");
-                String componentUrl = "http://127.0.0.1/DynComponent1.jar";
-                installUrlField = new TextField("Enter URL to install from:",
-                                                componentUrl, 1024,
-                                                TextField.URL);
-                nameField = new TextField("Enter component name:",
-                                          "asdf", 1024,
-                                          TextField.ANY);
+                installUrlForm = new Form(
+                        Resource.getString(
+                            ResourceConstants.AMS_CMGR_INSTALL_COMPONENT));
+
+                String componentUrl = Constants.AMS_CMGR_DEFAULT_COMPONENT_URL;
+
+                installUrlField = new TextField(
+                        Resource.getString(
+                            ResourceConstants.AMS_CMGR_ENTER_URL_TO_INSTALL_FROM),
+                        componentUrl, 1024,
+                        TextField.URL);
+
+                nameField = new TextField(
+                        Resource.getString(
+                            ResourceConstants.AMS_CMGR_ENTER_DESCRIPTIVE_NAME),
+                        "", 1024,
+                        TextField.ANY);
+
                 installUrlForm.append(installUrlField);
                 installUrlForm.append(nameField);
             }
@@ -415,7 +426,8 @@ public class ComponentManager extends MIDlet {
                 DynamicComponentInstaller installer = new DynamicComponentInstaller();
                 try {
                     int componentId = installer.installComponent(suiteId,
-                            installUrlField.getString(), nameField.getString());
+                            installUrlField.getString().trim(),
+                            nameField.getString().trim());
                 } catch (IOException e) {
                     showError(e.toString());
                     return;
