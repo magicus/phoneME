@@ -494,7 +494,6 @@ public:
   }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
   int use_profiler() const {
-    printf("....useProfiler for thos task is set to %d\n", int_field(use_profiler_offset()));
     return int_field(use_profiler_offset());
   }
 

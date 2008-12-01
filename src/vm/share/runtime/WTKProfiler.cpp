@@ -687,8 +687,9 @@ void  WTKProfiler::resume() {
 
 
 int WTKProfiler::dump_and_clear_profile_data(int id) {
+  tty->print("DEBUG: Task wit id %d ", id);
   Task::Raw task = Universe::task_from_id(id);
-  tty->print_cr("DEBUG: Task wit id %d has useProfiler set to %d", id, task().use_profiler());
+  tty->print("has useProfiler set to %d", task().use_profiler());
   if (UseExactProfiler && task().use_profiler()) {
     bool do_suspend_resume = _lastCycles != 0;
     if (do_suspend_resume) {
