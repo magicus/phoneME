@@ -119,6 +119,11 @@
             Value="MIDlet-Description"
             NativeOnly="true"
             Comment="MIDlet property for the suite description."/>
+ <constant Type="String"
+            Name="AMS_CMGR_DEFAULT_COMPONENT_URL"
+            Value="http://host/x.jar"
+            NativeOnly="false"
+            Comment="Default URL to install dynamic components from. Provider-defined."/>
 </constant_class>
 
 </constants>

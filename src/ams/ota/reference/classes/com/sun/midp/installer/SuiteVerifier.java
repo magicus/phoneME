@@ -165,8 +165,9 @@ public class SuiteVerifier extends MIDlet implements CommandListener {
     }
 
     /**
-     *
-     * @param command
+     * Catch command events that occurred on
+     * <code>Displayable d</code>.
+      * @param command
      * @param displayable
      */
     public void commandAction(Command command, Displayable displayable) {

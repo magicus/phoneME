@@ -870,6 +870,15 @@
   <constant Type="int"
             Name="AMS_GRA_INTLR_INVALIDJADEXCEPTION_UNSUPPORTED_CHAR_ENCODING"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_CMGR_INSTALL_COMPONENT"
+            Comment="AMS: com.sun.midp.appmanager.ComponentManager"/>
+  <constant Type="int"
+            Name="AMS_CMGR_ENTER_URL_TO_INSTALL_FROM"
+            Comment="AMS: com.sun.midp.appmanager.ComponentManager"/>
+  <constant Type="int"
+            Name="AMS_CMGR_ENTER_DESCRIPTIVE_NAME"
+            Comment="AMS: com.sun.midp.appmanager.ComponentManager"/>
 
   <!-- Class verification literals common for both standalone verification
        and for verification intergrated into suite intsallation process -->
