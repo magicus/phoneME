@@ -44,7 +44,7 @@ public final class ARC4 extends Cipher {
     /**
      * Constructor for algorithm 3 (ALG_ARCFOUR)
      */
-    public void ARC4() {
+    public ARC4() {
 	mode = Cipher.MODE_UNINITIALIZED;
 	S = null;
 	ii = null;
