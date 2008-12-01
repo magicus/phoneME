@@ -100,7 +100,9 @@ static long count_lines(char* buffer) {
     return lines;
 }
 
-/* fill dst buffer with the next line from buffer0, returns bytes skipped */
+/* fill dst buffer with the next line from buffer0, returns bytes skipped
+    If line ends with ',' skip it.
+ */
 static int next_line(char *buffer0, char *dst, int dst_len) {
     char *buffer_ptr = buffer0;
     char one_char;
@@ -121,8 +123,12 @@ static int next_line(char *buffer0, char *dst, int dst_len) {
             break;
         dst[len++] = one_char;
     }
-
-    dst[len] = 0; /* terminate the line */
+    // terminate the line and skip symbol ',' 
+    if (len > 1 && dst[len-1] == ',') {
+        dst[len-1] = 0;
+    } else {
+        dst[len] = 0; 
+    }
     return buffer_ptr - buffer0;
 }
 
