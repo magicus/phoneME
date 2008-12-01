@@ -62,12 +62,12 @@ jboolean get_random_bytes_port(unsigned char*buffer, jint bufsize) {
     jlong res;
     GetSystemTime(&st);
     res = (jlong)(st.wMilliseconds + st.wSecond * 1000);
-	int i;
-	for(i=0; i<bufsize; i++) {
-		buffer[i] = (unsigned char)res;
-		res >>= 8;
-	}
-	return KNI_TRUE;
+    int i;
+    for(i=0; i<bufsize; i++) {
+        buffer[i] = (unsigned char)res;
+        res >>= 8;
+    }
+    return KNI_TRUE;
 }
 
 
