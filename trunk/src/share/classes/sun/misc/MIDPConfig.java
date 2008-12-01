@@ -74,8 +74,6 @@ class MIDPConfig{
     static {
         // Create the member filter.
         memberFilter = newMemberFilter();
-        // Get the permitted class list.
-        getPermittedClasses();
     }
 
     private static File[] getDefaultPath() throws IOException {
@@ -148,10 +146,6 @@ class MIDPConfig{
     getPermittedClasses() {
         BufferedReader infile;
 
-	if (allowedClasses != null){
-	    return;
-	}
-
         allowedClasses = new HashSet();
 
         /* First, read the default lib/MIDPPermittedClasses.txt */
@@ -188,7 +182,7 @@ class MIDPConfig{
             } catch (IOException ioe) {
                 throw new InternalError(
                         "Failed to read MIDPPermittedClasses.txt in " +
-                        jarfiles[i]);
+                        jarfiles[i] + " (" + ioe.getMessage() + ").");
             }
         }
     }
@@ -473,6 +467,10 @@ class MIDPConfig{
 
     /* Check if the class is allowed for midlet. */
     public static boolean isClassAllowed(String classname) {
+        // Get the permitted class list.
+        if (allowedClasses == null) {
+            getPermittedClasses();
+        }
         return allowedClasses.contains(classname);
     }
 }
