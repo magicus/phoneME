@@ -333,6 +333,7 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
         if (bounds[Y] < 0) {
             bounds[Y] = 0;
         }
+        updateBoundsByScrollInd();
     }
 
     protected void paintBody(Graphics g) {        
@@ -417,6 +418,14 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
      */
     public void update(CLayer[] layers) {
         alignMenu();
+    }
+
+    /**
+     * Update bounds of layer depend on visability of scroll indicator layer
+     */
+    public void updateBoundsByScrollInd() {
+        bounds[W] = MenuSkin.WIDTH / 2;
+        super.updateBoundsByScrollInd();
     }
 
 

@@ -402,6 +402,7 @@ public class MenuLayer extends ScrollablePopupLayer {
                     bounds[H];
 		break;
         }
+        updateBoundsByScrollInd();
     }
     /**
      * Renders the body of the menu.
@@ -480,7 +481,7 @@ public class MenuLayer extends ScrollablePopupLayer {
                                MenuSkin.COLOR_INDEX);
 
                      if (ScreenSkin.RL_DIRECTION) {
-                         itemOffset = MenuSkin.WIDTH - MenuSkin.ITEM_INDEX_ANCHOR_X;                                                     
+                         itemOffset = bounds[W] - MenuSkin.ITEM_INDEX_ANCHOR_X;                                                     
                      } else {
                          itemOffset = MenuSkin.ITEM_INDEX_ANCHOR_X;
                      }
@@ -494,7 +495,7 @@ public class MenuLayer extends ScrollablePopupLayer {
                            MenuSkin.COLOR_ITEM);
 
                 if (ScreenSkin.RL_DIRECTION) {
-                         itemOffset = MenuSkin.WIDTH - MenuSkin.ITEM_ANCHOR_X;
+                         itemOffset = bounds[W] - MenuSkin.ITEM_ANCHOR_X;
                      } else {
                          itemOffset = MenuSkin.ITEM_ANCHOR_X;
                      }
@@ -504,7 +505,7 @@ public class MenuLayer extends ScrollablePopupLayer {
                     arrow = null;
                 }
                 if (ScreenSkin.RL_DIRECTION) {
-                         itemOffset = MenuSkin.WIDTH - MenuSkin.ITEM_ANCHOR_X - x;                                                     
+                         itemOffset = bounds[W] - MenuSkin.ITEM_ANCHOR_X - x;                                                     
                      } else {
                          itemOffset = MenuSkin.ITEM_ANCHOR_X;
                      }
@@ -629,7 +630,30 @@ public class MenuLayer extends ScrollablePopupLayer {
             requestRepaint();
         }
     }
-   
+
+    /**
+     * Update bounds of layer depend on visability of scroll indicator layer
+     */
+    public void updateBoundsByScrollInd() {
+        bounds[W] = MenuSkin.WIDTH;
+        if (owner != null) {
+            switch (MenuSkin.ALIGN_X) {
+                case Graphics.LEFT:
+                    bounds[X] = 0;
+                    break;
+                case Graphics.HCENTER:
+                    bounds[X] = (owner.bounds[W] - bounds[W]) / 2;
+                    break;
+                case Graphics.RIGHT:
+                default:
+                    bounds[X] = owner.bounds[W] - bounds[W];
+                    break;
+            }
+        }
+        super.updateBoundsByScrollInd();
+    }
+
+
     /**
      * Perform a line scrolling in the given direction. This method will
      * attempt to scroll the view to show next/previous line.
@@ -694,5 +718,6 @@ public class MenuLayer extends ScrollablePopupLayer {
         }
         scrollIndex = newY / MenuSkin.ITEM_HEIGHT;
     }
+
 }
 

@@ -27,6 +27,10 @@
 package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.chameleon.*;
+import com.sun.midp.chameleon.skins.ScrollIndSkin;
+import com.sun.midp.chameleon.skins.ScreenSkin;
+import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
+
 import javax.microedition.lcdui.*;
 
 /**
@@ -110,7 +114,8 @@ public class ScrollablePopupLayer extends PopupLayer
                 scrollInd.setListener(this);
             }
         }
-        updateScrollIndicator();        
+        updateScrollIndicator();
+        updateBoundsByScrollInd();
     }
 
     /**
@@ -122,10 +127,8 @@ public class ScrollablePopupLayer extends PopupLayer
         super.update(layers);
         if (scrollInd != null) {
             scrollInd.update(layers);
-            if (scrollInd.isVisible()) {
-                bounds[W] -= scrollInd.bounds[W];
-            }
         }
+        updateBoundsByScrollInd();
     }
     
     /**
@@ -152,6 +155,21 @@ public class ScrollablePopupLayer extends PopupLayer
             } else {
                 owner.removeLayer(scrollInd);
             }
+        }
+    }
+
+    /**
+     *  * Update bounds of layer depend on visability of scroll indicator layer
+     */
+    protected void updateBoundsByScrollInd() {
+        if (scrollInd != null && scrollInd.isVisible() ) {
+            if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR ) {
+                bounds[W] -= scrollInd.bounds[W];
+                if (ScreenSkin.RL_DIRECTION) {
+                    bounds[X] += scrollInd.bounds[W];
+                }
+            }
+            scrollInd.setBounds();
         }
     }
 }
