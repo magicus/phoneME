@@ -64,6 +64,9 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
     /** Number of midlets in minfo */
     private int mcount;
 
+    /** Indicates whether this MIDlet selector should be exited. */
+    private boolean scheduledExit;
+    
     /** MIDlet information, class, name, icon; one per MIDlet */
     private MIDletInfo[] minfo;
 
@@ -145,6 +148,16 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         refreshList();
         display.setCurrent(mform);
     }
+    
+    /**
+     * Checks whether this MIDlet selector is the current displayable.
+     * 
+     * @return <code>true</code> if this selector is the current displayable,
+     *      <code>false</code> otherwise
+     */
+    public boolean isCurrent() {
+        return display.getCurrent() == mform;
+    }
 
     /**
      * Called when MIDlet execution exited.
@@ -155,11 +168,19 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
     public void notifyMidletExited(String midlet) {
         runningMidlets.removeElement(midlet);        
         
-        /* If no more MIDlets are running from a locked suite, we need 
-         * the storage lock until another MIDlet is launched. This prevents 
-         * reinstallation of the locked suite. */
-        if (runningMidlets.isEmpty() && suiteInfo.isLocked()) {
-            suiteInfo.grabStorageLock();
+        if (runningMidlets.isEmpty()) {
+            if (scheduledExit) {
+                // exit now
+                exit();
+                return;
+            }
+            
+            /* If no more MIDlets are running from a locked suite, we need 
+             * the storage lock until another MIDlet is launched. This prevents 
+             * reinstallation of the locked suite. */
+            if (suiteInfo.isLocked()) {
+                suiteInfo.grabStorageLock();
+            }
         }
             
         refreshList();
@@ -168,14 +189,16 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
     /** If no MIDlet is running, exits the suite */
     public void exitIfNoMidletRuns() {
         if (runningMidlets.isEmpty()) {
-            if (suiteInfo.holdsStorageLock()) {
-                suiteInfo.releaseStorageLock();
-            }
-            if (suiteInfo.isLocked()) {
-                suiteInfo.unlock();
-            }
-            manager.notifyMIDletSelectorExited(suiteInfo);
+            exit();
         }
+    }
+
+    /**
+     * Exit immediately after the last running MIDlet of this selector exits.
+     */         
+    public void exitWhenNoMidletRuns() {
+        scheduledExit = true;
+        exitIfNoMidletRuns();
     }
     
     /**
@@ -325,6 +348,19 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         }
 
         minfo[mcount++] = info;
+    }
+
+    /** Exits this MIDlet selector unconditionally. */
+    private void exit() {
+        if (suiteInfo.holdsStorageLock()) {
+            suiteInfo.releaseStorageLock();
+        }
+        if (suiteInfo.isLocked()) {
+            suiteInfo.unlock();
+        }
+
+        manager.notifyMIDletSelectorExited(suiteInfo);
+        scheduledExit = false;
     }
 
     /** The inner class to represent MIDlet items in the MIDlet Selector screen */

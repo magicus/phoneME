@@ -189,6 +189,15 @@ interface AppManagerUI {
     void showMidletSelector(RunningMIDletSuiteInfo msiToRun);
 
     /**
+     * Exits a MIDlet selector which corresponds to the specified
+     * <code>RunningMIDletSuiteInfo</code>.
+     * 
+     * @param msi the <code>RunningMIDletSuiteInfo</code> which specifies 
+     *      the selector to exit
+     */
+    void exitMidletSelector(RunningMIDletSuiteInfo msi);
+    
+    /**
      * Called by Manager when destroyApp happens to clean up data.
      */
     void cleanUp();
