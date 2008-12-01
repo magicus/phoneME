@@ -166,7 +166,7 @@ $(CVM_CRW_JARDIR)/$(CVM_CRW_JAR): $(CVM_CRW_TRACKER)
 
 $(CVM_CRW_CLASSES)/%.class: %.java
 	@echo "Compiling crw classes..."
-	$(AT)$(CVM_JAVAC) -d $(CVM_CRW_CLASSES) \
+	$(AT)$(JAVAC_CMD) -d $(CVM_CRW_CLASSES) \
 		-sourcepath $(CVM_CRW_SHARECLASSESROOT) \
 		$<
 
