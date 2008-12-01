@@ -1392,6 +1392,8 @@ void ObjectHeap::unregister_global_ref_object(const int ref_index) {
 
 OopDesc* ObjectHeap::get_global_ref_object(const int ref_index) {
 #if USE_SOFT_REFERENCES
+  //SoftRefArray::get_value gives correct values for soft references
+  //and doesn't modify value for other references
   return SoftRefArray::get_value(*decode_reference(ref_index));
 #else
   return *decode_reference(ref_index);
