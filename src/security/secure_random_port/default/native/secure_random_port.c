@@ -59,16 +59,16 @@ jboolean get_random_bytes_port(unsigned char*buffer, jint bufsize) {
    *  http://www.ietf.org/rfc/rfc1750.txt)
    */
 
-	struct timeval tv;
+    struct timeval tv;
     jlong res;
-	gettimeofday(&tv,NULL);
-	res = tv.tv_usec + (1000000 * tv.tv_sec);
-	int i;
-	for(i=0; i<bufsize; i++) {
-		buffer[i] = (unsigned char)res;
-		res >>= 8;
-	}
-	return KNI_TRUE;
+    gettimeofday(&tv,NULL);
+    res = tv.tv_usec + (1000000 * tv.tv_sec);
+    int i;
+    for(i=0; i<bufsize; i++) {
+        buffer[i] = (unsigned char)res;
+        res >>= 8;
+    }
+    return KNI_TRUE;
 }
 
 
