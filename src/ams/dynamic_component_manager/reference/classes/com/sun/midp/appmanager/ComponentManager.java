@@ -288,12 +288,12 @@ public class ComponentManager extends MIDlet {
         private void makeInstallDialog() {
             if (installUrlForm == null) {
                 installUrlForm = new Form("Install Component");
-                String componentUrl = "http://127.0.0.1/DynComponent1.jar";
+                String componentUrl = "http://host/x.jar";
                 installUrlField = new TextField("Enter URL to install from:",
                                                 componentUrl, 1024,
                                                 TextField.URL);
-                nameField = new TextField("Enter component name:",
-                                          "asdf", 1024,
+                nameField = new TextField("Leave blank or enter a component name to override the default:",
+                                          "", 1024,
                                           TextField.ANY);
                 installUrlForm.append(installUrlField);
                 installUrlForm.append(nameField);
@@ -415,7 +415,7 @@ public class ComponentManager extends MIDlet {
                 DynamicComponentInstaller installer = new DynamicComponentInstaller();
                 try {
                     int componentId = installer.installComponent(suiteId,
-                            installUrlField.getString(), nameField.getString());
+                            installUrlField.getString().trim(), nameField.getString().trim());
                 } catch (IOException e) {
                     showError(e.toString());
                     return;
