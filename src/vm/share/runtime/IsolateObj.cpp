@@ -71,6 +71,10 @@ ReturnOop IsolateObj::duplicate(JVM_SINGLE_ARG_TRAPS) const {
   dup().set_profile_id( profile_id() );
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
+#if ENABLE_WTK_PROFILER
+  dup().set_use_profiler( use_profiler() );
+#endif
+
   OopDesc* p;
   // Do not use JVM_ZCHECK because result can be NULL
   p = Universe::deep_copy(main_class() JVM_CHECK_0);
