@@ -73,11 +73,15 @@ public class EventQueue implements Runnable {
     }
 
     /**
-     * Event queue thread reference to synchronize on. The event queue
-     * is not used since it given out to callers. But is given to
-     * the native event queue monitor.
+     * Event dispatcher thread.
      */
     Thread eventQueueThread;
+
+    /**
+     * Lock to synchronize on. The event queue or event dispatcher thread
+     * are not used since they are given out to callers.
+     */
+    private Object eventQueueLock;
 
     /** Next event to dispatch. */
     Event nextEvent;
@@ -165,12 +169,14 @@ public class EventQueue implements Runnable {
 
         eventQueueThread = new Thread(this);
 
+        eventQueueLock = new Object();
+
 // #ifndef ENABLE_GCI
         pool = new NativeEventPool();
 
         eventMonitorThread =
             new Thread(
-                new NativeEventMonitor(eventQueueThread, this, pool));
+                new NativeEventMonitor(eventQueueLock, this, pool));
 // #endif ENABLE_GCI
 
     }
@@ -269,7 +275,7 @@ public class EventQueue implements Runnable {
             throw new IllegalArgumentException("Listener is null");
         }
 
-        synchronized (eventQueueThread) {
+        synchronized (eventQueueLock) {
             if (eventType > dispatchTable.length) {
                 DispatchData[] newTable = new DispatchData[eventType + 1];
 
@@ -309,7 +315,7 @@ public class EventQueue implements Runnable {
     public void post(Event event) {
         DispatchData dispatchData;
         
-        synchronized (eventQueueThread) {
+        synchronized (eventQueueLock) {
             if (event.type < 1) {
                 if (Logging.REPORT_LEVEL <= Logging.ERROR) {
                     Logging.report(Logging.ERROR,
@@ -372,7 +378,7 @@ public class EventQueue implements Runnable {
 		}
 	    }
 
-            eventQueueThread.notifyAll();
+            eventQueueLock.notifyAll();
         }
     }
     
@@ -389,7 +395,7 @@ public class EventQueue implements Runnable {
         Event result = null;
         DispatchData dispatchData;
 
-        synchronized (eventQueueThread) {
+        synchronized (eventQueueLock) {
             /* find the event and the previous one */
             for (Event current = nextEvent; current != null;
                      prev = current, current = current.next) {
@@ -448,10 +454,10 @@ public class EventQueue implements Runnable {
 
 	sendShutdownEvent();
 
-        synchronized (eventQueueThread) {
+        synchronized (eventQueueLock) {
             while (alive) {
                 try {
-                    eventQueueThread.wait();
+                    eventQueueLock.wait();
                 } catch (InterruptedException ie) {
                     EventQueue.handleFatalError(ie);
                 }
@@ -471,10 +477,10 @@ public class EventQueue implements Runnable {
 
         for (; ; ) {
             try {
-                synchronized (eventQueueThread) {
+                synchronized (eventQueueLock) {
                     while (nextEvent == null) {
                         /* Wait until a event is pending. */
-                        eventQueueThread.wait();
+                        eventQueueLock.wait();
                     }
 
                     event = nextEvent;
@@ -487,7 +493,7 @@ public class EventQueue implements Runnable {
                     if (event.type == EventTypes.EVENT_QUEUE_SHUTDOWN) {
                         /* Time to shutdown. */
                         alive = false;
-                        eventQueueThread.notifyAll();
+                        eventQueueLock.notifyAll();
                         return;
                     }
                             
