@@ -139,6 +139,14 @@ typedef enum {
 /** @} */
 
 /**
+ * Return min negative value of defined key values
+ * or 0 if none.
+ */
+inline int minKeyValue() {
+    return KEYMAP_KEY_MACHINE_DEP; 
+}
+
+/**
  * Auxiliary data type to define association between key codes
  * and key names.
  */
