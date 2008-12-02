@@ -879,7 +879,7 @@ bool JavaDebugger::initialize_java_debugger(JVM_SINGLE_ARG_TRAPS) {
         GUARANTEE(!plist.is_null(), "Null packet buffer list");
         for (int i = 0; i < PacketStream::NUM_PACKET_BUFS; i++) {
           TypeArray::Raw data_buffer =
-            Universe::new_byte_array(PacketStream::INITIAL_SEGMENT_SIZE JVM_NO_CHECK);
+            Universe::new_byte_array(InitialStreamBufferSize JVM_NO_CHECK);
           if (CURRENT_HAS_PENDING_EXCEPTION) {
             // ran out of memory this soon?  Oh well,
             close_java_debugger(&t);
