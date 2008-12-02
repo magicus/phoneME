@@ -27,6 +27,6 @@ setlocal
 
 %~d0
 cd %~p0
-runMidlet internal com.sun.midp.appmanager.MVMManager
+runMidlet %* internal com.sun.midp.appmanager.MVMManager
 
 endlocal
