@@ -277,7 +277,7 @@ md_get_prelude_path(char *path, int path_len, char *filename)
 	    *lastSlash = '\0';
 	}
     }
-    (void)snprintf(path, path_len, "%s/%s", libdir, filename);
+    (void)snprintf(path, path_len, "%s/lib/%s", libdir, filename);
 }
 
 
