@@ -59,36 +59,59 @@ class RecordStoreSharedDBHeader {
     private int cachedHeaderVersion;
 
     /** True if record store has been locked */
-    boolean isRecordStoreLocked;    
+    boolean isRecordStoreLocked;
+
+    /** True if our cached data haven't been stored in native yet */
+    boolean isDirty;
 
     /** ID used for lookup in native code */
     private int lookupId;
 
     RecordStoreSharedDBHeader(int suiteId, String storeName, 
-            byte[] theHeaderData) {
+            byte[] headerData, boolean isNewRecordStore) {
 
-        cachedHeaderData = theHeaderData;
-        lookupId = getLookupId0(suiteId, storeName, theHeaderData.length);
+        cachedHeaderData = headerData;
+        lookupId = getLookupId0(suiteId, storeName, headerData.length);
         isRecordStoreLocked = false;
+        isDirty = false;
+        cachedHeaderVersion = 0;
+
+        if (isNewRecordStore) {
+            shareCachedData(0, cachedHeaderData.length);
+        } else {
+            updateCachedData();
+        }
     }
 
     synchronized void headerUpdated(byte[] newHeaderData, 
             int offset, int size) {
 
         cachedHeaderData = newHeaderData;
-        cachedHeaderVersion = headerUpdated0(lookupId, cachedHeaderData, 
-                offset, size);
+
+        if (isRecordStoreLocked) {
+            isDirty = true;
+        } else {
+            shareCachedData(offset, size);
+        }
     }
 
+    /**
+     * Gets up-to-date DB header data. If header hasn't changed
+     * since last call, this method guarantees to return the 
+     * same byte array.
+     *
+     * @return actual header data
+     */
     synchronized byte[] getHeaderData() {
         /*
          * Only fetch updated (possibly) header data from native if 
-         * record store  is unlocked. Record store being locked 
+         * record store is unlocked. Record store being locked 
          * guarantees that no other MIDlet can change the header.
          */
         if (!isRecordStoreLocked) {
-            cachedHeaderVersion = getHeaderData0(lookupId, cachedHeaderData);
+            updateCachedData();
         }
+
         return cachedHeaderData;
     }
 
@@ -100,16 +123,36 @@ class RecordStoreSharedDBHeader {
             throw new IllegalStateException("Record store already locked");
         }
 
-        cachedHeaderVersion = getHeaderData0(lookupId, cachedHeaderData);
+        updateCachedData();
         isRecordStoreLocked = true;
     }
 
     /**
-     * Called after record store has been unlocked.
+     * Called just before unblocking record store
      */
-    synchronized void recordStoreUnlocked() {
+    synchronized void recordStoreAboutToBeUnlocked() {
+        if (isDirty) {
+            // share the whole thing
+            shareCachedData(0, cachedHeaderData.length);
+            isDirty = false;
+        }
+
         isRecordStoreLocked = false;
-    }    
+    }
+
+    void recordStoreClosed() {
+        recordStoreClosed0();
+    }
+
+    private void updateCachedData() {
+        cachedHeaderVersion = updateCachedData0(lookupId, cachedHeaderData, 
+                cachedHeaderVersion);
+    }
+
+    private void shareCachedData(int offset, int size) {
+        cachedHeaderVersion = shareCachedData0(lookupId, cachedHeaderData, 
+                offset, size);
+    }
 
     /**
      * Gets lookup ID 
@@ -117,7 +160,20 @@ class RecordStoreSharedDBHeader {
     private static native int getLookupId0(int suiteId, String storeName, 
             int headerDataSize);
 
-    private static native int headerUpdated0(int lookupId, byte[] headerData,
-            int offset, int size);
-    private static native int getHeaderData0(int lookupId, byte[] headerData);
+    private static native int shareCachedData0(int lookupId, 
+            byte[] headerData, int offset, int size);
+    private static native int updateCachedData0(int lookupId, 
+            byte[] headerData, int headerVersion);
+
+    private native void recordStoreClosed0();
+
+    /**
+     * Ensures native resources are freed when Object is collected.
+     */
+// #ifdef ENABLE_CDC
+    protected native void finalize();
+// #else
+    private native void finalize();
+// #endif
+    
 }

@@ -34,8 +34,6 @@
 #include <midp_logging.h>
 
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "rms_shared_db_header.h"
 

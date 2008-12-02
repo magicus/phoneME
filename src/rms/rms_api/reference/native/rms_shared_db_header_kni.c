@@ -40,6 +40,9 @@
 
 #include "rms_shared_db_header.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 /** For MIDP on CDC */
 #ifndef SNI_BEGIN_RAW_POINTERS
 #define SNI_BEGIN_RAW_POINTERS
@@ -50,7 +53,7 @@
 #endif
 
 /** Cached field ID to be used in finalizer. */
-// static jfieldID gsLookupIdField = 0;
+static jfieldID gsLookupIdField = 0;
 
 /**
  * Gets lookup ID for specified suite ID and record store name. 
@@ -89,7 +92,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_getLookupId0) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_headerUpdated0) {
+KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_shareCachedData0) {
     RecordStoreSharedDBHeaderList* node = NULL;
     jint lookupId = -1;
     jint offset = 0;
@@ -128,7 +131,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_headerUpdated0) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_getHeaderData0) {
+KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_updateCachedData0) {
     RecordStoreSharedDBHeaderList* node = NULL;
     jint lookupId = -1;
     jint headerVersion = 0;    
@@ -138,6 +141,8 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_getHeaderData0) {
     KNI_DeclareHandle(headerDataJavaArray);
 
     lookupId = KNI_GetParameterAsInt(1);
+    headerVersion = KNI_GetParameterAsInt(3);
+    
     node = rmsdb_find_header_node_by_id(lookupId);
 
     if (node == NULL) {
@@ -156,6 +161,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_getHeaderData0) {
                 memcpy(JavaByteArray(headerDataJavaArray), headerData, 
                         node->headerDataSize * sizeof(jbyte));
             SNI_END_RAW_POINTERS
+                fprintf(stderr, "---- New header\n");
             }
         }
     }
@@ -163,4 +169,39 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_getHeaderData0) {
     KNI_EndHandles();
     KNI_ReturnInt(headerVersion);
 }
+
+#define SHARED_DB_HEADER_FINALIZER_BODY                                 \
+    jint lookupId = -1;                                                 \
+    RecordStoreSharedDBHeaderList* node = NULL;                         \
+                                                                        \
+    KNI_StartHandles(2);                                                \
+    KNI_DeclareHandle(classHandle);                                     \
+    KNI_DeclareHandle(thisHandle);                                      \
+                                                                        \
+    KNI_GetThisPointer(thisHandle);                                     \
+                                                                        \
+    if (gsLookupIdField == 0) {                                         \
+        KNI_GetObjectClass(thisHandle, classHandle);                    \
+        gsLookupIdField = KNI_GetFieldID(classHandle, "lookupId", "I"); \
+    }                                                                   \
+    lookupId = KNI_GetIntField(thisHandle, gsLookupIdField);            \
+                                                                        \
+    node = rmsdb_find_header_node_by_id(lookupId);                      \
+    if (node != NULL) {                                                 \
+        rmsdb_inc_header_node_refcount(node);                           \
+    }                                                                   \
+                                                                        \
+    KNI_EndHandles();                                                   \
+    KNI_ReturnVoid();                                                   
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_finalize) {
+    SHARED_DB_HEADER_FINALIZER_BODY
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_recordStoreClosed0) {
+    SHARED_DB_HEADER_FINALIZER_BODY    
+}
+
 

@@ -219,8 +219,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                             "store attributes");
                 }
             } finally {
+                dbHeader.recordStoreAboutToBeUnlocked();
                 recordStoreLock.release();
-                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -259,9 +259,10 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 throw new RecordStoreException("error closing .db file. "
                         + ioe);
             } finally {
+                dbHeader.recordStoreAboutToBeUnlocked();
                 recordStoreLock.release();
-                dbHeader.recordStoreUnlocked();
                 dbFile = null;
+                dbHeader.recordStoreClosed();
             }
         }
     }
@@ -462,11 +463,10 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 }
 
                 // Return the new record id
-                System.err.println("Added record: " + recordId);
                 return recordId;
             } finally {
+                dbHeader.recordStoreAboutToBeUnlocked();
                 recordStoreLock.release();
-                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -524,8 +524,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 throw new RecordStoreException("error updating file after" +
                         " record deletion");
             } finally {
+                dbHeader.recordStoreAboutToBeUnlocked();
                 recordStoreLock.release();
-                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -563,8 +563,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
                 return RecordStoreUtil.getInt(header, 4);
             } finally {
+                dbHeader.recordStoreAboutToBeUnlocked();
                 recordStoreLock.release();
-                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -606,8 +606,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error reading record data");
             } finally {
+                dbHeader.recordStoreAboutToBeUnlocked();
                 recordStoreLock.release();
-                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -652,8 +652,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error reading record data");
             } finally {
+                dbHeader.recordStoreAboutToBeUnlocked();
                 recordStoreLock.release();
-                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -727,8 +727,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error setting record data");
             } finally {
+                dbHeader.recordStoreAboutToBeUnlocked();
                 recordStoreLock.release();
-                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -746,8 +746,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 dbHeader.recordStoreLocked();
                 return dbIndex.getRecordIDs();
             } finally {
+                dbHeader.recordStoreAboutToBeUnlocked();
                 recordStoreLock.release();
-                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -1213,7 +1213,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                     }
                     
                     dbHeader = new RecordStoreSharedDBHeader(suiteId, 
-                            recordStoreName, dbHeaderData);
+                            recordStoreName, dbHeaderData, false);
 
                 } else {
                     // initialize the header
@@ -1230,8 +1230,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                     dbFile.commitWrite();
 
                     dbHeader = new RecordStoreSharedDBHeader(suiteId, 
-                            recordStoreName, dbHeaderData);
-                    dbHeader.headerUpdated(dbHeaderData, 0, DB_HEADER_SIZE);
+                            recordStoreName, dbHeaderData, true);
 
                 }
 

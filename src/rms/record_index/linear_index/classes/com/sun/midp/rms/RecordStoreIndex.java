@@ -528,14 +528,7 @@ class RecordStoreIndex {
 
         if (indexVersion < storeVersion) {
             recordIdOffsets = null;
-            System.err.println("Index is out of date: " + indexVersion + ", " + storeVersion);
             
-            try {
-                throw new Exception();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
             // out of date, can't use current index anymore           
             invalidateIndex();
             indexVersion = storeVersion;
