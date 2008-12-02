@@ -324,14 +324,16 @@ FinalizeEvents(void) {
  */
 void
 midp_resetEvents(void) {
-    int i;
 
     /* The Event ID may have changed for each VM startup*/
     eventFieldIDsObtained = KNI_FALSE;
 
 #if ENABLE_MULTIPLE_ISOLATES
-    for (i = 1; i <= maxIsolates; i++) {
-        resetEventQueue(i);
+    {
+	int i;
+	for (i = 1; i <= maxIsolates; i++) {
+    	    resetEventQueue(i);
+	}
     }
 #else
     resetEventQueue(0);
