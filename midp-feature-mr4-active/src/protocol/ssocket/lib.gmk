@@ -1,0 +1,90 @@
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+ifeq ($(USE_SERVER_SOCKET), true)
+
+# Adds to global SUBSYSTEMS list
+#
+SUBSYSTEMS += ssocket
+SUBSYSTEM_PROTOCOL_MODULES += ssocket
+
+# Javadoc source path
+SUBSYSTEM_SSOCKET_SOURCEPATH=$(SUBSYSTEM_DIR)/protocol/ssocket/classes
+
+SUBSYSTEM_SSOCKET_PACKAGES = \
+    com.sun.midp.io.j2me.serversocket 
+
+# Javadoc will be extracted from generated jpp output
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_SSOCKET_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_SSOCKET_PACKAGES)
+
+GROUP_PROTOCOL_JAVADOC_PACKAGES += \
+	$(SUBSYSTEM_SSOCKET_PACKAGES)
+
+# vpath for ( ssocket ) subsystem
+#
+vpath % $(SUBSYSTEM_DIR)/protocol/ssocket/reference/native
+
+# Java files for the ( ssocket ) module
+#
+SUBSYSTEM_SSOCKET_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/ssocket/classes/javax/microedition/io/ServerSocketConnection.java \
+    $(SUBSYSTEM_DIR)/protocol/ssocket/reference/classes/com/sun/midp/io/j2me/serversocket/Socket.java
+
+ifeq ($(USE_NETMON), true)
+SUBSYSTEM_SSOCKET_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/ssocket/reference/classes/com/sun/kvem/io/j2me/serversocket/Socket.java
+endif
+
+# Native files for the ( ssocket ) module
+#
+ifeq ($(TARGET_VM), cldc_vm)
+SUBSYSTEM_SSOCKET_NATIVE_FILES += \
+	serverSocketProtocol.c
+endif
+ifeq ($(USE_I3_TEST), true)
+
+SUBSYSTEM_SOCKET_I3TEST_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/ssocket/reference/i3test/com/sun/midp/io/j2me/socket/TestNonblockingSocket.java
+
+endif
+
+endif
+
+# Even if ServerSocket is not supported, we have to include
+# the interface for the signature test compliance.
+SUBSYSTEM_SSOCKET_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/ssocket/classes/javax/microedition/io/ServerSocketConnection.java

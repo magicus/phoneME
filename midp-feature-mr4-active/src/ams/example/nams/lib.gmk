@@ -1,0 +1,206 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+NAMS_EXAMPLES_DIR = $(SUBSYSTEM_AMS_DIR)/example/nams
+
+ifeq ($(USE_NAMS_TEST_SERVICE), true)
+
+SUBSYSTEM_AMS_JAVA_FILES += \
+	$(NAMS_EXAMPLES_DIR)/classes/com/sun/midp/main/NamsTestServiceMidlet.java \
+	$(NAMS_EXAMPLES_DIR)/classes/com/sun/midp/main/NamsTestService.java \
+	$(NAMS_EXAMPLES_DIR)/classes/com/sun/midp/main/NamsAPIWrapper.java
+
+SUBSYSTEM_AMS_NATIVE_FILES += \
+	nams_test_service_kni.c \
+	nams_api_wrapper_kni.c
+
+endif	
+
+# vpath for ( example ) module
+#
+vpath % $(NAMS_EXAMPLES_DIR)/native
+
+# This is needed to include API provided by findMidlet.c
+vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common/native
+
+ifeq ($(TARGET_PLATFORM), javacall)
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/$(TARGET_PLATFORM)/native
+else
+ifeq ($(TARGET_PLATFORM), wince)
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/$(TARGET_PLATFORM)/native
+else
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/default/native
+endif
+endif
+
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+	-I$(SUBSYSTEM_AMS_DIR)/example/ams_common/include \
+	-I$(SUBSYSTEM_AMS_DIR)/example/ams_common_port/include \
+	-I$(NAMS_EXAMPLES_DIR)/native/inc
+
+# Native files for the ( example ) module
+#
+AMS_RUNNAMS_NATIVE_FILES += \
+	runNams.c
+
+AMS_REMOVEMIDLET_NATIVE_FILES += \
+	removeMidlet.c \
+	nams_command_stub.c
+
+AMS_LISTMIDLET_NATIVE_FILES += \
+	listMidlets.c \
+	nams_command_stub.c
+
+AMS_FILEINSTALLER_NATIVE_FILES += \
+	fileInstallerShared.c \
+	jadParser.c \
+	manifestParser.c \
+	nams_command_stub.c	
+
+# I3test files
+#
+ifeq ($(USE_I3_TEST), true)
+
+vpath % $(NAMS_EXAMPLES_DIR)/i3test/native/$(TARGET_OS)
+
+AMS_RUNNAMS_NATIVE_FILES += \
+	runNamsI3test_md.c
+
+SUBSYSTEM_AMS_I3TEST_JAVA_FILES += \
+	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/events/EventCopyStorage.java \
+	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/main/DummyNamsMIDlet1.java \
+	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/main/DummyNamsMIDlet2.java \
+	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/main/DummyNamsMIDlet3.java \
+	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/main/DummyNamsMIDlet.java \
+	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/main/NamsManager.java \
+	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/main/NamsNotifier.java \
+	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/main/NamsStorage.java \
+	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/main/TestNamsStartMidlet.java
+
+# These files are normally not required for listMidlets and removeMidlet
+# but they contain some KNI functions of NamsStorage, NamsManager and NamsNotifier
+# so it should be included when building with I3 tests.
+SUBSYSTEM_AMS_NATIVE_FILES += \
+	midpNamsManager.c \
+	midpNamsTestService.c \
+	midpNamsTestEventProducer.c
+
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+	-I$(NAMS_EXAMPLES_DIR)/i3test/native
+
+vpath % \
+	$(NAMS_EXAMPLES_DIR)/i3test/native
+
+else
+
+ifeq ($(USE_NAMS_TEST_SERVICE), true)
+AMS_RUNNAMS_NATIVE_FILES += \
+	midpNamsTestService.c \
+	midpNamsTestEventProducer.c
+endif	
+
+endif
+
+ifeq ($(USE_NUTS_FRAMEWORK), true)
+AMS_FILEINSTALLER_NATIVE_FILES += fileInstallerTest.c
+endif
+
+AMS_FILEINSTALLER_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,$(AMS_FILEINSTALLER_NATIVE_FILES))
+AMS_REMOVEMIDLET_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,$(AMS_REMOVEMIDLET_NATIVE_FILES))
+AMS_LISTMIDLET_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,$(AMS_LISTMIDLET_NATIVE_FILES))
+AMS_RUNNAMS_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,$(AMS_RUNNAMS_NATIVE_FILES))
+
+# Don't include exe files to MIDP source file list
+# since we want to link different obj files for different exe
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+VM_MODE = mvm
+else
+VM_MODE = svm
+endif
+
+SUBSYSTEM_AMS_LAZY_MAKEFILES += \
+	$(NAMS_EXAMPLES_DIR)/executables.gmk
+
+SUBSYSTEM_AMS_EXECUTABLES = \
+	$(BINDIR)/runNams$(g)$(p)$(EXE) \
+	$(BINDIR)/listMidlets$(g)$(p)$(EXE) \
+	$(BINDIR)/removeMidlet$(g)$(p)$(EXE) \
+	$(BINDIR)/fileInstaller$(g)$(p)$(EXE)
+
+ifeq ($(TARGET_PLATFORM), javacall)
+ifeq ($(JAVACALL_PLATFORM), win32_i386_vc)
+
+vpath % $(NAMS_EXAMPLES_DIR)/native/win32
+
+SUBSYSTEM_AMS_EXECUTABLES += $(BINDIR)/postTestMsg.exe
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+	-I$(SUBSYSTEM_HIGHUI_DIR)/win32_application/include
+
+endif
+endif
+
+# Other platforms like stubs don't need scripts
+ifeq ($(TARGET_OS), linux)
+INCLUDE_SHELL_SCRIPTS = true
+endif
+
+ifeq ($(TARGET_PLATFORM), javacall)
+INCLUDE_SHELL_SCRIPTS = true
+endif
+
+ifdef INCLUDE_SHELL_SCRIPTS
+
+$(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/shell/%
+	$(A)echo " ... installing $@"
+	$(A)cp -f $< $@
+	$(A)chmod +x $@
+
+$(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/batch/%
+	$(A)echo " ... installing $@"
+	$(A)cp -f $< $@
+	$(A)chmod +x $@
+
+SUBSYSTEM_AMS_EXECUTABLES += \
+	$(BINDIR)/installMidlet$(g)$(BAT)
+
+ifeq ($(USE_AUTOTESTER), true)
+  SUBSYSTEM_AMS_EXECUTABLES += \
+	$(BINDIR)/autotest$(g)$(BAT)
+endif
+
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_AMS_EXECUTABLES += \
+	$(BINDIR)/i3test$(g)$(BAT)
+endif
+
+endif
