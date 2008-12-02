@@ -5127,11 +5127,17 @@ fixupCallback(CVMExecEnv* ee,
 		    thisMb = CVMcpGetMb(cp, i);
 		    thisCb = CVMmbClassBlock(thisMb);
 		    if (thisCb == oldcb) {
-			newMb = CVMcbMethodSlot(newcb,
-						findMbIndex(oldcb, thisMb));
-			CVMcpResetMb(cp, i, newMb);
-		    }
-		    break;
+                        if (!CVMmbIsMiranda(thisMb)) {
+                            newMb = CVMcbMethodSlot(newcb,
+                                        findMbIndex(oldcb, thisMb));
+                        } else {
+                            /* Miranda method */
+                            newMb = CVMcbMethodTableSlot(newcb,
+                                       CVMmbMethodTableIndex(thisMb));
+                        }
+                        CVMcpResetMb(cp, i, newMb);
+                    }
+                    break;
 		}
 	    }
 	}
