@@ -82,6 +82,12 @@
 #define KEYMAP_MD_KEY_HOME (KEYMAP_KEY_MACHINE_DEP)
 #define KEYMAP_MD_KEY_SWITCH_APP (KEYMAP_KEY_MACHINE_DEP - 1)
 
+/*Update of minimum valid key value*/
+#ifdef MIN_KEY_VALUE
+#undef MIN_KEY_VALUE
+#define MIN_KEY_VALUE (KEYMAP_MD_KEY_SWITCH_APP)
+#endif
+
 static HBITMAP getBitmapDCtmp = NULL;
 
 typedef unsigned short unicode;
