@@ -48,8 +48,11 @@ typedef struct RecordStoreSharedDBHeaderListStruct {
     /** Record store name */
     pcsl_string storeName;
 
-    /** 1, if header has been set at least once, 0 otherwise */
-    int isHeaderDataSet;
+    /** 
+     * DB header version, gets incremented by 1 every time 
+     * someone sets the new data
+     */
+    jint headerVersion;
 
     /** DB header data */
     jbyte* headerData;
@@ -58,9 +61,8 @@ typedef struct RecordStoreSharedDBHeaderListStruct {
     jint headerDataSize;
 
     /** 
-     * How many RecordStoreSharedDBHeader instances reference
-     * this native data 
-     * */
+     * How many RecordStoreSharedDBHeader instances reference this native data 
+     */
     int refCount;
 
     /** Next node in list */ 
@@ -68,25 +70,25 @@ typedef struct RecordStoreSharedDBHeaderListStruct {
 } RecordStoreSharedDBHeaderList;
 
 /**
- * Finds header data struct in list by ID.
+ * Finds header node in list by ID.
  *
  * @param lookupId lookup ID
- * @return header data struct that has specified ID, NULL if not found
+ * @return header node that has specified ID, NULL if not found
  */
 RecordStoreSharedDBHeaderList* rmsdb_find_header_node_by_id(int lookupId);
 
 /**
- * Finds header data struct in list by suite ID and record store name.
+ * Finds header node in list by suite ID and record store name.
  *
  * @param suiteId suite ID
  * @param storeName recordStore name
- * @return header data struct that has specified name, NULL if not found
+ * @return header node that has specified name, NULL if not found
  */
 RecordStoreSharedDBHeaderList* rmsdb_find_header_node_by_name(int suiteId, 
         const pcsl_string* storeName);
 
 /**
- * Creates header data struct associated with specified suite ID and 
+ * Creates header node associated with specified suite ID and 
  * record store name, and puts it into list.
  *
  * @param suiteId suite ID
@@ -98,41 +100,51 @@ RecordStoreSharedDBHeaderList* rmsdb_create_header_node(int suiteId,
         const pcsl_string* storeName, jint headerDataSize);
 
 /**
- * Deletes header data struct and removes it from the list.
+ * Deletes header node and removes it from the list.
  *
- * @param node pointer to header data struct to delete
+ * @param node pointer to header node to delete
  */
 void rmsdb_delete_header_node(RecordStoreSharedDBHeaderList* node);
 
 /**
- * Sets header data for the specified header data struct.
+ * Sets header data for the specified header node and 
+ * increments header version by 1.
  *
- * @param node pointer to header data struct 
- * @param headerData header data to set from
+ * @param node pointer to header node 
+ * @param srcHeaderData header data to set 
+ * @param srcOffset offset int srcHeaderData
+ * @param srcSize size of the data to set, in jbytes
+ *
+ * @return new header version
  */
-void rmsdb_set_header_data(RecordStoreSharedDBHeaderList* node, 
-        jbyte* headerData);
+int rmsdb_set_header_data(RecordStoreSharedDBHeaderList* node, 
+        jbyte* srcHeaderData, jint srcOffset, jint srcSize);
 
 /**
- * Gets header data from the specified header data struct.
+ * Gets header data from the specified header node.
+ * It only sets the pointer to the node's data if the version 
+ * of data stored in node is greater than the specified version.
  *
- * @param node pointer to header data struct 
- * @param headerData where to copy header data 
+ * @param node pointer to header node 
+ * @param dstHeaderData where to store pointer to the header data
+ * @param headerVersion version of the header to check against
+ *
+ * @return actual header version
  */
-void rmsdb_get_header_data(RecordStoreSharedDBHeaderList* node, 
-        jbyte* headerData);
+int rmsdb_get_header_data(RecordStoreSharedDBHeaderList* node, 
+        jbyte** dstHeaderData, jint headerVersion);
 
 /**
- * Increases header data struct ref count.
+ * Increases header node ref count.
  *
- * @param node data struct to increase ref count for
+ * @param node data node to increase ref count for
  */
 void rmsdb_inc_header_node_refcount(RecordStoreSharedDBHeaderList* node);
 
 /**
- * Decreases header data struct ref count.
+ * Decreases header node ref count.
  *
- * @param node data struct to decrease ref count for
+ * @param node data node to decrease ref count for
  */
 void rmsdb_dec_header_node_refcount(RecordStoreSharedDBHeaderList* node);
 

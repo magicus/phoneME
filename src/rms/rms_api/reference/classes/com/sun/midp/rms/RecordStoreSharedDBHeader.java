@@ -45,8 +45,21 @@ import com.sun.midp.log.LogChannels;
  * has been changed, so we share it in native instead.
  */
 class RecordStoreSharedDBHeader {
-    /** Cached header data, may be out of date */
+    /** 
+     * Cached header data, may be out of date regarding to the actual 
+     * header data. This happens when another MIDlet changes the header 
+     * of the same record store.
+     */
     private byte[] cachedHeaderData;
+
+    /** 
+     * Internal header version. Each headerUpdated() method call
+     * increments header version by 1.
+     */
+    private int cachedHeaderVersion;
+
+    /** True if record store has been locked */
+    boolean isRecordStoreLocked;    
 
     /** ID used for lookup in native code */
     private int lookupId;
@@ -56,17 +69,47 @@ class RecordStoreSharedDBHeader {
 
         cachedHeaderData = theHeaderData;
         lookupId = getLookupId0(suiteId, storeName, theHeaderData.length);
+        isRecordStoreLocked = false;
     }
 
-    synchronized void headerUpdated(byte[] theHeaderData) {
-        cachedHeaderData = theHeaderData;
-        headerUpdated0(lookupId, cachedHeaderData);
+    synchronized void headerUpdated(byte[] newHeaderData, 
+            int offset, int size) {
+
+        cachedHeaderData = newHeaderData;
+        cachedHeaderVersion = headerUpdated0(lookupId, cachedHeaderData, 
+                offset, size);
     }
 
     synchronized byte[] getHeaderData() {
-        getHeaderData0(lookupId, cachedHeaderData);
+        /*
+         * Only fetch updated (possibly) header data from native if 
+         * record store  is unlocked. Record store being locked 
+         * guarantees that no other MIDlet can change the header.
+         */
+        if (!isRecordStoreLocked) {
+            cachedHeaderVersion = getHeaderData0(lookupId, cachedHeaderData);
+        }
         return cachedHeaderData;
     }
+
+    /**
+     * Called after recors store has been locked.
+     */
+    synchronized void recordStoreLocked() {
+        if (isRecordStoreLocked) {
+            throw new IllegalStateException("Record store already locked");
+        }
+
+        cachedHeaderVersion = getHeaderData0(lookupId, cachedHeaderData);
+        isRecordStoreLocked = true;
+    }
+
+    /**
+     * Called after record store has been unlocked.
+     */
+    synchronized void recordStoreUnlocked() {
+        isRecordStoreLocked = false;
+    }    
 
     /**
      * Gets lookup ID 
@@ -74,6 +117,7 @@ class RecordStoreSharedDBHeader {
     private static native int getLookupId0(int suiteId, String storeName, 
             int headerDataSize);
 
-    private static native void headerUpdated0(int lookupId, byte[] headerData);
-    private static native void getHeaderData0(int lookupId, byte[] headerData);
+    private static native int headerUpdated0(int lookupId, byte[] headerData,
+            int offset, int size);
+    private static native int getHeaderData0(int lookupId, byte[] headerData);
 }

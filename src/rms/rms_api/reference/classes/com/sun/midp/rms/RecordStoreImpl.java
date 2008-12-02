@@ -196,6 +196,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         synchronized (recordStoreLock) {
             recordStoreLock.obtain();
             try {
+                dbHeader.recordStoreLocked();
+                    
                 int newAuthMode = authmode;
                 if ((authmode == RecordStore.AUTHMODE_ANY) &&
                         (writable == false)) {
@@ -210,7 +212,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                     // write out the changes to the db header
                     dbFile.seek(RS1_AUTHMODE);
                     dbFile.write(dbHeaderData, RS1_AUTHMODE, 4);
-                    dbHeader.headerUpdated(dbHeaderData);
+                    dbHeader.headerUpdated(dbHeaderData, RS1_AUTHMODE, 4);
                     // dbFile.commitWrite();
                 } catch (java.io.IOException ioe) {
                     throw new RecordStoreException("error writing record " +
@@ -218,6 +220,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 }
             } finally {
                 recordStoreLock.release();
+                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -247,17 +250,17 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         synchronized (recordStoreLock) {
             recordStoreLock.obtain();
             try {
-                // close native fd
+                dbHeader.recordStoreLocked();
+
                 compactRecords();  // compact before close
-
                 dbFile.close();
-
                 dbIndex.close();
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error closing .db file. "
                         + ioe);
             } finally {
                 recordStoreLock.release();
+                dbHeader.recordStoreUnlocked();
                 dbFile = null;
             }
         }
@@ -335,7 +338,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * @return the size of the record store in bytes
      */
     public int getSize() {
-        byte[] dbHeaderData = dbHeader.getHeaderData();        
+        byte[] dbHeaderData = dbHeader.getHeaderData();
         return DB_HEADER_SIZE + RecordStoreUtil.getInt(dbHeaderData, 
                 RS6_DATA_SIZE);
     }
@@ -427,6 +430,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         synchronized (recordStoreLock) {
             recordStoreLock.obtain();
             try {
+                dbHeader.recordStoreLocked();
+
                 int recordId = getNextRecordID();
 
                 try {
@@ -437,9 +442,10 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                     byte[] dbHeaderData = dbHeader.getHeaderData();
                     RecordStoreUtil.putInt(recordId+1, dbHeaderData, 
                             RS2_NEXT_ID);
-                    RecordStoreUtil.putInt(getNumRecords()+1, dbHeaderData, 
+                    RecordStoreUtil.putInt(getNumRecords()+1, dbHeaderData,
                             RS3_NUM_LIVE);
-                    RecordStoreUtil.putInt(getVersion()+1, dbHeaderData, 
+                    int newVersion = getVersion()+1;
+                    RecordStoreUtil.putInt(newVersion, dbHeaderData, 
                             RS4_VERSION);
                     RecordStoreUtil.putLong(System.currentTimeMillis(), 
                             dbHeaderData, RS5_LAST_MODIFIED);
@@ -447,7 +453,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                     // write out the changes to the db header
                     dbFile.seek(RS2_NEXT_ID);
                     dbFile.write(dbHeaderData, RS2_NEXT_ID, 3*4+8);
-                    dbHeader.headerUpdated(dbHeaderData);
+                    dbHeader.headerUpdated(dbHeaderData, RS2_NEXT_ID, 3*4+8);
+                    dbIndex.recordStoreVersionUpdated(newVersion);
                     // dbFile.commitWrite();
                 } catch (java.io.IOException ioe) {
                     throw new RecordStoreException("error writing new record "
@@ -455,9 +462,11 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 }
 
                 // Return the new record id
+                System.err.println("Added record: " + recordId);
                 return recordId;
             } finally {
                 recordStoreLock.release();
+                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -482,7 +491,10 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         synchronized (recordStoreLock) {
             recordStoreLock.obtain();
             try {
+                dbHeader.recordStoreLocked();
+
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
+
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
 
                 // free the block
@@ -495,7 +507,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 byte[] dbHeaderData = dbHeader.getHeaderData();
                 RecordStoreUtil.putInt(getNumRecords()-1, dbHeaderData, 
                         RS3_NUM_LIVE);
-                RecordStoreUtil.putInt(getVersion()+1, dbHeaderData, 
+                int newVersion = getVersion()+1;                
+                RecordStoreUtil.putInt(newVersion, dbHeaderData, 
                         RS4_VERSION);
                 RecordStoreUtil.putLong(System.currentTimeMillis(), 
                         dbHeaderData, RS5_LAST_MODIFIED);
@@ -503,7 +516,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 // save the updated db header
                 dbFile.seek(RS3_NUM_LIVE);
                 dbFile.write(dbHeaderData, RS3_NUM_LIVE, 2*4+8);
-                dbHeader.headerUpdated(dbHeaderData);
+                dbHeader.headerUpdated(dbHeaderData, RS3_NUM_LIVE, 2*4+8);
+                dbIndex.recordStoreVersionUpdated(newVersion);
                 // dbFile.commitWrite();
 
             } catch (java.io.IOException ioe) {
@@ -511,6 +525,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                         " record deletion");
             } finally {
                 recordStoreLock.release();
+                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -536,10 +551,12 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         synchronized (recordStoreLock) {
             recordStoreLock.obtain();
             try {
+                dbHeader.recordStoreLocked();
+
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
 
                 try {
-                dbIndex.getRecordHeader(recordId, header);
+                    dbIndex.getRecordHeader(recordId, header);
                 } catch (java.io.IOException ioe) {
                     throw new RecordStoreException("error reading record data");
                 }
@@ -547,6 +564,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 return RecordStoreUtil.getInt(header, 4);
             } finally {
                 recordStoreLock.release();
+                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -576,6 +594,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         synchronized (recordStoreLock) {
             recordStoreLock.obtain();
             try {
+                dbHeader.recordStoreLocked();
+
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
 
@@ -587,6 +607,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 throw new RecordStoreException("error reading record data");
             } finally {
                 recordStoreLock.release();
+                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -612,6 +633,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         synchronized (recordStoreLock) {
             recordStoreLock.obtain();
             try {
+                dbHeader.recordStoreLocked();
+
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
 
@@ -630,6 +653,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 throw new RecordStoreException("error reading record data");
             } finally {
                 recordStoreLock.release();
+                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -666,6 +690,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         synchronized (recordStoreLock) {
             recordStoreLock.obtain();
             try {
+                dbHeader.recordStoreLocked();
+
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
 
@@ -686,7 +712,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
                 // update the db header
                 byte[] dbHeaderData = dbHeader.getHeaderData();
-                RecordStoreUtil.putInt(getVersion()+1, dbHeaderData, 
+                int newVersion = getVersion()+1;                
+                RecordStoreUtil.putInt(newVersion, dbHeaderData, 
                         RS4_VERSION);
                 RecordStoreUtil.putLong(System.currentTimeMillis(), 
                         dbHeaderData, RS5_LAST_MODIFIED);
@@ -694,12 +721,14 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 // write out the changes to the db header
                 dbFile.seek(RS4_VERSION);
                 dbFile.write(dbHeaderData, RS4_VERSION, 4+8);
-                dbHeader.headerUpdated(dbHeaderData);
+                dbHeader.headerUpdated(dbHeaderData, RS4_VERSION, 4+8);
+                dbIndex.recordStoreVersionUpdated(newVersion);
                 // dbFile.commitWrite();
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error setting record data");
             } finally {
                 recordStoreLock.release();
+                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -714,9 +743,11 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         synchronized (recordStoreLock) {
             recordStoreLock.obtain();
             try {
+                dbHeader.recordStoreLocked();
                 return dbIndex.getRecordIDs();
             } finally {
                 recordStoreLock.release();
+                dbHeader.recordStoreUnlocked();
             }
         }
     }
@@ -754,6 +785,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *
      * Warning: This is a slow operation that scales linearly
      * with dbFile size.
+     *
+     * Warning: it is assumed that this method is only called while being
+     * protected by record store lock.
      *
      * @exception RecordStoreNotOpenException if this record store
      *            is closed
@@ -861,14 +895,14 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             RecordStoreUtil.putInt(0, dbHeaderData, RS7_FREE_SIZE);
             dbFile.seek(RS6_DATA_SIZE);
             dbFile.write(dbHeaderData, RS6_DATA_SIZE, 4+4);
-            dbHeader.headerUpdated(dbHeaderData);
+            dbHeader.headerUpdated(dbHeaderData, RS6_DATA_SIZE, 4+4);
             // dbFile.commitWrite();
 
             dbFile.truncate(getSize());
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                               "compactRecords, truncate to size " +
+                               "compactRecords, truncate to size " + 
                                getSize());
             }
         }
@@ -925,6 +959,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     /**
      * Adds a block for the record and data or sets an existing block to
      * the data.  Splits an exiting block if needed.
+     * 
+     * Warning: it is assumed that this method is only called while being
+     * protected by record store lock.
      *
      * @param recordId the ID of the record to use in this operation
      * @param data the new data to store in the record
@@ -1014,7 +1051,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                     dbHeaderData, RS6_DATA_SIZE);
             dbFile.seek(RS6_DATA_SIZE);
             dbFile.write(dbHeaderData, RS6_DATA_SIZE, 4);
-            dbHeader.headerUpdated(dbHeaderData);
+            dbHeader.headerUpdated(dbHeaderData, RS6_DATA_SIZE, 4);
             // dbFile.commitWrite();
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -1060,7 +1097,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 dbHeaderData, RS7_FREE_SIZE);
         dbFile.seek(RS7_FREE_SIZE);
         dbFile.write(dbHeaderData, RS7_FREE_SIZE, 4);
-        dbHeader.headerUpdated(dbHeaderData);
+        dbHeader.headerUpdated(dbHeaderData, RS7_FREE_SIZE, 4);
         // dbFile.commitWrite();
     }
 
@@ -1194,7 +1231,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
                     dbHeader = new RecordStoreSharedDBHeader(suiteId, 
                             recordStoreName, dbHeaderData);
-                    dbHeader.headerUpdated(dbHeaderData);
+                    dbHeader.headerUpdated(dbHeaderData, 0, DB_HEADER_SIZE);
 
                 }
 
