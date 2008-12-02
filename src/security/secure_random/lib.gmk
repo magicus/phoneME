@@ -38,6 +38,27 @@ SUBSYSTEM_SECURITY_MODULES += secure_random
 
 SECURE_RANDOM_DIR = $(SUBSYSTEM_DIR)/security/secure_random
 
+############################################################
+# CDC: only Java code:
+ifneq ($(TARGET_VM), cldc_vm)
+
+#
+# Javadoc source path, note this module does not add a new java package.
+#
+SUBSYSTEM_SECURE_RANDOM_SOURCEPATH += $(SECURE_RANDOM_DIR)/reference-cdc/classes
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_SECURE_RANDOM_SOURCEPATH)
+
+#
+# Java files for the library
+#
+SUBSYSTEM_SECURITY_JAVA_FILES += \
+    $(SECURE_RANDOM_DIR)/reference-cdc/classes/com/sun/midp/crypto/PRand.java \
+    $(SECURE_RANDOM_DIR)/reference-cdc/classes/com/sun/midp/crypto/SecureRandom.java
+
+############################################################
+# CLDC: Java and C code:
+else
 #
 # Javadoc source path, note this module does not add a new java package.
 #
@@ -55,13 +76,12 @@ SUBSYSTEM_SECURITY_JAVA_FILES += \
 #
 # Native files for the library
 #
-#ifeq ($(TARGET_VM), cldc_vm)
 vpath % $(SECURE_RANDOM_DIR)/reference/native
 
 SUBSYSTEM_SECURITY_NATIVE_FILES += prand.c
 
-#endif
-
 SUBSYSTEM_SECURITY_EXTRA_INCLUDES += \
     -I$(SECURE_RANDOM_DIR)/include
 
+############################################################
+endif
