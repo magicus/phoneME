@@ -583,7 +583,11 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
      */
     void uCallHideNotify() {
         super.uCallHideNotify();
-        disableLayers();
+        if (editable) {
+            disableInput();
+            // IMPL_NOTE: problem with synchronization on layers and LCDUILock
+            disableLayers();
+        }
     }
 
 
@@ -692,7 +696,17 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
      */
     void lCallShowNotify() {
         super.lCallShowNotify();
-        this.scrollInitialized = false;     
+        this.scrollInitialized = false;
+    }
+
+    void uCallShowNotify() {
+        super.uCallShowNotify();
+        if (editable) {
+            enableInput();
+            // IMPL_NOTE: problem with synchronization on layers and LCDUILock
+            showIMPopup = true;
+            enableLayers();
+        }
     }
     
     /**
