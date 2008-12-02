@@ -105,7 +105,6 @@ runMidlet(int argc, char** commandlineArgs) {
     appDir = getApplicationDir(argv[0]);
     if (appDir == NULL) {
         REPORT_ERROR(LC_AMS, "Failed to recieve midp application directory");
-        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
         return -1;
     }
 
@@ -115,7 +114,6 @@ runMidlet(int argc, char** commandlineArgs) {
     confDir = getConfigurationDir(argv[0]);
     if (confDir == NULL) {
         REPORT_ERROR(LC_AMS, "Failed to recieve midp configuration directory");
-        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
         return -1;
     }
     
@@ -123,7 +121,6 @@ runMidlet(int argc, char** commandlineArgs) {
 
     if (midpInitialize() != 0) {
         REPORT_ERROR(LC_AMS, "Not enough memory");
-        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
         return -1;
     }
 
