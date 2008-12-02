@@ -139,10 +139,10 @@ typedef enum {
 /** @} */
 
 /**
- * Minimun valid key value.
+ * Minimun valid key value KEYMAP_KEY_GAME_RIGHT.
  */
 #ifndef MIN_KEY_VALUE
-#define MIN_KEY_VALUE (KEYMAP_KEY_MACHINE_DEP + 1)
+#define MIN_KEY_VALUE (KEYMAP_KEY_GAME_RIGHT)
 #endif
 
 /**

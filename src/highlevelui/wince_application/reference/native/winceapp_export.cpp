@@ -72,12 +72,6 @@ extern "C" {
 
 #define KEYMAP_MD_KEY_HOME (KEYMAP_KEY_MACHINE_DEP)
 
-/*Update of minimum valid key value*/
-#ifdef MIN_KEY_VALUE
-#undef MIN_KEY_VALUE
-#define MIN_KEY_VALUE (KEYMAP_MD_KEY_HOME)
-#endif
-
 /* global variables defined in midp_msgQueue_md.c */
 extern int inMidpEventLoop;
 extern int lastWmSettingChangeTick;
