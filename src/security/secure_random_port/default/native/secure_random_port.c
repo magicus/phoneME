@@ -61,9 +61,9 @@ jboolean get_random_bytes_port(unsigned char*buffer, jint bufsize) {
 
     struct timeval tv;
     jlong res;
+    int i;
     gettimeofday(&tv,NULL);
     res = tv.tv_usec + (1000000 * tv.tv_sec);
-    int i;
     for(i=0; i<bufsize; i++) {
         buffer[i] = (unsigned char)res;
         res >>= 8;
