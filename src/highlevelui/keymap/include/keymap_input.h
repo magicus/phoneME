@@ -139,11 +139,9 @@ typedef enum {
 /** @} */
 
 /**
- * Minimun valid key value KEYMAP_KEY_GAME_RIGHT.
+ * Minimun valid key value.
  */
-#ifndef MIN_KEY_VALUE
 #define MIN_KEY_VALUE (KEYMAP_KEY_GAME_RIGHT)
-#endif
 
 /**
  * Auxiliary data type to define association between key codes
