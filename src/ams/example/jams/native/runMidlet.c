@@ -162,10 +162,10 @@ runMidlet(int argc, char** commandlineArgs) {
          * configuration settings. 
          */
         {
-            char * debuggerPortString = 
+            char* debuggerPortString =
               midpRemoveCommandOption("-port", commandlineArgs, &argc);
             if (debuggerPortString != NULL) {
-	        int debuggerPort;        
+                int debuggerPort;
                 if (sscanf(debuggerPortString, "%d", &debuggerPort) != 1) {
                     REPORT_ERROR(LC_AMS, "Invalid debugger port format");
                     return -1;
