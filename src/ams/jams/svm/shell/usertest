@@ -26,4 +26,4 @@
 #
 DIR=${0%/*}
 cd $DIR
-exec ./runMidlet internal com.sun.midp.appmanager.Manager
+exec ./runMidlet $* internal com.sun.midp.appmanager.Manager

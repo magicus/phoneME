@@ -26,4 +26,4 @@
 #
 DIR=${0%/*}
 cd $DIR
-exec ./runMidlet_g internal com.sun.midp.appmanager.MVMManager
+exec ./runMidlet_g $* internal com.sun.midp.appmanager.MVMManager
