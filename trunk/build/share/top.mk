@@ -34,11 +34,14 @@
 # J2ME_CLASSLIB default: cdc
 #     The class library build target. The choices are cdc and foundation.
 #     cdc represents a limited class library that is meant for testing
-#     purposes only. foundation represents the full Foundation Profile 1.0
+#     purposes only. foundation represents the full Foundation Profile
 #     class library.
 #
 # JDK_HOME
-#     Location of the J2SE 1.3.1 SDK tools.
+#     Location of the Java SE SDK tools. Versions 1.4.2 through Java 6 are
+#     supported. JDK_HOME should point to the directory containing the SDK's
+#     bin directory. If this option is left unset, tools found on the $PATH
+#     are used.
 #
 # OPT_PKGS
 #     Indicates that an optional package will be compiled as part of the
@@ -51,6 +54,9 @@
 #     in the value of OPT_PKGS, but are not necessary otherwise. When OPT_PKGS
 #     is set to all, all available optional packages will be part of the
 #     compilation.
+#
+#     Note that OPT_PKGS is typcially used for rmi and jdbc optional packages.
+#     Other optional packages use a different mechanism.
 #
 # CVM_DEBUG default: false
 #     Build the debug version of the VM.
@@ -87,34 +93,22 @@
 # CVM_JIT default: target specific - see GNUmakefile
 #     Build a VM with the dynamic compiler.
 #
+# CVM_AOT default: false
+#     Enable runtime support for ahead-of-time compilation of Java methods.
+#
 # CVM_JIT_USE_FP_HARDWARE default: target specific - see GNUmakefile
 #     Enable the JIT to use an FPU. If true, the JIT will emit FP instructions
 #     and use FP registers. If false, the JIT will store FP values in general
 #     purpose registers and call out to C or assembler helper functions to do
 #     FP arithmetic.
 #
-#     NOTE: This option is not supported on the ARM port and will result in
-#     build errors if set true.
-#
 # CVM_JVMTI default: false
 #     Build a VM that supports the new JVMTI debugger/profiler interface.
 #     When set true, there can be a significant degradation of performance.
 #
 # CVM_JVMTI_ROM default: false
-#     Build a VM that supports debugging romized system classes. CVM_JVMTI
-#     must be true.
-#
-# CVM_JVMPI default: false
-#     Build a VM that supports the Java profiler. This option is not
-#     supported with CVM_JIT=true. When set true, there will be a significant
-#     degradation of performance.
-#
-# CVM_JVMPI_TRACE_INSTRUCTION default: $(CVM_JVMPI)
-#     Build a VM that supports Java bytecode tracing for profiling purposes.
-#     Enabling this option imposes a greater runtime burden on the interpreter
-#     and may cause it to run a little slower.  Hence, this option is provided
-#     in case the user does not need this feature and does not want the
-#     additional runtime burden to impact the profile they are sampling.
+#     Build a VM that supports debugging romized system classes. Note that
+#     CVM_JVMTI must also be true.
 #
 # CVM_OPTIMIZED default: !$(CVM_DEBUG)
 #     If true, then use various C compiler optimization features. Setting
@@ -122,17 +116,19 @@
 #     support and optimized code that will run faster, but not as fast
 #     as when using CVM_DEBUG=false.
 #
-# CVM_PRELOAD_LIB default: unset
-#     Build a VM with all the system and profile classes preloaded.
-#     Obsolete.  Replaced by CVM_PRELOAD_SET.
-#
-# CVM_PRELOAD_TEST default: unset
-#     Build a VM with the test classes (testclasses.zip) preloaded.
-#     Obsolete.  Replaced by CVM_PRELOAD_SET.
-#
 # CVM_PRELOAD_SET default: minfull
 #     Build a VM with the specified set of classes preloaded.
-#     Possible choices: min nullapp libfull libtestfull
+#     Possible choices:
+#        min - minimum required classes to build and run the vm.
+#        minfull - same as min but with full transitive closure
+#        nullapp - mimumum required classes that avoids any class loading
+#                  when running an app that does nothing.
+#        nullappfull - same as nullapp but with full transitive closure
+#        libfull - All the library classes
+#        libtestfull - All the library and test classes (testclasses.zip)
+#     Note that "full" implies full transitive closure of the classes being
+#     preloaded, meaning that there will be no references from preloaded
+#     classes to classes that need to be dynamically loaded.
 #
 # CVM_SYMBOLS default: $(CVM_DEBUG)
 #     Include debugging and symbol information for C code even if the build is
@@ -141,20 +137,13 @@
 # USE_VERBOSE_MAKE default: false
 #     Avoid printing detailed messages that show each build step. Has the
 #     opposite meaning as CVM_TERSEOUTPUT, which can be used instead, but
-#     is now deprecated..
+#     is now deprecated.
 #
 # CVM_TRACE default: $(CVM_DEBUG)
 #     Include support for tracing VM events to stderr. The events that are
 #     traced are controlled by the -Xtrace option.  Since CVM_TRACE=true
 #     slows down the VM a lot, it is useful to build with CVM_TRACE=false
 #     and CVM_DEBUG=true to get debugging support without tracing support.
-#
-# CVM_USE_NATIVE_TOOLS default: false
-#     The native tools will be used rather than attempting to locate a gcc
-#     compiler. This means cc is used as the default compiler. Normally the
-#     makefiles search for gcc in a path determined by a number of other
-#     options, including CVM_TOOLS_DIR and CVM_HOST. See
-#     CVM_TARGET_TOOLS_PREFIX in build/share/defs.mk.
 #
 # CVM_VERIFY_HEAP default: false
 #     Enable Java heap verification code.  Because this can have a dramatically
@@ -164,7 +153,40 @@
 # CVM_INCLUDE_COMMCONNECTION default: false
 #     Include GCF CommProtocol support. This feature is not supported
 #     on all platforms.
-
+#
+# CVM_BUILD_SUBDIR_NAME default: unset
+#     Name of subdir to place build into, rather than using the current
+#     build directory. Makes it possible to have multiple builds in the
+#     same build directory, and makes it easier to remove builds.
+#
+# CVM_DUAL_STACK default: false
+#     Support concurrent CLDC and CDC stacks running on the same VM.
+#     This option is most commonly used when supporting a MIDP stack.
+#
+#####################################################################
+# Deprecated build options.
+#####################################################################
+#
+# CVM_JVMPI default: false
+#     Build a VM that supports the legacy JVMPI Java profiler. This option is
+#     not supported with CVM_JIT=true. When set true, there will be a significant
+#     degradation of performance.
+#
+# CVM_JVMPI_TRACE_INSTRUCTION default: $(CVM_JVMPI)
+#     Build a VM that supports Java bytecode tracing for profiling purposes.
+#     Enabling this option imposes a greater runtime burden on the interpreter
+#     and may cause it to run a little slower.  Hence, this option is provided
+#     in case the user does not need this feature and does not want the
+#     additional runtime burden to impact the profile they are sampling.
+#
+# CVM_PRELOAD_LIB default: unset
+#     Build a VM with all the system and profile classes preloaded.
+#     Obsolete.  Replaced by CVM_PRELOAD_SET.
+#
+# CVM_PRELOAD_TEST default: unset
+#     Build a VM with the test classes (testclasses.zip) preloaded.
+#     Obsolete.  Replaced by CVM_PRELOAD_SET.
+#
 #####################################################################
 # Definitions of limited options. The default values of these options
 # are supported. Alternate values should be considered experimental.
@@ -281,15 +303,26 @@
 #     Support for the dynamic patching of calls to methods within 
 #     compiled methods. Not supported on all platforms.
 #
+# CVM_CREATE_RT_JAR default: false
+#     Place all JSR and CDC library classes into the same jar file.
+#
+# CVM_INSPECTOR default: false
+#     Include VM Inspector support in the build.
+#
+#####################################################################
 # Options for locating target tools such as gcc. See defs.mk file
 # for more details:
+#####################################################################
+#
 #
 # CVM_TOOLS_DIR default:
 #   /usr/tools
 # CVM_HOST default:
 #   "i686-SuSE-linux" on SuSE Linux hosts
+# CVM_HOST_TOOLS_DIR default:
+#   <empty>
 # CVM_TARGET_TOOLS_DIR default:
-#  $(CVM_TOOLS_DIR)/$(CVM_HOST)/gnu/bin
+#   $(CVM_TOOLS_DIR)/$(CVM_HOST)/gnu/bin
 # CVM_TARGET_TOOLS_PREFIX default:
 #   $(CVM_TARGET_TOOLS_DIR)/$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)-$(TARGET_OS)-
 #
@@ -304,6 +337,7 @@
 # CVM_JAVA_TOOLS_PREFIX default:
 #   $(JDK_HOME)/bin/
 #
+
 # speed up makefile by not using implicit suffixes
 .SUFFIXES:
 
