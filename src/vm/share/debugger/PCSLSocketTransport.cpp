@@ -417,12 +417,14 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
   }
 
   do {
+	  status = javacall_odt_read_bytes(channel_handle, ptr, nleft, &nread); //ODD_TODO pcsl_socket_read_start(dbg_handle, ptr, nleft, &nread, &pContext);
+  /*
     if (!_wait_for_read) {
       status = javacall_odt_read_bytes(channel_handle, ptr, nleft, &nread); //ODD_TODO pcsl_socket_read_start(dbg_handle, ptr, nleft, &nread, &pContext);
-    }/* else {  //Reinvocation after unblocking the thread 
+    } else {  //Reinvocation after unblocking the thread 
       status = pcsl_socket_read_finish(dbg_handle,  ptr, nleft,
                                        &nread, pContext);
-    }*/
+    }
 
     if (status == PCSL_NET_WOULDBLOCK) {
       if (Verbose) {
@@ -433,6 +435,7 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
     }
 
     _wait_for_read = false;
+  */
 
     if (status != PCSL_NET_SUCCESS) {
 #ifdef AZZERT
@@ -443,6 +446,10 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
 
     if (nread == 0) {
       if (total > 0) {
+	    if (peekOnly) {
+		  // add the read data to the cache
+			bool success = st->add_to_read_ahead_buffer(ptr, nread);
+		}
         return total;
       } else {
         if (blockflag) {
