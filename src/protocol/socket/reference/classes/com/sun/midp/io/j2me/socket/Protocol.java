@@ -277,9 +277,6 @@ public class Protocol extends NetworkConnectionBase
                 "Target port denied to untrusted applications");
         }
 
-        System.out.println("###: socket.Protocol.open0 " + host + ", " + port + " " + this);
-        (new Exception("open0 debug")).printStackTrace();
-
         open0(ipBytes, port);
 
         NetworkSubsystem.getInstance(classSecurityToken).
@@ -409,9 +406,6 @@ public class Protocol extends NetworkConnectionBase
          * TCP connection by sending all pending data and the FIN flag.
          */
 
-        System.out.println("###: socket.Protocol.disconnect " + this);
-        (new Exception("close0 debug")).printStackTrace();
-        
         if (!outputShutdown) {
             shutdownOutput0();
         }
