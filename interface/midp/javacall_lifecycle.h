@@ -435,6 +435,16 @@ void javanotify_select_foreground_app(void);
  */
 void javanotify_switch_to_ams(void);
 
+
+typedef void (*JACACALL_INSTALL_LISTENER)(javacall_utf16 *midletName,int midletNameLen,
+                                          javacall_utf16 *className, int classNameLen,
+                                          int  suiteID,
+                                          javacall_utf16* midletIcon,int midletIconLen);
+
+typedef void (*JAVACALL_UNINSTALL_LISTENER)(int  suiteID);
+
+void javanotify_set_installation_notify(JACACALL_INSTALL_LISTENER install_notify, JAVACALL_UNINSTALL_LISTENER unistall_notify);
+
 /** @} */
 
 /** @} */
