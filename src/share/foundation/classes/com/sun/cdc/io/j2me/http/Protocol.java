@@ -99,7 +99,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     protected static int maxNumberOfPersistentConnections;
     /** Connection linger time in the pool, default 60 seconds. */
     protected static long connectionLingerTime;
-    protected static StreamConnectionPool connectionPool;
+    protected StreamConnectionPool connectionPool;
+    private static StreamConnectionPool staticConnectionPool;
+
     static {
         maxNumberOfPersistentConnections = Integer.parseInt(
             (String) AccessController.doPrivileged(
@@ -109,12 +111,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             (String) AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction(
                 "microedition.connlinger", "60000")));
-        createConnectionPool();
-    }
-
-    protected static void createConnectionPool() {
-        connectionPool = new StreamConnectionPool(
-                                 maxNumberOfPersistentConnections,
+        staticConnectionPool =
+            new StreamConnectionPool(maxNumberOfPersistentConnections,
                                  connectionLingerTime);
     }
     /*
@@ -136,6 +134,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      * We are initially unconnected.
      */
     public Protocol() {
+        connectionPool = getConnectionPool();
         reqProperties = new Hashtable();
         headerFields = new Hashtable();
         stringbuffer = new StringBuffer(32);
@@ -163,6 +162,13 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                 return null;
             }
         });
+    }
+
+    /*
+     * Return the static pool instance for this type of protocol.
+     */
+    protected StreamConnectionPool getConnectionPool() {
+        return staticConnectionPool;
     }
 
     /*
@@ -1258,7 +1264,7 @@ malformed: {
                 } else {
                     // save the connection for reuse
                     if (!connectionPool.add(protocol, host, port,
-                           (HttpStreamConnection)streamConnection, streamOutput,
+                           (StreamConnection)streamConnection, streamOutput,
                            streamInput)) {
                         // pool full, disconnect
                         disconnectSocket();
