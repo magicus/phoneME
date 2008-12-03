@@ -44,6 +44,8 @@ extern "C" {
 #include <javacall_time.h>
 #include <javautil_unicode.h>
 
+#include <suitestore_listeners.h>
+
 #define LOCALE "microedition.locale"
 
 char urlAddress[BINARY_BUFFER_MAX_LEN];
@@ -806,6 +808,83 @@ void javanotify_internal_resume(void) {
 
     midp_jc_event_send(&e);
 }
+
+
+
+ /**
+  * A notification function for telling Java to perform the update of
+  * a MIDlet with parameters
+  *
+  * @param suite_id : suite id to update
+  * @param forceUpdate updates the MIDlet even if it already exist regardless
+  *                    of version
+  */
+void javanotify_update_midlet_wparams(char* suite_id, int forceUpdate) {
+    int length;
+    midp_jc_event_union e;
+     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+
+     REPORT_INFO2(LC_CORE,"javanotify_update_midlet_wparams() >> "
+                          "suite_id = %s, forceUpdate = %d\n",
+                          suite_id, forceUpdate);
+
+     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+     data->argc = 0;
+     data->argv[data->argc++] = "runMidlet";
+     data->argv[data->argc++] = "-1";
+     data->argv[data->argc++] = "com.sun.midp.installer.GraphicalInstaller";
+
+     if (forceUpdate == 1) {
+         data->argv[data->argc++] = "FU";
+     } else {
+         data->argv[data->argc++] = "U";
+     }
+
+     data->argv[data->argc++]  = suite_id;
+    midp_jc_event_send(&e);
+}
+
+
+
+
+JACACALL_INSTALL_LISTENER javacall_install_listener=NULL;
+JAVACALL_UNINSTALL_LISTENER javacall_uninstall_listener=NULL;
+
+void javanotify_set_installation_notify(JACACALL_INSTALL_LISTENER install_notify, 
+                                        JAVACALL_UNINSTALL_LISTENER uninstall_notify) {
+
+    javacall_install_listener=install_notify;
+    javacall_uninstall_listener=uninstall_notify;
+
+}
+
+
+void notify_javacall_installation(int listenerType, int when, MIDPError status, \
+              const MidletSuiteData* pSuiteData) {
+
+
+    switch (listenerType) {
+    case SUITESTORE_LISTENER_TYPE_INSTALL:
+            if (javacall_install_listener!=NULL) javacall_install_listener(
+                pSuiteData->varSuiteData.suiteName.data,
+                pSuiteData->varSuiteData.suiteName.length,
+                pSuiteData->varSuiteData.midletClassName.data,
+                pSuiteData->varSuiteData.midletClassName.length,
+                pSuiteData->suiteId,
+                NULL /*pSuiteData->varSuiteData.iconName.data*/,
+                0 /*pSuiteData->varSuiteData.iconName.length*/ );
+             break;
+            
+
+    case SUITESTORE_LISTENER_TYPE_REMOVE:
+                if(javacall_uninstall_listener!=NULL) 
+                javacall_uninstall_listener(pSuiteData->suiteId); break;
+    }
+
+}
+
+
 
 #ifdef __cplusplus
 }

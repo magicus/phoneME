@@ -36,7 +36,7 @@
 #include <kni.h>
 
 #include <javacall_logging.h>
-
+#include <suitestore_listeners.h>
 
 gxj_screen_buffer gxj_system_screen_buffer;
 
@@ -75,6 +75,8 @@ void static jcapp_reset_screen_buffer(int hardwareId) {
             sizeof (gxj_pixel_type));
 }
 
+extern void notify_javacall_installation(int listenerType, int when, MIDPError status, \
+              const MidletSuiteData* pSuiteData);
 
 /**
  * Initializes the Javacall native resources.
@@ -100,6 +102,17 @@ int jcapp_init() {
     }    
 
     jcapp_reset_screen_buffer(hardwareId);
+
+    /* Initialize Install/Uninstall responders*/
+    midp_suite_add_listener(notify_javacall_installation, SUITESTORE_LISTENER_TYPE_INSTALL,
+                            SUITESTORE_OPERATION_END);
+
+    midp_suite_add_listener(notify_javacall_installation, SUITESTORE_LISTENER_TYPE_REMOVE,
+                            SUITESTORE_OPERATION_END);
+
+
+    
+
     return 0;
 }
 
