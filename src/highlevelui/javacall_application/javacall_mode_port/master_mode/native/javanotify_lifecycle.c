@@ -845,62 +845,6 @@ void javanotify_update_midlet_wparams(char* suite_id, int forceUpdate) {
     midp_jc_event_send(&e);
 }
 
-
-
-
-JACACALL_INSTALL_LISTENER javacall_install_listener=NULL;
-JAVACALL_UNINSTALL_LISTENER javacall_uninstall_listener=NULL;
-
-/**
- * The platform should invoke this function in register
- * listerners for midlet installation / uninstallation
- * notification.
- * Either function may be null, in which case, no notifier will
- * be invoked.
- * Only the last registered notifiers will be called
- */
-
-void javanotify_set_installation_notify(JACACALL_INSTALL_LISTENER install_notify, 
-                                        JAVACALL_UNINSTALL_LISTENER uninstall_notify) {
-
-    javacall_install_listener=install_notify;
-    javacall_uninstall_listener=uninstall_notify;
-
-}
-
-
-/**
- * Internal function to be registered with the MIDP notification
- * mechanism. Used for converting parameters between the MIDP
- * definition and the javacall listeners
- */
-
-void notify_javacall_installation(int listenerType, int when, MIDPError status, \
-              const MidletSuiteData* pSuiteData) {
-
-
-    switch (listenerType) {
-    case SUITESTORE_LISTENER_TYPE_INSTALL:
-            if (javacall_install_listener!=NULL) javacall_install_listener(
-                pSuiteData->varSuiteData.suiteName.data,
-                pSuiteData->varSuiteData.suiteName.length,
-                pSuiteData->varSuiteData.midletClassName.data,
-                pSuiteData->varSuiteData.midletClassName.length,
-                pSuiteData->suiteId,
-                NULL /*pSuiteData->varSuiteData.iconName.data*/,
-                0 /*pSuiteData->varSuiteData.iconName.length*/ );
-             break;
-            
-
-    case SUITESTORE_LISTENER_TYPE_REMOVE:
-                if(javacall_uninstall_listener!=NULL) 
-                javacall_uninstall_listener(pSuiteData->suiteId); break;
-    }
-
-}
-
-
-
 #ifdef __cplusplus
 }
 #endif
