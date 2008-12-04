@@ -26,8 +26,6 @@
 
 package com.sun.midp.installer;
 
-import com.sun.midp.services.*;
-import java.io.*;
 import com.sun.midp.security.*;
 
 /**
