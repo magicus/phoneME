@@ -54,6 +54,19 @@ extern "C" {
  */
 void javanotify_enable_odd(void);
 
+javacall_result javacall_odt_initialize();
+
+javacall_result javacall_odt_open_channel(int port, void **pHandle);
+
+javacall_result javacall_odt_close_channel(javacall_handle handle);
+
+javacall_result javacall_odt_is_available(javacall_handle handle, int *pBytesAvailable);
+
+javacall_result javacall_odt_write_bytes(javacall_handle handle, char *pData, int len, int *pBytesWritten);
+
+javacall_result javacall_odt_read_bytes(javacall_handle handle, unsigned char *pData, int len, int *pBytesRead);
+
+
 /** @} */
 
 #ifdef __cplusplus
