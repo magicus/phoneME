@@ -1,0 +1,774 @@
+//
+// Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
+//
+// @(#)jitfloatgrammarrules.jcs	1.28 06/10/10
+//
+//
+// Optional floating-point grammar rules for
+// RISC processors having floating-point hardware.
+// The usual RISC FP co-processor architecture is assumed.
+//
+
+// these only appear if we have FP hardware
+%binary FPARAMETER    // float parameter
+%binary DPARAMETER    // double parameter
+%binary FINVOKE       // float invocation
+%binary DINVOKE       // double invocation
+%unary FIDENT
+%unary DIDENT
+%unary FDEFINE
+%unary DDEFINE
+%leaf FUSED
+%leaf DUSED
+%binary FSEQUENCE_R
+%binary DSEQUENCE_R
+%binary FSEQUENCE_L
+%binary DSEQUENCE_L
+
+//
+// Sequences:
+//
+freg32: FSEQUENCE_R effect freg32 : 0 : :
+	SEQUENCE_R_INHERITANCE($$, CVMRM_FP_REGS(con)); : : {
+    passLastEvaluated(con, CVMRM_FP_REGS(con), $$);
+};
+
+freg64: DSEQUENCE_R effect freg64 : 0 : :
+	SEQUENCE_R_INHERITANCE($$, CVMRM_FP_REGS(con)); : : {
+    passLastEvaluated(con, CVMRM_FP_REGS(con), $$);
+};
+
+//
+// "L" Sequences:
+//
+freg32: FSEQUENCE_L freg32 effect : 0 : :
+	SEQUENCE_L_INHERITANCE($$, CVMRM_FP_REGS(con)); : : {
+    passLastEvaluated(con, CVMRM_FP_REGS(con), $$);
+};
+
+freg64: DSEQUENCE_L freg64 effect : 0 : :
+        SEQUENCE_L_INHERITANCE($$, CVMRM_FP_REGS(con)); : : {
+    passLastEvaluated(con, CVMRM_FP_REGS(con), $$);
+};
+
+
+freg32: ICONST_32 : 30 : : : :
+        const2Reg32(con, CVMRM_FP_REGS(con), $$, GET_FLOAT_REGISTER_GOALS);
+
+freg64: ICONST_64 : 50 : : : : {
+	/*
+	 * Here we probably don't know the actual type of the
+	 * constant value. There will be big trouble if long integers
+	 * and double floats need different treatment.
+	 */
+	CVMRMResource* dest = CVMRMgetResource(CVMRM_FP_REGS(con),
+					       GET_FLOAT_REGISTER_GOALS, 2);
+	int destregno = CVMRMgetRegisterNumber(dest);
+	CVMJavaVal64 v64;
+	CVMmemCopy64(v64.v, CVMJITirnodeGetConstant64($$)->j.v);
+        CVMCPUemitLoadLongConstantFP(con, destregno, &v64);
+	CVMRMoccupyAndUnpinResource(CVMRM_FP_REGS(con), dest, $$);
+	pushResource(con, dest);
+    };
+
+
+freg32:	LOCAL32 : 10 : : : : {
+	CVMJITLocal* l = CVMJITirnodeGetLocal( $$ );
+	CVMRMResource* dest =
+	    CVMRMbindResourceForLocal(CVMRM_FP_REGS(con), 1,
+				      CVM_FALSE, l->localNo);
+	CVMRMpinResourceEagerlyIfDesireable(CVMRM_FP_REGS(con),
+					    dest, GET_FLOAT_REGISTER_GOALS);
+	CVMRMoccupyAndUnpinResource(CVMRM_FP_REGS(con), dest, $$);
+	pushResource(con, dest);
+    };
+
+// Purpose: value32 = FETCH32(STATIC32(staticFieldSpec))
+freg32: FETCH32 STATIC32 reg32 : 20 : : : : {
+        CVMBool isVolatile;
+        CVMJITprintCodegenComment(("Do getstatic:"));
+        CVMJITaddCodegenComment((con,
+            "value{I|F|O} = getstatic(staticFieldAddr);"));
+        isVolatile =
+            ((CVMJITirnodeGetUnaryNodeFlag(CVMJITirnodeGetLeftSubtree($$)) &
+             CVMJITUNOP_VOLATILE_FIELD) != 0);
+        getStaticField(con, CVMRM_FP_REGS(con),
+		       $$, GET_FLOAT_REGISTER_GOALS, CVMCPU_FLDR32_OPCODE, 1,
+		       isVolatile);
+    };
+
+// Purpose: value = FETCH32(FIELDREF32(obj,fieldOffset))
+freg32: FETCH32 FIELDREF32 reg32 memSpec : 10 :
+    GETFIELD_SYNTHESIS(con, $$); : GETFIELD_INHERITANCE(con, $$); : : {
+        CVMBool isVolatile;
+        CVMJITprintCodegenComment(("Do getfield:"));
+        CVMJITaddCodegenComment((con, "value{I|F}"));
+        isVolatile =
+            ((CVMJITirnodeGetBinaryNodeFlag(CVMJITirnodeGetLeftSubtree($$)) &
+             CVMJITBINOP_VOLATILE_FIELD) != 0);
+        fetchField(con, CVMRM_FP_REGS(con), $$,
+		   GET_FLOAT_REGISTER_GOALS, CVMCPU_FLDR32_OPCODE, 1,
+		   isVolatile);
+    };
+
+freg64:	LOCAL64 : 10 : : : : {
+	CVMJITLocal* l = CVMJITirnodeGetLocal( $$ );
+	CVMRMResource* dest =
+	    CVMRMbindResourceForLocal(CVMRM_FP_REGS(con), 2,
+				      CVM_FALSE, l->localNo);
+	CVMRMpinResourceEagerlyIfDesireable(CVMRM_FP_REGS(con),
+					    dest, GET_FLOAT_REGISTER_GOALS);
+	CVMRMoccupyAndUnpinResource(CVMRM_FP_REGS(con), dest, $$);
+	pushResource(con, dest);
+    };
+
+// Purpose: value64 = FETCH64(STATIC64(staticFieldSpec))
+freg64: FETCH64 STATIC64 reg32 : 20 : : : : {
+        CVMJITprintCodegenComment(("Do getstatic:"));
+        CVMJITaddCodegenComment((con,
+            "value{D} = getstatic(staticFieldAddr);"));
+        getStaticField(con, CVMRM_FP_REGS(con),
+		       $$, GET_FLOAT_REGISTER_GOALS, CVMCPU_FLDR64_OPCODE, 2,
+		       CVM_FALSE);
+    };
+
+// Purpose: value = FETCH64(FIELDREF64(obj,fieldOffset))
+freg64: FETCH64 FIELDREF64 reg32 memSpec : 10 :
+    GETFIELD_SYNTHESIS(con, $$); : GETFIELD_INHERITANCE(con, $$); : : {
+        CVMJITprintCodegenComment(("Do getfield:"));
+        CVMJITaddCodegenComment((con, "value{D}"));
+        fetchField(con, CVMRM_FP_REGS(con), $$,
+		   GET_FLOAT_REGISTER_GOALS, CVMCPU_FLDR64_OPCODE, 2,
+		   CVM_FALSE);
+    };
+
+// Purpose: value32 = FINVOKE(parameters, methodBlock)
+finvoke32_result: FINVOKE parameters reg32 : 40 : SET_AVOID_METHOD_CALL($$); :
+    SET_TARGET2_1($$, ARG1); : : {
+	CVMRMResource* dest;
+        CVMJITprintCodegenComment(("Invoke a method w/ a 32bit return type"));
+	dest = invokeMethod(con, CVMRM_FP_REGS(con), $$);
+	pushResource(con, dest);
+   };
+
+// Purpose: value64 = DINVOKE(parameters, methodBlock)
+finvoke64_result: DINVOKE parameters reg32 : 40 : SET_AVOID_METHOD_CALL($$); :
+    SET_TARGET2_1($$, ARG1); : : {
+        CVMRMResource *dest;
+        CVMJITprintCodegenComment(("Invoke a method w/ a 64bit return type"));
+	dest = invokeMethod(con, CVMRM_FP_REGS(con), $$);
+        pushResource(con, dest);
+   };
+
+// Purpose: Stores a 64 return value into a register pair.
+freg32:  finvoke32_result: 20 : : : : {
+        /* force into a register */
+        CVMRMResource *operand = popResource(con);
+	CVMassert(CVMRMisJavaStackTopValue(operand));
+	CVMRMpinResource(CVMRM_FP_REGS(con), operand,
+			 GET_FLOAT_REGISTER_GOALS);
+        CVMRMunpinResource(CVMRM_FP_REGS(con), operand);
+        pushResource(con, operand);
+    };
+
+// Purpose: Stores a 64 return value into a register pair.
+freg64:  finvoke64_result: 20 : : : : {
+        /* force into a register */
+        CVMRMResource *operand = popResource(con);
+        CVMassert(CVMRMisJavaStackTopValue(operand));
+	CVMRMpinResource(CVMRM_FP_REGS(con), operand,
+			 GET_FLOAT_REGISTER_GOALS);
+        CVMRMunpinResource(CVMRM_FP_REGS(con), operand);
+        pushResource(con, operand);
+    };
+
+parameters: FPARAMETER fparam32 parameters : 0 : : : : ;
+parameters: DPARAMETER fparam64 parameters : 0 : : : : ;
+
+fparam32: finvoke32_result : 0 : : : : {
+	/* Free! Already on Stack  */
+	CVMRMResource *operand = popResource(con);
+	CVMRMrelinquishResource(CVMRM_FP_REGS(con), operand);
+    };
+fparam32: freg32 : 10 : : : : {
+	CVMRMResource *operand = popResource(con);
+	CVMSMpushSingle(con, CVMRM_FP_REGS(con), operand);
+	CVMRMrelinquishResource(CVMRM_FP_REGS(con), operand);
+    };
+
+fparam64: finvoke64_result : 0 : : : : {
+        /* Free! Already on Stack  */
+        CVMRMResource *operand = popResource(con);
+        CVMRMrelinquishResource(CVMRM_FP_REGS(con), operand);
+    };
+fparam64: freg64 : 20 : : : : {
+	CVMRMResource *operand = popResource(con);
+	CVMSMpushDouble(con, CVMRM_FP_REGS(con), operand);
+	CVMRMrelinquishResource(CVMRM_FP_REGS(con), operand);
+    };
+
+%{
+static CVMBool
+canDoFloatLoadstore(const ArrayElemInfo* ei, CVMBool isStore){
+    int opcode =  (isStore) ? ei->floatStoreOpcode : ei->floatLoadOpcode;
+    return (opcode != CVM_ILLEGAL_OPCODE);
+}
+
+%}
+
+// Purpose: value32 = FETCH32(INDEX(arrayObject, arraySubscript))
+freg32: FETCH32 INDEX reg32 arraySubscript : 20 :
+    ARRAY_LOAD_SYNTHESIS(con, $$); : ARRAY_LOAD_INHERITANCE(con, $$); : : {
+	CVMJITIRNode* indexNode = CVMJITirnodeGetLeftSubtree($$);
+	CVMUint16 typeId = CVMJITirnodeGetBinaryOp(indexNode)->data;
+	const ArrayElemInfo* ei = &typeidToArrayElemInfo[typeId];
+	if (canDoFloatLoadstore(ei, CVM_FALSE)){
+	    indexedLoad(con, CVMRM_FP_REGS(con), $$, GET_FLOAT_REGISTER_GOALS);
+	} else {
+	    indexedLoad(con, CVMRM_INT_REGS(con), $$,
+			CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    moveIntToFPRegs(con, $$, GET_FLOAT_REGISTER_GOALS);
+	}
+
+    };
+
+
+// Purpose: value32 = FETCH32(INDEX(arrayObject, arraySubscript))
+freg32: FETCH32 arrayIndex : 20 : :  : : {
+	ScaledIndexInfo *sinfo = popScaledIndexInfo(con); /* peek */
+	const ArrayElemInfo* ei = sinfo->elemInfo;
+	pushScaledIndexInfo(con, sinfo);
+        CVMJITprintCodegenComment(("Do *slotAddr32:"));
+	if (canDoFloatLoadstore(ei, CVM_FALSE)){
+	    fetchArraySlot(con, CVMRM_FP_REGS(con), $$,
+			   GET_FLOAT_REGISTER_GOALS);
+	}else{
+	    fetchArraySlot(con, CVMRM_INT_REGS(con), $$,
+			   CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    moveIntToFPRegs(con, $$, GET_FLOAT_REGISTER_GOALS);
+	}
+
+    };
+
+// Purpose: value64 = FETCH64(INDEX(arrayObject, arraySubscript))
+freg64: FETCH64 INDEX reg32 arraySubscript : 20 :
+    ARRAY_LOAD_SYNTHESIS(con, $$); : ARRAY_LOAD_INHERITANCE(con, $$); : : {
+	CVMJITIRNode* indexNode = CVMJITirnodeGetLeftSubtree($$);
+	CVMUint16 typeId = CVMJITirnodeGetBinaryOp(indexNode)->data;
+	const ArrayElemInfo* ei = &typeidToArrayElemInfo[typeId];
+	if (canDoFloatLoadstore(ei, CVM_FALSE)){
+	    indexedLoad(con, CVMRM_FP_REGS(con), $$, GET_FLOAT_REGISTER_GOALS);
+	} else {
+	    indexedLoad(con, CVMRM_INT_REGS(con), $$,
+			CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    moveIntToFPRegs(con, $$, GET_FLOAT_REGISTER_GOALS);
+	}
+
+    };
+
+
+// Purpose: value64 = FETCH64(INDEX(arrayObject, arraySubscript))
+freg64: FETCH64 arrayIndex : 20 : :  : : {
+	ScaledIndexInfo *sinfo = popScaledIndexInfo(con); /* peek */
+	const ArrayElemInfo* ei = sinfo->elemInfo;
+	pushScaledIndexInfo(con, sinfo);
+        CVMJITprintCodegenComment(("Do *slotAddr32:"));
+	if (canDoFloatLoadstore(ei, CVM_FALSE)){
+	    fetchArraySlot(con, CVMRM_FP_REGS(con), $$,
+			   GET_FLOAT_REGISTER_GOALS);
+	}else{
+	    fetchArraySlot(con, CVMRM_INT_REGS(con), $$,
+			   CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    moveIntToFPRegs(con, $$, GET_FLOAT_REGISTER_GOALS);
+	}
+
+    };
+
+//
+// pass floating registers as Java parameters.
+// the odd cost is to force parameter passing without arithmetic
+// to use integer registers.
+//
+//
+param32: freg32 : 11 : : : : {
+	CVMRMResource *operand = popResource(con);
+	CVMSMpushSingle(con, CVMRM_FP_REGS(con), operand);
+	CVMRMrelinquishResource(CVMRM_FP_REGS(con), operand);
+    };
+param64: freg64 : 22 : : : : {
+	CVMRMResource *operand = popResource(con);
+	CVMSMpushDouble(con, CVMRM_FP_REGS(con), operand);
+	CVMRMrelinquishResource(CVMRM_FP_REGS(con), operand);
+    };
+
+
+//
+// the odd cost on these is to force an assignment without
+// arithmetic to use the integer registers. e.g.
+//        ASSIGN
+//         /   \
+//    LOCAL32 freg32
+//
+root:	ASSIGN LOCAL32 freg32 : 11 : : ASSIGN_INHERITANCE(con, $$) : : {
+	CVMRMResource* rhs = popResource(con);
+	CVMJITIRNode*  localNode = CVMJITirnodeGetLeftSubtree($$);
+	CVMJITIRNode*  rhsNode = CVMJITirnodeGetRightSubtree($$);
+	CVMJITLocal*   lhs = CVMJITirnodeGetLocal(localNode);
+	int target;
+
+	if (rhsNode->decorationType == CVMJIT_REGHINT_DECORATION) {
+	    target = 1U << rhsNode->decorationData.regHint;
+	} else {
+	    target = CVMRM_FP_ANY_SET;
+	}
+
+	CVMRMpinResource(CVMRM_FP_REGS(con), rhs, target, CVMRM_EMPTY_SET);
+	CVMRMstoreJavaLocal(CVMRM_FP_REGS(con), rhs, 1,
+			    CVM_FALSE, lhs->localNo);
+	CVMRMrelinquishResource(CVMRM_FP_REGS(con), rhs);
+    };
+
+// Purpose: ASSIGN(FIELDREF32(obj,fieldOffset), value32)
+root: ASSIGN FIELDREF32 reg32 memSpec freg32 : 11 :
+    PUTFIELD_SYNTHESIS(con, $$); : PUTFIELD_INHERITANCE(con, $$); : : {
+        CVMBool isVolatile;
+        CVMJITprintCodegenComment(("Do putfield:"));
+        CVMJITaddCodegenComment((con,
+            "putfield(obj, fieldOffset, value{I|F});"));
+        isVolatile =
+            ((CVMJITirnodeGetBinaryNodeFlag(CVMJITirnodeGetLeftSubtree($$)) &
+             CVMJITBINOP_VOLATILE_FIELD) != 0);
+        setField(con, CVMRM_FP_REGS(con), CVMCPU_FSTR32_OPCODE,
+                 isVolatile);
+    };
+
+// Purpose: STATIC32(staticFieldSpec) = value32.
+root: ASSIGN STATIC32 reg32 freg32 : 21 : : : : {
+        CVMBool isVolatile;
+        CVMJITprintCodegenComment(("Do putstatic:"));
+        CVMJITaddCodegenComment((con,
+            "putstatic(staticFieldAddr, value{I|F|O})"));
+        isVolatile =
+            ((CVMJITirnodeGetUnaryNodeFlag(CVMJITirnodeGetLeftSubtree($$)) &
+             CVMJITUNOP_VOLATILE_FIELD) != 0);
+        setStaticField(con, CVMRM_FP_REGS(con), CVMCPU_FSTR32_OPCODE,
+		       isVolatile);
+    };
+
+root:	IRETURN freg32: 11 : : : : {
+        /* Emit the one-way ticket home: */
+        emitReturn(con, CVMRM_FP_REGS(con), 1);
+    };
+
+// Purpose: ASSIGN(INDEX(arrayObject, arraySubscript), value32)
+root: ASSIGN INDEX reg32 arraySubscript freg32 : 21 :
+    ARRAY_STORE_SYNTHESIS(con, $$); : ARRAY_STORE_INHERITANCE(con, $$); : : {
+	CVMJITIRNode* indexNode = CVMJITirnodeGetLeftSubtree($$);
+	CVMUint16 typeId = CVMJITirnodeGetBinaryOp(indexNode)->data;
+	const ArrayElemInfo* ei = &typeidToArrayElemInfo[typeId];
+	if (canDoFloatLoadstore(ei, CVM_TRUE)){
+	    indexedStore(con, CVMRM_FP_REGS(con), $$);
+	} else {
+	    CVMJITIRNode *f32 = CVMJITirnodeGetRightSubtree($$);
+	    moveFPToIntRegs(con, f32, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    indexedStore(con, CVMRM_INT_REGS(con), $$);
+	}
+    };
+
+// Purpose: ASSIGN(INDEX(arrayObject, arraySubscript), value32)
+root: ASSIGN arrayIndex freg32 : 21 : : : : {
+	CVMRMResource* rhs = popResource(con);
+	ScaledIndexInfo *sinfo = popScaledIndexInfo(con); /* peek */
+	const ArrayElemInfo* ei = sinfo->elemInfo;
+	pushScaledIndexInfo(con, sinfo);
+	pushResource(con, rhs);
+        CVMJITprintCodegenComment(("*slotAddr32 = freg:"));
+	if (canDoFloatLoadstore(ei, CVM_TRUE)){
+	    storeArraySlot(con, CVMRM_FP_REGS(con), $$);
+	}else{
+	    CVMJITIRNode *f32 = CVMJITirnodeGetRightSubtree($$);
+	    moveFPToIntRegs(con, f32, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    storeArraySlot(con, CVMRM_INT_REGS(con), $$);
+	}
+    };
+
+root:	ASSIGN LOCAL64 freg64 : 11 : : ASSIGN_INHERITANCE(con, $$) : : {
+	CVMRMResource* rhs = popResource(con);
+	CVMJITIRNode*  localNode = CVMJITirnodeGetLeftSubtree($$);
+	CVMJITIRNode*  rhsNode = CVMJITirnodeGetRightSubtree($$);
+	CVMJITLocal*   lhs = CVMJITirnodeGetLocal(localNode);
+	int target;
+
+	if (rhsNode->decorationType == CVMJIT_REGHINT_DECORATION) {
+	    target = 1U << rhsNode->decorationData.regHint;
+	} else {
+	    target = CVMRM_FP_ANY_SET;
+	}
+
+	CVMRMpinResource(CVMRM_FP_REGS(con), rhs, target, CVMRM_EMPTY_SET);
+	CVMRMstoreJavaLocal(CVMRM_FP_REGS(con), rhs, 2,
+			    CVM_FALSE, lhs->localNo);
+	CVMRMrelinquishResource(CVMRM_FP_REGS(con), rhs);
+    };
+
+// Purpose: ASSIGN(FIELDREF64(obj,fieldOffset), value64)
+root: ASSIGN FIELDREF64 reg32 memSpec freg64 : 11 :
+    PUTFIELD_SYNTHESIS(con, $$); : PUTFIELD_INHERITANCE(con, $$); : : {
+        CVMJITprintCodegenComment(("Do putfield:"));
+        CVMJITaddCodegenComment((con,
+            "putfield(obj, fieldOffset, value{L|D});"));
+        setField(con, CVMRM_FP_REGS(con), CVMCPU_FSTR64_OPCODE, CVM_FALSE);
+    };
+
+// Purpose: STATIC64(staticFieldSpec) = value64.
+root: ASSIGN STATIC64 reg32 freg64 : 21 : : : : {
+        CVMJITprintCodegenComment(("Do putstatic:"));
+        CVMJITaddCodegenComment((con,
+            "putstatic(staticFieldAddr, value{L|D})"));
+        setStaticField(con, CVMRM_FP_REGS(con), CVMCPU_FSTR64_OPCODE,
+		       CVM_FALSE);
+    };
+
+root:	LRETURN freg64: 11 : : : : {
+        /* Emit the one-way ticket home: */
+        emitReturn(con, CVMRM_FP_REGS(con), 2);
+    };
+
+// Purpose: ASSIGN(INDEX(arrayObject, arraySubscript), value64)
+root: ASSIGN INDEX reg32 arraySubscript freg64 : 21 :
+    ARRAY_STORE_SYNTHESIS(con, $$); : ARRAY_STORE_INHERITANCE(con, $$); : : {
+	CVMJITIRNode* indexNode = CVMJITirnodeGetLeftSubtree($$);
+	CVMUint16 typeId = CVMJITirnodeGetBinaryOp(indexNode)->data;
+	const ArrayElemInfo* ei = &typeidToArrayElemInfo[typeId];
+	if (canDoFloatLoadstore(ei, CVM_TRUE)){
+	    indexedStore(con, CVMRM_FP_REGS(con), $$);
+	} else {
+	    CVMJITIRNode *f64 = CVMJITirnodeGetRightSubtree($$);
+	    moveFPToIntRegs(con, f64, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    indexedStore(con, CVMRM_INT_REGS(con), $$);
+	}
+    };
+
+// Purpose: ASSIGN(INDEX(arrayObject, arraySubscript), value64)
+root: ASSIGN arrayIndex freg64 : 21 : : : : {
+	CVMRMResource* rhs = popResource(con);
+	ScaledIndexInfo *sinfo = popScaledIndexInfo(con); /* peek */
+	const ArrayElemInfo* ei = sinfo->elemInfo;
+	pushScaledIndexInfo(con, sinfo);
+	pushResource(con, rhs);
+        CVMJITprintCodegenComment(("*slotAddr32 = freg:"));
+	if (canDoFloatLoadstore(ei, CVM_TRUE)){
+	    storeArraySlot(con, CVMRM_FP_REGS(con), $$);
+	}else{
+	    CVMJITIRNode *f64 = CVMJITirnodeGetRightSubtree($$);
+	    moveFPToIntRegs(con, f64, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    storeArraySlot(con, CVMRM_INT_REGS(con), $$);
+	}
+    };
+
+//
+// Need rules to move between floating and integer registers.
+// Most processors require moving through memory. But some can
+// do better.
+//
+
+%dag freg32: FIDENT freg32 : 0 :
+    IDENT_SYNTHESIS(con, $$); : IDENT_INHERITANCE(con, $$); : : {
+	CVMRMResource* src;
+	if (!CVMJIT_DID_SEMANTIC_ACTION($$)){
+	    src = popResource(con);
+	    CVMRMoccupyAndUnpinResource(CVMRM_FP_REGS(con), src, $$);
+	    /* CVMconsolePrintf("Initial evaluation of "); */
+	} else {
+	    src = CVMRMfindResource(CVMRM_FP_REGS(con), $$);
+	    /* CVMconsolePrintf("Reiteration of "); */
+	    CVMassert(src != NULL);
+	}
+	/*
+	    CVMconsolePrintf("Float IDENT32 ID %d, resource 0x%x\n",
+	    $$->nodeID, src);
+	*/
+	pushResource(con, src);
+    };
+
+%dag freg64: DIDENT freg64 : 0 :
+    IDENT_SYNTHESIS(con, $$); : IDENT_INHERITANCE(con, $$); : : {
+	CVMRMResource* src;
+	if (!CVMJIT_DID_SEMANTIC_ACTION($$)){
+	    src = popResource(con);
+	    CVMRMoccupyAndUnpinResource(CVMRM_FP_REGS(con), src, $$);
+	    /* CVMconsolePrintf("Initial evaluation of "); */
+	} else {
+	    src = CVMRMfindResource(CVMRM_FP_REGS(con), $$);
+	    /* CVMconsolePrintf("Reiteration of "); */
+	    CVMassert(src != NULL);
+	}
+	/*
+	    CVMconsolePrintf("Float IDENT64 ID %d, resource 0x%x\n",
+	    $$->nodeID, src);
+	*/
+	pushResource(con, src);
+    };
+
+// decrement reference count on the expression.
+effect: freg32: 1 : : : : {
+	CVMRMResource* operand = popResource(con);
+	CVMRMrelinquishResource(CVMRM_FP_REGS(con), operand);
+    };
+root: finvoke32_result: 0 : : : : {
+	/* the 0 cost here is a fib, but must be < the cost of a deferred
+	 * pop of invoke32_result into a reg32, so that this instruction
+	 * gets emitted
+	 */
+	CVMRMResource* operand = popResource(con);
+	CVMRMrelinquishResource(CVMRM_FP_REGS(con), operand);
+
+	CVMSMpopSingle(con, NULL, NULL);
+    };
+
+effect: freg64: 1 : : : : {
+	CVMRMResource* operand = popResource(con);
+	CVMRMrelinquishResource(CVMRM_FP_REGS(con), operand);
+    };
+root: finvoke64_result: 0 : : : : {
+	/* the 0 cost here is a fib, but must be < the cost of a deferred
+	 * pop of invoke64_result into a reg64, so that this instruction
+	 * gets emitted
+	 */
+	CVMRMResource* operand = popResource(con);
+	CVMRMrelinquishResource(CVMRM_FP_REGS(con), operand);
+    
+	CVMSMpopDouble(con, NULL, NULL);
+    };
+
+//
+// values, usually a result of ?: expressions, live across branches.
+// These get stuffed into the spill area or passed , the first part of which
+// is reserved for them, based on max number of define's per block
+// in this method. If possible, these values are passed as registers
+// rather than spilled.
+
+root: FDEFINE freg32 : 10 : DEFINE_SYNTHESIS(con, $$) : : : {
+        CVMRMResource* src = popResource(con);
+	if (!CVMRMstoreDefinedValue(con, $$, src, 1)) {
+	    return -2;  /*  fail */
+	}
+    };
+
+root: DDEFINE freg64 : 10 : DEFINE_SYNTHESIS(con, $$) : : : {
+        CVMRMResource* src = popResource(con);
+	if (!CVMRMstoreDefinedValue(con, $$, src, 2)) {
+	    return -2;  /*  fail */
+	}
+    };
+
+freg32: FUSED : 0 : : : :
+    handleUsedNode(con, CVMRM_FP_REGS(con), $$, GET_FLOAT_REGISTER_GOALS);
+
+freg64: DUSED : 0 : : : :
+    handleUsedNode(con, CVMRM_FP_REGS(con), $$, GET_FLOAT_REGISTER_GOALS);
+
+
+// single float arithmetic
+%{
+static void
+floatBinaryOp(
+    CVMJITCompilationContext* con,
+    int opcode,
+    CVMJITIRNodePtr thisNode,
+    int size,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* rhs = popResource(con);
+    CVMRMResource* lhs = popResource(con);
+    CVMRMResource* dest;
+    int lhsRegNo = CVMRMgetRegisterNumberUnpinned(lhs);
+    CVMJITRMContext* rc = CVMRM_FP_REGS(con);
+
+    CVMRMpinResource(rc, rhs, ~target, target);
+
+    /* If the dest node has a regHint and the register number is the same as
+     * the register the lhs is already loaded into, then reuse the lhs
+     * register as the dest register. This is common when locals are
+     * incremented.
+     */
+    if (thisNode->decorationType == CVMJIT_REGHINT_DECORATION &&
+	lhsRegNo != -1 &&
+	(1U << lhsRegNo) == target &&
+	CVMRMgetRefCount(rc, lhs) == 1)
+    {
+	/* relinquish first so dirty resources are not spilled */
+	CVMRMrelinquishResource(rc, lhs);
+	lhs = NULL;
+	dest = CVMRMgetResourceSpecific(rc, lhsRegNo, size);
+	CVMassert(lhsRegNo == CVMRMgetRegisterNumber(dest));
+    } else {
+	/* Pin early so following CVMRMgetResource does not cause spill */
+	CVMRMpinResource(rc, lhs, ~target, target);
+	dest = CVMRMgetResource(rc, target, avoid, size);
+	lhsRegNo = CVMRMgetRegisterNumber(lhs);
+    }
+
+    CVMCPUemitBinaryFP(con, opcode,
+		       CVMRMgetRegisterNumber(dest), lhsRegNo,
+		       CVMRMgetRegisterNumber(rhs));
+    if (lhs != NULL) {
+	CVMRMrelinquishResource(rc, lhs);
+    }
+    CVMRMrelinquishResource(rc, rhs);
+    CVMRMoccupyAndUnpinResource(rc, dest, thisNode);
+    pushResource(con, dest);
+}
+
+static void
+floatUnaryOp(
+    CVMJITCompilationContext* con,
+    int opcode,
+    CVMJITIRNodePtr thisNode,
+    int size,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* src = popResource(con);
+    CVMRMResource* dest = CVMRMgetResource(CVMRM_FP_REGS(con),
+					   target, avoid, size);
+    CVMRMpinResource(CVMRM_FP_REGS(con), src,
+		     CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
+    CVMCPUemitUnaryFP(con, opcode, CVMRMgetRegisterNumber(dest),
+        CVMRMgetRegisterNumber(src));
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), src);
+    CVMRMoccupyAndUnpinResource(CVMRM_FP_REGS(con), dest, thisNode);
+    pushResource(con, dest);
+}
+%}
+
+freg32: FADD freg32 freg32 : 10 : : : :
+    floatBinaryOp(con, CVMCPU_FADD_OPCODE, $$, 1, GET_FLOAT_REGISTER_GOALS);
+freg32: FSUB freg32 freg32 : 10 : : : :
+    floatBinaryOp(con, CVMCPU_FSUB_OPCODE, $$, 1, GET_FLOAT_REGISTER_GOALS);
+freg32: FMUL freg32 freg32 : 10 : : : :
+    floatBinaryOp(con, CVMCPU_FMUL_OPCODE, $$, 1, GET_FLOAT_REGISTER_GOALS);
+freg32: FDIV freg32 freg32 : 10 : : : :
+    floatBinaryOp(con, CVMCPU_FDIV_OPCODE, $$, 1, GET_FLOAT_REGISTER_GOALS);
+
+// Purpose: valueFloat = -valueFloat.
+freg32: FNEG freg32 : 10 : : : :
+    floatUnaryOp(con,  CVMCPU_FNEG_OPCODE, $$, 1, GET_FLOAT_REGISTER_GOALS);
+
+freg64: DADD freg64 freg64 : 10 : : : :
+    floatBinaryOp(con, CVMCPU_DADD_OPCODE, $$, 2, GET_FLOAT_REGISTER_GOALS);
+freg64: DSUB freg64 freg64 : 10 : : : :
+    floatBinaryOp(con, CVMCPU_DSUB_OPCODE, $$, 2, GET_FLOAT_REGISTER_GOALS);
+freg64: DMUL freg64 freg64 : 10 : : : :
+    floatBinaryOp(con, CVMCPU_DMUL_OPCODE, $$, 2, GET_FLOAT_REGISTER_GOALS);
+freg64: DDIV freg64 freg64 : 10 : : : :
+    floatBinaryOp(con, CVMCPU_DDIV_OPCODE, $$, 2, GET_FLOAT_REGISTER_GOALS);
+
+// Purpose: valueFloat = -valueFloat.
+freg64: DNEG freg64 : 10 : : : :
+    floatUnaryOp(con,  CVMCPU_DNEG_OPCODE, $$, 2, GET_FLOAT_REGISTER_GOALS);
+
+
+//
+// a comparison does two things:
+// generates code to set the condition codes, and 
+// push on the compile-time stack the condition for success.
+// This will be used by the branch or trap parent node to generated
+// the correct conditional instruction.
+
+%{
+#ifdef CVM_NEED_COMPARE_FLOATS_HELPER
+
+/* convert CVMJIT_XXX condition code to a CVMCPUCondCode */
+static CVMCPUCondCode
+mapFloatCondCode(CVMUint16 condition) {
+    switch(condition) {
+        case CVMJIT_EQ: return CVMCPU_COND_FEQ;
+        case CVMJIT_NE: return CVMCPU_COND_FNE;
+        case CVMJIT_LE: return CVMCPU_COND_FLE;
+        case CVMJIT_GE: return CVMCPU_COND_FGE;
+        case CVMJIT_LT: return CVMCPU_COND_FLT;
+        case CVMJIT_GT: return CVMCPU_COND_FGT;
+        default: CVMassert(CVM_FALSE); return 0;
+    }
+}
+
+static void
+compareFloats(
+    CVMJITCompilationContext *con,
+    CVMJITIRNodePtr thisNode,
+    int opcode)
+{
+    CVMRMResource* rhs = popResource(con);
+    CVMRMResource* lhs = popResource(con);
+    CVMJITConditionalBranch* branch = CVMJITirnodeGetCondBranchOp(thisNode);
+    CVMJITIRBlock* target = branch->target;
+    CVMCPUCondCode condCode = mapFloatCondCode(branch->condition);
+
+#ifndef CVMCPU_HAS_COMPARE
+    /* pin before calling CVMCPUemitFCompare() */
+    CVMRMpinAllIncomingLocals(con, target, CVM_FALSE);
+#endif
+    CVMRMpinResource(CVMRM_FP_REGS(con), lhs,
+		     CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
+    CVMRMpinResource(CVMRM_FP_REGS(con), rhs,
+		     CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
+    if (branch->flags & CVMJITCMPOP_UNORDERED_LT)
+	condCode |= CVMCPU_COND_UNORDERED_LT;
+    CVMCPUemitFCompare(con, opcode, condCode,
+		      CVMRMgetRegisterNumber(lhs),
+		      CVMRMgetRegisterNumber(rhs));
+
+    CVMRMsynchronizeJavaLocals(con);
+#ifdef CVMCPU_HAS_COMPARE
+    /* no longer need resource used in CVMCPUemitCompare() */
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), lhs);
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), rhs);
+    /* pin after calling CVMCPUemiFtCompare() */
+    CVMRMpinAllIncomingLocals(con, target, CVM_FALSE);
+#endif
+    branchToBlock(con, condCode, target);
+
+#ifndef CVMCPU_HAS_COMPARE
+    /* no longer need resource used in CVMCPUemitCompare() */
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), lhs);
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), rhs);
+#endif
+    CVMRMunpinAllIncomingLocals(con, target);
+}
+
+#endif
+%}
+
+root: BCOND_FLOAT freg32 freg32 : 10 : : : CVM_NEED_COMPARE_FLOATS_HELPER : 
+	compareFloats(con, $$, CVMCPU_FCMP_OPCODE);
+
+root: BCOND_DOUBLE freg64 freg64 : 10 : : : CVM_NEED_COMPARE_FLOATS_HELPER : 
+	compareFloats(con, $$, CVMCPU_DCMP_OPCODE);
+
+
+// it is up to the BCOND rule, or more precisely the CVMCPUemitBranch
+// routine, to recognize the situation and emit an FP branch instruction
+// of the correct type. Note the separate set of CVMCPU_COND_XXX
+// conditions to make this easier.

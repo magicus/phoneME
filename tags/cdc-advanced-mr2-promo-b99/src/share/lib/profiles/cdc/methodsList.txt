@@ -1,0 +1,301 @@
+#
+# @(#)methodsList.txt	1.5 06/10/25
+#
+# Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+#
+# methodList.txt
+#
+# This is a list of methods for pre-compile in the server VM.
+# The applications that used to create the list include:
+# kBench, eembc, embedded CaffeineMark, SpecJvm98.
+# On SPARC, precompiling these methods takes about 212K bytes
+# in the codecache.
+# 
+# Methods from running eembc:
+java.lang.String.lastIndexOf(II)I
+java.util.Vector.elementAt(I)Ljava/lang/Object;
+java.util.Vector.size()I
+java.lang.Object.<init>()V
+java.lang.StringBuffer.append(C)Ljava/lang/StringBuffer;
+java.util.Vector.<init>(I)V
+java.util.AbstractList.<init>()V
+java.lang.String.length()I
+java.lang.StringBuffer.append(Ljava/lang/String;)Ljava/lang/StringBuffer;
+java.util.Vector.<init>()V
+java.lang.String.<init>(Ljava/lang/StringBuffer;)V
+java.lang.StringBuffer.toString()Ljava/lang/String;
+java.lang.StringBuffer.length()I
+java.lang.Integer.appendTo(ILjava/lang/StringBuffer;)V
+java.lang.StringBuffer.append(I)Ljava/lang/StringBuffer;
+java.lang.Integer.getChars(I[C)I
+java.lang.StringBuffer.<init>()V
+java.util.Vector.removeAllElements()V
+sun.io.CharToByteASCII.convert([CII[BII)I
+java.util.HashMap.maskNull(Ljava/lang/Object;)Ljava/lang/Object;
+sun.net.www.ParseUtil.decode(Ljava/lang/String;)Ljava/lang/String;
+java.util.zip.InflaterInputStream.ensureOpen()V
+java.util.zip.InflaterInputStream.read([BII)I
+java.util.zip.InflaterInputStream.read()I
+java.util.zip.Inflater.inflate([BII)I
+java.io.ByteArrayOutputStream.write(I)V
+sun.io.ByteToCharASCII.convert([BII[CII)I
+java.util.HashMap.indexFor(II)I
+sun.io.CharToByteConverter.convertAny([CII[BII)I
+java.lang.ThreadLocal.getMap(Ljava/lang/Thread;)Ljava/lang/ThreadLocal$ThreadLocalMap;
+java.lang.ThreadLocal.access$300(Ljava/lang/ThreadLocal;)I
+java.lang.ref.Reference.get()Ljava/lang/Object;
+java.lang.ThreadLocal$ThreadLocalMap.get(Ljava/lang/ThreadLocal;)Ljava/lang/Object;
+java.lang.ThreadLocal.get()Ljava/lang/Object;
+java.lang.StringCoding.deref(Ljava/lang/ThreadLocal;)Ljava/lang/Object;
+java.lang.StringCoding$ConverterSD.decode([BII)[C
+# removed for checkcast in db
+#java.lang.StringCoding.decode(Ljava/lang/String;[BII)[C
+#sun.io.CharToByteConverter.flushAny([BII)I
+sun.io.Converters.getDefaultEncodingName()Ljava/lang/String;
+java.io.UnixFileSystem.normalize(Ljava/lang/String;)Ljava/lang/String;
+java.lang.StringCoding$ConverterSE.encode([CII)[B
+java.lang.StringCoding.encode(Ljava/lang/String;[CII)[B
+java.lang.StringCoding.decode([BII)[C
+java.lang.StringCoding.encode([CII)[B
+java.io.OutputStreamWriter.flushBuffer()V
+java.io.OutputStreamWriter.write([CII)V
+# removed for bad invokevirtual guess in spec
+#java.util.HashMap.hash(Ljava/lang/Object;)I
+# removed for bad invokevirtual guess in spec
+#java.util.HashMap.get(Ljava/lang/Object;)Ljava/lang/Object;
+java.util.HashMap.put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+java.lang.String.replace(CC)Ljava/lang/String;
+java.lang.String.substring(II)Ljava/lang/String;
+java.util.Vector.insertElementAt(Ljava/lang/Object;I)V
+java.lang.StringBuffer.insert(IC)Ljava/lang/StringBuffer;
+java.lang.Integer.toString(I)Ljava/lang/String;
+java.util.Vector.setElementAt(Ljava/lang/Object;I)V
+java.util.Vector.removeElementAt(I)V
+java.lang.CharacterDataLatin1.getProperties(C)I
+java.io.ByteArrayInputStream.read()I
+java.lang.StringBuffer.charAt(I)C
+java.io.InputStreamReader.convertInto([CII)I
+java.io.InputStreamReader.read([CII)I
+java.io.InputStreamReader.fill([CII)I
+sun.io.ConversionBufferFullException.<init>()V
+sun.io.Converters.getConverterClass(ILjava/lang/String;)Ljava/lang/Class;
+java.io.CharConversionException.<init>()V
+java.io.IOException.<init>()V
+java.lang.Exception.<init>()V
+java.lang.Throwable.<init>()V
+java.io.ByteArrayInputStream.read([BII)I
+java.io.PrintStream.ensureOpen()V
+java.lang.CharacterDataLatin1.toLowerCase(C)C
+java.io.BufferedWriter.ensureOpen()V
+java.io.PrintStream.write(Ljava/lang/String;)V
+java.io.BufferedWriter.flushBuffer()V
+java.lang.String.trim()Ljava/lang/String;
+java.lang.ref.SoftReference.get()Ljava/lang/Object;
+java.io.PrintStream.write([BII)V
+java.io.BufferedWriter.write(Ljava/lang/String;II)V
+java.lang.Character.toLowerCase(C)C
+sun.io.Converters.cache(ILjava/lang/Object;)Ljava/lang/Class;
+java.util.Random.nextInt()I
+java.util.Random.next(I)I
+java.io.PrintStream.print(Ljava/lang/String;)V
+sun.io.Converters.getDefaultConverterClass(I)Ljava/lang/Class;
+java.io.BufferedOutputStream.write([BII)V
+java.lang.System.getSecurityManager()Ljava/lang/SecurityManager;
+java.io.BufferedOutputStream.flush()V
+java.io.ByteArrayInputStream.reset()V
+java.lang.String.lastIndexOf(I)I
+java.lang.String.substring(I)Ljava/lang/String;
+java.lang.String.<init>([CII)V
+java.lang.String.startsWith(Ljava/lang/String;I)Z
+java.lang.CharacterDataLatin1.digit(CI)I
+java.lang.Long.getChars(J[C)I
+# Additional methods from kbench:
+java.lang.Math.abs(I)I
+java.util.Hashtable.put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+java.lang.Integer.<init>(I)V
+# removed for bad invokevirtual guess in spec
+#java.util.Hashtable.get(Ljava/lang/Object;)Ljava/lang/Object;
+java.lang.String.toString()Ljava/lang/String;
+java.util.Vector.isEmpty()Z
+java.lang.StringBuffer.<init>(Ljava/lang/String;)V
+java.lang.String.<init>([CII)V
+java.lang.Object.equals(Ljava/lang/Object;)Z
+java.util.Vector.indexOf(Ljava/lang/Object;I)I
+java.util.Vector.indexOf(Ljava/lang/Object;)I
+java.util.Vector.removeElement(Ljava/lang/Object;)Z
+# Additional methods from SpecJvm98:
+java.io.BufferedReader.readLine(Z)Ljava/lang/String;
+sun.io.ByteToCharUTF8.convert([BII[CII)I
+java.io.BufferedReader.read()I
+java.io.StreamTokenizer.read()I
+java.io.StreamTokenizer.nextToken()I
+java.util.Properties.loadConvert(Ljava/lang/String;)Ljava/lang/String;
+java.util.Properties.load(Ljava/io/InputStream;)V
+java.util.Hashtable.rehash()V
+#java.io.LineNumberInputStream.read()I
+java.io.PrintStream.newLine()V
+java.lang.StringBuffer.<init>(I)V
+java.lang.ArithmeticException.<init>(Ljava/lang/String;)V
+java.lang.RuntimeException.<init>(Ljava/lang/String;)V
+java.io.PrintStream.println(Ljava/lang/String;)V
+java.lang.Exception.<init>(Ljava/lang/String;)V
+java.lang.Throwable.<init>(Ljava/lang/String;)V
+java.io.UnixFileSystem.resolve(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+java.io.UnixFileSystem.prefixLength(Ljava/lang/String;)I
+java.io.File.<init>(Ljava/lang/String;)V
+java.lang.ThreadLocal$ThreadLocalMap.access$000(Ljava/lang/ThreadLocal$ThreadLocalMap;Ljava/lang/ThreadLocal;)Ljava/lang/Object;
+java.lang.String.startsWith(Ljava/lang/String;)Z
+java.io.ExpiringCache.entryFor(Ljava/lang/String;)Ljava/io/ExpiringCache$Entry;
+sun.io.CharToByteASCII.getMaxBytesPerChar()I
+sun.io.CharToByteASCII.reset()V
+java.util.WeakHashMap.get(Ljava/lang/Object;)Ljava/lang/Object;
+java.lang.String.getBytes()[B
+java.lang.SecurityManager.checkPackageAccess(Ljava/lang/String;)V
+sun.misc.Launcher$AppClassLoader.loadClass(Ljava/lang/String;Z)Ljava/lang/Class;
+java.util.Stack.pop()Ljava/lang/Object;
+java.util.Stack.peek()Ljava/lang/Object;
+java.lang.Integer.hashCode()I
+java.lang.Float.intValue()I
+java.io.PrintStream.print(I)V
+java.lang.StringBuffer.setLength(I)V
+java.lang.Float.<init>(D)V
+java.lang.Float.floatValue()F
+java.lang.Integer.toString(II)Ljava/lang/String;
+java.io.PrintStream.flush()V
+java.lang.FloatingDecimal.countBits(J)I
+java.util.Vector$1.hasMoreElements()Z
+java.util.Vector$1.nextElement()Ljava/lang/Object;
+java.io.DataInputStream.readLine()Ljava/lang/String;
+java.io.BufferedInputStream.read()I
+java.lang.FloatingDecimal.readJavaFormatString(Ljava/lang/String;)Ljava/lang/FloatingDecimal;
+java.lang.FloatingDecimal.floatValue()F
+java.lang.Integer.parseInt(Ljava/lang/String;I)I
+java.lang.Float.valueOf(Ljava/lang/String;)Ljava/lang/Float;
+java.lang.Math.sqrt(D)D
+java.io.BufferedInputStream.fill()V
+java.lang.String.<init>(II[C)V
+java.util.Hashtable.keys()Ljava/util/Enumeration;
+java.util.Hashtable$Enumerator.hasMoreElements()Z
+java.util.Hashtable$Enumerator.nextElement()Ljava/lang/Object;
+java.util.Hashtable$Enumerator.<init>(Ljava/util/Hashtable;IZ)V
+java.util.Hashtable.<init>(IF)V
+java.util.Vector.<init>(II)V
+java.util.Hashtable.<init>()V
+# removed for bad invokevirtual guess in spec
+#java.lang.String.valueOf(C)Ljava/lang/String;
+java.util.Vector.contains(Ljava/lang/Object;)Z
+java.io.PrintStream.print(C)V
+java.lang.StringBuffer.append(J)Ljava/lang/StringBuffer;
+java.util.Hashtable.size()I
+java.util.Properties.getProperty(Ljava/lang/String;)Ljava/lang/String;
+java.lang.Long.toString(J)Ljava/lang/String;
+#
+# Additional methods by reducing climit
+#
+# 90% of default climit
+#
+# methods from running eembc
+java.io.InputStreamReader.flushInto([CII)I
+java.io.InputStreamReader.inReady()Z
+java.net.URL.<init>(Ljava/net/URL;Ljava/lang/String;Ljava/net/URLStreamHandler;)V
+java.util.jar.Attributes$Name.isAlpha(C)Z
+java.util.jar.Attributes$Name.isValid(C)Z
+sun.io.ByteToCharASCII.flush([CII)I
+#
+# 70% of default climit
+#
+#methods from running spec
+java.io.PrintStream.close()V
+java.io.StreamTokenizer.wordChars(II)V
+java.lang.ClassLoader$1.run()Ljava/lang/Object;
+java.lang.FloatingDecimal.<init>(D)V
+java.lang.FloatingDecimal.developLongDigits(IJJ)V
+java.lang.FloatingDecimal.dtoa(IJI)V
+java.lang.FloatingDecimal.getChars([C)I
+# removed for bad invokevirtual guess in spec
+#java.lang.String.valueOf(Z)Ljava/lang/String;
+# removed for checkcast or instanceof in jess
+#java.lang.StringBuffer.append(D)Ljava/lang/StringBuffer;
+java.lang.System.getProperty(Ljava/lang/String;)Ljava/lang/String;
+java.util.Stack.empty()Z
+#methods from running eembc
+java.lang.Class.newInstance()Ljava/lang/Object;
+java.lang.String.regionMatches(ZILjava/lang/String;II)Z
+java.lang.String.toLowerCase(Ljava/util/Locale;)Ljava/lang/String;
+java.lang.reflect.Constructor.newInstance([Ljava/lang/Object;)Ljava/lang/Object;
+java.util.jar.Attributes$Name.isValid(Ljava/lang/String;)Z
+sun.io.ByteToCharASCII.reset()V
+sun.io.Converters.newConverter(Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;
+sun.io.Converters.newDefaultConverter(I)Ljava/lang/Object;
+#
+# 50% of default climit
+#
+# methods from running spec
+java.io.BufferedReader.readLine()Ljava/lang/String;
+java.io.BufferedWriter.close()V
+java.io.ExpiringCache.get(Ljava/lang/String;)Ljava/lang/String;
+java.io.FilePermission$1.run()Ljava/lang/Object;
+java.io.FilePermission.<init>(Ljava/lang/String;Ljava/lang/String;)V
+java.io.FilePermission.impliesIgnoreMask(Ljava/io/FilePermission;)Z
+java.io.FilePermission.init(I)V
+java.io.FilePermissionCollection.implies(Ljava/security/Permission;)Z
+java.io.OutputStreamWriter.close()V
+java.io.OutputStreamWriter.flush()V
+java.io.PrintStream.println(I)V
+java.io.UnixFileSystem.canonicalize(Ljava/lang/String;)Ljava/lang/String;
+java.io.UnixFileSystem.parentOrNull(Ljava/lang/String;)Ljava/lang/String;
+java.lang.Class.checkMemberAccess(ILjava/lang/ClassLoader;)V
+java.lang.ClassLoader.check()V
+java.lang.ClassLoader.checkCerts(Ljava/lang/String;Ljava/security/CodeSource;)V
+java.lang.ClassLoader.checkPackageAccess(Ljava/lang/Class;Ljava/security/ProtectionDomain;)V
+java.lang.ClassLoader.getPackage(Ljava/lang/String;)Ljava/lang/Package;
+java.lang.ClassLoader.loadClass(Ljava/lang/String;)Ljava/lang/Class;
+java.lang.ClassLoader.loadClass(Ljava/lang/String;Z)Ljava/lang/Class;
+# removed for instanceof in jess
+#java.lang.Integer.equals(Ljava/lang/Object;)Z
+java.lang.Long.appendTo(JLjava/lang/StringBuffer;)V
+java.lang.Math.pow(DD)D
+java.lang.SecurityManager.checkPermission(Ljava/security/Permission;)V
+java.lang.SecurityManager.checkRead(Ljava/lang/String;)V
+java.lang.String.<init>([B)V
+java.lang.String.<init>([BII)V
+# removed for bad invokevirtual guess in spec
+# java.lang.String.valueOf(Ljava/lang/Object;)Ljava/lang/String;
+java.lang.StringBuffer.append(Z)Ljava/lang/StringBuffer;
+java.lang.ThreadLocal$ThreadLocalMap.set(Ljava/lang/ThreadLocal;Ljava/lang/Object;)V
+java.lang.ref.Finalizer.runFinalizer()V
+java.lang.ref.Reference$ReferenceHandler.run()V
+java.lang.ref.Reference.<init>(Ljava/lang/Object;Ljava/lang/ref/ReferenceQueue;)V
+java.lang.ref.ReferenceQueue.reallyPoll()Ljava/lang/ref/Reference;
+java.security.AccessControlContext.checkPermission(Ljava/security/Permission;)V
+java.security.AccessControlContext.optimize()Ljava/security/AccessControlContext;
+java.security.AccessController.checkPermission(Ljava/security/Permission;)V
+java.security.AccessController.doPrivileged(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;)Ljava/lang/Object;
+java.security.AccessController.getStackAccessControlContext()Ljava/security/AccessControlContext;
+java.security.BasicPermission.init(Ljava/lang/String;)V
+java.util.Collections$SynchronizedMap.get(Ljava/lang/Object;)Ljava/lang/Object;
+java.util.HashMap.removeEntryForKey(Ljava/lang/Object;)Ljava/util/HashMap$Entry;
+java.util.HashSet.add(Ljava/lang/Object;)Z
+java.util.PropertyPermission.getMask(Ljava/lang/String;)I
+java.util.Stack.push(Ljava/lang/Object;)Ljava/lang/Object;
+java.util.Vector$1.<init>(Ljava/util/Vector;)V
+java.util.WeakHashMap.expungeStaleEntries()V
+# methods from running eembc
+java.io.ByteArrayInputStream.available()I
+java.io.InputStreamReader.close()V
+java.io.Reader.<init>(Ljava/lang/Object;)V
+java.io.UnixFileSystem.prefixLength(Ljava/lang/String;)I
+java.lang.CharacterDataLatin1.getType(C)I
+java.util.jar.Attributes.get(Ljava/lang/Object;)Ljava/lang/Object;
+java.util.zip.Inflater.finished()Z
+java.util.zip.Inflater.needsDictionary()Z
+java.util.zip.Inflater.needsInput()Z
+java.util.zip.ZipFile$1.fill()V
+java.util.zip.ZipFile$ZipFileInputStream.read([BII)I
+java.util.zip.ZipFile.access$100(Ljava/util/zip/ZipFile;)J
+java.util.zip.ZipFile.getEntry(Ljava/lang/String;)Ljava/util/zip/ZipEntry;
+sun.misc.Launcher$AppClassLoader.handlePackage(Ljava/lang/String;Ljava/util/jar/Manifest;Ljava/net/URL;)V
+sun.misc.ThreadRegistry.remove(Ljava/lang/Thread;)V
+sun.net.www.protocol.jar.Handler.parseURL(Ljava/net/URL;Ljava/lang/String;II)V
+
+
