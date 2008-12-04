@@ -1,0 +1,14 @@
+ <!--
+  Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+-->
+<testImage>
+   <text>
+     You should see an image of duke.
+   </text>
+</testImage>
+
+<testVolatileImage>
+   <text>
+     You should see an image of Wily E. Coyote.
+   </text>
+</testVolatileImage>
