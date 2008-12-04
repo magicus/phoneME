@@ -256,12 +256,14 @@ typedef enum {
     JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN          =13,
     /** MIDlet install completed */
     JAVACALL_LIFECYCLE_MIDLET_INSTALL_COMPLETED =15,
+    /** MIDlet uninstall completed */
+    JAVACALL_LIFECYCLE_MIDLET_UNINSTALL_COMPLETED =16,
     /** MIDlet paused internally (PAUSED state) */
-    JAVACALL_LIFECYCLE_MIDLET_INTERNAL_PAUSED   =16,
+    JAVACALL_LIFECYCLE_MIDLET_INTERNAL_PAUSED   =17,
     /** MIDlet resumed internally (ACTIVE state) */
-    JAVACALL_LIFECYCLE_MIDLET_INTERNAL_RESUMED  =17,
+    JAVACALL_LIFECYCLE_MIDLET_INTERNAL_RESUMED  =18,
     /** Error starting MIDlet                    */
-    JAVACALL_LIFECYCLE_MIDLET_ERROR             =18
+    JAVACALL_LIFECYCLE_MIDLET_ERROR             =19
 } javacall_lifecycle_state;
 
 /* for compatibility with legacy code */
@@ -333,6 +335,25 @@ typedef enum {
     JAVACALL_MIDP_REASON_OTHER
 } javacall_change_reason;
 
+
+struct javacall_lifecycle_additional_info {
+    int command;
+    union data {
+        struct {
+            javacall_utf16 *midletName;
+            int midletNameLen,
+                javacall_utf16 *className; 
+            int classNameLen;
+            int  suiteID;
+            javacall_utf16* midletIcon;
+            int midletIconLen;
+    } installation;
+    struct {
+        int  suiteID;
+    } uninstallation;
+};
+                                          
+
 /**
  * Inform on change of the lifecycle status of the VM
  *
@@ -359,7 +380,8 @@ typedef enum {
  *        status is not used.
  */
 void javacall_lifecycle_state_changed(javacall_lifecycle_state state,
-                                      javacall_result status);
+                                      javacall_result status,
+                                      javacall_lifecycle_additional_info *additionalInfo);
 
 /**
  * Starts a new process to handle the given URL. The new process executes
@@ -434,30 +456,6 @@ void javanotify_select_foreground_app(void);
  * to bring the Application Manager Screen to foreground.
  */
 void javanotify_switch_to_ams(void);
-
-/**
- * Notifier decleration for MIDlet installation
- **/
-typedef void (*JACACALL_INSTALL_LISTENER)(javacall_utf16 *midletName,int midletNameLen,
-                                          javacall_utf16 *className, int classNameLen,
-                                          int  suiteID,
-                                          javacall_utf16* midletIcon,int midletIconLen);
-
-/**
- * Notifier decleration for MIDlet uninstallation
- **/
-typedef void (*JAVACALL_UNINSTALL_LISTENER)(int  suiteID);
-
-
-/**
- * Register listeners for midlet install / uninstall
- * notifications
- *
- * @param install_notify Install Listener function
- * @param unistall_notify Uninstall Listener function
- */
- 
-void javanotify_set_installation_notify(JACACALL_INSTALL_LISTENER install_notify, JAVACALL_UNINSTALL_LISTENER uninstall_notify);
 
 /** @} */
 
