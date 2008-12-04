@@ -450,14 +450,14 @@ typedef void (*JAVACALL_UNINSTALL_LISTENER)(int  suiteID);
 
 
 /**
- * The platform should invoke this function in register
- * listerners for midlet installation / uninstallation
- * notification.
- * Either function may be null, in which case, no notifier will
- * be invoked.
- * Only the last registered notifiers will be called
+ * Register listeners for midlet install / uninstall
+ * notifications
+ *
+ * @param install_notify Install Listener function
+ * @param unistall_notify Uninstall Listener function
  */
-void javanotify_set_installation_notify(JACACALL_INSTALL_LISTENER install_notify, JAVACALL_UNINSTALL_LISTENER unistall_notify);
+ 
+void javanotify_set_installation_notify(JACACALL_INSTALL_LISTENER install_notify, JAVACALL_UNINSTALL_LISTENER uninstall_notify);
 
 /** @} */
 
