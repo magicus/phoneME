@@ -37,6 +37,7 @@ import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
+import com.sun.midp.main.MIDletSuiteUtils;
 
 /**
  * A class implementing a MIDP a record store.
@@ -212,7 +213,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                     // write out the changes to the db header
                     dbFile.seek(RS1_AUTHMODE);
                     dbFile.write(dbHeaderData, RS1_AUTHMODE, 4);
-                    dbHeader.headerUpdated(dbHeaderData, RS1_AUTHMODE, 4);
+                    dbHeader.headerUpdated(dbHeaderData);
                     // dbFile.commitWrite();
                 } catch (java.io.IOException ioe) {
                     throw new RecordStoreException("error writing record " +
@@ -454,7 +455,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                     // write out the changes to the db header
                     dbFile.seek(RS2_NEXT_ID);
                     dbFile.write(dbHeaderData, RS2_NEXT_ID, 3*4+8);
-                    dbHeader.headerUpdated(dbHeaderData, RS2_NEXT_ID, 3*4+8);
+                    dbHeader.headerUpdated(dbHeaderData);
                     dbIndex.recordStoreVersionUpdated(newVersion);
                     // dbFile.commitWrite();
                 } catch (java.io.IOException ioe) {
@@ -516,7 +517,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 // save the updated db header
                 dbFile.seek(RS3_NUM_LIVE);
                 dbFile.write(dbHeaderData, RS3_NUM_LIVE, 2*4+8);
-                dbHeader.headerUpdated(dbHeaderData, RS3_NUM_LIVE, 2*4+8);
+                dbHeader.headerUpdated(dbHeaderData);
                 dbIndex.recordStoreVersionUpdated(newVersion);
                 // dbFile.commitWrite();
 
@@ -690,6 +691,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         synchronized (recordStoreLock) {
             recordStoreLock.obtain();
             try {
+                int id = MIDletSuiteUtils.getIsolateId();
+                System.err.println("set record: " + id);
                 dbHeader.recordStoreLocked();
 
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
@@ -721,7 +724,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 // write out the changes to the db header
                 dbFile.seek(RS4_VERSION);
                 dbFile.write(dbHeaderData, RS4_VERSION, 4+8);
-                dbHeader.headerUpdated(dbHeaderData, RS4_VERSION, 4+8);
+                dbHeader.headerUpdated(dbHeaderData);
                 dbIndex.recordStoreVersionUpdated(newVersion);
                 // dbFile.commitWrite();
             } catch (java.io.IOException ioe) {
@@ -895,7 +898,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             RecordStoreUtil.putInt(0, dbHeaderData, RS7_FREE_SIZE);
             dbFile.seek(RS6_DATA_SIZE);
             dbFile.write(dbHeaderData, RS6_DATA_SIZE, 4+4);
-            dbHeader.headerUpdated(dbHeaderData, RS6_DATA_SIZE, 4+4);
+            dbHeader.headerUpdated(dbHeaderData);
             // dbFile.commitWrite();
 
             dbFile.truncate(getSize());
@@ -1051,7 +1054,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                     dbHeaderData, RS6_DATA_SIZE);
             dbFile.seek(RS6_DATA_SIZE);
             dbFile.write(dbHeaderData, RS6_DATA_SIZE, 4);
-            dbHeader.headerUpdated(dbHeaderData, RS6_DATA_SIZE, 4);
+            dbHeader.headerUpdated(dbHeaderData);
             // dbFile.commitWrite();
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -1097,7 +1100,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 dbHeaderData, RS7_FREE_SIZE);
         dbFile.seek(RS7_FREE_SIZE);
         dbFile.write(dbHeaderData, RS7_FREE_SIZE, 4);
-        dbHeader.headerUpdated(dbHeaderData, RS7_FREE_SIZE, 4);
+        dbHeader.headerUpdated(dbHeaderData);
         // dbFile.commitWrite();
     }
 

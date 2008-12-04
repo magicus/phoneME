@@ -34,6 +34,8 @@
 #include <midp_logging.h>
 
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "rms_shared_db_header.h"
 
@@ -158,48 +160,42 @@ void rmsdb_delete_header_node(RecordStoreSharedDBHeaderList* node) {
  * Sets header data for the specified header node.
  *
  * @param node pointer to header node 
- * @param srcHeaderData header data to set from
- * @param srcOffset offset int srcheaderData
+ * @param srcBuffer header data to set from
  * @param srcSize size of the data to set, in jbytes
  *
  * @return actual header version
  */
 int rmsdb_set_header_data(RecordStoreSharedDBHeaderList* node, 
-        jbyte* srcHeaderData, jint srcOffset, jint srcSize) {
+        jbyte* srcBuffer, jint srcSize) {
     
-    jbyte* dst;    
-    jbyte* src;
     int size;
+    size = (srcSize > node->headerDataSize)? node->headerDataSize : srcSize;
 
-    size = (srcOffset + srcSize > node->headerDataSize)? 
-        node->headerDataSize - srcOffset : srcSize;
-    dst = node->headerData + srcOffset * sizeof(jbyte);
-    src = srcHeaderData + srcOffset * sizeof(jbyte);
-
-    if (size > 0) {
-        memcpy(dst, src, size * sizeof(jbyte));
-        node->headerVersion++;        
-    }
+    memcpy(node->headerData, srcBuffer, size * sizeof(jbyte));
+    node->headerVersion++;
 
     return node->headerVersion;
 }
 
 /**
  * Gets header data from the specified header node.
- * It only sets the pointer to the node's data if the version 
+ * It only copies the data into dst buffer if the version 
  * of data stored in node is greater than the specified version.
  *
  * @param node pointer to header node 
- * @param dstHeaderData where to store pointer to the header data
+ * @param dstBuffer where to copy header data
  * @param headerVersion version of the header to check against
  *
  * @return actual header version
  */
 int rmsdb_get_header_data(RecordStoreSharedDBHeaderList* node, 
-        jbyte** dstHeaderData, jint headerVersion) {
+        jbyte* dstBuffer, jint dstSize, jint headerVersion) {
+
+    int size;
+    size = (node->headerDataSize > dstSize)? dstSize: node->headerDataSize;
 
     if (node->headerVersion > headerVersion) {
-        *dstHeaderData = node->headerData;
+        memcpy(dstBuffer, node->headerData, size * sizeof(jbyte));
         return node->headerVersion;
     }
 
@@ -216,14 +212,25 @@ void rmsdb_inc_header_node_refcount(RecordStoreSharedDBHeaderList* node) {
 }
 
 /**
+ * Gets header node ref count.
+ *
+ * @param node data node to increase ref count for
+ * @return node ref count
+ */
+int rmsdb_get_header_node_refcount(RecordStoreSharedDBHeaderList* node) {
+    return node->refCount;
+}
+
+/**
  * Decreases header node ref count.
  *
  * @param node data node to decrease ref count for
  */
 void rmsdb_dec_header_node_refcount(RecordStoreSharedDBHeaderList* node) {
-    node->refCount++;
+    node->refCount--;
 
     if (node->refCount <= 0) {
+        fprintf(stderr, "--- Deleted\n");
         rmsdb_delete_header_node(node);
     }
 }

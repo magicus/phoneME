@@ -111,28 +111,28 @@ void rmsdb_delete_header_node(RecordStoreSharedDBHeaderList* node);
  * increments header version by 1.
  *
  * @param node pointer to header node 
- * @param srcHeaderData header data to set 
- * @param srcOffset offset int srcHeaderData
- * @param srcSize size of the data to set, in jbytes
+ * @param srcBuffer header data to set 
+ * @param srcSize src buffer size, in jbytes (safety measure)
  *
  * @return new header version
  */
 int rmsdb_set_header_data(RecordStoreSharedDBHeaderList* node, 
-        jbyte* srcHeaderData, jint srcOffset, jint srcSize);
+        jbyte* srcBuffer, jint srcSize);
 
 /**
  * Gets header data from the specified header node.
- * It only sets the pointer to the node's data if the version 
+ * It only copies the data into dst buffer if the version 
  * of data stored in node is greater than the specified version.
  *
  * @param node pointer to header node 
- * @param dstHeaderData where to store pointer to the header data
+ * @param dstBuffer where to copy header data
+ * @param dstSize dst buffer size, in jbytes (safety measure)
  * @param headerVersion version of the header to check against
  *
  * @return actual header version
  */
 int rmsdb_get_header_data(RecordStoreSharedDBHeaderList* node, 
-        jbyte** dstHeaderData, jint headerVersion);
+        jbyte* dstBuffer, jint dstSize, jint headerVersion);
 
 /**
  * Increases header node ref count.
@@ -140,6 +140,14 @@ int rmsdb_get_header_data(RecordStoreSharedDBHeaderList* node,
  * @param node data node to increase ref count for
  */
 void rmsdb_inc_header_node_refcount(RecordStoreSharedDBHeaderList* node);
+
+/**
+ * Gets header node ref count.
+ *
+ * @param node data node to increase ref count for
+ * @return node ref count
+ */
+int rmsdb_get_header_node_refcount(RecordStoreSharedDBHeaderList* node);
 
 /**
  * Decreases header node ref count.

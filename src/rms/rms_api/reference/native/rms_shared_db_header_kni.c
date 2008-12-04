@@ -95,7 +95,6 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_shareCachedData0) {
     RecordStoreSharedDBHeaderList* node = NULL;
     jint lookupId = -1;
-    jint offset = 0;
     jint size = 0;
     jint headerVersion = 0;
     jbyte* headerData = NULL;
@@ -104,8 +103,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_shareCachedData0) {
     KNI_DeclareHandle(headerDataJavaArray);
 
     lookupId = KNI_GetParameterAsInt(1);
-    offset = KNI_GetParameterAsInt(3);
-    size = KNI_GetParameterAsInt(4); 
+    size = KNI_GetParameterAsInt(3); 
 
     node = rmsdb_find_header_node_by_id(lookupId);
 
@@ -120,8 +118,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_shareCachedData0) {
         } else {
             headerData = JavaByteArray(headerDataJavaArray);
         SNI_BEGIN_RAW_POINTERS            
-            headerVersion = rmsdb_set_header_data(node, headerData, 
-                    offset, size);
+            headerVersion = rmsdb_set_header_data(node, headerData, size);
         SNI_END_RAW_POINTERS
         }
     }
@@ -134,14 +131,17 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_updateCachedData0) {
     RecordStoreSharedDBHeaderList* node = NULL;
     jint lookupId = -1;
-    jint headerVersion = 0;    
+    jint dataSize = 0;
+    jint headerVersion = 0; 
     jbyte* headerData = NULL;
+    jint oldVersion = 0;
 
     KNI_StartHandles(1); 
     KNI_DeclareHandle(headerDataJavaArray);
 
     lookupId = KNI_GetParameterAsInt(1);
-    headerVersion = KNI_GetParameterAsInt(3);
+    dataSize = KNI_GetParameterAsInt(3);    
+    headerVersion = KNI_GetParameterAsInt(4);
     
     node = rmsdb_find_header_node_by_id(lookupId);
 
@@ -154,13 +154,13 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_updateCachedData0) {
             KNI_ThrowNew(midpIllegalArgumentException, 
                     "Header data array is null");
         } else {
-            headerVersion = rmsdb_get_header_data(node, &headerData, 
+        SNI_BEGIN_RAW_POINTERS
+            headerData = JavaByteArray(headerDataJavaArray);
+            oldVersion = headerVersion;
+            headerVersion = rmsdb_get_header_data(node, headerData, dataSize, 
                     headerVersion);
-            if (headerData != NULL) {
-            SNI_BEGIN_RAW_POINTERS                
-                memcpy(JavaByteArray(headerDataJavaArray), headerData, 
-                        node->headerDataSize * sizeof(jbyte));
-            SNI_END_RAW_POINTERS
+        SNI_END_RAW_POINTERS 
+            if (headerVersion > oldVersion) {
                 fprintf(stderr, "---- New header\n");
             }
         }
@@ -169,6 +169,26 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_updateCachedData0) {
     KNI_EndHandles();
     KNI_ReturnInt(headerVersion);
 }
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_getHeaderRefCount0) {
+    RecordStoreSharedDBHeaderList* node = NULL;
+    jint lookupId = -1;
+    int refCount = 0;
+
+    lookupId = KNI_GetParameterAsInt(1);
+    
+    node = rmsdb_find_header_node_by_id(lookupId);
+    if (node == NULL) {
+        KNI_ThrowNew(midpIllegalStateException, 
+                "Invalid header node lookup ID");
+    } else {
+        refCount = rmsdb_get_header_node_refcount(node);
+    }
+
+    KNI_ReturnInt(refCount);
+}
+
 
 #define SHARED_DB_HEADER_FINALIZER_BODY                                 \
     jint lookupId = -1;                                                 \
@@ -188,7 +208,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_updateCachedData0) {
                                                                         \
     node = rmsdb_find_header_node_by_id(lookupId);                      \
     if (node != NULL) {                                                 \
-        rmsdb_inc_header_node_refcount(node);                           \
+        rmsdb_dec_header_node_refcount(node);                           \
     }                                                                   \
                                                                         \
     KNI_EndHandles();                                                   \
@@ -200,7 +220,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_finalize) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_recordStoreClosed0) {
+KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_cleanup0) {
     SHARED_DB_HEADER_FINALIZER_BODY    
 }
 
