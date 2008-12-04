@@ -670,7 +670,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                 return recordControl;
             }
         } else if (shortType.equals(stcName)) {
-            if (doGetMediaTime() != Player.TIME_UNKNOWN) {
+            if (!isCapturePlayer()) {
                 return this;
             }
 //            if (nIsStopTimeControlSupported(hNative)) {
