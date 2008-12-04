@@ -32,8 +32,8 @@ import com.sun.midp.util.Properties;
 
 import com.sun.midp.midlet.MIDletSuite;
 
-import com.sun.midp.services.ComponentInfo;
-import com.sun.midp.services.ComponentInfoImpl;
+import com.sun.midp.amsservices.ComponentInfo;
+import com.sun.midp.amsservices.ComponentInfoImpl;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -81,6 +81,7 @@ public class DynamicComponentStorage {
     /**
      * Gets the unique identifier of MIDlet suite's dynamic component.
      *
+     * @param suiteId ID of the suite the component belongs to
      * @param vendor name of the vendor that created the component, as
      *        given in a JAD file
      * @param name name of the component, as given in a JAD file
@@ -89,7 +90,7 @@ public class DynamicComponentStorage {
      *         or ComponentInfo.UNUSED_COMPONENT_ID if the component does
      *         not exist
      */
-    public native int getComponentId(String vendor, String name);
+    public native int getComponentId(int suiteId, String vendor, String name);
 
     /**
      * Returns a unique identifier of a dynamic component.

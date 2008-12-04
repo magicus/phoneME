@@ -31,8 +31,8 @@ import java.io.IOException;
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
 import com.sun.midp.midletsuite.DynamicComponentStorage;
 
-import com.sun.midp.services.ComponentInfo;
-import com.sun.midp.services.ComponentInfoImpl;
+import com.sun.midp.amsservices.ComponentInfo;
+import com.sun.midp.amsservices.ComponentInfoImpl;
 
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.util.Properties;
@@ -217,7 +217,7 @@ public class DynamicComponentInstaller extends HttpInstaller {
         DynamicComponentStorage dcs =
                 DynamicComponentStorage.getComponentStorage();
 
-        id = dcs.getComponentId(info.suiteVendor, info.suiteName);
+        id = dcs.getComponentId(info.id, info.suiteVendor, info.suiteName);
         if (id == ComponentInfo.UNUSED_COMPONENT_ID) {
             // there is no previous version
             return;
