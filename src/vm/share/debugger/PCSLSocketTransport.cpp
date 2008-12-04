@@ -34,9 +34,7 @@
 #if ENABLE_JAVA_DEBUGGER
 
 #include <javacall_odd.h>
-//#include "C:\ws\brew_odd_cr\src\javacall\interface\midp\javacall_odd.h"//..\javacall\interface\midp\javacall_odd.h>
 #include <javacall_defs.h>
-//#include "C:\ws\brew_odd_cr\src\javacall\interface\javacall_defs.h"
 #include <pcsl_network.h>
 
 // this definition is needed to include PCSL support for server sockets
