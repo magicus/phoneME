@@ -108,7 +108,6 @@ Java_com_sun_midp_io_j2me_socket_Protocol_open0(void) {
 
             if (status == PCSL_NET_SUCCESS) {
                 getMidpSocketProtocolPtr(thisObject)->handle = (jint)pcslHandle;
-/*                 printf("### socketProtocol: open0 increment\n"); */
                 if (midpIncResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
                     REPORT_INFO(LC_PROTOCOL, "Resource limit update error"); 
                 }
@@ -127,7 +126,6 @@ Java_com_sun_midp_io_j2me_socket_Protocol_open0(void) {
             } else if (status == PCSL_NET_WOULDBLOCK) {
                 ANC_INC_NETWORK_INDICATOR;
                 getMidpSocketProtocolPtr(thisObject)->handle = (jint)pcslHandle;
-/*                 printf("### socketProtocol: open0 increment2\n"); */
                 if (midpIncResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
                     REPORT_INFO(LC_PROTOCOL, "Resource limit update error"); 
                 }
@@ -159,7 +157,6 @@ Java_com_sun_midp_io_j2me_socket_Protocol_open0(void) {
         } else  {
             ANC_DEC_NETWORK_INDICATOR;
             getMidpSocketProtocolPtr(thisObject)->handle = (jint)INVALID_HANDLE;
-/*             printf("### socketProtocol: open0 decrement\n"); */
             if (midpDecResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
                 REPORT_INFO(LC_PROTOCOL, "Resource limit update error"); 
             }
@@ -518,7 +515,6 @@ Java_com_sun_midp_io_j2me_socket_Protocol_close0(void) {
 
     if (INVALID_HANDLE != pcslHandle) {
         if (status == PCSL_NET_SUCCESS) {
-/*             printf("### socketProtocol: close0 decrement\n"); */
             if (midpDecResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
                 REPORT_INFO(LC_PROTOCOL, "Resource limit update error"); 
             }
@@ -567,7 +563,6 @@ Java_com_sun_midp_io_j2me_socket_Protocol_finalize(void) {
         status = pcsl_socket_close_start(pcslHandle, &context);
 
         getMidpSocketProtocolPtr(thisObject)->handle = (jint)INVALID_HANDLE;
-/*         printf("### socketProtocol: finalize decrement\n"); */
         if (midpDecResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
             REPORT_INFO(LC_PROTOCOL, "Resource limit update error"); 
         }
