@@ -54,7 +54,8 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
      * @param args the arguments passed to main class of the Isolate
      */
     private AppIsolateMIDletSuiteLoader(String args[]) {
-System.out.println("+AppIsolateMIDletSuiteLoader.<init>");		
+System.out.println("+AppIsolateMIDletSuiteLoader.<init> " + args.length);		
+for(int i = 0; i < args.length; i++){System.out.println("arg " + i + ":" + args[i]);}
         this.suiteId = Integer.parseInt(args[0]);
         this.midletClassName = args[1];
         this.midletDisplayName = args[2];
@@ -63,10 +64,13 @@ System.out.println("+AppIsolateMIDletSuiteLoader.<init>");
 
         if (args.length > 7) {
             boolean isDebugMode = Integer.parseInt(args[7]) != 0;
+System.out.println("isDebugMode:" + isDebugMode);		
 
             if (isDebugMode) {
+System.out.println("before currentIsolate.attachDebugger()");		
                 currentIsolate = Isolate.currentIsolate();
                 currentIsolate.attachDebugger();
+System.out.println("after currentIsolate.attachDebugger()");		
 
                 // wait for a connection from debugger
                 while (!currentIsolate.isDebuggerConnected()) {
