@@ -851,6 +851,15 @@ void javanotify_update_midlet_wparams(char* suite_id, int forceUpdate) {
 JACACALL_INSTALL_LISTENER javacall_install_listener=NULL;
 JAVACALL_UNINSTALL_LISTENER javacall_uninstall_listener=NULL;
 
+/**
+ * The platform should invoke this function in register
+ * listerners for midlet installation / uninstallation
+ * notification.
+ * Either function may be null, in which case, no notifier will
+ * be invoked.
+ * Only the last registered notifiers will be called
+ */
+
 void javanotify_set_installation_notify(JACACALL_INSTALL_LISTENER install_notify, 
                                         JAVACALL_UNINSTALL_LISTENER uninstall_notify) {
 
@@ -859,6 +868,12 @@ void javanotify_set_installation_notify(JACACALL_INSTALL_LISTENER install_notify
 
 }
 
+
+/**
+ * Internal function to be registered with the MIDP notification
+ * mechanism. Used for converting parameters between the MIDP
+ * definition and the javacall listeners
+ */
 
 void notify_javacall_installation(int listenerType, int when, MIDPError status, \
               const MidletSuiteData* pSuiteData) {

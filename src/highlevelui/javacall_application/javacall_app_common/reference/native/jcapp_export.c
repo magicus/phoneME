@@ -75,6 +75,12 @@ void static jcapp_reset_screen_buffer(int hardwareId) {
             sizeof (gxj_pixel_type));
 }
 
+/**
+ * Decleration of the notifier used for midlet
+ * installation/uninstalltion.
+ * The implementation will call the appropriate javacall
+ * notifiers after modifying  the parameters
+ */
 extern void notify_javacall_installation(int listenerType, int when, MIDPError status, \
               const MidletSuiteData* pSuiteData);
 
