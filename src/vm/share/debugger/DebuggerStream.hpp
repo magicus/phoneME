@@ -132,7 +132,7 @@ public:
     if (buf.is_null()) {
       // Normally we shouldn't get to this point as it's not safe to 
       // allocate here. Try to increase InitialStreamBufferSize or NUM_PACKET_BUFS.
-      SHOULD_NOT_REACH_HERE("Unsafe allocation");
+      GUARANTEE(false, "Unsafe allocation");
       //add in header size and some safety zone
       SAVE_CURRENT_EXCEPTION;
       buf =

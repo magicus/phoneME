@@ -414,7 +414,7 @@ PacketOutputStream::check_buffer_size(int size) {
 
     // Normally we shouldn't get to this point as it's not safe to 
     // allocate here. Try to increase InitialStreamBufferSize or NUM_PACKET_BUFS.
-    SHOULD_NOT_REACH_HERE("Unsafe allocation");
+    GUARANTEE(false, "Unsafe allocation");
 
     SAVE_CURRENT_EXCEPTION;
     TypeArray new_buf = Universe::new_byte_array(_output_data.length() + size +
