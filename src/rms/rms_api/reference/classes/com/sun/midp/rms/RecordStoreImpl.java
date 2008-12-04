@@ -37,7 +37,6 @@ import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
-import com.sun.midp.main.MIDletSuiteUtils;
 
 /**
  * A class implementing a MIDP a record store.
@@ -691,8 +690,6 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         synchronized (recordStoreLock) {
             recordStoreLock.obtain();
             try {
-                int id = MIDletSuiteUtils.getIsolateId();
-                System.err.println("set record: " + id);
                 dbHeader.recordStoreLocked();
 
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
