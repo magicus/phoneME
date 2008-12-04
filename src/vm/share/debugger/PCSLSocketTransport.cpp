@@ -255,9 +255,14 @@ void SocketTransport::destroy_transport(Transport *t)
     tty->print_cr("SocketTransport::destroy_transport()");
   }
 
+  //ensure disconnect_transport is invoked to cleanup the debugger_socket handle
+  // (and no other operation is actually required for JavaCall ODD implementation - the listener_handle is NULL)
+  disconnect_transport(t);
+
   st->reset_read_ahead_buffer();
 
-  if (listener_handle != INVALID_HANDLE) {
+  if (listener_handle != INVALID_HANDLE) {	
+
     // last socket in the system, shutdown the listener socket
     //ODD_TODO pcsl_socket_shutdown_output(listener_handle);
 
