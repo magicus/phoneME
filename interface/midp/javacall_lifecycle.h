@@ -435,14 +435,28 @@ void javanotify_select_foreground_app(void);
  */
 void javanotify_switch_to_ams(void);
 
-
+/**
+ * Notifier decleration for MIDlet installation
+ **/
 typedef void (*JACACALL_INSTALL_LISTENER)(javacall_utf16 *midletName,int midletNameLen,
                                           javacall_utf16 *className, int classNameLen,
                                           int  suiteID,
                                           javacall_utf16* midletIcon,int midletIconLen);
 
+/**
+ * Notifier decleration for MIDlet uninstallation
+ **/
 typedef void (*JAVACALL_UNINSTALL_LISTENER)(int  suiteID);
 
+
+/**
+ * The platform should invoke this function in register
+ * listerners for midlet installation / uninstallation
+ * notification.
+ * Either function may be null, in which case, no notifier will
+ * be invoked.
+ * Only the last registered notifiers will be called
+ */
 void javanotify_set_installation_notify(JACACALL_INSTALL_LISTENER install_notify, JAVACALL_UNINSTALL_LISTENER unistall_notify);
 
 /** @} */
