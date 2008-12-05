@@ -783,9 +783,7 @@ public class MIDPWindow extends CWindow {
                     (titleLayer.getTitle() != null);
                 tickerLayer.visible =
                     (tickerLayer.getText() != null);
-		buttonLayer.visible = !bodyLayer.opaque || 
-		    getSoftOne() != null ||  
-		    getSoftTwo() != null; 
+		buttonLayer.visible = true;
                 break;
             default:
                 Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,
