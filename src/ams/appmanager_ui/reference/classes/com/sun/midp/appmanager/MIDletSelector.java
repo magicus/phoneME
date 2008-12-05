@@ -82,8 +82,6 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
                                          (ResourceConstants.END),
                                          Command.ITEM, 1);
 
-    /** List of midlets executed from this selector. */
-    private Vector runningMidlets;
 
     /**
      * Create and initialize a new Selector MIDlet.
@@ -122,15 +120,6 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
 
         display.setCurrent(mform);
         
-        /* some MIDlet may already run when showing selector. */
-        runningMidlets = new Vector();
-        MIDletProxy[] proxies = suiteInfo.getProxies();
-        for (int i = 0; i < proxies.length; i++) {
-            if (proxies[i].getMidletState() != MIDletProxy.MIDLET_DESTROYED) {
-                runningMidlets.addElement(proxies[i].getClassName());
-            }
-        }
-        
         /* for locked suite, we need storage lock until some MIDlet is launched.
          * This prevents reinstallation of the locked suite. */
         if (suiteInfo.isLocked()) {
@@ -160,11 +149,10 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
      * @param midlet ClassName of MIDlet which just exited
      */
     public void notifyMidletExited(String midlet) {
-        runningMidlets.removeElement(midlet);        
         
         /* If main MIDlet is exited and all other MIDlets as well, exit the
          * selector. */
-        if (runningMidlets.isEmpty() && suiteInfo.hasMainMidlet()) {
+        if (!suiteInfo.hasRunningMidlet() && suiteInfo.hasMainMidlet()) {
             leaveSelector();
             return;
         }
@@ -172,7 +160,7 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         /* If no more MIDlets are running from a locked suite, we need 
          * the storage lock until another MIDlet is launched. This prevents 
          * reinstallation of the locked suite. */
-        if (runningMidlets.isEmpty() && suiteInfo.isLocked()) {
+        if (!suiteInfo.hasRunningMidlet() && suiteInfo.isLocked()) {
             suiteInfo.grabStorageLock();
         }
             
@@ -181,7 +169,7 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
 
     /** If no MIDlet is running, exits the suite */
     public void exitIfNoMidletRuns() {
-        if (runningMidlets.isEmpty()) {
+        if (!suiteInfo.hasRunningMidlet()) {
             if (suiteInfo.holdsStorageLock()) {
                 suiteInfo.releaseStorageLock();
             }
@@ -233,7 +221,7 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         String midletClassName = minfo[selected].classname;
         if (c == launchCmd) {
 
-            if (runningMidlets.contains(midletClassName)) {
+            if (suiteInfo.getProxyFor(midletClassName) != null) {
                 manager.moveToForeground(suiteInfo, midletClassName);
                 return;
             }
@@ -245,7 +233,6 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
             }
 
             manager.launchSuite(suiteInfo, midletClassName);
-            runningMidlets.addElement(midletClassName);
 
         } else if (c == endCmd) {
 
