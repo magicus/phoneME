@@ -292,10 +292,6 @@
 #     Build a VM which supports the -Xrun command line option for loading
 #     native libraries. Defaults to true if CVM_JVMPI is true.
 #
-# CVM_INTERPRETER_LOOP: Standard
-#     Specify which interpreter loop imlementation to use. Allowed values
-#     are Standard, Split, and Aligned.
-#
 # CVM_GCOV default: false
 #     Enable gcov code coverage support.
 #
