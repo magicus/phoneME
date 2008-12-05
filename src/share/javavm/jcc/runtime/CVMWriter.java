@@ -1600,7 +1600,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
                              c.classInfo.minorVersion + ",");
 	    classOut.print  ("    /* CB genSig     */ ");
 	    //if (c.ci.signatureAttr != null) {
-	    //  classOut.print("\""+c.ci.signatureAttr.signature+"\""); // FIXME
+	    //  classOut.print("\""+c.ci.signatureAttr.signature+"\""); // !Not Working
 	    //} else {
 	        classOut.print(0);
 	    //}
