@@ -67,7 +67,8 @@ extern "C" {
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -135,6 +136,8 @@ javacall_dom_characterdata_get_data_finish(void *context,
  *                            JAVACALL_DOM_SYNTAX_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *             filled,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -190,6 +193,8 @@ javacall_dom_characterdata_set_data_finish(void *context,
  * @param ret_value the number of 16-bit units available in the CharacterData
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_characterdata_get_length_finish function to complete the 
  *             operation,
@@ -244,7 +249,8 @@ javacall_dom_characterdata_get_length_finish(void *context,
  *                            JAVACALL_DOM_DOMSTRING_SIZE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *             filled,
@@ -310,6 +316,8 @@ javacall_dom_characterdata_substring_data_finish(void *context,
  * @param arg The <code>DOMString</code> to append.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_characterdata_append_data_finish function to complete the 
@@ -356,6 +364,8 @@ javacall_dom_characterdata_append_data_finish(void *context);
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *             filled,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -413,6 +423,8 @@ javacall_dom_characterdata_insert_data_finish(void *context,
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *             filled,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -478,6 +490,8 @@ javacall_dom_characterdata_delete_data_finish(void *context,
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *             filled,
  *         JAVACALL_WOULD_BLOCK caller must call the 

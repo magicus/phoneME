@@ -56,6 +56,8 @@ extern "C" {
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_mouseevent_get_screen_x_finish function to complete the 
  *             operation,
@@ -95,6 +97,8 @@ javacall_dom_mouseevent_get_screen_x_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_mouseevent_get_screen_y_finish function to complete the 
  *             operation,
@@ -134,6 +138,8 @@ javacall_dom_mouseevent_get_screen_y_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_mouseevent_get_client_x_finish function to complete the 
  *             operation,
@@ -173,6 +179,8 @@ javacall_dom_mouseevent_get_client_x_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_mouseevent_get_client_y_finish function to complete the 
  *             operation,
@@ -211,6 +219,8 @@ javacall_dom_mouseevent_get_client_y_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_mouseevent_get_ctrl_key_finish function to complete the 
  *             operation,
@@ -248,6 +258,8 @@ javacall_dom_mouseevent_get_ctrl_key_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_mouseevent_get_shift_key_finish function to complete the 
  *             operation,
@@ -287,6 +299,8 @@ javacall_dom_mouseevent_get_shift_key_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_mouseevent_get_alt_key_finish function to complete the 
  *             operation,
@@ -328,6 +342,8 @@ javacall_dom_mouseevent_get_alt_key_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_mouseevent_get_meta_key_finish function to complete the 
  *             operation,
@@ -377,6 +393,8 @@ javacall_dom_mouseevent_get_meta_key_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_mouseevent_get_button_finish function to complete the 
  *             operation,
@@ -425,6 +443,8 @@ javacall_dom_mouseevent_get_button_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_mouseevent_get_related_target_finish function to complete the 
  *             operation,
@@ -486,6 +506,8 @@ javacall_dom_mouseevent_get_related_target_finish(void *context,
  *   <code>NULL</code>.   
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_mouseevent_init_mouse_event_finish function to complete the 
  *             operation,
@@ -575,6 +597,8 @@ javacall_dom_mouseevent_init_mouse_event_finish(void *context);
  *
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_mouseevent_init_mouse_event_ns_finish function to complete the 
  *             operation,

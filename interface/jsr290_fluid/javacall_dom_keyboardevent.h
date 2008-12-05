@@ -60,7 +60,8 @@ extern "C" {
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_keyboardevent_get_key_identifier_finish function to complete the 
@@ -111,6 +112,8 @@ javacall_dom_keyboardevent_get_key_identifier_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_keyboardevent_get_key_location_finish function to complete the 
  *             operation,
@@ -151,6 +154,8 @@ javacall_dom_keyboardevent_get_key_location_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_keyboardevent_get_ctrl_key_finish function to complete the 
  *             operation,
@@ -188,6 +193,8 @@ javacall_dom_keyboardevent_get_ctrl_key_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_keyboardevent_get_shift_key_finish function to complete the 
  *             operation,
@@ -227,6 +234,8 @@ javacall_dom_keyboardevent_get_shift_key_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_keyboardevent_get_alt_key_finish function to complete the 
  *             operation,
@@ -268,6 +277,8 @@ javacall_dom_keyboardevent_get_alt_key_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_keyboardevent_get_meta_key_finish function to complete the 
  *             operation,
@@ -324,6 +335,8 @@ javacall_dom_keyboardevent_get_meta_key_finish(void *context,
  *   this object. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_keyboardevent_init_keyboard_event_finish function to complete the 
  *             operation,
@@ -397,6 +410,8 @@ javacall_dom_keyboardevent_init_keyboard_event_finish(void *context);
  *   the control and alt modifiers. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_keyboardevent_init_keyboard_event_ns_finish function to complete the 
  *             operation,
