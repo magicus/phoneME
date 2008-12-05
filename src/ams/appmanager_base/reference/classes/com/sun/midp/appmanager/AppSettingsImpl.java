@@ -643,7 +643,7 @@ class AppSettingsImpl implements AppSettings, CommandListener {
                 Permissions.isReadMessageGroup(permissionGroup)) {
                 choice.setSelectedID(Permissions.ONESHOT);
             } else {
-                throw new RuntimeException("Invalid initial permission level selected in");
+                throw new RuntimeException("Invalid initial permission level selected.");
             }
         }
 
