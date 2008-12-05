@@ -41,7 +41,7 @@ public abstract class Screen extends BaseScreen {
     protected abstract Displayable createDisplayable();
 
     protected Command getSelectItemCommand() {
-        //  FIXME: i18n for "OK"
+        //  TODO: i18n for OK string - bug 6781618
         return new Command("OK", Command.OK, 1);
     }
 
