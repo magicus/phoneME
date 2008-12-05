@@ -38,6 +38,8 @@ import com.sun.midp.security.SecurityToken;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
+import com.sun.midp.main.MIDletSuiteUtils;
+
 /**
  * A class implementing a MIDP a record store.
  */
@@ -435,6 +437,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
                 int recordId = getNextRecordID();
 
+                int id = MIDletSuiteUtils.getIsolateId();
+                System.err.println(id + ": addRecord(" + recordId + ")");
+                
                 try {
                     // add a block for this record
                     addBlock(recordId, data, offset, numBytes);
@@ -493,8 +498,10 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             try {
                 dbHeader.recordStoreLocked();
 
-                byte[] header = new byte[BLOCK_HEADER_SIZE];
+                int id = MIDletSuiteUtils.getIsolateId();
+                System.err.println(id + ": deleteRecord(" + recordId + ")");
 
+                byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
 
                 // free the block
@@ -596,6 +603,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             try {
                 dbHeader.recordStoreLocked();
 
+                int id = MIDletSuiteUtils.getIsolateId();
+                System.err.println(id + ": getRecord(" + recordId + ")");
+
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
 
@@ -634,6 +644,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             recordStoreLock.obtain();
             try {
                 dbHeader.recordStoreLocked();
+
+                int id = MIDletSuiteUtils.getIsolateId();
+                System.err.println(id + ": getRecord(" + recordId + ")");
 
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
@@ -691,6 +704,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             recordStoreLock.obtain();
             try {
                 dbHeader.recordStoreLocked();
+
+                int id = MIDletSuiteUtils.getIsolateId();
+                System.err.println(id + ": setRecord(" + recordId + ")");
 
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
@@ -1212,9 +1228,6 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                         }
                     }
                     
-                    dbHeader = new RecordStoreSharedDBHeader(suiteId, 
-                            recordStoreName, dbHeaderData, false);
-
                 } else {
                     // initialize the header
                     for (int i = 0; i < DB_SIGNATURE.length; i++) {
@@ -1228,11 +1241,10 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                     // write the header to the file
                     dbFile.write(dbHeaderData);
                     dbFile.commitWrite();
-
-                    dbHeader = new RecordStoreSharedDBHeader(suiteId, 
-                            recordStoreName, dbHeaderData, true);
-
                 }
+
+                dbHeader = new RecordStoreSharedDBHeader(suiteId, 
+                        recordStoreName, dbHeaderData);                
 
                 // create the index object
                 dbIndex = new RecordStoreIndex(this, suiteId, recordStoreName);

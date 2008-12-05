@@ -73,7 +73,7 @@ class RecordStoreSharedDBHeader {
     private int lookupId;
 
     RecordStoreSharedDBHeader(int suiteId, String storeName, 
-            byte[] headerData, boolean isNewRecordStore) {
+            byte[] headerData) {
 
         cachedHeaderData = headerData;
         lookupId = getLookupId0(suiteId, storeName, headerData.length);
@@ -81,11 +81,16 @@ class RecordStoreSharedDBHeader {
         isExclusiveUse = false;
         cachedHeaderVersion = 0;
 
-        if (isNewRecordStore) {
-            shareCachedData();
-        } else {
-            updateCachedData();
-        }
+        /**
+         * The copy of header in native may be out-of-date regarding 
+         * actual header in db file. It happens if we are going to be 
+         * the second MIDlet that uses this record store. In this case, 
+         * the first MIDlet didn't care about sharing header in native, 
+         * because it knew that there are no others record store users. 
+         * So, store the header we read from db file in native to remedy 
+         * this situation.
+         */
+        shareCachedData();
     }
 
     /**
