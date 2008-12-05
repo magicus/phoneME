@@ -48,7 +48,7 @@
 #undef CVMjniGcSafeRef2Class
 #define CVMjniGcSafeRef2Class(ee, cl) CVMgcSafeClassRef2ClassBlock(ee, cl)
 
-/* FIXME - this should go away. */
+/* TODO - this should go away. */
 extern void
 JVMSPI_PrintRaw(const char* s) {
     CVMconsolePrintf(s);
@@ -62,7 +62,7 @@ KNI_FindClassImpl(CVMExecEnv* ee, const char* name, jclass classHandle)
     CVMD_gcSafeExec(ee, {
 	jclass result;
 	CVMjniPushLocalFrame(env, 4);
-	/* FIXME - we are only suppose to return classes that are
+	/* TODO - we are only suppose to return classes that are
 	   already loaded and initialized. */
 	result = CVMjniFindClass(env, name);
 	if (result != NULL) {

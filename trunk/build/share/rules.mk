@@ -684,7 +684,7 @@ endif
 
 # As a performance improvement, evaluate some flags in case
 # they contain shell commands.
-# FIXME: Disabled because this causes GCI build failures
+# NOTE: Disabled because this causes GCI build failures
 #$(J2ME_CLASSLIB):: CPPFLAGS := $(CPPFLAGS)
 
 $(J2ME_CLASSLIB):: initbuild

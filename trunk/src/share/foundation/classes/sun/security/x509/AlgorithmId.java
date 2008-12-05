@@ -293,7 +293,7 @@ public class AlgorithmId implements Serializable, DerEncoder {
     }
 
 
-// FIXME: cleaning required
+// TODO: cleaning required
     /**
      * Returns the DER-encoded X.509 AlgorithmId as a byte array.
      */

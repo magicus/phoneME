@@ -225,7 +225,7 @@ CVMLVMwalkStatics(CVMRefCallbackFunc callback, void* callbackData)
     CVMLVMGlobals *lvm = &CVMglobals.lvm;
     CVMLVMContext *context;
 
-    /* FIXME: This is usually only called from GC to scan all the static refs.
+    /* TODO: This is usually only called from GC to scan all the static refs.
        Consider adding an assert here to ensure that we don't call this at
        other times.  Otherwise, we can have a race condition on the access of
        the list of LVM contexts. */
@@ -771,7 +771,7 @@ CVMLVMcontextHalt(CVMExecEnv* ee)
      * Sharing the same ThreadDeath object for termination of all the
      * thread should be OK for now... */
 
-    /* FIXME: Change this into an LVMDeath exception that cannot be caught. */
+    /* TODO: Change this into an LVMDeath exception that cannot be caught. */
     threadDeathObj = JNU_NewObjectByName(env, "java/lang/ThreadDeath", "()V");
 
     /*

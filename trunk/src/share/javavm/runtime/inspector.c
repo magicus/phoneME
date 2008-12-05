@@ -322,7 +322,7 @@ static void CVMgcDumpGCRoots(CVMObject *obj)
     CVMconsolePrintf("List of references to object 0x%x (%C):\n",
                      obj, CVMobjectGetClass(obj));
 
-    /* FIXME:
+    /* TODO:
        this is where we have to set up data structures to track the
        references so that we can traverse each reverse reference. */
 
