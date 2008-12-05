@@ -615,6 +615,8 @@
                 Value="URL:"/>
 <localized_string Key="AMS_AUTO_TESTER_UNSIGN_SECURITY_DOMAIN"
                 Value="Security domain if suite not signed:"/>
+<localized_string Key="AMS_AUTO_TESTER_BLANKET_PERMISSIONS"
+                Value="Set the following permission groups of the test suite to blanket granted:"/>
 <localized_string Key="AMS_AUTO_TESTER_ERROR_URL_MSG"
                 Value="The URL has not been entered."/>
 <localized_string Key="AMS_AUTO_TESTER_ERROR_SECURITY_DOMAIN_MSG"

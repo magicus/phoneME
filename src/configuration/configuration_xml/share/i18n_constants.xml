@@ -911,6 +911,9 @@
             Name="AMS_AUTO_TESTER_UNSIGN_SECURITY_DOMAIN"
             Comment="AMS: com.sun.midp.installer.AutoTester"/>
   <constant Type="int"
+            Name="AMS_AUTO_TESTER_BLANKET_PERMISSIONS"
+            Comment="AMS: com.sun.osgi.autotest.AutoTester"/>
+  <constant Type="int"
             Name="AMS_AUTO_TESTER_ERROR_URL_MSG"
             Comment="AMS: com.sun.midp.installer.AutoTester"/>
   <constant Type="int"
