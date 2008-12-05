@@ -281,6 +281,20 @@ public final class Permissions {
 
         return false;
     }
+    
+    /**
+     * Checks if group is read message group
+     * @param group
+     * @return returns true if group is read message group, false otherwise
+     */
+    public static boolean isReadMessageGroup(PermissionGroup group) {
+        if (group == READ_MESSAGE_GROUP ||
+                group == READ_RESTRICTED_MESSAGE_GROUP) {
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * Returns domain for unsigned midlets.
@@ -431,7 +445,7 @@ public final class Permissions {
          */
         if ((group == READ_MESSAGE_GROUP ||
                 group == READ_RESTRICTED_MESSAGE_GROUP) &&
-                    (maxLevel == BLANKET || maxLevel == BLANKET_GRANTED)) {
+                    (maxLevel == BLANKET)) {
             if (currentLevels) {
                 maxLevel = ONESHOT;
             }
