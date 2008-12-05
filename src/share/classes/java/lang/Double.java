@@ -293,7 +293,7 @@ public final class Double extends Number implements Comparable {
      * @see        java.lang.Double#valueOf(java.lang.String)
      */
     public Double(String s) throws NumberFormatException {
-	// FIXME: this is inefficient
+	// TODO: this is inefficient
 	this(valueOf(s).doubleValue());
     }
 

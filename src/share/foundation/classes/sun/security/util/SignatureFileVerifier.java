@@ -156,7 +156,7 @@ public class SignatureFileVerifier {
 	    sf.getMainAttributes().getValue(Attributes.Name.SIGNATURE_VERSION);
 
 	if ((version == null) || !(version.equalsIgnoreCase("1.0"))) {
-	    // FIXME: should this be an exception?
+	    // TODO: should this be an exception?
 	    // for now we just ignore this signature file
 	    return;
 	}

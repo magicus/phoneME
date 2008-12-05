@@ -305,7 +305,7 @@ public final class Float extends Number implements Comparable {
      * @see        java.lang.Float#valueOf(java.lang.String)
      */
     public Float(String s) throws NumberFormatException {
-	// FIXME: this is inefficient
+	// TODO: this is inefficient
 	this(valueOf(s).floatValue());
     }
 
