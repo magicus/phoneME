@@ -818,6 +818,11 @@ public final class Permissions {
         final PermissionGroup[] groups2 = {
             MULTIMEDIA_GROUP, READ_USER_DATA_GROUP
         };
+        /**
+         * IMPL_NOTE: we will get warning only about first pair found.
+         * If it is more than one pair, there should be more complex
+         * warning created.
+         */
 
         for (int i = 0; i < groups1.length; i++) {
             if (group == groups1[i]) {
