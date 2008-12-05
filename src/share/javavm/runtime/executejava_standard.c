@@ -404,7 +404,7 @@ CVMdumpStats()
    event is posted reqardless of whether we're antcipating a synchronous or
    asynchronous request.
  */
-/* FIXME: Consolidate the FramePop and NeedEarlyReturn into a single field
+/* TODO: Consolidate the FramePop and NeedEarlyReturn into a single field
    so that we only need to do one comparison in the normal case where neither
    were requested. */
 #define JVMTI_PROCESS_POP_FRAME_AND_EARLY_RETURN()					\

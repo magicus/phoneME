@@ -1042,7 +1042,7 @@ jvmti_GetThreadState(jvmtiEnv* jvmtienv,
      * thread is terminated
      */
 
-    /* FIXME: We need to acquire the threadLock here to ensure that targetEE
+    /* NOTE: We need to acquire the threadLock here to ensure that targetEE
        doesn't disappear on us before we dereference it to get the threadState.
 
        The comment above says it will deadlock because the following may have
@@ -1073,7 +1073,7 @@ jvmti_GetThreadState(jvmtiEnv* jvmtienv,
        above observation is true.
     */
 
-    /* FIXME: Need to replace this with alternate solution: 
+    /*
     CVM_THREAD_LOCK(ee);
     */
     err = jthreadToExecEnv(ee, thread, &targetEE);
@@ -1116,7 +1116,7 @@ jvmti_GetThreadState(jvmtiEnv* jvmtienv,
     err = JVMTI_ERROR_NONE;
 
  cleanUpAndReturn:
-    /* FIXME: Need to replace this with alternate solution: 
+    /* TODO: Need to replace this with alternate solution: 
     CVM_THREAD_UNLOCK(ee);
     */
     return err;
@@ -1468,7 +1468,7 @@ jvmti_StopThread(jvmtiEnv* jvmtienv,
     if (err != JVMTI_ERROR_NONE) {
 	return err;
     }
-    /* FIXME: Exceptions are normally not thrown asynchronously.  This may
+    /* TODO: Exceptions are normally not thrown asynchronously.  This may
        cause the target thread to not be able to react appropriately
        in some cases.  Need to review the async exception system. */
     CVMsignalError(targetEE, exceptionCb, "");
@@ -2874,7 +2874,7 @@ forceEarlyReturn(jvmtiEnv* jvmtienv, jthread thread, jvalue val,
 	goto cleanUpAndReturn;
     }
 
-    /* FIXME: This treatment is not correct.  A JVMTI_ERROR_INTERNAL
+    /* NOTE:  A JVMTI_ERROR_INTERNAL
        implies that the VM has a bug that prevents it from servicing this
        request.  However, is it really the agent's responsibility to make
        sure that it doesn't do more than one request concurrently?
