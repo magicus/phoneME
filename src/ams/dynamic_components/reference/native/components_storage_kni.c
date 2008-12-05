@@ -244,11 +244,11 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_removeComponent) {
 
     if (status == SUITE_LOCKED) {
         KNI_ThrowNew(midletsuiteLocked, NULL);
-    } else if (status == BAD_PARAMS) {
+    } else if (status == BAD_PARAMS || status == NOT_FOUND) {
         KNI_ThrowNew(midpIllegalArgumentException, "bad component ID");
     } else if (status != ALL_OK) {
         KNI_ThrowNew(midpRuntimeException,
-            (status == OUT_OF_MEMORY) ? "Remove failed" : "Out of memory!");
+            (status == OUT_OF_MEMORY) ? "Out of memory!" : "Remove failed");
     }
 
     KNI_ReturnVoid();
