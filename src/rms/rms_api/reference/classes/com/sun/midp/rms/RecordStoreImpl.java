@@ -1182,6 +1182,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
          */
         recordStoreLock.obtain();
 
+        int id = MIDletSuiteUtils.getIsolateId();
+        System.err.println(id + ": RecordStoreImpl(" + suiteId + ", " + recordStoreName + ")");
+
         try {
             boolean exists = RecordStoreUtil.exists(
                     RmsEnvironment.getSecureFilenameBase(suiteId),
