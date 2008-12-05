@@ -269,6 +269,11 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
     case JSR290_FLUID_EVENT_SIGNAL:
         StoreMIDPEventInVmThread(newMidpEvent, -1);
         break;
+    case JSR290_INVOCATION_COMPLETION_SIGNAL:
+        midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                newSignal.waitingFor, newSignal.descriptor,
+                                newSignal.status);
+        break;
 #endif /* ENABLE_JSR_290 */
 #ifdef ENABLE_JSR_257
     case JSR257_CONTACTLESS_SIGNAL:
