@@ -636,7 +636,16 @@ class AppSettingsImpl implements AppSettings, CommandListener {
             break;
         }
 
-        choice.setSelectedID(initValue);
+        if (choice.idExists(initValue)) {
+            choice.setSelectedID(initValue);
+        } else {
+            if (level == Permissions.BLANKET_GRANTED &&
+                Permissions.isReadMessageGroup(permissionGroup)) {
+                choice.setSelectedID(Permissions.ONESHOT);
+            } else {
+                throw new RuntimeException("Invalid initial permission level selected.");
+            }
+        }
 
         if (initialSetting == null) {
             initialSetting = choice;

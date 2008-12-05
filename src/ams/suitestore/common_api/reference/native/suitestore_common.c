@@ -809,7 +809,8 @@ get_suite_or_component_id(ComponentType type, SuiteIdType suiteId,
         if (pcsl_string_equals(&pData->varSuiteData.suiteName, name) &&
                 pcsl_string_equals(&pData->varSuiteData.suiteVendor, vendor)
 #if ENABLE_DYNAMIC_COMPONENTS
-                    && (type == pData->type) && (suiteId == pData->suiteId) 
+                    && (type == pData->type) && (type != COMPONENT_DYNAMIC ||
+                        (type == COMPONENT_DYNAMIC && suiteId == pData->suiteId))
 #endif
         ) {
 #if ENABLE_DYNAMIC_COMPONENTS
