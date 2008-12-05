@@ -880,11 +880,10 @@ class LayoutManager {
                 hSpace = hSpace / 2;
                 /* fall through */
         case Item.LAYOUT_RIGHT:
-                for (; rowStart <= rowEnd; rowStart++) {
-                    itemLFs[rowStart].lMove(hSpace, 0); 
-                } 
+                    for (; rowStart <= rowEnd; rowStart++) {
+                        itemLFs[rowStart].lMove(hSpace, 0);
+                    }
                 break;
-
         case Item.LAYOUT_LEFT:
         default:
             break;
@@ -914,18 +913,18 @@ class LayoutManager {
      *         index
      */
     private int  getCurHorAlignment(ItemLFImpl[] itemLFs, int index) {
-        if (rl_direction) {
-            return Item.LAYOUT_RIGHT;
-        }
         for (int hAlign, i = index; i >= 0; i--) {
             hAlign = itemLFs[i].getLayout() & LAYOUT_HMASK;
 
             if (hAlign != Item.LAYOUT_DEFAULT)
                 return hAlign;
         }
-
-        // default layout is LAYOUT_LEFT
-        return Item.LAYOUT_LEFT; 
+        // default layout
+        if (rl_direction) {
+            return Item.LAYOUT_RIGHT;
+        } else {
+            return Item.LAYOUT_LEFT;
+        }
     }
 
     /**

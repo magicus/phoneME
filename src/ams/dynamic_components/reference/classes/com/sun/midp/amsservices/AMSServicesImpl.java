@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-package com.sun.midp.services;
+package com.sun.midp.amsservices;
 
 import com.sun.midp.installer.DynamicComponentInstaller;
 

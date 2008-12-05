@@ -112,8 +112,7 @@ KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_checkInByName0) {
     KNI_GetParameterAsObject(1, conn);
     connLen = KNI_GetArrayLength(conn);
 
-    szConn = midpMalloc(connLen);
-    if (szConn != NULL) {
+    if (connLen > 0 && (szConn = midpMalloc(connLen)) != NULL) {
         KNI_GetRawArrayRegion(conn, 0, connLen, (jbyte*)szConn);
         ret = pushcheckinbyname(szConn);
         midpFree(szConn);
@@ -252,8 +251,7 @@ KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_addAlarm0) {
     KNI_GetParameterAsObject(1, conn);
     connLen = KNI_GetArrayLength(conn);
 
-    szConn = midpMalloc(connLen);
-    if (szConn != NULL) {
+    if (connLen > 0 && (szConn = midpMalloc(connLen)) != NULL) {
         KNI_GetRawArrayRegion(conn, 0, connLen, (jbyte*)szConn);
         ret = alarmadd(szConn, alarm, &lastalarm);
         midpFree(szConn);
@@ -310,11 +308,8 @@ KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_list0) {
     KNI_GetParameterAsObject(3, connections);
 
     nameLength = KNI_GetArrayLength(name);
-    midletName = (char*)midpMalloc(nameLength);
-    if (midletName == NULL) {
-        KNI_ThrowNew(midpOutOfMemoryError, NULL);
-    }
-    else {
+
+    if (nameLength > 0 && (midletName = (char*)midpMalloc(nameLength)) != NULL) {
         KNI_GetRawArrayRegion(name, 0, nameLength, (jbyte*)midletName);
 
         conn = pushfindsuite(midletName, available);
@@ -327,6 +322,10 @@ KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_list0) {
 
         midpFree(midletName);
     }
+    else {
+        KNI_ThrowNew(midpOutOfMemoryError, NULL);
+    }
+
 
     KNI_EndHandles();
 
@@ -437,7 +436,7 @@ KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_getEntry0) {
     KNI_GetParameterAsObject(1, conn);
     connLen = KNI_GetArrayLength(conn);
     ret = -1;
-    if ((szConn = midpMalloc(connLen)) != NULL) {
+    if (connLen > 0 && (szConn = midpMalloc(connLen)) != NULL) {
         KNI_GetRawArrayRegion(conn, 0, connLen, (jbyte*)szConn);
 
         KNI_GetParameterAsObject(2, regObject);

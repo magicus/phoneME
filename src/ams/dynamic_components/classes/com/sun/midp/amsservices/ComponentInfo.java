@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-package com.sun.midp.services;
+package com.sun.midp.amsservices;
 
 /** Simple attribute storage describing a component */
 public interface ComponentInfo {

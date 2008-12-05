@@ -116,7 +116,7 @@ KNIEXPORT KNI_RETURNTYPE_INT
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
     if (info == NULL) {
         nameLen = KNI_GetStringLength(nameObject);
-        if (nameLen > MAX_NAME_LEN) {
+        if (nameLen < 0 || nameLen > MAX_NAME_LEN) {
             midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
                 "Serial device name has wrong length: %d\n", nameLen);
             REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);

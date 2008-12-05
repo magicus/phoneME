@@ -32,7 +32,6 @@
 #include <midpMalloc.h>
 #include <midpAMS.h>
 #include <midpInit.h>
-#include <midp_mastermode_port.h>
 #include <midp_foreground_id.h>
 #include <keymap_input.h>
 

@@ -1,8 +1,7 @@
-#!/bin/sh
 #
-# 	
+#   
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -24,6 +23,23 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 #
-DIR=${0%/*}
-cd $DIR
-exec ./runMidlet $* internal com.sun.midp.appmanager.MVMManager
+############################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+############################################################
+
+SUBSYSTEM_SECURITY_MODULES += secure_random
+
+CDC_SECURITY_DIR = $(SUBSYSTEM_DIR)/security/cdc_application
+
+#
+# Java files for the library
+#
+SUBSYSTEM_SECURITY_JAVA_FILES += \
+    $(CDC_SECURITY_DIR)/classes/com/sun/midp/crypto/SecureRandom.java

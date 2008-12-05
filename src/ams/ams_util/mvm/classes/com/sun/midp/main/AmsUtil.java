@@ -41,7 +41,7 @@ import com.sun.midp.links.LinkPortal;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.SecurityToken;
-import com.sun.midp.services.ComponentInfo;
+import com.sun.midp.amsservices.ComponentInfo;
 import com.sun.midp.services.SystemServiceLinkPortal;
 
 import com.sun.midp.log.Logging;

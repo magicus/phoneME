@@ -42,10 +42,14 @@ SECURE_RANDOM_PORT_DIR = $(SUBSYSTEM_DIR)/security/secure_random_port
 # vpath for this platform specific files
 #
 ifeq ($(TARGET_PLATFORM), javacall)
-vpath % $(SECURE_RANDOM_PORT_DIR)/javacall/native
+ vpath % $(SECURE_RANDOM_PORT_DIR)/javacall/native
 else
-vpath % $(SECURE_RANDOM_PORT_DIR)/default/native
-#vpath % $(SECURE_RANDOM_PORT_DIR)/stubs/native
+ ifeq ($(TARGET_PLATFORM), wince)
+  vpath % $(SECURE_RANDOM_PORT_DIR)/wince/native
+ else
+  vpath % $(SECURE_RANDOM_PORT_DIR)/default/native
+ endif
+ #vpath % $(SECURE_RANDOM_PORT_DIR)/stubs/native
 endif
 
 #
