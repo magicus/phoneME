@@ -183,6 +183,6 @@ endif
 force_midp_build:
 
 clean::
-	rm -rf $(CVM_MIDP_BUILDDIR)
+	rm -rf $(CVM_MIDP_BUILDDIR) $(MIDP_CLASSLIST)
 
 endif
