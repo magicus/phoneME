@@ -34,3 +34,6 @@ $(XMLPARSER_JAR): $(XMLPARSER_JAVA_FILES)
 
 source_bundle::
 	$(AT)$(call source_bundle_filter,$(XMLPARSER_DIR),$(XMLPARSER_SOURCE_OUTPUT_DIR),build/cdc_share)
+
+clean ::
+	$(AT)rm -fr $(XMLPARSER_BUILD_DIR)
