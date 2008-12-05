@@ -85,8 +85,6 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
                                          (ResourceConstants.END),
                                          Command.ITEM, 1);
 
-    /** List of midlets executed from this selector. */
-    private Vector runningMidlets;
 
     /**
      * Create and initialize a new Selector MIDlet.
@@ -124,15 +122,6 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         mform.setCommandListener(this);
 
         display.setCurrent(mform);
-        
-        /* some MIDlet may already run when showing selector. */
-        runningMidlets = new Vector();
-        MIDletProxy[] proxies = suiteInfo.getProxies();
-        for (int i = 0; i < proxies.length; i++) {
-            if (proxies[i].getMidletState() != MIDletProxy.MIDLET_DESTROYED) {
-                runningMidlets.addElement(proxies[i].getClassName());
-            }
-        }
         
         /* for locked suite, we need storage lock until some MIDlet is launched.
          * This prevents reinstallation of the locked suite. */
@@ -173,9 +162,8 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
      * @param midlet ClassName of MIDlet which just exited
      */
     public void notifyMidletExited(String midlet) {
-        runningMidlets.removeElement(midlet);        
                 
-        if (runningMidlets.isEmpty()) {
+        if (!suiteInfo.hasRunningMidlet()) {
             if (scheduledExit) {
                 // exit now
                 exit();
@@ -196,13 +184,13 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
                 suiteInfo.grabStorageLock();
             }
         }
-            
+
         refreshList();
     }
 
     /** If no MIDlet is running, exits the suite */
     public void exitIfNoMidletRuns() {
-        if (runningMidlets.isEmpty()) {
+        if (!suiteInfo.hasRunningMidlet()) {
             exit();
         }
     }
@@ -256,7 +244,7 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         String midletClassName = minfo[selected].classname;
         if (c == launchCmd) {
 
-            if (runningMidlets.contains(midletClassName)) {
+            if (suiteInfo.getProxyFor(midletClassName) != null) {
                 manager.moveToForeground(suiteInfo, midletClassName);
                 return;
             }
@@ -268,7 +256,6 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
             }
 
             manager.launchSuite(suiteInfo, midletClassName);
-            runningMidlets.addElement(midletClassName);
 
         } else if (c == endCmd) {
 
