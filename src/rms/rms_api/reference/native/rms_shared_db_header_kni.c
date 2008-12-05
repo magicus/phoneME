@@ -40,9 +40,6 @@
 
 #include "rms_shared_db_header.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-
 /** For MIDP on CDC */
 #ifndef SNI_BEGIN_RAW_POINTERS
 #define SNI_BEGIN_RAW_POINTERS
@@ -116,8 +113,8 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_shareCachedData0) {
             KNI_ThrowNew(midpIllegalArgumentException, 
                     "Header data array is null");
         } else {
-            headerData = JavaByteArray(headerDataJavaArray);
         SNI_BEGIN_RAW_POINTERS            
+            headerData = JavaByteArray(headerDataJavaArray);
             headerVersion = rmsdb_set_header_data(node, headerData, size);
         SNI_END_RAW_POINTERS
         }
@@ -134,7 +131,6 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_updateCachedData0) {
     jint dataSize = 0;
     jint headerVersion = 0; 
     jbyte* headerData = NULL;
-    jint oldVersion = 0;
 
     KNI_StartHandles(1); 
     KNI_DeclareHandle(headerDataJavaArray);
@@ -156,13 +152,9 @@ KNIDECL(com_sun_midp_rms_RecordStoreSharedDBHeader_updateCachedData0) {
         } else {
         SNI_BEGIN_RAW_POINTERS
             headerData = JavaByteArray(headerDataJavaArray);
-            oldVersion = headerVersion;
             headerVersion = rmsdb_get_header_data(node, headerData, dataSize, 
                     headerVersion);
         SNI_END_RAW_POINTERS 
-            if (headerVersion > oldVersion) {
-                fprintf(stderr, "---- New header\n");
-            }
         }
     }
 

@@ -507,10 +507,6 @@ class RecordStoreIndex {
      * @param newVersion new record store version
      */
     void recordStoreVersionUpdated(int newVersion) {
-        if (indexVersion + 1 < newVersion) {
-            invalidateIndex();
-        }
-
         indexVersion = newVersion;
     }
 
@@ -527,8 +523,6 @@ class RecordStoreIndex {
         }
 
         if (indexVersion < storeVersion) {
-            recordIdOffsets = null;
-            
             // out of date, can't use current index anymore           
             invalidateIndex();
             indexVersion = storeVersion;

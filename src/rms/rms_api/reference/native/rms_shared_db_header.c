@@ -34,8 +34,6 @@
 #include <midp_logging.h>
 
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "rms_shared_db_header.h"
 
@@ -135,6 +133,19 @@ RecordStoreSharedDBHeaderList* rmsdb_create_header_node(int suiteId,
  */
 void rmsdb_delete_header_node(RecordStoreSharedDBHeaderList* node) {
     RecordStoreSharedDBHeaderList* prevNode;
+    RecordStoreSharedDBHeaderList* thisNode;
+
+    /** Safety check */
+    if (node == NULL) {
+        return;
+    }
+
+    /** Make sure that node to delete is in list */
+    thisNode =  rmsdb_find_header_node_by_id(node->lookupId);
+    if (node != thisNode) {
+        /** Oops, node is not in list, don't try to remove it */
+        return;
+    }
 
     /* If it's first node, re-assign head pointer */
     if (node == gsHeaderListHead) {
@@ -161,7 +172,7 @@ void rmsdb_delete_header_node(RecordStoreSharedDBHeaderList* node) {
  *
  * @param node pointer to header node 
  * @param srcBuffer header data to set from
- * @param srcSize size of the data to set, in jbytes
+ * @param srcSize size of the data to set, in jbytes (safety measure)
  *
  * @return actual header version
  */
@@ -169,10 +180,22 @@ int rmsdb_set_header_data(RecordStoreSharedDBHeaderList* node,
         jbyte* srcBuffer, jint srcSize) {
     
     int size;
-    size = (srcSize > node->headerDataSize)? node->headerDataSize : srcSize;
+    
+    /** Safety checks */    
 
-    memcpy(node->headerData, srcBuffer, size * sizeof(jbyte));
-    node->headerVersion++;
+    if (node == NULL || srcBuffer == NULL) {
+        return 0;
+    }
+
+    size = srcSize;
+    if (size > node->headerDataSize) {
+        size = node->headerDataSize;
+    }
+
+    if (node->headerData != NULL) {
+        memcpy(node->headerData, srcBuffer, size * sizeof(jbyte));
+        node->headerVersion++;
+    }
 
     return node->headerVersion;
 }
@@ -184,6 +207,7 @@ int rmsdb_set_header_data(RecordStoreSharedDBHeaderList* node,
  *
  * @param node pointer to header node 
  * @param dstBuffer where to copy header data
+ * @param dstSize dst buffer size, in jbytes (safety measure)
  * @param headerVersion version of the header to check against
  *
  * @return actual header version
@@ -192,9 +216,19 @@ int rmsdb_get_header_data(RecordStoreSharedDBHeaderList* node,
         jbyte* dstBuffer, jint dstSize, jint headerVersion) {
 
     int size;
-    size = (node->headerDataSize > dstSize)? dstSize: node->headerDataSize;
 
-    if (node->headerVersion > headerVersion) {
+    /** Safety checks */
+
+    if (node == NULL || dstBuffer == NULL) {
+        return headerVersion;
+    }    
+
+    size = node->headerDataSize;
+    if (size > dstSize) {
+        size = dstSize;
+    }
+
+    if (node->headerVersion > headerVersion && node->headerData != NULL) {
         memcpy(dstBuffer, node->headerData, size * sizeof(jbyte));
         return node->headerVersion;
     }
@@ -208,6 +242,11 @@ int rmsdb_get_header_data(RecordStoreSharedDBHeaderList* node,
  * @param node data node to increase ref count for
  */
 void rmsdb_inc_header_node_refcount(RecordStoreSharedDBHeaderList* node) {
+    /** Safety check */    
+    if (node == NULL) {
+        return;
+    }
+
     node->refCount++;
 }
 
@@ -218,6 +257,10 @@ void rmsdb_inc_header_node_refcount(RecordStoreSharedDBHeaderList* node) {
  * @return node ref count
  */
 int rmsdb_get_header_node_refcount(RecordStoreSharedDBHeaderList* node) {
+    /** Safety check */    
+    if (node == NULL) {
+        return 0;
+    }    
     return node->refCount;
 }
 
@@ -227,10 +270,14 @@ int rmsdb_get_header_node_refcount(RecordStoreSharedDBHeaderList* node) {
  * @param node data node to decrease ref count for
  */
 void rmsdb_dec_header_node_refcount(RecordStoreSharedDBHeaderList* node) {
+    /** Safety check */    
+    if (node == NULL) {
+        return;
+    }
+
     node->refCount--;
 
     if (node->refCount <= 0) {
-        fprintf(stderr, "--- Deleted\n");
         rmsdb_delete_header_node(node);
     }
 }
