@@ -53,6 +53,14 @@ endif
 include $(SUBSYSTEM_HIGHUI_DIR)/annunciator/lib.gmk
 
 #####################################################################
+# Key port Mapping Subsystem
+# Description: Optional for certain platforms
+#####################################################################
+
+include $(SUBSYSTEM_HIGHUI_DIR)/keymap_port/lib.gmk
+
+
+#####################################################################
 # Key Mapping Subsystem
 # Description: Optional for certain platforms
 #####################################################################
@@ -198,6 +206,13 @@ SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_ANNUNCIATOR_JAVA_FILES)
 SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES += $(SUBSYSTEM_ANNUNCIATOR_I3TEST_JAVA_FILES)
 SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_ANNUNCIATOR_NATIVE_FILES)
 SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_ANNUNCIATOR_EXTRA_INCLUDES)
+
+# Keymap port
+#
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_KEYMAP_PORT_JAVA_FILES)
+SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES += $(SUBSYSTEM_KEYMAP_PORT_I3TEST_JAVA_FILES)
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_KEYMAP_PORT_NATIVE_FILES)
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_KEYMAP_PORT_EXTRA_INCLUDES)
 
 # KEYMAP
 #

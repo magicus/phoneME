@@ -34,16 +34,26 @@
 ######################################################################
 
 # Name of the library
-KEYMAP_NAME = keymap
-SUBSYSTEM_KEYMAP_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(KEYMAP_NAME)
+KEYMAP_PORT_NAME = keymap_port
+SUBSYSTEM_KEYMAP_PORT_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(KEYMAP_PORT_NAME)
 
-SUBSYSTEM_KEYMAP_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_KEYMAP_DIR)/include
+SUBSYSTEM_KEYMAP_PORT_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_KEYMAP_PORT_DIR)/include
 
 # Platform definitions
 #
 ifeq ($(PLATFORM), stubs)
-    include $(SUBSYSTEM_KEYMAP_DIR)/stubs/lib.gmk
+    include $(SUBSYSTEM_KEYMAP_PORT_DIR)/stubs/lib.gmk
 else
-    include $(SUBSYSTEM_KEYMAP_DIR)/default/lib.gmk                                   
+    
+    ifeq ($(PLATFORM), wince)
+        include $(SUBSYSTEM_KEYMAP_PORT_DIR)/wince/lib.gmk
+    else
+
+        ifeq ($(PLATFORM), win32)
+             include $(SUBSYSTEM_KEYMAP_PORT_DIR)/win32/lib.gmk
+        else
+             include $(SUBSYSTEM_KEYMAP_PORT_DIR)/default/lib.gmk    
+        endif
+    endif                                   
 endif

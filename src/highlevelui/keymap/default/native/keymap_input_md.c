@@ -27,7 +27,7 @@
 #include <kni.h>
 #include <keymap_input.h>
 #include <midp_logging.h>
-
+#include <keymap_invalid_key_port.h>
 /**
  * @file
  *
@@ -259,7 +259,7 @@ keymap_is_invalid_key_code(int keyCode)
      * Valid within UNICODE and not 0x0 and 0xffff 
      * since they are defined to be invalid
      */
-    if ((keyCode == 0x0) || (keyCode >= 0xFFFF) || (keyCode < MIN_KEY_VALUE)) {
+    if ((keyCode == 0x0) || (keyCode >= 0xFFFF) || is_invalid_key_code_port(keyCode)) {
         return KNI_TRUE;
     }
 

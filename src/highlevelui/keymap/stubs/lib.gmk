@@ -32,4 +32,4 @@
 vpath % $(SUBSYSTEM_DIR)/highlevelui/keymap/stubs/native
 
 SUBSYSTEM_KEYMAP_NATIVE_FILES += \
-    keymap_input_md.c
+    invalid_key_port.c
