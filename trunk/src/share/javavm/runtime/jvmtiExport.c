@@ -121,11 +121,6 @@ static CVMJvmtiMethodNode *getNode(CVMMethodBlock *mb)
     return node;
 }
 
-/* FIXME: This function is called from the interpreter loop for each method
-   invocation even when JVMTI is not being used.  This is very heavy overhead
-   and need to be fixed.  One option is to use some sort of bit marker on the
-   mb itself to indicate that it is obsolete so as to not have to do this
-   look up.  In the least, the bit can indicate if a look is necessary. */
 CVMBool
 CVMjvmtiMbIsObsoleteX(CVMMethodBlock *mb)
 {
@@ -659,10 +654,6 @@ reportException(CVMExecEnv* ee, CVMUint8 *pc,
 
 }
 
-/* FIXME: This function is being called if JVMTI is being enabled globally even
-   if this event is not enabled.  This is vey heavy overhead and should be
-   fixed. */
-/* %comment: k006 */
 void
 CVMjvmtiPostExceptionEvent(CVMExecEnv* ee, CVMUint8 *pc,
 			   CVMObjectICell* object)
@@ -755,9 +746,6 @@ CVMjvmtiPostExceptionEvent(CVMExecEnv* ee, CVMUint8 *pc,
     }
 }
 
-/* FIXME: This function is being called from the interpreter loop if JVMTI is
-   enabed globally even if this event is not needed.  This has to heavy
-   overhead and needs to be fixed. */
 /*
  * This function is called by the interpreter whenever:
  * 1) The interpreter catches an exception, or
@@ -1313,10 +1301,6 @@ CVMjvmtiPostFramePopEvent(CVMExecEnv* ee, CVMBool isRef,
 }
 
 
-/* FIXME: This is being called unconditionally from the interpreter loop even
-   when JVMTI is not in use.  This is very heavy overhead and need to be fixed.
-   JVMTI should provide some bit flags that can be checked to avoid calling
-   this function in unnecessary conditons. */
 void
 CVMjvmtiPostFramePushEvent(CVMExecEnv* ee)
 {
