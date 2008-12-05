@@ -288,6 +288,10 @@ public final class Permissions {
      * @return returns true if group is read message group, false otherwise
      */
     public static boolean isReadMessageGroup(PermissionGroup group) {
+        if (group == null) {
+            return false;
+        }
+        
         if (group == READ_MESSAGE_GROUP ||
                 group == READ_RESTRICTED_MESSAGE_GROUP) {
             return true;
@@ -441,7 +445,9 @@ public final class Permissions {
 
         /**
          * For Read Message Group, consider group level is OneShot if maximum
-         * permission level is Blanket.
+         * permission level is Blanket, but not Blanket_granted, because it would
+         * mean that the user explicitly set the interraction level either from
+         * the application settings or by answering the corresponding question.
          */
         if ((group == READ_MESSAGE_GROUP ||
                 group == READ_RESTRICTED_MESSAGE_GROUP) &&

@@ -65,9 +65,9 @@ class ValueChoiceImpl implements ValueChoice {
     }
 
     /**
-     * chacks if specefied ID exisit in the list
+     * Checks if specified ID exists in the list
      * @param id to find
-     * @return true if it is presen^ false otherwise
+     * @return true if it is present, false otherwise
      */
     boolean idExists(int id) {
         Integer ID = new Integer(id);

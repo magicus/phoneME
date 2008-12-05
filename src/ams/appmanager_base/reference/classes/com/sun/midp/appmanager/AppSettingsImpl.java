@@ -642,6 +642,8 @@ class AppSettingsImpl implements AppSettings, CommandListener {
             if (level == Permissions.BLANKET_GRANTED &&
                 Permissions.isReadMessageGroup(permissionGroup)) {
                 choice.setSelectedID(Permissions.ONESHOT);
+            } else {
+                throw new RuntimeException("Invalid initial permission level selected in");
             }
         }
 
