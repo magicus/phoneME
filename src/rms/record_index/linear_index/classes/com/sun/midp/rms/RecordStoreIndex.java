@@ -84,6 +84,12 @@ class RecordStoreIndex {
     /** specifies record ID to offset mapping */
     private OffsetCache recordIdOffsets;
 
+    /** 
+     * Specifies the version of record store for which this index is valid.
+     * Index becomes invalid if another MIDlet changes the record store.
+     */
+    private int indexVersion; 
+
     /**
      *  This value will be returned by recordIdOffsets.elementAt() when
      *  record id is not found
@@ -110,6 +116,13 @@ class RecordStoreIndex {
                      String recordStoreName) throws IOException {
         recordStore = rs;
         dbFile = rs.getDbFile();
+
+        indexVersion = 0;
+        try {
+            indexVersion = rs.getVersion();
+        } catch (Exception e) {
+            // ignore
+        }
     }
 
     /**
@@ -204,6 +217,8 @@ class RecordStoreIndex {
         if (recordId <= 0) {
             throw new InvalidRecordIDException("error finding record data");
         }
+
+        ensureIndexValidity();
 
         if (null != recordIdOffsets)
         {
@@ -423,6 +438,9 @@ class RecordStoreIndex {
                            " numBytes = " + RecordStoreUtil.getInt(header, 4) +
                            " blockOffset = " + blockOffset);
         }
+
+        ensureIndexValidity();
+
         int recordId = RecordStoreUtil.getInt(header, 0);
         if (null != recordIdOffsets) {
             recordIdOffsets.setElementAt(blockOffset, recordId);
@@ -448,6 +466,9 @@ class RecordStoreIndex {
                            " numBytes = " + RecordStoreUtil.getInt(header, 4) +
                            " blockOffset = " + blockOffset);
         }
+
+        ensureIndexValidity();
+
         // blocks get moved, LastSeenOffset may point into the middle
         // of a record.
         // In principle, all moved blocks will notify us via UpdateBlock(),
@@ -472,8 +493,46 @@ class RecordStoreIndex {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                            "deleteRecordIndex(" + recordId + ")");
         }
+
+        ensureIndexValidity();
+
         if (null != recordIdOffsets) {
             recordIdOffsets.removeElementAt(recordId);
         }
+    }
+
+    /**
+     * Called when record store version has been updated.
+     *
+     * @param newVersion new record store version
+     */
+    void recordStoreVersionUpdated(int newVersion) {
+        indexVersion = newVersion;
+    }
+
+    /**
+     * Ensures index validity. Index becomes invalid when another 
+     * MIDlet changes the record store.
+     */
+    void ensureIndexValidity() {
+        int storeVersion = indexVersion;
+
+        try {
+            storeVersion = recordStore.getVersion();
+        } catch (Exception e) {
+        }
+
+        if (indexVersion < storeVersion) {
+            // out of date, can't use current index anymore           
+            invalidateIndex();
+            indexVersion = storeVersion;
+        }
+    }
+
+    /**
+     * Invalidates (clears) the index
+     */
+    private void invalidateIndex() {
+        recordIdOffsets = null;
     }
 }

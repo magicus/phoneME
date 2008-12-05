@@ -34,6 +34,12 @@
 #
 ######################################################################
 
+USE_RMS_TREE_INDEX::
+	@if [ "$(USE_RMS_TREE_INDEX)" = "true" ]; then \
+	echo "ERROR: RMS tree index is not supported in this release"; \
+	exit -1; \
+	fi
+
 ifeq ($(USE_RMS_TREE_INDEX), true)
     include $(SUBSYSTEM_RMS_DIR)/record_index/tree_index/lib.gmk
 else
