@@ -24,12 +24,13 @@
  */
 
 /**
- * @file edb_registry.c
+ * @file javacall_registry.c
  * @ingroup CHAPI
  * @brief javacall chapi registry access implementation using wince EDB database engine
  */
 
 #include "javacall_chapi_registry.h"
+#include "javacall_memory.h"
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -958,11 +959,6 @@ final:
 	return jcres;
 }
 
-struct enum_handlers_pos
-{
-	HANDLE hRegDB;
-	DWORD dwCurrentPos;
-};
 
 /**
 * Enumerate all registered content handlers
@@ -987,19 +983,109 @@ struct enum_handlers_pos
 *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
 *         error code if failure occurs
 */
+
+#define ENUM_HANDLERS 0x1
+
+struct enum_pos
+{
+	DWORD dwFlag;
+};
+
+struct enum_handlers_pos
+{
+	struct enum_pos p;
+	HANDLE hRegDB;
+};
+
+static javacall_result copy_result(const javacall_utf16* src,  javacall_utf16*  dest, int* length)
+{
+	int len;
+	if (!src) src = L"";
+	len = wcslen(src) + 1;
+	if (*length < len) 
+	{
+		*length = len;
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	}
+	memcpy(dest, src, len * sizeof(javacall_utf16));
+	return JAVACALL_OK;
+}
+
 javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length)
 {
-	//get first
-	if (!pos_id)
+	struct enum_handlers_pos *enum_handler = (struct enum_handlers_pos *) pos_id;
+
+	DWORD dwRes;
+	DWORD dwOid;
+	DWORD propId[1] = {PROPID_REGISTRY_HANDLER_NAME};
+	WORD count = 1;
+	CEPROPVAL* pPropVal = NULL;
+	DWORD dwSize = 0;
+	HANDLE hRegDB = INVALID_HANDLE_VALUE;
+
+	if (!enum_handler)
 	{
-		HANDLE hRegDB = INVALID_HANDLE_VALUE;
-		DWORD dwRes;
-
 		dwRes = open_handlers_db(NULL,NO_SORT,&hRegDB);
+		if (dwRes)
+		{
+			log_win32error(dwRes);
+			return JAVACALL_FAIL;
+		}
 
-		// alocate position structure
-		struct enum_handlers_pos enum_handler = javacall_alloc(sizeof enum_handler);
+		// seek to first record
+		dwOid = CeSeekDatabaseEx(hRegDB, CEDB_SEEK_BEGINNING, 0, 0, NULL);
+		if (!dwOid)
+		{
+			CloseHandle(hRegDB);
+			return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+		}
+
+		// read first record
+		if (!CeReadRecordPropsEx(hRegDB, CEDB_ALLOWREALLOC, &count, 
+			(CEPROPID*)propId, (LPBYTE*)&pPropVal, &dwSize, GetProcessHeap()))
+		{
+			log_win32error(GetLastError());
+			CloseHandle(hRegDB);
+			return JAVACALL_FAIL;
+		}
+
+		// allocate position structure
+		enum_handler = (struct enum_handlers_pos*)javacall_malloc(sizeof (struct enum_handlers_pos));
+		enum_handler->hRegDB = hRegDB;
+		enum_handler->p.dwFlag = ENUM_HANDLERS;
+		* pos_id = (int) enum_handler;
+	} else {
+		if (enum_handler->p.dwFlag != ENUM_HANDLERS) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+		hRegDB = enum_handler->hRegDB;
+
+		dwOid = CeSeekDatabaseEx(hRegDB, CEDB_SEEK_CURRENT, 1, 0, NULL);
+		if (!dwOid)
+		{
+			DWORD dwErr = GetLastError();
+			if (dwErr != ERROR_SEEK && dwErr != ERROR_NO_MORE_ITEMS)
+			{
+				log_win32error(dwErr);
+				return JAVACALL_FAIL;
+			}
+			return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+		}
+		else
+		{
+			if (!CeReadRecordPropsEx(hRegDB, CEDB_ALLOWREALLOC, &count, 
+				(CEPROPID*)propId, (LPBYTE*)&pPropVal, &dwSize, GetProcessHeap()))
+			{
+				log_win32error(GetLastError());
+				return JAVACALL_FAIL;
+			}
+		}
 	}
+
+	dwRes = copy_result(pPropVal->val.lpwstr,handler_id_out,length);
+	if ( dwRes == JAVACALL_OK)
+	{
+		CeSeekDatabaseEx(hRegDB, CEDB_SEEK_CURRENT, 1, 0, NULL);
+	}
+	return JAVACALL_OK;
 }
 
 /**
