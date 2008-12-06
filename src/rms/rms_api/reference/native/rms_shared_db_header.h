@@ -29,6 +29,8 @@
 
 #include <jvmconfig.h>
 #include <kni.h>
+#include <pcsl_esc.h>
+#include <pcsl_string.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -28,7 +28,6 @@
 #include <kni.h>
 #include <midpMalloc.h>
 #include <midpError.h>
-#include <midp_thread.h>
 #include <pcsl_esc.h>
 #include <pcsl_string.h>
 #include <midp_logging.h>
