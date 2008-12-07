@@ -48,6 +48,9 @@ LD 		= link
 
 ifeq ($(CREATE_MIDP_SHARED_LIB),true)
 LD_FLAGS 	+= /DLL
+ifeq ($(USE_VS2005),true)
+VC_MANIFEST_EMBED_DLL = mt.exe -manifest `$(call fixcygpath, $@.manifest)` -outputresource:"`$(call fixcygpath, $@)`;2"
+endif
 endif
 
 LD_OUTPUT	= -out:
