@@ -53,7 +53,7 @@ extern int  debug_fid;
 
 #define LIMO_TRACE(...) do { \
                    if (debug_fid < 0 ) \
-                       debug_fid = open(DEBUG_FNAME, O_CREAT|O_WRONLY, (int)0x0666); \
+                       debug_fid = open(DEBUG_FNAME, O_CREAT|O_WRONLY|O_TRUNC, (int)0x0666); \
                    if (debug_fid >= 0 ) { \
                        sprintf(debug_buff,  __VA_ARGS__); \
                        write(debug_fid, debug_buff, strlen(debug_buff)); \

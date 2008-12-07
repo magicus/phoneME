@@ -29,6 +29,10 @@
 #include <syslog.h>
 #include "lfpport_gtk.h"
 
+extern GtkWidget *main_window;
+
+#define BITS_PER_PIXEL 8
+
 
 /**
  * Initializes the internal members of the native image structure, as required
@@ -45,16 +49,18 @@ void gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
                                             int height,
                                             img_native_error_codes*
                                             creationErrorPtr) {
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    GdkPixmap *gdk_pix_map;
+    LIMO_TRACE(">>>%s width is %d height is %d\n", __FUNCTION__, width, height);
 
     /* Suppress unused parameter warnings */
-    (void)newImagePtr;
-    (void)width;
-    (void)height;
+
+    gdk_pix_map = gdk_pixmap_new(main_window, width, height, -1);
+    *newImagePtr = gdk_pix_map;
+
 
     /* Not yet implemented */
-    *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
+    LIMO_TRACE("<<<%s newImagePtr=%x\n", __FUNCTION__, newImagePtr);
 }
 
 /**
@@ -74,14 +80,20 @@ void gxpport_render_mutableimage(gxpport_mutableimage_native_handle srcImagePtr,
 				 const jshort *clip,
 				 int x_dest, int y_dest) {
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);
-
     /* Suppress unused parameter warnings */
-    (void)srcImagePtr;
-    (void)dstImagePtr;
     (void)clip;
-    (void)x_dest;
-    (void)y_dest;
+
+    /* TODO:  replace main_window with something real */
+    gdk_draw_drawable(dstImagePtr,
+                         main_window->style->fg_gc[GTK_WIDGET_STATE (main_window)],
+                         srcImagePtr,
+                         clip[0],   /* x */
+                         clip[1],   /* y */
+                         x_dest,
+                         y_dest,
+                         clip[2],   /* width */
+                         clip[3]);  /* height */
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 /**

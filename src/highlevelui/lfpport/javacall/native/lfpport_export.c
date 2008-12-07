@@ -43,8 +43,8 @@
 extern "C" {
 #endif
 
-extern gint screen_width;
-extern gint screen_height;
+extern gint display_width;
+extern gint display_height;
 extern GtkWidget *main_window;
 extern GtkLabel  *ticker;
 extern GMainLoop *main_loop;
@@ -55,8 +55,8 @@ extern GMainLoop *main_loop;
 /* DS to pass information between GTK and java tasks */
 typedef struct {
     int is_orientation_reversed;
-    int screen_width;
-    int screen_height;
+    int display_width;
+    int display_height;
     int font_face;
     int font_style;
     int font_size;
@@ -67,11 +67,20 @@ typedef struct {
  * Refresh the given area.  For double buffering purposes.
  */
 void lfpport_refresh(int x, int y, int w, int h){
+    GtkWidget *form;
+    GtkWidget *da;
+    GdkRectangle rect;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    (void)x;
-    (void)y;
-    (void)w;
-    (void)h;
+
+    rect.x = x;
+    rect.y = y;
+    rect.width = w;
+    rect.height = h;
+
+    form = gtk_main_window_get_current_form(main_window);
+    da = gtk_object_get_user_data(form);
+
+    gdk_window_invalidate_rect(da->window, &rect, FALSE);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
@@ -109,8 +118,8 @@ jboolean lfpport_get_reverse_orientation(){
  */
 int lfpport_get_screen_width(){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    printf("<<<%s returning %d\n", __FUNCTION__, screen_width);
-    return screen_width;
+    printf("<<<%s returning %d\n", __FUNCTION__, display_width);
+    return display_width;
 }
 
 /**
@@ -118,8 +127,8 @@ int lfpport_get_screen_width(){
  */
 int lfpport_get_screen_height(){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    printf("<<<%s returning %d\n", __FUNCTION__, screen_height);
-    return screen_height;
+    printf("<<<%s returning %d\n", __FUNCTION__, display_height);
+    return display_height;
 }
 
 /**

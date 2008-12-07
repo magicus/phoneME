@@ -180,6 +180,8 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
                        box,
                        FALSE, FALSE, 0);
 
+    gtk_object_set_user_data(box, string_item_text);
+
     /* set font */
     itemPtr->widgetPtr = box;
     itemPtr->ownerPtr = ownerPtr;
@@ -216,7 +218,22 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
 MidpError lfpport_stringitem_set_content(MidpItem* itemPtr,
 					 const pcsl_string* text,
 					 int appearanceMode){
+    GtkWidget *string_item_text;
+    gchar text_buf[MAX_TEXT_LENGTH];
+    GtkWidget *string_item = (GtkWidget*)itemPtr->widgetPtr;
+    int text_len;
+    GtkWidget *view;
+    GtkTextBuffer *buffer;
+
+    view = gtk_text_view_new ();
+    buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
+
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+
+    string_item_text = gtk_object_get_user_data(string_item);
+    pcsl_string_convert_to_utf8(text, text_buf,  MAX_TEXT_LENGTH, &text_len);
+    gtk_label_set_text(string_item_text, text_buf);
+
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }

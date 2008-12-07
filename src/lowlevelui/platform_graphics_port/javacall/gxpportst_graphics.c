@@ -33,7 +33,8 @@
 #include <syslog.h>
 #include "lfpport_gtk.h"
 
-extern GtkDrawingArea *main_canvas;
+extern GtkWidget *main_canvas;
+extern GtkWidget *main_window;
 
 /**
  * @file
@@ -50,6 +51,9 @@ extern "C" {
 #define     GXPPORT_GTK_FONT_LEADING    2
 #define     GXPPORT_GTK_CHARS_WIDTH     4
 
+// extern MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
+//                int face, int style, int size);
+
 
 /**
  * Draw triangle
@@ -63,22 +67,63 @@ extern void gxpport_fill_triangle(
                                  int x2, int y2,
                                  int x3, int y3) {
 
+    GtkForm *form;
+    GtkWidget *da;
+    GdkGC *gc;
+    GdkColor gdkColor;
+    GdkPixmap *gdk_pix_map;
+    GdkLineStyle lineStyle;
+    GdkPoint points[3];
+    GdkRectangle clipRectangle;
+
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 
+    if (!dst) {
+        form = gtk_main_window_get_current_form(main_window);
+        da = gtk_object_get_user_data(form);
+        if (!GTK_IS_DRAWING_AREA(da)) {
+            LIMO_TRACE("%s extracted unepxected not drawing area.  Continuing.\n", __FUNCTION__);
+        }
 
-    /* Suppress unused parameter warnings */
-    (void)pixel;
-    (void)clip;
-    (void)dst;
-    (void)dotted;
-    (void)x1;
-    (void)y1;
-    (void)x2;
-    (void)y2;
-    (void)x3;
-    (void)y3;
-}
+        gdk_pix_map = gtk_object_get_user_data(da);
+        gc = gdk_gc_new(da->window);
+
+        gdkColor.pixel = pixel;    /* 0x00RRGGBB */
+        gdkColor.red = gdkColor.green = gdkColor.blue = 0;
+        gdk_gc_set_foreground(gc, &gdkColor);
+
+        lineStyle = dotted ? GDK_LINE_ON_OFF_DASH : GDK_LINE_SOLID;
+
+        points[0].x = x1;
+        points[0].y = y1;
+        points[1].x = x2;
+        points[1].y = y2;
+        points[2].x = x3;
+        points[2].y = y3;
+
+        gdk_gc_set_line_attributes(gc,
+                                   1,   /* line_width */
+                                   lineStyle,   /* line_style */
+                                   GDK_CAP_BUTT, /* cap_style */
+                                   GDK_JOIN_BEVEL); /* join_style */
+
+        clipRectangle.x = clip[0];
+        clipRectangle.y = clip[1];
+        clipRectangle.width = clip[2] - clip[0];
+        clipRectangle.height = clip[3] - clip[1];
+        gdk_gc_set_clip_rectangle(gc, &clipRectangle);
+
+        gdk_draw_polygon(gdk_pix_map,
+                              gc,
+                              TRUE,
+                              points,
+                              3);
+    }
+    else {
+        //TODO:  implement drawing to form-specific canvas
+    }
+
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);}
 
 /**
  * Copy from a specify region to other region
@@ -149,19 +194,54 @@ extern void gxpport_draw_line(
                              gxpport_mutableimage_native_handle dst,
                              int dotted, int x1, int y1, int x2, int y2)
 {
+    GtkForm *form;
+    GtkWidget *da;
+    GdkGC *gc;
+    GdkColor gdkColor;
+    GdkPixmap *gdk_pix_map;
+    GdkLineStyle lineStyle;
+    GdkRectangle clipRectangle;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 
-    /* Suppress unused parameter warnings */
-    (void)pixel;
-    (void)clip;
-    (void)dst;
-    (void)dotted;
-    (void)x1;
-    (void)y1;
-    (void)x2;
-    (void)y2;
+    if (!dst) {
+        form = gtk_main_window_get_current_form(main_window);
+        da = gtk_object_get_user_data(form);
+        if (!GTK_IS_DRAWING_AREA(da)) {
+            LIMO_TRACE("%s extracted unepxected not drawing area.  Continuing.\n", __FUNCTION__);
+        }
+
+        gdk_pix_map = gtk_object_get_user_data(da);
+        gc = gdk_gc_new(da->window);
+
+        gdkColor.pixel = pixel;    /* 0x00RRGGBB */
+        gdkColor.red = gdkColor.green = gdkColor.blue = 0;
+        gdk_gc_set_foreground(gc, &gdkColor);
+
+        lineStyle = dotted ? GDK_LINE_ON_OFF_DASH : GDK_LINE_SOLID;
+
+        gdk_gc_set_line_attributes(gc,
+                                   1,   /* line_width */
+                                   lineStyle,   /* line_style */
+                                   GDK_CAP_BUTT, /* cap_style */
+                                   GDK_JOIN_BEVEL); /* join_style */
+        clipRectangle.x = clip[0];
+        clipRectangle.y = clip[1];
+        clipRectangle.width = clip[2] - clip[0];
+        clipRectangle.height = clip[3] - clip[1];
+        gdk_gc_set_clip_rectangle(gc, &clipRectangle);
+        gdk_draw_line(gdk_pix_map,
+                              gc,
+                              x1,
+                              y1,
+                              x2,
+                              y2);
+    }
+    else {
+        //TODO:  implement drawing to form-specific canvas
+    }
+
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 /**
@@ -176,19 +256,58 @@ extern void gxpport_draw_rect(
                              gxpport_mutableimage_native_handle dst,
                              int dotted, int x, int y, int width, int height)
 {
+    GtkForm *form;
+    GtkWidget *da;
+    GdkGC *gc;
+    GdkColor gdkColor;
+    GdkPixmap *gdk_pix_map;
+    GdkLineStyle lineStyle;
+    GdkRectangle clipRectangle;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s clip is %d, %d, %d, %d\n", __FUNCTION__, clip[0], clip[1], clip[2], clip[3]);
 
-    /* Suppress unused parameter warnings */
-    (void)pixel;
-    (void)clip;
-    (void)dst;
-    (void)dotted;
-    (void)x;
-    (void)y;
-    (void)width;
-    (void)height;
+    if (!dst) {
+        form = gtk_main_window_get_current_form(main_window);
+        da = gtk_object_get_user_data(form);
+        if (!GTK_IS_DRAWING_AREA(da)) {
+            LIMO_TRACE("%s extracted unepxected not drawing area.  Continuing.\n", __FUNCTION__);
+        }
+
+        gdk_pix_map = gtk_object_get_user_data(da);
+        gc = gdk_gc_new(da->window);
+
+        gdkColor.pixel = pixel;    /* 0x00RRGGBB */
+        gdkColor.red = gdkColor.green = gdkColor.blue = 0;
+        gdk_gc_set_foreground(gc, &gdkColor);
+
+        lineStyle = dotted ? GDK_LINE_ON_OFF_DASH : GDK_LINE_SOLID;
+
+
+        gdk_gc_set_line_attributes(gc,
+                                   1,   /* line_width */
+                                   lineStyle,   /* line_style */
+                                   GDK_CAP_BUTT, /* cap_style */
+                                   GDK_JOIN_BEVEL); /* join_style */
+
+        clipRectangle.x = clip[0];
+        clipRectangle.y = clip[1];
+        clipRectangle.width = clip[2] - clip[0];
+        clipRectangle.height = clip[3] - clip[1];
+        gdk_gc_set_clip_rectangle(gc, &clipRectangle);
+
+        gdk_draw_rectangle(gdk_pix_map,
+                              gc,
+                              FALSE,
+                              x, y,
+                              width,
+                              height);
+    }
+    else {
+        //TODO:  implement drawing to form-specific canvas
+    }
+
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 /**
@@ -198,45 +317,57 @@ extern void gxpport_fill_rect(
                              jint pixel, const jshort *clip,
                              gxpport_mutableimage_native_handle dst,
                              int dotted, int x, int y, int width, int height) {
-
-    GdkImage *image;
-    GdkGC *gc;          /* graphic context */
-    GdkLineStyle line_style;
+    GtkForm *form;
+    GtkWidget *da;
+    GdkGC *gc;
+    GdkColor gdkColor;
+    GdkPixmap *gdk_pix_map;
+    GdkLineStyle lineStyle;
+    GdkRectangle clipRectangle;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    if (!dst) {
+        form = gtk_main_window_get_current_form(main_window);
+        da = gtk_object_get_user_data(form);
+        if (!GTK_IS_DRAWING_AREA(da)) {
+            LIMO_TRACE("%s extracted unepxected not drawing area.  Continuing.\n", __FUNCTION__);
+        }
+
+        gdk_pix_map = gtk_object_get_user_data(da);
+        gc = gdk_gc_new(da->window);
+
+        gdkColor.pixel = pixel;    /* 0x00RRGGBB */
+        gdkColor.red = gdkColor.green = gdkColor.blue = 0;
+        gdk_gc_set_foreground(gc, &gdkColor);
+
+        lineStyle = dotted ? GDK_LINE_ON_OFF_DASH : GDK_LINE_SOLID;
+
+        gdk_gc_set_line_attributes(gc,
+                                   1,   /* line_width */
+                                   lineStyle,   /* line_style */
+                                   GDK_CAP_BUTT, /* cap_style */
+                                   GDK_JOIN_BEVEL); /* join_style */
+
+        clipRectangle.x = clip[0];
+        clipRectangle.y = clip[1];
+        clipRectangle.width = clip[2] - clip[0];
+        clipRectangle.height = clip[3] - clip[1];
+        gdk_gc_set_clip_rectangle(gc, &clipRectangle);
+
+        LIMO_TRACE("%s clip.x=%d clip.y=%d clip.width=%d clip.height=%d\n",
+                   __FUNCTION__, clip[0], clip[1], clip[2], clip[3]);
+        gdk_draw_rectangle(gdk_pix_map,
+                              gc,
+                              TRUE,
+                              x, y,
+                              width,
+                              height);
+    }
+    else {
+        //TODO:  implement drawing to form-specific canvas
+    }
+
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-
-    /* create graphic context */
-    line_style == dotted ? GDK_LINE_ON_OFF_DASH : GDK_LINE_SOLID;
-//     gdk_gc_set_line_attributes(GdkGC *gc,
-//                                  1, /* line_width */
-//                                  line_style,
-//                                  GDK_CAP_ROUND, /* cap_style */
-//                                  GDK_JOIN_ROUND);/* join_style */
-
-    /* Convert clip to GdkImage */
-
-
-//     gdk_draw_image(pixmap, /* drawable */
-//         gc,  /* graphic context */
-//         image,
-//         0,  /* xsrc */
-//         0,  /* ysrc */
-//         x,  /* xdest */
-//         y,  /* ydest */
-//         width,
-//         height);
-
-
-    /* Suppress unused parameter warnings */
-    (void)pixel;
-    (void)clip;
-    (void)dst;
-    (void)dotted;
-    (void)x;
-    (void)y;
-    (void)width;
-    (void)height;
 }
 
 /**
@@ -310,21 +441,60 @@ extern void gxpport_draw_arc(
                             int dotted, int x, int y, int width, int height,
                             int startAngle, int arcAngle)
 {
+    GtkForm *form;
+    GtkWidget *da;
+    GdkGC *gc;
+    GdkColor gdkColor;
+    GdkPixmap *gdk_pix_map;
+    GdkLineStyle lineStyle;
+    GdkRectangle clipRectangle;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 
-    /* Suppress unused parameter warnings */
-    (void)pixel;
-    (void)clip;
-    (void)dst;
-    (void)dotted;
-    (void)x;
-    (void)y;
-    (void)width;
-    (void)height;
-    (void)startAngle;
-    (void)arcAngle;
+    if (!dst) {
+        form = gtk_main_window_get_current_form(main_window);
+        da = gtk_object_get_user_data(form);
+        if (!GTK_IS_DRAWING_AREA(da)) {
+            LIMO_TRACE("%s extracted unepxected not drawing area.  Continuing.\n", __FUNCTION__);
+        }
+
+        gdk_pix_map = gtk_object_get_user_data(da);
+        gc = gdk_gc_new(da->window);
+
+        gdkColor.pixel = pixel;    /* 0x00RRGGBB */
+        gdkColor.red = gdkColor.green = gdkColor.blue = 0;
+        gdk_gc_set_foreground(gc, &gdkColor);
+
+        lineStyle = dotted ? GDK_LINE_ON_OFF_DASH : GDK_LINE_SOLID;
+
+
+        gdk_gc_set_line_attributes(gc,
+                                   1,   /* line_width */
+                                   lineStyle,   /* line_style */
+                                   GDK_CAP_BUTT, /* cap_style */
+                                   GDK_JOIN_BEVEL); /* join_style */
+
+        clipRectangle.x = clip[0];
+        clipRectangle.y = clip[1];
+        clipRectangle.width = clip[2] - clip[0];
+        clipRectangle.height = clip[3] - clip[1];
+        gdk_gc_set_clip_rectangle(gc, &clipRectangle);
+
+        gdk_draw_arc(gdk_pix_map,
+                          gc,
+                          FALSE,
+                          x,
+                          y,
+                          width,
+                          height,
+                          startAngle,
+                          arcAngle);
+    }
+    else {
+        //TODO:  implement drawing to form-specific canvas
+    }
+
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 /**
@@ -340,20 +510,60 @@ extern void gxpport_fill_arc(
                             int startAngle, int arcAngle)
 {
 
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    GtkForm *form;
+    GtkWidget *da;
+    GdkGC *gc;
+    GdkColor gdkColor;
+    GdkPixmap *gdk_pix_map;
+    GdkLineStyle lineStyle;
+    GdkRectangle clipRectangle;
 
-    /* Suppress unused parameter warnings */
-    (void)pixel;
-    (void)clip;
-    (void)dst;
-    (void)dotted;
-    (void)x;
-    (void)y;
-    (void)width;
-    (void)height;
-    (void)startAngle;
-    (void)arcAngle;
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+
+    if (!dst) {
+        form = gtk_main_window_get_current_form(main_window);
+        da = gtk_object_get_user_data(form);
+        if (!GTK_IS_DRAWING_AREA(da)) {
+            LIMO_TRACE("%s extracted unepxected not drawing area.  Continuing.\n", __FUNCTION__);
+        }
+
+        gdk_pix_map = gtk_object_get_user_data(da);
+        gc = gdk_gc_new(da->window);
+
+        gdkColor.pixel = pixel;    /* 0x00RRGGBB */
+        gdkColor.red = gdkColor.green = gdkColor.blue = 0;
+        gdk_gc_set_foreground(gc, &gdkColor);
+
+        lineStyle = dotted ? GDK_LINE_ON_OFF_DASH : GDK_LINE_SOLID;
+
+
+        gdk_gc_set_line_attributes(gc,
+                                   1,   /* line_width */
+                                   lineStyle,   /* line_style */
+                                   GDK_CAP_BUTT, /* cap_style */
+                                   GDK_JOIN_BEVEL); /* join_style */
+
+        clipRectangle.x = clip[0];
+        clipRectangle.y = clip[1];
+        clipRectangle.width = clip[2] - clip[0];
+        clipRectangle.height = clip[3] - clip[1];
+        gdk_gc_set_clip_rectangle(gc, &clipRectangle);
+
+        gdk_draw_arc(gdk_pix_map,
+                          gc,
+                          TRUE,
+                          x,
+                          y,
+                          width,
+                          height,
+                          startAngle,
+                          arcAngle);
+    }
+    else {
+        //TODO:  implement drawing to form-specific canvas
+    }
+
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 /**

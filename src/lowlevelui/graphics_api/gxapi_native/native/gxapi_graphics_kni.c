@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -31,6 +31,8 @@
 #include <gxapi_constants.h>
 #include <gxapi_graphics.h>
 #include "gxapi_intern_graphics.h"
+
+#include "lfpport_gtk.h"
 
 #ifdef UNDER_CE
 #include "gxj_intern_graphics.h"
@@ -113,10 +115,10 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawLine) {
 
         GET_CLIP(thisObject, clip);
 
-        gx_draw_line(GET_PIXEL(thisObject), 
-                     clip, 
+        gx_draw_line(GET_PIXEL(thisObject),
+                     clip,
                      GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
-                     GET_LINESTYLE(thisObject), 
+                     GET_LINESTYLE(thisObject),
                      x1, y1, x2, y2);
     }
 
@@ -154,14 +156,14 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRect) {
     if ((w >= 0) && (h >= 0)) {
         KNI_StartHandles(1);
         KNI_DeclareHandle(thisObject);
-        
+
         KNI_GetThisPointer(thisObject);
-        
+
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
             TRANSLATE(thisObject, x, y);
-          
+
             GET_CLIP(thisObject, clip);
 
             gx_draw_rect(GET_PIXEL(thisObject),
@@ -207,7 +209,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillRect) {
     if ((w >= 0) && (h >= 0)) {
         KNI_StartHandles(1);
         KNI_DeclareHandle(thisObject);
-        
+
         KNI_GetThisPointer(thisObject);
 
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
@@ -264,7 +266,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRoundRect) {
     if ((w >= 0) && (h >= 0)) {
         KNI_StartHandles(1);
         KNI_DeclareHandle(thisObject);
-        
+
         KNI_GetThisPointer(thisObject);
 
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
@@ -320,7 +322,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillRoundRect) {
     if ((w >= 0) && (h >= 0)) {
         KNI_StartHandles(1);
         KNI_DeclareHandle(thisObject);
-        
+
         KNI_GetThisPointer(thisObject);
 
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
@@ -380,20 +382,20 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawArc) {
     if ((w >= 0) && (h >= 0)) {
         KNI_StartHandles(1);
         KNI_DeclareHandle(thisObject);
-        
+
         KNI_GetThisPointer(thisObject);
 
-        if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {        
+        if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
             TRANSLATE(thisObject, x, y);
-        
+
 #ifdef PLATFORM_SUPPORT_CCW_ARC_ONLY
             /* this block transfer any negative number of
              * start angle or arc angle to positive and
              * always counter-clockwise.
              *
-             * Optimization: This whole block can skip if 
+             * Optimization: This whole block can skip if
              * native platform support negative arc input.
              */
             if (arcAngle < 0) {
@@ -455,14 +457,14 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillArc) {
     if ((w >= 0) && (h >= 0)) {
         KNI_StartHandles(1);
         KNI_DeclareHandle(thisObject);
-        
+
         KNI_GetThisPointer(thisObject);
 
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
             TRANSLATE(thisObject, x, y);
-        
+
 #ifdef PLATFORM_SUPPORT_CCW_ARC_ONLY
             /* Please see above for explanation */
             if (arcAngle < 0) {
@@ -523,7 +525,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillTriangle) {
         TRANSLATE(thisObject, x1, y1);
         TRANSLATE(thisObject, x2, y2);
         TRANSLATE(thisObject, x3, y3);
-      
+
         GET_CLIP(thisObject, clip);
 
         gx_fill_triangle(GET_PIXEL(thisObject),
@@ -578,20 +580,20 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawString) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
             GET_FONT(thisObject, font);
-        
+
             DECLARE_FONT_PARAMS(font);
-        
+
             TRANSLATE(thisObject, x, y);
-        
+
             jstr = GET_STRING_PTR(str);
-        
+
             GET_CLIP(thisObject, clip);
 
             gx_draw_chars(GET_PIXEL(thisObject),
                           clip,
                           GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                           GET_LINESTYLE(thisObject),
-                          face, style, size, x, y, anchor, 
+                          face, style, size, x, y, anchor,
                           jstr->value->elements + jstr->offset,
                           strLen);
         }
@@ -639,8 +641,8 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawSubstring) {
         strLen = KNI_GetStringLength(str);
         if (strLen < 0) {
             KNI_ThrowNew(midpNullPointerException, NULL);
-        } else if (   (offset < 0) 
-                      || (offset > strLen) 
+        } else if (   (offset < 0)
+                      || (offset > strLen)
                       || (length < 0)
                       || (length > strLen)
                       || ((offset + length) < 0)
@@ -653,15 +655,15 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawSubstring) {
             _JavaString *jstr;
 
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
-        
+
             GET_FONT(thisObject, font);
-        
+
             DECLARE_FONT_PARAMS(font);
-        
+
             TRANSLATE(thisObject, x, y);
-        
+
             jstr = GET_STRING_PTR(str);
-        
+
             GET_CLIP(thisObject, clip);
 
             gx_draw_chars(GET_PIXEL(thisObject),
@@ -768,8 +770,8 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChars) {
         chLen = KNI_GetArrayLength(ch);
         if (chLen < 0) {
             KNI_ThrowNew(midpNullPointerException, NULL);
-        } else if (   (offset < 0) 
-                      || (offset > chLen) 
+        } else if (   (offset < 0)
+                      || (offset > chLen)
                       || (length < 0)
                       || (length > chLen)
                       || ((offset + length) < 0)
@@ -782,13 +784,13 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChars) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
             GET_FONT(thisObject, font);
-        
+
             DECLARE_FONT_PARAMS(font);
-        
+
             TRANSLATE(thisObject, x, y);
-        
+
             GET_CLIP(thisObject, clip);
-      
+
             gx_draw_chars(GET_PIXEL(thisObject),
                           clip,
                           GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
@@ -838,7 +840,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRGB) {
     jint buflen;
     jint *rgbBuffer;
     long min, max, l_scanlen, l_height, l_tmpexp;
-    
+
     KNI_StartHandles(2);
     KNI_DeclareHandle(rgbData);
     KNI_DeclareHandle(thisObject);
@@ -850,9 +852,9 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRGB) {
         if (KNI_IsNullHandle(rgbData)) {
             KNI_ThrowNew(midpNullPointerException, NULL);
         } else {
-	
+
             buflen = KNI_GetArrayLength(rgbData);
-	
+
             /* According to the spec., this function can be
              * defined as operation P(a,b) = rgbData[ offset +
              * (a-x) + (b-y)* scanlength] where x <= a < x + width
@@ -872,42 +874,42 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRGB) {
             l_scanlen = (long) scanlen;
             l_height  = (long) height - 1;
             l_tmpexp  = (height == 0) ? 0 : l_height * l_scanlen ;
-	
+
             /* Find the max/min of the index for rgbData array */
-            max = offset + ((width==0) ? 0 : (width-1)) 
+            max = offset + ((width==0) ? 0 : (width-1))
                 + ((scanlen<0) ? 0 : l_tmpexp);
             min = offset + ((scanlen<0) ? l_tmpexp : 0);
-	
+
             if ((max >= buflen) || (min < 0) || (max < 0) || (min >= buflen)) {
                 KNI_ThrowNew(midpArrayIndexOutOfBoundsException, NULL);
             } else {
-	  
-                if ((0 == scanlen || 
-                     0 == width   || 
+
+                if ((0 == scanlen ||
+                     0 == width   ||
                      0 == height)) {
-	    
+
                     /* Valid values, but nothing to render. */
-	    
+
                 } else {
 
                     jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
-            
+
                     rgbBuffer = JavaIntArray(rgbData);
-            
+
                     TRANSLATE(thisObject, x, y);
 
                     GET_CLIP(thisObject, clip);
-            
+
                     gx_draw_rgb(clip,
-                        GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject), 
-                        rgbBuffer, offset, scanlen, x, y, width, 
+                        GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                        rgbBuffer, offset, scanlen, x, y, width,
                         height, processAlpha);
                 }
 
             }
         }
     }
-    
+
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
@@ -936,7 +938,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRGB) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(javax_microedition_lcdui_Graphics_doCopyArea) {
     int anchor = KNI_GetParameterAsInt(7);
-    int y_dest = KNI_GetParameterAsInt(6); 
+    int y_dest = KNI_GetParameterAsInt(6);
     int x_dest = KNI_GetParameterAsInt(5);
     int height = KNI_GetParameterAsInt(4);
     int width  = KNI_GetParameterAsInt(3);
@@ -945,7 +947,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_doCopyArea) {
     jshort gfx_width = 0;
     jshort gfx_height = 0;
 
-    KNI_StartHandles(1); 
+    KNI_StartHandles(1);
     KNI_DeclareHandle(thisObject);
 
     KNI_GetThisPointer(thisObject);
@@ -955,22 +957,22 @@ KNIDECL(javax_microedition_lcdui_Graphics_doCopyArea) {
         gfx_width  = (int)GXAPI_GET_GRAPHICS_PTR(thisObject)->maxWidth;
         gfx_height = (int)GXAPI_GET_GRAPHICS_PTR(thisObject)->maxHeight;
 
-        TRANSLATE(thisObject, x_src, y_src); 
-      
+        TRANSLATE(thisObject, x_src, y_src);
+
         if((height < 0) || (width < 0) || (x_src < 0) || (y_src < 0) ||
            ((x_src + width) > gfx_width) || ((y_src + height) > gfx_height)) {
             KNI_ThrowNew(midpIllegalArgumentException, NULL);
         } else {
-	
+
             TRANSLATE(thisObject, x_dest, y_dest);
-	
+
             if (normalize_anchor(&x_dest, &y_dest, width, height, anchor)) {
                 jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
                 GET_CLIP(thisObject, clip);
 
                 gx_copy_area(clip,
                              GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
-                             x_src, y_src, width, height, 
+                             x_src, y_src, width, height,
                              x_dest, y_dest);
             }
         }
@@ -1073,13 +1075,13 @@ KNIDECL(javax_microedition_lcdui_Graphics_render) {
 	      (GXAPI_GET_GRAPHICS_PTR(g)->img);
             if (KNI_IsSameObject(gImg, img) || !check_anchor(anchor,0)) {
                 success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
-            } else if (!normalize_anchor(&x, &y, srcImageDataPtr->width, 
-					       srcImageDataPtr->height, 
+            } else if (!normalize_anchor(&x, &y, srcImageDataPtr->width,
+					       srcImageDataPtr->height,
 					       anchor)) {
                 success = KNI_FALSE;//KNI_ThrowNew(midpIllegalArgumentException, NULL);
             } else {
 	        jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
-	        const java_imagedata * dstMutableImageDataPtr = 
+	        const java_imagedata * dstMutableImageDataPtr =
 		  GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
 
                 TRANSLATE(g, x, y);
@@ -1137,7 +1139,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_renderRegion) {
 
     KNI_GetParameterAsObject(1, img);
     KNI_GetThisPointer(g);
-    
+
     if (GRAPHICS_OP_IS_ALLOWED(g)) {
       if (KNI_IsNullHandle(img)) {
         /* null checking is performed in the Java code, but check just in case */
@@ -1147,33 +1149,33 @@ KNIDECL(javax_microedition_lcdui_Graphics_renderRegion) {
       } else if (!normalize_anchor(&x_dest, &y_dest, width, height, anchor)) {
         success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
       } else {
-	const java_imagedata * srcImageDataPtr = 
+	const java_imagedata * srcImageDataPtr =
 	  IMGAPI_GET_IMAGE_PTR(img)->imageData;
         jint img_width = srcImageDataPtr->width;
         jint img_height = srcImageDataPtr->height;
 
-        IMGAPI_GET_IMAGE_PTR(gImg) = 
+        IMGAPI_GET_IMAGE_PTR(gImg) =
 	  (struct Java_javax_microedition_lcdui_Image *)
 	                      (GXAPI_GET_GRAPHICS_PTR(g)->img);
-        if (KNI_IsSameObject(gImg, img) || 
+        if (KNI_IsSameObject(gImg, img) ||
            (height < 0) || (width < 0) || (x_src < 0) || (y_src < 0) ||
-           ((x_src + width) > img_width) || 
+           ((x_src + width) > img_width) ||
            ((y_src + height) > img_height)) {
           success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
         } else {
 	  jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-	  const java_imagedata * dstMutableImageDataPtr = 
+	  const java_imagedata * dstMutableImageDataPtr =
 	    GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
 
 	  TRANSLATE(g, x_dest, y_dest);
 	  GET_CLIP(g, clip);
 
 	  gx_render_imageregion(srcImageDataPtr, dstMutableImageDataPtr,
-				clip, 
-				x_src, y_src, 
+				clip,
+				x_src, y_src,
 				width, height,
-				x_dest, y_dest, 
+				x_dest, y_dest,
 				transform);
         }
       }

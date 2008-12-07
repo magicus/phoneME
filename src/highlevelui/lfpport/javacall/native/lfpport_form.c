@@ -49,13 +49,15 @@ GtkVBox *main_container = NULL;
 GdkScreen *gdk_screen = NULL;
 GtkLabel  *ticker = NULL;
 GtkLabel  *statusbar = NULL;
-GtkDrawingArea *main_canvas = NULL;
+GtkWidget *main_canvas = NULL;
 GdkPixmap *pixmap = NULL;   /* Backing pixmap for drawing area */
+
 
 gint screen_width;
 gint screen_height;
+gint display_width;
+gint display_height;
 
-#define MAX_TITLE_LENGTH    64
 #define MAX_TICKER_LENGTH   128
 
 
@@ -139,7 +141,6 @@ MidpError lfpport_form_create(MidpDisplayable* dispPtr,
     gtkVBox = gtk_vbox_new(FALSE, /* not equal space allotments */
                            2);    /* spacing between children */
     form = gtk_form_new(TRUE);
-//    gtk_widget_set_size_request(GTK_WIDGET(form), 220, 240);
     gtk_widget_show(gtkVBox);
     gtk_container_add(GTK_CONTAINER(form), gtkVBox);
 
@@ -154,8 +155,8 @@ MidpError lfpport_form_create(MidpDisplayable* dispPtr,
     gtk_object_set_user_data(form, gtkVBox);
     gtk_main_window_add_form(main_window, GTK_FORM(form));
     lfpport_form_set_content_size(dispPtr,
-                                  screen_width,
-                                  screen_height);
+                                  display_width,
+                                  display_height);
 
     dispPtr->setTitle(dispPtr, title);
     syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
@@ -237,8 +238,8 @@ MidpError lfpport_form_set_scroll_position(int pos) {
  */
 MidpError lfpport_form_get_viewport_height(int *pHeight){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    *pHeight = screen_height;
-    syslog(LOG_INFO, "<<<%s returning %d\n", __FUNCTION__, screen_height);
+    *pHeight = display_height;
+    syslog(LOG_INFO, "<<<%s returning %d\n", __FUNCTION__, display_height);
     return KNI_OK;
 }
 
