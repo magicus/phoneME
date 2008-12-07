@@ -26,12 +26,9 @@
 
 #include <jvmconfig.h>
 #include <kni.h>
-#include <kni_globals.h>
-#include <jvmspi.h>
 #include <sni.h>
 #include <midpMalloc.h>
 #include <midpError.h>
-#include <midp_thread.h>
 #include <pcsl_esc.h>
 #include <pcsl_string.h>
 #include <midpUtilKni.h>
