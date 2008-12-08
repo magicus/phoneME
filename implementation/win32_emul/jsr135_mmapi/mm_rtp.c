@@ -61,7 +61,7 @@ typedef struct
 
     int                   missing;
 
-    long                  mediaTime;
+    javacall_int64        samplesPlayed;
 
     long                  volume;
     javacall_bool         mute;
@@ -92,10 +92,16 @@ size_t rtp_pcm_callback( void* buf, size_t size, void* param )
 
         if( p->playing )
         {
-            float ms = (float)size / (float)p->rate / (float)p->channels;
-            if( 16 == p->bits ) ms /= 2.0f;
-            p->mediaTime += (int)ms;
-            mt = p->mediaTime;
+            if( 16 == p->bits )
+            {
+                p->samplesPlayed += size / p->channels / 2;
+            }
+            else // if( 8 == p=>bits )
+            {
+                p->samplesPlayed += size / p->channels;
+            }
+
+            mt = p->samplesPlayed * 1000 / p->rate;
         }
     }
     LeaveCriticalSection( &(p->cs) );
@@ -164,7 +170,7 @@ static javacall_handle rtp_create(int appId,
     p->playing     = FALSE;
     p->buffering   = TRUE;
     p->missing     = 0;
-    p->mediaTime   = 0;
+    p->samplesPlayed = 0;
     p->volume      = 100;
     p->mute        = JAVACALL_FALSE;
 
@@ -373,7 +379,7 @@ static javacall_result rtp_do_buffering(javacall_handle handle,
                 OutputDebugString( "  -------- buffering stopped --------\n" );
                 p->buffering = FALSE;
                 javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED,
-                    p->appId, p->playerId, JAVACALL_OK, (void*)(p->mediaTime) );
+                    p->appId, p->playerId, JAVACALL_OK, (void*)(p->samplesPlayed * 1000 / p->rate) );
             }
             sprintf( str, ">> %li %i %i %i\n", *length, p->queue_size, p->playing, p->buffering );
             OutputDebugString( str );
@@ -444,7 +450,7 @@ static javacall_result rtp_get_time(javacall_handle handle,
     rtp_player* p = (rtp_player*)handle;
 
     EnterCriticalSection( &(p->cs) );
-    *ms = p->mediaTime;
+    *ms = p->samplesPlayed * 1000 / p->rate;
     LeaveCriticalSection( &(p->cs) );
 
     return JAVACALL_OK;
