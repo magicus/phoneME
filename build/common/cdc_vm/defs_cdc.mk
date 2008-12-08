@@ -66,7 +66,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.rms.RecordStoreFactory \
         com.sun.midp.rms.RecordStoreFile \
         com.sun.midp.rms.RecordStoreUtil \
-        com.sun.midp.rms.RecordStoreSharedDBHeader \		
+        com.sun.midp.rms.RecordStoreSharedDBHeader \
         javax.microedition.lcdui.Display \
         javax.microedition.lcdui.Font \
         javax.microedition.lcdui.game.GameCanvas \
