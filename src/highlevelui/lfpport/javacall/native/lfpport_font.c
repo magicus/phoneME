@@ -38,6 +38,10 @@
 #include <pango/pango.h>
 #include <glib.h>
 
+#define SMALL_FONT_SIZE  (7 * PANGO_SCALE)
+#define MEDIUM_FONT_SIZE (9 * PANGO_SCALE)
+#define LARGE_FONT_SIZE  (11 * PANGO_SCALE)
+
 typedef struct {
     int face;
     int style;
@@ -80,7 +84,7 @@ MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
     GList *tmp;
     PangoWeight pango_weight;
 
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s face=%d style=%d size=%d\n", __FUNCTION__, face, style, size);
 
     // look through allocated font to see if the font is there already
     for (tmp = g_list_first(fonts_list); tmp != 0; tmp = g_list_next(fonts_list)) {
@@ -88,6 +92,7 @@ MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
             ((MidpFont*)tmp->data)->style == style &&
             ((MidpFont*)tmp->data)->size == size) {
             *fontPtr = ((MidpFont*)tmp->data)->fontPtr;
+            LIMO_TRACE("<<<%s found!\n", __FUNCTION__);
             return KNI_OK;
         }
     }
@@ -101,13 +106,14 @@ MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
         f->face = face;
 
         /* set size */
-        font_size = 13; /* for SIZE_MEDIUM */
         if (size == SIZE_SMALL) {
-            font_size = face == FACE_MONOSPACE ? 7: 11;
-        } else if (size == SIZE_LARGE) {
-            font_size = 17;
+            font_size = SMALL_FONT_SIZE;
+        } else if (size == SIZE_MEDIUM) {
+            font_size = MEDIUM_FONT_SIZE;
+        } else {
+            font_size = LARGE_FONT_SIZE;
         }
-        //pango_font_description_set_size(font_descr, font_size);
+        pango_font_description_set_size(font_descr, font_size);
 
         /* set style */
         pango_style = PANGO_STYLE_NORMAL;       /* STYLE_PLAIN */
@@ -121,11 +127,15 @@ MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
         }
         pango_font_description_set_weight(font_descr, pango_weight);
 
-        /* TODO:  set face */
-//         if (face == FACE_MONOSPACE) {
+
+         /* TODO:  set face */
+//         if (face == FACE_SYSTEM) {
 //             pango_font_description_set_family(font_descr, );
 //        }
-
+//         else if (face == FACE_MONOSPACE) {
+//         }
+//         else {  /* FACE_PROPORTIONAL */
+//         }
 
         /* TODO:  set underline */
 //       if ((style & STYLE_UNDERLINED) != 0) {
