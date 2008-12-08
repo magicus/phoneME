@@ -317,7 +317,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         getStreamConnection();
     }
 
-    public void open1(String url, int mode, boolean timeouts)
+    protected void open1(String url, int mode, boolean timeouts)
         throws IOException {
 
         // DEBUG: System.out.println ("open " + url);
@@ -1046,14 +1046,11 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
         return hsc;
     }
-    
-    protected void connect() throws IOException {
-        if (connected) {
-            return;
-        }
+
+    protected void sendRequest() throws IOException {
 
         streamOutput = streamConnection.openDataOutputStream();
-        
+
         // HTTP 1.1 requests must contain content length for proxies
         if ((getRequestProperty("Content-Length") == null) ||
             (getRequestProperty("Content-Length").equals("0"))) {
@@ -1062,7 +1059,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
 
         String reqLine;
-        
+
         if (proxyHost == null) {
             reqLine = method + " " + (getFile() == null ? "/" : getFile())
                 + (getRef() == null ? "" : "#" + getRef())
@@ -1078,7 +1075,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         // DEBUG:  System.out.print("Request: " + reqLine);
         streamOutput.write((reqLine).getBytes());
 
-        
+
         // HTTP 1/1 requests require the Host header to distinguish virtual
         // host locations.
         reqProperties.put("Host", host + ":" + port);
@@ -1097,15 +1094,34 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             // ***Bug 4485901*** streamOutput.write("\r\n".getBytes());
             /*
              DEBUG: System.out.println("Request: "
-                 + new String(out.toByteArray())); */  
+                 + new String(out.toByteArray())); */
         }
 
         streamOutput.flush();
 
         streamInput = streamConnection.openDataInputStream();
-        readResponseMessage();
+    }
+
+    protected void connect() throws IOException {
+        if (connected) {
+            return;
+        }
+        sendRequest();
+        try {
+            readResponseMessage();
+        } catch (InterruptedIOException ex) {
+            if (responseMsg == null) {
+                // Most probably the server has closed its end by timeout.
+                // Here we have to reconnect and resend the request
+                getStreamConnection();
+                sendRequest();
+                readResponseMessage();
+            } else {
+                throw ex;
+            }
+        }
         readHeaders();
-        
+
         connected = true;
 
     }
@@ -1164,7 +1180,7 @@ malformed: {
 
         for (;;) {
             line = readLine(streamInput);
-            // DEBUG: System.out.println ("Response: " + line);   
+            // DEBUG: System.out.println ("Response: " + line);
             
             if (line == null || line.equals(""))
                 break;
