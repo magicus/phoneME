@@ -189,6 +189,14 @@ javacall_result
 javacall_dom_eventsdispatcher_remove_event_listener_finish(void *context);
 
 
+javacall_result
+javacall_dom_eventsdispatcher_handle_completed_start(javacall_int32 invocation_id,
+                                              void **context,
+                                              javacall_handle requestId);
+
+javacall_result
+javacall_dom_eventsdispatcher_handle_completed_finish(void *context);
+
 /** @} */
 
 #ifdef __cplusplus
