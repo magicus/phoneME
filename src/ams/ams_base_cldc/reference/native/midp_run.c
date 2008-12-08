@@ -105,7 +105,12 @@ static MIDP_ERROR getClassPathForVerifyOnce(
 
 #if (REPORT_LEVEL <= LOG_INFORMATION) && !ENABLE_CONTROL_ARGS_FROM_JAD
 
-#define STACK_SIZE 8192
+#ifdef JAVA_THREAD_STACK_SIZE
+    #define STACK_MARGIN  (1024) /* margin to cover stack amount until measureStack is called */
+    #define STACK_SIZE (JAVA_THREAD_STACK_SIZE - STACK_MARGIN)
+#else
+    #define STACK_SIZE (8*1024)
+#endif
 
 /* Stack grows down */
 void measureStack(int clearStack) {
@@ -113,6 +118,9 @@ void measureStack(int clearStack) {
     char  tag = (char)0xef;
     int   i;
 
+
+    reportToLog(LOG_INFORMATION, LC_CORE_STACK,
+            "Stack[0] addr= 0x%x Stack[%d] addr= 0x%x", &stack[0], STACK_SIZE-1,  &stack[STACK_SIZE-1]);
     if (clearStack) {
         for (i = 0; i < STACK_SIZE; i++) {
             stack[i] = tag;
@@ -123,6 +131,10 @@ void measureStack(int clearStack) {
                 reportToLog(LOG_INFORMATION, LC_CORE_STACK,
                             "Max Native Stack Size:  %d",
                             (STACK_SIZE - i));
+                if(i == 0) {
+                    reportToLog(LOG_CRITICAL, LC_CORE_STACK,
+                            "[measureStack] Stack overflow");
+                }
                 break;
             }
         }
@@ -391,10 +403,10 @@ midpInitializeDebugger(void) {
         char* argv[2];
 
         /* memory profiler */
-        if (getInternalProperty("VmMemoryProfiler") != NULL) {
-            argv[0] = "-memory_profiler";
+		if (getInternalProperty("VmMemoryProfiler") != NULL) {
+		    argv[0] = "-memory_profiler";
             (void)JVM_ParseOneArg(1, argv);
-        }
+		}
 
         /* Get the VM debugger port property. */
         argv[1] = (char *)getInternalProperty("VmDebuggerPort");
@@ -708,7 +720,7 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
 
         pushcheckinLeftOvers(commandState->suiteId);
 
-        measureStack(KNI_TRUE);
+        //measureStack(KNI_TRUE);
         monitorHeap();
 
 #if (VERIFY_ONCE)
@@ -733,7 +745,7 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
          */
         vmStatus = midpRunVm(classPath, MIDP_MAIN, 0, NULL);
 
-        measureStack(KNI_FALSE);
+        //measureStack(KNI_FALSE);
 
         if (classPath != NULL) {
             midpFree(classPath);

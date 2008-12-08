@@ -680,7 +680,7 @@ static jlong midpTimeSlice(void) {
     javacall_time_milliseconds toInMillisec;
 
     if (-2 == to) {
-        measureStack(KNI_FALSE);
+        //measureStack(KNI_FALSE);
         pushcheckinall();
         midpFinalize();
     } else {
