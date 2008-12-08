@@ -1017,7 +1017,6 @@ clean::
 	rm -rf $(CVM_BUILD_TOP)/.*classes
 	rm -rf $(CVM_BUILD_TOP)/.*.list
 	rm -rf $(CVM_BUILD_TOP)/.*.clist
-	rm -rf $(CVM_BUILD_TOP)/*.pdb
 	rm -rf $(CVM_BUILD_TOP)/.system_properties.c
 	rm -rf $(CVM_BUILD_FLAGS_FILE)
 	rm -rf $(BUILDFLAGS_JAVA)
