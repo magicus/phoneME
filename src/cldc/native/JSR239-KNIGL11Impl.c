@@ -26,7 +26,7 @@
  * ..\src\com\sun\jsr239\GL10Impl.java
  */
 
-#undef DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #include <stdio.h>

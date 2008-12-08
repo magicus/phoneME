@@ -40,7 +40,7 @@
 
 #include "JSR239-KNIInterface.h"
 
-#undef DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -445,7 +445,7 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1eglCreatePixmapSurface() {
 
     jint display = KNI_GetParameterAsInt(1);
     jint config = KNI_GetParameterAsInt(2);
-    jint pixmap = KNI_GetParameterAsInt(3);
+    JSR239_Pixmap* pixmap = (JSR239_Pixmap*)KNI_GetParameterAsInt(3);
     EGLint *attrib_list = (EGLint *)0;
 
     jint returnValue = (jint)EGL_NO_SURFACE;
@@ -473,8 +473,11 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1eglCreatePixmapSurface() {
 
     returnValue = (jint)eglCreatePixmapSurface((EGLDisplay)display,
 					       (EGLConfig)config,
-					       (NativePixmapType)pixmap,
+					       (NativePixmapType)pixmap->native_bitmap,
 					       (EGLint const *) attrib_list);
+
+//    printf("## ->eglCreatePixmapSurface, pixmap=%i bitmap=%i retVal=%i\n", pixmap, pixmap->native_handle, returnValue);
+
 #ifdef DEBUG
     printf("eglCreatePixmapSurface(%d, %d, 0x%x, attrib_list) = %d\n",
 	   display, config, pixmap, returnValue);

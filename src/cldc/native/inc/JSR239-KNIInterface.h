@@ -48,6 +48,9 @@ typedef struct {
   void *screen_buffer; /* 565 RGB or 8888 ARGB buffer, used in another implementation */
   int pixelBytes;
   int atab[256], rtab[256], gtab[256], btab[256];
+void *native_bitmap;
+void *native_bmi;
+void *native_dc;
 } JSR239_Pixmap;
 
 

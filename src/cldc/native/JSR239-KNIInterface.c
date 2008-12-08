@@ -24,6 +24,8 @@
 
 #include "JSR239-KNIInterface.h"
 
+#define DEBUG
+
 #ifdef DEBUG
 #include <stdio.h>
 #endif
@@ -32,6 +34,42 @@
 #define GET_DEPTH 16
 #define SCREEN_BUFFER_BPP 2
 
+///////////////////////////////////////////////////
+
+#include "windows.h"
+
+#define SAMPLE_COLOR_DEPTH 32   /* 16/32 */
+
+static BITMAPINFO* wince_getBMI(int width, int height) {
+
+    const size_t    bmiSize = sizeof(BITMAPINFO) + 256U*sizeof(RGBQUAD);
+    BITMAPINFO*             bmi;
+
+    bmi = (BITMAPINFO*)malloc(bmiSize);
+    memset(bmi, 0, bmiSize);
+
+    bmi->bmiHeader.biSize           = sizeof(BITMAPINFOHEADER);
+    bmi->bmiHeader.biWidth          = width;
+    bmi->bmiHeader.biHeight         = height; //## - ?
+    bmi->bmiHeader.biPlanes         = (short)1;
+    bmi->bmiHeader.biBitCount       = SAMPLE_COLOR_DEPTH;
+    bmi->bmiHeader.biCompression    = BI_RGB;
+    bmi->bmiHeader.biSizeImage      = 0;
+    bmi->bmiHeader.biXPelsPerMeter  = 0;
+    bmi->bmiHeader.biYPelsPerMeter  = 0;
+    bmi->bmiHeader.biClrUsed        = 3;
+    bmi->bmiHeader.biClrImportant   = 0;
+
+    return bmi;
+}
+
+static HBITMAP wince_CreatePixmap(HDC hDC, BITMAPINFO* bmi)
+{
+    DWORD*                  bits;
+    return CreateDIBSection(hDC, bmi, DIB_RGB_COLORS, &bits, NULL, 0);
+}
+
+/////////////////////////////////////////////////////////
 
 /*
  * Return the window implementation strategy for the window accessed by the
@@ -168,6 +206,15 @@ JSR239_getWindowPixmap(jobject winHandle, jint width, jint height,
     initPixelExpansionTable(p->btab, p->bSize);
     initPixelExpansionTable(p->atab, p->aSize);
 
+printf("## JSR239_getWindowPixmap, pixmap=%i (malloced)\n", p);
+ {
+p->native_bmi = wince_getBMI(width, height);
+p->native_dc = CreateCompatibleDC(NULL);
+p->native_bitmap = wince_CreatePixmap(p->native_dc, p->native_bmi);
+/*hbmOld = (HBITMAP)*/SelectObject(p->native_dc, p->native_bitmap);
+ }
+printf("## JSR239_getWindowPixmap, pixmap=%i bitmap=%i (malloced) x=%i y=%i\n", p, p->native_bitmap, width, height);
+
     return p;
 }
 
@@ -276,6 +323,8 @@ copyFromScreenBuffer(JSR239_Pixmap *dst, void *sbuffer,
 
     int alpha, red, green, blue, pixel;
     int x, y;
+int* line;
+int rc;
 
 #ifdef DEBUG
     printf("aOffset = %d\n", aOffset);
@@ -294,6 +343,8 @@ copyFromScreenBuffer(JSR239_Pixmap *dst, void *sbuffer,
 
     dstPtr += dst->stride * deltaHeight;
     height -= deltaHeight;
+
+line = (int*)malloc(4*width);
 
     for (y = 0; y < height; y++) {
         for (x = 0; x < width; x++) {
@@ -364,7 +415,13 @@ copyFromScreenBuffer(JSR239_Pixmap *dst, void *sbuffer,
 
             blue >>= (8 - bSize);
             blue <<= bOffset;
-
+//## ???
+//line[x] = RGB(red, green, blue);
+	    {
+	    COLORREF rc = SetPixel(dst->native_dc, x, y, RGB(red, green, blue));
+	    if (rc == -1) {printf("#SetPixel failed %i %i %i\n", dst->native_dc, x, y);}
+	    }
+/*
             pixel = alpha | red | green | blue;
 
 #ifdef DEBUG
@@ -386,7 +443,20 @@ copyFromScreenBuffer(JSR239_Pixmap *dst, void *sbuffer,
             } else {
                 printf("pixelBytes must be 2 or 4!\n");
             }
+*/
         }
+/*
+rc = SetDIBits(
+  NULL, //Device context
+  dst->native_handle, //Bitmap
+  y, //scan line
+  1, //number of scan lines
+  line, //data
+  dst->native_bmi, //bitmap data
+  DIB_RGB_COLORS
+);
+if (rc != 1) printf("SetDIBits failed");
+*/
 
 #if GET_DEPTH == 16
         srcPtr16 += width;
@@ -474,6 +544,23 @@ copyToScreenBuffer(JSR239_Pixmap *src, jint deltaHeight, jint flipY) {
 
     for (y = 0; y < height; y++) {
         for (x = 0; x < width; x++) {
+
+    COLORREF rc = GetPixel(src->native_dc, x, y);
+    if (rc == CLR_INVALID) {printf("#GetPixel failed %i %i %i\n", src->native_dc, x, y);}
+
+    red = GetRValue(rc);
+    green = GetGValue(rc);
+    blue = GetBValue(rc);
+
+//for test
+//red = GetGValue(rc);
+//green = GetRValue(rc);
+//alpha = 100; //##??
+//if (blue==0)  blue = 64;
+//if (green==0) green = 64;
+//if (red==0)   red = 64;
+
+    /*
             if (src->pixelBytes == 2) {
                 pixel = (jint)(*((jshort *)srcPtr + x));
             } else if (src->pixelBytes == 4) {
@@ -499,8 +586,10 @@ copyToScreenBuffer(JSR239_Pixmap *src, jint deltaHeight, jint flipY) {
             red   = src->rtab[red];
             green = src->gtab[green];
             blue  = src->btab[blue];
+*/
 
 #ifdef DEBUG
+if ((x/10*10==x) && (y/10*10==y))
             if (pixel != 0) {
                 printf("  tabled alpha = 0x%x, red = 0x%x, green = 0x%x, blue = 0x%x\n",
                        alpha, red, green, blue);
@@ -515,6 +604,7 @@ copyToScreenBuffer(JSR239_Pixmap *src, jint deltaHeight, jint flipY) {
             pixel = alpha | red | green | blue;
 
 #ifdef DEBUG
+if ((x/50*50==x) && (y/50*50==y))
             if (pixel != 0) {
                 printf("  shifted alpha = 0x%x, red = 0x%x, green = 0x%x, blue = 0x%x\n",
                        alpha, red, green, blue);
@@ -525,6 +615,7 @@ copyToScreenBuffer(JSR239_Pixmap *src, jint deltaHeight, jint flipY) {
 #if PUT_DEPTH == 16
             dstPtr16[x] = CONVERT_8888_TO_565(pixel);
 #ifdef DEBUG
+if ((x/50*50==x) && (y/50*50==y))
             if (pixel != 0) {
                 printf("  16-bit pixel = 0x%x\n", dstPtr16[x]);
             }
@@ -533,6 +624,7 @@ copyToScreenBuffer(JSR239_Pixmap *src, jint deltaHeight, jint flipY) {
 #if PUT_DEPTH == 32
             dstPtr32[x] = pixel | 0xff000000;
 #ifdef DEBUG
+if ((x/50*50==x) && (y/50*50==y))
             if (pixel != 0) {
                 printf("  32-bit pixel = 0x%x\n", dstPtr32[x]);
             }

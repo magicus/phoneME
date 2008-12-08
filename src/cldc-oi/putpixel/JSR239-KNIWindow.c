@@ -29,7 +29,7 @@
 #include <midp_constants_data.h>
 #include <lcdlf_export.h>
 
-#undef DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -179,6 +179,9 @@ JSR239_putWindowContents(jobject graphicsHandle,
 #endif
         } else {
             /* Source data must be in 16bit 565 format. */
+
+printf("## memcpy, dest=%i\n", d);
+
             JSR239_memcpy(d, s,
                 dest_width * min_height * sizeof(gxj_pixel_type));
         }

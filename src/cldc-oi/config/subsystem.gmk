@@ -151,6 +151,7 @@ MODULE_JSR_239_EGL_IMPL_JAVA_FILES += \
 
 # Paths for native code
 #
+vpath % $(PROJECT_JSR_239_DIR)/src/cldc-ri/native/$(PLATFORM)
 vpath % $(JSR_239_DIR)/src/cldc/native
 vpath % $(JSR_239_DIR)/src/cldc-oi/common
                                                                             
