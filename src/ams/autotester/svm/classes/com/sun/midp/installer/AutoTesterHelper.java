@@ -145,8 +145,6 @@ class AutoTesterHelper extends AutoTesterHelperBase {
             
                 saveSession();
                 restartScheduled = true;
-            
-                return;
             }
         } finally {
             if (!restartScheduled) {
