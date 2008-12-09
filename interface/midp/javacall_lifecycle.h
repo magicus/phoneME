@@ -338,7 +338,7 @@ typedef enum {
 
 struct javacall_lifecycle_additional_info {
     int command;
-    union data {
+    union {
         struct {
             javacall_utf16 *midletName;
             int midletNameLen;
@@ -351,8 +351,8 @@ struct javacall_lifecycle_additional_info {
         struct {
             int  suiteID;
         } uninstallation;
-    }
-}
+    } data;
+};
                                           
 
 /**
