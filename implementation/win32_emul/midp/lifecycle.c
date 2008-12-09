@@ -126,10 +126,12 @@ javacall_result javacall_lifecycle_platform_request(char* urlString) {
  *        For states other than JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN and
  *        JAVACALL_LIFECYCLE_MIDLET_INSTALL_COMPLETED the parameter
  *        status is not used.
+ * @param additionalInfo Additional information used for MIDlet
+ *                       installation and uninstallation events
  */
-
 void javacall_lifecycle_state_changed(javacall_lifecycle_state state,
-                                      javacall_result status){
+                                      javacall_result status,
+                                      javacall_lifecycle_additional_info *additionalInfo){
 
     javautil_debug_print (JAVACALL_LOG_INFORMATION, "lifecycle", "javacall_lifecycle_state_changed() ");
     switch(state) {
