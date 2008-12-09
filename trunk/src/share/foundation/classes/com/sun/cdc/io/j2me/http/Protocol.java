@@ -80,7 +80,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     protected boolean connected;
     /* there should be only one outputstream opened at any time */
     protected boolean outputStreamOpened = false;
-    protected boolean requested = false;
     private boolean closed = false;
     /*
      * In/Out Streams used to buffer input and output
@@ -370,7 +369,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             closed = true;
         }
         
-        if (opens == 0 && (connected || requested)) {
+        if (opens == 0 && streamConnection != null) {
             disconnect();
         }
     }
@@ -1301,8 +1300,12 @@ malformed: {
         if (streamConnection != null) {
             streamConnection.close();
             if (! (streamConnection instanceof StreamConnectionElement)) {
-                streamInput.close();
-                streamOutput.close();
+                if (streamInput != null) {
+                    streamInput.close();
+                }
+                if (streamOutput != null) {
+                    streamOutput.close();
+                }
             }
             streamInput = null;
             streamOutput = null;
