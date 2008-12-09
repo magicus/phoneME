@@ -275,6 +275,10 @@ endif
 # Remove the WTK dependency when building with Native App. Manager
 ifeq ($(MIDP_BIN_TARGET), wtk)
     MIDP_BIN_TARGET=
+else
+ifeq ($(MIDP_BIN_TARGET), sdk)
+    MIDP_BIN_TARGET=
+endif
 endif
 
 else
