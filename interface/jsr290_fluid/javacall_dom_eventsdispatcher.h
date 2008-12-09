@@ -189,11 +189,40 @@ javacall_result
 javacall_dom_eventsdispatcher_remove_event_listener_finish(void *context);
 
 
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code
+ * OR this method notify the <code>EngineThread</code> that handling of event is
+ * completed.
+ *
+ * @param invocation_id Invocation identifier which MUST be used in the
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * @param requestId The <code>HandleEventRequest</code> parameter indicates the
+ *   that handle event request is completed.
+ *
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the
+ *             javacall_dom_eventsdispatcher_handle_completed_finish function to
+ *             complete the operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
 javacall_result
 javacall_dom_eventsdispatcher_handle_completed_start(javacall_int32 invocation_id,
                                               void **context,
                                               javacall_handle requestId);
 
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code
+ * OR this method notify the <code>EngineThread</code> that handling of event is
+ * completed.
+ *
+ * @param context The context saved during asynchronous operation.
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the
+ *             javacall_dom_eventsdispatcher_handle_completed_finish function to
+ *             complete the operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
 javacall_result
 javacall_dom_eventsdispatcher_handle_completed_finish(void *context);
 
