@@ -88,6 +88,26 @@ static CEGUID volGUID = {-1L,-1L,-1L,-1L};
 
 #define NO_SORT -1L
 
+#define ENUM_HANDLERS								0x1
+#define ENUM_HANDLERS_BY_SUFFIX						0x2
+
+struct enum_pos
+{
+	DWORD dwFlag;
+};
+
+struct enum_handlers_pos
+{
+	struct enum_pos p;
+	HANDLE hRegDB;
+};
+
+struct enum_by_suffix_pos
+{
+	struct enum_pos p;
+	HANDLE hSuffixesDB;
+};
+
 /**
 * Log out win32 error message
 * @param dwError - win32 error code
@@ -122,6 +142,30 @@ static void log_error(LPWSTR msg, ...)
 	fwprintf(stderr, L"\n", CHAPI_HEADER);
 	va_end(args);
 }
+
+/*
+*	Copy result to client buffer, return length of result
+*	@param src - source string to copy
+*	@param dest - pointer to client buffer
+*	@param length - pointer to integer containing original length of client buffer in characters or
+*          zero for calculating what length needed
+*	@return JAVACALL_OK on success or JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if length is not enough, 
+*           length will contain size of source string in characters including terminating zero
+*/
+static javacall_result copy_result(const javacall_utf16* src,  javacall_utf16*  dest, int* length)
+{
+	int len;
+	if (!src) src = L"";
+	len = wcslen(src) + 1;
+	if (*length < len) 
+	{
+		*length = len;
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	}
+	memcpy(dest, src, len * sizeof(javacall_utf16));
+	return JAVACALL_OK;
+}
+
 
 /*
 *	Opens handlers database, create if not exists
@@ -599,6 +643,61 @@ static DWORD open_action_local_names_db(IN HANDLE hSession, int iSort, OUT HANDL
 	return 0;
 }
 
+/*
+*	Search handlers database for handler with given database OID and returns its Handler ID
+*	@param dwOid - handler's database OID
+*	@param dest - pointer to client buffer
+*	@param length - pointer to integer containing original length of client buffer in characters or
+*          zero for calculating what length needed
+*	@return JAVACALL_OK on success or JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if length is not enough, 
+*           length will contain size of source string in characters including terminating zero
+*/
+static javacall_result get_handler_by_oid(DWORD dwOid, javacall_utf16*  dest, int* length)
+{
+	javacall_result res;
+	HANDLE hRegDB = INVALID_HANDLE_VALUE;
+	CEPROPVAL propValOID = {0};
+	CEPROPVAL *pPropVal = NULL;
+	DWORD dwSize = 0;
+	DWORD propId[1] = {PROPID_REGISTRY_HANDLER_NAME};
+	WORD count = 1 ;
+
+	// open sorted by oid
+	DWORD dwRes = open_handlers_db(NULL,0,&hRegDB);
+	if (dwRes)
+	{
+		log_win32error(dwRes);
+		return JAVACALL_FAIL;
+	}
+
+	propValOID.propid = PROPID_REGISTRY_HANDLER_OID;
+	propValOID.val.ulVal = dwOid;
+
+	// seek to first record
+	if (!CeSeekDatabaseEx(hRegDB, CEDB_SEEK_VALUEFIRSTEQUAL, (DWORD)&propValOID, 1, NULL))
+	{
+		log_win32error(dwRes);
+		CloseHandle(hRegDB);
+		return JAVACALL_FAIL;
+	}
+
+	if (!CeReadRecordPropsEx(hRegDB, CEDB_ALLOWREALLOC, &count, 
+		(CEPROPID*)propId, (LPBYTE*)&pPropVal, &dwSize, GetProcessHeap()))
+	{
+		log_win32error(GetLastError());
+		CloseHandle(hRegDB);
+		return JAVACALL_FAIL;
+	}
+
+	res = copy_result(pPropVal->val.lpwstr,dest,length);
+	CloseHandle(hRegDB);
+	if (pPropVal) HeapFree(GetProcessHeap(),0,pPropVal);
+	return res;
+}
+
+/************************************************************************/
+/*          PUBLIC API                                                  */
+/************************************************************************/
 
 /**
 * Perform initialization of registry API
@@ -984,37 +1083,10 @@ final:
 *         error code if failure occurs
 */
 
-#define ENUM_HANDLERS 0x1
-
-struct enum_pos
-{
-	DWORD dwFlag;
-};
-
-struct enum_handlers_pos
-{
-	struct enum_pos p;
-	HANDLE hRegDB;
-};
-
-static javacall_result copy_result(const javacall_utf16* src,  javacall_utf16*  dest, int* length)
-{
-	int len;
-	if (!src) src = L"";
-	len = wcslen(src) + 1;
-	if (*length < len) 
-	{
-		*length = len;
-		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
-	}
-	memcpy(dest, src, len * sizeof(javacall_utf16));
-	return JAVACALL_OK;
-}
 
 javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length)
 {
-	struct enum_handlers_pos *enum_handler = (struct enum_handlers_pos *) pos_id;
-
+	struct enum_handlers_pos *enum_handler;
 	DWORD dwRes;
 	DWORD dwOid;
 	DWORD propId[1] = {PROPID_REGISTRY_HANDLER_NAME};
@@ -1022,6 +1094,9 @@ javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16
 	CEPROPVAL* pPropVal = NULL;
 	DWORD dwSize = 0;
 	HANDLE hRegDB = INVALID_HANDLE_VALUE;
+
+	if (!pos_id || !length || (*length && !handler_id_out)) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+	enum_handler = (struct enum_handlers_pos *) *pos_id;
 
 	if (!enum_handler)
 	{
@@ -1057,26 +1132,26 @@ javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16
 	} else {
 		if (enum_handler->p.dwFlag != ENUM_HANDLERS) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 		hRegDB = enum_handler->hRegDB;
-
-		dwOid = CeSeekDatabaseEx(hRegDB, CEDB_SEEK_CURRENT, 1, 0, NULL);
-		if (!dwOid)
+		while (!CeReadRecordPropsEx(hRegDB, CEDB_ALLOWREALLOC, &count, 
+			(CEPROPID*)propId, (LPBYTE*)&pPropVal, &dwSize, GetProcessHeap()))
 		{
 			DWORD dwErr = GetLastError();
-			if (dwErr != ERROR_SEEK && dwErr != ERROR_NO_MORE_ITEMS)
+
+			// if record was deleted seek to next record
+			if (dwErr == ERROR_KEY_DELETED)
 			{
-				log_win32error(dwErr);
-				return JAVACALL_FAIL;
+				if (CeSeekDatabaseEx(hRegDB, CEDB_SEEK_CURRENT, 1, 0, NULL))
+					continue;
+				dwErr = GetLastError();
 			}
-			return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
-		}
-		else
-		{
-			if (!CeReadRecordPropsEx(hRegDB, CEDB_ALLOWREALLOC, &count, 
-				(CEPROPID*)propId, (LPBYTE*)&pPropVal, &dwSize, GetProcessHeap()))
+
+			if (dwErr == ERROR_NO_MORE_ITEMS)
 			{
-				log_win32error(GetLastError());
-				return JAVACALL_FAIL;
+				return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 			}
+
+			log_win32error(dwErr);
+			return JAVACALL_FAIL;
 		}
 	}
 
@@ -1085,7 +1160,8 @@ javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16
 	{
 		CeSeekDatabaseEx(hRegDB, CEDB_SEEK_CURRENT, 1, 0, NULL);
 	}
-	return JAVACALL_OK;
+	HeapFree(GetProcessHeap(),0,pPropVal);
+	return dwRes;
 }
 
 /**
@@ -1112,7 +1188,82 @@ javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16
 *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
 *         error code if failure occurs
 */
-javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_string suffix, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length);
+javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_string suffix, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length)
+{
+	struct enum_by_suffix_pos *enum_handler;
+	DWORD dwRes;
+	DWORD dwOid;
+	DWORD propId[1] = {PROPID_SUFFIX_HANDLER_OID};
+	WORD count = 1;
+	CEPROPVAL* pPropVal = NULL;
+	DWORD dwSize = 0;
+	HANDLE hSuffixesDB = INVALID_HANDLE_VALUE;
+
+	if (!suffix || !pos_id || !length || (*length && !handler_id_out)) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+	enum_handler = (struct enum_by_suffix_pos *) *pos_id;
+
+	if (!enum_handler)
+	{
+		CEPROPVAL propSuffixVal = {0};
+
+		// open sorted by suffix
+		dwRes = open_suffixes_db(NULL,0,&hSuffixesDB);
+		if (dwRes)
+		{
+			log_win32error(dwRes);
+			return JAVACALL_FAIL;
+		}
+
+		// search first record with matched suffix
+		propSuffixVal.propid = PROPID_SUFFIX_NAME;
+		propSuffixVal.val.lpwstr = (LPWSTR)suffix;
+
+		dwOid = CeSeekDatabaseEx(hSuffixesDB, CEDB_SEEK_VALUEFIRSTEQUAL,(DWORD)&propSuffixVal, 1, NULL);
+		if (!dwOid)
+		{
+			CloseHandle(hSuffixesDB);
+			return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+		}
+
+		// read first record
+		if (!CeReadRecordPropsEx(hSuffixesDB, CEDB_ALLOWREALLOC, &count, 
+			(CEPROPID*)propId, (LPBYTE*)&pPropVal, &dwSize, GetProcessHeap()))
+		{
+			log_win32error(GetLastError());
+			CloseHandle(hSuffixesDB);
+			return JAVACALL_FAIL;
+		}
+
+		// allocate position structure
+		enum_handler = (struct enum_by_suffix_pos*)javacall_malloc(sizeof (struct enum_by_suffix_pos));
+		enum_handler->hSuffixesDB = hSuffixesDB;
+		enum_handler->p.dwFlag = ENUM_HANDLERS_BY_SUFFIX;
+		* pos_id = (int) enum_handler;
+	} else {
+		if (enum_handler->p.dwFlag != ENUM_HANDLERS_BY_SUFFIX) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+		hSuffixesDB = enum_handler->hSuffixesDB;
+		if (!CeReadRecordPropsEx(hSuffixesDB, CEDB_ALLOWREALLOC, &count, 
+			(CEPROPID*)propId, (LPBYTE*)&pPropVal, &dwSize, GetProcessHeap()))
+		{
+			DWORD dwErr = GetLastError();
+			if (dwErr == ERROR_NO_MORE_ITEMS)
+			{
+				return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+			}
+
+			log_win32error(dwErr);
+			return JAVACALL_FAIL;
+		}
+	}
+
+	dwRes = get_handler_by_oid(pPropVal->val.ulVal,handler_id_out,length);
+	if ( dwRes == JAVACALL_OK)
+	{
+		CeSeekDatabaseEx(hSuffixesDB, CEDB_SEEK_VALUENEXTEQUAL, 1, 0, NULL);
+	}
+	HeapFree(GetProcessHeap(),0,pPropVal);
+	return dwRes;
+}
 
 /**
 * Enumerate registered content handlers that can handle content with given content type
@@ -1482,4 +1633,33 @@ javacall_result javacall_chapi_unregister_handler(javacall_const_utf16_string co
 * @param pos_id position handle used by enumeration method call, if pos_id is zero it should be ignored
 * @return nothing
 */
-void javacall_chapi_enum_finish(int pos_id);
+void javacall_chapi_enum_finish(int pos_id)
+{
+	struct enum_pos *enumpos = (struct enum_pos *) pos_id;
+	if (enumpos)
+	{
+		switch (enumpos->dwFlag)
+		{
+			case ENUM_HANDLERS:
+				{
+					struct enum_handlers_pos *p = (struct enum_handlers_pos *) enumpos;
+					if (p->hRegDB !=  INVALID_HANDLE_VALUE)
+						CloseHandle(p->hRegDB);
+				}
+				break;
+			case ENUM_HANDLERS_BY_SUFFIX:
+				{
+					struct enum_by_suffix_pos *p = (struct enum_by_suffix_pos *) enumpos;
+					if (p->hSuffixesDB !=  INVALID_HANDLE_VALUE)
+						CloseHandle(p->hSuffixesDB);
+				}
+				break;
+			default:
+				{
+					log_error(L"Unknown or corrupted position handler %#x flag: %#x", pos_id, enumpos->dwFlag);
+					return;
+				}
+		}
+		javacall_free(enumpos);
+	}
+}
