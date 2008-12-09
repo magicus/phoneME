@@ -655,7 +655,7 @@ void javanotify_shutdown(void) {
 
     e.eventType = MIDP_JC_EVENT_END;
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN, JAVACALL_OK);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN, JAVACALL_OK, NULL);
 
     midp_jc_event_send(&e);
 }
