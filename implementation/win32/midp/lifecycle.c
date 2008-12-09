@@ -142,7 +142,7 @@ javacall_result javacall_lifecycle_platform_request(char* urlString) {
  */
 void javacall_lifecycle_state_changed(javacall_lifecycle_state state,
                                       javacall_result status,
-                                      javacall_lifecycle_additional_info *additionalInfo){
+                                      struct javacall_lifecycle_additional_info *additionalInfo){
 
     javacall_print("javacall_lifecycle_state_changed() ");
     switch(state) {
