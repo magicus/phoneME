@@ -383,7 +383,7 @@ struct javacall_lifecycle_additional_info {
  */
 void javacall_lifecycle_state_changed(javacall_lifecycle_state state,
                                       javacall_result status,
-                                      javacall_lifecycle_additional_info *additionalInfo);
+                                      struct javacall_lifecycle_additional_info *additionalInfo);
 
 /**
  * Starts a new process to handle the given URL. The new process executes
