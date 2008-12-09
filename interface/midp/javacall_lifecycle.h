@@ -347,11 +347,12 @@ struct javacall_lifecycle_additional_info {
             int  suiteID;
             javacall_utf16* midletIcon;
             int midletIconLen;
-    } installation;
-    struct {
-        int  suiteID;
-    } uninstallation;
-};
+        } installation;
+        struct {
+            int  suiteID;
+        } uninstallation;
+    }
+}
                                           
 
 /**
