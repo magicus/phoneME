@@ -341,8 +341,8 @@ struct javacall_lifecycle_additional_info {
     union data {
         struct {
             javacall_utf16 *midletName;
-            int midletNameLen,
-                javacall_utf16 *className; 
+            int midletNameLen;
+            javacall_utf16 *className; 
             int classNameLen;
             int  suiteID;
             javacall_utf16* midletIcon;
