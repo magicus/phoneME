@@ -377,9 +377,21 @@ endif
 # (Extra) Location Subsystem
 # Description: JSR 179
 #####################################################################
-ifeq ($(USE_JSR_179), true)
+ifeq ($(USE_JSR_179),true)
+ifneq ($(USE_JSR_293),true)
 JPP_DEFS += -DENABLE_JSR_179
 include $(JSR_179_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+endif
+
+#####################################################################
+# (Extra) Location Subsystem
+# Description: JSR 293
+#####################################################################
+ifeq ($(USE_JSR_293),true)
+JPP_DEFS += -DENABLE_JSR_179
+JPP_DEFS += -DENABLE_JSR_293
+include $(JSR_293_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
