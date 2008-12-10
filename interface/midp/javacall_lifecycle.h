@@ -256,12 +256,14 @@ typedef enum {
     JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN          =13,
     /** MIDlet install completed */
     JAVACALL_LIFECYCLE_MIDLET_INSTALL_COMPLETED =15,
+    /** MIDlet uninstall completed */
+    JAVACALL_LIFECYCLE_MIDLET_UNINSTALL_COMPLETED =16,
     /** MIDlet paused internally (PAUSED state) */
-    JAVACALL_LIFECYCLE_MIDLET_INTERNAL_PAUSED   =16,
+    JAVACALL_LIFECYCLE_MIDLET_INTERNAL_PAUSED   =17,
     /** MIDlet resumed internally (ACTIVE state) */
-    JAVACALL_LIFECYCLE_MIDLET_INTERNAL_RESUMED  =17,
+    JAVACALL_LIFECYCLE_MIDLET_INTERNAL_RESUMED  =18,
     /** Error starting MIDlet                    */
-    JAVACALL_LIFECYCLE_MIDLET_ERROR             =18
+    JAVACALL_LIFECYCLE_MIDLET_ERROR             =19
 } javacall_lifecycle_state;
 
 /* for compatibility with legacy code */
@@ -333,6 +335,26 @@ typedef enum {
     JAVACALL_MIDP_REASON_OTHER
 } javacall_change_reason;
 
+
+struct javacall_lifecycle_additional_info {
+    int command;
+    union {
+        struct {
+            javacall_utf16 *midletName;
+            int midletNameLen;
+            javacall_utf16 *className; 
+            int classNameLen;
+            int  suiteID;
+            javacall_utf16* midletIcon;
+            int midletIconLen;
+        } installation;
+        struct {
+            int  suiteID;
+        } uninstallation;
+    } data;
+};
+                                          
+
 /**
  * Inform on change of the lifecycle status of the VM
  *
@@ -357,9 +379,12 @@ typedef enum {
  *        For states other than JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN and
  *        JAVACALL_LIFECYCLE_MIDLET_INSTALL_COMPLETED the parameter
  *        status is not used.
+ * @param additionalInfo Additional information used for MIDlet
+ *                       installation and uninstallation events
  */
 void javacall_lifecycle_state_changed(javacall_lifecycle_state state,
-                                      javacall_result status);
+                                      javacall_result status,
+                                      struct javacall_lifecycle_additional_info *additionalInfo);
 
 /**
  * Starts a new process to handle the given URL. The new process executes
