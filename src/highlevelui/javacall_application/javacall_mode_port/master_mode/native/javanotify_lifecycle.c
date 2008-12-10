@@ -807,6 +807,42 @@ void javanotify_internal_resume(void) {
     midp_jc_event_send(&e);
 }
 
+
+
+ /**
+  * A notification function for telling Java to perform the update of
+  * a MIDlet with parameters
+  *
+  * @param suite_id : suite id to update
+  * @param forceUpdate updates the MIDlet even if it already exist regardless
+  *                    of version
+  */
+void javanotify_update_midlet_wparams(char* suite_id, int forceUpdate) {
+    int length;
+    midp_jc_event_union e;
+     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+
+     REPORT_INFO2(LC_CORE,"javanotify_update_midlet_wparams() >> "
+                          "suite_id = %s, forceUpdate = %d\n",
+                          suite_id, forceUpdate);
+
+     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+     data->argc = 0;
+     data->argv[data->argc++] = "runMidlet";
+     data->argv[data->argc++] = "-1";
+     data->argv[data->argc++] = "com.sun.midp.installer.GraphicalInstaller";
+
+     if (forceUpdate == 1) {
+         data->argv[data->argc++] = "FU";
+     } else {
+         data->argv[data->argc++] = "U";
+     }
+
+     data->argv[data->argc++]  = suite_id;
+    midp_jc_event_send(&e);
+}
+
 #ifdef __cplusplus
 }
 #endif

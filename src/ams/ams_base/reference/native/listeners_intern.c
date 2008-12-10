@@ -164,6 +164,8 @@ init_listeners_impl() {
         return ALL_OK;
     }
 
+    g_listenersInitDone = 1;
+
     memset((char*)g_pRegisteredListeners, 0, sizeof(g_pRegisteredListeners));
     memset((char*)g_listenerIdxByType, (char)LISTENER_TYPE_INVALID,
            sizeof(g_listenerIdxByType));

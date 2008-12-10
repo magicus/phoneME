@@ -74,7 +74,7 @@ suite_listeners_notify(int listenerType, int when, MIDPError status,
         get_event_listeners_impl((int)listenerType);
 
     while (pListener) {
-        if (pListener->listenerType == listenerType &&
+        if (pListener->genericListener.listenerType == listenerType &&
                 pListener->whenToCall == when) {
             ((SUITESTORE_LISTENER)pListener->genericListener.fn_callback)(
                 listenerType, when, status, pSuiteData);

@@ -39,7 +39,8 @@ javacall_result JavaTaskImpl(int argc, char** argv) {
     javacall_result res = runMidlet(argc, argv);
 
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
-                                     (res == 1) ? JAVACALL_OK : JAVACALL_FAIL);
+                                     (res == 1) ? JAVACALL_OK : JAVACALL_FAIL,
+                                     NULL);
 
     return res;
 }

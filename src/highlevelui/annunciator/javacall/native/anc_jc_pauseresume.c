@@ -40,7 +40,8 @@
  */
 void pdMidpNotifySuspendAll() {
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_PAUSED,
-                                     JAVACALL_OK);
+                                     JAVACALL_OK,
+                                     NULL);
 }
 
 /**
@@ -49,6 +50,7 @@ void pdMidpNotifySuspendAll() {
 void pdMidpNotifyResumeAll() {
 
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_RESUMED,
-                                         JAVACALL_OK);
+                                     JAVACALL_OK, 
+                                     NULL);
 
 }
