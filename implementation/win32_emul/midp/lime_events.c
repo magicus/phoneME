@@ -214,8 +214,6 @@ void SendEvent (KVMEventType *evt) {
     case keyDownKVMEvent:
         if (evt->chr == KEY_USER2) {
             RotateDisplay(evt->screenX);
-        } else if (evt->chr == VK_CLAMSHELL) {
-            ClamshellStateChanged(evt->screenX);
         } else if ((evt->chr != KEY_END)) {
             javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
         } else if (isRunningLocal == JAVACALL_FALSE) {
@@ -309,7 +307,11 @@ void SendEvent (KVMEventType *evt) {
             javanotify_change_locale(evt->screenX, evt->screenY);
             break;
         case VK_ROTATE:
-            RotateDisplay(evt->screenX);     
+            RotateDisplay(evt->screenX);
+            break;     
+        case VK_CLAMSHELL:
+            ClamshellStateChanged(evt->screenX);
+            break;
 #if ENABLE_JSR_179
         case STATE_AVAILABLE:
             HandleLocationProviderStateEvent(JAVACALL_LOCATION_AVAILABLE);
