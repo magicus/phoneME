@@ -1733,6 +1733,42 @@ javacall_result
 javacall_dom_document_get_default_view_finish(void *context,
                                               /* OUT */ javacall_handle* ret_value);
 
+/**
+ * Is this Document HTMLDocument
+ * 
+ * @param handle Pointer to the object representing this document.
+ * @param ret_value true if this document is HTMLDocument
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_document_is_html_document_finish function to complete the 
+ *             operation
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_document_is_html_document_start(javacall_handle handle,
+                                             javacall_int32 invocation_id,
+                                             void **context,
+                                             /* OUT */ javacall_bool *ret_value);
+
+/**
+ * Is this Document HTMLDocument
+ * 
+ * @param handle Pointer to the object representing this document.
+ * @param ret_value true if this document is HTMLDocument
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_document_is_html_document_finish function to complete the 
+ *             operation
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_document_is_html_document_finish(void *context, 
+                                              /* OUT */ javacall_bool *ret_value);
+
 /** 
  * Decrements ref counter of the native object specified number of times
  * 
