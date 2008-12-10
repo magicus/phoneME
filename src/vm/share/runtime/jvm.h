@@ -256,12 +256,13 @@ jint JVM_CreateAppImage(const JvmPathChar *jarFile, const JvmPathChar *binFile,
 #define JVM_CONFIG_USE_ROM                      5
 #define JVM_CONFIG_DEBUGGER_PORT                6
 #define JVM_CONFIG_ASYNC_DATA_SIZE              7
-#define JVM_CONFIG_TICK_INTERVAL                8
 
 #if ENABLE_ISOLATES
 #define JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY 8
 #define JVM_CONFIG_FIRST_ISOLATE_TOTAL_MEMORY   9
 #endif
+
+#define JVM_CONFIG_TICK_INTERVAL                10
 
 int  JVM_GetConfig(int name);
 void JVM_SetConfig(int name, int value);
