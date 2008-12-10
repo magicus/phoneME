@@ -187,7 +187,7 @@ bool FieldAddress::has_fixed_offset(jint& fixed_offset) {
   return true;
 }
 
-Assembler::Register FieldAddress::fixed_register() {
+Assembler::Register FieldAddress::fixed_register( void ) const {
   return object()->lo_register();
 }
 
@@ -205,7 +205,7 @@ bool IndexedAddress::has_fixed_offset(jint& fixed_offset) {
   }
 }
 
-Assembler::Register IndexedAddress::fixed_register() {
+Assembler::Register IndexedAddress::fixed_register( void ) const {
   return array()->lo_register();
 }
 
@@ -286,7 +286,7 @@ bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
   return true;
 }
 
-Assembler::Register LocationAddress::fixed_register() {
+Assembler::Register LocationAddress::fixed_register( void ) const {
   GUARANTEE(_fixed_register != Assembler::no_reg, "must be initialized");
   return _fixed_register;
 }
