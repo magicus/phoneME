@@ -41,22 +41,24 @@ public class RtspOutgoingRequest {
     }
 
     public static RtspOutgoingRequest SETUP(int seqNum, RtspUrl url,
-                                             String sesId, int port) {
+                                             String sesId, int port, boolean usingUdp) {
         return new RtspOutgoingRequest(
             "SETUP rtsp://" + url.getHost() + "/" + url.getFile() + " RTSP/1.0\r\n"
             + "CSeq: " + seqNum + "\r\n"
-            + "Transport: RTP/AVP;unicast;client_port=" + port + "-" + (port + 1) + "\r\n"
+            + "Transport: RTP/AVP/" + (usingUdp ? "UDP;unicast;client_port=" : "TCP;unicast;interleaved=")
+            + port + "-" + (port + 1) + "\r\n"
             + ((null != sesId) ? ("Session: " + sesId + "\r\n") : "")
             + userAgent + "\r\n\r\n");
     }
 
     public static RtspOutgoingRequest SETUP(int seqNum,
                                              String cBase, String mCtl,
-                                             String sesId, int port) {
+                                             String sesId, int port, boolean usingUdp) {
         return new RtspOutgoingRequest(
             "SETUP " + cBase + mCtl + " RTSP/1.0\r\n"
             + "CSeq: " + seqNum + "\r\n"
-            + "Transport: RTP/AVP;unicast;client_port=" + port + "-" + (port + 1) + "\r\n"
+            + "Transport: RTP/AVP/" + (usingUdp ? "UDP;unicast;client_port=" : "TCP;unicast;interleaved=")
+            + port + "-" + (port + 1) + "\r\n"
             + ((null != sesId) ? ("Session: " + sesId + "\r\n") : "")
             + userAgent + "\r\n\r\n");
     }

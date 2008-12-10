@@ -42,8 +42,8 @@ public class RtspDS extends BasicDS {
 
     private static final int RESPONSE_TIMEOUT = 5000;
 
-    private static final int MIN_PORT = 1024;  // inclusive
-    private static final int MAX_PORT = 65536; // exclusive
+    private static final int MIN_UDP_PORT = 1024;  // inclusive
+    private static final int MAX_UDP_PORT = 65536; // exclusive
 
     private static Random rnd = new Random(System.currentTimeMillis());
 
@@ -58,11 +58,17 @@ public class RtspDS extends BasicDS {
     private String contentBase = null;
     private RtspRange range = null;
 
-    private int sessionTimeout = 60; // in seconds, 60 is default according to the spec
+    // in seconds, 60 is default according to the spec
+    private int sessionTimeout = 60; 
+
+    // select UDP or inbound interleaved TCP for RTP transport
+    // IMPL_NOTE: currently using only TCP, although UDP is also implemented
+    private boolean usingUdp = false; 
 
     private RtspSS[] streams = null;
 
-    private static int nextPort = MIN_PORT;
+    private static int nextUdpPort = MIN_UDP_PORT;
+    private int nextInterleavedChannel = 0;
 
     public RtspUrl getUrl() {
         return url;
@@ -114,23 +120,25 @@ public class RtspDS extends BasicDS {
                 // sessionId is null at this point
                 for (int i = 0; i < num_tracks; i++) {
 
-                    int first_client_data_port = allocPort();
-                    int client_data_port = first_client_data_port;
+                    int client_data_port = allocPort();
 
                     RtpConnection conn = null;
                     String cdescr = null;
 
-                    do {
-                        try {
-                            conn = new RtpConnection(client_data_port);
-                            conn.startListening();
-                        } catch (IOException e) {
-                            client_data_port = allocPort();
-                        }
-                    } while (null == conn && client_data_port != first_client_data_port);
+                    if (usingUdp) {
+                        int first_client_data_port = client_data_port;
+                        do {
+                            try {
+                                conn = new RtpConnection(client_data_port);
+                                conn.startListening();
+                            } catch (IOException e) {
+                                client_data_port = allocPort();
+                            }
+                        } while (null == conn && client_data_port != first_client_data_port);
 
-                    if (null == conn) {
-                        throw new IOException("Unable to allocate client UDP port");
+                        if (null == conn) {
+                            throw new IOException("Unable to allocate client UDP port");
+                        }
                     }
 
                     if (i < sdp.getMediaDescriptionsCount()) {
@@ -153,11 +161,12 @@ public class RtspDS extends BasicDS {
 
                     if (null != contentBase || null != mediaControl) {
                         setup_request = RtspOutgoingRequest.SETUP(seqNum,
-                                                                   (null == contentBase) ? "" : contentBase,
-                                                                   (null == mediaControl) ? "" : mediaControl,
-                                                                   sessionId, client_data_port);
+                                                                  (null == contentBase) ? "" : contentBase,
+                                                                  (null == mediaControl) ? "" : mediaControl,
+                                                                  sessionId, client_data_port, usingUdp);
                     } else {
-                        setup_request = RtspOutgoingRequest.SETUP(seqNum, url, sessionId, client_data_port);
+                        setup_request = RtspOutgoingRequest.SETUP(seqNum, url, sessionId,
+                                                                  client_data_port, usingUdp);
                     }
 
                     if (!sendRequest(setup_request)) {
@@ -174,18 +183,23 @@ public class RtspDS extends BasicDS {
 
                     RtspTransportHeader th = response.getTransportHeader();
 
-                    if (th.getClientDataPort() != client_data_port) {
-                        // Returned value for client data port is different.
-                        // An attempt is made to re-allocate UDP port accordingly.
-                        if (null != conn) {
-                            conn.stopListening();
+                    if (usingUdp) {
+                        if (th.getClientDataPort() != client_data_port) {
+                            // Returned value for client data port is different.
+                            // An attempt is made to re-allocate UDP port accordingly.
+                            if (null != conn) {
+                                conn.stopListening();
+                            }
+                            client_data_port = th.getClientDataPort();
+                            conn = new RtpConnection(client_data_port);
+                            conn.startListening();
                         }
-                        client_data_port = th.getClientDataPort();
-                        conn = new RtpConnection(client_data_port);
-                        conn.startListening();
                     }
 
-                    streams[i] = new RtspSS(conn);
+                    streams[i] = new RtspSS();
+                    if (usingUdp) {
+                        conn.setSS(streams[i]);
+                    }
                     if (null != cdescr) {
                         streams[i].setContentDescriptor(cdescr);
                     }
@@ -268,19 +282,34 @@ public class RtspDS extends BasicDS {
 
     //=========================================================================
 
-    private static int allocPort() {
-        int retVal = nextPort;
-
-        nextPort += 2;
-
-        if (nextPort >= MAX_PORT) {
-            nextPort = MIN_PORT;
+    private int allocPort() {
+        if (usingUdp) {
+            int retVal = nextUdpPort;
+            nextUdpPort += 2;
+            if (nextUdpPort >= MAX_UDP_PORT) {
+                nextUdpPort = MIN_UDP_PORT;
+            }
+            return retVal;
+        } else {
+            int retVal = nextInterleavedChannel;
+            nextInterleavedChannel += 2;
+            return retVal;
         }
-
-        return retVal;
     }
 
     //=========================================================================
+
+    /** 
+     * This method is called by RtspConnection when RTP/RTCP packet is received.
+     * Used only in TCP mode (usingUdp=false).
+     */
+    protected void processRtpPacket(int channel, byte[] pkt) {
+        // process ony RTP packets. they arrive on even channels.
+        if (0 == channel % 2) {
+            int n_stream = channel / 2;
+            streams[n_stream].enqueuePacket(new RtpPacket(pkt,pkt.length));
+        }
+    }
 
     /** 
      * This method is called by RtspConnection when message is received
