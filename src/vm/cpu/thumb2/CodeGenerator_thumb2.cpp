@@ -125,7 +125,7 @@ void CodeGenerator::load_task_mirror(Oop*klass, Value& statics_holder,
     } else {
       // The marker is at the start of the heap or in ROM text, so it can be
       // treated as a constant value for the cib test.
-      cmp_imm8(statics_holder.lo_register(), (int)_task_class_init_marker);
+      cmp(statics_holder.lo_register(), (int)_task_class_init_marker);
     }
     b(class_is_initialized, ne);
 bind(need_init);
@@ -181,7 +181,7 @@ void CodeGenerator::check_cib(Oop *klass JVM_TRAPS){
     } else {
       // The marker is at the start of the heap or in ROM text, so it can be
       // treated as a constant value for the cib test.
-      cmp_imm8(task_mirror, (int)_task_class_init_marker);
+      cmp(task_mirror, (int)_task_class_init_marker);
     }
     b(class_is_initialized, ne);
   }
