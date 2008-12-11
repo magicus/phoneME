@@ -126,8 +126,9 @@ javacall_dom_namednodemap_get_named_item_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_namednodemap_set_named_item_finish function to complete the 
  *             operation,
@@ -166,8 +167,9 @@ javacall_dom_namednodemap_set_named_item_start(javacall_handle handle,
  *                            JAVACALL_DOM_HIERARCHY_REQUEST_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_namednodemap_set_named_item_finish function to complete the 
  *             operation,
@@ -202,8 +204,9 @@ javacall_dom_namednodemap_set_named_item_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_namednodemap_remove_named_item_finish function to complete the 
  *             operation,
@@ -235,8 +238,9 @@ javacall_dom_namednodemap_remove_named_item_start(javacall_handle handle,
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_namednodemap_remove_named_item_finish function to complete the 
  *             operation,
@@ -421,8 +425,9 @@ javacall_dom_namednodemap_get_named_item_ns_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_namednodemap_set_named_item_ns_finish function to complete the 
  *             operation,
@@ -458,8 +463,9 @@ javacall_dom_namednodemap_set_named_item_ns_start(javacall_handle handle,
  *                            JAVACALL_DOM_HIERARCHY_REQUEST_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_namednodemap_set_named_item_ns_finish function to complete the 
  *             operation,
@@ -496,8 +502,9 @@ javacall_dom_namednodemap_set_named_item_ns_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_namednodemap_remove_named_item_ns_finish function to complete the 
  *             operation,
@@ -531,8 +538,9 @@ javacall_dom_namednodemap_remove_named_item_ns_start(javacall_handle handle,
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_namednodemap_remove_named_item_ns_finish function to complete the 
  *             operation,

@@ -138,8 +138,9 @@ javacall_dom_domimplementation_has_feature_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_domimplementation_create_document_type_finish function to complete the 
  *             operation,
@@ -173,8 +174,9 @@ javacall_dom_domimplementation_create_document_type_start(javacall_handle handle
  *                            JAVACALL_DOM_NAMESPACE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_domimplementation_create_document_type_finish function to complete the 
  *             operation,
@@ -213,8 +215,9 @@ javacall_dom_domimplementation_create_document_type_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_domimplementation_create_document_finish function to complete the 
  *             operation,
@@ -248,8 +251,9 @@ javacall_dom_domimplementation_create_document_start(javacall_handle handle,
  *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_domimplementation_create_document_finish function to complete the 
  *             operation,

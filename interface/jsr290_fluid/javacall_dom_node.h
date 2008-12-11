@@ -124,7 +124,9 @@ javacall_dom_node_get_node_name_finish(void *context,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
- *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_node_value_finish function to complete the 
  *             operation,
@@ -155,7 +157,9 @@ javacall_dom_node_get_node_value_start(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *             specified in ret_value_len,
- *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_node_value_finish function to complete the 
  *             operation,
@@ -183,7 +187,9 @@ javacall_dom_node_get_node_value_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_set_node_value_finish function to complete the 
  *             operation,
@@ -206,7 +212,9 @@ javacall_dom_node_set_node_value_start(javacall_handle handle,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_set_node_value_finish function to complete the 
  *             operation,
@@ -669,8 +677,9 @@ javacall_dom_node_get_owner_document_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_insert_before_finish function to complete the 
  *             operation,
@@ -710,8 +719,9 @@ javacall_dom_node_insert_before_start(javacall_handle handle,
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_insert_before_finish function to complete the 
  *             operation,
@@ -753,8 +763,9 @@ javacall_dom_node_insert_before_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_replace_child_finish function to complete the 
  *             operation,
@@ -791,8 +802,9 @@ javacall_dom_node_replace_child_start(javacall_handle handle,
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_replace_child_finish function to complete the 
  *             operation,
@@ -825,8 +837,9 @@ javacall_dom_node_replace_child_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_remove_child_finish function to complete the 
  *             operation,
@@ -855,8 +868,9 @@ javacall_dom_node_remove_child_start(javacall_handle handle,
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_remove_child_finish function to complete the 
  *             operation,
@@ -893,8 +907,9 @@ javacall_dom_node_remove_child_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_append_child_finish function to complete the 
  *             operation,
@@ -927,8 +942,9 @@ javacall_dom_node_append_child_start(javacall_handle handle,
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_append_child_finish function to complete the 
  *             operation,
@@ -1418,8 +1434,9 @@ javacall_dom_node_get_prefix_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_set_prefix_finish function to complete the 
  *             operation,
@@ -1467,8 +1484,9 @@ javacall_dom_node_set_prefix_start(javacall_handle handle,
  *                            JAVACALL_DOM_NAMESPACE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_set_prefix_finish function to complete the 
  *             operation,
@@ -1643,7 +1661,9 @@ javacall_dom_node_has_attributes_finish(void *context,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
- *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_text_content_finish function to complete the 
  *             operation,
@@ -1711,7 +1731,9 @@ javacall_dom_node_get_text_content_start(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *             specified in ret_value_len,
- *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_text_content_finish function to complete the 
  *             operation,
@@ -1775,7 +1797,9 @@ javacall_dom_node_get_text_content_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_set_text_content_finish function to complete the 
  *             operation,
@@ -1834,7 +1858,9 @@ javacall_dom_node_set_text_content_start(javacall_handle handle,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_set_text_content_finish function to complete the 
  *             operation,
@@ -2116,8 +2142,9 @@ javacall_dom_node_remove_event_listener_finish(void *context);
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_dispatch_event_finish function to complete the 
  *             operation,
@@ -2157,8 +2184,9 @@ javacall_dom_node_dispatch_event_start(javacall_handle handle,
  *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_dispatch_event_finish function to complete the 
  *             operation,

@@ -180,7 +180,9 @@ javacall_dom_processinginstruction_get_data_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_processinginstruction_set_data_finish function to complete the 
  *             operation,
@@ -202,7 +204,9 @@ javacall_dom_processinginstruction_set_data_start(javacall_handle handle,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
+ *             filled. Exception code 0 stands for an error in native code,
+ *             exception code >0 stands for exception thrown by native engine.
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_processinginstruction_set_data_finish function to complete the 
  *             operation,
