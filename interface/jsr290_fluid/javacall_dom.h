@@ -56,7 +56,7 @@ typedef enum {
     /** 
      * If no exception was thrown
      */
-    JAVACALL_DOM_NO_ERR              =  0x0,
+    JAVACALL_DOM_RUNTIME_ERR                 =  0x0,
     /** 
      * If index or size is negative, or greater than the allowed value 
      */
