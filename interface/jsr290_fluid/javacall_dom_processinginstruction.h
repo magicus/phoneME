@@ -190,7 +190,8 @@ javacall_result
 javacall_dom_processinginstruction_set_data_start(javacall_handle handle,
                                                   javacall_int32 invocation_id,
                                                   void **context,
-                                                  javacall_const_utf16_string data);
+                                                  javacall_const_utf16_string data,
+                                                  /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -208,7 +209,8 @@ javacall_dom_processinginstruction_set_data_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_processinginstruction_set_data_finish(void *context);
+javacall_dom_processinginstruction_set_data_finish(void *context,
+                                                   /* OUT */ javacall_dom_exceptions* exception_code);
 
 /** 
  * Decrements ref counter of the native object specified number of times

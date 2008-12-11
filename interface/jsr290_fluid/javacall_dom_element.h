@@ -287,7 +287,8 @@ javacall_result
 javacall_dom_element_remove_attribute_start(javacall_handle handle,
                                             javacall_int32 invocation_id,
                                             void **context,
-                                            javacall_const_utf16_string name);
+                                            javacall_const_utf16_string name,
+                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -309,7 +310,8 @@ javacall_dom_element_remove_attribute_start(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_remove_attribute_finish(void *context);
+javacall_dom_element_remove_attribute_finish(void *context,
+                                             /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -598,7 +600,8 @@ javacall_dom_element_get_attribute_ns_start(javacall_handle handle,
                                             javacall_const_utf16_string namespace_uri,
                                             javacall_const_utf16_string local_name,
                                             /* OUT */ javacall_utf16_string ret_value,
-                                            /* INOUT */ javacall_uint32* ret_value_len);
+                                            /* INOUT */ javacall_uint32* ret_value_len,
+                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -629,7 +632,8 @@ javacall_dom_element_get_attribute_ns_start(javacall_handle handle,
 javacall_result
 javacall_dom_element_get_attribute_ns_finish(void *context,
                                              /* OUT */ javacall_utf16_string ret_value,
-                                             /* INOUT */ javacall_uint32* ret_value_len);
+                                             /* INOUT */ javacall_uint32* ret_value_len,
+                                             /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -833,7 +837,8 @@ javacall_dom_element_get_attribute_node_ns_start(javacall_handle handle,
                                                  void **context,
                                                  javacall_const_utf16_string namespace_uri,
                                                  javacall_const_utf16_string local_name,
-                                                 /* OUT */ javacall_handle* ret_value);
+                                                 /* OUT */ javacall_handle* ret_value,
+                                                 /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -858,7 +863,8 @@ javacall_dom_element_get_attribute_node_ns_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_attribute_node_ns_finish(void *context,
-                                                  /* OUT */ javacall_handle* ret_value);
+                                                  /* OUT */ javacall_handle* ret_value,
+                                                  /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -975,7 +981,8 @@ javacall_dom_element_get_elements_by_tag_name_ns_start(javacall_handle handle,
                                                        void **context,
                                                        javacall_const_utf16_string namespace_uri,
                                                        javacall_const_utf16_string local_name,
-                                                       /* OUT */ javacall_handle* ret_value);
+                                                       /* OUT */ javacall_handle* ret_value,
+                                                       /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -998,7 +1005,8 @@ javacall_dom_element_get_elements_by_tag_name_ns_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_elements_by_tag_name_ns_finish(void *context,
-                                                        /* OUT */ javacall_handle* ret_value);
+                                                        /* OUT */ javacall_handle* ret_value,
+                                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 

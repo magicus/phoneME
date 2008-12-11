@@ -250,7 +250,8 @@ javacall_dom_document_create_element_start(javacall_handle handle,
                                            javacall_int32 invocation_id,
                                            void **context,
                                            javacall_const_utf16_string tag_name,
-                                           /* OUT */ javacall_handle* ret_value);
+                                           /* OUT */ javacall_handle* ret_value,
+                                           /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -283,7 +284,8 @@ javacall_dom_document_create_element_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_element_finish(void *context,
-                                            /* OUT */ javacall_handle* ret_value);
+                                            /* OUT */ javacall_handle* ret_value,
+                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -445,7 +447,8 @@ javacall_dom_document_create_cdata_section_start(javacall_handle handle,
                                                  javacall_int32 invocation_id,
                                                  void **context,
                                                  javacall_const_utf16_string data,
-                                                 /* OUT */ javacall_handle* ret_value);
+                                                 /* OUT */ javacall_handle* ret_value,
+                                                 /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -465,7 +468,8 @@ javacall_dom_document_create_cdata_section_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_cdata_section_finish(void *context,
-                                                  /* OUT */ javacall_handle* ret_value);
+                                                  /* OUT */ javacall_handle* ret_value,
+                                                  /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -566,7 +570,8 @@ javacall_dom_document_create_attribute_start(javacall_handle handle,
                                              javacall_int32 invocation_id,
                                              void **context,
                                              javacall_const_utf16_string name,
-                                             /* OUT */ javacall_handle* ret_value);
+                                             /* OUT */ javacall_handle* ret_value,
+                                             /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -592,7 +597,8 @@ javacall_dom_document_create_attribute_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_attribute_finish(void *context,
-                                              /* OUT */ javacall_handle* ret_value);
+                                              /* OUT */ javacall_handle* ret_value,
+                                              /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1598,7 +1604,8 @@ javacall_dom_document_create_event_start(javacall_handle handle,
                                          javacall_int32 invocation_id,
                                          void **context,
                                          javacall_const_utf16_string event_type,
-                                         /* OUT */ javacall_handle* ret_value);
+                                         /* OUT */ javacall_handle* ret_value,
+                                         /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1640,7 +1647,8 @@ javacall_dom_document_create_event_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_document_create_event_finish(void *context,
-                                          /* OUT */ javacall_handle* ret_value);
+                                          /* OUT */ javacall_handle* ret_value,
+                                          /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
