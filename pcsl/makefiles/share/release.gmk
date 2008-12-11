@@ -1,0 +1,76 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Makefile for creating release source bundle. To be included
+# into the top level makefile.
+#
+######################################################################
+
+# Default filter rule for source release :
+# Copy files from specified sub directories that are under svn controlled.
+# Usage: re_src_filter2(src_dir, src_dir_override, output_dir, sub_dir_list)
+define re_src_filter2
+    if [ -d "$(1)/.svn" ]; then \
+        (for i in $(4); do mkdir -p $(3)/$$i; svn export --force -q $(1)/$$i $(3)/$$i; done); \
+            if [ "$(1)" != "$(2)" ]; then \
+                (for i in $(4); do mkdir -p $(3)/$$i; svn export --force -q $(2)/$$i $(3)/$$i; done); \
+            fi; \
+    else \
+        mkdir -p $(3); \
+        (for i in $(4); do cp -rp $(1)/$$i $(3)/$$i; done); \
+            if [ "$(1)" != "$(2)" ]; then \
+                (for i in $(4); do cp -rp $(2)/$$i $(3)/$$i; done); \
+            fi; \
+    fi
+endef
+
+# Create PCSL source in subdir 'pcsl/'
+PCSL_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/pcsl
+
+# Create PCSL source bundle in subdir 'pcsl/'
+source_bundle: PCSL_DIR SOURCE_OUTPUT_DIR
+	@echo " ... PCSL source bundle" $(LOG)
+	@$(call re_src_filter2,$(PCSL_DIR),$(PROJECT_PCSL_DIR),$(PCSL_SOURCE_OUTPUT_DIR),.)
+
+# Verify PCSL_DIR is set
+PCSL_DIR:
+	@if [ -z "$($@)" ]; then \
+	    echo "ERROR: $@ must be set"; \
+	    exit -1; \
+	fi
+
+# Verify source output directory is set
+SOURCE_OUTPUT_DIR:
+	@if [ -z "$($@)" ]; then \
+	    echo "ERROR: $@ must be set"; \
+	    exit -1; \
+	fi; \
+	mkdir -p "$($@)"
+
+# Phonies to avoid accidents.
+#
+.PHONY: source_bundle SOURCE_OUTPUT_DIR
