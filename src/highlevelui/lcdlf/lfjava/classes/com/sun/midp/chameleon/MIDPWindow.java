@@ -688,6 +688,33 @@ public class MIDPWindow extends CWindow {
         return alertLayer.bounds[H];
     }
 
+    /** 
+     * Calculate the width of some default Alert layer wich is still not rendered on the screen
+     * depending on the screen mode and the layers attached to the screen
+     * @param width screen width 
+     * @param scrollBarIsVisible true if the scroll bar is in use for the body layer 
+     * @return width of the paticular body layer
+     */
+    public static int getDefaultAlertWidth(int width, 
+					  boolean scrollBarIsVisible) {
+	int w = AlertSkin.WIDTH == -1 ? (int)(.95 * width) : AlertSkin.WIDTH;
+	// TODO: scroll arrows (bar? ) indicator has to be hidden?
+	if (scrollBarIsVisible) {
+	    w -= ScrollIndSkin.WIDTH;
+	}
+	return w;
+    }
+    
+    /** 
+     * Calculate the height of some default Alert layer wich is still not rendered on the screen 
+     * depending on the screen mode and the layers attached to the screen
+     * @param height screen height
+     * @return height of the paticular body layer
+     */
+    public static int getDefaultAlertHeight(int height) {
+	return AlertSkin.HEIGHT == -1 ? (int)(.75 * height) : AlertSkin.HEIGHT;
+    }
+
     /**
      * Utility method to determine if the given point lies within
      * the bounds of body layer. The point should be in the coordinate
