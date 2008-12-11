@@ -111,6 +111,9 @@ public abstract class RtspConnectionBase extends Thread implements Runnable {
      */
     public boolean sendData(byte[] message) {
         try {
+            // System.out.println("---------- sending RTSP message -------------------------");
+            // System.out.println(new String(message));
+            // System.out.println("---------------------------------------------------------");
             os.write(message);
             os.flush();
             return true;
@@ -126,6 +129,7 @@ public abstract class RtspConnectionBase extends Thread implements Runnable {
     public void run() {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] rtp_packet = null;
 
         int ch0 = 0;
         int ch1 = 0;
@@ -140,33 +144,66 @@ public abstract class RtspConnectionBase extends Thread implements Runnable {
                 ch0 = is.read();
 
                 if (-1 != ch0) {
+                    if (0 == baos.size() && '$' == ch0) {
 
-                    baos.write(ch0);
+                        // this is an interleaved RTP packet
 
-                    if ('\r' == ch1 && '\n' == ch0 &&
-                        '\r' == ch3 && '\n' == ch2) {
+                        int channel = is.read();
+                        int len = is.read() * 256 + is.read();
+                        rtp_packet = new byte[len];
 
-                        // message header is completely received
+                        int total_bytes_read = 0;
+                        int bytes_read;
 
-                        String header = new String(baos.toByteArray());
+                        do {
+                            bytes_read = is.read(rtp_packet, total_bytes_read, len - total_bytes_read);
 
-                        int content_length = getContentLength(header);
+                            // for (int i = 0; i < channel + 1; i++) System.out.print("   ");
+                            // System.out.println("[" + channel + "]: read " + bytes_read + " bytes of " + len);
 
-                        for (int i = 0; i < content_length; i++) {
-
-                            ch0 = is.read();
-
-                            if (-1 != ch0) {
-                                baos.write(ch0);
-                            } else {
-                                connectionIsAlive = false;
-                                break;
+                            if (-1 != bytes_read) {
+                                total_bytes_read += bytes_read;
                             }
-                        }
+                        } while (bytes_read != -1 && total_bytes_read < len);
 
-                        // whole message is completely received
-                        ds.processIncomingMessage(baos.toByteArray());
-                        baos.reset();
+                        if (len == total_bytes_read) {
+                            ds.processRtpPacket(channel, rtp_packet);
+                        } else {
+                            connectionIsAlive = false;
+                        }
+                    } else {
+                        baos.write(ch0);
+
+                        if ('\r' == ch1 && '\n' == ch0 &&
+                            '\r' == ch3 && '\n' == ch2) {
+
+                            // RTSP message header is completely received
+
+                            String header = new String(baos.toByteArray());
+
+                            int content_length = getContentLength(header);
+
+                            for (int i = 0; i < content_length; i++) {
+
+                                ch0 = is.read();
+
+                                if (-1 != ch0) {
+                                    baos.write(ch0);
+                                } else {
+                                    connectionIsAlive = false;
+                                    break;
+                                }
+                            }
+
+                            // whole message is completely received
+
+                            // System.out.println("---------- RTSP incoming message ------------------------");
+                            // System.out.println(new String(baos.toByteArray()));
+                            // System.out.println("---------------------------------------------------------");
+
+                            ds.processIncomingMessage(baos.toByteArray());
+                            baos.reset();
+                        }
                     }
                 } else {
                     connectionIsAlive = false;

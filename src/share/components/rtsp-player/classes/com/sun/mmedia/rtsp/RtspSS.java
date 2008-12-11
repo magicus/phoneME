@@ -24,36 +24,27 @@
 
 package com.sun.mmedia.rtsp;
 
+import java.util.Vector;
 import javax.microedition.media.protocol.SourceStream;
 import javax.microedition.media.protocol.ContentDescriptor;
 import javax.microedition.media.Control;
+import com.sun.j2me.log.Logging;
+import com.sun.j2me.log.LogChannels;
 
 public class RtspSS implements SourceStream {
 
-    private RtpConnection conn;
+    protected static final int PACKET_TIMEOUT = 30000; // ms to wait for packet arrival
+    protected static final int INITIAL_QUEUE_SIZE = 100; // packets
+
     private RtpPacket cur_pkt = null;
     public ContentDescriptor cdescr;
 
-    public RtspSS(RtpConnection conn) {
-        this.conn = conn;
-        conn.setSS(this);
+    public RtspSS() {
     }
 
     void setContentDescriptor(String descr) {
         cdescr = new ContentDescriptor(descr);
         //System.out.println("**** MIME:" + cdescr.getContentType());
-    }
-
-    void packetArrived(RtpPacket pkt) {
-        if (null == cdescr) {
-            RtpPayloadType pt = RtpPayloadType.get(pkt.getPayloadType());
-            if (null != pt) {
-                setContentDescriptor(pt.getDescr());
-            } else {
-                // unsupported content type
-                // conn.stopListening();
-            }
-        }
     }
 
     // ===================== SourceStream methods =============
@@ -79,7 +70,7 @@ public class RtspSS implements SourceStream {
 
         if (null == cur_pkt || 0 == cur_pkt.getPayloadSize()) {
             try {
-                cur_pkt = conn.dequeuePacket();
+                cur_pkt = dequeuePacket();
             } catch (InterruptedException e) {
                 return -1;
             }
@@ -110,4 +101,49 @@ public class RtspSS implements SourceStream {
     public Control[] getControls() {
         return new Control[] { null };
     }
+
+    // ===================== RTP packet queue =================
+
+    Vector pkt_queue = new Vector(INITIAL_QUEUE_SIZE);
+
+    public synchronized boolean enqueuePacket(RtpPacket pkt) {
+        try {
+            pkt_queue.addElement(pkt);
+            if (null == cdescr) {
+                RtpPayloadType pt = RtpPayloadType.get(pkt.getPayloadType());
+                if (null != pt) {
+                    setContentDescriptor(pt.getDescr());
+                } else {
+                    // unsupported content type
+                    // conn.stopListening();
+                }
+            }
+            notify();
+            return true;
+        } catch (OutOfMemoryError e) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                    "OutOfMemoryError in RtpConnection.enqueuePacket()");
+            }
+            return false;
+        }
+    }
+
+    public synchronized RtpPacket dequeuePacket() throws InterruptedException {
+        if (0 == pkt_queue.size()) {
+            wait(PACKET_TIMEOUT);
+        }
+        if (0 != pkt_queue.size()) {
+            RtpPacket p = (RtpPacket)pkt_queue.elementAt(0);
+            pkt_queue.removeElementAt(0);
+            return p;
+        } else {
+            return null;
+        }
+    }
+
+    public synchronized int getNumPackets() {
+        return pkt_queue.size();
+    }
+
 }

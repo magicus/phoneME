@@ -25,16 +25,17 @@
 package com.sun.mmedia.rtsp;
 
 import java.io.IOException;
-import java.util.Vector;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
 public abstract class RtpConnectionBase extends Thread implements Runnable {
 
+    // IMPL_NOTE: using 4096 as MAX_DATAGRAM_SIZE is just a temporary solution.
+    // Theoretically maximum datagram size is around 64000, but we cannot afford
+    // allocating that much memory for each datagram,
+    // so some _dynamic_ mechanizm is necessary.
     protected static final int MAX_DATAGRAM_SIZE = 4096; // bytes
-    protected static final int INITIAL_QUEUE_SIZE = 100; // packets
-    protected static final int PACKET_TIMEOUT = 30000; // ms to wait for packet arrival
 
     public abstract boolean connectionIsAlive();
     public abstract void startListening() throws IOException;
@@ -60,7 +61,7 @@ public abstract class RtpConnectionBase extends Thread implements Runnable {
         while (connectionIsAlive()) {
             RtpPacket pkt = receivePacket();
             if (null != pkt) {
-                if (!enqueuePacket(pkt)) {
+                if (null != ss && !ss.enqueuePacket(pkt)) {
                     stopListening();
                     break;
                 }
@@ -73,39 +74,5 @@ public abstract class RtpConnectionBase extends Thread implements Runnable {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
                 "** RTP thread finished.");
         }
-    }
-
-    Vector pkt_queue = new Vector(INITIAL_QUEUE_SIZE);
-
-    public synchronized boolean enqueuePacket(RtpPacket pkt) {
-        try {
-            pkt_queue.addElement(pkt);
-            if (null != ss) ss.packetArrived(pkt);
-            notify();
-            return true;
-        } catch (OutOfMemoryError e) {
-            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
-                    "OutOfMemoryError in RtpConnection.enqueuePacket()");
-            }
-            return false;
-        }
-    }
-
-    public synchronized RtpPacket dequeuePacket() throws InterruptedException {
-        if (0 == pkt_queue.size()) {
-            wait(PACKET_TIMEOUT);
-        }
-        if (0 != pkt_queue.size()) {
-            RtpPacket p = (RtpPacket)pkt_queue.elementAt(0);
-            pkt_queue.removeElementAt(0);
-            return p;
-        } else {
-            return null;
-        }
-    }
-
-    public synchronized int getNumPackets() {
-        return pkt_queue.size();
     }
 }

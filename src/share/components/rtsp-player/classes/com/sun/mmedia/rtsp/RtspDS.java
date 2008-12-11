@@ -42,8 +42,8 @@ public class RtspDS extends BasicDS {
 
     private static final int RESPONSE_TIMEOUT = 5000;
 
-    private static final int MIN_PORT = 1024;  // inclusive
-    private static final int MAX_PORT = 65536; // exclusive
+    private static final int MIN_UDP_PORT = 1024;  // inclusive
+    private static final int MAX_UDP_PORT = 65536; // exclusive
 
     private static Random rnd = new Random(System.currentTimeMillis());
 
@@ -55,14 +55,19 @@ public class RtspDS extends BasicDS {
     private RtspUrl url = null;
     private int seqNum = 0;
     private String sessionId = null;
-    private String contentBase = null;
     private RtspRange range = null;
 
-    private int sessionTimeout = 60; // in seconds, 60 is default according to the spec
+    // in seconds, 60 is default according to the spec
+    private int sessionTimeout = 60; 
+
+    // select UDP or inbound interleaved TCP for RTP transport
+    // IMPL_NOTE: currently using only TCP, although UDP is also implemented
+    private boolean usingUdp = false; 
 
     private RtspSS[] streams = null;
 
-    private static int nextPort = MIN_PORT;
+    private static int nextUdpPort = MIN_UDP_PORT;
+    private int nextInterleavedChannel = 0;
 
     public RtspUrl getUrl() {
         return url;
@@ -77,6 +82,91 @@ public class RtspDS extends BasicDS {
         }
     }
 
+    private void setupTrack(SdpSessionDescr sdp, int trk) 
+        throws IOException, InterruptedException {
+
+        String mediaControlString = null;
+
+        // used only in UDP mode
+        RtpConnection conn = null; 
+
+        // in UDP mode -- UDP prt number;
+        // in TCP mode -- interleaved channel number
+        int clientPort = allocPort(); 
+
+        if (usingUdp) {
+            int firstCP = clientPort;
+            do {
+                try {
+                    conn = new RtpConnection(clientPort);
+                    conn.startListening();
+                } catch (IOException e) {
+                    clientPort = allocPort();
+                }
+            } while (null == conn && clientPort != firstCP);
+
+            if (null == conn) {
+                throw new IOException("Unable to allocate client UDP port");
+            }
+        }
+
+        SdpMediaDescr md = sdp.getMediaDescription(trk);
+        SdpMediaAttr a_control = md.getMediaAttribute("control");
+        SdpMediaAttr a_rtpmap = md.getMediaAttribute("rtpmap");
+
+        if (null != a_control) {
+            mediaControlString = a_control.getValue();
+        }
+
+        if (null != a_rtpmap) {
+            new RtpPayloadType(a_rtpmap.getValue());
+        }
+
+        RtspOutgoingRequest setupRequest
+            = RtspOutgoingRequest.SETUP(seqNum, url, mediaControlString,
+                                        sessionId, clientPort, usingUdp);
+
+        if (!sendRequest(setupRequest)) {
+            throw new IOException("SETUP request failed");
+        }
+
+        if (null == sessionId) {
+            sessionId = response.getSessionId();
+            Integer timeout = response.getSessionTimeout();
+            if (null != timeout) {
+                sessionTimeout = timeout.intValue();
+            }
+        }
+
+        RtspTransportHeader th = response.getTransportHeader();
+
+        if (usingUdp) {
+            if (th.getClientDataPort() != clientPort) {
+                // Returned value for client data port is different.
+                // An attempt is made to re-allocate UDP port accordingly.
+                if (null != conn) {
+                    conn.stopListening();
+                }
+                clientPort = th.getClientDataPort();
+                conn = new RtpConnection(clientPort);
+                conn.startListening();
+            }
+        }
+
+        streams[trk] = new RtspSS();
+
+        if (usingUdp) {
+            conn.setSS(streams[trk]);
+        }
+
+        if (-1 != md.payload_type) {
+            RtpPayloadType pt = RtpPayloadType.get(md.payload_type);
+            if (null != pt) {
+                streams[trk].setContentDescriptor(pt.getDescr());
+            }
+        }
+    }
+
     public synchronized void connect() throws IOException {
         if (null == connection) {
             try {
@@ -87,8 +177,6 @@ public class RtspDS extends BasicDS {
                 if (!sendRequest(RtspOutgoingRequest.DESCRIBE(seqNum, url))) {
                     throw new IOException("RTSP DESCRIBE request failed");
                 }
-
-                contentBase = response.getContentBase();
 
                 SdpSessionDescr sdp = response.getSdp();
                 if (null == sdp) throw new IOException("no SDP data received");
@@ -104,91 +192,13 @@ public class RtspDS extends BasicDS {
                 }
 
                 int num_tracks = sdp.getMediaDescriptionsCount();
-                if (0 == num_tracks) num_tracks = 1;
+                if (0 == num_tracks) throw new IOException("no media descriptions received");
 
                 streams = new RtspSS[num_tracks];
 
-                String mediaControl;
-                RtspOutgoingRequest setup_request;
-
                 // sessionId is null at this point
-                for (int i = 0; i < num_tracks; i++) {
-
-                    int first_client_data_port = allocPort();
-                    int client_data_port = first_client_data_port;
-
-                    RtpConnection conn = null;
-                    String cdescr = null;
-
-                    do {
-                        try {
-                            conn = new RtpConnection(client_data_port);
-                            conn.startListening();
-                        } catch (IOException e) {
-                            client_data_port = allocPort();
-                        }
-                    } while (null == conn && client_data_port != first_client_data_port);
-
-                    if (null == conn) {
-                        throw new IOException("Unable to allocate client UDP port");
-                    }
-
-                    if (i < sdp.getMediaDescriptionsCount()) {
-                        SdpMediaDescr md = sdp.getMediaDescription(i); 
-                        mediaControl = md.getMediaAttribute("control").getValue();
-                        SdpMediaAttr rtpmap = md.getMediaAttribute("rtpmap");
-                        if (null != rtpmap) {
-                            new RtpPayloadType(rtpmap.getValue());
-                        }
-
-                        if (-1 != md.payload_type) {
-                            RtpPayloadType pt = RtpPayloadType.get(md.payload_type);
-                            if (null != pt) {
-                                cdescr = pt.getDescr();
-                            }
-                        }
-                    } else {
-                        mediaControl = null;
-                    }
-
-                    if (null != contentBase || null != mediaControl) {
-                        setup_request = RtspOutgoingRequest.SETUP(seqNum,
-                                                                   (null == contentBase) ? "" : contentBase,
-                                                                   (null == mediaControl) ? "" : mediaControl,
-                                                                   sessionId, client_data_port);
-                    } else {
-                        setup_request = RtspOutgoingRequest.SETUP(seqNum, url, sessionId, client_data_port);
-                    }
-
-                    if (!sendRequest(setup_request)) {
-                        throw new IOException("SETUP request failed");
-                    }
-
-                    if (0 == i) {
-                        sessionId = response.getSessionId();
-                        Integer timeout = response.getSessionTimeout();
-                        if (null != timeout) {
-                            sessionTimeout = timeout.intValue();
-                        }
-                    }
-
-                    RtspTransportHeader th = response.getTransportHeader();
-
-                    if (th.getClientDataPort() != client_data_port) {
-                        // Returned value for client data port is different.
-                        // An attempt is made to re-allocate UDP port accordingly.
-                        if (null != conn) {
-                            conn.stopListening();
-                        }
-                        client_data_port = th.getClientDataPort();
-                        conn = new RtpConnection(client_data_port);
-                        conn.startListening();
-                    }
-
-                    streams[i] = new RtspSS(conn);
-                    if (null != cdescr) {
-                        streams[i].setContentDescriptor(cdescr);
-                    }
+                for (int trk = 0; trk < num_tracks; trk++) {
+                    setupTrack( sdp, trk );
                 }
 
                 start();
@@ -268,19 +278,35 @@ public class RtspDS extends BasicDS {
 
     //=========================================================================
 
-    private static int allocPort() {
-        int retVal = nextPort;
-
-        nextPort += 2;
-
-        if (nextPort >= MAX_PORT) {
-            nextPort = MIN_PORT;
+    private int allocPort() {
+        if (usingUdp) {
+            int retVal = nextUdpPort;
+            nextUdpPort += 2;
+            if (nextUdpPort >= MAX_UDP_PORT) {
+                nextUdpPort = MIN_UDP_PORT;
+            }
+            return retVal;
+        } else {
+            int retVal = nextInterleavedChannel;
+            nextInterleavedChannel += 2;
+            return retVal;
         }
-
-        return retVal;
     }
 
     //=========================================================================
+
+    /** 
+     * This method is called by RtspConnection when RTP/RTCP packet is received.
+     * Used only in TCP mode (usingUdp=false).
+     */
+    protected void processRtpPacket(int channel, byte[] pkt) {
+        // Only RTP packets (they arrive on even channels) are processed.
+        // RTCP packets (on odd channels) are discarded for now.
+        if (0 == channel % 2) {
+            int n_stream = channel / 2;
+            streams[n_stream].enqueuePacket(new RtpPacket(pkt,pkt.length));
+        }
+    }
 
     /** 
      * This method is called by RtspConnection when message is received
