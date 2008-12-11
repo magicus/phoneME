@@ -111,9 +111,9 @@ public abstract class RtspConnectionBase extends Thread implements Runnable {
      */
     public boolean sendData(byte[] message) {
         try {
-            //System.out.println("---------- sending RTSP message -------------------------");
-            //System.out.println(new String(message));
-            //System.out.println("---------------------------------------------------------");
+            // System.out.println("---------- sending RTSP message -------------------------");
+            // System.out.println(new String(message));
+            // System.out.println("---------------------------------------------------------");
             os.write(message);
             os.flush();
             return true;
@@ -151,10 +151,22 @@ public abstract class RtspConnectionBase extends Thread implements Runnable {
                         int channel = is.read();
                         int len = is.read() * 256 + is.read();
                         rtp_packet = new byte[len];
-                        int bytes_read = is.read(rtp_packet);
-                        if (len == bytes_read) {
-                            //for (int i = 0; i < channel + 1; i++) System.out.print("   ");
-                            //System.out.println("[" + channel + "]: " + len + " bytes");
+
+                        int total_bytes_read = 0;
+                        int bytes_read;
+
+                        do {
+                            bytes_read = is.read(rtp_packet, total_bytes_read, len - total_bytes_read);
+
+                            // for (int i = 0; i < channel + 1; i++) System.out.print("   ");
+                            // System.out.println("[" + channel + "]: read " + bytes_read + " bytes of " + len);
+
+                            if (-1 != bytes_read) {
+                                total_bytes_read += bytes_read;
+                            }
+                        } while (bytes_read != -1 && total_bytes_read < len);
+
+                        if (len == total_bytes_read) {
                             ds.processRtpPacket(channel, rtp_packet);
                         } else {
                             connectionIsAlive = false;
@@ -184,6 +196,11 @@ public abstract class RtspConnectionBase extends Thread implements Runnable {
                             }
 
                             // whole message is completely received
+
+                            // System.out.println("---------- RTSP incoming message ------------------------");
+                            // System.out.println(new String(baos.toByteArray()));
+                            // System.out.println("---------------------------------------------------------");
+
                             ds.processIncomingMessage(baos.toByteArray());
                             baos.reset();
                         }

@@ -50,10 +50,6 @@ public class RtspIncomingMessage {
         String strType = new String(bytes, 0, n);
         type = new RtspMessageType(strType);
 
-        //System.out.println("---------- RTSP incoming message ------------------------");
-        //System.out.println(new String(bytes));
-        //System.out.println("---------------------------------------------------------");
-
         int offs = 0;
 
         while (offs < bytes.length) {
