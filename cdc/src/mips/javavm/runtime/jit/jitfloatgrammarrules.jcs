@@ -1,0 +1,200 @@
+//
+// Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
+//
+// @(#)jitfloatgrammarrules.jcs	1.9 06/10/10
+//
+//
+// Optional floating-point grammar rules for
+// RISC processors having floating-point hardware.
+// 
+// Unfortunately, these operations are not done uniformly
+// between processors, so we must place them in processor-specific
+// files.
+
+//
+// To move values between float and int registers, 64-bit cases must
+// move through the temp area because there are no such move
+// instructions.
+//
+
+%{
+static void
+moveIntToFPRegs(
+    CVMJITCompilationContext* con,
+    CVMJITIRNodePtr thisNode,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* src = popResource(con);
+    CVMRMResource* dest;
+
+    CVMassert( (src->size == 2)
+		||  (CVMJITgetOpcode(thisNode) == 
+		    (CVMJIT_CONST_JAVA_NUMERIC32 << CVMJIT_SHIFT_OPCODE))
+		|| (CVMJITgetTypeTag(thisNode) == CVM_TYPEID_FLOAT)
+		|| (CVMJITgetTypeTag(thisNode) == CVMJIT_TYPEID_32BITS));
+
+    if (src->size == 1) {
+        dest = CVMRMgetResource(CVMRM_FP_REGS(con), target, avoid, 1);
+        CVMRMpinResource(CVMRM_INT_REGS(con), src,
+                         CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+        CVMCPUemitUnaryFP(con, CVMMIPS_MTC1_OPCODE, 
+                          CVMRMgetRegisterNumber(dest),
+                          CVMRMgetRegisterNumber(src));
+    } else {
+        dest = CVMRMcloneResource(CVMRM_INT_REGS(con), src,
+			      CVMRM_FP_REGS(con), target, avoid);
+    }
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), src);
+    /*
+     * unpin without occupying
+     * to occupy would cause big trouble if the thing is an
+     * IDENT.
+     */
+    CVMRMoccupyAndUnpinResource(CVMRM_FP_REGS(con), dest, NULL);
+    pushResource(con, dest);
+}
+
+static void
+moveFPToIntRegs(
+    CVMJITCompilationContext* con,
+    CVMJITIRNodePtr thisNode,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* src = popResource(con);
+    CVMRMResource* dest;
+
+    CVMassert( (src->size == 2)
+		||  (CVMJITgetOpcode(thisNode) == 
+		    (CVMJIT_CONST_JAVA_NUMERIC32 << CVMJIT_SHIFT_OPCODE))
+		|| (CVMJITgetTypeTag(thisNode) == CVM_TYPEID_FLOAT));
+
+    if (src->size == 1) {
+        dest = CVMRMgetResource(CVMRM_INT_REGS(con), target, avoid, 1);
+        CVMRMpinResource(CVMRM_FP_REGS(con), src, 
+                         CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
+        CVMCPUemitUnaryFP(con, CVMMIPS_MFC1_OPCODE,
+                          CVMRMgetRegisterNumber(dest),
+                          CVMRMgetRegisterNumber(src));
+    } else {
+        dest = CVMRMcloneResource(CVMRM_FP_REGS(con), src, 
+                                  CVMRM_INT_REGS(con),
+			          target, avoid);
+    }
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), src);
+    /*
+     * unpin without occupying
+     * to occupy would cause big trouble if the thing is an
+     * FIDENT.
+     */
+    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, NULL);
+    pushResource(con, dest);
+}
+
+static void
+mipsIntToFloat(
+    CVMJITCompilationContext* con,
+    int opcode,
+    CVMJITIRNodePtr thisNode,
+    int size,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* src = popResource(con);
+    CVMRMResource* dest = CVMRMgetResource(CVMRM_FP_REGS(con),
+					   target, avoid, size);
+    CVMRMpinResource(CVMRM_INT_REGS(con), src,
+		     CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+    CVMCPUemitUnaryFP(con, opcode, CVMRMgetRegisterNumber(dest),
+        CVMRMgetRegisterNumber(src));
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), src);
+    CVMRMoccupyAndUnpinResource(CVMRM_FP_REGS(con), dest, thisNode);
+    pushResource(con, dest);
+}
+
+#if 0 /* not currently used */
+static void
+mipsFloatToInt(
+    CVMJITCompilationContext* con,
+    int opcode,
+    CVMJITIRNodePtr thisNode,
+    int size,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* src = popResource(con);
+    CVMRMResource* dest = CVMRMgetResource(CVMRM_INT_REGS(con),
+					   target, avoid, size);
+    CVMRMpinResource(CVMRM_FP_REGS(con), src,
+		     CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
+    CVMCPUemitUnaryFP(con, opcode, CVMRMgetRegisterNumber(dest),
+        CVMRMgetRegisterNumber(src));
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), src);
+    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, thisNode);
+    pushResource(con, dest);
+}
+#endif
+%}
+
+reg32: freg32 : 20  : : : : {
+	moveFPToIntRegs(con, $$, GET_REGISTER_GOALS);
+    };
+
+freg32: reg32 : 20  : : : : {
+	moveIntToFPRegs(con, $$, GET_FLOAT_REGISTER_GOALS);
+    };
+
+reg64: freg64 : 20  : : : : {
+	moveFPToIntRegs(con, $$, GET_REGISTER_GOALS);
+    };
+
+freg64: reg64 : 20  : : : : {
+	moveIntToFPRegs(con, $$, GET_FLOAT_REGISTER_GOALS);
+    };
+
+// Purpose: valueFloat = (float)valueInt.
+freg32: I2F reg32 : 10 : : : :
+    mipsIntToFloat(con,  CVMMIPS_I2F_OPCODE, $$, 1, GET_FLOAT_REGISTER_GOALS);
+
+// Purpose: valueDouble = (double)valueInt.
+freg64: I2D reg32 : 10 : : : :
+    mipsIntToFloat(con,  CVMMIPS_I2D_OPCODE, $$, 2, GET_FLOAT_REGISTER_GOALS);
+
+// Purpose: valueDouble = (double)valueFloat.
+freg64: F2D freg32 : 10 : : : :
+    floatUnaryOp(con,  CVMMIPS_F2D_OPCODE, $$, 2, GET_FLOAT_REGISTER_GOALS);
+
+// Purpose: valueFloat = (float)valueDouble.
+freg32: D2F freg64 : 10 : : : :
+    floatUnaryOp(con,  CVMMIPS_D2F_OPCODE, $$, 1, GET_FLOAT_REGISTER_GOALS);
+
+// Purpose: valueInt = (int)valueFloat.
+// WARNING: The F2I instruction (trunc.w.s) is not java compliant.
+//reg32: F2I freg32 : 10 : : : :
+//    mipsFloatToInt(con,  CVMMIPS_F2I_OPCODE, $$, 1, GET_REGISTER_GOALS);
+
+// Purpose: valueInt = (int)valueDouble.
+// WARNING: The D2I instruction (trunc.w.d) is not java compilant.
+//reg32: D2I freg64 : 10 : : : :
+//    mipsFloatToInt(con,  CVMMIPS_D2I_OPCODE, $$, 1, GET_REGISTER_GOALS);
