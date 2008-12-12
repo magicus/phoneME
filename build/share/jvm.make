@@ -1896,7 +1896,7 @@ endif
 
 ifeq ($(NO_DEBUG_SYMBOLS), true)
     DEBUG_SYMBOLS_FLAGS     =
-    CPP_OPT_FLAGS_debug     = -O2 $(GCC_WUNINITIALIZED) -fexpensive-optimizations
+    CPP_OPT_FLAGS_debug     = -O0 $(GCC_WUNINITIALIZED) -fexpensive-optimizations
     ifneq ($(PROFILING), true)
     CPP_OPT_FLAGS_debug    += -fomit-frame-pointer
     endif
@@ -1911,9 +1911,53 @@ ifeq ($(PRODUCT_DEBUG), true)
 CPP_OPT_FLAGS_release   += -g
 CPP_OPT_FLAGS_product   += -g
 else
-CPP_OPT_FLAGS_release   = -O2 $(GCC_WUNINITIALIZED)
-CPP_OPT_FLAGS_product   = -O2 $(GCC_WUNINITIALIZED) \
-                          -fexpensive-optimizations
+CPP_OPT_FLAGS_release   = -O0 $(GCC_WUNINITIALIZED)
+CPP_OPT_FLAGS_product   = -O0 $(GCC_WUNINITIALIZED) -fexpensive-optimizations \
+-fdefer-pop \
+-fguess-branch-probability \
+-fcprop-registers \
+-fif-conversion \
+-fif-conversion2 \
+-ftree-ccp \
+-ftree-dce \
+-ftree-dominator-opts \
+-ftree-dse \
+-ftree-ter \
+-ftree-lrs \
+-ftree-sra \
+-ftree-copyrename \
+-ftree-fre \
+-ftree-ch \
+-funit-at-a-time \
+-fmerge-constants \
+-fomit-frame-pointer \
+-fthread-jumps \
+-fcrossjumping \
+-foptimize-sibling-calls \
+-fcse-follow-jumps \
+-fcse-skip-blocks \
+-fgcse \
+-fgcse-lm \
+-fexpensive-optimizations \
+-frerun-cse-after-loop \
+-fcaller-saves \
+-fregmove \
+-fstrict-aliasing \
+-fstrict-overflow \
+-fdelete-null-pointer-checks \
+-freorder-blocks \
+-freorder-functions \
+-falign-functions \
+-falign-jumps \
+-falign-loops \
+-falign-labels \
+-ftree-vrp \
+-ftree-pre \
+-fpeephole2 \
+-fschedule-insns2 \
+-fsched-interblock \
+-fsched-spec 
+
   ifneq ($(PROFILING), true)
   CPP_OPT_FLAGS_product+= -fomit-frame-pointer
   endif
