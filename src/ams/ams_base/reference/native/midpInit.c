@@ -324,3 +324,20 @@ void midpFinalize() {
 
     initLevel = NO_INIT;
 }
+
+jboolean JVMSPI_IsPrecompilationTarget(const char * class_name, 
+                                       int class_name_length,
+                                       const char * method_name, 
+                                       int method_name_length,
+                                       const char * descriptor, 
+                                       int descriptor_length,
+                                       int code_size) {
+  (void)class_name;
+  (void)class_name_length;
+  (void)method_name;
+  (void)method_name_length;
+  (void)descriptor;
+  (void)descriptor_length;
+  (void)code_size;
+  return KNI_TRUE;
+}
