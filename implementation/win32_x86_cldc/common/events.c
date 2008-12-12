@@ -45,7 +45,7 @@ typedef struct EventMessage_ {
     struct EventMessage_* next;
     unsigned char* data;
     int dataLen;
-}EventMessage;
+} EventMessage;
 
 
 /*
@@ -259,7 +259,17 @@ static javacall_bool checkForEvents(long timeout) {
     if (timeout > 0) {
         before = (unsigned long)GetTickCount();
     } else if (-1 == timeout) {
+#if !ENABLE_NATIVE_AMS
         forever = JAVACALL_TRUE;
+#else
+        /*
+         * Due to peculiarities of NAMS API implementation in MIDP,
+         * checkForEvents() MUST return the control after some time
+         * even there were no events received.
+         */
+        timeout = 100;
+        before = (unsigned long)GetTickCount();
+#endif
     }
 
     do {
@@ -324,7 +334,6 @@ static javacall_bool checkForEvents(long timeout) {
 /**
  * Waits for an incoming event message and copies it to user supplied
  * data buffer
- * @param waitForever indicate if the function should block forever
  * @param timeTowaitInMillisec max number of seconds to wait
  *              if waitForever is false
  * @param binaryBuffer user-supplied buffer to copy event to
@@ -351,20 +360,18 @@ javacall_result javacall_event_receive(
                             /*OUT*/ int*            outEventLen)
 {
     javacall_bool ok;
-    int totalRead=0;
+    int totalRead = 0;
 
     if (!event_initialized) {
         javacall_events_init();
     }
 
-    ok=(binaryBuffer!=NULL) && (binaryBufferMaxLen>0);
+    ok = (binaryBuffer!=NULL) && (binaryBufferMaxLen>0);
 
     while (ok) {
+        ok = WaitForSingleObject(events_mutex, 500)==WAIT_OBJECT_0;
         if (ok) {
-            ok = WaitForSingleObject(events_mutex, 500)==WAIT_OBJECT_0;
-        }
-        if (ok) {
-            totalRead = dequeueEventMessage(binaryBuffer,binaryBufferMaxLen);
+            totalRead = dequeueEventMessage(binaryBuffer, binaryBufferMaxLen);
             if (head == NULL) {
                 ResetEvent(events_handle);
             }
@@ -377,11 +384,12 @@ javacall_result javacall_event_receive(
         }
     }
     
-    ok= ok && (totalRead!=0);
+    ok = ok && (totalRead!=0);
     if (outEventLen!=NULL) {
         *outEventLen = ok ? totalRead : 0;
     }
-    return ok?JAVACALL_OK:JAVACALL_FAIL;
+
+    return ok ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
  /**
