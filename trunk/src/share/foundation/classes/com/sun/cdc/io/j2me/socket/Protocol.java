@@ -313,10 +313,14 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
                        socket.setSoLinger(value != 0, value);
                        break;				
           case SocketConnection.RCVBUF: 
-                       socket.setReceiveBufferSize(value);
+	               if (value > 0) {
+			   socket.setReceiveBufferSize(value);
+		       }
                        break;				
           case SocketConnection.SNDBUF: 
-                       socket.setSendBufferSize(value);
+	              if (value > 0) {
+			  socket.setSendBufferSize(value);
+		      }
                        break;				
           default:
               throw new IllegalArgumentException("Option identifier is out of range");
