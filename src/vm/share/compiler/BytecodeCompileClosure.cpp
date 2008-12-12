@@ -2311,15 +2311,19 @@ bool BytecodeCompileClosure::code_eliminate_prologue(Bytecodes::Code code) {
     //consume the items of the operation stack
     //since we only target the byte code related to
     //memory acces and arithmetic
-    if (Bytecodes::can_decrease_stack(code) && 
-        is_following_codes_can_be_eliminated(bci_after_elimination)) {
+    if (!Bytecodes::can_decrease_stack(code)) {
+      // If the bytecode does not consume stack items, we should start a new snippet
+      // to guarantee that each calculates only one value
+      VirtualStackFrame::abort_tracking_of_current_snippet();
+      if (is_following_codes_can_be_eliminated(bci_after_elimination)) {
   
-      GUARANTEE(bci_after_elimination != not_found, "cse match error")
-      //next bci to be compiled, cse will skip some byte code here.
-      set_default_next_bytecode_index(bci_after_elimination);
-      compiler()->set_bci(next_bytecode_index());
-      //skip the compilation of current bci
-      return true;
+	GUARANTEE(bci_after_elimination != not_found, "cse match error")
+	  //next bci to be compiled, cse will skip some byte code here.
+	  set_default_next_bytecode_index(bci_after_elimination);
+	compiler()->set_bci(next_bytecode_index());
+	//skip the compilation of current bci
+	return true;
+      }
     }
     
     method()->wipe_out_dirty_recorded_snippet(compiler()->bci(), code);
