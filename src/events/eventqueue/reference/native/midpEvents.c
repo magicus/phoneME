@@ -338,17 +338,13 @@ midp_resetEvents(void) {
 #else
     resetEventQueue(0);
 #endif
-
 }
 
 /**
  * Helper function used by StoreMIDPEventInVmThread
  * Enqueues an event to be processed by the
  * Java event thread for a given Isolate
-
-
  */
-
 static void StoreMIDPEventInVmThreadImp(MidpEvent event, int isolateId) {
     EventQueue* pEventQueue;
     JVMSPI_ThreadID thread;
@@ -398,7 +394,6 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, int isolateId) {
 
     midp_unlockEventQueue();
 }
-
 
 /**
  * Enqueues an event to be processed by the Java event thread for a given
@@ -669,7 +664,6 @@ Java_com_sun_midp_events_EventQueue_sendShutdownEvent(void) {
 
     KNI_ReturnVoid();
 }
-
 
 /**
  * Clears native event queue for a given isolate - 

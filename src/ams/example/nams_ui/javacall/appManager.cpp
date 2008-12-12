@@ -698,7 +698,7 @@ static void CleanupTreeView(HWND hwndTV, WNDPROC DefWndProc) {
 }
 
 /**
- * Frees resources allocated for tree nodes.
+ * Creates a tree showing the installed midlet suites.
  *
  * @param hWndParent handle to the parent window of the tree view control
  *
@@ -1940,6 +1940,13 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 }
             break;
         }
+        break;
+    }
+
+    case WM_NOTIFY_SUITE_INSTALLED: {
+        TreeView_DeleteAllItems(g_hMidletTreeView);
+        InitMidletTreeViewItems(g_hMidletTreeView);
+        ShowMidletTreeView(NULL, TRUE);
         break;
     }
 
