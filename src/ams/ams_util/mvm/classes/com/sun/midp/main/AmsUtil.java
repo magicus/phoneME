@@ -264,10 +264,11 @@ public class AmsUtil {
             classpath[0] = "";
         }
 
+        Vector cpExtElements = new Vector();
+        
         String isolateClassPath = System.getProperty("classpathext");
-        String[] classpathext = null;
         if (isolateClassPath != null) {
-            classpathext = new String[] {isolateClassPath};
+            splitClassPath(cpExtElements, isolateClassPath);
         }
 
         /*
@@ -315,12 +316,6 @@ public class AmsUtil {
              *            + 1 is for System.getProperty("classpathext").
              */
             int n = 0;
-            if (isolateClassPath != null) {
-                classpathext = new String[ciVector.size() + 1];
-                classpathext[n++] = isolateClassPath;
-            } else {
-                classpathext = new String[ciVector.size()];
-            }
 
             try {
                 for (int i = 0; i < ciVector.size(); i++) {
@@ -331,7 +326,8 @@ public class AmsUtil {
                                     nextComponent.getComponentId());
                     if (componentPath != null) {
                         for (int j = 0; j < componentPath.length; j++) {
-                            classpathext[n++] = componentPath[j];
+                            cpExtElements.addElement(componentPath[j]);
+                            ++n;
                         }
                     }
                 }
@@ -340,12 +336,7 @@ public class AmsUtil {
                  * if something is wrong with a dynamic component, just
                  * don't use the components, this error is not fatal
                  */
-                if (isolateClassPath != null) {
-                    classpathext = new String[1];
-                    classpathext[0] = isolateClassPath;
-                } else {
-                    classpathext = null;
-                }
+                cpExtElements.setSize(cpExtElements.size() - n);
 
                 if (Logging.REPORT_LEVEL <= Logging.ERROR) {
                     e.printStackTrace();
@@ -363,6 +354,9 @@ public class AmsUtil {
                 return null;
             }
 
+            final String[] classpathext = new String[cpExtElements.size()];
+            cpExtElements.copyInto(classpathext);
+            
             isolate =
                 new Isolate("com.sun.midp.main.AppIsolateMIDletSuiteLoader",
                     args, classpath, classpathext);
@@ -541,5 +535,62 @@ public class AmsUtil {
         }
         
         return trustedToken;
+    }
+    
+    /**
+     * Splits a classpath into elements using the <code>path.separator</code>
+     * system property.
+     * 
+     * @param elements the <code>Vector</code> to which to add the classpath 
+     *      elements
+     * @param classpath the classpath to split
+     */                             
+    private static void splitClassPath(final Vector elements, 
+                                       final String classpath) {
+        String separator = System.getProperty("path.separator");
+        if (separator == null) {
+            // defaults to ';'
+            separator = ";";
+
+            Logging.report(Logging.ERROR, LogChannels.LC_AMS,
+                           "No \"path.separator\" defined! Using \"" 
+                               + separator + "\"!");
+        }
+        
+        int index = classpath.indexOf(separator);
+        int offset = 0;
+        while (index != -1) {
+            addClassPathElement(elements, classpath, offset, index);
+            
+            offset = index + separator.length();
+            index = classpath.indexOf(separator, offset);            
+        }
+        
+        addClassPathElement(elements, classpath, offset, classpath.length());
+    }
+    
+    /**
+     * Adds a single classpath element into the provided <code>Vector</code>.
+     * If the classpath element is an empty string it is not added.     
+     * 
+     * @param elements the <code>Vector</code> to which to add the classpath 
+     *      element
+     * @param classpath the classpath from which to "extract" the element
+     * @param beginIndex the begin index of the element in 
+     *      <code>classpath</code>
+     * @param endIndex the end index of the element in <code>classpath</code>
+     */     
+    private static void addClassPathElement(final Vector elements,
+                                            final String classpath,
+                                            final int beginIndex,
+                                            final int endIndex) {
+        if (beginIndex == endIndex) {
+            return;
+        }
+        
+        final String element = classpath.substring(beginIndex, endIndex).trim();
+        if (element.length() > 0) {
+            elements.addElement(element);
+        }
     }
 }
