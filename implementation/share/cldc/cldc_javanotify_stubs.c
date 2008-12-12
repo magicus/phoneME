@@ -104,7 +104,7 @@ void javanotify_start(void) {}
 void javanotify_start_java_with_arbitrary_args(int argc, char* argv[]) {}
 
 
-#if ENABLE_NATIVE_AMS_UI
+/* The 4 functions below are only called from implementation\win32\midp\main.c */ 
 
 void javanotify_start_i3test(char* arg1, char* arg2) {}
 
@@ -117,6 +117,9 @@ void javanotify_install_content(const char * httpUrl,
                                 unsigned int descFilePathLen,
                                 javacall_bool isJadFile,
                                 javacall_bool isSilent) {}
+
+
+#if ENABLE_NATIVE_AMS_UI
 
 javacall_result
 javanotify_ams_install_suite(javacall_app_id appId,
