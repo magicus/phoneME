@@ -165,29 +165,19 @@ public:                                                             \
 private:                                                            \
   jlong _start_time;                                                \
   jint  _start_offset;                                              \
-  int   _level;                                                     \
 };
 
 FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_WRAPPER_CLASS)
 
 #undef DEFINE_COUNTER_WRAPPER_CLASS
 
-#define DEFINE_COUNTER_LEVEL(name, counter_level) \
-const int name ## _level = counter_level;
-
+#define DEFINE_COUNTER_LEVEL(name, counter_level)
 FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_LEVEL)
-
 #undef DEFINE_COUNTER_LEVEL
 
-#define COMPILER_PERFORMANCE_COUNTER_ACTIVE() (comp_perf_counts.level > 0)
-
-#define COMPILER_PERFORMANCE_COUNTER_START(name)                    \
-    GUARANTEE(comp_perf_counts.level <= name ## _level, "Sanity");  \
-    int _level = comp_perf_counts.level;                            \
-    comp_perf_counts.level = name ## _level + 1;                    \
-                                                                    \
-    jint  __start_offset = CodeGenerator::current()->code_size();   \                                        \
-    jlong __start_time = Os::elapsed_counter()
+#define COMPILER_PERFORMANCE_COUNTER_START(name)                     \
+  const jint  __start_offset = CodeGenerator::current()->code_size();\
+  const jlong __start_time = Os::elapsed_counter()
 
 #define COMPILER_PERFORMANCE_COUNTER_END(name)                      \
     comp_perf_counts.name ## _time +=                               \
@@ -208,7 +198,6 @@ FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_LEVEL)
   counter_ ## name __counter_ ## name;
 
 #else
-#define COMPILER_PERFORMANCE_COUNTER_ACTIVE() false
 
 #define COMPILER_PERFORMANCE_COUNTER_START()
 #define COMPILER_PERFORMANCE_COUNTER_END(name)
