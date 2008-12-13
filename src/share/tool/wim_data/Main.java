@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -169,7 +169,7 @@ public class Main {
         src.print("/*\n" +
                   " *   \n" +
                   " *\n" +
-                  " * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.\n" +
+                  " * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.\n" +
                   " * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER\n" +  
                   " *\n */\n\npackage com.sun.satsa.pkiapplet;\n\n/**\n" +
                   " * This class contains WIM PINs, private keys and file " +
