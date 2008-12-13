@@ -62,6 +62,7 @@ extern "C" {
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
@@ -91,6 +92,7 @@ javacall_dom_attr_get_name_start(javacall_handle handle,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -136,6 +138,7 @@ javacall_dom_attr_get_name_finish(void *context,
  * @param ret_value <code>true</code> if this attribute was explicitly specified, otherwise <code>false</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -179,6 +182,7 @@ javacall_dom_attr_get_specified_start(javacall_handle handle,
  * @param ret_value <code>true</code> if this attribute was explicitly specified, otherwise <code>false</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_attr_get_specified_finish function to complete the 
  *             operation,
@@ -216,6 +220,7 @@ javacall_dom_attr_get_specified_finish(void *context,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
@@ -256,6 +261,7 @@ javacall_dom_attr_get_value_start(javacall_handle handle,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -285,13 +291,20 @@ javacall_dom_attr_get_value_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param value a String containing the value of this attribute
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
- *             filled. Exception code 0 stands for an error in native code,
- *             exception code >0 stands for exception thrown by native engine.
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_attr_set_value_finish function to complete the 
  *             operation,
@@ -317,11 +330,18 @@ javacall_dom_attr_set_value_start(javacall_handle handle,
  * value on setting.
  * 
  * @param context The context saved during asynchronous operation.
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
- *             filled. Exception code 0 stands for an error in native code,
- *             exception code >0 stands for exception thrown by native engine.
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_attr_set_value_finish function to complete the 
  *             operation,
@@ -344,6 +364,7 @@ javacall_dom_attr_set_value_finish(void *context,
  *   the <code>Element</code> node this attribute is attached to, or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -367,6 +388,7 @@ javacall_dom_attr_get_owner_element_start(javacall_handle handle,
  *   the <code>Element</code> node this attribute is attached to, or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_attr_get_owner_element_finish function to complete the 
  *             operation,
@@ -400,6 +422,7 @@ javacall_dom_attr_get_owner_element_finish(void *context,
  * @param ret_value <code>true</code> if the attribute is of type ID, otherwise <code>false</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -434,6 +457,7 @@ javacall_dom_attr_is_id_start(javacall_handle handle,
  * @param ret_value <code>true</code> if the attribute is of type ID, otherwise <code>false</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_attr_is_id_finish function to complete the 
  *             operation,

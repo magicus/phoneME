@@ -55,6 +55,7 @@ extern "C" {
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -75,6 +76,7 @@ javacall_dom_progressevent_get_length_computable_start(javacall_handle handle,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_progressevent_get_length_computable_finish function to complete the 
  *             operation,
@@ -99,6 +101,7 @@ javacall_dom_progressevent_get_length_computable_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -124,6 +127,7 @@ javacall_dom_progressevent_get_loaded_start(javacall_handle handle,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_progressevent_get_loaded_finish function to complete the 
  *             operation,
@@ -145,6 +149,7 @@ javacall_dom_progressevent_get_loaded_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -167,6 +172,7 @@ javacall_dom_progressevent_get_total_start(javacall_handle handle,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_progressevent_get_total_finish function to complete the 
  *             operation,
@@ -224,6 +230,7 @@ javacall_dom_progressevent_get_total_finish(void *context,
  *   and the value of <code>total</code> to zero. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -262,6 +269,7 @@ javacall_dom_progressevent_init_progress_event_start(javacall_handle handle,
  *   and the value of <code>total</code> to zero. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_progressevent_init_progress_event_finish function to complete the 
  *             operation,
@@ -327,6 +335,7 @@ javacall_dom_progressevent_init_progress_event_finish(void *context);
  *
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -369,6 +378,7 @@ javacall_dom_progressevent_init_progress_event_ns_start(javacall_handle handle,
  *
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_progressevent_init_progress_event_ns_finish function to complete the 
  *             operation,

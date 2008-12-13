@@ -73,6 +73,7 @@ extern "C" {
  *   specified version, <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -102,6 +103,7 @@ javacall_dom_domimplementation_has_feature_start(javacall_handle handle,
  *   specified version, <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_domimplementation_has_feature_finish function to complete the 
  *             operation,
@@ -132,15 +134,20 @@ javacall_dom_domimplementation_has_feature_finish(void *context,
  *   <code>Node.ownerDocument</code> set to <code>NULL</code>.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
  *                            JAVACALL_DOM_NAMESPACE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
- *             filled. Exception code 0 stands for an error in native code,
- *             exception code >0 stands for exception thrown by native engine.
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_INVALID_CHARACTER_ERR
+ *                 JAVACALL_DOM_NAMESPACE_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_domimplementation_create_document_type_finish function to complete the 
  *             operation,
@@ -170,13 +177,18 @@ javacall_dom_domimplementation_create_document_type_start(javacall_handle handle
  *   <code>Node.ownerDocument</code> set to <code>NULL</code>.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
  *                            JAVACALL_DOM_NAMESPACE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
- *             filled. Exception code 0 stands for an error in native code,
- *             exception code >0 stands for exception thrown by native engine.
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_INVALID_CHARACTER_ERR
+ *                 JAVACALL_DOM_NAMESPACE_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_domimplementation_create_document_type_finish function to complete the 
  *             operation,
@@ -208,6 +220,7 @@ javacall_dom_domimplementation_create_document_type_finish(void *context,
  *   a new <code>Document</code> object.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
  *                            JAVACALL_DOM_NAMESPACE_ERR
  *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
@@ -215,9 +228,14 @@ javacall_dom_domimplementation_create_document_type_finish(void *context,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
- *             filled. Exception code 0 stands for an error in native code,
- *             exception code >0 stands for exception thrown by native engine.
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_INVALID_CHARACTER_ERR
+ *                 JAVACALL_DOM_NAMESPACE_ERR
+ *                 JAVACALL_DOM_WRONG_DOCUMENT_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_domimplementation_create_document_finish function to complete the 
  *             operation,
@@ -246,14 +264,20 @@ javacall_dom_domimplementation_create_document_start(javacall_handle handle,
  *   a new <code>Document</code> object.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
  *                            JAVACALL_DOM_NAMESPACE_ERR
  *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
- *             filled. Exception code 0 stands for an error in native code,
- *             exception code >0 stands for exception thrown by native engine.
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_INVALID_CHARACTER_ERR
+ *                 JAVACALL_DOM_NAMESPACE_ERR
+ *                 JAVACALL_DOM_WRONG_DOCUMENT_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_domimplementation_create_document_finish function to complete the 
  *             operation,
@@ -302,6 +326,7 @@ javacall_dom_domimplementation_create_document_finish(void *context,
  *   <code>getFeature</code>, etc. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -348,6 +373,7 @@ javacall_dom_domimplementation_get_feature_start(javacall_handle handle,
  *   <code>getFeature</code>, etc. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_domimplementation_get_feature_finish function to complete the 
  *             operation,

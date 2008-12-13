@@ -56,6 +56,7 @@ extern "C" {
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -77,6 +78,7 @@ javacall_dom_htmlobjectelement_get_content_document_start(javacall_handle handle
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_htmlobjectelement_get_content_document_finish function to complete the 
  *             operation,

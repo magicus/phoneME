@@ -63,6 +63,7 @@ extern "C" {
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
@@ -93,6 +94,7 @@ javacall_dom_processinginstruction_get_target_start(javacall_handle handle,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -123,6 +125,7 @@ javacall_dom_processinginstruction_get_target_finish(void *context,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
@@ -153,6 +156,7 @@ javacall_dom_processinginstruction_get_data_start(javacall_handle handle,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -176,13 +180,20 @@ javacall_dom_processinginstruction_get_data_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param data character data to add to the node, may not be NULL
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
- *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
- *             filled. Exception code 0 stands for an error in native code,
- *             exception code >0 stands for exception thrown by native engine.
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_processinginstruction_set_data_finish function to complete the 
  *             operation,
@@ -202,11 +213,18 @@ javacall_dom_processinginstruction_set_data_start(javacall_handle handle,
  * preceding the <code>?&gt;</code>.
  * 
  * @param context The context saved during asynchronous operation.
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error or exception occured; in this case exception_code has to be 
- *             filled. Exception code 0 stands for an error in native code,
- *             exception code >0 stands for exception thrown by native engine.
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_processinginstruction_set_data_finish function to complete the 
  *             operation,
