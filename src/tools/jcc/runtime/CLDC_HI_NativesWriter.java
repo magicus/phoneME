@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -477,7 +477,7 @@ public class CLDC_HI_NativesWriter
         out.println();
         out.println("/*");
         out.println(" *");
-        out.println(" * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.");
+        out.println(" * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.");
         out.println(" * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");
         out.println(" * ");
         out.println(" * This program is free software; you can redistribute it and/or");
