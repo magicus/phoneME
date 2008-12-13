@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ public class RomUtil {
      */
     protected void writeCopyright() {
         pl("/**");
-        pl(" * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.");
+        pl(" * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.");
         pl(" * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");
         pl(" * ");
         pl(" * This program is free software; you can redistribute it and/or");
