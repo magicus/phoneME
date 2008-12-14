@@ -86,6 +86,10 @@ public:
   static int    _debugger_port;
 #endif
 
+#if ENABLE_MEMORY_MONITOR
+  static int    _monitor_memory;
+#endif
+
 #if ENABLE_JVMPI_PROFILE 
   static char* _jvmpi_profiler_lib;   // save the loading library name
 #endif 
@@ -109,6 +113,10 @@ public:
 
 #ifndef PRODUCT
     _compiler_test_config_file._path = NULL;
+#endif
+
+#if ENABLE_MEMORY_MONITOR
+    _monitor_memory = 0;
 #endif
   }
 

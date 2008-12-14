@@ -68,6 +68,10 @@ Arguments::Path            Arguments::_classpath;
 int                        Arguments::_debugger_port;
 #endif
 
+#if ENABLE_MEMORY_MONITOR
+int                        Arguments::_monitor_memory;
+#endif
+
 #if ENABLE_INTERPRETER_GENERATOR || USE_SOURCE_IMAGE_GENERATOR
 Arguments::Path            Arguments::_generator_output_dir;
 #endif
@@ -319,6 +323,11 @@ int Arguments::parse_one_arg(int argc, char** argv) {
 #if ENABLE_MEMORY_PROFILER
   else if (jvm_strcmp(argv[0], "-memory_profiler") == 0) {
     JavaDebugger::set_debugger_option_on(true);
+  }
+#endif
+#if ENABLE_MEMORY_MONITOR
+  else if (jvm_strcmp(argv[0], "-monitormemory") == 0) {
+    Arguments::_monitor_memory = 1;
   }
 #endif
   else if ((argv[0][0] == '-')||(argv[0][0] == '+') || (argv[0][0] == '=')) {

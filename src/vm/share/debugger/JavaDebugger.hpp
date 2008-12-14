@@ -131,7 +131,6 @@ private:
   // object ID functions
 public:
   static int next_seq_num();
-  static void release_id(int);
   static ReturnOop get_object_by_id(int objectID);
   static int get_object_id_by_ref(Oop *p);
   static ReturnOop get_thread_by_id(int objectID);
@@ -143,9 +142,7 @@ public:
   static ReturnOop get_method_by_id(InstanceClass *, jlong);
 private:
   static int _next_seq_num;
-  static int object_hash_code(Oop *);
-  static int hash_id(jint);
-  static ReturnOop compress_chain(RefNode *node, bool by_ref);
+
   // conversions to JDWP types of data
 public:
   static jbyte get_jdwp_tagtype(JavaClass *);
@@ -203,15 +200,11 @@ private:
 
   static void process_suspend_policy(jbyte policy, Thread *thread, 
                                      int task_id, jboolean forceWait);
+
   // GC support
 public:
-  static void clear_and_release_map_entry(OopDesc**, RefNodeDesc *, int);
   static void flush_refnodes();
   static void rehash();
-
-  enum {
-    HASH_SLOT_SIZE = 127
-  };
 #else
 public:
   static void set_stepping(bool /*is_stepping*/) {}

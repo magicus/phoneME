@@ -375,7 +375,10 @@ private:
                                                                             \
   product(int, InterpretationLogSize, INTERP_LOG_SIZE,                      \
           "How many elements of _interpretation_log[] to examine during "   \
-          "timer tick -- set to 0 to disable interpretation log")
+          "timer tick -- set to 0 to disable interpretation log")           \
+                                                                            \
+  product(int, InitialStreamBufferSize, 16 * 1024,                          \
+          "Initial size of the input/output packet streams buffers")        \
 
 
 #if !ENABLE_SYSTEM_ROM_OVERRIDE && defined(ROMIZING)

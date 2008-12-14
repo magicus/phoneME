@@ -131,7 +131,9 @@ inline void ObjectHeap::notify_objects_created  ( const OopDesc* const* from,
                                                   const OopDesc* const* to ) {
   do {
     const int size = ((const OopDesc*)from)->object_size();
-    MemoryMonitor::notify_object( (const OopDesc*)from, size, true );
+    if(Arguments::_monitor_memory) {
+      MemoryMonitor::notify_object( (const OopDesc*)from, size, true );
+    }
     from = DERIVED( const OopDesc* const*, from, size );
   } while( from < to );
 }
@@ -142,7 +144,9 @@ inline void ObjectHeap::notify_objects_disposed ( const OopDesc* const* from,
   do {
     const int size = ((const OopDesc*)from)->object_size();
     if( all || test_bit_for( (OopDesc**) from ) ) {
-      MemoryMonitor::notify_object( (const OopDesc*)from, size, false );
+      if(Arguments::_monitor_memory) {
+        MemoryMonitor::notify_object( (const OopDesc*)from, size, false );
+      }
     }
     from = DERIVED( const OopDesc* const*, from, size );
   } while( from < to );
@@ -1388,6 +1392,8 @@ void ObjectHeap::unregister_global_ref_object(const int ref_index) {
 
 OopDesc* ObjectHeap::get_global_ref_object(const int ref_index) {
 #if USE_SOFT_REFERENCES
+  //SoftRefArray::get_value gives correct values for soft references
+  //and doesn't modify value for other references
   return SoftRefArray::get_value(*decode_reference(ref_index));
 #else
   return *decode_reference(ref_index);
@@ -1645,7 +1651,9 @@ bool ObjectHeap::expand_current_compiled_method(const int delta) {
 
 void ObjectHeap::dispose( void ) {
 #if ENABLE_MEMORY_MONITOR
-  MemoryMonitor::notify_heap_disposed();
+  if(Arguments::_monitor_memory) {
+    MemoryMonitor::notify_heap_disposed();
+  }
 #endif
 
   _inline_allocation_top = NULL;
@@ -1917,7 +1925,9 @@ bool ObjectHeap::create( void ) {
 #endif
 
 #if ENABLE_MEMORY_MONITOR
-  MemoryMonitor::notify_heap_created();
+  if(Arguments::_monitor_memory) {
+    MemoryMonitor::notify_heap_created(_heap_start, _heap_capacity);
+  }
 #endif
 
   return true;
@@ -2650,6 +2660,13 @@ inline void ObjectHeap::compute_new_object_locations() {
     }
     if (test_bit_for(p, bitvector_base)) {
       // Current object is live
+#if ENABLE_MEMORY_MONITOR
+      if( p != compaction_top ) {
+        if(Arguments::_monitor_memory) {
+          MemoryMonitor::notify_object_moved( compaction_top, p );
+        }
+      }
+#endif
       OopDesc* obj = (OopDesc*) p;
       size_t size = obj->object_size_for(decode_far_class_with_real_near(obj));
       // Did we start compacting? If so this object is moving.
@@ -3546,6 +3563,11 @@ void ObjectHeap::collect(size_t min_free_after_collection JVM_TRAPS) {
     Throw::out_of_memory_error( JVM_SINGLE_ARG_THROW );
   }
 #undef DETECT_QUOTA_VIOLATIONS
+#if ENABLE_MEMORY_MONITOR
+  if(Arguments::_monitor_memory) {
+    MemoryMonitor::flushBuffer();
+  }
+#endif
 } 
 
 // This function contains misc debug and tracing code that are mostly unused by
@@ -3938,6 +3960,11 @@ bool ObjectHeap::internal_collect(size_t min_free_after_collection JVM_TRAPS) {
 
   set_task_allocation_start( _inline_allocation_top );
   verify_layout();
+#if ENABLE_MEMORY_MONITOR
+  if(Arguments::_monitor_memory) {
+    MemoryMonitor::flushBuffer();
+  }
+#endif
   return is_full_collect;
 }
 

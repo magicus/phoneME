@@ -1449,3 +1449,17 @@ void JVM::measure_native_stack(bool measure) {
 }
 
 #endif // ENABLE_MEASURE_NATIVE_STACK
+
+#if ENABLE_MEMORY_MONITOR
+extern "C" void javanotify_run_GC() {
+  if(Arguments::_monitor_memory) {
+    JVM_GarbageCollect(0, 0);
+  }
+}
+
+extern "C" void javanotify_stop_memmon() {
+  if(Arguments::_monitor_memory) {
+    MemoryMonitor::notify_heap_disposed();
+  }
+}
+#endif

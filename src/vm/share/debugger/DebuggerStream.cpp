@@ -410,7 +410,12 @@ void
 PacketOutputStream::check_buffer_size(int size) {
 
   SETUP_ERROR_CHECKER_ARG;
-  if (size > free_bytes()) {
+  if (size > free_bytes()) {   
+
+    // Normally we shouldn't get to this point as it's not safe to 
+    // allocate here. Try to increase InitialStreamBufferSize or NUM_PACKET_BUFS.
+    GUARANTEE(false, "Unsafe allocation");
+
     SAVE_CURRENT_EXCEPTION;
     TypeArray new_buf = Universe::new_byte_array(_output_data.length() + size +
                                                  _buffer_inc JVM_NO_CHECK);

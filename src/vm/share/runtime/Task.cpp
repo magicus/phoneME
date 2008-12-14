@@ -219,6 +219,18 @@ ReturnOop Task::create_task(const int id, IsolateObj* isolate JVM_TRAPS) {
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   task().set_profile_id(isolate->profile_id()); // Set current active profile
 #endif
+
+#if ENABLE_WTK_PROFILER && ENABLE_ISOLATES
+  task().set_use_profiler(isolate->use_profiler());
+#endif
+
+#if ENABLE_JAVA_DEBUGGER
+  {
+    JavaDebuggerContext::Raw context = 
+      JavaDebuggerContext::allocate(JVM_SINGLE_ARG_OZCHECK(context));
+    task().set_debugger_context(&context);
+  }
+#endif
   
   GUARANTEE(!Universe::java_lang_Class_class()->is_null(),
              "Mirror class not initialized");
@@ -1000,6 +1012,10 @@ void Task::iterate_oopmaps(oopmaps_doer do_map, void *param) {
 
 #if ENABLE_COMPILER && ENABLE_INLINE
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, direct_callers);
+#endif
+
+#if ENABLE_JAVA_DEBUGGER
+  OOPMAP_ENTRY_4(do_map, param, T_OBJECT, debugger_context);
 #endif
 
 #if ENABLE_ISOLATES

@@ -290,6 +290,13 @@ JavaDebugger.cpp                 ObjArrayDesc.hpp
 JavaDebugger.cpp                 JVM.hpp
 JavaDebugger.cpp                 LineVarTable.hpp
 
+JavaDebuggerContext.hpp          MixedOop.hpp
+JavaDebuggerContext.hpp          RefNode.hpp
+
+JavaDebuggerContext.cpp          JavaDebugger.hpp
+JavaDebuggerContext.cpp          JavaDebuggerContext.hpp
+JavaDebuggerContext.cpp          ObjArray.hpp
+
 VMImpl.cpp                       JavaDebugger.hpp
 VMImpl.cpp                       VMImpl.hpp
 VMImpl.cpp                       JDWP.hpp
@@ -1158,13 +1165,15 @@ ObjectHeap.cpp                   ClassFileParser.hpp
 ObjectHeap.cpp                   Verifier.hpp
 ObjectHeap.cpp                   TypeSymbol.hpp
 ObjectHeap.cpp                   JavaDebugger.hpp
-ObjectHeap.cpp                   MemoryMonitor.hpp
 ObjectHeap.cpp                   Boundary.hpp
 ObjectHeap.cpp                   CompiledMethodDesc.hpp
 ObjectHeap.cpp                   EventLogger.hpp
 ObjectHeap.cpp                   JarFileParser.hpp
 ObjectHeap.cpp                   Task.hpp
 ObjectHeap.cpp                   JniFrame.hpp
+#if ENABLE_MEMORY_MONITOR
+ObjectHeap.cpp                   MemoryMonitor.hpp
+#endif
 
 ConstantTag.hpp                  ArrayDesc.hpp
 ConstantTag.hpp                  GlobalDefinitions.hpp
@@ -1410,11 +1419,13 @@ TaskDesc.hpp                     OopDesc.hpp
 TaskDesc.hpp                     MixedOopDesc.hpp
 TaskDesc.hpp                     ObjArrayDesc.hpp
 TaskDesc.hpp                     ArrayDesc.hpp
+TaskDesc.hpp                     JavaDebuggerContext.hpp
 
 Task.hpp                         TaskDesc.hpp
 Task.hpp                         MixedOop.hpp
 Task.hpp                         Universe.hpp
 Task.hpp                         OopCons.hpp
+Task.hpp                         JavaDebuggerContext.hpp
 Task.cpp                         Task.hpp
 Task.cpp                         BoundaryDesc.hpp
 Task.cpp                         ObjArrayDesc.hpp
@@ -2609,6 +2620,9 @@ JVM.cpp                        Task.hpp
 JVM.cpp                        Stream.hpp
 #endif
 JVM.cpp                        SegmentedSourceROMWriter.hpp
+#if ENABLE_MEMORY_MONITOR
+JVM.cpp                        MemoryMonitor.hpp
+#endif
 
 JVM_<os_family>.hpp            Allocation.hpp
 JVM_<os_family>.cpp            JVM_<os_family>.hpp
@@ -3193,9 +3207,16 @@ JarFileParser.cpp               FilePath.hpp
 JarFileParser.cpp               OopVisitor.hpp
 JarFileParser.cpp               InstanceClass.hpp
 
+#if ENABLE_MEMORY_MONITOR
 MemoryMonitor.hpp               GlobalDefinitions.hpp
-MemoryMonitor.cpp               MemoryMonitor.hpp
 MemoryMonitor.cpp               Universe.hpp
+MemoryMonitor.cpp               MemoryMonitor.hpp
+MemoryMonitor.cpp               MemoryMonitorMd.hpp
+MemoryMonitorMd.cpp             MemoryMonitorMd.hpp
+MemoryMonitorMd_<os_family>.cpp MemoryMonitor.hpp
+MemoryMonitorMd_<os_family>.cpp MemoryMonitorMd.hpp
+MemoryMonitorMd_<os_family>.cpp MemoryMonitorMd_<os_family>.hpp
+#endif
 
 MemoryProfiler.hpp              DebuggerStream.hpp
 MemoryProfiler.hpp              Frame.hpp
