@@ -54,6 +54,10 @@ extern "C" {
  */
 typedef enum {
     /** 
+     * If no exception was thrown
+     */
+    JAVACALL_DOM_RUNTIME_ERR                 =  0x0,
+    /** 
      * If index or size is negative, or greater than the allowed value 
      */
     JAVACALL_DOM_INDEX_SIZE_ERR              =  0x1,

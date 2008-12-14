@@ -36,6 +36,10 @@
 #include <javacall_lcd.h>
 #include <javacall_penevent.h>
 
+#if ENABLE_NATIVE_AMS_UI
+#include <javacall_ams_installer.h>
+#endif
+
 #if ENABLE_JSR_120
 #include <javacall_sms.h>
 #include <javacall_cbs.h>
@@ -98,6 +102,35 @@ void javanotify_pen_event(int x, int y, javacall_penevent_type type) {}
 void javanotify_start(void) {}
 
 void javanotify_start_java_with_arbitrary_args(int argc, char* argv[]) {}
+
+
+/* The 4 functions below are only called from implementation\win32\midp\main.c */ 
+
+void javanotify_start_i3test(char* arg1, char* arg2) {}
+
+void javanotify_start_handler(char* handlerID, char* url, char* action) {}
+
+void javanotify_start_tck(char* url, javacall_lifecycle_tck_domain domain) {}
+
+void javanotify_install_content(const char * httpUrl,
+                                const javacall_utf16* descFilePath,
+                                unsigned int descFilePathLen,
+                                javacall_bool isJadFile,
+                                javacall_bool isSilent) {}
+
+
+#if ENABLE_NATIVE_AMS_UI
+
+javacall_result
+javanotify_ams_install_suite(javacall_app_id appId,
+                             javacall_ams_install_source_type srcType,
+                             javacall_const_utf16_string installUrl,
+                             javacall_storage_id storageId,
+                             javacall_folder_id folderId) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
+#endif /* ENABLE_NATIVE_AMS_UI */
 
 
 void JavaTask(void) {}

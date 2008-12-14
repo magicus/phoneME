@@ -62,7 +62,9 @@ extern "C" {
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_node_name_finish function to complete the 
@@ -90,6 +92,7 @@ javacall_dom_node_get_node_name_start(javacall_handle handle,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -118,11 +121,21 @@ javacall_dom_node_get_node_name_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the value of this node
  * @param ret_value_len Length of the returned string
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
+ *                            JAVACALL_DOM_DOMSTRING_SIZE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
- *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_DOMSTRING_SIZE_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_node_value_finish function to complete the 
  *             operation,
@@ -133,7 +146,8 @@ javacall_dom_node_get_node_value_start(javacall_handle handle,
                                        javacall_int32 invocation_id,
                                        void **context,
                                        /* OUT */ javacall_utf16_string ret_value,
-                                       /* INOUT */ javacall_uint32* ret_value_len);
+                                       /* INOUT */ javacall_uint32* ret_value_len,
+                                       /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -148,11 +162,20 @@ javacall_dom_node_get_node_value_start(javacall_handle handle,
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the value of this node
  * @param ret_value_len Length of the returned string
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
+ *                            JAVACALL_DOM_DOMSTRING_SIZE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *             specified in ret_value_len,
- *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_DOMSTRING_SIZE_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_node_value_finish function to complete the 
  *             operation,
@@ -161,7 +184,8 @@ javacall_dom_node_get_node_value_start(javacall_handle handle,
 javacall_result
 javacall_dom_node_get_node_value_finish(void *context,
                                         /* OUT */ javacall_utf16_string ret_value,
-                                        /* INOUT */ javacall_uint32* ret_value_len);
+                                        /* INOUT */ javacall_uint32* ret_value_len,
+                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -175,9 +199,20 @@ javacall_dom_node_get_node_value_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param node_value the value of the node
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_set_node_value_finish function to complete the 
  *             operation,
@@ -187,7 +222,8 @@ javacall_result
 javacall_dom_node_set_node_value_start(javacall_handle handle,
                                        javacall_int32 invocation_id,
                                        void **context,
-                                       javacall_const_utf16_string node_value);
+                                       javacall_const_utf16_string node_value,
+                                       /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -197,16 +233,26 @@ javacall_dom_node_set_node_value_start(javacall_handle handle,
  * including if the node is read-only.
  * 
  * @param context The context saved during asynchronous operation.
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_set_node_value_finish function to complete the 
  *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_set_node_value_finish(void *context);
+javacall_dom_node_set_node_value_finish(void *context,
+                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -220,6 +266,9 @@ javacall_dom_node_set_node_value_finish(void *context);
  * @param ret_value A code representing the type of the underlying object
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_node_type_finish function to complete the 
  *             operation,
@@ -240,6 +289,7 @@ javacall_dom_node_get_node_type_start(javacall_handle handle,
  * @param ret_value A code representing the type of the underlying object
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_node_type_finish function to complete the 
  *             operation,
@@ -266,6 +316,9 @@ javacall_dom_node_get_node_type_finish(void *context,
  *   the parent of this node, or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_parent_node_finish function to complete the 
  *             operation,
@@ -291,6 +344,7 @@ javacall_dom_node_get_parent_node_start(javacall_handle handle,
  *   the parent of this node, or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_parent_node_finish function to complete the 
  *             operation,
@@ -314,6 +368,9 @@ javacall_dom_node_get_parent_node_finish(void *context,
  *   a <code>NodeList</code> that contains all children of this node.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_child_nodes_finish function to complete the 
  *             operation,
@@ -336,6 +393,7 @@ javacall_dom_node_get_child_nodes_start(javacall_handle handle,
  *   a <code>NodeList</code> that contains all children of this node.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_child_nodes_finish function to complete the 
  *             operation,
@@ -358,6 +416,9 @@ javacall_dom_node_get_child_nodes_finish(void *context,
  *   the first child of this node or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_first_child_finish function to complete the 
  *             operation,
@@ -379,6 +440,7 @@ javacall_dom_node_get_first_child_start(javacall_handle handle,
  *   the first child of this node or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_first_child_finish function to complete the 
  *             operation,
@@ -401,6 +463,9 @@ javacall_dom_node_get_first_child_finish(void *context,
  *   the last child of this node or <code>NULL</code>.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_last_child_finish function to complete the 
  *             operation,
@@ -422,6 +487,7 @@ javacall_dom_node_get_last_child_start(javacall_handle handle,
  *   the last child of this node or <code>NULL</code>.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_last_child_finish function to complete the 
  *             operation,
@@ -444,6 +510,9 @@ javacall_dom_node_get_last_child_finish(void *context,
  *   the node immediately preceding this node or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_previous_sibling_finish function to complete the 
  *             operation,
@@ -465,6 +534,7 @@ javacall_dom_node_get_previous_sibling_start(javacall_handle handle,
  *   the node immediately preceding this node or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_previous_sibling_finish function to complete the 
  *             operation,
@@ -487,6 +557,9 @@ javacall_dom_node_get_previous_sibling_finish(void *context,
  *   the node immediately following this node or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_next_sibling_finish function to complete the 
  *             operation,
@@ -508,6 +581,7 @@ javacall_dom_node_get_next_sibling_start(javacall_handle handle,
  *   the node immediately following this node or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_next_sibling_finish function to complete the 
  *             operation,
@@ -530,6 +604,9 @@ javacall_dom_node_get_next_sibling_finish(void *context,
  *   a <code>NamedNodeMap</code> containing the attributes of this node, or  <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_attributes_finish function to complete the 
  *             operation,
@@ -551,6 +628,7 @@ javacall_dom_node_get_attributes_start(javacall_handle handle,
  *   a <code>NamedNodeMap</code> containing the attributes of this node, or  <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_attributes_finish function to complete the 
  *             operation,
@@ -576,6 +654,9 @@ javacall_dom_node_get_attributes_finish(void *context,
  *   the <code>Document</code> object associated with this node, or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_owner_document_finish function to complete the 
  *             operation,
@@ -600,6 +681,7 @@ javacall_dom_node_get_owner_document_start(javacall_handle handle,
  *   the <code>Document</code> object associated with this node, or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_owner_document_finish function to complete the 
  *             operation,
@@ -634,6 +716,7 @@ javacall_dom_node_get_owner_document_finish(void *context,
  *   the node being inserted.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_HIERARCHY_REQUEST_ERR
  *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
@@ -641,8 +724,18 @@ javacall_dom_node_get_owner_document_finish(void *context,
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_HIERARCHY_REQUEST_ERR
+ *                 JAVACALL_DOM_WRONG_DOCUMENT_ERR
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                 JAVACALL_DOM_NOT_FOUND_ERR
+ *                 JAVACALL_DOM_NOT_SUPPORTED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_insert_before_finish function to complete the 
  *             operation,
@@ -675,6 +768,7 @@ javacall_dom_node_insert_before_start(javacall_handle handle,
  *   the node being inserted.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_HIERARCHY_REQUEST_ERR
  *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
@@ -682,8 +776,16 @@ javacall_dom_node_insert_before_start(javacall_handle handle,
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_HIERARCHY_REQUEST_ERR
+ *                 JAVACALL_DOM_WRONG_DOCUMENT_ERR
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                 JAVACALL_DOM_NOT_FOUND_ERR
+ *                 JAVACALL_DOM_NOT_SUPPORTED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_insert_before_finish function to complete the 
  *             operation,
@@ -716,6 +818,7 @@ javacall_dom_node_insert_before_finish(void *context,
  *   the node replaced.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_HIERARCHY_REQUEST_ERR
  *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
@@ -723,8 +826,18 @@ javacall_dom_node_insert_before_finish(void *context,
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_HIERARCHY_REQUEST_ERR
+ *                 JAVACALL_DOM_WRONG_DOCUMENT_ERR
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                 JAVACALL_DOM_NOT_FOUND_ERR
+ *                 JAVACALL_DOM_NOT_SUPPORTED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_replace_child_finish function to complete the 
  *             operation,
@@ -754,6 +867,7 @@ javacall_dom_node_replace_child_start(javacall_handle handle,
  *   the node replaced.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_HIERARCHY_REQUEST_ERR
  *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
@@ -761,8 +875,16 @@ javacall_dom_node_replace_child_start(javacall_handle handle,
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_HIERARCHY_REQUEST_ERR
+ *                 JAVACALL_DOM_WRONG_DOCUMENT_ERR
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                 JAVACALL_DOM_NOT_FOUND_ERR
+ *                 JAVACALL_DOM_NOT_SUPPORTED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_replace_child_finish function to complete the 
  *             operation,
@@ -788,13 +910,22 @@ javacall_dom_node_replace_child_finish(void *context,
  *   the node removed.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *                            JAVACALL_DOM_NOT_FOUND_ERR
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                 JAVACALL_DOM_NOT_FOUND_ERR
+ *                 JAVACALL_DOM_NOT_SUPPORTED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_remove_child_finish function to complete the 
  *             operation,
@@ -818,13 +949,20 @@ javacall_dom_node_remove_child_start(javacall_handle handle,
  *   the node removed.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *                            JAVACALL_DOM_NOT_FOUND_ERR
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                 JAVACALL_DOM_NOT_FOUND_ERR
+ *                 JAVACALL_DOM_NOT_SUPPORTED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_remove_child_finish function to complete the 
  *             operation,
@@ -853,14 +991,24 @@ javacall_dom_node_remove_child_finish(void *context,
  *   the node added.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_HIERARCHY_REQUEST_ERR
  *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_HIERARCHY_REQUEST_ERR
+ *                 JAVACALL_DOM_WRONG_DOCUMENT_ERR
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                 JAVACALL_DOM_NOT_SUPPORTED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_append_child_finish function to complete the 
  *             operation,
@@ -887,14 +1035,22 @@ javacall_dom_node_append_child_start(javacall_handle handle,
  *   the node added.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_HIERARCHY_REQUEST_ERR
  *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_HIERARCHY_REQUEST_ERR
+ *                 JAVACALL_DOM_WRONG_DOCUMENT_ERR
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                 JAVACALL_DOM_NOT_SUPPORTED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_append_child_finish function to complete the 
  *             operation,
@@ -917,6 +1073,9 @@ javacall_dom_node_append_child_finish(void *context,
  *   <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_has_child_nodes_finish function to complete the 
  *             operation,
@@ -937,6 +1096,7 @@ javacall_dom_node_has_child_nodes_start(javacall_handle handle,
  *   <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_has_child_nodes_finish function to complete the 
  *             operation,
@@ -988,6 +1148,9 @@ javacall_dom_node_has_child_nodes_finish(void *context,
  *   the duplicate node.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_clone_node_finish function to complete the 
  *             operation,
@@ -1038,6 +1201,7 @@ javacall_dom_node_clone_node_start(javacall_handle handle,
  *   the duplicate node.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_clone_node_finish function to complete the 
  *             operation,
@@ -1071,6 +1235,9 @@ javacall_dom_node_clone_node_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_normalize_finish function to complete the 
  *             operation,
@@ -1102,6 +1269,7 @@ javacall_dom_node_normalize_start(javacall_handle handle,
  * @param context The context saved during asynchronous operation.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_normalize_finish function to complete the 
  *             operation,
@@ -1130,6 +1298,9 @@ javacall_dom_node_normalize_finish(void *context);
  *   supported on this node, <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_is_supported_finish function to complete the 
  *             operation,
@@ -1156,6 +1327,7 @@ javacall_dom_node_is_supported_start(javacall_handle handle,
  *   supported on this node, <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_is_supported_finish function to complete the 
  *             operation,
@@ -1193,7 +1365,9 @@ javacall_dom_node_is_supported_finish(void *context,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_namespace_uri_finish function to complete the 
@@ -1232,6 +1406,7 @@ javacall_dom_node_get_namespace_uri_start(javacall_handle handle,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -1277,7 +1452,9 @@ javacall_dom_node_get_namespace_uri_finish(void *context,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_prefix_finish function to complete the 
@@ -1321,6 +1498,7 @@ javacall_dom_node_get_prefix_start(javacall_handle handle,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -1367,13 +1545,22 @@ javacall_dom_node_get_prefix_finish(void *context,
  * @param prefix This node namespace prefix.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *                            JAVACALL_DOM_NAMESPACE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_INVALID_CHARACTER_ERR
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                 JAVACALL_DOM_NAMESPACE_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_set_prefix_finish function to complete the 
  *             operation,
@@ -1416,13 +1603,20 @@ javacall_dom_node_set_prefix_start(javacall_handle handle,
  * @param context The context saved during asynchronous operation.
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
  *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *                            JAVACALL_DOM_NAMESPACE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_INVALID_CHARACTER_ERR
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                 JAVACALL_DOM_NAMESPACE_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_set_prefix_finish function to complete the 
  *             operation,
@@ -1452,7 +1646,9 @@ javacall_dom_node_set_prefix_finish(void *context,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_local_name_finish function to complete the 
@@ -1483,6 +1679,7 @@ javacall_dom_node_get_local_name_start(javacall_handle handle,
  * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *             specified in ret_value_len,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -1507,6 +1704,9 @@ javacall_dom_node_get_local_name_finish(void *context,
  *   <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_has_attributes_finish function to complete the 
  *             operation,
@@ -1527,6 +1727,7 @@ javacall_dom_node_has_attributes_start(javacall_handle handle,
  *   <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_has_attributes_finish function to complete the 
  *             operation,
@@ -1589,11 +1790,21 @@ javacall_dom_node_has_attributes_finish(void *context,
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the text content of this node and its descendants
  * @param ret_value_len Length of the returned string
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
+ *                            JAVACALL_DOM_DOMSTRING_SIZE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
  *             specified in ret_value_len,
- *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_DOMSTRING_SIZE_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_text_content_finish function to complete the 
  *             operation,
@@ -1604,7 +1815,8 @@ javacall_dom_node_get_text_content_start(javacall_handle handle,
                                          javacall_int32 invocation_id,
                                          void **context,
                                          /* OUT */ javacall_utf16_string ret_value,
-                                         /* INOUT */ javacall_uint32* ret_value_len);
+                                         /* INOUT */ javacall_uint32* ret_value_len,
+                                         /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1656,11 +1868,20 @@ javacall_dom_node_get_text_content_start(javacall_handle handle,
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the text content of this node and its descendants
  * @param ret_value_len Length of the returned string
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
+ *                            JAVACALL_DOM_DOMSTRING_SIZE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *             specified in ret_value_len,
- *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_DOMSTRING_SIZE_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_text_content_finish function to complete the 
  *             operation,
@@ -1669,7 +1890,8 @@ javacall_dom_node_get_text_content_start(javacall_handle handle,
 javacall_result
 javacall_dom_node_get_text_content_finish(void *context,
                                           /* OUT */ javacall_utf16_string ret_value,
-                                          /* INOUT */ javacall_uint32* ret_value_len);
+                                          /* INOUT */ javacall_uint32* ret_value_len,
+                                          /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1719,9 +1941,20 @@ javacall_dom_node_get_text_content_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param text_content a String containing the new text content for this node
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_set_text_content_finish function to complete the 
  *             operation,
@@ -1731,7 +1964,8 @@ javacall_result
 javacall_dom_node_set_text_content_start(javacall_handle handle,
                                          javacall_int32 invocation_id,
                                          void **context,
-                                         javacall_const_utf16_string text_content);
+                                         javacall_const_utf16_string text_content,
+                                         /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1777,16 +2011,26 @@ javacall_dom_node_set_text_content_start(javacall_handle handle,
  * </table>
  * 
  * @param context The context saved during asynchronous operation.
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_set_text_content_finish function to complete the 
  *             operation,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_set_text_content_finish(void *context);
+javacall_dom_node_set_text_content_finish(void *context,
+                                          /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1823,6 +2067,9 @@ javacall_dom_node_set_text_content_finish(void *context);
  *   childNodes, etc. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_feature_finish function to complete the 
  *             operation,
@@ -1864,6 +2111,7 @@ javacall_dom_node_get_feature_start(javacall_handle handle,
  *   childNodes, etc. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_get_feature_finish function to complete the 
  *             operation,
@@ -1904,6 +2152,9 @@ javacall_dom_node_get_feature_finish(void *context,
  *   <code>EventListener</code> designated to use capture.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_add_event_listener_finish function to complete the 
  *             operation,
@@ -1943,6 +2194,7 @@ javacall_dom_node_add_event_listener_start(javacall_handle handle,
  *   <code>EventListener</code> designated to use capture.
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_add_event_listener_finish function to complete the 
  *             operation,
@@ -1979,6 +2231,9 @@ javacall_dom_node_add_event_listener_finish(void *context,
  *   vice versa. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_remove_event_listener_finish function to complete the 
  *             operation,
@@ -2013,6 +2268,7 @@ javacall_dom_node_remove_event_listener_start(javacall_handle handle,
  *   vice versa. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_remove_event_listener_finish function to complete the 
  *             operation,
@@ -2046,14 +2302,24 @@ javacall_dom_node_remove_event_listener_finish(void *context);
  *   is <code>false</code>, else it is <code>true</code>. 
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_EVENTS_UNSPECIFIED_EVENT_TYPE_ERR
  *                            JAVACALL_DOM_EVENTS_DISPATCH_REQUEST_ERR
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_EVENTS_UNSPECIFIED_EVENT_TYPE_ERR
+ *                 JAVACALL_DOM_EVENTS_DISPATCH_REQUEST_ERR
+ *                 JAVACALL_DOM_NOT_SUPPORTED_ERR
+ *                 JAVACALL_DOM_INVALID_CHARACTER_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_dispatch_event_finish function to complete the 
  *             operation,
@@ -2087,14 +2353,22 @@ javacall_dom_node_dispatch_event_start(javacall_handle handle,
  *   is <code>false</code>, else it is <code>true</code>. 
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
+ *                            JAVACALL_DOM_RUNTIME_ERR
  *                            JAVACALL_DOM_EVENTS_UNSPECIFIED_EVENT_TYPE_ERR
  *                            JAVACALL_DOM_EVENTS_DISPATCH_REQUEST_ERR
  *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
- *             filled,
+ *         JAVACALL_FAIL if error or exception occured;
+ *             in this case exception_code has to be filled.
+ *             JAVACALL_DOM_RUNTIME_ERR stands for an error in native code,
+ *             For exception that might be thrown by native engine
+ *             corresponding exception code should be set:
+ *                 JAVACALL_DOM_EVENTS_UNSPECIFIED_EVENT_TYPE_ERR
+ *                 JAVACALL_DOM_EVENTS_DISPATCH_REQUEST_ERR
+ *                 JAVACALL_DOM_NOT_SUPPORTED_ERR
+ *                 JAVACALL_DOM_INVALID_CHARACTER_ERR
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_node_dispatch_event_finish function to complete the 
  *             operation,

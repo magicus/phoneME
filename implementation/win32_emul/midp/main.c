@@ -224,11 +224,14 @@ main(int argc, char *argv[]) {
     /* parse MIDP/CLDC arguments */
     for (i; i < argc; i++) {
         if (strcmp(argv[i], "-classpath") == 0) {
-            classPath = vmArgv[vmArgc++] = argv[++i];
-            /* run local application */
-            if (executionMode == -1) {
-                executionMode = RUN_LOCAL;
-            }
+            if (i < argc-1) { /* just ignore it if no actual path is given */
+                vmArgv[vmArgc++] = argv[i++];               /* -classpath */
+                classPath = vmArgv[vmArgc++] = argv[i];     /* the actual path */
+                /* run local application */
+                if (executionMode == -1) {
+                    executionMode = RUN_LOCAL;
+                }
+	    }
         } else if (strncmp(argv[i],"-D", 2) == 0) {
             /* It is a CLDC arg, add to CLDC arguments list */
             /* vmArgv[vmArgc++] = argv[i]; */
