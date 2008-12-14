@@ -71,6 +71,7 @@ static MIDPError get_class_path_impl(ComponentType type,
                                      pcsl_string* classPath,
                                      const pcsl_string* extension);
 static MIDPError get_suite_or_component_id(ComponentType type,
+                                           SuiteIdType suiteId,
                                            const pcsl_string* vendor,
                                            const pcsl_string* name,
                                            jint* pId);
@@ -544,7 +545,8 @@ midp_suite_get_suite_folder(SuiteIdType suiteId, FolderIdType* pFolderId) {
 MIDPError
 midp_get_suite_id(const pcsl_string* vendor, const pcsl_string* name,
                   SuiteIdType* pSuiteId) {
-    return get_suite_or_component_id(COMPONENT_REGULAR_SUITE, vendor, name,
+    return get_suite_or_component_id(COMPONENT_REGULAR_SUITE, UNUSED_SUITE_ID,
+                                     vendor, name,
                                      (jint*)pSuiteId);
 }
 
@@ -554,6 +556,7 @@ midp_get_suite_id(const pcsl_string* vendor, const pcsl_string* name,
  * of the component. Note that the component may be corrupted even if it exists.
  * If the component doesn't exist, a new component ID is created.
  *
+ * @param suiteId ID of the suite the component belongs to 
  * @param vendor name of the vendor that created the component, as
  *        given in a JAD file
  * @param name name of the component, as given in a JAD file
@@ -567,9 +570,9 @@ midp_get_suite_id(const pcsl_string* vendor, const pcsl_string* name,
  *          other error code in case of error
  */
 MIDPError
-midp_get_component_id(const pcsl_string* vendor, const pcsl_string* name,
-                      ComponentIdType* pComponentId) {
-    return get_suite_or_component_id(COMPONENT_DYNAMIC, vendor, name,
+midp_get_component_id(SuiteIdType suiteId, const pcsl_string* vendor,
+                      const pcsl_string* name, ComponentIdType* pComponentId) {
+    return get_suite_or_component_id(COMPONENT_DYNAMIC, suiteId, vendor, name,
                                      (jint*)pComponentId);
 }
 #endif /* ENABLE_DYNAMIC_COMPONENTS */
@@ -757,6 +760,9 @@ midp_get_suite_property(SuiteIdType suiteId,
  * or component. Note that the suite or component may be corrupted even
  * if it exists. If it doesn't, a new suite ID or component ID is created.
  *
+ * @param type type of the component
+ * @param suiteId if type == COMPONENT_DYNAMIC, contains ID of the suite this
+ *                components belongs to; unused otherwise
  * @param vendor name of the vendor that created the application or component,
  *        as given in a JAD file
  * @param name name of the suite or component, as given in a JAD file
@@ -770,8 +776,9 @@ midp_get_suite_property(SuiteIdType suiteId,
  *          was created), other error code in case of error
  */
 static MIDPError
-get_suite_or_component_id(ComponentType type, const pcsl_string* vendor,
-                          const pcsl_string* name, jint* pId) {
+get_suite_or_component_id(ComponentType type, SuiteIdType suiteId,
+                           const pcsl_string* vendor, const pcsl_string* name,
+                           jint* pId) {
     MIDPError status;
     char *pszError;
     MidletSuiteData* pData;
@@ -784,6 +791,7 @@ get_suite_or_component_id(ComponentType type, const pcsl_string* vendor,
     }
 #else
     (void)type;
+    (void)suiteId;
     *pId = (jint)UNUSED_SUITE_ID;
 #endif /* ENABLE_DYNAMIC_COMPONENTS */
 
@@ -801,7 +809,8 @@ get_suite_or_component_id(ComponentType type, const pcsl_string* vendor,
         if (pcsl_string_equals(&pData->varSuiteData.suiteName, name) &&
                 pcsl_string_equals(&pData->varSuiteData.suiteVendor, vendor)
 #if ENABLE_DYNAMIC_COMPONENTS
-                    && type == pData->type
+                    && (type == pData->type) && (type != COMPONENT_DYNAMIC ||
+                        (type == COMPONENT_DYNAMIC && suiteId == pData->suiteId))
 #endif
         ) {
 #if ENABLE_DYNAMIC_COMPONENTS
@@ -819,7 +828,7 @@ get_suite_or_component_id(ComponentType type, const pcsl_string* vendor,
         pData = pData->nextEntry;
     }
 
-    /* suite or comonent was not found - create a new suite or component ID */
+    /* suite or component was not found - create a new suite or component ID */
 #if ENABLE_DYNAMIC_COMPONENTS
     if (type != COMPONENT_DYNAMIC) {
         status = midp_create_suite_id((SuiteIdType*)pId);

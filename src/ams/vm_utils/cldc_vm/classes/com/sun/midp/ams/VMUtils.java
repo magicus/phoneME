@@ -51,4 +51,14 @@ public class VMUtils {
     public static int getIsolateId() {
         return MIDletSuiteUtils.getIsolateId();
     }
+
+    /**
+     * Get maximal number of Isolates allowed by AMS.
+     *
+     * @return maximal Isolates number.
+     */
+    public static int getMaxIsolates() {
+        return MIDletSuiteUtils.getMaxIsolates();
+    }
+
 }

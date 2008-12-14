@@ -32,8 +32,8 @@ import com.sun.midp.util.Properties;
 
 import com.sun.midp.midlet.MIDletSuite;
 
-import com.sun.midp.services.ComponentInfo;
-import com.sun.midp.services.ComponentInfoImpl;
+import com.sun.midp.amsservices.ComponentInfo;
+import com.sun.midp.amsservices.ComponentInfoImpl;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -81,6 +81,7 @@ public class DynamicComponentStorage {
     /**
      * Gets the unique identifier of MIDlet suite's dynamic component.
      *
+     * @param suiteId ID of the suite the component belongs to
      * @param vendor name of the vendor that created the component, as
      *        given in a JAD file
      * @param name name of the component, as given in a JAD file
@@ -89,7 +90,7 @@ public class DynamicComponentStorage {
      *         or ComponentInfo.UNUSED_COMPONENT_ID if the component does
      *         not exist
      */
-    public native int getComponentId(String vendor, String name);
+    public native int getComponentId(int suiteId, String vendor, String name);
 
     /**
      * Returns a unique identifier of a dynamic component.
@@ -108,22 +109,23 @@ public class DynamicComponentStorage {
      *     id - unique ID of the suite;
      *     jadUrl - where the JAD came from, can be null;
      *     jarUrl - where the JAR came from;
-     *     jarFilename - name of the downloaded MIDlet suite jar file;
-     *     suiteName - name of the suite;
-     *     suiteVendor - vendor of the suite;
+     *     jarFilename - name of the downloaded component's jar file;
+     *     suiteName - name of the component;
+     *     suiteVendor - vendor of the component;
+     *     suiteVersion - version of the component;
      *     authPath - authPath if signed, the authorization path starting
      *                with the most trusted authority;
-     *     domain - security domain of the suite;
-     *     trusted - true if suite is trusted;
-     *     verifyHash - may contain hash value of the suite with
+     *     domain - security domain of the component (currently unused);
+     *     trusted - true if component is trusted;
+     *     verifyHash - may contain hash value of the component with
      *                  preverified classes or may be NULL;
      * </pre>
      *
      * @param suiteSettings structure containing the following information:<br>
      * <pre>
-     *     permissions - permissions for the suite;
-     *     pushInterruptSetting - defines if this MIDlet suite interrupt
-     *                            other suites;
+     *     permissions - permissions for the component (currently unused);
+     *     pushInterruptSetting - defines if this MIDlet component interrupt
+     *                            other components;
      *     pushOptions - user options for push interrupts;
      *     suiteId - unique ID of the suite, must be equal to the one given
      *               in installInfo;
@@ -139,8 +141,8 @@ public class DynamicComponentStorage {
      *        in key/value pair order
      *
      * @exception IOException is thrown, if an I/O error occurs during
-     * storing the suite
-     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     * storing the component
+     * @exception MIDletSuiteLockedException is thrown, if the component is
      * locked
      */
     public synchronized void storeComponent(
@@ -149,8 +151,8 @@ public class DynamicComponentStorage {
                     Properties jadProps, Properties jarProps)
                         throws IOException, MIDletSuiteLockedException {
         ComponentInfoImpl ci = new ComponentInfoImpl(
-                installInfo.componentId, installInfo.id,
-                displayName, installInfo.trusted);
+                installInfo.componentId, installInfo.id, displayName,
+                installInfo.suiteVersion, installInfo.trusted);
 
         /*
          * Convert the property args to String arrays to save
@@ -248,10 +250,7 @@ public class DynamicComponentStorage {
             components = new ComponentInfo[n];
 
             for (int i = 0; i < n; i++) {
-                components[i] = new ComponentInfoImpl(
-                        ComponentInfo.UNUSED_COMPONENT_ID,
-                        MIDletSuite.UNUSED_SUITE_ID,
-                        "", false);
+                components[i] = new ComponentInfoImpl();
             }
 
             try {

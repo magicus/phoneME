@@ -63,11 +63,19 @@ public final class JSRInitializer {
 // #ifdef ENABLE_JSR_290
         com.sun.midp.jsr290.Initializer.init();
 // #endif
+
+// #ifdef ENABLE_JSR_257
+        com.sun.midp.jsr257.Initializer.init();
+// #endif
+
     }
 
     /**
      * Finalizes JSRs.
      */
     public static void cleanup() {
+// #ifdef ENABLE_JSR_257
+        com.sun.midp.jsr257.Initializer.cleanup();
+// #endif
     }
 }

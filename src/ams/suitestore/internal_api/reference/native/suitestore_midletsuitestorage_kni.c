@@ -412,7 +412,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMidletSuiteFolderId) {
  * @param name name of the suite, as given in a JAD file
  *
  * @return ID of the midlet suite given by vendor and name or
- *         MIDletSuite.UNUSED_SUITE_ID if the suite doesn not exist
+ *         MIDletSuite.UNUSED_SUITE_ID if the suite does not exist
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSuiteID) {
@@ -433,7 +433,9 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSuiteID) {
         case SUITE_CORRUPTED_ERROR:
             KNI_ThrowNew(midpIOException, NULL);
             break;
-        case NOT_FOUND: /* this is ok, a new suite ID was created */
+        case NOT_FOUND:
+            suiteId = UNUSED_SUITE_ID;
+            break;
         default:
             break;
     }
@@ -875,6 +877,11 @@ KNIDECL(com_sun_midp_midletsuite_SuiteSettings_save0) {
     permissionsLen = (int)KNI_GetArrayLength(permissionsObj);
 
     do {
+        if (permissionsLen < 0) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+            break;
+        }
+
         pPermissions = (jbyte*)midpMalloc(permissionsLen);
         if (pPermissions == NULL) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
@@ -909,7 +916,9 @@ KNIDECL(com_sun_midp_midletsuite_SuiteSettings_save0) {
         }
     } while (0);
 
-    midpFree(pPermissions);
+    if (pPermissions != NULL) {
+        midpFree(pPermissions);
+    }
 
     KNI_EndHandles();
     KNI_ReturnVoid();
@@ -1337,6 +1346,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_moveSuiteToFolder) {
  *     jarFilename - name of the downloaded MIDlet suite jar file;
  *     suiteName - name of the suite;
  *     suiteVendor - vendor of the suite;
+ *     suiteVersion - version of the suite;
  *     authPath - authPath if signed, the authorization path starting
  *                with the most trusted authority;
  *     domain - security domain of the suite;
@@ -1451,6 +1461,8 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
             &suiteData.varSuiteData.suiteName, tmpHandle);
         KNI_SAVE_PCSL_STRING_FIELD(javaInstallInfo, clazz, "suiteVendor",
             &suiteData.varSuiteData.suiteVendor, tmpHandle);
+        KNI_SAVE_PCSL_STRING_FIELD(javaInstallInfo, clazz, "suiteVersion",
+            &suiteData.varSuiteData.suiteVersion, tmpHandle);
         KNI_SAVE_INT_FIELD(javaInstallInfo, clazz, "expectedJarSize",
                            suiteData.jarSize);
         KNI_GetObjectField(javaInstallInfo,

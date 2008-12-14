@@ -164,6 +164,8 @@ init_listeners_impl() {
         return ALL_OK;
     }
 
+    g_listenersInitDone = 1;
+
     memset((char*)g_pRegisteredListeners, 0, sizeof(g_pRegisteredListeners));
     memset((char*)g_listenerIdxByType, (char)LISTENER_TYPE_INVALID,
            sizeof(g_listenerIdxByType));
@@ -297,7 +299,7 @@ remove_event_listener_impl(void* fn_callback, int listenerType) {
  */
 MIDPError
 remove_all_event_listeners_impl(int listenerType) {
-    GenericListener *pListener, *pTmpListener, *pPrev = NULL;
+    GenericListener *pListener, *pTmpListener;
     int index = -1;
 
     do {
@@ -318,11 +320,7 @@ remove_all_event_listeners_impl(int listenerType) {
         while (pListener) {
             pTmpListener = pListener->pNext;
 
-            if (pPrev) {
-                pPrev->pNext = pTmpListener;
-            } else {
-                g_pRegisteredListeners[index] = pTmpListener;
-            }
+            g_pRegisteredListeners[index] = pTmpListener;
 
             pcsl_mem_free(pListener);
             pListener = pTmpListener;

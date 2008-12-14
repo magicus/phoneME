@@ -75,8 +75,6 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
         $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/app_image_gen_base/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/app_image_gen/lib.gmk \
-        $(SUBSYSTEM_AMS_DIR)/autotester_base/lib.gmk \
-        $(SUBSYSTEM_AMS_DIR)/autotester/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk \
@@ -88,8 +86,24 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
         $(SUBSYSTEM_AMS_DIR)/ams_folders/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/ams_debug/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/dynamic_components/lib.gmk \
-	$(SUBSYSTEM_AMS_DIR)/dynamic_component_manager/lib.gmk \
-	$(SUBSYSTEM_AMS_DIR)/vm_utils/lib.gmk
+        $(SUBSYSTEM_AMS_DIR)/dynamic_component_manager/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/vm_utils/lib.gmk
+ 
+# Auto tester
+        ifeq ($(USE_AUTOTESTER), true)
+            SUBSYSTEM_AMS_COMPONENTS += \
+                $(SUBSYSTEM_AMS_DIR)/autotester_base/lib.gmk \
+                $(SUBSYSTEM_AMS_DIR)/autotester/lib.gmk
+
+            # SVM autotester needs stubs
+            ifneq ($(USE_MULTIPLE_ISOLATES), true)
+                SUBSYSTEM_AMS_COMPONENTS += \
+                    $(SUBSYSTEM_AMS_DIR)/autotester_stubs/lib.gmk
+            endif
+        else
+            SUBSYSTEM_AMS_COMPONENTS += \
+                $(SUBSYSTEM_AMS_DIR)/autotester_stubs/lib.gmk
+        endif
 
 # On device debugging
         ifeq ($(USE_ON_DEVICE_DEBUG), true)

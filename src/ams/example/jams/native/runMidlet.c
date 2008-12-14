@@ -38,6 +38,7 @@
 #include <commandLineUtil_md.h>
 #include <heap.h>
 #include <ams_params.h>
+#include <midp_properties_port.h>
 
 /** Maximum number of command line arguments. */
 #define RUNMIDLET_MAX_ARGS 32
@@ -93,7 +94,6 @@ runMidlet(int argc, char** commandlineArgs) {
     int numberOfSuites = 0;
     int ordinalSuiteNumber = -1;
     char* chSuiteNum = NULL;
-    int midp_heap_requirement;
     MIDPError errCode;
     char** ppParamsFromPlatform;
     char** ppSavedParams = NULL;
@@ -101,12 +101,31 @@ runMidlet(int argc, char** commandlineArgs) {
 
     JVM_Initialize(); /* It's OK to call this more than once */
 
-    midp_heap_requirement = getHeapRequirement();
+    /* get midp application directory, set it */
+    appDir = getApplicationDir(argv[0]);
+    if (appDir == NULL) {
+        REPORT_ERROR(LC_AMS, "Failed to recieve midp application directory");
+        return -1;
+    }
 
-    /*
-     * Set Java heap capacity now so it can been overridden from command line.
-     */
-    JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
+    midpSetAppDir(appDir);
+
+    /* get midp configuration directory, set it */
+    confDir = getConfigurationDir(argv[0]);
+    if (confDir == NULL) {
+        REPORT_ERROR(LC_AMS, "Failed to recieve midp configuration directory");
+        return -1;
+    }
+    
+    midpSetConfigDir(confDir);
+
+    if (midpInitialize() != 0) {
+        REPORT_ERROR(LC_AMS, "Not enough memory");
+        return -1;
+    }
+
+    /* Set Java heap parameters now so they can been overridden from command line */
+    setHeapParameters();
 
     /*
      * Check if there are some parameters passed to us from the platform
@@ -138,11 +157,22 @@ runMidlet(int argc, char** commandlineArgs) {
 
     /* if savedNumberOfParams > 0, ignore the command-line parameters */
     if (savedNumberOfParams <= 0) {
-        if (midpRemoveOptionFlag("-port", commandlineArgs, &argc) != NULL) {
-            char* pMsg = "WARNING: -port option has no effect, "
-                         "set VmDebuggerPort property instead.\n";
-            REPORT_ERROR(LC_AMS, pMsg);
-            return -1;
+        /* 
+         * Debugger port: command-line argument overrides 
+         * configuration settings. 
+         */
+        {
+            char* debuggerPortString =
+              midpRemoveCommandOption("-port", commandlineArgs, &argc);
+            if (debuggerPortString != NULL) {
+                int debuggerPort;
+                if (sscanf(debuggerPortString, "%d", &debuggerPort) != 1) {
+                    REPORT_ERROR(LC_AMS, "Invalid debugger port format");
+                    return -1;
+                }
+
+                setInternalProperty("VmDebuggerPort", debuggerPortString);
+            }
         }
 
         /*
@@ -225,32 +255,6 @@ runMidlet(int argc, char** commandlineArgs) {
 
     if (argc > 6) {
         REPORT_ERROR(LC_AMS, "Too many arguments given\n");
-        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
-        return -1;
-    }
-
-    /* get midp application directory, set it */
-    appDir = getApplicationDir(argv[0]);
-    if (appDir == NULL) {
-        REPORT_ERROR(LC_AMS, "Failed to recieve midp application directory");
-        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
-        return -1;
-    }
-
-    midpSetAppDir(appDir);
-
-    /* get midp configuration directory, set it */
-    confDir = getConfigurationDir(argv[0]);
-    if (confDir == NULL) {
-        REPORT_ERROR(LC_AMS, "Failed to recieve midp configuration directory");
-        ams_free_startup_params(ppSavedParams, savedNumberOfParams);
-        return -1;
-    }
-    
-    midpSetConfigDir(confDir);
-
-    if (midpInitialize() != 0) {
-        REPORT_ERROR(LC_AMS, "Not enough memory");
         ams_free_startup_params(ppSavedParams, savedNumberOfParams);
         return -1;
     }

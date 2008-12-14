@@ -277,31 +277,43 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         if (numS > 0) {
             int index = -1;
             int type = -1;
+            // Priority value is initialized by minimal posible integer
+            int priority = Integer.MIN_VALUE;
 
             for (int i = 0; i < numS; i++) {
                 if (!(this.scrCmds[i] instanceof SubMenuCommand)) {
                     switch (this.scrCmds[i].getCommandType()) {
                         case Command.BACK:
-                            index = i;
-                            type = Command.BACK;
+                            if (type != Command.BACK ||
+                                    (type == Command.BACK && priority > this.scrCmds[i].getPriority() )) {
+                                index = i;
+                                type = Command.BACK;
+                                priority = this.scrCmds[i].getPriority();
+                            }
                             break;
                         case Command.EXIT:
-                            if (type != Command.BACK) {
+                            if ((type != Command.BACK && type != Command.EXIT)
+                                    || (type == Command.EXIT && priority > this.scrCmds[i].getPriority() )) {
                                 index = i;
                                 type = Command.EXIT;
+                                priority = this.scrCmds[i].getPriority();
                             }
                             break;
                         case Command.CANCEL:
-                            if (type != Command.BACK && type != Command.EXIT) {
+                            if ((type != Command.CANCEL && type != Command.EXIT && type != Command.BACK)
+                                    || (type == Command.CANCEL && priority > this.scrCmds[i].getPriority() )) {
                                 index = i;
                                 type = Command.CANCEL;
+                                priority = this.scrCmds[i].getPriority();
                             }
                             break;
                         case Command.STOP:
-                            if (type != Command.BACK && type != Command.EXIT &&
-                                    type != Command.CANCEL) {
+                            if ((type != Command.STOP && type != Command.CANCEL &&
+                                 type != Command.EXIT && type != Command.BACK)
+                                    || (type == Command.STOP && priority > this.scrCmds[i].getPriority() )) {
                                 index = i;
                                 type = Command.STOP;
+                                priority = this.scrCmds[i].getPriority();
                             }
                             break;
                         default:
@@ -309,12 +321,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                     }
                 } // if
 
-                // We can short circuit the search if we find
-                // a BACK command, because that is the highest weighted
-                // Command for the left soft button
-                if (type == Command.BACK) {
-                    break;
-                }
             } // for
 
             // If we have a command for the left button, we pop it out
@@ -917,7 +923,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         return containsPoint(x,y) ||
             (menuLayer != null && 
              (menuLayer.containsPoint(x,y) ||
-              (menuLayer.cascadeMenu != null &&
+              (menuLayer.cascadeMenu != null && menuLayer.cascadeMenuUp &&
                menuLayer.cascadeMenu.containsPoint(x,y))
               )
              );

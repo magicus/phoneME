@@ -322,6 +322,10 @@ class AppSettingsImpl implements AppSettings, CommandListener {
                 curChoice.setSelectedID(prevValueID);
                 settingsUI.changeSettingValue(curChoiceID, curChoice.getSelectedID());
             }
+            display.setCurrent(settingsUI.getMainDisplayable());
+        } else if (c == okChoiceSelectionCmd) {
+            // just switch back to AppSettings UI
+            display.setCurrent(settingsUI.getMainDisplayable());
         } else if (c == okExclusiveChoiceSelectionCmd) {
             if (groupsInConflict != null) {
                 // set [0] to blanket, [1] to session
@@ -331,11 +335,11 @@ class AppSettingsImpl implements AppSettings, CommandListener {
                 ValueChoiceImpl  bs2 = findChoice(groupsInConflict[0]);
                 int prevValID2 = bs2.getSelectedID();
                 bs2.setSelectedID(Permissions.BLANKET_GRANTED);
-                onChoiceGroupSelectionChanged(bs1, prevValID1);
-                onChoiceGroupSelectionChanged(bs2, prevValID2);
                 settingsUI.changeSettingValue(bs1.getPermissionGroupID(), bs1.getSelectedID());
                 settingsUI.changeSettingValue(bs2.getPermissionGroupID(), bs2.getSelectedID());
                 display.setCurrent(settingsUI.getMainDisplayable());
+                onChoiceGroupSelectionChanged(bs1, prevValID1);
+                onChoiceGroupSelectionChanged(bs2, prevValID2);
             }
         } else if (c == noExclusiveChoiceSelectionCmd) {
             if (groupsInConflict != null) {
@@ -346,11 +350,11 @@ class AppSettingsImpl implements AppSettings, CommandListener {
                 ValueChoiceImpl  bs2 = findChoice(groupsInConflict[1]);
                 int prevValID2 = bs2.getSelectedID();
                 bs2.setSelectedID(Permissions.BLANKET_GRANTED);
-                onChoiceGroupSelectionChanged(bs1, prevValID1);
-                onChoiceGroupSelectionChanged(bs2, prevValID2);
                 settingsUI.changeSettingValue(bs1.getPermissionGroupID(), bs1.getSelectedID());
                 settingsUI.changeSettingValue(bs2.getPermissionGroupID(), bs2.getSelectedID());
                 display.setCurrent(settingsUI.getMainDisplayable());
+                onChoiceGroupSelectionChanged(bs1, prevValID1);
+                onChoiceGroupSelectionChanged(bs2, prevValID2);
             }
         }
    }
@@ -632,7 +636,16 @@ class AppSettingsImpl implements AppSettings, CommandListener {
             break;
         }
 
-        choice.setSelectedID(initValue);
+        if (choice.idExists(initValue)) {
+            choice.setSelectedID(initValue);
+        } else {
+            if (level == Permissions.BLANKET_GRANTED &&
+                Permissions.isReadMessageGroup(permissionGroup)) {
+                choice.setSelectedID(Permissions.ONESHOT);
+            } else {
+                throw new RuntimeException("Invalid initial permission level selected.");
+            }
+        }
 
         if (initialSetting == null) {
             initialSetting = choice;

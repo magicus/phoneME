@@ -26,8 +26,6 @@
 
 package com.sun.midp.io.j2me.https;
 
-import java.util.Hashtable;
-import java.util.Enumeration;
 import java.util.Vector;
 
 import java.io.IOException;
@@ -114,20 +112,11 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
      * SecurityInitializer should be able to check this inner class name.
      */
     static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
+        implements ImplicitlyTrustedClass {}
 
     /** This class has a different security domain than the MIDlet suite */
     private static SecurityToken classSecurityToken =
         SecurityInitializer.requestToken(new SecurityTrusted());
-
-    /**
-     * The methods other than openPrim need to know that the
-     * permission occurred.
-     */
-    private boolean permissionChecked;
-
-    /** True if the owner of this connection is trusted. */
-    private boolean ownerTrusted;
 
     /**
      * Parse the common name out of a distinguished name.

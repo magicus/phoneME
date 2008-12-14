@@ -34,7 +34,6 @@ import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
-import com.sun.midp.installer.GraphicalInstaller;
 
 import javax.microedition.lcdui.*;
 import java.util.Vector;
@@ -65,6 +64,9 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
     /** Number of midlets in minfo */
     private int mcount;
 
+    /** Indicates whether this MIDlet selector should be exited. */
+    private boolean scheduledExit;
+    
     /** MIDlet information, class, name, icon; one per MIDlet */
     private MIDletInfo[] minfo;
 
@@ -83,11 +85,6 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
                                          (ResourceConstants.END),
                                          Command.ITEM, 1);
 
-    /** Index of the selected MIDlet, starts at -1 for non-selected. */
-    private int selectedMidlet = -1;
-
-    /** List of midlets executed from this selector. */
-    private Vector runningMidlets;
 
     /**
      * Create and initialize a new Selector MIDlet.
@@ -126,8 +123,6 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
 
         display.setCurrent(mform);
         
-        runningMidlets = new Vector();
-        
         /* for locked suite, we need storage lock until some MIDlet is launched.
          * This prevents reinstallation of the locked suite. */
         if (suiteInfo.isLocked()) {
@@ -137,7 +132,8 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
 
     /**
      * Gets structure containing information about suite accessible by this
-     * selector
+     * selector.
+     * @return the suite info
      */
     public RunningMIDletSuiteInfo getSuiteInfo() {
         return suiteInfo;
@@ -148,6 +144,16 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         refreshList();
         display.setCurrent(mform);
     }
+    
+    /**
+     * Checks whether this MIDlet selector is the current displayable.
+     * 
+     * @return <code>true</code> if this selector is the current displayable,
+     *      <code>false</code> otherwise
+     */
+    public boolean isCurrent() {
+        return display.getCurrent() == mform;
+    }
 
     /**
      * Called when MIDlet execution exited.
@@ -156,27 +162,45 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
      * @param midlet ClassName of MIDlet which just exited
      */
     public void notifyMidletExited(String midlet) {
-        runningMidlets.removeElement(midlet);        
-        
-        /* If no more MIDlets are running from a locked suite, we need 
-         * the storage lock until another MIDlet is launched. This prevents 
-         * reinstallation of the locked suite. */
-        if (runningMidlets.isEmpty() && suiteInfo.isLocked()) {
-            suiteInfo.grabStorageLock();
+                
+        if (!suiteInfo.hasRunningMidlet()) {
+            if (scheduledExit) {
+                // exit now
+                exit();
+                return;
+            }
+            
+            /* If main MIDlet is exited and all other MIDlets as well, exit the
+             * selector. */
+            if (suiteInfo.hasMainMidlet()) {
+                leaveSelector();
+                return;
+            }
+
+            /* If no more MIDlets are running from a locked suite, we need 
+             * the storage lock until another MIDlet is launched. This prevents 
+             * reinstallation of the locked suite. */
+            if (suiteInfo.isLocked()) {
+                suiteInfo.grabStorageLock();
+            }
         }
+
+        refreshList();
     }
 
     /** If no MIDlet is running, exits the suite */
     public void exitIfNoMidletRuns() {
-        if (runningMidlets.isEmpty()) {
-            if (suiteInfo.holdsStorageLock()) {
-                suiteInfo.releaseStorageLock();
-            }
-            if (suiteInfo.isLocked()) {
-                suiteInfo.unlock();
-            }
-            manager.notifyMIDletSelectorExited(suiteInfo);
+        if (!suiteInfo.hasRunningMidlet()) {
+            exit();
         }
+    }
+
+    /**
+     * Exit immediately after the last running MIDlet of this selector exits.
+     */         
+    public void exitWhenNoMidletRuns() {
+        scheduledExit = true;
+        exitIfNoMidletRuns();
     }
     
     /**
@@ -190,33 +214,37 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
      */
     public void commandAction(Command c, Displayable s) {
         if (c == backCmd) {
-            if (parentDisplayable != null) {
-                display.setCurrent(parentDisplayable);
-            } else {
-                manager.shutDown();
-            }
-            exitIfNoMidletRuns();
+            leaveSelector();
         }
     }
 
+    /**
+     * Leaves the MIDlet selector.
+     */
+    public void leaveSelector() {
+        if (parentDisplayable != null) {
+            display.setCurrent(parentDisplayable);
+        } else {
+            manager.shutDown();
+        }
+        exitIfNoMidletRuns();
+    }
+    
     /**
      * Responds to a command issued on an Item in MIDlet selector
      * @param c command activated by the user
      * @param item the Item the command was on.
      */
     public void commandAction(Command c, Item item) {
-        if (c == launchCmd) {
-            synchronized (this) {
-                if (selectedMidlet != -1) {
-                    // the previous selected MIDlet is being launched
-                    return;
-                }
-                selectedMidlet =
-                    ((SelectorMIDletCustomItem)item).index;
-            }
+        int selected = ((SelectorMIDletCustomItem)item).index;
+        if (selected < 0 || selected >= mcount) {
+            return;
+        }
 
-            String midletClassName = minfo[selectedMidlet].classname;
-            if(runningMidlets.contains(midletClassName)) {
+        String midletClassName = minfo[selected].classname;
+        if (c == launchCmd) {
+
+            if (suiteInfo.getProxyFor(midletClassName) != null) {
                 manager.moveToForeground(suiteInfo, midletClassName);
                 return;
             }
@@ -227,17 +255,11 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
                 suiteInfo.releaseStorageLock();
             }
 
-            runningMidlets.addElement(minfo[selectedMidlet].classname);
-            manager.launchSuite(suiteInfo, minfo[selectedMidlet].classname);
-            selectedMidlet = -1;
+            manager.launchSuite(suiteInfo, midletClassName);
 
         } else if (c == endCmd) {
 
-            int selected = ((SelectorMIDletCustomItem)item).index;
-            if (selected > 0 && selected < mform.size()) {
-                String midletClassName = minfo[selected].classname;
-                manager.exitMidlet(suiteInfo, midletClassName);
-            }
+            manager.exitMidlet(suiteInfo, midletClassName);
             display.setCurrent(mform);
         }
     }
@@ -265,9 +287,10 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
                 MIDletProxy mp = mpl.findMIDletProxy(
                     suiteInfo.suiteId, minfo[i].classname);
 
-                SelectorMIDletCustomItem mci = new SelectorMIDletCustomItem(
-                    encodeMIDletName(mp, minfo[i].name), icon, i);
+                SelectorMIDletCustomItem mci =
+                    new SelectorMIDletCustomItem(minfo[i].name, icon, i);
 
+                mci.updateState(mp);
                 mci.addCommand(launchCmd);
                 mci.addCommand(endCmd);
                 mci.setDefaultCommand(launchCmd);
@@ -287,23 +310,9 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
             int index = mci.index;
             MIDletProxy mp = mpl.findMIDletProxy(
                 suiteInfo.suiteId, minfo[index].classname);
-            mci.setDisplayName(encodeMIDletName(mp, minfo[index].name));
+            mci.updateState(mp);
+            mci.update();
         }
-    }
-
-    /**
-     * Composes a MIDlet entry title from the MIDlet name and MIDlet status
-     * @param mp the proxy of running MIDlet
-     * @param name the display name of the MIDlet
-     * @return a human-readable string including MIDlet status and name
-     */
-    private String encodeMIDletName(MIDletProxy mp, String name) {
-        int state;
-        return ((mp == null) ? "o "
-            : (MIDletProxy.MIDLET_ACTIVE == (state = mp.getMidletState())) ? "* "
-            : (MIDletProxy.MIDLET_PAUSED == state) ? "P "
-            : (MIDletProxy.MIDLET_DESTROYED == state) ? "D "
-            : "? ") + name;
     }
 
     /**
@@ -349,11 +358,25 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         minfo[mcount++] = info;
     }
 
+    /** Exits this MIDlet selector unconditionally. */
+    private void exit() {
+        if (suiteInfo.holdsStorageLock()) {
+            suiteInfo.releaseStorageLock();
+        }
+        if (suiteInfo.isLocked()) {
+            suiteInfo.unlock();
+        }
+
+        manager.notifyMIDletSelectorExited(suiteInfo);
+        scheduledExit = false;
+    }
+
     /** The inner class to represent MIDlet items in the MIDlet Selector screen */
     class SelectorMIDletCustomItem extends MIDletCustomItem {
-        
         /** Predefined index of the item in the form */
         int index;
+        /** Running state of the item */
+        boolean isActive;
 
         /**
          * Constructs new item
@@ -367,14 +390,19 @@ final class MIDletSelector implements CommandListener, ItemCommandListener {
         }
 
         /**
-         * Sets new display name for the item
-         * @param displayName
+         * Updates state of the MIDlet item 
+         * @param midletProxy MIDlet proxy of running MIDlet item
          */
-        void setDisplayName(String displayName) {
-            text = displayName.toCharArray();
-            textLen = displayName.length();
-            sizeChanged(width, height);
+        void updateState(MIDletProxy midletProxy) {
+            isActive = (midletProxy != null &&
+                MIDletProxy.MIDLET_ACTIVE == midletProxy.getMidletState());
         }
+
+        /** Overrides #MIDletCustomItem.isRunning() */
+        boolean isRunning() {
+            return isActive;
+        }
+
     }
 
 }

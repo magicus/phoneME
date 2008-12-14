@@ -123,3 +123,7 @@ USE_EXTENDED_ATTRIBUTES = false
 
 # ABB
 USE_MIDP_ABB            = false
+
+# Auto tester
+USE_AUTOTESTER          = true
+

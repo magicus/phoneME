@@ -574,6 +574,7 @@ public class MIDletSuiteStorage {
      *     jarFilename - name of the downloaded MIDlet suite jar file;
      *     suiteName - name of the suite;
      *     suiteVendor - vendor of the suite;
+     *     suiteVersion - version of the suite;
      *     authPath - authPath if signed, the authorization path starting
      *                with the most trusted authority;
      *     domain - security domain of the suite;

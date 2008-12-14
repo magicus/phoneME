@@ -275,6 +275,10 @@ endif
 # Remove the WTK dependency when building with Native App. Manager
 ifeq ($(MIDP_BIN_TARGET), wtk)
     MIDP_BIN_TARGET=
+else
+ifeq ($(MIDP_BIN_TARGET), sdk)
+    MIDP_BIN_TARGET=
+endif
 endif
 
 else
@@ -361,6 +365,7 @@ endif
 
 ifeq ($(USE_ON_DEVICE_DEBUG), true)
    EXTRA_CFLAGS += -DENABLE_ON_DEVICE_DEBUG=1
+   JPP_DEFS += -DENABLE_ON_DEVICE_DEBUG
 else
    EXTRA_CFLAGS += -DENABLE_ON_DEVICE_DEBUG=0
 endif
@@ -397,12 +402,6 @@ else
    p =
 endif
 
-ifeq ($(USE_CLDC_RELEASE), true)
-   r = _r
-else 
-   r = 
-endif 
-
 ifeq ($(USE_DEBUG), true)
     EXTRA_CFLAGS += -DAZZERT=1 -DENABLE_DEBUG=1
     JPP_DEFS	 += -DENABLE_DEBUG
@@ -417,6 +416,14 @@ else
     JAVAC_DEBUG = :none
     g = 
 endif
+
+ifeq ($(USE_CLDC_RELEASE), true)
+   cldc_g =
+   cldc_r = _r
+else 
+   cldc_g = $(g)
+   cldc_r = 
+endif 
 
 ifeq ($(USE_CONTROL_ARGS_FROM_JAD), true)
     EXTRA_CFLAGS += -DENABLE_CONTROL_ARGS_FROM_JAD=1

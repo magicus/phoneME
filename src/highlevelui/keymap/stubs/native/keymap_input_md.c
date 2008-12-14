@@ -261,7 +261,7 @@ keymap_is_invalid_key_code(int keyCode)
      * Valid within UNICODE and not 0x0 and 0xffff 
      * since they are defined to be invalid
      */
-    if ((keyCode <= 0x0) || (keyCode >= 0xFFFF) ) {
+    if ((keyCode == 0x0) || (keyCode >= 0xFFFF) || (keyCode < MIN_KEY_VALUE)) {
         return KNI_TRUE;
     }
 

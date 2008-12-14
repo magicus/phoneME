@@ -52,6 +52,8 @@ MIDP_JAVADOC_ALL += \
     -group "MIDP Permissions Subsystem" \
     $(shell echo $(SUBSYSTEM_SECURITY_PACKAGES) | tr ' ' $(PATHSEP))
 
+MIDP_JAVADOC_SOURCEPATH += $(CDC_SECURITY_DIR)/classes
+
 include $(SUBSYSTEM_SECURITY_DIR)/crypto/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/file_digest/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/internal_api_protection/lib.gmk
@@ -59,7 +61,7 @@ include $(CDC_SECURITY_DIR)/midp_permissions_lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/permission_dialog/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/pki/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/publickeystore/lib.gmk
-include $(SUBSYSTEM_SECURITY_DIR)/secure_random/lib.gmk
+include $(CDC_SECURITY_DIR)/secure_random_lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/access_controller_cldc_port/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/der/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/ocsp/lib.gmk

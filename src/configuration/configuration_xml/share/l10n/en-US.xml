@@ -312,6 +312,8 @@
                 Value="This suite contains"/>
 <localized_string Key="AMS_MGR_SUITE_RECORD_STORES"
                 Value="The following record stores will be removed"/>
+<localized_string Key="AMS_MGR_SUITE_PRIVATE_DATA"
+                Value="All data in the private work directory of the suite will be removed."/>
 <localized_string Key="AMS_MGR_REM_REINSTALL"
                 Value="Once removed, %1 will have to be reinstalled."/>
 <localized_string Key="AMS_MGR_INTRUPT"
@@ -586,6 +588,14 @@
 <localized_string Key="AMS_GRA_INTLR_LOCKED"
                 Value="You can not update the application %1 because it is currently running.   Please exit %1 and then update it."/>
 
+<localized_string Key="AMS_CMGR_INSTALL_COMPONENT"
+                Value="Install Component"/>
+<localized_string Key="AMS_CMGR_ENTER_URL_TO_INSTALL_FROM"
+                Value="Enter URL to install from:"/>
+<localized_string Key="AMS_CMGR_ENTER_DESCRIPTIVE_NAME"
+                Value="Leave blank or enter a descriptive name"/>
+
+
 <localized_string Key="AMS_CLASS_VERIFIER_TITLE"
                 Value="Class Verifier"/>
 <localized_string Key="AMS_CLASS_VERIFIER_GAUGE_LABEL"
@@ -605,6 +615,8 @@
                 Value="URL:"/>
 <localized_string Key="AMS_AUTO_TESTER_UNSIGN_SECURITY_DOMAIN"
                 Value="Security domain if suite not signed:"/>
+<localized_string Key="AMS_AUTO_TESTER_BLANKET_PERMISSIONS"
+                Value="Set the following permission groups of the test suite to blanket granted:"/>
 <localized_string Key="AMS_AUTO_TESTER_ERROR_URL_MSG"
                 Value="The URL has not been entered."/>
 <localized_string Key="AMS_AUTO_TESTER_ERROR_SECURITY_DOMAIN_MSG"

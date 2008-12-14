@@ -88,6 +88,11 @@ public class BasicTextInputSession implements
         if (this.textComponent == null) {
             this.textComponent = component;
         } else if (this.textComponent != component) {
+            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                Logging.report(Logging.WARNING, LogChannels.LC_HIGHUI,
+                    "[Basic.beginSession()] " +
+                        "InputModeHandler in use by another TextInputComponent");
+            }
             throw new IllegalStateException(
                 "InputModeHandler in use by another TextInputComponent");
         }

@@ -41,6 +41,7 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.payment.PAPICleanUp;
+import com.sun.midp.jsr075.FileConnectionCleanup;
 
 import com.sun.midp.midlet.MIDletSuite;
 
@@ -443,6 +444,20 @@ addCommand(ping);
     }
     
     /**
+     * Exits a MIDlet selector which corresponds to the specified
+     * <code>RunningMIDletSuiteInfo</code>.
+     * 
+     * @param msi the <code>RunningMIDletSuiteInfo</code> which specifies 
+     *      the selector to exit
+     */
+    public void exitMidletSelector(RunningMIDletSuiteInfo msi) {
+        MIDletSelector selector = getMidletSelector(msi.suiteId);
+        if (selector != null) {
+            selector.exitWhenNoMidletRuns();
+        }
+    }
+    
+    /**
      * Called to determine MidletSuiteInfo of the last selected Item.
      *
      * @return last selected MidletSuiteInfo
@@ -813,6 +828,7 @@ addCommand(ping);
                     mci.setDefaultCommand(infoCmd);
                 }
             } else {
+                mci.setDefaultCommand(fgCmd);
                 mci.removeCommand(launchInstallCmd);
                 if (appManager.caManagerIncluded()) {
                     mci.removeCommand(launchCaManagerCmd);
@@ -827,8 +843,12 @@ addCommand(ping);
         } else { // not internal suite
             // running MIDlets will continue to run
             // even when disabled
-            if (mci.msi.enabled || mci.msi.hasRunningMidlet()) {
-                mci.setDefaultCommand(openCmd);
+            if (si.enabled || running) {
+                if (running && si.hasSingleMidlet()) {
+                    mci.setDefaultCommand(fgCmd);
+                } else {
+                    mci.setDefaultCommand(openCmd);
+                }
             } else {
                 mci.setDefaultCommand(infoCmd);
                 mci.removeCommand(openCmd);
@@ -926,7 +946,14 @@ addCommand(ping);
      */
     public void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {
         if (!suiteInfo.isLocked()) {
-            removeMIDletSelector(suiteInfo);
+            MIDletSelector selector = getMidletSelector(suiteInfo.suiteId);
+            if (selector != null) {
+                midletSelectors.removeElement(selector);
+
+                if (selector.isCurrent()) {
+                    display.setCurrent(this);
+                }
+            }
         }
     }
 
@@ -1278,7 +1305,7 @@ addCommand(ping);
             confirmForm.append(item);
 
             extraConfirmMsg =
-                PAPICleanUp.checkMissedTransactions(midletSuite.getID());
+                PAPICleanUp.checkMissedTransactions(suiteInfo.suiteId);
             if (extraConfirmMsg != null) {
                 temp.setLength(0);
                 temp.append(" \n");
@@ -1321,6 +1348,23 @@ addCommand(ping);
                 confirmForm.append(item);
                 appendRecordStoresToForm(recordStores, confirmForm);
             }
+
+            // IMPL_NOTE: uncomment this code once 
+            // FileConnectionCleanupImpl.suiteHasPrivateData has sensible
+            // (not stubbed) implementation.
+            /*
+            boolean privateDataExists =
+                Installer.FileConnectionHasPrivateData(suiteInfo.suiteId);
+            if (privateDataExists) {
+                temp.setLength(0);
+                temp.append(" \n");
+                temp.append(Resource.getString
+                            (ResourceConstants.AMS_MGR_SUITE_PRIVATE_DATA));
+                item = new StringItem(null, temp.toString());
+                item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
+                confirmForm.append(item);
+            }
+            */
 
             temp.setLength(0);
             temp.append(" \n");

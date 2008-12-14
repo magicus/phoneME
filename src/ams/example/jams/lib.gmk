@@ -173,12 +173,18 @@ ifdef INCLUDE_SHELL_SCRIPTS
   ifeq ($(TARGET_VM), cldc_vm)
     SUBSYSTEM_AMS_EXECUTABLES += \
       $(BINDIR)/installMidlet$(g)$(BAT) \
-      $(BINDIR)/usertest$(g)$(BAT) \
-      $(BINDIR)/autotest$(g)$(BAT)
+      $(BINDIR)/usertest$(g)$(BAT)
+
+    ifeq ($(USE_AUTOTESTER), true)
+      SUBSYSTEM_AMS_EXECUTABLES += \
+         $(BINDIR)/autotest$(g)$(BAT)
+    endif
 
     ifeq ($(USE_MULTIPLE_ISOLATES), true)
+    ifeq ($(USE_AUTOTESTER), true)
       SUBSYSTEM_AMS_EXECUTABLES += \
          $(BINDIR)/autotestm$(g)$(BAT)
+    endif
     endif
   endif
 

@@ -465,11 +465,12 @@ class AppManagerPeer implements CommandListener {
 
                 if (si.hasProxy(midlet)) {
 
-                    if (si.hasSingleMidlet()) {
+                    si.removeProxy(midlet);
+
+                    if (si.hasSingleMidlet() || 
+                            (! si.hasRunningMidlet() && si.hasMainMidlet())) {
                         si.unlock();
                     }
-
-                    si.removeProxy(midlet);
 
                     appManagerUI.notifyMidletExited(si, midletClassName);
                     
@@ -1072,6 +1073,7 @@ class AppManagerPeer implements CommandListener {
             msi.lock();
         }
         
+        msi.setMainMidlet(midletClassname != null);
         if (midletClassname != null) {
             manager.launchSuite(msi, midletClassname);
         } else {
@@ -1108,6 +1110,8 @@ class AppManagerPeer implements CommandListener {
         for (int i = 0; i < proxies.length; ++i) {
             proxies[i].destroyMidlet();
         }
+
+        appManagerUI.exitMidletSelector(msi);
     }
     
     /**

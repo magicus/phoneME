@@ -339,6 +339,7 @@ endif
 #####################################################################
 ifeq ($(USE_JSR_257), true)
 JPP_DEFS += -DENABLE_JSR_257
+EXTRA_CFLAGS += -DENABLE_JSR_257=1
 include $(JSR_257_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
  
@@ -437,7 +438,7 @@ endif
 # Description: JSR 234
 #####################################################################
 ifeq ($(USE_JSR_234), true)
-include $(JSR_234_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_234_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -500,6 +501,14 @@ endif
 
 ifeq ($(USE_ABSTRACTIONS),true)
 include $(ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) Memory monitoring
+# Description: 
+#####################################################################
+ifeq ($(USE_MEMMON), true)
+EXTRA_CFLAGS += -DENABLE_MEMMON=1
 endif
 
 #####################################################################

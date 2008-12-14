@@ -32,6 +32,7 @@
 # Name of the library
 AUTOTESTER_MVM_NAME = autotester/mvm
 AUTOTESTER_MVM_DIR = $(SUBSYSTEM_AMS_DIR)/$(AUTOTESTER_MVM_NAME)
+PROJECT_AUTOTESTER_MVM_DIR = $(PROJECT_SUBSYSTEM_AMS_DIR)/$(AUTOTESTER_MVM_NAME)
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AUTOTESTER_MVM_DIR)/classes
@@ -42,10 +43,23 @@ MIDP_JAVADOC_SOURCEPATH += $(AUTOTESTER_MVM_DIR)/classes
 #MIDP_JAVADOC_PACKAGES += $(AUTOTESTER_MVM_PACKAGES)
 #MIDP_JAVADOC_ALL += \
 #        -group "AutoTester" \
-#	 $(shell echo $(AUTOTESTER_MVM_PACKAGES) |tr ' ' $(PATHSEP))
+#    $(shell echo $(AUTOTESTER_MVM_PACKAGES) |tr ' ' $(PATHSEP))
 
 # Java files for the library
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTester.java \
-    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterMulti.java
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterHelperBaseMVM.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterMulti.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterMultiHelper.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/service/AutoTesterService.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/service/AutoTesterServiceProtocolAMS.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/service/AutoTesterServiceProtocolClient.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/service/AutoTesterServiceInitializer.java
+
+ifeq ($(USE_ON_DEVICE_DEBUG), true)
+    SUBSYSTEM_AMS_JAVA_FILES += $(PROJECT_AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterHelper.java
+else
+    SUBSYSTEM_AMS_JAVA_FILES += $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterHelper.java
+endif
+

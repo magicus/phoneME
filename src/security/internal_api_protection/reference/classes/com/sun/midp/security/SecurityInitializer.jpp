@@ -210,7 +210,7 @@ public final class SecurityInitializer {
         // #endif ENABLE_JSR_75
 
         // #ifdef ENABLE_JSR_82
-        "com.sun.midp.jsr082.SecurityInitializer$SecurityTrusted",
+        "com.sun.jsr082.security.SecurityInitializer$SecurityTrusted",
         // #endif ENABLE_JSR_82
 
         // #ifdef ENABLE_JSR_234
@@ -265,6 +265,13 @@ public final class SecurityInitializer {
         // #ifdef ENABLE_MULTIPLE_ISOLATES
         "com.sun.midp.main.AmsUtil$SecurityTrusted",
         "com.sun.midp.io.j2me.pipe.Protocol$SecurityTrusted",
+        "com.sun.midp.installer.AutoTester$SecurityTrusted",
+        // #endif
+
+        // #ifdef ENABLE_ON_DEVICE_DEBUG
+        // #ifdef ENABLE_MULTIPLE_ISOLATES
+        "com.sun.midp.odd.ODTEngine$SecurityTrusted", 
+        // #endif
         // #endif
 
         "com.sun.midp.suspend.AbstractSubsystem$SecurityTrusted",

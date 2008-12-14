@@ -93,6 +93,7 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_createComponentId) {
  * Gets the unique identifier of the dynamic component defined by its
  * vendor and name.
  *
+ * @param suiteId ID of the suite the component belongs to
  * @param vendor name of the vendor that created the component,
  *        as given in a JAD file
  * @param name name of the component, as given in a JAD file
@@ -105,13 +106,14 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getComponentId) {
     ComponentIdType componentId = UNUSED_COMPONENT_ID;
     MIDPError error;
+    SuiteIdType suiteId = KNI_GetParameterAsInt(1);
 
     KNI_StartHandles(2);
 
-    GET_PARAMETER_AS_PCSL_STRING(1, vendor)
-    GET_PARAMETER_AS_PCSL_STRING(2, name)
+    GET_PARAMETER_AS_PCSL_STRING(2, vendor)
+    GET_PARAMETER_AS_PCSL_STRING(3, name)
 
-    error = midp_get_component_id(&vendor, &name, &componentId);
+    error = midp_get_component_id(suiteId, &vendor, &name, &componentId);
 
     switch(error) {
         case OUT_OF_MEMORY:
@@ -120,7 +122,9 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getComponentId) {
         case SUITE_CORRUPTED_ERROR:
             KNI_ThrowNew(midpIOException, NULL);
             break;
-        case NOT_FOUND: /* this is ok, a new component ID was created */
+        case NOT_FOUND:
+            componentId = UNUSED_COMPONENT_ID;
+            break;
         default:
             break;
     }
@@ -240,11 +244,11 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_removeComponent) {
 
     if (status == SUITE_LOCKED) {
         KNI_ThrowNew(midletsuiteLocked, NULL);
-    } else if (status == BAD_PARAMS) {
+    } else if (status == BAD_PARAMS || status == NOT_FOUND) {
         KNI_ThrowNew(midpIllegalArgumentException, "bad component ID");
     } else if (status != ALL_OK) {
         KNI_ThrowNew(midpRuntimeException,
-            (status == OUT_OF_MEMORY) ? "Remove failed" : "Out of memory!");
+            (status == OUT_OF_MEMORY) ? "Out of memory!" : "Remove failed");
     }
 
     KNI_ReturnVoid();
@@ -373,6 +377,10 @@ KNIDECL(
                                      "displayName",
                                       &(pData->varSuiteData.displayName),
                                       tmpHandle);
+        KNI_RESTORE_PCSL_STRING_FIELD(componentInfoObject, componentInfoClass,
+                                     "version",
+                                      &(pData->varSuiteData.suiteVersion),
+                                      tmpHandle);
         KNI_RESTORE_BOOLEAN_FIELD(componentInfoObject, componentInfoClass,
                                   "trusted", pData->isTrusted);
     } while (0);
@@ -442,6 +450,11 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getSuiteComponentsList)
                                       componentObjClass,
                                       "displayName",
                                       &(pData->varSuiteData.displayName),
+                                      tmpHandle);
+                KNI_RESTORE_PCSL_STRING_FIELD(componentObj,
+                                      componentObjClass,
+                                      "version",
+                                      &(pData->varSuiteData.suiteVersion),
                                       tmpHandle);
 
                 numberOfComponents++;

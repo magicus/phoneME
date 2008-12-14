@@ -159,6 +159,12 @@ typedef struct _variableLenSuiteData {
 
     /**
      * jint (length) + UTF16 string
+     * Version of the midlet suite.
+     */
+    pcsl_string suiteVersion;
+
+    /**
+     * jint (length) + UTF16 string
      * Full path to suite's jar file.
      */
     pcsl_string pathToJar;
@@ -474,6 +480,7 @@ midp_get_suite_id(const pcsl_string* vendor, const pcsl_string* name,
  * of the component. Note that the component may be corrupted even if it exists.
  * If the component doesn't exist, a new component ID is created.
  *
+ * @param suiteId ID of the suite the component belongs to
  * @param vendor name of the vendor that created the component, as
  *        given in a JAD file
  * @param name name of the component, as given in a JAD file
@@ -487,8 +494,8 @@ midp_get_suite_id(const pcsl_string* vendor, const pcsl_string* name,
  *          other error code in case of error
  */
 MIDPError
-midp_get_component_id(const pcsl_string* vendor, const pcsl_string* name,
-                      ComponentIdType* pComponentId);
+midp_get_component_id(SuiteIdType suiteId, const pcsl_string* vendor,
+                      const pcsl_string* name, ComponentIdType* pComponentId);
 #endif /* ENABLE_DYNAMIC_COMPONENTS */
 
 /**

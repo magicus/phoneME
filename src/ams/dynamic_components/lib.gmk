@@ -35,22 +35,22 @@ AMS_DYNAMIC_COMPONENTS_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_DYNAMIC_COMPONENTS_NAME)
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AMS_DYNAMIC_COMPONENTS_DIR)/classes $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes
-SUBSYSTEM_AMS_PACKAGES += com.sun.midp.services
+SUBSYSTEM_AMS_PACKAGES += com.sun.midp.amsservices
 
 # Java files for the library
 #
 
 # Common Interfaces
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AMS_DYNAMIC_COMPONENTS_DIR)/classes/com/sun/midp/services/AMSServices.java \
-    $(AMS_DYNAMIC_COMPONENTS_DIR)/classes/com/sun/midp/services/ComponentInfo.java \
+    $(AMS_DYNAMIC_COMPONENTS_DIR)/classes/com/sun/midp/amsservices/AMSServices.java \
+    $(AMS_DYNAMIC_COMPONENTS_DIR)/classes/com/sun/midp/amsservices/ComponentInfo.java \
     $(AMS_DYNAMIC_COMPONENTS_DIR)/classes/com/sun/midp/appmanager/AMSServicesEventConsumer.java
     
 # Implementation classes    
 ifeq ($(USE_DYNAMIC_COMPONENTS), true)
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/services/AMSServicesImpl.java \
-    $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/services/ComponentInfoImpl.java \
+    $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/amsservices/AMSServicesImpl.java \
+    $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/amsservices/ComponentInfoImpl.java \
     $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/appmanager/AMSServicesEventListener.java \
     $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/midletsuite/DynamicComponentStorage.java \
     $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/installer/DynamicComponentInstaller.java

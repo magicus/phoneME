@@ -221,7 +221,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      */
     public void lInsert(char data[], int offset, int length, int position) {
         if (data == null) {
-            return; // -au
+            return;
         }
         if (position <= cursor.index) {
             cursor.index += length;
@@ -247,7 +247,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
             int diff = cursor.index - offset;
             cursor.index -= (diff < length) ? diff : length;
             cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-        } 
+        }
         if (!editable) {
             resetUneditable();
         }
@@ -294,30 +294,30 @@ class TextFieldLFImpl extends ItemLFImpl implements
      *                      to show large uneditable contents
      */
     void setConstraintsCommon(boolean autoScrolling) {
-	// Cleanup old states that are constraints sensitive
+        // Cleanup old states that are constraints sensitive
         if (hasFocus && visible) {
-	    if (editable) {
-		disableInput();
+            if (editable) {
+                disableInput();
 
                 // IMPL_NOTE: problem with synchronization on layers and LCDUILock
                 disableLayers();
-	    } else if (autoScrolling) {
-		stopScroll();
-	    }
-	}
+            } else if (autoScrolling) {
+                stopScroll();
+            }
+        }
 
-	// Change editability
-        editable = 
+        // Change editability
+        editable =
             (tf.constraints & TextField.UNEDITABLE) != TextField.UNEDITABLE;
-        
-	// Setup new states that are constraints sensitive
+
+        // Setup new states that are constraints sensitive
         if (hasFocus && visible) {
-	    if (editable) {
+            if (editable) {
                 enableInput();
                 // IMPL_NOTE: problem with synchronization on layers and LCDUILock
                 showIMPopup = true;
                 enableLayers();
-	    } else if (autoScrolling) {
+            } else if (autoScrolling) {
                 startScroll();
             }
         }
@@ -1651,10 +1651,9 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * Disable all active layers. This method should be called outside of 
      * LCDUILock to avoid deadlocking with Chameleon internal lock 'layers'.
      */
-    private void disableLayers() {
+    protected void disableLayers() {
         Display currentDisplay;
 
-        
         synchronized (Display.LCDUILock) {
             currentDisplay = getCurrentDisplay();
         }
@@ -1680,7 +1679,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
     * Enable some layers related to the item. This method should be called outside of
     * LCDUILock to avoid deadlocking with Chameleon internal lock 'layers'.
     */
-    private void enableLayers() {
+    protected void enableLayers() {
         boolean needToShow = false;
         Display currentDisplay;
         synchronized (Display.LCDUILock) {
@@ -1772,7 +1771,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
     /**
      * Move input mode indicator
      */
-    void moveInputModeIndicator() {  
+    void moveInputModeIndicator() {
         int[] anchor;
         boolean changed = false;
         synchronized (Display.LCDUILock) {
@@ -1888,12 +1887,16 @@ class TextFieldLFImpl extends ItemLFImpl implements
     /**
      * Enable text field input
      */
-    private void enableInput() {
+    protected void enableInput() {
         enableTF();
 
         // ASSERT (editable && hasFocus)
         TextInputSession is = getInputSession();
         is.beginSession(this);
+
+        // Update input mode indicator
+        InputMode im = is.getCurrentInputMode();
+        inputModeIndicator.setDisplayMode(im.getName());
     }
     
     /**
@@ -1907,7 +1910,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
     /**
      * Disable text field input
      */
-    private void disableInput() {
+    protected void disableInput() {
         disableTF();
         removeInputCommands();       
         TextInputSession is = getInputSession();

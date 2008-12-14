@@ -32,13 +32,18 @@
 
 #include "rms_registry.h"
 
+/** Cached number of maximal allowed VM tasks */
+static int maxTasks = 0;
+
 /**
- * List of pairs <ID, counter> corresponding to number of
- * record store notifications sent to VM task with given ID
- * and not acknowledged by this VM task yet
- */
-static int notificationCounters[MAX_ISOLATES * 2];
-static int notificationCountersNumber = 0;
+  * The structure is designed to store total number of record store
+  * notifications sent to VM task and not acknowledged by it yet
+  */
+typedef struct _NotificationCounter {
+    int taskId;
+    int count;
+    struct _NotificationCounter *next;
+} NotificationCounter;
 
 /**
  * The structure is designed to store information about listeners
@@ -48,49 +53,57 @@ typedef struct _RecordStoreListener {
     int count;                           /* number of VM tasks with listeners of the record store */
     int suiteId;                         /* suite ID of record store */
     pcsl_string recordStoreName;         /* name of record store */
-    int listenerId[MAX_ISOLATES];        /* IDs of VM tasks with listeneres of the record store */
+    int *listenerId;                     /* IDs of VM tasks with listeneres of the record store */
     struct _RecordStoreListener *next;   /* reference to next entry in the list of structures */
 } RecordStoreListener;
 
 /** List of registered listeners for record store changes */
 static RecordStoreListener *rootListenerPtr = NULL;
 
+/** List of notification counters of VM tasks */
+static NotificationCounter *rootCounterPtr = NULL;
+
+
 /** Remove notification counter of VM task from the list */
 static void removeNotificationCounter(int taskId) {
-    int i, index;
-    for (i = 0; i < notificationCountersNumber; i++) {
-        index = i * 2;
-        if (notificationCounters[index] == taskId) {
-            int last = (--notificationCountersNumber) * 2;
-            if (index != last) {
-                notificationCounters[index] = notificationCounters[last];
-                notificationCounters[index + 1] = notificationCounters[last + 1];
-            }
-            return;
+    NotificationCounter *counterPtr;
+    NotificationCounter **counterRef;
+    counterRef = &rootCounterPtr;
+    while ((counterPtr = *counterRef) != NULL) {
+        if (counterPtr->taskId == taskId) {
+            *counterRef = counterPtr->next;
+            midpFree(counterPtr);
+            break;
+        }
+        counterRef = &(counterPtr->next);
+    }
+}
+
+/** Search for notification counter of VM task */
+static NotificationCounter *findNotificationCounter(int taskId) {
+    NotificationCounter *counterPtr;
+    for (counterPtr = rootCounterPtr; counterPtr != NULL;
+            counterPtr = counterPtr->next) {
+        if (counterPtr->taskId == taskId) {
+            return counterPtr;
         }
     }
+    return NULL;
 }
 
 /** Resets notification counter for given VM task */
 static void resetNotificationCounter(int taskId) {
-    int i, index;
-    for (i = 0; i < notificationCountersNumber; i++) {
-        index = i * 2;
-        if (notificationCounters[index] == taskId) {
-            notificationCounters[index + 1] = 0;
-            return;
-        }
+    NotificationCounter *counterPtr;
+    if ((counterPtr = findNotificationCounter(taskId)) != NULL) {
+        counterPtr->count = 0;
     }
 }
 
-/** Gets notification counter for given VM task */
-static int getNotificationCounter(int taskId) {
-    int i, index;
-    for (i = 0; i < notificationCountersNumber; i++) {
-        index = i * 2;
-        if (notificationCounters[index] == taskId) {
-            return notificationCounters[index + 1];
-        }
+/** Gets notifications count for given VM task */
+static int getNotificationsCount(int taskId) {
+    NotificationCounter *counterPtr;
+    if ((counterPtr = findNotificationCounter(taskId)) != NULL) {
+        return counterPtr->count;
     }
     return 0;
 }
@@ -100,40 +113,35 @@ static int getNotificationCounter(int taskId) {
  * and returns its current value
  */
 static int incNotificationCounter(int taskId) {
-    int i, index, counter;
-    for (i = 0; i < notificationCountersNumber; i++) {
-        index = i * 2;
-        if (notificationCounters[index] == taskId) {
-            counter = ++notificationCounters[index + 1];
-            return counter;
+    NotificationCounter *counterPtr;
+    /* Create new counter structure if needed */
+    if ((counterPtr = findNotificationCounter(taskId)) == NULL) {
+        counterPtr = (NotificationCounter *)midpMalloc(
+            sizeof(NotificationCounter));
+        if (counterPtr == NULL) {
+            REPORT_CRIT(LC_RMS,
+                "rms_registry: OUT OF MEMORY");
+            return 0;
         }
+        counterPtr->next = rootCounterPtr;
+        counterPtr->taskId = taskId;
+        counterPtr->count = 0;
+        rootCounterPtr = counterPtr;
     }
-
-    if (notificationCountersNumber < MAX_ISOLATES) {
-        index = notificationCountersNumber * 2;
-        notificationCountersNumber++;
-    } else {
-        index = 0;
-        REPORT_CRIT(LC_RMS,
-            "rms_registry: notification counters list overflow");
-
-    }
-    counter = 1;
-    notificationCounters[index] = taskId;
-    notificationCounters[index + 1] = counter;
-    return counter;
+    /* Return incremented counter value */
+    return ++counterPtr->count;
 }
 
 /** Finds record store listener by suite ID and record store name */
 static RecordStoreListener *findRecordStoreListener(
         int suiteId, pcsl_string* recordStoreName) {
 
-    RecordStoreListener *currentNodePtr;
-    for (currentNodePtr = rootListenerPtr; currentNodePtr != NULL;
-                currentNodePtr = currentNodePtr->next) {
-        if (currentNodePtr->suiteId == suiteId &&
-            pcsl_string_equals(&currentNodePtr->recordStoreName, recordStoreName)) {
-            return currentNodePtr;
+    RecordStoreListener *currentPtr;
+    for (currentPtr = rootListenerPtr; currentPtr != NULL;
+                currentPtr = currentPtr->next) {
+        if (currentPtr->suiteId == suiteId &&
+            pcsl_string_equals(&currentPtr->recordStoreName, recordStoreName)) {
+            return currentPtr;
         }
     }
     return NULL;
@@ -141,12 +149,12 @@ static RecordStoreListener *findRecordStoreListener(
 
 /** Detects whether given VM task listens for some record store changes */
 static int hasRecordStoreListeners(int taskId) {
-    RecordStoreListener *listenerNodePtr;
-    for (listenerNodePtr = rootListenerPtr; listenerNodePtr != NULL;
-                listenerNodePtr = listenerNodePtr->next) {
+    RecordStoreListener *listenerPtr;
+    for (listenerPtr = rootListenerPtr; listenerPtr != NULL;
+                listenerPtr = listenerPtr->next) {
         int i;
-        for (i = 0; i < listenerNodePtr->count; i++) {
-            if (listenerNodePtr->listenerId[i] == taskId) {
+        for (i = 0; i < listenerPtr->count; i++) {
+            if (listenerPtr->listenerId[i] == taskId) {
                 return 1;
             }
         }
@@ -159,76 +167,95 @@ static void createListenerNode(
         int suiteId, pcsl_string *recordStoreName, int listenerId) {
 
     pcsl_string_status rc;
-    RecordStoreListener *newNodePtr;
+    RecordStoreListener *newPtr;
 
-    newNodePtr = (RecordStoreListener *)midpMalloc(
+    newPtr = (RecordStoreListener *)midpMalloc(
         sizeof(RecordStoreListener));
-    if (newNodePtr == NULL) {
+    if (newPtr == NULL) {
+        REPORT_CRIT(LC_RMS,
+            "rms_registry: OUT OF MEMORY");
+        return;
+    }
+    newPtr->listenerId =
+        (int *)midpMalloc(maxTasks * sizeof(int));
+    if (newPtr->listenerId == NULL) {
         REPORT_CRIT(LC_RMS,
             "rms_registry: OUT OF MEMORY");
         return;
     }
 
-    newNodePtr->count = 1;
-    newNodePtr->suiteId = suiteId;
-    newNodePtr->listenerId[0] = listenerId;
-    rc = pcsl_string_dup(recordStoreName, &newNodePtr->recordStoreName);
+    newPtr->count = 1;
+    newPtr->suiteId = suiteId;
+    newPtr->listenerId[0] = listenerId;
+    rc = pcsl_string_dup(recordStoreName, &newPtr->recordStoreName);
     if (rc != PCSL_STRING_OK) {
-        midpFree(newNodePtr);
+        midpFree(newPtr);
         REPORT_CRIT(LC_RMS,
             "rms_registry: OUT OF MEMORY");
         return;
     }
-    newNodePtr->next = NULL;
+    newPtr->next = NULL;
 
     if (rootListenerPtr== NULL) {
-        rootListenerPtr= newNodePtr;
+        rootListenerPtr= newPtr;
     } else {
-        newNodePtr->next = rootListenerPtr;
-        rootListenerPtr = newNodePtr;
+        newPtr->next = rootListenerPtr;
+        rootListenerPtr = newPtr;
     }
 }
 
 /** Unlinks listener node from the list and frees its resources */
-static void deleteListenerNodeByRef(RecordStoreListener **listenerNodeRef) {
-    RecordStoreListener *listenerNodePtr;
+static void deleteListenerNodeByRef(RecordStoreListener **listenerRef) {
+    RecordStoreListener *listenerPtr;
 
-    listenerNodePtr = *listenerNodeRef;
-    *listenerNodeRef = listenerNodePtr->next;
-    pcsl_string_free(&listenerNodePtr->recordStoreName);
-    midpFree(listenerNodePtr);
+    listenerPtr = *listenerRef;
+    *listenerRef = listenerPtr->next;
+    pcsl_string_free(&listenerPtr->recordStoreName);
+    midpFree(listenerPtr->listenerId);
+    midpFree(listenerPtr);
 }
 
 /** Deletes earlier found record store listener entry */
-static void deleteListenerNode(RecordStoreListener *listenerNodePtr) {
-    RecordStoreListener **listenerNodeRef;
+static void deleteListenerNode(RecordStoreListener *listenerPtr) {
+    RecordStoreListener **listenerRef;
 
-    listenerNodeRef = &rootListenerPtr;
-    while (*listenerNodeRef != listenerNodePtr) {
+    listenerRef = &rootListenerPtr;
+    while (*listenerRef != listenerPtr) {
         /* No check for NULL, the function is called for list nodes only */
-        listenerNodeRef = &((*listenerNodeRef)->next);
+        listenerRef = &((*listenerRef)->next);
     }
-    deleteListenerNodeByRef(listenerNodeRef);
+    deleteListenerNodeByRef(listenerRef);
 }
 
 /** Registeres current VM task to get notifications on record store changes */
 void rms_registry_start_record_store_listening(int suiteId, pcsl_string *storeName) {
 
-    RecordStoreListener *listenerNodePtr;
+    RecordStoreListener *listenerPtr;
     int taskId = getCurrentIsolateId();
 
+    /* Cache maximal VM tasks number on first demand */
+    if (maxTasks == 0) {
+        maxTasks = getMaxIsolates();
+    }
+
     /* Search for existing listener entry to update listener ID */
-    listenerNodePtr = findRecordStoreListener(suiteId, storeName);
-    if (listenerNodePtr != NULL) {
+    listenerPtr = findRecordStoreListener(suiteId, storeName);
+    if (listenerPtr != NULL) {
         int i, count;
-        count = listenerNodePtr->count;
+        count = listenerPtr->count;
         for (i = 0; i < count; i++) {
-            if (listenerNodePtr->listenerId[i] == taskId) {
+            if (listenerPtr->listenerId[i] == taskId) {
                 return;
             }
         }
-        listenerNodePtr->listenerId[count] = taskId;
-        listenerNodePtr->count = count + 1;
+        if (count >= maxTasks) {
+            REPORT_CRIT(LC_RMS,
+                "rms_registry_start_record_store_listening: "
+                "internal structure overflow");
+            return;
+        }
+        listenerPtr->listenerId[count] = taskId;
+        listenerPtr->count = count + 1;
         return;
     }
     /* Create new listener entry for record store */
@@ -237,19 +264,19 @@ void rms_registry_start_record_store_listening(int suiteId, pcsl_string *storeNa
 
 /** Unregisters current VM task from the list of listeners of record store changes */
 void rms_registry_stop_record_store_listening(int suiteId, pcsl_string *storeName) {
-    RecordStoreListener *listenerNodePtr;
-    listenerNodePtr = findRecordStoreListener(suiteId, storeName);
-    if (listenerNodePtr != NULL) {
+    RecordStoreListener *listenerPtr;
+    listenerPtr = findRecordStoreListener(suiteId, storeName);
+    if (listenerPtr != NULL) {
         int i, count, taskId;
-        count = listenerNodePtr->count;
+        count = listenerPtr->count;
         taskId = getCurrentIsolateId();
         for (i = 0; i < count; i++) {
-            if (listenerNodePtr->listenerId[i] == taskId) {
+            if (listenerPtr->listenerId[i] == taskId) {
                 if (--count == 0) {
-                    deleteListenerNode(listenerNodePtr);
+                    deleteListenerNode(listenerPtr);
                 } else {
-                    listenerNodePtr->listenerId[i] =
-                        listenerNodePtr->listenerId[count];
+                    listenerPtr->listenerId[i] =
+                        listenerPtr->listenerId[count];
                 }
                 /* Remove notification counter of the task
                  * not listening for any record store changes */
@@ -267,15 +294,15 @@ void rms_registry_stop_record_store_listening(int suiteId, pcsl_string *storeNam
 void rms_registry_send_record_store_change_event(
         int suiteId, pcsl_string *storeName, int changeType, int recordId) {
 
-    RecordStoreListener *listenerNodePtr;
-    listenerNodePtr = findRecordStoreListener(suiteId, storeName);
-    if (listenerNodePtr != NULL) {
+    RecordStoreListener *listenerPtr;
+    listenerPtr = findRecordStoreListener(suiteId, storeName);
+    if (listenerPtr != NULL) {
         int i;
         pcsl_string_status rc;
         int taskId = getCurrentIsolateId();
 
-        for (i = 0; i < listenerNodePtr->count; i++) {
-            int listenerId = listenerNodePtr->listenerId[i];
+        for (i = 0; i < listenerPtr->count; i++) {
+            int listenerId = listenerPtr->listenerId[i];
             if (listenerId != taskId) {
                 int counter;
                 MidpEvent evt;
@@ -314,18 +341,18 @@ void rms_registry_send_record_store_change_event(
 void rms_registry_get_record_store_listeners(
         int suiteId, pcsl_string *storeName, int *listeners, int *length) {
 
-    RecordStoreListener *listenerNodePtr;
+    RecordStoreListener *listenerPtr;
     *length = 0;
-    listenerNodePtr = findRecordStoreListener(suiteId, storeName);
-    if (listenerNodePtr != NULL) {
+    listenerPtr = findRecordStoreListener(suiteId, storeName);
+    if (listenerPtr != NULL) {
         int i;
         int taskId = getCurrentIsolateId();
-        for (i = 0; i < listenerNodePtr->count; i++) {
-            int listenerId = listenerNodePtr->listenerId[i];
+        for (i = 0; i < listenerPtr->count; i++) {
+            int listenerId = listenerPtr->listenerId[i];
             if (listenerId != taskId) {
                 int index = *length;
                 listeners[index] = listenerId;
-                listeners[index + 1] = getNotificationCounter(listenerId);
+                listeners[index + 1] = getNotificationsCount(listenerId);
                 *length += 2;
             }
         }
@@ -344,28 +371,28 @@ void rms_registry_acknowledge_record_store_notifications(int taskId) {
 
 /** Stops listening for any record store changes in the VM task */
 void rms_regisrty_stop_task_listeners(int taskId) {
-    RecordStoreListener *listenerNodePtr;
-    RecordStoreListener **listenerNodeRef;
+    RecordStoreListener *listenerPtr;
+    RecordStoreListener **listenerRef;
 
     /* Remove notification counter of the VM task */
     removeNotificationCounter(taskId);
     
     /* Remove task ID from all record store listener structures */ 
-    listenerNodeRef = &rootListenerPtr;
-    while((listenerNodePtr = *listenerNodeRef) != NULL) {
+    listenerRef = &rootListenerPtr;
+    while((listenerPtr = *listenerRef) != NULL) {
         int i, count;
-        count = listenerNodePtr->count;
+        count = listenerPtr->count;
         for (i = 0; i < count; i++) {
-            if (listenerNodePtr->listenerId[i] == taskId) {
+            if (listenerPtr->listenerId[i] == taskId) {
                 if (--count == 0) {
-                    deleteListenerNodeByRef(listenerNodeRef);
+                    deleteListenerNodeByRef(listenerRef);
                 } else {
-                    listenerNodePtr->listenerId[i] =
-                        listenerNodePtr->listenerId[count];
+                    listenerPtr->listenerId[i] =
+                        listenerPtr->listenerId[count];
                 }
                 break;
             }
         }
-        listenerNodeRef = &(listenerNodePtr->next);
+        listenerRef = &(listenerPtr->next);
     }
 }

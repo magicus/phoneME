@@ -147,6 +147,7 @@ public final class Permissions {
     // Internal defined groups
     private static PermissionGroup NET_ACCESS_GROUP;
     private static PermissionGroup LOW_LEVEL_NET_ACCESS_GROUP;
+    private static PermissionGroup CALL_CONTROL_GROUP;
     private static PermissionGroup SEND_MESSAGE_GROUP;
     private static PermissionGroup READ_MESSAGE_GROUP;
     private static PermissionGroup SEND_RESTRICTED_MESSAGE_GROUP;
@@ -280,6 +281,24 @@ public final class Permissions {
 
         return false;
     }
+    
+    /**
+     * Checks if group is read message group
+     * @param group
+     * @return returns true if group is read message group, false otherwise
+     */
+    public static boolean isReadMessageGroup(PermissionGroup group) {
+        if (group == null) {
+            return false;
+        }
+        
+        if (group == READ_MESSAGE_GROUP ||
+                group == READ_RESTRICTED_MESSAGE_GROUP) {
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * Returns domain for unsigned midlets.
@@ -426,7 +445,9 @@ public final class Permissions {
 
         /**
          * For Read Message Group, consider group level is OneShot if maximum
-         * permission level is Blanket.
+         * permission level is Blanket, but not Blanket_granted, because it would
+         * mean that the user explicitly set the interraction level either from
+         * the application settings or by answering the corresponding question.
          */
         if ((group == READ_MESSAGE_GROUP ||
                 group == READ_RESTRICTED_MESSAGE_GROUP) &&
@@ -723,11 +744,11 @@ public final class Permissions {
             return null;
         }
 
-        if (group == NET_ACCESS_GROUP) {
+        if (group == NET_ACCESS_GROUP || group == LOW_LEVEL_NET_ACCESS_GROUP) {
             if (pushInterruptLevel == BLANKET_GRANTED ||
                    pushInterruptLevel == BLANKET) {
                 PermissionGroup[] ret = new PermissionGroup[2];
-                ret[0] = NET_ACCESS_GROUP;
+                ret[0] = group;
                 ret[1] = PUSH_INTERRUPT_GROUP;
                 return ret;
             }
@@ -735,7 +756,7 @@ public final class Permissions {
             level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
                 PermissionGroup[] ret = new PermissionGroup[2];
-                ret[0] = NET_ACCESS_GROUP;
+                ret[0] = group;
                 ret[1] = AUTO_INVOCATION_GROUP;
                 return ret;
             }
@@ -744,13 +765,20 @@ public final class Permissions {
         }
 
         if (group == AUTO_INVOCATION_GROUP) {
-            level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                PermissionGroup[] ret = new PermissionGroup[2];
-                ret[0] = AUTO_INVOCATION_GROUP;
-                ret[1] = NET_ACCESS_GROUP;
-                return ret;
-            }
+
+           final PermissionGroup[] netGroups = {
+               NET_ACCESS_GROUP, LOW_LEVEL_NET_ACCESS_GROUP
+           };
+
+           for (int i = 0; i < netGroups.length; i++) {
+               level = getPermissionGroupLevel(current, netGroups[i]);
+               if (level == BLANKET_GRANTED || level == BLANKET) {
+                   PermissionGroup[] ret = new PermissionGroup[2];
+                   ret[0] = AUTO_INVOCATION_GROUP;
+                   ret[1] = netGroups[i];
+                   return ret;
+               }
+           }
         }
         
         return null;
@@ -765,7 +793,8 @@ public final class Permissions {
      *
      * The following combinations of permissions are potentially dangerous:
      * <ul>
-     * <li> Any of Net Access, Messaging or Local Connectivity set to Blanket
+     * <li> Any of Net Access, Low Level Net Access, Messaging, Restricted Messaging,
+     *      Call Control or Local Connectivity set to Blanket
      *      in combination with any of Multimedia recording or Read User Data
      *      Access set to Blanket</li>
      * </ul>
@@ -785,93 +814,45 @@ public final class Permissions {
             return null;
         }
 
-        byte level;
+        final PermissionGroup[] groups1 = {
+            NET_ACCESS_GROUP, LOW_LEVEL_NET_ACCESS_GROUP,
+            SEND_MESSAGE_GROUP, READ_MESSAGE_GROUP,
+            SEND_RESTRICTED_MESSAGE_GROUP, READ_RESTRICTED_MESSAGE_GROUP,
+            CALL_CONTROL_GROUP, LOCAL_CONN_GROUP    
 
-        if (group == NET_ACCESS_GROUP ||
-                group == LOW_LEVEL_NET_ACCESS_GROUP) {
-            if (pushInterruptLevel == BLANKET_GRANTED ||
-                   pushInterruptLevel == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                        group.getName(),
-                        Resource.getString(ResourceConstants.AMS_MGR_INTRUPT));
-            }
-
-            level = getPermissionGroupLevel(current, READ_USER_DATA_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                        group, READ_USER_DATA_GROUP);
-            }
-
-            level = getPermissionGroupLevel(current, MULTIMEDIA_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                        group, MULTIMEDIA_GROUP);
-            }
-
-            level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createMutuallyExclusiveErrorMessage(group,
-                        AUTO_INVOCATION_GROUP);
-            }
-        }
-
-        if (group == LOCAL_CONN_GROUP) {
-            level = getPermissionGroupLevel(current, READ_USER_DATA_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                    LOCAL_CONN_GROUP, READ_USER_DATA_GROUP);
-            }
-
-            level = getPermissionGroupLevel(current, MULTIMEDIA_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                    LOCAL_CONN_GROUP, MULTIMEDIA_GROUP);
-            }
-        }
-
-        final PermissionGroup[] netGroups = {
-            NET_ACCESS_GROUP, LOW_LEVEL_NET_ACCESS_GROUP
         };
+        final PermissionGroup[] groups2 = {
+            MULTIMEDIA_GROUP, READ_USER_DATA_GROUP
+        };
+        /**
+         * IMPL_NOTE: we will get warning only about first pair found.
+         * If it is more than one pair, there should be more complex
+         * warning created.
+         */
 
-        if (group == READ_USER_DATA_GROUP) {
-            for (int i = 0; i < netGroups.length; i++) {
-                level = getPermissionGroupLevel(current, netGroups[i]);
-                if (level == BLANKET_GRANTED || level == BLANKET) {
-                    return createInsecureCombinationWarningMessage(
-                        READ_USER_DATA_GROUP, netGroups[i]);
+        for (int i = 0; i < groups1.length; i++) {
+            if (group == groups1[i]) {
+                for (int j = 0; j < groups2.length; j++) {
+                    byte level = getPermissionGroupLevel(current, groups2[j]);
+                    if (level == BLANKET_GRANTED || level == BLANKET) {
+                        return createInsecureCombinationWarningMessage(
+                            group, groups2[j]);
+                    }
                 }
-            }
-
-            level = getPermissionGroupLevel(current, LOCAL_CONN_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                    READ_USER_DATA_GROUP, LOCAL_CONN_GROUP);
+                return null;
             }
         }
 
-        if (group == MULTIMEDIA_GROUP) {
-            for (int i = 0; i < netGroups.length; i++) {
-                level = getPermissionGroupLevel(current, netGroups[i]);
-                if (level == BLANKET_GRANTED || level == BLANKET) {
-                    return createInsecureCombinationWarningMessage(
-                        MULTIMEDIA_GROUP, netGroups[i]);
+        for (int i = 0; i < groups2.length; i++) {
+            if (group == groups2[i]) {
+                for (int j = 0; j < groups1.length; j++) {
+                    byte level = getPermissionGroupLevel(current, groups1[j]);
+                    if (level == BLANKET_GRANTED || level == BLANKET) {
+                        return createInsecureCombinationWarningMessage(
+                            group, groups1[j]);
+                    }
                 }
-            }
-
-            level = getPermissionGroupLevel(current, LOCAL_CONN_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                    MULTIMEDIA_GROUP, LOCAL_CONN_GROUP);
-            }
-        }
-        
-        if (group == AUTO_INVOCATION_GROUP) {
-            for (int i = 0; i < netGroups.length; i++) {
-                level = getPermissionGroupLevel(current, netGroups[i]);
-                if (level == BLANKET_GRANTED || level == BLANKET) {
-                    return createMutuallyExclusiveErrorMessage(
-                        AUTO_INVOCATION_GROUP, netGroups[i]);
-                }
+                return null;
             }
         }
 
@@ -1116,6 +1097,7 @@ public final class Permissions {
             NET_ACCESS_GROUP = (PermissionGroup)tmpList.get("net_access");
             LOW_LEVEL_NET_ACCESS_GROUP =
                     (PermissionGroup)tmpList.get("low_level_net_access");
+            CALL_CONTROL_GROUP = (PermissionGroup)tmpList.get("call_control");
 
             // if the group was called "messaging", it is already converted
             // to "<send_/read_>messaging"

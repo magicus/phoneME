@@ -102,9 +102,8 @@ KNIDECL(com_sun_midp_main_Configuration_getProperty0) {
 
     KNI_GetParameterAsObject(1, str);
     strLen = KNI_GetStringLength(str);
-    uStr = (jchar*) midpMalloc(strLen * sizeof(jchar));
 
-    if (uStr == NULL) {
+    if (strLen <= 0 || (uStr = (jchar*) midpMalloc(strLen * sizeof(jchar))) == NULL) {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     } else {
         KNI_GetStringRegion(str, 0, strLen, uStr);

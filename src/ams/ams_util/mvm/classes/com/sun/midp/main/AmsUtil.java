@@ -37,13 +37,15 @@ import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.links.Link;
 import com.sun.midp.links.LinkPortal;
-import com.sun.midp.log.Logging;
+
 import com.sun.midp.security.ImplicitlyTrustedClass;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.SecurityToken;
-import com.sun.midp.services.ComponentInfo;
+import com.sun.midp.amsservices.ComponentInfo;
 import com.sun.midp.services.SystemServiceLinkPortal;
-import com.sun.midp.services.SystemServiceManager;
+
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
 
 import java.util.Vector;
 
@@ -70,7 +72,7 @@ public class AmsUtil {
     private static MIDletProxyList midletProxyList;
     
     /** Own trusted class to be able to request SecurityToken for priviledged operations */
-    private static class SecurityTrusted implements ImplicitlyTrustedClass {};
+    private static class SecurityTrusted implements ImplicitlyTrustedClass {}
     /** The instance of SecurityToken for priviledged operations */
     private static SecurityToken trustedToken;
     
@@ -320,16 +322,36 @@ public class AmsUtil {
                 classpathext = new String[ciVector.size()];
             }
 
-            for (int i = 0; i < ciVector.size(); i++) {
-                final ComponentInfo nextComponent =
-                        ((ComponentInfo)ciVector.elementAt(i));
-                final String[] componentPath =
-                        componentStorage.getComponentClassPath(
-                                nextComponent.getComponentId());
-                if (componentPath != null) {
-                    for (int j = 0; j < componentPath.length; j++) {
-                        classpathext[n++] = componentPath[j];
+            try {
+                for (int i = 0; i < ciVector.size(); i++) {
+                    final ComponentInfo nextComponent =
+                            ((ComponentInfo)ciVector.elementAt(i));
+                    final String[] componentPath =
+                            componentStorage.getComponentClassPath(
+                                    nextComponent.getComponentId());
+                    if (componentPath != null) {
+                        for (int j = 0; j < componentPath.length; j++) {
+                            classpathext[n++] = componentPath[j];
+                        }
                     }
+                }
+            } catch (Exception e) {
+                /*
+                 * if something is wrong with a dynamic component, just
+                 * don't use the components, this error is not fatal
+                 */
+                if (isolateClassPath != null) {
+                    classpathext = new String[1];
+                    classpathext[0] = isolateClassPath;
+                } else {
+                    classpathext = null;
+                }
+
+                if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                    e.printStackTrace();
+                    Logging.report(Logging.ERROR, LogChannels.LC_AMS,
+                        "Cannot use a dynamic component when starting '" +
+                        midlet + "' from the suite with id = " + id);
                 }
             }
         }
@@ -390,10 +412,10 @@ public class AmsUtil {
             isolate.setAPIAccess(true);
             isolate.start();
 
-            // Ability to launch midlet implies right to use Service API for negotiations
-            // with isolate being run
-            Link[] isolateLinks = 
-                    SystemServiceLinkPortal.establishLinksFor(isolate, getTrustedToken());
+            // Ability to launch midlet implies right to use Service API
+            // for negotiations with isolate being run
+            Link[] isolateLinks = SystemServiceLinkPortal.establishLinksFor( 
+                    isolate, getTrustedToken());
             LinkPortal.setLinks(isolate, isolateLinks);
         } catch (Throwable t) {
             int errorCode;

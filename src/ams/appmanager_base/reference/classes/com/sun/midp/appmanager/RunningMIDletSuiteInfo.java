@@ -36,7 +36,9 @@ import com.sun.midp.midletsuite.MIDletSuiteImpl;
 import com.sun.midp.midletsuite.MIDletSuiteInfo;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 import com.sun.midp.main.MIDletSuiteUtils;
+import com.sun.midp.main.Configuration;
 import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.ams.VMUtils;
 
 import javax.microedition.lcdui.Image;
 import java.util.Vector;
@@ -44,17 +46,24 @@ import java.util.Vector;
 
 /** Simple attribute storage for MIDlet suites */
 public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
-    // IMPL_NOTE: currently this value is 4, no need to specify a different initial size.
-    /** The list of MIDlet proxies, one for each running MIDlet. It is set from AppManagerUI.java. */
-    private Vector proxies = new Vector(Constants.MAX_ISOLATES);
+    /**
+     * The list of MIDlet proxies, one for each running MIDlet.
+     * It is set from AppManagerUI.java and has maximal allowed
+     * number of concurrent VM tasks as initial capacity.
+     */
+    private Vector proxies = new Vector(
+        VMUtils.getMaxIsolates());
+
     /** Icon for this suite. */
     public Image icon = null;
     /** Whether suite is under debug */
     public boolean isDebugMode = false;
     /** Whether the running suite is locked */
     private boolean locked = false;
-    /* corresponding suite */
+    /** Corresponding suite */
     private MIDletSuite msi = null;
+    /** Whether the suite has main MIDlet. */
+    private boolean hasMainMidlet = false;
 
     /**
      * Constructs a RunningMIDletSuiteInfo object for a suite.
@@ -443,5 +452,20 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
      */
     public boolean holdsStorageLock() {
         return msi != null;
+    }
+
+    /**
+     * Sets main MIDlet flag.
+     * @param mainMidlet Determines whether this suite has main MIDlet
+     */
+    public void setMainMidlet(boolean hasMainMidlet) {
+        this.hasMainMidlet = hasMainMidlet;
+    }
+    
+    /**
+     * @return true if main MIDlet is set
+     */
+    public boolean hasMainMidlet() {
+        return hasMainMidlet;
     }
 }

@@ -26,13 +26,14 @@
 
 package com.sun.midp.appmanager;
 
+import com.sun.midp.configurator.Constants;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.installer.DynamicComponentInstaller;
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midletsuite.DynamicComponentStorage;
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
-import com.sun.midp.services.ComponentInfo;
+import com.sun.midp.amsservices.ComponentInfo;
 
 import javax.microedition.lcdui.*;
 import javax.microedition.midlet.MIDlet;
@@ -158,10 +159,10 @@ public class ComponentManager extends MIDlet {
                                               (ResourceConstants.BACK),
                                               Command.BACK, 1);
 
-        /** Command object for "Back" command in the error message form. */
-        private Command errorBackCmd = new Command(Resource.getString
-                                              (ResourceConstants.BACK),
-                                              Command.BACK, 1);
+        /** Command object for "Back" command in the message form. */
+        private Command messageBackCmd = new Command(Resource.getString
+                                                     (ResourceConstants.BACK),
+                                                     Command.BACK, 1);
 
         /** Command object for "Launch". */
         private Command openCmd =
@@ -220,14 +221,14 @@ public class ComponentManager extends MIDlet {
         /** The "install component from url" Form */
         private Form installUrlForm = null;
 
-        /** the component url text field for installUrlForm */
+        /** The component url text field for installUrlForm */
         private TextField installUrlField = null ;
 
-        /** the component name text field for installUrlForm */
+        /** The component name text field for installUrlForm */
         private TextField nameField = null ;
 
-        /** The error message Form */
-        private Form errorForm = null;
+        /** A form for displaying a message */
+        private Form messageForm = null;
 
         /**
          * All information about suite components is kept in this
@@ -267,18 +268,25 @@ public class ComponentManager extends MIDlet {
         }
 
         /**
-         * Display an error message
-         * @param message the error description message
+         * Displays a message
+         * @param message a message to display
+         * @param title form title; if null, "Error" is used
          */
-        private void showError(String message) {
-            if (errorForm == null) {
-                    errorForm = new Form("Error");
+        private void showMessage(String message, String title) {
+            if (messageForm == null) {
+                messageForm = new Form("");
             }
-            errorForm.deleteAll();
-            errorForm.append(message);
-            errorForm.addCommand(errorBackCmd);
-            errorForm.setCommandListener(this);
-            display.setCurrent(errorForm);
+
+            if (title != null) {
+                messageForm.setTitle(title);
+            }
+
+            messageForm.deleteAll();
+            messageForm.append(message);
+            messageForm.addCommand(messageBackCmd);
+            messageForm.setCommandListener(this);
+
+            display.setCurrent(messageForm);
         }
 
         /**
@@ -287,14 +295,24 @@ public class ComponentManager extends MIDlet {
          */
         private void makeInstallDialog() {
             if (installUrlForm == null) {
-                installUrlForm = new Form("Install Component");
-                String componentUrl = "http://127.0.0.1/DynComponent1.jar";
-                installUrlField = new TextField("Enter URL to install from:",
-                                                componentUrl, 1024,
-                                                TextField.URL);
-                nameField = new TextField("Enter component name:",
-                                          "asdf", 1024,
-                                          TextField.ANY);
+                installUrlForm = new Form(
+                        Resource.getString(
+                            ResourceConstants.AMS_CMGR_INSTALL_COMPONENT));
+
+                String componentUrl = Constants.AMS_CMGR_DEFAULT_COMPONENT_URL;
+
+                installUrlField = new TextField(
+                        Resource.getString(
+                            ResourceConstants.AMS_CMGR_ENTER_URL_TO_INSTALL_FROM),
+                        componentUrl, 1024,
+                        TextField.URL);
+
+                nameField = new TextField(
+                        Resource.getString(
+                            ResourceConstants.AMS_CMGR_ENTER_DESCRIPTIVE_NAME),
+                        "", 1024,
+                        TextField.ANY);
+
                 installUrlForm.append(installUrlField);
                 installUrlForm.append(nameField);
             }
@@ -415,18 +433,19 @@ public class ComponentManager extends MIDlet {
                 DynamicComponentInstaller installer = new DynamicComponentInstaller();
                 try {
                     int componentId = installer.installComponent(suiteId,
-                            installUrlField.getString(), nameField.getString());
+                            installUrlField.getString().trim(),
+                            nameField.getString().trim());
                 } catch (IOException e) {
-                    showError(e.toString());
+                    showMessage(e.toString(), null);
                     return;
                 } catch (MIDletSuiteLockedException msle) {
-                    showError("The component is being used now.");
+                    showMessage("The component is being used now.", null);
                     return;
                 }
 
                 refresh();
 
-            } else if (c == errorBackCmd) {
+            } else if (c == messageBackCmd) {
                 refresh();
             }
         }
@@ -452,13 +471,14 @@ public class ComponentManager extends MIDlet {
                 try {
                     dcs.removeComponent(componentId);
                 } catch (MIDletSuiteLockedException msle) {
-                    showError("Component is in use: " + msle.getMessage());
+                    showMessage("Component is in use: " +
+                                    msle.getMessage(), null);
                     return;
                 }
                 refresh();
                 
             } else if (c == openCmd) {
-                showError("component info: "+cinfo.toString());
+                showMessage("component info: " + cinfo.toString(), "Info");
             }
         }
 

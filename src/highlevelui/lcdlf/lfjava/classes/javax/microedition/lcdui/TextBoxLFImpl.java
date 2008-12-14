@@ -33,7 +33,6 @@ import com.sun.midp.log.LogChannels;
 import com.sun.midp.chameleon.CGraphicsUtil;
 import com.sun.midp.chameleon.input.*;
 import com.sun.midp.chameleon.skins.*;
-import com.sun.midp.chameleon.skins.resources.*;
 import com.sun.midp.chameleon.layers.ScrollBarLayer;
 
 /**
@@ -387,7 +386,8 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 
         if (usePreferredX) {
             cursor.preferredX = cursor.x +
-                (myInfo.lineStart[myInfo.cursorLine] == cursor.index ?
+                ((myInfo.lineStart[myInfo.cursorLine] == cursor.index &&
+                    cursor.index < tf.buffer.length()) ?
                  ScreenSkin.FONT_INPUT_TEXT.charWidth(
                                                       tf.buffer.charAt(cursor.index)) :
                  0);
@@ -566,6 +566,39 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
     }
 
     /**
+     * Called by the system to indicate traversal has left this Item
+     *
+     * @see #getInteractionModes
+     * @see #traverse
+     * @see #TRAVERSE_HORIZONTAL
+     * @see #TRAVERSE_VERTICAL
+     */
+
+    void uCallTraverseOut() {
+    }
+
+    /**
+     * Called by the system to notify this Item it is being hidden.
+     * This function simply calls lCallHideNotify() after obtaining LCDUILock.
+     */
+    void uCallHideNotify() {
+        super.uCallHideNotify();
+        if (editable) {
+            // TextBox can be hidden on activation of input method with
+            // own Displayable, for example symbol table input method
+            TextInputSession is = getInputSession();
+            InputMode im = (is != null) ? is.getCurrentInputMode() : null;
+            if (im == null || !im.hasDisplayable()) {
+                disableInput();
+                // IMPL_NOTE: problem with synchronization on layers and LCDUILock
+                showIMPopup = false;
+                disableLayers();
+            }
+        }
+    }
+
+
+    /**
      * Move the text cursor in the given direction
      *
      * @param dir direction to move
@@ -670,7 +703,23 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
      */
     void lCallShowNotify() {
         super.lCallShowNotify();
-        this.scrollInitialized = false;     
+        this.scrollInitialized = false;
+    }
+
+    void uCallShowNotify() {
+        super.uCallShowNotify();
+        if (editable) {
+            // TextBox can be shown after deactivation of input method with
+            // own Displayable, for example symbol table input method
+            TextInputSession is = getInputSession();
+            InputMode im = (is != null) ? is.getCurrentInputMode() : null;
+            if (im == null || !im.hasDisplayable()) {
+                enableInput();
+                // IMPL_NOTE: problem with synchronization on layers and LCDUILock
+                showIMPopup = true;
+                enableLayers();
+            }
+        }
     }
     
     /**

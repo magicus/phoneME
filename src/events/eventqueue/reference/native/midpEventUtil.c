@@ -33,6 +33,7 @@
 #include <midp_foreground_id.h>
 #include <midpMidletSuiteUtils.h>
 #include <midpEventUtil.h>
+#include <midp_logging.h>
 
 #include <jvmconfig.h>
 #include <jvm.h>
@@ -44,10 +45,10 @@
 
 
 #if ENABLE_ISOLATES
-// this is a work around for jvm.h that has wrong case for this prototype
+/* this is a work around for jvm.h that has wrong case for this prototype */
 extern int JVM_CurrentIsolateId();
 
-#endif  // ENABLE_ISOLATES
+#endif  /* ENABLE_ISOLATES */
 
 #include <jvmspi.h>
 /**
@@ -67,10 +68,22 @@ void midpStoreEventAndSignalAms(MidpEvent evt) {
  * @param evt The event to store
  */
 void midpStoreEventAndSignalForeground(MidpEvent evt) {
+#if ENABLE_MULTIPLE_ISOLATES
+	/*
+	 * In NAMS when no midlets are running ID of the foreground
+	 * isolate can be 0. In this case the event is dropped.
+	 */
+	if (gForegroundIsolateId <= 0) {
+        REPORT_WARN2(LC_CORE, "Ignoring the event %d sent to wrong isolate (%d)",
+                     evt.type, gForegroundIsolateId); 
+		return;
+	}
+#endif
+
 #if ENABLE_MULTIPLE_DISPLAYS
   evt.DISPLAY = gForegroundDisplayIds[lcdlf_get_current_hardwareId()];
 #else
   evt.DISPLAY = gForegroundDisplayId;
-#endif // ENABLE_MULTIPLE_DISPLAYS
+#endif /* ENABLE_MULTIPLE_DISPLAYS */
   StoreMIDPEventInVmThread(evt, gForegroundIsolateId);
 }

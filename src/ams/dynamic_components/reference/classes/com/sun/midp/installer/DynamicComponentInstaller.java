@@ -31,15 +31,27 @@ import java.io.IOException;
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
 import com.sun.midp.midletsuite.DynamicComponentStorage;
 
-import com.sun.midp.services.ComponentInfo;
+import com.sun.midp.amsservices.ComponentInfo;
+import com.sun.midp.amsservices.ComponentInfoImpl;
 
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.util.Properties;
 
 /**
  * Installer for dynamic components.
  */
 public class DynamicComponentInstaller extends HttpInstaller {
-    DynamicComponentStorage componentStorage;
+    /** Dynamic Component property for the component name. */
+    private static final String COMPONENT_NAME_PROP = "Component-Name";
+
+    /** Dynamic Component property for the component vendor. */
+    private static final String COMPONENT_VENDOR_PROP = "Component-Vendor";
+
+    /** Dynamic Component property for the component version. */
+    private static final String COMPONENT_VERSION_PROP = "Component-Version";
+
+    /** Dynamic components storage */
+    private DynamicComponentStorage componentStorage;
 
     /**
      * Constructor of the DynamicComponentInstaller.
@@ -76,6 +88,7 @@ public class DynamicComponentInstaller extends HttpInstaller {
 
         info.id = suiteId;
         info.isSuiteComponent = true;
+        info.displayName = name;
 
         try {
             componentId = installJad(url, Constants.INTERNAL_STORAGE_ID,
@@ -103,6 +116,47 @@ public class DynamicComponentInstaller extends HttpInstaller {
     }
 
     /**
+     * Checks that all necessary attributes are present in JAD or JAR
+     * and are valid.
+     *
+     * @param props properties to check
+     *
+     * @throws InvalidJadException if any mandatory attribute is missing in
+     *                             the JAD file or its value is invalid
+     */
+    private void checkAttributesImpl(Properties props)
+            throws InvalidJadException {
+        info.suiteName = props.getProperty(COMPONENT_NAME_PROP);
+        if (info.suiteName == null || info.suiteName.length() == 0) {
+            throw new
+                InvalidJadException(InvalidJadException.MISSING_SUITE_NAME);
+        }
+
+        // if a user-friendly name was not given, use the name from the property
+        if (info.displayName == null || info.displayName.length() == 0) {
+            info.displayName = info.suiteName;
+        }
+
+        info.suiteVendor = props.getProperty(COMPONENT_VENDOR_PROP);
+        if (info.suiteVendor == null || info.suiteVendor.length() == 0) {
+            throw new
+                InvalidJadException(InvalidJadException.MISSING_VENDOR);
+        }
+
+        info.suiteVersion = props.getProperty(COMPONENT_VERSION_PROP);
+        if (info.suiteVersion == null || info.suiteVersion.length() == 0) {
+            throw new
+                InvalidJadException(InvalidJadException.MISSING_VERSION);
+        }
+
+        try {
+            checkVersionFormat(info.suiteVersion);
+        } catch (NumberFormatException nfe) {
+            throw new InvalidJadException(InvalidJadException.INVALID_VERSION);
+        }
+    }
+
+    /**
      * Checks that all necessary attributes are present in JAD and are valid.
      *
      * May be overloaded by subclasses that require presence of
@@ -112,7 +166,7 @@ public class DynamicComponentInstaller extends HttpInstaller {
      *                             the JAD file or its value is invalid
      */
     protected void checkJadAttributes() throws InvalidJadException {
-        // don't check MIDlet-* attributes if this is a dynamic component
+        checkAttributesImpl(state.jadProps);
     }
 
     /**
@@ -126,7 +180,7 @@ public class DynamicComponentInstaller extends HttpInstaller {
      *                             the manifest or its value is invalid
      */
     protected void checkJarAttributes() throws InvalidJadException {
-        // don't check MIDlet-* attributes if this is a dynamic component
+        checkAttributesImpl(state.jarProps);
     }
 
     /**
@@ -137,19 +191,14 @@ public class DynamicComponentInstaller extends HttpInstaller {
     }
 
     /**
-     * Stores the midlet suite being installed in the midlet suite storage.
+     * Stores the dynamic component being installed in the component storage.
      *
      * @throws IOException if an I/O error occured when storing the suite
      * @throws MIDletSuiteLockedException if the suite is locked
      */
     protected void storeUnit() throws IOException, MIDletSuiteLockedException {
-        String displayName = info.suiteName;
-        if (displayName == null) {
-            displayName = state.getDisplayName();
-        }
-
         componentStorage.storeComponent(state.midletSuiteStorage, info,
-            settings, displayName, state.jadProps, state.jarProps);
+            settings, state.getDisplayName(), state.jadProps, state.jarProps);
     }
 
     /**
@@ -168,26 +217,34 @@ public class DynamicComponentInstaller extends HttpInstaller {
         DynamicComponentStorage dcs =
                 DynamicComponentStorage.getComponentStorage();
 
-        id = dcs.getComponentId(info.suiteVendor, info.suiteName);
-
+        id = dcs.getComponentId(info.id, info.suiteVendor, info.suiteName);
         if (id == ComponentInfo.UNUSED_COMPONENT_ID) {
             // there is no previous version
             return;
         }
 
+        checkVersionFormat(info.suiteVersion);
         info.componentId = id;
 
-        if (state.force) {
-            // do not ask questions, force an overwrite
+        // If this component is already installed, check version information
+        ComponentInfo ci = new ComponentInfoImpl();
+        try {
+            dcs.getComponentInfo(id, ci);
+        } catch (Exception e) {
+            // ignore and force an overwrite
             return;
         }
 
-        /*
-         * Don't check version, just inform the user that the
-         * component is already installed.
-         */
-        state.exception = new InvalidJadException(
-                          InvalidJadException.ALREADY_INSTALLED,
-                          "n/a");
+        String installedVersion = ci.getVersion();
+        int cmpResult = vercmp(info.suiteVersion, installedVersion);
+
+        if (cmpResult >= 0) {
+            // the same or newer version, overwrite silently
+            return;
+        }
+
+        // older version, stop the installation
+        throw new InvalidJadException(InvalidJadException.NEW_VERSION,
+                                      installedVersion);
     }
 }

@@ -279,16 +279,7 @@ InitializeEvents(void) {
     }
 
 #if ENABLE_MULTIPLE_ISOLATES
-    maxIsolates = getInternalPropertyInt("MAX_ISOLATES");
-    if (0 == maxIsolates) {
-        char maxIsolatesStr[5];
-        REPORT_INFO(LC_AMS, "MAX_ISOLATES property not set");
-        /* set XML constant value as property value */
-        maxIsolates = MAX_ISOLATES;
-        sprintf(maxIsolatesStr, "%d", maxIsolates);
-        setInternalProperty("MAX_ISOLATES", maxIsolatesStr);
-    }
-
+    maxIsolates = getMaxIsolates();
     /*
      * In MVM the first isolate has number 1, but 0 still can be returned
      * by midpGetAmsIsolate() if JVM is not running. So in MVM we allocate
@@ -333,24 +324,27 @@ FinalizeEvents(void) {
  */
 void
 midp_resetEvents(void) {
-    int i;
 
     /* The Event ID may have changed for each VM startup*/
     eventFieldIDsObtained = KNI_FALSE;
 
-    for (i = 0; i < maxIsolates; i++) {
-        resetEventQueue(i);
+#if ENABLE_MULTIPLE_ISOLATES
+    {
+	int i;
+	for (i = 1; i <= maxIsolates; i++) {
+    	    resetEventQueue(i);
+	}
     }
+#else
+    resetEventQueue(0);
+#endif
 }
 
 /**
  * Helper function used by StoreMIDPEventInVmThread
  * Enqueues an event to be processed by the
  * Java event thread for a given Isolate
-
-
  */
-
 static void StoreMIDPEventInVmThreadImp(MidpEvent event, int isolateId) {
     EventQueue* pEventQueue;
     JVMSPI_ThreadID thread;
@@ -401,7 +395,6 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, int isolateId) {
     midp_unlockEventQueue();
 }
 
-
 /**
  * Enqueues an event to be processed by the Java event thread for a given
  * Isolate, or all isolates if isolateId is -1.
@@ -419,8 +412,13 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
     if( -1 != isolateId ) {
         StoreMIDPEventInVmThreadImp(event, isolateId);
     } else {
-        for (isolateId = 0; isolateId < maxIsolates; ++isolateId)
-            StoreMIDPEventInVmThreadImp(event, isolateId);
+#if ENABLE_MULTIPLE_ISOLATES
+    for (isolateId = 1; isolateId <= maxIsolates; isolateId++)
+        StoreMIDPEventInVmThreadImp(event, isolateId);
+#else
+        StoreMIDPEventInVmThreadImp(event, 0);
+#endif
+
     }
 }
 
@@ -666,7 +664,6 @@ Java_com_sun_midp_events_EventQueue_sendShutdownEvent(void) {
 
     KNI_ReturnVoid();
 }
-
 
 /**
  * Clears native event queue for a given isolate - 

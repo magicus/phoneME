@@ -78,6 +78,9 @@ extern "C" {
 #ifdef ENABLE_JSR_256
 #include "javacall_sensor.h"
 #endif /* ENABLE_JSR_256 */
+#ifdef ENABLE_JSR_257
+#include <javacall_contactless.h>
+#endif /* ENABLE_JSR_257 */
 
 
 #define MIDP_RUNMIDLET_MAXIMUM_ARGS 10
@@ -172,10 +175,14 @@ typedef enum {
     JSR290_JC_EVENT_FLUID_LISTENER_WARNING,
     JSR290_JC_EVENT_FLUID_REQUEST_RESOURCE,
     JSR290_JC_EVENT_FLUID_CANCEL_REQUEST,
+    JSR290_JC_EVENT_COMPLETION_NOTIFICATION,
 #endif /*ENABLE_JSR_290*/
+#ifdef ENABLE_JSR_257
+    JSR257_JC_EVENT_CONTACTLESS, 
+#endif /*ENABLE_JSR_257*/
 } midp_jc_event_type;
 
-
+ 
 typedef struct {
     int stub;
 } midp_event_volume;
@@ -196,6 +203,7 @@ typedef enum {
     MIDP_CARDDEVICE_UNLOCK
 } midp_carddevice_event_type;
 #endif /* ENABLE_JSR_177 */
+
 typedef struct {
     javacall_key             key; /* '0'-'9','*','# */
     javacall_keypress_type  keyEventType; /* presed, released, repeated ... */
@@ -348,6 +356,10 @@ typedef struct {
     float                       percentage;
     javacall_result             result;
 } jsr290_jc_event_fluid;
+
+typedef struct {
+    javacall_int32             invocation_id;
+} jsr290_jc_event_completion_notification;
 #endif /* ENABLE_JSR_290 */
 
 typedef struct {
@@ -375,6 +387,13 @@ typedef struct {
     int handle;
 } midp_jc_event_carddevice;
 #endif /* ENABLE_JSR_177 */
+
+#ifdef ENABLE_JSR_257
+typedef struct {
+    jsr257_contactless_event_type eventType;
+    javacall_handle eventData;
+} jsr257_jc_event_contactless;
+#endif /* ENABLE_JSR_257 */
 
 typedef struct {
     char* phoneNumber;
@@ -444,8 +463,14 @@ typedef struct {
 #endif /* ENABLE_API_EXTENSIONS */
 
 #ifdef ENABLE_JSR_290
-        jsr290_jc_event_fluid              jsr290FluidEvent;
+        jsr290_jc_event_fluid                         jsr290FluidEvent;
+		jsr290_jc_event_completion_notification       jsr290NotificationEvent;
 #endif /* ENABLE_JSR_290 */
+
+#ifdef ENABLE_JSR_257
+        jsr257_jc_event_contactless        jsr257Event;
+#endif /* ENABLE_JSR_257 */
+
         midp_jc_event_menu_selection    menuSelectionEvent;
     } data;
 

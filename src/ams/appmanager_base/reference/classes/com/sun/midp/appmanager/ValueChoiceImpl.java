@@ -4,6 +4,7 @@ import com.sun.midp.security.PermissionGroup;
 
 import java.util.Vector;
 
+
 /**
  *  Class contains set of pairs (ID, label)
  *  and one entity market as selected.
@@ -61,6 +62,21 @@ class ValueChoiceImpl implements ValueChoice {
      */
     void setSelectedID(int id) {
         selectedID = id;
+    }
+
+    /**
+     * Checks if specified ID exists in the list
+     * @param id to find
+     * @return true if it is present, false otherwise
+     */
+    boolean idExists(int id) {
+        Integer ID = new Integer(id);
+        for (int i = 0; i < ids.size(); i++) {
+            if (ID.equals(ids.elementAt(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
