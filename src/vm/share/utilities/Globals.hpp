@@ -564,7 +564,7 @@ private:
        op(bool, TraceCompiledMethodCache, false,                            \
           "Trace compiled method cache events")                             \
                                                                             \
-       op(bool, TraceDebugger, true,                                       \
+       op(bool, TraceDebugger, false,                                       \
           "Trace Java debugger support operations")                         \
                                                                             \
        op(bool, TraceRomizer, false,                                        \
