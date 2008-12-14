@@ -25,15 +25,16 @@
  */
 
 #include "incls/_precompiled.incl"
-#include "incls/_ODTSocketTransport.cpp.incl"
+#include "incls/_PCSLSocketTransport.cpp.incl"
 
-// The implementation from this file should be used, if the platform supports JavaCall ODT
+// The implementation from this file should be used, until the target platform
+// is not supported by PCSL, or when building without PCSL
 #if ENABLE_PCSL
+
 #if ENABLE_JAVA_DEBUGGER
 
-#include <javacall_odd.h>
-#include <javacall_defs.h>
 #include <pcsl_network.h>
+#include <pcsl_socket.h>
 
 // this definition is needed to include PCSL support for server sockets
 #define ENABLE_SERVER_SOCKET
@@ -111,7 +112,7 @@ void SocketTransport::init_transport(void *t JVM_TRAPS)
   (void)t; // Why? Do we need it in our arguments?
   JVM_IGNORE_TRAPS;
   UsingFastOops fastoops;
-  //ODD_TODO short debugger_port;
+  short debugger_port;
   int res;
 
   if (Verbose) {
@@ -122,20 +123,42 @@ void SocketTransport::init_transport(void *t JVM_TRAPS)
 
     if (!_network_is_up) {
       if (!_wait_for_network_init) {
-        res = javacall_odt_initialize(); //ODD_TODO res = pcsl_network_init_start(SocketTransport::network_initialized_callback);
-      } /*else {
+        res = pcsl_network_init_start(SocketTransport::network_initialized_callback);
+      } else {
         res = pcsl_network_init_finish();
-      }*/
+      }
+
+      if (res == PCSL_NET_WOULDBLOCK) {
+        // wait until the network is up
+        if (Verbose) {
+          tty->print_cr("SocketTransport::init_transport(): "
+	                "waiting for network initialization.");
+        }
+        _wait_for_network_init = true;
+        return;
+      }
 
       _wait_for_network_init = false;
 
-      if (res != JAVACALL_OK) {
+      if (res != PCSL_NET_SUCCESS) {
         jvm_fprintf(stdout, "Could not init the network");
         _first_time = false; // don't try to init network anymore
         return;
       }
 
       _network_is_up = true;
+    }
+
+    debugger_port = Arguments::_debugger_port;
+    if (debugger_port == 0) {
+      debugger_port = DefaultDebuggerPort;
+    }
+
+    res = pcsl_serversocket_open(debugger_port, &_listen_handle);
+
+    if (res != PCSL_NET_SUCCESS) {
+      jvm_fprintf(stdout, "Could not open listen socket");
+      return;
     }
 
     _first_time = false;
@@ -159,38 +182,54 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct,
                                         int timeout)
 {
   UsingFastOops fastoops;
-  void* channel_handle = INVALID_HANDLE;
+  void* connect_handle = INVALID_HANDLE;
   SocketTransport *st = (SocketTransport *)t;
-  javacall_result status;
-  int debugger_port;
+  int status;
+  static void *pContext = NULL;
 
   if (Verbose) {
     tty->print_cr("SocketTransport::connect_transport()");
   }
 
-  //return, if already connected
-  if((void*)st->debugger_socket() != INVALID_HANDLE){
-	  return true;
+  if (_listen_handle == INVALID_HANDLE) {
+    if (Verbose) {
+      tty->print_cr("SocketTransport::connect_transport(): "
+                    "invalid _listen_handle");
+    }
+    return false;
   }
 
   if (ct == SERVER) {
     /* listen = st->listener_socket(); */
 
     (void)timeout; // TODO: take timeout into account
-	
+
     if (!_wait_for_accept) {
-		debugger_port = Arguments::_debugger_port;
-		if (debugger_port == 0) {
-			debugger_port = DefaultDebuggerPort;
-		}
-      status = javacall_odt_open_channel(debugger_port, &channel_handle); //ODD_TODO pcsl_serversocket_accept_start(_listen_handle, &connect_handle, &pContext);
+      status = pcsl_serversocket_accept_start(_listen_handle,
+        &connect_handle, &pContext);
 
+      if (status == PCSL_NET_WOULDBLOCK) {
+        if (Verbose) {
+          tty->print_cr("SocketTransport::connect_transport(): "
+	                "Waiting for accept() (start)");
+        }
+        _wait_for_accept = true;
+        return false;
+      }
+    } else {
+      status = pcsl_serversocket_accept_finish(_listen_handle,
+        &connect_handle, &pContext);
+      if (status == PCSL_NET_WOULDBLOCK) {
+        if (Verbose) {
+          tty->print_cr("SocketTransport::connect_transport(): "
+	                "Waiting for accept() (finish)");
+        }
+        return false;
+      }
+      _wait_for_accept = false;
     }
-	else {
-		return false;
-	}
 
-    if (status != JAVACALL_OK) {
+    if (status != PCSL_NET_SUCCESS) {
       if (Verbose) {
         tty->print_cr("SocketTransport::connect_transport(): accept() failed");
       }
@@ -202,12 +241,28 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct,
     }
 
     st->reset_read_ahead_buffer();
-	//javacall_odt returns a SINGLE handle (i.e., NOT listener_socket and debugger_socket
-    st->set_debugger_socket((int)channel_handle);
+    st->set_debugger_socket((int)connect_handle);
      
+    _wait_for_accept = false;
+
     return true;
-  } 
-  else { //if (ct == SERVER)
+
+#if 0
+      /*
+       * Turn off Nagle algorithm which is slow in NT. Since we send many
+       * small packets Nagle actually slows us down as we send the packet
+       * header in tiny chunks before sending the data portion. Without this
+       * option, it could take 200 ms. per packet roundtrip from KVM on NT to
+       * Forte running on some other machine.
+       */
+      optval = 1;
+      ::setsockopt(na_get_fd(connect_handle), IPPROTO_TCP, TCP_NODELAY,
+                   (char *)&optval, sizeof(optval));
+      st->set_debugger_socket((int)connect_handle);
+      return true;
+#endif
+
+  } else {
     return false;
   }
 }
@@ -222,22 +277,22 @@ void SocketTransport::disconnect_transport(Transport *t)
 {
   UsingFastOops fastoops;
   SocketTransport *st = (SocketTransport *)t;
-  void* channel_handle = (void*)st->debugger_socket();
+  void* dbg_handle = (void*)st->debugger_socket();
 
   if (Verbose) {
     tty->print_cr("SocketTransport::disconnect_transport()");
   }
 
-  if (channel_handle != INVALID_HANDLE) {
+  if (dbg_handle != INVALID_HANDLE) {
     /* IMPL_NOTE: wait here for 2 seconds to let other side to finish */
 
-    javacall_odt_close_channel(channel_handle); //ODD_TODO pcsl_socket_shutdown_output(dbg_handle);
+    pcsl_socket_shutdown_output(dbg_handle);
 
     /* 
      * Note that this function NEVER returns PCSL_NET_WOULDBLOCK. Therefore, the
      * finish() function should never be called and does nothing.
      */
-    // ODD_TODO pcsl_socket_close_start(dbg_handle, NULL);
+    pcsl_socket_close_start(dbg_handle, NULL);
 
     st->set_debugger_socket((int)INVALID_HANDLE);
   }
@@ -253,22 +308,17 @@ void SocketTransport::destroy_transport(Transport *t)
     tty->print_cr("SocketTransport::destroy_transport()");
   }
 
-  //ensure disconnect_transport is invoked to cleanup the debugger_socket handle
-  // (and no other operation is actually required for JavaCall ODD implementation - the listener_handle is NULL)
-  disconnect_transport(t);
-
   st->reset_read_ahead_buffer();
 
-  if (listener_handle != INVALID_HANDLE) {	
-
+  if (listener_handle != INVALID_HANDLE) {
     // last socket in the system, shutdown the listener socket
-    //ODD_TODO pcsl_socket_shutdown_output(listener_handle);
+    pcsl_socket_shutdown_output(listener_handle);
 
     /* 
      * Note that this function NEVER returns PCSL_NET_WOULDBLOCK. Therefore, the
      * finish() function should never be called and does nothing.
      */
-    //ODD_TODO pcsl_socket_close_start(listener_handle, NULL);
+    pcsl_socket_close_start(listener_handle, NULL);
 
     st->set_listener_socket((int)INVALID_HANDLE);
   }
@@ -284,15 +334,15 @@ bool SocketTransport::char_avail(Transport *t, int timeout)
 {
   UsingFastOops fastoops;
   SocketTransport *st = (SocketTransport *)t;
-  void* channel_handle = (void*)st->debugger_socket();
+  void* dbg_handle = (void*)st->debugger_socket();
   int bytesAvailable = 0;
   (void)timeout; // IMPL_NOTE: take timeout into account
 
-  if (channel_handle == INVALID_HANDLE) {
+  if (dbg_handle == INVALID_HANDLE) {
     return false;
   }
 
-  int status = javacall_odt_is_available(channel_handle, &bytesAvailable);//ODD_TODO pcsl_socket_available(dbg_handle, &bytesAvailable);
+  int status = pcsl_socket_available(dbg_handle, &bytesAvailable);
   if (status == PCSL_NET_SUCCESS && bytesAvailable >= 1) {
     return true;
   } else {
@@ -304,7 +354,7 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
 {
   UsingFastOops fastoops;
   SocketTransport *st = (SocketTransport *)t;
-  void* channel_handle = (void*)st->debugger_socket();
+  void* dbg_handle = (void*)st->debugger_socket();
   int bytes_sent = 0;
   int status;
   static void* pContext;
@@ -313,16 +363,17 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
     tty->print_cr("SocketTransport::write_bytes()");
   }
 
-  if (channel_handle == INVALID_HANDLE) {
+  if (dbg_handle == INVALID_HANDLE) {
     return 0;
   }
 
   if (!_wait_for_write) {
-    status = javacall_odt_write_bytes(channel_handle, (char*)buf, len, &bytes_sent); //ODD_TODO pcsl_socket_write_start(dbg_handle, (char*)buf, len, &bytes_sent, &pContext);
-  } /*else {  //Reinvocation after unblocking the thread 
+    status = pcsl_socket_write_start(dbg_handle, (char*)buf,
+                                     len, &bytes_sent, &pContext);
+  } else {  /* Reinvocation after unblocking the thread */
     status = pcsl_socket_write_finish(dbg_handle, (char*)buf,
                                       len, &bytes_sent, pContext);
-  }*/
+  }
 
   if (status == PCSL_NET_WOULDBLOCK) {
     if (Verbose) {
@@ -375,7 +426,7 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
   unsigned char *ptr = (unsigned char *) buf;
   unsigned int total = 0;
   SocketTransport *st = (SocketTransport *)t;
-  void* channel_handle = (void*)st->debugger_socket();
+  void* dbg_handle = (void*)st->debugger_socket();
   int status;
   static void *pContext;
 
@@ -383,7 +434,7 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
     tty->print_cr("SocketTransport::read_bytes_impl()");
   }
 
-  if (channel_handle == INVALID_HANDLE) {
+  if (dbg_handle == INVALID_HANDLE) {
     return 0;
   }
   if (nleft == 0) {
@@ -418,11 +469,10 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
   }
 
   do {
-	  status = javacall_odt_read_bytes(channel_handle, ptr, nleft, &nread); //ODD_TODO pcsl_socket_read_start(dbg_handle, ptr, nleft, &nread, &pContext);
-  /*
     if (!_wait_for_read) {
-      status = javacall_odt_read_bytes(channel_handle, ptr, nleft, &nread); //ODD_TODO pcsl_socket_read_start(dbg_handle, ptr, nleft, &nread, &pContext);
-    } else {  //Reinvocation after unblocking the thread 
+      status = pcsl_socket_read_start(dbg_handle, ptr, nleft,
+                                      &nread, &pContext);
+    } else {  /* Reinvocation after unblocking the thread */
       status = pcsl_socket_read_finish(dbg_handle,  ptr, nleft,
                                        &nread, pContext);
     }
@@ -436,7 +486,6 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
     }
 
     _wait_for_read = false;
-  */
 
     if (status != PCSL_NET_SUCCESS) {
 #ifdef AZZERT
@@ -447,10 +496,6 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
 
     if (nread == 0) {
       if (total > 0) {
-	    if (peekOnly) {
-		  // add the read data to the cache
-			bool success = st->add_to_read_ahead_buffer(ptr, nread);
-		}
         return total;
       } else {
         if (blockflag) {
