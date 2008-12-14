@@ -54,17 +54,89 @@ extern "C" {
  */
 void javanotify_enable_odd(void);
 
+/**
+ * CLDC calls this function on start-up to allow ODT to initialize any global resources
+ *
+ * @retval JAVACALL_OK      success
+ * @retval JAVACALL_FAIL    fail
+ */
 javacall_result javacall_odt_initialize();
 
+/**
+ * CLDC calls this function when debugged Isolate starts.
+ * ODT should open all required connections e.g., KDWP, stdout
+ *
+ * @param port KDWP port
+ * @param pHandle address of variable to receive the handle
+ *
+ * @retval JAVACALL_OK      success
+ * @retval JAVACALL_FAIL    fail
+ */
 javacall_result javacall_odt_open_channel(int port, void **pHandle);
 
+/**
+ * CLDC calls this function when debugged Isolate exits.
+ * ODT should close all open connections e.g., KDWP, stdout
+ *
+ * @param handle address of variable to receive the handle
+ *
+ * @retval JAVACALL_OK      success
+ * @retval JAVACALL_FAIL    fail
+ */
 javacall_result javacall_odt_close_channel(javacall_handle handle);
 
+/**
+ * CLDC debugger calls this function before reading a full KDWP packet
+ *
+ * @param handle address of variable to receive the handle
+ * @param pBytesAvailable number of bytes available
+ *
+ * @retval JAVACALL_OK      success
+ * @retval JAVACALL_FAIL    fail
+ */
 javacall_result javacall_odt_is_available(javacall_handle handle, int *pBytesAvailable);
 
+/**
+ * CLDC debugger calls this function to write a KDWP packet
+ *
+ * @param handle handle of an open connection
+ * @param pData base of buffer containing data to be written
+ * @param len number of bytes to attempt to write
+ * @param pBytesWritten returns the number of bytes written after
+ *        successful write operation; only set if this function returns
+ *
+ * @retval JAVACALL_OK      success
+ * @retval JAVACALL_FAIL    fail
+ */
 javacall_result javacall_odt_write_bytes(javacall_handle handle, char *pData, int len, int *pBytesWritten);
 
+/**
+ * CLDC debugger calls this function to read a KDWP packet
+ *
+ * @param handle handle of an open connection
+ * @param pData base of buffer to receive read data
+ * @param len number of bytes to attempt to read
+ * @param pBytesRead returns the number of bytes actually read; it is
+ *        set only when this function returns JAVACALL_OK
+ *
+ * @retval JAVACALL_OK      success
+ * @retval JAVACALL_FAIL    fail
+ */
 javacall_result javacall_odt_read_bytes(javacall_handle handle, unsigned char *pData, int len, int *pBytesRead);
+
+/**
+ * CLDC debugger calls this function to redirect system output
+ *
+ * @param handle handle of an open connection
+ * @param pData base of buffer containing data to be written
+ * @param len number of bytes to attempt to write
+ * @param pBytesWritten returns the number of bytes written after
+ *        successful write operation; only set if this function returns
+ *
+ * @retval JAVACALL_OK      success
+ * @retval JAVACALL_FAIL    fail
+ */
+javacall_result javacall_odt_redirect_output(javacall_handle handle, char *pData, int len, int *pBytesWritten);
 
 
 /** @} */
