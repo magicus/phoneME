@@ -90,7 +90,7 @@ void lfpport_refresh(int x, int y, int w, int h){
  * @param mode The screen mode
  */
 void lfpport_set_fullscreen_mode(jboolean mode){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s mode=%d\n", __FUNCTION__, mode);
     (void)mode;
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
@@ -118,7 +118,7 @@ jboolean lfpport_get_reverse_orientation(){
  */
 int lfpport_get_screen_width(){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    printf("<<<%s returning %d\n", __FUNCTION__, display_width);
+    LIMO_TRACE("<<<%s returning %d\n", __FUNCTION__, display_width);
     return display_width;
 }
 
@@ -127,7 +127,7 @@ int lfpport_get_screen_width(){
  */
 int lfpport_get_screen_height(){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    printf("<<<%s returning %d\n", __FUNCTION__, display_height);
+    LIMO_TRACE("<<<%s returning %d\n", __FUNCTION__, display_height);
     return display_height;
 }
 
