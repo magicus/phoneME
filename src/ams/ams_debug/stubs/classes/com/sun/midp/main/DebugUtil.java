@@ -37,7 +37,6 @@ class DebugUtil {
      * Stub implementation.
      */
     static void attachDebugger() {
-try{throw new Exception();}catch(Exception e){System.out.println("------ attachDebugger 2"); e.printStackTrace();}	
         // do nothing in SVM or when debugging is not enabled
     }
 }

@@ -60,10 +60,11 @@ import com.sun.midp.io.FileUrl;
  * graphical Installer.
  */
 public class DiscoveryApp extends MIDlet implements CommandListener {
+
     /** Display for this MIDlet. */
     private Display display;
     /** Contains the default URL for the install list. */
-    private String defaultInstallListUrl = "http://127.0.0.1/index127.html";
+    private String defaultInstallListUrl = "http://";
     /** Contains the URL the user typed in. */
     private TextBox urlTextBox;
     /** Displays the progress of the install. */
@@ -131,7 +132,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         lastTypeOfInstall = InstallerResource.HTTP_INSTALL;
         
         GraphicalInstaller.initSettings();
-//        restoreSettings();         
+        restoreSettings();         
         // get the URL of a list of suites to install
         getUrl();
         
