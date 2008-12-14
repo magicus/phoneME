@@ -54,8 +54,6 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
      * @param args the arguments passed to main class of the Isolate
      */
     private AppIsolateMIDletSuiteLoader(String args[]) {
-System.out.println("+AppIsolateMIDletSuiteLoader.<init> " + args.length);		
-for(int i = 0; i < args.length; i++){System.out.println("arg " + i + ":" + args[i]);}
         this.suiteId = Integer.parseInt(args[0]);
         this.midletClassName = args[1];
         this.midletDisplayName = args[2];
@@ -64,13 +62,10 @@ for(int i = 0; i < args.length; i++){System.out.println("arg " + i + ":" + args[
 
         if (args.length > 7) {
             boolean isDebugMode = Integer.parseInt(args[7]) != 0;
-System.out.println("isDebugMode:" + isDebugMode);		
 
             if (isDebugMode) {
-System.out.println("before currentIsolate.attachDebugger()");		
                 currentIsolate = Isolate.currentIsolate();
                 currentIsolate.attachDebugger();
-System.out.println("after currentIsolate.attachDebugger()");		
 
                 // wait for a connection from debugger
                 while (!currentIsolate.isDebuggerConnected()) {
@@ -167,7 +162,6 @@ System.out.println("after currentIsolate.attachDebugger()");
      *             arg[5] optional MIDlet arg 2
      */
     public static void main(String args[]) {
-System.out.println("+AppIsolateMIDletSuiteLoader.main");	
         try {
             /* This class shouldn't be used more than once. */
             if (inUse) {
