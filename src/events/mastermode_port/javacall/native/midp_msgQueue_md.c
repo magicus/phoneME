@@ -380,6 +380,12 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor   = JSR290_INVOCATION_COMPLETION_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290NotificationEvent.invocation_id;
         break;
+        case JSR290_JC_EVENT_HANDLE_EVENT:
+        pNewSignal->waitingFor   = JSR290_HANDLE_EVENT_SIGNAL;
+    	pNewMidpEvent->type = FLUID_EVENT;
+        pNewMidpEvent->intParam4 = (int)((jlong)(event->data.jsr290HandleEvent.handle_event_request_handle));
+        pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290HandleEvent.handle_event_request_handle) >> 32);
+    	break;
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_177
