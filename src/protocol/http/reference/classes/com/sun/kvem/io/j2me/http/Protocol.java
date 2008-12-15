@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -39,9 +37,6 @@ import java.io.IOException;
  * a StreamConnectionStealer that "steals" the data along the way and
  * send it to the HttpAgent and from there to the network monitor gui.
  *
- *@author ah123546
- *@created December 25, 2001
- *@version 
  * @see com.sun.kem.netmon.StreamConnectionStealer
  */
 public class Protocol extends com.sun.midp.io.j2me.http.Protocol {

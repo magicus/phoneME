@@ -1,6 +1,4 @@
 #
-#   
-#
 # Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -240,7 +238,7 @@ ifndef CHAMELEON_QA_IMAGE_ROMIZATION_OVERRIDE
 	# Normal case: the list of romized images comes from skin XML file
 	CHAM_ROMIZED_IMAGE_FILES = $(addprefix $(LIBDIR)/,$(shell cat $(SUBSYSTEM_CONFIGURATION_CHAMROM_LIST_FILE)))
 else
-	# QA hack case
+	# For a special test case
 	ifeq ($(CHAMELEON_QA_IMAGE_ROMIZATION_OVERRIDE),all)
 		CHAM_SKIN_RESOURCES_FILES_LIST = $(notdir $(wildcard $(SUBSYSTEM_LCDLF_SKIN_RESOURCES_DIR)/*.png))
 		CHAM_ROMIZED_IMAGE_FILES = $(addprefix $(LIBDIR)/,$(CHAM_SKIN_RESOURCES_FILES_LIST))

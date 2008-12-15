@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -304,7 +302,7 @@ final public class ObjectIdentifier {
     }
 
     /*
-     * Tricky OID component parsing technique ... note that one bit
+     * Specific OID component parsing technique. Note that one bit
      * per octet is lost, this returns at most 28 bits of component.
      * Also, notice this parses in big-endian format.
      */

@@ -40,8 +40,6 @@ import java.io.*;
  * and may also provide additional methods
  * and fields.
  *
- * @author  Jonathan Payne
- * @version 1.23, 02/02/00
  * @since   JDK1.0
  */
 public

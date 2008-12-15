@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -1335,7 +1333,7 @@ Java_com_sun_midp_security_SecurityToken_warnPotentialBlocking0(void) {
  *
  * This block contains the native methods that are used by JSR082 Netmon.
  *
- * FIXME: after Netmon for Bluetooth is ready and the netmon structure
+ * Need revisit: after Netmon for Bluetooth is ready and the netmon structure
  *        is known, more accurate work may be done here to get rid of
  *        unused code.
  *

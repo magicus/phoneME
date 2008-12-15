@@ -1,6 +1,4 @@
 /*
- *   
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -30,7 +28,6 @@
  * FILE:      commProtocol_md.c
  * OVERVIEW:  Operations to support serial communication ports
  *            on Unix (native Unix support for the 'comm:' protocol)
- * AUTHOR:    
  *=======================================================================*/
 
 /*=======================================================================

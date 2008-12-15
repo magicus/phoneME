@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -39,9 +37,6 @@ import java.io.IOException;
  * StreamConnectionStealer and "steals" the data along the way to the user midlet.
  * The data is sent to the HttpsAgent and from there to the network monito gui.
  *
- *@author ah123546
- *@created December 25, 2001
- *@version
  */
 public class Protocol extends com.sun.midp.io.j2me.https.Protocol {
 

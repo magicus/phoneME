@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -35,8 +33,6 @@ import javax.microedition.io.Connection;
  * a StreamConnectionStealer that "steals" the data along the way and
  * send it to the CommAgent and from there to the network monitor gui.
  *
- *@author Moshe Sayag
- *@version
  * @see com.sun.kem.netmon.StreamConnectionStealer
  */
 public class Protocol

@@ -1,6 +1,4 @@
 /*
- *   
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -161,7 +159,7 @@ typedef struct {
 // and widths of the printable ASCII characters (0x20 ~ 0x7e). We use
 // WinCE API to query and draw the other characters.
 //
-// FIXME: we should support other font styles, such as italic, monospace
+// need revisit: we should support other font styles, such as italic, monospace
 // and bold.
 static FastFontInfo systemFontInfo;
 
@@ -506,7 +504,7 @@ static void drawCharImpl(gxj_screen_buffer *sbuf,
    int dstMask;
 
    if (c == ' ') {
-       return; // hack -- let assume that space is always empty in all
+       return; // need revisit: let assume that space is always empty in all
                // charsets.
    }
 
