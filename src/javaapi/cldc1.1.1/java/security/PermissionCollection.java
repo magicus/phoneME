@@ -92,7 +92,6 @@ import java.util.*;
  *
  * @version 1.26 00/02/02
  *
- * @author Roland Schemers
  */
 
 public abstract class PermissionCollection {

@@ -34,7 +34,6 @@ package java.lang;
  * <a href="{@docRoot}/../guide/collections/index.html">
  * Java Collections Framework</a>.
  *
- * @author  Josh Bloch
  * @version 1.12, 02/02/00
  * @since   1.2
  */

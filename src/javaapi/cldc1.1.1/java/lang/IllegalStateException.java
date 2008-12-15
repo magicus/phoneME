@@ -33,7 +33,6 @@ package java.lang;
  * Java application is not in an appropriate state for the requested
  * operation.
  *
- * @author  Jonni Kanerva
  * @version 1.9, 02/02/00
  * @since   JDK1.1
  */

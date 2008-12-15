@@ -1,6 +1,4 @@
 /*
- *   
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -45,7 +43,7 @@ public abstract class GCFPermission extends Permission {
 
   private URIParser parser;
 
-  // A trick to create an URI parser and normalize the URI before passing it 
+  // A way to create an URI parser and normalize the URI before passing it 
   // to the superclass constructor: we use kind of thread-local storage 
   // for URI parser. It works unless the superclass constructor somehow 
   // triggers construction of one more subclass instance.

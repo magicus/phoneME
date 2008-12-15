@@ -61,8 +61,6 @@ package java.security;
  *
  * @version 1.35 00/02/02
  *
- * @author Marianne Mueller
- * @author Roland Schemers 
  */
 
 public abstract class Permission {

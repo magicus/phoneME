@@ -77,7 +77,6 @@ import java.io.IOException;
  *
  * @version 1.24 00/02/02
  *
- * @author Roland Schemers
  * @since 1.2
  *
  * @serial exclude
@@ -368,7 +367,6 @@ public final class PropertyPermission extends BasicPermission {
  *
  * @version 1.24, 02/02/00
  *
- * @author Roland Schemers
  *
  * @serial include
  */
