@@ -66,8 +66,6 @@ import java.io.IOException;
  *
  * @version 1.26 00/02/02
  *
- * @author Marianne Mueller
- * @author Roland Schemers
  */
 
 public abstract class BasicPermission extends Permission
@@ -273,7 +271,6 @@ public abstract class BasicPermission extends Permission
  *
  * @version 1.26 02/02/00
  *
- * @author Roland Schemers
  *
  * @serial include
  */

@@ -39,8 +39,6 @@ package java.security;
  * possible at the time the exception is thrown.
  *
  * @version 	1.9, 02/02/00
- * @author Li Gong
- * @author Roland Schemers
  */
 
 public class AccessControlException extends SecurityException {

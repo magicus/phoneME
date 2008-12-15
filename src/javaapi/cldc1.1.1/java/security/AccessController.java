@@ -241,8 +241,6 @@ package java.security;
  * @see AccessControlContext
  *
  * @version 1.48 00/05/03
- * @author Li Gong 
- * @author Roland Schemers
  */
 
 public final class AccessController {

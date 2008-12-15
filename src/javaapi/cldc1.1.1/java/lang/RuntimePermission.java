@@ -269,8 +269,6 @@ import java.util.Hashtable;
  *
  * @version 1.37 00/02/02
  *
- * @author Marianne Mueller
- * @author Roland Schemers
  */
 
 public final class RuntimePermission extends BasicPermission {
