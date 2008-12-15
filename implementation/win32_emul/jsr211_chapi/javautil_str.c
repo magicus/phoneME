@@ -20,12 +20,6 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
- * 
- * These are constant defines both in native and Java layers.
- * NOTE: DO NOT EDIT. THIS FILE IS GENERATED. If you want to 
- * edit it, you need to modify the corresponding XML files.
- *
- * Patent pending.
  */
 
 /**
