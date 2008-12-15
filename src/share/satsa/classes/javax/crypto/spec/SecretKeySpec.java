@@ -1,6 +1,4 @@
 /*
- *   
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -22,7 +20,9 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
- *
+ */
+
+/*
  * NOTE:
  * Because of various external restrictions (i.e. US export
  * regulations, etc.), the actual source code can not be provided
@@ -45,9 +45,6 @@ import java.security.spec.KeySpec;
  * <p>This class is only useful for raw secret keys that can be represented as
  * a byte array and have no key parameters associated with them, e.g., DES or
  * Triple DES keys.
- *
- *
- * @version 1.16, 07/31/01
  *
  */
 public class SecretKeySpec implements KeySpec, Key {

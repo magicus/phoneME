@@ -1,6 +1,4 @@
 /*
- *   
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -22,7 +20,9 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
- *
+ */
+
+/*
  * NOTE:
  * Because of various external restrictions (i.e. US export
  * regulations, etc.), the actual source code can not be provided
@@ -37,9 +37,6 @@ import java.security.*;
  * This exception is thrown when the length of data provided to a block
  * cipher is incorrect, i.e., does not match the block size of the cipher.
  *
- *
- * @version 1.3, 01/23/03
- * @since 1.4
  */
 public class IllegalBlockSizeException  extends GeneralSecurityException 
     
