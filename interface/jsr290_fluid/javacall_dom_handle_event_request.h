@@ -128,5 +128,8 @@ extern "C" {
 	javacall_result
 	javacall_dom_handle_event_get_event_handle_finish(void *context,
 	                                            /* OUT */ javacall_handle* ret_value);
+#ifdef __cplusplus
+}
+#endif
 	
 #endif /* ifndef __JAVACALL_DOM_HANDLE_EVENT_REQUEST_H_*/

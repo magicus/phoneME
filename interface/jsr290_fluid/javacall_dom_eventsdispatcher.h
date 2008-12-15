@@ -79,7 +79,7 @@ javacall_dom_eventsdispatcher_add_event_listener_start(javacall_handle handle,
                                            void **context,
                                            javacall_const_utf16_string type,
                                            javacall_bool use_capture,
-                                           /* OUT */ javacall_int64* ret_value);
+                                           /*OUT*/javacall_handle* ret_value);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -114,7 +114,7 @@ javacall_dom_eventsdispatcher_add_event_listener_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_eventsdispatcher_add_event_listener_finish(void *context,
-                                            /* OUT */ javacall_int64* ret_value);
+                                            /* OUT */ javacall_handle* ret_value);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -209,7 +209,7 @@ javacall_dom_eventsdispatcher_remove_event_listener_finish(void *context);
 javacall_result
 javacall_dom_eventsdispatcher_handle_completed_start(javacall_int32 invocation_id,
                                               void **context,
-                                              javacall_handle requestId);
+                                              javacall_handle request_id);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code
