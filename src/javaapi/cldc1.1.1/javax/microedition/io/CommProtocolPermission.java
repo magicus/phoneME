@@ -1,6 +1,4 @@
 /*
- *   
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -50,7 +48,7 @@ import java.util.Vector;
  * @see "javax.microedition.io.CommConnection" in <a href="http://www.jcp.org/en/jsr/detail?id=271">MIDP 3.0 Specification</a>
  */
 public final class CommProtocolPermission extends GCFPermission {
-  // A trick to create a path normalizer, pass it to superclass ctor and then
+  // A way to create a path normalizer, pass it to superclass ctor and then
   // store it to an instance field. It works unless the superclass constructor
   // somehow triggers construction of one more subclass instance.
   private static final Hashtable map = new Hashtable();

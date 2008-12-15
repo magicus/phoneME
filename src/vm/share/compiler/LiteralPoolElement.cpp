@@ -56,7 +56,7 @@ void LiteralPoolElement::print_value_on( Stream* s ) const {
 // This method is called by MixedOop::iterate() after iterating the
 // header part of MixedOop
 void LiteralPoolElement::iterate(OopVisitor* visitor) {
-#if 0 // FIXME        
+#if 0 // need revisit        
   if (literal_oop() != NULL) {
     NamedField id("oop", true);
     visitor->do_oop(&id, literal_oop_offset(), true);
