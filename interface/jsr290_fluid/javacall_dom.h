@@ -173,6 +173,25 @@ typedef enum {
     JAVACALL_DOM_NOTATION_NODE               = 0xC
 } javacall_dom_node_types;
 
+/**
+ * @enum javacall_dom_html_element_types
+ * @brief types of HTMLElements
+ */
+typedef enum {
+    /** The Element is an <code>HTMLElement</code>. */
+    JAVACALL_DOM_HTML_ELEMENT                  = 0x1,
+    /** The HTMLElement is an <code>HTMLFormElement</code>. */
+    JAVACALL_DOM_HTML_FROM_ELEMENT             = 0x2,
+    /** The HTMLElement is a <code>HTMLInputElement</code>. */
+    JAVACALL_DOM_HTML_INPUT_ELEMENT            = 0x3,
+    /** The HTMLElement is a <code>HTMLObjectElement</code>. */
+    JAVACALL_DOM_HTML_OBJECT_ELEMENT           = 0x4,
+    /** The HTMLElement is an <code>HTMLOptionElement</code>. */
+    JAVACALL_DOM_HTML_OPTION_ELEMENT           = 0x5,
+    /** The HTMLElement is an <code>HTMLTextAreaElement</code>. */
+    JAVACALL_DOM_HTML_TEXT_AREA_ELEMENT        = 0x6
+} javacall_dom_html_element_types;
+
 /** @} */
 
 #ifdef __cplusplus

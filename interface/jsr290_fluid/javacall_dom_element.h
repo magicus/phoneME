@@ -1320,6 +1320,51 @@ javacall_result
 javacall_dom_element_set_id_attribute_node_finish(void *context,
                                                   /* OUT */ javacall_dom_exceptions* exception_code);
 
+/*
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR checks if this Element is HTMLElement
+ * 
+ * 
+ * @param handle Pointer to the object representing this element.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value <code>true</code> if the Element is HTMLElement,
+ * <code>false</code> otherwise. 
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_element_is_html_element_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_is_html_element_start(javacall_handle handle,
+                                           javacall_int32 invocation_id,
+                                           void **context,
+                                           /* OUT */ javacall_bool* ret_value);
+
+/*
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR checks if this Element is HTMLElement
+ * 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value <code>true</code> if the Element is HTMLElement,
+ * <code>false</code> otherwise. 
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_element_is_html_element_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_is_html_element_finish(void *context,
+                                            /* OUT */ javacall_bool* ret_value);
+
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns retrieves the number of child elements.
