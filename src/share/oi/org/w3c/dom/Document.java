@@ -67,7 +67,7 @@ public interface Document extends Node {
      * <code>Document</code> objects supporting additional features than the 
      * "Core", such as "HTML" [<a href='http://www.w3.org/TR/2003/REC-DOM-Level-2-HTML-20030109'>DOM Level 2 HTML</a>]
      * , based on the <code>DocumentType</code> specified at creation time, 
-     * changing it afterwards is very unlikely to result in a change of the 
+     * changing it afterwards is very improbable to result in a change of the 
      * features supported.
      * @since DOM Level 3
      * @return the Document Type Declaration associated with this document, or <code>null</code>
