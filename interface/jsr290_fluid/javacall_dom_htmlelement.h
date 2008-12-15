@@ -219,7 +219,7 @@ javacall_dom_htmlelement_set_id_finish(void *context);
 
 /*
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR returns checks if this Element is HTMLElement
+ * OR returns a code representing the type of the underlying object as defined above
  * 
  * 
  * @param handle Pointer to the object representing this htmlelement.
@@ -244,7 +244,7 @@ javacall_dom_htmlelement_get_html_element_type_start(javacall_handle handle,
 
 /*
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR returns checks if this Element is HTMLElement
+ * OR returns a code representing the type of the underlying object as defined above
  * 
  * 
  * @param context The context saved during asynchronous operation.
