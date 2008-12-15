@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -41,7 +39,7 @@ public abstract class Screen extends BaseScreen {
     protected abstract Displayable createDisplayable();
 
     protected Command getSelectItemCommand() {
-        //  FIXME: i18n for "OK"
+        // Need revisit: i18n for "OK"
         return new Command("OK", Command.OK, 1);
     }
 
