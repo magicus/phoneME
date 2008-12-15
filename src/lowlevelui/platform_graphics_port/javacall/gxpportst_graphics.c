@@ -25,6 +25,7 @@
  */
 
 #include <gxpport_graphics.h>
+#include <lfpport_error.h>
 #include <gxpport_font.h>
 #include <midp_logging.h>
 
@@ -32,9 +33,13 @@
 #include <gtk/gtk.h>
 #include <syslog.h>
 #include "lfpport_gtk.h"
+#include "lfpport_font.h"
+
 
 extern GtkWidget *main_canvas;
 extern GtkWidget *main_window;
+extern gint display_width;
+extern gint display_height;
 
 /**
  * @file
@@ -51,8 +56,8 @@ extern "C" {
 #define     GXPPORT_GTK_FONT_LEADING    2
 #define     GXPPORT_GTK_CHARS_WIDTH     4
 
-// extern MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
-//                int face, int style, int size);
+extern MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
+               int face, int style, int size);
 
 
 /**
@@ -60,7 +65,7 @@ extern "C" {
  *
  * @param pixel The packed pixel value
  */
-extern void gxpport_fill_triangle(
+void gxpport_fill_triangle(
                                  jint pixel, const jshort *clip,
                                  gxpport_mutableimage_native_handle dst, int dotted,
                                  int x1, int y1,
@@ -82,7 +87,8 @@ extern void gxpport_fill_triangle(
         form = gtk_main_window_get_current_form(main_window);
         da = gtk_object_get_user_data(form);
         if (!GTK_IS_DRAWING_AREA(da)) {
-            LIMO_TRACE("%s extracted unepxected not drawing area.  Continuing.\n", __FUNCTION__);
+            LIMO_TRACE("%s extracted unepxected not drawing area.  Returning.\n", __FUNCTION__);
+            return;
         }
 
         gdk_pix_map = gtk_object_get_user_data(da);
@@ -128,7 +134,7 @@ extern void gxpport_fill_triangle(
 /**
  * Copy from a specify region to other region
  */
-extern void gxpport_copy_area(
+void gxpport_copy_area(
                              const jshort *clip, gxpport_mutableimage_native_handle dst,
                              int x_src, int y_src, int width, int height,
                              int x_dest, int y_dest) {
@@ -151,7 +157,7 @@ extern void gxpport_copy_area(
 /**
  * Draw image in RGB format
  */
-extern void gxpport_draw_rgb(
+void gxpport_draw_rgb(
                             const jshort *clip,
                             gxpport_mutableimage_native_handle dst, jint *rgbData,
                             jint offset, jint scanlen, jint x, jint y,
@@ -177,7 +183,7 @@ extern void gxpport_draw_rgb(
  * Obtain the color that will be final shown
  * on the screen after the system processed it.
  */
-extern jint gxpport_get_displaycolor(jint color) {
+jint gxpport_get_displaycolor(jint color) {
 
     REPORT_CALL_TRACE1(LC_LOWUI, "LF:STUB:gxpport_get_displaycolor(%d)\n",
                        color);
@@ -189,7 +195,7 @@ extern jint gxpport_get_displaycolor(jint color) {
 /**
  * Draw a line between two points (x1,y1) and (x2,y2).
  */
-extern void gxpport_draw_line(
+void gxpport_draw_line(
                              jint pixel, const jshort *clip,
                              gxpport_mutableimage_native_handle dst,
                              int dotted, int x1, int y1, int x2, int y2)
@@ -208,7 +214,8 @@ extern void gxpport_draw_line(
         form = gtk_main_window_get_current_form(main_window);
         da = gtk_object_get_user_data(form);
         if (!GTK_IS_DRAWING_AREA(da)) {
-            LIMO_TRACE("%s extracted unepxected not drawing area.  Continuing.\n", __FUNCTION__);
+            LIMO_TRACE("%s extracted unepxected not drawing area.  Returning.\n", __FUNCTION__);
+            return;
         }
 
         gdk_pix_map = gtk_object_get_user_data(da);
@@ -251,7 +258,7 @@ extern void gxpport_draw_line(
  *       since x,y is quan. to be positive (>=0), we don't
  *       need to test for special case anymore.
  */
-extern void gxpport_draw_rect(
+void gxpport_draw_rect(
                              jint pixel, const jshort *clip,
                              gxpport_mutableimage_native_handle dst,
                              int dotted, int x, int y, int width, int height)
@@ -271,7 +278,8 @@ extern void gxpport_draw_rect(
         form = gtk_main_window_get_current_form(main_window);
         da = gtk_object_get_user_data(form);
         if (!GTK_IS_DRAWING_AREA(da)) {
-            LIMO_TRACE("%s extracted unepxected not drawing area.  Continuing.\n", __FUNCTION__);
+            LIMO_TRACE("%s extracted unepxected not drawing area. Returning.\n", __FUNCTION__);
+            return;
         }
 
         gdk_pix_map = gtk_object_get_user_data(da);
@@ -313,7 +321,7 @@ extern void gxpport_draw_rect(
 /**
  * Fill a rectangle at (x,y) with the given width and height.
  */
-extern void gxpport_fill_rect(
+void gxpport_fill_rect(
                              jint pixel, const jshort *clip,
                              gxpport_mutableimage_native_handle dst,
                              int dotted, int x, int y, int width, int height) {
@@ -325,12 +333,13 @@ extern void gxpport_fill_rect(
     GdkLineStyle lineStyle;
     GdkRectangle clipRectangle;
 
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s dst=%x\n", __FUNCTION__, dst);
     if (!dst) {
         form = gtk_main_window_get_current_form(main_window);
         da = gtk_object_get_user_data(form);
         if (!GTK_IS_DRAWING_AREA(da)) {
-            LIMO_TRACE("%s extracted unepxected not drawing area.  Continuing.\n", __FUNCTION__);
+            LIMO_TRACE("%s extracted unepxected not drawing area.  Returning.\n", __FUNCTION__);
+            return;
         }
 
         gdk_pix_map = gtk_object_get_user_data(da);
@@ -374,7 +383,7 @@ extern void gxpport_fill_rect(
  * Draw a rectangle at (x,y) with the given width and height. arcWidth and
  * arcHeight, if nonzero, indicate how much of the corners to round off.
  */
-extern void gxpport_draw_roundrect(
+void gxpport_draw_roundrect(
                                   jint pixel, const jshort *clip,
                                   gxpport_mutableimage_native_handle dst,
                                   int dotted,
@@ -402,7 +411,7 @@ extern void gxpport_draw_roundrect(
  * Fill a rectangle at (x,y) with the given width and height. arcWidth and
  * arcHeight, if nonzero, indicate how much of the corners to round off.
  */
-extern void gxpport_fill_roundrect(
+void gxpport_fill_roundrect(
                                   jint pixel, const jshort *clip,
                                   gxpport_mutableimage_native_handle dst,
                                   int dotted,
@@ -435,7 +444,7 @@ extern void gxpport_fill_roundrect(
  *
  * @note: check for width, height <0 is done in share layer
  */
-extern void gxpport_draw_arc(
+void gxpport_draw_arc(
                             jint pixel, const jshort *clip,
                             gxpport_mutableimage_native_handle dst,
                             int dotted, int x, int y, int width, int height,
@@ -455,7 +464,8 @@ extern void gxpport_draw_arc(
         form = gtk_main_window_get_current_form(main_window);
         da = gtk_object_get_user_data(form);
         if (!GTK_IS_DRAWING_AREA(da)) {
-            LIMO_TRACE("%s extracted unepxected not drawing area.  Continuing.\n", __FUNCTION__);
+            LIMO_TRACE("%s extracted unepxected not drawing area.  Returning.\n", __FUNCTION__);
+            return;
         }
 
         gdk_pix_map = gtk_object_get_user_data(da);
@@ -503,13 +513,12 @@ extern void gxpport_draw_arc(
  * 3 o'clock position) and proceeds counterclockwise by <arcAngle>
  * degrees.  arcAngle may not be negative.
  */
-extern void gxpport_fill_arc(
+void gxpport_fill_arc(
                             jint pixel, const jshort *clip,
                             gxpport_mutableimage_native_handle dst,
                             int dotted, int x, int y, int width, int height,
                             int startAngle, int arcAngle)
 {
-
     GtkForm *form;
     GtkWidget *da;
     GdkGC *gc;
@@ -524,7 +533,8 @@ extern void gxpport_fill_arc(
         form = gtk_main_window_get_current_form(main_window);
         da = gtk_object_get_user_data(form);
         if (!GTK_IS_DRAWING_AREA(da)) {
-            LIMO_TRACE("%s extracted unepxected not drawing area.  Continuing.\n", __FUNCTION__);
+            LIMO_TRACE("%s extracted unepxected not drawing area.  Returning.\n", __FUNCTION__);
+            return;
         }
 
         gdk_pix_map = gtk_object_get_user_data(da);
@@ -569,7 +579,7 @@ extern void gxpport_fill_arc(
 /**
  * Return the pixel value.
  */
-extern jint gxpport_get_pixel(
+jint gxpport_get_pixel(
                              jint rgb, int gray, int isGray) {
 
     REPORT_CALL_TRACE3(LC_LOWUI, "LF:STUB:gxpport_getPixel(%x, %x, %d)\n",
@@ -607,30 +617,78 @@ extern jint gxpport_get_pixel(
  * @param chararray Pointer to the characters to be drawn
  * @param n The number of characters to be drawn
  */
-extern void gxpport_draw_chars(
+void gxpport_draw_chars(
                               jint pixel, const jshort *clip,
                               gxpport_mutableimage_native_handle dst,
                               int dotted,
                               int face, int style, int size,
                               int x, int y, int anchor,
                               const jchar *charArray, int n) {
+    gchar text_buf[MAX_TEXT_LENGTH];
+    GtkForm *form;
+    MidpError status;
+    PlatformFontPtr fontPtr;
+    GdkColor color;
+    GtkWidget *da;
+    GdkPixmap *gdk_pix_map;
+    PangoRenderer *renderer;
+    PangoMatrix matrix = PANGO_MATRIX_INIT;
+    PangoContext *context;
+    PangoLayout *layout;
+    PangoFontDescription *desc;
+    GdkGC *gc;
+    int text_len;
+    int i;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 
-    /* Suppress unused parameter warnings */
-    (void)pixel;
-    (void)clip;
-    (void)dst;
-    (void)dotted;
-    (void)face;
-    (void)size;
-    (void)style;
-    (void)x;
-    (void)y;
-    (void)anchor;
-    (void)charArray;
-    (void)n;
+    status = lfpport_get_font(&desc,
+                              face,
+                              style,
+                              size);
+    if (status != KNI_OK) {
+        LIMO_TRACE("%s lfpport_get_font returned error status %d\n", __FUNCTION__, status);
+        return;
+    }
+
+    //set color
+    color.pixel = pixel;
+
+    //translate text
+    for (i = 0; i < n; i++) {
+        text_buf[i] = charArray[i];
+    }
+    //set anchor
+
+    //draw text
+    form = gtk_main_window_get_current_form(main_window);
+    da = gtk_object_get_user_data(form);
+    if (!GTK_IS_DRAWING_AREA(da)) {
+        LIMO_TRACE("%s extracted unepxected not drawing area.  Returning.\n", __FUNCTION__);
+        return;
+    }
+    gdk_pix_map = gtk_object_get_user_data(da);
+    gc = gdk_gc_new(da->window);
+    /* Get the default renderer for the screen, and set it up for drawing  */
+    renderer = gdk_pango_renderer_get_default(gtk_widget_get_screen(da));
+    gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER (renderer), gdk_pix_map);
+    gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER (renderer), da->style->white_gc);
+    /* Create a PangoLayout, set the font and text */
+    context = gtk_widget_create_pango_context(da);
+    layout = pango_layout_new (context);
+
+    pango_layout_set_text(layout, text_buf, n);
+    pango_layout_set_font_description (layout, desc);
+
+    gdk_pango_renderer_set_override_color(GDK_PANGO_RENDERER (renderer),
+                 PANGO_RENDER_PART_FOREGROUND, &color);
+    pango_context_set_matrix (context, &matrix);
+    pango_layout_context_changed (layout);
+    pango_renderer_draw_layout(renderer, layout,
+                  0,
+                  0);
+
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
 /**
@@ -643,7 +701,7 @@ extern void gxpport_draw_chars(
  * @param descent The font's descent should be returned here.
  * @param leading The font's leading should be returned here.
  */
-extern void gxpport_get_fontinfo(
+void gxpport_get_fontinfo(
   int face, int style, int size,
   int *ascent, int *descent, int *leading) {
 
@@ -680,19 +738,40 @@ extern void gxpport_get_fontinfo(
  * @return The total advance width in pixels (a non-negative value)
  */
 extern int gxpport_get_charswidth(
-                                 int face, int style, int size,
-                                 const jchar *charArray, int n) {
+                 int face, int style, int size,
+                 const jchar *charArray, int n) {
+
+    GtkWidget *da;
+    PangoLayout *layout;
+    PangoContext *context;
+    MidpError status;
+    PangoFontDescription *desc;
+    gchar text_buf[MAX_TEXT_LENGTH];
+    int width, height;
+    int i;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    //translate text
+    for (i = 0; i < n; i++) {
+        text_buf[i] = charArray[i];
+    }
+
+    status = lfpport_get_font(&desc, face, style, size);
+    if (status != KNI_OK) {
+        return;
+    }
+
+    da = gtk_drawing_area_new(); /* at this point main window might have not been created yet */
+    gtk_widget_set_size_request(da, display_width, display_height);
+    gtk_widget_show(da);
+
+    context = gtk_widget_create_pango_context(da);
+    layout = pango_layout_new (context);
+    pango_layout_set_text(layout, text_buf, n);
+    pango_layout_set_font_description (layout, desc);
+    pango_layout_get_pixel_size (layout, &width, &height);
+    LIMO_TRACE("%s width=%d height=%d\n", __FUNCTION__, width, height);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-
-    /* Suppress unused parameter warnings */
-    (void)face;
-    (void)size;
-    (void)style;
-    (void)charArray;
-    (void)n;
-
-    return GXPPORT_GTK_CHARS_WIDTH;
+    return width;
 }
 
