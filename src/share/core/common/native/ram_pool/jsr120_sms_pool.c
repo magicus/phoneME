@@ -296,9 +296,9 @@ WMA_STATUS jsr120_sms_pool_add_msg(SmsMessage* smsMessage) {
 
     if (smsMessage == NULL) { return WMA_ERR;}
 
-    MUTEX_LOCK
     jsr120_sms_pool_check_pool_quota();
 
+    MUTEX_LOCK
     newItem = jsr120_list_new_by_number(NULL, smsMessage->destPortNum,
         UNUSED_APP_ID, (void*)smsMessage, 0);
     jsr120_list_add_last(&SMSPool_smsMessages, newItem);
