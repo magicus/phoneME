@@ -28,6 +28,7 @@ package com.sun.midp.chameleon;
 
 import com.sun.midp.chameleon.layers.*;
 import com.sun.midp.chameleon.skins.*;
+import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
@@ -630,8 +631,8 @@ public class MIDPWindow extends CWindow {
 					  boolean isFullScn, 
 					  boolean scrollBarIsVisible) {
 	int w = width;
-	// TODO: scroll arrows (bar? ) indicator has to be hidden?
-	if (scrollBarIsVisible) {
+	if (scrollBarIsVisible && 
+	    ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR) {
 	    w -= ScrollIndSkin.WIDTH;
 	}
 	return w;
@@ -698,8 +699,8 @@ public class MIDPWindow extends CWindow {
     public static int getDefaultAlertWidth(int width, 
 					  boolean scrollBarIsVisible) {
 	int w = AlertSkin.WIDTH == -1 ? (int)(.95 * width) : AlertSkin.WIDTH;
-	// TODO: scroll arrows (bar? ) indicator has to be hidden?
-	if (scrollBarIsVisible) {
+	if (scrollBarIsVisible &&
+	    ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR) {
 	    w -= ScrollIndSkin.WIDTH;
 	}
 	return w;
