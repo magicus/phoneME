@@ -347,7 +347,12 @@ void bc_fconst::generate(jfloat arg) {
 }
 
 void bc_dconst::generate(jdouble arg) {
-  const jlong  l = *(jlong *)&arg;
+  union a_union {
+            jdouble d;
+            jlong l;
+  } tmp;
+  tmp.d = arg;
+  const jlong  l = tmp.l;
   pop_arguments(0);
   prefetch(1);
   GUARANTEE(lsw(l) == 0 || msw(l) == 0, "small floating point number");

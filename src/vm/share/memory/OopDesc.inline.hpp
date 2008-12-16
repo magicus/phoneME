@@ -172,6 +172,10 @@ bool OopDesc::is_method(void) const {
     return true;
   } else {
     const jint instance_size = blueprint()->instance_size_as_jint();
+    tty->print_cr(":::%d\t%d", InstanceSize::size_method, instance_size);
+    if(instance_size != InstanceSize::size_method ) {
+        tty->print("");
+    }
     return instance_size== InstanceSize::size_method;
   }
 }

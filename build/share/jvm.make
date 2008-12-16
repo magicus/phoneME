@@ -681,6 +681,7 @@ $(GENERATED_ROM_FILE): $(ROM_GENERATOR) $(CLDC_ZIP) \
                        $(WorkSpace)/src/vm/cldcx_rom.cfg \
                        $(WorkSpace)/src/vm/cldctest_rom.cfg
 	$(ROM_GENERATOR) -cp $(ROM_GEN_CLASSPATH) $(ROM_GEN_ARG) -romize
+	exit 1
 	$(A)mv ROMImage*.*pp `dirname $@`;
 	$(A)mv ROMLog.txt $(GEN_DIR)
 
@@ -1902,7 +1903,8 @@ ifeq ($(NO_DEBUG_SYMBOLS), true)
     endif
 else
     DEBUG_SYMBOLS_FLAGS     = -g
-    CPP_OPT_FLAGS_debug     = -g
+    CPP_OPT_FLAGS_debug     = -g -O -fdump-tree-all -fno-tree-ch -ftree-pre -fno-auto-inc-dec -fno-cprop-registers -fno-dce -fno-defer-pop -fno-delayed-branch -fno-dse -fno-guess-branch-probability -fno-if-conversion2 -fno-if-conversion -fno-inline-small-functions -fno-ipa-pure-const -fno-ipa-reference -fno-merge-constants -fno-split-wide-types -fno-tree-ccp -fno-tree-copyrename -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse -fno-tree-fre -fno-tree-sra -fno-tree-ter -fno-unit-at-a-time
+#-fauto-inc-dec -fcprop-registers -fdce -fdefer-pop -fdelayed-branch -fdse -fguess-branch-probability -fif-conversion2 -fif-conversion -finline-small-functions -fipa-pure-const -fipa-reference -fmerge-constants -fsplit-wide-types -ftree-ccp -ftree-ch -ftree-copyrename -ftree-dce -ftree-dominator-opts -ftree-dse -ftree-fre -ftree-sra -ftree-ter -funit-at-a-time
 endif
 
 # -Winline -fkeep-inline-functions  -fno-inline
@@ -1939,7 +1941,7 @@ CPP_DEF_FLAGS	        += $(CPP_DEF_FLAGS_$(BUILD))
 
 # C compiler flags
 CPP_DEF_FLAGS           += -pipe -DGCC
-CPP_DEF_FLAGS           += -Wreturn-type -Wcomment -Wparentheses -Wformat
+CPP_DEF_FLAGS           += -Wcomment -Wformat
 CPP_DEF_FLAGS           += -fstrict-aliasing
 
 # C++ specific compiler flags
@@ -1975,7 +1977,7 @@ CPP_FLAGS_EXPORT         = $(CPP_DEF_FLAGS) $(CPLUSPLUS_FLAGS)
 CPP_FLAGS                = $(CPP_FLAGS_EXPORT) $(CPP_INCLUDE_DIRS)
 
 ifneq ($(ENABLE_COMPILATION_WARNINGS), true)
-CPP_FLAGS               += -Werror
+#CPP_FLAGS               += -Werror
 endif
 
 LINK_OPT_FLAGS_debug    = $(DEBUG_SYMBOLS_FLAGS)
@@ -2045,7 +2047,7 @@ AsmStubs_$(target_arch)$(OBJ_SUFFIX): $(JVMWorkSpace)/src/vm/cpu/c/AsmStubs_$(ta
 endif
 
 define BUILD_C_TARGET
-	$(A)echo " ... $(notdir $<)"
+	$(A)echo " ... $(notdir $<) "
 	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(THUMB_CFLAGS) -c $< -o $@
 endef
 
