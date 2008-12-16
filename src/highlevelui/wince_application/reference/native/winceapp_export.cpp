@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -797,7 +795,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 result = processSystemKey(hwnd, mapKey(wp, lp));
             break;
         default:
-            // May need special handling for soft keys?  Not sure yet...
+            // Need revisit : may need special handling for soft keys?
             if (0 != lastKeyPressed && WM_KEYUP == msg) { 
                 //should use cached pressed key code for input
                 result = processKey(hwnd, KEYMAP_STATE_RELEASED, lastKeyPressed);

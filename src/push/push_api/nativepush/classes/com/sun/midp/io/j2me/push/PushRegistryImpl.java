@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -516,7 +514,7 @@ public final class PushRegistryImpl {
                                           final boolean registerConnection)
     throws ClassNotFoundException, IOException {
 
-/*  Not sure it is necessary for native push
+/*  not need for native push
         if (registerConnection) {
             /*
              * No need to register connection when bypassChecks: restoring
