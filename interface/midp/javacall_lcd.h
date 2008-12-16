@@ -360,6 +360,12 @@ void javanotify_display_device_state_changed(int hardwareId, javacall_lcd_displa
   */
 void javanotify_clamshell_state_changed(javacall_lcd_clamshell_state state);
 
+/**
+  * The platform should invoke this function in platform context
+  * to notify virtual keyboard invocation
+  */
+void javanotify_virtual_keyboard();
+
 /** @} */
 
 

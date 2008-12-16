@@ -108,6 +108,7 @@ $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).a: \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
 	$(AT)$(AR) $(ARFLAGS) $@ $^
+	$(AT)$(RANLIB) $@
 
 $(JAVACALL_OUTPUT_LIB_DIR)/libnotifiers$(BUILD_EXT).so: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
