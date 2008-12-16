@@ -164,6 +164,7 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
     pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
     pcsl_string_convert_to_utf8(text, text_buf,  MAX_TEXT_LENGTH, &text_len);
 
+    LIMO_TRACE("%s label=%s text=%s\n", __FUNCTION__, label_buf, text_buf);
 
     box = gtk_hbox_new(FALSE, 0);
     string_item_label = gtk_label_new(label_buf);

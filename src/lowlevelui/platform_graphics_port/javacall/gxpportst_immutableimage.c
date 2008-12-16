@@ -30,9 +30,21 @@
  */
 
 #include <gxpport_immutableimage.h>
+#include <midpResourceLimit.h>
 #include <midp_logging.h>
+#include <imgdcd_image_util.h>
+#include <img_errorcodes.h>
+
 #include <syslog.h>
 #include "lfpport_gtk.h"
+#include <sys/stat.h>
+#include <fcntl.h>
+
+
+char *tmpFilename = "/usr/tmp/java.tmp";
+/* uncomment when implementing reading image from buffer - with gdk >= 2.17 */
+//char pic_buf[320*280*4];
+
 
 /**
  * Creates a copy of the specified mutable image
@@ -43,8 +55,8 @@
  * @param creationErrorPtr  pointer to error status.
  *                          This function sets creationErrorPtr's value.
  */
-void gxpport_createimmutable_from_mutable
-    (gxpport_mutableimage_native_handle srcMutableImagePtr,
+void gxpport_createimmutable_from_mutable (gxpport_mutableimage_native_handle
+                                           srcMutableImagePtr,
     gxpport_image_native_handle *newImmutableImagePtr,
      img_native_error_codes* creationErrorPtr) {
 
@@ -158,24 +170,56 @@ gxpport_createimmutable_from_mutableregion
  *  @param creationErrorPtr pointer to the status of the decoding
  *         process. This function sets creationErrorPtr's value.
  */
-void
-gxpport_decodeimmutable_from_selfidentifying
-(unsigned char *srcBuffer, int length,
- int* imgWidth, int* imgHeight,
- gxpport_image_native_handle *newImmutableImagePtr,
- img_native_error_codes* creationErrorPtr) {
-
+void gxpport_decodeimmutable_from_selfidentifying(unsigned
+             char* srcBuffer, int length,
+             int* imgWidth, int* imgHeight,
+             gxpport_image_native_handle *newImmutableImagePtr,
+             img_native_error_codes* creationErrorPtr) {
+    MIDP_ERROR err;
+    imgdcd_image_format format;
+    unsigned int w, h;
+    int rscSize;
+    int tfd;
+    struct stat stat_buf;
+    int status;
+    gboolean loadResult;
+    GdkPixbuf *gdkPixBuf;
+    GError *error = NULL;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    /* Suppress unused parameter warnings */
-    (void)srcBuffer;
-    (void)length;
-    (void)imgWidth;
-    (void)imgHeight;
-    (void)newImmutableImagePtr;
 
-    *newImmutableImagePtr = (void*)1;
+
+
+/* IMPL_NOTE:  loading pix buf from file is a temporary hack to be fixed
+ * when using gdk version >= 2.14.  Use the code similar to the following
+ * code for a fix:
+ *    GInputStream gInputStream;
+ *    gInputStream = g_memory_input_stream_new_from_data(pic_buf, stat_buf.st_size, NULL);
+ *    gdkPixBuf = gdk_pixbuf_new_from_stream(gInputStream, NULL, error);
+ *
+ */
+
+    /* create temp file */
+    tfd = open(tmpFilename, O_CREAT|O_WRONLY|O_TRUNC, (int)0x666);
+    write(tfd, srcBuffer, length);
+    close(tfd);
+
+    /* read from temp file */
+    gdkPixBuf = gdk_pixbuf_new_from_file(tmpFilename, &error);
+    if (NULL == gdkPixBuf) {
+        *creationErrorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;
+        LIMO_TRACE("%s gdk_pixbuf_new_from_file returned NULL.  Error is %s.  Returning.\n",
+                   __FUNCTION__, error->message);
+        return;
+    }
+
+    *imgHeight = gdk_pixbuf_get_height(gdkPixBuf);
+    *imgWidth = gdk_pixbuf_get_width(gdkPixBuf);
+
+    *newImmutableImagePtr = gdkPixBuf;
     *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s imgHeight=%d imgWidth=%d\n",
+               __FUNCTION__, *imgHeight, *imgWidth);
+    return;
 }
 
 /**

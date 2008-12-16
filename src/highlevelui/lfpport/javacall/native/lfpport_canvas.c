@@ -91,8 +91,8 @@ jboolean canvas_handle_event_cb(MidpFrame* screenPtr, PlatformEventPtr eventPtr)
     return KNI_OK;
 }
 
-gboolean
-expose_event_callback(GtkWidget *widget,
+static gboolean
+lfpport_canvas_expose_event_callback(GtkWidget *widget,
                                   GdkEventExpose *event, gpointer data)
 {
     GdkPixmap *gdk_pix_map;
@@ -150,10 +150,6 @@ MidpError lfpport_canvas_create(MidpDisplayable* canvasPtr,
     gtk_widget_set_size_request(da, display_width, display_height);
     gtk_widget_size_request(da, &requisition);
 
-    //gtk_widget_get_size_request(form->bin, &da_width, &da_height);
-    LIMO_TRACE(">>>%s 1111 width=%d height=%d\n", __FUNCTION__,
-               requisition.width, requisition.height);
-
     // Fill in MidpDisplayable structure
     canvasPtr->frame.widgetPtr = form;
     canvasPtr->frame.show = canvas_show_cb;
@@ -167,13 +163,6 @@ MidpError lfpport_canvas_create(MidpDisplayable* canvasPtr,
                                  display_width,
                                  display_height,
                                  24);
-
-    gdk_draw_rectangle(gdk_pix_map,
-                          da->style->bg_gc[GTK_WIDGET_STATE(da)],
-                          FALSE,
-                          0, 0,
-                          display_width,
-                          display_height);
 
 
     gtk_object_set_user_data(da, gdk_pix_map);
@@ -197,12 +186,8 @@ MidpError lfpport_canvas_create(MidpDisplayable* canvasPtr,
 
     gtk_widget_size_request(da, &requisition);
 
-    //gtk_widget_get_size_request(form->bin, &da_width, &da_height);
-    LIMO_TRACE(">>>%s 2222 width=%d height=%d\n", __FUNCTION__,
-               requisition.width, requisition.height);
-
     g_signal_connect(G_OBJECT(da), "expose_event",
-                   G_CALLBACK(expose_event_callback), NULL);
+                   G_CALLBACK(lfpport_canvas_expose_event_callback), NULL);
 
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);

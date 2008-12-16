@@ -34,12 +34,150 @@
 #include <lfpport_displayable.h>
 #include <lfpport_item.h>
 #include <lfpport_imageitem.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
+#include "midpMalloc.h"
 #include "lfpport_gtk.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+typedef struct {
+    GtkWidget *container;
+    GtkWidget *label;
+    GtkWidget *contents;
+    GdkPixbuf *gdkPixBuf;
+    char *content_buffer;
+    int appearanceMode;
+} ImageItem;
+
+
+static gboolean
+lfpport_imageitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
+{
+    guchar *pixels;
+    int rowstride;
+    int width, height;
+    GdkPixbuf *gdkPixBuf;
+
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+
+    if (!GTK_IS_DRAWING_AREA(widget)) {
+        LIMO_TRACE("%s unexpectedly invoked on not drawing area\n", __FUNCTION__);
+        return FALSE;
+    }
+    gdkPixBuf = gtk_object_get_user_data(widget);
+
+    if (gdkPixBuf != NULL) {
+        rowstride = gdk_pixbuf_get_rowstride (gdkPixBuf);
+        pixels = gdk_pixbuf_get_pixels(gdkPixBuf);
+
+        width = gdk_pixbuf_get_width(gdkPixBuf);
+        height = gdk_pixbuf_get_height(gdkPixBuf);
+        /* set drawing area size requrest */
+        gtk_widget_set_size_request(widget, width, height);
+
+        LIMO_TRACE("%s drawing: x=%d y=%d width=%d height=%d xdith=%d ydith=%d \n", __FUNCTION__,
+                   event->area.x, event->area.y, width, height,
+                   event->area.x, event->area.x);
+        /* at this point da is empty, thus its exposed area is not that of an image!
+           Thus image size needs to be extracted from the gdkPixBuf rather than from
+           the exposure event itself */
+
+        gdk_draw_rgb_image_dithalign(widget->window,    /* drawable */
+                                    widget->style->black_gc, /*gc*/
+                                    event->area.x, event->area.y,   /*top left x, y*/
+                                    width, height, /*size of rectangle to be drawn */
+                                    GDK_RGB_DITHER_NORMAL,
+                                    pixels, rowstride,
+                                    0, 0);/*offset for dither*/
+        LIMO_TRACE("%s drew image\n", __FUNCTION__);
+    }
+    else {
+        LIMO_TRACE("%s null data\n", __FUNCTION__);
+    }
+
+
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return TRUE;
+}
+
+MidpError lfpport_image_item_show_cb(MidpItem* itemPtr){
+    ImageItem *imageItem = (GtkWidget*)itemPtr->widgetPtr;
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    gtk_widget_show(imageItem->container);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+MidpError lfpport_image_item_hide_cb(MidpItem* itemPtr){
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_image_item_set_label_cb(MidpItem* itemPtr){
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+MidpError lfpport_image_item_destroy_cb(MidpItem* itemPtr){
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_image_item_get_min_height_cb(int *height, MidpItem* itemPtr){
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    *height = STUB_MIN_HEIGHT;
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_image_item_get_min_width_cb(int *width, MidpItem* itemPtr){
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    *width = STUB_MIN_WIDTH;
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_image_item_get_pref_height_cb(int* height,
+                                                 MidpItem* itemPtr,
+                                                 int lockedWidth){
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    *height = STUB_PREF_HEIGHT;
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_image_item_get_pref_width_cb(int* width,
+                                                MidpItem* itemPtr,
+                                                int lockedHeight){
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    *width = STUB_PREF_WIDTH;
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return KNI_OK;
+}
+
+MidpError lfpport_image_item_handle_event_cb(MidpItem* itemPtr){
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return -1;
+}
+
+MidpError lfpport_image_item_relocate_cb(MidpItem* itemPtr){
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return -1;
+}
+
+MidpError lfpport_image_item_resize_cb(MidpItem* itemPtr){
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    return -1;
+}
 
 /**
  * Creates an image item's native peer, but does not display it.
@@ -64,9 +202,87 @@ MidpError lfpport_imageitem_create(MidpItem* itemPtr,
 				   const pcsl_string* label, int layout,
 				   unsigned char* imgPtr,
 				   const pcsl_string* altText, int appearanceMode){
+    ImageItem *imageItem;
+    GtkWidget *da;
+    GtkWidget *gtk_pix_map;
+    GtkWidget *image_item_label;
+    GtkWidget *form;
+    GtkWidget *vbox;
+    GtkWidget *box;
+    GdkPixbuf *gdkPixBuf;
+    gchar label_buf[MAX_TEXT_LENGTH];
+    int label_len;
+    int tfd;
+    GError *error = NULL;
+    struct stat stat_buf;
+
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+
+    imageItem = (ImageItem *)midpMalloc(sizeof(ImageItem));
+    if (NULL == imageItem) {
+        LIMO_TRACE(">>>%s not enough memory!\n", __FUNCTION__);
+        itemPtr->widgetPtr = NULL;
+        return KNI_ENOMEM;
+    }
+    pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
+
+    LIMO_TRACE(">>>%s1\n", __FUNCTION__);
+    if (imgPtr == NULL) {
+        LIMO_TRACE(">>>%s received null gdkPixBuf\n", __FUNCTION__);
+    }
+
+    gdkPixBuf = (GdkPixbuf*)imgPtr;
+
+    LIMO_TRACE(">>>%s5\n", __FUNCTION__);
+    imageItem->container = box = gtk_vbox_new(FALSE, 0);
+    imageItem->label = image_item_label = gtk_label_new(label_buf);
+    imageItem->contents = da = gtk_drawing_area_new();
+    imageItem->gdkPixBuf = gdkPixBuf;
+    imageItem->appearanceMode = appearanceMode;
+
+    LIMO_TRACE(">>>%s6\n", __FUNCTION__);
+    gtk_widget_show(image_item_label);
+    gtk_box_pack_start(GTK_BOX (box), image_item_label, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX (box), da, TRUE, TRUE, 0);
+    gtk_widget_show(da);
+    gtk_widget_show(box);
+    gtk_object_set_user_data(da, gdkPixBuf);
+
+    LIMO_TRACE(">>>%s7\n", __FUNCTION__);
+    g_signal_connect(G_OBJECT (da), "expose_event",
+                   G_CALLBACK (lfpport_imageitem_expose_event_callback), NULL);
+
+    /* add image item to the form */
+    LIMO_TRACE(">>>%s8\n", __FUNCTION__);
+    form = (GtkWidget*)ownerPtr->frame.widgetPtr;
+    LIMO_TRACE(">>>%s9\n", __FUNCTION__);
+    vbox = gtk_object_get_user_data(form);
+    LIMO_TRACE(">>>%s10\n", __FUNCTION__);
+    gtk_box_pack_start(GTK_BOX(vbox),
+                       box,
+                       FALSE, FALSE, 0);
+
+
+    /* set font */
+    itemPtr->widgetPtr = imageItem;
+    itemPtr->ownerPtr = ownerPtr;
+    itemPtr->layout = layout;
+
+    itemPtr->show = lfpport_image_item_show_cb;
+    itemPtr->hide = lfpport_image_item_hide_cb;
+    itemPtr->setLabel = lfpport_image_item_set_label_cb;
+    itemPtr->destroy = lfpport_image_item_destroy_cb;
+
+    itemPtr->getMinimumHeight = lfpport_image_item_get_min_height_cb;
+    itemPtr->getMinimumWidth = lfpport_image_item_get_min_width_cb;
+    itemPtr->getPreferredHeight = lfpport_image_item_get_pref_height_cb;
+    itemPtr->getPreferredWidth = lfpport_image_item_get_pref_width_cb;
+    itemPtr->handleEvent = lfpport_image_item_handle_event_cb;
+    itemPtr->relocate = lfpport_image_item_relocate_cb;
+    itemPtr->resize = lfpport_image_item_resize_cb;
+
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**

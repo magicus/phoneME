@@ -152,7 +152,7 @@ MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
         return KNI_OK;
     }
 
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s Returning error\n", __FUNCTION__);
     return -1;
 }
 

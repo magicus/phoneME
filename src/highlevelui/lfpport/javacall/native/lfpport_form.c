@@ -74,7 +74,7 @@ MidpError form_show(MidpFrame* framePtr) {
 
 MidpError form_hide_and_delete(MidpFrame* framePtr, jboolean onExit) {
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -88,7 +88,7 @@ MidpError displayable_set_title(MidpDisplayable* screenPtr,
     pcsl_string_convert_to_utf8(title, buf, MAX_TITLE_LENGTH, &len);
     form = screenPtr->frame.widgetPtr;
     gtk_form_set_title(GTK_FORM(form), buf);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -111,7 +111,7 @@ MidpError displayable_set_ticker(MidpDisplayable* dispPtr, const pcsl_string* te
     //gtk_widget_show(ticker);
 
     //show label
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -159,7 +159,7 @@ MidpError lfpport_form_create(MidpDisplayable* dispPtr,
                                   display_height);
 
     dispPtr->setTitle(dispPtr, title);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -179,7 +179,7 @@ MidpError lfpport_form_set_content_size(MidpDisplayable* formPtr,
     gtk_widget_set_size_request(formPtr->frame.widgetPtr,
                                 w,
                                 h);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -196,7 +196,7 @@ MidpError lfpport_form_set_current_item(MidpItem* itemPtr, int yOffset){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     (void)itemPtr;
     (void)yOffset;
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -211,7 +211,7 @@ MidpError lfpport_form_set_current_item(MidpItem* itemPtr, int yOffset){
 MidpError lfpport_form_get_scroll_position(int *pos){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     *pos = 0;
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -224,7 +224,7 @@ MidpError lfpport_form_get_scroll_position(int *pos){
 MidpError lfpport_form_set_scroll_position(int pos) {
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     (void)pos;
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -239,7 +239,7 @@ MidpError lfpport_form_set_scroll_position(int pos) {
 MidpError lfpport_form_get_viewport_height(int *pHeight){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     *pHeight = display_height;
-    syslog(LOG_INFO, "<<<%s returning %d\n", __FUNCTION__, display_height);
+    LIMO_TRACE("<<<%s returning %d\n", __FUNCTION__, display_height);
     return KNI_OK;
 }
 
