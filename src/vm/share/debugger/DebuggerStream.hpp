@@ -116,7 +116,7 @@ public:
       return Universe::packet_buffer_list()->obj_at(PacketStream::NUM_PACKET_BUFS);
     }
 #endif
-    if ((size + JDWP_HEADER_SIZE + 16) < InitialStreamBufferSize) {
+    if ((size + JDWP_HEADER_SIZE + 16) < PacketStream::INITIAL_SEGMENT_SIZE) {
       ObjArray::Raw plist = Universe::packet_buffer_list();
       if (!plist.is_null()) {
         for (int i = 0; i < PacketStream::NUM_PACKET_BUFS; i++) {
@@ -130,9 +130,6 @@ public:
       }
     }
     if (buf.is_null()) {
-      // Normally we shouldn't get to this point as it's not safe to 
-      // allocate here. Try to increase InitialStreamBufferSize or NUM_PACKET_BUFS.
-      GUARANTEE(false, "Unsafe allocation");
       //add in header size and some safety zone
       SAVE_CURRENT_EXCEPTION;
       buf =
@@ -149,6 +146,7 @@ public:
   enum {
     NUM_PACKET_BUFS = 4,
     JDWP_HEADER_SIZE = 11,
+    INITIAL_SEGMENT_SIZE = 128,
     MAX_BUF_INC = 2048
   };
 
@@ -262,7 +260,7 @@ public:
     // check free list
     _output_data = PacketStream::get_buffer(data_len JVM_NO_CHECK);
     _input_index = JDWP_HEADER_SIZE;
-    _buffer_inc = InitialStreamBufferSize;
+    _buffer_inc = INITIAL_SEGMENT_SIZE;
 
     _pkt._x._cmdset._cmd_set = cmd_set;
     _pkt._x._cmdset._cmd = cmd;

@@ -225,8 +225,8 @@ class GlobalData implements MPDataProvider {
     return _allJavaObjects.values().iterator();
   }
   public void connect(String hostName, int port) throws java.net.ConnectException, SocketException  {
-    _connector.connect(hostName, port);    
-    update();
+    _connector.connect(hostName, port);
+    pauseVM();
   }
 
   public String getObjectTypeName(JavaObject obj) {
