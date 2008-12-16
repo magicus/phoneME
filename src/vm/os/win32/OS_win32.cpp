@@ -83,8 +83,28 @@ jlong Os::java_time_millis() {
   GetSystemTimeAsFileTime(&wt);
 
   // Convert to Java time.
-  jlong a = jlong_from_msw_lsw(wt.dwHighDateTime, wt.dwLowDateTime);
-  return (a - offset()) / 10000;
+  jlong time = jlong_from_msw_lsw(wt.dwHighDateTime, wt.dwLowDateTime);
+#if ENABLE_ACCURATE_MILLISECOND_TIMER
+  static jlong previous_base_time;
+  static julong hr_start;
+
+  const julong hr_ticks = elapsed_counter();
+
+  if( previous_base_time == time ) {
+    time += (hr_ticks - hr_start) * 10000000ul / elapsed_frequency();
+  } else {
+    previous_base_time = time;
+    hr_start = hr_ticks;
+  }
+
+  static jlong previous_time;
+  if( time < previous_time ) {
+    time = previous_time;
+  } else {
+    previous_time = time;
+  }
+#endif
+  return (time - offset()) / 10000;
 }
 
 void Os::sleep(jlong ms) {
