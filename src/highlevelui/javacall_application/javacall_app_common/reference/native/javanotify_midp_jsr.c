@@ -1096,13 +1096,13 @@ javanotify_method_completion_notification (
     midp_jc_event_send(&e);
 }
 
-void 
-javanotify_fluid_handle_event_request (
-		javacall_handle  request_handle
-		) {
+void javanotify_fluid_handle_event_request (javacall_handle  request_handle) {
 	midp_jc_event_union e;
-	e.eventType = JSR290_JC_EVENT_HANDLE_EVENT;
+
+    REPORT_INFO(LC_CORE, "javanotify_fluid_event_request() >>\n");
+    e.eventType = JSR290_JC_EVENT_HANDLE_EVENT;
 	e.data.jsr290HandleEventRequest.request_handle = request_handle;
+    midp_jc_event_send(&e);
 }
 
 #endif /* ENABLE_JSR_290 */

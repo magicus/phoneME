@@ -274,10 +274,6 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
                                 newSignal.waitingFor, newSignal.descriptor,
                                 newSignal.status);
         break;
-   case JSR290_HANDLE_EVENT_SIGNAL:
-        StoreMIDPEventInVmThread(newMidpEvent, -1);
-        break;
-        
 #endif /* ENABLE_JSR_290 */
 #ifdef ENABLE_JSR_257
     case JSR257_CONTACTLESS_SIGNAL:
