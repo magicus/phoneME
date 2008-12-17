@@ -1087,12 +1087,49 @@ javanotify_fluid_cancel_request (
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_257
+/*
+ * Called by the platform to notify java VM about contactless event
+ * @param event an event identifier
+ */
 void javanotify_contactless_event(jsr257_contactless_event_type event) {
     midp_jc_event_union e;
-
     REPORT_INFO(LC_CORE, "javanotify_contactless_event() >>\n");
     e.eventType = JSR257_JC_EVENT_CONTACTLESS;
     e.data.jsr257Event.eventType = event;
+    midp_jc_event_send(&e);
+}
+
+/*
+ * Called by the platform to notify java VM about contactless event
+ * registered in push subsystem
+ * @param eventData a handle to identify contactless push event
+ */
+void javanotify_push_contactless_event(javacall_handle eventData) {
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_push_contactless_event() >>\n");
+    e.eventType = JSR257_JC_PUSH_NDEF_RECORD_DISCOVERED;
+    e.data.jsr257Event.eventData = eventData;
+    midp_jc_event_send(&e);
+}
+
+/*
+ * Called by the platform to notify java VM about contactless event
+ * processed by MIDP to send it to the particular isolate
+ * @param event an event identifier
+ * @param eventData a handle to retrieve additional event data
+ * @param isolateId the isolate to send notification to
+ */
+void javanotify_midp_contactless_event(jsr257_contactless_midp_event_type event, 
+        javacall_handle eventData, int isolateId) {
+        
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_midp_contactless_event() >>\n");
+    e.eventType = JSR257_JC_MIDP_EVENT;
+    e.data.jsr257Event.eventType = event;
+    e.data.jsr257Event.eventData = eventData;
+    e.data.jsr257Event.isolateId = isolateId;
     midp_jc_event_send(&e);
     return;
 }

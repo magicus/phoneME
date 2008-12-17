@@ -256,6 +256,8 @@ extern "C" {
  */
 #define MIDP_ODD_EXIT_MIDLET_EVENT      70
 
+#define CONTACTLESS_EVENT      71
+
 /** @} */
 
 /**
