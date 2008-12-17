@@ -237,6 +237,7 @@ javacall_dom_htmlelement_set_id_finish(void *context);
  * @param ret_value A code representing the type of the underlying object as defined above. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -259,6 +260,7 @@ javacall_dom_htmlelement_get_html_element_type_start(javacall_handle handle,
  * @param ret_value A code representing the type of the underlying object as defined above. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_htmlelement_get_html_element_type_finish function to complete the 
  *             operation,
