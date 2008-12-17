@@ -1089,7 +1089,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         if (privateOut != null) {
     	    streamOutput.write(privateOut.toByteArray());
-            resetOutput();
             // ***Bug 4485901*** streamOutput.write("\r\n".getBytes());
             /*
              DEBUG: System.out.println("Request: "
@@ -1118,6 +1117,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             } else {
                 throw ex;
             }
+        }
+        if (privateOut != null) {
+            resetOutput();
         }
         readHeaders();
 
@@ -1289,7 +1291,6 @@ malformed: {
         }
 
         privateIn = null;
-        privateOut = null;
         responseCode = -1;
         responseMsg = null;
         connected = false;
