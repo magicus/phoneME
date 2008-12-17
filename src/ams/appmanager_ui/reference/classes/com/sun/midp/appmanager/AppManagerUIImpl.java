@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -438,6 +438,20 @@ class AppManagerUIImpl extends Form
             }
         } else {
             display.setCurrent(this);
+        }
+    }
+    
+    /**
+     * Exits a MIDlet selector which corresponds to the specified
+     * <code>RunningMIDletSuiteInfo</code>.
+     * 
+     * @param msi the <code>RunningMIDletSuiteInfo</code> which specifies 
+     *      the selector to exit
+     */
+    public void exitMidletSelector(RunningMIDletSuiteInfo msi) {
+        MIDletSelector selector = getMidletSelector(msi.suiteId);
+        if (selector != null) {
+            selector.exitWhenNoMidletRuns();
         }
     }
     
@@ -911,7 +925,14 @@ class AppManagerUIImpl extends Form
      */
     public void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {
         if (!suiteInfo.isLocked()) {
-            removeMIDletSelector(suiteInfo);
+            MIDletSelector selector = getMidletSelector(suiteInfo.suiteId);
+            if (selector != null) {
+                midletSelectors.removeElement(selector);
+
+                if (selector.isCurrent()) {
+                    display.setCurrent(this);
+                }
+            }
         }
     }
 

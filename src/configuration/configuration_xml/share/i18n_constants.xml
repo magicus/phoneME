@@ -3,7 +3,7 @@
 <!--
 
 
-        Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 
         This program is free software; you can redistribute it and/or
@@ -910,6 +910,9 @@
   <constant Type="int"
             Name="AMS_AUTO_TESTER_UNSIGN_SECURITY_DOMAIN"
             Comment="AMS: com.sun.midp.installer.AutoTester"/>
+  <constant Type="int"
+            Name="AMS_AUTO_TESTER_BLANKET_PERMISSIONS"
+            Comment="AMS: AutoTester"/>
   <constant Type="int"
             Name="AMS_AUTO_TESTER_ERROR_URL_MSG"
             Comment="AMS: com.sun.midp.installer.AutoTester"/>

@@ -1,7 +1,7 @@
 #
 #
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -66,6 +66,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.rms.RecordStoreFactory \
         com.sun.midp.rms.RecordStoreFile \
         com.sun.midp.rms.RecordStoreUtil \
+        com.sun.midp.rms.RecordStoreSharedDBHeader \
         javax.microedition.lcdui.Display \
         javax.microedition.lcdui.Font \
         javax.microedition.lcdui.game.GameCanvas \

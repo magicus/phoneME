@@ -3,7 +3,7 @@
 <!--
 
 
-  Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+  Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
   
   This program is free software; you can redistribute it and/or
@@ -251,9 +251,9 @@
 <localized_string Key="AMS_NO_CA_FOUND"
                 Value="No certificate authorities found."/>
 <localized_string Key="AMS_COPYRIGHT_SHORT"
-                Value="Copyright 2008 Sun Microsystems, Inc. All rights reserved."/>
+                Value="Copyright 2007 Sun Microsystems, Inc. All rights reserved."/>
 <localized_string Key="AMS_COPYRIGHT_LONG"
-                Value="Copyright 2008 Sun Microsystems, Inc.aux Etats-Unis et dans d'autres pays."/>
+                Value="Copyright 2007 Sun Microsystems, Inc.aux Etats-Unis et dans d'autres pays."/>
 <localized_string Key="AMS_CANNOT_START"
                 Value="Cannot start: "/>
 <localized_string Key="AMS_CONFIRMATION"
@@ -615,6 +615,8 @@
                 Value="URL:"/>
 <localized_string Key="AMS_AUTO_TESTER_UNSIGN_SECURITY_DOMAIN"
                 Value="Security domain if suite not signed:"/>
+<localized_string Key="AMS_AUTO_TESTER_BLANKET_PERMISSIONS"
+                Value="Set the following permission groups of the test suite to blanket granted:"/>
 <localized_string Key="AMS_AUTO_TESTER_ERROR_URL_MSG"
                 Value="The URL has not been entered."/>
 <localized_string Key="AMS_AUTO_TESTER_ERROR_SECURITY_DOMAIN_MSG"

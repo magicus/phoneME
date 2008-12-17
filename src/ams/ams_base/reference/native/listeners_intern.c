@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -163,6 +163,8 @@ init_listeners_impl() {
         /* Already initialized */
         return ALL_OK;
     }
+
+    g_listenersInitDone = 1;
 
     memset((char*)g_pRegisteredListeners, 0, sizeof(g_pRegisteredListeners));
     memset((char*)g_listenerIdxByType, (char)LISTENER_TYPE_INVALID,

@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,8 @@ javacall_result JavaTaskImpl(int argc, char* argv[]) {
     javacall_result res = listMidlets(argc, argv);
 
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
-                                     (res == 1) ? JAVACALL_OK : JAVACALL_FAIL);
+                                     (res == 1) ? JAVACALL_OK : JAVACALL_FAIL,
+                                     NULL);
 
     return res;
 }

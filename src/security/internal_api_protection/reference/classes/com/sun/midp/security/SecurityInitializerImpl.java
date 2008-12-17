@@ -1,6 +1,6 @@
 /*
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@
 package com.sun.midp.security;
 
 import java.util.Hashtable;
+import java.util.Enumeration;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -57,6 +58,12 @@ public class SecurityInitializerImpl {
         if (trustedClasses == null) {
             return false;
         }
+//        System.out.println("SecurityInitializerImpl.isTrusted: " + object.getClass().getName());
+//        Enumeration e = trustedClasses.keys();
+//        for (int i = 0; e.hasMoreElements(); i++)
+//        {
+//            System.out.println("e["+i+"]=" + (String)e.nextElement());
+//        }
 
         return (trustedClasses.get(object.getClass().getName()) != null);
     }
