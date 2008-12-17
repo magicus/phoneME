@@ -123,7 +123,15 @@ public class OutputStreamStealer
         dest.close();
         closed = true;
 
-        if (md >= 0) {
+        disconnect();
+    }
+    
+    /**
+     * Report disconnected stream. Do not close the underlying stream, 
+     * as it may be reused.     
+     */         
+    public void disconnect() {
+        if (md >=0) {
             netAgent.close(md);
         }
     }
