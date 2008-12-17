@@ -1954,11 +1954,16 @@ char *pushfindsuite(char *store, int available){
              * current file descriptor. e.g. an accepted socket
              * or a cache datagram.
              */
+#if ENABLE_JSR_257             
             if (available && (p->fd != -1)){
                 if ((p->fdsock == -1) && (p->pCachedData == NULL) &&
                     (!p->isWMAMessCached) && 
                     (! ((p->isNFCEntry) && (p->state == LAUNCH_PENDING)))) {
-                    
+#else
+            if (available && (p->fd != -1)){
+                if ((p->fdsock == -1) && (p->pCachedData == NULL) &&
+                    (!p->isWMAMessCached)) { 
+#endif                    
                     midpFree(ret);
                     ret = NULL;
                     continue;
