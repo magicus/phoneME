@@ -1,0 +1,128 @@
+#  
+#
+# Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+#
+
+
+how to port the build system
+----------------------------
+
+A. Here is a list of Makefiles:
+
+   (Assuming PCSL is installed at /pcsl)
+
+   1. /pcsl/GNUmakefile
+
+      Makefile at the top of the workspace, will build all libraries, docs and tests.
+
+   2. /pcsl/file/GNUmakefile		   - makes named FILE_MODULE/donuts/doc/clean
+   3. /pcsl/print/GNUmakefile		   - makes named PRINT_MODULE/donuts/doc/clean
+   4. /pcsl/memory/GNUmakefile		   - makes named MEMORY_MODULE/donuts/doc/clean
+   5. /pcsl/network/GNUmakefile		   - makes named NETWORK_MODULE/donuts/doc/clean
+   6. /pcsl/network/socket/GNUmakefile	   - makes named NETWORK_MODULE/donuts/doc/clean
+   7. /pcsl/network/socket/bsd/GNUmakefile - makes named NETWORK_MODULE/donuts/doc/clean
+
+   8. /pcsl/file/posix/GNUmakefile	  - makes the posix FILE module/donuts/doc/clean
+   9. /pcsl/file/ram/GNUmakefile	  - makes the ram FILE module/donuts/doc/clean
+  10. /pcsl/file/win32/GNUmakefile	  - makes the win32 FILE module/donuts/doc/clean
+  12. /pcsl/print/stdout/GNUmakefile	  - makes the stdout PRINT module/donuts/doc/clean
+  13. /pcsl/print/file/GNUmakefile	  - makes the file PRINT module/donuts/doc/clean
+  14. /pcsl/memory/malloc/GNUmakefile	  - makes the malloc MEMORY module/donuts/doc/clean
+  15. /pcsl/memory/heap/GNUmakefile	  - makes the heap MEMORY module/donuts/doc/clean
+  16. /pcsl/network/socket/bsd/generic/GNUmakefile
+                                  - makes the socket/bsd/generic NETWORK module/donuts/doc/clean
+  17. /pcsl/network/socket/bsd/qte/GNUmakefile
+                                  - makes the socket/bsd/qte NETWORK module/donuts/doc/clean
+  18. /pcsl/network/socket/sos/GNUmakefile
+                                  - makes the socket/sos NETWORK module/donuts/doc/clean
+  19. /pcsl/network/socket/winsock/GNUmakefile
+                                  - makes the socket/winsock NETWORK module/donuts/doc/clean
+  20. /pcsl/donuts/GNUmakefile	  - makes all the PCSL unit tests
+
+  Below is a list of files included by some or all the makefiles above:
+
+  21. /pcsl/makefiles/top.gmk		- included by all makefiles
+  22. /pcsl/makefiles/share/gcc.gmk    - gcc (ver. 2.96) specific defines, eg: CFLAGS, LDFLAGS
+  23. /pcsl/makefiles/share/vc.gmk	- Visual C (vc) specific defines, eg: CFLAGS
+  24. /pcsl/makefiles/share/linux.gmk  - Linux specific defines
+  25. /pcsl/makefiles/share/win32.gmk  - Windows specific defines
+  26. /pcsl/makefiles/share/Docs.gmk   - Doxygen specific defines
+                                        included by all makefiles that have a 'doc' target
+  27. /pcsl/makefiles/platforms/linux_arm_gcc.gmk
+                                      - Included by top.gmk for the (linux,arm,gcc) platform
+                                        Includes gcc.gmk and linux.gmk
+  28. /pcsl/makefiles/platforms/linux_i386_gcc.gmk
+                                      - Included by top.gmk for the (linux,i386,gcc) platform
+                                        Includes gcc.gmk and linux.gmk
+  29. /pcsl/makefiles/platforms/win32_i386_vc.gmk
+                                      - Included by top.gmk for the (win32,i386,vc) platform
+                                        Includes win32.gmk and vc.gmk
+  Note: Makefiles need include only top.gmk and optionally Docs.gmk. From the PCSL_PLATFORM
+  definition, top.gmk will include all the platform specific files.
+ 
+B. When porting the makefiles, only the platform specific .gmk files will need porting.
+   More than likely Makefiles 1. through 20. will not need to be ported.
+   In the /pcsl/makefiles/platforms directory create a .gmk file for your platform,
+   <OS>_<CPU>_<COMPILER>.gmk
+   for example: linux_arm_gcc.gmk 
+                win32_i386_vc.gmk
+   Then in the /pcsl/makefiles/share directory create 2 .gmk files for your OS and
+   <COMPILER>, 
+   <OS>.gmk and <COMPILER>.gmk
+   for example: linux.gmk and gcc.gmk 
+   These two .gmk files should be included in your 
+   /pcsl/makefiles/platforms/<OS>_<CPU>_<COMPILER>.gmk  file.
+   Use the supplied .gmk files as models.
+
+C. Defines in <OS>_<CPU>_<COMPILER>.gmk
+   Need to define 2 variables PCSL_OS and PCSL_CPU in this .gmk file, eg
+   PCSL_OS=linux
+   PCSL_CPU = arm
+
+D. Defines in <OS>.gmk
+   Operating system specific variables are defined here, for example 
+   EXE= .exe  (suffix for executables)
+   LIBS = wsock32.lib (socket library on Windows platform)
+   Both EXE and LIBS are used in Makefiles 1. through 20. But if executable files
+   do not have a suffix and there are no special platform specific libraries to include,
+   they can have an empty or no definition at all.
+
+E. Defines in <COMPILER>.gmk
+   Compiler commands and flags are defines here. The following variables have to be 
+   defined here:
+   CC - compilation command for c files, eg: gcc
+   CPP - compilation command for c++ files, eg: g++
+   LD - link command for c++ and c files, eg: g++
+   AR - archiving command, eg: ar -rc
+ 
+   CC_OUTPUT - output flag for c,c++ files, eg: -o
+   AR_OUTPUT - output flag for the archiver, eg: /OUT:
+   LD_OUTPUT - output flag for the linker, eg: -o
+
+   LIB_EXT - suffix for library files, eg: .a
+
+   CFLAGS - compiler flags eg: -c -O3
+   LD_FLAGS - linker flags, if any
+
+   You can also conditionally add compiler flags, based on the cpu of the target platform, 
+   for cases where the target platform has the same OS on all devices, but different CPUs.
+
+F. If you are developing your own platform-specific implementation of a module, like
+   for example, the file service, you will need to create a new directory that is a
+   peer directory  of the other implementations, for example, file/<my_platform>.
+   This new directory will need a makefile, that can be modelled on the one in the
+   posix, win32, or ram directories. In fact the "donuts" and "doc" target definitions
+   and rules will not require any change. The only change will be the file names in the
+   "all" and "clean" target definitions and possibly the compilation rules for these
+   files.
+   
+G. All the directory variables are defined in top.gmk. If you are not changing
+   the directory structure, then no changes to top.gmk need be made.
+
+H. If you have doxygen (http://www.doxygen.org), then you can use Docs.gmk. The only
+   potential change that one would have to make is the location of the doxygen binary.
+   It is assumed to be
+   DOXYGEN_DIR = /usr/bin/doxygen
+   If you do not plan to use doxygen, then manually remove its inclusion from the makefiles
+   that include it.
+
