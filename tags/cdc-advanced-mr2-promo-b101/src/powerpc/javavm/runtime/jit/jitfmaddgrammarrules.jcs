@@ -1,0 +1,195 @@
+//
+// Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
+//
+// @(#)jitfmaddgrammarrules.jcs	1.6 06/10/10
+//
+//
+// Optional floating-point grammar rules for supporint the PowerPC
+// "fused multiply-add" instructions.
+// 
+// WARNING: using fmadd results in a non-compliant vm. Some floating
+// point tck tests will fail! Therefore, this support if off by defualt.
+//
+
+%{
+static void
+floatMultAddOp(
+    CVMJITCompilationContext* con,
+    int opcode,
+    CVMJITIRNodePtr thisNode,
+    int size,
+    CVMBool swapAB, /* if true, swap fregA and fregB */
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* fregB = popResource(con);
+    CVMRMResource* fregC = popResource(con);
+    CVMRMResource* fregA = popResource(con);
+    CVMRMResource* fregD = CVMRMgetResource(CVMRM_FP_REGS(con), target, avoid, 
+					   size);
+
+    if (swapAB) {
+	CVMRMResource* tmp = fregB;
+	fregB = fregA;
+	fregA = tmp;
+    }
+    CVMRMpinResource(CVMRM_FP_REGS(con), fregA,
+		     CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
+    CVMRMpinResource(CVMRM_FP_REGS(con), fregC,
+		     CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
+    CVMRMpinResource(CVMRM_FP_REGS(con), fregB,
+		     CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
+    CVMPPCemitTernaryFP(con, opcode, CVMRMgetRegisterNumber(fregD),
+			CVMRMgetRegisterNumber(fregA),
+			CVMRMgetRegisterNumber(fregC),
+			CVMRMgetRegisterNumber(fregB));
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), fregA);
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), fregC);
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), fregB);
+    CVMRMoccupyAndUnpinResource(CVMRM_FP_REGS(con), fregD, thisNode);
+    pushResource(con, fregD);
+}
+
+%}
+
+//
+// single precision rules
+//
+
+// d = a*c+b -> fmadds d,a,c,b 
+freg32: FADD FMUL freg32 freg32 freg32 : 10 :
+    BINARY_BINARY_reg_reg_reg_SYNTHESIS(con, $$) :
+    BINARY_BINARY_reg_reg_reg_INHERITANCE(con, $$) : : {
+        floatMultAddOp(con, CVMPPC_FMADD_OPCODE, $$, 1, CVM_FALSE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = b+a*c -> fmadds d,a,c,b
+freg32: FADD freg32 FMUL freg32 freg32 : 11 :
+    BINARY_reg_BINARY_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_reg_BINARY_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_FMADD_OPCODE, $$, 1, CVM_TRUE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = a*c-b -> fmsubs d,a,c,b
+freg32: FSUB FMUL freg32 freg32 freg32 : 10 :
+    BINARY_BINARY_reg_reg_reg_SYNTHESIS(con, $$); :
+    BINARY_BINARY_reg_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_FMSUB_OPCODE, $$, 1, CVM_FALSE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = -b+a*c -> fmsubs d,a,c,b
+freg32: FADD FNEG freg32 FMUL freg32 freg32 : 11 :
+    BINARY_UNARY_reg_BINARY_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_UNARY_reg_BINARY_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_FMSUB_OPCODE, $$, 1, CVM_TRUE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = -(a*c)+b -> fnmadds d,a,c,b
+freg32: FADD FNEG FMUL freg32 freg32 freg32 : 10 :
+    BINARY_UNARY_BINARY_reg_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_UNARY_BINARY_reg_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_FNMADD_OPCODE, $$, 1, CVM_FALSE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = b-(a*c) -> fnmadds d,a,c,b
+freg32: FSUB freg32 FMUL freg32 freg32 : 11 :
+    BINARY_reg_BINARY_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_reg_BINARY_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_FNMADD_OPCODE, $$, 1, CVM_TRUE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = -(a*c)-b -> fnmsubs d,a,c,b
+freg32: FSUB FNEG FMUL freg32 freg32 freg32 : 10 :
+    BINARY_UNARY_BINARY_reg_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_UNARY_BINARY_reg_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_FNMSUB_OPCODE, $$, 1, CVM_FALSE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = -b-(a*c) -> fnmsubs d,a,c,b
+freg32: FSUB FNEG freg32 FMUL freg32 freg32 : 11 :
+    BINARY_UNARY_reg_BINARY_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_UNARY_reg_BINARY_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_FNMSUB_OPCODE, $$, 1, CVM_TRUE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+
+//
+// double precision rules
+//
+
+// d = a*c+b -> fmadd d,a,c,b
+freg64: DADD DMUL freg64 freg64 freg64 : 10 :
+    BINARY_BINARY_reg_reg_reg_SYNTHESIS(con, $$); :
+    BINARY_BINARY_reg_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_DMADD_OPCODE, $$, 2, CVM_FALSE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = b+a*c -> fmadd d,a,c,b
+freg64: DADD freg64 DMUL freg64 freg64 : 11 :
+    BINARY_reg_BINARY_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_reg_BINARY_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_DMADD_OPCODE, $$, 2, CVM_TRUE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = a*c-b -> fmsub d,a,c,b
+freg64: DSUB DMUL freg64 freg64 freg64 : 10 :
+    BINARY_BINARY_reg_reg_reg_SYNTHESIS(con, $$); :
+    BINARY_BINARY_reg_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_DMSUB_OPCODE, $$, 2, CVM_FALSE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = -b+a*c -> fmsub d,a,c,b
+freg64: DADD DNEG freg64 DMUL freg64 freg64 : 11 :
+    BINARY_UNARY_reg_BINARY_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_UNARY_reg_BINARY_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_DMSUB_OPCODE, $$, 2, CVM_TRUE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = -(a*c)+b -> fnmadd d,a,c,b
+freg64: DADD DNEG DMUL freg64 freg64 freg64 : 10 :
+    BINARY_UNARY_BINARY_reg_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_UNARY_BINARY_reg_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_DNMADD_OPCODE, $$, 2, CVM_FALSE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = b-(a*c) -> fnmadd d,a,c,b
+freg64: DSUB freg64 DMUL freg64 freg64 : 11 :
+    BINARY_reg_BINARY_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_reg_BINARY_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_DNMADD_OPCODE, $$, 2, CVM_TRUE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = -(a*c)-b -> fnmsub d,a,c,b
+freg64: DSUB DNEG DMUL freg64 freg64 freg64 : 10 :
+    BINARY_UNARY_BINARY_reg_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_UNARY_BINARY_reg_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_DNMSUB_OPCODE, $$, 2, CVM_FALSE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
+// d = -b-(a*c) -> fnmsub d,a,c,b
+freg64: DSUB DNEG freg64 DMUL freg64 freg64 : 11 :
+    BINARY_UNARY_reg_BINARY_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_UNARY_reg_BINARY_reg_reg_INHERITANCE(con, $$); : : {
+        floatMultAddOp(con, CVMPPC_DNMSUB_OPCODE, $$, 2, CVM_TRUE,
+		       GET_FLOAT_REGISTER_GOALS);
+    };
