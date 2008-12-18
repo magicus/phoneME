@@ -33,7 +33,11 @@
 #include <midpUtilKni.h>
 
 #if !ENABLE_CDC
+#if 0
 #include <suspend_resume.h>
+#else
+#include <java_profiler.h>
+#endif
 #endif
 
 #ifdef ENABLE_JSR_75
@@ -121,8 +125,19 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
          * PAUSE_ALL_EVENT message to AMS; otherwise, the resources
          * will be suspended in the context of the caller.
          */
+#if 0
         midp_suspend();
+#else
+        midp_profiler_start();
+#endif
         break;
+     case MIDP_JC_EVENT_RESUME:
+#if 0
+        midp_resume();
+#else
+        midp_profiler_stop();
+#endif
+         break;
 #endif	
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;
