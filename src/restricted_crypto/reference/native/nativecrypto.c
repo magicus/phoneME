@@ -42,7 +42,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <midpMalloc.h>
+
+#if ENABLE_PLATFORM_BNLIB // bnlib of OpenSSL at the platfrom side
+#include <openssl/bn.h>
+#define INTEGER long
+#define BN_MAX_INTEGER (0x7FFFFFFF)
+#else
 #include <bn.h>
+#endif
+
 #include <midpError.h>
 
 #define MAX(x,y) (((x)>(y))?(x):(y))
@@ -109,13 +117,20 @@ Java_com_sun_midp_crypto_RSA_modExp() {
             KNI_GetRawArrayRegion(imod, 0, modLen, (jbyte*)buf);
             c = BN_bin2bn(buf, (INTEGER)modLen, NULL);
 
+#if ENABLE_PLATFORM_BNLIB
+            d = BN_new();
+            ctx = BN_CTX_new();
+#else
             d = BN_new((INTEGER)resLen);
-
             ctx = BN_CTX_new((INTEGER)maxLen);
-
+#endif
             /* do the actual exponentiation */
             if (a != NULL && b != NULL && c != NULL && d != NULL &&
+#if ENABLE_PLATFORM_BNLIB
+                    ctx != NULL && BN_mod_exp(d,a,b,c,ctx)) {
+#else
                     ctx != NULL && BN_mod_exp_mont(d,a,b,c,ctx)) {
+#endif
                 /* Covert result from BIGNUM d to char array */
                 numbytes = BN_bn2bin(d, buf);
                 KNI_SetRawArrayRegion(ires, 0, numbytes, (jbyte*)buf);
