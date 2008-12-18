@@ -1,0 +1,59 @@
+#
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# VIRTUAL_KEYBOARD Virtual keyboard Library
+#
+######################################################################
+
+# Name of the library
+VIRTUAL_KEYBOARD_NAME = virtual_keyboard
+VIRTUAL_KEYBOARD_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(VIRTUAL_KEYBOARD_NAME)
+
+# Add to library set for this build
+LIB_SET += $(VIRTUAL_KEYBOARD_NAME)
+
+# Export include files
+#SUBSYSTEM_VIRTUAL_KEYBOARD_EXTRA_INCLUDES += -I$(VIRTUAL_KEYBOARD_DIR)/include
+
+# Native files for the library
+# SUBSYSTEM_VIRTUAL_KEYBOARD_NATIVE_FILES +=
+
+# Source code path for the library
+# vpath $(VIRTUAL_KEYBOARD_DIR)/native
+
+
+# IMPL NOTE: Use library configuration file to select switch library
+#
+ifeq ($(USE_NATIVE_VIRTUAL_KEYBOARD), true)
+    include $(VIRTUAL_KEYBOARD_DIR)/vkplatform/lib.gmk
+else
+ifeq ($(USE_JAVA_VIRTUAL_KEYBOARD), true)
+    include $(VIRTUAL_KEYBOARD_DIR)/vkjava/lib.gmk
+else                                        
+    include $(VIRTUAL_KEYBOARD_DIR)/vkdefault/lib.gmk
+endif
+endif
