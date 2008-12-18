@@ -147,10 +147,10 @@ public class PublicKeyInfo {
         }
 
         if(value instanceof String) {
-			enabled = ((String)value).equals("enabled");
-		} else {
-			enabled = ((Boolean)value).booleanValue();
-		}
+            enabled = ((String)value).equals("enabled");
+        } else {
+            enabled = ((Boolean)value).booleanValue();
+        }
 
         return new PublicKeyInfo(owner, notBefore, notAfter,
                                  modulus, exponent, domain, enabled);
@@ -286,4 +286,54 @@ public class PublicKeyInfo {
     public boolean isEnabled() {
         return enabled;
     }
+
+    static protected void printPublicKeyInfoContent(PublicKeyInfo pki){
+        int i;
+        if (pki == null) {
+            return;
+        }
+        System.out.println("\n==============================================");
+        System.out.println("PublicKeyInfo.getKeyFromStorage() owner = " 
+                           + pki.owner);
+
+        System.out.println("PublicKeyInfo.getKeyFromStorage() notBefore = " 
+                           + pki.notBefore);
+
+        System.out.println("NotBefore date is " 
+                           + (new java.util.Date(pki.notBefore)).toString() 
+                           + " ");
+
+        System.out.println("PublicKeyInfo.getKeyFromStorage() notAfter = " 
+                           + pki.notAfter);
+
+        System.out.println("NotAfter date is " 
+                           + (new java.util.Date(pki.notAfter)).toString() 
+                           + " ");
+
+        System.out.println("PublicKeyInfo.getKeyFromStorage() " 
+                           + "modulus.length = " + pki.modulus.length);
+
+        for (i = 0; i < pki.modulus.length; i++) {
+            System.out.print("modulus[" + i + "] = " 
+                             + Integer.toHexString(((int)pki.modulus[i])&0xFF) + " ");
+
+        }
+        System.out.println(" ");
+
+        System.out.println("PublicKeyInfo.getKeyFromStorage() "
+                           + "exponent.length = " + pki.exponent.length);
+
+        for (i = 0; i < pki.exponent.length; i++) {
+            System.out.print("exponent[" + i + "] = " 
+                             + pki.exponent[i] + " ");
+        }
+        System.out.println(" ");
+
+        System.out.println("PublicKeyInfo.getKeyFromStorage() domain = " 
+                           + pki.domain);
+
+
+
+    } /* end printPublicKeyInfoContent */
+
 }

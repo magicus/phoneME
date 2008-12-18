@@ -61,6 +61,31 @@ SUBSYSTEM_SECURITY_JAVA_FILES += \
     $(PUBLICKEYSTORE_DIR)/reference/classes/com/sun/midp/publickeystore/PublicKeyInfo.java    \
     $(PUBLICKEYSTORE_DIR)/reference/classes/com/sun/midp/publickeystore/PublicKeyStore.java   \
     $(PUBLICKEYSTORE_DIR)/reference/classes/com/sun/midp/publickeystore/PublicKeyStoreBuilderBase.java   \
-    $(PUBLICKEYSTORE_DIR)/reference/classes/com/sun/midp/publickeystore/Storage.java          \
+    $(PUBLICKEYSTORE_DIR)/reference/classes/com/sun/midp/publickeystore/Storage.java
+
+ifeq ($(USE_EXTERNAL_KEY_STORE), true)
+
+vpath % $(PUBLICKEYSTORE_DIR)/external_store/native/share
+vpath % $(PUBLICKEYSTORE_DIR)/external_store/native/$(PLATFORM)
+
+SUBSYSTEM_SECURITY_JAVA_FILES += \
+    $(PUBLICKEYSTORE_DIR)/external_store/classes/com/sun/midp/publickeystore/PublicKeyLoader.java    \
+    $(PUBLICKEYSTORE_DIR)/external_store/classes/com/sun/midp/publickeystore/WebPublicKeyStore.java
+
+SUBSYSTEM_SECURITY_NATIVE_FILES += \
+    midp_keystore_kni.c \
+    midp_keystore_md.c
+# Native include path for the ( external key store ) module
+SUBSYSTEM_SECURITY_EXTRA_INCLUDES += \
+    -I$(PUBLICKEYSTORE_DIR)/external_store/native/share/inc
+
+# Add rom config for external keystore
+ROMGEN_CFG_FILES     += $(PUBLICKEYSTORE_DIR)/external_store/external_keystore_rom.config 
+
+else
+SUBSYSTEM_SECURITY_JAVA_FILES += \
+    $(PUBLICKEYSTORE_DIR)/reference/classes/com/sun/midp/publickeystore/PublicKeyLoader.java    \
     $(PUBLICKEYSTORE_DIR)/reference/classes/com/sun/midp/publickeystore/WebPublicKeyStore.java
 
+
+endif

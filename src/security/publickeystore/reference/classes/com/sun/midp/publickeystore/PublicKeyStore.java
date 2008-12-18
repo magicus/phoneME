@@ -28,6 +28,7 @@ package com.sun.midp.publickeystore;
 
 import java.io.*;
 import java.util.*;
+import com.sun.midp.publickeystore.PublicKeyLoader;
 
 /**
  * A read-only public keystore for use with MIDP.
@@ -94,7 +95,12 @@ public class PublicKeyStore {
      */
     protected void initPublicKeyStore(InputStream in, Vector sharedKeyList)
             throws IOException {
-        InputStorage storage = new InputStorage(in);
+        InputStorage storage = null;
+
+        if (in != null) {
+            storage = new InputStorage(in);
+        }
+
         PublicKeyInfo keyInfo;
 
         if (keyList != null) {
@@ -102,13 +108,15 @@ public class PublicKeyStore {
         }
 
         keyList = sharedKeyList;
+        PublicKeyLoader.open();
         for (;;) {
-            keyInfo = PublicKeyInfo.getKeyFromStorage(storage);
+            keyInfo = PublicKeyLoader.getKeyFromStorage(storage);
             if (keyInfo == null)
-                return;
+                break;
             
             keyList.addElement(keyInfo);
         }
+        PublicKeyLoader.close();
     }
 
     /**
