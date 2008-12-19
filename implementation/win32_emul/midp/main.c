@@ -514,6 +514,7 @@ main(int argc, char *argv[]) {
 #ifdef USE_NETMON
 
     if (isNetworkMonitorActive()) {
+        printf("+++ Yes network monitor is active !!!\n");
         javacall_set_property("javax.microedition.io.Connector.protocolpath",
                               "com.sun.kvem.io",
                               JAVACALL_TRUE,
