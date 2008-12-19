@@ -61,7 +61,8 @@ MODULE_TOOL_KEYTOOL_JAVA_FILES = \
 	$(INT_KEYSTORE_DIR)/PublicKeyStore.java \
 	$(INT_KEYSTORE_DIR)/PublicKeyInfo.java \
 	$(INT_KEYSTORE_DIR)/InputStorage.java \
-	$(INT_KEYSTORE_DIR)/Storage.java
+	$(INT_KEYSTORE_DIR)/Storage.java \
+	$(INT_KEYSTORE_DIR)/PublicKeyLoader.java 
 
 
 # Java files for the ( jadtool ) module
