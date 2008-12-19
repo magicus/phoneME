@@ -86,23 +86,22 @@ jlong Os::java_time_millis() {
   jlong time = jlong_from_msw_lsw(wt.dwHighDateTime, wt.dwLowDateTime);
 #if ENABLE_ACCURATE_MILLISECOND_TIMER
   static jlong previous_base_time;
+  static jlong previous_time;
   static julong hr_start;
 
   const julong hr_ticks = elapsed_counter();
 
   if( previous_base_time == time ) {
     time += (hr_ticks - hr_start) * 10000000ul / elapsed_frequency();
+    previous_time = time;
   } else {
+    if( time > previous_base_time && time < previous_time ) {
+      time = previous_time;
+    }
     previous_base_time = time;
     hr_start = hr_ticks;
   }
 
-  static jlong previous_time;
-  if( time < previous_time ) {
-    time = previous_time;
-  } else {
-    previous_time = time;
-  }
 #endif
   return (time - offset()) / 10000;
 }
