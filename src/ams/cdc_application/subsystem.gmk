@@ -77,9 +77,6 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/NativeForegroundState.java
 
-MIDP_BOOTCLASSPATH_CLASSES_LIST += \
-    com.sun.midp.main.CDCInit
-
 vpath % $(CDC_AMS_DIR)/native
 
 SUBSYSTEM_AMS_NATIVE_FILES += \
