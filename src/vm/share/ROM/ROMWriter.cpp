@@ -152,7 +152,7 @@ void ROMWriter::start(JVM_SINGLE_ARG_TRAPS) {
   OptimizeBytecodes = false;
 #endif
 
-  _starting_ms = Os::java_time_millis();
+  _starting_ms = Os::monotonic_time_millis();
 #if ENABLE_ISOLATES
   // Flush verifier caches since there may be items in there from other
   // tasks
@@ -190,13 +190,13 @@ void ROMWriter::start(JVM_SINGLE_ARG_TRAPS) {
 
 #if ENABLE_TTY_TRACE
   TTY_TRACE(("Loading classes..."));
-  jlong load_start_ms = Os::java_time_millis();
+  jlong load_start_ms = Os::monotonic_time_millis();
 #endif
 
   load_all_classes(JVM_SINGLE_ARG_CHECK);
 
 #if ENABLE_TTY_TRACE
-  long diff = (long)(Os::java_time_millis() - load_start_ms);
+  long diff = (long)(Os::monotonic_time_millis() - load_start_ms);
   TTY_TRACE_CR(("Done! in %ld.%ld seconds", diff/1000, diff % 1000));
 #endif
 
@@ -269,7 +269,7 @@ void ROMWriter::write_reports(JVM_SINGLE_ARG_TRAPS) {
 
   // Write a summary report of how the objects are arranged inside
   // the ROM image.
-  jlong elapsed_ms = Os::java_time_millis() - _starting_ms;
+  jlong elapsed_ms = Os::monotonic_time_millis() - _starting_ms;
 
   _summary_log_stream.print_cr("[ROM Image Summary]");
   _summary_log_stream.cr();
@@ -2079,14 +2079,14 @@ ROMWriter::BlockType BlockTypeFinder::find_meta_type(Oop *object) {
 
 void ROMWriter::start_work_timer() {
   set_must_suspend(false);
-  set_work_timer_start(Os::java_time_millis());
+  set_work_timer_start(Os::monotonic_time_millis());
 }
 
 bool ROMWriter::work_timer_has_expired() {
   if (must_suspend()) {
     return true;
   }
-  jlong elapsed = Os::java_time_millis() - work_timer_start();
+  jlong elapsed = Os::monotonic_time_millis() - work_timer_start();
   return ((int)elapsed) > MaxRomizationTime;
 }
 

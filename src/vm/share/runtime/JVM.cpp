@@ -1171,9 +1171,9 @@ void JVM::calibrate_cpu() {
       // run of the VM).
       OsMisc_flush_icache((address)p[0], num_instructions * 4);
 
-      jlong started = Os::java_time_millis();
+      jlong started = Os::monotonic_time_millis();
       p[0](num_loops);
-      jlong elapsed = Os::java_time_millis() - started;
+      jlong elapsed = Os::monotonic_time_millis() - started;
       if (elapsed < 1) {
         elapsed = 1;
       }

@@ -53,6 +53,11 @@ class Os {
  private:
   static jlong _java_time_millis_offset;
  public:
+  // Returns monotonic time in milliseconds from some unspecified starting
+  // point. This clock must be monotonic and must have resolution and read
+  // time not lower than that of java_time_millis().
+  static jlong monotonic_time_millis();
+
   // Returns the same value as java.lang.System.currentTimeMillis() would:
   // i.e., the difference, measured in milliseconds, between the current
   // time and midnight, January 1, 1970 UTC.

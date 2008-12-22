@@ -65,6 +65,17 @@ jlong offset() {
   return _offset;
 }
 
+#if SUPPORTS_MONOTONIC_CLOCK
+jlong Os::monotonic_time_millis() {
+  /*
+   * Get the monotonic time in milliseconds from some unspecified starting
+   * point. This clock must be monotonic and must have resolution and read
+   * time not lower than that of Os::java_time_millis().
+   */
+  return 0;
+}
+#endif
+
 jlong Os::java_time_millis() {
   /*
    * Get the current system time, unit: millisecond, count time from

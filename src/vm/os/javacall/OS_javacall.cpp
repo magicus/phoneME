@@ -62,6 +62,12 @@ jlong offset() {
   return _offset;
 }
 
+#if SUPPORTS_MONOTONIC_CLOCK
+jlong Os::monotonic_time_millis() {
+  return javacall_time_get_monotonic_time_millis();
+}
+#endif
+
 jlong Os::java_time_millis() {
   /*
    * Get the current system time, unit: millisecond, count time from
