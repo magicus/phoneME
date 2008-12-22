@@ -207,24 +207,14 @@ javacall_dom_eventsdispatcher_remove_event_listener_finish(void *context);
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_eventsdispatcher_handle_completed_start(javacall_int32 invocation_id,
+javacall_dom_eventsdispatcher_handle_completed(javacall_int32 invocation_id,
                                               void **context,
                                               javacall_handle request_id);
 
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code
- * OR this method notify the <code>EngineThread</code> that handling of event is
- * completed.
- *
- * @param context The context saved during asynchronous operation.
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_WOULD_BLOCK caller must call the
- *             javacall_dom_eventsdispatcher_handle_completed_finish function to
- *             complete the operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_eventsdispatcher_handle_completed_finish(void *context);
+void 
+javanotify_fluid_handle_event_request (
+    javacall_handle request_handle
+    );
 
 /** @} */
 
