@@ -35,13 +35,22 @@
 
 JAVA_PROFILER_DIR = $(SUBSYSTEM_CORE_DIR)/java_profiler
 
-vpath % $(JAVA_PROFILER_DIR)/reference/native
+ifeq ($(USE_WTK_PROFILER), true)
+    JAVA_PROFILER_IMPL = reference
 
-SUBSYSTEM_JAVA_PROFILER_EXTRA_INCLUDES += \
-    -I$(JAVA_PROFILER_DIR)/include
+    vpath % $(JAVA_PROFILER_DIR)/reference/native
 
-SUBSYSTEM_JAVA_PROFILER_NATIVE_FILES += \
-    java_profiler.c
+    SUBSYSTEM_JAVA_PROFILER_EXTRA_INCLUDES += \
+        -I$(JAVA_PROFILER_DIR)/include
 
-SUBSYSTEM_JAVA_PROFILER_JAVA_FILES +=
+    SUBSYSTEM_JAVA_PROFILER_NATIVE_FILES += \
+        java_profiler.c
+
+else
+    JAVA_PROFILER_IMPL = stubs
+endif
+
+SUBSYSTEM_JAVA_PROFILER_JAVA_FILES += \
+    $(JAVA_PROFILER_DIR)/$(JAVA_PROFILER_IMPL)/classes/com/sun/midp/profilercontrol/JavaProfilerControl.java
+
 SUBSYSTEM_JAVA_PROFILER_I3TEST_JAVA_FILES +=

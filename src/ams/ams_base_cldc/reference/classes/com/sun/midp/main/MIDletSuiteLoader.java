@@ -37,6 +37,7 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.i18n.*;
 import com.sun.midp.log.*;
 import com.sun.midp.security.SecurityToken;
+import com.sun.midp.profilercontrol.JavaProfilerControl;
 
 /**
  * The first class loaded in VM by midp_run_midlet_with_args to initialize
@@ -128,6 +129,9 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
 
         // Initialize Pipe service
         com.sun.midp.io.j2me.pipe.Protocol.registerService(internalSecurityToken);
+
+        // Initialize profiler control event listener
+        JavaProfilerControl.init(eventQueue);
     }
 
     /**

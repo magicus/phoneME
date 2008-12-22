@@ -106,6 +106,7 @@ USE_I3_TEST             = false
 USE_PORTING_DEMOS       = true
 USE_CONTROL_ARGS_FROM_JAD       = false
 USE_GCOV                = false
+USE_WTK_PROFILER        = false
 
 # SERVER SOCKET
 USE_SERVER_SOCKET       = true

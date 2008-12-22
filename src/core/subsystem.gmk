@@ -193,7 +193,9 @@ endif
 #####################################################################
 
 ifneq ($(TARGET_VM), cdc_vm)
+ifeq ($(USE_WTK_PROFILER), true)
 include $(SUBSYSTEM_CORE_DIR)/java_profiler/$(LIB_MAKE_FILE)
+endif
 endif
 
 

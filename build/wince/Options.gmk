@@ -99,6 +99,7 @@ USE_NUTS_FRAMEWORK      = false
 USE_VERBOSE_MAKE        = false
 USE_I3_TEST             = false
 USE_PORTING_DEMOS       = false
+USE_WTK_PROFILER        = false
 
 # SERVER SOCKET
 USE_SERVER_SOCKET       = true

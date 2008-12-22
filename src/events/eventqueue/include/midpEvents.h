@@ -256,6 +256,11 @@ extern "C" {
  */
 #define MIDP_ODD_EXIT_MIDLET_EVENT      70
 
+/**
+ * Request to start or stop java profiler.
+ */
+#define MIDP_JAVA_PROFILER_CONTROL_EVENT        71
+
 /** @} */
 
 /**

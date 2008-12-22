@@ -432,6 +432,12 @@ else
     EXTRA_CFLAGS += -DENABLE_CONTROL_ARGS_FROM_JAD=0
 endif
 
+ifeq ($(USE_WTK_PROFILER), true)
+    EXTRA_CFLAGS += -DENABLE_WTK_PROFILER=1
+else
+    EXTRA_CFLAGS += -DENABLE_WTK_PROFILER=0
+endif
+
 # Default compile flags
 #
 EXTRA_CFLAGS += \
