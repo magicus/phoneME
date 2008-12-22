@@ -447,7 +447,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam1 = 0;
         break;
 #endif /* ENABLE_MULTIPLE_ISOLATES */
-#if ENABLE_JSR_256
+#if ENABLE_JSR_256_CLDC
     case JSR256_JC_EVENT_SENSOR_AVAILABLE:
         pNewSignal->waitingFor = JSR256_SIGNAL;
         pNewMidpEvent->type    = SENSOR_EVENT;
@@ -458,7 +458,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = JSR256_SIGNAL;
         pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
         break;
-#endif /* ENABLE_JSR_256 */
+#endif /* ENABLE_JSR_256_CLDC */
 #ifdef ENABLE_API_EXTENSIONS
 case MIDP_JC_EVENT_VOLUME:
 		pNewSignal->waitingFor = VOLUME_SIGNAL;
