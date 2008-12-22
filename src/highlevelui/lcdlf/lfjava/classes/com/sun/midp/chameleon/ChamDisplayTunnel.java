@@ -84,6 +84,18 @@ public interface ChamDisplayTunnel {
     public void callSizeChanged(int w, int h);
 
     /**
+     * This method is used by Chameleon to invoke
+     * DisplayableLF.uCallFreeze() method.
+     */ 
+    public void callBackgroundNotify();
+    
+     /**
+     * This method is used by Chameleon to invoke
+     * DisplayableLF.uCallShow() method.
+     */
+    public void callForegroundNotify(); 
+
+    /**
      * This method is used by Chameleon to invoke 
      * Displayable.uCallScrollContent() method.
      *

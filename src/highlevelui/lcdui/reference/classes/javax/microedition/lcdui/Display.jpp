@@ -2767,6 +2767,34 @@ public class Display {
                 currentCopy.uCallSizeChanged(w, h);
             }
         }
+        
+        /**
+         * This method is used by Chameleon to invoke
+         * DisplayableLF.uCallFreeze() method. This may call into
+         * application code if the current displayable
+         * is a canvas or canvas subclass.
+         */
+        public void callBackgroundNotify() {
+            // A copy of current LF object            
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null) {
+                currentCopy.uCallFreeze();
+            }
+        } 
+
+        /**
+         * This method is used by Chameleon to invoke
+         * DisplayableLF.uCallShow() method. This may call into
+         * application code if the current displayable
+         * is a canvas or canvas subclass.
+         */
+        public void callForegroundNotify() {
+            // A copy of current LF object
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null) {
+                currentCopy.uCallShow();
+            }
+        }  
 
         /**
          * This method is used by Chameleon to invoke

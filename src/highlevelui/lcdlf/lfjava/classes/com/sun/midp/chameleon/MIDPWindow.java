@@ -162,6 +162,27 @@ public class MIDPWindow extends CWindow {
             tunnel.scheduleRepaint();
         }
     }
+    
+    /**
+     * Request a background notify. This method does not require any bounds
+     * information as it is contained in each of the Chameleon layers.
+     */
+    public void requestBackgroundNotify() {
+        if (tunnel != null) {
+            tunnel.callBackgroundNotify();
+        }
+    }
+    
+    /**
+     * Request a foreground notify. This method does not require any bounds
+     * information as it is contained in each of the Chameleon layers.
+     */
+    public void requestForegroundNotify() {
+        if (tunnel != null) {
+            tunnel.callForegroundNotify();
+        }
+    }
+
 
     /**
      * Set the title of this MIDPWindow. This would typically
