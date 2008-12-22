@@ -34,7 +34,6 @@
 #include <lfpport_displayable.h>
 #include <lfpport_item.h>
 #include <lfpport_imageitem.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 
 #include "midpMalloc.h"
@@ -43,16 +42,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-typedef struct {
-    GtkWidget *container;
-    GtkWidget *label;
-    GtkWidget *contents;
-    GdkPixbuf *gdkPixBuf;
-    char *content_buffer;
-    int appearanceMode;
-} ImageItem;
 
 
 static gboolean
@@ -106,9 +95,9 @@ lfpport_imageitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *event
 }
 
 MidpError lfpport_image_item_show_cb(MidpItem* itemPtr){
-    ImageItem *imageItem = (GtkWidget*)itemPtr->widgetPtr;
+    GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    gtk_widget_show(imageItem->container);
+    gtk_widget_show_all(widget);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -202,69 +191,47 @@ MidpError lfpport_imageitem_create(MidpItem* itemPtr,
 				   const pcsl_string* label, int layout,
 				   unsigned char* imgPtr,
 				   const pcsl_string* altText, int appearanceMode){
-    ImageItem *imageItem;
     GtkWidget *da;
     GtkWidget *gtk_pix_map;
     GtkWidget *image_item_label;
     GtkWidget *form;
     GtkWidget *vbox;
     GtkWidget *box;
+    GtkFrame *frame;
     GdkPixbuf *gdkPixBuf;
     gchar label_buf[MAX_TEXT_LENGTH];
     int label_len;
     int tfd;
     GError *error = NULL;
-    struct stat stat_buf;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-
-    imageItem = (ImageItem *)midpMalloc(sizeof(ImageItem));
-    if (NULL == imageItem) {
-        LIMO_TRACE(">>>%s not enough memory!\n", __FUNCTION__);
-        itemPtr->widgetPtr = NULL;
-        return KNI_ENOMEM;
-    }
-    pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
-
-    LIMO_TRACE(">>>%s1\n", __FUNCTION__);
     if (imgPtr == NULL) {
         LIMO_TRACE(">>>%s received null gdkPixBuf\n", __FUNCTION__);
     }
-
     gdkPixBuf = (GdkPixbuf*)imgPtr;
-
-    LIMO_TRACE(">>>%s5\n", __FUNCTION__);
-    imageItem->container = box = gtk_vbox_new(FALSE, 0);
-    imageItem->label = image_item_label = gtk_label_new(label_buf);
-    imageItem->contents = da = gtk_drawing_area_new();
-    imageItem->gdkPixBuf = gdkPixBuf;
-    imageItem->appearanceMode = appearanceMode;
-
-    LIMO_TRACE(">>>%s6\n", __FUNCTION__);
-    gtk_widget_show(image_item_label);
-    gtk_box_pack_start(GTK_BOX (box), image_item_label, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX (box), da, TRUE, TRUE, 0);
+    pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
+    frame = gtk_frame_new(label_buf);
+    da = gtk_drawing_area_new();
     gtk_widget_show(da);
-    gtk_widget_show(box);
+
+    /* TODO:  save appearanceMode */
+    gtk_container_add(GTK_CONTAINER (frame), da);
     gtk_object_set_user_data(da, gdkPixBuf);
 
-    LIMO_TRACE(">>>%s7\n", __FUNCTION__);
     g_signal_connect(G_OBJECT (da), "expose_event",
                    G_CALLBACK (lfpport_imageitem_expose_event_callback), NULL);
 
     /* add image item to the form */
-    LIMO_TRACE(">>>%s8\n", __FUNCTION__);
     form = (GtkWidget*)ownerPtr->frame.widgetPtr;
-    LIMO_TRACE(">>>%s9\n", __FUNCTION__);
+    vbox = g_object_get_data(form, USER_KEY);
     vbox = gtk_object_get_user_data(form);
-    LIMO_TRACE(">>>%s10\n", __FUNCTION__);
     gtk_box_pack_start(GTK_BOX(vbox),
-                       box,
+                       frame,
                        FALSE, FALSE, 0);
 
 
     /* set font */
-    itemPtr->widgetPtr = imageItem;
+    itemPtr->widgetPtr = frame;
     itemPtr->ownerPtr = ownerPtr;
     itemPtr->layout = layout;
 

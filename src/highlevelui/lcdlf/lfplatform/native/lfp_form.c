@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -104,7 +104,7 @@ Java_javax_microedition_lcdui_FormLFImpl_createNativeResource0() {
  * KNI function that makes native form visible.
  * Java Prototype: void showNativeResource0(int nativeId,
  * 					   int modelVersion,
- *                                         int w, int h) 
+ *                                         int w, int h)
  * CLASS:         javax.microedition.lcdui.FormLFImpl
  * Param: nativeId Id of previously created Form native resource
  * Param: modelVersion version id of the data passed in from Java
@@ -116,7 +116,7 @@ Java_javax_microedition_lcdui_FormLFImpl_showNativeResource0() {
     int w, h;
     MidpError err;
     MidpDisplayable *formPtr = (MidpDisplayable *)KNI_GetParameterAsInt(1);
-    
+
     /* Initialize data model version for this new visible period */
     formPtr->frame.component.modelVersion = KNI_GetParameterAsInt(2);
     w = KNI_GetParameterAsInt(3);
@@ -129,7 +129,7 @@ Java_javax_microedition_lcdui_FormLFImpl_showNativeResource0() {
     if (MidpCurrentScreen != &formPtr->frame) {
 	/* Becomes the new current screen that receives events */
 	MidpCurrentScreen = &formPtr->frame;
-    
+
 	/*
 	 * NOTE: MidpCurrentScreen is needed before it is shown because
 	 * on show its children may want to notify their appearance.
@@ -156,12 +156,14 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 Java_javax_microedition_lcdui_FormLFImpl_setCurrentItem0() {
 
     int yOffset;
+    int formPtr;
     MidpError err;
 
     MidpItem* itemPtr = (MidpItem *)KNI_GetParameterAsInt(2);
+    formPtr = KNI_GetParameterAsInt(1);
     yOffset = KNI_GetParameterAsInt(3);
 
-    err = lfpport_form_set_current_item(itemPtr, yOffset);
+    err = lfpport_form_set_current_item(formPtr, itemPtr, yOffset);
 
     if (err != KNI_OK) {
 	KNI_ThrowNew(midpOutOfMemoryError, NULL);
@@ -175,13 +177,13 @@ KNIEXPORT KNI_RETURNTYPE_INT
 Java_javax_microedition_lcdui_FormLFImpl_getScrollPosition0() {
 
   int pos = 0;
-  
+
   MidpError err = lfpport_form_get_scroll_position(&pos);
-  
+
   if (err != KNI_OK) {
     KNI_ThrowNew(midpOutOfMemoryError, NULL);
   }
-  
+
   KNI_ReturnInt(pos);
 }
 
@@ -192,13 +194,13 @@ Java_javax_microedition_lcdui_FormLFImpl_setScrollPosition0() {
   MidpError err;
 
   pos = KNI_GetParameterAsInt(1);
-  
+
   err = lfpport_form_set_scroll_position(pos);
-  
+
   if (err != KNI_OK) {
     KNI_ThrowNew(midpOutOfMemoryError, NULL);
   }
-  
+
   KNI_ReturnVoid();
 }
 
@@ -207,13 +209,13 @@ KNIEXPORT KNI_RETURNTYPE_INT
 Java_javax_microedition_lcdui_FormLFImpl_getViewportHeight0() {
 
   int height = 0;
-  
+
   MidpError err = lfpport_form_get_viewport_height(&height);
-  
+
   if (err != KNI_OK) {
     KNI_ThrowNew(midpOutOfMemoryError, NULL);
   }
-  
+
   KNI_ReturnInt(height);
 }
 
@@ -276,7 +278,7 @@ void MidpFormFocusChanged(PlatformItemWidgetPtr itemWidgetPtr) {
     if (MidpCurrentScreen != NULL &&
         MidpCurrentScreen->component.type == MIDP_FORM_TYPE) {
     	/*
-        compPtr is the pointer of the new focused item, which 
+        compPtr is the pointer of the new focused item, which
         can be NULL, which means no focused item.
         Hint is unused.
         */
@@ -322,7 +324,7 @@ void MidpFormViewportChanged(PlatformScreenWidgetPtr formPtr, int hint){
 
     if (MidpCurrentScreen != NULL &&
         MidpCurrentScreen->component.type == MIDP_FORM_TYPE &&
-        formPtr == ((MidpFrame *)MidpCurrentScreen)->widgetPtr) 
+        formPtr == ((MidpFrame *)MidpCurrentScreen)->widgetPtr)
     {
         storePeerChangedEvent(PEER_VIEWPORT_CHANGED, (MidpComponent *)MidpCurrentScreen, hint);
     }
@@ -340,7 +342,7 @@ void MidpFormTraverseRequest(PlatformScreenWidgetPtr formPtr, int hint){
 
     if (MidpCurrentScreen != NULL &&
         MidpCurrentScreen->component.type == MIDP_FORM_TYPE &&
-        formPtr == ((MidpFrame *)MidpCurrentScreen)->widgetPtr) 
+        formPtr == ((MidpFrame *)MidpCurrentScreen)->widgetPtr)
     {
         storePeerChangedEvent(PEER_TRAVERSE_REQUEST, (MidpComponent *)MidpCurrentScreen, hint);
     }

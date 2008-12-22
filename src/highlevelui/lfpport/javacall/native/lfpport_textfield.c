@@ -50,17 +50,12 @@ extern GtkWidget *main_window;
 
 extern MidpError gchar_to_pcsl_string(gchar *src, pcsl_string *dst);
 
-typedef struct {
-    GtkWidget *container;
-    int maxSize;
-    int conststaints;
-} TextFieldItem;
 
 
 MidpError lfpport_text_field_show_cb(MidpItem* itemPtr){
-    GtkWidget *text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
+    GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    gtk_widget_show(text_field);
+    gtk_widget_show_all(widget);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -68,11 +63,11 @@ MidpError lfpport_text_field_show_cb(MidpItem* itemPtr){
 
 
 MidpError lfpport_text_field_hide_cb(MidpItem* itemPtr){
-    GtkWidget *text_field;
+    GtkWidget *widget;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
-    gtk_widget_hide(text_field);
+    widget = (GtkWidget *)itemPtr->widgetPtr;
+    gtk_widget_hide_all(widget);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 
     return KNI_OK;
@@ -172,49 +167,36 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
 
     GtkWidget *box;
     GtkWidget *vbox;
+    GtkWidget *frame;
     GtkWidget *form;
-    GtkWidget *text_field_label;
     GtkWidget *text_field_text;
     int label_len, text_len;
-
-    TextFieldItem *text_field_item;
 
     gchar label_buf[MAX_TEXT_LENGTH];
     gchar text_buf[MAX_TEXT_LENGTH];
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
-    text_field_item = (TextFieldItem *)midpMalloc(sizeof(TextFieldItem));
-
     pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
     pcsl_string_convert_to_utf8(text, text_buf,  MAX_TEXT_LENGTH, &text_len);
 
 
-    box = gtk_hbox_new(FALSE, 0);
-    text_field_label = gtk_label_new(label_buf);
+    frame = gtk_frame_new(label_buf);
+
     text_field_text = gtk_entry_new();
     gtk_entry_set_text(text_field_text, text_buf);
     gtk_entry_set_editable(text_field_text, TRUE);
-    gtk_widget_show(text_field_label);
+
     gtk_widget_show(text_field_text);
-    gtk_box_pack_start(GTK_BOX (box), text_field_label, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX (box), text_field_text, FALSE, FALSE, 0);
+    gtk_container_add(GTK_CONTAINER (frame), text_field_text);
 
-    text_field_item->container = box;
-    text_field_item->conststaints = constraints;
-    text_field_item->maxSize = maxSize;
-
-    form = (GtkWidget*)ownerPtr->frame.widgetPtr;
+    form = ownerPtr->frame.widgetPtr;
     vbox = gtk_object_get_user_data(form);
-
-    syslog(LOG_INFO, "%s user_data is %d\n", __FUNCTION__, vbox);
-    gtk_box_pack_start(GTK_BOX(vbox),
-                       box,
-                       FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     /* set font */
     syslog(LOG_INFO, "%s setting textfield container to  %d\n", __FUNCTION__, box);
-    itemPtr->widgetPtr = text_field_item;
+    itemPtr->widgetPtr = frame;
     itemPtr->ownerPtr = ownerPtr;
     itemPtr->layout = layout;
 
@@ -245,20 +227,18 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_textfield_set_string(MidpItem* itemPtr, const pcsl_string* text){
-    GtkWidget *text_field;
+    GtkWidget *frame;
+    GtkWidget *textWidget;
     MidpError status;
-    GList *list;
-    GList *textWidget;
     gchar buf[MAX_TEXT_LENGTH];
     int length;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
-    text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
-    list = gtk_container_get_children(text_field);
-    textWidget = g_list_nth(list, 1);
+    frame = itemPtr->widgetPtr;
+    textWidget = gtk_bin_get_child(frame);
     pcsl_string_convert_to_utf8(text, buf, MAX_TEXT_LENGTH, &length);
-    gtk_entry_set_text(textWidget->data, buf);
+    gtk_entry_set_text(textWidget, buf);
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
@@ -279,17 +259,17 @@ MidpError lfpport_textfield_set_string(MidpItem* itemPtr, const pcsl_string* tex
 MidpError lfpport_textfield_get_string(pcsl_string* text, jboolean* newChange,
 				       MidpItem* itemPtr){
     GtkWidget *text_field;
+    GtkWidget *frame;
     MidpError status;
-    GList *list;
+
     GList *textWidget;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
-    text_field = ((TextFieldItem *)itemPtr->widgetPtr)->container;
-    list = gtk_container_get_children(text_field);
-    textWidget = g_list_nth(list, 1);
+    frame = itemPtr->widgetPtr;
+    textWidget = gtk_bin_get_child(frame);
 
-    status = gchar_to_pcsl_string(gtk_entry_get_text((GtkEntry* )textWidget->data),
+    status = gchar_to_pcsl_string(gtk_entry_get_text((GtkEntry*)textWidget),
                                    text);
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);

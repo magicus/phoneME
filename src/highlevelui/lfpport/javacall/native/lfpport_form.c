@@ -115,7 +115,6 @@ MidpError displayable_set_ticker(MidpDisplayable* dispPtr, const pcsl_string* te
     return KNI_OK;
 }
 
-
 /**
  * Creates the form's native peer (the container window for a form), but
  * does not display it.
@@ -135,28 +134,35 @@ MidpError lfpport_form_create(MidpDisplayable* dispPtr,
     GtkVBox  *gtkVBox;  /* form contents */
     GtkWidget *form;
     GtkWidget *vbox;
+    GtkWidget *sw;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
+    form = gtk_form_new(TRUE);
+    sw = gtk_scrolled_window_new (NULL, NULL);
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(sw),
+                                      GTK_POLICY_NEVER,
+                                      GTK_POLICY_AUTOMATIC);
     gtkVBox = gtk_vbox_new(FALSE, /* not equal space allotments */
                            2);    /* spacing between children */
-    form = gtk_form_new(TRUE);
-    gtk_widget_show(gtkVBox);
-    gtk_container_add(GTK_CONTAINER(form), gtkVBox);
 
+    gtk_scrolled_window_add_with_viewport(GTK_CONTAINER(sw), gtkVBox);
+    gtk_container_add(GTK_CONTAINER(form), sw);
+
+    gtk_object_set_user_data(form, gtkVBox);
+
+    gtk_widget_show_all(sw);
     // Fill in MidpDisplayable structure
     dispPtr->frame.widgetPtr = form;
+    LIMO_TRACE("%s form=%x\n", __FUNCTION__, form);
     dispPtr->frame.show = form_show;
     dispPtr->frame.hideAndDelete = form_hide_and_delete;
     dispPtr->frame.handleEvent	 = NULL;
     dispPtr->setTitle = displayable_set_title;
     dispPtr->setTicker = displayable_set_ticker;
 
-    gtk_object_set_user_data(form, gtkVBox);
+
     gtk_main_window_add_form(main_window, GTK_FORM(form));
-    lfpport_form_set_content_size(dispPtr,
-                                  display_width,
-                                  display_height);
 
     dispPtr->setTitle(dispPtr, title);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
@@ -192,10 +198,22 @@ MidpError lfpport_form_set_content_size(MidpDisplayable* formPtr,
  *
  * @return an indication of success or the reason for failure
  */
-MidpError lfpport_form_set_current_item(MidpItem* itemPtr, int yOffset){
+MidpError lfpport_form_set_current_item(MidpDisplayable* formPtr,
+                                        MidpItem* itemPtr, int yOffset){
+    GtkWidget *form;
+    GtkWidget *box;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     (void)itemPtr;
     (void)yOffset;
+
+//     form = formPtr->frame.widgetPtr;
+//     LIMO_TRACE("%s formPtr=%x \n", __FUNCTION__, formPtr);
+//     box = g_object_get_data(form, USER_KEY);
+    LIMO_TRACE("%s form=%x box=%x\n", __FUNCTION__, form, box);
+//     gtk_box_pack_start(GTK_BOX (box), (GtkWidget*)itemPtr->widgetPtr, FALSE, FALSE, 0);
+
+    gtk_widget_grab_focus((GtkWidget*)itemPtr->widgetPtr);
+
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }

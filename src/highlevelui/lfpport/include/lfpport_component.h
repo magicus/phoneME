@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -32,9 +32,9 @@
  * @ingroup highui_lfpport
  *
  * @brief Global functions and data types for the LCDUI subsystem.
- * 
- * <p>The pointer types defined in this file are for cross-platform 
- * code. The cross-platform code doesn't create or use the pointers. 
+ *
+ * <p>The pointer types defined in this file are for cross-platform
+ * code. The cross-platform code doesn't create or use the pointers.
  * Instead, it stores them for and passes them back to
  * platform-dependent functions. The pointers are stored as
  * void pointers, and the functions that use them cast them back to
@@ -104,7 +104,7 @@ typedef void* PlatformEventPtr;
  */
 typedef enum {
     /** Item types */
-    MIDP_EXCLUSIVE_CHOICE_GROUP_TYPE,	/**< Java platform CG Type: 1 */
+    MIDP_EXCLUSIVE_CHOICE_GROUP_TYPE = 1,	/**< Java platform CG Type: 1 */
     MIDP_MULTIPLE_CHOICE_GROUP_TYPE,	/**< Java platform CG Type: 2 */
     MIDP_IMPLICIT_CHOICE_GROUP_TYPE,	/**< Java platform CG Type: 3 */
     MIDP_POPUP_CHOICE_GROUP_TYPE,	/**< Java platform CG Type: 4 */
@@ -135,7 +135,7 @@ typedef enum {
     MIDP_ERROR_ALERT_TYPE,	  /**< Java platform AlertType ID: 3 */
     MIDP_ALARM_ALERT_TYPE,	  /**< Java platform AlertType ID: 4 */
     MIDP_CONFIRMATION_ALERT_TYPE, /**< Java platform AlertType ID: 5 */
-	
+
     MIDP_CANVAS_TYPE,
 
     MIDP_FORM_TYPE,
@@ -149,7 +149,7 @@ typedef struct _MidpComponent MidpComponent; /**< Type alias */
 typedef struct _MidpFrame MidpFrame; /**< Type alias */
 
 /**
- * Common data structure for a MIDP UI widget, like Displayable, Item, 
+ * Common data structure for a MIDP UI widget, like Displayable, Item,
  * system menu or dialog.
  *
  * This data structure should only be updated by platform independent
@@ -185,7 +185,7 @@ struct _MidpComponent {
     /**
      * Pointer to the next Displayable or Item component.
      * A linked list is used to keep track of all the native resources
-     * created through the platform independent layer. When the 
+     * created through the platform independent layer. When the
      * Java runtime environment exits, both normally and abnormally,
      * this list will be checked to clean up any remaining native
      * resources.
@@ -194,7 +194,7 @@ struct _MidpComponent {
 
     /**
      * Pointer to first child component structure this component
-     * contains. 
+     * contains.
      * For Displayable, child points to its first Item.
      * For Item, child should always be null.
      */
@@ -214,7 +214,7 @@ struct _MidpComponent {
 struct _MidpFrame {
     /**
      * Common data structure used by platform independent layer.
-     * Platform specific porting functions should only read 
+     * Platform specific porting functions should only read
      * its values without any changes.
      */
     MidpComponent component;
@@ -237,7 +237,7 @@ struct _MidpFrame {
      * @param screenPtr pointer to the screen's MidpFrame structure.
      * @param onExit true whether the VM is exiting: true if it is,
      *        and false otherwise.
-     * 
+     *
      * @return an indication of success or the reason for failure
      */
     MidpError (*hideAndDelete)(MidpFrame* screenPtr, jboolean onExit);

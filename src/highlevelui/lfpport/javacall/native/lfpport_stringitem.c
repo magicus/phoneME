@@ -48,9 +48,9 @@ extern GtkVBox *main_container;
 extern GtkWidget *main_window;
 
 MidpError lfpport_string_item_show_cb(MidpItem* itemPtr){
-    GtkWidget *string_item = (GtkWidget*)itemPtr->widgetPtr;
+    GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    gtk_widget_show(string_item);
+    gtk_widget_show_all(widget);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -150,10 +150,10 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
 				    PlatformFontPtr fontPtr,
 				    int appearanceMode){
     GtkWidget *box;
-    GtkWidget *string_item_label;
     GtkWidget *string_item_text;
     GtkWidget *form;
     GtkWidget *vbox;
+    GtkWidget *frame;
     int label_len, text_len;
 
     gchar label_buf[MAX_TEXT_LENGTH];
@@ -166,25 +166,20 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
 
     LIMO_TRACE("%s label=%s text=%s\n", __FUNCTION__, label_buf, text_buf);
 
-    box = gtk_hbox_new(FALSE, 0);
-    string_item_label = gtk_label_new(label_buf);
-    string_item_text = gtk_label_new(text_buf);
-    gtk_widget_show(string_item_label);
-    gtk_widget_show(string_item_text);
+    frame = gtk_frame_new(label_buf);
 
-    gtk_box_pack_start(GTK_BOX (box), string_item_label, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX (box), string_item_text, FALSE, FALSE, 0);
+    string_item_text = gtk_label_new(text_buf);
+    gtk_widget_show(string_item_text);
+    gtk_container_add(GTK_CONTAINER (frame), string_item_text);
 
     form = (GtkWidget*)ownerPtr->frame.widgetPtr;
     vbox = gtk_object_get_user_data(form);
     gtk_box_pack_start(GTK_BOX(vbox),
-                       box,
+                       frame,
                        FALSE, FALSE, 0);
 
-    gtk_object_set_user_data(box, string_item_text);
-
     /* set font */
-    itemPtr->widgetPtr = box;
+    itemPtr->widgetPtr = frame;
     itemPtr->ownerPtr = ownerPtr;
     itemPtr->layout = layout;
 

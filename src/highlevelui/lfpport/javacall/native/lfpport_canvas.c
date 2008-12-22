@@ -112,7 +112,7 @@ lfpport_canvas_expose_event_callback(GtkWidget *widget,
                      event->area.height);
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return TRUE;
+    return KNI_OK;
 }
 
 
