@@ -211,6 +211,12 @@ javacall_dom_eventsdispatcher_handle_completed(javacall_int32 invocation_id,
                                               void **context,
                                               javacall_handle request_id);
 
+/**
+ * Helper function that send handle request to Java part
+ *
+ * @param request_handle pointer to native HandleEventRequest class
+ *
+ */
 void 
 javanotify_fluid_handle_event_request (
     javacall_handle request_handle

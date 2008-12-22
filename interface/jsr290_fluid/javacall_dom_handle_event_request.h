@@ -55,8 +55,8 @@ extern "C" {
 	                                    void **context,
 	                                    /* OUT */ javacall_handle* ret_value);
 	/**
-	 * Returns used to indicate the <code>EventTarget</code> to which the event was 
-	 * originally dispatched. 
+	 * Returns used to indicate the <code>RequestId</code>  the unique id  
+	 * for each handle event request. 
 	 * 
 	 * @param context The context saved during asynchronous operation.
 	 * 
@@ -84,9 +84,8 @@ extern "C" {
 	                                            void **context,
 	                                            /* OUT */ javacall_handle* ret_value);
 	/**
-	 * Returns used to indicate the <code>EventTarget</code> whose 
-	 * <code>EventListeners</code> are currently being processed. This is 
-	 * particularly useful during capturing and bubbling. 
+	 * Returns used to indicate the <code>EventListener</code> handle, which 
+	 * represents native aprt of required event listenere 
 	 * 
 	 * @param context The context saved during asynchronous operation.
 	 * 
@@ -114,10 +113,8 @@ extern "C" {
 	                                           void **context,
 	                                           /* OUT */ javacall_handle* ret_value);
 	/**
-	 * Returns  The namespace URI associated with this event at creation time, or 
-	 * <code>NULL</code> if it is unspecified. 
-	 * <br> For events initialized with a DOM Level 2 Events method 
-	 * this is always <code>NULL</code>. 
+	 * Returns  the <code>Event</code> native handle which should be handled  
+	 * in java part. 
 	 * 
 	 * @param context The context saved during asynchronous operation.
 	 * 
