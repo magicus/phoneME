@@ -184,7 +184,14 @@ typedef unsigned long javacall_time_milliseconds;
  */
 javacall_time_milliseconds /*OPTIONAL*/ javacall_time_get_clock_milliseconds(void);
 
-
+/**
+ * Returns monotonic time in milliseconds from some unspecified starting
+ * point. This clock must be monotonic and must have resolution and read 
+ * time not lower than that of javacall_time_get_clock_milliseconds().
+ *
+ * @return monotonic time in milliseconds
+ */
+javacall_int64 /*OPTIONAL*/ javacall_time_get_monotonic_clock_milliseconds(void);
 
 /** @} */
 
