@@ -4671,12 +4671,7 @@ ObjectHeap::iterate(ObjectHeapVisitor* visitor, OopDesc** p, OopDesc** to) {
 #if !defined(PRODUCT) && !defined(UNDER_ADS)
     previous = p;
 #endif
-    union __casts {
-      OopDesc*** od;
-      Oop* o;
-    } c;
-    c.od = &p;
-    p = DERIVED( OopDesc**, p, (c.o)->object_size() );
+    p = DERIVED( OopDesc**, p, ((OopDesc*)p)->object_size() );
   }
 }
 
