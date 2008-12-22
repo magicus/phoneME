@@ -1075,7 +1075,7 @@ extern "C" int JVM_SetProfile(char *profile_name) {
 
   const int profile_id = Universe::profile_id_by_name(profile_name);
   Universe::set_profile_id(profile_id);
-  return -1;
+  return profile_id;
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
