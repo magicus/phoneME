@@ -313,19 +313,6 @@ public abstract class CWindow {
     public abstract void requestRepaint();
 
     /**
-     * Request a background notify. This method MUST be overridden
-     * by subclasses to provide the implementation.
-     */  
-    public abstract void requestBackgroundNotify();
-    
-    /**
-     * Request a foreground notify. This method MUST be overridden
-     * by subclasses to provide the implementation.
-     */ 
-    public abstract void requestForegroundNotify();
- 
-
-    /**
      * Check whether layer is overlapped with a higher visible layer
      * in the layer stack of the window
      *
