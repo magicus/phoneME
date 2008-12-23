@@ -376,7 +376,34 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290FluidEvent.spare) >> 32);
         pNewMidpEvent->intParam1 = JSR290_CANCEL_REQUEST;
         break;
-	case JSR290_JC_EVENT_COMPLETION_NOTIFICATION:
+    case JSR290_JC_EVENT_FLUID_FILTER_XML_HTTP_REQUEST:
+        pNewSignal->waitingFor   = JSR290_FLUID_EVENT_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
+        pNewMidpEvent->type      = FLUID_EVENT;
+        pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
+        pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
+        pNewMidpEvent->intParam1 = JSR290_FILTER_XML_HTTP;
+        pNewMidpEvent->intParam4 = event->data.jsr290FluidEvent.outward_id;
+        {
+            int len = 0;
+            if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text, &len)) {
+                len = 0;
+            }
+            pcsl_string_convert_from_utf16(event->data.jsr290FluidEvent.text, len,
+                                           &pNewMidpEvent->stringParam1);
+        }
+        javacall_free(event->data.jsr290FluidEvent.text);
+        {
+            int len = 0;
+            if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text, &len)) {
+                len = 0;
+            }
+            pcsl_string_convert_from_utf16(event->data.jsr290FluidEvent.text1, len,
+                                           &pNewMidpEvent->stringParam2);
+        }
+        javacall_free(event->data.jsr290FluidEvent.text);
+        break;
+    case JSR290_JC_EVENT_COMPLETION_NOTIFICATION:
         pNewSignal->waitingFor   = JSR290_INVOCATION_COMPLETION_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290NotificationEvent.invocation_id;
         break;
