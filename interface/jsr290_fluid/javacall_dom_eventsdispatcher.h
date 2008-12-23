@@ -207,9 +207,7 @@ javacall_dom_eventsdispatcher_remove_event_listener_finish(void *context);
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_eventsdispatcher_handle_completed(javacall_int32 invocation_id,
-                                              void **context,
-                                              javacall_handle request_id);
+javacall_dom_eventsdispatcher_handle_completed(javacall_handle request);
 
 /**
  * Helper function that send handle request to Java part

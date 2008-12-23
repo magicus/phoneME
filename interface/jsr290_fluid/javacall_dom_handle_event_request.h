@@ -46,35 +46,6 @@ extern "C" {
 	 * @param context The context saved during asynchronous operation.
 	 * 
 	 * @return JAVACALL_WOULD_BLOCK caller must call the 
-	 *             javacall_dom_event_get_target_finish function to complete the 
-	 *             operation
-	 */
-	javacall_result
-	javacall_dom_handle_event_get_request_id_start(javacall_handle handle,
-	                                    javacall_int32 invocation_id,
-	                                    void **context,
-	                                    /* OUT */ javacall_handle* ret_value);
-	/**
-	 * Returns used to indicate the <code>RequestId</code>  the unique id  
-	 * for each handle event request. 
-	 * 
-	 * @param context The context saved during asynchronous operation.
-	 * 
-	 * @return JAVACALL_OK if all done successfuly,
-	 */
-	javacall_result
-	javacall_dom_handle_event_get_request_id_finish(void *context,
-	                                     /* OUT */ javacall_handle* ret_value);
-
-	/**
-	 * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code.
-	 * 
-	 * @param handle Pointer to the object representing this event.
-	 * @param invocation_id Invocation identifier which MUST be used in the 
-	 *                  corresponding javanotify function.
-	 * @param context The context saved during asynchronous operation.
-	 * 
-	 * @return JAVACALL_WOULD_BLOCK caller must call the 
 	 *             javacall_dom_event_get_current_target_finish function to complete the 
 	 *             operation
 	 */
