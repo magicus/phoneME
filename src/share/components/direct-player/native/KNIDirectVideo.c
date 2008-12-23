@@ -1,32 +1,31 @@
 /*
- * 
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation.
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt).
+ * included at /legal/license.txt). 
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
+ * 02110-1301 USA 
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions.
+ * information or have any questions. 
  */
 
 #include "KNICommon.h"
-#include "SNI.h"
 
 #include "jsrop_exceptions.h"
+#include "jsr135_sync.h"
 
 /*  private native int nGetWidth ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
@@ -37,11 +36,20 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetWidth) {
     long width;
     long height;
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    javacall_result result = JAVACALL_FAIL;
 
-    if (pKniInfo && pKniInfo->pNativeHandle &&
-        JAVACALL_OK == javacall_media_get_video_size(pKniInfo->pNativeHandle, &width, &height)) {
-        returnValue = width;
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        JAVACALL_MM_ASYNC_EXEC(
+            result,
+            javacall_media_get_video_size(pKniInfo->pNativeHandle, &width, &height),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_VIDEO_SIZE_GOTTEN,
+            returns_data(2, (&width, &height))
+        );
+        if (result == JAVACALL_OK) {
+            returnValue = width;
+        }
     }
+
 
     MMP_DEBUG_STR2("[kni_video] -nGetWidth %d ret %d\n", width, returnValue);
 
@@ -57,10 +65,18 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetHeight) {
     long width;
     long height;
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    javacall_result result = JAVACALL_FAIL;
 
-    if (pKniInfo && pKniInfo->pNativeHandle &&
-        JAVACALL_OK == javacall_media_get_video_size(pKniInfo->pNativeHandle, &width, &height)) {
-        returnValue = height;
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        JAVACALL_MM_ASYNC_EXEC(
+            result,
+            javacall_media_get_video_size(pKniInfo->pNativeHandle, &width, &height),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_VIDEO_SIZE_GOTTEN,
+            returns_data(2, (&width, &height))
+        );
+        if (result == JAVACALL_OK) {
+            returnValue = height;
+        }
     }
 
     MMP_DEBUG_STR2("[kni_video] -nGetHeight %d ret %d\n", height, returnValue);
@@ -80,15 +96,46 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetLocation) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
     jboolean returnValue = KNI_FALSE;
+    javacall_result result;
 
     MMP_DEBUG_STR4("[kni_video] +nSetLocation %d %d %d %d\n", x, y, w, h);
 
-    if (pKniInfo && pKniInfo->pNativeHandle &&
-        JAVACALL_OK == javacall_media_set_video_location(pKniInfo->pNativeHandle, x, y, w, h)) {
-        returnValue = KNI_TRUE;
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        JAVACALL_MM_ASYNC_EXEC(
+            result,
+            javacall_media_set_video_location(pKniInfo->pNativeHandle, x, y, w, h),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_VIDEO_LOCATION_SET,
+            returns_no_data
+        );
+        if (result == JAVACALL_OK) {
+            returnValue = KNI_TRUE;
+        }
     }
 
     MMP_DEBUG_STR1("[kni_video] -nSetLocation ret %d\n", returnValue);
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN 
+KNIDECL(com_sun_mmedia_DirectPlayer_nSetFullScreenMode) {
+    jint     handle  = KNI_GetParameterAsInt(1);
+    jboolean fscreen = KNI_GetParameterAsBoolean(2);
+
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+
+    jboolean returnValue = KNI_FALSE;
+
+    MMP_DEBUG_STR1("[kni_video] +nSetFullScreen(%d)\n", fscreen);
+
+    if (pKniInfo && pKniInfo->pNativeHandle &&
+        JAVACALL_OK == javacall_media_set_video_full_screen_mode(pKniInfo->pNativeHandle, 
+                           (KNI_TRUE == fscreen ? JAVACALL_TRUE : JAVACALL_FALSE))) 
+    {
+        returnValue = KNI_TRUE;
+    }
+
+    MMP_DEBUG_STR1("[kni_video] +nSetFullScreen=%d\n", returnValue);
 
     KNI_ReturnBoolean(returnValue);
 }
@@ -138,10 +185,5 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetColorKey) {
     MMP_DEBUG_STR1("[kni_video] -nSetColorKey ret %d\n", ret);
 
     KNI_ReturnBoolean(JAVACALL_SUCCEEDED(ret) ? KNI_TRUE : KNI_FALSE);  
-}
-
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN 
-KNIDECL(com_sun_mmedia_DirectPlayer_nSetFullScreenMode) {
-    KNI_ReturnBoolean( KNI_FALSE );
 }
 
