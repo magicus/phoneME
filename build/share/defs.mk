@@ -164,6 +164,8 @@ endif
 CVM_HOST 	?= $(HOST_CPU_FAMILY)-$(HOST_DEVICE)-$(HOST_OS)
 CVM_TARGET	= $(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)
 
+CVM_DEFINES += -DCVM_TARGET_DEVICE=$(TARGET_DEVICE)
+
 # EVAL_SUPPORTED is true if this version of gnumake supports
 # the eval function. 
 $(eval EVAL_SUPPORTED=true)

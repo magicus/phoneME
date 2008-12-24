@@ -92,6 +92,7 @@
  *	 in ccmcodecachecopy_cpu.S, we need to name the sections
  *	 in alphabetical order.
  */
+        PRESERVE8
 	SET_SECTION_EXEC(s0_ccmcodecachecopy_cpu)
 
 
