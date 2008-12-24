@@ -1541,6 +1541,7 @@ javacall_dom_element_set_id_attribute_node_finish(void *context,
  * <code>false</code> otherwise. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
  *             context,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -1564,6 +1565,7 @@ javacall_dom_element_is_html_element_start(javacall_handle handle,
  * <code>false</code> otherwise. 
  * 
  * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
  *         JAVACALL_WOULD_BLOCK caller must call the 
  *             javacall_dom_element_is_html_element_finish function to complete the 
  *             operation,
