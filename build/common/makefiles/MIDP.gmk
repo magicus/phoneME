@@ -289,11 +289,9 @@ $(MIDP_SHARED_LIB): $(MIDP_SHARED_LIB_FILES)
 	@echo " ... linking $@ " $(LOG)
 	$(AT)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
 	  $(MIDP_SHARED_LIB_FILES) $(LIBS))` $(LOG)
-# Provide embedded manifest when building VS2005 DLL
-ifeq ($(USE_VS2005),true)
+# Provide embedded manifest required by VS.NET, enabled when USE_VS2005=true
 	@echo " ... embedding manifest into $@ " $(LOG)
-	$(VC_MANIFEST_EMBED_DLL)
-endif
+	$(AT)$(VC_MANIFEST_EMBED_DLL)
 	  
 ifeq ($(CREATE_MIDP_SHARED_LIB),true)
 MIDP_DEPS += $(MIDP_SHARED_LIB)
