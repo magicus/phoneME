@@ -356,10 +356,7 @@ typedef struct {
     javacall_handle             spare;
     javacall_utf16_string       text;
     javacall_utf16_string       text1;
-    union {
-	float                       percentage;
-	javacall_int32              outward_id;
-    };
+    float                       percentage;
     javacall_result             result;
 } jsr290_jc_event_fluid;
 

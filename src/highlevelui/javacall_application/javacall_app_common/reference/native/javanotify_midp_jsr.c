@@ -1086,7 +1086,7 @@ javanotify_fluid_cancel_request (
 
 void
 javanotify_fluid_filter_xml_http_request (
-    javacall_int32                        outward_id,
+    javacall_int32                        request,
     javacall_handle                       fluid_image,
     javacall_const_utf16_string           method,
     javacall_const_utf16_string           url
@@ -1094,7 +1094,7 @@ javanotify_fluid_filter_xml_http_request (
     midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_FILTER_XML_HTTP_REQUEST;
-    e.data.jsr290FluidEvent.outward_id  = outward_id;
+    e.data.jsr290FluidEvent.spare       = request;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
     e.data.jsr290FluidEvent.text        = javautil_wcsdup(method);
     e.data.jsr290FluidEvent.text1       = javautil_wcsdup(url);
