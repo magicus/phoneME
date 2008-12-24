@@ -32,12 +32,12 @@
 #include <midp_constants_data.h>
 #include <commonKNIMacros.h>
 
-static void midp_profiler_start() {
+void midp_profiler_start() {
     if (!JVM_SendProfilerCommand(JAVA_PROFILER_COMMAND_START, NULL))
         REPORT_ERROR(LC_CORE, "Cannot start java profiler.\n");
 }
 
-static void midp_profiler_stop() {
+void midp_profiler_stop() {
     if (!JVM_SendProfilerCommand(JAVA_PROFILER_COMMAND_STOP, NULL)) {
         REPORT_ERROR(LC_CORE, "Cannot stop java profiler.\n");
     }
