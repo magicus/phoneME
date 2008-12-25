@@ -28,7 +28,7 @@ package com.sun.midp.profilercontrol;
 
 import com.sun.midp.events.*;
 
-public class JavaProfilerControl implements EventListener {
+public class JavaProfilerControl {
 
     /**
      * Initialize java profiler control by subscribing for control messages
@@ -37,29 +37,5 @@ public class JavaProfilerControl implements EventListener {
      */
     public static void init(EventQueue eventQueue) {
     }
-
-    /**
-     * Preprocess an event that is being posted to the event queue.
-     * This method will get called in the thread that posted the event.
-     * 
-     * @param event event being posted
-     *
-     * @param waitingEvent previous event of this type waiting in the
-     *     queue to be processed
-     * 
-     * @return true to allow the post to continue, false to not post the
-     *     event to the queue
-     */
-    public boolean preprocess(Event event, Event waitingEvent) {
-        return true;
-    }
-
-    /**
-     * Process an event.
-     * This method will get called in the event queue processing thread.
-     *
-     * @param event event to process
-     */
-    public void process(Event event) {
-    }
 }
+

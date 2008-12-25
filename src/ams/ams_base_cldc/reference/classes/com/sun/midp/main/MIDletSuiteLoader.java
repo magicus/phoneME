@@ -127,9 +127,6 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
         com.sun.midp.installer.AutoTesterServiceInitializer.init(
                 internalSecurityToken);
 
-        // Initialize Pipe service
-        com.sun.midp.io.j2me.pipe.Protocol.registerService(internalSecurityToken);
-
         // Initialize profiler control event listener
         JavaProfilerControl.init(eventQueue);
     }
