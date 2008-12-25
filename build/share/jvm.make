@@ -781,10 +781,6 @@ CPP_INCLUDE_DIRS = \
   -I"$(WorkSpace)/src/anilib/$(os_family)"  \
   -I"$(WorkSpace)/src/tools/ads_extender"
 
-ifeq ($(ENABLE_MEMORY_MONITOR), true)
-CPP_INCLUDE_DIRS += -I"$(LIME_INCLUDE_DIR)"
-endif
-
 # Don't use PCSL for the generators. This way you don't need to build
 # two versions of PCSL (host and target) just to build the VM.
 ifndef target_os
