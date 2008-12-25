@@ -53,6 +53,13 @@ TARGET_DEVICE		= x86
 endif
 endif
 
+# Include JavaCall set of properties
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+    $(JAVACALL_OUTPUT_DIR)/properties.xml
+
+# Link with JavaCall library
+LIBS += -L$(JAVACALL_LIB_DIR) -ljavacall$(g)$(r)
+
 # file/directory name separator ( / or \\\\ )
 # if the file separator is backslash, double-quoting is needed,
 # that is, you need to write "\\\\" (four backslashes) for "\" (one backslash)
