@@ -1,6 +1,4 @@
 /*
- *   
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -22,7 +20,9 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
- *
+ */
+
+/*
  * NOTE:
  * Because of various external restrictions (i.e. US export
  * regulations, etc.), the actual source code can not be provided
@@ -41,9 +41,6 @@ import java.security.spec.AlgorithmParameterSpec;
  * Examples which use IVs are ciphers in feedback mode, e.g., DES in
  * CBC mode and RSA ciphers with OAEP encoding operation.
  * 
- *
- * @version 1.14, 09/13/01
- * @since 1.4 
  */
 public class IvParameterSpec implements AlgorithmParameterSpec {
 
