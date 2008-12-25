@@ -29,8 +29,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 
-import javax.microedition.io.Connector;
-import javax.microedition.io.SocketConnection;
+import com.sun.midp.io.j2me.socket.Protocol;
+
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.ImplicitlyTrustedClass;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
@@ -39,11 +42,19 @@ import com.sun.j2me.log.LogChannels;
  * The RtspConnection object encapsulates a TCP/IP connection to an RTSP Server.
  */
 public class RtspConnection extends RtspConnectionBase {
-    private SocketConnection sock_conn;
+    private com.sun.midp.io.j2me.socket.Protocol sock_conn;
+
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass { }
+
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     protected void openStreams(RtspUrl url) throws IOException {
-        sock_conn = (SocketConnection)Connector.open("socket://" + url.getHost() +
-                                                      ":" + url.getPort());
+        sock_conn = new com.sun.midp.io.j2me.socket.Protocol();
+        sock_conn.openPrim(classSecurityToken, 
+                           "//" + url.getHost() + ":" + url.getPort());
+
         is = sock_conn.openInputStream();
         os = sock_conn.openOutputStream();
     }
