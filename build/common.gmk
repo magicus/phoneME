@@ -35,7 +35,7 @@ TARGET_VM ?= cldc
 ifeq ($(TARGET_VM), cldc)
 #Adding stubs for standalone CLDC executable
 VPATH+=$(JAVACALL_DIR)/implementation/share/cldc
-SOURCE_OUTPUT_LIST+=$(JAVACALL_DIR)/implementation/share/cldc javacall/implementation/share
+JAVACALL_SOURCE_OUTPUT_LIST+=implementation/share/cldc
 endif
 
 ifeq ($(USE_WTK), true)
@@ -53,39 +53,49 @@ javacall_common: create_output_dirs copy_include_files output_properties_files
 
 PREFIX_true:=1
 
+# JSR_LIST - list of components that have interface/implementation/(notifiers)
+#            (default policy)
+# JC_API_LIST  - list of interfaces w/o implementation here
+# JC_IMPL_LIST - list of implemetations w/o interfaces here
+# JC_NOTIFIERS_LIST - list of notifiers located in javacall
+
+ALL_IMPL_JSR_LIST += $(JSR_LIST) $(JC_IMPL_LIST)
 #Form list of objects
-VPATH+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR))))
-PORTING_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.c))))
-PORTING_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.cpp))))
-NOTIFIER_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR)/*.c))))
+VPATH+=$(foreach jsr,$(ALL_IMPL_JSR_LIST) $(JC_NOTIFIERS_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR))))
+PORTING_SOURCE+=$(foreach jsr,$(ALL_IMPL_JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.c))))
+PORTING_SOURCE+=$(foreach jsr,$(ALL_IMPL_JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.cpp))))
+NOTIFIER_SOURCE+=$(foreach jsr,$(ALL_IMPL_JSR_LIST) $(JC_NOTIFIERS_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR)/*.c))))
+
+SPECIFIC_DEFINITIONS += $(filter -DENABLE_JSR%, $(foreach jsr,$(ALL_JSR_LIST), \
+    $(if $(PREFIX_$(USE_$(jsr))), -DENABLE_$(jsr)=1)))
+
+#Form list of javacall header files
+ALL_JC_API_LIST = $(JSR_LIST) $(JC_API_LIST)
+JC_INCLUDE_DIR_SET_LOCAL=$(foreach jsr,$(ALL_JC_API_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_DIR)))
+JC_INCLUDE_DIR_SET=$(addprefix $(JAVACALL_DIR)/interface/,$(JC_INCLUDE_DIR_SET_LOCAL))
+JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach dir,$(JC_INCLUDE_DIR_SET),$(wildcard $(dir)/*.h))
+
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/interface/javacall_defs.h
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/implementation/share/properties/inc/javacall_properties.h
 
 ifeq ($(USE_NETMON), true)
 PORTING_SOURCE+=$(notdir $(wildcard $(MIDP_JC_IMPL_PATH)/$(MIDP_JC_DIR)/netmon/*.c))
 VPATH+=$(MIDP_JC_IMPL_PATH)/$(MIDP_JC_DIR)/netmon
 endif
 
-#Form list of header files
-JAVACALL_INCLUDE_DIR_SET_LOCAL=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_DIR)))
-JAVACALL_INCLUDE_DIR_SET=$(addprefix $(JAVACALL_DIR)/interface/,$(JAVACALL_INCLUDE_DIR_SET_LOCAL))
-JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach dir,$(JAVACALL_INCLUDE_DIR_SET),$(wildcard $(dir)/*.h))
-
-
-JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h
-JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/interface/javacall_defs.h
-JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/implementation/share/properties/inc/javacall_properties.h
-
 UTILITIES+= javautil_stdio
 
 ifneq ($(UTILITIES)x, x)
 VPATH+=$(JAVACALL_DIR)/implementation/share/utils
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(foreach util,$(UTILITIES),$(JAVACALL_DIR)/implementation/share/utils/inc/$(util).h)
-SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/share/utils javacall/implementation/share
+JAVACALL_SOURCE_OUTPUT_LIST += implementation/share/utils
 endif
 
 ifeq ($(SUBSYSTEM_EVENTS_MODULES), slave_mode)
 FILTER_OBJECTS+=events.obj
 VPATH+=$(JAVACALL_DIR)/implementation/share/events
-SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/share/events javacall/implementation/share
+JAVACALL_SOURCE_OUTPUT_LIST += implementation/share/events
 PORTING_SOURCE+=events_slave_mode.c
 endif
 
@@ -146,9 +156,6 @@ ifeq ($(USE_MEMMON), true)
 CFLAGS += -DUSE_MEMMON
 endif
 
-SPECIFIC_DEFINITIONS += $(filter -DENABLE_JSR%, $(foreach jsr,$(JSR_LIST), \
-    $(if $(PREFIX_$(USE_$(jsr))), -DENABLE_$(jsr)=1)))
-
 # definitions and rules for JPEG component
 ifeq ($(USE_JC_JPEG_ENCODER), true)
         USE_JC_JPEG = true
@@ -160,7 +167,7 @@ endif
 
 ifeq ($(USE_JC_JPEG), true)
 JPEG_JC_DIR = $(JAVACALL_DIR)/implementation/share/jpeg
-SOURCE_OUTPUT_LIST += $(JPEG_JC_DIR) javacall/implementation/share
+JAVACALL_SOURCE_OUTPUT_LIST += implementation/share/jpeg
 include $(JPEG_JC_DIR)/module.gmk
 endif
 
@@ -243,11 +250,14 @@ define make_source_bundle
 		done
 endef
 
-SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(JAVACALL_DIR)/interface/$($(jsr)_JC_DIR) javacall/interface))
-SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/interface/javacall_defs.h javacall/interface
-SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/build javacall
+JAVACALL_SOURCE_OUTPUT_LIST += build
+JAVACALL_SOURCE_OUTPUT_LIST += $(foreach jsr,$(ALL_JC_API_LIST),  $(if $(PREFIX_$(USE_$(jsr))), interface/$($(jsr)_JC_DIR)))
+JAVACALL_SOURCE_OUTPUT_LIST += $(foreach jsr,$(ALL_JC_IMPL_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(subst $(JAVACALL_DIR)/, ,$($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR))))
+JC_NOTIFIER_DIRS=$(foreach jsr,$(JSR_LIST) $(JC_NOTIFIERS_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR))))
+JAVACALL_SOURCE_OUTPUT_LIST += $(foreach jsr,$(JC_NOTIFIER_DIRS), $(if $(PREFIX_$(USE_$(jsr))), $(subst $(JAVACALL_DIR)/, ,$(jsr))))
 
 source_bundle:: SOURCE_OUTPUT_DIR
 	@echo " ... javacall source bundle"
-	@$(call make_source_bundle, $(SOURCE_OUTPUT_LIST), $(SOURCE_CLEANUP_LIST))
-
+	$(AT)$(call source_bundle_filter,$(JAVACALL_DIR),$(SOURCE_OUTPUT_DIR)/javacall,$(JAVACALL_SOURCE_OUTPUT_LIST))
+	$(AT)cp $(JAVACALL_DIR)/interface/javacall_defs.h $(SOURCE_OUTPUT_DIR)/javacall/interface/javacall_defs.h
+	$(AT)$(call make_source_bundle, $(SOURCE_OUTPUT_LIST), $(SOURCE_CLEANUP_LIST))
