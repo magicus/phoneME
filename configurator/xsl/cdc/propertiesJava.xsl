@@ -114,7 +114,7 @@ public class Initializer {
         </xsl:for-each>
 
     </xsl:for-each>
-
+    <!-- Initialization code -->
     <xsl:for-each select="/configuration/initializer_strings">
         <xsl:for-each select="initializer_string">
             <xsl:text>        </xsl:text>
@@ -123,26 +123,6 @@ public class Initializer {
 </xsl:text>
         </xsl:for-each>
     </xsl:for-each>
-<!--
-    <xsl:for-each select="/configuration/initializer">
-        <xsl:text>
-    AccessController.doPrivileged(
-        new PrivilegedAction() {
-            public Object run() {
-                try {
-                    Class.forName("</xsl:text>
-        <xsl:value-of select="@Class"/><xsl:text>").newInstance();
-                } catch (java.lang.ClassNotFoundException e) {
-                } catch (java.lang.Exception e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-        }
-    );
-        </xsl:text>
-    </xsl:for-each>
--->
 <xsl:text>    }
 }
 </xsl:text>
