@@ -413,8 +413,18 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
         StoreMIDPEventInVmThreadImp(event, isolateId);
     } else {
 #if ENABLE_MULTIPLE_ISOLATES
-    for (isolateId = 1; isolateId <= maxIsolates; isolateId++)
-        StoreMIDPEventInVmThreadImp(event, isolateId);
+        for (isolateId = 1; isolateId <= maxIsolates; isolateId++) {
+            MidpEvent e = event;
+            if (isolateId != 1) {
+                pcsl_string_dup(&event.stringParam1, &e.stringParam1);
+                pcsl_string_dup(&event.stringParam2, &e.stringParam2);
+                pcsl_string_dup(&event.stringParam3, &e.stringParam3);
+                pcsl_string_dup(&event.stringParam4, &e.stringParam4);
+                pcsl_string_dup(&event.stringParam5, &e.stringParam5);
+                pcsl_string_dup(&event.stringParam6, &e.stringParam6);
+            }
+            StoreMIDPEventInVmThreadImp(e, isolateId);
+        }
 #else
         StoreMIDPEventInVmThreadImp(event, 0);
 #endif
