@@ -66,7 +66,7 @@ PORTING_SOURCE+=$(foreach jsr,$(ALL_IMPL_JSR_LIST), $(if $(PREFIX_$(USE_$(jsr)))
 PORTING_SOURCE+=$(foreach jsr,$(ALL_IMPL_JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.cpp))))
 NOTIFIER_SOURCE+=$(foreach jsr,$(ALL_IMPL_JSR_LIST) $(JC_NOTIFIERS_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR)/*.c))))
 
-SPECIFIC_DEFINITIONS += $(filter -DENABLE_JSR%, $(foreach jsr,$(ALL_JSR_LIST), \
+SPECIFIC_DEFINITIONS += $(filter -DENABLE_JSR%, $(foreach jsr,$(ALL_IMPL_JSR_LIST), \
     $(if $(PREFIX_$(USE_$(jsr))), -DENABLE_$(jsr)=1)))
 
 #Form list of javacall header files
