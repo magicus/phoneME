@@ -39,6 +39,7 @@ PUTPIXEL_PORT_STUBS_DIR = $(SUBSYSTEM_LOWUI_DIR)/putpixel_port/wince
 #
 vpath % $(PUTPIXEL_PORT_STUBS_DIR)/native
 
+REQUIRE_PUTPIXEL_FONT = true
 
 # Native files for the sub-system
 #

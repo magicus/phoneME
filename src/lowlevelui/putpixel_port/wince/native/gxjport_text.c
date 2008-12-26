@@ -38,7 +38,7 @@
 int gxjport_draw_chars(jint pixel, const jshort *clip,
                        gxj_screen_buffer *sbuf, int dotted,
                        int face, int style, int size,
-                       int x, int y, int anchor,
+                       int x, int y, int anchor, int direction,
                        const jchar *charArray, int n) {
     if (!gfFontInit) {
         gfFontInit = 1;

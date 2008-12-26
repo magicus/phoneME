@@ -54,11 +54,13 @@ SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
 
 
 ifeq ($(TARGET_PLATFORM), javacall)
-    include $(PUTPIXEL_PORT_DIR)/javacall/$(LIB_MAKE_FILE)
+    PUTPIXEL_PORT_IMPL ?= javacall
 else
 ifeq ($(TARGET_PLATFORM), wince)
-    include $(PUTPIXEL_PORT_DIR)/wince/$(LIB_MAKE_FILE)
+    PUTPIXEL_PORT_IMPL ?= wince
 else
-    include $(PUTPIXEL_PORT_DIR)/stubs/$(LIB_MAKE_FILE)
+    PUTPIXEL_PORT_IMPL ?= reference
 endif
 endif
+
+include $(PUTPIXEL_PORT_DIR)/$(PUTPIXEL_PORT_IMPL)/$(LIB_MAKE_FILE)

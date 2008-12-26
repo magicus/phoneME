@@ -34,7 +34,7 @@
  
 int gxjport_draw_chars(int pixel, const jshort *clip, void *dst, int dotted,
                        int face, int style, int size,
-                       int x, int y, int anchor,
+                       int x, int y, int anchor, int direction,
                        const jchar *chararray, int n) {
     (void)pixel;
     (void)clip;

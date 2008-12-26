@@ -58,7 +58,6 @@ SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
 # Native files for putpixel module
 SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
     gxj_screen_buffer.c \
-    gxj_font_bitmap.c \
     gxj_graphics_asm.c \
     gxj_graphics.c \
     gxj_image.c \

@@ -136,6 +136,15 @@ include $(SUBSYSTEM_LOWUI_DIR)/image_cache/$(LIB_MAKE_FILE)
 
 include $(SUBSYSTEM_LOWUI_DIR)/image_api/$(LIB_MAKE_FILE)
 
+#####################################################################
+# Font resources Subsystem
+# Description: contains definition of FontBitmaps resources
+#####################################################################
+
+ifeq ($(REQUIRE_PUTPIXEL_FONT), true)
+include $(SUBSYSTEM_LOWUI_DIR)/putpixel_font_port/$(LIB_MAKE_FILE)
+endif
+
 
 ####################################################################
 $(MIDP_CLASSES_ZIP) :: $(SUBSYSTEM_GRAPHICSUTIL_JAVA_FILES)
