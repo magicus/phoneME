@@ -70,5 +70,23 @@
 		Value="+17815511212" 
 		Scope="internal"
 		Comment="Default SMS Service Center address."/>
+
+  <property Key="SUITE_MEMORY_LIMIT"
+            Value="-1"
+            Scope="internal"
+            Comment="Default MIDletSuite Memory Limit."/>
+  <property Key="MAIN_MEMORY_CHUNK_SIZE"
+            Value="28388608"
+            Scope="internal"
+            Comment=""/>
+  <property Key="JAVA_HEAP_SIZE"
+            Value="14194304"
+            Scope="internal"
+            Comment=""/>
+  <property Key="RMS_CACHE_LIMIT"
+            Value="3072"
+            Scope="internal"
+            Comment="Global memory limit (in Bytes) for RMS caching"/>
+    
 </properties>
 </configuration>
