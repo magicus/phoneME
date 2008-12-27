@@ -281,11 +281,9 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         break;
     case JSR257_PUSH_SIGNAL:
         if(findPushBlockedHandle(newSignal.descriptor) != 0) {
-        printf("midp_master_mode_events.c(): JSR257_PUSH_SIGNAL: calling midp_thread_signal_list()\n");
             /* The push system is waiting for a read on this descriptor */
             midp_thread_signal_list(blocked_threads, blocked_threads_count, 
                                     PUSH_SIGNAL, 0, 0);
-    
         }
         break;
         

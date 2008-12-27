@@ -256,6 +256,9 @@ extern "C" {
  */
 #define MIDP_ODD_EXIT_MIDLET_EVENT      70
 
+/**
+ * JSR 257 notification event
+ */
 #define CONTACTLESS_EVENT      71
 
 /** @} */

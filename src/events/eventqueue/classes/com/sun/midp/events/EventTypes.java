@@ -439,6 +439,9 @@ public final class EventTypes {
      */
     public static final int MIDP_ODD_EXIT_MIDLET_EVENT = 70;
 
+    /**
+     * JSR 257 notification event
+     */
     public static final int CONTACTLESS_EVENT = 71;
     
 }

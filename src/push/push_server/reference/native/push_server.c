@@ -1758,8 +1758,6 @@ char *pushfindfd(int fd) {
 #if ENABLE_JSR_257
             else if(pushp->isNFCEntry) {
                 char *entry = pushp->value;
-                printf("DEBUG PUSH: pushfindfd(): entry=%s, state = %d\n", 
-                    entry, pushp->state);
                 if(strncmp(entry, "ndef:",5) == 0) {
                     return pcsl_mem_strdup(entry);
                 } else {
@@ -1954,16 +1952,14 @@ char *pushfindsuite(char *store, int available){
              * current file descriptor. e.g. an accepted socket
              * or a cache datagram.
              */
+            if (available && (p->fd != -1)){
+                if ((p->fdsock == -1) && (p->pCachedData == NULL) &&
+                    (!p->isWMAMessCached) 
 #if ENABLE_JSR_257             
-            if (available && (p->fd != -1)){
-                if ((p->fdsock == -1) && (p->pCachedData == NULL) &&
-                    (!p->isWMAMessCached) && 
-                    (! ((p->isNFCEntry) && (p->state == LAUNCH_PENDING)))) {
-#else
-            if (available && (p->fd != -1)){
-                if ((p->fdsock == -1) && (p->pCachedData == NULL) &&
-                    (!p->isWMAMessCached)) { 
+                    && 
+                    (! ((p->isNFCEntry) && (p->state == LAUNCH_PENDING)))
 #endif                    
+                    ) {
                     midpFree(ret);
                     ret = NULL;
                     continue;
