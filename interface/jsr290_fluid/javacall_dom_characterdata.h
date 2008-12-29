@@ -64,7 +64,7 @@ extern "C" {
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The specified substring.
- * @param ret_value_len Amount of symbols in the returned string
+ * @param ret_value_len Number of symbols in the returned string
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_RUNTIME_ERR
@@ -109,7 +109,7 @@ javacall_dom_characterdata_get_data_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value The specified substring.
- * @param ret_value_len Amount of symbols in the returned string
+ * @param ret_value_len Number of symbols in the returned string
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_RUNTIME_ERR
@@ -276,7 +276,7 @@ javacall_dom_characterdata_get_length_finish(void *context,
  * @param ret_value The specified substring. If the sum of <code>offset</code> and 
  *   <code>count</code> exceeds the <code>length</code>, then all 16-bit 
  *   units to the end of the data are returned.
- * @param ret_value_len Amount of symbols in the returned string
+ * @param ret_value_len Number of symbols in the returned string
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_RUNTIME_ERR
@@ -321,7 +321,7 @@ javacall_dom_characterdata_substring_data_start(javacall_handle handle,
  * @param ret_value The specified substring. If the sum of <code>offset</code> and 
  *   <code>count</code> exceeds the <code>length</code>, then all 16-bit 
  *   units to the end of the data are returned.
- * @param ret_value_len Amount of symbols in the returned string
+ * @param ret_value_len Number of symbols in the returned string
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_RUNTIME_ERR

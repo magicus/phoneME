@@ -59,7 +59,7 @@ extern "C" {
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the attribute name
- * @param ret_value_len Amount of symbols in the returned string
+ * @param ret_value_len Number of symbols in the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -89,7 +89,7 @@ javacall_dom_attr_get_name_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value the attribute name
- * @param ret_value_len Amount of symbols in the returned string
+ * @param ret_value_len Number of symbols in the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -217,7 +217,7 @@ javacall_dom_attr_get_specified_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the value of this attribute
- * @param ret_value_len Amount of symbols in the returned string
+ * @param ret_value_len Number of symbols in the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -258,7 +258,7 @@ javacall_dom_attr_get_value_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the value of this attribute
- * @param ret_value_len Amount of symbols in the returned string
+ * @param ret_value_len Number of symbols in the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
