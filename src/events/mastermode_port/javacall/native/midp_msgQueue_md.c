@@ -396,13 +396,13 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         javacall_free(event->data.jsr290FluidEvent.text);
         {
             int len = 0;
-            if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text, &len)) {
+            if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text1, &len)) {
                 len = 0;
             }
             pcsl_string_convert_from_utf16(event->data.jsr290FluidEvent.text1, len,
                                            &pNewMidpEvent->stringParam2);
         }
-        javacall_free(event->data.jsr290FluidEvent.text);
+        javacall_free(event->data.jsr290FluidEvent.text1);
         break;
     case JSR290_JC_EVENT_COMPLETION_NOTIFICATION:
         pNewSignal->waitingFor   = JSR290_INVOCATION_COMPLETION_SIGNAL;
