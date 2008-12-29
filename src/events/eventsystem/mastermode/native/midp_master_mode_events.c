@@ -251,7 +251,7 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         break;
 #endif /* ENABLE_JSR_177 */
 #if !ENABLE_CDC
-#ifdef ENABLE_JSR_256_CLDC
+#ifdef ENABLE_JSR_256
     case JSR256_SIGNAL:
         if (newMidpEvent.type == SENSOR_EVENT) {
             StoreMIDPEventInVmThread(newMidpEvent, -1);
