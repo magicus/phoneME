@@ -33,21 +33,24 @@
 #include <commonKNIMacros.h>
 
 void midp_profiler_start() {
+    fprintf(stderr, "Starting profiling...\n");
     if (!JVM_SendProfilerCommand(JAVA_PROFILER_COMMAND_START, NULL))
         REPORT_ERROR(LC_CORE, "Cannot start java profiler.\n");
 }
 
 void midp_profiler_stop() {
+    fprintf(stderr, "Stoping profiling.\n");    
     if (!JVM_SendProfilerCommand(JAVA_PROFILER_COMMAND_STOP, NULL)) {
         REPORT_ERROR(LC_CORE, "Cannot stop java profiler.\n");
     }
+    
     if (!JVM_SendProfilerCommand(JAVA_PROFILER_COMMAND_DUMP_AND_CLEAR, NULL))
         REPORT_ERROR(LC_CORE, "Cannot dump java profiler data.\n");
 }
 
-KNIEXPORT KNI_RETURNTYPE_INT
+KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_profilercontrol_JavaProfilerControl_control0) {
-    jint command = KNI_GetParameterAsInt(0);
+    jint command = KNI_GetParameterAsInt(1);
 
     if (command)
         midp_profiler_start();
