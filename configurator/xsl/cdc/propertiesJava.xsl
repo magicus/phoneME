@@ -114,6 +114,15 @@ public class Initializer {
         </xsl:for-each>
 
     </xsl:for-each>
+    <!-- Initialization code -->
+    <xsl:for-each select="/configuration/initializer_strings">
+        <xsl:for-each select="initializer_string">
+            <xsl:text>        </xsl:text>
+            <xsl:value-of select="@Code"/>
+            <xsl:text>
+</xsl:text>
+        </xsl:for-each>
+    </xsl:for-each>
 <xsl:text>    }
 }
 </xsl:text>
