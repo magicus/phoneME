@@ -49,8 +49,6 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_profilercontrol_JavaProfilerControl_control0) {
     jint command = KNI_GetParameterAsInt(0);
 
-    printf("com_sun_midp_profilercontrol_JavaProfilerControl_control0 %d\n" + command);
-
     if (command)
         midp_profiler_start();
     else
