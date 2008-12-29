@@ -67,7 +67,7 @@ extern "C" {
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the name of the element
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Amount of symbols in the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -83,7 +83,7 @@ javacall_result
 javacall_dom_element_get_tag_name_start(javacall_handle handle,
                                         javacall_int32 invocation_id,
                                         void **context,
-                                        /* OUT */ javacall_utf16_string ret_value,
+                                        /* OUT */ javacall_utf16* ret_value,
                                         /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -105,7 +105,7 @@ javacall_dom_element_get_tag_name_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the name of the element
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Amount of symbols in the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -118,7 +118,7 @@ javacall_dom_element_get_tag_name_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_tag_name_finish(void *context,
-                                         /* OUT */ javacall_utf16_string ret_value,
+                                         /* OUT */ javacall_utf16* ret_value,
                                          /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -136,7 +136,7 @@ javacall_dom_element_get_tag_name_finish(void *context,
  * @param name The name of the attribute to retrieve.
  * @param ret_value The <code>Attr</code> value as a string, or the empty string 
  *   if that attribute does not have a specified or default value.
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Amount of symbols in the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -153,7 +153,7 @@ javacall_dom_element_get_attribute_start(javacall_handle handle,
                                          javacall_int32 invocation_id,
                                          void **context,
                                          javacall_const_utf16_string name,
-                                         /* OUT */ javacall_utf16_string ret_value,
+                                         /* OUT */ javacall_utf16* ret_value,
                                          /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -167,7 +167,7 @@ javacall_dom_element_get_attribute_start(javacall_handle handle,
  * @param context The context saved during asynchronous operation.
  * @param ret_value The <code>Attr</code> value as a string, or the empty string 
  *   if that attribute does not have a specified or default value.
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Amount of symbols in the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -180,7 +180,7 @@ javacall_dom_element_get_attribute_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_attribute_finish(void *context,
-                                          /* OUT */ javacall_utf16_string ret_value,
+                                          /* OUT */ javacall_utf16* ret_value,
                                           /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -645,7 +645,7 @@ javacall_dom_element_get_elements_by_tag_name_finish(void *context,
  * @param local_name The local name of the attribute to retrieve.
  * @param ret_value The <code>Attr</code> value as a string, or the empty string 
  *   if that attribute does not have a specified or default value.
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Amount of symbols in the returned string
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_RUNTIME_ERR
@@ -672,7 +672,7 @@ javacall_dom_element_get_attribute_ns_start(javacall_handle handle,
                                             void **context,
                                             javacall_const_utf16_string namespace_uri,
                                             javacall_const_utf16_string local_name,
-                                            /* OUT */ javacall_utf16_string ret_value,
+                                            /* OUT */ javacall_utf16* ret_value,
                                             /* INOUT */ javacall_uint32* ret_value_len,
                                             /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -691,7 +691,7 @@ javacall_dom_element_get_attribute_ns_start(javacall_handle handle,
  * @param context The context saved during asynchronous operation.
  * @param ret_value The <code>Attr</code> value as a string, or the empty string 
  *   if that attribute does not have a specified or default value.
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Amount of symbols in the returned string
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_RUNTIME_ERR
@@ -713,7 +713,7 @@ javacall_dom_element_get_attribute_ns_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_attribute_ns_finish(void *context,
-                                             /* OUT */ javacall_utf16_string ret_value,
+                                             /* OUT */ javacall_utf16* ret_value,
                                              /* INOUT */ javacall_uint32* ret_value_len,
                                              /* OUT */ javacall_dom_exceptions* exception_code);
 
