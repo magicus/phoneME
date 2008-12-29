@@ -59,7 +59,7 @@ extern "C" {
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the name of the DTD
- * @param ret_value_len Number of symbols in the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -89,7 +89,7 @@ javacall_dom_documenttype_get_name_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value the name of the DTD
- * @param ret_value_len Number of symbols in the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -242,7 +242,7 @@ javacall_dom_documenttype_get_notations_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the public identifier of the external subset
- * @param ret_value_len Number of symbols in the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -271,7 +271,7 @@ javacall_dom_documenttype_get_public_id_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value the public identifier of the external subset
- * @param ret_value_len Number of symbols in the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -300,7 +300,7 @@ javacall_dom_documenttype_get_public_id_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The system identifier of the external subset
- * @param ret_value_len Number of symbols in the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -329,7 +329,7 @@ javacall_dom_documenttype_get_system_id_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value The system identifier of the external subset
- * @param ret_value_len Number of symbols in the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -362,7 +362,7 @@ javacall_dom_documenttype_get_system_id_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing a representation of the internal subset
- * @param ret_value_len Number of symbols in the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -395,7 +395,7 @@ javacall_dom_documenttype_get_internal_subset_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing a representation of the internal subset
- * @param ret_value_len Number of symbols in the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
