@@ -76,7 +76,13 @@ final class PermissionAccessorAbstractions {
                     permission = new ConnectorPermission(
                             ConnectorPermission.HTTPS.getName(), locator);
                     break;
-                    
+
+                case PermissionAccessor.PERMISSION_RTSP_READ:
+                case PermissionAccessor.PERMISSION_RTSP_WRITE:
+                    permission = new ConnectorPermission(
+                            ConnectorPermission.RTSP.getName(), locator);
+                    break;
+
                 case PermissionAccessor.PERMISSION_SOCKET_READ:
                 case PermissionAccessor.PERMISSION_SOCKET_WRITE:
                     permission = new ConnectorPermission(

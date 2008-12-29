@@ -38,6 +38,8 @@ import com.sun.midp.security.ImplicitlyTrustedClass;
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
+import com.sun.mmedia.PermissionAccessor;
+
 /**
  * The RtspConnection object encapsulates a TCP/IP connection to an RTSP Server.
  */
@@ -50,7 +52,18 @@ public class RtspConnection extends RtspConnectionBase {
     private static SecurityToken classSecurityToken =
         SecurityInitializer.requestToken(new SecurityTrusted());
 
+    private static final String RTSP_PERMISSION_NAME =
+        "javax.microedition.io.Connector.rtsp";
+
     protected void openStreams(RtspUrl url) throws IOException {
+
+        try {
+            PermissionAccessor.checkPermissions(url.toString(), 
+                PermissionAccessor.PERMISSION_RTSP_READ);
+        } catch (InterruptedException ie) {
+            throw new IOException("Interrupted while waiting for user permission");
+        }
+
         sock_conn = new com.sun.midp.io.j2me.socket.Protocol();
         sock_conn.openPrim(classSecurityToken, 
                            "//" + url.getHost() + ":" + url.getPort());
