@@ -30,6 +30,9 @@ package com.sun.j2me.security;
  */
 public class ConnectorPermission extends Permission {
 
+    static public ConnectorPermission RTSP = new ConnectorPermission(
+        "javax.microedition.io.Connector.rtsp", null);
+
     static public ConnectorPermission HTTP = new ConnectorPermission(
         "javax.microedition.io.Connector.http", null);
 
