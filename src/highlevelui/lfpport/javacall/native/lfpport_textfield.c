@@ -181,10 +181,14 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
     pcsl_string_convert_to_utf8(text, text_buf,  MAX_TEXT_LENGTH, &text_len);
 
 
-    frame = gtk_frame_new(label_buf);
-
+    frame = gtk_frame_new(NULL);
+    if (label_len > 0) {
+        gtk_frame_set_label(frame, label_buf);
+    }
     text_field_text = gtk_entry_new();
-    gtk_entry_set_text(text_field_text, text_buf);
+    if (text_len > 0) {
+        gtk_label_set_label(text_field_text, text_buf);
+    }
     gtk_entry_set_editable(text_field_text, TRUE);
 
     gtk_widget_show(text_field_text);

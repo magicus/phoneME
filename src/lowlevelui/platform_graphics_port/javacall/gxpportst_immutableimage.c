@@ -41,11 +41,6 @@
 #include <fcntl.h>
 
 
-char *tmpFilename = "/usr/tmp/java.tmp";
-/* uncomment when implementing reading image from buffer - with gdk >= 2.17 */
-//char pic_buf[320*280*4];
-
-
 /**
  * Creates a copy of the specified mutable image
  *
@@ -217,8 +212,8 @@ void gxpport_decodeimmutable_from_selfidentifying(unsigned
 
     *newImmutableImagePtr = gdkPixBuf;
     *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
-    LIMO_TRACE("<<<%s imgHeight=%d imgWidth=%d\n",
-               __FUNCTION__, *imgHeight, *imgWidth);
+    LIMO_TRACE("<<<%s imgHeight=%d imgWidth=%d gdkPixBuf=%x\n",
+               __FUNCTION__, *imgHeight, *imgWidth, gdkPixBuf);
     return;
 }
 
@@ -345,21 +340,52 @@ void gxpport_get_immutable_argb(gxpport_image_native_handle immutableImagePtr,
         int x, int y, int width, int height,
         img_native_error_codes* errorPtr) {
 
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    GdkPixbuf *gdkPixBuf;
+    GdkImage *image;
+    guchar pixel[4];
+    guint32 i, j;
+    guint32 col, row;
+    guchar *pixels, *p;
+    int n_channels;
+    int rowstride;
+    int nwidth, nheight;
+
+
+    LIMO_TRACE(">>>%s src=%x dst=%x offset=%d scanLength=%d "
+               "x=%d y=%d width=%d height=%d\n", __FUNCTION__, immutableImagePtr, rgbBuffer,
+               offset, scanLength,
+               x, y, width, height);
+
+    if (!GDK_IS_PIXBUF(immutableImagePtr)){
+        *errorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;
+        LIMO_TRACE("<<<%s gdk_pix_buf expected!\n", __FUNCTION__);
+        return;
+    }
+
+    nwidth = gdk_pixbuf_get_width(immutableImagePtr);
+    nheight = gdk_pixbuf_get_height(immutableImagePtr);
+    n_channels = gdk_pixbuf_get_n_channels(immutableImagePtr);
+    rowstride = gdk_pixbuf_get_rowstride (immutableImagePtr);
+    pixels = gdk_pixbuf_get_pixels(immutableImagePtr);
+
+    LIMO_TRACE(">>>%s nwidth=%d nheight=%d n_channels=%d rowstride=%d\n",
+               __FUNCTION__, nwidth, nheight, n_channels, rowstride);
+
+    //use image to get pixels
+    for (i = y; i < height; i++) {
+        for (j = x; j < width; j++) {
+            p = pixels + i * rowstride + j * n_channels;
+            pixel[0] = p[0]; //red
+            pixel[1] = p[1]; //green
+            pixel[2] = p[2]; //blue
+            pixel[3] = 0;    //alpha
+            rgbBuffer[i * scanLength + j] = *((guint32*)pixel);
+        }
+    }
+
+
+    *errorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-
-    /* Suppress unused parameter warnings */
-    (void)immutableImagePtr;
-    (void)rgbBuffer;
-    (void)offset;
-    (void)scanLength;
-    (void)x;
-    (void)y;
-    (void)width;
-    (void)height;
-
-    /* Not implemented yet */
-    *errorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
 /**
  * Cleans up any native resources to prepare the image to be garbage collected.

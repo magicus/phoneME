@@ -66,15 +66,10 @@ lfpport_imageitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *event
 
         width = gdk_pixbuf_get_width(gdkPixBuf);
         height = gdk_pixbuf_get_height(gdkPixBuf);
-        /* set drawing area size requrest */
-        gtk_widget_set_size_request(widget, width, height);
 
         LIMO_TRACE("%s drawing: x=%d y=%d width=%d height=%d xdith=%d ydith=%d \n", __FUNCTION__,
                    event->area.x, event->area.y, width, height,
                    event->area.x, event->area.x);
-        /* at this point da is empty, thus its exposed area is not that of an image!
-           Thus image size needs to be extracted from the gdkPixBuf rather than from
-           the exposure event itself */
 
         gdk_draw_rgb_image_dithalign(widget->window,    /* drawable */
                                     widget->style->black_gc, /*gc*/
@@ -89,7 +84,6 @@ lfpport_imageitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *event
         LIMO_TRACE("%s null data\n", __FUNCTION__);
     }
 
-
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return TRUE;
 }
@@ -102,7 +96,9 @@ MidpError lfpport_image_item_show_cb(MidpItem* itemPtr){
     return KNI_OK;
 }
 MidpError lfpport_image_item_hide_cb(MidpItem* itemPtr){
+    GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    gtk_widget_hide_all(widget);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -202,28 +198,37 @@ MidpError lfpport_imageitem_create(MidpItem* itemPtr,
     gchar label_buf[MAX_TEXT_LENGTH];
     int label_len;
     int tfd;
+    gint width, height;
     GError *error = NULL;
 
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s imgPtr=%x\n", __FUNCTION__, imgPtr);
     if (imgPtr == NULL) {
         LIMO_TRACE(">>>%s received null gdkPixBuf\n", __FUNCTION__);
     }
     gdkPixBuf = (GdkPixbuf*)imgPtr;
     pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
-    frame = gtk_frame_new(label_buf);
+    frame = gtk_frame_new(NULL);
+    if (label_len > 0) {
+        gtk_frame_set_label(frame, label_buf);
+    }
     da = gtk_drawing_area_new();
+
+    width = gdk_pixbuf_get_width(gdkPixBuf);
+    height = gdk_pixbuf_get_height(gdkPixBuf);
+    /* set drawing area size requrest */
+    gtk_widget_set_size_request(da, width, height);
     gtk_widget_show(da);
 
     /* TODO:  save appearanceMode */
     gtk_container_add(GTK_CONTAINER (frame), da);
     gtk_object_set_user_data(da, gdkPixBuf);
+    g_object_set_qdata(gdkPixBuf, PIXBUF_QUARK, da);
 
     g_signal_connect(G_OBJECT (da), "expose_event",
                    G_CALLBACK (lfpport_imageitem_expose_event_callback), NULL);
 
     /* add image item to the form */
     form = (GtkWidget*)ownerPtr->frame.widgetPtr;
-    vbox = g_object_get_data(form, USER_KEY);
     vbox = gtk_object_get_user_data(form);
     gtk_box_pack_start(GTK_BOX(vbox),
                        frame,

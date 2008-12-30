@@ -38,11 +38,13 @@
 #define     STUB_MIN_WIDTH      20
 #define     STUB_PREF_HEIGHT    20
 #define     STUB_PREF_WIDTH     20
+#define     MAX_TITLE_LENGTH    64
 
 #define MAX_TEXT_LENGTH 256
 
 #include <stdio.h>  //TODO@gd212247:  remove at release
 #include <fcntl.h>
+#include <string.h>
 #include <syslog.h>
 #include <gtk/gtk.h>
 
@@ -50,6 +52,7 @@ extern char *DEBUG_FNAME;
 extern char debug_buff[1024];
 extern int  debug_fid;
 
+static char *tmpFilename = "/usr/tmp/java.tmp";
 
 #define LIMO_TRACE(...) do { \
                    if (debug_fid < 0 ) \
@@ -60,6 +63,11 @@ extern int  debug_fid;
                    } \
                    } while (0)
 
+
+extern void ps();
+
+#define PIXBUF_QUARK 1  /* must be non-zero!*/
+#define ITEM_BOUND_PAD 4
 
 #endif //_LFPPORT_GTK_H_
 

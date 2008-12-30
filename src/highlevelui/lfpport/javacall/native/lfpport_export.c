@@ -48,39 +48,41 @@ extern gint display_height;
 extern GtkWidget *main_window;
 extern GtkLabel  *ticker;
 extern GMainLoop *main_loop;
+extern GdkPixmap *current_mutable;
 
 #define LFPPORT_SCREEN_HEIGHT       320
 #define LFPPORT_SCREEN_WIDTH        240
-
-/* DS to pass information between GTK and java tasks */
-typedef struct {
-    int is_orientation_reversed;
-    int display_width;
-    int display_height;
-    int font_face;
-    int font_style;
-    int font_size;
-    pthread_mutex_t mutex;  /* protect access to the struct */
-} lfpport_shared_ds;
 
  /**
  * Refresh the given area.  For double buffering purposes.
  */
 void lfpport_refresh(int x, int y, int w, int h){
-    GtkWidget *form;
-    GtkWidget *da;
-    GdkRectangle rect;
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    guchar *pixels;
+    int rowstride;
+    GdkRectangle clipRectangle;
+    GdkGC *gc;
 
-    rect.x = x;
-    rect.y = y;
-    rect.width = w;
-    rect.height = h;
 
-    form = gtk_main_window_get_current_form(main_window);
-    da = gtk_object_get_user_data(form);
+    LIMO_TRACE(">>>%s x=%d y=%d w=%d h=%d\n", __FUNCTION__, x, y, w, h);
 
-    gdk_window_invalidate_rect(da->window, &rect, FALSE);
+    clipRectangle.x = 0;
+    clipRectangle.y = 0;
+    clipRectangle.width = w;
+    clipRectangle.height = h;
+
+    gc = gdk_gc_new(main_window->window);
+    gdk_gc_set_clip_rectangle(gc, &clipRectangle);
+
+    gdk_draw_drawable(main_window->window,
+             gc,
+             current_mutable,
+             x,   /* x */
+             y,   /* y */
+             x,
+             y,
+             w,   /* width */
+             h);  /* height */
+
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 

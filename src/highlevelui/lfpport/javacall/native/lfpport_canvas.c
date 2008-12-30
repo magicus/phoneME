@@ -54,11 +54,10 @@ MidpError canvas_show_cb(MidpFrame* framePtr) {
     return KNI_OK;
 }
 MidpError canvas_hide_and_delete_cb(MidpFrame* framePtr, jboolean onExit) {
+    GtkWidget *widget = (GtkWidget*)framePtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    gtk_widget_hide_all(widget);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-
-    (void)framePtr;
-    (void)onExit;
     return KNI_OK;
 }
 MidpError canvas_set_title_cb(MidpDisplayable* screenPtr,
@@ -67,10 +66,12 @@ MidpError canvas_set_title_cb(MidpDisplayable* screenPtr,
     int len;
     GtkWidget *form;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    pcsl_string_convert_to_utf8(title, buf, MAX_TITLE_LENGTH, &len);
     form = screenPtr->frame.widgetPtr;
-    gtk_form_set_title(GTK_FORM(form), buf);
-    syslog(LOG_INFO, "<<<%s\n", __FUNCTION__);
+    pcsl_string_convert_to_utf8(title, buf, MAX_TITLE_LENGTH, &len);
+    if (len > 0) {
+        gtk_form_set_title(GTK_FORM(form), buf);
+    }
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
@@ -166,12 +167,11 @@ MidpError lfpport_canvas_create(MidpDisplayable* canvasPtr,
 
 
     gtk_object_set_user_data(da, gdk_pix_map);
+    g_object_set_qdata(gdk_pix_map, PIXBUF_QUARK, da);
     gtk_object_set_user_data(form, da);
 
-    gc = gdk_gc_new(((GtkWidget*)da)->window);
-    gtk_object_set_user_data(gdk_pix_map, gc);
+    LIMO_TRACE(">>>%s da=%x gdk_pix_map=%x\n", __FUNCTION__, da, gdk_pix_map);
     gtk_main_window_add_form(main_window, GTK_FORM(form));
-
 
     lfpport_form_set_content_size(canvasPtr,
                                   display_width,
@@ -182,12 +182,12 @@ MidpError lfpport_canvas_create(MidpDisplayable* canvasPtr,
     //TODO:  find a more appropriate location for the following line
     //Located here only because for some unknown reason show(canvas)
     //is not called
-    gtk_main_window_set_current_form(main_window, GTK_FORM(form));
+    //gtk_main_window_set_current_form(main_window, GTK_FORM(form));
 
     gtk_widget_size_request(da, &requisition);
 
-    g_signal_connect(G_OBJECT(da), "expose_event",
-                   G_CALLBACK(lfpport_canvas_expose_event_callback), NULL);
+//     g_signal_connect(G_OBJECT(da), "expose_event",
+//                    G_CALLBACK(lfpport_canvas_expose_event_callback), NULL);
 
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);

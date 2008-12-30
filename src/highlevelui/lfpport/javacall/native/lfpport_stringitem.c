@@ -55,10 +55,9 @@ MidpError lfpport_string_item_show_cb(MidpItem* itemPtr){
     return KNI_OK;
 }
 MidpError lfpport_string_item_hide_cb(MidpItem* itemPtr){
-    GtkWidget *string_item = (GtkWidget*)itemPtr->widgetPtr;
+    GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-
-    gtk_widget_hide((GtkWidget *)string_item);
+    gtk_widget_hide_all(widget);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -164,14 +163,19 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
     pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
     pcsl_string_convert_to_utf8(text, text_buf,  MAX_TEXT_LENGTH, &text_len);
 
-    LIMO_TRACE("%s label=%s text=%s\n", __FUNCTION__, label_buf, text_buf);
+    LIMO_TRACE("%s label=%s label_len=%d text=%s text_len=%d\n",
+               __FUNCTION__, label_buf, label_len, text_buf, text_len);
 
-    frame = gtk_frame_new(label_buf);
-
-    string_item_text = gtk_label_new(text_buf);
+    frame = gtk_frame_new(NULL);
+    if (label_len > 0) {
+        gtk_frame_set_label(frame, label_buf);
+    }
+    string_item_text = gtk_label_new(NULL);
+    if (text_len > 0) {
+        gtk_label_set_text(string_item_text, text_buf);
+    }
     gtk_widget_show(string_item_text);
     gtk_container_add(GTK_CONTAINER (frame), string_item_text);
-
     form = (GtkWidget*)ownerPtr->frame.widgetPtr;
     vbox = gtk_object_get_user_data(form);
     gtk_box_pack_start(GTK_BOX(vbox),

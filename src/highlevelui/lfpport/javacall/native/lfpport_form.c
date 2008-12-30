@@ -73,7 +73,20 @@ MidpError form_show(MidpFrame* framePtr) {
 
 
 MidpError form_hide_and_delete(MidpFrame* framePtr, jboolean onExit) {
+    GtkForm *currentForm, *form;
+
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    form = framePtr->widgetPtr;
+    currentForm = gtk_main_window_get_current_form(main_window);
+    gtk_widget_hide_all(form);
+    if (form == currentForm) {
+        LIMO_TRACE("%s removing current form\n", __FUNCTION__);
+        gtk_main_window_remove_current_form(main_window);
+    }
+    else {
+        LIMO_TRACE("%s removing form\n", __FUNCTION__);
+        gtk_main_window_remove_form(main_window, form);
+    }
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -208,8 +221,7 @@ MidpError lfpport_form_set_current_item(MidpDisplayable* formPtr,
 
 //     form = formPtr->frame.widgetPtr;
 //     LIMO_TRACE("%s formPtr=%x \n", __FUNCTION__, formPtr);
-//     box = g_object_get_data(form, USER_KEY);
-    LIMO_TRACE("%s form=%x box=%x\n", __FUNCTION__, form, box);
+     LIMO_TRACE("%s form=%x box=%x\n", __FUNCTION__, form, box);
 //     gtk_box_pack_start(GTK_BOX (box), (GtkWidget*)itemPtr->widgetPtr, FALSE, FALSE, 0);
 
     gtk_widget_grab_focus((GtkWidget*)itemPtr->widgetPtr);

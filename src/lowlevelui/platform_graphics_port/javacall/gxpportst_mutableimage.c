@@ -30,6 +30,8 @@
 #include "lfpport_gtk.h"
 
 extern GtkWidget *main_window;
+GdkPixmap *current_mutable;
+
 
 #define BITS_PER_PIXEL 8
 
@@ -50,17 +52,20 @@ void gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
                                             img_native_error_codes*
                                             creationErrorPtr) {
     GdkPixmap *gdk_pix_map;
-    LIMO_TRACE(">>>%s width is %d height is %d\n", __FUNCTION__, width, height);
+    int nwidth, nheight;
+    LIMO_TRACE(">>>%s width=%d height=%d\n", __FUNCTION__, width, height);
 
     /* Suppress unused parameter warnings */
-
-    gdk_pix_map = gdk_pixmap_new(main_window, width, height, -1);
+    gdk_pix_map = gdk_pixmap_new(NULL, width, height, 24);
     *newImagePtr = gdk_pix_map;
+    current_mutable = gdk_pix_map;
 
+    gdk_drawable_get_size(gdk_pix_map, &nwidth, &nheight);
+    LIMO_TRACE("%s gdk_pix_map size: width=%d height=%d\n", __FUNCTION__, nwidth, nheight);
 
     /* Not yet implemented */
     *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
-    LIMO_TRACE("<<<%s newImagePtr=%x\n", __FUNCTION__, newImagePtr);
+    LIMO_TRACE("<<<%s newImagePtr=%x\n", __FUNCTION__, *newImagePtr);
 }
 
 /**
@@ -79,20 +84,52 @@ void gxpport_render_mutableimage(gxpport_mutableimage_native_handle srcImagePtr,
 				 gxpport_mutableimage_native_handle dstImagePtr,
 				 const jshort *clip,
 				 int x_dest, int y_dest) {
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    /* Suppress unused parameter warnings */
-    (void)clip;
+    guchar *pixels;
+    int rowstride;
+    GdkPixbuf *gdkPixBuf;
 
-    /* TODO:  replace main_window with something real */
-    gdk_draw_drawable(dstImagePtr,
-                         main_window->style->fg_gc[GTK_WIDGET_STATE (main_window)],
-                         srcImagePtr,
-                         clip[0],   /* x */
-                         clip[1],   /* y */
-                         x_dest,
-                         y_dest,
-                         clip[2],   /* width */
-                         clip[3]);  /* height */
+    LIMO_TRACE(">>>%s srcImagePtr=%x dstImagePtr=%x clip[0]=%d clip[1]=%d clip[2]=%d clip[3]=%d\n",
+               __FUNCTION__, srcImagePtr, dstImagePtr, clip[0], clip[1], clip[2], clip[3]);
+
+    //if src is GdkPixbuf
+    if (GDK_IS_PIXBUF(srcImagePtr)) {
+        LIMO_TRACE("%s rendering pixbuf\n", __FUNCTION__);
+        gdkPixBuf = srcImagePtr;
+        rowstride = gdk_pixbuf_get_rowstride(gdkPixBuf);
+        pixels = gdk_pixbuf_get_pixels(gdkPixBuf);
+
+        gdk_draw_rgb_image_dithalign(dstImagePtr,    /* drawable */
+                                    main_window->style->black_gc, /*gc*/
+                                    clip[0], clip[1],   /*top left x, y*/
+                                    clip[2], clip[3], /*width, height */
+                                    GDK_RGB_DITHER_NORMAL,
+                                    pixels, rowstride,
+                                    0, 0);/*offset for dither*/
+
+    }
+    else if (GDK_IS_PIXMAP(srcImagePtr)) {
+        LIMO_TRACE("%s rendering pixmap\n", __FUNCTION__);
+        /* TODO:  replace main_window with something real */
+
+        if (!dstImagePtr) {
+            gdk_draw_drawable(main_window->window,
+                 main_window->style->fg_gc[GTK_STATE_NORMAL],
+                 srcImagePtr,
+                 clip[0],   /* x */
+                 clip[1],   /* y */
+                 x_dest,
+                 y_dest,
+                 clip[2],   /* width */
+                 clip[3]);  /* height */
+        }
+        else {
+            //TODO
+        }
+
+    } else {
+        LIMO_TRACE("%s unknown source\n", __FUNCTION__);
+    }
+
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 

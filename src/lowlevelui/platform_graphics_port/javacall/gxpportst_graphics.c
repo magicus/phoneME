@@ -60,6 +60,8 @@ extern MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
                int face, int style, int size);
 
 
+extern GdkPixmap *current_mutable;
+
 /**
  * Draw triangle
  *
@@ -154,29 +156,88 @@ void gxpport_copy_area(
     (void)y_dest;
 }
 
+int bufPrinted = 0;
+
 /**
  * Draw image in RGB format
  */
 void gxpport_draw_rgb(
-                            const jshort *clip,
-                            gxpport_mutableimage_native_handle dst, jint *rgbData,
-                            jint offset, jint scanlen, jint x, jint y,
-                            jint width, jint height, jboolean processAlpha) {
+                        const jshort *clip,
+                        gxpport_mutableimage_native_handle dst, jint *rgbData,
+                        jint offset, jint scanlen, jint x, jint y,
+                        jint width, jint height, jboolean processAlpha) {
+    GdkPixmap *gdk_pix_map;
+    GdkPixmap *src_pix_map;
+    GtkWidget *da;
+    GtkWidget *form;
+    GdkGC *gc;
+    int tfd;
+    GdkColor gdkColor;
+    jint nwidth, nheight;
+    int length;
+    GdkPixbuf *gdkPixBuf;
+    guchar *pixels;
+    int rowstride;
+    GError *error = NULL;
+    GdkImage *image;
+    int i,j;
+    int row;
 
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s dst=%x rgbData=%x offset=%d scanlen=%d x=%d y=%d "
+               "width=%d height=%d processAlpha=%d\n", __FUNCTION__, dst, rgbData,
+               offset, scanlen, x, y, width, height, processAlpha);
+
+    if (!dst) {
+        form = gtk_main_window_get_current_form(main_window);
+        da = gtk_object_get_user_data(form);
+        if (!GTK_IS_DRAWING_AREA(da)) {
+            LIMO_TRACE("%s Expecting drawing area from canvas.  Returning.\n", __FUNCTION__);
+            return;
+        }
+        gdk_pix_map = gtk_object_get_user_data(da);
+        if (!GDK_IS_PIXMAP(dst)) {
+            LIMO_TRACE("%s GdkPixmap expected from canvas!\n", __FUNCTION__);
+            return;
+        }
+    }
+    else {
+        if (!GDK_IS_PIXMAP(dst)) {
+            LIMO_TRACE("%s GdkPixmap expected as dst!\n", __FUNCTION__);
+            return;
+        }
+        gdk_pix_map = (GdkPixmap*)dst;
+        da = g_object_get_qdata(gdk_pix_map, PIXBUF_QUARK);
+        LIMO_TRACE("%s da=%x gdk_pix_map=%x\n", __FUNCTION__, da, gdk_pix_map);
+        if (!GTK_IS_DRAWING_AREA(da)) {
+            /*draw directly on screen*/
+            //gdk_pix_map = main_window->window;
+            gdk_pix_map = current_mutable;
+            da = main_window;
+            LIMO_TRACE("%s Drawing directly on main canvas\n", __FUNCTION__);
+        }
+    }
+
+    gc = gdk_gc_new(da->window);
+
+    if (!bufPrinted) {
+        bufPrinted = 1;
+        for (i = y; i < y + height; i++) {
+            LIMO_TRACE("%s rgbData[%d][0]=%x rgbData[%d][1]=%x rgbData[%d][2]=%x\n",
+                       __FUNCTION__, i, rgbData[i*width], i, rgbData[i*width+1], i, rgbData[i*width+2]);
+        }
+    }
+
+    gdk_draw_rgb_32_image(gdk_pix_map,
+                          gc,
+                          x,
+                          y,
+                          width,
+                          height,
+                          GDK_RGB_DITHER_NORMAL,
+                          rgbData,
+                          scanlen * 4);
+
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-
-    /* Suppress unused parameter warnings */
-    (void)clip;
-    (void)dst;
-    (void)rgbData;
-    (void)offset;
-    (void)scanlen;
-    (void)x;
-    (void)y;
-    (void)width;
-    (void)height;
-    (void)processAlpha;
 }
 
 /**
@@ -271,7 +332,7 @@ void gxpport_draw_rect(
     GdkLineStyle lineStyle;
     GdkRectangle clipRectangle;
 
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s dst=%x\n", __FUNCTION__, dst);
     LIMO_TRACE(">>>%s clip is %d, %d, %d, %d\n", __FUNCTION__, clip[0], clip[1], clip[2], clip[3]);
 
     if (!dst) {
@@ -333,48 +394,64 @@ void gxpport_fill_rect(
     GdkLineStyle lineStyle;
     GdkRectangle clipRectangle;
 
-    LIMO_TRACE(">>>%s dst=%x\n", __FUNCTION__, dst);
+    LIMO_TRACE(">>>%s dst=%x x=%d y=%d width=%d height=%d\n",
+               __FUNCTION__, dst, x, y, width, height);
     if (!dst) {
         form = gtk_main_window_get_current_form(main_window);
         da = gtk_object_get_user_data(form);
         if (!GTK_IS_DRAWING_AREA(da)) {
-            LIMO_TRACE("%s extracted unepxected not drawing area.  Returning.\n", __FUNCTION__);
+            LIMO_TRACE("%s Expecting drawing area from canvas.  Returning.\n", __FUNCTION__);
             return;
         }
-
         gdk_pix_map = gtk_object_get_user_data(da);
-        gc = gdk_gc_new(da->window);
-
-        gdkColor.pixel = pixel;    /* 0x00RRGGBB */
-        gdkColor.red = gdkColor.green = gdkColor.blue = 0;
-        gdk_gc_set_foreground(gc, &gdkColor);
-
-        lineStyle = dotted ? GDK_LINE_ON_OFF_DASH : GDK_LINE_SOLID;
-
-        gdk_gc_set_line_attributes(gc,
-                                   1,   /* line_width */
-                                   lineStyle,   /* line_style */
-                                   GDK_CAP_BUTT, /* cap_style */
-                                   GDK_JOIN_BEVEL); /* join_style */
-
-        clipRectangle.x = clip[0];
-        clipRectangle.y = clip[1];
-        clipRectangle.width = clip[2] - clip[0];
-        clipRectangle.height = clip[3] - clip[1];
-        gdk_gc_set_clip_rectangle(gc, &clipRectangle);
-
-        LIMO_TRACE("%s clip.x=%d clip.y=%d clip.width=%d clip.height=%d\n",
-                   __FUNCTION__, clip[0], clip[1], clip[2], clip[3]);
-        gdk_draw_rectangle(gdk_pix_map,
-                              gc,
-                              TRUE,
-                              x, y,
-                              width,
-                              height);
+        if (!GDK_IS_PIXMAP(dst)) {
+            LIMO_TRACE("%s GdkPixmap expected from canvas!\n", __FUNCTION__);
+            return;
+        }
     }
     else {
-        //TODO:  implement drawing to form-specific canvas
+        if (!GDK_IS_PIXMAP(dst)) {
+            LIMO_TRACE("%s GdkPixmap expected as dst!\n", __FUNCTION__);
+            return;
+        }
+        gdk_pix_map = (GdkPixmap*)dst;
+        da = g_object_get_qdata(gdk_pix_map, PIXBUF_QUARK);
+        LIMO_TRACE("%s da=%x gdk_pix_map=%x\n", __FUNCTION__, da, gdk_pix_map);
+        if (!GTK_IS_DRAWING_AREA(da)) {
+            /*draw directly on screen*/
+            //gdk_pix_map = main_window->window;
+            gdk_pix_map = current_mutable;
+            da = main_window;
+            LIMO_TRACE("%s Drawing directly on main canvas\n", __FUNCTION__);
+        }
     }
+    gc = gdk_gc_new(da->window);
+    gdkColor.pixel = pixel;    /* 0x00RRGGBB */
+    gdkColor.red = gdkColor.green = gdkColor.blue = 0;
+    gdk_gc_set_foreground(gc, &gdkColor);
+
+    lineStyle = dotted ? GDK_LINE_ON_OFF_DASH : GDK_LINE_SOLID;
+
+    gdk_gc_set_line_attributes(gc,
+                               1,   /* line_width */
+                               lineStyle,   /* line_style */
+                               GDK_CAP_BUTT, /* cap_style */
+                               GDK_JOIN_BEVEL); /* join_style */
+
+    clipRectangle.x = clip[0];
+    clipRectangle.y = clip[1];
+    clipRectangle.width = clip[2] - clip[0];
+    clipRectangle.height = clip[3] - clip[1];
+    gdk_gc_set_clip_rectangle(gc, &clipRectangle);
+
+    LIMO_TRACE("%s clip.x=%d clip.y=%d clip.width=%d clip.height=%d\n",
+               __FUNCTION__, clip[0], clip[1], clip[2], clip[3]);
+    gdk_draw_rectangle(gdk_pix_map,
+                          gc,
+                          TRUE,
+                          x, y,
+                          width,
+                          height);
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
@@ -640,7 +717,7 @@ void gxpport_draw_chars(
     int text_len;
     int i;
 
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s dst=%x\n", __FUNCTION__, dst);
 
     status = lfpport_get_font(&desc,
                               face,
@@ -661,14 +738,36 @@ void gxpport_draw_chars(
     //set anchor
 
     //draw text
-    form = gtk_main_window_get_current_form(main_window);
-    da = gtk_object_get_user_data(form);
-    if (!GTK_IS_DRAWING_AREA(da)) {
-        LIMO_TRACE("%s extracted unepxected not drawing area.  Returning.\n", __FUNCTION__);
-        return;
+    if (!dst) {
+        form = gtk_main_window_get_current_form(main_window);
+        da = gtk_object_get_user_data(form);
+        if (!GTK_IS_DRAWING_AREA(da)) {
+            LIMO_TRACE("%s extracted unepxected not drawing area.  Returning.\n", __FUNCTION__);
+            return;
+        }
+        gdk_pix_map = gtk_object_get_user_data(da);
+        if (!GDK_IS_PIXMAP(dst)) {
+            LIMO_TRACE("%s GdkPixmap expected!\n", __FUNCTION__);
+            return;
+        }
     }
-    gdk_pix_map = gtk_object_get_user_data(da);
-    gc = gdk_gc_new(da->window);
+    else {
+        if (!GDK_IS_PIXMAP(dst)) {
+            LIMO_TRACE("%s GdkPixmap expected!\n", __FUNCTION__);
+            return;
+        }
+        gdk_pix_map = (GdkPixmap*)dst;
+        da = g_object_get_qdata(gdk_pix_map, PIXBUF_QUARK);
+        LIMO_TRACE("%s da=%x gdk_pix_map=%x\n", __FUNCTION__, da, gdk_pix_map);
+        if (!GTK_IS_DRAWING_AREA(da)) {
+            /*draw directly on screen*/
+            //gdk_pix_map = main_window->window;
+            gdk_pix_map = current_mutable;
+            da = main_window;
+            LIMO_TRACE("%s Drawing directly on main canvas\n", __FUNCTION__);
+        }
+    }
+
     /* Get the default renderer for the screen, and set it up for drawing  */
     renderer = gdk_pango_renderer_get_default(gtk_widget_get_screen(da));
     gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER (renderer), gdk_pix_map);
