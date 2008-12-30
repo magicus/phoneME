@@ -30,9 +30,10 @@
 #if ENABLE_MEMORY_MONITOR
 void MemoryMonitor::notify_object( const OopDesc* obj, const int size,
                                    const bool create ) {
+  if (!GenerateROMImage) {
   FixedArrayOutputStream stream;
   jlong t = Os::java_time_millis();
-  stream.print( "%lld %c 0x%x %d ", t, create ? '+' : '-', obj, size );
+  stream.print( "%I64d %c 0x%x %d ", t, create ? '+' : '-', obj, size );
 
   Oop::Raw o( (OopDesc*) obj );
   
@@ -44,10 +45,10 @@ void MemoryMonitor::notify_object( const OopDesc* obj, const int size,
     default:                  // Java object
       if( blueprint == Universe::string_class()->obj() ) {
         stream.print( "String\n  " );
-        o.print_value_on( &stream );
+//        o.print_value_on( &stream );
       } else if( blueprint == Universe::java_lang_Class_class()->obj() ) {
           stream.print( "Java class\n  " );
-          o.print_value_on( &stream );
+//          o.print_value_on( &stream );
       } else {
         JavaClass::Raw klass( blueprint );
         ClassInfo::Raw info = klass().class_info();
@@ -64,10 +65,10 @@ void MemoryMonitor::notify_object( const OopDesc* obj, const int size,
     CASE( type_array_2      ) // short[], char[]
     CASE( type_array_4      ) // int[], float[]
     CASE( type_array_8      ) // long[], double[]    
-    CASE( symbol            ) // a symbol
       o.print_value_on( &stream );
       break;
 
+    CASE( symbol            ) // a symbol
     CASE( class_info        ) // a class info
     CASE( execution_stack   ) // an execution stack
     CASE( task_mirror       ) // an isolate task mirror
@@ -90,5 +91,6 @@ void MemoryMonitor::notify_object( const OopDesc* obj, const int size,
   }
   #undef CASE
   tty->print_cr( stream.array() );
+  }
 }
 #endif

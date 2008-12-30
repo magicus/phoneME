@@ -141,7 +141,7 @@ inline void ObjectHeap::notify_objects_disposed ( const OopDesc* const* from,
                                                   const bool all ) {
   do {
     const int size = ((const OopDesc*)from)->object_size();
-    if( all || test_bit_for( (OopDesc**) from ) ) {
+    if( all || !test_bit_for( (OopDesc**) from ) ) {
       MemoryMonitor::notify_object( (const OopDesc*)from, size, false );
     }
     from = DERIVED( const OopDesc* const*, from, size );
