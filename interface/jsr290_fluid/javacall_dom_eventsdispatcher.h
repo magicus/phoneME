@@ -56,9 +56,6 @@ extern "C" {
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param type The event type for which the user is registering
- * @param listener The <code>listener</code> parameter takes an interface 
- *   implemented by the user which contains the methods to be called 
- *   when the event occurs.
  * @param use_capture If true, <code>use_capture</code> indicates that the 
  *   user wishes to initiate capture. After initiating capture, all 
  *   events of the specified type will be dispatched to the registered 
@@ -66,6 +63,9 @@ extern "C" {
  *   <code>EventTargets</code> beneath them in the tree. Events which 
  *   are bubbling upward through the tree will not trigger an 
  *   <code>EventListener</code> designated to use capture.
+ * @param ret_value The <code>ret_value</code> parameter points to the
+ *   variable which will receive the handle to EventListener
+ *   registration.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -96,15 +96,9 @@ javacall_dom_eventsdispatcher_add_event_listener_start(javacall_handle handle,
  * <code>removeEventListener</code> method. 
  * 
  * @param context The context saved during asynchronous operation.
- * @param listener The <code>listener</code> parameter takes an interface 
- *   implemented by the user which contains the methods to be called 
- *   when the event occurs.
- *   user wishes to initiate capture. After initiating capture, all 
- *   events of the specified type will be dispatched to the registered 
- *   <code>EventListener</code> before being dispatched to any 
- *   <code>EventTargets</code> beneath them in the tree. Events which 
- *   are bubbling upward through the tree will not trigger an 
- *   <code>EventListener</code> designated to use capture.
+ * @param ret_value The <code>ret_value</code> parameter points to the
+ *   variable which will receive the handle to EventListener
+ *   registration.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -168,16 +162,6 @@ javacall_dom_eventsdispatcher_remove_event_listener_start(javacall_handle handle
  * the <code>EventTarget</code> has no effect.
  * 
  * @param context The context saved during asynchronous operation.
- * @param type Specifies the event type of the <code>EventListener</code> 
- *   being removed. 
- * @param listener The <code>EventListener</code> parameter indicates the 
- *   <code>EventListener </code> to be removed. 
- * @param useCapture Specifies whether the <code>EventListener</code> 
- *   being removed was registered as a capturing listener or not. If a 
- *   listener was registered twice, one with capture and one without, 
- *   each must be removed separately. Removal of a capturing listener 
- *   does not affect a non-capturing version of the same listener, and 
- *   vice versa. 
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_WOULD_BLOCK caller must call the 
@@ -190,20 +174,13 @@ javacall_dom_eventsdispatcher_remove_event_listener_finish(void *context);
 
 
 /**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code
- * OR this method notify the <code>EngineThread</code> that handling of event is
- * completed.
+ * Indicates the completion of handle event request processing by
+ * Java application
  *
- * @param invocation_id Invocation identifier which MUST be used in the
- *                  corresponding javanotify function.
- * @param context The context saved during asynchronous operation.
- * @param requestId The <code>HandleEventRequest</code> parameter indicates the
- *   that handle event request is completed.
+ * @param request pointer to native HandleEventRequest class
  *
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_WOULD_BLOCK caller must call the
- *             javacall_dom_eventsdispatcher_handle_completed_finish function to
- *             complete the operation,
+ *         JAVACALL_FAIL if an error encountered
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
