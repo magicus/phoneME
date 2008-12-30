@@ -1,0 +1,164 @@
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+ifeq ($(TARGET_VM), cdc_vm)
+  USE_NATIVE_PUSH=false
+else
+  USE_NATIVE_PUSH?=false
+endif
+
+ifeq ($(USE_JUMP), true)
+  USE_PUSH_SHARED_IMPL=true
+endif
+
+# Adds to global SUBSYSTEMS list
+#
+PUSH_SUBSYSTEM = push
+SUBSYSTEMS += $(PUSH_SUBSYSTEM)
+
+SUBSYSTEM_PUSH_DIR = $(SUBSYSTEM_DIR)/$(PUSH_SUBSYSTEM)
+
+  
+#####################################################################
+# Push API Library
+# Description: Push Registry
+#####################################################################
+
+include $(SUBSYSTEM_PUSH_DIR)/push_api/lib.gmk
+
+#####################################################################
+# JUMP Push Library
+# Description: JUMP variant of stack implementation
+#####################################################################
+
+ifeq ($(USE_NATIVE_PUSH), false)
+    ifeq ($(TARGET_VM), cdc_vm)
+        ifeq ($(USE_PUSH_SHARED_IMPL), true)
+            include $(SUBSYSTEM_PUSH_DIR)/cdc_application/share/lib.gmk
+        endif
+        ifeq ($(USE_JUMP), true)
+            include $(SUBSYSTEM_PUSH_DIR)/cdc_application/jump/lib.gmk
+        endif
+    endif
+endif
+
+#####################################################################
+# Native Push API Port Library
+# Description: Push Registry and Listener
+#####################################################################
+
+ifeq ($(USE_NATIVE_PUSH), true)
+include $(SUBSYSTEM_PUSH_DIR)/nativepush_port/lib.gmk
+endif
+
+#####################################################################
+# Push Server Library
+# Description: Push database and resource manipulation logic
+#####################################################################
+
+include $(SUBSYSTEM_PUSH_DIR)/push_server/lib.gmk
+
+#####################################################################
+# Push Timer Library
+# Description: Timer utility for push timer alarms
+#####################################################################
+
+include $(SUBSYSTEM_PUSH_DIR)/push_timer/lib.gmk
+
+
+####################################################################
+
+SUBSYSTEM_PUSH_I3TEST_JAVA_FILES = \
+    $(SUBSYSTEM_PUSH_API_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_PUSH_GCF_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_CDC_SHARE_PUSH_I3TEST_JAVA_FILES)
+    $(SUBSYSTEM_JUMP_PUSH_I3TEST_JAVA_FILES)
+
+SUBSYSTEM_PUSH_JUNIT_JAVA_FILES = \
+    $(SUBSYSTEM_PUSH_GCF_JUNIT_JAVA_FILES) \
+    $(SUBSYSTEM_CDC_SHARE_PUSH_JUNIT_JAVA_FILES) \
+    $(SUBSYSTEM_JUMP_PUSH_JUNIT_JAVA_FILES)
+
+SUBSYSTEM_PUSH_JAVA_FILES = \
+    $(SUBSYSTEM_PUSH_API_JAVA_FILES) \
+    $(SUBSYSTEM_PUSH_GCF_JAVA_FILES) \
+    $(SUBSYSTEM_CDC_SHARE_PUSH_JAVA_FILES) \
+    $(SUBSYSTEM_JUMP_PUSH_JAVA_FILES) \
+    $(SUBSYSTEM_NATIVEPUSH_PORT_JAVA_FILES) \
+    $(SUBSYSTEM_PUSH_SERVER_JAVA_FILES) \
+    $(SUBSYSTEM_PUSH_TIMER_JAVA_FILES)
+
+SUBSYSTEM_PUSH_NATIVE_FILES = \
+    $(SUBSYSTEM_PUSH_API_NATIVE_FILES) \
+    $(SUBSYSTEM_PUSH_GCF_NATIVE_FILES) \
+    $(SUBSYSTEM_CDC_SHARE_PUSH_NATIVE_FILES) \
+    $(SUBSYSTEM_JUMP_PUSH_NATIVE_FILES) \
+    $(SUBSYSTEM_NATIVEPUSH_PORT_NATIVE_FILES) \
+    $(SUBSYSTEM_PUSH_SERVER_NATIVE_FILES) \
+    $(SUBSYSTEM_PUSH_TIMER_NATIVE_FILES)
+    
+SUBSYSTEM_PUSH_EXTRA_INCLUDES = \
+    $(SUBSYSTEM_PUSH_API_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_PUSH_GCF_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_CDC_SHARE_PUSH_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_JUMP_PUSH_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_NATIVEPUSH_PORT_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_PUSH_SERVER_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_PUSH_TIMER_EXTRA_INCLUDES)
+
+############################################################################
+
+# Javadoc source path
+LIB_PUSH_API_SOURCEPATH = $(SUBSYSTEM_PUSH_DIR)/push_api/$(LIB_PUSH_API_IMPL)/classes$(PATHSEP)$(SUBSYSTEM_PUSH_DIR)/push_api/classes
+
+SUBSYSTEM_PUSH_API_PACKAGES = \
+    com.sun.midp.io.j2me.push
+    
+ifeq ($(TARGET_VM), cdc_vm)
+    SUBSYSTEM_PUSH_API_PACKAGES += com.sun.midp.push.reservation
+endif
+
+MIDP_JAVADOC_SOURCEPATH += \
+    $(LIB_PUSH_API_SOURCEPATH) \
+    $(LIB_PUSH_GCF_SOURCEPATH) \
+    $(LIB_CDC_SHARE_PUSH_SOURCEPATH) \
+    $(LIB_JUMP_PUSH_SOURCEPATH)
+
+MIDP_JAVADOC_PACKAGES += \
+    $(SUBSYSTEM_PUSH_API_PACKAGES) \
+    $(SUBSYSTEM_PUSH_GCF_PACKAGES) \
+    $(SUBSYSTEM_CDC_SHARE_PUSH_PACKAGES) \
+    $(SUBSYSTEM_JUMP_PUSH_PACKAGES)

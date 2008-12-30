@@ -1,0 +1,194 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+SUBSYSTEM_PROTOCOL_DIR = $(SUBSYSTEM_DIR)/protocol
+
+#####################################################################
+# Generic Connection Framework
+# Description: GCF classes not specific to any particular protocol
+#####################################################################
+
+include $(SUBSYSTEM_PROTOCOL_DIR)/gcf/$(LIB_MAKE_FILE)
+
+#####################################################################
+# File
+# Description: GCF File protocol
+#####################################################################
+
+include $(SUBSYSTEM_PROTOCOL_DIR)/file/$(LIB_MAKE_FILE)
+
+#####################################################################
+# HTTP
+# Description: GCF HTTP protocol
+#####################################################################
+include $(SUBSYSTEM_PROTOCOL_DIR)/http/$(LIB_MAKE_FILE)
+
+#####################################################################
+# HTTPS
+# Description: GCF HTTPS protocol
+#####################################################################
+include $(SUBSYSTEM_PROTOCOL_DIR)/https/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Serial
+# Description: GCF Serial (comm) protocol.
+#####################################################################
+include $(SUBSYSTEM_PROTOCOL_DIR)/serial/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Serial port
+# Description: GCF Serial (comm) protocol porting layer
+#              implementation.
+#####################################################################
+include $(SUBSYSTEM_PROTOCOL_DIR)/serial_port/$(LIB_MAKE_FILE)
+
+#####################################################################
+# TCP client sockets
+# Description: GCF TCP client socket protocol
+#####################################################################
+include $(SUBSYSTEM_PROTOCOL_DIR)/socket/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Sockets platform layer notification
+# Description: Implementation of platform layer callbacks
+#####################################################################
+include $(SUBSYSTEM_PROTOCOL_DIR)/socket_notify/$(LIB_MAKE_FILE)
+
+#####################################################################
+# TCP server sockets
+# Description: GCF TCP server socket protocol
+#####################################################################
+include $(SUBSYSTEM_PROTOCOL_DIR)/ssocket/$(LIB_MAKE_FILE)
+
+#####################################################################
+# SSL
+# Description: GCF SSL protocol
+#####################################################################
+include $(SUBSYSTEM_PROTOCOL_DIR)/ssl/$(LIB_MAKE_FILE)
+
+#####################################################################
+# UDP
+# Description: GCF UDP protocol
+#####################################################################
+include $(SUBSYSTEM_PROTOCOL_DIR)/udp/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Inter-application communication
+# Description: PIPE protocol
+#####################################################################
+include $(SUBSYSTEM_PROTOCOL_DIR)/pipe/$(LIB_MAKE_FILE)
+
+SUBSYSTEM_PROTOCOL_JAVA_FILES = $(SUBSYSTEM_GCF_JAVA_FILES) \
+	$(SUBSYSTEM_FILE_JAVA_FILES) \
+	$(SUBSYSTEM_HTTP_JAVA_FILES) \
+	$(SUBSYSTEM_HTTPS_JAVA_FILES) \
+	$(SUBSYSTEM_SERIAL_JAVA_FILES) \
+	$(SUBSYSTEM_SERIAL_PORT_JAVA_FILES) \
+	$(SUBSYSTEM_SOCKET_JAVA_FILES) \
+	$(SUBSYSTEM_SOCKET_NOTIFY_JAVA_FILES) \
+	$(SUBSYSTEM_SSOCKET_JAVA_FILES) \
+	$(SUBSYSTEM_SECURE_CONNECTION_JAVA_FILES) \
+	$(SUBSYSTEM_UDP_JAVA_FILES) \
+	$(SUBSYSTEM_PIPE_JAVA_FILES)
+
+SUBSYSTEM_PROTOCOL_I3TEST_JAVA_FILES = $(SUBSYSTEM_GCF_I3TEST_JAVA_FILES) \
+	$(SUBSYSTEM_FILE_I3TEST_JAVA_FILES) \
+	$(SUBSYSTEM_HTTP_I3TEST_JAVA_FILES) \
+	$(SUBSYSTEM_HTTPS_I3TEST_JAVA_FILES) \
+	$(SUBSYSTEM_SERIAL_I3TEST_JAVA_FILES) \
+	$(SUBSYSTEM_SERIAL_PORT_I3TEST_JAVA_FILES) \
+	$(SUBSYSTEM_SOCKET_I3TEST_JAVA_FILES) \
+	$(SUBSYSTEM_SOCKET_NOTIFY_I3TEST_JAVA_FILES) \
+	$(SUBSYSTEM_SSOCKET_I3TEST_JAVA_FILES) \
+	$(SUBSYSTEM_SECURE_CONNECTION_I3TEST_JAVA_FILES) \
+	$(SUBSYSTEM_UDP_I3TEST_JAVA_FILES) \
+	$(SUBSYSTEM_PIPE_I3TEST_JAVA_FILES)
+
+SUBSYSTEM_PROTOCOL_NATIVE_FILES = $(SUBSYSTEM_GCF_NATIVE_FILES) \
+	$(SUBSYSTEM_FILE_NATIVE_FILES) \
+	$(SUBSYSTEM_HTTP_NATIVE_FILES) \
+	$(SUBSYSTEM_HTTPS_NATIVE_FILES) \
+	$(SUBSYSTEM_SERIAL_NATIVE_FILES) \
+	$(SUBSYSTEM_SERIAL_PORT_NATIVE_FILES) \
+	$(SUBSYSTEM_SOCKET_NATIVE_FILES) \
+	$(SUBSYSTEM_SOCKET_NOTIFY_NATIVE_FILES) \
+	$(SUBSYSTEM_SSOCKET_NATIVE_FILES) \
+	$(SUBSYSTEM_SECURE_CONNECTION_NATIVE_FILES) \
+	$(SUBSYSTEM_UDP_NATIVE_FILES) \
+	$(SUBSYSTEM_PIPE_NATIVE_FILES)
+
+SUBSYSTEM_PROTOCOL_EXTRA_INCLUDES += $(SUBSYSTEM_GCF_EXTRA_INCLUDES) \
+	$(SUBSYSTEM_FILE_EXTRA_INCLUDES) \
+	$(SUBSYSTEM_HTTP_EXTRA_INCLUDES) \
+	$(SUBSYSTEM_HTTPS_EXTRA_INCLUDES) \
+	$(SUBSYSTEM_SERIAL_EXTRA_INCLUDES) \
+	$(SUBSYSTEM_SERIAL_PORT_EXTRA_INCLUDES) \
+	$(SUBSYSTEM_SOCKET_EXTRA_INCLUDES) \
+	$(SUBSYSTEM_SOCKET_NOTIFY_EXTRA_INCLUDES) \
+	$(SUBSYSTEM_SSOCKET_EXTRA_INCLUDES) \
+	$(SUBSYSTEM_SECURE_CONNECTION_EXTRA_INCLUDES) \
+	$(SUBSYSTEM_UDP_EXTRA_INCLUDES) \
+	$(SUBSYSTEM_PIPE_EXTRA_INCLUDES)
+
+SUBSYSTEM_PROTOCOL_EXTRA_CFLAGS += $(SUBSYSTEM_GCF_EXTRA_CFLAGS) \
+	$(SUBSYSTEM_FILE_EXTRA_CFLAGS) \
+	$(SUBSYSTEM_HTTP_EXTRA_CFLAGS) \
+	$(SUBSYSTEM_HTTPS_EXTRA_CFLAGS) \
+	$(SUBSYSTEM_SERIAL_EXTRA_CFLAGS) \
+	$(SUBSYSTEM_SERIAL_PORT_EXTRA_CFLAGS) \
+	$(SUBSYSTEM_SOCKET_EXTRA_INCLUDES) \
+	$(SUBSYSTEM_SOCKET_NOTIFY_EXTRA_CFLAGS) \
+	$(SUBSYSTEM_SSOCKET_EXTRA_CFLAGS) \
+	$(SUBSYSTEM_SECURE_CONNECTION_EXTRA_CFLAGS) \
+	$(SUBSYSTEM_UDP_EXTRA_CFLAGS) \
+	$(SUBSYSTEM_PIPE_EXTRA_CFLAGS)
+
+ifeq ($(USE_NETMON), true)
+#####################################################################
+# Network monitor
+# Description: Notifying the SDK/WTK about any protocol action.
+#####################################################################
+include $(SUBSYSTEM_PROTOCOL_DIR)/netmon/$(LIB_MAKE_FILE)
+
+SUBSYSTEM_PROTOCOL_JAVA_FILES += \
+	$(SUBSYSTEM_NETMON_JAVA_FILES)
+
+SUBSYSTEM_PROTOCOL_NATIVE_FILES += \
+	$(SUBSYSTEM_NETMON_NATIVE_FILES)
+
+SUBSYSTEM_PROTOCOL_EXTRA_INCLUDES += \
+    $(SUBSYSTEM_NETMON_EXTRA_INCLUDES)
+
+endif
