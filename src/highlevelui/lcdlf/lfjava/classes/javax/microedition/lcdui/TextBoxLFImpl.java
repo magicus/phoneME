@@ -584,9 +584,16 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
     void uCallHideNotify() {
         super.uCallHideNotify();
         if (editable) {
-            disableInput();
-            // IMPL_NOTE: problem with synchronization on layers and LCDUILock
-            disableLayers();
+            // TextBox can be hidden on activation of input method with
+            // own Displayable, for example symbol table input method
+            TextInputSession is = getInputSession();
+            InputMode im = (is != null) ? is.getCurrentInputMode() : null;
+            if (im == null || !im.hasDisplayable()) {
+                disableInput();
+                // IMPL_NOTE: problem with synchronization on layers and LCDUILock
+                showIMPopup = false;
+                disableLayers();
+            }
         }
     }
 
@@ -702,10 +709,16 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
     void uCallShowNotify() {
         super.uCallShowNotify();
         if (editable) {
-            enableInput();
-            // IMPL_NOTE: problem with synchronization on layers and LCDUILock
-            showIMPopup = true;
-            enableLayers();
+            // TextBox can be shown after deactivation of input method with
+            // own Displayable, for example symbol table input method
+            TextInputSession is = getInputSession();
+            InputMode im = (is != null) ? is.getCurrentInputMode() : null;
+            if (im == null || !im.hasDisplayable()) {
+                enableInput();
+                // IMPL_NOTE: problem with synchronization on layers and LCDUILock
+                showIMPopup = true;
+                enableLayers();
+            }
         }
     }
     

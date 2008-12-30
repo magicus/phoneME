@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -24,23 +24,22 @@
 
 package com.sun.midp.suite;
 
-import com.sun.midp.installer.InvalidJadException;
+import java.util.Hashtable;
+
 import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.util.Properties;
 
 /**
  * API interface to be implemented by classes which want to be notified of
  * MIDlet lifecycle events.
  */
 public interface LifeCycleListener {
-
     /**
      * Called when a MIDlet is to be destroyed.
      *
      * @param suite the MIDlet suite to be destroyed.
      * @param className the class name of the MIDlet to destroy.
      */
-    public void midletDestroyed(MIDletSuite suite, String className);
+    void midletDestroyed(MIDletSuite suite, String className);
 
     /**
      * Called when a MIDlet is to be paused.
@@ -48,7 +47,7 @@ public interface LifeCycleListener {
      * @param suite the MIDlet suite to be paused.
      * @param className the class name of the MIDlet to pause.
      */
-    public void midletPaused(MIDletSuite suite, String className);
+    void midletPaused(MIDletSuite suite, String className);
 
     /**
      * Called when a MIDlet is to be resumed.
@@ -56,35 +55,51 @@ public interface LifeCycleListener {
      * @param suite the MIDlet suite to be resumed.
      * @param className the class name of the MIDlet to resume.
      */
-    public void midletResumed(MIDletSuite suite, String className);
+    void midletResumed(MIDletSuite suite, String className);
 
     /**
-     * Called when a MIDlet is to be started.
+     * Called when a MIDlet is to be created and started.
      *
      * @param suite the MIDlet suite to be started.
      * @param className the class name of the MIDlet to start.
      */
-    public void midletToBeStarted(MIDletSuite suite, String className);
+    void midletToBeStarted(MIDletSuite suite, String className);
 
     /**
-     * Called when a MIDlet JAR is to be installed.
+     * Called when a MIDlet suite has just been installed. Listeners should
+     * not have a UI and should just set up optional optimation data for
+     * a suite, such as image caching.
+     * <p>
+     * If feature needs user input or can fail because a property is missing
+     * or invalid, the suite installer for that AMS it should extended,
+     * instead of using this callback.
      *
-     * @param id the MIDlet suite ID of the of the suite to be installed.
+     * @param suite the MIDlet suite that was installed
      * @param jarPathName the path name to the MIDlet JAR.
-     * @param appProps the application properties.
-     * @throws InvalidJadException if there is an error parsing the JAD.
      */
-    public void toBeInstalled(int id, String jarPathname, Properties appProps)
-	throws InvalidJadException;
+    void installed(MIDletSuite suite, String jarPathname);
+
+    /**
+     * Called when a MIDlet suite has just been updated. Listeners should
+     * not have a UI and should just set up optional optimation data for
+     * a suite, such as image caching.
+     * <p>
+     * If feature needs user input or can fail because a property is missing
+     * or invalid, the suite installer for that AMS it should extended,
+     * instead of using this callback.
+     *
+     * @param newSuite the new MIDlet suite that was installed
+     * @param jarPathName the path name to the new MIDlet's JAR
+     * @param oldSuite the old version of the MIDlet suite
+     * @param keepOldData true if user wants to keep the previous suite's data
+     */
+    void updated(MIDletSuite newSuite, String jarPathname,
+                 MIDletSuite oldSuite, boolean keepOldData);
 
     /**
      * Called when a MIDlet JAR is to be un-installed.
      *
-     * @param id the MIDlet suite ID of the of the suite to be uninstalled.
-     * @param jarPathName the path name to the MIDlet JAR.
-     * @param appProps the application properties.
-     * @throws InvalidJadException if there is an error parsing the JAD.
+     * @param suite the MIDlet suite that was installed
      */
-    public void toBeUninstalled(int id, String jarPathname,
-				Properties appProps);
+    void toBeUninstalled(MIDletSuite suite);
 }

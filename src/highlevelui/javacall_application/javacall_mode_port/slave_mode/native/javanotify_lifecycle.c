@@ -108,7 +108,7 @@ void javanotify_start(void) {
     "com.sun.midp.appmanager.Manager";
 #endif /* if ENABLE_MULTIPLE_ISOLATES */
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK,NULL);
     res = runMidlet(argc, argv);
 }
 
@@ -145,7 +145,7 @@ void javanotify_start_suite(char* suiteId) {
     argv[argc++] = "com.sun.midp.appmanager.MIDletSuiteLauncher";
     argv[argc++] = urlAddress;
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK, NULL);
 
     res = runMidlet(argc, argv);
 }
@@ -188,7 +188,7 @@ void javanotify_start_local(char* classname, char* descriptor,
         argv[argc++] = classpath;
     }
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK, NULL);
 
     res = runMidlet(argc, argv);
 }
@@ -264,7 +264,7 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
     }
     argc++;
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK, NULL);
 
     res = runMidlet(argc, argv);
 }
@@ -300,7 +300,7 @@ void javanotify_start_i3test(char* arg1, char* arg2) {
             argv[argc++] = arg2;
     }
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK, NULL);
 
     res = runMidlet(argc, argv);
 }
@@ -339,7 +339,7 @@ void javanotify_start_handler(char* handlerID, char* url, char* action) {
         }
     }
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK, NULL);
 
     res = runMidlet(argc, argv);
 }
@@ -389,7 +389,7 @@ void javanotify_install_midlet(const char *httpUrl) {
     memcpy(urlAddress, httpUrl, length);
     argv[argc++] = urlAddress;
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK, NULL);
     res = runMidlet(argc, argv);
 }
 
@@ -440,7 +440,7 @@ void javanotify_install_midlet_from_filesystem(const javacall_utf16* jadFilePath
 
     argv[argc++] = urlAddress;
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK, NULL);
     res = runMidlet(argc, argv);
 }
 
@@ -506,7 +506,7 @@ void javanotify_install_midlet_wparams(const char* httpUrl,
     memcpy(urlAddress, httpUrl, length);
     argv[argc++] = urlAddress;
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK, NULL);
     res = runMidlet(argc, argv);
 }
 
@@ -535,7 +535,7 @@ void javanotify_start_java_with_arbitrary_args(int argc, char* argv[]) {
         return;
     }
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK, NULL);
     res = runMidlet(argc, argv);
 }
 
@@ -655,7 +655,7 @@ void javanotify_shutdown(void) {
 
     e.eventType = MIDP_JC_EVENT_END;
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN, JAVACALL_OK);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN, JAVACALL_OK, NULL);
 
     midp_jc_event_send(&e);
 }

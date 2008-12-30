@@ -121,45 +121,49 @@ class AutoTesterHelper extends AutoTesterHelperBase {
         }
 
         MIDletInfo midletInfo;
-        String message = null;
+        boolean restartScheduled = false;
 
-        if (loopCount != 0) {
-            // force an overwrite and remove the RMS data
-            suiteId = installer.installJad(url, Constants.INTERNAL_STORAGE_ID,
-                    true, true, null);
+        try {
+            if (loopCount != 0) {
+                // force an overwrite and remove the RMS data
+                suiteId = installer.installJad(url, 
+                        Constants.INTERNAL_STORAGE_ID, true, true, null);
 
-            midletInfo = getFirstMIDletOfSuite(suiteId);
-            MIDletSuiteUtils.execute(suiteId, midletInfo.classname, 
-                    midletInfo.name);
+                midletInfo = getFirstMIDletOfSuite(suiteId);
+                MIDletSuiteUtils.execute(suiteId, midletInfo.classname, 
+                        midletInfo.name);
 
-            // We want auto tester MIDlet to run after the test is run.
-            MIDletSuiteUtils.setLastSuiteToRun(
-                    MIDletStateHandler.getMidletStateHandler().
-                    getMIDletSuite().getID(),
-                    midletClassName, null, null);
+                // We want auto tester MIDlet to run after the test is run.
+                MIDletSuiteUtils.setLastSuiteToRun(
+                        MIDletStateHandler.getMidletStateHandler().
+                        getMIDletSuite().getID(),
+                        midletClassName, null, null);
 
-            if (loopCount > 0) {
-                loopCount -= 1;
-            }
-            
-            saveSession();
-            
-            return;
-        }
-
-        if (midletSuiteStorage != null && 
-                suiteId != MIDletSuite.UNUSED_SUITE_ID) {
-            try {
-                midletSuiteStorage.remove(suiteId);
-            } catch (Throwable ex) {
-                if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                    Logging.report(Logging.WARNING, LogChannels.LC_AMS,
-                                   "Throwable in remove");
+                if (loopCount > 0) {
+                    loopCount -= 1;
                 }
+            
+                saveSession();
+                restartScheduled = true;
+            }
+        } finally {
+            if (!restartScheduled) {
+                // we are done: cleanup
+                if (midletSuiteStorage != null && 
+                        suiteId != MIDletSuite.UNUSED_SUITE_ID) {
+                    try {
+                        midletSuiteStorage.remove(suiteId);
+                    } catch (Throwable ex) {
+                        if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                            Logging.report(Logging.WARNING, LogChannels.LC_AMS,
+                                        "Throwable in remove");
+                        }
+                    }
+                }
+
+                endSession();
             }
         }
-
-        endSession();
     }    
     
     /**

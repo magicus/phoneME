@@ -34,12 +34,10 @@
 #
 ######################################################################
 
-ifeq ($(USE_NATIVE_APP_MANAGER), true)
-  USE_NATIVE_PUSH=true
-endif
-
 ifeq ($(TARGET_VM), cdc_vm)
   USE_NATIVE_PUSH=false
+else
+  USE_NATIVE_PUSH?=false
 endif
 
 ifeq ($(USE_JUMP), true)

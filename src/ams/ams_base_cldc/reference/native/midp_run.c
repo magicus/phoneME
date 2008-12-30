@@ -813,13 +813,14 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
             break;
         }
 
+#if ENABLE_JAVA_DEBUGGER
 #if ENABLE_WTK_DEBUG
         /*
          * If ENABLE_ON_DEVICE_DEBUG is also enabled and debug session is in
          * progress, debugOption will be overridden in the following code block.
          */
         setDebugOption(debugOption);
-#endif
+#endif /* ENABLE_WTK_DEBUG */
 
 #if ENABLE_ON_DEVICE_DEBUG
         if (commandState->isDebugMode) {
@@ -828,9 +829,10 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
         } else {
 #if !ENABLE_WTK_DEBUG
             setDebugOption(MIDP_DEBUG_NO_SUSPEND);
-#endif
+#endif /* !ENABLE_WTK_DEBUG */
         }
-#endif
+#endif /* ENABLE_ON_DEVICE_DEBUG */
+#endif /* ENABLE_JAVA_DEBUGGER */
     } while (commandState->suiteId != UNUSED_SUITE_ID);
 
     pushcheckinall();

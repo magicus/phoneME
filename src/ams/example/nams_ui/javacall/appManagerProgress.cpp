@@ -345,6 +345,8 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
                MessageBox(hwndDlg, _T("Installation completed!"), g_szTitle,
                           MB_ICONINFORMATION | MB_OK);
+         
+               PostMessage(GetParent(hwndDlg), WM_NOTIFY_SUITE_INSTALLED, 0, 0);
            } else {
                wsprintf(szBuf,
                         _T("Installation failed!\n\n Error status %d, code %d"),

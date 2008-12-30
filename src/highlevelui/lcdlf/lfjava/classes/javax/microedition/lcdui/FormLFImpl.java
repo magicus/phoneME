@@ -2144,7 +2144,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 {
                     //cycling 
                     if ((viewable[Y] == viewable[HEIGHT] - viewport[HEIGHT]) &&
-                        (bounds[Y] <= bounds[HEIGHT])) {
+                        (bounds[Y] <= viewable[Y])) {
                         viewable[Y] = 0;
                         return true;		
                     }

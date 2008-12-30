@@ -33,10 +33,11 @@
 #include <javacall_lcd.h>
 #include <string.h>
 #include <javacall_time.h>
+#include <javacall_lifecycle.h>
 #include <kni.h>
 
 #include <javacall_logging.h>
-
+#include <suitestore_listeners.h>
 
 gxj_screen_buffer gxj_system_screen_buffer;
 
@@ -75,6 +76,51 @@ void static jcapp_reset_screen_buffer(int hardwareId) {
             sizeof (gxj_pixel_type));
 }
 
+/**
+ * Decleration of the notifier used for midlet
+ * installation/uninstalltion.
+ * The implementation will call the appropriate javacall
+ * notifiers after modifying  the parameters
+ */
+/**
+ * Internal function to be registered with the MIDP notification
+ * mechanism. Used for converting parameters between the MIDP
+ * definition and the javacall listeners
+ */
+
+static void notify_javacall_installation(int listenerType, int when, MIDPError status, \
+              const MidletSuiteData* pSuiteData) {
+
+    struct javacall_lifecycle_additional_info additionalData;
+
+
+    switch (listenerType) {
+    case SUITESTORE_LISTENER_TYPE_INSTALL:
+                additionalData.command = JAVACALL_LIFECYCLE_MIDLET_INSTALL_COMPLETED;
+                additionalData.data.installation.midletName = pSuiteData->varSuiteData.suiteName.data;
+                additionalData.data.installation.midletNameLen = pSuiteData->varSuiteData.suiteName.length;
+                additionalData.data.installation.className = pSuiteData->varSuiteData.midletClassName.data;
+                additionalData.data.installation.classNameLen = pSuiteData->varSuiteData.midletClassName.length;
+                additionalData.data.installation.midletIcon = pSuiteData->varSuiteData.iconName.data;
+                additionalData.data.installation.midletIconLen = pSuiteData->varSuiteData.iconName.length;
+                additionalData.data.installation.suiteID = pSuiteData->suiteId;
+                javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_INSTALL_COMPLETED,
+                                                 status,
+                                                 &additionalData);
+             break;
+            
+
+    case SUITESTORE_LISTENER_TYPE_REMOVE:
+                additionalData.command = JAVACALL_LIFECYCLE_MIDLET_UNINSTALL_COMPLETED;
+                additionalData.data.uninstallation.suiteID = pSuiteData->suiteId;                 
+                javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_UNINSTALL_COMPLETED,
+                                                 status,
+                                                 &additionalData);
+                break;
+    }
+
+}
+
 
 /**
  * Initializes the Javacall native resources.
@@ -100,6 +146,17 @@ int jcapp_init() {
     }    
 
     jcapp_reset_screen_buffer(hardwareId);
+
+    /* Initialize Install/Uninstall responders*/
+    midp_suite_add_listener(notify_javacall_installation, SUITESTORE_LISTENER_TYPE_INSTALL,
+                            SUITESTORE_OPERATION_END);
+
+    midp_suite_add_listener(notify_javacall_installation, SUITESTORE_LISTENER_TYPE_REMOVE,
+                            SUITESTORE_OPERATION_END);
+
+
+    
+
     return 0;
 }
 

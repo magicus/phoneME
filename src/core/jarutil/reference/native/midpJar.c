@@ -155,6 +155,9 @@ midpOpenJar(int* pError, const pcsl_string * name) {
 
     pJarInfo->jarInfo = getJarInfo(&pJarInfo->fileObj);
     if (pJarInfo->jarInfo.status != 0) {
+        storageClose(&pszError, (int)(pJarInfo->fileObj.state));
+        storageFreeError(pszError);
+        
         midpFree(pJarInfo);
         *pError = MIDP_JAR_CORRUPT_ERROR;
         return NULL;

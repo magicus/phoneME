@@ -396,6 +396,7 @@ BOOLEAN_OPTIONS = \
 	USE_SERVER_SOCKET \
 	USE_ON_DEVICE_DEBUG \
 	USE_WTK_DEBUG \
+	USE_SYSTEM_CLASSES_DEBUG \
 	USE_OCSP \
 	USE_DYNAMIC_COMPONENTS \
 	USE_AMS_FOLDERS \
@@ -464,6 +465,14 @@ USE_WTK_DEBUG::
 	@if [ "$(USE_WTK_DEBUG)" = "true" ]; then \
 	  if [ "$(USE_JAVA_DEBUGGER)" = "false" ]; then \
 	    echo "ERROR: USE_JAVA_DEBUGGER must be true when USE_WTK_DEBUG is true"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_SYSTEM_CLASSES_DEBUG::
+	@if [ "$(USE_SYSTEM_CLASSES_DEBUG)" = "true" ]; then \
+	  if [ "$(USE_JAVA_DEBUGGER)" = "false" ]; then \
+	    echo "ERROR: USE_JAVA_DEBUGGER must be true when USE_SYSTEM_CLASSES_DEBUG is true"; \
 	    exit -1; \
 	  fi; \
 	fi
