@@ -194,14 +194,8 @@ static void createListenerNode(
             "rms_registry: OUT OF MEMORY");
         return;
     }
-    newPtr->next = NULL;
-
-    if (rootListenerPtr== NULL) {
-        rootListenerPtr= newPtr;
-    } else {
-        newPtr->next = rootListenerPtr;
-        rootListenerPtr = newPtr;
-    }
+    newPtr->next = rootListenerPtr;
+    rootListenerPtr = newPtr;
 }
 
 /** Unlinks listener node from the list and frees its resources */
@@ -382,15 +376,13 @@ void rms_regisrty_stop_task_listeners(int taskId) {
     while((listenerPtr = *listenerRef) != NULL) {
         int i, count;
         count = listenerPtr->count;
-        for (i = 0; i < count; i++) {
-            if (listenerPtr->listenerId[i] == taskId) {
-                if (--count == 0) {
-                    deleteListenerNodeByRef(listenerRef);
-                } else {
-                    listenerPtr->listenerId[i] =
-                        listenerPtr->listenerId[count];
-                }
-                break;
+        for (i = 0; i < count && listenerPtr->listenerId[i] != taskId; i++);
+        if ( i < count ) {
+            if (--count == 0) {
+                deleteListenerNodeByRef(listenerRef);
+            } else {
+                listenerPtr->listenerId[i] =
+                    listenerPtr->listenerId[--listenerPtr->count];
             }
         }
         listenerRef = &(listenerPtr->next);

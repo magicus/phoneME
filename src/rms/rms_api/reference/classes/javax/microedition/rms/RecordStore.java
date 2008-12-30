@@ -127,7 +127,7 @@ public class RecordStore {
     /** cache of open RecordStore instances */
     private static java.util.Vector openRecordStores = new java.util.Vector(3);
 
-    /** The peer that performs the real functionallity. */
+    /** The peer that performs the real functionality. */
     private RecordStoreImpl peer;
 
     /** name of this record store */
@@ -202,8 +202,12 @@ public class RecordStore {
         throws RecordStoreException, RecordStoreNotFoundException {
         int id = MIDletStateHandler.getMidletStateHandler().
             getMIDletSuite().getID();
+        deleteRecordStore(recordStoreName, id);
+    }
 
-        if (recordStoreName == null || recordStoreName.length() == 0) {
+	static void deleteRecordStore(String recordStoreName, int suiteId)
+			throws RecordStoreNotFoundException, RecordStoreException {
+		if (recordStoreName == null || recordStoreName.length() == 0) {
             throw new RecordStoreNotFoundException();
         }
 
@@ -213,7 +217,7 @@ public class RecordStore {
             int size = openRecordStores.size();
             for (int n = 0; n < size; n++) {
                 db = (RecordStore) openRecordStores.elementAt(n);
-                if (db.suiteId == id &&
+                if (db.suiteId == suiteId &&
                     db.recordStoreName.equals(recordStoreName)) {
                     // cannot delete an open record store
                     throw new RecordStoreException("deleteRecordStore error:"
@@ -224,10 +228,9 @@ public class RecordStore {
 
             // this record store is not currently open
             RecordStoreImpl.deleteRecordStore(
-                classSecurityToken, id, recordStoreName);
-
+                classSecurityToken, suiteId, recordStoreName);
         }
-    }
+	}
 
     /**
      * Open (and possibly create) a record store associated with the
@@ -1232,7 +1235,7 @@ public class RecordStore {
      * @exception IllegalArgumentException if
      *          recordStoreName is invalid
      */
-    private static RecordStore doOpen(int suiteId,
+    static RecordStore doOpen(int suiteId,
             String recordStoreName, boolean createIfNecessary)
                 throws RecordStoreException, RecordStoreFullException,
                 RecordStoreNotFoundException {
@@ -1318,4 +1321,9 @@ public class RecordStore {
         recordStore.opencount = 1;
         return recordStore;
     }
+
+    // used via Tunnel
+	void setWritable() throws RecordStoreException {
+		peer.setMode(AUTHMODE_ANY, true);
+	}
 }
