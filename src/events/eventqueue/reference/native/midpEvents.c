@@ -452,7 +452,11 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
 #if ENABLE_MULTIPLE_ISOLATES
         StoreMIDPEventInVmThreadImp(event, 1);
         for (isolateId = 2; isolateId <= maxIsolates; isolateId++) {
-            duplicateMIDPEventFields(&event);
+            if(duplicateMIDPEventFields(&event)) {
+                REPORT_CRIT(LC_CORE, "StoreMIDPEventInVmThread: "
+                            "Out of memory.");
+                return;
+            }
             StoreMIDPEventInVmThreadImp(event, isolateId);
         }
 #else
