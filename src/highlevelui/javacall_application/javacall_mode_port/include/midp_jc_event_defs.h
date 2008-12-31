@@ -175,6 +175,7 @@ typedef enum {
     JSR290_JC_EVENT_FLUID_LISTENER_WARNING,
     JSR290_JC_EVENT_FLUID_REQUEST_RESOURCE,
     JSR290_JC_EVENT_FLUID_CANCEL_REQUEST,
+    JSR290_JC_EVENT_FLUID_FILTER_XML_HTTP_REQUEST,
     JSR290_JC_EVENT_COMPLETION_NOTIFICATION,
     JSR290_JC_EVENT_HANDLE_EVENT,
 #endif /*ENABLE_JSR_290*/
@@ -354,6 +355,7 @@ typedef struct {
     javacall_handle             fluid_image;
     javacall_handle             spare;
     javacall_utf16_string       text;
+    javacall_utf16_string       text1;
     float                       percentage;
     javacall_result             result;
 } jsr290_jc_event_fluid;
