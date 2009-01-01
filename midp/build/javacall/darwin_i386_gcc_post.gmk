@@ -1,0 +1,57 @@
+#
+#
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Makefile for building and packaging post processing
+#
+######################################################################
+
+
+# Some additional targets defined by ES
+
+ifeq ($(TARGET_VM)+$(USE_I3_TEST), cldc_vm+true)
+CLDCVM_TESTLIB=$(CLDC_DIST_DIR)/lib/libcldc_vmtest$(g)$(r)$(LIB_SUFFIX)
+endif
+
+midp: $(BINDIR)/libmidp$(g).a $(BINDIR)/libjvm$(g).a
+
+$(BINDIR)/libmidp$(g).a: $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
+	@echo " ... $@" $(LOG)
+	$(A)$(CREATE_LIB) $(AR_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES))` $(LOG)
+
+$(BINDIR)/libjvm$(g).a: $(VERIFY_BUILD_ENV) $(DISPLAY_BUILD_ENV) $(BINDIR)/libmidp$(g).a $(CLDC_DIST_DIR)/lib/libcldc_vm$(g)$(r)$(LIB_SUFFIX) $(CLDCVM_TESTLIB) $(PCSL_TARGET_DIR)/lib/libpcsl_escfilenames.a $(PCSL_TARGET_DIR)/lib/libpcsl_file.a $(PCSL_TARGET_DIR)/lib/libpcsl_memory.a $(PCSL_TARGET_DIR)/lib/libpcsl_print.a $(PCSL_TARGET_DIR)/lib/libpcsl_string.a $(PCSL_TARGET_DIR)/lib/libpcsl_network.a 
+	@echo " ... $@" $(LOG)
+	$(A)cp $(BINDIR)/libmidp$(g).a $@
+	$(A)mergelib $@ $(CLDC_DIST_DIR)/lib/libcldc_vm$(g)$(r)$(LIB_SUFFIX) 
+	$(A)mergelib $@ $(PCSL_TARGET_DIR)/lib/libpcsl_file.a $(LOG)
+	$(A)mergelib $@ $(PCSL_TARGET_DIR)/lib/libpcsl_escfilenames.a $(LOG)
+	$(A)mergelib $@ $(PCSL_TARGET_DIR)/lib/libpcsl_memory.a $(LOG)
+	$(A)mergelib $@ $(PCSL_TARGET_DIR)/lib/libpcsl_print.a $(LOG)
+	$(A)mergelib $@ $(PCSL_TARGET_DIR)/lib/libpcsl_string.a $(LOG)
+	$(A)mergelib $@ $(PCSL_TARGET_DIR)/lib/libpcsl_network.a $(LOG)
+ifeq ($(TARGET_VM)+$(USE_I3_TEST), cldc_vm+true)
+	$(A)mergelib $@ $(CLDCVM_TESTLIB)
+endif
