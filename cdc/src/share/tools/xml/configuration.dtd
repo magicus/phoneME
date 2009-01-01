@@ -1,0 +1,178 @@
+<!--
+
+        Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
+
+-->
+<!ELEMENT configuration (properties | constants | localized_strings | skin | rawimage)*>
+<!ELEMENT properties (property)+>
+<!ELEMENT property EMPTY>
+<!-- If callout is specified, it must be a defined native function -->
+<!--  with the signature: char* foo(void) -->
+<!ATTLIST property
+        Key      CDATA                          #REQUIRED
+        Value    CDATA                          #REQUIRED
+        Scope    (system | internal)            "internal"
+        Callout  CDATA                          #IMPLIED
+        Comment  CDATA                          #IMPLIED
+>
+
+<!ELEMENT localized_strings (localized_string)*>
+    
+<!-- 
+    KeysClass: name of constants class that provides keys values.   
+ -->
+<!ATTLIST localized_strings
+    Package     CDATA                           #REQUIRED
+    Name        CDATA                           #REQUIRED
+    KeysClass   CDATA                           #REQUIRED 
+    Scope       (protected | public)            "public"
+    Comment     CDATA                           #IMPLIED
+>
+<!ELEMENT localized_string EMPTY>
+<!ATTLIST localized_string
+        Key         CDATA                   #REQUIRED
+        KeyValue    CDATA                   #IMPLIED
+        Value       CDATA                   #REQUIRED
+>
+
+<!ELEMENT constants (constant_class)*>
+<!ELEMENT constant_class (constant)*>
+
+<!--
+    KeysValuesProvider: does this class provide keys values.
+    
+    AutoValue: automatically generate integer values for constants
+    (starting from zero and going up).
+
+    JavaOnly: generate only .java file for constants.
+    NativeOnly: generate only native definitions for constants.
+-->
+<!ATTLIST constant_class
+    Package  CDATA                          #REQUIRED
+    Name     CDATA                          #REQUIRED
+    Scope    (protected | public)           "public"
+    Comment  CDATA                          #IMPLIED
+    KeysValuesProvider (true | false)       "false"
+    AutoValue  (true | false)               "false"
+    JavaOnly   (true | false)               "false"
+    NativeOnly (true | false)               "false"
+>
+
+<!ELEMENT constant EMPTY>
+<!ATTLIST constant
+    Type      (int | String | boolean)       #IMPLIED
+    Name      CDATA                          #REQUIRED
+    Value     CDATA                          #IMPLIED
+    VScope    (protected | public | private) "public"
+    Comment   CDATA                          #IMPLIED
+    JavaOnly   (true | false)                "false"
+    NativeOnly (true | false)                "false"
+>
+
+<!--
+    Top level node for skin description
+-->
+<!ELEMENT skin (skin_properties)>
+
+
+<!--
+    Skin properties description
+-->
+<!ELEMENT skin_properties (integer | integer_seq | string | font | 
+        image | composite_image)+>
+<!ATTLIST skin_properties
+    KeysClass   CDATA                           #REQUIRED 
+>
+
+<!--
+    Integer valued skin property
+-->
+<!ELEMENT integer EMPTY>
+<!ATTLIST integer
+        Key         CDATA                   #REQUIRED
+        KeyValue    CDATA                   #IMPLIED
+        Value       CDATA                   #REQUIRED
+>
+
+<!--
+    Integers sequence valued skin property
+-->
+<!ELEMENT integer_seq EMPTY>
+<!ATTLIST integer_seq
+        Key         CDATA                   #REQUIRED
+        KeyValue    CDATA                   #IMPLIED
+        Value       CDATA                   #REQUIRED
+>
+
+<!--
+    String valued skin property
+-->
+<!ELEMENT string EMPTY>
+<!ATTLIST string
+        Key         CDATA                   #REQUIRED
+        KeyValue    CDATA                   #IMPLIED
+        Value       CDATA                   #REQUIRED
+>
+
+<!--
+    Font valued skin property
+-->
+<!ELEMENT font EMPTY>
+<!ATTLIST font
+        Key         CDATA                   #REQUIRED
+        KeyValue    CDATA                   #IMPLIED
+        Value       CDATA                   #REQUIRED
+>
+
+<!--
+    Image valued skin property
+-->
+<!ELEMENT image EMPTY>
+<!ATTLIST image
+        Key         CDATA                   #REQUIRED
+        KeyValue    CDATA                   #IMPLIED
+        Value       CDATA                   #REQUIRED
+        Romized     (true | false)          "false"
+>
+
+<!--
+    Composite image valued skin property
+-->
+<!ELEMENT composite_image EMPTY>
+<!ATTLIST composite_image
+        Key         CDATA                   #REQUIRED
+        KeyValue    CDATA                   #IMPLIED
+        Value       CDATA                   #REQUIRED
+        Pieces      CDATA                   #REQUIRED
+        Romized     (true | false)          "false"
+>
+
+<!--
+    Raw image format description
+-->
+<!ELEMENT rawimage EMPTY>
+<!ATTLIST rawimage
+        Format    (Putpixel | ARGB)         #REQUIRED
+        Colors    (565 | 888)               #REQUIRED
+        Endian    (Little | Big)            #REQUIRED
+>
