@@ -36,7 +36,7 @@ MIDP_DIR               := $(shell dirname $(shell dirname $(CURDIR)))
 
 # Build output directory
 ifndef MIDP_OUTPUT_DIR
-MIDP_OUTPUT_DIR         = $(CURDIR)/output
+MIDP_OUTPUT_DIR         := $(CURDIR)/output
 endif
 
 # Build options should be include before shared gmk
