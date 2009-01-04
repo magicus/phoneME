@@ -126,6 +126,17 @@ GtkWidget *get_da(void *dst){
     return da;
 }
 
+GdkRectangle create_clip_rectangle(const jshort *clip){
+    GdkRectangle clipRectangle;
+
+    clipRectangle.x = clip[0];
+    clipRectangle.y = clip[1];
+    clipRectangle.width = clip[2] - clip[0];
+    clipRectangle.height = clip[3] - clip[1];
+    return clipRectangle;
+}
+
+
 /**
  * Draw triangle
  *
@@ -171,10 +182,7 @@ void gxpport_fill_triangle(
                                GDK_CAP_BUTT, /* cap_style */
                                GDK_JOIN_BEVEL); /* join_style */
 
-    clipRectangle.x = clip[0];
-    clipRectangle.y = clip[1];
-    clipRectangle.width = clip[2] - clip[0];
-    clipRectangle.height = clip[3] - clip[1];
+    clipRectangle = create_clip_rectangle(clip);
     gdk_gc_set_clip_rectangle(gc, &clipRectangle);
 
     gdk_draw_polygon(gdk_pix_map,
@@ -301,10 +309,8 @@ void gxpport_draw_line(
                                lineStyle,   /* line_style */
                                GDK_CAP_BUTT, /* cap_style */
                                GDK_JOIN_BEVEL); /* join_style */
-    clipRectangle.x = clip[0];
-    clipRectangle.y = clip[1];
-    clipRectangle.width = clip[2] - clip[0];
-    clipRectangle.height = clip[3] - clip[1];
+
+    clipRectangle = create_clip_rectangle(clip);
     gdk_gc_set_clip_rectangle(gc, &clipRectangle);
     gdk_draw_line(gdk_pix_map,
                           gc,
@@ -356,10 +362,7 @@ void gxpport_draw_rect(
                                GDK_CAP_BUTT, /* cap_style */
                                GDK_JOIN_BEVEL); /* join_style */
 
-    clipRectangle.x = clip[0];
-    clipRectangle.y = clip[1];
-    clipRectangle.width = clip[2] - clip[0];
-    clipRectangle.height = clip[3] - clip[1];
+    clipRectangle = create_clip_rectangle(clip);
     gdk_gc_set_clip_rectangle(gc, &clipRectangle);
 
     gdk_draw_rectangle(gdk_pix_map,
@@ -405,10 +408,7 @@ void gxpport_fill_rect(
                                GDK_CAP_BUTT, /* cap_style */
                                GDK_JOIN_BEVEL); /* join_style */
 
-    clipRectangle.x = clip[0];
-    clipRectangle.y = clip[1];
-    clipRectangle.width = clip[2] - clip[0];
-    clipRectangle.height = clip[3] - clip[1];
+    clipRectangle = create_clip_rectangle(clip);
     gdk_gc_set_clip_rectangle(gc, &clipRectangle);
 
     LIMO_TRACE("%s clip.x=%d clip.y=%d clip.width=%d clip.height=%d\n",
@@ -520,10 +520,7 @@ void gxpport_draw_arc(
                                GDK_CAP_BUTT, /* cap_style */
                                GDK_JOIN_BEVEL); /* join_style */
 
-    clipRectangle.x = clip[0];
-    clipRectangle.y = clip[1];
-    clipRectangle.width = clip[2] - clip[0];
-    clipRectangle.height = clip[3] - clip[1];
+    clipRectangle = create_clip_rectangle(clip);
     gdk_gc_set_clip_rectangle(gc, &clipRectangle);
 
     gdk_draw_arc(gdk_pix_map,
@@ -577,10 +574,7 @@ void gxpport_fill_arc(
                                GDK_CAP_BUTT, /* cap_style */
                                GDK_JOIN_BEVEL); /* join_style */
 
-    clipRectangle.x = clip[0];
-    clipRectangle.y = clip[1];
-    clipRectangle.width = clip[2] - clip[0];
-    clipRectangle.height = clip[3] - clip[1];
+    clipRectangle = create_clip_rectangle(clip);
     gdk_gc_set_clip_rectangle(gc, &clipRectangle);
 
     gdk_draw_arc(gdk_pix_map,
@@ -659,8 +653,10 @@ void gxpport_draw_chars(
     GdkGC *gc;
     int text_len;
     int i;
+    GdkRectangle clipRectangle;
 
-    LIMO_TRACE(">>>%s dst=%x\n", __FUNCTION__, dst);
+    LIMO_TRACE(">>>%s dst=%x x=%d y=%d anchor=%d n=%d\n",
+               __FUNCTION__, dst, x, y, anchor, n);
 
     status = lfpport_get_font(&desc,
                               face,
@@ -680,6 +676,8 @@ void gxpport_draw_chars(
     }
 
     gc = get_gc(dst);
+    clipRectangle = create_clip_rectangle(clip);
+    gdk_gc_set_clip_rectangle(gc, &clipRectangle);
     gdk_pix_map = get_pix_map(dst);
     da = get_da(dst);
 
@@ -692,7 +690,7 @@ void gxpport_draw_chars(
     context = gtk_widget_create_pango_context(da);
     layout = pango_layout_new (context);
 
-    LIMO_TRACE("%s context=%x layout=%x\n", __FUNCTION__, context, layout);
+    LIMO_TRACE("%s context=%x layout=%x text_buf=%s\n", __FUNCTION__, context, layout, text_buf);
     pango_layout_set_text(layout, text_buf, n);
     pango_layout_set_font_description (layout, desc);
 
@@ -701,9 +699,10 @@ void gxpport_draw_chars(
     pango_context_set_matrix (context, &matrix);
     pango_layout_context_changed (layout);
     pango_renderer_draw_layout(renderer, layout,
-                  0,
-                  0);
+                  x * PANGO_SCALE,
+                  y * PANGO_SCALE);
 
+    g_object_unref(layout);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
