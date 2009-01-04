@@ -287,9 +287,9 @@ CC_vc8ce_arm         = $(VC8CE_ARCH_PATH)/cl.exe
 CC_vc8ce             = $(CC_vc8ce_$(arch))
 CC                   = $(CC_$(compiler))
 
-SAVE_TEMPS_visCPP    = /Fa$(basename $(notdir $<))
-SAVE_TEMPS_evc	     = /Fa$(basename $(notdir $<))
-SAVE_TEMPS_vc8ce     = /Fa$(basename $(notdir $<))
+SAVE_TEMPS_visCPP    = -Fa$(basename $(notdir $<))
+SAVE_TEMPS_evc	     = -Fa$(basename $(notdir $<))
+SAVE_TEMPS_vc8ce     = -Fa$(basename $(notdir $<))
 SAVE_TEMPS_gcc	     = -save-temps
 
 ifeq ($(SAVE_TEMPS), true)
@@ -379,9 +379,9 @@ ifndef ROMIZING
 ROMIZING             = true
 endif
 
-ROMIZING_CFLAGS_visCPP 	= /D "ROMIZING"
-ROMIZING_CFLAGS_evc    	= /D "ROMIZING"
-ROMIZING_CFLAGS_vc8ce  	= /D "ROMIZING"
+ROMIZING_CFLAGS_visCPP 	= -DROMIZING
+ROMIZING_CFLAGS_evc    	= -DROMIZING
+ROMIZING_CFLAGS_vc8ce  	= -DROMIZING
 ROMIZING_CFLAGS_gcc    	= -DROMIZING=1
 
 ifeq ($(ROMIZING)+$(IsTarget), true+true)
@@ -870,22 +870,22 @@ endif
 # /GF (Enable read -only string pooling)
 
 ifeq ($(NO_DEBUG_SYMBOLS), true)
-CPP_DBG_FLAGS_debug     = /MD /Ox
+CPP_DBG_FLAGS_debug     = -MD -Ox
 else
-CPP_DBG_FLAGS_debug     = /MDd /Zi /Od
+CPP_DBG_FLAGS_debug     = -MDd -Zi -Od
 endif
 
-CPP_DBG_FLAGS_release   = /MD /Zi
+CPP_DBG_FLAGS_release   = -MD -Zi
 ifeq ($(PRODUCT_DEBUG), true)
-CPP_DBG_FLAGS_product   = /MD /Zi
+CPP_DBG_FLAGS_product   = -MD -Zi
 else
-CPP_DBG_FLAGS_product   = /MD
+CPP_DBG_FLAGS_product   = -MD
 endif
 CPP_DBG_FLAGS          += $(CPP_DBG_FLAGS_$(BUILD))
 
 CPP_OPT_FLAGS_debug     =
-CPP_OPT_FLAGS_release   = /Ox /Os /Gy /GF
-CPP_OPT_FLAGS_product   = /Ox /Os /Gy /GF
+CPP_OPT_FLAGS_release   = -Ox -Os -Gy -GF
+CPP_OPT_FLAGS_product   = -Ox -Os -Gy -GF
 CPP_OPT_FLAGS          += $(CPP_OPT_FLAGS_$(BUILD))
 
 CPP_DEF_FLAGS_debug     = -D_DEBUG -DAZZERT
@@ -898,7 +898,7 @@ endif
 
 CPP_DEF_FLAGS          += -DWIN32 -D_WINDOWS
 CPP_DEF_FLAGS          += $(CPP_DEF_FLAGS_$(BUILD))
-CPP_DEF_FLAGS          += /W3 /nologo  \
+CPP_DEF_FLAGS          += -W3 -nologo  \
                           $(SAVE_TEMPS_CFLAGS) \
                           $(ENABLE_CFLAGS) \
                           $(ROMIZING_CFLAGS) \
@@ -909,29 +909,29 @@ CPP_FLAGS_EXPORT        = $(CPP_DEF_FLAGS) $(CPP_OPT_FLAGS) \
 CPP_FLAGS               = $(CPP_DEF_FLAGS) $(CPP_INCLUDE_DIRS)
 
 ifneq ($(NO_DEBUG_SYMBOLS), true)
-LINK_FLAGS_DBG_debug    = /debug
-LINK_FLAGS_DBG_release  = /debug
+LINK_FLAGS_DBG_debug    = -debug
+LINK_FLAGS_DBG_release  = -debug
 endif
 
 ifeq ($(PRODUCT_DEBUG), true)
-LINK_FLAGS_DBG_product  = /debug
+LINK_FLAGS_DBG_product  = -debug
 else
 LINK_FLAGS_DBG_product  =
 endif
 LINK_FLAGS_DBG          = $(LINK_FLAGS_DBG_$(BUILD))
 LINK_OPT_FLAGS_debug    =
 LINK_OPT_FLAGS_release  =
-LINK_OPT_FLAGS_product  = /merge:CODESEGMENT=.text \
-                          /merge:DATASEGMENT=.data \
-			  /opt:REF /opt:ICF,8
+LINK_OPT_FLAGS_product  = -merge:CODESEGMENT=.text \
+                          -merge:DATASEGMENT=.data \
+			  -opt:REF -opt:ICF,8
 LINK_OPT_FLAGS          = $(LINK_FLAGS_DBG) $(LINK_OPT_FLAGS_$(BUILD))
 
-LINK_PROF_FLAGS_true    = /PROFILE /FIXED:NO
+LINK_PROF_FLAGS_true    = -PROFILE -FIXED:NO
 LINK_PROF_FLAGS         = $(LINK_PROF_FLAGS_$(PROFILING))
 LINK_OPT_FLAGS         += $(LINK_PROF_FLAGS)
 
-LINK_FLAGS_EXPORT       = /MAP /incremental:no \
-		          /nologo /subsystem:console /machine:i386
+LINK_FLAGS_EXPORT       = -MAP -incremental:no \
+		          -nologo -subsystem:console -machine:i386
 LINK_FLAGS_EXPORT      += $(LINK_OPT_FLAGS)
 LINK_FLAGS             += $(LINK_FLAGS_EXPORT) wsock32.lib
 
@@ -948,10 +948,10 @@ endif
 LIB_FLAGS_debug         =
 LIB_FLAGS_release       =
 LIB_FLAGS_product       =
-LIB_FLAGS               = /nologo $(LIB_FLAGS_$(BUILD))
+LIB_FLAGS               = -nologo $(LIB_FLAGS_$(BUILD))
 
-CPP_USE_PCH             = /Fp"cldchi.pch" /Yu"incls/_precompiled.incl"
-ASM_FLAGS               = /nologo /c /coff /Zi /FR
+CPP_USE_PCH             = -Fp"cldchi.pch" -Yu"incls/_precompiled.incl"
+ASM_FLAGS               = -nologo -c -coff -Zi -FR
 BUILD_PCH               = _build_pch_visCPP.obj
 
 $(Obj_Files):            $(BUILD_PCH)
@@ -961,8 +961,8 @@ $(BUILD_PCH): $(Precompiled_Headers) $(GEN_DIR)/jvmconfig.h
 	$(A)echo Generating $@ ...
 	$(A)echo '#include "incls/_precompiled.incl"' > \
 		$(GEN_DIR)/_build_pch_visCPP.cpp
-	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) /Fp"cldchi.pch" \
-	    /Yc"incls/_precompiled.incl" /c $(GEN_DIR)/_build_pch_visCPP.cpp
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) -Fp"cldchi.pch" \
+	    -Yc"incls/_precompiled.incl" -c $(GEN_DIR)/_build_pch_visCPP.cpp
 	$(A)echo '    done'
 
 ifeq ($(ENABLE_C_INTERPRETER), true)
@@ -970,18 +970,18 @@ ifeq ($(ENABLE_C_INTERPRETER), true)
 AsmStubs_$(target_arch).obj: \
 		$(JVMWorkSpace)/src/vm/cpu/c/AsmStubs_$(target_arch).asm
 	$(A) echo "generating CPU stubs $<"
-	$(A)$(ASM) /Zi $(ASM_FLAGS) /Fo$@ \
-		/Sc /FlAsmStubs_$(target_arch).lst `$(call fixcygpath, $<)`
+	$(A)$(ASM) -Zi $(ASM_FLAGS) -Fo$@ \
+		-Sc -FlAsmStubs_$(target_arch).lst `$(call fixcygpath, $<)`
 
 else
 ifeq ($(ENABLE_INLINEASM_INTERPRETER), true)
 Interpreter_$(arch).obj: Interpreter_$(arch).c
-	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) /FaInterpreter_$(arch).asm \
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) -FaInterpreter_$(arch).asm \
 		-c `$(call fixcygpath, $<)`
 else
 Interpreter_$(arch).obj: Interpreter_$(arch).asm
-	$(A)$(ASM) /Zi $(ASM_FLAGS) /FoInterpreter_$(arch).obj \
-		/Sc /FlInterpreter_$(arch).lst \
+	$(A)$(ASM) -Zi $(ASM_FLAGS) -FoInterpreter_$(arch).obj \
+		-Sc -FlInterpreter_$(arch).lst \
 		`$(call fixcygpath, $(THIS_DIR)/$<)`
 endif
 endif
@@ -1002,7 +1002,7 @@ NativesTable.obj: $(NATIVES_TABLE)
 
 ifeq ($(SAVE_PREPROCESSOR_OUTPUT),true)
 define BUILD_C_TARGET
-	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) /P \
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) -P \
 		`$(call fixcygpath, $<)`
 	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) -c \
 		`$(call fixcygpath, $<)`
@@ -1022,7 +1022,7 @@ $(LOOP_GENERATOR):
 else
 $(LOOP_GENERATOR): $(BUILD_PCH) $(Obj_Files) \
 		   InterpreterSkeleton.obj OopMapsSkeleton.obj
-	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ $(Obj_Files) \
+	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) -out:$@ $(Obj_Files) \
 		   InterpreterSkeleton.obj OopMapsSkeleton.obj
 	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
@@ -1040,19 +1040,19 @@ $(GP_TABLE_OBJ): $(LOOP_GENERATOR)
 	    mv $(THIS_DIR)/Interpreter_arm.asm \
                $(THIS_DIR)/Interpreter_$(carch).asm; \
 	fi
-	$(A)$(ASM) /Zi $(ASM_FLAGS) /Fo$(GP_TABLE_OBJ) \
-		/Sc /FlInterpreter_$(carch).lst \
+	$(A)$(ASM) -Zi $(ASM_FLAGS) -Fo$(GP_TABLE_OBJ) \
+		-Sc -FlInterpreter_$(carch).lst \
 		`$(call fixcygpath, $(THIS_DIR)/Interpreter_$(carch).asm)`
 endif
 
 $(ROM_GENERATOR): $(CLDC_ZIP) $(Obj_Files) OopMapsSkeleton.obj $(GP_TABLE_OBJ)
 	$(A)echo "linking ROM generator: $(ROM_GENERATOR)"
-	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ \
+	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) -out:$@ \
 		$(Obj_Files) OopMapsSkeleton.obj $(GP_TABLE_OBJ)
 	$(A)$(ROM_GENERATOR) +GenerateOopMaps
 	$(A)$(MAKE) OopMaps.obj
 	$(A)echo "re-linking ROM generator: $(ROM_GENERATOR)"
-	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ $(Obj_Files) \
+	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) -out:$@ $(Obj_Files) \
                 OopMaps.obj \
                 $(GP_TABLE_OBJ)
 	$(A)$(VC_MANIFEST_EMBED_EXE)
@@ -1060,13 +1060,13 @@ $(ROM_GENERATOR): $(CLDC_ZIP) $(Obj_Files) OopMapsSkeleton.obj $(GP_TABLE_OBJ)
 else
 $(ROM_GENERATOR): $(BUILD_PCH) $(Obj_Files) InterpreterSkeleton.obj \
                                             OopMapsSkeleton.obj
-	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ $(Obj_Files) \
+	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) -out:$@ $(Obj_Files) \
 		InterpreterSkeleton.obj OopMapsSkeleton.obj
 	$(A)$(ROM_GENERATOR) $(LOOP_GEN_ARG)
 	$(A)$(ROM_GENERATOR) +GenerateOopMaps
 	$(A)$(MAKE) Interpreter_$(arch).obj
 	$(A)$(MAKE) OopMaps.obj
-	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ \
+	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) -out:$@ \
 		$(Obj_Files) Interpreter_$(arch).obj OopMaps.obj
 	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
@@ -1075,7 +1075,7 @@ endif
 endif
 
 MAKE_EXPORT_LINK_OUT_SWITCH1     =
-MAKE_EXPORT_LINK_OUT_SWITCH2     = /out:
+MAKE_EXPORT_LINK_OUT_SWITCH2     = -out:
 MAKE_EXPORT_EXTRA_LIBS          += wsock32.lib
 MAKE_EXPORT_THREAD_LIBS          =
 
@@ -1177,20 +1177,20 @@ EXE_OBJS += $(JNI_ADAPTERS_OBJ)
 endif
 
 $(JVM_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIB_OBJS)
-	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIB_OBJS)
+	$(A)$(LIBMGR) $(LIB_FLAGS) -out:$@ $(LIB_OBJS)
 	$(A)echo generated `pwd`/$@
 
 $(JVMX_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBX_OBJS)
-	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBX_OBJS)
+	$(A)$(LIBMGR) $(LIB_FLAGS) -out:$@ $(LIBX_OBJS)
 	$(A)echo generated `pwd`/$@
 
 $(JVMTEST_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBTEST_OBJS)
-	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBTEST_OBJS)
+	$(A)$(LIBMGR) $(LIB_FLAGS) -out:$@ $(LIBTEST_OBJS)
 	$(A)echo generated `pwd`/$@
 
 $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVM_LIB) $(JVMTEST_LIB) \
 	    $(EXE_OBJS)
-	$(A)$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVM_LIB) \
+	$(A)$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) -out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVM_LIB) \
 		$(JVMTEST_LIB) $(PCSL_LIBS)
 	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
@@ -1199,11 +1199,11 @@ ANI_OBJS  = ani.obj os_port.obj poolthread.obj
 ANIX_OBJS = ani_bsd_socket.obj
 
 $(ANI_LIB): $(JVM_LIB) $(ANI_OBJS)
-	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(ANI_OBJS)
+	$(A)$(LIBMGR) $(LIB_FLAGS) -out:$@ $(ANI_OBJS)
 	$(A)echo generated `pwd`/$@
 
 $(ANIX_LIB): $(JVM_LIB) $(ANIX_OBJS)
-	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(ANIX_OBJS)
+	$(A)$(LIBMGR) $(LIB_FLAGS) -out:$@ $(ANIX_OBJS)
 	$(A)echo generated `pwd`/$@
 
 endif
@@ -1271,7 +1271,7 @@ else
     LIB                := $(EVC_ARCH_PATH)/$(LIB)
     RC                 := $(EVC_COMMON_PATH)/rc.exe
 
-    LINK_ARCH_FLAGS_arm+= /MACHINE:ARM /base:"0x00010000" /stack:0x10000,0x1000
+    LINK_ARCH_FLAGS_arm+= -MACHINE:ARM -base:"0x00010000" -stack:0x10000,0x1000
 
     CESubsystem         = windowsce,4.00
     CEVersion           = 400
@@ -1281,9 +1281,9 @@ endif
 LIBS                    = commctrl.lib coredll.lib  \
                           winsock.lib
 
-CPP_OPT_FLAGS_debug     = /Zi /Od
-CPP_OPT_FLAGS_release   = /Oxs
-CPP_OPT_FLAGS_product   = /Oxs
+CPP_OPT_FLAGS_debug     = -Zi -Od
+CPP_OPT_FLAGS_release   = -Oxs
+CPP_OPT_FLAGS_product   = -Oxs
 CPP_OPT_FLAGS           =
 CPP_OPT_FLAGS          += $(CPP_OPT_FLAGS_$(BUILD))
 
@@ -1291,25 +1291,25 @@ CPP_ARCH_FLAGS_arm      = -DARM -D_ARM -D_ARM_
 CPP_ARCH_FLAGS_i386     = -D_X86_ -D_X86 -Dx86
 CPP_ARCH_FLAGS          = $(CPP_ARCH_FLAGS_$(arch))
 
-CPP_DEF_FLAGS_debug     = /D "_DEBUG" /D "AZZERT" /D "DEBUG"
+CPP_DEF_FLAGS_debug     = -D_DEBUG -DAZZERT -DDEBUG
 CPP_DEF_FLAGS_release   = -DNDEBUG
 CPP_DEF_FLAGS_product   = -DPRODUCT -DNDEBUG
 
-CPP_DEF_FLAGS          += $(CPP_DEF_FLAGS_$(BUILD)) /X /I"${EVC_INCLUDE_PATH}"
+CPP_DEF_FLAGS          += $(CPP_DEF_FLAGS_$(BUILD)) -X -I"${EVC_INCLUDE_PATH}"
 
 CPP_FLAGS_EXPORT        = $(CPP_DEF_FLAGS) -DREQUIRES_JVMCONFIG_H=1
-CPP_FLAGS_EXPORT       += /W3 -D_WIN32_WCE=$(CEVersion) $(CPP_ARCH_FLAGS) \
+CPP_FLAGS_EXPORT       += -W3 -D_WIN32_WCE=$(CEVersion) $(CPP_ARCH_FLAGS) \
                           -DUNDER_CE=$(CEVersion) \
-                          -DUNICODE -D_UNICODE /nologo $(SAVE_TEMPS_CFLAGS) \
+                          -DUNICODE -D_UNICODE -nologo $(SAVE_TEMPS_CFLAGS) \
                           $(ENABLE_CFLAGS) $(ROMIZING_CFLAGS) \
                           $(BUILD_VERSION_CFLAGS) $(CPP_OPT_FLAGS)
 
 CPP_FLAGS               = $(CPP_INCLUDE_DIRS) $(CPP_FLAGS_EXPORT)
 
-LIB_FLAGS_debug         = /DEBUGTYPE:CV
+LIB_FLAGS_debug         = -DEBUGTYPE:CV
 LIB_FLAGS_release       =
 LIB_FLAGS_product       =
-LIB_FLAGS               = /nologo $(LIB_FLAGS_$(BUILD))
+LIB_FLAGS               = -nologo $(LIB_FLAGS_$(BUILD))
 
 ifeq ($(ENABLE_PCSL), true)
     PCSL_LIBS               = $(PCSL_DIST_DIR)/lib/libpcsl_memory.lib   \
@@ -1320,39 +1320,39 @@ ifeq ($(ENABLE_PCSL), true)
     MAKE_EXPORT_EXTRA_LIBS += $(PCSL_LIBS)
 endif
 
-LINK_OPT_FLAGS_debug    = /pdb:$(basename $@).pdb
+LINK_OPT_FLAGS_debug    = -pdb:$(basename $@).pdb
 LINK_OPT_FLAGS_release  =
 LINK_OPT_FLAGS_product  =
 
-LINK_OPT_FLAGS_EXPORT_debug    = /debug
+LINK_OPT_FLAGS_EXPORT_debug    = -debug
 LINK_OPT_FLAGS_EXPORT_release  =
 LINK_OPT_FLAGS_EXPORT_product  =
 
-LINK_ARCH_FLAGS_arm    += /SUBSYSTEM:$(CESubsystem)
-LINK_ARCH_FLAGS_i386   += /MACHINE:ix86 /SUBSYSTEM:$(CESubsystem) \
-                          /base:"0x00010000" /stack:0x10000,0x1000
-LINK_ARCH_FLAGS         = $(LINK_ARCH_FLAGS_$(arch)) /LIBPATH:$(EVC_LIB_PATH) \
-                          /VERBOSE:LIB
+LINK_ARCH_FLAGS_arm    += -SUBSYSTEM:$(CESubsystem)
+LINK_ARCH_FLAGS_i386   += -MACHINE:ix86 -SUBSYSTEM:$(CESubsystem) \
+                          -base:"0x00010000" -stack:0x10000,0x1000
+LINK_ARCH_FLAGS         = $(LINK_ARCH_FLAGS_$(arch)) -LIBPATH:$(EVC_LIB_PATH) \
+                          -VERBOSE:LIB
 
-LINK_FLAGS_EXPORT       = /incremental:no /nologo /entry:"WinMainCRTStartup" \
-                          /MAP $(LINK_ARCH_FLAGS) corelibc.lib aygshell.lib \
-                          /nodefaultlib:libc.lib \
-                          /nodefaultlib:libcd.lib /nodefaultlib:libcmt.lib \
-                          /nodefaultlib:libcmtd.lib /nodefaultlib:msvcrt.lib \
-                          /nodefaultlib:msvcrtd.lib /nodefaultlib:oldnames.lib
+LINK_FLAGS_EXPORT       = -incremental:no -nologo -entry:"WinMainCRTStartup" \
+                          -MAP $(LINK_ARCH_FLAGS) corelibc.lib aygshell.lib \
+                          -nodefaultlib:libc.lib \
+                          -nodefaultlib:libcd.lib -nodefaultlib:libcmt.lib \
+                          -nodefaultlib:libcmtd.lib -nodefaultlib:msvcrt.lib \
+                          -nodefaultlib:msvcrtd.lib -nodefaultlib:oldnames.lib
 
 LINK_FLAGS_EXPORT      += $(LINK_OPT_FLAGS_EXPORT_$(BUILD))
 LINK_FLAGS              = $(LINK_FLAGS_EXPORT)
 
-CPP_USE_PCH             = /Fp"cldchi.pch" /Yu"incls/_precompiled.incl"
+CPP_USE_PCH             = -Fp"cldchi.pch" -Yu"incls/_precompiled.incl"
 BUILD_PCH               = _build_pch_visCPP.obj
 
 $(BUILD_PCH): $(Precompiled_Headers)
 	$(A)echo Generating $@ ...
 	$(A)echo '#include "incls/_precompiled.incl"' > \
 		$(GEN_DIR)/_build_pch_visCPP.cpp
-	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) /Fp"cldchi.pch" \
-	    /Yc"incls/_precompiled.incl" /c $(GEN_DIR)/_build_pch_visCPP.cpp
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) -Fp"cldchi.pch" \
+	    -Yc"incls/_precompiled.incl" -c $(GEN_DIR)/_build_pch_visCPP.cpp
 	$(A)echo '    done'
 
 # Special case (fails to compile with precompiled header files)
@@ -1375,7 +1375,7 @@ NativesTable.obj: $(NATIVES_TABLE)
 
 ifeq ($(SAVE_PREPROCESSOR_OUTPUT),true)
 define BUILD_C_TARGET
-	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) /P \
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) -P \
 		`$(call fixcygpath, $<)`
 	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) -c \
 		`$(call fixcygpath, $<)`
@@ -1391,14 +1391,14 @@ Interpreter_arm.obj: Interpreter_arm.asm
 	$(A)$(ASM) -o $@ -list "Interpreter_$(arch).lst" $(THIS_DIR)/$<
 
 Interpreter_i386.obj: Interpreter_i386.asm
-	$(A)$(ASM) /Zi /FoInterpreter_i386.obj /coff \
-		/Sc /FlInterpreter_i386.lst /c $(THIS_DIR)/$<
+	$(A)$(ASM) -Zi -FoInterpreter_i386.obj -coff \
+		-Sc -FlInterpreter_i386.lst -c $(THIS_DIR)/$<
 
 %.obj: %.cpp
 	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) -c $<
 
 MAKE_EXPORT_LINK_OUT_SWITCH1     =
-MAKE_EXPORT_LINK_OUT_SWITCH2     = /out:
+MAKE_EXPORT_LINK_OUT_SWITCH2     = -out:
 MAKE_EXPORT_EXTRA_LIBS          += $(LIBS)
 MAKE_EXPORT_THREAD_LIBS          =
 
@@ -1437,8 +1437,8 @@ EXE_OBJS +=         resources.res
 resources.res: $(WorkSpace)/src/vm/os/wince/resources.rc \
                $(WorkSpace)/src/vm/os/wince/resources.h
 	@echo creating $@
-	$(A)$(RC) -D_WIN32_WCE=$(CEVersion) /I"${EVC_INCLUDE_PATH}" \
-		-DUNDER_CE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /fo"$@" \
+	$(A)$(RC) -D_WIN32_WCE=$(CEVersion) -I"${EVC_INCLUDE_PATH}" \
+		-DUNDER_CE=$(CEVersion) -DUNICODE -D_UNICODE -fo"$@" \
 		$(WorkSpace)/src/vm/os/wince/resources.rc
 
 ifeq ($(SeparateROMImage), true)
@@ -1506,20 +1506,20 @@ EXE_OBJS += $(JNI_ADAPTERS_OBJ)
 endif
 
 $(JVM_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIB_OBJS)
-	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIB_OBJS)
+	$(A)$(LIBMGR) $(LIB_FLAGS) -out:$@ $(LIB_OBJS)
 	$(A)echo generated `pwd`/$@
 
 $(JVMX_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBX_OBJS)
-	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBX_OBJS)
+	$(A)$(LIBMGR) $(LIB_FLAGS) -out:$@ $(LIBX_OBJS)
 	$(A)echo generated `pwd`/$@
 
 $(JVMTEST_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBTEST_OBJS)
-	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBTEST_OBJS)
+	$(A)$(LIBMGR) $(LIB_FLAGS) -out:$@ $(LIBTEST_OBJS)
 	$(A)echo generated `pwd`/$@
 
 $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVMTEST_LIB) \
             $(JVM_LIB) $(EXE_OBJS)
-	$(A)$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ $(EXE_OBJS) $(JVMX_LIB) \
+	$(A)$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) -out:$@ $(EXE_OBJS) $(JVMX_LIB) \
             $(JVMTEST_LIB) $(JVM_LIB) $(LINK_OPT_FLAGS_$(BUILD)) \
             $(LIBS) $(PCSL_LIBS)
 
@@ -1589,17 +1589,17 @@ endif
 
 CPP_INCLUDE_DIRS       += -I"$(WINCE_INCLUDE_PATH)"
 
-CPP_OPT_FLAGS_debug     = /Zi /Od
-CPP_OPT_FLAGS_release   = /Oxs
-CPP_OPT_FLAGS_product   = /Oxs
-CPP_OPT_FLAGS           = /X /wd4996 /wd4819 /GS-
+CPP_OPT_FLAGS_debug     = -Zi -Od
+CPP_OPT_FLAGS_release   = -Oxs
+CPP_OPT_FLAGS_product   = -Oxs
+CPP_OPT_FLAGS           = -X -wd4996 -wd4819 -GS-
 CPP_OPT_FLAGS          += $(CPP_OPT_FLAGS_$(BUILD))
 
 CPP_ARCH_FLAGS_arm      = -D$(CEPlatform) -DARM -D_ARM -D_ARM_
-CPP_ARCH_FLAGS_i386     = -D_X86_ -D_X86  /D _WIN32_WCE_EMULATION
+CPP_ARCH_FLAGS_i386     = -D_X86_ -D_X86  -D_WIN32_WCE_EMULATION
 CPP_ARCH_FLAGS          = $(CPP_ARCH_FLAGS_$(arch))
 
-CPP_DEF_FLAGS_debug     = /D "_DEBUG" /D "AZZERT" /D "DEBUG"
+CPP_DEF_FLAGS_debug     = -D_DEBUG -DAZZERT -DDEBUG
 CPP_DEF_FLAGS_release   = -DNDEBUG
 CPP_DEF_FLAGS_product   = -DPRODUCT -DNDEBUG
 
@@ -1607,40 +1607,40 @@ CPP_DEF_FLAGS          += $(CPP_DEF_FLAGS_$(BUILD))
 CPP_DEF_FLAGS		   += -D_CRT_SECURE_NO_WARNINGS
 
 CPP_FLAGS_EXPORT        = $(CPP_DEF_FLAGS) -DREQUIRES_JVMCONFIG_H=1
-CPP_FLAGS_EXPORT       += /W3 -D_WIN32_WCE=$(CEVersion) $(CPP_ARCH_FLAGS) \
+CPP_FLAGS_EXPORT       += -W3 -D_WIN32_WCE=$(CEVersion) $(CPP_ARCH_FLAGS) \
                           -DUNDER_CE=$(CEVersion) \
-                          -DUNICODE -D_UNICODE /nologo $(SAVE_TEMPS_CFLAGS) \
+                          -DUNICODE -D_UNICODE -nologo $(SAVE_TEMPS_CFLAGS) \
                           $(ENABLE_CFLAGS) $(ROMIZING_CFLAGS) \
                           $(BUILD_VERSION_CFLAGS)
 
 CPP_FLAGS               = $(CPP_INCLUDE_DIRS) $(CPP_FLAGS_EXPORT)
 
-LIB_FLAGS_debug         = /DEBUGTYPE:CV
+LIB_FLAGS_debug         = -DEBUGTYPE:CV
 LIB_FLAGS_release       =
 LIB_FLAGS_product       =
-LIB_FLAGS               = /nologo $(LIB_FLAGS_$(BUILD))
+LIB_FLAGS               = -nologo $(LIB_FLAGS_$(BUILD))
 
 
-LINK_OPT_FLAGS_debug    = /OPT:REF /DEBUG
-LINK_OPT_FLAGS_release  = /OPT:REF
-LINK_OPT_FLAGS_product  = /OPT:REF
+LINK_OPT_FLAGS_debug    = -OPT:REF -DEBUG
+LINK_OPT_FLAGS_release  = -OPT:REF
+LINK_OPT_FLAGS_product  = -OPT:REF
 
-#LINK_ARCH_FLAGS_arm     = /MACHINE:ARM /SUBSYSTEM:$(CESubsystem) \
-#                          /base:"0x00010000" /stack:0x10000,0x1000
+#LINK_ARCH_FLAGS_arm     = -MACHINE:ARM -SUBSYSTEM:$(CESubsystem) \
+#                          -base:"0x00010000" -stack:0x10000,0x1000
 
-LINK_ARCH_FLAGS_arm     = /SUBSYSTEM:$(CESubsystem)
-LINK_ARCH_FLAGS_i386    = /subsystem:windows /WINDOWSCE:EMULATION \
-                          /MACHINE:ix86
-LINK_ARCH_FLAGS         = $(LINK_ARCH_FLAGS_$(arch)) /LIBPATH:"\"$(WINCE_LIB_PATH)\"" \
-                          /LIBPATH:"\"$(VC8CE_LIB_PATH)\"" /LIBPATH:"\"$(VC8CE_ATLMFC_LIB_PATH)\""
+LINK_ARCH_FLAGS_arm     = -SUBSYSTEM:$(CESubsystem)
+LINK_ARCH_FLAGS_i386    = -subsystem:windows -WINDOWSCE:EMULATION \
+                          -MACHINE:ix86
+LINK_ARCH_FLAGS         = $(LINK_ARCH_FLAGS_$(arch)) -LIBPATH:"\"$(WINCE_LIB_PATH)\"" \
+                          -LIBPATH:"\"$(VC8CE_LIB_PATH)\"" -LIBPATH:"\"$(VC8CE_ATLMFC_LIB_PATH)\""
 
-LINK_FLAGS_EXPORT       = /incremental /entry:"WinMainCRTStartup" \
-                          /MAP $(LINK_ARCH_FLAGS)
+LINK_FLAGS_EXPORT       = -incremental -entry:"WinMainCRTStartup" \
+                          -MAP $(LINK_ARCH_FLAGS)
 
 LINK_FLAGS_EXPORT      += $(LINK_OPT_FLAGS_$(BUILD))
 LINK_FLAGS             += $(LINK_FLAGS_EXPORT) $(LIBS)
 
-CPP_USE_PCH             = /Fp"cldchi.pch" /Yu"incls/_precompiled.incl"
+CPP_USE_PCH             = -Fp"cldchi.pch" -Yu"incls/_precompiled.incl"
 BUILD_PCH               = _build_pch_visCPP.obj
 
 $(BUILD_PCH): $(Precompiled_Headers)
@@ -1648,8 +1648,8 @@ $(BUILD_PCH): $(Precompiled_Headers)
 	echo CPP_INCLUDE_DIRS is $(CPP_INCLUDE_DIRS)
 	echo '#include "incls/_precompiled.incl"' > \
 		$(GEN_DIR)/_build_pch_visCPP.cpp
-	$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) /Fp"cldchi.pch" \
-		/Yc"incls/_precompiled.incl" /c $(GEN_DIR)/_build_pch_visCPP.cpp
+	$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) -Fp"cldchi.pch" \
+		-Yc"incls/_precompiled.incl" -c $(GEN_DIR)/_build_pch_visCPP.cpp
 	echo '    done'
 
 # Special case (fails to compile with precompiled header files)
@@ -1672,7 +1672,7 @@ NativesTable.obj: $(NATIVES_TABLE)
 
 ifeq ($(SAVE_PREPROCESSOR_OUTPUT),true)
 define BUILD_C_TARGET
-	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) /P \
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) -P \
 		`$(call fixcygpath, $<)`
 	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) -c \
 		`$(call fixcygpath, $<)`
@@ -1692,15 +1692,15 @@ Interpreter_arm.obj: Interpreter_arm.asm
 	$(A)$(ASM) -LIST "Interpreter_$(arch).lst" $(THIS_DIR)/$< $@
 
 Interpreter_i386.obj: Interpreter_i386.asm
-	$(A)$(ASM) /Zi /FoInterpreter_i386.obj /coff \
-		/Sc /FlInterpreter_i386.lst /c $(THIS_DIR)/$<
+	$(A)$(ASM) -Zi -FoInterpreter_i386.obj -coff \
+		-Sc -FlInterpreter_i386.lst -c $(THIS_DIR)/$<
 
 %.obj: %.cpp
 	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) -c \
 		`$(call fixcygpath, $<)`
 
 MAKE_EXPORT_LINK_OUT_SWITCH1     =
-MAKE_EXPORT_LINK_OUT_SWITCH2     = /out:
+MAKE_EXPORT_LINK_OUT_SWITCH2     = -out:
 MAKE_EXPORT_EXTRA_LIBS          += $(LIBS)
 MAKE_EXPORT_THREAD_LIBS          =
 
@@ -1786,15 +1786,15 @@ $(ROM_SEGMENTS):
 endif
 
 $(JVM_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIB_OBJS) romgenmanifest
-	$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIB_OBJS)
+	$(LIBMGR) $(LIB_FLAGS) -out:$@ $(LIB_OBJS)
 	$(A)echo generated `pwd`/$@
 
 $(JVMX_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBX_OBJS)
-	$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBX_OBJS)
+	$(LIBMGR) $(LIB_FLAGS) -out:$@ $(LIBX_OBJS)
 	$(A)echo generated `pwd`/$@
 
 $(JVMTEST_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBTEST_OBJS)
-	$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBTEST_OBJS)
+	$(LIBMGR) $(LIB_FLAGS) -out:$@ $(LIBTEST_OBJS)
 	$(A)echo generated `pwd`/$@
 
 ifeq ($(skip_link_image), true)
@@ -1802,7 +1802,7 @@ $(JVM_EXE):
 	$(A)touch $@
 else
 $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) $(EXE_OBJS)
-	$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
+	$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) -out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
 		$(PCSL_LIBS) $(JAVACALL_LIBS)
 	$(A)if test "$(arch)-$(BUILD)" = "arm-product"; then \
 	    echo running pdstrip ...; \
