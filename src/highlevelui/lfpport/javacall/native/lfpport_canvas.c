@@ -43,6 +43,7 @@ extern gint display_height;
 
 extern GtkWidget *main_canvas;
 extern GtkWidget *main_window;
+extern GdkPixmap *current_mutable;
 
 MidpError canvas_show_cb(MidpFrame* framePtr) {
     //Same as form_show
@@ -99,7 +100,8 @@ lfpport_canvas_expose_event_callback(GtkWidget *widget,
     GdkPixmap *gdk_pix_map;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
-    gdk_pix_map = gtk_object_get_user_data(widget);
+    //gdk_pix_map = gtk_object_get_user_data(widget);
+    gdk_pix_map = current_mutable;
 
     /* draw pixmap to the draw area */
     gdk_draw_drawable(widget->window,
@@ -133,7 +135,6 @@ MidpError lfpport_canvas_create(MidpDisplayable* canvasPtr,
                 const pcsl_string* title, const pcsl_string* tickerText) {
     GtkWidget *form;
     GtkWidget *da;
-    GdkPixmap *gdk_pix_map;
     GdkGC *gc;
     int da_width, da_height;
     int title_height, title_width;
@@ -142,11 +143,10 @@ MidpError lfpport_canvas_create(MidpDisplayable* canvasPtr,
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
     da = gtk_drawing_area_new();
-    gtk_widget_show(da);
     form = gtk_form_new(TRUE);
-    gtk_widget_show(form);
-
     gtk_container_add(GTK_CONTAINER(form), da);
+    gtk_object_set_user_data(form, da);
+    gtk_widget_show_all(form);
 
     gtk_widget_set_size_request(da, display_width, display_height);
     gtk_widget_size_request(da, &requisition);
@@ -159,19 +159,12 @@ MidpError lfpport_canvas_create(MidpDisplayable* canvasPtr,
     canvasPtr->setTitle = canvas_set_title_cb;
     canvasPtr->setTicker = canvas_set_ticker_cb;
 
-
-    gdk_pix_map = gdk_pixmap_new(NULL,
-                                 display_width,
-                                 display_height,
-                                 24);
-
-
-    gtk_object_set_user_data(da, gdk_pix_map);
-    g_object_set_qdata(gdk_pix_map, PIXBUF_QUARK, da);
-    gtk_object_set_user_data(form, da);
-
-    LIMO_TRACE(">>>%s da=%x gdk_pix_map=%x\n", __FUNCTION__, da, gdk_pix_map);
+    LIMO_TRACE("%s da=%x\n", __FUNCTION__, da);
     gtk_main_window_add_form(main_window, GTK_FORM(form));
+    //TODO:  find a more appropriate location for the following line
+    //Located here only because for some unknown reason show(canvas)
+    //is not called
+    gtk_main_window_set_current_form(main_window, GTK_FORM(form));
 
     lfpport_form_set_content_size(canvasPtr,
                                   display_width,
@@ -179,11 +172,6 @@ MidpError lfpport_canvas_create(MidpDisplayable* canvasPtr,
 
 
     canvasPtr->setTitle(canvasPtr, title);
-    //TODO:  find a more appropriate location for the following line
-    //Located here only because for some unknown reason show(canvas)
-    //is not called
-    //gtk_main_window_set_current_form(main_window, GTK_FORM(form));
-
     gtk_widget_size_request(da, &requisition);
 
 //     g_signal_connect(G_OBJECT(da), "expose_event",

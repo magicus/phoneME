@@ -87,6 +87,9 @@ void gxpport_render_mutableimage(gxpport_mutableimage_native_handle srcImagePtr,
     guchar *pixels;
     int rowstride;
     GdkPixbuf *gdkPixBuf;
+    GtkWidget *form;
+    GtkWidget *da;
+
 
     LIMO_TRACE(">>>%s srcImagePtr=%x dstImagePtr=%x clip[0]=%d clip[1]=%d clip[2]=%d clip[3]=%d\n",
                __FUNCTION__, srcImagePtr, dstImagePtr, clip[0], clip[1], clip[2], clip[3]);
@@ -112,7 +115,14 @@ void gxpport_render_mutableimage(gxpport_mutableimage_native_handle srcImagePtr,
         /* TODO:  replace main_window with something real */
 
         if (!dstImagePtr) {
-            gdk_draw_drawable(main_window->window,
+
+            form = gtk_main_window_get_current_form(main_window);
+            da = gtk_object_get_user_data(form);
+
+            g_usleep(15 * 1000);
+
+            //gdk_draw_drawable(main_window->window,
+            gdk_draw_drawable(da->window,
                  main_window->style->fg_gc[GTK_STATE_NORMAL],
                  srcImagePtr,
                  clip[0],   /* x */

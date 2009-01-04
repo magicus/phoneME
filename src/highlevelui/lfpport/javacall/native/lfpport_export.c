@@ -49,6 +49,7 @@ extern GtkWidget *main_window;
 extern GtkLabel  *ticker;
 extern GMainLoop *main_loop;
 extern GdkPixmap *current_mutable;
+extern gint tmpFlag;
 
 #define LFPPORT_SCREEN_HEIGHT       320
 #define LFPPORT_SCREEN_WIDTH        240
@@ -61,27 +62,44 @@ void lfpport_refresh(int x, int y, int w, int h){
     int rowstride;
     GdkRectangle clipRectangle;
     GdkGC *gc;
-
+    GdkRectangle rect;
+    GtkWidget *form;
+    GtkWidget *da;
 
     LIMO_TRACE(">>>%s x=%d y=%d w=%d h=%d\n", __FUNCTION__, x, y, w, h);
 
-    clipRectangle.x = 0;
-    clipRectangle.y = 0;
-    clipRectangle.width = w;
-    clipRectangle.height = h;
+//     clipRectangle.x = 0;
+//     clipRectangle.y = 0;
+//     clipRectangle.width = w;
+//     clipRectangle.height = h;
 
-    gc = gdk_gc_new(main_window->window);
-    gdk_gc_set_clip_rectangle(gc, &clipRectangle);
+//     rect.x = x;
+//     rect.y = y;
+//     rect.width = w;
+//     rect.height = h;
 
-    gdk_draw_drawable(main_window->window,
-             gc,
-             current_mutable,
-             x,   /* x */
-             y,   /* y */
-             x,
-             y,
-             w,   /* width */
-             h);  /* height */
+//    gc = main_window->style->black_gc;
+
+
+//    gdk_gc_set_clip_rectangle(gc, &clipRectangle);
+
+//     form = gtk_main_window_get_current_form(main_window);
+//     da = gtk_object_get_user_data(form);
+//    LIMO_TRACE("%s da=%x\n", __FUNCTION__, da);
+
+//    gdk_draw_drawable(main_window->window,
+//    gdk_draw_drawable(da->window,
+//              gc,
+//              current_mutable,
+//              x,   /* x */
+//              y,   /* y */
+//              x,
+//              y,
+//              w,   /* width */
+//              h);  /* height */
+
+//
+//     gdk_window_invalidate_rect(da, &rect, FALSE);
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
