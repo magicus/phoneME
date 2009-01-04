@@ -48,6 +48,9 @@ POSIX2WIN_FILTER = xargs -r cygpath -m
 CHKWINPATH	 = $(shell ls -d "$(1)" 2>&1)
 endif
 
+# safeguard for win32 builds other than Cygwin
+POSIX2WIN_CMD?=echo $(1)
+
 # path conversion macros used in shared makefiles.
 HOST2POSIX        = $(WIN2POSIX)
 POSIX2HOST 	  = $(POSIX2WIN)
