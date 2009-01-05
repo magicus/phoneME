@@ -60,7 +60,7 @@ extern "C" {
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The target of this processing instruction.
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -76,7 +76,7 @@ javacall_result
 javacall_dom_processinginstruction_get_target_start(javacall_handle handle,
                                                     javacall_int32 invocation_id,
                                                     void **context,
-                                                    /* OUT */ javacall_utf16_string ret_value,
+                                                    /* OUT */ javacall_utf16* ret_value,
                                                     /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -91,7 +91,7 @@ javacall_dom_processinginstruction_get_target_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value The target of this processing instruction.
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -104,7 +104,7 @@ javacall_dom_processinginstruction_get_target_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_processinginstruction_get_target_finish(void *context,
-                                                     /* OUT */ javacall_utf16_string ret_value,
+                                                     /* OUT */ javacall_utf16* ret_value,
                                                      /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -122,7 +122,7 @@ javacall_dom_processinginstruction_get_target_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The content of this processing instruction
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -138,7 +138,7 @@ javacall_result
 javacall_dom_processinginstruction_get_data_start(javacall_handle handle,
                                                   javacall_int32 invocation_id,
                                                   void **context,
-                                                  /* OUT */ javacall_utf16_string ret_value,
+                                                  /* OUT */ javacall_utf16* ret_value,
                                                   /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -153,7 +153,7 @@ javacall_dom_processinginstruction_get_data_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value The content of this processing instruction
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -166,7 +166,7 @@ javacall_dom_processinginstruction_get_data_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_processinginstruction_get_data_finish(void *context,
-                                                   /* OUT */ javacall_utf16_string ret_value,
+                                                   /* OUT */ javacall_utf16* ret_value,
                                                    /* INOUT */ javacall_uint32* ret_value_len);
 
 /**

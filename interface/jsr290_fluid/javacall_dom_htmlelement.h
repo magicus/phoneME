@@ -70,7 +70,7 @@ javacall_result
 javacall_dom_htmlelement_get_class_name_start(javacall_handle handle,
                                               javacall_int32 invocation_id,
                                               void **context,
-                                              /* OUT */ javacall_utf16_string ret_value,
+                                              /* OUT */ javacall_utf16* ret_value,
                                               /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -92,7 +92,7 @@ javacall_dom_htmlelement_get_class_name_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmlelement_get_class_name_finish(void *context,
-                                               /* OUT */ javacall_utf16_string ret_value,
+                                               /* OUT */ javacall_utf16* ret_value,
                                                /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -118,7 +118,7 @@ javacall_result
 javacall_dom_htmlelement_get_id_start(javacall_handle handle,
                                       javacall_int32 invocation_id,
                                       void **context,
-                                      /* OUT */ javacall_utf16_string ret_value,
+                                      /* OUT */ javacall_utf16* ret_value,
                                       /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -138,7 +138,7 @@ javacall_dom_htmlelement_get_id_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmlelement_get_id_finish(void *context,
-                                       /* OUT */ javacall_utf16_string ret_value,
+                                       /* OUT */ javacall_utf16* ret_value,
                                        /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -224,6 +224,51 @@ javacall_dom_htmlelement_set_id_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_htmlelement_set_id_finish(void *context);
+
+/*
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a code representing the type of the underlying object as defined above
+ * 
+ * 
+ * @param handle Pointer to the object representing this htmlelement.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value A code representing the type of the underlying object as defined above. 
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlelement_get_html_element_type_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlelement_get_html_element_type_start(javacall_handle handle,
+                                                     javacall_int32 invocation_id,
+                                                     void **context,
+                                                     /* OUT */ javacall_dom_html_element_types* ret_value);
+
+/*
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns a code representing the type of the underlying object as defined above
+ * 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value A code representing the type of the underlying object as defined above. 
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlelement_get_html_element_type_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlelement_get_html_element_type_finish(void *context,
+                                                      /* OUT */ javacall_dom_html_element_types* ret_value);
 
 /** 
  * Decrements ref counter of the native object specified number of times
