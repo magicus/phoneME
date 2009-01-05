@@ -63,6 +63,8 @@ static void reportOutOfMemoryError();
 #if ENABLE_MULTIPLE_ISOLATES
 static char* constructODTAgentMVMManagerArgument(
         const char* odtAgentSettings);
+
+static int extendClasspath(const char* classpath);
 #endif /* ENABLE_MULTIPLE_ISOLATES */
 
 static javacall_utf16* get_properties_file_name(int* fileNameLen, 
@@ -612,13 +614,17 @@ main(int argc, char *argv[]) {
     } else if (executionMode == ODTAGENT) {
     
 #if ENABLE_MULTIPLE_ISOLATES
-
+        
         /* run the MVM manager and instruct it run the ODT agent */
 
         char* argv1[4] = { 
                 "runMidlet", "-1",
                 "com.sun.midp.appmanager.MVMManager", 
                 RUN_ODT_AGENT_PREFIX }; 
+
+        if ((classPath != NULL) && !extendClasspath(classPath)) {
+            return -1;
+        }
     
         if (odtAgentSettings != NULL) {
             mvmManagerArgument = 
@@ -737,6 +743,78 @@ constructODTAgentMVMManagerArgument(const char* odtAgentSettings) {
     strcat(mvmManagerParamString, odtAgentSettings);
     
     return mvmManagerParamString;
+}
+
+/**
+ * Inserts the specified classpath in front of the classpath stored in the 
+ * "classpathext" system property. In this way the input classpath will have
+ * higher priority than the previously stored classpath.
+ * 
+ * @param classpath the classpath to insert in front of "classpathext"
+ * @return <code>1</code> on success, <code>0</code> on failure  
+ */   
+static int 
+extendClasspath(const char* classpath) {
+    char* oldClasspathext = NULL;
+    char* pathSeparator = NULL;
+    int classpathLength;
+    int separatorLength;
+    int offset;
+    char* newClasspathext;
+    
+    javacall_get_property("classpathext", JAVACALL_APPLICATION_PROPERTY,
+                          &oldClasspathext);
+    if ((oldClasspathext == NULL) || (oldClasspathext[0] == '\0')) {
+        if (javacall_set_property(
+                "classpathext", classpath, 1, 
+                JAVACALL_APPLICATION_PROPERTY) != JAVACALL_OK) {
+            javautil_debug_print(JAVACALL_LOG_ERROR, "main",
+                                 "Failed to set classpath!");
+            return 0;
+        }
+    
+        return 1;
+    }
+
+    javacall_get_property("path.separator", JAVACALL_APPLICATION_PROPERTY, 
+                          &pathSeparator);
+    if (pathSeparator == NULL) {
+        javautil_debug_print(JAVACALL_LOG_ERROR, "main",
+                             "Failed to get path separator!");
+        return 0;
+    }
+
+    classpathLength = strlen(classpath);
+    separatorLength = strlen(pathSeparator);
+    newClasspathext = (char*)malloc((classpathLength + separatorLength 
+                                            + strlen(oldClasspathext) + 1) 
+                                        * sizeof(char));
+    if (newClasspathext == NULL) {
+        reportOutOfMemoryError();
+        return 0;
+    }        
+    
+    /* prepend classpath to make it of higher priority */
+    offset = 0;
+    strcpy(newClasspathext, classpath);
+    
+    offset += classpathLength;
+    strcpy(newClasspathext + offset, pathSeparator);
+    
+    offset += separatorLength;
+    strcpy(newClasspathext + offset, oldClasspathext);
+     
+    if (javacall_set_property("classpathext", newClasspathext, 1, 
+                              JAVACALL_APPLICATION_PROPERTY) != JAVACALL_OK) {
+        javautil_debug_print(JAVACALL_LOG_ERROR, "main",
+                             "Failed to set classpath!");
+
+        free(newClasspathext);
+        return 0;
+    }
+
+    free(newClasspathext);
+    return 1;    
 }
 
 #endif /* ENABLE_MULTIPLE_ISOLATES */
