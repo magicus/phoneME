@@ -123,7 +123,7 @@ void gxpport_render_mutableimage(gxpport_mutableimage_native_handle srcImagePtr,
 
             //gdk_draw_drawable(main_window->window,
             gdk_draw_drawable(da->window,
-                 main_window->style->fg_gc[GTK_STATE_NORMAL],
+                 main_window->style->black_gc,
                  srcImagePtr,
                  clip[0],   /* x */
                  clip[1],   /* y */

@@ -66,9 +66,15 @@ extern GdkPixmap *current_mutable;
 GdkGC *get_gc(void *dst){
     GtkWidget *form;
     GtkWidget *da;
+    GdkGC *gc;
 
     if (!dst) {
-        return main_window->style->black_gc;
+        form = gtk_main_window_get_current_form(main_window);
+        da = gtk_object_get_user_data(form);
+        gc = gdk_gc_new(da->window);
+
+//        gdk_gc_copy(gc, main_window->style->black_gc);
+        return gc;
     }
 
     if (!GDK_IS_PIXMAP(dst)) {
@@ -77,9 +83,8 @@ GdkGC *get_gc(void *dst){
     }
 
     if (current_mutable == dst) {
-//         LIMO_TRACE("%s drawing to current_mutable.  Returning main_window->style->black_gc\n",
-//                     __FUNCTION__);
-        return main_window->style->black_gc;
+        gc = gdk_gc_new(current_mutable);
+        return gc;
     }
 
     form = gtk_main_window_get_current_form(main_window);
@@ -91,7 +96,9 @@ GdkGC *get_gc(void *dst){
         LIMO_TRACE("%s Expecting drawing area\n", __FUNCTION__);
         return;
     }
-    return da->style->black_gc;
+    gc = gdk_gc_new(da);
+//    gdk_gc_copy(gc, da->style->black_gc);
+    return gc;
 }
 
 GdkPixmap *get_pix_map(void *dst){
@@ -696,8 +703,8 @@ void gxpport_draw_chars(
 
     gdk_pango_renderer_set_override_color(GDK_PANGO_RENDERER (renderer),
                  PANGO_RENDER_PART_FOREGROUND, &color);
-    pango_context_set_matrix (context, &matrix);
-    pango_layout_context_changed (layout);
+    pango_context_set_matrix(context, &matrix);
+    pango_layout_context_changed(layout);
     pango_renderer_draw_layout(renderer, layout,
                   x * PANGO_SCALE,
                   y * PANGO_SCALE);

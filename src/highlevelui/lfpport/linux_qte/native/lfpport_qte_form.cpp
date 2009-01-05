@@ -1,28 +1,28 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
- * 
+ *
  * This source file is specific for Qt-based configurations.
  */
 
@@ -44,7 +44,7 @@
  * Form container constructor. This container is later
  * added as a child of the mscreen that is why it is
  * constructed with no parent. All items are later
- * added to this container. 
+ * added to this container.
  */
 Form::Form() : QWidget(0) {
   connect(PlatformMScreen::getMScreen(), SIGNAL(contentsMoving(int, int)),
@@ -52,7 +52,7 @@ Form::Form() : QWidget(0) {
 }
 
 /**
- * Finds a new widget to give the keyboard focus to, 
+ * Finds a new widget to give the keyboard focus to,
  * returns TRUE if is can find a new widget and FALSE if it can't
  *
  * Override to notify Java.
@@ -110,7 +110,7 @@ form_hide_and_delete(MidpFrame* framePtr, jboolean onExit) {
 }
 
 /**
- * Create the container window for a Form. 
+ * Create the container window for a Form.
  * The container window should be created in background and displayed
  * after its content is populated.
  * Return the error condition.
@@ -128,11 +128,11 @@ lfpport_form_create(MidpDisplayable* dispPtr,
   QWidget *container = new Form();
   MScreen * mscreen = PlatformMScreen::getMScreen();
 
-  // we need to resize container to the default viewport width 
-  // and height because items with use the default size as the 
+  // we need to resize container to the default viewport width
+  // and height because items with use the default size as the
   // base for there own
   container->resize(mscreen->getScreenWidth(), mscreen->getScreenHeight());
-    
+
   // Fill in MidpDisplayable structure
   dispPtr->frame.widgetPtr	 = container;
   dispPtr->frame.show		 = form_show;
@@ -140,7 +140,7 @@ lfpport_form_create(MidpDisplayable* dispPtr,
   dispPtr->frame.handleEvent	 = NULL; // Not used in Qt
   dispPtr->setTitle		 = displayable_set_title;
   dispPtr->setTicker		 = displayable_set_ticker;
-  
+
   dispPtr->setTitle(dispPtr, title);
 /*  dispPtr->setTicker(dispPtr, tickerText);*/
 
@@ -158,7 +158,7 @@ lfpport_form_set_content_size(MidpDisplayable* dispPtr, int w, int h) {
 
   if (h <= mscreen->getDisplayHeight()) {
     w = mscreen->getDisplayWidth();
-    h = mscreen->getDisplayHeight(); 
+    h = mscreen->getDisplayHeight();
   }
 
   container->resize(w, h);
@@ -171,7 +171,8 @@ lfpport_form_set_content_size(MidpDisplayable* dispPtr, int w, int h) {
  * Set current Item.
  */
 extern "C" MidpError
-lfpport_form_set_current_item(MidpItem* itemPtr, int yOffset) {
+lfpport_form_set_current_item(MidpDisplayable* formPtr,
+                                        MidpItem* itemPtr, int yOffset)) {
     PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
     QWidget* itemWidgetPtr = (QWidget *)itemPtr->widgetPtr;
     // Make it visible
@@ -192,7 +193,7 @@ lfpport_form_get_scroll_position(int *pos)
   PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
   TRACE_CI(pdMidpFormGetScrollPosition);
   *pos = mscreen->getScrollPosition();
- 
+
   return KNI_OK;
 }
 
@@ -205,7 +206,7 @@ lfpport_form_set_scroll_position(int pos)
   PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
   TRACE_CI(pdMidpFormSetScrollPosition);
   mscreen->setScrollPosition(pos);
- 
+
   return KNI_OK;
 }
 
@@ -219,6 +220,6 @@ lfpport_form_get_viewport_height(int *height)
   PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
   TRACE_CI(lfpport_form_get_viewport_height);
   *height = mscreen->visibleHeight();
- 
+
   return KNI_OK;
 }
