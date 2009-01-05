@@ -335,15 +335,13 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
      *             used for arguments
      */
     public static void main(String args[]) {
-System.out.println("MIDletSuiteLoader.main");
         try {
             MIDletSuiteLoader loader = new MIDletSuiteLoader();
 
             /**
              * The following call has no effect until both USE_WTK_DEBUG
              * and USE_MULTIPLE_ISOLATES are true.
-             */
-			 
+             */			 
             //DebugUtil.attachDebugger();
 
             loader.runMIDletSuite();
@@ -357,7 +355,6 @@ System.out.println("MIDletSuiteLoader.main");
      * from the persistent {@link CommandState} object.
      */
     private MIDletSuiteLoader() {
-System.out.println("+MIDletSuiteLoader.<init>");
         // Restore command state transfered to MIDlet suite loader
         state = CommandState.getCommandState();
 
