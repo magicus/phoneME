@@ -68,36 +68,19 @@ GdkGC *get_gc(void *dst){
     GtkWidget *da;
     GdkGC *gc;
 
-    if (!dst) {
-        form = gtk_main_window_get_current_form(main_window);
-        da = gtk_object_get_user_data(form);
-        gc = gdk_gc_new(da->window);
-
-//        gdk_gc_copy(gc, main_window->style->black_gc);
-        return gc;
-    }
-
-    if (!GDK_IS_PIXMAP(dst)) {
-        LIMO_TRACE("%s GdkPixmap expected as dst!\n", __FUNCTION__);
-        return;
-    }
-
-    if (current_mutable == dst) {
+    if (dst != NULL && current_mutable == dst) {
         gc = gdk_gc_new(current_mutable);
         return gc;
     }
 
     form = gtk_main_window_get_current_form(main_window);
     da = gtk_object_get_user_data(form);
-    if (form == NULL || da == NULL) {
+    if (form == NULL || da == NULL || !GTK_IS_DRAWING_AREA(da)) {
         LIMO_TRACE("%s null form or da\n", __FUNCTION__);
+        return NULL;
     }
-    if (!GTK_IS_DRAWING_AREA(da)) {
-        LIMO_TRACE("%s Expecting drawing area\n", __FUNCTION__);
-        return;
-    }
-    gc = gdk_gc_new(da);
-//    gdk_gc_copy(gc, da->style->black_gc);
+
+    gc = gdk_gc_new(da->window);
     return gc;
 }
 
@@ -112,7 +95,7 @@ GdkPixmap *get_pix_map(void *dst){
     return (GdkPixmap*)dst;
 }
 
-GtkWidget *get_da(void *dst){
+GtkWidget *get_dst_widget_for_chars(void *dst){
     GtkWidget *form;
     GtkWidget *da;
 
@@ -122,14 +105,11 @@ GtkWidget *get_da(void *dst){
 
     form = gtk_main_window_get_current_form(main_window);
     da = gtk_object_get_user_data(form);
-    if (form == NULL || da == NULL) {
+    if (form == NULL || da == NULL || !GTK_IS_DRAWING_AREA(da)) {
         LIMO_TRACE("%s null form or da\n", __FUNCTION__);
-    }
-    if (!GTK_IS_DRAWING_AREA(da)) {
-        LIMO_TRACE("%s Expecting drawing area\n", __FUNCTION__);
         return main_window;
-        return;
     }
+
     return da;
 }
 
@@ -648,8 +628,8 @@ void gxpport_draw_chars(
     gchar text_buf[MAX_TEXT_LENGTH];
     MidpError status;
     PlatformFontPtr fontPtr;
-    GdkColor color;
-    GtkWidget *da;
+    GdkColor gdkColor;
+    GtkWidget *dstWidget;
     GtkWidget *form;
     GdkPixmap *gdk_pix_map;
     PangoRenderer *renderer;
@@ -675,7 +655,7 @@ void gxpport_draw_chars(
     }
 
     //set color
-    color.pixel = pixel;
+    gdkColor.pixel = pixel;
 
     //translate text
     for (i = 0; i < n; i++) {
@@ -683,10 +663,11 @@ void gxpport_draw_chars(
     }
 
     gc = get_gc(dst);
+    gdk_gc_set_foreground(gc, &gdkColor);
     clipRectangle = create_clip_rectangle(clip);
     gdk_gc_set_clip_rectangle(gc, &clipRectangle);
     gdk_pix_map = get_pix_map(dst);
-    da = get_da(dst);
+    dstWidget = get_dst_widget_for_chars(dst);
 
     /* Get the default renderer for the screen, and set it up for drawing  */
     renderer = gdk_pango_renderer_get_default(gdk_screen);
@@ -694,15 +675,13 @@ void gxpport_draw_chars(
     gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER (renderer), gc);
     LIMO_TRACE("%s renderer=%x\n", __FUNCTION__, renderer);
     /* Create a PangoLayout, set the font and text */
-    context = gtk_widget_create_pango_context(da);
+    context = gtk_widget_create_pango_context(dstWidget);
     layout = pango_layout_new (context);
 
     LIMO_TRACE("%s context=%x layout=%x text_buf=%s\n", __FUNCTION__, context, layout, text_buf);
     pango_layout_set_text(layout, text_buf, n);
     pango_layout_set_font_description (layout, desc);
 
-    gdk_pango_renderer_set_override_color(GDK_PANGO_RENDERER (renderer),
-                 PANGO_RENDER_PART_FOREGROUND, &color);
     pango_context_set_matrix(context, &matrix);
     pango_layout_context_changed(layout);
     pango_renderer_draw_layout(renderer, layout,
