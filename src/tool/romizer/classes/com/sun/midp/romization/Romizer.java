@@ -151,6 +151,13 @@ public class Romizer extends RomUtil {
      */
     private static String getResourceNameFromPath(String filePath) {
         int start = filePath.lastIndexOf(File.separatorChar);
+
+		// To be compatible with non-Cygwin win32 builds
+		// that do not translate / to \.
+        if (start < 0) {
+            start = filePath.lastIndexOf('/');
+        }
+
         if (start < 0) {
             start = 0;
         } else {
