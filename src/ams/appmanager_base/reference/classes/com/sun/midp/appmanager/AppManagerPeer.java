@@ -1110,6 +1110,8 @@ class AppManagerPeer implements CommandListener {
         for (int i = 0; i < proxies.length; ++i) {
             proxies[i].destroyMidlet();
         }
+
+        appManagerUI.exitMidletSelector(msi);
     }
     
     /**

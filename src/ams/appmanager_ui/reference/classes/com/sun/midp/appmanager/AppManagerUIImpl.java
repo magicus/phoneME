@@ -442,6 +442,20 @@ class AppManagerUIImpl extends Form
     }
     
     /**
+     * Exits a MIDlet selector which corresponds to the specified
+     * <code>RunningMIDletSuiteInfo</code>.
+     * 
+     * @param msi the <code>RunningMIDletSuiteInfo</code> which specifies 
+     *      the selector to exit
+     */
+    public void exitMidletSelector(RunningMIDletSuiteInfo msi) {
+        MIDletSelector selector = getMidletSelector(msi.suiteId);
+        if (selector != null) {
+            selector.exitWhenNoMidletRuns();
+        }
+    }
+    
+    /**
      * Called to determine MidletSuiteInfo of the last selected Item.
      *
      * @return last selected MidletSuiteInfo
@@ -911,7 +925,14 @@ class AppManagerUIImpl extends Form
      */
     public void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {
         if (!suiteInfo.isLocked()) {
-            removeMIDletSelector(suiteInfo);
+            MIDletSelector selector = getMidletSelector(suiteInfo.suiteId);
+            if (selector != null) {
+                midletSelectors.removeElement(selector);
+
+                if (selector.isCurrent()) {
+                    display.setCurrent(this);
+                }
+            }
         }
     }
 
