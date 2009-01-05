@@ -139,7 +139,7 @@ ROMGEN_ARGS += -romconfig $(ROMGEN_CFG_LST)
 ROMGEN_ARGS += +GenerateROMStructs
 ROMGEN_ARGS += +EnableROMCompilation
 
-ifeq ($(USE_WTK_DEBUG), true)
+ifeq ($(USE_SYSTEM_CLASSES_DEBUG), true)
     ROMGEN_ARGS += +MakeROMDebuggable
 else
     ifeq ($(USE_DEBUG), true)
@@ -150,7 +150,7 @@ else
 endif
 
 ifneq ($(USE_DEBUG), true)
-    ifneq ($(USE_WTK_DEBUG), true)
+    ifneq ($(USE_SYSTEM_CLASSES_DEBUG), true)
         ifneq ($(USE_I3_TEST), true)
             # ROM optimizations do not work with DEBUG, WTK_DEBUG or I3_TEST
             ROMGEN_ARGS += +EnableAllROMOptimizations

@@ -1085,6 +1085,24 @@ javanotify_fluid_cancel_request (
 }
 
 void
+javanotify_fluid_filter_xml_http_request (
+    javacall_int32                        request,
+    javacall_handle                       fluid_image,
+    javacall_const_utf16_string           method,
+    javacall_const_utf16_string           url
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_FILTER_XML_HTTP_REQUEST;
+    e.data.jsr290FluidEvent.spare       = request;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.text        = javautil_wcsdup(method);
+    e.data.jsr290FluidEvent.text1       = javautil_wcsdup(url);
+
+    midp_jc_event_send(&e);
+}
+
+void
 javanotify_method_completion_notification (
     javacall_int32			              invocation_id
     ) {
@@ -1093,6 +1111,15 @@ javanotify_method_completion_notification (
     e.eventType = JSR290_JC_EVENT_COMPLETION_NOTIFICATION;
     e.data.jsr290NotificationEvent.invocation_id = invocation_id;
 
+    midp_jc_event_send(&e);
+}
+
+void javanotify_fluid_handle_event_request (javacall_handle  request_handle) {
+	midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_fluid_event_request() >>\n");
+    e.eventType = JSR290_JC_EVENT_HANDLE_EVENT;
+	e.data.jsr290HandleEventRequest.request_handle = request_handle;
     midp_jc_event_send(&e);
 }
 

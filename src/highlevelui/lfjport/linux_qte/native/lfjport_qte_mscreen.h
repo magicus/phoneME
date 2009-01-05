@@ -198,8 +198,7 @@ public:
         
     jboolean get_reverse_orientation() const { return r_orientation;}
 
-	void handle_clamshell(){};
-}
+    void handle_clamshell(){};
 
 public slots:
     /**
