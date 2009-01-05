@@ -45,6 +45,8 @@ extern GtkWidget *main_window;
 
 extern GdkGC *get_gc(void *);
 extern GdkRectangle create_clip_rectangle(const jshort *clip);
+extern char *get_temp_file_name(void);
+
 
 /**
  * Creates a copy of the specified mutable image
@@ -185,6 +187,7 @@ void gxpport_decodeimmutable_from_selfidentifying(unsigned
     gboolean loadResult;
     GdkPixbuf *gdkPixBuf;
     GError *error = NULL;
+    char *tmpFile;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
 
@@ -199,12 +202,13 @@ void gxpport_decodeimmutable_from_selfidentifying(unsigned
  */
 
     /* create temp file */
-    tfd = open(tmpFilename, O_CREAT|O_WRONLY|O_TRUNC, (int)0x666);
+    tmpFile = get_temp_file_name();
+    tfd = open(tmpFile, O_CREAT|O_WRONLY|O_TRUNC, (int)0x666);
     write(tfd, srcBuffer, length);
     close(tfd);
 
     /* read from temp file */
-    gdkPixBuf = gdk_pixbuf_new_from_file(tmpFilename, &error);
+    gdkPixBuf = gdk_pixbuf_new_from_file(tmpFile, &error);
     if (NULL == gdkPixBuf) {
         *creationErrorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;
         LIMO_TRACE("%s gdk_pixbuf_new_from_file returned NULL.  Error is %s.  Returning.\n",
@@ -326,6 +330,8 @@ gxpport_render_immutableregion
 
     //gc = gdk_gc_new(main_window);
     gc = get_gc(dstMutableImagePtr);
+    gdk_gc_copy(gc, main_window->style->base_gc);
+
     clipRectangle = create_clip_rectangle(clip);
     gdk_gc_set_clip_rectangle(gc, &clipRectangle);
 
@@ -339,14 +345,18 @@ gxpport_render_immutableregion
                    __FUNCTION__, rowstride, pixels);
 
         g_usleep(1000);
-        gdk_draw_rgb_image_dithalign(dstMutableImagePtr,    /* drawable */
-                                    gc, /*gc*/
-                                    x_dest, y_dest,   /*top left x, y*/
-                                    width, height, /*width, height */
-                                    GDK_RGB_DITHER_NORMAL,
-                                    pixels, rowstride,
-                                    0, 0);/*offset for dither*/
-
+        gdk_draw_pixbuf(dstMutableImagePtr,    /* drawable */
+                         gc,
+                         gdkPixBuf,
+                         x_src,
+                         y_src,
+                         x_dest,
+                         y_dest,
+                         width,
+                         height,
+                         GDK_RGB_DITHER_NORMAL,
+                         0,
+                         0);
     }
     else if (GDK_IS_PIXMAP(srcImmutableImagePtr)) {
         LIMO_TRACE("%s rendering pixmap\n", __FUNCTION__);
@@ -361,14 +371,14 @@ gxpport_render_immutableregion
 
             //gdk_draw_drawable(main_window->window,
             gdk_draw_drawable(da->window,
-                 main_window->style->fg_gc[GTK_STATE_NORMAL],
+                 gc,
                  srcImmutableImagePtr,
-                 clip[0],   /* x */
-                 clip[1],   /* y */
+                 x_src,   /* x */
+                 y_src,   /* y */
                  x_dest,
                  y_dest,
-                 clip[2],   /* width */
-                 clip[3]);  /* height */
+                 width,   /* width */
+                 height);  /* height */
         }
         else {
             //TODO
