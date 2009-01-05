@@ -64,17 +64,8 @@ class BinaryAssemblerCommon: public Macros {
 #if ENABLE_ISOLATES
     _task_id = Task::current_id();
 #endif
-    // In PRODUCT CompilerObject is filled with zeroes
-    NOT_PRODUCT( _code_offset                   = 0;    )
+
 #if USE_LITERAL_POOL
-    NOT_PRODUCT( _first_literal                 = NULL; )
-    NOT_PRODUCT( _first_unbound_literal         = NULL; )
-    NOT_PRODUCT( _last_literal                  = NULL; )
-#if ENABLE_THUMB_COMPILER
-    NOT_PRODUCT( _first_unbound_branch_literal  = NULL; )
-    NOT_PRODUCT( _last_unbound_branch_literal   = NULL; )
-    NOT_PRODUCT( _unbound_branch_literal_count  = 0;    )
-#endif
     zero_literal_count();
 #endif
   }

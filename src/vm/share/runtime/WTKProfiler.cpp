@@ -799,6 +799,7 @@ int WTKProfiler::dump_and_clear_profile_data(int id) {
 #if ENABLE_ISOLATES
     } else {
       dispose(id);
+      return -1;
     }
 #endif
   } else {

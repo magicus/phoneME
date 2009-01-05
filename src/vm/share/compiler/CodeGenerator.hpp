@@ -519,11 +519,6 @@ public:
 #if ENABLE_APPENDED_CALLINFO
     _callinfo_writer.initialize( this->compiled_method() );
 #endif
-    NOT_PRODUCT( _method = NULL; )
-#if ENABLE_INLINE
-    NOT_PRODUCT( _root_method = NULL; )
-#endif
-    NOT_PRODUCT( _omit_stack_frame = false; )
   }
 
   void oops_do( void do_oop(OopDesc**) ) {

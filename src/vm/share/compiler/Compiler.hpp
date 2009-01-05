@@ -139,7 +139,6 @@
   jint   name ## _count;
 
 struct Compiler_PerformanceCounters {
-  int level;
   FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_FIELDS)
 };
 
@@ -150,10 +149,10 @@ extern Compiler_PerformanceCounters comp_perf_counts;
 #define DEFINE_COUNTER_WRAPPER_CLASS(name, counter_level)\
 class counter_##name {                                              \
 public:                                                             \
-  counter_##name( void ) {                                          \
-    _start_offset = CodeGenerator::current()->code_size();          \
-    _start_time = Os::elapsed_counter();                            \
-  }                                                                 \
+  counter_##name( void ):                                           \
+    _start_offset( CodeGenerator::current()->code_size() ),         \
+    _start_time( Os::elapsed_counter() )                            \
+  {}                                                                \
                                                                     \
   ~counter_##name( void ) {                                         \
     comp_perf_counts.name ## _time +=                               \
@@ -163,17 +162,12 @@ public:                                                             \
     comp_perf_counts.name ## _count++;                              \
   }                                                                 \
 private:                                                            \
-  jlong _start_time;                                                \
-  jint  _start_offset;                                              \
+  const jlong _start_time;                                          \
+  const jint  _start_offset;                                        \
 };
 
 FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_WRAPPER_CLASS)
-
 #undef DEFINE_COUNTER_WRAPPER_CLASS
-
-#define DEFINE_COUNTER_LEVEL(name, counter_level)
-FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_LEVEL)
-#undef DEFINE_COUNTER_LEVEL
 
 #define COMPILER_PERFORMANCE_COUNTER_START(name)                     \
   const jint  __start_offset = CodeGenerator::current()->code_size();\
@@ -184,18 +178,14 @@ FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(DEFINE_COUNTER_LEVEL)
       Os::elapsed_counter() - __start_time;                         \
     comp_perf_counts.name ## _size +=                               \
       CodeGenerator::current()->code_size() - __start_offset;       \
-    comp_perf_counts.name ## _count++;                              \
-                                                                    \
-    GUARANTEE(comp_perf_counts.level > name ## _level, "Sanity");   \
-    GUARANTEE(_level <= name ## _level, "Sanity");                  \
-    comp_perf_counts.level = _level                           
+    comp_perf_counts.name ## _count++;
 
 #define INCREMENT_COMPILER_PERFORMANCE_COUNTER(name, value) \
     comp_perf_counts.name ## _size += (value);              \
     comp_perf_counts.name ## _count++;
 
 #define COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(name) \
-  counter_ ## name __counter_ ## name;
+  const counter_ ## name __counter_ ## name;
 
 #else
 

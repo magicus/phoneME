@@ -411,21 +411,11 @@ SocketTransport.cpp              SocketTransport.hpp
 SocketTransport.cpp              JavaDebugger.hpp
 SocketTransport.cpp              ObjectHeap_<iarch>.hpp
 
-#if ENABLE_JAVACALL_ODT
 
 ODTSocketTransport.cpp          SocketTransport.hpp
 ODTSocketTransport.cpp          JavaDebugger.hpp
 ODTSocketTransport.cpp          ObjectHeap_<iarch>.hpp
 
-#endif ENABLE_JAVACALL_ODT
-
-#if !ENABLE_JAVACALL_ODT
-
-PCSLSocketTransport.cpp          SocketTransport.hpp
-PCSLSocketTransport.cpp          JavaDebugger.hpp
-PCSLSocketTransport.cpp          ObjectHeap_<iarch>.hpp
-
-#endif !ENABLE_JAVACALL_ODT
 
 
 TransportDesc.hpp                MixedOopDesc.hpp
