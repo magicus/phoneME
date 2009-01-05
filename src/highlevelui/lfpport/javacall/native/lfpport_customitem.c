@@ -46,6 +46,7 @@ extern "C" {
 
 
 extern GtkWidget *main_window;
+extern GdkPixmap *current_mutable;
 
 static gboolean
 lfpport_customitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
@@ -362,10 +363,11 @@ MidpError lfpport_customitem_set_content_buffer(MidpItem* ciPtr,
     GdkPixmap* pixmap;
     int width, height;
 
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s imgPtr=%x\n", __FUNCTION__, imgPtr);
 
     if (imgPtr == NULL) {
-        return KNI_ERR;
+        imgPtr = current_mutable;
+        LIMO_TRACE("%s null imgPtr\n", __FUNCTION__);
     }
     if (!GDK_IS_PIXMAP(imgPtr)) {
         LIMO_TRACE("%s GdkPixmap expected!\n", __FUNCTION__);
@@ -381,7 +383,6 @@ MidpError lfpport_customitem_set_content_buffer(MidpItem* ciPtr,
     }
     gtk_object_set_user_data(da, imgPtr);
     LIMO_TRACE("%s da=%x imgPtr=%x\n", __FUNCTION__, da, imgPtr);
-    g_object_set_qdata((GdkPixmap*)imgPtr, PIXBUF_QUARK, da);
 
     gdk_drawable_get_size((GdkPixmap*)imgPtr, &width, &height);
     LIMO_TRACE("%s width=%d height=%d da=%x\n", __FUNCTION__, width, height, da);

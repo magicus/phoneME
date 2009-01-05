@@ -177,7 +177,8 @@ void gxpport_fill_triangle(
                           TRUE,
                           points,
                           3);
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);}
+    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+}
 
 /**
  * Copy from a specify region to other region
@@ -245,7 +246,6 @@ void gxpport_draw_rgb(
                           GDK_RGB_DITHER_NONE,
                           rgbData,
                           scanlen * 4);
-
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
@@ -358,7 +358,6 @@ void gxpport_draw_rect(
                           x, y,
                           width,
                           height);
-
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
@@ -407,7 +406,6 @@ void gxpport_fill_rect(
                           x, y,
                           width,
                           height);
-
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
@@ -519,7 +517,6 @@ void gxpport_draw_arc(
                       height,
                       startAngle,
                       arcAngle);
-
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
@@ -573,7 +570,6 @@ void gxpport_fill_arc(
                       height,
                       startAngle,
                       arcAngle);
-
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
@@ -738,7 +734,7 @@ void gxpport_get_fontinfo(
  * @param n The number of character to be measured
  * @return The total advance width in pixels (a non-negative value)
  */
-extern int gxpport_get_charswidth(
+int gxpport_get_charswidth(
                  int face, int style, int size,
                  const jchar *charArray, int n) {
 

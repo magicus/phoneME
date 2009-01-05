@@ -43,6 +43,7 @@
 extern "C" {
 #endif
 
+extern GdkPixmap *current_mutable;
 
 static gboolean
 lfpport_imageitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
@@ -222,7 +223,6 @@ MidpError lfpport_imageitem_create(MidpItem* itemPtr,
     /* TODO:  save appearanceMode */
     gtk_container_add(GTK_CONTAINER (frame), da);
     gtk_object_set_user_data(da, gdkPixBuf);
-    g_object_set_qdata(gdkPixBuf, PIXBUF_QUARK, da);
 
     g_signal_connect(G_OBJECT (da), "expose_event",
                    G_CALLBACK (lfpport_imageitem_expose_event_callback), NULL);
