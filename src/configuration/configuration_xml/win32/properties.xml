@@ -70,5 +70,12 @@
 		Value="+17815511212" 
 		Scope="internal"
 		Comment="Default SMS Service Center address."/>
+
+<!-- SYSTEM PROPERTIES -->
+<!-- Visible from System.getProperty() -->
+  <property Key="path.separator" 
+		Value=";" 
+		Scope="system"
+		Comment="Path separator."/>
 </properties>
 </configuration>

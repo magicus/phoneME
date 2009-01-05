@@ -44,5 +44,11 @@
 		Scope="internal"
 		Comment="Amount of space to reserve for JAM storage."/>
 
+<!-- SYSTEM PROPERTIES -->
+<!-- Visible from System.getProperty() -->
+  <property Key="path.separator" 
+		Value=":" 
+		Scope="system"
+		Comment="Path separator."/>
 </properties>
 </configuration>
