@@ -163,6 +163,10 @@
 #     Support concurrent CLDC and CDC stacks running on the same VM.
 #     This option is most commonly used when supporting a MIDP stack.
 #
+# CVM_SPLIT_VERIFY default: false
+#     Set to true to enable the split verifier, which will make use
+#     of StackMap resources in the .class file for quicker verification.
+#
 #####################################################################
 # Deprecated build options.
 #####################################################################
