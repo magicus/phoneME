@@ -176,16 +176,10 @@
 #define MIPS_PHI_REG_s3			(1U << CVMMIPS_s3)
 #endif
 
-#ifndef CVMMIPS_DOES_NOT_USE_GP
-#define MIPS_PHI_REG_gp			0
-#else
-#define MIPS_PHI_REG_gp			(1U << CVMMIPS_gp)
-#endif
-
 #define CVMCPU_PHI_REG_SET (			\
     MIPS_PHI_REG_s3  | 1U << CVMMIPS_s4 |	\
     1U << CVMMIPS_s5 | 1U << CVMMIPS_s6 |	\
-    1U << CVMMIPS_s7 | MIPS_PHI_REG_gp	       	\
+    1U << CVMMIPS_s7	       			\
 )
 
 /* range of registers that regman should look at */
@@ -205,16 +199,10 @@
  * no need to tell regman about CVMCPU_SP_REG because regman already
  * knows that it is busy.
  */
-#define CVMCPU_BUSY_SET0 (						\
+#define CVMCPU_BUSY_SET (						\
     1U<<CVMMIPS_r0 | /* r0 is always #0 */				\
     1U<<CVMMIPS_t7 | /* reserved as a scratch register */               \
     1U<<CVMMIPS_kt0 | 1U<<CVMMIPS_kt1) /* for kernel use only */
-#ifdef CVMMIPS_DOES_NOT_USE_GP
-#define CVMCPU_BUSY_SET CVMCPU_BUSY_SET0
-#else
-/* don't clobber the globals pointers */
-#define CVMCPU_BUSY_SET (CVMCPU_BUSY_SET0 | 1U<<CVMMIPS_gp)
-#endif
 
 /*
  * The set of all non-volatile registers according to C calling conventions.
@@ -223,7 +211,7 @@
 #define CVMCPU_NON_VOLATILE_SET (  /* s0-s8,gp */	       		\
     1U<<CVMMIPS_s0 | 1U<<CVMMIPS_s1 | 1U<<CVMMIPS_s2 | 1U<<CVMMIPS_s3 |	\
     1U<<CVMMIPS_s4 | 1U<<CVMMIPS_s5 | 1U<<CVMMIPS_s6 | 1U<<CVMMIPS_s7 |	\
-    1U<<CVMMIPS_s8 | 1U<<CVMMIPS_gp)
+    1U<<CVMMIPS_s8)
 
 /* The set of all volatile registers according to C calling conventions */
 #define CVMCPU_VOLATILE_SET \

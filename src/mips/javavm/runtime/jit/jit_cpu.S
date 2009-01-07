@@ -55,22 +55,23 @@
 NESTED(CVMJITgoNative, CONSTANT_CVMCCExecEnv_size, ra)
 #define off_31	-0
 #define off_30	-4
-#define off_23	-8
-#define off_22	-12
-#define off_21	-16
-#define off_20	-20
-#define off_19	-24
-#define off_18	-28
-#define off_17	-32
-#define off_16	-36
-#define off_f20	-40
-#define off_f21	-44
-#define off_f22	-48
-#define off_f23	-52
-#define off_f24	-56
-#define off_f25	-60
-#define off_f26	-64
-#define off_f27	-68
+#define off_28	-8
+#define off_23	-12
+#define off_22	-16
+#define off_21	-20
+#define off_20	-24
+#define off_19	-28
+#define off_18	-32
+#define off_17	-36
+#define off_16	-40
+#define off_f20	-44
+#define off_f21	-48
+#define off_f22	-52
+#define off_f23	-56
+#define off_f24	-60
+#define off_f25	-64
+#define off_f26	-68
+#define off_f27	-72
 #define savesize (-off_f27+4)
 #if savesize != (CONSTANT_CStack_NumGPRs*4 + CONSTANT_CStack_NumFPRs*4)
 #error bad savesize
@@ -99,6 +100,7 @@ NESTED(CVMJITgoNative, CONSTANT_CVMCCExecEnv_size, ra)
 	/* Save general registers */
 	sw	ra, framesize+frameoffset+off_31(sp)
 	sw	$30, framesize+frameoffset+off_30(sp)
+	sw	$28, framesize+frameoffset+off_28(sp)
 	sw	$23, framesize+frameoffset+off_23(sp)
 	sw	$22, framesize+frameoffset+off_22(sp)
 	sw	$21, framesize+frameoffset+off_21(sp)
@@ -174,6 +176,7 @@ MIPSexitNative0:
 	 */
 	lw	ra, framesize+frameoffset+off_31(sp)
 	lw	$30, framesize+frameoffset+off_30(sp)
+	lw	$28, framesize+frameoffset+off_28(sp)
 	lw	$23, framesize+frameoffset+off_23(sp)
 	lw	$22, framesize+frameoffset+off_22(sp)
 	lw	$21, framesize+frameoffset+off_21(sp)
