@@ -2605,7 +2605,6 @@ JVM.cpp                        Task.hpp
 JVM.cpp                        Stream.hpp
 #endif
 JVM.cpp                        SegmentedSourceROMWriter.hpp
-JVM.cpp                        MemoryMonitor.hpp
 
 JVM_<os_family>.hpp            Allocation.hpp
 JVM_<os_family>.cpp            JVM_<os_family>.hpp
