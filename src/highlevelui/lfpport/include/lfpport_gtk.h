@@ -44,6 +44,7 @@
 
 #include <stdio.h>  //TODO@gd212247:  remove at release
 #include <fcntl.h>
+#include <pthread.h>
 #include <string.h>
 #include <syslog.h>
 #include <gtk/gtk.h>
@@ -51,6 +52,7 @@
 extern char *DEBUG_FNAME;
 extern char debug_buff[1024];
 extern int  debug_fid;
+extern pthread_mutex_t mutex;
 
 static char *tmpFilename = "/usr/tmp/java.tmp";
 

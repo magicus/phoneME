@@ -174,7 +174,8 @@ void lfpport_ui_init(){
 void lfpport_ui_finalize(){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     gtk_widget_destroy(main_window);
-    g_main_loop_quit(main_loop);
+    gtk_main_quit();
+    //g_main_loop_quit(main_loop);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 

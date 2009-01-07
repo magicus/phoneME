@@ -119,9 +119,6 @@ void gxpport_render_mutableimage(gxpport_mutableimage_native_handle srcImagePtr,
             form = gtk_main_window_get_current_form(main_window);
             da = gtk_object_get_user_data(form);
 
-            g_usleep(15 * 1000);
-
-            //gdk_draw_drawable(main_window->window,
             gdk_draw_drawable(da->window,
                  main_window->style->black_gc,
                  srcImagePtr,

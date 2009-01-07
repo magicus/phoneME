@@ -344,7 +344,7 @@ gxpport_render_immutableregion
         LIMO_TRACE("%s rendering pixbuf.  rowstride=%x pixels=%x\n",
                    __FUNCTION__, rowstride, pixels);
 
-        g_usleep(1000);
+        pthread_mutex_lock(&mutex);
         gdk_draw_pixbuf(dstMutableImagePtr,    /* drawable */
                          gc,
                          gdkPixBuf,
@@ -357,6 +357,7 @@ gxpport_render_immutableregion
                          GDK_RGB_DITHER_NORMAL,
                          0,
                          0);
+        pthread_mutex_unlock(&mutex);
     }
     else if (GDK_IS_PIXMAP(srcImmutableImagePtr)) {
         LIMO_TRACE("%s rendering pixmap\n", __FUNCTION__);
@@ -367,7 +368,7 @@ gxpport_render_immutableregion
             form = gtk_main_window_get_current_form(main_window);
             da = gtk_object_get_user_data(form);
 
-            g_usleep(15 * 1000);
+            //g_usleep(15 * 1000);
 
             //gdk_draw_drawable(main_window->window,
             gdk_draw_drawable(da->window,
