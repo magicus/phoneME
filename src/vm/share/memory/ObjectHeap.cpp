@@ -378,7 +378,9 @@ void ObjectHeap::accumulate_memory_usage( OopDesc* _lwb[], OopDesc* _upb[] ) {
 }
 
 void ObjectHeap::accumulate_current_task_memory_usage( void ) {
+#if ENABLE_MEMORY_MONITOR
   notify_objects_created();
+#endif // ENABLE_MEMORY_MONITOR
 
   const int current_task_id = _current_task_id;
   TaskMemoryInfo& task_info = get_task_info( current_task_id );
