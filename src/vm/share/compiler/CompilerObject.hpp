@@ -141,7 +141,7 @@ public:
 #if !defined(PRODUCT) || (ARM && USE_COMPILER_COMMENTS)
 // For virtual functions of Assembler
 protected:
-  static void* operator new ( const unsigned size ) {
+  static void* operator new ( size_t size ) {
     SETUP_ERROR_CHECKER_ARG;
     return ObjectHeap::allocate_temp( align_size(size) JVM_NO_CHECK );
   }

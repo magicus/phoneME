@@ -411,11 +411,21 @@ SocketTransport.cpp              SocketTransport.hpp
 SocketTransport.cpp              JavaDebugger.hpp
 SocketTransport.cpp              ObjectHeap_<iarch>.hpp
 
+#if ENABLE_JAVACALL_ODT
 
 ODTSocketTransport.cpp          SocketTransport.hpp
 ODTSocketTransport.cpp          JavaDebugger.hpp
 ODTSocketTransport.cpp          ObjectHeap_<iarch>.hpp
 
+#endif ENABLE_JAVACALL_ODT
+
+#if !ENABLE_JAVACALL_ODT
+
+PCSLSocketTransport.cpp          SocketTransport.hpp
+PCSLSocketTransport.cpp          JavaDebugger.hpp
+PCSLSocketTransport.cpp          ObjectHeap_<iarch>.hpp
+
+#endif !ENABLE_JAVACALL_ODT
 
 
 TransportDesc.hpp                MixedOopDesc.hpp
@@ -1161,9 +1171,7 @@ ObjectHeap.cpp                   EventLogger.hpp
 ObjectHeap.cpp                   JarFileParser.hpp
 ObjectHeap.cpp                   Task.hpp
 ObjectHeap.cpp                   JniFrame.hpp
-#if ENABLE_MEMORY_MONITOR
 ObjectHeap.cpp                   MemoryMonitor.hpp
-#endif
 
 ConstantTag.hpp                  ArrayDesc.hpp
 ConstantTag.hpp                  GlobalDefinitions.hpp
@@ -2610,9 +2618,6 @@ JVM.cpp                        Task.hpp
 JVM.cpp                        Stream.hpp
 #endif
 JVM.cpp                        SegmentedSourceROMWriter.hpp
-#if ENABLE_MEMORY_MONITOR
-JVM.cpp                        MemoryMonitor.hpp
-#endif
 
 JVM_<os_family>.hpp            Allocation.hpp
 JVM_<os_family>.cpp            JVM_<os_family>.hpp
@@ -3197,7 +3202,6 @@ JarFileParser.cpp               FilePath.hpp
 JarFileParser.cpp               OopVisitor.hpp
 JarFileParser.cpp               InstanceClass.hpp
 
-#if ENABLE_MEMORY_MONITOR
 MemoryMonitor.hpp               GlobalDefinitions.hpp
 MemoryMonitor.cpp               Universe.hpp
 MemoryMonitor.cpp               MemoryMonitor.hpp
@@ -3206,7 +3210,6 @@ MemoryMonitorMd.cpp             MemoryMonitorMd.hpp
 MemoryMonitorMd_<os_family>.cpp MemoryMonitor.hpp
 MemoryMonitorMd_<os_family>.cpp MemoryMonitorMd.hpp
 MemoryMonitorMd_<os_family>.cpp MemoryMonitorMd_<os_family>.hpp
-#endif
 
 MemoryProfiler.hpp              DebuggerStream.hpp
 MemoryProfiler.hpp              Frame.hpp

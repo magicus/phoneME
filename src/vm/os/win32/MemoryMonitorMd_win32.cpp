@@ -31,7 +31,7 @@
 #include "incls/_precompiled.incl"
 #include "incls/_MemoryMonitorMd_win32.cpp.incl"
 
-#if ENABLE_MEMORY_MONITOR
+#if 0 && ENABLE_MEMORY_MONITOR
 
 void MemoryMonitorMd::startup() {}
 void MemoryMonitorMd::shutdown() {}

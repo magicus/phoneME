@@ -375,10 +375,7 @@ private:
                                                                             \
   product(int, InterpretationLogSize, INTERP_LOG_SIZE,                      \
           "How many elements of _interpretation_log[] to examine during "   \
-          "timer tick -- set to 0 to disable interpretation log")           \
-                                                                            \
-  product(int, InitialStreamBufferSize, 16 * 1024,                          \
-          "Initial size of the input/output packet streams buffers")        \
+          "timer tick -- set to 0 to disable interpretation log")
 
 
 #if !ENABLE_SYSTEM_ROM_OVERRIDE && defined(ROMIZING)
@@ -409,6 +406,14 @@ private:
          "when the VM is restarted inside the same process")
 #else
 #define WTK_PROFILER_RUNTIME_FLAGS(develop, product)
+#endif
+
+#if ENABLE_MEMORY_MONITOR
+#define MEMORY_MONITOR_RUNTIME_FLAGS(develop, product)                      \
+  product(bool, UseMemoryMonitor, false,                                    \
+          "Use memory monitor")
+#else
+#define MEMORY_MONITOR_RUNTIME_FLAGS(develop, product)
 #endif
 
 // If enable ENABLE_JVMPI_PROFILE, support +UseJvmpiProfiler parameter
@@ -964,6 +969,7 @@ private:
       USE_ROM_RUNTIME_FLAGS(develop, product, always)      \
       PROFILER_RUNTIME_FLAGS(develop, product)             \
       EVENT_LOGGER_RUNTIME_FLAGS(develop, product)         \
+      MEMORY_MONITOR_RUNTIME_FLAGS(develop, product)       \
       ROM_GENERATOR_FLAGS(develop, product)                \
       PERFORMANCE_COUNTERS_RUNTIME_FLAGS(develop, product) \
       PLATFORM_RUNTIME_FLAGS(develop, product)             \

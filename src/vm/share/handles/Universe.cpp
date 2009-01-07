@@ -710,7 +710,12 @@ bool Universe::bootstrap_with_rom(const JvmPathChar* classpath) {
 
   _is_bootstrapping = false;
   _before_main = false;
-  ObjectHeap::notify_bootstrap_complete();
+
+#if ENABLE_MEMORY_MONITOR
+  if( UseMemoryMonitor ) {
+    ObjectHeap::notify_bootstrap_complete();
+  }
+#endif
 
   if (VerboseGC || TraceGC || TraceHeapSize) {
     TTY_TRACE_CR(("young gen min (actual)   = %dK",
@@ -1008,7 +1013,12 @@ bool Universe::bootstrap_without_rom(const JvmPathChar* classpath) {
   }
 
   _before_main = false;
-  ObjectHeap::notify_bootstrap_complete();
+
+#if ENABLE_MEMORY_MONITOR
+  if( UseMemoryMonitor ) {
+    ObjectHeap::notify_bootstrap_complete();
+  }
+#endif
 
   *inlined_stackmaps() = new_stackmap_list(1 JVM_CHECK_0);
   inlined_stackmaps()->set_short_map(0, 0);
@@ -2090,7 +2100,7 @@ ReturnOop Universe::new_obj_array_class(JavaClass* element_class JVM_TRAPS) {
 }
 
 void Universe::fill_heap_gap(address ptr, size_t size_to_fill) {
-  GUARANTEE(size_to_fill >= 0, "sanity");
+  GUARANTEE(int(size_to_fill) >= 0, "sanity");
   GUARANTEE(!(size_to_fill & 0x3), "alignment");
   OopDesc* filler = (OopDesc*)ptr;
   if (size_to_fill == sizeof(OopDesc*)) {
