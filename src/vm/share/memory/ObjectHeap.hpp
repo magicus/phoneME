@@ -304,10 +304,6 @@ public:
   static void notify_objects_created    ( void );
   static void notify_objects_disposed   ( void );
   static void notify_bootstrap_complete ( void );
-#else // ENABLE_MEMORY_MONITOR
-  static void notify_objects_created    ( void ) {}
-  static void notify_objects_disposed   ( void ) {}
-  static void notify_bootstrap_complete ( void ) {}
 #endif // ENABLE_MEMORY_MONITOR
 
   static int compiler_area_soft_collect(size_t min_free_after_collection);

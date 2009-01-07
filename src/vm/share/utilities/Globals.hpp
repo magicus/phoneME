@@ -408,6 +408,14 @@ private:
 #define WTK_PROFILER_RUNTIME_FLAGS(develop, product)
 #endif
 
+#if ENABLE_MEMORY_MONITOR
+#define MEMORY_MONITOR_RUNTIME_FLAGS(develop, product)                      \
+  product(bool, UseMemoryMonitor, false,                                    \
+          "Use memory monitor")
+#else
+#define MEMORY_MONITOR_RUNTIME_FLAGS(develop, product)
+#endif
+
 // If enable ENABLE_JVMPI_PROFILE, support +UseJvmpiProfiler parameter
 // to enable the JVMPI events sending.
 #if ENABLE_JVMPI_PROFILE
@@ -961,6 +969,7 @@ private:
       USE_ROM_RUNTIME_FLAGS(develop, product, always)      \
       PROFILER_RUNTIME_FLAGS(develop, product)             \
       EVENT_LOGGER_RUNTIME_FLAGS(develop, product)         \
+      MEMORY_MONITOR_RUNTIME_FLAGS(develop, product)       \
       ROM_GENERATOR_FLAGS(develop, product)                \
       PERFORMANCE_COUNTERS_RUNTIME_FLAGS(develop, product) \
       PLATFORM_RUNTIME_FLAGS(develop, product)             \

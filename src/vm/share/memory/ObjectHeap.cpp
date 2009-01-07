@@ -131,9 +131,7 @@ inline void ObjectHeap::notify_objects_created  ( const OopDesc* const* from,
                                                   const OopDesc* const* to ) {
   do {
     const int size = ((const OopDesc*)from)->object_size();
-    if(Arguments::_monitor_memory) {
-      MemoryMonitor::notify_object( (const OopDesc*)from, size, true );
-    }
+    MemoryMonitor::notify_object( (const OopDesc*)from, size, true );
     from = DERIVED( const OopDesc* const*, from, size );
   } while( from < to );
 }
@@ -144,9 +142,7 @@ inline void ObjectHeap::notify_objects_disposed ( const OopDesc* const* from,
   do {
     const int size = ((const OopDesc*)from)->object_size();
     if( all || !test_bit_for( (OopDesc**) from ) ) {
-      if(Arguments::_monitor_memory) {
-        MemoryMonitor::notify_object( (const OopDesc*)from, size, false );
-      }
+      MemoryMonitor::notify_object( (const OopDesc*)from, size, false );
     }
     from = DERIVED( const OopDesc* const*, from, size );
   } while( from < to );
@@ -657,8 +653,10 @@ OopDesc* ObjectHeap::dead_task;
 #if ENABLE_MEMORY_MONITOR
 OopDesc** ObjectHeap::_task_allocation_start;
 void ObjectHeap::accumulate_current_task_memory_usage( void ) {
-  notify_objects_created();
-  _task_allocation_start = _inline_allocation_top;
+  if( UseMemoryMonitor ) {
+    notify_objects_created();
+    _task_allocation_start = _inline_allocation_top;
+  }
 }
 #endif  // ENABLE_MEMORY_MONITOR
 
@@ -1651,7 +1649,7 @@ bool ObjectHeap::expand_current_compiled_method(const int delta) {
 
 void ObjectHeap::dispose( void ) {
 #if ENABLE_MEMORY_MONITOR
-  if(Arguments::_monitor_memory) {
+  if( UseMemoryMonitor ) {
     MemoryMonitor::notify_heap_disposed();
   }
 #endif
@@ -1925,7 +1923,7 @@ bool ObjectHeap::create( void ) {
 #endif
 
 #if ENABLE_MEMORY_MONITOR
-  if(Arguments::_monitor_memory) {
+  if( UseMemoryMonitor ) {
     MemoryMonitor::notify_heap_created(_heap_start, _heap_capacity);
   }
 #endif
@@ -2496,7 +2494,12 @@ inline void ObjectHeap::mark_objects( const bool is_full_collect ) {
 #endif
   }
 #endif
-  notify_objects_disposed();
+
+#if ENABLE_MEMORY_MONITOR
+  if( UseMemoryMonitor ) {
+    notify_objects_disposed();
+  }
+#endif
 }
 
 void ObjectHeap::check_marking_stack_overflow() {
@@ -2661,10 +2664,8 @@ inline void ObjectHeap::compute_new_object_locations() {
     if (test_bit_for(p, bitvector_base)) {
       // Current object is live
 #if ENABLE_MEMORY_MONITOR
-      if( p != compaction_top ) {
-        if(Arguments::_monitor_memory) {
-          MemoryMonitor::notify_object_moved( compaction_top, p );
-        }
+      if( p != compaction_top && UseMemoryMonitor ) {
+        MemoryMonitor::notify_object_moved( compaction_top, p );
       }
 #endif
       OopDesc* obj = (OopDesc*) p;
@@ -3563,11 +3564,6 @@ void ObjectHeap::collect(size_t min_free_after_collection JVM_TRAPS) {
     Throw::out_of_memory_error( JVM_SINGLE_ARG_THROW );
   }
 #undef DETECT_QUOTA_VIOLATIONS
-#if ENABLE_MEMORY_MONITOR
-  if(Arguments::_monitor_memory) {
-    MemoryMonitor::flushBuffer();
-  }
-#endif
 } 
 
 // This function contains misc debug and tracing code that are mostly unused by
@@ -3960,11 +3956,6 @@ bool ObjectHeap::internal_collect(size_t min_free_after_collection JVM_TRAPS) {
 
   set_task_allocation_start( _inline_allocation_top );
   verify_layout();
-#if ENABLE_MEMORY_MONITOR
-  if(Arguments::_monitor_memory) {
-    MemoryMonitor::flushBuffer();
-  }
-#endif
   return is_full_collect;
 }
 

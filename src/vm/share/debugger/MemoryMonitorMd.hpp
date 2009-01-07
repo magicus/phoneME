@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-#if ENABLE_MEMORY_MONITOR
+#if 0 && ENABLE_MEMORY_MONITOR
 /*
  * MemoryMonitorMd.hpp:
  */
@@ -32,17 +32,16 @@
 typedef unsigned long u_long;
 
 class MemoryMonitorMd {
-public:
-    static void startup(void);
-    static void shutdown(void);
-    static void startFlushThread(void);
-    static void stopFlushThread(void);
-    static void lock(void);
-    static void unlock(void);
-private:
-    static u_long htonl_m(u_long);
-    friend class MemoryMonitor;
-
+ public:
+  static void startup(void);
+  static void shutdown(void);
+  static void startFlushThread(void);
+  static void stopFlushThread(void);
+  static void lock(void);
+  static void unlock(void);
+ private:
+  static u_long htonl_m(u_long);
+  friend class MemoryMonitor;
 };
  
 #ifdef __cplusplus
