@@ -111,7 +111,6 @@ void SocketTransport::init_transport(void *t JVM_TRAPS)
   (void)t; // Why? Do we need it in our arguments?
   JVM_IGNORE_TRAPS;
   UsingFastOops fastoops;
-  //ODD_TODO short debugger_port;
   int res;
 
   if (Verbose) {
@@ -122,10 +121,8 @@ void SocketTransport::init_transport(void *t JVM_TRAPS)
 
     if (!_network_is_up) {
       if (!_wait_for_network_init) {
-        res = javacall_odt_initialize(); //ODD_TODO res = pcsl_network_init_start(SocketTransport::network_initialized_callback);
-      } /*else {
-        res = pcsl_network_init_finish();
-      }*/
+        res = javacall_odt_initialize(); 
+      } 
 
       _wait_for_network_init = false;
 
@@ -174,16 +171,15 @@ bool SocketTransport::connect_transport(Transport *t, ConnectionType ct,
   }
 
   if (ct == SERVER) {
-    /* listen = st->listener_socket(); */
 
-    (void)timeout; // TODO: take timeout into account
+    (void)timeout; // take timeout into account
 	
     if (!_wait_for_accept) {
 		debugger_port = Arguments::_debugger_port;
 		if (debugger_port == 0) {
 			debugger_port = DefaultDebuggerPort;
 		}
-      status = javacall_odt_open_channel(debugger_port, &channel_handle); //ODD_TODO pcsl_serversocket_accept_start(_listen_handle, &connect_handle, &pContext);
+      status = javacall_odt_open_channel(debugger_port, &channel_handle); 
 
     }
 	else {
@@ -229,15 +225,8 @@ void SocketTransport::disconnect_transport(Transport *t)
   }
 
   if (channel_handle != INVALID_HANDLE) {
-    /* IMPL_NOTE: wait here for 2 seconds to let other side to finish */
 
-    javacall_odt_close_channel(channel_handle); //ODD_TODO pcsl_socket_shutdown_output(dbg_handle);
-
-    /* 
-     * Note that this function NEVER returns PCSL_NET_WOULDBLOCK. Therefore, the
-     * finish() function should never be called and does nothing.
-     */
-    // ODD_TODO pcsl_socket_close_start(dbg_handle, NULL);
+    javacall_odt_close_channel(channel_handle); 
 
     st->set_debugger_socket((int)INVALID_HANDLE);
   }
@@ -262,14 +251,6 @@ void SocketTransport::destroy_transport(Transport *t)
   if (listener_handle != INVALID_HANDLE) {	
 
     // last socket in the system, shutdown the listener socket
-    //ODD_TODO pcsl_socket_shutdown_output(listener_handle);
-
-    /* 
-     * Note that this function NEVER returns PCSL_NET_WOULDBLOCK. Therefore, the
-     * finish() function should never be called and does nothing.
-     */
-    //ODD_TODO pcsl_socket_close_start(listener_handle, NULL);
-
     st->set_listener_socket((int)INVALID_HANDLE);
   }
 
@@ -292,7 +273,7 @@ bool SocketTransport::char_avail(Transport *t, int timeout)
     return false;
   }
 
-  int status = javacall_odt_is_available(channel_handle, &bytesAvailable);//ODD_TODO pcsl_socket_available(dbg_handle, &bytesAvailable);
+  int status = javacall_odt_is_available(channel_handle, &bytesAvailable);
   if (status == PCSL_NET_SUCCESS && bytesAvailable >= 1) {
     return true;
   } else {
@@ -318,11 +299,8 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
   }
 
   if (!_wait_for_write) {
-    status = javacall_odt_write_bytes(channel_handle, (char*)buf, len, &bytes_sent); //ODD_TODO pcsl_socket_write_start(dbg_handle, (char*)buf, len, &bytes_sent, &pContext);
-  } /*else {  //Reinvocation after unblocking the thread 
-    status = pcsl_socket_write_finish(dbg_handle, (char*)buf,
-                                      len, &bytes_sent, pContext);
-  }*/
+    status = javacall_odt_write_bytes(channel_handle, (char*)buf, len, &bytes_sent); 
+  }
 
   if (status == PCSL_NET_WOULDBLOCK) {
     if (Verbose) {
@@ -418,25 +396,7 @@ int SocketTransport::read_bytes_impl(Transport *t, void *buf, int len,
   }
 
   do {
-	  status = javacall_odt_read_bytes(channel_handle, ptr, nleft, &nread); //ODD_TODO pcsl_socket_read_start(dbg_handle, ptr, nleft, &nread, &pContext);
-  /*
-    if (!_wait_for_read) {
-      status = javacall_odt_read_bytes(channel_handle, ptr, nleft, &nread); //ODD_TODO pcsl_socket_read_start(dbg_handle, ptr, nleft, &nread, &pContext);
-    } else {  //Reinvocation after unblocking the thread 
-      status = pcsl_socket_read_finish(dbg_handle,  ptr, nleft,
-                                       &nread, pContext);
-    }
-
-    if (status == PCSL_NET_WOULDBLOCK) {
-      if (Verbose) {
-        tty->print_cr("SocketTransport::read_bytes_impl(): waiting for read");
-      }
-      _wait_for_read = true;
-      return total;
-    }
-
-    _wait_for_read = false;
-  */
+	  status = javacall_odt_read_bytes(channel_handle, ptr, nleft, &nread); 
 
     if (status != PCSL_NET_SUCCESS) {
 #ifdef AZZERT
