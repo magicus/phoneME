@@ -77,6 +77,11 @@ CVMJITdisableRendezvousCallsTrapbased(CVMExecEnv* ee)
 #include "javavm/include/porting/io.h"
 #include "javavm/include/securehash.h"
 
+/* codecache start addr + codecache size */
+#define AOT_HEADER_SIZE (2 * sizeof(CVMInt32))
+#define TOTAL_CODECACHE_SIZE \
+    (jgs->codeCacheSize + AOT_HEADER_SIZE)
+
 /* Find existing AOT code. If there is no AOT code found,
  * allocate a big consecutive code cache for both AOT and 
  * JIT compilation.
@@ -86,8 +91,6 @@ CVMInt32 CVMfindAOTCode()
     CVMJITGlobalState* jgs = &CVMglobals.jit;
     char *aotfile = jgs->aotFile;
     int fd;
-    /* codecache start addr + codecache size */
-    int headersize = 2 * sizeof(CVMInt32);
 
     if (jgs->recompileAOT) {
         goto notFound;
@@ -153,11 +156,11 @@ CVMInt32 CVMfindAOTCode()
          * boundary when MAP_FIXED is used, so we need to use
          * 'addr-headersize' instead of 'addr'.
          */
-        addr -= headersize;
+        addr -= AOT_HEADER_SIZE;
         /* This is to check if we can safely map at the same address
          * that's specified in the AOT file.
          */
-        codeStart = mmap((void*)addr, codeSize,
+        codeStart = mmap((void*)addr, codeSize + AOT_HEADER_SIZE,
                          PROT_EXEC|PROT_READ,
                          MAP_PRIVATE, fd, 0);
 	if (codeStart != (void*)addr) {
@@ -171,13 +174,13 @@ CVMInt32 CVMfindAOTCode()
 	    }
         }
 #else
-        codeStart = mmap(0, codeSize,
+        codeStart = mmap(0, codeSize + AOT_HEADER_SIZE,
                          PROT_EXEC|PROT_READ,
 			 MAP_PRIVATE, fd, 0);
 #endif
 
         if (codeStart != MAP_FAILED) {
-	    jgs->codeCacheAOTStart = (CVMUint8*)(codeStart + headersize);
+	    jgs->codeCacheAOTStart = (CVMUint8*)(codeStart + AOT_HEADER_SIZE);
             jgs->codeCacheAOTEnd = jgs->codeCacheAOTStart + codeSize;
 	    jgs->codeCacheAOTCodeExist = CVM_TRUE;
             jgs->codeCacheDecompileStart = jgs->codeCacheAOTEnd;
@@ -200,7 +203,7 @@ notFound:
            code cache for both AOT and JIT compilation. */
         jgs->codeCacheSize += jgs->aotCodeCacheSize;
         fd = open("/dev/zero", O_RDWR);
-        alignedAddr = mmap(0, jgs->codeCacheSize+headersize,
+        alignedAddr = mmap(0, TOTAL_CODECACHE_SIZE,
                            PROT_EXEC|PROT_READ|PROT_WRITE,
                            MAP_PRIVATE, fd, 0);
         close(fd);
@@ -209,7 +212,7 @@ notFound:
 	    CVMconsolePrintf("Failed to mmap AOT code cache.\n");
 	    jgs->codeCacheStart = NULL;
         } else {
-            jgs->codeCacheStart = alignedAddr + headersize;
+            jgs->codeCacheStart = alignedAddr + AOT_HEADER_SIZE;
             jgs->codeCacheAOTStart = jgs->codeCacheStart;
             jgs->codeCacheAOTEnd = &jgs->codeCacheStart[jgs->aotCodeCacheSize];
         }
@@ -223,8 +226,12 @@ notFound:
  * The compiled code above the codeCacheDecompileStart will be saved
  * into persistent storage if there is no previouse saved AOT code, 
  * and will be reloaded next time.
- * We write the AOT code size as the first word. The saved code
- * cache looks like the following:
+ *
+ * We write the start address of the AOT code as the first word.
+ * This allows it to be forced to be mapped to the same location if
+ * necessary on subsequent runs. See CVMAOT_USE_FIXED_ADDRESS.
+ * The size is also written, along with a checksum to make sure
+ * it is the correct AOT code to be used with this vm build.
  *
  *  ------------------------------------------------------
  *  |codecache start addr|codecache size|                |
@@ -244,7 +251,6 @@ CVMJITcodeCachePersist()
 {
     int fd;
     CVMJITGlobalState* jgs = &CVMglobals.jit;
-    /*CVMUint8* cbuf = jgs->codeCacheStart;*/
     char *aotfile = jgs->aotFile;
 
     CVMassert(aotfile != NULL);
@@ -280,4 +286,24 @@ CVMJITcodeCachePersist()
         CVMtraceJITStatus(("JS: Finished writing AOT code.\n"));
     }
 }
+
+/* Destroy AOT code cache. The return value indicates if
+ * we need to free the JIT code cache separately.
+ */
+CVMBool
+CVMJITAOTcodeCacheDestroy()
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit; 
+    if (jgs->codeCacheAOTStart == jgs->codeCacheStart) {
+        /* We just generated the AOT code on this run */
+        munmap(jgs->codeCacheAOTStart, TOTAL_CODECACHE_SIZE);
+        return CVM_FALSE; /* no need to free JIT code cache */
+    } else {
+        munmap(jgs->codeCacheAOTStart - AOT_HEADER_SIZE, 
+               jgs->codeCacheAOTEnd - 
+               (jgs->codeCacheAOTStart - AOT_HEADER_SIZE));
+        return CVM_TRUE; /* need to free JIT code cache */
+    }
+}
+
 #endif
