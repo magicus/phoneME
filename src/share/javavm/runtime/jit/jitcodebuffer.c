@@ -850,11 +850,16 @@ CVMJITcodeCacheDestroy(CVMJITGlobalState *jgs)
     }
 
     if (jgs->codeCacheStart != NULL) {
-#ifdef CVMJIT_HAVE_PLATFORM_SPECIFIC_ALLOC_FREE_CODECACHE
- 	CVMJITfreeCodeCache(jgs->codeCacheStart);
-#else
- 	free(jgs->codeCacheStart);
+#ifdef CVM_AOT
+        if (CVMJITAOTcodeCacheDestroy(jgs))
 #endif
+        {
+#ifdef CVMJIT_HAVE_PLATFORM_SPECIFIC_ALLOC_FREE_CODECACHE
+ 	    CVMJITfreeCodeCache(jgs->codeCacheStart);
+#else
+ 	    free(jgs->codeCacheStart);
+#endif
+        }
     }
 
 #ifdef CVM_JIT_PROFILE
@@ -885,11 +890,8 @@ preventMethodFromDecompiling(CVMMethodBlock* mb)
     CVMCompiledMethodDescriptor* cmd = CVMmbCmd(mb);
     /* make sure method survives for 2 aging processes after this one */
     if (CVMcmdEntryCount(cmd) < 8 
-#ifdef CVM_AOT
-        && !((CVMUint8*)cmd >= CVMglobals.jit.codeCacheAOTStart &&
-             (CVMUint8*)cmd < CVMglobals.jit.codeCacheAOTEnd)
-#endif
-        ) {
+        && (CVMUint8*)cmd >= CVMglobals.jit.codeCacheDecompileStart
+        && (CVMUint8*)cmd < CVMglobals.jit.codeCacheEnd) {
 	CVMcmdEntryCount(cmd) = 8;
     }
 }
@@ -1716,7 +1718,7 @@ CVMJITcodeCacheFindCompiledMethod(CVMUint8* pc, CVMBool doPrint)
     /* make sure the pc is in the code cache */
     if (pc < jgs->codeCacheStart || pc >= jgs->codeCacheEnd) {
 	if (doPrint) {
-	    CVMconsolePrintf("PC is not in code cache\n");
+	    CVMconsolePrintf("PC 0x%x is not in code cache\n", pc);
 	}
 	return NULL;
     }
