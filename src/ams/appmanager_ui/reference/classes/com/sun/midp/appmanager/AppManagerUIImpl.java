@@ -97,8 +97,6 @@ import java.util.*;
  */
 class AppManagerUIImpl extends Form
     implements AppManagerUI, ItemCommandListener, CommandListener {
-private Command ping = new Command("ping", Command.ITEM, 2);											
-	
 
     /** Command object for "Exit" command for splash screen. */
     private Command exitCmd =
@@ -269,6 +267,7 @@ private Command ping = new Command("ping", Command.ITEM, 2);
             folderList.setSelectCommand(selectFolderCmd);
             folderList.setCommandListener(this);
         }
+
         mciVector = new Vector();
 
         this.manager = manager;
@@ -291,7 +290,6 @@ private Command ping = new Command("ping", Command.ITEM, 2);
         } else {
             addCommand(exitCmd);
         }
-addCommand(ping);
 
         setCommandListener(this);
         
@@ -472,26 +470,7 @@ addCommand(ping);
      * @param c command activated by the user
      * @param s the Displayable the command was on.
      */
-  private void ping(String ip, int port){
-	javax.microedition.io.SocketConnection sc = null;
-    try {
-      System.out.println("+Pinger.ping " + ip + ":" + port);
-      sc = (javax.microedition.io.SocketConnection) javax.microedition.io.Connector.open("socket://" + ip + ":" + port);
-      java.io.DataOutputStream dos = sc.openDataOutputStream();
-      java.io.DataInputStream dis = sc.openDataInputStream();
-      sc.close();
-    } catch (Exception e) {
-      System.out.println("Pinger caught error: " + e);
-	  e.printStackTrace();
-    } finally {
-		try{ sc.close(); } catch(Exception e){}
-		System.out.println("-Pinger.ping " + ip);
-    }
-  }
-	 
     public void commandAction(Command c, Displayable s) {
-	if(c == ping) {ping("127.0.0.1", 9000);}
-	
         if (c == exitCmd) {
             if ((s == this) || s == folderList) {
                 manager.shutDown();
