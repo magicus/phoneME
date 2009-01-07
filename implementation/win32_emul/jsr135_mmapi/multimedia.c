@@ -716,6 +716,14 @@ javacall_result javacall_media_create(int appId,
             pPlayer->mediaType   = fmt_guess_from_url( uri, uriLength );
             pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
         }
+        
+#ifdef ENABLE_MMAPI_LIME
+        if (&g_audio_itf == pPlayer->mediaItfPtr || 
+            &g_video_itf == pPlayer->mediaItfPtr)
+        {
+            pPlayer->downloadByDevice = JAVACALL_TRUE;
+        }
+#endif
     }
 
     if( NULL != pPlayer->mediaItfPtr )
