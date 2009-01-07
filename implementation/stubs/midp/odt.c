@@ -22,8 +22,6 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#ifndef __JAVACALL_ODD_H_
-#define __JAVACALL_ODD_H_
 
 /**
  * @file javacall_odd.h
@@ -35,7 +33,7 @@
 extern "C" {
 #endif
 
-#include "javacall_defs.h"
+#include "javacall_odd.h"
 
 /**
  * @defgroup OnDeviceDebug API
@@ -52,18 +50,20 @@ extern "C" {
  * The platform calls this function to inform VM that
  * ODTAgent midlet must be enabled.
  */
-void javanotify_enable_odd(void);
+void javanotify_enable_odd(void)
+{}
 
 /**
- * debugger calls this function on start-up to allow ODT to initialize any global resources
+ * CLDC calls this function on start-up to allow ODT to initialize any global resources
  *
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_odt_initialize();
-
+javacall_result javacall_odt_initialize(){
+    return JAVACALL_FAIL;
+}
 /**
- * debugger calls this function when debugged Isolate starts.
+ * CLDC calls this function when debugged Isolate starts.
  * ODT should open all required connections e.g., KDWP, stdout
  *
  * @param port KDWP port
@@ -72,10 +72,12 @@ javacall_result javacall_odt_initialize();
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_odt_open_channel(int port, void **pHandle);
+javacall_result javacall_odt_open_channel(int port, void **pHandle){
+    return JAVACALL_FAIL;
+}
 
 /**
- * debugger calls this function when debugged Isolate exits.
+ * CLDC calls this function when debugged Isolate exits.
  * ODT should close all open connections e.g., KDWP, stdout
  *
  * @param handle address of variable to receive the handle
@@ -83,10 +85,12 @@ javacall_result javacall_odt_open_channel(int port, void **pHandle);
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_odt_close_channel(javacall_handle handle);
+javacall_result javacall_odt_close_channel(javacall_handle handle){
+    return JAVACALL_FAIL;
+}
 
 /**
- * debugger calls this function before reading a full KDWP packet
+ * CLDC debugger calls this function before reading a full KDWP packet
  *
  * @param handle address of variable to receive the handle
  * @param pBytesAvailable number of bytes available
@@ -94,10 +98,12 @@ javacall_result javacall_odt_close_channel(javacall_handle handle);
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_odt_is_available(javacall_handle handle, int *pBytesAvailable);
+javacall_result javacall_odt_is_available(javacall_handle handle, int *pBytesAvailable){
+    return JAVACALL_FAIL;
+}
 
 /**
- * debugger calls this function to write a KDWP packet
+ * CLDC debugger calls this function to write a KDWP packet
  *
  * @param handle handle of an open connection
  * @param pData base of buffer containing data to be written
@@ -108,10 +114,12 @@ javacall_result javacall_odt_is_available(javacall_handle handle, int *pBytesAva
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_odt_write_bytes(javacall_handle handle, char *pData, int len, int *pBytesWritten);
+javacall_result javacall_odt_write_bytes(javacall_handle handle, char *pData, int len, int *pBytesWritten){
+    return JAVACALL_FAIL;
+}
 
 /**
- * debugger calls this function to read a KDWP packet
+ * CLDC debugger calls this function to read a KDWP packet
  *
  * @param handle handle of an open connection
  * @param pData base of buffer to receive read data
@@ -122,10 +130,12 @@ javacall_result javacall_odt_write_bytes(javacall_handle handle, char *pData, in
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_odt_read_bytes(javacall_handle handle, unsigned char *pData, int len, int *pBytesRead);
+javacall_result javacall_odt_read_bytes(javacall_handle handle, unsigned char *pData, int len, int *pBytesRead){
+    return JAVACALL_FAIL;
+}
 
 /**
- * debugger calls this function to redirect system output
+ * CLDC debugger calls this function to redirect system output
  *
  * @param handle handle of an open connection
  * @param pData base of buffer containing data to be written
@@ -136,7 +146,9 @@ javacall_result javacall_odt_read_bytes(javacall_handle handle, unsigned char *p
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_odt_redirect_output(javacall_handle handle, char *pData, int len, int *pBytesWritten);
+javacall_result javacall_odt_redirect_output(javacall_handle handle, char *pData, int len, int *pBytesWritten){
+    return JAVACALL_FAIL;
+}
 
 
 /** @} */
@@ -145,5 +157,4 @@ javacall_result javacall_odt_redirect_output(javacall_handle handle, char *pData
 }
 #endif
 
-#endif
 
