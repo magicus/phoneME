@@ -361,32 +361,25 @@ CVMJITfreeCodeCache(void *start);
  *              jgs->codeCacheAOTCodeExist
  *          The return value is the size of the AOT code.
  *          If there is no existing AOT code, allocate a consecutive
- *          code cache for both AOT and JIT compilation.
+ *          code cache for bot h AOT and JIT compilation.
  */
 extern CVMInt32
 CVMfindAOTCode();
 
-/* 
- * The compiled code below the codeCacheDecompileStart will be saved
- * into persistent storage if there is no previouse saved AOT code, 
+/*
+ * The compiled code above the codeCacheDecompileStart will be saved
+ * into persistent storage if there is no previously saved AOT code,
  * and will be reloaded next time.
- * On linux, for example we write the AOT code size as the first word.
- * The saved code cache looks like the following:
- *
- *  ------------------------------------------------------
- *  |size|                                               |
- *  |-----                                               |
- *  |                                                    |
- *  |                 compiled code                      |
- *  .                                                    .
- *  .                                                    .
- *  .                                                    .
- *  |                                                    |
- *  ------------------------------------------------------
  */
 extern void
 CVMJITcodeCachePersist();
 
+/*
+ * Destroy AOT code cache. The return value indicates if 
+ * we need to free the JIT code cache separately.
+ */
+extern CVMBool
+CVMJITAOTcodeCacheDestroy();
 
 /******************************************************************/
 
