@@ -41,8 +41,6 @@
 /* ABI definition */
 
 #define CVMMIPS_MAX_ARG_REGS 4
-/* TODO: #define this and makes sure it works after port is stable. */
-#undef CVMMIPS_DOES_NOT_USE_GP
 
 #ifndef _MIPS64
 #undef  CVMMIPS_HAS_64BIT_REGISTERS
