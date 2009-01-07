@@ -91,20 +91,20 @@ SET_SIZE ( CVMCCMruntimeSimpleSyncUnlockGlue )
 /* do a gc rendezvous */
 ENTRY ( CVMCCMruntimeGCRendezvousGlue )
 	mflr	r7
+	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeGCRendezvous)
+
+#if defined(CVM_JIT_COPY_CCMCODE_TO_CODECACHE) && defined(CVMJIT_PATCH_BASED_GC_CHECKS)
+ENTRY ( CVMPPCruntimeGCRendezvousRetAddrAdjustGlue )
 	/* If we are copying to the code cache, then only one instruction
 	 * was needed to call us, so we want to return to it. Otherwise
 	 * it may have taken multiple instructions, so the last one is
 	 * patched with a nop so we can skip it.
 	 */
-#if defined(CVM_JIT_COPY_CCMCODE_TO_CODECACHE) && defined(CVMJIT_PATCH_BASED_GC_CHECKS)
+	mflr	r7
 	subi	r7, r7, 4
-#endif
 	mtlr	r7
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeGCRendezvous)
-
-ENTRY ( CVMPPCruntimeGCRendezvousNoRetAddrAdjustGlue )
-	mflr	r7
-	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeGCRendezvous)
+#endif
 
 /* Throw various well known exceptions */
 
@@ -257,6 +257,7 @@ ENTRY ( CVMCCMruntimeRunClassInitializerGlue )
 	 * first instruction of a block, which means we may also try to
 	 * patch it when doing a gc-rendezvous. */
 #ifdef CVM_AOT
+	/* Don't patch AOT code */
 	lis	r4, HA16(CVMJITcodeCacheAOTEnd)
 	lwz	r4, LO16(CVMJITcodeCacheAOTEnd)(r4)
 	lwz	r4, 0(r4)

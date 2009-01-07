@@ -3079,10 +3079,10 @@ CVMCPUemitAtomicCompareAndSwap(CVMJITCompilationContext* con,
 #endif /* CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS */
 #endif /* CVMJIT_SIMPLE_SYNC_METHODS */
 
-/* glue routine that calls CVMCCMruntimeGCRendezvous. No return address
-   adjustment. */
+/* glue routine that calls CVMCCMruntimeGCRendezvous and adjusts
+   the return address. */
 extern void
-CVMPPCruntimeGCRendezvousNoRetAddrAdjustGlue();
+CVMPPCruntimeGCRendezvousRetAddrAdjustGlue();
 
 /*
  * Emit code to do a gc rendezvous.
@@ -3093,20 +3093,26 @@ CVMCPUemitGcCheck(CVMJITCompilationContext* con, CVMBool cbufRewind)
 {
     /* Emit the gc rendezvous instruction(s) */
     if (cbufRewind) {
-        CVMJITaddCodegenComment((con, "CVMCCMruntimeGCRendezvousGlue"));
-        CVMCPUemitAbsoluteCall(con, CVMCCMruntimeGCRendezvousGlue,
+        /* The code buffer will be rewinded after the bl instruction,
+         * and the bl will be patched with the next instruction. In
+         * this case, CVMPPCruntimeGCRendezvousRetAddrAdjustGlue is 
+         * going to subtract the lr by 4, so we can return to the 
+         * patch point after the gc is done.
+         */
+        CVMJITaddCodegenComment((con, "CVMPPCruntimeGCRendezvousRetAddrAdjustGlue"));
+        CVMCPUemitAbsoluteCall(con, CVMPPCruntimeGCRendezvousRetAddrAdjustGlue,
 			       CVMJIT_CPDUMPOK, CVMJIT_NOCPBRANCH);
     } else {
         /* There is no rewinding in this case after emitting the
          * gc rendezvous call. We want to continue with the next
          * instruction after gc is done, so call 
-         * CVMPPCruntimeGCRendezvousNoRetAddrAdjustGlue and skip the
+         * CVMCCMruntimeGCRendezvousGlue and skip the
          * return address adjustment.
          */
         CVMJITaddCodegenComment((con, 
-                    "CVMPPCruntimeGCRendezvousNoRetAddrAdjustGlue"));
+                    "CVMCCMruntimeGCRendezvousGlue"));
         CVMCPUemitAbsoluteCall(con, 
-                    CVMPPCruntimeGCRendezvousNoRetAddrAdjustGlue,
+                    CVMCCMruntimeGCRendezvousGlue,
                     CVMJIT_CPDUMPOK, CVMJIT_NOCPBRANCH);
     }
 }
