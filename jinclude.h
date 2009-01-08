@@ -58,7 +58,11 @@
 #endif
 
 #ifdef HAVE_STDLIB_H
+#ifdef STDLIB_INCLUDE
+#include STDLIB_INCLUDE
+#else
 #include <stdlib.h>
+#endif
 #endif
 
 #ifdef NEED_SYS_TYPES_H
