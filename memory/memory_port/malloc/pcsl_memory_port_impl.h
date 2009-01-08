@@ -27,7 +27,11 @@
 #ifndef _PCSL_MEMORY_PORT_IMPL_H_
 #define _PCSL_MEMORY_PORT_IMPL_H_
 
+#ifdef STDLIB_INCLUDE
+#include STDLIB_INCLUDE
+#else
 #include <stdlib.h> 
+#endif
 
 #ifdef __cplusplus
 extern "C" {
