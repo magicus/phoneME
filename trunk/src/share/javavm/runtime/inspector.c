@@ -31,7 +31,9 @@
 #include "javavm/include/gc_common.h"
 #include "javavm/include/inspector.h"
 #include "javavm/include/indirectmem.h"
+#ifdef CVM_JIT
 #include "javavm/include/jit_common.h"
+#endif
 
 #include "native/common/jni_util.h"
 
