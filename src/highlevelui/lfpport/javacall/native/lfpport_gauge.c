@@ -44,37 +44,45 @@ extern MidpError gchar_to_pcsl_string(gchar *src, pcsl_string *dst);
 
 
 
-MidpError lfpport_gauge_show_cb(MidpItem* gaugePtr){
-    GtkWidget *widget = (GtkWidget*)gaugePtr->widgetPtr;
+MidpError lfpport_gauge_show_cb(MidpItem* itemPtr){
+    GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     gtk_widget_show_all(widget);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
-MidpError lfpport_gauge_hide_cb(MidpItem* gaugePtr){
-    GtkWidget *widget = (GtkWidget*)gaugePtr->widgetPtr;
+MidpError lfpport_gauge_hide_cb(MidpItem* itemPtr){
+    GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     gtk_widget_hide_all(widget);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
-MidpError lfpport_gauge_set_label_cb(MidpItem* gaugePtr){
+MidpError lfpport_gauge_set_label_cb(MidpItem* itemPtr){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return -1;
 }
 
 
-MidpError lfpport_gauge_destroy_cb(MidpItem* gaugePtr){
+MidpError lfpport_gauge_destroy_cb(MidpItem* itemPtr){
+    GtkWidget *pBar;
+    GtkWidget *string_item;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+
+    pBar = (GtkWidget*)itemPtr->widgetPtr;
+
+    //remove item from all its containers and destroy the widget
+    gtk_widget_destroy(pBar);
+
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 
-MidpError lfpport_gauge_get_min_height_cb(int *height, MidpItem* gaugePtr){
+MidpError lfpport_gauge_get_min_height_cb(int *height, MidpItem* itemPtr){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     *height = STUB_MIN_HEIGHT;
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
@@ -82,7 +90,7 @@ MidpError lfpport_gauge_get_min_height_cb(int *height, MidpItem* gaugePtr){
 }
 
 
-MidpError lfpport_gauge_get_min_width_cb(int *width, MidpItem* gaugePtr){
+MidpError lfpport_gauge_get_min_width_cb(int *width, MidpItem* itemPtr){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     *width = STUB_MIN_WIDTH;
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
@@ -90,7 +98,7 @@ MidpError lfpport_gauge_get_min_width_cb(int *width, MidpItem* gaugePtr){
 }
 
 MidpError lfpport_gauge_get_pref_height_cb(int* height,
-                                                 MidpItem* gaugePtr,
+                                                 MidpItem* itemPtr,
                                                  int lockedWidth){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     *height = STUB_PREF_HEIGHT;
@@ -99,7 +107,7 @@ MidpError lfpport_gauge_get_pref_height_cb(int* height,
 }
 
 MidpError lfpport_gauge_get_pref_width_cb(int* width,
-                                                MidpItem* gaugePtr,
+                                                MidpItem* itemPtr,
                                                 int lockedHeight){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     *width = STUB_PREF_WIDTH;
@@ -107,19 +115,19 @@ MidpError lfpport_gauge_get_pref_width_cb(int* width,
     return KNI_OK;
 }
 
-MidpError lfpport_gauge_handle_event_cb(MidpItem* gaugePtr){
+MidpError lfpport_gauge_handle_event_cb(MidpItem* itemPtr){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return -1;
 }
 
-MidpError lfpport_gauge_relocate_cb(MidpItem* gaugePtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+MidpError lfpport_gauge_relocate_cb(MidpItem* itemPtr, int x, int y){
+    LIMO_TRACE(">>>%s x=%d y=%d\n", __FUNCTION__, x, y);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 
-MidpError lfpport_gauge_resize_cb(MidpItem* gaugePtr){
+MidpError lfpport_gauge_resize_cb(MidpItem* itemPtr){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
@@ -128,10 +136,10 @@ MidpError lfpport_gauge_resize_cb(MidpItem* gaugePtr){
 
  /**
  * Creates a gauge's native peer, but does not display it.
- * When this function returns successfully, the fields *gaugePtr will be
+ * When this function returns successfully, the fields *itemPtr will be
  * set.
  *
- * @param gaugePtr pointer to the gauge's MidpItem structure.
+ * @param itemPtr pointer to the gauge's MidpItem structure.
  * @param ownerPtr pointer to the item's owner(form)'s MidpDisplayable
  *                 structure.
  * @param label the item label.
@@ -143,11 +151,13 @@ MidpError lfpport_gauge_resize_cb(MidpItem* gaugePtr){
  *
  * @return an indication of success or the reason for failure
  */
-MidpError lfpport_gauge_create(MidpItem* gaugePtr, MidpDisplayable* ownerPtr,
+MidpError lfpport_gauge_create(MidpItem* itemPtr, MidpDisplayable* ownerPtr,
 			       const pcsl_string* label, int layout,
 			       jboolean interactive,
 			       int maxValue, int initialValue){
     GtkWidget *pBar;
+    GtkWidget *form;
+    GtkWidget *vbox;
     gchar label_buf[MAX_TEXT_LENGTH];
     gdouble fraction;
     int label_len;
@@ -163,25 +173,29 @@ MidpError lfpport_gauge_create(MidpItem* gaugePtr, MidpDisplayable* ownerPtr,
         fraction = (gdouble)initialValue/(gdouble)maxValue ;
         gtk_progress_bar_set_fraction(pBar, fraction);
     }
-    gtk_widget_show(pBar);
 
-    gaugePtr->widgetPtr = pBar;
-    gaugePtr->ownerPtr = ownerPtr;
-    gaugePtr->layout = layout;
+    form = ownerPtr->frame.widgetPtr;
+    vbox = gtk_object_get_user_data(form);
+    gtk_box_pack_start(GTK_BOX(vbox), pBar, FALSE, FALSE, 0);
 
-    gaugePtr->show = lfpport_gauge_show_cb;
-    gaugePtr->hide = lfpport_gauge_hide_cb;
-    gaugePtr->setLabel = lfpport_gauge_set_label_cb;
-    gaugePtr->destroy = lfpport_gauge_destroy_cb;
 
-    //gaugePtr->component
-    gaugePtr->getMinimumHeight = lfpport_gauge_get_min_height_cb;
-    gaugePtr->getMinimumWidth = lfpport_gauge_get_min_width_cb;
-    gaugePtr->getPreferredHeight = lfpport_gauge_get_pref_height_cb;
-    gaugePtr->getPreferredWidth = lfpport_gauge_get_pref_width_cb;
-    gaugePtr->handleEvent = lfpport_gauge_handle_event_cb;
-    gaugePtr->relocate = lfpport_gauge_relocate_cb;
-    gaugePtr->resize = lfpport_gauge_resize_cb;
+    itemPtr->widgetPtr = pBar;
+    itemPtr->ownerPtr = ownerPtr;
+    itemPtr->layout = layout;
+
+    itemPtr->show = lfpport_gauge_show_cb;
+    itemPtr->hide = lfpport_gauge_hide_cb;
+    itemPtr->setLabel = lfpport_gauge_set_label_cb;
+    itemPtr->destroy = lfpport_gauge_destroy_cb;
+
+    //itemPtr->component
+    itemPtr->getMinimumHeight = lfpport_gauge_get_min_height_cb;
+    itemPtr->getMinimumWidth = lfpport_gauge_get_min_width_cb;
+    itemPtr->getPreferredHeight = lfpport_gauge_get_pref_height_cb;
+    itemPtr->getPreferredWidth = lfpport_gauge_get_pref_width_cb;
+    itemPtr->handleEvent = lfpport_gauge_handle_event_cb;
+    itemPtr->relocate = lfpport_gauge_relocate_cb;
+    itemPtr->resize = lfpport_gauge_resize_cb;
 
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
@@ -191,19 +205,19 @@ MidpError lfpport_gauge_create(MidpItem* gaugePtr, MidpDisplayable* ownerPtr,
 /**
  * Changes the gauge to have the given current value and maximum values.
  *
- * @param gaugePtr pointer to the gauge's MidpItem structure.
+ * @param itemPtr pointer to the gauge's MidpItem structure.
  * @param value the current value to be set on the gauge.
  * @param maxValue the maximum value to be set on the gauge.
  *
  * @return an indication of success or the reason for failure
  */
-MidpError lfpport_gauge_set_value(MidpItem* gaugePtr, int value, int maxValue){
+MidpError lfpport_gauge_set_value(MidpItem* itemPtr, int value, int maxValue){
     GtkWidget *pBar;
     gdouble fraction;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
-    pBar = gaugePtr->widgetPtr;
+    pBar = itemPtr->widgetPtr;
     fraction = (gdouble)value/(gdouble)maxValue ;
     gtk_progress_bar_set_fraction(pBar, fraction);
 
@@ -216,11 +230,11 @@ MidpError lfpport_gauge_set_value(MidpItem* gaugePtr, int value, int maxValue){
  *
  * @param value pointer that will be set to the gauge's current value. This
  * function sets value's value.
- * @param gaugePtr pointer to the gauge's MidpItem structure.
+ * @param itemPtr pointer to the gauge's MidpItem structure.
  *
  * @return an indication of success or the reason for failure
  */
-MidpError lfpport_gauge_get_value(int* value, MidpItem* gaugePtr){
+MidpError lfpport_gauge_get_value(int* value, MidpItem* itemPtr){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return -1;

@@ -126,8 +126,8 @@ MidpError lfpport_text_field_handle_event_cb(MidpItem* itemPtr){
     return -1;
 }
 
-MidpError lfpport_text_field_relocate_cb(MidpItem* itemPtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+MidpError lfpport_text_field_relocate_cb(MidpItem* itemPtr, int x, int y){
+    LIMO_TRACE(">>>%s x=%d y=%d\n", __FUNCTION__, x, y);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -198,7 +198,7 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
     /* set font */
-    syslog(LOG_INFO, "%s setting textfield container to  %d\n", __FUNCTION__, box);
+    LIMO_TRACE("%s setting textfield container to  %d\n", __FUNCTION__, box);
     itemPtr->widgetPtr = frame;
     itemPtr->ownerPtr = ownerPtr;
     itemPtr->layout = layout;

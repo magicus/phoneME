@@ -43,7 +43,7 @@
 extern "C" {
 #endif
 
-extern GdkPixmap *current_mutable;
+extern GdkPixmap *back_buffer;
 
 static gboolean
 lfpport_imageitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
@@ -92,7 +92,9 @@ lfpport_imageitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *event
 MidpError lfpport_image_item_show_cb(MidpItem* itemPtr){
     GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_show_all(widget);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -110,7 +112,18 @@ MidpError lfpport_image_item_set_label_cb(MidpItem* itemPtr){
     return KNI_OK;
 }
 MidpError lfpport_image_item_destroy_cb(MidpItem* itemPtr){
+    GtkWidget *frame;
+    GtkWidget *da;
+
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    frame = (GtkWidget*)itemPtr->widgetPtr;
+    da = gtk_bin_get_child(frame);
+    LIMO_TRACE("%s frame=%x da=%x\n", __FUNCTION__, frame, da);
+
+    //remove item from all its containers and destroy the widget
+    gtk_widget_destroy(da);
+    gtk_widget_destroy(frame);
+
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -153,10 +166,10 @@ MidpError lfpport_image_item_handle_event_cb(MidpItem* itemPtr){
     return -1;
 }
 
-MidpError lfpport_image_item_relocate_cb(MidpItem* itemPtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+MidpError lfpport_image_item_relocate_cb(MidpItem* itemPtr, int x, int y){
+    LIMO_TRACE(">>>%s x=%d y=%d\n", __FUNCTION__, x, y);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 MidpError lfpport_image_item_resize_cb(MidpItem* itemPtr){

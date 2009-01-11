@@ -43,21 +43,27 @@ extern gint display_height;
 
 extern GtkWidget *main_canvas;
 extern GtkWidget *main_window;
-extern GdkPixmap *current_mutable;
+extern GdkPixmap *back_buffer;
 
 MidpError canvas_show_cb(MidpFrame* framePtr) {
-    //Same as form_show
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    GtkWidget *label;
-    GtkWidget *form;
-    form = (GtkWidget *)framePtr->widgetPtr;
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 MidpError canvas_hide_and_delete_cb(MidpFrame* framePtr, jboolean onExit) {
     GtkWidget *widget = (GtkWidget*)framePtr->widgetPtr;
+    GtkWidget *form;
+    GtkWidget *da;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    gtk_widget_hide_all(widget);
+
+    form = gtk_main_window_get_current_form(main_window);
+    gtk_widget_hide_all(form);
+    da = gtk_object_get_user_data(form);
+
+    gtk_widget_destroy(da);
+    gtk_main_window_remove_current_form(main_window);
+    gtk_widget_destroy(form);
+
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -101,7 +107,7 @@ lfpport_canvas_expose_event_callback(GtkWidget *widget,
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
     //gdk_pix_map = gtk_object_get_user_data(widget);
-    gdk_pix_map = current_mutable;
+    gdk_pix_map = back_buffer;
 
     /* draw pixmap to the draw area */
     gdk_draw_drawable(widget->window,

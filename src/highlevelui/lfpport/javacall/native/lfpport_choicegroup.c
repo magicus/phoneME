@@ -50,7 +50,9 @@ extern "C" {
 MidpError lfpport_choicegroup_item_show_cb(MidpItem* itemPtr){
     GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_show_all(widget);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -111,10 +113,10 @@ MidpError lfpport_choicegroup_item_handle_event_cb(MidpItem* itemPtr){
     return -1;
 }
 
-MidpError lfpport_choicegroup_item_relocate_cb(MidpItem* itemPtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+MidpError lfpport_choicegroup_item_relocate_cb(MidpItem* itemPtr, int x, int y){
+    LIMO_TRACE(">>>%s x=%d y=%d\n", __FUNCTION__, x, y);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 MidpError lfpport_choicegroup_item_resize_cb(MidpItem* itemPtr){
@@ -180,6 +182,7 @@ MidpError lfpport_choicegroup_create(MidpItem* cgPtr,
             gtk_box_pack_start(GTK_BOX (box), button, FALSE, FALSE, 0);
         }
         gtk_container_add(GTK_CONTAINER (frame), box);
+        gtk_object_set_user_data(frame, MIDP_MULTIPLE_CHOICE_GROUP_TYPE);
     }
     else if (choiceType == MIDP_EXCLUSIVE_CHOICE_GROUP_TYPE) {
         if (numOfChoices > 0) {
@@ -197,6 +200,7 @@ MidpError lfpport_choicegroup_create(MidpItem* cgPtr,
                 gtk_box_pack_start(GTK_BOX (box), button, FALSE, FALSE, 0);
             }
             gtk_container_add(GTK_CONTAINER (frame), box);
+            gtk_object_set_user_data(frame, MIDP_EXCLUSIVE_CHOICE_GROUP_TYPE);
         }
     }
     else if (choiceType == MIDP_POPUP_CHOICE_GROUP_TYPE) {
@@ -250,7 +254,7 @@ MidpError lfpport_choicegroup_insert(MidpItem* cgPtr,
 				     MidpChoiceGroupElement element){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -267,7 +271,7 @@ MidpError lfpport_choicegroup_delete(MidpItem* cgPtr, int elementNum,
 				     int selectedIndex){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -281,7 +285,7 @@ MidpError lfpport_choicegroup_delete(MidpItem* cgPtr, int elementNum,
 MidpError lfpport_choicegroup_delete_all(MidpItem* cgPtr){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -299,7 +303,7 @@ MidpError lfpport_choicegroup_set(MidpItem* cgPtr,
 				  MidpChoiceGroupElement element){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -318,7 +322,7 @@ MidpError lfpport_choicegroup_set_selected_index(MidpItem* cgPtr,
 						 jboolean selected){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -333,8 +337,15 @@ MidpError lfpport_choicegroup_set_selected_index(MidpItem* cgPtr,
 MidpError lfpport_choicegroup_get_selected_index(int* elementNum,
 						 MidpItem* cgPtr){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    //get first item
+
+    //get item group
+
+    //get index
+
+    *elementNum = 0;
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -353,7 +364,7 @@ MidpError lfpport_choicegroup_set_selected_flags(MidpItem* cgPtr,
 						 int selectedArrayNum){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -374,7 +385,7 @@ MidpError lfpport_choicegroup_get_selected_flags(int *numSelected,
 						 int selectedArrayLength){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -392,7 +403,7 @@ MidpError lfpport_choicegroup_is_selected(jboolean *selected, MidpItem* cgPtr,
 					  int elementNum){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -408,7 +419,7 @@ MidpError lfpport_choicegroup_is_selected(jboolean *selected, MidpItem* cgPtr,
 MidpError lfpport_choicegroup_set_fit_policy(MidpItem* cgPtr, int fitPolicy){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -426,7 +437,7 @@ MidpError lfpport_choicegroup_set_font(MidpItem* cgPtr,
 				       PlatformFontPtr fontPtr){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -437,7 +448,7 @@ MidpError lfpport_choicegroup_set_font(MidpItem* cgPtr,
 MidpError lfpport_choicegroup_dismiss_popup(){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 #ifdef __cplusplus

@@ -46,7 +46,7 @@ extern "C" {
 
 
 extern GtkWidget *main_window;
-extern GdkPixmap *current_mutable;
+extern GdkPixmap *back_buffer;
 
 static gboolean
 lfpport_customitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
@@ -106,7 +106,9 @@ MidpError lfpport_custom_item_show_cb(MidpItem* itemPtr){
 MidpError lfpport_custom_item_hide_cb(MidpItem* itemPtr){
     GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_hide_all(widget);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -160,10 +162,10 @@ MidpError lfpport_custom_item_handle_event_cb(MidpItem* itemPtr){
     return -1;
 }
 
-MidpError lfpport_custom_item_relocate_cb(MidpItem* itemPtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+MidpError lfpport_custom_item_relocate_cb(MidpItem* itemPtr, int x, int y){
+    LIMO_TRACE(">>>%s x=%d y=%d\n", __FUNCTION__, x, y);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 MidpError lfpport_custom_item_resize_cb(MidpItem* itemPtr){
@@ -203,6 +205,7 @@ MidpError lfpport_customitem_create(MidpItem* itemPtr,
 
     pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
 
+    pthread_mutex_lock(&mutex);
     frame = gtk_frame_new(NULL);
     if (label_len > 0) {
         gtk_frame_set_label(frame, label_buf);
@@ -225,6 +228,7 @@ MidpError lfpport_customitem_create(MidpItem* itemPtr,
     gtk_box_pack_start(GTK_BOX(vbox),
                        frame,
                        FALSE, FALSE, 0);
+    pthread_mutex_unlock(&mutex);
 
     /* set font */
     itemPtr->widgetPtr = frame;
@@ -366,7 +370,7 @@ MidpError lfpport_customitem_set_content_buffer(MidpItem* ciPtr,
     LIMO_TRACE(">>>%s imgPtr=%x\n", __FUNCTION__, imgPtr);
 
     if (imgPtr == NULL) {
-        imgPtr = current_mutable;
+        imgPtr = back_buffer;
         LIMO_TRACE("%s null imgPtr\n", __FUNCTION__);
     }
     if (!GDK_IS_PIXMAP(imgPtr)) {

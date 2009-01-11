@@ -48,8 +48,8 @@ extern gint display_height;
 extern GtkWidget *main_window;
 extern GtkLabel  *ticker;
 extern GMainLoop *main_loop;
-extern GdkPixmap *current_mutable;
-extern gint tmpFlag;
+extern GdkPixmap *back_buffer;
+extern int goOn;
 
 #define LFPPORT_SCREEN_HEIGHT       320
 #define LFPPORT_SCREEN_WIDTH        240
@@ -90,7 +90,7 @@ void lfpport_refresh(int x, int y, int w, int h){
 //    gdk_draw_drawable(main_window->window,
 //    gdk_draw_drawable(da->window,
 //              gc,
-//              current_mutable,
+//              back_buffer,
 //              x,   /* x */
 //              y,   /* y */
 //              x,
@@ -174,8 +174,7 @@ void lfpport_ui_init(){
 void lfpport_ui_finalize(){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     gtk_widget_destroy(main_window);
-    gtk_main_quit();
-    //g_main_loop_quit(main_loop);
+    goOn = FALSE;
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 

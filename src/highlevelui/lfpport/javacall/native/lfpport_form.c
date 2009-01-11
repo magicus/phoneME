@@ -62,11 +62,14 @@ gint display_height;
 
 
 MidpError form_show(MidpFrame* framePtr) {
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    GtkWidget *label;
     GtkWidget *form;
+
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     form = (GtkWidget *)framePtr->widgetPtr;
+    pthread_mutex_lock(&mutex);
+    gtk_widget_show_all(form);
     gtk_main_window_set_current_form(main_window, GTK_FORM(form));
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -77,6 +80,7 @@ MidpError form_hide_and_delete(MidpFrame* framePtr, jboolean onExit) {
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     form = framePtr->widgetPtr;
+    pthread_mutex_lock(&mutex);
     currentForm = gtk_main_window_get_current_form(main_window);
     gtk_widget_hide_all(form);
     if (form == currentForm) {
@@ -87,6 +91,7 @@ MidpError form_hide_and_delete(MidpFrame* framePtr, jboolean onExit) {
         LIMO_TRACE("%s removing form\n", __FUNCTION__);
         gtk_main_window_remove_form(main_window, form);
     }
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -100,7 +105,9 @@ MidpError displayable_set_title(MidpDisplayable* screenPtr,
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     pcsl_string_convert_to_utf8(title, buf, MAX_TITLE_LENGTH, &len);
     form = screenPtr->frame.widgetPtr;
+    pthread_mutex_lock(&mutex);
     gtk_form_set_title(GTK_FORM(form), buf);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -151,8 +158,9 @@ MidpError lfpport_form_create(MidpDisplayable* dispPtr,
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
+    pthread_mutex_lock(&mutex);
     form = gtk_form_new(TRUE);
-    sw = gtk_scrolled_window_new (NULL, NULL);
+    sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(sw),
                                       GTK_POLICY_NEVER,
                                       GTK_POLICY_AUTOMATIC);
@@ -176,6 +184,7 @@ MidpError lfpport_form_create(MidpDisplayable* dispPtr,
 
 
     gtk_main_window_add_form(main_window, GTK_FORM(form));
+    pthread_mutex_unlock(&mutex);
 
     dispPtr->setTitle(dispPtr, title);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);

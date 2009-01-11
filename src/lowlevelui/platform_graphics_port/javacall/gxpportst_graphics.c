@@ -61,15 +61,15 @@ extern MidpError lfpport_get_font(PlatformFontPtr* fontPtr,
                int face, int style, int size);
 
 
-extern GdkPixmap *current_mutable;
+extern GdkPixmap *back_buffer;
 
 GdkGC *get_gc(void *dst){
     GtkWidget *form;
     GtkWidget *da;
     GdkGC *gc;
 
-    if (dst != NULL && current_mutable == dst) {
-        gc = gdk_gc_new(current_mutable);
+    if (dst != NULL && back_buffer == dst) {
+        gc = gdk_gc_new(back_buffer);
         return gc;
     }
 
@@ -81,16 +81,19 @@ GdkGC *get_gc(void *dst){
     }
 
     gc = gdk_gc_new(da->window);
+    if (gc == NULL) {
+        LIMO_TRACE("%s gdk_gc_new returned NULL\n", __FUNCTION__);
+        return NULL;
+    }
     return gc;
 }
 
 GdkPixmap *get_pix_map(void *dst){
     if (!dst) {
-        return current_mutable;
+        return back_buffer;
     }
     if (!GDK_IS_PIXMAP(dst)) {
         LIMO_TRACE("%s GdkPixmap expected as dst!\n", __FUNCTION__);
-        return;
     }
     return (GdkPixmap*)dst;
 }
@@ -147,6 +150,7 @@ void gxpport_fill_triangle(
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
+    pthread_mutex_lock(&mutex);
     gc = get_gc(dst);
     gdk_pix_map = get_pix_map(dst);
 
@@ -177,6 +181,7 @@ void gxpport_fill_triangle(
                           TRUE,
                           points,
                           3);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
@@ -232,10 +237,9 @@ void gxpport_draw_rgb(
                "width=%d height=%d processAlpha=%d\n", __FUNCTION__, dst, rgbData,
                offset, scanlen, x, y, width, height, processAlpha);
 
+    pthread_mutex_lock(&mutex);
     gc = get_gc(dst);
     gdk_pix_map = get_pix_map(dst);
-
-    g_usleep(15 * 1000);
 
     gdk_draw_rgb_32_image(gdk_pix_map,
                           gc,
@@ -246,7 +250,7 @@ void gxpport_draw_rgb(
                           GDK_RGB_DITHER_NONE,
                           rgbData,
                           scanlen * 4);
-
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
@@ -379,6 +383,7 @@ void gxpport_fill_rect(
     LIMO_TRACE(">>>%s dst=%x x=%d y=%d width=%d height=%d\n",
                __FUNCTION__, dst, x, y, width, height);
 
+    pthread_mutex_lock(&mutex);
     gc = get_gc(dst);
     gdk_pix_map = get_pix_map(dst);
 
@@ -406,6 +411,7 @@ void gxpport_fill_rect(
                           x, y,
                           width,
                           height);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
@@ -657,7 +663,9 @@ void gxpport_draw_chars(
     for (i = 0; i < n; i++) {
         text_buf[i] = charArray[i];
     }
+    text_buf[i] = '\0';
 
+    pthread_mutex_lock(&mutex);
     gc = get_gc(dst);
     gdk_gc_set_foreground(gc, &gdkColor);
     clipRectangle = create_clip_rectangle(clip);
@@ -685,6 +693,7 @@ void gxpport_draw_chars(
                   y * PANGO_SCALE);
 
     g_object_unref(layout);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 

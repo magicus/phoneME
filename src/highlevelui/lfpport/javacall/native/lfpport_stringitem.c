@@ -68,9 +68,19 @@ MidpError lfpport_string_item_set_label_cb(MidpItem* itemPtr){
     return -1;
 }
 MidpError lfpport_string_item_destroy_cb(MidpItem* itemPtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    GtkWidget *frame;
+    GtkWidget *string_item;
+
+    frame = (GtkWidget*)itemPtr->widgetPtr;
+    string_item = gtk_bin_get_child(frame);
+    LIMO_TRACE(">>>%s frame=%x string_item=%x\n", __FUNCTION__, frame, string_item);
+
+    //remove item from all its containers and destroy the widget
+    gtk_widget_destroy(string_item);
+    gtk_widget_destroy(frame);
+
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 MidpError lfpport_string_item_get_min_height_cb(int *height, MidpItem* itemPtr){
@@ -111,10 +121,10 @@ MidpError lfpport_string_item_handle_event_cb(MidpItem* itemPtr){
     return -1;
 }
 
-MidpError lfpport_string_item_relocate_cb(MidpItem* itemPtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+MidpError lfpport_string_item_relocate_cb(MidpItem* itemPtr, int x, int y){
+    LIMO_TRACE(">>>%s x=%d y=%d\n", __FUNCTION__, x, y);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 MidpError lfpport_string_item_resize_cb(MidpItem* itemPtr){
@@ -162,6 +172,9 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
 
     pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
     pcsl_string_convert_to_utf8(text, text_buf,  MAX_TEXT_LENGTH, &text_len);
+
+    label_buf[label_len] = '\0';
+    text_buf[text_len] = '\0';
 
     LIMO_TRACE("%s label=%s label_len=%d text=%s text_len=%d\n",
                __FUNCTION__, label_buf, label_len, text_buf, text_len);

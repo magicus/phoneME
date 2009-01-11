@@ -30,7 +30,7 @@
 #include "lfpport_gtk.h"
 
 extern GtkWidget *main_window;
-GdkPixmap *current_mutable;
+GdkPixmap *back_buffer;
 
 
 #define BITS_PER_PIXEL 8
@@ -58,7 +58,7 @@ void gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
     /* Suppress unused parameter warnings */
     gdk_pix_map = gdk_pixmap_new(NULL, width, height, 24);
     *newImagePtr = gdk_pix_map;
-    current_mutable = gdk_pix_map;
+    back_buffer = gdk_pix_map;
 
     gdk_drawable_get_size(gdk_pix_map, &nwidth, &nheight);
     LIMO_TRACE("%s gdk_pix_map size: width=%d height=%d\n", __FUNCTION__, nwidth, nheight);
