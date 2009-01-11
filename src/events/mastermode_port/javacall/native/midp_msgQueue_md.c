@@ -450,24 +450,32 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     case JSR257_JC_EVENT_CONTACTLESS:
         if(event->data.jsr257Event.eventType < JSR257_EVENTS_NUM) {
             pNewSignal->waitingFor = JSR257_CONTACTLESS_SIGNAL;
-            switch(event->data.jsr257Event.eventType) {
-            case JSR257_STOP_TARGET_DISCOVERY:
-                pNewSignal->descriptor = JSR257_TARGET_DISCOVERED;
-                pNewSignal->status     = JSR257_STOP_TARGET_DISCOVERY;
-                break;
-            case JSR257_STOP_NDEF_RECORD_DISCOVERY:
-                pNewSignal->descriptor = JSR257_NDEF_RECORD_DISCOVERED;
-                pNewSignal->status     = JSR257_STOP_NDEF_RECORD_DISCOVERY;
-                break;
-            default:
-                pNewSignal->descriptor = event->data.jsr257Event.eventType;
-                break;
-            }
+            pNewSignal->descriptor = event->data.jsr257Event.eventType;
         } else {
             REPORT_ERROR1(LC_CORE,"Invalid contactless event type: %d\n", 
                 event->data.jsr257Event.eventType);
         }
         break;
+        
+    case JSR257_JC_MIDP_EVENT:
+        if(event->data.jsr257Event.eventType < JSR257_MIDP_EVENTS_NUM) {
+            pNewSignal->waitingFor   = JSR257_EVENT_SIGNAL;
+            pNewSignal->descriptor   = event->data.jsr257Event.eventType;
+            pNewMidpEvent->type      = CONTACTLESS_EVENT;
+            pNewMidpEvent->intParam1 = event->data.jsr257Event.eventType;
+            pNewMidpEvent->intParam2 = (int)(event->data.jsr257Event.eventData);
+            pNewMidpEvent->intParam3 = (int)(event->data.jsr257Event.isolateId);
+       } else {
+            REPORT_ERROR1(LC_CORE,"Invalid contactless MIDP event type: %d\n", 
+                event->data.jsr257Event.eventType);
+       }
+       break;
+       
+    case JSR257_JC_PUSH_NDEF_RECORD_DISCOVERED:
+        pNewSignal->waitingFor   = JSR257_PUSH_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr257Event.eventData;
+       break;
+
 #endif /* ENABLE_JSR_257 */
 
 #if ENABLE_MULTIPLE_ISOLATES
@@ -502,7 +510,6 @@ case MIDP_JC_EVENT_VOLUME:
 	break;
 #endif /* ENABLE_API_EXTENSIONS */
 	default:
-
         REPORT_ERROR(LC_CORE,"Unknown event.\n");
         break;
     };

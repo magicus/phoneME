@@ -180,7 +180,9 @@ typedef enum {
     JSR290_JC_EVENT_HANDLE_EVENT,
 #endif /*ENABLE_JSR_290*/
 #ifdef ENABLE_JSR_257
-    JSR257_JC_EVENT_CONTACTLESS, 
+    JSR257_JC_EVENT_CONTACTLESS,
+    JSR257_JC_MIDP_EVENT,
+    JSR257_JC_PUSH_NDEF_RECORD_DISCOVERED, 
 #endif /*ENABLE_JSR_257*/
 } midp_jc_event_type;
 
@@ -399,6 +401,7 @@ typedef struct {
 typedef struct {
     jsr257_contactless_event_type eventType;
     javacall_handle eventData;
+    int isolateId;
 } jsr257_jc_event_contactless;
 #endif /* ENABLE_JSR_257 */
 

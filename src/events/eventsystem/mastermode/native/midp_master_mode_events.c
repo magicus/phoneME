@@ -281,6 +281,17 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
                                 newSignal.waitingFor, newSignal.descriptor,
                                 newSignal.status);
         break;
+    case JSR257_EVENT_SIGNAL:
+        StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.intParam3);
+        break;
+    case JSR257_PUSH_SIGNAL:
+        if(findPushBlockedHandle(newSignal.descriptor) != 0) {
+            /* The push system is waiting for a read on this descriptor */
+            midp_thread_signal_list(blocked_threads, blocked_threads_count, 
+                                    PUSH_SIGNAL, 0, 0);
+        }
+        break;
+        
 #endif /* ENABLE_JSR_257 */
     default:
 #ifdef ENABLE_API_EXTENSIONS

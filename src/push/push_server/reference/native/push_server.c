@@ -81,6 +81,10 @@
     #include "btPush.h"
 #endif
 
+#if ENABLE_JSR_257
+    #include <ContactlessPush.h>
+#endif
+
 #if ENABLE_I3_TEST
     #include <midpUtilKni.h>
 #endif
@@ -172,6 +176,10 @@ typedef struct _pushentry {
     jboolean isSIPEntry;
     /** Marks shared connection for quick search */
     jboolean isShared;
+#endif
+#if ENABLE_JSR_257
+    /** True if this entry is a JSR 257 (NFC) entry. */
+    jboolean isNFCEntry;
 #endif
 } PushEntry;
 
@@ -429,6 +437,12 @@ static int pushIsDatagramConnection(const char* pBuffer) {
  * @param pe push entry for which a network notifier should be added
  */
 static void pushAddNetworkNotifier(PushEntry* pe) {
+#if ENABLE_JSR_257
+    if(pe->isNFCEntry) {
+        return;
+    }
+#endif 
+
     /*
      * WMA connections have their own notification system.
      * So add a notifier only if its not WMA connection.
@@ -743,12 +757,16 @@ int pushadd(char *str) {
     pe->isSIPEntry = KNI_FALSE;
 #endif
 
+#if ENABLE_JSR_257
+    pe->isNFCEntry = KNI_FALSE;
+#endif
     /*
 #if ENABLE_JSR_82
     bt_push_register_url(str, NULL, 0);
 #endif
     */
     ret = pushProcessPort(pe);
+    
     if (pe->fd == -1) {
 #if ENABLE_JSR_82
         bt_push_unregister_url(str);
@@ -858,6 +876,12 @@ static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext) {
                 }
             }
         }
+#if ENABLE_JSR_257
+    if(p->isNFCEntry) {
+        contactless_push_unregister(&p->fd);    
+    } 
+#endif 
+        
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
         /* Check for sms,cbs or mms connection. */
         wmaPushCloseEntry(p->state, p->value, p->port,
@@ -1013,6 +1037,7 @@ int pushcheckout(char* protocol, int port, char * store) {
         wmaProtocol = isWmaProtocol(p->port, p->value,
                                     p->storagename, port, store);
 #endif
+
 
 #if ENABLE_JSR_180
         /*
@@ -1730,6 +1755,17 @@ char *pushfindfd(int fd) {
             }
 #endif
 
+#if ENABLE_JSR_257
+            else if(pushp->isNFCEntry) {
+                char *entry = pushp->value;
+                if(strncmp(entry, "ndef:",5) == 0) {
+                    return pcsl_mem_strdup(entry);
+                } else {
+                    return NULL;
+                }
+            }        
+#endif 
+
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
             else{
                 /*
@@ -1783,6 +1819,7 @@ char *pushfindfd(int fd) {
  */
 char *pushfindconn(char *str){
     PushEntry *p;
+
 
     /* Find the entry that has matching connection URL. */
     for (p = pushlist; p != NULL ; p = p->next){
@@ -1917,7 +1954,12 @@ char *pushfindsuite(char *store, int available){
              */
             if (available && (p->fd != -1)){
                 if ((p->fdsock == -1) && (p->pCachedData == NULL) &&
-                    (!p->isWMAMessCached)){
+                    (!p->isWMAMessCached) 
+#if ENABLE_JSR_257             
+                    && 
+                    (! ((p->isNFCEntry) && (p->state == LAUNCH_PENDING)))
+#endif                    
+                    ) {
                     midpFree(ret);
                     ret = NULL;
                     continue;
@@ -1996,6 +2038,10 @@ static int parsePushList(int pushfd){
 #if ENABLE_JSR_180
             pe->isSIPEntry = KNI_FALSE;
             pe->isShared = KNI_FALSE;
+#endif
+
+#if ENABLE_JSR_257
+            pe->isNFCEntry = KNI_FALSE;
 #endif
 
         }
@@ -2280,6 +2326,15 @@ static int pushProcessPort(PushEntry* pe){
     }
 #endif
 
+#if ENABLE_JSR_257
+    if(strncmp(buffer, "ndef:", 5) == 0) {
+        pe->isNFCEntry = KNI_TRUE;
+        return contactless_push_register(buffer, &pe->fd);
+    } else {
+        pe->isNFCEntry = KNI_FALSE;
+    }
+#endif 
+
     if (pushIsDatagramConnection(buffer)){
         if (pe->port == -1){
             pe->port = getUrlPort(buffer);
@@ -2535,7 +2590,6 @@ int findPushBlockedHandle(int handle){
             }
         }
     }
-
     return 0;
 }
 

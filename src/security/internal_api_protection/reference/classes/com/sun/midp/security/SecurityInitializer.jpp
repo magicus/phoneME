@@ -244,6 +244,10 @@ public final class SecurityInitializer {
         "com.sun.j2me.dom.DOMFactory$SecurityTrusted",
         // #endif ENABLE_JSR_290
 
+        // #ifdef ENABLE_JSR_257
+        "com.sun.contactless.NfcMidpEventDispatcher$SecurityTrusted",
+        // #endif ENABLE_JSR_257
+
         // Pass the security token to the i3 test framework.
         // #ifdef ENABLE_I3_TEST
         "com.sun.midp.i3test.TestCase$SecurityTrusted",
