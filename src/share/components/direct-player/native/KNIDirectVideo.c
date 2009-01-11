@@ -147,16 +147,23 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetVisible) {
     jint handle = KNI_GetParameterAsInt(1);
     jboolean visible = KNI_GetParameterAsBoolean(2);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    javacall_result result = JAVACALL_FALSE;
 
     jboolean returnValue = KNI_FALSE;
 
     MMP_DEBUG_STR1("[kni_video] +nSetVisible %d\n", visible);
 
-    if (pKniInfo && pKniInfo->pNativeHandle &&
-        JAVACALL_OK == javacall_media_set_video_visible(pKniInfo->pNativeHandle, 
-                           (KNI_TRUE == visible ? JAVACALL_TRUE : JAVACALL_FALSE))) 
-    {
-        returnValue = KNI_TRUE;
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        JAVACALL_MM_ASYNC_EXEC(
+            result,
+            javacall_media_set_video_visible(pKniInfo->pNativeHandle, 
+                (KNI_TRUE == visible ? JAVACALL_TRUE : JAVACALL_FALSE)),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_VIDEO_VISIBILITY_SET,
+            returns_no_data
+        );
+        if (result == JAVACALL_OK) {
+            returnValue = KNI_TRUE;
+        }
     }
 
     MMP_DEBUG_STR1("[kni_video] -nSetVisible ret %d\n", returnValue);
