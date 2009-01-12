@@ -36,7 +36,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+	
 #ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
 #include <javacall_cbs.h>
@@ -75,9 +75,11 @@ extern "C" {
 #include <javacall_multimedia_advanced.h>
 #endif /* ENABLE_JSR_234 */
 #include <javacall_security.h>
+#if !ENABLE_CDC
 #ifdef ENABLE_JSR_256
 #include "javacall_sensor.h"
 #endif /* ENABLE_JSR_256 */
+#endif /* !ENABLE_CDC */
 #ifdef ENABLE_JSR_257
 #include <javacall_contactless.h>
 #endif /* ENABLE_JSR_257 */
@@ -161,11 +163,13 @@ typedef enum {
     MIDP_JC_EVENT_REMOVE_MIDLET        ,
     MIDP_JC_EVENT_DRM_RO_RECEIVED      ,
     MIDP_JC_EVENT_PEER_CHANGED         ,
-#if ENABLE_JSR_256
+#if !ENABLE_CDC
+#ifdef ENABLE_JSR_256
     JSR256_JC_EVENT_SENSOR_AVAILABLE   ,
     JSR256_JC_EVENT_SENSOR_OPEN_CLOSE  ,
     JSR256_JC_EVENT_SENSOR_DATA_READY  ,
-#endif /*ENABLE_JSR_256*/
+#endif /*ENABLE_JSR_256 */
+#endif /*!ENABLE_CDC*/
 #if ENABLE_JSR_290
     JSR290_JC_EVENT_FLUID_INVALIDATE   ,
     JSR290_JC_EVENT_FLUID_LISTENER_COMPLETED,
@@ -332,6 +336,7 @@ typedef struct {
 } jsr211_jc_event_platform_event;
 #endif
 
+#if !ENABLE_CDC
 #ifdef ENABLE_JSR_256
 typedef struct {
     int sensor_type;
@@ -351,6 +356,7 @@ typedef struct {
 } jsr256_jc_event_sensor_data_ready_t;
 
 #endif /* ENABLE_JSR_256 */
+#endif /* !ENABLE_CDC */
 
 #ifdef ENABLE_JSR_290
 typedef struct {
@@ -461,11 +467,13 @@ typedef struct {
 
         midp_event_heap_size               heap_size;
         midp_event_remove_midlet           removeMidletEvent;
+#if !ENABLE_CDC
 #ifdef ENABLE_JSR_256
         jsr256_jc_event_sensor_available    jsr256SensorAvailable;
         jsr256_jc_event_sensor_t            jsr256_jc_event_sensor;
 	jsr256_jc_event_sensor_data_ready_t jsr256_jc_event_sensor_data_ready;
 #endif /* ENABLE_JSR_256 */
+#endif /* !ENABLE_CDC */
 
 #ifdef ENABLE_API_EXTENSIONS
         midp_event_volume     VolumeEvent;
