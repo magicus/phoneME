@@ -37,14 +37,7 @@ EXE            = .exe
 BAT            = .bat
 
 
-ifndef USE_CYGWIN
-ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
-USE_CYGWIN=false
-else
-USE_CYGWIN=true
-endif
-endif
-
+USE_CYGWIN     = true
 WHOAMI         = whoami
 
 endif

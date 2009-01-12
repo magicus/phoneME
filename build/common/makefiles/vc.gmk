@@ -72,7 +72,7 @@ AR = lib
 MRI_ADD = 
 MRI_CREATE = -OUT:
 MRI_SAVE = 
-MRI_OPT = -NOLOGO 
+MRI_OPT = -NOLOGO @
 
 # IMPORTANT: the following line does not mean what it could look like from first sight
 # actually it is substitution of unnecessary call t ranlib with true which effectively
