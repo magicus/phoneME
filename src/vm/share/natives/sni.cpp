@@ -46,8 +46,9 @@ void *SNI_GetReentryData(int* reentry_data_size) {
   return Scheduler::get_blocked_thread_data(reentry_data_size);
 }
 
-void SNI_BlockThread() {
+JVMSPI_ThreadID SNI_BlockThread() {
   Scheduler::block_current_thread();
+  return (JVMSPI_ThreadID)(Thread::current()->obj());
 }
 
 void SNI_UnblockThread(JVMSPI_ThreadID thread_id) {

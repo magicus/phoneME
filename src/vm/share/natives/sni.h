@@ -75,7 +75,7 @@ extern int _jvm_in_raw_pointers_block;
  * Return value of native method is meaningless at this point, so
  * anything can be returned, if native method should return value.
  */
-void SNI_BlockThread();
+JVMSPI_ThreadID SNI_BlockThread();
 
 /**
  * For use by event checking code to notify the JVM that the specified
