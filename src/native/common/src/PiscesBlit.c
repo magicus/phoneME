@@ -166,7 +166,7 @@ fillRectSrcOver(Renderer* rdr,
             imageType == TYPE_INT_ARGB_PRE) {
           if (width > 8 && height > 1) { 
 			int size = width * sizeof(jint);
-            jint* data = (jint *) malloc(size);
+            jint* data = (jint *) PISCESmalloc(size);
             for (i = 0; i < width; i++) {
               data[i] = intVal;
             }
@@ -175,7 +175,7 @@ fillRectSrcOver(Renderer* rdr,
               offset += imageScanlineStride;
             }
 			if (data) {
-				free(data);
+				PISCESfree(data);
 			}
           } else {
             for (j = 0; j < height; j++) {
@@ -2531,7 +2531,7 @@ clearRect8888(Renderer *rdr, jint x, jint y, jint w, jint h) {
                     y * rdr->_imageScanlineStride + x * pixelStride;
     if (w > 8 && h > 1) {
 	  jint size = w * sizeof(jint);		
-      jint * data = (jint *) malloc(size);
+      jint * data = (jint *) PISCESmalloc(size);
       jint i;
       for (i = 0; i < w; ++i) {
         data[i] = cval;
@@ -2541,7 +2541,7 @@ clearRect8888(Renderer *rdr, jint x, jint y, jint w, jint h) {
         intData += rdr->_imageScanlineStride;
       }
 	  if (data) {
-		free(data);
+		   PISCESfree(data);
 	  }
     } else {
       for (; h > 0; --h) {
