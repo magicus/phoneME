@@ -140,7 +140,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         if (item == null || item.owner != owner) {
             return;
         }
-
         ItemLFImpl[] itemsCopy = null;
         int itemsCopyCount = 0;
         int traverseIndexCopy = -1;
@@ -213,7 +212,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 uHideShowItems(itemsCopy);
                 setupScroll(); 
             }
-
             // If complex item need extra scrolling we should make it
             if (!itemCompletelyVisible(itemLF)) {
                 if (itemsCopy[traverseIndexCopy].lScrollToItem(viewport, visRect)) {
@@ -1086,9 +1084,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         if (traverseIndexCopy != -1 && dir == CustomItem.NONE) {
             itemTraverse = 
                     uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
-            
-            uRequestPaint(); // request to paint contents area
-            
             if (keepFocusOnTheScreen) {
                 uScrollToItem(itemsCopy[traverseIndexCopy].item);
                 synchronized (Display.LCDUILock) {
@@ -1096,6 +1091,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 }
             }
             setupScroll();
+            uRequestPaint(); // request to paint contents area
             return;
         }
         
@@ -1634,13 +1630,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
 
             ret = true;
         }
-
         // Since visRect is sent to the Item in its own coordinate
         // space, we translate it back into the overall Form's
         // coordinate space
         visRect[X] += item.bounds[X];
         visRect[Y] += item.bounds[Y];
-
         return ret;
     }
     
@@ -2187,7 +2181,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             return false;
         }
 
-        if (bounds[Y] < viewable[Y]) {
+        if (bounds[Y] <= viewable[Y]) {
             viewable[Y] = bounds[Y];
             res = true;
         } else if (viewable[Y] + viewport[HEIGHT] < bounds[Y] + bounds[HEIGHT]) {

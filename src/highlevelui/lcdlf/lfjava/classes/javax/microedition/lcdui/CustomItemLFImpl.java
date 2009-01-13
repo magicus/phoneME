@@ -371,7 +371,7 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
     void uCallPaint(Graphics g, int w, int h) {
 
         int clipX, clipY, clipH, clipW;
-
+        int viewportY = 0;
         synchronized (Display.LCDUILock) {
             // do internal layout, paint label
             lDoInternalLayout(labelBounds, contentBounds, w, h);
@@ -380,23 +380,34 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
 
             paintLabel(g, labelBounds[WIDTH]);
 
-            g.translate(-labelBounds[X] + contentBounds[X],
-                    -labelBounds[Y] + contentBounds[Y]);
+            g.translate(-labelBounds[X], -labelBounds[Y]);
 
             clipX = g.getClipX();
             clipY = g.getClipY();
             clipH = g.getClipHeight();
             clipW = g.getClipWidth();
+            //case than total area more than content area
+            if (contentBounds[Y] + viewport[Y] >= contentBounds[HEIGHT]) {      
+                g.clipRect(contentBounds[X], contentBounds[Y], clipW, clipH);
+                viewportY = viewport[Y];
+            }
 
+            g.translate(contentBounds[X], contentBounds[Y]);
+                
             w = contentBounds[WIDTH];
             h = contentBounds[HEIGHT];
+
+            g.translate(-viewport[X], -viewportY);
+            
+            w += viewport[X];
+            h += viewportY;
         }
 
         if (clipY + clipH >= 0 && clipY < contentBounds[HEIGHT] &&
             clipX + clipW >= 0 && clipX < contentBounds[WIDTH]) {
 
             // We prevent the CustomItem from drawing outside the bounds.
-            g.preserveMIDPRuntimeGC(0, 0, contentBounds[WIDTH], contentBounds[HEIGHT]);
+            g.preserveMIDPRuntimeGC(0, 0, w, h);
             // Reset the graphics context
             g.resetGC();
 
@@ -409,8 +420,9 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
             }
             g.restoreMIDPRuntimeGC();
         }
+        g.clipRect(clipX, clipY, clipW, clipH);
+        g.translate(viewport[X], viewportY);
         g.translate(-contentBounds[X], -contentBounds[Y]);
-
     }
 
     /**
@@ -440,11 +452,21 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
                 boolean t = customItem.traverse(dir, viewportWidth, 
                                                 viewportHeight,
                                                 visRect_inout);
-
-                // We shift the return value from the item's traverse
-                // by the label height to give the real location
-                visRect_inout[X] += contX;
-                visRect_inout[Y] += contY;
+                if (t) {
+                    if ((viewport[X] > visRect_inout[X]) || 
+                        (visRect_inout[X] - viewport[X] > bounds[WIDTH]/2)) {
+                        viewport[X] = visRect_inout[X];  
+                    }
+                    int tmpDiffY = visRect_inout[Y] - viewport[Y];  
+                    if ((viewport[Y] > visRect_inout[Y]) ||
+                        (tmpDiffY > contentBounds[HEIGHT]/2) || 
+                        (tmpDiffY > viewportHeight/2)) {
+                        viewport[Y] = visRect_inout[Y];
+                    }
+                } else {
+                    viewport[X] = 0;
+                    viewport[Y] = 0;
+                }
                 return t;
             }
         } catch (Throwable thr) {
@@ -452,6 +474,18 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
         }
         return false;
     }
+
+    /**
+     *  If hilighted element of item is not completely visible should make it visible
+     * @param viewport the viewport coordinates
+     * @param visRect the in/out rectangle for the internal traversal location
+     * @return true if visRect was changed
+     */
+    boolean lScrollToItem(int[] viewport, int[] visRect) {
+        visRect[X] = this.viewport[X];
+        visRect[Y] = this.viewport[Y] ; 
+        return true;
+    } 
 
     /**
      * Called by the system to indicate traversal has left this Item
@@ -695,4 +729,9 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
      * Cached minimum width when validRequestedSizes is true.
      */
     private int minimumWidth; // default 0
+    
+    /**
+     * Visible part of custom item
+     */   
+    private int[] viewport = new int [4];
 } // CustomItemLF
