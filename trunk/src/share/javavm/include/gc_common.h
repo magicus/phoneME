@@ -189,13 +189,13 @@ void CVMgcLockerLock(CVMGCLocker *self, CVMExecEnv *current_ee);
 /* NOTE: Calls to CVMgcLockerLock() & CVMgcLockerUnlock() can be nested. */
 void CVMgcLockerUnlock(CVMGCLocker *self, CVMExecEnv *current_ee);
 
+#endif
+
 /*===========================================================================*/
 
 /* Purpose: Checks to see if the specified thread is running the GC. */
 #define CVMgcIsGCThread(/* CVMExecEnv * */ ee) \
     (CVM_CSTATE(CVM_GC_SAFE)->requester == ee)
-
-#endif
 
 #ifdef CVM_MTASK
 extern CVMBool
