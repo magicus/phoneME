@@ -48,7 +48,7 @@ JSROP_ABSTRACTS_JAVASRCDIRS = \
         $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes
 
 # classes
-ABSTRACTIONS_CLASSES = \
+ABSTRACTIONS_CLASSES += \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppPackage.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppIsolate.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppModel.java \
