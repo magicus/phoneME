@@ -206,6 +206,43 @@ freeMIDPEventFields(MidpEvent event) {
     pcsl_string_free(&event.stringParam6);
 }    
 
+#if ENABLE_MULTIPLE_ISOLATES
+/**
+ * Duplicates those fields of an event, which require resource allocation.
+ *
+ * @param event The event to be duplicated
+ *
+ * @return 0 for success, or non-zero if the MIDP implementation is
+ * out of memory
+ */
+static int
+duplicateMIDPEventFields(MidpEvent *event) {
+    int i, j;
+    MidpEvent e = *event;
+    pcsl_string *params[2][6] = {
+        {&e.stringParam1, &e.stringParam2, &e.stringParam3,
+         &e.stringParam4, &e.stringParam5, &e.stringParam6},
+        {&event->stringParam1, &event->stringParam2,
+         &event->stringParam3, &event->stringParam4,
+         &event->stringParam5, &event->stringParam6}
+    };
+
+    for (i = 0; i < 6; i++) {
+        if (PCSL_STRING_OK !=
+            pcsl_string_dup(params[0][i], params[1][i])) {
+                for (j = 0; j < i; j++) {
+                    pcsl_string_free(params[1][j]);
+                    *params[1][j] = *params[0][j];
+                }
+                *params[1][i] = *params[0][i];
+                return -1;
+            }
+    }
+
+    return 0;
+}
+#endif
+
 /**
  * Gets the next pending event for an isolate.
  * <p>
@@ -413,8 +450,15 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
         StoreMIDPEventInVmThreadImp(event, isolateId);
     } else {
 #if ENABLE_MULTIPLE_ISOLATES
-    for (isolateId = 1; isolateId <= maxIsolates; isolateId++)
-        StoreMIDPEventInVmThreadImp(event, isolateId);
+        StoreMIDPEventInVmThreadImp(event, 1);
+        for (isolateId = 2; isolateId <= maxIsolates; isolateId++) {
+            if(0 != duplicateMIDPEventFields(&event)) {
+                REPORT_CRIT(LC_CORE, "StoreMIDPEventInVmThread: "
+                            "Out of memory.");
+                return;
+            }
+            StoreMIDPEventInVmThreadImp(event, isolateId);
+        }
 #else
         StoreMIDPEventInVmThreadImp(event, 0);
 #endif
