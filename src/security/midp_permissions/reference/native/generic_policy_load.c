@@ -59,6 +59,7 @@ static string groupTBL [] = {
 static const int groupTBLsize = sizeof(groupTBL) / sizeof(string);
 
 static string net_access_members[] = {
+    "javax.microedition.io.Connector.rtsp",
     "javax.microedition.io.Connector.http",
     "javax.microedition.io.Connector.https",
     "javax.microedition.io.Connector.obex.client.tcp",
