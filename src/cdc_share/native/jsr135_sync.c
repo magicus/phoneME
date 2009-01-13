@@ -148,6 +148,7 @@ javacall_result mmapi_thread_suspend(int desc, javacall_result *pStatus, void **
         return JAVACALL_OUT_OF_MEMORY;
     }
     if (NULL != ti->pStatus) {
+        CVMmutexUnlock(&tMutex);
         return JAVACALL_FAIL;
     }
 
