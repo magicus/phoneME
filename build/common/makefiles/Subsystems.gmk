@@ -500,7 +500,11 @@ endif
 #####################################################################
 
 ifeq ($(USE_ABSTRACTIONS),true)
+ifeq ($(PROJECT_ABSTRACTIONS_DIR),)
 include $(ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+else
+include $(PROJECT_ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
 endif
 
 #####################################################################
