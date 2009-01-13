@@ -42,7 +42,10 @@ public final class PermissionAccessor {
 
     public static final int PERMISSION_HTTPS_READ   = 9;
     public static final int PERMISSION_HTTPS_WRITE  = 10;
-    
+
+    public static final int PERMISSION_RTSP_READ    = 11;
+    public static final int PERMISSION_RTSP_WRITE   = 12;
+
     /**
      * Method indended to be called by Players & Controls to check
      * if user application has enough permissions to perform
@@ -69,6 +72,7 @@ public final class PermissionAccessor {
         "file://",
         "http://",
         "https://",
+        "rtsp://"
     };
     
     // inidicates that corresponding locator type needs no special permissions.
@@ -83,7 +87,8 @@ public final class PermissionAccessor {
         /* "device://"       */ NEED_NO_PERMISSIONS,
         /* "file://"         */ PERMISSION_FILE_READ,
         /* "http://"         */ PERMISSION_HTTP_READ,
-        /* "https://"        */ PERMISSION_HTTPS_READ
+        /* "https://"        */ PERMISSION_HTTPS_READ,
+        /* "rtsp://"         */ PERMISSION_RTSP_READ
     };
     
     /**

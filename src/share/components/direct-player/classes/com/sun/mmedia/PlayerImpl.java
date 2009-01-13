@@ -37,6 +37,7 @@ import  com.sun.j2me.app.AppIsolate;
 import  com.sun.j2me.log.Logging;
 import  com.sun.j2me.log.LogChannels;
 import com.sun.mmedia.PlayerStateSubscriber;
+import com.sun.mmedia.rtsp.RtspDS;
 
 import java.io.IOException;
 
@@ -243,7 +244,7 @@ public class PlayerImpl implements Player {
                     mediaFormat = format;
                     handledByJava = true;
                 } else {
-                    throw new MediaException("Unsupported media format");
+                    throw new MediaException("Unsupported media format ('" + type + "','" + mediaFormat + "')");
                 }
             }
             /* predownload media data to recognize media format and/or 
@@ -688,11 +689,18 @@ public class PlayerImpl implements Player {
         if (isClosed) {
             throw new IllegalStateException();
         }
-        if (playerInst != null) {
-            return playerInst.getDuration();
-        } else {
-            return Player.TIME_UNKNOWN;
+
+        long dur = Player.TIME_UNKNOWN;
+
+        if (null!=playerInst) {
+            dur = playerInst.getDuration();
         }
+
+        if (Player.TIME_UNKNOWN == dur && null != source && source instanceof RtspDS) {
+            dur = ((RtspDS)source).getDuration();
+        }
+
+        return dur;
     };
 
     /**

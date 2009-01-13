@@ -264,7 +264,7 @@ public class RtspDS extends BasicDS {
             float from = range.getFrom();
             float to = range.getTo();
             if (RtspRange.NOW != from && RtspRange.END != to) {
-                return (long)((to - from) * 1000.0);
+                return (long)((to - from) * 1.E6);
             }
         }
 
