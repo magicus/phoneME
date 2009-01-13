@@ -1191,7 +1191,9 @@ void Scheduler::master_mode_wait_for_event_or_timer(jlong sleep_time) {
   // We do suspend and resume ticks only if we gonna wait for long time
   // (sleep_time < 0) == sleep forever until an event happens.
   if (JavaDebugger::is_debugger_option_on()) {
-    sleep_time = 100;
+    if (sleep_time < 0 || sleep_time > 100) {
+      sleep_time = 100;
+    }
   }
   if (sleep_time < 0 || sleep_time > 500) {
     Os::suspend_ticks();
