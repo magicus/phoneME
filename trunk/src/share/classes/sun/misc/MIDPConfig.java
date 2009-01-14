@@ -278,9 +278,16 @@ class MIDPConfig{
 	int nComponents = 1;
         //char separator = ' ';
 	String components[];
-	int length = path.length();
+	int length;
 	int start;
 	int componentIndex;
+
+        if (path == null) {
+            components = new String[0];
+            return components;
+        }
+
+        length = path.length();
 	for (int i=0; i<length; i++){
 	    if (path.charAt(i) == separator)
 		nComponents += 1;
