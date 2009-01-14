@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ JSROP_ABSTRACTS_JAVASRCDIRS = \
         $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes
 
 # classes
-ABSTRACTIONS_CLASSES = \
+ABSTRACTIONS_CLASSES += \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppPackage.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppIsolate.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppModel.java \
