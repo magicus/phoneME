@@ -24,14 +24,10 @@
  */
 
 /**
- * @file javacall_registry.c
+ * @file edb_registry.c
  * @ingroup CHAPI
  * @brief javacall chapi registry access implementation using wince EDB database engine
  */
-
-#include "javacall_chapi_registry.h"
-#include "javacall_memory.h"
-
 #define WIN32_LEAN_AND_MEAN
 
 #ifndef UNICODE
@@ -45,7 +41,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <windows.h>
-#include <windbase.h>
+
+#include "javacall_chapi_registry.h"
+#include "javacall_memory.h"
+
+// recreate database on index structure change
+// should be used only in development time
+#define JSR211_RECREATE_ON_FAILURE 1
 
 #define CHAPI_HEADER L"CHAPI REGISRTY"
 #define CHAPI_DB_VOLUME L"\\chapireg.vol"
@@ -196,53 +198,70 @@ static DWORD open_handlers_db(IN HANDLE hSession, int iSort, BOOL bNotCreate, OU
 	if (*phDB != INVALID_HANDLE_VALUE) return 0;
 
 	dwErr = GetLastError();
-	if (dwErr != ERROR_FILE_NOT_FOUND || bNotCreate) 
-		return dwErr;
-	else 
+	if (dwErr)
 	{
-	// database does not exist - create
-		const DWORD cProps = 6;
-		CEPROPSPEC	prgProps[6] = {0};
-
-		prgProps[0].wVersion = CEPROPSPEC_VERSION;
-		prgProps[0].propid = PROPID_REGISTRY_HANDLER_OID;
-		prgProps[0].dwFlags = DB_PROP_NOTNULL;
-		prgProps[0].pwszPropName = L"HandlerOID";
-		prgProps[0].cchPropName = wcslen(prgProps[0].pwszPropName);
-
-		prgProps[1].wVersion = CEPROPSPEC_VERSION;
-		prgProps[1].propid = PROPID_REGISTRY_HANDLER_NAME;
-		prgProps[1].dwFlags = DB_PROP_NOTNULL;
-		prgProps[1].pwszPropName = L"HandlerName";
-		prgProps[1].cchPropName = wcslen(prgProps[1].pwszPropName);
-
-		prgProps[2].wVersion = CEPROPSPEC_VERSION;
-		prgProps[2].propid = PROPID_REGISTRY_HANDLER_APPNAME;
-		prgProps[2].dwFlags = 0;
-		prgProps[2].pwszPropName = L"HandlerAppName";
-		prgProps[2].cchPropName = wcslen(prgProps[2].pwszPropName);
-
-		prgProps[3].wVersion = CEPROPSPEC_VERSION;
-		prgProps[3].propid = PROPID_REGISTRY_SUITEID;
-		prgProps[3].dwFlags = 0;
-		prgProps[3].pwszPropName = L"SuiteID";
-		prgProps[3].cchPropName = wcslen(prgProps[3].pwszPropName);
-
-		prgProps[4].wVersion = CEPROPSPEC_VERSION;
-		prgProps[4].propid = PROPID_REGISTRY_CLASSNAME;
-		prgProps[4].dwFlags = 0;
-		prgProps[4].pwszPropName = L"ClassName";
-		prgProps[4].cchPropName = wcslen(prgProps[4].pwszPropName);
-
-		prgProps[5].wVersion = CEPROPSPEC_VERSION;
-		prgProps[5].propid = PROPID_REGISTRY_FLAG;
-		prgProps[5].dwFlags = 0;
-		prgProps[5].pwszPropName = L"TypeFlag";
-		prgProps[5].cchPropName = wcslen(prgProps[5].pwszPropName);
-
-		if(0 == (dwOID = CeCreateDatabaseWithProps(&volGUID, &DBInfo, cProps, prgProps)))
+#ifdef JSR211_RECREATE_ON_FAILURE
+		if (dwErr == ERROR_INVALID_PARAMETER)
 		{
-			return GetLastError();
+			// database has invalid index structure - recreate it
+			// search by name
+			HANDLE hDb = CeOpenDatabaseInSession(NULL, &volGUID, &dwOID, DBInfo.szDbaseName, NULL, 0, NULL);
+			if (!dwOID) return GetLastError();
+			CloseHandle(hDb);
+			// delete
+			log_error(L"Database %S has invalid structure and being recreated..", DBInfo.szDbaseName);
+			if (!CeDeleteDatabaseEx(&volGUID,dwOID)) return GetLastError();
+			dwErr = ERROR_FILE_NOT_FOUND;
+		}
+#endif
+		if (bNotCreate || dwErr != ERROR_FILE_NOT_FOUND) 
+			return dwErr;
+		else
+		{
+		// database does not exist - create
+			const DWORD cProps = 6;
+			CEPROPSPEC	prgProps[6] = {0};
+
+			prgProps[0].wVersion = CEPROPSPEC_VERSION;
+			prgProps[0].propid = PROPID_REGISTRY_HANDLER_OID;
+			prgProps[0].dwFlags = DB_PROP_NOTNULL;
+			prgProps[0].pwszPropName = L"HandlerOID";
+			prgProps[0].cchPropName = wcslen(prgProps[0].pwszPropName);
+
+			prgProps[1].wVersion = CEPROPSPEC_VERSION;
+			prgProps[1].propid = PROPID_REGISTRY_HANDLER_NAME;
+			prgProps[1].dwFlags = DB_PROP_NOTNULL;
+			prgProps[1].pwszPropName = L"HandlerName";
+			prgProps[1].cchPropName = wcslen(prgProps[1].pwszPropName);
+
+			prgProps[2].wVersion = CEPROPSPEC_VERSION;
+			prgProps[2].propid = PROPID_REGISTRY_HANDLER_APPNAME;
+			prgProps[2].dwFlags = 0;
+			prgProps[2].pwszPropName = L"HandlerAppName";
+			prgProps[2].cchPropName = wcslen(prgProps[2].pwszPropName);
+
+			prgProps[3].wVersion = CEPROPSPEC_VERSION;
+			prgProps[3].propid = PROPID_REGISTRY_SUITEID;
+			prgProps[3].dwFlags = 0;
+			prgProps[3].pwszPropName = L"SuiteID";
+			prgProps[3].cchPropName = wcslen(prgProps[3].pwszPropName);
+
+			prgProps[4].wVersion = CEPROPSPEC_VERSION;
+			prgProps[4].propid = PROPID_REGISTRY_CLASSNAME;
+			prgProps[4].dwFlags = 0;
+			prgProps[4].pwszPropName = L"ClassName";
+			prgProps[4].cchPropName = wcslen(prgProps[4].pwszPropName);
+
+			prgProps[5].wVersion = CEPROPSPEC_VERSION;
+			prgProps[5].propid = PROPID_REGISTRY_FLAG;
+			prgProps[5].dwFlags = 0;
+			prgProps[5].pwszPropName = L"TypeFlag";
+			prgProps[5].cchPropName = wcslen(prgProps[5].pwszPropName);
+
+			if(0 == (dwOID = CeCreateDatabaseWithProps(&volGUID, &DBInfo, cProps, prgProps)))
+			{
+				return GetLastError();
+			}
 		}
 	}
 
@@ -275,7 +294,7 @@ static DWORD open_contenttype_db(IN HANDLE hSession, int iSort, BOOL bNotCreate,
 	DBInfo.rgSortSpecs[0].wKeyFlags = 0;
 	DBInfo.rgSortSpecs[0].wNumProps = 2;
 	DBInfo.rgSortSpecs[0].rgPropID[0] = PROPID_CONTENTTYPE_NAME;
-	DBInfo.rgSortSpecs[0].rgdwFlags[0] = 0;
+	DBInfo.rgSortSpecs[0].rgdwFlags[0] = CEDB_SORT_CASEINSENSITIVE;
 	DBInfo.rgSortSpecs[0].rgPropID[1] = PROPID_CONTENTTYPE_HANDLER_OID;
 	DBInfo.rgSortSpecs[0].rgdwFlags[1] = 0;
 
@@ -285,7 +304,7 @@ static DWORD open_contenttype_db(IN HANDLE hSession, int iSort, BOOL bNotCreate,
 	DBInfo.rgSortSpecs[1].rgPropID[0] = PROPID_CONTENTTYPE_HANDLER_OID;
 	DBInfo.rgSortSpecs[1].rgdwFlags[0] = 0;
 	DBInfo.rgSortSpecs[1].rgPropID[1] = PROPID_CONTENTTYPE_NAME;
-	DBInfo.rgSortSpecs[1].rgdwFlags[1] = 0;
+	DBInfo.rgSortSpecs[1].rgdwFlags[1] = CEDB_SORT_CASEINSENSITIVE;
 
 	wcscpy(DBInfo.szDbaseName, CHAPI_CONTENTTYPE_DB_NAME);
 
@@ -295,29 +314,46 @@ static DWORD open_contenttype_db(IN HANDLE hSession, int iSort, BOOL bNotCreate,
 	if (*phDB != INVALID_HANDLE_VALUE) return 0;
 
 	dwErr = GetLastError();
-	if (dwErr != ERROR_FILE_NOT_FOUND || bNotCreate) 
-		return dwErr;
-	else 
+	if (dwErr)
 	{
-		// database does not exist - create
-		const DWORD cProps = 2;
-		CEPROPSPEC	prgProps[2] = {0};
-
-		prgProps[0].wVersion = CEPROPSPEC_VERSION;
-		prgProps[0].propid = PROPID_CONTENTTYPE_NAME;
-		prgProps[0].dwFlags = DB_PROP_NOTNULL;
-		prgProps[0].pwszPropName = L"ContentType";
-		prgProps[0].cchPropName = wcslen(prgProps[0].pwszPropName);
-
-		prgProps[1].wVersion = CEPROPSPEC_VERSION;
-		prgProps[1].propid = PROPID_CONTENTTYPE_HANDLER_OID;
-		prgProps[1].dwFlags = DB_PROP_NOTNULL;
-		prgProps[1].pwszPropName = L"HandlerOID";
-		prgProps[1].cchPropName = wcslen(prgProps[1].pwszPropName);
-
-		if(0 == (dwOID = CeCreateDatabaseWithProps(&volGUID, &DBInfo, cProps, prgProps)))
+#ifdef JSR211_RECREATE_ON_FAILURE
+		if (dwErr == ERROR_INVALID_PARAMETER)
 		{
-			return GetLastError();
+			// database has invalid index structure - recreate it
+			// search by name
+			HANDLE hDb = CeOpenDatabaseInSession(NULL, &volGUID, &dwOID, DBInfo.szDbaseName, NULL, 0, NULL);
+			if (!dwOID) return GetLastError();
+			CloseHandle(hDb);
+			// delete
+			log_error(L"Database %S has invalid structure and being recreated..", DBInfo.szDbaseName);
+			if (!CeDeleteDatabaseEx(&volGUID,dwOID)) return GetLastError();
+			dwErr = ERROR_FILE_NOT_FOUND;
+		}
+#endif
+		if (bNotCreate || dwErr != ERROR_FILE_NOT_FOUND) 
+			return dwErr;
+		else
+		{
+			// database does not exist - create
+			const DWORD cProps = 2;
+			CEPROPSPEC	prgProps[2] = {0};
+
+			prgProps[0].wVersion = CEPROPSPEC_VERSION;
+			prgProps[0].propid = PROPID_CONTENTTYPE_NAME;
+			prgProps[0].dwFlags = DB_PROP_NOTNULL;
+			prgProps[0].pwszPropName = L"ContentType";
+			prgProps[0].cchPropName = wcslen(prgProps[0].pwszPropName);
+
+			prgProps[1].wVersion = CEPROPSPEC_VERSION;
+			prgProps[1].propid = PROPID_CONTENTTYPE_HANDLER_OID;
+			prgProps[1].dwFlags = DB_PROP_NOTNULL;
+			prgProps[1].pwszPropName = L"HandlerOID";
+			prgProps[1].cchPropName = wcslen(prgProps[1].pwszPropName);
+
+			if(0 == (dwOID = CeCreateDatabaseWithProps(&volGUID, &DBInfo, cProps, prgProps)))
+			{
+				return GetLastError();
+			}
 		}
 	}
 
@@ -371,29 +407,46 @@ static DWORD open_suffixes_db(IN HANDLE hSession, int iSort, BOOL bNotCreate, OU
 	if (*phDB != INVALID_HANDLE_VALUE) return 0;
 
 	dwErr = GetLastError();
-	if (dwErr != ERROR_FILE_NOT_FOUND || bNotCreate) 
-		return dwErr;
-	else 
+	if (dwErr)
 	{
-		// database does not exist - create
-		const DWORD cProps = 2;
-		CEPROPSPEC	prgProps[2] = {0};
-
-		prgProps[0].wVersion = CEPROPSPEC_VERSION;
-		prgProps[0].propid = PROPID_SUFFIX_NAME;
-		prgProps[0].dwFlags = DB_PROP_NOTNULL;
-		prgProps[0].pwszPropName = L"Suffix";
-		prgProps[0].cchPropName = wcslen(prgProps[0].pwszPropName);
-
-		prgProps[1].wVersion = CEPROPSPEC_VERSION;
-		prgProps[1].propid = PROPID_SUFFIX_HANDLER_OID;
-		prgProps[1].dwFlags = DB_PROP_NOTNULL;
-		prgProps[1].pwszPropName = L"HandlerOID";
-		prgProps[1].cchPropName = wcslen(prgProps[1].pwszPropName);
-
-		if(0 == (dwOID = CeCreateDatabaseWithProps(&volGUID, &DBInfo, cProps, prgProps)))
+#ifdef JSR211_RECREATE_ON_FAILURE
+		if (dwErr == ERROR_INVALID_PARAMETER)
 		{
-			return GetLastError();
+			// database has invalid index structure - recreate it
+			// search by name
+			HANDLE hDb = CeOpenDatabaseInSession(NULL, &volGUID, &dwOID, DBInfo.szDbaseName, NULL, 0, NULL);
+			if (!dwOID) return GetLastError();
+			CloseHandle(hDb);
+			// delete
+			log_error(L"Database %S has invalid structure and being recreated..", DBInfo.szDbaseName);
+			if (!CeDeleteDatabaseEx(&volGUID,dwOID)) return GetLastError();
+			dwErr = ERROR_FILE_NOT_FOUND;
+		}
+#endif
+		if (bNotCreate || dwErr != ERROR_FILE_NOT_FOUND) 
+			return dwErr;
+		else
+		{
+			// database does not exist - create
+			const DWORD cProps = 2;
+			CEPROPSPEC	prgProps[2] = {0};
+
+			prgProps[0].wVersion = CEPROPSPEC_VERSION;
+			prgProps[0].propid = PROPID_SUFFIX_NAME;
+			prgProps[0].dwFlags = DB_PROP_NOTNULL;
+			prgProps[0].pwszPropName = L"Suffix";
+			prgProps[0].cchPropName = wcslen(prgProps[0].pwszPropName);
+
+			prgProps[1].wVersion = CEPROPSPEC_VERSION;
+			prgProps[1].propid = PROPID_SUFFIX_HANDLER_OID;
+			prgProps[1].dwFlags = DB_PROP_NOTNULL;
+			prgProps[1].pwszPropName = L"HandlerOID";
+			prgProps[1].cchPropName = wcslen(prgProps[1].pwszPropName);
+
+			if(0 == (dwOID = CeCreateDatabaseWithProps(&volGUID, &DBInfo, cProps, prgProps)))
+			{
+				return GetLastError();
+			}
 		}
 	}
 
@@ -446,29 +499,46 @@ static DWORD open_access_db(IN HANDLE hSession, int iSort, BOOL bNotCreate, OUT 
 	if (*phDB != INVALID_HANDLE_VALUE) return 0;
 
 	dwErr = GetLastError();
-	if (dwErr != ERROR_FILE_NOT_FOUND || bNotCreate) 
-		return dwErr;
-	else 
+	if (dwErr)
 	{
-		// database does not exist - create
-		const DWORD cProps = 2;
-		CEPROPSPEC	prgProps[2] = {0};
-
-		prgProps[0].wVersion = CEPROPSPEC_VERSION;
-		prgProps[0].propid = PROPID_ACCESS_CALLER_ID;
-		prgProps[0].dwFlags = DB_PROP_NOTNULL;
-		prgProps[0].pwszPropName = L"CallerID";
-		prgProps[0].cchPropName = wcslen(prgProps[0].pwszPropName);
-
-		prgProps[1].wVersion = CEPROPSPEC_VERSION;
-		prgProps[1].propid = PROPID_ACCESS_HANDLER_OID;
-		prgProps[1].dwFlags = DB_PROP_NOTNULL;
-		prgProps[1].pwszPropName = L"HandlerOID";
-		prgProps[1].cchPropName = wcslen(prgProps[1].pwszPropName);
-
-		if(0 == (dwOID = CeCreateDatabaseWithProps(&volGUID, &DBInfo, cProps, prgProps)))
+#ifdef JSR211_RECREATE_ON_FAILURE
+		if (dwErr == ERROR_INVALID_PARAMETER)
 		{
-			return GetLastError();
+			// database has invalid index structure - recreate it
+			// search by name
+			HANDLE hDb = CeOpenDatabaseInSession(NULL, &volGUID, &dwOID, DBInfo.szDbaseName, NULL, 0, NULL);
+			if (!dwOID) return GetLastError();
+			CloseHandle(hDb);
+			// delete
+			log_error(L"Database %S has invalid structure and being recreated..", DBInfo.szDbaseName);
+			if (!CeDeleteDatabaseEx(&volGUID,dwOID)) return GetLastError();
+			dwErr = ERROR_FILE_NOT_FOUND;
+		}
+#endif
+		if (bNotCreate || dwErr != ERROR_FILE_NOT_FOUND) 
+			return dwErr;
+		else
+		{
+			// database does not exist - create
+			const DWORD cProps = 2;
+			CEPROPSPEC	prgProps[2] = {0};
+
+			prgProps[0].wVersion = CEPROPSPEC_VERSION;
+			prgProps[0].propid = PROPID_ACCESS_CALLER_ID;
+			prgProps[0].dwFlags = DB_PROP_NOTNULL;
+			prgProps[0].pwszPropName = L"CallerID";
+			prgProps[0].cchPropName = wcslen(prgProps[0].pwszPropName);
+
+			prgProps[1].wVersion = CEPROPSPEC_VERSION;
+			prgProps[1].propid = PROPID_ACCESS_HANDLER_OID;
+			prgProps[1].dwFlags = DB_PROP_NOTNULL;
+			prgProps[1].pwszPropName = L"HandlerOID";
+			prgProps[1].cchPropName = wcslen(prgProps[1].pwszPropName);
+
+			if(0 == (dwOID = CeCreateDatabaseWithProps(&volGUID, &DBInfo, cProps, prgProps)))
+			{
+				return GetLastError();
+			}
 		}
 	}
 
@@ -521,35 +591,52 @@ static DWORD open_actions_db(IN HANDLE hSession, int iSort, BOOL bNotCreate, OUT
 	if (*phDB != INVALID_HANDLE_VALUE) return 0;
 
 	dwErr = GetLastError();
-	if (dwErr != ERROR_FILE_NOT_FOUND || bNotCreate) 
-		return dwErr;
-	else 
+	if (dwErr)
 	{
-		// database does not exist - create
-		const DWORD cProps = 3;
-		CEPROPSPEC	prgProps[3] = {0};
-
-		prgProps[0].wVersion = CEPROPSPEC_VERSION;
-		prgProps[0].propid = PROPID_ACTION_OID;
-		prgProps[0].dwFlags = DB_PROP_NOTNULL;
-		prgProps[0].pwszPropName = L"ActionOID";
-		prgProps[0].cchPropName = wcslen(prgProps[0].pwszPropName);
-
-		prgProps[1].wVersion = CEPROPSPEC_VERSION;
-		prgProps[1].propid = PROPID_ACTION_NAME;
-		prgProps[1].dwFlags = DB_PROP_NOTNULL;
-		prgProps[1].pwszPropName = L"ActionName";
-		prgProps[1].cchPropName = wcslen(prgProps[1].pwszPropName);
-
-		prgProps[2].wVersion = CEPROPSPEC_VERSION;
-		prgProps[2].propid = PROPID_ACTION_HANDLER_OID;
-		prgProps[2].dwFlags = DB_PROP_NOTNULL;
-		prgProps[2].pwszPropName = L"HandlerOID";
-		prgProps[2].cchPropName = wcslen(prgProps[3].pwszPropName);
-
-		if(0 == (dwOID = CeCreateDatabaseWithProps(&volGUID, &DBInfo, cProps, prgProps)))
+#ifdef JSR211_RECREATE_ON_FAILURE
+		if (dwErr == ERROR_INVALID_PARAMETER)
 		{
-			return GetLastError();
+			// database has invalid index structure - recreate it
+			// search by name
+			HANDLE hDb = CeOpenDatabaseInSession(NULL, &volGUID, &dwOID, DBInfo.szDbaseName, NULL, 0, NULL);
+			if (!dwOID) return GetLastError();
+			CloseHandle(hDb);
+			// delete
+			log_error(L"Database %S has invalid structure and being recreated..", DBInfo.szDbaseName);
+			if (!CeDeleteDatabaseEx(&volGUID,dwOID)) return GetLastError();
+			dwErr = ERROR_FILE_NOT_FOUND;
+		}
+#endif
+		if (bNotCreate || dwErr != ERROR_FILE_NOT_FOUND) 
+			return dwErr;
+		else
+		{
+			// database does not exist - create
+			const DWORD cProps = 3;
+			CEPROPSPEC	prgProps[3] = {0};
+
+			prgProps[0].wVersion = CEPROPSPEC_VERSION;
+			prgProps[0].propid = PROPID_ACTION_OID;
+			prgProps[0].dwFlags = DB_PROP_NOTNULL;
+			prgProps[0].pwszPropName = L"ActionOID";
+			prgProps[0].cchPropName = wcslen(prgProps[0].pwszPropName);
+
+			prgProps[1].wVersion = CEPROPSPEC_VERSION;
+			prgProps[1].propid = PROPID_ACTION_NAME;
+			prgProps[1].dwFlags = DB_PROP_NOTNULL;
+			prgProps[1].pwszPropName = L"ActionName";
+			prgProps[1].cchPropName = wcslen(prgProps[1].pwszPropName);
+
+			prgProps[2].wVersion = CEPROPSPEC_VERSION;
+			prgProps[2].propid = PROPID_ACTION_HANDLER_OID;
+			prgProps[2].dwFlags = DB_PROP_NOTNULL;
+			prgProps[2].pwszPropName = L"HandlerOID";
+			prgProps[2].cchPropName = wcslen(prgProps[2].pwszPropName);
+
+			if(0 == (dwOID = CeCreateDatabaseWithProps(&volGUID, &DBInfo, cProps, prgProps)))
+			{
+				return GetLastError();
+			}
 		}
 	}
 
@@ -595,35 +682,52 @@ static DWORD open_action_local_names_db(IN HANDLE hSession, int iSort, BOOL bNot
 	if (*phDB != INVALID_HANDLE_VALUE) return 0;
 
 	dwErr = GetLastError();
-	if (dwErr != ERROR_FILE_NOT_FOUND || bNotCreate) 
-		return dwErr;
-	else 
+	if (dwErr)
 	{
-		// database does not exist - create
-		const DWORD cProps = 3;
-		CEPROPSPEC	prgProps[3] = {0};
-
-		prgProps[0].wVersion = CEPROPSPEC_VERSION;
-		prgProps[0].propid = PROPID_LACTION_ACTION_OID;
-		prgProps[0].dwFlags = DB_PROP_NOTNULL;
-		prgProps[0].pwszPropName = L"ActionOID";
-		prgProps[0].cchPropName = wcslen(prgProps[0].pwszPropName);
-
-		prgProps[1].wVersion = CEPROPSPEC_VERSION;
-		prgProps[1].propid = PROPID_LACTION_LOCALE;
-		prgProps[1].dwFlags = DB_PROP_NOTNULL;
-		prgProps[1].pwszPropName = L"Locale";
-		prgProps[1].cchPropName = wcslen(prgProps[1].pwszPropName);
-
-		prgProps[2].wVersion = CEPROPSPEC_VERSION;
-		prgProps[2].propid = PROPID_LACTION_ACTION_NAME;
-		prgProps[2].dwFlags = DB_PROP_NOTNULL;
-		prgProps[2].pwszPropName = L"LocalName";
-		prgProps[2].cchPropName = wcslen(prgProps[2].pwszPropName);
-
-		if(0 == (dwOID = CeCreateDatabaseWithProps(&volGUID, &DBInfo, cProps, prgProps)))
+#ifdef JSR211_RECREATE_ON_FAILURE
+		if (dwErr == ERROR_INVALID_PARAMETER)
 		{
-			return GetLastError();
+			// database has invalid index structure - recreate it
+			// search by name
+			HANDLE hDb = CeOpenDatabaseInSession(NULL, &volGUID, &dwOID, DBInfo.szDbaseName, NULL, 0, NULL);
+			if (!dwOID) return GetLastError();
+			CloseHandle(hDb);
+			// delete
+			log_error(L"Database %S has invalid structure and being recreated..", DBInfo.szDbaseName);
+			if (!CeDeleteDatabaseEx(&volGUID,dwOID)) return GetLastError();
+			dwErr = ERROR_FILE_NOT_FOUND;
+		}
+#endif
+		if (bNotCreate || dwErr != ERROR_FILE_NOT_FOUND) 
+			return dwErr;
+		else
+		{
+			// database does not exist - create
+			const DWORD cProps = 3;
+			CEPROPSPEC	prgProps[3] = {0};
+
+			prgProps[0].wVersion = CEPROPSPEC_VERSION;
+			prgProps[0].propid = PROPID_LACTION_ACTION_OID;
+			prgProps[0].dwFlags = DB_PROP_NOTNULL;
+			prgProps[0].pwszPropName = L"ActionOID";
+			prgProps[0].cchPropName = wcslen(prgProps[0].pwszPropName);
+
+			prgProps[1].wVersion = CEPROPSPEC_VERSION;
+			prgProps[1].propid = PROPID_LACTION_LOCALE;
+			prgProps[1].dwFlags = DB_PROP_NOTNULL;
+			prgProps[1].pwszPropName = L"Locale";
+			prgProps[1].cchPropName = wcslen(prgProps[1].pwszPropName);
+
+			prgProps[2].wVersion = CEPROPSPEC_VERSION;
+			prgProps[2].propid = PROPID_LACTION_ACTION_NAME;
+			prgProps[2].dwFlags = DB_PROP_NOTNULL;
+			prgProps[2].pwszPropName = L"LocalName";
+			prgProps[2].cchPropName = wcslen(prgProps[2].pwszPropName);
+
+			if(0 == (dwOID = CeCreateDatabaseWithProps(&volGUID, &DBInfo, cProps, prgProps)))
+			{
+				return GetLastError();
+			}
 		}
 	}
 
@@ -722,6 +826,102 @@ static javacall_result get_handler_by_oid(DWORD dwOid, CEPROPVAL **ppPropVal)
 	CloseHandle(hRegDB);
 	return JAVACALL_OK;
 }
+
+/*
+*   Enumerate registered content handlers that has corresponding indexed value in given database
+*   see javacall_chapi_enum_handlers_by_* methods for more info
+*	@param hDB - databse opened by needed index on first iteration or null on each next
+*	@param indexed_value - indexed value to search on first iteration or null on each next
+*	@param valuePropID - id of indexed value property
+*	@param handlerPropID - id of HANDLER_ID property
+*	@param pos_id - see javacall_chapi_enum_handlers_by_*
+*	@param handler_id_out - see javacall_chapi_enum_handlers_by_*
+*	@param length - see javacall_chapi_enum_handlers_by_*
+*	@return JAVACALL_OK on success error otherwise
+*/
+static javacall_result enum_handlers_by_indexed_value(HANDLE hDB, javacall_const_utf16_string indexed_value, DWORD valuePropID, DWORD handlerPropID, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length)
+{
+	DWORD dwRes;
+	WORD count = 1;
+	CEPROPVAL* pPropVal = NULL;
+	DWORD dwSize = 0;
+	enum_pos_ptr epos = (enum_pos_ptr)*pos_id;
+
+	if (!epos)
+	{
+		CEPROPVAL propIndexedVal = {0};
+
+		// search first record with matched suffix
+		propIndexedVal.propid = valuePropID;
+		propIndexedVal.val.lpwstr = (LPWSTR)indexed_value;
+
+		if (!CeSeekDatabaseEx(hDB, CEDB_SEEK_VALUEFIRSTEQUAL,(DWORD)&propIndexedVal, 1, NULL))
+		{
+			CloseHandle(hDB);
+			return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+		}
+
+		// read first record
+		if (!CeReadRecordPropsEx(hDB, CEDB_ALLOWREALLOC, &count, 
+			(CEPROPID*)&handlerPropID, (LPBYTE*)&pPropVal, &dwSize, GetProcessHeap()))
+		{
+			log_win32_error(GetLastError());
+			CloseHandle(hDB);
+			return JAVACALL_FAIL;
+		}
+
+		// allocate position structure
+		epos = (enum_pos_ptr)javacall_malloc(sizeof(enum_pos));
+		if (!epos)
+		{
+			log_error(L"out of memory");
+			CloseHandle(hDB);
+			return JAVACALL_CHAPI_ERROR_NO_MEMORY;
+		}
+
+		epos->hDB = hDB;
+		epos->pPropVal = 0;
+		*pos_id = (int)epos;
+	} 
+
+	while (!epos->pPropVal)
+	{
+		while (!pPropVal)
+		{
+			if (!CeSeekDatabaseEx(epos->hDB, CEDB_SEEK_VALUENEXTEQUAL, 1, 0, NULL))
+			{
+				dwRes = GetLastError();
+				if (dwRes == ERROR_SEEK || dwRes == ERROR_NO_MORE_ITEMS)
+				{
+					return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+				} else {
+					log_win32_error(dwRes);
+					return JAVACALL_FAIL;
+				}
+			}
+
+			if (!CeReadRecordPropsEx(epos->hDB, CEDB_ALLOWREALLOC, &count, 
+				(CEPROPID*)&handlerPropID, (LPBYTE*)&(epos->pPropVal), &dwSize, GetProcessHeap()))
+			{
+				log_win32_error(GetLastError());
+				return JAVACALL_FAIL;
+			}
+		}
+
+		dwRes = get_handler_by_oid(pPropVal->val.uiVal, &(epos->pPropVal));
+		if (dwRes && dwRes != JAVACALL_CHAPI_ERROR_NOT_FOUND) return dwRes;
+	}
+
+	dwRes = copy_result(epos->pPropVal,handler_id_out,length);
+	if (dwRes == JAVACALL_OK)
+	{
+		HeapFree(GetProcessHeap(),0,epos->pPropVal);
+		epos->pPropVal = NULL;
+	}
+
+	return dwRes;
+}
+
 
 /************************************************************************/
 /*          PUBLIC API                                                  */
@@ -1222,101 +1422,26 @@ javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16
 */
 javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_string suffix, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length)
 {
-	enum_pos_ptr epos;
-	DWORD dwRes;
-	DWORD propId[1] = {PROPID_SUFFIX_HANDLER_OID};
-	WORD count = 1;
-	CEPROPVAL* pPropVal = NULL;
-	DWORD dwSize = 0;
 	HANDLE hSuffixesDB = INVALID_HANDLE_VALUE;
 
 	if (!suffix || !pos_id || !length || (*length && !handler_id_out)) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
-	epos = (enum_pos_ptr)*pos_id;
 
-	if (!epos)
+	if (!(*pos_id))
 	{
-		CEPROPVAL propSuffixVal = {0};
-
 		// open sorted by suffix
-		dwRes = open_suffixes_db(NULL,0, FALSE, &hSuffixesDB);
+		DWORD dwRes = open_suffixes_db(NULL,0, FALSE, &hSuffixesDB);
 		if (dwRes)
 		{
 			log_win32_error(dwRes);
 			return JAVACALL_FAIL;
 		}
-
-		// search first record with matched suffix
-		propSuffixVal.propid = PROPID_SUFFIX_NAME;
-		propSuffixVal.val.lpwstr = (LPWSTR)suffix;
-
-		if (!CeSeekDatabaseEx(hSuffixesDB, CEDB_SEEK_VALUEFIRSTEQUAL,(DWORD)&propSuffixVal, 1, NULL))
-		{
-			CloseHandle(hSuffixesDB);
-			return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
-		}
-
-		// read first record
-		if (!CeReadRecordPropsEx(hSuffixesDB, CEDB_ALLOWREALLOC, &count, 
-			(CEPROPID*)propId, (LPBYTE*)&pPropVal, &dwSize, GetProcessHeap()))
-		{
-			log_win32_error(GetLastError());
-			CloseHandle(hSuffixesDB);
-			return JAVACALL_FAIL;
-		}
-
-		// allocate position structure
-		epos = (enum_pos_ptr)javacall_malloc(sizeof(enum_pos));
-		if (!epos)
-		{
-			log_error(L"out of memory");
-			CloseHandle(hSuffixesDB);
-			return JAVACALL_CHAPI_ERROR_NO_MEMORY;
-		}
-
-		epos->hDB = hSuffixesDB;
-		epos->pPropVal = 0;
-		*pos_id = (int)epos;
-	} 
-
-	while (!epos->pPropVal)
-	{
-		while (!pPropVal)
-		{
-			if (!CeSeekDatabaseEx(epos->hDB, CEDB_SEEK_VALUENEXTEQUAL, 1, 0, NULL))
-			{
-				dwRes = GetLastError();
-				if (dwRes == ERROR_SEEK || dwRes == ERROR_NO_MORE_ITEMS)
-				{
-					return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
-				} else {
-					log_win32_error(dwRes);
-					return JAVACALL_FAIL;
-				}
-			}
-
-			if (!CeReadRecordPropsEx(epos->hDB, CEDB_ALLOWREALLOC, &count, 
-				(CEPROPID*)propId, (LPBYTE*)&(epos->pPropVal), &dwSize, GetProcessHeap()))
-			{
-				log_win32_error(GetLastError());
-				return JAVACALL_FAIL;
-			}
-		}
-
-		dwRes = get_handler_by_oid(pPropVal->val.uiVal, &(epos->pPropVal));
-		if (dwRes && dwRes != JAVACALL_CHAPI_ERROR_NOT_FOUND) return dwRes;
 	}
 
-	dwRes = copy_result(epos->pPropVal,handler_id_out,length);
-	if (dwRes == JAVACALL_OK)
-	{
-		HeapFree(GetProcessHeap(),0,epos->pPropVal);
-		epos->pPropVal = NULL;
-	}
-	
-	return dwRes;
+	return enum_handlers_by_indexed_value(hSuffixesDB, suffix, PROPID_SUFFIX_NAME, PROPID_SUFFIX_HANDLER_OID, 
+		pos_id, handler_id_out, length);
 }
 
-/**
+/** 
 * Enumerate registered content handlers that can handle content with given content type
 * Search is case-insensitive
 * Function should be called sequentially until JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS is returned
@@ -1340,7 +1465,26 @@ javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_stri
 *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
 *         error code if failure occurs
 */
-javacall_result javacall_chapi_enum_handlers_by_type(javacall_const_utf16_string content_type, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length);
+javacall_result javacall_chapi_enum_handlers_by_type(javacall_const_utf16_string content_type, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length)
+{
+	HANDLE hTypesDB = INVALID_HANDLE_VALUE;
+
+	if (!content_type || !pos_id || !length || (*length && !handler_id_out)) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+
+	if (!(*pos_id))
+	{
+		// open sorted by suffix
+		DWORD dwRes = open_contenttype_db(NULL,0, FALSE, &hTypesDB);
+		if (dwRes)
+		{
+			log_win32_error(dwRes);
+			return JAVACALL_FAIL;
+		}
+	}
+
+	return enum_handlers_by_indexed_value(hTypesDB, content_type, PROPID_CONTENTTYPE_NAME, PROPID_CONTENTTYPE_HANDLER_OID,
+		pos_id, handler_id_out, length);
+}
 
 /**
 * Enumerate registered content handlers that can perform given action
@@ -1366,7 +1510,27 @@ javacall_result javacall_chapi_enum_handlers_by_type(javacall_const_utf16_string
 *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
 *         error code if failure occurs
 */
-javacall_result javacall_chapi_enum_handlers_by_action(javacall_const_utf16_string action, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length);
+javacall_result javacall_chapi_enum_handlers_by_action(javacall_const_utf16_string action, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length)
+{
+	HANDLE hActionsDB = INVALID_HANDLE_VALUE;
+
+	if (!action || !pos_id || !length || (*length && !handler_id_out)) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+
+	if (!(*pos_id))
+	{
+		// open sorted by suffix
+		DWORD dwRes = open_actions_db(NULL,0, FALSE, &hActionsDB);
+		if (dwRes)
+		{
+			log_win32_error(dwRes);
+			return JAVACALL_FAIL;
+		}
+	}
+
+	return enum_handlers_by_indexed_value(hActionsDB, action, PROPID_ACTION_NAME, PROPID_ACTION_HANDLER_OID,
+		pos_id, handler_id_out, length);
+}
+
 
 /**
 * Enumerate registered content handlers located in suite (bundle) with given suite id
