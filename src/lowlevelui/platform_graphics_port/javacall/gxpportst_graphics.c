@@ -89,8 +89,21 @@ GdkGC *get_gc(void *dst){
 }
 
 GdkPixmap *get_pix_map(void *dst){
+    GdkPixmap *gdk_pix_map;
+    GtkWidget *form;
+    GtkWidget *da;
+
     if (!dst) {
-        return back_buffer;
+        /*Assumption:  always called from locked context. Don't
+         *lock here */
+        form = gtk_main_window_get_current_form(main_window);
+        da = gtk_object_get_user_data(form);
+        if (!GTK_IS_DRAWING_AREA(da)) {
+            LIMO_TRACE("%s drawing area expected!\n", __FUNCTION__);
+            return (GdkPixmap*)dst;
+        }
+        gdk_pix_map = gtk_object_get_user_data(da);
+        return gdk_pix_map;
     }
     if (!GDK_IS_PIXMAP(dst)) {
         LIMO_TRACE("%s GdkPixmap expected as dst!\n", __FUNCTION__);

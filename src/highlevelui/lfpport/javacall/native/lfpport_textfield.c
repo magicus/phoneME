@@ -81,9 +81,23 @@ MidpError lfpport_text_field_set_label_cb(MidpItem* itemPtr){
 
 
 MidpError lfpport_text_field_destroy_cb(MidpItem* itemPtr){
+    GtkFrame *frame = (GtkWidget*)itemPtr->widgetPtr;
+    GtkWidget *widget;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+
+    widget = gtk_bin_get_child(frame);
+    if (NULL == widget) {
+        LIMO_TRACE(">>>%s non-null widget expected as frame child\n", __FUNCTION__);
+        return KNI_OK;  /* don't do anything */
+    }
+
+    pthread_mutex_lock(&mutex);
+    gtk_widget_destroy(widget);
+    gtk_widget_destroy(frame);
+
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 
@@ -132,8 +146,8 @@ MidpError lfpport_text_field_relocate_cb(MidpItem* itemPtr, int x, int y){
     return KNI_OK;
 }
 
-MidpError lfpport_text_field_resize_cb(MidpItem* itemPtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+MidpError lfpport_text_field_resize_cb(MidpItem* itemPtr, int width, int height){
+    LIMO_TRACE(">>>%s width=%d height=%d\n", __FUNCTION__, width, height);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }

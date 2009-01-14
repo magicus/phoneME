@@ -43,8 +43,6 @@
 extern "C" {
 #endif
 
-extern GdkPixmap *back_buffer;
-
 static gboolean
 lfpport_imageitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 {
@@ -101,7 +99,9 @@ MidpError lfpport_image_item_show_cb(MidpItem* itemPtr){
 MidpError lfpport_image_item_hide_cb(MidpItem* itemPtr){
     GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_hide_all(widget);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -112,18 +112,22 @@ MidpError lfpport_image_item_set_label_cb(MidpItem* itemPtr){
     return KNI_OK;
 }
 MidpError lfpport_image_item_destroy_cb(MidpItem* itemPtr){
-    GtkWidget *frame;
-    GtkWidget *da;
-
+    GtkFrame *frame = (GtkWidget*)itemPtr->widgetPtr;
+    GtkWidget *widget;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
-    frame = (GtkWidget*)itemPtr->widgetPtr;
-    da = gtk_bin_get_child(frame);
-    LIMO_TRACE("%s frame=%x da=%x\n", __FUNCTION__, frame, da);
 
-    //remove item from all its containers and destroy the widget
-    gtk_widget_destroy(da);
+    pthread_mutex_lock(&mutex);
+    widget = gtk_bin_get_child(frame);
+    if (NULL == widget) {
+        LIMO_TRACE(">>>%s non-null widget expected as frame child\n", __FUNCTION__);
+        pthread_mutex_unlock(&mutex);
+        return KNI_OK;  /* don't do anything */
+    }
+
+    gtk_widget_destroy(widget);
     gtk_widget_destroy(frame);
 
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -172,10 +176,10 @@ MidpError lfpport_image_item_relocate_cb(MidpItem* itemPtr, int x, int y){
     return KNI_OK;
 }
 
-MidpError lfpport_image_item_resize_cb(MidpItem* itemPtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+MidpError lfpport_image_item_resize_cb(MidpItem* itemPtr, int width, int height){
+    LIMO_TRACE(">>>%s width=%d height=%d\n", __FUNCTION__, width, height);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 /**
@@ -221,6 +225,7 @@ MidpError lfpport_imageitem_create(MidpItem* itemPtr,
     }
     gdkPixBuf = (GdkPixbuf*)imgPtr;
     pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
+    pthread_mutex_lock(&mutex);
     frame = gtk_frame_new(NULL);
     if (label_len > 0) {
         gtk_frame_set_label(frame, label_buf);
@@ -230,6 +235,8 @@ MidpError lfpport_imageitem_create(MidpItem* itemPtr,
     width = gdk_pixbuf_get_width(gdkPixBuf);
     height = gdk_pixbuf_get_height(gdkPixBuf);
     /* set drawing area size requrest */
+    LIMO_TRACE("%s setting size request width=%d height=%d\n",
+               __FUNCTION__, width, height);
     gtk_widget_set_size_request(da, width, height);
     gtk_widget_show(da);
 
@@ -246,7 +253,7 @@ MidpError lfpport_imageitem_create(MidpItem* itemPtr,
     gtk_box_pack_start(GTK_BOX(vbox),
                        frame,
                        FALSE, FALSE, 0);
-
+    pthread_mutex_unlock(&mutex);
 
     /* set font */
     itemPtr->widgetPtr = frame;

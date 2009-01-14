@@ -47,7 +47,9 @@ extern MidpError gchar_to_pcsl_string(gchar *src, pcsl_string *dst);
 MidpError lfpport_gauge_show_cb(MidpItem* itemPtr){
     GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_show_all(widget);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -55,7 +57,9 @@ MidpError lfpport_gauge_show_cb(MidpItem* itemPtr){
 MidpError lfpport_gauge_hide_cb(MidpItem* itemPtr){
     GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_hide_all(widget);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -75,7 +79,9 @@ MidpError lfpport_gauge_destroy_cb(MidpItem* itemPtr){
     pBar = (GtkWidget*)itemPtr->widgetPtr;
 
     //remove item from all its containers and destroy the widget
+    pthread_mutex_lock(&mutex);
     gtk_widget_destroy(pBar);
+    pthread_mutex_unlock(&mutex);
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
@@ -127,8 +133,8 @@ MidpError lfpport_gauge_relocate_cb(MidpItem* itemPtr, int x, int y){
     return KNI_OK;
 }
 
-MidpError lfpport_gauge_resize_cb(MidpItem* itemPtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+MidpError lfpport_gauge_resize_cb(MidpItem* itemPtr, int width, int height){
+    LIMO_TRACE(">>>%s width=%d height=%d\n", __FUNCTION__, width, height);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -166,6 +172,7 @@ MidpError lfpport_gauge_create(MidpItem* itemPtr, MidpDisplayable* ownerPtr,
 
     LIMO_TRACE(">>>%s interactive=%d maxValue=%d initialValue=%d\n", __FUNCTION__);
 
+    pthread_mutex_lock(&mutex);
     pBar = gtk_progress_bar_new();
     gtk_progress_bar_set_text(pBar, label_buf);
 
@@ -178,7 +185,7 @@ MidpError lfpport_gauge_create(MidpItem* itemPtr, MidpDisplayable* ownerPtr,
     vbox = gtk_object_get_user_data(form);
     gtk_box_pack_start(GTK_BOX(vbox), pBar, FALSE, FALSE, 0);
 
-
+    pthread_mutex_unlock(&mutex);
     itemPtr->widgetPtr = pBar;
     itemPtr->ownerPtr = ownerPtr;
     itemPtr->layout = layout;
@@ -219,7 +226,9 @@ MidpError lfpport_gauge_set_value(MidpItem* itemPtr, int value, int maxValue){
 
     pBar = itemPtr->widgetPtr;
     fraction = (gdouble)value/(gdouble)maxValue ;
+    pthread_mutex_lock(&mutex);
     gtk_progress_bar_set_fraction(pBar, fraction);
+    pthread_mutex_unlock(&mutex);
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;

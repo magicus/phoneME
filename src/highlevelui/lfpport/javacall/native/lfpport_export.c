@@ -48,7 +48,6 @@ extern gint display_height;
 extern GtkWidget *main_window;
 extern GtkLabel  *ticker;
 extern GMainLoop *main_loop;
-extern GdkPixmap *back_buffer;
 extern int goOn;
 
 #define LFPPORT_SCREEN_HEIGHT       320
@@ -68,39 +67,16 @@ void lfpport_refresh(int x, int y, int w, int h){
 
     LIMO_TRACE(">>>%s x=%d y=%d w=%d h=%d\n", __FUNCTION__, x, y, w, h);
 
-//     clipRectangle.x = 0;
-//     clipRectangle.y = 0;
-//     clipRectangle.width = w;
-//     clipRectangle.height = h;
+    rect.x = x;
+    rect.y = y;
+    rect.width = w;
+    rect.height = h;
 
-//     rect.x = x;
-//     rect.y = y;
-//     rect.width = w;
-//     rect.height = h;
-
-//    gc = main_window->style->black_gc;
-
-
-//    gdk_gc_set_clip_rectangle(gc, &clipRectangle);
-
-//     form = gtk_main_window_get_current_form(main_window);
-//     da = gtk_object_get_user_data(form);
-//    LIMO_TRACE("%s da=%x\n", __FUNCTION__, da);
-
-//    gdk_draw_drawable(main_window->window,
-//    gdk_draw_drawable(da->window,
-//              gc,
-//              back_buffer,
-//              x,   /* x */
-//              y,   /* y */
-//              x,
-//              y,
-//              w,   /* width */
-//              h);  /* height */
-
-//
-//     gdk_window_invalidate_rect(da, &rect, FALSE);
-
+    pthread_mutex_lock(&mutex);
+    form = gtk_main_window_get_current_form(main_window);
+    da = gtk_object_get_user_data(form);
+    gdk_window_invalidate_rect(da->window, &rect, FALSE);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 

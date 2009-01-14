@@ -316,6 +316,7 @@ gxpport_render_immutableregion
     guchar *pixels;
     int rowstride;
     GdkPixbuf *gdkPixBuf;
+    GdkPixmap *gdk_pix_map;
     GtkWidget *form;
     GtkWidget *da;
     GdkGC *gc;
@@ -328,7 +329,6 @@ gxpport_render_immutableregion
     LIMO_TRACE("%s clip[0]=%d clip[1]=%d clip[2]=%d clip[3]=%d\n",
                __FUNCTION__, clip[0], clip[1], clip[2], clip[3]);
 
-    //gc = gdk_gc_new(main_window);
     gc = get_gc(dstMutableImagePtr);
     gdk_gc_copy(gc, main_window->style->base_gc);
 
@@ -365,13 +365,12 @@ gxpport_render_immutableregion
 
         if (!dstMutableImagePtr) {
 
+            pthread_mutex_lock(&mutex);
             form = gtk_main_window_get_current_form(main_window);
             da = gtk_object_get_user_data(form);
 
-            //g_usleep(15 * 1000);
-
-            //gdk_draw_drawable(main_window->window,
-            gdk_draw_drawable(da->window,
+            gdk_pix_map = gtk_object_get_user_data(da);
+            gdk_draw_drawable(gdk_pix_map,
                  gc,
                  srcImmutableImagePtr,
                  x_src,   /* x */
@@ -380,6 +379,7 @@ gxpport_render_immutableregion
                  y_dest,
                  width,   /* width */
                  height);  /* height */
+            pthread_mutex_unlock(&mutex);
         }
         else {
             //TODO
@@ -436,12 +436,13 @@ void gxpport_get_immutable_argb(gxpport_image_native_handle immutableImagePtr,
         LIMO_TRACE("<<<%s gdk_pix_buf expected!\n", __FUNCTION__);
         return;
     }
-
+    pthread_mutex_lock(&mutex);
     nwidth = gdk_pixbuf_get_width(immutableImagePtr);
     nheight = gdk_pixbuf_get_height(immutableImagePtr);
     n_channels = gdk_pixbuf_get_n_channels(immutableImagePtr);
     rowstride = gdk_pixbuf_get_rowstride (immutableImagePtr);
     pixels = gdk_pixbuf_get_pixels(immutableImagePtr);
+    pthread_mutex_unlock(&mutex);
 
     LIMO_TRACE(">>>%s nwidth=%d nheight=%d n_channels=%d rowstride=%d\n",
                __FUNCTION__, nwidth, nheight, n_channels, rowstride);

@@ -46,13 +46,12 @@ extern "C" {
 
 
 extern GtkWidget *main_window;
-extern GdkPixmap *back_buffer;
 
 static gboolean
 lfpport_customitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 {
     GdkPixmap *gdk_pix_map;
-    int width,height;
+    int width, height;
     LIMO_TRACE(">>>%s widget=%x area.x=%d area.y=%d area.width=%d area.height=%d\n",
                __FUNCTION__, widget, event->area.x, event->area.y, event->area.width, event->area.height);
 
@@ -66,20 +65,9 @@ lfpport_customitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *even
         return KNI_ERR;
     }
 
-//     gdk_draw_drawable(widget->window,
-//                      widget->style->fg_gc[GTK_WIDGET_STATE(widget)],
-//                      gdk_pix_map,
-//                      event->area.x,
-//                      event->area.y,
-//                      event->area.x,
-//                      event->area.y,
-//                      event->area.width,
-//                      event->area.height);
-
     gdk_drawable_get_size(gdk_pix_map, &width, &height);
     LIMO_TRACE("%s gdk_pix_map=%x width=%x height=%x\n",
                __FUNCTION__, gdk_pix_map, width, height);
-
 
     gdk_draw_drawable(widget->window,
                      widget->style->fg_gc[GTK_WIDGET_STATE(widget)],
@@ -91,7 +79,6 @@ lfpport_customitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *even
                      width,    /* copy the entire image */
                      height);
 
-
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return TRUE;
 }
@@ -99,10 +86,13 @@ lfpport_customitem_expose_event_callback(GtkWidget *widget, GdkEventExpose *even
 MidpError lfpport_custom_item_show_cb(MidpItem* itemPtr){
     GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_show_all(widget);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
+
 MidpError lfpport_custom_item_hide_cb(MidpItem* itemPtr){
     GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
@@ -119,7 +109,21 @@ MidpError lfpport_custom_item_set_label_cb(MidpItem* itemPtr){
     return KNI_OK;
 }
 MidpError lfpport_custom_item_destroy_cb(MidpItem* itemPtr){
+    GtkFrame *frame = (GtkWidget*)itemPtr->widgetPtr;
+    GtkWidget *widget;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+
+    widget = gtk_bin_get_child(frame);
+    if (NULL == widget) {
+        LIMO_TRACE(">>>%s non-null widget expected as frame child\n", __FUNCTION__);
+        return KNI_OK;  /* don't do anything */
+    }
+
+    pthread_mutex_lock(&mutex);
+    gtk_widget_destroy(widget);
+    gtk_widget_destroy(frame);
+
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -168,10 +172,10 @@ MidpError lfpport_custom_item_relocate_cb(MidpItem* itemPtr, int x, int y){
     return KNI_OK;
 }
 
-MidpError lfpport_custom_item_resize_cb(MidpItem* itemPtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+MidpError lfpport_custom_item_resize_cb(MidpItem* itemPtr, int width, int height){
+    LIMO_TRACE(">>>%s width=%d height=%d\n", __FUNCTION__, width, height);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 
@@ -218,7 +222,6 @@ MidpError lfpport_customitem_create(MidpItem* itemPtr,
 
     /* IMPL_NOTE:  for some reason lfpport_custom_item_show_cb is not called
       Until the reason is investigated, showing frame always*/
-    gtk_widget_show(frame);
     g_signal_connect(G_OBJECT (da), "expose_event",
                    G_CALLBACK (lfpport_customitem_expose_event_callback), NULL);
 
@@ -281,6 +284,7 @@ MidpError lfpport_customitem_refresh(MidpItem* itemPtr,
     rect.height = height;
 
     frame = (GtkWidget *)itemPtr->widgetPtr;
+    pthread_mutex_lock(&mutex);
     da = gtk_bin_get_child(frame);
     if (!GTK_IS_DRAWING_AREA(da)) {
         LIMO_TRACE("%s unexpectedly invoked on not drawing area\n", __FUNCTION__);
@@ -288,6 +292,7 @@ MidpError lfpport_customitem_refresh(MidpItem* itemPtr,
     }
 
     gdk_window_invalidate_rect(da->window, &rect, FALSE);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -308,7 +313,9 @@ MidpError lfpport_customitem_refresh(MidpItem* itemPtr,
     GtkRequisition r;
     GtkWidget *widget = (GtkWidget*)ciPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_size_request(widget, &r);
+    pthread_mutex_unlock(&mutex);
     *widthRet = r.width;
     LIMO_TRACE("<<<%s width=%d\n", __FUNCTION__, r.width);
     return KNI_OK;
@@ -330,7 +337,9 @@ MidpError lfpport_customitem_get_label_height(int width,
     GtkRequisition r;
     GtkWidget *widget = (GtkWidget*)ciPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_size_request(widget, &r);
+    pthread_mutex_unlock(&mutex);
     *heightRet = r.height;
     LIMO_TRACE("<<<%s width=%d\n", __FUNCTION__, r.width);
     return KNI_OK;
@@ -370,27 +379,33 @@ MidpError lfpport_customitem_set_content_buffer(MidpItem* ciPtr,
     LIMO_TRACE(">>>%s imgPtr=%x\n", __FUNCTION__, imgPtr);
 
     if (imgPtr == NULL) {
-        imgPtr = back_buffer;
         LIMO_TRACE("%s null imgPtr\n", __FUNCTION__);
     }
-    if (!GDK_IS_PIXMAP(imgPtr)) {
+    else if (!GDK_IS_PIXMAP(imgPtr)) {
         LIMO_TRACE("%s GdkPixmap expected!\n", __FUNCTION__);
         return KNI_ERR;
     }
-
-    /* TODO:  extract da here */
+    
     frame = (GtkWidget *)ciPtr->widgetPtr;
+    pthread_mutex_lock(&mutex);
     da = gtk_bin_get_child(frame);
     if (!GTK_IS_DRAWING_AREA(da)) {
         LIMO_TRACE("%s unexpectedly invoked on not drawing area\n", __FUNCTION__);
+        pthread_mutex_unlock(&mutex);
         return KNI_ERR;
     }
     gtk_object_set_user_data(da, imgPtr);
     LIMO_TRACE("%s da=%x imgPtr=%x\n", __FUNCTION__, da, imgPtr);
 
-    gdk_drawable_get_size((GdkPixmap*)imgPtr, &width, &height);
-    LIMO_TRACE("%s width=%d height=%d da=%x\n", __FUNCTION__, width, height, da);
-    gtk_widget_set_size_request(da, width, height);
+    if (imgPtr) {
+        gdk_drawable_get_size((GdkPixmap*)imgPtr, &width, &height);
+        LIMO_TRACE("%s width=%d height=%d da=%x\n", __FUNCTION__, width, height, da);
+        gtk_widget_set_size_request(da, width, height);
+    }
+    else {
+        gtk_widget_set_size_request(da, 0, 0);
+    }
+    pthread_mutex_unlock(&mutex);
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;

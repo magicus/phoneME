@@ -50,14 +50,18 @@ extern GtkWidget *main_window;
 MidpError lfpport_string_item_show_cb(MidpItem* itemPtr){
     GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_show_all(widget);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
 MidpError lfpport_string_item_hide_cb(MidpItem* itemPtr){
     GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_hide_all(widget);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -68,17 +72,21 @@ MidpError lfpport_string_item_set_label_cb(MidpItem* itemPtr){
     return -1;
 }
 MidpError lfpport_string_item_destroy_cb(MidpItem* itemPtr){
-    GtkWidget *frame;
-    GtkWidget *string_item;
+    GtkFrame *frame = (GtkWidget*)itemPtr->widgetPtr;
+    GtkWidget *widget;
+    LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
-    frame = (GtkWidget*)itemPtr->widgetPtr;
-    string_item = gtk_bin_get_child(frame);
-    LIMO_TRACE(">>>%s frame=%x string_item=%x\n", __FUNCTION__, frame, string_item);
+    widget = gtk_bin_get_child(frame);
+    if (NULL == widget) {
+        LIMO_TRACE(">>>%s non-null widget expected as frame child\n", __FUNCTION__);
+        return KNI_OK;  /* don't do anything */
+    }
 
-    //remove item from all its containers and destroy the widget
-    gtk_widget_destroy(string_item);
+    pthread_mutex_lock(&mutex);
+    gtk_widget_destroy(widget);
     gtk_widget_destroy(frame);
 
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -127,10 +135,10 @@ MidpError lfpport_string_item_relocate_cb(MidpItem* itemPtr, int x, int y){
     return KNI_OK;
 }
 
-MidpError lfpport_string_item_resize_cb(MidpItem* itemPtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+MidpError lfpport_string_item_resize_cb(MidpItem* itemPtr, int width, int height){
+    LIMO_TRACE(">>>%s width=%d height=%d\n", __FUNCTION__, width, height);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 
@@ -163,6 +171,7 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
     GtkWidget *form;
     GtkWidget *vbox;
     GtkWidget *frame;
+    GtkAlignment *alignment;
     int label_len, text_len;
 
     gchar label_buf[MAX_TEXT_LENGTH];
@@ -179,22 +188,29 @@ MidpError lfpport_stringitem_create(MidpItem* itemPtr,
     LIMO_TRACE("%s label=%s label_len=%d text=%s text_len=%d\n",
                __FUNCTION__, label_buf, label_len, text_buf, text_len);
 
+    pthread_mutex_lock(&mutex);
     frame = gtk_frame_new(NULL);
     if (label_len > 0) {
         gtk_frame_set_label(frame, label_buf);
     }
     string_item_text = gtk_label_new(NULL);
+    //TODO:  uncomment when implementing real size
+    //gtk_label_set_line_wrap(string_item_text, TRUE);
     if (text_len > 0) {
         gtk_label_set_text(string_item_text, text_buf);
     }
+    alignment = gtk_alignment_new(0, 0, 0, 0);
     gtk_widget_show(string_item_text);
-    gtk_container_add(GTK_CONTAINER (frame), string_item_text);
+    gtk_container_add(GTK_BOX (alignment), string_item_text);
+    gtk_container_add(GTK_BOX (frame), alignment);
+    gtk_object_set_user_data(frame, string_item_text);
     form = (GtkWidget*)ownerPtr->frame.widgetPtr;
     vbox = gtk_object_get_user_data(form);
     gtk_box_pack_start(GTK_BOX(vbox),
                        frame,
                        FALSE, FALSE, 0);
 
+    pthread_mutex_unlock(&mutex);
     /* set font */
     itemPtr->widgetPtr = frame;
     itemPtr->ownerPtr = ownerPtr;
@@ -238,6 +254,7 @@ MidpError lfpport_stringitem_set_content(MidpItem* itemPtr,
     GtkWidget *view;
     GtkTextBuffer *buffer;
 
+    pthread_mutex_lock(&mutex);
     view = gtk_text_view_new ();
     buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
 
@@ -247,6 +264,7 @@ MidpError lfpport_stringitem_set_content(MidpItem* itemPtr,
     pcsl_string_convert_to_utf8(text, text_buf,  MAX_TEXT_LENGTH, &text_len);
     gtk_label_set_text(string_item_text, text_buf);
 
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }

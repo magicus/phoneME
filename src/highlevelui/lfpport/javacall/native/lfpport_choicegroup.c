@@ -119,10 +119,10 @@ MidpError lfpport_choicegroup_item_relocate_cb(MidpItem* itemPtr, int x, int y){
     return KNI_OK;
 }
 
-MidpError lfpport_choicegroup_item_resize_cb(MidpItem* itemPtr){
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+MidpError lfpport_choicegroup_item_resize_cb(MidpItem* itemPtr, int width, int height){
+    LIMO_TRACE(">>>%s width=%d height=%d\n", __FUNCTION__, width, height);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
-    return -1;
+    return KNI_OK;
 }
 
 
@@ -170,6 +170,7 @@ MidpError lfpport_choicegroup_create(MidpItem* cgPtr,
 
     // do arguments check here
     pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
+    pthread_mutex_lock(&mutex);
     frame = gtk_frame_new(label_buf);
     box = gtk_vbox_new(FALSE, 0);
 
@@ -205,10 +206,12 @@ MidpError lfpport_choicegroup_create(MidpItem* cgPtr,
     }
     else if (choiceType == MIDP_POPUP_CHOICE_GROUP_TYPE) {
         LIMO_TRACE("%s choiceType MIDP_POPUP_CHOICE_GROUP_TYPE not implemented yet \n", __FUNCTION__);
+        pthread_mutex_unlock(&mutex);
         return -1;
     }
     else {
         LIMO_TRACE("%s unexpected choiceType %d \n", __FUNCTION__, choiceType);
+        pthread_mutex_unlock(&mutex);
         return -1;
     }
 
@@ -216,6 +219,7 @@ MidpError lfpport_choicegroup_create(MidpItem* cgPtr,
     vbox = gtk_object_get_user_data(form);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
+    pthread_mutex_unlock(&mutex);
     /* set font */
     cgPtr->widgetPtr = frame;
     cgPtr->ownerPtr = ownerPtr;

@@ -151,6 +151,11 @@ MidpError cmdmanager_set_commands(MidpFrame* cmPtr,
     int label_len;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    /* IMPL_NOTE:  size of critical section can be reduced
+     * by removing string manipulation methods to improve
+     * performance */
+
+    pthread_mutex_lock(&mutex);
     gtkMainWindow = (GtkMainWindow* )cmPtr->widgetPtr;
     form = gtk_main_window_get_current_form(main_window);
     if (form == NULL) {
@@ -159,6 +164,8 @@ MidpError cmdmanager_set_commands(MidpFrame* cmPtr,
     gtkSoftKeyBar = form->softkeybar;
 
     if (numCmds <= 0) {
+        LIMO_TRACE("%s no commands! returning...\n", __FUNCTION__);
+        pthread_mutex_unlock(&mutex);
         return KNI_OK;
     }
 
@@ -217,6 +224,8 @@ MidpError cmdmanager_set_commands(MidpFrame* cmPtr,
             }
         }
     }
+
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }

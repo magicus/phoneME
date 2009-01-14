@@ -62,36 +62,38 @@ gint display_height;
 
 
 MidpError form_show(MidpFrame* framePtr) {
-    GtkWidget *form;
+    GtkWidget *form, *tmp;
+    gint retVal;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     form = (GtkWidget *)framePtr->widgetPtr;
     pthread_mutex_lock(&mutex);
     gtk_widget_show_all(form);
-    gtk_main_window_set_current_form(main_window, GTK_FORM(form));
+    tmp = gtk_main_window_get_current_form(main_window);
+    retVal = gtk_main_window_set_current_form(main_window, GTK_FORM(form));
     pthread_mutex_unlock(&mutex);
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("%<<<s old %x, new: %x, retval:%d\n", __FUNCTION__, tmp, form, retVal);
     return KNI_OK;
 }
 
 
 MidpError form_hide_and_delete(MidpFrame* framePtr, jboolean onExit) {
     GtkForm *currentForm, *form;
+    gint ret;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     form = framePtr->widgetPtr;
     pthread_mutex_lock(&mutex);
-    currentForm = gtk_main_window_get_current_form(main_window);
+    form = framePtr->widgetPtr;
+
     gtk_widget_hide_all(form);
-    if (form == currentForm) {
-        LIMO_TRACE("%s removing current form\n", __FUNCTION__);
-        gtk_main_window_remove_current_form(main_window);
-    }
-    else {
-        LIMO_TRACE("%s removing form\n", __FUNCTION__);
-        gtk_main_window_remove_form(main_window, form);
-    }
+    ret = gtk_main_window_remove_form(main_window, form);
+    LIMO_TRACE("%s removed form=%x ret=%d\n",
+               __FUNCTION__, form, ret);
+
+    gtk_widget_destroy(form);
     pthread_mutex_unlock(&mutex);
+
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -104,7 +106,9 @@ MidpError displayable_set_title(MidpDisplayable* screenPtr,
     GtkWidget *form;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
     pcsl_string_convert_to_utf8(title, buf, MAX_TITLE_LENGTH, &len);
+    buf[len] = 0;
     form = screenPtr->frame.widgetPtr;
+    LIMO_TRACE("%s form=%x, title=%s\n", __FUNCTION__, form, buf);
     pthread_mutex_lock(&mutex);
     gtk_form_set_title(GTK_FORM(form), buf);
     pthread_mutex_unlock(&mutex);
@@ -204,9 +208,11 @@ MidpError lfpport_form_create(MidpDisplayable* dispPtr,
 MidpError lfpport_form_set_content_size(MidpDisplayable* formPtr,
 					int w, int h){
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_set_size_request(formPtr->frame.widgetPtr,
                                 w,
                                 h);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -228,12 +234,11 @@ MidpError lfpport_form_set_current_item(MidpDisplayable* formPtr,
     (void)itemPtr;
     (void)yOffset;
 
-//     form = formPtr->frame.widgetPtr;
-//     LIMO_TRACE("%s formPtr=%x \n", __FUNCTION__, formPtr);
-     LIMO_TRACE("%s form=%x box=%x\n", __FUNCTION__, form, box);
-//     gtk_box_pack_start(GTK_BOX (box), (GtkWidget*)itemPtr->widgetPtr, FALSE, FALSE, 0);
+    LIMO_TRACE("%s form=%x box=%x\n", __FUNCTION__, form, box);
 
+    pthread_mutex_lock(&mutex);
     gtk_widget_grab_focus((GtkWidget*)itemPtr->widgetPtr);
+    pthread_mutex_unlock(&mutex);
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;

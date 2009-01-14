@@ -56,11 +56,13 @@ void gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
     LIMO_TRACE(">>>%s width=%d height=%d\n", __FUNCTION__, width, height);
 
     /* Suppress unused parameter warnings */
+    pthread_mutex_lock(&mutex);
     gdk_pix_map = gdk_pixmap_new(NULL, width, height, 24);
     *newImagePtr = gdk_pix_map;
     back_buffer = gdk_pix_map;
 
     gdk_drawable_get_size(gdk_pix_map, &nwidth, &nheight);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("%s gdk_pix_map size: width=%d height=%d\n", __FUNCTION__, nwidth, nheight);
 
     /* Not yet implemented */
@@ -89,11 +91,12 @@ void gxpport_render_mutableimage(gxpport_mutableimage_native_handle srcImagePtr,
     GdkPixbuf *gdkPixBuf;
     GtkWidget *form;
     GtkWidget *da;
-
+    GdkPixmap *gdk_pix_map;
 
     LIMO_TRACE(">>>%s srcImagePtr=%x dstImagePtr=%x clip[0]=%d clip[1]=%d clip[2]=%d clip[3]=%d\n",
                __FUNCTION__, srcImagePtr, dstImagePtr, clip[0], clip[1], clip[2], clip[3]);
 
+    pthread_mutex_lock(&mutex);
     //if src is GdkPixbuf
     if (GDK_IS_PIXBUF(srcImagePtr)) {
         LIMO_TRACE("%s rendering pixbuf\n", __FUNCTION__);
@@ -111,7 +114,6 @@ void gxpport_render_mutableimage(gxpport_mutableimage_native_handle srcImagePtr,
 
     }
     else if (GDK_IS_PIXMAP(srcImagePtr)) {
-        LIMO_TRACE("%s rendering pixmap\n", __FUNCTION__);
         /* TODO:  replace main_window with something real */
 
         if (!dstImagePtr) {
@@ -119,15 +121,22 @@ void gxpport_render_mutableimage(gxpport_mutableimage_native_handle srcImagePtr,
             form = gtk_main_window_get_current_form(main_window);
             da = gtk_object_get_user_data(form);
 
-            gdk_draw_drawable(da->window,
-                 main_window->style->black_gc,
-                 srcImagePtr,
-                 clip[0],   /* x */
-                 clip[1],   /* y */
-                 x_dest,
-                 y_dest,
-                 clip[2],   /* width */
-                 clip[3]);  /* height */
+            if (GTK_IS_DRAWING_AREA(da)) {
+                LIMO_TRACE("%s rendering pixmap on drawing area\n", __FUNCTION__);
+                gdk_pix_map = gtk_object_get_user_data(da);
+                gdk_draw_drawable(gdk_pix_map,
+                     main_window->style->black_gc,
+                     srcImagePtr,
+                     clip[0],   /* x */
+                     clip[1],   /* y */
+                     x_dest,
+                     y_dest,
+                     clip[2],   /* width */
+                     clip[3]);  /* height */
+            }
+            else{
+                LIMO_TRACE("%s not drawing area - not drawing pixmap\n", __FUNCTION__);
+            }
         }
         else {
             //TODO
@@ -137,6 +146,7 @@ void gxpport_render_mutableimage(gxpport_mutableimage_native_handle srcImagePtr,
         LIMO_TRACE("%s unknown source\n", __FUNCTION__);
     }
 
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 }
 
