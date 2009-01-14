@@ -215,7 +215,7 @@ public final class SecurityInitializer {
 
         // #ifdef ENABLE_JSR_135
         "com.sun.mmedia.rtsp.RtspConnection$SecurityTrusted",
-        // #endif ENABLE_JSR_234
+        // #endif ENABLE_JSR_135
 
         // #ifdef ENABLE_JSR_234
         "com.sun.amms.AMMSMPEventListener$SecurityTrusted",
