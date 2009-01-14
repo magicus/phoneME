@@ -96,7 +96,6 @@ public final class PermissionsStrings {</xsl:text>
 <xsl:text>
     /* Permission Strings. */
     static final String [] PERMISSION_STRINGS =  {
-        "javax.microedition.io.Connector.rtsp",
         "javax.microedition.io.Connector.http",
         "javax.microedition.io.Connector.socket",
         "javax.microedition.io.Connector.https",
