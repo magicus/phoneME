@@ -52,14 +52,12 @@ public class RtspConnection extends RtspConnectionBase {
     private static SecurityToken classSecurityToken =
         SecurityInitializer.requestToken(new SecurityTrusted());
 
-    private static final String RTSP_PERMISSION_NAME =
-        "javax.microedition.io.Connector.rtsp";
-
     protected void openStreams(RtspUrl url) throws IOException {
 
         try {
+            // IMPL_NOTE: should become PERMISSION_RTSP_READ as soon as new spec allows it
             PermissionAccessor.checkPermissions(url.toString(), 
-                PermissionAccessor.PERMISSION_RTSP_READ);
+                PermissionAccessor.PERMISSION_HTTP_READ);
         } catch (InterruptedException ie) {
             throw new IOException("Interrupted while waiting for user permission");
         }

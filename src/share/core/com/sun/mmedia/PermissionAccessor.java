@@ -88,7 +88,7 @@ public final class PermissionAccessor {
         /* "file://"         */ PERMISSION_FILE_READ,
         /* "http://"         */ PERMISSION_HTTP_READ,
         /* "https://"        */ PERMISSION_HTTPS_READ,
-        /* "rtsp://"         */ PERMISSION_RTSP_READ
+        /* "rtsp://"         */ PERMISSION_HTTP_READ // IMPL_NOTE: should become PERMISSION_RTSP_READ as soon as new spec allows it
     };
     
     /**
