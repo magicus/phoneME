@@ -65,9 +65,6 @@ public class EventQueue implements Runnable {
      */
     static {
         eventQueue = new EventQueue();
-// #ifndef ENABLE_GCI
-        eventQueue.queueId = eventQueue.getEventQueueId();
-// #endif ENABLE_GCI
         eventQueue.start();
     }
 
@@ -171,6 +168,8 @@ public class EventQueue implements Runnable {
         eventQueueLock = new Object();
 
 // #ifndef ENABLE_GCI
+        queueId = getEventQueueId();
+
         pool = new NativeEventPool();
 
         eventMonitorThread =
@@ -212,7 +211,11 @@ public class EventQueue implements Runnable {
      * Clears native event queue for a given isolate - 
      * there could be some events from isolate's previous usage.
      */
-    private native void resetNativeEventQueue();
+    private void resetNativeEventQueue() {
+        resetNativeEventQueue0(queueId);
+    }
+
+    private static native void resetNativeEventQueue0(int queueId);
     
     /**
      * Get the handle of the native peer event queue.
@@ -255,7 +258,11 @@ public class EventQueue implements Runnable {
     /**
      * Queue a shutdown event to the native event queue.
      */
-    private native void sendShutdownEvent();
+    private void sendShutdownEvent() {
+        sendShutdownEvent0(queueId);
+    }
+
+    private static native void sendShutdownEvent0(int queueId);
 
     private native void finalize();
 // #endif

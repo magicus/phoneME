@@ -24,6 +24,7 @@
  * information or have any questions.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -80,7 +81,9 @@ typedef struct Java_com_sun_midp_events_EventQueue _eventQueue;
 static int gsTotalQueues = 1;
 static int gsMaxIsolates = 1;
 
-#define QUEUE_ID_FROM_ISOLATE_ID(isolateId) (isolateId)
+#define ISOLATE_ID_TO_QUEUE_ID(isolateId) (isolateId)
+#define QUEUE_ID_TO_ISOLATE_ID(queueId) (queueId)
+#define IS_ISOLATE_QUEUE(queueId) ((queueId) >= 0 && (queueId) < gsTotalQueues)
 
 /* 
  * NOTE: MAX_EVENTS is defined in the constants.xml 
@@ -96,7 +99,8 @@ typedef struct _EventQueue {
     int eventIn;
     /** The queue position of the next event to be stored */
     int eventOut;
-    JVMSPI_ThreadID blockedMonitorThreadId;
+    /** Thread state for each Java native event monitor. */
+    jboolean isMonitorBlocked;
 } EventQueue;
 
 /** Queues of pending events, one per Isolate or 1 for SVM mode */
@@ -249,16 +253,16 @@ getPendingMIDPEvent(MidpEvent* pResult, int queueId) {
  *
  * @param handle handle of the event queue.
  */
-static void resetEventQueue(int handle) {
+static void resetEventQueue(int queueId) {
     MidpEvent event;
 
     if (NULL == pEventQueues) {
         return;
     }
 
-    pEventQueues[handle].blockedMonitorThreadId = NULL;
+    pEventQueues[queueId].isMonitorBlocked = KNI_FALSE;
 
-    while (getPendingMIDPEvent(&event, handle) != -1) {
+    while (getPendingMIDPEvent(&event, queueId) != -1) {
         freeMIDPEventFields(event);
     }
 }
@@ -333,9 +337,9 @@ midp_resetEvents(void) {
 
 #if ENABLE_MULTIPLE_ISOLATES
     {
-        int i;
-        for (i = 1; i < gsTotalQueues; i++) {
-            resetEventQueue(i);
+        int queueId;
+        for (queueId = 1; queueId < gsTotalQueues; queueId++) {
+            resetEventQueue(queueId);
         }
     }
 #else
@@ -350,6 +354,8 @@ midp_resetEvents(void) {
  */
 static void StoreMIDPEventInVmThreadImp(MidpEvent event, int queueId) {
     EventQueue* pEventQueue;
+    JVMSPI_ThreadID thread;
+    jint isolateId;
 
     pEventQueue = getEventQueueById(queueId);
 
@@ -368,10 +374,22 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, int queueId) {
       
         pEventQueue->numEvents++;
 
-        /* Unblock monitor thread if its blocked */
-        if (pEventQueue->blockedMonitorThreadId != NULL) {
-            midp_thread_unblock(pEventQueue->blockedMonitorThreadId);
-            pEventQueue->blockedMonitorThreadId = NULL;
+        if (pEventQueue->isMonitorBlocked) {
+            /*
+             * The event monitor thread has been saved as the "special" thread
+             * of this particular isolate in order to avoid having to search
+             * the entire list of threads.
+             */
+            isolateId = QUEUE_ID_TO_ISOLATE_ID(queueId);
+            thread = SNI_GetSpecialThread(isolateId);
+            if (thread != NULL) {
+                midp_thread_unblock(thread);
+                pEventQueue->isMonitorBlocked = KNI_FALSE;
+            } else {
+                REPORT_CRIT(LC_CORE,
+                    "StoreMIDPEventInVmThread: cannot find "
+                    "native event monitor thread");
+            }
         }
     } else {
         /*
@@ -402,12 +420,12 @@ void
 StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
     int queueId = -1;
     if( -1 != isolateId ) {
-        queueId = QUEUE_ID_FROM_ISOLATE_ID(isolateId);
+        queueId = ISOLATE_ID_TO_QUEUE_ID(isolateId);
         StoreMIDPEventInVmThreadImp(event, queueId);
     } else {
 #if ENABLE_MULTIPLE_ISOLATES
     for (isolateId = 1; isolateId <= gsMaxIsolates; isolateId++)
-        queueId = QUEUE_ID_FROM_ISOLATE_ID(isolateId);        
+        queueId = ISOLATE_ID_TO_QUEUE_ID(isolateId);        
         StoreMIDPEventInVmThreadImp(event, queueId);
 #else
         StoreMIDPEventInVmThreadImp(event, 0);
@@ -527,6 +545,7 @@ static int readNativeEventCommon(int queueId) {
 KNIEXPORT KNI_RETURNTYPE_INT
 Java_com_sun_midp_events_NativeEventMonitor_waitForNativeEvent(void) {
     jint queueId;
+    jint isolateId;
     int eventsPending;
     EventQueue* pEventQueue;
 
@@ -539,7 +558,7 @@ Java_com_sun_midp_events_NativeEventMonitor_waitForNativeEvent(void) {
 
     pEventQueue = getEventQueueById(queueId);
 
-    if (pEventQueue->blockedMonitorThreadId != NULL) {
+    if (pEventQueue->isMonitorBlocked) {
         /*
          * ASSERT: we are about to block, so the state must not indicate
          * that a monitor thread is already blocked.
@@ -549,8 +568,15 @@ Java_com_sun_midp_events_NativeEventMonitor_waitForNativeEvent(void) {
             "called when Java thread already blocked");
     }
 
-    /* Block the event processing thread */
-    pEventQueue->blockedMonitorThreadId = SNI_BlockThread();
+    /*
+     * Block the event processing thread.  To speed up unblocking the
+     * event monitor thread, this thread is saved as the "special" thread
+     * of an Isolate to avoid having to search the entire list of threads.
+     */
+    isolateId = QUEUE_ID_TO_ISOLATE_ID(queueId);
+    SNI_SetSpecialThread(isolateId);
+    SNI_BlockThread();
+    pEventQueue->isMonitorBlocked = KNI_TRUE;
 
     KNI_ReturnInt(0);
 }
@@ -637,17 +663,17 @@ Java_com_sun_midp_events_EventQueue_sendNativeEventToIsolate(void) {
  *
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_events_EventQueue_sendShutdownEvent(void) {
+Java_com_sun_midp_events_EventQueue_sendShutdownEvent0(void) {
     MidpEvent event;
-    jint isolateId;
+    jint queueId;
 
     /* Initialize the event with just the SHUTDOWN type */
     MIDP_EVENT_INITIALIZE(event);
     event.type = EVENT_QUEUE_SHUTDOWN;
 
     /* Send the shutdown event. */
-    isolateId = getCurrentIsolateId();
-    StoreMIDPEventInVmThread(event, isolateId);
+    queueId = KNI_GetParameterAsInt(1);
+    StoreMIDPEventInVmThreadImp(event, queueId);
 
     KNI_ReturnVoid();
 }
@@ -658,8 +684,11 @@ Java_com_sun_midp_events_EventQueue_sendShutdownEvent(void) {
  *
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_events_EventQueue_resetNativeEventQueue(void) {
-    resetEventQueue(getCurrentIsolateId());
+Java_com_sun_midp_events_EventQueue_resetNativeEventQueue0(void) {
+    jint queueId;
+
+    queueId = KNI_GetParameterAsInt(1);
+    resetEventQueue(queueId);
 }
 
 /**
