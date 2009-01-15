@@ -83,6 +83,11 @@ public abstract class TimerTask implements Runnable {
     long period = 0;
 
     /**
+     * Indicates if the user clock should be used to schedule this task.
+     */
+    boolean isUserClock;
+
+    /**
      * Creates a new timer task.
      */
     protected TimerTask() {

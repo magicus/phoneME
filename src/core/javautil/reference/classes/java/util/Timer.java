@@ -27,6 +27,14 @@
 package java.util;
 import java.util.Date;
 
+//
+// NOTE: this implementation is used only for CLDC ports, since CDC provides 
+// own implementation of java.util.Timer. It would be nice to refactor this
+// library to separate shared and CLDC-specific parts.
+//
+
+import com.sun.cldchi.jvm.JVM;
+
 /**
  * A facility for threads to schedule tasks for future execution in a
  * background thread.  Tasks may be scheduled for one-time execution, or for
@@ -85,6 +93,18 @@ public class Timer {
     private TimerThread thread;
 
     /**
+     * Time of this class initialization in the monotonic clock.
+     */
+    private static final long monotonicClockOffset = 
+        JVM.monotonicTimeMillis();
+
+    /**
+     * Time of this class initialization in the user clock.
+     * Can change if the user clock changes.
+     */
+    private static long userClockOffset = System.currentTimeMillis();
+
+    /**
      * Creates a new timer.  The associated thread does <i>not</i> run as
      * a daemon thread, which may prevent an application from terminating.
      *
@@ -92,6 +112,7 @@ public class Timer {
      * @see #cancel()
      */
     public Timer() {
+        JVM.registerUserClockChangeListener(queue);
     }
 
     /**
@@ -107,7 +128,10 @@ public class Timer {
     public void schedule(TimerTask task, long delay) {
         if (delay < 0)
             throw new IllegalArgumentException("Negative delay.");
-        sched(task, System.currentTimeMillis()+delay, 0);
+        if (System.currentTimeMillis() + delay < 0) {
+            throw new IllegalArgumentException("Illegal execution time.");
+        }
+        sched(task, null, delay, 0);
     }
 
     /**
@@ -121,7 +145,10 @@ public class Timer {
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
     public void schedule(TimerTask task, Date time) {
-        sched(task, time.getTime(), 0);
+        if (time == null) {
+            throw new NullPointerException();
+        }
+        sched(task, time, 0, 0);
     }
 
     /**
@@ -159,7 +186,10 @@ public class Timer {
             throw new IllegalArgumentException("Negative delay.");
         if (period <= 0)
             throw new IllegalArgumentException("Non-positive period.");
-        sched(task, System.currentTimeMillis()+delay, -period);
+        if (System.currentTimeMillis() + delay < 0) {
+            throw new IllegalArgumentException("Illegal execution time.");
+        }
+        sched(task, null, delay, -period);
     }
 
     /**
@@ -194,7 +224,10 @@ public class Timer {
     public void schedule(TimerTask task, Date firstTime, long period) {
         if (period <= 0)
             throw new IllegalArgumentException("Non-positive period.");
-        sched(task, firstTime.getTime(), -period);
+        if (firstTime == null) {
+            throw new NullPointerException();
+        }
+        sched(task, firstTime, 0, -period);
     }
 
     /**
@@ -233,7 +266,10 @@ public class Timer {
             throw new IllegalArgumentException("Negative delay.");
         if (period <= 0)
             throw new IllegalArgumentException("Non-positive period.");
-        sched(task, System.currentTimeMillis()+delay, period);
+        if (System.currentTimeMillis() + delay < 0) {
+            throw new IllegalArgumentException("Illegal execution time.");
+        }
+        sched(task, null, delay, period);
     }
 
     /**
@@ -270,7 +306,10 @@ public class Timer {
                                     long period) {
         if (period <= 0)
             throw new IllegalArgumentException("Non-positive period.");
-        sched(task, firstTime.getTime(), period);
+        if (firstTime == null) {
+            throw new NullPointerException();
+        }
+        sched(task, firstTime, 0, period);
     }
 
     /**
@@ -282,15 +321,29 @@ public class Timer {
      * and initial execution time, but not period.
      *
      * @param task   task to be scheduled.
-     * @param time time at which task is to be executed.
+     * @param userTime the user time at which task is to be executed or 
+     *        <tt>null</tt> if the delay is specified
+     * @param delay the delay in milliseconds before the task execution
      * @param period time in milliseconds between successive task executions.
+     * @param isUserClock true if the time is bound to user clock
      * @throws IllegalArgumentException if <tt>time()</tt> is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
-    private void sched(TimerTask task, long time, long period) {
-        if (time < 0)
-            throw new IllegalArgumentException("Illegal execution time.");
+    private void sched(TimerTask task, Date userTime, long delay, long period) {
+        final boolean isUserClock = userTime != null;
+
+        long time;
+
+        if (isUserClock) {
+            long t = userTime.getTime();
+            if (t < 0) {
+                throw new IllegalArgumentException("Illegal execution time.");
+            }
+            time = Timer.userTimeFromStart(t);
+        } else {
+            time = Timer.monotonicTimeFromStart(JVM.monotonicTimeMillis() + delay);
+        }
         
         synchronized (queue) {
             if (!queue.newTasksMayBeScheduled) {
@@ -314,6 +367,7 @@ public class Timer {
                 task.nextExecutionTime = time;
                 task.period = period;
                 task.state = TimerTask.SCHEDULED;
+                task.isUserClock = isUserClock;
             }
 
             queue.add(task);
@@ -342,6 +396,34 @@ public class Timer {
             queue.clear();
             queue.notify();  // In case queue was already empty.
         }
+    }
+
+    private static long monotonicTimeFromStart(long monotonicTime) {
+        return monotonicTime - monotonicClockOffset;
+    }
+
+    private static long userTimeFromStart(long userTime) {
+        return userTime - userClockOffset;
+    }
+
+    static long monotonicTimeMillis() {
+        return monotonicTimeFromStart(JVM.monotonicTimeMillis());
+    }
+
+    private static final int SKEW_THRESHOLD = 100;
+
+    static long handleUserClockChange() {
+        long newDelta = 
+            System.currentTimeMillis() - JVM.monotonicTimeMillis();
+        long oldDelta = 
+            userClockOffset - monotonicClockOffset;
+        long skew = newDelta - oldDelta;
+	if (Math.abs(skew) < SKEW_THRESHOLD) {
+	    skew = 0;
+	}
+
+        userClockOffset += skew;
+        return skew;
     }
 }
 
@@ -417,6 +499,9 @@ class TimerThread extends Thread {
                     if (queue.isEmpty())
                         break; // Queue is empty and will forever remain; die
 
+                    // Handle a possible change of the user clock
+                    queue.handleUserClockChange();
+
                     // Queue nonempty; look at first evt and do the right thing
                     long currentTime, executionTime;
                     task = queue.getMin();
@@ -425,9 +510,14 @@ class TimerThread extends Thread {
                             queue.removeMin();
                             continue;  // No action required, poll queue again
                         }
-                        currentTime = System.currentTimeMillis();
+                        currentTime = Timer.monotonicTimeMillis();
                         executionTime = task.nextExecutionTime;
+
                         if (taskFired = (executionTime <= currentTime)) {
+                            // Only the first execution is scheduled against 
+                            // the user clock. Subsequent executions are 
+                            // scheduled based on delays.
+                            task.isUserClock = false;
                             if (task.period == 0) { // Non-repeating, remove
                                 queue.removeMin();
                                 task.state = TimerTask.EXECUTED;
@@ -592,6 +682,32 @@ class TaskQueue {
                 break;
             TimerTask tmp = queue[j];  queue[j] = queue[k]; queue[k] = tmp;
             k = j;
+        }
+    }
+
+
+    void handleUserClockChange() {
+        long userClockSkew = Timer.handleUserClockChange();
+        if (userClockSkew == 0) {
+            return;
+        }
+
+        if (userClockSkew > 0) {
+            for (int i = 0; i < size; i++) {
+                TimerTask task = queue[i];
+                if (task != null && task.isUserClock) {
+                    task.nextExecutionTime += userClockSkew;
+                    fixUp(i);
+                }
+            }
+        } else {
+            for (int i = size - 1; i >= 0; i--) {
+                TimerTask task = queue[i];
+                if (task != null && task.isUserClock) {
+                    task.nextExecutionTime += userClockSkew;
+                    fixDown(i);
+                }
+            }
         }
     }
 }
