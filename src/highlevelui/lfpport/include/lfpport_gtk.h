@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -66,9 +66,6 @@ static char *tmpFilename = "/usr/tmp/java.tmp";
                    } while (0)
 
 
-extern void ps();
-
-#define PIXBUF_QUARK 1  /* must be non-zero!*/
 #define ITEM_BOUND_PAD 0
 
 #endif //_LFPPORT_GTK_H_
