@@ -220,6 +220,29 @@ char* javacall_time_get_local_timezone(void){
 
 }
 
+static void (*_user_clock_change_callback)(void);
+
+/**
+ * Registers the given callback routine to be invoked when the user 
+ * clock changes. Any previously registered routines are discarded.
+ *
+ * @param callback the callback routine to be invoked when the user
+ *                 clock changes
+ */
+void javacall_time_set_user_clock_change_callback(void (*callback)(void)) {
+  _user_clock_change_callback = callback;
+}
+
+/*
+ * Invokes the registered callback on user clock change.
+ */
+void user_clock_changed() {
+  void (*callback)(void);
+  callback = _user_clock_change_callback;
+  if (callback != NULL) {
+    callback();
+  }
+}
 
 /**
  * returns number of milliseconds elapsed since midnight(00:00:00), January 1, 1970,
@@ -266,4 +289,37 @@ javacall_time_seconds /*OPTIONAL*/ javacall_time_get_seconds_since_1970(void){
 javacall_time_milliseconds /*OPTIONAL*/ javacall_time_get_clock_milliseconds(void){
 
     return clock()*1000/CLOCKS_PER_SEC;
+}
+
+/**
+ * Returns the value of the monotonic clock counter.
+ * This counter must be monotonic and must have resolution and read 
+ * time not lower than that of javacall_time_get_clock_milliseconds().
+ *
+ * @return the value of the monotonic clock counter
+ */
+javacall_int64 /*OPTIONAL*/ javacall_time_get_monotonic_clock_counter(void) {
+  LARGE_INTEGER count;
+  // NOTE: we assume performance counter is available and do not check
+  // the return value
+  QueryPerformanceCounter(&count);
+  return (javacall_int64)count.QuadPart;
+}
+
+/**
+ * Returns the frequency of the monotonic clock counter.
+ *
+ * @return the frequency of the monotonic clock counter
+ */
+javacall_int64 /*OPTIONAL*/ javacall_time_get_monotonic_clock_frequency(void) {
+  static javacall_int64 frequency = -1;
+  javacall_int64 f = frequency;
+  if (f < 0) {
+    LARGE_INTEGER freq;
+    // NOTE: we assume performance counter is available and do not check
+    // the return value
+    QueryPerformanceFrequency(&freq);
+    frequency = f = freq.QuadPart;
+  }
+  return f;
 }

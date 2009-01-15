@@ -148,6 +148,15 @@ char* javacall_time_get_local_timezone(void);
  */
 javacall_int64 javacall_time_get_milliseconds_since_1970(void);
 
+/**
+ * Registers the given callback routine to be invoked when the user 
+ * clock changes. Any previously registered routines are discarded.
+ *
+ * @param callback the callback routine to be invoked when the user
+ *                 clock changes
+ */
+void javacall_time_set_user_clock_change_callback(void (*callback)(void));
+
 /** @} */
 
 
@@ -184,7 +193,21 @@ typedef unsigned long javacall_time_milliseconds;
  */
 javacall_time_milliseconds /*OPTIONAL*/ javacall_time_get_clock_milliseconds(void);
 
+/**
+ * Returns the value of the monotonic clock counter.
+ * This counter must be monotonic and must have resolution and read 
+ * time not lower than that of javacall_time_get_clock_milliseconds().
+ *
+ * @return the value of the monotonic clock counter
+ */
+javacall_int64 /*OPTIONAL*/ javacall_time_get_monotonic_clock_counter(void);
 
+/**
+ * Returns the frequency of the monotonic clock counter.
+ *
+ * @return the frequency of the monotonic clock counter
+ */
+javacall_int64 /*OPTIONAL*/ javacall_time_get_monotonic_clock_frequency(void);
 
 /** @} */
 
