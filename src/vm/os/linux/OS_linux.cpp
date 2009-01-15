@@ -148,6 +148,8 @@ jlong Os::java_time_millis() {
     return (jlong)tv.tv_sec * 1000 + tv.tv_usec/1000;
 }
 
+void Os::set_user_clock_change_callback(void (*callback)(void)) {}
+
 /*
  * Sleep for ms Milliseconds, a sleep of 0ms is from the
  * scheduler requiring a yield, therefore we should call

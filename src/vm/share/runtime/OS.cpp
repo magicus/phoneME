@@ -146,3 +146,27 @@ Stream *Os::get_tty() {
 }
 
 #endif // USE_DEFAULT_TTY_STREAM
+
+#if !SUPPORTS_MONOTONIC_CLOCK
+
+// If the platform does not provide a monotonic clock 
+// with fast read time and sufficient resolution, 
+// we use own implementation based on the user clock.
+jlong Os::monotonic_time_millis() {
+  static jlong previous_time;
+  static jlong adjustment;
+
+  jlong time = Os::java_time_millis() + adjustment;
+  
+  jlong delta = previous_time - time;
+  if (delta > 0) {
+    adjustment += delta;
+    time = previous_time;
+  } else {
+    previous_time = time;
+  }
+
+  return time;
+}
+
+#endif

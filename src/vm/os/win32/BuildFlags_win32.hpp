@@ -47,3 +47,6 @@
 // policy implemented in src/vm/share/runtime/OsMemory.cpp
 #define SUPPORTS_ADJUSTABLE_MEMORY_CHUNK 1
 #define SUPPORTS_CUSTOM_HEAP_ADJUSTMENT  0
+
+// The Win32 port supports monotonic clock
+#define SUPPORTS_MONOTONIC_CLOCK 1

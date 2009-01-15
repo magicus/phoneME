@@ -1039,6 +1039,7 @@ void Task::iterate_oopmaps(oopmaps_doer do_map, void *param) {
 #if ENABLE_LIB_IMAGES && USE_BINARY_IMAGE_LOADER
   OOPMAP_ENTRY_4(do_map, param, T_INT   , classes_in_images);
 #endif
+  OOPMAP_ENTRY_4(do_map, param, T_INT,    user_clock_changed);
 
 #if ENABLE_ISOLATES
   OOPMAP_ENTRY_4(do_map, param, T_INT,    status);

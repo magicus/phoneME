@@ -39,7 +39,7 @@ void ROMOptimizer::optimize(Stream *log_stream JVM_TRAPS) {
 
   do {
     int last_state = state();
-    jlong started_ms = Os::java_time_millis();
+    jlong started_ms = Os::monotonic_time_millis();
 
     switch (state()) {
     case STATE_MAKE_RESTRICTED_PACKAGES_FINAL:
@@ -264,7 +264,7 @@ void ROMOptimizer::optimize(Stream *log_stream JVM_TRAPS) {
       SHOULD_NOT_REACH_HERE();
     }
 
-    jlong end_ms = Os::java_time_millis();
+    jlong end_ms = Os::monotonic_time_millis();
     _time_counters[last_state] += (int)(end_ms - started_ms);
   } while (!is_done() && !ROMWriter::work_timer_has_expired());
 
@@ -3187,6 +3187,9 @@ bool ROMOptimizer::is_special_method(Method* method) {
     return true;
   }
 #endif
+  if (name.equals(Symbols::handleUserClockChange_name())) {
+    return true;
+  }
 
   if (method->equals(Universe::throw_null_pointer_exception_method())) {
     return true;

@@ -572,6 +572,8 @@ void Thread::timer_tick() {
   Scheduler::yield();
   Thread::clear_timer_tick();
 
+  JVM::on_timer_tick(JVM_SINGLE_ARG_CHECK);
+
 #if ENABLE_CPU_VARIANT
   if (EnableCPUVariant) {
     enable_cpu_variant();

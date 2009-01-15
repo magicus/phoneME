@@ -609,7 +609,7 @@ void BinaryROMWriter::init_streams() {
   int rom_flags = _image_target_location;
   WRITE_HEADER_FIELD_INT(rom_flags); // must not be WRITE_HEADER_FIELD_REF!
   
-  int rom_bundle_id = Os::java_time_millis();
+  int rom_bundle_id = Os::monotonic_time_millis();
   WRITE_HEADER_FIELD_INT(rom_bundle_id); // ROM_BUNDLE_ID
 #if ENABLE_LIB_IMAGES
   WRITE_HEADER_FIELD_INT(flags() & JVM_GENERATE_SHARED_IMAGE);

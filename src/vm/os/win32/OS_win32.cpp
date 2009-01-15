@@ -48,7 +48,61 @@ static jlong            _offset     = 0;
 static bool             _compiler_timer_has_ticked = false;
 static jlong            _compiler_timer_start;
 
-jlong offset() {
+static bool  _has_performance_frequency = false;
+static jlong _performance_frequency     = 0;
+
+static void (*_user_clock_changed_callback)(void);
+
+static inline jlong as_jlong(LARGE_INTEGER x) {
+  return jlong_from_msw_lsw(x.HighPart, x.LowPart);
+}
+
+static inline jlong elapsed_counter() {
+  LARGE_INTEGER count;
+  count.HighPart = count.LowPart = 0;
+  QueryPerformanceCounter(&count);
+  return as_jlong(count);
+}
+
+static inline jlong elapsed_frequency() {
+  if (!_has_performance_frequency) {
+    LARGE_INTEGER freq;
+    freq.HighPart = freq.LowPart = 0;
+    QueryPerformanceFrequency(&freq);
+    _performance_frequency = as_jlong(freq);
+    _has_performance_frequency = true;
+  }
+  return _performance_frequency;
+}
+
+static void check_user_clock_change(void) {
+  static bool initialized;
+  static jlong prev_delta;
+
+  if (_user_clock_changed_callback == NULL) {
+    return;
+  }
+
+  enum {
+    CLOCK_SHIFT_THRESHOLD = 1000l
+  };
+
+  jlong current_delta = 
+    Os::java_time_millis() - Os::monotonic_time_millis();
+
+  if (initialized) {
+    jlong clock_shift = current_delta - prev_delta;
+    if (clock_shift > CLOCK_SHIFT_THRESHOLD || 
+	clock_shift < -CLOCK_SHIFT_THRESHOLD) {
+      _user_clock_changed_callback();
+    }
+  }
+
+  initialized = true;
+  prev_delta = current_delta;
+}
+ 
+static jlong offset() {
   if (!_has_offset) {
     SYSTEMTIME java_origin;
     java_origin.wYear          = 1970;
@@ -68,7 +122,7 @@ jlong offset() {
   }
   return _offset;
 }
- 
+
 #if ENABLE_DYNAMIC_NATIVE_METHODS
 void* Os::loadLibrary(const char* libName) {
   return 0; //Library loading not supported for this OS
@@ -106,6 +160,15 @@ jlong Os::java_time_millis() {
   return (time - offset()) / 10000;
 }
 
+jlong Os::monotonic_time_millis() {
+  return elapsed_counter() * 1000ul / elapsed_frequency();
+}
+
+// Register a callback routine to be invoked when the user clock changes
+void Os::set_user_clock_change_callback(void (*callback)(void)) {
+  _user_clock_changed_callback = callback;
+}
+
 void Os::sleep(jlong ms) {
   // win32 Sleep takes 32-bit unsigned argument
   // Should really do loop here if sleeping more than 49 days
@@ -116,6 +179,7 @@ void Os::sleep(jlong ms) {
 DWORD WINAPI TickerMain(LPVOID lpvParam) {
   while (!ticker_stopping) {
     ::Sleep(TickInterval);
+    ::check_user_clock_change();
     if (ticker_running) {
       real_time_tick(TickInterval);
       _compiler_timer_has_ticked = true;
@@ -146,6 +210,7 @@ bool Os::start_ticks() {
       return true;
     }
   }
+
   return false;
 }
 
@@ -211,29 +276,13 @@ void Os::dispose() {
 }
 
 #if USE_HIGH_RESOLUTION_TIMER
-static bool  _has_performance_frequency = false;
-static jlong _performance_frequency     = 0;
-
-jlong as_jlong(LARGE_INTEGER x) {
-  return jlong_from_msw_lsw(x.HighPart, x.LowPart);
-}
 
 jlong Os::elapsed_counter() {
-  LARGE_INTEGER count;
-  count.HighPart = count.LowPart = 0;
-  QueryPerformanceCounter(&count);
-  return as_jlong(count);
+  return ::elapsed_counter();
 }
 
 jlong Os::elapsed_frequency() {
-  if (!_has_performance_frequency) {
-    LARGE_INTEGER freq;
-    freq.HighPart = freq.LowPart = 0;
-    QueryPerformanceFrequency(&freq);
-    _performance_frequency = as_jlong(freq);
-    _has_performance_frequency = true;
-  }
-  return _performance_frequency;
+  return ::elapsed_frequency();
 }
 
 #endif // USE_HIGH_RESOLUTION_TIMER

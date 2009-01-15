@@ -26,6 +26,10 @@
 
 package com.sun.cldchi.jvm;
 
+import java.lang.ref.WeakReference;
+
+import java.util.Vector;
+
 public class JVM {
     /**
      * If this flag is defined and the romization is successful, class
@@ -291,4 +295,55 @@ public class JVM {
      * Flushes all JAR file caches.
      */
     public static native void flushJarCaches();
+
+    /**
+     * Returns monotonic time in milliseconds from some unspecified starting
+     * point.
+     *
+     * @return  monotonic time in milliseconds
+     */
+    public static native long monotonicTimeMillis();
+
+    private static final Vector listeners = new Vector();
+
+    /**
+     * Registers the given object to be notified when the user clock changes.
+     *
+     * @param the object to be notified when the user clock changes
+     */
+    public static void registerUserClockChangeListener(Object listener) {
+	if (listener == null) {
+	    throw new NullPointerException();
+	}
+
+	final WeakReference newWeakRef = new WeakReference(listener);
+
+	synchronized (listeners) {
+	    final int size = listeners.size();
+	    for (int i = 0; i < size; i++) {
+		WeakReference wr = (WeakReference)listeners.elementAt(i);
+		if (wr.get() == null) {
+		    listeners.setElementAt(newWeakRef, i);
+		    return;
+		}
+	    }
+
+	    listeners.addElement(newWeakRef);
+	}
+    }
+
+    private static void handleUserClockChange() {
+	synchronized (listeners) {
+	    final int size = listeners.size();
+	    for (int i = 0; i < size; i++) {
+		WeakReference wr = (WeakReference)listeners.elementAt(i);
+		Object o = wr.get();
+		if (o != null) {
+		    synchronized (o) {
+			o.notifyAll();
+		    }
+		}
+	    }
+	}
+    }
 }

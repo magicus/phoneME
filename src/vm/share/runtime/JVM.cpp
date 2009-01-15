@@ -356,6 +356,8 @@ inline bool JVM::initialize( void ) {
   }
 #endif
 
+  Os::set_user_clock_change_callback(JVM::user_clock_changed);
+
   return true;
 }
 
@@ -1049,6 +1051,43 @@ void JVM::dump_profile() {
   dump_statistic_profile();
 }
 
+void JVM::user_clock_changed() {
+  for (int task_id = Task::FIRST_TASK; task_id < MAX_TASKS; task_id++) {
+    Task::Raw task = Task::get_task(task_id);
+    if (task.not_null()) {
+      task().set_user_clock_changed(true);
+    }
+  }
+}
+
+void JVM::on_timer_tick(JVM_SINGLE_ARG_TRAPS) {
+  UsingFastOops fast_oops;
+  Task::Fast task = Task::current();
+  if (task.is_null() || !task().user_clock_changed()) {
+    return;
+  }
+
+  Thread::Fast thread = Thread::current();
+  if (thread.is_null()) {
+    return;
+  }
+
+  InstanceClass::Fast klass = Universe::jvm_class()->obj();
+
+  // Run the Java method JVM.handleUserClockChange()
+  Symbol* method_name = Symbols::handleUserClockChange_name();
+
+  Method::Fast method =
+    klass().lookup_method(method_name, Symbols::void_signature());
+  GUARANTEE(method.not_null() && method().is_static(), "sanity");
+
+  EntryActivation::Fast entry =
+    Universe::new_entry_activation(&method, 0 JVM_CHECK);
+  thread().append_pending_entry(&entry);
+
+  task().set_user_clock_changed(false);
+}
+
 static int _version_id = 0;
 
 extern "C" int JVM_GetVersionID() {
@@ -1171,9 +1210,9 @@ void JVM::calibrate_cpu() {
       // run of the VM).
       OsMisc_flush_icache((address)p[0], num_instructions * 4);
 
-      jlong started = Os::java_time_millis();
+      jlong started = Os::monotonic_time_millis();
       p[0](num_loops);
-      jlong elapsed = Os::java_time_millis() - started;
+      jlong elapsed = Os::monotonic_time_millis() - started;
       if (elapsed < 1) {
         elapsed = 1;
       }

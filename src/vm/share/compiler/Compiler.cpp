@@ -219,7 +219,7 @@ void Compiler::on_timer_tick(bool is_real_time_tick JVM_TRAPS) {
 
 #if ENABLE_INTERPRETATION_LOG
 void Compiler::process_interpretation_log() {
-  jlong now = Os::java_time_millis();
+  jlong now = Os::monotonic_time_millis();
   if (now < _last_frame_time_stamp + _estimated_frame_time) {
     Universe::reset_interpretation_log();
     return;

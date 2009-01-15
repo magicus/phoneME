@@ -62,6 +62,14 @@ jlong offset() {
   return _offset;
 }
 
+#if SUPPORTS_MONOTONIC_CLOCK
+jlong Os::monotonic_time_millis() {
+  const jlong counter = (jlong)javacall_time_get_monotonic_clock_counter();
+  const jlong frequency = (jlong)javacall_time_get_monotonic_clock_frequency();
+  return counter * 1000ul / frequency;
+}
+#endif
+
 jlong Os::java_time_millis() {
   /*
    * Get the current system time, unit: millisecond, count time from
@@ -69,6 +77,11 @@ jlong Os::java_time_millis() {
    * the offset exist
    */
   return (jlong) javacall_time_get_milliseconds_since_1970();
+}
+
+// Register a callback routine to be invoked when the user clock changes
+void Os::set_user_clock_change_callback(void (*callback)(void)) {
+  javacall_time_set_user_clock_change_callback(callback);
 }
 
 void Os::sleep(jlong ms) {
@@ -180,16 +193,16 @@ void Os::dispose() {
 
 #if USE_HIGH_RESOLUTION_TIMER
 
-static bool  _has_performance_frequency = false;
-static jlong _performance_frequency     = 0;
-
-
 jlong Os::elapsed_counter() {
   /*
    * Retrieve the current time in high-resolution.
    * The resolution is decided by elapsed_frequency() method
    */
+#if SUPPORTS_MONOTONIC_CLOCK  
+  return (jlong)javacall_time_get_monotonic_clock_counter();
+#else
   return (jlong)javacall_time_get_milliseconds_since_1970();
+#endif
 }
 
 jlong Os::elapsed_frequency() {
@@ -198,7 +211,11 @@ jlong Os::elapsed_frequency() {
    * The return value is equal to  1s / the small unit of system-support unit
    * For example, if system support millisecond, the return valuse is 1000
    */
+#if SUPPORTS_MONOTONIC_CLOCK  
+  return (jlong)javacall_time_get_monotonic_clock_frequency();
+#else
   return 1000;
+#endif
 }
 
 #endif
