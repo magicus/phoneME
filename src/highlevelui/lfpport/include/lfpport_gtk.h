@@ -69,7 +69,7 @@ static char *tmpFilename = "/usr/tmp/java.tmp";
 extern void ps();
 
 #define PIXBUF_QUARK 1  /* must be non-zero!*/
-#define ITEM_BOUND_PAD 4
+#define ITEM_BOUND_PAD 0
 
 #endif //_LFPPORT_GTK_H_
 

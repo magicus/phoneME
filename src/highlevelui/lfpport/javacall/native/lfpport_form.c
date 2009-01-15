@@ -230,11 +230,11 @@ MidpError lfpport_form_set_current_item(MidpDisplayable* formPtr,
                                         MidpItem* itemPtr, int yOffset){
     GtkWidget *form;
     GtkWidget *box;
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
     (void)itemPtr;
     (void)yOffset;
 
-    LIMO_TRACE("%s form=%x box=%x\n", __FUNCTION__, form, box);
+
+    LIMO_TRACE(">>>%s formPtr=%x\n", __FUNCTION__, formPtr);
 
     pthread_mutex_lock(&mutex);
     gtk_widget_grab_focus((GtkWidget*)itemPtr->widgetPtr);

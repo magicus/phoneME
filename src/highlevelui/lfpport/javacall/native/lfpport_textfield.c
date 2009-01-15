@@ -55,7 +55,9 @@ extern MidpError gchar_to_pcsl_string(gchar *src, pcsl_string *dst);
 MidpError lfpport_text_field_show_cb(MidpItem* itemPtr){
     GtkWidget *widget = (GtkWidget*)itemPtr->widgetPtr;
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     gtk_widget_show_all(widget);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
 }
@@ -66,8 +68,10 @@ MidpError lfpport_text_field_hide_cb(MidpItem* itemPtr){
     GtkWidget *widget;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    pthread_mutex_lock(&mutex);
     widget = (GtkWidget *)itemPtr->widgetPtr;
     gtk_widget_hide_all(widget);
+    pthread_mutex_unlock(&mutex);
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
 
     return KNI_OK;
@@ -194,6 +198,7 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
     pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
     pcsl_string_convert_to_utf8(text, text_buf,  MAX_TEXT_LENGTH, &text_len);
 
+    pthread_mutex_lock(&mutex);
     frame = gtk_frame_new(NULL);
     if (label_len > 0) {
         gtk_frame_set_label(frame, label_buf);
@@ -210,6 +215,7 @@ MidpError lfpport_textfield_create(MidpItem* itemPtr,
     form = ownerPtr->frame.widgetPtr;
     vbox = gtk_object_get_user_data(form);
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
+    pthread_mutex_unlock(&mutex);
 
     /* set font */
     LIMO_TRACE("%s setting textfield container to  %d\n", __FUNCTION__, box);
@@ -252,10 +258,13 @@ MidpError lfpport_textfield_set_string(MidpItem* itemPtr, const pcsl_string* tex
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
-    frame = itemPtr->widgetPtr;
-    textWidget = gtk_bin_get_child(frame);
     pcsl_string_convert_to_utf8(text, buf, MAX_TEXT_LENGTH, &length);
+
+    frame = itemPtr->widgetPtr;
+    pthread_mutex_lock(&mutex);
+    textWidget = gtk_bin_get_child(frame);
     gtk_entry_set_text(textWidget, buf);
+    pthread_mutex_unlock(&mutex);
 
     LIMO_TRACE("<<<%s\n", __FUNCTION__);
     return KNI_OK;
@@ -278,18 +287,22 @@ MidpError lfpport_textfield_get_string(pcsl_string* text, jboolean* newChange,
     GtkWidget *text_field;
     GtkWidget *frame;
     MidpError status;
+    gchar *gtext;
 
     GList *textWidget;
 
     LIMO_TRACE(">>>%s\n", __FUNCTION__);
 
+    pthread_mutex_lock(&mutex);
     frame = itemPtr->widgetPtr;
     textWidget = gtk_bin_get_child(frame);
+    gtext = gtk_entry_get_text((GtkEntry*)textWidget);
+    pthread_mutex_unlock(&mutex);
 
-    status = gchar_to_pcsl_string(gtk_entry_get_text((GtkEntry*)textWidget),
-                                   text);
+    LIMO_TRACE("%s gtext=%s\n", __FUNCTION__, gtext);
+    status = gchar_to_pcsl_string(gtext,  text);
 
-    LIMO_TRACE("<<<%s\n", __FUNCTION__);
+    LIMO_TRACE("<<<%s returning %d\n", __FUNCTION__, status);
     return status;
 }
 

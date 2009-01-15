@@ -205,7 +205,7 @@ MidpError lfpport_customitem_create(MidpItem* itemPtr,
     int tfd;
     GError *error = NULL;
 
-    LIMO_TRACE(">>>%s\n", __FUNCTION__);
+    LIMO_TRACE(">>>%s ownerPtr=%x\n", __FUNCTION__, ownerPtr);
 
     pcsl_string_convert_to_utf8(label, label_buf, MAX_TEXT_LENGTH, &label_len);
 

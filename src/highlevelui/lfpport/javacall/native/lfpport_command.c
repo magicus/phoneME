@@ -164,7 +164,7 @@ MidpError cmdmanager_set_commands(MidpFrame* cmPtr,
     gtkSoftKeyBar = form->softkeybar;
 
     if (numCmds <= 0) {
-        LIMO_TRACE("%s no commands! returning...\n", __FUNCTION__);
+        LIMO_TRACE("<<<%s no commands! returning...\n", __FUNCTION__);
         pthread_mutex_unlock(&mutex);
         return KNI_OK;
     }
