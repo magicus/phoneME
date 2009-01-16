@@ -105,6 +105,24 @@ static int gsTotalQueues = 1;
 /** Max number of Isolates allowed in the system */
 static int gsMaxIsolates = 1;
 
+/**
+ * Macro that gets the event queue associated with an queueId.
+ *
+ * @param queuePtr variable to assign queue pointer to
+ * @param queueId ID of an queue
+ */
+#define GET_EVENT_QUEUE_BY_ID(queuePtr, queueId)                            \
+    if (queueId < 0 || queueId >= gsTotalQueues) {                          \
+        REPORT_CRIT1(LC_CORE,                                               \
+                     "Assertion failed: Event queue ID (%d) out of bounds", \
+                     queueId);                                              \
+                                                                            \
+        /* avoid a SEGV;*/                                                  \
+        queueId = 0;                                                        \
+    }                                                                       \
+                                                                            \
+    queuePtr = &(gsEventQueues[queueId]);
+
 
 /**
  * Macros for converting between Isolate ID and queue ID. 
@@ -147,39 +165,6 @@ static jfieldID stringParam3FieldID;
 static jfieldID stringParam4FieldID;
 static jfieldID stringParam5FieldID;
 static jfieldID stringParam6FieldID;
-
-/**
- * Gets the event queue associated with an queueId.
- *
- * @param queueId ID of an queue or 0 for SVM mode
- *
- */
-static EventQueue* getEventQueueById(jint queueId) {
-    /*
-     * Note: Using Isolate IDs as an event queue array index is only done
-     * here for performance reasons and should NOT
-     * be used in other parts of the system. In other parts of
-     * the system something like a matching search should be used.
-     *
-     * In MVM the first isolate has number 1, and we've allocated one
-     * more entry in gsEventQueues[], thus the condition bellow is
-     * isolateId > maxIsolates rather than >= .
-     */
-#if ENABLE_MULTIPLE_ISOLATES
-    if (queueId < 0 || queueId >= gsTotalQueues) {
-#else
-    if (queueId != 0) {
-#endif
-        REPORT_CRIT1(LC_CORE,
-                     "Assertion failed: Event queue ID (%d) out of bounds",
-                     queueId);
-
-        /* avoid a SEGV;*/
-        queueId = 0;
-    }
-
-    return &(gsEventQueues[queueId]);
-}
 
 /**
  * Gets the field ids of a Java event object and cache them
@@ -236,20 +221,22 @@ freeMIDPEventFields(MidpEvent event) {
 }    
 
 /**
- * Gets the next pending event for an isolate.
+ * Gets the next pending event for an event queue.
  * <p>
  * <b>NOTE:</b> Any string parameter data must be de-allocated with
  * <tt>midpFree</tt>.
  *
  * @param pResult where to put the pending event
- * @param isolateId ID of an Isolate or 0 for SVM mode
+ * @param queueId queue ID 
  *
  * @return -1 for no event pending, number of event still pending after this
  * event
  */
 static int
 getPendingMIDPEvent(MidpEvent* pResult, jint queueId) {
-    EventQueue* pEventQueue = getEventQueueById(queueId);
+    EventQueue* pEventQueue;
+    
+    GET_EVENT_QUEUE_BY_ID(pEventQueue, queueId);
 
     if (pEventQueue->numEvents == 0) {
         return -1;
@@ -273,7 +260,7 @@ getPendingMIDPEvent(MidpEvent* pResult, jint queueId) {
 /**
  * Reset an event queue.
  *
- * @param handle handle of the event queue.
+ * @param queueId ID of the queue to reset
  */
 static void resetEventQueue(jint queueId) {
     MidpEvent event;
@@ -289,11 +276,16 @@ static void resetEventQueue(jint queueId) {
     }
 }
 
+/**
+ * Blocks Java thread that monitors specified event queue.
+ *
+ * @param queueId queue ID
+ */
 static void blockMonitorThread(jint queueId) {
     EventQueue* pEventQueue;
     jint isolateId;
 
-    pEventQueue = getEventQueueById(queueId);    
+    GET_EVENT_QUEUE_BY_ID(pEventQueue, queueId);
 
     if (IS_ISOLATE_QUEUE(queueId)) {
         /*
@@ -305,18 +297,24 @@ static void blockMonitorThread(jint queueId) {
         SNI_SetSpecialThread(isolateId);
         SNI_BlockThread();
     } else {
+        /* Block thread in the usual way */
         midp_thread_wait(EVENT_QUEUE_SIGNAL, queueId, 0);
     }
 
     pEventQueue->isMonitorBlocked = KNI_TRUE;
 }
 
+/**
+ * Unblocks Java thread that monitors specified event queue.
+ *
+ * @param queueId queue ID
+ */
 static void unblockMonitorThread(jint queueId) {
     EventQueue* pEventQueue;
     jint isolateId;
     JVMSPI_ThreadID thread;
     
-    pEventQueue = getEventQueueById(queueId);
+    GET_EVENT_QUEUE_BY_ID(pEventQueue, queueId);
 
     if (IS_ISOLATE_QUEUE(queueId)) {
         /*
@@ -328,16 +326,17 @@ static void unblockMonitorThread(jint queueId) {
         thread = SNI_GetSpecialThread(isolateId);
         if (thread != NULL) {
             midp_thread_unblock(thread);
-            pEventQueue->isMonitorBlocked = KNI_FALSE;
         } else {
             REPORT_CRIT(LC_CORE,
                 "StoreMIDPEventInVmThread: cannot find "
                 "native event monitor thread");
         }
     } else {
+        /* Unblock thread in the usual (slower) way */
         midp_thread_signal(EVENT_QUEUE_SIGNAL, queueId, 0);
-        pEventQueue->isMonitorBlocked = KNI_FALSE;
-    }    
+    }
+
+    pEventQueue->isMonitorBlocked = KNI_FALSE;    
 }
 
 
@@ -422,14 +421,16 @@ midp_resetEvents(void) {
 }
 
 /**
- * Helper function used by StoreMIDPEventInVmThread
- * Enqueues an event to be processed by the
- * Java event thread for a given Isolate
+ * Helper function used by StoreMIDPEventInVmThread. Enqueues an event 
+ * to be processed by the Java event thread for a given event queue.
+ *
+ * @param event the event to enqueue
+ * @queueID ID of the queue to enqueue event from
  */
 static void StoreMIDPEventInVmThreadImp(MidpEvent event, jint queueId) {
     EventQueue* pEventQueue;
 
-    pEventQueue = getEventQueueById(queueId);
+    GET_EVENT_QUEUE_BY_ID(pEventQueue, queueId);
 
     midp_logThreadId("StoreMIDPEventInVmThread");
 
@@ -464,7 +465,7 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, jint queueId) {
 
 /**
  * Enqueues an event to be processed by the Java event thread for a given
- * queue, or for all isolates queues if queueId is -1.
+ * Isolate, or for all isolates queues if isolateId is -1.
  * Only safe to call from VM thread.
  * Any other threads should call StoreMIDPEvent. 
  *
@@ -541,7 +542,7 @@ void handleFatalError(void) {
  * @param event The parameter is on the java stack,
  *              An empty event to be filled in if there is a queued
  *              event.
- * @param isolateId Isolate ID of the event queue
+ * @param queueId queue ID
  * @return -1 for no event read or the number of events still pending after
  * this event
  */
@@ -613,7 +614,7 @@ Java_com_sun_midp_events_NativeEventMonitor_waitForNativeEvent(void) {
         KNI_ReturnInt(eventsPending);
     }
 
-    pEventQueue = getEventQueueById(queueId);
+    GET_EVENT_QUEUE_BY_ID(pEventQueue, queueId);
 
     if (pEventQueue->isMonitorBlocked) {
         /*
