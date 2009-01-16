@@ -92,6 +92,14 @@ typedef struct _EventQueue {
     int eventIn;
     /** The queue position of the next event to be stored */
     int eventOut;
+    /** 
+     * Indicates if the queue is currently active, that is, 
+     * there is an actual Java queue associated with this native data.
+     * Queue can be inactive because we preallocate all the native 
+     * structures in advance, so it is possible that some of these
+     * structures are currently unused.
+     */
+    jboolean isActive;    
     /** Thread state for each Java native event monitor. */
     jboolean isMonitorBlocked;
 } EventQueue;
@@ -478,14 +486,24 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, jint queueId) {
 void
 StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
     jint queueId = -1;
+    EventQueue* pEventQueue;
+
     if( -1 != isolateId ) {
         queueId = ISOLATE_ID_TO_QUEUE_ID(isolateId);
         StoreMIDPEventInVmThreadImp(event, queueId);
     } else {
 #if ENABLE_MULTIPLE_ISOLATES
     for (isolateId = 1; isolateId <= gsMaxIsolates; isolateId++)
-        queueId = ISOLATE_ID_TO_QUEUE_ID(isolateId);        
-        StoreMIDPEventInVmThreadImp(event, queueId);
+        queueId = ISOLATE_ID_TO_QUEUE_ID(isolateId);
+        GET_EVENT_QUEUE_BY_ID(pEventQueue, queueId);
+
+        /* 
+         * Broadcast only for active queues to avoid overflowing 
+         * inactive queues that no one reads event from
+         */
+        if (pEventQueue->isActive) {
+            StoreMIDPEventInVmThreadImp(event, queueId);
+        }
 #else
         StoreMIDPEventInVmThreadImp(event, 0);
 #endif
@@ -749,8 +767,17 @@ Java_com_sun_midp_events_EventQueue_resetNativeEventQueue0(void) {
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 Java_com_sun_midp_events_EventQueue_getEventQueueId0(void) {
-    /* For now use Isolate IDs for event queue handles. */
-    return getCurrentIsolateId();
+   jint queueId;
+   EventQueue* pEventQueue;
+    
+    /* Use Isolate IDs for event queue handles. */
+    queueId = getCurrentIsolateId();
+
+    /* Mark queue as active */
+    GET_EVENT_QUEUE_BY_ID(pEventQueue, queueId);
+    pEventQueue->isActive = KNI_TRUE;
+
+    KNI_ReturnInt(queueId);
 }
 
 /**
@@ -760,6 +787,7 @@ Java_com_sun_midp_events_EventQueue_getEventQueueId0(void) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_events_EventQueue_finalize(void) {
    jint queueId;
+   EventQueue* pEventQueue;
 
    KNI_StartHandles(1);
    KNI_DeclareHandle(thisObject);
@@ -773,6 +801,10 @@ Java_com_sun_midp_events_EventQueue_finalize(void) {
 
    if (queueId >= 0) {
        resetEventQueue(queueId);
+
+       /* Mark queue as inactive */
+       GET_EVENT_QUEUE_BY_ID(pEventQueue, queueId);
+       pEventQueue->isActive = KNI_FALSE;
    }
 
    KNI_ReturnVoid();
