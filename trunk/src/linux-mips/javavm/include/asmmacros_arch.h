@@ -31,9 +31,11 @@
 #ifndef _ASM
 #define _ASM 
 #endif
-	
-#include <asm/regdef.h>
-#include <asm/asm.h>
+
+/* Must include sgidefs.h first since some versions of regdef.h rely on it. */
+#include <sgidefs.h>
+#include <sys/regdef.h>
+#include <sys/asm.h>
 
 #define ENTRY(x)	LEAF(x)
 #define SET_SIZE(x)	END(x)
