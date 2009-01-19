@@ -220,29 +220,6 @@ char* javacall_time_get_local_timezone(void){
 
 }
 
-static void (*_user_clock_change_callback)(void);
-
-/**
- * Registers the given callback routine to be invoked when the user 
- * clock changes. Any previously registered routines are discarded.
- *
- * @param callback the callback routine to be invoked when the user
- *                 clock changes
- */
-void javacall_time_set_user_clock_change_callback(void (*callback)(void)) {
-  _user_clock_change_callback = callback;
-}
-
-/*
- * Invokes the registered callback on user clock change.
- */
-void user_clock_changed() {
-  void (*callback)(void);
-  callback = _user_clock_change_callback;
-  if (callback != NULL) {
-    callback();
-  }
-}
 
 /**
  * returns number of milliseconds elapsed since midnight(00:00:00), January 1, 1970,

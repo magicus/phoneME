@@ -45,8 +45,6 @@ extern "C" {
 #include <windows.h>
 #endif
 
-#include "time_int.h"
-
 #if ENABLE_JSR_120
 extern javacall_result try_process_wma_emulator(javacall_handle handle);
 #endif
@@ -401,10 +399,6 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 
 
     switch (iMsg) {
-    case WM_TIMECHANGE:
-        user_clock_changed();
-        return 0;
-
     case WM_CLOSE:
         /*
          * Handle the "X" (close window) button by sending the AMS a shutdown

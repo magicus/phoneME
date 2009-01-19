@@ -148,15 +148,6 @@ char* javacall_time_get_local_timezone(void);
  */
 javacall_int64 javacall_time_get_milliseconds_since_1970(void);
 
-/**
- * Registers the given callback routine to be invoked when the user 
- * clock changes. Any previously registered routines are discarded.
- *
- * @param callback the callback routine to be invoked when the user
- *                 clock changes
- */
-void javacall_time_set_user_clock_change_callback(void (*callback)(void));
-
 /** @} */
 
 
