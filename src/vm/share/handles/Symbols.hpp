@@ -107,7 +107,6 @@
   template(unchecked_int_arraycopy_name,   "unchecked_int_arraycopy")       \
   template(unchecked_obj_arraycopy_name,   "unchecked_obj_arraycopy")       \
   template(unchecked_long_arraycopy_name,  "unchecked_long_arraycopy")      \
-  template(handleUserClockChange_name,  "handleUserClockChange")            \
   /* ---- common signatures ---- */                                         \
   sig_template(java_lang_Object_signature,                                  \
                                    "Ljava/lang/Object;")                    \

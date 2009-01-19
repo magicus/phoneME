@@ -3187,9 +3187,6 @@ bool ROMOptimizer::is_special_method(Method* method) {
     return true;
   }
 #endif
-  if (name.equals(Symbols::handleUserClockChange_name())) {
-    return true;
-  }
 
   if (method->equals(Universe::throw_null_pointer_exception_method())) {
     return true;

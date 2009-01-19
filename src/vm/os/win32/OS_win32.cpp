@@ -51,8 +51,6 @@ static jlong            _compiler_timer_start;
 static bool  _has_performance_frequency = false;
 static jlong _performance_frequency     = 0;
 
-static void (*_user_clock_changed_callback)(void);
-
 static inline jlong as_jlong(LARGE_INTEGER x) {
   return jlong_from_msw_lsw(x.HighPart, x.LowPart);
 }
@@ -75,33 +73,6 @@ static inline jlong elapsed_frequency() {
   return _performance_frequency;
 }
 
-static void check_user_clock_change(void) {
-  static bool initialized;
-  static jlong prev_delta;
-
-  if (_user_clock_changed_callback == NULL) {
-    return;
-  }
-
-  enum {
-    CLOCK_SHIFT_THRESHOLD = 1000l
-  };
-
-  jlong current_delta = 
-    Os::java_time_millis() - Os::monotonic_time_millis();
-
-  if (initialized) {
-    jlong clock_shift = current_delta - prev_delta;
-    if (clock_shift > CLOCK_SHIFT_THRESHOLD || 
-	clock_shift < -CLOCK_SHIFT_THRESHOLD) {
-      _user_clock_changed_callback();
-    }
-  }
-
-  initialized = true;
-  prev_delta = current_delta;
-}
- 
 static jlong offset() {
   if (!_has_offset) {
     SYSTEMTIME java_origin;
@@ -122,7 +93,7 @@ static jlong offset() {
   }
   return _offset;
 }
-
+ 
 #if ENABLE_DYNAMIC_NATIVE_METHODS
 void* Os::loadLibrary(const char* libName) {
   return 0; //Library loading not supported for this OS
@@ -138,35 +109,11 @@ jlong Os::java_time_millis() {
 
   // Convert to Java time.
   jlong time = jlong_from_msw_lsw(wt.dwHighDateTime, wt.dwLowDateTime);
-#if ENABLE_ACCURATE_MILLISECOND_TIMER
-  static jlong previous_base_time;
-  static jlong previous_time;
-  static julong hr_start;
-
-  const julong hr_ticks = elapsed_counter();
-
-  if( previous_base_time == time ) {
-    time += (hr_ticks - hr_start) * 10000000ul / elapsed_frequency();
-    previous_time = time;
-  } else {
-    if( time > previous_base_time && time < previous_time ) {
-      time = previous_time;
-    }
-    previous_base_time = time;
-    hr_start = hr_ticks;
-  }
-
-#endif
   return (time - offset()) / 10000;
 }
 
 jlong Os::monotonic_time_millis() {
   return elapsed_counter() * 1000ul / elapsed_frequency();
-}
-
-// Register a callback routine to be invoked when the user clock changes
-void Os::set_user_clock_change_callback(void (*callback)(void)) {
-  _user_clock_changed_callback = callback;
 }
 
 void Os::sleep(jlong ms) {
@@ -179,7 +126,6 @@ void Os::sleep(jlong ms) {
 DWORD WINAPI TickerMain(LPVOID lpvParam) {
   while (!ticker_stopping) {
     ::Sleep(TickInterval);
-    ::check_user_clock_change();
     if (ticker_running) {
       real_time_tick(TickInterval);
       _compiler_timer_has_ticked = true;
@@ -210,7 +156,6 @@ bool Os::start_ticks() {
       return true;
     }
   }
-
   return false;
 }
 

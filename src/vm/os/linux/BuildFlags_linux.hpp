@@ -60,3 +60,6 @@
 #ifndef SUPPORTS_MEMORY_MAPPED_FILES
 #define SUPPORTS_MEMORY_MAPPED_FILES 1
 #endif
+
+// The default Linux port supports monotonic clock
+#define SUPPORTS_MONOTONIC_CLOCK 1

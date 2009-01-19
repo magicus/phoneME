@@ -63,9 +63,6 @@ class Os {
   // time and midnight, January 1, 1970 UTC.
   static jlong java_time_millis();
 
-  // Register a callback routine to be invoked when the user clock changes
-  static void set_user_clock_change_callback(void (*callback)(void));
-
 #if USE_HIGH_RESOLUTION_TIMER
   // Returns the current value of a system-dependent high-resolution counter.
   // Ideally, this counter should be light-weight and should have higher

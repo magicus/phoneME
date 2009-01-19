@@ -79,11 +79,6 @@ jlong Os::java_time_millis() {
   return (jlong) javacall_time_get_milliseconds_since_1970();
 }
 
-// Register a callback routine to be invoked when the user clock changes
-void Os::set_user_clock_change_callback(void (*callback)(void)) {
-  javacall_time_set_user_clock_change_callback(callback);
-}
-
 void Os::sleep(jlong ms) {
   /* let the current process sleep for ms milliseconds */
     javacall_time_sleep(ms);

@@ -112,8 +112,6 @@ class JVM: public AllStatic {
   static void generate_assembly_code() {}
 #endif
 
-  static void on_timer_tick(JVM_SINGLE_ARG_TRAPS);
-
 private:
   static bool load_main_class(JVM_SINGLE_ARG_TRAPS);
   static bool initialize();
@@ -137,8 +135,6 @@ private:
 #endif
 
   static void dump_profile();
-
-  static void user_clock_changed();
 
   // We put this in solely for the purpose
   // so that one can look at the executable binary

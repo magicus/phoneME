@@ -116,7 +116,6 @@ private:
 #if ENABLE_LIB_IMAGES && USE_BINARY_IMAGE_LOADER
   jint               _classes_in_images;
 #endif
-  jint              _user_clock_changed;
 
 #if ENABLE_ISOLATES
   // Could be one of the Task::State enums

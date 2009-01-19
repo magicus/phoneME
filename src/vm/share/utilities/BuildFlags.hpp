@@ -520,8 +520,6 @@
 //
 // ENABLE_JNI                           0,0 Enable (partial) JNI support.
 //
-// ENABLE_ACCURATE_MILLISECOND_TIMER    1,1 Improve accuracy of millisecond timer.
-//
 //============================================================================
 // ENABLE_FLAGS_END }}
 //============================================================================

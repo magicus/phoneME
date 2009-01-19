@@ -188,9 +188,6 @@ public:
   }
 #endif
 
-  DEFINE_ACCESSOR_NUM(Task, int, user_clock_changed);
- public:
-
 #if ENABLE_COMPILER && ENABLE_INLINE
   DEFINE_ACCESSOR_OBJ(Task, OopCons, direct_callers);
  public:
@@ -709,8 +706,6 @@ public:
 
   void init_classes_inited_at_build(JVM_SINGLE_ARG_TRAPS);
 
-  static ReturnOop get_task(int id);
-
 #ifndef PRODUCT
   // for debugging purposes
   static int _num_tasks_stopping;
@@ -739,14 +734,10 @@ public:
     INVALID_TASK_ID = -1,
     NEW_TABLE_LEN = 64
   };
+  static ReturnOop get_task(int id);
 
 #if !ENABLE_ISOLATES
   static int task_id( void ) { return FIRST_TASK; }
-
-  static ReturnOop get_task(int id) {
-    GUARANTEE(id == FIRST_TASK, "Task ID out of range");
-    return Universe::current_task_obj()->obj();
-  }
 #endif
 
 #if USE_BINARY_IMAGE_LOADER
