@@ -219,13 +219,20 @@ static int
 duplicateMIDPEventFields(MidpEvent *event) {
     int i, j;
     MidpEvent e = *event;
-    pcsl_string *params[2][6] = {
-        {&e.stringParam1, &e.stringParam2, &e.stringParam3,
-         &e.stringParam4, &e.stringParam5, &e.stringParam6},
-        {&event->stringParam1, &event->stringParam2,
-         &event->stringParam3, &event->stringParam4,
-         &event->stringParam5, &event->stringParam6}
-    };
+    pcsl_string *params[2][6];
+
+    params[0][0] = &e.stringParam1;
+    params[0][1] = &e.stringParam2;
+    params[0][2] = &e.stringParam3;
+    params[0][3] = &e.stringParam4;
+    params[0][4] = &e.stringParam5;
+    params[0][5] = &e.stringParam6;
+    params[1][0] = &event->stringParam1;
+    params[1][1] = &event->stringParam2;
+    params[1][2] = &event->stringParam3;
+    params[1][3] = &event->stringParam4;
+    params[1][4] = &event->stringParam5;
+    params[1][5] = &event->stringParam6;
 
     for (i = 0; i < 6; i++) {
         if (PCSL_STRING_OK !=
