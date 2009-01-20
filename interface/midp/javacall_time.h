@@ -188,6 +188,10 @@ javacall_time_milliseconds /*OPTIONAL*/ javacall_time_get_clock_milliseconds(voi
  * Returns the value of the monotonic clock counter.
  * This counter must be monotonic and must have resolution and read 
  * time not lower than that of javacall_time_get_clock_milliseconds().
+ * <p>
+ * The CLDC VM build flag SUPPORTS_MONOTONIC_CLOCK should be set to
+ * a non-zero value if the platform provides the monotonic clock,
+ * otherwise it should be set to zero.
  *
  * @return the value of the monotonic clock counter
  */
@@ -195,6 +199,10 @@ javacall_int64 /*OPTIONAL*/ javacall_time_get_monotonic_clock_counter(void);
 
 /**
  * Returns the frequency of the monotonic clock counter.
+ * <p>
+ * The CLDC VM build flag SUPPORTS_MONOTONIC_CLOCK should be set to
+ * a non-zero value if the platform provides the monotonic clock,
+ * otherwise it should be set to zero.
  *
  * @return the frequency of the monotonic clock counter
  */
