@@ -111,7 +111,9 @@ static EventQueue* gsEventQueues = NULL;
 static int gsTotalQueues = 1;
 
 /** Max number of Isolates allowed in the system */
+#if ENABLE_MULTIPLE_ISOLATES
 static int gsMaxIsolates = 1;
+#endif
 
 /**
  * Macro that gets the event queue associated with an queueId.
@@ -505,6 +507,7 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
             StoreMIDPEventInVmThreadImp(event, queueId);
         }
 #else
+        (void)pEventQueue; /* avoid warning */
         StoreMIDPEventInVmThreadImp(event, 0);
 #endif
     }
