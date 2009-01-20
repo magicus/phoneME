@@ -43,3 +43,13 @@
 // The Generic port does not support adjustable memory chunks for
 // implementing the Java heap.
 #define SUPPORTS_ADJUSTABLE_MEMORY_CHUNK 0
+
+// If the platform provides a monotonic clock counter of sufficient
+// resolution and read time, the following Javacall routines should 
+// be implemented, see javacall/interface/midp/javacall_time.h:
+//
+//  javacall_int64 javacall_time_get_monotonic_clock_counter(void);
+//
+//  javacall_int64 javacall_time_get_monotonic_clock_frequency(void);
+//
+#define SUPPORTS_MONOTONIC_CLOCK     1

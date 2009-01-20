@@ -695,7 +695,7 @@ void Java_java_lang_Runtime_gc(JVM_SINGLE_ARG_TRAPS) {
   enum { min_free = 2 * 1024 * 1024 };  
   if( free < min_free ) {
     static jlong previous_gc_time;
-    const jlong current_gc_time = Os::java_time_millis();
+    const jlong current_gc_time = Os::monotonic_time_millis();
     // For performance reasons don't collect if we are
     // called within 500ms of the previous call.
     enum { min_interval = 500 };  
@@ -1568,6 +1568,10 @@ jint Java_com_sun_cldchi_jvm_JVM_verifyNextChunk(JVM_SINGLE_ARG_TRAPS) {
 
 void Java_com_sun_cldchi_jvm_JVM_flushJarCaches(JVM_SINGLE_ARG_TRAPS) {
   JarFileParser::flush_caches();
+}
+
+jlong Java_com_sun_cldchi_jvm_JVM_monotonicTimeMillis() {
+  return Os::monotonic_time_millis();
 }
 
 } // extern "C"

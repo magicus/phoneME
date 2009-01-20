@@ -42,6 +42,8 @@
 #include "incls/_precompiled.incl"
 #include "incls/_OS_linux.cpp.incl"
 
+#include <time.h>
+
 // this flag allows running with Valgrind, advanced memory checker for
 // x86 Linux see http://developer.kde.org/~sewardj/ for more details
 #define ENABLE_VALGRIND 0
@@ -148,6 +150,12 @@ jlong Os::java_time_millis() {
     return (jlong)tv.tv_sec * 1000 + tv.tv_usec/1000;
 }
 
+jlong Os::monotonic_time_millis() {
+  timespec tp;
+  ::clock_gettime(CLOCK_MONOTONIC, &tp);
+  return (jlong)tp.tv_sec * 1000l + tp.tv_nsec / 1000000;
+}
+
 /*
  * Sleep for ms Milliseconds, a sleep of 0ms is from the
  * scheduler requiring a yield, therefore we should call
@@ -163,8 +171,8 @@ void Os::sleep(jlong ms) {
     return;
   }
 
-  jlong end = Os::java_time_millis() + ms;
-  while (Os::java_time_millis() < end) {
+  jlong end = Os::monotonic_time_millis() + ms;
+  while (Os::monotonic_time_millis() < end) {
     ::usleep(1000);  // sleep for 1 ms
   }
 }

@@ -48,7 +48,32 @@ static jlong            _offset     = 0;
 static bool             _compiler_timer_has_ticked = false;
 static jlong            _compiler_timer_start;
 
-jlong offset() {
+static bool  _has_performance_frequency = false;
+static jlong _performance_frequency     = 0;
+
+static inline jlong as_jlong(LARGE_INTEGER x) {
+  return jlong_from_msw_lsw(x.HighPart, x.LowPart);
+}
+
+static inline jlong elapsed_counter() {
+  LARGE_INTEGER count;
+  count.HighPart = count.LowPart = 0;
+  QueryPerformanceCounter(&count);
+  return as_jlong(count);
+}
+
+static inline jlong elapsed_frequency() {
+  if (!_has_performance_frequency) {
+    LARGE_INTEGER freq;
+    freq.HighPart = freq.LowPart = 0;
+    QueryPerformanceFrequency(&freq);
+    _performance_frequency = as_jlong(freq);
+    _has_performance_frequency = true;
+  }
+  return _performance_frequency;
+}
+
+static jlong offset() {
   if (!_has_offset) {
     SYSTEMTIME java_origin;
     java_origin.wYear          = 1970;
@@ -84,26 +109,11 @@ jlong Os::java_time_millis() {
 
   // Convert to Java time.
   jlong time = jlong_from_msw_lsw(wt.dwHighDateTime, wt.dwLowDateTime);
-#if ENABLE_ACCURATE_MILLISECOND_TIMER
-  static jlong previous_base_time;
-  static jlong previous_time;
-  static julong hr_start;
-
-  const julong hr_ticks = elapsed_counter();
-
-  if( previous_base_time == time ) {
-    time += (hr_ticks - hr_start) * 10000000ul / elapsed_frequency();
-    previous_time = time;
-  } else {
-    if( time > previous_base_time && time < previous_time ) {
-      time = previous_time;
-    }
-    previous_base_time = time;
-    hr_start = hr_ticks;
-  }
-
-#endif
   return (time - offset()) / 10000;
+}
+
+jlong Os::monotonic_time_millis() {
+  return elapsed_counter() * 1000ul / elapsed_frequency();
 }
 
 void Os::sleep(jlong ms) {
@@ -211,29 +221,13 @@ void Os::dispose() {
 }
 
 #if USE_HIGH_RESOLUTION_TIMER
-static bool  _has_performance_frequency = false;
-static jlong _performance_frequency     = 0;
-
-jlong as_jlong(LARGE_INTEGER x) {
-  return jlong_from_msw_lsw(x.HighPart, x.LowPart);
-}
 
 jlong Os::elapsed_counter() {
-  LARGE_INTEGER count;
-  count.HighPart = count.LowPart = 0;
-  QueryPerformanceCounter(&count);
-  return as_jlong(count);
+  return ::elapsed_counter();
 }
 
 jlong Os::elapsed_frequency() {
-  if (!_has_performance_frequency) {
-    LARGE_INTEGER freq;
-    freq.HighPart = freq.LowPart = 0;
-    QueryPerformanceFrequency(&freq);
-    _performance_frequency = as_jlong(freq);
-    _has_performance_frequency = true;
-  }
-  return _performance_frequency;
+  return ::elapsed_frequency();
 }
 
 #endif // USE_HIGH_RESOLUTION_TIMER

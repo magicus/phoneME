@@ -1995,6 +1995,10 @@ ifeq ($(LINK_PTHREAD), true)
 LINK_FLAGS             += -lpthread
 endif
 
+ifeq ($(SUPPORTS_MONOTONIC_CLOCK), true)
+LINK_FLAGS             += -lrt
+endif
+
 ifeq ($(ENABLE_PCSL), true)
 PCSL_LIBS               = $(PCSL_DIST_DIR)/lib/libpcsl_memory.a  \
                           $(PCSL_DIST_DIR)/lib/libpcsl_print.a   \

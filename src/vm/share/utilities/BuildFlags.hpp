@@ -520,8 +520,6 @@
 //
 // ENABLE_JNI                           0,0 Enable (partial) JNI support.
 //
-// ENABLE_ACCURATE_MILLISECOND_TIMER    1,1 Improve accuracy of millisecond timer.
-//
 //============================================================================
 // ENABLE_FLAGS_END }}
 //============================================================================
@@ -915,7 +913,7 @@
 #define NOT_CURRENTLY_USED 0
 
 /*
- * The SUPPORTS_ flags are defined in Globals_<os_family>.hpp to
+ * The SUPPORTS_ flags are defined in BuildFlags_<os_family>.hpp to
  * declare whether a feature is supported on the given platform.
  */
 
@@ -932,6 +930,11 @@
 // SUPPORTS_MEMORY_MAPPED_FILES       Does this OS port
 //                                    allow mapping files into a fixed
 //                                    memory space?
+//
+// SUPPORTS_MONOTONIC_CLOCK           Does this OS provide access to a 
+//                                    monotonic clock that have resolution
+//                                    and read time better than the user 
+//                                    clock?
 //
 // SUPPORTS_TIMER_THREAD              Does this OS port support clock ticks
 //                                    implemented by a timer thread?
@@ -961,6 +964,9 @@
 #define SUPPORTS_MEMORY_MAPPED_FILES 0
 #endif
 
+#ifndef SUPPORTS_MONOTONIC_CLOCK
+#define SUPPORTS_MONOTONIC_CLOCK 0
+#endif
 
 #ifndef HOST_LITTLE_ENDIAN
 // This should have be set in makefiles, but need to set a default value

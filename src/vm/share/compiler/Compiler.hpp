@@ -272,7 +272,7 @@ class Compiler: public BytecodeCompileClosure {
     jvm_memset(&comp_perf_counts, 0, sizeof comp_perf_counts );
 #endif
     _estimated_frame_time = 30;
-    _last_frame_time_stamp = Os::java_time_millis();
+    _last_frame_time_stamp = Os::monotonic_time_millis();
   }
 
   // Compiles the method and returns the result.
@@ -504,7 +504,7 @@ class Compiler: public BytecodeCompileClosure {
     switch (hint) {
     case JVM_HINT_VISUAL_OUTPUT:
       _estimated_frame_time = 300;
-      _last_frame_time_stamp = Os::java_time_millis();
+      _last_frame_time_stamp = Os::monotonic_time_millis();
       break;
     case JVM_HINT_END_STARTUP_PHASE:
       break;
