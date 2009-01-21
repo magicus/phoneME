@@ -1896,10 +1896,15 @@ endif
 
 ifndef SUPPORTS_MONOTONIC_CLOCK
 SUPPORTS_MONOTONIC_CLOCK := \
-    $(shell TESTFILE="`mktemp`.c" && \
-            echo "int main(void) { return 0; }" > $$TESTFILE && \
-            $(CC_gcc) -o /dev/null -lrt $$TESTFILE 2> /dev/null && \
-            echo true || echo false; rm $$TESTFILE)
+  $(shell TESTFILE="`mktemp`.c" && \
+    echo "\#include <time.h>"                     >  $$TESTFILE && \
+    echo ""                                       >> $$TESTFILE && \
+    echo "int main(void) {"                       >> $$TESTFILE && \
+    echo "  struct timespec tp;"                  >> $$TESTFILE && \
+    echo "  clock_gettime(CLOCK_MONOTONIC, &tp);" >> $$TESTFILE && \
+    echo "}"                                      >> $$TESTFILE && \
+    $(CC_gcc) -o /dev/null -lrt $$TESTFILE 2> /dev/null && \
+    echo true || echo false; rm $$TESTFILE)
 export SUPPORTS_MONOTONIC_CLOCK__BY = jvm.make
 endif
 
