@@ -150,11 +150,15 @@ jlong Os::java_time_millis() {
     return (jlong)tv.tv_sec * 1000 + tv.tv_usec/1000;
 }
 
+#if SUPPORTS_MONOTONIC_CLOCK
+
 jlong Os::monotonic_time_millis() {
   timespec tp;
   ::clock_gettime(CLOCK_MONOTONIC, &tp);
   return (jlong)tp.tv_sec * 1000l + tp.tv_nsec / 1000000;
 }
+
+#endif
 
 /*
  * Sleep for ms Milliseconds, a sleep of 0ms is from the
