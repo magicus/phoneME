@@ -77,8 +77,7 @@ public class Timer {
      * @see Thread
      * @see #cancel()
      */
-    public Timer() {
-    }
+    public Timer() {}
 
     /**
      * Schedules the specified task for execution after the specified delay.

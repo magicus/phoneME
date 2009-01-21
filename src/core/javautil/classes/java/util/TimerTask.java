@@ -39,8 +39,7 @@ public abstract class TimerTask implements Runnable {
     /**
      * Creates a new timer task.
      */
-    protected TimerTask() {
-    }
+    protected TimerTask() {}
 
     /**
      * The action to be performed by this timer task.
@@ -69,7 +68,9 @@ public abstract class TimerTask implements Runnable {
      *         returns <tt>true</tt> if it prevents one or more scheduled
      *         executions from taking place.)
      */
-    public boolean cancel() {}
+    public boolean cancel() {
+	return false;
+    }
 
     /**
      * Returns the <i>scheduled</i> execution time of the most recent
@@ -99,5 +100,7 @@ public abstract class TimerTask implements Runnable {
      *         its first execution.
      * @see Date#getTime()
      */
-    public long scheduledExecutionTime() {}
+    public long scheduledExecutionTime() {
+	return 0;
+    }
 }
