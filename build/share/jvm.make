@@ -1995,6 +1995,15 @@ ifeq ($(LINK_PTHREAD), true)
 LINK_FLAGS             += -lpthread
 endif
 
+ifndef SUPPORTS_MONOTONIC_CLOCK
+SUPPORTS_MONOTONIC_CLOCK := \
+    $(shell TESTFILE="`mktemp`.c" && \
+            echo "int main(void) { return 0; }" > $$TESTFILE && \
+            $(CC_gcc) -o /dev/null -l$(LIBNAME) $$TESTFILE 2> /dev/null && \
+            echo true || echo false; rm $$TESTFILE)
+export SUPPORTS_MONOTONIC_CLOCK__BY = jvm.make
+endif
+
 ifeq ($(SUPPORTS_MONOTONIC_CLOCK), true)
 LINK_FLAGS             += -lrt
 endif
