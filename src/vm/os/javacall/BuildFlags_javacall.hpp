@@ -52,4 +52,6 @@
 //
 //  javacall_int64 javacall_time_get_monotonic_clock_frequency(void);
 //
+#ifndef SUPPORTS_MONOTONIC_CLOCK
 #define SUPPORTS_MONOTONIC_CLOCK     1
+#endif

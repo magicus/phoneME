@@ -62,4 +62,6 @@
 #endif
 
 // The default Linux port supports monotonic clock
-#define SUPPORTS_MONOTONIC_CLOCK 1
+#ifndef SUPPORTS_MONOTONIC_CLOCK
+#error "SUPPORTS_MONOTONIC_CLOCK must be defined in jvm.make"
+#endif

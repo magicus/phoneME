@@ -1894,6 +1894,27 @@ NO_DEBUG_SYMBOLS         = true
 endif
 endif
 
+ifndef SUPPORTS_MONOTONIC_CLOCK
+SUPPORTS_MONOTONIC_CLOCK := \
+  $(shell TESTFILE="`mktemp`.c" && \
+    echo "\#include <time.h>"                     >  $$TESTFILE && \
+    echo ""                                       >> $$TESTFILE && \
+    echo "int main(void) {"                       >> $$TESTFILE && \
+    echo "  struct timespec tp;"                  >> $$TESTFILE && \
+    echo "  clock_gettime(CLOCK_MONOTONIC, &tp);" >> $$TESTFILE && \
+    echo "}"                                      >> $$TESTFILE && \
+    $(CC_gcc) -o /dev/null -lrt $$TESTFILE 2> /dev/null && \
+    echo true || echo false; rm $$TESTFILE)
+export SUPPORTS_MONOTONIC_CLOCK__BY = jvm.make
+endif
+
+ifeq ($(SUPPORTS_MONOTONIC_CLOCK), true)
+LINK_FLAGS             += -lrt
+CPP_DEF_FLAGS          += -DSUPPORTS_MONOTONIC_CLOCK=1
+else
+CPP_DEF_FLAGS          += -DSUPPORTS_MONOTONIC_CLOCK=0
+endif
+
 ifeq ($(NO_DEBUG_SYMBOLS), true)
     DEBUG_SYMBOLS_FLAGS     =
     CPP_OPT_FLAGS_debug     = -O2 $(GCC_WUNINITIALIZED) -fexpensive-optimizations
@@ -1993,10 +2014,6 @@ LINK_PTHREAD=true
 endif
 ifeq ($(LINK_PTHREAD), true)
 LINK_FLAGS             += -lpthread
-endif
-
-ifeq ($(SUPPORTS_MONOTONIC_CLOCK), true)
-LINK_FLAGS             += -lrt
 endif
 
 ifeq ($(ENABLE_PCSL), true)
