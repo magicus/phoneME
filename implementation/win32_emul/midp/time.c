@@ -284,7 +284,8 @@ javacall_int64 /*OPTIONAL*/ javacall_time_get_monotonic_clock_counter(void) {
 }
 
 /**
- * Returns the frequency of the monotonic clock counter.
+ * Returns the frequency of the monotonic clock counter in the number 
+ * of periods per second.
  *
  * @return the frequency of the monotonic clock counter
  */

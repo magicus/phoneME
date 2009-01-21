@@ -198,7 +198,8 @@ javacall_time_milliseconds /*OPTIONAL*/ javacall_time_get_clock_milliseconds(voi
 javacall_int64 /*OPTIONAL*/ javacall_time_get_monotonic_clock_counter(void);
 
 /**
- * Returns the frequency of the monotonic clock counter.
+ * Returns the frequency of the monotonic clock counter in the number 
+ * of periods per second.
  * <p>
  * The CLDC VM build flag SUPPORTS_MONOTONIC_CLOCK should be set to
  * a non-zero value if the platform provides the monotonic clock,
