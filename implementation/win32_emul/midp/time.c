@@ -277,14 +277,17 @@ javacall_time_milliseconds /*OPTIONAL*/ javacall_time_get_clock_milliseconds(voi
  */
 javacall_int64 /*OPTIONAL*/ javacall_time_get_monotonic_clock_counter(void) {
   LARGE_INTEGER count;
-  // NOTE: we assume performance counter is available and do not check
-  // the return value
+  /* 
+   * NOTE: we assume performance counter is available and do not check
+   * the return value
+   */
   QueryPerformanceCounter(&count);
   return (javacall_int64)count.QuadPart;
 }
 
 /**
- * Returns the frequency of the monotonic clock counter.
+ * Returns the frequency of the monotonic clock counter in the number 
+ * of periods per second.
  *
  * @return the frequency of the monotonic clock counter
  */
@@ -293,8 +296,10 @@ javacall_int64 /*OPTIONAL*/ javacall_time_get_monotonic_clock_frequency(void) {
   javacall_int64 f = frequency;
   if (f < 0) {
     LARGE_INTEGER freq;
-    // NOTE: we assume performance counter is available and do not check
-    // the return value
+    /*
+     * NOTE: we assume performance counter is available and do not check
+     * the return value
+     */
     QueryPerformanceFrequency(&freq);
     frequency = f = freq.QuadPart;
   }
