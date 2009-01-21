@@ -1137,8 +1137,8 @@ SourceROMWriter::print_rom_hashtable_content(const char *element_name,
     }
     main_stream()->print("\n/* %d [%d] */\n\t", b, bytes_written/4);
 
-    int bucket_size = bucket().length();
-    for (int index=0; index<bucket_size; index++) {
+    const int bucket_size = bucket().length();
+    for (int index = 0; index < bucket_size; index++) {
       oop = bucket().obj_at(index);
       GUARANTEE(!oop.is_null(), "sanity");
       write_reference(&oop, TEXT_BLOCK, main_stream() JVM_CHECK_0);

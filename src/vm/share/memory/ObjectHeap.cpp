@@ -379,8 +379,10 @@ void ObjectHeap::accumulate_memory_usage( OopDesc* _lwb[], OopDesc* _upb[] ) {
 
 void ObjectHeap::accumulate_current_task_memory_usage( void ) {
 #if ENABLE_MEMORY_MONITOR
-  notify_objects_created();
-#endif // ENABLE_MEMORY_MONITOR
+  if( UseMemoryMonitor ) {
+    notify_objects_created();
+  }
+#endif
 
   const int current_task_id = _current_task_id;
   TaskMemoryInfo& task_info = get_task_info( current_task_id );
@@ -5257,7 +5259,9 @@ void ObjectHeap::print_task_usage(Stream *st) {
 #if ENABLE_ISOLATES
   if (VerboseGC || TraceGC || TraceHeapSize) {
     ForTask(task) {
-      st->print_cr("Task %2d usage %d", task, _task_info[task].usage);
+      const TaskMemoryInfo& info = get_task_info( task );
+      st->print_cr("Task %2d usage %d reserve %d", task,
+                    info.usage, info.reserve);
       if (!Universe::before_main()) {
         Task::Raw t = Task::get_task(task);
         if (!t.is_null()) {

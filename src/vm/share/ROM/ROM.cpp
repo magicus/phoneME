@@ -984,10 +984,11 @@ ReturnOop ROM::string_from_table(String *string, juint hash_value) {
 ReturnOop ROM::symbol_for(utf8 s, juint hash_value, int len) {
   ROM_DETAILED_PERFORMANCE_COUNTER_START();
   if (_rom_symbol_table_num_buckets > 0) {
-    juint i = hash_value % _rom_symbol_table_num_buckets;
-    SymbolDesc*** rom_table = (SymbolDesc ***)_rom_symbol_table;
-    SymbolDesc** p = rom_table[i];     // start of the bucket
-    SymbolDesc** end = rom_table[i+1]; // end of the bucket (exclusive)
+    const juint i = hash_value % _rom_symbol_table_num_buckets;
+    const SymbolDesc* const** const rom_table =
+      (const SymbolDesc* const**)_rom_symbol_table;
+    const SymbolDesc* const* p = rom_table[i];     // start of the bucket
+    const SymbolDesc* const* end = rom_table[i+1]; // end of the bucket (excl)
     while (p != end) {
       if ((*p)->matches(s, len)) {
         ROM_DETAILED_PERFORMANCE_COUNTER_END(symbol_for_hrticks);
@@ -1004,11 +1005,11 @@ ReturnOop ROM::symbol_for(utf8 s, juint hash_value, int len) {
     for (int i = 0; i < bundles().length(); i++) {
       ROMBundle* bundle = (ROMBundle*)bundles().obj_at(i);
       if (bundle->symbol_table_num_buckets() != 0) {
-        juint i = hash_value % bundle->symbol_table_num_buckets();
-        SymbolDesc*** rom_table = (SymbolDesc ***)
+        const juint i = hash_value % bundle->symbol_table_num_buckets();
+        const SymbolDesc* const** const rom_table = (const SymbolDesc* const**)
           bundle->ptr_at( ROMBundle::SYMBOL_TABLE );
-        SymbolDesc** p   = rom_table[i];   // start of the bucket
-        SymbolDesc** end = rom_table[i+1]; // end of the bucket (exclusive)
+        const SymbolDesc* const* p   = rom_table[i];   // start of the bucket
+        const SymbolDesc* const* end = rom_table[i+1]; // end of the bucket
         while (p != end) {
           if ((*p)->matches(s, len)) {
             ROM_DETAILED_PERFORMANCE_COUNTER_END(symbol_for_hrticks);
@@ -1022,11 +1023,12 @@ ReturnOop ROM::symbol_for(utf8 s, juint hash_value, int len) {
 #else
   if( ROMBundle::current() != NULL &&
       ROMBundle::current()->symbol_table_num_buckets() != 0) {
-    juint i = hash_value % ROMBundle::current()->symbol_table_num_buckets();
-    SymbolDesc*** rom_table = (SymbolDesc ***)
+    const juint i =
+      hash_value % ROMBundle::current()->symbol_table_num_buckets();
+    const SymbolDesc* const** const rom_table = (const SymbolDesc* const**)
       ROMBundle::current()->ptr_at( ROMBundle::current()->SYMBOL_TABLE );
-    SymbolDesc** p   = rom_table[i];   // start of the bucket
-    SymbolDesc** end = rom_table[i+1]; // end of the bucket (exclusive)
+    const SymbolDesc* const* p   = rom_table[i];   // start of the bucket
+    const SymbolDesc* const* end = rom_table[i+1]; // end of the bucket
     while (p != end) {
       if ((*p)->matches(s, len)) {
         ROM_DETAILED_PERFORMANCE_COUNTER_END(symbol_for_hrticks);

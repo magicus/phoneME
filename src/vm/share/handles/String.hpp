@@ -40,51 +40,51 @@ class String : public Instance {
   static int offset_offset() {
     return header_size() + sizeof(jobject);
   }
-  static int count_offset(){
+  static int count_offset() {
     return header_size() + sizeof(jobject) + sizeof(jint);
   }
 
  public:
   // ^TypeArray
-  ReturnOop value() {
+  ReturnOop value( void ) const {
     return obj_field(value_offset());
   }
 
-  jint offset() {
+  jint offset( void ) const {
     return int_field(offset_offset());
   }
   void set_offset(jint value) {
     int_field_put(offset_offset(), value);
   }
 
-  jint count() {
+  jint count( void ) const {
     return int_field(count_offset());
   }
   void set_count(jint value) {
     int_field_put(count_offset(), value);
   }
 
-  jint length() {
+  jint length( void ) const {
     return count();
   }
   void set_length(jint value) {
     set_count(value);
   }
 
-  bool matches(String *other_string);
-  juint hash();
+  bool matches(const String* other_string) const;
+  juint hash( void ) const;
 
   // Return the content of the string as a NUL-terminated "C" string
   // (the upper byte of each character is stripped, and a NUL character
   // is appended to the end).
   ReturnOop to_cstring(JVM_SINGLE_ARG_TRAPS);
 
-  void print_string_on(Stream* st, int max_len=-1);
+  void print_string_on(Stream* st, int max_len=-1) const;
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE
-  void print_value_on(Stream* /*st*/);
+  void print_value_on(Stream* /*st*/) const;
 #endif
 
-  jchar char_at(int index);
+  jchar char_at(int index) const;
 
-  jint last_index_of(jchar ch, jint fromIndex);
+  jint last_index_of(jchar ch, jint fromIndex) const;
 };

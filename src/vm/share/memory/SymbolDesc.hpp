@@ -27,18 +27,21 @@
 class SymbolDesc: public OopDesc {
  private:
   // NOTE: cannot use sizeof(SymbolDesc) since compiler aligns the size
-  static jint header_size() {
+  static jint header_size( void ) {
     return FIELD_OFFSET(SymbolDesc, _length) + sizeof(jushort);
   }
 
  public:
-  utf8 utf8_data() {
+  utf8 utf8_data( void ) const {
+    return (utf8) this + header_size();
+  }
+  utf8 utf8_data( void ) {
     return (utf8) this + header_size();
   }
 
  private:
-  bool matches(SymbolDesc* other_symbol);
-  bool matches(utf8 s, int len) {
+  bool matches(const SymbolDesc* other_symbol) const;
+  bool matches(utf8 s, const int len) const {
     if (len != _length) {
       return false;
     } else {
@@ -47,16 +50,16 @@ class SymbolDesc: public OopDesc {
   }
 
   // Returns the size of a symbol with the given length.
-  static size_t allocation_size(int length) { 
+  static size_t allocation_size(const int length) { 
     GUARANTEE(length >= 0, "Cannot allocate symbol of negative length");
     return align_allocation_size(header_size() + length * sizeof(jbyte));
   }
 
  public:
   // Returns the object size
-  size_t object_size() const { return allocation_size(_length); }
+  size_t object_size( void ) const { return allocation_size(_length); }
 
-  juint utf8_length() { 
+  juint utf8_length( void ) const { 
     return _length;
   };
 

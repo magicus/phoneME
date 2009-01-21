@@ -27,7 +27,7 @@
 # include "incls/_precompiled.incl"
 # include "incls/_String.cpp.incl"
 
-bool String::matches(String *that_string) {
+bool String::matches(const String *that_string) const{
   if (this->count() != that_string->count()) {
     return false;
   }
@@ -45,19 +45,17 @@ bool String::matches(String *that_string) {
   }
 }
 
-juint String::hash() {
+juint String::hash( void ) const {
   AllocationDisabler raw_pointers_used_in_this_function;
 
   juint value = 0;
   TypeArray::Raw char_array = this->value();
-  jchar *ptr = (jchar*) char_array().base_address();
+  const jchar* ptr = (const jchar*) char_array().base_address();
   ptr += this->offset();
-  jchar *end = ptr + this->count();
-
-  while (ptr < end) {
-    juint chr = (juint)(*ptr);
+  
+  for( const jchar* const end = ptr + this->count(); ptr < end; ptr++ ) {
+    const juint chr = juint(*ptr);
     value = 31 * value + chr;
-    ptr++;
   }
   return value;
 }
@@ -68,7 +66,7 @@ ReturnOop String::to_cstring(JVM_SINGLE_ARG_TRAPS) {
   int off = offset();
   TypeArray::Fast ustring = value();
   TypeArray::Fast cstring = Universe::new_byte_array(len+1 JVM_CHECK_0);
-  jushort *uptr = ((jushort*)ustring().base_address()) + off;
+  const jushort* uptr = ((jushort*)ustring().base_address()) + off;
   jubyte  *cptr = (jubyte*)cstring().base_address();
 
   for (int i=0; i<len; i++) {
@@ -79,7 +77,7 @@ ReturnOop String::to_cstring(JVM_SINGLE_ARG_TRAPS) {
   return cstring;
 }
 
-void String::print_string_on(Stream* st, int max_len) {
+void String::print_string_on(Stream* st, int max_len) const {
   UsingFastOops fast_oops;
   TypeArray::Fast t = value();
   int index = offset();
@@ -103,12 +101,12 @@ void String::print_string_on(Stream* st, int max_len) {
   }
 }
 
-jchar String::char_at(int index) {
+jchar String::char_at(int index) const {
   TypeArray::Raw ta = value();
   return ta().char_at(index + offset());
 }
 
-jint String::last_index_of(jchar ch, jint fromIndex) {
+jint String::last_index_of(jchar ch, jint fromIndex) const {
   if (count() == 0 || fromIndex < 0) {
     return -1;
   }
@@ -122,18 +120,13 @@ jint String::last_index_of(jchar ch, jint fromIndex) {
 
   // Pointer to the start point of the search.
   const jchar* p = base + fromIndex;
-
-  do {
-    if (*p == ch) {
-      return p - base;
-    }
-  } while (--p >= base);
-
-  return -1;
+  while( *p == ch && --p >= base ) {
+  }
+  return p - base;
 }
 
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE
-void String::print_value_on(Stream* st) {
+void String::print_value_on(Stream* st) const {
   TypeArray::Raw t = value();
   if (t.is_null()) {
     st->print("(uninitialized)");
@@ -143,6 +136,4 @@ void String::print_value_on(Stream* st) {
     st->print("\"");
   }
 }
-
-
 #endif
