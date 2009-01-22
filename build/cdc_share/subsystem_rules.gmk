@@ -35,5 +35,6 @@ $(JSR_239_NATIVE_LIB): $(JSR_239_NATIVE_OBJS)
 
 # Copy and filter JSR 239 source in JSR_239_SOURCE_OUTPUT_DIR
 jsr_239_source_bundle:: $(JSR_239_DIR)
-	$(AT)$(call source_bundle_filter,$(JSR_239_DIR),$(JSR_239_SOURCE_OUTPUT_DIR),src/share src/cdc_share build/share build/cdc_share)
+	@echo " ... JSR 239 source bundle" $(LOG)
+	$(AT)$(call source_bundle_filter,$(JSR_239_DIR),$(JSR_239_SOURCE_OUTPUT_DIR),build/share build/cdc_share)
 

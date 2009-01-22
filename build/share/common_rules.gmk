@@ -57,12 +57,6 @@ JSR_239_LIB_DIR:
 # Append JSR 239 source bundle creation to target
 source_bundle:: jsr_239_source_bundle
 
-# Copy and filter JSR 239 source in JSR_239_SOURCE_OUTPUT_DIR
-#
-jsr_239_source_bundle:: SOURCE_OUTPUT_DIR
-	@echo " ... JSR 239 source bundle (oss)" $(LOG)
-	@$(call re_src_filter,$(JSR_239_DIR),$(JSR_239_SOURCE_OUTPUT_DIR),src)
-
 #(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_239_JAVA_FILES)
 #	$(appendjavafiles)
 
