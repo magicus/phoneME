@@ -93,11 +93,11 @@ typedef struct _EventQueue {
     /** The queue position of the next event to be stored */
     int eventOut;
     /** 
-     * Indicates if the queue is currently active, that is, 
-     * there is an actual Java queue associated with this native data.
-     * Queue can be inactive because we preallocate all the native 
-     * structures in advance, so it is possible that some of these
-     * structures are currently unused.
+     * Indicates if the queue is currently active, that is, there is 
+     * an actual Java queue associated with this native data. Queue 
+     * can be inactive at the moment because we preallocate all 
+     * the native structures in advance, so it is possible that some 
+     * of these structures are currently unused.
      */
     jboolean isActive;    
     /** Thread state for each Java native event monitor. */
@@ -307,7 +307,7 @@ static void blockMonitorThread(jint queueId) {
         SNI_SetSpecialThread(isolateId);
         SNI_BlockThread();
     } else {
-        /* Block thread in the usual way */
+        /* Block thread in the normal way */
         midp_thread_wait(EVENT_QUEUE_SIGNAL, queueId, 0);
     }
 
@@ -342,7 +342,7 @@ static void unblockMonitorThread(jint queueId) {
                 "native event monitor thread");
         }
     } else {
-        /* Unblock thread in the usual (slower) way */
+        /* Unblock thread in the normal (slower) way */
         midp_thread_signal(EVENT_QUEUE_SIGNAL, queueId, 0);
     }
 
@@ -488,26 +488,26 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, jint queueId) {
 void
 StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
     jint queueId = -1;
-    EventQueue* pEventQueue;
 
     if( -1 != isolateId ) {
         queueId = ISOLATE_ID_TO_QUEUE_ID(isolateId);
         StoreMIDPEventInVmThreadImp(event, queueId);
     } else {
 #if ENABLE_MULTIPLE_ISOLATES
+    EventQueue* pEventQueue;
+
     for (isolateId = 1; isolateId <= gsMaxIsolates; isolateId++)
         queueId = ISOLATE_ID_TO_QUEUE_ID(isolateId);
         GET_EVENT_QUEUE_BY_ID(pEventQueue, queueId);
 
         /* 
          * Broadcast only for active queues to avoid overflowing 
-         * inactive queues that no one reads event from
+         * inactive queues that no one is currently reading events from
          */
         if (pEventQueue->isActive) {
             StoreMIDPEventInVmThreadImp(event, queueId);
         }
 #else
-        (void)pEventQueue; /* avoid warning */
         StoreMIDPEventInVmThreadImp(event, 0);
 #endif
     }
@@ -774,7 +774,7 @@ Java_com_sun_midp_events_EventQueue_getEventQueueId0(void) {
    EventQueue* pEventQueue;
     
     /* Use Isolate IDs for event queue handles. */
-    queueId = getCurrentIsolateId();
+    queueId = ISOLATE_ID_TO_QUEUE_ID(getCurrentIsolateId());
 
     /* Mark queue as active */
     GET_EVENT_QUEUE_BY_ID(pEventQueue, queueId);
