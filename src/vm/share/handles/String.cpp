@@ -120,7 +120,7 @@ jint String::last_index_of(jchar ch, jint fromIndex) const {
 
   // Pointer to the start point of the search.
   const jchar* p = base + fromIndex;
-  while( *p == ch && --p >= base ) {
+  while( *p != ch && --p >= base ) {
   }
   return p - base;
 }
