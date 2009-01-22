@@ -436,8 +436,8 @@ bool Arguments::parse_method_trap_param(const char* arg) {
 
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
-char* Arguments::_method_CompileOnly;
-char* Arguments::_class_CompileOnly;
+char* Arguments::_method_CompileOnly = "func";
+char* Arguments::_class_CompileOnly = "b";
 
 bool Arguments::must_compile_method(Symbol* class_name, Symbol* method_name
                                     JVM_TRAPS) {
