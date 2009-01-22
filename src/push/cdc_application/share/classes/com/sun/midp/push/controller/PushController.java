@@ -1,22 +1,22 @@
 /*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -225,6 +225,25 @@ public final class PushController {
     public void removeSuiteInfo(final int midletSuiteID) {
         alarmController.removeSuiteAlarms(midletSuiteID);
         connectionController.removeSuiteConnections(midletSuiteID);
+    }
+
+    /**
+     * Dumps Push-related information for the suite to the specified store;
+     *
+     * <p>
+     * NOTE: <code>midletSuiteID</code> must refer to valid installed
+     *  <code>MIDlet</code> suite.  However, it might refer to the
+     *  suite without alarms.
+     * </p>
+     *
+     * @param midletSuiteID ID of the suite to dump Push info for
+     * @param store dump destination
+     * @throws IOException if dump fails
+     */
+    public void dumpSuiteInfo(final int midletSuiteID,  final Store store)
+            throws IOException {
+        alarmController.dumpSuiteAlarms(midletSuiteID, store);
+        connectionController.dumpSuiteConnections(midletSuiteID, store);
     }
 
     /**

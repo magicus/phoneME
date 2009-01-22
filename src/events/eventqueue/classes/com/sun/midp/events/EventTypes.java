@@ -438,4 +438,10 @@ public final class EventTypes {
      * Request to exit a running midlet from the debug agent to AMS.
      */
     public static final int MIDP_ODD_EXIT_MIDLET_EVENT = 70;
+
+    /**
+     * JSR 257 notification event
+     */
+    public static final int CONTACTLESS_EVENT = 71;
+    
 }

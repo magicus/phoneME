@@ -157,9 +157,9 @@ MIDP_EXCLUDED_CLASS_DIR = $(MIDP_OUTPUT_DIR)/excludedclasses
 
 # The list of classes excluded from MIDP/CDC build.
 MIDP_EXCLUDED_JAVA_FILES = \
-    $(MIDP_DIR)/src/core/javautil/reference/classes/java/util/Timer.java \
-    $(MIDP_DIR)/src/core/javautil/reference/classes/java/util/TimerTask.java \
-    $(MIDP_DIR)/src/core/javautil/reference/classes/java/lang/IllegalStateException.java \
+    $(MIDP_DIR)/src/core/javautil/classes/java/util/Timer.java \
+    $(MIDP_DIR)/src/core/javautil/classes/java/util/TimerTask.java \
+    $(MIDP_DIR)/src/core/javautil/classes/java/lang/IllegalStateException.java \
     $(MIDP_DIR)/src/security/pki/reference/classes/javax/microedition/pki/Certificate.java \
     $(MIDP_DIR)/src/security/pki/reference/classes/javax/microedition/pki/CertificateException.java \
     $(MIDP_DIR)/src/protocol/serial/classes/javax/microedition/io/CommConnection.java \

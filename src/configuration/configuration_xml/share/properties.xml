@@ -144,7 +144,10 @@
   <property Key="mms"
 	    Value="com.sun.midp.io.j2me.mms.ProtocolPushImpl"
 	    Scope="internal"/>				
-
+  <property Key="ndef"
+        Value="com.sun.contactless.ProtocolPushImpl"
+        Scope="internal"/>
+        
   <property Key="AMS_MEMORY_RESERVED_MVM"
             Value="1024"
             Scope="internal"

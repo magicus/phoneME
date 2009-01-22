@@ -230,8 +230,56 @@ freeMIDPEventFields(MidpEvent event) {
     pcsl_string_free(&event.stringParam6);
 }    
 
+#if ENABLE_MULTIPLE_ISOLATES
 /**
+<<<<<<< .working
  * Gets the next pending event for an event queue.
+=======
+ * Duplicates those fields of an event, which require resource allocation.
+ *
+ * @param event The event to be duplicated
+ *
+ * @return 0 for success, or non-zero if the MIDP implementation is
+ * out of memory
+ */
+static int
+duplicateMIDPEventFields(MidpEvent *event) {
+    int i, j;
+    MidpEvent e = *event;
+    pcsl_string *params[2][6];
+
+    params[0][0] = &e.stringParam1;
+    params[0][1] = &e.stringParam2;
+    params[0][2] = &e.stringParam3;
+    params[0][3] = &e.stringParam4;
+    params[0][4] = &e.stringParam5;
+    params[0][5] = &e.stringParam6;
+    params[1][0] = &event->stringParam1;
+    params[1][1] = &event->stringParam2;
+    params[1][2] = &event->stringParam3;
+    params[1][3] = &event->stringParam4;
+    params[1][4] = &event->stringParam5;
+    params[1][5] = &event->stringParam6;
+
+    for (i = 0; i < 6; i++) {
+        if (PCSL_STRING_OK !=
+            pcsl_string_dup(params[0][i], params[1][i])) {
+                for (j = 0; j < i; j++) {
+                    pcsl_string_free(params[1][j]);
+                    *params[1][j] = *params[0][j];
+                }
+                *params[1][i] = *params[0][i];
+                return -1;
+            }
+    }
+
+    return 0;
+}
+#endif
+
+/**
+ * Gets the next pending event for an isolate.
+>>>>>>> .merge-right.r16694
  * <p>
  * <b>NOTE:</b> Any string parameter data must be de-allocated with
  * <tt>midpFree</tt>.
@@ -494,6 +542,7 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
         StoreMIDPEventInVmThreadImp(event, queueId);
     } else {
 #if ENABLE_MULTIPLE_ISOLATES
+<<<<<<< .working
     EventQueue* pEventQueue;
 
     for (isolateId = 1; isolateId <= gsMaxIsolates; isolateId++)
@@ -507,6 +556,17 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
         if (pEventQueue->isActive) {
             StoreMIDPEventInVmThreadImp(event, queueId);
         }
+=======
+        StoreMIDPEventInVmThreadImp(event, 1);
+        for (isolateId = 2; isolateId <= maxIsolates; isolateId++) {
+            if(0 != duplicateMIDPEventFields(&event)) {
+                REPORT_CRIT(LC_CORE, "StoreMIDPEventInVmThread: "
+                            "Out of memory.");
+                return;
+            }
+            StoreMIDPEventInVmThreadImp(event, isolateId);
+        }
+>>>>>>> .merge-right.r16694
 #else
         StoreMIDPEventInVmThreadImp(event, 0);
 #endif

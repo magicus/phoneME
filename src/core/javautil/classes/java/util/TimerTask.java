@@ -37,61 +37,9 @@ package java.util;
 
 public abstract class TimerTask implements Runnable {
     /**
-     * This object is used to control access to the TimerTask internals.
-     */
-    final Object lock = new Object();
-
-    /**
-     * The state of this task, chosen from the constants below.
-     */
-    int state = VIRGIN;
-
-    /**
-     * This task has not yet been scheduled.
-     */
-    static final int VIRGIN = 0;
-
-    /**
-     * This task is scheduled for execution.  If it is a non-repeating task,
-     * it has not yet been executed.
-     */
-    static final int SCHEDULED   = 1;
-
-    /**
-     * This non-repeating task has already executed (or is currently
-     * executing) and has not been cancelled.
-     */
-    static final int EXECUTED    = 2;
-
-    /**
-     * This task has been cancelled (with a call to TimerTask.cancel).
-     */
-    static final int CANCELLED   = 3;
-
-    /**
-     * Next execution time for this task in the format returned by
-     * System.currentTimeMillis, assuming this task is schedule for execution.
-     * For repeating tasks, this field is updated prior to each task execution.
-     */
-    long nextExecutionTime;
-
-    /**
-     * Period in milliseconds for repeating tasks.  A positive value indicates
-     * fixed-rate execution.  A negative value indicates fixed-delay execution.
-     * A value of 0 indicates a non-repeating task.
-     */
-    long period = 0;
-
-    /**
-     * Indicates if the user clock should be used to schedule this task.
-     */
-    boolean isUserClock;
-
-    /**
      * Creates a new timer task.
      */
-    protected TimerTask() {
-    }
+    protected TimerTask() {}
 
     /**
      * The action to be performed by this timer task.
@@ -121,11 +69,7 @@ public abstract class TimerTask implements Runnable {
      *         executions from taking place.)
      */
     public boolean cancel() {
-        synchronized (lock) {
-            boolean result = (state == SCHEDULED);
-            state = CANCELLED;
-            return result;
-        }
+	return false;
     }
 
     /**
@@ -157,9 +101,6 @@ public abstract class TimerTask implements Runnable {
      * @see Date#getTime()
      */
     public long scheduledExecutionTime() {
-        synchronized (lock) {
-            return (period < 0 ? nextExecutionTime + period
-                               : nextExecutionTime - period);
-        }
+	return 0;
     }
 }

@@ -690,30 +690,6 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
     }
     
     /**
-     * Calculate the height a displayable would occupy if it was to
-     * be displayed.
-     *
-     * @return the height a displayable would occupy 
-     */
-    public int getDisplayableHeight() {
-        return currentDisplay != null ?
-            currentDisplay.getDisplayableHeight() :
-            AlertSkin.HEIGHT;
-    }
-
-    /**
-     * Calculate the width a displayable would occupy if it was to
-     * be displayed
-     *
-     * @return the width a displayable would occupy 
-     */
-    public int getDisplayableWidth() {
-        return currentDisplay != null ?
-            currentDisplay.getDisplayableWidth() :
-            AlertSkin.WIDTH;
-    }
-
-    /**
      * The maximum amount of scroll needed to see all the contents
      * @return get the maximum scroll amount
      */
@@ -729,6 +705,30 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
      */
     protected int getScrollAmount() {
         return AlertSkin.SCROLL_AMOUNT;
+    }
+
+    /**
+     * Calculate the height a displayable would occupy if it was to
+     * be displayed.
+     *
+     * @return the height a displayable would occupy 
+     */
+    public int getDisplayableHeight() {
+        return (currentDisplay != null ?
+		currentDisplay.getDisplayableHeight() :
+		Display.getDefaultAlertHeight());
+    }
+
+    /**
+     * Calculate the width a displayable would occupy if it was to
+     * be displayed
+     *
+     * @return the width a displayable would occupy 
+     */
+    public int getDisplayableWidth() {
+	return (currentDisplay != null ?
+		currentDisplay.getDisplayableWidth() :
+		Display.getDefaultAlertWidth(getVerticalScrollProportion() != 100)); 
     }
 
     
