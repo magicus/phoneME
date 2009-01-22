@@ -1,0 +1,74 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+# JSR_239_DIR = point to the root of this workspace
+#
+######################################################################
+
+
+# Platform definitions
+#
+#ifdef PROJECT_JSR_239_DIR
+#include $(PROJECT_JSR_239_DIR)/src/config/$(TARGET_OS).gmk
+#else
+#include $(JSR_239_DIR)/src/cldc-oi/config/sample.gmk
+#endif
+
+#
+# Verify whether JSR_239_LIB_DIR is correctly specified
+#
+all:: JSR_239_LIB_DIR
+
+JSR_239_LIB_DIR:
+	@echo " ... verifing JSR_239_LIB_DIR"
+	@$(verify_directory) $(LOG)
+
+# Append JSR 239 source bundle creation to target
+source_bundle:: jsr_239_source_bundle
+
+#(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_239_JAVA_FILES)
+#	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES += $(SUBSYSTEM_JSR_239_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES      += $(SUBSYSTEM_JSR_239_NATIVE_FILES)
+EXTRA_INCLUDES         += $(SUBSYSTEM_JSR_239_EXTRA_INCLUDES)
+
+#
+# Remove "-Werror" from $(CFLAGS) for all native files
+# IMPL_NOTE: fix the warnings in the native files
+#
+#$(OBJ_DIR)/%.o: $(JSR_239_DIR)/src/cldc/native/%.c
+#	@echo " ... $@" $(LOG)
+#	@echo +++ $(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG_ONLY)
+#	$(A)$(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
