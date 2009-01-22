@@ -246,14 +246,6 @@
 #     by about 2%. If profiling support is included at build time but not
 #     used at runtime, it has no affect on preformance.
 #
-# CVM_NO_LOSSY_OPCODES default: false
-#     Field-related opcodes whose arguments would ordinarily be quickened into
-#     offsets instead have their arguments quickened into constant pool
-#     references, to ensure the fieldblock for the field is available. This is
-#     required to allow the debugger to set field watchpoints. Note this works
-#     either with or without classloading enabled, and affects both
-#     JavaCodeCompact and quicken.c.
-#
 # CVM_REBUILD default: false
 #     Rebuild using the same build flags as last time, preventing the need to
 #     retype a bunch of command line options. The main benefit of this is that
