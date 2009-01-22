@@ -419,14 +419,6 @@ int JVM::start() {
     goto done;
   }
 
-//XXXXXX
-  PrintCompiledCode = true;
-  GenerateCompilerComments = true;
-  DumpVSFInComments = true;
-  MaxCompilationTime = 1000000;
-  CompiledCodeFactor = 100;
-  tty->print_cr("JVM::start PrintCompiledCode=%d\n", PrintCompiledCode);
-//XXXXXX
   if (GenerateROMImage) {
     ok = start_standalone_rom_generator(JVM_SINGLE_ARG_NO_CHECK);
   } else {
