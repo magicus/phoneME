@@ -287,7 +287,11 @@ endif
 # Include JSR 239
 ifeq ($(USE_JSR_239), true)
 export JSR_239_DIR ?= $(COMPONENTS_DIR)/jsr239
-JSR_239_MAKE_FILE = $(JSR_239_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(PROJECT_JSR_239_DIR),)
+JSR_239_MAKE_FILE = $(JSR_239_DIR)/build/cdc_share/$(SUBSYSTEM_MAKE_FILE)
+else
+JSR_239_MAKE_FILE = $(PROJECT_JSR_239_DIR)/build/cdc_share/$(SUBSYSTEM_MAKE_FILE)
+endif
 ifeq ($(wildcard $(JSR_239_MAKE_FILE)),)
 $(error JSR_239_DIR must point to a directory containing JSR 239 sources)
 endif
