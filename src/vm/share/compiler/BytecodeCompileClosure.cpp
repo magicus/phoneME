@@ -278,24 +278,24 @@ void BytecodeCompileClosure::branch_if_flags(JVM_SINGLE_ARG_TRAPS) {
     const Bytecodes::Code code = bytecode_at(bci);
     const unsigned offset = unsigned(code) - Bytecodes::_ifeq;
     if( offset <= unsigned(Bytecodes::_ifle - Bytecodes::_ifeq) ) {
-      const cond_op cond = cond_op(offset + BytecodeClosure::eq);
       const int dest = branch_destination(bci);
-      set_bytecode(bci);
-      set_default_next_bytecode_index(bci);
-      compiler()->set_bci(bci); // Is it really necessary?
 
-      // Insert OSR entries for backward branches.
-      if( dest < bci || is_active_bci() ) {
-        osr_entry(JVM_SINGLE_ARG_CHECK);
+      // This optimization is incompatible with OSR, 
+      // so apply it only if OSR entry is not needed at this point
+      if( dest > bci && !is_active_bci() ) {
+        const cond_op cond = cond_op(offset + BytecodeClosure::eq);
+        set_bytecode(bci);
+        set_default_next_bytecode_index(bci);
+        compiler()->set_bci(bci); // Is it really necessary?
+
+        // Pop argument
+        PoppedValue op1(T_INT);
+        Value op2(T_INT);
+        op2.set_int(0);
+
+        __ branch_if(cond, dest, op1, op2, true JVM_NO_CHECK_AT_BOTTOM);
+        set_jump_from_current_bci( dest );
       }
-
-      // Pop argument
-      PoppedValue op1(T_INT);
-      Value op2(T_INT);
-      op2.set_int(0);
-
-      __ branch_if(cond, dest, op1, op2, true JVM_NO_CHECK_AT_BOTTOM);
-      set_jump_from_current_bci( dest );
     }
   }
 }
