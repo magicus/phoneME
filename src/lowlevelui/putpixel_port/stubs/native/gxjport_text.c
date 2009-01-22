@@ -32,7 +32,7 @@
  * platform dependent character drawing
  */
  
-int gxjport_draw_chars(int pixel, const jshort *clip, void *dst, int dotted,
+int gxjport_draw_chars(int pixel, const jshort *clip, gxj_screen_buffer *dst, int dotted,
                        int face, int style, int size,
                        int x, int y, int anchor, int direction,
                        const jchar *chararray, int n) {

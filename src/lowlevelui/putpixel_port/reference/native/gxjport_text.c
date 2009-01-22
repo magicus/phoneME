@@ -188,6 +188,12 @@ int gxjport_draw_chars(int pixel, const jshort *clip, gxj_screen_buffer *dest,
     int clipY2 = clip[3];
     int diff;
 
+    (void)dotted;
+    (void)face;
+    (void)style;
+    (void)size;
+    (void)anchor;
+
 //    int fontAscent;
 //    int fontDescent;
 //    int fontLeading;
@@ -230,7 +236,7 @@ int gxjport_draw_chars(int pixel, const jshort *clip, gxj_screen_buffer *dest,
 
     if (clipX1 >= clipX2 || clipY1 >= clipY2) {
         /* Nothing to do. */
-        return;
+        return KNI_TRUE;
     }
 
     /* Apply the clip region to the destination region */
@@ -261,7 +267,7 @@ int gxjport_draw_chars(int pixel, const jshort *clip, gxj_screen_buffer *dest,
 
     if (width <= 0 || yCharSource >= yLimit || nCharsToSkip >= n) {
         /* Nothing to do. */
-        return;
+        return KNI_TRUE;
     }
 
     widthRemaining = width;
@@ -337,6 +343,9 @@ int gxjport_draw_chars(int pixel, const jshort *clip, gxj_screen_buffer *dest,
  */
 int gxjport_get_font_info(int face, int style, int size,
                           int *ascent, int *descent, int *leading) {
+    (void)face;
+    (void)style;
+    (void)size;
 
     *ascent  = FontBitmaps[1][FONT_ASCENT];
     *descent = FontBitmaps[1][FONT_DESCENT];
@@ -359,7 +368,11 @@ int gxjport_get_font_info(int face, int style, int size,
  */
 int gxjport_get_chars_width(int face, int style, int size,
                             const jchar *charArray, int n) {
-
+    (void)face;
+    (void)style;
+    (void)size;
+    (void)charArray;
+    
     return n * FontBitmaps[1][FONT_WIDTH];
 }
 
