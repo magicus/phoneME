@@ -73,5 +73,14 @@ public class JavaProfilerControl implements EventListener {
         }
     }
 
+    public static void enableProfiler(boolean enable) {
+        System.err.println("enableprofiler: " + enable);
+        if (enable) {
+            control0(1);
+        } else {
+            control0(0);            
+        }
+    }
+
     private static native void control0(int command);
 }

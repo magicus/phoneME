@@ -30,6 +30,7 @@
 #include <jvm.h>
 #include <midp_logging.h>
 #include <midp_constants_data.h>
+#include <midpServices.h>
 #include <commonKNIMacros.h>
 
 void midp_profiler_start() {
@@ -39,13 +40,16 @@ void midp_profiler_start() {
 }
 
 void midp_profiler_stop() {
+    int tid;
+
+    tid = getCurrentIsolateId();
+    if (!JVM_SendProfilerCommand(JAVA_PROFILER_COMMAND_DUMP_AND_CLEAR, (void*)tid))
+        REPORT_ERROR(LC_CORE, "Cannot dump java profiler data.\n");
+    
     fprintf(stderr, "Stoping profiling.\n");    
     if (!JVM_SendProfilerCommand(JAVA_PROFILER_COMMAND_STOP, NULL)) {
         REPORT_ERROR(LC_CORE, "Cannot stop java profiler.\n");
     }
-    
-    if (!JVM_SendProfilerCommand(JAVA_PROFILER_COMMAND_DUMP_AND_CLEAR, NULL))
-        REPORT_ERROR(LC_CORE, "Cannot dump java profiler data.\n");
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
