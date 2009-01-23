@@ -61,7 +61,7 @@ public abstract class RtpConnectionBase extends Thread implements Runnable {
         while (connectionIsAlive()) {
             RtpPacket pkt = receivePacket();
             if (null != pkt) {
-                if (null != ss && !ss.enqueuePacket(pkt)) {
+                if (null != ss && !ss.processPacket(pkt)) {
                     stopListening();
                     break;
                 }

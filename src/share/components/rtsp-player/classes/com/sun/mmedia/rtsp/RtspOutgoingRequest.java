@@ -85,6 +85,14 @@ public class RtspOutgoingRequest {
             + userAgent + "\r\n\r\n");
     }
 
+    public static RtspOutgoingRequest GET_PARAMETER(int seqNum, RtspUrl url, String sesId) {
+        return new RtspOutgoingRequest(
+            "GET_PARAMETER rtsp://" + url.getHost() + "/" + url.getFile() + " RTSP/1.0\r\n"
+            + "CSeq: " + seqNum + "\r\n"
+            + ((null != sesId) ? ("Session: " + sesId + "\r\n") : "")
+            + userAgent + "\r\n\r\n");
+    }
+
     public RtspOutgoingRequest(String msg) {
         this.msg = msg;
     }

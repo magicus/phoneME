@@ -203,6 +203,9 @@ public class RtspDS extends BasicDS {
 
                 start();
 
+                KeepAliveThread ka = new KeepAliveThread();
+                ka.start();
+
             } catch (InterruptedException e) {
                 connection = null;
                 Thread.currentThread().interrupt();
@@ -304,7 +307,7 @@ public class RtspDS extends BasicDS {
         // RTCP packets (on odd channels) are discarded for now.
         if (0 == channel % 2) {
             int n_stream = channel / 2;
-            streams[n_stream].enqueuePacket(new RtpPacket(pkt,pkt.length));
+            streams[n_stream].processPacket(new RtpPacket(pkt,pkt.length));
         }
     }
 
@@ -359,5 +362,25 @@ public class RtspDS extends BasicDS {
         }
 
         return ok;
+    }
+
+    //=========================================================================
+
+    private class KeepAliveThread extends Thread implements Runnable {
+        public boolean terminate = false;
+        public void run() {
+            while (!terminate) {
+                try {
+                    java.lang.Thread.sleep(3000 * sessionTimeout / 4); // 3/4, in milliseconds
+                    terminate |= !sendRequest(RtspOutgoingRequest.GET_PARAMETER(seqNum, url, sessionId));
+                } catch (InterruptedException e) {
+                    terminate = true;
+                } catch (IOException e) {
+                    // ignore for now assuming it's '451 Parameter Not Understood'
+                } catch (Exception e) {
+                    terminate = true;
+                }
+            }
+        }
     }
 }
