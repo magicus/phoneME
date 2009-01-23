@@ -469,15 +469,19 @@ extern media_interface g_qsound_interactive_midi_itf;
 extern media_interface g_record_itf;
 extern media_interface g_fake_radio_itf;
 extern media_interface g_rtp_itf;
-extern media_interface g_rtp_dshow_itf;
+extern media_interface g_dshow_itf;
 
 media_interface* fmt_enum2itf( jc_fmt fmt )
 {
     switch( fmt )
     {
+
+#ifdef ENABLE_MMAPI_DSHOW
     case JC_FMT_RTP_MPA:
-        return &g_rtp_dshow_itf;
+        return &g_dshow_itf;
         break;
+#endif ENABLE_MMAPI_DSHOW
+
     case JC_FMT_RTP_L16:
         return &g_rtp_itf;
         break;
