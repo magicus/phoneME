@@ -931,7 +931,10 @@ bool JavaDebugger::sync_debugger(Transport *t)
 
 #if ENABLE_ISOLATES
 void JavaDebugger::on_task_termination() {
-  Universe::packet_buffer_list()->set_null();
+  // No active debugger sessions, safe to cleanup
+  if (!_debugger_active) {
+    Universe::packet_buffer_list()->set_null();
+  }
 }
 #endif
 

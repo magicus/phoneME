@@ -537,10 +537,7 @@ void Task::terminate_current_isolate(Thread *thread JVM_TRAPS) {
     }
   }
 
-  // No active debugger sessions, safe to cleanup
-  if (!_debugger_active) {
-    JavaDebugger::on_task_termination();
-  }
+  JavaDebugger::on_task_termination();
 #endif
 }
 
