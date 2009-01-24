@@ -533,8 +533,13 @@ void Task::terminate_current_isolate(Thread *thread JVM_TRAPS) {
     UsingFastOops fastoops;
     Transport::Fast t = transport();
     if (!t.is_null()) {
-      JavaDebugger::close_java_debugger(&t);
+      JavaDebugger::close_java_debugger(&t);      
     }
+  }
+
+  // No active debugger sessions, safe to cleanup
+  if (!_debugger_active) {
+    JavaDebugger::on_task_termination();
   }
 #endif
 }

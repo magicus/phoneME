@@ -929,6 +929,12 @@ bool JavaDebugger::sync_debugger(Transport *t)
   return true;
 }
 
+#if ENABLE_ISOLATES
+void JavaDebugger::on_task_termination() {
+  Universe::packet_buffer_list()->set_null();
+}
+#endif
+
 void JavaDebugger::close_java_debugger(Transport *t) {
 
   Transport::transport_op_def_t *ops;
@@ -988,7 +994,7 @@ void JavaDebugger::close_java_debugger(Transport *t) {
     JVMSPI_DebuggerNotification(KNI_FALSE);
   }
 }
-  
+
 static const char *_null_transport = "";
 
 extern "C" char *JVM_GetDebuggerTransport() {
