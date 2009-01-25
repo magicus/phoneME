@@ -55,16 +55,34 @@ import com.sun.midp.log.LogChannels;
  * method calls per native event over the old stream based
  * implementation.</p>
  */
-public class EventQueue implements Runnable {
+
+public abstract class EventQueue {
+    public static boolean isDispatchThread() {
+        return EventQueueImpl.isDispatchThread();
+    }
+    public static EventQueue getEventQueue(SecurityToken token) {
+        return EventQueueImpl.getEventQueue(token);
+    }
+    public static EventQueue getEventQueue() {
+        return EventQueueImpl.getEventQueue();
+    }
+    public abstract void sendNativeEventToIsolate(NativeEvent event, int isolateId);
+    public abstract void registerEventListener(int eventType, EventListener listener);
+    public abstract void post(Event event);
+    public abstract Event remove(int eventType);
+    public abstract void shutdown();
+}
+
+class EventQueueImpl extends EventQueue implements Runnable {
     /** The global event queue. */
-    private static EventQueue eventQueue;
+    private static EventQueueImpl eventQueue;
 
     /**
      * Constructs, assigns a native event queue handle, and
      * starts the primary event queue for this isolate.
      */
     static {
-        eventQueue = new EventQueue();
+        eventQueue = new EventQueueImpl();
 // #ifndef ENABLE_GCI
         eventQueue.nativeEventQueueHandle =
             eventQueue.getNativeEventQueueHandle();
@@ -155,7 +173,7 @@ public class EventQueue implements Runnable {
      * Constructs an event queue.  This does not assign a native event queue
      * handle. It creates the event threads, but it doesn't start them.
      */
-    EventQueue() {
+    EventQueueImpl() {
         /*
          * Currently we know of 33 events. The table will grow if needed.
          * for testing we need to lower that without changing code.
@@ -459,7 +477,7 @@ public class EventQueue implements Runnable {
                 try {
                     eventQueueLock.wait();
                 } catch (InterruptedException ie) {
-                    EventQueue.handleFatalError(ie);
+                    EventQueueImpl.handleFatalError(ie);
                 }
             }
         }
@@ -647,7 +665,7 @@ class NativeEventMonitor implements Runnable {
 	    if (!(t instanceof OutOfMemoryError)) {
 		t.printStackTrace();
 	    }
-            EventQueue.handleFatalError(t);
+            EventQueueImpl.handleFatalError(t);
         }
     }
 }

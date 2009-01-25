@@ -50,8 +50,8 @@
 #include <midp_properties_port.h>
 
 
-typedef struct Java_com_sun_midp_events_EventQueue _eventQueue;
-#define getEventQueuePtr(handle) (unhand(_eventQueue,(handle)))
+typedef struct Java_com_sun_midp_events_EventQueueImpl _eventQueueImpl;
+#define getEventQueueImplPtr(handle) (unhand(_eventQueueImpl,(handle)))
 
 #define SET_STRING_EVENT_FIELD(VALUE, STRING, OBJ, ID) \
     if (pcsl_string_utf16_length(&VALUE) >= 0) { \
@@ -479,7 +479,7 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
  * handleFatalError(Ljava/lang/Throwable;)V
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_events_EventQueue_handleFatalError(void) {
+Java_com_sun_midp_events_EventQueueImpl_handleFatalError(void) {
     handleFatalError();
 }
 
@@ -642,7 +642,7 @@ Java_com_sun_midp_events_NativeEventMonitor_readNativeEvent(void) {
  * @param isolateId ID of the target Isolate
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_events_EventQueue_sendNativeEventToIsolate(void) {
+Java_com_sun_midp_events_EventQueueImpl_sendNativeEventToIsolate(void) {
     MidpEvent event;
     jint isolateId;
     int noExceptions = 0;
@@ -701,7 +701,7 @@ Java_com_sun_midp_events_EventQueue_sendNativeEventToIsolate(void) {
  *
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_events_EventQueue_sendShutdownEvent(void) {
+Java_com_sun_midp_events_EventQueueImpl_sendShutdownEvent(void) {
     MidpEvent event;
     jint isolateId;
 
@@ -722,7 +722,7 @@ Java_com_sun_midp_events_EventQueue_sendShutdownEvent(void) {
  *
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_events_EventQueue_resetNativeEventQueue(void) {
+Java_com_sun_midp_events_EventQueueImpl_resetNativeEventQueue(void) {
     resetEventQueue(getCurrentIsolateId());
 }
 
@@ -733,7 +733,7 @@ Java_com_sun_midp_events_EventQueue_resetNativeEventQueue(void) {
  * @return Native event queue handle
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_events_EventQueue_getNativeEventQueueHandle(void) {
+Java_com_sun_midp_events_EventQueueImpl_getNativeEventQueueHandle(void) {
     /* For now use Isolate IDs for event queue handles. */
     return getCurrentIsolateId();
 }
@@ -743,7 +743,7 @@ Java_com_sun_midp_events_EventQueue_getNativeEventQueueHandle(void) {
  * the Isolate ends.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_events_EventQueue_finalize(void) {
+Java_com_sun_midp_events_EventQueueImpl_finalize(void) {
    jint handle;
 
    KNI_StartHandles(1);
@@ -751,7 +751,7 @@ Java_com_sun_midp_events_EventQueue_finalize(void) {
    KNI_GetThisPointer(thisObject);
 
    SNI_BEGIN_RAW_POINTERS;
-   handle = getEventQueuePtr(thisObject)->nativeEventQueueHandle;
+   handle = getEventQueueImplPtr(thisObject)->nativeEventQueueHandle;
    SNI_END_RAW_POINTERS;
 
    KNI_EndHandles();
