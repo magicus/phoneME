@@ -65,10 +65,6 @@ public class EventQueue implements Runnable {
      */
     static {
         eventQueue = new EventQueue();
-// #ifndef ENABLE_GCI
-        eventQueue.nativeEventQueueHandle =
-            eventQueue.getNativeEventQueueHandle();
-// #endif ENABLE_GCI
         eventQueue.start();
     }
 
@@ -112,7 +108,7 @@ public class EventQueue implements Runnable {
     NativeEventPool pool;
 
     /** This is for the native finalizer to reset peer native queue. */
-    int nativeEventQueueHandle = -1;
+    int queueId = -1;
 
 // #endif ENABLE_GCI
 
@@ -172,6 +168,8 @@ public class EventQueue implements Runnable {
         eventQueueLock = new Object();
 
 // #ifndef ENABLE_GCI
+        queueId = getNativeEventQueueHandle();
+
         pool = new NativeEventPool();
 
         eventMonitorThread =
@@ -197,7 +195,7 @@ public class EventQueue implements Runnable {
      */
     public void sendNativeEventToIsolate(NativeEvent event,
                                          int isolateId) {
-    	post(event);
+        post(event);
     }
 
 // #else
@@ -213,7 +211,11 @@ public class EventQueue implements Runnable {
      * Clears native event queue for a given isolate - 
      * there could be some events from isolate's previous usage.
      */
-    private native void resetNativeEventQueue();
+    private void resetNativeEventQueue() {
+        resetNativeEventQueue0(queueId);
+    }
+
+    private static native void resetNativeEventQueue0(int queueId);
     
     /**
      * Get the handle of the native peer event queue.
@@ -246,13 +248,17 @@ public class EventQueue implements Runnable {
      * Queue a shutdown event to the native event queue.
      */
     private void sendShutdownEvent() {
-	post(new Event(EventTypes.EVENT_QUEUE_SHUTDOWN));
+        post(new Event(EventTypes.EVENT_QUEUE_SHUTDOWN));
     }
 // #else
     /**
      * Queue a shutdown event to the native event queue.
      */
-    private native void sendShutdownEvent();
+    private void sendShutdownEvent() {
+        sendShutdownEvent0(queueId);
+    }
+
+    private static native void sendShutdownEvent0(int queueId);
 
     private native void finalize();
 // #endif
@@ -288,12 +294,12 @@ public class EventQueue implements Runnable {
             }
 
             // IMPL_NOTE
-	    if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-		if (dispatchTable[eventType - 1] != null) {
-		    Logging.report(Logging.WARNING, LogChannels.LC_CORE,
-				   "Warning overwriting event listener");
-		}
-	    }
+            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                if (dispatchTable[eventType - 1] != null) {
+                    Logging.report(Logging.WARNING, LogChannels.LC_CORE,
+                                   "Warning overwriting event listener");
+                }
+            }
 
             dispatchTable[eventType - 1] = new DispatchData(listener);
         }
@@ -344,8 +350,8 @@ public class EventQueue implements Runnable {
                     if (Logging.REPORT_LEVEL <= Logging.ERROR) {
                         Logging.report(Logging.ERROR, LogChannels.LC_CORE,
                             "Cannot dispatch: " +
-			    "No listener for this event type: " +
-			    event.type);
+                            "No listener for this event type: " +
+                            event.type);
                     }
 
                     return;
@@ -369,14 +375,14 @@ public class EventQueue implements Runnable {
             lastEvent = event;
 
             // IMPL_NOTE
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		numEvents++;
-		if (numEvents > 30) {
-		    Logging.report(Logging.INFORMATION, LogChannels.LC_CORE,
-				   "*** queue overloaded, num events = " 
-				   + numEvents);
-		}
-	    }
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                numEvents++;
+                if (numEvents > 30) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_CORE,
+                                   "*** queue overloaded, num events = " 
+                                   + numEvents);
+                }
+            }
 
             eventQueueLock.notifyAll();
         }
@@ -432,9 +438,9 @@ public class EventQueue implements Runnable {
 
             result.next = null;
 
-	    // IMPL_NOTE
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		numEvents--;
+            // IMPL_NOTE
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                numEvents--;
             }
         }
 
@@ -452,7 +458,7 @@ public class EventQueue implements Runnable {
             throw new IllegalStateException("Shutdown called in event thread");
         }
 
-	sendShutdownEvent();
+        sendShutdownEvent();
 
         synchronized (eventQueueLock) {
             while (alive) {
@@ -503,19 +509,19 @@ public class EventQueue implements Runnable {
                         dispatchData.waitingEvent = null;
                     }
 
-		    // IMPL_NOTE
-		    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-			numEvents--;
-		    }
+                    // IMPL_NOTE
+                    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                        numEvents--;
+                    }
                 } // synchronized
                 
-		// IMPL_NOTE
-		if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		    Logging.report(Logging.INFORMATION, LogChannels.LC_CORE,
-				   "*** processing event " + event.type);
-		}
+                // IMPL_NOTE
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_CORE,
+                                   "*** processing event " + event.type);
+                }
 
-		dispatchData.listener.process(event);
+                dispatchData.listener.process(event);
 
 // #ifndef ENABLE_GCI
                 if (event instanceof NativeEvent) {
@@ -524,18 +530,18 @@ public class EventQueue implements Runnable {
 // #endif
 
                 // IMPL_NOTE
-		if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		    Logging.report(Logging.INFORMATION, LogChannels.LC_CORE,
-				   "*** processed event " + event.type);
-		}
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_CORE,
+                                   "*** processed event " + event.type);
+                }
 
                 event = null;
 
             } catch (Throwable t) {
-		if (!(t instanceof OutOfMemoryError)) {
-		    t.printStackTrace();
-		}
-		handleFatalError(t);
+                if (!(t instanceof OutOfMemoryError)) {
+                    t.printStackTrace();
+                }
+                handleFatalError(t);
             } // try
         } // for
     }
@@ -579,7 +585,8 @@ class NativeEventMonitor implements Runnable {
      *
      * @return number of events still pending
      */
-    private static native int waitForNativeEvent(NativeEvent event);
+    private static native int waitForNativeEvent(NativeEvent event, 
+            int queueId);
 
     /**
      * Read a native event without blocking.
@@ -588,7 +595,8 @@ class NativeEventMonitor implements Runnable {
      *
      * @return true if an event was read else false
      */
-    private static native boolean readNativeEvent(NativeEvent event);
+    private static native boolean readNativeEvent(NativeEvent event, 
+            int queueId);
 
     /** Event queue lock to synchronize on. */
     private Object eventQueueLock;
@@ -598,6 +606,8 @@ class NativeEventMonitor implements Runnable {
 
     /** The pool for reusing native events. */
     private NativeEventPool pool;
+
+    private int queueId;
 
     /**
      * Construct a native event monitor.
@@ -612,6 +622,7 @@ class NativeEventMonitor implements Runnable {
         eventQueueLock = theEventQueueLock;
         eventQueue = theEventQueue;
         pool = thePool;
+        queueId = theEventQueue.queueId;
     }
 
     /**
@@ -622,7 +633,8 @@ class NativeEventMonitor implements Runnable {
         try {
             for (; ; ) {
                 NativeEvent nativeEvent = pool.get();
-                int eventsStillPending = waitForNativeEvent(nativeEvent);
+                int eventsStillPending = waitForNativeEvent(nativeEvent, 
+                        queueId);
 
                 /*
                  * To avoid back log in the native event queue, try to
@@ -635,7 +647,7 @@ class NativeEventMonitor implements Runnable {
                     for (; eventsStillPending > 0; eventsStillPending--) {
                         nativeEvent = pool.get();
 
-                        if (!readNativeEvent(nativeEvent)) {
+                        if (!readNativeEvent(nativeEvent, queueId)) {
                             break;
                         }
 
@@ -644,9 +656,9 @@ class NativeEventMonitor implements Runnable {
                 }
             }
         } catch (Throwable t) {
-	    if (!(t instanceof OutOfMemoryError)) {
-		t.printStackTrace();
-	    }
+            if (!(t instanceof OutOfMemoryError)) {
+                t.printStackTrace();
+            }
             EventQueue.handleFatalError(t);
         }
     }
