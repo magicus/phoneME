@@ -1,0 +1,56 @@
+/*
+ * @(#)atomic_sparc.S	1.10 06/10/10
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
+ */
+
+#include "javavm/include/asmmacros_cpu.h"
+#include "javavm/include/porting/defs.h"
+
+	.text
+	.align	4
+
+! CVMUint32 atomicCmpSwap(CVMUint32 new, CVMUint32 *addr, CVMUint32 old);
+!
+#ifdef CVM_ADV_ATOMIC_CMPANDSWAP
+ENTRY(atomicCmpSwap)
+    retl
+    cas		[%o1], %o2, %o0
+SET_SIZE(atomicCmpSwap)
+#endif
+
+! CVMUint32 atomicSwap(CVMUint32 new, CVMUint32 *addr);
+!
+ENTRY(atomicSwap)
+    retl
+    swap	[%o1], %o0
+SET_SIZE(atomicSwap)
+
+#ifdef CVM_MP_SAFE
+! void CVMmemoryBarrier();
+!
+ENTRY(CVMmemoryBarrier)
+    retl
+    membar	#Sync
+#endif
