@@ -1,6 +1,6 @@
 <!--
 
-        Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+        Copyright  2009  Sun Microsystems, Inc. All rights reserved.
 -->
     <hr class="pHr">
 
@@ -23,7 +23,7 @@
     </table>
 
     <p class="copyright"><a href="../../share/copyright.html">Copyright</a>
-      &#169; 2006-2008 Sun Microsystems, Inc. All rights reserved.</p>
+      &#169; 2006-2009 Sun Microsystems, Inc. All rights reserved.</p>
 
   </body>
 </html>
