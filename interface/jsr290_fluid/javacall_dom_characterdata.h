@@ -89,7 +89,7 @@ javacall_result
 javacall_dom_characterdata_get_data_start(javacall_handle handle,
                                           javacall_int32 invocation_id,
                                           void **context,
-                                          /* OUT */ javacall_utf16* ret_value,
+                                          /* OUT */ javacall_utf16** ret_value,
                                           /* INOUT */ javacall_uint32* ret_value_len,
                                           /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -131,7 +131,7 @@ javacall_dom_characterdata_get_data_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_characterdata_get_data_finish(void *context,
-                                           /* OUT */ javacall_utf16* ret_value,
+                                           /* OUT */ javacall_utf16** ret_value,
                                            /* INOUT */ javacall_uint32* ret_value_len,
                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -305,7 +305,7 @@ javacall_dom_characterdata_substring_data_start(javacall_handle handle,
                                                 void **context,
                                                 javacall_int32 offset,
                                                 javacall_int32 count,
-                                                /* OUT */ javacall_utf16* ret_value,
+                                                /* OUT */ javacall_utf16** ret_value,
                                                 /* INOUT */ javacall_uint32* ret_value_len,
                                                 /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -345,7 +345,7 @@ javacall_dom_characterdata_substring_data_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_characterdata_substring_data_finish(void *context,
-                                                 /* OUT */ javacall_utf16* ret_value,
+                                                 /* OUT */ javacall_utf16** ret_value,
                                                  /* INOUT */ javacall_uint32* ret_value_len,
                                                  /* OUT */ javacall_dom_exceptions* exception_code);
 
