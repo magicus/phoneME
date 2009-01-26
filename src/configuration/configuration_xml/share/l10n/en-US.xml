@@ -3,7 +3,7 @@
 <!--
 
 
-  Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+  Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
   
   This program is free software; you can redistribute it and/or
@@ -251,9 +251,9 @@
 <localized_string Key="AMS_NO_CA_FOUND"
                 Value="No certificate authorities found."/>
 <localized_string Key="AMS_COPYRIGHT_SHORT"
-                Value="Copyright 2008 Sun Microsystems, Inc. All rights reserved."/>
+                Value="Copyright 2009 Sun Microsystems, Inc. All rights reserved."/>
 <localized_string Key="AMS_COPYRIGHT_LONG"
-                Value="Copyright 2008 Sun Microsystems, Inc.aux Etats-Unis et dans d'autres pays."/>
+                Value="Copyright 2009 Sun Microsystems, Inc.aux Etats-Unis et dans d'autres pays."/>
 <localized_string Key="AMS_CANNOT_START"
                 Value="Cannot start: "/>
 <localized_string Key="AMS_CONFIRMATION"
