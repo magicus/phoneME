@@ -257,9 +257,10 @@ ObjectReferenceImpl::object_reference_reference_type(PacketInputStream *in,
   }
 #endif 
   if (object.not_null()) {
-    ref_class = object().blueprint();
-    if (object.is_jvm_thread()) {
-      // this is a VM thread object that's in the java.lang.Thread object
+    if (object.is_java_oop()) {
+      ref_class = object().blueprint();
+    } else {
+      // this can be a VM thread object that's in the java.lang.Thread object
       // User really doesn't want to know about this as such
       ref_class = Universe::object_class();
     }

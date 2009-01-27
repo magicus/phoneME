@@ -148,25 +148,27 @@ jbyte JavaDebugger::get_jdwp_tag(Oop *p)
   if (p == NULL || p->is_null()) {
     return JDWP_Tag_OBJECT;
   } else {
-    JavaClass jc = p->blueprint();
+    FarClass::Raw fc = p->blueprint();
     if (p->is_type_array() || p->is_obj_array()) { 
       return JDWP_Tag_ARRAY;
     }
     if (p->is_instance()) {
-      if (jc.is_subclass_of(Universe::string_class())) {
+      GUARANTEE(fc.is_java_class(), "Must be a JavaClass");
+      JavaClass::Raw jc = fc;
+      if (jc().is_subclass_of(Universe::string_class())) {
         return JDWP_Tag_STRING;
-      } else if (jc.is_subclass_of(Universe::thread_class())) { 
+      } else if (jc().is_subclass_of(Universe::thread_class())) { 
         return JDWP_Tag_THREAD;
-      } else if (jc.is_subclass_of(Universe::java_lang_Class_class())) { 
+      } else if (jc().is_subclass_of(Universe::java_lang_Class_class())) { 
         return JDWP_Tag_CLASS_OBJECT;
       }
     } else if (p->is_jvm_thread()) {
       return JDWP_Tag_OBJECT;
-    } else if (jc.equals(Universe::string_class())) {
+    } else if (fc.equals(Universe::string_class())) {
       return JDWP_Tag_STRING;
-    } else if (jc.equals(Universe::thread_class())) { 
+    } else if (fc.equals(Universe::thread_class())) { 
       return JDWP_Tag_THREAD;
-    } else if (jc.equals(Universe::java_lang_Class_class())) { 
+    } else if (fc.equals(Universe::java_lang_Class_class())) { 
       return JDWP_Tag_CLASS_OBJECT;
     }
   }
@@ -748,7 +750,14 @@ bool JavaDebugger::dispatch(int timeout)
       out.init_reply(in.id());
 
       //    waitOnSuspend = false;
-      func(&in, &out);
+      {
+#if ENABLE_ISOLATES
+        // GC can happen during command processing, so we need a full context switch
+        TaskContext tmp(t().task_id());
+#endif
+        func(&in, &out);
+      }
+
       processed_cmd = true;
 
       if (in.error()) {

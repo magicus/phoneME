@@ -727,7 +727,8 @@ void VMEvent::create_event_request(PacketInputStream *in,
   ep().set_transport(transport);
 #if ENABLE_ISOLATES
   ep().set_task_id(transport->task_id());
-  TaskGCContext tmp(transport->task_id());
+  GUARANTEE(TaskContext::current_task_id() == in->transport()->task_id(),
+	    "Must switch to the context of the transport task");
 #endif
   for (i=0; i < ep().num_modifiers(); i++) {
 
