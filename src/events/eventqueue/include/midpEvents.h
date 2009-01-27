@@ -261,6 +261,12 @@ extern "C" {
  */
 #define CONTACTLESS_EVENT      71
 
+/** 
+ * Events added for focus integration with native applications
+ */
+#define NATIVE_WINDOW_LOST_FOCUS 72
+#define NATIVE_WINDOW_GAINED_FOCUS 73
+
 /** @} */
 
 /**

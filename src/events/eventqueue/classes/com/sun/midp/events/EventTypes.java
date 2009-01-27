@@ -443,5 +443,11 @@ public final class EventTypes {
      * JSR 257 notification event
      */
     public static final int CONTACTLESS_EVENT = 71;
+
+    /**
+     *  Events added to manage focus interaction with native applications
+     */
+    public static final int NATIVE_WINDOW_LOST_FOCUS = 72;
+    public static final int NATIVE_WINDOW_GAINED_FOCUS = 73;
     
 }
