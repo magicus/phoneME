@@ -55,6 +55,25 @@ void javacall_print(const char *s) {
     }
 }
 
+/*
+ * Returns the jlong-specifier prefix used with type characters in
+ * printf functions or wprintf functions to specify interpretation
+ * of jlong, the 64-bit signed integer type, 
+ * e.g. for win32 is "%I64d", for linux is "%lld"
+ */
+const char * javacall_jlong_format_specifier() {
+  return "%I64d";
+}
+
+/*
+ * Returns the julong-specifier prefix used with type characters in
+ * printf functions or wprintf functions to specify interpretation
+ * of julong, the 64-bit unsigned integer type,
+ * e.g. for win32 is "%I64u", for linux is "%llu"
+ */
+const char * javacall_julong_format_specifier() {
+  return "%I64u";
+}
 
 #ifdef __cplusplus
 }
