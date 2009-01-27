@@ -309,7 +309,8 @@ void StackFrameImpl::stack_frame_getter_setter(PacketInputStream *in,
       case JDWP_Tag_CLASS_OBJECT:
         {
 #if ENABLE_ISOLATES
-          TaskGCContext tmp(thread().task_id());
+          GUARANTEE(TaskContext::current_task_id() == in->transport()->task_id(),
+                    "Must switch to the context of the transport task");
 #endif
           int map_length;
           TypeArray::Raw map = jf.generate_stack_map(map_length);
