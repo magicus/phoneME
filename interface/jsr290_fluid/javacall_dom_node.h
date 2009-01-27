@@ -75,9 +75,8 @@ javacall_result
 javacall_dom_node_get_node_name_start(javacall_handle handle,
                                       javacall_int32 invocation_id,
                                       void **context,
-                                      /* OUT */ javacall_utf16* ret_value,
-                                      /* INOUT */ javacall_uint32* ret_value_len,
-                                      /* OUT */ javacall_bool* ret_value_is_null);
+                                      /* OUT */ javacall_utf16** ret_value,
+                                      /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -103,9 +102,8 @@ javacall_dom_node_get_node_name_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_node_name_finish(void *context,
-                                       /* OUT */ javacall_utf16* ret_value,
-                                       /* INOUT */ javacall_uint32* ret_value_len,
-                                       /* OUT */ javacall_bool* ret_value_is_null);
+                                       /* OUT */ javacall_utf16** ret_value,
+                                       /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -147,9 +145,8 @@ javacall_result
 javacall_dom_node_get_node_value_start(javacall_handle handle,
                                        javacall_int32 invocation_id,
                                        void **context,
-                                       /* OUT */ javacall_utf16* ret_value,
+                                       /* OUT */ javacall_utf16** ret_value,
                                        /* INOUT */ javacall_uint32* ret_value_len,
-                                       /* OUT */ javacall_bool* ret_value_is_null,
                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -186,9 +183,8 @@ javacall_dom_node_get_node_value_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_node_value_finish(void *context,
-                                        /* OUT */ javacall_utf16* ret_value,
+                                        /* OUT */ javacall_utf16** ret_value,
                                         /* INOUT */ javacall_uint32* ret_value_len,
-                                        /* OUT */ javacall_bool* ret_value_is_null,
                                         /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -1382,9 +1378,8 @@ javacall_result
 javacall_dom_node_get_namespace_uri_start(javacall_handle handle,
                                           javacall_int32 invocation_id,
                                           void **context,
-                                          /* OUT */ javacall_utf16* ret_value,
-                                          /* INOUT */ javacall_uint32* ret_value_len,
-                                          /* OUT */ javacall_bool* ret_value_is_null);
+                                          /* OUT */ javacall_utf16** ret_value,
+                                          /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1421,9 +1416,8 @@ javacall_dom_node_get_namespace_uri_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_namespace_uri_finish(void *context,
-                                           /* OUT */ javacall_utf16* ret_value,
-                                           /* INOUT */ javacall_uint32* ret_value_len,
-                                           /* OUT */ javacall_bool* ret_value_is_null);
+                                           /* OUT */ javacall_utf16** ret_value,
+                                           /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1471,9 +1465,8 @@ javacall_result
 javacall_dom_node_get_prefix_start(javacall_handle handle,
                                    javacall_int32 invocation_id,
                                    void **context,
-                                   /* OUT */ javacall_utf16* ret_value,
-                                   /* INOUT */ javacall_uint32* ret_value_len,
-                                   /* OUT */ javacall_bool* ret_value_is_null);
+                                   /* OUT */ javacall_utf16** ret_value,
+                                   /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1515,9 +1508,8 @@ javacall_dom_node_get_prefix_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_prefix_finish(void *context,
-                                    /* OUT */ javacall_utf16* ret_value,
-                                    /* INOUT */ javacall_uint32* ret_value_len,
-                                    /* OUT */ javacall_bool* ret_value_is_null);
+                                    /* OUT */ javacall_utf16** ret_value,
+                                    /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1667,9 +1659,8 @@ javacall_result
 javacall_dom_node_get_local_name_start(javacall_handle handle,
                                        javacall_int32 invocation_id,
                                        void **context,
-                                       /* OUT */ javacall_utf16* ret_value,
-                                       /* INOUT */ javacall_uint32* ret_value_len,
-                                       /* OUT */ javacall_bool* ret_value_is_null);
+                                       /* OUT */ javacall_utf16** ret_value,
+                                       /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1698,9 +1689,8 @@ javacall_dom_node_get_local_name_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_local_name_finish(void *context,
-                                        /* OUT */ javacall_utf16* ret_value,
-                                        /* INOUT */ javacall_uint32* ret_value_len,
-                                        /* OUT */ javacall_bool* ret_value_is_null);
+                                        /* OUT */ javacall_utf16** ret_value,
+                                        /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -1824,9 +1814,8 @@ javacall_result
 javacall_dom_node_get_text_content_start(javacall_handle handle,
                                          javacall_int32 invocation_id,
                                          void **context,
-                                         /* OUT */ javacall_utf16* ret_value,
+                                         /* OUT */ javacall_utf16** ret_value,
                                          /* INOUT */ javacall_uint32* ret_value_len,
-                                         /* OUT */ javacall_bool* ret_value_is_null,
                                          /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -1900,9 +1889,8 @@ javacall_dom_node_get_text_content_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_text_content_finish(void *context,
-                                          /* OUT */ javacall_utf16* ret_value,
+                                          /* OUT */ javacall_utf16** ret_value,
                                           /* INOUT */ javacall_uint32* ret_value_len,
-                                          /* OUT */ javacall_bool* ret_value_is_null,
                                           /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**

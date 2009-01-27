@@ -83,9 +83,8 @@ javacall_result
 javacall_dom_element_get_tag_name_start(javacall_handle handle,
                                         javacall_int32 invocation_id,
                                         void **context,
-                                        /* OUT */ javacall_utf16* ret_value,
-                                        /* INOUT */ javacall_uint32* ret_value_len,
-                                        /* OUT */ javacall_bool* ret_value_is_null);
+                                        /* OUT */ javacall_utf16** ret_value,
+                                        /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -119,9 +118,8 @@ javacall_dom_element_get_tag_name_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_tag_name_finish(void *context,
-                                         /* OUT */ javacall_utf16* ret_value,
-                                         /* INOUT */ javacall_uint32* ret_value_len,
-                                         /* OUT */ javacall_bool* ret_value_is_null);
+                                         /* OUT */ javacall_utf16** ret_value,
+                                         /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -155,9 +153,8 @@ javacall_dom_element_get_attribute_start(javacall_handle handle,
                                          javacall_int32 invocation_id,
                                          void **context,
                                          javacall_const_utf16_string name,
-                                         /* OUT */ javacall_utf16* ret_value,
-                                         /* INOUT */ javacall_uint32* ret_value_len,
-                                         /* OUT */ javacall_bool* ret_value_is_null);
+                                         /* OUT */ javacall_utf16** ret_value,
+                                         /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -183,9 +180,8 @@ javacall_dom_element_get_attribute_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_attribute_finish(void *context,
-                                          /* OUT */ javacall_utf16* ret_value,
-                                          /* INOUT */ javacall_uint32* ret_value_len,
-                                          /* OUT */ javacall_bool* ret_value_is_null);
+                                          /* OUT */ javacall_utf16** ret_value,
+                                          /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
@@ -676,9 +672,8 @@ javacall_dom_element_get_attribute_ns_start(javacall_handle handle,
                                             void **context,
                                             javacall_const_utf16_string namespace_uri,
                                             javacall_const_utf16_string local_name,
-                                            /* OUT */ javacall_utf16* ret_value,
+                                            /* OUT */ javacall_utf16** ret_value,
                                             /* INOUT */ javacall_uint32* ret_value_len,
-                                            /* OUT */ javacall_bool* ret_value_is_null,
                                             /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
@@ -718,9 +713,8 @@ javacall_dom_element_get_attribute_ns_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_element_get_attribute_ns_finish(void *context,
-                                             /* OUT */ javacall_utf16* ret_value,
+                                             /* OUT */ javacall_utf16** ret_value,
                                              /* INOUT */ javacall_uint32* ret_value_len,
-                                             /* OUT */ javacall_bool* ret_value_is_null,
                                              /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
