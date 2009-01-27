@@ -37,7 +37,7 @@
 ifeq ($(JSR_177_PACKAGE), full)
 JSR_177_PROPERTY_FILES += \
 	$(INTERNAL_JSR_177_CONFIG_DIR)/common/i18n_constants_jsr177.xml \
-	$(INTERNAL_JSR_177_CONFIG_DIR)/common/l10n/en-US_jsr177.xml \
+	$(INTERNAL_JSR_177_CONFIG_DIR)/common/l10n/en-US_jsr177.xml
 endif
 
 # Source files for the ( satsa ) module

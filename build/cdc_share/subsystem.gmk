@@ -73,7 +73,6 @@ JSR_177_LIB_NAME        = jsr177
 JSR_177_JAR             = $(JSROP_JAR_DIR)/$(JSR_177_LIB_NAME).jar
 
 SUBSYSTEM_JSR_177_JAVA_FILES = $(SUBSYSTEM_SATSA_JAVA_FILES)
-JPP_DEFS             += -DENABLE_JSR_177
 
 JSR_177_API_CLASSLIST = $(JSR_177_DIR)/build/cdc_share/satsa_api.txt
 JSR_177_API_CLASSES   = $(call readClassList, $(JSR_177_API_CLASSLIST))

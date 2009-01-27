@@ -101,27 +101,31 @@ endif
 ifeq ($(JSR_177_PACKAGE), full)
 SUBSYSTEM_SATSA_PACKAGES += \
   com.sun.satsa.acl \
-  com.sun.satsa.util \
   com.sun.satsa.util.pkcs15
 endif
+
+SUBSYSTEM_SATSA_PACKAGES += \
+  com.sun.satsa.util
   
 # Source files for the ( satsa ) module
 #
 JSR_177_COMMON = $(JSR_177_DIR)/src/share/common
 
-ifeq ($(JSR_177_PACKAGE), full)
 MODULE_SATSA_COMMON_JAVA_FILES = \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/Utils.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/TLV.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/TLVException.java
+        
+ifeq ($(JSR_177_PACKAGE), full)
+MODULE_SATSA_COMMON_JAVA_FILES += \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/PKCS15File.java \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/AODF.java \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/DODF.java \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/ODF.java \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/DIRF.java \
-    $(JSR_177_COMMON)/classes/com/sun/satsa/util/TLV.java \
-    $(JSR_177_COMMON)/classes/com/sun/satsa/util/TLVException.java \
-    $(JSR_177_COMMON)/classes/com/sun/satsa/util/Utils.java \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/Connection.java \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/FileSystemAbstract.java \
-    $(JSR_177_COMMON)/classes/com/sun/satsa/util/Location.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/Location.java
     
 ifeq ($(JSR_177_SPEC_SUPPORT), etsi)
 MODULE_SATSA_COMMON_JAVA_FILES += \
@@ -160,11 +164,18 @@ MODULE_SATSA_ACL_JAVA_FILES += \
 	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/PINEntryDialog.java
 endif
 
+ifneq ($(TARGET_VM), cldc_vm)
+include $(JSR_177_DIR)/build/cdc_share/subsystem.gmk
+else
+include $(JSR_177_DIR)/build/cldc_application/subsystem.gmk
+endif
+
 ifeq ($(JSR_177_PACKAGE), full)
 include $(JSR_177_DIR)/build/share/apdu.gmk
 include $(JSR_177_DIR)/build/share/jcrmi.gmk
 include $(JSR_177_DIR)/build/share/crypto.gmk
 include $(JSR_177_DIR)/build/share/pki.gmk
+include $(JSR_177_DIR)/build/share/tools.gmk
 else
 include $(JSR_177_DIR)/build/share/crypto.gmk
 endif
@@ -205,25 +216,13 @@ else
     JSR_177_PROPERTY_FILES += \
         $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_real.xml
 endif
-
-ifeq ($(JSR_177_APDU_MANAGER),carddevice)
-    ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
-        JSR_177_PROPERTY_FILES += \
-            $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_platform.xml
-    endif
-endif
 endif
 
+ifeq ($(JSR_177_PACKAGE), full)
 EXTRA_CFLAGS += -DENABLE_JSR_177
 JPP_DEFS += -DENABLE_JSR_177
-
-ifneq ($(TARGET_VM), cldc_vm)
-include $(JSR_177_DIR)/build/cdc_share/subsystem.gmk
-else
-include $(JSR_177_DIR)/build/cldc_application/subsystem.gmk
 endif
 
-include $(JSR_177_DIR)/build/share/tools.gmk
 # Append SATSA source bundle creation to target
 source_bundle:: satsa_source_bundle
 

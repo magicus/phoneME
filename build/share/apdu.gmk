@@ -33,7 +33,7 @@
 ######################################################################
 
 SUBSYSTEM_SATSA_PACKAGES += \
-  com.sun.cardreader \  
+  com.sun.cardreader \
   com.sun.cdc.io.j2me.apdu \
   com.sun.midp.io.j2me.apdu \
   javax.microedition.apdu
@@ -70,6 +70,7 @@ MODULE_SATSA_APDU_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/Handle.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/TLP224Message.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/Protocol.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/midp/io/j2me/apdu/Protocol.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardDevice.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardSlot.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/SlotFactory.java \
