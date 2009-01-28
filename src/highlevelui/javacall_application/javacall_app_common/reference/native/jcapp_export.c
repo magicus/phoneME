@@ -223,8 +223,11 @@ jboolean jcapp_reverse_orientation(int hardwareId) {
  * Handle clamshell event
  */
 void jcapp_handle_clamshell_event() {
-    int hardwareId = jcapp_get_current_hardwareId();
+    int hardwareId;
+    
     javacall_lcd_handle_clamshell(); 
+    
+    hardwareId = jcapp_get_current_hardwareId();
     jcapp_get_screen_buffer(hardwareId);
     jcapp_reset_screen_buffer(hardwareId);
 }
