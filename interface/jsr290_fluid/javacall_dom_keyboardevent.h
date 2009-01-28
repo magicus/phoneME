@@ -73,7 +73,7 @@ javacall_result
 javacall_dom_keyboardevent_get_key_identifier_start(javacall_handle handle,
                                                     javacall_int32 invocation_id,
                                                     void **context,
-                                                    /* OUT */ javacall_utf16* ret_value,
+                                                    /* OUT */ javacall_utf16** ret_value,
                                                     /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -98,7 +98,7 @@ javacall_dom_keyboardevent_get_key_identifier_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_keyboardevent_get_key_identifier_finish(void *context,
-                                                     /* OUT */ javacall_utf16* ret_value,
+                                                     /* OUT */ javacall_utf16** ret_value,
                                                      /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
