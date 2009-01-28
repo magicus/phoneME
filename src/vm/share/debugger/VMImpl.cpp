@@ -43,7 +43,8 @@ void VMImpl::virtualmachine_all_classes(PacketInputStream *in,
   jint count = 0;
 
 #if ENABLE_ISOLATES
-  TaskGCContext tmp(in->transport()->task_id());
+  // GC can happen in this block, so we need a full context switch
+  TaskContext tmp(in->transport()->task_id());
 #endif
 
 #ifdef AZZERT

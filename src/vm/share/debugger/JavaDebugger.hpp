@@ -83,6 +83,10 @@ public:
   static void initialize_java_debugger_task(JVM_SINGLE_ARG_TRAPS);
   static bool initialize_java_debugger(JVM_SINGLE_ARG_TRAPS);
 
+#if ENABLE_ISOLATES
+  static void on_task_termination();
+#endif
+
   static void set_debugger_option_on(bool is_on)
   {
     // arguments passed in to VM to enable debugger
