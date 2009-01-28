@@ -164,6 +164,7 @@ API_EXTENSIONS_CLASSLIST = $(subst $(space),$(comma),$(API_EXTENSIONS_LIST))
 define genMIDPPermittedJSRClasses
     $(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
         -listapi:include=java/*,include=javax/*,include=javacard/*,include=org/xml/sax/*,include=org/w3c/dom/*,$(API_EXTENSIONS_CLASSLIST),input=$(1),cout=$(2)
+    $(foreach elem,$(JSR_EXTRA_PERMITTED_CLASSES),$(AT)`echo $(elem) >> $(2)`)
 endef
 
 ifeq ($(CVM_PRELOAD_LIB), true)
