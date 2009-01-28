@@ -18,7 +18,7 @@
 /* ]]> */
 </style>
 
-<title>Getting Started with phoneME Feature Software (MR3)</title>
+<title>Getting Started with phoneME Feature Software (MR4)</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
@@ -37,7 +37,7 @@
 <!-- =========  BEGIN PAGE BODY (Ignore Everything Above)  ====================== -->
 
 <!-- BEGIN PAGE TITLE -->
-<div id="projecthome" class="app"> <h1><font color="#e76f00">Before You Begin (MR3)
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Before You Begin (MR4)
 <span class="style1"></span></font></h1>
 <!-- END PAGE TITLE -->
 
@@ -77,8 +77,8 @@ software into the directory <code>/home/chocolate/phoneME_feature</code>, changi
 to <code>%COMPONENTS_DIR%/midp</code> means to change directory to 
 <code>/home/chocolate/phoneME_feature/midp</code>.
 <p>
-<li>For all procedures and examples carried out on the Windows platform, the use of Cygwin
-(Cyg4Me) is assumed.  Instructions for installing Cyg4Me are provided
+<li>For all procedures and examples carried out on the Windows platform, the use of Cyg4Me 
+is assumed.  Instructions for installing Cyg4Me are provided
 <a href="./buildenv_feature.html#cyg4me">here</a>.
 <p>
 </ul>
@@ -175,20 +175,22 @@ building optional packages:
 <li><code>ABSTRACTIONS_DIR=</code><em>path-to-abstractions-directory</em>
 </ul>
 <p>
-Certain JSRs have dependencies that must be taken into consideration when building optional 
+Certain JSRs have dependencies that must also be taken into consideration when building optional 
 packages.  For example, to properly build JSR 234, Advanced Multimedia Supplements API, 
-you <em>must</em> also build JSR 135, Mobile Media API. 
+you <em>must</em> also build JSR 135, Mobile Media API and JSR 75, File Connection and Personal 
+Information Management API. 
 <p>
-For more information on using optional package variables and the dependencies between specific 
-optional packages, see 
+Other variables are also required to build JSR 234.  For more information on using optional 
+package variables and the dependencies between specific optional packages, see 
 <a href="http://java.sun.com/javame/reference/docs/sjwc-2.1/pdf-html/html/build/index.html">
 <i>Sun Java Wireless Client Software Build Guide</i></a>.
 
 <p>
-<b>Note:</b> Builds for PCSL and CLDC do not require optional packages to be included, even if they are built 
-in the JavaCall porting layer and the phoneME Feature software client.  However, if optional 
-packages are included in the build for the phoneME Feature client software, the same optional 
-packages <em>must</em> be included in the JavaCall porting layer build.
+<b>Note:</b> If one (or more) optional packages are included in the phoneME Feature software 
+client build, the same optional packages <em>must</em> be included when building the JavaCall 
+porting layer. Builds for the PCSL and CLDC components do not require the inclusion of 
+optional packages, even if optional packages are included in the JavaCall and phoneME Feature 
+software client builds. 
 <p>
 
 
@@ -206,9 +208,9 @@ For improved usability, this guide directs you to change to the build directory 
 a component. However, if you choose, you can launch your build from any directory using the 
 <code>make -C</code> option.
 <p>
-For example, if the build directory for building the JavaCall porting layer on an Windows x86 
+For example, if the build directory for building the JavaCall porting layer on a Windows x86 
 target platform in the phoneME Feature client is <code>%COMPONENTS_DIR%/midp/build/javacall</code>, 
-enter the following: 
+and you want to build from any directory, enter the following: 
 <p>
 <ol>
 <code>$ make -C %COMPONENTS_DIR%/midp/build/javacall</code> <em>flag1 flag2 flag3</em>

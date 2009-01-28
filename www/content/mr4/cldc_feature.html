@@ -18,7 +18,7 @@
 /* ]]> */
 </style>
 
-<title>Getting Started with phoneME Feature Software (MR3)</title>
+<title>Getting Started with phoneME Feature Software (MR4)</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
@@ -38,7 +38,7 @@
 
 <!-- BEGIN PAGE TITLE -->
 <div id="projecthome" class="app"> <h1><font color="#e76f00">Building a CLDC 
-Reference Port (MR3)<span class="style1"> </span></font></h1>
+Reference Port (MR4)<span class="style1"> </span></font></h1>
 <!-- END PAGE TITLE -->
 
 <p>
@@ -194,6 +194,42 @@ Defines a directory location for tools-specific output.  For example,
 <p>
 </TD>
 </TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>USE_VS2005</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Tells the build system to use Microsoft Visual Studio 2005 as the default compiler.  For example,
+<code>USE_VS2005=true</code>.
+<p>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>ENABLE_JAVA_DEBUGGER</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Supports the use of the Java Platform, Micro Edition Software Development Kit 3.0.  For example,
+<code>ENABLE_JAVA_DEBUGGER=true</code>.
+<p>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>ENABLE_MULTIPLE_PROFILES_SUPPORT</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Supports the use of the Java Platform, Micro Edition Software Development Kit 3.0.  For example,
+<code>ENABLE_MULTIPLE_PROFILES_SUPPORT=true</code>.
+<p>
+</TD>
+</TR>
 </TBODY>
 </TABLE>
 <p>
@@ -217,7 +253,8 @@ Defines a directory location for tools-specific output.  For example,
 <KBD>$ make -C %JVMWorkSpace%/build/javacall_i386_vc  ENABLE_PCSL=true 
 PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl ENABLE_ISOLATES=true 
 JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall TOOLS_DIR=%COMPONENTS_DIR%/tools 
-TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools</KBD>
+TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools USE_VS2005=true
+ENABLE_JAVA_DEBUGGER=true ENABLE_MULTIPLE_PROFILES_SUPPORT=true</KBD>
 </OL>
 <P>
 The generated CLDC output is found under <KBD>%JVMBuildSpace%/javacall_i386_vc/dist</KBD>.

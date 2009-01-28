@@ -18,7 +18,7 @@
 /* ]]> */
 </style>
 
-<title>Getting Started with phoneME Feature Software (MR3)</title>
+<title>Getting Started with phoneME Feature Software (MR4)</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
@@ -38,7 +38,7 @@
 
 <!-- BEGIN PAGE TITLE -->
 <div id="projecthome" class="app"> <h1><font color="#e76f00">Setting Up Your Build 
-Environment (MR3)<span class="style1"></span></font></h1>
+Environment (MR4)<span class="style1"></span></font></h1>
 <!-- END PAGE TITLE -->
 
 <p>
@@ -115,18 +115,18 @@ For example, you could unzip the file into
 <p>
 
 To properly set up your Windows work environment, you must run the Windows batch file, 
-<code>VCVARS32.BAT</code>, as shown here:
+<code>vcvars32.bat</code>, as shown here:
 <p>
 <ul>
-<code>C:\Program Files\Microsoft Visual Studio\VC98\Bin\VCVARS32.BAT</code>
+<code>C:\Program Files\Microsoft Visual Studio 8\VC\bin\vcvars32.bat</code>
 </ul>
 <p>
-The <code>VCVARS32.BAT</code> file sets several Windows variables, including 
+The <code>vcvars32.bat</code> file sets several Windows variables, including 
 <code>LIB</code>, <code>INCLUDE</code>, and others. 
 <p>
 Due to variations in Windows system configuration, the directory path to the 
-<code>VCVARS32.BAT</code> file might differ from that shown here.  If so, use the 
-Windows Explorer to search for <code>VCVARS32.BAT</code>. 
+<code>vcvars32.bat</code> file might differ from that shown here.  If so, use the 
+Windows Explorer to search for <code>vcvars32.bat</code>. 
 <p>
 <b>Note:</b> If using a Windows path with spaces, as shown above, doesn't work, try 
 entering a substitute path using Windows short names.  
@@ -142,13 +142,13 @@ You can use also the <code>cygpath</code> utility (from Cyg4me) to get the
 Windows short name.  For example:
 <p>
 <ul>
-<code>$ cygpath -ms C:\Program Files\Microsoft Visual Studio\VC98\Bin</code>
+<code>$ cygpath -ms C:\Program Files\Microsoft Visual Studio 8\VC\bin</code>
 <p>
 </ul>
 delivers the short name 
 <p>
 <ul>
-<code>C:/PROGRA~1/MICROS~2/VC98/Bin</code>
+<code>C:/PROGRA~1/MICROS~2/VC/bin</code>
 </ul>
 <p>
   
@@ -162,9 +162,9 @@ as shown here:
 </ul>
 <p>
 <b>Note:</b> Building phoneME Feature using Microsoft Visual Studio .NET 2003 may work, 
-but it is not fully supported.  For best results, use Microsoft Visual C++ Professional 
-Version 6.0, as described in <a href="./index_feature.html#win_req">Requirements for 
-Building on a Windows x86 Platform</a>.
+but it is not fully supported.  For best results, use Microsoft Visual Studio 2005, as 
+described in <a href="./index_feature.html#win_req">Requirements for Building on a Windows 
+x86 Platform</a>.
 <p>
 
 
@@ -253,7 +253,8 @@ CELLPADDING=5 CELLSPACING=0 >
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
-<P>Directory that contains the JDK software release.  For example, <code>JDK_DIR=C:/java/j2sdk1.4.2</code>.
+<P>Directory that contains the JDK software release.  For example, 
+<code>JDK_DIR=C:/java/j2sdk1.6.0_07</code>.
 </TD>
 </TR>
 <TR>
@@ -298,7 +299,7 @@ the</b> <code>BUILD_OUTPUT_DIR</code> <b>variable.</b>
 <p>
 <b><li>Set the</b> <code>JDK_DIR</code> <b>variable.</b>
 <p>
-<code>$ set JDK_DIR=C:/java/j2sdk1.4.2</code>
+<code>$ set JDK_DIR=C:/java/j2sdk1.6.0_07</code>
 <p>
 <b>Note:</b> As shown in this command line, the<b> <code>JDK_DIR</code> </b>path 
 must be set using Linux (forward) slashes.
