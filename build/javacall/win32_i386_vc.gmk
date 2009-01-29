@@ -42,8 +42,8 @@ TARGET_COMPILER		= vc
 TARGET_VM		= cldc_vm
 
 # Platform-specific compiler flags
-EXTRA_CPPFLAGS += /Zm400
-EXTRA_CFLAGS += /Zm1000
+EXTRA_CPPFLAGS += -Zm400
+EXTRA_CFLAGS += -Zm1000
 
 # Platform-specific linker flags and libraries
 LD_FLAGS+=-nodefaultlib:libcmt.lib

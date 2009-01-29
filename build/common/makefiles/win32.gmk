@@ -36,7 +36,7 @@ PATHSEP                = \;
 EXE            = .exe
 BAT            = .bat
 
-# Whoami from Cygwin
+
 USE_CYGWIN     = true
 WHOAMI         = whoami
 
