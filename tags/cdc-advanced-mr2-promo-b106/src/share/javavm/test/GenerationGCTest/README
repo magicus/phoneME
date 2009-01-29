@@ -1,0 +1,14 @@
+#
+# @(#)README	1.7 06/10/25
+#
+# Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+#
+
+o Execute configure.sh - creates Defs.mk
+o gnumake build -  Builds test, test specific cvm and the libraries
+o gnumake run - Runs the test using the cvm built
+o gnumake results - Parses through run.log and summarizes result in results.log
+o gnumake clean - Cleans the test, cvm and the libraries
+
+For details about the test, please refer to the Test Design Spec at
+http://javaweb.eng/sqe/testExec/pjava/cdc/docs/GenerationGCTestDesign.html
