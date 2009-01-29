@@ -608,7 +608,7 @@ private:
 
 private:
 #if USE_JAR_ENTRY_ENUMERATOR
-  static void load_jar_entry(char* name, int length, 
+  static void load_jar_entry(const char* name, int length, 
                              JarFileParser* jf_parser JVM_TRAPS);
 #endif
   static void create_meta(JVM_SINGLE_ARG_TRAPS);

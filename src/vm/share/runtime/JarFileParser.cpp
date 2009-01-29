@@ -542,13 +542,23 @@ jboolean JarFileParser::suffix_match_filter(const char* name,
   return KNI_TRUE;
 }
 
-int JarFileParser::do_next_entries(const JvmPathChar* jar_file_name,
-                                   const char *suffix,
-                                   bool should_match, 
-                                   JarFileParser::do_entry_proc f,
-                                   int entry_id, int max_size JVM_TRAPS)
-{
+int JarFileParser::do_next_class_entries(FilePath* path, 
+                                         const bool should_match,
+                                         do_entry_proc f,
+                                         int entry_id, int max_size JVM_TRAPS) {
   GUARANTEE(entry_id >= 0 && max_size > 0, "Sanity");
+
+  enum { buffer_size = 512 };
+  DECLARE_STATIC_BUFFER(JvmPathChar, file_name, buffer_size);
+  path->string_copy(file_name, buffer_size);
+
+  if( !OsFile_exists(file_name) ) {
+    // Either the jarfile does not exist or the openJarFile() failed
+    // due to corruption or other problem.  Loading non-JarFile is
+    // UNIMPLEMENTED, but is treated as an error here.
+    Throw::error(jarfile_error JVM_THROW_(-1));
+  }
+
   int result = -1;
 
   // JAR entry iteration is not compatible with CacheJarEntries. The 
@@ -562,11 +572,10 @@ int JarFileParser::do_next_entries(const JvmPathChar* jar_file_name,
 #endif
   {
     UsingFastOops fast_oops;
-    JarFileParser::Fast parser = get(jar_file_name, 
-                                     /*enable_entry_cache=*/false
+    JarFileParser::Fast parser = get(file_name, /*enable_entry_cache=*/false
                                      JVM_NO_CHECK);
-    if (parser.not_null()) {
-      SuffixMatchFilterData data = { suffix, should_match, &parser, f };
+    if( parser.not_null() ) {
+      SuffixMatchFilterData data = { ".class", should_match, &parser, f };
       result =
         parser().filtered_do_next_entries(&JarFileParser::suffix_match_filter, 
                                           NULL, &data, entry_id, max_size 

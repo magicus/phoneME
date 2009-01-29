@@ -1079,15 +1079,15 @@ void Universe::create_main_thread_mirror(JVM_SINGLE_ARG_TRAPS) {
 }
 
 #if USE_JAR_ENTRY_ENUMERATOR
-void Universe::load_jar_entry(char* name, int length, JarFileParser* jf_parser
-                              JVM_TRAPS) {
+void Universe::load_jar_entry(const char* name, int length,
+                              JarFileParser* jf_parser JVM_TRAPS) {
   const int post_length = STATIC_STRLEN(".class");
   FileDecoder fd = jf_parser->open_entry(0 JVM_CHECK);
   if (fd.not_null()) {
     Buffer b = fd.read_completely(JVM_SINGLE_ARG_CHECK);
     if (b.not_null()) {
-      Symbol class_name = SymbolTable::symbol_for(name, length - post_length
-                                                  JVM_CHECK);
+      Symbol class_name =
+        SymbolTable::symbol_for(utf8(name), length - post_length JVM_CHECK);
       InstanceClass instance_class =
         SystemDictionary::resolve(&class_name, ErrorOnFailure, &b JVM_NO_CHECK);
       if (CURRENT_HAS_PENDING_EXCEPTION) {
@@ -1133,22 +1133,9 @@ int Universe::load_next_in_classpath_segment(FilePath* path,
                                               int entry_id, 
                                               int chunk_size JVM_TRAPS) {
   GUARANTEE(entry_id >= 0 && chunk_size > 0, "Sanity");
-  const int buffer_size = 512;
-  DECLARE_STATIC_BUFFER(PathChar, file_name, buffer_size);
-  const char suffix[] = {'.','c','l','a','s','s','\0'};
-
-  path->string_copy(file_name, buffer_size);
-  // check to see if this path is a jar file
-  if (OsFile_exists(file_name)) {
-    return JarFileParser::do_next_entries(file_name, suffix, true, 
+  return JarFileParser::do_next_class_entries(path, true, 
                (JarFileParser::do_entry_proc)load_jar_entry, entry_id, 
-               chunk_size JVM_NO_CHECK_AT_BOTTOM_0);
-  } else {
-    // Either the jarfile does not exist or the openJarFile() failed
-    // due to corruption or other problem.  Loading non-JarFile is
-    // UNIMPLEMENTED, but is treated as an error here.
-    Throw::error(jarfile_error JVM_THROW_(-1));
-  }
+               chunk_size JVM_NO_CHECK_AT_BOTTOM);
 }
 
 // Used by the romizer

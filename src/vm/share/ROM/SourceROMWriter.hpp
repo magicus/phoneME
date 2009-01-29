@@ -70,10 +70,10 @@ private:
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   void print_packages_list(ROMVector* patterns);
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
-  static void handle_jar_entry(char* name, int length, JarFileParser *jf
+  static void handle_jar_entry(const char* name, int length, JarFileParser* jf
                                JVM_TRAPS);
-  void get_all_names_in_jar(FilePath* path, 
-    int classpath_index, bool classes JVM_TRAPS);
+  void get_all_names_in_classpath(ObjArray* classpath,
+                             const bool classes JVM_TRAPS);
   void sort_and_load_all_in_classpath(JVM_SINGLE_ARG_TRAPS);
   ROMVector *_sorted_class_names;
 

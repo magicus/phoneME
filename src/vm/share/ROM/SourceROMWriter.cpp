@@ -1685,7 +1685,7 @@ void SourceROMWriter::combine_output_files() {
   OsFile_remove(FilePath::rom_optimizer_file);
 }
 
-void SourceROMWriter::handle_jar_entry(char* name, int length, 
+void SourceROMWriter::handle_jar_entry(const char* name, int length, 
                                        JarFileParser * /*jf*/
                                        JVM_TRAPS) {
   TypeArray byte_array = Universe::new_byte_array(length JVM_CHECK);
@@ -1695,24 +1695,14 @@ void SourceROMWriter::handle_jar_entry(char* name, int length,
                 _sorted_class_names->add_element(&byte_array JVM_CHECK);
 }
 
-void SourceROMWriter::get_all_names_in_jar(FilePath* path, 
-                                           int classpath_index, 
-                                           bool classes JVM_TRAPS) {
-  const int buffer_size = 512;
-  DECLARE_STATIC_BUFFER(JvmPathChar, file_name, buffer_size);
-  const char suffix[] = {'.','c','l','a','s','s','\0'};
-
-  path->string_copy(file_name, buffer_size);
-
-  if (OsFile_exists(file_name)) {
-    JarFileParser::do_entries(file_name, suffix, classes, 
-                        (JarFileParser::do_entry_proc)&handle_jar_entry
-                        JVM_CHECK);
-  } else {
-    // Either the jarfile does not exist or the openJarFile() failed
-    // due to corruption or other problem.  Loading non-JarFile is
-    // UNIMPLEMENTED, but is treated as an error here.
-    Throw::error(jarfile_error JVM_THROW);
+void SourceROMWriter::get_all_names_in_classpath(ObjArray* classpath,
+                                                 const bool classes JVM_TRAPS) {
+  const int length = classpath->length();
+  for(int index = 0; index < length; index++) {
+    FilePath::Raw path = classpath->obj_at(index);
+    JarFileParser::do_next_class_entries(&path, classes, 
+                        (JarFileParser::do_entry_proc)&handle_jar_entry,
+                        0, max_jint JVM_CHECK);
   }
 }
 
@@ -1735,12 +1725,8 @@ void SourceROMWriter::sort_and_load_all_in_classpath(JVM_SINGLE_ARG_TRAPS) {
   _sorted_class_names = &sorted_names;
 
   //loading classes
-  FilePath::Fast path;
   ObjArray::Fast classpath = Task::current()->app_classpath();
-  for (index = 0; index < classpath().length(); index++) {
-    path = classpath().obj_at(index);
-    get_all_names_in_jar(&path, index, true JVM_CHECK);
-  }
+  get_all_names_in_classpath(&classpath, true JVM_CHECK);
 
   sorted_names().sort();
 
@@ -1754,8 +1740,14 @@ void SourceROMWriter::sort_and_load_all_in_classpath(JVM_SINGLE_ARG_TRAPS) {
                                 (utf8)(byte_array().base_address()),
                                 len JVM_CHECK);
     instance_class =
-      SystemDictionary::resolve(&class_name, ErrorOnFailure JVM_CHECK);
-    instance_class().verify(JVM_SINGLE_ARG_CHECK);
+      SystemDictionary::resolve(&class_name, ErrorOnFailure JVM_NO_CHECK);
+    if( instance_class.is_null() ) {
+      tty->print( "Error romizing " );
+      class_name().print_value_on(tty);
+      tty->cr();
+      return;
+    }
+    instance_class().verify(JVM_SINGLE_ARG_NO_CHECK);
   }
 
   //loading resources
@@ -1763,10 +1755,7 @@ void SourceROMWriter::sort_and_load_all_in_classpath(JVM_SINGLE_ARG_TRAPS) {
   sorted_names().initialize(JVM_SINGLE_ARG_CHECK);
   _sorted_class_names = &sorted_names;
 
-  for (index = 0; index < classpath().length(); index++) {
-    path = classpath().obj_at(index);
-    get_all_names_in_jar(&path, index, false JVM_CHECK);
-  }
+  get_all_names_in_classpath(&classpath, false JVM_CHECK);
 
   sorted_names().sort();
   const int size = sorted_names().size();

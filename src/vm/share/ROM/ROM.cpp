@@ -981,7 +981,7 @@ ReturnOop ROM::string_from_table(String *string, juint hash_value) {
   return NULL;
 }
 
-ReturnOop ROM::symbol_for(utf8 s, juint hash_value, int len) {
+ReturnOop ROM::symbol_for(const utf8 s, juint hash_value, int len) {
   ROM_DETAILED_PERFORMANCE_COUNTER_START();
   if (_rom_symbol_table_num_buckets > 0) {
     const juint i = hash_value % _rom_symbol_table_num_buckets;

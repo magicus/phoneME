@@ -265,16 +265,8 @@ public:
   static void flush_caches();
 
 #if USE_JAR_ENTRY_ENUMERATOR
-  typedef void (*do_entry_proc)(char* name, int length, JarFileParser *jf
+  typedef void (*do_entry_proc)(const char* name, int length, JarFileParser *jf
                                 JVM_TRAPS);
-  static void do_entries(const JvmPathChar* jar_file_name, const char*suffix,
-                         bool should_match, 
-                         do_entry_proc f JVM_TRAPS) {
-    do_next_entries(jar_file_name, suffix, should_match, f, /*entry_id=*/0, 
-                    /*max_size=*/max_jint
-                    JVM_NO_CHECK_AT_BOTTOM);
-  }
-
   /*
    * Iterates over entries in the specified JAR file.
    * entry_id specifies the next entry to load.
@@ -290,10 +282,10 @@ public:
    * Returns -1 if failed to iterate some entry in the JAR.
    * Otherwise, returns entry_id of the next entry.
    */
-  static int do_next_entries(const JvmPathChar* jar_file_name, 
-                             const char*suffix, bool should_match,
-                             do_entry_proc f, int entry_id, int max_size
-                             JVM_TRAPS);
+  static int do_next_class_entries(FilePath* path, 
+                                   const bool should_match,
+                                   do_entry_proc f, int entry_id, int max_size
+                                   JVM_TRAPS);
   static bool match(const char *suffix, const char *name, int name_len);
 #endif // USE_JAR_ENTRY_ENUMERATOR
 
