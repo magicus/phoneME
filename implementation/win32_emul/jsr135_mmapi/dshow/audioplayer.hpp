@@ -24,18 +24,23 @@
 
 #pragma once
 
-#include "sourcefilter.hpp"
+class sourcefilter;
+
+struct ap_callback
+{
+    virtual void call( unsigned int bytes_in_queue ) = 0;
+};
 
 class audioplayer
 {
-    sourcefilter*sf;
-    IGraphBuilder*pgb;
-    IMediaControl*pmc;
+    sourcefilter*  sf;
+    IGraphBuilder* pgb;
+    IMediaControl* pmc;
 public:
     audioplayer();
     ~audioplayer();
-    bool init(unsigned int len,const wchar_t*format);
-    bool data(unsigned int len,const void*src);
+    bool init(unsigned int len, const wchar_t* format, ap_callback* cb);
+    bool data(unsigned int len, const void* src);
     bool play();
     bool stop();
     bool seek(double time);

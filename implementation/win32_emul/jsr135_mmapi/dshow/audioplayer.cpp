@@ -25,7 +25,8 @@
 #include<dshow.h>
 #include<wmsdkidl.h>
 
-#include"audioplayer.hpp"
+#include "sourcefilter.hpp"
+#include "audioplayer.hpp"
 
 audioplayer::audioplayer()
 {
@@ -37,9 +38,10 @@ audioplayer::~audioplayer()
     if(sf)shutdown();
 }
 
-bool audioplayer::init(unsigned int len,const wchar_t*format)
+bool audioplayer::init(unsigned int len,const wchar_t*format, ap_callback* cb)
 {
     if(sf)return false;
+
     HRESULT hr=S_OK;
 
     hr=CoInitializeEx(NULL,COINIT_MULTITHREADED);
@@ -48,7 +50,7 @@ bool audioplayer::init(unsigned int len,const wchar_t*format)
         return false;
     }
 
-    sf=new sourcefilter(NULL,&hr);
+    sf=new sourcefilter(NULL, &hr, cb);
     if(!sf)
     {
         return false;

@@ -26,28 +26,35 @@
 
 #include <streams.h>
 
-class sourcefilter;
+class  sourcefilter;
+struct ap_callback;
 
-class sourcefilterpin:public CSourceStream
+class sourcefilterpin : public CSourceStream
 {
     friend sourcefilter;
-    FILE*f;
-    UINT32 len;
-    UINT32 offs;
-    UINT8*data;
-    bool end;
-    sourcefilterpin(CSource*pms,HRESULT*phr);
+
+    FILE*         f;
+    UINT32        len;
+    UINT32        offs;
+    UINT8*        data;
+    bool          end;
+    sourcefilter* psf;
+    ap_callback*  pcb;
+
+    sourcefilterpin(sourcefilter* pms, HRESULT* phr, ap_callback* cb);
     ~sourcefilterpin();
-    virtual HRESULT DecideBufferSize(IMemAllocator*pAlloc,ALLOCATOR_PROPERTIES*ppropInputRequest);
-    virtual HRESULT FillBuffer(IMediaSample*pSample);
-    virtual HRESULT GetMediaType(CMediaType*pMediaType);
+
+    virtual HRESULT DecideBufferSize(IMemAllocator* pAlloc, ALLOCATOR_PROPERTIES* ppropInputRequest);
+    virtual HRESULT FillBuffer(IMediaSample* pSample);
+    virtual HRESULT GetMediaType(CMediaType* pMediaType);
 };
 
-class sourcefilter:public CSource
+class sourcefilter : public CSource
 {
-    sourcefilterpin*psfp;
+    sourcefilterpin* psfp;
+
 public:
-    sourcefilter(LPUNKNOWN lpunk,HRESULT*phr);
-    bool data(UINT32 len,const UINT8*data);
+    sourcefilter(LPUNKNOWN lpunk, HRESULT* phr, ap_callback* cb);
+    bool data(UINT32 len, const UINT8* data);
     bool end();
 };

@@ -27,6 +27,7 @@
 #include<initguid.h>
 #include<wmsdkidl.h>
 
+#include"audioplayer.hpp"
 #include"sourcefilter.hpp"
 
 //#pragma comment(lib,"strmiids.lib")
@@ -36,16 +37,19 @@
 DEFINE_GUID(CLSID_sourcefilter,
 0xad533349, 0xcbc3, 0x482c, 0x87, 0xf0, 0x25, 0xf9, 0xcb, 0x36, 0x2, 0x57);
 
-sourcefilterpin::sourcefilterpin(CSource*pms,HRESULT*phr):CSourceStream(TEXT("Output"),phr,pms,L"Output")
+sourcefilterpin::sourcefilterpin(sourcefilter* pms, HRESULT* phr, ap_callback* cb)
+: CSourceStream(TEXT("Output"), phr, pms, L"Output")
+, psf( pms )
+, pcb( cb )
 {
-    len=0;
-    offs=0;
-    end=false;
+    len  = 0;
+    offs = 0;
+    end  = false;
 }
 
 sourcefilterpin::~sourcefilterpin()
 {
-    if(len)free(data);
+    if(len) free(data);
 }
 
 HRESULT sourcefilterpin::DecideBufferSize(IMemAllocator*pAlloc,ALLOCATOR_PROPERTIES*ppropInputRequest)
@@ -87,6 +91,8 @@ HRESULT sourcefilterpin::FillBuffer(IMediaSample*pSample)
                 REFERENCE_TIME rt1=offs;
                 REFERENCE_TIME rt2=offs+1;
                 offs++;
+
+                pcb->call( len - offs );
                 //memcpy(data,data+1,len-1);
                 //len--;
                 hr=pSample->SetTime(&rt1,&rt2);
@@ -133,10 +139,11 @@ HRESULT sourcefilterpin::GetMediaType(CMediaType*pMediaType)
     return S_OK;
 }
 
-sourcefilter::sourcefilter(LPUNKNOWN lpunk,HRESULT*phr):CSource(TEXT("Source Filter"),lpunk,CLSID_sourcefilter)
+sourcefilter::sourcefilter(LPUNKNOWN lpunk,HRESULT*phr, ap_callback* cb)
+: CSource(TEXT("Source Filter"),lpunk,CLSID_sourcefilter)
 {
     HRESULT hr=S_OK;
-    psfp=new sourcefilterpin(this,&hr);
+    psfp=new sourcefilterpin(this, &hr, cb);
     if(!psfp)
     {
         if(phr)*phr=E_OUTOFMEMORY;

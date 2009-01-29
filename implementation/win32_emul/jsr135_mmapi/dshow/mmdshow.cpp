@@ -22,41 +22,26 @@
 * information or have any questions. 
 */ 
 
-#include <stdio.h>
-
 #include "multimedia.h"
+#include <dshow.h>
 #include "audioplayer.hpp"
 
 //=============================================================================
 
-/*
-static void dshow_DBG_out( LPCSTR str )
+#define dshow_DBG( s )
+//#define dshow_DBG( s ) OutputDebugString( (s) )
+
+#define XFER_BUFFER_SIZE  4096
+#define EOM_TIMEOUT       2000
+
+struct dshow_player : public ap_callback
 {
-    FILE* f = fopen( "c:\\rtp_dshow.log", "ab" );
-    if( NULL != f )
-    {
-        fputs( str, f );
-        fclose( f );
-    }
-}
+    virtual void call( unsigned int bytes_in_queue );
 
-#define dshow_DBG( s ) dshow_DBG_out( (s) )
-*/
+    unsigned int          bytes_in_queue;
+    bool                  notified;
+    bool                  buffering;
 
-#define dshow_DBG( s ) OutputDebugString( (s) )
-
-//=============================================================================
-
-extern "C" {
-
-//=============================================================================
-
-#define XFER_BUFFER_SIZE  1024
-#define BUFFER_PACKETS    20  // number of packets necessary to stop buffering
-#define MAX_MISSING       40  // number of missing packets necessary to consider EOM
-
-typedef struct
-{
     int                   appId;
     int                   playerId;
     jc_fmt                mediaType;
@@ -67,13 +52,10 @@ typedef struct
 
     BYTE                  buf[ XFER_BUFFER_SIZE ];
 
-    BOOL                  realized;
-    BOOL                  prefetched;
-    BOOL                  acquired;
-    BOOL                  playing;
-    BOOL                  buffering;
-
-    int                   enqueued;
+    bool                  realized;
+    bool                  prefetched;
+    bool                  acquired;
+    volatile BOOL         playing;
 
     javacall_int64        samplesPlayed;
 
@@ -81,7 +63,74 @@ typedef struct
     javacall_bool         mute;
 
     audioplayer           ap;
-} dshow_player;
+
+    volatile HANDLE       hEomThread; // monitors buffering activity
+    HANDLE                hBufEvent;  // if not signaled for EOM_TIMEOUT ms, EOM is generated
+};
+
+void dshow_player::call( unsigned int ap_bytes_in_queue )
+{
+    bytes_in_queue = ap_bytes_in_queue;
+
+    if( ap_bytes_in_queue < XFER_BUFFER_SIZE )
+    {
+        if( !notified )
+        {
+            dshow_DBG( "        sending NMD...\n" );
+            javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
+                appId, playerId, JAVACALL_OK, NULL);
+
+            notified  = true;
+            buffering = true;
+        }
+    }
+    else
+    {
+        notified = false;
+    }
+}
+
+DWORD WINAPI dshow_eom_thread( LPVOID lpParameter )
+{
+    dshow_player* p = (dshow_player*)lpParameter;
+
+    dshow_DBG( "*** eom thread start ***\n" );
+
+    while( NULL != p->hBufEvent )
+    {
+        if( p->playing )
+        {
+            if( WAIT_TIMEOUT == WaitForSingleObject( p->hBufEvent, EOM_TIMEOUT ) )
+            {
+                if( p->playing )
+                {
+                    dshow_DBG( "*** buf timeout, sending EOM. ***\n" );
+                    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
+                        p->appId, p->playerId, JAVACALL_OK, (void*)0 ); // IMPL_NOTE: mediatime!
+                    p->playing = FALSE;
+                }
+            }
+            else
+            {
+                dshow_DBG( "*** buf ok ***\n" );
+            }
+        }
+        else
+        {
+            Sleep( 250 );
+        }
+    }
+
+    dshow_DBG( "*** eom thread exit ***\n" );
+
+    return 0;
+}
+
+//=============================================================================
+
+extern "C" {
+
+//=============================================================================
 
 static javacall_handle dshow_create(int appId, 
                                   int playerId,
@@ -92,20 +141,22 @@ static javacall_handle dshow_create(int appId,
 
     dshow_DBG( "*** create ***\n" );
 
-    p->appId       = appId;
-    p->playerId    = playerId;
-    p->mediaType   = mediaType;
-    p->uri         = NULL;
-    p->realized    = FALSE;
-    p->prefetched  = FALSE;
-    p->acquired    = FALSE;
-    p->playing     = FALSE;
-    p->buffering   = TRUE;
-    p->enqueued    = 0;
-    p->samplesPlayed = 0;
-    p->volume      = 100;
-    p->mute        = JAVACALL_FALSE;
-
+    p->bytes_in_queue   = 0;
+    p->notified         = false;
+    p->appId            = appId;
+    p->playerId         = playerId;
+    p->mediaType        = mediaType;
+    p->uri              = NULL;
+    p->realized         = FALSE;
+    p->prefetched       = FALSE;
+    p->acquired         = FALSE;
+    p->playing          = FALSE;
+    p->buffering        = TRUE;
+    p->samplesPlayed    = 0;
+    p->volume           = 100;
+    p->mute             = JAVACALL_FALSE;
+    p->hBufEvent        = CreateEvent( NULL, FALSE, FALSE, NULL );
+    p->hEomThread       = CreateThread( NULL, 0, dshow_eom_thread, p, 0, NULL );
     return p;
 }
 
@@ -123,9 +174,14 @@ static javacall_result dshow_destroy(javacall_handle handle)
 
     dshow_DBG( "*** destroy ***\n" );
 
+    CloseHandle( p->hBufEvent );
+    p->hBufEvent = NULL;
+    // setting hBufEvent to NULL causes eom thread to exit
+    WaitForSingleObject( p->hEomThread, INFINITE );
+
     p->ap.shutdown();
 
-    delete p;//FREE(p);
+    delete p;
 
     return JAVACALL_OK;
 }
@@ -185,7 +241,7 @@ static javacall_result dshow_realize(javacall_handle handle,
         get_int_param( mime, (javacall_const_utf16_string)L"channels", &(p->channels) );
         get_int_param( mime, (javacall_const_utf16_string)L"rate", &(p->rate) );
 
-        p->ap.init( mimeLength, (wchar_t*)mime );
+        p->ap.init( mimeLength, (wchar_t*)mime, p );
 
         p->realized = TRUE;
     }
@@ -217,10 +273,6 @@ static javacall_result dshow_get_java_buffer_size(javacall_handle handle,
     {
         dshow_DBG( "*** get_java_buffer_size: XFER_BUFFER_SIZE ***\n" );
         *first_chunk_size = XFER_BUFFER_SIZE;
-
-        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
-            p->appId, p->playerId, JAVACALL_OK, NULL);
-
     }
     else
     {
@@ -258,63 +310,60 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
 {
     dshow_player* p = (dshow_player*)handle;
 
-    dshow_DBG( "        do_buffering...\n" );
-
-    /*
-    FILE* f = fopen( "c:\\buffering.log", "a" );
-    if( NULL != f )
-    {
-        for( int i = 0; i < *length; i++ )
-        {
-            fprintf(f, "%02X ", ((BYTE*)buffer)[i] );
-        }
-        fprintf(f,"\n");
-        fclose(f);
-    }
-    */
-
-    /*
-    FILE* f1 = fopen( "c:\\buffering.mp3", "ab" );
-    if( NULL != f1 )
-    {
-        fwrite( buffer, *length, 1, f1 );
-        fclose(f1);
-    }*/
+    char str[ 256 ];
+    sprintf( str, "     do_buffering % 6i->% 6i...\n", p->bytes_in_queue, p->bytes_in_queue + *length );
+    dshow_DBG( str );
 
     if( 0 != *length && NULL != buffer )
     {
         p->ap.data( *length, buffer );
+        p->bytes_in_queue += *length;
+        SetEvent( p->hBufEvent );
     }
     else
     {
         dshow_DBG( "           [zero]\n" );
     }
 
-    if( p->acquired || p->buffering )
+    if( p->buffering )
     {
-        dshow_DBG( "        continue...\n" );
+        if( p->bytes_in_queue > XFER_BUFFER_SIZE * 10 )
+        {
+            p->buffering = FALSE;
+            dshow_DBG( "        -- buffering stopped.\n" );
+
+            if( p->playing )
+            {
+                dshow_DBG( "        ** resuming playback.\n" );
+                p->ap.play();
+            }
+        }
+        else
+        {
+            if( p->playing )
+            {
+                dshow_DBG( "        ** stopping playback.\n" );
+                p->ap.stop();
+            }
+        }
+    }
+
+    if( p->buffering )
+    {
+        dshow_DBG( "        need more data immmediately...\n" );
         *need_more_data  = JAVACALL_TRUE;
-        *next_chunk_size = XFER_BUFFER_SIZE;
+    }
+    else
+    {
+        dshow_DBG( "        enough data for now, posting NMD.\n" );
+        *need_more_data  = JAVACALL_FALSE;
 
         javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
             p->appId, p->playerId, JAVACALL_OK, NULL);
 
-        if(++p->enqueued > 10 )
-        {
-            p->buffering = FALSE;
-            dshow_DBG( "        -- enough!\n" );
-        }
-        else
-        {
-            dshow_DBG( "        -- buffering...\n" );
-        }
     }
-    else
-    {
-        dshow_DBG( "        stop...\n" );
-        *need_more_data  = JAVACALL_FALSE;
-        *next_chunk_size = 0;
-    }
+
+    *next_chunk_size = XFER_BUFFER_SIZE;
 
     return JAVACALL_OK;
 }
