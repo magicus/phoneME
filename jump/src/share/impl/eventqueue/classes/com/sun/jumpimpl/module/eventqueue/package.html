@@ -1,0 +1,27 @@
+<!--
+     
+
+   Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+-->
+  <body>
+  This package contains the initial implementation of the <b>EventQueue</b> 
+  executive module. It uses a single queue for all events and a single 
+  processing thread, from the context of which all event handlers are 
+  executed. No threads use active polling for the events, i.e. all the 
+  threads in this module are blocked if the underlying platform does not 
+  generate any events.
+
+  <p>
+  When a new native event arrives, the receiving thread wakes up, enqueues 
+  the event data and causes the processing thread to wake up. The processing 
+  thread gets the event from the queue and tries to find a registered handler 
+  for this type of events. If a handler is found, the corresponding event 
+  handler is executed.
+
+  <p>
+  The internal logic of event handlers is completely up to JSRs. However, 
+  their lengthy execution can affect the event system itself 
+  (by delaying the next event being retrieved from the queue), so potentially 
+  slow or blocking event handlers should use another thread for processing 
+  and return as soon as possible.
+  </body>
