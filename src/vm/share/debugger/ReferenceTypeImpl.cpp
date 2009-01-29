@@ -94,7 +94,8 @@ void ReferenceTypeImpl::static_field_getter_setter(PacketInputStream *in,
     // find the correct task mirror for this task
     {
       SETUP_ERROR_CHECKER_ARG;
-      TaskGCContext tmp(in->transport()->task_id());
+      GUARANTEE(TaskContext::current_task_id() == in->transport()->task_id(),
+		"Must switch to the context of the transport task");
       TaskMirror::Fast tm = field_clazz().task_mirror_no_check();
       if (!TaskMirrorDesc::is_initialized_mirror((TaskMirrorDesc*)tm.obj())) {
         GUARANTEE(field_clazz().is_interface(),

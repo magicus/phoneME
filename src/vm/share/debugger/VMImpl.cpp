@@ -43,8 +43,8 @@ void VMImpl::virtualmachine_all_classes(PacketInputStream *in,
   jint count = 0;
 
 #if ENABLE_ISOLATES
-  // GC can happen in this block, so we need a full context switch
-  TaskContext tmp(in->transport()->task_id());
+  GUARANTEE(TaskContext::current_task_id() == in->transport()->task_id(),
+	    "Must switch to the context of the transport task");
 #endif
 
 #ifdef AZZERT
@@ -147,7 +147,8 @@ void VMImpl::virtualmachine_classes_by_signature(PacketInputStream *in,
   }
   {
 #if ENABLE_ISOLATES
-    TaskGCContext tmp(in->transport()->task_id());
+    GUARANTEE(TaskContext::current_task_id() == in->transport()->task_id(),
+	      "Must switch to the context of the transport task");
 #endif
     num_classes = Universe::number_of_java_classes();
     for (i = 0; i < num_classes; i++) {

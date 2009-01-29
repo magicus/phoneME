@@ -257,11 +257,15 @@ ObjectReferenceImpl::object_reference_reference_type(PacketInputStream *in,
   }
 #endif 
   if (object.not_null()) {
-    ref_class = object().blueprint();
-    if (object.is_jvm_thread()) {
-      // this is a VM thread object that's in the java.lang.Thread object
-      // User really doesn't want to know about this as such
-      ref_class = Universe::object_class();
+    {
+      FarClass::Raw far_class = object().blueprint();
+      if (far_class.is_java_class()) {
+        ref_class = far_class;
+      } else {
+        // this can be a VM thread object that's in the java.lang.Thread object
+        // User really doesn't want to know about this as such
+        ref_class = Universe::object_class();
+      }
     }
     out->write_byte(JavaDebugger::get_jdwp_tagtype(&ref_class));
     out->write_class(&ref_class);
