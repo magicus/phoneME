@@ -415,14 +415,14 @@ static javacall_result rtp_do_buffering(javacall_handle handle,
     {
         RTP_DBG( "        continue...\n" );
         *need_more_data  = JAVACALL_TRUE;
-        *next_chunk_size = XFER_BUFFER_SIZE;
     }
     else
     {
         RTP_DBG( "        stop...\n" );
         *need_more_data  = JAVACALL_FALSE;
-        *next_chunk_size = 0;
     }
+
+    *next_chunk_size = XFER_BUFFER_SIZE;
 
     return JAVACALL_OK;
 }
