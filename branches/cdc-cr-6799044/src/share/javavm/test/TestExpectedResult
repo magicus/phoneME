@@ -1,0 +1,9 @@
+*Number of command line arguments: 0
+*TestE exception thrown because "I'm feeling Testy"
+*<clinit> threw java.lang.ExceptionInInitializerError
+*<clinit> threw java.lang.NoClassDefFoundError: StaticE
+*FloatMIN =1.4E-45
+*FloatMAX =3.4028235E38
+*CONGRATULATIONS: test Test completed with 403 tests passed and 0 failures
+*Output lines starting with a * should be checked for correctness
+*They can be compared to src/share/javavm/test/TestExpectedResult
