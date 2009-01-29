@@ -41,6 +41,9 @@ class sourcefilterpin : public CSourceStream
     sourcefilter* psf;
     ap_callback*  pcb;
 
+    int           rate;
+    int           channels;
+
     sourcefilterpin(sourcefilter* pms, HRESULT* phr, ap_callback* cb);
     ~sourcefilterpin();
 

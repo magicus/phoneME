@@ -28,11 +28,11 @@
 
 //=============================================================================
 
-#define dshow_DBG( s )
-//#define dshow_DBG( s ) OutputDebugString( (s) )
+//#define dshow_DBG( s )
+#define dshow_DBG( s ) OutputDebugString( (s) )
 
 #define XFER_BUFFER_SIZE  4096
-#define EOM_TIMEOUT       2000
+#define EOM_TIMEOUT       5000
 
 struct dshow_player : public ap_callback
 {
@@ -92,6 +92,7 @@ void dshow_player::call( unsigned int ap_bytes_in_queue )
 
 DWORD WINAPI dshow_eom_thread( LPVOID lpParameter )
 {
+    DWORD t0;
     dshow_player* p = (dshow_player*)lpParameter;
 
     dshow_DBG( "*** eom thread start ***\n" );
@@ -100,6 +101,7 @@ DWORD WINAPI dshow_eom_thread( LPVOID lpParameter )
     {
         if( p->playing )
         {
+            t0 = GetTickCount();
             if( WAIT_TIMEOUT == WaitForSingleObject( p->hBufEvent, EOM_TIMEOUT ) )
             {
                 if( p->playing )
@@ -107,12 +109,15 @@ DWORD WINAPI dshow_eom_thread( LPVOID lpParameter )
                     dshow_DBG( "*** buf timeout, sending EOM. ***\n" );
                     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
                         p->appId, p->playerId, JAVACALL_OK, (void*)0 ); // IMPL_NOTE: mediatime!
+                    p->ap.stop();
                     p->playing = FALSE;
                 }
             }
             else
             {
-                dshow_DBG( "*** buf ok ***\n" );
+                char str[ 80 ];
+                sprintf( str, "*** buf ok, dt = %i ***\n", GetTickCount() - t0 );
+                dshow_DBG( str );
             }
         }
         else
@@ -398,6 +403,7 @@ static javacall_result dshow_pause(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     dshow_DBG( "*** pause ***\n" );
     p->playing = FALSE;
+    p->ap.stop();
     return JAVACALL_OK;
 }
 
@@ -406,6 +412,7 @@ static javacall_result dshow_resume(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     dshow_DBG( "*** resume ***\n" );
     p->playing = TRUE;
+    p->ap.play();
     return JAVACALL_OK;
 }
 

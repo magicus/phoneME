@@ -45,7 +45,7 @@ bool audioplayer::init(unsigned int len,const wchar_t*format, ap_callback* cb)
     HRESULT hr=S_OK;
 
     hr=CoInitializeEx(NULL,COINIT_MULTITHREADED);
-    if(hr!=S_OK)
+    if( FAILED( hr ) )
     {
         return false;
     }
@@ -55,7 +55,7 @@ bool audioplayer::init(unsigned int len,const wchar_t*format, ap_callback* cb)
     {
         return false;
     }
-    if(hr != S_OK)
+    if( FAILED( hr ) )
     {
         delete sf;
         return false;

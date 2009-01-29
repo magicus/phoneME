@@ -45,6 +45,9 @@ sourcefilterpin::sourcefilterpin(sourcefilter* pms, HRESULT* phr, ap_callback* c
     len  = 0;
     offs = 0;
     end  = false;
+
+    rate     = 44100;
+    channels = 1;
 }
 
 sourcefilterpin::~sourcefilterpin()
@@ -121,18 +124,18 @@ HRESULT sourcefilterpin::GetMediaType(CMediaType*pMediaType)
     pMediaType->SetFormatType(&FORMAT_WaveFormatEx);
 
     MPEGLAYER3WAVEFORMAT ml3wf;
-    ml3wf.wfx.wFormatTag=WAVE_FORMAT_MPEGLAYER3;
-    ml3wf.wfx.nChannels=2;
-    ml3wf.wfx.nSamplesPerSec=44100;
-    ml3wf.wfx.nAvgBytesPerSec=16000;
-    ml3wf.wfx.nBlockAlign=1;
-    ml3wf.wfx.wBitsPerSample=0;
-    ml3wf.wfx.cbSize=12;
-    ml3wf.wID=1;
-    ml3wf.fdwFlags=0;
-    ml3wf.nBlockSize=1;
-    ml3wf.nFramesPerBlock=1;
-    ml3wf.nCodecDelay=0;
+    ml3wf.wfx.wFormatTag      = WAVE_FORMAT_MPEGLAYER3;
+    ml3wf.wfx.nChannels       = channels;
+    ml3wf.wfx.nSamplesPerSec  = rate;
+    ml3wf.wfx.nAvgBytesPerSec = 16000;
+    ml3wf.wfx.nBlockAlign     = 1;
+    ml3wf.wfx.wBitsPerSample  = 0;
+    ml3wf.wfx.cbSize          = 12;
+    ml3wf.wID                 = 1;
+    ml3wf.fdwFlags            = 0;
+    ml3wf.nBlockSize          = 1;
+    ml3wf.nFramesPerBlock     = 1;
+    ml3wf.nCodecDelay         = 0;
 
     pMediaType->SetFormat((BYTE*)&ml3wf,sizeof(MPEGLAYER3WAVEFORMAT));
 
