@@ -28,48 +28,58 @@ import java.util.Vector;
 
 class AduqDepacketizer extends DefaultDepacketizer
 {
-    private static final int READ_TIMEOUT = 30000; // ms to wait before returning 0
+    private static final int READ_TIMEOUT = 2000; // ms to wait before returning 0
     private static final int OUT_QUEUE_INITIAL_SIZE = 100; // mp3 frames
 
     private Vector out_queue = new Vector(OUT_QUEUE_INITIAL_SIZE);
     private int head_offs = 0; // offset in head packet
+    private int bytes_ready = 0;
 
-    public synchronized int read(byte[] b, int off, int len)
-        throws java.io.IOException {
+    public int read(byte[] b, int off, int len) throws java.io.IOException {
 
-        int bytes_moved = 0;
+        synchronized (out_queue) {
 
-        if (0 == out_queue.size()) {
+            int bytes_moved = 0;
+
             try {
-                wait(READ_TIMEOUT);
+                int s = out_queue.size();
+                while (bytes_ready < len) {
+                    out_queue.wait(READ_TIMEOUT);
+                    if (s == out_queue.size()) {
+                        // if no new packets arrived within timeout period,
+                        // return all data we already have
+                        break;
+                    }
+                }
             } catch (InterruptedException ie) {
                 return -1;
             }
-        }
 
-        byte[] head;
-        int n;
+            byte[] head;
+            int n;
 
-        while (bytes_moved < len && 0 != out_queue.size()) {
+            while (bytes_moved < len && 0 != out_queue.size()) {
 
-            head = (byte[])out_queue.elementAt(0);
-            n = Math.min(len - bytes_moved, head.length - head_offs);
+                head = (byte[])out_queue.elementAt(0);
+                n = Math.min(len - bytes_moved, head.length - head_offs);
 
-            System.arraycopy(head, head_offs, b, off + bytes_moved, n);
+                System.arraycopy(head, head_offs, b, off + bytes_moved, n);
 
-            head_offs += n;
-            bytes_moved += n;
+                head_offs += n;
+                bytes_moved += n;
 
-            if (0 == head.length - head_offs) {
-                out_queue.removeElementAt(0);
-                head_offs = 0;
+                if (0 == head.length - head_offs) {
+                    out_queue.removeElementAt(0);
+                    head_offs = 0;
+                }
             }
-        }
 
-        return bytes_moved;
+            bytes_ready -= bytes_moved;
+            return bytes_moved;
+        }
     }
 
-    public synchronized boolean processPacket(RtpPacket pkt) {
+    public boolean processPacket(RtpPacket pkt) {
 
         if (!enqueuePacket(pkt)) {
             return false;
@@ -169,8 +179,11 @@ class AduqDepacketizer extends DefaultDepacketizer
                 break;
             }
 
-            out_queue.addElement(f);
-            notify();
+            synchronized (out_queue) {
+                bytes_ready += f.length;
+                out_queue.addElement(f);
+                out_queue.notify();
+            }
 
             pkt_queue.removeElementAt(0);
 

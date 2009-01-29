@@ -57,10 +57,12 @@ class DefaultDepacketizer implements Depacketizer
         return enqueuePacket(pkt);
     }
 
-    protected synchronized boolean enqueuePacket(RtpPacket pkt) {
+    protected boolean enqueuePacket(RtpPacket pkt) {
         try {
-            pkt_queue.addElement(pkt);
-            notify();
+            synchronized (pkt_queue) {
+                pkt_queue.addElement(pkt);
+                pkt_queue.notify();
+            }
             return true;
         } catch (OutOfMemoryError e) {
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -71,16 +73,18 @@ class DefaultDepacketizer implements Depacketizer
         }
     }
 
-    protected synchronized RtpPacket dequeuePacket() throws InterruptedException {
-        if (0 == pkt_queue.size()) {
-            wait(PACKET_TIMEOUT);
-        }
-        if (0 != pkt_queue.size()) {
-            RtpPacket p = (RtpPacket)pkt_queue.elementAt(0);
-            pkt_queue.removeElementAt(0);
-            return p;
-        } else {
-            return null;
+    protected RtpPacket dequeuePacket() throws InterruptedException {
+        synchronized (pkt_queue) {
+            if (0 == pkt_queue.size()) {
+                pkt_queue.wait(PACKET_TIMEOUT);
+            }
+            if (0 != pkt_queue.size()) {
+                RtpPacket p = (RtpPacket)pkt_queue.elementAt(0);
+                pkt_queue.removeElementAt(0);
+                return p;
+            } else {
+                return null;
+            }
         }
     }
 }
