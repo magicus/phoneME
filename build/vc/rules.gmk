@@ -138,7 +138,7 @@ CPPFLAGS+= -I`$(call fixcygpath, $(JAVACALL_OUTPUT_INCLUDE_DIR))`
 CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
 
 ADDITIONAL_RC_INCLUDE_DIRS += $(RESOURCE_IMAGES_DIR)
-RCFLAGS += $(foreach dir,$(ADDITIONAL_RC_INCLUDE_DIRS),/i`$(call fixcygpath, $(dir))`)
+RCFLAGS += $(foreach dir,$(ADDITIONAL_RC_INCLUDE_DIRS),-i`$(call fixcygpath, $(dir))`)
 
 ifeq ($(VC8CE_ARCH_PATH),)
 AR=lib.exe
@@ -149,12 +149,12 @@ ifeq ($(TARGET_CPU),arm)
 ifeq ($(VC8CE_ARCH_PATH),)
 ARFLAGS=-nologo -MACHINE:ARM
 else
-ARFLAGS=/nologo /MACHINE:ARM
+ARFLAGS=-nologo -MACHINE:ARM
 endif
 else
 ARFLAGS=-nologo -MACHINE:X86
 ifeq ($(USE_VS2005), true)
-LOCAL_CFLAGS_$(BUILD) += /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+LOCAL_CFLAGS_$(BUILD) += -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
 LOCAL_CFLAGS_debug += -RTC1
 else
 LOCAL_CFLAGS_debug += -GZ
@@ -168,7 +168,7 @@ OUTPUT_OPTION=-Fo`$(call fixcygpath, $@)` \
 
 $(JAVACALL_OUTPUT_LIB_DIR)/%.res: %.rc
 	@echo "...compiling resources ... "
-	$(AT)$(RC) $(RCFLAGS) /l 0x409 /d "NDEBUG" /fo`$(call fixcygpath, $@)` `$(call fixcygpath, $<)`
+	$(AT)$(RC) $(RCFLAGS) -l 0x409 -d "NDEBUG" -fo`$(call fixcygpath, $@)` `$(call fixcygpath, $<)`
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.cpp
 	@echo -n "...compiling: "
