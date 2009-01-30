@@ -33,9 +33,6 @@ struct ap_callback
 
 class audioplayer
 {
-    sourcefilter*  sf;
-    IGraphBuilder* pgb;
-    IMediaControl* pmc;
 public:
     audioplayer();
     ~audioplayer();
@@ -46,4 +43,8 @@ public:
     bool seek(double time);
     bool tell(double*time);
     bool shutdown();
+protected:
+    sourcefilter*  sf;
+    IGraphBuilder* pgb;
+    IMediaControl* pmc;
 };

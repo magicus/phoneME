@@ -28,8 +28,8 @@
 
 //=============================================================================
 
-//#define dshow_DBG( s )
-#define dshow_DBG( s ) OutputDebugString( (s) )
+#define dshow_DBG( s )
+//#define dshow_DBG( s ) OutputDebugString( (s) )
 
 #define XFER_BUFFER_SIZE  4096
 #define EOM_TIMEOUT       5000

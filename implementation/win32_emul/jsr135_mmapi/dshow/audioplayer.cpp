@@ -30,12 +30,14 @@
 
 audioplayer::audioplayer()
 {
-    sf=NULL;
+    sf   = NULL;
+    pgb  = NULL;
+    pmc  = NULL;
 }
 
 audioplayer::~audioplayer()
 {
-    if(sf)shutdown();
+    shutdown();
 }
 
 bool audioplayer::init(unsigned int len,const wchar_t*format, ap_callback* cb)
@@ -44,96 +46,103 @@ bool audioplayer::init(unsigned int len,const wchar_t*format, ap_callback* cb)
 
     HRESULT hr=S_OK;
 
-    hr=CoInitializeEx(NULL,COINIT_MULTITHREADED);
+    hr = CoInitializeEx(NULL,COINIT_MULTITHREADED);
     if( FAILED( hr ) )
     {
         return false;
     }
 
-    sf=new sourcefilter(NULL, &hr, cb);
-    if(!sf)
-    {
-        return false;
-    }
+    sf = new sourcefilter(NULL, &hr, cb);
+    if(NULL == sf) return false;
     if( FAILED( hr ) )
     {
         delete sf;
+        sf = NULL;
         return false;
     }
-    IBaseFilter*pbf;
-    hr=sf->QueryInterface(IID_IBaseFilter,(void**)&pbf);
-    if(hr != S_OK)
-    {
-        delete sf;
-        return false;
-    }
-    IPin*pp;
-    hr=pbf->FindPin(L"1",&pp);
-    if(hr != S_OK)
-    {
-        pbf->Release();
-        delete sf;
-        return false;
-    }
-    hr=CoCreateInstance(CLSID_FilterGraph,NULL,CLSCTX_INPROC_SERVER,IID_IGraphBuilder,(void**)&pgb);
-    if(hr != S_OK)
-    {
-        pp->Release();
-        pbf->Release();
-        delete sf;
-        return false;
-    }
-    hr=pgb->AddFilter(pbf,L"Source Filter");
-    if(hr != S_OK)
-    {
-        pgb->Release();
-        pp->Release();
-        pbf->Release();
-        delete sf;
-        return false;
-    }
-    hr=pgb->Render(pp);
-    if(hr != S_OK)
-    {
-        pgb->Release();
-        pp->Release();
-        pbf->Release();
-        delete sf;
-        return false;
-    }
-    hr=pgb->QueryInterface(IID_IMediaControl,(void**)&pmc);
-    if(hr != S_OK)
-    {
-        pgb->Release();
-        pp->Release();
-        pbf->Release();
-        delete sf;
-        return false;
-    }
-    pgb->Release();
-    pp->Release();
-    pbf->Release();
+
     return true;
 }
 
 bool audioplayer::data(unsigned int len,const void*src)
 {
-    sf->data(len,(UINT8*)src);
+    if(NULL == sf) return false;
+    sf->data(len, (UINT8*)src);
     return true;
 }
 
 bool audioplayer::play()
 {
-    HRESULT hr=pmc->Run();
-    if(hr != S_OK)return false;
-    return true;
+    if(NULL == pgb)
+    {
+        HRESULT      hr;
+        IBaseFilter* pbf;
+        IPin*        pp;
+
+        hr = sf->QueryInterface(IID_IBaseFilter, (void**)&pbf );
+        if(hr != S_OK) return false;
+
+        hr = pbf->FindPin(L"1", &pp);
+        if(hr != S_OK)
+        {
+            pbf->Release();
+            return false;
+        }
+
+        hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+                              IID_IGraphBuilder, (void**)&pgb);
+        if(hr != S_OK)
+        {
+            pp->Release();
+            pbf->Release();
+            return false;
+        }
+
+        hr = pgb->AddFilter(pbf, L"Source Filter");
+        if(hr != S_OK)
+        {
+            pgb->Release();
+            pgb = NULL;
+            pp->Release();
+            pbf->Release();
+            return false;
+        }
+
+        hr = pgb->Render(pp);
+        if(hr != S_OK)
+        {
+            pgb->Release();
+            pgb = NULL;
+            return false;
+        }
+
+        pp->Release();
+        pbf->Release();
+
+        hr = pgb->QueryInterface(IID_IMediaControl, (void**)&pmc);
+        if(hr != S_OK)
+        {
+            pgb->Release();
+            pgb = NULL;
+            return false;
+        }
+    }
+
+    HRESULT hr = pmc->Run();
+    return (hr == S_OK);
 }
 
 bool audioplayer::stop()
 {
-    HRESULT hr=pmc->Stop();
-    if(hr != S_OK)return false;
-    return true;
+    if( NULL != pmc )
+    {
+        HRESULT hr = pmc->Stop();
+        return (S_OK == hr);
+    }
+    else
+    {
+        return false;
+    }
 }
 
 bool audioplayer::seek(double time)
@@ -148,10 +157,23 @@ bool audioplayer::tell(double*time)
 
 bool audioplayer::shutdown()
 {
-    if(!sf)return false;
-    pmc->Release();
-    pgb->Release();
-    //delete sf;
-    sf=NULL;
+    if( NULL != pmc )
+    {
+        pmc->Release();
+        pmc = NULL;
+    }
+
+    if( NULL != pgb )
+    {
+        pgb->Release();
+        pgb = NULL;
+    }
+
+    if( NULL != sf )
+    {
+        delete sf;
+        sf = NULL;
+    }
+
     return true;
 }

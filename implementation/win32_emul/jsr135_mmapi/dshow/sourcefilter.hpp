@@ -41,8 +41,8 @@ class sourcefilterpin : public CSourceStream
     sourcefilter* psf;
     ap_callback*  pcb;
 
-    int           rate;
-    int           channels;
+    bool                 first_packet;
+    MPEGLAYER3WAVEFORMAT ml3wf;
 
     sourcefilterpin(sourcefilter* pms, HRESULT* phr, ap_callback* cb);
     ~sourcefilterpin();
