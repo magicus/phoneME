@@ -1747,7 +1747,7 @@ void SourceROMWriter::sort_and_load_all_in_classpath(JVM_SINGLE_ARG_TRAPS) {
       tty->cr();
       return;
     }
-    instance_class().verify(JVM_SINGLE_ARG_NO_CHECK);
+    instance_class().verify(JVM_SINGLE_ARG_CHECK);
   }
 
   //loading resources
