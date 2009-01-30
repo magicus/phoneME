@@ -1704,7 +1704,10 @@ public class Protocol extends ConnectionBaseAdapter
         }
 
         // HTTP 1.0 requests must contain content length for proxies
-        if (getRequestProperty("Content-Length") == null) {
+        // (with the exception of GET and HEAD requests that do not have content)
+        if (getRequestProperty("Content-Length") == null
+            && !method.equals(HEAD)
+            && !method.equals(GET)) {
             setRequestField("Content-Length", Integer.toString(bytesToWrite));
         }
 
