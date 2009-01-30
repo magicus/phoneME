@@ -188,6 +188,8 @@ class MediaDownload {
                         } while (num_read < packetSize && !stopDownloadFlag);
                     }
 
+                    if (stopDownloadFlag) break;
+
                     packetSize = nBuffering(hNative, buffer, roffset, num_read);
                     roffset += num_read;
                     if (packetSize == -1) {
