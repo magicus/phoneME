@@ -55,14 +55,14 @@ class MIDletCustomItem extends CustomItem {
      * Inner class cannot have static variables thus it has to be here.
      */
     private static final Font ICON_FONT = Font.getFont(
-        Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_SMALL);
+        Font.FACE_PROPORTIONAL, Font.STYLE_BOLD, Font.SIZE_SMALL);
 
     /**
      * The font used to paint midlet names in the AppSelector.
      * Inner class cannot have static variables thus it has to be here.
      */
     private static final Font ICON_FONT_UL = Font.getFont(
-        Font.FACE_SYSTEM, Font.STYLE_BOLD | Font.STYLE_UNDERLINED,
+        Font.FACE_PROPORTIONAL, Font.STYLE_BOLD | Font.STYLE_UNDERLINED,
         Font.SIZE_SMALL);
 
     /**
