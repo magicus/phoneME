@@ -95,8 +95,6 @@ ABSTRACTIONS_CLASSES += \
 ifeq ($(USE_JSR_177), true)
 ABSTRACTIONS_CLASSES += \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/FileAccess.java \
-    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
-    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Util.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Cipher.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/RSAPublicKey.java \
@@ -110,6 +108,13 @@ ABSTRACTIONS_CLASSES += \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/SecretKey.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/IvParameter.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Key.java
+
+ifeq ($(JSR_177_PACKAGE), full)    
+ABSTRACTIONS_CLASSES += \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java
+endif
+
 endif
 
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
