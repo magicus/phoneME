@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -232,8 +232,7 @@ SATSA_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr177
 # Copy and filter SATSA source in SATSA_SOURCE_OUTPUT_DIR
 satsa_source_bundle:: $(JSR_177_DIR)
 	@echo " ... JSR 177 source bundle" $(LOG)
-	$(AT)$(call source_bundle_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR), src/share)
-	$(AT)mkdir -p $(SATSA_SOURCE_OUTPUT_DIR)/build
+	$(AT)$(call source_bundle_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR), build/share src/share)
 	$(AT)cp -f $(JSR_177_DIR)/build/subsystem.gmk $(SATSA_SOURCE_OUTPUT_DIR)/build/subsystem.gmk
 
 # Subsystem verify rules
