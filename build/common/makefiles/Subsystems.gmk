@@ -368,8 +368,6 @@ endif
 # Description: JSR 177
 #####################################################################
 ifeq ($(USE_JSR_177), true)
-JPP_DEFS += -DENABLE_JSR_177
-EXTRA_CFLAGS += -DENABLE_JSR_177=1
 include $(JSR_177_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
