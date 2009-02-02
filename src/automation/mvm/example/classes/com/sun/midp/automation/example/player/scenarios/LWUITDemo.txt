@@ -31,7 +31,7 @@
 # This scenario was written for LWUIT release from 2008-08-14,
 # so there is no guarantee that it will work for earlier or later
 # releases.
-# In order to use this scenario, make sure that SJWC is compiled
+# In order to use this scenario, make sure that sources are compiled
 # with jpeg support.
 # The "msec" argument for pen and key events specifies delay in
 # milliseconds _before_ simulating that event. It is used to 

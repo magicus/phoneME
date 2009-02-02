@@ -272,7 +272,7 @@ static void ShowSplashScreen() {
 extern "C" javacall_result JavaTaskImpl(int argc, char* argv[]) {
     javacall_result res = javanotify_ams_system_start();
 
-    wprintf(_T("SJWC exited, code: %d\n"), (int)res);
+    wprintf(_T("Exited, code: %d\n"), (int)res);
 
     return res;
 }

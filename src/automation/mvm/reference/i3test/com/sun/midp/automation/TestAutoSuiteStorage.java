@@ -38,7 +38,7 @@ public class TestAutoSuiteStorage extends TestCase {
 
     /** URL of suite to install */
     private static final String SUITE_URL = 
-        "http://localhost/~leonid/Hello.jad";
+        "http://localhost/test/Hello.jad";
     
     /**
      * Test failures 

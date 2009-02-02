@@ -35,11 +35,11 @@ import java.util.*;
 public class TestSwitchMidlets extends TestCase {
     /** URL of the first suite to install */
     private static final String SUITE1_URL =
-        "http://localhost/~leonid/Hello.jad";
+        "http://localhost/test/Hello.jad";
 
     /** URL of the second suite to install */
     private static final String SUITE2_URL =
-        "http://localhost/~leonid/TextInput.jad";
+        "http://localhost/test/TextInput.jad";
 
     /** Midlet suite storage */
     private AutoSuiteStorage storage = null;

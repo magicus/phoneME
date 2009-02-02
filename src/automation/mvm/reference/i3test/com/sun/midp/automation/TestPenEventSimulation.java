@@ -35,7 +35,7 @@ import java.util.*;
 public class TestPenEventSimulation extends TestCase {
     /** URL of suite to install */
     private static final String SUITE_URL = 
-        "http://localhost/~leonid/TextInput.jad";
+        "http://localhost/test/TextInput.jad";
 
     /** Midlet suite storage */
     private AutoSuiteStorage storage = null;

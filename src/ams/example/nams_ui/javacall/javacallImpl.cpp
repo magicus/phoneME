@@ -208,8 +208,7 @@ void javacall_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
  * This function is called by the installer when some action is required
  * from the user.
  *
- * It must be implemented at that side (SJWC or Platform) where the
- * application manager is located.
+ * It must be implemented at the side where the application manager is located.
  *
  * After processing the request, javacall_ams_install_answer() must
  * be called to report the result to the installer.
