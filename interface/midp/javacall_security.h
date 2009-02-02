@@ -343,8 +343,6 @@ typedef enum {
   JAVACALL_SECURITY_PERMISSION_SIPS,
   /** javax.microedition.payment.process permission ID. */
   JAVACALL_SECURITY_PERMISSION_PAYMENT,
-  /** com.qualcomm.qjae.gps.Gps permission ID. */  
-  JAVACALL_SECURITY_PERMISSION_GPS,
   /** javax.microedition.media.protocol.Datasource permission ID. */
   JAVACALL_SECURITY_PERMISSION_MM_DATASOURCE,
   /** javax.microedition.media.Player permission ID. */
