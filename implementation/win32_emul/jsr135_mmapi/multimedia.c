@@ -33,6 +33,14 @@
 #define LIME_MMAPI_PACKAGE      "com.sun.mmedia"
 #define LIME_MMAPI_CLASS        "JavaCallBridge"
 
+#define AUDIO_CAPTURE_LOCATOR   L"capture://audio"
+#define VIDEO_CAPTURE_LOCATOR   L"capture://video"
+#define RADIO_CAPTURE_LOCATOR   L"capture://radio"
+#define DEVICE_TONE_LOCATOR     L"device://tone"
+#define DEVICE_MIDI_LOCATOR     L"device://midi"
+#define RTSP_PROTOCOL_PREFIX    L"rtsp://"
+
+
 static javacall_media_caps g_caps[] = 
 {
 //    mediaFormat,                   contentTypes,           'whole' protocols,              streaming protocols
@@ -41,6 +49,9 @@ static javacall_media_caps g_caps[] =
     { JAVACALL_MEDIA_FORMAT_SP_MIDI, "audio/sp-midi",                     JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_TONE,    "audio/x-tone-seq audio/tone",       JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_RTP_L16, "audio/L16",                         0, JAVACALL_MEDIA_MEMORY_PROTOCOL },
+#ifdef ENABLE_MMAPI_DSHOW
+    { JAVACALL_MEDIA_FORMAT_RTP_MPA, "audio/X-MP3-draft-00",              0, JAVACALL_MEDIA_MEMORY_PROTOCOL },
+#endif //ENABLE_MMAPI_DSHOW
     { JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
 #ifdef ENABLE_AMR
     { JAVACALL_MEDIA_FORMAT_AMR,     "audio/amr",                         JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
@@ -340,7 +351,12 @@ jc_fmt fmt_str2enum( javacall_media_format_type fmt )
     JC_MM_ASSERT( JC_FMT_UNSUPPORTED == g_fmt_count - 1 );
 
     for( n = 0; n < g_fmt_count; n++ )
-        if( 0 == strcmp( fmt, g_fmt[ n ] ) ) return (jc_fmt)n;
+    {
+        if( 0 == strcmp( fmt, g_fmt[ n ] ) )
+        { 
+            return (jc_fmt)n;
+        }
+    }
 
     return JC_FMT_UNKNOWN;
 }
@@ -361,6 +377,9 @@ javacall_media_format_type fmt_mime2str( const char* mime )
     int          idx;
     unsigned int mimelen = strlen( mime );
     const char*  ct;
+    const char*  semicol_pos = strchr( mime, ';' );
+
+    if( NULL != semicol_pos ) mimelen = semicol_pos - mime;
 
     for( idx = 0; idx < nCaps; idx++ )
     {
@@ -453,11 +472,23 @@ extern media_interface g_qsound_interactive_midi_itf;
 extern media_interface g_record_itf;
 extern media_interface g_fake_radio_itf;
 extern media_interface g_rtp_itf;
+extern media_interface g_dshow_itf;
 
 media_interface* fmt_enum2itf( jc_fmt fmt )
 {
     switch( fmt )
     {
+
+#ifdef ENABLE_MMAPI_DSHOW
+    case JC_FMT_RTP_MPA:
+        return &g_dshow_itf;
+        break;
+#endif // ENABLE_MMAPI_DSHOW
+
+    case JC_FMT_RTP_L16:
+        return &g_rtp_itf;
+        break;
+
 #ifdef ENABLE_MMAPI_LIME
     case JC_FMT_MPEG_1:
     case JC_FMT_MPEG_4_SVP:
@@ -561,6 +592,13 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
     int i, extlen;
     javacall_const_utf16_string tail;
 
+    // do not guess formats for RTSP, it will be discovered on realize stage
+    if( 0 == _wcsnicmp( uri, RTSP_PROTOCOL_PREFIX, 
+                        min( (long)wcslen( RTSP_PROTOCOL_PREFIX ), uriLength ) ) )
+    {
+        return JAVACALL_MEDIA_FORMAT_UNKNOWN;
+    }
+
     for( i = 0; i < sizeof( map ) / sizeof( map[ 0 ] ); i++ )
     {
         extlen = wcslen( map[ i ].ext );
@@ -578,28 +616,6 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
 
     return JAVACALL_MEDIA_FORMAT_UNKNOWN;
 }
-
-/**
- * Testing purpose API
- */
-javacall_handle javacall_media_create2(int playerId, javacall_media_format_type mediaType,
-                                       const javacall_utf16* fileName,
-                                       int fileNameLength)
-{
-    return NULL;
-}
-
-/**
- * Native player create.
- * This function create internal information structure that will be used from other native API.
- */
-
-#define AUDIO_CAPTURE_LOCATOR   L"capture://audio"
-#define VIDEO_CAPTURE_LOCATOR   L"capture://video"
-#define RADIO_CAPTURE_LOCATOR   L"capture://radio"
-#define DEVICE_TONE_LOCATOR     L"device://tone"
-#define DEVICE_MIDI_LOCATOR     L"device://midi"
-#define RTSP_PROTOCOL_PREFIX    L"rtsp://"
 
 /**
  * This function is called to get all the necessary return values from 
@@ -641,6 +657,20 @@ javacall_result javacall_media_get_event_data(javacall_handle handle,
     return JAVACALL_INVALID_ARGUMENT;
 }
 
+/**
+ * Testing purpose API
+ */
+javacall_handle javacall_media_create2(int playerId, javacall_media_format_type mediaType,
+                                       const javacall_utf16* fileName,
+                                       int fileNameLength)
+{
+    return NULL;
+}
+
+/**
+ * Native player create.
+ * This function create internal information structure that will be used from other native API.
+ */
 javacall_result javacall_media_create(int appId,
                                       int playerId,
                                       javacall_const_utf16_string uri, 
@@ -704,13 +734,6 @@ javacall_result javacall_media_create(int appId,
             pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_MIDI;
             pPlayer->mediaItfPtr      = &g_qsound_itf;
             pPlayer->downloadByDevice = JAVACALL_TRUE;
-        }
-        else if( 0 == _wcsnicmp( uri, RTSP_PROTOCOL_PREFIX, 
-                           min( (long)wcslen( RTSP_PROTOCOL_PREFIX ), uriLength ) ) )
-        {
-            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_UNKNOWN;
-            pPlayer->mediaItfPtr      = &g_rtp_itf;
-            pPlayer->downloadByDevice = JAVACALL_FALSE;
         }
         else
         {
