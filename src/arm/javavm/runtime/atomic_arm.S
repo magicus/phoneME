@@ -45,9 +45,9 @@ ENTRY ( CVMatomicSwapImpl )
         swp     r0, r0, [r1]    /* Swap the contents of r1 with the *addr. */
         BR_REG(lr)              /* Return to the caller. */
 
+SET_SIZE(CVMatomicSwapImpl)
 #endif
 
-SET_SIZE(atomicSwap)
 
 
 #ifdef CVM_MP_SAFE
