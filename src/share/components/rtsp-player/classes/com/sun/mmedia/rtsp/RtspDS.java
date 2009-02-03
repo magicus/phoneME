@@ -58,7 +58,8 @@ public class RtspDS extends BasicDS {
     private RtspRange range = null;
 
     // in seconds, 60 is default according to the spec
-    private int sessionTimeout = 60; 
+    private int sessionTimeout = 60;
+    private KeepAliveThread ka_thread;
 
     // select UDP or inbound interleaved TCP for RTP transport
     // IMPL_NOTE: currently using only TCP, although UDP is also implemented
@@ -203,8 +204,8 @@ public class RtspDS extends BasicDS {
 
                 start();
 
-                KeepAliveThread ka = new KeepAliveThread();
-                ka.start();
+                ka_thread = new KeepAliveThread();
+                ka_thread.start();
 
             } catch (InterruptedException e) {
                 connection = null;
@@ -221,6 +222,11 @@ public class RtspDS extends BasicDS {
 
     public synchronized void disconnect() {
         if( null != connection ) {
+            if (null != ka_thread && ka_thread.isAlive() ) {
+                synchronized( ka_thread ) {
+                    ka_thread.interrupt();
+                }
+            }
             try {
                 sendRequest( RtspOutgoingRequest.TEARDOWN( seqNum, url, sessionId ) );
             } catch( InterruptedException e ) {
@@ -366,13 +372,15 @@ public class RtspDS extends BasicDS {
 
     //=========================================================================
 
-    private class KeepAliveThread extends Thread implements Runnable {
-        public boolean terminate = false;
+    private class KeepAliveThread extends Thread {
+        private boolean terminate;
         public void run() {
             while (!terminate) {
                 try {
-                    java.lang.Thread.sleep(3000 * sessionTimeout / 4); // 3/4, in milliseconds
-                    terminate |= !sendRequest(RtspOutgoingRequest.GET_PARAMETER(seqNum, url, sessionId));
+                    Thread.sleep(3000 * sessionTimeout / 4); // 3/4, in milliseconds
+                    synchronized (this) {
+                        terminate |= !sendRequest(RtspOutgoingRequest.GET_PARAMETER(seqNum, url, sessionId));
+                    }
                 } catch (InterruptedException e) {
                     terminate = true;
                 } catch (IOException e) {
