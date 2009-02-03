@@ -51,7 +51,10 @@ public abstract class RobotHelper {
 	String className;
 
         try {
-            helperClass = Class.forName("java.awt.QtRobotHelper");
+			className = 
+            System.getProperty("java.awt.RobotHelper", 
+                               "java.awt.QtRobotHelper");
+            helperClass = Class.forName(className);
             
             constructor = helperClass.getDeclaredConstructor(
 				new Class[] {java.awt.GraphicsDevice.class});
