@@ -40,6 +40,7 @@ public class PiscesFinalizer {
      * The constructor. It should not be used directly.
      */
     private PiscesFinalizer() {
+        initialize();
     }
 
     /**
@@ -48,12 +49,17 @@ public class PiscesFinalizer {
      */
     public static void init() {
         if (cleaner == null){
-	    cleaner = new PiscesFinalizer();
-	}
+	         cleaner = new PiscesFinalizer();
+	       }
     }
 
     /**
      * Uninitializes native Pisces module.
      */
     private native void finalize();
+    
+    /**
+     * Itializes native Pisces module.
+     */
+    private native void initialize();
 }

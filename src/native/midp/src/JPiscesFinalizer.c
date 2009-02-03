@@ -27,12 +27,25 @@
 #include <kni.h>
 #include <PiscesLibrary.h>
 
+static jint counter = 0;
+
 /*
  * private native void finalize();
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_PiscesFinalizer_finalize()
 {
-    pisces_moduleFinalize();
+    if (--counter == 0) {
+        pisces_moduleFinalize();
+    }
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_pisces_PiscesFinalizer_initialize()
+{
+    if (++counter == 1) {
+        pisces_moduleInitialize();
+    }
     KNI_ReturnVoid();
 }
