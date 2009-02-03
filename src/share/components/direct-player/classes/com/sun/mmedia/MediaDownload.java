@@ -43,9 +43,10 @@ class MediaDownload {
     private byte[] buffer = null;
     private boolean eom = false;
     private int hNative;
-    private boolean needMoreData = false;
     private Thread downloadThread = null;
-    private boolean stopDownloadFlag = false;
+
+    private volatile boolean needMoreData = false;
+    private volatile boolean stopDownloadFlag = false;
 
 
     // get java buffer size to determine media format
@@ -103,7 +104,7 @@ class MediaDownload {
             downloadThread.start();
         }
     }
-    
+
     synchronized void continueDownload() {
         needMoreData = true;
         notifyAll();
@@ -111,17 +112,17 @@ class MediaDownload {
 
     void stopDownload() {
         if (downloadThread != null && downloadThread.isAlive()) {
-           stopDownloadFlag = true;
-           try {
-               downloadThread.join();
-           } catch(InterruptedException ex) {;}
-           stopDownloadFlag = false;
-           downloadThread = null;
-           needMoreData = false;
+            stopDownloadFlag = true;
+            try {
+                downloadThread.join();
+            } catch (InterruptedException ex) { ;}
+            stopDownloadFlag = false;
+            downloadThread = null;
+            needMoreData = false;
         }
     }
 
-    private synchronized void download( boolean inBackground ) throws MediaException, IOException {
+    private void download( boolean inBackground ) throws MediaException, IOException {
         int roffset = 0;
         int woffset = 0;
 
@@ -177,22 +178,24 @@ class MediaDownload {
                             roffset = 0;
                         }
                         do {
-                            ret = stream.read(buffer, woffset, packetSize-num_read);
+                            ret = stream.read(buffer, woffset, packetSize - num_read);
                             if (ret == -1) {
                                 eom = true;
                                 break;
                             }
                             num_read += ret;
                             woffset += ret;
-                        }while(num_read<packetSize);
+                        } while (num_read < packetSize && !stopDownloadFlag);
                     }
-                
+
+                    if (stopDownloadFlag) break;
+
                     packetSize = nBuffering(hNative, buffer, roffset, num_read);
                     roffset += num_read;
                     if (packetSize == -1) {
                         packetSize = 0;
                         needMoreData = false;
-                        throw new MediaException("Error data buffering or encoding");
+                        throw new MediaException("Data buffering failed in native.");
                     } else if (packetSize > javaBufSize){
                         if ((woffset - roffset)==0) {
                             javaBufSize = packetSize;
@@ -240,9 +243,9 @@ class MediaDownload {
 
     private int bgDownloadAndWait(int offset) throws IOException {
         while (!needMoreData && !stopDownloadFlag) {
-            if (offset<javaBufSize && !eom) {
+            if (offset < javaBufSize && !eom) {
                 int num_read = packetSize;
-                if (offset + num_read >javaBufSize) {
+                if (offset + num_read > javaBufSize) {
                     num_read = javaBufSize - offset;
                 }
                 int ret = stream.read(buffer, offset, num_read);
@@ -252,9 +255,12 @@ class MediaDownload {
                     offset += ret;
                 }
             } else {
-                try {
-                    wait(500);
-                } catch (InterruptedException e) {
+                synchronized (this) {
+                    try {
+                        wait(500);
+                    } catch (InterruptedException e) {
+                        stopDownloadFlag = true;
+                    }
                 }
             }
         }

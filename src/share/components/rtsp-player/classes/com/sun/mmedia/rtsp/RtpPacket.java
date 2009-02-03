@@ -36,11 +36,19 @@ class RtpPacket {
         this.raw_data = raw_data;
         this.raw_data_size = raw_data_size;
 
-        payload_offs = 12 + 4 * getCsrcCount();
+        payload_offs = 12 + 4 * csrcCount();
         payload_size = raw_data_size - payload_offs;
     }
 
-    int getVersion() {
+    byte[] raw() {
+        return raw_data;
+    }
+
+    int rawSize() {
+        return raw_data_size;
+    }
+
+    int version() {
         return raw_data[0] >> 6;
     }
 
@@ -52,7 +60,7 @@ class RtpPacket {
         return 0 != (raw_data[0] & 0x10);
     }
 
-    int getCsrcCount() {
+    int csrcCount() {
         return raw_data[0] & 0x0F;
     }
 
@@ -60,30 +68,30 @@ class RtpPacket {
         return 0 != (raw_data[1] & 0x80);
     }
 
-    int getPayloadType() {
+    int payloadType() {
         return raw_data[1] & 0x7F;
     }
 
-    short getSequenceNumber() {
+    short sequenceNumber() {
         return (short)(((raw_data[2] & 0xFF) << 8) |
                        (raw_data[3] & 0xFF) );
     }
 
-    int getTimestamp() {
+    int timestamp() {
         return ((raw_data[4] & 0xFF) << 24) |
                ((raw_data[5] & 0xFF) << 16) |
                ((raw_data[6] & 0xFF) << 8) |
                  (raw_data[7] & 0xFF);
     }
 
-    int getSsrc() {
+    int ssrc() {
         return ((raw_data[8] & 0xFF) << 24) |
                ((raw_data[9] & 0xFF) << 16) |
                ((raw_data[10] & 0xFF) << 8) |
                  (raw_data[11] & 0xFF);
     }
 
-    int getCsrc(int n) {
+    int csrc(int n) {
         int offs = 12 + 4 * n;
         return ((raw_data[offs] & 0xFF) << 24) |
                ((raw_data[offs + 1] & 0xFF) << 16) |
@@ -99,7 +107,11 @@ class RtpPacket {
         return len;
     }
 
-    int getPayloadSize() {
+    int payloadOffs() {
+        return payload_offs;
+    }
+
+    int payloadSize() {
         return payload_size;
     }
 }
