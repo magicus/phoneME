@@ -633,7 +633,7 @@ ENTRY1 ( CVMCCMintrinsic_sun_misc_CVM_copyCharArray )
 	add	r1, r0, #OFFSET_ARRAY_ELEMENTS /* r1 = src+(2*sIdx) + ofst */
 	add	r0, r2, #OFFSET_ARRAY_ELEMENTS /* r0 = dst+(2*dIdx) + ofst */
 	mov	r2, r6, LSL #1	    /* r2 = (length * 2) */
-	b	SYM_NAME(CVMARMmemmove16Bit)
+	b	SYM_NAME(CVMARMmemmove16BitLocal)
 	SET_SIZE( CVMCCMintrinsic_sun_misc_CVM_copyCharArray )
 
 
@@ -688,7 +688,7 @@ LABEL(copyObjectArray_markCard)
 #undef CARDSTART
 #undef CARDEND
 
-	b	SYM_NAME(CVMARMmemmove32Bit)
+	b	SYM_NAME(CVMARMmemmove32BitLocal)
 
 	SET_SIZE ( CVMCCMintrinsic_sun_misc_CVM_copyObjectArray )
 
@@ -811,7 +811,7 @@ LABEL(arraycopy8bit)
 	mov	r2, LENGTH			/* length */
 	add	r3, DST, DSTIDX
 	add	r0, r3, #OFFSET_ARRAY_ELEMENTS	/* dstAddr */
-	b	SYM_NAME(CVMARMmemmove8Bit)
+	b	SYM_NAME(CVMARMmemmove8BitLocal)
 
 LABEL(arraycopy16bit)
 	add	r1, SRC, SRCIDX, LSL #1
@@ -819,7 +819,7 @@ LABEL(arraycopy16bit)
 	mov	r2, LENGTH, LSL #1		/* length */
 	add	r3, DST, DSTIDX, LSL #1
 	add	r0, r3, #OFFSET_ARRAY_ELEMENTS	/* dstAddr */
-	b	SYM_NAME(CVMARMmemmove16Bit)
+	b	SYM_NAME(CVMARMmemmove16BitLocal)
 
 LABEL(arraycopy32bit)
 	add	r1, SRC, SRCIDX, LSL #2
@@ -827,7 +827,7 @@ LABEL(arraycopy32bit)
 	mov	r2, LENGTH, LSL #2		/* length */
 	add	r3, DST, DSTIDX, LSL #2
 	add	r0, r3, #OFFSET_ARRAY_ELEMENTS	/* dstAddr */
-	b	SYM_NAME(CVMARMmemmove32Bit)
+	b	SYM_NAME(CVMARMmemmove32BitLocal)
 
 LABEL(arraycopy64bit)
 	add	r1, SRC, SRCIDX, LSL #3
@@ -835,7 +835,7 @@ LABEL(arraycopy64bit)
 	mov	r2, LENGTH, LSL #3		/* length */
 	add	r3, DST, DSTIDX, LSL #3
 	add	r0, r3, #OFFSET_ARRAY_ELEMENTS	/* dstAddr */
-	b	SYM_NAME(CVMARMmemmove32Bit)
+	b	SYM_NAME(CVMARMmemmove32BitLocal)
 
 LABEL(arraycopyObject)
 #if (CVM_GCCHOICE == CVM_GC_GENERATIONAL) && !defined(CVM_SEGMENTED_HEAP)
@@ -874,7 +874,7 @@ LABEL(arraycopyObject_markCard)
 #undef CARDEND
 
 	/* Now do the copying.  NOTE: dstAddr is already in r3. */
-	b	SYM_NAME(CVMARMmemmove32Bit)
+	b	SYM_NAME(CVMARMmemmove32BitLocal)
 
 #else
 

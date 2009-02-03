@@ -219,7 +219,7 @@ LABEL(jfp_set)
 	mov ORIG_LR, lr
 	mov r1, JFP
 	ldr r0, [sp, #OFFSET_CVMCCExecEnv_ee]
-	bl SYM_NAME(CVMCCMtraceMethodCallGlue)
+	bl SYM_NAME(CVMCCMtraceMethodCallGlueLocal)
 	mov lr, ORIG_LR
 #endif
 
@@ -565,7 +565,7 @@ _fastlockSuccess
         mov ORIG_LR, lr
         mov r1, JFP
         ldr r0, [sp, #OFFSET_CVMCCExecEnv_ee]
-        bl SYM_NAME(CVMCCMtraceMethodCallGlue)
+        bl SYM_NAME(CVMCCMtraceMethodCallGlueLocal)
         mov lr, ORIG_LR
 #endif
 
@@ -725,7 +725,7 @@ ENTRY1( CVMCCMinvokeCNIMethod )
 	/* trace call */
 	mov	r1, JFP
 	mov	r2, MB		/* r2 = mb */
-	bl	SYM_NAME(CCMtraceFramelessMethodCall)
+	bl	SYM_NAME(CCMtraceFramelessMethodCallLocal)
 	ldr	r0, [sp, #OFFSET_CVMCCExecEnv_ee]	    /* r0 = ee */
 	mov	r1, ARGS		/* restore args ptr */
 #endif
@@ -742,7 +742,7 @@ ENTRY1( CVMCCMinvokeCNIMethod )
 	mov	r1, MB		/* r1 = mb */
 	mov	r2, JFP
 	ldr	r0, [sp, #OFFSET_CVMCCExecEnv_ee]	    /* r0 = ee */
-	bl	SYM_NAME(CCMtraceFramelessMethodReturn)
+	bl	SYM_NAME(CCMtraceFramelessMethodReturnLocal)
 	ldr	r0, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4] /* restore result */
 #endif
 
@@ -949,7 +949,7 @@ ENTRY1( CVMCCMreturnFromMethod )
 	mov r1, JFP
 	and JFP, PREV, #~CONSTANT_CVM_FRAME_MASK_ALL
 	ldr r0, [sp, #OFFSET_CVMCCExecEnv_ee]
-	bl SYM_NAME(CCMtraceMethodReturn)
+	bl SYM_NAME(CCMtraceMethodReturnLocal)
 #ifdef CVMCPU_HAS_CP_REG
 	ldr CVMARM_CP_REGNAME, [JFP, #OFFSET_CVMCompiledFrame_cpBaseRegX]
 #endif
@@ -1166,7 +1166,7 @@ LABEL(_fastTryUnlockDone)
         /* Do trace method return: */
         mov     r1, JFP
         ldr     r0, [sp, #OFFSET_CVMCCExecEnv_ee]
-        bl	SYM_NAME(CCMtraceMethodReturn)
+        bl	SYM_NAME(CCMtraceMethodReturnLocal)
 #endif
         /* Restore the previous JFP: 
          * Returning from one compiled method to another. 
@@ -1393,7 +1393,7 @@ _fastTryUnlockDone
         ; Do trace method return
         mov     r1, JFP
         ldr     r0, [sp, #OFFSET_CVMCCExecEnv_ee]
-        bl      CCMtraceMethodReturn
+        bl      CCMtraceMethodReturnLocal
 #endif
         ; Restore the previous JFP
         ; Returning from one compiled method to another.
@@ -1443,6 +1443,7 @@ _fastTryUnlockFailed
 
 	ENTRY(CVMCCMtraceMethodCallGlue)
 ENTRY1(CVMCCMtraceMethodCallGlue)
+LABEL(CVMCCMtraceMethodCallGlueLocal)
 /* IAI-04 */
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
 	textrmuw ip, W_CVMGLOBALS, #0
@@ -1463,6 +1464,7 @@ ENTRY1(CVMCCMtraceMethodCallGlue)
 
 	ENTRY(CCMtraceMethodReturn)
 ENTRY1(CCMtraceMethodReturn)
+LABEL(CCMtraceMethodReturnLocal)
 /* IAI-04 */
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
 	textrmuw ip, W_CVMGLOBALS, #0
@@ -1480,6 +1482,7 @@ ENTRY1(CCMtraceMethodReturn)
 
 	ENTRY(CCMtraceFramelessMethodCall)
 ENTRY1(CCMtraceFramelessMethodCall)
+LABEL(CCMtraceFramelessMethodCallLocal)
 /* IAI-04 */
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
 	textrmuw ip, W_CVMGLOBALS, #0
@@ -1495,6 +1498,7 @@ ENTRY1(CCMtraceFramelessMethodCall)
 
 	ENTRY(CCMtraceFramelessMethodReturn)
 ENTRY1(CCMtraceFramelessMethodReturn)
+LABEL(CCMtraceFramelessMethodReturnLocal)
 /* IAI-04 */
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
 	textrmuw ip, W_CVMGLOBALS, #0

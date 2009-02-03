@@ -3702,7 +3702,7 @@ LABEL(_idiv_pow_of_2_DeliverRemainder)
 	 */
 LABEL(_idivByZeroOrOne)
 	/* go throw an exception */
-        blo         SYM_NAME(CVMCCMruntimeThrowDivideByZeroGlue)
+        blo         SYM_NAME(CVMCCMruntimeThrowDivideByZeroGlueLocal)
         mov         QUOT,       R           
         mov         R,          #0          
         b           _idivCorrectResult      
@@ -3827,7 +3827,7 @@ LABEL(_idivNegative)
 	 */
 LABEL(_idivByZeroOrOne)
 	/* go throw an exception */
-	blo	SYM_NAME(CVMCCMruntimeThrowDivideByZeroGlue)
+	blo	SYM_NAME(CVMCCMruntimeThrowDivideByZeroGlueLocal)
 	mov	QUOT, R
 	mov	R, #0
 	b	_idivCorrectResult

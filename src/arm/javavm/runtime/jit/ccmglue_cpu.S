@@ -145,6 +145,7 @@ ENTRY1 ( CVMARMruntimeGCRendezvousAdjustRetAddrGlue )
 
 	ENTRY(CVMCCMruntimeThrowNullPointerExceptionGlue)
 ENTRY1 ( CVMCCMruntimeThrowNullPointerExceptionGlue )
+LABEL(CVMCCMruntimeThrowNullPointerExceptionGlueLocal)
 	IMPORT(java_lang_NullPointerException_Classblock)
 	FIXUP_FRAMES(JFP, {lr}, 1)
 	ldr	a3, SYMBOL(java_lang_NullPointerException_Classblock)
@@ -170,6 +171,7 @@ L1	DCD	java_lang_ArrayIndexOutOfBoundsException_Classblock
 
 	ENTRY(CVMCCMruntimeThrowDivideByZeroGlue)
 ENTRY1 ( CVMCCMruntimeThrowDivideByZeroGlue )
+LABEL(CVMCCMruntimeThrowDivideByZeroGlueLocal)
 	IMPORT(java_lang_ArithmeticException_Classblock)
 	FIXUP_FRAMES(JFP, {lr}, 1)
 	adr	a4, divideByZeroString /*exception message */
@@ -768,7 +770,7 @@ ENTRY1 ( CVMCCMruntimeMonitorEnterGlue )
 	/* Get address of object microlock */
         ldr     MICROLOCK, [MICROLOCK]        
 #endif
-        beq     SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
+        beq     SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlueLocal)
         ldr     r3, [MICROLOCK]
 
         /* Acquire the microlock: */
@@ -946,7 +948,7 @@ ENTRY1 ( CVMCCMruntimeMonitorExitGlue )
 	/* Get address of object microlock */
         ldr     MICROLOCK, [MICROLOCK]
 #endif
-        beq     SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
+        beq     SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlueLocal)
         ldr     r3, [MICROLOCK]
 
 LABEL(_monexitAcquireMicrolock)
@@ -1130,7 +1132,7 @@ LABEL(_monexitFastTryUnlockFailed)
         ; Make sure that the object is not NULL:
         ldr     EE, [sp, #OFFSET_CVMCCExecEnv_ee]
         cmp     OBJ, #0
-        beq     SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
+        beq     SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlueLocal)
 
         /* Setup a lock record and assume the object has not been locked
            yet: */
@@ -1335,7 +1337,7 @@ _monenterRecordNotAvailable
         ; Make sure that the object is not NULL:
         ldr     EE, [sp, #OFFSET_CVMCCExecEnv_ee]
         cmp     OBJ, #0
-        beq     SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
+        beq     SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlueLocal)
 
         /* Check to see if the object is locked with a fastlock: */
         ldr     OWNEDREC, [OBJ, #OFFSET_CVMObjectHeader_various32] /* obits */
