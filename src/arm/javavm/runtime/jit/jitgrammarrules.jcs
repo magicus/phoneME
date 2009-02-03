@@ -297,8 +297,8 @@ reg32: DCMPL reg64 reg64 : 80 : SET_AVOID_C_CALL($$); :
     };
 
 // Purpose: value32{-1,0,1} = DCMPG(valueDouble1, valueDouble2)
-reg32: DCMPG reg64 reg64 : 80 : SET_AVOID_C_CALL($$);
-    SET_TARGET2($$, ARG1, ARG3); :
+reg32: DCMPG reg64 reg64 : 80 : SET_AVOID_C_CALL($$); :
+    SET_TARGET2($$, ARG1, ARG3);
     : CVM_NEED_DO_DCMP_HELPER CVM_NEED_CONVERT_COND2INT_HELPER : {
         dcomparecc(con, $$,
 		   CVM_FALSE /* needBranch */, CVM_FALSE /* needSetcc */);
