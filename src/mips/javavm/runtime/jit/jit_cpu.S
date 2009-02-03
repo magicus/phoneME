@@ -90,13 +90,12 @@ NESTED(CVMJITgoNative, CONSTANT_CVMCCExecEnv_size, ra)
 	 * a3 = pc
 	 */
 
-	/* use gcc prologue */
-#ifndef CVM_JIT_COPY_CCMCODE_TO_CODECACHE
+	/* setup %gp */
 	.set noreorder
 	.cpload $25
 	.set reorder
-#endif
-	addiu	sp, sp, -frameadjust
+
+       	addiu	sp, sp, -frameadjust
 	/* Save general registers */
 	sw	ra, framesize+frameoffset+off_31(sp)
 	sw	$30, framesize+frameoffset+off_30(sp)
@@ -135,7 +134,7 @@ NESTED(CVMJITgoNative, CONSTANT_CVMCCExecEnv_size, ra)
 	 * Load CVMMIPS_GC_REGNAME with the address that will cause a trap
 	 * when a gc is requested.
 	 */
-	LA	(CVMMIPS_GC_REGNAME, CVMgcTrapAddrPtr)
+	la	CVMMIPS_GC_REGNAME, CVMgcTrapAddrPtr
 	lw	CVMMIPS_GC_REGNAME, 0(CVMMIPS_GC_REGNAME)
 	lw	CVMMIPS_GC_REGNAME, 0(CVMMIPS_GC_REGNAME)
 #endif
@@ -145,9 +144,8 @@ NESTED(CVMJITgoNative, CONSTANT_CVMCCExecEnv_size, ra)
 	la	a2, CVMCCMruntimeGCRendezvousGlue
 	sw	a2, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmGCRendezvousGlue(sp)
 #endif
-        /* Store pointer to memmove */
-        la      a2, memmove
-	sw	a2, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_memmove(sp)
+        /* Store pointer to gp */
+	sw	gp, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_gp(sp)
 	jr	a3
 SET_SIZE( CVMJITgoNative ) 
 
