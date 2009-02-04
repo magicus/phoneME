@@ -354,6 +354,11 @@ public class EventQueue implements Runnable {
                 if (!dispatchData.listener.preprocess(event,
                         dispatchData.waitingEvent)) {
                     /* The listener does not want this event posted. */
+// #ifndef ENABLE_GCI
+                    if (event instanceof NativeEvent) {
+                        pool.putBack((NativeEvent)event);
+                    }
+// #endif
                     return;
                 }
 
