@@ -1,0 +1,80 @@
+#! /bin/sh
+#
+# @(#)Build	1.12	06/10/10
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+#
+# Script for building the demo AMS and demo MIDlets
+# 
+# I use a standard JDK1.3.1 set of tools, but compile against
+# a foundation.jar that I've already built.
+
+set -x
+
+Homedir=`dirname $0`
+. ${Homedir}/SetCvmHome
+
+ImplJar=javax.jar
+MainJar=app.jar
+EmptyJar=empty
+
+#
+# First build the AMS and implementation classes
+# This order works because nothing from javax.* references anything in com.sun*
+# but things in com.sun* do reference javax.*
+${Javac} -classpath ${Foundation}:. javax/microedition/midlet/MIDlet*.java
+${Javac} -classpath ${Foundation}:. com/sun/javax/microedition/midlet/AMS*.java
+${Javac} -classpath ${Foundation}:. com/sun/javax/microedition/*.java
+
+# 
+# The main application and the interface it uses go in the app JAR.
+# MIDlet and the actual suite runner (class AMS) and all their
+# implementation paraphenalia go in the implementation JAR,
+# along with any classes (none in this example) overriding a CDC/FP class.
+# The empty file is for CLDCmain, which really does not need an implementation.
+#
+
+${Jar} -cvf ${MainJar} com/sun/javax/microedition/midlet/AMSmain.class \
+		       com/sun/javax/microedition/midlet/MidletAMS.class \
+		       com/sun/javax/microedition/CLDCmain.class 
+
+${Jar} -cfv ${ImplJar} `find javax/microedition/midlet -name \*class -print` \
+			com/sun/javax/microedition/midlet/AMS.class \
+			com/sun/javax/microedition/midlet/MIDletPair.class
+touch  ${EmptyJar} 
+
+#
+# Compile the MIDlets against the implementation JAR and the Foundation JAR.
+# This will allow some things to compile that will not run, and allows us
+# to demonstrate some security features.
+
+${Javac} -classpath ${ImplJar}:${Foundation} midlets/*.java
+
+#
+# Create the MIDlet suite JAR. This contains all those class files as well
+# as the manifest and the one resource we want to bring along.
+
+(cd midlets ; \
+    ${Jar} -cfvm midlet.jar ManifestFile *.class embeddedResource )

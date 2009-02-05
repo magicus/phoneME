@@ -1,0 +1,388 @@
+//
+// Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
+//
+// @(#)jitgrammarrules.jcs	1.24 06/10/10
+//
+// converting CVM IR subset to StrongARM assembler
+//
+
+%{
+
+/* Purpose: Emits code for a integer shift operation.  Also masks off the
+            offset with 0x1f before shifting per VM spec. */
+static void doARMIntShift(CVMJITCompilationContext *con, int shiftOp)
+{
+    CVMRMResource *rhs = popResource(con);
+    CVMRMResource *lhs = popResource(con);
+    CVMRMResource *maskedCount;
+    CVMRMpinResource(CVMRM_INT_REGS(con), rhs, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+    CVMJITaddCodegenComment((con, "mask shiftOffset with 0x1f"));
+
+    maskedCount = CVMRMgetResource(CVMRM_INT_REGS(con),
+				   CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+    CVMCPUemitBinaryALUConstant(con, CVMCPU_AND_OPCODE,
+        CVMRMgetRegisterNumber(maskedCount), CVMRMgetRegisterNumber(rhs), 0x1F,
+	CVMJIT_NOSETCC);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), rhs);
+    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), maskedCount, NULL);
+    pushALURhsShiftByReg(con, shiftOp, lhs, maskedCount);
+}
+
+static void
+wordMoveOp(
+    CVMJITCompilationContext* con,
+    int opcode,
+    CVMJITIRNodePtr thisNode,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMCPUALURhs *operand = popALURhs(con);
+    if (CVMCPUalurhsIsConstant(operand)) {
+        CVMRMResource *constRes;
+        CVMInt32 constValue = CVMCPUalurhsGetConstantValue(operand);
+        constRes = CVMRMbindResourceForConstant32(CVMRM_INT_REGS(con),
+						  constValue);
+        /* Need this in case this constant is a CSE */
+        CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), constRes, thisNode);
+        pushResource(con, constRes);
+    } else {
+        CVMRMResource* dest = CVMRMgetResource(CVMRM_INT_REGS(con),
+					       target, avoid, 1);
+        CVMCPUalurhsPinResource(CVMRM_INT_REGS(con), opcode, operand,
+				CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+        CVMCPUemitMove(con, opcode,
+		       CVMRMgetRegisterNumber(dest),
+		       CVMCPUalurhsGetToken(con, operand),
+		       CVMJIT_NOSETCC);
+        CVMCPUalurhsRelinquishResource(CVMRM_INT_REGS(con), operand);
+        CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, thisNode);
+        pushResource(con, dest);
+    }
+}
+
+%}
+
+// NOTE: We implement the goal of all the ARM shift rules as shiftAluRhs
+//       instead of aluRhs because there is a need to be able to convert
+//       shiftAluRhs to reg32 but not all aluRhs need to be converted to
+//       reg32.
+//
+//       If we choose aluRhs as the goal of these shift rules, then the
+//       following problem arises:
+//       The rule would look like:
+//              reg32: aluRhs : 10 : ...
+//
+//       The cost needs to be 10 because than is the appropriate cost for
+//       executing a shift to get its result into a register using the MOV
+//       instruction.
+//
+//       Now compare the costs of getting an ICONST_32 into a reg32 via 2
+//       possible paths:
+//       Path 1:
+//              reg32: ICONST_32 : 20 : ...
+//       Path 2:
+//              aluRhs: ICONST_32 : 0 : ...
+//              reg32: aluRhs : 10 : ...
+//
+//       The total cost of path 2 would be less than path 1 resulting in path
+//       2 being taken.  This means that the "reg32: aluRhs" rule can no
+//       longer be implemented using a simple MOV instruction.  It will have
+//       be able to check for the type of aluRhs and emit different type of
+//       code to get the desired result.  All this added complexity was not
+//       necessary in the first place if we had used shiftAluRhs as the
+//       results of the shift rules.  Implementing it that way results in a
+//       more efficient code generator.
+
+aluRhs: shiftAluRhs : 0 : : : : ;
+
+reg32: shiftAluRhs : 10 : : : : 
+        wordMoveOp(con, CVMCPU_MOV_OPCODE, $$, GET_REGISTER_GOALS);
+
+// Purpose: value32 = value32 << (const32 & 0x1f).
+shiftAluRhs: SLL32 reg32 ICONST_32 : 0 : : : : {
+	CVMRMResource* lhs = popResource(con);
+        CVMInt32 shiftOffset =
+            CVMJITirnodeGetConstant32(CVMJITirnodeGetRightSubtree($$))->j.i;
+        shiftOffset = shiftOffset & 0x1f;
+        pushALURhsShiftByConstant(con, CVMCPU_SLL_OPCODE, lhs, shiftOffset);
+    };
+
+// Purpose: value32 = value32 << (value32 & 0x1f).
+shiftAluRhs: SLL32 reg32 reg32 : 5 : : : : {
+        doARMIntShift(con, CVMCPU_SLL_OPCODE);
+    };
+
+// Purpose: value32 = value32 >>> (const32 & 0x1f).
+shiftAluRhs: SRL32 reg32 ICONST_32 : 0 : : : : {
+	CVMRMResource* lhs = popResource(con);
+        CVMInt32 shiftOffset =
+            CVMJITirnodeGetConstant32(CVMJITirnodeGetRightSubtree($$))->j.i;
+        shiftOffset = shiftOffset & 0x1f;
+        pushALURhsShiftByConstant(con, CVMCPU_SRL_OPCODE, lhs, shiftOffset);
+    };
+
+// Purpose: value32 = value32 >>> (value32 & 0x1f).
+shiftAluRhs: SRL32 reg32 reg32 : 5 : : : : {
+        doARMIntShift(con, CVMCPU_SRL_OPCODE);
+    };
+
+// Purpose: value32 = value32 >> (const32 & 0x1f).
+shiftAluRhs: SRA32 reg32 ICONST_32 : 0 : : : : {
+	CVMRMResource* lhs = popResource(con);
+        CVMInt32 shiftOffset =
+            CVMJITirnodeGetConstant32(CVMJITirnodeGetRightSubtree($$))->j.i;
+        shiftOffset = shiftOffset & 0x1f;
+        pushALURhsShiftByConstant(con, CVMCPU_SRA_OPCODE, lhs, shiftOffset);
+    };
+
+// Purpose: value32 = value32 >> (value32 & 0x1f).
+shiftAluRhs: SRA32 reg32 reg32 : 5 : : : : {
+        doARMIntShift(con, CVMCPU_SRA_OPCODE);
+    };
+
+reg32: ISUB32 aluRhs reg32 : 15 : : : : {
+        CVMRMResource *rhs = popResource(con);
+        CVMCPUALURhs *lhs = popALURhs(con);
+
+        /* Reverse the order of the operands and use ARM reverse subtraction
+           to take care of this efficiently: */
+        pushResource(con, rhs);
+        pushALURhs(con, lhs);
+        wordBinaryOp(con, CVMARM_RSB_OPCODE, $$, GET_REGISTER_GOALS);
+    };
+
+// Purpose: valueFloat = -valueFloat.
+reg32: FNEG reg32 : 50 : : : : {
+        /* Since floats are sign,magnitute quantities, we only need to toggle
+           the sign bit (i.e. the MSB bit) with an exclusive or operation:
+
+               xor dest, src, 0x80000000
+        */
+        CVMRMResource *src = popResource(con);
+        CVMRMResource *dest = CVMRMgetResource(CVMRM_INT_REGS(con),
+					       GET_REGISTER_GOALS, 1);
+        CVMRMpinResource(CVMRM_INT_REGS(con), src,
+			 CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+
+        CVMJITaddCodegenComment((con, "do fneg"));
+        CVMCPUemitBinaryALUConstant(con, CVMCPU_XOR_OPCODE, 
+            CVMRMgetRegisterNumber(dest), CVMRMgetRegisterNumber(src),
+            0x80000000, CVMJIT_NOSETCC);
+        CVMRMrelinquishResource(CVMRM_INT_REGS(con), src);
+        CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, $$);
+        pushResource(con, dest);
+    };
+
+// Purpose: valueDouble = -valueDouble.
+reg64: DNEG reg64 : 50 : : : : {
+        /* Since doubles are sign,magnitute quantities, we only need to toggle
+           the sign bit (i.e. the MSB bit) with an exclusive or operation:
+
+               xor dest, src, 0x80000000
+        */
+        CVMRMResource *src = popResource(con);
+        CVMRMResource *dest = CVMRMgetResource(CVMRM_INT_REGS(con),
+					       GET_REGISTER_GOALS, 2);
+        CVMRMpinResource(CVMRM_INT_REGS(con), src,
+			 CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+
+#if CVM_DOUBLE_ENDIANNESS == CVM_LITTLE_ENDIAN
+#define LO_OFF 0
+#define HI_OFF 1
+#else
+#define LO_OFF 1
+#define HI_OFF 0
+#endif
+
+        CVMJITaddCodegenComment((con, "do dneg"));
+        CVMCPUemitBinaryALUConstant(con, CVMCPU_XOR_OPCODE, 
+            CVMRMgetRegisterNumber(dest)+HI_OFF,
+	    CVMRMgetRegisterNumber(src)+HI_OFF,
+            0x80000000, CVMJIT_NOSETCC);
+        CVMCPUemitMoveRegister(con, CVMCPU_MOV_OPCODE,
+			       CVMRMgetRegisterNumber(dest)+LO_OFF,
+			       CVMRMgetRegisterNumber(src)+LO_OFF,
+			       CVMJIT_NOSETCC);
+        CVMRMrelinquishResource(CVMRM_INT_REGS(con), src);
+        CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, $$);
+        pushResource(con, dest);
+    };
+
+%{
+
+/* Purpose: Emits code to convert a cond resource to an int.
+            -1 for less than, 0 for equal, 1 for greater than. */
+
+#ifdef CVM_NEED_CONVERT_COND2INT_HELPER
+static void
+convertCond2Int(CVMJITCompilationContext *con, CVMJITIRNodePtr thisNode,
+                CVMRMregset target, CVMRMregset avoid)
+{
+    CVMRMResource *dest;
+    CVMUint32 destReg;
+
+    dest = CVMRMgetResource(CVMRM_INT_REGS(con), target, avoid, 1);
+    destReg = CVMRMgetRegisterNumber(dest);
+    CVMCPUemitLoadConstantConditional(con, destReg, 1, CVMCPU_COND_GT);
+    CVMCPUemitLoadConstantConditional(con, destReg, -1, CVMCPU_COND_LT);
+    CVMCPUemitLoadConstantConditional(con, destReg, 0, CVMCPU_COND_EQ);
+    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, thisNode);
+    pushResource(con, dest);
+}
+#endif
+
+%}
+
+// NOTE: The ARM assembly version of CVMCCMruntimeFCmp, CVMCCMruntimeDCmpg,
+//       and CVMCCMruntimeDCmpl helpers return the result in the CPU condition
+//       code register. See ARM version of ccmmath_cpu.S for details.
+
+root: BCOND_FLOAT reg32 reg32 : 80 : SET_AVOID_C_CALL($$); :
+    SET_TARGET2($$, ARG1, ARG2); : CVM_NEED_DO_FCMP_HELPER : {
+        fcomparecc(con, $$,
+		   CVM_TRUE /* needBranch */, CVM_FALSE /* needSetcc */);
+    };
+
+root: BCOND_DOUBLE reg64 reg64 : 80 : SET_AVOID_C_CALL($$); :
+    SET_TARGET2($$, ARG1, ARG3); : CVM_NEED_DO_DCMP_HELPER : {
+        dcomparecc(con, $$,
+		   CVM_TRUE /* needBranch */, CVM_FALSE /* needSetcc */);
+    };
+
+// Purpose: value32{-1,0,1} = FCMPL(valueFloat1, valueFloat2)
+reg32: FCMPL reg32 reg32 : 80 : SET_AVOID_C_CALL($$); :
+    SET_TARGET2($$, ARG1, ARG2); 
+    : CVM_NEED_DO_FCMP_HELPER CVM_NEED_CONVERT_COND2INT_HELPER : {
+        fcomparecc(con, $$,
+		   CVM_FALSE /* needBranch */, CVM_FALSE /* needSetcc */);
+        convertCond2Int(con, $$, GET_REGISTER_GOALS);
+    };
+
+// Purpose: value32{-1,0,1} = FCMPG(valueFloat1, valueFloat2)
+reg32: FCMPG reg32 reg32 : 80 : SET_AVOID_C_CALL($$); :
+    SET_TARGET2($$, ARG1, ARG2);
+    : CVM_NEED_DO_FCMP_HELPER CVM_NEED_CONVERT_COND2INT_HELPER : {
+        fcomparecc(con, $$,
+		   CVM_FALSE /* needBranch */, CVM_FALSE /* needSetcc */);
+        convertCond2Int(con, $$, GET_REGISTER_GOALS);
+    };
+
+// Purpose: value32{-1,0,1} = DCMPL(valueDouble1, valueDouble2)
+reg32: DCMPL reg64 reg64 : 80 : SET_AVOID_C_CALL($$); :
+    SET_TARGET2($$, ARG1, ARG3);
+    : CVM_NEED_DO_DCMP_HELPER CVM_NEED_CONVERT_COND2INT_HELPER : {
+        dcomparecc(con, $$,
+		   CVM_FALSE /* needBranch */, CVM_FALSE /* needSetcc */);
+        convertCond2Int(con, $$, GET_REGISTER_GOALS);
+    };
+
+// Purpose: value32{-1,0,1} = DCMPG(valueDouble1, valueDouble2)
+reg32: DCMPG reg64 reg64 : 80 : SET_AVOID_C_CALL($$); :
+    SET_TARGET2($$, ARG1, ARG3);
+    : CVM_NEED_DO_DCMP_HELPER CVM_NEED_CONVERT_COND2INT_HELPER : {
+        dcomparecc(con, $$,
+		   CVM_FALSE /* needBranch */, CVM_FALSE /* needSetcc */);
+        convertCond2Int(con, $$, GET_REGISTER_GOALS);
+    };
+//
+// See if AND of a constant is encodeable as BIC of ~constant.
+//
+reg32: AND32 reg32 ICONST_32 : 9 : : : : {
+        int opcode = CVMCPU_AND_OPCODE;
+        CVMInt32 constValue =
+	    CVMJITirnodeGetConstant32(CVMJITirnodeGetRightSubtree($$))->j.i;
+	CVMBool isANDEncodable =
+	    CVMCPUalurhsIsEncodableAsImmediate(CVMCPU_AND_OPCODE, constValue);
+	CVMBool isBICEncodable =
+	    CVMCPUalurhsIsEncodableAsImmediate(CVMCPU_BIC_OPCODE, ~constValue);
+	if (!isANDEncodable && isBICEncodable) {
+	    /*
+	     * We can't encode constValue with an AND instruction, but
+	     * ~constValue is encodeble with BIC, which allows us
+	     * to do this in one instruction instead of 2
+	     */
+	    /*CVMconsolePrintf("**** 0x%x 0x%x\n",constValue, ~constValue);*/
+	    opcode = CVMCPU_BIC_OPCODE;
+	    constValue = ~constValue;
+	}
+	pushALURhsConstant(con, constValue);
+	wordBinaryOp(con, opcode, $$, GET_REGISTER_GOALS);
+    };
+
+//
+// Support for ARM MLA instruction
+//
+
+%{
+static void
+multAddOp(
+    CVMJITCompilationContext* con,
+    CVMJITIRNodePtr thisNode,
+    CVMBool swapAB, /* if true, swap fregA and fregB */
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* regB = popResource(con);
+    CVMRMResource* regC = popResource(con);
+    CVMRMResource* regA = popResource(con);
+    CVMRMResource* regD;
+
+    if (swapAB) {
+	CVMRMResource* tmp = regB;
+	regB = regA;
+	regA = tmp;
+    }
+
+    /* avoid regD target when pinning regA, regB, and regC */
+    CVMRMpinResource(CVMRM_INT_REGS(con), regA, CVMRM_ANY_SET, target);
+    CVMRMpinResource(CVMRM_INT_REGS(con), regC, CVMRM_ANY_SET, target);
+    CVMRMpinResource(CVMRM_INT_REGS(con), regB, CVMRM_ANY_SET, target);
+    regD = CVMRMgetResource(CVMRM_INT_REGS(con), target, avoid, 1);
+
+    CVMCPUemitMul(con, CVMARM_MLA_OPCODE,
+		  CVMRMgetRegisterNumber(regD),
+		  CVMRMgetRegisterNumber(regA),
+		  CVMRMgetRegisterNumber(regC),
+		  CVMRMgetRegisterNumber(regB));
+
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), regA);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), regC);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), regB);
+    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), regD, thisNode);
+    pushResource(con, regD);
+}
+
+%}
+// d = a*c+b -> mla d,a,c,b 
+reg32: IADD32 IMUL32 reg32 reg32 reg32 : 41 :
+    BINARY_BINARY_reg_reg_reg_SYNTHESIS(con, $$) :
+    BINARY_BINARY_reg_reg_reg_INHERITANCE(con, $$) : : {
+        multAddOp(con, $$, CVM_FALSE, GET_REGISTER_GOALS);
+    };
+// d = b+a*c -> mla d,a,c,b
+reg32: IADD32 reg32 IMUL32 reg32 reg32 : 42 :
+    BINARY_reg_BINARY_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_reg_BINARY_reg_reg_INHERITANCE(con, $$); : : {
+        multAddOp(con, $$, CVM_TRUE,  GET_REGISTER_GOALS);
+    };
+
