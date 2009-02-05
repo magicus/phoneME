@@ -1148,7 +1148,7 @@ void javanotify_push_contactless_event(javacall_handle eventData) {
 
     REPORT_INFO(LC_CORE, "javanotify_push_contactless_event() >>\n");
     e.eventType = JSR257_JC_PUSH_NDEF_RECORD_DISCOVERED;
-    e.data.jsr257Event.eventData = eventData;
+    e.data.jsr257Event.eventData[0] = eventData;
     midp_jc_event_send(&e);
 }
 
@@ -1160,17 +1160,28 @@ void javanotify_push_contactless_event(javacall_handle eventData) {
  * @param isolateId the isolate to send notification to
  */
 void javanotify_midp_contactless_event(jsr257_contactless_midp_event_type event, 
-        javacall_handle eventData, int isolateId) {
+        int isolateId, javacall_int32* pParams, javacall_int32 ParamNum) {
         
     midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_midp_contactless_event() >>\n");
+    
+     printf("\n DEBUG: javanotify_midp_contactless_event(): isolateId = %d, ParamNum = %d\n",
+        isolateId, ParamNum); 
+    
     e.eventType = JSR257_JC_MIDP_EVENT;
     e.data.jsr257Event.eventType = event;
-    e.data.jsr257Event.eventData = eventData;
     e.data.jsr257Event.isolateId = isolateId;
-    midp_jc_event_send(&e);
-    return;
+    if(ParamNum > 0) {
+        if(ParamNum > 3) {
+            ParamNum = 3;
+        }
+        memcpy(e.data.jsr257Event.eventData, pParams, sizeof(javacall_int32) *
+            ParamNum);
+     printf("\n DEBUG: javanotify_midp_contactless_event(): before calling midp_jc_event_send(): eventData[0] = 0x%X\n",
+        e.data.jsr257Event.eventData[0]);
+        midp_jc_event_send(&e);
+    }
 }
 #endif /* ENABLE_JSR_257 */
 

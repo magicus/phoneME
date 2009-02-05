@@ -282,7 +282,7 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
                                 newSignal.status);
         break;
     case JSR257_EVENT_SIGNAL:
-        StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.intParam3);
+        StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.JSR257_ISOLATE);
         break;
     case JSR257_PUSH_SIGNAL:
         if(findPushBlockedHandle(newSignal.descriptor) != 0) {
