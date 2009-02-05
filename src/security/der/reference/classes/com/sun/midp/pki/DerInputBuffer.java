@@ -351,7 +351,7 @@ class DerInputBuffer extends ByteArrayInputStream {
          */
         Calendar c = Calendar.getInstance();
         c.set(Calendar.YEAR, year);
-        c.set(Calendar.MONTH, month);
+        c.set(Calendar.MONTH, month - 1); // Calendar.JANUARY is defined as 0 
         c.set(Calendar.DATE, day);
         c.set(Calendar.HOUR_OF_DAY, hour);
         c.set(Calendar.MINUTE, minute);
