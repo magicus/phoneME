@@ -1,0 +1,41 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Makefile for building and packaging post processing
+#
+######################################################################
+
+
+# Some additional targets defined by ES
+
+midp: $(BINDIR)/midp$(g).lib $(BINDIR)/jvm$(g).lib
+
+$(BINDIR)/midp$(g).lib: $(OBJLIB) $(AMS_RUNMIDLET_OBJ_FILES)
+	@echo " ... $@" $(LOG)
+	$(A)$(AR) $(AR_FLAGS) $(AR_OUTPUT)`$(call fixcygpath,$@ $(OBJLIB) $(AMS_RUNMIDLET_OBJ_FILES))` $(LOG)
+
+$(BINDIR)/jvm$(g).lib: $(VERIFY_BUILD_ENV) $(DISPLAY_BUILD_ENV) $(JAVACALL_LIB_DIR)/javacall$(g).lib $(BINDIR)/midp$(g).lib $(CLDC_DIST_DIR)/lib/cldc_vm$(cldc_g)$(cldc_r)$(LIB_SUFFIX) $(PCSL_TARGET_DIR)/lib/libpcsl_escfilenames.lib $(PCSL_TARGET_DIR)/lib/libpcsl_file.lib $(PCSL_TARGET_DIR)/lib/libpcsl_memory.lib $(PCSL_TARGET_DIR)/lib/libpcsl_print.lib $(PCSL_TARGET_DIR)/lib/libpcsl_string.lib $(PCSL_TARGET_DIR)/lib/libpcsl_network.lib 
+	@echo " ... $@" $(LOG)
+	$(A)$(AR) $(AR_FLAGS) $(AR_OUTPUT)`$(call fixcygpath,$@ $(JAVACALL_LIB_DIR)/javacall$(g).lib $(BINDIR)/midp$(g).lib $(CLDC_DIST_DIR)/lib/cldc_vm$(cldc_g)$(cldc_r)$(LIB_SUFFIX) $(PCSL_TARGET_DIR)/lib/libpcsl_escfilenames.lib $(PCSL_TARGET_DIR)/lib/libpcsl_file.lib $(PCSL_TARGET_DIR)/lib/libpcsl_memory.lib $(PCSL_TARGET_DIR)/lib/libpcsl_print.lib $(PCSL_TARGET_DIR)/lib/libpcsl_string.lib $(PCSL_TARGET_DIR)/lib/libpcsl_network.lib )` $(LOG)

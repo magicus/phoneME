@@ -1,0 +1,2415 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../configuration.dtd">
+<!--
+        	
+
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
+-->
+<configuration>
+<constants>
+
+<!-- 
+    Indentifiers for Chameleon skin properties
+-->
+<constant_class Package="com.sun.midp.chameleon.skins" Name="SkinPropertiesIDs" 
+    Scope="public" AutoValue="true" JavaOnly="true" KeysValuesProvider="true"
+    Comment="/** Indentifiers for Chameleon skin properties */">
+
+
+  <!--
+     Screen properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="SCREEN_TEXT_ORIENT"
+            Comment="The orientation of text. The value indicates
+                     the directionality of various text on the display.
+                     Valid values are Graphics.LEFT and Graphics.RIGHT.
+                     A value of Graphics.RIGHT, for example, would indicate
+                     text which reads from left to right.
+                     NOTE: This property currently has no effect."/>
+
+  <constant Type="int"
+            Name="SCREEN_PAD_FORM_ITEMS"
+            Comment="The amount of padding (in pixels) between items
+                     in a Form."/>
+
+  <constant Type="int"
+            Name="SCREEN_PAD_LABEL_VERT"
+            Comment="The amount of padding (in pixels) around the 
+                     top/bottom of a label."/>
+
+  <constant Type="int"
+            Name="SCREEN_PAD_LABEL_HORIZ"
+            Comment="The amount of padding (in pixels) around the 
+                     left/right of a label."/>
+            
+  <constant Type="int"
+            Name="SCREEN_COLOR_BG"
+            Comment="The background color for a screen. In cases where there 
+                     is either no image background or the images could not be
+                     loaded, this color is used as a solid fill for screen
+                     backgrounds."/>
+
+  <constant Type="int"
+            Name="SCREEN_COLOR_HS_BG"
+            Comment="The background color for the 'home' screen. In cases where
+                     there no image background or the images could not be
+                     loaded, this color is used as a solid fill for screen
+                     backgrounds."/>
+                     
+  <constant Type="int"
+            Name="SCREEN_COLOR_FG"
+            Comment="The foreground color for a screen. This is the basic 
+                     color that all foreground text is painted."/>
+
+  <constant Type="int"
+            Name="SCREEN_COLOR_BG_HL"
+            Comment="The background highlight color for highlighted elements. 
+                     This is often the solid background color for selected 
+                     text and things of that nature."/>
+
+  <constant Type="int"
+            Name="SCREEN_COLOR_FG_HL"
+            Comment="The foreground highlight color for highlighted elements. 
+                     This is often the foreground color for selected text and 
+                     things of that nature. It should be of a contrasting 
+                     nature to the background highlight color."/>
+
+  <constant Type="int"
+            Name="SCREEN_COLOR_BORDER"
+            Comment="The color to use for a border around a custom item."/>
+
+  <constant Type="int"
+            Name="SCREEN_COLOR_BORDER_HL"
+            Comment="The color to use for a border around a custom item which
+                     is currently traversed to (or highlighted)."/>
+            
+  <constant Type="int"
+            Name="SCREEN_COLOR_TRAVERSE_IND"
+            Comment="The color with which to draw a traversal indicator for 
+                     elements which must do so (such as custom items)."/>
+
+  <constant Type="int"
+            Name="SCREEN_BORDER_STYLE"
+            Comment="The style of border for those visual elements 
+                     which draw a border, either Graphics.SOLID or 
+                     Graphics.DOTTED."/>
+  <constant Type="int"
+            Name="SCREEN_SCROLL_AMOUNT"
+            Comment="The amount of pixels to scroll the contents of the Screen
+                     at one time."/>
+
+  <constant Type="int"
+            Name="SCREEN_FONT_LABEL"
+            Comment="The Font to use when rendering Item labels in a Form."/>
+
+  <constant Type="int"
+            Name="SCREEN_FONT_INPUT_TEXT"
+            Comment="The Font to use as the predefined Font.INPUT_TEXT font."/>
+
+  <constant Type="int"
+            Name="SCREEN_FONT_STATIC_TEXT"
+            Comment="The Font to use as the predefined Font.STATIC_TEXT 
+                     font."/>
+
+  <constant Type="int"
+            Name="SCREEN_IMAGE_WASH"
+            Comment="The Image to use as a tile to paint a 'wash' over the 
+                     rest of the screen contents. An example of this is when
+                     displaying an Alert on top of other screen elements, the
+                     background is covered with a semi-transparent 'wash' to 
+                     give it a grayish-out effect. If isn't specified or
+                     cannot be loaded, no wash will be painted."/>
+
+  <constant Type="int"
+            Name="SCREEN_IMAGE_BG"
+            Comment="The Image to use as a tile for the typical screen 
+                     background. This image could be either fullsize, 
+                     or if smaller than fullsize, it will be tiled both 
+                     horizontally and vertically to fill the entire screen 
+                     background."/>
+
+  <constant Type="int"
+            Name="SCREEN_IMAGE_BG_W_TITLE"
+            Comment="The 9 pc Image background to use for the typical screen 
+                     background with a title. The images correspond to:
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the middle-bar.
+                     Piece 4: Middle tile for the middle-bar.
+                     Piece 5: Right edge of the middle-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+                     
+                     The top-bar is the area which serves to visually cap the 
+                     top of the background.
+                     
+                     The middle-bar is the background 'tile' for a single 
+                     horizontal row of the background. It will be repeatedly
+                     drawn vertically to fill the background area between the 
+                     top-bar and the bottom-bar.
+                     
+                     The bottom-bar is the bottom border of the screen 
+                     background and serves to visually cap the bottom 
+                     of the background.
+                     
+                     All three bars are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the background, the middle image will be tiled 
+                     horizontally to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color 
+                     is used instead of background image."/>
+            
+  <constant Type="int"
+            Name="SCREEN_IMAGE_BG_WO_TITLE"
+            Comment="The 9 pc Image background to use for the typical screen 
+                     background without a title. The images correspond to:
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the middle-bar.
+                     Piece 4: Middle tile for the middle-bar.
+                     Piece 5: Right edge of the middle-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+
+                     The top-bar is the area which serves to visually cap the
+                     top of the background.
+
+                     The middle-bar is the background 'tile' for a single 
+                     horizontal row of the background. It will be repeatedly 
+                     drawn vertically to fill the background area between the 
+                     top-bar and the bottom-bar.
+
+                     The bottom-bar is the bottom border of the screen 
+                     background and serves to visually cap the bottom 
+                     of the background.
+                     
+                     All three bars are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the background, the middle image will be tiled 
+                     horizontally to make up the difference.
+
+                     If isn't specified or cannot be loaded, solid fill color 
+                     is used instead of background image."/>
+            
+  <constant Type="int"
+            Name="SCREEN_IMAGE_HS_BG_TILE"
+            Comment="The Image to use as a tile for the 'home' screen 
+                     background. This image could be either fullsize, 
+                     or if smaller than fullsize, it will be tiled both 
+                     horizontally and vertically to fill the entire screen 
+                     background."/>
+
+  <constant Type="int"
+            Name="SCREEN_IMAGE_HS_BG_W_TITLE"
+            Comment="The 9 pc Image background to use for the 'home' screen
+                     background with a title. The images correspond to:
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the middle-bar.
+                     Piece 4: Middle tile for the middle-bar.
+                     Piece 5: Right edge of the middle-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+                     
+                     The top-bar is the area which serves to visually cap the 
+                     top of the background.
+                     
+                     The middle-bar is the background 'tile' for a single 
+                     horizontal row of the background. It will be repeatedly 
+                     drawn vertically to fill the background area between the 
+                     top-bar and the bottom-bar.
+                     
+                     The bottom-bar is the bottom border of the screen 
+                     background and serves to visually cap the bottom 
+                     of the background.
+                     
+                     All three bars are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the background, the middle image will be tiled 
+                     horizontally to make up the difference.
+
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+            
+  <constant Type="int"
+            Name="SCREEN_IMAGE_HS_BG_WO_TITLE"
+            Comment="The 9 pc Image background to use for the 'home' screen 
+                     background without a title. The images correspond to:
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the middle-bar.
+                     Piece 4: Middle tile for the middle-bar.
+                     Piece 5: Right edge of the middle-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+                     
+                     The top-bar is the area which serves to visually cap the 
+                     top of the background.
+                     
+                     The middle-bar is the background 'tile' for a single 
+                     horizontal row of the background. It will be repeatedly 
+                     drawn vertically to fill the background area between the 
+                     top-bar and the bottom-bar.
+                     
+                     The bottom-bar is the bottom border of the screen 
+                     background and serves to visually cap the bottom 
+                     of the background.
+                     
+                     All three bars are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the background, the middle image will be tiled 
+                     horizontally to make up the difference.
+
+                     If isn't specified pr cannot be loaded, solid fill color 
+                     is used instead of background image."/>
+
+
+
+  <!--
+     Scroll indicator properties indentifiers    
+  -->                    
+  <constant Type="int"
+            Name="SCROLL_MODE"
+            Comment="The 'mode' of the scroll indicator. Valid values are 
+                     either ScrollIndSkin.MODE_ARROWS or 
+                     ScrollIndSkin.MODE_BAR."/>
+
+  <constant Type="int"
+            Name="SCROLL_WIDTH"
+            Comment="The width of the scroll indicator. This value is only 
+                     used when no images can be loaded to determine the 
+                     indicator's width."/>
+
+  <constant Type="int"
+            Name="SCROLL_COLOR_BG"
+            Comment="The background fill color for the scroll indicator 
+                     (in bar mode). If no images can be loaded, this color 
+                     is used to render the background of a scrollbar."/>
+
+  <constant Type="int"
+            Name="SCROLL_COLOR_FG"
+            Comment="The foreground fill color for the scroll indicator 
+                     (in bar mode). If no images can be loaded, this color 
+                     is used to render the foreground of a scrollbar."/>
+            
+  <constant Type="int"
+            Name="SCROLL_COLOR_FRAME"
+            Comment="The foreground fill color for the scroll bar frame."/>
+  <constant Type="int"
+            Name="SCROLL_COLOR_UP_ARROW"
+            Comment="The foreground fill color for the pressed
+            scrollbar arrow"/>
+  <constant Type="int"
+            Name="SCROLL_COLOR_DN_ARROW"
+            Comment="The foreground fill color for the released
+            scrollbar arrow"/>
+
+  <constant Type="int"
+            Name="SCROLL_IMAGE_BG"
+            Comment="A 3 piece background image to use to render the 
+                     background of the scroll indicator (in bar mode).
+                     Piece 0: Top cap of the bar.
+                     Piece 1: Middle tile of the bar.
+                     Piece 2: Bottom cap of the bar.
+                     
+                     These images are used to render a background for 
+                     the scrollbar. If the combined heights of the top, 
+                     middle, and bottom images is less than the overall 
+                     height of the scrollbar, the middle image will be 
+                     tiled vertically to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color 
+                     is used instead of background image."/>
+            
+  <constant Type="int"
+            Name="SCROLL_IMAGE_FG"
+            Comment="A 3 piece foreground image to use to render the 'thumb' 
+                     of the scroll indicator (in bar mode).
+                     Piece 0: Top cap of the thumb.
+                     Piece 1: Middle tile of the thumb.
+                     Piece 2: Bottom cap of the thumb.
+                     
+                     These images are used to render a foreground for the 
+                     scrollbar. If the combined heights of the top, middle, 
+                     and bottom images is less than the overall height of 
+                     the thumb, the middle image will be tiled vertically 
+                     to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color 
+                     is used instead of foreground image."/>
+            
+  <constant Type="int"
+            Name="SCROLL_IMAGE_UP"
+            Comment="The 'up' arrow for a scroll indicator in arrow mode."/>
+
+  <constant Type="int"
+            Name="SCROLL_IMAGE_DN"
+            Comment="The 'down' arrow for a scroll indicator in arrow mode."/>
+
+  <constant Type="int"
+            Name="SCROLL_COLOR_AU_BG"
+            Comment="The background fill color for the scroll indicator 
+                     (in bar mode) when used for an Alert. If no images can 
+                     be loaded, this color is used to render the background 
+                     of a scrollbar."/>
+
+  <constant Type="int"
+            Name="SCROLL_COLOR_AU_FG"
+            Comment="The foreground fill color for the scroll indicator 
+                     (in bar mode) when used for an Alert. If no images can 
+                     be loaded, this color is used to render the foreground 
+                     of a scrollbar."/>
+
+  <constant Type="int"
+            Name="SCROLL_IMAGE_AU_BG"
+            Comment="A 3 piece background image to use to render the 
+                     background of the scroll indicator (in bar mode) 
+                     when used for an Alert.
+                     Piece 0: Top cap of the bar.
+                     Piece 1: Middle tile of the bar.
+                     Piece 2: Bottom cap of the bar.
+                     
+                     These images are used to render a background for the 
+                     scrollbar. If the combined heights of the top, middle, 
+                     and bottom images is less than the overall height of 
+                     the scrollbar, the middle image will be tiled vertically 
+                     to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color 
+                     is used instead of background image."/>
+            
+  <constant Type="int"
+            Name="SCROLL_IMAGE_AU_FG"
+            Comment="A 3 piece foreground image to use to render the 'thumb'
+                    of the scroll indicator (in bar mode) when used for an 
+                    Alert.
+                    Piece 0: Top cap of the thumb.
+                    Piece 1: Middle tile of the thumb.
+                    Piece 2: Bottom cap of the thumb.
+                    
+                    These images are used to render a foreground for the
+                    scrollbar. If the combined heights of the top, middle, 
+                    and bottom images is less than the overall height of 
+                    the thumb, the middle image will be tiled vertically 
+                    to make up the difference.
+                    
+                    If isn't specified or cannot be loaded, solid fill color 
+                    is used instead of foreground image."/>
+
+  <constant Type="int"
+            Name="SCROLL_IMAGE_AU_UP"
+            Comment="The 'up' arrow for a scroll indicator in arrow mode for
+                     an Alert."/>
+
+  <constant Type="int"
+            Name="SCROLL_IMAGE_AU_DN"
+            Comment="The 'down' arrow for a scroll indicator in arrow mode for 
+                     an Alert."/>
+
+
+
+  <!--
+     Softbutton bar properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="SOFTBTN_HEIGHT"
+            Comment="The overall height of the soft button bar."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_NUM_BUTTONS"
+            Comment="The number of 'soft buttons' to represent on the 
+                     soft button bar, typically 2."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_BUTTON_SHD_ALIGN"
+            Comment="Specifies the alignment property of the drop shadow on 
+                     the button text. This should be a combination value such 
+                     as Graphics.TOP | Graphics.LEFT or Graphics.RIGHT | 
+                     Graphics.BOTTOM."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_COLOR_FG"
+            Comment="The text foreground color for buttons."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_COLOR_FG_SHD"
+            Comment="The text drop-shadow color for buttons."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_COLOR_BG"
+            Comment="The solid fill-color for the button bar. If the 
+                     background image isn't specified or cannot be loaded, 
+                     this fill color will be used."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_COLOR_MU_FG"
+            Comment="The text foreground color for buttons on the button bar 
+                     when the system menu is up."/>
+
+  <constant Type="int"
+            Name="SOFTBTN_COLOR_MU_FG_SHD"
+            Comment="The text drop-shadow color for buttons on the button bar 
+                     when the system menu is up."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_COLOR_MU_BG"
+            Comment="The solid fill-color for the button bar when the system 
+                     menu is up. If the background image isn't specified or 
+                     cannot be loaded, this fill color will be used."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_COLOR_AU_FG"
+            Comment="The text foreground color for buttons on the button bar 
+                     when a system alert is up."/>
+
+  <constant Type="int"
+            Name="SOFTBTN_COLOR_AU_FG_SHD"
+            Comment="The text drop-shadow color for buttons on the button bar 
+                     when a system alert is up."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_COLOR_AU_BG"
+            Comment="The solid fill-color for the button bar when a system 
+                     alert is up. If the background image isn't specified 
+                     or cannot be loaded, this fill color will be used."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_FONT"
+            Comment="The font to use to render the softbutton text."/>
+
+  <constant Type="int"
+            Name="SOFTBTN_TEXT_MENUCMD"
+            Comment="The soft button label to use to represent that pressing 
+                     that soft button will bring up the system menu, 
+                     typically 'Menu'."/>
+
+  <constant Type="int"
+            Name="SOFTBTN_TEXT_BACKCMD"
+            Comment="The soft button label to use for the command which closes 
+                     the system menu once it is opened, typically 'Back'."/>
+
+  <constant Type="int"
+            Name="SOFTBTN_IMAGE_BG"
+            Comment="The 3 piece background image for the button bar. 
+                     Piece 0: Left edge of the button bar.
+                     Piece 1: Middle tile of the button bar.
+                     Piece 2: Right edge of the button bar.
+                     
+                     These images are used to render a background for the 
+                     button bar. If the combined widths of the left, middle, 
+                     and right images is less than the overall width of the 
+                     button bar, the middle image will be tiled horizontally 
+                     to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color 
+                     is used instead of background image."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_IMAGE_MU_BG"
+            Comment="The 3 piece background image for the button bar when the 
+                     system menu is up.
+                     Piece 0: Left edge of the button bar.
+                     Piece 1: Middle tile of the button bar.
+                     Piece 2: Right edge of the button bar.
+                     
+                     These images are used to render a background for the 
+                     button bar. If the combined widths of the left, middle, 
+                     and right images is less than the overall width of the 
+                     button bar, the middle image will be tiled horizontally
+                     to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color 
+                     is used instead of background iamge."/>
+
+  <constant Type="int"
+            Name="SOFTBTN_IMAGE_AU_BG"
+            Comment="The 3 piece background image for the button bar when a
+                     system alert is up.
+                     
+                     Piece 0: Left edge of the button bar.
+                     Piece 1: Middle tile of the button bar.
+                     Piece 2: Right edge of the button bar.
+                     
+                     These images are used to render a background for the 
+                     button bar. If the combined widths of the left, middle, 
+                     and right images is less than the overall width of the 
+                     button bar, the middle image will be tiled horizontally 
+                     to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color 
+                     is used instead of background image."/>
+
+
+
+  <!--
+     Ticker bar properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="TICKER_HEIGHT"
+            Comment="The overall height of this ticker (in pixels)."/>
+            
+  <constant Type="int"
+            Name="TICKER_ALIGN"
+            Comment="The vertical alignment of this ticker, can be either 
+                     Graphics.TOP or Graphics.BOTTOM."/>
+            
+  <constant Type="int"
+            Name="TICKER_DIRECTION"
+            Comment="The direction of motion of the text in this ticker.
+                     Valid values are either Graphics.RIGHT or Graphics.LEFT,
+                     meaning text moves to the right or to the left,
+                     respectively."/>
+            
+  <constant Type="int"
+            Name="TICKER_RATE"
+            Comment="The amount of time (in milliseconds) between subsequent
+                     ticker text updates. This is the rate of animation for
+                     the ticker text. For example, a value of 500 would move
+                     the text across the ticker two times per second.
+                     The distance the text would move per update is defined by
+                     TICKER_SPEED."/>
+
+  <constant Type="int"
+            Name="TICKER_SPEED"
+            Comment="The rate of movement per cycle for the ticker text
+                     (measured in pixels). This is the amount of travel
+                     (in pixels) the text will move for each update of
+                     the ticker."/>
+            
+  <constant Type="int"
+            Name="TICKER_TEXT_ANCHOR_Y"
+            Comment="The y-coordinate of the anchor point for the ticker text.
+                     This value represents the TOP of the ticker text."/>
+
+  <constant Type="int"
+            Name="TICKER_TEXT_SHD_ALIGN"
+            Comment="The alignment directive for the drop shadow of 
+                     the ticker text. If this ticker has a drop shadow, 
+                     this directive specified where to align the drop shadow. 
+                     Valid values are: 
+                     Graphics.TOP | Graphics.LEFT, 
+                     Graphics.TOP | Graphics.RIGHT, 
+                     Graphics.BOTTOM | Graphics.LEFT, 
+                     Graphics.BOTTOM | Graphics.RIGHT."/>
+
+  <constant Type="int"
+            Name="TICKER_COLOR_BG"
+            Comment="The background fill color for this ticker if its 
+                     background image isn't specified or cannot be loaded."/>
+
+  <constant Type="int"
+            Name="TICKER_COLOR_FG"
+            Comment="The foreground color for rendering the text of this 
+                     ticker."/>
+            
+  <constant Type="int"
+            Name="TICKER_COLOR_FG_SHD"
+            Comment="The drop-shadow color of the text of this ticker."/>
+            
+  <constant Type="int"
+            Name="TICKER_FONT"
+            Comment="The font to render the text of this ticker."/>
+            
+  <constant Type="int"
+            Name="TICKER_IMAGE_BG"
+            Comment="The 3 piece background image to be used for this ticker.
+                     Piece 0: Left edge of the ticker.
+                     Piece 1: Middle tile of the ticker.
+                     Piece 2: Right edge of the ticker.
+            
+                     These images are used to render a background for the 
+                     ticker. If the combined widths of the left, middle, 
+                     and right images is less than the overall width of the 
+                     ticker, the middle image will be tiled horizontally to 
+                     make up the difference. 
+            
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+  <constant Type="int"
+            Name="TICKER_IMAGE_AU_BG"
+            Comment="The 3 piece background image to be used for this ticker 
+                     when a system alert is visible.
+                     Piece 0: Left edge of the ticker.
+                     Piece 1: Middle tile of the ticker.
+                     Piece 2: Right edge of the ticker.
+                     
+                     These images are used to render a background for the 
+                     ticker.If the combined widths of the left, middle, 
+                     and right images is less than the overall width of the 
+                     ticker, the middle image will be tiled horizontally to 
+                     make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+
+  <!--
+     PTI bar properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="PTI_HEIGHT"
+            Comment="The overall height of this ticker (in pixels)."/>
+            
+  <constant Type="int"
+            Name="PTI_MARGIN"
+            Comment="The text margin in PTI bar (in pixels)."/>
+            
+  <constant Type="int"
+            Name="PTI_COLOR_BG"
+            Comment="The background fill color for this pti bar if its 
+                     background image isn't specified or cannot be loaded."/>
+
+  <constant Type="int"
+            Name="PTI_COLOR_FG"
+            Comment="The foreground color for rendering the text of this 
+                     pti bar."/>
+            
+  <constant Type="int"
+            Name="PTI_COLOR_FG_HL"
+            Comment="The highlighted color of the text of this pti bar."/>
+            
+  <constant Type="int"
+            Name="PTI_COLOR_BG_HL"
+            Comment="The highlighted color of the background of this pti bar."/>
+
+  <constant Type="int"
+            Name="PTI_COLOR_BDR"
+            Comment="The color of the background of this pti bar."/>
+
+  <constant Type="int"
+            Name="PTI_FONT"
+            Comment="The font to render the text of this ticker."/>
+            
+  <constant Type="int"
+            Name="PTI_IMAGE_BG"
+            Comment="These images are used to render a background for the 
+                     pti bar. 
+            
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+  <constant Type="int"
+            Name="PTI_LEFT_ARROW"
+            Comment="Left scrolling indicator for PTI bar"/>
+
+  <constant Type="int"
+            Name="PTI_RIGHT_ARROW"
+            Comment="Right scrolling indicator for PTI bar"/>
+
+  <!--
+     Input Mode Indicator properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="INPUT_MODE_MARGIN"
+            Comment="The text margin in Input Mode Indicator (in pixels)."/>
+            
+  <constant Type="int"
+            Name="INPUT_MODE_COLOR_BG"
+            Comment="The background fill color for this pti bar if its 
+                     background image isn't specified or cannot be loaded."/>
+
+  <constant Type="int"
+            Name="INPUT_MODE_COLOR_FG"
+            Comment="The foreground color for rendering the text of this 
+                     Input Mode Indicator."/>
+            
+  <constant Type="int"
+            Name="INPUT_MODE_COLOR_BDR"
+            Comment="The color of the background of this Input Mode Indicator."/>
+
+  <constant Type="int"
+            Name="INPUT_MODE_FONT"
+            Comment="The font to render the text of this Input Mode Indicator."/>
+            
+  <constant Type="int"
+            Name="INPUT_MODE_IMAGE_BG"
+            Comment="These images are used to render a background for the 
+                     Input Mode Indicator. 
+            
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+  <!--
+     Title bar properties indentifiers    
+  -->                    
+  <constant Type="int"
+            Name="TITLE_HEIGHT"
+            Comment="The overall height of the title component, including its 
+                     background, title text, etc."/>
+            
+  <constant Type="int"
+            Name="TITLE_MARGIN"
+            Comment="The margin (in pixels) to leave on either side of the 
+                     layer when rendering its text."/>
+
+  <constant Type="int"
+            Name="TITLE_TEXT_ALIGN_X"
+            Comment="Specifies the horizontal alignment of the text, can be 
+                     Graphics.LEFT, RIGHT, or HCENTER."/>
+
+  <constant Type="int"
+            Name="TITLE_TEXT_SHD_ALIGN"
+            Comment="Specifies the alignment property of the drop shadow on 
+                     the title text. This should be a combination value such 
+                     as Graphics.TOP | Graphics.LEFT or 
+                     Graphics.RIGHT | Graphics.BOTTOM"/>
+            
+  <constant Type="int"
+            Name="TITLE_COLOR_FG"
+            Comment="The foreground color to use when rendering 
+                     the title text."/>
+            
+  <constant Type="int"
+            Name="TITLE_COLOR_FG_SHD"
+            Comment="The 'shadow' color to use when rendering the title text.
+                     The title's shadow is a drop shadow of the text appearing
+                     behind the foreground color text. If this color is equal
+                     to that of the foreground color, no drop shadow will be
+                     drawn."/>
+            
+  <constant Type="int"
+            Name="TITLE_COLOR_BG"
+            Comment="A background fill color to use if there is no background image."/>
+
+  <constant Type="int"
+            Name="TITLE_FONT"
+            Comment="The Font to use when rendering the title text."/>
+            
+  <constant Type="int"
+            Name="TITLE_IMAGE_BG"
+            Comment="The 3 piece background image to be used in the 
+                     'title bar'.
+                     Piece 0: Left edge of the titlebar.
+                     Piece 1: Middle tile of the titlebar.
+                     Piece 2: Right edge of the titlebar.
+                     
+                     These images are used to render a background for the 
+                     titlebar. If the combined widths of the left, middle,
+                     and right images is less than the overall width of the 
+                     titlebar, the middle image will be tiled horizontally 
+                     to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, either the tile 
+                     image or solid fill color is used instead of background 
+                     image."/>
+
+
+
+  <!--
+     Alert properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="ALERT_WIDTH"
+            Comment="The overall width of an Alert."/>
+            
+  <constant Type="int"
+            Name="ALERT_HEIGHT"
+            Comment="The height for an Alert. Alerts taller than this height 
+                     will require scrolling."/>
+            
+  <constant Type="int"
+            Name="ALERT_ALIGN_X"
+            Comment="The horizontal alignment of an Alert on the screen.
+                     Valid values are Graphics.LEFT, Graphics.HCENTER, 
+                     and Graphics.RIGHT."/>
+            
+  <constant Type="int"
+            Name="ALERT_ALIGN_Y"
+            Comment="The vertical alignment of an Alert on the screen.
+                     Valid values are Graphics.TOP, Graphics.VCENTER, 
+                     and Graphics.BOTTOM."/>
+            
+  <constant Type="int"
+            Name="ALERT_MARGIN_H"
+            Comment="The width (in pixels) for the horizontal margins for 
+                     an alert."/>
+            
+  <constant Type="int"
+            Name="ALERT_MARGIN_V"
+            Comment="The height (in pixels) for the vertical margins for 
+                     an alert."/>
+            
+  <constant Type="int"
+            Name="ALERT_TITLE_ALIGN"
+            Comment="The alignment directive for the title in the title bar.
+                     Valid values are Graphics.LEFT, Graphics.HCENTER, or 
+                     Graphics.RIGHT. This value will be combined with 
+                     Graphics.TOP to locate the title in the Alert's title 
+                     bar, centered vertically."/>
+            
+  <constant Type="int"
+            Name="ALERT_TITLE_HEIGHT"
+            Comment="The overall height of the 'title bar' of the Alert. This 
+                     height accounts for the area at the top of the Alert 
+                     where the icon and the title are located. The rest of the 
+                     alert constitutes the 'body' of the Alert."/>
+            
+  <constant Type="int"
+            Name="ALERT_TITLE_MARGIN"
+            Comment="The width of the margin (in pixels) on either side of the 
+                     title in an Alert. If the title exceeds the available 
+                     width, it will be clipped at the margins."/>
+            
+  <constant Type="int"
+            Name="ALERT_TEXT_TITLE_INFO"
+            Comment="The default title for an 'info' type alert."/>
+            
+  <constant Type="int"
+            Name="ALERT_TEXT_TITLE_WARN"
+            Comment="The default title for a 'warning' type alert."/>
+            
+  <constant Type="int"
+            Name="ALERT_TEXT_TITLE_ERRR"
+            Comment="The default title for an 'error' type alert."/>
+            
+  <constant Type="int"
+            Name="ALERT_TEXT_TITLE_ALRM"
+            Comment="The default title for an 'alarm' type alert."/>
+            
+  <constant Type="int"
+            Name="ALERT_TEXT_TITLE_CNFM"
+            Comment="The default title for a 'confirm' type alert."/>
+            
+  <constant Type="int"
+            Name="ALERT_PAD_HORIZ"
+            Comment="The amount of padding (in pixels) between some elements 
+                     on a row (such as the icon and the title)."/>
+            
+  <constant Type="int"
+            Name="ALERT_PAD_VERT"
+            Comment="The amount of padding (in pixels) between two rows of 
+                     elements."/>
+            
+  <constant Type="int"
+            Name="ALERT_SCROLL_AMOUNT"
+            Comment="The amount of pixels to scroll the contents of the Alert 
+                     at one time."/>
+            
+  <constant Type="int"
+            Name="ALERT_TIMEOUT"
+            Comment="The timeout (in milliseconds) for an Alert."/>
+            
+  <constant Type="int"
+            Name="ALERT_COLOR_BG"
+            Comment="The background fill color to be used for Alerts when the 
+                     background image cannot be loaded or does not exist."/>
+            
+  <constant Type="int"
+            Name="ALERT_COLOR_TITLE"
+            Comment="The foreground color for the Alert's title text."/>
+            
+  <constant Type="int"
+            Name="ALERT_COLOR_FG"
+            Comment="The foreground color for the Alert's contents."/>
+            
+  <constant Type="int"
+            Name="ALERT_FONT_TITLE"
+            Comment="The font to use to render the Alert's title text."/>
+            
+  <constant Type="int"
+            Name="ALERT_FONT_TEXT"
+            Comment="The font to use to render the Alert's contents."/>
+            
+  <constant Type="int"
+            Name="ALERT_IMAGE_BG"
+            Comment="A 9-piece background to use for an Alert.
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the middle-bar.
+                     Piece 4: Middle tile for the middle-bar.
+                     Piece 5: Right edge of the middle-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+                     
+                     The top-bar is the area where the Alert icon and title 
+                     are drawn. If there is no Alert title, the top-bar may 
+                     be very short, and serves to visually cap the top of the 
+                     Alert.
+                     
+                     The middle-bar is the background 'tile' for a row of the 
+                     middle of an Alert. It will be repeatedly drawn 
+                     vertically to accommodate the height of the Alert.
+                     
+                     The bottom-bar is the bottom border of the Alert and 
+                     serves to visually cap the bottom of the Alert.
+                     
+                     All three bars are divided into three pieces, a left,
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the Alert, the middle image will be tiled 
+                     horizontally to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color 
+                     is used instead of image background."/>
+            
+  <constant Type="int"
+            Name="ALERT_IMAGE_ICON_INFO"
+            Comment="The icon for an 'Information' type Alert."/>
+            
+  <constant Type="int"
+            Name="ALERT_IMAGE_ICON_WARN"
+            Comment="The icon for an 'Warning' type Alert."/>
+
+  <constant Type="int"
+            Name="ALERT_IMAGE_ICON_ERRR"
+            Comment="The icon for an 'Error' type Alert."/>
+
+  <constant Type="int"
+            Name="ALERT_IMAGE_ICON_ALRM"
+            Comment="The icon for an 'Alarm' type Alert."/>
+            
+  <constant Type="int"
+            Name="ALERT_IMAGE_ICON_CNFM"
+            Comment="The icon for an 'Confirmation' type Alert."/>
+
+
+
+  <!--
+     Busy cursor properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="BUSYCRSR_WIDTH"
+            Comment="The width of the continuous gauge. This is the width of 
+                     the UI design. It does not include label support which 
+                     may be provided automatically in addition to this 
+                     measurement."/>
+            
+  <constant Type="int"
+            Name="BUSYCRSR_HEIGHT"
+            Comment="The height of the continuous gauge. This is the height of 
+                     the UI design. It does not include label support which 
+                     may be provided automatically in addition to this 
+                     measurement."/>
+            
+  <constant Type="int"
+            Name="BUSYCRSR_NUM_FRAMES"
+            Comment="The number of frames that contribute to the animation of
+                     this continuous gauge."/>
+            
+  <constant Type="int"
+            Name="BUSYCRSR_FRAME_X"
+            Comment="The 'x' coordinate of the animation region of the 
+                     continuous gauge as measured in the gauge's own 
+                     coordinate space, where the frames get painted. 
+                     If the animation is small in size, the frames could be 
+                     of that small size and given this 'x' co-ordinate, the 
+                     frames would get painted there. The frames will be placed 
+                     with their upper left corner at this coordinate."/>
+            
+  <constant Type="int"
+            Name="BUSYCRSR_FRAME_Y"
+            Comment="The 'y' coordinate of the animation region of the
+                     continuous gauge as measured in the gauge's own 
+                     coordinate space, where the frames get painted. 
+                     If the animation is small in size, the frames could be 
+                     of that small size and given this 'y' co-ordinate, the 
+                     frames would get painted there. The frames will be placed 
+                     with their upper left corner at this coordinate."/>
+            
+  <constant Type="int"
+            Name="BUSYCRSR_FRAME_SEQU"
+            Comment="The sequence in which the frames should be animated in 
+                     this continuous gauge."/>
+            
+  <constant Type="int"
+            Name="BUSYCRSR_IMAGE_BG"
+            Comment="The image to be used for the background body of the 
+                     continuous gauge, without any animation related 
+                     images."/>
+            
+  <constant Type="int"
+            Name="BUSYCRSR_IMAGE_FRAME"
+            Comment="All the images (frames), total BUSYCRSR_NUM_FRAMES 
+                     images, that contribute to the animation of this 
+                     continuous gauge."/>
+            
+
+
+  <!--
+     Choice group properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="CHOICE_WIDTH_IMAGE"
+            Comment="The maximum width for an application-supplied image for 
+                     a choice element."/>
+            
+  <constant Type="int"
+            Name="CHOICE_HEIGHT_IMAGE"
+            Comment="The maximum height for an application-supplied image for 
+                     a choice element."/>
+            
+  <constant Type="int"
+            Name="CHOICE_WIDTH_SCROLL"
+            Comment="In a popup choice, the width of the scrollbar."/>
+            
+  <constant Type="int"
+            Name="CHOICE_WIDTH_THUMB"
+            Comment="In a popup choice, the width of the thumb of the
+                     scrollbar."/>
+            
+  <constant Type="int"
+            Name="CHOICE_HEIGHT_THUMB"
+            Comment="In a popup choice, the height of the thumb of the 
+                     scrollbar."/>
+            
+  <constant Type="int"
+            Name="CHOICE_PAD_H"
+            Comment="The horizontal padding (in pixels) to use between 
+                     elements on the same line."/>
+            
+  <constant Type="int"
+            Name="CHOICE_PAD_V"
+            Comment="The vertical padding (in pixels) to use between 
+                     elements on the same line."/>
+            
+  <constant Type="int"
+            Name="CHOICE_COLOR_FG"
+            Comment="The foreground color for this popup choice."/>
+            
+  <constant Type="int"
+            Name="CHOICE_COLOR_BG"
+            Comment="The background color for this popup choice."/>
+            
+  <constant Type="int"
+            Name="CHOICE_COLOR_BRDR"
+            Comment="The border color for this popup choice."/>
+            
+  <constant Type="int"
+            Name="CHOICE_COLOR_BRDR_SHD"
+            Comment="The border shadow color for this popup choice."/>
+            
+  <constant Type="int"
+            Name="CHOICE_COLOR_SCROLL"
+            Comment="The color of the scrollbar on a popup choice."/>
+            
+  <constant Type="int"
+            Name="CHOICE_COLOR_THUMB"
+            Comment="The color of the scrollbar thumb on a popup choice."/>
+            
+  <constant Type="int"
+            Name="CHOICE_FONT"
+            Comment="The font to use for choice elements."/>
+            
+  <constant Type="int"
+            Name="CHOICE_FONT_FOCUS"
+            Comment="The font to use for the currently focused choice 
+                     element."/>
+            
+  <constant Type="int"
+            Name="CHOICE_IMAGE_RADIO"
+            Comment="The pair of images for radio buttons.
+                     Piece 0: The image for the 'off' radio button.
+                     Piece 1: The image for the 'on' radio button.
+                     
+                     Both images should be of the same dimensions."/>
+            
+  <constant Type="int"
+            Name="CHOICE_IMAGE_CHKBX"
+            Comment="The pair of images for checkboxes.
+                     Piece 0: The image for the 'unchecked' checkbox.
+                     Piece 1: The image for the 'checked' checkbox.
+                     
+                     Both images should be of the same dimensions."/>
+            
+  <constant Type="int"
+            Name="CHOICE_IMAGE_BG"
+            Comment="A 9 piece image background for a popup choicegroup.
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the middle-bar.
+                     Piece 4: Middle tile for the middle-bar.
+                     Piece 5: Right edge of the middle-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+                     
+                     The top-bar is the top border for the popup.
+                     
+                     The middle-bar is the left/right borders as well as the 
+                     center tile for the popup.
+                     
+                     The bottom-bar is the bottom border of the popup.
+                     
+                     All three bars are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the datefield, the middle image will be tiled 
+                     horizontally to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+            
+  <constant Type="int"
+            Name="CHOICE_IMAGE_BTN_BG"
+            Comment="A 9 piece image background to use to draw the 'popup' 
+                     button for popup choicegroup. Once the button background 
+                     is drawn, the icon will be placed in its center.
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the middle-bar.
+                     Piece 4: Middle tile for the middle-bar.
+                     Piece 5: Right edge of the middle-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+                     
+                     All three bars are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the background, the middle image will be tiled 
+                     horizontally to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+            
+  <constant Type="int"
+            Name="CHOICE_IMAGE_BTN_ICON"
+            Comment="The image to use to indicate the drop-down nature of the 
+                     popup choice, typically a 'down arrow'."/>
+            
+  <constant Type="int"
+            Name="CHOICE_IMAGE_POPUP_BG"
+            Comment="The 9 piece image background to use for the background of
+                     a popup choice window.
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the middle-bar.
+                     Piece 4: Middle tile for the middle-bar.
+                     Piece 5: Right edge of the middle-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+                     
+                     All three bars are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the background, the middle image will be tiled 
+                     horizontally to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+
+
+  <!--
+     Date editor properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="DATEEDITOR_HEIGHT"
+            Comment="The height (in pixels) of the popup date editor."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_HEIGHT_POPUPS"
+            Comment="The maximum height allowed for internal popups, 
+                     like month, year, hours, etc."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_WIDTH_D"
+            Comment="The width (in pixels) of the popup date editor in 
+                     'date' mode."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_WIDTH_T"
+            Comment="The width (in pixels) of the popup date editor in 
+                     'time' mode."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_WIDTH_DT"
+            Comment="The width (in pixels) of the popup date editor in 
+                     'date/time' mode."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_COLOR_BG"
+            Comment="The background color of the popup editor (if the 
+                     background image either can't be found or loaded)."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_COLOR_POPUPS_BG"
+            Comment="The background color for the popups, such as hours, 
+                     minutes, month, etc."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_COLOR_BRDR"
+            Comment="The border color of the popup editor (if the background
+                     image either can't be found or loaded)."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_COLOR_TRAV_IND"
+            Comment="The color of the traverse indicator within the editor 
+                     popup."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_COLOR_CLK_LT"
+            Comment="The color to draw the hands of the clock."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_COLOR_CLK_DK"
+            Comment="The shadow color to draw the hands of the clock."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_FONT_POPUPS"
+            Comment="The font to use for rendering options inside the popups,
+                     like hours, minutes, month, etc."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_IMAGE_BG"
+            Comment="The 9 piece image background to use to draw the 
+                     background of the popup editor."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_IMAGE_MON_BG"
+            Comment="The background image for the drop-down month selector."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_IMAGE_YR_BG"
+            Comment="The background image for the drop-down year selector."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_IMAGE_CAL_BG"
+            Comment="The background image for rendering the calendar."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_IMAGE_DATES"
+            Comment="This is a single image which holds all the dates as 
+                     graphics. The image is arranged vertically, starting 
+                     with 1 and going to 31. Each digit is equal height and
+                     centered in the image."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_IMAGE_DAYS"
+            Comment="This is a single image which holds all the days of week as 
+                     graphics. The image is arranged horizontally, starting 
+                     with 1 and going to 7. Each letter is equal height and
+                     centered in the image."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_IMAGE_TIME_BG"
+            Comment="The background image for the drop-down hour/minute 
+                     selected."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_IMAGE_RADIO"
+            Comment="Two radio button images for the am/pm setting. The first 
+                     image is the unselected radio button and the second image
+                     is the selected radio image."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_IMAGE_AMPM"
+            Comment="This is a single image which holds the graphics for the 
+                     am/pm text. The image contains the am and pm graphic 
+                     arranged horizontally such that the left half of the 
+                     image is the am graphic and the right half of the image 
+                     is the pm graphic."/>
+            
+  <constant Type="int"
+            Name="DATEEDITOR_IMAGE_CLOCK_BG"
+            Comment="The background image for the clock."/>
+            
+
+
+  <!--
+     Date field properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="DATEFIELD_PAD_H"
+            Comment="The horizontal padding (in pixels) between the left and 
+                     right borders of a datefield and its contents."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_PAD_V"
+            Comment="The vertical padding (in pixels) between the top and 
+                     bottom borders of a text component and its contents."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_BTN_BRDR_W"
+            Comment="For the 'popup' button (with a non-existing image 
+                     background), the width in pixels of the line border to 
+                     draw around the button."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_FONT"
+            Comment="The font to use for the text in this datefield."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_COLOR_FG"
+            Comment="The foreground color for this datefield."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_COLOR_BG"
+            Comment="The background color for this datefield."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_COLOR_BRDR"
+            Comment="The border color for this datefield."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_COLOR_BRDR_LT"
+            Comment="The 'light' line border color for the 'popup' button
+                     (with a non-existing image background)."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_COLOR_BRDR_DK"
+            Comment="The 'dark' line border color for the 'popup' button 
+                     (with a non-existing image background)."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_COLOR_BRDR_SHD"
+            Comment="The border shadow color for this datefield."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_IMAGE_BG"
+            Comment="A 9 piece image background for a datefield.
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the middle-bar.
+                     Piece 4: Middle tile for the middle-bar.
+                     Piece 5: Right edge of the middle-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+                     
+                     The top-bar is the top border for the datefield.
+                     
+                     The middle-bar is the left/right borders as well as the
+                     center tile for the datefield.
+                     
+                     The bottom-bar is the bottom border of the datefield.
+                     
+                     All three bars are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the datefield, the middle image will be tiled 
+                     horizontally to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_IMAGE_BTN_BG"
+            Comment="A 9 piece image background for the 'popup' button which 
+                     holds the specific icon for this datefield.
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the middle-bar.
+                     Piece 4: Middle tile for the middle-bar
+                     Piece 5: Right edge of the middle-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+                     
+                     All three bars are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width needed for the button, the middle image will be 
+                     tiled horizontally to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_IMAGE_ICON_DATE"
+            Comment="An icon for the popup button for a date only 
+                     datefield."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_IMAGE_ICON_TIME"
+            Comment="An icon for the popup button for a time only 
+                     datefield."/>
+
+  <constant Type="int"
+            Name="DATEFIELD_IMAGE_ICON_DATETIME"
+            Comment="An icon for the popup button for a date and time 
+                     datefield."/>
+
+
+
+  <!--
+     Gauge properties indentifiers    
+  -->                    
+  <constant Type="int"
+            Name="GAUGE_ORIENT"
+            Comment="The orientation of the interactive gauge. The value 
+                     indicates the directionality of the gauge as it goes 
+                     from 0 to its max value. Valid values are Skin.LEFT, 
+                     Skin.RIGHT, Skin.UP, and Skin.DOWN. A value of 
+                     Skin.RIGHT, for example, would indicate a gauge which 
+                     increased in value from left to right."/>
+
+  <constant Type="int"
+            Name="GAUGE_WIDTH"
+            Comment="The width of the interactive gauge. This is the width 
+                     of the UI design. It does not include label support 
+                     which may be provided automatically in addition to this 
+                     measurement."/>
+
+  <constant Type="int"
+            Name="GAUGE_HEIGHT"
+            Comment="The height of the interactive gauge. This is the height 
+                     of the UI design. It does not include label support 
+                     which may be provided automatically in addition to this 
+                     measurement."/>
+
+  <constant Type="int"
+            Name="GAUGE_METER_X"
+            Comment="The 'x' coordinate of the meter image for this 
+                     interactive gauge, as measured in the gauge's own
+                     coordinate space. The meter image will be placed with 
+                     its upper left corner at this coordinate."/>
+
+  <constant Type="int"
+            Name="GAUGE_METER_Y"
+            Comment="The 'y' coordinate of the meter image for this 
+                     interactive gauge, as measured in the gauge's own 
+                     coordinate space. The meter image will be placed with 
+                     its upper left corner at this coordinate."/>
+
+  <constant Type="int"
+            Name="GAUGE_INC_BTN_X"
+            Comment="The 'x' coordinate of the increase button for this
+                     interactive gauge, as measured in the gauge's own 
+                     coordinate space. The button will be placed with its
+                     upper left corner at this coordinate."/>
+
+  <constant Type="int"
+            Name="GAUGE_INC_BTN_Y"
+            Comment="The 'y' coordinate of the increase button for this 
+                     interactive gauge, as measured in the gauge's own 
+                     coordinate space. The button will be placed with its 
+                     upper left corner at this coordinate."/>
+
+  <constant Type="int"
+            Name="GAUGE_DEC_BTN_X"
+            Comment="The 'x' coordinate of the decrease button for this 
+                     interactive gauge, as measured in the gauge's own 
+                     coordinate space. The button will be placed with its 
+                     upper left corner at this coordinate."/>
+
+  <constant Type="int"
+            Name="GAUGE_DEC_BTN_Y"
+            Comment="The 'y' coordinate of the decrease button for this 
+                     interactive gauge, as measured in the gauge's own 
+                     coordinate space. The button will be placed with its 
+                     upper left corner at this coordinate."/>
+
+  <constant Type="int"
+            Name="GAUGE_VALUE_X"
+            Comment="The 'x' coordinate defining the upper left corner of 
+                     the bounding box which contains the interactive gauge's 
+                     value."/>
+
+  <constant Type="int"
+            Name="GAUGE_VALUE_Y"
+            Comment="The 'y' coordinate defining the upper left corner of 
+                     the bounding box which contains the interactive gauge's 
+                     value."/>
+
+  <constant Type="int"
+            Name="GAUGE_VALUE_WIDTH"
+            Comment="The maximum allowable width of the space available to
+                     render the value of the interactive gauge. For example, 
+                     a gauge may be able to easily render the value of 45, 
+                     but it may not be large enough to render 4500000. 
+                     The height of the gauge value is determined by the image
+                     used to provide the numbers."/>
+
+  <constant Type="int"
+            Name="GAUGE_IMAGE_BG"
+            Comment="The image to be used for the background body of the 
+                     interactive gauge, without the meter images, value, 
+                     or control buttons."/>
+
+  <constant Type="int"
+            Name="GAUGE_IMAGE_MTR_EMPTY"
+            Comment="The image to be used for the actual meter of the 
+                     interactive gauge, in an 'empty' (ie value==0) state."/>
+
+  <constant Type="int"
+            Name="GAUGE_IMAGE_MTR_FULL"
+            Comment="The image to be used for the actual meter of the 
+                     interactive gauge, in a 'full' (ie value==max) state."/>
+
+  <constant Type="int"
+            Name="GAUGE_IMAGE_INC_BTN"
+            Comment="The image to be used for the 'increase' button for this
+                     interactive gauge."/>
+
+  <constant Type="int"
+            Name="GAUGE_IMAGE_DEC_BTN"
+            Comment="The image to be used for the 'decrease' button for this 
+                     interactive gauge."/>
+
+  <constant Type="int"
+            Name="GAUGE_IMAGE_VALUES"
+            Comment="The image to be used to paint the value of this
+                     interactive gauge in a numerical form. The image
+                     should consist of the highlighted/normal values 0-9, 
+                     and a trailing non-highlighted/grayish 0, that could
+                     be used to display a value of 0. The digits should be
+                     equally spaced in a horizontal layout. Each digit
+                     should be the same width, equal to the width of the
+                     overall image divided by 11 (the total number of digits
+                     in the image, 0-9,0)."/>
+
+
+
+  <!--
+     Imageitem properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="IMAGEITEM_COLOR_BG_LNK_FOC"
+            Comment="The background fill color of a hyperlink which has input
+                     focus."/>
+
+  <constant Type="int"
+            Name="IMAGEITEM_COLOR_BG_BTN"
+            Comment="The background fill color of a button."/>
+
+  <constant Type="int"
+            Name="IMAGEITEM_COLOR_BORDER_LT"
+            Comment="The 'light' line border color of a button which does not
+                     have an image background."/>
+
+  <constant Type="int"
+            Name="IMAGEITEM_COLOR_BORDER_DK"
+            Comment="The 'dark' line border color of a button which does not 
+                     have an image background."/>
+
+  <constant Type="int"
+            Name="IMAGEITEM_PAD_LNK_H"
+            Comment="The padding between the sides of an image and its outer
+                     border when it is a hyperlink."/>
+
+  <constant Type="int"
+            Name="IMAGEITEM_PAD_LNK_V"
+            Comment="The padding between the top and bottom of an image and
+                     its outer border when it is a hyperlink."/>
+
+  <constant Type="int"
+            Name="IMAGEITEM_PAD_BTN_H"
+            Comment="The padding between the sides of an image and its outer
+                     border when it is a button."/>
+
+  <constant Type="int"
+            Name="IMAGEITEM_PAD_BTN_V"
+            Comment="The padding between the top and bottom of an image and
+                     its outer border when it is a button."/>
+
+  <constant Type="int"
+            Name="IMAGEITEM_BTN_BORDER_W"
+            Comment="The thickness of the line border drawn around the image 
+                     when it is a button (and its background image is not 
+                     available)."/>
+
+  <constant Type="int"
+            Name="IMAGEITEM_IMAGE_LNK_H"
+            Comment="The 'horizontal' portion of the border graphic to draw 
+                     around an image when it is a hyperlink."/>
+
+  <constant Type="int"
+            Name="IMAGEITEM_IMAGE_LNK_V"
+            Comment="The 'vertical' portion of the border graphic to draw 
+                     around an image when it is a hyperlink."/>
+
+  <constant Type="int"
+            Name="IMAGEITEM_IMAGE_BUTTON"
+            Comment="The 9 piece image background for an image which is a 
+                     button.
+                     Piece 0: Top left corner of the button.
+                     Piece 1: Middle tile for the top of the button.
+                     Piece 2: Top right corner of the button.
+                     Piece 3: Left edge of the button.
+                     Piece 4: Middle tile for the button.
+                     Piece 5: Right edge of the button.
+                     Piece 6: Bottom left corner of the button.
+                     Piece 7: Middle tile for the bottom of the button.
+                     Piece 8: Bottom right corner of the button.
+                     
+                     All three rows are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the button, the middle image will be tiled 
+                     horizontally to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color
+                     and line border are used instead of background image."/>
+
+  <constant Type="int"
+            Name="KEYBOARD_HEIGHT"
+            Comment="Height of virtual keyboard"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_COEFFICIENT"
+            Comment="The persent of the board which virtual keyboard fill"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_KEY"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_BACKSPACE"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_CAPS"
+            Comment="Image for virtual keyboard key"/>
+  <constant Type="int"
+            Name="KEYBOARD_BTN_ENTER"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_ALPHA_MODE"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_SYMBOL_MODE"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_NUMERIC_MODE"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BG"
+            Comment="Background for virtual keyboard"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_COLOR_BG"
+            Comment="Background color for virtual keyboard"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_UP_SEL"
+            Comment="Image for virtual keyboard key with selected up arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_UP_UN"
+            Comment="Image for virtual keyboard key with unselected up arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_LEFT_SEL"
+            Comment="Image for virtual keyboard key with selected left arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_LEFT_UN"
+            Comment="Image for virtual keyboard key with unselected left arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_MID_SEL"
+            Comment="Image for virtual keyboard key with selected middle icon"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_MID_UN"
+            Comment="Image for virtual keyboard key with unselected middle icon"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_RIGHT_SEL"
+            Comment="Image for virtual keyboard key with selected right arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_RIGHT_UN"
+            Comment="Image for virtual keyboard key with unselected right arrow"/>
+  <constant Type="int"
+            Name="KEYBOARD_BTN_DOWN_SEL"
+            Comment="Image for virtual keyboard key with selected down arrow"/>
+  <constant Type="int"
+            Name="KEYBOARD_BTN_DOWN_UN"
+            Comment="Image for virtual keyboard key with unselected down arrow"/>
+  <constant Type="int"
+            Name="KEYBOARD_FONT"
+            Comment="Virtual keyboard font"/>
+    <constant Type="int"
+              Name="TOUCH_RADIUS"
+           Comment="Radius of finger if finger support is on,
+                    if finger support is off than this constant should be 0" />
+
+
+
+  <!--
+     System menu properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="MENU_WIDTH"
+            Comment="The maximum overall width of the system menu 
+                     component."/>
+
+  <constant Type="int"
+            Name="MENU_HEIGHT"
+            Comment="The maximum overall height of the system menu 
+                     component."/>
+
+  <constant Type="int"
+            Name="MENU_ALIGN_X"
+            Comment="The alignment property of the system menu on the 'x' 
+                     axis. Valid values are Graphics.LEFT, Graphics.RIGHT, 
+                     or Graphics.HCENTER. A value of LEFT, for example, would 
+                     align the system menu on the left edge of the screen. A 
+                     value of RIGHT would align the menu along the right edge 
+                     of the screen, and a value of HCENTER would horizontally 
+                     center the system menu on the screen."/>
+
+  <constant Type="int"
+            Name="MENU_ALIGN_Y"
+            Comment="The alignment property of the system menu on the 'y' 
+                     axis. Valid values are Graphics.TOP, Graphics.BOTTOM, 
+                     or Graphics.VCENTER. A value of TOP, for example, would 
+                     align the system menu along the top edge of the screen. 
+                     A value of BOTTOM would align the menu along the bottom 
+                     edge of the screen, and a value of VCENTER would 
+                     vertically center the system menu on the screen."/>
+
+  <constant Type="int"
+            Name="MENU_TITLE_X"
+            Comment="The 'x' coordinate for the anchor point of the system
+                     menu title."/>
+
+  <constant Type="int"
+            Name="MENU_TITLE_Y"
+            Comment="The 'y' coordinate for the anchor point of the system 
+                     menu title."/>
+
+  <constant Type="int"
+            Name="MENU_TITLE_MAXWIDTH"
+            Comment="The maximum width allowed for hte system menu title."/>
+
+  <constant Type="int"
+            Name="MENU_TITLE_ALIGN"
+            Comment="The horizontal alignment property of the system menu 
+                     title around its anchor point. Valid values are 
+                     Graphics.LEFT, Graphics.RIGHT, and Graphics.HCENTER."/>
+
+  <constant Type="int"
+            Name="MENU_MAX_ITEMS"
+            Comment="The max items this system menu can display at once."/>
+
+  <constant Type="int"
+            Name="MENU_ITEM_HEIGHT"
+            Comment="The height (in pixels) of each option in the system menu.
+                     This height includes any padding, and is the total height
+                     occupied by a single 'row' which makes up an item. 
+                     The next item in the menu would have its origin y-value 
+                     at ITEM_HEIGHT + 1."/>
+
+  <constant Type="int"
+            Name="MENU_ITEM_TOPOFFSET"
+            Comment="The offset (in pixels) from the top of the menu to the 
+                     origin y-value of the first menu item."/>
+
+  <constant Type="int"
+            Name="MENU_ITEM_INDEX_ANCHOR_X"
+            Comment="The 'x' coordinate of the starting location for the index 
+                     of each menu item. That is, menu items are made up of an 
+                     index and a string, ie, '5  Help Menu'. This coordinate 
+                     is for the numeric index of the items. All item indexes 
+                     will have the same x coordinate."/>
+
+  <constant Type="int"
+            Name="MENU_ITEM_ANCHOR_X"
+            Comment="The 'x' coordinate of the starting location for the 
+                     string value of each menu item. That is, menu items are 
+                     made up of an index and a string, ie, '5  Help Menu'. 
+                     This coordinate is for the string value of the items. All 
+                     item strings will have the same x coordinate."/>
+
+  <constant Type="int"
+            Name="MENU_COLOR_BG"
+            Comment="A background fill color to use in lieu of using a 
+                     background image."/>
+
+  <constant Type="int"
+            Name="MENU_COLOR_BG_SEL"
+            Comment="A background fill color to use for the currently 
+                     highlighted menu item and index in lieu of using a 
+                     background image."/>
+
+  <constant Type="int"
+            Name="MENU_COLOR_TITLE"
+            Comment="The foreground color to use to render the system menu 
+                     title if one is used."/>
+
+  <constant Type="int"
+            Name="MENU_COLOR_INDEX"
+            Comment="The non-selected foreground color to use to render the 
+                     index of each item on the menu."/>
+
+  <constant Type="int"
+            Name="MENU_COLOR_INDEX_SEL"
+            Comment="The foreground color to use to render the index of the 
+                     selected item on the menu."/>
+
+  <constant Type="int"
+            Name="MENU_COLOR_ITEM"
+            Comment="The non-selected foreground color to use to render items 
+                     on the menu."/>
+
+  <constant Type="int"
+            Name="MENU_COLOR_ITEM_SEL"
+            Comment="The foreground color to use to render the selected item
+                     on the menu."/>
+
+  <constant Type="int"
+            Name="MENU_TEXT_TITLE"
+            Comment="The actual title of the system menu, typically 'Menu'. 
+                     If isn't specified, then this system menu does not have 
+                     a title."/>
+
+  <constant Type="int"
+            Name="MENU_FONT_TITLE"
+            Comment="The Font to use to render the system menu title."/>
+
+  <constant Type="int"
+            Name="MENU_FONT_ITEM"
+            Comment="The Font to use to render all non-selected items and 
+                     their indexes on the menu."/>
+
+  <constant Type="int"
+            Name="MENU_FONT_ITEM_SEL"
+            Comment="The Font to use to render the currently selected item 
+                     and its index on the menu."/>
+
+  <constant Type="int"
+            Name="MENU_IMAGE_BG"
+            Comment="The 9 piece background image to be used for the 
+                     system menu.
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the item-bar.
+                     Piece 4: Middle tile for the item-bar.
+                     Piece 5: Right edge of the item-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+                     
+                     The top-bar is the area where the menu title is drawn. 
+                     If there is no menu title, the top-bar may be very short, 
+                     and serves to visually cap the top of the menu.
+                     
+                     The item-bar is the background 'tile' for a single menu 
+                     item. It will be repeatedly drawn vertically to 
+                     accommodate each line for each menu item.
+                     
+                     The bottom-bar is the bottom border of the system menu 
+                     and serves to visually cap the bottom of the menu.
+                     
+                     All three bars are divided into three pieces, a left,
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the system menu, the middle image will be tiled 
+                     horizontally to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+  <constant Type="int"
+            Name="MENU_IMAGE_ITEM_SEL_BG"
+            Comment="The 3 piece background image for a selected menu item.
+                     Piece 0: Left edge of the selected item-bar.
+                     Piece 1: Middle tile of the selected item-bar.
+                     Piece 2: Right edge of the selected item-bar.
+                     
+                     These images are used to render a special background for 
+                     the currently selected menu item. They should match in 
+                     height to those images used for the non-selected 
+                     item-bar. If the combined widths of the left, middle, and 
+                     right images is less than the overall width of the system 
+                     menu, the middle image will be tiled horizontally to make 
+                     up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+  <constant Type="int"
+            Name="MENU_IMAGE_SUBMENU"
+            Comment="Some menu items may trigger a cascading submenu. In this 
+                     case the menu item may be additionally displayed with a 
+                     directional arrow indicating the availability of a 
+                     submenu. This image is the arrow to be displayed when a 
+                     menu item is not currently selected."/>
+
+  <constant Type="int"
+            Name="MENU_IMAGE_SUBMENU_HL"
+            Comment="Some menu items may trigger a cascading submenu. In this
+                     case the menu item may be additionally displayed with a 
+                     directional arrow indicating the availability of a 
+                     submenu. This image is the arrow to be displayed when a 
+                     menu item is currently selected."/>
+
+
+
+  <!--
+     Progress bar properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="PBAR_ORIENT"
+            Comment="The orientation of the progressbar. The value indicates 
+                     the directionality of the progressbar as it goes from 0 
+                     to its max value. Valid values are Skin.LEFT, Skin.RIGHT,
+                     Skin.UP, and Skin.DOWN. A value of Skin.RIGHT, for 
+                     example, would indicate a gauge which increased in value 
+                     from left to right."/>
+
+  <constant Type="int"
+            Name="PBAR_WIDTH"
+            Comment="The width of the progressbar. This is the width of 
+                     the UI design. It does not include label support which 
+                     may be provided automatically in addition to this 
+                     measurement."/>
+
+  <constant Type="int"
+            Name="PBAR_HEIGHT"
+            Comment="The height of the progressbar. This is the height of 
+                     the UI design. It does not include label support which
+                     may be provided automatically in addition to this 
+                     measurement."/>
+
+  <constant Type="int"
+            Name="PBAR_METER_X"
+            Comment="The 'x' coordinate of the meter image for this 
+                     progressbar, as measured in the gauge's own coordinate 
+                     space. The meter image will be placed with its upper left 
+                     corner at this coordinate."/>
+
+  <constant Type="int"
+            Name="PBAR_METER_Y"
+            Comment="The 'y' coordinate of the meter image for this 
+                     progressbar, as measured in the gauge's own coordinate 
+                     space. The meter image will be placed with its upper left 
+                     corner at this coordinate."/>
+
+  <constant Type="int"
+            Name="PBAR_VALUE_X"
+            Comment="The 'x' coordinate defining the upper left corner of the
+                     bounding box which contains the progressbar's value."/>
+
+  <constant Type="int"
+            Name="PBAR_VALUE_Y"
+            Comment="The 'y' coordinate defining the upper left corner of the
+                     bounding box which contains the progressbar's value."/>
+
+  <constant Type="int"
+            Name="PBAR_VALUE_WIDTH"
+            Comment="The maximum allowable width of the space available to 
+                     render the value of the progressbar as a percentage. 
+                     For example, it would range from a 0% to a 100%, which 
+                     is the maximum. The actual value of the gauge is scaled
+                     according to the maximum value of the gauge as a 
+                     percentage. The height of the gauge value is determined 
+                     by the image used to provide the numbers."/>
+
+  <constant Type="int"
+            Name="PBAR_IMAGE_BG"
+            Comment="The image to be used for the background body of the 
+                     progressbar, without the meter images, value and 
+                     percentage."/>
+
+  <constant Type="int"
+            Name="PBAR_IMAGE_MTR_EMPTY"
+            Comment="The image to be used for the actual meter of this 
+                     progressbar, in an 'empty' (ie value==0) state."/>
+
+  <constant Type="int"
+            Name="PBAR_IMAGE_MTR_FULL"
+            Comment="The image to be used for the actual meter of this 
+                     progressbar, in a 'full' (ie value==max) state."/>
+
+  <constant Type="int"
+            Name="PBAR_IMAGE_VALUES"
+            Comment="The image to be used to paint the value of this 
+                     progressbar in a numerical form. The image should consist
+                     of the highlighted/normal values 0-9, and a trailing 
+                     non-highlighted/grayish 0, that could be used to display 
+                     a value of 0. The digits should be equally spaced in a 
+                     horizontal layout. Each digit should be the same width, 
+                     equal to the width of the overall image divided by 11 
+                     (the total number of digits in the image, 0-9,0)."/>
+
+  <constant Type="int"
+            Name="PBAR_IMAGE_PERCENTS"
+            Comment="The image to be used to clip the percentage sign from. 
+                     The percentage sign is displayed right next to the 
+                     (percentage equivalent) current value of the progressbar. 
+                     It consists of 2 percentage signs, one normal/highlighted 
+                     and the other showing non-highlighted/grayish rendering, 
+                     that could be used when displaying a value of 0%. The 2 
+                     signs should be equally spaced in a horizontal layout and
+                     be the same width, equal to the width of the overall
+                     image divided by 2 (the total number of signs in the 
+                     image)."/>
+
+
+
+  <!--
+     Stringitem properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="STRINGITEM_PAD_BUTTON_H"
+            Comment="In button mode, the number of pixels between the sides of
+                     the button and its text."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_PAD_BUTTON_V"
+            Comment="In button mode, the number of pixels between the top and 
+                     bottom of the button and its text."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_BUTTON_BORDER_W"
+            Comment="In button mode (with a non-existing image background), 
+                     the width in pixels of the line border to draw around 
+                     the button."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_COLOR_FG_LNK"
+            Comment="The foreground text color of a hyperlink."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_COLOR_FG_LNK_FOC"
+            Comment="The foreground text color of a hyperlink which has input 
+                     focus."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_COLOR_BG_LNK_FOC"
+            Comment="The background fill color of a hyperlink which has input 
+                     focus. If this value is -1, there will be no background 
+                     fill."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_COLOR_FG_BTN"
+            Comment="The foreground text color of a button."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_COLOR_BG_BTN"
+            Comment="The background fill color of a button (with a 
+                     non-existing image background)."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_COLOR_BORDER_LT"
+            Comment="The 'light' line border color for a button (with a 
+                     non-existing image background)."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_COLOR_BORDER_DK"
+            Comment="The 'dark' line border color for a button (with a 
+                     non-existing image background)."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_FONT"
+            Comment="The font to use for a plain StringItem."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_FONT_LNK"
+            Comment="The font to use for a hyperlink."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_FONT_BTN"
+            Comment="The font to use for a button."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_IMAGE_LNK"
+            Comment="The image to use to draw the link underline below a 
+                     hyperlink."/>
+
+  <constant Type="int"
+            Name="STRINGITEM_IMAGE_BTN"
+            Comment="The 9 piece image background to use for a button.
+                     Piece 0: Top left corner of the button.
+                     Piece 1: Middle tile for the top of the button.
+                     Piece 2: Top right corner of the button.
+                     Piece 3: Left edge of the button.
+                     Piece 4: Middle tile for the button.
+                     Piece 5: Right edge of the button.
+                     Piece 6: Bottom left corner of the button.
+                     Piece 7: Middle tile for the bottom of the button.
+                     Piece 8: Bottom right corner of the button.
+                     
+                     All three rows are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the button, the middle image will be tiled 
+                     horizontally to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color
+                     and line border are used instead of background image."/>
+
+
+
+  <!--
+     Textfield properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="TEXTFIELD_PAD_H"
+            Comment="The horizontal padding (in pixels) between the left and
+                     right borders of a text component and its contents."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_PAD_V"
+            Comment="The vertical padding (in pixels) between the top and 
+                     bottom borders of a text component and its contents."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_BOX_MARGIN"
+            Comment="The size of the inset margin for a full-screen textbox 
+                     component. This will create an inset margin on the 
+                     screen, literally creating a 'box' onscreen which will 
+                     contain the text input."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_WIDTH_CARET"
+            Comment="The width (in pixels) for the caret (input cursor) in a 
+                     text input component."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_SCRL_RATE"
+            Comment="For auto-scrolling text, this is the rate (in 
+                     milliseconds) between updates of the scrolling text. For 
+                     example, a value of 100 will move the text ten times in 
+                     one second."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_SCRL_SPD"
+            Comment="For auto-scrolling text, the number of pixels to shift 
+                     the text in a single update. This value combines with 
+                     TEXTFIELD_SCRL_RATE to define auto-scrolling behavior. 
+                     The text will move a certain number of pixels every so 
+                     many milliseconds."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_COLOR_FG"
+            Comment="The foreground color for this text component."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_COLOR_BG"
+            Comment="The background color for this text component."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_COLOR_BRDR"
+            Comment="The border color for this text component."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_COLOR_BRDR_SHD"
+            Comment="The border shadow color for this text component."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_COLOR_FG_UE"
+            Comment="The foreground color for an uneditable text component."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_COLOR_BG_UE"
+            Comment="The background color for an uneditable text component."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_COLOR_BRDR_UE"
+            Comment="The border color for an uneditable text component."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_COLOR_BRDR_SHD_UE"
+            Comment="The border shadow color for an uneditable text 
+                     component."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_IMAGE_BG"
+            Comment="A 9 piece image background for a text component.
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the middle-bar.
+                     Piece 4: Middle tile for the middle-bar.
+                     Piece 5: Right edge of the middle-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+                     
+                     The top-bar is the top border for the text component.
+                     
+                     The middle-bar is the left/right borders as well as the
+                     center tile for the text component.
+                     
+                     The bottom-bar is the bottom border of the text 
+                     component.
+                     
+                     All three bars are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the text component, the middle image will be 
+                     tiled horizontally to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+  <constant Type="int"
+            Name="TEXTFIELD_IMAGE_BG_UE"
+            Comment="A 9 piece image background for an uneditable text 
+                     component.
+                     Piece 0: Top left corner of the top-bar.
+                     Piece 1: Middle tile for the top-bar.
+                     Piece 2: Top right corner of the top-bar.
+                     Piece 3: Left edge of the middle-bar.
+                     Piece 4: Middle tile for the middle-bar.
+                     Piece 5: Right edge of the middle-bar.
+                     Piece 6: Bottom left corner of the bottom-bar.
+                     Piece 7: Middle tile for the bottom-bar.
+                     Piece 8: Bottom right corner of the bottom-bar.
+                     
+                     The top-bar is the top border for the text component.
+                     
+                     The middle-bar is the left/right borders as well as the
+                     center tile for the text component.
+                     
+                     The bottom-bar is the bottom border of the text 
+                     component.
+                     
+                     All three bars are divided into three pieces, a left, 
+                     a middle, and a right. If the combined widths of the 
+                     left, middle, and right images is less than the overall 
+                     width of the text component, the middle image will be 
+                     tiled horizontally to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+
+
+  <!--
+     Update bar properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="UPDATEBAR_WIDTH"
+            Comment="The width of the incremental updating gauge. This is the 
+                     width of the UI design. It does not include label support 
+                     which may be provided automatically in addition to this 
+                     measurement."/>
+
+  <constant Type="int"
+            Name="UPDATEBAR_HEIGHT"
+            Comment="The height of the incremental updating gauge. This is the 
+                     height of the UI design. It does not include label support 
+                     which may be provided automatically in addition to this 
+                     measurement."/>
+
+  <constant Type="int"
+            Name="UPDATEBAR_NUM_FRAMES"
+            Comment="The number of frames that contribute to the animation of 
+                     this incremental updating gauge."/>
+
+  <constant Type="int"
+            Name="UPDATEBAR_FRAME_X"
+            Comment="The 'x' coordinate of the animation region of the 
+                     incremental updating gauge as measured in the gauge's 
+                     own coordinate space, where the frames get painted. If 
+                     the animation is small in size, the frames could be of 
+                     that small size and given this 'x' co-ordinate, the 
+                     frames would get painted there. The frames will be placed 
+                     with their upper left corner at this coordinate."/>
+
+  <constant Type="int"
+            Name="UPDATEBAR_FRAME_Y"
+            Comment="The 'y' coordinate of the animation region of the 
+                     incremental updating gauge as measured in the gauge's 
+                     own coordinate space, where the frames get painted. If 
+                     the animation is small in size, the frames could be of 
+                     that small size and given this 'y' co-ordinate, the 
+                     frames would get painted there. The frames will be placed 
+                     with their upper left corner at this coordinate."/>
+
+  <constant Type="int"
+            Name="UPDATEBAR_FRAME_SEQU"
+            Comment="The sequence in which the frames should be animated in 
+                     this incremental updating gauge."/>
+
+  <constant Type="int"
+            Name="UPDATEBAR_IMAGE_BG"
+            Comment="The image to be used for the background body of the 
+                     incremental updating gauge, without any animation 
+                     related images."/>
+
+  <constant Type="int"
+            Name="UPDATEBAR_IMAGE_FRAME"
+            Comment="All the images (frames), total UPDATEBAR_NUM_FRAMES 
+                     images, that contribute to the animation of this 
+                     incremental updating gauge."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_BUTTON_ALIGN_X"
+            Comment="The alignment property of a button around its anchor 
+                     point. Its a sequence of SOFTBTN_NUM_BUTTONS integer 
+                     numbers. Valid values for this property would be 
+                     Graphics.LEFT, Graphics.RIGHT, or Graphics.HCENTER. 
+                     This value will be combined with Graphics.TOP to orient 
+                     the label around the anchor."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_BUTTON_MAX_WIDTH"
+            Comment="The maximum width (in pixels) to allow for a button. Its
+                     a sequence of SOFTBTN_NUM_BUTTONS integer numbers."/>
+            
+  <constant Type="int"
+            Name="SOFTBTN_BUTTON_ANCHOR_X"
+            Comment="The x-coordinate for the anchor point of a button. Its
+                     a sequence of SOFTBTN_NUM_BUTTONS integer numbers."/>
+
+  <constant Type="int"
+            Name="SOFTBTN_BUTTON_ANCHOR_Y"
+            Comment="The y-coordinate for the anchor point of a button. Its
+                     a sequence of SOFTBTN_NUM_BUTTONS integer numbers."/>
+   <constant Type="int"
+                         Name="DATEEDITOR_IMAGE_MON_HE_BG"
+                         Comment="The background image for the drop-down month selector
+                                         if microedition.locale is set to a country where RTL text orientation is used"/>
+
+   <constant Type="int"
+                         Name="DATEEDITOR_IMAGE_DAY_HE_BG"
+                         Comment="The background image for the drop-down day selector
+                                         if microedition.locale is set to a country where uses RIGHT-TO-LEFT note (Hebrew)"/>
+
+   <constant Type="int"
+                         Name="DATEEDITOR_IMAGE_YR_HE_BG"
+                         Comment="The background image for the drop-down year selector
+                                         if microedition.locale is set to a country where uses RIGHT-TO-LEFT note (Hebrew)"/>
+
+   <constant Type="int"
+                         Name="DATEEDITOR_IMAGE_TIME_HE_BG"
+                         Comment="The background image for the drop-down time selector
+                                         if microedition.locale is set to a country where uses RIGHT-TO-LEFT note (Hebrew)"/>     
+</constant_class>
+</constants>
+</configuration>

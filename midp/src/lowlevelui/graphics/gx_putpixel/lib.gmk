@@ -1,0 +1,100 @@
+#
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+############################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+############################################################
+
+# Local module directory
+GRAPHICS_MODULE_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics/gx_putpixel
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(GRAPHICS_MODULE_DIR)/classes
+
+# Java files for the putpixel module
+#
+SUBSYSTEM_GRAPHICS_JAVA_FILES +=
+
+# vpath for putixel module
+#
+vpath % \
+    $(GRAPHICS_MODULE_DIR)/native
+
+# Additional include path for highlevel ui subsystem
+# (IMPL_NOTE remove this dependency)
+
+SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/gx_putpixel/include \
+    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/gx_putpixel/native
+
+
+# Native files for putpixel module
+SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
+    gxj_screen_buffer.c \
+    gxj_font_bitmap.c \
+    gxj_graphics_asm.c \
+    gxj_graphics.c \
+    gxj_image.c \
+    gxj_putpixel.c \
+    gxj_text.c
+
+ifeq ($(TARGET_PLATFORM), wince)
+ifeq ($(TARGET_CPU), arm)
+
+OBJ_FILES += $(OBJ_DIR)/gxj_graphics_asm_wince.o
+$(OBJ_DIR)/gxj_graphics_asm_wince.o: \
+    $(GRAPHICS_MODULE_DIR)/native/gxj_graphics_asm_wince.s
+	$(ASM) -o $@ $<
+
+endif
+endif
+
+#Add optimization only for CE targets
+ifeq ($(TARGET_PLATFORM), javacall)
+ifeq ($(TARGET_CPU), arm)
+ifeq ($(TARGET_COMPILER), vc8ce)
+
+OBJ_FILES += $(OBJ_DIR)/gxj_graphics_asm_wince.o
+$(OBJ_DIR)/gxj_graphics_asm_wince.o: \
+    $(GRAPHICS_MODULE_DIR)/native/gxj_graphics_asm_wince.s
+	$(ASM) -o $@ $<
+
+endif
+endif
+endif
+
+
+# I3test files
+ifeq ($(USE_I3_TEST), true)
+
+    SUBSYSTEM_GRAPHICS_I3TEST_JAVA_FILES =
+
+endif
+
