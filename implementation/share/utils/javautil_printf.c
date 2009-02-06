@@ -122,7 +122,8 @@ static char* get_channel_name(int channelID) {
             return("JSR180");
         case 10500:
             return("EVENTS");
-
+        case 15000:
+            return("JSR257");
         default:
             return("LOG_DISABLED");
     }
