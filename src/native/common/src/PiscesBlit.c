@@ -1097,7 +1097,7 @@ blitPTSrc565(Renderer *rdr, jint height) {
 
             cval = CONVERT_888_TO_565(paint[aidx]);
 
-            aval = *a++ << aaAlphaShift;
+            aval = *a << aaAlphaShift;
             if (aval == MAX_ALPHA) {
                 shortData[iidx] = (jshort)cval;
             } else if (aval > 0) {
