@@ -144,6 +144,11 @@ public class Protocol extends ConnectionBaseAdapter
      * com.sun.midp.io.j2me.https.Protocol class also uses this field.
      */
     protected boolean ownerTrusted;
+    
+    /**
+     * True if the last disconnect lead to a stream reusage.
+     */
+    protected boolean connReused;         
 
     /** Get the configuration values for this class. */
     static {
@@ -1624,13 +1629,7 @@ public class Protocol extends ConnectionBaseAdapter
             throw new SecurityException("The permission check was bypassed");
         }
 
-        streamConnection = connectionPool.get(classSecurityToken, protocol,
-                                              url.host, url.port);
-
-
-        if (streamConnection == null) {
-            streamConnection = connect();
-        }
+        streamConnection = connect();
 
         /*
          * Because StreamConnection.open*Stream cannot be called twice
@@ -2395,10 +2394,11 @@ public class Protocol extends ConnectionBaseAdapter
     /**
      * Disconnect the current low level socket connection. If the connection
      * is an HTTP1.1 connection that connection will be put back in the pool
-     * for another session to use to connect.
+     * for another session to use to connect.      
      */
     protected void disconnect() throws IOException {
         if (streamConnection == null) {
+            connReused = false;
             return;
         }
 
@@ -2409,6 +2409,7 @@ public class Protocol extends ConnectionBaseAdapter
          */
         if (!eof && !chunkedIn && chunksize >= 0 &&
                 totalbytesread == chunksize) {
+                
             eof = true;
         }
 
@@ -2423,6 +2424,7 @@ public class Protocol extends ConnectionBaseAdapter
          */
         synchronized (streamInput) {
             if (readInProgress) {
+                
                 // do not save the connection
                 ConnectionCloseFlag = true;
             }
@@ -2430,6 +2432,7 @@ public class Protocol extends ConnectionBaseAdapter
 
         if (!requestFinished || !eof || httpVer.equals("HTTP/1.0") ||
                 ConnectionCloseFlag) {
+                
             if (streamConnection instanceof StreamConnectionElement) {
                 // we got this connection from the pool
                 connectionPool.remove(
@@ -2438,6 +2441,7 @@ public class Protocol extends ConnectionBaseAdapter
                 disconnect(streamConnection);
             }
 
+            connReused = false;
             return;
         }
 
@@ -2445,6 +2449,7 @@ public class Protocol extends ConnectionBaseAdapter
             // we got this connection from the pool
             connectionPool.returnForReuse(
                    (StreamConnectionElement)streamConnection);
+            connReused = false;
             return;
         }
 
@@ -2453,7 +2458,10 @@ public class Protocol extends ConnectionBaseAdapter
                  streamConnection, streamOutput, streamInput)) {
             // pool full, disconnect
             disconnect(streamConnection);
+            connReused = false;
+            return;
         }
+        connReused = true;
     }
 
     /** 
