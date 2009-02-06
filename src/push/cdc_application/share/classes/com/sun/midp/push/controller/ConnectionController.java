@@ -537,25 +537,23 @@ final class ConnectionController {
 
         /** {@inheritDoc} */
         public void dataAvailable() {
-            synchronized (ConnectionController.this) {
-                if (cancelled) {
-                    return;
-                }
+            if (cancelled) {
+                return;
+            }
 
-                try {
-                    lifecycleAdapter.launchMidlet(midpApp.midletSuiteID,
-                            midpApp.midlet);
-                } catch (Exception ex) {
-                    /* IMPL_NOTE: need to handle _all_ the exceptions. */
-                    /*
-            * TBD: uncomment when logging can be disabled
-                     * (not to interfer with unittests)
-            * logError(
-            *      "Failed to launch \"" + midpApp.midlet + "\"" +
-                     *       " (suite ID: " + midpApp.midletSuiteID + "): " +
-                     *       ex);
-                     */
-                }
+            try {
+                lifecycleAdapter.launchMidlet(midpApp.midletSuiteID,
+                        midpApp.midlet);
+            } catch (Exception ex) {
+                /* IMPL_NOTE: need to handle _all_ the exceptions. */
+                /*
+                 * TBD: uncomment when logging can be disabled
+                 * (not to interfer with unittests)
+                 * logError(
+                 *      "Failed to launch \"" + midpApp.midlet + "\"" +
+                 *       " (suite ID: " + midpApp.midletSuiteID + "): " +
+                 *       ex);
+                 */
             }
         }
     }
