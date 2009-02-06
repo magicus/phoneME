@@ -37,7 +37,10 @@
 
 #include <signal.h>
 #include <ucontext.h>
+#ifndef _ASM_SIGCONTEXT_H
+#define sigcontext asm_sigcontext
 #include <asm/sigcontext.h>
+#endif
 
 #ifdef CVM_SIGACTION_CHAINING
 
