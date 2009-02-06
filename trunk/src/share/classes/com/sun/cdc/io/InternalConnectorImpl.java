@@ -122,18 +122,13 @@ public class InternalConnectorImpl implements InternalConnector {
         
         /* Look for : as in "http:", "file:", or whatever */
         int colon = name.indexOf(':');
-
-        /* Test for null argument */
-        if (colon < 1) {
-            throw new IllegalArgumentException("no ':' in URL");
-        }
-
+ 
         try {
             String protocol;
 
             /* Strip off the protocol name */
-            protocol = name.substring(0, colon);
-
+            protocol = name.substring(0, colon).toLowerCase();
+            checkProtocol(protocol);
             /* Strip off the rest of the string */
             name = name.substring(colon + 1);
 
@@ -171,6 +166,57 @@ public class InternalConnectorImpl implements InternalConnector {
             throw new ConnectionNotFoundException(
                 "The requested protocol does not exist " + name);
         }
+    }
+    
+        /** Characters allowed as first char of scheme. */
+    private static final String ALLOWED_FIRST_CHAR =
+        "abcdefghijklmnopqrstuvwxyz";
+
+    /** Characters allowed after the first char of scheme. */
+    private static final String ALLOWED_CHAR =
+        ALLOWED_FIRST_CHAR + "0123456789+-.";
+
+    /**
+     * Checks validity of protocol (a.k.a scheme) string.
+     * 
+     * <p>
+     * Throws <code>IllegalArgumentException</code> if string is invalid.
+     * </p>
+     *
+     * <p>
+     * Note: <code>URL</code> class might be used, but it might be better
+     * to be maximally independent of external stuff.
+     * </p>
+     * 
+     * @param protocol string to check (must be lower case)
+     */
+    public static void checkProtocol(final String protocol) {
+        if (protocol.length() == 0) {
+            throw new IllegalArgumentException("protocols is empty string");
+        }
+        if (!isOneOf(protocol.charAt(0), ALLOWED_FIRST_CHAR)) {
+            throw new IllegalArgumentException("wrong leading character: "
+                    + protocol);
+        }
+        for (int i = 1; i < protocol.length(); i++) {
+            final char c = protocol.charAt(i);
+            if (!isOneOf(c, ALLOWED_CHAR)) {
+                throw new IllegalArgumentException("wrong character at "
+                        + i + ": " + protocol);
+            }
+        }
+    }
+
+    /**
+     * Checks if the character is one of the given set.
+     *
+     * @param c character to check
+     * @param set set to check against
+     *
+     * @return <code>true</code> iff <code>c</code> belongs to <code>set</code>
+     */
+    private static boolean isOneOf(final char c, final String set) {
+        return set.indexOf(c) != -1;
     }
 }
 
