@@ -52,7 +52,7 @@ public final class MapProtocolRegistry implements ProtocolRegistry {
     public ProtocolFactory bind(final String protocol,
             final ProtocolFactory factory) {
         final String p = protocol.toLowerCase();
-        ConnectionName.checkProtocol(p);
+        com.sun.cdc.io.InternalConnectorImpl.checkProtocol(p);
         return (ProtocolFactory) map.put(p, factory);
     }
 
