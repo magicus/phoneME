@@ -77,6 +77,7 @@ javacall_result
 javacall_dom_eventsdispatcher_add_event_listener_start(javacall_handle handle,
                                            javacall_int32 invocation_id,
                                            void **context,
+                                           javacall_const_utf16_string namespaceURI,
                                            javacall_const_utf16_string type,
                                            javacall_bool use_capture,
                                            /*OUT*/javacall_handle* ret_value);
@@ -146,7 +147,8 @@ javacall_result
 javacall_dom_eventsdispatcher_remove_event_listener_start(javacall_handle handle,
                                               javacall_int32 invocation_id,
                                               void **context,
-											  javacall_const_utf16_string type,
+                                              javacall_const_utf16_string namespaceURI,
+					      javacall_const_utf16_string type,
                                               javacall_bool use_capture,
                                               javacall_handle listener);
 
