@@ -35,7 +35,6 @@ import java.io.ByteArrayOutputStream;
 
 import java.net.URL;
 import java.net.MalformedURLException;
-import java.net.Socket;
 
 import java.util.Hashtable;
 import java.util.Enumeration;
@@ -75,7 +74,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     protected String method;
     protected int opens;
     protected int mode;
-    protected Socket socket;
 
     protected boolean connected;
     /* there should be only one outputstream opened at any time */
@@ -689,78 +687,13 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      * Private OutputStream to allow the buffering of output
      * so the "Content-Length" header can be supplied.
      */
-    protected class PrivateOutputStream extends OutputStream {
-        private ByteArrayOutputStream output;
-
-        public PrivateOutputStream() {
-            output = new ByteArrayOutputStream();
-        }
-
-        public void write(int b) throws IOException {
-            output.write(b);
-            // CR 6216611: set the content-length. Note: we shouldn't set
-            // content-length to the size of the current bytes that we are
-            // writing. The length should be number of all valid bytes in the 
-            // output buffer.
-            reqProperties.put("Content-Length", "" + output.size());
-        }
-
-        /*
-         * Override this method from OutputStream class, this is either called
-         * directly or by writeUTF(), to set the header field "content-length" 
-         * to "len". CR 6216611 
-         */
-        public void write(byte b[], int off, int len) throws IOException {
-            output.write(b, off, len);
-            // Update Content-Length. Note: we should't set
-            // content-length to the size of the current bytes that we are
-            // writing. The length should be number of all valid bytes in the 
-            // output buffer.
-            reqProperties.put("Content-Length", "" + output.size());
-        }
-
-        public void write(byte[] b) throws IOException {
-            // Create the headers
-            String reqLine = method + " "
-                + (getFile() == null ? "/" : getFile())
-                + (getRef() == null ? "" : "#" + getRef())
-                + (getQuery() == null ? "" : "?" + getQuery())
-                + " " + httpVersion + "\r\n";
-            write((reqLine).getBytes(), 0, reqLine.length());
- 
-            // HTTP 1/1 requests require the Host header to
-            // distinguish virtual host locations.
-            reqProperties.put("Host", host + ":" + port);
- 
-            Enumeration reqKeys = reqProperties.keys();
-            while (reqKeys.hasMoreElements()) {
-                String key = (String)reqKeys.nextElement();
-                String reqPropLine = key + ": " + reqProperties.get(key) + 
-                    "\r\n";
-                write((reqPropLine).getBytes(), 0, reqPropLine.length());
-            }
-            write("\r\n".getBytes(), 0, "\r\n".length());
-            write(b, 0, b.length);
-            // Update Content-Length. Note: we should't set
-            // content-length to the size of the current bytes that we are
-            // writing. The length should be number of all valid bytes in the 
-            // output buffer.
-            reqProperties.put("Content-Length", "" + output.size());
-        }
-
+    protected class PrivateOutputStream extends ByteArrayOutputStream {
 
         public void flush() throws IOException {
-            if (output.size() > 0) {
+            super.flush();
+            if (size() > 0) {
                 connect();
             }
-        }
-
-        public byte[] toByteArray() {
-            return output.toByteArray();
-        }
-
-        public int size() {
-            return output.size();
         }
 
         public void close() throws IOException {
@@ -773,10 +706,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
             if (--opens == 0 && connected) disconnect();
             outputStreamOpened = false;
-        }
-
-        private void reset() {
-            output.reset();
         }
     }// PrivateOutputStream
     protected void ensureOpen() throws IOException {
@@ -1119,16 +1048,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             }
         }
         if (privateOut != null) {
-            resetOutput();
+            privateOut.reset();
         }
         readHeaders();
 
         connected = true;
 
-    }
-
-    protected void resetOutput() {
-        privateOut.reset();
     }
 
     protected void readResponseMessage() throws IOException {

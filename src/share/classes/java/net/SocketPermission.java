@@ -397,7 +397,9 @@ implements java.io.Serializable
 	}
 	
 	if (sep != -1) {
-	    String port = hostport.substring(sep+1);
+        int slash = hostport.indexOf('/', sep + 1);
+        String port = hostport.substring(sep + 1,
+                slash != -1 ? slash : hostport.length());
 	    try {
 		portrange = parsePort(port);
 	    } catch (Exception e) {
