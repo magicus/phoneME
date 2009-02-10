@@ -2770,7 +2770,7 @@ public class Display {
         
         /**
          * This method is used by Chameleon to invoke
-         * DisplayableLF.uCallFreeze() method. This may call into
+         * hideNotify() method from Canvas. This may call into
          * application code if the current displayable
          * is a canvas or canvas subclass.
          */
@@ -2791,7 +2791,7 @@ public class Display {
 
         /**
          * This method is used by Chameleon to invoke
-         * DisplayableLF.uCallShow() method. This may call into
+         * showNotify methos from Canvas. This may call into
          * application code if the current displayable
          * is a canvas or canvas subclass.
          */
