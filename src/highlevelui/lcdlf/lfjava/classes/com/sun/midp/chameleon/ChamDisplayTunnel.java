@@ -85,15 +85,15 @@ public interface ChamDisplayTunnel {
 
     /**
      * This method is used by Chameleon to invoke
-     * DisplayableLF.uCallFreeze() method.
+     * hideNotify() method by Canvas.
      */ 
-    public void callBackgroundNotify();
+    public void callHideNotify();
     
      /**
      * This method is used by Chameleon to invoke
-     * DisplayableLF.uCallShow() method.
+     * showNotify() method by Canvas.
      */
-    public void callForegroundNotify(); 
+    public void callShowNotify(); 
 
     /**
      * This method is used by Chameleon to invoke 

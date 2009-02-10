@@ -167,9 +167,9 @@ public class MIDPWindow extends CWindow {
      * Request a background notify. This method does not require any bounds
      * information as it is contained in each of the Chameleon layers.
      */
-    private void requestBackgroundNotify() {
+    private void requestHideNotify() {
         if (tunnel != null) {
-            tunnel.callBackgroundNotify();
+            tunnel.callHideNotify();
         }
     }
     
@@ -177,9 +177,9 @@ public class MIDPWindow extends CWindow {
      * Request a foreground notify. This method does not require any bounds
      * information as it is contained in each of the Chameleon layers.
      */
-    private void requestForegroundNotify() {
+    private void requestShowNotify() {
         if (tunnel != null) {
-            tunnel.callForegroundNotify();
+            tunnel.callShowNotify();
         }
     }
 
@@ -341,7 +341,7 @@ public class MIDPWindow extends CWindow {
 						 popup.getCommandListener());
 		}
                 if (layer instanceof MenuLayer) {
-                    requestBackgroundNotify();  
+                    requestHideNotify();  
                 } 
 	    }
 	    
@@ -405,7 +405,7 @@ public class MIDPWindow extends CWindow {
                         scrCmdCache, scrCmdCount, scrCmdListener);
                 }
                 if (layer instanceof MenuLayer) { 
-                    requestForegroundNotify();  
+                    requestShowNotify();  
                 }
             } // instanceof
             return true;

@@ -2774,11 +2774,18 @@ public class Display {
          * application code if the current displayable
          * is a canvas or canvas subclass.
          */
-        public void callBackgroundNotify() {
+        public void callHideNotify() {
             // A copy of current LF object            
             DisplayableLF currentCopy = Display.this.current;
-            if (currentCopy != null) {
-                currentCopy.uCallFreeze();
+            if (currentCopy != null && currentCopy instanceof CanvasLF) {
+                CanvasLFImpl canvasLF = (CanvasLFImpl)currentCopy;
+                try {
+                    synchronized (Display.calloutLock) {
+                        canvasLF.canvas.hideNotify();
+                    }
+                } catch (Throwable thr) {
+                    Display.handleThrowable(thr);
+                }
             }
         } 
 
@@ -2788,12 +2795,19 @@ public class Display {
          * application code if the current displayable
          * is a canvas or canvas subclass.
          */
-        public void callForegroundNotify() {
+        public void callShowNotify() {
             // A copy of current LF object
             DisplayableLF currentCopy = Display.this.current;
-            if (currentCopy != null) {
-                currentCopy.uCallShow();
-            }
+            if (currentCopy != null && currentCopy instanceof CanvasLF) {
+                CanvasLFImpl canvasLF = (CanvasLFImpl)currentCopy;
+                try {
+                    synchronized (Display.calloutLock) {
+                        canvasLF.canvas.showNotify();
+                    }
+                } catch (Throwable thr) {
+                    Display.handleThrowable(thr);
+                }
+           }
         }  
 
         /**
