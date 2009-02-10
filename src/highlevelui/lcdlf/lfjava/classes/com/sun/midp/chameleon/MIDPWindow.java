@@ -164,20 +164,20 @@ public class MIDPWindow extends CWindow {
     }
     
     /**
-     * Request a background notify. This method does not require any bounds
+     * Request a hide notify. This method does not require any bounds
      * information as it is contained in each of the Chameleon layers.
      */
-    private void requestHideNotify() {
+    public void requestHideNotify() {
         if (tunnel != null) {
             tunnel.callHideNotify();
         }
     }
     
     /**
-     * Request a foreground notify. This method does not require any bounds
+     * Request a show notify. This method does not require any bounds
      * information as it is contained in each of the Chameleon layers.
      */
-    private void requestShowNotify() {
+   public void requestShowNotify() {
         if (tunnel != null) {
             tunnel.callShowNotify();
         }
@@ -339,10 +339,7 @@ public class MIDPWindow extends CWindow {
 		    buttonLayer.updateCommandSet(
 						 null, 0, null, cmds, cmds.length,
 						 popup.getCommandListener());
-		}
-                if (layer instanceof MenuLayer) {
-                    requestHideNotify();  
-                } 
+		} 
 	    }
 	    
 	    if (layer instanceof PTILayer) {
@@ -403,9 +400,6 @@ public class MIDPWindow extends CWindow {
                     buttonLayer.updateCommandSet(
                         itemCmdCache, itemCmdCount, itemCmdListener,
                         scrCmdCache, scrCmdCount, scrCmdListener);
-                }
-                if (layer instanceof MenuLayer) { 
-                    requestShowNotify();  
                 }
             } // instanceof
             return true;
