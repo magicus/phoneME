@@ -318,8 +318,7 @@ javanotify_ams_install_is_ocsp_enabled() {
  * This function is called by the application manager to report the results
  * of handling of the request previously sent by javacall_ams_install_ask().
  *
- * It must be implemented at that side (SJWC or Platform) where the installer
- * is located.
+ * It must be implemented at that Platform side where the installer is located.
  *
  * @param requestCode   in pair with pInstallState->appId uniquely
  *                      identifies the request for which the results
