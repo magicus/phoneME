@@ -312,7 +312,6 @@ public abstract class CWindow {
      */
     public abstract void requestRepaint();
 
-
     /**
      * Check whether layer is overlapped with a higher visible layer
      * in the layer stack of the window
