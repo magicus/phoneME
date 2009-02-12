@@ -35,7 +35,7 @@ ifeq ($(MIDP_BIN_TARGET),wtk)
 WTK_BIN_DIR = $(MIDP_OUTPUT_DIR)/WTK
 WTK_STORAGE_DIR = $(MIDP_OUTPUT_DIR)/WTK_STORAGE
 all:: wtkbin
-wtkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
+wtkbin: midp
 	$(AT)$(shell mkdir -p $(WTK_BIN_DIR)/bin $(WTK_BIN_DIR)/wtklib \
          $(WTK_STORAGE_DIR)/DefaultColorPhone)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/runMidlet*.exe, \
@@ -82,7 +82,7 @@ endif
 ifeq ($(MIDP_BIN_TARGET),sdk)
 SDK_BIN_DIR = $(MIDP_OUTPUT_DIR)/SDK
 all:: sdkbin
-sdkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
+sdkbin:  midp
 	$(AT)$(shell mkdir -p $(SDK_BIN_DIR)/bin \
 	$(SDK_BIN_DIR)/runtimes/cldc-hi/bin/ \
 	$(SDK_BIN_DIR)/runtimes/cldc-hi/lib/ \
@@ -109,6 +109,8 @@ sdkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
          $(SDK_BIN_DIR)/toolkit-lib/process/jadtool/code)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/classes.zip, \
          $(SDK_BIN_DIR)/runtimes/cldc-hi/lib/)
+	$(AT)$(call copy_file_if_exists, \
+         $(MIDP_OUTPUT_DIR)/javacard_classes, $(SDK_BIN_DIR)/)
 	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/NCISlave.jar, \
          $(SDK_BIN_DIR)/toolkit-lib/tck-support/wma-nci/)
 	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/NCISlave.jad, \
