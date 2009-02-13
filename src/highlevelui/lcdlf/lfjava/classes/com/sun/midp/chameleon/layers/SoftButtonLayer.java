@@ -224,6 +224,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             menuLayer.dismiss();
             if (owner != null) {
                 menuLayer.setScrollInd(null);
+                ((MIDPWindow)owner).requestShowNotify();  
                 owner.removeLayer(menuLayer);
             }
         }
@@ -626,8 +627,9 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                 
                 // Show the menu
                 if (owner != null) {
+                    ((MIDPWindow)owner).requestHideNotify();
                     owner.addLayer(menuLayer);
-		    menuLayer.alignMenu();           
+                    menuLayer.alignMenu();           
 		    menuLayer.requestRepaint();
                     menuLayer.setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
                 }

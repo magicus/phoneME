@@ -129,6 +129,23 @@ public class StreamConnectionStealer
             }
         }
     }
+    
+    public void disconnect() {
+        if (in != null) {
+            in.disconnect();
+        }
+        
+        if (out != null) {
+            out.disconnect();
+        }
+    }
+    
+    /**
+     * Set a new URL. Used when a stream reusage is detected
+     */         
+    public void resetURL(String URL) {
+        this.URL = URL;
+    }
 
     /**
     * This method is called when a new message is about to start.

@@ -55,8 +55,15 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol {
     } else {
         theUrl = protocol + "://" + url.host;
     }
-    StreamConnectionStealer newCon =
-        new StreamConnectionStealer(theUrl, con, HttpAgent.instance());
+    
+    StreamConnectionStealer newCon;
+    if (con instanceof StreamConnectionStealer) {
+        newCon = (StreamConnectionStealer)con;
+        newCon.resetURL(theUrl);
+    } else {
+        newCon = new StreamConnectionStealer(theUrl, con, 
+              HttpAgent.instance());
+    }
     /*
      * Because StreamConnection.open*Stream cannot be called twice
      * the HTTP connect method may have already open the streams
@@ -71,6 +78,18 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol {
 
     return newCon;
     }
+    
+    protected void disconnect() throws IOException {
+        super.disconnect();
+        if (connReused) {
+            StreamConnectionStealer stealer = (StreamConnectionStealer)
+                getStreamConnection();
+            stealer.disconnect();
+        }
+    }
+    
+    
+    
     /**
      * I override this method because we need to know when a new message
      * starts. Thats true for a new connection and for a reused connection.

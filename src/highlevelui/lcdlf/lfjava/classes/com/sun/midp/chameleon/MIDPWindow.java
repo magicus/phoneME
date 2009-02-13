@@ -162,6 +162,27 @@ public class MIDPWindow extends CWindow {
             tunnel.scheduleRepaint();
         }
     }
+    
+    /**
+     * Request a hide notify. This method does not require any bounds
+     * information as it is contained in each of the Chameleon layers.
+     */
+    public void requestHideNotify() {
+        if (tunnel != null) {
+            tunnel.callHideNotify();
+        }
+    }
+    
+    /**
+     * Request a show notify. This method does not require any bounds
+     * information as it is contained in each of the Chameleon layers.
+     */
+   public void requestShowNotify() {
+        if (tunnel != null) {
+            tunnel.callShowNotify();
+        }
+    }
+
 
     /**
      * Set the title of this MIDPWindow. This would typically
@@ -318,7 +339,7 @@ public class MIDPWindow extends CWindow {
 		    buttonLayer.updateCommandSet(
 						 null, 0, null, cmds, cmds.length,
 						 popup.getCommandListener());
-		}
+		} 
 	    }
 	    
 	    if (layer instanceof PTILayer) {
@@ -338,7 +359,7 @@ public class MIDPWindow extends CWindow {
             mainLayers[KEYBOARD_LAYER] = layer;
             resize();
         }
-
+        
         return added;
     }
 
