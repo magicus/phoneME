@@ -312,7 +312,7 @@ else
     CVM_DUAL_STACK          ?= false
   endif
 endif
-CVM_SPLIT_VERIFY	?= true
+CVM_SPLIT_VERIFY	?= false
 
 CVM_JIT_REGISTER_LOCALS	?= true
 CVM_JIT_USE_FP_HARDWARE ?= false
