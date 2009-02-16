@@ -371,8 +371,8 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
     void uCallPaint(Graphics g, int w, int h) {
 
         int clipX, clipY, clipH, clipW;
-        int visRectY = 0;
-        synchronized (Display.LCDUILock) {
+        
+         synchronized (Display.LCDUILock) {
             // do internal layout, paint label
             lDoInternalLayout(labelBounds, contentBounds, w, h);
 
@@ -380,28 +380,15 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
 
             paintLabel(g, labelBounds[WIDTH]);
 
-            g.translate(-labelBounds[X], -labelBounds[Y]);
+            g.translate(contentBounds[X]-labelBounds[X], contentBounds[Y]-labelBounds[Y]);
 
             clipX = g.getClipX();
             clipY = g.getClipY();
             clipH = g.getClipHeight();
             clipW = g.getClipWidth();
-            //case than total area more than content area
-            //and than vieport became more than half of content area 
-            if (viewport[HEIGHT] >= contentBounds[HEIGHT] && (visRect[Y] + visRect[HEIGHT] >= contentBounds[HEIGHT])) {      
-                g.clipRect(contentBounds[X], contentBounds[Y], clipW, clipH);
-                visRectY = visRect[Y];
-            }
-
-            g.translate(contentBounds[X], contentBounds[Y]);
                 
             w = contentBounds[WIDTH];
             h = contentBounds[HEIGHT];
-
-            g.translate(-visRect[X], -visRectY);
-            
-            w += visRect[X];
-            h += visRectY;
         }
 
         if (clipY + clipH >= 0 && clipY < contentBounds[HEIGHT] &&
@@ -422,7 +409,6 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
             g.restoreMIDPRuntimeGC();
         }
         g.clipRect(clipX, clipY, clipW, clipH);
-        g.translate(visRect[X], visRectY);
         g.translate(-contentBounds[X], -contentBounds[Y]);
     }
 
@@ -441,9 +427,7 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
                          int[] visRect_inout) {
 
         super.uCallTraverse(dir, viewportWidth, viewportHeight, visRect_inout);
-        viewport[WIDTH] = visRect_inout[WIDTH];
-        viewport[HEIGHT] = visRect_inout[HEIGHT];  
-              
+                 
         try {
             synchronized (Display.calloutLock) {
                 // SYNC NOTE: Make a copy of current label height
@@ -456,29 +440,8 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
                                                 viewportHeight,
                                         visRect_inout);
                 if (t) {
-                    if ((visRect[X] > visRect_inout[X]) || 
-                        (visRect_inout[X] - visRect[X] > bounds[WIDTH]/2)) {
-                        int lastX = contentBounds[WIDTH] - visRect_inout[WIDTH];
-                        //alighn by the most right point if content of item more than viewport 
-                        visRect[X] = (visRect_inout[X] > lastX && contentBounds[WIDTH] > viewport[WIDTH]) ? lastX : visRect_inout[X];  
-                    }
-                    int tmpDiffY = visRect_inout[Y] - visRect[Y]; 
-                    if ((visRect[Y] > visRect_inout[Y]) ||
-                        (tmpDiffY > contentBounds[HEIGHT]/2) || 
-                        (tmpDiffY > viewportHeight/2)) {
-                        int lastY = contentBounds[HEIGHT] - visRect_inout[HEIGHT];
-                        //alighn by the most bottom point id content of item more than viewport
-                        visRect[Y] = (visRect_inout[Y] > lastY && contentBounds[HEIGHT] > viewport[HEIGHT]) ? lastY : visRect_inout[Y];
-                         
-                    }
-                    visRect[WIDTH] = visRect_inout[WIDTH];
-                    visRect[HEIGHT] = visRect_inout[HEIGHT];
-                } else {
-                    visRect[X] = 0;
-                    visRect[Y] = 0;
-                    visRect[WIDTH] = 0;
-                    visRect[HEIGHT] = 0;
-                }
+                    visRect[Y] = visRect_inout[Y];                    
+                } 
                 return t;
             }
         } catch (Throwable thr) {
@@ -494,7 +457,6 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
      * @return true if visRect was changed
      */
     boolean lScrollToItem(int[] viewport, int[] visRect) {
-        visRect[X] = this.visRect[X];
         visRect[Y] = this.visRect[Y] ; 
         return true;
     } 
@@ -742,10 +704,6 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
      */
     private int minimumWidth; // default 0
     
-    /**
-     * Viewport in which this custom item should be contained
-     */   
-    private int[] viewport = new int [4];
     
     /**
      * Visible part of custom item
