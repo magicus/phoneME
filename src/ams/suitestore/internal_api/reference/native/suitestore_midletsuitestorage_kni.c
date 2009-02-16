@@ -1157,34 +1157,37 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_remove0) {
     KNI_GetParameterAsObject(NUM, PARAM); \
  \
     numberOfStrings = (int)KNI_GetArrayLength(PARAM); \
+	if (numberOfStrings > 0) { \
  \
-    (PROPS.pStringArr) = alloc_pcsl_string_list(numberOfStrings); \
-    if ((PROPS.pStringArr) == NULL) { \
-        (STATUS) = OUT_OF_MEMORY; \
-        break; \
-    } \
- \
-    (PROPS.numberOfProperties) = numberOfStrings / 2; \
-    for (i = 0; i < numberOfStrings; i++) { \
-        KNI_GetObjectArrayElement(PARAM, (jint)i, STRINGOBJ); \
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string((STRINGOBJ), \
-                &(PROPS.pStringArr[i]))) { \
-            int j; \
-            for (j = 0; j < i; j++) { \
-                pcsl_string_free(&(PROPS.pStringArr[j])); \
-            } \
-            midpFree((PROPS.pStringArr)); \
-            (PROPS.numberOfProperties) = 0; \
+        (PROPS.pStringArr) = alloc_pcsl_string_list(numberOfStrings); \
+        if ((PROPS.pStringArr) == NULL) { \
             (STATUS) = OUT_OF_MEMORY; \
             break; \
         } \
-    } \
  \
-    if ((STATUS) != ALL_OK) { \
-        break; \
-    } \
+        (PROPS.numberOfProperties) = numberOfStrings / 2; \
+        for (i = 0; i < numberOfStrings; i++) { \
+            KNI_GetObjectArrayElement(PARAM, (jint)i, STRINGOBJ); \
+            if (PCSL_STRING_OK != midp_jstring_to_pcsl_string((STRINGOBJ), \
+                    &(PROPS.pStringArr[i]))) { \
+                int j; \
+                for (j = 0; j < i; j++) { \
+                    pcsl_string_free(&(PROPS.pStringArr[j])); \
+                } \
+                midpFree((PROPS.pStringArr)); \
+                (PROPS.numberOfProperties) = 0; \
+			     PROPS.pStringArr = NULL; \
+                (STATUS) = OUT_OF_MEMORY; \
+                break; \
+            } \
+			KNI_ReleaseHandle(STRINGOBJ); \
+        } \
  \
-    KNI_ReleaseHandle(STRINGOBJ); \
+        if ((STATUS) != ALL_OK) { \
+            break; \
+        } \
+ \
+	} \
 }
 
 /**
@@ -1547,6 +1550,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
                 installInfo.authPathLen * sizeof(pcsl_string));
             if (installInfo.authPath_as == NULL) {
                 status = OUT_OF_MEMORY;
+				printf("===========installInfo.authPath_as\n");
                 break;
             }
 
@@ -1556,6 +1560,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
                 if (KNI_GetStringLength(tmpHandle) >= 0) {
                     if (midp_jstring_to_pcsl_string(tmpHandle,
                             &installInfo.authPath_as[i]) != PCSL_STRING_OK) {
+								printf("=============installInfo.authPath_as[i]\n");
                         status = OUT_OF_MEMORY;
                         break;
                     }
@@ -1576,6 +1581,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
             suiteSettings.pPermissions =
                 (jbyte*)midpMalloc(suiteSettings.permissionsLen);
             if (suiteSettings.pPermissions == NULL) {
+				printf("================suitesettings.permissions\n");
                 status = OUT_OF_MEMORY;
                 break;
             }
@@ -1590,6 +1596,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
             suiteData.varSuiteData.pJarHash =
                 (unsigned char*)midpMalloc(suiteData.jarHashLen);
             if (suiteData.varSuiteData.pJarHash == NULL) {
+				printf("===================suitedata.varSuiteData.pJarHash\n");
                 status = OUT_OF_MEMORY;
                 break;
             }
@@ -1605,7 +1612,10 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
                            installInfo.jadProps, status);
         }
 
-        GET_PROP_PARAM(6, tmpHandle, tmpHandle2, installInfo.jarProps, status);
+		if (!pcsl_string_is_null(&installInfo.jarUrl_s)) {
+            GET_PROP_PARAM(6, tmpHandle, tmpHandle2, 
+				installInfo.jarProps, status);
+		}
     } while (0);
 
     if (status == ALL_OK) {
@@ -1620,26 +1630,34 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
     }
 
     if (installInfo.authPathLen > 0 && installInfo.authPath_as != NULL) {
+		printf("======================free installInfo.autoPath_as\n");
         free_pcsl_string_list(installInfo.authPath_as, installInfo.authPathLen);
     }
 
     if (!pcsl_string_is_null(&installInfo.jadUrl_s)) {
         if (installInfo.jadProps.pStringArr != NULL) {
+			printf("============free jadProsp.pStringArr \n");
             free_pcsl_string_list(installInfo.jadProps.pStringArr,
                                   installInfo.jadProps.numberOfProperties * 2);
         }
+		printf("===============free installInfo.jadUrl_s\n");
         pcsl_string_free(&installInfo.jadUrl_s);
     }
 
-    if (installInfo.jarProps.pStringArr != NULL) {
-        free_pcsl_string_list(installInfo.jarProps.pStringArr,
+	if (!pcsl_string_is_null(&installInfo.jarUrl_s)) {
+        if (installInfo.jarProps.pStringArr != NULL) {
+		    printf("======================free jarProps.pStringArr\n");
+            free_pcsl_string_list(installInfo.jarProps.pStringArr,
                               installInfo.jarProps.numberOfProperties * 2);
-    }
+		    pcsl_string_free(&installInfo.jarUrl_s);
+        }
+	}
 
-    pcsl_string_free(&installInfo.jarUrl_s);
-    pcsl_string_free(&installInfo.domain_s);
+    if (!pcsl_string_is_null(&installInfo.domain_s)) 
+        pcsl_string_free(&installInfo.domain_s);
     
-    pcsl_string_free(&suiteData.varSuiteData.pathToJar);
+	if (!pcsl_string_is_null(&suiteData.varSuiteData.pathToJar))
+        pcsl_string_free(&suiteData.varSuiteData.pathToJar);
 
     /* end of cleanup */
 
