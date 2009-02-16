@@ -455,8 +455,8 @@ USE_ON_DEVICE_DEBUG::
 	    echo "ERROR: PROJECT_MIDP_DIR must be set when USE_ON_DEVICE_DEBUG is true"; \
 	    exit -1; \
 	  fi; \
-	  if [ -z "$(SDK_ODD_DIR)" ]; then \
-	    echo "ERROR: SDK_ODD_DIR must be set when USE_ON_DEVICE_DEBUG is true"; \
+	  if [ -z "$(SDK_ODD_DIR)" && -z "$(SDK_ODD_JAR)" ]; then \
+	    echo "ERROR: SDK_ODD_DIR or SDK_ODD_JAR must be set when USE_ON_DEVICE_DEBUG is true"; \
 	    exit -1; \
 	  fi; \
 	fi
