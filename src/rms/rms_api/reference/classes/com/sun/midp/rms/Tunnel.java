@@ -1,8 +1,7 @@
 /*
  *
  *
- * Portions Copyright  2000-2009 Sun Microsystems, Inc. All Rights
- * Reserved.  Use is subject to license terms.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -23,9 +22,6 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
- *
- * Copyright 2000 Motorola, Inc. All Rights Reserved.
- * This notice does not imply publication.
  */
 
 package com.sun.midp.rms;
@@ -39,6 +35,6 @@ public abstract class Tunnel {
 	public abstract RecordStore openRecordStore(int suiteId, String storeName, 
 									boolean createIfNecessary) throws RecordStoreException;
 
-	public abstract void deleteRecordStore(int suiteID, String linksTableStoreName) 
+	public abstract void deleteRecordStore(int suiteID, String storeName) 
 									throws RecordStoreException;
 }
