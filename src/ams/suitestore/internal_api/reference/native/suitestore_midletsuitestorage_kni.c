@@ -1550,7 +1550,6 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
                 installInfo.authPathLen * sizeof(pcsl_string));
             if (installInfo.authPath_as == NULL) {
                 status = OUT_OF_MEMORY;
-				printf("===========installInfo.authPath_as\n");
                 break;
             }
 
@@ -1560,7 +1559,6 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
                 if (KNI_GetStringLength(tmpHandle) >= 0) {
                     if (midp_jstring_to_pcsl_string(tmpHandle,
                             &installInfo.authPath_as[i]) != PCSL_STRING_OK) {
-								printf("=============installInfo.authPath_as[i]\n");
                         status = OUT_OF_MEMORY;
                         break;
                     }
@@ -1581,7 +1579,6 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
             suiteSettings.pPermissions =
                 (jbyte*)midpMalloc(suiteSettings.permissionsLen);
             if (suiteSettings.pPermissions == NULL) {
-				printf("================suitesettings.permissions\n");
                 status = OUT_OF_MEMORY;
                 break;
             }
@@ -1596,7 +1593,6 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
             suiteData.varSuiteData.pJarHash =
                 (unsigned char*)midpMalloc(suiteData.jarHashLen);
             if (suiteData.varSuiteData.pJarHash == NULL) {
-				printf("===================suitedata.varSuiteData.pJarHash\n");
                 status = OUT_OF_MEMORY;
                 break;
             }
@@ -1630,23 +1626,19 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
     }
 
     if (installInfo.authPathLen > 0 && installInfo.authPath_as != NULL) {
-		printf("======================free installInfo.autoPath_as\n");
         free_pcsl_string_list(installInfo.authPath_as, installInfo.authPathLen);
     }
 
     if (!pcsl_string_is_null(&installInfo.jadUrl_s)) {
         if (installInfo.jadProps.pStringArr != NULL) {
-			printf("============free jadProsp.pStringArr \n");
             free_pcsl_string_list(installInfo.jadProps.pStringArr,
                                   installInfo.jadProps.numberOfProperties * 2);
         }
-		printf("===============free installInfo.jadUrl_s\n");
         pcsl_string_free(&installInfo.jadUrl_s);
     }
 
 	if (!pcsl_string_is_null(&installInfo.jarUrl_s)) {
         if (installInfo.jarProps.pStringArr != NULL) {
-		    printf("======================free jarProps.pStringArr\n");
             free_pcsl_string_list(installInfo.jarProps.pStringArr,
                               installInfo.jarProps.numberOfProperties * 2);
 		    pcsl_string_free(&installInfo.jarUrl_s);
