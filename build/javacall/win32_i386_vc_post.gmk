@@ -83,41 +83,42 @@ ifeq ($(MIDP_BIN_TARGET),sdk)
 SDK_BIN_DIR = $(MIDP_OUTPUT_DIR)/SDK
 all:: sdkbin
 sdkbin: midp
+	$(AT)$(shell rm -fr $(SDK_BIN_DIR))
 	$(AT)$(shell mkdir -p $(SDK_BIN_DIR)/bin \
-	$(SDK_BIN_DIR)/runtimes/cldc-hi/bin/ \
-	$(SDK_BIN_DIR)/runtimes/cldc-hi/lib/ \
-	$(SDK_BIN_DIR)/runtimes/cldc-hi/wtklib/ \
-	$(SDK_BIN_DIR)/runtimes/cldc-hi/appdb/ \
+	$(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/bin/ \
+	$(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/lib/ \
+	$(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/wtklib/ \
+	$(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/appdb/ \
 	$(SDK_BIN_DIR)/toolkit-lib/process/mekeytool/code \
 	$(SDK_BIN_DIR)/toolkit-lib/process/jadtool/code \
 	$(SDK_BIN_DIR)/toolkit-lib/tck-support/wma-nci)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/runMidlet*.exe, \
-         $(SDK_BIN_DIR)/runtimes/cldc-hi/bin/runMidlet.exe)
+         $(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/bin/runMidlet.exe)
 	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/runMidlet*.pdb, \
-         $(SDK_BIN_DIR)/runtimes/cldc-hi/bin/)
+         $(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/bin/)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/kdp.jar, \
-         $(SDK_BIN_DIR)/runtimes/cldc-hi/wtklib/)
+         $(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/wtklib/)
 	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/memprof_client.jar, \
-         $(SDK_BIN_DIR)/runtimes/cldc-hi/wtklib/)
+         $(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/wtklib/)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/lib/., \
-         $(SDK_BIN_DIR)/runtimes/cldc-hi/lib/)
+         $(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/lib/)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/appdb/., \
-         $(SDK_BIN_DIR)/runtimes/cldc-hi/appdb/)
+         $(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/appdb/)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/MEKeyTool.jar, \
          $(SDK_BIN_DIR)/toolkit-lib/process/mekeytool/code)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/JadTool.jar, \
          $(SDK_BIN_DIR)/toolkit-lib/process/jadtool/code)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/classes.zip, \
-         $(SDK_BIN_DIR)/runtimes/cldc-hi/lib/)
+         $(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/lib/)
 	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/NCISlave.jar, \
          $(SDK_BIN_DIR)/toolkit-lib/tck-support/wma-nci/)
 	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/NCISlave.jad, \
          $(SDK_BIN_DIR)/toolkit-lib/tck-support/wma-nci/)
 	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/jwc_properties.ini, \
-         $(SDK_BIN_DIR)/runtimes/cldc-hi/bin/)
+         $(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/bin/)
 	$(AT)$(call copy_file_if_exists, $(JAVACALL_OUTPUT_DIR)/lib/sublime.dll, \
          $(SDK_BIN_DIR)/bin/)
 	$(AT)$(call copy_file_if_exists, $(JAVACALL_OUTPUT_DIR)/storage/., \
-         $(SDK_BIN_DIR)/runtimes/cldc-hi/appdb/)
+         $(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/appdb/)
 endif
 endif
