@@ -181,12 +181,16 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetColorKey) {
     javacall_result ret = JAVACALL_FAIL;
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
+    javacall_pixel lcd_color 
+        = (javacall_pixel)RGB2PIXELTYPE((color & 0xFF0000) >> 16,
+                                        (color & 0x00FF00) >> 8,
+                                        (color & 0x0000FF));
+
     MMP_DEBUG_STR2("[kni_video] +nSetColorKey on=%d colorKey=%d\n", isOn, color);
 
     if (pKniInfo && pKniInfo->pNativeHandle ) {
         ret = javacall_media_set_video_color_key(pKniInfo->pNativeHandle, 
-					KNI_TRUE == isOn ? JAVACALL_TRUE : JAVACALL_FALSE, 
-                                         (javacall_pixel)color);
+					KNI_TRUE == isOn ? JAVACALL_TRUE : JAVACALL_FALSE, lcd_color);
     }
 
     MMP_DEBUG_STR1("[kni_video] -nSetColorKey ret %d\n", ret);
