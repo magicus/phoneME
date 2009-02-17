@@ -63,7 +63,9 @@ extern "C" {
  */
 
 #ifndef RGB2PIXELTYPE
-#define RGB2PIXELTYPE(r,g,b)  (( ((javacall_pixel)b)>>3)&0x1f) | ( (( ((javacall_pixel)g)>>2)&0x3f) << 5) | ((( ((javacall_pixel)r)>>3)&0x1f)<<11)
+#define RGB2PIXELTYPE(r,g,b) (( ((javacall_pixel)(b)) >> 3) & 0x1f)        \
+                          | ((( ((javacall_pixel)(g)) >> 2) & 0x3f) << 5)  \
+                          | ((( ((javacall_pixel)(r)) >> 3) & 0x1f) << 11)
 #endif
 
 /** Separate colors are 8 bits as in Java RGB */
