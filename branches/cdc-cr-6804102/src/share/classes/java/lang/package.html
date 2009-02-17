@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+  @(#)package.html	1.19 06/10/25
+
+Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+-->
+
+</head>
+<body bgcolor="white">
+
+Provides classes that are fundamental to the design of the Java
+programming language. The most important classes are <code>Object</code>,
+which is the root of the class hierarchy, and <code>Class</code>, instances of
+which represent classes at run time.
+<p>
+Frequently it is necessary to represent a value of primitive type as
+if it were an object. The wrapper classes <code>Boolean</code>,
+<code>Character</code>, <code>Integer</code>, <code>Long</code>, <code>Float</code>, and
+<code>Double</code> serve this purpose. An object of type <code>Double</code>,
+for example, contains a field whose type is double, representing that
+value in such a way that a reference to it can be stored in a variable
+of reference type. These classes also provide a number of methods for
+converting among primitive values, as well as supporting such
+standard methods as equals and hashCode.  The <code>Void</code> class is a
+non-instantiable class that holds a reference to a <code>Class</code> object
+represening the primitive type void.
+<p>
+The class <code>Math</code> provides commonly used mathematical functions such
+as sine, cosine, and square root. The classes <code>String</code> and
+<code>StringBuffer</code> similarly provide commonly used operations on
+character strings.
+<p>
+Classes <code>ClassLoader</code>, <code>Process</code>, <code>Runtime</code>,
+<code>SecurityManager</code>, and <code>System</code> provide "system operations"
+that manage the dynamic loading of classes, creation of external processes,
+host environment inquiries such as the time of day, and enforcement of
+security policies.
+<p>
+Class <code>Throwable</code> encompasses objects that may be thrown by the
+throw statement (&sect;14.16). Subclasses of <code>Throwable</code> represent errors
+and exceptions.
+<p>
+<h2>Package Specification</h2>
+
+
+<a name="charenc"></a>
+<h3>Character Encodings</h3>
+
+Various constructors and methods in the {@link java.lang} and {@link java.io}
+packages accept string arguments that specify the character encoding to be used
+when converting between raw eight-bit bytes and sixteen-bit Unicode characters.
+Such encodings are named by strings composed of the following characters:
+
+<ul>
+
+  <li> The uppercase letters <tt>'A'</tt> through <tt>'Z'</tt>
+       (<tt>'&#92;u0041'</tt>&nbsp;through&nbsp;<tt>'&#92;u005a'</tt>),
+
+  <li> The lowercase letters <tt>'a'</tt> through <tt>'z'</tt>
+       (<tt>'&#92;u0061'</tt>&nbsp;through&nbsp;<tt>'&#92;u007a'</tt>),
+
+  <li> The digits <tt>'0'</tt> through <tt>'9'</tt>
+       (<tt>'&#92;u0030'</tt>&nbsp;through&nbsp;<tt>'&#92;u0039'</tt>),
+
+  <li> The dash character <tt>'-'</tt>
+       (<tt>'&#92;u002d'</tt>,&nbsp;<small>HYPHEN-MINUS</small>),
+
+  <li> The colon character <tt>':'</tt>
+       (<tt>'&#92;u003a'</tt>,&nbsp;<small>COLON</small>), and
+
+  <li> The underscore character <tt>'_'</tt>
+       (<tt>'&#92;u005f'</tt>,&nbsp;<small>LOW&nbsp;LINE</small>).
+
+</ul>
+
+An encoding name must begin with either a letter or a digit.  The empty string
+is not a legal encoding name.
+
+<p> An encoding may have more than one name.  One of an encoding's names is
+considered to be its <i>canonical name</i>.  The canonical name of an encoding
+is the name returned by the <tt>getEncoding</tt> methods of the {@link
+java.io.InputStreamReader#getEncoding InputStreamReader} and {@link
+java.io.OutputStreamWriter#getEncoding OutputStreamWriter} classes.
+
+<p> Encoding names generally follow the conventions documented in <a
+href="http://ietf.org/rfc/rfc2278.txt"><i>RFC2278:&nbsp;IANA Charset
+Registration Procedures</i></a>.  If an encoding listed in the <a
+href="ftp://ftp.isi.edu/in-notes/iana/assignments/character-sets">IANA Charset
+Registry</a> is supported by an implementation of the Java platform then one of
+its names must be the name listed in the registry.  Many encodings are given
+more than one name in the registry, in which case the registry identifies one
+of the names as <i>MIME-preferred</i>.  An implementation of the Java platform
+must support the MIME-preferred registry name for a supported encoding if there
+is one; for convenience it may additionally support other registry names.  The
+IANA MIME-preferred name of an encoding, if there is one, is often, but not
+necessarily, its canonical name.  Following IANA convention, the mapping from
+IANA registry names to encodings is not case-sensitive.
+
+<p> Every implementation of the Java platform is required to support the
+following character encodings.  Consult the release documentation for your
+implementation to see if any other encodings are supported.
+
+<blockquote><table width="80%">
+<tr><td valign=top><tt>US-ASCII</tt></td>
+    <td>Seven-bit ASCII, a.k.a. <tt>ISO646-US</tt>,
+        a.k.a. the Basic Latin block of the Unicode character set</td></tr>
+<tr><td valign=top><tt>ISO-8859-1&nbsp;&nbsp;</tt></td>
+    <td>ISO Latin Alphabet No. 1, a.k.a. <tt>ISO-LATIN-1</tt></td></tr>
+<tr><td valign=top><tt>UTF-8</tt></td>
+    <td>Eight-bit Unicode Transformation Format</td></tr>
+<tr><td valign=top><tt>UTF-16BE</tt></td>
+    <td>Sixteen-bit Unicode Transformation Format,
+        big-endian byte&nbsp;order</td></tr>
+<tr><td valign=top><tt>UTF-16LE</tt></td>
+    <td>Sixteen-bit Unicode Transformation Format,
+        little-endian byte&nbsp;order</td></tr>
+<tr><td valign=top><tt>UTF-16</tt></td>
+    <td>Sixteen-bit Unicode Transformation Format,
+        byte&nbsp;order specified by a mandatory initial byte-order mark
+	(either order accepted on input, big-endian used on output)</td></tr>
+</table></blockquote>
+
+The various Unicode Transformation Formats are described in detail in <a
+href="http://www.unicode.org/unicode/standard/standard.html"><i>The Unicode
+Standard</i></a> and in the <a
+href="http://www.unicode.org/unicode/faq"><i>Unicode FAQ</i></a>.
+
+<p> Every instance of the Java virtual machine has a default character
+encoding.  The default encoding is determined during virtual-machine startup
+and typically depends upon the locale and encoding being used by the underlying
+operating system.
+
+
+<!--
+<ul>
+  <li><a href="">##### REFER TO ANY FRAMEMAKER SPECIFICATION HERE #####</a>
+</ul>
+
+<h2>Related Documentation</h2>
+
+For overviews, tutorials, examples, guides, and tool documentation, please see:
+<ul>
+  <li><a href="">##### REFER TO NON-SPEC DOCUMENTATION HERE #####</a>
+</ul>
+-->
+
+@since JDK1.0
+</body>
+</html>
