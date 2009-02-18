@@ -26,24 +26,33 @@ package com.sun.mmedia.rtsp;
 
 import javax.microedition.media.protocol.SourceStream;
 import javax.microedition.media.protocol.ContentDescriptor;
+import javax.microedition.media.Player;
 import javax.microedition.media.Control;
 
 public class RtspSS implements SourceStream {
 
-    public ContentDescriptor cdescr;
+    private ContentDescriptor cdescr;
+    private Depacketizer depacketizer;
+    private RtspDS ds;
 
-    Depacketizer depacketizer;
-
-    public RtspSS() {
+    public RtspSS(RtspDS ds) {
         depacketizer = null;
+        this.ds = ds;
     }
 
     public void setContentDescriptor(String descr) {
-        cdescr = new ContentDescriptor(descr);
 
-        String d = cdescr.getContentType().toUpperCase();
+        String d = descr;
 
-        if (d.startsWith("AUDIO/X-MP3-DRAFT-00")) {
+        if (Player.TIME_UNKNOWN != ds.getDuration()) {
+            d = descr + "; duration=" + ds.getDuration() / 1000; // mks ==> ms
+        }
+
+        cdescr = new ContentDescriptor(d);
+
+        String d_upr = descr.toUpperCase();
+
+        if (d_upr.startsWith("AUDIO/X-MP3-DRAFT-00")) {
             depacketizer = new AduqDepacketizer();
         } else {
             depacketizer = new DefaultDepacketizer();

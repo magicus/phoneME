@@ -154,7 +154,7 @@ public class RtspDS extends BasicDS {
             }
         }
 
-        streams[trk] = new RtspSS();
+        streams[trk] = new RtspSS(this);
 
         if (usingUdp) {
             conn.setSS(streams[trk]);
