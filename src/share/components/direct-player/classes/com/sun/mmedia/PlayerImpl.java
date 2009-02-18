@@ -37,7 +37,6 @@ import  com.sun.j2me.app.AppIsolate;
 import  com.sun.j2me.log.Logging;
 import  com.sun.j2me.log.LogChannels;
 import com.sun.mmedia.PlayerStateSubscriber;
-import com.sun.mmedia.rtsp.RtspDS;
 
 import java.io.IOException;
 
@@ -694,10 +693,6 @@ public class PlayerImpl implements Player {
 
         if (null!=playerInst) {
             dur = playerInst.getDuration();
-        }
-
-        if (Player.TIME_UNKNOWN == dur && null != source && source instanceof RtspDS) {
-            dur = ((RtspDS)source).getDuration();
         }
 
         return dur;
