@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation. 
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt). 
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA 
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions. 
+-->
+<project name="AppManager" default="compile-linux-x86" basedir=".">
+    <description>
+         Builds CDC on either Linux/x86 or Linux/ARM.
+    </description>
+
+    <!-- Clean target to clean a linux-x86-suse build -->
+    <target name="clean">
+        <echo message="CDC on SuSE Linux on x86"/>
+        <exec executable="make" failonerror="true" dir="${basedir}/build/linux-x86-suse">
+            <arg value="clean"/>
+        </exec>
+    </target>
+
+    <!-- Clean target to clean a linux-arm-strongarm build -->
+    <target name="clean-p2">
+        <echo message="CDC on Linux on StrongARM (P2 Board)"/>
+        <exec executable="make" failonerror="true" dir="${basedir}/build/linux-arm-strongarm">
+            <arg value="clean"/>
+        </exec>
+    </target>
+
+    <!-- Compile target for Linux/ARM -->
+    <target name="compile-linux-arm">
+        <echo message="CDC on Personal Profile on Linux on StrongARM (P2 Board)"/>
+        <property name="J2ME_CLASSLIB" value="basis"/>
+
+        <!-- ==================================== Should this be set for the P2? ==================================== -->
+        <property name="QT_TARGET_DIR" value="/usr/lib/qt3"/>
+        <property name="QT_STATIC_LINK" value="false"/>
+        
+        <exec executable="make" failonerror="true" dir="${basedir}/build/linux-arm-strongarm">
+            <arg value="J2ME_CLASSLIB=${J2ME_CLASSLIB}"/>
+            <arg value="QT_STATIC_LINK=${QT_STATIC_LINK}"/>
+            <arg value="QT_TARGET_DIR=${QT_TARGET_DIR}"/>
+        </exec>
+    </target>
+
+    <!-- Compile target for Linux/x86 -->
+    <target name="compile-linux-x86">
+        <echo message="CDC on Personal Profile on SuSE Linux on x86"/>
+        <property name="J2ME_CLASSLIB" value="personal"/>
+        <property name="QT_TARGET_DIR" value="/usr/lib/qt3"/>
+        <property name="QT_STATIC_LINK" value="false"/>
+        
+        <exec executable="make" failonerror="true" dir="${basedir}/build/linux-x86-suse">
+            <arg value="J2ME_CLASSLIB=${J2ME_CLASSLIB}"/>
+            <arg value="QT_STATIC_LINK=${QT_STATIC_LINK}"/>
+            <arg value="QT_TARGET_DIR=${QT_TARGET_DIR}"/>
+        </exec>
+    </target>
+
+    <!-- Help target to output help -->
+    <target name="help">
+         <echo>
+             Usage:
+             ant
+                or
+             ant p2
+                or
+             ant clean
+                 or
+             ant clean-p2
+                    
+             properties:
+                 J2ME_CLASSLIB=personal
+                 PLATFORM=linux-x86-suse | linux-arm-strongarm
+                 QT_TARGET_DIR=path_to_qt
+         </echo>
+    </target>
+</project>
