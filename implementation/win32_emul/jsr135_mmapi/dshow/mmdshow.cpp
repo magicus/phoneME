@@ -76,7 +76,7 @@ long dshow_player::get_media_time()
 {
     if( playing )
     {
-        return GetTickCount() - start_time;
+        return media_time + ( GetTickCount() - start_time );
     }
     else
     {
@@ -164,7 +164,7 @@ DWORD WINAPI dshow_eom_thread( LPVOID lpParameter )
                 {
                     dshow_DBG( "***              stopping player... ***\n" );
 
-                    p->media_time = GetTickCount() - p->start_time;
+                    p->media_time += GetTickCount() - p->start_time;
                     p->ap.stop();
                     p->playing = FALSE;
 
@@ -459,7 +459,7 @@ static javacall_result dshow_stop(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     dshow_DBG( "*** stop ***\n" );
-    p->media_time = GetTickCount() - p->start_time;
+    p->media_time += GetTickCount() - p->start_time;
     p->playing = FALSE;
     p->ap.stop();
     return JAVACALL_OK;
@@ -469,7 +469,7 @@ static javacall_result dshow_pause(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     dshow_DBG( "*** pause ***\n" );
-    p->media_time = GetTickCount() - p->start_time;
+    p->media_time += GetTickCount() - p->start_time;
     p->playing = FALSE;
     p->ap.stop();
     return JAVACALL_OK;
