@@ -30,10 +30,10 @@ package com.sun.j2me.security;
 public class FileConnectionPermission extends Permission {
 
     static public FileConnectionPermission READ = new FileConnectionPermission(
-        "javax.microedition.io.Connector.file.read", null);
+        "javax.microedition.io.Connector.file.read", "-");
 
     static public FileConnectionPermission WRITE = new FileConnectionPermission(
-        "javax.microedition.io.Connector.file.write", null);
+        "javax.microedition.io.Connector.file.write", "-");
 
     /** Creates a new instance of FileConnectionPermission. */
     public FileConnectionPermission(String name, String resource) {
