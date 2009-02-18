@@ -122,7 +122,9 @@ public class InternalConnectorImpl implements InternalConnector {
         
         /* Look for : as in "http:", "file:", or whatever */
         int colon = name.indexOf(':');
- 
+        if (colon == -1) {
+            throw new IllegalArgumentException("Illegal protocol");
+        }
         try {
             String protocol;
 
