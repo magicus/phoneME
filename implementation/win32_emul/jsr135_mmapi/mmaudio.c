@@ -234,6 +234,11 @@ static void CALLBACK FAR audio_timer_callback(UINT uID, UINT uMsg,
                 mmaudio_mutex_unlock(pHandle->mutex);
                 return;
             }
+            else {
+                javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DURATION_UPDATED,
+                    pHandle->isolateId, pHandle->playerId, JAVACALL_OK, 
+                    (void *) pHandle->duration);
+            }
         }
 
         audio_get_time((javacall_handle)dwUser,&(pHandle->offset));
