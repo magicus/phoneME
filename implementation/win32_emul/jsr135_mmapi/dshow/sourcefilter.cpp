@@ -147,34 +147,36 @@ HRESULT sourcefilterpin::FillBuffer(IMediaSample*pSample)
 {
     if(!pSample)return E_POINTER;
 
-    for(;;)
     {
+        CAutoLock al(m_pFilter->pStateLock());
+        if(end)return S_FALSE;
+
+        if(offs<len)
         {
-            CAutoLock al(m_pFilter->pStateLock());
-            if(end)return S_FALSE;
-            if(offs<len)
-            {
-                BYTE*p;
-                HRESULT hr=pSample->GetPointer(&p);
-                if(hr != S_OK)return hr;
+            BYTE*p;
+            HRESULT hr=pSample->GetPointer(&p);
+            if(hr != S_OK)return hr;
 
-                memcpy(p,data+offs,1);
+            memcpy(p,data+offs,1);
+            pSample->SetActualDataLength( 1 );
 
-                REFERENCE_TIME rt1=offs;
-                REFERENCE_TIME rt2=offs+1;
-                offs++;
+            REFERENCE_TIME rt1=offs;
+            REFERENCE_TIME rt2=offs+1;
+            offs++;
 
-                pcb->call( len - offs );
-                //memcpy(data,data+1,len-1);
-                //len--;
-                hr=pSample->SetTime(&rt1,&rt2);
-                if(hr!=S_OK)return hr;
-                hr=pSample->SetSyncPoint(TRUE);
-                if(hr!=S_OK)return hr;
-                return S_OK;
-            }
+            pcb->call( len - offs );
+
+            //hr=pSample->SetTime(&rt1,&rt2);
+            //if(hr!=S_OK)return hr;
+            //hr=pSample->SetSyncPoint(TRUE);
+            //if(hr!=S_OK)return hr;
+            return S_OK;
         }
-        Sleep(1);
+        else
+        {
+            pSample->SetActualDataLength( 0 );
+            return S_OK;
+        }
     }
 }
 

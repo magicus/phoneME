@@ -152,6 +152,18 @@ bool audioplayer::seek(double time)
 
 bool audioplayer::tell(double*time)
 {
+    if( NULL != pgb )
+    {
+        IMediaPosition* pmp = NULL;
+
+        HRESULT hr = pgb->QueryInterface( IID_IMediaPosition, (void**)&pmp );
+        if( NULL != pmp )
+        {
+            hr = pmp->get_CurrentPosition( time );
+            pmp->Release();
+            if( SUCCEEDED( hr ) ) return true;
+        }
+    }
     return false;
 }
 

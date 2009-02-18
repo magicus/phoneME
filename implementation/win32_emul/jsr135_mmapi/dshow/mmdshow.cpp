@@ -38,6 +38,8 @@ struct dshow_player : public ap_callback
 {
     virtual void call( unsigned int bytes_in_queue );
 
+    long                  get_media_time();
+
     unsigned int          bytes_in_queue;
     bool                  notified;
     bool                  buffering;
@@ -49,6 +51,10 @@ struct dshow_player : public ap_callback
 
     int                   channels;
     int                   rate;
+    int                   duration;
+
+    DWORD                 start_time;
+    DWORD                 media_time;
 
     BYTE                  buf[ XFER_BUFFER_SIZE ];
 
@@ -56,8 +62,6 @@ struct dshow_player : public ap_callback
     bool                  prefetched;
     bool                  acquired;
     volatile BOOL         playing;
-
-    javacall_int64        samplesPlayed;
 
     long                  volume;
     javacall_bool         mute;
@@ -67,6 +71,30 @@ struct dshow_player : public ap_callback
     volatile HANDLE       hEomThread; // monitors buffering activity
     HANDLE                hBufEvent;  // if not signaled for EOM_TIMEOUT ms, EOM is generated
 };
+
+long dshow_player::get_media_time()
+{
+    if( playing )
+    {
+        return media_time + ( GetTickCount() - start_time );
+    }
+    else
+    {
+        return media_time;
+    }
+
+    /*
+    double t;
+    if( ap.tell( &t ) )
+    {
+        return long( t * 1000.0 );
+    }
+    else
+    {
+        return -1;
+    }
+    */
+}
 
 void dshow_player::call( unsigned int ap_bytes_in_queue )
 {
@@ -95,6 +123,13 @@ DWORD WINAPI dshow_eom_thread( LPVOID lpParameter )
     DWORD t0;
     dshow_player* p = (dshow_player*)lpParameter;
 
+    HRESULT hr=S_OK;
+    hr = CoInitializeEx(NULL,COINIT_MULTITHREADED);
+    if( FAILED( hr ) )
+    {
+        return 0;
+    }
+
     dshow_DBG( "*** eom thread start ***\n" );
 
     while( NULL != p->hBufEvent )
@@ -102,21 +137,47 @@ DWORD WINAPI dshow_eom_thread( LPVOID lpParameter )
         if( p->playing )
         {
             t0 = GetTickCount();
-            if( WAIT_TIMEOUT == WaitForSingleObject( p->hBufEvent, EOM_TIMEOUT ) )
+
+            long mt          = p->get_media_time();
+            long time_left   = p->duration - mt;
+            bool eom_reached = ( -1 != p->duration && time_left <= 0 );
+            bool no_packets  = false;
+
+            DWORD timeout = EOM_TIMEOUT;
+            if( -1 != p->duration && time_left < EOM_TIMEOUT ) {
+                timeout = time_left;
+            }
+
+            if( !eom_reached ) {
+                no_packets = ( WAIT_TIMEOUT == WaitForSingleObject( p->hBufEvent, timeout ) );
+            }
+
+            if( eom_reached ) dshow_DBG( "*** EOM EOM EOM ***\n" );
+            if( no_packets  ) dshow_DBG( "*** NO  PACKETS ***\n" );
+
+            if( eom_reached || no_packets )
             {
+                char str[ 80 ];
+                sprintf( str, "***               dt = %i, time_left = %ld ***\n", GetTickCount() - t0, time_left );
+                dshow_DBG( str );
                 if( p->playing )
                 {
-                    dshow_DBG( "*** buf timeout, sending EOM. ***\n" );
-                    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
-                        p->appId, p->playerId, JAVACALL_OK, (void*)0 ); // IMPL_NOTE: mediatime!
+                    dshow_DBG( "***              stopping player... ***\n" );
+
+                    p->media_time += GetTickCount() - p->start_time;
                     p->ap.stop();
                     p->playing = FALSE;
+
+                    dshow_DBG( "***              sending EOM... ***\n" );
+
+                    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
+                        p->appId, p->playerId, JAVACALL_OK, (void*)(p->get_media_time()) ); // IMPL_NOTE: mediatime!
                 }
             }
             else
             {
                 char str[ 80 ];
-                sprintf( str, "*** buf ok, dt = %i ***\n", GetTickCount() - t0 );
+                sprintf( str, "*** buf ok, dt = %i, time_left = %ld ***\n", GetTickCount() - t0, time_left );
                 dshow_DBG( str );
             }
         }
@@ -157,11 +218,12 @@ static javacall_handle dshow_create(int appId,
     p->acquired         = FALSE;
     p->playing          = FALSE;
     p->buffering        = TRUE;
-    p->samplesPlayed    = 0;
     p->volume           = 100;
     p->mute             = JAVACALL_FALSE;
     p->hBufEvent        = CreateEvent( NULL, FALSE, FALSE, NULL );
     p->hEomThread       = CreateThread( NULL, 0, dshow_eom_thread, p, 0, NULL );
+    p->start_time       = 0;
+    p->media_time       = 0;
     return p;
 }
 
@@ -235,6 +297,8 @@ static javacall_result dshow_realize(javacall_handle handle,
 
     dshow_DBG( "*** realize ***\n" );
 
+    p->duration = -1;
+
     if( !wcsncmp( (const wchar_t*)mime, L"audio/MPA", wcslen( L"audio/MPA" ) ) ||
         !wcsncmp( (const wchar_t*)mime, L"audio/X-MP3-draft-00", wcslen( L"audio/X-MP3-draft-00" ) ) )
     {
@@ -244,7 +308,8 @@ static javacall_result dshow_realize(javacall_handle handle,
         p->mediaType = JC_FMT_RTP_MPA;
 
         get_int_param( mime, (javacall_const_utf16_string)L"channels", &(p->channels) );
-        get_int_param( mime, (javacall_const_utf16_string)L"rate", &(p->rate) );
+        get_int_param( mime, (javacall_const_utf16_string)L"rate",     &(p->rate)     );
+        get_int_param( mime, (javacall_const_utf16_string)L"duration", &(p->duration) );
 
         p->ap.init( mimeLength, (wchar_t*)mime, p );
 
@@ -384,6 +449,7 @@ static javacall_result dshow_start(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     dshow_DBG( "*** start ***\n" );
+    p->start_time = GetTickCount();
     p->playing = TRUE;
     p->ap.play();
     return JAVACALL_OK;
@@ -393,6 +459,7 @@ static javacall_result dshow_stop(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     dshow_DBG( "*** stop ***\n" );
+    p->media_time += GetTickCount() - p->start_time;
     p->playing = FALSE;
     p->ap.stop();
     return JAVACALL_OK;
@@ -402,6 +469,7 @@ static javacall_result dshow_pause(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     dshow_DBG( "*** pause ***\n" );
+    p->media_time += GetTickCount() - p->start_time;
     p->playing = FALSE;
     p->ap.stop();
     return JAVACALL_OK;
@@ -411,6 +479,7 @@ static javacall_result dshow_resume(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     dshow_DBG( "*** resume ***\n" );
+    p->start_time = GetTickCount();
     p->playing = TRUE;
     p->ap.play();
     return JAVACALL_OK;
@@ -420,6 +489,8 @@ static javacall_result dshow_get_time(javacall_handle handle,
                                     long* ms)
 {
     dshow_player* p = (dshow_player*)handle;
+
+    *ms = p->get_media_time();
 
     return JAVACALL_OK;
 }
@@ -435,7 +506,8 @@ static javacall_result dshow_get_duration(javacall_handle handle,
                                         long* ms)
 {
     dshow_player* p = (dshow_player*)handle;
-    return JAVACALL_NO_DATA_AVAILABLE;
+    *ms = p->duration;
+    return JAVACALL_OK;
 }
 
 static javacall_result dshow_switch_to_foreground(javacall_handle handle,
