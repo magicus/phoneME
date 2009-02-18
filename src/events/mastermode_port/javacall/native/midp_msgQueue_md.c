@@ -456,15 +456,20 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
                 event->data.jsr257Event.eventType);
         }
         break;
-        
+         
     case JSR257_JC_MIDP_EVENT:
-        if(event->data.jsr257Event.eventType < JSR257_MIDP_EVENTS_NUM) {
+      printf("\n DEBUG: midp_msgQueue_md.c(): data.jsr257Event.eventType = %d\n",
+        event->data.jsr257Event.eventType);
+       if(event->data.jsr257Event.eventType < JSR257_MIDP_EVENTS_NUM) {
             pNewSignal->waitingFor   = JSR257_EVENT_SIGNAL;
             pNewSignal->descriptor   = event->data.jsr257Event.eventType;
             pNewMidpEvent->type      = CONTACTLESS_EVENT;
             pNewMidpEvent->intParam1 = event->data.jsr257Event.eventType;
-            pNewMidpEvent->intParam2 = (int)(event->data.jsr257Event.eventData);
-            pNewMidpEvent->intParam3 = (int)(event->data.jsr257Event.isolateId);
+            pNewMidpEvent->JSR257_ISOLATE = (int)(event->data.jsr257Event.isolateId);
+            pNewMidpEvent->intParam3 = (int)(event->data.jsr257Event.eventData[0]);
+            pNewMidpEvent->intParam4 = (int)(event->data.jsr257Event.eventData[1]);
+            pNewMidpEvent->intParam5 = (int)(event->data.jsr257Event.eventData[2]);
+            
        } else {
             REPORT_ERROR1(LC_CORE,"Invalid contactless MIDP event type: %d\n", 
                 event->data.jsr257Event.eventType);
@@ -473,7 +478,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
        
     case JSR257_JC_PUSH_NDEF_RECORD_DISCOVERED:
         pNewSignal->waitingFor   = JSR257_PUSH_SIGNAL;
-        pNewSignal->descriptor = event->data.jsr257Event.eventData;
+        pNewSignal->descriptor = event->data.jsr257Event.eventData[0];
        break;
 
 #endif /* ENABLE_JSR_257 */
