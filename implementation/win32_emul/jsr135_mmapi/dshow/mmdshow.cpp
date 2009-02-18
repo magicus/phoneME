@@ -506,7 +506,8 @@ static javacall_result dshow_get_duration(javacall_handle handle,
                                         long* ms)
 {
     dshow_player* p = (dshow_player*)handle;
-    return JAVACALL_NO_DATA_AVAILABLE;
+    *ms = p->duration;
+    return JAVACALL_OK;
 }
 
 static javacall_result dshow_switch_to_foreground(javacall_handle handle,
