@@ -445,6 +445,9 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
                 // by the label height to give the real location
                 visRect_inout[X] += contX;
                 visRect_inout[Y] += contY;
+                if (t) {
+                    visRect[Y] = visRect_inout[Y]; 
+                } 
                 return t;
             }
         } catch (Throwable thr) {
@@ -452,6 +455,17 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
         }
         return false;
     }
+
+    /**
+     *  If hilighted element of item is not completely visible should make it visible
+     * @param viewport the viewport coordinates
+     * @param visRect the in/out rectangle for the internal traversal location
+     * @return true if visRect was changed
+     */
+    boolean lScrollToItem(int[] viewport, int[] visRect) {
+        visRect[Y] = this.visRect[Y] ; 
+        return true;
+    } 
 
     /**
      * Called by the system to indicate traversal has left this Item
@@ -695,4 +709,9 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
      * Cached minimum width when validRequestedSizes is true.
      */
     private int minimumWidth; // default 0
+
+    /**
+     * Visible part of custom item
+     */   
+    private int[] visRect = new int [4];
 } // CustomItemLF
