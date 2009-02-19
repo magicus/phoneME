@@ -53,6 +53,14 @@ class ImageDataFactory implements AbstractImageDataFactory {
     };
 
     /**
+     * EXIF Header Data
+     */
+    private static final byte[] exifHeader = new byte[] {
+         (byte)0xff, (byte)0xd8, (byte)0xff, (byte)0xe1
+    };
+
+
+    /**
      * RAW Header Data
      */
     private static final byte[] rawHeader = new byte[] {
@@ -672,7 +680,9 @@ class ImageDataFactory implements AbstractImageDataFactory {
             // image type is PNG
             decodePNG(imageData, imageBytes, imageOffset, imageLength);
         } else if (headerMatch(jpegHeader, imageBytes,
-                               imageOffset, imageLength)) {
+                               imageOffset, imageLength)
+                   || headerMatch(exifHeader, imageBytes,
+                                  imageOffset, imageLength)) {
             // image type is JPEG
             decodeJPEG(imageData, imageBytes, imageOffset, imageLength);
         } else if (headerMatch(rawHeader, imageBytes,
