@@ -1,0 +1,362 @@
+//
+// Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
+
+// Rules for Freescale PowerPC e500v1 floating point.
+// Single-precision floating-point operations are performed on values
+// in GPRs.  The code has been based on the integer code, and re-uses
+// it where possible.
+
+// NOTE: FREM, L2F, and F2L are not supported by the e500v1.
+
+// TODO: Implement FCMPL and FCMPG.
+// TODO: Test this code on a supported processor.
+
+// Purpose: valueFloat = -valueFloat.
+reg32: FNEG reg32 : 10 : : : :
+	wordUnaryOp(con, CVME500_FNEG_OPCODE, $$, GET_REGISTER_GOALS);
+
+// Purpose: valueFloat = valueFloat + valueFloat.
+reg32: FADD reg32 reg32 : 10 : : : CVM_NEED_WORD_BINARY_OP_WITH_REG32_RHS :
+	wordBinaryOpWithReg32Rhs(con, CVME500_FADD_OPCODE, $$,
+	    GET_REGISTER_GOALS);
+
+// Purpose: valueFloat = valueFloat - valueFloat.
+reg32: FSUB reg32 reg32 : 10 : : : CVM_NEED_WORD_BINARY_OP_WITH_REG32_RHS :
+	wordBinaryOpWithReg32Rhs(con, CVME500_FSUB_OPCODE, $$,
+	    GET_REGISTER_GOALS);
+
+// Purpose: valueFloat = valueFloat * valueFloat.
+reg32: FMUL reg32 reg32 : 10 : : : CVM_NEED_WORD_BINARY_OP_WITH_REG32_RHS :
+	wordBinaryOpWithReg32Rhs(con, CVME500_FMUL_OPCODE, $$,
+	    GET_REGISTER_GOALS);
+
+// Purpose: valueFloat = valueFloat / valueFloat.
+reg32: FDIV reg32 reg32 : 10 : : : CVM_NEED_WORD_BINARY_OP_WITH_REG32_RHS :
+	wordBinaryOpWithReg32Rhs(con, CVME500_FDIV_OPCODE, $$,
+	    GET_REGISTER_GOALS);
+
+// Purpose: valueFloat = (float) valueInt.
+reg32: I2F reg32 : 10 : : : :
+	wordUnaryOp(con, CVME500_I2F_OPCODE, $$, GET_REGISTER_GOALS);
+
+// Purpose: valueInt = (int) valueFloat.
+reg32: F2I reg32 : 10 : : : :
+	wordUnaryOp(con, CVME500_F2I_OPCODE, $$, GET_REGISTER_GOALS);
+
+%{
+/* Branch conditions to use after a floating-point compare instruction. */
+#define CVME500_COND_TRUE  CVMCPU_COND_GT
+#define CVME500_COND_FALSE CVMCPU_COND_LE
+
+/*
+ * e500CompareFloats handles the BCOND_FLOAT node.  The e500 has three
+ * floating-point compare instructions: efscmpeq, efscmplt, and
+ * efcmpgt.  However, efscmplt and efscmpgt are equivalent if the
+ * arguments are transposed.  bgt branches if the compare was true,
+ * ble branches if the compare was false or at least one operand was
+ * NaN.  Together this gives four combinations for testing inequalities
+ * (efscmplt/efscmpgt + bgt/ble).  Since BCOND_FLOAT has eight cases,
+ * there are cases that require an extra test to handle properly.
+ *
+ * Here is the code emitted to handle all cases, including equality
+ * tests EQ and NE which brings the total to ten.  Note the if the
+ * code emitted for [synchronize locals] is empty then it may be
+ * possible to simplify some cases, but we don't find out whether it's
+ * empty until it's too late.  The [synchronize locals] code must always
+ * be executed whether or not the branch is taken, otherwise the register
+ * manager's state may get out of sync with the emitted code's state.
+ *
+ * 1. CVMCPU_COND_EQ                    => if (lhs == rhs && !hasNan) then br
+ *      efscmpeq lhs, rhs
+ *      [synchronize locals]
+ *      bgt      target
+ * 2. CVMCPU_COND_NE                    => if (lhs != rhs || hasNan) then br
+ *      efscmpeq lhs, rhs
+ *      [synchronize locals]
+ *      ble      target
+ * 3. CVMCPU_COND_LT && !UNORDERED_LT   => if (lhs < rhs && !hasNan) then br
+ *      efscmplt lhs, rhs
+ *      [synchronize locals]
+ *      bgt      target
+ * 4. CVMCPU_COND_GT && UNORDERED_LT    => if (lhs > rhs && !hasNan) then br
+ *      efscmpgt lhs, rhs
+ *      [synchronize locals]
+ *      bgt      target
+ * 5. CVMCPU_COND_GE && !UNORDERED_LT   => if (lhs >= rhs || hasNan) then br
+ *      efscmplt lhs, rhs
+ *      [synchronize locals]
+ *      ble      target
+ * 6. CVMCPU_COND_LE && UNORDERED_LT   => if (lhs <= rhs || hasNan) then br
+ *      efscmpgt lhs, rhs
+ *      [synchronize locals]
+ *      ble      target
+ * 7. CVMCPU_COND_LT && UNORDERED_LT   => if (lhs < rhs || hasNan) then br
+ *      efscmpgt  lhs, rhs
+ *      bgt       syncLocals
+ *      efscmpeq  lhs, rhs
+ *     syncLocals:
+ *      [synchronize locals]
+ *      ble       target
+ * 8. CVMCPU_COND_GE && UNORDERED_LT   => if (lhs >= rhs && !hasNan) then br
+ *      efscmpgt  lhs, rhs
+ *      bgt       syncLocals
+ *      efscmpeq  lhs, rhs
+ *     syncLocals:
+ *      [synchronize locals]
+ *      bgt       target
+ * 9. CVMCPU_COND_GT && !UNORDERED_LT  => if (lhs > rhs || hasNan) then br
+ *      efscmplt  lhs, rhs
+ *      bgt       syncLocals
+ *      efscmpeq  lhs, rhs
+ *     syncLocals:
+ *      [synchronize locals]
+ *      ble       target
+ * 10. CVMCPU_COND_LE && !UNORDERED_LT => if (lhs <= rhs && !hasNan) then br
+ *      efscmplt  lhs, rhs
+ *      bgt       syncLocals
+ *      efscmpeq  lhs, rhs
+ *     syncLocals:
+ *      [synchronize locals]
+ *      bgt       target
+ *
+ * The code for cases 7 through 10 is not obviously correct.  Here's
+ * a case-by-case demonstration that it is correct:
+ *
+ * 1. CVMCPU_COND_LT && UNORDERED_LT => if (lhs < rhs || hasNaN) then br
+ * 
+ *    01 efscmpgt lhs, rhs
+ *    02 bgt      syncLocals
+ *    03 efscmpeq lhs, rhs
+ *    syncLocals:
+ *    04 [sync locals]
+ *    05 ble      target
+ * 
+ *    Case 1: lhs < rhs, no NaNs.
+ *       01 cmpgt yields GT bit cleared.
+ *       02 bgt will not branch because GT bit is cleared.
+ *       03 cmpeq yields GT bit cleared.
+ *       05 ble will branch because GT bit is cleared. <== as expected.
+ * 
+ *    Case 2: lhs == rhs, no NaNs.
+ *       01 cmpgt yields GT bit cleared.
+ *       02 bgt will not branch because GT bit is cleared.
+ *       03 cmpeq yields GT bit set.
+ *       05 ble will not branch because GT bit is set. <== as expected.
+ * 
+ *    Case 3: lhs > rhs, no NaNs.
+ *       01 cmpgt yields GT bit set.
+ *       02 bgt will branch because GT bit is set.
+ *       05 ble will not branch because GT bit is set. <== as expected.
+ * 
+ *    Case 4: has NaNs.
+ *       01 cmpgt yields GT bit cleared.
+ *       02 bgt will not branch because GT bit is cleared.
+ *       03 cmpeq yields GT bit cleared.
+ *       05 ble will branch because GT bit is cleared. <== as expected.
+ * 
+ * 2. CVMCPU_COND_GE && UNORDERED_LT => if (lhs >= rhs && !hasNaN) then br.
+ * 
+ *    01 efscmpgt lhs, rhs
+ *    02 bgt      syncLocals
+ *    03 efscmpeq lhs, rhs
+ *    syncLocals:
+ *    04 [sync locals]
+ *    05 bgt      target
+ * 
+ *    Case 1: lhs < rhs, no NaNs.
+ *       01 cmpgt yields GT bit cleared.
+ *       02 bgt will not branch because GT bit is cleared.
+ *       03 cmpeq yields GT bit cleared.
+ *       05 bgt will not branch because GT bit is cleared. <== as expected
+ * 
+ *    Case 2: lhs == rhs, no NaNs.
+ *       01 cmpgt yields GT bit cleared.
+ *       02 bgt will not branch because GT bit is cleared.
+ *       03 cmpeq yields GT bit set.
+ *       05 bgt will branch because GT bit is set. <== as expected.
+ * 
+ *    Case 3: lhs > rhs, no NaNs.
+ *       01 cmpgt yields GT bit set.
+ *       02 bgt will branch because GT bit is set.
+ *       05 bgt will branch because GT bit is set. <== as expected.
+ * 
+ *    Case 4: has NaNs.
+ *       01 cmpgt yields GT bit cleared.
+ *       02 bgt will not branch because GT bit is cleared.
+ *       03 cmpeq yields GT bit cleared.
+ *       05 bgt will not branch because GT bit is cleared. <=== as expected
+ * 
+ * 3. CVMCPU_COND_GT && !UNORDERED_LT => if (lhs > rhs || hasNaN) then br.
+ * 
+ *    01 efscmplt lhs, rhs
+ *    02 bgt      syncLocals
+ *    03 efscmpeq lhs, rhs
+ *    syncLocals:
+ *    04 [sync locals]
+ *    05 ble      target
+ * 
+ *    Case 1: lhs < rhs, no NaNs.
+ *       01 cmplt yields GT bit set.
+ *       02 bgt will branch because GT bit is set.
+ *       05 ble will not branch because GT bit is set. <== as expected.
+ * 
+ *    Case 2: lhs == rhs, no NaNs.
+ *       01 cmplt yields GT bit cleared.
+ *       02 bgt will not branch because GT bit is cleared.
+ *       03 cmpeq yields GT bit set.
+ *       05 ble will not branch because GT bit is set. <== as expected.
+ * 
+ *    Case 3: lhs > rhs, no NaNs.
+ *       01 cmplt yields GT bit cleared.
+ *       02 bgt will not branch because GT bit is cleared.
+ *       03 cmpeq yields GT bit cleared.
+ *       05 ble will branch because GT bit is cleared. <== as expected.
+ * 
+ *    Case 4: has NaNs.
+ *       01 cmplt yields GT bit cleared.
+ *       02 bgt will not branch because GT bit is cleared.
+ *       03 cmpeq yields GT bit cleared.
+ *       05 ble will branch because GT bit is cleared. <== as expected.
+ * 
+ * 4. CVMCPU_COND_LE && !UNORDERED_LT => if (lhs <= rhs && !hasNaN) then br.
+ * 
+ *    01 efscmplt lhs, rhs
+ *    02 bgt      syncLocals
+ *    03 efscmpeq lhs, rhs
+ *    syncLocals:
+ *    04 [sync locals]
+ *    05 bgt      target
+ * 
+ *    Case 1: lhs < rhs, no NaNs.
+ *       01 cmplt yields GT bit set.
+ *       02 bgt will branch because GT bit is set.
+ *       05 bgt will branch because GT bit is set. <== as expected.
+ * 
+ *    Case 2: lhs == rhs, no NaNs.
+ *       01 cmplt yields GT bit cleared.
+ *       02 bgt will not branch because GT bit is cleared.
+ *       03 cmpeq yields GT bit set.
+ *       05 bgt will branch because GT bit is set. <== as expected.
+ * 
+ *    Case 3: lhs > rhs, no NaNs.
+ *       01 cmplt yields GT bit cleared.
+ *       02 bgt will not branch because GT bit is cleared.
+ *       03 cmpeq yields GT bit cleared.
+ *       05 bgt will not branch because GT bit is cleared. <== as expected.
+ * 
+ *    Case 4: has NaNs.
+ *       01 cmplt yields GT bit cleared.
+ *       02 bgt will not branch because GT bit is cleared.
+ *       03 cmpeq yields GT bit cleared.
+ *       05 bgt will not branch because GT bit is cleared. <== as expected.
+ */
+static void
+e500CompareFloats(
+    CVMJITCompilationContext *con,
+    CVMJITIRNodePtr thisNode)
+{
+    CVMRMResource* rhs = popResource(con);
+    CVMRMResource* lhs = popResource(con);
+    CVMJITConditionalBranch* branch = CVMJITirnodeGetCondBranchOp(thisNode);
+    CVMJITIRBlock* target = branch->target;
+    CVMCPUCondCode condCode = mapCondCode(branch->condition);
+    CVMInt32 unorderedLt = branch->flags & CVMJITCMPOP_UNORDERED_LT;
+    CVMCPUCondCode branchCondCode;
+
+    CVMRMpinResource(CVMRM_INT_REGS(con), lhs, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+    CVMRMpinResource(CVMRM_INT_REGS(con), rhs, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+
+    /* Handle cases 7 through 10 listed above. */
+
+    if (unorderedLt ?
+	(condCode == CVMCPU_COND_LT || condCode == CVMCPU_COND_GE) :
+	(condCode == CVMCPU_COND_GT || condCode == CVMCPU_COND_LE)) {
+	CVME500emitFCompare(
+	    con, unorderedLt ? CVMCPU_COND_GT : CVMCPU_COND_LT,
+	    CVMRMgetRegisterNumber(lhs),
+	    CVMRMgetRegisterNumber(rhs));
+
+	CVMCPUemitBranch(
+	    con, CVMJITcbufGetLogicalPC(con) + 2 * CVMCPU_INSTRUCTION_SIZE,
+	    CVME500_COND_TRUE);
+
+	CVME500emitFCompare(
+	    con, CVMCPU_COND_EQ,
+	    CVMRMgetRegisterNumber(lhs),
+	    CVMRMgetRegisterNumber(rhs));
+
+	if (unorderedLt ?
+	    condCode == CVMCPU_COND_LT : condCode == CVMCPU_COND_GT) {
+	    branchCondCode = CVME500_COND_FALSE;
+	}
+	else {
+	    branchCondCode = CVME500_COND_TRUE;
+	}
+    } else {
+	CVMCPUCondCode cmpCondCode;
+	switch (condCode) {
+	  case CVMCPU_COND_EQ:
+	  case CVMCPU_COND_LT:
+	  case CVMCPU_COND_GT:
+	    cmpCondCode = condCode;
+	    branchCondCode = CVME500_COND_TRUE;
+	    break;
+	  case CVMCPU_COND_NE:
+	    cmpCondCode = CVMCPU_COND_EQ;
+	    branchCondCode = CVME500_COND_FALSE;
+	    break;
+	  case CVMCPU_COND_GE:
+	    cmpCondCode = CVMCPU_COND_LT;
+	    branchCondCode = CVME500_COND_FALSE;
+	    break;
+	  case CVMCPU_COND_LE:
+	    cmpCondCode = CVMCPU_COND_GT;
+	    branchCondCode = CVME500_COND_FALSE;
+	    break;
+	  default:
+	    CVMassert(CVM_FALSE);
+	    cmpCondCode = CVMCPU_COND_EQ;
+	    branchCondCode = CVME500_COND_TRUE;
+	    break;
+	}
+
+	CVME500emitFCompare(con, cmpCondCode,
+			    CVMRMgetRegisterNumber(lhs),
+			    CVMRMgetRegisterNumber(rhs));
+    }
+
+    CVMRMsynchronizeJavaLocals(con);
+    /* no longer need resource used in CVME500emitFCompare() */
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), lhs);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), rhs);
+    /* pin after calling CVME500emitFCompare() */
+    CVMRMpinAllIncomingLocals(con, target, CVM_FALSE);
+
+    branchToBlock(con, branchCondCode, target);
+
+    CVMRMunpinAllIncomingLocals(con, target);
+}
+%}
+
+root: BCOND_FLOAT reg32 reg32 : 20 : : : :
+	e500CompareFloats(con, $$);

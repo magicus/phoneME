@@ -1,0 +1,65 @@
+//
+// Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
+//
+// @(#)jitgrammarrules.jcs	1.8 06/10/10
+//
+// converting CVM IR subset to SPARC assembler
+//
+
+//
+// By default the DIV instruction is assumed to not be supported.
+// Adding this rule adds support for the SPARC sdiv instruction.
+// NOTE: By providing a cost of 40, the default "reg32 reg32" rules
+// are overridden, but the "reg32 ICONST_32" rules are not.
+//
+reg32: IDIV32 reg32 reg32 : 40 : : : CVM_NEED_WORD_BINARY_OP_WITH_REG32_RHS :
+	wordBinaryOpWithReg32Rhs(con, CVMSPARC_DIV_OPCODE, $$,
+	    GET_REGISTER_GOALS);
+reg32: IREM32 reg32 reg32 : 40 : : : CVM_NEED_WORD_BINARY_OP_WITH_REG32_RHS :
+	wordBinaryOpWithReg32Rhs(con, CVMSPARC_REM_OPCODE, $$,
+	    GET_REGISTER_GOALS);
+
+//
+// See if AND of a constant is encodeable as ANDN of ~constant,using
+// sethi to encode ~constant.
+//
+reg32: AND32 reg32 ICONST_32 : 9 : : : : {
+        int opcode = CVMCPU_AND_OPCODE;
+        CVMInt32 constValue =
+	    CVMJITirnodeGetConstant32(CVMJITirnodeGetRightSubtree($$))->j.i;
+	CVMBool isANDEncodable =
+	    CVMCPUalurhsIsEncodableAsImmediate(CVMCPU_AND_OPCODE, constValue);
+	CVMBool isSethiEncodable = (~constValue & 0x3ff) == 0;
+	if (!isANDEncodable && isSethiEncodable) {
+	    /*
+	     * We can't encode constValue with an AND instruction, but
+	     * ~constValue is encodeble with sethi, which allows us to
+	     * do this in 2 instructions instead of 3.
+	     */
+	    /*CVMconsolePrintf("**** 0x%x 0x%x\n",constValue, ~constValue);*/
+	    opcode = CVMSPARC_ANDN_OPCODE;
+	    constValue = ~constValue;
+	}
+	pushALURhsConstant(con, constValue);
+	wordBinaryOp(con, opcode, $$, GET_REGISTER_GOALS);
+    };

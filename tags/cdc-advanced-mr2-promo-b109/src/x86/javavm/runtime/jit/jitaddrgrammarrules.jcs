@@ -1,0 +1,546 @@
+//
+//
+// @(#)jitaddrgrammarrules.jcs	1.11 06/10/09
+//
+// Portions Copyright  2000-2008 Sun Microsystems, Inc. All Rights
+// Reserved.  Use is subject to license terms.
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+// 
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License version
+// 2 only, as published by the Free Software Foundation.
+// 
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// General Public License version 2 for more details (a copy is
+// included at /legal/license.txt).
+// 
+// You should have received a copy of the GNU General Public License
+// version 2 along with this work; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+// 02110-1301 USA
+// 
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+// Clara, CA 95054 or visit www.sun.com if you need additional
+// information or have any questions.
+//
+
+//////////////////////////////////////////////////////
+// Copied from shared
+//////////////////////////////////////////////////////
+
+%leaf CVMJIT_ENCODE_CONST_STATIC_FIELD_ADDRESS
+%leaf LOCALADDR // Java 2-word local
+%leaf USEDADDR
+
+%unary ARETURN
+%unary DEFINE_VALUEADDR
+//%unary ENDINLININGADDR
+%unary FETCHADDR // memory fetch from STATIC or INDEX or FIELDREF
+%unary IDENTADDR
+%unary STATICADDR // Java 1-word static
+
+%binary BCOND_ADDR
+%binary FIELDREFADDR     // object ref field of object
+%binary INTRINSICADDR
+%binary INVOKEADDRI	// return type is address
+%binary PARAMETERADDR
+%binary SEQUENCEADDR_R
+%binary SEQUENCEADDR_L
+
+
+regAddr: CVMJIT_ENCODE_CONST_STATIC_FIELD_ADDRESS : 20 : : : :
+        const2RegAddr(con, CVMRM_INT_REGS(con), $$);
+
+//FIXME: This doesn't seem to be used.
+//root:   RET LOCALADDR : 10 : : : : {
+//        /* Get the return address from the local and branch to it */
+//	CVMJITLocal* lhs =
+//	    CVMJITirnodeGetLocal(CVMJITirnodeGetLeftSubtree($$));
+//	CVMRMResource* src =
+//	    CVMRMloadJavaLocal(CVMRM_INT_REGS(con), CVMRM_ANY_SET,
+//			       CVMRM_EMPTY_SET, 1, CVM_FALSE, 
+//                               CVM_TRUE,                             
+//                               lhs->localNo);
+//	CVMCPUemitRegisterBranch(con, CVMRMgetRegisterNumber(src));
+//        CVMRMrelinquishResource(CVMRM_INT_REGS(con), src);
+//	CVMJITdumpRuntimeConstantPool(con, CVM_FALSE);
+//    };
+
+effect: regAddr: 0 : : : : {
+	CVMRMResource* operand = popResource(con);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), operand);
+    };
+
+// SVMC_JIT rr 2004-01-23: proper typing of  method invocations
+root: invokeAddri_result: 0 : : : : {
+	/* the 0 cost here is a fib, but must be < the cost of a deferred
+	 * pop of invokeAddri_result into a regAddr, so that this instruction
+	 * gets emitted
+	 */
+	CVMRMResource* operand = popResource(con);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), operand);
+
+	CVMSMpopSingle(con, NULL);
+    };
+
+regAddr: invokeAddri_result: 20 : : : : {
+        forceJavaStackTopValueIntoRegister(con, CVMRM_INT_REGS(con), GET_REGISTER_GOALS);
+    };
+
+
+// Purpose: STATICADDR(staticFieldSpec) = valueAddr.
+root: ASSIGN STATICADDR memSpec regAddr : 20 : : : : {
+        CVMJITprintCodegenComment(("Do putstatic:"));
+        CVMJITaddCodegenComment((con,
+            "putstatic(staticFieldAddr, valueObj)"));
+        setStaticField(con, CVMRM_INT_REGS(con), CVMCPU_STRADDR_OPCODE);
+    };
+
+// "type-less" sequence. 
+regAddr:  VSEQUENCE_R effect regAddr : 0 : : 
+	SEQUENCE_R_INHERITANCE($$, CVMRM_INT_REGS(con)); : : ;
+
+regAddr: SEQUENCEADDR_R effect regAddr : 0 : :
+        SEQUENCE_R_INHERITANCE($$, CVMRM_INT_REGS(con)); : : {
+    passLastEvaluated(con, CVMRM_INT_REGS(con), $$);
+};
+
+// "type-less" L sequence. 
+regAddr:  VSEQUENCE_L regAddr effect : 0 : :
+	SEQUENCE_L_INHERITANCE($$, CVMRM_INT_REGS(con)); : : ;
+
+regAddr: SEQUENCEADDR_L regAddr effect : 0 : :
+        SEQUENCE_L_INHERITANCE($$, CVMRM_INT_REGS(con)); : : {
+    passLastEvaluated(con, CVMRM_INT_REGS(con), $$);
+};
+
+//regAddr: ENDINLININGADDR regAddr : 0 : : : : {
+//    endInlining(con, $$);
+//    passLastEvaluated(con, CVMRM_INT_REGS(con), $$);
+//};
+
+// Purpose: valueAddr = FETCHADDR(STATICADDR(staticFieldSpec))
+regAddr: FETCHADDR STATICADDR memSpec : 10 : : : : {
+        CVMJITprintCodegenComment(("Do getstatic:"));
+        CVMJITaddCodegenComment((con,
+            "value{I|F|O} = getstatic(staticFieldAddr);"));
+        getStaticField(con, CVMRM_INT_REGS(con),
+		       $$, GET_REGISTER_GOALS, CVMCPU_LDRADDR_OPCODE, 1);
+    };
+
+regAddr: LOCALADDR : 10 : : : : {
+	CVMJITLocal*   l = CVMJITirnodeGetLocal( $$ );
+	CVMRMResource* dest =
+	    CVMRMbindResourceForLocal(CVMRM_INT_REGS(con), 1,
+				      CVM_FALSE, l->localNo);
+	CVMassert(!CVMJITirnodeIsReferenceType($$));
+	dest->flags |= CVMRMaddr;
+	CVMRMpinResourceEagerlyIfDesireable(CVMRM_INT_REGS(con),
+					    dest, GET_REGISTER_GOALS);
+	CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, $$);
+	pushResource(con, dest);
+    };
+
+root:	ASSIGN LOCALADDR regAddr : 10 : : : : {
+	CVMRMResource * rhs = popResource(con);
+	CVMJITLocal   * lhs = CVMJITirnodeGetLocal(
+        CVMJITirnodeGetLeftSubtree($$));
+	CVMRMpinResource(CVMRM_INT_REGS(con), rhs,
+			 CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	CVMRMstoreJavaLocal(CVMRM_INT_REGS(con), rhs, 1, CVM_FALSE, lhs->localNo);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), rhs);
+    };
+
+%dag regAddr: IDENTADDR regAddr : 0 : 
+    IDENT_SYNTHESIS(con, $$); : IDENT_INHERITANCE(con, $$);: : {
+	CVMRMResource* src;
+	if (!CVMJIT_DID_SEMANTIC_ACTION($$)){
+	    src = popResource(con);
+	    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), src, $$);
+	} else {
+	    src = CVMRMfindResource(CVMRM_INT_REGS(con), $$);
+	    CVMassert(src != NULL);
+	}
+	pushResource(con, src);
+    };
+
+// Purpose: valueAddr = FETCHADDR(INDEX(arrayObject, arraySubscript))
+regAddr: FETCHADDR arrayIndex : 20 : :  : : {
+        CVMJITprintCodegenComment(("Do *slotAddr32:"));
+        fetchArraySlot(con, CVMRM_INT_REGS(con), $$, GET_REGISTER_GOALS);
+    };
+
+regPtr: regAddr : 0 : : : : ;
+regPtr: regObj : 0 : : : : ;
+
+// Purpose: value = FETCHADDR(FIELDREFADDR(obj,fieldOffset))
+regAddr: FETCHADDR FIELDREFADDR regPtr memSpec : 10 :
+    GETFIELD_SYNTHESIS(con, $$); : GETFIELD_INHERITANCE(con, $$); : : {
+        CVMJITprintCodegenComment(("Do getfield:"));
+        CVMJITaddCodegenComment((con, "valueObj"));
+        fetchField(con, CVMRM_INT_REGS(con), $$,
+		   GET_REGISTER_GOALS, CVMCPU_LDRADDR_OPCODE, 1);
+    };
+
+// Purpose: valueAddr = FETCHADDR(INDEX(arrayObject, arraySubscript))
+regAddr: FETCHADDR INDEX regObj arraySubscript : 20 :
+    ARRAY_LOAD_SYNTHESIS(con, $$); : ARRAY_LOAD_INHERITANCE(con, $$); : : {
+        indexedLoad(con, CVMRM_INT_REGS(con), $$, GET_REGISTER_GOALS);
+    };
+
+parameters: PARAMETERADDR paramAddr parameters : 0 : : : : ;
+
+// SVMC_JIT rr 2004-01-23: proper typing of  method invocations
+paramAddr: invokeAddri_result : 0 : : : : {
+	/* Free! Already on Stack  */
+	CVMRMResource *operand = popResource(con);
+        CVMRMconvertJavaStackTopValue2StackParam(con, operand);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), operand);
+    };
+
+paramAddr: regAddr : 10 : : : : {
+	CVMRMResource *operand = popResource(con);
+	CVMSMpushSingle(con, CVMRM_INT_REGS(con), operand);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), operand);
+    };
+    
+// Purpose: valueAddr = INTRINSICADDR(iargs, methodBlock)
+regAddr: USEDADDR : 0 : : : :
+    pushResource(con, CVMJITirnodeGetUsedOp($$)->resource );
+
+// SVMC_JIT rr 2004-01-23: proper typing of  method invocations
+// Purpose: valueAddr = INTRINSICAddr(parameters, methodBlock)
+invokeAddri_result: INTRINSICADDR parameters intrinsicMB : 90 :
+    SET_AVOID_INTRINSIC_CALL(con, $$); : SET_TARGET_INTRINSIC_CALL(con, $$);
+    : CVM_NEED_INVOKE_INTRINSIC_METHOD_HELPER : {
+        FLUSH_GOAL_TOP(con);
+        invokeIntrinsicMethod(con, $$);
+    };
+
+// Purpose: valueAddr = INVOKEADDRI(parameters, methodBlock)
+invokeAddri_result: INVOKEADDRI parameters regAddr : 40 : SET_AVOID_METHOD_CALL($$); :
+    SET_TARGET2_1($$, ARG1); : : {
+        CVMRMResource *dest;
+        CVMJITprintCodegenComment(("Invoke a method w/ a addr return type"));
+	dest = invokeMethod(con, $$);
+        pushResource(con, dest);
+   };
+
+root: DEFINE_VALUEADDR regAddr : 10 : : : : {
+        CVMRMResource* src = popResource(con);
+	if (!CVMRMstoreDefinedValue(con, $$, src, 1)) {
+	    return -2;  /*  fail */
+	}
+    };
+
+regAddr: INTRINSICADDR iargs intrinsicMB : 90 :
+    SET_AVOID_INTRINSIC_CALL(con, $$); : SET_TARGET_INTRINSIC_CALL(con, $$);
+    : CVM_NEED_INVOKE_INTRINSIC_METHOD_HELPER : {
+        FLUSH_GOAL_TOP(con);
+        invokeIntrinsicMethod(con, $$);
+    };
+
+root:	ARETURN regAddr: 10 : : : : {
+        /* Emit the one-way ticket home: */
+        emitReturn(con, CVMRM_INT_REGS(con), 1);
+    };
+
+// Purpose: Converts a valueAddr into an aluRhs.
+aluRhs: regAddr : 0 : : : : {
+	/*
+	 * a simple matter of bookkeeping.
+	 * may be able to (may need to!) delete this rule.
+	 * it probably leads to ambiguity.
+	 */
+	CVMRMResource* operand = popResource(con);
+        pushALURhsResource(con, operand);
+    };
+
+root: BCOND_ADDR regAddr aluRhs : 20 : : : :
+        compareAddrcc(con, $$, CVMCPU_CMP_OPCODE);
+
+iargs: IARG regAddr iargs : 0 : : SET_TARGET_IARG(con, $$); : : ;
+
+//
+// The rhs of a Address array store
+//
+arrayAssignmentRhsAddr: regAddr : 0 : : : : ;
+
+// Purpose: ASSIGN(INDEX(arrayObject, arraySubscript), valueAddr)
+root: ASSIGN arrayIndex arrayAssignmentRhsAddr : 20 : : : : {
+        CVMJITprintCodegenComment(("*slotAddrAddr = reg:"));
+        storeArraySlot(con, CVMRM_INT_REGS(con), $$);
+    };
+
+// Purpose: ASSIGN(INDEX(arrayObject, arraySubscript), valueAddr)
+root: ASSIGN INDEX regObj arraySubscript arrayAssignmentRhsAddr : 20 :
+    ARRAY_STORE_SYNTHESIS(con, $$); : ARRAY_STORE_INHERITANCE(con, $$); : : {
+        indexedStore(con, CVMRM_INT_REGS(con), $$);
+    };
+
+///////////////////////////////////////////////////////////////////////
+
+%leaf CVMJIT_ENCODE_CONST_STRING_OBJECT
+%leaf LOCALOBJ // Java 2-word local
+%leaf USEDOBJ
+
+%unary ORETURN
+%unary DEFINE_VALUEOBJ
+//%unary ENDINLININGOBJ
+%unary FETCHOBJ	// memory fetch from STATIC or INDEX or FIELDREF
+%unary IDENTOBJ
+%unary STATICOBJ // Java 1-word static
+
+%binary BCOND_OBJ
+%binary INTRINSICOBJ
+%binary INVOKEOBJI	// return type is object
+%binary PARAMETEROBJ
+%binary SEQUENCEOBJ_R
+%binary SEQUENCEOBJ_L
+
+regObj: CVMJIT_ENCODE_CONST_STRING_OBJECT : 20 : : : :
+        const2RegAddr(con, CVMRM_INT_REGS(con), $$);
+
+// Purpose: STATICOBJ(staticFieldSpec) = valueObj.
+root: ASSIGN STATICOBJ memSpec regObj : 20 : : : : {
+        CVMJITprintCodegenComment(("Do putstatic:"));
+        CVMJITaddCodegenComment((con,
+            "putstatic(staticFieldAddr, valueObj)"));
+        setStaticField(con, CVMRM_INT_REGS(con), CVMCPU_STRADDR_OPCODE);
+    };
+
+regObj:  VSEQUENCE_R effect regObj : 0 : :
+	SEQUENCE_R_INHERITANCE($$, CVMRM_INT_REGS(con)); : : ;
+
+regObj:  SEQUENCEOBJ_R effect regObj : 0 : :
+	SEQUENCE_R_INHERITANCE($$, CVMRM_INT_REGS(con)); : : {
+    passLastEvaluated(con, CVMRM_INT_REGS(con), $$);
+};
+
+regObj:  VSEQUENCE_L regObj effect : 0 : :
+	SEQUENCE_L_INHERITANCE($$, CVMRM_INT_REGS(con)); : : ;
+
+regObj:  SEQUENCEOBJ_L regObj effect : 0 : :
+	SEQUENCE_L_INHERITANCE($$, CVMRM_INT_REGS(con)); : : {
+    passLastEvaluated(con, CVMRM_INT_REGS(con), $$);
+};
+
+//regObj:  ENDINLININGOBJ regObj : 0 : : : : {
+//    endInlining(con, $$);
+//    passLastEvaluated(con, CVMRM_INT_REGS(con), $$);
+//};
+
+// SVMC_JIT rr 2004-01-23: proper typing of  method invocations
+root: invokeObji_result: 0 : : : : {
+	/* the 0 cost here is a fib, but must be < the cost of a deferred
+	 * pop of invokeObji_result into a regObj, so that this instruction
+	 * gets emitted
+	 */
+	CVMRMResource* operand = popResource(con);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), operand);
+
+	CVMSMpopSingle(con, NULL);
+    };
+
+effect: regObj: 0 : : : : {
+	CVMRMResource* operand = popResource(con);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), operand);
+    };
+
+// Purpose: valueObj = FETCHADDR(STATICADDR(staticFieldSpec))
+regObj: FETCHOBJ STATICOBJ memSpec : 10 : : : : {
+        CVMJITprintCodegenComment(("Do getstatic:"));
+        CVMJITaddCodegenComment((con,
+            "value{I|F|O} = getstatic(staticFieldAddr);"));
+        getStaticField(con, CVMRM_INT_REGS(con),
+		       $$, GET_REGISTER_GOALS, CVMCPU_LDRADDR_OPCODE, 1);
+    };
+
+regObj: LOCALOBJ : 10 : : : : {
+	CVMJITLocal*   l = CVMJITirnodeGetLocal( $$ );
+	CVMRMResource* dest =
+	    CVMRMbindResourceForLocal(CVMRM_INT_REGS(con), 1,
+				      CVM_TRUE, l->localNo);
+	dest->flags |= CVMRMaddr;
+	CVMassert(CVMJITirnodeIsReferenceType($$));
+	CVMRMpinResourceEagerlyIfDesireable(CVMRM_INT_REGS(con),
+					    dest, GET_REGISTER_GOALS);
+	CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, $$);
+	pushResource(con, dest);
+    };
+
+%dag regObj: IDENTOBJ regObj : 0 : 
+    IDENT_SYNTHESIS(con, $$); : IDENT_INHERITANCE(con, $$);: : {
+	CVMRMResource* src;
+	if (!CVMJIT_DID_SEMANTIC_ACTION($$)){
+	    src = popResource(con);
+	    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), src, $$);
+	} else {
+	    src = CVMRMfindResource(CVMRM_INT_REGS(con), $$);
+	    CVMassert(src != NULL);
+	}
+	pushResource(con, src);          
+    };
+
+regObj: FETCHOBJ arrayIndex : 20 : :  : : {
+        CVMJITprintCodegenComment(("Do *slotAddr32:"));
+        fetchArraySlot(con, CVMRM_INT_REGS(con), $$, GET_REGISTER_GOALS);
+    };
+
+// Purpose: valueAddr = FETCHADDR(FIELDREFOBJ(obj,fieldOffset))
+regObj: FETCHOBJ FIELDREFOBJ regObj memSpec : 10 :
+    GETFIELD_SYNTHESIS(con, $$); : GETFIELD_INHERITANCE(con, $$); : : {
+        CVMJITprintCodegenComment(("Do getfield:"));
+        CVMJITaddCodegenComment((con, "valueObj"));
+        fetchField(con, CVMRM_INT_REGS(con), $$,
+		   GET_REGISTER_GOALS, CVMCPU_LDRADDR_OPCODE, 1);
+    };
+
+regObj: FETCHOBJ INDEX regObj arraySubscript : 20 :
+    ARRAY_LOAD_SYNTHESIS(con, $$); : ARRAY_LOAD_INHERITANCE(con, $$); : : {
+        indexedLoad(con, CVMRM_INT_REGS(con), $$, GET_REGISTER_GOALS);
+    };
+
+parameters: PARAMETEROBJ paramObj parameters : 0 : : : : ;
+
+// SVMC_JIT rr 2004-01-23: proper typing of  method invocations
+paramObj: invokeObji_result : 0 : : : : {
+	/* Free! Already on Stack  */
+	CVMRMResource *operand = popResource(con);
+        CVMRMconvertJavaStackTopValue2StackParam(con, operand);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), operand);
+    };
+
+paramObj: regObj : 10 : : : : {
+	CVMRMResource *operand = popResource(con);
+	CVMSMpushSingle(con, CVMRM_INT_REGS(con), operand);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), operand);
+    };
+
+regObj: USEDOBJ : 0 : : : :
+    pushResource(con, CVMJITirnodeGetUsedOp($$)->resource );
+
+// SVMC_JIT rr 2004-01-23: proper typing of  method invocations
+// Purpose: valueObj = INTRINSICOBJ(parameters, methodBlock)
+invokeObji_result: INTRINSICOBJ parameters intrinsicMB : 90 :
+    SET_AVOID_INTRINSIC_CALL(con, $$); : SET_TARGET_INTRINSIC_CALL(con, $$);
+    : CVM_NEED_INVOKE_INTRINSIC_METHOD_HELPER : {
+        FLUSH_GOAL_TOP(con);
+        invokeIntrinsicMethod(con, $$);
+    };
+
+// Purpose: valueObj = INVOKEOBJ(parameters, methodBlock)
+invokeObji_result: INVOKEOBJI parameters regAddr : 40 : SET_AVOID_METHOD_CALL($$); :
+    SET_TARGET2_1($$, ARG1); : : {
+        CVMRMResource *dest;
+        CVMJITprintCodegenComment(("Invoke a method w/ a addr return type"));
+	dest = invokeMethod(con, $$);
+        pushResource(con, dest);
+   };
+
+root: DEFINE_VALUEOBJ regObj : 10 : : : : {
+        CVMRMResource* src = popResource(con);
+	if (!CVMRMstoreDefinedValue(con, $$, src, 1)) {
+	    return -2;  /*  fail */
+	}
+    };
+
+// Purpose: valueObj = INTRINSICOBJ(iargs, methodBlock)
+regObj: INTRINSICOBJ iargs intrinsicMB : 90 :
+    SET_AVOID_INTRINSIC_CALL(con, $$); : SET_TARGET_INTRINSIC_CALL(con, $$);
+    : CVM_NEED_INVOKE_INTRINSIC_METHOD_HELPER : {
+        FLUSH_GOAL_TOP(con);
+        invokeIntrinsicMethod(con, $$);
+    };
+
+root:	ORETURN regObj: 10 : : : : {
+        /* Emit the one-way ticket home: */
+        emitReturn(con, CVMRM_INT_REGS(con), 1);
+    };
+
+// Purpose: Converts a valueAddr into an aluRhs.
+aluRhs: regObj : 0 : : : : {
+	/*
+	 * a simple matter of bookkeeping.
+	 * may be able to (may need to!) delete this rule.
+	 * it probably leads to ambiguity.
+	 */
+	CVMRMResource* operand = popResource(con);
+        pushALURhsResource(con, operand);
+    };
+
+root: BCOND_OBJ regObj aluRhs : 20 : : : : 
+        compareAddrcc(con, $$, CVMCPU_CMP_OPCODE);
+        
+iargs: IARG regObj iargs : 0 : : SET_TARGET_IARG(con, $$); : : ;
+
+// Purpose: Stores a object return value into a register.
+regObj: invokeObji_result: 20 : : : : {
+        /* force into a register */
+        forceJavaStackTopValueIntoRegister(con, CVMRM_INT_REGS(con), GET_REGISTER_GOALS);
+    };
+
+// The rhs of a object array store
+arrayAssignmentRhsObj: regObj : 0 : : : : ;
+
+
+// Purpose: ASSIGN(INDEX(arrayObject, arraySubscript), valueObj)
+root: ASSIGN arrayIndex arrayAssignmentRhsObj : 20 : : : : {
+        CVMJITprintCodegenComment(("*slotObj = reg:"));
+        storeArraySlot(con, CVMRM_INT_REGS(con), $$);
+    };
+// Purpose: ASSIGN(INDEX(arrayObject, arraySubscript), valueObj)
+root: ASSIGN INDEX regObj arraySubscript arrayAssignmentRhsObj : 20 :
+    ARRAY_STORE_SYNTHESIS(con, $$); : ARRAY_STORE_INHERITANCE(con, $$); : : {
+        indexedStore(con, CVMRM_INT_REGS(con), $$);
+    };
+
+///////////////////////////////////////////////////////////////////////
+// Copied from CISC
+///////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////
+
+// Purpose: Converts a valueAddr into a memSpec.
+memSpec: regAddr : 0 : : : : {
+  CVMRMResource *operand = popResource(con);
+  if (CVMRMisConstant(operand)) { 
+    pushMemSpecImmediate(con, operand->constant);
+  }
+  else {
+    pushMemSpecRegister(con, CVM_TRUE, operand);
+  }
+};
+
+///////////////////////////////////////////////////////////////////////
+
+// Purpose: Converts a valueObj into a memSpec.
+memSpec: regObj : 0 : : : : {
+  CVMRMResource *operand = popResource(con);
+  if (CVMRMisConstant(operand)) { 
+    pushMemSpecImmediate(con, operand->constant);
+  }
+  else {
+    pushMemSpecRegister(con, CVM_TRUE, operand);
+  }
+};
+
+
+// Purpose: LOCALOBJ = valueObj.
+root:	ASSIGN LOCALOBJ regObj : 10 : : : : {
+	CVMRMResource * rhs = popResource(con);
+	CVMJITLocal   * lhs = CVMJITirnodeGetLocal(
+	    CVMJITirnodeGetLeftSubtree($$));
+
+	/* If it is a constant, do not move it into a register at all */
+	if (!CVMRMisConstant(rhs)) {
+	  CVMRMpinResource(CVMRM_INT_REGS(con), rhs,
+			   CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	}
+	CVMRMstoreJavaLocal(CVMRM_INT_REGS(con), rhs, 1, CVM_TRUE, lhs->localNo);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), rhs);
+    };
+
+

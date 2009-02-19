@@ -1,0 +1,72 @@
+//
+// @(#)awt.rc	1.2 06/10/03
+//
+// Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License version
+// 2 only, as published by the Free Software Foundation.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// General Public License version 2 for more details (a copy is
+// included at /legal/license.txt).
+//
+// You should have received a copy of the GNU General Public License
+// version 2 along with this work; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+// 02110-1301 USA
+//
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+// Clara, CA 95054 or visit www.sun.com if you need additional
+// information or have any questions.
+//
+
+#include "ppcResource.h"
+
+HAND_CURSOR  CURSOR  DISCARDABLE "hand.cur"
+AWT_ICON     ICON    DISCARDABLE "awt.ico"
+CHECK_BITMAP BITMAP  DISCARDABLE "check.bmp"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,1,2,1
+ PRODUCTVERSION 1,1,2,1
+ FILEFLAGSMASK 0x3fL
+#ifdef DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Sun Microsystems, Inc.\0"
+            VALUE "FileDescription", "winawt\0"
+            VALUE "FileVersion", "1, 1, 2, 1\0"
+#ifdef DEBUG
+            VALUE "InternalName", "winawt_g\0"
+#else
+            VALUE "InternalName", "winawt\0"
+#endif
+            VALUE "LegalCopyright", "Copyright ¨ 1998\0"
+#ifdef DEBUG
+            VALUE "OriginalFilename", "winawt_g.dll\0"
+#else
+            VALUE "OriginalFilename", "winawt.dll\0"
+#endif
+            VALUE "ProductName", "Java« Developers Kit\0"
+            VALUE "ProductVersion", "1, 1, 2, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
