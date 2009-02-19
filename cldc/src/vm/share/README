@@ -1,0 +1,31 @@
+/*
+ *   
+ *
+ * Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+ */
+
+Directory for $ws/src/vm/share
+==============================
+Contains the platform independent part of the Java virtual machine
+
+[runtime]
+   Contains the code for threads, etc.
+
+[handles]
+   Contains abstractions for accessing heap objects inside the vm.
+   Handles provide GC safe references to objects.
+
+[interpreter]           
+   Contains the byte code interpreter.
+
+[memory]
+   Contains
+     - the layout of the object heap and its objects.
+     - the garbage collector 
+
+[natives]
+   Contains native methods and interface for accessing foreign code.
+
+[compiler] 
+   Contains the optimizing compiler.
+

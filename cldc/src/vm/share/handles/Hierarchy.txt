@@ -1,0 +1,63 @@
+/*
+ *   
+ *
+ * Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+ */
+
+// Handles used to refer to OopDescs
+
+//
+// Raw objects in object heap
+//
+OopDesc                      (_klass)
+ - JavaDesc
+   - InstanceDesc            ("instance fields")    *
+   - ArrayDesc               (_length)
+    - TypeArrayDesc          ("indexable fields")   * * * * *
+    - ObjArrayDesc           ("indexable fields")   *
+ - ConstantPoolDesc          ("indexable fields")   *
+ - MethodDesc                (* + byte codes)       *
+ - NearDesc                  (hash value + locking) *
+ - SymbolDesc                (_length + "indexable fields") *     (.cpp)
+
+//
+// Raw classes
+//
+ - FarClassDesc
+   - JavaClassDesc           abstract (super)
+     - InstanceClassDesc     (methods, etc.)
+     - ArrayClassDesc        abstract
+       - ObjArrayClassDesc   (element type)
+       - TypeArrayClassDesc  (scale etc)
+   - ConstantPoolDesc
+   - MethodClassDesc
+   - NearClassDesc
+   - SymbolClassDesc
+
+//
+// Raw meta classes
+//
+   - FarClassClassDesc
+     - JavaClassClassDesc
+       - InstanceClassClassDesc
+       - ArrayClassClassDesc       
+         - ObjArrayClassClassDesc 
+         - TypeArrayClassClassDesc
+     - NearClassClassDesc
+   - MetaClass
+
+// Runtime structure
+
+(MethodDesc -> NearDesc) ->
+  (MethodClassDesc -> NearClassDesc) -> (1)
+
+(InstanceDesc -> NearDesc) ->
+   (InstanceClassDesc -> NearClassDesc) ->
+      (InstanceClassClassDesc -> NearClassClassDesc) -> (1)
+
+(ObjArrayDesc -> NearDesc) -> 
+   (ObjArrayClassDesc -> NearClassDesc) -> 
+       (ObjArrayClassClassDesc ->NearClassClassDesc) -> (1)
+
+(1) NearClassClassClass -> ClassClass
+
