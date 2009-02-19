@@ -192,7 +192,7 @@ public class InputStreamReader extends Reader {
 	    if (nBytes != -1) {
 		if ((nc > 0) && !inReady())
 		    break;	/* Block at most once */
-		nBytes = in.read(bb);
+                nBytes = in.read(bb, 0, Math.min(end - off, bb.length));
 	    }
 
 	    if (nBytes == -1) {
