@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
+<!--
+		Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+		DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+		
+		This program is free software; you can redistribute it and/or
+		modify it under the terms of the GNU General Public License version
+		2 only, as published by the Free Software Foundation.
+		
+		This program is distributed in the hope that it will be useful, but
+		WITHOUT ANY WARRANTY; without even the implied warranty of
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+		General Public License version 2 for more details (a copy is
+		included at /legal/license.txt).
+		
+		You should have received a copy of the GNU General Public License
+		version 2 along with this work; if not, write to the Free Software
+		Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+		02110-1301 USA
+		
+		Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+		Clara, CA 95054 or visit www.sun.com if you need additional
+		information or have any questions.
+-->
+<!-- THIS IS THE PROPERTIES FILE FOR SHARP ZAURUS 5500D ONLY!
+	 YOU MAY NEED TO ADJUST THAT TO YOUR PLATFORM -->
+<configuration>
+<properties>
+<!-- INTERNAL PROPERTIES -->
+<!-- Visible from Configuration.getProperty() -->
+  <!-- System tunable parameters -->
+
+  <!-- Default values for SMS internal implementation -->
+  <property Key="com.sun.midp.io.j2me.sms.Impl" 
+		Value="com.sun.midp.io.j2me.sms.DatagramImpl" 
+		Scope="internal"
+		Comment="Select the low level transport handler."/>
+  <property Key="com.sun.midp.io.j2me.sms.DatagramHost" 
+		Value="smsdatagramhost"
+		Comment="The datagram host name."/>
+  <property Key="com.sun.midp.io.j2me.sms.DatagramPortIn" 
+		Value="54321" 
+		Scope="internal"
+		Comment="The datagram port number for inbound messages from the SMS emulator."/>
+  <property Key="com.sun.midp.io.j2me.sms.DatagramPortOut" 
+		Value="12345" 
+		Scope="internal"
+		Comment="The datagram port number of a SMS emulator."/>
+
+  <!-- Alternate SMS port for CBS emulation -->
+  <property Key="com.sun.midp.io.j2me.sms.CBSPort" 
+		Value="24680" 
+		Scope="internal"
+		Comment="Create a CBS message connection protocol port number"/>
+
+  <!-- Sender's phone number -->
+  <property Key="com.sun.midp.io.j2me.sms.PhoneNumber" 
+		Value="+5551212" 
+		Scope="internal"
+		Comment="The phone number for outbound messages from the SMS emulator."/>
+
+  <!-- Default SMS Service Center address -->
+  <property Key="wireless.messaging.sms.smsc" 
+		Value="+17815511212" 
+		Scope="internal"
+		Comment="Default SMS Service Center address."/>
+  <property Key="VmDebuggerPort"
+		Value="2808"
+		Scope="internal"
+		Comment="Default SMS Service Center address port number."/>
+
+  <property Key="MAX_ISOLATES"
+            Value="4"
+            Scope="internal"
+            Comment="MAX_ISOLATES"/>
+  <property Key="SUITE_MEMORY_LIMIT"
+            Value="-1"
+            Scope="internal"
+            Comment="Default MIDletSuite Memory Limit."/>
+  <property Key="MAIN_MEMORY_CHUNK_SIZE"
+            Value="8388608"
+            Scope="internal"
+            Comment=""/>
+  <property Key="JAVA_HEAP_SIZE"
+            Value="4194304"
+            Scope="internal"
+            Comment=""/>
+  <property Key="RMS_CACHE_LIMIT"
+            Value="3072"
+            Scope="internal"
+            Comment="Global memory limit (in Bytes) for RMS caching"/>
+
+  <property Key="useJavaInstallerForPlaformRequest"
+            Value="1"
+            Scope="internal"
+            Comment="When not zero, Java installer is launched to handle a midlet suite URL."/>
+  <property Key="security.domain"
+            Value="minimum"
+            Scope="internal"
+            Comment="Default security domain. The property is intended for emulators"/>
+
+<!-- SYSTEM PROPERTIES -->
+<!-- Visible from System.getProperty() -->
+  <property Key="path.separator" 
+		Value=";" 
+		Scope="system"
+		Comment="Path separator."/>
+</properties>
+</configuration>

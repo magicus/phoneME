@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "./configuration.dtd">
+<!--
+
+
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
+-->
+
+<configuration>
+<constants>
+
+<!--
+    Indentifiers for Suite Storage subsystem
+-->
+<constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public"
+    Comment="/** Indentifiers for the Suite Storage subsystem */">
+ <constant Type="String"
+            Name="SETTINGS_FILENAME"
+            Value=".ss"
+            NativeOnly="true"
+            Comment="Extension of the file to save suites settings."/>
+ <constant Type="String"
+            Name="INSTALL_INFO_FILENAME"
+            Value=".ii"
+            NativeOnly="true"
+            Comment="Extension of the file to save the suite installation information."/>
+ <constant Type="String"
+            Name="PROPS_FILENAME"
+            Value=".ap"
+            NativeOnly="true"
+            Comment="Extension of the file to save the suite application properties."/>
+ <constant Type="String"
+            Name="SECURE_EXTENSION"
+            Value=".ssr"
+            NativeOnly="true"
+            Comment="Extension of the file to save the suite secure resources."/>
+ <constant Type="String"
+            Name="TMP_EXT"
+            Value=".tmp"
+            NativeOnly="true"
+            Comment="Temporary file extension."/>
+ <constant Type="String"
+            Name="IDX_EXTENSION"
+            Value=".idx"
+            NativeOnly="true"
+            Comment="RMS index file extension."/>
+ <constant Type="String"
+            Name="DB_EXTENSION"
+            Value=".db"
+            NativeOnly="true"
+            Comment="RMS database file extension."/>
+ <constant Type="String"
+            Name="JAR_EXTENSION"
+            Value=".jar"
+            NativeOnly="true"
+            Comment="Suite's JAR file extension."/>
+ <constant Type="String"
+            Name="TRANSACTION_DATA_FILENAME"
+            Value="_trans.dat"
+            NativeOnly="true"
+            Comment="Name of the file containing information about the current transaction."/>
+ <constant Type="String"
+            Name="SUITE_DATA_FILENAME"
+            Value="_suites.dat"
+            NativeOnly="true"
+            Comment="Name of the file with the basic information about the installed suites."/>
+ <constant Type="String"
+            Name="ICON_CACHE_FILENAME"
+            Value="_icons.dat"
+            NativeOnly="true"
+            Comment="Name of the file with the cached icons."/>
+ <constant Type="String"
+            Name="INSTALL_NOTIFY_PROP"
+            Value="MIDlet-Install-Notify"
+            NativeOnly="true"
+            Comment="MIDlet property for the install notify URL."/>
+ <constant Type="String"
+            Name="DELETE_NOTIFY_PROP"
+            Value="MIDlet-Delete-Notify"
+            NativeOnly="true"
+            Comment="MIDlet property for the delete notify URL."/>
+ <constant Type="String"
+            Name="SUITE_NAME_PROP"
+            Value="MIDlet-Name"
+            NativeOnly="true"
+            Comment="MIDlet property for the suite name."/>
+ <constant Type="String"
+            Name="SUITE_VENDOR_PROP"
+            Value="MIDlet-Name"
+            NativeOnly="true"
+            Comment="MIDlet property for the suite vendor."/>
+ <constant Type="String"
+            Name="SUITE_VERSION_PROP"
+            Value="MIDlet-Version"
+            NativeOnly="true"
+            Comment="MIDlet property for the suite version."/>
+ <constant Type="String"
+            Name="SUITE_DESC_PROP"
+            Value="MIDlet-Description"
+            NativeOnly="true"
+            Comment="MIDlet property for the suite description."/>
+ <constant Type="String"
+            Name="AMS_CMGR_DEFAULT_COMPONENT_URL"
+            Value="http://host/x.jar"
+            NativeOnly="false"
+            Comment="Default URL to install dynamic components from. Provider-defined."/>
+</constant_class>
+
+</constants>
+</configuration>

@@ -1,0 +1,200 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+
+# If USE_QT_FB is true, obtain the frame buffer from QT instead
+# of /dev/fb0.
+USE_QT_FB ?= true
+
+ifndef _CDC_GMK_
+_CDC_GMK_	=
+
+include $(CDC_DIST_DIR)/generated/build_defs.mk
+EXTRA_CFLAGS	+= $(CCFLAGS_SPEED) $(CVM_DEFINES)
+
+ifeq ($(TARGET_CPU), arm)
+EXTRA_CFLAGS	+= -DARM
+endif
+
+ifeq ($(USE_QT_FB), true)
+    ifeq ($(QTOPIA_SDK_DIR),)
+        export QTOPIA_SDK_DIR = /micro/tools/lib/linux-arm-qt/usr/lib/qt-emb-2.3.2
+    endif
+    ifeq ($(HOST_QTLIBDIR),)
+        HOST_QTLIBDIR = $(QTOPIA_SDK_DIR)/lib
+    endif
+
+    ifeq ($(TARGET_QTLIBDIR),)
+        TARGET_QTLIBDIR = $(QTOPIA_SDK_DIR)/lib
+    endif
+
+    EXTRA_INCLUDES  += -I$(QTOPIA_SDK_DIR)/include -I$(QTOPIA_SDK_DIR)/include/qpe
+    LIBS		+= -Wl,-rpath,$(TARGET_QTLIBDIR) -L$(HOST_QTLIBDIR) -lqte -lqpe
+endif
+
+ifeq ($(USE_DIRECTFB), true)
+    ifeq ($(DIRECTFB_INSTALL_DIR),)
+        export DIRECTFB_INSTALL_DIR = /usr/local
+    endif
+    ifeq ($(HOST_DIRECTFBLIBDIR),)
+        HOST_DIRECTFBLIBDIR = $(DIRECTFB_INSTALL_DIR)/lib
+    endif
+
+    ifeq ($(TARGET_DIRECTFBLIBDIR),)
+        TARGET_DIRECTFBLIBDIR = $(DIRECTFB_INSTALL_DIR)/lib
+    endif
+
+    EXTRA_INCLUDES  += -I$(DIRECTFB_INSTALL_DIR)/include/directfb
+    LIBS            += -Wl,-rpath,$(TARGET_DIRECTFBLIBDIR) 
+    LIBS            += -L$(HOST_DIRECTFBLIBDIR) -ldirectfb
+
+    EXTRA_CFLAGS    += -DDIRECTFB
+endif
+
+ifeq ($(USE_DIRECTDRAW), true)
+   EXTRA_CFLAGS += -DENABLE_DIRECT_DRAW=1
+else
+   EXTRA_CFLAGS += -DENABLE_DIRECT_DRAW=0
+endif
+
+#----------------------------------------------------------------------
+# CDC_DIST_DIR --
+#
+# This variable points to the CDC-VM binary distribution directory
+# from which we obtain the VM library, CDC class library, and other
+# build tools supplied by the VM.
+#
+#----------------------------------------------------------------------
+define cdc_dist_dir_help
+	echo 'ERROR: CDC_DIST_DIR points to invalid directory:'; \
+	echo '=========================================================='; \
+	echo 'Setting CDC_DIST_DIR:'; \
+	echo ''; \
+	echo 'If you build the CDC-VM yourself, you need to specify'; \
+	echo 'CDC_DIST_DIR as something like:'; \
+	echo '    CDC_DIST_DIR=$${CDC_DIR}/build/linux-x86-redhat'; \
+	echo '=========================================================='
+endef
+
+
+# CDC VM exported include directory
+#
+CDC_TARGET_CPU_i386 = x86
+CDC_TARGET_CPU_arm  = arm
+CDC_TARGET_CPU      = ${CDC_TARGET_CPU_${TARGET_CPU}}
+
+VM_INCLUDES += -I$(CDC_DIST_DIR)/include -I$(CDC_DIR)/src \
+               -I$(CDC_DIR)/src/share -I$(CDC_DIR)/src/share/javavm/export \
+               -I$(CDC_OS_COMPONENT_DIR)/src/$(TARGET_OS) -I$(CDC_DIST_DIR) \
+               -I$(CDC_OSCPU_COMPONENT_DIR)/src/$(TARGET_OS)-$(CDC_TARGET_CPU) \
+               -I$(CDC_CPU_COMPONENT_DIR)/src/$(CDC_TARGET_CPU) \
+	             -I$(MIDP_OUTPUT_DIR) \
+               -I$(MIDP_DIR)/src/core/vm_services/cdc_vm/native
+
+ifeq ($(USE_QT_FB), true)
+VM_INCLUDES += -I$(QTOPIA_SDK_DIR)/include -I$(QTOPIA_SDK_DIR)/include/qpe
+endif
+
+# Generate ROMStructs.h
+MIDP_ROMSTRUCTS_CLASSES += \
+	javax.microedition.lcdui.Graphics \
+	javax.microedition.lcdui.Image \
+	javax.microedition.lcdui.ImageData \
+	javax.microedition.lcdui.Font \
+	java.lang.String \
+	com.sun.midp.rms.RecordStoreFile \
+	com.sun.midp.chameleon.input.NativeInputMode \
+	com.sun.midp.io.j2me.storage.RandomAccessStream \
+	javax.microedition.lcdui.game.GameCanvas
+
+
+ROMSTRUCTS_H = $(MIDP_OUTPUT_DIR)/ROMStructs.h
+
+$(ROMSTRUCTS_H): $(MIDP_CLASSES_ZIP)
+	@echo "creating $@..."
+	$(AT)$(JDK_DIR)/bin/javah -old \
+		-bootclasspath $(CVM_BUILDTIME_CLASSESZIP) \
+		-classpath $^ -o $@ \
+		$(MIDP_ROMSTRUCTS_CLASSES)
+	$(AT)perl $(MIDP_DIR)/build/common/genROMStructs.pl $@
+
+#
+# Create a separate zip file that contains classes excluded
+# from MIDP_CLASSES_ZIP. These classes are public MIDP classes,
+# but are not in MIDP_CLASSES_ZIP. Instead their implementations
+# are provided by CDC. The separate zip file is not used for 
+# runtime and it should not be added to the bootclasspath or
+# midp library path. It is used for the MIDP signature
+# test only.
+#
+MIDP_EXCLUDED_CLASS_ZIP = ${CDC_DIST_DIR}/lib/midpexcludedclasses.zip
+MIDP_DEPS += $(MIDP_EXCLUDED_CLASS_ZIP)
+
+MIDP_EXCLUDED_CLASS_DIR = $(MIDP_OUTPUT_DIR)/excludedclasses
+
+# The list of classes excluded from MIDP/CDC build.
+MIDP_EXCLUDED_JAVA_FILES = \
+    $(MIDP_DIR)/src/core/javautil/classes/java/util/Timer.java \
+    $(MIDP_DIR)/src/core/javautil/classes/java/util/TimerTask.java \
+    $(MIDP_DIR)/src/core/javautil/classes/java/lang/IllegalStateException.java \
+    $(MIDP_DIR)/src/security/pki/reference/classes/javax/microedition/pki/Certificate.java \
+    $(MIDP_DIR)/src/security/pki/reference/classes/javax/microedition/pki/CertificateException.java \
+    $(MIDP_DIR)/src/protocol/serial/classes/javax/microedition/io/CommConnection.java \
+    $(MIDP_DIR)/src/protocol/http/classes/javax/microedition/io/HttpConnection.java \
+    $(MIDP_DIR)/src/protocol/https/classes/javax/microedition/io/HttpsConnection.java \
+    $(MIDP_DIR)/src/protocol/ssl/classes/javax/microedition/io/SecureConnection.java \
+    $(MIDP_DIR)/src/protocol/ssl/classes/javax/microedition/io/SecurityInfo.java \
+    $(MIDP_DIR)/src/protocol/ssocket/classes/javax/microedition/io/ServerSocketConnection.java \
+    $(MIDP_DIR)/src/protocol/socket/classes/javax/microedition/io/SocketConnection.java \
+    $(MIDP_DIR)/src/protocol/udp/classes/javax/microedition/io/UDPDatagramConnection.java
+
+# Create the MIDP_EXCLUDED_CLASS_ZIP for the signature test.
+$(MIDP_EXCLUDED_CLASS_ZIP) : $(MIDP_EXCLUDED_JAVA_FILES)
+	@echo "creating $@..."
+	$(AT)mkdir -p $(MIDP_EXCLUDED_CLASS_DIR)
+	$(AT)$(JDK_DIR)/bin/javac \
+		-bootclasspath "$(VM_BOOTCLASSPATH)$(PATHSEP)$(MIDP_CLASSES_ZIP)" \
+		-d $(MIDP_EXCLUDED_CLASS_DIR) \
+		$(MIDP_EXCLUDED_JAVA_FILES)
+	$(AT)cd $(MIDP_EXCLUDED_CLASS_DIR); zip -r -q $@ *
+
+# The CDC build cannot compile the following files yet. 
+cdc_dummies:
+	$(AT)mkdir -p $(GENERATED_DIR)
+	$(AT)for i in jvmconfig.h ; do \
+	    if test ! -f $(GENERATED_DIR)/$$i; then \
+		echo "creating dummy $$i"; \
+		echo '// empty' > $(GENERATED_DIR)/$$i; \
+	    fi; \
+	 done	
+
+# ifndef _CDC_GMK_
+endif
+
+# Add configuration input files set by JSRs subsystem
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+	$(JSR_CONFIGURATION_INPUT_FILES)
+
