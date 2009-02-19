@@ -162,10 +162,6 @@ int get_allowed_severity_c(int channelID) {
         case LC_JSR290:
             return(getInternalPropertyInt("JSR290"));
         case LC_JSR257:
-// ALEXEY {
-    printf("DEBUG: midp_logging.c: LC_JSR257: propJSR257 = %d\n",
-        getInternalPropertyInt("JSR257"));        
-// ALEXEY }
             return(getInternalPropertyInt("JSR257"));
         case LC_EVENTS:
             return(getInternalPropertyInt("EVENTS"));
