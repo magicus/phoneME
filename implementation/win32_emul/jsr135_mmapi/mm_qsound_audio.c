@@ -120,6 +120,7 @@ static void MQ234_CALLBACK eom_event_trigger(void *userData)
             // needs to be in milliseconds, so dive by 10
             long ms = mQ234_PlayControl_GetPosition(hm->synth) / 10;
             sendEOM(hm->hdr.isolateID, hm->hdr.playerID, ms);
+            mQ234_PlayControl_Play(hm->synth, FALSE);
         }
         break;
 
@@ -1535,7 +1536,7 @@ static javacall_result audio_qs_start(javacall_handle handle){
     if (JAVACALL_OK == audio_qs_get_duration(handle, &duration) && 
             duration != -1) {
         javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DURATION_UPDATED,
-            h->hdr.isolateID, h->hdr.playerID, JAVACALL_OK, (void*)&duration);
+            h->hdr.isolateID, h->hdr.playerID, JAVACALL_OK, (void*)duration);
     }
     //printf("audio_start...\n");
     switch(h->hdr.mediaType)
