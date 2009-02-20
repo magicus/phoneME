@@ -178,7 +178,7 @@ ifeq ($(CVM_JVMTI), true)
 ifeq ($(CVM_JVMPI), false)
 $(CVM_LIBDIR)/jvm.hprof.txt:
 	@echo "Copying $@"
-	@if [ ! -d $@ ]; then cp $(CVM_JVMTI_HPROF_SHAREROOT)/jvm.hprof.txt $@; fi
+	@if [ ! -d $@ ]; then cp -f $(CVM_JVMTI_HPROF_SHAREROOT)/jvm.hprof.txt $@; fi
 	@echo "Done Copying $@"
 endif
 endif
