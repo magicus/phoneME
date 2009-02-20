@@ -451,13 +451,16 @@ USE_VERIFY_ONCE::
 
 USE_ON_DEVICE_DEBUG::
 	@if [ "$(USE_ON_DEVICE_DEBUG)" = "true" ]; then \
-	  if [ -z "$(PROJECT_MIDP_DIR)" ]; then \
-	    echo "ERROR: PROJECT_MIDP_DIR must be set when USE_ON_DEVICE_DEBUG is true"; \
-	    exit -1; \
-	  fi; \
-	  if [ -z "$(SDK_ODD_DIR)" && -z "$(SDK_ODD_JAR)" ]; then \
-	    echo "ERROR: SDK_ODD_DIR or SDK_ODD_JAR must be set when USE_ON_DEVICE_DEBUG is true"; \
-	    exit -1; \
+	  if [ "$(PRECOMPILED_ODD)" = "true" ]; then \
+	    if [ -z "$(FULL_ODD_JAR)" ]; then \
+	      echo "ERROR: FULL_ODD_JAR must be set when USE_ON_DEVICE_DEBUG and PRECOMPILED_ODD are true"; \
+	      exit -1; \
+	    fi; \
+	  else \
+	    if [ -z "$(SDK_ODD_DIR)" && -z "$(SDK_ODD_JAR)" ]; then \
+	      echo "ERROR: SDK_ODD_DIR or SDK_ODD_JAR must be set when USE_ON_DEVICE_DEBUG is true and PRECOMPILED_ODD is false"; \
+	      exit -1; \
+	    fi; \
 	  fi; \
 	fi
 
