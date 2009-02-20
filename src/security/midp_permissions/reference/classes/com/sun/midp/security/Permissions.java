@@ -382,12 +382,31 @@ public final class Permissions {
         PermissionGroup[] groups = null;
 
         if (groupsAll != null) {
-            // merge two SEND/READ_[RESTRICTED_]MESSAGE_GROUP groups into one
-            // for each of two pairs (messaging/restricted messaging)
-            groups = new PermissionGroup[groupsAll.length - 2];
+            /* 
+             * Merge two SEND/READ_[RESTRICTED_]MESSAGE_GROUP groups into one
+             * for each of two pairs (messaging/restricted messaging).
+             * Before the merge, calculate how many pairs we have.
+             */
+            int i, numberOfPairs;
+            int numOfMsgGroupEntries = 0, numOfRestrictedMsgGroupEntries = 0;
+
+            for (i = 0; i < groupsAll.length; i++) {
+                if (groupsAll[i] == READ_MESSAGE_GROUP ||
+                    groupsAll[i] == SEND_MESSAGE_GROUP) {
+                    numOfMsgGroupEntries++;
+                } else if (groupsAll[i] == READ_RESTRICTED_MESSAGE_GROUP ||
+                           groupsAll[i] == SEND_RESTRICTED_MESSAGE_GROUP) {
+                    numOfRestrictedMsgGroupEntries++;
+                }
+            }
+
+            numberOfPairs = (numOfMsgGroupEntries == 2 ? 1 : 0) +
+                            (numOfRestrictedMsgGroupEntries == 2 ? 1 : 0);
+
+            groups = new PermissionGroup[groupsAll.length - numberOfPairs];
             int n = 0;
 
-            for (int i = 0; i < groupsAll.length; i++) {
+            for (i = 0; i < groupsAll.length; i++) {
                 if (groupsAll[i] == READ_MESSAGE_GROUP ||
                     groupsAll[i] == READ_RESTRICTED_MESSAGE_GROUP) {
                     continue;

@@ -391,10 +391,45 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290FluidEvent.spare) >> 32);
         pNewMidpEvent->intParam1 = JSR290_CANCEL_REQUEST;
         break;
-	case JSR290_JC_EVENT_COMPLETION_NOTIFICATION:
+    case JSR290_JC_EVENT_FLUID_FILTER_XML_HTTP_REQUEST:
+        pNewSignal->waitingFor   = JSR290_FLUID_EVENT_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
+        pNewMidpEvent->type      = FLUID_EVENT;
+        pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
+        pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
+        pNewMidpEvent->intParam1 = JSR290_FILTER_XML_HTTP;
+        pNewMidpEvent->intParam4 = (int)((jlong)(event->data.jsr290FluidEvent.spare));
+        pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290FluidEvent.spare) >> 32);
+        {
+            int len = 0;
+            if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text, &len)) {
+                len = 0;
+            }
+            pcsl_string_convert_from_utf16(event->data.jsr290FluidEvent.text, len,
+                                           &pNewMidpEvent->stringParam1);
+        }
+        javacall_free(event->data.jsr290FluidEvent.text);
+        {
+            int len = 0;
+            if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text1, &len)) {
+                len = 0;
+            }
+            pcsl_string_convert_from_utf16(event->data.jsr290FluidEvent.text1, len,
+                                           &pNewMidpEvent->stringParam2);
+        }
+        javacall_free(event->data.jsr290FluidEvent.text1);
+        break;
+    case JSR290_JC_EVENT_COMPLETION_NOTIFICATION:
         pNewSignal->waitingFor   = JSR290_INVOCATION_COMPLETION_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290NotificationEvent.invocation_id;
         break;
+        case JSR290_JC_EVENT_HANDLE_EVENT:
+        pNewSignal->waitingFor   = JSR290_FLUID_EVENT_SIGNAL;
+    	pNewMidpEvent->type = FLUID_EVENT;
+        pNewMidpEvent->intParam4 = (int)((jlong)(event->data.jsr290HandleEventRequest.request_handle));
+        pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290HandleEventRequest.request_handle) >> 32);
+        pNewMidpEvent->intParam1 = JSR290_HANDLE_EVENT;
+    	break;
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_177
@@ -430,24 +465,37 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     case JSR257_JC_EVENT_CONTACTLESS:
         if(event->data.jsr257Event.eventType < JSR257_EVENTS_NUM) {
             pNewSignal->waitingFor = JSR257_CONTACTLESS_SIGNAL;
-            switch(event->data.jsr257Event.eventType) {
-            case JSR257_STOP_TARGET_DISCOVERY:
-                pNewSignal->descriptor = JSR257_TARGET_DISCOVERED;
-                pNewSignal->status     = JSR257_STOP_TARGET_DISCOVERY;
-                break;
-            case JSR257_STOP_NDEF_RECORD_DISCOVERY:
-                pNewSignal->descriptor = JSR257_NDEF_RECORD_DISCOVERED;
-                pNewSignal->status     = JSR257_STOP_NDEF_RECORD_DISCOVERY;
-                break;
-            default:
-                pNewSignal->descriptor = event->data.jsr257Event.eventType;
-                break;
-            }
+            pNewSignal->descriptor = event->data.jsr257Event.eventType;
         } else {
             REPORT_ERROR1(LC_CORE,"Invalid contactless event type: %d\n", 
                 event->data.jsr257Event.eventType);
         }
         break;
+         
+    case JSR257_JC_MIDP_EVENT:
+      printf("\n DEBUG: midp_msgQueue_md.c(): data.jsr257Event.eventType = %d\n",
+        event->data.jsr257Event.eventType);
+       if(event->data.jsr257Event.eventType < JSR257_MIDP_EVENTS_NUM) {
+            pNewSignal->waitingFor   = JSR257_EVENT_SIGNAL;
+            pNewSignal->descriptor   = event->data.jsr257Event.eventType;
+            pNewMidpEvent->type      = CONTACTLESS_EVENT;
+            pNewMidpEvent->intParam1 = event->data.jsr257Event.eventType;
+            pNewMidpEvent->JSR257_ISOLATE = (int)(event->data.jsr257Event.isolateId);
+            pNewMidpEvent->intParam3 = (int)(event->data.jsr257Event.eventData[0]);
+            pNewMidpEvent->intParam4 = (int)(event->data.jsr257Event.eventData[1]);
+            pNewMidpEvent->intParam5 = (int)(event->data.jsr257Event.eventData[2]);
+            
+       } else {
+            REPORT_ERROR1(LC_CORE,"Invalid contactless MIDP event type: %d\n", 
+                event->data.jsr257Event.eventType);
+       }
+       break;
+       
+    case JSR257_JC_PUSH_NDEF_RECORD_DISCOVERED:
+        pNewSignal->waitingFor   = JSR257_PUSH_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr257Event.eventData[0];
+       break;
+
 #endif /* ENABLE_JSR_257 */
 
 #if ENABLE_MULTIPLE_ISOLATES
@@ -462,7 +510,8 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam1 = 0;
         break;
 #endif /* ENABLE_MULTIPLE_ISOLATES */
-#if ENABLE_JSR_256
+#if !ENABLE_CDC
+#ifdef ENABLE_JSR_256
     case JSR256_JC_EVENT_SENSOR_AVAILABLE:
         pNewSignal->waitingFor = JSR256_SIGNAL;
         pNewMidpEvent->type    = SENSOR_EVENT;
@@ -474,6 +523,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
         break;
 #endif /* ENABLE_JSR_256 */
+#endif /* !ENABLE_CDC */
 #ifdef ENABLE_API_EXTENSIONS
 case MIDP_JC_EVENT_VOLUME:
 		pNewSignal->waitingFor = VOLUME_SIGNAL;
@@ -482,7 +532,6 @@ case MIDP_JC_EVENT_VOLUME:
 	break;
 #endif /* ENABLE_API_EXTENSIONS */
 	default:
-
         REPORT_ERROR(LC_CORE,"Unknown event.\n");
         break;
     };

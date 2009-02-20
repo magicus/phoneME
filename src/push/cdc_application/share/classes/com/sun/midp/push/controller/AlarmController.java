@@ -1,22 +1,22 @@
 /*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -177,6 +177,58 @@ final class AlarmController {
     }
 
     /**
+     * Dumps alarms for the given suite.
+     *
+     * <p>
+     * NOTE: <code>midletSuiteID</code> must refer to valid installed
+     *  <code>MIDlet</code> suite.  However, it might refer to the
+     *  suite without alarms.
+     * </p>
+     *
+     * @param midletSuiteID ID of the suite to dump alarms for
+     * @param store dump destination
+     * @throws IOException if dump fails
+     */
+    public synchronized void dumpSuiteAlarms(
+            final int midletSuiteID, final Store store) throws IOException {
+
+        class AlarmsConsumer implements Store.AlarmsConsumer {
+            private IOException ex;
+
+            AlarmsConsumer() throws IOException {
+                AlarmController.this.store.listAlarms(this);
+                if (ex != null) {
+                    throw ex;
+                }
+            }
+
+            public void consume(final int suiteID, final Map suiteAlarms) {
+                if (midletSuiteID != suiteID) {
+                    return;
+                }
+
+                try {
+                    for (Iterator it = suiteAlarms.entrySet().iterator();
+                                                            it.hasNext(); ) {
+                        final Map.Entry entry = (Map.Entry) it.next();
+                        final String midlet = (String) entry.getKey();
+                        final Long time = (Long) entry.getValue();
+
+                        store.addAlarm(midletSuiteID, midlet, time.longValue());
+                    }
+                } catch (IOException e) {
+                    logError(
+                        "Failed to write alarm info to the persistent store: "
+                        + e);
+                    ex = e;
+                }
+            }
+        }
+
+        new AlarmsConsumer();
+    }
+
+    /**
      * Disposes an alarm controller.
      *
      * <p>
@@ -207,7 +259,7 @@ final class AlarmController {
 
         /** Cancelation status. */
         private boolean cancelled = false;
-        
+
         /** Scheduled execution time. */
         private long scheduledTime;
 
@@ -221,11 +273,11 @@ final class AlarmController {
             this.midpApp = midpApp;
             this.scheduledTime = scheduledTime;
         }
-        
+
         /**
-         * Returns scheduled time. 
-         * This is different from what #scheduledExecutionTime() returns 
-         * as #scheduledExecutionTime() returns <code>0</code> 
+         * Returns scheduled time.
+         * This is different from what #scheduledExecutionTime() returns
+         * as #scheduledExecutionTime() returns <code>0</code>
          * for not scheduled tasks.
          */
         long getScheduledAlarmTime() {
@@ -250,9 +302,9 @@ final class AlarmController {
                      * cannot be scheduled anymore.
                      */
                     /*
-		     * TBD: uncomment when logging can be disabled
+            * TBD: uncomment when logging can be disabled
                      * (not to interfer with unittests)
-		     * logError(
+            * logError(
                      *       "Failed to launch \"" + midpApp.midlet + "\"" +
                      *       " (suite ID: " + midpApp.midletSuiteID + "): " +
                      *       ex);
@@ -280,8 +332,8 @@ final class AlarmController {
         alarms.put(midpApp, newTask);
         try {
             timer.schedule(newTask, date);
-        } catch (IllegalArgumentException e) {         
-            // Timer javadoc: 
+        } catch (IllegalArgumentException e) {
+            // Timer javadoc:
             //  throws IllegalArgumentException if time.getTime() is negative
 
             // register alarm but don't schedule it for execution to pass TCK.

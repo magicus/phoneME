@@ -213,6 +213,10 @@ public final class SecurityInitializer {
         "com.sun.jsr082.security.SecurityInitializer$SecurityTrusted",
         // #endif ENABLE_JSR_82
 
+        // #ifdef ENABLE_JSR_135
+        "com.sun.mmedia.rtsp.RtspConnection$SecurityTrusted",
+        // #endif ENABLE_JSR_135
+
         // #ifdef ENABLE_JSR_234
         "com.sun.amms.AMMSMPEventListener$SecurityTrusted",
         // #endif ENABLE_JSR_234
@@ -243,6 +247,10 @@ public final class SecurityInitializer {
         "com.sun.fluid.FluidMidpEventDispatcher$SecurityTrusted",
         "com.sun.j2me.dom.DOMFactory$SecurityTrusted",
         // #endif ENABLE_JSR_290
+
+        // #ifdef ENABLE_JSR_257
+        "com.sun.contactless.NfcMidpEventDispatcher$SecurityTrusted",
+        // #endif ENABLE_JSR_257
 
         // Pass the security token to the i3 test framework.
         // #ifdef ENABLE_I3_TEST

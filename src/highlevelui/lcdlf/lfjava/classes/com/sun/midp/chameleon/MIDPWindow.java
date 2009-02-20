@@ -28,6 +28,7 @@ package com.sun.midp.chameleon;
 
 import com.sun.midp.chameleon.layers.*;
 import com.sun.midp.chameleon.skins.*;
+import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
@@ -161,6 +162,27 @@ public class MIDPWindow extends CWindow {
             tunnel.scheduleRepaint();
         }
     }
+    
+    /**
+     * Request a hide notify. This method does not require any bounds
+     * information as it is contained in each of the Chameleon layers.
+     */
+    public void requestHideNotify() {
+        if (tunnel != null) {
+            tunnel.callHideNotify();
+        }
+    }
+    
+    /**
+     * Request a show notify. This method does not require any bounds
+     * information as it is contained in each of the Chameleon layers.
+     */
+   public void requestShowNotify() {
+        if (tunnel != null) {
+            tunnel.callShowNotify();
+        }
+    }
+
 
     /**
      * Set the title of this MIDPWindow. This would typically
@@ -317,7 +339,7 @@ public class MIDPWindow extends CWindow {
 		    buttonLayer.updateCommandSet(
 						 null, 0, null, cmds, cmds.length,
 						 popup.getCommandListener());
-		}
+		} 
 	    }
 	    
 	    if (layer instanceof PTILayer) {
@@ -337,7 +359,7 @@ public class MIDPWindow extends CWindow {
             mainLayers[KEYBOARD_LAYER] = layer;
             resize();
         }
-
+        
         return added;
     }
 
@@ -630,8 +652,8 @@ public class MIDPWindow extends CWindow {
 					  boolean isFullScn, 
 					  boolean scrollBarIsVisible) {
 	int w = width;
-	// TODO: scroll arrows (bar? ) indicator has to be hidden?
-	if (scrollBarIsVisible) {
+	if (scrollBarIsVisible && 
+	    ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR) {
 	    w -= ScrollIndSkin.WIDTH;
 	}
 	return w;
@@ -686,6 +708,33 @@ public class MIDPWindow extends CWindow {
      */
     public int getAlertHeight() {
         return alertLayer.bounds[H];
+    }
+
+    /** 
+     * Calculate the width of some default Alert layer wich is still not rendered on the screen
+     * depending on the screen mode and the layers attached to the screen
+     * @param width screen width 
+     * @param scrollBarIsVisible true if the scroll bar is in use for the body layer 
+     * @return width of the paticular body layer
+     */
+    public static int getDefaultAlertWidth(int width, 
+					  boolean scrollBarIsVisible) {
+	int w = AlertSkin.WIDTH == -1 ? (int)(.95 * width) : AlertSkin.WIDTH;
+	if (scrollBarIsVisible &&
+	    ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR) {
+	    w -= ScrollIndSkin.WIDTH;
+	}
+	return w;
+    }
+    
+    /** 
+     * Calculate the height of some default Alert layer wich is still not rendered on the screen 
+     * depending on the screen mode and the layers attached to the screen
+     * @param height screen height
+     * @return height of the paticular body layer
+     */
+    public static int getDefaultAlertHeight(int height) {
+	return AlertSkin.HEIGHT == -1 ? (int)(.75 * height) : AlertSkin.HEIGHT;
     }
 
     /**

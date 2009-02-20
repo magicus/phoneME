@@ -99,5 +99,12 @@
             Value="maximum"
             Scope="internal"
             Comment="Default security domain. The property is intended for emulators"/>
+
+<!-- SYSTEM PROPERTIES -->
+<!-- Visible from System.getProperty() -->
+  <property Key="path.separator" 
+		Value=";" 
+		Scope="system"
+		Comment="Path separator."/>
 </properties>
 </configuration>

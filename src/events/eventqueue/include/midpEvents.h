@@ -261,6 +261,17 @@ extern "C" {
  */
 #define MIDP_JAVA_PROFILER_CONTROL_EVENT        71
 
+/**
+ * JSR 257 notification event
+ */
+#define CONTACTLESS_EVENT      72
+
+/** 
+ * Events added for focus integration with native applications
+ */
+#define NATIVE_WINDOW_LOST_FOCUS 73
+#define NATIVE_WINDOW_GAINED_FOCUS 74
+
 /** @} */
 
 /**
@@ -284,6 +295,9 @@ extern "C" {
 #define MM_EVT_TYPE     intParam4
 #define MM_EVT_STATUS   intParam5
 #define MM_STRING       stringParam1
+
+#define JSR257_ISOLATE  intParam2
+
 /** @} */
 
 /**

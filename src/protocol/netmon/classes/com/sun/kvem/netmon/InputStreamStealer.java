@@ -130,7 +130,15 @@ public class InputStreamStealer
         super.close();
         src.close();
 
-        if (md >= 0) {
+        disconnect();
+    }
+    
+    /**
+     * Report disconnected stream. Do not close the underlying stream, 
+     * as it may be reused.     
+     */         
+    public void disconnect() {
+        if (md >=0) {
             netAgent.close(md);
         }
     }

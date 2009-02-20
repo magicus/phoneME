@@ -59,7 +59,7 @@
 #ifndef _MIDP_MALLOC_H_
 #define _MIDP_MALLOC_H_
 
-#include <stdlib.h> 
+#include <stdlib.h>
 
 #include <midp_logging.h>
 

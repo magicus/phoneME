@@ -247,6 +247,12 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam1 = event->data.displayDeviceEvent.hardwareId;
         pNewMidpEvent->intParam2 = event->data.displayDeviceEvent.state;
         break;
+#if ENABLE_ON_DEVICE_DEBUG
+    case MIDP_JC_ENABLE_ODD_EVENT:
+        pNewSignal->waitingFor = AMS_SIGNAL;
+        pNewMidpEvent->type = MIDP_ENABLE_ODD_EVENT;
+        break;
+#endif
 	case MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED:
         pNewSignal->waitingFor = DISPLAY_DEVICE_SIGNAL;
         pNewMidpEvent->type    = DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT;
@@ -432,7 +438,8 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam1 = 0;
         break;
 #endif /* ENABLE_MULTIPLE_ISOLATES */
-#if ENABLE_JSR_256
+#if !ENABLE_CDC
+#ifdef ENABLE_JSR_256
     case JSR256_JC_EVENT_SENSOR_AVAILABLE:
         pNewSignal->waitingFor = JSR256_SIGNAL;
         pNewMidpEvent->type    = SENSOR_EVENT;
@@ -444,6 +451,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
 		break;
 #endif /* ENABLE_JSR_256 */
+#endif /* !ENABLE_CDC */
     default:
         REPORT_ERROR1(LC_CORE,"checkForSystemSignal(): Unknown event %d.\n", event->eventType);
         break;
@@ -600,6 +608,7 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
                                     newSignal.status);
             break;
 #endif /* ENABLE_JSR_177 */
+#if !ENABLE_CDC
 #ifdef ENABLE_JSR_256
         case JSR256_SIGNAL:
             if (newMidpEvent.type == SENSOR_EVENT) {
@@ -610,6 +619,7 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             }
             break;
 #endif /* ENABLE_JSR_256 */
+#endif /* !ENABLE_CDC */
         case NETWORK_STATUS_SIGNAL:
             if (MIDP_NETWORK_UP == newSignal.status) {
                 midp_thread_signal_list(blocked_threads,

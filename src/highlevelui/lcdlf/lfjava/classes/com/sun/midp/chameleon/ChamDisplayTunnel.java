@@ -84,6 +84,18 @@ public interface ChamDisplayTunnel {
     public void callSizeChanged(int w, int h);
 
     /**
+     * This method is used by Chameleon to invoke
+     * hideNotify() method by Canvas.
+     */ 
+    public void callHideNotify();
+    
+     /**
+     * This method is used by Chameleon to invoke
+     * showNotify() method by Canvas.
+     */
+    public void callShowNotify(); 
+
+    /**
      * This method is used by Chameleon to invoke 
      * Displayable.uCallScrollContent() method.
      *

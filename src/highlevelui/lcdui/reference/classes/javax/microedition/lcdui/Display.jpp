@@ -2573,6 +2573,14 @@ public class Display {
 	return MIDPWindow.getDefaultBodyWidth(WIDTH, isFullScn, withScrollBar);
     }
     
+    /** Get the width of some default alert depending on the layers attached to the screen 
+     * @param withScrollBar true if the scroll bar is in use for the  displayable
+     * @return width of the paticular displayable
+     */
+    static int getDefaultAlertWidth(boolean withScrollBar) {
+	return MIDPWindow.getDefaultAlertWidth(WIDTH, withScrollBar);
+    }
+
     /** 
      * Get the height of some default displayable depending on the screen mode and 
      * the layers attached to the screen 
@@ -2589,6 +2597,13 @@ public class Display {
 	return MIDPWindow.getDefaultBodyHeight(HEIGHT, isFullScn, withTitle, withTicker, withCmds);
     }
     
+    /** 
+     * Get the height of some default alert 
+     * @return height of the paticular body layer
+     */
+    static int getDefaultAlertHeight() {
+	return MIDPWindow.getDefaultAlertHeight(HEIGHT);
+    }
 
     // #endif ENABLE_CHAMELEON
 
@@ -2752,6 +2767,48 @@ public class Display {
                 currentCopy.uCallSizeChanged(w, h);
             }
         }
+        
+        /**
+         * This method is used by Chameleon to invoke
+         * hideNotify() method from Canvas. This may call into
+         * application code if the current displayable
+         * is a canvas or canvas subclass.
+         */
+        public void callHideNotify() {
+            // A copy of current LF object            
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null && currentCopy instanceof CanvasLF) {
+                CanvasLFImpl canvasLF = (CanvasLFImpl)currentCopy;
+                try {
+                    synchronized (Display.calloutLock) {
+                        canvasLF.canvas.hideNotify();
+                    }
+                } catch (Throwable thr) {
+                    Display.handleThrowable(thr);
+                }
+            }
+        } 
+
+        /**
+         * This method is used by Chameleon to invoke
+         * showNotify methos from Canvas. This may call into
+         * application code if the current displayable
+         * is a canvas or canvas subclass.
+         */
+        public void callShowNotify() {
+            // A copy of current LF object
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null && currentCopy instanceof CanvasLF) {
+                CanvasLFImpl canvasLF = (CanvasLFImpl)currentCopy;
+                try {
+                    synchronized (Display.calloutLock) {
+                        canvasLF.canvas.showNotify();
+                    }
+                } catch (Throwable thr) {
+                    Display.handleThrowable(thr);
+                }
+           }
+        }  
 
         /**
          * This method is used by Chameleon to invoke

@@ -1,22 +1,22 @@
 /*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -315,6 +315,54 @@ final class ConnectionController {
     }
 
     /**
+     * Dumps connections for the given suite.
+     *
+     * <p>
+     * NOTE: <code>midletSuiteID</code> must refer to valid installed
+     *  <code>MIDlet</code> suite.  However, it might refer to the
+     *  suite without connections.
+     * </p>
+     *
+     * @param midletSuiteID ID of the suite to dump connections for
+     * @param store dump destination
+     * @throws IOException if dump fails
+     */
+    public synchronized void dumpSuiteConnections(
+            final int midletSuiteID, final Store store) throws IOException {
+
+        class ConnectionsConsumer implements Store.ConnectionsConsumer {
+            private IOException ex;
+
+            ConnectionsConsumer() throws IOException {
+                ConnectionController.this.store.listConnections(this);
+                if (ex != null) {
+                    throw ex;
+                }
+            }
+
+            public void consume(
+                    final int suiteId, final ConnectionInfo [] connections) {
+                if (midletSuiteID != suiteId) {
+                    return;
+                }
+
+                ConnectionInfo info = null;
+                try {
+                    for (int i = 0; i < connections.length; i++) {
+                        info = connections[i];
+                        store.addConnection(midletSuiteID, info);
+                    }
+                } catch (IOException e) {
+                    logError("failed to store " + info + ": " + e);
+                    ex = e;
+                }
+            }
+        }
+
+        new ConnectionsConsumer();
+    }
+
+    /**
      * Disposes a connection controller.
      *
      * <p>
@@ -489,25 +537,23 @@ final class ConnectionController {
 
         /** {@inheritDoc} */
         public void dataAvailable() {
-            synchronized (ConnectionController.this) {
-                if (cancelled) {
-                    return;
-                }
+            if (cancelled) {
+                return;
+            }
 
-                try {
-                    lifecycleAdapter.launchMidlet(midpApp.midletSuiteID,
-                            midpApp.midlet);
-                } catch (Exception ex) {
-                    /* IMPL_NOTE: need to handle _all_ the exceptions. */
-                    /*
-		     * TBD: uncomment when logging can be disabled
-                     * (not to interfer with unittests)
-		     * logError(
-		     *      "Failed to launch \"" + midpApp.midlet + "\"" +
-                     *       " (suite ID: " + midpApp.midletSuiteID + "): " +
-                     *       ex);
-                     */
-                }
+            try {
+                lifecycleAdapter.launchMidlet(midpApp.midletSuiteID,
+                        midpApp.midlet);
+            } catch (Exception ex) {
+                /* IMPL_NOTE: need to handle _all_ the exceptions. */
+                /*
+                 * TBD: uncomment when logging can be disabled
+                 * (not to interfer with unittests)
+                 * logError(
+                 *      "Failed to launch \"" + midpApp.midlet + "\"" +
+                 *       " (suite ID: " + midpApp.midletSuiteID + "): " +
+                 *       ex);
+                 */
             }
         }
     }

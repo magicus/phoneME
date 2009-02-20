@@ -85,6 +85,16 @@ alias: payment
 alias: satsa
   javax.microedition.apdu.sat
 
+alias: contactless
+  javax.microedition.contactless.DiscoveryManager,
+  javax.microedition.io.Connector.ndef,
+  javax.microedition.io.Connector.rf,
+  javax.microedition.io.Connector.sc,
+  javax.microedition.io.Connector.vtag
+
+alias: nfc_write_access
+  javax.microedition.contactless.ndef.NDEFTagConnection.write
+
 domain: minimum,unsecured
 
 domain: maximum,unsecured
@@ -105,6 +115,8 @@ allow: landmark
 allow: payment
 allow: satsa
 allow: sensor
+allow: contactless
+allow: nfc_write_access
 
 domain: manufacturer
 allow: net_access
@@ -124,6 +136,8 @@ allow: landmark
 allow: payment
 allow: satsa
 allow: sensor
+allow: contactless
+allow: nfc_write_access
 
 domain: operator
 allow: net_access
@@ -142,6 +156,8 @@ allow: location
 allow: landmark
 allow: payment
 allow: satsa
+allow: contactless
+allow: nfc_write_access
 
 domain: identified_third_party
 blanket(session): net_access
@@ -160,6 +176,8 @@ allow: payment
 blanket(session): authentication
 blanket(session): smart_card
 blanket(session): sensor
+allow: contactless
+blanket(session): nfc_write_access
 
 domain: unidentified_third_party,unsecured
 session(oneshot): net_access
@@ -175,3 +193,5 @@ oneshot(oneshot): write_user_data_access
 session(oneshot): location
 session(oneshot): landmark
 session(oneshot): sensor
+allow: contactless
+session(oneshot): nfc_write_access

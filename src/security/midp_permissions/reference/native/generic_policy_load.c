@@ -167,7 +167,7 @@ static struct _group_member {
                 sizeof(local_connectivity_members)/sizeof(string)},
     {messaging_members, 
                 sizeof(messaging_members)/sizeof(string)},
-    {restricted_messaging_members, 
+    {restricted_messaging_members,
                 sizeof(restricted_messaging_members)/sizeof(string)},
     {multimedia_recording_members, 
                 sizeof(multimedia_recording_members)/sizeof(string)},
