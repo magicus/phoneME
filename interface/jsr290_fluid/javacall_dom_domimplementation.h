@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -287,101 +287,6 @@ javacall_result
 javacall_dom_domimplementation_create_document_finish(void *context,
                                                       /* OUT */ javacall_handle* ret_value,
                                                       /* OUT */ javacall_dom_exceptions* exception_code);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR  This method returns a specialized object which implements the 
- * specialized APIs of the specified feature and version, as specified 
- * in <a href="http://www.w3.org/TR/DOM-Level-3-Core/core.html#DOMFeatures"
- * >DOM Features</a>. The specialized object may also be obtained by using 
- * binding-specific casting methods but is not necessarily expected to, 
- * as discussed in 
- * <a href="http://www.w3.org/TR/DOM-Level-3-Core/core.html#Embedded-DOM"
- * >Mixed DOM Implementations</a>.
- * This method also allow the implementation to 
- * provide specialized objects which do not support the 
- * <code>DOMImplementation</code> interface. 
- * <p><b>Note:</b> when using the methods that take a feature and a 
- * version as parameters, applications can use NULL or empty string 
- * for the version parameter if they don't wish to specify a particular
- * version for the specified feature.
- * 
- * @param handle Pointer to the object representing this domimplementation.
- * @param invocation_id Invocation identifier which MUST be used in the 
- *                  corresponding javanotify function.
- * @param context The context saved during asynchronous operation.
- * @param feature  The name of the feature requested. Note that any plus 
- *   sign "+" prepended to the name of the feature will be ignored since 
- *   it is not significant in the context of this method. 
- * @param version  This is the version number of the feature to test. 
- * @param ret_value Pointer to the object representing 
- *     an object which implements the specialized APIs of 
- *   the specified feature and version, if any, or <code>NULL</code> if 
- *   there is no object which implements interfaces associated with that 
- *   feature. If the <code>DOMObject</code> returned by this method 
- *   implements the <code>DOMImplementation</code> interface, it must 
- *   delegate to the primary core <code>DOMImplementation</code> and not 
- *   return results inconsistent with the primary core 
- *   <code>DOMImplementation</code> such as <code>hasFeature</code>, 
- *   <code>getFeature</code>, etc. 
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
- *             context,
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_domimplementation_get_feature_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_domimplementation_get_feature_start(javacall_handle handle,
-                                                 javacall_int32 invocation_id,
-                                                 void **context,
-                                                 javacall_const_utf16_string feature,
-                                                 javacall_const_utf16_string version,
-                                                 /* OUT */ javacall_handle* ret_value);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR  This method returns a specialized object which implements the 
- * specialized APIs of the specified feature and version, as specified 
- * in <a href="http://www.w3.org/TR/DOM-Level-3-Core/core.html#DOMFeatures"
- * >DOM Features</a>. The specialized object may also be obtained by using 
- * binding-specific casting methods but is not necessarily expected to, 
- * as discussed in 
- * <a href="http://www.w3.org/TR/DOM-Level-3-Core/core.html#Embedded-DOM"
- * >Mixed DOM Implementations</a>.
- * This method also allow the implementation to 
- * provide specialized objects which do not support the 
- * <code>DOMImplementation</code> interface. 
- * <p><b>Note:</b> when using the methods that take a feature and a 
- * version as parameters, applications can use NULL or empty string 
- * for the version parameter if they don't wish to specify a particular
- * version for the specified feature.
- * 
- * @param context The context saved during asynchronous operation.
- * @param ret_value Pointer to the object representing 
- *     an object which implements the specialized APIs of 
- *   the specified feature and version, if any, or <code>NULL</code> if 
- *   there is no object which implements interfaces associated with that 
- *   feature. If the <code>DOMObject</code> returned by this method 
- *   implements the <code>DOMImplementation</code> interface, it must 
- *   delegate to the primary core <code>DOMImplementation</code> and not 
- *   return results inconsistent with the primary core 
- *   <code>DOMImplementation</code> such as <code>hasFeature</code>, 
- *   <code>getFeature</code>, etc. 
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_domimplementation_get_feature_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_domimplementation_get_feature_finish(void *context,
-                                                  /* OUT */ javacall_handle* ret_value);
 
 /** 
  * Decrements ref counter of the native object specified number of times

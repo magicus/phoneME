@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ extern "C" {
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the name of this node
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -75,7 +75,7 @@ javacall_result
 javacall_dom_node_get_node_name_start(javacall_handle handle,
                                       javacall_int32 invocation_id,
                                       void **context,
-                                      /* OUT */ javacall_utf16_string ret_value,
+                                      /* OUT */ javacall_utf16** ret_value,
                                       /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -89,7 +89,7 @@ javacall_dom_node_get_node_name_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value the name of this node
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -102,7 +102,7 @@ javacall_dom_node_get_node_name_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_node_name_finish(void *context,
-                                       /* OUT */ javacall_utf16_string ret_value,
+                                       /* OUT */ javacall_utf16** ret_value,
                                        /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -120,7 +120,7 @@ javacall_dom_node_get_node_name_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the value of this node
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_RUNTIME_ERR
@@ -145,7 +145,7 @@ javacall_result
 javacall_dom_node_get_node_value_start(javacall_handle handle,
                                        javacall_int32 invocation_id,
                                        void **context,
-                                       /* OUT */ javacall_utf16_string ret_value,
+                                       /* OUT */ javacall_utf16** ret_value,
                                        /* INOUT */ javacall_uint32* ret_value_len,
                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -161,7 +161,7 @@ javacall_dom_node_get_node_value_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the value of this node
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_RUNTIME_ERR
@@ -183,7 +183,7 @@ javacall_dom_node_get_node_value_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_node_value_finish(void *context,
-                                        /* OUT */ javacall_utf16_string ret_value,
+                                        /* OUT */ javacall_utf16** ret_value,
                                         /* INOUT */ javacall_uint32* ret_value_len,
                                         /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -1362,7 +1362,7 @@ javacall_dom_node_is_supported_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value  The namespace URI of this node, or <code>NULL</code>
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -1378,7 +1378,7 @@ javacall_result
 javacall_dom_node_get_namespace_uri_start(javacall_handle handle,
                                           javacall_int32 invocation_id,
                                           void **context,
-                                          /* OUT */ javacall_utf16_string ret_value,
+                                          /* OUT */ javacall_utf16** ret_value,
                                           /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -1403,7 +1403,7 @@ javacall_dom_node_get_namespace_uri_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value  The namespace URI of this node, or <code>NULL</code>
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -1416,7 +1416,7 @@ javacall_dom_node_get_namespace_uri_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_namespace_uri_finish(void *context,
-                                           /* OUT */ javacall_utf16_string ret_value,
+                                           /* OUT */ javacall_utf16** ret_value,
                                            /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -1449,7 +1449,7 @@ javacall_dom_node_get_namespace_uri_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value The namespace prefix of this node, or <code>NULL</code>
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -1465,7 +1465,7 @@ javacall_result
 javacall_dom_node_get_prefix_start(javacall_handle handle,
                                    javacall_int32 invocation_id,
                                    void **context,
-                                   /* OUT */ javacall_utf16_string ret_value,
+                                   /* OUT */ javacall_utf16** ret_value,
                                    /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -1495,7 +1495,7 @@ javacall_dom_node_get_prefix_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value The namespace prefix of this node, or <code>NULL</code>
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -1508,7 +1508,7 @@ javacall_dom_node_get_prefix_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_prefix_finish(void *context,
-                                    /* OUT */ javacall_utf16_string ret_value,
+                                    /* OUT */ javacall_utf16** ret_value,
                                     /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -1643,7 +1643,7 @@ javacall_dom_node_set_prefix_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value the local part of the qualified name of this node
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -1659,7 +1659,7 @@ javacall_result
 javacall_dom_node_get_local_name_start(javacall_handle handle,
                                        javacall_int32 invocation_id,
                                        void **context,
-                                       /* OUT */ javacall_utf16_string ret_value,
+                                       /* OUT */ javacall_utf16** ret_value,
                                        /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -1676,7 +1676,7 @@ javacall_dom_node_get_local_name_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value the local part of the qualified name of this node
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -1689,7 +1689,7 @@ javacall_dom_node_get_local_name_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_local_name_finish(void *context,
-                                        /* OUT */ javacall_utf16_string ret_value,
+                                        /* OUT */ javacall_utf16** ret_value,
                                         /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
@@ -1789,7 +1789,7 @@ javacall_dom_node_has_attributes_finish(void *context,
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the text content of this node and its descendants
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_RUNTIME_ERR
@@ -1814,7 +1814,7 @@ javacall_result
 javacall_dom_node_get_text_content_start(javacall_handle handle,
                                          javacall_int32 invocation_id,
                                          void **context,
-                                         /* OUT */ javacall_utf16_string ret_value,
+                                         /* OUT */ javacall_utf16** ret_value,
                                          /* INOUT */ javacall_uint32* ret_value_len,
                                          /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -1867,7 +1867,7 @@ javacall_dom_node_get_text_content_start(javacall_handle handle,
  *
  * @param context The context saved during asynchronous operation.
  * @param ret_value a String containing the text content of this node and its descendants
- * @param ret_value_len Length of the returned string
+ * @param ret_value_len Number of code_units of the returned string
  * @param exception_code Code of the error if function fails; the following 
  *                       codes are acceptable: 
  *                            JAVACALL_DOM_RUNTIME_ERR
@@ -1889,7 +1889,7 @@ javacall_dom_node_get_text_content_start(javacall_handle handle,
  */
 javacall_result
 javacall_dom_node_get_text_content_finish(void *context,
-                                          /* OUT */ javacall_utf16_string ret_value,
+                                          /* OUT */ javacall_utf16** ret_value,
                                           /* INOUT */ javacall_uint32* ret_value_len,
                                           /* OUT */ javacall_dom_exceptions* exception_code);
 
@@ -2031,251 +2031,6 @@ javacall_dom_node_set_text_content_start(javacall_handle handle,
 javacall_result
 javacall_dom_node_set_text_content_finish(void *context,
                                           /* OUT */ javacall_dom_exceptions* exception_code);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR  This method returns a specialized object which implements the 
- * specialized APIs of the specified feature and version, as specified 
- * in <a href="http://www.w3.org/TR/DOM-Level-3-Core/core.html#DOMFeatures"> 
- * DOM Features</a>. The specialized object may also be obtained by using 
- * binding-specific casting methods but is not necessarily expected to, 
- * as discussed in <a href="http://www.w3.org/TR/DOM-Level-3-Core/core.html#Embedded-DOM">
- * Mixed DOM Implementations</a>. This method also allows the implementation 
- * to provide specialized objects which do not support the <code>Node</code>
- * interface. 
- * <p><b>Note:</b> when using the methods that take a feature and a 
- * version as parameters, applications can use NULL or empty string 
- * for the version parameter if they don't wish to specify a particular
- * version for the specified feature.
- * 
- * @param handle Pointer to the object representing this node.
- * @param invocation_id Invocation identifier which MUST be used in the 
- *                  corresponding javanotify function.
- * @param context The context saved during asynchronous operation.
- * @param feature  The name of the feature requested. Note that any plus 
- *   sign "+" prepended to the name of the feature will be ignored since 
- *   it is not significant in the context of this method. 
- * @param version  This is the version number of the feature to test. 
- * @param ret_value Pointer to the object representing 
- *     an object which implements the specialized APIs of 
- *   the specified feature and version, if any, or <code>NULL</code> if 
- *   there is no object which implements interfaces associated with that 
- *   feature. If the <code>DOMObject</code> returned by this method 
- *   implements the <code>Node</code> interface, it must delegate to the 
- *   primary core <code>Node</code> and not return results inconsistent 
- *   with the primary core <code>Node</code> such as attributes, 
- *   childNodes, etc. 
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
- *             context,
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_node_get_feature_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_node_get_feature_start(javacall_handle handle,
-                                    javacall_int32 invocation_id,
-                                    void **context,
-                                    javacall_const_utf16_string feature,
-                                    javacall_const_utf16_string version,
-                                    /* OUT */ javacall_handle* ret_value);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR  This method returns a specialized object which implements the 
- * specialized APIs of the specified feature and version, as specified 
- * in <a href="http://www.w3.org/TR/DOM-Level-3-Core/core.html#DOMFeatures"> 
- * DOM Features</a>. The specialized object may also be obtained by using 
- * binding-specific casting methods but is not necessarily expected to, 
- * as discussed in <a href="http://www.w3.org/TR/DOM-Level-3-Core/core.html#Embedded-DOM">
- * Mixed DOM Implementations</a>. This method also allows the implementation 
- * to provide specialized objects which do not support the <code>Node</code>
- * interface. 
- * <p><b>Note:</b> when using the methods that take a feature and a 
- * version as parameters, applications can use NULL or empty string 
- * for the version parameter if they don't wish to specify a particular
- * version for the specified feature.
- * 
- * @param context The context saved during asynchronous operation.
- * @param ret_value Pointer to the object representing 
- *     an object which implements the specialized APIs of 
- *   the specified feature and version, if any, or <code>NULL</code> if 
- *   there is no object which implements interfaces associated with that 
- *   feature. If the <code>DOMObject</code> returned by this method 
- *   implements the <code>Node</code> interface, it must delegate to the 
- *   primary core <code>Node</code> and not return results inconsistent 
- *   with the primary core <code>Node</code> such as attributes, 
- *   childNodes, etc. 
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_node_get_feature_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_node_get_feature_finish(void *context,
-                                     /* OUT */ javacall_handle* ret_value);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR this method allows the registration of event listeners on the event 
- * target. If an <code>EventListener</code> is added to an 
- * <code>EventTarget</code> while it is processing an event, it will not 
- * be triggered by the current actions but may be triggered during a 
- * later stage of event flow, such as the bubbling phase. 
- * <br> If multiple identical <code>EventListener</code>s are registered 
- * on the same <code>EventTarget</code> with the same parameters the 
- * duplicate instances are discarded. They do not cause the 
- * <code>EventListener</code> to be called twice and since they are 
- * discarded they do not need to be removed with the 
- * <code>removeEventListener</code> method. 
- * 
- * @param handle Pointer to the object representing this node.
- * @param invocation_id Invocation identifier which MUST be used in the 
- *                  corresponding javanotify function.
- * @param context The context saved during asynchronous operation.
- * @param type The event type for which the user is registering
- * @param listener The <code>listener</code> parameter takes an interface 
- *   implemented by the user which contains the methods to be called 
- *   when the event occurs.
- * @param use_capture If true, <code>use_capture</code> indicates that the 
- *   user wishes to initiate capture. After initiating capture, all 
- *   events of the specified type will be dispatched to the registered 
- *   <code>EventListener</code> before being dispatched to any 
- *   <code>EventTargets</code> beneath them in the tree. Events which 
- *   are bubbling upward through the tree will not trigger an 
- *   <code>EventListener</code> designated to use capture.
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
- *             context,
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_node_add_event_listener_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_node_add_event_listener_start(javacall_handle handle,
-                                           javacall_int32 invocation_id,
-                                           void **context,
-                                           javacall_const_utf16_string type,
-                                           javacall_bool use_capture,
-                                           /* OUT */ javacall_int64* ret_value);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR this method allows the registration of event listeners on the event 
- * target. If an <code>EventListener</code> is added to an 
- * <code>EventTarget</code> while it is processing an event, it will not 
- * be triggered by the current actions but may be triggered during a 
- * later stage of event flow, such as the bubbling phase. 
- * <br> If multiple identical <code>EventListener</code>s are registered 
- * on the same <code>EventTarget</code> with the same parameters the 
- * duplicate instances are discarded. They do not cause the 
- * <code>EventListener</code> to be called twice and since they are 
- * discarded they do not need to be removed with the 
- * <code>removeEventListener</code> method. 
- * 
- * @param context The context saved during asynchronous operation.
- * @param listener The <code>listener</code> parameter takes an interface 
- *   implemented by the user which contains the methods to be called 
- *   when the event occurs.
- *   user wishes to initiate capture. After initiating capture, all 
- *   events of the specified type will be dispatched to the registered 
- *   <code>EventListener</code> before being dispatched to any 
- *   <code>EventTargets</code> beneath them in the tree. Events which 
- *   are bubbling upward through the tree will not trigger an 
- *   <code>EventListener</code> designated to use capture.
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_node_add_event_listener_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_node_add_event_listener_finish(void *context,
-                                            /* OUT */ javacall_int64* ret_value);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR this method allows the removal of event listeners from the event 
- * target. If an <code>EventListener</code> is removed from an 
- * <code>EventTarget</code> while it is processing an event, it will not 
- * be triggered by the current actions. <code>EventListener</code>s can 
- * never be invoked after being removed.
- * <br>Calling <code>removeEventListener</code> with arguments which do 
- * not identify any currently registered <code>EventListener</code> on 
- * the <code>EventTarget</code> has no effect.
- * 
- * @param handle Pointer to the object representing this node.
- * @param invocation_id Invocation identifier which MUST be used in the 
- *                  corresponding javanotify function.
- * @param context The context saved during asynchronous operation.
- * @param type Specifies the event type of the <code>EventListener</code> 
- *   being removed. 
- * @param listener The <code>EventListener</code> parameter indicates the 
- *   <code>EventListener </code> to be removed. 
- * @param useCapture Specifies whether the <code>EventListener</code> 
- *   being removed was registered as a capturing listener or not. If a 
- *   listener was registered twice, one with capture and one without, 
- *   each must be removed separately. Removal of a capturing listener 
- *   does not affect a non-capturing version of the same listener, and 
- *   vice versa. 
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
- *             context,
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_node_remove_event_listener_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_node_remove_event_listener_start(javacall_handle handle,
-                                              javacall_int32 invocation_id,
-                                              void **context);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR this method allows the removal of event listeners from the event 
- * target. If an <code>EventListener</code> is removed from an 
- * <code>EventTarget</code> while it is processing an event, it will not 
- * be triggered by the current actions. <code>EventListener</code>s can 
- * never be invoked after being removed.
- * <br>Calling <code>removeEventListener</code> with arguments which do 
- * not identify any currently registered <code>EventListener</code> on 
- * the <code>EventTarget</code> has no effect.
- * 
- * @param context The context saved during asynchronous operation.
- * @param type Specifies the event type of the <code>EventListener</code> 
- *   being removed. 
- * @param listener The <code>EventListener</code> parameter indicates the 
- *   <code>EventListener </code> to be removed. 
- * @param useCapture Specifies whether the <code>EventListener</code> 
- *   being removed was registered as a capturing listener or not. If a 
- *   listener was registered twice, one with capture and one without, 
- *   each must be removed separately. Removal of a capturing listener 
- *   does not affect a non-capturing version of the same listener, and 
- *   vice versa. 
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_node_remove_event_listener_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_node_remove_event_listener_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 

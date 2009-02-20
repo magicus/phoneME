@@ -159,6 +159,26 @@ javacall_time_milliseconds /*OPTIONAL*/ javacall_time_get_clock_milliseconds(voi
     return 0;
 }
 
+/**
+ * Returns the value of the monotonic clock counter.
+ * This counter must be monotonic and must have resolution and read 
+ * time not lower than that of javacall_time_get_clock_milliseconds().
+ *
+ * @return the value of the monotonic clock counter
+ */
+javacall_int64 /*OPTIONAL*/ javacall_time_get_monotonic_clock_counter(void) {
+  return 0;
+}
+
+/**
+ * Returns the frequency of the monotonic clock counter.
+ *
+ * @return the frequency of the monotonic clock counter
+ */
+javacall_int64 /*OPTIONAL*/ javacall_time_get_monotonic_clock_frequency(void) {
+  return 0;
+}
+
 #ifdef __cplusplus
 }
 #endif
