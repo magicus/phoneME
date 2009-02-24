@@ -63,16 +63,14 @@ public class Protocol extends com.sun.cdc.io.j2me.datagram.Protocol {
         if (host == null) {
             // A server endpoint. Use the port if valid; otherwise
             // it is assigned by the server.
-            String endPoint = "UDP:";
+            String endPoint = ":";
             if (port > 0) {
-                endPoint.concat(String.valueOf(port));
+                endPoint += port;
             }
-            AccessController.checkPermission(SERVER_PERMISSION_NAME,
-                                             endPoint);
+            AccessController.checkPermission(SERVER_PERMISSION_NAME, endPoint);
         } else {
             AccessController.checkPermission(CLIENT_PERMISSION_NAME,
-                                             "UDP:" + host + ":" +
-                                             String.valueOf(port));
+                                             host + ":" + port);
         }
 
         return;
