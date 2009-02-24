@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -34,7 +34,7 @@ import javax.microedition.lcdui.Image;
 public class LCDUIEnvironment {
 
     /**
-     * Creates lcdui event producers/handlers/lisneners.
+     * Creates lcdui event producers/handlers/listeners.
      * 
      * @param internalSecurityToken
      * @param eventQueue
@@ -42,9 +42,25 @@ public class LCDUIEnvironment {
      * @param foregroundController
      */
     public LCDUIEnvironment(SecurityToken internalSecurityToken,
-		EventQueue eventQueue, 
-		int isolateId,
-		ForegroundController foregroundController) {
+                            EventQueue eventQueue, 
+                            int isolateId,
+                            ForegroundController foregroundController) {
+        this(internalSecurityToken, eventQueue,
+             new DefaultDisplayIdPolicy(isolateId), foregroundController);
+    }
+
+    /**
+     * Creates lcdui event producers/handlers/listeners.
+     * 
+     * @param internalSecurityToken
+     * @param eventQueue
+     * @param idPolicy
+     * @param foregroundController
+     */
+    public LCDUIEnvironment(SecurityToken internalSecurityToken,
+                            EventQueue eventQueue, 
+                            DisplayIdPolicy idPolicy,
+                            ForegroundController foregroundController) {
 
         displayEventHandler =
             DisplayEventHandlerFactory.getDisplayEventHandler(
@@ -58,10 +74,11 @@ public class LCDUIEnvironment {
             new RepaintEventProducer(
                 eventQueue);
 
-        displayContainer = new DisplayContainer(
-            internalSecurityToken, isolateId);
+        displayContainer = new DisplayContainer(internalSecurityToken,
+                                                idPolicy);
 
-        DisplayDeviceContainer displayDeviceContainer = new DisplayDeviceContainer();
+        DisplayDeviceContainer displayDeviceContainer =
+            new DisplayDeviceContainer();
 
         /*
          * Because the display handler is implemented in a javax
