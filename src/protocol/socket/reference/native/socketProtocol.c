@@ -230,7 +230,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
     if (bytesRead <= 0) {
         info = (MidpReentryData*)SNI_GetReentryData(NULL);
 
-        ANC_START_NETWORK_INDICATOR;
+        ANC_IND_NETWORK_INDICATOR;
 
         if (info == NULL) {   /* First invocation */
             if (INVALID_HANDLE == pcslHandle) {
@@ -296,7 +296,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
             }
         }
 
-        ANC_STOP_NETWORK_INDICATOR;
+        ANC_IND_NETWORK_INDICATOR;
     }
 
     KNI_EndHandles();
@@ -347,7 +347,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_write0(void) {
 
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
 
-    ANC_START_NETWORK_INDICATOR;
+    ANC_IND_NETWORK_INDICATOR;
 
     if (info == NULL) {   /* First invocation */
         if (INVALID_HANDLE == pcslHandle) {
@@ -410,7 +410,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_write0(void) {
 
     REPORT_INFO1(LC_PROTOCOL, "socket::write0 bytesWritten=%d\n", 
                  bytesWritten);
-   ANC_STOP_NETWORK_INDICATOR;
+   ANC_IND_NETWORK_INDICATOR;
     KNI_EndHandles();
 
     KNI_ReturnInt((jint)bytesWritten);
@@ -579,6 +579,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_finalize(void) {
         }
     }
     ANC_FINISH_NETWORK_INDICATOR;
+    ANC_IND_NETWORK_INDICATOR;
 
     KNI_EndHandles();
     KNI_ReturnVoid();
@@ -874,6 +875,7 @@ Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal(void) {
     MidpReentryData* info;
     int status = PCSL_NET_SUCCESS;
     ANC_INIT_NETWORK_INDICATOR;
+    ANC_IND_NETWORK_INDICATOR;
 
     REPORT_INFO(LC_CORE,
         "Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal start\n");
