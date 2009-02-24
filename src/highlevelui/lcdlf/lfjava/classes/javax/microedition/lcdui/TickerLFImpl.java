@@ -27,6 +27,7 @@
 package javax.microedition.lcdui;
 
 import com.sun.midp.configurator.Constants;
+import java.lang.ref.WeakReference;
 
 /**
  * Implementation class for TickerLF interface.
@@ -41,6 +42,8 @@ class TickerLFImpl implements TickerLF {
      */
     TickerLFImpl(Ticker ticker) {
 	    this.ticker = ticker;
+        owners = new WeakReference[1];
+        /* numOfOwners = 0; */
     }
 
     /**
@@ -49,7 +52,15 @@ class TickerLFImpl implements TickerLF {
      * @param owner the last Displayable this ticker was set to
      */
     public void lSetOwner(DisplayableLF owner) {
-        this.owner = owner;
+        if (owners.length == numOfOwners) {
+            WeakReference newOwners[] =
+                new WeakReference[numOfOwners + 1];
+            System.arraycopy(owners, 0, newOwners, 0, numOfOwners);
+            owners = newOwners;
+
+        }
+        owners[numOfOwners] = new WeakReference(owner);
+        numOfOwners++;
     }
     
     /**
@@ -57,16 +68,27 @@ class TickerLFImpl implements TickerLF {
      * @param str string to set on this ticker.
      */
     public void lSetString(String str) {
-        if (owner != null) {
-            Display d = owner.lGetCurrentDisplay();
-            if (d != null) {
-                d.lSetTicker(owner, ticker);
+        for (int i = 0; i < numOfOwners; i++) {
+            DisplayableLF owner = (DisplayableLF)owners[i].get();
+            if (owner != null) {
+                Display d = owner.lGetCurrentDisplay();
+                if (d != null) {
+                    d.lSetTicker(owner, ticker);
+                }
             }
         }
     }
 
-    /** DisplayableLF this ticker is associated with */
-    private DisplayableLF owner;
+    /**
+     * DisplayableLFs this ticker is associated with
+     */
+    private WeakReference[] owners;
+
+    /**
+     * The number of owners.
+     */
+    int numOfOwners;
+
     
     /** Ticker object that corresponds to this Look & Feel object */
     private Ticker ticker;

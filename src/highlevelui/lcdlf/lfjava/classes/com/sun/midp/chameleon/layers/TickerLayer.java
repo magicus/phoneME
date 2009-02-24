@@ -104,7 +104,6 @@ public class TickerLayer extends CLayer {
         synchronized (this) {
             this.text = text;
             super.visible = (text != null && text.trim().length() > 0);
-            textLoc = bounds[X] + bounds[W];
             textLen = (text == null) ? 0 : TickerSkin.FONT.stringWidth(text);
             setDirty();
         }
