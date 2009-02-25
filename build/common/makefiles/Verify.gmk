@@ -457,7 +457,7 @@ USE_ON_DEVICE_DEBUG::
 	      exit -1; \
 	    fi; \
 	  else \
-	    if [ -z "$(SDK_ODD_DIR)" && -z "$(SDK_ODD_JAR)" ]; then \
+	    if [ -z "$(SDK_ODD_DIR)" ] && [ -z "$(SDK_ODD_JAR)" ]; then \
 	      echo "ERROR: SDK_ODD_DIR or SDK_ODD_JAR must be set when USE_ON_DEVICE_DEBUG is true and PRECOMPILED_ODD is false"; \
 	      exit -1; \
 	    fi; \
