@@ -835,8 +835,8 @@ public class MIDPWindow extends CWindow {
                 break;
             case NO_SOFT_BUTTON_MODE:
                 // TODO: scroll arrows (bar? ) indicator has to be hidden?
-                titleLayer.visible = false;
-                tickerLayer.visible = false;
+                titleLayer.visible = (titleLayer.getTitle() != null) ;
+                tickerLayer.visible = (tickerLayer.getText() != null);
                 buttonLayer.visible = false;
                 break;
             case NORMAL_MODE:
