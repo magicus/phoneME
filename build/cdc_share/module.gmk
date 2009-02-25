@@ -140,6 +140,7 @@ ABSTRACTIONS_WRAPPER_CLASSES += \
         javax.microedition.lcdui.Display \
         javax.microedition.lcdui.Graphics \
         -i javax.microedition.lcdui.Canvas \
+        com.sun.midp.lcdui.DisplayIdPolicy \
     -package com.sun.j2me.proxy.security \
         com.sun.midp.security.SecurityToken \
         com.sun.midp.security.SecurityInitializer \
