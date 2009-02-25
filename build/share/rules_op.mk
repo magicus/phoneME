@@ -204,6 +204,16 @@ endif
 clean::
 	$(AT)rm -rf $(JSROP_OUTPUT_DIRS)
 
+# Include JSR 75
+ifeq ($(USE_JSR_75), true)
+export JSR_75_DIR ?= $(COMPONENTS_DIR)/jsr75
+JSR_75_RULES_FILE = $(JSR_75_DIR)/build/cdc_share/$(SUBSYSTEM_RULES_FILE)
+ifeq ($(wildcard $(JSR_75_RULES_FILE)),)
+$(error JSR_75_DIR must point to a directory containing JSR 75 sources)
+endif
+include $(JSR_75_RULES_FILE)
+endif
+
 # Include JSR 120
 ifeq ($(USE_JSR_120), true)
 export JSR_120_DIR ?= $(COMPONENTS_DIR)/jsr120
