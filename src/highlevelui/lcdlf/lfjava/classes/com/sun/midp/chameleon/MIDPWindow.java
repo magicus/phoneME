@@ -91,13 +91,19 @@ public class MIDPWindow extends CWindow {
     /**
      * Normal screen mode
      */
-    private static final int NORMAL_MODE         = 0;
+    static final int NORMAL_MODE         = 0;
 
     /**
      * Full screen mode when the current displayable
      * is occupying as much screen as possible
      */
-    private static final int FULL_SCR_MODE       = 1;
+    static final int FULL_SCR_MODE       = 1;
+
+    /**
+     * No soft button mode when the command bar will be
+     * managed by the subclass.
+     */
+    static final int NO_SOFT_BUTTON_MODE  = 2;
 
     /**
      * Current screen mode
@@ -481,7 +487,7 @@ public class MIDPWindow extends CWindow {
      *
      * @param mode the mode to be set
      */
-    private void setMode(int mode) {
+    void setMode(int mode) {
         screenMode = mode;
         updateLayout();
     }
@@ -826,6 +832,12 @@ public class MIDPWindow extends CWindow {
                 tickerLayer.visible = false;
                 buttonLayer.visible =
                     buttonLayer.isInteractive();
+                break;
+            case NO_SOFT_BUTTON_MODE:
+                // TODO: scroll arrows (bar? ) indicator has to be hidden?
+                titleLayer.visible = false;
+                tickerLayer.visible = false;
+                buttonLayer.visible = false;
                 break;
             case NORMAL_MODE:
                 titleLayer.visible =
