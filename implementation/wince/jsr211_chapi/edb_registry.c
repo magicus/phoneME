@@ -47,7 +47,7 @@
 
 /* recreate database on index structure change
   should be used only in development time */
-#define JSR211_RECREATE_ON_FAILURE 1
+/* #define JSR211_RECREATE_ON_FAILURE 1 */
 
 #define CHAPI_HEADER L"CHAPI REGISRTY"
 #define CHAPI_DB_VOLUME L"\\chapireg.vol"
@@ -137,6 +137,27 @@ static void log_error(LPWSTR msg, ...)
 	va_end(args);
 }
 
+
+/**
+* Common block for unsuccessful record seeking
+* @param hDb - handle of database for closing
+* @param result - result to return if no other error caused failure
+*/
+static javacall_result bad_seek(HANDLE hDb, javacall_result result)
+{
+	DWORD dwError = GetLastError();
+
+	CloseHandle(hDb);
+
+	if (dwError == ERROR_SEEK || dwError == ERROR_NO_MORE_ITEMS)
+	{
+		return result;
+	} else {
+		log_win32_error(dwError);
+		return JAVACALL_FAIL;
+	}
+}
+
 /*
 *	Copy result to client buffer, return length of result
 *	@param src - source string to copy
@@ -150,7 +171,7 @@ static javacall_result copy_result(CEPROPVAL* pPropVal,  javacall_utf16*  dest, 
 {
 	int len;
 	javacall_utf16* src;
-	if (!pPropVal || !pPropVal->val.lpwstr) src = L""; else src = pPropVal->val.lpwstr;
+	if (!pPropVal || pPropVal->wFlags == CEDB_PROPNOTFOUND || !pPropVal->val.lpwstr) src = L""; else src = pPropVal->val.lpwstr;
 	len = wcslen(src) + 1;
 	if (*length < len) 
 	{
@@ -756,26 +777,19 @@ static DWORD get_handler_by_name(LPCWSTR pszHandlerName, DWORD OUT *pdwOid, DWOR
 	DWORD dwRes;
 	WORD nProps = 1;
 
-	if (!pszHandlerName || !pdwOid) return E_INVALIDARG;
+	if (!pszHandlerName || !pdwOid) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 	dwRes = open_handlers_db(NULL, 1, TRUE, &hRegDB);
 	if (dwRes)
 	{
+		if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
 		log_win32_error(dwRes);
 		return JAVACALL_FAIL;
 	}
 
 	propValName.val.lpwstr = (LPWSTR)pszHandlerName;
 	if (!CeSeekDatabaseEx(hRegDB, CEDB_SEEK_VALUEFIRSTEQUAL, (DWORD)&propValName, 1, NULL))
-	{
-		DWORD dw = GetLastError();
-		CloseHandle(hRegDB);
-		if (dw == ERROR_SEEK){
-			return JAVACALL_CHAPI_ERROR_NOT_FOUND;
-		} else {
-			log_win32_error(dw);
-			return JAVACALL_FAIL;
-		}
-	}
+		return bad_seek(hRegDB,JAVACALL_CHAPI_ERROR_NOT_FOUND);
+	
 
 	dwRes = CeReadRecordPropsEx(hRegDB, CEDB_ALLOWREALLOC, &nProps, propIds, (LPBYTE*)&pPropVals, &dwSize, GetProcessHeap());
 	if (!dwRes)
@@ -808,6 +822,7 @@ static javacall_result get_handler_by_oid(DWORD dwOid, CEPROPVAL **ppPropVal, DW
 	DWORD dwRes = open_handlers_db(NULL,0, TRUE, &hRegDB);
 	if (dwRes)
 	{
+		if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
 		log_win32_error(dwRes);
 		return JAVACALL_FAIL;
 	}
@@ -817,16 +832,7 @@ static javacall_result get_handler_by_oid(DWORD dwOid, CEPROPVAL **ppPropVal, DW
 
 	/* search handler */
 	if (!CeSeekDatabaseEx(hRegDB, CEDB_SEEK_VALUEFIRSTEQUAL, (DWORD)&propValOID, 1, NULL))
-	{
-		DWORD dw = GetLastError();
-		CloseHandle(hRegDB);
-		if (dw == ERROR_SEEK){
-			return JAVACALL_CHAPI_ERROR_NOT_FOUND;
-		} else {
-			log_win32_error(dw);
-			return JAVACALL_FAIL;
-		}
-	}
+		return bad_seek(hRegDB,JAVACALL_CHAPI_ERROR_NOT_FOUND);
 
 	if (!CeReadRecordPropsEx(hRegDB, CEDB_ALLOWREALLOC, &count, 
 		(CEPROPID*)propId, (LPBYTE*)ppPropVal, pdwSize, GetProcessHeap()))
@@ -905,16 +911,7 @@ static javacall_result enum_handlers_by_indexed_value(HANDLE hDB, javacall_const
 			{
 				// search either next equal or just next sorted
 				if (!CeSeekDatabaseEx(epos->m_hDB, dwSeekFlag == CEDB_SEEK_VALUEGREATEROREQUAL ? CEDB_SEEK_CURRENT : CEDB_SEEK_VALUENEXTEQUAL, 1, 0, NULL))
-				{
-					dwRes = GetLastError();
-					if (dwRes == ERROR_SEEK || dwRes == ERROR_NO_MORE_ITEMS)
-					{
-						return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
-					} else {
-						log_win32_error(dwRes);
-						return JAVACALL_FAIL;
-					}
-				}
+					return bad_seek(epos->m_hDB,JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS);
 			}
 
 			if (!CeReadRecordPropsEx(epos->m_hDB, CEDB_ALLOWREALLOC, &count, 
@@ -1007,16 +1004,7 @@ static javacall_result enum_values_by_handler_id(HANDLE hDB,
 		if (!epos->m_pPropVal || epos->m_pPropVal->wFlags != CHAPI_REPEAT_RESULT)
 		{
 			if (!CeSeekDatabaseEx(epos->m_hDB, CEDB_SEEK_VALUENEXTEQUAL, 1, 0, NULL))
-			{
-				dwRes = GetLastError();
-				if (dwRes == ERROR_SEEK || dwRes == ERROR_NO_MORE_ITEMS)
-				{
-					return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
-				} else {
-					log_win32_error(dwRes);
-					return JAVACALL_FAIL;
-				}
-			}
+				return bad_seek(epos->m_hDB,JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS);
 
 			if (!CeReadRecordPropsEx(epos->m_hDB, CEDB_ALLOWREALLOC, &count, 
 				(CEPROPID*)&valuePropID, (LPBYTE*)&(epos->m_pPropVal), &(epos->m_dwSize), GetProcessHeap()))
@@ -1035,6 +1023,7 @@ static javacall_result enum_values_by_handler_id(HANDLE hDB,
 
 /*
 *   Check that szPrefix is prefix of string szString case sensitively
+*   szPrefix is not NULL
 *	@param szPrefix - searched prefix
 *	@param szString - compared string
 *	@return 1 if comparison is true 0 if false
@@ -1044,6 +1033,7 @@ static int compare_prefix_with_case(LPCWSTR szPrefix, LPCWSTR szString)
 {
 	register LPCWSTR a = szPrefix;
 	register LPCWSTR b = szString;
+	if (!b) return 0;
 	while (*a) if (*a++ != *b++) return 0;
 	return 1;
 }
@@ -1453,9 +1443,10 @@ javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16
 
 	if (!epos)
 	{
-		dwRes = open_handlers_db(NULL,NO_SORT, FALSE, &hRegDB);
+		dwRes = open_handlers_db(NULL,NO_SORT, TRUE, &hRegDB);
 		if (dwRes)
 		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 			log_win32_error(dwRes);
 			return JAVACALL_FAIL;
 		}
@@ -1493,16 +1484,7 @@ javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16
 		if (!epos->m_pPropVal  || epos->m_pPropVal->wFlags != CHAPI_REPEAT_RESULT)
 		{
 			if (!CeSeekDatabaseEx(epos->m_hDB, CEDB_SEEK_CURRENT, 1, 0, NULL))
-			{
-				dwRes = GetLastError();
-				if (dwRes == ERROR_SEEK || dwRes == ERROR_NO_MORE_ITEMS)
-				{
-					return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
-				} else {
-					log_win32_error(dwRes);
-					return JAVACALL_FAIL;
-				}
-			}
+				return bad_seek(epos->m_hDB,JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS);
 
 			if (!CeReadRecordPropsEx(epos->m_hDB, CEDB_ALLOWREALLOC, &count, 
 				(CEPROPID*)propId, (LPBYTE*)&(epos->m_pPropVal), &(epos->m_dwSize), GetProcessHeap()))
@@ -1552,9 +1534,10 @@ javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_stri
 	if (!(*pos_id))
 	{
 		/* open sorted by suffix */
-		DWORD dwRes = open_suffixes_db(NULL,0, FALSE, &hSuffixesDB);
+		DWORD dwRes = open_suffixes_db(NULL,0, TRUE, &hSuffixesDB);
 		if (dwRes)
 		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 			log_win32_error(dwRes);
 			return JAVACALL_FAIL;
 		}
@@ -1597,9 +1580,10 @@ javacall_result javacall_chapi_enum_handlers_by_type(javacall_const_utf16_string
 	if (!(*pos_id))
 	{
 		/* open sorted by content type */
-		DWORD dwRes = open_contenttype_db(NULL,0, FALSE, &hTypesDB);
+		DWORD dwRes = open_contenttype_db(NULL,0, TRUE, &hTypesDB);
 		if (dwRes)
 		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 			log_win32_error(dwRes);
 			return JAVACALL_FAIL;
 		}
@@ -1642,9 +1626,10 @@ javacall_result javacall_chapi_enum_handlers_by_action(javacall_const_utf16_stri
 	if (!(*pos_id))
 	{
 		/* open sorted by action name */
-		DWORD dwRes = open_actions_db(NULL,0, FALSE, &hActionsDB);
+		DWORD dwRes = open_actions_db(NULL,0, TRUE, &hActionsDB);
 		if (dwRes)
 		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 			log_win32_error(dwRes);
 			return JAVACALL_FAIL;
 		}
@@ -1692,9 +1677,10 @@ javacall_result javacall_chapi_enum_handlers_by_suite_id(
 	if (!(*pos_id))
 	{
 		/* open sorted by suite_id */
-		DWORD dwRes = open_handlers_db(NULL, 2, FALSE, &hHandlerDB);
+		DWORD dwRes = open_handlers_db(NULL, 2, TRUE, &hHandlerDB);
 		if (dwRes)
 		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 			log_win32_error(dwRes);
 			return JAVACALL_FAIL;
 		}
@@ -1741,9 +1727,10 @@ javacall_result javacall_chapi_enum_handlers_by_prefix(javacall_const_utf16_stri
 	if (!(*pos_id))
 	{
 		/* open sorted by handler name */
-		DWORD dwRes = open_handlers_db(NULL, 1, FALSE, &hHandlerDB);
+		DWORD dwRes = open_handlers_db(NULL, 1, TRUE, &hHandlerDB);
 		if (dwRes)
 		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 			log_win32_error(dwRes);
 			return JAVACALL_FAIL;
 		}
@@ -1808,9 +1795,10 @@ javacall_result javacall_chapi_enum_handlers_prefixes_of(javacall_const_utf16_st
 	if (!(new_pos_id = (*pos_id)))
 	{
 		/* open sorted by handler name */
-		DWORD dwRes = open_handlers_db(NULL, 1, FALSE, &hHandlerDB);
+		DWORD dwRes = open_handlers_db(NULL, 1, TRUE, &hHandlerDB);
 		if (dwRes)
 		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 			log_win32_error(dwRes);
 			return JAVACALL_FAIL;
 		}
@@ -1915,9 +1903,10 @@ javacall_result javacall_chapi_enum_suffixes(javacall_const_utf16_string content
 		if (dwRes) return dwRes;
 
 		/* open sorted by handler oid */
-		dwRes = open_suffixes_db(NULL, 1, FALSE, &hDB);
+		dwRes = open_suffixes_db(NULL, 1, TRUE, &hDB);
 		if (dwRes)
 		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 			log_win32_error(dwRes);
 			return JAVACALL_FAIL;
 		}
@@ -1966,9 +1955,10 @@ javacall_result javacall_chapi_enum_types(javacall_const_utf16_string content_ha
 		if (dwRes) return dwRes;
 
 		/* open sorted by handler oid */
-		dwRes = open_contenttype_db(NULL, 1, FALSE, &hDB);
+		dwRes = open_contenttype_db(NULL, 1, TRUE, &hDB);
 		if (dwRes)
 		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 			log_win32_error(dwRes);
 			return JAVACALL_FAIL;
 		}
@@ -2018,9 +2008,11 @@ javacall_result javacall_chapi_enum_actions(javacall_const_utf16_string content_
 		if (dwRes) return dwRes;
 
 		/* open sorted by handler oid */
-		dwRes = open_actions_db(NULL, 1, FALSE, &hDB);
+		dwRes = open_actions_db(NULL, 1, TRUE, &hDB);
 		if (dwRes)
 		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+
 			log_win32_error(dwRes);
 			return JAVACALL_FAIL;
 		}
@@ -2053,7 +2045,77 @@ javacall_result javacall_chapi_enum_actions(javacall_const_utf16_string content_
 *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
 *         error code if failure occurs
 */
-javacall_result javacall_chapi_enum_action_locales(javacall_const_utf16_string content_handler_id, /*OUT*/ int* pos_id, javacall_utf16* locale_out, int* length);
+javacall_result javacall_chapi_enum_action_locales(javacall_const_utf16_string content_handler_id, /*OUT*/ int* pos_id, javacall_utf16* locale_out, int* length)
+{
+	HANDLE hDB = INVALID_HANDLE_VALUE;
+	DWORD dwActionOID = 0;
+
+	if (!content_handler_id || !content_handler_id[0] || !pos_id || !length || (*length && !locale_out)) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+
+	if (!(*pos_id))
+	{
+		DWORD dwRes;
+		HANDLE hActionsDB = INVALID_HANDLE_VALUE;
+		CEPROPVAL propValOID = {PROPID_ACTION_HANDLER_OID};
+		DWORD dwHandlerOID = 0;
+		
+		
+
+		/* find handle oid by name */
+		dwRes = get_handler_by_name(content_handler_id, &dwHandlerOID, NULL);
+		if (dwRes) return dwRes;
+
+
+		/* get any first action id of for this handler */
+		dwRes = open_actions_db(NULL, 1, TRUE, &hActionsDB);
+		if (dwRes)
+		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+			log_win32_error(dwRes);
+			return JAVACALL_FAIL;
+		}
+
+
+		propValOID.val.ulVal = dwHandlerOID;
+
+		if (!CeSeekDatabaseEx(hActionsDB, CEDB_SEEK_VALUEFIRSTEQUAL, (DWORD)&propValOID, 1, NULL))
+		{
+			return bad_seek(hActionsDB,JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS);
+		}
+		else
+		{
+			CEPROPID propidsA[] = {PROPID_ACTION_OID};
+			CEPROPVAL* propVal = NULL;
+			DWORD dwSize = 0;
+			WORD nProps = 1;
+
+			dwRes = CeReadRecordPropsEx(hActionsDB, CEDB_ALLOWREALLOC, &nProps, propidsA, (LPBYTE*)&propVal, &dwSize, GetProcessHeap());
+			if (!dwRes)
+			{
+				CloseHandle(hActionsDB);
+				log_win32_error(GetLastError());
+				return JAVACALL_FAIL;
+			}
+
+			dwActionOID = propVal->val.ulVal;
+			HeapFree(GetProcessHeap(),0,propVal);
+
+			CloseHandle(hActionsDB);
+		}
+
+		/* open local names database sorted by action oid */
+		dwRes = open_action_local_names_db(NULL, 0, FALSE, &hDB);
+		if (dwRes)
+		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+			log_win32_error(dwRes);
+			return JAVACALL_FAIL;
+		}
+	}
+
+	/* enumerate locales for found action OID */
+	return enum_values_by_handler_id(hDB, dwActionOID, PROPID_LACTION_ACTION_OID, PROPID_LACTION_LOCALE, pos_id, locale_out, length);
+}
 
 /**
 * Get localized name of actions that can be performed by given handler
@@ -2071,7 +2133,93 @@ locale consist of two small letters containing ISO-639 language code and two upp
 *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
 *         error code if failure occurs
 */
-javacall_result javacall_chapi_get_local_action_name(javacall_const_utf16_string content_handler_id, javacall_const_utf16_string action, javacall_const_utf16_string locale, javacall_utf16*  local_action_out, int* length);
+javacall_result javacall_chapi_get_local_action_name(javacall_const_utf16_string content_handler_id, javacall_const_utf16_string action, javacall_const_utf16_string locale, javacall_utf16*  local_action_out, int* length)
+{
+	HANDLE hDB = INVALID_HANDLE_VALUE;
+	DWORD dwRes;
+	HANDLE hActionsDB = INVALID_HANDLE_VALUE;
+	CEPROPVAL propValOID[2] = {{PROPID_ACTION_HANDLER_OID}, {PROPID_ACTION_NAME}};
+	DWORD dwHandlerOID = 0;
+	DWORD dwActionOID;
+
+	if (!content_handler_id || !content_handler_id[0] || !action || !locale || !length || (*length && !local_action_out)) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+
+	/* find handle oid by name */
+	dwRes = get_handler_by_name(content_handler_id, &dwHandlerOID, NULL);
+	if (dwRes) return dwRes;
+
+	/* open actions db sorted by handler oid and action name */
+	dwRes = open_actions_db(NULL, 1, TRUE, &hActionsDB);
+	if (dwRes)
+	{
+		if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
+		log_win32_error(dwRes);
+		return JAVACALL_FAIL;
+	}
+
+	propValOID[0].val.ulVal = dwHandlerOID;
+	propValOID[1].val.lpwstr = (LPWSTR)action;
+
+	if (!CeSeekDatabaseEx(hActionsDB, CEDB_SEEK_VALUEFIRSTEQUAL, (DWORD)&propValOID, 2, NULL))
+	{
+		return bad_seek(hActionsDB,JAVACALL_CHAPI_ERROR_NOT_FOUND);
+	}
+	else
+	{
+		CEPROPID propidsA[] = {PROPID_ACTION_OID};
+		CEPROPVAL* propVal = NULL;
+		DWORD dwSize = 0;
+		WORD nProps = 1;
+
+		dwRes = CeReadRecordPropsEx(hActionsDB, CEDB_ALLOWREALLOC, &nProps, propidsA, (LPBYTE*)&propVal, &dwSize, GetProcessHeap());
+		if (!dwRes)
+		{
+			CloseHandle(hActionsDB);
+			log_win32_error(GetLastError());
+			return JAVACALL_FAIL;
+		}
+
+		dwActionOID = propVal->val.ulVal;
+		CloseHandle(hActionsDB);
+		HeapFree(GetProcessHeap(),0,propVal);
+		propVal = NULL;
+		dwSize = 0;
+
+		/* open local names database sorted by action oid */
+		dwRes = open_action_local_names_db(NULL, 0, FALSE, &hDB);
+		if (dwRes)
+		{
+			if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
+			log_win32_error(dwRes);
+			return JAVACALL_FAIL;
+		} else 
+		{
+			CEPROPVAL propValLActions[2] = {{PROPID_LACTION_ACTION_OID}, {PROPID_LACTION_LOCALE}};
+			propValLActions[0].val.ulVal = dwActionOID;
+			propValLActions[1].val.lpwstr = (LPWSTR)locale;
+			if (!CeSeekDatabaseEx(hDB, CEDB_SEEK_VALUEFIRSTEQUAL, (DWORD)&propValLActions, 2, NULL))
+			{
+				return bad_seek(hDB,JAVACALL_CHAPI_ERROR_NOT_FOUND);
+			} else {
+				CEPROPID propidsLN[] = {PROPID_LACTION_ACTION_NAME};
+				nProps = 1;
+
+				dwRes = CeReadRecordPropsEx(hDB, CEDB_ALLOWREALLOC, &nProps, propidsLN, (LPBYTE*)&propVal, &dwSize, GetProcessHeap());
+				if (!dwRes)
+				{
+					dwRes = GetLastError();
+					CloseHandle(hDB);
+					log_win32_error(dwRes);
+					return JAVACALL_FAIL;
+				}
+				CloseHandle(hDB);
+				dwRes = copy_result(propVal,local_action_out,length);
+				HeapFree(GetProcessHeap(),0,propVal);
+				return dwRes;
+			}
+		}
+	}
+}
 
 /**
 * Enumerate all caller names that accessible to invoke given handler
@@ -2138,7 +2286,46 @@ javacall_result javacall_chapi_enum_access_allowed_callers(javacall_const_utf16_
 *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
 *         error code if failure occurs
 */
-javacall_result javacall_chapi_get_content_handler_friendly_appname(javacall_const_utf16_string content_handler_id, /*OUT*/ javacall_utf16*  handler_frienfly_appname_out, int* length);
+javacall_result javacall_chapi_get_content_handler_friendly_appname(javacall_const_utf16_string content_handler_id, /*OUT*/ javacall_utf16*  handler_frienfly_appname_out, int* length)
+{
+	HANDLE hRegDB = INVALID_HANDLE_VALUE;
+	CEPROPVAL propValName = {PROPID_REGISTRY_HANDLER_NAME};
+	CEPROPID propIds[1] = {PROPID_REGISTRY_HANDLER_APPNAME};
+	CEPROPVAL* pPropVals = NULL;
+	DWORD dwSize = 0;
+	DWORD dwRes;
+	WORD nProps = 1;
+
+	if (!content_handler_id || !content_handler_id[0] || !handler_frienfly_appname_out || !length || (*length && !handler_frienfly_appname_out)) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+
+
+	dwRes = open_handlers_db(NULL, 1, TRUE, &hRegDB);
+	if (dwRes)
+	{
+		if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
+		log_win32_error(dwRes);
+		return JAVACALL_FAIL;
+	}
+
+	propValName.val.lpwstr = (LPWSTR)content_handler_id;
+	if (!CeSeekDatabaseEx(hRegDB, CEDB_SEEK_VALUEFIRSTEQUAL, (DWORD)&propValName, 1, NULL))
+		return bad_seek(hRegDB,JAVACALL_CHAPI_ERROR_NOT_FOUND);
+	
+
+	dwRes = CeReadRecordPropsEx(hRegDB, CEDB_ALLOWREALLOC, &nProps, propIds, (LPBYTE*)&pPropVals, &dwSize, GetProcessHeap());
+	if (!dwRes)
+	{
+		dwRes = GetLastError();
+		log_win32_error(dwRes);
+		return JAVACALL_FAIL;
+	}
+
+	dwRes = copy_result(pPropVals,handler_frienfly_appname_out,length);
+
+	HeapFree(GetProcessHeap(),0,pPropVals);
+	CloseHandle(hRegDB);
+	return dwRes;
+}
 
 /**
 * Get the combined location information of given content handler
@@ -2163,7 +2350,85 @@ javacall_result javacall_chapi_get_handler_info(javacall_const_utf16_string cont
 												/*OUT*/
 												javacall_utf16*  suite_id_out, int* suite_id_len,
 												javacall_utf16*  classname_out, int* classname_len,
-												javacall_chapi_handler_registration_type *flag_out);
+												javacall_chapi_handler_registration_type *flag_out)
+{
+	HANDLE hRegDB = INVALID_HANDLE_VALUE;
+	CEPROPVAL propValName = {PROPID_REGISTRY_HANDLER_NAME};
+	CEPROPID propIds[3];
+	CEPROPVAL* pPropVals = NULL;
+	DWORD dwSize = 0;
+	DWORD dwRes;
+	WORD nProps = 0;
+	javacall_result jcres = JAVACALL_OK;
+
+	if (!content_handler_id || !content_handler_id[0]) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+
+
+	if (suite_id_out || suite_id_len)
+	{
+		if (!suite_id_out && suite_id_len && *suite_id_len != 0) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+		if (suite_id_out && !suite_id_len) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+		propIds[nProps++] = PROPID_REGISTRY_SUITEID;
+	}
+
+	if (classname_out || classname_len)
+	{
+		if (!classname_out && classname_len && *classname_len != 0) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+		if (classname_out && !classname_len) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+		propIds[nProps++] = PROPID_REGISTRY_CLASSNAME;
+	}
+
+	if (flag_out)
+	{
+		propIds[nProps++] = PROPID_REGISTRY_FLAG;
+	}
+	
+
+	dwRes = open_handlers_db(NULL, 1, TRUE, &hRegDB);
+	if (dwRes)
+	{
+		if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
+		log_win32_error(dwRes);
+		return JAVACALL_FAIL;
+	}
+
+	propValName.val.lpwstr = (LPWSTR)content_handler_id;
+	if (!CeSeekDatabaseEx(hRegDB, CEDB_SEEK_VALUEFIRSTEQUAL, (DWORD)&propValName, 1, NULL))
+		return bad_seek(hRegDB,JAVACALL_CHAPI_ERROR_NOT_FOUND);
+	
+
+	dwRes = CeReadRecordPropsEx(hRegDB, CEDB_ALLOWREALLOC, &nProps, propIds, (LPBYTE*)&pPropVals, &dwSize, GetProcessHeap());
+	if (!dwRes)
+	{
+		dwRes = GetLastError();
+		log_win32_error(dwRes);
+		return JAVACALL_FAIL;
+	}
+
+	nProps = 0;
+
+	if (suite_id_out || suite_id_len)
+	{
+		dwRes = copy_result(&pPropVals[nProps++],suite_id_out,suite_id_len);
+		if (!JAVACALL_SUCCEEDED(dwRes)) jcres = dwRes;
+	}
+
+	if (classname_out || classname_len)
+	{
+		dwRes = copy_result(&pPropVals[nProps++],classname_out,classname_len);
+		if (!JAVACALL_SUCCEEDED(dwRes)) jcres = dwRes;
+	}
+
+	if (flag_out)
+	{
+		*flag_out = pPropVals[nProps].val.ulVal;
+	}
+
+	HeapFree(GetProcessHeap(),0,pPropVals);
+	CloseHandle(hRegDB);
+	return jcres;
+
+}
 
 /**
 * Check if given caller has allowed access to invoke content handler
@@ -2175,7 +2440,82 @@ javacall_result javacall_chapi_get_handler_info(javacall_const_utf16_string cont
 * @return JAVACALL_TRUE if caller is trusted
 *         JAVACALL_FALSE if caller is not trusted
 */
-javacall_bool javacall_chapi_is_access_allowed(javacall_const_utf16_string content_handler_id, javacall_const_utf16_string caller_id);
+javacall_bool javacall_chapi_is_access_allowed(javacall_const_utf16_string content_handler_id, javacall_const_utf16_string caller_id)
+{
+	HANDLE hDB = INVALID_HANDLE_VALUE;
+	DWORD dwRes;
+	HANDLE hAccessDB = INVALID_HANDLE_VALUE;
+	CEPROPVAL propValOID[1] = {PROPID_ACCESS_HANDLER_OID};
+	DWORD dwHandlerOID = 0;
+	DWORD dwAccessOID;
+	CEPROPVAL* propVal = NULL;
+	DWORD dwSize = 0;
+	javacall_bool jbRes = JAVACALL_FALSE;
+
+	if (!content_handler_id || !content_handler_id[0] || !caller_id || !caller_id[0]) return JAVACALL_FAIL;
+
+	/* find handle oid by name */
+	dwRes = get_handler_by_name(content_handler_id, &dwHandlerOID, NULL);
+	if (dwRes) return JAVACALL_FALSE;
+
+	/* open access db sorted by handler oid */
+	dwRes = open_access_db(NULL, 1, TRUE, &hAccessDB);
+	if (dwRes)
+	{
+		if (dwRes != ERROR_FILE_NOT_FOUND) 
+		{
+			log_win32_error(dwRes);
+			return JAVACALL_FALSE;
+		}
+
+		/* access list is empty */
+		return JAVACALL_TRUE;
+	}
+
+
+	propValOID[0].val.ulVal = dwHandlerOID;
+
+	if (!(dwAccessOID = CeSeekDatabaseEx(hAccessDB, CEDB_SEEK_VALUEFIRSTEQUAL, (DWORD)&propValOID, 1, NULL)))
+	{
+
+		dwRes = GetLastError();
+		if (dwRes != ERROR_SEEK) 
+		{
+			log_win32_error(dwRes);
+			return JAVACALL_FALSE;
+		}
+		/* access list is empty */
+		return JAVACALL_TRUE;
+	}
+	else
+	{
+		while(dwAccessOID)
+		{
+			CEPROPID propidsA[] = {PROPID_ACCESS_CALLER_ID};
+			WORD nProps = 1;
+
+			dwRes = CeReadRecordPropsEx(hAccessDB, CEDB_ALLOWREALLOC, &nProps, propidsA, (LPBYTE*)&propVal, &dwSize, GetProcessHeap());
+			if (!dwRes)
+			{
+				CloseHandle(hAccessDB);
+				log_win32_error(GetLastError());
+				return JAVACALL_FALSE;
+			}
+
+			if (compare_prefix_with_case(propVal->val.lpwstr,caller_id))
+			{
+				jbRes = JAVACALL_TRUE;
+				break;
+			}
+
+			dwAccessOID = CeSeekDatabaseEx(hAccessDB, CEDB_SEEK_VALUENEXTEQUAL, 1, 0, NULL);
+		}
+	}
+
+	CloseHandle(hAccessDB);
+	if (propVal) HeapFree(GetProcessHeap(),0,propVal);
+	return jbRes;
+}
 
 /**
 * Check if given action is supported by given content handler
@@ -2184,7 +2524,41 @@ javacall_bool javacall_chapi_is_access_allowed(javacall_const_utf16_string conte
 * @return JAVACALL_TRUE if caller is trusted
 *         JAVACALL_FALSE if caller is not trusted
 */
-javacall_bool javacall_chapi_is_action_supported(javacall_const_utf16_string content_handler_id, javacall_const_utf16_string action);
+javacall_bool javacall_chapi_is_action_supported(javacall_const_utf16_string content_handler_id, javacall_const_utf16_string action)
+{
+	HANDLE hDB = INVALID_HANDLE_VALUE;
+	DWORD dwRes;
+	HANDLE hActionsDB = INVALID_HANDLE_VALUE;
+	CEPROPVAL propValOID[2] = {{PROPID_ACTION_HANDLER_OID}, {PROPID_ACTION_NAME}};
+	DWORD dwHandlerOID = 0;
+	javacall_bool jbres = JAVACALL_FALSE;
+
+	if (!content_handler_id || !content_handler_id[0] || !action) return JAVACALL_FALSE;
+
+	/* find handle oid by name */
+	dwRes = get_handler_by_name(content_handler_id, &dwHandlerOID, NULL);
+	if (dwRes) return JAVACALL_FALSE;
+
+	/* open actions db sorted by handler oid and action name */
+	dwRes = open_actions_db(NULL, 1, TRUE, &hActionsDB);
+	if (dwRes)
+	{
+		if (dwRes == ERROR_FILE_NOT_FOUND) return JAVACALL_FALSE;
+		log_win32_error(dwRes);
+		return JAVACALL_FALSE;
+	}
+
+	propValOID[0].val.ulVal = dwHandlerOID;
+	propValOID[1].val.lpwstr = (LPWSTR)action;
+
+	if (CeSeekDatabaseEx(hActionsDB, CEDB_SEEK_VALUEFIRSTEQUAL, (DWORD)&propValOID, 2, NULL))
+	{
+		jbres = JAVACALL_TRUE;
+	}
+
+	CloseHandle(hActionsDB);
+	return jbres;
+}
 
 /**
 * Remove all information about handler from registry
