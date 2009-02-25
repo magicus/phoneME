@@ -270,6 +270,7 @@ static void CALLBACK FAR audio_timer_callback(UINT uID, UINT uMsg,
                 audio_start( (javacall_handle)dwUser );
             } else {
                 JC_MM_DEBUG_PRINT1("[jc_media] javanotify_on_media_notification %d\n", pHandle->playerId);
+                audio_stop((javacall_handle) dwUser);
                 javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
                                                  pHandle->isolateId, pHandle->playerId, 
                                                  JAVACALL_OK, (void*)pHandle->duration);
