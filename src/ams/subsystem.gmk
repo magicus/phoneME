@@ -107,10 +107,17 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
 
 # On device debugging
         ifeq ($(USE_ON_DEVICE_DEBUG), true)
-            SUBSYSTEM_AMS_COMPONENTS += $(PROJECT_MIDP_DIR)/src/ams/on_device_debug_base/lib.gmk \
-                $(PROJECT_MIDP_DIR)/src/ams/on_device_debug/lib.gmk
+            ifeq ($(PRECOMPILED_ODD), true)
+                SUBSYSTEM_AMS_COMPONENTS += \
+                    $(SUBSYSTEM_AMS_DIR)/on_device_debug_precompiled/lib.gmk
+            else
+                SUBSYSTEM_AMS_COMPONENTS += \
+                    $(PROJECT_MIDP_DIR)/src/ams/on_device_debug_base/lib.gmk \
+                    $(PROJECT_MIDP_DIR)/src/ams/on_device_debug/lib.gmk
+            endif
         else
-            SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/lib.gmk
+            SUBSYSTEM_AMS_COMPONENTS += \
+                    $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/lib.gmk
         endif
 
 # Add VM mode specific common files
