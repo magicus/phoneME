@@ -118,6 +118,12 @@ interface DisplayableLF {
      */
     void uSetFullScreenMode(boolean fullScreenMode);
 
+    /**
+     * Notify the no soft button mode of this LF.
+     *
+     */
+    void uHideSoftButtons();
+
 /*
  * Interface to Display
  */

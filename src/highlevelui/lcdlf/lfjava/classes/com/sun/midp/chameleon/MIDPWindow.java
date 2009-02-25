@@ -91,19 +91,19 @@ public class MIDPWindow extends CWindow {
     /**
      * Normal screen mode
      */
-    static final int NORMAL_MODE         = 0;
+    public static final int NORMAL_MODE         = 0;
 
     /**
      * Full screen mode when the current displayable
      * is occupying as much screen as possible
      */
-    static final int FULL_SCR_MODE       = 1;
+    public static final int FULL_SCR_MODE       = 1;
 
     /**
      * No soft button mode when the command bar will be
      * managed by the subclass.
      */
-    static final int NO_SOFT_BUTTON_MODE  = 2;
+    public static final int NO_SOFT_BUTTON_MODE  = 2;
 
     /**
      * Current screen mode
@@ -487,7 +487,7 @@ public class MIDPWindow extends CWindow {
      *
      * @param mode the mode to be set
      */
-    void setMode(int mode) {
+    public void setMode(int mode) {
         screenMode = mode;
         updateLayout();
     }

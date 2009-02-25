@@ -2384,6 +2384,17 @@ public class Display {
         window.setFullScreen(wantFullScnMode);
         // #endif ENABLE_CHAMELEON
     }
+    /**
+     * Hide the soft button layer.
+     */
+    void lHideSoftButtons() {
+        // #ifdef ENABLE_CHAMELEON
+        // Notify Chameleon that the current displayable should be shown
+        // in no soft button mode.
+        // This call will not result in any call into application code
+        window.setMode(MIDPWindow.NO_SOFT_BUTTON_MODE);
+        // #endif ENABLE_CHAMELEON
+    }
 
     /**                                                              `
      * Update the system's account of abstract commands.
