@@ -202,6 +202,64 @@ void Thread::lightweight_thread_uncaught_exception() {
     tty->print(MSG_UNCAUGHT_EXCEPTIONS);
     print_current_pending_exception_stack_trace();
     clear_current_pending_exception();
+
+    InstanceClass::Raw exception_class = exception().blueprint();
+
+    if (exception_class().is_subclass_of(Universe::throwable_class())) {
+      SETUP_ERROR_CHECKER_ARG;
+      UsingFastOops fast_oops2;
+      Throwable::Raw throwable = exception;
+      Symbol::Fast exception_class_name = exception_class().name();
+      const char * cmessage = "";
+      String::Fast message = throwable().message();
+      TypeArray::Fast carray = message().to_cstring(JVM_SINGLE_ARG_NO_CHECK);
+      if (CURRENT_HAS_PENDING_EXCEPTION) {
+	clear_current_pending_exception();
+      } else {
+	cmessage = (char *)carray().base_address();
+      }
+
+      Task::Raw task = Task::current();
+
+      int flags = 0;
+#if ENABLE_ISOLATES      
+      if (task().thread_count() == 1) {
+#else
+      if (Scheduler::active_count() == 1) {
+#endif
+	flags |= JVMSPI_LAST_THREAD;
+      }
+
+      int action = JVMSPI_HandleUncaughtException(TaskContext::current_task_id(),
+						  exception_class_name().utf8_data(), 
+						  exception_class_name().length(),
+						  cmessage, flags);
+      switch (action) {
+      case JVMSPI_ABORT:
+#if ENABLE_ISOLATE	
+	task().stop(0, UNCAUGHT_EXCEPTION);
+#else
+	JVM_Stop(0);
+#endif
+	break;
+      case JVMSPI_IGNORE:
+	/* do nothing */
+	break;
+      case JVMSPI_SUSPEND:
+#if ENABLE_ISOLATES
+	/*
+	 * If this is the last thread, just ignore. It will die anyway.
+	 * If not, suspend the isolate and let 
+	 */
+	if ((flags & JVMSPI_LAST_THREAD) != 0) {
+	  JVM_SuspendIsolate(TaskContext::current_task_id());
+	}
+#else
+	GUARANTEE(0, "Not supported for SVM");    
+#endif
+	break;
+      }
+    }
   }
 }
 

@@ -200,3 +200,21 @@ void JVMSPI_DisplayUsage(char* message) {
   P("                : ACTION can be 'exit', 'stop' or a numeric value");
 #endif
 }
+
+int JVMSPI_HandleUncaughtException(const int isolate_id,
+				   const char * exception_class_name,
+				   const int exception_class_name_length,
+				   const char * message,
+				   const int flags) {
+  return JVMSPI_IGNORE;
+}
+
+int JVMSPI_HandleOutOfMemory(const int isolate_id,
+			     const JVMSPI_ThreadID thread_id,
+			     const int limit,
+			     const int reserve,
+			     const int available,
+			     const int alloc_size,
+			     const int flags) {
+  return JVMSPI_IGNORE;
+}

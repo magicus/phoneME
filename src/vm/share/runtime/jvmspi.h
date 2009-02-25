@@ -154,6 +154,78 @@ jboolean JVMSPI_IsPrecompilationTarget(const char * class_name,
                                        int code_size);
 #endif                                
 
+/**
+ * JVMSPI_HandleUncaughtException() and JVMSPI_HandleOutOfMemory() flags.
+ */
+#define JVMSPI_LAST_THREAD (1 << 0)
+
+/**
+ * JVMSPI_HandleUncaughtException() return values.
+ */
+#define JVMSPI_ABORT      0
+#define JVMSPI_IGNORE     1
+#define JVMSPI_SUSPEND    2
+#define JVMSPI_RETRY      3
+
+/*
+ * This function is called by the VM before a Java thread is terminated 
+ * because of an uncaught exception. 
+ *
+ * <isolate_id> ID of an isolate in which this exception was thrown (always 1 in SVM mode).
+ * <thread_id> ID of a thread in which this exception was thrown.
+ * <exception_class_name> name of the class containing the method. 
+ *              This string is a fully qualified class name 
+ *              encoded in internal form (see JVMS 4.2).
+ *              This string is NOT 0-terminated.
+ * <exception_class_name_length> number of UTF8 characters in <exception_class_name>.
+ * <message> exception message as a 0-terminated ASCII string
+ * <flags> a bitmask of flags
+ *
+ * If this function returns JVMSPI_ABORT, the VM will terminate the isolate in MVM mode,
+ *     or the whole VM in SVM mode.
+ * If this function returns JVMSPI_IGNORE, the VM will apply default handling actions 
+ *     to this exception - the thread in which the exception occurred will terminate.
+ * If this function returns JVMSPI_SUSPEND, the VM will suspend the isolate in MVM mode,
+ *     in SVM mode the behavior is undefined.
+ * For other return values the VM behavior is undefined.
+ */
+int JVMSPI_HandleUncaughtException(const int isolate_id,
+				   const char * exception_class_name,
+				   const int exception_class_name_length,
+				   const char * message,
+				   const int flags);
+
+/*
+ * This function is called by the VM when it fails to fulfil a memory allocation request.
+ *
+ * <isolate_id> ID of an isolate in which the allocation was requested (always 1 in SVM mode).
+ * <limit> in SVM mode - heap capacity, in MVM mode - memory limit for the isolate, 
+ *    i.e. the max amount of heap memory that can possibly be allocated
+ * <reserve> in SVM mode - heap capacity, in MVM mode - memory reservation for the isolate,
+ *    i.e. the max amount of heap memory guaranteed to be available
+ * <available> how much memory is available for allocation at this point for the isolate 
+ *    in MVM mode, or for the whole VM in SVM mode.
+ * <alloc_size> the requested amount of memory that the VM failed to allocate
+ * <flags> a bitmask of flags
+ *
+ * If this function returns JVMSPI_ABORT, the VM will terminate the isolate in MVM mode,
+ *     or the whole VM in SVM mode.
+ * If this function returns JVMSPI_IGNORE, the VM will apply default handling actions 
+ *     to this failure - OutOfMemoryError will be thrown in this thread.
+ * If this function returns JVMSPI_RETRY, the VM will redo the allocation attempt. 
+ *     This code should be returned if the function freed up some memory in the Java heap.
+ * If this function returns JVMSPI_SUSPEND, in SVM mode the behavior is undefined,
+ *     in MVM mode the VM will suspend the isolate. When the isolate will be resumed,
+ *     the VM will redo the allocation attempt.
+ * For other return values the VM behavior is undefined.
+ */
+int JVMSPI_HandleOutOfMemory(const int isolate_id,
+			     const int limit,
+			     const int reserve,
+			     const int available,
+			     const int alloc_size,
+			     const int flags);
+
 #ifdef __cplusplus
 }
 #endif
