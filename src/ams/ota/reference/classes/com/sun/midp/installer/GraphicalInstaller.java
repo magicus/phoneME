@@ -75,7 +75,8 @@ import com.sun.midp.ams.VMUtils;
  * <ol>
  *   <li>arg-0: "U" for update, "I" for install, "FI" for forced install,
  *              "FU" for forced update, "PR" for install or update
- *              initiated by platformRequest</li>
+ *              initiated by platformRequest, "DR" to wait for direct
+ *              request</li>
  *   <li>arg-1: Suite ID for updating, URL for installing
  *   <li>arg-2: For installing a name to put in the title bar when installing
  * </ol>
@@ -172,6 +173,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private boolean noConfirmation = false;
     /** true if runnning midlets from the suite being updated must be killed */
     private boolean killRunningMIDletIfUpdate = false;
+
+    /** Direct installation request */
+    private InstallRequest directRequest = null;
             
     /**
      * Gets an image from the internal storage.
@@ -486,6 +490,10 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                  * from the suite that is going to be updated.
                  */
                 killRunningMIDletIfUpdate = true;
+            } else if("DR".equals(arg0)) {
+                /* Let's wait for direct request issued by requestInstall()
+                 * method. */
+                return;
             }
 
             url = getAppProperty("arg-1");
@@ -501,6 +509,13 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             }
         }
         
+        doInstall();
+    }
+
+    /**
+     * Perform the installation or update.
+     */
+    private void doInstall() {
         installer = InstallerResource.getInstaller(url);
         
         cancelledMessage =
@@ -612,14 +627,17 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                  */
                 synchronized (this) {
                     if (installer.stopInstalling()) {
+                        notifyRequestCanceled();
                         displayCancelledMessage(cancelledMessage);
                     }
                 }
             } else {
                 // goto back to the manager midlet
+                notifyRequestCanceled();
                 exit(false);
             }
         } else if (c == cancelCmd) {
+            notifyRequestCanceled();
             displayCancelledMessage(cancelledMessage);
             cancelBackgroundInstall();
         } else if (c == Alert.DISMISS_COMMAND) {
@@ -1763,6 +1781,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                          */
                         parent.preventScreenFlash();
 
+                        parent.notifyRequestSucceeded(lastInstalledMIDletId);
                         parent.exit(true);
                     } catch (InvalidJadException ije) {
                         int reason = ije.getReason();
@@ -1793,6 +1812,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                             break;
                         }
 
+                        parent.notifyRequestFailed(ije);
                         msg = GraphicalInstaller.translateJadException(
                             ije, name, null, null, url);
                     } catch (MIDletSuiteLockedException msle) {
@@ -1809,6 +1829,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                     ResourceConstants.AMS_GRA_INTLR_LOCKED,
                                         values);
                             }
+                            parent.notifyRequestFailed(msle);
                         } else {
                              /*
                               * Kill running midlets from the suite being
@@ -1897,6 +1918,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                 InstallerResource.IO_EXCEPTION_MESSAGE)
                                     + ":" + urlToShow;
                              }
+                        parent.notifyRequestFailed(ioe);
                     } catch (Throwable ex) {
                         if (Logging.TRACE_ENABLED) {
                             Logging.trace(ex, "Exception caught " +
@@ -1904,6 +1926,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                         }
 
                         msg = ex.getClass().getName() + ": " + ex.getMessage();
+                        parent.notifyRequestFailed(ex);
                     }
 
                 } while (tryAgain);
@@ -2141,5 +2164,88 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                 parent.exit(false);
             }
         }
+    }
+
+    /**
+     * Request installation. This method should be called once after
+     * instantiating GraphicInstaller with first argument "DR". Results
+     * are passed asynchronously throug the request methods.
+     * @param request Installation requesdt
+     */
+    public synchronized void requestInstall(InstallRequest request) {
+        directRequest = request;
+        
+        url = directRequest.getURL();
+        if (directRequest.getForce()) {
+            noConfirmation = true;
+        }
+        label = Resource.getString(ResourceConstants.APPLICATION);
+
+        doInstall();
+    }
+
+    /**
+     * Notify that installation request failed.
+     * @param reason Failure reason.
+     */
+    private void notifyRequestFailed(Throwable reason) {
+        if (directRequest != null) {
+            directRequest.installationFailed(reason);
+        }
+    }
+
+    /**
+     * Notify that installation request succeeded.
+     * @param id Id of the installed suite
+     */
+    private void notifyRequestSucceeded(int id) {
+        if (directRequest != null) {
+            directRequest.installationSucceeded(id);
+        }
+    }
+
+    /**
+     * Notify that installation request was canceled.
+     */
+    private void notifyRequestCanceled() {
+        if (directRequest != null) {
+            directRequest.installationCanceled();
+        }
+    }
+
+    /**
+     * Direct installation request.
+     */
+    public interface InstallRequest {
+        /* installation input arguments */
+
+        /**
+         * @return URL to install from
+         */
+        String getURL();
+
+        /**
+         * @return "force" installation flag
+         */
+        boolean getForce();
+
+        /* installation result */
+        
+        /**
+         * Send failure result
+         * @param reason Reason for the failure
+         */
+        void installationFailed(Throwable reason);
+        
+        /**
+         * Send success result
+         * @param id ID of the installed suite
+         */
+        void installationSucceeded(int id);
+
+        /**
+         * Send cancel result
+         */
+        void installationCanceled();
     }
 }

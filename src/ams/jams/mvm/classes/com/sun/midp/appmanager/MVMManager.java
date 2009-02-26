@@ -191,8 +191,8 @@ public class MVMManager extends MIDlet
         midletProxyList.setForegroundMIDlet(thisMidlet);
 
         if (suiteUnderDebugId != MIDletSuite.UNUSED_SUITE_ID) {
-            /* IMPL NOTE: this forces only one running MIDlet in debug mode - 
-             * the VM currently does not support more MIDlets in debug mode 
+            /* IMPL NOTE: this forces only one running MIDlet in debug mode -
+             * the VM currently does not support more MIDlets in debug mode
              * at the same time. */
             isDebugMode = false;
         }
@@ -434,7 +434,7 @@ public class MVMManager extends MIDlet
             NativeEvent event = new NativeEvent(
                     EventTypes.MIDP_ODD_MIDLET_EXITED_EVENT);
             event.intParam1    = suiteInfo.suiteId;
-            event.stringParam1 = odtAgentMidlet.getClassName();
+            event.stringParam1 = suiteInfo.midletToRun;
             eq.sendNativeEventToIsolate(event,
                     odtAgentMidlet.getIsolateId());
         }

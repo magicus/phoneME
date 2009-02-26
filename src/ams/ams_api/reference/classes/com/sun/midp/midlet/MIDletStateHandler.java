@@ -186,6 +186,7 @@ public class MIDletStateHandler {
      *
      * @param classname name of MIDlet class
      * @param displayName name to show the user
+     * @return the started MIDlet
      *
      * @exception SecurityException if the suite does not have the
      *   AMS permission.
@@ -196,10 +197,10 @@ public class MIDletStateHandler {
      * @exception IllegalAccessException is thrown, if the MIDlet is not
      * permitted to perform a specific operation
      */
-    public void startMIDlet(String classname, String displayName) throws
+    public MIDlet startMIDlet(String classname, String displayName) throws
            ClassNotFoundException, InstantiationException,
            IllegalAccessException {
-        startMIDlet(0, classname, displayName);
+        return startMIDlet(0, classname, displayName);
     }
 
     /**
@@ -210,6 +211,7 @@ public class MIDletStateHandler {
      * @param externalAppId ID of given by an external application manager
      * @param classname name of MIDlet class
      * @param displayName name to show the user
+     * @return the started MIDlet
      *
      * @exception SecurityException if the suite does not have the
      *   AMS permission.
@@ -220,13 +222,13 @@ public class MIDletStateHandler {
      * @exception IllegalAccessException is thrown, if the MIDlet is not
      * permitted to perform a specific operation
      */
-    public void startMIDlet(int externalAppId, String classname,
+    public MIDlet startMIDlet(int externalAppId, String classname,
                             String displayName) throws
            ClassNotFoundException, InstantiationException,
            IllegalAccessException {
 
         AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
-        createAndRegisterMIDlet(externalAppId, classname);
+        return createAndRegisterMIDlet(externalAppId, classname);
     }
 
     /**
@@ -235,6 +237,7 @@ public class MIDletStateHandler {
      * @param token security token of the caller
      * @param classname name of MIDlet class
      * @param displayName name to show the user
+     * @return the started MIDlet
      *
      * @exception SecurityException if the caller does not have the
      *   AMS permission.
@@ -245,11 +248,11 @@ public class MIDletStateHandler {
      * @exception IllegalAccessException is thrown, if the MIDlet is not
      * permitted to perform a specific operation
      */
-    public void startMIDlet(SecurityToken token, String classname,
+    public MIDlet startMIDlet(SecurityToken token, String classname,
                             String displayName) throws
            ClassNotFoundException, InstantiationException,
            IllegalAccessException {
-        startMIDlet(token, 0, classname, displayName);
+        return startMIDlet(token, 0, classname, displayName);
     }
 
     /**
@@ -259,6 +262,7 @@ public class MIDletStateHandler {
      * @param externalAppId ID of given by an external application manager
      * @param classname name of MIDlet class
      * @param displayName name to show the user
+     * @return the started MIDlet
      *
      * @exception SecurityException if the caller does not have the
      *   AMS permission.
@@ -269,13 +273,13 @@ public class MIDletStateHandler {
      * @exception IllegalAccessException is thrown, if the MIDlet is not
      * permitted to perform a specific operation
      */
-    public void startMIDlet(SecurityToken token, int externalAppId,
+    public MIDlet startMIDlet(SecurityToken token, int externalAppId,
                             String classname, String displayName) throws
            ClassNotFoundException, InstantiationException,
            IllegalAccessException {
 
         token.checkIfPermissionAllowed(Permissions.AMS);
-        createAndRegisterMIDlet(externalAppId, classname);
+        return createAndRegisterMIDlet(externalAppId, classname);
     }
 
     /**
@@ -337,6 +341,7 @@ public class MIDletStateHandler {
      *
      * @param externalAppId ID of given by an external application manager
      * @param classname name of MIDlet class
+     * @return the started MIDlet
      *
      * @exception ClassNotFoundException if the MIDlet class is
      * not found
@@ -345,12 +350,14 @@ public class MIDletStateHandler {
      * @exception IllegalAccessException if the MIDlet is not
      * permitted to perform a specific operation
      */
-    private void createAndRegisterMIDlet(int externalAppId, String classname)
+    private MIDlet createAndRegisterMIDlet(int externalAppId, String classname)
            throws ClassNotFoundException, InstantiationException,
            IllegalAccessException {
 
         listener.midletPreStart(getMIDletSuite(), classname);
-        register(createMIDlet(externalAppId, classname));
+        MIDlet m = createMIDlet(externalAppId, classname);
+        register(m);
+        return m;
     }
 
     /**
