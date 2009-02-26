@@ -1,0 +1,99 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+######################################################################
+# Tools Component Configuration file
+#
+######################################################################
+
+ifndef _tools_gmk_
+_tools_gmk_ = defined
+
+include $(TOOLS_DIR)/makefiles/common_defs.gmk
+
+ifndef TOOLS_OUTPUT_DIR
+TOOLS_OUTPUT_DIR=$(TOOLS_DIR)/output
+endif
+
+# Configurator paths and file names
+#
+CONFIGURATOR_DIR           = $(TOOLS_DIR)/configurator
+CONFIGURATOR_PACKAGE       = com.sun.xml.transform
+CONFIGURATOR_MAIN_CLASS    = $(CONFIGURATOR_PACKAGE).CodeTransformer
+CONFIGURATOR_JAVA_FILES    = $(CONFIGURATOR_DIR)/classes/$(subst .,/,$(CONFIGURATOR_MAIN_CLASS)).java
+CONFIGURATOR_MANIFEST_FILE = $(TOOLS_OUTPUT_DIR)/Configurator.manifest
+CONFIGURATOR_JAR_FILE      = $(TOOLS_OUTPUT_DIR)/Configurator.jar
+
+JPP_JAVA_FILES  = $(TOOLS_DIR)/jpp/Jpp.java
+JPP_CLASS_FILES = $(TOOLS_OUTPUT_DIR)/Jpp.class
+
+# Guarantee existence of the directory for tools class files
+#
+define verify_tools_output_directory
+    @if [ '!' -d $(TOOLS_OUTPUT_DIR) ]; then \
+       mkdir -p $(TOOLS_OUTPUT_DIR); \
+    fi
+endef
+
+# Java pre-processor build rule
+#
+$(JPP_CLASS_FILES): $(JPP_JAVA_FILES)
+	@echo " ... building Jpp"
+	@$(verify_tools_output_directory) $(LOG)
+	$(call compileJavaClasses, $(TOOLS_OUTPUT_DIR), $(JPP_JAVA_FILES), -g)
+
+# CodeTransformer build rules
+#
+$(CONFIGURATOR_JAR_FILE): $(CONFIGURATOR_JAVA_FILES) $(CONFIGURATOR_MANIFEST_FILE)
+	@echo " ... building CodeTransformer"
+	@$(verify_tools_output_directory) $(LOG)
+	@$(call compileJavaClasses, \
+		$(TOOLS_OUTPUT_DIR), $(CONFIGURATOR_JAVA_FILES), -g)
+	@echo " ... $@ " $(LOG)
+	@$(call createJarFileWithManifest, \
+		$(CONFIGURATOR_JAR_FILE), $(TOOLS_OUTPUT_DIR),\
+		$(subst .,/,$(CONFIGURATOR_PACKAGE)), \
+		$(CONFIGURATOR_MANIFEST_FILE))
+
+$(CONFIGURATOR_MANIFEST_FILE):
+	@echo " ... $@ " $(LOG)
+	@$(verify_tools_output_directory) $(LOG)
+	@(echo "Main-Class: $(CONFIGURATOR_MAIN_CLASS)" > $@) $(LOG)
+
+# Append tools source bundle creation to target
+source_bundle:: tools_source_bundle
+
+TOOLS_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/tools
+
+# Copy and filter tools source in SOURCE_OUTPUT_DIR/tools
+tools_source_bundle:
+	@echo " ... tools source bundle"; \
+	if [ -z "$(SOURCE_OUTPUT_DIR)" ]; then \
+		echo "ERROR: SOURCE_OUTPUT_DIR must be set"; \
+		exit -1; \
+	fi;
+	@$(call source_bundle_filter,$(TOOLS_DIR),$(TOOLS_SOURCE_OUTPUT_DIR),.)
+
+clean::
+	@rm -rf $(TOOLS_OUTPUT_DIR)
+
+endif #_tools_gmk_
