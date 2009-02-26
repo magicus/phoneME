@@ -852,8 +852,11 @@ javacall_result javacall_media_set_mute(javacall_handle handle, javacall_bool mu
  * @param duration the duration of the note in ms 
  * @param volume   volume of this play. From 0 to 100 inclusive.
  * 
- * @retval JAVACALL_OK      Success
- * @retval JAVACALL_FAIL    Fail. JVM will raise the media exception.
+ * @retval JAVACALL_OK                  Success
+ * @retval JAVACALL_NO_AUDIO_DEVICE     No audio device found. JVM will throw a
+ *                                      MediaException
+ * @retval JAVACALL_FAIL                General fail. JVM will raise the media
+ *                                      exception.
  */
 javacall_result javacall_media_play_tone(int appID, long note, long duration, long volume);
 

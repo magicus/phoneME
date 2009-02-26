@@ -118,7 +118,9 @@ typedef enum {
     /** Invalid state */
    JAVACALL_INVALID_STATE = -15,
    /** Timeout elapsed */
-   JAVACALL_TIMEOUT = -16
+   JAVACALL_TIMEOUT = -16,
+   /** No audio device found */
+   JAVACALL_NO_AUDIO_DEVICE = -17
 } javacall_result;
 
 #define JAVACALL_SUCCEEDED(Status) ((javacall_result)(Status) >= 0) 
