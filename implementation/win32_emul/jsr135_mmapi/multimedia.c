@@ -1471,8 +1471,7 @@ extern int mmaudio_tone_note(long isolateId, long note, long duration, long volu
  * Tone to MIDI short message converter
  */
 javacall_result javacall_media_play_tone(int appId, long note, long duration, long volume){
-    mmaudio_tone_note(appId, note, duration, volume);
-    return JAVACALL_OK;
+    return mmaudio_tone_note(appId, note, duration, volume);
 }
 
 javacall_result javacall_media_play_dualtone(int appId, long noteA, long noteB, long duration, long volume)
