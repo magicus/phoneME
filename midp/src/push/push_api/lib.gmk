@@ -1,0 +1,130 @@
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+# Adds to global SUBSYSTEMS list
+#
+PUSH_API_LIB = push_api
+LIB_SET += $(PUSH_API_LIB)
+
+# This specifies the option you choose for this build 
+#
+# javapush - Push daemon running as a Java thread
+# nativepush - external native push daemon
+#
+ifeq ($(USE_NATIVE_PUSH), true)
+LIB_PUSH_API_IMPL = nativepush
+else
+LIB_PUSH_API_IMPL = javapush
+endif
+
+USE_PUSH_CDC_STUBBED ?= true
+
+
+MIDP_JAVADOC_ALL += \
+    -group "Push Registry" \
+    $(shell echo $(SUBSYSTEM_PUSH_API_PACKAGES) | tr ' ' $(PATHSEP))
+
+# vpath for ( push ) subsystem
+#
+vpath % $(SUBSYSTEM_PUSH_DIR)/push_api/$(LIB_PUSH_API_IMPL)/native
+
+# Java files for the ( push ) subsystem
+#
+ifeq ($(USE_NATIVE_PUSH), true)
+    # Shared file for non stub configurations
+    SHARED_JAVA_FILES += \
+        $(SUBSYSTEM_PUSH_DIR)/push_api/javapush/classes/com/sun/midp/io/j2me/push/ProtocolPush.java
+    
+    SUBSYSTEM_PUSH_API_NATIVE_FILES = \
+            push_registry_impl_kni.c
+
+   SUBSYSTEM_PUSH_API_JAVA_FILES += $(SHARED_JAVA_FILES) \
+        $(SUBSYSTEM_PUSH_DIR)/push_api/nativepush/classes/javax/microedition/io/PushRegistry.java \
+        $(SUBSYSTEM_PUSH_DIR)/push_api/nativepush/classes/com/sun/midp/io/j2me/push/PushRegistryImpl.java \
+        $(SUBSYSTEM_PUSH_DIR)/push_api/nativepush/classes/com/sun/midp/io/j2me/push/PushRegistryInternal.java
+else
+    # Shared file for non stub configurations
+    SHARED_JAVA_FILES += \
+        $(SUBSYSTEM_PUSH_DIR)/push_api/javapush/classes/javax/microedition/io/PushRegistry.java \
+        $(SUBSYSTEM_PUSH_DIR)/push_api/javapush/classes/com/sun/midp/io/j2me/push/PushRegistryImpl.java \
+        $(SUBSYSTEM_PUSH_DIR)/push_api/javapush/classes/com/sun/midp/io/j2me/push/Connection.java \
+        $(SUBSYSTEM_PUSH_DIR)/push_api/javapush/classes/com/sun/midp/io/j2me/push/ProtocolPush.java
+
+    ifeq ($(TARGET_VM), cldc_vm)
+        SUBSYSTEM_PUSH_API_NATIVE_FILES = \
+            midp_connection_registry_kni.c
+
+        SUBSYSTEM_PUSH_API_JAVA_FILES += $(SHARED_JAVA_FILES) \
+            $(SUBSYSTEM_PUSH_DIR)/push_api/javapush/classes/com/sun/midp/io/j2me/push/ConnectionRegistry.java \
+            $(SUBSYSTEM_PUSH_DIR)/push_api/javapush/classes/com/sun/midp/io/j2me/push/PushRegistryInternal.java
+    else 
+        ifneq ($(TARGET_VM), cdc_vm)
+            $(error "Unknown target VM")
+        endif
+        
+        # Push interfaces that JSRs should implement to support push connections
+        SUBSYSTEM_PUSH_API_JAVA_FILES += \
+            $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/com/sun/midp/push/reservation/ConnectionReservation.java \
+            $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/com/sun/midp/push/reservation/DataAvailableListener.java \
+            $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/com/sun/midp/push/reservation/ReservationDescriptor.java \
+            $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/com/sun/midp/push/reservation/ProtocolFactory.java
+
+        MIDP_BOOTCLASSPATH_PACKAGES_LIST += com.sun.midp.push.reservation
+
+        ifeq ($(USE_JUMP), true)
+            # NOTE: there is no native files for JUMP configuration
+            SUBSYSTEM_PUSH_API_NATIVE_FILES =
+
+            SUBSYSTEM_PUSH_API_JAVA_FILES += $(SHARED_JAVA_FILES) \
+                $(SUBSYSTEM_PUSH_DIR)/push_api/jump_application/classes/com/sun/midp/io/j2me/push/ConnectionRegistry.java \
+                $(SUBSYSTEM_PUSH_DIR)/push_api/jump_application/classes/com/sun/midp/io/j2me/push/PushRegistryInternal.java
+        else
+            # NOTE: there is no native files for CDC only configuration
+            SUBSYSTEM_PUSH_API_NATIVE_FILES =
+
+            ifeq ($(USE_PUSH_CDC_STUBBED), true)            
+                # CDC only version of push is stubbed
+                SUBSYSTEM_PUSH_API_JAVA_FILES += \
+                    $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/javax/microedition/io/PushRegistry.java \
+                    $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/com/sun/midp/io/j2me/push/PushRegistryInternal.java
+            endif 
+        endif
+    endif
+endif
+
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_PUSH_API_I3TEST_JAVA_FILES =
+endif

@@ -1,0 +1,113 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+############################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+############################################################
+
+SUBSYSTEM_SECURITY_MODULES += midp_permissions
+
+PERMISSIONS_DIR = $(SUBSYSTEM_DIR)/security/midp_permissions
+PERMISSIONS_CONFIG_DIR = $(PERMISSIONS_DIR)/reference/config
+
+# Javadoc source path
+SUBSYSTEM_MIDP_PERMISSIONS_SOURCEPATH += $(PERMISSIONS_DIR)/reference/classes
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_MIDP_PERMISSIONS_SOURCEPATH)
+
+#
+# Java files for the library
+#
+SUBSYSTEM_SECURITY_JAVA_FILES += \
+  $(GENERATED_DIR)/classes/com/sun/midp/security/PermissionsStrings.java \
+  $(PERMISSIONS_DIR)/reference/classes/com/sun/midp/security/DomainPolicy.java \
+  $(PERMISSIONS_DIR)/reference/classes/com/sun/midp/security/Permissions.java \
+  $(PERMISSIONS_DIR)/reference/classes/com/sun/midp/security/PermissionGroup.java
+
+
+vpath % $(PERMISSIONS_DIR)/reference/native
+SUBSYSTEM_SECURITY_NATIVE_FILES += LoadPolicy_kni.c
+
+
+# Select security policy implementation
+# Should be reworked according to subsystem decoupling
+SECURITY_POLICY_IMPL_FILES = generic_policy_load.c
+
+ifeq ($(TARGET_OS), javacall)
+ifeq ($(USE_DYNAMIC_PERMISSIONS), true)
+SECURITY_POLICY_IMPL_FILES = javacall_policy_load.c
+endif
+endif 
+
+SUBSYSTEM_SECURITY_NATIVE_FILES += $(SECURITY_POLICY_IMPL_FILES)
+
+# Include system properties in Configuration
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+	 $(PERMISSIONS_CONFIG_DIR)/properties_security.xml
+
+
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES += \
+#    $(PERMISSIONS_DIR)/reference/i3test/com/sun/midp/security/TestPermissions.java
+endif
+
+
+ifeq ($(TARGET_OS), javacall)
+POLICY_FILES = $(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.JTWI \
+	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.JTWI \
+	$(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.MSA \
+	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.MSA \
+    $(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.FULL \
+    $(PERMISSIONS_CONFIG_DIR)/_policy.txt.FULL
+
+javacall_policy_load.c : policy_files
+
+ifeq ($(USE_NATIVE_APP_MANAGER), true)
+
+# Need to apply some security policy when building with NAMS
+
+policy_files :
+	@if [ ! -d $(MIDP_OUTPUT_DIR)/lib ]; then mkdir $(MIDP_OUTPUT_DIR)/lib; fi
+	@cp  $(POLICY_FILES) $(MIDP_OUTPUT_DIR)/lib
+	@cp  $(MIDP_OUTPUT_DIR)/lib/_function_groups.txt.JTWI $(MIDP_OUTPUT_DIR)/lib/_function_groups.txt
+	@cp  $(MIDP_OUTPUT_DIR)/lib/_policy.txt.JTWI $(MIDP_OUTPUT_DIR)/lib/_policy.txt
+
+else
+
+policy_files :
+	@if [ ! -d $(MIDP_OUTPUT_DIR)/lib ]; then mkdir $(MIDP_OUTPUT_DIR)/lib; fi
+	@cp  $(POLICY_FILES) $(MIDP_OUTPUT_DIR)/lib
+
+endif
+
+endif
+
