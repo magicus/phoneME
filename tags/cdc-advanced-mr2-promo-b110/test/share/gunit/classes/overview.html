@@ -1,0 +1,267 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!--
+ @(#)overview.html	1.8 06/10/25
+
+Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+-->
+<html>
+<head>
+</head>
+<body>
+<div style="text-align: center;">
+<h2>GUnit, a Graphics Unit Test Framework</h2>
+<h3>A Technical Overview</h3>
+<span style="font-weight: bold;">Version 1.8</span><br>
+<div style="text-align: left;">
+<hr style="width: 100%; height: 2px;"><br>
+</div>
+<div style="text-align: left;"><br>
+GUnit is an unit test framework that extends <span
+ style="font-weight: bold;">JUnit</span> (<a href="http://www.junit.org">http://www.junit.org</a>))
+mainly focused
+for graphics unit tests development and execution. All testcases
+developed for Gunit can be run with Junit testrunners. Gunit also
+provides its own runner that extends Junit's runner with more features.
+This document is focused on how one
+develops unit tests, execute them and also extend the framework as
+appropriate. Design and internals of the framework are beyond the scope
+of this document.<br>
+<br>
+The following class diagram shows the layering of GUnit on top of
+Junit. <br>
+<br>
+<div style="text-align: center;"><img alt=""
+ src="gunit/framework/doc-files/gunit-allclasses.jpg"
+ style="width: 920px; height: 790px;"><br>
+</div>
+<br>
+<br>
+<table
+ style="width: 100%; text-align: left; margin-left: auto; margin-right: 0px; font-weight: bold;"
+ border="0" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;">
+      <center style="background-color: rgb(204, 204, 255);">:::
+Developing Tests :::<br>
+      </center>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+The following are the key classes that the developer needs to focus for
+developing unit tests.<br>
+<span style="font-weight: bold;"></span><span style="font-weight: bold;"></span>
+<h4>gunit.framework.TestCase<br>
+</h4>
+This is an abstract class that must be extended to create testcases.
+This class provides the&nbsp; infrastructure for Graphics testcase
+developers. Refer to the javadoc for the methods provided by this class<br>
+<h4>Test Recipe</h4>
+Create a public class that extends gunit.framework.TestCase and provide
+a no-arg
+constructor<br>
+<br>
+<table style="text-align: left; width: 100%;" border="0" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td
+ style="vertical-align: top; background-color: rgb(255, 255, 204);">
+      <pre style="background-color: rgb(255, 255, 204);">  <br>  <span
+ style="font-weight: bold;">public class DrawTest extends gunit.framework.TestCase {</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">    public DrawTest() {</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">    }</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">  }</span><br></pre>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<br>
+Optionally override TestCase.setUp() and TestCase.tearDown() and ensure
+that you call super's version before your version.<br>
+<br>
+<table style="text-align: left; width: 100%;" border="0" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td
+ style="vertical-align: top; background-color: rgb(255, 255, 204);">
+      <pre style="background-color: rgb(255, 255, 204);">  <br>  public class DrawTest extends gunit.framework.TestCase {<br>    public DrawTest() {<br>    }<br><br>    <span
+ style="font-weight: bold;">protected void setUp() {</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">      super.setUp();</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">      // DrawTest specific setup</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">    }</span><br
+ style="font-weight: bold;"><br style="font-weight: bold;"><span
+ style="font-weight: bold;">    protected void tearDown() {</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">      super.tearDown() ;</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">      // DrawTest specific teardown</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">    }</span><br>  }<br><br></pre>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<br>
+Write your testcase method(s) by naming the method with a test prefix<br>
+<br>
+<table style="text-align: left; width: 100%;" border="0" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td
+ style="vertical-align: top; background-color: rgb(255, 255, 204);">
+      <pre style="background-color: rgb(255, 255, 204);"><br>  public class DrawTest extends gunit.framework.TestCase {<br>    public DrawTest() {<br>    }<br><br>    protected void setUp() {<br>      super.setUp();<br>      // DrawTest specific setup<br>    }<br><br>    protected void tearDown() {<br>      super.tearDown() ;<br>      // DrawTest specific teardown<br>    }<br><br>    <span
+ style="font-weight: bold;">public void testRect() {<br>       Graphics g = getGraphics() ;<br
+ style="font-weight: bold;"></span><span style="font-weight: bold;">       g.drawRect(0, 0, this.args[0]. this.args[1]) ;</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">    }</span><br
+ style="font-weight: bold;"><br style="font-weight: bold;"><span
+ style="font-weight: bold;">    public void testAPI() {</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">       Integer i = new Integer(209) ;</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">       int actual = i.intValue() ;</span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">    }</span><br>  }<br></pre>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<br>
+If you can assert the testcase result programatically, do so using the
+appropriate Assert.assert*() or Assert.fail() methods.<br>
+<br>
+<table style="text-align: left; width: 100%;" border="0" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td
+ style="vertical-align: top; background-color: rgb(255, 255, 204);">
+      <pre style="background-color: rgb(255, 255, 204);"><br>  public class DrawTest extends gunit.framework.TestCase {<br>    public DrawTest() {<br>    }<br><br>    protected void setUp() {<br>      super.setUp();<br>      // DrawTest specific setup<br>    }<br><br>    protected void tearDown() {<br>      super.tearDown() ;<br>      // DrawTest specific teardown<br>    }<br><br>    public void testRect() {<br>       Graphics g = getGraphics() ;<br>       g.drawRect(0, 0, this.args[0]. this.args[1]) ;<br> <span
+ style="font-weight: bold;">      assertEquals(super.getReferenceImage(),</span><span
+ style="font-weight: bold;"> super.getTestImage()) ;</span><br>    }<br><br>    public void testAPI() {<br>       Integer i = new Integer(209) ;<br>       int actual = i.intValue() ;<br>      <span
+ style="font-weight: bold;"> if ( actual != 209 ) </span><br
+ style="font-weight: bold;"><span style="font-weight: bold;">         fail("It is not 209") ;</span><br>    }<br>  }</pre>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+If you cannot assert the testcase result programatically, provide a
+brief description of what the result should be, by doing the following.
+<br>
+<ul>
+  <li>Create a file with the same name as the TestCase subclass with a
+.xml suffix and place it in the same directory along with the java
+sources (For example :- DrawTest.xml)<br>
+  </li>
+</ul>
+<ul>
+  <li>In the file add the following for each of the testcase method
+that cannot assert the result programatically. <br>
+  </li>
+</ul>
+<div style="margin-left: 40px;">
+<div style="text-align: left;">
+<pre>&lt;methodName&gt;<br>    &lt;test&gt;<br>      <b>test description line 1</b><br>      <b>test description line 2</b><br>         ...<br>      <b>test description line n</b><br>    &lt;/test&gt;<br>    &lt;image&gt;<br>      <b>URL of the imagefile</b><br>    &lt;/image&gt;<br> &lt;/methodName&gt;</pre>
+<br>
+This allows the runner to validate the result manually<br>
+</div>
+<div style="text-align: left; margin-left: 40px;"><br>
+</div>
+</div>
+<br>
+<table
+ style="width: 100%; text-align: left; margin-left: auto; margin-right: auto; font-weight: bold;"
+ border="0" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td
+ style="vertical-align: top; background-color: rgb(204, 204, 255);">
+      <center>::: Running Tests :::</center>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<span style="font-weight: bold;"></span><br>
+A test runner's job is to collect all the testcases specfied by the
+user and runs them. All test runners are java
+applications (meaning they have a static main() method) and take a well
+defined set of arguments.<br>
+<br>
+<table style="text-align: left; width: 100%;" border="0" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td
+ style="vertical-align: top; background-color: rgb(255, 255, 204);">
+      <pre style="background-color: rgb(255, 255, 204);"> <br>java junit.textui.TestRunner &lt;junit-options&gt; &lt;testcaseclass&gt;<br><br>                                   (or) <br><br>java gunit.textui.TestRunner [&lt;options&gt;] &lt;testcase-class&gt;|&lt;testcase-method&gt;<br>   where &lt;options&gt; = &lt;junit-options&gt; &lt;gunit-options&gt;<br> <br>   Refer to junit.textui.TestRunner for &lt;junit-options&gt;<br>   (Note :- &lt;testcase-method&gt; is specified using &lt;class-name&gt;.&lt;method-name&gt;<br>    and is only supported by Gunit)<br><br>   &lt;gunit-options&gt; are the following. (Note, all gunit options start with<br>   '--' so that it does not collide with junit options)<br> <br>   <span
+ style="font-weight: bold;">--h  | --help</span><br>        Prints this usage<br> <br>   <span
+ style="font-weight: bold;">--cc | --containerclass &lt;classname&gt;</span><br>        Specifies the container class, which implements<br>        "gunit.framework.TestContainer" interface. This container is handed<br>        to the GUI testcases.<br>        (Default = "gunit.container.AWTTestContainer")<br> <br>   <span
+ style="font-weight: bold;">--pc | --printerclass   &lt;classname&gt;</span><br>        Specifies the result printer class, which should extend<br>        "junit.textui.ResultPrinter".<br>        (Default = "junit.textui.ResultPrinter")<br> <br>   <span
+ style="font-weight: bold;">--ta | --testargs       &lt;filename&gt;.xml</span><br>        Name of the file that contains the test arguments. The format of<br>        the file is as follows.<br> <br>        &lt;default&gt;<br>          &lt;args&gt;&lt;/args&gt;<br>          &lt;args&gt;&lt;/args&gt;<br>          ...<br>        &lt;/default&gt;<br> <br>        &lt;methodname&gt;<br>          &lt;args&gt;&lt;/args&gt;<br>          &lt;args&gt;&lt;/args&gt;<br>          ...<br>        &lt;methodname&gt;<br> <br>        The "&lt;default&gt;" is optional and if present is used if a method<br>        specific arguments are not present.<br> <br>        The "&lt;methodname&gt;" is fully qualified classname-methodname and<br>        the '.' in the classname is changed to '-'.<br>        (For example if the methodName is "testFoo" and<br>        resides in a class "moc.nus.Bar" then the methodname is specified<br>        as moc-nus-Bar-testFoo).<br> <br>        This file can be autogenerated using<br>        "<span
+ style="font-weight: bold;">gunit.textui.XMLTestLister --tb &lt;filename&gt;|&lt;testcaseclass&gt;</span>"<br> <br>   <span
+ style="font-weight: bold;">--tb | --testbundle     &lt;filename&gt;</span><br>        File that contains a list of java class names seperated by newlines<br>        that should be run by the runner.This option ignores <br>        &lt;testcase-class&gt; or &lt;testcase-method&gt; if specified.<br> <br>   <span
+ style="font-weight: bold;">--rp | --refimagepath &lt;directory&gt;[:&lt;directory&gt;]</span><br>        The directory path (seperated using :) that contain the reference<br>        images.<br>        (Default = "/tmp")<br>                        <br></pre>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<br>
+The following is a sample of how testcases are specified in the
+test-bundle.<br>
+<br>
+<table style="text-align: left; width: 100%;" border="0" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td
+ style="vertical-align: top; background-color: rgb(255, 255, 204);">
+      <pre><br>&lt;tests-j2d-Benchmark-testFillRect&gt;<br>   &lt;args&gt;images/duke.gif&lt;/args&gt;<br>   &lt;args&gt;-i&lt;/args&gt;<br>   &lt;args&gt;100&lt;/args&gt;<br>&lt;/tests-j2d-Benchmark-testFillRect&gt;<br>&lt;tests-j2d-Benchmark-testCloneGraphics&gt;<br>   &lt;args&gt;images/javalogo.gif&lt;/args&gt;<br>   &lt;args&gt;-i&lt;/args&gt;<br>   &lt;args&gt;100&lt;/args&gt;<br>&lt;/tests-j2d-Benchmark-testCloneGraphics&gt;<br>      </pre>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<h4>Generating Reference Images</h4>
+Graphics testcases can assert if the rendition is the same as some
+reference image. Generating reference images are incremental, meaning
+as you code each testcase you can generate them. when you run your
+testcase with the following line <span style="font-weight: bold;">assertImageEquals(getReferenceImage(),
+getTestImage())</span> <br>
+Gunit checks if there is a reference image for the testcase in the list
+of directories. If it cannot find one then it prompts the user to
+create the reference image. The user can look at the rendered output of
+the testcase on the screen and if he thinks it is correct, can goahead
+with the generation of the reference image. When the next time you run
+the testcase it will aitomatically perform the comparison and report
+the result accordingly<br>
+<br>
+<table style="text-align: left; width: 100%; font-weight: bold;"
+ border="0" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td
+ style="vertical-align: top; background-color: rgb(204, 204, 255);">
+      <center>:::
+Reporting Results :::</center>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<code></code>By default gunit's runner uses junit's result printer. If
+you need to report in some other format extend <span
+ style="font-weight: bold;">junit.textui.ResultPrinter</span> and
+implement the required methods to report results differently. As of
+this version there are no other result printers available.<br>
+<hr style="width: 100%; height: 2px;"><span style="font-weight: bold;">Last
+Modified : 10/25/06</span><br>
+<br>
+</div>
+</div>
+<HR>
+<font size="-1">Copyright  2008  Sun Microsystems, Inc. All rights reserved.</font>
+</body>
+</html>

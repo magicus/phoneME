@@ -1,0 +1,304 @@
+//
+// Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
+//
+// @(#)jitfloatgrammarrules.jcs	1.10 06/10/10
+//
+//
+// Optional floating-point grammar rules for
+// RISC processors having floating-point hardware.
+// 
+// Unfortunately, these operations are not done uniformly
+// between processors, so we must place them in processor-specific
+// files.
+
+%{
+static void
+moveIntToFPRegs(
+    CVMJITCompilationContext* con,
+    CVMJITIRNodePtr thisNode,    
+    CVMRMregset target,
+    CVMRMregset avoid)
+{   
+    const int size = CVMJITirnodeIsSingleWordType(thisNode) ? 1 : 2;   
+    CVMRMResource* src  = popResource(con);
+    CVMRMResource* dest = CVMRMgetResource(CVMRM_FP_REGS(con),
+					   target, avoid, size);
+    CVMRMpinResource(CVMRM_INT_REGS(con), src,
+		     CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+
+    if (size == 1) {		     
+        CVMARMemitMoveFloatFP(con, CVMARM_MOVFA_OPCODE, 
+            CVMRMgetRegisterNumber(dest), CVMRMgetRegisterNumber(src));
+    } else {
+        CVMARMemitMoveDoubleFP(con, CVMARM_MOVDA_OPCODE, 
+            CVMRMgetRegisterNumber(dest), CVMRMgetRegisterNumber(src));
+    }
+        
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), src);
+    CVMRMoccupyAndUnpinResource(CVMRM_FP_REGS(con), dest, NULL);
+    pushResource(con, dest);    
+}
+
+static void
+moveFPToIntRegs(
+    CVMJITCompilationContext* con,
+    CVMJITIRNodePtr thisNode,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    const int size = CVMJITirnodeIsSingleWordType(thisNode) ? 1 : 2;
+    CVMRMResource* src  = popResource(con);
+    CVMassert(size == src->size);
+    CVMRMResource* dest = CVMRMgetResource(CVMRM_INT_REGS(con),
+					   target, avoid, size);
+    CVMRMpinResource(CVMRM_FP_REGS(con), src,
+		     CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
+		     
+    if (size == 1) {
+        CVMARMemitMoveFloatFP(con, CVMARM_MOVAF_OPCODE, 
+            CVMRMgetRegisterNumber(src), CVMRMgetRegisterNumber(dest));
+    } else {
+        CVMARMemitMoveDoubleFP(con, CVMARM_MOVAD_OPCODE, 
+            CVMRMgetRegisterNumber(src), CVMRMgetRegisterNumber(dest));
+    }
+        
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), src);
+    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, NULL);
+    pushResource(con, dest);        
+}
+
+%}
+
+reg32: freg32 : 10  : : : :
+    moveFPToIntRegs(con, $$, GET_REGISTER_GOALS);
+
+freg32: reg32 : 20  : : : : 
+    moveIntToFPRegs(con, $$, GET_FLOAT_REGISTER_GOALS);
+
+reg64: freg64 : 10  : : : :
+    moveFPToIntRegs(con, $$, GET_REGISTER_GOALS);
+
+freg64: reg64 : 20  : : : :
+    moveIntToFPRegs(con, $$, GET_FLOAT_REGISTER_GOALS);
+
+// Purpose: valueFloat = (float)valueInt.
+freg32: I2F freg32 : 10 : : : :
+    floatUnaryOp(con,  CVMARM_I2F_OPCODE, $$, 1, GET_FLOAT_REGISTER_GOALS);
+
+// Purpose: valueInt = (int)valueFloat.
+freg32: F2I freg32 : 10 : : : :
+    floatUnaryOp(con,  CVMARM_F2I_OPCODE, $$, 1, GET_FLOAT_REGISTER_GOALS);
+
+// Purpose: valueDouble = (double)valueInt.
+freg64: I2D freg32 : 10 : : : :
+    floatUnaryOp(con,  CVMARM_I2D_OPCODE, $$, 2, GET_FLOAT_REGISTER_GOALS);
+
+// Purpose: valueInt = (int)valueDouble.
+freg32: D2I freg64 : 10 : : : :
+    floatUnaryOp(con,  CVMARM_D2I_OPCODE, $$, 1, GET_FLOAT_REGISTER_GOALS);
+
+// Purpose: valueDouble = (double)valueFloat.
+freg64: F2D freg32 : 10 : : : :
+    floatUnaryOp(con,  CVMARM_F2D_OPCODE, $$, 2, GET_FLOAT_REGISTER_GOALS);
+
+// Purpose: valueFloat = (float)valueDouble.
+freg32: D2F freg64 : 10 : : : :
+    floatUnaryOp(con,  CVMARM_D2F_OPCODE, $$, 1, GET_FLOAT_REGISTER_GOALS);
+
+//
+// comparing floating-point values for integer result -1, 0, 1
+//
+%{
+/*
+ * emit this pattern
+ * fcmpes %f1 %f2
+ * fmstat
+ * mov    %dest #1
+ * if FCMPL
+ *   bgt   done
+ *   fcmps %f1 %f2
+ *   fmstat
+ *   mvnne  %dest #0
+ * else if FCMPG
+ *   mvnmi %dest #0
+ *   bgt   done
+ *   fcmps %f1 %f2
+ *   fmstat
+ * moveq %dest #0
+ * done:
+ *
+ */
+static void
+vfpcompare(
+    CVMJITCompilationContext* con, 
+    CVMJITIRNodePtr thisNode,
+    CVMBool isFloat,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{             
+    CVMRMResource* rhs = popResource(con);
+    CVMRMResource* lhs = popResource(con);
+    CVMRMResource *dest = 
+        CVMRMgetResource(CVMRM_INT_REGS(con), target, avoid, 1);
+    CVMUint32 destReg = CVMRMgetRegisterNumber(dest);
+    
+    int flags = CVMJITirnodeGetBinaryNodeFlag(thisNode);
+    int cmpOpcode;
+    int cmpeOpcode;
+    int done;    
+    
+    if (isFloat) {
+        cmpOpcode  = CVMCPU_FCMP_OPCODE;
+        cmpeOpcode = CVMARM_FCMPES_OPCODE;
+    } else {
+        cmpOpcode  = CVMCPU_DCMP_OPCODE;
+        cmpeOpcode = CVMARM_DCMPED_OPCODE;
+    }
+   
+    CVMRMpinResource(CVMRM_FP_REGS(con), lhs,
+                     CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
+    CVMRMpinResource(CVMRM_FP_REGS(con), rhs,
+                     CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
+
+    CVMCPUemitFCompare(con, cmpeOpcode, CVMCPU_COND_AL,
+        CVMRMgetRegisterNumber(lhs), CVMRMgetRegisterNumber(rhs));
+
+    CVMCPUemitFCompare(con, CVMARM_FMSTAT_OPCODE, CVMCPU_COND_AL,0, 0);
+
+    CVMCPUemitLoadConstant(con, destReg, 1);
+
+    if (flags & CVMJITCMPOP_UNORDERED_LT) {
+        done = CVMJITcbufGetLogicalPC(con) + CVMCPU_INSTRUCTION_SIZE * 5;
+        CVMCPUemitBranch(con, done, CVMCPU_COND_GT);
+
+        CVMCPUemitFCompare(con, cmpOpcode, CVMCPU_COND_AL,
+            CVMRMgetRegisterNumber(lhs), CVMRMgetRegisterNumber(rhs));
+
+        CVMCPUemitFCompare(con, CVMARM_FMSTAT_OPCODE, CVMCPU_COND_AL,0, 0);
+        CVMCPUemitLoadConstantConditional(con, destReg, -1, CVMCPU_COND_NE);
+    } else {
+        CVMCPUemitLoadConstantConditional(con, destReg, -1, CVMCPU_COND_MI);
+	
+        done = CVMJITcbufGetLogicalPC(con) + CVMCPU_INSTRUCTION_SIZE * 4;
+        CVMCPUemitBranch(con, done, CVMCPU_COND_GT);
+        
+        CVMCPUemitFCompare(con, cmpOpcode, CVMCPU_COND_AL,
+            CVMRMgetRegisterNumber(lhs), CVMRMgetRegisterNumber(rhs));
+
+        CVMCPUemitFCompare(con, CVMARM_FMSTAT_OPCODE, CVMCPU_COND_AL,0, 0);
+    }
+    CVMCPUemitLoadConstantConditional(con, destReg, 0, CVMCPU_COND_EQ);
+    
+    CVMJITcsBeginBlock(con);
+
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), lhs);
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), rhs);
+    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, thisNode);
+    pushResource(con, dest);        
+}
+
+static void
+vfpCompareAndBranch(
+    CVMJITCompilationContext* con, 
+    CVMJITIRNodePtr thisNode,
+    CVMBool isFloat)    
+{
+    enum { numberOfConditions = 6 };
+    
+    static const CVMCPUCondCode branchCondCode[] = {
+	/* CVMJITCMPOP_UNORDERED_LT = false */
+        CVMCPU_COND_MI,    /* CVMJIT_LT */
+        CVMCPU_COND_LS,	   /* CVMJIT_LE */
+        CVMCPU_COND_EQ,	   /* CVMJIT_EQ */
+        CVMCPU_COND_HS,	   /* CVMJIT_GE */
+        CVMCPU_COND_HI,	   /* CVMJIT_GT */
+        CVMCPU_COND_NE,	   /* CVMJIT_NE */
+        
+	/* CVMJITCMPOP_UNORDERED_LT = true */
+        CVMCPU_COND_LT,    /* CVMJIT_LT */ 
+        CVMCPU_COND_LE,	   /* CVMJIT_LE */   
+        CVMCPU_COND_EQ,	   /* CVMJIT_EQ */
+        CVMCPU_COND_GE,	   /* CVMJIT_GE */
+        CVMCPU_COND_GT,	   /* CVMJIT_GT */
+        CVMCPU_COND_NE	   /* CVMJIT_NE */
+    };
+    
+    const CVMJITConditionalBranch* branch = 
+        CVMJITirnodeGetCondBranchOp(thisNode);
+    CVMJITCondition condition = branch->condition;
+    
+    CVMRMResource* rhs = popResource(con);
+    CVMRMResource* lhs = popResource(con);
+    
+    CVMRMpinResource(CVMRM_FP_REGS(con), lhs,
+                     CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
+    CVMRMpinResource(CVMRM_FP_REGS(con), rhs,
+                     CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);                     
+    {    
+	int cmpOpcode;
+
+	if (condition == CVMJIT_EQ || condition == CVMJIT_NE) {        
+	    cmpOpcode = isFloat ? CVMCPU_FCMP_OPCODE : CVMCPU_DCMP_OPCODE;
+	} else {
+	    cmpOpcode = isFloat ? CVMARM_FCMPES_OPCODE : CVMARM_DCMPED_OPCODE;
+	}
+
+	CVMCPUemitFCompare(con, cmpOpcode, CVMCPU_COND_AL,
+	    CVMRMgetRegisterNumber(lhs), CVMRMgetRegisterNumber(rhs));
+
+	CVMCPUemitFCompare(con, CVMARM_FMSTAT_OPCODE, CVMCPU_COND_AL, 0,0);
+    }
+       
+    CVMJITcsBeginBlock(con);    
+    CVMRMsynchronizeJavaLocals(con);
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), lhs);
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), rhs);
+    CVMRMpinAllIncomingLocals(con, branch->target, CVM_FALSE);
+    
+    if (branch->flags & CVMJITCMPOP_UNORDERED_LT) {
+        condition += numberOfConditions;
+    }
+    branchToBlock(con, branchCondCode[condition], branch->target);
+    
+    CVMRMunpinAllIncomingLocals(con, branch->target);
+}
+%}
+
+reg32: FCMPL freg32 freg32 : 20 : : : :
+    vfpcompare(con, $$, CVM_TRUE, GET_FLOAT_REGISTER_GOALS);
+
+reg32: FCMPG freg32 freg32 : 20 : : : :
+    vfpcompare(con, $$, CVM_TRUE, GET_FLOAT_REGISTER_GOALS);    
+
+reg32: DCMPL freg64 freg64 : 20 : : : :
+    vfpcompare(con, $$, CVM_FALSE, GET_FLOAT_REGISTER_GOALS);
+    
+reg32: DCMPG freg64 freg64 : 20 : : : :
+    vfpcompare(con, $$, CVM_FALSE, GET_FLOAT_REGISTER_GOALS);       
+    
+root: BCOND_FLOAT freg32 freg32 : 5 : : : : 
+    vfpCompareAndBranch(con, $$, CVM_TRUE);
+
+root: BCOND_DOUBLE freg64 freg64 : 5 : : : : 
+    vfpCompareAndBranch(con, $$, CVM_FALSE);
+
