@@ -30,6 +30,7 @@
 #include <lfjport_export.h>
 
 #include <jcapp_export.h>
+static jboolean _isPainting = KNI_FALSE;
 
 /**
  * @file
@@ -267,4 +268,16 @@ jint* lfjport_get_display_device_ids(jint* n) {
  */
 void lfjport_display_device_state_changed(int hardwareId, int state) {
     jcapp_display_device_state_changed(hardwareId, state);
+}
+
+/**
+ * This function will be called from event handling loop to check 
+ * painting in progress.
+ */
+int lfjport_is_painting(){
+    return _isPainting;
+}
+
+void lfjport_set_is_painting(jboolean painting){
+     _isPainting = painting;
 }

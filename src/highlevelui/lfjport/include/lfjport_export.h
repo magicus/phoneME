@@ -182,6 +182,16 @@ jint* lfjport_get_display_device_ids(jint* n);
  */
 void lfjport_display_device_state_changed(int hardwareId, int state);
 
+/**
+ * This function will be called from event handling loop to check 
+ * painting in progress.
+ */
+extern int lfjport_is_painting();
+
+/**
+ */
+void lfjport_set_is_painting(jboolean isPainting);
+
 #ifdef __cplusplus
 }
 #endif

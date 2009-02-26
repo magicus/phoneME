@@ -40,6 +40,8 @@
 #include <gxapi_graphics.h>
 #include <imgapi_image.h>
 
+
+
 /**
  * Calls platform specific function to redraw a portion of the display.
  * <p>
@@ -308,9 +310,28 @@ KNIDECL(com_sun_midp_lcdui_DisplayDeviceContainer_getDisplayDevicesIds0) {
 
     KNI_EndHandlesAndReturnObject(returnArray);
 }
+
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_lcdui_DisplayDevice_displayStateChanged0) {
     jint hardwareId = KNI_GetParameterAsInt(1);
     jint state = KNI_GetParameterAsInt(2);
     lcdlf_display_device_state_changed(hardwareId, state);
+}
+
+/**
+ * Mark in painting 
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(javax_microedition_lcdui_Display_startPaint) {
+    lfjport_set_is_painting(KNI_TRUE);
+    KNI_ReturnVoid();
+}
+
+/**
+ * Mark out of painting 
+ */ 
+KNIEXPORT KNI_RETURNTYPE_VOID 
+KNIDECL(javax_microedition_lcdui_Display_endPaint) {
+    lfjport_set_is_painting(KNI_FALSE);
+    KNI_ReturnVoid();
 }
