@@ -35,24 +35,14 @@
 #include <javacall_time.h>
 #include <javacall_lifecycle.h>
 #include <kni.h>
-#include <lfjport_export.h>
 
 #include <javacall_logging.h>
 #include <suitestore_listeners.h>
 
 gxj_screen_buffer gxj_system_screen_buffer;
 
-#ifndef max
-#define max(x,y)        (x > y ? x :y)
-#endif
-
-#ifndef min
-#define min(x,y)        (x > y ? y: x)
-#endif
-
 static jboolean isLcdDirty = KNI_FALSE;
 static javacall_time_milliseconds lastFlushTimeTicks = 0;
-#define REFRESH_DELTA_MSEC (1000/24) /* 24fps */
 static jboolean disableRefresh=KNI_FALSE;
 
 /**
@@ -154,8 +144,6 @@ int jcapp_init() {
         REPORT_ERROR(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
         return -2;
     }    
-    lastFlushTimeTicks = 0;
-    isLcdDirty = KNI_FALSE;
 
     jcapp_reset_screen_buffer(hardwareId);
 
@@ -192,37 +180,12 @@ void jcapp_finalize() {
 #define TRACE_LCD_REFRESH
 void jcapp_refresh(int hardwareId, int x1, int y1, int x2, int y2)
 {
-    static int min_x, max_x;
-    static int min_y, max_y;
-    javacall_time_milliseconds  now;
     /*block any refresh calls in case of native master volume*/
     if(disableRefresh==KNI_TRUE){
         return;
     }
 
-    now = javacall_time_get_clock_milliseconds();
-
-     if(isLcdDirty == KNI_FALSE) {
-        min_x = x1;
-        min_y = y1;
-        max_x = x2;
-        max_y = y2;
-        isLcdDirty = KNI_TRUE;
-    } else {
-        /* update the "dirty" area of the display */
-        min_x = min(min_x, x1);
-        min_y = min(min_y, y1);
-        max_x = max(max_x, x2);
-        max_y = max(max_y, y2);
-    }
-
-    if ((now - lastFlushTimeTicks) < REFRESH_DELTA_MSEC) {
-        return;
-    }
-    javacall_lcd_flush_partial (hardwareId, min_y, max_y);
-
-    lastFlushTimeTicks = now;
-    isLcdDirty = KNI_FALSE;
+    javacall_lcd_flush_partial (hardwareId, y1, y2);
 }
 
 /**
@@ -380,28 +343,3 @@ void jcapp_display_device_state_changed(int hardwareId, int state) {
     (void)hardwareId;
     (void)state;
 }
-
-#define MAX_INT 0x7FFFFFFF
-/*
- * will be called from event handling loop periodically
- */
-void jcapp_refresh_pending(javacall_time_milliseconds timeTowaitInMillisec) {
-	if(isLcdDirty == KNI_FALSE){
-        return;
-    }
-
-    /* apply the expected waiting time to lastFlushtimeTicks */
-
-    if(-1 == timeTowaitInMillisec) {
-        lastFlushTimeTicks = 0;
-    } else {
-        lastFlushTimeTicks -= timeTowaitInMillisec;
-    }
-
-    if(KNI_FALSE == lfjport_is_painting()) {
-        // perform update only dirty area selected by min_x(y),max_x(y)
-        // see jcapp_refresh
-        lcdlf_refresh(jcapp_get_current_hardwareId(),MAX_INT, MAX_INT, 0, 0);
-    }
-}
-#undef MAX_INT

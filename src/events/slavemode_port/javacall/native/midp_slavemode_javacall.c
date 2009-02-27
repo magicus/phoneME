@@ -184,7 +184,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
     }	else {
         timeTowaitInMillisec = (long)(timeout&0x7FFFFFFF);
     }
-    jcapp_refresh_pending(-1);
+
     res = javacall_event_receive ((long)timeTowaitInMillisec, binaryBuffer, BINARY_BUFFER_MAX_LEN, &outEventLen);
 
     if (!JAVACALL_SUCCEEDED(res)) {
@@ -702,7 +702,6 @@ static jlong midpTimeSlice(void) {
         }   else {
             toInMillisec = (javacall_time_milliseconds)(to&0x7FFFFFFF);
         }
-        jcapp_refresh_pending(toInMillisec);
     }
 
     return to;
