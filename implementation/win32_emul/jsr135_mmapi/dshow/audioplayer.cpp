@@ -25,12 +25,12 @@
 #include<dshow.h>
 #include<wmsdkidl.h>
 
-#include "sourcefilter.hpp"
+#include "filter_in.hpp"
 #include "audioplayer.hpp"
 
 audioplayer::audioplayer()
 {
-    sf   = NULL;
+    pfi  = NULL;
     pgb  = NULL;
     pmc  = NULL;
 }
@@ -40,11 +40,11 @@ audioplayer::~audioplayer()
     shutdown();
 }
 
-bool audioplayer::init(unsigned int len,const wchar_t*format, ap_callback* cb)
+bool audioplayer::init(unsigned int len,const wchar_t*format)
 {
-    if(sf)return false;
+    if(NULL != pfi) return false;
 
-    HRESULT hr=S_OK;
+    HRESULT hr = S_OK;
 
     hr = CoInitializeEx(NULL,COINIT_MULTITHREADED);
     if( FAILED( hr ) )
@@ -52,12 +52,63 @@ bool audioplayer::init(unsigned int len,const wchar_t*format, ap_callback* cb)
         return false;
     }
 
-    sf = new sourcefilter(NULL, &hr, cb);
-    if(NULL == sf) return false;
+    if(!filter_in::create(L"", &pfi))
+    {
+        pfi = NULL;
+        return false;
+    }
+
+    IPin* pp;
+
+    hr = pfi->FindPin(L"Output", &pp);
+    if(hr != S_OK)
+    {
+        pfi->Release(); pfi = NULL;
+        return false;
+    }
+
+    hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+                          IID_IGraphBuilder, (void**)&pgb);
+    if(hr != S_OK)
+    {
+        pp->Release(); pfi->Release();
+        pfi = NULL;
+        return false;
+    }
+
+    hr = pgb->AddFilter(pfi, L"Source Filter");
+    if(hr != S_OK)
+    {
+        pp->Release();
+        pfi->Release(); pfi = NULL;
+        pgb->Release(); pgb = NULL;
+        return false;
+    }
+
+    hr = pgb->Render(pp);
+    pp->Release();
+
+    if(hr != S_OK)
+    {
+        pfi->Release(); pfi = NULL;
+        pgb->Release(); pgb = NULL;
+        return false;
+    }
+
+    hr = pgb->QueryInterface(IID_IMediaControl, (void**)&pmc);
+    if(hr != S_OK)
+    {
+        pfi->Release(); pfi = NULL;
+        pgb->Release(); pgb = NULL;
+        return false;
+    }
+
+    hr = pmc->Pause();
     if( FAILED( hr ) )
     {
-        delete sf;
-        sf = NULL;
+        pmc->Release(); pmc = NULL;
+        pfi->Release(); pfi = NULL;
+        pgb->Release(); pgb = NULL;
         return false;
     }
 
@@ -66,83 +117,22 @@ bool audioplayer::init(unsigned int len,const wchar_t*format, ap_callback* cb)
 
 bool audioplayer::data(unsigned int len,const void*src)
 {
-    if(NULL == sf) return false;
-    sf->data(len, (UINT8*)src);
-    return true;
+    if(NULL == pfi) return false;
+    return pfi->data(len, (UINT8*)src);
 }
 
 bool audioplayer::play()
 {
-    if(NULL == pgb)
-    {
-        HRESULT      hr;
-        IBaseFilter* pbf;
-        IPin*        pp;
-
-        hr = sf->QueryInterface(IID_IBaseFilter, (void**)&pbf );
-        if(hr != S_OK) return false;
-
-        hr = pbf->FindPin(L"1", &pp);
-        if(hr != S_OK)
-        {
-            pbf->Release();
-            return false;
-        }
-
-        hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
-                              IID_IGraphBuilder, (void**)&pgb);
-        if(hr != S_OK)
-        {
-            pp->Release();
-            pbf->Release();
-            return false;
-        }
-
-        hr = pgb->AddFilter(pbf, L"Source Filter");
-        if(hr != S_OK)
-        {
-            pgb->Release();
-            pgb = NULL;
-            pp->Release();
-            pbf->Release();
-            return false;
-        }
-
-        hr = pgb->Render(pp);
-        if(hr != S_OK)
-        {
-            pgb->Release();
-            pgb = NULL;
-            return false;
-        }
-
-        pp->Release();
-        pbf->Release();
-
-        hr = pgb->QueryInterface(IID_IMediaControl, (void**)&pmc);
-        if(hr != S_OK)
-        {
-            pgb->Release();
-            pgb = NULL;
-            return false;
-        }
-    }
-
+    if(NULL == pmc) return false;
     HRESULT hr = pmc->Run();
-    return (hr == S_OK);
+    return SUCCEEDED(hr);
 }
 
 bool audioplayer::stop()
 {
-    if( NULL != pmc )
-    {
-        HRESULT hr = pmc->Stop();
-        return (S_OK == hr);
-    }
-    else
-    {
-        return false;
-    }
+    if(NULL == pmc) return false;
+    HRESULT hr = pmc->Pause();
+    return SUCCEEDED(hr);
 }
 
 bool audioplayer::seek(double time)
@@ -152,39 +142,36 @@ bool audioplayer::seek(double time)
 
 bool audioplayer::tell(double*time)
 {
-    if( NULL != pgb )
-    {
-        IMediaPosition* pmp = NULL;
+    if(NULL == pgb) return false;
 
-        HRESULT hr = pgb->QueryInterface( IID_IMediaPosition, (void**)&pmp );
-        if( NULL != pmp )
-        {
-            hr = pmp->get_CurrentPosition( time );
-            pmp->Release();
-            if( SUCCEEDED( hr ) ) return true;
-        }
-    }
-    return false;
+    IMediaPosition* pmp = NULL;
+
+    HRESULT hr = pgb->QueryInterface(IID_IMediaPosition, (void**)&pmp);
+    if(NULL == pmp) return false;
+
+    hr = pmp->get_CurrentPosition(time);
+    pmp->Release();
+    return SUCCEEDED(hr);
 }
 
 bool audioplayer::shutdown()
 {
-    if( NULL != pmc )
+    if(NULL != pmc)
     {
         pmc->Release();
         pmc = NULL;
     }
 
-    if( NULL != pgb )
+    if(NULL != pgb)
     {
         pgb->Release();
         pgb = NULL;
     }
 
-    if( NULL != sf )
+    if(NULL != pfi)
     {
-        delete sf;
-        sf = NULL;
+        pfi->Release();
+        pfi = NULL;
     }
 
     return true;
