@@ -211,6 +211,12 @@ else
    EXTRA_CFLAGS += -DENABLE_IMAGE_CACHE=0
 endif
 
+ifeq ($(USE_JPEG_CACHE), true)
+   EXTRA_CFLAGS += -DENABLE_JPEG_CACHE=1
+else
+   EXTRA_CFLAGS += -DENABLE_JPEG_CACHE=0
+endif
+
 ifeq ($(TARGET_VM), cdc_vm)
    USE_ICON_CACHE = false
 endif

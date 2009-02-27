@@ -62,44 +62,65 @@
  * aborted and all already created files are deleted. This is not an
  * ideal approach, but should be sufficient for now.
  * <p>
- * Note: Currently, only images ending with ".png" or ".PNG" are supported.
+ * Note: Currently, only images ending with ".png", ".PNG", ".jpg", ".JPG",
+ * ".jpeg" or ".JPEG" are supported.
  */
 
 /**
  * Holds the suite ID. It is initialized during createImageCache() call
- * and used in png_cache_action() to avoid passing an additional parameter to it
+ * and used in png_jpeg_cache_action() to avoid passing an additional parameter to it
  * because this function is called for each image entry in the suite's jar file.
  */
 static SuiteIdType globalSuiteId;
 
 /**
  * Holds the storage ID where the cached images will be saved. It is initialized
- * during createImageCache() call and used in png_cache_action() to avoid
+ * during createImageCache() call and used in png_jpeg_cache_action() to avoid
  * passing an additional parameter to it.
  */
 static StorageIdType globalStorageId;
 
 /**
  * Handle to the opened jar file with the midlet suite. It is used to
- * passing an additional parameter to png_cache_action().
+ * passing an additional parameter to png_jpeg_cache_action().
  */
 static void *handle;
 
 /**
  * Holds the amount of free space in the storage. It is initialized during
- * createImageCache() call and used in png_cache_action() to avoid passing
+ * createImageCache() call and used in png_jpeg_cache_action() to avoid passing
  * an additional parameter to it.
  */
 static jlong remainingSpace;
 
 /**
  * Holds the amount of cached data placed into the storage. It is initialized
- * during createImageCache() call and used in png_cache_action() to avoid
+ * during createImageCache() call and used in png_jpeg_cache_action() to avoid
  * passing an additional parameter to it.
  */
 static long cachedDataSize;
 
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(PNG_EXT1)
+#if ENABLE_JPEG_CACHE
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT1)
+    {'.', 'j', 'p', 'g', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT1);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT2)
+    {'.', 'J', 'P', 'G', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT2);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT3)
+    {'.', 'j', 'p', 'e', 'g', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT3);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT4)
+    {'.', 'J', 'P', 'E', 'G', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT4);
+
+#endif
+
     {'.', 'p', 'n', 'g', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(PNG_EXT1);
 
@@ -115,12 +136,19 @@ static int storeImageToCache(SuiteIdType suiteId,
 
 
 /**
- * Tests if JAR entry is a PNG image, by name extension
+ * Tests if JAR entry is a PNG or JPEG image, by name extension
  */
-static jboolean png_filter(const pcsl_string * entry) {
+static jboolean png_jpeg_filter(const pcsl_string * entry) {
 
-    if (pcsl_string_ends_with(entry, &PNG_EXT1) ||
-        pcsl_string_ends_with(entry, &PNG_EXT2)) {
+    if (pcsl_string_ends_with(entry, &PNG_EXT1)
+        || pcsl_string_ends_with(entry, &PNG_EXT2)
+#if ENABLE_JPEG_CACHE
+        || pcsl_string_ends_with(entry, &JPEG_EXT1)
+        || pcsl_string_ends_with(entry, &JPEG_EXT2)
+        || pcsl_string_ends_with(entry, &JPEG_EXT3)
+        || pcsl_string_ends_with(entry, &JPEG_EXT4)
+#endif
+        ) {
         return KNI_TRUE;
     }
 
@@ -128,9 +156,9 @@ static jboolean png_filter(const pcsl_string * entry) {
 }
 
 /**
- * Loads PNG image from JAR, decodes it and writes as native
+ * Loads PNG or JPEG image from JAR, decodes it and writes as native
  */
-static jboolean png_cache_action(const pcsl_string * entry) {
+static jboolean png_jpeg_cache_action(const pcsl_string * entry) {
     unsigned char *pngBufPtr = NULL;
     int pngBufLen = 0;
     unsigned char *nativeBufPtr = NULL;
@@ -257,9 +285,9 @@ static void deleteImageCache(SuiteIdType suiteId, StorageIdType storageId) {
 }
 
 /**
- * Creates a cache of natives images by iterating over all png images in the jar
- * file, loading each one, decoding it into native, and caching it persistent
- * store.
+ * Creates a cache of natives images by iterating over all png and jpeg images
+ * in the jar file, loading each one, decoding it into native, and caching it
+ * persistent store.
  *
  * @param suiteId The suite ID
  * @param storageId ID of the storage where to create the cache
@@ -304,8 +332,8 @@ void createImageCache(SuiteIdType suiteId, StorageIdType storageId,
     }
 
     result = loadAndCacheJarFileEntries(&jarFileName,
-        (jboolean (*)(const pcsl_string *))&png_filter,
-        (jboolean (*)(const pcsl_string *))&png_cache_action);
+        (jboolean (*)(const pcsl_string *))&png_jpeg_filter,
+        (jboolean (*)(const pcsl_string *))&png_jpeg_cache_action);
 
     /* If something went wrong then clean up anything that was created */
     if (result != 1) {
@@ -462,11 +490,10 @@ static int storeImageToCache(SuiteIdType suiteId, StorageIdType storageId,
 
     /* Open the file */
     handle = storage_open(&errmsg, &path, OPEN_READ_WRITE_TRUNCATE);
-    pcsl_string_free(&path);
     if (errmsg != NULL) {
         REPORT_WARN1(LC_LOWUI,"Warning: could not save cached image; %s\n",
 		     errmsg);
-
+        pcsl_string_free(&path);
 	storageFreeError(errmsg);
 	return 0;
     }
@@ -479,6 +506,18 @@ static int storeImageToCache(SuiteIdType suiteId, StorageIdType storageId,
     }
 
     storageClose(&errmsg, handle);
+    if (errmsg != NULL) {
+        storageFreeError(errmsg);    
+    }
+    
+    if (status == 0) {
+        storage_delete_file(&errmsg, &path);
+        if (errmsg != NULL) {
+            storageFreeError(errmsg);
+        }
+    }
+
+    pcsl_string_free(&path);
 
     return status;
 }

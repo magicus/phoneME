@@ -326,9 +326,11 @@ midpIterateJarEntries(void *handle, filterFuncT *filter, actionFuncT *action) {
         if ((*filter)(&entryName)) {
             /* name match: call action */   
             if (!(*action)(&entryName)) {
-                status = 0;
-                pcsl_string_free(&entryName);
-                break;
+                // IMPL_NOTE: continue iteration over remaining entries even
+                //            action for some entry fails
+                // status = 0;
+                // pcsl_string_free(&entryName);
+                // break;
             }
         }
         
