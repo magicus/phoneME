@@ -32,26 +32,35 @@
  *********************************************************/
 
 /*  private native int nPlayTone ( int appId, int note , int dur , int vol ) ; */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIEXPORT KNI_RETURNTYPE_INTEGER
 KNIDECL(com_sun_mmedia_NativeTonePlayer_nPlayTone) {
     jint appId = KNI_GetParameterAsInt(1);
     jint note = KNI_GetParameterAsInt(2);
     jint dur = KNI_GetParameterAsInt(3);
     jint vol = KNI_GetParameterAsInt(4);
-    jboolean returnValue = KNI_TRUE;
+    jint returnValue = 1;
+    javacall_result res = JAVACALL_FAIL;
 
-    if (vol < 0) {
-        vol = 0;
-    } else if (vol > 100) {
-        vol = 100;
-    }
+    JC_MM_ASSERT( vol >= 0 && vol <= 100 );
 
-    if (note >= 0 && note <= 127) {
-        if (JAVACALL_FAIL == javacall_media_play_tone(appId, note, dur, vol)) {
-            returnValue = KNI_FALSE;
-        }
+    JC_MM_ASSERT(note >= 0 && note <= 127);
+    
+    res = javacall_media_play_tone(appId, note, dur, vol);
+    
+    if( JAVACALL_OK == res )
+    {
+        returnValue = 0;
     }
-    KNI_ReturnBoolean(returnValue);
+    else if( JAVACALL_NO_AUDIO_DEVICE == res )
+    {
+        returnValue = 2;
+    }
+    else
+    {
+        returnValue = 1;
+    }
+    
+    KNI_ReturnInteger(returnValue);
 }
 
 /*  private native int nStopTone ( int appId) ; */

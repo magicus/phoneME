@@ -31,6 +31,11 @@ import javax.microedition.media.MediaException;
  * @created    January 31, 2005
  */
 public interface TonePlayer {
+    
+    public static final int RESULT_OK = 0;
+    public static final int RESULT_FAIL = 1;
+    public static final int RESULT_NO_AUDIO_DEVICE = 2;
+    
     /**
      * Plays a note of specified duration and volume
      *
@@ -38,8 +43,7 @@ public interface TonePlayer {
      * @param  duration  The duration of the tone in milli-seconds.
      * @param  volume    Audio volume range from 0 to 100.
      */
-    void playTone(int note, int duration, int volume)
-        throws MediaException;
+    int playTone(int note, int duration, int volume);
 
     /**
      * Stop current tone playing
