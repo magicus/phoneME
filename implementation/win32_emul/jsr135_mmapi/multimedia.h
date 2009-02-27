@@ -215,7 +215,9 @@ typedef struct {
  * function pointer vector table for basic media functions
  */
 typedef struct {
-    javacall_handle (*create)(int appId, int playerId, jc_fmt mediaType, const javacall_utf16_string URI);
+    javacall_result (*create)(int appId, int playerId, jc_fmt mediaType,
+                              const javacall_utf16_string URI,
+                              /*OUT*/ javacall_handle *pHandle);
     javacall_result (*get_format)(javacall_handle handle, jc_fmt* fmt);
     javacall_result (*get_player_controls)(javacall_handle handle, int* controls);
     javacall_result (*close)(javacall_handle handle);

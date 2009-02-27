@@ -711,7 +711,7 @@ javacall_result mmaudio_tone_note(long isolateid, long note, long dur, long vol)
     unsigned char status;
     int tchnl = 5; // NEED REVISIT: Need to see which channel should actually be used for tones.
     int gmidx = -1;
-    javacall_result res = isolateIDtoGM(isolateid);
+    javacall_result res = isolateIDtoGM( isolateid, &gmidx );
     
     if( JAVACALL_NO_AUDIO_DEVICE == res )
     {
@@ -757,13 +757,23 @@ javacall_result mmaudio_tone_note(long isolateid, long note, long dur, long vol)
 /**
  *
  */
-static javacall_handle audio_qs_create(int appId, int playerId,
+static javacall_result audio_qs_create(int appId, int playerId,
                                        jc_fmt mediaType,
-                                       const javacall_utf16_string URI)
+                                       const javacall_utf16_string URI,
+                                       /* OUT */ javacall_handle *pHandle)
 {
     ah *newHandle = NULL;
     int isolateId = appId;
-    int gmIdx = isolateIDtoGM(isolateId);
+    int gmIdx = -1;
+    javacall_result res = isolateIDtoGM( isolateId, &gmIdx );
+    
+    if( JAVACALL_OK != res )
+    {
+        gmDetach( gmIdx );
+        *pHandle = ( javacall_handle )NULL;
+        return res;
+    }
+    
     JC_MM_DEBUG_PRINT1("audio create %s\n", __FILE__);
     JC_MM_ASSERT(gmIdx>=0);
     switch(mediaType)
@@ -871,7 +881,8 @@ static javacall_handle audio_qs_create(int appId, int playerId,
                             mediaType, (int)newHandle, gmIdx);
 
     newHandle->hdr.state = PL135_UNREALIZED;
-    return (javacall_handle)newHandle;
+    *pHandle = (javacall_handle)newHandle;
+    return res;
 }
 
 /**
