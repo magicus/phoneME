@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,15 @@ import javax.microedition.lcdui.Image;
  * Initialize the LCDUI environment.
  */
 public class LCDUIEnvironment {
+
+    /** Stores array of active displays for a MIDlet suite isolate. */
+    private DisplayContainer displayContainer;
+
+    /**
+     * Provides interface for display preemption, creation and other
+     * functionality that can not be publicly added to a javax package.
+     */
+    private DisplayEventHandler displayEventHandler;
 
     /**
      * Creates lcdui event producers/handlers/listeners.
@@ -93,18 +102,25 @@ public class LCDUIEnvironment {
             displayContainer,
 	    displayDeviceContainer);
 
-        DisplayEventListener displayEventListener = new DisplayEventListener(
+        // Set a listener in the event queue for display events
+        new DisplayEventListener(
             eventQueue,
             displayContainer,
-	    displayDeviceContainer);
+            displayDeviceContainer);
 
-        /* Bad style of type casting, but DisplayEventHandlerImpl
+        /*
+         * Set a listener in the event queue for LCDUI events
+         *
+         * Bad style of type casting, but DisplayEventHandlerImpl
          * implements both DisplayEventHandler & ItemEventConsumer IFs 
          */
-        LCDUIEventListener lcduiEventListener = new LCDUIEventListener(
+        new LCDUIEventListener(
             internalSecurityToken,
             eventQueue,
             (ItemEventConsumer)displayEventHandler);
+
+        // Set a listener in the event queue for foreground events
+        new ForegroundEventListener(eventQueue, displayContainer);
     }
 
     /**
@@ -133,13 +149,4 @@ public class LCDUIEnvironment {
     public void setTrustedState(boolean isTrusted) {
         displayEventHandler.setTrustedState(isTrusted);
     }
-
-    /** Stores array of active displays for a MIDlet suite isolate. */
-    private DisplayContainer displayContainer;
-
-    /**
-     * Provides interface for display preemption, creation and other
-     * functionality that can not be publicly added to a javax package.
-     */
-    private DisplayEventHandler displayEventHandler;
 }

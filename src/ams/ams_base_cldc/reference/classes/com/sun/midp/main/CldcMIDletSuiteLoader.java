@@ -64,7 +64,6 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
      * Provides interface for display foreground notification,
      * functionality that can not be publicly added to a javax package.
      */
-    protected ForegroundEventListener foregroundEventListener;
 
     /** Core initialization of a MIDlet suite loader */
     protected void init() {
@@ -97,16 +96,12 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
         foregroundController = new CldcForegroundController(
             midletControllerEventProducer);
 
+        // creates display container, needs foregroundController
 	lcduiEnvironment = new LCDUIEnvironment(internalSecurityToken, 
 						eventQueue, isolateId, 
 						foregroundController);
 
-        // creates display container, needs foregroundController
         super.createSuiteEnvironment();
-
-        foregroundEventListener = new ForegroundEventListener(
-            eventQueue,
-            displayContainer);
 
         midletStateHandler =
             MIDletStateHandler.getMidletStateHandler();
