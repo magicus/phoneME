@@ -1435,8 +1435,17 @@ class AppManagerUIImpl extends Form
 
     /** Called by Manager when destroyApp happens to clean up data */
     public void cleanUp() {
+        if (lastSelectedMsi == null) {
+            return;
+        }
+
         AppManagerMIDletCustomItem ci =
             findItem(lastSelectedMsi);
+
+        if (ci == null) {
+            return;
+        }
+
         ci.cleanUp();
     }
 
