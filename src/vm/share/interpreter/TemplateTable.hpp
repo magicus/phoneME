@@ -272,8 +272,8 @@ def_template_0 ( bc_fast_new                             )
 def_template_0 ( bc_fast_anewarray                       )
 def_template_0 ( bc_fast_invokespecial                   )
 
-def_template_1 ( bc_load_w       , BasicType     )
-def_template_1 ( bc_store_w      , BasicType     )
+//def_template_1 ( bc_load_w       , BasicType     )
+//def_template_1 ( bc_store_w      , BasicType     )
 #if !ENABLE_CPU_VARIANT
 def_template_2 ( bc_aload_0_fast_getfield_n,BasicType, int)
 def_template_0 ( bc_init_static_array                    )
