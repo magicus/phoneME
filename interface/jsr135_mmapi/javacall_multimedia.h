@@ -466,6 +466,14 @@ javacall_result javacall_media_get_event_data(javacall_handle handle,
  * @retval JAVACALL_IO_ERROR                IO error occurred while connecting
  *                                          the URL or getting data 
  * @retval JAVACALL_INVALID_ARGUMENT        Invalid URL or other parameter
+ * @retval JAVACALL_NO_AUDIO_DEVICE     No audio device found and therefore
+ *                                      playback is impossible. JVM will throw
+ *                                      a MediaException. Please return this
+ *                                      code only in case you want to
+ *                                      reject playback, i.e. when the content
+ *                                      is audio only. If some kind of playback
+ *                                      is still possible (e.g. mute video),
+ *                                      please return JAVACALL_OK instead
  * @retval JAVACALL_FAIL                    General failure or the following
  *                                          situation. Porting Layer may
  *                                          decide to reject the creation for

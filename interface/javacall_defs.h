@@ -119,7 +119,12 @@ typedef enum {
    JAVACALL_INVALID_STATE = -15,
    /** Timeout elapsed */
    JAVACALL_TIMEOUT = -16,
-   /** No audio device found */
+
+   /** 
+     * No audio device found. Please return this code only in case you want to
+     * reject playback, i.e. when the content is audio only. If some playback
+     * is still possible (e.g. mute video), please return JAVACALL_OK instead
+     */
    JAVACALL_NO_AUDIO_DEVICE = -17
 } javacall_result;
 
