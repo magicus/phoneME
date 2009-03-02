@@ -122,12 +122,6 @@ public class PlayerImpl implements Player {
         String locator = source.getLocator();
         hNative = nInit(appId, pID, locator);
 
-        if (0 == hNative) {
-            throw new MediaException("Unable to create native player");
-        } else if (-1 == hNative) {
-            throw new IOException("Unable to create native player");
-        }
-
         mediaFormat     = nGetMediaFormat(hNative);
 
         if( mediaFormat.equals( BasicPlayer.MEDIA_FORMAT_UNSUPPORTED ) ) {

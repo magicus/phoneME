@@ -81,9 +81,21 @@ LockAudioMutex();
             returnValue = (int)pKniInfo;
         } else if (res == JAVACALL_IO_ERROR) {
             MMP_FREE(pKniInfo);
+            KNI_ThrowNew( "java/io/IOException",
+                "\nUnable to create native player\n" );
             returnValue = -1; /* Can not create player - IO error */
-        } else {
+        } 
+        else if ( JAVACALL_NO_AUDIO_DEVICE == res )
+        {
             MMP_FREE(pKniInfo);
+            KNI_ThrowNew( "javax/microedition/media/MediaException",
+"\nNo audio device found. Please check your audio driver settings\n" );
+            returnValue = 0; /* Can not create player */
+        }
+        else {
+            MMP_FREE(pKniInfo);
+            KNI_ThrowNew( "javax/microedition/media/MediaException",
+            "\nUnable to create native player\n" );
             returnValue = 0; /* Can not create player */
         }
     } else {
