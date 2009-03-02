@@ -130,6 +130,10 @@
             Name="LC_JSR290"
             Value="14000"
             Comment="JSR290 module channel"/>
+  <constant Type="int"
+            Name="LC_JSR257"
+            Value="15000"
+            Comment="JSR257 module channel"/>
 </constant_class>
 <!-- Memory limits -->
 <constant_class Package="com.sun.midp.configurator" Name="Constants"

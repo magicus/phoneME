@@ -266,7 +266,7 @@ jboolean lfjport_is_display_pen_motion_supported(int hardwareId) {
  */
 int lfjport_get_display_capabilities(int hardwareId) {
     (void)hardwareId;
-    return 0;
+    return 255;
 }
 
 

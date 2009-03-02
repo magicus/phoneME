@@ -196,7 +196,7 @@ int getMaxIsolates() {
         }
         if (midpMaxIsolates > jvmMaxIsolates){
             REPORT_WARN1(LC_AMS,
-                "MAX_ISOLATES exceeds VM limit %d, decreased", jvmMaxIsolate);
+                "MAX_ISOLATES exceeds VM limit %d, decreased", jvmMaxIsolates);
             midpMaxIsolates = jvmMaxIsolates;
         }
         setMaxIsolates(midpMaxIsolates);

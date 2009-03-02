@@ -30,6 +30,7 @@ import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
 import com.sun.j2me.security.AccessController;
+import com.sun.midp.events.*;
 import com.sun.midp.log.*;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.installer.InternalMIDletSuiteImpl;
@@ -52,6 +53,9 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
 
     /** Holds the ID of the current display, for preempting purposes. */
     protected int currentDisplayId;
+
+    /* Sends foreground events to displays. */
+    protected CdcForegroundEventProducer foregroundEventProducer;
 
     /**
      * Called at the initial start of the VM.
@@ -122,6 +126,8 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
         lcduiEnvironment = new LCDUIEnvironmentForCDC(internalSecurityToken, 
 						      eventQueue, isolateId, 
 						      foregroundController);
+        foregroundEventProducer = 
+            new CdcForegroundEventProducer(eventQueue);
 
         // creates display container, needs foregroundController
         super.createSuiteEnvironment();
@@ -416,16 +422,9 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      * @param isAlert true if the current displayable is an Alert
      */
     public void requestForeground(int displayId, boolean isAlert) {
-        ForegroundEventConsumer fc =
-            displayContainer.findForegroundEventConsumer(displayId);
-
-        if (fc == null) {
-            return;
-        }
-
         NativeForegroundState.setState(internalSecurityToken, displayId);
 
-        fc.handleDisplayForegroundNotifyEvent();
+        foregroundEventProducer.sendDisplayForegroundNotifyEvent(displayId);
     }
 
     /**
@@ -435,14 +434,6 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      * @param displayId ID of the Display
      */
     public void requestBackground(int displayId) {
-        ForegroundEventConsumer fc =
-            displayContainer.findForegroundEventConsumer(displayId);
-
-        if (fc == null) {
-            return;
-        }
-
-        fc.handleDisplayBackgroundNotifyEvent();
     }
 
     /**
@@ -452,7 +443,7 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      * @param displayId ID of the Display
      */
     public void startPreempting(int displayId) {
-        requestBackground(currentDisplayId);
+        foregroundEventProducer.sendDisplayBackgroundNotifyEvent(displayId);
         requestForeground(displayId, true);
     }
 
@@ -462,7 +453,7 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      * @param displayId ID of the Display
      */
     public void stopPreempting(int displayId) {
-        requestBackground(displayId);
+        foregroundEventProducer.sendDisplayBackgroundNotifyEvent(displayId);
         requestForeground(currentDisplayId, false);
     }
 

@@ -406,8 +406,8 @@ typedef struct {
 #ifdef ENABLE_JSR_257
 typedef struct {
     jsr257_contactless_event_type eventType;
-    javacall_handle eventData;
     int isolateId;
+    javacall_int32 eventData[3];
 } jsr257_jc_event_contactless;
 #endif /* ENABLE_JSR_257 */
 

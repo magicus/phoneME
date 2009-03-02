@@ -290,6 +290,9 @@ extern "C" {
 #define MM_EVT_TYPE     intParam4
 #define MM_EVT_STATUS   intParam5
 #define MM_STRING       stringParam1
+
+#define JSR257_ISOLATE  intParam2
+
 /** @} */
 
 /**
