@@ -160,10 +160,10 @@ class BMPEncoder {
         // the vertical resolution of the image
         os.writeInt(0);
 
-        // the number of colours in the colour palette, or 0 to default to 2^n
+        // the number of colors in the color palette, or 0 to default to 2^n
         os.writeInt(0);
 
-        // the number of important colours used, generally ignored
+        // the number of important colors used, generally ignored
         os.writeInt(0);
     }
 

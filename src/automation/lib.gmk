@@ -94,6 +94,7 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/Automation.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventType.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEvent.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventListener.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoKeyCode.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoKeyState.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoKeyEvent.java \
