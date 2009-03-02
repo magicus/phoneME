@@ -2385,14 +2385,13 @@ public class Display {
         // #endif ENABLE_CHAMELEON
     }
     /**
-     * Hide the soft button layer.
+     * Sets the display mode.
+     * @param m MIDPWindow display mode
      */
-    void lHideSoftButtons() {
+    void lSetMode() {
         // #ifdef ENABLE_CHAMELEON
-        // Notify Chameleon that the current displayable should be shown
-        // in no soft button mode.
         // This call will not result in any call into application code
-        window.setMode(MIDPWindow.NO_SOFT_BUTTON_MODE);
+        window.setMode(m);
         // #endif ENABLE_CHAMELEON
     }
 
@@ -3192,6 +3191,14 @@ public class Display {
          */
         public ForegroundEventConsumer getForegroundEventConsumer() {
             return Display.this.foregroundConsumer;
+        }
+
+       /**
+        * Sets the display mode.
+        * @param m MIDPWindow display mode
+        */
+        public void setMode(m) {
+	    Display.this.lSetMode(m);
         }
     } // END DisplayAccessImpl Class
 
