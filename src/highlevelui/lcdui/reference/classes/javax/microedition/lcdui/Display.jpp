@@ -2388,7 +2388,7 @@ public class Display {
      * Sets the display mode.
      * @param m MIDPWindow display mode
      */
-    void lSetMode() {
+    void lSetMode(int m) {
         // #ifdef ENABLE_CHAMELEON
         // This call will not result in any call into application code
         window.setMode(m);
@@ -3197,7 +3197,7 @@ public class Display {
         * Sets the display mode.
         * @param m MIDPWindow display mode
         */
-        public void setMode(m) {
+        public void setMode(int m) {
 	    Display.this.lSetMode(m);
         }
     } // END DisplayAccessImpl Class

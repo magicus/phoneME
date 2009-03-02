@@ -217,15 +217,6 @@ class DisplayableLFImpl implements DisplayableLF {
         }
     }
 
-
-        // app's sizeChanged has to be called before repaint
-        synchronized (Display.LCDUILock) {
-            if (requestRepaint) {
-                lRequestPaint();
-            }
-        }
-    }
-
     /**
      * \Need revisit Move this to CanvasLFImpl.
      * Called to get key mask of all the keys that were pressed.
