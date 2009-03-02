@@ -484,12 +484,16 @@ endif
 ####################################################################
 ifeq ($(USE_API_EXTENSIONS), true)
 JPP_DEFS += -DENABLE_API_EXTENSIONS
+ifeq ($(PROJECT_API_EXTENSIONS_DIR),)
 ifeq ($(TARGET_VM), cldc_vm)
 include $(API_EXTENSIONS_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 else
 ifeq ($(TARGET_VM), cdc_vm)
 #include $(API_EXTENSIONS_DIR)/build/cdc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
+endif
+else
+include $(PROJECT_API_EXTENSIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 endif
 #####################################################################
