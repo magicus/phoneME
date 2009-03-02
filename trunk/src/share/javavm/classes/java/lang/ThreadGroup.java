@@ -70,6 +70,9 @@ class ThreadGroup {
     int ngroups;
     ThreadGroup groups[];
 
+    /* See Thread.java. For saving info about which Class started the thread.*/
+    boolean saveThreadStarterClassFlag;
+
     /**
      * Creates an empty Thread group that is not in any Thread group. 
      * This method is used to create the system Thread group.
@@ -77,6 +80,7 @@ class ThreadGroup {
     ThreadGroup() {	// called from Thread.initMainThread()
 	this.name = "system";
 	this.maxPriority = Thread.MAX_PRIORITY;
+        saveThreadStarterClassFlag = false;
     }
 
     /**
@@ -124,6 +128,7 @@ class ThreadGroup {
 	this.vmAllowSuspension = parent.vmAllowSuspension;
 	this.parent = parent;
 	parent.add(this);
+        saveThreadStarterClassFlag = parent.saveThreadStarterClassFlag;
     }
 
     /**

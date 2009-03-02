@@ -1573,6 +1573,7 @@ CVM_OFFSETS_CLASSES += \
 	java.lang.StackTraceElement \
 	java.lang.Class \
 	java.lang.Thread \
+	java.lang.ThreadGroup \
 	java.lang.Boolean \
 	java.lang.Byte \
 	java.lang.Character \
@@ -1602,11 +1603,6 @@ ifeq ($(CVM_REFLECT), true)
 		java.lang.reflect.Constructor \
 		java.lang.reflect.Field \
 		java.lang.reflect.Method
-endif
-
-ifneq ($(CVM_JVMPI)$(CVM_JVMTI), falsefalse)
-CVM_OFFSETS_CLASSES += \
-        java.lang.ThreadGroup
 endif
 
 #

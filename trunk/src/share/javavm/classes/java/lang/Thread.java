@@ -669,6 +669,9 @@ class Thread implements Runnable {
 		    // This is redundant now that we call
 		    // CVM.maskInterrupts() above.
 		    synchronized (currentThread().lock) {
+                        if (group.saveThreadStarterClassFlag) {
+                            threadStarterClass = System.getCallerClass();
+                        }
 			start0(priority); 
 		    }
 		    alive = true;
@@ -1524,4 +1527,7 @@ class Thread implements Runnable {
     private native void resume0();
     */
     private native void interrupt0();
+
+    /* The class that called Thread.start(). */
+    private Class threadStarterClass;
 }
