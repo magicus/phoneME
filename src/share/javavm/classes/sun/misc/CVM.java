@@ -918,4 +918,40 @@ public final class CVM {
      * even if the URLClassLoader is kept live.
      */
     public static native void clearURLClassLoaderUcpField(java.net.URLClassLoader cl);
+
+    /*
+     * Return the array of Class instances for all the methods in the
+     * backtrace of an exception (Throwable objct).
+     */
+    public static Class[] getExceptionBackTraceClasses(Throwable exception) {
+        /* Throwable.backtrace contains the following:
+         *   <1> Pointer to an int[] for line number and the method index for
+         *       each frame. The lineno and index each take up 16-bits of the
+         *       int.
+         *   <2> If the JIT is supported, a pointer to a boolean[] that
+         *       contains the isCompiled flag for each frame, otherwise NULL.
+         *   <3...n+2> The Class instance for each mb in each frame. This is
+         *       used to force all classes that are in a backtrace to stay
+         *       loaded.
+         *
+         * We need to fetch the Class instances starting at backtrace[2].
+         */
+        Object[] backtrace = getExceptionBackTrace(exception);
+        int numClasses = (backtrace == null ? 0 : backtrace.length-2);
+        Class[] classes = new Class[numClasses];
+        while (numClasses-- > 0) {
+            classes[numClasses] = (Class)backtrace[numClasses+2];
+        }
+        return classes;
+    }
+    
+    /* Helper function for getExceptionBackTraceClasses. */   
+    private static native Object[] getExceptionBackTrace(Throwable exception);
+
+    /* Set ThreadGroup.saveThreadStarterClassFlag. */   
+    public static native void setSaveThreadStarterClassFlag(
+                                  ThreadGroup group, boolean value);
+
+    /* Get Thread.threadStarterClass, a private field. */   
+    public static native Class getThreadStarterClass(Thread t);
 }

@@ -1540,3 +1540,55 @@ CNIsun_misc_CVM_clearURLClassLoaderUcpField(CVMExecEnv* ee,
 			 NULL);
     return CNI_VOID;
 }
+
+/*
+ * Returns Throwable.backtrace, a private field.
+ */
+#include "generated/offsets/java_lang_Throwable.h"
+CNIEXPORT CNIResultCode
+CNIsun_misc_CVM_getExceptionBackTrace(CVMExecEnv* ee,
+                                      CVMStackVal32 *arguments,
+                                      CVMMethodBlock **p_mb)
+{
+    CVMObjectICell* throwableICell = &arguments[0].j.r;
+    CVMObject* backtrace;
+    CVMD_fieldReadRef(CVMID_icellDirect(ee, throwableICell),
+                      CVMoffsetOfjava_lang_Throwable_backtrace,
+                      backtrace);
+    CVMID_icellSetDirect(ee, &arguments[0].j.r, backtrace);
+    return CNI_SINGLE;
+}
+
+/*
+ * Set ThreadGroup.saveThreadStarterClassFlag.
+ */
+#include "generated/offsets/java_lang_ThreadGroup.h"
+CNIEXPORT CNIResultCode
+CNIsun_misc_CVM_setSaveThreadStarterClassFlag(CVMExecEnv* ee,
+                                              CVMStackVal32 *arguments,
+                                              CVMMethodBlock **p_mb)
+{
+    CVMObjectICell* groupICell = &arguments[0].j.r;
+    CVMBool value = arguments[1].j.i;
+    CVMD_fieldWriteInt(CVMID_icellDirect(ee, groupICell),
+                       CVMoffsetOfjava_lang_ThreadGroup_saveThreadStarterClassFlag,
+                       value);
+    return CNI_VOID;
+}
+
+/*
+ * Get Thread.threadStarterClass, a private field.
+ */
+CNIEXPORT CNIResultCode
+CNIsun_misc_CVM_getThreadStarterClass(CVMExecEnv* ee,
+                                       CVMStackVal32 *arguments,
+                                       CVMMethodBlock **p_mb)
+{
+    CVMObjectICell* threadICell = &arguments[0].j.r;
+    CVMObject* backtrace;
+    CVMD_fieldReadRef(CVMID_icellDirect(ee, threadICell),
+                      CVMoffsetOfjava_lang_Thread_threadStarterClass,
+                      backtrace);
+    CVMID_icellSetDirect(ee, &arguments[0].j.r, backtrace);
+    return CNI_SINGLE;
+}

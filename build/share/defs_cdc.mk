@@ -303,13 +303,6 @@ CVM_BUILDTIME_CLASSES_nullapp += \
     java.lang.Void \
     java.lang.StringCoding \
 
-# If JVMPI/JVMTI is enabled, ThreadGroup was added to
-# CVM_OFFSETS_CLASSES and thus CVM_BUILDTIME_CLASSES_min
-ifeq ($(CVM_JVMPI)$(CVM_JVMTI), falsefalse)
-CVM_BUILDTIME_CLASSES_nullapp += \
-    java.lang.ThreadGroup
-endif
-
 CVM_BUILDTIME_CLASSES += \
     java.io.BufferedReader \
     java.io.ByteArrayInputStream \
