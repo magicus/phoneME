@@ -38,7 +38,8 @@ static javacall_result fake_radio_create(int appId, int playerId,
     newHandle = MALLOC( sizeof( fake_radio_instance_t ) );
     if( NULL == newHandle )
     {
-        return NULL; 
+        *pHandle = NULL;
+        return JAVACALL_OUT_OF_MEMORY;
     }
     newHandle->volume = 50;
     newHandle->is_mute = JAVACALL_FALSE;

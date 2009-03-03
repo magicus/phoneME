@@ -648,7 +648,7 @@ javacall_result isolateIDtoGM(int isolateID, /*OUT*/ int *gmIdx )
         --i;
     }
 
-    *gmIdx = i
+    *gmIdx = i;
     return res;
 }
 
