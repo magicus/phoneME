@@ -92,7 +92,8 @@ public class PlayerImpl implements Player {
     private static Object idLock = new Object();
     
     // Init native library
-    protected native int nInit(int appId, int pID, String URI);
+    protected native int nInit(int appId, int pID, String URI)
+                                            throws MediaException, IOException;
     // Terminate native library
     protected native int nTerm(int handle);
     // Get Media Format
@@ -101,7 +102,8 @@ public class PlayerImpl implements Player {
     protected native boolean nIsHandledByDevice(int handle);
 
     // Realize native player
-    protected native boolean nRealize(int handle, String mime);
+    protected native void nRealize(int handle, String mime) throws
+            MediaException;
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
     
@@ -219,9 +221,7 @@ public class PlayerImpl implements Player {
             type = stream.getContentDescriptor().getContentType();
         }
         /* try to realize native player */
-        if (!nRealize(hNative, type)) {
-            throw new MediaException("Can not realize");
-        }
+        nRealize(hNative, type);
 
         MediaDownload mediaDownload = null;
 

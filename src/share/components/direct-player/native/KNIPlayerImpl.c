@@ -188,13 +188,12 @@ UnlockAudioMutex();
 }
 
 /*  protected native boolean nRealize(int handle, String mime); */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_PlayerImpl_nRealize) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     int mimeLength;
     jchar* pszMime = NULL;
-    jboolean returnValue = KNI_FALSE;
     javacall_result status = JAVACALL_FAIL;
 
     KNI_StartHandles(1);
@@ -222,12 +221,18 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nRealize) {
         pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_REALIZED,
         returns_no_data
     );
-    if (status == JAVACALL_OK) {
-        returnValue = KNI_TRUE;
+    if ( JAVACALL_NO_AUDIO_DEVICE == status ) {
+        KNI_ThrowNew( "javax/microedition/media/MediaException",
+"\nNo audio device found. Please check your audio driver settings\n" );
     }
+    else if(status != JAVACALL_OK) {
+        KNI_ThrowNew( "javax/microedition/media/MediaException",
+            "\nCannot realize\n" );
+    }
+    
 
     if (pszMime)      { MMP_FREE(pszMime); }
 
     KNI_EndHandles();
-    KNI_ReturnBoolean(returnValue);
+    KNI_ReturnVoid();
 }

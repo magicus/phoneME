@@ -43,7 +43,7 @@ public class NativeTonePlayer implements TonePlayer {
      * @param  vol   Audio volume range from 0 to 100.
      * @return       the tone player handle, or 0 if it failed to play the tone
      */
-    private native boolean nPlayTone(int appId, int note, int dur, int vol);
+    private native int nPlayTone(int appId, int note, int dur, int vol);
     private native boolean nStopTone(int appId);
     // native finalizer 
 // #ifdef ENABLE_CDC [    
@@ -52,19 +52,15 @@ public class NativeTonePlayer implements TonePlayer {
     private native void finalize();
 // #endif ]    
     
-    public void playTone(int note, int duration, int volume)
-         throws MediaException {
+    public int playTone(int note, int duration, int volume) {
         
         // Set audioTunnel to Driver
         AudioTunnel.getInstance().start();
 
-
         // Get current application ID to support MVM
         int appId = AppPackage.getInstance().getId();
 
-        if (false == nPlayTone(appId, note, duration, volume)) {
-            throw new MediaException("can't play tone");
-        }
+        return nPlayTone(appId, note, duration, volume);
     }    
 
     /**

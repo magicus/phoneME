@@ -32,7 +32,7 @@
  *********************************************************/
 
 /*  private native int nPlayTone ( int appId, int note , int dur , int vol ) ; */
-KNIEXPORT KNI_RETURNTYPE_INTEGER
+KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_NativeTonePlayer_nPlayTone) {
     jint appId = KNI_GetParameterAsInt(1);
     jint note = KNI_GetParameterAsInt(2);
@@ -41,10 +41,6 @@ KNIDECL(com_sun_mmedia_NativeTonePlayer_nPlayTone) {
     jint returnValue = 1;
     javacall_result res = JAVACALL_FAIL;
 
-    JC_MM_ASSERT( vol >= 0 && vol <= 100 );
-
-    JC_MM_ASSERT(note >= 0 && note <= 127);
-    
     res = javacall_media_play_tone(appId, note, dur, vol);
     
     if( JAVACALL_OK == res )
@@ -60,7 +56,7 @@ KNIDECL(com_sun_mmedia_NativeTonePlayer_nPlayTone) {
         returnValue = 1;
     }
     
-    KNI_ReturnInteger(returnValue);
+    KNI_ReturnInt(returnValue);
 }
 
 /*  private native int nStopTone ( int appId) ; */
