@@ -166,10 +166,11 @@ size_t rtp_pcm_callback( void* buf, size_t size, void* param )
     return size;
 }
 
-static javacall_handle rtp_create(int appId, 
+static javacall_result rtp_create(int appId, 
                                   int playerId,
                                   jc_fmt mediaType,
-                                  const javacall_utf16_string URI)
+                                  const javacall_utf16_string URI,
+                                  javacall_handle *pHandle)
 {
     rtp_player* p = (rtp_player*)MALLOC(sizeof(rtp_player));
 
@@ -195,7 +196,8 @@ static javacall_handle rtp_create(int appId,
 
     InitializeCriticalSection( &(p->cs) );
 
-    return p;
+    *pHandle = p;
+    return JAVACALL_OK;
 }
 
 static javacall_result rtp_get_format(javacall_handle handle, jc_fmt* fmt)

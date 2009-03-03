@@ -678,6 +678,7 @@ javacall_result javacall_media_create(int appId,
                                       javacall_handle *handle)
 {
     javacall_impl_player* pPlayer = NULL;
+    javacall_result res = JAVACALL_FAIL;
 
     JC_MM_DEBUG_PRINT("javacall_media_create \n");
 
@@ -754,22 +755,22 @@ javacall_result javacall_media_create(int appId,
     {
         JC_MM_ASSERT( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, create) );
 
-        pPlayer->mediaHandle =
+        res =
             pPlayer->mediaItfPtr->vptrBasic->create( 
                 appId, playerId, 
                 fmt_str2enum(pPlayer->mediaType), 
-                pPlayer->uri );
+                pPlayer->uri, &pPlayer->mediaHandle );
 
         if( NULL != pPlayer->mediaHandle )
         {
             *handle = pPlayer;
-            return JAVACALL_OK;
         }
         else
         {
             FREE( pPlayer );
-            return JAVACALL_FAIL;
+            *handle = NULL;
         }
+        return res;
     }
     else
     {
@@ -784,6 +785,7 @@ javacall_result javacall_media_realize(javacall_handle handle,
                                        long mimeLength)
 {
     javacall_result ret     = JAVACALL_FAIL;
+    javacall_result ret_from_create = JAVACALL_OK;
     javacall_impl_player*  pPlayer = (javacall_impl_player*)handle;
     char* cmime;
 
@@ -822,15 +824,15 @@ javacall_result javacall_media_realize(javacall_handle handle,
             {
                 JC_MM_ASSERT( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, create) );
 
-                pPlayer->mediaHandle =
+                ret_from_create =
                     pPlayer->mediaItfPtr->vptrBasic->create( 
                     pPlayer->appId, pPlayer->playerId, 
                     fmt_str2enum(pPlayer->mediaType),
-                    pPlayer->uri );
+                    pPlayer->uri, &pPlayer->mediaHandle );
 
                 if( NULL == pPlayer->mediaHandle )
                 {
-                    return JAVACALL_FAIL;
+                    return ret_from_create;
                 }
             }
             else
@@ -851,6 +853,11 @@ javacall_result javacall_media_realize(javacall_handle handle,
         ret = JAVACALL_OK;
     }
 
+    if( JAVACALL_OK == ret && JAVACALL_NO_AUDIO_DEVICE == ret_from_create )
+    {
+        ret = JAVACALL_NO_AUDIO_DEVICE;
+    }
+        
     return ret;
 }
 
@@ -1471,8 +1478,7 @@ extern int mmaudio_tone_note(long isolateId, long note, long duration, long volu
  * Tone to MIDI short message converter
  */
 javacall_result javacall_media_play_tone(int appId, long note, long duration, long volume){
-    mmaudio_tone_note(appId, note, duration, volume);
-    return JAVACALL_OK;
+    return mmaudio_tone_note(appId, note, duration, volume);
 }
 
 javacall_result javacall_media_play_dualtone(int appId, long noteA, long noteB, long duration, long volume)

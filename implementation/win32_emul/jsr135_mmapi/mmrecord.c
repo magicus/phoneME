@@ -78,9 +78,10 @@ void sendRSL(int appId, int playerId, long duration)
 /**
  * Create native recorder
  */
-static javacall_handle recorder_create(int appId, int playerId,
+static javacall_result recorder_create(int appId, int playerId,
                                        jc_fmt mediaType,
-                                       const javacall_utf16_string URI)
+                                       const javacall_utf16_string URI,
+                                       javacall_handle *pJCHandle )
 {
     javacall_result result = JAVACALL_FAIL;
     
@@ -114,7 +115,8 @@ static javacall_handle recorder_create(int appId, int playerId,
 
     result = JAVACALL_OK;
 
-    return (javacall_handle)newHandle;
+    *pJCHandle = (javacall_handle)newHandle;
+    return result;
 }
 
 /**

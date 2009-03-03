@@ -466,6 +466,14 @@ javacall_result javacall_media_get_event_data(javacall_handle handle,
  * @retval JAVACALL_IO_ERROR                IO error occurred while connecting
  *                                          the URL or getting data 
  * @retval JAVACALL_INVALID_ARGUMENT        Invalid URL or other parameter
+ * @retval JAVACALL_NO_AUDIO_DEVICE     No audio device found and therefore
+ *                                      playback is impossible. JVM will throw
+ *                                      a MediaException. Please return this
+ *                                      code only in case you want to
+ *                                      reject playback, i.e. when the content
+ *                                      is audio only. If some kind of playback
+ *                                      is still possible (e.g. mute video),
+ *                                      please return JAVACALL_OK instead
  * @retval JAVACALL_FAIL                    General failure or the following
  *                                          situation. Porting Layer may
  *                                          decide to reject the creation for
@@ -670,8 +678,16 @@ javacall_result javacall_media_clear_buffer(javacall_handle handle);
  *                      NULL if unknown
  * @param mimeLength    String length of media MIME type.
  * 
- * @retval JAVACALL_OK
- * @retval JAVACALL_FAIL   
+ * @retval JAVACALL_OK                  Success
+ * @retval JAVACALL_NO_AUDIO_DEVICE     No audio device found and therefore
+ *                                      playback is impossible. JVM will throw
+ *                                      a MediaException. Please return this
+ *                                      code only in case you want to
+ *                                      reject playback, i.e. when the content
+ *                                      is audio only. If some kind of playback
+ *                                      is still possible (e.g. mute video),
+ *                                      please return JAVACALL_OK instead
+ * @retval JAVACALL_FAIL                General failure
  */
 javacall_result javacall_media_realize(javacall_handle handle,
                                       javacall_const_utf16_string mime,
@@ -852,8 +868,11 @@ javacall_result javacall_media_set_mute(javacall_handle handle, javacall_bool mu
  * @param duration the duration of the note in ms 
  * @param volume   volume of this play. From 0 to 100 inclusive.
  * 
- * @retval JAVACALL_OK      Success
- * @retval JAVACALL_FAIL    Fail. JVM will raise the media exception.
+ * @retval JAVACALL_OK                  Success
+ * @retval JAVACALL_NO_AUDIO_DEVICE     No audio device found. JVM will throw a
+ *                                      MediaException
+ * @retval JAVACALL_FAIL                General fail. JVM will raise the media
+ *                                      exception.
  */
 javacall_result javacall_media_play_tone(int appID, long note, long duration, long volume);
 
