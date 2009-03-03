@@ -581,6 +581,14 @@ public final class Manager {
         String locStr = locator.toLowerCase();
 
         // System.out.println("[mmapi] createPlayer with " + locator);
+        
+        
+        if( !isAudioDeviceFound && ( locStr.equals( MIDI_DEVICE_LOCATOR ) || 
+                                     locStr.equals( TONE_DEVICE_LOCATOR ) ) )
+        {
+            throw new MediaException( "No audio device found. Check your" +
+                    " audio driver settings" );
+        }
 
         /* Verify if Protocol is supported */
         String theProtocol = null;
@@ -893,6 +901,12 @@ public final class Manager {
         
         type = type.toLowerCase();
 
+        if( !isAudioDeviceFound && type != null && type.startsWith( "audio" ) )
+        {
+            throw new MediaException( "No audio device found. Check your" +
+                    " audio driver settings" );
+        }
+            
         // Wrap the input stream with a CommonDS where the input
         // can be handled in a generic way.
         
@@ -952,16 +966,39 @@ public final class Manager {
             return;
         }
 
+        if( !isAudioDeviceFound )
+        {
+            throw new MediaException( "No audio device found. Check your" +
+                        " audio driver settings" );
+        }
+
         if (tonePlayer == null) {
             tonePlayer = config.getTonePlayer();
         }
         
         if (tonePlayer != null) {
+            int res = 
             tonePlayer.playTone(note, duration, volume);
+            
+            if( TonePlayer.RESULT_FAIL == res )
+            {
+                throw new MediaException( "Failed to play tone" );
+            }
+            
+            if( TonePlayer.RESULT_NO_AUDIO_DEVICE == res )
+            {
+                isAudioDeviceFound = false;
+                throw new MediaException( "No audio device found. Check your" +
+                        " audio driver settings" );
+            }
+            
+            
         } else {
             throw new MediaException("no tone player");
         }
     }
+
+    private static boolean isAudioDeviceFound = true;
 
     /**
      * MMAPI full specific methods.
