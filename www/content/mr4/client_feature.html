@@ -46,11 +46,9 @@ Feature Software Reference Port (MR4)<span class="style1"> </span></font></h1>
 <p>
 
 The phoneME Feature Software is an Open Source version of Sun Microsystems' commercial 
-implementation, the Sun Java Wireless Client software, version 2.2.  The commercial 
-version is based upon, and incorporates code from, the Open Source MR4 version of phoneME 
-Feature software.  The phoneME Feature software is built on top of CLDC, an Open Source 
-version of Sun Microsystems' Connected Limited Device Configuration, HotSpot Implementation, 
-version 2.2.
+implementation, the Sun Java Wireless Client software. The phoneME Feature software is 
+built on top of CLDC, an Open Source version of Sun Microsystems' Connected Limited 
+Device Configuration, HotSpot Implementation.
 <P>
 This document has the following sections:
 <p>
@@ -217,7 +215,7 @@ Tells the build system to use Microsoft Visual Studio 2005 as the default compil
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
-Supports the use of the Java Platform, Micro Edition Software Development Kit 3.0.  For example,
+Supports the use of the emulator binary plugin.  For example, 
 <code>USE_ON_DEVICE_DEBUG=true</code>.
 <p>
 </TD>
@@ -229,7 +227,7 @@ Supports the use of the Java Platform, Micro Edition Software Development Kit 3.
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
-Supports the use of the Java Platform, Micro Edition Software Development Kit 3.0.  For example,
+Supports the use of the emulator binary plugin.  For example,
 <code>USE_JAVA_DEBUGGER=true</code>.
 <p>
 </TD>
@@ -241,7 +239,7 @@ Supports the use of the Java Platform, Micro Edition Software Development Kit 3.
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
-Supports the use of the Java Platform, Micro Edition Software Development Kit 3.0.  For example,
+Supports the use of the emulator binary plugin.  For example,
 <code>SDK_ODD_DIR=$COMPONENTS_DIR/sdk/components/jme-remoting</code>.
 <p>
 </TD>
@@ -253,7 +251,7 @@ Supports the use of the Java Platform, Micro Edition Software Development Kit 3.
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
-Supports the use of the Java Platform, Micro Edition Software Development Kit 3.0.  For example,
+Supports the use of the emulator binary plugin.  For example,
 <code>VM_PROFILES_CONFIG_FILE=$COMPONENTS_DIR/sdk/harness/runtime-builders/cldc-builder/midp/vm_profiles.config</code>.
 <p>
 </TD>
@@ -313,11 +311,11 @@ must take a few additional steps.
 To prepare your phoneME Feature implementation for running, follow these steps:
 <p>
 <ol>
-<li>Ensure you have Java ME SDK 3.0 installed on your machine.
+<li>Ensure you have emulator binary plugin installed on your machine.
 <p>
 <li>Copy the contents of the <code>/SDK</code> directory (<em>not</em> the directory 
-itself) into the top-level (root) directory of the Java ME SDK environment. For example, 
-<code>C:\Java_ME_platform_SDK_3.0</code>.
+itself) into the top-level (root) directory of the emulator binary plugin environment. 
+For example, <code>C:\emulator</code>.
 </ol>
 <p>
 To start your phoneME Feature implementation:
@@ -327,7 +325,7 @@ To start your phoneME Feature implementation:
 <p>
 <li>Remove the folder <code>%USERPROFILE%\javame-sdk-sjwc</code>
 <p>
-<li>Restart the Java ME SDK Device Manager. The Device Manager is in the lower right hand 
+<li>Restart the emulator Device Manager. The Device Manager is in the lower right hand 
 system tray.  Right click to disply the menu and select Restart. 
 <!--
 <li>Execute the following command:
@@ -339,7 +337,7 @@ command with the <code>-help</code> option.
 -->
 </ol>
 <p>
-For additional information on running in the Java ME SDK 3.0 Emulator, see the
+For additional information on running in the emulator, see the
 <a href="http://java.sun.com/javame/reference/docs/sjwc-2.2/pdf-html/html/build/index.html">
 <i>Sun Java Wireless Client Software Build Guide</i></a>.
 <p>
