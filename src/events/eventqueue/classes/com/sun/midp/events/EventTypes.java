@@ -449,5 +449,15 @@ public final class EventTypes {
      */
     public static final int NATIVE_WINDOW_LOST_FOCUS = 72;
     public static final int NATIVE_WINDOW_GAINED_FOCUS = 73;
+
+    /**
+     * Request to install a MIDlet suite.
+     */
+    public static final int MIDP_ODD_REQUEST_INSTALLATION_EVENT = 74;
+
+    /**
+     * MIDlet suite installation has finished.
+     */
+    public static final int MIDP_INSTALLATION_DONE_EVENT = 75;
     
 }

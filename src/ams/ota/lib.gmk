@@ -45,7 +45,8 @@ OTA_IMPL_DIR ?= $(OTA_DIR)/reference
 
 # Common interface
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(OTA_DIR)/classes/com/sun/midp/appmanager/InstallerEventConsumer.java
+    $(OTA_DIR)/classes/com/sun/midp/appmanager/InstallerEventConsumer.java \
+    $(OTA_DIR)/classes/com/sun/midp/appmanager/InstallerResultEventConsumer.java
 		    
 # Get implementation settings and files
 include $(OTA_IMPL_DIR)/lib.gmk
