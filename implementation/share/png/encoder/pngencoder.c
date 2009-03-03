@@ -429,12 +429,14 @@ int javautil_media_rgbX888_to_png(unsigned char *input,
                 zcrc = adler32(zcrc, &(input[0]), 1);
                 writebytecrc(&enc, input[0]);
             } else {
+                zcrc = adler32(zcrc, &(input[0]), 1);
+                writebytecrc(&enc, input[0]);
                 zcrc = adler32(zcrc, &(input[1]), 1);
                 writebytecrc(&enc, input[1]);
                 zcrc = adler32(zcrc, &(input[2]), 1);
                 writebytecrc(&enc, input[2]);
-                zcrc = adler32(zcrc, &(input[3]), 1);
-                writebytecrc(&enc, input[3]);
+//                zcrc = adler32(zcrc, &(input[3]), 1);
+//                writebytecrc(&enc, input[3]);
             }
             input += 4;
         }

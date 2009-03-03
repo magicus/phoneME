@@ -1024,6 +1024,46 @@ javacall_result javacall_media_get_video_snapshot_data(javacall_handle handle,
   */
  javacall_result javacall_media_set_video_full_screen_mode(javacall_handle handle, javacall_bool fullScreenMode);
 
+/**
+ * struct javacall_encoder_type
+ * @brief Supported native encoders
+ */
+typedef enum {
+    JAVACALL_JPEG_ENCODER,
+    JAVACALL_PNG_ENCODER
+}javacall_encoder_type;
+
+/**
+ * Encodes given raw RGB888 image to specified format.
+ * 
+ * @param rgb888    soure raw image to be encoded
+ * @param width     source image width
+ * @param height    source image height
+ * @param encode    destination format
+ * @param quality   quality of encoded image (for format with
+ *                  losses)
+ * @param result_buffer a pointer where result buffer will be
+ *                      stored
+ * @param result_buffer_len result buffer size
+ * 
+ * @return  JAVACALL_OK  in case of success,
+ *          JAVACALL_OUT_OF_MEMORY if there is no memory for
+ *          destination buffer
+ *          JAVACALL_FAIL if encoder failed
+ */
+javacall_result javacall_media_encode(javacall_uint8* rgb888, javacall_uint8 width, javacall_uint8 height,
+                                      javacall_encoder_type encode, javacall_uint8 quality,
+                                      javacall_uint8** result_buffer, javacall_uint32* result_buffer_len);
+
+/**
+ * Release a data was acuired by <tt>javacall_media_encode</tt>
+ * 
+ * @param result_buffer     a pointer to a buffer need to be
+ *                          released
+ * @param result_buffer_len the buffer length
+ */
+void javacall_media_release_data(javacall_uint8* result_buffer, javacall_uint32 result_buffer_len);
+
 /** @} */
 
 /**********************************************************************************/

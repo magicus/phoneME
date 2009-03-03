@@ -1388,3 +1388,16 @@ javacall_result javacall_media_to_background(const javacall_handle handle,
                                              const int appID) {
     return JAVACALL_NOT_IMPLEMENTED;
 }
+
+javacall_result javacall_media_encode(javacall_uint8* rgb888, 
+                                      javacall_uint8 width, 
+                                      javacall_uint8 height,
+                                      javacall_encoder_type encode,
+                                      javacall_uint8 quality,
+                                      javacall_uint8** result_buffer,
+                                      javacall_uint32* result_buffer_len) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
+void javacall_media_release_data(javacall_uint8* result_buffer, javacall_uint32 result_buffer_len) {
+}

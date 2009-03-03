@@ -29,6 +29,8 @@
 #include "javautil_unicode.h"
 #include "javacall_memory.h"
 #include <stdio.h>
+#include "jpegencoder.h"
+#include "pngencoder.h"
 
 #define LIME_MMAPI_PACKAGE      "com.sun.mmedia"
 #define LIME_MMAPI_CLASS        "JavaCallBridge"
@@ -2355,4 +2357,41 @@ javacall_result javacall_media_skip_frames(javacall_handle handle, /*INOUT*/ lon
     }
 
     return ret;
+}
+
+
+#define JFIF_HEADER_MAXIMUM_LENGTH 1024
+javacall_result javacall_media_encode(javacall_uint8* rgb888, 
+                                      javacall_uint8 width, 
+                                      javacall_uint8 height,
+                                      javacall_encoder_type encode,
+                                      javacall_uint8 quality,
+                                      javacall_uint8** result_buffer,
+                                      javacall_uint32* result_buffer_len) {
+    if (JAVACALL_JPEG_ENCODER == encode) {
+        /// It's hard to suppose, how large will be jpeg image 
+        int nWidth = ((width+7)&(~7));
+        int nHeight = ((height+7)&(~7));
+        int jpegLen = nWidth*nHeight*5 + JFIF_HEADER_MAXIMUM_LENGTH;
+        *result_buffer = javacall_malloc(jpegLen);
+        if (NULL != *result_buffer) {
+            *result_buffer_len = RGBToJPEG(rgb888, width, height, quality, 
+                                           *result_buffer, JPEG_ENCODER_COLOR_RGB);
+            return (*result_buffer_len > 0) ? JAVACALL_OK : JAVACALL_FAIL;
+        }
+    } else if (JAVACALL_PNG_ENCODER == encode) {
+        int pngLen = javautil_media_get_png_size(width, height);
+        *result_buffer = javacall_malloc(pngLen);
+        if (NULL != *result_buffer) {
+            *result_buffer_len = javautil_media_rgb_to_png(rgb888, *result_buffer, 
+                                                               width, height);
+            return (*result_buffer_len > 0) ? JAVACALL_OK : JAVACALL_FAIL;
+        }
+    }
+
+    return JAVACALL_OUT_OF_MEMORY;
+}
+
+void javacall_media_release_data(javacall_uint8* result_buffer, javacall_uint32 result_buffer_len) {
+    javacall_free(result_buffer);
 }
