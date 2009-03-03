@@ -168,6 +168,14 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
         return new AutoDelayEventImpl(msec);
     }
 
+    /**
+     * Creates event from native (used by our MIDP implementation) event.
+     *
+     * @param nativeEvent native event
+     * @return created event
+     * @throws IllegalArgumentException if this kind of native event
+     * is not supported
+     */
     private AutoEvent createFromNativeEvent(NativeEvent nativeEvent) {
         AutoEvent event = null;
 
@@ -186,6 +194,15 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
                 }
 
                 break;
+            }
+
+            case EventTypes.PEN_EVENT: {
+                AutoPenState penState = AutoPenState.getByMIDPPenState(
+                        nativeEvent.intParam1);
+                int x = nativeEvent.intParam2;
+                int y = nativeEvent.intParam3;
+
+                event = createPenEvent(x, y, penState);
             }
 
             default: {
