@@ -251,15 +251,26 @@ static javacall_bool checkForEvents(long timeout) {
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
             /* Dispatching the message will call WndProc below. */
             if (msg.message == WM_QUIT) {
-                        return JAVACALL_FALSE;
-                    }
+                return JAVACALL_FALSE;
+            }
             TranslateMessage(&msg);
-        DispatchMessage(&msg);
+            DispatchMessage(&msg);
         }
 
-        if (WaitForSingleObject(events_handle, 0)==WAIT_OBJECT_0) {
-            /* We got signal to unblock a Java thread. */
-            return JAVACALL_TRUE;
+        if (forever == JAVACALL_TRUE || timeout >= 0) {
+            HANDLE lpHandles[] = { events_handle };
+            DWORD ret;
+            ret = MsgWaitForMultipleObjects(1, lpHandles, FALSE,
+                    forever == JAVACALL_TRUE ? INFINITE : timeout,
+                    QS_ALLINPUT);
+            if (ret == WAIT_TIMEOUT) {
+                /* time out */
+                return JAVACALL_FALSE;
+            } else if (ret == WAIT_OBJECT_0) {
+                /* We got signal to unblock a Java thread. */
+                return JAVACALL_TRUE;
+            }
+            /* We got message signal. */
         }
 
         if (timeout > 0) {
@@ -271,15 +282,7 @@ static javacall_bool checkForEvents(long timeout) {
                 timeout -= (long)((unsigned long)0xFFFFFFFF - before + after);
             }
         }
-
         before = after;
-
-        /* IMPL_NOTE - Decrease CPU usage */
-        /*  negative values mean "INFINITE", so check for less than zero
-        */
-        if ((timeout > 20) || (timeout < 0)) {
-            Sleep(10);
-        }
 
     } while ( (timeout > 0) || (forever == JAVACALL_TRUE) );
 
