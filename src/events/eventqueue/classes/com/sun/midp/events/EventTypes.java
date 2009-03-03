@@ -449,5 +449,10 @@ public final class EventTypes {
      */
     public static final int NATIVE_WINDOW_LOST_FOCUS = 72;
     public static final int NATIVE_WINDOW_GAINED_FOCUS = 73;
+
+    /** 
+     * API Extensions System Event
+     */
+    public static final int API_EXTENSIONS_SYSTEM_EVENT = 74;
     
 }
