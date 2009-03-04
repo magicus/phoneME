@@ -205,7 +205,8 @@ int JVMSPI_HandleUncaughtException(const int isolate_id,
 				   const char * exception_class_name,
 				   const int exception_class_name_length,
 				   const char * message,
-				   const int flags) {
+				   const int flags,
+                                   int * exit_code) {
   return JVMSPI_IGNORE;
 }
 
@@ -215,6 +216,7 @@ int JVMSPI_HandleOutOfMemory(const int isolate_id,
 			     const int reserve,
 			     const int available,
 			     const int alloc_size,
-			     const int flags) {
+			     const int flags,
+                             int * exit_code) {
   return JVMSPI_IGNORE;
 }

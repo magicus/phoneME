@@ -208,7 +208,7 @@ void Thread::lightweight_thread_uncaught_exception() {
     if (exception_class().is_subclass_of(Universe::throwable_class())) {
       SETUP_ERROR_CHECKER_ARG;
       UsingFastOops fast_oops2;
-      Throwable::Raw throwable = exception;
+      Throwable::Raw throwable = exception.obj();
       Symbol::Fast exception_class_name = exception_class().name();
       const char * cmessage = "";
       String::Fast message = throwable().message();
@@ -219,10 +219,10 @@ void Thread::lightweight_thread_uncaught_exception() {
 	cmessage = (char *)carray().base_address();
       }
 
-      Task::Raw task = Task::current();
-
+      const int task_id = TaskContext::current_task_id();
       int flags = 0;
 #if ENABLE_ISOLATES      
+      Task::Raw task = Task::current();
       if (task().thread_count() == 1) {
 #else
       if (Scheduler::active_count() == 1) {
@@ -230,16 +230,18 @@ void Thread::lightweight_thread_uncaught_exception() {
 	flags |= JVMSPI_LAST_THREAD;
       }
 
-      int action = JVMSPI_HandleUncaughtException(TaskContext::current_task_id(),
-						  exception_class_name().utf8_data(), 
-						  exception_class_name().length(),
-						  cmessage, flags);
+      int exit_code = 0;
+      int action = 
+        JVMSPI_HandleUncaughtException(task_id,
+                                       exception_class_name().utf8_data(), 
+                                       exception_class_name().length(),
+                                       cmessage, flags, &exit_code);
       switch (action) {
       case JVMSPI_ABORT:
-#if ENABLE_ISOLATE	
-	task().stop(0, UNCAUGHT_EXCEPTION);
+#if ENABLE_ISOLATES
+	task().stop(exit_code, Task::UNCAUGHT_EXCEPTION JVM_NO_CHECK);
 #else
-	JVM_Stop(0);
+	JVM_Stop(exit_code);
 #endif
 	break;
       case JVMSPI_IGNORE:
@@ -249,10 +251,12 @@ void Thread::lightweight_thread_uncaught_exception() {
 #if ENABLE_ISOLATES
 	/*
 	 * If this is the last thread, just ignore. It will die anyway.
-	 * If not, suspend the isolate and let 
+	 * If not, suspend the isolate.
 	 */
-	if ((flags & JVMSPI_LAST_THREAD) != 0) {
-	  JVM_SuspendIsolate(TaskContext::current_task_id());
+	if ((flags & JVMSPI_LAST_THREAD) == 0) {
+	  JVM_SuspendIsolate(task_id);
+          // Resume the current thread to let it die gracefully
+          Scheduler::resume_thread(Thread::current());
 	}
 #else
 	GUARANTEE(0, "Not supported for SVM");    

@@ -355,8 +355,7 @@ void Scheduler::suspend_threads(int task_id) {
         queue_thread = next_thread;
         next_thread = queue_thread().next();
         if (queue_thread().task_id() == task_id) {
-          remove_from_active(&queue_thread);
-          add_to_suspend(&queue_thread);
+          suspend_thread(&queue_thread);
         }
       } while (!queue_thread.equals(&last_thread));
     }
@@ -375,8 +374,7 @@ void Scheduler::resume_threads(int task_id) {
       queue_thread = next_thread;
       next_thread = queue_thread().next();
       if (queue_thread().task_id() == task_id) {
-        remove_from_suspend(&queue_thread);
-        add_to_active(&queue_thread);
+        resume_thread(&queue_thread);
       }
     } while (!queue_thread.equals(&last_thread));
     Scheduler::yield();
