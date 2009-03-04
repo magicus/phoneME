@@ -3198,7 +3198,9 @@ public class Display {
         * @param m MIDPWindow display mode
         */
         public void setMode(int m) {
-	    Display.this.lSetMode(m);
+            synchronized (LCDUILock) {
+	        Display.this.lSetMode(m);
+            }
         }
     } // END DisplayAccessImpl Class
 
