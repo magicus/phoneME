@@ -330,7 +330,11 @@ endif
 
 # Include API Extensions
 ifeq ($(USE_API_EXTENSIONS), true)
+ifneq ($(PROJECT_API_EXTENSIONS_DIR),)
+API_EXTENSIONS_MAKE_FILE = $(PROJECT_API_EXTENSIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+else
 API_EXTENSIONS_MAKE_FILE = $(API_EXTENSIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
 ifeq ($(wildcard $(API_EXTENSIONS_MAKE_FILE)),)
 $(error API_EXTENSIONS_DIR must point to a directory containing API Extensions sources)
 endif
