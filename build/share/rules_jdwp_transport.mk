@@ -21,19 +21,18 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional  
 # information or have any questions. 
 #
-# @(#)jdwp_transport_socket.mk	1.8 06/10/10
+# @(#)rules_jdwp_transport.mk	1.8 06/10/10
 #
 
 #
-#  Makefile for building the jdwp tool
-#
-
 ###############################################################################
-# Make definitions:
+# Make rules:
 
-#
-# List of object files to build:
-#
-CVM_JDWP_DT_SHAREOBJS += \
-	socketTransport.o \
-	socket_md.o
+jdwp_dt_build_list = $(CVM_JDWP_LIBDIR)/$(CVM_JDWP_DT_LIB)
+
+jdwp-dt: $(jdwp_dt_build_list)
+
+$(CVM_JDWP_LIBDIR)/$(CVM_JDWP_DT_LIB): $(CVM_JDWP_DT_OBJECTS)
+	@echo "Linking $@"
+	$(call SO_LINK_CMD,$(CVM_JDWP_DT_LINKLIBS))
+	@echo "Done Linking $@"

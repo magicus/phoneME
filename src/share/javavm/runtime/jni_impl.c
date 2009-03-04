@@ -4416,6 +4416,7 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     CVMjvmtiEnterOnloadPhase();
     CVMtimeThreadCpuClockInit(&ee->threadInfo);
 #endif
+
     /* Run agents */
     /* Agents run before VM is fully initialized */
 #ifdef CVM_AGENTLIB
@@ -4539,11 +4540,7 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     if (!CVMjvmtiIsInDebugMode())
 #endif
     {
-        if (!CVMjitCompileAOTCode(ee)) {
-	    errorStr = "error during AOT compilation";
-            errorNo = JNI_ERR;
-            goto done;
-        }
+        CVMjitCompileAOTCode(ee);
     }
 #endif
     
@@ -5104,6 +5101,7 @@ CVMjniDetachCurrentThread(JavaVM *vm)
 	return JNI_OK;
     }
 }
+
 
 static jint JNICALL
 CVMjniGetEnv(JavaVM *vm, void **penv, jint version)

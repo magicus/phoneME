@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -21,21 +21,16 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
 #
-# @(#)hprof.mk	1.8 06/10/10
+# @(#)jdwp.mk	1.4 06/10/10
 #
-#  Platform specific makefile for building the Hprof tool
+# Makefile for building the jdwp tool for windows target
 #
 
-CVM_HPROF_LIBDIR        = $(CVM_BINDIR)
+CVM_JDWP_LIBDIR		= $(CVM_BINDIR)
 
 ifeq ($(WIN32_PLATFORM),wince)
-CVM_HPROF_LINKLIBS = winsock.lib
+CVM_JDWP_DT_LINKLIBS = winsock.lib
 else
-CVM_HPROF_LINKLIBS = ws2_32.lib
+CVM_JDWP_DT_LINKLIBS = ws2_32.lib user32.lib
+CVM_JDWP_LINKLIBS = user32.lib
 endif
-
-#
-# Platform specific build flags:
-#
-CVM_HPROF_FLAGS += \
-

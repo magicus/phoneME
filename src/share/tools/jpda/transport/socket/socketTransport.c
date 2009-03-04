@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include "javavm/include/porting/net.h"
 
 #include "jdwpTransport.h"
 #include "sysSocket.h"
@@ -198,13 +199,13 @@ parseAddress(const char *address, struct sockaddr_in *sa, U_SOCKINT32 defaultHos
     /* check for host:port or port */
     colon = strchr(address, ':');
     if (colon == NULL) {
-        u_short port = (u_short)atoi(address);
+        unsigned short port = (unsigned short)atoi(address);
         sa->sin_port = dbgsysHostToNetworkShort(port);
         sa->sin_addr.s_addr = dbgsysHostToNetworkLong(defaultHost);
     } else {
         char *buf;
         char *hostname;
-        u_short port;
+        unsigned short port;
         U_SOCKINT32 addr;
 
         buf = (*callback->alloc)(strlen(address)+1);
@@ -745,9 +746,8 @@ jdwpTransport_OnLoad(JavaVM *vm, jdwpTransportCallback* cbTablePtr,
     jdwpInterface.GetLastError = &socketTransport_getLastError;
     *result = &single_env;
 
+    dbgsysInit(jvm);
     /* initialized TLS */
     tlsIndex = dbgsysTlsAlloc();
     return JNI_OK;
 }
-
-

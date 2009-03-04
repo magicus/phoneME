@@ -31,6 +31,12 @@
 #include "sysSocket.h"
 
 int
+dbgsysInit(JavaVM *jvm)
+{
+    return 0;
+}
+
+int
 dbgsysListen(int fd, long count)
 {
     if (fd < 0 || fd >= FD_SETSIZE) {

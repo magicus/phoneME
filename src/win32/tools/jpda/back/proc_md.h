@@ -35,10 +35,13 @@
 #endif
 #include <time.h>
 
-#define MUTEX_T         int
-#define MUTEX_INIT      0
-#define MUTEX_LOCK(x)           /* FIXUP? */
-#define MUTEX_UNLOCK(x)         /* FIXUP? */
+static CRITICAL_SECTION __my_mutex__;
+
+#define MUTEX_T         CRITICAL_SECTION *
+#define MUTEX_INIT    (InitializeCriticalSection(&__my_mutex__), &__my_mutex__)
+
+#define MUTEX_LOCK(x)  EnterCriticalSection(x)
+#define MUTEX_UNLOCK(x) LeaveCriticalSection(x)
 #define GET_THREAD_ID() GetCurrentThreadId()
 #define THREAD_T        unsigned long
 #define PID_T           int

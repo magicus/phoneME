@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
 #   
 # This program is free software; you can redistribute it and/or  
@@ -21,13 +21,20 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional  
 # information or have any questions. 
 #
-# @(#)hprof.mk	1.10 06/10/10
-#
-#  Platform specific makefile for building the Hprof tool
+# @(#)jdwp_transport_socket.mk	1.8 06/10/10
 #
 
 #
-# Platform specific build flags:
+#  Makefile for building the jdwp tool
 #
-CVM_HPROF_FLAGS += \
-        USE_SUNCC
+
+###############################################################################
+# Make definitions:
+
+#
+# List of object files to build:
+#
+CVM_JDWP_DT_SHAREOBJS += \
+	socketTransport.o \
+	socket_md.o \
+	linker_md.o

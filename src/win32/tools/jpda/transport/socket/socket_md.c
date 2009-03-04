@@ -808,3 +808,8 @@ dbgsysCurrentTimeMillis() {
     return (FT2INT64(ft0) - fileTime_1_1_70) / 10000;
 }
 
+int
+dbgsysInit(JavaVM *jvm)
+{
+    return JNI_OK;
+}

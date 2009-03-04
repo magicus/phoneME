@@ -512,16 +512,29 @@ ifeq ($(CVM_TOOLS_BUILD),true)
 # Include the makefiles for tool libraries to build here:
 # NOTE: For jcov and hprof, the platform specific makefiles need to be
 #       included first.
--include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/jcov.mk
--include $(CDC_DIR)/build/share/jcov.mk
--include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/hprof.mk
--include $(CDC_DIR)/build/share/hprof.mk
--include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/jvmti_crw.mk
--include $(CDC_DIR)/build/share/jvmti_crw.mk
--include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/jvmti_hprof.mk
--include $(CDC_DIR)/build/share/jvmti_hprof.mk
--include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/jdwp.mk
--include $(CDC_DIR)/build/share/jdwp.mk
+-include $(CDC_DIR)/build/share/defs_jcov.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jcov.mk
+-include $(CDC_DIR)/build/share/rules_jcov.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/rules_jcov.mk
+-include $(CDC_DIR)/build/share/defs_hprof.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_hprof.mk
+-include $(CDC_DIR)/build/share/rules_hprof.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/rules_hprof.mk
+-include $(CDC_DIR)/build/share/defs_jvmti_crw.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jvmti_crw.mk
+-include $(CDC_DIR)/build/share/rules_jvmti_crw.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/rules_jvmti_crw.mk
+-include $(CDC_DIR)/build/share/defs_jvmti_hprof.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jvmti_hprof.mk
+-include $(CDC_DIR)/build/share/rules_jvmti_hprof.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/rules_jvmti_hprof.mk
+-include $(CDC_DIR)/build/share/defs_jdwp.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jdwp.mk
+-include $(CDC_DIR)/build/share/rules_jdwp.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/rules_jdwp.mk
+-include $(CDC_DIR)/build/share/defs_jdwp_transport.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jdwp_transport.mk
+-include $(CDC_DIR)/build/share/rules_jdwp_transport.mk
 -include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/cvmc.mk
 -include $(CDC_DIR)/build/share/cvmc.mk
 endif
