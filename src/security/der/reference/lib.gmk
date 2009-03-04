@@ -51,4 +51,16 @@ SUBSYSTEM_SECURITY_JAVA_FILES += \
     $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/BigInteger.java \
     $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/SerialNumber.java \
     $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/BitArray.java
+
+ifeq ($(USE_I3_TEST), true)
+
+SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES = \
+    $(SECURITY_DER_REFERENCE_DIR)/i3test/com/sun/midp/pki/TestDerInputBufferTime.java
+
+else
+
+SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES =
+
+endif # USE_I3_TEST
+
 					    
