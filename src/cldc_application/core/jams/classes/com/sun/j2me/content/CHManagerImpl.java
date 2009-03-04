@@ -65,8 +65,7 @@ import com.sun.midp.events.EventTypes;
  * MIDP stack is not built with CHAPI and the real implementation when
  * MIDP stack is BUILT with CHAPI.
  */
-public class CHManagerImpl extends com.sun.midp.content.CHManager
-    						implements MIDletProxyListListener, EventListener {
+public class CHManagerImpl extends CHManagerBase {
 
     /**
      * Inner class to request security token from SecurityInitializer.
@@ -230,116 +229,4 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
         }
     }
 
-    /**
-     * Setup to monitor for MIDlets starting and exiting and check
-     * for incompletely handled Invocation requests.
-     * Cleanup only occurs within the AMS Isolate.
-     * This method is only called from MIDletSuiteLoader in the AMS Isolate.
-     *
-     * @param midletProxyList reference to the MIDlet proxy list
-     * @param eventQueue reference to AMS isolate event queue
-     */
-    public void init(MIDletProxyList midletProxyList, EventQueue eventQueue) {
-        midletProxyList.addListener(this);
-        eventQueue.registerEventListener(EventTypes.CHAPI_EVENT, this);
-    }
-
-    /**
-     * Notification that a MIDlet is about to be created.
-     * Set the cleanup flag on all invocations for the MIDlet.
-     *
-     * @param suiteId the storage name of the MIDlet suite
-     * @param classname the midlet classname
-     */
-    public void midletInit(int suiteId, String classname) {
-    	InvocationStore.setCleanup(new CLDCAppID(suiteId, classname), true);
-    }
-
-    /**
-     * The ContentHandler monitor ignores MIDlet added callbacks.
-     * The necessary initialization is done in the Isolate and
-     * MIDletState that instantiates the MIDlet.
-     * Called when a MIDlet is added to the list and only in the AMS
-     * Isolate.
-     *
-     * @param midlet The proxy of the MIDlet being added
-     */
-    public void midletAdded(MIDletProxy midlet) {
-    	AppProxy.midletIsAdded( midlet.getSuiteId(), midlet.getClassName() );
-    }
-
-    /**
-     * The ContentHandler monitor ignores MIDlet update callbacks.
-     * Called when the state of a MIDlet in the list is updated.
-     *
-     * @param midlet The proxy of the MIDlet that was updated
-     * @param fieldId code for which field of the proxy was updated
-     */
-    public void midletUpdated(MIDletProxy midlet, int fieldId) {
-    }
-
-    /**
-     * The ContentHandler monitor uses the MIDlet removed callback
-     * to cleanup any Invocations in an incorrect state.
-     * Called (in the AMS Isolate) when a MIDlet is removed from the list.
-     *
-     * @param midlet The proxy of the removed MIDlet
-     */
-    public void midletRemoved(MIDletProxy midlet) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println("midletRemoved: " + midlet.getClassName());
-	
-		// Cleanup unprocessed Invocations
-    	CLDCAppID appID = new CLDCAppID(midlet.getSuiteId(), midlet.getClassName());
-		RegistryImpl.cleanup(appID);
-		AppProxy.midletIsRemoved( appID.suiteID, appID.className );
-		// Check for and execute a pending MIDlet suite
-		InvocationStoreProxy.invokeNext();
-    }
-
-    /**
-     * Called when error occurred while starting a MIDlet object.
-     *
-     * @param externalAppId ID assigned by the external application manager
-     * @param suiteId Suite ID of the MIDlet
-     * @param className Class name of the MIDlet
-     * @param errorCode start error code
-     * @param errorDetails start error details
-     */
-    public void midletStartError(int externalAppId, int suiteId, String className,
-                          int errorCode, String errorDetails) {
-		// Cleanup unprocessed Invocations
-    	CLDCAppID appID = new CLDCAppID(suiteId, className);
-    	InvocationStore.setCleanup(appID, true);
-		RegistryImpl.cleanup(appID);
-		AppProxy.midletIsRemoved( suiteId, className );
-		// Check for and execute a pending MIDlet suite
-		InvocationStoreProxy.invokeNext();
-    }
-
-    /**
-     * Preprocess an event that is being posted to the event queue.
-     * This method will get called in the thread that posted the event.
-     * 
-     * @param event event being posted
-     *
-     * @param waitingEvent previous event of this type waiting in the
-     *     queue to be processed
-     * 
-     * @return true to allow the post to continue, false to not post the
-     *     event to the queue
-     */
-    public boolean preprocess(Event event, Event waitingEvent) {
-        return true;
-    }
-
-    /**
-     * Process an event.
-     * This method will get called in the event queue processing thread.
-     *
-     * @param event event to process
-     */
-    public void process(Event event) {
-        InvocationStoreProxy.invokeNext();
-    }
 }

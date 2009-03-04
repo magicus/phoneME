@@ -84,52 +84,52 @@ static void result2string(KNIDECLARGS JSR211_RESULT_BUFFER buffer, jstring str){
 #ifdef TRACE_TRANSFER_DATA
     printf( "kni_reg_store: buffer = %p, length %d\n", buffer, length );
 #endif
-	KNI_ReleaseHandle(str);
-	if (length != 0) {
+    KNI_ReleaseHandle(str);
+    if (length != 0) {
         // check data on '\0' character
         jchar * chars = (jchar *)data;
         if( length & 0x1 ){
 #ifdef _DEBUG
-		    printf( "\nkni_reg_store.c: data transfer internal problem (length is odd)" );
+            printf( "\nkni_reg_store.c: data transfer internal problem (length is odd)" );
 #endif
         }
         length /= 2;
         chars[ length ] = '\0';
 
-		if (JAVACALL_OK != jsrop_jstring_from_utf16_string_n(
+        if (JAVACALL_OK != jsrop_jstring_from_utf16_string_n(
                                 KNIPASSARGS (const javacall_utf16_string)data, length, str)){
             KNI_ThrowNew(jsropOutOfMemoryError, "No memory to create result string!");
-		}
+        }
 #ifdef TRACE_TRANSFER_DATA
         printf( "kni_reg_store: data '" );
         chars = (jchar *)data; 
         while( length-- ) printf( "%04x", *chars++ );
         printf( "'\n" );
 #endif
-	}
-	jsr211_release_result_buffer(buffer);
+    }
+    jsr211_release_result_buffer(buffer);
 }
 
 static void cleanStringArray(const jchar** strings, int n) {
-	if (strings != NULL){
-		const jchar** p = strings;
-		while(n--) JAVAME_FREE(*p++);
-		JAVAME_FREE((void*)strings);
-	}
+    if (strings != NULL){
+        jchar** p = (jchar **)strings;
+        while(n--) JAVAME_FREE(*p++);
+        JAVAME_FREE((void*)strings);
+    }
 }
 
 
 static void cleanHandlerData(jsr211_content_handler* handler) {
-	JAVAME_FREE(handler->id);
-	JAVAME_FREE(handler->suite_id);
-	JAVAME_FREE(handler->class_name);
+    JAVAME_FREE(handler->id);
+    JAVAME_FREE(handler->suite_id);
+    JAVAME_FREE(handler->class_name);
 
-	cleanStringArray(handler->types,handler->type_num);
-	cleanStringArray(handler->suffixes,handler->suff_num);
-	cleanStringArray(handler->actions,handler->act_num);
-	cleanStringArray(handler->locales,handler->locale_num);
-	cleanStringArray(handler->action_map,handler->act_num * handler->locale_num);
-	cleanStringArray(handler->accesses,handler->access_num);
+    cleanStringArray(handler->types,handler->type_num);
+    cleanStringArray(handler->suffixes,handler->suff_num);
+    cleanStringArray(handler->actions,handler->act_num);
+    cleanStringArray(handler->locales,handler->locale_num);
+    cleanStringArray(handler->action_map,handler->act_num * handler->locale_num);
+    cleanStringArray(handler->accesses,handler->access_num);
 }
 
 
@@ -153,13 +153,13 @@ static int initializeFields(KNIDECLARGS int dummy) {
     do {
         // 1. initialize ContentHandlerRegData fields
         KNI_FindClass("com/sun/j2me/content/ContentHandlerRegData", clObj);
-	    if (KNI_IsNullHandle(clObj)) {
+        if (KNI_IsNullHandle(clObj)) {
 #ifdef _DEBUG
-		    printf("\nkni_reg_store.c: can't find class com.sun.j2me.content.ContentHandlerRegData");
+            printf("\nkni_reg_store.c: can't find class com.sun.j2me.content.ContentHandlerRegData");
 #endif
-       	    ret = KNI_ERR;
-		    break;
-	    }
+               ret = KNI_ERR;
+            break;
+        }
         chImplId =          KNI_GetFieldID(clObj,  "ID", STRING_TYPE);
         chImplregMethod =   KNI_GetFieldID(clObj,  "registrationMethod", "I");
         chImplTypes =       KNI_GetFieldID(clObj,  "types", S_ARRAY_TYPE);
@@ -171,7 +171,7 @@ static int initializeFields(KNIDECLARGS int dummy) {
         if (chImplId == 0 || chImplregMethod == 0 || chImplTypes == 0 || 
                 chImplSuffixes == 0 || chImplActions == 0 || chImplActionnames == 0 || chImplAccesses == 0) {
 #ifdef _DEBUG
-	        printf( "kni_reg_store.c: can't initialize ContentHandlerRegData fields!" );
+            printf( "kni_reg_store.c: can't initialize ContentHandlerRegData fields!" );
 #endif
             ret = KNI_ERR;
             break;
@@ -181,7 +181,7 @@ static int initializeFields(KNIDECLARGS int dummy) {
         KNI_FindClass(ANM_CLASS_NAME, clObj);  // clObj = ActionNameMap class
         if (KNI_IsNullHandle(clObj)) {
 #ifdef _DEBUG
-	        printf("kni_reg_store.c: can't find " ANM_CLASS_NAME " class!");
+            printf("kni_reg_store.c: can't find " ANM_CLASS_NAME " class!");
 #endif
             ret = KNI_ERR;
             break;
@@ -193,7 +193,7 @@ static int initializeFields(KNIDECLARGS int dummy) {
         if (anMapLocale == 0 || anMapActionnames == 0) {
     
 #ifdef _DEBUG
-	        printf("kni_reg_store.c: can't initialize " ANM_CLASS_NAME " fields!");
+            printf("kni_reg_store.c: can't initialize " ANM_CLASS_NAME " fields!");
 #endif
             ret = KNI_ERR;
             break;
@@ -221,13 +221,13 @@ static int initializeFields(KNIDECLARGS int dummy) {
  */
 static int getStringArray(KNIDECLARGS jobjectArray arrObj, const jchar*** arrPtr) {
     int i=0, n;
-	const jchar** arr;
+    const jchar** arr;
 
-	if (!arrObj) return 0;
+    if (!arrObj) return 0;
 
     n = KNI_IsNullHandle(arrObj)? 0: (int)KNI_GetArrayLength(arrObj);
-	if (!n) return 0;
-	
+    if (!n) return 0;
+    
 #ifdef TRACE_MALLOC
     printf( "kni_reg_store.getStringArray(%d): malloc( %d )", __LINE__, sizeof(jchar*) * n );
 #endif
@@ -238,21 +238,21 @@ static int getStringArray(KNIDECLARGS jobjectArray arrObj, const jchar*** arrPtr
     KNI_DeclareHandle(strObj);
 
     for (; i < n; i++) {
-		KNI_GetObjectArrayElement(arrObj, i, strObj);
-		if (!strObj) break;
+        KNI_GetObjectArrayElement(arrObj, i, strObj);
+        if (!strObj) break;
 
-		if (!JAVACALL_OK == jsrop_jstring_to_utf16_string(strObj,(javacall_utf16_string*)&arr[i]))
-			break;
+        if (!JAVACALL_OK == jsrop_jstring_to_utf16_string(strObj,(javacall_utf16_string*)&arr[i]))
+            break;
     }
 
-	KNI_EndHandles();
+    KNI_EndHandles();
 
-	if (i<n){
-		cleanStringArray(arr, i);
-		KNI_ReturnInt(KNI_ENOMEM);
-	}
+    if (i<n){
+        cleanStringArray(arr, i);
+        KNI_ReturnInt(KNI_ENOMEM);
+    }
 
-	*arrPtr = arr;
+    *arrPtr = arr;
     KNI_ReturnInt(n);
 }
 
@@ -280,8 +280,8 @@ static int fillActionMap(KNIDECLARGS jobject o, jsr211_content_handler* handler)
     if (len > 0) {
         int i, j;
         int n = handler->act_num;   // number of actions
-		const jchar** locs = NULL;   // fetched locales
-		const jchar** nams = NULL;   // fetched action names
+        const jchar** locs = NULL;   // fetched locales
+        const jchar** nams = NULL;   // fetched action names
 
         do {
             // allocate buffers
@@ -305,14 +305,14 @@ static int fillActionMap(KNIDECLARGS jobject o, jsr211_content_handler* handler)
             for (i = 0; i < len && ret == KNI_OK; i++) {
                 KNI_GetObjectArrayElement(o, i, map);
                 KNI_GetObjectField(map, anMapLocale, str);
-				if (!str || JAVACALL_OK!=jsrop_jstring_to_utf16_string(str, (javacall_utf16_string*)locs++)) {
+                if (!str || JAVACALL_OK!=jsrop_jstring_to_utf16_string(str, (javacall_utf16_string*)locs++)) {
                     ret = KNI_ENOMEM;
                     break;
                 }
                 KNI_GetObjectField(map, anMapActionnames, arr);
                 for (j = 0; j < n; j++) {
                     KNI_GetObjectArrayElement(arr, j, str);
-					if (!str || JAVACALL_OK!=jsrop_jstring_to_utf16_string(str, (javacall_utf16_string*)nams++)) {
+                    if (!str || JAVACALL_OK!=jsrop_jstring_to_utf16_string(str, (javacall_utf16_string*)nams++)) {
                         ret = KNI_ENOMEM;
                         break;
                     }
@@ -341,7 +341,7 @@ static int fillActionMap(KNIDECLARGS jobject o, jsr211_content_handler* handler)
 static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassName, jobject o, 
                                 jsr211_content_handler* handler) {
     int ret;    // returned result code
-	int length=0;
+    int length=0;
     KNI_StartHandles(1);
     KNI_DeclareHandle(fldObj);   // field object
     do {
@@ -352,12 +352,12 @@ static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassN
         }
 
         // check mandatory field
-		javautil_unicode_utf16_ulength(handler->id,&length);
+        javautil_unicode_utf16_ulength(handler->id,&length);
         if (length <= 0) { ret = KNI_ERR; break; }
         // suiteID
         handler->suite_id = JAVAME_MALLOC(
                 (jsrop_suiteid_string_size(suiteId) + 1) * sizeof(jchar));
-	    jsrop_suiteid_to_string(suiteId, handler->suite_id);
+        jsrop_suiteid_to_string(suiteId, (jchar *)handler->suite_id);
 
         // classname
         if (JAVACALL_OK!=jsrop_jstring_to_utf16_string(midletClassName, (javacall_utf16_string*)&(handler->class_name))) {
@@ -413,8 +413,8 @@ static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassN
 void jsr211_cleanHandlerData(jsr211_content_handler *handler) {
     // clean up handler structure 
     if (handler->id!=NULL) JAVAME_FREE(handler->id);
-	if (handler->suite_id!=NULL) JAVAME_FREE(handler->suite_id);
-	if (handler->class_name!=NULL) JAVAME_FREE(handler->class_name);
+    if (handler->suite_id!=NULL) JAVAME_FREE(handler->suite_id);
+    if (handler->class_name!=NULL) JAVAME_FREE(handler->class_name);
 
     if (handler->type_num > 0 && handler->types != NULL) {
         cleanStringArray(handler->types, handler->type_num);
@@ -465,10 +465,10 @@ KNIDECL(com_sun_j2me_content_RegistryStore_register0) {
 
         res = fillHandlerData(KNIPASSARGS suiteId, handlerClassName, chObj, &handler);
         if (res != KNI_OK) {
-			if (res == KNI_ENOMEM) {
-				KNI_ThrowNew(jsropOutOfMemoryError, 
-							"RegistryStore_register0 no memory for handler");
-			}
+            if (res == KNI_ENOMEM) {
+                KNI_ThrowNew(jsropOutOfMemoryError, 
+                            "RegistryStore_register0 no memory for handler");
+            }
             break;
         }
 
@@ -575,10 +575,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_forSuite0) {
     KNI_DeclareHandle(strObj);   // String object
 
     SuiteIdType suite_id_param = KNI_GetParameterAsInt(1);
-    jchar suiteID[ 0x20 ];  // enough
-    jsrop_suiteid_to_string(suite_id_param, suiteID);
-
-    jsr211_find_for_suite(suiteID, &result);
+    jsr211_find_for_suite(suite_id_param, &result);
     result2string(KNIPASSARGS result, strObj);
 
     KNI_EndHandlesAndReturnObject(strObj);
@@ -754,13 +751,13 @@ KNIDECL(com_sun_j2me_content_RegistryStore_init) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_j2me_content_RegistryStore_finalize) {
 
-	if (initialized > 0) {
+    if (initialized > 0) {
 
-		if (--initialized == 0) {
-			jsr211_finalize();
-			initialized = -1;
-		}
-	}
+        if (--initialized == 0) {
+            jsr211_finalize();
+            initialized = -1;
+        }
+    }
 
     KNI_ReturnVoid();
 }

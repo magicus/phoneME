@@ -69,13 +69,13 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
  * @param suiteID installing suite ID
  * @return 0 if handlers are stored successfully.
  */
-int jsr211_store_handlers(const pcsl_string* suiteID);
+int jsr211_store_handlers(SuiteIdType suiteId);
 
 /**
  * Removes registered Content Handlers from the JSR211 Registry.
  * @param suiteID removing suite ID
  */
-void jsr211_remove_handlers(const pcsl_string* suiteID);
+void jsr211_remove_handlers(SuiteIdType suiteId);
 
 #ifdef __cplusplus
 }

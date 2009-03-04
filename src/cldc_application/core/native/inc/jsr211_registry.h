@@ -1,7 +1,7 @@
 /*
  * 
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -68,6 +68,7 @@
 #define _JSR211_REGISTRY_H_
 
 #include "javacall_chapi_registry.h"
+#include "suitestore_common.h"
 #include "jsr211_result.h"
 
 
@@ -125,29 +126,29 @@ typedef enum {
  * Full content handler informaton for jsr211_register() method.
  */
 typedef struct jsr211_content_handler_ {
-	const jchar*			id;         /**< Content handler ID */
-	const jchar*			suite_id;   /**< Storage where the handler is */
-	const jchar*			class_name; /**< Content handler class name */
-	jsr211_register_type	flag;		/**< Flag for registered content handlers. */
-	int						type_num;   /**< Number of types */
-	const jchar**			types;      /**< The types that are supported by this content handler */
-	int						suff_num;   /**< Number of suffixes */
-	const jchar**			suffixes;   /**< The suffixes of URLs that are supported by this content handler */
-	int						act_num;	/**< Number of actions */
-	const jchar**			actions;    /**< The actions that are supported by this  content handler */
-	int						locale_num; /**< Number of locales */
-	const jchar**			locales;    /**< The locales that are supported by this content handler */
-	const jchar**			action_map; /**< The action names that are defined by this content handler;
-											  size is act_num x locale_num  */
-	int						access_num;	/**< Number of accesses */
-	const jchar**			accesses;	/**< The accessRestrictions for this ContentHandler */
+    const jchar*            id;         /**< Content handler ID */
+    const jchar*            suite_id;   /**< Storage where the handler is */
+    const jchar*            class_name; /**< Content handler class name */
+    jsr211_register_type    flag;       /**< Flag for registered content handlers. */
+    int                     type_num;   /**< Number of types */
+    const jchar**           types;      /**< The types that are supported by this content handler */
+    int                     suff_num;   /**< Number of suffixes */
+    const jchar**           suffixes;   /**< The suffixes of URLs that are supported by this content handler */
+    int                     act_num;    /**< Number of actions */
+    const jchar**           actions;    /**< The actions that are supported by this  content handler */
+    int                     locale_num; /**< Number of locales */
+    const jchar**           locales;    /**< The locales that are supported by this content handler */
+    const jchar**           action_map; /**< The action names that are defined by this content handler;
+                                              size is act_num x locale_num  */
+    int                     access_num; /**< Number of accesses */
+    const jchar**           accesses;   /**< The accessRestrictions for this ContentHandler */
 } jsr211_content_handler;
 
 
 #define JSR211_CONTENT_HANDLER_INITIALIZER   {        \
-    NULL,							/* id         */  \
-    NULL,							/* suite_id   */  \
-    NULL,							/* class_name */  \
+    NULL,                           /* id         */  \
+    NULL,                           /* suite_id   */  \
+    NULL,                           /* class_name */  \
     0,                              /* flag       */  \
     0,                              /* type_num   */  \
     NULL,                           /* types      */  \
@@ -220,7 +221,7 @@ jsr211_result jsr211_find_handler(const jchar* caller_id,
  *  <br>Use @link jsr211_fillHandlerArray function to fill this structure.
  * @return status of the operation
  */
-jsr211_result jsr211_find_for_suite(const jchar*  suite_id, 
+jsr211_result jsr211_find_for_suite(SuiteIdType suiteId, 
                         /*OUT*/ JSR211_RESULT_CHARRAY result);
 
 /**
