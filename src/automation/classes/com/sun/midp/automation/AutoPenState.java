@@ -90,6 +90,24 @@ public final class AutoPenState {
     }
 
     /**
+     * Gets pen state by corresponding MIDP key state.
+     *
+     * @param midpPenState state constant used by our MIDP implementation
+     * @return pen state corresponding to the specified constant
+     */
+    static AutoPenState getByMIDPPenState(int midpPenState) {
+        Enumeration e = penStates.elements();
+        while (e.hasMoreElements()) {
+            AutoPenState penState = (AutoPenState)e.nextElement();
+            if (penState.getMIDPPenState() == midpPenState) {
+                return penState;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Private constructor to prevent creation of class instances.
      *
      * @param name pen state name

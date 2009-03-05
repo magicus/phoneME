@@ -26,6 +26,8 @@
 
 package com.sun.midp.automation;
 import java.util.*;
+import com.sun.midp.events.*;
+import com.sun.midp.lcdui.EventConstants;
 
 final class AutoEventFactoryImpl implements AutoEventFactory {
     /** The one and only instance */
@@ -164,6 +166,52 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
         throws IllegalArgumentException {
 
         return new AutoDelayEventImpl(msec);
+    }
+
+    /**
+     * Creates event from native (used by our MIDP implementation) event.
+     *
+     * @param nativeEvent native event
+     * @return created event
+     * @throws IllegalArgumentException if this kind of native event
+     * is not supported
+     */
+    private AutoEvent createFromNativeEvent(NativeEvent nativeEvent) {
+        AutoEvent event = null;
+
+        switch (nativeEvent.getType()) {
+            case EventTypes.KEY_EVENT: {
+                AutoKeyState keyState = AutoKeyState.getByMIDPKeyState(
+                        nativeEvent.intParam1);
+                AutoKeyCode keyCode =  AutoKeyCode.getByMIDPKeyCode(
+                        nativeEvent.intParam2);
+
+                if (keyCode != null) {
+                    event = createKeyEvent(keyCode, keyState);
+                } else {
+                    char keyChar = (char)nativeEvent.intParam2;
+                    event = createKeyEvent(keyChar, keyState);
+                }
+
+                break;
+            }
+
+            case EventTypes.PEN_EVENT: {
+                AutoPenState penState = AutoPenState.getByMIDPPenState(
+                        nativeEvent.intParam1);
+                int x = nativeEvent.intParam2;
+                int y = nativeEvent.intParam3;
+
+                event = createPenEvent(x, y, penState);
+            }
+
+            default: {
+                throw new IllegalArgumentException(
+                     "Unexpected NativeEvent type: " + nativeEvent.getType());
+            }
+        }
+
+        return event;
     }
 
     /**
