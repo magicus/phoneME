@@ -159,6 +159,24 @@ public final class AutoKeyCode {
     }
 
     /**
+     * Gets key code by corresponding MIDP key code.
+     *
+     * @param midpKeyCode key code constant used by our MIDP implementation
+     * @return key code corresponding to the specified constant
+     */
+    static AutoKeyCode getByMIDPKeyCode(int midpKeyCode) {
+        Enumeration e = keyCodes.elements();
+        while (e.hasMoreElements()) {
+            AutoKeyCode keyCode = (AutoKeyCode)e.nextElement();
+            if (keyCode.getMIDPKeyCode() == midpKeyCode) {
+                return keyCode;
+            }
+        }
+
+        return null;
+    }    
+
+    /**
      * Gets MIDP key code.
      *
      * @return int value used for key code by our MIDP implemenation

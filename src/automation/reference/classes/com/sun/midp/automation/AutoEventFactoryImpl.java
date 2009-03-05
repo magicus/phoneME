@@ -168,6 +168,35 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
         return new AutoDelayEventImpl(msec);
     }
 
+    private AutoEvent createFromNativeEvent(NativeEvent nativeEvent) {
+        AutoEvent event = null;
+
+        switch (nativeEvent.getType()) {
+            case EventTypes.KEY_EVENT: {
+                AutoKeyState keyState = AutoKeyState.getByMIDPKeyState(
+                        nativeEvent.intParam1);
+                AutoKeyCode keyCode =  AutoKeyCode.getByMIDPKeyCode(
+                        nativeEvent.intParam2);
+
+                if (keyCode != null) {
+                    event = createKeyEvent(keyCode, keyState);
+                } else {
+                    char keyChar = (char)nativeEvent.intParam2;
+                    event = createKeyEvent(keyChar, keyState);
+                }
+
+                break;
+            }
+
+            default: {
+                throw new IllegalArgumentException(
+                     "Unexpected NativeEvent type: " + nativeEvent.getType());
+            }
+        }
+
+        return event;
+    }
+
     /**
      * Creates event from native (used by our MIDP implementation) event.
      *

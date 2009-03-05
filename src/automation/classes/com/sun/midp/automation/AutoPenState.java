@@ -41,7 +41,7 @@ public final class AutoPenState {
     /**
      * State: pen tip dragged
      */
-    public static final AutoPenState REPEATED = 
+    public static final AutoPenState DRAGGED = 
         new AutoPenState("dragged", EventConstants.DRAGGED);
 
     /**

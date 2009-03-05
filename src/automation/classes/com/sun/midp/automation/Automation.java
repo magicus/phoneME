@@ -193,6 +193,30 @@ public abstract class Automation {
     public abstract void simulateDelayEvent(int msec) 
         throws IllegalArgumentException;
 
+
+    /*
+     * Group of event listening methods
+     */
+
+    /**
+     * Adds event listener that allows to monitor hardware events.
+     * That is, this listener is called whenever hardware (external)
+     * event occurs (like keypress).
+     *
+     * @param el event listener
+     */
+    public abstract void addHardwareEventListener(AutoEventListener el);
+
+    /**
+     * Removes previously added hardware event listener.
+     */
+    public abstract void removeHardwareEventListener(AutoEventListener el);
+
+
+    /*
+     * Group of screenshot taking methods
+     */    
+
     /**
      * Gets screenshot in specified format.
      * IMPL_NOTE: only implemented for putpixel based ports
