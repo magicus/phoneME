@@ -1181,9 +1181,6 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 h->wav.stream = NULL;
             }
 
-            h->wav.bytesPerMilliSec = (h->wav.rate *
-                h->wav.channels * (h->wav.bits >> 3)) / 1000;
-
             if(h->wav.stream != NULL) {
                 mQ234_EffectModule_addPlayer(
                     g_QSoundGM[gmIdx].EM135, h->wav.stream);
