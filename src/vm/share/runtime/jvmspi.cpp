@@ -211,7 +211,6 @@ int JVMSPI_HandleUncaughtException(const int isolate_id,
 }
 
 int JVMSPI_HandleOutOfMemory(const int isolate_id,
-			     const JVMSPI_ThreadID thread_id,
 			     const int limit,
 			     const int reserve,
 			     const int available,

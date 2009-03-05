@@ -213,8 +213,8 @@ int JVMSPI_HandleUncaughtException(const int isolate_id,
  * <reserve> in SVM mode - heap capacity, in MVM mode - memory reservation 
  *    for the isolate, i.e. the max amount of heap memory guaranteed 
  *    to be available
- * <available> how much memory is available for allocation at this point 
- *    for the isolate in MVM mode, or for the whole VM in SVM mode.
+ * <used> how much memory is already allocated on behalf of this isolate 
+ *    in MVM mode, or for the whole VM in SVM mode.
  * <alloc_size> the requested amount of memory that the VM failed to allocate
  * <flags> a bitmask of flags
  * <exit_code> a pointer to store the exit code of the VM or the isolate 
@@ -236,7 +236,7 @@ int JVMSPI_HandleUncaughtException(const int isolate_id,
 int JVMSPI_HandleOutOfMemory(const int isolate_id,
 			     const int limit,
 			     const int reserve,
-			     const int available,
+			     const int used,
 			     const int alloc_size,
 			     const int flags,
 			     int * exit_code);

@@ -212,11 +212,13 @@ void Thread::lightweight_thread_uncaught_exception() {
       Symbol::Fast exception_class_name = exception_class().name();
       const char * cmessage = "";
       String::Fast message = throwable().message();
-      TypeArray::Fast carray = message().to_cstring(JVM_SINGLE_ARG_NO_CHECK);
-      if (CURRENT_HAS_PENDING_EXCEPTION) {
-	clear_current_pending_exception();
-      } else {
-	cmessage = (char *)carray().base_address();
+      if (message.not_null()) {
+        TypeArray::Fast carray = message().to_cstring(JVM_SINGLE_ARG_NO_CHECK);
+        if (CURRENT_HAS_PENDING_EXCEPTION) {
+          clear_current_pending_exception();
+        } else {
+          cmessage = (char *)carray().base_address();
+        }
       }
 
       const int task_id = TaskContext::current_task_id();
@@ -243,7 +245,7 @@ void Thread::lightweight_thread_uncaught_exception() {
 #else
 	JVM_Stop(exit_code);
 #endif
-	break;
+	/* fall through */
       case JVMSPI_IGNORE:
 	/* do nothing */
 	break;
@@ -262,6 +264,8 @@ void Thread::lightweight_thread_uncaught_exception() {
 	GUARANTEE(0, "Not supported for SVM");    
 #endif
 	break;
+      default:
+        GUARANTEE(0, "Invalid return value");
       }
     }
   }
