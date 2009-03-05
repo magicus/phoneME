@@ -191,8 +191,6 @@ clipped_blit(gxj_screen_buffer* dst, int dstX, int dstY, gxj_screen_buffer* src,
 		 srcRaster, src->width<<1, height, width<<1,dst);
 }
 
-
-
 /**
  * Renders the contents of the specified region of this
  * mutable image onto the destination specified.
@@ -367,7 +365,8 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
      */
     newSrc.pixelData = NULL;
     newSrc.alphaData = NULL;
-    if (dest == src || transform != 0) {
+
+    if (dest == src || (transform != 0 && transform != TRANSFORM_X_FLIP)) {
         /*
          * create a new image that is a copy of the region with transform
          * applied
@@ -389,7 +388,7 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
         }
         
         create_transformed_imageregion(src, &newSrc, x_src, y_src, width,
-				       height, transform);
+                height, transform);
         
         /* set the new image as the source */
         src = &newSrc;
@@ -403,12 +402,32 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
         }
     }
 
-    /* Apply the clip region to the destination region */
-    diff = clipX1 - x_dest;
-    if (diff > 0) {
-        x_src += diff;
-        width -= diff;
-        x_dest = clipX1;
+    if (transform == TRANSFORM_X_FLIP && src != &newSrc) {
+        /* Apply the clip region to the destination region */
+        diff = clipX1 - x_dest;
+        if (diff > 0) {
+            width -= diff;
+            x_dest = clipX1;
+        }
+
+        diff = (x_dest + width) - clipX2;
+        if (diff > 0) {
+            width -= diff;
+            x_src += diff;
+        }
+    } else {
+        /* Apply the clip region to the destination region */
+        diff = clipX1 - x_dest;
+        if (diff > 0) {
+            x_src += diff;
+            width -= diff;
+            x_dest = clipX1;
+        }
+
+        diff = (x_dest + width) - clipX2;
+        if (diff > 0) {
+            width -= diff;
+        }
     }
 
     diff = clipY1 - y_dest;
@@ -417,70 +436,173 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
         height -= diff;
         y_dest = clipY1;
     }
-
-    diff = (x_dest + width) - clipX2;
-    if (diff > 0) {
-        width -= diff;
-    }
-
+        
     diff = (y_dest + height) - clipY2;
     if (diff > 0) {
         height -= diff;
     }
+    
+#define DRAW_ARGB_PIXEL(src, dest, alpha)   \
+    ap = *alpha++; \
+    if (ap != 0) {  \
+        if (ap == 0xFF) {   \
+            *dest = *src; \
+        } else if (ap > 0x3) { \
+            sp = *src; \
+            dp = *dest; \
+            r1 = (sp >> 11);  \
+            g1 = ((sp >> 5) & 0x3F);  \
+            b1 = (sp & 0x1F); \
+            r2 = (dp >> 11); \
+            g2 = ((dp >> 5) & 0x3F); \
+            b2 = (dp & 0x1F);    \
+            a2 = ap >> 2;   \
+            a3 = ap >> 3;   \
+            r1 = (r1 * a3 + r2 * (31 - a3)) >> 5;   \
+            g1 = (g1 * a2 + g2 * (63 - a2)) >> 6;   \
+            b1 = (b1 * a3 + b2 * (31 - a3)) >> 5;   \
+            *dest = (gxj_pixel_type)((r1 << 11) | (g1 << 5) | (b1)); \
+        } \
+    } \
+    dest++; src++
+
+#define DRAW_ARGB_PIXEL_MIRROR(src, dest, alpha)   \
+    ap = *alpha--; \
+    if (ap != 0) {  \
+        if (ap == 0xFF) {   \
+            *dest = *src; \
+        } else if (ap > 0x3) { \
+            sp = *src; \
+            dp = *dest; \
+            r1 = (sp >> 11);  \
+            g1 = ((sp >> 5) & 0x3F);  \
+            b1 = (sp & 0x1F); \
+            r2 = (dp >> 11); \
+            g2 = ((dp >> 5) & 0x3F); \
+            b2 = (dp & 0x1F);    \
+            a2 = ap >> 2;   \
+            a3 = ap >> 3;   \
+            r1 = (r1 * a3 + r2 * (31 - a3)) >> 5;   \
+            g1 = (g1 * a2 + g2 * (63 - a2)) >> 6;   \
+            b1 = (b1 * a3 + b2 * (31 - a3)) >> 5;   \
+            *dest = (gxj_pixel_type)((r1 << 11) | (g1 << 5) | (b1)); \
+        } \
+    } \
+    dest++; src--   
 
     if (width > 0) {
-        int rowsCopied;
         gxj_pixel_type* pDest = dest->pixelData + (y_dest * dest->width) + x_dest;
-        gxj_pixel_type* pSrc = src->pixelData + (y_src * src->width) + x_src;
-        gxj_pixel_type* limit;
+        gxj_pixel_type* pSrc;
+        gxj_alpha_type* pSrcAlpha;
         int destWidthDiff = dest->width - width;
-        int srcWidthDiff = src->width - width;
-        int r1, g1, b1, a2, a3, r2, b2, g2;
+        int srcWidthDiff;
+        int r1, g1, b1, a2, a3, r2, b2, g2, sp, dp, ap;
+        int rowsCopied;
+        int colsCopied;
+        int widthFor16 = width & 0xFFFFFFF0;
+        int widthRemaind = width & 0xF;
+        
+        if (transform == TRANSFORM_X_FLIP && src != &newSrc) {
+            pSrc = src->pixelData + (y_src * src->width) + x_src + width - 1;
+            srcWidthDiff = (src->width + width);
 
-        if (src->alphaData != NULL) {
-            unsigned char *pSrcAlpha = src->alphaData + (y_src * src->width) + x_src;
+            if (src->alphaData != NULL) {
+                pSrcAlpha = src->alphaData + (y_src * src->width) + x_src + width - 1;
+                /* copy the source to the destination */
+                for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
+                    for (colsCopied = 0; colsCopied < widthFor16; colsCopied += 16) {
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                    }
 
-            /* copy the source to the destination */
-            for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
-                for (limit = pDest + width; pDest < limit; pDest++, pSrc++, pSrcAlpha++) {
-                    if ((*pSrcAlpha) == 0xFF) {
+                    for (colsCopied = 0; colsCopied < widthRemaind; colsCopied++) {
+                        DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
+                    }
+
+                    pDest += destWidthDiff;
+                    pSrc += srcWidthDiff;
+                    pSrcAlpha += srcWidthDiff;
+                }
+            } else {
+                /* copy the source to the destination */
+                for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
+                    for (colsCopied = 0; colsCopied < width; colsCopied++) {
                         CHECK_PTR_CLIP(dest, pDest);
                         *pDest = *pSrc;
+                        pDest++; pSrc--;
                     }
-                    else if (*pSrcAlpha > 0x3) {
-                        r1 = (*pSrc >> 11);
-                        g1 = ((*pSrc >> 5) & 0x3F);
-                        b1 = (*pSrc & 0x1F);
-
-                        r2 = (*pDest >> 11);
-                        g2 = ((*pDest >> 5) & 0x3F);
-                        b2 = (*pDest & 0x1F);
-
-                        a2 = *pSrcAlpha >> 2;
-                        a3 = *pSrcAlpha >> 3;
-
-                        r1 = (r1 * a3 + r2 * (31 - a3)) >> 5;
-                        g1 = (g1 * a2 + g2 * (63 - a2)) >> 6;
-                        b1 = (b1 * a3 + b2 * (31 - a3)) >> 5;
-
-                        *pDest = (gxj_pixel_type)((r1 << 11) | (g1 << 5) | (b1));
-                    }
+                    pDest += destWidthDiff;
+                    pSrc += srcWidthDiff;
                 }
-
-                pDest += destWidthDiff;
-                pSrc += srcWidthDiff;
-                pSrcAlpha += srcWidthDiff;
             }
         } else {
-            /* copy the source to the destination */
-            for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
-                for (limit = pDest + width; pDest < limit; pDest++, pSrc++) {
-                    CHECK_PTR_CLIP(dest, pDest);
-                    *pDest = *pSrc;
-                }
+            pSrc = src->pixelData + (y_src * src->width) + x_src;
+            srcWidthDiff = src->width - width;
+            
+            if (src->alphaData != NULL) {
+                pSrcAlpha = src->alphaData + (y_src * src->width) + x_src;
 
-                pDest += destWidthDiff;
-                pSrc += srcWidthDiff;
+                /* copy the source to the destination */
+                for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
+                    for (colsCopied = 0; colsCopied < widthFor16; colsCopied += 16) {
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                    }
+
+                    for (colsCopied = 0; colsCopied < widthRemaind; colsCopied++) {
+                        DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
+                    }
+
+                    pDest += destWidthDiff;
+                    pSrc += srcWidthDiff;
+                    pSrcAlpha += srcWidthDiff;
+                }
+            } else {
+                /* copy the source to the destination */
+                for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
+                    // Copy image region as solid block
+                    memcpy(pDest, pSrc, width * sizeof(gxj_pixel_type));
+                    /*
+                    for (colsCopied = 0; colsCopied < width; colsCopied++) {
+                        CHECK_PTR_CLIP(dest, pDest);
+                        *pDest = *pSrc;
+                        pDest++; pSrc++;
+                    }
+                    pDest += destWidthDiff;
+                    pSrc += srcWidthDiff;
+                    */
+
+                    pDest += dest->width;
+                    pSrc += src->width;
+                }
             }
         }
     }
