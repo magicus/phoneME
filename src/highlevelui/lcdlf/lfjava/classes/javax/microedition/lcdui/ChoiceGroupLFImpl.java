@@ -1055,7 +1055,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         // IMPL_NOTE there is an assumption here that text height is always
         // taller then the choice image and taller then the content image
 
-        elHeights[i] = 0;
+        elHeights[i] = 20;
 
         int textOffset = (cgEl.imageEl == null) ? 0 : 
             ChoiceGroupSkin.WIDTH_IMAGE + 
