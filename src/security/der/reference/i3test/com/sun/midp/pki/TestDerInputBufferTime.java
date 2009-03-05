@@ -32,22 +32,33 @@ import java.io.IOException;
 public class TestDerInputBufferTime extends TestCase {
 
     void testTime(byte tag) {
+        //TimeZone tz = TimeZone.getTimeZone("GMT");
         Calendar c = Calendar.getInstance();
-        c.set(2009, 1, 1, 0, 0);
-        long idate = c.getTimeInMillis();
-        c.set(2010, 1, 1, 0, 0);
-        long edate = c.getTimeInMillis();
-        for (; idate <= edate; idate += 60000) {
+        c.set(Calendar.YEAR, 2009);
+        c.set(Calendar.MONTH, 1);
+        c.set(Calendar.DATE, 1);
+        c.set(Calendar.HOUR_OF_DAY, 15);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        long idate = c.getTime().getTime();
+        c.set(Calendar.YEAR, 2010);
+        long edate = c.getTime().getTime();
+        for (; idate <= edate; idate += 600000) {
             Date din = new Date(idate);
             DerOutputStream ost = new DerOutputStream();
             try {
                 if (tag == DerValue.tag_UtcTime) {
                     ost.putUTCTime(din);
+                    ost.putUTCTime(din);
                 } else {
+                    ost.putGeneralizedTime(din);
                     ost.putGeneralizedTime(din);
                 }
             } catch(IOException e) {
                 assertFalse("Failed to write to DerOutputStream", true);
+                e.printStackTrace();
+                return;
             }
             byte[] ba = ost.toByteArray();
             DerInputStream ist;
@@ -61,9 +72,17 @@ public class TestDerInputBufferTime extends TestCase {
                 }
             } catch(IOException e) {
                 assertFalse("Failed to read from DerInputStream", true);
+                e.printStackTrace();
+                return;
             }
-            assertFalse("Encoded Date does not match decoded UTC Date", din.equals(dout));
+            if (!din.equals(dout)) {
+                assertFalse("Encoded Date does not match decoded Date ", false);
+                System.err.println("din: " + din);
+                System.err.println("dout: " + dout);
+                return;
+            }
         }
+        assertTrue(true);
     }
 
 
@@ -72,7 +91,9 @@ public class TestDerInputBufferTime extends TestCase {
      * Run tests
      */
     public void runTests() {
+        declare("testUTCTime");
         testTime(DerValue.tag_UtcTime);
+        declare("testGeneralizedTime");
         testTime(DerValue.tag_GeneralizedTime);
     }
 }

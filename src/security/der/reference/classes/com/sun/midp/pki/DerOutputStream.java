@@ -436,19 +436,22 @@ public class DerOutputStream extends ByteArrayOutputStream {
 
         // adding "MMddHHmmss'Z'"
         int[] n = {
-            Calendar.MONTH, Calendar.DAY_OF_MONTH,
-            Calendar.HOUR, Calendar.SECOND
+            c.get(Calendar.MONTH) + 1, // Calendar.JANUARY is defined as 0
+            c.get(Calendar.DAY_OF_MONTH),
+            c.get(Calendar.HOUR_OF_DAY),
+            c.get(Calendar.MINUTE),
+            c.get(Calendar.SECOND)
         };
 
         for (int i = 0; i < n.length; i++) {
-            String tmp = Integer.toString(c.get(n[i]));
+            String tmp = Integer.toString(n[i]);
             if (tmp.length() < 2) {
                 timeStr.append("0");
             }
             timeStr.append(tmp);
         }
 
-        timeStr.append("'+0000'"); // GMT
+        timeStr.append("+0000"); // GMT
 
         byte[] time = timeStr.toString().getBytes("ISO-8859-1");
 

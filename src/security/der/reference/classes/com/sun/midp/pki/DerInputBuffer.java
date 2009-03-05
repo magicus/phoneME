@@ -30,6 +30,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 /**
  * DER input buffer ... this is the main abstraction in the DER library
@@ -349,7 +350,8 @@ class DerInputBuffer extends ByteArrayInputStream {
          * Generalized time can theoretically allow any precision,
          * but we're not supporting that.
          */
-        Calendar c = Calendar.getInstance();
+        TimeZone tz = TimeZone.getTimeZone("GMT");
+        Calendar c = Calendar.getInstance(tz);
         c.set(Calendar.YEAR, year);
         c.set(Calendar.MONTH, month - 1); // Calendar.JANUARY is defined as 0 
         c.set(Calendar.DATE, day);
@@ -358,7 +360,7 @@ class DerInputBuffer extends ByteArrayInputStream {
         c.set(Calendar.SECOND, second);
         c.set(Calendar.MILLISECOND, millis);
         long time = c.getTime().getTime();
-
+        
         /*
          * Finally, "Z" or "+hhmm" or "-hhmm" ... offsets change hhmm
          */
