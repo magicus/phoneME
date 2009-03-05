@@ -490,7 +490,7 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
     } \
     dest++; src--   
 
-    if (width > 0) {
+    if (width > 0 && height > 0) {
         gxj_pixel_type* pDest = dest->pixelData + (y_dest * dest->width) + x_dest;
         gxj_pixel_type* pSrc;
         gxj_alpha_type* pSrcAlpha;
@@ -509,8 +509,8 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
             if (src->alphaData != NULL) {
                 pSrcAlpha = src->alphaData + (y_src * src->width) + x_src + width - 1;
                 /* copy the source to the destination */
-                for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
-                    for (colsCopied = 0; colsCopied < widthFor16; colsCopied += 16) {
+                for (rowsCopied = height; rowsCopied != 0; rowsCopied--) {
+                    for (colsCopied = widthFor16; colsCopied != 0; colsCopied -= 16) {
                         DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
                         DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
                         DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
@@ -529,7 +529,7 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
                         DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
                     }
 
-                    for (colsCopied = 0; colsCopied < widthRemaind; colsCopied++) {
+                    for (colsCopied = widthRemaind; colsCopied != 0; colsCopied--) {
                         DRAW_ARGB_PIXEL_MIRROR(pSrc, pDest, pSrcAlpha);
                     }
 
@@ -539,8 +539,8 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
                 }
             } else {
                 /* copy the source to the destination */
-                for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
-                    for (colsCopied = 0; colsCopied < width; colsCopied++) {
+                for (rowsCopied = height; rowsCopied != 0; rowsCopied--) {
+                    for (colsCopied = width; colsCopied != 0; colsCopied--) {
                         CHECK_PTR_CLIP(dest, pDest);
                         *pDest = *pSrc;
                         pDest++; pSrc--;
@@ -557,8 +557,8 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
                 pSrcAlpha = src->alphaData + (y_src * src->width) + x_src;
 
                 /* copy the source to the destination */
-                for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
-                    for (colsCopied = 0; colsCopied < widthFor16; colsCopied += 16) {
+                for (rowsCopied = height; rowsCopied != 0; rowsCopied--) {
+                    for (colsCopied = widthFor16; colsCopied != 0; colsCopied -= 16) {
                         DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
                         DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
                         DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
@@ -577,7 +577,7 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
                         DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
                     }
 
-                    for (colsCopied = 0; colsCopied < widthRemaind; colsCopied++) {
+                    for (colsCopied = widthRemaind; colsCopied != 0; colsCopied--) {
                         DRAW_ARGB_PIXEL(pSrc, pDest, pSrcAlpha);
                     }
 
@@ -587,7 +587,7 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
                 }
             } else {
                 /* copy the source to the destination */
-                for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
+                for (rowsCopied = height; rowsCopied != 0; rowsCopied--) {
                     // Copy image region as solid block
                     memcpy(pDest, pSrc, width * sizeof(gxj_pixel_type));
                     /*
