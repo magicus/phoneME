@@ -1576,11 +1576,6 @@ static javacall_result audio_qs_start(javacall_handle handle){
 
     h->hdr.state = PL135_STARTED;
    
-    if (JAVACALL_OK == audio_qs_get_duration(handle, &duration) && 
-            duration != -1) {
-        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DURATION_UPDATED,
-            h->hdr.isolateID, h->hdr.playerID, JAVACALL_OK, (void*)duration);
-    }
     //printf("audio_start...\n");
     switch(h->hdr.mediaType)
     {

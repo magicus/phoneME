@@ -87,8 +87,8 @@ int wav_setStreamPlayerData(ah_wav *wav) {
                 wav->channels = fc->num_channels;
                 wav->rate = fc->sample_rate;
                 wav->bits = fc->bits;
-                wav->bytesPerMilliSec = (wav.rate *
-                    wav.channels * (wav.bits >> 3)) / 1000;
+                wav->bytesPerMilliSec = (wav->rate *
+                    wav->channels * (wav->bits >> 3)) / 1000;
             break; /* CHUNKID_fmt */
 
             case CHUNKID_LIST:
