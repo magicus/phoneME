@@ -72,11 +72,11 @@ JSR211_RESULT_BUFFER jsr211_create_result_buffer(){
 #ifdef TRACE_DATA_OPS
     printf( "jsr211_result: create buffer %p\n", res );
 #endif
-	if (res == NULL) return NULL;
+    if (res == NULL) return NULL;
     memset( res, '\0', BUFFER_GRANULARITY );
-	res->size = BUFFER_GRANULARITY - sizeof(DATA_BUFFER);
+    res->size = BUFFER_GRANULARITY - sizeof(DATA_BUFFER);
     jsr211_clean_buffer( &res );
-	return (JSR211_RESULT_BUFFER)res;
+    return (JSR211_RESULT_BUFFER)res;
 }
 
 void jsr211_release_result_buffer(JSR211_RESULT_BUFFER resbuf){
@@ -100,7 +100,7 @@ static jsr211_result assureBufferCap(DATA_BUFFER** resbuf, size_t ext){
         // calculate new size
         size_t sz = ((sizeof(DATA_BUFFER) + (*resbuf)->bytes_used + ext) / BUFFER_GRANULARITY + 1) * 
                         BUFFER_GRANULARITY;
-		DATA_BUFFER* tmp = (DATA_BUFFER*)JAVAME_REALLOC(*resbuf, sz);
+        DATA_BUFFER* tmp = (DATA_BUFFER*)JAVAME_REALLOC(*resbuf, sz);
 #ifdef TRACE_DATA_OPS
         printf( "jsr211_result: assureBufferCap %p -> %p\n", *resbuf, tmp );
 #endif
@@ -125,6 +125,9 @@ static void jsr211_inc( DATA_BUFFER * buffer, size_t length ) {
         *(size_type *)(buffer->data + buffer->size_offset[ l ]) += length;
 }
 
+/**
+ * append data on the current level
+ */
 jsr211_result jsr211_append_data(DATA_BUFFER** buffer, const void * data, size_t length ) {
     jsr211_result rc = assureBufferCap(buffer, sizeof(size_type) + length);
     if( rc == JSR211_OK ){
@@ -151,6 +154,9 @@ jsr211_result jsr211_append_data(DATA_BUFFER** buffer, const void * data, size_t
     return rc;
 }
 
+/**
+ * adds new level of data (without content)
+ */
 jsr211_result jsr211_add_level( DATA_BUFFER ** buffer ) {
     jsr211_result rc;
     DATA_BUFFER * b = *buffer;
@@ -168,6 +174,9 @@ jsr211_result jsr211_add_level( DATA_BUFFER ** buffer ) {
     return JSR211_OK;
 }
 
+/**
+ * closes level of data
+ */
 jsr211_result jsr211_drop_level( DATA_BUFFER * buffer ) {
 #ifdef TRACE_DATA_OPS
     printf( "jsr211_result: drop level %p\n", buffer );
@@ -183,11 +192,14 @@ JSR211_BUFFER_DATA jsr211_get_result_data(JSR211_RESULT_BUFFER resbuf){
     return ((DATA_BUFFER*)resbuf)->data;
 }
 
-void jsr211_get_data( JSR211_BUFFER_DATA handle, const void * * data, size_t * length ){
+void jsr211_get_data( JSR211_BUFFER_DATA handle, const void ** data, size_t * length ){
     *length = *(size_type *)handle;
     *data = (size_type *)handle + 1;
 }
 
+/**
+ * returns handle suitable for enumeration data on the current level
+ */
 JSR211_ENUM_HANDLE jsr211_get_enum_handle( JSR211_BUFFER_DATA data_handle ){
     JSR211_ENUM_HANDLE eh;
     const void * data; size_t length;
@@ -197,6 +209,9 @@ JSR211_ENUM_HANDLE jsr211_get_enum_handle( JSR211_BUFFER_DATA data_handle ){
     return eh;
 }
 
+/**
+ * returns handle to next bulk of data on the current level or NULL
+ */
 JSR211_BUFFER_DATA jsr211_get_next( JSR211_ENUM_HANDLE * eh ){
     JSR211_BUFFER_DATA result = eh->handle;
     const void * data; size_t length;
@@ -233,15 +248,15 @@ jsr211_boolean jsr211_isUniqueString(const jchar *str, size_t sz, int casesens, 
     while( (bd = jsr211_get_next( &eh )) != NULL ){
         const void * data; size_t length;
         jsr211_get_data( bd, &data, &length );
-		if ( length == sz * sizeof(jchar) ) {
-			if (casesens == JAVACALL_TRUE) {
-				if( wcsncmp(str, (const jchar *)data, sz) == 0 )
+        if ( length == sz * sizeof(jchar) ) {
+            if (casesens == JAVACALL_TRUE) {
+                if( wcsncmp(str, (const jchar *)data, sz) == 0 )
                     return JAVACALL_FALSE;
-			} else {
-				if( javautil_wcsnicmp(str, (const jchar *)data, sz) == 0 )
+            } else {
+                if( javautil_wcsnicmp(str, (const jchar *)data, sz) == 0 )
                     return JAVACALL_FALSE;
-			}
-		}
+            }
+        }
     }
     return JAVACALL_TRUE;
 }
@@ -261,10 +276,10 @@ jsr211_boolean jsr211_isUniqueHandler(const jchar *id, size_t id_sz, JSR211_RESU
         JSR211_BUFFER_DATA id_handle = jsr211_get_next( &ehh );
         const void * data; size_t length;
         jsr211_get_data( id_handle, &data, &length );
-		if ( length == id_sz * sizeof(jchar) ) {
-			if( wcsncmp(id, (const jchar *)data, id_sz) == 0 )
+        if ( length == id_sz * sizeof(jchar) ) {
+            if( wcsncmp(id, (const jchar *)data, id_sz) == 0 )
                 return JAVACALL_FALSE;
-		}
+        }
     }
     return JAVACALL_TRUE;
 }
@@ -278,9 +293,9 @@ jsr211_boolean jsr211_isUniqueHandler(const jchar *id, size_t id_sz, JSR211_RESU
  * @return operation status.
  */
 jsr211_result jsr211_appendUniqueString(const jchar* str, size_t str_size, int casesens,
-												  /*OUT*/ JSR211_RESULT_STRARRAY array){
-	if (JSR211_FALSE == jsr211_isUniqueString(str,str_size,casesens,array)) return JSR211_OK;
-	return jsr211_appendString(str,str_size,array);
+                                                  /*OUT*/ JSR211_RESULT_STRARRAY array){
+    if (JSR211_FALSE == jsr211_isUniqueString(str,str_size,casesens,array)) return JSR211_OK;
+    return jsr211_appendString(str,str_size,array);
 }
 
 //---------------------------------------------------------
@@ -291,7 +306,7 @@ jsr211_result jsr211_appendUniqueString(const jchar* str, size_t str_size, int c
  * filled area.
  */
 static jsr211_result fill_ch_buf(DATA_BUFFER ** buffer, const javacall_utf16* id, size_t id_size, 
-						    const jchar* suit, size_t suit_size, const jchar* clas, size_t clas_size, 
+                            const jchar* suit, size_t suit_size, const jchar* clas, size_t clas_size, 
                             unsigned short flag) {
     static jchar xd[] = { '0', '1', '2', '3', '4', '5', '6', '7', 
                           '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
@@ -302,7 +317,7 @@ static jsr211_result fill_ch_buf(DATA_BUFFER ** buffer, const javacall_utf16* id
 
     // put id
     CHECKRC( jsr211_append_data(buffer, id, id_size * sizeof(id[0])) );
-	// put suite_id
+    // put suite_id
     // !!! suit IS null-terminated
     if( 0 == jsrop_string_to_suiteid(suit, &suite_id) )
         return JSR211_FAILED;
@@ -339,7 +354,7 @@ static jsr211_result fill_ch_buf(DATA_BUFFER ** buffer, const javacall_utf16* id
  * @return operation status.
  */
 jsr211_result jsr211_fillHandler( const jchar* id, size_t id_size,
-		            const jchar* suit, size_t suit_size, const jchar* class_name, size_t class_name_size,
+                    const jchar* suit, size_t suit_size, const jchar* class_name, size_t class_name_size,
                     unsigned short flag, /*OUT*/ JSR211_RESULT_CH result) 
 {
     jsr211_clean_buffer( (DATA_BUFFER**)result );

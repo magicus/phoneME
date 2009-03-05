@@ -36,6 +36,7 @@
 #include <midpUtilKni.h>
 
 #include <jsrop_memory.h>
+#include <jsrop_suitestore.h>
 
 /**
  * @file
@@ -82,7 +83,7 @@ static void cleanup(void) {
             jsr211_cleanHandlerData(ptr);
         }
 
-        midpFree(handlers);
+        JAVAME_FREE(handlers);
         handlers = NULL;
         nHandlers = 0;
     }
@@ -119,30 +120,28 @@ static int prepareHandlerTag(int handlerNumber, /*OUT*/pcsl_string* result) {
  * @param path prepared path for JAR entry test
  * @return 0 if failed
  */
-static int getFullClassPath(const pcsl_string* classname,
-                                                    /*OUT*/pcsl_string* path) {
+static int getFullClassPath(const jchar * classname, /*OUT*/pcsl_string* path) {
     static const jchar suff[] = {'.','c','l','a','s','s'};
     int sz, n = 0;
     jchar *ptr, *buf;
+    int classname_len = wcslen( classname );
 
-    sz = pcsl_string_utf16_length(classname) + sizeof(suff) / sizeof(jchar);
+    sz = classname_len + sizeof(suff) / sizeof(jchar);
     buf = (jchar*) JAVAME_MALLOC(sz * sizeof(jchar));
     if (buf == NULL) {
         return 0;
     }
 
-    if (PCSL_STRING_OK == pcsl_string_convert_to_utf16(classname, buf, sz, &n)) {
-        ptr = buf;
-        while (n--) {
-            if (*ptr == '.') {
-                *ptr = '/';
-            }
-            ptr++;
+    memcpy( buf, classname, classname_len );
+    ptr = buf;
+    while (classname_len--) {
+        if (*ptr == '.') {
+            *ptr = '/';
         }
-        memcpy(ptr, suff, sizeof(suff));
-        n = (PCSL_STRING_OK == pcsl_string_convert_from_utf16(buf, sz, path)?
-            1: 0);
+        ptr++;
     }
+    memcpy(ptr, suff, sizeof(suff));
+    n = (PCSL_STRING_OK == pcsl_string_convert_from_utf16(buf, sz, path)? 1: 0);
     JAVAME_FREE(buf);
 
     return n;
@@ -168,9 +167,9 @@ static int getDefaultID(MidpProperties mp, const jchar* clazzname,
     PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(defaultApp);
     const pcsl_string* vendor = &PCSL_STRING_NULL;
     const pcsl_string* app = &PCSL_STRING_NULL;
-	pcsl_string classname;
-	int result;
-	if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(clazzname, wcslen(clazzname), classname)) return 0;
+    pcsl_string classname;
+    int result;
+    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(clazzname, wcslen(clazzname), &classname)) return 0;
 
     vendor = midp_find_property(&mp, &SUITE_VENDOR_PROP);
     if (vendor == NULL || pcsl_string_length(vendor) <= 0)
@@ -181,16 +180,16 @@ static int getDefaultID(MidpProperties mp, const jchar* clazzname,
         app = &defaultApp;
 
     pcsl_string_predict_size(defaultID, pcsl_string_length(vendor) +
-            pcsl_string_length(app) + pcsl_string_length(classname) + 3);
+            pcsl_string_length(app) + pcsl_string_length(&classname) + 3);
 
     result = (PCSL_STRING_OK == pcsl_string_append(defaultID, vendor) &&
             PCSL_STRING_OK == pcsl_string_append_char(defaultID, '-') &&
             PCSL_STRING_OK == pcsl_string_append(defaultID, app) &&
             PCSL_STRING_OK == pcsl_string_append_char(defaultID, '-') &&
-            PCSL_STRING_OK == pcsl_string_append(defaultID, classname)? 1: 0);
+            PCSL_STRING_OK == pcsl_string_append(defaultID, &classname)? 1: 0);
 
-	pcsl_string_free(&classname);
-	return result;
+    pcsl_string_free(&classname);
+    return result;
 }
 
 /**
@@ -212,18 +211,18 @@ static int parseString(const pcsl_string* src,
     }
     if (n > 0) {
         if (PCSL_STRING_OK == pcsl_string_substring(src, from, n, &temp)) {
-			pcsl_string dst = PCSL_STRING_NULL_INITIALIZER;
+            pcsl_string dst = PCSL_STRING_NULL_INITIALIZER;
             if (PCSL_STRING_OK == pcsl_string_trim(&temp, &dst)) {
-				jsize length = pcsl_string_length(&dst);
-				jchar* buf = (jchar*)JAVAME_MALLOC(length+1);
-				if (*dest) {
-					if (PCSL_STRING_OK == pcsl_string_convert_to_utf16(&dst,buf,length+1,NULL)){
-						*dest = buf;
-						if (lenOut) *lenOut=length;
-						n = 0;
-					}
-				}
-				pcsl_string_free(&dst);
+                if (*dest) {
+                    jsize length = pcsl_string_length(&dst);
+                    jchar* buf = (jchar*)JAVAME_MALLOC(length+1);
+                    if (PCSL_STRING_OK == pcsl_string_convert_to_utf16(&dst,buf,length+1,NULL)){
+                        *dest = buf;
+                        if (lenOut) *lenOut=length;
+                        n = 0;
+                    }
+                }
+                pcsl_string_free(&dst);
             }
             pcsl_string_free(&temp);
         }
@@ -238,9 +237,9 @@ static int parseString(const pcsl_string* src,
  * @return 0 if failed
  */
 static int parseArray(const jchar* src, int len,
-                       /*OUT*/int* arr_len, /*OUT*/const jchar*** arr, jchar** arrVar) {
+                       /*INOUT*/int* arr_len, /*INOUT*/const jchar*** arr) {
     const jchar *buf, *end, *p0, *p1;
-	jchar** str;
+    jchar** str;
     int n = *arr_len, wsp, wsp_mode;
 
     buf = src;
@@ -261,9 +260,8 @@ static int parseArray(const jchar* src, int len,
     }
 
     while (n > 0) {
-		if (arrVar) {
-			str = arrVar;
-		} else {
+        if (*arr == NULL) {
+            // allocate an array of n jchar pointers
             str = (jchar**)JAVAME_CALLOC(n, sizeof(jchar*));
             if (str == NULL)
                 break;
@@ -278,14 +276,27 @@ static int parseArray(const jchar* src, int len,
             p1 = p0 + 1;
             while (p1 < end  && *p1 > ' ') p1++;
             *str = (jchar*)JAVAME_MALLOC((p1 - p0 + 1) * sizeof(jchar));
-			if (!str) break;
-			while (p0 <= p1) **str = *p0++;
+            if (*str == NULL) break;
+            memcpy( *str, p0, (p1 - p0) * sizeof(jchar) );
+            *(*str + (p1 - p0) * sizeof(jchar)) = (jchar)0;
             str++;
             n--;
         }
     }
 
     return n == 0;
+}
+
+static int parseSubList( const pcsl_string * attr, int * n, int * entriesCount, jchar *** entries ){
+    jchar* temp = NULL;
+    int len;
+    if (!parseString(attr, n, &temp, &len)) return 0;
+    if (!parseArray(temp, len, entriesCount, entries)){
+        JAVAME_FREE(temp);
+        return 0;
+    }
+    JAVAME_FREE(temp);
+    return -1; // OK
 }
 
 /**
@@ -307,9 +318,8 @@ static int parseHandler(jsr211_content_handler* handler, MidpProperties mp,
     PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(access_suff);
 
     pcsl_string attrName = PCSL_STRING_NULL_INITIALIZER;
-    jchar* temp = NULL;
     const pcsl_string* attr = &PCSL_STRING_NULL;
-    int n, len=0;
+    int n, len=0, i;
 
     // look up 'MicroEdition-Handler-<n>' attribute
     attr = midp_find_property(&mp, handlerN);
@@ -319,43 +329,25 @@ static int parseHandler(jsr211_content_handler* handler, MidpProperties mp,
     // Parse: <classname>[, <type(s)>[, <suffix(es)>[, <action(s)>[, <locale(s)>]]]]
     n = 0;
     if (!parseString(attr, &n, &handler->class_name, &len) || !len) return -1;
-    do {
-        if (n <= 0)
-            break;
-
-        if (!parseString(attr, &n, &temp, &len)) return -1;
-        if (!parseArray(temp, len, &handler->type_num, &handler->types, NULL)){
-			JAVAME_FREE(temp);
+    do { // not a loop, trick for conditional exit (via break)
+        if (n <= 0) break;
+        if( !parseSubList( attr, &n, &handler->type_num, &handler->types ) )
             return -1;
-		}
-		JAVAME_FREE(temp);
 
-        if (n < 0)
-            break;
-
-        if (!parseString(attr, &n, &temp, &len)) return -1;
-        if (!parseArray(temp, len, &handler->suff_num, &handler->suffixes, NULL)){
-			JAVAME_FREE(temp);
+        if (n < 0) break;
+        if( !parseSubList( attr, &n, &handler->suff_num, &handler->suffixes ) )
             return -1;
-        }
-		JAVAME_FREE(temp);
 
-        if (n < 0)
-            break;
-        if (!parseString(attr, &n, &temp, &len) ||
-            !parseArray(temp, len, &handler->act_num, &handler->actions, NULL))
+        if (n < 0) break;
+        if( !parseSubList( attr, &n, &handler->act_num, &handler->actions ) )
             return -1;
-        JAVAME_FREE(temp);
 
-        if (n > 0 && handler->act_num > 0) {
-            if (!parseString(attr, &n, &temp, &len) ||
-                !parseArray(temp, len, &handler->locale_num, &handler->locales, NULL))
-                return -1;
-            JAVAME_FREE(temp);
-        }
+        if (n < 0) break;
+        if( !parseSubList( attr, &n, &handler->locale_num, &handler->locales ) )
+            return -1;
     } while (0);
 
-    // apprnd extra-hyphen
+    // append extra-hyphen
     if (PCSL_STRING_OK != pcsl_string_append_char(handlerN, '-'))
         return -1;
 
@@ -365,12 +357,20 @@ static int parseHandler(jsr211_content_handler* handler, MidpProperties mp,
     attr = midp_find_property(&mp, &attrName);
     pcsl_string_free(&attrName);
     if (attr != NULL && (len=pcsl_string_length(attr)) > 0) {
-        if (!(handler->id = JAVAME_MALLOC(sizeof(jchar)*(len+1))) return -1;
-		if (PCSL_STRING_OK != pcsl_string_convert_to_utf16(&attr, handler->id, len+1, NULL))
+        if (!(handler->id = JAVAME_MALLOC(sizeof(jchar)*(len+1))) ||
+                PCSL_STRING_OK != pcsl_string_convert_to_utf16(attr, handler->id, len+1, NULL))
             return -1;
     } else {
-        if (!getDefaultID(mp, handler->class_name, &handler->id))
+        pcsl_string id;
+        if (!getDefaultID(mp, handler->class_name, &id))
             return -1;
+        len = pcsl_string_length(&id);
+        if (!(handler->id = JAVAME_MALLOC(sizeof(jchar)*(len+1))) ||
+                PCSL_STRING_OK != pcsl_string_convert_to_utf16(&id, handler->id, len+1, NULL)){
+            pcsl_string_free(&id);
+            return -1;
+        }
+        pcsl_string_free(&id);
     }
 
     // look up 'MicroEdition-Handler-<n>-Access' attribute
@@ -378,29 +378,50 @@ static int parseHandler(jsr211_content_handler* handler, MidpProperties mp,
         return -1;
     attr = midp_find_property(&mp, &attrName);
     pcsl_string_free(&attrName);
-    if (attr != NULL && pcsl_string_length(attr) > 0 &&
-        !parseArray(attr, &handler->access_num, &handler->accesses))
-        return -1;
+    if (attr != NULL && (len = pcsl_string_length(attr)) > 0 ){
+        jchar * temp = JAVAME_MALLOC( (len + 1) * sizeof(jchar) );
+        if( temp == NULL )
+            return -1;
+        if (PCSL_STRING_OK != pcsl_string_convert_to_utf16(attr, temp, len+1, NULL)){
+            JAVAME_FREE(temp);
+            return -1;
+        }
+        if( !parseArray(temp, len, &handler->access_num, &handler->accesses) ){
+            JAVAME_FREE(temp);
+            return -1;
+        }
+        JAVAME_FREE(temp);
+    }
 
+    // look up 'MicroEdition-Handler-<n>-<locale>' attributes
     if (handler->locale_num > 0) {
-        // look up 'MicroEdition-Handler-<n>-<locale>' attributes
         int act_num = handler->act_num;
-        pcsl_string *map;
 
-        map = (pcsl_string*) JAVAME_CALLOC(
-                        act_num * handler->locale_num, sizeof(pcsl_string));
+        jchar ** map = 
+            (jchar **)JAVAME_CALLOC(act_num * handler->locale_num, sizeof(jchar*));
         if (map == NULL)
             return -1;
         handler->action_map = map;
-        for (n = 0; n < handler->locale_num; n++, map += act_num) {
-            if (PCSL_STRING_OK !=
-                    pcsl_string_cat(handlerN, handler->locales + n, &attrName))
+        for (n = 0; n < handler->locale_num; n++) {
+            pcsl_string locale;
+            int char_idx = 0;
+            if( PCSL_STRING_OK != 
+                    pcsl_string_convert_from_utf16(handler->locales[n], wcslen(handler->locales[n]), &locale) )
                 return -1;
+            if (PCSL_STRING_OK != pcsl_string_cat(handlerN, &locale, &attrName)){
+                pcsl_string_free( &locale );
+                return -1;
+            }
+            pcsl_string_free( &locale );
             attr = midp_find_property(&mp, &attrName);
             pcsl_string_free(&attrName);
-            if (attr == NULL ||
-                pcsl_string_length(attr) <= 0 ||
-                !parseArray(attr, &act_num, &map))
+            if (attr == NULL || pcsl_string_length(attr) <= 0)
+                return -1;
+            for( i = 0; i < act_num; i++){
+                if( !parseString( attr, &char_idx, map++, NULL ) )
+                    return -1;
+            }
+            if( char_idx != -1 )
                 return -1;
         }
     }
@@ -431,8 +452,8 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
     const pcsl_string* testAttr = &PCSL_STRING_NULL;
     MidpProperties mp; /* attribute values source */
     MidpProperties *testMp = NULL;  /* test for matching if needed */
-    JSR211_content_handler *ptr;
-    JSR211_RESULT_CHARRAY testHnd = { NULL, 0 };
+    jsr211_content_handler *ptr;
+    JSR211_RESULT_CHARRAY testHnd = NULL;
 
     if (nHandlers != 0) {
         return -1;  /* Suite installation might be only once in the NAMS. */
@@ -452,9 +473,9 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
 
     /* count handlers */
     res = 1; /* 'res' is an iteration flag */
-    count = 1;
+    count = 0;
     while (res) {
-        if (!prepareHandlerTag(count, &handlerN)) {
+        if (!prepareHandlerTag(++count, &handlerN)) {
             jsr211_errCode = OUT_OF_MEMORY;
             return -1; // No memory
         }
@@ -485,8 +506,8 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
         return -1; /* JSR 211 initialization failed. */
     }
 
-    handlers = (JSR211_content_handler*)
-                    JAVAME_CALLOC(count, sizeof(JSR211_content_handler));
+    handlers = (jsr211_content_handler*)
+                    JAVAME_CALLOC(count, sizeof(jsr211_content_handler));
     if (handlers == NULL) {
         jsr211_errCode = OUT_OF_MEMORY;
         return -1; // No memory
@@ -494,7 +515,7 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
     nHandlers = count;
     ptr = handlers;
 
-    for (count = 1; count <= nHandlers; count++, ptr++) {
+    for (count = 0; count++ < nHandlers; ptr++) {
         if (!prepareHandlerTag(count, &handlerN)) {
             res = -1;
             break;
@@ -507,7 +528,7 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
             break;
         }
 
-        if (!getFullClassPath(&ptr->class_name, &path)) {
+        if (!getFullClassPath(ptr->class_name, &path)) {
             res = -1;
             break;
         }
@@ -516,19 +537,18 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
         if (res < 0)
             break;
 
-        jsr211_find_handler(&PCSL_STRING_NULL, JSR211_FIELD_ID, &ptr->id,
-                                            &testHnd);
-        if (testHnd.buf != NULL) {
+        testHnd = jsr211_create_result_buffer();
+        jsr211_find_handler(NULL, JSR211_FIELD_ID, ptr->id, testHnd);
+        if( jsr211_get_result_data( testHnd ) != 0 ){
             // -- Content handler conflicts with other handlers
+            jsr211_release_result_buffer( testHnd );
             jsr211_errCode = 938;
-            JAVAME_FREE(testHnd.buf);
-            testHnd.buf = NULL;
-            testHnd.len = 0;
             res = -1;
             break;
         }
+        jsr211_release_result_buffer( testHnd );
 
-        ptr->flag = JSR211_FLAG_COMMON;
+        ptr->flag = JSR211_REGISTER_TYPE_STATIC_FLAG;
     }
 
     if (res < 0) {
@@ -550,10 +570,13 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
  */
 int jsr211_store_handlers(SuiteIdType suiteId) {
     int n = nHandlers;
-    JSR211_content_handler *ptr = handlers;
+    jsr211_content_handler *ptr = handlers;
 
     while (n > 0) {
-        ptr->suite_id = suiteId;
+        ptr->suite_id = JAVAME_MALLOC((jsrop_suiteid_string_size(suiteId) + 1) * sizeof(jchar));
+        if( !jsrop_suiteid_to_string(suiteId, (jchar *)ptr->suite_id) )
+            return -1;
+
         if (JSR211_OK != jsr211_register_handler(ptr)) {
             n = 0;
         }
@@ -571,22 +594,26 @@ int jsr211_store_handlers(SuiteIdType suiteId) {
  * @param suiteId removing suite Id
  */
 void jsr211_remove_handlers(SuiteIdType suiteId) {
-    JSR211_RESULT_CHARRAY handlers = _JSR211_RESULT_INITIALIZER_;
+    JSR211_RESULT_BUFFER resbuf = jsr211_create_result_buffer();
+ 
+    if( JSR211_OK == jsr211_find_for_suite( suiteId, &resbuf ) ){
+        // enumerate found handlers names
+        JSR211_ENUM_HANDLE eh = jsr211_get_enum_handle( jsr211_get_result_data(resbuf) );
+        JSR211_BUFFER_DATA bd;
+        while( (bd = jsr211_get_next( &eh )) != NULL ){
+          // bd - content handler data (id, suiteId, classname, flags)
+            JSR211_ENUM_HANDLE ehh = jsr211_get_enum_handle( bd );
+            JSR211_BUFFER_DATA id_handle = jsr211_get_next( &ehh );
+            const void * data; size_t length;
+            javacall_utf16_string handler_id;
+            jsr211_get_data( id_handle, &data, &length );
 
-    jsr211_find_for_suite(suiteId, &handlers);
-    if (handlers.buf != NULL) {
-        jchar* buf = handlers.buf;
-        int n = *buf++;
-        int sz;
-        pcsl_string id;
-        while (n--) {
-            sz = *buf++;
-            if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(buf + 1, *buf, &id))
-                    break;
-            jsr211_unregister_handler(&id);
-            pcsl_string_free(&id);
-            buf += sz;
+            handler_id = JAVAME_MALLOC( length + sizeof(javacall_utf16) );
+            memcpy( handler_id, data, length );
+            handler_id[ length / 2 ] = (javacall_utf16)0;
+            jsr211_unregister_handler( handler_id );
+            JAVAME_FREE( handler_id );
         }
-        JAVAME_FREE(handlers.buf);
     }
+    jsr211_release_result_buffer(resbuf);
 }

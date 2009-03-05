@@ -103,14 +103,18 @@ void jsr211_release_result_buffer(JSR211_RESULT_BUFFER resbuf);
  */
 JSR211_BUFFER_DATA jsr211_get_result_data(JSR211_RESULT_BUFFER resbuf);
 
-void jsr211_get_data( JSR211_BUFFER_DATA handle, const void * * data, size_t * length );
+void jsr211_get_data( JSR211_BUFFER_DATA handle, const void ** data, size_t * length );
 
 typedef struct {
     const void * eptr;
     JSR211_BUFFER_DATA handle;
 } JSR211_ENUM_HANDLE;
 
-JSR211_ENUM_HANDLE jsr211_get_enum_hanadle( JSR211_BUFFER_DATA data_handle );
+JSR211_ENUM_HANDLE jsr211_get_enum_handle( JSR211_BUFFER_DATA data_handle );
+
+/** returns next bulk of data for this enum handle or NULL
+ */
+JSR211_BUFFER_DATA jsr211_get_next( JSR211_ENUM_HANDLE * eh );
 
 //---------------------------------------------------------
 
