@@ -262,7 +262,7 @@ public class MVMManager extends MIDlet
                                       null);
         } catch (Exception ex) {
             displayError.showErrorAlert(displayName, ex, null, null);
-            handleODDInstallationDoneEvent(INSTALLATION_RESULT_FAILURE,
+            handleODDInstallationDoneEvent(INSTALLER_RESULT_FAILURE,
                     MIDletSuite.UNUSED_SUITE_ID, ex.getClass().getName(),
                     ex.getMessage(), 0, null);
         }
