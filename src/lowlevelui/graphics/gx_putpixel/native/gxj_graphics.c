@@ -223,6 +223,83 @@ gx_draw_rgb(const jshort *clip,
 
     CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
 
+#if 1
+    {
+        const unsigned int width16 = width & 0xFFFFFFF0;
+        const unsigned int widthRemain = width & 0xF;
+        unsigned int col;
+        
+        gxj_pixel_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
+        jint * psrc = &rgbData[offset];
+        unsigned int pdst_delta = sbufWidth - width;
+        unsigned int psrc_delta = scanlen - width;
+        gxj_pixel_type * pdst_end = pdst + height * sbufWidth;
+        unsigned int  src;
+        unsigned char As;
+
+        if (pdst_delta < 0 || psrc_delta < 0) {
+            return;
+        }
+
+        if (processAlpha) {
+            do {
+                for (col = width16; col != 0; col -= 16) {
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                }
+                
+                for (col = widthRemain; col != 0; col--) {
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                }
+                
+                psrc += psrc_delta;
+                pdst += pdst_delta;
+            } while (pdst < pdst_end);
+        } else {
+            do {
+                for (col = width16; col != 0; col -= 16) {
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                }
+                
+                for (col = widthRemain; col != 0; col--) {
+                    SRC_PIXEL_TO_DEST(psrc,pdst);
+                }
+
+                psrc += psrc_delta;
+                pdst += pdst_delta;
+            } while (pdst < pdst_end);
+        }
+    }
+#else
     {
       gxj_pixel_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
       jint * psrc = &rgbData[offset];
@@ -267,6 +344,7 @@ gx_draw_rgb(const jshort *clip,
 	} while (pdst < pdst_end);
       }
     }
+#endif
 }
 
 /**
