@@ -86,6 +86,7 @@ typedef struct {
     IEventTrigger           *doneCallback;
     MQ234_HostBlock         *midiStream;
     IHostStorage            *storage;
+    long                    mtime; /* stores media time when state < PREFETCHED */
 } ah_midi;
 
 
