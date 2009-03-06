@@ -60,8 +60,6 @@ import com.sun.midp.events.EventQueue;
 import com.sun.midp.events.EventListener;
 import com.sun.midp.ams.VMUtils;
 
-import com.sun.midp.appmanager.InstallerResultEventConsumer;
-
 /**
  * The Graphical MIDlet suite installer.
  * <p>
@@ -614,17 +612,17 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                  */
                 synchronized (this) {
                     if (installer.stopInstalling()) {
-                        notifyRequestCanceled();
+                        InstallerResultHandler.notifyRequestCanceled();
                         displayCancelledMessage(cancelledMessage);
                     }
                 }
             } else {
                 // goto back to the manager midlet
-                notifyRequestCanceled();
+                InstallerResultHandler.notifyRequestCanceled();
                 exit(false);
             }
         } else if (c == cancelCmd) {
-            notifyRequestCanceled();
+            InstallerResultHandler.notifyRequestCanceled();
             displayCancelledMessage(cancelledMessage);
             cancelBackgroundInstall();
         } else if (c == Alert.DISMISS_COMMAND) {
@@ -1768,7 +1766,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                          */
                         parent.preventScreenFlash();
 
-                        parent.notifyRequestSucceeded(lastInstalledMIDletId);
+                        InstallerResultHandler.notifyRequestSucceeded(lastInstalledMIDletId);
                         parent.exit(true);
                     } catch (InvalidJadException ije) {
                         int reason = ije.getReason();
@@ -1799,7 +1797,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                             break;
                         }
 
-                        parent.notifyRequestFailed(ije);
+                        InstallerResultHandler.notifyRequestFailed(ije);
                         msg = GraphicalInstaller.translateJadException(
                             ije, name, null, null, url);
                     } catch (MIDletSuiteLockedException msle) {
@@ -1816,7 +1814,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                     ResourceConstants.AMS_GRA_INTLR_LOCKED,
                                         values);
                             }
-                            parent.notifyRequestFailed(msle);
+                            InstallerResultHandler.notifyRequestFailed(msle);
                         } else {
                              /*
                               * Kill running midlets from the suite being
@@ -1905,7 +1903,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                 InstallerResource.IO_EXCEPTION_MESSAGE)
                                     + ":" + urlToShow;
                              }
-                        parent.notifyRequestFailed(ioe);
+                        InstallerResultHandler.notifyRequestFailed(ioe);
                     } catch (Throwable ex) {
                         if (Logging.TRACE_ENABLED) {
                             Logging.trace(ex, "Exception caught " +
@@ -1913,7 +1911,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                         }
 
                         msg = ex.getClass().getName() + ": " + ex.getMessage();
-                        parent.notifyRequestFailed(ex);
+                        InstallerResultHandler.notifyRequestFailed(ex);
                     }
 
                 } while (tryAgain);
@@ -2151,71 +2149,6 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                 parent.exit(false);
             }
         }
-    }
-
-    /**
-     * Send installation result to AMS.
-     * @param result Result code, as defined by constants in
-     *               InstallerResultEventConsumer
-     * @param suiteId Installed suite ID (in case of success)
-     * @param exception Thrown exception class name (in case of failure)
-     * @param message Thrown exception message (in case of failure)
-     * @param reason Failure reason (in case of InvalidJadException)
-     * @param extraData Failure extra data (in case of InvalidJadException)
-     */
-    private void sendInstallationResult(int result, int suiteId,
-            String exception, String message, int reason, String extraData) {
-
-        EventQueue eq = EventQueue.getEventQueue();
-        NativeEvent event = new NativeEvent(
-                EventTypes.MIDP_INSTALLATION_DONE_EVENT);
-        event.intParam1    = result;
-        event.intParam2    = suiteId;
-        event.stringParam1 = exception;
-        event.stringParam2 = message;
-        event.intParam3    = reason;
-        event.stringParam3 = extraData;
-
-        eq.sendNativeEventToIsolate(event, VMUtils.getAmsIsolateId());
-
-    }
-
-    /**
-     * Notify that installation request failed.
-     * @param reason Failure reason.
-     */
-    private void notifyRequestFailed(Throwable reason) {
-        if (reason instanceof InvalidJadException) {
-            InvalidJadException ije = (InvalidJadException) reason;
-            sendInstallationResult(
-                    InstallerResultEventConsumer.INSTALLER_RESULT_FAILURE,
-                    MIDletSuite.UNUSED_SUITE_ID, "InvalidJadException",
-                    ije.getMessage(), ije.getReason(), ije.getExtraData());
-        } else {
-            sendInstallationResult(
-                    InstallerResultEventConsumer.INSTALLER_RESULT_FAILURE,
-                    MIDletSuite.UNUSED_SUITE_ID, reason.getClass().getName(),
-                    reason.getMessage(), 0, null);
-        }
-    }
-
-    /**
-     * Notify that installation request succeeded.
-     * @param id Id of the installed suite
-     */
-    private void notifyRequestSucceeded(int id) {
-        sendInstallationResult(
-                InstallerResultEventConsumer.INSTALLER_RESULT_SUCCESS, id,
-                null, null, 0, null);
-    }
-
-    /**
-     * Notify that installation request was canceled.
-     */
-    private void notifyRequestCanceled() {
-        sendInstallationResult(
-                InstallerResultEventConsumer.INSTALLER_RESULT_CANCELED,
-                MIDletSuite.UNUSED_SUITE_ID, null, null, 0, null);
     }
 
 }

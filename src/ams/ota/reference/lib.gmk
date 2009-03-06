@@ -42,8 +42,7 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(OTA_IMPL_DIR)/classes/com/sun/midp/installer/DiscoveryApp.java \
     $(OTA_IMPL_DIR)/classes/com/sun/midp/installer/InstallerResource.java \
     $(OTA_IMPL_DIR)/classes/com/sun/midp/installer/GraphicalInstaller.java \
-    $(OTA_IMPL_DIR)/classes/com/sun/midp/appmanager/InstallerEventListener.java \
-    $(OTA_IMPL_DIR)/classes/com/sun/midp/appmanager/InstallerResultEventListener.java
+    $(OTA_IMPL_DIR)/classes/com/sun/midp/appmanager/InstallerEventListener.java
 
 ifeq ($(TARGET_VM), cldc_vm)
 SUBSYSTEM_AMS_JAVA_FILES += \
