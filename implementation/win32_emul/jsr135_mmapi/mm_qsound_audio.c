@@ -829,7 +829,7 @@ static javacall_result audio_qs_create(int appId, int playerId,
                 (IControl*)mQ234_PlayControl_getVolumeControl(synth);
 
             newHandle->midi.synth    = synth;
-            
+            newHandle->midi.mtime    = -1;
         }
         break;
 
@@ -1108,6 +1108,10 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                         h->midi.doneCallback);
 
                     r = h->hdr.dataBufferLen;
+
+                    if( -1 != h->midi.mtime ) {
+                        mQ234_PlayControl_SetPosition( h->midi.synth, h->midi.mtime );
+                    }
                 }
 
                 /* NB: r==-1 here may mean that the buffered Tone Sequence
@@ -1280,6 +1284,12 @@ static javacall_result audio_qs_release_device(javacall_handle handle){
                 mQ234_EventTrigger_Destroy(h->midi.doneCallback);
                 h->midi.doneCallback = NULL;
             }
+
+            if( h->midi.midiStream != NULL && h->midi.storage != NULL )
+            {
+                h->midi.mtime = mQ234_PlayControl_GetPosition( h->midi.synth );
+            }
+
             if( h->midi.midiStream != NULL )
             {
                 FREE( h->midi.midiStream );
@@ -1769,7 +1779,12 @@ static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
         {
-            long pos = mQ234_PlayControl_GetPosition(h->midi.synth);
+            long pos;
+
+            if( h->midi.midiStream != NULL && h->midi.storage != NULL )
+                pos = mQ234_PlayControl_GetPosition(h->midi.synth);
+            else
+                pos = h->midi.mtime;
 
             if(pos >= 0) *ms =  pos / 10;  // needs to be in millis
         }
@@ -1801,9 +1816,15 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long* ms){
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
         {
-           currtime = mQ234_PlayControl_SetPosition(h->midi.synth, (*ms)*10) != 0 ?
-           mQ234_PlayControl_GetPosition(h->midi.synth)/10 : 0;
-
+            if( h->midi.midiStream != NULL && h->midi.storage != NULL )
+            {
+                currtime = mQ234_PlayControl_SetPosition(h->midi.synth, (*ms)*10) != 0 ?
+                mQ234_PlayControl_GetPosition(h->midi.synth)/10 : 0;
+            }
+            else
+            {
+                currtime = h->midi.mtime = (*ms)*10;
+            }
         }
         break;
 
