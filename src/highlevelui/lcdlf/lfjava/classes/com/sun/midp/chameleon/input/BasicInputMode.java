@@ -270,19 +270,12 @@ abstract class BasicInputMode implements InputMode, Runnable {
                 clickCount++;
             
                 // If the pending key code has just one match or long key
-                // press happens commit the current key 
-
-                if (longPress) {
-                    if (lastKey != -1) {
-                        lastKey = keyCode;                  
-                        commitPendingChar();
-                    } 
-                } else if (hasOneCase(keyCode)) {
-                    lastKey = keyCode;                  
+                // press happens commit the current key
+                
+                lastKey = keyCode;                 
+                if (hasOneCase(keyCode) || longPress) {
                     commitPendingChar();
-                } else {
-                    lastKey = keyCode;                  
-                }
+                } 
                 
                 // Lastly, we'll interrupt the timer to reset it or start it if
                 // timer is still not working.
