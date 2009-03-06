@@ -2,7 +2,7 @@
 #include "filter_in.hpp"
 #pragma comment (lib, "strmiids.lib")
 
-#define DUMP_LEVEL 1
+#define DUMP_LEVEL 0
 
 #if DUMP_LEVEL > 0
 #include "print_guid.hpp"

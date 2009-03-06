@@ -103,9 +103,29 @@ bool audioplayer::init(unsigned int len,const wchar_t*format)
         return false;
     }
 
+    hr = pgb->QueryInterface(IID_IMediaSeeking, (void**)&pms);
+    if( FAILED( hr ) )
+    {
+        pmc->Release(); pmc = NULL;
+        pfi->Release(); pfi = NULL;
+        pgb->Release(); pgb = NULL;
+        return false;
+    }
+
     hr = pmc->Pause();
     if( FAILED( hr ) )
     {
+        pms->Release(); pms = NULL;
+        pmc->Release(); pmc = NULL;
+        pfi->Release(); pfi = NULL;
+        pgb->Release(); pgb = NULL;
+        return false;
+    }
+
+    hr = pms->SetTimeFormat( &TIME_FORMAT_MEDIA_TIME );
+    if( FAILED( hr ) )
+    {
+        pms->Release(); pms = NULL;
         pmc->Release(); pmc = NULL;
         pfi->Release(); pfi = NULL;
         pgb->Release(); pgb = NULL;
@@ -144,6 +164,7 @@ bool audioplayer::tell(double*time)
 {
     if(NULL == pgb) return false;
 
+    /*
     IMediaPosition* pmp = NULL;
 
     HRESULT hr = pgb->QueryInterface(IID_IMediaPosition, (void**)&pmp);
@@ -152,10 +173,33 @@ bool audioplayer::tell(double*time)
     hr = pmp->get_CurrentPosition(time);
     pmp->Release();
     return SUCCEEDED(hr);
+    */
+
+    HRESULT hr = pgb->QueryInterface(IID_IMediaSeeking, (void**)&pms);
+    if(NULL == pms) return false;
+
+    LONGLONG cur;
+    hr = pms->GetCurrentPosition( &cur );
+    if( SUCCEEDED( hr ) )
+    {
+        *time = double(cur) / 1E7;
+        return true;
+    }
+    else
+    {
+        *time = -1;
+        return false;
+    }
 }
 
 bool audioplayer::shutdown()
 {
+    if(NULL != pms)
+    {
+        pms->Release();
+        pms = NULL;
+    }
+
     if(NULL != pmc)
     {
         pmc->Release();

@@ -28,6 +28,7 @@
 
 //=============================================================================
 
+/*
 static void PRINTF( const char* fmt, ... ) {
     char           str8[ 256 ];
 	va_list        args;
@@ -38,6 +39,9 @@ static void PRINTF( const char* fmt, ... ) {
 
     OutputDebugString( str8 );
 }
+*/
+
+#define PRINTF printf
 
 #define XFER_BUFFER_SIZE  4096
 #define ENQUEUE_PACKETS   20
@@ -62,36 +66,39 @@ struct dshow_player
     int                   channels;
     int                   rate;
     int                   duration;
+    long                  media_time;
 
     xfer_buffer*          cur_buf;
-    xfer_buffer*          queue_head;
-    xfer_buffer*          queue_tail;
-    int                   queue_size;
+    xfer_buffer* volatile queue_head;
+    xfer_buffer* volatile queue_tail;
+    int          volatile queue_size;
 
     bool                  realized;
     bool                  prefetched;
     bool                  acquired;
-    volatile bool         playing;
-    volatile bool         eom;
+    bool         volatile playing;
+    bool         volatile all_data_arrived;
+    bool         volatile nmd_sent;
 
     long                  volume;
     javacall_bool         mute;
 
     audioplayer           ap;
 
-    volatile HANDLE       hEomThread; // monitors buffering activity
-    HANDLE                hBufEvent;  // if not signaled for EOM_TIMEOUT ms, EOM is generated
+    HANDLE                hThread;
+    HANDLE       volatile hBufEvent;
     CRITICAL_SECTION      cs;
 };
 
 long dshow_player::get_media_time()
 {
+    if( !playing ) return media_time;
+
     double t;
     if( ap.tell( &t ) )
     {
-        long mt = long( t * 1000.0 );
-        PRINTF( "media time = %ld\n", mt );
-        return mt;
+        media_time = long( t * 1000.0 );
+        return media_time;
     }
     else
     {
@@ -99,7 +106,7 @@ long dshow_player::get_media_time()
     }
 }
 
-DWORD WINAPI dshow_eom_thread( LPVOID lpParameter )
+DWORD WINAPI dshow_thread( LPVOID lpParameter )
 {
     DWORD t0;
     dshow_player* p = (dshow_player*)lpParameter;
@@ -111,60 +118,75 @@ DWORD WINAPI dshow_eom_thread( LPVOID lpParameter )
         return 0;
     }
 
-    PRINTF( "*** eom thread start ***\n" );
+    PRINTF( "\n*** *** dshow thread start ***\n" );
+    p->ap.play();
+    PRINTF( "*** *** player started ***\n\n" );
 
-    while( NULL != p->hBufEvent )
+    while( p->playing )
     {
-        if( p->playing && !p->eom )
+        PRINTF( "*** *** dshow thread media time = %ld\n", p->get_media_time() );
+
+        if( NULL != p->queue_head )
         {
-            t0 = GetTickCount();
+            xfer_buffer* b;
 
-            long mt          = p->get_media_time();
-            long time_left   = p->duration - mt;
-            bool eom_reached = ( -1 != p->duration && time_left <= 0 );
-            bool no_packets  = false;
-
-            DWORD timeout = EOM_TIMEOUT;
-            if( -1 != p->duration && time_left < EOM_TIMEOUT ) {
-                timeout = time_left;
-            }
-
-            if( !eom_reached ) {
-                no_packets = ( WAIT_TIMEOUT == WaitForSingleObject( p->hBufEvent, timeout ) );
-            }
-
-            if( p->playing && !p->eom )
+            EnterCriticalSection( &(p->cs) );
             {
-                if( eom_reached ) PRINTF( "*** EOM EOM EOM ***\n" );
-                if( no_packets  ) PRINTF( "*** NO  PACKETS ***\n" );
-
-                if( eom_reached || no_packets )
-                {
-                    PRINTF( "***               dt = %i, time_left = %ld ***\n", GetTickCount() - t0, time_left );
-                    if( p->playing )
-                    {
-                        PRINTF( "***              stopping player... ***\n" );
-
-                        p->ap.stop();
-                        p->playing = false;
-
-                        PRINTF( "***              sending EOM... ***\n" );
-
-                        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
-                            p->appId, p->playerId, JAVACALL_OK, (void*)(p->get_media_time()) );
-
-                        p->eom = true;
-                    }
-                }
+                PRINTF( "*** *** dshow thread %i->%i\n", p->queue_size, p->queue_size-1 );
+                b = p->queue_head;
+                p->queue_head = b->next;
+                if( NULL == p->queue_head ) p->queue_tail = NULL;
+                p->queue_size--;
             }
+            LeaveCriticalSection( &(p->cs) );
+
+            int len = XFER_BUFFER_SIZE;
+            for(int i=0; i < len; i++ ) {
+                p->ap.data( 1, b->data + i );
+            }
+
+            delete b;
         }
         else
         {
-            Sleep( 250 );
+            PRINTF( "*** *** thread: no data! ***\n" );
+            if( p->all_data_arrived || 
+                -1 != p->duration && p->get_media_time() >= p->duration + 500 )
+            {
+                PRINTF( "*** *** thread: eom, initiating stop... ***\n" );
+                p->get_media_time();
+                p->playing = false;
+
+                long t = p->get_media_time();
+                if( -1 != p->duration && t > p->duration ) t = p->duration;
+
+                javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
+                    p->appId, p->playerId, JAVACALL_OK, (void*)t );
+            }
+            else
+            {
+                Sleep( 10 );
+            }
+        }
+
+        if( p->playing 
+            && !( p->all_data_arrived || -1 != p->duration && p->get_media_time() >= p->duration + 500 )
+            && p->queue_size < ENQUEUE_PACKETS / 2 
+            && !p->nmd_sent )
+        {
+            PRINTF( "*** *** thread: posting NMD ***\n" );
+            javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
+                p->appId, p->playerId, JAVACALL_OK, NULL);
+
+            p->nmd_sent = true;
         }
     }
 
-    PRINTF( "*** eom thread exit ***\n" );
+    PRINTF( "*** *** stopping player ***\n\n" );
+    p->ap.stop();
+    PRINTF( "*** *** dshow thread exit ***\n\n" );
+
+    p->hThread = NULL;
 
     return 0;
 }
@@ -182,7 +204,7 @@ static javacall_handle dshow_create(int appId,
 {
     dshow_player* p = new dshow_player;
 
-    PRINTF( "*** create ***\n" );
+    PRINTF( "\n\n*** create ***\n" );
 
     p->appId            = appId;
     p->playerId         = playerId;
@@ -193,13 +215,17 @@ static javacall_handle dshow_create(int appId,
     p->prefetched       = false;
     p->acquired         = false;
     p->playing          = false;
-    p->eom              = false;
+    p->all_data_arrived = false;
+    p->nmd_sent         = false;
 
+    p->media_time       = 0;
     p->volume           = 100;
     p->mute             = JAVACALL_FALSE;
 
+    InitializeCriticalSection( &(p->cs) );
+
     p->hBufEvent        = CreateEvent( NULL, FALSE, FALSE, NULL );
-    p->hEomThread       = CreateThread( NULL, 0, dshow_eom_thread, p, 0, NULL );
+    p->hThread          = NULL;
 
     p->cur_buf          = NULL;
     p->queue_head       = NULL;
@@ -227,8 +253,8 @@ static javacall_result dshow_destroy(javacall_handle handle)
 
     CloseHandle( p->hBufEvent );
     p->hBufEvent = NULL;
-    // setting hBufEvent to NULL causes eom thread to exit
-    WaitForSingleObject( p->hEomThread, INFINITE );
+
+    DeleteCriticalSection( &(p->cs) );
 
     p->ap.shutdown();
 
@@ -241,6 +267,7 @@ static javacall_result dshow_destroy(javacall_handle handle)
     }
     p->queue_head = NULL;
     p->queue_tail = NULL;
+    p->queue_size = 0;
 
     if(NULL != p->cur_buf) delete p->cur_buf;
 
@@ -339,12 +366,12 @@ static javacall_result dshow_get_java_buffer_size(javacall_handle handle,
 
     if( p->prefetched )
     {
-        PRINTF( "*** get_java_buffer_size: XFER_BUFFER_SIZE ***\n" );
+        PRINTF( "*** 0x%08X get_java_buffer_size: XFER_BUFFER_SIZE ***\n", handle );
         *first_chunk_size = XFER_BUFFER_SIZE;
     }
     else
     {
-        PRINTF( "*** get_java_buffer_size: 0 ***\n" );
+        PRINTF( "*** 0x%08X get_java_buffer_size: 0 ***\n", handle );
         *first_chunk_size = 0;
     }
 
@@ -380,28 +407,15 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
 {
     dshow_player* p = (dshow_player*)handle;
 
-    PRINTF( "     do_buffering %i->%i...\n", p->queue_size, p->queue_size + 1 );
+    PRINTF( "     0x%08X do_buffering %i->%i...\n", handle, p->queue_size, p->queue_size + 1 );
+
+    p->nmd_sent = false;
 
     if( 0 != *length && NULL != buffer )
     {
         assert( buffer == p->cur_buf->data );
 
-        if(p->playing)
-        {
-            // IMPL_NOTE: current player version supports only one-byte sends
-            // p->ap.data( *length, buffer );
-            for(int i=0; i < *length; i++ ) {
-                p->ap.data( 1, (const BYTE*)buffer + i );
-            }
-
-            SetEvent( p->hBufEvent );
-            *need_more_data  = JAVACALL_FALSE;
-            PRINTF( "        posting NMD.\n" );
-            javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
-                p->appId, p->playerId, JAVACALL_OK, NULL);
-
-        }
-        else
+        EnterCriticalSection( &(p->cs) );
         {
             if( NULL == p->queue_tail ) // first packet
                 p->queue_head = p->cur_buf;
@@ -411,33 +425,30 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
             p->queue_tail = p->cur_buf;
             p->cur_buf = NULL;
             p->queue_size++;
-
-            if(p->queue_size < ENQUEUE_PACKETS)
-            {
-                PRINTF( "        need more data.\n" );
-                *need_more_data = JAVACALL_TRUE;
-            }
-            else
-            {
-                PRINTF( "        enough data,posting NMD.\n" );
-                *need_more_data = JAVACALL_FALSE;
-                javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
-                    p->appId, p->playerId, JAVACALL_OK, NULL);
-            }
         }
+        LeaveCriticalSection( &(p->cs) );
+
+        if(p->queue_size < ENQUEUE_PACKETS)
+        {
+            PRINTF( "        need more data.\n" );
+            *need_more_data = JAVACALL_TRUE;
+        }
+        else
+        {
+            PRINTF( "        enough.\n" );
+            *need_more_data = JAVACALL_FALSE;
+        }
+
+        *next_chunk_size = XFER_BUFFER_SIZE;
     }
     else
     {
-        PRINTF( "           [zero -- sending EOM...]\n" );
-        //PRINTF( "***              stopping player... ***\n" );
-        //p->ap.stop();
-        p->playing = false;
-        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
-            p->appId, p->playerId, JAVACALL_OK, (void*)(p->get_media_time()) );
-        p->eom = true;
+        PRINTF( "           [zero]\n" );
+        p->all_data_arrived = true;
+        *need_more_data  = JAVACALL_FALSE;
+        *next_chunk_size = 0;
     }
 
-    *next_chunk_size = XFER_BUFFER_SIZE;
     return JAVACALL_OK;
 }
 
@@ -453,37 +464,20 @@ static javacall_result dshow_start(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** start ***\n" );
     p->playing = true;
-    p->ap.play();
-
-    DWORD t = GetTickCount();
-
-    while(NULL != p->queue_head)
-    {
-        // IMPL_NOTE: current player version supports only one-byte sends
-        // should be p->ap.data(XFER_BUFFER_SIZE,p->queue_head->data);
-        for(int i=0; i < XFER_BUFFER_SIZE; i++) {
-            p->ap.data(1,p->queue_head->data+i);
-        }
-
-        xfer_buffer* t = p->queue_head;
-        p->queue_head = p->queue_head->next;
-        p->queue_size--;
-        delete t;
-    }
-
-    PRINTF( "*** started in %i ms.", GetTickCount() - t );
-
-    p->queue_tail = NULL;
-
+    p->hThread = CreateThread( NULL, 0, dshow_thread, p, 0, NULL );
     return JAVACALL_OK;
 }
 
 static javacall_result dshow_stop(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** stop ***\n" );
+    PRINTF( "*** stop... ***\n" );
+    p->get_media_time();
     p->playing = false;
-    p->ap.stop();
+    // setting p->playing to false causes thread to exit
+    WaitForSingleObject( p->hThread, INFINITE );
+    PRINTF( "*** ...stopped ***\n" );
+
     return JAVACALL_OK;
 }
 
@@ -501,6 +495,7 @@ static javacall_result dshow_get_time(javacall_handle handle, long* ms)
 {
     dshow_player* p = (dshow_player*)handle;
     *ms = p->get_media_time();
+    if( p->duration != -1 && *ms > p->duration ) *ms = p->duration;
     return JAVACALL_OK;
 }
 

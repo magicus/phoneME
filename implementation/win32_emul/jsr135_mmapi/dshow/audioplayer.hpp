@@ -42,4 +42,5 @@ protected:
     filter_in*     pfi;
     IGraphBuilder* pgb;
     IMediaControl* pmc;
+    IMediaSeeking* pms;
 };
