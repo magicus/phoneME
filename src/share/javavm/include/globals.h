@@ -97,6 +97,9 @@ struct CVMOptions {
     CVMUint16 classVerificationLevel;
     const char *bootclasspathStr;
     const char *appclasspathStr;
+#ifdef CVM_SPLIT_VERIFY
+    CVMBool splitVerify;
+#endif
 #endif
 #ifdef CVM_HAVE_PROCESS_MODEL
     CVMBool fullShutdownFlag;
@@ -432,6 +435,9 @@ struct CVMGlobalState {
     CVMClassPath         appClassPath;
     
     CVMUint16            classVerificationLevel;
+#ifdef CVM_SPLIT_VERIFY
+    CVMBool              splitVerify;
+#endif
     void*                cvmDynHandle;
     
     /* Stuff for native application class loading */
