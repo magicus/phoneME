@@ -59,6 +59,7 @@ public class Client {
   private boolean isConnected = false;
   private static String hostName = "localhost";
   private static int    port = 5000;
+  private boolean vm_run = false;
 
 
   public static void main(String args[]) {
@@ -91,6 +92,17 @@ public class Client {
     _frame.getContentPane().setLayout(new GridBagLayout());
     _frame.addWindowListener(new WindowAdapter() {
       public void windowClosing(WindowEvent e) {
+        if (isConnected && !vm_run) {
+          /* resume VM before exiting, otherwise it will be left unusable */
+          try {
+            _data_provider.resumeVM();
+            /* give KDP proxy time to resend the packet before socket is closed */
+            try { Thread.sleep(200); } catch (Exception ex) {}
+            System.out.println("Exitting, VM execution resumed.");
+          } catch (Exception ex) {
+            System.err.println("Exitting, VM execution could not be resumed.");
+          }
+        }
         _data_provider.closeConnections();
         System.exit(0);
       }
@@ -256,7 +268,6 @@ public class Client {
 
 
   class VMActionListener implements ActionListener {
-    boolean vm_run = false;
     public void actionPerformed(ActionEvent e) {
       try {
         if (!vm_run) {

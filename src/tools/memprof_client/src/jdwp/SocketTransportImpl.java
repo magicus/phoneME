@@ -256,13 +256,13 @@ class SocketTransportImpl extends Thread {
                 (((int)buf[3]) & 0xFF));
 				bytesRead = 0;
 
+                if (size > buf.length) {
+                    byte[] buf2 = new byte[size];
+                    System.arraycopy(buf,0,buf2,0,Packet.PacketHeaderSize);
+                    buf = buf2;
+                }
+
 				while (bytesRead != size - Packet.PacketHeaderSize) {
-					// If the initial buffer is insufficient, enlarge it
-					if (bytesRead + Packet.PacketHeaderSize + size - Packet.PacketHeaderSize - bytesRead > buf.length) {
-						byte[] buf2 = new byte[buf.length * 2];
-						System.arraycopy(buf,0,buf2,0,buf.length);
-						buf = buf2;
-					}
 					int bytesReadDuringLastRead =inputStream.read(buf, 
 																  bytesRead + Packet.PacketHeaderSize,
 																  size - Packet.PacketHeaderSize - bytesRead);  
