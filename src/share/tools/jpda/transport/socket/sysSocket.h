@@ -72,6 +72,8 @@ int dbgsysPoll(int fd, jboolean rd, jboolean wr, long timeout);
 int dbgsysGetLastIOError(char *buf, jint size);
 long dbgsysCurrentTimeMillis();
 
+int dbgsysInit(JavaVM *jvm);
+
 /*
  * TLS support
  */

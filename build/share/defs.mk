@@ -181,6 +181,7 @@ CVM_JVMDI               ?= false
 # For backwards compatibility of sorts, we migrate CVM_JVMDI to CVM_JVMTI
 CVM_JVMTI               ?= $(CVM_JVMDI)
 CVM_JVMTI_ROM           ?= $(CVM_JVMTI)
+CVM_JVMTI_IOVEC         ?= false
 
 # We need to check this here because the CVM_JVMTI option overrides many
 # others that follows through CVM_DEBUG:
@@ -194,6 +195,11 @@ endif
         override CVM_THREAD_SUSPENSION = true
 endif
 
+ifeq ($(CVM_JVMTI_IOVEC), true)
+ifneq ($(findstring true,$(CVM_JVMTI)$(CVM_JVMPI)), true)
+$(error CVM_JVMTI must be set to 'true' if CVM_JVMTI_IOVEC is 'true')
+endif
+endif
 
 ifeq ($(CVM_JVMTI_ROM), true)
 ifneq ($(CVM_JVMTI), true)
@@ -686,6 +692,9 @@ ifeq ($(CVM_JVMPI), true)
 else
         override CVM_JVMPI_TRACE_INSTRUCTION = false
 endif
+ifeq ($(CVM_JVMTI_IOVEC), true)
+	CVM_DEFINES      += -DCVM_JVMTI_IOVEC
+endif
 ifeq ($(CVM_JVMPI_TRACE_INSTRUCTION), true)
         override CVM_NO_CODE_COMPACTION = true
         CVM_DEFINES      += -DCVM_JVMPI_TRACE_INSTRUCTION
@@ -869,6 +878,7 @@ CVM_FLAGS += \
 	CVM_AGENTLIB \
 	CVM_JVMTI \
 	CVM_JVMTI_ROM \
+	CVM_JVMTI_IOVEC \
 	CVM_JVMPI \
 	CVM_JVMPI_TRACE_INSTRUCTION \
 	CVM_THREAD_SUSPENSION \
@@ -1015,6 +1025,7 @@ CVM_XRUN_CLEANUP_ACTION			= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_AGENTLIB_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_JVMTI_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_JVMTI_ROM_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_JVMTI_IOVEC_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_JVMPI_CLEANUP_ACTION                = \
         $(CVM_DEFAULT_CLEANUP_ACTION)     \
         $(CVM_DEBUG_CLASSINFO_CLEANUP_ACTION)

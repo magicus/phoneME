@@ -734,12 +734,12 @@ typedef struct AttachOperation_ {
     (CVMglobals.jvmti.isWatchingFieldModification = (isWatching_))
 
 
-typedef enum CVMJvmtiLoadKind CVMJvmtiLoadKind;
 enum CVMJvmtiLoadKind {
   JVMTICLASSLOADKINDNORMAL   = 0,
   JVMTICLASSLOADKINDREDEFINE,
   JVMDICLASSLOADKINDRETRANSFORM
 };
+typedef enum CVMJvmtiLoadKind CVMJvmtiLoadKind;
 
 typedef struct CVMJvmtiLockInfo CVMJvmtiLockInfo;
 struct CVMJvmtiLockInfo {

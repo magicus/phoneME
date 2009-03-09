@@ -24,11 +24,26 @@
  * information or have any questions.
  */
 
+#include "javavm/export/jni.h"
 #include "javavm/include/porting/time.h"
+#include <unistd.h>
 
 void
 CVMformatTime(char *format, size_t format_size, time_t t)
 {
     (void)strftime(format, sizeof(format),  
                 "%d.%m.%Y %T.%%.3d %Z", localtime(&t));
+}
+
+
+int
+md_init(JavaVM *jvm)
+{
+    return 0;
+}
+
+int 
+md_write(int filedes, const void *buf, int nBytes)
+{
+    return write(filedes, buf, nBytes);
 }

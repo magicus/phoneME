@@ -43,11 +43,11 @@
 #define MAXLEN_MESSAGE          256
 #define MAXLEN_EXEC             (MAXLEN_FILENAME*2+MAXLEN_INTEGER+16)
 
-static MUTEX_T my_mutex = MUTEX_INIT;
+static MUTEX_T my_mutex;
 
 /* Static variables (should be protected with mutex) */
 static int logging;
-static FILE * log_file;
+static int log_file;
 static char logging_filename[MAXLEN_FILENAME+1+6];
 static char location_stamp[MAXLEN_LOCATION+1];
 static PID_T processPid;
@@ -109,7 +109,7 @@ log_message_begin(const char *flavor, const char *file, int line)
 
 /* Standard Logging Format Entry */
 static void
-standard_logging_format(FILE *fp,
+standard_logging_format(int fd,
         const char *datetime,
         const char *level,
         const char *product,
@@ -126,7 +126,7 @@ standard_logging_format(FILE *fp,
     
     format="[#|%s|%s|%s|%s|%s|%s:%s|#]\n";
     
-    print_message(fp, "", "", format,
+    print_message(fd, "", "", format,
             datetime,
             level,
             product,
@@ -152,17 +152,15 @@ log_message_end(const char *format, ...)
         char message[MAXLEN_MESSAGE+1];
 
         /* Grab the location, start file if needed, and clear the lock */
-        if ( log_file == NULL && open_count == 0 && logging_filename[0] != 0 ) {
+        if ( log_file == 0 && open_count == 0 && logging_filename[0] != 0 ) {
             open_count++;
-            log_file = fopen(logging_filename, "w");
-            if ( log_file!=NULL ) {
-                (void)setvbuf(log_file, NULL, _IOLBF, BUFSIZ);
-            } else {
+            log_file = md_creat(logging_filename);
+            if ( log_file < 0 ) {
                 logging = 0;
             }
         }
         
-        if ( log_file != NULL ) {
+        if ( log_file > 0 ) {
             
             /* Get the rest of the needed information */
             tid = GET_THREAD_ID();
@@ -205,6 +203,7 @@ void
 setup_logging(const char *filename, unsigned flags)
 {
 #ifdef JDWP_LOGGING
+    my_mutex = MUTEX_INIT;
     /* Turn off logging */
     logging = 0;
     gdata->log_flags = 0;
@@ -233,10 +232,9 @@ finish_logging(int exit_code)
     MUTEX_LOCK(my_mutex);
     if ( logging ) {
         logging = 0;
-        if ( log_file != NULL ) {
-            (void)fflush(log_file);
-            (void)fclose(log_file);
-            log_file = NULL;
+        if ( log_file >= 0 ) {
+            (void)md_close(log_file);
+            log_file = -1;
         }
     }
     MUTEX_UNLOCK(my_mutex);

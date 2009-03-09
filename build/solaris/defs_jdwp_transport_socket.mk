@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
 #   
 # This program is free software; you can redistribute it and/or  
@@ -21,13 +21,12 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional  
 # information or have any questions. 
 #
-# @(#)jcov.mk	1.10 06/10/10
+# @(#)jdwp_transport_socket.mk	1.7 06/10/10
 #
-#  Platform specific makefile for building the Jcov tool
+#  Makefile for building the jdwp tool
 #
 
-#
-# Platform specific build flags:
-#
-CVM_JCOV_FLAGS += \
-        USE_SUNCC
+###############################################################################
+# Make definitions:
+
+jdwp-dt : LINKLIBS = -lnsl -lsocket
