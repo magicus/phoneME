@@ -176,7 +176,7 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
      * @throws IllegalArgumentException if this kind of native event
      * is not supported
      */
-    private AutoEvent createFromNativeEvent(NativeEvent nativeEvent) {
+    public AutoEvent createFromNativeEvent(NativeEvent nativeEvent) {
         AutoEvent event = null;
 
         switch (nativeEvent.getType()) {
@@ -203,6 +203,8 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
                 int y = nativeEvent.intParam3;
 
                 event = createPenEvent(x, y, penState);
+
+                break;
             }
 
             default: {

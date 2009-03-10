@@ -40,7 +40,7 @@ final class AutomationImpl extends Automation {
     private EventQueue eventQueue;
 
     /** Event spying queue */
-    private EventQueue eventSpyingQueue;
+    private EventQueue eventSpyingQueue = null;
 
     /** Event factory */
     private AutoEventFactoryImpl eventFactory;
@@ -335,6 +335,13 @@ final class AutomationImpl extends Automation {
      * @param el event listener
      */
     public void addHardwareEventListener(AutoEventListener el) {
+        if (eventSpyingQueue == null) {
+            NativeEventListener l = new NativeEventListener();
+            eventSpyingQueue = EventSpyingQueue.getEventQueue();
+            eventSpyingQueue.registerEventListener(EventTypes.KEY_EVENT, l);
+            eventSpyingQueue.registerEventListener(EventTypes.PEN_EVENT, l);
+        }
+
         hwEventListeners.addElement(el);
     }
 
@@ -411,6 +418,40 @@ final class AutomationImpl extends Automation {
     }
 
     /**
+     * EventListener implementation
+     */
+    private class NativeEventListener implements EventListener {
+        /**
+         * Preprocess an event that is being posted to the event queue.
+         * This method will get called in the thread that posted the event.
+         * 
+         * @param event event being posted
+         *
+         * @param waitingEvent previous event of this type waiting in the
+         *     queue to be processed
+         * 
+         * @return true to allow the post to continue, false to not post the
+         *     event to the queue
+         */        
+        public boolean preprocess(Event event, Event waitingEvent) {
+            return true;
+        }
+
+        /**
+         * Process an event.
+         * This method will get called in the event queue processing thread.
+         *
+         * @param nativeEvent native event recieved
+         */
+        public void process(Event nativeEvent) {
+            AutoEvent event = eventFactory.createFromNativeEvent(
+                    (NativeEvent)nativeEvent);
+
+            notifyHardwareEventListeners(event);
+        }
+    }
+
+    /**
      * Gets ids of foreground isolate and display.
      *
      * @param foregroundIsolateAndDisplay array to store ids in
@@ -444,4 +485,5 @@ final class AutomationImpl extends Automation {
         this.screenshotTaker = new AutoScreenshotTaker();
         this.hwEventListeners = new Vector();
     } 
+
 }

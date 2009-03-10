@@ -115,6 +115,10 @@ static int gsTotalQueues = 1;
 static int gsMaxIsolates = 1;
 #endif
 
+#if ENABLE_EVENT_SPYING
+static int gsEventSpyingQueueId = 0;
+#endif
+
 /**
  * Macro that gets the event queue associated with an queueId.
  *
@@ -425,6 +429,11 @@ InitializeEvents(void) {
     gsTotalQueues = 1;     
 #endif
 
+#if ENABLE_EVENT_SPYING
+    gsEventSpyingQueueId = gsTotalQueues;
+    gsTotalQueues += 1;
+#endif   
+
     sizeInBytes = gsTotalQueues * sizeof (EventQueue);
     gsEventQueues = midpMalloc(sizeInBytes);
     if (NULL == gsEventQueues) {
@@ -515,6 +524,21 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, jint queueId) {
     }
 
     midp_unlockEventQueue();
+
+#if ENABLE_EVENT_SPYING
+    if (queueId != gsEventSpyingQueueId) {
+        GET_EVENT_QUEUE_BY_ID(pEventQueue, gsEventSpyingQueueId);
+        if (pEventQueue->isActive) {
+            if (0 == duplicateMIDPEventFields(&event)) {
+                StoreMIDPEventInVmThreadImp(event, gsEventSpyingQueueId); 
+            } else {
+                REPORT_CRIT(LC_CORE, 
+                        "StoreMIDPEventInVmThread: Out of memory.");
+                return;
+            }
+        }
+    }
+#endif
 }
 
 /**
@@ -834,6 +858,25 @@ Java_com_sun_midp_events_EventQueue_getNativeEventQueueHandle(void){
 
     KNI_ReturnInt(queueId);
 }
+
+#if ENABLE_EVENT_SPYING
+/**
+ * Returns the native event queue handle for use by the native
+ * finalizer.
+ *
+ * @return Native event queue handle
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_midp_events_EventSpyingQueue_getNativeEventQueueHandle(void){
+    EventQueue* pEventQueue;
+   
+    /* Mark queue as active */
+    GET_EVENT_QUEUE_BY_ID(pEventQueue, gsEventSpyingQueueId);
+    pEventQueue->isActive = KNI_TRUE;
+
+    KNI_ReturnInt(gsEventSpyingQueueId);
+}
+#endif
 
 /**
  * Native finalizer to reset the native peer event queue when

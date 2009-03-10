@@ -169,6 +169,10 @@ endif
 # Description: Modules that are shared among other sub-systems
 #####################################################################
 
+ifeq ($(USE_AUTOMATION), true)
+    USE_EVENT_SPYING = true
+endif
+
 include $(SUBSYSTEM_DIR)/events/$(SUBSYSTEM_MAKE_FILE)
 
 
@@ -547,3 +551,4 @@ endif
 ifeq ($(USE_XMLPARSER),true)
 include $(XMLPARSER_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
+

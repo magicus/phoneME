@@ -66,12 +66,13 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 # and uncomment the following block.
 
 ifeq ($(USE_I3_TEST), true)
-SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES =
+#SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES =
 #SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES += \
-#	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestAutoSuiteStorage.java \
-#	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestSwitchMidlets.java \
-#	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestPenEventSimulation.java \
-#	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestKeyEventSimulation.java
+#$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestAutoSuiteStorage.java \
+#$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestHardwareEventListening.java \
+#$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestSwitchMidlets.java \
+#$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestPenEventSimulation.java \
+#$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestKeyEventSimulation.java
 endif
 
 ifeq ($(USE_AUTOMATION_EXAMPLE), true)

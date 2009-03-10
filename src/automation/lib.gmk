@@ -81,7 +81,6 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES = \
 	$(SUBSYSTEM_AUTOMATION_DIR)/stubs/classes/com/sun/midp/automation/AutomationInitializer.java
 endif
 
-
 ifeq ($(USE_AUTOMATION), true) 
 
 # If ROMUL isn't included, use stub version of ROMULInitializer
