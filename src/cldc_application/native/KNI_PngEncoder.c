@@ -26,6 +26,7 @@
 #include "KNICommon.h"
 #include "jsrop_exceptions.h"
 #include "javacall_multimedia.h"
+#include "midp_thread.h"
 
 /*  private static native byte[] encode0(byte[] rgbData, int w, int h); */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
@@ -33,41 +34,57 @@ KNIDECL(com_sun_mmedia_PNGEncoder_encode0) {
     jint w =  KNI_GetParameterAsInt(2);
     jint h =  KNI_GetParameterAsInt(3);
     jint rgbLen;
+    MidpReentryData* info;    
+    javacall_result res;
+    javacall_handle context;
+    jbyte* rgbData;
+    jbyte* pngData;
+    jint pngLen;
+        
     KNI_StartHandles(2);
     KNI_DeclareHandle(rgb);
     KNI_DeclareHandle(png);
     KNI_GetParameterAsObject(1, rgb);
     rgbLen = KNI_GetArrayLength(rgb);
-    do {
-        if (rgbLen > 0) {
-            jbyte* rgbData;
-            jbyte* pngData;
-            jint pngLen;
-            javacall_result res;
-            
-            rgbData = (jbyte*) JAVAME_MALLOC(rgbLen);
-            if (NULL == rgbData) {
-                KNI_ThrowNew(jsropOutOfMemoryError, NULL);
-                break;
-            }
-            KNI_GetRawArrayRegion(rgb, 0, rgbLen, (jbyte*)rgbData);
-
-            res = javacall_media_encode(rgbData, w, h, JAVACALL_PNG_ENCODER,
-                                        0, &pngData, &pngLen);
-            
-            if (JAVACALL_OK == res) {
-                SNI_NewArray(SNI_BYTE_ARRAY, pngLen, png);
-                if (!KNI_IsNullHandle(png)) {
-                    KNI_SetRawArrayRegion(png, 0, pngLen, pngData);
-                } else {
-                    KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+    info = (MidpReentryData*)SNI_GetReentryData(NULL);
+    if (NULL == info) {    
+        do {
+            if (rgbLen > 0) {
+               
+                rgbData = (jbyte*) JAVAME_MALLOC(rgbLen);
+                if (NULL == rgbData) {
+                    res = JAVACALL_OUT_OF_MEMORY;
+                    break;
                 }
-                javacall_media_release_data(pngData, pngLen);
-            } else if (JAVACALL_OUT_OF_MEMORY == res) {
-                KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+                KNI_GetRawArrayRegion(rgb, 0, rgbLen, (jbyte*)rgbData);
+    
+                res = javacall_media_encode_start(rgbData, w, h, JAVACALL_PNG_ENCODER,
+                                                  0, &pngData, &pngLen, &context);
+                
+                JAVAME_FREE(rgbData);
             }
-            JAVAME_FREE(rgbData);
+        } while ( 0 );
+    } else {
+        /* reinvocation */
+        context = info->pResult;
+        res = javacall_media_encode_finish(context, &pngData, &pngLen);
+    }
+
+    if (JAVACALL_OK == res) {
+        SNI_NewArray(SNI_BYTE_ARRAY, pngLen, png);
+        if (!KNI_IsNullHandle(png)) {
+            KNI_SetRawArrayRegion(png, 0, pngLen, pngData);
+        } else {
+            KNI_ThrowNew(jsropOutOfMemoryError, NULL);
         }
-    } while ( 0 );
+        javacall_media_release_data(pngData, pngLen);
+    } else if (JAVACALL_OUT_OF_MEMORY == res) {
+        KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+    } else if (JAVACALL_WOULD_BLOCK == res) {
+        midp_thread_wait(MEDIA_EVENT_SIGNAL, 
+                         MAKE_PLAYER_DESCRIPTOR((int)context, -1, JAVACALL_EVENT_MEDIA_ENCODE_COMPLETE), 
+                         NULL);
+    }
+    
     KNI_EndHandlesAndReturnObject(png);
 }
