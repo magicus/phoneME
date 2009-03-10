@@ -197,10 +197,11 @@ extern "C" {
 
 //=============================================================================
 
-static javacall_handle dshow_create(int appId, 
+static javacall_result dshow_create(int appId, 
     int playerId,
     jc_fmt mediaType,
-    const javacall_utf16_string URI)
+    const javacall_utf16_string URI, 
+    javacall_handle* pHandle)
 {
     dshow_player* p = new dshow_player;
 
@@ -232,7 +233,9 @@ static javacall_handle dshow_create(int appId,
     p->queue_tail       = NULL;
     p->queue_size       = 0;
 
-    return p;
+    *pHandle =(javacall_handle)p;
+
+    return JAVACALL_OK;
 }
 
 static javacall_result dshow_get_format(javacall_handle handle, jc_fmt* fmt)
