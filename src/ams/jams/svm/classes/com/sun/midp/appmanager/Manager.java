@@ -197,6 +197,12 @@ public class Manager extends MIDlet implements ApplicationManager,
          */
     }
 
+    /**
+     * Processes MIDP_ODD_REQUEST_INSTALLATION_EVENT.
+     *
+     * @param url URL to install from
+     * @param foce Installation "force" flag
+     */
     public void handleODDRequestInstallationEvent(String url, boolean force) {
         /**
          * Not used in SVM: suite is installed directly instead of sending
