@@ -1,4 +1,3 @@
-#
 #   
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
@@ -24,17 +23,21 @@
 # information or have any questions.
 #
 
-LIB_DESCRIPTION=OTA Library reference implementation
-LIB_VERSION=1.0
-LIB_DEPENDENCIES=ams/ams_api ams/ams_util ams/ams_base ams/ota_control
-LIB_JAVA_FILES= \
-    com/sun/midp/installer/DiscoveryApp.java \
-    com/sun/midp/installer/SuiteVerifier.java \
-    com/sun/midp/installer/InstallerResource.java \
-    com/sun/midp/installer/GraphicalInstaller.java \
-    com/sun/midp/installer/OtaNotifier.java
+############################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+############################################################
 
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(OTA_CONTROL_IMPL_DIR)/classes
+
+# Java files for the sub-system
 #
-# IMPL_NOTE: remove when decoupling is complete
-#
-LIB_USES_LEGACY_CLASSES=true
+SUBSYSTEM_AMS_JAVA_FILES += \
+    $(OTA_CONTROL_IMPL_DIR)/classes/com/sun/midp/installer/InstallerResultHandler.java \
+    $(OTA_CONTROL_IMPL_DIR)/classes/com/sun/midp/appmanager/InstallerResultEventListener.java

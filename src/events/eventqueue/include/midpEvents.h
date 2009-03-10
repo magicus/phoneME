@@ -272,6 +272,16 @@ extern "C" {
  */
 #define API_EXTENSIONS_SYSTEM_EVENT 74
 
+/**
+ * Request to install a MIDlet suite.
+ */
+#define MIDP_ODD_REQUEST_INSTALLATION_EVENT       75
+
+/**
+ * MIDlet suite installation has finished.
+ */
+#define MIDP_INSTALLATION_DONE_EVENT          76
+
 /** @} */
 
 /**

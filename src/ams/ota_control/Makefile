@@ -24,17 +24,4 @@
 # information or have any questions.
 #
 
-LIB_DESCRIPTION=OTA Library reference implementation
-LIB_VERSION=1.0
-LIB_DEPENDENCIES=ams/ams_api ams/ams_util ams/ams_base ams/ota_control
-LIB_JAVA_FILES= \
-    com/sun/midp/installer/DiscoveryApp.java \
-    com/sun/midp/installer/SuiteVerifier.java \
-    com/sun/midp/installer/InstallerResource.java \
-    com/sun/midp/installer/GraphicalInstaller.java \
-    com/sun/midp/installer/OtaNotifier.java
-
-#
-# IMPL_NOTE: remove when decoupling is complete
-#
-LIB_USES_LEGACY_CLASSES=true
+include $(CURDIR)/../../../build/share/genroot.make
