@@ -51,11 +51,15 @@ extern "C" {
  * interactive user agent. Changing this attribute changes the state of 
  * the form control, but does not change the value of the HTML selected 
  * attribute of the element.
+ *
  * 
  * @param handle Pointer to the object representing this htmloptionelement.
  * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
+ * @param ret_value The current state of the corresponding option element.
+ *
+ * @see #setSelected
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -78,8 +82,12 @@ javacall_dom_htmloptionelement_get_selected_start(javacall_handle handle,
  * interactive user agent. Changing this attribute changes the state of 
  * the form control, but does not change the value of the HTML selected 
  * attribute of the element.
+ *
  * 
  * @param context The context saved during asynchronous operation.
+ * @param ret_value The current state of the corresponding option element.
+ *
+ * @see #setSelected
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -98,11 +106,15 @@ javacall_dom_htmloptionelement_get_selected_finish(void *context,
  * interactive user agent. Changing this attribute changes the state of 
  * the form control, but does not change the value of the HTML selected 
  * attribute of the element.
+ *
  * 
  * @param handle Pointer to the object representing this htmloptionelement.
  * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
+ * @param selected The new state of that option element.
+ *
+ * @see #getSelected
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -125,8 +137,11 @@ javacall_dom_htmloptionelement_set_selected_start(javacall_handle handle,
  * interactive user agent. Changing this attribute changes the state of 
  * the form control, but does not change the value of the HTML selected 
  * attribute of the element.
+ *
  * 
  * @param context The context saved during asynchronous operation.
+ *
+ * @see #getSelected
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured

@@ -47,18 +47,25 @@ extern "C" {
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR  With [<a href='http://www.w3.org/TR/1999/REC-html401-19991224'>HTML 4.01</a>] documents, this method returns the (possibly empty) collection 
- * of elements whose <code>name</code> value is given by 
- * <code>element_name</code>. In [<a href='http://www.w3.org/TR/2002/REC-xhtml1-20020801'>XHTML 1.0</a>] documents, this methods only return the 
+ * OR with [<a href="http://www.w3.org/TR/1999/REC-html401-19991224">HTML
+ * 4.01</a>] documents, this method returns the (possibly empty) 
+ * collection of elements whose <code>name</code> value is given by 
+ * <code>element_name</code>. In 
+ * [<a href='http://www.w3.org/TR/2002/REC-xhtml1-20020801'>XHTML 1.0</a>] 
+ * documents, this method only returns the 
  * (possibly empty) collection of form controls with matching name. This 
- * method is case sensitive. 
+ * method is case sensitive. The argument <code>element_name</code> 
+ * <span class="rfc2119">may</span> be NULL in which case, an empty
+ * collection is returned.
+ *
  * 
  * @param handle Pointer to the object representing this htmldocument.
  * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
  * @param element_name The <code>name</code> attribute value for an 
- *   element.
+ * element.
+ *
  * @param ret_value Pointer to the object representing 
  *   the matching elements.
  * 
@@ -80,14 +87,21 @@ javacall_dom_htmldocument_get_elements_by_name_start(javacall_handle handle,
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR  With [<a href='http://www.w3.org/TR/1999/REC-html401-19991224'>HTML 4.01</a>] documents, this method returns the (possibly empty) collection 
- * of elements whose <code>name</code> value is given by 
- * <code>elementName</code>. In [<a href='http://www.w3.org/TR/2002/REC-xhtml1-20020801'>XHTML 1.0</a>] documents, this methods only return the 
+ * OR with [<a href="http://www.w3.org/TR/1999/REC-html401-19991224">HTML
+ * 4.01</a>] documents, this method returns the (possibly empty) 
+ * collection of elements whose <code>name</code> value is given by 
+ * <code>elementName</code>. In 
+ * [<a href='http://www.w3.org/TR/2002/REC-xhtml1-20020801'>XHTML 1.0</a>] 
+ * documents, this method only returns the 
  * (possibly empty) collection of form controls with matching name. This 
- * method is case sensitive. 
+ * method is case sensitive. The argument <code>elementName</code> 
+ * <span class="rfc2119">may</span> be NULL in which case, an empty
+ * collection is returned.
+ *
  * 
  * @param context The context saved during asynchronous operation.
- *   element.
+ * element.
+ *
  * @param ret_value Pointer to the object representing 
  *   the matching elements.
  * 
