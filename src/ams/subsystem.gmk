@@ -78,6 +78,7 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
         $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/ota_control/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/platform_request/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk \
         $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk \

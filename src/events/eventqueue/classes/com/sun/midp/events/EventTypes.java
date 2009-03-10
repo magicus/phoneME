@@ -438,4 +438,15 @@ public final class EventTypes {
      * Request to exit a running midlet from the debug agent to AMS.
      */
     public static final int MIDP_ODD_EXIT_MIDLET_EVENT = 70;
+
+    /**
+     * Request to install a MIDlet suite.
+     */
+    public static final int MIDP_ODD_REQUEST_INSTALLATION_EVENT = 75;
+
+    /**
+     * MIDlet suite installation has finished.
+     */
+    public static final int MIDP_INSTALLATION_DONE_EVENT = 76;
+    
 }

@@ -63,7 +63,9 @@ public class MVMManager extends MIDlet
                 ApplicationManager,
                 ODTControllerEventConsumer,
                 AMSServicesEventConsumer,
-                InstallerEventConsumer {
+                InstallerEventConsumer,
+                InstallerResultEventConsumer
+{
 
     /** Constant for the discovery application class name. */
     private static final String DISCOVERY_APP =
@@ -112,6 +114,7 @@ public class MVMManager extends MIDlet
         new ODTControllerEventListener(eq, this);
         new AMSServicesEventListener(eq, this);
         new InstallerEventListener(eq, this);
+        new InstallerResultEventListener(eq, this);
 
         midletProxyList = MIDletProxyList.getMIDletProxyList();
 
@@ -191,8 +194,8 @@ public class MVMManager extends MIDlet
         midletProxyList.setForegroundMIDlet(thisMidlet);
 
         if (suiteUnderDebugId != MIDletSuite.UNUSED_SUITE_ID) {
-            /* IMPL NOTE: this forces only one running MIDlet in debug mode - 
-             * the VM currently does not support more MIDlets in debug mode 
+            /* IMPL NOTE: this forces only one running MIDlet in debug mode -
+             * the VM currently does not support more MIDlets in debug mode
              * at the same time. */
             isDebugMode = false;
         }
@@ -239,6 +242,66 @@ public class MVMManager extends MIDlet
      */
     public void handleODDSuiteRemovedEvent(int suiteId) {
         appManager.notifySuiteRemoved(suiteId);
+    }
+
+
+    /**
+     * Processes MIDP_ODD_REQUEST_INSTALLATION_EVENT.
+     *
+     * @param url URL to install from
+     * @param foce Installation "force" flag
+     */
+    public void handleODDRequestInstallationEvent(String url, boolean force) {
+        String displayName =
+                Resource.getString(ResourceConstants.INSTALL_APPLICATION);
+        try {
+            MIDletSuiteUtils.executeWithArgs(MIDletSuite.INTERNAL_SUITE_ID,
+                                      INSTALLER,
+                                      displayName,
+                                      force ? "FI" : "I", url,
+                                      null);
+        } catch (Exception ex) {
+            displayError.showErrorAlert(displayName, ex, null, null);
+            handleODDInstallationDoneEvent(INSTALLER_RESULT_FAILURE,
+                    MIDletSuite.UNUSED_SUITE_ID, ex.getClass().getName(),
+                    ex.getMessage(), 0, null);
+        }
+    }
+
+
+    /**
+     * Processes MIDP_ODD_INSTALATION_DONE_EVENT.
+     *
+     * @param result One of INSTALLATION_RESULT_* values.
+     * @param suiteId Id of installed suite, UNUSED_SUITE_ID in case of
+     *                unsuccessful installation
+     * @param exception Name of the thrown exception if any
+     * @param message Message of the thrown exception if any
+     * @param reason Reason of the failure if applicable on the thrown exception
+     * @param extraData Extra data if applicable on the thrown exception
+     */
+    public void handleODDInstallationDoneEvent(int result, int suiteId,
+            String exception, String message, int reason, String extraData) {
+
+        MIDletProxy odtAgentMidlet = midletProxyList.findMIDletProxy(
+            MIDletSuite.INTERNAL_SUITE_ID, ODT_AGENT);
+
+        if (odtAgentMidlet == null) {
+            return;
+        }
+
+        EventQueue eq = EventQueue.getEventQueue();
+        NativeEvent event = new NativeEvent(
+                EventTypes.MIDP_INSTALLATION_DONE_EVENT);
+        event.intParam1    = result;
+        event.intParam2    = suiteId;
+        event.stringParam1 = exception;
+        event.stringParam2 = message;
+        event.intParam3    = reason;
+        event.stringParam3 = extraData;
+
+        eq.sendNativeEventToIsolate(event,
+                odtAgentMidlet.getIsolateId());
     }
 
     /**
@@ -434,7 +497,7 @@ public class MVMManager extends MIDlet
             NativeEvent event = new NativeEvent(
                     EventTypes.MIDP_ODD_MIDLET_EXITED_EVENT);
             event.intParam1    = suiteInfo.suiteId;
-            event.stringParam1 = odtAgentMidlet.getClassName();
+            event.stringParam1 = suiteInfo.midletToRun;
             eq.sendNativeEventToIsolate(event,
                     odtAgentMidlet.getIsolateId());
         }

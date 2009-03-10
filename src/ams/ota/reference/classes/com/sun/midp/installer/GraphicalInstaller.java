@@ -95,7 +95,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     public static final int SELECTED_MIDLET_RECORD_ID = 2;
     /** type of last installation: from web or storage source */
     public static final int LAST_INSTALLATION_SOURCE_RECORD_ID = 4;
-   
+
     /** The installer that is being used to install or update a suite. */
     private Installer installer;
     /** Display for this MIDlet. */
@@ -172,7 +172,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private boolean noConfirmation = false;
     /** true if runnning midlets from the suite being updated must be killed */
     private boolean killRunningMIDletIfUpdate = false;
-            
+
     /**
      * Gets an image from the internal storage.
      * <p>
@@ -425,7 +425,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     public GraphicalInstaller() {
         
         String arg0;
-           
+        
         display = Display.getDisplay(this);
         GraphicalInstaller.initSettings();
         
@@ -446,7 +446,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                 exit(false);
                 return;
             }
-              
+            
            if ("U".equals(arg0)) {
                 String strSuiteID = getAppProperty("arg-1");
                 int suiteId = MIDletSuite.UNUSED_SUITE_ID;
@@ -612,14 +612,17 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                  */
                 synchronized (this) {
                     if (installer.stopInstalling()) {
+                        InstallerResultHandler.notifyRequestCanceled();
                         displayCancelledMessage(cancelledMessage);
                     }
                 }
             } else {
                 // goto back to the manager midlet
+                InstallerResultHandler.notifyRequestCanceled();
                 exit(false);
             }
         } else if (c == cancelCmd) {
+            InstallerResultHandler.notifyRequestCanceled();
             displayCancelledMessage(cancelledMessage);
             cancelBackgroundInstall();
         } else if (c == Alert.DISMISS_COMMAND) {
@@ -1763,6 +1766,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                          */
                         parent.preventScreenFlash();
 
+                        InstallerResultHandler.notifyRequestSucceeded(lastInstalledMIDletId);
                         parent.exit(true);
                     } catch (InvalidJadException ije) {
                         int reason = ije.getReason();
@@ -1793,6 +1797,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                             break;
                         }
 
+                        InstallerResultHandler.notifyRequestFailed(ije);
                         msg = GraphicalInstaller.translateJadException(
                             ije, name, null, null, url);
                     } catch (MIDletSuiteLockedException msle) {
@@ -1809,6 +1814,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                     ResourceConstants.AMS_GRA_INTLR_LOCKED,
                                         values);
                             }
+                            InstallerResultHandler.notifyRequestFailed(msle);
                         } else {
                              /*
                               * Kill running midlets from the suite being
@@ -1897,6 +1903,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                 InstallerResource.IO_EXCEPTION_MESSAGE)
                                     + ":" + urlToShow;
                              }
+                        InstallerResultHandler.notifyRequestFailed(ioe);
                     } catch (Throwable ex) {
                         if (Logging.TRACE_ENABLED) {
                             Logging.trace(ex, "Exception caught " +
@@ -1904,6 +1911,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                         }
 
                         msg = ex.getClass().getName() + ": " + ex.getMessage();
+                        InstallerResultHandler.notifyRequestFailed(ex);
                     }
 
                 } while (tryAgain);
@@ -2142,4 +2150,5 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             }
         }
     }
+
 }

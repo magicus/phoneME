@@ -256,6 +256,16 @@ extern "C" {
  */
 #define MIDP_ODD_EXIT_MIDLET_EVENT      70
 
+/**
+ * Request to install a MIDlet suite.
+ */
+#define MIDP_ODD_REQUEST_INSTALLATION_EVENT       75
+
+/**
+ * MIDlet suite installation has finished.
+ */
+#define MIDP_INSTALLATION_DONE_EVENT          76
+
 /** @} */
 
 /**

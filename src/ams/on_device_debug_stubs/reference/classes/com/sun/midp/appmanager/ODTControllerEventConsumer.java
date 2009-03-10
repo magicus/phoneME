@@ -72,4 +72,13 @@ interface ODTControllerEventConsumer {
      * @param suiteId ID of the removed midlet suite          
      */
     public void handleODDSuiteRemovedEvent(int suiteId);
+
+ 
+    /**
+     * Processes MIDP_ODD_REQUEST_INSTALLATION_EVENT.
+     *
+     * @param url URL to install from
+     * @param foce Installation "force" flag
+     */
+    public void handleODDRequestInstallationEvent(String url, boolean foce);
 }
