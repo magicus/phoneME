@@ -197,6 +197,13 @@ public class Manager extends MIDlet implements ApplicationManager,
          */
     }
 
+    public void handleODDRequestInstallationEvent(String url, boolean force) {
+        /**
+         * Not used in SVM: suite is installed directly instead of sending
+         * a message to AMS.
+         */
+    }    
+
     /**
      * Processes MIDP_ODD_EXIT_MIDLET_EVENT.
      *
