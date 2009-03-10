@@ -65,7 +65,7 @@ void anc_show_trusted_indicator(jboolean isTrusted) {
  */
 extern "C"
 void anc_set_network_indicator(int counter) {
-    IndicatorBar::setNetworkOn(counter);
+    IndicatorBar::setNetworkOn((bool)counter);
 }
 
 /**
