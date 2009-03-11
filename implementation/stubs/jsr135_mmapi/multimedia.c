@@ -1421,7 +1421,7 @@ javacall_result javacall_media_encode_start(javacall_uint8* rgb888,
                                             javacall_uint8** result_buffer,
                                             javacall_uint32* result_buffer_len,
                                             javacall_handle* context) {
- return JAVACALL_FAIL;
+ return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /**
@@ -1445,8 +1445,7 @@ javacall_result javacall_media_encode_start(javacall_uint8* rgb888,
 javacall_result javacall_media_encode_finish(javacall_handle context,
                                              javacall_uint8** result_buffer, 
                                              javacall_uint32* result_buffer_len) {
-    // should never be called
-    return JAVACALL_FAIL;
+    return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /**
@@ -1457,5 +1456,5 @@ javacall_result javacall_media_encode_finish(javacall_handle context,
  * @param result_buffer_len the buffer length
  */
 void javacall_media_release_data(javacall_uint8* result_buffer, javacall_uint32 result_buffer_len) {
-    javacall_free(result_buffer);
+    // NOT IMPLEMENTED
 }

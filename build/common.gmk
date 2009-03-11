@@ -173,13 +173,11 @@ endif
 
 ifeq ($(USE_JC_JPEG), true)
 JPEG_JC_DIR = $(JAVACALL_DIR)/implementation/share/jpeg
-JAVACALL_SOURCE_OUTPUT_LIST += implementation/share/jpeg
 include $(JPEG_JC_DIR)/module.gmk
 endif
 
 ifeq ($(USE_JC_PNG), true)
 PNG_JC_DIR = $(JAVACALL_DIR)/implementation/share/png
-JAVACALL_SOURCE_OUTPUT_LIST += implementation/share/png
 include $(PNG_JC_DIR)/module.gmk
 endif
 

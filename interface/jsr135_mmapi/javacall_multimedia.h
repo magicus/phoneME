@@ -1043,19 +1043,22 @@ typedef enum {
  * @param quality       [IN]quality of encoded image (for format
  *                      with losses)
  * @param result_buffer [OUT]a pointer where result buffer will
- *                      be stored
+ *                      be stored. Must be released by
+ *                      <tt>javacall_media_release_data</tt>.
  * @param result_buffer_len [OUT] a pointer for result buffer
  *                          size
  * @param context       [OUT] a context saved during
  *                      asynchronous operation
  * 
- * @return  JAVACALL_OK  in case of success,
- *          JAVACALL_OUT_OF_MEMORY if there is no memory for
+ * @retval  JAVACALL_OK  in case of success,
+ * @retval  JAVACALL_OUT_OF_MEMORY if there is no memory for
  *          destination buffer
- *          JAVACALL_FAIL if encoder failed
+ * @retval  JAVACALL_FAIL if encoder failed
  *          JAVACALL_WOULD_BLOCK if operation requires time to
  *          complete, an application should call
- *          <tt>javacall_media_encode_finish</tt> to get result
+ *          <tt>javacall_media_encode_finish</tt> later in
+ *          respose to JAVACALL_EVENT_MEDIA_ENCODE_COMPLETE
+ *          event.
  */
 javacall_result javacall_media_encode_start(javacall_uint8* rgb888, javacall_uint8 width, javacall_uint8 height,
                                             javacall_encoder_type encode, javacall_uint8 quality,
@@ -1066,24 +1069,30 @@ javacall_result javacall_media_encode_start(javacall_uint8* rgb888, javacall_uin
  * Finish encode procedure for given raw RGB888 image.
  * 
  * @param result_buffer [OUT]a pointer where result buffer will
- *                      be stored
+ *                      be stored. Must be released by
+ *                      <tt>javacall_media_release_data</tt>.
  * @param result_buffer_len [OUT] a pointer for result buffer
  *                          size
- * @param context       [OUT] a context saved during
+ * @param context       [IN] a context saved during
  *                      asynchronous operation
  * 
- * @return  JAVACALL_OK  in case of success,
- *          JAVACALL_OUT_OF_MEMORY if there is no memory for
- *          destination buffer
- *          JAVACALL_FAIL if encoder failed
- *          JAVACALL_WOULD_BLOCK if operation requires time to
- *          complete, an application should call
- *          <tt>javacall_media_encode_finish</tt> to get result
+ * @retval  JAVACALL_OK  in case of success
+ * @retval  JAVACALL_OUT_OF_MEMORY if there is no memory
+ *          for destination buffer
+ * @retval  JAVACALL_FAIL if encoder failed
+ * @retval  JAVACALL_WOULD_BLOCK if operation requires time to
+ *          complete, an application should recall this function
+ *          later again. Generally this error code means that
+ *          blocked java thread was unblocked at wrong time,
+ *          probably due to implemenetation bug.
+ * 
  */
 javacall_result javacall_media_encode_finish(javacall_handle context,
                                              javacall_uint8** result_buffer, javacall_uint32* result_buffer_len);
 /**
- * Release a data was acuired by <tt>javacall_media_encode</tt>
+ * Release a data was acuired by
+ * <tt>javacall_media_encode_start</tt> or
+ * <tt>javacall_media_encode_finish</tt>
  * 
  * @param result_buffer     a pointer to a buffer need to be
  *                          released
