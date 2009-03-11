@@ -1024,8 +1024,23 @@ javacall_result javacall_media_get_video_snapshot_data(javacall_handle handle,
   */
  javacall_result javacall_media_set_video_full_screen_mode(javacall_handle handle, javacall_bool fullScreenMode);
 
+/** @} */
+
+ /**
+ * @defgroup MediaOptionalImageEncoding  Optional image encoding
+ *           API
+ * @ingroup JSR135
+ * 
+ * @brief Image encoding is used by snapshot API if native player
+ *        doesn't provide such functionality.
+ * 
+ * @note  Currently it is used for GIF player snapshot only.
+ *
+ * @{
+ */
+ 
 /**
- * struct javacall_encoder_type
+ * @enum javacall_encoder_type
  * @brief Supported native encoders
  */
 typedef enum {
@@ -1044,7 +1059,8 @@ typedef enum {
  *                      with losses)
  * @param result_buffer [OUT]a pointer where result buffer will
  *                      be stored. Must be released by
- *                      <tt>javacall_media_release_data</tt>.
+ *                      <tt>javacall_media_release_data</tt>
+ *                      when it is no more need.
  * @param result_buffer_len [OUT] a pointer for result buffer
  *                          size
  * @param context       [OUT] a context saved during
@@ -1070,7 +1086,8 @@ javacall_result javacall_media_encode_start(javacall_uint8* rgb888, javacall_uin
  * 
  * @param result_buffer [OUT]a pointer where result buffer will
  *                      be stored. Must be released by
- *                      <tt>javacall_media_release_data</tt>.
+ *                      <tt>javacall_media_release_data</tt>
+ *                      when it is no more need.
  * @param result_buffer_len [OUT] a pointer for result buffer
  *                          size
  * @param context       [IN] a context saved during
@@ -1080,8 +1097,8 @@ javacall_result javacall_media_encode_start(javacall_uint8* rgb888, javacall_uin
  * @retval  JAVACALL_OUT_OF_MEMORY if there is no memory
  *          for destination buffer
  * @retval  JAVACALL_FAIL if encoder failed
- * @retval  JAVACALL_WOULD_BLOCK if operation requires time to
- *          complete, an application should recall this function
+ * @retval  JAVACALL_WOULD_BLOCK if operation is not complete
+ *          yet, an application should recall this function
  *          later again. Generally this error code means that
  *          blocked java thread was unblocked at wrong time,
  *          probably due to implemenetation bug.
@@ -1101,7 +1118,7 @@ javacall_result javacall_media_encode_finish(javacall_handle context,
 void javacall_media_release_data(javacall_uint8* result_buffer, javacall_uint32 result_buffer_len);
 
 /** @} */
-
+ 
 /**********************************************************************************/
 
 /**
