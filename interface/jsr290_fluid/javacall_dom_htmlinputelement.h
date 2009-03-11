@@ -47,23 +47,81 @@ extern "C" {
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR select the contents of the text area. For <code>INPUT</code> elements 
+ * whose <code>type</code> attribute has one of the following values: 
+ * "text", "file", or "password".
+ *
+ * <p>Please note that this method does nothing in case the type has none
+ * of the above listed values.</p>
+ * 
+ * @param handle Pointer to the object representing this htmlinputelement.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlinputelement_select_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlinputelement_select_start(javacall_handle handle,
+                                           javacall_int32 invocation_id,
+                                           void **context);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR select the contents of the text area. For <code>INPUT</code> elements 
+ * whose <code>type</code> attribute has one of the following values: 
+ * "text", "file", or "password".
+ *
+ * <p>Please note that this method does nothing in case the type has none
+ * of the above listed values.</p>
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlinputelement_select_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlinputelement_select_finish(void *context);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns when the <code>type</code> attribute of the element has the value 
  * "radio" or "checkbox", this represents the current state of the form 
  * control, in an interactive user agent. Changes to this attribute 
  * change the state of the form control, but do not change the value of 
- * the HTML checked attribute of the INPUT element.During the handling 
+ * the HTML checked attribute of the INPUT element. 
+ *
+ * <p>During the handling 
  * of a click event on an input element with a type attribute that has 
  * the value "radio" or "checkbox", some implementations may change the 
  * value of this property before the event is being dispatched in the 
  * document. If the default action of the event is canceled, the value 
  * of the property may be changed back to its original value. This means 
  * that the value of this property during the handling of click events 
- * is implementation dependent.
+ * is implementation dependent.</p>
+ *
+ * <p>In any cases, the value returned is <code>true</code> 
+ * if explicitly set.</p>
+ *
  * 
  * @param handle Pointer to the object representing this htmlinputelement.
  * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
+ * @param ret_value Whether the form control is checked or not.
+ *
+ * @see #setChecked
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -86,16 +144,25 @@ javacall_dom_htmlinputelement_get_checked_start(javacall_handle handle,
  * "radio" or "checkbox", this represents the current state of the form 
  * control, in an interactive user agent. Changes to this attribute 
  * change the state of the form control, but do not change the value of 
- * the HTML checked attribute of the INPUT element.During the handling 
+ * the HTML checked attribute of the INPUT element. 
+ *
+ * <p>During the handling 
  * of a click event on an input element with a type attribute that has 
  * the value "radio" or "checkbox", some implementations may change the 
  * value of this property before the event is being dispatched in the 
  * document. If the default action of the event is canceled, the value 
  * of the property may be changed back to its original value. This means 
  * that the value of this property during the handling of click events 
- * is implementation dependent.
+ * is implementation dependent.</p>
+ *
+ * <p>In any cases, the value returned is <code>true</code> 
+ * if explicitly set.</p>
+ *
  * 
  * @param context The context saved during asynchronous operation.
+ * @param ret_value Whether the form control is checked or not.
+ *
+ * @see #setChecked
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -110,6 +177,79 @@ javacall_dom_htmlinputelement_get_checked_finish(void *context,
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets when the <code>type</code> attribute of the element has the value 
+ * "radio" or "checkbox", this represents the current state of the form 
+ * control, in an interactive user agent. Changes to this attribute 
+ * change the state of the form control, but do not change the value of 
+ * the HTML checked attribute of the INPUT element. 
+ *
+ * <p>During the handling 
+ * of a click event on an input element with a type attribute that has 
+ * the value "radio" or "checkbox", some implementations may change the 
+ * value of this property before the event is being dispatched in the 
+ * document. If the default action of the event is canceled, the value 
+ * of the property may be changed back to its original value. This means 
+ * that the value of this property during the handling of click events 
+ * is implementation dependent.</p>
+ *
+ * 
+ * @param handle Pointer to the object representing this htmlinputelement.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * @param checked The new state of the form control.
+ *
+ * @see #getChecked
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlinputelement_set_checked_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlinputelement_set_checked_start(javacall_handle handle,
+                                                javacall_int32 invocation_id,
+                                                void **context,
+                                                javacall_bool checked);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR sets when the <code>type</code> attribute of the element has the value 
+ * "radio" or "checkbox", this represents the current state of the form 
+ * control, in an interactive user agent. Changes to this attribute 
+ * change the state of the form control, but do not change the value of 
+ * the HTML checked attribute of the INPUT element. 
+ *
+ * <p>During the handling 
+ * of a click event on an input element with a type attribute that has 
+ * the value "radio" or "checkbox", some implementations may change the 
+ * value of this property before the event is being dispatched in the 
+ * document. If the default action of the event is canceled, the value 
+ * of the property may be changed back to its original value. This means 
+ * that the value of this property during the handling of click events 
+ * is implementation dependent.</p>
+ *
+ * 
+ * @param context The context saved during asynchronous operation.
+ *
+ * @see #getChecked
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmlinputelement_set_checked_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmlinputelement_set_checked_finish(void *context);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns when the <code>type</code> attribute of the element has the value 
  * "text", "file" or "password", this represents the current contents of 
  * the corresponding form control, in an interactive user agent. 
@@ -119,11 +259,25 @@ javacall_dom_htmlinputelement_get_checked_finish(void *context,
  * "button", "hidden", "submit", "reset", "image", "checkbox" or 
  * "radio", this represents the HTML value attribute of the element. See 
  * the value attribute definition in HTML 4.01.
+ *
+ * <!--
+ * <p><i>Implementation note</i>: please refer to the implementation note
+ * found in <code>setValue()</code>.</p>
+ * -->
+ *
  * 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this htmlinputelement.
  * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
+ * @param ret_value The content of the value attribute of that form control.
+ *
+ * @see #setValue
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -153,8 +307,22 @@ javacall_dom_htmlinputelement_get_value_start(javacall_handle handle,
  * "button", "hidden", "submit", "reset", "image", "checkbox" or 
  * "radio", this represents the HTML value attribute of the element. See 
  * the value attribute definition in HTML 4.01.
+ *
+ * <!--
+ * <p><i>Implementation note</i>: please refer to the implementation note
+ * found in <code>setValue()</code>.</p>
+ * -->
+ *
  * 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
+ *       with actual length of the returned string.
+ *
  * @param context The context saved during asynchronous operation.
+ * @param ret_value The content of the value attribute of that form control.
+ *
+ * @see #setValue
+ * @param ret_value_len Number of code_units of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -172,111 +340,6 @@ javacall_dom_htmlinputelement_get_value_finish(void *context,
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR select the contents of the text area. For <code>INPUT</code> elements 
- * whose <code>type</code> attribute has one of the following values: 
- * "text", "file", or "password".
- * 
- * @param handle Pointer to the object representing this htmlinputelement.
- * @param invocation_id Invocation identifier which MUST be used in the 
- *                  corresponding javanotify function.
- * @param context The context saved during asynchronous operation.
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
- *             context,
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_htmlinputelement_select_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_htmlinputelement_select_start(javacall_handle handle,
-                                           javacall_int32 invocation_id,
-                                           void **context);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR select the contents of the text area. For <code>INPUT</code> elements 
- * whose <code>type</code> attribute has one of the following values: 
- * "text", "file", or "password".
- * 
- * @param context The context saved during asynchronous operation.
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_htmlinputelement_select_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_htmlinputelement_select_finish(void *context);
-
-/**
-  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR sets when the <code>type</code> attribute of the element has the value 
-  * "radio" or "checkbox", this represents the current state of the form 
-  * control, in an interactive user agent. Changes to this attribute 
-  * change the state of the form control, but do not change the value of 
-  * the HTML checked attribute of the INPUT element.During the handling 
-  * of a click event on an input element with a type attribute that has 
-  * the value "radio" or "checkbox", some implementations may change the 
-  * value of this property before the event is being dispatched in the 
-  * document. If the default action of the event is canceled, the value 
-  * of the property may be changed back to its original value. This means 
-  * that the value of this property during the handling of click events 
-  * is implementation dependent.
-  * 
- * @param handle Pointer to the object representing this htmlinputelement.
- * @param invocation_id Invocation identifier which MUST be used in the 
- *                  corresponding javanotify function.
- * @param context The context saved during asynchronous operation.
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
- *             context,
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_htmlinputelement_set_checked_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_htmlinputelement_set_checked_start(javacall_handle handle,
-                                                javacall_int32 invocation_id,
-                                                void **context,
-                                                javacall_bool checked);
-
-/**
-  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR sets when the <code>type</code> attribute of the element has the value 
-  * "radio" or "checkbox", this represents the current state of the form 
-  * control, in an interactive user agent. Changes to this attribute 
-  * change the state of the form control, but do not change the value of 
-  * the HTML checked attribute of the INPUT element.During the handling 
-  * of a click event on an input element with a type attribute that has 
-  * the value "radio" or "checkbox", some implementations may change the 
-  * value of this property before the event is being dispatched in the 
-  * document. If the default action of the event is canceled, the value 
-  * of the property may be changed back to its original value. This means 
-  * that the value of this property during the handling of click events 
-  * is implementation dependent.
-  * 
- * @param context The context saved during asynchronous operation.
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_htmlinputelement_set_checked_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_htmlinputelement_set_checked_finish(void *context);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR sets when the <code>type</code> attribute of the element has the value 
  * "text", "file" or "password", this represents the current contents of 
  * the corresponding form control, in an interactive user agent. 
@@ -286,11 +349,26 @@ javacall_dom_htmlinputelement_set_checked_finish(void *context);
  * "button", "hidden", "submit", "reset", "image", "checkbox" or 
  * "radio", this represents the HTML value attribute of the element. See 
  * the value attribute definition in HTML 4.01.
+ *
+ * <!--
+ * <p><i>Implementation note</i>: Please note that various implementations
+ * of the Document Object Model (DOM) Level 2 HTML Specification 
+ * interprete setting <code>HTMLInputElement</code>'s <code>value</code>
+ * (here by means of <code>setValue()</code>) to <code>NULL</code>
+ * differently, resulting in <code>value</code> being effectively set to 
+ * e.g. <code>NULL</code> or the empty string <code>""</code> or the
+ * string <code>"NULL"</code>. Reading the <code>value</code> subsequently
+ * (here by mean of <code>getValue()</code>) may return any of these.</p>
+ * -->
+ *
  * 
  * @param handle Pointer to the object representing this htmlinputelement.
  * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
+ * @param value The new content of that form control.
+ *
+ * @see #getValue
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -318,8 +396,22 @@ javacall_dom_htmlinputelement_set_value_start(javacall_handle handle,
  * "button", "hidden", "submit", "reset", "image", "checkbox" or 
  * "radio", this represents the HTML value attribute of the element. See 
  * the value attribute definition in HTML 4.01.
+ *
+ * <!--
+ * <p><i>Implementation note</i>: Please note that various implementations
+ * of the Document Object Model (DOM) Level 2 HTML Specification 
+ * interprete setting <code>HTMLInputElement</code>'s <code>value</code>
+ * (here by means of <code>setValue()</code>) to <code>NULL</code>
+ * differently, resulting in <code>value</code> being effectively set to 
+ * e.g. <code>NULL</code> or the empty string <code>""</code> or the
+ * string <code>"NULL"</code>. Reading the <code>value</code> subsequently
+ * (here by mean of <code>getValue()</code>) may return any of these.</p>
+ * -->
+ *
  * 
  * @param context The context saved during asynchronous operation.
+ *
+ * @see #getValue
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured

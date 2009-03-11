@@ -47,60 +47,6 @@ extern "C" {
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR returns represents the current contents of the corresponding form control, in 
- * an interactive user agent. Changing this attribute changes the 
- * contents of the form control, but does not change the contents of the 
- * element. If the entirety of the data can not fit into a single 
- * <code>DOMString</code>, the implementation may truncate the data.
- * 
- * @param handle Pointer to the object representing this htmltextareaelement.
- * @param invocation_id Invocation identifier which MUST be used in the 
- *                  corresponding javanotify function.
- * @param context The context saved during asynchronous operation.
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
- *             context or if length of the returend string is more then 
- *             specified in ret_value_len,
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_htmltextareaelement_get_value_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_htmltextareaelement_get_value_start(javacall_handle handle,
-                                                 javacall_int32 invocation_id,
-                                                 void **context,
-                                                 /* OUT */ javacall_utf16** ret_value,
-                                                 /* INOUT */ javacall_uint32* ret_value_len);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR returns represents the current contents of the corresponding form control, in 
- * an interactive user agent. Changing this attribute changes the 
- * contents of the form control, but does not change the contents of the 
- * element. If the entirety of the data can not fit into a single 
- * <code>DOMString</code>, the implementation may truncate the data.
- * 
- * @param context The context saved during asynchronous operation.
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *             specified in ret_value_len,
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_htmltextareaelement_get_value_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_htmltextareaelement_get_value_finish(void *context,
-                                                  /* OUT */ javacall_utf16** ret_value,
-                                                  /* INOUT */ javacall_uint32* ret_value_len);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR select the contents of the <code>TEXTAREA</code>.
  * 
  * @param handle Pointer to the object representing this htmltextareaelement.
@@ -140,16 +86,96 @@ javacall_dom_htmltextareaelement_select_finish(void *context);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns represents the current contents of the corresponding form control, in 
+ * an interactive user agent. Changing this attribute changes the 
+ * contents of the form control, but does not change the contents of the 
+ * element. The implementation <span class="rfc2119">may</span> truncate
+ * the content if the entirety of the data does not fit in the DOM
+ * implementation data type (e.g. <code>DOMString</code>).
+ *
+ * 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
+ *       with actual length of the returned string.
+ *
+ * @param handle Pointer to the object representing this htmltextareaelement.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value The current content of that text area.
+ *
+ * @see #setValue
+ * @param ret_value_len Number of code_units of the returned string
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context or if length of the returend string is more then 
+ *             specified in ret_value_len,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmltextareaelement_get_value_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmltextareaelement_get_value_start(javacall_handle handle,
+                                                 javacall_int32 invocation_id,
+                                                 void **context,
+                                                 /* OUT */ javacall_utf16** ret_value,
+                                                 /* INOUT */ javacall_uint32* ret_value_len);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns represents the current contents of the corresponding form control, in 
+ * an interactive user agent. Changing this attribute changes the 
+ * contents of the form control, but does not change the contents of the 
+ * element. The implementation <span class="rfc2119">may</span> truncate
+ * the content if the entirety of the data does not fit in the DOM
+ * implementation data type (e.g. <code>DOMString</code>).
+ *
+ * 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
+ *       with actual length of the returned string.
+ *
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value The current content of that text area.
+ *
+ * @see #setValue
+ * @param ret_value_len Number of code_units of the returned string
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *             specified in ret_value_len,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_htmltextareaelement_get_value_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_htmltextareaelement_get_value_finish(void *context,
+                                                  /* OUT */ javacall_utf16** ret_value,
+                                                  /* INOUT */ javacall_uint32* ret_value_len);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR sets represents the current contents of the corresponding form control, in 
  * an interactive user agent. Changing this attribute changes the 
  * contents of the form control, but does not change the contents of the 
- * element. If the entirety of the data can not fit into a single 
- * <code>DOMString</code>, the implementation may truncate the data.
+ * element. The implementation <span class="rfc2119">may</span> truncate
+ * the content if the entirety of the data does not fit in the DOM
+ * implementation data type (e.g. <code>DOMString</code>).
+ *
  * 
  * @param handle Pointer to the object representing this htmltextareaelement.
  * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
+ * @param value The new content of that text area. This string <span 
+ * class="rfc2119">may</span> be <code>NULL</code>.
+ *
+ * @see #getValue
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -171,10 +197,15 @@ javacall_dom_htmltextareaelement_set_value_start(javacall_handle handle,
  * OR sets represents the current contents of the corresponding form control, in 
  * an interactive user agent. Changing this attribute changes the 
  * contents of the form control, but does not change the contents of the 
- * element. If the entirety of the data can not fit into a single 
- * <code>DOMString</code>, the implementation may truncate the data.
+ * element. The implementation <span class="rfc2119">may</span> truncate
+ * the content if the entirety of the data does not fit in the DOM
+ * implementation data type (e.g. <code>DOMString</code>).
+ *
  * 
  * @param context The context saved during asynchronous operation.
+ * class="rfc2119">may</span> be <code>NULL</code>.
+ *
+ * @see #getValue
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
