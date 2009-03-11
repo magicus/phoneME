@@ -1185,9 +1185,6 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 h->wav.stream = NULL;
             }
 
-            h->wav.bytesPerMilliSec = (h->wav.rate *
-                h->wav.channels * (h->wav.bits >> 3)) / 1000;
-
             if(h->wav.stream != NULL) {
                 mQ234_EffectModule_addPlayer(
                     g_QSoundGM[gmIdx].EM135, h->wav.stream);
@@ -1196,7 +1193,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
 
             JC_MM_DEBUG_PRINT4( 
                 "wavBuffered: bytes=%d rate=%d channels=%d bits=%d\n",
-                h->wav.streamBufferLen, h->wav.rate,
+                h->wav.playBufferLen, h->wav.rate,
                 h->wav.channels, h->wav.bits);
         break;
 #if( defined( ENABLE_AMR ) && ( defined( AMR_USE_QSOUND ) || defined( AMR_USE_QT )))
@@ -1589,11 +1586,6 @@ static javacall_result audio_qs_start(javacall_handle handle){
 
     h->hdr.state = PL135_STARTED;
    
-    if (JAVACALL_OK == audio_qs_get_duration(handle, &duration) && 
-            duration != -1) {
-        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DURATION_UPDATED,
-            h->hdr.isolateID, h->hdr.playerID, JAVACALL_OK, (void*)duration);
-    }
     //printf("audio_start...\n");
     switch(h->hdr.mediaType)
     {
@@ -1895,7 +1887,7 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
         case JC_FMT_MS_PCM:
         {
             if(h->wav.bytesPerMilliSec != 0 && (h->hdr.dataEnded || h->hdr.dataStopped))
-                *ms = h->wav.playBufferLen / h->wav.bytesPerMilliSec;
+                *ms = h->wav.dataChunkLen / h->wav.bytesPerMilliSec;
         }
         break;
 
