@@ -85,7 +85,7 @@ KNIDECL(com_sun_mmedia_JPEGEncoder_encode0) {
         midp_thread_wait(MEDIA_EVENT_SIGNAL, 
                          MAKE_PLAYER_DESCRIPTOR((int)context, -1, JAVACALL_EVENT_MEDIA_ENCODE_COMPLETE), 
                          context);
-    } else {
+    } else { 
         // video.snapshot.encodings is not configured properly
         // or wrong application behavior
         // or native encoder failure (not covered by API)
