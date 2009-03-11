@@ -56,6 +56,7 @@ int wav_setStreamPlayerData(ah_wav *wav) {
         /* Only data chunk does not require full presence */
         if (wc->chnk_id == CHUNKID_data) {
             dc = (struct datachnk *)data;
+            wav->dataChunkLen = dc->chnk_ds;
             if (wav->playBuffer == NULL) {
                 /* data chunk contents is the playBuffer */
                 wav->playBuffer = data + sizeof(struct datachnk);

@@ -108,6 +108,7 @@ typedef struct {
     /* Decoded data variables */
     unsigned char           *playBuffer;
     int                     playBufferLen;
+    int                     dataChunkLen;
     int                     playPos;
     int                     bytesPerMilliSec;
     javacall_bool           buffering;

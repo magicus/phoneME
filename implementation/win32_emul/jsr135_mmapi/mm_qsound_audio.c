@@ -1189,7 +1189,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
 
             JC_MM_DEBUG_PRINT4( 
                 "wavBuffered: bytes=%d rate=%d channels=%d bits=%d\n",
-                h->wav.streamBufferLen, h->wav.rate,
+                h->wav.playBufferLen, h->wav.rate,
                 h->wav.channels, h->wav.bits);
         break;
 #if( defined( ENABLE_AMR ) && ( defined( AMR_USE_QSOUND ) || defined( AMR_USE_QT )))
@@ -1866,23 +1866,14 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
         case JC_FMT_MS_PCM:
         {
             if(h->wav.bytesPerMilliSec != 0 && (h->hdr.dataEnded || h->hdr.dataStopped))
-                *ms = h->wav.playBufferLen / h->wav.bytesPerMilliSec;
+                *ms = h->wav.dataChunkLen / h->wav.bytesPerMilliSec;
         }
         break;
 
         case JC_FMT_AMR: // will need revisit when real streaming will be used
         {
-            if( h->wav.bytesPerMilliSec != 0 )
-            {
-                if( h->hdr.wholeContentSize > 0 )
-                {
-                    *ms = h->hdr.wholeContentSize / h->wav.bytesPerMilliSec;
-                }
-                else if( h->hdr.dataEnded || h->hdr.dataStopped )
-                {
-                    *ms = h->hdr.dataBufferLen / h->wav.bytesPerMilliSec;
-                }
-            }
+            if(h->wav.bytesPerMilliSec != 0 && (h->hdr.dataEnded || h->hdr.dataStopped))
+                *ms = h->hdr.dataBufferLen / h->wav.bytesPerMilliSec;
         }
         break;
 
