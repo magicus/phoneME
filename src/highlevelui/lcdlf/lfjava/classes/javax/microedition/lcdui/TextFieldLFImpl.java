@@ -994,7 +994,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
     }
    
     /**
-     * Returns true if the keyCode is used as 'clear'
+     * Returns true if the keyCode is used as 'clear
      * @param keyCode key code
      * @return true if keu code is Clear one, false otherwise
      */
@@ -1219,10 +1219,10 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * @param keyCode the code for the key which was pressed
      */
     void uCallKeyPressed(int keyCode) {
-        boolean theSameKey = timers.contains(new TimerKey(keyCode));
+        boolean theSameKey = longKeys.contains(new Integer(keyCode));
 
         if (!theSameKey) {
-            setTimerKey(keyCode);
+            setLongKey(keyCode);
         }
 
         synchronized (Display.LCDUILock) {
@@ -1334,7 +1334,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
          * constants definition file
         */
 
-        cancelTimerKey(keyCode);
+        clearLongKey(keyCode);
     }
 
     /**
@@ -1354,103 +1354,31 @@ class TextFieldLFImpl extends ItemLFImpl implements
     }
 
 
-    /** Timer to indicate long key press */
-    class TimerKey extends TimerTask {
-        /** handling key */
-        private int key;
-
-        /**
-         * Default constructor for TimerKey
-         * @param key key code
-         */
-        TimerKey(int key) {
-            this.key = key;
-        }
-
-        /**
-         * As soon as timer occures uCallKeyPressed has to be called
-         * and timer has to be stopped
-         */
-        
-        public final void run() {
-            uCallKeyPressed(key);
-            stop();
-        }
-
-        /**
-         * Start the timer for the pressed key.
-         * Add this timer to the active pool. 
-         */
-        public void start() {
-            timerService.schedule(this, 700);
-            timers.addElement(this);
-        }
-
-        /**
-         * Stop the timer for the pressed key.
-         * Remove this timer from the active pool.
-         */
-        public void stop() {
-            cancel();
-            timers.removeElement(this);             
-        }
-        
-        /**
-         * just one timer can be started for the particular key
-         * @param obj another TimerKey object
-         * @return true if this TimerKey object equals to another one
-         */
-        public boolean equals(Object obj) {
-            return ((TimerKey)obj).key == key;
-        }
-    }
-
     /** Pool of the active timers */
-    protected Vector timers = new Vector(); 
-
-    /** The Timer to service TimerTasks. */
-    protected Timer timerService = new Timer();
+    protected Vector longKeys = new Vector(); 
 
     /**
-     * Set a new timer.
-     *
-     * @param keyCode the key the timer is started for   
+     * Clear the recently pressed key.
+     * @param keyCode last pressed key 
      */
-    protected synchronized void setTimerKey(int keyCode) {
+    protected synchronized void clearLongKey(int keyCode) {
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
-                "[setTimerKey] for " + keyCode);
+                "[clearLongKey] for " + keyCode);
         }
-        TimerKey timer = new TimerKey(keyCode);
-        if (!timers.contains(timer)) {
-            try {
-                timer.start();
-            } catch (IllegalStateException e) {
-                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
-                        "Exception caught in setTimer");
-                }
-                cancelTimerKey(keyCode);
-            }
-        }
+        longKeys.removeElement(new Integer(keyCode));
     }
-
     /**
-     * Cancel any running Timer.
-     * @param keyCode key the timer is canceled for
+     * Set just pressed key.
+     * @param keyCode pressed  key
      */
-    protected synchronized void cancelTimerKey(int keyCode) {
+    protected synchronized void setLongKey(int keyCode) {
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
-                "[cancelTimerKey] for " + keyCode);
+                "[setLongKey] for " + keyCode);
         }
-        TimerKey timer = new TimerKey(keyCode);
-        int idx = timers.indexOf(timer);
-        if (idx != -1) {
-            ((TimerKey) timers.elementAt(idx)).stop();
-        }
+        longKeys.addElement(new Integer(keyCode));
     }
-
     
     /**
      * Emulate the key click
