@@ -30,11 +30,11 @@
  * The string is used by native part of JPEG/PNG encoder to
  * throw corresponding exception.
  */
-extern const char* MediaExceptionString;
+extern const char* const MediaExceptionString;
 
 /**
  * The string that describes problem cause.
  */
-extern const char* NotImplementedDescriprion;
+extern const char* const NotImplementedDescriprion;
 
 #endif //_kni_encoder_share_h_

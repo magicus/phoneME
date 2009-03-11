@@ -27,10 +27,10 @@
  * The string is used by native part of JPEG/PNG encoder to
  * throw corresponding exception.
  */
-const char MediaExceptionString[] = "javax.microedition.media.MediaException";
+const char* const MediaExceptionString = "javax/microedition/media/MediaException";
 
 /**
  * The string that describes problem cause.
  */
-const char NotImplementedDescriprion[] = "Encoder is not supported/implemented";
+const char* const NotImplementedDescriprion = "Encoder is not supported/implemented";
  
