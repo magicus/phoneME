@@ -464,7 +464,11 @@ javacall_result get_int_param(javacall_const_utf16_string ptr,
 #ifdef ENABLE_MMAPI_LIME
 extern media_interface g_audio_itf;
 extern media_interface g_video_itf;
-#endif ENABLE_MMAPI_LIME
+#endif // ENABLE_MMAPI_LIME
+
+#ifdef ENABLE_MMAPI_DSHOW
+extern media_interface g_dshow_itf;
+#endif // ENABLE_MMAPI_DSHOW
 
 extern media_interface g_qsound_itf;
 extern media_interface g_amr_audio_itf;
@@ -472,7 +476,6 @@ extern media_interface g_qsound_interactive_midi_itf;
 extern media_interface g_record_itf;
 extern media_interface g_fake_radio_itf;
 extern media_interface g_rtp_itf;
-extern media_interface g_dshow_itf;
 
 media_interface* fmt_enum2itf( jc_fmt fmt )
 {
@@ -480,6 +483,8 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     {
 
 #ifdef ENABLE_MMAPI_DSHOW
+    case JC_FMT_MPEG1_LAYER3:
+    case JC_FMT_MPEG1_LAYER3_PRO:
     case JC_FMT_RTP_MPA:
         return &g_dshow_itf;
         break;
@@ -497,8 +502,11 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MOV:
         return &g_video_itf;
 
+#ifndef ENABLE_MMAPI_DSHOW // if both DSHOW and LIME are enabled, DSHOW overrides LIME
     case JC_FMT_MPEG1_LAYER3:
     case JC_FMT_MPEG1_LAYER3_PRO:
+#endif // ENABLE_MMAPI_DSHOW
+
     case JC_FMT_MPEG2_AAC:
     case JC_FMT_MPEG4_HE_AAC:
         return &g_audio_itf;
@@ -579,8 +587,12 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
 #ifdef ENABLE_AMR
         { L".amr",  JAVACALL_MEDIA_FORMAT_AMR    },
 #endif // ENABLE_AMR
-#ifdef ENABLE_MMAPI_LIME
+
+#if defined(ENABLE_MMAPI_DSHOW) || defined(ENABLE_MMAPI_LIME)
         { L".mp3",  JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3 },
+#endif // mp3
+
+#ifdef ENABLE_MMAPI_LIME
         { L".mpg",  JAVACALL_MEDIA_FORMAT_MPEG_1       },
         { L".mov",  JAVACALL_MEDIA_FORMAT_MOV          },
         { L".3gp",  JAVACALL_MEDIA_FORMAT_VIDEO_3GPP   },

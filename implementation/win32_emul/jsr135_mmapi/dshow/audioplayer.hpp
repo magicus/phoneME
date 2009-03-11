@@ -24,19 +24,14 @@
 
 #pragma once
 
-class sourcefilter;
-
-struct ap_callback
-{
-    virtual void call( unsigned int bytes_in_queue ) = 0;
-};
+class filter_in;
 
 class audioplayer
 {
 public:
     audioplayer();
     ~audioplayer();
-    bool init(unsigned int len, const wchar_t* format, ap_callback* cb);
+    bool init(unsigned int len, const wchar_t* format);
     bool data(unsigned int len, const void* src);
     bool play();
     bool stop();
@@ -44,7 +39,8 @@ public:
     bool tell(double*time);
     bool shutdown();
 protected:
-    sourcefilter*  sf;
+    filter_in*     pfi;
     IGraphBuilder* pgb;
     IMediaControl* pmc;
+    IMediaSeeking* pms;
 };
