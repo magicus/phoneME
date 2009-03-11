@@ -356,7 +356,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
     public byte[] getSnapshot(String imageType)
         throws MediaException, SecurityException {
         checkState();
-	checkPermission();
+        checkPermission();
 
         if (rgbData == null)
             throw new IllegalStateException("No image available");
@@ -364,6 +364,9 @@ public final class MIDPVideoRenderer extends VideoRenderer
         /* Need to update  video.snapshot.encodings property accordingly
          */
         String encoding = getEncodingType(imageType);
+        /* Real need of RAW format encoding is discussable. 
+           We do not maintain it until future request.
+           
         int format = 0, pixelsize = 0;
         if (imageType == null || encoding.equalsIgnoreCase(SNAPSHOT_RGB888)) {
             format = 1;
@@ -377,13 +380,15 @@ public final class MIDPVideoRenderer extends VideoRenderer
         } else if (encoding.equalsIgnoreCase(SNAPSHOT_RGB555)) {
             format = 4;
             pixelsize = 2;
-        } else if (encoding.equalsIgnoreCase(SNAPSHOT_PNG)) {
+        } else */
+         if (encoding.equalsIgnoreCase(SNAPSHOT_PNG)) {
             return PNGEncoder.encode(rgbData, videoWidth, videoHeight, imageType);
         } else  if (encoding.equalsIgnoreCase(SNAPSHOT_JPEG)){
             return JPEGEncoder.encode(rgbData, videoWidth, videoHeight, imageType);
         } else 
             throw new MediaException("Image format " + imageType + " not supported");
-        
+
+        /*
         byte [] arr = new byte[pixelsize * rgbData.length];
         int idx = 0;
         switch (format) {
@@ -421,6 +426,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
                 break;
         }
         return arr; 
+        */
     }
 
     /*private int tryParam(String tok, String prop, int def) {

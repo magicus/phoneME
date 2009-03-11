@@ -27,6 +27,7 @@
 #include "jsrop_exceptions.h"
 #include "javacall_multimedia.h"
 #include "midp_thread.h"
+#include "KNI_EncoderShare.h"
 
 /*  private static native byte[] encode0(byte[] rgbData, int w, int h, int qaulity); */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
@@ -84,6 +85,11 @@ KNIDECL(com_sun_mmedia_JPEGEncoder_encode0) {
         midp_thread_wait(MEDIA_EVENT_SIGNAL, 
                          MAKE_PLAYER_DESCRIPTOR((int)context, -1, JAVACALL_EVENT_MEDIA_ENCODE_COMPLETE), 
                          context);
+    } else {
+        // video.snapshot.encodings is not configured properly
+        // or wrong application behavior
+        // or native encoder failure (not covered by API)
+        KNI_ThrowNew(MediaExceptionString, NotImplementedDescriprion);
     }
     
     KNI_EndHandlesAndReturnObject(jpeg);
