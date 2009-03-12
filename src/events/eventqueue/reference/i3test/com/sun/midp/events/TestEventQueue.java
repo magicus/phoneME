@@ -42,7 +42,6 @@ public class TestEventQueue extends TestCase {
         assertNotNull(eq.dispatchTable);
         assertTrue(eq.dispatchTable.length > 0);
         assertNotNull(eq.pool);
-        assertEquals(-1, eq.nativeEventQueueHandle);
         assertNotNull(eq.eventQueueThread);
         assertNotNull(eq.eventMonitorThread);
         assertFalse(eq.eventQueueThread.isAlive());

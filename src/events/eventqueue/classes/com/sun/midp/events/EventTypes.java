@@ -454,5 +454,15 @@ public final class EventTypes {
      * API Extensions System Event
      */
     public static final int API_EXTENSIONS_SYSTEM_EVENT = 74;
+
+    /**
+     * Request to install a MIDlet suite.
+     */
+    public static final int MIDP_ODD_REQUEST_INSTALLATION_EVENT = 75;
+
+    /**
+     * MIDlet suite installation has finished.
+     */
+    public static final int MIDP_INSTALLATION_DONE_EVENT = 76;
     
 }

@@ -60,8 +60,7 @@ public class EventQueue implements Runnable {
     private static EventQueue eventQueue;
 
     /**
-     * Constructs, assigns a native event queue handle, and
-     * starts the primary event queue for this isolate.
+     * Constructs and starts the primary event queue for this isolate.
      */
     static {
         eventQueue = new EventQueue();
@@ -148,8 +147,8 @@ public class EventQueue implements Runnable {
     }
 
     /**
-     * Constructs an event queue.  This does not assign a native event queue
-     * handle. It creates the event threads, but it doesn't start them.
+     * Constructs an event queue. It creates the event threads, 
+     * but it doesn't start them.
      */
     EventQueue() {
         /*
@@ -208,23 +207,18 @@ public class EventQueue implements Runnable {
     }
 
     /**
+     * Get the handle of the native peer event queue.
+     *
+     * @return Native event queue handle
+     */
+    protected native int getNativeEventQueueHandle();    
+
+    /**
      * Clears native event queue for a given isolate - 
      * there could be some events from isolate's previous usage.
      */
     private static native void resetNativeEventQueue(int queueId);
     
-    /**
-     * Get the handle of the native peer event queue.
-     *
-     * WARNING: The native code can handle only one event queue per isolate.
-     * Only one event queue object in any isolate should have a native handle
-     * assigned.  If multiple Java event queue objects in the same isolate
-     * have native handles assigned, this causes serious problems.
-     *
-     * @return Native event queue handle
-     */
-    private native int getNativeEventQueueHandle();
-
     /**
      * Send a native event to a specific Isolate.
      *

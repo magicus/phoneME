@@ -64,8 +64,8 @@ void anc_show_trusted_indicator(jboolean isTrusted) {
  * ONLY works on device. There is no equivalent in emulator.
  */
 extern "C"
-void anc_set_network_indicator(AncNetworkIndicatorState status) {
-    IndicatorBar::setNetworkOn(status == ANC_NETWORK_INDICATOR_ON);
+void anc_set_network_indicator(int counter) {
+    IndicatorBar::setNetworkOn((bool)counter);
 }
 
 /**

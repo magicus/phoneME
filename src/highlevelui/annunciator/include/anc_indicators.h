@@ -139,8 +139,8 @@ extern int gAncNetworkIndicatorCount;
 #define ANC_INC_NETWORK_INDICATOR     { gAncNetworkIndicatorCount++; };
 #define ANC_DEC_NETWORK_INDICATOR     { if (gAncNetworkIndicatorCount > 0) \
                                             gAncNetworkIndicatorCount--; \
-                                        else REPORT_WARN(LC_PROTOCOL, \
-                                   "Network connection is closed without opening");};
+                                        else  { REPORT_WARN(LC_PROTOCOL, \
+                                   "Network connection is closed without opening"); ((void)0); } };
 #define ANC_FINISH_NETWORK_INDICATOR  { gAncNetworkIndicatorCount = 0; };
 
 /** deploy the network indicator count */
