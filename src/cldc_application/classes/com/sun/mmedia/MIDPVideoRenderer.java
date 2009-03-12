@@ -84,8 +84,8 @@ public final class MIDPVideoRenderer extends VideoRenderer
     public static final String SNAPSHOT_BGR888 = "bgr888";
     public static final String SNAPSHOT_RGB565 = "rgb565";
     public static final String SNAPSHOT_RGB555 = "rgb555";
-    public static final String SNAPSHOT_ENCODINGS = SNAPSHOT_RGB888 + " "
-            + SNAPSHOT_BGR888 + " " + SNAPSHOT_RGB565 + " " + SNAPSHOT_RGB555;
+    public static final String SNAPSHOT_PNG = "png";
+    public static final String SNAPSHOT_JPEG = "jpeg";
 
     /** used to protect dx, dy, dw, dh set & read */
     private Object dispBoundsLock = new Object();
@@ -321,32 +321,74 @@ public final class MIDPVideoRenderer extends VideoRenderer
         return videoHeight;
     }
 
+
+    private static final String encodingString = "encoding=";
+    
+    private String getEncodingType(String imageType) {
+        if (null == imageType) {
+            return null;
+        }
+        String encType = null;
+        int encIndex = imageType.indexOf(encodingString);
+        if (-1 != encIndex && imageType.length() > encIndex + encodingString.length()) {
+            encIndex += encodingString.length();
+            // try to find end of encoding type string
+            // it should '&' symbol
+            int ampersandIndex = imageType.indexOf((int)'&', encIndex);
+            // or space
+            int blankIndex = imageType.indexOf((int)' ', encIndex);
+            int delimiterIndex;
+            if (blankIndex > ampersandIndex && -1 != ampersandIndex) {
+                delimiterIndex = ampersandIndex;
+            } else {
+                delimiterIndex = blankIndex;
+            }
+            // or end of the string
+            if (-1 == delimiterIndex) {
+                encType = imageType.substring(encIndex);
+            } else {
+                encType = imageType.substring(encIndex, delimiterIndex);
+            }
+        }
+        return encType;
+    }
+
     public byte[] getSnapshot(String imageType)
         throws MediaException, SecurityException {
         checkState();
-	checkPermission();
-        /* REVISIT: Not currently supported.
-         * Need to update  video.snapshot.encodings property accordingly
-         *
-        int format = 0, pixelsize = 0;
-        if (imageType == null || imageType.equalsIgnoreCase(SNAPSHOT_RGB888)) {
-            format = 1;
-            pixelsize = 3;
-        } else if (imageType.equalsIgnoreCase(SNAPSHOT_BGR888)) {
-            format = 2;
-            pixelsize = 3;
-        } else if (imageType.equalsIgnoreCase(SNAPSHOT_RGB565)) {
-            format = 3;
-            pixelsize = 2;
-        } else if (imageType.equalsIgnoreCase(SNAPSHOT_RGB555)) {
-            format = 4;
-            pixelsize = 2;
-        } else */
-            throw new MediaException("Image format " + imageType + " not supported");
-        /*
+        checkPermission();
+
         if (rgbData == null)
             throw new IllegalStateException("No image available");
         
+        /* Need to update  video.snapshot.encodings property accordingly
+         */
+        String encoding = getEncodingType(imageType);
+        /* Real need of RAW format encoding is discussable. 
+           We do not maintain it until future request.
+           
+        int format = 0, pixelsize = 0;
+        if (imageType == null || encoding.equalsIgnoreCase(SNAPSHOT_RGB888)) {
+            format = 1;
+            pixelsize = 3;
+        } else if (encoding.equalsIgnoreCase(SNAPSHOT_BGR888)) {
+            format = 2;
+            pixelsize = 3;
+        } else if (encoding.equalsIgnoreCase(SNAPSHOT_RGB565)) {
+            format = 3;
+            pixelsize = 2;
+        } else if (encoding.equalsIgnoreCase(SNAPSHOT_RGB555)) {
+            format = 4;
+            pixelsize = 2;
+        } else */
+         if (encoding.equalsIgnoreCase(SNAPSHOT_PNG)) {
+            return PNGEncoder.encode(rgbData, videoWidth, videoHeight, imageType);
+        } else  if (encoding.equalsIgnoreCase(SNAPSHOT_JPEG)){
+            return JPEGEncoder.encode(rgbData, videoWidth, videoHeight, imageType);
+        } else 
+            throw new MediaException("Image format " + imageType + " not supported");
+        
+        /*
         byte [] arr = new byte[pixelsize * rgbData.length];
         int idx = 0;
         switch (format) {
@@ -383,7 +425,8 @@ public final class MIDPVideoRenderer extends VideoRenderer
                 }
                 break;
         }
-        return arr; */
+        return arr; 
+        */
     }
 
     /*private int tryParam(String tok, String prop, int def) {
