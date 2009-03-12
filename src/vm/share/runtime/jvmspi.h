@@ -228,8 +228,9 @@ int JVMSPI_HandleUncaughtException(const int isolate_id,
  * If this function returns JVMSPI_RETRY, the VM will redo the allocation 
  *     attempt. This code should be returned if the function freed up some 
  *     memory in the Java heap.
- * If this function returns JVMSPI_SUSPEND, in SVM mode the behavior is 
- *     undefined, in MVM mode the VM will suspend the isolate. When the isolate
+ * If this function returns JVMSPI_SUSPEND, if the VM is built in SVM mode 
+ *     or with ENABLE_ALLOCATION_REDO=false, the VM behavior is undefined, 
+ *     otherwise the VM will suspend the isolate. When the isolate
  *     will be resumed, the VM will redo the allocation attempt.
  * For other return values the VM behavior is undefined.
  */

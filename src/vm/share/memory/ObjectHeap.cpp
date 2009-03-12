@@ -5149,19 +5149,21 @@ void ObjectHeap::handle_out_of_memory(const size_t alloc_size,
     case JVMSPI_RETRY:
       force_full_collect();
       internal_collect(alloc_size JVM_CHECK);
+      {
 #if ENABLE_ISOLATES
-      const unsigned detected_violations = 
-        violations_mask & ObjectHeap::detect_out_of_memory_tasks(alloc_size);
-      if (violations_mask != 0) {
-        if (detected_violations) {
+        const unsigned detected_violations = 
+          violations_mask & ObjectHeap::detect_out_of_memory_tasks(alloc_size);
+        if (violations_mask != 0) {
+          if (detected_violations) {
+            continue;
+          }
+        } else 
+#else
+        GUARANTEE(violations_mask == 0, "No quota violations in SVM mode");
+#endif
+        if (free_memory() < alloc_size) {
           continue;
         }
-      } else 
-#else
-      GUARANTEE(violations_mask == 0, "No quota violations in SVM mode");
-#endif
-      if (free_memory() < alloc_size) {
-        continue;
       }
     default:
       GUARANTEE(0, "Invalid return value");

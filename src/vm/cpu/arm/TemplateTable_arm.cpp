@@ -1494,7 +1494,26 @@ void bc_athrow::generate() {
 
 void bc_new::generate() {
   set_stack_state_to(tos_on_stack);
+
+#if ENABLE_ALLOCATION_REDO
+  Label redo;
+bind(redo);
+#endif
+
   interpreter_call_vm("newobject", T_OBJECT);
+
+#if ENABLE_ALLOCATION_REDO
+  get_thread(tmp1);
+  ldr(tmp2, imm_index(tmp1, Thread::async_redo_offset()));
+  comment("Clear Thread.async_redo so that we won't loop indefinitely");
+  mov(tmp3, zero);
+  str(tmp3, imm_index(tmp1, Thread::async_redo_offset()));
+
+  comment("loop if need to redo the allocation");
+  cmp(tmp2, zero);
+  b(redo, ne);
+#endif
+
   prefetch(3);
   set_tag(obj_tag);
   dispatch(tos_in_regs);
@@ -1502,7 +1521,26 @@ void bc_new::generate() {
 
 void bc_anewarray::generate() {
   set_stack_state_to(tos_on_stack);
+
+#if ENABLE_ALLOCATION_REDO
+  Label redo;
+bind(redo);
+#endif
+
   interpreter_call_vm("anewarray", T_ARRAY);
+
+#if ENABLE_ALLOCATION_REDO
+  get_thread(tmp1);
+  ldr(tmp2, imm_index(tmp1, Thread::async_redo_offset()));
+  comment("Clear Thread.async_redo so that we won't loop indefinitely");
+  mov(tmp3, zero);
+  str(tmp3, imm_index(tmp1, Thread::async_redo_offset()));
+
+  comment("loop if need to redo the allocation");
+  cmp(tmp2, zero);
+  b(redo, ne);
+#endif
+
   prefetch(3);
   sub_imm(jsp, jsp, JavaStackDirection * BytesPerStackElement);
   set_tag(obj_tag);
@@ -1511,7 +1549,26 @@ void bc_anewarray::generate() {
 
 void bc_multianewarray::generate() {
   set_stack_state_to(tos_on_stack);
+
+#if ENABLE_ALLOCATION_REDO
+  Label redo;
+bind(redo);
+#endif
+
   interpreter_call_vm("multianewarray", T_ARRAY);
+
+#if ENABLE_ALLOCATION_REDO
+  get_thread(tmp1);
+  ldr(tmp2, imm_index(tmp1, Thread::async_redo_offset()));
+  comment("Clear Thread.async_redo so that we won't loop indefinitely");
+  mov(tmp3, zero);
+  str(tmp3, imm_index(tmp1, Thread::async_redo_offset()));
+
+  comment("loop if need to redo the allocation");
+  cmp(tmp2, zero);
+  b(redo, ne);
+#endif
+
   ldrb_at_bcp(tmp0, 3); // get dimensions
   // remove parameters
   prefetch(4);
@@ -2325,7 +2382,37 @@ bind(slow_case);
   GUARANTEE(length != r1, "Register clash");
   mov_reg(r1, tag);
   mov_reg(r2, length);
+
+#if ENABLE_ALLOCATION_REDO
+  GUARANTEE(ENABLE_FULL_STACK, "Not tested with empty stack");
+  StackTypeMode mode = ENABLE_FULL_STACK ? full : empty;
+  Label redo;
+bind(redo);
+  push(r2, al, mode);
+#endif
+
   interpreter_call_vm("_newarray", T_ARRAY);
+
+#if ENABLE_ALLOCATION_REDO
+  get_thread(tmp1);
+  ldr(tmp2, imm_index(tmp1, Thread::async_redo_offset()));
+  comment("Clear Thread.async_redo so that we won't loop indefinitely");
+  mov(tmp3, zero);
+  str(tmp3, imm_index(tmp1, Thread::async_redo_offset()));
+
+  comment("loop if need to redo the allocation");
+  cmp(tmp2, zero);
+
+  eol_comment("Grab length argument from stack");  
+  int offset = ENABLE_FULL_STACK ? JavaStackDirection * BytesPerWord : 0;
+  pop(r2, al, mode);
+
+  comment("get array type");
+  ldrb(r1, imm_index(bcp, 1), ne);
+
+  b(redo, ne);
+#endif
+
   if (!ENABLE_FULL_STACK) {  
     add_imm(jsp, jsp, JavaStackDirection* BytesPerWord);
   }
