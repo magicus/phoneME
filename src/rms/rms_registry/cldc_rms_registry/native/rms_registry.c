@@ -382,7 +382,7 @@ void rms_regisrty_stop_task_listeners(int taskId) {
                 deleteListenerNodeByRef(listenerRef);
             } else {
                 listenerPtr->listenerId[i] =
-                    listenerPtr->listenerId[--listenerPtr->count];
+                    listenerPtr->listenerId[--(listenerPtr->count)];
             }
         }
         listenerRef = &(listenerPtr->next);
