@@ -217,5 +217,5 @@ int JVMSPI_HandleOutOfMemory(const int isolate_id,
 			     const int alloc_size,
 			     const int flags,
                              int * exit_code) {
-  return JVMSPI_SUSPEND;
+  return JVMSPI_IGNORE;
 }
