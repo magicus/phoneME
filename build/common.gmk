@@ -156,6 +156,12 @@ ifeq ($(USE_MEMMON), true)
 CFLAGS += -DUSE_MEMMON
 endif
 
+# definitions and rules for PNG component
+ifeq ($(USE_JC_PNG_ENCODER), true)
+        USE_JC_PNG = true
+endif
+
+
 # definitions and rules for JPEG component
 ifeq ($(USE_JC_JPEG_ENCODER), true)
         USE_JC_JPEG = true
@@ -167,9 +173,14 @@ endif
 
 ifeq ($(USE_JC_JPEG), true)
 JPEG_JC_DIR = $(JAVACALL_DIR)/implementation/share/jpeg
-JAVACALL_SOURCE_OUTPUT_LIST += implementation/share/jpeg
 include $(JPEG_JC_DIR)/module.gmk
 endif
+
+ifeq ($(USE_JC_PNG), true)
+PNG_JC_DIR = $(JAVACALL_DIR)/implementation/share/png
+include $(PNG_JC_DIR)/module.gmk
+endif
+
 
 # general build rules
 ifeq ($(USE_DEBUG),true)
