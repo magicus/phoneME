@@ -28,7 +28,7 @@
 
 #define JC_MM_ASSERT( e ) assert( e )
 
-#if defined(DEBUG) && !defined(USE_JC_MM_DEBUG)
+#if ( defined(DEBUG) || defined(_DEBUG) ) && !defined(USE_JC_MM_DEBUG)
     #define USE_JC_MM_DEBUG
 #endif
 
