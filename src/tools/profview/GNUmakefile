@@ -27,7 +27,7 @@ all: ProfView.jar
 ProfView.jar: ProfView.java TimeLine.java
 	javac ProfView.java TimeLine.java
 	rm -f ProfView.jar
-	jar cfm ProfView.jar ProfView.mf *.class icons\*.gif
+	jar cfm ProfView.jar ProfView.mf *.class icons/*.gif
 
 run: ProfView.jar
 	java -jar ProfView.jar graph.txt
