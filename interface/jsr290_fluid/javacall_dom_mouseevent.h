@@ -509,6 +509,9 @@ javacall_dom_mouseevent_get_related_target_finish(void *context,
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
  *   method for a description of this parameter. 
+ * @param view_arg Pointer to the object of
+ *    Refer to the <code>UIEvent.initUIEvent()</code> method 
+ *   for a description of this parameter. 
  * @param detail_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
  *   method for a description of this parameter. 
  * @param screen_x_arg  Specifies <code>MouseEvent.screenX</code>. 
@@ -541,6 +544,7 @@ javacall_dom_mouseevent_init_mouse_event_start(javacall_handle handle,
                                                javacall_const_utf16_string type_arg,
                                                javacall_bool can_bubble_arg,
                                                javacall_bool cancelable_arg,
+                                               javacall_handle view_arg,
                                                javacall_int32 detail_arg,
                                                javacall_int32 screen_x_arg,
                                                javacall_int32 screen_y_arg,
@@ -591,6 +595,9 @@ javacall_dom_mouseevent_init_mouse_event_finish(void *context);
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>UIEvent.initUIEventNS()</code>
  *   method for a description of this parameter. 
+ * @param view_arg Pointer to the object of
+ *    Refer to the <code>UIEvent.initUIEventNS()</code> 
+ *   method for a description of this parameter. 
  * @param detail_arg  Refer to the <code>UIEvent.initUIEventNS()</code> 
  *   method for a description of this parameter. 
  * @param screen_x_arg  Refer to the 
@@ -635,6 +642,7 @@ javacall_dom_mouseevent_init_mouse_event_ns_start(javacall_handle handle,
                                                   javacall_const_utf16_string type_arg,
                                                   javacall_bool can_bubble_arg,
                                                   javacall_bool cancelable_arg,
+                                                  javacall_handle view_arg,
                                                   javacall_int32 detail_arg,
                                                   javacall_int32 screen_x_arg,
                                                   javacall_int32 screen_y_arg,

@@ -104,6 +104,9 @@ javacall_dom_uievent_get_detail_finish(void *context,
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>Event.initEvent()</code> 
  *   method for a description of this parameter. 
+ * @param view_arg Pointer to the object of
+ *    Specifies <code>UIEvent.view</code>. This value may be 
+ *   <code>NULL</code>. 
  * @param detail_arg  Specifies <code>UIEvent.detail</code>.   
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -122,6 +125,7 @@ javacall_dom_uievent_init_ui_event_start(javacall_handle handle,
                                          javacall_const_utf16_string type_arg,
                                          javacall_bool can_bubble_arg,
                                          javacall_bool cancelable_arg,
+                                         javacall_handle view_arg,
                                          javacall_int32 detail_arg);
 
 /**
@@ -160,6 +164,9 @@ javacall_dom_uievent_init_ui_event_finish(void *context);
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>Event.initEventNS()</code> 
  *   method for a description of this parameter. 
+ * @param view_arg Pointer to the object of
+ *    Refer to the <code>UIEvent.initUIEvent()</code> method 
+ *   for a description of this parameter. 
  * @param detail_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
  *   method for a description of this parameter.
  *
@@ -181,6 +188,7 @@ javacall_dom_uievent_init_ui_event_ns_start(javacall_handle handle,
                                             javacall_const_utf16_string type_arg,
                                             javacall_bool can_bubble_arg,
                                             javacall_bool cancelable_arg,
+                                            javacall_handle view_arg,
                                             javacall_int32 detail_arg);
 
 /**
