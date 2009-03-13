@@ -79,6 +79,12 @@ typedef unsigned __int16 javacall_uint16;
 typedef __int32 javacall_int32;
 
 /**
+ * @typedef javacall_uint32
+ * @brief 32 bit unsigned integer type
+ */
+typedef unsigned __int32 javacall_uint32;
+
+/**
  * @typedef javacall_int64
  * @brief 64 bit interger type
  */
