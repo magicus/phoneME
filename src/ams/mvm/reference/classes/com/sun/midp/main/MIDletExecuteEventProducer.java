@@ -127,15 +127,15 @@ public class MIDletExecuteEventProducer {
      *                 &lt;= 0 if not used
      * @param profileName name of the profile to set for the new isolate;
      *                    null if not used
-     * @param isDebugMode true if the new midlet must be started in debug
-     *                    mode, false otherwise
+     * @param debugMode debug option for the MIDlet to be launched, one of:
+     *                  MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
      */
     public void sendMIDletExecuteEvent(
         int midletExternalAppId, int midletSuiteId,
         String midletClassName, String midletDisplayName,
         String arg0, String arg1, String arg2,
         int memoryReserved, int memoryTotal, int priority,
-        String profileName, boolean isDebugMode) {
+        String profileName, int debugMode) {
 
         NativeEvent event =
             new NativeEvent(EventTypes.EXECUTE_MIDLET_EVENT);
@@ -145,7 +145,7 @@ public class MIDletExecuteEventProducer {
         event.intParam3 = memoryReserved;
         event.intParam4 = memoryTotal;
         event.intParam5 = priority;
-        event.intParam6 = (isDebugMode ? 1 : 0);
+        event.intParam6 = debugMode;
         event.stringParam1 = midletClassName;
         event.stringParam2 = midletDisplayName;
         event.stringParam3 = arg0;
@@ -154,5 +154,5 @@ public class MIDletExecuteEventProducer {
         event.stringParam6 = profileName;
 
         eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
-    };
+    }
 }

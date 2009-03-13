@@ -115,6 +115,13 @@
 #include <midpString.h>
 #include <suitestore_common.h>
 
+#include <midp_constants_data.h> /* to include the debug option values */
+/*
+ * Possible debug options are:
+ * MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND.
+ * See share/constants.xml.
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -133,23 +140,6 @@ extern "C" {
 #define MIDP_ERROR_STATUS (-1)
 /** the MIDlet suite was not found */
 #define SUITE_NOT_FOUND_STATUS (-2)
-/** @} */
-
-/**
- * @name Debug option values
- * Debug option values to be passed as the <var>debugOption</var> parameter
- * to the <var>midp_run_midlet_with_args_cp</var> function.
- * When compiled with ENABLE_JAVA_DEBUGGER,
- * these values identify command line options passed to the JVM.
- * @see midp_run_midlet_with_args_cp
- * @{
- */
-/** no debug */
-#define MIDP_NO_DEBUG 0
-/** debug: suspend the VM until the debugger sends a continue command */
-#define MIDP_DEBUG_SUSPEND 1
-/** debug: do not wait for the debugger */
-#define MIDP_DEBUG_NO_SUSPEND 2
 /** @} */
 
 /**

@@ -51,6 +51,7 @@
 #include <midp_run_vm.h>
 #include <midp_check_events.h>
 #include <midpMidletSuiteUtils.h>
+#include <midp_constants_data.h>
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
 #include <jsr120_types.h>
 #include <wmaInterface.h>
@@ -823,13 +824,9 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
 #endif /* ENABLE_WTK_DEBUG */
 
 #if ENABLE_ON_DEVICE_DEBUG
-        if (commandState->isDebugMode) {
-            commandState->isDebugMode = 0;
-            setDebugOption(MIDP_DEBUG_SUSPEND);
-        } else {
-#if !ENABLE_WTK_DEBUG
-            setDebugOption(MIDP_DEBUG_NO_SUSPEND);
-#endif /* !ENABLE_WTK_DEBUG */
+        if (commandState->debugMode != MIDP_NO_DEBUG) {
+            setDebugOption(commandState->debugMode);
+            commandState->debugMode = MIDP_NO_DEBUG;
         }
 #endif /* ENABLE_ON_DEVICE_DEBUG */
 #endif /* ENABLE_JAVA_DEBUGGER */
