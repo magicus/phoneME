@@ -41,15 +41,15 @@ extern "C" {
 
 /* This is logical LCDUI putpixel screen buffer. */
 static struct {
-    javacall_pixel* hdc;
-    javacall_pixel* hdc_rotated;
-    char*           mask;
-    javacall_pixel* video;
-    javacall_pixel* composite;
-    int width;
-    int height;
-    int full_height; /* screen height in full screen mode */
-    int             num_pixels;
+    javacall_pixel*  hdc;
+    javacall_pixel*  hdc_rotated;
+    char*            mask;
+    javacall_pixel*  video;
+    javacall_pixel*  composite;
+    int              width;
+    int              height;
+    int              full_height; /* screen height in full screen mode */
+    int              num_pixels;
     CRITICAL_SECTION cs;
 } VRAM;
 
@@ -244,13 +244,119 @@ static volatile int            lcd_video_y;
 static volatile int            lcd_video_w;
 static volatile int            lcd_video_h;
 
+static void blend_video_into_buffer( javacall_pixel* buffer )
+{
+    int x, y;
+
+    int dst_x0 = lcd_video_x;
+    int dst_y0 = lcd_video_y;
+    int src_x0 = 0;
+    int src_y0 = 0;
+    int nx     = lcd_video_w;
+    int ny     = lcd_video_h;
+    int dstw   = (isLCDRotated ? VRAM.full_height : VRAM.width );
+    int dsth   = (isLCDRotated ? VRAM.width : VRAM.full_height );
+
+    if( dst_x0 < 0 ) {
+        nx -= -dst_x0;
+        src_x0 += -dst_x0;
+        dst_x0 = 0;
+    }
+
+    if( dst_y0 < 0 ) {
+        ny -= -dst_y0;
+        src_y0 += -dst_y0;
+        dst_y0 = 0;
+    }
+
+    if( dst_x0 + nx > dstw ) {
+        nx -= ( dst_x0 + nx - dstw );
+    }
+
+    if( dst_y0 + ny > dsth ) {
+        ny -= ( dst_y0 + ny - dsth );
+    }
+
+    for( y = 0; y < ny; y++ ) {
+        for( x = 0; x < nx; x++ ) {
+            int dst_idx = dstw * ( dst_y0 + y ) + dst_x0 + x;
+
+            if( !lcd_use_keying || VRAM.mask[ dst_idx ] ) {
+                buffer[ dst_idx ] =
+                    VRAM.video[ lcd_video_w * ( src_y0 + y ) + src_x0 + x ];
+            }
+        }
+    }
+}
+
+static void send_buffer_to_device( javacall_pixel* buffer ) {
+
+    static LimeFunction *f = NULL;
+    static LimeFunction *f1 = NULL;
+
+    short clip[4] = {0,0,VRAM.width, VRAM.height};
+
+    if( inFullScreenMode ) {
+        clip[3] = VRAM.full_height;
+    }
+
+#ifdef ENABLE_WTK
+
+    f = NewLimeFunction(LIME_PACKAGE,
+        LIME_GRAPHICS_CLASS,
+        "drawRGB16");
+
+    if(inFullScreenMode) {
+        f->call(f, NULL, 0, 0, clip, 4, 0, current_hdc, (VRAM.width * VRAM.full_height) << 1, 0, 0, VRAM.width, VRAM.full_height);
+    } else {
+        f->call(f, NULL, 0, 0, clip, 4, 0, current_hdc, (VRAM.width * VRAM.height) << 1, 0, 0, VRAM.width, VRAM.height);
+    }
+
+    f1 = NewLimeFunction(LIME_PACKAGE,
+        LIME_GRAPHICS_CLASS,
+        "refresh");
+    if(inFullScreenMode) {
+        f1->call(f1, NULL, 0, 0, VRAM.width, VRAM.full_height);
+    } else {
+        f1->call(f1, NULL, 0, 0, VRAM.width, VRAM.height);
+    }
+
+#else
+
+    if( NULL == f )
+    {
+        f  = NewLimeFunction(LIME_PACKAGE, LIME_GRAPHICS_CLASS, "drawRGB16Buffer");
+        f1 = NewLimeFunction(LIME_PACKAGE, LIME_GRAPHICS_CLASS, "refreshDisplay");
+    }
+
+    if(inFullScreenMode) {
+        f->call(f, NULL, currDisplayId, 0, 0, clip, 4, 0, buffer, 
+            (VRAM.width * VRAM.full_height) << 1, 0, 0, 
+            VRAM.width, VRAM.full_height);
+        f1->call(f1, NULL, currDisplayId, 0, 0, VRAM.width, VRAM.full_height);
+    } else {
+        f->call(f, NULL, currDisplayId, 0, 0, clip, 4, 0, buffer, 
+            (VRAM.width * VRAM.height) << 1, 0, 0, 
+            VRAM.width, VRAM.height);
+        f1->call(f1, NULL, currDisplayId, 0, 0, VRAM.width, VRAM.height);
+    }
+
+#endif
+}
+
 /**
  * lcd_set_color_key() is used internally by win32_emul MMAPI 
  */
 void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color )
 {
+    EnterCriticalSection( &VRAM.cs );
     lcd_use_keying = use_keying;
     lcd_key_color  = key_color;
+
+    if( lcd_use_keying ) {
+        javacall_lcd_flush( 0 ); // force mask and composite buffer creation
+    }
+    LeaveCriticalSection( &VRAM.cs );
 }
 
 /**
@@ -258,208 +364,39 @@ void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color )
  */
 void lcd_set_video_rect( int x, int y, int w, int h )
 {
+    EnterCriticalSection( &VRAM.cs );
     lcd_video_x    = x;
     lcd_video_y    = y;
     lcd_video_w    = w;
     lcd_video_h    = h;
+    LeaveCriticalSection( &VRAM.cs );
 }
 
 /**
  * lcd_output_video_frame() is used internally by MMAPI to composite
  * decoded video into offscreen buffer.
  */
-void lcd_output_video_frame( javacall_pixel* video )
-{
-    static LimeFunction *f = NULL;
-    static LimeFunction *f1 = NULL;
-    short clip[4] = {0,0,VRAM.width, VRAM.height};
+void lcd_output_video_frame( javacall_pixel* video ) {
 
-    int x, y;
-    int nx, ny;
-
-    int src_x0, dst_x0;
-    int src_y0, dst_y0;
-
-    int cut;
+    javacall_pixel* hdc;
 
     EnterCriticalSection( &VRAM.cs );
 
+    hdc = ( lcd_use_keying ? VRAM.composite : VRAM.hdc );
+
     VRAM.video = video;
+    blend_video_into_buffer( hdc );
 
-    if( NULL != video )
-    {
-        if(inFullScreenMode) {
-            clip[3] = VRAM.full_height;
-        }
-
-        nx = lcd_video_w;
-        ny = lcd_video_h;
-        src_x0 = 0; 
-        src_y0 = 0; 
-
-        if (isLCDRotated) {
-            if (top_down) {
-                dst_x0 = lcd_video_y;
-                dst_y0 = VRAM.height - lcd_video_x - lcd_video_w;
-
-                if( ( cut = -dst_x0 ) > 0 ) {
-                    ny -= cut;
-                    dst_x0 += cut;
-                }
-
-                if( ( cut = dst_x0 + ny - clip[2] ) > 0 ) {
-                    ny -= cut;
-                    src_y0 += cut;
-                }
-
-                if( ( cut = -dst_y0 ) > 0 ) {
-                    nx -= cut;
-                    src_x0 += cut;
-                    dst_y0 += cut;
-                }
-
-                if( ( cut = dst_y0 + nx - clip[3] ) > 0 ) {
-                    nx -= cut;
-                }
-
-                for( y = 0; y < ny; y++ ) {
-                    for( x = 0; x < nx; x++ ) {
-                        int dst_idx = VRAM.width * ( dst_y0 + x ) 
-                                                   + dst_x0 + ny - y - 1;
-
-                        if( !lcd_use_keying || VRAM.mask[ dst_idx ] ) {
-                            VRAM.composite[ dst_idx ] =
-                                video[ lcd_video_w * ( src_y0 + y ) + src_x0 + x ];
-                        }
-                    }
-                }
-            } else {
-                dst_x0 = VRAM.width - lcd_video_y - lcd_video_h;
-                dst_y0 = lcd_video_x;
-
-                if( ( cut = -dst_x0 ) > 0 ) {
-                    ny -= cut;
-                    src_y0 += cut;
-                    dst_x0 += cut;
-                }
-
-                if( ( cut = dst_x0 + ny - clip[2] ) > 0 ) {
-                    ny -= cut;
-                }
-
-                if( ( cut = -dst_y0 ) > 0 ) {
-                    nx -= cut;
-                    dst_y0 += cut;
-                }
-
-                if( ( cut = dst_y0 + nx - clip[3] ) > 0 ) {
-                    nx -= cut;
-                    src_x0 += cut;
-                }
-
-                for( y = 0; y < ny; y++ ) {
-                    for( x = 0; x < nx; x++ ) {
-                        int dst_idx = VRAM.width * ( dst_y0 + nx - 1 - x ) 
-                                                   + dst_x0 + y;
-
-                        if( !lcd_use_keying || VRAM.mask[ dst_idx ] ) {
-                            VRAM.composite[ dst_idx ] =
-                                video[ lcd_video_w * ( src_y0 + y ) + src_x0 + x ];
-                        }
-                    }
-                }
-            }
-        } else {
-            if (top_down) {
-                dst_x0 = VRAM.width  - lcd_video_x - lcd_video_w;
-                dst_y0 = VRAM.height - lcd_video_y - lcd_video_h;
-
-                if( ( cut = -dst_x0 ) > 0 ) {
-                    nx -= cut;
-                    dst_x0 += cut;
-                }
-
-                if( ( cut = dst_x0 + nx - clip[2] ) > 0 ) {
-                    nx -= cut;
-                    src_x0 += cut;
-                }
-
-                if( ( cut = -dst_y0 ) > 0 ) {
-                    ny -= cut;
-                    dst_y0 += cut;
-                }
-
-                if( ( cut = dst_y0 + ny - clip[3] ) > 0 ) {
-                    ny -= cut;
-                    src_y0 += cut;
-                }
-
-                for( y = 0; y < ny; y++ ) {
-                    for( x = 0; x < nx; x++ ) {
-                        int dst_idx = VRAM.width * ( dst_y0 + ny - 1 - y ) 
-                                                   + dst_x0 + nx - 1 - x;
-
-                        if( !lcd_use_keying || VRAM.mask[ dst_idx ] ) {
-                            VRAM.composite[ dst_idx ] =
-                                video[ lcd_video_w * ( src_y0 + y ) + src_x0 + x ];
-                        }
-                    }
-                }
-            } else {
-                dst_x0 = lcd_video_x;
-                dst_y0 = lcd_video_y;
-
-                if( ( cut = -dst_x0 ) > 0 ) {
-                    nx -= cut;
-                    src_x0 += cut;
-                    dst_x0 += cut;
-                }
-
-                if( ( cut = -dst_y0 ) > 0 ) {
-                    ny -= cut;
-                    src_y0 += cut;
-                    dst_y0 += cut;
-                }
-
-                if( ( cut = dst_x0 + nx - clip[2] ) > 0 ) {
-                    nx -= cut;
-                }
-
-                if( ( cut = dst_y0 + ny - clip[3] ) > 0 ) {
-                    ny -= cut;
-                }
-
-                for( y = 0; y < ny; y++ ) {
-                    for( x = 0; x < nx; x++ ) {
-                        int dst_idx = VRAM.width * ( dst_y0 + y ) 
-                                                   + dst_x0 + x;
-
-                        if( !lcd_use_keying || VRAM.mask[ dst_idx ] ) {
-                            VRAM.composite[ dst_idx ] =
-                                video[ lcd_video_w * ( src_y0 + y ) + src_x0 + x ];
-                        }
-                    }
-                }
-            }
-        }
-
-        if( NULL == f ) {
-            f =  NewLimeFunction(LIME_PACKAGE, LIME_GRAPHICS_CLASS, "drawRGB16Buffer" );
-            f1 = NewLimeFunction(LIME_PACKAGE, LIME_GRAPHICS_CLASS, "refreshDisplay" );
-        }
-
-        if(inFullScreenMode) {
-            f->call(f, NULL, currDisplayId, 0, 0, clip, 4, 0, VRAM.composite,
-                        (VRAM.width * VRAM.full_height) << 1, 0, 0, 
-                         VRAM.width, VRAM.full_height);
-            f1->call(f1, NULL, currDisplayId, 0, 0, VRAM.width, VRAM.full_height);
-        } else {
-            f->call(f, NULL, currDisplayId, 0, 0, clip, 4, 0, VRAM.composite,
-                        (VRAM.width * VRAM.height) << 1, 0, 0, 
-                         VRAM.width, VRAM.height);
-            f1->call(f1, NULL, currDisplayId, 0, 0, VRAM.width, VRAM.height);
-        }
+    if (isLCDRotated || top_down) {
+        rotate_offscreen_buffer(VRAM.hdc_rotated,
+                                hdc,
+                                inFullScreenMode ? VRAM.full_height : VRAM.height,
+                                VRAM.width);
+        send_buffer_to_device( VRAM.hdc_rotated );
+    } else {
+        send_buffer_to_device( hdc );
     }
+
     LeaveCriticalSection( &VRAM.cs );
 }
 
@@ -474,81 +411,42 @@ void lcd_output_video_frame( javacall_pixel* video )
  * @retval JAVACALL_FAIL    fail
  */
 javacall_result javacall_lcd_flush(int hardwareId) {
-    static LimeFunction *f = NULL;
-    static LimeFunction *f1 = NULL;
-    short clip[4] = {0,0,VRAM.width, VRAM.height};
-    javacall_pixel *current_hdc;
     int idx;
+    javacall_pixel* hdc;
 
     EnterCriticalSection( &VRAM.cs );
 	 
     (void)hardwareId;
 
-    if(inFullScreenMode) {
-        clip[3] = VRAM.full_height;
+    if( lcd_use_keying ) {
+        for( idx = 0; idx < VRAM.num_pixels; idx++ ) {
+            VRAM.mask[ idx ] = (lcd_key_color == VRAM.hdc[ idx ]);
+        }
+
+        // javacall_lcd_flush() may be called again without VRAM.hdc being updated.
+        // if we blend video directly into VRAM.hdc, second call with unchanged
+        // VRAM.hdc will erase video mask. Hence separate VRAM.composite buffer.
+
+        memcpy( VRAM.composite, VRAM.hdc, VRAM.num_pixels * sizeof(javacall_pixel) );
+
+        hdc = VRAM.composite;
+    } else {
+        hdc = VRAM.hdc;
+    }
+
+    if( NULL != VRAM.video ) {
+        blend_video_into_buffer( hdc );
     }
 
     if (isLCDRotated || top_down) {
         rotate_offscreen_buffer(VRAM.hdc_rotated,
-                                VRAM.hdc,
+                                hdc,
                                 inFullScreenMode ? VRAM.full_height : VRAM.height,
                                 VRAM.width);
-        current_hdc  = VRAM.hdc_rotated;
+        send_buffer_to_device( VRAM.hdc_rotated );
     } else {
-        current_hdc  = VRAM.hdc;
+        send_buffer_to_device( hdc );
     }
-
-    for( idx = 0; idx < VRAM.num_pixels; idx++ ) {
-        VRAM.mask[ idx ] = (lcd_key_color == current_hdc[ idx ]);
-    }
-
-    memcpy( VRAM.composite, current_hdc, VRAM.num_pixels * sizeof(javacall_pixel) );
-
-#ifdef ENABLE_WTK
-
-   f = NewLimeFunction(LIME_PACKAGE,
-                       LIME_GRAPHICS_CLASS,
-                       "drawRGB16");
-   if(inFullScreenMode) {
-       f->call(f, NULL, 0, 0, clip, 4, 0, current_hdc, (VRAM.width * VRAM.full_height) << 1, 0, 0, VRAM.width, VRAM.full_height);
-   } else {
-       f->call(f, NULL, 0, 0, clip, 4, 0, current_hdc, (VRAM.width * VRAM.height) << 1, 0, 0, VRAM.width, VRAM.height);
-   }
-
-   f1 = NewLimeFunction(LIME_PACKAGE,
-                        LIME_GRAPHICS_CLASS,
-                       "refresh");
-   if(inFullScreenMode) {
-       f1->call(f1, NULL, 0, 0, VRAM.width, VRAM.full_height);
-   } else {
-       f1->call(f1, NULL, 0, 0, VRAM.width, VRAM.height);
-   }
-
-#else
-
-    if( NULL != VRAM.video ) {
-        lcd_output_video_frame( VRAM.video );
-    } else {
-        if( NULL == f )
-        {
-            f  = NewLimeFunction(LIME_PACKAGE, LIME_GRAPHICS_CLASS, "drawRGB16Buffer");
-            f1 = NewLimeFunction(LIME_PACKAGE, LIME_GRAPHICS_CLASS, "refreshDisplay");
-        }
-
-        if(inFullScreenMode) {
-            f->call(f, NULL, currDisplayId, 0, 0, clip, 4, 0, current_hdc, 
-                        (VRAM.width * VRAM.full_height) << 1, 0, 0, 
-                         VRAM.width, VRAM.full_height);
-            f1->call(f1, NULL, currDisplayId, 0, 0, VRAM.width, VRAM.full_height);
-        } else {
-            f->call(f, NULL, currDisplayId, 0, 0, clip, 4, 0, current_hdc, 
-                        (VRAM.width * VRAM.height) << 1, 0, 0, 
-                         VRAM.width, VRAM.height);
-            f1->call(f1, NULL, currDisplayId, 0, 0, VRAM.width, VRAM.height);
-        }
-    }
-
-#endif
 
     LeaveCriticalSection( &VRAM.cs );
 
@@ -596,8 +494,6 @@ static void rotate_offscreen_buffer(javacall_pixel* dst, javacall_pixel *src, in
         }
     }
 }
-
-
 
 
 /**
