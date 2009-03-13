@@ -35,7 +35,8 @@
  * IF SUN HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
  */
  
-#include "multimedia.h"
+
+#include "javacall_defs.h"
 
 /* Very Simple PNG Encoder *************************************************/
  
