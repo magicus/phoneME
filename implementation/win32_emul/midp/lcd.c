@@ -148,11 +148,9 @@ javacall_result javacall_lcd_init(void) {
     VRAM.hdc_rotated = (javacall_pixel*)malloc(VRAM.num_pixels * sizeof(javacall_pixel));
     memset(VRAM.hdc_rotated, 0x11, VRAM.num_pixels * sizeof(javacall_pixel));
 
-    VRAM.mask = malloc(VRAM.num_pixels);
-    memset(VRAM.mask,0,VRAM.num_pixels);
-
-    VRAM.composite = (javacall_pixel*)malloc(VRAM.num_pixels * sizeof(javacall_pixel));
     VRAM.video     = NULL;
+    VRAM.mask      = NULL;
+    VRAM.composite = NULL;
 
     InitializeCriticalSection( &VRAM.cs );
 
@@ -177,10 +175,14 @@ javacall_result javacall_lcd_finalize(void){
         VRAM.hdc_rotated = NULL;
         free(VRAM.hdc);
         VRAM.hdc = NULL;
-        free(VRAM.mask);
-        VRAM.mask = NULL;
-        free(VRAM.composite);
-        VRAM.composite = NULL;
+        if( NULL != VRAM.mask ) {
+            free(VRAM.mask);
+            VRAM.mask = NULL;
+        }
+        if( NULL != VRAM.composite ) {
+            free(VRAM.composite);
+            VRAM.composite = NULL;
+        }
         VRAM.video = NULL;
         isLCDActive = JAVACALL_FALSE;
         DeleteCriticalSection( &VRAM.cs );
@@ -354,8 +356,24 @@ void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color )
     lcd_key_color  = key_color;
 
     if( lcd_use_keying ) {
+        if( NULL == VRAM.mask ) {
+            VRAM.mask = malloc(VRAM.num_pixels);
+        }
+        if( NULL == VRAM.composite ) {
+            VRAM.composite = (javacall_pixel*)malloc(VRAM.num_pixels * sizeof(javacall_pixel));
+        }
         javacall_lcd_flush( 0 ); // force mask and composite buffer creation
+    } else {
+        if( NULL != VRAM.mask ) {
+            free(VRAM.mask);
+            VRAM.mask = NULL;
+        }
+        if( NULL != VRAM.composite ) {
+            free(VRAM.composite);
+            VRAM.composite = NULL;
+        }
     }
+
     LeaveCriticalSection( &VRAM.cs );
 }
 
