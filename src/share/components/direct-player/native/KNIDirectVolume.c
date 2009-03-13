@@ -59,7 +59,12 @@ KNIDECL(com_sun_mmedia_DirectVolume_nSetVolume) {
     MMP_DEBUG_STR("[kni_volume] +nSetVolume\n");
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        ret = javacall_media_set_volume(pKniInfo->pNativeHandle, &level);
+        JAVACALL_MM_ASYNC_EXEC(
+            ret,
+            javacall_media_set_volume(pKniInfo->pNativeHandle, &level),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_VOLUME_SET,
+            returns_no_data
+        );
     } else {
         MMP_DEBUG_STR("[nSetVolume] Invalid native handle");
     }
