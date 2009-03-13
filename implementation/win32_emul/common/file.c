@@ -40,6 +40,7 @@ extern "C" {
 #include "javacall_file.h"
 #include "javacall_dir.h"
 #include "javacall_logging.h"
+#include "javautil_unicode.h"
 #include "file.h"
 
 #define MAX_NULL_TERMINATED_NAME_LENGTH (JAVACALL_MAX_FILE_NAME_LENGTH + 1)
@@ -87,31 +88,39 @@ static int stringlastindexof(unsigned short *str,
 
 char* unicode_to_char(unsigned short* str) {
 
-    static char char_name[JAVACALL_MAX_FILE_NAME_LENGTH*2];
-    unsigned i;
+    static char char_name[JAVACALL_MAX_FILE_NAME_LENGTH*2+1];
+    javacall_int32 strLen = wcslen(str);
+    javacall_int32 charLen;
 
-    for (i = 0; i < wcslen(str); i++) {
-        char_name[i] = (char) str[i];
-    }
-    char_name[i] = 0;
+    javacall_result res = javautil_unicode_utf16_to_utf8((javacall_utf16*)str,
+                                                         strLen,
+                                                         char_name,
+                                                         sizeof(char_name)-1,
+                                                         &charLen);
+    if (res != JAVACALL_OK)
+        charLen = 0;
+    char_name[charLen] = '\0';
+
     return char_name;
-
 }
 
 
 
 unsigned short* char_to_unicode(char* str) {
 
-    static unsigned short unicode_name[JAVACALL_MAX_FILE_NAME_LENGTH*2];
-    unsigned  i;
+    static unsigned short unicode_name[JAVACALL_MAX_FILE_NAME_LENGTH+1];
+    javacall_int32 strLen = strlen(str);
+    javacall_int32 utf16len;
 
-    for (i = 0; i < strlen(str); i++) {
-        unicode_name[i] = (unsigned short) str[i];
-
-    }
-    unicode_name[i] = 0;
-    unicode_name[i++] = 0;
-
+    javacall_result res = javautil_unicode_utf8_to_utf16((unsigned char*)str,
+                                                         strLen,
+                                                         (javacall_utf16*)unicode_name,
+                                                         sizeof(unicode_name)-1,
+                                                         &utf16len);
+    if (res != JAVACALL_OK)
+        utf16len = 0;
+    unicode_name[utf16len] = 0;
+    
     return unicode_name;
 }
 

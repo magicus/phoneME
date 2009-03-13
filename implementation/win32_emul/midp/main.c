@@ -69,6 +69,7 @@ static int extendClasspath(const char* classpath);
 
 static javacall_utf16* get_properties_file_name(int* fileNameLen, 
                                                 const char* argv[], int argc);
+static char* ansi_to_utf8(char *str);
 
 /** Usage text for the run emulator executable. */
 /* IMPL_NOTE: Update usage according to main(...) func */
@@ -170,6 +171,7 @@ main(int argc, char *argv[]) {
     javacall_utf16* propFileName;
     int propFileNameLen = 0;
     int isMemoryProfiler = 0;
+    char *utf8Value;
 
 #ifdef USE_MEMMON
 	int isMemoryMonitor = 0;
@@ -282,7 +284,11 @@ main(int argc, char *argv[]) {
 	            isMemoryMonitor=1;
 #endif
 			}
-            javacall_set_property(key, value, JAVACALL_TRUE,property_type);
+            utf8Value = ansi_to_utf8(value);
+            if (utf8Value == NULL)
+                return 0;
+            javacall_set_property(key, utf8Value, JAVACALL_TRUE,property_type);
+            javacall_free(utf8Value);
         } else if (strcmp(argv[i], "-profile") == 0) {
                 /* ROM profile name is passed here */ 
                 vmArgv[vmArgc++] = argv[i++];
@@ -298,9 +304,13 @@ main(int argc, char *argv[]) {
             /* It is a CLDC arg, add to CLDC arguments list */
             vmArgv[vmArgc++] = "+UseExactProfiler";
             i++;
+            utf8Value = ansi_to_utf8(argv[i]);
+            if (utf8Value == NULL)
+                return 0;
             javacall_set_property("profiler.filename",
-                                  argv[i], JAVACALL_TRUE,
+                                  utf8Value, JAVACALL_TRUE,
                                   JAVACALL_APPLICATION_PROPERTY);
+            javacall_free(utf8Value);
         } else if (strcmp(argv[i], "-tracegarbagecollection") == 0) {
 
             /* It is a CLDC arg, add to CLDC arguments list */
@@ -761,15 +771,22 @@ extendClasspath(const char* classpath) {
     int separatorLength;
     int offset;
     char* newClasspathext;
+    char* utf8Classpath;
+
+    utf8Classpath = ansi_to_utf8(classpath);
+    if (utf8Classpath == NULL) {
+        return 0;
+    }
     
     javacall_get_property("classpathext", JAVACALL_APPLICATION_PROPERTY,
                           &oldClasspathext);
     if ((oldClasspathext == NULL) || (oldClasspathext[0] == '\0')) {
         if (javacall_set_property(
-                "classpathext", classpath, 1, 
+                "classpathext", utf8Classpath, 1, 
                 JAVACALL_APPLICATION_PROPERTY) != JAVACALL_OK) {
             javautil_debug_print(JAVACALL_LOG_ERROR, "main",
                                  "Failed to set classpath!");
+            javacall_free(utf8Classpath);
             return 0;
         }
     
@@ -781,38 +798,42 @@ extendClasspath(const char* classpath) {
     if (pathSeparator == NULL) {
         javautil_debug_print(JAVACALL_LOG_ERROR, "main",
                              "Failed to get path separator!");
+        javacall_free(utf8Classpath);
         return 0;
     }
 
-    classpathLength = strlen(classpath);
+    classpathLength = strlen(utf8Classpath);
     separatorLength = strlen(pathSeparator);
     newClasspathext = (char*)malloc((classpathLength + separatorLength 
                                             + strlen(oldClasspathext) + 1) 
                                         * sizeof(char));
     if (newClasspathext == NULL) {
         reportOutOfMemoryError();
+        javacall_free(utf8Classpath);
         return 0;
     }        
     
     /* prepend classpath to make it of higher priority */
     offset = 0;
-    strcpy(newClasspathext, classpath);
+    strcpy(newClasspathext, utf8Classpath);
     
     offset += classpathLength;
     strcpy(newClasspathext + offset, pathSeparator);
     
     offset += separatorLength;
     strcpy(newClasspathext + offset, oldClasspathext);
-     
+
     if (javacall_set_property("classpathext", newClasspathext, 1, 
                               JAVACALL_APPLICATION_PROPERTY) != JAVACALL_OK) {
         javautil_debug_print(JAVACALL_LOG_ERROR, "main",
                              "Failed to set classpath!");
 
+        javacall_free(utf8Classpath);
         free(newClasspathext);
         return 0;
     }
 
+    javacall_free(utf8Classpath);
     free(newClasspathext);
     return 1;    
 }
@@ -871,3 +892,76 @@ get_properties_file_name(int* fileNameLen, const char* argv[], int argc) {
     /* no properties file argument */
     return NULL;
 } 
+
+static char* ansi_to_utf8(char *str) {
+    int length = strlen(str);
+    javacall_utf16* w_buf;
+    int w_length;
+    char *res;
+    int r_length;
+
+    if (str == NULL)
+        return str;
+
+    if (*str == '\0') {
+        res = (char*)javacall_malloc(1);
+        *res = '\0';
+    } else {
+        w_length = MultiByteToWideChar(CP_ACP, 0, str, length, NULL, 0);
+        if (w_length == 0) {
+            javautil_debug_print(JAVACALL_LOG_ERROR, "main",
+                                 "Cannot convert argv into unicode: %d",
+                                 GetLastError());
+            return NULL;
+        }
+
+        w_buf = (javacall_utf16*)javacall_malloc(w_length * sizeof(javacall_utf16));
+        if (w_buf == NULL) {
+            javautil_debug_print(JAVACALL_LOG_ERROR, "main",
+                                 "Cannot convert argv into unicode: not enough memory",
+                                 GetLastError());
+            return NULL;
+        }
+
+        if (MultiByteToWideChar(CP_ACP, 0, str, length, w_buf, w_length) == 0) {
+            javautil_debug_print(JAVACALL_LOG_ERROR, "main",
+                                 "Cannot convert argv into unicode: %d",
+                                 GetLastError());
+            javacall_free(w_buf);
+            return NULL;
+        }
+
+        r_length = WideCharToMultiByte(CP_UTF8, 0, w_buf, w_length, NULL, 0, NULL, 0);
+        if (r_length == 0) {
+            javautil_debug_print(JAVACALL_LOG_ERROR, "main",
+                                 "Cannot convert argv into unicode: %d",
+                                 GetLastError());
+            javacall_free(w_buf);
+            return NULL;
+        }
+
+        res = (char*)javacall_malloc(r_length + 1);
+        if (res == NULL) {
+            javautil_debug_print(JAVACALL_LOG_ERROR, "main",
+                                 "Cannot convert argv into unicode: not enough memory",
+                                 GetLastError());
+            javacall_free(w_buf);
+            return NULL;
+        }
+
+        r_length = WideCharToMultiByte(CP_UTF8, 0, w_buf, w_length, res, r_length, NULL, 0);
+        if (r_length == 0) {
+            javautil_debug_print(JAVACALL_LOG_ERROR, "main",
+                                 "Cannot convert argv into unicode: %d",
+                                 GetLastError());
+            javacall_free(w_buf);
+            javacall_free(res);
+            return NULL;
+        }
+
+        javacall_free(w_buf);
+        res[r_length] = '\0';
+    }
+
+    return res;
+}
