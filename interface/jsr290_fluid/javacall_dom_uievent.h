@@ -47,6 +47,49 @@ extern "C" {
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The <code>view</code> attribute identifies the 
+ * <code>AbstractView</code> from which the event was generated. 
+ * 
+ * @param handle Pointer to the object representing this uievent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_uievent_get_view_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_uievent_get_view_start(javacall_handle handle,
+                                    javacall_int32 invocation_id,
+                                    void **context,
+                                    /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The <code>view</code> attribute identifies the 
+ * <code>AbstractView</code> from which the event was generated. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_uievent_get_view_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_uievent_get_view_finish(void *context,
+                                     /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns  Specifies some detail information about the <code>Event</code>, 
  * depending on the type of event. 
  * 
