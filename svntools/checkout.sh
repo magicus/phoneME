@@ -75,7 +75,7 @@ while read repourl base ; do
     elif svn info $base > $TMP ; then
         wcurl=$(awk '$1 == "URL:" { print $2 }' $TMP)
         if [ "$repourl" = "$wcurl" ] ; then
-            cmd=(svn update $OPTQ $repourl $base)
+            cmd=(svn update $OPTQ $base)
         else
             cmd=(svn switch $OPTQ $repourl $base)
         fi
