@@ -51,6 +51,7 @@ include $(SUBSYSTEM_AMS_DIR)/ams_api/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/ams_base/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ota_control/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
 include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk

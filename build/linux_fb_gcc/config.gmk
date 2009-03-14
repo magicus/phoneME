@@ -43,6 +43,7 @@ ams/nams                = reference
 ams/mvm                 = reference
 ams/platform_request    = linux_fb
 ams/ota                 = reference
+ams/ota_control         = reference
 ams/ams_jsr_interface   = reference
 ams/appmanager_ui       = reference
 ams/ams_util            = mvm
