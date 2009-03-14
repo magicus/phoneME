@@ -194,7 +194,6 @@ endif
         override CVM_THREAD_SUSPENSION = true
 endif
 
-
 ifeq ($(CVM_JVMTI_ROM), true)
 ifneq ($(CVM_JVMTI), true)
 $(error CVM_JVMTI must be set to 'true' if CVM_JVMTI_ROM is 'true')

@@ -1974,12 +1974,13 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 	gdata->debug_malloc_lock = createRawMonitor("HPROF debug_malloc lock");
     #endif
 
+    /* Initialize machine dependent code (micro state accounting) */
+    md_init();
+
     parse_options(options);
 
     LOG2("Agent_OnLoad", "Has jvmtiEnv and options parsed");
 
-    /* Initialize machine dependent code (micro state accounting) */
-    md_init();
 
     string_init();	/* Table index values look like: 0x10000000 */
     

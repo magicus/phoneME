@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -21,11 +21,21 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
 #
-# @(#)jcov.mk	1.7 06/10/10
+# @(#)hprof.mk	1.8 06/10/10
 #
-#  Platform specific makefile for building the Jcov tool
+#  Platform specific makefile for building the Hprof tool
 #
 
-CVM_JCOV_LIBDIR        = $(CVM_BINDIR)
+CVM_HPROF_LIBDIR        = $(CVM_BINDIR)
 
+ifeq ($(WIN32_PLATFORM),wince)
+CVM_HPROF_LINKLIBS = winsock.lib
+else
+CVM_HPROF_LINKLIBS = ws2_32.lib
+endif
+
+#
+# Platform specific build flags:
+#
+CVM_HPROF_FLAGS += \
 

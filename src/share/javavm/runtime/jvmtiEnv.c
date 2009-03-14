@@ -1310,8 +1310,9 @@ jvmti_SuspendThread(jvmtiEnv* jvmtienv,
 	    if (CVMeeThreadIsSuspended(targetEE)) {
 		err = JVMTI_ERROR_THREAD_SUSPENDED;
 	    } else {
+                CVMlocksForThreadSuspendRelease(ee);
 		JVM_SuspendThread(env, (jobject)thread);
-		err = JVMTI_ERROR_NONE;
+		return JVMTI_ERROR_NONE;
 	    }
 	}
 	CVMlocksForThreadSuspendRelease(ee);
@@ -7880,7 +7881,7 @@ static CVMJvmtiContext *CVMjvmtiCreateContext()
 }
 
 /* Destructor for the CVMJvmtiContext. */
-jint CVMjvmtiDestroyContext(CVMJvmtiContext *context)
+int CVMjvmtiDestroyContext(CVMJvmtiContext *context)
 {
     CVMassert(CVMglobals.jvmti.statics.context == context);
     CVMglobals.jvmti.statics.context = NULL;

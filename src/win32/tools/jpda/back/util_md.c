@@ -35,8 +35,51 @@
 #include <string.h>
 #include <stddef.h>
 #endif
+#include "javavm/include/jni_md.h"
+#include "javavm/export/jni.h"
+#include "javavm/include/jni_impl.h"
+#include "javavm/include/ansi/fcntl.h"
+#include <sys/stat.h>
 
 #ifdef WINCE
+#define FILETAB_SIZE 32
+static FILE* filetab[FILETAB_SIZE];
+static BOOL filetab_initted = FALSE;
+
+static void init_filetab()
+{
+    int i;
+    for (i = 0; i < FILETAB_SIZE; i++) {
+        filetab[i] = NULL;
+    }
+}
+
+static FILE* GETFILE(int fd)
+{
+    if (fd < 0 || fd >= FILETAB_SIZE)
+        return NULL;
+    return filetab[fd];
+}
+
+static int file_to_fd(FILE *fp)
+{
+    int i;
+    if (!filetab_initted) {
+        init_filetab();
+        filetab_initted = TRUE;
+    }
+    for (i = 0; i < FILETAB_SIZE; i++) {
+        if (filetab[i] == NULL) {
+            filetab[i] = fp;
+            return i;
+        }
+    }
+    return -1;
+}
+
+#define GETPID()        GetCurrentProcessId()
+
+
 void _sleep(int secs)
 {
     Sleep(secs);
@@ -81,6 +124,9 @@ time(void)
     return ttt/1000;
 }
 
+#else
+#define GETFILE(x) x
+#define GETPID()        getpid()
 #endif
 
 void CVMformatTime(char *format, size_t format_size, time_t t) {
@@ -88,4 +134,43 @@ void CVMformatTime(char *format, size_t format_size, time_t t) {
     GetLocalTime(&st);
     snprintf(format, format_size, "%d.%d.%d %d:%d%:%d.%%.3d", st.wDay,
 	     st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond);
+}
+
+int
+md_init(JavaVM *jvm)
+{
+    return JNI_OK;
+}
+
+int 
+md_creat(const char *filename)
+{
+#ifdef WINCE
+    FILE *fp = fopen(filename, "wb");
+    if (fp != NULL) {
+	return file_to_fd(fp);
+    } else {
+	return -1;
+    }
+#else
+    return open(filename, O_CREAT | O_WRONLY | O_TRUNC, 
+			     _S_IREAD | _S_IWRITE);
+#endif
+}
+
+void
+md_close(int filedes)
+{
+#ifdef WINCE
+    fclose(GETFILE(filedes));
+    filetab[filedes] = NULL;
+#else
+    (void)close(filedes);
+#endif
+}
+
+int
+md_write(int fd, char *buf, int len)
+{
+    return write(fd, buf, len);
 }
