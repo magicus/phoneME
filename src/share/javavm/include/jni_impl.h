@@ -837,4 +837,8 @@ CVMjniGetDirectBufferAddress(JNIEnv *env, jobject buf);
 extern jlong JNICALL
 CVMjniGetDirectBufferCapacity(JNIEnv *env, jobject buf);
 
+#ifdef CVM_JVMTI_IOVEC
+#include "jni_io.h"
+#endif
+
 #endif /* _INCLUDED_JNI_IMPL_H */

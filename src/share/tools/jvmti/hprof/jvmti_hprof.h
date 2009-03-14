@@ -38,7 +38,6 @@
 
 /* Machine dependent functions. */
 
-#include "jvmti_hprof_md.h"
 #include "javavm/include/clib.h"
 
 /* General JVM/Java functions, types and macros. */
@@ -79,6 +78,7 @@ typedef unsigned SerialNumber;
 
 #define FILE_IO_BUFFER_SIZE	(1024*64)
 
+#include "jvmti_hprof_md.h"
 
 /* Table index types */
 

@@ -45,6 +45,12 @@
 #include "socket_md.h"
 #include "sysSocket.h"
 
+int
+dbgsysInit(JavaVM *jvm)
+{
+    return 0;
+}
+
 static int waitForInput(int fd)
 {
     fd_set fds;
