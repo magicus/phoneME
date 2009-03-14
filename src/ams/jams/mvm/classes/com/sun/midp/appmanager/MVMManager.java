@@ -255,6 +255,7 @@ public class MVMManager extends MIDlet
         String displayName =
                 Resource.getString(ResourceConstants.INSTALL_APPLICATION);
         try {
+            appManager.suppressNextRunMIDletQuestion();
             MIDletSuiteUtils.executeWithArgs(MIDletSuite.INTERNAL_SUITE_ID,
                                       INSTALLER,
                                       displayName,
@@ -283,6 +284,10 @@ public class MVMManager extends MIDlet
     public void handleODDInstallationDoneEvent(int result, int suiteId,
             String exception, String message, int reason, String extraData) {
 
+        if (result != INSTALLER_RESULT_SUCCESS) {
+            appManager.allowRunMIDletQuestion();
+        }
+        
         MIDletProxy odtAgentMidlet = midletProxyList.findMIDletProxy(
             MIDletSuite.INTERNAL_SUITE_ID, ODT_AGENT);
 
