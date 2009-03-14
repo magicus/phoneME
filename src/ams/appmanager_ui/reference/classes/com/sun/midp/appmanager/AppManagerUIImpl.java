@@ -891,6 +891,8 @@ class AppManagerUIImpl extends Form
                     exitingMidletClassName = null;
                     selector.exitIfNoMidletRuns();
                 }
+            } else {
+                display.setCurrent(this);
             }
         }
     }
@@ -1409,6 +1411,9 @@ class AppManagerUIImpl extends Form
      * the midlet suite that was just installed.
      */
     private void askUserIfLaunchMidlet() {
+        if (!appManager.getAndResetRunMIDletQuestionFlag()) {
+            return;
+        }
         // Ask the user if he wants to run a midlet from
         // the newly installed midlet suite
         String title = Resource.getString(
