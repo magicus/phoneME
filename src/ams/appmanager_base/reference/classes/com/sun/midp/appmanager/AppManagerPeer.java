@@ -157,7 +157,7 @@ class AppManagerPeer implements CommandListener {
     /** If there are folders */
     private boolean foldersOn;
 
-    /** true if AMS shoud not ask user whether to run just installed suite */
+    /** true if AMS should not ask user whether to run just installed suite */
     private boolean disableRunMIDletQuestion;
 
     /** Command object for "Yes, enable on device debug" command. */
@@ -1248,7 +1248,7 @@ class AppManagerPeer implements CommandListener {
      * If the question is suppressed, toggles the flag to allow next questions.
      * @return true if the question should be displayed
      */
-    public boolean isRunMIDletQuestionAllowed() {
+    public boolean getAndResetRunMIDletQuestionFlag() {
         if (disableRunMIDletQuestion) {
             allowRunMIDletQuestion();
             return false;

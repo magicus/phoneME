@@ -1411,7 +1411,7 @@ class AppManagerUIImpl extends Form
      * the midlet suite that was just installed.
      */
     private void askUserIfLaunchMidlet() {
-        if (!appManager.isRunMIDletQuestionAllowed()) {
+        if (!appManager.getAndResetRunMIDletQuestionFlag()) {
             return;
         }
         // Ask the user if he wants to run a midlet from
