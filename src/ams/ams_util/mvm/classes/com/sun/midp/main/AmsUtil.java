@@ -401,8 +401,7 @@ public class AmsUtil {
                 IsolateUtil.setProfile(isolate, profileName);
             }
 
-            isolate.setDebug(debugMode == Constants.MIDP_NO_DEBUG ?
-                                 false : true);
+            isolate.setDebug(debugMode);
             
             isolate.setAPIAccess(true);
             isolate.start();
