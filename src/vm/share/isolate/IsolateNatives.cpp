@@ -352,6 +352,14 @@ Java_com_sun_cldc_isolate_Isolate_isDebuggerConnected(JVM_SINGLE_ARG_TRAPS) {
 #endif
 }
 
+/* Sets java debugger suspend flag to true, which makes the starting isolate 
+ * stay in suspended mode until an external debugger is connected */
+void Java_com_sun_cldc_isolate_Isolate_setSuspend0() {
+#if ENABLE_JAVA_DEBUGGER
+    JavaDebugger::set_suspend(true);
+#endif
+}
+
 } // extern "C"
 
 

@@ -70,6 +70,7 @@ ReturnOop IsolateObj::duplicate(JVM_SINGLE_ARG_TRAPS) const {
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   dup().set_profile_id( profile_id() );
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+  dup().set_suspend_debugging( suspend_debugging() );
 
 #if ENABLE_WTK_PROFILER
   dup().set_use_profiler( use_profiler() );
@@ -82,7 +83,7 @@ ReturnOop IsolateObj::duplicate(JVM_SINGLE_ARG_TRAPS) const {
   p = Universe::deep_copy(main_args() JVM_CHECK_0);
   dup().set_main_args(p);
   p = Universe::deep_copy(app_classpath() JVM_CHECK_0);
-  dup().set_app_classpath(p);
+  dup().set_app_classpath(p);  
 
   return dup.obj();
 }

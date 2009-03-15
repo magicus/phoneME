@@ -76,8 +76,9 @@ public:
   INT_FIELD ( connect_debugger,    15 )
   INT_FIELD ( use_verifier,        16 )
   INT_FIELD ( profile_id,          17 )  
+  INT_FIELD ( suspend_debugging,   18 )  
 #if ENABLE_WTK_PROFILER
-  INT_FIELD ( use_profiler,        18 )
+  INT_FIELD ( use_profiler,        19 )
 #endif
 
   STATIC_INT_FIELD( api_access, 0 )
