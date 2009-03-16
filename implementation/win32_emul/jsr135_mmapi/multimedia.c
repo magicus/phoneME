@@ -80,6 +80,25 @@ typedef struct _cap_item cap_item;
 #define DEFAULT_VALUE_LEN       0xFF
 #define MEDIA_CAPS_SIZE         sizeof(javacall_media_caps)
 
+static javacall_media_format_type streamable_fmt[] = 
+{
+    JAVACALL_MEDIA_FORMAT_VIDEO_3GPP,
+    JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3
+};
+
+static javacall_bool is_streamable(javacall_media_format_type fmt)
+{
+    int i;
+    for (i = 0; i < sizeof(streamable_fmt) / sizeof(javacall_media_format_type); i++)
+    {
+        if (streamable_fmt[i] == fmt)
+        {
+            return JAVACALL_TRUE;
+        }
+    }
+    return JAVACALL_FALSE;
+}
+
 static javacall_media_caps nullCap = { NULL, NULL, 0, 0 };
 
 javacall_media_caps* get_cap_item(const char *strItem) {
@@ -760,7 +779,10 @@ javacall_result javacall_media_create(int appId,
         if (&g_audio_itf == pPlayer->mediaItfPtr || 
             &g_video_itf == pPlayer->mediaItfPtr)
         {
-            pPlayer->downloadByDevice = JAVACALL_TRUE;
+            if (is_streamable(pPlayer->mediaType) == JAVACALL_TRUE)
+            {
+                pPlayer->downloadByDevice = JAVACALL_TRUE;
+            }
         }
 #endif
     }
