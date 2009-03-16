@@ -191,7 +191,7 @@ javacall_result javacall_annunciator_display_notification_icon(javacall_bool ena
  *         <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not
  *         supported on device
  */
-javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNetworkIndicator) {
+javacall_result javacall_annunciator_display_network_icon(int networkIndicatorCounter) {
     static LimeFunction *f = NULL;
 	javacall_bool enable = JAVACALL_FALSE;
 
@@ -202,14 +202,7 @@ javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNe
 							"setNetworkIndicator");
     }
 
-	if (enableNetworkIndicator == 1) { /* NETWORK_INDICATOR_ON, Turns on indicator */
-		enable = JAVACALL_TRUE;
-	} else if (enableNetworkIndicator == 2) { /* NETWORK_INDICATOR_OFF, Turns off indicator */
-		enable = JAVACALL_FALSE;
-	} else if (enableNetworkIndicator == 3) { /* NETWORK_INDICATOR_TOGGLE, Toggles the current state */
-		// IMPL_NOTE: define what needs to be done here
-	}
-    f->call(f, NULL, enable);
+    f->call(f, NULL, networkIndicatorCounter);
 
 	return JAVACALL_OK;
 
