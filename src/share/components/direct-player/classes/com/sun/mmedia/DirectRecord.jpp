@@ -27,7 +27,6 @@ package com.sun.mmedia;
 
 import java.io.*;
 import javax.microedition.media.*;
-import javax.microedition.media.MediaException.*;
 import javax.microedition.media.control.*;
 import javax.microedition.io.*;
 
@@ -35,7 +34,6 @@ import javax.microedition.io.*;
 import javax.microedition.io.file.*;
 // #endif ]
 
-import com.sun.mmedia.*;
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
@@ -63,7 +61,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
     private native void finalize();
     // #endif ]    
 
-    public DirectRecord(DirectPlayer player) {
+    public DirectRecord(PlayerImpl player) {
         this.player = player;
     }
 
@@ -115,7 +113,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
 	    checkPermission();
 
         // Query if native function can handle this locator
-        int ret = nSetLocator(player.hNative, locator);
+        int ret = nSetLocator(player.getNativeHandle(), locator);
         if (-1 == ret) {
             throw new MediaException("setRecordLocation: invalid locator " + locator);
         } else if (0 == ret) {
@@ -208,7 +206,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
         recordRequested = true;
 
         if (player.getState() == Player.STARTED) {
-            if (1 == nStart(player.hNative)) {
+            if (1 == nStart(player.getNativeHandle())) {
                 recording = true;
                 player.sendEvent(PlayerListener.RECORD_STARTED, new Long(player.getMediaTime()));
             } else {
@@ -231,9 +229,9 @@ public final class DirectRecord implements RecordControl, DirectControls {
     	    if (recording == true) {
                 if (suspended == false) {
                     if (pause) 
-                        nPause(player.hNative);
+                        nPause(player.getNativeHandle());
                     else 
-                        nStop(player.hNative);
+                        nStop(player.getNativeHandle());
                 }
                 player.sendEvent(PlayerListener.RECORD_STOPPED, new Long(player.getMediaTime()));
     		    recording = false;
@@ -258,7 +256,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
     	    return;
     	}
 
-        if (player == null || 0 == player.hNative) {
+        if (player == null || 0 == player.getNativeHandle()) {
             return;
         }
 
@@ -267,7 +265,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
 
         if( hasDataToCommit )
         {
-            if (1 != nCommit(player.hNative)) {
+            if (1 != nCommit(player.getNativeHandle())) {
                 cleanUp();
                 throw new IOException("I/O error occurs during commit");
             }
@@ -280,7 +278,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
                     getSize = 100;          // 100 bytes
                 }
                 dataBuffer = new byte[getSize];
-                int size = nGetRecordedSize(player.hNative);
+                int size = nGetRecordedSize(player.getNativeHandle());
 
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
@@ -288,7 +286,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
                 }
 
                 while (size >= getSize) {
-                    if (1 != nGetRecordedData(player.hNative, offset, getSize, dataBuffer)) {
+                    if (1 != nGetRecordedData(player.getNativeHandle(), offset, getSize, dataBuffer)) {
                         cleanUp();
                         throw new IOException("I/O error occurs during commit");
                     }
@@ -301,7 +299,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
 
                 if (size > 0) {
                     dataBuffer = new byte[size];
-                    if (1 != nGetRecordedData(player.hNative, offset, size, dataBuffer)) {
+                    if (1 != nGetRecordedData(player.getNativeHandle(), offset, size, dataBuffer)) {
                         cleanUp();
                         throw new IOException("I/O error occurs during commit");
                     }
@@ -314,7 +312,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
         }
 
         // Release native resources
-        nClose(player.hNative);
+        nClose(player.getNativeHandle());
 
         if (locator != null) {
             if (httpCon != null) {
@@ -350,7 +348,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
 
         if (recordRequested == true) {
             stopRecord(false);
-            if (1 != nReset(player.hNative)) {
+            if (1 != nReset(player.getNativeHandle())) {
                 cleanUp();
                 throw new IOException("The current recording cannot be erased");
             }
@@ -371,9 +369,9 @@ public final class DirectRecord implements RecordControl, DirectControls {
             throw new IllegalArgumentException("Given size is invalid");
 
         if (Integer.MAX_VALUE == size) {
-            nSetSizeLimit(player.hNative, -1);
+            nSetSizeLimit(player.getNativeHandle(), -1);
         } else {
-            size = nSetSizeLimit(player.hNative, size);
+            size = nSetSizeLimit(player.getNativeHandle(), size);
             if (size == 0) {
                 throw new MediaException("Setting the record size limit is not supported");
             }
@@ -381,7 +379,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
 
         // If the requested size is less than the already recorded size, commit
         if (recording == true) {
-            int recordedSize = nGetRecordedSize(player.hNative);
+            int recordedSize = nGetRecordedSize(player.getNativeHandle());
             if (recordedSize > size) {
                 try {
                     commit();
@@ -398,7 +396,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
      * Get content type
      */
     public String getContentType() {
-        return nGetRecordedType(player.hNative);
+        return nGetRecordedType(player.getNativeHandle());
     }
     
     ///////////////////////////////////////////////////////////////
@@ -427,7 +425,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
     public synchronized void playerStarted() {
         // Automatically resume recording from Player
         if (suspended) {
-            if (1 == nStart(player.hNative)) {
+            if (1 == nStart(player.getNativeHandle())) {
                 recording = true;
                 player.sendEvent(PlayerListener.RECORD_STARTED, new Long(player.getMediaTime()));
             } else {
@@ -440,7 +438,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
         }
 
         if (recordRequested && !recording) {
-            if (1 == nStart(player.hNative)) {
+            if (1 == nStart(player.getNativeHandle())) {
                 recording = true;
                 player.sendEvent(PlayerListener.RECORD_STARTED, new Long(player.getMediaTime()));
             } else {
@@ -465,7 +463,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
     public synchronized void playerClosed() {
         try {
             reset();
-            nClose(player.hNative);
+            nClose(player.getNativeHandle());
         } catch(IOException e) {
             // Nothing to do
         }
@@ -536,7 +534,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
     private String locator; // null;
     /* Set the output stream where the data will be recorded. */
     private OutputStream stream; // null
-    private DirectPlayer player; // null;
+    private PlayerImpl player; // null;
     /* specifies whether recording is requested via <code>startRecord</code> */
     private boolean recordRequested; // false;
     /* This is set to true when recording starts (RECORD_STARTED event

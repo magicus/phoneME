@@ -33,13 +33,11 @@ import java.util.Hashtable;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
-import com.sun.mmedia.BasicPlayer;
 import com.sun.mmedia.PlayerImpl;
 import com.sun.mmedia.TonePlayer;
 import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.*;
 import com.sun.mmedia.DefaultConfiguration;
-import com.sun.mmedia.DirectPlayer;
 
 import javax.microedition.media.protocol.*;
 

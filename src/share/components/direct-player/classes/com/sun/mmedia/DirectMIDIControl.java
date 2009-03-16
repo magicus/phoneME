@@ -65,14 +65,14 @@ class DirectMIDIControl implements DirectControls {
     private native int nGetProgramList(int handle, int bank, int[] proglist);
     private native int nGetProgram(int handle, int channel, int[] program);
 
-    DirectMIDIControl(DirectPlayer p) {
+    DirectMIDIControl(PlayerImpl p) {
         _player = p;
     }
 
     // Private //////////////////////////////////////////////////////////
 
     private void checkState() {
-        if (_player.state < Player.PREFETCHED) {
+        if (_player.getState() < Player.PREFETCHED) {
             throw new IllegalStateException("Not prefetched");
         }
     }
@@ -129,7 +129,7 @@ class DirectMIDIControl implements DirectControls {
         if (_cachedRate != -1) {
             // NOTE - MMAPI SPEC is not clear about this
             // set cached rate at enter playing state
-            nSetRate(_player.hNative, _cachedRate);
+            nSetRate(_player.getNativeHandle(), _cachedRate);
             _cachedRate = -1;
         }
     }
@@ -154,7 +154,7 @@ class DirectMIDIControl implements DirectControls {
 
     class MIDIControlImpl implements MIDIControl {
         public synchronized boolean isBankQuerySupported() {
-            return nIsBankQuerySupported(_player.hNative);
+            return nIsBankQuerySupported(_player.getNativeHandle());
         }
 
         public synchronized int[] getProgram(int channel) throws MediaException {
@@ -164,7 +164,7 @@ class DirectMIDIControl implements DirectControls {
 
             int[] p = new int[2];
 
-            int len = nGetProgram(_player.hNative, channel, p);
+            int len = nGetProgram(_player.getNativeHandle(), channel, p);
             if(len < 0) throw new MediaException("GetProgram failure");
 
             return p;
@@ -176,7 +176,7 @@ class DirectMIDIControl implements DirectControls {
 
             int[] bl1 = new int[20];
 
-            int len = nGetBankList(_player.hNative, custom, bl1);
+            int len = nGetBankList(_player.getNativeHandle(), custom, bl1);
             if(len < 0) throw new MediaException("BankList failure");
 
             int[] bl2 = new int[len];
@@ -198,7 +198,7 @@ class DirectMIDIControl implements DirectControls {
 
             byte[] str = new byte[64];
 
-            int len = nGetKeyName(_player.hNative, bank, prog, key, str);
+            int len = nGetKeyName(_player.getNativeHandle(), bank, prog, key, str);
             if(len < 0) throw new MediaException("KeyName failure");
 
             return new String(str, 0, len);
@@ -212,7 +212,7 @@ class DirectMIDIControl implements DirectControls {
 
             byte[] str = new byte[64];
 
-            int len = nGetProgramName(_player.hNative, bank, prog, str);
+            int len = nGetProgramName(_player.getNativeHandle(), bank, prog, str);
             if(len < 0) throw new MediaException("ProgramName failure");
 
             return new String(str, 0, len);
@@ -225,7 +225,7 @@ class DirectMIDIControl implements DirectControls {
 
             int[] pl1 = new int[200];
 
-            int len = nGetProgramList(_player.hNative, bank, pl1);
+            int len = nGetProgramList(_player.getNativeHandle(), bank, pl1);
             if(len < 0) throw new MediaException("ProgramList failure");
 
             int[] pl2 = new int[len];
@@ -241,8 +241,8 @@ class DirectMIDIControl implements DirectControls {
                     checkChannel(channel);
                     checkVolume(volume);
 
-            if (_player != null && _player.hNative != 0) {
-                nSetChannelVolume(_player.hNative, channel, volume);
+            if (_player != null && _player.getNativeHandle() != 0) {
+                nSetChannelVolume(_player.getNativeHandle(), channel, volume);
             }
         }
 
@@ -250,8 +250,8 @@ class DirectMIDIControl implements DirectControls {
             checkState();
             checkChannel(channel);
 
-            if (_player != null && _player.hNative != 0) {
-                return nGetChannelVolume(_player.hNative, channel);
+            if (_player != null && _player.getNativeHandle() != 0) {
+                return nGetChannelVolume(_player.getNativeHandle(), channel);
             } else {
                 return -1;
             }
@@ -264,8 +264,8 @@ class DirectMIDIControl implements DirectControls {
             if(bank != -1) checkBank(bank);
             checkProgram(program);
 
-            if (_player != null && _player.hNative != 0) {
-                nSetProgram(_player.hNative, channel, bank, program);
+            if (_player != null && _player.getNativeHandle() != 0) {
+                nSetProgram(_player.getNativeHandle(), channel, bank, program);
             }
         }
 
@@ -275,8 +275,8 @@ class DirectMIDIControl implements DirectControls {
             checkData(data1);
             checkData(data2);
 
-            if (_player != null && _player.hNative != 0) {
-                nShortMidiEvent(_player.hNative, type, data1, data2);
+            if (_player != null && _player.getNativeHandle() != 0) {
+                nShortMidiEvent(_player.getNativeHandle(), type, data1, data2);
             }
         }
 
@@ -284,8 +284,8 @@ class DirectMIDIControl implements DirectControls {
             checkState();
             checkLongMidiEvent(data, offset, length);
 
-            if (_player != null && _player.hNative != 0) {
-                return nLongMidiEvent(_player.hNative, data, offset, length);
+            if (_player != null && _player.getNativeHandle() != 0) {
+                return nLongMidiEvent(_player.getNativeHandle(), data, offset, length);
             } else {
                 return -1;
             }
@@ -323,9 +323,9 @@ class DirectMIDIControl implements DirectControls {
             }
 
             recalculateStopTime();
-            if (_player.state >= Player.STARTED) {
+            if (_player.getState() >= Player.STARTED) {
                     _cachedRate = -1;
-                    return nSetRate(_player.hNative, millirate);
+                    return nSetRate(_player.getNativeHandle(), millirate);
             } else {
                     _cachedRate = millirate;
                     return millirate;
@@ -333,24 +333,24 @@ class DirectMIDIControl implements DirectControls {
         }
 
         public synchronized int getRate() {
-            if (_player != null && _player.hNative != 0) {
-                return _cachedRate == -1 ? nGetRate(_player.hNative) : _cachedRate;
+            if (_player != null && _player.getNativeHandle() != 0) {
+                return _cachedRate == -1 ? nGetRate(_player.getNativeHandle()) : _cachedRate;
             } else {
                 return 0;
             }
         }
 
         public synchronized int getMaxRate() {
-            if (_player != null && _player.hNative != 0) {
-                return nGetMaxRate(_player.hNative);
+            if (_player != null && _player.getNativeHandle() != 0) {
+                return nGetMaxRate(_player.getNativeHandle());
             } else {
                 return 0;
             }
         }
 
         public synchronized int getMinRate() {
-            if (_player != null && _player.hNative != 0) {
-                return nGetMinRate(_player.hNative);
+            if (_player != null && _player.getNativeHandle() != 0) {
+                return nGetMinRate(_player.getNativeHandle());
             } else {
                 return 0;
             }
@@ -379,32 +379,32 @@ class DirectMIDIControl implements DirectControls {
                 millisemitones = min;
             }
 
-            if (_player != null && _player.hNative != 0) {
-                return nSetPitch(_player.hNative, millisemitones);
+            if (_player != null && _player.getNativeHandle() != 0) {
+                return nSetPitch(_player.getNativeHandle(), millisemitones);
             } else {
                 return 0;
             }
         }
 
         public synchronized int getPitch() {
-            if (_player != null && _player.hNative != 0) {
-                return nGetPitch(_player.hNative);
+            if (_player != null && _player.getNativeHandle() != 0) {
+                return nGetPitch(_player.getNativeHandle());
             } else {
                 return 0;
             }
         }
 
         public synchronized int getMaxPitch() {
-            if (_player != null && _player.hNative != 0) {
-                return nGetMaxPitch(_player.hNative);
+            if (_player != null && _player.getNativeHandle() != 0) {
+                return nGetMaxPitch(_player.getNativeHandle());
             } else {
                 return 0;
             }
         }
 
         public synchronized int getMinPitch() {
-            if (_player != null && _player.hNative != 0) {
-                return nGetMinPitch(_player.hNative);
+            if (_player != null && _player.getNativeHandle() != 0) {
+                return nGetMinPitch(_player.getNativeHandle());
             } else {
                 return 0;
             }
@@ -429,16 +429,16 @@ class DirectMIDIControl implements DirectControls {
             }
 
             recalculateStopTime();
-            if (_player != null && _player.hNative != 0) {
-                return nSetTempo(_player.hNative, millitempo);
+            if (_player != null && _player.getNativeHandle() != 0) {
+                return nSetTempo(_player.getNativeHandle(), millitempo);
             } else {
                 return 0;
             }
         }
 
         public synchronized int getTempo() {
-            if (_player != null &&  _player.hNative != 0) {
-                return nGetTempo(_player.hNative);
+            if (_player != null &&  _player.getNativeHandle() != 0) {
+                return nGetTempo(_player.getNativeHandle());
             } else {
                 return 0;
             }
@@ -458,6 +458,6 @@ class DirectMIDIControl implements DirectControls {
 
     //////////////////////////////////////////////////////////////////////
 
-    private DirectPlayer _player;
+    private PlayerImpl _player;
     private int _cachedRate = -1;
 }

@@ -66,7 +66,7 @@ class MMEventListener implements EventListener {
      */
     public void process(Event event) {
         NativeEvent nevt = (NativeEvent)event;
-        BasicPlayer p;
+        PlayerImpl p;
 
 		if( EventTypes.MMAPI_EVENT != nevt.getType() ) return;
 		
@@ -99,7 +99,7 @@ class MMEventListener implements EventListener {
         case EVENT_MEDIA_RECORD_SIZE_LIMIT:
             p = PlayerImpl.get(nevt.intParam1);
             if(p != null) {
-                p.doReceiveRSL();
+                p.receiveRSL();
 			}	
             break;
         
@@ -142,11 +142,7 @@ class MMEventListener implements EventListener {
             p = PlayerImpl.get( nevt.intParam1 );
             if( null != p )
             {
-                try{
-                    DirectPlayer dp = ( DirectPlayer )p;
-                    dp.notifySnapshotFinished();
-                }
-                catch( ClassCastException e ){}
+                p.notifySnapshotFinished();
             }
             break;
                 

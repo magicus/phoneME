@@ -50,8 +50,8 @@ public final class DirectTone extends DirectPlayer {
     /**
      * It does not need data source
      */
-    public DirectTone() {
-        super();
+    public DirectTone( PlayerImpl owner ) {
+        super( owner );
     }
 
     /**
@@ -60,9 +60,9 @@ public final class DirectTone extends DirectPlayer {
     protected void doRealize() throws MediaException {
         // if no source stream, player is created from TONE_DEVICE_LOCATOR
         // simply return it.
-        if (stream != null) {
-            long contLength = stream.getContentLength();
-            if (contLength == stream.tell()) {
+        if ( getOwner().stream != null) {
+            long contLength = getOwner().stream.getContentLength();
+            if (contLength == getOwner().stream.tell()) {
                 return;
             } else {
                 // read the whole sequence from the source stream
@@ -75,7 +75,7 @@ public final class DirectTone extends DirectPlayer {
                 try {
                     int read;
 
-                    while ((read = stream.read(tmpseqs, 0, chunksize)) != -1) {
+                    while ((read = getOwner().stream.read(tmpseqs, 0, chunksize)) != -1) {
                         baos.write(tmpseqs, 0, read);
                     }
 
@@ -103,6 +103,7 @@ public final class DirectTone extends DirectPlayer {
      * @exception  MediaException  Description of the Exception
      */
     protected void doPrefetch() throws MediaException {
+        int hNative = getOwner().getNativeHandle();
         /* prefetch native player */
         if (!nPrefetch(hNative)) {
             throw new MediaException("Can not prefetch");
@@ -125,7 +126,7 @@ public final class DirectTone extends DirectPlayer {
             return c;
         }
 
-        if (getState() >= REALIZED) {
+        if (getOwner().getState() >= Player.REALIZED) {
             if (type.equals("javax.microedition.media.control.ToneControl") ||
                 type.equals("ToneControl")) {
                 if( null == toneCtl ) toneCtl = new DirectToneControl(this, false);
@@ -141,12 +142,8 @@ public final class DirectTone extends DirectPlayer {
     }
 
 
-    /**
-     * Override getContentType from BasicPlayer
-     * Always return DefaultConfiguration.TONE content type
-     */
-    public String getContentType() {
-        chkClosed(true);
+    protected String doGetContentType()
+    {
         return DefaultConfiguration.MIME_AUDIO_TONE;
     }
 
@@ -162,9 +159,10 @@ public final class DirectTone extends DirectPlayer {
      */
     void setSequence(byte[] sequence)
     {
-        if (this.getState() >= Player.PREFETCHED)
+        if (getOwner().getState() >= Player.PREFETCHED)
             throw new IllegalStateException("cannot set seq after prefetched");
-       
+
+        int hNative = getOwner().getNativeHandle();
         nFlushBuffer(hNative);
 
         long contentSize = sequence.length;
@@ -175,7 +173,7 @@ public final class DirectTone extends DirectPlayer {
         MediaDownload.nBuffering(hNative, sequence,  0, sequence.length);
         MediaDownload.nBuffering(hNative, null, 0, 0);
 
-        hasToneSequenceSet = true;
+        getOwner().hasToneSequenceSet = true;
     }
 
     /**

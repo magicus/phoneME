@@ -42,7 +42,8 @@ public class DirectCamera extends DirectPlayer
     /**
      * It does not need data source
      */
-    public DirectCamera() {
+    public DirectCamera( PlayerImpl owner ) {
+        super( owner );
     }
 
     protected Control doGetControl(String type) {

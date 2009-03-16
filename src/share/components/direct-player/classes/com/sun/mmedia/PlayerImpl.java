@@ -36,28 +36,158 @@ import  com.sun.j2me.app.AppPackage;
 import  com.sun.j2me.app.AppIsolate;
 import  com.sun.j2me.log.Logging;
 import  com.sun.j2me.log.LogChannels;
-import com.sun.mmedia.PlayerStateSubscriber;
 
 import java.io.IOException;
 
-public class PlayerImpl implements Player {
+public class PlayerImpl implements Player, TimeBase, StopTimeControl {
+
+    /** Unknown media format */
+    static final String MEDIA_FORMAT_UNKNOWN = "UNKNOWN";
+    /** Unsupported media format */
+    static final String MEDIA_FORMAT_UNSUPPORTED = "UNSUPPORTED";
+    /** Device Tone format */
+    static final String MEDIA_FORMAT_DEVICE_TONE = "DEVICE_TONE";
+    /** Device MIDI format */
+    static final String MEDIA_FORMAT_DEVICE_MIDI = "DEVICE_MIDI";
+    /** Audio Capture format*/
+    static final String MEDIA_FORMAT_CAPTURE_AUDIO = "CAPTURE_AUDIO";
+    /** Video Capture format*/
+    static final String MEDIA_FORMAT_CAPTURE_VIDEO = "CAPTURE_VIDEO";
+    /** Radio Capture format*/
+    static final String MEDIA_FORMAT_CAPTURE_RADIO = "CAPTURE_RADIO";
+    /** Tone format */
+    static final String MEDIA_FORMAT_TONE = "TONE";
+
+    /**
+     * Control package name
+     */
+    protected final static String pkgName = "javax.microedition.media.control.";
+
+    /**
+     * Centralized control management with string constants for each
+     * implemented Control.
+     * <p>
+     * For adding a new control interfaces, follow the following steps:
+     * <ol>
+     *  <li>Add new control name here. If it is not in the package
+     *     javax.microedition.media.control, then the full package
+     *     name of the control must be used.
+     *  <li>Add the control's name field to the allJsr135Ctrls array (see below)
+     * </ol>
+     * <p>
+     * Size note: it would be space saving to declare the array allJsr135Ctrls
+     * with the strings directly and not define the strings constants here.
+     * However, it is more convenient for descendants to use
+     * these constants, instead of e.g.
+     * <code>&nbsp;&nbsp;&nbsp;allJsr135Ctrls[4]; // RateControl</code>
+     *
+     * @see    #getControls()
+     * @see    #doGetControl(String)
+     * @see    #allJsr135Ctrls
+     */
+
+    protected final static String fpcName = "FramePositioningControl";
+    /**
+     *  Description of the Field
+     */
+    protected final static String mdcName = "MetaDataControl";
+    /**
+     *  Description of the Field
+     */
+    protected final static String micName = "MIDIControl";
+    /**
+     *  Description of the Field
+     */
+    protected final static String picName = "PitchControl";
+    /**
+     *  Description of the Field
+     */
+    protected final static String racName = "RateControl";
+    /**
+     *  Description of the Field
+     */
+    protected final static String recName = "RecordControl";
+    /**
+     *  Description of the Field
+     */
+    protected final static String stcName = "StopTimeControl";
+    /**
+     *  Description of the Field
+     */
+    protected final static String tecName = "TempoControl";
+    /**
+     *  Description of the Field
+     */
+    protected final static String guiName = "GUIControl";
+    /**
+     *  Description of the Field
+     */
+    protected final static String vicName = "VideoControl";
+    /**
+     *  Description of the Field
+     */
+    protected final static String rtspName = "RtspControl";
+
+    /**
+     *  Description of the Field
+     */
+    protected final static String tocName = "ToneControl";
+    /**
+     *  Description of the Field
+     */
+    protected final static String dtocName = "com.sun.mmedia.control.DualToneControl";
+    /**
+     *  Description of the Field
+     */
+    protected final static String vocName = "VolumeControl";
+
+    /**
+     * An array containing all available JSR-135 controls in possible Players
+     */
+    private final static String[] allJsr135Ctrls = {
+        fpcName,
+        mdcName,
+        micName,
+        picName,
+        racName,
+        recName,
+        stcName,
+        tecName,
+        guiName,
+        vicName,
+        rtspName,
+        tocName,
+        dtocName,
+        vocName,
+        };
+
+    /**
+     * An array containing all available controls
+     * in possible Players, including JSR-234 controls
+     * if available.
+     * DO NOT USE DIRECTLY! Use getPossibleControlNames() instead.
+     */
+    private static String[] allCtrls;
+
 
     public PlayerStateSubscriber state_subscriber = null;
 
-    protected BasicPlayer playerInst = null;
-    public    BasicPlayer getPlayerInst(){ return playerInst; };
+    private LowLevelPlayer lowLevelPlayer;
     
     protected DataSource  source;
     protected SourceStream stream;
-    private boolean isClosed = false;
 
     private String  mediaFormat = null;
-    private boolean handledByDevice = false;
+    boolean handledByDevice = false;
     private boolean handledByJava = false;
     private int hNative;      // handle of native API library 
 
 
-    private int loopCount = 0; /* if set in unrealized state */
+    /**
+     * the loopCount of this player
+     */
+    int loopCountSet = 1, loopCount;
+
     private Vector listeners = new Vector(2);
 
     /**
@@ -89,7 +219,7 @@ public class PlayerImpl implements Player {
     /**
      * lock object
      */
-    private static Object idLock = new Object();
+    final private static Object idLock = new Object();
     
     // Init native library
     protected native int nInit(int appId, int pID, String URI)
@@ -110,8 +240,6 @@ public class PlayerImpl implements Player {
     /**
      * Constructor 
      */
-    private PlayerImpl() {};
-
     public PlayerImpl(DataSource source) throws MediaException, IOException {
         // Get current application ID to support MVM
         int appId = AppIsolate.getIsolateId();
@@ -121,37 +249,40 @@ public class PlayerImpl implements Player {
             pID = pcount;
         }
 
-        String locator = source.getLocator();
+        locator = source.getLocator();
         hNative = nInit(appId, pID, locator);
+
+        mplayers.put(new Integer(pID), this);
 
         mediaFormat     = nGetMediaFormat(hNative);
 
-        if( mediaFormat.equals( BasicPlayer.MEDIA_FORMAT_UNSUPPORTED ) ) {
+        if( mediaFormat.equals( MEDIA_FORMAT_UNSUPPORTED ) ) {
             /* verify if handled by Java */
             mediaFormat = Configuration.getConfiguration().ext2Format(source.getLocator());
-            if( mediaFormat == null || mediaFormat.equals( BasicPlayer.MEDIA_FORMAT_UNSUPPORTED ) ) {
+            if( mediaFormat == null || mediaFormat.equals( MEDIA_FORMAT_UNSUPPORTED ) ) {
                 nTerm(hNative);
+                hNative = 0;
                 throw new MediaException("Unsupported Media Format:" + mediaFormat + " for " + source.getLocator());
             } else {
                 handledByJava = true;
             }
         }
 
-        if (locator != null && mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
+        if (locator != null && mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
             if (locator.equals(Manager.TONE_DEVICE_LOCATOR)) {
-                mediaFormat = BasicPlayer.MEDIA_FORMAT_DEVICE_TONE;
+                mediaFormat = MEDIA_FORMAT_DEVICE_TONE;
                 handledByDevice = true;
             } else if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
-                mediaFormat = BasicPlayer.MEDIA_FORMAT_DEVICE_MIDI;
+                mediaFormat = MEDIA_FORMAT_DEVICE_MIDI;
                 handledByDevice = true;
             }
         } else if (locator != null && locator.startsWith(Configuration.CAPTURE_LOCATOR)) {
             if (locator.startsWith(Configuration.AUDIO_CAPTURE_LOCATOR)) {
-                mediaFormat = BasicPlayer.MEDIA_FORMAT_CAPTURE_AUDIO;
+                mediaFormat = MEDIA_FORMAT_CAPTURE_AUDIO;
             } else if (locator.startsWith(Configuration.VIDEO_CAPTURE_LOCATOR)) {
-                mediaFormat = BasicPlayer.MEDIA_FORMAT_CAPTURE_VIDEO;
+                mediaFormat = MEDIA_FORMAT_CAPTURE_VIDEO;
             } else if (locator.startsWith(Configuration.RADIO_CAPTURE_LOCATOR)) {
-                mediaFormat = BasicPlayer.MEDIA_FORMAT_CAPTURE_RADIO;
+                mediaFormat = MEDIA_FORMAT_CAPTURE_RADIO;
             }
             handledByDevice = true;
         }
@@ -184,9 +315,235 @@ public class PlayerImpl implements Player {
 
         // Set event listener
         new MMEventListener();
+        state = UNREALIZED;
     }
 
-        
+    void receiveRSL()
+    {
+        if( null != lowLevelPlayer )
+        {
+            lowLevelPlayer.doReceiveRSL();
+        }
+    }
+
+    void notifySnapshotFinished()
+    {
+        if( null != lowLevelPlayer )
+        {
+            lowLevelPlayer.doNotifySnapshotFinished();
+        }
+    }
+            
+    void continueDownload() {
+        /* predownload media data to fill native buffers */
+        if (mediaDownload != null) {
+            mediaDownload.continueDownload();
+        }
+    }
+
+    public int getNativeHandle()
+    {
+        return hNative;
+    }
+
+    /**
+     * TimeBase related functions.
+     */
+    private long origin = 0;
+    private long offset = 0;
+    private long time = 0;
+    private long sysOffset = 0;
+    final private Object timeLock = new Object();
+    private boolean useSystemTime = true;
+
+    /**
+     * Get the current time of this <code>TimeBase</code>.  The values
+     * returned must be non-negative and non-decreasing over time.
+     *
+     * @return    the current <code>TimeBase</code> time in microseconds.
+     */
+    public long getTime() {
+        synchronized (timeLock) {
+            if (useSystemTime) {
+
+                time = origin + (System.currentTimeMillis() * 1000L -
+                    sysOffset) - offset;
+            } else {
+
+                time = origin + getMediaTime() - offset;
+            }
+            return time;
+        }
+    }
+
+    // NOTE: Right now, PlayerImpl implements StopTimeControl, but only
+    // provides partial implementation. That means each individual player
+    // must complete the implementation. I.E., somehow it must keep polling
+    // current media time and compare it to the set stop time. If the time
+    // is reached, it should call doStop and satev.
+
+    /**
+     * For StopTimeControl - initially reset
+     */
+    protected long stopTime = StopTimeControl.RESET;
+
+    /**
+     * Returns the current stop time
+     *
+     * @return    The stopTime value
+     */
+    public long getStopTime() {
+        return stopTime;
+    }
+
+    /**
+     * the state of this player
+     */
+    private int state = UNREALIZED;
+
+    private void setState( int state )
+    {
+        this.state = state;
+    }
+
+    /**
+     * Sets the stop time
+     *
+     * @param  time  The new stopTime value
+     */
+    public synchronized void setStopTime(long time) {
+        if ( getState() == STARTED) {
+            /*
+             *  If the stop time has already been set and its being set again,
+             *  throw an exception
+             */
+            if (stopTime != StopTimeControl.RESET && time != StopTimeControl.RESET) {
+                throw new IllegalStateException("StopTime already set");
+            }
+            /*
+             *  If the new stop time is before the current media time,
+             *  stop the player and send an event
+             */
+            if (time < getMediaTime()) {
+                try {
+                    lowLevelPlayer.doPreStop();
+                    lowLevelPlayer.doStop();
+                } catch (MediaException e) {
+                    // Not much we can do here.
+                }
+                satev();
+                /*
+                 *  Send STOPPED_AT_TIME event
+                 */
+                return;
+            }
+        }
+        stopTime = time;
+        lowLevelPlayer.doSetStopTime(stopTime);
+    }
+
+    /**
+     * Send STOPPED_AT_TIME event. Call this after stopping the player
+     */
+    protected void satev() {
+        // Update the time base to use the system time
+        // before stopping.
+        updateTimeBase(false);
+        setState( PREFETCHED );
+        stopTime = StopTimeControl.RESET;
+        sendEvent(PlayerListener.STOPPED_AT_TIME, new Long(getMediaTime()));
+    }
+
+    /**
+     * flag to prevent delivering events after the CLOSED event
+     */
+    private boolean closedDelivered;
+
+    /**
+     * Asynchronous event mechanism.
+     */
+    EvtQ evtQ = null;
+
+    /**
+     * event queue lock obj
+     */
+    final Object evtLock = new Object();
+
+    /**
+     * Send event to player
+     *
+     * @param  evt      event type
+     * @param  evtData  event data
+     */
+    public void sendEvent(String evt, Object evtData) {
+        //  There's always one listener for EOM -- itself.
+        //  "Deliver" the CLOSED event so that the evtQ thread may terminate
+        if (listeners.size() == 0 && !evt.equals( PlayerListener.END_OF_MEDIA )
+                                  && !evt.equals( PlayerListener.CLOSED )
+                                  && !evt.equals(PlayerListener.ERROR)) {
+            return;
+        }
+
+        // Safeguard against sending events after CLOSED event to avoid
+        // deadlock in event delivery thread.
+        if (closedDelivered) {
+            return;
+        }
+
+        // Deliver the event to the listeners.
+        synchronized (evtLock) {
+            if (evtQ == null) {
+                evtQ = new EvtQ(this);
+            }
+            evtQ.sendEvent(evt, evtData);
+            // try to let listener run
+            Thread.currentThread().yield();
+        }
+
+        if (evt == PlayerListener.CLOSED || evt == PlayerListener.ERROR) {
+            closedDelivered = true;
+        }
+    }
+
+    /**
+     * This method needs to be called when the Player transitions
+     * back and forth the STARTED and STOPPED states.  This is
+     * to make sure that the correct time base time can be computed.
+     *
+     * @param  started  Description of the Parameter
+     */
+    public void updateTimeBase(boolean started) {
+        synchronized (timeLock) {
+            origin = getTime();
+            useSystemTime = !started;
+            if (started) {
+                // Computes the starting offset based on the media time.
+                offset = getMediaTime();
+            } else {
+                // Computes the starting offset based on the system time.
+                offset = System.currentTimeMillis() * 1000L - sysOffset;
+            }
+        }
+    }
+
+    protected MediaDownload mediaDownload = null;
+
+    /**
+     * Check to see if the Player is closed.  If the
+     * unrealized boolean flag is true, check also to
+     * see if the Player is UNREALIZED.
+     *
+     * @param  unrealized  Description of the Parameter
+     */
+    protected void chkClosed(boolean unrealized) {
+        int state = getState();
+        if (state == CLOSED || (unrealized && state == UNREALIZED)) {
+            throw new IllegalStateException("Can't invoke the method at the " +
+                (state == CLOSED ? "closed" : "unrealized") +
+                " state");
+        }
+    }
+
     /**
      * Constructs portions of the <code>Player</code> without
      * acquiring the scarce and exclusive resources.
@@ -209,13 +566,13 @@ public class PlayerImpl implements Player {
      * have security permission to realize the <code>Player</code>.
      *
      */
-    public void realize() throws MediaException {
-        if (playerInst != null) {
-            if (isClosed) {
-                throw new IllegalStateException();
-            }
+    public synchronized void realize() throws MediaException {
+        chkClosed(false);
+
+        if (getState() >= REALIZED) {
             return;
         }
+
         String type = source.getContentType();
         if (type == null && stream != null && stream.getContentDescriptor() != null) {
             type = stream.getContentDescriptor().getContentType();
@@ -223,17 +580,17 @@ public class PlayerImpl implements Player {
         /* try to realize native player */
         nRealize(hNative, type);
 
-        MediaDownload mediaDownload = null;
+        mediaDownload = null;
 
         if (!handledByDevice && !handledByJava) {
             mediaFormat = nGetMediaFormat(hNative);
-            if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
+            if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
                 String format;
                 /* verify if handled by Java */
                 if (type != null &&
                         (format = Configuration.getConfiguration().mime2Format(type)) != null && 
-                        !format.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN) && 
-                        !format.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
+                        !format.equals(MEDIA_FORMAT_UNKNOWN) && 
+                        !format.equals(MEDIA_FORMAT_UNSUPPORTED)) {
                     mediaFormat = format;
                     handledByJava = true;
                 } else {
@@ -242,7 +599,7 @@ public class PlayerImpl implements Player {
             }
             /* predownload media data to recognize media format and/or 
                specific media parameters (e.g. duration) */
-            if (!mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_TONE)) {
+            if (!mediaFormat.equals(MEDIA_FORMAT_TONE)) {
                 mediaDownload = new MediaDownload(hNative, stream);
                 try {
                     mediaDownload.fgDownload();
@@ -256,45 +613,28 @@ public class PlayerImpl implements Player {
             }
         }
 
-        if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {        
+        if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {        
             /* ask media format if unknown */
             mediaFormat = nGetMediaFormat(hNative);
 
-            if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
+            if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
                 throw new MediaException("Unknown Media Format");
             }
-            if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
+            if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
                 throw new MediaException("Unsupported Media Format");
             }
         }
 
         /* create Implementation Player */
-        playerInst = getPlayerFromType(mediaFormat);
+        lowLevelPlayer = getPlayerFromType( mediaFormat );
 
-        playerInst.notificationSource = this;
-        playerInst.hNative            = hNative;
-        playerInst.mediaFormat        = mediaFormat;
-        playerInst.handledByDevice    = handledByDevice;
-        playerInst.pID                = pID;
-        playerInst.mediaDownload      = mediaDownload;
+        lowLevelPlayer.doRealize();
 
-        playerInst.setSource(source);
-
-        if (loopCount != 0) {
-            playerInst.setLoopCount(loopCount);
-        }
-        if (listeners.size() > 0) {
-            for(int i=0; i<listeners.size(); i++)
-                playerInst.addPlayerListener((PlayerListener)listeners.elementAt(i));
-            listeners.removeAllElements();
-        }
-        mplayers.put(new Integer(pID), playerInst);
-
-        playerInst.realize();
         if (null != state_subscriber) {
             state_subscriber.PlayerRealized(this);
         }
     }
+
 
     /**
      *  Gets the playerFromType attribute of the Manager class
@@ -304,35 +644,24 @@ public class PlayerImpl implements Player {
      * @exception  IOException     Description of the Exception
      * @exception  MediaException  Description of the Exception
      */
-    private BasicPlayer getPlayerFromType(String type) throws MediaException {
-        String className = null;
+    private LowLevelPlayer getPlayerFromType(String type) throws MediaException {
+
+        if ( type == null ) {
+            throw new MediaException(PL_ERR_SH + "MediaFormat is not determined");
+        }
 
         if ("GIF".equals(type)) {
-            className = "com.sun.mmedia.GIFPlayer";
-        } else if (BasicPlayer.MEDIA_FORMAT_CAPTURE_VIDEO.equals(type)) {
-            className = "com.sun.mmedia.DirectCamera";
+            return new GIFPlayer( this );
+        } else if (MEDIA_FORMAT_CAPTURE_VIDEO.equals(type)) {
+            return new DirectCamera( this );
         } else if (DirectPlayer.nIsToneControlSupported(hNative)) {
-            className = "com.sun.mmedia.DirectTone";
+            return new DirectTone( this );
         } else if (DirectPlayer.nIsMIDIControlSupported(hNative)) {
-            className = "com.sun.mmedia.DirectMIDI";
+            return new DirectMIDI( this );
         } else {
-            className = "com.sun.mmedia.DirectPlayer";
+            return new DirectPlayer( this );
         }              
 
-        if ((type == null) || className == null) {
-            throw new MediaException(PL_ERR_SH + "MediaFormat " + type + " is not supported");
-        }
-
-        BasicPlayer p = null;
-
-        try {
-            // ... try and instantiate the handler ...
-            Class handlerClass = Class.forName(className);
-            p = (BasicPlayer) handlerClass.newInstance();
-        } catch (Exception e) {
-            throw new MediaException(PL_ERR_SH + e.getMessage());
-        }
-        return p;
     }
 
     /**
@@ -373,27 +702,45 @@ public class PlayerImpl implements Player {
      * have security permission to prefetch the <code>Player</code>.
      *
      */
-    public void prefetch() throws MediaException {
-        if (isClosed) {
-            throw new IllegalStateException();
+    public synchronized void prefetch() throws MediaException {
+        if (getState() >= PREFETCHED) {
+            return;
         }
-        if (playerInst == null) {
+
+        if (getState() < REALIZED) {
             realize();
         }
-        if (playerInst != null) {
-            playerInst.chkClosed(false);
 
-            if (vmPaused) {
-                return;
-            }        
+        if (vmPaused) {
+            return;
+        }
 
-            playerInst.prefetch();
+        lowLevelPlayer.doPrefetch();
 
-            if (null != state_subscriber) {
-                state_subscriber.PlayerPrefetched(this);
-            }
+        VolumeControl vc = ( VolumeControl )lowLevelPlayer.doGetControl(
+                pkgName + vocName);
+        if (vc != null && (vc.getLevel() == -1)) {
+               vc.setLevel(100);
+        }
+
+        setState( PREFETCHED );
+        
+        if (null != state_subscriber) {
+            state_subscriber.PlayerPrefetched(this);
         }
     };
+
+    /**
+     * the flag to indicate whether the Player is currently paused at EOM.
+     * If true, the Player will seek back to the beginning when
+     * restarted.
+     */
+    boolean EOM = false;
+
+    /**
+     * the flag to indicate looping after EOM.
+     */
+    boolean loopAfterEOM = false;
 
     /**
      * Starts the <code>Player</code> as soon as possible.
@@ -429,26 +776,80 @@ public class PlayerImpl implements Player {
      * @exception SecurityException Thrown if the caller does not
      * have security permission to start the <code>Player</code>.
      */
-    public void start() throws MediaException {
-        if (isClosed) {
-            throw new IllegalStateException();
+    public synchronized void start() throws MediaException {
+        if (getState() >= STARTED) {
+            return;
         }
-        if (playerInst == null) {
+
+        if (getState() < REALIZED) {
             realize();
         }
-        if ( getState() == REALIZED )
-        {
+
+        if (getState() < PREFETCHED) {
             prefetch();
         }
-        if (playerInst != null) {
-            playerInst.chkClosed(false);
 
-            if (vmPaused) {
+        if (isDevicePlayer() && !hasToneSequenceSet) {
+            sendEvent(PlayerListener.STARTED, new Long(0));
+            sendEvent( PlayerListener.END_OF_MEDIA, new Long(0) );
+            return;
+        }
+
+        if (vmPaused) {
+            return;
+        }
+        
+        // Update the time base to use the player's
+        // media time before starting.
+        updateTimeBase(true);
+
+        // Check for any preset stop time.
+        if (stopTime != StopTimeControl.RESET) {
+            if (stopTime <= getMediaTime()) {
+                satev();
+                // Send STOPPED_AT_TIME event
                 return;
             }
-            playerInst.start();
         }
+
+        // If it's at the EOM, it will automatically
+        // loop back to the beginning.
+        if (EOM) {
+            try {
+            setMediaTime(0);
+            } catch(Exception e) {
+                // do nothing...
+            }
+        }
+
+        if (!lowLevelPlayer.doStart()) {
+            throw new MediaException("start");
+        }
+
+        setState( STARTED );
+        sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
+
+        // Finish any pending startup stuff in subclass
+        // Typically used to start any threads that might potentially
+        // generate events before the STARTED event is delivered
+        lowLevelPlayer.doPostStart();
+
     };
+
+    protected boolean hasToneSequenceSet = false;
+
+    protected boolean isCapturePlayer()
+    {
+        return (mediaFormat.equals(MEDIA_FORMAT_CAPTURE_AUDIO) ||
+                mediaFormat.equals(MEDIA_FORMAT_CAPTURE_VIDEO) ||
+                mediaFormat.equals(MEDIA_FORMAT_CAPTURE_RADIO) );
+    }
+
+    protected boolean isDevicePlayer()
+    {
+        return (mediaFormat.equals(MEDIA_FORMAT_DEVICE_MIDI) ||
+                mediaFormat.equals(MEDIA_FORMAT_DEVICE_TONE));
+    }
 
     /**
      * Stops the <code>Player</code>.  It will pause the playback at
@@ -467,13 +868,23 @@ public class PlayerImpl implements Player {
      * @exception MediaException Thrown if the <code>Player</code>
      * cannot be stopped.
      */
-    public void stop() throws MediaException {
-        if (isClosed) {
-            throw new IllegalStateException();
+    public synchronized void stop() throws MediaException {
+        chkClosed(false);
+
+        loopAfterEOM = false;
+
+        if (getState() < STARTED) {
+            return;
         }
-        if (playerInst != null) {
-            playerInst.stop();
-        }
+        lowLevelPlayer.doPreStop();
+        lowLevelPlayer.doStop();
+
+        // Update the time base to use the system time
+        // before stopping.
+        updateTimeBase(false);
+
+        setState( PREFETCHED );
+        sendEvent(PlayerListener.STOPPED, new Long(getMediaTime()));
     }
 
     /**
@@ -501,19 +912,43 @@ public class PlayerImpl implements Player {
      * @exception IllegalStateException Thrown if the <code>Player</code>
      * is in the <i>CLOSED</i> state.
      */
-    public void deallocate() {
-        if (playerInst != null) {
-            playerInst.deallocate();
-            if( null != state_subscriber && 
-                ( getState() == PREFETCHED || getState() == STARTED ) ) {
-                state_subscriber.PlayerDeallocated(this);
-            }
-        } else {
-            // Player in the UNREALIZED or CLOSED state
-            if (isClosed) {
-                throw new IllegalStateException();
+    public synchronized void deallocate() {
+        chkClosed(false);
+
+        loopAfterEOM = false;
+
+        if (getState() < PREFETCHED) {
+            return;
+        }
+
+        if (getState() == STARTED) {
+            try {
+                stop();
+            } catch (MediaException e) {
+                // Not much we can do here.
             }
         }
+
+        lowLevelPlayer.doDeallocate();
+
+        if (stream != null) {
+            // if stream is not seekable, just return
+            if (SourceStream.NOT_SEEKABLE != stream.getSeekType()) {
+                try {
+                    // seek to start position
+                    stream.seek(0);
+                } catch(IOException e) {
+                    // System.out.println("[direct] doDeallocate seek IOException");
+                }
+            }
+        }
+
+        if( null != state_subscriber &&
+            ( getState() == PREFETCHED || getState() == STARTED ) ) {
+            state_subscriber.PlayerDeallocated( this );
+        }
+
+        setState( REALIZED );
     };
 
     /**
@@ -527,24 +962,39 @@ public class PlayerImpl implements Player {
      * If <code>close</code> is called on a closed <code>Player</code>
      * the request is ignored.
      */
-    public void close() {
-        if (playerInst != null) {
-            playerInst.close();
-            mplayers.remove(new Integer(pID));
-        } else {
-            if (!isClosed) {
-                /* close source of unrealized player */
-                if (source != null) {
-                    source.disconnect();
-                    source = null;
-                }
-                /* close native part of unrealized player */
-                if(hNative != 0) {
-                    nTerm(hNative);
-                }
+    public synchronized void close() {
+        if (getState() == CLOSED) {
+            return;
+        }
+
+        if (getState() == STARTED) {
+            try {
+                stop();
+            } catch (MediaException e) {
+                // Not much we can do here.
             }
         }
-        isClosed = true;
+
+        if( null != lowLevelPlayer )
+        {
+            lowLevelPlayer.doDeallocate();
+            lowLevelPlayer.doClose();
+        }
+
+        setState( CLOSED );
+
+        if (source != null) {
+            source.disconnect();
+        }
+
+        sendEvent(PlayerListener.CLOSED, null);
+        mplayers.remove(new Integer(pID));
+
+        /* close native part of unrealized player */
+        if(hNative != 0) {
+            nTerm(hNative);
+            hNative = 0;
+        }
     }
     
     /**
@@ -566,11 +1016,16 @@ public class PlayerImpl implements Player {
      * @see #getTimeBase
      */
     public void setTimeBase(TimeBase master) throws MediaException {
-        if (playerInst != null) {
-            playerInst.setTimeBase(master);
-        } else {
-            // Player in the UNREALIZED or CLOSED state
-            throw new IllegalStateException();
+        chkClosed(true);
+        if (state == STARTED) {
+            throw new IllegalStateException("Cannot call setTimeBase on a player in the STARTED state");
+        }
+
+        if (master == null) {
+            return;
+        }
+        if (master != this) {
+            throw new MediaException("Incompatible TimeBase");
         }
     };
 
@@ -583,11 +1038,8 @@ public class PlayerImpl implements Player {
      * is in the <i>UNREALIZED</i> or <i>CLOSED</i> state.
      */
     public TimeBase getTimeBase() {
-        if (playerInst != null) {
-            return playerInst.getTimeBase();
-        }
-        // Player in the UNREALIZED or CLOSED state
-        throw new IllegalStateException();
+        chkClosed(true);
+        return this;
     };
 
     /**
@@ -614,14 +1066,32 @@ public class PlayerImpl implements Player {
      * cannot be set.
      * @see #getMediaTime
      */
-    public long setMediaTime(long now) throws MediaException {
-        if (isClosed) {
-            throw new IllegalStateException();
+    public synchronized long setMediaTime(long now) throws MediaException {
+        chkClosed(true);
+
+        if (now < 0) {
+            now = 0;
         }
-        if (playerInst != null) {
-            return playerInst.setMediaTime(now);
+
+        // Time-base-time needs to be updated if player is started.
+        if (getState() == STARTED) {
+            origin = getTime();
         }
-        throw new IllegalStateException();
+
+        long theDur = lowLevelPlayer.doGetDuration();
+        if ((theDur != TIME_UNKNOWN) && (now > theDur)) {
+            now = theDur;
+        }
+
+        long rtn = lowLevelPlayer.doSetMediaTime(now);
+        EOM = false;
+
+        // Time-base-time needs to be updated if player is started.
+        if (getState() == STARTED) {
+            offset = rtn;
+        }
+
+        return rtn;
     };
 
     /**
@@ -641,14 +1111,13 @@ public class PlayerImpl implements Player {
      * @see #setMediaTime
      */
     public long getMediaTime() {
-        if (isClosed) {
-            throw new IllegalStateException();
+        chkClosed(false);
+        long time = TIME_UNKNOWN;
+        if( null != lowLevelPlayer )
+        {
+            time = lowLevelPlayer.doGetDuration();
         }
-        if (playerInst != null) {
-            return playerInst.getMediaTime();
-        } else {
-            return Player.TIME_UNKNOWN;
-        }
+        return time;
     };
 
     /**
@@ -659,10 +1128,7 @@ public class PlayerImpl implements Player {
      * @return The <code>Player</code>'s current state.
      */
     public int getState() {
-        if (playerInst != null) {
-            return playerInst.getState();
-        }
-        return isClosed ? Player.CLOSED : Player.UNREALIZED;
+        return state;
     };
 
     /**
@@ -679,18 +1145,24 @@ public class PlayerImpl implements Player {
      * is in the <i>CLOSED</i> state.
      */
     public long getDuration() {
-        if (isClosed) {
-            throw new IllegalStateException();
+        chkClosed(false);
+        long dur = TIME_UNKNOWN;
+        if( null != lowLevelPlayer )
+        {
+            dur = lowLevelPlayer.doGetDuration();
         }
-
-        long dur = Player.TIME_UNKNOWN;
-
-        if (null!=playerInst) {
-            dur = playerInst.getDuration();
-        }
-
         return dur;
     };
+
+    /**
+     * Locator string
+     */
+    private String locator;
+
+    String getLocator()
+    {
+        return locator;
+    }
 
     /**
      * Get the content type of the media that's
@@ -705,10 +1177,25 @@ public class PlayerImpl implements Player {
      * is in the <i>UNREALIZED</i> or <i>CLOSED</i> state.
      */
     public String getContentType() {
-        if (playerInst != null) {
-            return playerInst.getContentType();
+
+        String type = null;
+
+        chkClosed(true);
+
+        if (source == null) {
+            // Call helper function to get a content type
+            type = DefaultConfiguration.getContentType(locator);
+        } else {
+            type = source.getContentType();
         }
-        throw new IllegalStateException();
+
+        if( null == type )
+        {
+            type = lowLevelPlayer.doGetContentType();
+        }
+
+        return type;
+
     };
 
 
@@ -758,19 +1245,20 @@ public class PlayerImpl implements Player {
      */
 
     public void setLoopCount(int count) {
-        if (isClosed) {
-            throw new IllegalStateException();
+        chkClosed(false);
+
+        if (getState() == STARTED) {
+            throw new IllegalStateException("setLoopCount");
         }
-        if (playerInst != null) {
-            playerInst.setLoopCount(count);
-        } else {
-            if (count != 0) {
-                loopCount = count;
-            } else {
-                throw new IllegalArgumentException();
-            }
+
+        if (count == 0 || count < -1) {
+            throw new IllegalArgumentException("setLoopCount");
         }
-    };
+
+        loopCountSet = count;
+        loopCount = count;
+    }
+
 
     /**
      * Add a player listener for this player.
@@ -782,15 +1270,9 @@ public class PlayerImpl implements Player {
      * @see #removePlayerListener
      */
     public void addPlayerListener(PlayerListener playerListener) {
-        if (isClosed) {
-            throw new IllegalStateException();
-        }
-        if (playerInst != null) {
-            playerInst.addPlayerListener(playerListener);
-        } else {
-            if (playerListener != null) {
-                listeners.addElement(playerListener);
-            }
+        chkClosed(false);
+        if (playerListener != null) {
+            listeners.addElement(playerListener);
         }
     };
 
@@ -806,29 +1288,59 @@ public class PlayerImpl implements Player {
      * @see #addPlayerListener
      */
     public void removePlayerListener(PlayerListener playerListener) {
-        if (isClosed) {
-            throw new IllegalStateException();
-        }
-        if (playerInst != null) {
-            playerInst.removePlayerListener(playerListener);
-        } else {
-            listeners.removeElement(playerListener);
-        }
+        chkClosed(false);
+        listeners.removeElement(playerListener);
     };
 
     /**
-     *  Gets the controls attribute of the BasicPlayer object
+     *  Gets the controls attribute of the PlayerImpl object
      *
      * @return    The controls value
      */
     public final Control[] getControls() {
-        if (playerInst != null) {
-            return playerInst.getControls();
+        chkClosed(true);
+
+        Vector v = new Vector(3);
+        // average maximum number of controls
+
+        String [] ctrlNames = getPossibleControlNames();
+        for (int i = 0; i < ctrlNames.length; i++) {
+            Object c = getControl(ctrlNames[i]);
+            if ((c != null) && !v.contains(c)) {
+                v.addElement(c);
+            }
         }
-        throw new IllegalStateException();
+        Control[] ret = new Control[v.size()];
+        v.copyInto(ret);
+        return ret;
     }
 
-
+    /**
+     * Returns the array containing all the available JSR-135 and
+     * JSR-234 (if available) control names
+     * that may be supported by PlayerImpl
+     */
+    private static String [] getPossibleControlNames()
+    {
+        if( null == allCtrls )
+        {
+            String [] ammsCtrlNames =
+                    Jsr234Proxy.getInstance().getJsr234PlayerControlNames();
+            allCtrls = new
+                    String [ allJsr135Ctrls.length + ammsCtrlNames.length ];
+            int i = 0;
+            for( i = 0; i < allJsr135Ctrls.length; i++ )
+            {
+                allCtrls[ i ] = allJsr135Ctrls[ i ];
+            }
+            for( int j = 0; i < allCtrls.length; i++, j++ )
+            {
+                allCtrls[ i ] = ammsCtrlNames[ j ];
+            }
+        }
+        return allCtrls;
+    }
+    
     /**
      * Gets the <code>Control</code> that supports the specified
      * class or interface. The full class
@@ -841,10 +1353,30 @@ public class PlayerImpl implements Player {
      * name.
      */
     public Control getControl(String type) {
-        if (playerInst != null) {
-            return playerInst.getControl(type);
+        chkClosed(true);
+
+        if (type == null) {
+            throw new IllegalArgumentException();
         }
-        throw new IllegalStateException();
+
+        // Prepend the package name if the type given does not
+        // have the package prefix.
+        if (type.indexOf('.') < 0) {
+            // for non-fully qualified control names,
+            // look up the package in the allJsr135Ctrls array
+            for (int i = 0; i < allJsr135Ctrls.length; i++) {
+                if (allJsr135Ctrls[i].equals(type)) {
+                    // standard controls are specified
+                    // without package name in allJsr135Ctrls
+                    return lowLevelPlayer.doGetControl(pkgName + type);
+                } else if (allJsr135Ctrls[i].endsWith(type)) {
+                    // non-standard controls are with
+                    // full package name in allJsr135Ctrls
+                    return lowLevelPlayer.doGetControl(allJsr135Ctrls[i]);
+                }
+            }
+        }
+        return lowLevelPlayer.doGetControl(type);
     }
 
     /**
@@ -853,8 +1385,8 @@ public class PlayerImpl implements Player {
      * @param  pid  Description of the Parameter
      * @return      Description of the Return Value
      */
-    public static BasicPlayer get(int pid) {
-        return (BasicPlayer) (mplayers.get(new Integer(pid)));
+    public static PlayerImpl get(int pid) {
+        return (PlayerImpl) (mplayers.get(new Integer(pid)));
     }
 
     /**
@@ -867,7 +1399,7 @@ public class PlayerImpl implements Player {
 
         /* Send event to player if this player is in realized state (or above) */
         for (Enumeration e = mplayers.elements(); e.hasMoreElements();) {
-            BasicPlayer p = (BasicPlayer) e.nextElement();
+            PlayerImpl p = (PlayerImpl) e.nextElement();
             int state = p.getState();
             if (state >= Player.REALIZED) {
                 VolumeControl vc = (VolumeControl)p.getControl("VolumeControl");
@@ -894,7 +1426,7 @@ public class PlayerImpl implements Player {
         }
 
         for (Enumeration e = mplayers.elements(); e.hasMoreElements();) {
-            BasicPlayer p = (BasicPlayer) e.nextElement();
+            PlayerImpl p = (PlayerImpl) e.nextElement();
 
             int state = p.getState();
             long time = p.getMediaTime();
@@ -930,7 +1462,7 @@ public class PlayerImpl implements Player {
         }
         
         for (Enumeration e = mplayers.elements(); e.hasMoreElements();) {
-            BasicPlayer p = (BasicPlayer) e.nextElement();
+            PlayerImpl p = (PlayerImpl) e.nextElement();
 
             int state = ((Integer) pstates.get(p)).intValue();
             long time = ((Long) mtimes.get(p)).longValue();
@@ -964,5 +1496,220 @@ public class PlayerImpl implements Player {
         mtimes.clear();
     }
 
+    /**
+     * the default size of the event queue
+     * can be overridden by descendants
+     */
+    int eventQueueSize = 20;
+
+    /**
+     *  Description of the Method
+     */
+    synchronized void doLoop() {
+        // If a loop count is set, we'll loop back to the beginning.
+        if ((loopCount > 1) || (loopCount == -1)) {
+            try {
+                setMediaTime(0);
+            } catch(MediaException e){
+                // Do nothing...
+            }
+            try {
+                if (loopCount > 1) {
+                    loopCount--;
+                }
+                start();
+            } catch (MediaException ex) {
+                // System.out.println("[basic] doLoop exception " + ex.getMessage());
+                loopCount = 1;
+            }
+        } else if (loopCountSet > 1) {
+            loopCount = loopCountSet;
+        }
+
+        loopAfterEOM = false;
+    }
+
+    /**
+     * The thread that's responsible for delivering Player events.
+     * This class lives for only 5 secs.  If no event comes in
+     * 5 secs, it will exit.
+     *
+     * @created    January 13, 2005
+     */
+    private class EvtQ extends Thread {
+
+        /**
+         * the player instance
+         */
+        private PlayerImpl p;
+        /**
+         * event type array
+         */
+        private String[] evtQ;
+        /**
+         * event data array
+         */
+        private Object[] evtDataQ;
+        /**
+         * head and tail pointer of the event queue
+         */
+        private int head, tail;
+
+        /**
+         * The constructor
+         *
+         * @param  p  the instance of PlayerImpl intending to post event to
+         *        this event queue.
+         */
+        EvtQ(PlayerImpl p) {
+            this.p = p;
+            evtQ = new String[p.eventQueueSize];
+            evtDataQ = new Object[p.eventQueueSize];
+            start();
+        }
+
+        /**
+         * Put an event in the event queue and wake up the thread to
+         * deliver it.  If the event queue is filled, block.
+         *
+         * @param  evt      Description of the Parameter
+         * @param  evtData  Description of the Parameter
+         */
+        synchronized void sendEvent(String evt, Object evtData) {
+
+            // Wait if the event queue is full.
+            // This potentially will block the Player's main thread.
+            while ((head + 1) % p.eventQueueSize == tail) {
+                try {
+                    wait(1000);
+                } catch (Exception e) {
+                }
+            }
+            evtQ[head] = evt;
+            evtDataQ[head] = evtData;
+            if (++head == p.eventQueueSize) {
+                head = 0;
+            }
+            notifyAll();
+            // try to let other threads run
+            Thread.currentThread().yield();
+        }
+
+        /**
+         * Event handling thread.
+         */
+        public void run() {
+
+            String evt = "";
+            Object evtData = null;
+            boolean evtToGo = false;
+            // true if there is an event to send
+            // true if at least one event is sent,
+            // in case that posting the initial event
+            // takes a long time
+            boolean evtSent = false;
+
+            for (;;) {
+
+                synchronized (this) {
+
+                    // If the queue is empty, we'll wait
+                    if (head == tail) {
+                        try {
+                            wait(1000);
+                        } catch (Exception e) {
+                        }
+                    }
+                    if (head != tail) {
+                        evt = evtQ[tail];
+                        evtData = evtDataQ[tail];
+                        // For garbage collection.
+                        evtDataQ[tail] = null;
+                        evtToGo = true;
+                        if (++tail == p.eventQueueSize) {
+                            tail = 0;
+                        }
+                        notifyAll();
+                    } else {
+                        evtToGo = false;
+                    }
+
+                }
+                // synchronized this
+
+                if (evtToGo) {
+                    // First, check and handle EOM.
+                    if (evt == PlayerListener.END_OF_MEDIA) {
+                        synchronized (p) {
+                            p.EOM = true;
+                            p.loopAfterEOM = false;
+
+                            if (p.getState() > Player.PREFETCHED) {
+                                p.updateTimeBase(false);
+                                p.setState(Player.PREFETCHED);
+                                if (p.loopCount > 1 || p.loopCount == -1) {
+
+                                    p.loopAfterEOM = true;
+                                }
+                            }
+                        }
+                    }
+
+                    // Notify the PlayerListeners.
+                    Enumeration en;
+                    synchronized (p.listeners) {
+                        en = p.listeners.elements();
+                    }
+
+                    PlayerListener l;
+
+                    Player src_p = p;
+
+                    while (en.hasMoreElements()) {
+                        try {
+                            l = (PlayerListener) en.nextElement();
+                            l.playerUpdate(src_p, evt, evtData);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            System.err.println("Error in playerUpdate " +
+                                    "while delivering event " + evt + ": " + e);
+                        }
+                    }
+
+                    if (p.loopAfterEOM) {
+                        // We'll need to loop back because looping was set.
+                        p.doLoop();
+                    }
+
+                    evtSent = true;
+
+                }
+
+                // We'll exit the event thread if we have already sent one
+                // event and there's no more event after 5 secs; or if the
+                // Player is closed.
+
+                if (evt == PlayerListener.CLOSED || evt == PlayerListener.ERROR) {
+                    // will cause a deadlock if the queue
+                    // is full
+                    synchronized (p.evtLock) {
+                        p.evtQ = null;
+                        break;
+                        // Exit the event thread.
+                    }
+                }
+
+                synchronized (this) {
+                    if (head == tail && evtSent && !evtToGo) {
+                        synchronized (p.evtLock) {
+                            p.evtQ = null;
+                            break;
+                            // Exit the event thread.
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 

@@ -39,7 +39,8 @@ public final class DirectMIDI extends DirectPlayer {
     /**
      * It does not need data source
      */
-    public DirectMIDI() {
+    public DirectMIDI( PlayerImpl owner ) {
+        super( owner );
     }
 
     protected Control doGetControl(String type) {
@@ -48,7 +49,7 @@ public final class DirectMIDI extends DirectPlayer {
 
         if (type.equals("javax.microedition.media.control.MIDIControl")) {
             if (midiCtrl == null) {
-	        midiCtrl = new DirectMIDIControl(this);
+	        midiCtrl = new DirectMIDIControl( getOwner() );
             }
             return (Control)midiCtrl.getMIDIControl();
         }

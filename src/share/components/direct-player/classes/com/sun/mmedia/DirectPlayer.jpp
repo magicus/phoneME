@@ -55,7 +55,7 @@ import com.sun.mmedia.DirectRecord;
  * Media direct player base class
  * This class depends on native library to handle media data
  */ 
-public class DirectPlayer extends BasicPlayer implements VideoSource 
+class DirectPlayer extends LowLevelPlayer implements VideoSource
 // #ifdef ENABLE_MULTIPLE_ISOLATES [
     , MediaEventConsumer
 // #endif ]
@@ -189,9 +189,9 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     /**
      * Constructor
      */
-    public DirectPlayer()
+    DirectPlayer( PlayerImpl owner )
     {
-        super();
+        super( owner );
 
         // #ifdef ENABLE_MULTIPLE_ISOLATES [
         // Get media tunnerl singleton instance
@@ -199,11 +199,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         // #endif ]
     }
     
-    public int getNativeHandle()
-    {
-        return hNative;
-    }
-
     /**
      * StopTimeControl implementation of DirectPlayer
      *
@@ -215,7 +210,8 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             stopTimer.cancel();
             stopTimer = null;
 
-        } else if (time != StopTimeControl.RESET && state == STARTED) {
+        } else if (time != StopTimeControl.RESET &&
+                   getOwner().getState() == Player.STARTED) {
             long currentTime = doGetMediaTime();
             if (time >= currentTime) {
                 scheduleStopTimer(time);
@@ -231,17 +227,18 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         long duration = doGetDuration();
         long currentTime = doGetMediaTime();
         
-        if (currentTime == TIME_UNKNOWN) {
+        if (currentTime == Player.TIME_UNKNOWN) {
             return false;
         }
-        
+
+        int hNative = getOwner().getNativeHandle();
         if (hNative != 0) {
             isRateControlSupported = nIsRateControlSupported(hNative);
             isTempoControlSupported = nIsTempoControlSupported(hNative);
         }
         if (midiControl == null &&
                 (isRateControlSupported || isTempoControlSupported)) {
-            midiControl = new DirectMIDIControl(this);
+            midiControl = new DirectMIDIControl( getOwner() );
         }
         if (midiControl != null) {
             if (isRateControlSupported) {
@@ -267,7 +264,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                         "Exception during stop by stop timer");
                 }
             }
-            satev();
+            getOwner().satev();
             
             stopped = true;
         } else {
@@ -284,6 +281,8 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      */
     protected void doRealize() throws MediaException {
 
+        int hNative = getOwner().getNativeHandle();
+	
         // #ifdef ENABLE_MULTIPLE_ISOLATES [
         // Add to media tunnel as event consumer
         // and, let native layer knows about their situation
@@ -301,7 +300,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
 
         // Is straming source?
         isStreaming = isStreamingSource();
-        
+
         if( isVideoPlayer() )
         {
             videoControl = new DirectVideo( this, nGetWidth( hNative ), 
@@ -311,23 +310,24 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     
     private boolean isRadioPlayer()
     {
-        return ( null != source.getLocator() && 
-            source.getLocator().startsWith( 
+        return ( null != getOwner().source.getLocator() &&
+            getOwner().source.getLocator().startsWith(
                 DefaultConfiguration.RADIO_CAPTURE_LOCATOR ) );
     }
     
     private void prefetchData() throws MediaException
     {
+        int hNative = getOwner().getNativeHandle();
         /* prefetch native player */
         if (!nPrefetch(hNative)) {
             throw new MediaException("Can not prefetch");
         }
 
-        if (!handledByDevice) {
+        if (!getOwner().handledByDevice) {
             /* predownload media data to fill native buffers */
-            if (mediaDownload != null) {
+            if (getOwner().mediaDownload != null) {
                 try {
-                    mediaDownload.fgDownload();
+                    getOwner().mediaDownload.fgDownload();
                 } catch (IOException ex) {
                     throw new MediaException("Can not start media download thread : " + ex);
                 }
@@ -347,7 +347,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             hasTakenRadioAccess = true;
         }
 
-        if(!nAcquireDevice(hNative)) {
+        if(!nAcquireDevice(getOwner().getNativeHandle())) {
             releaseRadioAccess();
             throw new MediaException("Can not acquire device");
         }
@@ -363,14 +363,10 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         prefetchData();
         acquireDevice();
         
-        if (nPcmAudioPlayback(hNative)) {
+        if (nPcmAudioPlayback(getOwner().getNativeHandle())) {
             AudioTunnel.getInstance().start();
         }
     }
-
-    /**
-     * Overrides from BasicPlayer
-     */
 
     // #ifdef RECORD [
     protected void doReceiveRSL()
@@ -392,6 +388,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             dVolumeControl.setToPlayerMute();          /* set to this player's mute state */
         }
 
+        long stopTime = getOwner().getStopTime();
         if (stopTime != StopTimeControl.RESET) {
             if (scheduleStopTimer(stopTime)) { // Media stop-time has already passed
                 return;
@@ -408,12 +405,12 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             midiControl.playerStarted();
         }
         
-        if (mediaDownload != null) {
+        if ( getOwner().mediaDownload != null) {
             try {
-                mediaDownload.bgDownload();
+                getOwner().mediaDownload.bgDownload();
             } catch(Exception ex) {
                 try {
-                    stop();
+                    getOwner().stop();
                 } catch(MediaException mEx) {
                 }
             }
@@ -434,8 +431,8 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         {
             videoControl.start();
         }
-        
-        if (isFirstStart || (0 == getMediaTime())) {
+        int hNative = getOwner().getNativeHandle();
+        if (isFirstStart || (0 == getOwner().getMediaTime())) {
             ret = nStart(hNative);
             isFirstStart = false;
         } else {
@@ -445,13 +442,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         return ret;
     }
 
-    protected void continueDownload() {
-        /* predownload media data to fill native buffers */
-        if (mediaDownload != null) {
-            mediaDownload.continueDownload();
-        }
-    }
-    
     /**
      * Override method in BasicPlayer to get the media time
      * of the <code>Player</code>
@@ -459,7 +449,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      * @return The <code>Player</code>'s current media time.
      */
     protected long doGetMediaTime() {
-        int ret = nGetMediaTime(hNative);
+        int ret = nGetMediaTime(getOwner().getNativeHandle());
         if (ret != Player.TIME_UNKNOWN) {
             return (ret * 1000);
         }
@@ -497,7 +487,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             videoControl.stop();
         }
         
-        if (false == nPause(hNative)) {
+        if (false == nPause(getOwner().getNativeHandle())) {
             throw new MediaException("Player cannot be stopped");
         }
     }
@@ -517,17 +507,17 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      */
     protected void doDeallocate() {
         // release device
-        if (nPcmAudioPlayback(hNative)) {
+        if (nPcmAudioPlayback(getOwner().getNativeHandle())) {
             AudioTunnel.getInstance().stop();
         }
         
         releaseRadioAccess();
 
-        if (mediaDownload != null) {
-            mediaDownload.deallocate();
+        if (getOwner().mediaDownload != null) {
+            getOwner().mediaDownload.deallocate();
         }
 
-        nReleaseDevice(hNative);
+        nReleaseDevice(getOwner().getNativeHandle());
 
         isFirstStart = true;
     }
@@ -569,6 +559,8 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             dVolumeControl = null;
         }
 
+        int hNative = getOwner().getNativeHandle();
+
         if (hNative != 0) {
             if ( true == nIsNeedBuffering(hNative) ) {
                 nFlushBuffer(hNative);
@@ -591,9 +583,9 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         
         long dur = doGetDuration();
 
-        if (TIME_UNKNOWN != dur && now > dur) now = dur;
+        if (Player.TIME_UNKNOWN != dur && now > dur) now = dur;
         
-        int ret = nSetMediaTime(hNative, now/1000);
+        int ret = nSetMediaTime(getOwner().getNativeHandle(), now/1000);
         if (ret == -1) {
             throw new MediaException("media time cannot be set");
         }                
@@ -607,12 +599,12 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      * @return the duration in microseconds or <code>TIME_UNKNOWN</code>
      */
     protected long doGetDuration() {
-        if (isCapturePlayer()) {
+        if (getOwner().isCapturePlayer()) {
             return Player.TIME_UNKNOWN;
-        } else if (isDevicePlayer() && !hasToneSequenceSet) {
+        } else if (getOwner().isDevicePlayer() && !getOwner().hasToneSequenceSet) {
             return 0;
         } else {
-            int ret = nGetDuration(hNative);
+            int ret = nGetDuration(getOwner().getNativeHandle());
             if (ret != Player.TIME_UNKNOWN) {
                 return (ret * 1000);    
             }
@@ -635,71 +627,72 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             shortType = type.substring(prefix.length());
         }
 
-        if (shortType.equals(fpcName)) {
+        int hNative = getOwner().getNativeHandle();
+        if (shortType.equals(PlayerImpl.fpcName)) {
 //            if (nIsFramePositioningControlSupported(hNative)) {
 //            }
-        } else if (shortType.equals(mdcName)) {
+        } else if (shortType.equals(PlayerImpl.mdcName)) {
             if (nIsMetaDataControlSupported(hNative)) {
                 if (dMetaDataControl == null)
                     dMetaDataControl = new DirectMetaData(hNative);
                 return dMetaDataControl;
             }
-        } else if (shortType.equals(micName)) {
+        } else if (shortType.equals(PlayerImpl.micName)) {
             if (nIsMIDIControlSupported(hNative)) {
                 if (midiControl == null) 
-                    midiControl = new DirectMIDIControl(this);
+                    midiControl = new DirectMIDIControl( getOwner() );
                 return midiControl.getMIDIControl();
             }
-        } else if (shortType.equals(picName)) {
+        } else if (shortType.equals(PlayerImpl.picName)) {
             if (nIsPitchControlSupported(hNative)) {
                 if (midiControl == null) 
-                    midiControl = new DirectMIDIControl(this);
+                    midiControl = new DirectMIDIControl( getOwner() );
                 return midiControl.getPitchControl();
             }
-        } else if (shortType.equals(racName)) {
+        } else if (shortType.equals(PlayerImpl.racName)) {
             if (nIsRateControlSupported(hNative)) {
                 if (midiControl == null) 
-                    midiControl = new DirectMIDIControl(this);
+                    midiControl = new DirectMIDIControl( getOwner() );
                 return midiControl.getRateControl();
             }
-        } else if (shortType.equals(recName)) {
+        } else if (shortType.equals(PlayerImpl.recName)) {
             if (nIsRecordControlSupported(hNative)) {
                 if (recordControl == null) {
-                    recordControl = new DirectRecord(this);
+                    recordControl = new DirectRecord( getOwner() );
                 }
                 return recordControl;
             }
-        } else if (shortType.equals(stcName)) {
-            if (!isCapturePlayer()) {
-                return this;
+        } else if (shortType.equals(PlayerImpl.stcName)) {
+            if (!getOwner().isCapturePlayer()) {
+                return getOwner();
             }
 //            if (nIsStopTimeControlSupported(hNative)) {
 //            }
-        } else if (shortType.equals(tecName)) {
+        } else if (shortType.equals(PlayerImpl.tecName)) {
             if (nIsTempoControlSupported(hNative)) {
                 if (midiControl == null) 
-                    midiControl = new DirectMIDIControl(this);
+                    midiControl = new DirectMIDIControl( getOwner() );
                 return midiControl.getTempoControl();
             }
-        } else if (shortType.equals(vicName)) {
+        } else if (shortType.equals(PlayerImpl.vicName)) {
 //            if (nIsVideoControlSupported(hNative)) {
 //            }
-        } else if (shortType.equals(tocName)) {
+        } else if (shortType.equals(PlayerImpl.tocName)) {
 //            if (nIsToneControlSupported(hNative)) {
 //            }
-        } else if (shortType.equals(vocName)) {
+        } else if (shortType.equals(PlayerImpl.vocName)) {
             if (nIsVolumeControlSupported(hNative)) {
                 if (dVolumeControl == null) {
-                    dVolumeControl = new DirectVolume(this, hNative);
+                    dVolumeControl = new DirectVolume( getOwner(), hNative);
                 }
                 return dVolumeControl;
             }
         }
 
         if ( null != videoControl ) {
-            if (shortType.equals(vicName)) {        // VideoControl
+            if (shortType.equals(PlayerImpl.vicName)) {        // VideoControl
                 return videoControl;
-            } else if (shortType.equals(guiName)) {  // GUIControl
+            } else if (shortType.equals(PlayerImpl.guiName)) {  // GUIControl
                 return videoControl;
             }
         }
@@ -732,8 +725,8 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      */
     private boolean isStreamingSource() {
         String theProtocol = null;
-        if (source != null) {
-            String locStr = source.getLocator();
+        if (getOwner().source != null) {
+            String locStr = getOwner().source.getLocator();
             if (locStr != null) {
                 locStr = locStr.toLowerCase();
                 int idx = locStr.indexOf(':');
@@ -757,10 +750,10 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      * @param  Length of the source buffer
      */
     private void processHeader(byte[] buffer, int length) {
-        if (source != null) {
+        if (getOwner().source != null) {
             // Additional check to differentiate sp-midi and midi
-            String mimeType = getContentType();
-            BasicDS ds = (BasicDS)source;
+            String mimeType = getOwner().getContentType();
+            BasicDS ds = (BasicDS)getOwner().source;
             if ((ds != null) && mimeType.equals(Configuration.MIME_AUDIO_MIDI)) {
                 final int MAX_SP_MIDI_SEARCH = 512;
                 int maxSearch = length - 5;
@@ -778,30 +771,26 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             }
         }
     }
-    
-    public String getContentType()
+
+    protected String doGetContentType()
     {
-        String ctype = super.getContentType();
-        
-        if( null == ctype ) {
-            ctype = nGetContentType(hNative);
-            if( null != ctype ) {
-                int s_pos = ctype.indexOf(' ');
-                if (-1 != s_pos) {
-                    ctype = ctype.substring(0, s_pos);
-                }
-            }
-            if (ctype == null && source != null) {
-                ctype = DefaultConfiguration.getContentType(source.getLocator());
+        String ctype = nGetContentType( getOwner().getNativeHandle() );
+        if( null != ctype ) {
+            int s_pos = ctype.indexOf(' ');
+            if (-1 != s_pos) {
+                ctype = ctype.substring(0, s_pos);
             }
         }
-        
+        if (ctype == null && getOwner().source != null) {
+            ctype = DefaultConfiguration.getContentType(getOwner().source.getLocator());
+        }
+
         return ctype;
     }
     
     private boolean isVideoPlayer()
     {
-        return nIsVideoControlSupported(hNative);
+        return nIsVideoControlSupported( getOwner().getNativeHandle() );
     }
     
     public void setSnapshotQuality( int quality )
@@ -816,7 +805,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      */
     public void checkSnapshotPermission() {
         try {
-            PermissionAccessor.checkPermissions( getLocator(), PermissionAccessor.PERMISSION_SNAPSHOT );
+            PermissionAccessor.checkPermissions( getOwner().getLocator(), PermissionAccessor.PERMISSION_SNAPSHOT );
         } catch( InterruptedException e ) {
             throw new SecurityException( "Interrupted while trying to ask the user permission" );
         }
@@ -829,7 +818,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     // Set display location of video
     public boolean setVideoLocation(int x, int y, int w, int h)
     {
-        return nSetLocation( hNative, x, y, w, h );
+        return nSetLocation( getOwner().getNativeHandle(), x, y, w, h );
     }
 
     private boolean isWaitingForSnapshot;
@@ -838,6 +827,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     {
         byte [] ret = null;
         checkSnapshotPermission();
+        int hNative = getOwner().getNativeHandle();
         try {
             synchronized ( snapshotLock )
             {
@@ -862,7 +852,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         return ret;
     }
 
-    void notifySnapshotFinished()
+    void doNotifySnapshotFinished()
     {
         synchronized( snapshotLock )
         {
@@ -877,13 +867,13 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     // Set fullscreen
     public boolean setVideoFullScreen( boolean fullscreen)
     {
-        return nSetFullScreenMode( hNative, fullscreen );
+        return nSetFullScreenMode( getOwner().getNativeHandle(), fullscreen );
     }
     
     // Set visible
     public boolean setVideoVisible( boolean visible)
     {
-        return nSetVisible( hNative, visible );
+        return nSetVisible( getOwner().getNativeHandle(), visible );
     }
     
     private boolean colorKeyOn = false;
@@ -892,7 +882,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     {
         if (colorKeyOn != on) {
             colorKeyOn = on;
-            return nSetColorKey( hNative, on, colorKey );
+            return nSetColorKey( getOwner().getNativeHandle(), on, colorKey );
         }
         return true;
     }
@@ -900,7 +890,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     // Notifies that the Display Size was changed
     public void notifyDisplaySizeChange()
     {
-        sendEvent(PlayerListener.SIZE_CHANGED, videoControl);
+        getOwner().sendEvent(PlayerListener.SIZE_CHANGED, videoControl);
     }
     
     /**
@@ -928,7 +918,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                 long dur = doGetDuration();
                 
                 while ((mt != -1) && 
-                        (mt < stopTime) && (dur <= 0 || mt < dur)) {
+                        (mt < getOwner().getStopTime()) && (dur <= 0 || mt < dur)) {
                     try	{
                         java.lang.Thread.sleep( 10 );
                     } catch( InterruptedException e ) {
@@ -947,7 +937,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                 }
             }
 
-            satev();
+            getOwner().satev();
         }
     }
     
@@ -964,6 +954,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         if (mvmOption == -1)
             mvmOption = mediaTunnel.isBackPlayable() ? mediaTunnel.PLAYABLE_FROM_BACKGROUND : 0;
 
+        int hNative = getOwner().getNativeHandle();
         if (hNative != 0)
             nSwitchToForeground(hNative, mvmOption);
     }
@@ -976,6 +967,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         if (mvmOption == -1)
             mvmOption = mediaTunnel.isBackPlayable() ? mediaTunnel.PLAYABLE_FROM_BACKGROUND : 0;
 
+        int hNative = getOwner().getNativeHandle();
         if (hNative != 0)
             nSwitchToBackground(hNative, mvmOption);
     }
