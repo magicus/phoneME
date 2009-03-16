@@ -39,11 +39,8 @@ import com.sun.midp.security.SecurityToken;
  */
 public class DisplayContainer {
     
-    /** ID of the Isolate this instance is created in */
-    private final int isolateId;
-
-    /** Last local Display count used to create Display ID */
-    private int lastLocalDisplayId;
+    /** Sets the display ID in a new display. */
+    private DisplayIdPolicy displayIdPolicy;
 
     /** Active displays. */
     private Vector displays = new Vector(5, 5);
@@ -52,11 +49,11 @@ public class DisplayContainer {
      * Default constructor.
      *
      * @param token security token for initilaization
-     * @param isolateId id of the Isolate this instance is created in
+     * @param idPolicy policy to set the display ID of a new display
      */ 
-    public DisplayContainer(SecurityToken token, int isolateId) {
+    public DisplayContainer(SecurityToken token, DisplayIdPolicy idPolicy) {
         token.checkIfPermissionAllowed(Permissions.MIDP);
-	this.isolateId = isolateId;
+	displayIdPolicy = idPolicy;
     }
 
     /**
@@ -69,8 +66,7 @@ public class DisplayContainer {
      */
     public synchronized void addDisplay(DisplayAccess da) {
         if (displays.indexOf(da) == -1) {
-            int newId = createDisplayId();
-            da.setDisplayId(newId);
+            displayIdPolicy.createDisplayId(da, this);
             displays.addElement(da);
         }
     }
@@ -346,26 +342,5 @@ public class DisplayContainer {
         }
 
         return da.getForegroundEventConsumer();
-    }
-
-    /**
-     * Creates an Display Id that is unique across all Isolates.
-     * Graphics subsystem depends on this uniqueness, which allows
-     * quick check on whether a Display is in the foreground
-     * without having to check Isolate id.
-     *
-     * @return a new unique display Id with high 8 bits as Isolate ID,
-     *		low 24 bits as local display counter.
-     */
-    private int createDisplayId() {
-        int id;
-        
-        do {
-            lastLocalDisplayId++;
-	    // [high 8 bits: isolate id][low 24 bits: display id]]
-            id = ((isolateId & 0xff)<<24) | (lastLocalDisplayId & 0x00ffffff);
-        } while (findDisplayById(id) != null);
-
-        return id;
     }
 }

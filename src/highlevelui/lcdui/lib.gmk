@@ -97,10 +97,12 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEventListener.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironment.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/PhoneDial.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DefaultDisplayIdPolicy.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDevice.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayContainer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDeviceContainer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventHandler.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayIdPolicy.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ItemEventConsumer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventHandlerFactory.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DynamicCharacterArray.java \
