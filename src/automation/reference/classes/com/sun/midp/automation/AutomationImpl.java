@@ -27,6 +27,7 @@
 package com.sun.midp.automation;
 import com.sun.midp.events.*;
 import javax.microedition.lcdui.Image;
+import java.util.*;
 
 /**
  * Implements Automation class abstract methods.
@@ -38,14 +39,20 @@ final class AutomationImpl extends Automation {
     /** Event queue */
     private EventQueue eventQueue;
 
+    /** Event spying queue */
+    private EventQueue eventSpyingQueue = null;
+
     /** Event factory */
     private AutoEventFactoryImpl eventFactory;
 
     /** index 0: foreground isolate id, index 1: foreground display id */
     private int[] foregroundIsolateAndDisplay;
     
+    /** Takes screenshots */
     private AutoScreenshotTaker screenshotTaker;
 
+    /** Hardware event listeners */
+    private Vector hwEventListeners;
 
     /**
      * Gets instance of AutoSuiteStorage class.
@@ -321,6 +328,32 @@ final class AutomationImpl extends Automation {
     }
 
     /**
+     * Adds event listener that allows to monitor hardware events.
+     * That is, this listener is called whenever hardware (external)
+     * event occurs (like keypress).
+     *
+     * @param el event listener
+     */
+    public void addHardwareEventListener(AutoEventListener el) {
+        if (eventSpyingQueue == null) {
+            NativeEventListener l = new NativeEventListener();
+            eventSpyingQueue = EventSpyingQueue.getEventQueue();
+            eventSpyingQueue.registerEventListener(EventTypes.KEY_EVENT, l);
+            eventSpyingQueue.registerEventListener(EventTypes.PEN_EVENT, l);
+        }
+
+        hwEventListeners.addElement(el);
+    }
+
+    /**
+     * Removes previously added hardware event listener.
+     */
+    public void removeHardwareEventListener(AutoEventListener el) {
+        hwEventListeners.removeElement(el);        
+    }
+    
+
+    /**
      * Gets screenshot in specified format.
      * IMPL_NOTE: only implemented for putpixel based ports
      *
@@ -385,12 +418,60 @@ final class AutomationImpl extends Automation {
     }
 
     /**
-     * Gets ids of foreground isolate and display
+     * EventListener implementation
+     */
+    private class NativeEventListener implements EventListener {
+        /**
+         * Preprocess an event that is being posted to the event queue.
+         * This method will get called in the thread that posted the event.
+         * 
+         * @param event event being posted
+         *
+         * @param waitingEvent previous event of this type waiting in the
+         *     queue to be processed
+         * 
+         * @return true to allow the post to continue, false to not post the
+         *     event to the queue
+         */        
+        public boolean preprocess(Event event, Event waitingEvent) {
+            return true;
+        }
+
+        /**
+         * Process an event.
+         * This method will get called in the event queue processing thread.
+         *
+         * @param nativeEvent native event recieved
+         */
+        public void process(Event nativeEvent) {
+            AutoEvent event = eventFactory.createFromNativeEvent(
+                    (NativeEvent)nativeEvent);
+
+            notifyHardwareEventListeners(event);
+        }
+    }
+
+    /**
+     * Gets ids of foreground isolate and display.
      *
      * @param foregroundIsolateAndDisplay array to store ids in
      */
     private static native void getForegroundIsolateAndDisplay(
             int[] foregroundIsolateAndDisplay);
+
+    /**
+     * Notifies hardware event listeners.
+     *
+     * @param event event to notify about
+     */
+    private void notifyHardwareEventListeners(AutoEvent event) {
+        for (int i = hwEventListeners.size() - 1; i >= 0; i--) {
+            AutoEventListener l = 
+                (AutoEventListener)hwEventListeners.elementAt(i);
+
+            l.onEvent(event);
+        }
+    }
 
     /**
      * Private constructor to prevent creating class instances.
@@ -402,5 +483,7 @@ final class AutomationImpl extends Automation {
         this.eventFactory = AutoEventFactoryImpl.getInstance();
         this.foregroundIsolateAndDisplay = new int[2];
         this.screenshotTaker = new AutoScreenshotTaker();
+        this.hwEventListeners = new Vector();
     } 
+
 }

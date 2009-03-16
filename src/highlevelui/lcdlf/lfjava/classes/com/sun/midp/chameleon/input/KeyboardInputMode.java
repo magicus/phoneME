@@ -130,8 +130,7 @@ public class KeyboardInputMode implements InputMode {
         int ret = KEYCODE_NONE;
         validateState(true);
         // if the key is printable one
-        if (mediator != null &&
-            !longPress) {
+        if (mediator != null) {
             if( keyCode >= ' ' && keyCode != 127 ) {
                 mediator.commit("" + (char)keyCode);
             } else if ( mediator.isNewlineKey(keyCode)) {

@@ -1084,9 +1084,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
 
         // The result of an invalidate() call
         if (traverseIndexCopy != -1 && dir == CustomItem.NONE) {
-            itemTraverse = 
-                    uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
-            
             uRequestPaint(); // request to paint contents area
             
             if (keepFocusOnTheScreen) {
@@ -1095,6 +1092,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                     keepFocusOnTheScreen = false;
                 }
             }
+            
+            itemTraverse = 
+                    uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+            
             setupScroll();
             return;
         }

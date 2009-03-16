@@ -48,6 +48,12 @@ SUBSYSTEM_EVENTS_JAVA_FILES += \
     $(EVENT_QUEUE_DIR)/reference/classes/com/sun/midp/events/Event.java \
     $(EVENT_QUEUE_DIR)/reference/classes/com/sun/midp/events/NativeEvent.java
 
+ifeq ($(USE_EVENT_SPYING), true)
+    EXTRA_CFLAGS += -DENABLE_EVENT_SPYING=1
+
+SUBSYSTEM_EVENTS_JAVA_FILES += \
+    $(EVENT_QUEUE_DIR)/reference/classes/com/sun/midp/events/EventSpyingQueue.java
+endif    
 
 # I3 test files for the ( eventqueue ) library
 #

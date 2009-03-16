@@ -54,6 +54,35 @@ public class LCDUIEnvironmentForCDC extends LCDUIEnvironment {
         super(internalSecurityToken, eventQueue, 
               isolateId, foregroundController);
 
+        initCvmGraphics(eventQueue);
+    }
+
+    /**
+     * Creates lcdui event producers/handlers/lisneners.
+     * 
+     * @param internalSecurityToken
+     * @param eventQueue
+     * @param idPolicy
+     * @param isolateId
+     * @param foregroundController
+     */
+    public LCDUIEnvironmentForCDC(SecurityToken internalSecurityToken,
+                                  EventQueue eventQueue, 
+                                  DisplayIdPolicy idPolicy,
+                                  ForegroundController foregroundController) {
+
+        super(internalSecurityToken, eventQueue, 
+              idPolicy, foregroundController);
+
+        initCvmGraphics(eventQueue);
+    }
+
+    /**
+     * Initializes gci event lister when LCDUI is run on top of GCI.
+     *
+     * @param eventQueue
+     */
+    private void initCvmGraphics(EventQueue eventQueue) {
         // #ifdef ENABLE_GCI
             GCIGraphicsEnvironment gciEnv = 
                 GCIGraphicsEnvironment.getInstance();

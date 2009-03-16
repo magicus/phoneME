@@ -89,6 +89,23 @@ public final class AutoKeyState {
         return (AutoKeyState)keyStates.get(name);
     }
 
+    /**
+     * Gets key state by corresponding MIDP key state.
+     *
+     * @param midpKeyState state constant used by our MIDP implementation
+     * @return key state corresponding to the specified constant
+     */
+    static AutoKeyState getByMIDPKeyState(int midpKeyState) {
+        Enumeration e = keyStates.elements();
+        while (e.hasMoreElements()) {
+            AutoKeyState keyState = (AutoKeyState)e.nextElement();
+            if (keyState.getMIDPKeyState() == midpKeyState) {
+                return keyState;
+            }
+        }
+
+        return null;
+    }
 
     /**
      * Private constructor to prevent creation of class instances.

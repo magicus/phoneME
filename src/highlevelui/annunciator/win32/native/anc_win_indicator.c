@@ -56,10 +56,10 @@ void anc_show_trusted_indicator(jboolean isTrusted) {
  * It controls the LED as the network indicator, it
  * ONLY works on device. There is no equivalent in emulator.
  */
-void anc_set_network_indicator(AncNetworkIndicatorState status) {
+void anc_set_network_indicator(int counter) {
     REPORT_WARN(LC_LOWUI, "anc_set_network_indicator: Stubbed out."); 
     // Work around for compiler warning
-    (void)status;
+    (void)counter;
 }
 
 /**

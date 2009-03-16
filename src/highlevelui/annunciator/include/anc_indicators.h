@@ -72,19 +72,6 @@ typedef enum {
 } AncBacklightState;
 
 /**
- * Operations on network indicator.
- * The function anc_set_network_indicator() requires one of these values.
- *
- * The network indicator support is enabled by compiling with
- * ENABLE_NETWORK_INDICATOR set to true.
- */
-typedef enum {
-    ANC_NETWORK_INDICATOR_ON     = 1, /**< Turns on indicator        */
-    ANC_NETWORK_INDICATOR_OFF    = 2, /**< Turns off indicator       */
-    ANC_NETWORK_INDICATOR_TOGGLE = 3  /**< Toggles the current state */
-} AncNetworkIndicatorState;
-
-/**
  * Control the device's backlight.  Turn it on or off, 
  * toggle it, or check to see if control of the backlight
  * is supported by the system without changing the light's 
@@ -144,21 +131,21 @@ jboolean anc_show_backlight(AncBacklightState mode);
  *
  * @param status What the status of the indicator should be.
  */
-void anc_set_network_indicator(AncNetworkIndicatorState status);
+void anc_set_network_indicator(int counter);
 
 extern int gAncNetworkIndicatorCount;
 
 #define ANC_INIT_NETWORK_INDICATOR    { gAncNetworkIndicatorCount = 0; };
 #define ANC_INC_NETWORK_INDICATOR     { gAncNetworkIndicatorCount++; };
-#define ANC_DEC_NETWORK_INDICATOR     { gAncNetworkIndicatorCount--; };
+#define ANC_DEC_NETWORK_INDICATOR     { if (gAncNetworkIndicatorCount > 0) \
+                                            gAncNetworkIndicatorCount--; \
+                                        else  { REPORT_WARN(LC_PROTOCOL, \
+                                   "Network connection is closed without opening"); ((void)0); } };
 #define ANC_FINISH_NETWORK_INDICATOR  { gAncNetworkIndicatorCount = 0; };
 
-#define ANC_START_NETWORK_INDICATOR    \
-                      anc_set_network_indicator(ANC_NETWORK_INDICATOR_ON); 
-#define ANC_STOP_NETWORK_INDICATOR    { if (gAncNetworkIndicatorCount == 0) \
-                      anc_set_network_indicator(ANC_NETWORK_INDICATOR_OFF); }
-#define ANC_TOGGLE_NETWORK_INDICATOR  { if (gAncNetworkIndicatorCount > 0) \
-                      anc_set_network_indicator(ANC_NETWORK_INDICATOR_TOGGLE); }
+/** deploy the network indicator count */
+#define ANC_IND_NETWORK_INDICATOR    {  anc_set_network_indicator( \
+                                          gAncNetworkIndicatorCount); };
 
 #else
 
@@ -170,13 +157,8 @@ extern int gAncNetworkIndicatorCount;
 #define ANC_DEC_NETWORK_INDICATOR
 /** reset the network indicator count */
 #define ANC_FINISH_NETWORK_INDICATOR
-/** show the network indicator */
-#define ANC_START_NETWORK_INDICATOR
-/** hide the network indicator */
-#define ANC_STOP_NETWORK_INDICATOR
-/** toggle the network indicator */
-#define ANC_TOGGLE_NETWORK_INDICATOR
-
+/** deploy the network indicator count */
+#define ANC_IND_NETWORK_INDICATOR
 #endif /* ENABLE_NETWORK_INDICATOR */
 /** @} */
 

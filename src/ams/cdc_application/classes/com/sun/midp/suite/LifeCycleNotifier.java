@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@
 package com.sun.midp.suite;
 
 /**
- * SPI interface to be implemented by classes which want to receive lifecycle
- * notifications.
+ * SPI interface to be implemented by classes that want to send lifecycle
+ * notifications and called by services that want to receive notifications.
  */
 public interface LifeCycleNotifier {
     /**

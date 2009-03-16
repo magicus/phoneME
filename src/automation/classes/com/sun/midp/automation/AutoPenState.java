@@ -41,7 +41,7 @@ public final class AutoPenState {
     /**
      * State: pen tip dragged
      */
-    public static final AutoPenState REPEATED = 
+    public static final AutoPenState DRAGGED = 
         new AutoPenState("dragged", EventConstants.DRAGGED);
 
     /**
@@ -87,6 +87,24 @@ public final class AutoPenState {
      */
     static AutoPenState getByName(String name) {
         return (AutoPenState)penStates.get(name);
+    }
+
+    /**
+     * Gets pen state by corresponding MIDP key state.
+     *
+     * @param midpPenState state constant used by our MIDP implementation
+     * @return pen state corresponding to the specified constant
+     */
+    static AutoPenState getByMIDPPenState(int midpPenState) {
+        Enumeration e = penStates.elements();
+        while (e.hasMoreElements()) {
+            AutoPenState penState = (AutoPenState)e.nextElement();
+            if (penState.getMIDPPenState() == midpPenState) {
+                return penState;
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ import java.util.Hashtable;
 import com.sun.midp.midlet.MIDletSuite;
 
 /**
- * API interface to be implemented by classes which want to be notified of
+ * Interface to be implemented by classes which want to be notified of
  * MIDlet lifecycle events.
  */
 public interface LifeCycleListener {

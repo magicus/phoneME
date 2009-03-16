@@ -26,7 +26,7 @@
 
 LIB_DESCRIPTION=OTA Library reference implementation
 LIB_VERSION=1.0
-LIB_DEPENDENCIES=ams/ams_api ams/ams_util ams/ams_base
+LIB_DEPENDENCIES=ams/ams_api ams/ams_util ams/ams_base ams/ota_control
 LIB_JAVA_FILES= \
     com/sun/midp/installer/DiscoveryApp.java \
     com/sun/midp/installer/SuiteVerifier.java \

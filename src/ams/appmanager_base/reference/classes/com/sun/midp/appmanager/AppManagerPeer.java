@@ -157,6 +157,9 @@ class AppManagerPeer implements CommandListener {
     /** If there are folders */
     private boolean foldersOn;
 
+    /** true if AMS should not ask user whether to run just installed suite */
+    private boolean disableRunMIDletQuestion;
+
     /** Command object for "Yes, enable on device debug" command. */
     private Command enableOddYesCmd = new Command(Resource.getString
                                             (ResourceConstants.YES),
@@ -184,6 +187,7 @@ class AppManagerPeer implements CommandListener {
         msiVector = new Vector();
         this.displayError = displayError;
         this.manager = manager;
+        disableRunMIDletQuestion = false;
         
         this.display = display;
         Vector folders = FolderManager.getFolders();
@@ -1223,7 +1227,34 @@ class AppManagerPeer implements CommandListener {
         return appManagerUI.getSelectedMIDletSuiteInfo();
     }
 
-    
+    /**
+     * Suppresses next question if run newly installed MIDlet.
+     * Used for ODT installations, the question is undiserable in this case.
+     */
+    public void suppressNextRunMIDletQuestion() {
+        disableRunMIDletQuestion = true;
+    }
+
+    /**
+     * Allow questions if run newly installed MIDlet.
+     * Reverts effect of suppressNextRunMIDletQuestion().
+     */
+    public void allowRunMIDletQuestion() {
+        disableRunMIDletQuestion = false;
+    }
+
+    /**
+     * Checks whether question if run newly installed MIDlet is allowed.
+     * If the question is suppressed, toggles the flag to allow next questions.
+     * @return true if the question should be displayed
+     */
+    public boolean getAndResetRunMIDletQuestionFlag() {
+        if (disableRunMIDletQuestion) {
+            allowRunMIDletQuestion();
+            return false;
+        }
+        return true;
+    }
 }
 
 

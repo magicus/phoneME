@@ -28,6 +28,8 @@ package com.sun.midp.lcdui;
 
 import java.util.Vector;
 
+import javax.microedition.lcdui.Display;
+
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
@@ -155,6 +157,56 @@ public class DisplayContainer {
         }
 
         return null;
+    }
+
+    /**
+     * Find a display's access object.
+     *
+     * @param display an LCDUI display
+     *
+     * @return a display access object or null if not found
+     */
+    public synchronized DisplayAccess findDisplayAccess(Display display) {
+        int size = displays.size();
+        
+        for (int i = 0; i < size; i++) {
+            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
+
+            if (current.getDisplay() == display) {
+                return current;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Find the displays by owner.
+     *
+     * @param owner the object that owns the display
+     *
+     * @return array of display access objects or null if not found
+     */
+    public synchronized DisplayAccess[] findDisplaysByOwner(Object owner) {
+        int size = displays.size();
+	Vector v = new Vector(2, 2); 
+	
+
+        for (int i = 0; i < size; i++) {
+            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
+	    
+            if (current.getOwner() == owner) {
+		v.addElement(current);
+            }
+        }
+	
+	DisplayAccess[] ret = null;
+	if (v.size() > 0) {
+	    ret = new DisplayAccess[v.size()];
+	    v.copyInto(ret);
+	}
+	
+        return ret;
     }
 
     /**

@@ -51,6 +51,7 @@ include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
 
 CDC_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/cdc_application
 OTA_DIR = $(SUBSYSTEM_AMS_DIR)/ota/reference
+OTA_CONTROL_DIR = $(SUBSYSTEM_AMS_DIR)/ota_control/reference
 INSTALLER_DIR = $(SUBSYSTEM_AMS_DIR)/installer/reference
 JUMP_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/jump_application
 MIDLET_API_DIR = $(SUBSYSTEM_AMS_DIR)/ams_api/reference
@@ -59,6 +60,7 @@ MIDLET_API_DIR = $(SUBSYSTEM_AMS_DIR)/ams_api/reference
 MIDP_JAVADOC_SOURCEPATH += \
 			$(CDC_AMS_DIR)/classes \
 			$(OTA_DIR)/classes \
+			$(OTA_CONTROL_DIR)/classes \
 			$(INSTALLER_DIR)/classes \
 			$(JUMP_AMS_DIR)/classes \
 			$(MIDLET_API_DIR)/classes

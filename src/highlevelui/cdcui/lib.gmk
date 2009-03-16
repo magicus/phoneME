@@ -45,6 +45,9 @@ $(GENERATED_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironmentForCDC.java: $(CDCUI
 # Java files for the library
 #
 SUBSYSTEM_CDCUI_JAVA_FILES += \
+    $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/CdcForegroundEventProducer.java
+
+SUBSYSTEM_CDCUI_JAVA_FILES += \
     $(GENERATED_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironmentForCDC.java
 
 ifeq ($(TARGET_PLATFORM), linux_gci)
