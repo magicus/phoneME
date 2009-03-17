@@ -416,8 +416,10 @@ else
     CVM_PRELOAD_FULL_CLOSURE = false
 endif
 
-ifeq ($(CVM_PRELOAD_SET), libtestfull)
+ifeq ($(findstring full,$(CVM_PRELOAD_SET)), full)
+ifeq ($(findstring test,$(CVM_PRELOAD_SET)), test)
     CVM_PRELOAD_TEST = true
+endif
 endif
 
 CVM_STATICLINK_LIBS   = $(CVM_PRELOAD_ALL)
