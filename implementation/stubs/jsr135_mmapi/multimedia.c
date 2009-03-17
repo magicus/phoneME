@@ -1460,13 +1460,27 @@ void javacall_media_release_data(javacall_uint8* result_buffer, javacall_uint32 
 }
 
 /**
- * Get current system audio volume level
- * Audio volume range have to be in 0 to 100 inclusive
- * 
- * @param volume    Volume value
+ * Get current system audio volume level.
+ * Audio volume range have to be in 0 to 100 inclusive. 0 means that audio is
+ * muted.
  *
- * @retval JAVACALL_OK      Success
- * @retval JAVACALL_NO_DATA_AVAILABLE
+ * @note Player's volume level will be multiplied by the system volume 
+ *       (divided by 100) before the javacall_media_set_volume() method will be 
+ *       called by the Java layer. To block this calculation 
+ *       the javacall_media_get_system_volume() method must return 
+ *       JAVACALL_NO_DATA_AVAILABLE.
+ *
+ * @note If the device have a system mute/unmute capability 
+ *       the Javacall layer is responsible for saving/restoring the current 
+ *       system volume level when the audio is muted/unmuted.
+ * 
+ * @note This method must return JAVACALL_NO_DATA_AVAILABLE when the 
+ *       System volume feature is not implemented.
+ *
+ * @param volume        Volume value
+ *
+ * @retval JAVACALL_OK                Success
+ * @retval JAVACALL_NO_DATA_AVAILABLE System volume is not available
  */
 javacall_result javacall_media_get_system_volume(/*OUT*/ javacall_int32 *volume) {
     return JAVACALL_NO_DATA_AVAILABLE;
