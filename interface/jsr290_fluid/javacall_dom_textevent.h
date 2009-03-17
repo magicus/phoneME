@@ -118,6 +118,9 @@ javacall_dom_textevent_get_data_finish(void *context,
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
  *   method for a description of this parameter. 
+ * @param view_arg Pointer to the object of
+ *    Refer to the <code>UIEvent.initUIEvent()</code> method 
+ *   for a description of this parameter. 
  * @param data_arg  Specifies <code>TextEvent.data</code>. 
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -136,6 +139,7 @@ javacall_dom_textevent_init_text_event_start(javacall_handle handle,
                                              javacall_const_utf16_string type_arg,
                                              javacall_bool can_bubble_arg,
                                              javacall_bool cancelable_arg,
+                                             javacall_handle view_arg,
                                              javacall_const_utf16_string data_arg);
 
 /**
@@ -176,6 +180,9 @@ javacall_dom_textevent_init_text_event_finish(void *context);
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>UIEvent.initUIEventNS()</code>
  *   method for a description of this parameter. 
+ * @param view_arg Pointer to the object of
+ *    Refer to the <code>UIEvent.initUIEventNS()</code> 
+ *   method for a description of this parameter. 
  * @param data_arg  Refer to the <code>TextEvent.initTextEvent()</code> 
  *   method for a description of this parameter. 
  * 
@@ -196,6 +203,7 @@ javacall_dom_textevent_init_text_event_ns_start(javacall_handle handle,
                                                 javacall_const_utf16_string type_arg,
                                                 javacall_bool can_bubble_arg,
                                                 javacall_bool cancelable_arg,
+                                                javacall_handle view_arg,
                                                 javacall_const_utf16_string data_arg);
 
 /**
