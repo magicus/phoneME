@@ -25,6 +25,9 @@ package com.sun.mmedia;
 
 import java.util.Hashtable;
 import javax.microedition.media.Control;
+// #ifdef ENABLE_CDC [
+import java.security.*;
+// #endif ]
 
 /**
  *  The configuration module for MMAPI.
@@ -291,8 +294,18 @@ public abstract class Configuration {
     public static Configuration getConfiguration() {
         if (config != null) return config;
     
-        String className = System.getProperty("mmapi-configuration");
-        
+        String className = 
+// #ifdef ENABLE_CDC [
+            (String) AccessController.doPrivileged(new PrivilegedAction() {
+                    public Object run() {
+                        return
+// #endif ]
+            System.getProperty("mmapi-configuration");
+// #ifdef ENABLE_CDC [
+                    }
+                });
+// #endif ]
+
         if (className != null) {        
             try {
                 // ... try and instantiate the configuration class ...
