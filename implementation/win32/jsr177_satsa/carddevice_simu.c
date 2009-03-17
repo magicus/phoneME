@@ -137,7 +137,7 @@ static HANDLE locked = NULL;
 /**
  * Verbose level of the driver.
  */
-javacall_bool javacall_carddevice_verbose = JAVACALL_TRUE;
+javacall_bool javacall_carddevice_verbose = JAVACALL_FALSE;
 
 /* local functions */
 static int isoOut(int slot, char *command, int length, char *response, 

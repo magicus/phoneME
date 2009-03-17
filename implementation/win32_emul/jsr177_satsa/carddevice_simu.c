@@ -135,7 +135,7 @@ static HANDLE locked = NULL;
 /**
  * Verbose level of the driver.
  */
-javacall_bool javacall_carddevice_verbose = JAVACALL_TRUE;
+javacall_bool javacall_carddevice_verbose = JAVACALL_FALSE;
 
 /* local functions */
 static int isoOut(int slot, char *command, int length, char *response,
@@ -556,11 +556,11 @@ static javacall_result javacall_carddevice_xfer_data(char *tx_buffer, javacall_i
 
     if (javacall_carddevice_verbose) {
         int i;
-	 printf("Try to send: ");
+	 javautil_debug_print (JAVACALL_LOG_INFORMATION, "carddevice_simu", "Try to send: ");
         for (i = 0; i < tx_size; i++) {
-	     printf("%02X ", (tx_buffer[i] & 0xFF));
+	     javautil_debug_print (JAVACALL_LOG_INFORMATION, "carddevice_simu", "%02X ", (tx_buffer[i] & 0xFF));
         }
-	 printf("\n");
+	 javautil_debug_print (JAVACALL_LOG_INFORMATION, "carddevice_simu", "\n");
     }
 
     ret_value = cmdXfer(current_slot, tx_buffer, tx_size, rx_buffer, *rx_size);
@@ -568,13 +568,13 @@ static javacall_result javacall_carddevice_xfer_data(char *tx_buffer, javacall_i
     if (javacall_carddevice_verbose) {
         int i;
         if (ret_value < 0) {
-   	     printf("Received: error\n");
+   	     javautil_debug_print (JAVACALL_LOG_ERROR, "carddevice_simu", "Received: error\n");
         } else {
-   	     printf("Received: %s", (ret_value == 0 ? "none" : ""));
+   	     javautil_debug_print (JAVACALL_LOG_INFORMATION, "carddevice_simu", "Received: %s", (ret_value == 0 ? "none" : ""));
             for (i = 0; i < ret_value; i++) {
      	         javautil_debug_print (JAVACALL_LOG_INFORMATION, "carddevice_simu", "%02X ", (rx_buffer[i] & 0xFF));
             }
-   	     printf("\n");
+   	     javautil_debug_print (JAVACALL_LOG_INFORMATION, "carddevice_simu", "\n");
         }
     }
     if (ret_value < 0) {
