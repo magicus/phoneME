@@ -226,6 +226,8 @@ class SourceMacros: public SourceAssembler {
   void swap_mask(Register msk);
   void swap_bytes(Register res, Register tmp, Register msk);
   void get_method_parameter_size(Register result, Register method);
+
+  void redo_if_needed(Label& label);
 };
 
 #endif // PRODUCT

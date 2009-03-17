@@ -320,6 +320,8 @@ class SourceMacros: public SourceAssembler {
 
   void call_shared_call_vm(BasicType return_value_type);
   void goto_shared_call_vm(BasicType return_value_type);
+
+  void redo_if_needed(Label& label);
 };
 
 #endif // PRODUCT

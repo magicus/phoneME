@@ -3194,14 +3194,7 @@ void CodeGenerator::new_object_stub(CompilationQueueElement* cqe JVM_TRAPS) {
   ldr(r1, imm_index(jnear, JavaNear::klass_offset()));
   call_through_gp(&gp_compiler_new_object_ptr JVM_CHECK);
 
-#ifdef AZZERT
-  COMPILER_COMMENT(("Verify that redo flag is not set"));
-  get_thread(tmp1);
-  ldr_imm_index(tmp2, tmp1, Thread::async_redo_offset());
-  cmp(tmp2, zero);
-  COMPILER_COMMENT(("Allocation redo must be handled in interpreter"));
-  breakpoint(ne);
-#endif
+  verify_no_redo();
 }
 
 void CodeGenerator::new_type_array_stub(CompilationQueueElement* cqe JVM_TRAPS) {
@@ -3222,14 +3215,7 @@ void CodeGenerator::new_type_array_stub(CompilationQueueElement* cqe JVM_TRAPS) 
   }
   call_through_gp(&gp_compiler_new_type_array_ptr JVM_NO_CHECK_AT_BOTTOM);
 
-#ifdef AZZERT
-  COMPILER_COMMENT(("Verify that redo flag is not set"));
-  get_thread(tmp1);
-  ldr_imm_index(tmp2, tmp1, Thread::async_redo_offset());
-  cmp(tmp2, zero);
-  COMPILER_COMMENT(("Allocation redo must be handled in interpreter"));
-  breakpoint(ne);
-#endif
+  verify_no_redo();
 }
 #endif // ENABLE_INLINE_COMPILER_STUBS
 
@@ -3363,14 +3349,7 @@ void CodeGenerator::new_object_array(Value& result, JavaClass* element_class,
   ldr_oop(r0, &java_near);
   call_through_gp(&gp_compiler_new_obj_array_ptr JVM_CHECK);
 
-#ifdef AZZERT
-  COMPILER_COMMENT(("Verify that redo flag is not set"));
-  get_thread(tmp1);
-  ldr_imm_index(tmp2, tmp1, Thread::async_redo_offset());
-  cmp(tmp2, zero);
-  COMPILER_COMMENT(("Allocation redo must be handled in interpreter"));
-  breakpoint(ne);
-#endif
+  verify_no_redo();
 
   // The result is in r0
   RegisterAllocator::reference(r0);
@@ -3522,14 +3501,7 @@ void CodeGenerator::new_multi_array(Value& result JVM_TRAPS) {
   // Call the runtime system.
   call_vm((address) multianewarray, T_ARRAY JVM_CHECK);
 
-#if defined(AZZERT)
-  COMPILER_COMMENT(("Verify that redo flag is not set"));
-  get_thread(tmp1);
-  ldr_imm_index(tmp2, tmp1, Thread::async_redo_offset());
-  cmp(tmp2, zero);
-  COMPILER_COMMENT(("Allocation redo must be handled in interpreter"));
-  breakpoint(ne);
-#endif
+  verify_no_redo();
 
   // The result is in r0
   RegisterAllocator::reference(r0);
@@ -6106,6 +6078,17 @@ CodeGenerator::verify_location_is_constant(jint index, const Value& constant) {
     }
     breakpoint(ne);
   }
+}
+#endif
+
+#if !defined(PRODUCT)
+void CodeGenerator::verify_no_redo() {
+  COMPILER_COMMENT(("Verify that redo flag is not set"));
+  get_thread(tmp1);
+  ldr_imm_index(tmp2, tmp1, Thread::async_redo_offset());
+  cmp(tmp2, zero);
+  COMPILER_COMMENT(("Allocation redo must be handled in interpreter"));
+  breakpoint(ne);
 }
 #endif
 

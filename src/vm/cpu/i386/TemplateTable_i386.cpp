@@ -1218,55 +1218,24 @@ void bc_athrow::generate() {
 }
 
 void bc_new::generate() {
-#if ENABLE_ALLOCATION_REDO
-  Label redo, done;
+  Label redo;
 bind(redo);
-#endif
 
   comment("Call runtime routine");
   interpreter_call_vm(Constant("newobject"), T_OBJECT);
 
-#if ENABLE_ALLOCATION_REDO
-  get_thread(ebx);
-  movl(ecx, Address(ebx, Constant(Thread::async_redo_offset())));
-  testl(ecx, ecx);
-
-  jcc(zero, Constant(done));
-  comment("Need to redo the allocation");
-  movl(ecx, Constant(0));
-
-  // clear Thread.async_redo so that we won't loop indefinitely.
-  movl(Address(ebx, Constant(Thread::async_redo_offset())), ecx);
-  jmp(Constant(redo));
-
-bind(done);
-#endif
+  redo_if_needed(redo);
 
   push_obj(eax);
 }
 
 void bc_anewarray::generate() {
-#if ENABLE_ALLOCATION_REDO
-  Label redo, done;
+  Label redo;
 bind(redo);
-#endif
 
   interpreter_call_vm(Constant("anewarray"), T_ARRAY);
 
-#if ENABLE_ALLOCATION_REDO
-  get_thread(ebx);
-  movl(ecx, Address(ebx, Constant(Thread::async_redo_offset())));
-  testl(ecx, ecx);
-
-  jcc(zero, Constant(done));
-  comment("Need to redo the allocation");
-  movl(ecx, Constant(0));
-
-  // clear Thread.async_redo so that we won't loop indefinitely.
-  movl(Address(ebx, Constant(Thread::async_redo_offset())), ecx);
-  jmp(Constant(redo));
-bind(done);
-#endif
+  redo_if_needed(redo);
 
   pop_int(ebx, ebx);
   comment("Push the result on the stack");
@@ -1274,27 +1243,12 @@ bind(done);
 }
 
 void bc_multianewarray::generate() {
-#if ENABLE_ALLOCATION_REDO
-  Label redo, done;
+  Label redo;
 bind(redo);
-#endif
 
   interpreter_call_vm(Constant("multianewarray"), T_ARRAY);
 
-#if ENABLE_ALLOCATION_REDO
-  get_thread(ebx);
-  movl(ecx, Address(ebx, Constant(Thread::async_redo_offset())));
-  testl(ecx, ecx);
-
-  jcc(zero, Constant(done));
-  comment("Need to redo the allocation");
-  movl(ecx, Constant(0));
-
-  // clear Thread.async_redo so that we won't loop indefinitely.
-  movl(Address(ebx, Constant(Thread::async_redo_offset())), ecx);
-  jmp(Constant(redo));
-bind(done);
-#endif
+  redo_if_needed(redo);
 
   comment("Remove arguments from the stack");
   load_unsigned_byte(ecx, bcp_address(3));
@@ -2228,28 +2182,12 @@ void bc_newarray::generate() {
 
 bind(slow);
 
-#if ENABLE_ALLOCATION_REDO
-  Label slow_redo, slow_done;
+  Label slow_redo;
 bind(slow_redo);
-#endif
 
   interpreter_call_vm(Constant("newarray"), T_ARRAY);
 
-#if ENABLE_ALLOCATION_REDO
-  get_thread(ebx);
-  movl(ecx, Address(ebx, Constant(Thread::async_redo_offset())));
-  testl(ecx, ecx);
-
-  jcc(zero, Constant(slow_done));
-  comment("Need to redo the allocation");
-  movl(ecx, Constant(0));
-
-  // clear Thread.async_redo so that we won't loop indefinitely.
-  movl(Address(ebx, Constant(Thread::async_redo_offset())), ecx);
-  jmp(Constant(slow_redo));
-
-bind(slow_done);
-#endif
+  redo_if_needed(slow_redo);
 
   pop_int(edx, edx);
 
