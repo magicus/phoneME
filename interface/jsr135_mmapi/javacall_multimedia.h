@@ -1143,6 +1143,30 @@ void javacall_media_release_data(javacall_uint8* result_buffer, javacall_uint32 
 
 /** @} */
 
+ /**
+ * @defgroup MediaOptionalSystemVolume  Optional system volume API
+ * 
+ * @ingroup JSR135
+ * 
+ * @brief System (Master) volume can be adjusted e.g. by dedicated volume keys.
+ *        This API provides a way to get the volume level value from 
+ *        the platform.
+ * 
+ * @{
+ */
+ 
+/**
+ * Get current system audio volume level
+ * Audio volume range have to be in 0 to 100 inclusive
+ * 
+ * @param volume        Volume value
+ *
+ * @retval JAVACALL_OK      Success
+ * @retval JAVACALL_NO_DATA_AVAILABLE
+ */
+javacall_result javacall_media_get_system_volume(/*OUT*/ javacall_int32 *volume);
+/** @} */
+
 /**********************************************************************************/
 
 /**
