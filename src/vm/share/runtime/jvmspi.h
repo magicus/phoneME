@@ -157,7 +157,20 @@ jboolean JVMSPI_IsPrecompilationTarget(const char * class_name,
 /**
  * JVMSPI_HandleUncaughtException() and JVMSPI_HandleOutOfMemory() flags.
  */
+
+/**
+ * Indicates that the current thread is the last thread in the current task
+ * in MVM mode or the last thread in the whole VM in SVM mode.
+ */
 #define JVMSPI_LAST_THREAD (1 << 0)
+
+/**
+ * Indicates that the allocation failed in native code. 
+ * If this flag is passed to JVMSPI_HandleOutOfMemory(), the return value
+ * will be ignored and the VM will behave exactly as if JVMSPI_IGNORE is
+ * returned.
+ */
+#define JVMSPI_NATIVE      (1 << 1)
 
 /**
  * JVMSPI_HandleUncaughtException() return values.
@@ -232,6 +245,8 @@ int JVMSPI_HandleUncaughtException(const int isolate_id,
  *     or with ENABLE_ALLOCATION_REDO=false, the VM behavior is undefined, 
  *     otherwise the VM will suspend the isolate. When the isolate
  *     will be resumed, the VM will redo the allocation attempt.
+ * If JVMSPI_NATIVE flag is set, the return value will be ignored and the VM
+ *     will behave exactly as if JVMSPI_IGNORE is returned.
  * For other return values the VM behavior is undefined.
  */
 int JVMSPI_HandleOutOfMemory(const int isolate_id,

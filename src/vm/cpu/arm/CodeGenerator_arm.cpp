@@ -3191,33 +3191,22 @@ void CodeGenerator::instance_of_stub(CompilationQueueElement* cqe JVM_TRAPS) {
 void CodeGenerator::new_object_stub(CompilationQueueElement* cqe JVM_TRAPS) {
   Assembler::Register jnear = NewObjectStub::cast(cqe)->java_near();
 
-#if ENABLE_ALLOCATION_REDO
-  Label redo;
-bind(redo);
-#endif
-
   ldr(r1, imm_index(jnear, JavaNear::klass_offset()));
   call_through_gp(&gp_compiler_new_object_ptr JVM_CHECK);
 
-#if ENABLE_ALLOCATION_REDO
-  COMPILER_COMMENT(("Check if allocation needs redoing"));
+#ifdef AZZERT
+  COMPILER_COMMENT(("Verify that redo flag is not set"));
   get_thread(tmp1);
-  mov(tmp3, zero);
   ldr_imm_index(tmp2, tmp1, Thread::async_redo_offset());
-  str(tmp3, imm_index(tmp1, Thread::async_redo_offset()));
   cmp(tmp2, zero);
-  b(redo, ne);
+  COMPILER_COMMENT(("Allocation redo must be handled in interpreter"));
+  breakpoint(ne);
 #endif
 }
 
 void CodeGenerator::new_type_array_stub(CompilationQueueElement* cqe JVM_TRAPS) {
   Assembler::Register jnear = NewTypeArrayStub::cast(cqe)->java_near();
   Assembler::Register length = NewTypeArrayStub::cast(cqe)->length();
-
-#if ENABLE_ALLOCATION_REDO
-  Label redo;
-bind(redo);
-#endif
 
   if (length != r1) {
     ldr(r1, imm_index(jnear, JavaNear::klass_offset()));
@@ -3233,14 +3222,13 @@ bind(redo);
   }
   call_through_gp(&gp_compiler_new_type_array_ptr JVM_NO_CHECK_AT_BOTTOM);
 
-#if ENABLE_ALLOCATION_REDO
-  COMPILER_COMMENT(("Check if allocation needs redoing"));
+#ifdef AZZERT
+  COMPILER_COMMENT(("Verify that redo flag is not set"));
   get_thread(tmp1);
-  mov(tmp3, zero);
   ldr_imm_index(tmp2, tmp1, Thread::async_redo_offset());
-  str(tmp3, imm_index(tmp1, Thread::async_redo_offset()));
   cmp(tmp2, zero);
-  b(redo, ne);
+  COMPILER_COMMENT(("Allocation redo must be handled in interpreter"));
+  breakpoint(ne);
 #endif
 }
 #endif // ENABLE_INLINE_COMPILER_STUBS
@@ -3369,25 +3357,19 @@ void CodeGenerator::new_object_array(Value& result, JavaClass* element_class,
   // Do flushing, and remember to unmap.
   flush_frame(JVM_SINGLE_ARG_CHECK);
 
-#if ENABLE_ALLOCATION_REDO
-  Label redo;
-bind(redo);
-#endif
-
   // Call the allocation routine.
   Value save_reg_for_oop(T_ILLEGAL);
   setup_c_args(2, &save_reg_for_oop, &length, NULL);
   ldr_oop(r0, &java_near);
   call_through_gp(&gp_compiler_new_obj_array_ptr JVM_CHECK);
 
-#if ENABLE_ALLOCATION_REDO
-  COMPILER_COMMENT(("Check if allocation needs redoing"));
+#ifdef AZZERT
+  COMPILER_COMMENT(("Verify that redo flag is not set"));
   get_thread(tmp1);
-  mov(tmp3, zero);
   ldr_imm_index(tmp2, tmp1, Thread::async_redo_offset());
-  str(tmp3, imm_index(tmp1, Thread::async_redo_offset()));
   cmp(tmp2, zero);
-  b(redo, ne);
+  COMPILER_COMMENT(("Allocation redo must be handled in interpreter"));
+  breakpoint(ne);
 #endif
 
   // The result is in r0
@@ -3476,9 +3458,6 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
 #else // !ENABLE_INLINE_COMPILER_STUBS
-  GUARANTEE(!ENABLE_ALLOCATION_REDO, 
-            "Allocation redo implemented only for inline compiler stubs");
-
   // Do flushing, and remember to unmap.
   flush_frame(JVM_SINGLE_ARG_CHECK);
 
@@ -3540,22 +3519,16 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
 void CodeGenerator::new_multi_array(Value& result JVM_TRAPS) {
   flush_frame(JVM_SINGLE_ARG_CHECK);
 
-#if ENABLE_ALLOCATION_REDO
-  Label redo;
-bind(redo);
-#endif
-
   // Call the runtime system.
   call_vm((address) multianewarray, T_ARRAY JVM_CHECK);
 
-#if ENABLE_ALLOCATION_REDO
-  COMPILER_COMMENT(("Check if allocation needs redoing"));
+#if defined(AZZERT)
+  COMPILER_COMMENT(("Verify that redo flag is not set"));
   get_thread(tmp1);
-  mov(tmp3, zero);
   ldr_imm_index(tmp2, tmp1, Thread::async_redo_offset());
-  str(tmp3, imm_index(tmp1, Thread::async_redo_offset()));
   cmp(tmp2, zero);
-  b(redo, ne);
+  COMPILER_COMMENT(("Allocation redo must be handled in interpreter"));
+  breakpoint(ne);
 #endif
 
   // The result is in r0

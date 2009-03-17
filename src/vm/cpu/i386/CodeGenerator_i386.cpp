@@ -932,11 +932,6 @@ void CodeGenerator::new_object(Value& result, JavaClass* klass JVM_TRAPS) {
   // Do flushing, and remember to unmap.
   frame()->flush(JVM_SINGLE_ARG_CHECK);
 
-#if ENABLE_ALLOCATION_REDO
-  Label redo, done;
-bind(redo);
-#endif
-
   // Handle finalization by going slow-case for objects with finalizers.
   if (klass->has_finalizer()) {
     // Slow-case: Call InterpreterRuntime::newobject.
@@ -956,17 +951,16 @@ bind(redo);
     call_from_compiled_code((address)compiler_new_object JVM_CHECK);
   }
 
-#if ENABLE_ALLOCATION_REDO
-  comment("Check if need to redo allocation");
+#if defined(AZZERT)
+  Label done;
+  comment("Verify that redo flag is not set");
   get_thread(ebx);
   movl(ecx, Address(ebx, Thread::async_redo_offset()));
   testl(ecx, ecx);
   jcc(zero, done);
 
-  comment("Clear Thread::async_redo");
-  xorl(ecx, ecx);
-  movl(Address(ebx, Thread::async_redo_offset()), ecx);
-  jmp(redo);
+  comment("Allocation redo must be handled in interpreter");
+  breakpoint();
 bind(done);
 #endif
 
@@ -985,11 +979,6 @@ void CodeGenerator::new_object_array(Value& result, JavaClass* element_class,
   // Flush the virtual stack frame.
   frame()->flush(JVM_SINGLE_ARG_CHECK);
 
-#if ENABLE_ALLOCATION_REDO
-  Label redo, done;
-bind(redo);
-#endif
-
   // Get the prototypical near object from the klass and put it into register
   // ebx
   Oop::Fast near_object = array_class().prototypical_near();
@@ -998,17 +987,16 @@ bind(redo);
   // Call the allocation routine.
   call_from_compiled_code((address)compiler_new_obj_array JVM_CHECK);
 
-#if ENABLE_ALLOCATION_REDO
-  comment("Check if need to redo allocation");
+#if defined(AZZERT)
+  Label done;
+  comment("Verify that redo flag is not set");
   get_thread(ebx);
   movl(ecx, Address(ebx, Thread::async_redo_offset()));
   testl(ecx, ecx);
   jcc(zero, done);
 
-  comment("Clear Thread::async_redo");
-  xorl(ecx, ecx);
-  movl(Address(ebx, Thread::async_redo_offset()), ecx);
-  jmp(redo);
+  comment("Allocation redo must be handled in interpreter");
+  breakpoint();
 bind(done);
 #endif
 
@@ -1028,11 +1016,6 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
 
   // Do flushing, and remember to unmap.
   frame()->flush(JVM_SINGLE_ARG_CHECK);
-
-#if ENABLE_ALLOCATION_REDO
-  Label redo, done;
-bind(redo);
-#endif
 
   // Figure out which class to use.
   TypeArrayClass* array_class = Universe::as_TypeArrayClass(type);
@@ -1057,17 +1040,16 @@ bind(redo);
   // Call the allocation routine.
   call_from_compiled_code((address)compiler_new_type_array JVM_CHECK);
 
-#if ENABLE_ALLOCATION_REDO
-  comment("Check if need to redo allocation");
+#if defined(AZZERT)
+  Label done;
+  comment("Verify that redo flag is not set");
   get_thread(ebx);
   movl(ecx, Address(ebx, Thread::async_redo_offset()));
   testl(ecx, ecx);
   jcc(zero, done);
 
-  comment("Clear Thread::async_redo");
-  xorl(ecx, ecx);
-  movl(Address(ebx, Thread::async_redo_offset()), ecx);
-  jmp(redo);
+  comment("Allocation redo must be handled in interpreter");
+  breakpoint();
 bind(done);
 #endif
 
@@ -1083,25 +1065,19 @@ void CodeGenerator::new_multi_array(Value& result JVM_TRAPS) {
   // Do flushing, and remember to unmap.
   frame()->flush(JVM_SINGLE_ARG_CHECK);
 
-#if ENABLE_ALLOCATION_REDO
-  Label redo, done;
-bind(redo);
-#endif
-
   // Call the runtime system.
   call_vm((address) multianewarray, T_ARRAY JVM_CHECK);
 
-#if ENABLE_ALLOCATION_REDO
-  comment("Check if need to redo allocation");
+#if defined(AZZERT)
+  Label done;
+  comment("Verify that redo flag is not set");
   get_thread(ebx);
   movl(ecx, Address(ebx, Thread::async_redo_offset()));
   testl(ecx, ecx);
   jcc(zero, done);
 
-  comment("Clear Thread::async_redo");
-  xorl(ecx, ecx);
-  movl(Address(ebx, Thread::async_redo_offset()), ecx);
-  jmp(redo);
+  comment("Allocation redo must be handled in interpreter");
+  breakpoint();
 bind(done);
 #endif
 

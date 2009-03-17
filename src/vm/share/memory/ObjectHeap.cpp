@@ -5122,9 +5122,24 @@ void ObjectHeap::handle_out_of_memory(const size_t alloc_size,
       flags |= JVMSPI_LAST_THREAD;
     }
 
+    Frame frame(Thread::current());
+    if (frame.is_java_frame()) {
+      Method::Raw method = frame.as_JavaFrame().method();
+      if (method().is_native()) {
+        flags |= JVMSPI_NATIVE;
+      }
+    } else {
+      flags |= JVMSPI_NATIVE;
+    }
+
     int exit_code = 0;
     int action = JVMSPI_HandleOutOfMemory(task_id, limit, reserve, used,
                                           alloc_size, flags, &exit_code);
+
+    // Ignore return value if allocation failed in native code.
+    if (flags & JVMSPI_NATIVE) {
+      action = JVMSPI_IGNORE;
+    }
 
     switch (action) {
     case JVMSPI_ABORT:
@@ -5136,6 +5151,13 @@ void ObjectHeap::handle_out_of_memory(const size_t alloc_size,
       break;
     case JVMSPI_SUSPEND:
 #if ENABLE_ISOLATES && ENABLE_ALLOCATION_REDO
+      GUARANTEE(frame.is_java_frame(), "Must be a Java frame");
+
+      // Deoptimize the frame to handle suspend/redo in interpreter
+      if (frame.as_JavaFrame().is_compiled_frame()) {
+        frame.as_JavaFrame().deoptimize();
+      }
+
       // Redo the allocation bytecode.
       Thread::current()->set_async_redo(1);
       JVM_SuspendIsolate(task_id);
