@@ -1163,7 +1163,7 @@ void SourceMacros::redo_if_needed(Label& label) {
   comment("Need to redo the allocation");
   movl(ecx, Constant(0));
 
-  // clear Thread.async_redo so that we won't loop indefinitely.
+  comment("clear Thread.async_redo so that we won't loop indefinitely.");
   movl(Address(ebx, Constant(Thread::async_redo_offset())), ecx);
   jmp(Constant(label));
 

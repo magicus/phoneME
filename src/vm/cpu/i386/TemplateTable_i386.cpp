@@ -2182,12 +2182,9 @@ void bc_newarray::generate() {
 
 bind(slow);
 
-  Label slow_redo;
-bind(slow_redo);
-
   interpreter_call_vm(Constant("newarray"), T_ARRAY);
 
-  redo_if_needed(slow_redo);
+  redo_if_needed(slow);
 
   pop_int(edx, edx);
 

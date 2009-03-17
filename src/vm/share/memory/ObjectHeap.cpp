@@ -1548,9 +1548,13 @@ OopDesc* ObjectHeap::allocate(size_t size JVM_TRAPS) {
       if( saved_inline_end == NULL ) {
         _inline_allocation_end = saved_inline_end;
       }
-      if (Task::current()->is_suspended()) {
+#if ENABLE_ALLOCATION_REDO
+      if (Thread::current()->async_redo()) {
+        GUARANTEE(Task::current()->is_suspended(),
+                  "The current task must be suspended for allocation redo");
         Thread::clear_current_pending_exception();        
       }
+#endif
 #endif
       return NULL;
     }
