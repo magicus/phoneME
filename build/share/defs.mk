@@ -36,7 +36,8 @@ space:= $(empty) $(empty)
 # to assist in locating the proper tools to use.
 #
 
-UNAME_OS 	?= $(shell uname -s)
+UNAME_OS	?= $(shell uname -s)
+UNAME_OS	:= $(UNAME_OS)
 
 # Solaris host support
 ifeq ($(UNAME_OS), SunOS)
@@ -95,6 +96,8 @@ HOST_DEVICE	?= $(UNAME_OS)
 TOOL_WHICH	?= PATH="$(PATH)" whence "$(1)"
 USE_INTERIX	?= true
 endif
+
+HOST_CPU_FAMILY := $(HOST_CPU_FAMILY)
 
 ifeq ($(HOST_OS),)
 $(error Invalid host. "$(UNAME_OS)" not recognized.)
