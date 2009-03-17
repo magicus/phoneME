@@ -1309,12 +1309,6 @@ $(CVM_POLICY_BUILD): $(CVM_POLICY_SRC)
 # - JAVAME_LEGAL_DIR and BINARY_BUNDLE_APPEND_REVISION also work
 #       with the device bundle target
 
-# Make sure the "legal" directory is available if set.
-ifneq ($(JAVAME_LEGAL_DIR),,)
-ifneq ($(JAVAME_LEGAL_DIR),$(wildcard $(JAVAME_LEGAL_DIR)))
-$(error JAVAME_LEGAL_DIR must be set to "legal" directory. The respository can be found at https://phoneme.dev.java.net/svn/phoneme/legal.)
-endif
-endif
 
 # Patterns that we want to bundle. BINARY_BUNDLE_PATTERNS can be appended
 # to from other component makefiles if necssary.
@@ -1333,6 +1327,14 @@ BINARY_BUNDLE_PATTERNS := \
 BINARY_BUNDLE_PATTERNS := \
 	$(patsubst $(CVM_BUILD_TOP_ABS)%,$(BINARY_BUNDLE_DIRNAME)%,$(BINARY_BUNDLE_PATTERNS))
 
+CHECK_LEGAL_DIR = \
+	if [ ! -d $(JAVAME_LEGAL_DIR) ]; then				\
+	    echo '*** JAVAME_LEGAL_DIR must be set to the "legal"'	\
+	         'directory. The OSS version can be found at'		\
+		 'https://phoneme.dev.java.net/svn/phoneme/legal.';	\
+	    exit 2;							\
+	fi
+
 .PHONY : bin
 bin: all
 	@echo ">>>Making binary bundle ..."
@@ -1340,7 +1342,6 @@ bin: all
 	@echo "	BINARY_BUNDLE_NAME	= $(BINARY_BUNDLE_NAME)"
 	@echo "	BINARY_BUNDLE_DIRNAME	= $(BINARY_BUNDLE_DIRNAME)"
 	@echo "	JAVAME_LEGAL_DIR	= $(JAVAME_LEGAL_DIR)"
-	@echo "	JAVAME_LEGAL_REPOSITORY = $(JAVAME_LEGAL_REPOSITORY)"
 
 	$(AT)mkdir -p $(INSTALLDIR)
 	$(AT)rm -rf $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
@@ -1348,11 +1349,9 @@ bin: all
 	$(AT)ln -ns $(CVM_BUILD_TOP)/* $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
 	$(AT)rm -rf $(INSTALLDIR)/$(BINARY_BUNDLE_NAME).zip
 
-ifneq ($(JAVAME_LEGAL_DIR),)
-	$(AT)ln -ns $(JAVAME_LEGAL_DIR) $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
-else
-	svn checkout $(JAVAME_LEGAL_REPOSITORY) $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)/legal
-endif
+	$(AT)$(CHECK_LEGAL_DIR)
+	$(AT)ln -ns $(JAVAME_LEGAL_DIR) \
+		$(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)/legal
 
 	$(AT)cp $(CVM_BUILDTIME_CLASSESZIP) $(CVM_LIBDIR)/
 
@@ -1370,22 +1369,22 @@ device_bin_zip:
 	@echo ">>>Making device binary bundle ..."
 	@echo "	DEVICE_BUNDLE_NAME	= $(DEVICE_BUNDLE_NAME)"
 	@echo "	JAVAME_LEGAL_DIR	= $(JAVAME_LEGAL_DIR)"
-	@echo "	JAVAME_LEGAL_REPOSITORY = $(JAVAME_LEGAL_REPOSITORY)"
+
 	$(AT)(cd $(INSTALLDIR); \
 	 $(ZIP) -rq  - $(DEVICE_BUNDLE_DIRNAME) ) \
 		> $(INSTALLDIR)/$(DEVICE_BUNDLE_NAME).zip;
+	$(AT)rm -rf $(INSTALLDIR)/$(DEVICE_BUNDLE_DIRNAME)
 	@echo "<<<Finished device binary bundle" ;
 
 device_bin_prep ::
 	$(AT)rm -f $(INSTALLDIR)/$(DEVICE_BUNDLE_NAME).zip
+	$(AT)rm -rf $(INSTALLDIR)/$(DEVICE_BUNDLE_DIRNAME)
 	$(AT)mkdir -p $(INSTALLDIR)/$(DEVICE_BUNDLE_DIRNAME)
 
 device_bin_legal:
-ifneq ($(JAVAME_LEGAL_DIR),)
-	$(AT)ln -ns $(JAVAME_LEGAL_DIR) $(INSTALLDIR)/$(DEVICE_BUNDLE_DIRNAME)
-else
-	$(AT)svn export -q --force $(JAVAME_LEGAL_REPOSITORY) $(INSTALLDIR)/$(DEVICE_BUNDLE_DIRNAME)/legal
-endif
+	$(AT)$(CHECK_LEGAL_DIR)
+	$(AT)ln -ns $(JAVAME_LEGAL_DIR) \
+		$(INSTALLDIR)/$(DEVICE_BUNDLE_DIRNAME)/legal
 
 
 ################################################

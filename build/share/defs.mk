@@ -1273,9 +1273,8 @@ BINARY_BUNDLE_DIRNAME	= $(BINARY_BUNDLE_NAME)
 DEVICE_BUNDLE_NAME	= \
 	$(BUNDLE_PRODUCT_NAME)-$(BUNDLE_VERSION)-$(BUNDLE_TARGET)-dev
 DEVICE_BUNDLE_DIRNAME	= $(DEVICE_BUNDLE_NAME)
- 
-# Location of legal documents in case JAVAME_LEGAL_DIR is not set.
-JAVAME_LEGAL_REPOSITORY = https://phoneme.dev.java.net/svn/phoneme/legal
+
+JAVAME_LEGAL_DIR ?= $(COMPONENTS_DIR)/legal
 
 # Add the svn revison number to BINARY_BUNDLE_NAME and BINARY_BUNDLE_DIRNAME
 # if requested.
