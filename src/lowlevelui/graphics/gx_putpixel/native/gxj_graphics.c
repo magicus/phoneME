@@ -170,6 +170,21 @@ extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
     int dstSpan, int width, int height);
 #endif
 
+#define SRC_PIXEL_TO_DEST_WITH_ALPHA(pSrc, pDest) \
+        src = *pSrc++;  \
+        As = src >> 26; \
+        if (As == 0x3F) {   \
+            *pDest = GXJ_RGB24TORGB16(src);  \
+        } else if (As != 0) {   \
+            *pDest = alphaComposition(src, *pDest, (unsigned char)As);   \
+        }   \
+        pDest++
+
+#define SRC_PIXEL_TO_DEST(pSrc, pDest) \
+        src = *pSrc++;  \
+        *pDest = GXJ_RGB24TORGB16(src); \
+        pDest++
+
 /** Draw image in RGB format */
 void
 gx_draw_rgb(const jshort *clip,
