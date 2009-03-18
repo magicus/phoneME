@@ -95,6 +95,7 @@ public final class DirectTone extends DirectPlayer {
                 }
             }        
         }
+        state = Player.REALIZED;
     }
 
     /**
@@ -111,6 +112,7 @@ public final class DirectTone extends DirectPlayer {
         if(!nAcquireDevice(hNative)) {
             throw new MediaException("Can not acquire device");
         }
+        state = Player.PREFETCHED;
     }
 
     /**

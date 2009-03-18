@@ -137,7 +137,6 @@ UnlockAudioMutex();
 
     if (pKniInfo) {
         MMP_FREE(pKniInfo);
-        KNI_SetIntField(instance, KNI_GetFieldID(clazz, "hNative", "I"), 0);
     }
 
     KNI_EndHandles();

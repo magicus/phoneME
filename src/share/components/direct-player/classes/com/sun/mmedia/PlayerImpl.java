@@ -39,7 +39,7 @@ import  com.sun.j2me.log.LogChannels;
 
 import java.io.IOException;
 
-public class PlayerImpl implements Player, TimeBase, StopTimeControl {
+public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
 
     /** Unknown media format */
     static final String MEDIA_FORMAT_UNKNOWN = "UNKNOWN";
@@ -180,7 +180,7 @@ public class PlayerImpl implements Player, TimeBase, StopTimeControl {
     private String  mediaFormat = null;
     boolean handledByDevice = false;
     private boolean handledByJava = false;
-    private int hNative;      // handle of native API library 
+    private int hNative = 0;      // handle of native API library
 
 
     /**
@@ -344,6 +344,11 @@ public class PlayerImpl implements Player, TimeBase, StopTimeControl {
     public int getNativeHandle()
     {
         return hNative;
+    }
+
+    void setNativeHandleToNull()
+    {
+        hNative = 0;
     }
 
     /**
@@ -629,6 +634,8 @@ public class PlayerImpl implements Player, TimeBase, StopTimeControl {
         lowLevelPlayer = getPlayerFromType( mediaFormat );
 
         lowLevelPlayer.doRealize();
+
+        setState( REALIZED );
 
         if (null != state_subscriber) {
             state_subscriber.PlayerRealized(this);
@@ -980,21 +987,23 @@ public class PlayerImpl implements Player, TimeBase, StopTimeControl {
             lowLevelPlayer.doDeallocate();
             lowLevelPlayer.doClose();
         }
+        else if(hNative != 0) {
+            nTerm(hNative);
+            hNative = 0;
+        }
+
 
         setState( CLOSED );
 
         if (source != null) {
             source.disconnect();
+            source = null;
         }
-
-        sendEvent(PlayerListener.CLOSED, null);
-        mplayers.remove(new Integer(pID));
 
         /* close native part of unrealized player */
-        if(hNative != 0) {
-            nTerm(hNative);
-            hNative = 0;
-        }
+        
+        sendEvent(PlayerListener.CLOSED, null);
+        mplayers.remove(new Integer(pID));
     }
     
     /**

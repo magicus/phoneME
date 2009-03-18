@@ -186,6 +186,14 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     
     // Member functions /////////////////////////////////////////////////
 
+    // Used only by native finalizers. Do not use in Java, except in doClose()!
+    protected int hNative = 0;
+
+    // Should be synchronized with the owner state. Left in this class for
+    // native finalizer. Java should use getOwner().getState() instead of this
+    // field whenever possible!
+    protected int state = Player.UNREALIZED;
+    
     /**
      * Constructor
      */
@@ -193,6 +201,8 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     {
         super( owner );
 
+        hNative = owner.getNativeHandle();
+        state = owner.getState();
         // #ifdef ENABLE_MULTIPLE_ISOLATES [
         // Get media tunnerl singleton instance
         mediaTunnel = MediaTunnel.getInstance();
@@ -306,6 +316,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             videoControl = new DirectVideo( this, nGetWidth( hNative ), 
                                          nGetHeight( hNative ) );
         }
+        state = Player.REALIZED;
     }
     
     private boolean isRadioPlayer()
@@ -366,6 +377,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         if (nPcmAudioPlayback(getOwner().getNativeHandle())) {
             AudioTunnel.getInstance().start();
         }
+        state = Player.PREFETCHED;
     }
 
     // #ifdef RECORD [
@@ -438,7 +450,8 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         } else {
             ret = nResume(hNative);    
         }
-        
+
+        state = Player.STARTED;
         return ret;
     }
 
@@ -490,6 +503,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         if (false == nPause(getOwner().getNativeHandle())) {
             throw new MediaException("Player cannot be stopped");
         }
+        state = Player.PREFETCHED;
     }
 
     private void releaseRadioAccess()
@@ -520,6 +534,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         nReleaseDevice(getOwner().getNativeHandle());
 
         isFirstStart = true;
+        state = Player.REALIZED;
     }
     
     /**
@@ -566,8 +581,10 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
                 nFlushBuffer(hNative);
             }
             nTerm(hNative);
-            hNative = 0;
+            this.hNative = 0;
+            getOwner().setNativeHandleToNull();
         }
+        state = Player.CLOSED;
     }
     
     /**
@@ -658,7 +675,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         } else if (shortType.equals(PlayerImpl.recName)) {
             if (nIsRecordControlSupported(hNative)) {
                 if (recordControl == null) {
-                    recordControl = new DirectRecord( getOwner() );
+                    recordControl = new DirectRecord( this );
                 }
                 return recordControl;
             }
