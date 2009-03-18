@@ -2359,6 +2359,9 @@ CVMsplitVerifyClass(CVMExecEnv* ee, CLASS thisClass)
                /*
                 * Call the core routine
                 */
+#if 0
+                CVMconsolePrintf("*** SPLIT: %C.%M\n", thisClass, thisMethod);
+#endif
                 result = Vfy_verifyMethod(cntxt, thisClass, thisMethod);
                 if (result != 0) {
 		    if (!CVMexceptionOccurred(ee)){
@@ -5387,14 +5390,16 @@ does this do?
                          */
                         obj_type = Vfy_popCategory1(cntxt); 
                         if (obj_type == ITEM_InitObject) {
-                            /* special case for uninitialized objects */ 
+                            /* special case for uninitialized objects */
+                            FIELD thisField = NULL;
                             NameTypeKey nameTypeKey = 
                               Pol_getFieldNameTypeKey(vPool, fieldNameAndTypeIndex);
-
-                            CLASS clazz = 
-                              (CLASS) Pol_getClass(vPool, fieldClassIndex);
-                            FIELD thisField = 
-                              Cls_lookupField((CLASS) clazz, nameTypeKey);
+                            CVMClassTypeID fieldClassKey =
+                              Pol_getClassKey(vPool, fieldClassIndex);
+                            if (Cls_getKey(vClass) == fieldClassKey) {
+                                thisField =
+                                    Cls_lookupField((CLASS) vClass, nameTypeKey);
+                            }
                             if (thisField == NULL || 
                                 Fld_getClass(thisField) != vClass) {
                                 Vfy_throw(cntxt, VE_EXPECTING_OBJ_OR_ARR_ON_STK);
