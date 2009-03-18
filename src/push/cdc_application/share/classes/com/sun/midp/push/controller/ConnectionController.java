@@ -33,10 +33,12 @@ import com.sun.j2me.security.AccessControlContext;
 import com.sun.j2me.security.AccessControlContextAdapter;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.TreeMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Map;
 import java.util.Vector;
 import javax.microedition.io.ConnectionNotFoundException;
 
@@ -121,7 +123,7 @@ final class ConnectionController {
         final ReservationHandler previous =
                 reservations.queryByConnectionName(connectionName);
         if (previous != null) {
-            throw new IOException("registered for another suite");
+            throw new IOException("already registered");
         }
 
         final ReservationHandler reservationHandler = new ReservationHandler(
@@ -428,6 +430,53 @@ final class ConnectionController {
     }
 
     /**
+     * Key to compare ReservationDescriptor-s for equality by connection name.
+     */
+    final static class ReservationNameKey implements Comparable {
+        /** Connection name. */
+        private String connectionName;
+
+        /** Reservation descriptor. */
+        private final ReservationDescriptor reservationDescriptor;
+
+        ReservationNameKey(ReservationDescriptor reservationDescriptor) {
+            this.connectionName = reservationDescriptor.getConnectionName();
+            this.reservationDescriptor = reservationDescriptor;
+        }
+
+        ReservationNameKey(String connectionName) {
+            this.connectionName = connectionName;
+            this.reservationDescriptor = null;
+        }
+
+        public int compareTo(Object o) {
+            final ReservationNameKey key = (ReservationNameKey)o;
+
+            if (key.reservationDescriptor != null) {
+                if (key.reservationDescriptor.isConnectionNameEquivalent(
+                        connectionName)) {
+                    return 0;
+                }
+            } else if (reservationDescriptor != null) {
+                if (reservationDescriptor.isConnectionNameEquivalent(
+                        key.connectionName)) {
+                    return 0;
+                }
+            }
+
+            return connectionName.compareTo(key.connectionName);
+        }
+
+        void setConnectionName(String connectionName) {
+            if (reservationDescriptor != null) {
+                throw new RuntimeException();
+            }
+
+            this.connectionName = connectionName;
+        }
+    }
+
+    /**
      * Reservation listening handler.
      *
      * <p>
@@ -452,6 +501,9 @@ final class ConnectionController {
 
         /** Connection reservation. */
         private final ConnectionReservation connectionReservation;
+
+        /** Key to use for comparison this object with other reservations. */
+        private final ReservationNameKey key;
 
         /** Cancelation status. */
         private boolean cancelled = false;
@@ -480,6 +532,8 @@ final class ConnectionController {
 
             this.connectionReservation =
                     reservationDescriptor.reserve(midletSuiteID, midlet, this);
+
+            this.key = new ReservationNameKey(reservationDescriptor);
         }
 
         /**
@@ -527,9 +581,16 @@ final class ConnectionController {
         }
 
         /**
+         * Returns comparison key.
+         */
+        ReservationNameKey getKey() {
+            return key;
+        }
+
+        /**
          * See {@link ConnectionReservation#hasAvailableData}.
          *
-         * @return <code>true</code> iff reservation has available data
+         * @return <code>true</code> if reservation has available data
          */
         boolean hasAvailableData() {
             return connectionReservation.hasAvailableData();
@@ -561,10 +622,14 @@ final class ConnectionController {
     /** Internal structure that manages needed mappings. */
     static final class Reservations {
         /** Mappings from connection to reservations. */
-        private final HashMap connection2data = new HashMap();
+        private final Map connection2data = new TreeMap();
 
         /** Mappings from suite id to set of reservations. */
-        private final HashMap suiteId2data = new HashMap();
+        private final Map suiteId2data = new HashMap();
+
+        /** Preallocated ReservationNameKey to avoid temporary object creation. */
+        private final ReservationNameKey keyPlaceholder =
+            new ReservationNameKey((String)null);
 
         /**
          * Adds a reservation into reservations.
@@ -572,8 +637,7 @@ final class ConnectionController {
          * @param reservationHandler reservation to add
          */
         void add(final ReservationHandler reservationHandler) {
-            connection2data.put(
-                    reservationHandler.getConnectionName(), reservationHandler);
+            connection2data.put(reservationHandler.getKey(), reservationHandler);
 
             final Set data = getData(reservationHandler.getSuiteId());
             if (data != null) {
@@ -592,7 +656,7 @@ final class ConnectionController {
          * @param reservationHandler reservation to remove
          */
         void remove(final ReservationHandler reservationHandler) {
-            connection2data.remove(reservationHandler.getConnectionName());
+            connection2data.remove(reservationHandler.getKey());
 
             getData(reservationHandler.getSuiteId()).remove(reservationHandler);
         }
@@ -606,7 +670,8 @@ final class ConnectionController {
          * @return reservation (<code>null</code> if absent)
          */
         ReservationHandler queryByConnectionName(final String connectionName) {
-            return (ReservationHandler) connection2data.get(connectionName);
+            keyPlaceholder.setConnectionName(connectionName);
+            return (ReservationHandler) connection2data.get(keyPlaceholder);
         }
 
         /**
