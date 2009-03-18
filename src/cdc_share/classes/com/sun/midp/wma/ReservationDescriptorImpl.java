@@ -139,4 +139,8 @@ public class ReservationDescriptorImpl implements ReservationDescriptor {
     public String getFilter() { 
         return _filter; 
     }
+    
+    public boolean isConnectionNameEquivalent(String connectionName) {
+        return getConnectionName().equals(connectionName);
+    }
 }
