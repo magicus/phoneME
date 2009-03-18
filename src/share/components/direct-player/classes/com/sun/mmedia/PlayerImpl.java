@@ -1124,7 +1124,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
         long time = TIME_UNKNOWN;
         if( null != lowLevelPlayer )
         {
-            time = lowLevelPlayer.doGetDuration();
+            time = lowLevelPlayer.doGetMediaTime();
         }
         return time;
     };
