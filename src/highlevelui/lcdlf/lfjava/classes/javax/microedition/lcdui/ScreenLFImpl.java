@@ -97,6 +97,46 @@ class ScreenLFImpl extends DisplayableLFImpl {
     }
 
     /**
+     * Handle a pointer press event
+     *
+     * @param x The x coordinate of the press
+     * @param y The y coordinate of the press
+     */
+    void uCallPointerPressed(int x, int y) {
+        pointerY = y;
+    }
+    /**
+     * Handle a pointer drag event
+     *
+     * @param x The x coordinate of the drag
+     * @param y The y coordinate of the drag
+     */
+    void uCallPointerDragged(int x, int y) {
+        if (pointerY != -1) {
+            int deltaY = pointerY - y;
+            uScrollBy(deltaY);
+        }
+        pointerY = y;
+    }
+    /**
+     * Handle a pointer release event
+     *
+     * @param x The x coordinate of the release
+     * @param y The y coordinate of the release
+     */
+    void uCallPointerReleased(int x, int y) {
+        pointerY = -1;
+    }
+    /**
+     * Handle a pointer flicker event
+     *
+     * @param x The x coordinate of the flickered
+     * @param y The y coordinate of the flickered
+     */
+     void uCallPointerFlickered(int x, int y) { }
+    
+
+    /**
      * Set the vertical scroll position and proportion
      *
      * @param scrollPosition The vertical scroll position to set on a
@@ -244,11 +284,30 @@ class ScreenLFImpl extends DisplayableLFImpl {
     }
 
     /**
+     * Perform a scrolling by specified number of pixels.
+     * @param deltaY number of pixels
+     */
+    protected void uScrollBy(int deltaY) {
+        int max = getMaxScroll();
+        int newY = viewable[Y] + deltaY;
+        if (newY < 0) {
+            newY = 0;
+        } else if (newY > max) {
+            newY = max;
+        }
+        viewable[Y] = newY;
+    }
+
+    /**
      * The maximum amount of scroll needed to see all the contents
      * @return get the maximum scroll amount
      */
     protected int getMaxScroll() {
-        return viewable[HEIGHT] - viewport[HEIGHT];
+        if (viewable[HEIGHT] <= viewport[HEIGHT]) {
+            return 0;
+        } else {
+            return viewable[HEIGHT] - viewport[HEIGHT];
+        }
     }
     
     /**
@@ -403,6 +462,11 @@ class ScreenLFImpl extends DisplayableLFImpl {
      * The value has no meaning for the actual scroll size
      */
     private int lastScrollSize = -1;
+
+    /**
+     *  Y coordinate of pointer during pointer drag event.
+     */
+    private int pointerY = -1;
 
     // ************************************************************
     //  Static initializer, constructor
