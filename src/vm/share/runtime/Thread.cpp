@@ -222,7 +222,7 @@ void Thread::lightweight_thread_uncaught_exception() {
       }
 
       const int task_id = TaskContext::current_task_id();
-      int flags = 0;
+      int flags = JVMSPI_IGNORE | JVMSPI_ABORT | JVMSPI_SUSPEND;
 #if ENABLE_ISOLATES      
       Task::Raw task = Task::current();
       if (task().thread_count() == 1) {

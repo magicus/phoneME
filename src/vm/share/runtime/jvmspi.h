@@ -159,26 +159,19 @@ jboolean JVMSPI_IsPrecompilationTarget(const char * class_name,
  */
 
 /**
- * Indicates that the current thread is the last thread in the current task
- * in MVM mode or the last thread in the whole VM in SVM mode.
+ * Supported return values.
  */
-#define JVMSPI_LAST_THREAD (1 << 0)
+#define JVMSPI_ABORT       (1 << 0)
+#define JVMSPI_IGNORE      (1 << 1) 
+#define JVMSPI_SUSPEND     (1 << 2)
+#define JVMSPI_RETRY       (1 << 3)
 
 /**
- * Indicates that the allocation failed in native code. 
- * If this flag is passed to JVMSPI_HandleOutOfMemory(), the return value
- * will be ignored and the VM will behave exactly as if JVMSPI_IGNORE is
- * returned.
+ * A state flag that indicates if the current thread is the last thread 
+ * in the current task in MVM mode or the last thread in the whole VM 
+ * in SVM mode.
  */
-#define JVMSPI_NATIVE      (1 << 1)
-
-/**
- * JVMSPI_HandleUncaughtException() return values.
- */
-#define JVMSPI_ABORT      0
-#define JVMSPI_IGNORE     1
-#define JVMSPI_SUSPEND    2
-#define JVMSPI_RETRY      3
+#define JVMSPI_LAST_THREAD (1 << 4)
 
 /*
  * This function is called by the VM before a Java thread is terminated 
@@ -194,9 +187,13 @@ jboolean JVMSPI_IsPrecompilationTarget(const char * class_name,
  * <exception_class_name_length> number of UTF8 characters in
  *              <exception_class_name>. 
  * <message> exception message as a 0-terminated ASCII string
- * <flags> a bitmask of flags
+ * <flags> a bitmask of supported return values and state flags
  * <exit_code> a pointer to store the exit code of the VM or the isolate 
  *     in case of JVMSPI_ABORT return value. Not used for other return values.
+ *
+ * If this function returns a value not present in the <flags> bitmask,
+ *     the VM behavior is undefined. Otherwise, the return values are 
+ *     treated as specified below.
  *
  * If this function returns JVMSPI_ABORT, the VM will terminate the isolate 
  *     in MVM mode, or the whole VM in SVM mode.
@@ -229,9 +226,13 @@ int JVMSPI_HandleUncaughtException(const int isolate_id,
  * <used> how much memory is already allocated on behalf of this isolate 
  *    in MVM mode, or for the whole VM in SVM mode.
  * <alloc_size> the requested amount of memory that the VM failed to allocate
- * <flags> a bitmask of flags
+ * <flags> a bitmask of supported return values and state flags
  * <exit_code> a pointer to store the exit code of the VM or the isolate 
  *     in case of JVMSPI_ABORT return value. Not used for other return values.
+ *
+ * If this function returns a value not present in the <flags> bitmask,
+ *     the VM behavior is undefined. Otherwise, the return values are 
+ *     treated as specified below.
  *
  * If this function returns JVMSPI_ABORT, the VM will terminate the isolate 
  *     in MVM mode, or the whole VM in SVM mode.

@@ -5116,7 +5116,7 @@ void ObjectHeap::handle_out_of_memory(const size_t alloc_size,
     const int used = _heap_capacity - free_memory();
 #endif
 
-    int flags = 0;
+    int flags = JVMSPI_IGNORE | JVMSPI_RETRY;
 #if ENABLE_ISOLATES      
     Task::Raw task = Task::current();
     if (task().thread_count() == 1) {
@@ -5126,24 +5126,36 @@ void ObjectHeap::handle_out_of_memory(const size_t alloc_size,
       flags |= JVMSPI_LAST_THREAD;
     }
 
+    // Determine the set of supported responses depending on the caller frame.
+    // If the caller is native - only IGNORE and RETRY are supported
+    // If the caller is Java or entry frame - IGNORE, RETRY and ABORT.
+    // If the caller is Java and allocation redo is supported 
+    // for the current bytecode - IGNORE, RETRY, ABORT and SUSPEND.
     Frame frame(Thread::current());
     if (frame.is_java_frame()) {
       Method::Raw method = frame.as_JavaFrame().method();
-      if (method().is_native()) {
-        flags |= JVMSPI_NATIVE;
+      if (!method().is_native()) {
+        flags |= JVMSPI_ABORT;
+
+        {
+          const int bci = frame.as_JavaFrame().bci();
+          const Bytecodes::Code code = method().bytecode_at(bci);
+
+          if (Bytecodes::can_redo(code)) {
+            flags |= JVMSPI_SUSPEND;
+          }
+        }
       }
     } else {
-      flags |= JVMSPI_NATIVE;
+      flags |= JVMSPI_ABORT;
     }
 
     int exit_code = 0;
     int action = JVMSPI_HandleOutOfMemory(task_id, limit, reserve, used,
                                           alloc_size, flags, &exit_code);
 
-    // Ignore return value if allocation failed in native code.
-    if (flags & JVMSPI_NATIVE) {
-      action = JVMSPI_IGNORE;
-    }
+    // Filter out unsupported return values.
+    action &= flags;
 
     switch (action) {
     case JVMSPI_ABORT:
@@ -5168,8 +5180,6 @@ void ObjectHeap::handle_out_of_memory(const size_t alloc_size,
 #else
       GUARANTEE(0, "Requires ENABLE_ISOLATES and ENABLE_ALLOCATION_REDO");    
 #endif
-      /* fall through */
-    case JVMSPI_IGNORE:
       Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW);
       break;
     case JVMSPI_RETRY:
@@ -5191,8 +5201,13 @@ void ObjectHeap::handle_out_of_memory(const size_t alloc_size,
           continue;
         }
       }
+      break;
     default:
       GUARANTEE(0, "Invalid return value");
+      /* fall through */
+    case JVMSPI_IGNORE:
+      Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW);
+      break;
     }
 
     break;

@@ -207,6 +207,7 @@ int JVMSPI_HandleUncaughtException(const int isolate_id,
 				   const char * message,
 				   const int flags,
                                    int * exit_code) {
+  GUARANTEE(flags & JVMSPI_IGNORE, "JVMSPI_IGNORE must be supprted");
   return JVMSPI_IGNORE;
 }
 
@@ -217,5 +218,6 @@ int JVMSPI_HandleOutOfMemory(const int isolate_id,
 			     const int alloc_size,
 			     const int flags,
                              int * exit_code) {
+  GUARANTEE(flags & JVMSPI_IGNORE, "JVMSPI_IGNORE must be supprted");
   return JVMSPI_IGNORE;
 }

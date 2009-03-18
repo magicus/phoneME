@@ -397,6 +397,7 @@ class Bytecodes: public AllStatic {
     NoFallThru      = 0x080,
     NoPatching      = 0x100,
     NoInlining      = 0x200,
+    CanRedo         = 0x400,
 
     // Some bytecodes require the method frame, since on all ports except ARM
     // the shared stubs called from the generated code use the frame 
@@ -457,6 +458,14 @@ class Bytecodes: public AllStatic {
   static bool is_zero_const  (const Code code) { 
     return code == _aconst_null || code == _iconst_0 ||
            code == _fconst_0    || code == _dconst_0; 
+  }
+
+  static bool can_redo_flags(const jushort flags) {
+    return flags & CanRedo;
+  }
+
+  static bool can_redo(const Code code) {
+    return can_redo_flags(get_flags(code));
   }
 
   static void verify() PRODUCT_RETURN;
