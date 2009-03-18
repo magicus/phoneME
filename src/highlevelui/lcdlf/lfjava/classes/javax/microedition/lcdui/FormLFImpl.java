@@ -795,6 +795,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * @param y The y coordinate of the press
      */
     void uCallPointerPressed(int x, int y) {
+        super.uCallPointerPressed(x, y);
+        
         ItemLFImpl v = null;
 
         pointerIndicator = true;
@@ -832,6 +834,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * @param y The y coordinate of the release
      */
     void uCallPointerReleased(int x, int y) {
+        super.uCallPointerReleased(x, y);
+
         ItemLFImpl v = null;
 
         pointerIndicator = false;        
@@ -873,6 +877,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * @param y The y coordinate of the drag
      */
     void uCallPointerDragged(int x, int y) {
+        super.uCallPointerDragged(x, y);
+
         ItemLFImpl v = null;
 
         synchronized (Display.LCDUILock) {
@@ -2371,8 +2377,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
     }
 
     /**
-     * Perform a scrolling at the given position. 
-     * @param context position  
+     * Perform a scrolling at the given position.
+     * @param context position
      */
     protected void uScrollAt(int position) {
         ItemLFImpl[] items = null;
@@ -2382,6 +2388,26 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         }
         int oldY = viewable[Y];
         super.uScrollAt(position);
+        if (oldY != viewable[Y]) {
+            uInitItemsInViewport(viewable[Y] > oldY ? Canvas.DOWN : Canvas.UP,
+                                 items, traverseIndex);
+            updateCommandSet();
+        }
+    }
+
+
+    /**
+     * Perform a scrolling by specified number of pixels.
+     * @param deltaY number of pixels
+     */
+    protected void uScrollBy(int deltaY) {
+        ItemLFImpl[] items = null;
+        synchronized (Display.LCDUILock) {
+            items = new ItemLFImpl[numOfLFs];
+            System.arraycopy(itemLFs, 0, items, 0, numOfLFs);
+        }
+        int oldY = viewable[Y];
+        super.uScrollBy(deltaY);
         if (oldY != viewable[Y]) {
             uInitItemsInViewport(viewable[Y] > oldY ? Canvas.DOWN : Canvas.UP,
                                  items, traverseIndex);
