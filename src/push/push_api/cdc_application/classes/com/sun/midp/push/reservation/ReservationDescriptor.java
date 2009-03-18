@@ -1,22 +1,22 @@
 /*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -95,4 +95,26 @@ public interface ReservationDescriptor {
      * @return connection filter
      */
     String getFilter();
+
+    /**
+     * Tests if the given connection name is equivalent to this reservation
+     * connection name.
+     * <p>
+     * Normally reservation can be addressed with only one connection name.
+     * Though some protocols (e.g.: Bluetooth) require that the same
+     * reservation can be addressed with more then one connection name.
+     * This methods addresses requirements of such protocols.
+     * </p>
+     *
+     * <p>
+     * Typical implementation should be
+     * <code>return getConnectionName().equals(connectionName);</code>
+     * </p>
+     *
+     * @param connectionName connection name to test
+     *
+     * @return <code>true</code> if the given connection name is equivalent
+     *      to this reservation connection name
+     */
+    boolean isConnectionNameEquivalent(String connectionName);
 }
