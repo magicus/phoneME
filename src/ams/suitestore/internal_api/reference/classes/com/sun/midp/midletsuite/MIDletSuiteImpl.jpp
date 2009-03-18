@@ -309,6 +309,38 @@ public final class MIDletSuiteImpl implements MIDletSuite {
     }
 
     /**
+     * Gets the number of a MIDlet from suite's
+     * MIDlet-&lt;n&gt; record in the manifest or
+     * application descriptor.
+     *
+     * @param className class name of the MIDlet to be checked
+     * @return the MIDlet's number, or 0 if it cannot be determined.
+     */
+    public int getMIDletNumber(String className) {
+        int midletNumber = 0;
+        String midlet;
+        MIDletInfo midletInfo;
+
+        for (int i = 1; ; i++) {
+            midlet = getProperty("MIDlet-" + i);
+
+	    if (midlet == null) {
+		break;
+	    } else {
+	        /* Check if the names match. */
+            	midletInfo = new MIDletInfo(midlet);
+
+		if (midletInfo.classname.equals(className)) {
+                    midletNumber = i;
+		    break;
+                }
+            }
+        }
+
+	return midletNumber;
+    }
+
+    /**
      * Asks the user want to interrupt the current MIDlet with
      * a new MIDlet that has received network data.
      *

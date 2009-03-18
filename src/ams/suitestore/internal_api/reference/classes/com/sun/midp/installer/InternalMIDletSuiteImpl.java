@@ -164,6 +164,18 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
     }
 
     /**
+     * Gets the number of a MIDlet from suite's
+     * MIDlet-&lt;n&gt; record in the manifest or
+     * application descriptor.
+     *
+     * @param className class name of the MIDlet to be checked
+     * @return the MIDlet's number, or 0 if it cannot be determined.
+     */
+    public int getMIDletNumber(String className) {
+	return 1;
+    }
+
+    /**
      * Gets a property of the suite. A property is an attribute from
      * either the application descriptor or JAR Manifest.
      *
