@@ -267,7 +267,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 // #endif ]
             visible = true;
         }
-        
+
         return ret;
     }
 
@@ -477,14 +477,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         if (canvas != null && !canvas.isShown()) {
             hidden = true;
         }
-        if (!hidden) {
-            boolean isOverlapped = false;
-            if (mmh != null) {
-                isOverlapped = mmh.isDisplayOverlapped(g);
-            }
+        if (!hidden && visible) {
+            boolean isOverlapped = (null != mmh) && mmh.isDisplayOverlapped(g);
             if (isOverlapped) {
                 prepareClippedPreview(g, x, y, w, h);
-            } else if (visible && started) {
+            } else {
                 prepareVideoSurface(g, x, y, w, h);
             }
         }
@@ -523,7 +520,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      */
     class DVItem extends CustomItem {
 
-       private MMHelper mmh = null;
+        private MMHelper mmh = null;
 
         DVItem(String label) {
             super(label);
@@ -539,14 +536,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                     "DVItem.paint visible=" + visible); 
             }
-            if (!hidden) {
-                boolean isOverlapped = false;
-                if (mmh != null) {
-                    isOverlapped = mmh.isDisplayOverlapped(g);
-                }
+            if (!hidden && visible) {
+                boolean isOverlapped = (null != mmh) && mmh.isDisplayOverlapped(g);
                 if (isOverlapped) {
                     prepareClippedPreview(g, 0, 0, w, h);
-                } else if (visible) {
+                } else {
                     prepareVideoSurface(g, 0, 0, w, h);
                 }
             }
