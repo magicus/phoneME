@@ -174,6 +174,7 @@ public class MenuLayer extends ScrollablePopupLayer {
      * @param y the y coordinate of the event
      */
     public boolean pointerInput(int type, int x, int y) {
+        super.pointerInput(type, x, y);
         switch (type) {
         case EventConstants.PRESSED:
             itemIndexWhenPressed =  itemIndexAtPointerPosition(x, y);
@@ -630,6 +631,43 @@ public class MenuLayer extends ScrollablePopupLayer {
             requestRepaint();
         }
     }
+
+    /**
+     * Drag the contents to the specified amount of pixels.
+     * @param deltaY
+     * @returns how many pixels were not processed
+     */
+    public int dragContent(int deltaY) {
+        int itemCnt = deltaY / MenuSkin.ITEM_HEIGHT;
+        if (itemCnt == 0) {
+            return deltaY;
+        }
+
+        if ((deltaY > 0) && (scrollIndex < (menuCmds.length - MenuSkin.MAX_ITEMS))) {
+            int itemsLeft =  menuCmds.length - MenuSkin.MAX_ITEMS - scrollIndex;
+            if (itemCnt > itemsLeft) {
+                itemCnt = itemsLeft;
+            }
+            scrollIndex += itemCnt;
+            if (selI < scrollIndex) {
+                selI = scrollIndex;
+            }
+        } else if ((deltaY < 0) && (scrollIndex > 0)) {
+            itemCnt = -itemCnt;
+            if (itemCnt > scrollIndex) {
+                itemCnt = scrollIndex;
+            }
+            scrollIndex -= itemCnt;
+
+            if (selI >= scrollIndex + MenuSkin.MAX_ITEMS) {
+                selI = scrollIndex + MenuSkin.MAX_ITEMS - 1;
+            }
+        }
+        updateScrollIndicator();
+        requestRepaint();
+        return deltaY % MenuSkin.ITEM_HEIGHT;
+    }
+    
 
     /**
      * Update bounds of layer depend on visability of scroll indicator layer
