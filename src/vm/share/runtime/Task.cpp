@@ -75,6 +75,18 @@ void Task::link_dynamic(JVM_SINGLE_ARG_TRAPS) {
 }
 #endif //USE_BINARY_IMAGE_LOADER
 
+#if ENABLE_JAVA_DEBUGGER
+bool Task::_is_initial_suspend = false;
+
+void Task::set_initial_suspend() {
+    _is_initial_suspend = true;
+}
+
+bool Task::is_initial_suspend() {
+    return _is_initial_suspend;
+}
+#endif
+
 #if ENABLE_ISOLATES
 int     Task::_num_tasks;
 

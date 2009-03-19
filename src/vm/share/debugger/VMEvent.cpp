@@ -1084,6 +1084,7 @@ void VMEvent::vminit(Transport *t)
   (void)reqID;
   int threadID = JavaDebugger::get_thread_id_by_ref(Thread::current());
   bool is_suspend = true;
+  bool is_task_suspend = Task::current()->is_initial_suspend();
 
   PacketOutputStream out(t, JDWP_EVENT_VMINIT_LEN,
                          JDWP_COMMAND_SET(Event),
@@ -1093,6 +1094,9 @@ void VMEvent::vminit(Transport *t)
     // Suspend all threads by default
     DEBUGGER_EVENT(("VM Suspend All"));
     out.write_byte(JDWP_SuspendPolicy_ALL);
+  } else if (is_task_suspend) {
+    DEBUGGER_EVENT(("VM Suspend Thread"))
+    out.write_byte(JDWP_SuspendPolicy_EVENT_THREAD);
   } else {
     // Suspend no threads
     DEBUGGER_EVENT(("VM Suspend None"));
@@ -1113,6 +1117,10 @@ void VMEvent::vminit(Transport *t)
     // Use suspend policy which suspends all threads by default
     JavaDebugger::process_suspend_policy(JDWP_SuspendPolicy_ALL,
                                          task_id,
+                                         true);
+  } else if (is_task_suspend) {
+    JavaDebugger::process_suspend_policy(JDWP_SuspendPolicy_EVENT_THREAD,
+                                         Thread::current(),
                                          true);
   } else {
     // Use suspend policy which suspends no threads

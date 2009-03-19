@@ -380,6 +380,13 @@ public:
   void set_hint(int hint, int param);
 
   void suspend();
+
+#if ENABLE_JAVA_DEBUGGER
+  static bool _is_initial_suspend;
+  void set_initial_suspend();
+  bool is_initial_suspend();
+#endif
+  
   void resume();
   bool is_suspended();
   bool is_restricted_package(const char* name, int len);  
