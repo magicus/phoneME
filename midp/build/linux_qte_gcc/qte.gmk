@@ -1,0 +1,72 @@
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+# 
+# This source file is specific for Qt-based configurations.
+#
+######################################################################
+# QT Embedded specific defines and targets
+######################################################################
+
+# Show Build number
+MAINWINDOW_TITLE="$(PROJECT_NAME_SHORT) $(BUILD_ID)"
+
+# Default Qt directory
+ifndef QTOPIA_SDK_DIR
+    ifneq ($(TARGET_CPU), arm)
+        export QTOPIA_SDK_DIR = /opt/Qtopia
+    else 
+        export QTOPIA_SDK_DIR = /opt/Qtopia/omap
+    endif 
+endif
+
+ifeq ($(TARGET_CPU), arm)
+    # Use keypad events for ARM platforms
+    EXTRA_CFLAGS += -DQT_KEYPAD_MODE
+    # Use simple new/delete implementations
+    EXTRA_CPPFLAGS += -DENABLE_MIDP_MALLOC_FOR_NEW
+endif
+
+# The product executable will be started as
+# Qt/Embedded master application
+USE_QWS = true
+
+ifndef HOST_QTLIBDIR
+    HOST_QTLIBDIR = $(QTOPIA_SDK_DIR)/lib
+endif
+
+ifndef TARGET_QTLIBDIR
+    TARGET_QTLIBDIR = $(QTOPIA_SDK_DIR)/lib
+endif
+
+# if warnings-as-errors happen in system header files, they are just ignored
+EXTRA_INCLUDES  += -isystem$(QTOPIA_SDK_DIR)/include
+EXTRA_CFLAGS	+= -DQWS -DMAINWINDOW_TITLE=\"$(MAINWINDOW_TITLE)\"
+LIBS		+= -Wl,-rpath,$(TARGET_QTLIBDIR) -L$(HOST_QTLIBDIR) -lqte
+
+ifeq ($(USE_QWS), true)
+    EXTRA_CFLAGS += -DENABLE_QWS=1
+else
+    EXTRA_CFLAGS += -DENABLE_QWS=0
+endif
