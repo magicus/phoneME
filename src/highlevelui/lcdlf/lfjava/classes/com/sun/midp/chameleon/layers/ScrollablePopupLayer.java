@@ -30,6 +30,7 @@ import com.sun.midp.chameleon.*;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
+import com.sun.midp.lcdui.EventConstants;
 
 import javax.microedition.lcdui.*;
 
@@ -57,6 +58,17 @@ public class ScrollablePopupLayer extends PopupLayer
      * in case not all content can fit on the menu.
      */
     protected ScrollIndLayer scrollInd;
+
+    /**
+     *  Y coordinate of pointer during pointer drag event.
+     */
+    private int pointerY = -1;
+
+    /**
+     * number of points left to drag
+     */
+    private int dragY = 0;
+    
     
     
     /**
@@ -65,6 +77,7 @@ public class ScrollablePopupLayer extends PopupLayer
      */
     public ScrollablePopupLayer() {
         super((Image)null, -1);
+        setSupportsInput(true);
     }
 
 
@@ -75,6 +88,7 @@ public class ScrollablePopupLayer extends PopupLayer
      */
     public ScrollablePopupLayer(Image bgImage, int bgColor) {
         super(bgImage, bgColor);
+        setSupportsInput(true);
     }
     
     /**
@@ -84,6 +98,7 @@ public class ScrollablePopupLayer extends PopupLayer
      */
     public ScrollablePopupLayer(Image[] bgImage, int bgColor) {
         super(bgImage, bgColor);
+        setSupportsInput(true);
     }
 
     /**
@@ -94,6 +109,16 @@ public class ScrollablePopupLayer extends PopupLayer
      * 
      */
     public void scrollContent(int scrollType, int thumbPosition) {
+    }
+
+    /**
+     * Drag the contents to the specified amount of pixels.
+     * @param deltaY
+     * @returns how many pixels were not processed
+     *
+     */
+    public int dragContent(int deltaY) {
+        return 0;
     }
 
     public void setScrollInd(ScrollIndLayer newScrollInd) {
@@ -172,5 +197,44 @@ public class ScrollablePopupLayer extends PopupLayer
             scrollInd.setBounds();
         }
     }
+
+    /**
+     * Handle input from a pen tap.
+     *
+     * Parameters describe the type of pen event and the x,y location in the
+     * layer at which the event occurred.
+     *
+     * Important: the x,y location of the pen tap will already be translated
+     * into the coordinate space of the layer.
+     *
+     * @param type the type of pen event
+     * @param x the x coordinate of the event
+     * @param y the y coordinate of the event
+     * @return
+     */
+    public boolean pointerInput(int type, int x, int y) {
+        switch (type) {
+            case EventConstants.PRESSED:
+                pointerY = y;
+                dragY = 0;
+                break;
+            case EventConstants.DRAGGED:
+                if (pointerY != -1) {
+                    dragY = dragContent(pointerY - y + dragY);
+                }
+                pointerY = y;
+                break;
+            case EventConstants.RELEASED:
+                pointerY = -1;
+                dragY = 0;
+                break;
+            case EventConstants.FLICKERED:
+                //TODO: initiate continues content dragging
+                break;
+        }
+        // pass event to other consumers
+        return false;
+    }
+    
 }
 
