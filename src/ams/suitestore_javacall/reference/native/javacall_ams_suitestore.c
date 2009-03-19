@@ -53,12 +53,6 @@ static int javacall_permission2midp(javacall_ams_permission jcPermission);
 static jbyte
 javacall_permission_val2midp(javacall_ams_permission_val jcPermissionVal);
 
-static MIDPError
-pcsl_string_array2javacall_impl(const pcsl_string* pPcslStrArray,
-                                jint srcArrSize,
-                                javacall_utf16_string** ppOutArray,
-                                javacall_int32* pOutArraySize);
-
 /*----------------------- Suite Storage: Common API -------------------------*/
 
 /**
@@ -435,7 +429,7 @@ javanotify_ams_suite_get_install_info(javacall_suite_id suiteId,
         /* convert the authorization path */
         pInstallInfo->authPathLen = (javacall_int32)midpInstallInfo.authPathLen;
         if (midpInstallInfo.authPathLen > 0) {
-            status = pcsl_string_array2javacall_impl(
+            status = pcsl_string_array2javacall(
                 midpInstallInfo.authPath_as, midpInstallInfo.authPathLen,
                 &pInstallInfo->pAuthPath, &pInstallInfo->authPathLen);
             if (status != ALL_OK) {
@@ -471,7 +465,7 @@ javanotify_ams_suite_get_install_info(javacall_suite_id suiteId,
                 (javacall_int32)midpInstallInfo.jadProps.numberOfProperties;
 
             if (midpInstallInfo.jadProps.numberOfProperties > 0) {
-                status = pcsl_string_array2javacall_impl(
+                status = pcsl_string_array2javacall(
                     midpInstallInfo.jadProps.pStringArr,
                     midpInstallInfo.jadProps.numberOfProperties,
                     &pInstallInfo->jadProps.pStringArr,
@@ -492,7 +486,7 @@ javanotify_ams_suite_get_install_info(javacall_suite_id suiteId,
             (javacall_int32)midpInstallInfo.jarProps.numberOfProperties;
 
         if (midpInstallInfo.jarProps.numberOfProperties > 0) {
-            status = pcsl_string_array2javacall_impl(
+            status = pcsl_string_array2javacall(
                 midpInstallInfo.jarProps.pStringArr,
                 midpInstallInfo.jarProps.numberOfProperties,
                 &pInstallInfo->jarProps.pStringArr,

@@ -96,9 +96,9 @@ midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,
  * @return ALL_OK if succeeded, an error code otherwise
  */
 MIDPError
-pcsl_string_array2javacall_impl(const pcsl_string* pPcslStrArray,
-                                jint srcArraySize,
-                                javacall_utf16_string** ppOutArray,
-                                javacall_int32* pOutArraySize);
+pcsl_string_array2javacall(const pcsl_string* pPcslStrArray,
+                           jint srcArraySize,
+                           javacall_utf16_string** ppOutArray,
+                           javacall_int32* pOutArraySize);
 
 #endif /* _JAVACALL_UTIL_H_ */

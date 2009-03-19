@@ -28,11 +28,13 @@
 #include <javacall_native_ams.h>
 #include <midpNativeAppManager.h>
 #include <midpEvents.h>
+#include <midpEventUtil.h>
 #include <midp_logging.h>
 #include <midp_runtime_info.h>
 #include <listeners_intern.h>
 #include <commandLineUtil_md.h>
 #include <midpAMS.h>
+#include <javacall_memory.h>
 #include <javacall_util.h>
 
 #define MAX_CLASS_NAME_LEN   256
@@ -503,13 +505,14 @@ void midp_listener_ams_operation_completed(const NamsEventData* pEventData) {
  *                   caused this event
  */
 void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
+    MIDPError status;
+
     if (pEventData == NULL) {
         return;
     }
 
     if (pEventData->event == MIDP_NAMS_EVENT_UNCAUGHT_EXCEPTION) {
         if (pEventData->pExceptionInfo != NULL) {
-            MIDPError status;
             javacall_utf16_string midletName;
             javacall_utf16_string exceptionClassName;
             javacall_utf16_string exceptionMessage;
@@ -517,8 +520,8 @@ void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
             /* convert midletName */
             status = midp_pcsl_str2javacall_str(
                 &pEventData->pExceptionInfo->midletName, &midletName);
-            pcsl_string_free(pEventData->pExceptionInfo->midletName);
-            if (status != JAVACALL_OK) {
+            pcsl_string_free(&pEventData->pExceptionInfo->midletName);
+            if (status != ALL_OK) {
                 midletName = NULL;
             }
 
@@ -526,7 +529,7 @@ void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
             status = midp_pcsl_str2javacall_str(
                 &pEventData->pExceptionInfo->exceptionClassName,
                     &exceptionClassName);
-            pcsl_string_free(pEventData->pExceptionInfo->exceptionClassName);
+            pcsl_string_free(&pEventData->pExceptionInfo->exceptionClassName);
             if (status != JAVACALL_OK) {
                 exceptionClassName = NULL;
             }
@@ -535,14 +538,14 @@ void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
             status = midp_pcsl_str2javacall_str(
                 &pEventData->pExceptionInfo->exceptionMessage,
                     &exceptionMessage);
-            pcsl_string_free(pEventData->pExceptionInfo->exceptionMessage);
+            pcsl_string_free(&pEventData->pExceptionInfo->exceptionMessage);
             if (status != JAVACALL_OK) {
                 exceptionMessage = NULL;
             }
 
             javacall_ams_uncaught_exception(pEventData->appId,
                 midletName, exceptionClassName, exceptionMessage,
-                    (pEventData->pExceptionInfo.isLastThread == KNI_TRUE) ?
+                    (pEventData->pExceptionInfo->isLastThread == KNI_TRUE) ?
                         JAVACALL_TRUE : JAVACALL_FALSE);
 
             /* free the javacall strings allocated above */
@@ -562,18 +565,18 @@ void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
             /* convert midletName */
             status = midp_pcsl_str2javacall_str(
                 &pEventData->pExceptionInfo->midletName, &midletName);
-            pcsl_string_free(pEventData->pExceptionInfo->midletName);
-            if (status != JAVACALL_OK) {
+            pcsl_string_free(&pEventData->pExceptionInfo->midletName);
+            if (status != ALL_OK) {
                 midletName = NULL;
             }
 
             javacall_ams_out_of_memory(pEventData->appId,
                 NULL,
-                pEventData->pExceptionInfo.memoryLimit,
-                pEventData->pExceptionInfo.memoryReserved,
-                pEventData->pExceptionInfo.memoryUsed,
-                pEventData->pExceptionInfo.allocSize,
-                (pEventData->pExceptionInfo.isLastThread == KNI_TRUE) ?
+                pEventData->pExceptionInfo->memoryLimit,
+                pEventData->pExceptionInfo->memoryReserved,
+                pEventData->pExceptionInfo->memoryUsed,
+                pEventData->pExceptionInfo->allocSize,
+                (pEventData->pExceptionInfo->isLastThread == KNI_TRUE) ?
                     JAVACALL_TRUE : JAVACALL_FALSE);
 
             JCUTIL_FREE_JC_STRING(midletName)

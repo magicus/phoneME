@@ -25,6 +25,7 @@
  */
 
 #include <javacall_util.h>
+#include <javacall_memory.h>
 #include <pcsl_memory.h>
 
 /**
@@ -163,10 +164,10 @@ midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,
  * @return ALL_OK if succeeded, an error code otherwise
  */
 MIDPError
-pcsl_string_array2javacall_impl(const pcsl_string* pPcslStrArray,
-                                jint srcArraySize,
-                                javacall_utf16_string** ppOutArray,
-                                javacall_int32* pOutArraySize) {
+pcsl_string_array2javacall(const pcsl_string* pPcslStrArray,
+                           jint srcArraySize,
+                           javacall_utf16_string** ppOutArray,
+                           javacall_int32* pOutArraySize) {
     int i;
     jsize strSize, convertedLength;
     pcsl_string_status pcslRes;
