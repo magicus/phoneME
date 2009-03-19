@@ -65,7 +65,7 @@
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_util_ResourceHandler_loadRomizedResource0) {
-#if ENABLE_FILE_SYSTEM && !ENABLE_NATIVE_APP_MANAGER
+#if ENABLE_FILE_SYSTEM || ENABLE_NATIVE_APP_MANAGER
     KNI_StartHandles(1);
     KNI_DeclareHandle(hReturnArray);
     KNI_ReleaseHandle(hReturnArray);
