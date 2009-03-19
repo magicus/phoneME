@@ -260,8 +260,7 @@ static volatile int            lcd_video_h; /* video rectangle height (not clipp
  * VRAM.mask is generated in javacall_lcd_flush.
  * @param buffer target offscreen buffer
  */
-static void blend_video_into_buffer( javacall_pixel* buffer )
-{
+static void blend_video_into_buffer( javacall_pixel* buffer ) {
     int x, y;
 
     int dst_x0 = lcd_video_x;
@@ -306,6 +305,22 @@ static void blend_video_into_buffer( javacall_pixel* buffer )
 }
 
 /**
+ * Checks colors of VRAM.hdc pixels and creates mask by comaring them with lcd_key_color.
+ * also creates a copy of VRAM.hdc in VRAM.composite -- for blending video into it.
+ */
+static void prepare_video_mask_and_composite() {
+
+    int idx;
+
+    for( idx = 0; idx < VRAM.num_pixels; idx++ ) {
+        VRAM.mask[ idx ] = (lcd_key_color == VRAM.hdc[ idx ]);
+    }
+
+    memcpy( VRAM.composite, VRAM.hdc, VRAM.num_pixels * sizeof(javacall_pixel) );
+}
+
+
+/**
  * Outputs offscreen buffer to device emulator screen.
  * @param hardwareId unique hardware screen id
  * @param buffer     source offscreen buffer (already rotated)
@@ -315,12 +330,23 @@ static void send_buffer_to_device( int hardwareId, javacall_pixel* buffer ) {
     static LimeFunction *f = NULL;
     static LimeFunction *f1 = NULL;
 
+    javacall_pixel* hdc;
+
     short clip[4] = {0,0,VRAM.width, VRAM.height};
 
     (void)hardwareId;
 
     if( inFullScreenMode ) {
         clip[3] = VRAM.full_height;
+    }
+
+    if (isLCDRotated || top_down) {
+        rotate_offscreen_buffer(VRAM.hdc_rotated, buffer,
+                                inFullScreenMode ? VRAM.full_height : VRAM.height,
+                                VRAM.width);
+        hdc = VRAM.hdc_rotated;
+    } else {
+        hdc = buffer;
     }
 
 #ifdef ENABLE_WTK
@@ -330,9 +356,9 @@ static void send_buffer_to_device( int hardwareId, javacall_pixel* buffer ) {
         "drawRGB16");
 
     if(inFullScreenMode) {
-        f->call(f, NULL, 0, 0, clip, 4, 0, buffer, (VRAM.width * VRAM.full_height) << 1, 0, 0, VRAM.width, VRAM.full_height);
+        f->call(f, NULL, 0, 0, clip, 4, 0, hdc, (VRAM.width * VRAM.full_height) << 1, 0, 0, VRAM.width, VRAM.full_height);
     } else {
-        f->call(f, NULL, 0, 0, clip, 4, 0, buffer, (VRAM.width * VRAM.height) << 1, 0, 0, VRAM.width, VRAM.height);
+        f->call(f, NULL, 0, 0, clip, 4, 0, hdc, (VRAM.width * VRAM.height) << 1, 0, 0, VRAM.width, VRAM.height);
     }
 
     f1 = NewLimeFunction(LIME_PACKAGE,
@@ -353,12 +379,12 @@ static void send_buffer_to_device( int hardwareId, javacall_pixel* buffer ) {
     }
 
     if(inFullScreenMode) {
-        f->call(f, NULL, currDisplayId, 0, 0, clip, 4, 0, buffer, 
+        f->call(f, NULL, currDisplayId, 0, 0, clip, 4, 0, hdc, 
             (VRAM.width * VRAM.full_height) << 1, 0, 0, 
             VRAM.width, VRAM.full_height);
         f1->call(f1, NULL, currDisplayId, 0, 0, VRAM.width, VRAM.full_height);
     } else {
-        f->call(f, NULL, currDisplayId, 0, 0, clip, 4, 0, buffer, 
+        f->call(f, NULL, currDisplayId, 0, 0, clip, 4, 0, hdc, 
             (VRAM.width * VRAM.height) << 1, 0, 0, 
             VRAM.width, VRAM.height);
         f1->call(f1, NULL, currDisplayId, 0, 0, VRAM.width, VRAM.height);
@@ -386,7 +412,7 @@ void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color )
         if( NULL == VRAM.composite ) {
             VRAM.composite = (javacall_pixel*)malloc(VRAM.num_pixels * sizeof(javacall_pixel));
         }
-        javacall_lcd_flush( 0 ); // force mask and composite buffer creation
+        prepare_video_mask_and_composite();
     } else {
         if( NULL != VRAM.mask ) {
             free(VRAM.mask);
@@ -428,22 +454,13 @@ void lcd_set_video_rect( int x, int y, int w, int h )
  */
 void lcd_output_video_frame( javacall_pixel* video ) {
 
-    javacall_pixel* hdc;
-
     EnterCriticalSection( &VRAM.cs );
 
-    hdc = ( lcd_use_keying ? VRAM.composite : VRAM.hdc );
-
     VRAM.video = video;
-    blend_video_into_buffer( hdc );
 
-    if (isLCDRotated || top_down) {
-        rotate_offscreen_buffer(VRAM.hdc_rotated,
-                                hdc,
-                                inFullScreenMode ? VRAM.full_height : VRAM.height,
-                                VRAM.width);
-        send_buffer_to_device( javacall_lcd_get_current_hardwareId(), VRAM.hdc_rotated );
-    } else {
+    if( NULL != VRAM.video ) {
+        javacall_pixel* hdc = ( lcd_use_keying ? VRAM.composite : VRAM.hdc );
+        blend_video_into_buffer( hdc );
         send_buffer_to_device( javacall_lcd_get_current_hardwareId(), hdc );
     }
 
@@ -461,22 +478,16 @@ void lcd_output_video_frame( javacall_pixel* video ) {
  * @retval JAVACALL_FAIL    fail
  */
 javacall_result javacall_lcd_flush(int hardwareId) {
-    int idx;
+
     javacall_pixel* hdc;
 
     EnterCriticalSection( &VRAM.cs );
 	 
     if( lcd_use_keying ) {
-        for( idx = 0; idx < VRAM.num_pixels; idx++ ) {
-            VRAM.mask[ idx ] = (lcd_key_color == VRAM.hdc[ idx ]);
-        }
-
         // javacall_lcd_flush() may be called again without VRAM.hdc being updated.
         // if we blend video directly into VRAM.hdc, second call with unchanged
         // VRAM.hdc will erase video mask. Hence separate VRAM.composite buffer.
-
-        memcpy( VRAM.composite, VRAM.hdc, VRAM.num_pixels * sizeof(javacall_pixel) );
-
+        prepare_video_mask_and_composite();
         hdc = VRAM.composite;
     } else {
         hdc = VRAM.hdc;
@@ -486,15 +497,7 @@ javacall_result javacall_lcd_flush(int hardwareId) {
         blend_video_into_buffer( hdc );
     }
 
-    if (isLCDRotated || top_down) {
-        rotate_offscreen_buffer(VRAM.hdc_rotated,
-                                hdc,
-                                inFullScreenMode ? VRAM.full_height : VRAM.height,
-                                VRAM.width);
-        send_buffer_to_device( hardwareId, VRAM.hdc_rotated );
-    } else {
-        send_buffer_to_device( hardwareId, hdc );
-    }
+    send_buffer_to_device( hardwareId, hdc );
 
     LeaveCriticalSection( &VRAM.cs );
 
