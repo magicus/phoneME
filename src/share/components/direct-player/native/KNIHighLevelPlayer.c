@@ -39,7 +39,7 @@ extern int unicodeToNative(const jchar *ustr, int ulen, unsigned char *bstr, int
 
 /*  protected native int nInit (int appId, int playerId, String URI) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_PlayerImpl_nInit) {
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nInit) {
     jint  appId = KNI_GetParameterAsInt(1);
     jint  playerId = KNI_GetParameterAsInt(2);
     jint  returnValue = 0;
@@ -113,7 +113,7 @@ UnlockAudioMutex();
 
 /*  protected native int nTerm ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_PlayerImpl_nTerm) {
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nTerm) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
@@ -145,7 +145,7 @@ UnlockAudioMutex();
 
 /*  protected native String nGetMediaFormat(int handle); */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-KNIDECL(com_sun_mmedia_PlayerImpl_nGetMediaFormat) {
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nGetMediaFormat) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_media_format_type mFormat = JAVACALL_MEDIA_FORMAT_UNKNOWN;
@@ -168,7 +168,7 @@ UnlockAudioMutex();
 
 /*  protected native boolean nIsHandledByDevice(int handle); */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_PlayerImpl_nIsHandledByDevice) {
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nIsHandledByDevice) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jboolean returnValue = KNI_TRUE;
@@ -188,7 +188,7 @@ UnlockAudioMutex();
 
 /*  protected native boolean nRealize(int handle, String mime); */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_mmedia_PlayerImpl_nRealize) {
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nRealize) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     int mimeLength;
