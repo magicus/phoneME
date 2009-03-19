@@ -65,7 +65,7 @@ class DirectMIDIControl implements DirectControls {
     private native int nGetProgramList(int handle, int bank, int[] proglist);
     private native int nGetProgram(int handle, int channel, int[] program);
 
-    DirectMIDIControl(PlayerImpl p) {
+    DirectMIDIControl(HighLevelPlayer p) {
         _player = p;
     }
 
@@ -458,6 +458,6 @@ class DirectMIDIControl implements DirectControls {
 
     //////////////////////////////////////////////////////////////////////
 
-    private PlayerImpl _player;
+    private HighLevelPlayer _player;
     private int _cachedRate = -1;
 }

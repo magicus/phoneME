@@ -39,7 +39,7 @@ import  com.sun.j2me.log.LogChannels;
 
 import java.io.IOException;
 
-public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
+public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl {
 
     /** Unknown media format */
     static final String MEDIA_FORMAT_UNKNOWN = "UNKNOWN";
@@ -61,7 +61,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
     /**
      * Control package name
      */
-    protected final static String pkgName = "javax.microedition.media.control.";
+    final static String pkgName = "javax.microedition.media.control.";
 
     /**
      * Centralized control management with string constants for each
@@ -86,60 +86,60 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
      * @see    #allJsr135Ctrls
      */
 
-    protected final static String fpcName = "FramePositioningControl";
+    final static String fpcName = "FramePositioningControl";
     /**
      *  Description of the Field
      */
-    protected final static String mdcName = "MetaDataControl";
+    final static String mdcName = "MetaDataControl";
     /**
      *  Description of the Field
      */
-    protected final static String micName = "MIDIControl";
+    final static String micName = "MIDIControl";
     /**
      *  Description of the Field
      */
-    protected final static String picName = "PitchControl";
+    final static String picName = "PitchControl";
     /**
      *  Description of the Field
      */
-    protected final static String racName = "RateControl";
+    final static String racName = "RateControl";
     /**
      *  Description of the Field
      */
-    protected final static String recName = "RecordControl";
+    final static String recName = "RecordControl";
     /**
      *  Description of the Field
      */
-    protected final static String stcName = "StopTimeControl";
+    final static String stcName = "StopTimeControl";
     /**
      *  Description of the Field
      */
-    protected final static String tecName = "TempoControl";
+    final static String tecName = "TempoControl";
     /**
      *  Description of the Field
      */
-    protected final static String guiName = "GUIControl";
+    final static String guiName = "GUIControl";
     /**
      *  Description of the Field
      */
-    protected final static String vicName = "VideoControl";
+    final static String vicName = "VideoControl";
     /**
      *  Description of the Field
      */
-    protected final static String rtspName = "RtspControl";
+    final static String rtspName = "RtspControl";
 
     /**
      *  Description of the Field
      */
-    protected final static String tocName = "ToneControl";
+    final static String tocName = "ToneControl";
     /**
      *  Description of the Field
      */
-    protected final static String dtocName = "com.sun.mmedia.control.DualToneControl";
+    final static String dtocName = "com.sun.mmedia.control.DualToneControl";
     /**
      *  Description of the Field
      */
-    protected final static String vocName = "VolumeControl";
+    final static String vocName = "VolumeControl";
 
     /**
      * An array containing all available JSR-135 controls in possible Players
@@ -174,8 +174,8 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
 
     private LowLevelPlayer lowLevelPlayer;
     
-    protected DataSource  source;
-    protected SourceStream stream;
+    DataSource  source;
+    SourceStream stream;
 
     private String  mediaFormat = null;
     boolean handledByDevice = false;
@@ -222,17 +222,17 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
     final private static Object idLock = new Object();
     
     // Init native library
-    protected native int nInit(int appId, int pID, String URI)
+    private native int nInit(int appId, int pID, String URI)
                                             throws MediaException, IOException;
     // Terminate native library
-    protected native int nTerm(int handle);
+    private native int nTerm(int handle);
     // Get Media Format
-    protected native String nGetMediaFormat(int handle);
+    private native String nGetMediaFormat(int handle);
     // Need media Download in Java side?
-    protected native boolean nIsHandledByDevice(int handle);
+    private native boolean nIsHandledByDevice(int handle);
 
     // Realize native player
-    protected native void nRealize(int handle, String mime) throws
+    private native void nRealize(int handle, String mime) throws
             MediaException;
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
@@ -240,7 +240,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
     /**
      * Constructor 
      */
-    public PlayerImpl(DataSource source) throws MediaException, IOException {
+    public HighLevelPlayer(DataSource source) throws MediaException, IOException {
         // Get current application ID to support MVM
         int appId = AppIsolate.getIsolateId();
 
@@ -381,7 +381,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
         }
     }
 
-    // NOTE: Right now, PlayerImpl implements StopTimeControl, but only
+    // NOTE: Right now, HighLevelPlayer implements StopTimeControl, but only
     // provides partial implementation. That means each individual player
     // must complete the implementation. I.E., somehow it must keep polling
     // current media time and compare it to the set stop time. If the time
@@ -390,7 +390,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
     /**
      * For StopTimeControl - initially reset
      */
-    protected long stopTime = StopTimeControl.RESET;
+    private long stopTime = StopTimeControl.RESET;
 
     /**
      * Returns the current stop time
@@ -450,7 +450,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
     /**
      * Send STOPPED_AT_TIME event. Call this after stopping the player
      */
-    protected void satev() {
+    void satev() {
         // Update the time base to use the system time
         // before stopping.
         updateTimeBase(false);
@@ -540,7 +540,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
      *
      * @param  unrealized  Description of the Parameter
      */
-    protected void chkClosed(boolean unrealized) {
+    private void chkClosed(boolean unrealized) {
         int state = getState();
         if (state == CLOSED || (unrealized && state == UNREALIZED)) {
             throw new IllegalStateException("Can't invoke the method at the " +
@@ -845,14 +845,14 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
 
     protected boolean hasToneSequenceSet = false;
 
-    protected boolean isCapturePlayer()
+    boolean isCapturePlayer()
     {
         return (mediaFormat.equals(MEDIA_FORMAT_CAPTURE_AUDIO) ||
                 mediaFormat.equals(MEDIA_FORMAT_CAPTURE_VIDEO) ||
                 mediaFormat.equals(MEDIA_FORMAT_CAPTURE_RADIO) );
     }
 
-    protected boolean isDevicePlayer()
+    boolean isDevicePlayer()
     {
         return (mediaFormat.equals(MEDIA_FORMAT_DEVICE_MIDI) ||
                 mediaFormat.equals(MEDIA_FORMAT_DEVICE_TONE));
@@ -1320,7 +1320,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
     };
 
     /**
-     *  Gets the controls attribute of the PlayerImpl object
+     *  Gets the controls attribute of the HighLevelPlayer object
      *
      * @return    The controls value
      */
@@ -1345,7 +1345,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
     /**
      * Returns the array containing all the available JSR-135 and
      * JSR-234 (if available) control names
-     * that may be supported by PlayerImpl
+     * that may be supported by HighLevelPlayer
      */
     private static String [] getPossibleControlNames()
     {
@@ -1412,8 +1412,8 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
      * @param  pid  Description of the Parameter
      * @return      Description of the Return Value
      */
-    public static PlayerImpl get(int pid) {
-        return (PlayerImpl) (mplayers.get(new Integer(pid)));
+    public static HighLevelPlayer get(int pid) {
+        return (HighLevelPlayer) (mplayers.get(new Integer(pid)));
     }
 
     /**
@@ -1426,7 +1426,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
 
         /* Send event to player if this player is in realized state (or above) */
         for (Enumeration e = mplayers.elements(); e.hasMoreElements();) {
-            PlayerImpl p = (PlayerImpl) e.nextElement();
+            HighLevelPlayer p = (HighLevelPlayer) e.nextElement();
             int state = p.getState();
             if (state >= Player.REALIZED) {
                 VolumeControl vc = (VolumeControl)p.getControl("VolumeControl");
@@ -1453,7 +1453,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
         }
 
         for (Enumeration e = mplayers.elements(); e.hasMoreElements();) {
-            PlayerImpl p = (PlayerImpl) e.nextElement();
+            HighLevelPlayer p = (HighLevelPlayer) e.nextElement();
 
             int state = p.getState();
             long time = p.getMediaTime();
@@ -1489,7 +1489,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
         }
         
         for (Enumeration e = mplayers.elements(); e.hasMoreElements();) {
-            PlayerImpl p = (PlayerImpl) e.nextElement();
+            HighLevelPlayer p = (HighLevelPlayer) e.nextElement();
 
             int state = ((Integer) pstates.get(p)).intValue();
             long time = ((Long) mtimes.get(p)).longValue();
@@ -1532,7 +1532,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
     /**
      *  Description of the Method
      */
-    synchronized void doLoop() {
+    private synchronized void doLoop() {
         // If a loop count is set, we'll loop back to the beginning.
         if ((loopCount > 1) || (loopCount == -1)) {
             try {
@@ -1568,7 +1568,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
         /**
          * the player instance
          */
-        private PlayerImpl p;
+        private HighLevelPlayer p;
         /**
          * event type array
          */
@@ -1585,10 +1585,10 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
         /**
          * The constructor
          *
-         * @param  p  the instance of PlayerImpl intending to post event to
+         * @param  p  the instance of HighLevelPlayer intending to post event to
          *        this event queue.
          */
-        EvtQ(PlayerImpl p) {
+        EvtQ(HighLevelPlayer p) {
             this.p = p;
             evtQ = new String[p.eventQueueSize];
             evtDataQ = new Object[p.eventQueueSize];

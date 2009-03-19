@@ -26,7 +26,7 @@ package com.sun.mmedia;
 
 import javax.microedition.media.Control;
 
-public class DirectCamera extends DirectPlayer 
+class DirectCamera extends DirectPlayer 
 {
     private Control _cameraControl;
     private Control _exposureControl;
@@ -42,7 +42,7 @@ public class DirectCamera extends DirectPlayer
     /**
      * It does not need data source
      */
-    public DirectCamera( PlayerImpl owner ) {
+    public DirectCamera( HighLevelPlayer owner ) {
         super( owner );
     }
 

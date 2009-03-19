@@ -51,47 +51,47 @@ public class Jsr234Proxy {
         return _emptyNamesList;
     }
     
-    public Control getRDSControl( PlayerImpl p )
+    public Control getRDSControl( HighLevelPlayer p )
     {
         return null;
     }
     
-    public Control getTunerControl( PlayerImpl p )
+    public Control getTunerControl( HighLevelPlayer p )
     {
         return null;
     }
 
-    public Control getCameraControl( PlayerImpl p )
+    public Control getCameraControl( HighLevelPlayer p )
     {
         return null;
     }
 
-    public Control getExposureControl( PlayerImpl p )
+    public Control getExposureControl( HighLevelPlayer p )
     {
         return null;
     }
     
-    public Control getFlashControl( PlayerImpl p )
+    public Control getFlashControl( HighLevelPlayer p )
     {
         return null;
     }
 
-    public Control getFocusControl( PlayerImpl p )
+    public Control getFocusControl( HighLevelPlayer p )
     {
         return null;
     }
 
-    public Control getSnapshotControl( PlayerImpl p )
+    public Control getSnapshotControl( HighLevelPlayer p )
     {
         return null;
     }
 
-    public Control getZoomControl( PlayerImpl p )
+    public Control getZoomControl( HighLevelPlayer p )
     {
         return null;
     }
 
-    public Control getImageFormatControl( PlayerImpl p )
+    public Control getImageFormatControl( HighLevelPlayer p )
     {
         return null;
     }

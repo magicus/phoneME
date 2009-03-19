@@ -57,7 +57,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
     /** Application specified visibility flag. True if setVisible(true) */
     private boolean pvis;
     /** Player which is being controlled */
-    private PlayerImpl player;
+    private HighLevelPlayer player;
 
     /** Display X */
     private int dx, tmpdx;
@@ -99,7 +99,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
      * VideoControl implementation
      ****************************************************************/
 
-    MIDPVideoRenderer(PlayerImpl p) {
+    MIDPVideoRenderer(HighLevelPlayer p) {
         this.player = p;
         locatorString = player.getLocator();
     }

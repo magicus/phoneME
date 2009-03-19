@@ -32,14 +32,14 @@ import javax.microedition.media.control.*;
  * Interactive MIDI Player
  * it implements MIDIControl
  */
-public final class DirectMIDI extends DirectPlayer {
+final class DirectMIDI extends DirectPlayer {
 
     private DirectMIDIControl midiCtrl;
 
     /**
      * It does not need data source
      */
-    public DirectMIDI( PlayerImpl owner ) {
+    public DirectMIDI( HighLevelPlayer owner ) {
         super( owner );
     }
 

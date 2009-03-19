@@ -42,7 +42,7 @@ import com.sun.mmedia.control.DualToneControl;
  * Java Tone Sequence Player
  * it implements ToneControl
  */
-public final class DirectTone extends DirectPlayer {
+final class DirectTone extends DirectPlayer {
 
     private DirectToneControl toneCtl     = null;
     private DirectToneControl dualToneCtl = null;
@@ -50,7 +50,7 @@ public final class DirectTone extends DirectPlayer {
     /**
      * It does not need data source
      */
-    public DirectTone( PlayerImpl owner ) {
+    public DirectTone( HighLevelPlayer owner ) {
         super( owner );
     }
 

@@ -29,20 +29,20 @@ import javax.microedition.media.MediaException;
 
 abstract class LowLevelPlayer {
     
-    private PlayerImpl owner;
+    private HighLevelPlayer owner;
     
     /** Creates a new instance of LowLevelPlayer */
-    LowLevelPlayer( PlayerImpl owner ) {
+    LowLevelPlayer( HighLevelPlayer owner ) {
         this.owner = owner;
     }
     
-    PlayerImpl getOwner()
+    HighLevelPlayer getOwner()
     {
         return owner;
     }
 
 
-    abstract void doNotifySnapshotFinished();
+    protected abstract void doNotifySnapshotFinished();
 
     /* This means that 'Record Size Limit (reached)' event received */
     protected abstract void doReceiveRSL();

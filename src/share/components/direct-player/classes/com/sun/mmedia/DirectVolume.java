@@ -44,9 +44,9 @@ public class DirectVolume implements VolumeControl {
     private int _level = -1;
     private int _mute = -1;
     private int _hNative;
-    private PlayerImpl _player;
+    private HighLevelPlayer _player;
 
-    DirectVolume(PlayerImpl player, int hNative) {
+    DirectVolume(HighLevelPlayer player, int hNative) {
         _player = player;
         _hNative = hNative;
     }

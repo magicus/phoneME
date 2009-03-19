@@ -197,7 +197,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     /**
      * Constructor
      */
-    DirectPlayer( PlayerImpl owner )
+    DirectPlayer( HighLevelPlayer owner )
     {
         super( owner );
 
@@ -645,59 +645,59 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         }
 
         int hNative = getOwner().getNativeHandle();
-        if (shortType.equals(PlayerImpl.fpcName)) {
+        if (shortType.equals(HighLevelPlayer.fpcName)) {
 //            if (nIsFramePositioningControlSupported(hNative)) {
 //            }
-        } else if (shortType.equals(PlayerImpl.mdcName)) {
+        } else if (shortType.equals(HighLevelPlayer.mdcName)) {
             if (nIsMetaDataControlSupported(hNative)) {
                 if (dMetaDataControl == null)
                     dMetaDataControl = new DirectMetaData(hNative);
                 return dMetaDataControl;
             }
-        } else if (shortType.equals(PlayerImpl.micName)) {
+        } else if (shortType.equals(HighLevelPlayer.micName)) {
             if (nIsMIDIControlSupported(hNative)) {
                 if (midiControl == null) 
                     midiControl = new DirectMIDIControl( getOwner() );
                 return midiControl.getMIDIControl();
             }
-        } else if (shortType.equals(PlayerImpl.picName)) {
+        } else if (shortType.equals(HighLevelPlayer.picName)) {
             if (nIsPitchControlSupported(hNative)) {
                 if (midiControl == null) 
                     midiControl = new DirectMIDIControl( getOwner() );
                 return midiControl.getPitchControl();
             }
-        } else if (shortType.equals(PlayerImpl.racName)) {
+        } else if (shortType.equals(HighLevelPlayer.racName)) {
             if (nIsRateControlSupported(hNative)) {
                 if (midiControl == null) 
                     midiControl = new DirectMIDIControl( getOwner() );
                 return midiControl.getRateControl();
             }
-        } else if (shortType.equals(PlayerImpl.recName)) {
+        } else if (shortType.equals(HighLevelPlayer.recName)) {
             if (nIsRecordControlSupported(hNative)) {
                 if (recordControl == null) {
                     recordControl = new DirectRecord( this );
                 }
                 return recordControl;
             }
-        } else if (shortType.equals(PlayerImpl.stcName)) {
+        } else if (shortType.equals(HighLevelPlayer.stcName)) {
             if (!getOwner().isCapturePlayer()) {
                 return getOwner();
             }
 //            if (nIsStopTimeControlSupported(hNative)) {
 //            }
-        } else if (shortType.equals(PlayerImpl.tecName)) {
+        } else if (shortType.equals(HighLevelPlayer.tecName)) {
             if (nIsTempoControlSupported(hNative)) {
                 if (midiControl == null) 
                     midiControl = new DirectMIDIControl( getOwner() );
                 return midiControl.getTempoControl();
             }
-        } else if (shortType.equals(PlayerImpl.vicName)) {
+        } else if (shortType.equals(HighLevelPlayer.vicName)) {
 //            if (nIsVideoControlSupported(hNative)) {
 //            }
-        } else if (shortType.equals(PlayerImpl.tocName)) {
+        } else if (shortType.equals(HighLevelPlayer.tocName)) {
 //            if (nIsToneControlSupported(hNative)) {
 //            }
-        } else if (shortType.equals(PlayerImpl.vocName)) {
+        } else if (shortType.equals(HighLevelPlayer.vocName)) {
             if (nIsVolumeControlSupported(hNative)) {
                 if (dVolumeControl == null) {
                     dVolumeControl = new DirectVolume( getOwner(), hNative);
@@ -707,9 +707,9 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         }
 
         if ( null != videoControl ) {
-            if (shortType.equals(PlayerImpl.vicName)) {        // VideoControl
+            if (shortType.equals(HighLevelPlayer.vicName)) {        // VideoControl
                 return videoControl;
-            } else if (shortType.equals(PlayerImpl.guiName)) {  // GUIControl
+            } else if (shortType.equals(HighLevelPlayer.guiName)) {  // GUIControl
                 return videoControl;
             }
         }
@@ -851,7 +851,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         return ret;
     }
 
-    void doNotifySnapshotFinished()
+    protected void doNotifySnapshotFinished()
     {
         synchronized( snapshotLock )
         {

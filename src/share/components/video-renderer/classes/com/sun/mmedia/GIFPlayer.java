@@ -131,7 +131,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
     private int imageDataLength;
     private int lzwCodeSize;
 
-    GIFPlayer( PlayerImpl owner ) {
+    GIFPlayer( HighLevelPlayer owner ) {
         super( owner );
     }
     
@@ -151,21 +151,21 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      *                    otherwise null.
      */
     protected Control doGetControl(String type) {
-        if (type.startsWith(PlayerImpl.pkgName)) {
+        if (type.startsWith(HighLevelPlayer.pkgName)) {
             
-            type = type.substring(PlayerImpl.pkgName.length());
+            type = type.substring(HighLevelPlayer.pkgName.length());
             
-            if (type.equals(PlayerImpl.vicName) ||
-                type.equals(PlayerImpl.guiName)) {
+            if (type.equals(HighLevelPlayer.vicName) ||
+                type.equals(HighLevelPlayer.guiName)) {
                 // video control
                 return videoControl;
-            } else if (type.equals(PlayerImpl.fpcName)) {
+            } else if (type.equals(HighLevelPlayer.fpcName)) {
                 // frame positioning control
                 return framePosControl;
-            } else if (type.equals(PlayerImpl.racName)) {
+            } else if (type.equals(HighLevelPlayer.racName)) {
                 // rate control
                 return rateControl;
-            } else if (type.equals(PlayerImpl.stcName)) {
+            } else if (type.equals(HighLevelPlayer.stcName)) {
                 // stop time control
 
                 return getOwner();
@@ -443,7 +443,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
 
     protected void doPreStop() {}
     
-    void doNotifySnapshotFinished() {}
+    protected void doNotifySnapshotFinished() {}
 
     /**
      * The run method driving the play thread.

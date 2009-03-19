@@ -543,7 +543,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
     /* ATTENTION: this field is important for native finalizer! */
     private DirectPlayer player; // null;
     
-    private PlayerImpl highLevelPlayer; //null 
+    private HighLevelPlayer highLevelPlayer; //null 
     
     /* specifies whether recording is requested via <code>startRecord</code> */
     private boolean recordRequested; // false;

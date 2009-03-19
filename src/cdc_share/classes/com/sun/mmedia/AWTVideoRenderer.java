@@ -76,7 +76,7 @@ public class AWTVideoRenderer extends VideoRenderer
     /**
      *Constructor for the VideoRenderer object
      */
-    public AWTVideoRenderer(PlayerImpl player) {
+    public AWTVideoRenderer(HighLevelPlayer player) {
         locatorString  = player.getLocator();
     }
 
