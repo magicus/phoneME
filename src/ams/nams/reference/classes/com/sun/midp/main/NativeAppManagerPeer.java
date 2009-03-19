@@ -322,8 +322,8 @@ public class NativeAppManagerPeer
         int eventType = nativeEvent.getType();
         MIDletProxy midlet;
 
-        if (eventType == EventTypes.MIDP_UNCAUGHT_EXCEPTION_HANDLED ||
-                eventType == EventTypes.MIDP_OUT_OF_MEMORY_HANDLED) {
+        if (eventType == EventTypes.MIDP_HANDLE_UNCAUGHT_EXCEPTION ||
+                eventType == EventTypes.MIDP_HANDLE_OUT_OF_MEMORY) {
             /* for these event types the first parameter is isolateId << 16 */
             midlet = midletProxyList.findFirstMIDletProxy(
                                  (nativeEvent.intParam1 >> 16) & 0xffff);
@@ -473,13 +473,14 @@ public class NativeAppManagerPeer
             case EventTypes.MIDP_OUT_OF_MEMORY_HANDLED: {
                 int responseCode = nativeEvent.intParam2;
 
+                if (midlet == null) {
+                    errorMsg = "OOM/EXCEPTION_HANDLED: Invalid App Id";
+                    break;
+                }
+
                 if (responseCode == 0) { // JAVACALL_TERMINATE_MIDLET
                     // terminate the isolate
-                    if (midlet != null) {
-                        midlet.destroyMidlet();
-                    } else {
-                        errorMsg = "EXCEPTION_HANDLED: Invalid App Id";
-                    }
+                    midlet.destroyMidlet();
                 } else if ((responseCode == 1) ||  // JAVACALL_TERMINATE_THREAD
                            (responseCode == 2 && (eventType ==         // RETRY
                                EventTypes.MIDP_OUT_OF_MEMORY_HANDLED))) {
@@ -494,20 +495,17 @@ public class NativeAppManagerPeer
                      * allocation attempt; it will be done automatically after
                      * activation of the MIDlet.
                      */
-                    if (midlet != null) {
-                        Isolate task = getIsolateObjById(midlet.getIsolateId());
+                    Isolate task = getIsolateObjById(midlet.getIsolateId());
 
-                        if (task != null) {
-                            task.resume();
-                        } else {
-                            errorMsg = "Invalid Isolate Id:" +
-                                           midlet.getIsolateId();
-                        }
+                    if (task != null) {
+                        task.resume();
                     } else {
-                        errorMsg = "Invalid App Id";
+                        errorMsg = "OOM/EXCEPTION_HANDLED: Invalid Isolate Id:"
+                                       + midlet.getIsolateId();
                     }
                 } else {
-                    errorMsg = "Invalid response code: " + responseCode;
+                    errorMsg = "OOM/EXCEPTION_HANDLED: Invalid response code: "
+                                       + responseCode;
                 }
                 break;
             }
