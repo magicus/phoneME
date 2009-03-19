@@ -142,6 +142,7 @@ class DEPopupLayer extends ScrollablePopupLayer {
      * @return true always, since popupLayers swallow all pointer events
      */
     public boolean pointerInput(int type, int x, int y) {
+        super.pointerInput(type, x, y);
         boolean consume = true;
         switch (type) {
         case EventConstants.PRESSED:
@@ -433,6 +434,23 @@ class DEPopupLayer extends ScrollablePopupLayer {
                 break;
         }
     }
+
+    /**
+     * Drag the contents to the specified amount of pixels.
+     * @param deltaY
+     *
+     */
+    public int dragContent(int deltaY) {
+        startIndex += deltaY / elementHeight;
+        if (startIndex < 0) {
+            startIndex = 0;
+        } else if (startIndex > numElements - elementsToFit) {
+            startIndex = numElements - elementsToFit;
+        }
+        updatePopupLayer();
+        return deltaY % elementHeight;
+    }
+    
 
     /**
      * Perform a page flip in the given direction. This method will
