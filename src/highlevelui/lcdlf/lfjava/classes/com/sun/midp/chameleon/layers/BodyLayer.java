@@ -31,6 +31,7 @@ import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
+import com.sun.midp.lcdui.EventConstants;
 
 /**
  * Basic layer containing the application area of the display. This layer
@@ -47,6 +48,12 @@ public class BodyLayer extends CLayer
 
     /** Tunnel instance to call Display methods */
     ChamDisplayTunnel tunnel;
+
+    /**
+     *  Y coordinate of pointer during pointer drag event.
+     */
+    private int pointerY = -1;
+    
 
     /**
      * Create a new BodyLayer.
@@ -76,7 +83,7 @@ public class BodyLayer extends CLayer
         super(bgImage, bgColor);
         this.tunnel = tunnel;
         this.visible = false;
-
+        setSupportsInput(true);
         setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
     
@@ -97,6 +104,7 @@ public class BodyLayer extends CLayer
         super(bgImage, bgColor);
         this.tunnel = tunnel;
         this.visible = false;
+        setSupportsInput(true);
         setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
 
@@ -355,5 +363,45 @@ public class BodyLayer extends CLayer
             scrollInd.setBounds();             
         }
     }
+
+    /**
+     * Handle input from a pen tap.
+     *
+     * Parameters describe the type of pen event and the x,y location in the
+     * layer at which the event occurred.
+     *
+     * Important: the x,y location of the pen tap will already be translated
+     * into the coordinate space of the layer.
+     *
+     * @param type the type of pen event
+     * @param x the x coordinate of the event
+     * @param y the y coordinate of the event
+     * @return
+     */
+    public boolean pointerInput(int type, int x, int y) {
+        if (tunnel != null) {
+            switch (type) {
+                case EventConstants.PRESSED:
+                    pointerY = y;
+                    break;
+                case EventConstants.DRAGGED:
+                    if (pointerY != -1) {
+                        int deltaY = pointerY - y;
+                        tunnel.callDragContent(deltaY);
+                    }
+                    pointerY = y;
+                    break;
+                case EventConstants.RELEASED:
+                    pointerY = -1;
+                    break;
+                case EventConstants.FLICKERED:
+                    //TODO: initiate continues content dragging
+                    break;
+            }
+        }
+        // pass event to other consumers
+        return false;
+    }
+
 }
 
