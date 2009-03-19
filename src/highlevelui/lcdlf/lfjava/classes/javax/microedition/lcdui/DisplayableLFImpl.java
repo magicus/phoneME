@@ -527,7 +527,16 @@ class DisplayableLFImpl implements DisplayableLF {
     public void uCallScrollContent(int scrollType, int thumbPosition) {
         // by default nothing to do 
     }
-    
+
+    /**
+     * This method notify displayable to drga its content
+     *
+     * @param deltaY
+     */
+    public void uCallDragContent(int deltaY) {
+        // by default nothing to do
+    }
+
 
     /**
      * Display calls this method on it's current Displayable.
