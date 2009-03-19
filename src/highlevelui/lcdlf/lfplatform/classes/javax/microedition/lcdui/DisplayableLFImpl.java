@@ -543,6 +543,15 @@ abstract class DisplayableLFImpl implements DisplayableLF {
     }
 
     /**
+     * This method notify displayable to drga its content
+     *
+     * @param deltaY
+     */
+    public void uCallDragContent(int deltaY) {
+        // by default nothing to do
+    }
+    
+    /**
      * <code>Display</code> calls this method on it's current 
      * <code>Displayable</code>.
      * <code>Displayable</code> uses this opportunity to do necessary stuff
