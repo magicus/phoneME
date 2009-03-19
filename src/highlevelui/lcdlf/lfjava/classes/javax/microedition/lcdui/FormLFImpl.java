@@ -795,8 +795,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * @param y The y coordinate of the press
      */
     void uCallPointerPressed(int x, int y) {
-        super.uCallPointerPressed(x, y);
-        
+
         ItemLFImpl v = null;
 
         pointerIndicator = true;
@@ -834,7 +833,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * @param y The y coordinate of the release
      */
     void uCallPointerReleased(int x, int y) {
-        super.uCallPointerReleased(x, y);
 
         ItemLFImpl v = null;
 
@@ -877,7 +875,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * @param y The y coordinate of the drag
      */
     void uCallPointerDragged(int x, int y) {
-        super.uCallPointerDragged(x, y);
 
         ItemLFImpl v = null;
 
