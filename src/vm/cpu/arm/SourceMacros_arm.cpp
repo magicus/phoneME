@@ -1221,6 +1221,20 @@ void SourceMacros::initialize_class_when_needed(Register dst,
 }
 #endif
 
+void SourceMacros::redo_if_needed(Label& label) {
+#if ENABLE_ALLOCATION_REDO
+  get_thread(tmp1);
+  ldr(tmp2, imm_index(tmp1, Thread::async_redo_offset()));
+  comment("Clear Thread.async_redo so that we won't loop indefinitely");
+  mov(tmp3, zero);
+  str(tmp3, imm_index(tmp1, Thread::async_redo_offset()));
+
+  comment("loop if need to redo the allocation");
+  cmp(tmp2, zero);
+  b(label, ne);
+#endif
+}
+
 #endif // PRODUCT
 
 #endif /*#if ENABLE_INTERPRETER_GENERATOR*/

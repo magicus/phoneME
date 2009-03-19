@@ -1151,6 +1151,26 @@ void SourceMacros::goto_shared_call_vm(BasicType return_value_type) {
   }
 }
 
+void SourceMacros::redo_if_needed(Label& label) {
+#if ENABLE_ALLOCATION_REDO
+  Label done;
+
+  get_thread(ebx);
+  movl(ecx, Address(ebx, Constant(Thread::async_redo_offset())));
+  testl(ecx, ecx);
+
+  jcc(zero, Constant(done));
+  comment("Need to redo the allocation");
+  movl(ecx, Constant(0));
+
+  comment("clear Thread.async_redo so that we won't loop indefinitely.");
+  movl(Address(ebx, Constant(Thread::async_redo_offset())), ecx);
+  jmp(Constant(label));
+
+bind(done);
+#endif
+}
+
 #if ENABLE_INTERPRETATION_LOG
 void SourceMacros::update_interpretation_log() {
   // _interpretation_log[] is a circular buffer that stores

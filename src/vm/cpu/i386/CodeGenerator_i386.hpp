@@ -81,3 +81,5 @@ private:
   void store_tag_to_address(BasicType type, StackAddress& address);
 
   void cmp_values(Value& op1, Value& op2);
+
+  void verify_no_redo() PRODUCT_RETURN;

@@ -202,6 +202,72 @@ void Thread::lightweight_thread_uncaught_exception() {
     tty->print(MSG_UNCAUGHT_EXCEPTIONS);
     print_current_pending_exception_stack_trace();
     clear_current_pending_exception();
+
+    InstanceClass::Raw exception_class = exception().blueprint();
+
+    if (exception_class().is_subclass_of(Universe::throwable_class())) {
+      SETUP_ERROR_CHECKER_ARG;
+      UsingFastOops fast_oops2;
+      Throwable::Raw throwable = exception.obj();
+      Symbol::Fast exception_class_name = exception_class().name();
+      const char * cmessage = "";
+      String::Fast message = throwable().message();
+      if (message.not_null()) {
+        TypeArray::Fast carray = message().to_cstring(JVM_SINGLE_ARG_NO_CHECK);
+        if (CURRENT_HAS_PENDING_EXCEPTION) {
+          clear_current_pending_exception();
+        } else {
+          cmessage = (char *)carray().base_address();
+        }
+      }
+
+      const int task_id = TaskContext::current_task_id();
+      int flags = JVMSPI_IGNORE | JVMSPI_ABORT | JVMSPI_SUSPEND;
+#if ENABLE_ISOLATES      
+      Task::Raw task = Task::current();
+      if (task().thread_count() == 1) {
+#else
+      if (Scheduler::active_count() == 1) {
+#endif
+	flags |= JVMSPI_LAST_THREAD;
+      }
+
+      int exit_code = 0;
+      int action = 
+        JVMSPI_HandleUncaughtException(task_id,
+                                       exception_class_name().utf8_data(), 
+                                       exception_class_name().length(),
+                                       cmessage, flags, &exit_code);
+      switch (action) {
+      case JVMSPI_ABORT:
+#if ENABLE_ISOLATES
+	task().stop(exit_code, Task::UNCAUGHT_EXCEPTION JVM_NO_CHECK);
+#else
+	JVM_Stop(exit_code);
+#endif
+	/* fall through */
+      case JVMSPI_IGNORE:
+	/* do nothing */
+	break;
+      case JVMSPI_SUSPEND:
+#if ENABLE_ISOLATES
+	/*
+	 * If this is the last thread, just ignore. It will die anyway.
+	 * If not, suspend the isolate.
+	 */
+	if ((flags & JVMSPI_LAST_THREAD) == 0) {
+	  JVM_SuspendIsolate(task_id);
+          // Resume the current thread to let it die gracefully
+          Scheduler::resume_thread(Thread::current());
+	}
+#else
+	GUARANTEE(0, "Not supported for SVM");    
+#endif
+	break;
+      default:
+        GUARANTEE(0, "Invalid return value");
+      }
+    }
   }
 }
 

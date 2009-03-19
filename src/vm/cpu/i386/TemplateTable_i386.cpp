@@ -1218,20 +1218,38 @@ void bc_athrow::generate() {
 }
 
 void bc_new::generate() {
+  Label redo;
+bind(redo);
+
   comment("Call runtime routine");
   interpreter_call_vm(Constant("newobject"), T_OBJECT);
+
+  redo_if_needed(redo);
+
   push_obj(eax);
 }
 
 void bc_anewarray::generate() {
+  Label redo;
+bind(redo);
+
   interpreter_call_vm(Constant("anewarray"), T_ARRAY);
+
+  redo_if_needed(redo);
+
   pop_int(ebx, ebx);
   comment("Push the result on the stack");
   push_obj(eax);
 }
 
 void bc_multianewarray::generate() {
+  Label redo;
+bind(redo);
+
   interpreter_call_vm(Constant("multianewarray"), T_ARRAY);
+
+  redo_if_needed(redo);
+
   comment("Remove arguments from the stack");
   load_unsigned_byte(ecx, bcp_address(3));
   leal(esp, Address(esp, ecx, TaggedJavaStack ? times_8 : times_4));
@@ -2163,7 +2181,11 @@ void bc_newarray::generate() {
   jmp(Constant(done));
 
 bind(slow);
+
   interpreter_call_vm(Constant("newarray"), T_ARRAY);
+
+  redo_if_needed(slow);
+
   pop_int(edx, edx);
 
 bind(done);

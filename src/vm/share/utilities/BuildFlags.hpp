@@ -520,6 +520,10 @@
 //
 // ENABLE_JNI                           0,0 Enable (partial) JNI support.
 //
+// ENABLE_ALLOCATION_REDO               1,1 Enable support for memory 
+//                                          allocation redo, see 
+//                                          JVMSPI_HandleOutOfMemory().
+//
 //============================================================================
 // ENABLE_FLAGS_END }}
 //============================================================================

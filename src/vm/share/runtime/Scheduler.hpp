@@ -266,6 +266,15 @@ private:
   static void suspend_threads(int task_id);
   static void resume_threads(int task_id);
 
+  static void suspend_thread(Thread *thread) {
+    remove_from_active(thread);
+    add_to_suspend(thread);
+  }
+  static void resume_thread(Thread *thread) {
+    remove_from_suspend(thread);
+    add_to_active(thread);
+  }
+
   // Support for Isolate termination
   static void wake_up_async_threads(int task_id);
   static void wake_up_terminated_sleepers(int task_id JVM_TRAPS);

@@ -583,7 +583,6 @@ unsigned ObjectHeap::detect_out_of_memory_tasks( const size_t alloc_size ) {
   return violations;
 }
 
-
 #if ENABLE_PERFORMANCE_COUNTERS
 void ObjectHeap::print_max_memory_usage ( void ) {
   if( PrintIsolateMemoryUsage ) {
@@ -1549,6 +1548,13 @@ OopDesc* ObjectHeap::allocate(size_t size JVM_TRAPS) {
       if( saved_inline_end == NULL ) {
         _inline_allocation_end = saved_inline_end;
       }
+#if ENABLE_ALLOCATION_REDO
+      if (Thread::current()->async_redo()) {
+        GUARANTEE(Task::current()->is_suspended(),
+                  "The current task must be suspended for allocation redo");
+        Thread::clear_current_pending_exception();        
+      }
+#endif
 #endif
       return NULL;
     }
@@ -3473,7 +3479,8 @@ void ObjectHeap::collect(size_t min_free_after_collection JVM_TRAPS) {
     DETECT_QUOTA_VIOLATIONS
     if( !(violations & OverLimit) ) break;
     if( is_full_collect ) {
-      Throw::out_of_memory_error( JVM_SINGLE_ARG_THROW );
+      ObjectHeap::handle_out_of_memory(min_free_after_collection,
+                                       OverLimit JVM_CHECK);
     }
   }
 #else
@@ -3546,7 +3553,6 @@ void ObjectHeap::collect(size_t min_free_after_collection JVM_TRAPS) {
       if (VerboseGC) {
         TTY_TRACE_CR(("nope"));
       }
-      Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW);
     } else {
       if (VerboseGC) {
         TTY_TRACE_CR(("got more space"));
@@ -3559,13 +3565,14 @@ void ObjectHeap::collect(size_t min_free_after_collection JVM_TRAPS) {
 #if ENABLE_ISOLATES
   DETECT_QUOTA_VIOLATIONS
   if( violations ) {
-    Throw::out_of_memory_error( JVM_SINGLE_ARG_THROW );
+    ObjectHeap::handle_out_of_memory(min_free_after_collection,
+                                     OverReservation | OverLimit JVM_CHECK);
   }
 #endif
 
   if( free_memory() < min_free_after_collection ) {
     set_collection_area_boundary(0, false);
-    Throw::out_of_memory_error( JVM_SINGLE_ARG_THROW );
+    ObjectHeap::handle_out_of_memory(min_free_after_collection, 0 JVM_CHECK);
   }
 #undef DETECT_QUOTA_VIOLATIONS
 } 
@@ -5093,6 +5100,119 @@ bool ObjectHeap::permanent_contains(OopDesc** obj) {
   return _heap_start <= obj && obj < _permanent_generation_top;
 }
 #endif
+
+void ObjectHeap::handle_out_of_memory(const size_t alloc_size,
+                                      unsigned violations_mask JVM_TRAPS) {
+  do {
+    const int task_id = TaskContext::current_task_id();
+#if ENABLE_ISOLATES
+    const TaskMemoryInfo& task_info = get_task_info(task_id);
+    const int limit = task_info.limit;
+    const int reserve = task_info.reserve;
+    const int used = task_info.estimate;
+#else
+    const int limit = _heap_capacity;
+    const int reserve = _heap_capacity;
+    const int used = _heap_capacity - free_memory();
+#endif
+
+    int flags = JVMSPI_IGNORE | JVMSPI_RETRY;
+#if ENABLE_ISOLATES      
+    Task::Raw task = Task::current();
+    if (task().thread_count() == 1) {
+#else
+    if (Scheduler::active_count() == 1) {
+#endif
+      flags |= JVMSPI_LAST_THREAD;
+    }
+
+    // Determine the set of supported responses depending on the caller frame.
+    // If the caller is native - only IGNORE and RETRY are supported
+    // If the caller is Java or entry frame - IGNORE, RETRY and ABORT.
+    // If the caller is Java and allocation redo is supported 
+    // for the current bytecode - IGNORE, RETRY, ABORT and SUSPEND.
+    Frame frame(Thread::current());
+    if (frame.is_java_frame()) {
+      Method::Raw method = frame.as_JavaFrame().method();
+      if (!method().is_native()) {
+        flags |= JVMSPI_ABORT;
+
+        {
+          const int bci = frame.as_JavaFrame().bci();
+          const Bytecodes::Code code = method().bytecode_at(bci);
+
+          if (Bytecodes::can_redo(code)) {
+            flags |= JVMSPI_SUSPEND;
+          }
+        }
+      }
+    } else {
+      flags |= JVMSPI_ABORT;
+    }
+
+    int exit_code = 0;
+    int action = JVMSPI_HandleOutOfMemory(task_id, limit, reserve, used,
+                                          alloc_size, flags, &exit_code);
+
+    // Filter out unsupported return values.
+    action &= flags;
+
+    switch (action) {
+    case JVMSPI_ABORT:
+#if ENABLE_ISOLATES
+      task().stop(exit_code, Task::UNCAUGHT_EXCEPTION JVM_NO_CHECK);
+#else
+      JVM_Stop(exit_code);
+#endif
+      break;
+    case JVMSPI_SUSPEND:
+#if ENABLE_ISOLATES && ENABLE_ALLOCATION_REDO
+      GUARANTEE(frame.is_java_frame(), "Must be a Java frame");
+
+      // Deoptimize the frame to handle suspend/redo in interpreter
+      if (frame.as_JavaFrame().is_compiled_frame()) {
+        frame.as_JavaFrame().deoptimize();
+      }
+
+      // Redo the allocation bytecode.
+      Thread::current()->set_async_redo(1);
+      JVM_SuspendIsolate(task_id);
+#else
+      GUARANTEE(0, "Requires ENABLE_ISOLATES and ENABLE_ALLOCATION_REDO");    
+#endif
+      Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW);
+      break;
+    case JVMSPI_RETRY:
+      force_full_collect();
+      internal_collect(alloc_size JVM_CHECK);
+      {
+#if ENABLE_ISOLATES
+        const unsigned detected_violations = 
+          violations_mask & ObjectHeap::detect_out_of_memory_tasks(alloc_size);
+        if (violations_mask != 0) {
+          if (detected_violations) {
+            continue;
+          }
+        } else 
+#else
+        GUARANTEE(violations_mask == 0, "No quota violations in SVM mode");
+#endif
+        if (free_memory() < alloc_size) {
+          continue;
+        }
+      }
+      break;
+    default:
+      GUARANTEE(0, "Invalid return value");
+      /* fall through */
+    case JVMSPI_IGNORE:
+      Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW);
+      break;
+    }
+
+    break;
+  } while (1);
+}
 
 // This function implements JVM_GarbageCollect, which is an external
 // interface for MIDP to invoke GC.

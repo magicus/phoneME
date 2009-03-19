@@ -832,6 +832,8 @@ private:
   enum { OverReservation = 1, OverLimit = 2 };
   static unsigned detect_out_of_memory_tasks( const size_t /*alloc_size*/ );
 #endif
+  static void handle_out_of_memory( const size_t alloc_size,
+                                    const unsigned violations_mask JVM_TRAPS );
 
   static inline void set_task_allocation_start( OopDesc** p );
   static inline void set_inline_allocation_end( OopDesc** p ) {
