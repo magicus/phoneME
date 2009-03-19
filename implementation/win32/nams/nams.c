@@ -630,9 +630,9 @@ void javacall_ams_uncaught_exception(javacall_app_id appId,
         javacall_const_utf16_string exceptionMessage,
         javacall_bool isLastThread) {
 
-        javacall_print("[NAMS] javacall_ams_uncaught_exception()\n");
+    javacall_print("[NAMS] javacall_ams_uncaught_exception()\n");
 
-        javanotify_ams_caught_exception_handled(appId, JAVACALL_TERMINATE_THREAD);
+    javanotify_ams_uncaught_exception_handled(appId, JAVACALL_TERMINATE_THREAD);
 }
 
 /**

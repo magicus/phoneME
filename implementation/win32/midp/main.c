@@ -41,7 +41,7 @@
 #include "javacall_properties.h"
 #include "javautil_jad_parser.h"
 #include "javacall_lcd.h"
-#if ENABLE_NATIVE_AMS
+#if ENABLE_NATIVE_AMS_UI
 #include "javacall_ams_installer.h"
 #endif
 #include "lcd.h"
@@ -219,7 +219,7 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
         javanotify_install_midlet_from_filesystem (utf16Path, pathLen, 0);
         */
 
-#if ENABLE_NATIVE_AMS
+#if ENABLE_NATIVE_AMS_UI
         javanotify_ams_install_suite(1, JAVACALL_INSTALL_SRC_ANY, utf16Path,
             JAVACALL_INVALID_STORAGE_ID, JAVACALL_INVALID_FOLDER_ID);
 #endif
@@ -263,7 +263,7 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
                 i++;
                 jadPathUnicode[i + 7] = 0;
 
-#if ENABLE_NATIVE_AMS
+#if ENABLE_NATIVE_AMS_UI
                 javanotify_ams_install_suite(1, JAVACALL_INSTALL_SRC_ANY,
                     jadPathUnicode, JAVACALL_INVALID_STORAGE_ID,
                         JAVACALL_INVALID_FOLDER_ID);
