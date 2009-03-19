@@ -96,45 +96,6 @@ class ScreenLFImpl extends DisplayableLFImpl {
         }
     }
 
-    /**
-     * Handle a pointer press event
-     *
-     * @param x The x coordinate of the press
-     * @param y The y coordinate of the press
-     */
-    void uCallPointerPressed(int x, int y) {
-        pointerY = y;
-    }
-    /**
-     * Handle a pointer drag event
-     *
-     * @param x The x coordinate of the drag
-     * @param y The y coordinate of the drag
-     */
-    void uCallPointerDragged(int x, int y) {
-        if (pointerY != -1) {
-            int deltaY = pointerY - y;
-            uScrollBy(deltaY);
-        }
-        pointerY = y;
-    }
-    /**
-     * Handle a pointer release event
-     *
-     * @param x The x coordinate of the release
-     * @param y The y coordinate of the release
-     */
-    void uCallPointerReleased(int x, int y) {
-        pointerY = -1;
-    }
-    /**
-     * Handle a pointer flicker event
-     *
-     * @param x The x coordinate of the flickered
-     * @param y The y coordinate of the flickered
-     */
-     void uCallPointerFlickered(int x, int y) { }
-    
 
     /**
      * Set the vertical scroll position and proportion
@@ -364,6 +325,21 @@ class ScreenLFImpl extends DisplayableLFImpl {
             setupScroll();
         }
     }
+
+    /**
+     * This method notify displayable to drga its content
+     *
+     * @param deltaY
+     */
+    public void uCallDragContent(int deltaY) {
+        int oldY = viewable[Y];
+        uScrollBy(deltaY);
+        if (oldY != viewable[Y]) {
+            uRequestPaint();
+            setupScroll();
+        }
+    }
+
     
     /**
      * all scroll actions should be handled through here.
@@ -463,10 +439,6 @@ class ScreenLFImpl extends DisplayableLFImpl {
      */
     private int lastScrollSize = -1;
 
-    /**
-     *  Y coordinate of pointer during pointer drag event.
-     */
-    private int pointerY = -1;
 
     // ************************************************************
     //  Static initializer, constructor
