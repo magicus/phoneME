@@ -357,6 +357,25 @@ void JVMSPI_PrintRaw(const char* s) {
     pcsl_print(s);
 }
 
+int JVMSPI_HandleUncaughtException(const int isolate_id,
+				   const char * exception_class_name,
+				   const int exception_class_name_length,
+				   const char * message,
+				   const int flags,
+                                   int * exit_code) {
+  return JVMSPI_IGNORE;
+}
+
+int JVMSPI_HandleOutOfMemory(const int isolate_id,
+			     const int limit,
+			     const int reserve,
+			     const int available,
+			     const int alloc_size,
+			     const int flags,
+                             int * exit_code) {
+  return JVMSPI_IGNORE;
+}
+
 /**
  * Initializes the Debugger.
  */
