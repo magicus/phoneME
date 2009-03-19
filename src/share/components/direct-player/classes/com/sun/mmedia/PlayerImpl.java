@@ -959,6 +959,20 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
     };
 
     /**
+     * Check for the multimedia snapshot permission.
+     *
+     * @exception SecurityException if the permission is not
+     *            allowed by this token
+     */
+    public void checkSnapshotPermission() {
+        try {
+            PermissionAccessor.checkPermissions( getLocator(), PermissionAccessor.PERMISSION_SNAPSHOT );
+        } catch( InterruptedException e ) {
+            throw new SecurityException( "Interrupted while trying to ask the user permission" );
+        }
+    }
+
+    /**
      * Close the <code>Player</code> and release its resources.
      * <p>
      * When the method returns, the <code>Player</code> is in the
@@ -1103,6 +1117,10 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
         return rtn;
     };
 
+    public void setSnapshotQuality( int quality )
+    {
+    }
+
     /**
      * Gets this <code>Player</code>'s current <i>media time</i>.
      * <p>
@@ -1168,7 +1186,7 @@ public final class PlayerImpl implements Player, TimeBase, StopTimeControl {
      */
     private String locator;
 
-    String getLocator()
+    public String getLocator()
     {
         return locator;
     }
