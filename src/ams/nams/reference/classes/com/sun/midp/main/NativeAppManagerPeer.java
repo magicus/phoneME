@@ -182,6 +182,15 @@ public class NativeAppManagerPeer
         eventQueue.registerEventListener(
             EventTypes.NATIVE_SET_FOREGROUND_REQUEST, this);
 
+        eventQueue.registerEventListener(
+            EventTypes.MIDP_HANDLE_UNCAUGHT_EXCEPTION, this);
+        eventQueue.registerEventListener(
+            EventTypes.MIDP_HANDLE_OUT_OF_MEMORY, this);
+        eventQueue.registerEventListener(
+            EventTypes.MIDP_UNCAUGHT_EXCEPTION_HANDLED, this);
+        eventQueue.registerEventListener(
+            EventTypes.MIDP_OUT_OF_MEMORY_HANDLED, this);
+
         IndicatorManager.init(midletProxyList);
 
         AccessController.setAccessControlContext(new MyAccessControlContext());
@@ -310,10 +319,21 @@ public class NativeAppManagerPeer
         String errorMsg = null;
 
         NativeEvent nativeEvent = (NativeEvent)event;
-        MIDletProxy midlet = midletProxyList.findMIDletProxy(
-                                 nativeEvent.intParam1);
+        int eventType = nativeEvent.getType();
+        MIDletProxy midlet;
 
-        switch (nativeEvent.getType()) {
+        if (eventType == EventTypes.MIDP_UNCAUGHT_EXCEPTION_HANDLED ||
+                eventType == EventTypes.MIDP_OUT_OF_MEMORY_HANDLED) {
+            /* for these event types the first parameter is isolateId << 16 */
+            midlet = midletProxyList.findFirstMIDletProxy(
+                                 (nativeEvent.intParam1 >> 16) & 0xffff);
+        } else {
+            /* for all other types the first parameter is externalAppId */
+            midlet = midletProxyList.findMIDletProxy(
+                                         nativeEvent.intParam1);
+        }
+
+        switch (eventType) {
             case EventTypes.NATIVE_MIDLET_EXECUTE_REQUEST: {
                 if (midlet == null) {
                     if (nativeEvent.intParam2 == MIDletSuite.UNUSED_SUITE_ID) {
@@ -374,16 +394,7 @@ public class NativeAppManagerPeer
             }
 
             case EventTypes.NATIVE_MIDLET_GETINFO_REQUEST: {
-                int isolateId = midlet.getIsolateId();
-                Isolate task = null;
-                Isolate[] allTasks = Isolate.getIsolates();
-
-                for (int i = 0; i < allTasks.length; i++) {
-                    if (allTasks[i].id() == isolateId) {
-                        task = allTasks[i];
-                        break;
-                    }
-                }
+                Isolate task = getIsolateObjById(midlet.getIsolateId());
 
                 if (task != null) {
                     /* Structure to hold run time information about a midlet. */
@@ -426,6 +437,81 @@ public class NativeAppManagerPeer
                 break;
             }
 
+            case EventTypes.MIDP_HANDLE_UNCAUGHT_EXCEPTION:
+            case EventTypes.MIDP_HANDLE_OUT_OF_MEMORY: {
+                String midletName;
+                int externalAppId;
+                
+                if (midlet != null) {
+                    midletName = midlet.getDisplayName();
+                    externalAppId = midlet.getExternalAppId();
+                } else {
+                    externalAppId = Constants.MIDLET_APPID_NO_FOREGROUND;
+                    midletName = "Unknown";
+                }
+
+                if (eventType == EventTypes.MIDP_HANDLE_UNCAUGHT_EXCEPTION) {
+                    notifyUncaughtException(
+                                    externalAppId,
+                                    midletName,
+                                    nativeEvent.stringParam1,
+                                    nativeEvent.stringParam2,
+                                    (nativeEvent.intParam1 & 0xffff) != 0);
+                } else {
+                    notifyOutOfMemory(externalAppId,
+                                      midletName,
+                                      nativeEvent.intParam2,
+                                      nativeEvent.intParam3,
+                                      nativeEvent.intParam4,
+                                      nativeEvent.intParam5,
+                                      (nativeEvent.intParam1 & 0xffff) != 0);
+                }
+                break;
+            }
+
+            case EventTypes.MIDP_UNCAUGHT_EXCEPTION_HANDLED:
+            case EventTypes.MIDP_OUT_OF_MEMORY_HANDLED: {
+                int responseCode = nativeEvent.intParam2;
+
+                if (responseCode == 0) { // JAVACALL_TERMINATE_MIDLET
+                    // terminate the isolate
+                    if (midlet != null) {
+                        midlet.destroyMidlet();
+                    } else {
+                        errorMsg = "EXCEPTION_HANDLED: Invalid App Id";
+                    }
+                } else if ((responseCode == 1) ||  // JAVACALL_TERMINATE_THREAD
+                           (responseCode == 2 && (eventType ==         // RETRY
+                               EventTypes.MIDP_OUT_OF_MEMORY_HANDLED))) {
+                    /*
+                     * If the event type MIDP_UNCAUGHT_EXCEPTION_HANDLED, this
+                     * responce code means that the exception will be ignored
+                     * (i.e. the thread from which the exception was thrown
+                     * will be terminated).
+                     *
+                     * If the event type is MIDP_OUT_OF_MEMORY_HANDLED, this
+                     * responce code means that the VM should retry the memory
+                     * allocation attempt; it will be done automatically after
+                     * activation of the MIDlet.
+                     */
+                    if (midlet != null) {
+                        Isolate task = getIsolateObjById(midlet.getIsolateId());
+
+                        if (task != null) {
+                            task.resume();
+                        } else {
+                            errorMsg = "Invalid Isolate Id:" +
+                                           midlet.getIsolateId();
+                        }
+                    } else {
+                        errorMsg = "Invalid App Id";
+                    }
+                } else {
+                    errorMsg = "Invalid response code: " + responseCode;
+                }
+                break;
+            }
+
             default: {
                 errorMsg = "Unknown event type " + event.getType();
                 break;
@@ -459,6 +545,24 @@ public class NativeAppManagerPeer
 
     // ------ End implementation of the Listener interface
     // ==============================================================
+
+    /**
+     * Finds an Isolate object by the given isolate ID.
+     *
+     * @param isolateId ID of the isolate
+     * @return Isolate object having the given isolate ID
+     */
+    Isolate getIsolateObjById(int isolateId) {
+        Isolate[] allTasks = Isolate.getIsolates();
+
+        for (int i = 0; i < allTasks.length; i++) {
+            if (allTasks[i].id() == isolateId) {
+                return allTasks[i];
+            }
+        }
+
+        return null;
+    }
 
     /**
      * Saves runtime information from the given structure
@@ -563,6 +667,53 @@ public class NativeAppManagerPeer
                                                      String className);
 
     /**
+     * Notifies the native application manager about an uncaught exception
+     * in a running MIDlet.
+     *
+     * @param externalAppId ID assigned by the external application manager
+     * @param midletName name of the MIDlet in which the exception occured
+     * @param className  name of the class containing the method.
+     *                   This string is a fully qualified class name
+     *                   encoded in internal form (see JVMS 4.2).
+     *                   This string is NULL-terminated.
+     * @param exceptionMessage exception message
+     * @param isLastThread true if this is the last thread of the MIDlet,
+     *                     false otherwise
+     */
+    private static native void notifyUncaughtException(int externalAppId,
+                                                       String midletName,
+                                                       String className,
+                                                       String exceptionMessage,
+                                                       boolean isLastThread);
+
+    /**
+     * Notifies the native application manager about that VM can't
+     * fulfill a memory allocation attempt.
+     *
+     * @param externalAppId ID assigned by the external application manager
+     * @param memoryLimit in SVM mode - heap capacity, in MVM mode - memory
+     *                    limit for the isolate, i.e. the max amount of heap
+     *                    memory that can possibly be allocated
+     * @param memoryReserved in SVM mode - heap capacity, in MVM mode - memory
+     *                       reservation for the isolate, i.e. the max amount of
+     *                       heap memory guaranteed to be available
+     * @param memoryUsed how much memory is already allocated on behalf of this
+     *                   isolate in MVM mode, or for the whole VM in SVM mode
+     * @param allocSize the requested amount of memory that the VM failed
+     *                  to allocate
+     * @param midletName name of the MIDlet in which the exception occured
+     * @param isLastThread true if this is the last thread of the MIDlet,
+     *                     false otherwise
+     */
+    private static native void notifyOutOfMemory(int externalAppId,
+                                                 String midletName,
+                                                 int memoryLimit,
+                                                 int memoryReserved,
+                                                 int memoryUsed,
+                                                 int allocSize,
+                                                 boolean isLastThread);
+
+    /**
      * Register the Isolate ID of the AMS Isolate by making a native
      * method call that will call JVM_CurrentIsolateId and set
      * it in the proper native variable.
@@ -581,7 +732,6 @@ public class NativeAppManagerPeer
      */
     private static native void exitInternal(int status);
 
-
     // ==============================================================
     // Access Control Context allowing to access all protected APIs
 
@@ -593,7 +743,7 @@ public class NativeAppManagerPeer
          * If the permission check failed because an InterruptedException was
          * thrown, this method will throw a InterruptedSecurityException.
          *
-         * @param permission ID of the permission to check for,
+         * @param name ID of the permission to check for,
          *      the ID must be from
          *      {@link com.sun.midp.security.Permissions}
          * @param resource string to insert into the question, can be null if

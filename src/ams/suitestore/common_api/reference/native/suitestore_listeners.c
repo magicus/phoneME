@@ -42,7 +42,6 @@
  */
 typedef struct _suiteStoreListener {
     GenericListener genericListener;
-    int listenerType;
     int whenToCall;
 } SuiteStoreListener;
 

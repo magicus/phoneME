@@ -828,6 +828,129 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifySuiteTerminated(void) {
 }
 
 /**
+ * Notifies the native application manager about an uncaught exception
+ * in a running MIDlet.
+ *
+ * @param externalAppId ID assigned by the external application manager
+ * @param midletName name of the MIDlet in which the exception occured
+ * @param className  name of the class containing the method.
+ *                   This string is a fully qualified class name
+ *                   encoded in internal form (see JVMS 4.2).
+ *                   This string is NULL-terminated.
+ * @param exceptionMessage exception message
+ * @param isLastThread true if this is the last thread of the MIDlet,
+ *                     false otherwise
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_midp_main_NativeAppManagerPeer_notifyUncaughtException(void) {
+    NamsEventData eventData;
+    MidletExceptionInfo exceptionInfo;
+    pcsl_string_status res;
+
+    /* initialize the new event */
+    memset((char*)&eventData, 0, sizeof(NamsEventData));
+    eventData.event = MIDP_NAMS_EVENT_UNCAUGHT_EXCEPTION;
+    eventData.appId = KNI_GetParameterAsInt(1);
+    eventData.pExceptionInfo = &exceptionInfo;
+
+    /* get the parameters */
+    KNI_StartHandles(3);
+    KNI_DeclareHandle(jsMidletName);
+    KNI_DeclareHandle(jsClassName);
+    KNI_DeclareHandle(jsExceptionMessage);
+
+    KNI_GetParameterAsObject(2, jsMidletName);
+    KNI_GetParameterAsObject(3, jsClassName);
+    KNI_GetParameterAsObject(4, jsExceptionMessage);
+    exceptionInfo.isLastThread = KNI_GetParameterAsBoolean(5);
+
+    res = midp_jstring_to_pcsl_string(jsMidletName,
+                                      &exceptionInfo.midletName);
+    if (res != PCSL_STRING_OK) {
+        exceptionInfo.midletName = PCSL_STRING_NULL;
+    }
+    res = midp_jstring_to_pcsl_string(jsMidletName,
+                                      &exceptionInfo.exceptionClassName);
+    if (res != PCSL_STRING_OK) {
+        exceptionInfo.exceptionClassName = PCSL_STRING_NULL;
+    }
+    res = midp_jstring_to_pcsl_string(jsExceptionMessage,
+                                      &exceptionInfo.exceptionMessage);
+    if (res != PCSL_STRING_OK) {
+        exceptionInfo.exceptionMessage = PCSL_STRING_NULL;
+    }
+
+    /* notify NAMS about the event */
+    nams_listeners_notify(MIDLET_EVENT_LISTENER, &eventData);
+
+    /* free memory */
+    pcsl_string_free(&exceptionInfo.midletName);
+    pcsl_string_free(&exceptionInfo.exceptionClassName);
+    pcsl_string_free(&exceptionInfo.exceptionMessage);
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
+/**
+ * Notifies the native application manager about that VM can't
+ * fulfill a memory allocation attempt.
+ *
+ * @param externalAppId ID assigned by the external application manager
+ * @param memoryLimit in SVM mode - heap capacity, in MVM mode - memory
+ *                    limit for the isolate, i.e. the max amount of heap
+ *                    memory that can possibly be allocated
+ * @param memoryReserved in SVM mode - heap capacity, in MVM mode - memory
+ *                       reservation for the isolate, i.e. the max amount of
+ *                       heap memory guaranteed to be available
+ * @param memoryUsed how much memory is already allocated on behalf of this
+ *                   isolate in MVM mode, or for the whole VM in SVM mode
+ * @param allocSize the requested amount of memory that the VM failed
+ *                  to allocate
+ * @param midletName name of the MIDlet in which the exception occured
+ * @param isLastThread true if this is the last thread of the MIDlet,
+ *                     false otherwise
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_midp_main_NativeAppManagerPeer_notifyOutOfMemory(void) {
+    NamsEventData eventData;
+    MidletExceptionInfo exceptionInfo;
+    pcsl_string_status res;
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(jsMidletName);
+    KNI_GetParameterAsObject(2, jsMidletName);
+
+    /* initialize the new event */
+    memset((char*)&eventData, 0, sizeof(NamsEventData));
+    eventData.event = MIDP_NAMS_EVENT_OUT_OF_MEMORY;
+    eventData.appId = KNI_GetParameterAsInt(1);
+    eventData.pExceptionInfo = &exceptionInfo;
+
+    /* get the parameters */
+    exceptionInfo.memoryLimit = KNI_GetParameterAsInt(3);
+    exceptionInfo.memoryReserved = KNI_GetParameterAsInt(4);
+    exceptionInfo.memoryUsed = KNI_GetParameterAsInt(5);
+    exceptionInfo.allocSize = KNI_GetParameterAsInt(6);
+    exceptionInfo.isLastThread = KNI_GetParameterAsBoolean(7);
+
+    res = midp_jstring_to_pcsl_string(jsMidletName,
+                                      &exceptionInfo.midletName);
+    if (res != PCSL_STRING_OK) {
+        exceptionInfo.midletName = PCSL_STRING_EMPTY;
+    }
+
+    /* notify NAMS about the event */
+    nams_listeners_notify(MIDLET_EVENT_LISTENER, &eventData);
+
+    /* free memory */
+    pcsl_string_free(&exceptionInfo.midletName);
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
+/**
  * Register the Isolate ID of the AMS Isolate by making a native
  * method call that will call JVM_CurrentIsolateId and set
  * it in the proper native variable.

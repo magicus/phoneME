@@ -33,6 +33,7 @@
 #include <listeners_intern.h>
 #include <commandLineUtil_md.h>
 #include <midpAMS.h>
+#include <javacall_util.h>
 
 #define MAX_CLASS_NAME_LEN   256
 #define MAX_PROFILE_NAME_LEN 64
@@ -383,6 +384,57 @@ javanotify_ams_create_resource_cache(javacall_suite_id suiteId) {
 }
 
 /**
+ * App Manager invokes this function in response to
+ * javacall_ams_uncaught_exception() to instruct Java either to terminate
+ * the MIDlet or to terminate the thread that trown the exception.
+ *
+ * @param appId the ID used to identify the application
+ * @param responseCode a constant identfifying what Java should do with the
+ *            MIDlet in which an unhandled exception was thrown:
+ *            <tt>JAVACALL_TERMINATE_MIDLET</tt> to terminate the MIDlet,
+ *            <tt>JAVACALL_TERMINATE_THREAD</tt> to terminate the thread in
+ *                                               which the exception occured
+ */
+void javanotify_ams_uncaught_exception_handled(javacall_app_id appId,
+                                               int responseCode) {
+    MidpEvent evt;
+
+    MIDP_EVENT_INITIALIZE(evt);
+
+    evt.type = MIDP_UNCAUGHT_EXCEPTION_HANDLED;
+    evt.intParam1 = (jint)appId;
+    evt.intParam2 = responseCode;
+
+    midpStoreEventAndSignalAms(evt);
+}
+
+/**
+ * App Manager invokes this function in response to
+ * javacall_ams_out_of_memory_exception() to instruct Java how to handle
+ * OutOfMemoryError that has just happened.
+ *
+ * @param appId the ID used to identify the application
+ * @param responseCode a constant identifying what Java should do with the
+ *            MIDlet in which an OutOfMeoryError has happened:
+ *            <tt>JAVACALL_RETRY</tt> to retry the memory allocation attempt,
+ *            <tt>JAVACALL_TERMINATE_MIDLET</tt> to terminate the MIDlet,
+ *            <tt>JAVACALL_TERMINATE_THREAD</tt> to terminate the thread in
+ *                                               which the exception occured
+ */
+void javanotify_ams_out_of_memory_handled(javacall_app_id appId,
+                                          int responseCode) {
+    MidpEvent evt;
+
+    MIDP_EVENT_INITIALIZE(evt);
+
+    evt.type = MIDP_OUT_OF_MEMORY_HANDLED;
+    evt.intParam1 = (jint)appId;
+    evt.intParam2 = responseCode;
+
+    midpStoreEventAndSignalAms(evt);
+}
+
+/**
  * MIDP proxy for the javacall_ams_system_state_changed() listener.
  *
  * @param pEventData full data about the event and about the application
@@ -455,10 +507,83 @@ void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
         return;
     }
 
-    javacall_ams_midlet_state_changed(
-        midp_midlet_state2javacall(pEventData->state),
-        (javacall_app_id)pEventData->appId,
-        midp_midlet_event_reason2javacall(pEventData->reason));
+    if (pEventData->event == MIDP_NAMS_EVENT_UNCAUGHT_EXCEPTION) {
+        if (pEventData->pExceptionInfo != NULL) {
+            MIDPError status;
+            javacall_utf16_string midletName;
+            javacall_utf16_string exceptionClassName;
+            javacall_utf16_string exceptionMessage;
+
+            /* convert midletName */
+            status = midp_pcsl_str2javacall_str(
+                &pEventData->pExceptionInfo->midletName, &midletName);
+            pcsl_string_free(pEventData->pExceptionInfo->midletName);
+            if (status != JAVACALL_OK) {
+                midletName = NULL;
+            }
+
+            /* convert exceptionClassName */
+            status = midp_pcsl_str2javacall_str(
+                &pEventData->pExceptionInfo->exceptionClassName,
+                    &exceptionClassName);
+            pcsl_string_free(pEventData->pExceptionInfo->exceptionClassName);
+            if (status != JAVACALL_OK) {
+                exceptionClassName = NULL;
+            }
+
+            /* convert exceptionMessage */
+            status = midp_pcsl_str2javacall_str(
+                &pEventData->pExceptionInfo->exceptionMessage,
+                    &exceptionMessage);
+            pcsl_string_free(pEventData->pExceptionInfo->exceptionMessage);
+            if (status != JAVACALL_OK) {
+                exceptionMessage = NULL;
+            }
+
+            javacall_ams_uncaught_exception(pEventData->appId,
+                midletName, exceptionClassName, exceptionMessage,
+                    (pEventData->pExceptionInfo.isLastThread == KNI_TRUE) ?
+                        JAVACALL_TRUE : JAVACALL_FALSE);
+
+            /* free the javacall strings allocated above */
+            JCUTIL_FREE_JC_STRING(midletName)
+            JCUTIL_FREE_JC_STRING(exceptionClassName)
+            JCUTIL_FREE_JC_STRING(exceptionMessage)
+        }
+    } else if (pEventData->event == MIDP_NAMS_EVENT_OUT_OF_MEMORY) {
+        if (pEventData->pExceptionInfo != NULL) {
+            /*
+             * NOTE: we are handling Out Of Memory condition, so convertion
+             *       of midletName string may fail because of malloc()
+             *       If so, NULL is passed as midletName.
+             */
+            javacall_utf16_string midletName;
+
+            /* convert midletName */
+            status = midp_pcsl_str2javacall_str(
+                &pEventData->pExceptionInfo->midletName, &midletName);
+            pcsl_string_free(pEventData->pExceptionInfo->midletName);
+            if (status != JAVACALL_OK) {
+                midletName = NULL;
+            }
+
+            javacall_ams_out_of_memory(pEventData->appId,
+                NULL,
+                pEventData->pExceptionInfo.memoryLimit,
+                pEventData->pExceptionInfo.memoryReserved,
+                pEventData->pExceptionInfo.memoryUsed,
+                pEventData->pExceptionInfo.allocSize,
+                (pEventData->pExceptionInfo.isLastThread == KNI_TRUE) ?
+                    JAVACALL_TRUE : JAVACALL_FALSE);
+
+            JCUTIL_FREE_JC_STRING(midletName)
+        }
+    } else {
+        javacall_ams_midlet_state_changed(
+            midp_midlet_state2javacall(pEventData->state),
+            (javacall_app_id)pEventData->appId,
+            midp_midlet_event_reason2javacall(pEventData->reason));
+    }
 }
 
 /**

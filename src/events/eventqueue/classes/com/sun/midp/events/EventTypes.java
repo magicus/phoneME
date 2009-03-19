@@ -449,5 +449,30 @@ public final class EventTypes {
      */
     public static final int NATIVE_WINDOW_LOST_FOCUS = 72;
     public static final int NATIVE_WINDOW_GAINED_FOCUS = 73;
-    
+
+    /**
+     * Notification sent from a native code to the Application Manager (Java or
+     * Native) to ask the user how to handle an uncaught exception.
+     */
+    public static final int MIDP_HANDLE_UNCAUGHT_EXCEPTION = 74;
+
+    /**
+     * Notification sent from a native code to the Application Manager (Java or
+     * Native) to ask the user how to handle an out of memory error.  
+     */
+    public static final int MIDP_HANDLE_OUT_OF_MEMORY = 75;
+
+    /**
+     * Notification sent by the Application Manager (Java or Native) to inform
+     * MIDP that a response from the user on the request how to handle an
+     * uncaught exception was received.  
+     */
+    public static final int MIDP_UNCAUGHT_EXCEPTION_HANDLED = 76;
+
+    /**
+     * Notification sent by the Application Manager (Java or Native) to inform
+     * MIDP that a response from the user on the request how to handle an
+     * out of memory was received.  
+     */
+    public static final int MIDP_OUT_OF_MEMORY_HANDLED = 77;
 }

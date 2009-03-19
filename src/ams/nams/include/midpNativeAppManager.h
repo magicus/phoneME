@@ -63,6 +63,18 @@
  */
 #define MIDP_NAMS_EVENT_ERROR 3
 
+/**
+ * @def MIDP_NAMS_EVENT_UNCAUGHT_EXCEPTION 4
+ * an uncaught exception has occured in a MIDlet
+ */
+#define MIDP_NAMS_EVENT_UNCAUGHT_EXCEPTION 4
+
+/**
+ * @def MIDP_NAMS_EVENT_OUT_OF_MEMORY 5
+ * VM can't fulfill a memory allocation request
+ */
+#define MIDP_NAMS_EVENT_OUT_OF_MEMORY 5
+
 /*
  * Defines for Java platform system states.
  *
@@ -120,6 +132,55 @@
 #define MIDP_INVALID_ISOLATE_ID -1
 
 /**
+ * Structure with information about uncaught exception thrown from the MIDlet.
+ */
+typedef struct _midletExceptionInfo {
+    /**
+     * Name of the MIDlet from where the exception was thrown.
+     */
+    pcsl_string midletName;
+
+    /**
+     * Name of the class containing the method that threw the exception.
+     */
+    pcsl_string exceptionClassName;
+
+    /**
+     * Exception message.
+     */
+    pcsl_string exceptionMessage;
+
+    /**
+     * KNI_TRUE if this is the last thread of the MIDlet,
+     * KNI_FALSE otherwise
+     */
+    jboolean isLastThread;
+
+    /**
+     * In SVM mode - heap capacity, in MVM mode - memory limit for the isolate,
+     * i.e. the max amount of heap memory that can possibly be allocated.
+     */
+    jint memoryLimit;
+
+    /**
+     * In SVM mode - heap capacity, in MVM mode - memory reservation for the
+     * isolate, i.e. the max amount of heap memory guaranteed to be available.
+     */
+    jint memoryReserved;
+
+    /**
+     * How much memory is already allocated on behalf of this isolate
+     * in MVM mode, or for the whole VM in SVM mode.
+     */
+    jint memoryUsed;
+
+    /**
+     * The requested amount of memory that the VM failed to allocate.
+     */
+    jint allocSize;
+} MidletExceptionInfo;
+
+/**
  * A structure containing all information about the event that caused
  * the call of the listener.
  */
@@ -151,6 +212,8 @@ typedef struct _namsEventData {
     MidletSuiteData* pSuiteData;
     /** runtime information about the application */
     MidletRuntimeInfo* pRuntimeInfo;
+    /** information about the uncaught exception thrown from this application */
+    MidletExceptionInfo* pExceptionInfo;
 } NamsEventData;
 
 /**
