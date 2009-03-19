@@ -436,6 +436,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
     void uCallPointerPressed(int x, int y) {
         itemWasPressed = true;
         itemSelectedWhenPressed = false;
+        pointerDragged = false;
         if (popupLayer.isPopupOpen()) {
             // popupLayer.
             int i = getIndexByPointer(x, y);
@@ -468,7 +469,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         if (popupLayer.isPopupOpen()) {
             // do not dismiss the popup until a new selection is made.
             int i = getIndexByPointer(x, y);
-            if ( (i >= 0 && hilightedIndex == i && itemSelectedWhenPressed) ||
+            if ( (i >= 0 && hilightedIndex == i && itemSelectedWhenPressed && (!pointerDragged)) ||
                  (!itemSelectedWhenPressed)) {
                 uCallKeyPressed(itemSelectedWhenPressed ?
                                 // close the popup with highlighted item selected
@@ -481,8 +482,22 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         }
         itemSelectedWhenPressed = false;
         itemWasPressed = false;
+        pointerDragged = false;
 
     }
+
+    /**
+     * Called by the system to signal a pointer drag
+     *
+     * @param x the x coordinate of the pointer drag
+     * @param y the x coordinate of the pointer drag
+     *
+     * @see #getInteractionModes
+     */
+    void uCallPointerDragged(int x, int y) {
+        pointerDragged = true;
+    }
+
 
     /**
      * Called by the system to indicate the size available to this Item
@@ -504,6 +519,9 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
     /** pressed on a valid item in popup layer **/
     private boolean itemSelectedWhenPressed = false;
+
+    /** pointer dragged over popup layer **/
+    private boolean pointerDragged = false;
 
     /** The PopupLayer that represents open state of this ChoiceGroup POPUP. */
     CGPopupLayer popupLayer;
@@ -790,6 +808,23 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         }
 
         /**
+         * Drag the contents to the specified amount of pixels.
+         * @param deltaY
+         *
+         */
+        public int dragContent(int deltaY) {
+            int newY = viewable[Y] + deltaY;
+            if (newY < 0) {
+                newY = 0;
+            } else if (newY > viewable[HEIGHT] - viewport[HEIGHT]) {
+                newY = viewable[HEIGHT] - viewport[HEIGHT];
+            }
+            updatePopupLayer(newY);
+            return 0;
+        }
+
+
+        /**
          * Perform a line scrolling in the given direction. This method will
          * attempt to scroll the view to show next/previous line.
          *
@@ -945,7 +980,11 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             case EventConstants.RELEASED:
                 lf.uCallPointerReleased(transX, transY);
                 break;
+            case EventConstants.DRAGGED:
+                lf.uCallPointerDragged(transX, transY);
+                break;
             }
+            super.pointerInput(type, x, y);
             return consume;
         }
 
