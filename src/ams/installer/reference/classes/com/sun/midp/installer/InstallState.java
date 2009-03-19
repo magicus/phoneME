@@ -99,6 +99,15 @@ public interface InstallState {
     public String getSuiteName();
 
     /**
+     * Gets the MIDlet number as specified in the MIDlet-n entry in the JAD
+     * file based on the MIDlet's class name.
+     *
+     * @param className class name of the MIDlet to be checked
+     * @return the MIDlet's number, or 0 if it cannot be determined.
+     */
+    public int getMIDletNumber(String className);
+
+    /**
      * Gets the expected size of the JAR.
      *
      * @return size of the JAR in K bytes

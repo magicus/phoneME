@@ -3205,6 +3205,17 @@ class InstallStateImpl implements InstallState, MIDletSuite {
     }
 
     /**
+     * Gets the MIDlet number as specified in the MIDlet-n entry in the JAD
+     * file based on the MIDlet's class name.
+     *
+     * @param className class name of the MIDlet to be checked
+     * @return the MIDlet's number, or 0 if it cannot be determined.
+     */
+    public int getMIDletNumber(String className) {
+        throw new RuntimeException("Not Implemented");
+    }
+
+    /**
      * Checks to see the suite has the ALLOW level for specific permission.
      * This is used for by internal APIs that only provide access to
      * trusted system applications.

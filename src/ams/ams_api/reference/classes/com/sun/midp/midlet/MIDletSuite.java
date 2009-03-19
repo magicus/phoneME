@@ -241,6 +241,15 @@ public interface MIDletSuite {
     public int getID();
 
     /**
+     * Gets the MIDlet number as specified in the MIDlet-n entry in the JAD
+     * file based on the MIDlet's class name.
+     *
+     * @param className class name of the MIDlet to be checked
+     * @return the MIDlet's number, or 0 if it cannot be determined.
+     */
+    public int getMIDletNumber(String className);
+
+    /**
      * Ask the user want to interrupt the current MIDlet with
      * a new MIDlet that has received network data.
      *
