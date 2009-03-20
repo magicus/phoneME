@@ -51,6 +51,11 @@ public class Jsr234Proxy {
         return _emptyNamesList;
     }
     
+    public Control getPanControl( DirectPlayer p )
+    {
+        return null;
+    }
+
     public Control getRDSControl( DirectPlayer p )
     {
         return null;
