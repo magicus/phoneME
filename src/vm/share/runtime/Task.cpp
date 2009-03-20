@@ -176,6 +176,15 @@ bool Task::init_first_task(JVM_SINGLE_ARG_TRAPS) {
   task().set_profile_id(Universe::profile_id());
 #endif
 
+#if ENABLE_JAVA_DEBUGGER
+  {
+    JavaDebuggerContext::Raw context = 
+      JavaDebuggerContext::allocate(JVM_SINGLE_ARG_OZCHECK(context));
+    context().set_debug_mode(JavaDebugger::main_debug_mode());
+    task().set_debugger_context(&context);
+  }
+#endif
+
   return true;
 }
 
@@ -228,6 +237,7 @@ ReturnOop Task::create_task(const int id, IsolateObj* isolate JVM_TRAPS) {
   {
     JavaDebuggerContext::Raw context = 
       JavaDebuggerContext::allocate(JVM_SINGLE_ARG_OZCHECK(context));
+    context().set_debug_mode(isolate->connect_debugger());
     task().set_debugger_context(&context);
   }
 #endif
@@ -987,6 +997,7 @@ bool Task::is_hidden_class(Symbol* checking_name) {
   return false;  
 }
 #endif
+
 #ifndef PRODUCT
 
 void Task::iterate(OopVisitor* visitor) {

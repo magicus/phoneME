@@ -154,7 +154,7 @@ jbyte JavaDebugger::get_jdwp_tag(Oop *p)
     }
     if (p->is_instance()) {
       GUARANTEE(fc.is_java_class(), "Must be a JavaClass");
-      JavaClass::Raw jc = fc;
+      JavaClass::Raw jc = fc.obj();
       if (jc().is_subclass_of(Universe::string_class())) {
         return JDWP_Tag_STRING;
       } else if (jc().is_subclass_of(Universe::thread_class())) { 
@@ -976,7 +976,6 @@ void JavaDebugger::close_java_debugger(Transport *t) {
     }
     ops = t->ops();
     if (ops->initialized(t)) {
-      set_suspend(false);
       ops->disconnect_transport(t);
     }
       

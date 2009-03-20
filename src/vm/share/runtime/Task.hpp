@@ -196,6 +196,7 @@ public:
 #if ENABLE_JAVA_DEBUGGER
   DEFINE_ACCESSOR_OBJ(Task, JavaDebuggerContext, debugger_context);
  public:
+  inline bool is_debug_suspend() const;
 #endif
 
   void iterate(OopVisitor* /*visitor*/) PRODUCT_RETURN;
