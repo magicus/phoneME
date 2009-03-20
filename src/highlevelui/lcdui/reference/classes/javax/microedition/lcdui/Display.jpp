@@ -2825,6 +2825,19 @@ public class Display {
         }
 
         /**
+         * This method is used by Chameleon to invoke
+         * Displayable.uCallDragContent() method.
+         *
+         * @param deltaY
+         */
+        public void callDragContent(int deltaY) {
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null) {
+                currentCopy.uCallDragContent(deltaY);
+            }
+        }
+
+        /**
          * Updates the scroll indicator.
          */
         public void updateScrollIndicator() {
