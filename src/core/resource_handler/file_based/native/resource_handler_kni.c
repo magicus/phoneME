@@ -32,7 +32,7 @@
 #include <midpUtilKni.h>
 #include <pcsl_string.h>
 
-#if !ENABLE_FILE_SYSTEM
+#if !ENABLE_FILE_SYSTEM && !ENABLE_NATIVE_APP_MANAGER
 #include <resources_rom.h>
 #endif
 
@@ -65,9 +65,10 @@
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_util_ResourceHandler_loadRomizedResource0) {
-#if ENABLE_FILE_SYSTEM
+#if ENABLE_FILE_SYSTEM || ENABLE_NATIVE_APP_MANAGER
     KNI_StartHandles(1);
     KNI_DeclareHandle(hReturnArray);
+    KNI_ReleaseHandle(hReturnArray);
     KNI_EndHandlesAndReturnObject(hReturnArray);
 #else
     int resourceSize;
