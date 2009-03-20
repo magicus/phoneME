@@ -121,7 +121,7 @@ int midp_ams_uncaught_exception(int isolateId,
                                 int exceptionClassNameLength,
                                 const char* exceptionMessage,
                                 int flags) {
- #if ENABLE_NATIVE_APP_MANAGER /* JAMS currently doesn't handle this message */
+#if ENABLE_NATIVE_APP_MANAGER /* JAMS currently doesn't handle this message */
     pcsl_string_status res;
     pcsl_string strExceptionClassName, strExceptionMessage;
     MidpEvent evt;
@@ -162,7 +162,7 @@ int midp_ams_uncaught_exception(int isolateId,
     midpStoreEventAndSignalAms(evt);
 
     return 1;
- #else
+#else
     (void)isolateId;
     (void)exceptionClassName;
     (void)exceptionClassNameLength;
@@ -202,7 +202,7 @@ int midp_ams_out_of_memory(int isolateId, int limit, int reserve, int used,
      * - NAMS Peer can provide more appropriate information for the platform
      *   about the MIDlet by its isolateId.
      */
- #if ENABLE_NATIVE_APP_MANAGER /* JAMS currently doesn't handle this message */
+#if ENABLE_NATIVE_APP_MANAGER /* JAMS currently doesn't handle this message */
     /*
      * IMPL_NOTE: a pair of isolateId and allocSize is used to uniquely identify
      *            this exception. If the same exception is thrown again after
@@ -215,7 +215,7 @@ int midp_ams_out_of_memory(int isolateId, int limit, int reserve, int used,
     if (index >= 0) {
         /* apply the default behavior (i.e., ignore the exception) */
         remove_exception_id_by_index(index);
-        return 1;
+        return 0;
     }
 
     /* add the ID to the list of IDs of the exceptions being processed */  
@@ -234,7 +234,7 @@ int midp_ams_out_of_memory(int isolateId, int limit, int reserve, int used,
     midpStoreEventAndSignalAms(evt);
 
     return 1;
- #else
+#else
     (void)isolateId;
     (void)limit;
     (void)reserve;
