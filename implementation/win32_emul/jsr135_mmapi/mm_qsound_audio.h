@@ -145,6 +145,6 @@ typedef struct
  * isolateIDtoGM is public for use in JSR234
  */
 
-int isolateIDtoGM(int isolateID); 
+javacall_result isolateIDtoGM(int isolateID, /*OUT*/ int *gmIdx );
 
 #endif /* __JSR135_MULTIMEDIA_AUDIO_H__ */
