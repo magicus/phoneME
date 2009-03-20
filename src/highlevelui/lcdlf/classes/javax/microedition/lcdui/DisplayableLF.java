@@ -241,6 +241,13 @@ interface DisplayableLF {
      */
     void uCallScrollContent(int scrollType, int thumbPosition);
 
+    /**
+     * This method notify displayable to drga its content 
+     *
+     * @param deltaY
+     */
+    void uCallDragContent(int deltaY);
+
     boolean uSetRotatedStatus (boolean newStatus);
 
     /**
