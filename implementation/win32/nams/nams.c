@@ -664,7 +664,7 @@ void javacall_ams_out_of_memory(javacall_app_id appId,
                                 int memoryUsed,
                                 int allocSize,
                                 javacall_bool isLastThread) {
-        javacall_print("[NAMS] javacall_ams_out_of_memory()\n");
+    javacall_print("[NAMS] javacall_ams_out_of_memory()\n");
 
-        javanotify_ams_out_of_memory_handled(appId, JAVACALL_TERMINATE_MIDLET);
+    javanotify_ams_out_of_memory_handled(appId, JAVACALL_TERMINATE_MIDLET);
 }
