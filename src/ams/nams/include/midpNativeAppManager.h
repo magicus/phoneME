@@ -136,6 +136,12 @@
  */
 typedef struct _midletExceptionInfo {
     /**
+     * ID used to uniquely identify this exception
+     * (currently is used for OutOfMemory only).
+     */
+    jint exceptionId;
+
+    /**
      * Name of the MIDlet from where the exception was thrown.
      */
     pcsl_string midletName;

@@ -451,8 +451,7 @@ public class NativeAppManagerPeer
                 }
 
                 if (eventType == EventTypes.MIDP_HANDLE_UNCAUGHT_EXCEPTION) {
-                    notifyUncaughtException(
-                                    externalAppId,
+                    notifyUncaughtException(externalAppId,
                                     midletName,
                                     nativeEvent.stringParam1,
                                     nativeEvent.stringParam2,
@@ -486,12 +485,12 @@ public class NativeAppManagerPeer
                                EventTypes.MIDP_OUT_OF_MEMORY_HANDLED))) {
                     /*
                      * If the event type MIDP_UNCAUGHT_EXCEPTION_HANDLED, this
-                     * responce code means that the exception will be ignored
+                     * response code means that the exception will be ignored
                      * (i.e. the thread from which the exception was thrown
                      * will be terminated).
                      *
                      * If the event type is MIDP_OUT_OF_MEMORY_HANDLED, this
-                     * responce code means that the VM should retry the memory
+                     * response code means that the VM should retry the memory
                      * allocation attempt; it will be done automatically after
                      * activation of the MIDlet.
                      */
@@ -507,6 +506,7 @@ public class NativeAppManagerPeer
                     errorMsg = "OOM/EXCEPTION_HANDLED: Invalid response code: "
                                        + responseCode;
                 }
+
                 break;
             }
 
@@ -550,7 +550,7 @@ public class NativeAppManagerPeer
      * @param isolateId ID of the isolate
      * @return Isolate object having the given isolate ID
      */
-    Isolate getIsolateObjById(int isolateId) {
+    private Isolate getIsolateObjById(int isolateId) {
         Isolate[] allTasks = Isolate.getIsolates();
 
         for (int i = 0; i < allTasks.length; i++) {
@@ -686,7 +686,7 @@ public class NativeAppManagerPeer
 
     /**
      * Notifies the native application manager about that VM can't
-     * fulfill a memory allocation attempt.
+     * fulfill a memory allocation request.
      *
      * @param externalAppId ID assigned by the external application manager
      * @param memoryLimit in SVM mode - heap capacity, in MVM mode - memory
@@ -741,16 +741,12 @@ public class NativeAppManagerPeer
          * If the permission check failed because an InterruptedException was
          * thrown, this method will throw a InterruptedSecurityException.
          *
-         * @param name ID of the permission to check for,
-         *      the ID must be from
-         *      {@link com.sun.midp.security.Permissions}
+         * @param name name of the requested permission
          * @param resource string to insert into the question, can be null if
          *        no %2 in the question
          * @param extraValue string to insert into the question,
          *        can be null if no %3 in the question
          *
-         * @param name name of the requested permission
-         * 
          * @exception SecurityException if the specified permission
          * is not permitted, based on the current security policy
          * @exception InterruptedException if another thread interrupts the

@@ -31,6 +31,75 @@
 #include <commandLineUtil_md.h>
 
 /**
+ * Maximal number of exceptions that can be processed at once.
+ * If the list if full, MAX_EXCEPTIONS/2 exceptions with lower
+ * indexes will be thrown away.
+ */
+#define MAX_EXCEPTIONS 10
+
+/**
+ * A list of IDs of the exceptions that are being processed.
+ */
+static jlong exceptionIds[MAX_EXCEPTIONS];
+
+/**
+ * The number of exception that are currently being processed.
+ * I.e., it is the number of filled entries in exceptionIds[]. 
+ */
+static int currentNumberOfExceptions = 0;
+
+/**
+ * Adds the given ID into the list of IDs of the exceptions being processed.
+ *
+ * @param exceptionId ID to add into the list
+ */
+static void add_exception_id(jlong exceptionId) {
+    if (currentNumberOfExceptions >= MAX_EXCEPTIONS) {
+        int i, lowerBound = MAX_EXCEPTIONS >> 1;
+        for (i = lowerBound; i < currentNumberOfExceptions; i++) {
+            exceptionIds[i - lowerBound] = exceptionIds[i];
+        }
+        currentNumberOfExceptions = lowerBound;
+    }
+
+    exceptionIds[currentNumberOfExceptions++] = exceptionId;
+}
+
+/**
+ * Removes the given ID from the list of IDs of the exceptions being processed.
+ *
+ * @param index index of the ID to remove from the list
+ */
+static void remove_exception_id_by_index(int index) {
+    if (index >= 0 && index < currentNumberOfExceptions) {
+        int i;
+        for (i = index + 1; i < currentNumberOfExceptions; i++) {
+            exceptionIds[i - 1] = exceptionIds[i];
+        }
+        currentNumberOfExceptions--;
+    }
+}
+
+/**
+ * Looks for the given exceptionId in the list.
+ *
+ * @param exceptionId exception ID to find
+ *
+ * @return non-negative index of the entry having the given ID if found,
+ *         -1 otherwise
+ */
+static int get_exception_id_index(jlong exceptionId) {
+    int i;
+    for (i = 0; i < currentNumberOfExceptions; i++) {
+        if (exceptionIds[i] == exceptionId) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+/**
  * This function is called by the VM before a Java thread is terminated
  * because of an uncaught exception.
  *
@@ -105,7 +174,7 @@ int midp_ams_uncaught_exception(int isolateId,
 }
 
 /**
- * This function is called by the VM when it fails to fulfil
+ * This function is called by the VM when it fails to fulfill
  * a memory allocation request.
  *
  * @param isolateId ID of an isolate in which the allocation was requested
@@ -134,7 +203,23 @@ int midp_ams_out_of_memory(int isolateId, int limit, int reserve, int used,
      *   about the MIDlet by its isolateId.
      */
  #if ENABLE_NATIVE_APP_MANAGER /* JAMS currently doesn't handle this message */
+    /*
+     * IMPL_NOTE: a pair of isolateId and allocSize is used to uniquely identify
+     *            this exception. If the same exception is thrown again after
+     *            re-trying the allocation attempt, it will be ignored.
+     */
     MidpEvent evt;
+    jlong exceptionId = ((jlong)isolateId << 32) | ((jlong)allocSize);
+    int index = get_exception_id_index(exceptionId);
+
+    if (index >= 0) {
+        /* apply the default behavior (i.e., ignore the exception) */
+        remove_exception_id_by_index(index);
+        return 1;
+    }
+
+    /* add the ID to the list of IDs of the exceptions being processed */  
+    add_exception_id(exceptionId);
 
     MIDP_EVENT_INITIALIZE(evt);
 
