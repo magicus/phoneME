@@ -2404,7 +2404,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             System.arraycopy(itemLFs, 0, items, 0, numOfLFs);
         }
         int oldY = viewable[Y];
-        super.uScrollBy(deltaY);
+        if (owner instanceof TextBox && itemLFs[0] instanceof TextBoxLFImpl) {
+            ((TextBoxLFImpl)itemLFs[0]).uScrollBy(deltaY);
+        } else {
+            super.uScrollBy(deltaY);
+        }
         if (oldY != viewable[Y]) {
             uInitItemsInViewport(viewable[Y] > oldY ? Canvas.DOWN : Canvas.UP,
                                  items, traverseIndex);
