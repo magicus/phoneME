@@ -267,7 +267,7 @@ extern "C" {
 #define NATIVE_WINDOW_LOST_FOCUS 72
 #define NATIVE_WINDOW_GAINED_FOCUS 73
 
-/** 
+/**
  * API Extensions System Event
  */
 #define API_EXTENSIONS_SYSTEM_EVENT 74
@@ -281,6 +281,32 @@ extern "C" {
  * MIDlet suite installation has finished.
  */
 #define MIDP_INSTALLATION_DONE_EVENT          76
+
+/**
+ * Notification sent from a native code to the Application Manager (Java or
+ * Native) to ask the user how to handle an uncaught exception.
+ */
+#define MIDP_HANDLE_UNCAUGHT_EXCEPTION 77
+
+/**
+ * Notification sent from a native code to the Application Manager (Java or
+ * Native) to ask the user how to handle an out of memory error.
+ */
+#define MIDP_HANDLE_OUT_OF_MEMORY 78
+
+/**
+ * Notification sent by the Application Manager (Java or Native) to inform
+ * MIDP that a response from the user on the request how to handle an
+ * uncaught exception was received.
+ */
+#define MIDP_UNCAUGHT_EXCEPTION_HANDLED 79
+
+/**
+ * Notification sent by the Application Manager (Java or Native) to inform
+ * MIDP that a response from the user on the request how to handle an
+ * out of memory was received.
+ */
+#define MIDP_OUT_OF_MEMORY_HANDLED 80
 
 /** @} */
 

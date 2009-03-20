@@ -27,9 +27,11 @@
 #include "appManager.h"
 #include "appManagerProgress.h"
 
-#include <javacall_memory.h >
+#include <javacall_defs.h>
+#include <javacall_memory.h>
 #include <javacall_ams_platform.h>
 #include <javacall_ams_installer.h>
+#include <javacall_ams_app_manager.h> // for javanotify_*
 
 
 extern "C" {
@@ -251,6 +253,66 @@ javacall_ams_install_ask(javacall_ams_install_request_code requestCode,
                                     (LPARAM)pRqData);
 
     return (fRes == TRUE) ? JAVACALL_OK : JAVACALL_FAIL;
+}
+
+/**
+ * This function is called by Java to inform the Platform that a Java thread
+ * has thrown an exception that was not caught. In response to this function the
+ * Platform must call javanotify_ams_uncaught_exception_handled() to instruct
+ * Java either to terminate the MIDlet or to terminate the thread that threw
+ * the exception.
+ *
+ * @param appId the ID used to identify the application
+ * @param midletName name of the MIDlet in which the exception occured
+ * @param exceptionClassName name of the class containing the method
+ * @param exceptionMessage exception message
+ * @param isLastThread JAVACALL_TRUE if this is the last thread of the MIDlet,
+ *                     JAVACALL_FALSE otherwise
+ */
+void javacall_ams_uncaught_exception(javacall_app_id appId,
+        javacall_const_utf16_string midletName,
+        javacall_const_utf16_string exceptionClassName,
+        javacall_const_utf16_string exceptionMessage,
+        javacall_bool isLastThread) {
+    wprintf(_T(">>> javacall_ams_uncaught_exception(), midletName = '%s'\n"),
+            midletName);
+
+    javanotify_ams_uncaught_exception_handled(appId, JAVACALL_TERMINATE_MIDLET);
+}
+
+/**
+ * This function is called by Java to inform the Platform that VM fails
+ * to fulfill a memory allocation request. In response to this function the
+ * Platform must call javanotify_ams_out_of_memory_handled() to instruct Java
+ * either to terminate the MIDlet or to terminate the thread that trown the
+ * exception, or to retry the request.
+ *
+ * @param appId the ID used to identify the application
+ * @param midletName name of the MIDlet in which the exception occured
+ * @param memoryLimit in SVM mode - heap capacity, in MVM mode - memory limit
+ *                    for the isolate, i.e. the max amount of heap memory that
+ *                    can possibly be allocated
+ * @param memoryReserved in SVM mode - heap capacity, in MVM mode - memory
+ *                       reservation for the isolate, i.e. the max amount of
+ *                       heap memory guaranteed to be available
+ * @param memoryUsed how much memory is already allocated on behalf of this
+ *                   isolate in MVM mode, or for the whole VM in SVM mode
+ * @param allocSize the requested amount of memory that the VM failed
+ *                  to allocate
+ * @param isLastThread JAVACALL_TRUE if this is the last thread of the MIDlet,
+ *                     JAVACALL_FALSE otherwise
+ */
+void javacall_ams_out_of_memory(javacall_app_id appId,
+                                javacall_const_utf16_string midletName,
+                                int memoryLimit,
+                                int memoryReserved,
+                                int memoryUsed,
+                                int allocSize,
+                                javacall_bool isLastThread) {
+    wprintf(_T(">>> javacall_ams_out_of_memory(), midletName = '%s'\n"),
+            midletName);
+
+    javanotify_ams_out_of_memory_handled(appId, JAVACALL_TERMINATE_THREAD);
 }
 
 };  // extern "C"

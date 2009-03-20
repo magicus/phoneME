@@ -232,4 +232,15 @@ public class GameCanvasLFImpl {
         }
         return 0;
     }
+
+    /**
+     * Sets the display mode.
+     * @param m MIDPWindow display mode
+    */
+    public void setMode(int m) {
+        DisplayAccess displayAccess = GameMap.getDisplayAccess(owner);
+        if (displayAccess != null && offscreenBuffer != null) {
+	    displayAccess.setMode(m);
+        }
+    }
 }

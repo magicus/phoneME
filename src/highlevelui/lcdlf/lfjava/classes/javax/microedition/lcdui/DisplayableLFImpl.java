@@ -216,6 +216,39 @@ class DisplayableLFImpl implements DisplayableLF {
             }
         }
     }
+    /**
+     * Notifies look and feel object of a screen mode change.
+     * @param mode MIDPWindow display mode
+     */
+    public void uSetMode(int mode) {
+        boolean requestRepaint = false;
+        
+        synchronized (Display.LCDUILock) {
+            if (lIsShown()) {
+                // IMPL_NOTE: Notify MainWindow of screen mode change
+                
+                // currentDisplay is not null when lIsShown is true
+                currentDisplay.lSetMode(mode);
+                
+                layout();
+                updateCommandSet();
+                requestRepaint = true;
+                
+            } else {
+                // Layout needs to happen even if the canvas is not visible
+                // so that correct width and height could be returned 
+                // in getWidth() and getHeight()
+                layout();
+            }  
+        } 
+
+        // app's sizeChanged has to be called before repaint
+        synchronized (Display.LCDUILock) {
+            if (requestRepaint) {
+                lRequestPaint();
+            }
+        }
+    }
 
     /**
      * \Need revisit Move this to CanvasLFImpl.
@@ -269,6 +302,7 @@ class DisplayableLFImpl implements DisplayableLF {
 
             // Assure correct screen mode
             currentDisplay.lSetFullScreen(owner.isInFullScreenMode);
+            currentDisplay.lSetMode(owner.lastSetMode);
             copyDefferedSizeChange = defferedSizeChange;
             defferedSizeChange = false;
         }

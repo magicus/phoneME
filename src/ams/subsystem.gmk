@@ -88,7 +88,8 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
         $(SUBSYSTEM_AMS_DIR)/ams_debug/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/dynamic_components/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/dynamic_component_manager/lib.gmk \
-        $(SUBSYSTEM_AMS_DIR)/vm_utils/lib.gmk
+        $(SUBSYSTEM_AMS_DIR)/vm_utils/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/ams_exceptions_cldc/lib.gmk
  
 # Auto tester
         ifeq ($(USE_AUTOTESTER), true)
@@ -167,7 +168,3 @@ SUBSYSTEM_AMS_COMPONENTS += $(AMS_ADDITIONAL_COMPONENTS)
 
 # Include subsystem libraries
 include $(SUBSYSTEM_AMS_COMPONENTS)
-
-
-
-
