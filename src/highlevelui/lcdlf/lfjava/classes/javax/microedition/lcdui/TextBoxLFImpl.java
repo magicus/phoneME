@@ -542,16 +542,32 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
      * @param context position  
      */
     protected void uScrollAt(int position) {
+        setTopVis(((myInfo.height - myInfo.visLines * ScreenSkin.FONT_INPUT_TEXT.getHeight()) *
+                          position / 100) / ScreenSkin.FONT_INPUT_TEXT.getHeight());
+    }
+
+    /**
+     * Perform a scrolling by specified number of pixels.
+     * @param deltaY number of pixels
+     */
+    protected void uScrollBy(int deltaY) {
+        setTopVis(myInfo.topVis + deltaY);
+    }
+
+    /**
+     * Updates myInfo.topVis and validates new value.
+     * @param newTopVis new value
+     */
+    private void setTopVis(int newTopVis) {
         int oldTopVis = myInfo.topVis;
-        myInfo.topVis  = ((myInfo.height - myInfo.visLines * ScreenSkin.FONT_INPUT_TEXT.getHeight()) *
-                          position / 100) / ScreenSkin.FONT_INPUT_TEXT.getHeight();
-        
+        myInfo.topVis  = newTopVis;
+
         if (myInfo.topVis < 0) {
             myInfo.topVis = 0;
         } else if (myInfo.topVis + myInfo.visLines > myInfo.numLines) {
             myInfo.topVis = myInfo.numLines - myInfo.visLines;
         }
-        
+
         if (myInfo.topVis != oldTopVis) {
             if (editable) {
                 // accept the word if the PTI is currently enabled
