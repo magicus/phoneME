@@ -135,12 +135,16 @@ public:
   static bool is_suspend_option() {
     return _suspend_option;
   }
-  static bool is_suspend() {
+  static bool is_suspend(const Transport * t) {
 #if ENABLE_ISOLATES
-    return Task::current()->is_debug_suspend();
-#else
-    return is_suspend_option();
+    if (t != NULL) {
+      Task::Raw task = Task::get_task(t->task_id());
+      if (task.not_null()) {
+        return task().is_debug_suspend();
+      }
+    }
 #endif
+    return is_suspend_option();
   }
   static void set_stepping(bool is_stepping) {
     if (is_stepping) {

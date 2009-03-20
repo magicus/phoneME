@@ -897,7 +897,7 @@ bool JavaDebugger::initialize_java_debugger(JVM_SINGLE_ARG_TRAPS) {
           plist().obj_at_put(i, &data_buffer);
         }
       }
-      if (is_suspend()) {
+      if (is_suspend(&t)) {
         // Wait for debugger to connect
         ops->connect_transport(&t, Transport::SERVER, -1);
       } else {
@@ -919,7 +919,7 @@ bool JavaDebugger::sync_debugger(Transport *t)
   Transport::transport_op_def_t *ops = t->ops();
 
   if (!ops->initialized(t)) {
-    if (is_suspend()) {
+    if (is_suspend(t)) {
       // Should have made a connection if in suspend mode.  Something failed.
       return false;
     }

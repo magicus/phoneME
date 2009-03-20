@@ -931,6 +931,7 @@ void Thread::print_value_on(Stream* st) {
 }
 
 void Thread::trace_stack(Stream* st) {
+#if 0
 #if ENABLE_STACK_TRACE
 #if ENABLE_ISOLATES
   TaskContext maybeSwitchTask(task_id());
@@ -939,9 +940,11 @@ void Thread::trace_stack(Stream* st) {
   Frame fr(this);
   trace_stack_from(&fr, st);
 #endif
+#endif
 }
 
 void Thread::trace_stack_from(Frame* frame, Stream* st) {
+#if 0
 #if ENABLE_STACK_TRACE
   st->print_cr("Stack Trace (id=%d) [", id());
   Frame fr(*frame);
@@ -960,6 +963,7 @@ void Thread::trace_stack_from(Frame* frame, Stream* st) {
   }
   st->print_cr("]");
   st->cr();
+#endif
 #endif
 }
 

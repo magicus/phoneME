@@ -1089,7 +1089,7 @@ void VMEvent::vminit(Transport *t)
                          JDWP_COMMAND_SET(Event),
                          JDWP_COMMAND(Event, Composite));
 
-  if ((is_suspend = JavaDebugger::is_suspend()) != false) {
+  if ((is_suspend = JavaDebugger::is_suspend(t)) != false) {
     // Suspend all threads by default
     DEBUGGER_EVENT(("VM Suspend All"));
     out.write_byte(JDWP_SuspendPolicy_ALL);

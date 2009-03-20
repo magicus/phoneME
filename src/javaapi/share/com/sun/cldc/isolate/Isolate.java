@@ -970,6 +970,7 @@ public final class Isolate {
       case DEBUG_SUSPEND:
       case DEBUG_NO_SUSPEND:
         _ConnectDebugger = mode;
+        break;
       default:
         throw new IllegalArgumentException("Unknown debug mode: " + mode);
       }

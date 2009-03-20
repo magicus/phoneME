@@ -77,13 +77,13 @@ public:
     int_field_put(ops_offset(), (int)ops);
   }
 
-  ReturnOop next() { return obj_field(next_offset()); }
+  ReturnOop next() const { return obj_field(next_offset()); }
   void set_next(Oop *p) { obj_field_put(next_offset(), p); }
 
-  int task_id() { return int_field(task_id_offset()); }
+  int task_id() const { return int_field(task_id_offset()); }
   void set_task_id(int value) { int_field_put(task_id_offset(), value); }
 
-  int flags() { return int_field(flags_offset()); }
+  int flags() const { return int_field(flags_offset()); }
   void set_flags(int value) { int_field_put(flags_offset(), value); }
 
   static ReturnOop allocate(JVM_SINGLE_ARG_TRAPS) {
