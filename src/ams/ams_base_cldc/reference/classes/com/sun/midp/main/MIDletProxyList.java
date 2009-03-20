@@ -284,6 +284,17 @@ public class MIDletProxyList
     }
 
     /**
+     * Find the first MIDletProxy that has matching Isolate ID.
+     *
+     * @param isolateId Isolate ID
+     *
+     * @return a reference to the matching MIDletProxy or null if no match
+     */
+    public MIDletProxy findFirstMIDletProxy(int isolateId) {
+        return findMIDletProxyImpl(isolateId, 0, true);
+    }
+
+    /**
      * Find the MIDletProxy that has matching Isolate ID and Display ID.
      *
      * @param isolateId Isolate ID
@@ -292,12 +303,27 @@ public class MIDletProxyList
      * @return a reference to the matching MIDletProxy or null if no match
      */
     private MIDletProxy findMIDletProxy(int isolateId, int displayId) {
+        return findMIDletProxyImpl(isolateId, displayId, false);
+    }
+
+    /**
+     * Find the MIDletProxy that has matching Isolate ID and, optionally,
+     * Display ID.
+     *
+     * @param isolateId Isolate ID
+     * @param displayId Display ID
+     * @param ignoreDisplayId if false, displayId parameter is ignored
+     *
+     * @return a reference to the matching MIDletProxy or null if no match
+     */
+    private MIDletProxy findMIDletProxyImpl(int isolateId, int displayId,
+                                            boolean ignoreDisplayId) {
         synchronized (midletProxies) {
             for (int i = midletProxies.size() - 1; i >= 0; i--) {
                 MIDletProxy current = (MIDletProxy)midletProxies.elementAt(i);
 
                 if (current.getIsolateId() == isolateId &&
-		    current.containsDisplay(displayId)) {
+                    (ignoreDisplayId || current.containsDisplay(displayId))) {
                     return current;
                 }
             }
