@@ -49,6 +49,7 @@ class MMEventListener implements EventListener {
     private static final int EVENT_MEDIA_VOLUME_CHANGED		= 10;
     private static final int EVENT_MEDIA_SNAPSHOT_FINISHED	= 11;
     private static final int EVENT_MEDIA_ERROR				= 12;
+    private static final int EVENT_MEDIA_SYSTEM_VOLUME_CHANGED		= 13;
 
     MMEventListener() {
         MMEventHandler.setListener(this);

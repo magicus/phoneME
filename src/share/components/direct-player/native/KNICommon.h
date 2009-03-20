@@ -31,6 +31,7 @@
 
 #include "javacall_defs.h"
 #include "javacall_multimedia.h"
+#include "javacall_lcd.h"
 #include "javanotify_multimedia.h"
 
 #include "mm_async_exec.h"
