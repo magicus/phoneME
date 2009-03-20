@@ -353,7 +353,7 @@ javacall_dom_htmlinputelement_get_value_finish(void *context,
  * <!--
  * <p><i>Implementation note</i>: Please note that various implementations
  * of the Document Object Model (DOM) Level 2 HTML Specification 
- * interprete setting <code>HTMLInputElement</code>'s <code>value</code>
+ * interpret setting <code>HTMLInputElement</code>'s <code>value</code>
  * (here by means of <code>setValue()</code>) to <code>NULL</code>
  * differently, resulting in <code>value</code> being effectively set to 
  * e.g. <code>NULL</code> or the empty string <code>""</code> or the
@@ -400,7 +400,7 @@ javacall_dom_htmlinputelement_set_value_start(javacall_handle handle,
  * <!--
  * <p><i>Implementation note</i>: Please note that various implementations
  * of the Document Object Model (DOM) Level 2 HTML Specification 
- * interprete setting <code>HTMLInputElement</code>'s <code>value</code>
+ * interpret setting <code>HTMLInputElement</code>'s <code>value</code>
  * (here by means of <code>setValue()</code>) to <code>NULL</code>
  * differently, resulting in <code>value</code> being effectively set to 
  * e.g. <code>NULL</code> or the empty string <code>""</code> or the

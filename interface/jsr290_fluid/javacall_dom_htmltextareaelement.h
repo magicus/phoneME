@@ -172,8 +172,7 @@ javacall_dom_htmltextareaelement_get_value_finish(void *context,
  * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
- * @param value The new content of that text area. This string <span 
- * class="rfc2119">may</span> be <code>NULL</code>.
+ * @param value The new content of that text area. 
  *
  * @see #getValue
  * 
@@ -203,7 +202,6 @@ javacall_dom_htmltextareaelement_set_value_start(javacall_handle handle,
  *
  * 
  * @param context The context saved during asynchronous operation.
- * class="rfc2119">may</span> be <code>NULL</code>.
  *
  * @see #getValue
  * 
