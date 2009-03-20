@@ -505,12 +505,8 @@ public final class Isolate {
             throw new IsolateStartupException("Isolate has already started");
         }
 
-        if (_SuspendDebugging == 1) {
-            setSuspend0();
-        }
-        
         try {
-            nativeStart();
+            nativeStart(_SuspendDebugging == 1);
         } catch (IsolateResourceError e) {
             throw e;
         } catch (OutOfMemoryError e) {
@@ -1034,7 +1030,8 @@ public final class Isolate {
      * Native method will use the JNI invocation API to start a new in-process
      * JVM to execute the new Isolate.
      */
-    private native void nativeStart() throws IsolateStartupException;
+    private native void nativeStart(boolean initial_suspend)
+            throws IsolateStartupException;
 
     /**
      * The last non-daemon thread returned from main.
@@ -1140,5 +1137,4 @@ public final class Isolate {
     }
 
     private native void attachDebugger0(Isolate obj);
-    private native void setSuspend0();
 }

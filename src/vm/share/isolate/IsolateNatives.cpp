@@ -33,11 +33,6 @@ extern "C" {
  * Isolate support
  *----------------------------------------------------------------*/
 
-#if ENABLE_JAVA_DEBUGGER
-// Indicates whether the underlying task should be initialy suspended.
-static bool _suspendTask = false;
-#endif
-
 // private native static Isolate[] getIsolates0();
 ReturnOop Java_com_sun_cldc_isolate_Isolate_getIsolates0(JVM_SINGLE_ARG_TRAPS){
   return Task::current()->get_visible_active_isolates(
@@ -78,6 +73,7 @@ void Java_com_sun_cldc_isolate_Isolate_nativeStart(JVM_SINGLE_ARG_TRAPS) {
   Thread::Raw saved;
   bool has_exception = false;
   const int id = Task::allocate_task_id(JVM_SINGLE_ARG_CHECK);
+  bool initial_suspend = KNI_GetParameterAsBoolean(1);
   {
     UsingFastOops fast_oops;
     IsolateObj::Fast isolate = GET_PARAMETER_AS_OOP(0);
@@ -95,14 +91,12 @@ void Java_com_sun_cldc_isolate_Isolate_nativeStart(JVM_SINGLE_ARG_TRAPS) {
       return;
     }
   }
-
-#if ENABLE_JAVA_DEBUGGER
-  if (_suspendTask) {
-    Task::Raw task = Task::get_task(id);
-    task().set_initial_suspend();
-  }
-#endif
       
+#if ENABLE_JAVA_DEBUGGER
+  Task::Raw task = Task::get_task(id);
+  task().set_initial_suspend(initial_suspend);
+#endif
+
   // save current thread pointer, no non-raw handles please!
   Thread::Raw current = Thread::current();
   Thread::set_current(&saved);
@@ -361,14 +355,6 @@ Java_com_sun_cldc_isolate_Isolate_isDebuggerConnected(JVM_SINGLE_ARG_TRAPS) {
   return t().not_null() && t().connection_confirmed();
 #else
   return false;
-#endif
-}
-
-/* Sets java debugger suspend flag to true, which makes the starting isolate 
- * stay in suspended mode until an external debugger is connected */
-void Java_com_sun_cldc_isolate_Isolate_setSuspend0() {
-#if ENABLE_JAVA_DEBUGGER
-    _suspendTask = true;
 #endif
 }
 

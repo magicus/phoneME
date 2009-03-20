@@ -235,6 +235,10 @@ private:
     return FIELD_OFFSET(TaskDesc, _task_id);
   }
 
+  static int initial_suspend_offset() {
+    return FIELD_OFFSET(TaskDesc, _initial_suspend);
+  }
+
   static int thread_count_offset() {
     return FIELD_OFFSET(TaskDesc, _thread_count);
   }
@@ -381,10 +385,13 @@ public:
 
   void suspend();
 
-#if ENABLE_JAVA_DEBUGGER
-  static bool _is_initial_suspend;
-  void set_initial_suspend();
-  bool is_initial_suspend();
+#if ENABLE_JAVA_DEBUGGER  
+  void set_initial_suspend(bool initial_suspend) {
+      int_field_put(initial_suspend_offset(), initial_suspend ? 1 : 0);
+  }
+  bool is_initial_suspend() {
+      return int_field(initial_suspend_offset()) == 1 ? true : false;
+  }
 #endif
   
   void resume();

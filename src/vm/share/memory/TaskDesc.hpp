@@ -150,6 +150,10 @@ private:
 #endif
 #endif // ENABLE_ISOLATES
 
+#if ENABLE_JAVA_DEBUGGER
+  int               _initial_suspend;
+#endif
+  
   friend class FarClassDesc;
   friend class Universe;
   friend class OopDesc;
