@@ -54,6 +54,27 @@ extern "C" {
  */
 
 /**
+ * @define JAVACALL_TERMINATE_MIDLET
+ * @brief A return code instructing Java to terminate the MIDlet in which
+ *        an unhandled exception has occured
+ */
+#define JAVACALL_TERMINATE_MIDLET 0
+
+/**
+ * @define JAVACALL_TERMINATE_THREAD
+ * @brief A return code instructing Java to terminate the MIDlet's thread
+ *        in which an unhandled exception has happened
+ */
+#define JAVACALL_TERMINATE_THREAD 1
+
+/**
+ * @define JAVACALL_RETRY
+ * @brief A return code instructing Java to retry the memory allocation
+ *        attempt that previously caused OutOfMemoryError. 
+ */
+#define JAVACALL_RETRY 3
+
+/**
  * Structure where run time information about the midlet will be placed.
  */
 typedef struct _javacall_midlet_runtime_info {
@@ -254,6 +275,37 @@ javanotify_ams_midlet_request_runtime_info(javacall_app_id appId);
 javacall_result
 javanotify_ams_midlet_get_app_suite_id(javacall_app_id appId,
                                        javacall_suite_id* pSuiteId);
+
+/**
+ * App Manager invokes this function in response to
+ * javacall_ams_uncaught_exception() to instruct Java either to terminate
+ * the MIDlet or to terminate the thread that trown the exception.
+ *
+ * @param appId the ID used to identify the application
+ * @param responseCode a constant identfifying what Java should do with the
+ *            MIDlet in which an unhandled exception was thrown:
+ *            <tt>JAVACALL_TERMINATE_MIDLET</tt> to terminate the MIDlet,
+ *            <tt>JAVACALL_TERMINATE_THREAD</tt> to terminate the thread in
+ *                                               which the exception occured
+ */
+void javanotify_ams_uncaught_exception_handled(javacall_app_id appId,
+                                               int responseCode);
+
+/**
+ * App Manager invokes this function in response to
+ * javacall_ams_out_of_memory_exception() to instruct Java how to handle
+ * OutOfMemoryError that has just happened.
+ *
+ * @param appId the ID used to identify the application
+ * @param responseCode a constant identifying what Java should do with the
+ *            MIDlet in which an OutOfMeoryError has happened:
+ *            <tt>JAVACALL_RETRY</tt> to retry the memory allocation attempt,
+ *            <tt>JAVACALL_TERMINATE_MIDLET</tt> to terminate the MIDlet,
+ *            <tt>JAVACALL_TERMINATE_THREAD</tt> to terminate the thread in
+ *                                               which the exception occured
+ */
+void javanotify_ams_out_of_memory_handled(javacall_app_id appId,
+                                          int responseCode);
 
 /** @} */
 
