@@ -144,4 +144,10 @@ public interface DisplayAccess {
      * @return Consumer of foreground events that go through this display
      */
     public ForegroundEventConsumer getForegroundEventConsumer();
+
+   /**
+    * Sets the display mode.
+    * @param m MIDPWindow display mode
+    */
+    public void setMode(int m);
 }

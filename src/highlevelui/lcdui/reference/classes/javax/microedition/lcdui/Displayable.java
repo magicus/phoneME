@@ -475,6 +475,9 @@ public abstract class Displayable {
     /** True, if this Displayable is in full screen mode */
     boolean isInFullScreenMode; // = false
 
+    /** Current screen mode. */
+    int lastSetMode;
+
     /** True, if this Displayable is rotated */
     boolean isRotated; // = false
 

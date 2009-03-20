@@ -2384,6 +2384,16 @@ public class Display {
         window.setFullScreen(wantFullScnMode);
         // #endif ENABLE_CHAMELEON
     }
+    /**
+     * Sets the display mode.
+     * @param m MIDPWindow display mode
+     */
+    void lSetMode(int m) {
+        // #ifdef ENABLE_CHAMELEON
+        // This call will not result in any call into application code
+        window.setMode(m);
+        // #endif ENABLE_CHAMELEON
+    }
 
     /**                                                              `
      * Update the system's account of abstract commands.
@@ -3181,6 +3191,16 @@ public class Display {
          */
         public ForegroundEventConsumer getForegroundEventConsumer() {
             return Display.this.foregroundConsumer;
+        }
+
+       /**
+        * Sets the display mode.
+        * @param m MIDPWindow display mode
+        */
+        public void setMode(int m) {
+            synchronized (LCDUILock) {
+	        Display.this.lSetMode(m);
+            }
         }
     } // END DisplayAccessImpl Class
 
