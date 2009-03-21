@@ -28,6 +28,14 @@
 #include "filter_in.hpp"
 #include "audioplayer.hpp"
 
+extern "C" { FILE _iob[3] = {__iob_func()[0], __iob_func()[1], __iob_func()[2]}; }
+
+namespace On2FlvSDK
+{
+    HRESULT FlvSplitCreateInstance(IUnknown *, const IID &, void **);
+    HRESULT FlvDecVP6CreateInstance(IUnknown *, const IID &, void **);
+}
+
 audioplayer::audioplayer()
 {
     pfi  = NULL;
@@ -131,6 +139,11 @@ bool audioplayer::init(unsigned int len,const wchar_t*format)
         pgb->Release(); pgb = NULL;
         return false;
     }
+
+    IBaseFilter *pbf_flv_split;
+    IBaseFilter *pbf_flv_dec;
+    hr = On2FlvSDK::FlvSplitCreateInstance(NULL, IID_IBaseFilter, (void **)&pbf_flv_split);
+    hr = On2FlvSDK::FlvDecVP6CreateInstance(NULL, IID_IBaseFilter, (void **)&pbf_flv_dec);
 
     return true;
 }

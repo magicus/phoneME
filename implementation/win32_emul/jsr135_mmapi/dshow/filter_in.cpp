@@ -2,10 +2,10 @@
 #include "filter_in.hpp"
 #pragma comment (lib, "strmiids.lib")
 
-#define DUMP_LEVEL 0
+#define DUMP_LEVEL 1
 
 #if DUMP_LEVEL > 0
-#include "print_guid.hpp"
+#include "writer.hpp"
 #endif
 
 static void PRINTF( const char* fmt, ... ) {
