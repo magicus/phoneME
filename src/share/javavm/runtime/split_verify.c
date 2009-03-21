@@ -1541,11 +1541,6 @@ static int Vfy_verifyMethod(VfyContext* cntxt, CLASS vClass, METHOD vMethod);
 static CVMsplitVerifyStackMaps*
 CVMsplitVerifyGetMaps(CVMClassBlock* cb, CVMMethodBlock* mb);
 
-/*
- * Delete them when done.
- */
-static void deleteMapCacheClass(CVMClassTypeID classname);
-
 #ifdef CVM_DEBUG
 static void 
 printStackMap(VfyContext* cntxt, unsigned short ip);
@@ -2364,6 +2359,9 @@ CVMsplitVerifyClass(CVMExecEnv* ee, CLASS thisClass)
                /*
                 * Call the core routine
                 */
+#if 0
+                CVMconsolePrintf("*** SPLIT: %C.%M\n", thisClass, thisMethod);
+#endif
                 result = Vfy_verifyMethod(cntxt, thisClass, thisMethod);
                 if (result != 0) {
 		    if (!CVMexceptionOccurred(ee)){
@@ -2380,7 +2378,7 @@ CVMsplitVerifyClass(CVMExecEnv* ee, CLASS thisClass)
         CVMcbSetRuntimeFlag(thisClass, ee, VERIFIED);
     }
 deallocateAndReturn:
-    deleteMapCacheClass(CVMcbClassName(thisClass));
+    CVMsplitVerifyClassDeleteMaps(thisClass);
     if (cntxt != NULL){
 	free(cntxt);
     }
@@ -3065,7 +3063,7 @@ static CVMBool Vfy_checkNewInstructions(VfyContext *cntxt, METHOD thisMethod) {
  */
 
 struct CVMmapCacheClass{
-    CVMClassTypeID		classname;
+    CVMClassBlock*		cb;
     struct CVMmapCacheClass*	prev;
     struct CVMmapCacheClass*	next;
     struct CVMmapCacheMethod*	methods;
@@ -3084,10 +3082,10 @@ static struct CVMmapCacheClass*	mapCaches;
  * Lookup existing. Add if necessary.
  */
 static struct CVMmapCacheClass*
-getMapCacheClass(CVMClassTypeID classname, CVMBool doAddition){
+getMapCacheClass(CVMClassBlock* cb, CVMBool doAddition){
     struct CVMmapCacheClass* mccp = mapCaches;
     while (mccp != NULL){
-	if (mccp->classname == classname)
+	if (mccp->cb == cb)
 	    return mccp;
 	mccp = mccp->next;
     }
@@ -3096,7 +3094,7 @@ getMapCacheClass(CVMClassTypeID classname, CVMBool doAddition){
 	return NULL;
     /* Add new */
     mccp = (struct CVMmapCacheClass*)calloc(1, sizeof(*mccp));
-    mccp->classname = classname;
+    mccp->cb = cb;
     mccp->next = mapCaches;
     if (mapCaches != NULL){
 	mapCaches->prev = mccp;
@@ -3131,14 +3129,15 @@ getMapCacheMethod(
     return mcmp;
 }
 
-static void
-deleteMapCacheClass(CVMClassTypeID classname){
+void
+CVMsplitVerifyClassDeleteMaps(CVMClassBlock* cb){
     struct CVMmapCacheClass* mccp;
     struct CVMmapCacheMethod* mcmp;
     struct CVMmapCacheMethod* nextMcmp;
-    mccp = getMapCacheClass(classname, CVM_FALSE);
+    mccp = getMapCacheClass(cb, CVM_FALSE);
     if (mccp == NULL){
-	CVMconsolePrintf("deleteMapCacheClass: couldn't find %!C\n", classname);
+	CVMdebugPrintf(("deleteMapCacheClass: couldn't find %C\n", cb));
+        CVMassert(CVM_FALSE);
 	return;
     }
     /* free method structures */
@@ -3162,9 +3161,8 @@ deleteMapCacheClass(CVMClassTypeID classname){
 
 static CVMsplitVerifyStackMaps*
 CVMsplitVerifyGetMaps(CVMClassBlock* cb, CVMMethodBlock* mb){
-    CVMClassTypeID cid  = CVMcbClassName(cb);
     CVMMethodTypeID mid = CVMmbNameAndTypeID(mb);
-    struct CVMmapCacheClass* mccp = getMapCacheClass(cid, CVM_FALSE);
+    struct CVMmapCacheClass* mccp = getMapCacheClass(cb, CVM_FALSE);
     struct CVMmapCacheMethod* mcmp;
     if (mccp == NULL)
 	return NULL;
@@ -3181,12 +3179,10 @@ CVMsplitVerifyAddMaps(
     CVMMethodBlock*	mb,
     CVMsplitVerifyStackMaps* mapp)
 {
-    CVMClassTypeID cid  = CVMcbClassName(cb);
     CVMMethodTypeID mid = CVMmbNameAndTypeID(mb);
-    struct CVMmapCacheClass* mccp  = getMapCacheClass(cid, CVM_TRUE);
+    struct CVMmapCacheClass* mccp  = getMapCacheClass(cb, CVM_TRUE);
     struct CVMmapCacheMethod* mcmp = getMapCacheMethod(mccp, mid, CVM_TRUE);
 
-    CVMassert(cid != 0);
     CVMassert(mid != 0);
     if (mcmp->maps != NULL){
 	/*
@@ -3195,11 +3191,9 @@ CVMsplitVerifyAddMaps(
 	 * Minimize the amount of garbage left behind and throw a
 	 * ClassFormatError.
 	 */
-#if CVM_DEBUG
-	CVMconsolePrintf("Duplicate split verifier maps for %C.%M\n",
-		cb, mb);
-#endif
-	deleteMapCacheClass(cid);
+	CVMdebugPrintf(("Duplicate split verifier maps for %C.%M\n",
+                        cb, mb));
+	CVMsplitVerifyClassDeleteMaps(cb);
 	if (!CVMexceptionOccurred(ee)){
 	    CVMthrowClassFormatError(ee, 
 			"%C.%M: has multiple stackmap attributes", cb, mb);
@@ -3212,7 +3206,7 @@ CVMsplitVerifyAddMaps(
 }
 
 CVMBool CVMsplitVerifyClassHasMaps(CVMExecEnv* ee, CVMClassBlock* cb){
-    return getMapCacheClass(CVMcbClassName(cb), CVM_FALSE) != NULL;
+    return getMapCacheClass(cb, CVM_FALSE) != NULL;
 }
 
 #if 0
@@ -5396,14 +5390,16 @@ does this do?
                          */
                         obj_type = Vfy_popCategory1(cntxt); 
                         if (obj_type == ITEM_InitObject) {
-                            /* special case for uninitialized objects */ 
+                            /* special case for uninitialized objects */
+                            FIELD thisField = NULL;
                             NameTypeKey nameTypeKey = 
                               Pol_getFieldNameTypeKey(vPool, fieldNameAndTypeIndex);
-
-                            CLASS clazz = 
-                              (CLASS) Pol_getClass(vPool, fieldClassIndex);
-                            FIELD thisField = 
-                              Cls_lookupField((CLASS) clazz, nameTypeKey);
+                            CVMClassTypeID fieldClassKey =
+                              Pol_getClassKey(vPool, fieldClassIndex);
+                            if (Cls_getKey(vClass) == fieldClassKey) {
+                                thisField =
+                                    Cls_lookupField((CLASS) vClass, nameTypeKey);
+                            }
                             if (thisField == NULL || 
                                 Fld_getClass(thisField) != vClass) {
                                 Vfy_throw(cntxt, VE_EXPECTING_OBJ_OR_ARR_ON_STK);
@@ -5635,8 +5631,27 @@ does this do?
                         if (
                              (opcode == INVOKESPECIAL || opcode == INVOKEVIRTUAL) &&
                              (Vfy_isProtectedMethod(vClass, methodIndex))
-                           ) {
-                            Vfy_pop(cntxt,  Vfy_toVerifierType(Cls_getKey(vClass)));
+                           )
+                        {
+                            /* This is ugly. Special dispensation.  Arrays
+                               pretend to implement public Object clone()
+                               even though they don't */
+                            int is_clone = 
+                                CVMtypeidIsSameName(methodNameKey,
+                                                    CVMglobals.cloneTid);
+                            int is_object_class =
+                                (methodClassKey ==
+                                 Vfy_getSystemClassName(java_lang_Object));
+                            int is_array_object =
+                                (cntxt->vSP > 0 &&
+                                 Vfy_isArray(cntxt->vStack[cntxt->vSP - 1]));
+                            if (is_clone && is_object_class && is_array_object){
+                                Vfy_pop(cntxt,
+                                        Vfy_toVerifierType(methodClassKey));
+                            } else {
+                                Vfy_pop(cntxt,
+                                        Vfy_toVerifierType(Cls_getKey(vClass)));
+                            }
                         } else {
                             Vfy_pop(cntxt,  Vfy_toVerifierType(methodClassKey));
                         }

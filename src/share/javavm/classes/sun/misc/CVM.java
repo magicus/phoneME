@@ -164,6 +164,15 @@ public final class CVM {
 		    return parseStatus;
 		}
 		// continue with VM execution
+	    } else if (args[i].startsWith("-XsplitVerify=")) {
+		String verifyArg = args[i].substring(14);
+		if (!CVM.parseSplitVerifyOptions(verifyArg)) {
+		    System.err.println("Error parsing splitVerify arg " + args[i]);
+		    usage(nativeOptions);
+		    parseStatus = ARG_PARSE_ERR;
+		    return parseStatus;
+		}
+		// continue with VM execution
 	    } else if (args[i].startsWith("-Xopt:")) {
 		String xoptArg = args[i].substring(6);
 		if (!CVM.parseXoptOptions(xoptArg)) {
@@ -776,6 +785,11 @@ public final class CVM {
     // Re-parse the -Xverify option from the Java side
     //
     public native static boolean parseVerifyOptions(String verifyArg);
+
+    //
+    // Re-parse the -XsplitVerify option from the Java side
+    //
+    public native static boolean parseSplitVerifyOptions(String verifyArg);
 
     //
     // Re-parse the -Xopt options from the Java side

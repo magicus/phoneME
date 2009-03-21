@@ -138,4 +138,10 @@ CVMBool CVMsplitVerifyClassHasMaps(CVMExecEnv*, CVMClassBlock*);
  */
 int CVMsplitVerifyClass(CVMExecEnv*, CVMClassBlock* );
 
+/*
+ * Delete all stackmaps when done.
+ */
+void CVMsplitVerifyClassDeleteMaps(CVMClassBlock* cb);
+
+
 #endif /*SPLIT_VERIFY_H */

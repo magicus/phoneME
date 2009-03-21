@@ -1009,6 +1009,9 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     }
 #ifdef CVM_CLASSLOADING
     gs->classVerificationLevel = options->classVerificationLevel;
+#ifdef CVM_SPLIT_VERIFY
+    gs->splitVerify = options->splitVerify;
+#endif
 #endif
 
     /*

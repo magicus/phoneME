@@ -3573,6 +3573,12 @@ initializeThreadObjects(JNIEnv* env)
 #define CVM_CLASSLOADING_OPTIONS
 #endif
 
+#ifdef CVM_SPLIT_VERIFY
+#define CVM_SPLIT_VERIFY_OPTIONS "[-XsplitVerify={true|false}] "
+#else
+#define CVM_SPLIT_VERIFY_OPTIONS
+#endif
+
 #ifdef CVM_DEBUG
 #define CVM_DEBUG_OPTIONS "[-Xtrace:<val>] "
 #else
@@ -3624,6 +3630,7 @@ initializeThreadObjects(JNIEnv* env)
         CVM_MTASK_OPTIONS \
 	CVM_JAVA_ASSERTION_OPTIONS \
 	CVM_CLASSLOADING_OPTIONS \
+	CVM_SPLIT_VERIFY_OPTIONS \
 	CVM_JVMTI_OPTIONS \
 	CVM_JVMPI_OPTIONS \
 	CVM_XRUN_OPTIONS \
@@ -4054,6 +4061,10 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
      * The default verification mode is CVM_VERIFY_REMOTE
      */
     options.classVerificationLevel = CVM_VERIFY_REMOTE;
+
+#ifdef CVM_SPLIT_VERIFY
+    options.splitVerify = CVM_FALSE;
+#endif
 #endif
 
     for (argCtr = 0; argCtr < initArgs->nOptions; argCtr++) {
@@ -4126,6 +4137,20 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 		errorNo = JNI_EINVAL;
 		goto done;
 	    }	    
+#ifdef CVM_SPLIT_VERIFY
+	} else if (!strncmp(str, "-XsplitVerify=", 14)) {
+	    char* value = (char*)str + 14;
+            if (!strcmp(value, "true")) {
+                options.splitVerify = CVM_TRUE;
+            } else if (!strcmp(value, "false")) {
+                options.splitVerify = CVM_FALSE;
+	    } else {
+		CVMconsolePrintf("Illegal -XsplitVerify option: \"%s\"\n",
+				 value);
+		errorNo = JNI_EINVAL;
+		goto done;
+	    }	    
+#endif
 	}
         else if (!strncmp(str, "-Xbootclasspath=", 16) ||
                  !strncmp(str, "-Xbootclasspath:", 16)) {

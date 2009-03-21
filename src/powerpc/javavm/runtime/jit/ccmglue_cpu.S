@@ -93,7 +93,7 @@ ENTRY ( CVMCCMruntimeGCRendezvousGlue )
 	mflr	r7
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeGCRendezvous)
 
-#if defined(CVM_JIT_COPY_CCMCODE_TO_CODECACHE) && defined(CVMJIT_PATCH_BASED_GC_CHECKS)
+#if defined(CVMJIT_PATCH_BASED_GC_CHECKS)
 ENTRY ( CVMPPCruntimeGCRendezvousRetAddrAdjustGlue )
 	/* If we are copying to the code cache, then only one instruction
 	 * was needed to call us, so we want to return to it. Otherwise

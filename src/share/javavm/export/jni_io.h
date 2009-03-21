@@ -35,16 +35,16 @@ typedef struct CVMIOVector CVMIOVector;
 #define JVMIOVEC_VERSION_1 0x40000100
 
 struct CVMIOVector {
-    CVMInt32  (*CVMjniIOOpen)(const char *name, CVMInt32 mode, CVMInt32 perm);
+    CVMInt32       (*CVMjniIOOpen)(const char *name, CVMInt32 mode,
+                                   CVMInt32 perm);
     CVMInt32       (*CVMjniIOClose)(CVMInt32 filedes);
     CVMInt32       (*CVMjniIORead)(CVMInt32 filedes, void *buf, CVMUint32 nbyte);
     CVMInt32       (*CVMjniIOWrite)(CVMInt32 filedes, const void *buf,
                                CVMUint32 nbyte);
-    CVMInt64  (*CVMjniIOSeek)(CVMInt32 filedes, CVMInt64 cur, CVMInt32 whence);
+    CVMInt64       (*CVMjniIOSeek)(CVMInt32 filedes, CVMInt64 cur,
+                                   CVMInt32 whence);
     CVMInt32       (*CVMjniIOFlush)(FILE *f);
     CVMInt32       (*CVMjniIORemove)(const char *name);
-    FILE*     (*CVMjniIOgetStdFile)(CVMInt32 fd);
-    CVMInt32       (*CVMjniIOfileno)(FILE *fp);
 
     CVMInt32       (*CVMjniIOSocket)(CVMInt32 domain, CVMInt32 type, CVMInt32 proto);
     CVMInt32       (*CVMjniIOSocketClose)(CVMInt32 fd);
@@ -65,14 +65,25 @@ struct CVMIOVector {
                               CVMInt32 flags);
     CVMInt32       (*CVMjniIORecv)(CVMInt32 f, char *buf, CVMInt32 len,
                               CVMInt32 option);
-    struct hostent      *(*CVMjniIOGetHostByName)(char *hostname);
+    struct hostent *(*CVMjniIOGetHostByName)(char *hostname);
     CVMInt32       (*CVMjniIOShutdown)(CVMInt32 filedes, CVMInt32 option);
 
-    CVMBool   (*CVMjniIOThreadCreate)(CVMThreadID *thread, CVMSize stackSize,
-                                      CVMInt32 priority,
-                                      void (*func)(void *), void *arg);
-    CVMInt64  (*CVMjniIOGetTimeMillis)(void);
-    void      (*CVMjniIOSleep)(unsigned millis);
+    CVMBool        (*CVMjniIOThreadCreate)(CVMThreadID *thread,
+                                           CVMSize stackSize,
+                                           CVMInt32 priority,
+                                           void (*func)(void *), void *arg);
+    CVMInt64       (*CVMjniIOGetTimeMillis)(void);
+    void           (*CVMjniIOSleep)(unsigned millis);
+    CVMBool        (*CVMjniIOMutexInit)( CVMMutex *m);
+    void           (*CVMjniIOMutexDestroy)(CVMMutex *m);
+    void           (*CVMjniIOMutexLock)(CVMMutex *m);
+    void           (*CVMjniIOMutexUnlock)(CVMMutex *m);
+    CVMBool        (*CVMjniIOCondvarInit)(CVMCondVar *c, CVMMutex* m);
+    void           (*CVMjniIOCondvarDestroy)(CVMCondVar *c);
+    CVMBool        (*CVMjniIOCondvarWait)(CVMCondVar *c, CVMMutex *m,
+                                       CVMJavaLong millis);
+    void           (*CVMjniIOCondvarNotify)(CVMCondVar *c);
+    void           (*CVMjniIOCondvarNotifyAll)(CVMCondVar *c);
 };
 
 

@@ -36,7 +36,8 @@ space:= $(empty) $(empty)
 # to assist in locating the proper tools to use.
 #
 
-UNAME_OS 	?= $(shell uname -s)
+UNAME_OS	?= $(shell uname -s)
+UNAME_OS	:= $(UNAME_OS)
 
 # Solaris host support
 ifeq ($(UNAME_OS), SunOS)
@@ -95,6 +96,8 @@ HOST_DEVICE	?= $(UNAME_OS)
 TOOL_WHICH	?= PATH="$(PATH)" whence "$(1)"
 USE_INTERIX	?= true
 endif
+
+HOST_CPU_FAMILY := $(HOST_CPU_FAMILY)
 
 ifeq ($(HOST_OS),)
 $(error Invalid host. "$(UNAME_OS)" not recognized.)
@@ -318,7 +321,7 @@ else
     CVM_DUAL_STACK          ?= false
   endif
 endif
-CVM_SPLIT_VERIFY	?= false
+CVM_SPLIT_VERIFY	?= true
 
 CVM_JIT_REGISTER_LOCALS	?= true
 CVM_JIT_USE_FP_HARDWARE ?= false
@@ -1282,9 +1285,8 @@ BINARY_BUNDLE_DIRNAME	= $(BINARY_BUNDLE_NAME)
 DEVICE_BUNDLE_NAME	= \
 	$(BUNDLE_PRODUCT_NAME)-$(BUNDLE_VERSION)-$(BUNDLE_TARGET)-dev
 DEVICE_BUNDLE_DIRNAME	= $(DEVICE_BUNDLE_NAME)
- 
-# Location of legal documents in case JAVAME_LEGAL_DIR is not set.
-JAVAME_LEGAL_REPOSITORY = https://phoneme.dev.java.net/svn/phoneme/legal
+
+JAVAME_LEGAL_DIR ?= $(COMPONENTS_DIR)/legal
 
 # Add the svn revison number to BINARY_BUNDLE_NAME and BINARY_BUNDLE_DIRNAME
 # if requested.

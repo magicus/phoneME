@@ -511,15 +511,16 @@ endif
 # The OSS repository legal directory
 BUNDLE_INCLUDE_LIST += legal
 
-# Location of legal documents in case JAVAME_LEGAL_DIR is not set.
-JAVAME_LEGAL_REPOSITORY = https://phoneme.dev.java.net/svn/phoneme/legal
+JAVAME_LEGAL_DIR ?= $(COMPONENTS_DIR)/legal
 
-# Make sure the "legal" directory is available if set.
-ifneq ($(JAVAME_LEGAL_DIR),,)
-ifneq ($(JAVAME_LEGAL_DIR),$(wildcard $(JAVAME_LEGAL_DIR)))
-$(error JAVAME_LEGAL_DIR must be set to "legal" directory. The respository can be found at https://phoneme.dev.java.net/svn/phoneme/legal.)
-endif
-endif
+# Make sure the "legal" directory is available.
+CHECK_LEGAL_DIR = \
+	if [ ! -d $(JAVAME_LEGAL_DIR) ]; then				\
+	    echo '*** JAVAME_LEGAL_DIR must be set to the "legal"'	\
+	         'directory. The OSS version can be found at'		\
+		 'https://phoneme.dev.java.net/svn/phoneme/legal.';	\
+	    exit 2;							\
+	fi
 
 ########################
 # Build the include list
@@ -580,7 +581,6 @@ ifeq ($(USE_VERBOSE_MAKE), true)
 	@echo "	SRC_BUNDLE_NAME		= $(SRC_BUNDLE_NAME)"
 	@echo "	SRC_BUNDLE_DIRNAME	= $(SRC_BUNDLE_DIRNAME)"
 	@echo "	JAVAME_LEGAL_DIR	= $(JAVAME_LEGAL_DIR)"
-	@echo "	JAVAME_LEGAL_REPOSITORY = $(JAVAME_LEGAL_REPOSITORY)"
 
 	@echo ">>>Making "$@" for the following devices:"
 	@for s in "$(BUNDLE_DEVICE_PORTS)" ; do \
@@ -609,12 +609,10 @@ endif
 	$(AT)ln -ns $(CDC_DIR)/* $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
 	$(AT)rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip
 
-ifneq ($(JAVAME_LEGAL_DIR),)
-	$(AT)ln -ns $(JAVAME_LEGAL_DIR) $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
-else
-	$(AT)svn checkout $(SVN_QUIET_CHECKOUT) $(JAVAME_LEGAL_REPOSITORY) \
-			  $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)/legal
-endif
+	$(AT)$(CHECK_LEGAL_DIR)
+	$(AT)ln -ns $(JAVAME_LEGAL_DIR) \
+		$(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)/legal
+
 	$(AT)(cd $(INSTALLDIR); \
 	 $(ZIP) -r -q \
 		$(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip \

@@ -1031,6 +1031,36 @@ CNIsun_misc_CVM_parseVerifyOptions(CVMExecEnv* ee, CVMStackVal32 *arguments,
 }
 
 CNIEXPORT CNIResultCode
+CNIsun_misc_CVM_parseSplitVerifyOptions(CVMExecEnv* ee,
+                                        CVMStackVal32 *arguments,
+                                        CVMMethodBlock **p_mb)
+{
+    CVMBool result;
+#ifdef CVM_SPLIT_VERIFY
+    jobject opts  = &arguments[0].j.r;
+    char* value = CVMconvertJavaStringToCString(ee, opts);
+    if (value == NULL) {
+	result = CVM_FALSE;
+    } else {
+        if (!strcmp(value, "true")) {
+            CVMglobals.splitVerify = CVM_TRUE;
+            result = CVM_TRUE;
+        } else if (!strcmp(value, "false")) {
+            result = CVM_TRUE;
+            CVMglobals.splitVerify = CVM_FALSE;
+        } else {
+            result = CVM_FALSE;
+        }
+	free(value);
+    }
+#else
+    result = CVM_FALSE;
+#endif
+    arguments[0].j.i = result;
+    return CNI_SINGLE;
+}
+
+CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_parseXoptOptions(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				   CVMMethodBlock **p_mb)
 {

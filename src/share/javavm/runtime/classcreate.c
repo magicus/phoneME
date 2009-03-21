@@ -2236,9 +2236,11 @@ CVMreadCode(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock* mb,
 	    CVMUtf8*  attrName = CVMcpGetUtf8(utf8Cp, cpIdx);
 	    CVMUint32 attrLength = get4bytes(context);
 #ifdef CVM_SPLIT_VERIFY
-	    if (context->needsVerify) {
+	    if (CVMglobals.splitVerify && context->needsVerify) {
 		if (!strcmp(attrName, "StackMapTable")) {
 		    CVMBool ok;
+                    CVMtraceVerifier(("SV add StackMapTable: %C.%M\n",
+                                      context->cb, mb));
 		    ok = CVMsplitVerifyAddMaps(ee, context->cb, mb,
 			CVMreadStackMapTable(ee, context,
 			    mb, attrLength, codeLength,
@@ -2250,6 +2252,8 @@ CVMreadCode(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock* mb,
 		}
 		if (!strcmp(attrName, "StackMap")) {
 		    CVMBool ok;
+                    CVMtraceVerifier(("SV add StackMap: %C.%M\n",
+                                      context->cb, mb));
 		    ok = CVMsplitVerifyAddMaps(ee, context->cb, mb,
 			CVMreadStackMaps(ee, context, attrLength, codeLength,
 			    maxLocals, maxStack));
@@ -2432,6 +2436,15 @@ CVMfreeCommon(CVMExecEnv*ee, CVMClassBlock* cb)
     int i;
 
     CVMassert(!CVMisArrayClass(cb));
+
+#if CVM_SPLIT_VERIFY
+    /*
+     * Free up any stackmaps associated with the class.
+     */
+    if (CVMsplitVerifyClassHasMaps(ee, cb)) {
+        CVMsplitVerifyClassDeleteMaps(cb);
+    }
+#endif
     
     /*
      * Free CVMcbClassName().
