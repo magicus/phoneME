@@ -310,6 +310,7 @@ static javacall_media_format_type g_fmt[] =
     JAVACALL_MEDIA_FORMAT_VIDEO_3GPP        ,
     JAVACALL_MEDIA_FORMAT_AVI               ,
     JAVACALL_MEDIA_FORMAT_MOV               ,
+    JAVACALL_MEDIA_FORMAT_FLV               ,
     JAVACALL_MEDIA_FORMAT_JPEG              ,
     JAVACALL_MEDIA_FORMAT_JPEG2000          ,
     JAVACALL_MEDIA_FORMAT_TIFF              ,
@@ -507,6 +508,7 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MPEG1_LAYER3:
     case JC_FMT_MPEG1_LAYER3_PRO:
     case JC_FMT_RTP_MPA:
+    case JC_FMT_FLV:
         return &g_dshow_itf;
         break;
 #endif // ENABLE_MMAPI_DSHOW
@@ -611,6 +613,8 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
 
 #if defined(ENABLE_MMAPI_DSHOW) || defined(ENABLE_MMAPI_LIME)
         { L".mp3",  JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3 },
+        { L".flv",  JAVACALL_MEDIA_FORMAT_FLV },
+        { L".fxm",  JAVACALL_MEDIA_FORMAT_FLV },
 #endif // mp3
 
 #ifdef ENABLE_MMAPI_LIME

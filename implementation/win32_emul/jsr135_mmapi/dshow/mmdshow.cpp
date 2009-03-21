@@ -62,6 +62,7 @@ struct dshow_player
     int                   playerId;
     jc_fmt                mediaType;
     javacall_utf16_string uri;
+    bool                  is_video;
 
     int                   channels;
     int                   rate;
@@ -211,6 +212,7 @@ static javacall_result dshow_create(int appId,
     p->playerId         = playerId;
     p->mediaType        = mediaType;
     p->uri              = NULL;
+    p->is_video         = false;
 
     p->realized         = false;
     p->prefetched       = false;
@@ -292,6 +294,7 @@ static javacall_result dshow_get_player_controls(javacall_handle handle,
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** get controls ***\n" );
     *controls = JAVACALL_MEDIA_CTRL_VOLUME;
+    if( p->is_video ) *controls |= JAVACALL_MEDIA_CTRL_VIDEO;
     return JAVACALL_OK;
 }
 
@@ -325,10 +328,14 @@ static javacall_result dshow_realize(javacall_handle handle,
 
     p->duration = -1;
 
+    p->is_video = !wcsncmp( (const wchar_t*)mime, L"video",  wcslen( L"video" ) );
+
     if( !wcsncmp( (const wchar_t*)mime, L"audio/mp3",  wcslen( L"audio/mp3"  ) ) ||
         !wcsncmp( (const wchar_t*)mime, L"audio/mpeg", wcslen( L"audio/mpeg" ) ) ||
         !wcsncmp( (const wchar_t*)mime, L"audio/MPA",  wcslen( L"audio/MPA"  ) ) ||
-        !wcsncmp( (const wchar_t*)mime, L"audio/X-MP3-draft-00", wcslen( L"audio/X-MP3-draft-00" ) ) )
+        !wcsncmp( (const wchar_t*)mime, L"audio/X-MP3-draft-00", wcslen( L"audio/X-MP3-draft-00" ) ) || 
+        !wcsncmp( (const wchar_t*)mime, L"video/x-vp6", wcslen( L"video/x-vp6" ) ) ||
+        !wcsncmp( (const wchar_t*)mime, L"video/x-flv", wcslen( L"video/x-flv" ) ) )
     {
         p->rate     = 90000;
         p->channels = 1;
@@ -566,6 +573,44 @@ static javacall_result dshow_set_mute(javacall_handle handle,
 }
 
 /*****************************************************************************\
+V I D E O    I N T E R F A C E
+\*****************************************************************************/
+
+// following functions are defined in lcd.c (MIDP-related javacall):
+void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color );
+void lcd_set_video_rect( int x, int y, int w, int h );
+void lcd_output_video_frame( javacall_pixel* video );
+
+// ===========================================================================
+
+static javacall_result dshow_get_video_size(javacall_handle handle, long* width, long* height)
+{
+    return JAVACALL_OK;
+}
+
+static javacall_result dshow_set_video_visible(javacall_handle handle, javacall_bool visible)
+{
+    return JAVACALL_OK;
+}
+
+static javacall_result dshow_set_video_location(javacall_handle handle, long x, long y, long w, long h)
+{
+    lcd_set_video_rect( x, y, w, h );
+    return JAVACALL_OK;
+}
+
+static javacall_result dshow_set_video_alpha(javacall_handle handle, javacall_bool on, javacall_pixel color)
+{
+    lcd_set_color_key( on, color );
+    return JAVACALL_OK;
+}
+
+static javacall_result dshow_set_video_fullscreenmode(javacall_handle handle, javacall_bool fullScreenMode)
+{
+    return JAVACALL_OK;
+}
+
+/*****************************************************************************\
 I N T E R F A C E   T A B L E S
 \*****************************************************************************/
 
@@ -603,11 +648,19 @@ static media_volume_interface _dshow_volume_itf = {
     dshow_set_mute
 };
 
+static media_video_interface _dshow_video_itf = {
+    dshow_get_video_size,
+    dshow_set_video_visible,
+    dshow_set_video_location,
+    dshow_set_video_alpha,
+    dshow_set_video_fullscreenmode
+};
+
 media_interface g_dshow_itf =
 {
     &_dshow_basic_itf,
     &_dshow_volume_itf,
-    NULL,
+    &_dshow_video_itf,
     NULL,
     NULL,
     NULL,
