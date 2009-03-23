@@ -355,6 +355,7 @@ typedef struct VfyContext{
 #define VE_CONSTPOOL_OVERINDEX	       45
 #define VE_CALLS_CLINIT		       46
 #define VE_OUT_OF_MEMORY	       47
+#define VE_SWITCH_NONZERO_PADDING      48
 
 /*
  * Error messages. Keyed by VE_* error codes
@@ -408,7 +409,8 @@ verifierStatusInfo[] = {
     "field access requires correct object type",
     "constant pool overindex",
     "direct call to <clinit>",
-    "could not allocate working memory"
+    "could not allocate working memory",
+    "Non zero padding bytes in switch"
 };
 
 static const char *
@@ -2215,6 +2217,9 @@ doThrow:
 static CVMBool
 checkNewObject(VfyContext* cntxt, IPINDEX this_ip, IPINDEX target_ip) 
 {
+#if 0
+    /* This check is now disabled. See bug 6819090 and related bugs
+       like 4817320 and 6293528. */
     if (target_ip < this_ip) {
         int i, n;
 	VERIFIERTYPE* v;
@@ -2233,6 +2238,7 @@ checkNewObject(VfyContext* cntxt, IPINDEX this_ip, IPINDEX target_ip)
             }
         }
     }
+#endif
     return CVM_TRUE;
 }
 
@@ -5221,6 +5227,16 @@ does this do?
                 * Pop the switch argument
                 */
                 Vfy_pop(cntxt, ITEM_Integer);
+
+                /* 6819090: Verify 0 padding */
+                {
+                    IPINDEX padpc =  ip + 1;
+                    for (; padpc < lpc; padpc++) {
+                        if (Vfy_getUByte(cntxt, padpc) != 0) {
+                            Vfy_throw(cntxt, VE_SWITCH_NONZERO_PADDING);
+                        }
+                    }
+                }
 
                /*
                 * Get the number of keys and the delta between each entry
