@@ -572,7 +572,6 @@ public final class Manager {
      */
     public static Player createPlayer(String locator)
          throws IOException, MediaException {
-        System.out.println("[mmapi] createPlayer with " + locator);
 
         if (locator == null) {
             throw new IllegalArgumentException();
@@ -889,8 +888,6 @@ public final class Manager {
     public static Player createPlayer(InputStream stream, String type)
          throws IOException, MediaException {
 
-        System.out.println("[mmapi] createPlayer with InputStream of type " + type);
-
         if (stream == null) {
             throw new IllegalArgumentException();
         }
@@ -1023,8 +1020,6 @@ public final class Manager {
     public static Player createPlayer(DataSource source)
         throws IOException, MediaException
     {
-        System.out.println("[mmapi] createPlayer from a DataSource");
-
         if (source == null) {
             throw new IllegalArgumentException();
         }
