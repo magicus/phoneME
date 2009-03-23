@@ -33,13 +33,11 @@ import java.util.Hashtable;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
-import com.sun.mmedia.BasicPlayer;
-import com.sun.mmedia.PlayerImpl;
+import com.sun.mmedia.HighLevelPlayer;
 import com.sun.mmedia.TonePlayer;
 import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.*;
 import com.sun.mmedia.DefaultConfiguration;
-import com.sun.mmedia.DirectPlayer;
 
 import javax.microedition.media.protocol.*;
 
@@ -574,14 +572,13 @@ public final class Manager {
      */
     public static Player createPlayer(String locator)
          throws IOException, MediaException {
+
         if (locator == null) {
             throw new IllegalArgumentException();
         }
 
         String locStr = locator.toLowerCase();
 
-        // System.out.println("[mmapi] createPlayer with " + locator);
-        
         
         if( !isAudioDeviceFound && ( locStr.equals( MIDI_DEVICE_LOCATOR ) || 
                                      locStr.equals( TONE_DEVICE_LOCATOR ) ) )
@@ -1056,7 +1053,7 @@ public final class Manager {
             }
         }
 
-        PlayerImpl p = new PlayerImpl(source);
+        HighLevelPlayer p = new HighLevelPlayer(source);
 
         return p;
     }

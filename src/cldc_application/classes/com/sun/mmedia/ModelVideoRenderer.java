@@ -35,7 +35,7 @@ public class ModelVideoRenderer{
     {
     }
     
-    public static VideoRenderer getVideoRenderer(BasicPlayer player) {
+    public static VideoRenderer getVideoRenderer(HighLevelPlayer player) {
         return new MIDPVideoRenderer(player);
     }
 
