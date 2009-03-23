@@ -212,7 +212,7 @@ static javacall_result dshow_create(int appId,
     p->playerId         = playerId;
     p->mediaType        = mediaType;
     p->uri              = NULL;
-    p->is_video         = false;
+    p->is_video         = ( JC_FMT_FLV == mediaType );
 
     p->realized         = false;
     p->prefetched       = false;
@@ -318,6 +318,11 @@ static javacall_result dshow_release_device(javacall_handle handle)
     return JAVACALL_OK;
 }
 
+static bool mime_equal( javacall_const_utf16_string mime, long mimeLength, const wchar_t* v )
+{
+    return !wcsncmp( (const wchar_t*)mime, v, min( mimeLength, wcslen( v ) ) );
+}
+
 static javacall_result dshow_realize(javacall_handle handle, 
     javacall_const_utf16_string mime, 
     long mimeLength)
@@ -328,14 +333,22 @@ static javacall_result dshow_realize(javacall_handle handle,
 
     p->duration = -1;
 
-    p->is_video = !wcsncmp( (const wchar_t*)mime, L"video",  wcslen( L"video" ) );
+    if( NULL == mime || mime_equal( mime, mimeLength, L"text/plain" ) )
+    {
+        switch( p->mediaType )
+        {
+        case JC_FMT_FLV:          mime = (javacall_const_utf16_string)L"video/x-flv"; break;
+        case JC_FMT_MPEG1_LAYER3: mime = (javacall_const_utf16_string)L"audio/mpeg";  break;
+        default:
+            return JAVACALL_FAIL;
+        }
+        mimeLength = wcslen( (const wchar_t*)mime );
+    }
 
-    if( !wcsncmp( (const wchar_t*)mime, L"audio/mp3",  wcslen( L"audio/mp3"  ) ) ||
-        !wcsncmp( (const wchar_t*)mime, L"audio/mpeg", wcslen( L"audio/mpeg" ) ) ||
-        !wcsncmp( (const wchar_t*)mime, L"audio/MPA",  wcslen( L"audio/MPA"  ) ) ||
-        !wcsncmp( (const wchar_t*)mime, L"audio/X-MP3-draft-00", wcslen( L"audio/X-MP3-draft-00" ) ) || 
-        !wcsncmp( (const wchar_t*)mime, L"video/x-vp6", wcslen( L"video/x-vp6" ) ) ||
-        !wcsncmp( (const wchar_t*)mime, L"video/x-flv", wcslen( L"video/x-flv" ) ) )
+    if( mime_equal( mime, mimeLength, L"audio/mp3"  ) ||
+        mime_equal( mime, mimeLength, L"audio/mpeg" ) ||
+        mime_equal( mime, mimeLength, L"audio/MPA"  ) ||
+        mime_equal( mime, mimeLength, L"audio/X-MP3-draft-00" ) )
     {
         p->rate     = 90000;
         p->channels = 1;
@@ -345,6 +358,15 @@ static javacall_result dshow_realize(javacall_handle handle,
         get_int_param( mime, (javacall_const_utf16_string)L"channels", &(p->channels) );
         get_int_param( mime, (javacall_const_utf16_string)L"rate",     &(p->rate)     );
         get_int_param( mime, (javacall_const_utf16_string)L"duration", &(p->duration) );
+
+        p->ap.init( mimeLength, (wchar_t*)mime );
+
+        p->realized = true;
+    }
+    else if( mime_equal( mime, mimeLength, L"video/x-vp6" ) ||
+             mime_equal( mime, mimeLength, L"video/x-flv" ) )
+    {
+        p->mediaType = JC_FMT_FLV;
 
         p->ap.init( mimeLength, (wchar_t*)mime );
 
