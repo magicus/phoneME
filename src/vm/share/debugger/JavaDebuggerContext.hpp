@@ -33,6 +33,7 @@
 class JavaDebuggerContextDesc : public MixedOopDesc {
   ObjArrayDesc* _objects_by_ref_map;
   ObjArrayDesc* _objects_by_id_map;
+  int _debug_mode;
 
   friend class JavaDebuggerContext;
 };
@@ -50,6 +51,7 @@ public:
 
   DEFINE_ACCESSOR_OBJ(JavaDebuggerContext, ObjArray, objects_by_ref_map);
   DEFINE_ACCESSOR_OBJ(JavaDebuggerContext, ObjArray, objects_by_id_map);
+  DEFINE_ACCESSOR_NUM(JavaDebuggerContext, int, debug_mode);
 
 public:
   static ReturnOop allocate(JVM_SINGLE_ARG_TRAPS);

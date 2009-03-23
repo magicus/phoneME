@@ -154,7 +154,7 @@ jbyte JavaDebugger::get_jdwp_tag(Oop *p)
     }
     if (p->is_instance()) {
       GUARANTEE(fc.is_java_class(), "Must be a JavaClass");
-      JavaClass::Raw jc = fc;
+      JavaClass::Raw jc = fc.obj();
       if (jc().is_subclass_of(Universe::string_class())) {
         return JDWP_Tag_STRING;
       } else if (jc().is_subclass_of(Universe::thread_class())) { 
@@ -897,7 +897,7 @@ bool JavaDebugger::initialize_java_debugger(JVM_SINGLE_ARG_TRAPS) {
           plist().obj_at_put(i, &data_buffer);
         }
       }
-      if (is_suspend()) {
+      if (is_suspend(&t)) {
         // Wait for debugger to connect
         ops->connect_transport(&t, Transport::SERVER, -1);
       } else {
@@ -919,7 +919,7 @@ bool JavaDebugger::sync_debugger(Transport *t)
   Transport::transport_op_def_t *ops = t->ops();
 
   if (!ops->initialized(t)) {
-    if (is_suspend()) {
+    if (is_suspend(t)) {
       // Should have made a connection if in suspend mode.  Something failed.
       return false;
     }
@@ -976,7 +976,6 @@ void JavaDebugger::close_java_debugger(Transport *t) {
     }
     ops = t->ops();
     if (ops->initialized(t)) {
-      set_suspend(false);
       ops->disconnect_transport(t);
     }
       

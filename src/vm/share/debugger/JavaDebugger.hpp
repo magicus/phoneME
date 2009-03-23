@@ -83,8 +83,23 @@ public:
   static void initialize_java_debugger_task(JVM_SINGLE_ARG_TRAPS);
   static bool initialize_java_debugger(JVM_SINGLE_ARG_TRAPS);
 
+  enum DebugMode {
+    NO_DEBUG = 0,
+    DEBUG_SUSPEND = 1,
+    DEBUG_NO_SUSPEND = 2
+  };
+
 #if ENABLE_ISOLATES
   static void on_task_termination();
+
+  static DebugMode main_debug_mode() {
+    DebugMode debug_mode = NO_DEBUG;
+    if (is_debugger_option_on() &&
+        (!is_debug_isolate_option_on() || is_debug_main_option_on())) {
+      debug_mode = is_suspend_option() ? DEBUG_SUSPEND : DEBUG_NO_SUSPEND;
+    }
+    return debug_mode;
+  }
 #endif
 
   static void set_debugger_option_on(bool is_on)
@@ -114,11 +129,22 @@ public:
   {
     return _debug_main_option_on;
   }
-  static void set_suspend(bool state) {
+  static void set_suspend_option(bool state) {
     _suspend_option = state;
   }
-  static bool is_suspend() {
+  static bool is_suspend_option() {
     return _suspend_option;
+  }
+  static bool is_suspend(const Transport * t) {
+#if ENABLE_ISOLATES
+    if (t != NULL) {
+      Task::Raw task = Task::get_task(t->task_id());
+      if (task.not_null()) {
+        return task().is_debug_suspend();
+      }
+    }
+#endif
+    return is_suspend_option();
   }
   static void set_stepping(bool is_stepping) {
     if (is_stepping) {
@@ -220,3 +246,11 @@ public:
 
 #endif
 };
+
+#if ENABLE_ISOLATES && ENABLE_JAVA_DEBUGGER
+bool Task::is_debug_suspend() const {
+  JavaDebuggerContext::Raw context = debugger_context();
+  return context().debug_mode() == JavaDebugger::DEBUG_SUSPEND;
+}
+#endif
+

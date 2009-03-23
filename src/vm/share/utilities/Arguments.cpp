@@ -307,9 +307,9 @@ int Arguments::parse_one_arg(int argc, char** argv) {
     _debugger_port = jvm_atoi(argv[1]);
     count=2;
   } else if (jvm_strcmp(argv[0], "-suspend") == 0) {
-    JavaDebugger::set_suspend(true);
+    JavaDebugger::set_suspend_option(true);
   } else if (jvm_strcmp(argv[0], "-nosuspend") == 0) {
-    JavaDebugger::set_suspend(false);
+    JavaDebugger::set_suspend_option(false);
   }
 #if ENABLE_ISOLATES
   else if (jvm_strcmp(argv[0], "-debug_isolate") == 0) {
