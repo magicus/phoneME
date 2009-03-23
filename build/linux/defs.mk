@@ -28,6 +28,15 @@
 # defs for Linux target
 #
 
+# enable/disable all IAI optimizations
+LINUX_ENABLE_SET_AFFINITY ?= false
+CVM_FLAGS	+= LINUX_ENABLE_SET_AFFINITY
+LINUX_ENABLE_SET_AFFINITY_CLEANUP_ACTION = \
+	rm -rf $(CVM_OBJDIR)/globals_md.o
+ifeq ($(LINUX_ENABLE_SET_AFFINITY), true)
+CVM_DEFINES += -DLINUX_ENABLE_SET_AFFINITY
+endif
+
 CVM_TARGETROOT	= $(CVM_TOP)/src/$(TARGET_OS)
 
 #
