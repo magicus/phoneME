@@ -368,7 +368,7 @@ static javacall_result dshow_realize(javacall_handle handle,
     {
         p->mediaType = JC_FMT_FLV;
 
-        p->ap.init( mimeLength, (wchar_t*)mime );
+        p->ap.init1( mimeLength, (wchar_t*)mime );
 
         p->realized = true;
     }
@@ -384,6 +384,7 @@ static javacall_result dshow_prefetch(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** prefetch ***\n" );
+    p->ap.init2();
     p->prefetched = true;
     return JAVACALL_OK;
 }
