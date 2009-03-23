@@ -22,7 +22,7 @@
 * information or have any questions. 
 */ 
 
-#include "multimedia.h"
+#include "../multimedia.h"
 #include <dshow.h>
 #include "audioplayer.hpp"
 
@@ -359,7 +359,7 @@ static javacall_result dshow_realize(javacall_handle handle,
         get_int_param( mime, (javacall_const_utf16_string)L"rate",     &(p->rate)     );
         get_int_param( mime, (javacall_const_utf16_string)L"duration", &(p->duration) );
 
-        p->ap.init( mimeLength, (wchar_t*)mime );
+        p->ap.init1( mimeLength, (wchar_t*)mime );
 
         p->realized = true;
     }

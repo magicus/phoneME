@@ -31,7 +31,8 @@ class audioplayer
 public:
     audioplayer();
     ~audioplayer();
-    bool init(unsigned int len, const wchar_t* format);
+    bool init1(unsigned int len, const wchar_t* format);
+    bool init2();
     bool data(unsigned int len, const void* src);
     bool play();
     bool stop();

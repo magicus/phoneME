@@ -39,24 +39,6 @@ void print(WCHAR const *fmt, ...)
     //OutputDebugStringA(str8);
 }
 
-
-// {ebe1fb08-3957-47ca-af13-5827e5442e56}
-DEFINE_GUID(IID_IDirectVobSub,
-0xebe1fb08, 0x3957, 0x47ca, 0xaf, 0x13, 0x58, 0x27, 0xe5, 0x44, 0x2e, 0x56);
-
-// {59333afb-9992-4aa3-8c31-7fb03f6ffdf3}
-DEFINE_GUID(MEDIASUBTYPE_FLV,
-0x59333afb, 0x9992, 0x4aa3, 0x8c, 0x31, 0x7f, 0xb0, 0x3f, 0x6f, 0xfd, 0xf3);
-
-// {34564c46-0000-0010-8000-00aa00389b71}
-DEFINE_GUID(MEDIASUBTYPE_FLV4,
-0x34564c46, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
-
-// {35564c46-0000-0010-8000-00aa00389b71}
-DEFINE_GUID(MEDIASUBTYPE_FLV5,
-0x35564c46, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
-
-
 void error(HRESULT hr)
 {
     print("Errorcode: %x.", hr);
@@ -100,6 +82,27 @@ void error(char const *str, HRESULT hr)
 }
 
 
+// {ebe1fb08-3957-47ca-af13-5827e5442e56}
+DEFINE_GUID(IID_IDirectVobSub,
+0xebe1fb08, 0x3957, 0x47ca, 0xaf, 0x13, 0x58, 0x27, 0xe5, 0x44, 0x2e, 0x56);
+
+// {59333afb-9992-4aa3-8c31-7fb03f6ffdf3}
+DEFINE_GUID(MEDIASUBTYPE_FLV,
+0x59333afb, 0x9992, 0x4aa3, 0x8c, 0x31, 0x7f, 0xb0, 0x3f, 0x6f, 0xfd, 0xf3);
+
+// {31564c46-0000-0010-8000-00aa00389b71}
+DEFINE_GUID(MEDIASUBTYPE_FLV1,
+0x31564c46, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+
+// {34564c46-0000-0010-8000-00aa00389b71}
+DEFINE_GUID(MEDIASUBTYPE_FLV4,
+0x34564c46, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+
+// {35564c46-0000-0010-8000-00aa00389b71}
+DEFINE_GUID(MEDIASUBTYPE_FLV5,
+0x35564c46, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+
+
 struct guid_item
 {
     GUID guid;
@@ -136,9 +139,11 @@ guid_item const static guid_items[]=
     define_guid_item(IID_IStreamBuilder             ),
     define_guid_item(IID_IVideoWindow               ),
     define_guid_item(MEDIASUBTYPE_AIFF              ),
+    define_guid_item(MEDIASUBTYPE_ARGB32            ),
     define_guid_item(MEDIASUBTYPE_AU                ),
     define_guid_item(MEDIASUBTYPE_Asf               ),
     define_guid_item(MEDIASUBTYPE_Avi               ),
+    define_guid_item(MEDIASUBTYPE_CLJR              ),
     define_guid_item(MEDIASUBTYPE_DOLBY_AC3         ),
     define_guid_item(MEDIASUBTYPE_DOLBY_AC3_SPDIF   ),
     define_guid_item(MEDIASUBTYPE_DRM_Audio         ),
@@ -146,6 +151,7 @@ guid_item const static guid_items[]=
     define_guid_item(MEDIASUBTYPE_DssAudio          ),
     define_guid_item(MEDIASUBTYPE_DssVideo          ),
     define_guid_item(MEDIASUBTYPE_FLV               ),
+    define_guid_item(MEDIASUBTYPE_FLV1              ),
     define_guid_item(MEDIASUBTYPE_FLV4              ),
     define_guid_item(MEDIASUBTYPE_FLV5              ),
     define_guid_item(MEDIASUBTYPE_IEEE_FLOAT        ),
@@ -235,9 +241,9 @@ void dump_media_type(AM_MEDIA_TYPE const *pamt)
     print(", lSampleSize=%u", pamt->lSampleSize);
     print(", formattype=");
     print(pamt->formattype);
-    //print(", pUnk=0x%08x", UINT32(UINT64(pamt->pUnk)));
+    print(", pUnk=0x%08x", UINT32(UINT64(pamt->pUnk)));
     print(", cbFormat=%u", pamt->cbFormat);
-    //print(", pbFormat=0x%08x", UINT32(UINT64(pamt->pbFormat)));
+    print(", pbFormat=0x%08x", UINT32(UINT64(pamt->pbFormat)));
     if(pamt->formattype == FORMAT_WaveFormatEx && pamt->cbFormat >= sizeof(WAVEFORMATEX) && pamt->pbFormat)
     {
         WAVEFORMATEX *pwfe = (WAVEFORMATEX *) pamt->pbFormat;
@@ -360,9 +366,9 @@ BOOL dump_pin(IPin *pp, UINT32 indent)
         else
         {
             for(UINT32 i = 0; i < indent; i++) print(" ");
-            //print("0x%08x ", UINT32(UINT64(pp)));
+            print("0x%08x ", UINT32(UINT64(pp)));
             print(L"%s", id);
-            //print(" 0x%08x", UINT32(UINT64(pi.pFilter)));
+            print(" 0x%08x", UINT32(UINT64(pi.pFilter)));
             print(" %u ", pi.dir);
             print(L"%s", pi.achName);
             if(pi.pFilter) pi.pFilter->Release();
@@ -370,7 +376,7 @@ BOOL dump_pin(IPin *pp, UINT32 indent)
             hr = pp->ConnectedTo(&pp2);
             if(hr == S_OK)
             {
-                //print(" 0x%08x", UINT32(UINT64(pp2)));
+                print(" 0x%08x", UINT32(UINT64(pp2)));
                 pp2->Release();
             }
             AM_MEDIA_TYPE amt;
@@ -442,9 +448,9 @@ BOOL dump_filter(IBaseFilter *pbf, UINT32 indent)
     else
     {
         for(UINT32 i = 0; i < indent; i++) print(" ");
-        //print("0x%08x ", UINT32(UINT64(pbf)));
+        print("0x%08x ", UINT32(UINT64(pbf)));
         print(L"%s", fi.achName);
-        //print(" 0x%08x ", UINT32(UINT64(fi.pGraph)));
+        print(" 0x%08x ", UINT32(UINT64(fi.pGraph)));
         if(fi.pGraph) fi.pGraph->Release();
         LPWSTR vi;
         hr = pbf->QueryVendorInfo(&vi);
@@ -503,7 +509,7 @@ BOOL dump_filter_graph(IFilterGraph *pfg, UINT32 indent)
 {
     BOOL r = FALSE;
     for(UINT32 i = 0; i < indent; i++) print(" ");
-    //print("0x%08x\n", UINT32(UINT64(pfg)));
+    print("0x%08x\n", UINT32(UINT64(pfg)));
     if(dump_filters(pfg, indent+4)) r = TRUE;
     return r;
 }

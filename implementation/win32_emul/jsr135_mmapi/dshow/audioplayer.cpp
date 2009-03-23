@@ -48,7 +48,7 @@ audioplayer::~audioplayer()
     shutdown();
 }
 
-bool audioplayer::init(unsigned int len,const wchar_t*format)
+bool audioplayer::init1(unsigned int len,const wchar_t*format)
 {
     if(NULL != pfi) return false;
 
@@ -60,18 +60,9 @@ bool audioplayer::init(unsigned int len,const wchar_t*format)
         return false;
     }
 
-    if(!filter_in::create(L"", &pfi))
+    if(!filter_in::create(len, format, &pfi))
     {
         pfi = NULL;
-        return false;
-    }
-
-    IPin* pp;
-
-    hr = pfi->FindPin(L"Output", &pp);
-    if(hr != S_OK)
-    {
-        pfi->Release(); pfi = NULL;
         return false;
     }
 
@@ -79,7 +70,8 @@ bool audioplayer::init(unsigned int len,const wchar_t*format)
                           IID_IGraphBuilder, (void**)&pgb);
     if(hr != S_OK)
     {
-        pp->Release(); pfi->Release();
+        //pp->Release();
+        pfi->Release();
         pfi = NULL;
         return false;
     }
@@ -87,9 +79,27 @@ bool audioplayer::init(unsigned int len,const wchar_t*format)
     hr = pgb->AddFilter(pfi, L"Source Filter");
     if(hr != S_OK)
     {
-        pp->Release();
+        //pp->Release();
         pfi->Release(); pfi = NULL;
         pgb->Release(); pgb = NULL;
+        return false;
+    }
+
+    return true;
+}
+
+bool audioplayer::init2()
+{
+    if(!pfi) return false;
+
+    HRESULT hr;
+
+    IPin* pp;
+
+    hr = pfi->FindPin(L"Output", &pp);
+    if(hr != S_OK)
+    {
+        pfi->Release(); pfi = NULL;
         return false;
     }
 
