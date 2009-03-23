@@ -929,7 +929,7 @@ public final class Permissions {
         try {
             // initialization process
             // step 1: permissions list and hashtable
-            int i1, i2;
+            int i1, i2, i3;
             String [] list;
 
             /*
@@ -997,6 +997,10 @@ public final class Permissions {
                 if (tmp != null) {
                     for (i2 = 0; i2 < tmp.length; i2++) {
                         messages[i2] = replaceCRLF(tmp[i2]);
+                    }
+                    for (i3 = i2; i3 < messages.length; i3++) {
+                        /* clear unused entries in messages[] */
+                        messages[i3] = null;
                     }
                 } else {
                     messages[0] = list[i1];
