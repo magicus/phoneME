@@ -131,6 +131,16 @@ javacall_result javacall_lifecycle_platform_request(char* urlString) {
 void javacall_lifecycle_state_changed(javacall_lifecycle_state state,
                                       javacall_result status){
 
+    if (state == JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN) {
+       /*
+        * in this state, property files are already deinitialized, so we don't
+        * want to call javautil_debug_print which initializes them back.
+        */
+       javacall_print ("javacall_lifecycle_state_changed() ");
+       javacall_print ("lifecycle: event is JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN");
+       return;
+    }
+    
     javautil_debug_print (JAVACALL_LOG_INFORMATION, "lifecycle", "javacall_lifecycle_state_changed() ");
     switch(state) {
     case  JAVACALL_LIFECYCLE_MIDLET_STARTED:
