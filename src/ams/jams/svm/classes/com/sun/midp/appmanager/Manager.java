@@ -185,12 +185,12 @@ public class Manager extends MIDlet implements ApplicationManager,
      * @param suiteId ID of the midlet suite
      * @param className class name of the midlet to run
      * @param displayName display name of the midlet to run
-     * @param isDebugMode true if the midlet must be started in debug mode,
-     *                    false otherwise
+     * @param debugMode debug option for the MIDlet to be launched, one of:
+     *                  MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
      */
     public void handleODDStartMidletEvent(int suiteId, String className,
                                           String displayName,
-                                          boolean isDebugMode) {
+                                          int debugMode) {
         /*
          * Not used in SVM: midlet is started directly instead of sending
          * a message to AMS.
@@ -201,7 +201,7 @@ public class Manager extends MIDlet implements ApplicationManager,
      * Processes MIDP_ODD_REQUEST_INSTALLATION_EVENT.
      *
      * @param url URL to install from
-     * @param foce Installation "force" flag
+     * @param force Installation "force" flag
      */
     public void handleODDRequestInstallationEvent(String url, boolean force) {
         /**

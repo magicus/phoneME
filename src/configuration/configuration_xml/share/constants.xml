@@ -296,6 +296,27 @@
             Comment="Number of attempts to send notification event about record store
                      change in the case there is receiver VM task that cannot accept
                      the event."/>
+    <!--
+        Debug option values
+        Debug option values to be passed as the debugOption parameter
+        to the midp_run_midlet_with_args_cp() function.
+        When compiled with ENABLE_JAVA_DEBUGGER,
+        these values identify command line options passed to the JVM.
+        see midp_run_midlet_with_args_cp()
+    -->
+    <constant Type="int"
+              Name="MIDP_NO_DEBUG"
+              Value="0"
+              Comment="No debug."/>
+    <constant Type="int"
+              Name="MIDP_DEBUG_SUSPEND"
+              Value="1"
+              Comment="Debug: suspend the VM until the debugger sends
+                       a continue command."/>
+    <constant Type="int"
+              Name="MIDP_DEBUG_NO_SUSPEND"
+              Value="2"
+              Comment="Debug: do not wait for the debugger."/>
 </constant_class>
 </constants>
 </configuration>

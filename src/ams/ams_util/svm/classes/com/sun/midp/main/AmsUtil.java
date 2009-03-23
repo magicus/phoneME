@@ -79,17 +79,17 @@ public class AmsUtil {
      *                 &lt;= 0 if not used
      * @param profileName name of the profile to set for the new isolate;
      *                    null if not used
-     * @param isDebugMode true if the new midlet must be started in debug
-     *                    mode, false otherwise
+     * @param debugMode debug option for the MIDlet to be launched, one of:
+     *                  MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
      *
      * @return true to signal that the MIDlet suite MUST first exit before the
-     * MIDlet is run
+     *         MIDlet is run
      */
     static boolean executeWithArgs(MIDletSuiteStorage midletSuiteStorage,
             int externalAppId, int id, String midlet,
             String displayName, String arg0, String arg1, String arg2,
             int memoryReserved, int memoryTotal, int priority,
-            String profileName, boolean isDebugMode) {
+            String profileName, int debugMode) {
 
         if (id != MIDletSuite.UNUSED_SUITE_ID) {
 
@@ -116,7 +116,7 @@ public class AmsUtil {
         MIDletSuiteUtils.memoryTotal = memoryTotal;
         MIDletSuiteUtils.priority    = priority;
         MIDletSuiteUtils.profileName = profileName;
-        MIDletSuiteUtils.isDebugMode = isDebugMode;
+        MIDletSuiteUtils.debugMode = debugMode;
         
         return true;
     }

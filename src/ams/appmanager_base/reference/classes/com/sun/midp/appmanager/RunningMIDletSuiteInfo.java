@@ -57,7 +57,7 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
     /** Icon for this suite. */
     public Image icon = null;
     /** Whether suite is under debug */
-    public boolean isDebugMode = false;
+    public int debugMode = Constants.MIDP_NO_DEBUG;
     /** Whether the running suite is locked */
     private boolean locked = false;
     /** Corresponding suite */
