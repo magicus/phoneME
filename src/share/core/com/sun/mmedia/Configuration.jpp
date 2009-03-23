@@ -227,7 +227,7 @@ public abstract class Configuration {
      *
      * @return The video renderer
      */
-    public abstract VideoRenderer getVideoRenderer(BasicPlayer player);
+    public abstract VideoRenderer getVideoRenderer(HighLevelPlayer player);
 
     /**
      *  Gets the tonePlayer attribute of the Configuration object

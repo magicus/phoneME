@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.Vector;
 
 import javax.microedition.media.Control;
+import javax.microedition.media.Player;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.PlayerListener;
 import javax.microedition.media.control.VideoControl;
@@ -35,11 +36,12 @@ import javax.microedition.media.control.RateControl;
 import javax.microedition.media.control.StopTimeControl;
 import com.sun.mmedia.protocol.BasicDS;
 import javax.microedition.media.protocol.DataSource;
+import javax.microedition.media.protocol.SourceStream;
 
 /**
  * A player for the GIF89a.
  */
-public final class GIFPlayer extends BasicPlayer implements Runnable {
+final class GIFPlayer extends LowLevelPlayer implements Runnable {
     /* Single image decoder */
     private GIFImageDecoder imageDecoder;
     
@@ -128,20 +130,14 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
     private byte[] imageData;
     private int imageDataLength;
     private int lzwCodeSize;
+
+    GIFPlayer( HighLevelPlayer owner ) {
+        super( owner );
+    }
     
-    /**
-     * Sets the media source
-     *
-     * @param  source              The new source value
-     * @exception  MediaException  Description of the Exception
-     */
-    public void setSource(DataSource source)
-        throws MediaException {
-        super.setSource(source);
-        
-        if (source.getContentType() == null) {
-            ((BasicDS)source).setContentType(Configuration.MIME_IMAGE_GIF);
-        }
+    protected String doGetContentType()
+    {
+        return "image/gif";
     }
 
     /**
@@ -155,26 +151,24 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
      *                    otherwise null.
      */
     protected Control doGetControl(String type) {
-        if (type.startsWith(BasicPlayer.pkgName)) {
+        if (type.startsWith(HighLevelPlayer.pkgName)) {
             
-            type = type.substring(BasicPlayer.pkgName.length());
+            type = type.substring(HighLevelPlayer.pkgName.length());
             
-            if (type.equals(BasicPlayer.vicName) || 
-                type.equals(BasicPlayer.guiName)) {
+            if (type.equals(HighLevelPlayer.vicName) ||
+                type.equals(HighLevelPlayer.guiName)) {
                 // video control
                 return videoControl;
-            } else if (type.equals(BasicPlayer.fpcName)) { 
+            } else if (type.equals(HighLevelPlayer.fpcName)) {
                 // frame positioning control
                 return framePosControl;
-            } else if (type.equals(BasicPlayer.racName)) { 
+            } else if (type.equals(HighLevelPlayer.racName)) {
                 // rate control
                 return rateControl;
-            } else if (type.equals(BasicPlayer.stcName)) {
+            } else if (type.equals(HighLevelPlayer.stcName)) {
                 // stop time control
 
-                // StopTimeControl is implemented BasicPlayer,
-                // the parent class of GIF Player
-                return this;
+                return getOwner();
             }
         }
         return null;
@@ -213,10 +207,10 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
      * @return the new media time in microseconds.
      */
     protected long doSetMediaTime(long now) throws MediaException {
-        if (seekType == NOT_SEEKABLE)
+        if (seekType == SourceStream.NOT_SEEKABLE)
             throw new MediaException("stream not seekable");
 
-        if (state == STARTED)
+        if (getOwner().getState() == Player.STARTED)
             doStop();
 
         if (now > duration)
@@ -247,7 +241,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
 
             renderFrame();
 
-            if (state == STARTED)
+            if (getOwner().getState() == Player.STARTED)
                 // restart the player
                 doStart();
         } catch (IOException e) {
@@ -265,18 +259,19 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
      *                           be realized.
      */
     protected void doRealize() throws MediaException {          
-        duration = TIME_UNKNOWN;
+        duration = Player.TIME_UNKNOWN;
         frameCount = 0;
         mediaTimeOffset = 0;
 
-        seekType = stream.getSeekType();
+        seekType = getOwner().stream.getSeekType();
 
         // parse GIF header
         if (parseHeader()) {
             scanFrames();
 
             // initialize video control
-            videoRenderer = Configuration.getConfiguration().getVideoRenderer(this);
+            videoRenderer = Configuration.getConfiguration().getVideoRenderer(
+                    getOwner());
             videoControl = (VideoControl)videoRenderer.getVideoControl();
             videoRenderer.initRendering(VideoRenderer.XRGB888 | 
                                         VideoRenderer.USE_ALPHA,
@@ -342,7 +337,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
                     try {
                         wait(ZERO_DURATION_WAIT);
                     } catch (InterruptedException ie) { }
-                    sendEvent(PlayerListener.END_OF_MEDIA, new Long(0));
+                    getOwner().sendEvent(PlayerListener.END_OF_MEDIA, new Long(0));
                 }
             }).start();
         } else {
@@ -438,6 +433,17 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
         imageDecoder = null;
         imageData = null;
     }
+    
+    /* This means that 'Record Size Limit (reached)' event received */
+    protected void doReceiveRSL() {}
+
+    protected void doPostStart() {}
+
+    protected void doSetStopTime(long time) {}
+
+    protected void doPreStop() {}
+    
+    protected void doNotifySnapshotFinished() {}
 
     /**
      * The run method driving the play thread.
@@ -469,7 +475,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
             if (frameCount < frameTimes.size()) {
                 duration = getDuration(frameCount);
 
-                sendEvent(PlayerListener.DURATION_UPDATED, new Long(duration));
+                getOwner().sendEvent(PlayerListener.DURATION_UPDATED, new Long(duration));
             }
 
             // send an end-of-media if the player was not stopped
@@ -478,7 +484,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
             synchronized( mediaTimeLock ) {
                 mediaTimeOffset = getMicrosecondsFromStart();
                 startTime = 0;
-                sendEvent(PlayerListener.END_OF_MEDIA,
+                getOwner().sendEvent(PlayerListener.END_OF_MEDIA,
                           new Long(mediaTimeOffset * rateControl.getRate() / 100000));
             }
         }
@@ -501,7 +507,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
         }
         stopped = true;
         // send STOPPED_AT_TIME event
-        satev();
+        getOwner().satev();
     }
 
     /**
@@ -637,8 +643,8 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
 
         // report that stop time has been reached if
         // the mediaTime is greater or equal to stop time.      
-        if (stopTime != StopTimeControl.RESET && 
-            doGetMediaTime() >= stopTime) {
+        if ( getOwner().getStopTime() != StopTimeControl.RESET &&
+            doGetMediaTime() >= getOwner().getStopTime() ) {
             stopTimeReached();
         }
        
@@ -672,8 +678,8 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
                                     waitTime = 0;
                                 }
                                     
-                                if (stopTime != StopTimeControl.RESET && 
-                                    doGetMediaTime() >= stopTime) {
+                                if (getOwner().getStopTime() != StopTimeControl.RESET &&
+                                    doGetMediaTime() >= getOwner().getStopTime()) {
                                     stopTimeReached();
                                 }
                             }
@@ -691,12 +697,12 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
      * to be able to read it again
      */
     private void seekFirstFrame() throws IOException {
-        if (seekType == RANDOM_ACCESSIBLE) {
+        if (seekType == SourceStream.RANDOM_ACCESSIBLE) {
             // seek to the beginning of the first frame
-            stream.seek(firstFramePos);
+            getOwner().stream.seek(firstFramePos);
         } else { // SEEKABLE_TO_START           
             // seek to the start of stream and parse the header
-            stream.seek(0);
+            getOwner().stream.seek(0);
             parseHeader();
         }
         imageDecoder.clearImage();
@@ -773,7 +779,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
     private boolean getFrame() {            
         //System.out.println("getFrame at pos " + stream.tell());
 
-        if (stream.tell() == 0)
+        if (getOwner().stream.tell() == 0)
             parseHeader();
 
         boolean eos = false;
@@ -823,7 +829,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
         byte [] header = new byte[6];            
 
         try {
-            stream.read(header, 0, 6);
+            getOwner().stream.read(header, 0, 6);
         } catch (IOException e) {
             return false;
         }
@@ -852,7 +858,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
         byte [] globalColorTable = null;
 
         try {
-            stream.read(logicalScreenDescriptor, 0, 7);
+            getOwner().stream.read(logicalScreenDescriptor, 0, 7);
         } catch (IOException e) {
             return false;
         }
@@ -891,14 +897,14 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
             globalColorTable = new byte[size];
 
             try {
-                stream.read(globalColorTable, 0, size);
+                getOwner().stream.read(globalColorTable, 0, size);
             } catch (IOException e) {
             }
 
             imageDecoder.setGlobalPalette(tableDepth, globalColorTable, index);
         }
     
-        firstFramePos = stream.tell();
+        firstFramePos = getOwner().stream.tell();
 
         return true;
     }
@@ -951,7 +957,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
         byte [] localColorTable = null;
 
         try {
-            stream.read(imageDescriptor, 0, 9);
+            getOwner().stream.read(imageDescriptor, 0, 9);
         } catch (IOException e) {
         }
 
@@ -969,7 +975,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
             localColorTable = new byte[size];
 
             try {
-                stream.read(localColorTable, 0, size);
+                getOwner().stream.read(localColorTable, 0, size);
             } catch (IOException e) {
             }
         }
@@ -1037,7 +1043,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
                 }
                 
                 if (size > 0)
-                    idx += stream.read(imageData, idx, size);
+                    idx += getOwner().stream.read(imageData, idx, size);
             
             } while (size != 0);
                                     
@@ -1093,7 +1099,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
                 if (size > 0) {
                     byte[] data = new byte[size];
 
-                    stream.read(data, 0, size);
+                    getOwner().stream.read(data, 0, size);
                 }
             } while (size != 0);
         } catch (IOException e) {
@@ -1140,11 +1146,11 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
 
             // application identifier
             byte[] data = new byte[8];
-            stream.read(data, 0, 8);
+            getOwner().stream.read(data, 0, 8);
 
             // application authentication code
             data = new byte[3];
-            stream.read(data, 0, 3);
+            getOwner().stream.read(data, 0, 3);
 
             do {
                 size = readUnsignedByte();
@@ -1152,7 +1158,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
                 if (size > 0) {
                     data = new byte[size];
 
-                    stream.read(data, 0, size);
+                    getOwner().stream.read(data, 0, size);
                 }
             } while (size != 0);
         } catch (IOException e) {
@@ -1174,7 +1180,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
                 if (size > 0) {
                     byte[] data = new byte[size];
 
-                    stream.read(data, 0, size);
+                    getOwner().stream.read(data, 0, size);
                 }
             } while (size != 0);
         } catch (IOException e) {
@@ -1191,7 +1197,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
         byte [] graphicControl = new byte[6];
 
         try {
-            stream.read(graphicControl, 0, 6);
+            getOwner().stream.read(graphicControl, 0, 6);
         } catch (IOException e) {
         }
 
@@ -1241,7 +1247,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
      * Reads one byte from the source stream.
      */
     private int readUnsignedByte() throws IOException {
-        if (stream.read(oneByte, 0, 1) == -1)
+        if (getOwner().stream.read(oneByte, 0, 1) == -1)
             throw new IOException();
 
         return oneByte[0] & 0xff;
@@ -1292,7 +1298,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
             // a consecutive start call will start the player
             // from the seek position and not from the first
             // frame.
-            EOM = false;
+            getOwner().EOM = false;
 
             if (frameNumber < 0) {
                 frameNumber = 0;
@@ -1349,7 +1355,7 @@ public final class GIFPlayer extends BasicPlayer implements Runnable {
             // a consecutive start call will start the player
             // from the seek position and not from the first
             // frame.
-            EOM = false;
+            getOwner().EOM = false;
 
             int frames_skipped = 0;
 
