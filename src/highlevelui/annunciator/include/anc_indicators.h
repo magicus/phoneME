@@ -135,13 +135,11 @@ void anc_set_network_indicator(int counter);
 
 extern int gAncNetworkIndicatorCount;
 
-#define ANC_INIT_NETWORK_INDICATOR    { gAncNetworkIndicatorCount = 0; };
 #define ANC_INC_NETWORK_INDICATOR     { gAncNetworkIndicatorCount++; };
 #define ANC_DEC_NETWORK_INDICATOR     { if (gAncNetworkIndicatorCount > 0) \
                                             gAncNetworkIndicatorCount--; \
                                         else REPORT_WARN(LC_PROTOCOL, \
                                    "Network connection is closed without opening");};
-#define ANC_FINISH_NETWORK_INDICATOR  { gAncNetworkIndicatorCount = 0; };
 
 /** deploy the network indicator count */
 #define ANC_IND_NETWORK_INDICATOR    {  anc_set_network_indicator( \
@@ -149,14 +147,10 @@ extern int gAncNetworkIndicatorCount;
 
 #else
 
-/** reset the network indicator count */
-#define ANC_INIT_NETWORK_INDICATOR
 /** increment the network indicator count */
 #define ANC_INC_NETWORK_INDICATOR
 /** decrement the network indicator count */
 #define ANC_DEC_NETWORK_INDICATOR
-/** reset the network indicator count */
-#define ANC_FINISH_NETWORK_INDICATOR
 /** deploy the network indicator count */
 #define ANC_IND_NETWORK_INDICATOR
 #endif /* ENABLE_NETWORK_INDICATOR */
