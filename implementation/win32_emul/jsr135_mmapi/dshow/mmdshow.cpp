@@ -487,9 +487,12 @@ void lcd_output_video_frame( javacall_pixel* video );
 
 static javacall_result dshow_get_video_size(javacall_handle handle, long* width, long* height)
 {
-    *width  = 100;
-    *height = 50;
-    return JAVACALL_OK;
+    dshow_player* p = (dshow_player*)handle;
+
+    if( p->ap.get_video_size( width, height ) )
+        return JAVACALL_OK;
+    else
+        return JAVACALL_FAIL;
 }
 
 static javacall_result dshow_set_video_visible(javacall_handle handle, javacall_bool visible)

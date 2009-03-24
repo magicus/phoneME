@@ -292,3 +292,17 @@ bool player_dshow::shutdown()
 
     return true;
 }
+
+bool player_dshow::get_video_size(long* pw, long* ph)
+{
+    IBasicVideo* pbv = NULL;
+    if( NULL != pgb && S_OK == pgb->QueryInterface( IID_IBasicVideo, (void**)&pbv ) )
+    {
+        HRESULT hr = pbv->GetVideoSize( pw, ph );
+        return ( S_OK == hr );
+    }
+    else
+    {
+        return false;
+    }
+}

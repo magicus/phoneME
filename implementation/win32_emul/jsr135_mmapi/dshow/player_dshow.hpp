@@ -46,6 +46,7 @@ public:
     bool seek(double time);
     bool tell(double *time);
     bool shutdown();
+    bool get_video_size(long* pw, long* ph);
 protected:
     IGraphBuilder *pgb;
     IMediaControl *pmc;
