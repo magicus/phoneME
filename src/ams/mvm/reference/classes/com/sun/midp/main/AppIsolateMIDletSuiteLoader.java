@@ -72,9 +72,11 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
 
             if (debugMode == Constants.MIDP_DEBUG_SUSPEND) {
                 // wait for a connection from debugger
+                // this is probably unnecessary because JavaDebugger on CLDC
+                // side waits for the connection anyway
                 while (!currentIsolate.isDebuggerConnected()) {
                     try {
-                        Thread.sleep(500);
+                        Thread.sleep(100);
                     } catch (Exception e) {
                         // ignore
                     }
