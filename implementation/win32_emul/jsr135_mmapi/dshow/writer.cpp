@@ -1,3 +1,27 @@
+/*
+* Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+* DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License version
+* 2 only, as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+* General Public License version 2 for more details (a copy is
+* included at /legal/license.txt).
+*
+* You should have received a copy of the GNU General Public License
+* version 2 along with this work; if not, write to the Free Software
+* Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+* 02110-1301 USA
+*
+* Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+* Clara, CA 95054 or visit www.sun.com if you need additional
+* information or have any questions.
+*/
+
 #include <control.h>
 #include <stdio.h>
 #include <uuids.h>
@@ -12,8 +36,10 @@
 
 #include <wmcodecdsp.h>
 
+#include "types.hpp"
 
-void print(char const *fmt, ...)
+
+void print(char8 const *fmt, ...)
 {
     char str8[1024];
     va_list args;
@@ -26,7 +52,7 @@ void print(char const *fmt, ...)
     //OutputDebugStringA(str8);
 }
 
-void print(WCHAR const *fmt, ...)
+void print(char16 const *fmt, ...)
 {
     WCHAR str16[1024];
     va_list args;
@@ -60,7 +86,7 @@ void error(HRESULT hr)
     print("\n");
 }
 
-void error(char const *str, HRESULT hr)
+void error(char8 const *str, HRESULT hr)
 {
     print("%s. Errorcode: %x.", str, hr);
     WCHAR *buf;
@@ -306,9 +332,9 @@ void dump_media_type(AM_MEDIA_TYPE const *pamt)
     }
 }
 
-BOOL dump_media_types(IPin *pp, UINT32 indent)
+bool dump_media_types(IPin *pp, nat32 indent)
 {
-    BOOL r = FALSE;
+    bool r = false;
     HRESULT hr;
     IEnumMediaTypes *pemt;
     hr = pp->EnumMediaTypes(&pemt);
@@ -324,7 +350,7 @@ BOOL dump_media_types(IPin *pp, UINT32 indent)
             hr = pemt->Next(1, &pamt, NULL);
             if(hr != S_OK)
             {
-                if(hr == S_FALSE) r = TRUE;
+                if(hr == S_FALSE) r = true;
                 else error("EnumMediaTypes::Next failed", hr);
                 break;
             }
@@ -339,15 +365,15 @@ BOOL dump_media_types(IPin *pp, UINT32 indent)
         if(rc)
         {
             print("IEnumMediaTypes::Release returns %u\n", rc);
-            r = FALSE;
+            r = false;
         }
     }
     return r;
 }
 
-BOOL dump_pin(IPin *pp, UINT32 indent)
+bool dump_pin(IPin *pp, nat32 indent)
 {
-    BOOL r = FALSE;
+    bool r = false;
     HRESULT hr;
     LPWSTR id;
     hr = pp->QueryId(&id);
@@ -389,16 +415,16 @@ BOOL dump_pin(IPin *pp, UINT32 indent)
                 if(amt.cbFormat) CoTaskMemFree(amt.pbFormat);
             }
             print("\n");
-            if(dump_media_types(pp, indent + 4)) r = TRUE;
+            if(dump_media_types(pp, indent + 4)) r = true;
         }
         CoTaskMemFree(id);
     }
     return r;
 }
 
-BOOL dump_pins(IBaseFilter *pbf, UINT32 indent)
+bool dump_pins(IBaseFilter *pbf, nat32 indent)
 {
-    BOOL r = FALSE;
+    bool r = false;
     HRESULT hr;
     IEnumPins *pep;
     hr = pbf->EnumPins(&pep);
@@ -414,7 +440,7 @@ BOOL dump_pins(IBaseFilter *pbf, UINT32 indent)
             hr = pep->Next(1, &pp, NULL);
             if(hr != S_OK)
             {
-                if(hr == S_FALSE) r = TRUE;
+                if(hr == S_FALSE) r = true;
                 else error("IEnumPins::Next failed", hr);
                 break;
             }
@@ -429,15 +455,15 @@ BOOL dump_pins(IBaseFilter *pbf, UINT32 indent)
         if(rc)
         {
             print("IEnumPins::Release returns %u\n", rc);
-            r = FALSE;
+            r = false;
         }
     }
     return r;
 }
 
-BOOL dump_filter(IBaseFilter *pbf, UINT32 indent)
+bool dump_filter(IBaseFilter *pbf, nat32 indent)
 {
-    BOOL r = FALSE;
+    bool r = false;
     HRESULT hr;
     FILTER_INFO fi;
     hr = pbf->QueryFilterInfo(&fi);
@@ -461,14 +487,14 @@ BOOL dump_filter(IBaseFilter *pbf, UINT32 indent)
             CoTaskMemFree(vi);
         }
         print("\n");
-        if(dump_pins(pbf, indent + 4)) r = TRUE;
+        if(dump_pins(pbf, indent + 4)) r = true;
     }
     return r;
 }
 
-BOOL dump_filters(IFilterGraph *pfg, UINT32 indent)
+bool dump_filters(IFilterGraph *pfg, nat32 indent)
 {
-    BOOL r = FALSE;
+    bool r = false;
     HRESULT hr;
     IEnumFilters *pef;
     hr = pfg->EnumFilters(&pef);
@@ -484,7 +510,7 @@ BOOL dump_filters(IFilterGraph *pfg, UINT32 indent)
             hr = pef->Next(1, &pbf, NULL);
             if(hr != S_OK)
             {
-                if(hr == S_FALSE) r = TRUE;
+                if(hr == S_FALSE) r = true;
                 else error("EnumFilters::Next failed", hr);
                 break;
             }
@@ -499,17 +525,17 @@ BOOL dump_filters(IFilterGraph *pfg, UINT32 indent)
         if(rc)
         {
             print("EnumFilters::Release returns %u\n", rc);
-            r = FALSE;
+            r = false;
         }
     }
     return r;
 }
 
-BOOL dump_filter_graph(IFilterGraph *pfg, UINT32 indent)
+bool dump_filter_graph(IFilterGraph *pfg, nat32 indent)
 {
-    BOOL r = FALSE;
+    bool r = false;
     for(UINT32 i = 0; i < indent; i++) print(" ");
     print("0x%08x\n", UINT32(UINT64(pfg)));
-    if(dump_filters(pfg, indent+4)) r = TRUE;
+    if(dump_filters(pfg, indent+4)) r = true;
     return r;
 }

@@ -1,6 +1,30 @@
+/*
+* Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+* DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License version
+* 2 only, as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+* General Public License version 2 for more details (a copy is
+* included at /legal/license.txt).
+*
+* You should have received a copy of the GNU General Public License
+* version 2 along with this work; if not, write to the Free Software
+* Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+* 02110-1301 USA
+*
+* Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+* Clara, CA 95054 or visit www.sun.com if you need additional
+* information or have any questions.
+*/
+
+#include "filter_in.hpp"
 #include <dshow.h>
 #include <wmsdkidl.h>
-#include "filter_in.hpp"
 #pragma comment (lib, "strmiids.lib")
 
 #define DUMP_LEVEL 1
@@ -139,9 +163,10 @@ public:
     virtual HRESULT __stdcall QueryFilterInfo(FILTER_INFO *pInfo);
     virtual HRESULT __stdcall JoinFilterGraph(IFilterGraph *pGraph, LPCWSTR pName);
     virtual HRESULT __stdcall QueryVendorInfo(LPWSTR *pVendorInfo);
+
     inline static SIZE_T round(SIZE_T a);
-    virtual bool data(SIZE_T size, BYTE *p);
-    static bool create(wchar_t const *format, filter_in_filter **ppfilter);
+    virtual bool data(nat32 len, bits8 const *pdata);
+    static bool create(AM_MEDIA_TYPE const *pamt, filter_in_filter **ppfilter);
 };
 
 //----------------------------------------------------------------------------
@@ -1181,7 +1206,7 @@ inline SIZE_T filter_in_filter::round(SIZE_T a)
     return a;
 }
 
-bool filter_in_filter::data(SIZE_T size, BYTE *p)
+bool filter_in_filter::data(nat32 size, nat8 const *p)
 {
     /*IMediaSample *psample;
     HRESULT hr = ppin->pallocator->GetBuffer(&psample, NULL, NULL, 0);
@@ -1217,7 +1242,7 @@ bool filter_in_filter::data(SIZE_T size, BYTE *p)
     return true;
 }
 
-bool filter_in_filter::create(wchar_t const *format, filter_in_filter **ppfilter)
+bool filter_in_filter::create(AM_MEDIA_TYPE const *pamt, filter_in_filter **ppfilter)
 {
 #if DUMP_LEVEL > 1
     print("filter_in_filter::create called...\n");
@@ -1247,11 +1272,11 @@ bool filter_in_filter::create(wchar_t const *format, filter_in_filter **ppfilter
 // filter_in
 //----------------------------------------------------------------------------
 
-bool filter_in::create(SIZE_T size, wchar_t const *format, filter_in **ppfilter)
+bool filter_in::create(AM_MEDIA_TYPE const *pamt, filter_in **ppfilter)
 {
     if(!ppfilter) return false;
     filter_in_filter *pfilter;
-    if(!filter_in_filter::create(format, &pfilter)) return false;
+    if(!filter_in_filter::create(pamt, &pfilter)) return false;
     *ppfilter = pfilter;
     return true;
 }
