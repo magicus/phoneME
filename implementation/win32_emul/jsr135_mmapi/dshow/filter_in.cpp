@@ -1039,6 +1039,9 @@ inline nat32 filter_in_filter::round(nat32 n)
 
 bool filter_in_filter::data(nat32 len, void const *pdata)
 {
+#if write_level > 0
+    print("filter_in_filter::data(%u) called...\n", len);
+#endif
     EnterCriticalSection(&ppin->data_cs);
     nat32 l2 = ppin->data_l + len;
     if(ppin->data_a < l2)

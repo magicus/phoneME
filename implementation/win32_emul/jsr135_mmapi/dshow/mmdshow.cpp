@@ -42,8 +42,6 @@ static void PRINTF( const char* fmt, ... ) {
 //#define PRINTF printf
 
 #define XFER_BUFFER_SIZE  4096
-#define ENQUEUE_PACKETS   20
-#define EOM_TIMEOUT       5000
 
 struct dshow_player
 {
@@ -62,10 +60,12 @@ struct dshow_player
 
     BYTE                  buf[ XFER_BUFFER_SIZE ];
 
-    bool                  realized;
+    bool                  realizing;
+    bool                  prefetching;
     bool                  prefetched;
-    bool                  acquired;
     bool                  playing;
+
+    long                  bytes_buffered;
     bool                  all_data_arrived;
 
     long                  volume;
@@ -112,11 +112,13 @@ static javacall_result dshow_create(int appId,
     p->uri              = NULL;
     p->is_video         = ( JC_FMT_FLV == mediaType );
 
-    p->realized         = false;
+    p->realizing        = false;
+    p->prefetching      = false;
     p->prefetched       = false;
-    p->acquired         = false;
     p->playing          = false;
+
     p->all_data_arrived = false;
+    p->bytes_buffered   = 0;
 
     p->media_time       = 0;
     p->volume           = 100;
@@ -168,8 +170,17 @@ static javacall_result dshow_acquire_device(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** acquire device ***\n" );
 
-    p->ap.init2();
-    p->acquired = true;
+    if( p->ap.init2() )
+    {
+        PRINTF( "*** acquire device succeeded ***\n" );
+    }
+    else
+    {
+        PRINTF( "*** acquire device failed! ***\n" );
+        return JAVACALL_FAIL;
+    }
+
+    p->prefetched = true;
 
     return JAVACALL_OK;
 }
@@ -178,8 +189,6 @@ static javacall_result dshow_release_device(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** release device ***\n" );
-
-    p->acquired = false;
 
     return JAVACALL_OK;
 }
@@ -227,7 +236,7 @@ static javacall_result dshow_realize(javacall_handle handle,
 
         p->ap.init1( mimeLength, (wchar_t*)mime );
 
-        p->realized = true;
+        p->realizing = true;
     }
     else if( mime_equal( mime, mimeLength, L"video/x-vp6" ) ||
              mime_equal( mime, mimeLength, L"video/x-flv" ) )
@@ -236,7 +245,7 @@ static javacall_result dshow_realize(javacall_handle handle,
 
         p->ap.init1( mimeLength, (wchar_t*)mime );
 
-        p->realized = true;
+        p->realizing = true;
     }
     else
     {
@@ -250,7 +259,7 @@ static javacall_result dshow_prefetch(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** prefetch ***\n" );
-    p->prefetched = true;
+    p->prefetching = true;
     return JAVACALL_OK;
 }
 
@@ -262,7 +271,7 @@ static javacall_result dshow_get_java_buffer_size(javacall_handle handle,
 
     *java_buffer_size = XFER_BUFFER_SIZE;
 
-    if( p->prefetched )
+    if( p->prefetching || p->prefetched )
     {
         PRINTF( "*** 0x%08X get_java_buffer_size: XFER_BUFFER_SIZE ***\n", handle );
         *first_chunk_size = XFER_BUFFER_SIZE;
@@ -280,6 +289,7 @@ static javacall_result dshow_set_whole_content_size(javacall_handle handle,
     long whole_content_size)
 {
     dshow_player* p = (dshow_player*)handle;
+    PRINTF( "*** 0x%08X set_whole_content_size: %ld***\n", handle, whole_content_size );
     return JAVACALL_OK;
 }
 
@@ -308,9 +318,28 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
     if( 0 != *length && NULL != buffer )
     {
         assert( buffer == p->buf );
+
+        p->bytes_buffered += *length;
         p->ap.data( *length, buffer );
 
-        *need_more_data  = JAVACALL_FALSE;
+        if( p->prefetched )
+        {
+            *need_more_data  = JAVACALL_TRUE;
+        }
+        else if( p->prefetching )
+        {
+            *need_more_data  = ( p->bytes_buffered < XFER_BUFFER_SIZE * 30 ) 
+                               ? JAVACALL_TRUE : JAVACALL_FALSE;
+        }
+        else if( p->realizing )
+        {
+            *need_more_data  = JAVACALL_FALSE;
+        }
+        else
+        {
+            assert( FALSE );
+        }
+
         *next_chunk_size = XFER_BUFFER_SIZE;
 
         javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
@@ -326,8 +355,8 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
         long t = p->get_media_time();
         if( -1 != p->duration && t > p->duration ) t = p->duration;
 
-        javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
-                                          p->appId, p->playerId, JAVACALL_OK, (void*)t );
+        //javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
+        //                                  p->appId, p->playerId, JAVACALL_OK, (void*)t );
 
     }
 
@@ -346,6 +375,7 @@ static javacall_result dshow_start(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** start ***\n" );
     p->ap.play();
+    PRINTF( "*** started ***\n" );
     p->playing = true;
     return JAVACALL_OK;
 }
@@ -457,6 +487,8 @@ void lcd_output_video_frame( javacall_pixel* video );
 
 static javacall_result dshow_get_video_size(javacall_handle handle, long* width, long* height)
 {
+    *width  = 100;
+    *height = 50;
     return JAVACALL_OK;
 }
 

@@ -210,8 +210,16 @@ bool player_dshow::init2()
 {
     if(!pgb) return false;
 
+    print("Callind IGraphBuilder::Render...\n");
+
     HRESULT hr = pgb->Render(pp);
-    if(hr != S_OK) return false;
+    if(hr != S_OK)
+    {
+        print("IGraphBuilder::Render failed.\n");
+        return false;
+    }
+
+    print("IGraphBuilder::Render succeeded.\n");
 
     dump_filter_graph(pgb, 0);
 
