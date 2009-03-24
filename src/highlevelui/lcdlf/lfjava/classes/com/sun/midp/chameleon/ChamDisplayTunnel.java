@@ -109,8 +109,9 @@ public interface ChamDisplayTunnel {
      * Displayable.uCallDragContent() method.
      *
      * @param deltaY 
+     * @return desired drag amount to become stable
      */
-    public void callDragContent(int deltaY);
+    public int callDragContent(int deltaY);
 
     /**
      * Updates the scroll indicator.

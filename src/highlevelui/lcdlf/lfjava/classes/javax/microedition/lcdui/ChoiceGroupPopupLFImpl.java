@@ -810,16 +810,16 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         /**
          * Drag the contents to the specified amount of pixels.
          * @param deltaY
-         *
+         * @return desired drag amount to become stable
          */
         public int dragContent(int deltaY) {
             int newY = viewable[Y] + deltaY;
-            if (newY < 0) {
-                newY = 0;
-            } else if (newY > viewable[HEIGHT] - viewport[HEIGHT]) {
-                newY = viewable[HEIGHT] - viewport[HEIGHT];
-            }
             updatePopupLayer(newY);
+            if (newY < 0) {
+                return -newY;
+            } else if (newY > viewable[HEIGHT] - viewport[HEIGHT]) {
+                return viewable[HEIGHT] - viewport[HEIGHT] - newY;
+            }
             return 0;
         }
 

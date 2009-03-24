@@ -54,6 +54,11 @@ public class BodyLayer extends CLayer
      */
     private int pointerY = -1;
     
+    /**
+     *  Desired drag amount needed to return content
+     *  to the stable position.
+     */
+    private int stableY = 0;
 
     /**
      * Create a new BodyLayer.
@@ -387,11 +392,16 @@ public class BodyLayer extends CLayer
                 case EventConstants.DRAGGED:
                     if (pointerY != -1) {
                         int deltaY = pointerY - y;
-                        tunnel.callDragContent(deltaY);
+                        stableY = tunnel.callDragContent(deltaY);
                     }
                     pointerY = y;
                     break;
                 case EventConstants.RELEASED:
+                    if (stableY != 0) {
+                        // IMPL_NOTE: should return 0
+                        tunnel.callDragContent(stableY);
+                        stableY = 0;
+                    }
                     pointerY = -1;
                     break;
                 case EventConstants.FLICKERED:

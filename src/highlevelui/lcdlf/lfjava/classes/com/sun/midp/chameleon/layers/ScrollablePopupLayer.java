@@ -65,9 +65,10 @@ public class ScrollablePopupLayer extends PopupLayer
     private int pointerY = -1;
 
     /**
-     * number of points left to drag
+     *  Desired drag amount needed to return content
+     *  to the stable position.
      */
-    private int dragY = 0;
+    private int stableY = 0;
     
     
     
@@ -114,7 +115,7 @@ public class ScrollablePopupLayer extends PopupLayer
     /**
      * Drag the contents to the specified amount of pixels.
      * @param deltaY
-     * @returns how many pixels were not processed
+     * @return desired drag amount to become stable
      *
      */
     public int dragContent(int deltaY) {
@@ -216,17 +217,20 @@ public class ScrollablePopupLayer extends PopupLayer
         switch (type) {
             case EventConstants.PRESSED:
                 pointerY = y;
-                dragY = 0;
                 break;
             case EventConstants.DRAGGED:
                 if (pointerY != -1) {
-                    dragY = dragContent(pointerY - y + dragY);
+                    stableY = dragContent(pointerY - y);
                 }
                 pointerY = y;
                 break;
             case EventConstants.RELEASED:
+                if (stableY != 0) {
+                    // IMPL_NOTE: should return 0
+                    dragContent(stableY);
+                    stableY = 0;
+                }
                 pointerY = -1;
-                dragY = 0;
                 break;
             case EventConstants.FLICKERED:
                 //TODO: initiate continues content dragging

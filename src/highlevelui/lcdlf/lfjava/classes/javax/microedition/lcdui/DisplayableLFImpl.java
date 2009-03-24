@@ -529,15 +529,16 @@ class DisplayableLFImpl implements DisplayableLF {
     }
 
     /**
-     * This method notify displayable to drga its content
+     * This method notify displayable to drag its content
      *
      * @param deltaY
+     * @return desired drag amount to become stable
      */
-    public void uCallDragContent(int deltaY) {
+    public int uCallDragContent(int deltaY) {
         // by default nothing to do
+        return 0;
     }
-
-
+    
     /**
      * Display calls this method on it's current Displayable.
      * This function simply calls lCallPaint() after obtaining LCDUILock.

@@ -245,8 +245,9 @@ interface DisplayableLF {
      * This method notify displayable to drga its content 
      *
      * @param deltaY
+     * @return desired drag amount to become stable
      */
-    void uCallDragContent(int deltaY);
+    int uCallDragContent(int deltaY);
 
     boolean uSetRotatedStatus (boolean newStatus);
 

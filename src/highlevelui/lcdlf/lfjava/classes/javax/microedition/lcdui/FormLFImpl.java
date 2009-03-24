@@ -2375,7 +2375,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
 
     /**
      * Perform a scrolling at the given position.
-     * @param context position
+     * @param position scroll position
      */
     protected void uScrollAt(int position) {
         ItemLFImpl[] items = null;
@@ -2395,9 +2395,13 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
 
     /**
      * Perform a scrolling by specified number of pixels.
-     * @param deltaY number of pixels
+     * Returns amount of pixels to drag to return content
+     * to the stable position.
+     * @param deltaY number of pixels to scroll
+     * @return desired drag amount to become stable
      */
-    protected void uScrollBy(int deltaY) {
+    protected int uScrollBy(int deltaY) {
+        int ret = 0;
         ItemLFImpl[] items = null;
         synchronized (Display.LCDUILock) {
             items = new ItemLFImpl[numOfLFs];
@@ -2405,15 +2409,16 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         }
         int oldY = viewable[Y];
         if (owner instanceof TextBox && itemLFs[0] instanceof TextBoxLFImpl) {
-            ((TextBoxLFImpl)itemLFs[0]).uScrollBy(deltaY);
+            ret = ((TextBoxLFImpl)itemLFs[0]).uScrollBy(deltaY);
         } else {
-            super.uScrollBy(deltaY);
+            ret = super.uScrollBy(deltaY);
         }
         if (oldY != viewable[Y]) {
             uInitItemsInViewport(viewable[Y] > oldY ? Canvas.DOWN : Canvas.UP,
                                  items, traverseIndex);
             updateCommandSet();
         }
+        return ret;
     }
 
     /**

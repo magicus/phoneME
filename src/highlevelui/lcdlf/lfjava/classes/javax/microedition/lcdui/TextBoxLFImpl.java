@@ -53,6 +53,17 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
     protected boolean scrollInitialized;
 
     /**
+     * Amount of pixels left from previous content dragging
+     */
+    protected int leftToDrag = 0;
+
+    /**
+     *  Desired drag amount needed to return content
+     *  to the stable position.
+     */
+    protected int stableY = 0;
+
+    /**
      * Creates TextFieldLF for the passed in TextField.
      * @param tf The TextField associated with this TextFieldLF
      */
@@ -276,9 +287,12 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         
         Text.updateTextInfo(str, font, w, h, offset, options, cursor, info);
 
+        g.translate(0, stableY);
+
         Text.paintText(info, g, str, font, fgColor, 0xffffff - fgColor,
-                       w, h, offset, options, cursor);
+                       w, h - stableY, offset, options, cursor);
         
+        g.translate(0, -stableY);
         // just correct cursor index if the charracter has
         // been already committed 
         if (str != null && str.length() > 0) {
@@ -334,6 +348,10 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
      * @param height The height available for the Item's content
      */
     void lPaintContent(Graphics g, int width, int height) {
+        int cX = g.getClipX();
+        int cY = g.getClipY();
+        int cW = g.getClipWidth();
+        int cH = g.getClipHeight();
         g.translate(TextFieldSkin.BOX_MARGIN, TextFieldSkin.BOX_MARGIN);
         width -= (2 * TextFieldSkin.BOX_MARGIN);
         height -= ((2 * TextFieldSkin.BOX_MARGIN) +     
@@ -369,12 +387,16 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         // Input session should be retrieved from the current Display
         TextInputSession is = getInputSession();
 
+        int w = width - 2 * TextFieldSkin.PAD_H;
+        int h = height - 2 * TextFieldSkin.PAD_V;
+        g.clipRect(0, 0, w, h);
+
         paint(g, tf.buffer,
               is.getPendingChar(),
               tf.constraints, 
               ScreenSkin.FONT_INPUT_TEXT, 
               (editable ? TextFieldSkin.COLOR_FG : TextFieldSkin.COLOR_FG_UE), 
-              width - (2 * (TextFieldSkin.PAD_H)), height, 0,  
+              w, h, 0,
               Text.NORMAL, cursor, myInfo); 
 
         if (!scrollInitialized) {
@@ -395,6 +417,9 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         
 
         g.translate(-TextFieldSkin.BOX_MARGIN, -TextFieldSkin.BOX_MARGIN);
+        //restore clip
+        g.setClip(cX, cY, cW, cH);
+
     }
 
     /**
@@ -548,10 +573,43 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 
     /**
      * Perform a scrolling by specified number of pixels.
-     * @param deltaY number of pixels
+     * Returns amount of pixels to drag to return content
+     * to the stable position.
+     * @param deltaY number of pixels to scroll
+     * @return desired drag amount to become stable
      */
-    protected void uScrollBy(int deltaY) {
-        setTopVis(myInfo.topVis + deltaY);
+    protected int uScrollBy(int deltaY) {
+        leftToDrag += deltaY;
+        int lineH = ScreenSkin.FONT_INPUT_TEXT.getHeight();
+        int lineCnt = leftToDrag / lineH;
+        int newTopVis = myInfo.topVis + lineCnt;
+        int oldTopVis = myInfo.topVis;
+        if (editable) {
+            // accept the word if the PTI is currently enabled
+            acceptPTI();
+        }
+        if (newTopVis < 0) {
+            stableY = -newTopVis * lineH;
+        } else if (newTopVis > myInfo.numLines - myInfo.visLines
+                && myInfo.numLines > myInfo.visLines) {
+            stableY = (myInfo.numLines - myInfo.visLines - newTopVis)
+                    * lineH;
+        } else if (newTopVis > 0
+                && myInfo.numLines <= myInfo.visLines) {
+            stableY = -newTopVis * lineH;
+        } else {
+            stableY = 0;
+            leftToDrag %= lineH;
+            myInfo.topVis = newTopVis;
+            if (editable) {
+                cursor.y += (myInfo.topVis - oldTopVis) * ScreenSkin.FONT_INPUT_TEXT.getHeight();
+                cursor.option = Text.PAINT_GET_CURSOR_INDEX;
+            }
+            myInfo.isModified = myInfo.scrollY = true;
+        }
+
+        updateTextInfo();
+        return stableY - leftToDrag % lineH;
     }
 
     /**
@@ -567,7 +625,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         } else if (myInfo.topVis + myInfo.visLines > myInfo.numLines) {
             myInfo.topVis = myInfo.numLines - myInfo.visLines;
         }
-
+        
         if (myInfo.topVis != oldTopVis) {
             if (editable) {
                 // accept the word if the PTI is currently enabled

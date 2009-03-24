@@ -246,17 +246,21 @@ class ScreenLFImpl extends DisplayableLFImpl {
 
     /**
      * Perform a scrolling by specified number of pixels.
-     * @param deltaY number of pixels
+     * Returns amount of pixels to drag to return content
+     * to the stable position.
+     * @param deltaY number of pixels to scroll
+     * @return desired drag amount to become stable
      */
-    protected void uScrollBy(int deltaY) {
+    protected int uScrollBy(int deltaY) {
         int max = getMaxScroll();
         int newY = viewable[Y] + deltaY;
-        if (newY < 0) {
-            newY = 0;
-        } else if (newY > max) {
-            newY = max;
-        }
         viewable[Y] = newY;
+        if (viewable[Y] < 0) {
+            return -viewable[Y];
+        } else if (viewable[Y] > max) {
+            return max - viewable[Y];
+        }
+        return 0;
     }
 
     /**
@@ -327,20 +331,21 @@ class ScreenLFImpl extends DisplayableLFImpl {
     }
 
     /**
-     * This method notify displayable to drga its content
+     * This method notify displayable to drag its content
      *
      * @param deltaY
+     * @return desired drag amount to become stable
      */
-    public void uCallDragContent(int deltaY) {
+    public int uCallDragContent(int deltaY) {
         int oldY = viewable[Y];
-        uScrollBy(deltaY);
+        int ret = uScrollBy(deltaY);
         if (oldY != viewable[Y]) {
             uRequestPaint();
             setupScroll();
         }
+        return ret;
     }
 
-    
     /**
      * all scroll actions should be handled through here.
      * 

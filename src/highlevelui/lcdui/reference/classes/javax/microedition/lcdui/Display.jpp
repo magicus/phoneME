@@ -2829,12 +2829,14 @@ public class Display {
          * Displayable.uCallDragContent() method.
          *
          * @param deltaY
+         * @return desired drag amount to become stable
          */
-        public void callDragContent(int deltaY) {
+        public int callDragContent(int deltaY) {
             DisplayableLF currentCopy = Display.this.current;
             if (currentCopy != null) {
-                currentCopy.uCallDragContent(deltaY);
+                return currentCopy.uCallDragContent(deltaY);
             }
+            return 0;
         }
 
         /**
