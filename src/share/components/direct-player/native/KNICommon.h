@@ -31,8 +31,14 @@
 
 #include "javacall_defs.h"
 #include "javacall_multimedia.h"
-#include "javacall_lcd.h"
 #include "javanotify_multimedia.h"
+
+#ifndef RGB2PIXELTYPE
+#define RGB2PIXELTYPE(r,g,b) (( ((javacall_pixel)(b)) >> 3) & 0x1f)        \
+                          | ((( ((javacall_pixel)(g)) >> 2) & 0x3f) << 5)  \
+                          | ((( ((javacall_pixel)(r)) >> 3) & 0x1f) << 11)
+#endif
+
 
 #include "mm_async_exec.h"
 
