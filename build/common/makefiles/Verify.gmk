@@ -452,8 +452,8 @@ USE_VERIFY_ONCE::
 USE_ON_DEVICE_DEBUG::
 	@if [ "$(USE_ON_DEVICE_DEBUG)" = "true" ]; then \
 	  if [ "$(PRECOMPILED_ODD)" = "true" ]; then \
-	    if [ -z "$(FULL_ODD_JAR)" ]; then \
-	      echo "ERROR: FULL_ODD_JAR must be set when USE_ON_DEVICE_DEBUG and PRECOMPILED_ODD are true"; \
+	    if [ -z "$(ODD_JAR)" ]; then \
+	      echo "ERROR: ODD_JAR must be set when USE_ON_DEVICE_DEBUG and PRECOMPILED_ODD are true"; \
 	      exit -1; \
 	    fi; \
 	  else \

@@ -35,6 +35,6 @@
 #
 SUBSYSTEMS += on_device_debug_precompiled
 
-$(MIDP_CLASSES_ZIP):: $(FULL_ODD_JAR) $(CLASSBINDIR)
+$(MIDP_CLASSES_ZIP):: $(ODD_JAR) $(CLASSBINDIR)
 	@echo " ... uncompressing $<" $(LOG)
 	$(A)(cd $(CLASSBINDIR) && $(JAR_CMD) -xf $<) $(LOG)
