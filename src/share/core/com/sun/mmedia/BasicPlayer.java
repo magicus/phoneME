@@ -529,7 +529,7 @@ public abstract class BasicPlayer
             prefetch();
         }
 
-        if (isDevicePlayer() && !hasToneSequenceSet) {
+        if (hasZeroDuration()) {
             sendEvent(PlayerListener.STARTED, new Long(0));
             sendEvent( PlayerListener.END_OF_MEDIA, new Long(0) );
             return;
@@ -812,6 +812,9 @@ public abstract class BasicPlayer
      */
     protected abstract long doSetMediaTime(long now) throws MediaException;
 
+    private boolean hasZeroDuration() {
+        return (isDevicePlayer() && !hasToneSequenceSet);
+    }
 
     /**
      * Gets this <code>Player</code>'s current <i>media time</i>.
@@ -824,6 +827,9 @@ public abstract class BasicPlayer
      */
     public long getMediaTime() {
         chkClosed(false);
+        if (hasZeroDuration()) {
+            return 0;
+        }
         return doGetMediaTime();
     }
 
@@ -862,6 +868,9 @@ public abstract class BasicPlayer
      */
     public long getDuration() {
         chkClosed(false);
+        if (hasZeroDuration()) {
+            return 0;
+        }
         return doGetDuration();
     }
 
