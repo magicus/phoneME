@@ -30,6 +30,6 @@
 class filter_in : public IBaseFilter
 {
 public:
-    virtual bool data(nat32 len, bits8 const *pdata) = 0;
+    virtual bool data(nat32 len, void const *pdata) = 0;
     static bool create(AM_MEDIA_TYPE const *pamt, filter_in **ppfilter);
 };

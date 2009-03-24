@@ -22,66 +22,177 @@
 * information or have any questions.
 */
 
-#include<dshow.h>
-#include<wmsdkidl.h>
-
-#include "filter_in.hpp"
+#include <control.h>
+#include <stdio.h>
+#include <uuids.h>
 #include "audioplayer.hpp"
+#include "filter_in.hpp"
 
-extern "C" { FILE _iob[3] = {__iob_func()[0], __iob_func()[1], __iob_func()[2]}; }
+
+nat32 const null = 0;
+
+
+extern "C" FILE _iob[3] = {__iob_func()[0], __iob_func()[1], __iob_func()[2]};
+
 
 namespace On2FlvSDK
 {
-    HRESULT FlvSplitCreateInstance(IUnknown *, const IID &, void **);
-    HRESULT FlvDecVP6CreateInstance(IUnknown *, const IID &, void **);
+    HRESULT FlvSplitCreateInstance(IUnknown *, IID const &, void **);
+    HRESULT FlvDecVP6CreateInstance(IUnknown *, IID const &, void **);
 }
+
+// {59333afb-9992-4aa3-8c31-7fb03f6ffdf3}
+DEFINE_GUID(MEDIASUBTYPE_FLV,
+0x59333afb, 0x9992, 0x4aa3, 0x8c, 0x31, 0x7f, 0xb0, 0x3f, 0x6f, 0xfd, 0xf3);
+
 
 audioplayer::audioplayer()
 {
-    pfi  = NULL;
-    pgb  = NULL;
-    pmc  = NULL;
+    pgb = null;
 }
 
 audioplayer::~audioplayer()
 {
-    shutdown();
+    if(pgb) shutdown();
 }
 
-bool audioplayer::init1(unsigned int len,const wchar_t*format)
+bool audioplayer::init1(nat32 /*len*/, char16 * /*format*/)
 {
-    if(NULL != pfi) return false;
+    if(pgb) return false;
 
-    HRESULT hr = S_OK;
+    HRESULT hr = CoInitializeEx(null, COINIT_MULTITHREADED);
+    if(FAILED(hr)) return false;
 
-    hr = CoInitializeEx(NULL,COINIT_MULTITHREADED);
-    if( FAILED( hr ) )
-    {
-        return false;
-    }
-
-    if(!filter_in::create(0, &pfi))
-    {
-        pfi = NULL;
-        return false;
-    }
-
-    hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
-                          IID_IGraphBuilder, (void**)&pgb);
+    hr = CoCreateInstance(CLSID_FilterGraph, null, CLSCTX_INPROC_SERVER,
+        IID_IGraphBuilder, (void **)&pgb);
     if(hr != S_OK)
     {
-        //pp->Release();
+        CoUninitialize();
+        return false;
+    }
+
+    hr = pgb->QueryInterface(IID_IMediaControl, (void **)&pmc);
+    if(hr != S_OK)
+    {
+        pgb->Release();
+        pgb = null;
+        CoUninitialize();
+        return false;
+    }
+
+    hr = pgb->QueryInterface(IID_IMediaSeeking, (void **)&pms);
+    if(hr != S_OK)
+    {
+        pmc->Release();
+        pgb->Release();
+        pgb = null;
+        CoUninitialize();
+        return false;
+    }
+
+    AM_MEDIA_TYPE amt;
+    amt.majortype = MEDIATYPE_Stream;
+    amt.subtype = MEDIASUBTYPE_FLV;
+    amt.bFixedSizeSamples = TRUE;
+    amt.bTemporalCompression = FALSE;
+    amt.lSampleSize = 0;
+    amt.formattype = FORMAT_None;
+    amt.pUnk = null;
+    amt.cbFormat = 0;
+    amt.pbFormat = null;
+    if(!filter_in::create(&amt, &pfi))
+    {
+        pms->Release();
+        pmc->Release();
+        pgb->Release();
+        pgb = null;
+        CoUninitialize();
+        return false;
+    }
+
+    hr = pfi->FindPin(L"Output", &pp);
+    if(hr != S_OK)
+    {
         pfi->Release();
-        pfi = NULL;
+        pms->Release();
+        pmc->Release();
+        pgb->Release();
+        pgb = null;
+        CoUninitialize();
+        return false;
+    }
+
+    hr = On2FlvSDK::FlvSplitCreateInstance(null, IID_IBaseFilter,
+        (void **)&pbf_flv_split);
+    if(hr != S_OK)
+    {
+        pp->Release();
+        pfi->Release();
+        pms->Release();
+        pmc->Release();
+        pgb->Release();
+        pgb = null;
+        CoUninitialize();
+        return false;
+    }
+
+    hr = On2FlvSDK::FlvDecVP6CreateInstance(null, IID_IBaseFilter,
+        (void **)&pbf_flv_dec);
+    if(hr != S_OK)
+    {
+        pbf_flv_split->Release();
+        pp->Release();
+        pfi->Release();
+        pms->Release();
+        pmc->Release();
+        pgb->Release();
+        pgb = null;
+        CoUninitialize();
         return false;
     }
 
     hr = pgb->AddFilter(pfi, L"Source Filter");
     if(hr != S_OK)
     {
-        //pp->Release();
-        pfi->Release(); pfi = NULL;
-        pgb->Release(); pgb = NULL;
+        pbf_flv_dec->Release();
+        pbf_flv_split->Release();
+        pp->Release();
+        pfi->Release();
+        pms->Release();
+        pmc->Release();
+        pgb->Release();
+        pgb = null;
+        CoUninitialize();
+        return false;
+    }
+
+    hr = pgb->AddFilter(pbf_flv_split, L"FLV splitter");
+    if(hr != S_OK)
+    {
+        pbf_flv_dec->Release();
+        pbf_flv_split->Release();
+        pp->Release();
+        pfi->Release();
+        pms->Release();
+        pmc->Release();
+        pgb->Release();
+        pgb = null;
+        CoUninitialize();
+        return false;
+    }
+
+    hr = pgb->AddFilter(pbf_flv_dec, L"FLV decoder");
+    if(hr != S_OK)
+    {
+        pbf_flv_dec->Release();
+        pbf_flv_split->Release();
+        pp->Release();
+        pfi->Release();
+        pms->Release();
+        pmc->Release();
+        pgb->Release();
+        pgb = null;
+        CoUninitialize();
         return false;
     }
 
@@ -90,156 +201,77 @@ bool audioplayer::init1(unsigned int len,const wchar_t*format)
 
 bool audioplayer::init2()
 {
-    if(!pfi) return false;
+    if(!pgb) return false;
 
-    HRESULT hr;
-
-    IPin* pp;
-
-    hr = pfi->FindPin(L"Output", &pp);
-    if(hr != S_OK)
-    {
-        pfi->Release(); pfi = NULL;
-        return false;
-    }
-
-    hr = pgb->Render(pp);
-    pp->Release();
-
-    if(hr != S_OK)
-    {
-        pfi->Release(); pfi = NULL;
-        pgb->Release(); pgb = NULL;
-        return false;
-    }
-
-    hr = pgb->QueryInterface(IID_IMediaControl, (void**)&pmc);
-    if(hr != S_OK)
-    {
-        pfi->Release(); pfi = NULL;
-        pgb->Release(); pgb = NULL;
-        return false;
-    }
-
-    hr = pgb->QueryInterface(IID_IMediaSeeking, (void**)&pms);
-    if( FAILED( hr ) )
-    {
-        pmc->Release(); pmc = NULL;
-        pfi->Release(); pfi = NULL;
-        pgb->Release(); pgb = NULL;
-        return false;
-    }
+    HRESULT hr = pgb->Render(pp);
+    if(hr != S_OK) return false;
 
     hr = pmc->Pause();
-    if( FAILED( hr ) )
-    {
-        pms->Release(); pms = NULL;
-        pmc->Release(); pmc = NULL;
-        pfi->Release(); pfi = NULL;
-        pgb->Release(); pgb = NULL;
-        return false;
-    }
+    if(FAILED(hr)) return false;
 
-    hr = pms->SetTimeFormat( &TIME_FORMAT_MEDIA_TIME );
-    if( FAILED( hr ) )
-    {
-        pms->Release(); pms = NULL;
-        pmc->Release(); pmc = NULL;
-        pfi->Release(); pfi = NULL;
-        pgb->Release(); pgb = NULL;
-        return false;
-    }
-
-    IBaseFilter *pbf_flv_split;
-    IBaseFilter *pbf_flv_dec;
-    hr = On2FlvSDK::FlvSplitCreateInstance(NULL, IID_IBaseFilter, (void **)&pbf_flv_split);
-    hr = On2FlvSDK::FlvDecVP6CreateInstance(NULL, IID_IBaseFilter, (void **)&pbf_flv_dec);
+    hr = pms->SetTimeFormat(&TIME_FORMAT_MEDIA_TIME);
+    if(hr != S_OK) return false;
 
     return true;
 }
 
-bool audioplayer::data(unsigned int len,const void*src)
+bool audioplayer::data(nat32 len, void const *pdata)
 {
-    if(NULL == pfi) return false;
-    return pfi->data(len, (UINT8*)src);
+    if(!pgb) return false;
+
+    return pfi->data(len, pdata);
 }
 
 bool audioplayer::play()
 {
-    if(NULL == pmc) return false;
-    HRESULT hr = pmc->Run();
-    return SUCCEEDED(hr);
+    if(!pgb) return false;
+
+    return SUCCEEDED(pmc->Run());
 }
 
 bool audioplayer::stop()
 {
-    if(NULL == pmc) return false;
-    HRESULT hr = pmc->Pause();
-    return SUCCEEDED(hr);
+    if(!pgb) return false;
+
+    return SUCCEEDED(pmc->Pause());
 }
 
-bool audioplayer::seek(double time)
+bool audioplayer::seek(double /*time*/)
 {
     return false;
 }
 
-bool audioplayer::tell(double*time)
+bool audioplayer::tell(double *time)
 {
-    if(NULL == pgb) return false;
-
-    /*
-    IMediaPosition* pmp = NULL;
-
-    HRESULT hr = pgb->QueryInterface(IID_IMediaPosition, (void**)&pmp);
-    if(NULL == pmp) return false;
-
-    hr = pmp->get_CurrentPosition(time);
-    pmp->Release();
-    return SUCCEEDED(hr);
-    */
-
-    HRESULT hr = pgb->QueryInterface(IID_IMediaSeeking, (void**)&pms);
-    if(NULL == pms) return false;
+    if(!pgb) return false;
 
     LONGLONG cur;
-    hr = pms->GetCurrentPosition( &cur );
-    if( SUCCEEDED( hr ) )
-    {
-        *time = double(cur) / 1E7;
-        return true;
-    }
-    else
+    HRESULT hr = pms->GetCurrentPosition(&cur);
+    if(hr != S_OK)
     {
         *time = -1;
         return false;
+    }
+    else
+    {
+        *time = double(cur) / 1e7;
+        return true;
     }
 }
 
 bool audioplayer::shutdown()
 {
-    if(NULL != pms)
-    {
-        pms->Release();
-        pms = NULL;
-    }
+    if(!pgb) return false;
 
-    if(NULL != pmc)
-    {
-        pmc->Release();
-        pmc = NULL;
-    }
-
-    if(NULL != pgb)
-    {
-        pgb->Release();
-        pgb = NULL;
-    }
-
-    if(NULL != pfi)
-    {
-        pfi->Release();
-        pfi = NULL;
-    }
+    pbf_flv_dec->Release();
+    pbf_flv_split->Release();
+    pp->Release();
+    pfi->Release();
+    pms->Release();
+    pmc->Release();
+    pgb->Release();
+    pgb = null;
+    CoUninitialize();
 
     return true;
 }

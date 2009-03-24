@@ -24,6 +24,13 @@
 
 #pragma once
 
+#include "types.hpp"
+
+struct IBaseFilter;
+struct IGraphBuilder;
+struct IMediaControl;
+struct IMediaSeeking;
+struct IPin;
 class filter_in;
 
 class audioplayer
@@ -31,17 +38,20 @@ class audioplayer
 public:
     audioplayer();
     ~audioplayer();
-    bool init1(unsigned int len, const wchar_t* format);
+    bool init1(nat32 len, char16 *format);
     bool init2();
-    bool data(unsigned int len, const void* src);
+    bool data(nat32 len, void const *pdata);
     bool play();
     bool stop();
     bool seek(double time);
-    bool tell(double*time);
+    bool tell(double *time);
     bool shutdown();
 protected:
-    filter_in*     pfi;
-    IGraphBuilder* pgb;
-    IMediaControl* pmc;
-    IMediaSeeking* pms;
+    IGraphBuilder *pgb;
+    IMediaControl *pmc;
+    IMediaSeeking *pms;
+    filter_in *pfi;
+    IPin *pp;
+    IBaseFilter *pbf_flv_split;
+    IBaseFilter *pbf_flv_dec;
 };
