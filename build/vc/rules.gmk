@@ -22,6 +22,9 @@
 # information or have any questions.
 #
 
+# set USE_VS2005 to true for VC8, VC9
+USE_VS2005 ?= true
+
 .PHONY: all pre_target local_vc post_target JAVACALL_EXTRA_LIBS
 
 all: pre_target javacall_common local_vc post_target
