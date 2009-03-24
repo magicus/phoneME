@@ -33,11 +33,11 @@ struct IMediaSeeking;
 struct IPin;
 class filter_in;
 
-class audioplayer
+class player_dshow
 {
 public:
-    audioplayer();
-    ~audioplayer();
+    player_dshow();
+    ~player_dshow();
     bool init1(nat32 len, char16 *format);
     bool init2();
     bool data(nat32 len, void const *pdata);

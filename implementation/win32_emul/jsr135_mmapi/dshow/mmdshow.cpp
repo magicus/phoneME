@@ -24,7 +24,7 @@
 
 #include "../multimedia.h"
 #include <dshow.h>
-#include "audioplayer.hpp"
+#include "player_dshow.hpp"
 
 //=============================================================================
 
@@ -71,7 +71,7 @@ struct dshow_player
     long                  volume;
     javacall_bool         mute;
 
-    audioplayer           ap;
+    player_dshow           ap;
 };
 
 long dshow_player::get_media_time()

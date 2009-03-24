@@ -25,7 +25,7 @@
 #include <control.h>
 #include <stdio.h>
 #include <uuids.h>
-#include "audioplayer.hpp"
+#include "player_dshow.hpp"
 #include "filter_in.hpp"
 #include "writer.hpp"
 
@@ -53,17 +53,17 @@ DEFINE_GUID(MEDIASUBTYPE_FLV,
 0x59333afb, 0x9992, 0x4aa3, 0x8c, 0x31, 0x7f, 0xb0, 0x3f, 0x6f, 0xfd, 0xf3);
 
 
-audioplayer::audioplayer()
+player_dshow::player_dshow()
 {
     pgb = null;
 }
 
-audioplayer::~audioplayer()
+player_dshow::~player_dshow()
 {
     if(pgb) shutdown();
 }
 
-bool audioplayer::init1(nat32 /*len*/, char16 * /*format*/)
+bool player_dshow::init1(nat32 /*len*/, char16 * /*format*/)
 {
     if(pgb) return false;
 
@@ -206,7 +206,7 @@ bool audioplayer::init1(nat32 /*len*/, char16 * /*format*/)
     return true;
 }
 
-bool audioplayer::init2()
+bool player_dshow::init2()
 {
     if(!pgb) return false;
 
@@ -224,33 +224,33 @@ bool audioplayer::init2()
     return true;
 }
 
-bool audioplayer::data(nat32 len, void const *pdata)
+bool player_dshow::data(nat32 len, void const *pdata)
 {
     if(!pgb) return false;
 
     return pfi->data(len, pdata);
 }
 
-bool audioplayer::play()
+bool player_dshow::play()
 {
     if(!pgb) return false;
 
     return SUCCEEDED(pmc->Run());
 }
 
-bool audioplayer::stop()
+bool player_dshow::stop()
 {
     if(!pgb) return false;
 
     return SUCCEEDED(pmc->Pause());
 }
 
-bool audioplayer::seek(double /*time*/)
+bool player_dshow::seek(double /*time*/)
 {
     return false;
 }
 
-bool audioplayer::tell(double *time)
+bool player_dshow::tell(double *time)
 {
     if(!pgb) return false;
 
@@ -268,7 +268,7 @@ bool audioplayer::tell(double *time)
     }
 }
 
-bool audioplayer::shutdown()
+bool player_dshow::shutdown()
 {
     if(!pgb) return false;
 
