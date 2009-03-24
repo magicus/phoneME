@@ -749,6 +749,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      */
     boolean loopAfterEOM = false;
 
+    private boolean hasZeroDuration()
+    {
+        return ( isDevicePlayer() && !hasToneSequenceSet ) ;
+    }
     /**
      * Starts the <code>Player</code> as soon as possible.
      * If the <code>Player</code> was previously stopped
@@ -796,7 +800,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             prefetch();
         }
 
-        if (isDevicePlayer() && !hasToneSequenceSet) {
+        if ( hasZeroDuration() ) {
             sendEvent(PlayerListener.STARTED, new Long(0));
             sendEvent( PlayerListener.END_OF_MEDIA, new Long(0) );
             return;
@@ -1140,6 +1144,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     public long getMediaTime() {
         chkClosed(false);
         long time = TIME_UNKNOWN;
+        if( hasZeroDuration() )
+        {
+            return 0;
+        }
         if( null != lowLevelPlayer )
         {
             time = lowLevelPlayer.doGetMediaTime();
@@ -1174,6 +1182,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     public long getDuration() {
         chkClosed(false);
         long dur = TIME_UNKNOWN;
+        if( hasZeroDuration() )
+        {
+            return 0;
+        }
         if( null != lowLevelPlayer )
         {
             dur = lowLevelPlayer.doGetDuration();
