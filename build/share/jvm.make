@@ -1828,15 +1828,15 @@ else
 gcc_arch = $(host_arch)
 endif
 
-GCC_PREFIX_arm     = $(GNU_TOOLS_DIR)/bin/
-GCC_PREFIX_sh      = $(GNU_TOOLS_DIR)/bin/
-GCC_PREFIX_mips    = $(GNU_TOOLS_DIR)/bin/
-GCC_PREFIX_thumb2  = $(GNU_TOOLS_DIR)/bin/
-GCC_PREFIX_i386    =
-GCC_PREFIX_sparc   =
-GCC_PREFIX_powerpc =
-GCC_PREFIX_c       = $(GCC_PREFIX_$(target_arch))
-GCC_PREFIX         = $(GCC_PREFIX_$(gcc_arch))
+GCC_PREFIX_arm     ?= $(GNU_TOOLS_DIR)/bin/
+GCC_PREFIX_sh      ?= $(GNU_TOOLS_DIR)/bin/
+GCC_PREFIX_mips    ?= $(GNU_TOOLS_DIR)/bin/
+GCC_PREFIX_thumb2  ?= $(GNU_TOOLS_DIR)/bin/
+GCC_PREFIX_i386    ?=
+GCC_PREFIX_sparc   ?=
+GCC_PREFIX_powerpc ?=
+GCC_PREFIX_c       ?= $(GCC_PREFIX_$(target_arch))
+GCC_PREFIX         ?= $(GCC_PREFIX_$(gcc_arch))
 
 # GCC 4.2 and 4.3 issue false positive warnings about uninitialized variables
 ENABLE_WEAK_GCC_WARNINGS = false
@@ -2042,7 +2042,7 @@ endif
 # statically link romgen, so that it can be used on another Linux distribution
 # that may have an incompatible libc.so
 ifeq ($(host_os)-$(IsRomGen), linux-true)
-LINK_FLAGS             += -static
+#LINK_FLAGS             += -static
 endif
 
 ifeq ($(PROFILING), true)
