@@ -27,10 +27,10 @@
 #include <uuids.h>
 #include "audioplayer.hpp"
 #include "filter_in.hpp"
+#include "writer.hpp"
 
 #pragma comment(lib, "strmiids.lib")
 #pragma comment(lib, "winmm.lib")
-#pragma comment(lib, "javacall-com/implementation/win32_emul/jsr135_mmapi/on2/flvsdkmd.lib")
 
 #pragma comment(linker, "/nodefaultlib:libcmt")
 #pragma comment(linker, "/nodefaultlib:msvcrt")
@@ -212,6 +212,8 @@ bool audioplayer::init2()
 
     HRESULT hr = pgb->Render(pp);
     if(hr != S_OK) return false;
+
+    dump_filter_graph(pgb, 0);
 
     hr = pmc->Pause();
     if(FAILED(hr)) return false;

@@ -23,7 +23,7 @@
 */
 
 #include <vfwmsgs.h>
-#include "filter_in.hpp"
+#include "filter_out.hpp"
 
 #define write_level 1
 
@@ -35,19 +35,19 @@
 nat32 const null = 0;
 
 
-class filter_in_filter;
-class filter_in_pin;
+class filter_out_filter;
+class filter_out_pin;
 
-class filter_in_enum_media_types : public IEnumMediaTypes
+class filter_out_enum_media_types : public IEnumMediaTypes
 {
-    friend filter_in_pin;
+    friend filter_out_pin;
 
     nat32 reference_count;
     AM_MEDIA_TYPE amt;
     nat32 index;
 
-    filter_in_enum_media_types();
-    ~filter_in_enum_media_types();
+    filter_out_enum_media_types();
+    ~filter_out_enum_media_types();
 public:
     // IUnknown
     virtual HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject);
@@ -60,11 +60,11 @@ public:
     virtual HRESULT __stdcall Clone(IEnumMediaTypes **ppEnum);
 };
 
-class filter_in_pin : public IPin, public IAsyncReader
+class filter_out_pin : public IPin, public IAsyncReader
 {
-    friend filter_in_filter;
+    friend filter_out_filter;
 
-    filter_in_filter *pfilter;
+    filter_out_filter *pfilter;
     AM_MEDIA_TYPE amt;
 
     CRITICAL_SECTION data_cs;
@@ -74,8 +74,8 @@ class filter_in_pin : public IPin, public IAsyncReader
 
     IPin *pconnected;
 
-    filter_in_pin();
-    ~filter_in_pin();
+    filter_out_pin();
+    ~filter_out_pin();
 public:
     // IUnknown
     virtual HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject);
@@ -108,16 +108,16 @@ public:
     //virtual HRESULT __stdcall EndFlush();
 };
 
-class filter_in_enum_pins : public IEnumPins
+class filter_out_enum_pins : public IEnumPins
 {
-    friend filter_in_filter;
+    friend filter_out_filter;
 
     nat32 reference_count;
-    filter_in_pin *ppin;
+    filter_out_pin *ppin;
     nat32 index;
 
-    filter_in_enum_pins();
-    ~filter_in_enum_pins();
+    filter_out_enum_pins();
+    ~filter_out_enum_pins();
 public:
     // IUnknown
     virtual HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject);
@@ -130,19 +130,19 @@ public:
     virtual HRESULT __stdcall Clone(IEnumPins **ppEnum);
 };
 
-class filter_in_filter : public filter_in
+class filter_out_filter : public filter_out
 {
-    friend filter_in_pin;
+    friend filter_out_pin;
 
     nat32 reference_count;
-    filter_in_pin *ppin;
+    filter_out_pin *ppin;
     IFilterGraph *pgraph;
     IReferenceClock *pclock;
     char16 name[MAX_FILTER_NAME];
     FILTER_STATE state;
 
-    filter_in_filter();
-    ~filter_in_filter();
+    filter_out_filter();
+    ~filter_out_filter();
     inline static nat32 round(nat32 n);
 public:
     // IUnknown
@@ -164,34 +164,34 @@ public:
     virtual HRESULT __stdcall QueryFilterInfo(FILTER_INFO *pInfo);
     virtual HRESULT __stdcall JoinFilterGraph(IFilterGraph *pGraph, LPCWSTR pName);
     virtual HRESULT __stdcall QueryVendorInfo(LPWSTR *pVendorInfo);
-    // filter_in
+    // filter_out
     virtual bool data(nat32 len, void const *pdata);
 
-    static bool create(AM_MEDIA_TYPE const *pamt, filter_in_filter **ppfilter);
+    static bool create(AM_MEDIA_TYPE const *pamt, filter_out_filter **ppfilter);
 };
 
 //----------------------------------------------------------------------------
-// filter_in_enum_media_types
+// filter_out_enum_media_types
 //----------------------------------------------------------------------------
 
-filter_in_enum_media_types::filter_in_enum_media_types()
+filter_out_enum_media_types::filter_out_enum_media_types()
 {
 #if write_level > 1
-    print("filter_in_enum_media_types::filter_in_enum_media_types called...\n");
+    print("filter_out_enum_media_types::filter_out_enum_media_types called...\n");
 #endif
 }
 
-filter_in_enum_media_types::~filter_in_enum_media_types()
+filter_out_enum_media_types::~filter_out_enum_media_types()
 {
 #if write_level > 1
-    print("filter_in_enum_media_types::~filter_in_enum_media_types called...\n");
+    print("filter_out_enum_media_types::~filter_out_enum_media_types called...\n");
 #endif
 }
 
-HRESULT __stdcall filter_in_enum_media_types::QueryInterface(REFIID riid, void **ppvObject)
+HRESULT __stdcall filter_out_enum_media_types::QueryInterface(REFIID riid, void **ppvObject)
 {
 #if write_level > 0
-    print("filter_in_enum_media_types::QueryInterface called...\n");
+    print("filter_out_enum_media_types::QueryInterface called...\n");
 #endif
     if(!ppvObject) return E_POINTER;
     if(riid == IID_IUnknown)
@@ -210,18 +210,18 @@ HRESULT __stdcall filter_in_enum_media_types::QueryInterface(REFIID riid, void *
     return E_NOINTERFACE;
 }
 
-ULONG __stdcall filter_in_enum_media_types::AddRef()
+ULONG __stdcall filter_out_enum_media_types::AddRef()
 {
 #if write_level > 1
-    print("filter_in_enum_media_types::AddRef called...\n");
+    print("filter_out_enum_media_types::AddRef called...\n");
 #endif
     return ++reference_count;
 }
 
-ULONG __stdcall filter_in_enum_media_types::Release()
+ULONG __stdcall filter_out_enum_media_types::Release()
 {
 #if write_level > 1
-    print("filter_in_enum_media_types::Release called...\n");
+    print("filter_out_enum_media_types::Release called...\n");
 #endif
     if(reference_count == 1)
     {
@@ -231,10 +231,10 @@ ULONG __stdcall filter_in_enum_media_types::Release()
     return --reference_count;
 }
 
-HRESULT __stdcall filter_in_enum_media_types::Next(ULONG cMediaTypes, AM_MEDIA_TYPE **ppMediaTypes, ULONG *pcFetched)
+HRESULT __stdcall filter_out_enum_media_types::Next(ULONG cMediaTypes, AM_MEDIA_TYPE **ppMediaTypes, ULONG *pcFetched)
 {
 #if write_level > 0
-    print("filter_in_enum_media_types::Next called...\n");
+    print("filter_out_enum_media_types::Next called...\n");
 #endif
     if(!ppMediaTypes) return E_POINTER;
     if(cMediaTypes != 1 && !pcFetched) return E_INVALIDARG;
@@ -280,10 +280,10 @@ HRESULT __stdcall filter_in_enum_media_types::Next(ULONG cMediaTypes, AM_MEDIA_T
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_enum_media_types::Skip(ULONG cMediaTypes)
+HRESULT __stdcall filter_out_enum_media_types::Skip(ULONG cMediaTypes)
 {
 #if write_level > 0
-    print("filter_in_enum_media_types::Skip called...\n");
+    print("filter_out_enum_media_types::Skip called...\n");
 #endif
     if(index + cMediaTypes > 1)
     {
@@ -294,22 +294,22 @@ HRESULT __stdcall filter_in_enum_media_types::Skip(ULONG cMediaTypes)
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_enum_media_types::Reset()
+HRESULT __stdcall filter_out_enum_media_types::Reset()
 {
 #if write_level > 0
-    print("filter_in_enum_media_types::Reset called...\n");
+    print("filter_out_enum_media_types::Reset called...\n");
 #endif
     index = 0;
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_enum_media_types::Clone(IEnumMediaTypes **ppEnum)
+HRESULT __stdcall filter_out_enum_media_types::Clone(IEnumMediaTypes **ppEnum)
 {
 #if write_level > 0
-    print("filter_in_enum_media_types::Clone called...\n");
+    print("filter_out_enum_media_types::Clone called...\n");
 #endif
     if(!ppEnum) return E_POINTER;
-    filter_in_enum_media_types *penum_media_types = new filter_in_enum_media_types;
+    filter_out_enum_media_types *penum_media_types = new filter_out_enum_media_types;
     if(!penum_media_types) return E_OUTOFMEMORY;
     if(amt.cbFormat)
     {
@@ -338,27 +338,27 @@ HRESULT __stdcall filter_in_enum_media_types::Clone(IEnumMediaTypes **ppEnum)
 }
 
 //----------------------------------------------------------------------------
-// filter_in_pin
+// filter_out_pin
 //----------------------------------------------------------------------------
 
-filter_in_pin::filter_in_pin()
+filter_out_pin::filter_out_pin()
 {
 #if write_level > 1
-    print("filter_in_pin::filter_in_pin called...\n");
+    print("filter_out_pin::filter_out_pin called...\n");
 #endif
 }
 
-filter_in_pin::~filter_in_pin()
+filter_out_pin::~filter_out_pin()
 {
 #if write_level > 1
-    print("filter_in_pin::~filter_in_pin called...\n");
+    print("filter_out_pin::~filter_out_pin called...\n");
 #endif
 }
 
-HRESULT __stdcall filter_in_pin::QueryInterface(REFIID riid, void **ppvObject)
+HRESULT __stdcall filter_out_pin::QueryInterface(REFIID riid, void **ppvObject)
 {
 #if write_level > 0
-    print("filter_in_pin::QueryInterface(");
+    print("filter_out_pin::QueryInterface(");
     print(riid);
     print(", %p) called...\n", ppvObject);
 #endif
@@ -385,26 +385,26 @@ HRESULT __stdcall filter_in_pin::QueryInterface(REFIID riid, void **ppvObject)
     return E_NOINTERFACE;
 }
 
-ULONG __stdcall filter_in_pin::AddRef()
+ULONG __stdcall filter_out_pin::AddRef()
 {
 #if write_level > 1
-    print("filter_in_pin::AddRef called...\n");
+    print("filter_out_pin::AddRef called...\n");
 #endif
     return pfilter->AddRef();
 }
 
-ULONG __stdcall filter_in_pin::Release()
+ULONG __stdcall filter_out_pin::Release()
 {
 #if write_level > 1
-    print("filter_in_pin::Release called...\n");
+    print("filter_out_pin::Release called...\n");
 #endif
     return pfilter->Release();
 }
 
-HRESULT __stdcall filter_in_pin::Connect(IPin *pReceivePin, AM_MEDIA_TYPE const * /*pmt*/)
+HRESULT __stdcall filter_out_pin::Connect(IPin *pReceivePin, AM_MEDIA_TYPE const * /*pmt*/)
 {
 #if write_level > 0
-    print("filter_in_pin::Connect called...\n");
+    print("filter_out_pin::Connect called...\n");
 #endif
     if(!pReceivePin) return E_POINTER;
     if(pconnected) return VFW_E_ALREADY_CONNECTED;
@@ -428,19 +428,19 @@ HRESULT __stdcall filter_in_pin::Connect(IPin *pReceivePin, AM_MEDIA_TYPE const 
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_pin::ReceiveConnection(IPin *pConnector, AM_MEDIA_TYPE const *pmt)
+HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, AM_MEDIA_TYPE const *pmt)
 {
 #if write_level > 0
-    print("filter_in_pin::ReceiveConnection called...\n");
+    print("filter_out_pin::ReceiveConnection called...\n");
 #endif
     if(!pConnector || !pmt) return E_POINTER;
     return E_UNEXPECTED;
 }
 
-HRESULT __stdcall filter_in_pin::Disconnect()
+HRESULT __stdcall filter_out_pin::Disconnect()
 {
 #if write_level > 0
-    print("filter_in_pin::Disconnect called...\n");
+    print("filter_out_pin::Disconnect called...\n");
 #endif
     if(pfilter->state != State_Stopped) return VFW_E_NOT_STOPPED;
     if(!pconnected) return S_FALSE;
@@ -449,10 +449,10 @@ HRESULT __stdcall filter_in_pin::Disconnect()
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_pin::ConnectedTo(IPin **pPin)
+HRESULT __stdcall filter_out_pin::ConnectedTo(IPin **pPin)
 {
 #if write_level > 0
-    print("filter_in_pin::ConnectedTo called...\n");
+    print("filter_out_pin::ConnectedTo called...\n");
 #endif
     if(!pPin) return E_POINTER;
     if(!pconnected)
@@ -465,10 +465,10 @@ HRESULT __stdcall filter_in_pin::ConnectedTo(IPin **pPin)
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_pin::ConnectionMediaType(AM_MEDIA_TYPE *pmt)
+HRESULT __stdcall filter_out_pin::ConnectionMediaType(AM_MEDIA_TYPE *pmt)
 {
 #if write_level > 0
-    print("filter_in_pin::ConnectionMediaType called...\n");
+    print("filter_out_pin::ConnectionMediaType called...\n");
 #endif
     if(!pmt) return E_POINTER;
     if(!pconnected)
@@ -495,10 +495,10 @@ HRESULT __stdcall filter_in_pin::ConnectionMediaType(AM_MEDIA_TYPE *pmt)
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_pin::QueryPinInfo(PIN_INFO *pInfo)
+HRESULT __stdcall filter_out_pin::QueryPinInfo(PIN_INFO *pInfo)
 {
 #if write_level > 0
-    print("filter_in_pin::QueryPinInfo called...\n");
+    print("filter_out_pin::QueryPinInfo called...\n");
 #endif
     if(!pInfo) return E_POINTER;
     pInfo->pFilter = pfilter;
@@ -508,20 +508,20 @@ HRESULT __stdcall filter_in_pin::QueryPinInfo(PIN_INFO *pInfo)
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_pin::QueryDirection(PIN_DIRECTION *pPinDir)
+HRESULT __stdcall filter_out_pin::QueryDirection(PIN_DIRECTION *pPinDir)
 {
 #if write_level > 0
-    print("filter_in_pin::QueryDirection called...\n");
+    print("filter_out_pin::QueryDirection called...\n");
 #endif
     if(!pPinDir) return E_POINTER;
     *pPinDir = PINDIR_OUTPUT;
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_pin::QueryId(LPWSTR *Id)
+HRESULT __stdcall filter_out_pin::QueryId(LPWSTR *Id)
 {
 #if write_level > 0
-    print("filter_in_pin::QueryId called...\n");
+    print("filter_out_pin::QueryId called...\n");
 #endif
     if(!Id) return E_POINTER;
     *Id = (WCHAR *)CoTaskMemAlloc(sizeof(WCHAR) * 7);
@@ -530,21 +530,21 @@ HRESULT __stdcall filter_in_pin::QueryId(LPWSTR *Id)
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_pin::QueryAccept(AM_MEDIA_TYPE const * /*pmt*/)
+HRESULT __stdcall filter_out_pin::QueryAccept(AM_MEDIA_TYPE const * /*pmt*/)
 {
 #if write_level > 0
-    print("filter_in_pin::QueryAccept called...\n");
+    print("filter_out_pin::QueryAccept called...\n");
 #endif
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_pin::EnumMediaTypes(IEnumMediaTypes **ppEnum)
+HRESULT __stdcall filter_out_pin::EnumMediaTypes(IEnumMediaTypes **ppEnum)
 {
 #if write_level > 0
-    print("filter_in_pin::EnumMediaTypes called...\n");
+    print("filter_out_pin::EnumMediaTypes called...\n");
 #endif
     if(!ppEnum) return E_POINTER;
-    filter_in_enum_media_types *penum_media_types = new filter_in_enum_media_types;
+    filter_out_enum_media_types *penum_media_types = new filter_out_enum_media_types;
     if(!penum_media_types) return E_OUTOFMEMORY;
     if(amt.cbFormat)
     {
@@ -572,83 +572,83 @@ HRESULT __stdcall filter_in_pin::EnumMediaTypes(IEnumMediaTypes **ppEnum)
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_pin::QueryInternalConnections(IPin **apPin, ULONG *nPin)
+HRESULT __stdcall filter_out_pin::QueryInternalConnections(IPin **apPin, ULONG *nPin)
 {
 #if write_level > 0
-    print("filter_in_pin::QueryInternalConnections called...\n");
+    print("filter_out_pin::QueryInternalConnections called...\n");
 #endif
     if(!apPin || !nPin) return E_POINTER;
     return E_NOTIMPL;
 }
 
-HRESULT __stdcall filter_in_pin::EndOfStream()
+HRESULT __stdcall filter_out_pin::EndOfStream()
 {
 #if write_level > 0
-    print("filter_in_pin::EndOfStream called...\n");
+    print("filter_out_pin::EndOfStream called...\n");
 #endif
     return E_UNEXPECTED;
 }
 
-HRESULT __stdcall filter_in_pin::BeginFlush()
+HRESULT __stdcall filter_out_pin::BeginFlush()
 {
 #if write_level > 0
-    print("filter_in_pin::BeginFlush called...\n");
+    print("filter_out_pin::BeginFlush called...\n");
 #endif
     return E_UNEXPECTED;
 }
 
-HRESULT __stdcall filter_in_pin::EndFlush()
+HRESULT __stdcall filter_out_pin::EndFlush()
 {
 #if write_level > 0
-    print("filter_in_pin::EndFlush called...\n");
+    print("filter_out_pin::EndFlush called...\n");
 #endif
     return E_UNEXPECTED;
 }
 
-HRESULT __stdcall filter_in_pin::NewSegment(REFERENCE_TIME /*tStart*/, REFERENCE_TIME /*tStop*/, double /*dRate*/)
+HRESULT __stdcall filter_out_pin::NewSegment(REFERENCE_TIME /*tStart*/, REFERENCE_TIME /*tStop*/, double /*dRate*/)
 {
 #if write_level > 0
-    print("filter_in_pin::NewSegment called...\n");
+    print("filter_out_pin::NewSegment called...\n");
 #endif
     return E_UNEXPECTED;
 }
 
-HRESULT __stdcall filter_in_pin::RequestAllocator(IMemAllocator * /*pPreferred*/, ALLOCATOR_PROPERTIES * /*pProps*/, IMemAllocator ** /*ppActual*/)
+HRESULT __stdcall filter_out_pin::RequestAllocator(IMemAllocator * /*pPreferred*/, ALLOCATOR_PROPERTIES * /*pProps*/, IMemAllocator ** /*ppActual*/)
 {
 #if write_level > 0
-    print("filter_in_pin::RequestAllocator called...\n");
+    print("filter_out_pin::RequestAllocator called...\n");
 #endif
     return E_FAIL;
 }
 
-HRESULT __stdcall filter_in_pin::Request(IMediaSample * /*pSample*/, DWORD_PTR /*dwUser*/)
+HRESULT __stdcall filter_out_pin::Request(IMediaSample * /*pSample*/, DWORD_PTR /*dwUser*/)
 {
 #if write_level > 0
-    print("filter_in_pin::Request called...\n");
+    print("filter_out_pin::Request called...\n");
 #endif
     return E_FAIL;
 }
 
-HRESULT __stdcall filter_in_pin::WaitForNext(DWORD /*dwTimeout*/, IMediaSample ** /*ppSample*/, DWORD_PTR * /*pdwUser*/)
+HRESULT __stdcall filter_out_pin::WaitForNext(DWORD /*dwTimeout*/, IMediaSample ** /*ppSample*/, DWORD_PTR * /*pdwUser*/)
 {
 #if write_level > 0
-    print("filter_in_pin::WaitForNext called...\n");
+    print("filter_out_pin::WaitForNext called...\n");
 #endif
     return E_FAIL;
 }
 
-HRESULT __stdcall filter_in_pin::SyncReadAligned(IMediaSample * /*pSample*/)
+HRESULT __stdcall filter_out_pin::SyncReadAligned(IMediaSample * /*pSample*/)
 {
 #if write_level > 0
-    print("filter_in_pin::SyncReadAligned called...\n");
+    print("filter_out_pin::SyncReadAligned called...\n");
 #endif
     return E_FAIL;
 }
 
-HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYTE *pBuffer)
+HRESULT __stdcall filter_out_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYTE *pBuffer)
 {
 #if write_level > 0
-    print("filter_in_pin::SyncRead(%I64i, %i, %p) called...\n", llPosition, lLength, pBuffer);
+    print("filter_out_pin::SyncRead(%I64i, %i, %p) called...\n", llPosition, lLength, pBuffer);
 #endif
     if(!pBuffer) return E_POINTER;
     HRESULT r;
@@ -671,10 +671,10 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
     return r;
 }
 
-HRESULT __stdcall filter_in_pin::Length(LONGLONG *pTotal, LONGLONG *pAvailable)
+HRESULT __stdcall filter_out_pin::Length(LONGLONG *pTotal, LONGLONG *pAvailable)
 {
 #if write_level > 0
-    print("filter_in_pin::Length called...\n");
+    print("filter_out_pin::Length called...\n");
 #endif
     if(!pTotal || !pAvailable) return E_POINTER;
     EnterCriticalSection(&data_cs);
@@ -685,27 +685,27 @@ HRESULT __stdcall filter_in_pin::Length(LONGLONG *pTotal, LONGLONG *pAvailable)
 }
 
 //----------------------------------------------------------------------------
-// filter_in_enum_pins
+// filter_out_enum_pins
 //----------------------------------------------------------------------------
 
-filter_in_enum_pins::filter_in_enum_pins()
+filter_out_enum_pins::filter_out_enum_pins()
 {
 #if write_level > 1
-    print("filter_in_enum_pins::filter_in_enum_pins called...\n");
+    print("filter_out_enum_pins::filter_out_enum_pins called...\n");
 #endif
 }
 
-filter_in_enum_pins::~filter_in_enum_pins()
+filter_out_enum_pins::~filter_out_enum_pins()
 {
 #if write_level > 1
-    print("filter_in_enum_pins::~filter_in_enum_pins called...\n");
+    print("filter_out_enum_pins::~filter_out_enum_pins called...\n");
 #endif
 }
 
-HRESULT __stdcall filter_in_enum_pins::QueryInterface(REFIID riid, void **ppvObject)
+HRESULT __stdcall filter_out_enum_pins::QueryInterface(REFIID riid, void **ppvObject)
 {
 #if write_level > 0
-    print("filter_in_enum_pins::QueryInterface called...\n");
+    print("filter_out_enum_pins::QueryInterface called...\n");
 #endif
     if(!ppvObject) return E_POINTER;
     if(riid == IID_IUnknown)
@@ -724,18 +724,18 @@ HRESULT __stdcall filter_in_enum_pins::QueryInterface(REFIID riid, void **ppvObj
     return E_NOINTERFACE;
 }
 
-ULONG __stdcall filter_in_enum_pins::AddRef()
+ULONG __stdcall filter_out_enum_pins::AddRef()
 {
 #if write_level > 1
-    print("filter_in_enum_pins::AddRef called...\n");
+    print("filter_out_enum_pins::AddRef called...\n");
 #endif
     return ++reference_count;
 }
 
-ULONG __stdcall filter_in_enum_pins::Release()
+ULONG __stdcall filter_out_enum_pins::Release()
 {
 #if write_level > 1
-    print("filter_in_enum_pins::Release called...\n");
+    print("filter_out_enum_pins::Release called...\n");
 #endif
     if(reference_count == 1)
     {
@@ -746,10 +746,10 @@ ULONG __stdcall filter_in_enum_pins::Release()
     return --reference_count;
 }
 
-HRESULT __stdcall filter_in_enum_pins::Next(ULONG cPins, IPin **ppPins, ULONG *pcFetched)
+HRESULT __stdcall filter_out_enum_pins::Next(ULONG cPins, IPin **ppPins, ULONG *pcFetched)
 {
 #if write_level > 0
-    print("filter_in_enum_pins::Next called...\n");
+    print("filter_out_enum_pins::Next called...\n");
 #endif
     if(!ppPins) return E_POINTER;
     if(cPins != 1 && !pcFetched) return E_INVALIDARG;
@@ -769,10 +769,10 @@ HRESULT __stdcall filter_in_enum_pins::Next(ULONG cPins, IPin **ppPins, ULONG *p
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_enum_pins::Skip(ULONG cPins)
+HRESULT __stdcall filter_out_enum_pins::Skip(ULONG cPins)
 {
 #if write_level > 0
-    print("filter_in_enum_pins::Skip called...\n");
+    print("filter_out_enum_pins::Skip called...\n");
 #endif
     if(index + cPins > 1)
     {
@@ -783,22 +783,22 @@ HRESULT __stdcall filter_in_enum_pins::Skip(ULONG cPins)
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_enum_pins::Reset()
+HRESULT __stdcall filter_out_enum_pins::Reset()
 {
 #if write_level > 0
-    print("filter_in_enum_pins::Reset called...\n");
+    print("filter_out_enum_pins::Reset called...\n");
 #endif
     index = 0;
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_enum_pins::Clone(IEnumPins **ppEnum)
+HRESULT __stdcall filter_out_enum_pins::Clone(IEnumPins **ppEnum)
 {
 #if write_level > 0
-    print("filter_in_enum_pins::Clone called...\n");
+    print("filter_out_enum_pins::Clone called...\n");
 #endif
     if(!ppEnum) return E_POINTER;
-    filter_in_enum_pins *penum_pins = new filter_in_enum_pins;
+    filter_out_enum_pins *penum_pins = new filter_out_enum_pins;
     if(!penum_pins) return E_OUTOFMEMORY;
     penum_pins->reference_count = 1;
     penum_pins->ppin = ppin;
@@ -809,27 +809,27 @@ HRESULT __stdcall filter_in_enum_pins::Clone(IEnumPins **ppEnum)
 }
 
 //----------------------------------------------------------------------------
-// filter_in_filter
+// filter_out_filter
 //----------------------------------------------------------------------------
 
-filter_in_filter::filter_in_filter()
+filter_out_filter::filter_out_filter()
 {
 #if write_level > 1
-    print("filter_in_filter::filter_in_filter called...\n");
+    print("filter_out_filter::filter_out_filter called...\n");
 #endif
 }
 
-filter_in_filter::~filter_in_filter()
+filter_out_filter::~filter_out_filter()
 {
 #if write_level > 1
-    print("filter_in_filter::~filter_in_filter called...\n");
+    print("filter_out_filter::~filter_out_filter called...\n");
 #endif
 }
 
-HRESULT __stdcall filter_in_filter::QueryInterface(REFIID riid, void **ppvObject)
+HRESULT __stdcall filter_out_filter::QueryInterface(REFIID riid, void **ppvObject)
 {
 #if write_level > 0
-    print("filter_in_filter::QueryInterface(");
+    print("filter_out_filter::QueryInterface(");
     print(riid);
     print(", %p) called...\n", ppvObject);
 #endif
@@ -862,18 +862,18 @@ HRESULT __stdcall filter_in_filter::QueryInterface(REFIID riid, void **ppvObject
     return E_NOINTERFACE;
 }
 
-ULONG __stdcall filter_in_filter::AddRef()
+ULONG __stdcall filter_out_filter::AddRef()
 {
 #if write_level > 1
-    print("filter_in_filter::AddRef called...\n");
+    print("filter_out_filter::AddRef called...\n");
 #endif
     return ++reference_count;
 }
 
-ULONG __stdcall filter_in_filter::Release()
+ULONG __stdcall filter_out_filter::Release()
 {
 #if write_level > 1
-    print("filter_in_filter::Release called...\n");
+    print("filter_out_filter::Release called...\n");
 #endif
     if(reference_count == 1)
     {
@@ -890,45 +890,45 @@ ULONG __stdcall filter_in_filter::Release()
     return --reference_count;
 }
 
-HRESULT __stdcall filter_in_filter::GetClassID(CLSID * /*pClassID*/)
+HRESULT __stdcall filter_out_filter::GetClassID(CLSID * /*pClassID*/)
 {
 #if write_level > 0
-    print("filter_in_filter::GetClassID called...\n");
+    print("filter_out_filter::GetClassID called...\n");
 #endif
     return E_FAIL;
 }
 
-HRESULT __stdcall filter_in_filter::Stop()
+HRESULT __stdcall filter_out_filter::Stop()
 {
 #if write_level > 0
-    print("filter_in_filter::Stop called...\n");
+    print("filter_out_filter::Stop called...\n");
 #endif
     state = State_Stopped;
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_filter::Pause()
+HRESULT __stdcall filter_out_filter::Pause()
 {
 #if write_level > 0
-    print("filter_in_filter::Pause called...\n");
+    print("filter_out_filter::Pause called...\n");
 #endif
     state = State_Paused;
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_filter::Run(REFERENCE_TIME /*tStart*/)
+HRESULT __stdcall filter_out_filter::Run(REFERENCE_TIME /*tStart*/)
 {
 #if write_level > 0
-    print("filter_in_filter::Run called...\n");
+    print("filter_out_filter::Run called...\n");
 #endif
     state = State_Running;
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_filter::GetState(DWORD /*dwMilliSecsTimeout*/, FILTER_STATE *State)
+HRESULT __stdcall filter_out_filter::GetState(DWORD /*dwMilliSecsTimeout*/, FILTER_STATE *State)
 {
 #if write_level > 0
-    print("filter_in_filter::GetState called...\n");
+    print("filter_out_filter::GetState called...\n");
 #endif
     if(!State) return E_POINTER;
     if(state == State_Paused) return VFW_S_CANT_CUE;
@@ -936,10 +936,10 @@ HRESULT __stdcall filter_in_filter::GetState(DWORD /*dwMilliSecsTimeout*/, FILTE
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_filter::SetSyncSource(IReferenceClock *pClock)
+HRESULT __stdcall filter_out_filter::SetSyncSource(IReferenceClock *pClock)
 {
 #if write_level > 0
-    print("filter_in_filter::SetSyncSource called...\n");
+    print("filter_out_filter::SetSyncSource called...\n");
 #endif
     if(pClock != pclock)
     {
@@ -950,10 +950,10 @@ HRESULT __stdcall filter_in_filter::SetSyncSource(IReferenceClock *pClock)
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_filter::GetSyncSource(IReferenceClock **pClock)
+HRESULT __stdcall filter_out_filter::GetSyncSource(IReferenceClock **pClock)
 {
 #if write_level > 0
-    print("filter_in_filter::GetSyncSource called...\n");
+    print("filter_out_filter::GetSyncSource called...\n");
 #endif
     if(!pClock) return E_POINTER;
     *pClock = pclock;
@@ -961,13 +961,13 @@ HRESULT __stdcall filter_in_filter::GetSyncSource(IReferenceClock **pClock)
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_filter::EnumPins(IEnumPins **ppEnum)
+HRESULT __stdcall filter_out_filter::EnumPins(IEnumPins **ppEnum)
 {
 #if write_level > 0
-    print("filter_in_filter::EnumPins called...\n");
+    print("filter_out_filter::EnumPins called...\n");
 #endif
     if(!ppEnum) return E_POINTER;
-    filter_in_enum_pins *penum_pins = new filter_in_enum_pins;
+    filter_out_enum_pins *penum_pins = new filter_out_enum_pins;
     if(!penum_pins) return E_OUTOFMEMORY;
     penum_pins->reference_count = 1;
     penum_pins->ppin = ppin;
@@ -977,10 +977,10 @@ HRESULT __stdcall filter_in_filter::EnumPins(IEnumPins **ppEnum)
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_filter::FindPin(LPCWSTR Id, IPin **ppPin)
+HRESULT __stdcall filter_out_filter::FindPin(LPCWSTR Id, IPin **ppPin)
 {
 #if write_level > 0
-    print("filter_in_filter::FindPin called...\n");
+    print("filter_out_filter::FindPin called...\n");
 #endif
     if(!ppPin) return E_POINTER;
     if(!wcscmp(Id, L"Output"))
@@ -993,10 +993,10 @@ HRESULT __stdcall filter_in_filter::FindPin(LPCWSTR Id, IPin **ppPin)
     return VFW_E_NOT_FOUND;
 }
 
-HRESULT __stdcall filter_in_filter::QueryFilterInfo(FILTER_INFO *pInfo)
+HRESULT __stdcall filter_out_filter::QueryFilterInfo(FILTER_INFO *pInfo)
 {
 #if write_level > 0
-    print("filter_in_filter::QueryFilterInfo called...\n");
+    print("filter_out_filter::QueryFilterInfo called...\n");
 #endif
     if(!pInfo) return E_POINTER;
     wcscpy_s(pInfo->achName, MAX_FILTER_NAME, name);
@@ -1005,10 +1005,10 @@ HRESULT __stdcall filter_in_filter::QueryFilterInfo(FILTER_INFO *pInfo)
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_filter::JoinFilterGraph(IFilterGraph *pGraph, LPCWSTR pName)
+HRESULT __stdcall filter_out_filter::JoinFilterGraph(IFilterGraph *pGraph, LPCWSTR pName)
 {
 #if write_level > 0
-    print("filter_in_filter::JoinFilterGraph called...\n");
+    print("filter_out_filter::JoinFilterGraph called...\n");
 #endif
     pgraph = pGraph;
     if(pName) wcscpy_s(name, MAX_FILTER_NAME, pName);
@@ -1016,16 +1016,16 @@ HRESULT __stdcall filter_in_filter::JoinFilterGraph(IFilterGraph *pGraph, LPCWST
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_filter::QueryVendorInfo(LPWSTR *pVendorInfo)
+HRESULT __stdcall filter_out_filter::QueryVendorInfo(LPWSTR *pVendorInfo)
 {
 #if write_level > 0
-    print("filter_in_filter::QueryVendorInfo called...\n");
+    print("filter_out_filter::QueryVendorInfo called...\n");
 #endif
     if(!pVendorInfo) return E_POINTER;
     return E_NOTIMPL;
 }
 
-inline nat32 filter_in_filter::round(nat32 n)
+inline nat32 filter_out_filter::round(nat32 n)
 {
     n--;
     n |= n >> 1;
@@ -1037,7 +1037,7 @@ inline nat32 filter_in_filter::round(nat32 n)
     return n;
 }
 
-bool filter_in_filter::data(nat32 len, void const *pdata)
+bool filter_out_filter::data(nat32 len, void const *pdata)
 {
     EnterCriticalSection(&ppin->data_cs);
     nat32 l2 = ppin->data_l + len;
@@ -1059,15 +1059,15 @@ bool filter_in_filter::data(nat32 len, void const *pdata)
     return true;
 }
 
-bool filter_in_filter::create(AM_MEDIA_TYPE const *pamt, filter_in_filter **ppfilter)
+bool filter_out_filter::create(AM_MEDIA_TYPE const *pamt, filter_out_filter **ppfilter)
 {
 #if write_level > 1
-    print("filter_in_filter::create called...\n");
+    print("filter_out_filter::create called...\n");
 #endif
     if(!pamt || !ppfilter) return false;
-    filter_in_filter *pfilter = new filter_in_filter;
+    filter_out_filter *pfilter = new filter_out_filter;
     if(!pfilter) return false;
-    pfilter->ppin = new filter_in_pin;
+    pfilter->ppin = new filter_out_pin;
     if(!pfilter->ppin)
     {
         delete pfilter;
@@ -1115,14 +1115,14 @@ bool filter_in_filter::create(AM_MEDIA_TYPE const *pamt, filter_in_filter **ppfi
 }
 
 //----------------------------------------------------------------------------
-// filter_in
+// filter_out
 //----------------------------------------------------------------------------
 
-bool filter_in::create(AM_MEDIA_TYPE const *pamt, filter_in **ppfilter)
+bool filter_out::create(AM_MEDIA_TYPE const *pamt, filter_out **ppfilter)
 {
     if(!pamt || !ppfilter) return false;
-    filter_in_filter *pfilter;
-    if(!filter_in_filter::create(pamt, &pfilter)) return false;
+    filter_out_filter *pfilter;
+    if(!filter_out_filter::create(pamt, &pfilter)) return false;
     *ppfilter = pfilter;
     return true;
 }
