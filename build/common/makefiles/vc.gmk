@@ -30,6 +30,9 @@
 ifndef _VC_GMK_
 _VC_GMK_	=
 
+# set USE_VS2005 to true for VC8, VC9
+USE_VS2005 ?= true
+
 # Suffix
 LIB_SUFFIX      = .lib
 LIB_PREFIX      = 
