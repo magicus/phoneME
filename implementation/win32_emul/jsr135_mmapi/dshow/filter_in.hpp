@@ -25,11 +25,12 @@
 #pragma once
 
 #include <strmif.h>
-#include "types.hpp"
+#include "player_callback.hpp"
+//#include "types.hpp"
 
 class filter_in : public IBaseFilter
 {
 public:
     virtual bool data(nat32 len, void const *pdata) = 0;
-    static bool create(AM_MEDIA_TYPE const *pamt, filter_in **ppfilter);
+    static bool create(AM_MEDIA_TYPE const *pamt, player_callback *pcallback, filter_in **ppfilter);
 };

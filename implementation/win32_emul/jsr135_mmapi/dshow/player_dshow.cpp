@@ -66,6 +66,7 @@ class filter_in;
 
 class player_dshow : public player
 {
+    player_callback *pcallback;
     int32 state;
     int64 media_time;
     IGraphBuilder *pgb;
@@ -76,7 +77,7 @@ class player_dshow : public player
     IBaseFilter *pbf_flv_split;
     IBaseFilter *pbf_flv_dec;
 public:
-    player_dshow();
+    player_dshow(player_callback *pcallback);
     virtual ~player_dshow();
     virtual result realize();
     virtual result prefetch();
@@ -98,8 +99,9 @@ public:
     virtual bool data(nat32 len, void const *pdata);
 };
 
-player_dshow::player_dshow()
+player_dshow::player_dshow(player_callback *pcallback)
 {
+    this->pcallback = pcallback;
     state = unrealized;
     media_time = time_unknown;
 }
@@ -161,7 +163,7 @@ player::result player_dshow::realize()
     amt.pUnk = null;
     amt.cbFormat = 0;
     amt.pbFormat = null;
-    if(!filter_in::create(&amt, &pfi))
+    if(!filter_in::create(&amt, pcallback, &pfi))
     {
         pms->Release();
         pmc->Release();
@@ -492,7 +494,7 @@ bool player_dshow::data(nat32 len, void const *pdata)
 bool create_player_dshow(nat32 /*len*/, char16 const * /*pformat*/, player_callback *pcallback, player **ppplayer)
 {
     if(!pcallback || !ppplayer) return false;
-    player_dshow *pplayer = new player_dshow;
+    player_dshow *pplayer = new player_dshow(pcallback);
     if(!pplayer) return false;
     *ppplayer = pplayer;
     return true;

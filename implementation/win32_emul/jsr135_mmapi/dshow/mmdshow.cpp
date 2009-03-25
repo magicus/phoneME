@@ -23,10 +23,18 @@
 */
 
 #include "../multimedia.h"
-#include <dshow.h>
 #include "player_dshow.hpp"
 
 //=============================================================================
+
+extern "C" {
+    // following functions are defined in lcd.c (MIDP-related javacall):
+    void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color );
+    void lcd_set_video_rect( int x, int y, int w, int h );
+    void lcd_output_video_frame( javacall_pixel* video );
+}
+
+// ===========================================================================
 
 static void PRINTF( const char* fmt, ... ) {
     char           str8[ 256 ];
@@ -43,8 +51,13 @@ static void PRINTF( const char* fmt, ... ) {
 
 #define XFER_BUFFER_SIZE  4096
 
-struct dshow_player
+class dshow_player : public player_callback
 {
+    virtual void frame_ready( bits16 const* pFrame );
+    virtual void size_changed( int16 w, int16 h );
+    virtual void playback_finished();
+
+public:
     long                  get_media_time();
 
     int                   appId;
@@ -57,6 +70,10 @@ struct dshow_player
     int                   rate;
     int                   duration;
     long                  media_time;
+
+    long                  video_width;
+    long                  video_height;
+    javacall_pixel*       video_frame;
 
     BYTE                  buf[ XFER_BUFFER_SIZE ];
 
@@ -71,22 +88,43 @@ struct dshow_player
     long                  volume;
     javacall_bool         mute;
 
-    player_dshow           ap;
+    player*               ppl;
 };
+
+void dshow_player::frame_ready( bits16 const* pFrame )
+{
+    javacall_pixel* old_frame = video_frame;
+    video_frame = new javacall_pixel[ video_width * video_height ];
+    memcpy( video_frame, pFrame, sizeof( javacall_pixel ) * video_width * video_height );
+    lcd_output_video_frame( video_frame );
+    if( NULL != old_frame ) delete old_frame;
+}
+
+void dshow_player::size_changed( int16 w, int16 h )
+{
+    video_width  = w;
+    video_height = h;
+}
+
+void dshow_player::playback_finished()
+{
+    long t = get_media_time();
+    javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
+                                      appId, playerId, JAVACALL_OK, (void*)t );
+}
 
 long dshow_player::get_media_time()
 {
-    if( !playing ) return media_time;
-
-    double t;
-    if( ap.tell( &t ) )
+    if( !playing )
     {
-        media_time = long( t * 1000.0 );
         return media_time;
     }
     else
     {
-        return -1;
+        player::result r;
+        int64 time = ppl->get_media_time( &r );
+        if( player::time_unknown != time ) time /= 1000;
+        return ( media_time = long( time ) );
     }
 }
 
@@ -124,6 +162,10 @@ static javacall_result dshow_create(int appId,
     p->volume           = 100;
     p->mute             = JAVACALL_FALSE;
 
+    p->video_width      = 0;
+    p->video_height     = 0;
+    p->video_frame      = NULL;
+
     *pHandle =(javacall_handle)p;
 
     return JAVACALL_OK;
@@ -142,9 +184,9 @@ static javacall_result dshow_destroy(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** destroy ***\n" );
 
-    p->ap.shutdown();
+    if( NULL != p->video_frame ) delete p->video_frame;
+    if( NULL != p->ppl ) delete p->ppl;
     delete p;
-
     return JAVACALL_OK;
 }
 
@@ -152,6 +194,7 @@ static javacall_result dshow_close(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** close ***\n" );
+    p->ppl->close();
     return JAVACALL_OK;
 }
 
@@ -170,7 +213,7 @@ static javacall_result dshow_acquire_device(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** acquire device ***\n" );
 
-    if( p->ap.init2() )
+    if( player::result_success == p->ppl->prefetch() )
     {
         PRINTF( "*** acquire device succeeded ***\n" );
     }
@@ -195,7 +238,7 @@ static javacall_result dshow_release_device(javacall_handle handle)
 
 static bool mime_equal( javacall_const_utf16_string mime, long mimeLength, const wchar_t* v )
 {
-    return !wcsncmp( (const wchar_t*)mime, v, min( mimeLength, wcslen( v ) ) );
+    return !wcsncmp( (const wchar_t*)mime, v, min( (size_t)mimeLength, wcslen( v ) ) );
 }
 
 static javacall_result dshow_realize(javacall_handle handle, 
@@ -228,31 +271,35 @@ static javacall_result dshow_realize(javacall_handle handle,
         p->rate     = 90000;
         p->channels = 1;
 
-        p->mediaType = JC_FMT_MPEG1_LAYER3;
-
         get_int_param( mime, (javacall_const_utf16_string)L"channels", &(p->channels) );
         get_int_param( mime, (javacall_const_utf16_string)L"rate",     &(p->rate)     );
         get_int_param( mime, (javacall_const_utf16_string)L"duration", &(p->duration) );
 
-        p->ap.init1( mimeLength, (wchar_t*)mime );
-
-        p->realizing = true;
+        p->mediaType = JC_FMT_MPEG1_LAYER3;
     }
     else if( mime_equal( mime, mimeLength, L"video/x-vp6" ) ||
              mime_equal( mime, mimeLength, L"video/x-flv" ) )
     {
         p->mediaType = JC_FMT_FLV;
-
-        p->ap.init1( mimeLength, (wchar_t*)mime );
-
-        p->realizing = true;
     }
     else
     {
         p->mediaType = JC_FMT_UNSUPPORTED;
     }
 
-    return JAVACALL_OK;
+    if( JC_FMT_UNSUPPORTED != p->mediaType )
+    {
+        if( create_player_dshow( mimeLength, (const char16*)mime, p, &(p->ppl) ) )
+        {
+            if( player::result_success == p->ppl->realize() )
+            {
+                p->realizing = true;
+                return JAVACALL_OK;
+            }
+        }
+    }
+
+    return JAVACALL_FAIL;
 }
 
 static javacall_result dshow_prefetch(javacall_handle handle)
@@ -320,7 +367,7 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
         assert( buffer == p->buf );
 
         p->bytes_buffered += *length;
-        p->ap.data( *length, buffer );
+        p->ppl->data( *length, buffer );
 
         if( p->prefetched )
         {
@@ -347,17 +394,15 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
     }
     else
     {
-        PRINTF( "           [zero]\n" );
+        PRINTF( "           [all data arrived]\n" );
         p->all_data_arrived = true;
+        p->ppl->data( 0, NULL );
+
         *need_more_data  = JAVACALL_FALSE;
         *next_chunk_size = 0;
 
         long t = p->get_media_time();
         if( -1 != p->duration && t > p->duration ) t = p->duration;
-
-        //javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
-        //                                  p->appId, p->playerId, JAVACALL_OK, (void*)t );
-
     }
 
     return JAVACALL_OK;
@@ -374,10 +419,17 @@ static javacall_result dshow_start(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** start ***\n" );
-    p->ap.play();
-    PRINTF( "*** started ***\n" );
-    p->playing = true;
-    return JAVACALL_OK;
+    if( player::result_success == p->ppl->start() )
+    {
+        PRINTF( "*** started ***\n" );
+        p->playing = true;
+        return JAVACALL_OK;
+    }
+    else
+    {
+        PRINTF( "*** start failed ***\n" );
+        return JAVACALL_FAIL;
+    }
 }
 
 static javacall_result dshow_stop(javacall_handle handle)
@@ -385,12 +437,17 @@ static javacall_result dshow_stop(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** stop... ***\n" );
     p->get_media_time();
-    p->playing = false;
-    p->ap.stop();
-    // setting p->playing to false causes thread to exit
-    PRINTF( "*** ...stopped ***\n" );
-
-    return JAVACALL_OK;
+    if( player::result_success == p->ppl->stop() )
+    {
+        p->playing = false;
+        PRINTF( "*** ...stopped ***\n" );
+        return JAVACALL_OK;
+    }
+    else
+    {
+        PRINTF( "*** ...stop failed ***\n" );
+        return JAVACALL_FAIL;
+    }
 }
 
 static javacall_result dshow_pause(javacall_handle handle)
@@ -407,7 +464,7 @@ static javacall_result dshow_get_time(javacall_handle handle, long* ms)
 {
     dshow_player* p = (dshow_player*)handle;
     *ms = p->get_media_time();
-    if( p->duration != -1 && *ms > p->duration ) *ms = p->duration;
+    // if( p->duration != -1 && *ms > p->duration ) *ms = p->duration;
     return JAVACALL_OK;
 }
 
@@ -439,7 +496,7 @@ static javacall_result dshow_switch_to_background(javacall_handle handle,
 }
 
 /*****************************************************************************\
-V O L U M E   C O N T R O L
+                       V O L U M E   C O N T R O L
 \*****************************************************************************/
 
 static javacall_result dshow_get_volume(javacall_handle handle, 
@@ -475,24 +532,45 @@ static javacall_result dshow_set_mute(javacall_handle handle,
 }
 
 /*****************************************************************************\
-V I D E O    I N T E R F A C E
+                       R A T E    C O N T R O L
 \*****************************************************************************/
 
-// following functions are defined in lcd.c (MIDP-related javacall):
-void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color );
-void lcd_set_video_rect( int x, int y, int w, int h );
-void lcd_output_video_frame( javacall_pixel* video );
+javacall_result dshow_get_max_rate(javacall_handle handle, long* maxRate)
+{
+    dshow_player* p = (dshow_player*)handle;
+    return JAVACALL_OK;
+}
 
-// ===========================================================================
+javacall_result dshow_get_min_rate(javacall_handle handle, long* minRate)
+{
+    dshow_player* p = (dshow_player*)handle;
+    return JAVACALL_OK;
+}
+
+javacall_result dshow_set_rate(javacall_handle handle, long rate)
+{
+    dshow_player* p = (dshow_player*)handle;
+    return JAVACALL_OK;
+}
+
+javacall_result dshow_get_rate(javacall_handle handle, long* rate)
+{
+    dshow_player* p = (dshow_player*)handle;
+    return JAVACALL_OK;
+}
+
+/*****************************************************************************\
+                      V I D E O    C O N T R O L
+\*****************************************************************************/
 
 static javacall_result dshow_get_video_size(javacall_handle handle, long* width, long* height)
 {
     dshow_player* p = (dshow_player*)handle;
 
-    if( p->ap.get_video_size( width, height ) )
-        return JAVACALL_OK;
-    else
-        return JAVACALL_FAIL;
+    *width  = p->video_width;
+    *height = p->video_height;
+
+    return JAVACALL_OK;
 }
 
 static javacall_result dshow_set_video_visible(javacall_handle handle, javacall_bool visible)
@@ -514,11 +592,11 @@ static javacall_result dshow_set_video_alpha(javacall_handle handle, javacall_bo
 
 static javacall_result dshow_set_video_fullscreenmode(javacall_handle handle, javacall_bool fullScreenMode)
 {
-    return JAVACALL_OK;
+    return JAVACALL_FAIL;
 }
 
 /*****************************************************************************\
-I N T E R F A C E   T A B L E S
+                      I N T E R F A C E   T A B L E S
 \*****************************************************************************/
 
 static media_basic_interface _dshow_basic_itf =
@@ -555,6 +633,13 @@ static media_volume_interface _dshow_volume_itf = {
     dshow_set_mute
 };
 
+static media_rate_interface _dshow_rate_itf = {
+    dshow_get_max_rate,
+    dshow_get_min_rate,
+    dshow_set_rate,
+    dshow_get_rate
+};
+
 static media_video_interface _dshow_video_itf = {
     dshow_get_video_size,
     dshow_set_video_visible,
@@ -571,7 +656,7 @@ media_interface g_dshow_itf =
     NULL,
     NULL,
     NULL,
-    NULL,
+    NULL, //&_dshow_rate_itf
     NULL,
     NULL,
     NULL,

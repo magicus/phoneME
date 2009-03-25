@@ -135,6 +135,7 @@ class filter_in_filter : public filter_in
     friend filter_in_pin;
 
     nat32 reference_count;
+    player_callback *pcallback;
     filter_in_pin *ppin;
     IFilterGraph *pgraph;
     IReferenceClock *pclock;
@@ -167,7 +168,7 @@ public:
     // filter_in
     virtual bool data(nat32 len, void const *pdata);
 
-    static bool create(AM_MEDIA_TYPE const *pamt, filter_in_filter **ppfilter);
+    static bool create(AM_MEDIA_TYPE const *pamt, player_callback *pcallback, filter_in_filter **ppfilter);
 };
 
 //----------------------------------------------------------------------------
@@ -664,6 +665,10 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
     }
     else
     {
+        //if(llPosition + lLength + 1024 > data_l)
+        //{
+        //    pfilter->pcallback->playback_finished();
+        //}
         memcpy(pBuffer, (bits8 *)data_p + nat32(llPosition), lLength);
         r = S_OK;
     }
@@ -1062,7 +1067,7 @@ bool filter_in_filter::data(nat32 len, void const *pdata)
     return true;
 }
 
-bool filter_in_filter::create(AM_MEDIA_TYPE const *pamt, filter_in_filter **ppfilter)
+bool filter_in_filter::create(AM_MEDIA_TYPE const *pamt, player_callback *pcallback, filter_in_filter **ppfilter)
 {
 #if write_level > 1
     print("filter_in_filter::create called...\n");
@@ -1096,6 +1101,7 @@ bool filter_in_filter::create(AM_MEDIA_TYPE const *pamt, filter_in_filter **ppfi
     }
     else pfilter->ppin->amt.pbFormat = null;
     pfilter->reference_count = 1;
+    pfilter->pcallback = pcallback;
     pfilter->pgraph = null;
     pfilter->pclock = null;
     wcscpy_s(pfilter->name, MAX_FILTER_NAME, L"");
@@ -1121,11 +1127,11 @@ bool filter_in_filter::create(AM_MEDIA_TYPE const *pamt, filter_in_filter **ppfi
 // filter_in
 //----------------------------------------------------------------------------
 
-bool filter_in::create(AM_MEDIA_TYPE const *pamt, filter_in **ppfilter)
+bool filter_in::create(AM_MEDIA_TYPE const *pamt, player_callback *pcallback, filter_in **ppfilter)
 {
     if(!pamt || !ppfilter) return false;
     filter_in_filter *pfilter;
-    if(!filter_in_filter::create(pamt, &pfilter)) return false;
+    if(!filter_in_filter::create(pamt, pcallback, &pfilter)) return false;
     *ppfilter = pfilter;
     return true;
 }
