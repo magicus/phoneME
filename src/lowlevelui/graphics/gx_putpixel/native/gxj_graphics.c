@@ -170,6 +170,21 @@ extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
     int dstSpan, int width, int height);
 #endif
 
+#define SRC_PIXEL_TO_DEST_WITH_ALPHA(pSrc, pDest) \
+        src = *pSrc++;  \
+        As = src >> 26; \
+        if (As == 0x3F) {   \
+            *pDest = GXJ_RGB24TORGB16(src);  \
+        } else if (As != 0) {   \
+            *pDest = alphaComposition(src, *pDest, (unsigned char)As);   \
+        }   \
+        pDest++
+
+#define SRC_PIXEL_TO_DEST(pSrc, pDest) \
+        src = *pSrc++;  \
+        *pDest = GXJ_RGB24TORGB16(src); \
+        pDest++
+
 /** Draw image in RGB format */
 void
 gx_draw_rgb(const jshort *clip,
@@ -223,6 +238,7 @@ gx_draw_rgb(const jshort *clip,
 
     CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
 
+#if USE_SLOW_LOOPS
     {
       gxj_pixel_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
       jint * psrc = &rgbData[offset];
@@ -267,6 +283,83 @@ gx_draw_rgb(const jshort *clip,
 	} while (pdst < pdst_end);
       }
     }
+#else
+    {
+        const unsigned int width16 = width & 0xFFFFFFF0;
+        const unsigned int widthRemain = width & 0xF;
+        unsigned int col;
+        
+        gxj_pixel_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
+        jint * psrc = &rgbData[offset];
+        unsigned int pdst_delta = sbufWidth - width;
+        unsigned int psrc_delta = scanlen - width;
+        gxj_pixel_type * pdst_end = pdst + height * sbufWidth;
+        unsigned int  src;
+        unsigned char As;
+
+        if (pdst_delta < 0 || psrc_delta < 0) {
+            return;
+        }
+
+        if (processAlpha) {
+            do {
+                for (col = width16; col != 0; col -= 16) {
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                }
+                
+                for (col = widthRemain; col != 0; col--) {
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                }
+                
+                psrc += psrc_delta;
+                pdst += pdst_delta;
+            } while (pdst < pdst_end);
+        } else {
+            do {
+                for (col = width16; col != 0; col -= 16) {
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                }
+                
+                for (col = widthRemain; col != 0; col--) {
+                    SRC_PIXEL_TO_DEST(psrc,pdst);
+                }
+
+                psrc += psrc_delta;
+                pdst += pdst_delta;
+            } while (pdst < pdst_end);
+        }
+    }
+#endif
 }
 
 /**
