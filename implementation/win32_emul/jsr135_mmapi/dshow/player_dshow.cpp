@@ -22,12 +22,13 @@
 * information or have any questions.
 */
 
+#include <amvideo.h>
 #include <control.h>
 #include <stdio.h>
 #include <uuids.h>
-#include "player.hpp"
-#include "player_callback.hpp"
 #include "filter_in.hpp"
+#include "filter_out.hpp"
+#include "player.hpp"
 #include "writer.hpp"
 
 #pragma comment(lib, "strmiids.lib")
@@ -73,6 +74,7 @@ class player_dshow : public player
     IMediaControl *pmc;
     IMediaSeeking *pms;
     filter_in *pfi;
+    filter_out *pfo;
     IPin *pp;
     IBaseFilter *pbf_flv_split;
     IBaseFilter *pbf_flv_dec;
@@ -158,7 +160,7 @@ player::result player_dshow::realize()
     amt.subtype = MEDIASUBTYPE_FLV;
     amt.bFixedSizeSamples = TRUE;
     amt.bTemporalCompression = FALSE;
-    amt.lSampleSize = 0;
+    amt.lSampleSize = 1;
     amt.formattype = FORMAT_None;
     amt.pUnk = null;
     amt.cbFormat = 0;
@@ -172,9 +174,41 @@ player::result player_dshow::realize()
         return result_media;
     }
 
+    //VIDEOINFOHEADER vih;
+    amt.majortype = MEDIATYPE_Video;
+    amt.subtype = MEDIASUBTYPE_RGB565;
+    amt.bFixedSizeSamples = TRUE;
+    amt.bTemporalCompression = FALSE;
+    amt.lSampleSize = 1;
+    amt.formattype = FORMAT_None;//FORMAT_VideoInfo;
+    amt.pUnk = null;
+    amt.cbFormat = 0;//sizeof(VIDEOINFOHEADER);
+    amt.pbFormat = null;//(BYTE *)&vih;
+    /*vih.rcSource.left   = 0;
+    vih.rcSource.top    = 0;
+    vih.rcSource.right  = 0;
+    vih.rcSource.bottom = 0;
+    vih.rcTarget.left   = 0;
+    vih.rcTarget.top    = 0;
+    vih.rcTarget.right  = 0;
+    vih.rcTarget.bottom = 0;
+    vih.dwBitRate = 0;
+    vih.dwBitErrorRate = 0;
+    vih.AvgTimePerFrame = 0;*/
+    if(!filter_out::create(&amt, pcallback, &pfo))
+    {
+        pfi->Release();
+        pms->Release();
+        pmc->Release();
+        pgb->Release();
+        CoUninitialize();
+        return result_media;
+    }
+
     hr = pfi->FindPin(L"Output", &pp);
     if(hr != S_OK)
     {
+        pfo->Release();
         pfi->Release();
         pms->Release();
         pmc->Release();
@@ -188,6 +222,7 @@ player::result player_dshow::realize()
     if(hr != S_OK)
     {
         pp->Release();
+        pfo->Release();
         pfi->Release();
         pms->Release();
         pmc->Release();
@@ -202,6 +237,7 @@ player::result player_dshow::realize()
     {
         pbf_flv_split->Release();
         pp->Release();
+        pfo->Release();
         pfi->Release();
         pms->Release();
         pmc->Release();
@@ -210,12 +246,34 @@ player::result player_dshow::realize()
         return result_media;
     }
 
-    hr = pgb->AddFilter(pfi, L"Source Filter");
+    /*IID iid = {0xb87beb7b, 0x8d29, 0x423f, 0xae, 0x4d, 0x65, 0x82, 0xc1, 0x01, 0x75, 0xac};
+    IBaseFilter *pbf;
+    CoCreateInstance(iid, null, CLSCTX_INPROC_SERVER,
+        IID_IBaseFilter, (void **)&pbf);
+    pgb->AddFilter(pbf, L"Video Renderer forced");*/
+
+    hr = pgb->AddFilter(pfi, L"Input filter");
     if(hr != S_OK)
     {
         pbf_flv_dec->Release();
         pbf_flv_split->Release();
         pp->Release();
+        pfo->Release();
+        pfi->Release();
+        pms->Release();
+        pmc->Release();
+        pgb->Release();
+        CoUninitialize();
+        return result_media;
+    }
+
+    hr = pgb->AddFilter(pfo, L"Output filter");
+    if(hr != S_OK)
+    {
+        pbf_flv_dec->Release();
+        pbf_flv_split->Release();
+        pp->Release();
+        pfo->Release();
         pfi->Release();
         pms->Release();
         pmc->Release();
@@ -230,6 +288,7 @@ player::result player_dshow::realize()
         pbf_flv_dec->Release();
         pbf_flv_split->Release();
         pp->Release();
+        pfo->Release();
         pfi->Release();
         pms->Release();
         pmc->Release();
@@ -244,6 +303,7 @@ player::result player_dshow::realize()
         pbf_flv_dec->Release();
         pbf_flv_split->Release();
         pp->Release();
+        pfo->Release();
         pfi->Release();
         pms->Release();
         pmc->Release();
@@ -251,6 +311,8 @@ player::result player_dshow::realize()
         CoUninitialize();
         return result_media;
     }
+
+    dump_filter_graph(pgb, 0);
 
     state = realized;
 
@@ -282,7 +344,7 @@ player::result player_dshow::prefetch()
         return result_media;
     }
 
-    dump_filter_graph(pgb, 0);
+//    dump_filter_graph(pgb, 0);
 
     hr = pmc->Pause();
     if(FAILED(hr))
@@ -384,6 +446,7 @@ void player_dshow::close()
         pbf_flv_dec->Release();
         pbf_flv_split->Release();
         pp->Release();
+        pfo->Release();
         pfi->Release();
         pms->Release();
         pmc->Release();

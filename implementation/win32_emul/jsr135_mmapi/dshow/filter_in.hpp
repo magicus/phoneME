@@ -26,7 +26,6 @@
 
 #include <strmif.h>
 #include "player_callback.hpp"
-//#include "types.hpp"
 
 class filter_in : public IBaseFilter
 {

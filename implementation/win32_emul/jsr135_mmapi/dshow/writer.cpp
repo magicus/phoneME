@@ -160,6 +160,7 @@ guid_item const static guid_items[]=
     define_guid_item(IID_IKsPropertySet             ),
     define_guid_item(IID_IMediaPosition             ),
     define_guid_item(IID_IMediaSeeking              ),
+    define_guid_item(IID_IMemInputPin               ),
     define_guid_item(IID_IPersist                   ),
     define_guid_item(IID_IStream                    ),
     define_guid_item(IID_IStreamBuilder             ),
@@ -340,7 +341,8 @@ bool dump_media_types(IPin *pp, nat32 indent)
     hr = pp->EnumMediaTypes(&pemt);
     if(hr != S_OK)
     {
-        error("IPin::EnumMediaTypes failed", hr);
+        //error("IPin::EnumMediaTypes failed", hr);
+        r = true;
     }
     else
     {
@@ -475,6 +477,12 @@ bool dump_filter(IBaseFilter *pbf, nat32 indent)
     {
         for(UINT32 i = 0; i < indent; i++) print(" ");
         print("0x%08x ", UINT32(UINT64(pbf)));
+        CLSID clsid;
+        if(pbf->GetClassID(&clsid) == S_OK)
+        {
+            print(clsid);
+            print(" ");
+        }
         print(L"%s", fi.achName);
         print(" 0x%08x ", UINT32(UINT64(fi.pGraph)));
         if(fi.pGraph) fi.pGraph->Release();

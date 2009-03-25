@@ -25,7 +25,7 @@
 #include <vfwmsgs.h>
 #include "filter_in.hpp"
 
-#define write_level 1
+#define write_level 0
 
 #if write_level > 0
 #include "writer.hpp"
@@ -411,7 +411,9 @@ HRESULT __stdcall filter_in_pin::Connect(IPin *pReceivePin, AM_MEDIA_TYPE const 
     if(pconnected) return VFW_E_ALREADY_CONNECTED;
     if(pfilter->state != State_Stopped) return VFW_E_NOT_STOPPED;
 
+#if write_level > 0
     print("wp1...\n");
+#endif
     PIN_INFO pi;
     pReceivePin->QueryPinInfo(&pi);
 #if write_level > 0
@@ -425,7 +427,9 @@ HRESULT __stdcall filter_in_pin::Connect(IPin *pReceivePin, AM_MEDIA_TYPE const 
     if(hr != S_OK) return hr;
     pconnected = pReceivePin;
     pconnected->AddRef();
+#if write_level > 0
     print("wp2...\n");
+#endif
     return S_OK;
 }
 
