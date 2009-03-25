@@ -592,8 +592,12 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         if (type == null && stream != null && stream.getContentDescriptor() != null) {
             type = stream.getContentDescriptor().getContentType();
         }
-        /* try to realize native player */
-        nRealize(hNative, type);
+
+        if( !handledByJava )
+        {
+            /* try to realize native player */
+            nRealize(hNative, type);
+        }
 
         mediaDownload = null;
 
