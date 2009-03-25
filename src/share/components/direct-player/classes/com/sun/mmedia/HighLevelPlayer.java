@@ -237,6 +237,16 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
     
+    private void setHandledByJava()
+    {
+        handledByJava = true;
+        if( 0 != hNative )
+        {
+            nTerm( hNative );
+            hNative = 0;
+        }
+    }
+
     /**
      * Constructor 
      */
@@ -264,7 +274,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 hNative = 0;
                 throw new MediaException("Unsupported Media Format:" + mediaFormat + " for " + source.getLocator());
             } else {
-                handledByJava = true;
+                setHandledByJava();
             }
         }
 
@@ -597,7 +607,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                         !format.equals(MEDIA_FORMAT_UNKNOWN) && 
                         !format.equals(MEDIA_FORMAT_UNSUPPORTED)) {
                     mediaFormat = format;
-                    handledByJava = true;
+                    setHandledByJava();
                 } else {
                     throw new MediaException("Unsupported media format ('" + type + "','" + mediaFormat + "')");
                 }
