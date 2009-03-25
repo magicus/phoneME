@@ -60,7 +60,7 @@ public:
     virtual HRESULT __stdcall Clone(IEnumMediaTypes **ppEnum);
 };
 
-class filter_out_pin : public IPin, public IAsyncReader
+class filter_out_pin : public IPin
 {
     friend filter_out_filter;
 
@@ -97,15 +97,6 @@ public:
     virtual HRESULT __stdcall BeginFlush();
     virtual HRESULT __stdcall EndFlush();
     virtual HRESULT __stdcall NewSegment(REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
-    // IAsyncReader
-    virtual HRESULT __stdcall RequestAllocator(IMemAllocator *pPreferred, ALLOCATOR_PROPERTIES *pProps, IMemAllocator **ppActual);
-    virtual HRESULT __stdcall Request(IMediaSample *pSample, DWORD_PTR dwUser);
-    virtual HRESULT __stdcall WaitForNext(DWORD dwTimeout, IMediaSample **ppSample, DWORD_PTR *pdwUser);
-    virtual HRESULT __stdcall SyncReadAligned(IMediaSample *pSample);
-    virtual HRESULT __stdcall SyncRead(LONGLONG llPosition, LONG lLength, BYTE *pBuffer);
-    virtual HRESULT __stdcall Length(LONGLONG *pTotal, LONGLONG *pAvailable);
-    //virtual HRESULT __stdcall BeginFlush();
-    //virtual HRESULT __stdcall EndFlush();
 };
 
 class filter_out_enum_pins : public IEnumPins
@@ -375,12 +366,6 @@ HRESULT __stdcall filter_out_pin::QueryInterface(REFIID riid, void **ppvObject)
         ((IPin *)*ppvObject)->AddRef();
         return S_OK;
     }
-    if(riid == IID_IAsyncReader)
-    {
-        *(IAsyncReader **)ppvObject = this;
-        ((IAsyncReader *)*ppvObject)->AddRef();
-        return S_OK;
-    }
     *ppvObject = null;
     return E_NOINTERFACE;
 }
@@ -611,77 +596,6 @@ HRESULT __stdcall filter_out_pin::NewSegment(REFERENCE_TIME /*tStart*/, REFERENC
     print("filter_out_pin::NewSegment called...\n");
 #endif
     return E_UNEXPECTED;
-}
-
-HRESULT __stdcall filter_out_pin::RequestAllocator(IMemAllocator * /*pPreferred*/, ALLOCATOR_PROPERTIES * /*pProps*/, IMemAllocator ** /*ppActual*/)
-{
-#if write_level > 0
-    print("filter_out_pin::RequestAllocator called...\n");
-#endif
-    return E_FAIL;
-}
-
-HRESULT __stdcall filter_out_pin::Request(IMediaSample * /*pSample*/, DWORD_PTR /*dwUser*/)
-{
-#if write_level > 0
-    print("filter_out_pin::Request called...\n");
-#endif
-    return E_FAIL;
-}
-
-HRESULT __stdcall filter_out_pin::WaitForNext(DWORD /*dwTimeout*/, IMediaSample ** /*ppSample*/, DWORD_PTR * /*pdwUser*/)
-{
-#if write_level > 0
-    print("filter_out_pin::WaitForNext called...\n");
-#endif
-    return E_FAIL;
-}
-
-HRESULT __stdcall filter_out_pin::SyncReadAligned(IMediaSample * /*pSample*/)
-{
-#if write_level > 0
-    print("filter_out_pin::SyncReadAligned called...\n");
-#endif
-    return E_FAIL;
-}
-
-HRESULT __stdcall filter_out_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYTE *pBuffer)
-{
-#if write_level > 0
-    print("filter_out_pin::SyncRead(%I64i, %i, %p) called...\n", llPosition, lLength, pBuffer);
-#endif
-    if(!pBuffer) return E_POINTER;
-    HRESULT r;
-    EnterCriticalSection(&data_cs);
-    if(data_l < llPosition)
-    {
-        r = S_FALSE;
-    }
-    else if(data_l < llPosition + lLength)
-    {
-        memcpy(pBuffer, (bits8 *)data_p + nat32(llPosition), data_l - nat32(llPosition));
-        r = S_FALSE;
-    }
-    else
-    {
-        memcpy(pBuffer, (bits8 *)data_p + nat32(llPosition), lLength);
-        r = S_OK;
-    }
-    LeaveCriticalSection(&data_cs);
-    return r;
-}
-
-HRESULT __stdcall filter_out_pin::Length(LONGLONG *pTotal, LONGLONG *pAvailable)
-{
-#if write_level > 0
-    print("filter_out_pin::Length called...\n");
-#endif
-    if(!pTotal || !pAvailable) return E_POINTER;
-    EnterCriticalSection(&data_cs);
-    *pTotal = 0x7fffffff;
-    *pAvailable = data_l;
-    LeaveCriticalSection(&data_cs);
-    return VFW_S_ESTIMATED;
 }
 
 //----------------------------------------------------------------------------

@@ -24,7 +24,13 @@
 
 #pragma once
 
-#include "player.hpp"
-#include "player_callback.hpp"
+#include "types.hpp"
 
-bool create_player_dshow(nat32 len, char16 const *pformat, player_callback *pcallback, player **ppplayer);
+class player_callback
+{
+public:
+    virtual ~player_callback() = 0 {}
+    virtual void frame_ready(bits16 const *pframe) = 0;
+    virtual void size_changed(int16 w, int16 h) = 0;
+    virtual void playback_finished() = 0;
+};
