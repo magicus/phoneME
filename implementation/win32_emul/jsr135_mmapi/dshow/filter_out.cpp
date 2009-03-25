@@ -255,7 +255,7 @@ HRESULT __stdcall filter_out_enum_media_types::Next(ULONG cMediaTypes, AM_MEDIA_
         }
         if(amt.cbFormat)
         {
-            pamt->pbFormat = (BYTE *)CoTaskMemAlloc(amt.cbFormat);
+            pamt->pbFormat = (bits8 *)CoTaskMemAlloc(amt.cbFormat);
             if(!pamt->pbFormat)
             {
                 CoTaskMemFree(pamt);
@@ -314,7 +314,7 @@ HRESULT __stdcall filter_out_enum_media_types::Clone(IEnumMediaTypes **ppEnum)
     if(!penum_media_types) return E_OUTOFMEMORY;
     if(amt.cbFormat)
     {
-        penum_media_types->amt.pbFormat = new BYTE[amt.cbFormat];
+        penum_media_types->amt.pbFormat = new bits8[amt.cbFormat];
         if(!penum_media_types->amt.pbFormat)
         {
             delete penum_media_types;
@@ -499,7 +499,7 @@ HRESULT __stdcall filter_out_pin::ConnectionMediaType(AM_MEDIA_TYPE *pmt)
     }
     if(amt.cbFormat)
     {
-        pmt->pbFormat = (BYTE *)CoTaskMemAlloc(amt.cbFormat);
+        pmt->pbFormat = (bits8 *)CoTaskMemAlloc(amt.cbFormat);
         if(!pmt->pbFormat) return E_OUTOFMEMORY;
         memcpy(pmt->pbFormat, amt.pbFormat, amt.cbFormat);
     }
@@ -569,7 +569,7 @@ HRESULT __stdcall filter_out_pin::EnumMediaTypes(IEnumMediaTypes **ppEnum)
     if(!penum_media_types) return E_OUTOFMEMORY;
     if(amt.cbFormat)
     {
-        penum_media_types->amt.pbFormat = new BYTE[amt.cbFormat];
+        penum_media_types->amt.pbFormat = new bits8[amt.cbFormat];
         if(!penum_media_types->amt.pbFormat)
         {
             delete penum_media_types;
@@ -671,8 +671,26 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
     if(pfilter->state == State_Stopped) return VFW_E_WRONG_STATE;
 #if write_level > 0
     print("Actual data length=%i\n", pSample->GetActualDataLength());
+    int64 tstart;
+    int64 tend;
+    int64 t;
+    int64 tc = 0;
+    pSample->GetTime(&tstart, &tend);
+    pfilter->pclock->GetTime(&t);
+    IMediaSeeking *pms;
+    pfilter->pgraph->QueryInterface(IID_IMediaSeeking, (void **)&pms);
+
+    for(nat32 i = 0; i < 5000; i++)
+    {
+        pms->GetCurrentPosition(&tc);
+        if(tc > tstart) break;
+        Sleep(1);
+    }
+
+    pms->Release();
+    printf("%I64i %I64i %I64i %I64i\n", tstart, tend, t, tc);
 #endif
-    BYTE *pb;
+    bits8 *pb;
     pSample->GetPointer(&pb);
     pfilter->pcallback->frame_ready((bits16 *)pb);
     return S_OK;
@@ -1096,7 +1114,7 @@ bool filter_out_filter::create(AM_MEDIA_TYPE const *pamt, player_callback *pcall
     }
     if(pamt->cbFormat)
     {
-        pfilter->ppin->amt.pbFormat = new BYTE[pamt->cbFormat];
+        pfilter->ppin->amt.pbFormat = new bits8[pamt->cbFormat];
         if(!pfilter->ppin->amt.pbFormat)
         {
             DeleteCriticalSection(&pfilter->ppin->data_cs);

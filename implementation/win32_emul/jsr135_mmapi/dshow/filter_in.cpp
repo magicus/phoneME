@@ -255,7 +255,7 @@ HRESULT __stdcall filter_in_enum_media_types::Next(ULONG cMediaTypes, AM_MEDIA_T
         }
         if(amt.cbFormat)
         {
-            pamt->pbFormat = (BYTE *)CoTaskMemAlloc(amt.cbFormat);
+            pamt->pbFormat = (bits8 *)CoTaskMemAlloc(amt.cbFormat);
             if(!pamt->pbFormat)
             {
                 CoTaskMemFree(pamt);
@@ -314,7 +314,7 @@ HRESULT __stdcall filter_in_enum_media_types::Clone(IEnumMediaTypes **ppEnum)
     if(!penum_media_types) return E_OUTOFMEMORY;
     if(amt.cbFormat)
     {
-        penum_media_types->amt.pbFormat = new BYTE[amt.cbFormat];
+        penum_media_types->amt.pbFormat = new bits8[amt.cbFormat];
         if(!penum_media_types->amt.pbFormat)
         {
             delete penum_media_types;
@@ -483,7 +483,7 @@ HRESULT __stdcall filter_in_pin::ConnectionMediaType(AM_MEDIA_TYPE *pmt)
     }
     if(amt.cbFormat)
     {
-        pmt->pbFormat = (BYTE *)CoTaskMemAlloc(amt.cbFormat);
+        pmt->pbFormat = (bits8 *)CoTaskMemAlloc(amt.cbFormat);
         if(!pmt->pbFormat) return E_OUTOFMEMORY;
         memcpy(pmt->pbFormat, amt.pbFormat, amt.cbFormat);
     }
@@ -553,7 +553,7 @@ HRESULT __stdcall filter_in_pin::EnumMediaTypes(IEnumMediaTypes **ppEnum)
     if(!penum_media_types) return E_OUTOFMEMORY;
     if(amt.cbFormat)
     {
-        penum_media_types->amt.pbFormat = new BYTE[amt.cbFormat];
+        penum_media_types->amt.pbFormat = new bits8[amt.cbFormat];
         if(!penum_media_types->amt.pbFormat)
         {
             delete penum_media_types;
@@ -1093,7 +1093,7 @@ bool filter_in_filter::create(AM_MEDIA_TYPE const *pamt, player_callback *pcallb
     }
     if(pamt->cbFormat)
     {
-        pfilter->ppin->amt.pbFormat = new BYTE[pamt->cbFormat];
+        pfilter->ppin->amt.pbFormat = new bits8[pamt->cbFormat];
         if(!pfilter->ppin->amt.pbFormat)
         {
             DeleteCriticalSection(&pfilter->ppin->data_cs);
