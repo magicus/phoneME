@@ -49,6 +49,11 @@ JSR_280_DEPS+=$(PS)$(XMLPARSER_JAR)
 
 include $(INTERNAL_JSR_280_CONFIG_DIR)/common.gmk
 
+# Include jsr 280 common properties in Configuration
+#
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+    $(JSR_280_PROPERTY_FILES)
+
 JAVADOC_ALL_SOURCEPATH += $(SUBSYSTEM_JSR280_SOURCEPATH)
 JAVADOC_ALL_PACKAGES +=  $(SUBSYSTEM_JSR280_PACKAGES)
 
@@ -59,7 +64,7 @@ GROUP_DOC_ALL += \
 # Determines what option we have made and set it
 # to some variable that global makefile recognize
 #
-SUBSYSTEM_JSR_280_JAVA_FILES   = \
+SUBSYSTEM_JSR_280_JAVA_FILES += \
     $(MODULE_JSR_280_JAVA_FILES)
 
 # Create JSR 280 source in subdir 'jsr280/'
