@@ -747,29 +747,53 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * Sets the button labels.
      */
     protected void setButtonLabels() {
-        // reset all the labels
-        for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
-            labels[i] = null;
-        }
 
-        // Port me : If a port had more than 2 soft buttons, adjust
-        // the behavior here for extra buttons
-        labels[0] = (soft1 == null) ? null : soft1.getLabel();
+        // IMPL_NOTE: If a port had more than 2 soft buttons, adjust
+        // the behavior below for extra buttons
+
+        String label1 = (soft1 == null) ? null : soft1.getLabel();
+        String label2;
+
         if (soft2 == null) {
-            labels[1] = null;
+            label2 = null;
         } else if (soft2.length == 1) {
-            labels[1] = soft2[0].getLabel();
+            label2 = soft2[0].getLabel();
         } else {
-            labels[1] = SoftButtonSkin.TEXT_MENUCMD;
+            label2 = SoftButtonSkin.TEXT_MENUCMD;
         }
 
-        if (isNativeLayer) {
-            // paint buttons on native layer instead of java's SFBLayer
-            setNativeSoftButtonLabel0 (labels[0],0);
-            setNativeSoftButtonLabel0 (labels[1],1);
+        boolean sameLabel;
+
+        if (labels[0] == label1) {
+            sameLabel = true;
+        } else if (labels[0] != null && labels[0].equals(label1)) {
+            sameLabel = true;
         } else {
-            addDirtyRegion();
-            requestRepaint();
+            sameLabel = false;
+        }
+
+        if (sameLabel) {
+            if (labels[1] == label2) {
+                sameLabel = true;
+            } else if (labels[1] != null && labels[1].equals(label2)) {
+                sameLabel = true;
+            } else {
+                sameLabel = false;
+            }
+        }
+
+        if (!sameLabel) {
+            labels[0] = label1;
+            labels[1] = label2;
+
+            if (isNativeLayer) {
+                // paint buttons on native layer instead of java's SFBLayer
+                setNativeSoftButtonLabel0 (labels[0],0);
+                setNativeSoftButtonLabel0 (labels[1],1);
+            } else {
+                addDirtyRegion();
+                requestRepaint();
+            }
         }
     }
 
