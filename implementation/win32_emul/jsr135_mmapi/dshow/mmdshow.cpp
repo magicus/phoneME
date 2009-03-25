@@ -93,11 +93,18 @@ public:
 
 void dshow_player::frame_ready( bits16 const* pFrame )
 {
-    javacall_pixel* old_frame = video_frame;
-    video_frame = new javacall_pixel[ video_width * video_height ];
-    memcpy( video_frame, pFrame, sizeof( javacall_pixel ) * video_width * video_height );
+    if( NULL == video_frame ) video_frame = new javacall_pixel[ video_width * video_height ];
+
+    //memcpy( video_frame, pFrame, sizeof( javacall_pixel ) * video_width * video_height );
+
+    for( int y = 0; y < video_height; y++ )
+    {
+        memcpy( video_frame + y * video_width, 
+                pFrame + ( video_height - y - 1 ) * video_width,
+                sizeof( javacall_pixel ) * video_width );
+    }
+
     lcd_output_video_frame( video_frame );
-    if( NULL != old_frame ) delete old_frame;
 }
 
 void dshow_player::size_changed( int16 w, int16 h )
@@ -168,6 +175,8 @@ static javacall_result dshow_create(int appId,
 
     *pHandle =(javacall_handle)p;
 
+    lcd_set_color_key( JAVACALL_FALSE, 0 );
+
     return JAVACALL_OK;
 }
 
@@ -184,6 +193,8 @@ static javacall_result dshow_destroy(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** destroy ***\n" );
 
+    lcd_output_video_frame( NULL );
+
     if( NULL != p->video_frame ) delete p->video_frame;
     if( NULL != p->ppl ) delete p->ppl;
     delete p;
@@ -195,6 +206,9 @@ static javacall_result dshow_close(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** close ***\n" );
     p->ppl->close();
+
+    lcd_output_video_frame( NULL );
+
     return JAVACALL_OK;
 }
 
@@ -212,16 +226,6 @@ static javacall_result dshow_acquire_device(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** acquire device ***\n" );
-
-    if( player::result_success == p->ppl->prefetch() )
-    {
-        PRINTF( "*** acquire device succeeded ***\n" );
-    }
-    else
-    {
-        PRINTF( "*** acquire device failed! ***\n" );
-        return JAVACALL_FAIL;
-    }
 
     p->prefetched = true;
 
@@ -291,11 +295,15 @@ static javacall_result dshow_realize(javacall_handle handle,
     {
         if( create_player_dshow( mimeLength, (const char16*)mime, p, &(p->ppl) ) )
         {
-            if( player::result_success == p->ppl->realize() )
+            if( player::result_success != p->ppl->realize() )
             {
-                p->realizing = true;
-                return JAVACALL_OK;
+                PRINTF( "*** player::realize() failed! ***\n" );
+                return JAVACALL_FAIL;
             }
+
+            p->realizing = true;
+
+            return JAVACALL_OK;
         }
     }
 
@@ -318,15 +326,20 @@ static javacall_result dshow_get_java_buffer_size(javacall_handle handle,
 
     *java_buffer_size = XFER_BUFFER_SIZE;
 
-    if( p->prefetching || p->prefetched )
+    if( p->prefetched )
     {
         PRINTF( "*** 0x%08X get_java_buffer_size: XFER_BUFFER_SIZE ***\n", handle );
         *first_chunk_size = XFER_BUFFER_SIZE;
     }
-    else
+    else if( p->prefetching )
     {
-        PRINTF( "*** 0x%08X get_java_buffer_size: 0 ***\n", handle );
+        PRINTF( "*** 0x%08X get_java_buffer_size: prefetching, 0 ***\n", handle );
         *first_chunk_size = 0;
+    }
+    else // if( p->realizing )
+    {
+        PRINTF( "*** 0x%08X get_java_buffer_size: realizing, XFER_BUFFER_SIZE ***\n", handle );
+        *first_chunk_size = XFER_BUFFER_SIZE;
     }
 
     return JAVACALL_OK;
@@ -375,12 +388,21 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
         }
         else if( p->prefetching )
         {
-            *need_more_data  = ( p->bytes_buffered < XFER_BUFFER_SIZE * 30 ) 
-                               ? JAVACALL_TRUE : JAVACALL_FALSE;
+            *need_more_data  = JAVACALL_FALSE;
         }
         else if( p->realizing )
         {
-            *need_more_data  = JAVACALL_FALSE;
+            *need_more_data  = ( p->bytes_buffered < XFER_BUFFER_SIZE * 30 ) 
+                               ? JAVACALL_TRUE : JAVACALL_FALSE;
+
+            if( JAVACALL_FALSE == *need_more_data )
+            {
+                if( player::result_success != p->ppl->prefetch() )
+                {
+                    PRINTF( "*** player::prefetch() failed! ***\n" );
+                    return JAVACALL_FAIL;
+                }
+            }
         }
         else
         {
