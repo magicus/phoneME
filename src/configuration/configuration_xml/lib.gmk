@@ -155,13 +155,11 @@ SUBSYSTEM_CONFIGURATION_SKIN_XML_FILE = $(INT_XML_DIR)/skin.xml
 # Skin description input file
 INT_XML_FILES += $(SUBSYSTEM_CONFIGURATION_SKIN_XML_FILE)
 
-ifeq ($(USE_FINGER_TOUCH), true)
-    ifeq ($(USE_JAVA_VIRTUAL_KEYBOARD), true)
-    SUBSYSTEM_CONFIGURATION_KEYBOARD_SKIN_XML_FILE = $(INT_XML_DIR)/keyboard_skin.xml
+ifeq ($(USE_JAVA_VIRTUAL_KEYBOARD), true)
+SUBSYSTEM_CONFIGURATION_KEYBOARD_SKIN_XML_FILE = $(INT_XML_DIR)/keyboard_skin.xml
 
-    # Skin description input file
-    INT_XML_FILES += $(SUBSYSTEM_CONFIGURATION_KEYBOARD_SKIN_XML_FILE)
-    endif
+# Skin description input file
+INT_XML_FILES += $(SUBSYSTEM_CONFIGURATION_KEYBOARD_SKIN_XML_FILE)
 endif
 
 # Command for invoking transformer
@@ -296,20 +294,19 @@ GENERATE_PROPERTIES_CALLOUTS = \
 	-xsl $(INT_XSL_DIR)/cldc/propertyCallouts.xsl \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/midp_property_callouts.h)`
 
-ifeq ($(USE_FINGER_TOUCH), true)
-    ifeq ($(USE_JAVA_VIRTUAL_KEYBOARD), true)
-    # transformation for generating .h file with property callouts
-    GENERATE_KEYBOARDS_SOURCE = \
+ifeq ($(USE_JAVA_VIRTUAL_KEYBOARD), true)
+# transformation for generating .h file with property callouts
+GENERATE_KEYBOARDS_SOURCE = \
 	-xml $(INT_MERGED_XML_FILE) \
 	-xsl $(INT_XSL_DIR)/cldc/keyboardJava.xsl \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/chameleon/keyboards/Keyboards.java)`
 
 
-    ifndef GENERATE_KEYBOARDS_SOURCE
-	GENERATE_KEYBOARDS_SOURCE = $(GENERATED_DIR)/classes/com/sun/midp/chameleon/keyboards/Keyboards.java
-    endif
-    endif
+ifndef GENERATE_KEYBOARDS_SOURCE
+  GENERATE_KEYBOARDS_SOURCE = $(GENERATED_DIR)/classes/com/sun/midp/chameleon/keyboards/Keyboards.java
 endif
+endif
+
 ifeq ($(USE_STATIC_PROPERTIES), true)
 # transformation for generating .c file with properties 
 GENERATE_PROPERTIES_STATIC = \

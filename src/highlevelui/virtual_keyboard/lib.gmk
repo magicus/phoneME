@@ -52,12 +52,8 @@ ifeq ($(USE_NATIVE_VIRTUAL_KEYBOARD), true)
     include $(VIRTUAL_KEYBOARD_DIR)/vkplatform/lib.gmk
 else
 ifeq ($(USE_JAVA_VIRTUAL_KEYBOARD), true)
-    ifeq ($(USE_FINGER_TOUCH), true))
-        include $(VIRTUAL_KEYBOARD_DIR)/vkjava/lib.gmk
-    else
-        include $(VIRTUAL_KEYBOARD_DIR)/vkdefault/lib.gmk
-    endif
-else                                     
+    include $(VIRTUAL_KEYBOARD_DIR)/vkjava/lib.gmk
+else                                        
     include $(VIRTUAL_KEYBOARD_DIR)/vkdefault/lib.gmk
 endif
 endif
