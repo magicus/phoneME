@@ -377,9 +377,9 @@ public final class MIDPVideoRenderer extends VideoRenderer
             format = 4;
             pixelsize = 2;
         } else */
-         if (encoding.equalsIgnoreCase(SNAPSHOT_PNG)) {
+         if (SNAPSHOT_PNG.equalsIgnoreCase(encoding)) {
             return PNGEncoder.encode(rgbData, videoWidth, videoHeight, imageType);
-        } else  if (encoding.equalsIgnoreCase(SNAPSHOT_JPEG)){
+        } else  if (SNAPSHOT_JPEG.equalsIgnoreCase(encoding)){
             return JPEGEncoder.encode(rgbData, videoWidth, videoHeight, imageType);
         } else 
             throw new MediaException("Image format " + imageType + " not supported");

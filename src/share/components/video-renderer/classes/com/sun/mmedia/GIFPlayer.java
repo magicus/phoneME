@@ -315,8 +315,8 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             if (duration == 0) {
                 while (getFrame())
                     decodeFrame();
-                renderFrame();
             }
+                renderFrame();
 
         } catch (IOException e) {
             throw new MediaException("can't seek first frame");
