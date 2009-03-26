@@ -69,7 +69,7 @@ static pfontbitmap selectFontBitmap(jchar c, pfontbitmap* pfonts) {
  *
  * putpixel primitive character drawing.
  */
-unsigned char BitMask[8] = {0x80,0x40,0x20,0x10,0x8,0x4,0x2,0x1};
+const unsigned char BitMask[8] = {0x80,0x40,0x20,0x10,0x8,0x4,0x2,0x1};
 static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
 		     gxj_pixel_type pixelColor, int x, int y,
 		     int xSource, int ySource, int xLimit, int yLimit,
@@ -111,7 +111,7 @@ static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
     // The clipping should be applied here already, so
     // we use optimal access to destination buffer with
     // no extra checks
-
+#if USE_SLOW_LOOPS
     if (fontbitmap < mapend) {
         for (yDest = y; yDest < yDestLimit;
                 yDest++, bitOffset+=pixelIndexLineInc, dest += destInc) {
@@ -133,6 +133,83 @@ static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
             }
         }
     }
+#else
+    if (fontbitmap < mapend) {
+        for (yDest = y; yDest < yDestLimit;
+                yDest++, bitOffset+=pixelIndexLineInc, dest += destInc) {
+            int xDestLimit8 = xDestLimit - 8;
+            xDest = x;
+            if (bitOffset >= 8) {
+                fontbitmap += bitOffset / 8;
+                if (fontbitmap >= mapend) {
+                    continue;
+                }
+                bitOffset %= 8;
+                bitmapByte = *fontbitmap;
+            }
+            if (bitOffset != 0) {
+                for (; bitOffset < 8 && xDest < xDestLimit;
+                        xDest++, bitOffset++, dest++) {
+                    /* we don't draw "background" pixels, only foreground */
+                    if ((bitmapByte & BitMask[bitOffset]) != 0) {
+                        *dest = pixelColor;
+                    }
+                }
+                if (xDest < xDestLimit) {
+                    bitOffset = 0;
+                    fontbitmap++;
+                    bitmapByte = *fontbitmap;
+                }
+            }
+            for (; xDest <= xDestLimit8; ) {
+                /* we don't draw "background" pixels, only foreground */
+                if ((bitmapByte & 0x80) != 0) {
+                    *dest = pixelColor;
+                }
+                dest++;
+                if ((bitmapByte & 0x40) != 0) {
+                    *dest = pixelColor;
+                }
+                dest++;
+                if ((bitmapByte & 0x20) != 0) {
+                    *dest = pixelColor;
+                }
+                dest++;
+                if ((bitmapByte & 0x10) != 0) {
+                    *dest = pixelColor;
+                }
+                dest++;
+                if ((bitmapByte & 0x8) != 0) {
+                    *dest = pixelColor;
+                }
+                dest++;
+                if ((bitmapByte & 0x4) != 0) {
+                    *dest = pixelColor;
+                }
+                dest++;
+                if ((bitmapByte & 0x2) != 0) {
+                    *dest = pixelColor;
+                }
+                dest++;
+                if ((bitmapByte & 0x1) != 0) {
+                    *dest = pixelColor;
+                }
+                dest++;
+                xDest += 8;
+
+                fontbitmap++;
+                bitmapByte = *fontbitmap;
+            }
+            for (; xDest < xDestLimit;
+                    xDest++, bitOffset++, dest++) {
+                /* we don't draw "background" pixels, only foreground */
+                if ((bitmapByte & BitMask[bitOffset]) != 0) {
+                    *dest = pixelColor;
+                }
+            }
+        }
+    }
+#endif
 }
 
 /*
