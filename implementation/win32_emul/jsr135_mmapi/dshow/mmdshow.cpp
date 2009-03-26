@@ -38,16 +38,14 @@ extern "C" {
 
 static void PRINTF( const char* fmt, ... ) {
     char           str8[ 256 ];
-	va_list        args;
+    va_list        args;
 
-	va_start(args, fmt);
+    va_start(args, fmt);
     vsprintf( str8, fmt, args );
-	va_end(args);
+    va_end(args);
 
-    OutputDebugString( str8 );
+    //OutputDebugString( str8 );
 }
-
-//#define PRINTF printf
 
 #define XFER_BUFFER_SIZE  4096
 
@@ -94,8 +92,6 @@ public:
 void dshow_player::frame_ready( bits16 const* pFrame )
 {
     if( NULL == video_frame ) video_frame = new javacall_pixel[ video_width * video_height ];
-
-    //memcpy( video_frame, pFrame, sizeof( javacall_pixel ) * video_width * video_height );
 
     for( int y = 0; y < video_height; y++ )
     {

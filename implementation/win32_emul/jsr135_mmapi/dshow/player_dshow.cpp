@@ -29,6 +29,7 @@
 #include "filter_in.hpp"
 #include "filter_out.hpp"
 #include "player.hpp"
+#include "writer.hpp"
 
 #pragma comment(lib, "strmiids.lib")
 #pragma comment(lib, "winmm.lib")
