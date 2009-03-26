@@ -30,6 +30,5 @@
 class filter_out : public IBaseFilter
 {
 public:
-    virtual bool data(nat32 len, void const *pdata) = 0;
     static bool create(AM_MEDIA_TYPE const *pamt, player_callback *pcallback, filter_out **ppfilter);
 };

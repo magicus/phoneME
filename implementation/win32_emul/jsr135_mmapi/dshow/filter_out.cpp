@@ -27,7 +27,7 @@
 #include <vfwmsgs.h>
 #include "filter_out.hpp"
 
-#define write_level 1
+#define write_level 2
 
 #if write_level > 0
 #include "writer.hpp"
@@ -165,8 +165,6 @@ public:
     virtual HRESULT __stdcall QueryFilterInfo(FILTER_INFO *pInfo);
     virtual HRESULT __stdcall JoinFilterGraph(IFilterGraph *pGraph, LPCWSTR pName);
     virtual HRESULT __stdcall QueryVendorInfo(LPWSTR *pVendorInfo);
-    // filter_out
-    virtual bool data(nat32 len, void const *pdata);
 
     static bool create(AM_MEDIA_TYPE const *pamt, player_callback *pcallback, filter_out_filter **ppfilter);
 };
@@ -408,25 +406,7 @@ HRESULT __stdcall filter_out_pin::Connect(IPin *pReceivePin, AM_MEDIA_TYPE const
     print("filter_out_pin::Connect called...\n");
 #endif
     if(!pReceivePin) return E_POINTER;
-    if(pconnected) return VFW_E_ALREADY_CONNECTED;
-    if(pfilter->state != State_Stopped) return VFW_E_NOT_STOPPED;
-
-    print("wp1...\n");
-    PIN_INFO pi;
-    pReceivePin->QueryPinInfo(&pi);
-#if write_level > 0
-    dump_filter(pi.pFilter, 0);
-#endif
-    HRESULT hr = pReceivePin->ReceiveConnection(this, &amt);
-#if write_level > 0
-    error(hr);
-#endif
-    if(hr == VFW_E_TYPE_NOT_ACCEPTED) return VFW_E_NO_ACCEPTABLE_TYPES;
-    if(hr != S_OK) return hr;
-    pconnected = pReceivePin;
-    pconnected->AddRef();
-    print("wp2...\n");
-    return S_OK;
+    return E_UNEXPECTED;
 }
 
 HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, AM_MEDIA_TYPE const *pmt)
@@ -669,8 +649,36 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
     if(!pSample) return E_POINTER;
     if(pfilter->state == State_Stopped) return VFW_E_WRONG_STATE;
+/*
+    nat32 l = pSample->GetActualDataLength();
+
+    EnterCriticalSection(&data_cs);
+    nat32 l2 = data_l + 4;
+    if(data_a < l2)
+    {
+        nat32 a = round(l2);
+        void *p = new bits8[a];
+        if(data_a)
+        {
+            if(data_l) memcpy(p, data_p, data_l);
+            delete[] (bits8 *)data_p;
+        }
+        data_p = p;
+        data_a = a;
+    }
+    //memcpy((bits8 *)data_p + data_l, len);
+
+    data_l = l2;
+
+
+    LeaveCriticalSection(&ppin->data_cs);
+    return true;
+}*/
+
+
 #if write_level > 0
     print("Actual data length=%i\n", pSample->GetActualDataLength());
+#endif
     int64 tstart;
     int64 tend;
     int64 t;
@@ -680,7 +688,7 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
     IMediaSeeking *pms;
     pfilter->pgraph->QueryInterface(IID_IMediaSeeking, (void **)&pms);
 
-    for(nat32 i = 0; i < 5000; i++)
+    for(nat32 i = 0; i < 5; i++)
     {
         pms->GetCurrentPosition(&tc);
         if(tc > tstart) break;
@@ -688,6 +696,7 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
     }
 
     pms->Release();
+#if write_level > 0
     printf("%I64i %I64i %I64i %I64i\n", tstart, tend, t, tc);
 #endif
     bits8 *pb;
@@ -711,7 +720,7 @@ HRESULT __stdcall filter_out_pin::ReceiveCanBlock()
 #if write_level > 0
     print("filter_out_pin::ReceiveCanBlock called...\n");
 #endif
-    return S_FALSE;
+    return S_OK;
 }
 
 //----------------------------------------------------------------------------
@@ -1065,31 +1074,6 @@ inline nat32 filter_out_filter::round(nat32 n)
     n |= n >> 16;
     n++;
     return n;
-}
-
-bool filter_out_filter::data(nat32 len, void const *pdata)
-{
-#if write_level > 0
-    print("filter_out_filter::data(%u) called...\n", len);
-#endif
-    EnterCriticalSection(&ppin->data_cs);
-    nat32 l2 = ppin->data_l + len;
-    if(ppin->data_a < l2)
-    {
-        nat32 a = round(l2);
-        void *p = new bits8[a];
-        if(ppin->data_a)
-        {
-            if(ppin->data_l) memcpy(p, ppin->data_p, ppin->data_l);
-            delete[] (bits8 *)ppin->data_p;
-        }
-        ppin->data_p = p;
-        ppin->data_a = a;
-    }
-    memcpy((bits8 *)ppin->data_p + ppin->data_l, pdata, len);
-    ppin->data_l = l2;
-    LeaveCriticalSection(&ppin->data_cs);
-    return true;
 }
 
 bool filter_out_filter::create(AM_MEDIA_TYPE const *pamt, player_callback *pcallback, filter_out_filter **ppfilter)

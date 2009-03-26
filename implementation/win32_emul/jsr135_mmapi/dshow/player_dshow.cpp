@@ -339,12 +339,13 @@ player::result player_dshow::prefetch()
     }
 
     HRESULT hr = pgb->Render(pp);
+    //HRESULT hr = pgb->RenderFile(L"C:/Working/Matway/Sun/ds/Debug/phantom.mpg", null);
     if(hr != S_OK)
     {
         return result_media;
     }
 
-//    dump_filter_graph(pgb, 0);
+    dump_filter_graph(pgb, 0);
 
     hr = pmc->Pause();
     if(FAILED(hr))
@@ -443,6 +444,7 @@ void player_dshow::close()
     }
     else if(state == realized || state == prefetched || state == started)
     {
+        pmc->Stop();
         pbf_flv_dec->Release();
         pbf_flv_split->Release();
         pp->Release();
@@ -450,7 +452,7 @@ void player_dshow::close()
         pfi->Release();
         pms->Release();
         pmc->Release();
-        pgb->Release();
+        /*print("IGraphBuilder::Release=%u\n", */pgb->Release()/*)*/;
         CoUninitialize();
         state = closed;
     }

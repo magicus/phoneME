@@ -396,6 +396,19 @@ bool dump_pin(IPin *pp, nat32 indent)
             for(UINT32 i = 0; i < indent; i++) print(" ");
             print("0x%08x ", UINT32(UINT64(pp)));
             print(L"%s", id);
+            IAsyncReader *par;
+            if(pp->QueryInterface(IID_IAsyncReader, (void **)&par) == S_OK)
+            {
+                par->Release();
+                print(" IAsyncReader");
+            }
+            IMemInputPin *pmip;
+            if(pp->QueryInterface(IID_IMemInputPin, (void **)&pmip) == S_OK)
+            {
+                print(" IMemInputPin");
+                if(pmip->ReceiveCanBlock() == S_OK) print("(blocking)");
+                pmip->Release();
+            }
             print(" 0x%08x", UINT32(UINT64(pi.pFilter)));
             print(" %u ", pi.dir);
             print(L"%s", pi.achName);
@@ -476,22 +489,21 @@ bool dump_filter(IBaseFilter *pbf, nat32 indent)
     else
     {
         for(UINT32 i = 0; i < indent; i++) print(" ");
-        print("0x%08x ", UINT32(UINT64(pbf)));
+        print("0x%08x", UINT32(UINT64(pbf)));
+        print(L" %s", fi.achName);
         CLSID clsid;
         if(pbf->GetClassID(&clsid) == S_OK)
         {
-            print(clsid);
             print(" ");
+            print(clsid);
         }
-        print(L"%s", fi.achName);
-        print(" 0x%08x ", UINT32(UINT64(fi.pGraph)));
+        print(" 0x%08x", UINT32(UINT64(fi.pGraph)));
         if(fi.pGraph) fi.pGraph->Release();
         LPWSTR vi;
         hr = pbf->QueryVendorInfo(&vi);
         if(hr == S_OK)
         {
-            print(" ");
-            print(L"%s", vi);
+            print(L" %s", vi);
             CoTaskMemFree(vi);
         }
         print("\n");
