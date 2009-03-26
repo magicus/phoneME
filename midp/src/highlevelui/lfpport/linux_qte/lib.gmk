@@ -1,0 +1,104 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+# 
+# This source file is specific for Qt-based configurations.
+#
+######################################################################
+#
+# Library makefile
+#
+######################################################################
+
+# Name of the library
+LFPPORT_QTE_NAME = lfpport/linux_qte
+LFPPORT_QTE_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(LFPPORT_QTE_NAME)
+
+# Path to resources dir
+LFPPORT_QTE_RESOURCES_DIR=$(LFPPORT_QTE_DIR)/resource
+
+# Add to library set for this build
+LIB_SET += $(LFPPORT_QTE_NAME)
+
+# Export include files
+# SUBSYSTEM_LFPPORT_EXTRA_INCLUDES += -I$(LFPPORT_QTE_DIR)/include
+
+# Native files for the library
+#
+SUBSYSTEM_LFPPORT_NATIVE_FILES += \
+    lfpport_qte_export.cpp \
+    lfpport_qte_alert.cpp \
+    lfpport_qte_canvas.cpp \
+    lfpport_qte_choicegroup.cpp \
+    lfpport_qte_customitem.cpp \
+    lfpport_qte_dateeditor.cpp \
+    lfpport_qte_datefield.cpp \
+    lfpport_qte_displayable.cpp \
+    lfpport_qte_font.cpp \
+    lfpport_qte_form.cpp \
+    lfpport_qte_gauge.cpp \
+    lfpport_qte_item.cpp \
+    lfpport_qte_string_image_item.cpp \
+    lfpport_qte_textfield.cpp \
+    lfpport_qte_ticker.cpp \
+    lfpport_qte_command.cpp \
+    lfpport_qte_util.cpp \
+    lfpport_qte_mainwindow.cpp \
+    lfpport_qte_inputmode.cpp \
+    lfpport_qte_mscreen.cpp
+
+# Source code path for the library
+#
+vpath % $(LFPPORT_QTE_DIR)/native
+
+# Rules to pre-process Qt files with the Meta Object Compiler
+#
+$(MIDP_OUTPUT_DIR)/moc_%.cpp: $(LFPPORT_QTE_DIR)/native/%.h
+	@echo Creating ... $@ using MOC $(LOG_ONLY)
+	@echo +++ cd $(MIDP_OUTPUT_DIR)\; \
+	  $(QTOPIA_SDK_DIR)/bin/moc -i $< -o $@ $(LOG_ONLY)
+	@(cd $(MIDP_OUTPUT_DIR); \
+	  $(QTOPIA_SDK_DIR)/bin/moc -i $< -o $@) $(LOG)
+
+# Copy images to /lib
+define copy_lcdlf_resources
+        @mkdir -p $(LIBDIR)
+        @cp -f $(LFPPORT_QTE_RESOURCES_DIR)/*.png $(LIBDIR) $(LOG)
+endef
+
+$(OBJ_DIR)/lfpport_qte_dateeditor.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_dateeditor.cpp
+$(OBJ_DIR)/lfpport_qte_alert.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_alert.cpp
+$(OBJ_DIR)/lfpport_qte_choicegroup.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_choicegroup.cpp
+$(OBJ_DIR)/lfpport_qte_form.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_form.cpp
+$(OBJ_DIR)/lfpport_qte_gauge.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_gauge.cpp
+$(OBJ_DIR)/lfpport_qte_string_image_item.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_string_image_item.cpp
+$(OBJ_DIR)/lfpport_qte_item.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_item.cpp
+$(OBJ_DIR)/lfpport_qte_textfield.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_textfield.cpp
+$(OBJ_DIR)/lfpport_qte_inputmode.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_inputmode.cpp
+$(OBJ_DIR)/lfpport_qte_mainwindow.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_mainwindow.cpp
+$(OBJ_DIR)/lfpport_qte_mscreen.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_mscreen.cpp
+$(OBJ_DIR)/lfpport_qte_ticker.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_ticker.cpp
+$(OBJ_DIR)/lfpport_qte_command.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_command.cpp
+
+$(OBJ_DIR)/lfpport_qte_mainwindow.o: $(MIDP_OUTPUT_DIR)/moc_qteapp_mainwindow.cpp
