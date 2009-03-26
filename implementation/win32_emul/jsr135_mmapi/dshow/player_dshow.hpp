@@ -24,12 +24,7 @@
 
 #pragma once
 
-#include <strmif.h>
+#include "player.hpp"
 #include "player_callback.hpp"
 
-class filter_in : public IBaseFilter
-{
-public:
-    virtual bool data(nat32 len, void const *pdata) = 0;
-    static bool create(AM_MEDIA_TYPE const *pamt, player_callback *pcallback, filter_in **ppfilter);
-};
+bool create_player_dshow(nat32 len, char16 const *pformat, player_callback *pcallback, player **ppplayer);
