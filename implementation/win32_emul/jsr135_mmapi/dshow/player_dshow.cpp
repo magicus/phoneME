@@ -123,16 +123,22 @@ player::result player_dshow::realize()
     }
     else
     {
+        print( "illegal state %i\n", state );
         return result_illegal_state;
     }
 
     HRESULT hr = CoInitializeEx(null, COINIT_MULTITHREADED);
-    if(FAILED(hr)) return result_media;
+    if(FAILED(hr))
+    {
+        error( "CoInitializeEx", hr );
+        return result_media;
+    }
 
     hr = CoCreateInstance(CLSID_FilterGraph, null, CLSCTX_INPROC_SERVER,
         IID_IGraphBuilder, (void **)&pgb);
     if(hr != S_OK)
     {
+        error( "CoCreateInstance", hr );
         CoUninitialize();
         return result_media;
     }
@@ -140,6 +146,7 @@ player::result player_dshow::realize()
     hr = pgb->QueryInterface(IID_IMediaControl, (void **)&pmc);
     if(hr != S_OK)
     {
+        error( "IID_IMediaControl", hr );
         pgb->Release();
         CoUninitialize();
         return result_media;
@@ -148,6 +155,7 @@ player::result player_dshow::realize()
     hr = pgb->QueryInterface(IID_IMediaSeeking, (void **)&pms);
     if(hr != S_OK)
     {
+        error( "IID_IMediaSeeking", hr );
         pmc->Release();
         pgb->Release();
         CoUninitialize();
@@ -166,6 +174,7 @@ player::result player_dshow::realize()
     amt.pbFormat = null;
     if(!filter_in::create(&amt, pcallback, &pfi))
     {
+        error( "filter_in::create", 0 );
         pms->Release();
         pmc->Release();
         pgb->Release();
@@ -184,6 +193,7 @@ player::result player_dshow::realize()
     amt.pbFormat = null;
     if(!filter_out::create(&amt, pcallback, &pfo))
     {
+        error( "filter_out::create", 0 );
         pfi->Release();
         pms->Release();
         pmc->Release();
@@ -195,6 +205,7 @@ player::result player_dshow::realize()
     hr = pfi->FindPin(L"Output", &pp);
     if(hr != S_OK)
     {
+        error( "FindPin", hr );
         pfo->Release();
         pfi->Release();
         pms->Release();
@@ -208,6 +219,7 @@ player::result player_dshow::realize()
         (void **)&pbf_flv_split);
     if(hr != S_OK)
     {
+        error( "FlvSplitCreateInstance", hr );
         pp->Release();
         pfo->Release();
         pfi->Release();
@@ -222,6 +234,7 @@ player::result player_dshow::realize()
         (void **)&pbf_flv_dec);
     if(hr != S_OK)
     {
+        error( "FlvDecVP6CreateInstance", hr );
         pbf_flv_split->Release();
         pp->Release();
         pfo->Release();
@@ -236,6 +249,7 @@ player::result player_dshow::realize()
     hr = pgb->AddFilter(pfi, L"Input filter");
     if(hr != S_OK)
     {
+        error( "AddFilter(I)", hr );
         pbf_flv_dec->Release();
         pbf_flv_split->Release();
         pp->Release();
@@ -251,6 +265,7 @@ player::result player_dshow::realize()
     hr = pgb->AddFilter(pfo, L"Output filter");
     if(hr != S_OK)
     {
+        error( "AddFilter(O)", hr );
         pbf_flv_dec->Release();
         pbf_flv_split->Release();
         pp->Release();
@@ -266,6 +281,7 @@ player::result player_dshow::realize()
     hr = pgb->AddFilter(pbf_flv_split, L"FLV splitter");
     if(hr != S_OK)
     {
+        error( "AddFilter(S)", hr );
         pbf_flv_dec->Release();
         pbf_flv_split->Release();
         pp->Release();
@@ -281,6 +297,7 @@ player::result player_dshow::realize()
     hr = pgb->AddFilter(pbf_flv_dec, L"FLV decoder");
     if(hr != S_OK)
     {
+        error( "AddFilter(D)", hr );
         pbf_flv_dec->Release();
         pbf_flv_split->Release();
         pp->Release();

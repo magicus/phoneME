@@ -173,6 +173,8 @@ static javacall_result dshow_create(int appId,
     p->video_height     = 0;
     p->video_frame      = NULL;
 
+    p->ppl              = NULL;
+
     *pHandle =(javacall_handle)p;
 
     lcd_set_color_key( JAVACALL_FALSE, 0 );
@@ -205,7 +207,7 @@ static javacall_result dshow_close(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** close ***\n" );
-    p->ppl->close();
+    if( NULL != p->ppl ) p->ppl->close();
 
     lcd_output_video_frame( NULL );
 
@@ -392,7 +394,7 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
         }
         else if( p->realizing )
         {
-            *need_more_data  = ( p->bytes_buffered < XFER_BUFFER_SIZE * 30 ) 
+            *need_more_data  = ( p->bytes_buffered < XFER_BUFFER_SIZE * 50 ) 
                                ? JAVACALL_TRUE : JAVACALL_FALSE;
 
             if( JAVACALL_FALSE == *need_more_data )
