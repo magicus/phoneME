@@ -29,7 +29,6 @@
 #include "filter_in.hpp"
 #include "filter_out.hpp"
 #include "player.hpp"
-#include "writer.hpp"
 
 #pragma comment(lib, "strmiids.lib")
 #pragma comment(lib, "winmm.lib")
@@ -174,27 +173,15 @@ player::result player_dshow::realize()
         return result_media;
     }
 
-    //VIDEOINFOHEADER vih;
     amt.majortype = MEDIATYPE_Video;
     amt.subtype = MEDIASUBTYPE_RGB565;
     amt.bFixedSizeSamples = TRUE;
     amt.bTemporalCompression = FALSE;
     amt.lSampleSize = 1;
-    amt.formattype = FORMAT_None;//FORMAT_VideoInfo;
+    amt.formattype = FORMAT_None;
     amt.pUnk = null;
-    amt.cbFormat = 0;//sizeof(VIDEOINFOHEADER);
-    amt.pbFormat = null;//(BYTE *)&vih;
-    /*vih.rcSource.left   = 0;
-    vih.rcSource.top    = 0;
-    vih.rcSource.right  = 0;
-    vih.rcSource.bottom = 0;
-    vih.rcTarget.left   = 0;
-    vih.rcTarget.top    = 0;
-    vih.rcTarget.right  = 0;
-    vih.rcTarget.bottom = 0;
-    vih.dwBitRate = 0;
-    vih.dwBitErrorRate = 0;
-    vih.AvgTimePerFrame = 0;*/
+    amt.cbFormat = 0;
+    amt.pbFormat = null;
     if(!filter_out::create(&amt, pcallback, &pfo))
     {
         pfi->Release();
@@ -245,12 +232,6 @@ player::result player_dshow::realize()
         CoUninitialize();
         return result_media;
     }
-
-    /*IID iid = {0xb87beb7b, 0x8d29, 0x423f, 0xae, 0x4d, 0x65, 0x82, 0xc1, 0x01, 0x75, 0xac};
-    IBaseFilter *pbf;
-    CoCreateInstance(iid, null, CLSCTX_INPROC_SERVER,
-        IID_IBaseFilter, (void **)&pbf);
-    pgb->AddFilter(pbf, L"Video Renderer forced");*/
 
     hr = pgb->AddFilter(pfi, L"Input filter");
     if(hr != S_OK)
@@ -312,8 +293,6 @@ player::result player_dshow::realize()
         return result_media;
     }
 
-    dump_filter_graph(pgb, 0);
-
     state = realized;
 
     return result_success;
@@ -339,13 +318,10 @@ player::result player_dshow::prefetch()
     }
 
     HRESULT hr = pgb->Render(pp);
-    //HRESULT hr = pgb->RenderFile(L"C:/Working/Matway/Sun/ds/Debug/phantom.mpg", null);
     if(hr != S_OK)
     {
         return result_media;
     }
-
-    dump_filter_graph(pgb, 0);
 
     hr = pmc->Pause();
     if(FAILED(hr))
@@ -445,6 +421,7 @@ void player_dshow::close()
     else if(state == realized || state == prefetched || state == started)
     {
         pmc->Stop();
+        Sleep(100);
         pbf_flv_dec->Release();
         pbf_flv_split->Release();
         pp->Release();
@@ -452,7 +429,7 @@ void player_dshow::close()
         pfi->Release();
         pms->Release();
         pmc->Release();
-        /*print("IGraphBuilder::Release=%u\n", */pgb->Release()/*)*/;
+        pgb->Release();
         CoUninitialize();
         state = closed;
     }

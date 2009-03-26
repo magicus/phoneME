@@ -27,7 +27,7 @@
 #include <vfwmsgs.h>
 #include "filter_out.hpp"
 
-#define write_level 2
+#define write_level 1
 
 #if write_level > 0
 #include "writer.hpp"
@@ -647,60 +647,58 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #if write_level > 0
     print("filter_out_pin::Receive called...\n");
 #endif
+
     if(!pSample) return E_POINTER;
-    if(pfilter->state == State_Stopped) return VFW_E_WRONG_STATE;
-/*
-    nat32 l = pSample->GetActualDataLength();
-
-    EnterCriticalSection(&data_cs);
-    nat32 l2 = data_l + 4;
-    if(data_a < l2)
-    {
-        nat32 a = round(l2);
-        void *p = new bits8[a];
-        if(data_a)
-        {
-            if(data_l) memcpy(p, data_p, data_l);
-            delete[] (bits8 *)data_p;
-        }
-        data_p = p;
-        data_a = a;
-    }
-    //memcpy((bits8 *)data_p + data_l, len);
-
-    data_l = l2;
-
-
-    LeaveCriticalSection(&ppin->data_cs);
-    return true;
-}*/
-
 
 #if write_level > 0
     print("Actual data length=%i\n", pSample->GetActualDataLength());
 #endif
+
+    if(pfilter->state == State_Stopped) return VFW_E_WRONG_STATE;
+
     int64 tstart;
     int64 tend;
-    int64 t;
-    int64 tc = 0;
-    pSample->GetTime(&tstart, &tend);
-    pfilter->pclock->GetTime(&t);
-    IMediaSeeking *pms;
-    pfilter->pgraph->QueryInterface(IID_IMediaSeeking, (void **)&pms);
+    if(FAILED(pSample->GetTime(&tstart, &tend))) return VFW_E_RUNTIME_ERROR;
 
-    for(nat32 i = 0; i < 5; i++)
+    IMediaSeeking *pms;
+    if(pfilter->pgraph->QueryInterface(
+        IID_IMediaSeeking, (void **)&pms) != S_OK) return VFW_E_RUNTIME_ERROR;
+
+    int64 tc;
+    if(pms->GetCurrentPosition(&tc) != S_OK)
     {
-        pms->GetCurrentPosition(&tc);
-        if(tc > tstart) break;
-        Sleep(1);
+        pms->Release();
+        return VFW_E_RUNTIME_ERROR;
+    }
+
+#if write_level > 0
+    print("%I64i %I64i %I64i\n", tstart, tend, tc);
+#endif
+
+    while(tstart > tc)
+    {
+        do
+        {
+            Sleep(1);
+        }
+        while(pfilter->state == State_Paused);
+
+        if(pfilter->state == State_Stopped)
+        {
+            pms->Release();
+            return VFW_E_WRONG_STATE;
+        }
+
+        if(pms->GetCurrentPosition(&tc) != S_OK)
+        {
+            pms->Release();
+            return VFW_E_RUNTIME_ERROR;
+        }
     }
 
     pms->Release();
-#if write_level > 0
-    printf("%I64i %I64i %I64i %I64i\n", tstart, tend, t, tc);
-#endif
     bits8 *pb;
-    pSample->GetPointer(&pb);
+    if(pSample->GetPointer(&pb) != S_OK) return VFW_E_RUNTIME_ERROR;
     pfilter->pcallback->frame_ready((bits16 *)pb);
     return S_OK;
 }
