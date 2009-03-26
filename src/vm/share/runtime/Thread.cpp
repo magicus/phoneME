@@ -229,7 +229,7 @@ void Thread::lightweight_thread_uncaught_exception() {
 #else
       if (Scheduler::active_count() == 1) {
 #endif
-	flags |= JVMSPI_LAST_THREAD;
+        flags |= JVMSPI_LAST_THREAD;
       }
 
       int exit_code = 0;
@@ -241,29 +241,29 @@ void Thread::lightweight_thread_uncaught_exception() {
       switch (action) {
       case JVMSPI_ABORT:
 #if ENABLE_ISOLATES
-	task().stop(exit_code, Task::UNCAUGHT_EXCEPTION JVM_NO_CHECK);
+        task().stop(exit_code, Task::UNCAUGHT_EXCEPTION JVM_NO_CHECK);
 #else
-	JVM_Stop(exit_code);
+        JVM_Stop(exit_code);
 #endif
-	/* fall through */
+        /* fall through */
       case JVMSPI_IGNORE:
-	/* do nothing */
-	break;
+        /* do nothing */
+        break;
       case JVMSPI_SUSPEND:
 #if ENABLE_ISOLATES
-	/*
-	 * If this is the last thread, just ignore. It will die anyway.
-	 * If not, suspend the isolate.
-	 */
-	if ((flags & JVMSPI_LAST_THREAD) == 0) {
-	  JVM_SuspendIsolate(task_id);
+        /*
+         * If this is the last thread, just ignore. It will die anyway.
+         * If not, suspend the isolate.
+         */
+        if ((flags & JVMSPI_LAST_THREAD) == 0) {
+          JVM_SuspendIsolate(task_id);
           // Resume the current thread to let it die gracefully
           Scheduler::resume_thread(Thread::current());
-	}
+        }
 #else
-	GUARANTEE(0, "Not supported for SVM");    
+        GUARANTEE(0, "Not supported for SVM");    
 #endif
-	break;
+        break;
       default:
         GUARANTEE(0, "Invalid return value");
       }
@@ -620,21 +620,72 @@ void Thread::timer_tick() {
   }
 #endif
 
+#if ENABLE_METHOD_EXECUTION_TRACE
+if( UseMethodExecutionTrace && _real_time_has_ticked
+    && !Universe::is_bootstrapping() ) {
+  Stream* const st = tty;
+  st->print_cr( "* Sampling interval " JVM_LLD " : " JVM_LLD,
+                   JVM::sampling_interval_start(),
+                   JVM::sampling_interval_duration() );
+  {
+    st->print_cr( "* Interpreted methods:" );
+    OopDesc** p = _interpretation_log;
+    for( ; *p; p++ ) {
+      Method::Raw m( *p );
+      m().print_name_on( st );
+      st->cr();
+    }
+    if ( p == (_interpretation_log + INTERP_LOG_SIZE - 1) ) {
+      // Interpretation log overflow
+      st->print_cr( "! Execution log overflow, execution trace incomplete");
+    }
+  }
+
 #if ENABLE_COMPILER
+  if (UseCompiler) {
+    st->print_cr( "* Compiled methods:" );
+    const int n = CompiledMethodCache::get_upb();
+    for( int i = 0; i <= n; i++ ) {
+      if( _method_execution_sensor[ i ] != 0xFF ) {
+        CompiledMethod::Raw cm( CompiledMethodCache::get_item( i ) );
+        Method::Raw m ( cm().method() );
+        m().print_name_on( st );
+        st->cr();        
+      }
+    }
+  }
+#endif
+
+  st->print_cr("* Sampling interval end\n");
+  JVM::start_sampling_interval();
+}
+#endif
 
   ObjectHeap::accumulate_current_task_memory_usage();
+
+#if ENABLE_COMPILER
   Compiler::on_timer_tick(_real_time_has_ticked JVM_MUST_SUCCEED);
-  _real_time_has_ticked = false;
 #endif
+
+#if ENABLE_EXECUTION_LOG
+  if( _real_time_has_ticked ) { // Cleanup interpretation log
+    ForInterpretationLog( p ) {
+      *p = NULL;
+    }
+    _interpretation_log_idx = 0;
+  }
+#endif
+
+  _real_time_has_ticked = false;
 
   if (Universe::is_stopping()) {
     if (!CURRENT_HAS_PENDING_EXCEPTION) {
       Throw::uncatchable(JVM_SINGLE_ARG_THROW);
     }
   }
+
   // Do the preemption. yield will transfer the control
   // to the next ready thread in the scheduler.
-  ObjectHeap::accumulate_current_task_memory_usage();
   Scheduler::yield();
   Thread::clear_timer_tick();
 

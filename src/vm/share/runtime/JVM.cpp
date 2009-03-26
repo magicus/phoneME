@@ -56,6 +56,11 @@ jchar     ** JVM::_u_argv;
 const JvmPathChar* JVM::_classpath;
 int          JVM::_startup_phase_count;
 
+#if ENABLE_METHOD_EXECUTION_TRACE
+jlong        JVM::_sampling_interval_base;
+jlong        JVM::_sampling_interval_start;
+#endif
+
 // For release and product builds we make sure that we have
 // the optimized interpreter.
 #ifdef AZZERT
@@ -303,6 +308,11 @@ inline bool JVM::initialize( void ) {
   _startup_phase_count = 0;
   Os::initialize();
   EventLogger::initialize();
+
+#if ENABLE_METHOD_EXECUTION_TRACE
+  _sampling_interval_base = sampling_timer();
+  JVM::start_sampling_interval();
+#endif
 
 #if ENABLE_PERFORMANCE_COUNTERS
   JVM::calibrate_cpu();
@@ -1191,7 +1201,7 @@ void JVM::calibrate_cpu() {
 #endif
 }
 
-void JVM::calibrate_hrticks() {
+inline void JVM::calibrate_hrticks( void ) {
   jlong saved = jvm_perf_count.hrtick_read_count;
   jlong started = Os::elapsed_counter();
   for (int i=1000; i>0; i--) {
@@ -1260,8 +1270,8 @@ void JVM::print_performance_counters() {
     return;
   }
 
-  JVM_PerformanceCounters *pc = JVM_GetPerformanceCounters();
-  jlong elapsed = (pc->vm_current_hrtick - pc->vm_start_hrtick);
+  const JVM_PerformanceCounters* const pc = JVM_GetPerformanceCounters();
+  const jlong elapsed = pc->vm_current_hrtick - pc->vm_start_hrtick;
 
   julong avg_compile_hrticks_xmax = 0;
   julong avg_compiled_method_xmax = 0;

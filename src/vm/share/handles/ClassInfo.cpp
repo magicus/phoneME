@@ -49,7 +49,7 @@ jint ClassInfo::itable_size(int nof_interfaces, int nof_methods) {
 #if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_PERFORMANCE_COUNTERS \
     || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING                         
 void ClassInfo::print_name_on(Stream* st) {
-#if ENABLE_TTY_TRACE
+#if ENABLE_TTY_TRACE || ENABLE_METHOD_EXECUTION_TRACE
   if (!check_valid_for_print(st)) {
     return;
   }

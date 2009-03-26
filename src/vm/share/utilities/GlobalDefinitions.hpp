@@ -1700,7 +1700,13 @@ ERROR_MESSAGES_DO(ERROR_MESSAGE_DECLARE)
 // Redefine INTERP_LOG_SIZE in your Makefile to change the size of
 // the interpretation log. (INTERP_LOG_SIZE-1) must be a power of two.
 #ifndef INTERP_LOG_SIZE
-#define INTERP_LOG_SIZE (8+1)  // Extra element to make the log NULL-terminated
+#  if ENABLE_METHOD_EXECUTION_TRACE
+#    define INTERP_LOG_SIZE (1*1024+1)
+#  else
+#    define INTERP_LOG_SIZE (8+1)  // Extra element to make the log NULL-terminated
+#  endif
+#elif INTERP_LOG_SIZE < 1 || ((INTERP_LOG_SIZE-1) | (INTERP_LOG_SIZE-2))
+#  error INTERP_LOG_SIZE must be a power of two + 1
 #endif
 
 enum {

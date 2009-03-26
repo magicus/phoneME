@@ -319,7 +319,7 @@ void Signature::verify_tables() {
 
 #endif //!PRODUCT
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 
 void Signature::print_parameters_on(Stream* st) {
   print_decoded_on(st);

@@ -2588,7 +2588,7 @@ jushort Method::ushort_at(jint bci) {
   return Bytes::get_Java_u2((address)field_base(bc_offset_for(bci)));
 }
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 // Is this method overloaded in its holder class?
 bool Method::is_overloaded() const {
   InstanceClass::Raw h = holder();
@@ -2768,7 +2768,7 @@ void Method::iterate(OopVisitor* visitor) {
 }
 
 void Method::print_name_on(Stream* st, bool long_output) const {
-#if ENABLE_TTY_TRACE
+#if ENABLE_TTY_TRACE || ENABLE_METHOD_EXECUTION_TRACE
   bool renamed;
   const TaskGCContext tmp(obj());
   Signature::Raw sig = signature();

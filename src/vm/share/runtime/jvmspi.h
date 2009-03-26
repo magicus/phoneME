@@ -205,11 +205,11 @@ jboolean JVMSPI_IsPrecompilationTarget(const char * class_name,
  * For other return values the VM behavior is undefined.
  */
 int JVMSPI_HandleUncaughtException(const int isolate_id,
-				   const char * exception_class_name,
-				   const int exception_class_name_length,
-				   const char * message,
-				   const int flags,
-				   int * exit_code);
+                                   const char * exception_class_name,
+                                   const int exception_class_name_length,
+                                   const char * message,
+                                   const int flags,
+                                   int * exit_code);
 
 /*
  * This function is called by the VM when it fails to fulfil 
@@ -251,12 +251,12 @@ int JVMSPI_HandleUncaughtException(const int isolate_id,
  * For other return values the VM behavior is undefined.
  */
 int JVMSPI_HandleOutOfMemory(const int isolate_id,
-			     const int limit,
-			     const int reserve,
-			     const int used,
-			     const int alloc_size,
-			     const int flags,
-			     int * exit_code);
+                             const int limit,
+                             const int reserve,
+                             const int used,
+                             const int alloc_size,
+                             const int flags,
+                             int * exit_code);
 
 #ifdef __cplusplus
 }

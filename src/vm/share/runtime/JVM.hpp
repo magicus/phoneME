@@ -65,6 +65,23 @@ class JVM: public AllStatic {
   static void P_HRT(bool cond, const char *name, julong hrticks);
   static void P_CR(bool cond);
 
+#if ENABLE_METHOD_EXECUTION_TRACE
+ private:
+  static jlong _sampling_interval_base;
+  static jlong _sampling_interval_start;
+  static jlong sampling_timer(void) { return Os::java_time_millis(); }
+ public:
+  static void start_sampling_interval(void) {
+    _sampling_interval_start = sampling_timer();
+  }
+  static jlong sampling_interval_start(void) {
+    return _sampling_interval_start - _sampling_interval_base;
+  }
+  static jlong sampling_interval_duration(void) {
+    return sampling_timer() - _sampling_interval_start;
+  }
+#endif
+
   static void development_prologue() PRODUCT_RETURN;
   static void development_epilogue(JVM_SINGLE_ARG_TRAPS) PRODUCT_RETURN;
   static void set_arguments(const JvmPathChar *classpath, char *main_class,

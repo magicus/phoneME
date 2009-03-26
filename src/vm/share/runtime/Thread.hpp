@@ -598,12 +598,6 @@ class Thread: public Oop {
   // Call back when a timer tick occurs
   static void timer_tick();
 
-#if ENABLE_INTERPRETATION_LOG
-  static void process_interpretation_log();
-#else
-  static void process_interpretation_log() {}
-#endif
-
 #if ENABLE_COMPILER
   static void invoke_compiler(Thread *thread);
 #else

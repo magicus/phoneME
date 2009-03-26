@@ -268,6 +268,8 @@
 //
 // ENABLE_MEMORY_MONITOR         0,0  Add Memory Monitor support.
 //
+// ENABLE_METHOD_EXECUTION_TRACE 0,0  Add method execution trace support.
+//
 // ENABLE_ROM_JAVA_DEBUGGER      0,0  Add Java debugger support for ROMized.
 //                                    classes
 //
@@ -1064,21 +1066,27 @@
 
 #if ENABLE_INTERPRETER_GENERATOR || USE_SOURCE_IMAGE_GENERATOR
 // The loopgen and source romgen always need the debug printing code.
-#  define USE_DEBUG_PRINTING        1
 #  define USE_COMPILER_COMMENTS     ENABLE_COMPILER
 #  define USE_COMPILER_DISASSEMBLER ENABLE_COMPILER
 #  define USE_OOP_VISITOR           1
 #else
-#  define USE_DEBUG_PRINTING        (ENABLE_TTY_TRACE && !defined(PRODUCT))
 #  define USE_COMPILER_COMMENTS     (ENABLE_COMPILER && ENABLE_TTY_TRACE)
 #  define USE_COMPILER_DISASSEMBLER (ENABLE_COMPILER && ENABLE_TTY_TRACE)
-#  define USE_OOP_VISITOR           USE_DEBUG_PRINTING
+#  define USE_OOP_VISITOR           (ENABLE_TTY_TRACE && !defined(PRODUCT))
 #endif
 
-#if !USE_DEBUG_PRINTING && ENABLE_MEMORY_MONITOR
-#  undef USE_DEBUG_PRINTING
-#  define USE_DEBUG_PRINTING 1
+#if (ENABLE_TTY_TRACE && !defined(PRODUCT)) || USE_SOURCE_IMAGE_GENERATOR ||\
+    ENABLE_INTERPRETER_GENERATOR || ENABLE_MEMORY_MONITOR ||\
+    ENABLE_METHOD_EXECUTION_TRACE    
+#  define USE_DEBUG_PRINTING        1
+#else
+#  define USE_DEBUG_PRINTING        0
 #endif
+
+#if ENABLE_METHOD_EXECUTION_TRACE && !ENABLE_INTERPRETATION_LOG
+#  error ENABLE_METHOD_EXECUTION_TRACE requires ENABLE_INTERPRETATION_LOG
+#endif
+
 
 #if defined(PRODUCT) || (!ENABLE_TTY_TRACE)
 #  define USE_VERBOSE_ERROR_MSG 0

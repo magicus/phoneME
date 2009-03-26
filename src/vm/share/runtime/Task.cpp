@@ -481,11 +481,11 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
 #if ENABLE_ISOLATES
   if( ObjectHeap::get_task_memory_usage(id) > BoundaryDesc::allocation_size() ) {
     ObjectHeap::print_task_objects( id );
-#if ENABLE_JAVA_DEBUGGER	
-  if (!_debugger_active){	
+#if ENABLE_JAVA_DEBUGGER        
+  if (!_debugger_active){       
     GUARANTEE( 0, "Leftover objects" );
   }
-#endif //ENABLE_JAVA_DEBUGGER	
+#endif //ENABLE_JAVA_DEBUGGER   
   }
 #endif
 #endif

@@ -177,7 +177,7 @@ private:
 #endif
 
   friend class ObjectHeap;
-#if (ENABLE_INLINE || ENABLE_TRAMPOLINE) && ARM
+#if ENABLE_METHOD_EXECUTION_TRACE || ((ENABLE_INLINE || ENABLE_TRAMPOLINE) && ARM)
 public:
   static int get_upb(void) {
     return upb;
