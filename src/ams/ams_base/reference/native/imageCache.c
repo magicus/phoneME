@@ -55,46 +55,39 @@
  * </blockquote>
  * All cache files are deleted when a suite is updated or removed.
  * <p>
- * This implementation contains a simple method for preventing cached images
- * to grab too much storage space: If the remaining space is below
- * IMAGE_CACHE_THRESHOLD or the last cached image couldn't be saved due
- * to lack of space, then the creating of the cache for this suite is
- * aborted and all already created files are deleted. This is not an
- * ideal approach, but should be sufficient for now.
- * <p>
- * Note: Currently, only images ending with ".png" or ".PNG" are supported.
+ * Note: Currently, only png and jpeg images are supported.
  */
 
 /**
  * Holds the suite ID. It is initialized during createImageCache() call
- * and used in png_cache_action() to avoid passing an additional parameter to it
+ * and used in image_cache_action() to avoid passing an additional parameter to it
  * because this function is called for each image entry in the suite's jar file.
  */
 static SuiteIdType globalSuiteId;
 
 /**
  * Holds the storage ID where the cached images will be saved. It is initialized
- * during createImageCache() call and used in png_cache_action() to avoid
+ * during createImageCache() call and used in image_cache_action() to avoid
  * passing an additional parameter to it.
  */
 static StorageIdType globalStorageId;
 
 /**
  * Handle to the opened jar file with the midlet suite. It is used to
- * passing an additional parameter to png_cache_action().
+ * passing an additional parameter to image_cache_action().
  */
 static void *handle;
 
 /**
  * Holds the amount of free space in the storage. It is initialized during
- * createImageCache() call and used in png_cache_action() to avoid passing
+ * createImageCache() call and used in image_cache_action() to avoid passing
  * an additional parameter to it.
  */
 static jlong remainingSpace;
 
 /**
  * Holds the amount of cached data placed into the storage. It is initialized
- * during createImageCache() call and used in png_cache_action() to avoid
+ * during createImageCache() call and used in image_cache_action() to avoid
  * passing an additional parameter to it.
  */
 static long cachedDataSize;
@@ -107,6 +100,23 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(PNG_EXT2)
     {'.', 'P', 'N', 'G', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(PNG_EXT2);
 
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT1)
+    {'.', 'j', 'p', 'g', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT1);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT2)
+    {'.', 'J', 'P', 'G', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT2);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT3)
+    {'.', 'j', 'p', 'e', 'g', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT3);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT4)
+    {'.', 'J', 'P', 'E', 'G', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT4);
+
+
 /* Forward declaration */
 static int storeImageToCache(SuiteIdType suiteId,
                              StorageIdType storageId,
@@ -115,12 +125,17 @@ static int storeImageToCache(SuiteIdType suiteId,
 
 
 /**
- * Tests if JAR entry is a PNG image, by name extension
+ * Tests if JAR entry is a PNG or JPEG image, by name extension
  */
-static jboolean png_filter(const pcsl_string * entry) {
+static jboolean image_filter(const pcsl_string * entry) {
 
-    if (pcsl_string_ends_with(entry, &PNG_EXT1) ||
-        pcsl_string_ends_with(entry, &PNG_EXT2)) {
+    if (pcsl_string_ends_with(entry, &PNG_EXT1)
+        || pcsl_string_ends_with(entry, &PNG_EXT2)
+        || pcsl_string_ends_with(entry, &JPEG_EXT1)
+        || pcsl_string_ends_with(entry, &JPEG_EXT2)
+        || pcsl_string_ends_with(entry, &JPEG_EXT3)
+        || pcsl_string_ends_with(entry, &JPEG_EXT4)
+        ) {
         return KNI_TRUE;
     }
 
@@ -128,9 +143,9 @@ static jboolean png_filter(const pcsl_string * entry) {
 }
 
 /**
- * Loads PNG image from JAR, decodes it and writes as native
+ * Loads PNG or JPEG image from JAR, decodes it and writes as native
  */
-static jboolean png_cache_action(const pcsl_string * entry) {
+static jboolean image_cache_action(const pcsl_string * entry) {
     unsigned char *pngBufPtr = NULL;
     int pngBufLen = 0;
     unsigned char *nativeBufPtr = NULL;
@@ -172,7 +187,6 @@ static jboolean png_cache_action(const pcsl_string * entry) {
         midpFree(pngBufPtr);
     }
 
-    /* IMPL_NOTE: our policy is to stop caching on the first error */
     return status;
 }
 
@@ -257,9 +271,9 @@ static void deleteImageCache(SuiteIdType suiteId, StorageIdType storageId) {
 }
 
 /**
- * Creates a cache of natives images by iterating over all png images in the jar
- * file, loading each one, decoding it into native, and caching it persistent
- * store.
+ * Creates a cache of natives images by iterating over all png and jpeg images
+ * in the jar file, loading each one, decoding it into native, and caching it
+ * persistent store.
  *
  * @param suiteId The suite ID
  * @param storageId ID of the storage where to create the cache
@@ -304,8 +318,8 @@ void createImageCache(SuiteIdType suiteId, StorageIdType storageId,
     }
 
     result = loadAndCacheJarFileEntries(&jarFileName,
-        (jboolean (*)(const pcsl_string *))&png_filter,
-        (jboolean (*)(const pcsl_string *))&png_cache_action);
+        (jboolean (*)(const pcsl_string *))&image_filter,
+        (jboolean (*)(const pcsl_string *))&image_cache_action);
 
     /* If something went wrong then clean up anything that was created */
     if (result != 1) {
@@ -462,11 +476,10 @@ static int storeImageToCache(SuiteIdType suiteId, StorageIdType storageId,
 
     /* Open the file */
     handle = storage_open(&errmsg, &path, OPEN_READ_WRITE_TRUNCATE);
-    pcsl_string_free(&path);
     if (errmsg != NULL) {
-        REPORT_WARN1(LC_LOWUI,"Warning: could not save cached image; %s\n",
+        REPORT_WARN1(LC_LOWUI,"Warning: could not open image cache; %s\n",
 		     errmsg);
-
+        pcsl_string_free(&path);
 	storageFreeError(errmsg);
 	return 0;
     }
@@ -474,11 +487,26 @@ static int storeImageToCache(SuiteIdType suiteId, StorageIdType storageId,
     /* Finally write the file */
     storageWrite(&errmsg, handle, (char*)bufPtr, len);
     if (errmsg != NULL) {
+      REPORT_WARN1(LC_LOWUI,"Warning: could not save cached image; %s\n",
+		     errmsg);
       status = 0;
       storageFreeError(errmsg);
     }
 
     storageClose(&errmsg, handle);
+    if (errmsg != NULL) {
+        storageFreeError(errmsg);    
+    }
+    
+    if (status == 0) {
+        /* Delete the image cach file to keep away from corrupted data */
+        storage_delete_file(&errmsg, &path);
+        if (errmsg != NULL) {
+            storageFreeError(errmsg);
+        }
+    }
+
+    pcsl_string_free(&path);
 
     return status;
 }

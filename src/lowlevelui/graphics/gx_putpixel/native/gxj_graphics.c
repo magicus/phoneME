@@ -291,8 +291,8 @@ gx_draw_rgb(const jshort *clip,
         
         gxj_pixel_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
         jint * psrc = &rgbData[offset];
-        unsigned int pdst_delta = sbufWidth - width;
-        unsigned int psrc_delta = scanlen - width;
+        int pdst_delta = sbufWidth - width;
+        int psrc_delta = scanlen - width;
         gxj_pixel_type * pdst_end = pdst + height * sbufWidth;
         unsigned int  src;
         unsigned char As;

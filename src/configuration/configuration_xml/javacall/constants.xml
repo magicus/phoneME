@@ -28,7 +28,7 @@
 <constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public">
   <constant Type="int"
             Name="IMAGE_CACHE_THRESHOLD"
-            Value="(100*1024)"
+            Value="(500*1024)"
             Comment="Threshold for image cache storage"/>
   <constant Type="boolean"
             Name="PORTING_NO_FILESYSTEM"
