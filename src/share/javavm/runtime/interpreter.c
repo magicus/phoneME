@@ -3051,7 +3051,7 @@ CVMthreadSuspendConsistentRelease(CVMExecEnv* ee)
 static void*
 CVMfindBuiltinEntry(const char* name)
 {
-    CVMassert(CVMglobals.cvmDynHandle != NULL);
+    /*    CVMassert(CVMglobals.cvmDynHandle != NULL); */
     return CVMdynlinkSym(CVMglobals.cvmDynHandle, name);
 }
 

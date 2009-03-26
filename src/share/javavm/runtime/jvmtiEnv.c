@@ -5279,23 +5279,27 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
     }
 
+    CVMtraceJVMTI(("JVMTI: Redefine: Start 0x%x\n", (int)ee));
 
     if (CVMjniPushLocalFrame(env, classCount+1) != JNI_OK) {
 	return JVMTI_ERROR_OUT_OF_MEMORY;
     }
     ALLOC(jvmtienv, CVMint2Long(classCount * sizeof(CVMClassBlock*)),
 	  (unsigned char**)&classes);
+#if 0
     ACQUIRE_SYS_MUTEXES
+    CVMtraceJVMTI(("JVMTI: Redefine: suspending\n"));
     if ((err = suspendAllThreads(jvmtienv, ee, &threads,
                                  &threadCount)) != JVMTI_ERROR_NONE) {
 	jvmti_Deallocate(jvmtienv, (unsigned char*)threads);
 	jvmti_Deallocate(jvmtienv, (unsigned char*)classes);
 	CVMjniPopLocalFrame(env, NULL);
         RELEASE_SYS_MUTEXES
+        CVMtraceJVMTI(("JVMTI: Redefine: suspend error %d\n", err));
 	return err;
     }
     RELEASE_SYS_MUTEXES
-
+#endif
     node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
     CVMassert(node != NULL);
     for (i = 0; i < classCount; i++) {
@@ -5325,6 +5329,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	node->oldCb = oldcb;
         className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
 	loader = CVMcbClassLoader(oldcb);
+        CVMtraceJVMTI(("JVMTI: Redefine: verify %s\n", className));
         res = CVMverifyClassFormat(className,
                                    classDefinitions[i].class_bytes,
                                    classDefinitions[i].class_byte_count,
@@ -5333,6 +5338,9 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
                                    CVM_FALSE,
 #endif
                                    CVM_TRUE);
+        if (res != JVMTI_ERROR_NONE) {
+            CVMtraceJVMTI(("JVMTI: Redefine: verify error %d\n", res));
+        }
 	if (res == -1) { /* nomem */
 	    err = JVMTI_ERROR_OUT_OF_MEMORY;
             goto cleanup;
@@ -5354,6 +5362,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	 * loader is 'NULL' since we don't want Class.java to call
 	 * addClass which would create a reference to the javaInstance
 	 */
+        CVMtraceJVMTI(("JVMTI: Redefine: define\n"));
 	newKlass =
 	    CVMdefineClass(ee,
 			   className,
@@ -5364,6 +5373,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 			   CVM_TRUE);
 	if (newKlass == NULL) {
 	    /* TODO: Not sure at this point how to get appropriate error */
+            CVMtraceJVMTI(("JVMTI: Redefine: define error\n"));
 	    err = JVMTI_ERROR_INVALID_CLASS;
 	    goto cleanup;
 	}
@@ -5479,7 +5489,9 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	 * resolved classes must have been loaded to have been resolved
 	 * already.
 	 */
+	node->redefineCb = newcb;
 	CVMcpResolveCbEntriesWithoutClassLoading(ee, newcb);
+	node->redefineCb = NULL;
 	cpFixup.oldcb = oldcb;
 	cpFixup.newcb = newcb;
 	/*
@@ -5584,6 +5596,9 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
         className = NULL;
     }
  cleanup:
+    if (err != JVMTI_ERROR_NONE) {
+        CVMtraceJVMTI(("JVMTI: Redefine: cleanup error %d\n", err));
+    }
     if (className != NULL) {
         free(className);
     }
@@ -5591,10 +5606,10 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	node->oldCb = NULL;
 	node->redefineCb = NULL;
     }
-    resumeAllThreads(jvmtienv, ee, threads, threadCount);
+    /* resumeAllThreads(jvmtienv, ee, threads, threadCount); */
     CVMjniPopLocalFrame(env, NULL);
     jvmti_Deallocate(jvmtienv, (unsigned char *)classes);
-    jvmti_Deallocate(jvmtienv, (unsigned char *)threads);
+    /* jvmti_Deallocate(jvmtienv, (unsigned char *)threads); */
     return err;
 }
 
@@ -7862,6 +7877,9 @@ CVMjvmtiGetInterface(JavaVM *vm, void **penv)
 
     /* Return the jvmtiEnv * ptr: */
     *penv = (void *)&context->jvmtiExternal;
+    CVMjvmtiGetPotentialCapabilities(getCapabilities(context),
+			       getProhibitedCapabilities(context),
+			       &context->currentCapabilities);
 
     return JNI_OK;
 }

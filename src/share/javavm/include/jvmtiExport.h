@@ -786,6 +786,14 @@ struct CVMJvmtiExecEnv {
 #define CVMjvmtiUserEventEnabled(ee_)		\
     ((ee_)->jvmtiEE.jvmtiUserEventEnabled)
 
+#define CVMjvmtiEventTypeDisable(ee_, eventType_)               \
+    (CVMjvmtiEventEnabled(ee_).enabledBits &=                   \
+     ~(((jlong)1) << CVMjvmtiEvent2EventBit((eventType_))))
+
+#define CVMjvmtiEventTypeEnable(ee_, eventType_)                \
+    (CVMjvmtiEventEnabled(ee_).enabledBits |=                   \
+     (((jlong)1) << CVMjvmtiEvent2EventBit((eventType_))))
+
 #define CVMjvmtiEventEnabled(ee_)		\
     ((ee_)->jvmtiEE.jvmtiEventEnabled)
 

@@ -108,8 +108,10 @@ static CVMProperties props;
 
 CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 {
-#if 0
-#if !defined(CVM_MP_SAFE) && defined(__cpu_set_t_defined)
+#if defined(LINUX_ENABLE_SET_AFFINITY) && !defined(CVM_MP_SAFE)
+#if !defined(__cpu_set_t_defined)
+#error LINUX_ENABLE_SETAFFINITY not supported
+#endif
     /* If we don't have MP-safe support built in, then make sure
        that we don't run on more than one processor. */
     {
@@ -144,7 +146,6 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 	    return CVM_FALSE;
 	}
     }
-#endif
 #endif
 
     /*

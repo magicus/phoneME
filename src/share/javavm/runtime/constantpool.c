@@ -212,7 +212,12 @@ CVMprivate_cpResolveEntryWithoutClassLoading(CVMExecEnv* ee,
 	    CVMBool needLoaderCacheUpdate = CVM_FALSE;
 	    CVM_LOADERCACHE_LOCK(ee);
 	    cb = CVMloaderCacheLookup(ee, classID, currLoader);
+#ifdef CVM_JVMTI
+            if (cb == NULL && CVMjvmtiIsEnabled() &&
+                CVMjvmtiClassBeingRedefined(ee, currentCb)) {
+#else
 	    if (cb == NULL && isSystemClassLoader) {
+#endif
 		cb = CVMloaderCacheLookup(ee, classID, NULL);
 		needLoaderCacheUpdate = (cb != NULL);
 	    }

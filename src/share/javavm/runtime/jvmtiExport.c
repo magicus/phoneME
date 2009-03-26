@@ -1943,12 +1943,16 @@ void CVMjvmtiPostMonitorContendedEnterEvent(CVMExecEnv *ee,
     if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTER)) {
 	return;
     }
+    CVMjvmtiEventTypeDisable(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTER);
+
     context = GLOBAL_ENV;
     if (context != NULL) {
 	callback = context->eventCallbacks.MonitorContendedEnter;
 	if (callback != NULL) {
 	    CVMObjMonitor *mon = CVMcastProfiledMonitor2ObjMonitor(pm);
 	    if ((*env)->PushLocalFrame(env, 2) < 0) {
+                CVMjvmtiEventTypeEnable(ee,
+                                         JVMTI_EVENT_MONITOR_CONTENDED_ENTER);
 		return;
 	    }
 	    CVMID_localrootBegin(ee); {
@@ -1965,6 +1969,7 @@ void CVMjvmtiPostMonitorContendedEnterEvent(CVMExecEnv *ee,
 	    (*env)->PopLocalFrame(env, 0);
 	}
     }
+    CVMjvmtiEventTypeEnable(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTER);
 }
 
 /* Purpose: Posts a  JVMTI_EVENT_MONITOR_CONTENDED_ENTERED event. */
@@ -1984,13 +1989,16 @@ void CVMjvmtiPostMonitorContendedEnteredEvent(CVMExecEnv *ee,
     if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTERED)) {
 	return;
     }
+    CVMjvmtiEventTypeDisable(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTERED);
     context = GLOBAL_ENV;
     if (context != NULL) {
 	callback = context->eventCallbacks.MonitorContendedEntered;
 	if (callback != NULL) {
 	    CVMObjMonitor *mon = CVMcastProfiledMonitor2ObjMonitor(pm);
 	    if ((*env)->PushLocalFrame(env, 2) < 0) {
-		return;
+                CVMjvmtiEventTypeEnable(ee,
+                                        JVMTI_EVENT_MONITOR_CONTENDED_ENTERED);
+                return;
 	    }
 	    CVMID_localrootBegin(ee); {
 		CVMID_localrootDeclare(CVMObjectICell, tempObj);
@@ -2005,6 +2013,7 @@ void CVMjvmtiPostMonitorContendedEnteredEvent(CVMExecEnv *ee,
 	    (*env)->PopLocalFrame(env, 0);
 	}
     }
+    CVMjvmtiEventTypeEnable(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTERED);
 }
 
 /* Purpose: Posts a JVMTI_EVENT_MONITOR_WAIT_EVENT */
@@ -2023,11 +2032,13 @@ void CVMjvmtiPostMonitorWaitEvent(CVMExecEnv *ee,
     if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_MONITOR_WAIT)) {
 	return;
     }
+    CVMjvmtiEventTypeDisable(ee, JVMTI_EVENT_MONITOR_WAIT);
     context = GLOBAL_ENV;
     if (context != NULL) {
 	callback = context->eventCallbacks.MonitorWait;
 	if (callback != NULL) {
 	    if ((*env)->PushLocalFrame(env, 2) < 0) {
+                CVMjvmtiEventTypeEnable(ee, JVMTI_EVENT_MONITOR_WAIT);
 		return;
 	    }
 	    (*callback)(&context->jvmtiExternal, env,
@@ -2036,6 +2047,7 @@ void CVMjvmtiPostMonitorWaitEvent(CVMExecEnv *ee,
 	    (*env)->PopLocalFrame(env, 0);
 	}
     }
+    CVMjvmtiEventTypeEnable(ee, JVMTI_EVENT_MONITOR_WAIT);
 }
 
 /* Purpose: Posts a JVMTI_EVENT_MONITOR_WAITED_EVENT */
@@ -2054,11 +2066,13 @@ void CVMjvmtiPostMonitorWaitedEvent(CVMExecEnv *ee,
     if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_MONITOR_WAITED)) {
 	return;
     }
+    CVMjvmtiEventTypeDisable(ee, JVMTI_EVENT_MONITOR_WAITED);
     context = GLOBAL_ENV;
     if (context != NULL) {
 	callback = context->eventCallbacks.MonitorWaited;
 	if (callback != NULL) {
 	    if ((*env)->PushLocalFrame(env, 2) < 0) {
+                CVMjvmtiEventTypeEnable(ee, JVMTI_EVENT_MONITOR_WAITED);
 		return;
 	    }
 	    (*callback)(&context->jvmtiExternal, env,
@@ -2067,6 +2081,7 @@ void CVMjvmtiPostMonitorWaitedEvent(CVMExecEnv *ee,
 	    (*env)->PopLocalFrame(env, 0);
 	}
     }
+    CVMjvmtiEventTypeEnable(ee, JVMTI_EVENT_MONITOR_WAITED);
 }
 
 void CVMjvmtiPostObjectFreeEvent(CVMObject *obj)

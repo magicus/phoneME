@@ -1180,7 +1180,6 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
         if (CVMglobals.cvmDynHandle == NULL) {
             CVMconsolePrintf("Cannot start VM "
                              "(Could not open cvm as a shared library)\n");
-            return CVM_FALSE;
         }
     }
 
