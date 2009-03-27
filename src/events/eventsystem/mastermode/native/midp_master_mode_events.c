@@ -37,6 +37,7 @@
 #include <midp_run_vm.h>
 #include <suspend_resume.h>
 #include <pcsl_network.h>
+#include <midpCompoundEvents.h>
 
 #if (ENABLE_JSR_120 || ENABLE_JSR_205)
 #include <wmaInterface.h>
@@ -53,6 +54,7 @@ extern void check_extrnal_api_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
+static MidpEvent newCompMidpEvent;
 
 /**
  * Unblock a Java thread.
@@ -142,6 +144,18 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
             StoreMIDPEventInVmThread(newMidpEvent, -1);
         } else {
             midpStoreEventAndSignalForeground(newMidpEvent);
+
+            /*
+             * IMPL_NOTE: Currently compound events are implemented only for
+             * UI_SIGNALs and only UI_SIGNALs are needed to identify UI
+             * compound event, so trying to recognize compound event only
+             * in this particular place.
+             */
+            MIDP_EVENT_INITIALIZE(newCompMidpEvent);
+            if (midpCheckCompoundEvent(&newMidpEvent, &newCompMidpEvent)) {
+                midpStoreEventAndSignalForeground(newCompMidpEvent);
+            }
+            
         }
         break;
 

@@ -79,5 +79,6 @@ vpath % $(EVENT_QUEUE_DIR)/reference/native
 
 SUBSYSTEM_EVENTS_NATIVE_FILES += \
     midpEvents.c \
+    midpCompoundEvents.c \
     midpEventUtil.c
 endif

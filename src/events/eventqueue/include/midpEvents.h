@@ -275,6 +275,20 @@ extern "C" {
 /** @} */
 
 /**
+ * @name Minor event type IDs.
+ *
+ * Refer to <tt>com.sun.midp.events.EventConstants</tt> for description
+ * of each minor event type.
+ * @{
+ */
+#define MIDP_PRESSED    1
+#define MIDP_RELEASED   2
+#define MIDP_DRAGGED    3
+#define MIDP_FLICKERED  5
+/** @} */
+
+
+/**
  * @name The event parameter access macros.
  *
  * These macros provide descriptive names for the MidpEvent fields.
