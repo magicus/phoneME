@@ -44,9 +44,13 @@ public class StatisticsDialog extends JDialog implements ActionListener {
   public StatisticsDialog(Frame frame, String title, boolean param, Object[] objects) {
     super(frame, title, param);
     JButton closeButton = new JButton("Close");
+    closeButton.getAccessibleContext().setAccessibleName("Close");
+    closeButton.getAccessibleContext().setAccessibleDescription("Close Statistics");
+    closeButton.setMnemonic(KeyEvent.VK_C);
     JScrollPane pane = new JScrollPane();
     closeButton.addActionListener(this);
-    JTable tbl = new JTable(new StatTableModel(objects));    
+    JTable tbl = new JTable(new StatTableModel(objects));
+    tbl.setToolTipText("Statistics");
     pane.getViewport().setView(tbl);
     getContentPane().add(pane, BorderLayout.CENTER);
     getContentPane().add(closeButton, BorderLayout.PAGE_END);

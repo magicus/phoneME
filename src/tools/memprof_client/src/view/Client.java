@@ -84,6 +84,8 @@ public class Client {
   private void initUI() {
     _data_provider = MPDataProviderFactory.getMPDataProvider(VMConnectionFactory.getVMConnectionImpl());
     _frame = new JFrame("Java Heap Memory Observe Tool");
+    _frame.getAccessibleContext().setAccessibleDescription("Java Heap Memory Observe Tool");
+    _frame.getAccessibleContext().setAccessibleName("Java Heap Memory Observe Tool");
     _frame.pack();
     _frame.setLocation(0, 0);
     _frame.setSize(1000, 700);
@@ -110,6 +112,8 @@ public class Client {
 
     /* memory access panel*/
     _classes_list = new JList();
+    _classes_list.setToolTipText("Classes");
+    _classes_list.getAccessibleContext().setAccessibleName("Classes");
     _memory_access_panel = new ViewMemoryPanel(_data_provider);
     _memory_access_panel.setSize(1000, 300);
     _memory_access_panel.update();
@@ -136,6 +140,7 @@ public class Client {
 
     JPanel button_panel = new JPanel();
     _statistics_btn = new JButton("Statistics");
+    _statistics_btn.setMnemonic(KeyEvent.VK_S);
     _statistics_btn.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         StatisticsDialog.showDialog(_frame, _data_provider.calculateStatistics());
@@ -143,10 +148,16 @@ public class Client {
     });
     button_panel.add(_statistics_btn);
     _vm_controller = new JButton("Resume");
+    _vm_controller.setToolTipText("Resume connection");
+    _vm_controller.setMnemonic(KeyEvent.VK_R);;
     _vm_controller.addActionListener(new VMActionListener());
     button_panel.add(_vm_controller);
     _connection_controller = new JButton("Connect");
+    _connection_controller.setMnemonic(KeyEvent.VK_C);
+    _connection_controller.setToolTipText("Connect to emulator");
     _connection_controller.addActionListener(new ConnectionActionListener());
+    _connection_controller.setDefaultCapable(true);
+    _connection_controller.setSelected(true);
     button_panel.add(_connection_controller);
     _statusLabel = new JLabel("Disconnected");
     TitledBorder tb = BorderFactory.createTitledBorder("Memory Observer tool status");
@@ -159,6 +170,7 @@ public class Client {
                   GridBagConstraints.SOUTHEAST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
 
     setDisconnected();
+    _frame.getRootPane().setDefaultButton(_connection_controller);
     _frame.invalidate();
     _frame.validate();
     _frame.repaint();
@@ -315,6 +327,7 @@ public class Client {
     _statusLabel.setText("Connected");
     //prevent the user from diconnecting, after which he can not connect again
     _connection_controller.setEnabled(false);
+    _classes_list.setSelectedIndex(0);
   }
 }
 

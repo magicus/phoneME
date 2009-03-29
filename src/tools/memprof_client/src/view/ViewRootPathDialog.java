@@ -47,6 +47,7 @@ public class ViewRootPathDialog extends JDialog implements ActionListener {
     super(frame, title, param);
     _provider = provider;
     JButton closeButton = new JButton("Close");
+    closeButton.setMnemonic(KeyEvent.VK_C);
     closeButton.addActionListener(this);
     ViewObjectsPanel vo_panel = new ViewObjectsPanel(provider);
     vo_panel.initUI(false);

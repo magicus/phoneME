@@ -30,10 +30,16 @@ package view;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Iterator;
+import java.util.Locale;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import com.sun.cldchi.tools.memoryprofiler.data.*;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleContext;
 
-public class ViewMemoryPanel extends JComponent {
+public class ViewMemoryPanel extends JPanel implements Accessible {
   MPDataProvider _data_provider;
 
   //paramenters of view
@@ -248,4 +254,5 @@ public class ViewMemoryPanel extends JComponent {
                title, _data_provider);      
     }
   }
+
 }

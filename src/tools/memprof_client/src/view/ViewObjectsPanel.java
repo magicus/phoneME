@@ -37,9 +37,11 @@ import javax.swing.table.*;
 import javax.swing.event.*;
 
 public class ViewObjectsPanel extends JPanel {
-  private JLabel address_label = new JLabel("address");
+  private JLabel address_label = new JLabel("Address");
   private JTextField address_field = new JTextField();
-  private JLabel type_label = new JLabel("type");
+  private JLabel referees_label;
+  private JLabel references_label;
+  private JLabel type_label = new JLabel("Type");
   private JTextField type_field = new JTextField();
   private JTable references = new ObjectListTable(new ObjectListTableModel());
   private JTable referees = new ObjectListTable(new ObjectListTableModel());
@@ -60,7 +62,16 @@ public class ViewObjectsPanel extends JPanel {
     top_panel.add(address_label);
     top_panel.add(address_field);
     address_field.setEditable(false);
+    address_label.setFocusable(false);
+    address_field.setFocusable(false);
+    address_field.getAccessibleContext().setAccessibleDescription("Address");
+    address_label.setLabelFor(address_field);
+    type_label.setLabelFor(type_field);
     type_field.setEditable(false);
+    type_label.setFocusable(false);
+    type_field.setFocusable(false);
+    type_field.getAccessibleContext().setAccessibleDescription("Type");
+
     address_field.setPreferredSize(new Dimension(80, 20));
     type_field.setPreferredSize(new Dimension(120, 20));
 
@@ -68,10 +79,12 @@ public class ViewObjectsPanel extends JPanel {
     top_panel.add(type_field);
     if (add_show_root_path_button) {
       _root_path = new JButton("Show path from the root") {
+        @Override
         public Dimension getPreferredSize() {
           return new Dimension(160, 20);
         }
       };
+      _root_path.setMnemonic(KeyEvent.VK_P);
       _root_path.addActionListener(new ShowRootPathListener());
 
       _root_path.setFont(_root_path.getFont().deriveFont(9.0f));
@@ -79,10 +92,12 @@ public class ViewObjectsPanel extends JPanel {
       top_panel.add(_root_path);
     } else { //this is show path from the root object
         _stack_location = new JButton("Show stack trace") {
+          @Override
           public Dimension getPreferredSize() {
             return new Dimension(160, 20);
           }
         };
+        _stack_location.setMnemonic(KeyEvent.VK_T);
         _stack_location.addActionListener(new ShowStackTraceListener());
   
         _stack_location.setFont(_stack_location.getFont().deriveFont(9.0f));
@@ -97,6 +112,8 @@ public class ViewObjectsPanel extends JPanel {
       public Dimension getPreferredSize() {return new Dimension(100, 220);}
     };
     _object_list = new JList();
+    _object_list.setToolTipText("Objects");
+    _object_list.getAccessibleContext().setAccessibleName("Objects");
     _object_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     _object_list.addListSelectionListener(new ObjectListSelectionListener());
     pane.getViewport().setView(_object_list);
@@ -104,10 +121,15 @@ public class ViewObjectsPanel extends JPanel {
     bottom_panel.setLayout(new GridBagLayout());
     bottom_panel.add(pane, new GridBagConstraints(0, 0, 1, 2, 1, 1,
            GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
-    bottom_panel.add(new JLabel("Referees"), new GridBagConstraints(1, 0, 1, 1, 1, 1,
-           GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
-    bottom_panel.add(new JLabel("References"), new GridBagConstraints(2, 0, 1, 1, 1, 1,
-           GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
+    referees_label = new JLabel("Referees");
+    references_label = new JLabel("References");
+    bottom_panel.add(referees_label,new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
+    bottom_panel.add(references_label,new GridBagConstraints(2, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
+    references_label.setLabelFor(references);
+    referees_label.setLabelFor(referees);
+    referees.setToolTipText("Referees");
+    references.setToolTipText("References");
+
     pane = new JScrollPane() {
       public Dimension getPreferredSize() {
         return new Dimension(220, 200);
