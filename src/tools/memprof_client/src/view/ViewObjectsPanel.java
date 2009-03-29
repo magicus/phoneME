@@ -79,7 +79,7 @@ public class ViewObjectsPanel extends JPanel {
     top_panel.add(type_field);
     if (add_show_root_path_button) {
       _root_path = new JButton("Show path from the root") {
-        @Override
+
         public Dimension getPreferredSize() {
           return new Dimension(160, 20);
         }
@@ -92,7 +92,7 @@ public class ViewObjectsPanel extends JPanel {
       top_panel.add(_root_path);
     } else { //this is show path from the root object
         _stack_location = new JButton("Show stack trace") {
-          @Override
+
           public Dimension getPreferredSize() {
             return new Dimension(160, 20);
           }
