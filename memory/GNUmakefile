@@ -38,7 +38,7 @@ endif
 # What to build
 #
 
-all doc donuts : verify $(MEMORY_PORT_DIR) $(MEMORY_SELECT_DIR)
+all doc donuts : verify $(MEMORY_PORT_DIR) $(MEMORY_SELECT_DIR) $(OUTPUT_INC_DIR) $(OUTPUT_OBJ_DIR)/pcsl_memory_wrappers.o 
 	@echo "building memory port module..."
 	@$(MAKE) -C $(MEMORY_PORT_DIR) $@
 	@echo "building memory module..."
@@ -51,5 +51,9 @@ clean: verify_for_clean $(MEMORY_PORT_DIR) $(MEMORY_SELECT_DIR)
 	@cd $(MEMORY_SELECT_DIR); $(MAKE) $@
 
 include $(PCSL_DIR)/makefiles/verify.gmk
+
+$(OUTPUT_OBJ_DIR)/pcsl_memory_wrappers.o: pcsl_memory_wrappers.c
+	@$(CC) -I. -I./$(MEMORY_MODULE) -I./../print -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` 
+
 
 .PHONY : all doc clean donuts verify
