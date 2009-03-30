@@ -104,6 +104,7 @@ struct CVMOptions {
 #ifdef CVM_HAVE_PROCESS_MODEL
     CVMBool fullShutdownFlag;
 #endif
+    CVMBool unlimitedGCRoots;
 #ifndef CDC_10
     CVMBool javaAssertionsUserDefault; /* User class default (-ea/-da). */
     CVMBool javaAssertionsSysDefault;  /* System class default (-esa/-dsa). */
@@ -549,6 +550,9 @@ struct CVMGlobalState {
      * Shutdown flags
      */
     CVMBool fullShutdown;
+
+    /* If true, no limit on the size of global roots stacks. */
+    CVMBool unlimitedGCRoots;
 
 #ifdef CVM_XRUN
     /*

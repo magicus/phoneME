@@ -793,6 +793,8 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     gs->javaAssertionsPackages    = options->javaAssertionsPackages;
 #endif
 
+    gs->unlimitedGCRoots = options->unlimitedGCRoots;
+
     /*
      * Initalize all of the global sys mutexes.
      */

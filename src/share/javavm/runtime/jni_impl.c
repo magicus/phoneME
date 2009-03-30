@@ -3631,12 +3631,14 @@ initializeThreadObjects(JNIEnv* env)
 	CVM_JVMPI_OPTIONS \
 	CVM_XRUN_OPTIONS \
 	"[-XfullShutdown] " \
+	"[-XunlimitedGCRoots] " \
 	"[-XtimeStamping] " \
 	CVM_GC_OPTIONS \
 	"[-Xms<size>] " \
 	"[-Xmn<size>] " \
 	"[-Xmx<size>] " \
 	"[-Xss<size>] " \
+	"[-Xopt:[<option>[,<option>]...]] " \
 	CVM_JIT_OPTIONS \
 	CVM_DEBUG_OPTIONS
 
@@ -4338,6 +4340,8 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 #ifdef CVM_HAVE_PROCESS_MODEL
 	    options.fullShutdownFlag = CVM_TRUE;
 #endif
+	} else if (!strcmp(str, "-XunlimitedGCRoots")) {
+            options.unlimitedGCRoots = CVM_TRUE;
 #ifdef CVM_AGENTLIB
 	} else if (!strncmp(str, "-agentlib:", 10) ||
                !strncmp(str, "-agentpath:", 11)) {

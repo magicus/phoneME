@@ -111,6 +111,9 @@ CVMinitGCRootStack(CVMExecEnv *ee, CVMStack* s, CVMUint32 initialStackSize,
     CVMFreelistFrame* initialFrame;
     CVMBool result;
 
+    if (CVMglobals.unlimitedGCRoots) {
+        maxStackSize = 0xffffffff;
+    }
     result = CVMinitStack(ee, s, initialStackSize, maxStackSize, 
 			  minStackChunkSize, CVMfreelistFrameCapacity,
 			  frameType);
