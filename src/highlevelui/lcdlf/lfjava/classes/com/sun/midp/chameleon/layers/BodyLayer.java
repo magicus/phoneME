@@ -38,7 +38,7 @@ import com.sun.midp.lcdui.EventConstants;
  * contains the current Displayable contents, such as a Form or Canvas.
  */
 public class BodyLayer extends CLayer
-    implements ScrollListener {
+    implements ScrollListener, GestureAnimatorListener {
 
     /**
      * The scroll indicator layer to notify of scroll settings
@@ -52,13 +52,18 @@ public class BodyLayer extends CLayer
     /**
      *  Y coordinate of pointer during pointer drag event.
      */
-    private int pointerY = -1;
+    private int pointerY = Integer.MAX_VALUE;
     
     /**
      *  Desired drag amount needed to return content
      *  to the stable position.
      */
     private int stableY = 0;
+
+    /**
+     * Last delta of pointer y coordinate during drag operation.
+     */
+    private int pointerDeltaY = 0;
 
     /**
      * Create a new BodyLayer.
@@ -390,28 +395,41 @@ public class BodyLayer extends CLayer
                     pointerY = y;
                     break;
                 case EventConstants.DRAGGED:
-                    if (pointerY != -1) {
-                        int deltaY = pointerY - y;
-                        stableY = tunnel.callDragContent(deltaY);
+                    if (pointerY != Integer.MAX_VALUE) {
+                        pointerDeltaY = pointerY - y;
+                        stableY = tunnel.callDragContent(pointerDeltaY);
+                        pointerY = y;
                     }
-                    pointerY = y;
-                    break;
-                case EventConstants.RELEASED:
-                    if (stableY != 0) {
-                        // IMPL_NOTE: should return 0
-                        tunnel.callDragContent(stableY);
-                        stableY = 0;
-                    }
-                    pointerY = -1;
                     break;
                 case EventConstants.FLICKERED:
-                    //TODO: initiate continues content dragging
+                    if (pointerDeltaY != 0) {
+                        GestureAnimator.flick(this, pointerDeltaY);
+                    }
+                    break;                    
+                case EventConstants.RELEASED:
+                case EventConstants.GONE:
+                    if (stableY != 0) {
+                        // IMPL_NOTE: should return 0
+                        GestureAnimator.dragToStablePosition(this, stableY);
+                        stableY = 0;
+                    }
+                    pointerY = Integer.MAX_VALUE;
                     break;
             }
         }
         // pass event to other consumers
         return false;
     }
+
+    /**
+     * Drag displayable content
+     * @param deltaY
+     * @return desired drag amount to become stable
+     */
+    public int dragContent(int deltaY) {
+        return tunnel.callDragContent(deltaY);
+    }
+
 
 }
 

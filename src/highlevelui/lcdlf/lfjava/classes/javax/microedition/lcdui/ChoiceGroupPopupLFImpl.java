@@ -942,10 +942,18 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
          */
         public void updateScrollIndicator() {
             if (scrollInd != null) {
+                if (viewable[Y] < 0 ||
+                        viewable[Y] > viewable[HEIGHT] - viewport[HEIGHT]) {
+                    return;
+                }
                 if (sbVisible) {
-                    scrollInd.setVerticalScroll(
-                          (viewable[Y] * 100 / (viewable[HEIGHT] - viewport[HEIGHT])),
-                          (viewport[HEIGHT] * 100 / viewable[HEIGHT]));
+                    if (viewable[HEIGHT] <= viewport[HEIGHT]) {
+                        scrollInd.setVerticalScroll(0, 100);
+                    } else {
+                        scrollInd.setVerticalScroll((viewable[Y] * 100 /
+                                           (viewable[HEIGHT] - viewport[HEIGHT])),
+                                          (viewport[HEIGHT] * 100 / viewable[HEIGHT]));
+                    }
                 } else {
                     scrollInd.setVerticalScroll(0, 100);
                 }

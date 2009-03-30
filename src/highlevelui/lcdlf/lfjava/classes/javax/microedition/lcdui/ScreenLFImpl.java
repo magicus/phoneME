@@ -361,6 +361,10 @@ class ScreenLFImpl extends DisplayableLFImpl {
                            "[F] >> viewable[HEIGHT] == "+viewable[HEIGHT] +
                            " lastScrollSize == "+lastScrollSize);
         }
+
+        if (viewable[Y] < 0 || viewable[Y] > getMaxScroll()) {
+            return;
+        }
         
         // check if scroll moves, and if so, refresh scrollbars
         if (!invalidScroll &&

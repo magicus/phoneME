@@ -51,7 +51,7 @@ import javax.microedition.lcdui.*;
  * PopupLayer and MIDPWindow can allow non visible popup layers.
  */
 public class ScrollablePopupLayer extends PopupLayer
-    implements ScrollListener {
+    implements ScrollListener, GestureAnimatorListener {
 
     /**
      * The scroll indicator layer to notify of scroll settings
@@ -62,7 +62,7 @@ public class ScrollablePopupLayer extends PopupLayer
     /**
      *  Y coordinate of pointer during pointer drag event.
      */
-    private int pointerY = -1;
+    private int pointerY = Integer.MAX_VALUE;
 
     /**
      *  Desired drag amount needed to return content
@@ -70,6 +70,10 @@ public class ScrollablePopupLayer extends PopupLayer
      */
     private int stableY = 0;
     
+    /**
+     * Last delta of pointer y coordinate during drag operation.
+     */
+    private int pointerDeltaY = 0;
     
     
     /**
@@ -219,25 +223,27 @@ public class ScrollablePopupLayer extends PopupLayer
                 pointerY = y;
                 break;
             case EventConstants.DRAGGED:
-                if (pointerY != -1) {
+                if (pointerY != Integer.MAX_VALUE) {
+                    pointerDeltaY = pointerY - y;
                     stableY = dragContent(pointerY - y);
+                    pointerY = y;
                 }
-                pointerY = y;
-                break;
-            case EventConstants.RELEASED:
-                if (stableY != 0) {
-                    // IMPL_NOTE: should return 0
-                    dragContent(stableY);
-                    stableY = 0;
-                }
-                pointerY = -1;
                 break;
             case EventConstants.FLICKERED:
-                //TODO: initiate continues content dragging
+                if (pointerDeltaY != 0) {
+                    GestureAnimator.flick(this, pointerDeltaY);
+                }
+                break;
+            case EventConstants.RELEASED:
+            case EventConstants.GONE:
+                if (stableY != 0) {
+                    GestureAnimator.dragToStablePosition(this, stableY);
+                    stableY = 0;
+                }
+                pointerY = Integer.MAX_VALUE;
                 break;
         }
-        // pass event to other consumers
-        return false;
+        return true;
     }
     
 }

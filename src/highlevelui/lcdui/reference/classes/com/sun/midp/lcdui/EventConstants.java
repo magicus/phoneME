@@ -65,6 +65,11 @@ public final class EventConstants {
     public static final int FLICKERED = 5; // pen
 
     /**
+     * Minor ID indicating pointer out event.
+     */
+    public static final int GONE = 6; // pen
+
+    /**
      * Minor ID indicating that command event requires posting a menu.
      */
     public static final int MENU_REQUESTED   = -1;
