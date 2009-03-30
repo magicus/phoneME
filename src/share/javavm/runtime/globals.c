@@ -793,6 +793,8 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     gs->javaAssertionsPackages    = options->javaAssertionsPackages;
 #endif
 
+    gs->unlimitedGCRoots = options->unlimitedGCRoots;
+
     /*
      * Initalize all of the global sys mutexes.
      */
@@ -1175,11 +1177,13 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
 #endif
 
     /* Open up the cvm binary as a shared library for locating JNI methods */
+    /* Not all platforms support this */
     if (CVMglobals.cvmDynHandle == NULL) {
         CVMglobals.cvmDynHandle = CVMdynlinkOpen(NULL);
         if (CVMglobals.cvmDynHandle == NULL) {
-            CVMconsolePrintf("Cannot start VM "
-                             "(Could not open cvm as a shared library)\n");
+#ifdef CVM_DEBUG
+            CVMconsolePrintf("Could not open cvm as a shared library\n");
+#endif
         }
     }
 

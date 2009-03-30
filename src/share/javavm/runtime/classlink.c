@@ -196,7 +196,7 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine)
 	 * StackMapTable attribute if none is specified.
 	 */
 	if (CVMsplitVerifyClassHasMaps(ee, cb) || cb->major_version >= 50) {
-	    verified = (CVMsplitVerifyClass(ee, cb) == 0);
+	    verified = (CVMsplitVerifyClass(ee, cb, isRedefine) == 0);
 #ifndef CVM_50_0_FALL_BACK
 	    if (!verified) {
 		success = CVM_FALSE;
@@ -216,7 +216,7 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine)
 	}
 #endif
 	if (!verified) {
-	    verified = CVMclassVerify(ee, cb);
+	    verified = CVMclassVerify(ee, cb, isRedefine);
 	}
         if (!verified) {
 	    success = CVM_FALSE;

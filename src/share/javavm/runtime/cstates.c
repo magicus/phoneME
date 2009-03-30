@@ -199,7 +199,7 @@ CVMcsResumeConsistentState(CVMExecEnv *ee, CVMCStateID csID)
 	ee->threadID, cs->count, ee, cs->name));
 
     cs->reached = CVM_FALSE;
-    //    CVMassert(cs->requester == ee);
+    CVMassert(cs->requester == ee);
     cs->requester = NULL;
     CVMsysMutexLock(ee, &cs->mutex);
     cs->request = CVM_FALSE;
@@ -230,7 +230,7 @@ CVMcsRendezvous(CVMExecEnv *ee, CVMCState *cs, CVMTCState *tcs, CVMBool block)
     CVMBool isConsistent = tcs->isConsistent;
     CVMUint32 count;
     /* The requester should not be making transitions during the request */
-    //    CVMassert(cs->requester != ee);
+        CVMassert(cs->requester != ee);
 
     /* must block if inconsistent */
     CVMassert(block != isConsistent);

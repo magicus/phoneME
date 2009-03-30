@@ -1711,7 +1711,7 @@ CVMclassDoClassUnloadingPass2(CVMExecEnv* ee);
 #ifdef CVM_CLASSLOADING
 
 extern CVMBool
-CVMclassVerify(CVMExecEnv* ee, CVMClassBlock* cb);
+CVMclassVerify(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine);
 
 enum { CVM_VERIFY_NONE = 0, CVM_VERIFY_REMOTE, CVM_VERIFY_ALL, CVM_VERIFY_UNRECOGNIZED };
 

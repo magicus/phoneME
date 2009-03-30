@@ -768,7 +768,8 @@ make_class_info_from_name(context_type *context, CVMClassTypeID name)
  * in a class.
  */
 jboolean
-VerifyClass(CVMExecEnv *ee, CVMClassBlock *cb, char *buffer, jint len)
+VerifyClass(CVMExecEnv *ee, CVMClassBlock *cb, char *buffer, jint len,
+            CVMBool isRedefine)
 {
     context_type *context = (context_type *)malloc(sizeof(context_type)); 
     jboolean result = JNI_TRUE;
@@ -819,8 +820,23 @@ VerifyClass(CVMExecEnv *ee, CVMClassBlock *cb, char *buffer, jint len)
 	context->serializable_info = 
 	    make_class_info(context, CVMsystemClass(java_io_Serializable));
 
-	context->currentclass_info = make_loadable_class_info(context, cb);
-
+#ifdef CVM_JVMTI
+        if (isRedefine) {
+            /* The class being verified is the new class. However, that
+             * class will not be in the list of classes as we just use
+             * it to hold the methods during the redefine phase.  The oldcb
+             * is the class of record for this class so we want to make
+             * sure we use that as the target of any verifications
+             */
+            CVMClassBlock *oldcb = CVMjvmtiGetCurrentRedefinedClass(ee);
+            CVMassert(oldcb != NULL);
+            context->currentclass_info =
+                make_loadable_class_info(context, oldcb);
+        } else
+#endif
+       {
+           context->currentclass_info = make_loadable_class_info(context, cb);
+       }
 	super = CVMcbSuperclass(cb);
 
 	if (super != 0) {

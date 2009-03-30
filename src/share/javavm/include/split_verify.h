@@ -136,7 +136,7 @@ CVMBool CVMsplitVerifyClassHasMaps(CVMExecEnv*, CVMClassBlock*);
  * Deletes stack maps.
  * (Future work: rewrite as pointerstackmaps for GC.)
  */
-int CVMsplitVerifyClass(CVMExecEnv*, CVMClassBlock* );
+int CVMsplitVerifyClass(CVMExecEnv*, CVMClassBlock*, CVMBool isRedefine);
 
 /*
  * Delete all stackmaps when done.

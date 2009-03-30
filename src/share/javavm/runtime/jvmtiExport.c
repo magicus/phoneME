@@ -457,10 +457,18 @@ CVMjvmtiFindThread(CVMExecEnv* ee, CVMObjectICell* thread)
     /* cast away volatility */
     node = (CVMJvmtiThreadNode *)CVMglobals.jvmti.statics.threadList;  
     while (node != NULL) {
-	CVMID_icellSameObject(ee, node->thread, thread, thrEq);
-	if (thrEq) {
-	    break;
-	}
+        if (CVMjvmtiIsSafeToAccessDirectObject(ee)) {
+            CVMObject* directObj1_ = CVMjvmtiGetICellDirect(ee, node->thread);
+            CVMObject* directObj2_ = CVMjvmtiGetICellDirect(ee, thread);
+            if (directObj1_ == directObj2_) {
+                break;
+            }
+        } else {
+            CVMID_icellSameObject(ee, node->thread, thread, thrEq);
+            if (thrEq) {
+                break;
+            }
+        }
 	node = node->next;
     }
     JVMTI_UNLOCK(ee);

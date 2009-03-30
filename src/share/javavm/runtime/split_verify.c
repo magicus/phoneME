@@ -2329,7 +2329,7 @@ allocateContext(CVMExecEnv* ee, CLASS thisClass){
  *=======================================================================*/
 
 int
-CVMsplitVerifyClass(CVMExecEnv* ee, CLASS thisClass)
+CVMsplitVerifyClass(CVMExecEnv* ee, CLASS thisClass, CVMBool isRedefine)
 {
     int i;
     int nMethods;
@@ -2368,7 +2368,23 @@ CVMsplitVerifyClass(CVMExecEnv* ee, CLASS thisClass)
 #if 0
                 CVMconsolePrintf("*** SPLIT: %C.%M\n", thisClass, thisMethod);
 #endif
-                result = Vfy_verifyMethod(cntxt, thisClass, thisMethod);
+#ifdef CVM_JVMTI
+                if (isRedefine) {
+                    /* The class being verified is the new class. However,
+                     * that class will not be in the list of classes as we
+                     * just use it to hold the methods during the redefine
+                     * phase. The oldcb is the class of record for this class
+                     * so we want to make sure we use that as the target of
+                     * any verifications.
+                     */
+                    CVMClassBlock *oldcb = CVMjvmtiGetCurrentRedefinedClass(ee);
+                    CVMassert(oldcb != NULL);
+                    result = Vfy_verifyMethod(cntxt, oldcb, thisMethod);
+                } else
+#endif
+                {
+                    result = Vfy_verifyMethod(cntxt, thisClass, thisMethod);
+                }
                 if (result != 0) {
 		    if (!CVMexceptionOccurred(ee)){
 			CVMthrowVerifyError(ee, "%C.%M: %s", thisClass,
