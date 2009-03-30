@@ -332,7 +332,23 @@ insertThread(JNIEnv *env, ThreadList *list, jthread thread)
              */
             node->suspendCount = suspendAllCount;
             node->suspendOnStart = JNI_TRUE;
+        } else {
+            jvmtiThreadInfo info;
+            
+            info.name = NULL;
+            JVMTI_FUNC_PTR(gdata->jvmti, GetThreadInfo)
+                            (gdata->jvmti, thread, &info);
+
+            if (info.name != NULL) {
+                if (strncmp(info.name, "[dbgsuspend]", 12) == 0) {
+                    node->suspendCount = 1;
+                    node->suspendOnStart = JNI_TRUE;
+                }
+                
+                jvmtiDeallocate(info.name);
+            }
         }
+        
         node->current_ei = 0;
         node->instructionStepMode = JVMTI_DISABLE;
         node->eventBag = eventBag;
