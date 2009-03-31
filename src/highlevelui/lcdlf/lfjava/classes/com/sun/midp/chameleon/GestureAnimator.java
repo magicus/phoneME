@@ -32,6 +32,26 @@ import java.util.TimerTask;
  * Utility class used to animate gestures
  */
 public class GestureAnimator {
+    
+    /**
+     * Animation recalculation parameters
+     */
+    protected static final int scrollAnimationRate = 100;
+    protected static double flickSpeed = 2;
+    protected static int ScrollStableSteps = 4;
+    protected static int ScrollFlickSteps = 7;
+
+    /**
+     * Animation types
+     */
+    protected static int AT_STABLE = 1;
+    protected static int AT_FLICK  = 2;
+
+    /**
+     * Current animation type
+     */
+    protected static int type;
+
 
     /**
      * Timer used to perform animation
@@ -49,10 +69,6 @@ public class GestureAnimator {
     /**
      * Scrolling animation parameters.
      */
-    /**
-     * Animation recalculation rate
-     */
-    protected static final int rate = 100;
     /**
      * Height we need to scroll.
      */
@@ -101,19 +117,11 @@ public class GestureAnimator {
         stop();
         
         listener = l;
-        stepCnt = 5;
-        currStep = 0;
-        if (stY > 0) {
-            yDistance = yLeft = stY;
-            ySign = 1;
-        } else {
-            yDistance = yLeft = -stY;
-            ySign = -1;
-        }
-        a = (yDistance - b)/(yDistance * yDistance * yDistance);
+
+        initAnimation(AT_STABLE, stY);
 
         timerTask = new dragTimerTask();
-        getTimer().schedule(timerTask, 0, rate);
+        getTimer().schedule(timerTask, 0, scrollAnimationRate);
     }
 
     /**
@@ -128,23 +136,46 @@ public class GestureAnimator {
         stop();
         
         listener = l;
-        stepCnt = 7;
+
+        initAnimation(AT_FLICK, dy);
+
+        timerTask = new dragTimerTask();
+        getTimer().schedule(timerTask, 0, scrollAnimationRate);
+    }
+
+    /**
+     * Set up animation parameters
+     * @param t animation type
+     */
+    protected static void initAnimation(int t, int param) {
+        type = t;
+        double dist = 0;
+
+        if (type == AT_STABLE) {
+            // param - distance we need to scroll to return to stable position
+            stepCnt = ScrollStableSteps;
+            dist = param;
+        } else if (type == AT_FLICK) {
+            // param - initial speed of the flick            
+            stepCnt = ScrollFlickSteps;
+
+            dist = (flickSpeed * param - b) * stepCnt * stepCnt * stepCnt /
+                    (stepCnt - 1) / (stepCnt - 1) / (stepCnt - 1) + b;
+
+        } else {
+            //unsupported
+            return;
+        }
+
         currStep = 0;
-
-        yLeft = (1.5 * dy - b) * stepCnt * stepCnt * stepCnt /
-                (stepCnt - 1) / (stepCnt - 1) / (stepCnt - 1) + b;
-
         if (yLeft > 0) {
-            yDistance = yLeft;
+            yDistance = yLeft = dist;
             ySign = 1;
         } else {
-            yDistance = yLeft = -yLeft;
+            yDistance = yLeft = -dist;
             ySign = -1;
         }
         a = (yDistance - b)/(yDistance * yDistance * yDistance);
-
-        timerTask = new dragTimerTask();
-        getTimer().schedule(timerTask, 0, rate);
     }
 
     /**
@@ -175,10 +206,16 @@ public class GestureAnimator {
             if (yLeft <= 0) {
                 int stableY = listener.dragContent((int)(ySign * yLeft));
                 if (stableY != 0) {
-                    System.out.println("GestureAnimator$dragTimerTask.run, stableY != 0");
-                    listener.dragContent(stableY);
+                    if (type == AT_STABLE) {
+                        listener.dragContent(stableY);
+                        stop();
+                    } else {
+                        // we flicked out of stable position
+                        initAnimation(AT_STABLE, stableY);
+                    }
+                } else {
+                    stop();
                 }
-                stop();
             } else {
                 currStep++;
                 int y = (int)(yLeft - f((stepCnt - currStep)/stepCnt * yDistance));
