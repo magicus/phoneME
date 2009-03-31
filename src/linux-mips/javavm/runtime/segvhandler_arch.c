@@ -36,11 +36,9 @@
 #include "portlibs/jit/risc/include/porting/ccmrisc.h"
 
 #include <signal.h>
-#include <ucontext.h>
-#ifndef _ASM_SIGCONTEXT_H
-#define sigcontext asm_sigcontext
-#include <asm/sigcontext.h>
-#endif
+#define ucontext asm_ucontext
+#include <asm/ucontext.h>
+
 
 #ifdef CVM_SIGACTION_CHAINING
 
@@ -126,11 +124,10 @@ sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
  */
 static void handleSegv(int sig, siginfo_t* info, struct ucontext* ucp)
 {
-    struct sigcontext* mcp = (struct sigcontext*)&ucp->uc_mcontext;
 #ifdef CVM_DEBUG
     int pid = getpid();
 #endif
-    CVMUint8* pc = (CVMUint8*)(ptrdiff_t)mcp->sc_pc;
+    CVMUint8* pc = (CVMUint8*)(ptrdiff_t)ucp->uc_mcontext.sc_pc;
     if (CVMJITcodeCacheInCompiledMethod(pc)) {
 #if 0
         fprintf(stderr, "Process #%d received signal %d in jit code\n",
@@ -150,20 +147,22 @@ static void handleSegv(int sig, siginfo_t* info, struct ucontext* ucp)
 		if (offset >= 0) {
 		    /* set link register to return to just before the trap
 		     * instruction where incoming locals are reloaded. */
-		    mcp->sc_regs[31] = mcp->sc_pc - offset;
+		    ucp->uc_mcontext.sc_regs[31] =
+			ucp->uc_mcontext.sc_pc - offset;
 		    /* Branch to do a gc rendezvous */
-		    mcp->sc_pc = (unsigned long)CVMCCMruntimeGCRendezvousGlue;
+		    ucp->uc_mcontext.sc_pc =
+			(unsigned long)CVMCCMruntimeGCRendezvousGlue;
 		} else {
 		    /* phi handling: branch to generated code that will
 		     * spill phis, call CVMCCMruntimeGCRendezvousGlue, and
 		     * then reload phis.
 		     */
-		    mcp->sc_pc += offset;
+		    ucp->uc_mcontext.sc_pc += offset;
 		}
 #if 0
 		fprintf(stderr, "redirecting to rendezvous code 0x%x 0x%x\n",
-			(int)mcp->sc_pc,
-			(int)mcp->sc_regs[31]);
+			(int)ucp->uc_mcontext.sc_pc,
+			(int)ucp->uc_mcontext.sc_regs[31]);
 #endif
 		return;
 	    }
@@ -171,8 +170,9 @@ static void handleSegv(int sig, siginfo_t* info, struct ucontext* ucp)
 #endif
 #ifdef CVMJIT_TRAP_BASED_NULL_CHECKS
 	/* Branch and link to throw null pointer exception glue */
-	mcp->sc_regs[31] = mcp->sc_pc + 4; /* set link register */
-	mcp->sc_pc =
+	ucp->uc_mcontext.sc_regs[31] =
+	    ucp->uc_mcontext.sc_pc + 4; /* set link register */
+	ucp->uc_mcontext.sc_pc =
 	    (unsigned long)CVMCCMruntimeThrowNullPointerExceptionGlue;
 	return;
 #endif
@@ -184,7 +184,7 @@ static void handleSegv(int sig, siginfo_t* info, struct ucontext* ucp)
 #endif
 	/* Coming from CCM code. */
 	/* Branch to throw null pointer exception glue */
-	mcp->sc_pc =
+	ucp->uc_mcontext.sc_pc =
 	    (unsigned long)CVMCCMruntimeThrowNullPointerExceptionGlue;
 	return;
 #endif
@@ -200,7 +200,7 @@ static void handleSegv(int sig, siginfo_t* info, struct ucontext* ucp)
 	 * NOTE: for some reason it is not off by 4 if the crash is in
 	 * the code cache, which is why didn't adjust it above also.
 	 */
-	mcp->sc_pc = mcp->sc_pc - 4; 
+	ucp->uc_mcontext.sc_pc = ucp->uc_mcontext.sc_pc - 4; 
     }
 #else
 #ifdef CVM_SIGACTION_CHAINING

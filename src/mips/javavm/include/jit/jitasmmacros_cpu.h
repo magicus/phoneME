@@ -30,12 +30,6 @@
 
 #include "javavm/include/jit/jitasmconstants_cpu.h"
 
-/* First restore %gp from the CCEE, and then load the specified symbol
-   off of %gp. */
-#define LA(r,sym)                                               \
-    lw	gp, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_gp(sp);     \
-    la	r, sym
-
 /*
  * Shorthand for registers that are alo defined in jitasmconstants_cpu.h
  */
@@ -53,9 +47,11 @@
 	jr	jp
 
 /* 
- * The last word of ccmStorage is reserved on mips for the gp pointer.
+ * The last word of ccmStorage is reserved on mips for the memmove pointer.
+ * Note we could get rid of this requirement if we supported %gp in the
+ * ccm assembler glue.
  */
-#define OFFSET_CVMCCExecEnv_gp OFFSET_CVMCCExecEnv_ccmStorage+56
+#define OFFSET_CVMCCExecEnv_memmove OFFSET_CVMCCExecEnv_ccmStorage+60
 
 /*
  * Some macros to assist with fixing up compiled frames. They only bother

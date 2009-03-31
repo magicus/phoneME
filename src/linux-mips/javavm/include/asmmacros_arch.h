@@ -40,4 +40,13 @@
 #define ENTRY(x)	LEAF(x)
 #define SET_SIZE(x)	END(x)
 
+#ifdef __PIC__
+#define LA(r,sym)			\
+	lui	r, %hi(sym);		\
+	addiu	r, %lo(sym)
+#else
+#define LA(r,sym)			\
+	la	r, sym
+#endif
+
 #endif /* _INCLUDED_ASMMACROS_ARCH_H */

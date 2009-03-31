@@ -44,7 +44,6 @@
 
 	ENTRY (CVMARMmemmove8Bit)
 ENTRY1(CVMARMmemmove8Bit)
-LABEL(CVMARMmemmove8BitLocal)
         /*
           r0 = a1 = dest
           r1 = a2 = src
@@ -932,7 +931,6 @@ LABEL(memmove8Bit_copyBackwardLoopDone)
 
 	ENTRY (CVMARMmemmove16Bit)
 ENTRY1(CVMARMmemmove16Bit)
-LABEL(CVMARMmemmove16BitLocal)
         /*
           r0 = a1 = dest
           r1 = a2 = src
@@ -1037,7 +1035,6 @@ LABEL(memmove16Bit_copyBackwardLoopDone)
 
 	ENTRY (CVMARMmemmove32Bit)
 ENTRY1(CVMARMmemmove32Bit)
-LABEL(CVMARMmemmove32BitLocal)
         /*
           r0 = a1 = dest
           r1 = a2 = src
