@@ -543,7 +543,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
     }
 
     /**
-     * This method notify displayable to drga its content
+     * This method notifies displayable to drag its content
      *
      * @param deltaY
      * @return desired drag amount to become stable

@@ -444,7 +444,7 @@ class DEPopupLayer extends ScrollablePopupLayer {
         startIndex += leftToDrag / elementHeight;
         updatePopupLayer();
         leftToDrag %= elementHeight;
-        int stableY = 0;
+        stableY = 0;
         if (startIndex < 0) {
             stableY = -startIndex * elementHeight;
         } else if (startIndex > numElements - elementsToFit
@@ -532,7 +532,11 @@ class DEPopupLayer extends ScrollablePopupLayer {
     public void updateScrollIndicator() {
         if (scrollInd != null) {
             scrollInd.update(null);
-            if (sbVisible) {
+
+            if (stableY != 0) {
+                return;
+            }
+            if (sbVisible && numElements > 0 && numElements != elementsToFit) {
                 scrollInd.setVerticalScroll(
                                             startIndex * 100 / (numElements - elementsToFit),
                                             elementsToFit * 100 / numElements);                                            
@@ -643,7 +647,13 @@ class DEPopupLayer extends ScrollablePopupLayer {
     /**
      * Amount of pixels left from previous content dragging
      */
-    protected int leftToDrag = 0;    
+    protected int leftToDrag = 0;
+
+    /**
+     *  Desired drag amount needed to return content
+     *  to the stable position.
+     */
+    protected int stableY = 0;    
 
     /**
      * True if traversal past the last item in the popup should jump to the

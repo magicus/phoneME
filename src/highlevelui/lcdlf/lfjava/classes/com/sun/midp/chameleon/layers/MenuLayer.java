@@ -141,6 +141,9 @@ public class MenuLayer extends ScrollablePopupLayer {
      */
     public void updateScrollIndicator() {
     	if (scrollInd != null) {
+            if (stableY != 0) {
+                return;
+            }
             if (menuCmds.length > MenuSkin.MAX_ITEMS) {
                 scrollInd.setVerticalScroll(
                   (scrollIndex * 100) / (menuCmds.length - MenuSkin.MAX_ITEMS),

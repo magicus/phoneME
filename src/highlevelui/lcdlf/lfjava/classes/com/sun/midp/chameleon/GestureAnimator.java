@@ -25,8 +25,6 @@
  */
 package com.sun.midp.chameleon;
 
-import com.sun.midp.chameleon.skins.TickerSkin;
-
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -34,6 +32,7 @@ import java.util.TimerTask;
  * Utility class used to animate gestures
  */
 public class GestureAnimator {
+
     /**
      * Timer used to perform animation
      */
@@ -102,7 +101,7 @@ public class GestureAnimator {
         stop();
         
         listener = l;
-        stepCnt = 3;
+        stepCnt = 5;
         currStep = 0;
         if (stY > 0) {
             yDistance = yLeft = stY;
@@ -176,6 +175,7 @@ public class GestureAnimator {
             if (yLeft <= 0) {
                 int stableY = listener.dragContent((int)(ySign * yLeft));
                 if (stableY != 0) {
+                    System.out.println("GestureAnimator$dragTimerTask.run, stableY != 0");
                     listener.dragContent(stableY);
                 }
                 stop();

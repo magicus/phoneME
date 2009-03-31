@@ -253,8 +253,7 @@ class ScreenLFImpl extends DisplayableLFImpl {
      */
     protected int uScrollBy(int deltaY) {
         int max = getMaxScroll();
-        int newY = viewable[Y] + deltaY;
-        viewable[Y] = newY;
+        viewable[Y] += deltaY;
         if (viewable[Y] < 0) {
             return -viewable[Y];
         } else if (viewable[Y] > max) {
