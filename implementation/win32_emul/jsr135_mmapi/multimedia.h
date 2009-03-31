@@ -94,6 +94,7 @@ typedef enum _jc_fmt {
     JC_FMT_VIDEO_3GPP        ,
     JC_FMT_AVI               ,
     JC_FMT_MOV               ,
+    JC_FMT_FLV               ,
     JC_FMT_JPEG              ,
     JC_FMT_JPEG2000          ,
     JC_FMT_TIFF              ,

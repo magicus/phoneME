@@ -164,6 +164,9 @@ extern "C" {
 /** Apple Quicktime, video/quicktime */
 #define JAVACALL_MEDIA_FORMAT_MOV               "MOV"
 
+/** Flash video */
+#define JAVACALL_MEDIA_FORMAT_FLV               "FLV"
+
 /** Image formats section */
 /** MPEG JPEG, image/jpeg */
 #define JAVACALL_MEDIA_FORMAT_JPEG              "JPEG"
