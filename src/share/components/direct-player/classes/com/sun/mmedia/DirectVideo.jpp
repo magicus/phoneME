@@ -52,7 +52,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     private final int DEFAULT_WIDTH  = 80;
     private final int DEFAULT_HEIGHT = 80;
 
-    private final int COLOR_KEY = 0x010101;
+    private final int COLOR_KEY = 0xFF00FF; // 00RRGGBB, note: it will be converted to RGB565 in native
 
     // NOTE: You have to calibrate this value carefully
     //       If you increase this value, fake preview quality goes down but, system overhead decrease
