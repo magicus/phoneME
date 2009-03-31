@@ -122,7 +122,20 @@ INTERNAL_PISCES_JAVA_FILES := \
 MIDP_BOOTCLASSPATH_CLASSES_LIST += com.sun.pisces.TestInterface \
                                    com.sun.pisces.PiscesRenderer \
                                    com.sun.pisces.PiscesRendererFactory \
+                                   com.sun.pisces.GraphicsSurfaceIface \
                                    com.sun.pisces.NativeFinalization \
+
+
+#                                   javax.microedition.lcdui.Graphics \
+#                                   javax.microedition.lcdui.Font \
+#                                   javax.microedition.lcdui.Image \
+#                                   javax.microedition.lcdui.Display \
+#                                   javax.microedition.lcdui.ImageData \
+#                                   javax.microedition.lcdui.AbstractImageDataFactory \
+#                                   javax.microedition.lcdui.ImageDataFactory \
+
+
+MIDP_BOOTCLASSPATH_PACKAGES_LIST += com.sun.pisces \
 
 
 ifeq ($(SUBSYSTEM_PISCES_MODULES), pure_java)
@@ -166,6 +179,7 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesFinalizer.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesLibrary.java \
             $(INTERNAL_PISCES_NATIVE-JWC_CLASSES_DIR)/com/sun/pisces/GraphicsSurface.java \
+            $(INTERNAL_PISCES_NATIVE-JWC_CLASSES_DIR)/com/sun/pisces/GraphicsSurfaceIface.java \
             $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/NativeSurface.java
 
 #            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurfaceDestination.java 

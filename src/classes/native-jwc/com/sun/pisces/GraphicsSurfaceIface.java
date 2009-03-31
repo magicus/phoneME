@@ -28,33 +28,17 @@ package com.sun.pisces;
 
 import javax.microedition.lcdui.Graphics;
 
-public final class GraphicsSurface extends AbstractSurface implements GraphicsSurfaceIface {
-//    private Graphics g;
-    private Object g;
+public interface GraphicsSurfaceIface {
 
-    public GraphicsSurface() {
-        initialize();
-    }
+    public void bindTarget(Object g);
     
-    public void bindTarget(Object g) {
-//        this.g = (Graphics) g;
-        this.g = g;
-    }
-    
-    public void releaseTarget() {
-        this.g = null;
-    }
+    public void releaseTarget();
 
     public void getRGB(int[] argb, int offset, int scanLength, 
-            int x, int y, int width, int height) {
-        throw new RuntimeException("Not implemented!");
-    }
+            int x, int y, int width, int height);
 
     public void setRGB(int[] argb, int offset, int scanLength, 
-            int x, int y, int width, int height) {
-        throw new RuntimeException("Not implemented!");
-    }
+            int x, int y, int width, int height);
 
-    private native void initialize();
 }
 
