@@ -46,6 +46,14 @@
 #include <midpUtilKni.h>
 #include <midp_net_events.h>
 
+#define SOCK_ANC_INC_NETWORK_INDICATOR \
+    ANC_INC_NETWORK_INDICATOR \
+    getMidpSocketProtocolPtr(thisObject)->pendingConnections++;
+
+#define SOCK_ANC_DEC_NETWORK_INDICATOR \
+    ANC_DEC_NETWORK_INDICATOR \
+    getMidpSocketProtocolPtr(thisObject)->pendingConnections--;
+
 /**
  * @file
  * 
@@ -124,7 +132,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_open0(void) {
                 REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer); 
                 KNI_ThrowNew(midpConnectionNotFoundException, gKNIBuffer);
             } else if (status == PCSL_NET_WOULDBLOCK) {
-                ANC_INC_NETWORK_INDICATOR;
+                SOCK_ANC_INC_NETWORK_INDICATOR;
                 getMidpSocketProtocolPtr(thisObject)->handle = (jint)pcslHandle;
                 if (midpIncResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
                     REPORT_INFO(LC_PROTOCOL, "Resource limit update error"); 
@@ -151,11 +159,11 @@ Java_com_sun_midp_io_j2me_socket_Protocol_open0(void) {
         status = pcsl_socket_open_finish(pcslHandle, context);
 
         if (status == PCSL_NET_SUCCESS) {
-            ANC_DEC_NETWORK_INDICATOR;
+            SOCK_ANC_DEC_NETWORK_INDICATOR;
         } else if (status == PCSL_NET_WOULDBLOCK) {
             midp_thread_wait(NETWORK_WRITE_SIGNAL, (int)pcslHandle, context);
         } else  {
-            ANC_DEC_NETWORK_INDICATOR;
+            SOCK_ANC_DEC_NETWORK_INDICATOR;
             getMidpSocketProtocolPtr(thisObject)->handle = (jint)INVALID_HANDLE;
             if (midpDecResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
                 REPORT_INFO(LC_PROTOCOL, "Resource limit update error"); 
@@ -167,6 +175,8 @@ Java_com_sun_midp_io_j2me_socket_Protocol_open0(void) {
             KNI_ThrowNew(midpConnectionNotFoundException, gKNIBuffer);
         }
     }
+
+    ANC_IND_NETWORK_INDICATOR;
 
     KNI_EndHandles();
     KNI_ReturnVoid();
@@ -236,7 +246,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
             if (INVALID_HANDLE == pcslHandle) {
                 KNI_ThrowNew(midpIOException, "invalid handle during socket::read");
             } else {
-                ANC_INC_NETWORK_INDICATOR;
+                SOCK_ANC_INC_NETWORK_INDICATOR;
                 SNI_BEGIN_RAW_POINTERS;
                 status = pcsl_socket_read_start(pcslHandle,
                                (unsigned char*)&(JavaByteArray(bufferObject)[offset]),
@@ -248,7 +258,9 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
                 /* connection or its input streams are closed by another thread */
                 KNI_ThrowNew(midpInterruptedIOException,
                              "Interrupted IO error during socket::read");
-                ANC_DEC_NETWORK_INDICATOR;
+                if (INVALID_HANDLE == pcslHandle) {
+                    SOCK_ANC_DEC_NETWORK_INDICATOR;
+                }
             } else {
                 if ((void *)info->descriptor != pcslHandle) {
                     REPORT_CRIT2(LC_PROTOCOL,
@@ -273,7 +285,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
                     /* end of stream */
                     bytesRead = -1;
                 }
-                ANC_DEC_NETWORK_INDICATOR;
+                SOCK_ANC_DEC_NETWORK_INDICATOR;
             } else {
                 REPORT_INFO1(LC_PROTOCOL, "socket::read error=%d\n",
                              pcsl_network_error(pcslHandle));
@@ -285,13 +297,13 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
                             "Interrupted IO error %d during socket::read ",
                             pcsl_network_error(pcslHandle));
                     KNI_ThrowNew(midpInterruptedIOException, gKNIBuffer);
-                    ANC_DEC_NETWORK_INDICATOR;
+                    SOCK_ANC_DEC_NETWORK_INDICATOR;
                 } else {
                     midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
                             "Unknown error %d during socket::read ",
                             pcsl_network_error(pcslHandle));
                     KNI_ThrowNew(midpIOException, gKNIBuffer);
-                    ANC_DEC_NETWORK_INDICATOR;
+                    SOCK_ANC_DEC_NETWORK_INDICATOR;
                 }
             }
         }
@@ -354,7 +366,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_write0(void) {
             KNI_ThrowNew(midpIOException, 
                          "invalid handle during socket::write");
         } else {
-            ANC_INC_NETWORK_INDICATOR;
+            SOCK_ANC_INC_NETWORK_INDICATOR;
             SNI_BEGIN_RAW_POINTERS;
             status = pcsl_socket_write_start(pcslHandle, 
                            (char*)&(JavaByteArray(bufferObject)[offset]),
@@ -366,7 +378,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_write0(void) {
             /* connection or its output streams are closed by another thread */
             KNI_ThrowNew(midpInterruptedIOException, 
                          "Interrupted IO error during socket::write");
-            ANC_DEC_NETWORK_INDICATOR;
+            SOCK_ANC_DEC_NETWORK_INDICATOR;
         } else {
             if ((void *)info->descriptor != pcslHandle) {
                 REPORT_CRIT2(LC_PROTOCOL, 
@@ -385,7 +397,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_write0(void) {
 
     if (INVALID_HANDLE != pcslHandle) {
         if (status == PCSL_NET_SUCCESS) {
-            ANC_DEC_NETWORK_INDICATOR;
+            SOCK_ANC_DEC_NETWORK_INDICATOR;
         } else {
             REPORT_INFO1(LC_PROTOCOL, "socket::write error=%d\n", 
                          (int)pcsl_network_error(pcslHandle));
@@ -397,13 +409,13 @@ Java_com_sun_midp_io_j2me_socket_Protocol_write0(void) {
                         "Interrupted IO error %d during socket::write ", 
                         pcsl_network_error(pcslHandle));
                 KNI_ThrowNew(midpInterruptedIOException, gKNIBuffer);
-                ANC_DEC_NETWORK_INDICATOR;
+                SOCK_ANC_DEC_NETWORK_INDICATOR;
             } else {
                 midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
                         "IOError %d during socket:: write \n", 
                         pcsl_network_error(pcslHandle));
                 KNI_ThrowNew(midpIOException, gKNIBuffer);
-                ANC_DEC_NETWORK_INDICATOR;
+                SOCK_ANC_DEC_NETWORK_INDICATOR;
             }
         }
     }
@@ -550,6 +562,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_finalize(void) {
     void *pcslHandle;
     int status = PCSL_NET_INVALID;
     void* context = NULL;
+    int i;
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(thisObject);
@@ -577,6 +590,12 @@ Java_com_sun_midp_io_j2me_socket_Protocol_finalize(void) {
             REPORT_CRIT1(LC_PROTOCOL, "socket::finalize = 0x%x blocked\n", 
                          pcslHandle);
         }
+    }
+
+    i = getMidpSocketProtocolPtr(thisObject)->pendingConnections;
+    while (i > 0) {
+        ANC_DEC_NETWORK_INDICATOR;
+        i--;
     }
 
     KNI_EndHandles();
