@@ -30,3 +30,9 @@
  * Global buffers definitions
  */
 char gKNIBuffer[KNI_BUFFER_SIZE];
+
+char * 
+get_KNIBuffer() {
+    return gKNIBuffer;
+}
+

@@ -1,5 +1,7 @@
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+#
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -22,34 +24,39 @@
 # information or have any questions. 
 #
 ######################################################################
-
-# Create library from object files
 #
-# IMPL_NOTE: win32 platform has limitation of environment (32K),
-#   so too long command lines (especially for linker) are truncated.
-#   To avoid it object files are put to a library.
+# Makefile for building and packaging.
 #
-# For compatibility with AR that creates temp lib file addding 'tmp-' prefix
-# to lib name, short name $(OBJLIBNAME) was used
+######################################################################
 
-OBJLIBNAME = libobj$(LIB_SUFFIX)
-OBJLIB = $(OBJ_DIR)/$(OBJLIBNAME)
-OBJLIB_SCRIPT = $(OBJLIB)-list
+# Definition of platform to build on
+HOST_PLATFORM		= linux
+HOST_OS			= linux
+HOST_CPU		= i386
+HOST_COMPILER		= gcc
 
-ifeq ($(MRI_OPT), )
+# Definition of platform to run on
+TARGET_PLATFORM		= javacall
+TARGET_OS		= javacall
+TARGET_CPU		= i386
+TARGET_COMPILER		= gcc
+TARGET_VM		= cldc_vm
 
-$(OBJLIB): $(OBJ_FILES)
-	@echo " ... libing $@" $(LOG)
-	$(AT)$(CREATE_LIB) $(LIB_OUTPUT)$@ $(OBJ_FILES) $(LOG) 
-	$(AT)$(RANLIB) $@ $(LOG)
+# Platform-specific compiler flags
+EXTRA_CPPFLAGS +=
 
-else 
+# Platform-specific linker flags and libraries
+LD_FLAGS +=
+EXTRA_LIBS += 
 
-$(OBJLIB): $(OBJ_FILES)
-	$(shell echo $(MRI_CREATE)$(OBJLIBNAME) > $(OBJLIB_SCRIPT))
-	$(foreach path, $(OBJ_FILES), $(shell echo $(MRI_ADD)`$(call fixcygpath,$(path))` >> $(OBJLIB_SCRIPT)))
-	$(shell echo $(MRI_SAVE) >> $(OBJLIB_SCRIPT))
-	$(shell cd $(OBJ_DIR); $(AR) $(MRI_OPT)$(OBJLIB_SCRIPT); $(RANLIB) $(OBJLIBNAME))
+GCC_LIBS = -lpthread -lm
 
-endif
+LINKER_OUTPUT = -o # one space after -o included intentionally
+LD_START_GROUP =
+LD_END_GROUP =
+
+# the ar doesn't support MRI scripts 
+MRI_OPT = 
+
+MIDP_BIN_TARGET ?= sdk
 
