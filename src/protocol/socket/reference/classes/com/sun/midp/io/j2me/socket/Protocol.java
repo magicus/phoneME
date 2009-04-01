@@ -102,6 +102,9 @@ public class Protocol extends NetworkConnectionBase
     /** True if the owner of this connection is trusted. */
     private boolean ownerTrusted;
 
+    /** nuber of blocked connections */
+    private int pendingConnections;
+
     /** Byte array that represents the IP address */
     byte[] ipBytes = new byte[4];
 
