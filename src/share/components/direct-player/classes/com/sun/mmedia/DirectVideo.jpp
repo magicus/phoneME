@@ -706,23 +706,17 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             int px, py, pw, ph;
 
             // Calculate positions
-            // And, do a physical clipping
             px = x + diffx;
             py = y + diffy;
             pw = dw;
             ph = dh;
 
-            if (px + pw <= 0) {
-                return;
-            }
-            if (py + ph <= 0) {
-                return;
-            }
-
             /*
              * Revisit: these can swap when device screen orientation changes or
              * UI object got moved to another Display.
+             * And, maybe some kind of clipping is necessary here.
              */
+            /*
             Display myDisplay;
             switch (displayMode) {
             case USE_DIRECT_VIDEO:
@@ -736,13 +730,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             }
             int displayWidth = mmh.getDisplayWidth(myDisplay);
             int displayHeight = mmh.getDisplayHeight(myDisplay);
-
-            if (px >= displayWidth) {
-                return;
-            }
-            if (py >= displayHeight) {
-                return;
-            }
+            */
 
             source.setVideoLocation(px, py, pw, ph);
         }
