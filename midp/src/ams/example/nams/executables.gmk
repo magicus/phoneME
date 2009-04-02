@@ -1,0 +1,79 @@
+#
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+# Makefile with "lazy" rules that should be included after other
+# subsystem makefile's are included and global variable values are
+# collected across the system.
+#
+# IMPORTNAT: No global variables should be changed here.
+######################################################################
+
+# Define AMS executables
+#
+# IMPL_NOTE: AMS executables are dependent on all object files of 
+#   the system, that's why this rule should be parsed after all object
+#   names are collected and prerequisite variables have correct values.
+#
+
+$(BINDIR)/runNams$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_RUNNAMS_OBJ_FILES)
+	@echo " ... linking $@ " $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+		$(LD_START_GROUP) $(AMS_RUNNAMS_OBJ_FILES) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
+
+$(BINDIR)/removeMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_REMOVEMIDLET_OBJ_FILES)
+	@echo " ... linking $@ " $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+		$(LD_START_GROUP) $(AMS_REMOVEMIDLET_OBJ_FILES) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
+
+$(BINDIR)/listMidlets$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_LISTMIDLET_OBJ_FILES)
+	@echo " ... linking $@ " $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+		$(LD_START_GROUP) $(AMS_LISTMIDLET_OBJ_FILES) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
+
+$(BINDIR)/fileInstaller$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_FILEINSTALLER_OBJ_FILES)
+	@echo " ... linking $@ " $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+		$(LD_START_GROUP) $(AMS_FILEINSTALLER_OBJ_FILES) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
+
+ifeq ($(TARGET_PLATFORM), javacall)
+ifeq ($(JAVACALL_PLATFORM), win32_i386_vc)
+$(BINDIR)/postTestMsg.exe: $(OBJ_DIR)/postTestMsg.o
+	@echo " ... linking $@ " $(LOG)
+	$(A)$(LD) $(LD_FLAGS) \
+		$(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_DIR)/postTestMsg.o \
+		$(LIBS))` $(LOG)
+endif
+endif
+
+$(BINDIR)/midp$(g)$(p)$(LIB_SUFFIX): $(MIDP_DEPS) $(OBJLIB)
+	@echo " ... libing $@ " $(LOG)
+	$(A)$(LD) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+		$(LD_START_GROUP) $(OBJLIB))` $(LD_END_GROUP) $(LOG)
+
+$(BINDIR)/java$(g)$(p)$(LIB_SUFFIX): $(BINDIR)/midp$(g)$(p)$(LIB_SUFFIX)
+	@echo " ... libing $@ " $(LOG)
+	$(A)$(LD) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+		$(LD_START_GROUP) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
