@@ -847,7 +847,7 @@ public final class CVM {
     //
     public native static boolean xdebugSet();
 
-    static class Preloader {
+    public static class Preloader {
 	//
 	// Register ClassLoader for ROMized classes
 	//
