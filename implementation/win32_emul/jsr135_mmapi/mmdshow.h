@@ -22,16 +22,25 @@
 * information or have any questions.
 */
 
-#pragma once
+#ifndef __MMDSHOW_H
+#define __MMDSHOW_H
 
-#include "types.hpp"
+#include "multimedia.h"
 
-class player_callback
-{
-public:
-    virtual ~player_callback() = 0 {}
-    virtual void frame_ready(bits16 const *pframe) = 0;
-    virtual void pcm_ready(nat32 nbytes, void const* pdata) = 0;
-    virtual void size_changed(int16 w, int16 h) = 0;
-    virtual void playback_finished() = 0;
-};
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
+
+
+javacall_bool   is_dshow_player( javacall_handle handle );
+javacall_result dshow_add_player_to_ss3d( javacall_handle handle, ISoundSource3D* ss3d );
+javacall_result dshow_remove_player_from_ss3d( javacall_handle handle, ISoundSource3D* ss3d );
+void            dshow_notify_ss3d_going_down( ISoundSource3D* ss3d );
+
+
+
+#ifdef __cplusplus
+} // extern "C"
+#endif //__cplusplus
+
+#endif // __MMDSHOW_H

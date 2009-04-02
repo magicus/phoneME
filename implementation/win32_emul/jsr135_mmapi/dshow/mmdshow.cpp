@@ -22,8 +22,13 @@
 * information or have any questions.
 */
 
+#include <math.h>
+
 #include "../multimedia.h"
 #include "player_dshow.hpp"
+
+#include "mm_qsound_audio.h"
+#include "mmdshow.h"
 
 //=============================================================================
 
@@ -32,7 +37,11 @@ extern "C" {
     void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color );
     void lcd_set_video_rect( int x, int y, int w, int h );
     void lcd_output_video_frame( javacall_pixel* video );
+
+    extern globalMan g_QSoundGM[];
 }
+
+#define QSOUND_GET_GM( n ) ( g_QSoundGM[ (n) ] )
 
 // ===========================================================================
 
@@ -47,19 +56,29 @@ static void PRINTF( const char* fmt, ... ) {
     //OutputDebugString( str8 );
 }
 
-#define XFER_BUFFER_SIZE  4096
+#define MAX_DSHOW_PLAYERS   1024
+#define XFER_BUFFER_SIZE    0x1000   // bytes 
+#define OUT_QUEUE_SIZE      0x10000  // bytes
 
-class dshow_player : public player_callback
+class dshow_player : public player_callback, 
+                     public IWaveStream
 {
-    virtual void frame_ready( bits16 const* pFrame );
-    virtual void size_changed( int16 w, int16 h );
-    virtual void playback_finished();
+    // player_callback methods:
+    virtual void        frame_ready( bits16 const* pFrame );
+    virtual void        pcm_ready(nat32 nbytes, void const* pdata);
+    virtual void        size_changed( int16 w, int16 h );
+    virtual void        playback_finished();
+
+    // IWaveStream methods:
+	virtual long        getFormat(int* pChannels, long* pSampleRate);
+	virtual long        read(short* buffer, int samples);
 
 public:
     long                  get_media_time();
 
     int                   appId;
     int                   playerId;
+    int                   gmIdx;
     jc_fmt                mediaType;
     javacall_utf16_string uri;
     bool                  is_video;
@@ -87,7 +106,21 @@ public:
     javacall_bool         mute;
 
     player*               ppl;
+    IModule*              pModule;
+    bool                  our_module;
+
+    static dshow_player*  players[ MAX_DSHOW_PLAYERS ];
+    static int            num_players;
+
+    CRITICAL_SECTION      cs;
+    BYTE                  out_queue[ OUT_QUEUE_SIZE ];
+    size_t                out_queue_w; // write index
+    size_t                out_queue_r; // read  index
+    size_t                out_queue_n; // samples in queue
 };
+
+dshow_player* dshow_player::players[ MAX_DSHOW_PLAYERS ];
+int           dshow_player::num_players = 0;
 
 void dshow_player::frame_ready( bits16 const* pFrame )
 {
@@ -114,6 +147,102 @@ void dshow_player::playback_finished()
     long t = get_media_time();
     javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
                                       appId, playerId, JAVACALL_OK, (void*)t );
+}
+
+void dshow_player::pcm_ready(nat32 nbytes, void const* pdata)
+{
+    EnterCriticalSection( &cs );
+
+    if( out_queue_n + nbytes > OUT_QUEUE_SIZE ) nbytes = OUT_QUEUE_SIZE - out_queue_n;
+
+    if( 0 != nbytes )
+    {
+        size_t n1 = nbytes;
+        size_t n2 = 0;
+
+        if( out_queue_w + n1 > OUT_QUEUE_SIZE ) {
+            n1 = OUT_QUEUE_SIZE - out_queue_w;
+            n2 = nbytes - n1;
+        }
+
+        memcpy( out_queue + out_queue_w, pdata, n1 );
+
+        if( 0 != n2 ) {
+            memcpy( out_queue, (BYTE*)pdata + n1, n2 );
+            out_queue_w = n2;
+        } else {
+            out_queue_w += n1;
+        }
+
+        out_queue_n += nbytes;
+    }
+
+    LeaveCriticalSection( &cs );
+}
+
+long dshow_player::getFormat(int* pChannels, long* pSampleRate)
+{
+    *pChannels   = channels;
+    *pSampleRate = 44100;
+    return MQ234_ERROR_NO_ERROR;
+}
+
+long dshow_player::read(short* buffer, int samples)
+{
+    /*
+    static double t  = 0;
+    static DWORD  k  = 0;
+    static double dt = 1.0 / 44100.0;
+    static double f0  = 440.0;
+    static double f1  = 440.0 * 1.5;
+
+    for( int i = 0; i < samples; i ++ )
+    {
+        //buffer[ 2*i     ] = (k&0x00003000) ? short( 5000.0 * sin( t * 6.28 * f0 ) ) : 0;
+        //buffer[ 2*i + 1 ] = (k&0x00006000) ? short( 5000.0 * sin( t * 6.28 * f1 ) ) : 0;
+        buffer[ i ] = (k&0x00003000) ? short( 5000.0 * sin( t * 6.28 * f0 ) ) : 0;
+        t += dt;
+        k++;
+    }
+    */
+
+
+    EnterCriticalSection( &cs );
+
+    size_t zero_padding_size = 0;
+    size_t nbytes = samples * 2 * channels;
+    if( nbytes > out_queue_n ) {
+        zero_padding_size = nbytes - out_queue_n;
+        nbytes = out_queue_n;
+    }
+
+    BYTE*  out = (BYTE*)buffer;
+    size_t n1  = nbytes;
+    size_t n2  = 0;
+
+    if( out_queue_r + n1 > OUT_QUEUE_SIZE ) {
+        n1 = OUT_QUEUE_SIZE - out_queue_r;
+        n2 = nbytes - n1;
+    }
+
+    memcpy( out, out_queue + out_queue_r, n1 );
+
+    if( 0 != n2 ) {
+        memcpy( out + n1, out_queue, n2 );
+        out_queue_r = n2;
+    } else {
+        out_queue_r += n1;
+    }
+
+    out_queue_n -= nbytes;
+
+    if( 0 != zero_padding_size ) {
+        memset( out + nbytes, 0, zero_padding_size );
+    }
+
+    LeaveCriticalSection( &cs );
+
+    return MQ234_ERROR_NO_ERROR;
 }
 
 long dshow_player::get_media_time()
@@ -147,6 +276,19 @@ static javacall_result dshow_create(int appId,
 
     PRINTF( "\n\n*** create ***\n" );
 
+    if( dshow_player::num_players >= MAX_DSHOW_PLAYERS )
+        return JAVACALL_OUT_OF_MEMORY;
+
+    p->gmIdx = -1;
+    javacall_result res = isolateIDtoGM( appId, &(p->gmIdx) );
+    
+    if( JAVACALL_OK != res )
+    {
+        gmDetach( p->gmIdx );
+        *pHandle = ( javacall_handle )NULL;
+        return JAVACALL_FAIL;
+    }
+
     p->appId            = appId;
     p->playerId         = playerId;
     p->mediaType        = mediaType;
@@ -170,10 +312,19 @@ static javacall_result dshow_create(int appId,
     p->video_frame      = NULL;
 
     p->ppl              = NULL;
+    p->pModule          = NULL;
+    p->our_module       = true;
+
+    InitializeCriticalSection( &(p->cs) );
+    p->out_queue_w      = 0;
+    p->out_queue_r      = 0;
+    p->out_queue_n      = 0;
 
     *pHandle =(javacall_handle)p;
 
     lcd_set_color_key( JAVACALL_FALSE, 0 );
+
+    dshow_player::players[ dshow_player::num_players++ ] = p;
 
     return JAVACALL_OK;
 }
@@ -193,9 +344,30 @@ static javacall_result dshow_destroy(javacall_handle handle)
 
     lcd_output_video_frame( NULL );
 
+    if( NULL != p->pModule )
+    {
+        p->pModule->removePlayer( p );
+        if( p->our_module ) p->pModule->destroy();
+        p->pModule = NULL;
+    }
+
+    gmDetach( p->gmIdx );
+
     if( NULL != p->video_frame ) delete p->video_frame;
     if( NULL != p->ppl ) delete p->ppl;
+
+    DeleteCriticalSection( &(p->cs) );
+
     delete p;
+
+    bool found = false;
+    for( int i = 0; i < dshow_player::num_players-1; i++ )
+    {
+        if( dshow_player::players[i] == p ) found = true;
+        if( found ) dshow_player::players[i] = dshow_player::players[i+1];
+    }
+    dshow_player::num_players--;
+
     return JAVACALL_OK;
 }
 
@@ -203,6 +375,14 @@ static javacall_result dshow_close(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** close ***\n" );
+
+    if( NULL != p->pModule )
+    {
+        p->pModule->removePlayer( p );
+        if( p->our_module ) p->pModule->destroy();
+        p->pModule = NULL;
+    }
+
     if( NULL != p->ppl ) p->ppl->close();
 
     lcd_output_video_frame( NULL );
@@ -225,6 +405,15 @@ static javacall_result dshow_acquire_device(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** acquire device ***\n" );
 
+    if( NULL == p->pModule )
+    {
+        IGlobalManager* gm = QSOUND_GET_GM(p->gmIdx).gm;
+        p->pModule = gm->createEffectModule();
+        p->our_module = true;
+    }
+
+    p->pModule->addPlayer( p );
+
     p->prefetched = true;
 
     return JAVACALL_OK;
@@ -234,6 +423,13 @@ static javacall_result dshow_release_device(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** release device ***\n" );
+
+    if( NULL != p->pModule )
+    {
+        p->pModule->removePlayer( p );
+        if( p->our_module ) p->pModule->destroy();
+        p->pModule = NULL;
+    }
 
     return JAVACALL_OK;
 }
@@ -282,6 +478,9 @@ static javacall_result dshow_realize(javacall_handle handle,
     else if( mime_equal( mime, mimeLength, L"video/x-vp6" ) ||
              mime_equal( mime, mimeLength, L"video/x-flv" ) )
     {
+        p->rate     = 44100;
+        p->channels = 2;
+
         p->mediaType = JC_FMT_FLV;
     }
     else
@@ -682,6 +881,67 @@ media_interface g_dshow_itf =
     NULL,
     NULL
 };
+
+/*****************************************************************************\
+                          A M M S   S U P P O R T
+\*****************************************************************************/
+
+javacall_bool is_dshow_player( javacall_handle handle )
+{
+    javacall_impl_player*  pPlayer = (javacall_impl_player*)handle;
+
+    return ( &g_dshow_itf == pPlayer->mediaItfPtr ) ? JAVACALL_TRUE : JAVACALL_FALSE;
+}
+
+javacall_result dshow_add_player_to_ss3d( javacall_handle handle, ISoundSource3D* ss3d )
+{
+    javacall_impl_player*  pPlayer = (javacall_impl_player*)handle;
+    dshow_player*          p = (dshow_player*)pPlayer->mediaHandle;
+
+    if( NULL != p->pModule )
+    {
+        p->pModule->removePlayer( p );
+        if( p->our_module ) p->pModule->destroy();
+        p->pModule = NULL;
+    }
+
+    MQ234_ERROR e = ss3d->addPlayer( p );
+
+    if( MQ234_ERROR_NO_ERROR == e )
+    {
+        p->pModule = ss3d;
+        p->our_module = false;
+    }
+
+    return ( MQ234_ERROR_NO_ERROR == e ) ? JAVACALL_OK : JAVACALL_FAIL;
+}
+
+javacall_result dshow_remove_player_from_ss3d( javacall_handle handle, ISoundSource3D* ss3d )
+{
+    javacall_impl_player*  pPlayer = (javacall_impl_player*)handle;
+    dshow_player*          p = (dshow_player*)pPlayer->mediaHandle;
+
+    MQ234_ERROR e = ss3d->removePlayer( p );
+
+    if( MQ234_ERROR_NO_ERROR == e )
+    {
+        p->pModule = NULL;
+    }
+
+    return ( MQ234_ERROR_NO_ERROR == e ) ? JAVACALL_OK : JAVACALL_FAIL;
+}
+
+void dshow_notify_ss3d_going_down( ISoundSource3D* ss3d )
+{
+    for( int i = 0; i < dshow_player::num_players; i++ )
+    {
+        if( dshow_player::players[i]->pModule == ss3d )
+        {
+            dshow_player::players[i]->pModule->removePlayer( dshow_player::players[i] );
+            dshow_player::players[i]->pModule = NULL;
+        }
+    }
+}
 
 //=============================================================================
 
