@@ -59,7 +59,7 @@ public class CHManagerBase extends com.sun.midp.content.CHManager
      * @param classname the midlet classname
      */
     public void midletInit(int suiteId, String classname) {
-    	InvocationStore.setCleanup(new CLDCAppID(suiteId, classname), true);
+    	InvocationImpl.store.setCleanupFlag(new CLDCAppID(suiteId, classname), true);
     }
 
     /**
@@ -117,7 +117,7 @@ public class CHManagerBase extends com.sun.midp.content.CHManager
                           int errorCode, String errorDetails) {
 		// Cleanup unprocessed Invocations
     	CLDCAppID appID = new CLDCAppID(suiteId, className);
-    	InvocationStore.setCleanup(appID, true);
+    	InvocationImpl.store.setCleanupFlag(appID, true);
 		RegistryImpl.cleanup(appID);
 		AppProxy.midletIsRemoved( suiteId, className );
 		// Check for and execute a pending MIDlet suite

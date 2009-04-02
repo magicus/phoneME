@@ -74,12 +74,12 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
     	}
         // Application has tried to get a request; reset cleanup flags on all
         if (requestCalls == 0) {
-            InvocationStore.setCleanup(applicationID, false);
+        	InvocationImpl.store.setCleanupFlag(applicationID, false);
         }
         requestCalls++;
 
         InvocationImpl invoc =
-            InvocationStore.getRequest(applicationID, wait, this);
+            InvocationImpl.store.getRequest(applicationID, wait, this);
         if (invoc != null) {
             // Keep track of number of requests delivered to the application
             AppProxy.requestForeground(invoc.invokingApp, invoc.destinationApp);
@@ -99,7 +99,7 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
      */
     public void cancelGetRequest() {
     	cancelCounter++;
-        InvocationStore.cancel();
+    	InvocationImpl.store.unblockWaitingThreads();
     }
 
     /**

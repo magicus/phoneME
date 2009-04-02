@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ import com.sun.j2me.security.Token;
  * The standalone instance initializes resources in the private
  * constructor and then releases its in the native finalizer.
  */
-class RegistryStore {
+class RegistryStore implements RegistryGate {
 
     /** 
      * Content Handler fields indexes.
@@ -61,18 +61,12 @@ class RegistryStore {
     static final Vector emptyVector = new Vector();
     static final ContentHandlerImpl[] emptyHandlersArray = new ContentHandlerImpl[0]; 
 
-    /**
-     * Search flags for @link getHandler() method. 
-     */
-    static final int SEARCH_EXACT   = 0; /** Search by exact match with ID */
-    static final int SEARCH_PREFIX  = 1; /** Search by prefix of given value */
-
     /** This class has a different security domain than the MIDlet suite */
     private static Token classSecurityToken;
     
-	static ContentHandlerImpl.Handle register(ApplicationID appID,
+	public ContentHandlerImpl.Handle register(ApplicationID appID,
 										ContentHandlerRegData handlerData) {
-        if( !store.register0(CLDCAppID.from(appID).suiteID, CLDCAppID.from(appID).className, 
+        if( !register0(CLDCAppID.from(appID).suiteID, CLDCAppID.from(appID).className, 
         						handlerData) )
         	return null;
         return new ContentHandlerHandle( handlerData.ID );
@@ -83,11 +77,11 @@ class RegistryStore {
      * @param handlerId ID of unregistered handler.
      * @return true if success, false - otherwise.
      */
-    static boolean unregister(String handlerId) {
-        return store.unregister0(handlerId);
+	public boolean unregister(String handlerId) {
+        return unregister0(handlerId);
     }
 
-	static void enumHandlers(String callerId, int searchBy, String value,
+	public void enumHandlers(String callerId, int searchBy, String value,
 						ContentHandlerImpl.Handle.Receiver output) {
 		ContentHandlerImpl[] result = findHandler(callerId, searchBy, value);
 		for( int i = 0; i < result.length; i++)
@@ -104,7 +98,7 @@ class RegistryStore {
      *
      * @return conflicted handlers array.
      */
-    static ContentHandlerImpl[] findConflicted(String testID) {
+	public ContentHandlerImpl[] findConflicted(String testID) {
         ContentHandlerImpl[] result = findHandler(null, FIELD_ID, testID);
         if(AppProxy.LOGGER != null){
 			AppProxy.LOGGER.println( "conflictedHandlers for '" + testID + "' [" + result.length + "]:" );
@@ -128,12 +122,12 @@ class RegistryStore {
      * @param value Searched value
      * @return found handlers array.
      */
-    static ContentHandlerImpl[] findHandler(String callerId, int searchBy, 
+    public ContentHandlerImpl[] findHandler(String callerId, int searchBy, 
                                                 String value) {
         /* Check value for null */
         value.length();
         HandlersCollection collection = new HandlersCollection();
-        deserializeCHArray(store.findHandler0(callerId, searchBy, value), collection);
+        deserializeCHArray(findHandler0(callerId, searchBy, value), collection);
         return collection.getArray(); 
     }
 
@@ -143,15 +137,14 @@ class RegistryStore {
      *
      * @return found handlers array.
      */
-    static ContentHandlerImpl[] forSuite(int suiteId) {
+    public ContentHandlerImpl[] forSuite(int suiteId) {
         HandlersCollection collection = new HandlersCollection();
-        deserializeCHArray(store.forSuite0(suiteId), collection);
+        deserializeCHArray(forSuite0(suiteId), collection);
         return collection.getArray(); 
     }
     
-    static ContentHandlerImpl getHandler( ApplicationID appID ){
-        ContentHandlerImpl[] arr = 
-        	RegistryStore.forSuite(CLDCAppID.from(appID).suiteID);
+    public ContentHandlerImpl getHandler( ApplicationID appID ){
+        ContentHandlerImpl[] arr = forSuite(CLDCAppID.from(appID).suiteID);
         String classname = CLDCAppID.from(appID).className;
         for (int i = 0; i < arr.length; i++) {
             if (classname.equals(CLDCAppID.from(arr[i].applicationID).className)) {
@@ -169,8 +162,8 @@ class RegistryStore {
      *        @link FIELD_ID values.
      * @return found values array.
      */
-    static String[] getValues(String callerId, int searchBy) {
-        String res = store.getValues0(callerId, searchBy);
+    public String[] getValues(String callerId, int searchBy) {
+        String res = getValues0(callerId, searchBy);
         Vector v = deserializeString(res);
         String[] result = new String[ v.size() ];
         v.copyInto(result);
@@ -187,7 +180,7 @@ class RegistryStore {
      * @return array of values
      */
     static String[] getArrayField(String handlerId, int fieldId) {
-        String res = store.loadFieldValues0(handlerId, fieldId);
+        String res = loadFieldValues0(handlerId, fieldId);
         Vector v = deserializeString(res);
         String[] result = new String[ v.size() ];
         v.copyInto(result);
@@ -211,9 +204,9 @@ class RegistryStore {
      * @return loaded ContentHandlerImpl object or
      * <code>null</code> if given handler ID is not found in Registry database.
      */
-    static ContentHandlerImpl getHandler(String callerId, String id, int searchMode) {
+    public ContentHandlerImpl getHandler(String callerId, String id, int searchMode) {
         if (id.length() != 0) {
-	        HandlerData data = deserializeCH( store.getHandler0( callerId, id, searchMode ) );
+	        HandlerData data = deserializeCH( getHandler0( callerId, id, searchMode ) );
 	        if( data != null )
 	            return new ContentHandlerHandle( data ).get();
         }
@@ -221,20 +214,20 @@ class RegistryStore {
     }
 
 	static HandlerData getHandler(String handlerID) {
-		return deserializeCH( store.getHandler0( null, handlerID, SEARCH_EXACT ) );
+		return deserializeCH( getHandler0( null, handlerID, SEARCH_EXACT ) );
 	}
 
-    /**
+    /* *
      * Returns content handler suitable for URL.
      * @param callerId ID of calling application.
      * @param URL content URL.
      * @param action requested action.
      * @return found handler if any or null.
-     */
+     * /
     static ContentHandlerImpl getByURL(String callerId, String url, 
                                        String action) {
         return new ContentHandlerHandle( deserializeCH( store.getByURL0(callerId, url, action) ) ).get();
-    }
+    }*/
 
     /**
      * Transforms serialized form to array of Strings.
@@ -316,7 +309,7 @@ class RegistryStore {
      * The token may only be set once.
      * @param token a Security token
      */
-    static void setSecurityToken(Token token) {
+    public void setSecurityToken(Token token) {
 		if (classSecurityToken != null) {
             throw new SecurityException();
         }
@@ -325,7 +318,7 @@ class RegistryStore {
     
     
     /** Singleton instance. Worker for the class static methods. */
-    private static RegistryStore store = new RegistryStore();
+    private static RegistryGate store = new RegistryStore();
 
     /**
      * Private constructor for the singleton storage class.
@@ -342,6 +335,10 @@ class RegistryStore {
             throw new RuntimeException("RegistryStore initialization failed");
         }
     }
+    
+    public static RegistryGate getInstance(){
+    	return store;
+    }
 
     /**
      * Native implementation of <code>findHandler</code>.
@@ -350,7 +347,7 @@ class RegistryStore {
      * @param value searched value
      * @return found handlers array in serialized form.
      */
-    private native String findHandler0(String callerId, int searchBy,
+    private static native String findHandler0(String callerId, int searchBy,
                                         String value);
 
     /**
@@ -358,7 +355,7 @@ class RegistryStore {
      * @param suiteId explored suite Id
      * @return handlers registered for the given suite in serialized form.
      */
-    private native String forSuite0(int suiteId);
+    private static native String forSuite0(int suiteId);
 
     /**
      * Native implementation of <code>getValues</code>.
@@ -366,7 +363,7 @@ class RegistryStore {
      * @param searchBy index of searchable field.
      * @return found values in serialized form.
      */
-    private native String getValues0(String callerId, int searchBy);
+    private static native String getValues0(String callerId, int searchBy);
 
     /**
      * Loads content handler data.
@@ -375,7 +372,7 @@ class RegistryStore {
      * @param mode flag defined search mode applied for the operation.
      * @return serialized content handler or null.
      */
-    private native String getHandler0(String callerId, String id, int mode);
+    private static native String getHandler0(String callerId, String id, int mode);
 
     /**
      * Loads values for array fields.
@@ -383,35 +380,36 @@ class RegistryStore {
      * @param fieldId fieldId to be loaded.
      * @return loaded field values in serialized form.
      */
-    private native String loadFieldValues0(String handlerId, int fieldId);
+    private static native String loadFieldValues0(String handlerId, int fieldId);
 
-    /**
+    /* *
      * Returns content handler suitable for URL.
      * @param callerId ID of calling application.
      * @param URL content URL.
      * @param action requested action.
      * @return ID of found handler if any or null.
-     */
+     * /
     private native String getByURL0(String callerId, String url, String action);
+    */
     
     /**
      * Initialize persistence storage.
      * @return <code>true</code> or
      * <BR><code>false</code> if initialization fails.
      */
-    private native boolean init();
+    private static native boolean init();
 
     /**
      * Cleanup native resources.
      */
-    private native void finalize();
+    private static native void finalize();
 
     /**
      * Registers given content handler.
      * @param contentHandler content handler being registered.
      * @return true if success, false - otherwise.
      */
-    private native boolean register0(int storageId, String classname,
+    private static native boolean register0(int storageId, String classname,
 											ContentHandlerRegData handlerData);
 
     /**
@@ -419,7 +417,7 @@ class RegistryStore {
      * @param handlerId ID of unregistered handler.
      * @return true if success, false - otherwise.
      */
-    private native boolean unregister0(String handlerId);
+    private static native boolean unregister0(String handlerId);
 
 }
 

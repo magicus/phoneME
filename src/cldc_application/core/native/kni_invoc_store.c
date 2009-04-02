@@ -859,7 +859,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_listen0) {
  * @param mode one of {@link #MODE_LREQUEST}, {@link #MODE_LRESPONSE}
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_j2me_content_InvocationStore_setListenNotify0) {
+KNIDECL(com_sun_j2me_content_InvocationStore_resetListenNotifiedFlag0) {
     StoredLink* link;
     StoredInvoc* invoc;
     SuiteIdType desiredSuiteId;
@@ -941,7 +941,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_setListenNotify0) {
  * @see #invocQueue
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_j2me_content_InvocationStore_setCleanup0) {
+KNIDECL(com_sun_j2me_content_InvocationStore_setCleanupFlag0) {
     StoredLink* link;
     StoredInvoc* invoc;
     SuiteIdType desiredSuiteId;
@@ -1006,7 +1006,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_setCleanup0) {
  * need to restart function calls.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_j2me_content_InvocationStore_cancel0) {
+KNIDECL(com_sun_j2me_content_InvocationStore_unblockWaitingThreads0) {
     unblockWaitingThreads(STATUS_CANCELLED);
     KNI_ReturnVoid();
 }
@@ -1353,7 +1353,7 @@ static void unblockWaitingThreads(int newStatus) {
 #ifdef TRACE_BLOCKING
         printf( "blocked_thread[%d] %p, waitingFor '%x', status '%x'\n", i, p, p->waitingFor, p->status );
 #endif
-        if (p->waitingFor == JSR211_SIGNAL && (p->status | status_mask) != 0) {
+        if (p->waitingFor == JSR211_SIGNAL && (p->status & status_mask) != 0) {
             JVMSPI_ThreadID id = blocked_threads[i].thread_id;
 #ifdef TRACE_BLOCKING
             printf( "try to unblock. id = %p\n", id );

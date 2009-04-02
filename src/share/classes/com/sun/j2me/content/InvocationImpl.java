@@ -35,6 +35,26 @@ import javax.microedition.content.Registry;
 import javax.microedition.io.Connection;
 import javax.microedition.io.ConnectionNotFoundException;
 
+interface StoreGate {
+	int size();
+	void put(InvocationImpl invoc);
+	void resetListenNotifiedFlag(ApplicationID appID, boolean request);
+	void setCleanupFlag(ApplicationID appID, boolean cleanup);
+	void resetFlags(int tid);
+	void update(InvocationImpl invoc);
+	InvocationImpl getRequest(ApplicationID appID, boolean shouldBlock, 
+						Counter cancelCounter);
+	InvocationImpl getResponse(ApplicationID appID, boolean shouldBlock, 
+						Counter cancelCounter);
+	InvocationImpl getCleanup(ApplicationID appID);
+	InvocationImpl getByTid(int tid, boolean next);
+	void dispose(int tid);
+	
+	boolean waitForEvent(ApplicationID appID, boolean request, 
+						Counter cancelCounter);
+	void unblockWaitingThreads();
+}
+
 
 /**
  * Implementation of Invocation class.
@@ -46,6 +66,7 @@ import javax.microedition.io.ConnectionNotFoundException;
 public final class InvocationImpl {
 	
 	public static Tunnel tunnel = null;
+    public static final StoreGate store = InvocationStore.getInstance();
 	public static final int UNDEFINED_TID = 0;
 	
     /**
@@ -449,7 +470,7 @@ public final class InvocationImpl {
         destinationApp = handler.applicationID.duplicate();
 
         // Queue this Invocation
-        InvocationStore.put(this);
+        store.put(this);
         setStatus(Invocation.WAITING);
         
         // Set the status of the previous invocation
@@ -458,7 +479,7 @@ public final class InvocationImpl {
         }
         
         return InvocationStoreProxy.launchInvocationTarget( this ) == 
-        					InvocationStoreProxy.LIT_MIDLET_START_FAILED;
+        					InvocationStoreProxy.LIT_APP_START_FAILED;
     }
 
 	/**
@@ -496,7 +517,7 @@ public final class InvocationImpl {
                 return AppProxy.platformFinish(tid);
             }
             return InvocationStoreProxy.launchInvocationTarget( this ) == 
-						InvocationStoreProxy.LIT_MIDLET_START_FAILED;
+						InvocationStoreProxy.LIT_APP_START_FAILED;
         }
         return false;
     }
@@ -582,7 +603,7 @@ public final class InvocationImpl {
                  */
                 if (!responseRequired){
                 	if( tid != UNDEFINED_TID ){
-	                	InvocationStore.dispose(tid);
+                		store.dispose(tid);
 	                	tid = UNDEFINED_TID;
                 	}
                 	return;
@@ -593,12 +614,12 @@ public final class InvocationImpl {
                 invokingApp = destinationApp;
                 destinationApp = tmpApp;
 
-                InvocationStore.update(this);
+                store.update(this);
                 /* Unmark the response it is "new" to the target */
-                InvocationStore.resetFlags(tid);
+                store.resetFlags(tid);
         		break;
         	default:
-                InvocationStore.update(this);
+        		store.update(this);
         		break;
         }
     }

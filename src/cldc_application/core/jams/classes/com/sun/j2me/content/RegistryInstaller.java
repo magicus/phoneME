@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -106,7 +106,7 @@ final class RegistryInstaller {
         /*
          * Remove all static registrations. Verify dynamically registered.
          */
-        chs = RegistryStore.forSuite(suiteId);
+        chs = RegistryImpl.gate.forSuite(suiteId);
         sz = (chs == null? 0: chs.length);
         if( AppProxy.LOGGER != null ) 
         	AppProxy.LOGGER.println( "RegistryInstaller.preInstall: suite " + suiteId + 
@@ -156,7 +156,7 @@ final class RegistryInstaller {
             // Verify ID ...
             // ... look through Registry
             ContentHandlerImpl[] conf = 
-            	RegistryStore.findConflicted(handler.ID);
+            	RegistryImpl.gate.findConflicted(handler.ID);
             if (conf != null) {
                 for (int j = 0; j < conf.length; j++) {
                 	if (conf[j] == null) continue;
@@ -419,7 +419,7 @@ final class RegistryInstaller {
         }
     	Enumeration htr = handlersToRemove.keys();
     	while( htr.hasMoreElements() ) {
-            RegistryStore.unregister( (String)htr.nextElement() );
+    		RegistryImpl.gate.unregister( (String)htr.nextElement() );
         }
 
         // Install new handlers.
@@ -430,7 +430,7 @@ final class RegistryInstaller {
                 ContentHandlerRegData handlerData =
                 	(ContentHandlerRegData)handlersToInstall.get(classname);
                 try {
-					RegistryStore.register(appl.forClass(classname), handlerData);
+                	RegistryImpl.gate.register(appl.forClass(classname), handlerData);
 	                if (AppProxy.LOGGER != null) {
 	                    AppProxy.LOGGER.println("Register: " + classname + ", id: " + handlerData.getID());
 	                }
@@ -451,11 +451,11 @@ final class RegistryInstaller {
      * update
      */
     static void uninstallAll(int suiteId, boolean update) {
-        ContentHandlerImpl[] chs = RegistryStore.forSuite(suiteId);
+        ContentHandlerImpl[] chs = RegistryImpl.gate.forSuite(suiteId);
         for (int i = 0; i < chs.length; i++) {
             if (!update || (chs[i].registrationMethod & 
             						ContentHandlerImpl.REGISTERED_STATIC_FLAG) != 0) {
-                RegistryStore.unregister(chs[i].getID());
+            	RegistryImpl.gate.unregister(chs[i].getID());
             }
         }
     }

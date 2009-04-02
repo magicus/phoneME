@@ -292,7 +292,7 @@ jsr211_result jsr211_find_for_suite( SuiteIdType suiteId, /*OUT*/ JSR211_RESULT_
 }
 
 
-/**
+/* *
  * Searches content handler using content URL. This function MUST define
  * content type and return default handler for this type if any.
  *
@@ -303,12 +303,12 @@ jsr211_result jsr211_find_for_suite( SuiteIdType suiteId, /*OUT*/ JSR211_RESULT_
  * and action.
  *  <br>Use the @link jsr211_fillHandler() jsr211_fillHandler function to fill this structure.
  * @return status of the operation
- */
+ * /
 jsr211_result jsr211_handler_by_URL(
         javacall_const_utf16_string caller_id,
         javacall_const_utf16_string url,
         javacall_const_utf16_string action,
-        /*OUT*/ JSR211_RESULT_CH result){
+        /*OUT* / JSR211_RESULT_CH result){
     
 //find suffix
 int pos = 0;
@@ -348,7 +348,7 @@ suffix=(javacall_const_utf16_string)wcsrchr(url,'.');
 
     return (found)?JSR211_OK:JSR211_FAILED;
 }
-
+*/
 
 /**
  * Returns all found values for specified field. Tha allowed fields are: <ul>

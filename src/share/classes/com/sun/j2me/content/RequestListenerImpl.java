@@ -79,10 +79,10 @@ class RequestListenerImpl implements Runnable, Counter {
 		 * Reset notified flags on pending requests.
 		 * Unblock any threads waiting to notify current listeners
 		 */
-		InvocationStore.setListenNotify(handler.applicationID, true);
+		InvocationImpl.store.resetListenNotifiedFlag(handler.applicationID, true);
 		// stop thread
 		stopFlag++;
-		InvocationStore.cancel();
+		InvocationImpl.store.unblockWaitingThreads();
     }
 
     /**
@@ -95,7 +95,7 @@ class RequestListenerImpl implements Runnable, Counter {
 		Thread mythread = Thread.currentThread();
 		while (mythread == thread) {
 		    // Wait for a matching invocation
-		    boolean pending = InvocationStore.listen(handler.applicationID, true, true, this);
+		    boolean pending = InvocationImpl.store.waitForEvent(handler.applicationID, true, this);
 		    if (pending) {
 		    	handler.requestNotify();
 		    }

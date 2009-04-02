@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -41,6 +41,26 @@ import com.sun.j2me.security.Token;
 import com.sun.j2me.security.TrustedClass;
 import com.sun.jsr211.security.SecurityInitializer;
 
+interface RegistryGate {
+    /**
+     * Search flags for @link getHandler() method. 
+     */
+    static final int SEARCH_EXACT   = 0; /** Search by exact match with ID */
+    static final int SEARCH_PREFIX  = 1; /** Search by prefix of given value */
+
+	void setSecurityToken(Token token);
+	ContentHandlerImpl.Handle register(ApplicationID appID, ContentHandlerRegData handlerData);
+	boolean unregister(String handlerId);
+	void enumHandlers(String callerId, int searchBy, String value, 
+							ContentHandlerImpl.Handle.Receiver output);
+	ContentHandlerImpl[] findConflicted(String testID);
+	ContentHandlerImpl[] findHandler(String callerId, int searchBy, String value);
+	ContentHandlerImpl[] forSuite(int suiteId);
+	ContentHandlerImpl getHandler( ApplicationID appID );
+	String[] getValues(String callerId, int searchBy);
+	ContentHandlerImpl getHandler(String callerId, String id, int searchMode);
+}
+
 /**
  * Implementation of Content Handler registry.  It maintains
  * the set of currently registered handlers and updates to
@@ -50,6 +70,7 @@ import com.sun.jsr211.security.SecurityInitializer;
  */
 public final class RegistryImpl implements Counter {
 	
+	static public final RegistryGate gate;
     /**
      * Inner class to request security token from SecurityInitializer.
      * SecurityInitializer should be able to check this inner class name.
@@ -60,9 +81,9 @@ public final class RegistryImpl implements Counter {
     private static Token securityToken;
     
     static {
-    	securityToken =
-        	SecurityInitializer.requestToken(new SecurityTrusted());
-	    RegistryStore.setSecurityToken(securityToken);
+    	gate = RegistryStore.getInstance();
+    	securityToken = SecurityInitializer.requestToken(new SecurityTrusted());
+	    gate.setSecurityToken(securityToken);
     }
     
     /** The set of active Invocations. */
@@ -203,7 +224,7 @@ public final class RegistryImpl implements Counter {
          * Mark any existing Invocations so that at cleanup the pre-existing
          * Invocations can be handled properly.
          */
-        InvocationStore.setCleanup(curr.application, true);
+        InvocationImpl.store.setCleanupFlag(curr.application, true);
         return curr;
     }
 
@@ -294,7 +315,7 @@ public final class RegistryImpl implements Counter {
      */
     static void cleanup(ApplicationID appID) {
         InvocationImpl invoc = null;
-        while ((invoc = InvocationStore.getCleanup(appID)) != null) {
+        while ((invoc = InvocationImpl.store.getCleanup(appID)) != null) {
             invoc.setStatus(Invocation.ERROR);
         }
     }
@@ -421,8 +442,7 @@ public final class RegistryImpl implements Counter {
                 unregister(classname);
             }
 
-            ContentHandlerImpl.Handle handle = 
-            	RegistryStore.register(appl, handlerData);
+            ContentHandlerImpl.Handle handle = gate.register(appl, handlerData);
             setServer(handle.get());
 
             if (AppProxy.LOGGER != null) {
@@ -459,7 +479,7 @@ public final class RegistryImpl implements Counter {
      * @return found handler or <code>null</code> if none found.
      */
     static ContentHandlerImpl getHandler(AppProxy appl) {
-        return RegistryStore.getHandler(appl);
+        return gate.getHandler(appl);
     }
     
     /**
@@ -475,7 +495,7 @@ public final class RegistryImpl implements Counter {
     static ContentHandlerImpl checkConflicts(String handlerID, AppProxy appl)
                 throws ContentHandlerException
     {
-        ContentHandlerImpl[] handlers = RegistryStore.findConflicted(handlerID);
+        ContentHandlerImpl[] handlers = gate.findConflicted(handlerID);
         ContentHandlerImpl existing = null;
 
         if (handlers != null) {
@@ -513,7 +533,7 @@ public final class RegistryImpl implements Counter {
      * @return an array of types; MUST NOT be <code>null</code>
      */
     public String[] getTypes() {
-        return RegistryStore.getValues(getID(), Handle.FIELD_TYPES);
+        return gate.getValues(getID(), Handle.FIELD_TYPES);
     }
 
     /**
@@ -525,7 +545,7 @@ public final class RegistryImpl implements Counter {
      *  MUST NOT be <code>null</code>
      */
     public String[] getIDs() {
-        return RegistryStore.getValues(getID(), Handle.FIELD_ID);
+        return gate.getValues(getID(), Handle.FIELD_ID);
     }
 
     /**
@@ -539,7 +559,7 @@ public final class RegistryImpl implements Counter {
      *  MUST NOT be <code>null</code>
      */
     public String[] getActions() {
-        return RegistryStore.getValues(getID(), Handle.FIELD_ACTIONS);
+        return gate.getValues(getID(), Handle.FIELD_ACTIONS);
     }
 
     /**
@@ -553,7 +573,7 @@ public final class RegistryImpl implements Counter {
      *  MUST NOT be <code>null</code>
      */
     public String[] getSuffixes() {
-        return RegistryStore.getValues(getID(), Handle.FIELD_SUFFIXES);
+        return gate.getValues(getID(), Handle.FIELD_SUFFIXES);
     }
 
     /**
@@ -579,7 +599,7 @@ public final class RegistryImpl implements Counter {
 	            RegistryImpl reg = (RegistryImpl)registries.get(appl);
 	            ContentHandlerImpl curr = (reg != null)? reg.getServer() : getHandler(appl);
 	            if (curr != null) {
-	                RegistryStore.unregister(curr.getID());
+	            	gate.unregister(curr.getID());
 	                if (reg != null && appl.equals(curr.applicationID)) {
 	                    reg.handlerImpl = null;
 	                }
@@ -807,13 +827,13 @@ public final class RegistryImpl implements Counter {
     {
         // Application has tried to get a response; reset cleanup flags on all
         if (responseCalls == 0) {
-            InvocationStore.setCleanup(application, false);
+        	InvocationImpl.store.setCleanupFlag(application, false);
         }
         responseCalls++;
 
         // Find a response for this application and context
         InvocationImpl invoc =
-            InvocationStore.getResponse(application, wait, this);
+        	InvocationImpl.store.getResponse(application, wait, this);
         if (invoc != null) {
             // Keep track of how many responses have been received;
         	final ApplicationID fromApp = invoc.invokingApp; 
@@ -845,7 +865,7 @@ public final class RegistryImpl implements Counter {
                      * There will be a previous Invocation unless the app has
                      * already finished it. It will have a HOLD status.
                      */
-                    invoc.previous = InvocationStore.getByTid(invoc.previousTid, false);
+                    invoc.previous = InvocationImpl.store.getByTid(invoc.previousTid, false);
                 }
             }
             if (invoc.previous != null && invoc.previous.getStatus() == Invocation.HOLD) {
@@ -872,7 +892,7 @@ public final class RegistryImpl implements Counter {
      */
     public void cancelGetResponse() {
     	cancelCounter++;
-        InvocationStore.cancel();
+    	InvocationImpl.store.unblockWaitingThreads();
     }
 
     /**
@@ -1006,19 +1026,19 @@ public final class RegistryImpl implements Counter {
                 }
                 if (invoc.getType() != null) {
                     // The type is known; lookup the handlers
-                	RegistryStore.enumHandlers( getID(), 
+                	gate.enumHandlers( getID(), 
                 			ContentHandlerImpl.Handle.FIELD_TYPES, invoc.getType(), 
                 			output );
                 } else if (invoc.getURL() != null) {
                 	int lpIdx = invoc.getURL().lastIndexOf('.');
                 	if( lpIdx != -1 ){
 	                	String suffix = invoc.getURL().substring(lpIdx);
-	                	RegistryStore.enumHandlers( getID(), 
+	                	gate.enumHandlers( getID(), 
 	                			ContentHandlerImpl.Handle.FIELD_SUFFIXES, suffix, 
 	                			output );
                 	}
                 } else if (invoc.getAction() != null) {
-                	RegistryStore.enumHandlers( getID(), 
+                	gate.enumHandlers( getID(), 
                 			ContentHandlerImpl.Handle.FIELD_ACTIONS, invoc.getAction(), 
                 			collection /* skip action filter here */ );
                 } else {
@@ -1051,7 +1071,7 @@ public final class RegistryImpl implements Counter {
      *       <code>null</code>
      */
     public ContentHandler[] forType(String type) {
-        return RegistryStore.findHandler(getID(), Handle.FIELD_TYPES, type);
+        return gate.findHandler(getID(), Handle.FIELD_TYPES, type);
     }
 
     /**
@@ -1069,7 +1089,7 @@ public final class RegistryImpl implements Counter {
      *       <code>null</code>
      */
     public ContentHandler[] forAction(String action) {
-        return RegistryStore.findHandler(getID(), Handle.FIELD_ACTIONS, action);
+        return gate.findHandler(getID(), Handle.FIELD_ACTIONS, action);
     }
 
     /**
@@ -1089,7 +1109,7 @@ public final class RegistryImpl implements Counter {
      *       <code>null</code>
      */
     public ContentHandler[] forSuffix(String suffix) {
-        return RegistryStore.findHandler(getID(), Handle.FIELD_SUFFIXES, suffix);
+        return gate.findHandler(getID(), Handle.FIELD_SUFFIXES, suffix);
     }
 
     /**
@@ -1113,8 +1133,8 @@ public final class RegistryImpl implements Counter {
      *       <code>null</code>
      */
     public ContentHandler forID(String ID, boolean exact) {
-        return RegistryStore.getHandler(getID(), ID, 
-                exact? RegistryStore.SEARCH_EXACT: RegistryStore.SEARCH_PREFIX);
+        return gate.getHandler(getID(), ID, 
+                exact? RegistryGate.SEARCH_EXACT: RegistryGate.SEARCH_PREFIX);
     }
 
     /**

@@ -31,8 +31,8 @@ import javax.microedition.content.Invocation;
 
 public final class InvocationStoreProxy {
 
-	static final public int LIT_MIDLET_START_FAILED = 0;
-	static final public int LIT_MIDLET_STARTED = 1;
+	static final public int LIT_APP_START_FAILED = 0;
+	static final public int LIT_APP_STARTED = 1;
 	static final public int LIT_NATIVE_STARTED = 2;
 	static final public int LIT_INVOCATION_REMOVED = 3;
 	
@@ -58,8 +58,8 @@ public final class InvocationStoreProxy {
             try {
                 AppProxy appl = AppProxy.getCurrent().forApp(invoc.destinationApp);
             	// if MIDlet already started report STARTED
-                int rc = appl.launch("Application")? LIT_MIDLET_STARTED 
-                						: LIT_MIDLET_START_FAILED;
+                int rc = appl.launch("Application")? LIT_APP_STARTED 
+                						: LIT_APP_START_FAILED;
                 return rc;
             } catch (ClassNotFoundException cnfe) {
                 // Ignore => invocation will be deleted
@@ -86,28 +86,28 @@ public final class InvocationStoreProxy {
      */
     static public boolean invokeNext() {
     	if(AppProxy.LOGGER!=null) {
-    		AppProxy.LOGGER.println( "InvocationStoreProxy.invokeNext() called. Invocations count = " + InvocationStore.size());
+    		AppProxy.LOGGER.println( "InvocationStoreProxy.invokeNext() called. Invocations count = " + InvocationImpl.store.size());
     		int tid = 0;
     		InvocationImpl invoc;
-    		while( (invoc = InvocationStore.getByTid(tid, true)) != null ){
+    		while( (invoc = InvocationImpl.store.getByTid(tid, true)) != null ){
 	        	AppProxy.LOGGER.println( "invocation[" + tid + "]: " + invoc ); 
                 tid = invoc.tid;
     		}
     	}
 
-    	int launchedMidletsCount = 0;
+    	int launchedAppsCount = 0;
     	boolean done = false;
         InvocationImpl invoc = null;
         int tid;
 
         // Look for a recently queued Invocation to launch
         tid = 0;
-        while (!done && (invoc = InvocationStore.getByTid(tid, true)) != null) {
+        while (!done && (invoc = InvocationImpl.store.getByTid(tid, true)) != null) {
             switch (invoc.getStatus()){
 	            case Invocation.WAITING: {
 	                switch( launchInvocationTarget(invoc) ){
-		                case LIT_MIDLET_START_FAILED: done = true; break;
-		                case LIT_MIDLET_STARTED: launchedMidletsCount++; break;
+		                case LIT_APP_START_FAILED: done = true; break;
+		                case LIT_APP_STARTED: launchedAppsCount++; break;
 		                case LIT_NATIVE_STARTED: case LIT_INVOCATION_REMOVED: break;
 	                }
 	            } 	break;
@@ -118,8 +118,8 @@ public final class InvocationStoreProxy {
 	            {
 	            	if( invoc.getResponseRequired() ){
 	            		switch( launchInvocationTarget(invoc) ){
-		                	case LIT_MIDLET_START_FAILED: done = true; break;
-	            			case LIT_MIDLET_STARTED: launchedMidletsCount++; break; 
+		                	case LIT_APP_START_FAILED: done = true; break;
+	            			case LIT_APP_STARTED: launchedAppsCount++; break; 
 			                case LIT_NATIVE_STARTED: case LIT_INVOCATION_REMOVED: break;
 	            		}
 	            	} else invoc.setStatus(InvocationImpl.DISPOSE);
@@ -135,9 +135,10 @@ public final class InvocationStoreProxy {
             
             // AMS way to determine number of started midlets is wrong, 
             // so we will start only one new midlet
-            done = done || (launchedMidletsCount > 0);
+            done = done || (launchedAppsCount > 0);
         }
-        if(AppProxy.LOGGER!=null) AppProxy.LOGGER.println( InvocationStore.class.getName() + ".invokeNext() finished: started midlets = " + launchedMidletsCount);
-        return launchedMidletsCount > 0;
+        if(AppProxy.LOGGER!=null) 
+        	AppProxy.LOGGER.println( "invokeNext() finished: started apps = " + launchedAppsCount);
+        return launchedAppsCount > 0;
     }
 }

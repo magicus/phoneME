@@ -40,7 +40,7 @@ package com.sun.j2me.content;
  * unblock it at a later time. The implementation does not poll for
  * requests but blocks, if requested, until it is unblocked.
  */
-public class InvocationStore {
+public class InvocationStore implements StoreGate {
 
     /** The mode for get to retrieve a new request. */
     private static final int MODE_REQUEST = 0;
@@ -68,6 +68,11 @@ public class InvocationStore {
      */
     private InvocationStore() {
     }
+    
+    static private StoreGate instance = new InvocationStore();
+    public static StoreGate getInstance(){
+    	return instance;
+    }
 
     /**
      * Put a new Invocation into the store.
@@ -79,7 +84,7 @@ public class InvocationStore {
      * @see #getRequest
      * @see #getResponse
      */
-    static void put(InvocationImpl invoc) {
+    public void put(InvocationImpl invoc) {
     	if (AppProxy.LOGGER != null) {
     	    AppProxy.LOGGER.println("Store put0: " + invoc);
     	}
@@ -100,7 +105,7 @@ public class InvocationStore {
      *  its status is set to ACTIVE;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    static InvocationImpl getRequest(ApplicationID appID,
+    public InvocationImpl getRequest(ApplicationID appID,
                             	boolean shouldBlock, Counter cancelCounter) {
     	if( AppProxy.LOGGER != null )
     		AppProxy.LOGGER.println( "InvocationStore.getRequest: " + appID );
@@ -124,7 +129,7 @@ public class InvocationStore {
      *  the same MIDlet suiteId and classname if one was requested;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    static InvocationImpl getResponse(ApplicationID appID, 
+    public InvocationImpl getResponse(ApplicationID appID, 
     						boolean shouldBlock, Counter cancelCounter) {
     	if( AppProxy.LOGGER != null )
     		AppProxy.LOGGER.println( "InvocationStore.getResponse: " + appID );
@@ -158,7 +163,7 @@ public class InvocationStore {
      *  the same MIDlet suiteId and classname;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    static InvocationImpl getCleanup(ApplicationID appID) {
+    public InvocationImpl getCleanup(ApplicationID appID) {
         return get(CLDCAppID.from(appID), MODE_CLEANUP, false, null);
     }
 
@@ -174,7 +179,7 @@ public class InvocationStore {
      * @return an InvocationImpl object if a matching tid was found;
      *  otherwise <code>null</code>
      */
-    static InvocationImpl getByTid(int tid, boolean next) {
+    public InvocationImpl getByTid(int tid, boolean next) {
         InvocationImpl invoc = new InvocationImpl();
         int mode = MODE_TID;
         if (tid != 0 && next) {
@@ -262,18 +267,16 @@ public class InvocationStore {
      * When a matching invocation is present, true is returned.
      * Each Invocation instance is only returned once.
      * After it has been returned once; it is ignored subsequently.
-     *
+     * @param request true to listen for a request; else a response
      * @param suiteId the MIDlet suiteId to search for,
      *  MUST not be <code>null</code>
      * @param classname to match, must not be null
-     * @param request true to listen for a request; else a response
-     * @param shouldBlock true if the method should block
-     *      waiting for an Invocation
      *
      * @return true if a matching invocation is present; false otherwise
      */
-    static boolean listen(ApplicationID appID,
-                      boolean request, boolean shouldBlock, Counter cancelCounter) {
+    public boolean waitForEvent(ApplicationID appID,
+                      boolean request, Counter cancelCounter) {
+    	final boolean shouldBlock = true;
         final int mode = (request ? MODE_LREQUEST : MODE_LRESPONSE);
         boolean pending;
         int oldCancelCount = 0;
@@ -304,10 +307,10 @@ public class InvocationStore {
      * @param request true to reset request notification flags;
      *   else reset response notification flags
      */
-    static void setListenNotify(ApplicationID appID, boolean request) {
+    public void resetListenNotifiedFlag(ApplicationID appID, boolean request) {
         int mode = (request ? MODE_LREQUEST : MODE_LRESPONSE);
         CLDCAppID app = CLDCAppID.from(appID);
-        setListenNotify0(app.suiteID, app.className, mode);
+        resetListenNotifiedFlag0(app.suiteID, app.className, mode);
 
         if (AppProxy.LOGGER != null) {
             AppProxy.LOGGER.println("Store setListenNotify: " +
@@ -320,10 +323,10 @@ public class InvocationStore {
      * Cancel a blocked {@link #get}  or {@link #listen}
      * method if it is blocked in the native code.
      */
-    static void cancel() {
+    public void unblockWaitingThreads() {
     	if( AppProxy.LOGGER != null )
     		AppProxy.LOGGER.println( "InvocationStore.cancel called." );
-    	cancel0();
+    	unblockWaitingThreads0();
     }
 
     /**
@@ -336,23 +339,23 @@ public class InvocationStore {
      *   cleanup at exit
      */
 
-    static void setCleanup(ApplicationID appID, boolean cleanup) {
+    public void setCleanupFlag(ApplicationID appID, boolean cleanup) {
         if (AppProxy.LOGGER != null) {
             AppProxy.LOGGER.println("Store setCleanup: " + appID +
                                           ": " + cleanup);
         }
-        setCleanup0(CLDCAppID.from(appID).suiteID, CLDCAppID.from(appID).className, cleanup);
+        setCleanupFlag0(CLDCAppID.from(appID).suiteID, CLDCAppID.from(appID).className, cleanup);
     }
 
     /**
      * Return the number of invocations in the native queue.
      * @return the number of invocations in the native queue
      */
-    static int size() {
+    public int size() {
         return size0();
     }
 
-	static void update(InvocationImpl invoc) {
+    public void update(InvocationImpl invoc) {
 		if( invoc.tid != InvocationImpl.UNDEFINED_TID ){
 			if( invoc.status != InvocationImpl.DISPOSE )
 				update0(invoc);
@@ -363,11 +366,11 @@ public class InvocationStore {
 		}
 	}
 
-	static void resetFlags(int tid) {
+    public void resetFlags(int tid) {
 		resetFlags0(tid);
 	}
 
-	static void dispose(int tid) {
+    public void dispose(int tid) {
 		dispose0(tid);
 	}
 	
@@ -434,7 +437,7 @@ public class InvocationStore {
      *   <code>false</code> to reset the notified state for responses
      * @see #listen0
      */
-    private static native void setListenNotify0(int suiteId, String classname,
+    private static native void resetListenNotifiedFlag0(int suiteId, String classname,
                                                 int mode);
 
     /**
@@ -443,7 +446,7 @@ public class InvocationStore {
      * {@link #get0}.
      *
      */
-    private static native void cancel0();
+    private static native void unblockWaitingThreads0();
 
     /**
      * Sets the cleanup flag in matching Invocations.
@@ -455,7 +458,7 @@ public class InvocationStore {
      * @param cleanup <code>true</code> to mark the Invocation for
      *  cleanup at exit
      */
-    private static native void setCleanup0(int suiteId, String classname,
+    private static native void setCleanupFlag0(int suiteId, String classname,
                                            boolean cleanup);
 
     /**

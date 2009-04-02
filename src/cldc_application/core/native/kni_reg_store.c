@@ -581,10 +581,10 @@ KNIDECL(com_sun_j2me_content_RegistryStore_forSuite0) {
     KNI_EndHandlesAndReturnObject(strObj);
 }
 
-/**
+/* *
  * java call:
  *  private native String getByURL0(String callerId, String url, String action);
- */
+ * /
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_j2me_content_RegistryStore_getByURL0) {
     jchar* callerId = NULL;
@@ -620,7 +620,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getByURL0) {
 
     KNI_EndHandlesAndReturnObject(resultObj);
 }
-
+*/
 
 /**
  * java call:

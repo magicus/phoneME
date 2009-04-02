@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -40,15 +40,7 @@ import javax.microedition.midlet.MIDlet;
 import com.sun.midp.installer.InstallState;
 import com.sun.midp.installer.Installer;
 import com.sun.midp.installer.InvalidJadException;
-import com.sun.midp.main.MIDletProxy;
-import com.sun.midp.main.MIDletProxyList;
-import com.sun.midp.main.MIDletProxyListListener;
 import com.sun.midp.midlet.MIDletSuite;
-
-import com.sun.midp.events.EventListener;
-import com.sun.midp.events.EventQueue;
-import com.sun.midp.events.Event;
-import com.sun.midp.events.EventTypes;
 
 /**
  * Handle all of the details of installing ContentHandlers.
