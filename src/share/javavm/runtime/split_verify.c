@@ -2338,9 +2338,7 @@ CVMsplitVerifyClass(CVMExecEnv* ee, CLASS thisClass)
     METHOD thisMethod;
     nMethods = CVMcbMethodCount(thisClass);
     if (nMethods > 0) {
-        if (!CVMcbCheckRuntimeFlag(thisClass, VERIFIED) && 
-	    CVM_NEED_VERIFY(CVMcbClassLoader(thisClass))) 
-	{
+        if (!CVMcbCheckRuntimeFlag(thisClass, VERIFIED)) {
             /* Verify all methods */
 	    cntxt = allocateContext(ee, thisClass);
 	    if (cntxt == NULL){

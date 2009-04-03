@@ -188,7 +188,7 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine)
     }
 
     /* Verify the class if necessary. */
-    if (CVM_NEED_VERIFY(CVMcbClassLoader(cb) != NULL)) {
+    if (CVMloaderNeedsVerify(ee, CVMcbClassLoader(cb), CVM_TRUE)) {
 	CVMBool verified = CVM_FALSE;
 #ifdef CVM_SPLIT_VERIFY
 	/*

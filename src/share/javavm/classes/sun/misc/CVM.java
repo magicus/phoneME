@@ -968,4 +968,8 @@ public final class CVM {
 
     /* Get Thread.threadStarterClass, a private field. */   
     public static native Class getThreadStarterClass(Thread t);
+
+    /* Used to set java.lang.ClassLoader.noVerification */
+    public static native void setNoVerification(ClassLoader cl,
+                                                boolean noVerification);
 }

@@ -985,9 +985,9 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
     {
         char buf[200];
 	jboolean measure_only =
-	    CVM_NEED_VERIFY(loader != NULL) ? JNI_FALSE : JNI_TRUE;
+	    CVMloaderNeedsVerify(ee, loader, CVM_TRUE) ? JNI_FALSE : JNI_TRUE;
 	jboolean check_relaxed =
-	    CVM_NEED_VERIFY(!CVMisTrustedClassLoader(ee, loader)) ? JNI_FALSE 
+	    CVMloaderNeedsVerify(ee, loader, CVM_FALSE) ? JNI_FALSE 
 	    				        	          : JNI_TRUE;
         jint res = CVMverifyClassFormat(classname, buffer, bufferLength,
 					&(context->size), 

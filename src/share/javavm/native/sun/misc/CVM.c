@@ -1622,3 +1622,23 @@ CNIsun_misc_CVM_getThreadStarterClass(CVMExecEnv* ee,
     CVMID_icellSetDirect(ee, &arguments[0].j.r, backtrace);
     return CNI_SINGLE;
 }
+
+#include "generated/offsets/java_lang_ClassLoader.h"
+
+/*
+ * Used to set java.lang.ClassLoader.noVerification.
+ */
+CNIEXPORT CNIResultCode
+CNIsun_misc_CVM_setNoVerification(CVMExecEnv* ee,
+                                  CVMStackVal32 *arguments,
+                                  CVMMethodBlock **p_mb)
+{
+    if (CVMglobals.classVerificationLevel != CVM_VERIFY_ALL) {
+        CVMObjectICell* classLoaderICell = &arguments[0].j.r;
+        CVMBool noVerification = arguments[1].j.i;
+        CVMD_fieldWriteInt(CVMID_icellDirect(ee, classLoaderICell),
+                           CVMoffsetOfjava_lang_ClassLoader_noVerification,
+                           noVerification);
+    }
+    return CNI_VOID;
+}

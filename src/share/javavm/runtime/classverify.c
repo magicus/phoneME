@@ -35,8 +35,10 @@
 #include "javavm/include/globals.h"
 #include "javavm/include/verify.h"
 #include "javavm/include/directmem.h"
+#include "javavm/include/indirectmem.h"
 #include "javavm/export/jvm.h"
 #include "javavm/export/jni.h"
+#include "generated/offsets/java_lang_ClassLoader.h"
 
 /*
  * Returns one of the VERIFY options.
@@ -53,6 +55,63 @@ CVMclassVerificationSpecToEncoding(char* kind)
     else {
 	return CVM_VERIFY_UNRECOGNIZED;
     }	    
+}
+
+
+/*
+ * CVMloaderNeedsVerify - returns TRUE if the classloader requires
+ * verification of its loaded classes.
+ *
+ * verifyTrusted should be set true if verification must be done even
+ * for trusted class loaders when the verification level is REMOTE.
+ */
+CVMBool
+CVMloaderNeedsVerify(CVMExecEnv* ee, CVMClassLoaderICell* loader,
+                     CVMBool verifyTrusted) {
+#ifdef CVM_TRUSTED_CLASSLOADERS	
+    return CVM_FALSE;
+#else
+    switch (CVMglobals.classVerificationLevel) {
+    case CVM_VERIFY_ALL: {
+        return CVM_TRUE;
+    }
+
+    case CVM_VERIFY_NONE: {
+        return CVM_FALSE;
+    }
+
+    case CVM_VERIFY_REMOTE: {
+        /* We don't need to verify the NULL class loader. */
+        if (loader == NULL) {
+            return CVM_FALSE;
+        }
+        
+        /* We don't need to verify if ClassLoader.noVerification is true */
+        {
+            CVMBool noVerification;
+            CVMID_fieldReadInt(ee, loader, 
+                               CVMoffsetOfjava_lang_ClassLoader_noVerification,
+                               noVerification);
+            if (noVerification) {
+                return CVM_FALSE;
+            }
+        }
+        
+        if (verifyTrusted) {
+            /* Even if the class loader is trusted, we must verify */
+            return CVM_TRUE;
+        }
+        
+        /* We don't have to verify if the class loader is trusted */
+        return !CVMisTrustedClassLoader(ee, loader);
+    }
+        
+    default: {
+        CVMassert(CVM_FALSE);
+        return CVM_FALSE;
+    }
+    } /* switch */
+#endif /* CVM_TRUSTED_CLASSLOADERS */
 }
 
 CVMBool
