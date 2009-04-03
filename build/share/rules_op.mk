@@ -264,7 +264,7 @@ endif
 include $(JSR_280_MAKE_FILE)
 endif
 
-# Include SprintExtensions
+# Include API Extensions
 ifeq ($(USE_API_EXTENSIONS), true)
 API_EXTENSIONS_RULES_FILE = $(API_EXTENSIONS_DIR)/build/cdc_share/$(SUBSYSTEM_RULES_FILE)
 ifeq ($(wildcard $(API_EXTENSIONS_RULES_FILE)),)
