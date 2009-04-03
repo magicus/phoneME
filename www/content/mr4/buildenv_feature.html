@@ -4,6 +4,11 @@
 
 <head>
 
+<!--
+<title>Getting Started - phoneME Feature Software (MR4)</title>
+    <link rel="stylesheet" href="./style/document.css" type="text/css">
+-->
+
 <style type="text/css"> /* <![CDATA[ */
 @import "/branding/css/tigris.css";
 @import "/branding/css/inst.css";
@@ -11,14 +16,18 @@
 <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
 <script src="/branding/scripts/tigris.js" type="text/javascript"></script>
 
-<script src="/branding/scripts/alm.js" type="text/javascrit"></script>
+<script src="/branding/scripts/alm.js" type="text/javascript"></script>
 <style type="text/css">
 /* <![CDATA[ */
 @import "/brinding/css/alm.css";
 /* ]]> */
 </style>
 
-<title>Getting Started with phoneME Feature Software (MR4)</title>
+<title>Getting Started - phoneME Feature Software (MR4)</title>
+<!--
+<link rel="stylesheet" href="./tigris.css" type="text/css">
+<link rel="stylesheet" href="./inst.css" type="text/css">
+-->
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
@@ -36,14 +45,40 @@
 
 <!-- =========  BEGIN PAGE BODY (Ignore Everything Above)  ====================== -->
 
+<!-- Header -->
+<!--
+<table class="full-width">
+  <tr>
+    <td align="center" class=sun-darkblue>
+      <h1>Getting Started</h1>
+      <h2>phoneME&#153; Feature Software (MR4)</h2>
+      <h4>April 2009</h4>
+    </td>
+  </tr>
+  <tr>
+    <td class=sun-lightblue>&nbsp;</td>
+  </tr>
+</table>
+<p>
+-->
+<!-- End Header -->
+
 <!-- BEGIN PAGE TITLE -->
-<div id="projecthome" class="app"> <h1><font color="#e76f00">Setting Up Your Build 
+<!--
+<div id="projecthome" class="app"> <h2><font color="#225577">Setting Up Your Build 
+Environment <span class="style1"></span></font></h2>
+-->
+<!-- END PAGE TITLE -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Setting Up Your Build
 Environment (MR4)<span class="style1"></span></font></h1>
 <!-- END PAGE TITLE -->
 
 <p>
-<a href="./index_feature.html">first</a> | <a href="./begin_feature.html">prev</a> |  
-<a href="./javacall_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<a href="./index_feature.html">first</a> | 
+<a href="./begin_feature.html">prev</a> |  <a href="./javacall_feature.html">next</a> | 
+<a href="./client_feature.html">last</a> 
 <p> 
 
 This section describes how to prepare your Windows x86 build environment for 
@@ -91,7 +126,7 @@ To set up your Windows x86 platform, you must take the following general steps:
 Before you build phoneME Feature on a Windows x86 platform, download and install Cyg4Me,
 version 1.1. Cyg4Me is a standardized version of Cygwin for building Java ME platform
 products on Windows. It provides the necessary UNIX&#174; system tools, such as
-<KBD>sh</KBD> and <KBD>gnumake</KBD>.
+<code>sh</code> and <code>gnumake</code>.
 <P>
 <ol>
 <b><li>Download the Cyg4Me zip file
@@ -104,7 +139,7 @@ platform.
 <b><li>Unzip the file.</b>
 <P>
 For example, you could unzip the file into
-<KBD>C:&#92;cyg4me</KBD>.
+<code>C:&#92;cyg4me</code>.
 <P>
 </ol>
 <p>
@@ -135,14 +170,14 @@ To find the short names for your directory path, change to each directory that h
 spaces and type: 
 <p>
 <ul>
-<code>$ dir /x</code>
+<code>C:\> dir /x</code>
 </ul>  
 <p>
 You can use also the <code>cygpath</code> utility (from Cyg4me) to get the 
 Windows short name.  For example:
 <p>
 <ul>
-<code>$ cygpath -ms "C:\Program Files\Microsoft Visual Studio 8\VC\bin"</code>
+<code>C:\>: cygpath -ms "C:\Program Files\Microsoft Visual Studio 8\VC\bin"</code>
 <p>
 </ul>
 delivers the short name 
@@ -183,7 +218,7 @@ JavaCall porting layer on Windows x86 target platform, set the optional build va
 <a name="table1-1"></a>
 <TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000" 
 CELLPADDING=5 CELLSPACING=0 >
-<CAPTION> <b>TABLE 1-1</b>Optional Windows x86 Build Platform Variables</CAPTION>
+<CAPTION><b>TABLE 1-1</b> Optional Windows x86 Build Platform Variables</CAPTION>
 <THEAD>
 <TR>
 <TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
@@ -199,22 +234,22 @@ CELLPADDING=5 CELLSPACING=0 >
 <TBODY>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><KBD>COMPONENTS_DIR</KBD>
+<P><code>COMPONENTS_DIR</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>The location where you install the phoneME Feature software.  For example,
-<code>COMPONENTS_DIR=C:/home/chocolate/phoneME_feature</code>.
+<code>COMPONENTS_DIR=C:/home/chocolate/mr4/phoneme_feature</code>.
 <p>
 <b>Note:</b> The sample directory <code>/home/chocolate</code> can also be referred to 
 by the convention <em>InstallDir</em>. For example, 
-<em>InstallDir</em><code>/phoneME_feature</code>. 
+<em>InstallDir</em><code>/mr4/phoneme_feature</code>. 
 </P>
 </TD>
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><KBD>BUILD_OUTPUT_DIR</KBD>
+<P><code>BUILD_OUTPUT_DIR</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
@@ -232,7 +267,7 @@ are stored. For example, <code>BUILD_OUTPUT_DIR=%COMPONENTS_DIR%/build_output</c
 <a name="table1-2"></a>
 <TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
 CELLPADDING=5 CELLSPACING=0 >
-<CAPTION> <b>TABLE 1-2</b>Required Windows x86 Build Platform Variables</CAPTION>
+<CAPTION><b>TABLE 1-2</b> Required Windows x86 Build Platform Variables</CAPTION>
 <THEAD>
 <TR>
 <TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
@@ -248,8 +283,7 @@ CELLPADDING=5 CELLSPACING=0 >
 <TBODY>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><KBD>JDK_DIR</KBD><A NAME="marker-474010"></A><A NAME="marker-474011"></A>
-<A NAME="marker-474012"></A>
+<P><code>JDK_DIR</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
@@ -259,7 +293,7 @@ CELLPADDING=5 CELLSPACING=0 >
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><KBD> CYG4ME</KBD><A NAME="marker-474010"></A><A NAME="marker-474011"></A>
+<P><code>CYG4ME</code>
 <A NAME="marker-474012"></A>
 </P>
 </TD>
@@ -269,7 +303,7 @@ CELLPADDING=5 CELLSPACING=0 >
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><KBD>PATH</KBD>
+<P><code>PATH</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
@@ -287,33 +321,33 @@ CELLPADDING=5 CELLSPACING=0 >
 <p
 
 <OL>
-<b><li>Set your</b> <code>COMPONENTS_DIR</code> <b>environment variable to the location 
-where you install the</b> <code>phoneME_feature</code> <b>directory.</b>
+<b><li>If not already set, set your</b> <code>COMPONENTS_DIR</code> <b>environment variable to the directory
+location where you install the</b> <code>phoneme_feature</code> <b>software.</b>
 <p>
-<code>$ set COMPONENTS_DIR=C:/</code><em>InstallDir</em><code>/phoneME_feature</code>
+<code>C:\> set COMPONENTS_DIR=C:/</code><em>InstallDir</em><code>/mr4/phoneme_feature</code>
 <p>
 <b><li>Create the directory</b> <code>build_output</code> <b>as a folder and set 
 the</b> <code>BUILD_OUTPUT_DIR</code> <b>variable.</b> 
 <p>
-<code>$ set BUILD_OUTPUT_DIR=%COMPONENTS_DIR%/build_output</code>
+<code>C:\> set BUILD_OUTPUT_DIR=%COMPONENTS_DIR%/build_output</code>
 <p>
 <b><li>Set the</b> <code>JDK_DIR</code> <b>variable.</b>
 <p>
-<code>$ set JDK_DIR=C:/java/j2sdk1.6.0_07</code>
+<code>C:\> set JDK_DIR=C:/java/j2sdk1.6.0_07</code>
 <p>
 <b>Note:</b> As shown in this command line, the<b> <code>JDK_DIR</code> </b>path 
 must be set using Linux (forward) slashes.
 <p>
 <b><li>Set the</b> <code>CYG4ME</code> <b>variable, as shown here:</b>
 <p>
-<code>$ set CYG4ME=C:\cyg4me</code>
+<code>C:\> set CYG4ME=C:\cyg4me</code>
 <p> 
 <b><li>Add</b> <code>Cyg4Me</code> <b>and</b> <code>JDK_DIR</code> <b>to your</b> 
-<KBD>PATH</KBD> <b>environment variable.  Make the</b> <KBD>bin</KBD> <b>directory 
+<code>PATH</code> <b>environment variable.  Make the</b> <code>bin</code> <b>directory 
 of your</b> <code>Cyg4Me</code> <b>installation the first element of your</b>
 <code>PATH</code><b>, as shown here.</b> 
 <P>
-<code>$ set PATH=%CYG4ME%&#92;bin;%JDK_DIR%/bin;%PATH%</code>
+<code>C:\> set PATH=%CYG4ME%&#92;bin;%JDK_DIR%/bin;%PATH%</code>
 <p>
 </OL>
 <P>
@@ -324,8 +358,9 @@ all <code>PATH</code> elements that point to those previous versions.
 
 </pre>
 
-<a href="./index_feature.html">first</a> | <a href="./begin_feature.html">prev</a> | 
-<a href="./javacall_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<a href="./index_feature.html">first</a> | 
+<a href="./begin_feature.html">prev</a> | <a href="./javacall_feature.html">next</a> | 
+<a href="./client_feature.html">last</a> 
 <p>
 
 <!-- =============================== END PAGE BODY ======================= -->
@@ -333,11 +368,8 @@ all <code>PATH</code> elements that point to those previous versions.
 <p>
 <hr noshade="noshade" size="1">
 
-<!--
-<p class=copyright>
-<a href="../style/copyright.html">Copyright</a> &#169;
-2008 Sun Microsystems, Inc. All rights reserved.
+<p class="copyright"><a href="./style/copyright.html">Copyright</a>
+&#169; 2009 Sun Microsystems, Inc. All rights reserved.
 </p>
--->
 
 </div></td></tr></tbody></table></body></html>

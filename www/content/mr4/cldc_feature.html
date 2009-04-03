@@ -4,6 +4,11 @@
 
 <head>
 
+<!--
+<title>Getting Started - phoneME Feature Software (MR4)</title>
+    <link rel="stylesheet" href="./style/document.css" type="text/css">
+-->
+
 <style type="text/css"> /* <![CDATA[ */
 @import "/branding/css/tigris.css";
 @import "/branding/css/inst.css";
@@ -11,14 +16,19 @@
 <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
 <script src="/branding/scripts/tigris.js" type="text/javascript"></script>
 
-<script src="/branding/scripts/alm.js" type="text/javascrit"></script>
+<script src="/branding/scripts/alm.js" type="text/javascript"></script>
 <style type="text/css">
 /* <![CDATA[ */
 @import "/brinding/css/alm.css";
 /* ]]> */
 </style>
 
-<title>Getting Started with phoneME Feature Software (MR4)</title>
+<title>Getting Started - phoneME Feature Software (MR4)</title>
+
+<!--
+<link rel="stylesheet" href="./style/tigris.css" type="text/css">
+<link rel="stylesheet" href="./style/inst.css" type="text/css">
+-->
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
@@ -36,18 +46,43 @@
 
 <!--  ================= BEGIN PAGE BODY (Ignore Everything Above)  ============ -->
 
+<!-- Header -->
+<!--
+<table class="full-width">
+  <tr>
+    <td align="center" class=sun-darkblue>
+      <h1>Getting Started</h1>
+      <h2>phoneME&#153; Feature Software (MR4)</h2>
+      <h4>April 2009</h4>
+    </td>
+  </tr>
+  <tr>
+    <td class=sun-lightblue>&nbsp;</td>
+  </tr>
+</table>
+<p>
+-->
+<!-- End Header -->
+
 <!-- BEGIN PAGE TITLE -->
-<div id="projecthome" class="app"> <h1><font color="#e76f00">Building a CLDC 
+<!--
+<div id="projecthome" class="app"> <h2><font color="#225577">Building a CLDC
+Reference Port<span class="style1"></span></font></h2>
+-->
+<!-- END PAGE TITLE -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Building a CLDC
 Reference Port (MR4)<span class="style1"> </span></font></h1>
 <!-- END PAGE TITLE -->
 
 <p>
-<a href="./index_feature.html">first</a> | <a href="./pcsl_feature.html">prev</a> | 
-<a href="./client_feature.html">next-last</a> 
+<a href="./index_feature.html">first</a> | 
+<a href="./pcsl_feature.html">prev</a> | <a href="./client_feature.html">next-last</a> 
 <p>
 
 CLDC software is the OSS community version of Sun Microsystems' Connected Limited 
-Device Configuration HotSpot&#153; Implementation virtual machine. 
+Device Configuration HotSpot&#153; Implementation virtual machine.
 <P>
 This document has the following sections:
 <p>
@@ -67,7 +102,7 @@ CLDC HotSpot Implementation software documentation</a>.
 <a name="win32"></a><h3>Building CLDC Software on a Windows x86 Build Platform</h3>
 <!-- END SECTION HEAD -->
 <p>
-Building a default version of CLDC creates the CLDC software executable <KBD>cldc_vm.exe</KBD> 
+Building a default version of CLDC creates the CLDC software executable <code>cldc_vm.exe</code> 
 for the JavaCall porting layer on a Windows x86 target platform. To properly build the CLDC software on 
 a Windows x86 build platform, you must set the environment variables shown in 
 <a href="#table4-1">TABLE 4-1</A>. 
@@ -76,7 +111,7 @@ a Windows x86 build platform, you must set the environment variables shown in
 <a name="table4-1"></a>
 <TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
 CELLPADDING=5 CELLSPACING=0 >
-<CAPTION> <b>TABLE 4-1</b>Required CLDC Build Variables for Windows x86</CAPTION>
+<CAPTION><b>TABLE 4-1</b> Required CLDC Build Variables for Windows x86</CAPTION>
 <THEAD>
 <TR>
 <TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
@@ -92,62 +127,59 @@ CELLPADDING=5 CELLSPACING=0 >
 <TBODY>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P CLASS="TableText"><A NAME="pgfId-473089"></A><KBD>JVMWorkSpace</KBD>
+<code>JVMWorkSpace</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
-<P CLASS="TableText"><A NAME="pgfId-473092"></A>The location of your CLDC software
-source code workspace.  For example,
-<KBD>JVMWorkSpace=%COMPONENTS_DIR%/cldc</KBD>.
+<P CLASS="TableText">The location of your CLDC software source code workspace.  For example,
+<code>JVMWorkSpace=%COMPONENTS_DIR%/cldc</code>.
 <br>
 </P>
 </TD>
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P CLASS="TableText"><A NAME="pgfId-473197"></A><KBD>JVMBuildSpace</KBD>
+<P CLASS="TableText"><code>JVMBuildSpace</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
-<P CLASS="TableText"><A NAME="pgfId-473199"></A>The location of your CLDC software
-build output. For example,
-<KBD>JVMBuildSpace=%BUILD_OUTPUT_DIR%/cldc</KBD>.
+<P CLASS="TableText">The location of your CLDC software build output. For example,
+<code>JVMBuildSpace=%BUILD_OUTPUT_DIR%/cldc</code>.
 </P>
 </TD>
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P CLASS="TableText"><A NAME="pgfId-473736"></A><KBD>ENABLE_PCSL</KBD>
+<P CLASS="TableText"><code>ENABLE_PCSL</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
-<P CLASS="TableText"><A NAME="pgfId-473738"></A>Required for building CLDC with
-the PCSL software component. Must be set to <code>true</code>.
+<P CLASS="TableText">Required for building CLDC with the PCSL software component. Must 
+be set to <code>true</code>.
 </P>
 </TD>
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<KBD>PCSL_OUTPUT_DIR</KBD>
+<code>PCSL_OUTPUT_DIR</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
-<P CLASS="TableText"><A NAME="pgfId-474049"></A>The location of PCSL build output.
-Required for building CLDC if <code>ENABLE_PCSL=true</code>.  For example,
-<KBD>PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl</KBD>.
+<P CLASS="TableText">The location of PCSL build output.  Required for building CLDC 
+if <code>ENABLE_PCSL=true</code>.  For example, 
+<code>PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl</code>.
 </P>
 </TD>
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P CLASS="TableText"><A NAME="pgfId-473732"></A><KBD>ENABLE_ISOLATES</KBD>
+<P CLASS="TableText"><code>ENABLE_ISOLATES</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
-<P CLASS="TableText"><A NAME="pgfId-473734"></A>Required for building a CLDC implementation
-with multitasking capability. Must be set to <KBD>true</KBD>.  If not explicitly set to
-<code>true</code>, the build defaults to <code>false</code> and CLDC is built without
-multitasking capability.
+<P CLASS="TableText">Required for building a CLDC implementation with multitasking 
+capability. Must be set to <code>true</code>.  If not explicitly set to <code>true</code>, 
+the build defaults to <code>false</code> and CLDC is built without multitasking capability.
 <p>
 <b>Note:</b> If you set <code>ENABLE_ISOLATES=true</code> to build a CLDC implementation
 with multitasking capability, you must also set <code>USE_MULTIPLE_ISOLATES=true</code>
@@ -159,7 +191,7 @@ Building a phoneME Feature Reference Port</a>.
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>JAVACALL_OUTPUT_DIR</KBD> <P>
+<code>JAVACALL_OUTPUT_DIR</code> <P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
@@ -170,7 +202,7 @@ The location of JavaCall porting layer output. For example,
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>TOOLS_DIR</KBD>
+<code>TOOLS_DIR</code>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
@@ -182,7 +214,7 @@ Defines the directory where needed build tools are located.  For example,
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>TOOLS_OUTPUT_DIR</KBD>
+<code>TOOLS_OUTPUT_DIR</name>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
@@ -194,19 +226,24 @@ Defines a directory location for tools-specific output.  For example,
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>USE_VS2005</KBD>
+<code>USE_VS2005</code>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
-Tells the build system to use Microsoft Visual Studio 2005 as the default compiler.  For example,
-<code>USE_VS2005=true</code>.
+Tells the build system to use Microsoft Visual Studio 2005 as the default compiler
+setting, as shown here: <code>USE_VS2005=true</code>.
 <p>
+<b>Note:</b> If Microsoft Visual Studio 2005 is your default compiler, you do not
+need to set this variable. <code>USE_VS2005=true</code> is set for you in the MR4
+build scripts. However, if you are using some other compiler (which is possible,
+but not supported, in MR4), you <i>must</i> set this variable to
+<code>USE_VS2005=false</code>.
 </TD>
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>ENABLE_JAVA_DEBUGGER</KBD>
+<code>ENABLE_JAVA_DEBUGGER</code>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
@@ -218,7 +255,7 @@ Supports the use of the emulator binary plugin.  For example,
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>ENABLE_MULTIPLE_PROFILES_SUPPORT</KBD>
+<code>ENABLE_MULTIPLE_PROFILES_SUPPORT</code>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
@@ -235,26 +272,25 @@ Supports the use of the emulator binary plugin.  For example,
 <a name="build_win"></a>
 <strong>Building CLDC for a Windows x86 Target Platform</strong>
 <P>
-<OL>
-<b><LI>Set the</b> <code>JVMWorkSpace</code> <b>variable, as shown here.</b>
+<ol>
+<b><li>Set the</b> <code>JVMWorkSpace</code> <b>variable, as shown here.</b>
 <p>
-<KBD>$ set JVMWorkSpace=%COMPONENTS_DIR%/cldc</KBD>
+<code>C:\> set JVMWorkSpace=%COMPONENTS_DIR%/cldc</code>
 <p>
-<b><LI>Set the</b> <code>JVMBuildSpace</code> <b>variable, as shown here.</b>
+<b><li>Set the</b> <code>JVMBuildSpace</code> <b>variable, as shown here.</b>
 <p>
-<KBD>$ set JVMBuildSpace=%BUILD_OUTPUT_DIR%/cldc</KBD>
+<code>C:\> set JVMBuildSpace=%BUILD_OUTPUT_DIR%/cldc</code>
 <p>
-
-<b><LI>Run the</b> <code>make</code> <b>command as a single command-line string, as shown here.</b>
+<b><li>Run the</b> <code>make</code> <b>command as a single command-line string, as shown here.</b>
 <P>
-<KBD>$ make -C %JVMWorkSpace%/build/javacall_i386_vc  ENABLE_PCSL=true 
+<code>C:\> make -C %JVMWorkSpace%/build/javacall_i386_vc  ENABLE_PCSL=true 
 PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl ENABLE_ISOLATES=true 
 JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall TOOLS_DIR=%COMPONENTS_DIR%/tools 
-TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools USE_VS2005=true
-ENABLE_JAVA_DEBUGGER=true ENABLE_MULTIPLE_PROFILES_SUPPORT=true</KBD>
-</OL>
+TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools ENABLE_JAVA_DEBUGGER=true 
+ENABLE_MULTIPLE_PROFILES_SUPPORT=true</code>
+</ol>
 <P>
-The generated CLDC output is found under <KBD>%JVMBuildSpace%/javacall_i386_vc/dist</KBD>.
+The generated CLDC output is found under <code>%JVMBuildSpace%/javacall_i386_vc/dist</code>.
 </OL>
 <p>
 
@@ -274,20 +310,20 @@ which you build the software.
 <a name="run_win"></a>
 <strong>Running CLDC on a JavaCall porting layer on Windows x86 Target Platform</strong>
 <p>
-<OL>
-<b><LI>Change to the CLDC build space for the JavaCall porting layer on Windows x86 platform:</b>
+<ol>
+<b><li>Change to the CLDC build space for the JavaCall porting layer on Windows x86 platform:</b>
 <P>
-<KBD>$ cd %JVMBuildSpace%/javacall_i386/dist</KBD>
+<code>C:\> cd %JVMBuildSpace%/javacall_i386/dist</code>
 <p>
-<b><LI>Enter the following command:</b>
+<b><li>Enter the following command:</b>
 <P>
-<KBD>$ bin/cldc_vm.exe -classpath</KBD>
-<EM>location-of-compiled-applications</EM><KBD>/classes</KBD> <EM>classname</EM>
+<code>C:\> bin/cldc_vm.exe -classpath</code>
+<EM>location-of-compiled-applications</EM><code>/classes</code> <EM>classname</EM>
 <p>
 For example, to run the <code>HelloWorld</code> application:
 <p>
-<code>$ bin/cldc_vm -classpath C:/src/classes HelloWorld</code>
-</OL>
+<code>C:\> bin/cldc_vm -classpath C:/src/classes HelloWorld</code>
+</ol>
 <p>
 
 
@@ -298,7 +334,7 @@ For example, to run the <code>HelloWorld</code> application:
 <p>
 
 You can create HTML documents from CLDC porting interfaces. To do this for the
-CLDC software, use the <KBD>make docs_html</KBD> build target.
+CLDC software, use the <code>make docs_html</code> build target.
 <P>
 
 <a name="javadoc"></a>
@@ -306,18 +342,18 @@ CLDC software, use the <KBD>make docs_html</KBD> build target.
 <P>
 Building Javadoc&#153 tool documentation is the same for all build platforms.
 <P>
-<OL>
-<b><LI>Change to the default build directory for your build platform.</b> 
+<ol>
+<b><li>Change to the default build directory for your build platform.</b> 
 <p>
 For example, this could be a Linux on i386 platform, as shown here.
 <P>
-<KBD>$ cd %JVMWorkSpace%/build/linux_i386</KBD>
+<code>C:\> cd %JVMWorkSpace%/build/linux_i386</code>
 <P>
-<b><LI>Build Javadoc tool HTML documentation.</b>
+<b><li>Build Javadoc tool HTML documentation.</b>
 <P>
-<KBD>$ make docs_html</KBD>
+<code>C:\> make docs_html</code>
 <P>
-</OL>
+</ol>
 <p>
 
 <a name="view_javadoc"></a>
@@ -326,26 +362,23 @@ For example, this could be a Linux on i386 platform, as shown here.
 Use any browser to display the Javadoc tool output file at the following URL:
 <P>
 <ul>
-<KBD>file://%JVMBuildSpace%/doc/javadoc/html/index.html</KBD>
+<code>file://%JVMBuildSpace%/doc/javadoc/html/index.html</code>
 </ul>
 <pre>
 
 
 </pre>
 
-<a href="./index_feature.html">first</a> | <a href="./pcsl_feature.html">prev</a> |
-<a href="./client_feature.html">next-last</a> 
+<a href="./index_feature.html">first</a> | 
+<a href="./pcsl_feature.html">prev</a> | <a href="./client_feature.html">next-last</a> 
 <p>
 
 <!-- =================================== END PAGE BODY ================== -->
 
 <hr shade="noshade" size="1">
 
-<!--
-<p class=copyright>
-<a href="../style/copyright.html">Copyright</a> &#169;
-2008 Sun Microsystems, Inc. All rights reserved.
+<p class="copyright"><a href="./style/copyright.html">Copyright</a>
+&#169; 2009 Sun Microsystems, Inc. All rights reserved. 
 </p>
--->
 
 </div></td></tr></tbody></table></body></html>

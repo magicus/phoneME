@@ -4,6 +4,11 @@
 
 <head>
 
+<!--
+<title>Getting Started - phoneME Feature Software (MR4)</title>
+    <link rel="stylesheet" href="./style/document.css" type="text/css">
+-->
+
 <style type="text/css"> /* <![CDATA[ */
 @import "/branding/css/tigris.css";
 @import "/branding/css/inst.css";
@@ -11,14 +16,19 @@
 <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
 <script src="/branding/scripts/tigris.js" type="text/javascript"></script>
 
-<script src="/branding/scripts/alm.js" type="text/javascrit"></script>
+<script src="/branding/scripts/alm.js" type="text/javascript"></script>
 <style type="text/css">
 /* <![CDATA[ */
 @import "/brinding/css/alm.css";
 /* ]]> */
 </style>
 
-<title>Getting Started with phoneME Feature Software (MR4)</title>
+<title>Getting Started - phoneME Feature Software (MR4)</title>
+
+<!--
+<link rel="stylesheet" href="./style/tigris.css" type="text/css">
+<link rel="stylesheet" href="./style/inst.css" type="text/css">
+-->
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
@@ -36,13 +46,39 @@
 
 <!--  ================= BEGIN PAGE BODY (Ignore Everything Above)  ============ -->
 
+<!-- Header -->
+<!--
+<table class="full-width">
+  <tr>
+    <td align="center" class=sun-darkblue>
+      <h1>Getting Started</h1>
+      <h2>phoneME&#153; Feature Software (MR4)</h2>
+      <h4>April 2009</h4>
+    </td>
+  </tr>
+  <tr>
+    <td class=sun-lightblue>&nbsp;</td>
+  </tr>
+</table>
+<p>
+-->
+<!-- End Header -->
+
 <!-- BEGIN PAGE TITLE -->
-<div id="projecthome" class="app"> <h1><font color="#e76f00">Building a phoneME 
+<!--
+<div id="projecthome" class="app"> <h2><font color="#225577">Building a phoneME
+Feature Software Reference Port<span class="style1"></span></font></h2>
+-->
+<!-- END PAGE TITLE -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Building a phoneME
 Feature Software Reference Port (MR4)<span class="style1"> </span></font></h1>
 <!-- END PAGE TITLE -->
 
 <p>
-<a href="./index_feature.html">first</a> | <a href="./cldc_feature.html">prev</a> 
+<a href="./index_feature.html">first</a> | 
+<a href="./cldc_feature.html">prev</a> 
 <p>
 
 The phoneME Feature Software is the Open Source version of Sun Microsystems' commercial 
@@ -86,7 +122,7 @@ environment variables shown in <a href="#table5-1">TABLE 5-1</A>.
 <a name="table5-1"></a>
 <TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
 CELLPADDING=5 CELLSPACING=0>
-<CAPTION> <b>TABLE 5-1</b>Required Windows x86 Build Variables</CAPTION>
+<CAPTION><b>TABLE 5-1</b> Required Windows x86 Build Variables</CAPTION>
 <THEAD>
 <TR>
 <TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
@@ -102,6 +138,21 @@ CELLPADDING=5 CELLSPACING=0>
 <TBODY>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><code>EMULATOR_DIR</code>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>The location where you install the emulator software.  For example,
+<code>EMULATOR_DIR=C:/home/chocolate/mr4_emulator/phoneme_feature</code>.
+<p>
+For more information on setting the <code>%EMULATOR_DIR%</code> variable, see
+<a href="./download_feature.html#zip_files">Downloading the Qsound and Emulator
+Binary Files</a>. 
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P><kbd>MIDP_OUTPUT_DIR</kbd>
 </P>
 </TD>
@@ -113,7 +164,7 @@ CELLPADDING=5 CELLSPACING=0>
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><KBD> PCSL_OUTPUT_DIR</KBD>
+<P><code> PCSL_OUTPUT_DIR</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
@@ -125,7 +176,7 @@ Feature to pick up PCSL libraries. For example,
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><KBD>CLDC_DIST_DIR</KBD>
+<P><code>CLDC_DIST_DIR</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
@@ -137,7 +188,7 @@ CLDC software build output. For example,
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><KBD>TOOLS_DIR</KBD>
+<P><code>TOOLS_DIR</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
@@ -148,7 +199,7 @@ phoneME Feature software. For example, <kbd>TOOLS_DIR=%COMPONENTS_DIR%/tools</kb
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><KBD>TOOLS_OUTPUT_DIR</KBD>
+<P><code>TOOLS_OUTPUT_DIR</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
@@ -159,7 +210,7 @@ phoneME Feature software. For example, <kbd>TOOLS_DIR=%COMPONENTS_DIR%/tools</kb
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><KBD>USE_MULTIPLE_ISOLATES</KBD>
+<P><code>USE_MULTIPLE_ISOLATES</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
@@ -176,7 +227,7 @@ CLDC, as described in <a href="./cldc_feature.html">Building a CLDC Reference Po
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><KBD> JAVACALL_PLATFORM</KBD>
+<P><code> JAVACALL_PLATFORM</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
@@ -199,31 +250,38 @@ CLDC, as described in <a href="./cldc_feature.html">Building a CLDC Reference Po
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>USE_VS2005</KBD>
+<code>USE_VS2005</code>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
-Tells the build system to use Microsoft Visual Studio 2005 as the default compiler.  For example,
-<code>USE_VS2005=true</code>.
+Tells the build system to use Microsoft Visual Studio 2005 as the default compiler
+setting, as shown here: <code>USE_VS2005=true</code>.
+<p>
+<b>Note:</b> If Microsoft Visual Studio 2005 is your default compiler, you do not 
+need to set this variable. <code>USE_VS2005=true</code> is set for you in the MR4 
+build scripts. However, if you are using some other compiler (which is possible, 
+but not supported, in MR4), you <i>must</i> set this variable to 
+<code>USE_VS2005=false</code>.
 <p>
 </TD>
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>USE_ON_DEVICE_DEBUG</KBD>
+<code>USE_ON_DEVICE_DEBUG</code>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
-Supports the use of the emulator binary plugin.  For example, 
+Supports the use of the emulator binary plugin.  For example,
 <code>USE_ON_DEVICE_DEBUG=true</code>.
 <p>
+<b>Note:</b> This variable must be set to <code>true</code> or the emulator will not start.
 </TD>
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>USE_JAVA_DEBUGGER</KBD>
+<code>USE_JAVA_DEBUGGER</code>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
@@ -235,27 +293,33 @@ Supports the use of the emulator binary plugin.  For example,
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>SDK_ODD_DIR</KBD>
+<code>PRECOMPILED_ODD</code>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
-Supports the use of the emulator binary plugin.  For example,
-<code>SDK_ODD_DIR=$COMPONENTS_DIR/sdk/components/jme-remoting</code>.
+Supports the use of the On-Device Debugger (ODD) binary plugin.  For example, 
+<code>PRECOMPILED_ODD=true</code>.
+<p>
+<b>Note:</b> This variable must be set to <code>true</code> or the emulator will 
+not start.
 <p>
 </TD>
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>VM_PROFILES_CONFIG_FILE</KBD>
+<code>ODD_JAR</code>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
-Supports the use of the emulator binary plugin.  For example,
-<code>VM_PROFILES_CONFIG_FILE=$COMPONENTS_DIR/sdk/harness/runtime-builders/cldc-builder/midp/vm_profiles.config</code>.
+Sets the path to the On-Device Debugger (ODD) binary plugin.  For example,
+<code>ODD_JAR=%COMPONENTS_DIR%/phoneme-lib/odd.jar</code>.
+<p>
+<b>Note:</b> This variable must be set to <code>true</code> or the emulator will not start.
 <p>
 </TD>
 </TR>
+
 </TBODY>
 </TABLE>
 <p>
@@ -270,25 +334,16 @@ the following steps.
 <ol>
 <b><li>Set the</b> <code>MIDP_OUTPUT_DIR</code> <b>variable, as shown here.</b>
 <p>
-<code>$ set MIDP_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/midp</code>
+<code>C:\> set MIDP_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/midp</code>
 <p>
-<b><li>Change to the build directory, as shown here.</b>
-<p>
-<code>$ cd %COMPONENTS_DIR%/midp/build/javacall</code>
-<p>
-<b>Note:</b> You can skip this step and use the <code>make</code> <code>-C</code> 
-build option. For more information, see <a href="./begin_feature.html#dash_c">
-Building with the <code>make -C</code> Option</a>.
-<p>
-<b><li>Run the</b> <code>make</code> <b>command as a single command-line string, as shown here.</b>
+<b><li>Run the</b> <code>make</code> <b>command as a single command-line string, using
+the <code>-C</code> option, as shown here.</b>
 <P>
-<KBD>$ make PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl 
-CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/javacall_i386_vc/dist TOOLS_DIR=%COMPONENTS_DIR%/tools 
-TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools USE_MULTIPLE_ISOLATES=true 
-JAVACALL_PLATFORM=win32_i386_vc JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall
-USE_VS2005=true USE_ON_DEVICE_DEBUG=true USE_JAVA_DEBUGGER=true
-SDK_ODD_DIR=$COMPONENTS_DIR/sdk/components/jme-remoting
-VM_PROFILES_CONFIG_FILE=$COMPONENTS_DIR/sdk/harness/runtime-builders/cldc-builders/midp/vm_profiles.config</KBD>
+<code>C:\> make -C EMULATOR_DIR=C:/home/chocolate/mr4_emulator/phoneme_feature
+PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/javacall_i386_vc/dist
+TOOLS_DIR=%COMPONENTS_DIR%/tools TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools USE_MULTIPLE_ISOLATES=true 
+JAVACALL_PLATFORM=win32_i386_vc JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall USE_ON_DEVICE_DEBUG=true 
+USE_JAVA_DEBUGGER=true PRECOMPILED_ODD=true ODD_JAR=%COMPONENTS_DIR%/phoneme-lib/odd.jar</code>
 <P>
 <b>Note:</b> It is possible to include optional packages in your Windows x86 
 target build.  For more information, see 
@@ -296,7 +351,7 @@ target build.  For more information, see
 </ol>
 <p>
 The generated output for Windows x86 target platform is found under 
-<KBD>%BUILD_OUTPUT_DIR%/midp</KBD>.
+<code>%BUILD_OUTPUT_DIR%/midp</code>.
 <p>
 
 
@@ -305,39 +360,34 @@ The generated output for Windows x86 target platform is found under
 Platform</strong>  
 <p>
 Once you build an implementation of phoneME Feature software, you can run a MIDlet 
-using the Wireless Toolkit emulation device. However, before you can do this, you 
-must take a few additional steps.
-<p>
-To prepare your phoneME Feature implementation for running, follow these steps:
+using the <a href="./download_feature.html#zip_files">emulator</a>. However, before 
+you can do this, you must start the phoneME Feature emulator:
 <p>
 <ol>
-<li>Ensure you have emulator binary plugin installed on your machine.
+<b><li>Right click on the Device Manager icon to display the Device Manager menu 
+and select</b> <code>Exit</code> <b>to stop the Device Manager. (The Device Manager 
+icon is in the lower right corner system tray.)</b>
 <p>
-<li>Copy the contents of the <code>/SDK</code> directory (<em>not</em> the directory 
-itself) into the top-level (root) directory of the emulator binary plugin environment. 
-For example, <code>C:\Emulator</code>.
+<b><li>Remove the folder</b> <code>%USERPROFILE%\javame-sdk-pmef</code>
+<p>
+<b><li>Copy the contents of the</b> <code>%BUILD_OUTPUT_DIR%/midp/SDK</code> 
+<b>directory (<em>not</em> the directory itself) into</b> 
+<code>%EMULATOR_DIR%</code><b>, the top-level (root) directory of the 
+emulation environment. For example,</b> <code>C:\mr4\emulator</code>.
+<p>
+<b><li>Change to the emulation root directory. For example:</b>
+<p>
+<code>C:\>cd %EMULATOR_DIR%</code>
+<p>
+<b><li>Start your phoneME Feature implementation:</b>
+<p>
+<code>C:\>bin\emulator.exe</code>
+<p>
+The Device Manager appears in the lower right corner system tray; on the console, the 
+command line help appears. You can now use it to run MIDlets. 
 </ol>
 <p>
-To start your phoneME Feature implementation:
-<p>
-<ol>
-<li>Change to the emulation root directory.
-<p>
-<li>Remove the folder <code>%USERPROFILE%\javame-sdk-sjwc</code>
-<p>
-<li>Restart the emulator Device Manager. The Device Manager is in the lower right hand 
-system tray.  Right click to disply the menu and select Restart. 
-<!--
-<li>Execute the following command:
-<p>
-<code>$ bin/emulator.exe</code>  
-<p>
-<b>Note:</b> To get a list of supported parameters, run the <code>bin/emulator.exe</code>
-command with the <code>-help</code> option.
--->
-</ol>
-<p>
-For additional information on running in the emulator, see the
+For additional information on working with the emulator, see the
 <a href="http://java.sun.com/javame/reference/docs/sjwc-2.2/pdf-html/html/build/index.html">
 <i>Sun Java Wireless Client Software Build Guide</i></a>.
 <p>
@@ -350,7 +400,7 @@ For additional information on running in the emulator, see the
 <p>
 
 You can create HTML API documents for phoneME Feature software from porting interfaces.
-To do this for the phoneME Feature software, use the <KBD>make docs_html</KBD> build
+To do this for the phoneME Feature software, use the <code>make docs_html</code> build
 target.
 <P>
 
@@ -360,17 +410,17 @@ target.
 
 Building Javadoc tool documentation is the same for all platforms.
 <P>
-<OL>
-<b><LI>Change to the default build directory for your target platform.</b> 
+<ol>
+<b><li>Change to the default build directory for your target platform.</b> 
 <p>
 For example, this could be the Windows x86 target platform, as shown here.
 <P>
-<KBD>$ cd %COMPONENTS_DIR%/javacall-com/configuration/phoneMEFeature/win32_emul</KBD>
+<code>C:\> cd %COMPONENTS_DIR%/javacall-com/configuration/phoneme_feature/win32_emul</code>
 <P>
-<b><LI>Build Javadoc tool HTML documentation.</b>
+<b><li>Build Javadoc tool HTML documentation.</b>
 <P>
-<KBD>$ make docs_html</KBD>
-</OL>
+<code>C:\> make docs_html</code>
+</ol>
 <p>
 
 <a name="view_docs"></a>
@@ -379,14 +429,15 @@ For example, this could be the Windows x86 target platform, as shown here.
 Use any browser to display the Javadoc output file at the following URL:
 <P>
 <ul>
-<KBD>file://%MIDP_OUTPUT_DIR%/doc/javadoc/html/index.html</KBD>
+<code>file://%MIDP_OUTPUT_DIR%/doc/javadoc/html/index.html</code>
 </ul>
 <pre>
 
 
 </pre>
 
-<a href="./index_feature.html">first</a> | <a href="./cldc_feature.html">prev</a> 
+<a href="./index_feature.html">first</a> | 
+<a href="./cldc_feature.html">prev</a> 
 <p>
 
 <!-- =================================== END PAGE BODY ================== -->
@@ -394,11 +445,8 @@ Use any browser to display the Javadoc output file at the following URL:
 <p>
 <hr noshade="noshade" size="1">
 
-<!--
-<p class=copyright>
-<a href="../style/copyright.html">Copyright</a> &#169;
-2008 Sun Microsystems, Inc. All rights reserved.
+<p class="copyright"><a href="./style/copyright.html">Copyright</a>
+&#169; 2009 Sun Microsystems, Inc. All rights reserved. 
 </p>
--->
 
 </div></td></tr></tbody></table></body></html>

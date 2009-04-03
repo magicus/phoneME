@@ -4,6 +4,11 @@
 
 <head>
 
+<!--
+<title>Getting Started - phoneME Feature Software (MR4)</title>
+    <link rel="stylesheet" href="./style/document.css" type="text/css">
+-->
+
 <style type="text/css"> /* <![CDATA[ */
 @import "/branding/css/tigris.css";
 @import "/branding/css/inst.css";
@@ -11,14 +16,19 @@
 <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
 <script src="/branding/scripts/tigris.js" type="text/javascript"></script>
 
-<script src="/branding/scripts/alm.js" type="text/javascrit"></script>
+<script src="/branding/scripts/alm.js" type="text/javascript"></script>
 <style type="text/css">
 /* <![CDATA[ */
 @import "/brinding/css/alm.css";
 /* ]]> */
 </style>
 
-<title>Getting Started with phoneME Feature Software (MR4)</title>
+<title>Getting Started - phoneME Feature Software (MR4)</title>
+
+<!--
+<link rel="stylesheet" href="./style/tigris.css" type="text/css">
+<link rel="stylesheet" href="./style/inst.css" type="text/css">
+-->
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
@@ -36,14 +46,40 @@
 
 <!--  ================= BEGIN PAGE BODY (Ignore Everything Above)  ============ -->
 
+<!-- Header -->
+<!--
+<table class="full-width">
+  <tr>
+    <td align="center" class=sun-darkblue>
+      <h1>Getting Started</h1>
+      <h2>phoneME&#153; Feature Software (MR4)</h2>
+      <h4>April 2009</h4>
+    </td>
+  </tr>
+  <tr>
+    <td class=sun-lightblue>&nbsp;</td>
+  </tr>
+</table>
+<p>
+-->
+<!-- End Header -->
+
 <!-- BEGIN PAGE TITLE -->
-<div id="projecthome" class="app"> <h1><font color="#e76f00">Building a PCSL 
+<!--
+<div id="projecthome" class="app"> <h2><font color="#225577">Building a PCSL 
+Reference Port<span class="style1"></span></font></h2>
+-->
+<!-- END PAGE TITLE -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Building a PCSL
 Reference Port (MR4) <span class="style1"> </span></font></h1>
 <!-- END PAGE TITLE -->
 
 <p>
-<a href="./index_feature.html">first</a> | <a href="./javacall_feature.html">prev</a> | 
-<a href="./cldc_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<a href="./index_feature.html">first</a> | 
+<a href="./javacall_feature.html">prev</a> | <a href="./cldc_feature.html">next</a> | 
+<a href="./client_feature.html">last</a> 
 <p>
 
 This document contains instructions for building a PCSL reference port. It has the 
@@ -91,7 +127,7 @@ the CLDC and phoneME Feature software client, you must set corresponding values.
 <TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
 CELLPADDING=5 CELLSPACING=0>
 <A NAME="table3-1"></A>
-<CAPTION><b>TABLE 3-1</b>Required PCSL Build Variables for Windows x86</CAPTION>
+<CAPTION><b>TABLE 3-1</b> Required PCSL Build Variables for Windows x86</CAPTION>
 <THEAD>
 <TR>
 <TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
@@ -124,17 +160,17 @@ indicates the Microsoft Visual Studio compiler.
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>PCSL_OUTPUT_DIR</KBD>
+<code>PCSL_OUTPUT_DIR</code>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
 Specifies the location where the build system puts PCSL output. For example,  this
-could be <KBD>%BUILD_OUTPUT_DIR%/pcsl</KBD>.
+could be <code>%BUILD_OUTPUT_DIR%/pcsl</code>.
 <p>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>JAVACALL_OUTPUT_DIR</KBD> <P>
+<code>JAVACALL_OUTPUT_DIR</code> <P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
@@ -147,7 +183,7 @@ location of the JavaCall porting layer output.
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>TOOLS_DIR</KBD> <P>
+<code>TOOLS_DIR</code> <P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
@@ -160,7 +196,7 @@ Defines the directory where needed build tools are located. For example,
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>TOOLS_OUTPUT_DIR</KBD> <P>
+<code>TOOLS_OUTPUT_DIR</code> <P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
@@ -172,12 +208,18 @@ Defines a directory location for tools-specific output.  For example,
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
 <P>
-<KBD>USE_VS2005</KBD>
+<code>USE_VS2005</code>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>
-Tells the build system to use Microsoft Visual Studio 2005 as the default compiler.  For example,
-<code>USE_VS2005=true</code>.
+Tells the build system to use Microsoft Visual Studio 2005 as the default compiler 
+setting, as shown here: <code>USE_VS2005=true</code>.
+<p>
+<b>Note:</b> If Microsoft Visual Studio 2005 is your default compiler, you do not
+need to set this variable. <code>USE_VS2005=true</code> is set for you in the MR4
+build scripts. However, if you are using some other compiler (which is possible,
+but not supported, in MR4), you <i>must</i> set this variable to 
+<code>USE_VS2005=false</code>.
 <p>
 </TD>
 </TR>
@@ -194,10 +236,9 @@ Tells the build system to use Microsoft Visual Studio 2005 as the default compil
 <b><li>Run the</b> <code>make</code> <b>command as a single command-line string, 
 as shown here.</b>
 <P>
-<KBD>$ make -C %COMPONENTS_DIR%/pcsl PCSL_PLATFORM=javacall_i386_vc 
+<code>C:\> make -C %COMPONENTS_DIR%/pcsl PCSL_PLATFORM=javacall_i386_vc 
 PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall 
-TOOLS_DIR=%COMPONENTS_DIR%/tools TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools 
-USE_VS2005=true</KBD>
+TOOLS_DIR=%COMPONENTS_DIR%/tools TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools</code>
 </ol>
 <p>
 The PCSL build output is found under <code>%PCSL_OUTPUT_DIR%/javacall_i386</code>
@@ -223,20 +264,20 @@ build platforms.
 <OL>
 <b><LI>Change to the PCSL directory:</b>
 <P>
-<code>$ cd %COMPONENTS_DIR%/pcsl</code>
+<code>C:\> cd %COMPONENTS_DIR%/pcsl</code>
 <P>
-<b><LI>Run the</b> <KBD>make doc</KBD> <b>command:</b>
+<b><LI>Run the</b> <code>make doc</code> <b>command:</b>
 <P>
-<code>$ make doc</code>
+<code>C:\> make doc</code>
 <p>
 
 <P>
 <b>Note:</b> The build system assumes that the Doxygen executable is in the 
-directory <KBD>/usr/bin/doxygen</KBD>. If your executable is installed in a 
+directory <code>/usr/bin/doxygen</code>. If your executable is installed in a 
 different location, use the <code>DOXYGEN_CMD</code> variable to define the 
 new location.  For example:
 <p>
-<KBD>$ make DOXYGEN_CMD=<em>doxygen_dir</em> doc</KBD>
+<code>C:\> make DOXYGEN_CMD=</code><em>doxygen_dir</em><code> doc</code>
 <p>
 where <em>doxygen_dir</em> is the location of your Doxygen executable.
 <p>
@@ -255,8 +296,9 @@ Use any browser to display the Doxygen output file at the following URL:
 
 </pre>
 
-<a href="./index_feature.html">first</a> | <a href="./javacall_feature.html">prev</a> |
-<a href="./cldc_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<a href="./index_feature.html">first</a> | 
+<a href="./javacall_feature.html">prev</a> | <a href="./cldc_feature.html">next</a> | 
+<a href="./client_feature.html">last</a> 
 <p>
 
 <!-- =================================== END PAGE BODY ================== -->
@@ -264,11 +306,8 @@ Use any browser to display the Doxygen output file at the following URL:
 <p>
 <hr noshade="noshade" size="1">
 
-<!--
-<p class=copyright>
-<a href="../style/copyright.html">Copyright</a> &#169;
-2008 Sun Microsystems, Inc. All rights reserved.
+<p class="copyright"><a href="./style/copyright.html">Copyright</a>
+&#169; 2009 Sun Microsystems, Inc. All rights reserved. 
 </p>
--->
 
 </div></td></tr></tbody></table></body></html>

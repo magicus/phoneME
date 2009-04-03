@@ -4,6 +4,11 @@
 
 <head>
 
+<!--
+<title>Getting Started - phoneME Feature Software (MR4)</title>
+    <link rel="stylesheet" href="./style/document.css" type="text/css">
+-->
+
 <style type="text/css"> /* <![CDATA[ */
 @import "/branding/css/tigris.css";
 @import "/branding/css/inst.css";
@@ -11,14 +16,19 @@
 <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
 <script src="/branding/scripts/tigris.js" type="text/javascript"></script>
 
-<script src="/branding/scripts/alm.js" type="text/javascrit"></script>
+<script src="/branding/scripts/alm.js" type="text/javascript"></script>
 <style type="text/css">
 /* <![CDATA[ */
 @import "/brinding/css/alm.css";
 /* ]]> */
 </style>
 
-<title>Getting Started with phoneME Feature Software (MR4)</title>
+<title>Getting Started - phoneME Feature Software (MR4)</title>
+
+<!--
+<link rel="stylesheet" href="./style/tigris.css" type="text/css">
+<link rel="stylesheet" href="./style/inst.css" type="text/css">
+-->
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
@@ -36,14 +46,40 @@
 
 <!-- =========  BEGIN PAGE BODY (Ignore Everything Above)  ====================== -->
 
+<!-- Header -->
+<!--
+<table class="full-width">
+  <tr>
+    <td align="center" class=sun-darkblue>
+      <h1>Getting Started</h1>
+      <h2>phoneME&#153; Feature Software (MR4)</h2>
+      <h4>April 2009</h4>
+    </td>
+  </tr>
+  <tr>
+    <td class=sun-lightblue>&nbsp;</td>
+  </tr>
+</table>
+<p>
+-->
+<!-- End Header -->
+
+<!-- BEGIN PAGE TITLE -->
+<!--
+<div id="projecthome" class="app"> <h2><font color="#225577">Before You Begin
+<span class="style1"></span></font></h2>
+-->
+<!-- END PAGE TITLE -->
+
 <!-- BEGIN PAGE TITLE -->
 <div id="projecthome" class="app"> <h1><font color="#e76f00">Before You Begin (MR4)
 <span class="style1"></span></font></h1>
 <!-- END PAGE TITLE -->
 
 <p>
-<A href="./index_feature.html">first</a> I <a href="./download_feature.html">prev</a> |  
-<a href="./buildenv_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<A href="./index_feature.html">first</a> I 
+<a href="./download_feature.html">prev</a> | <a href="./buildenv_feature.html">next</a> | 
+<a href="./client_feature.html">last</a> 
 <p> 
 
 
@@ -73,9 +109,9 @@ For your ease of use, this guide uses the following conventions:
 <ul>
 <li>The document variable <code>%COMPONENTS_DIR%</code> means "the location where you have 
 installed the phoneME Feature software."  For example, if you install the phoneME Feature 
-software into the directory <code>/home/chocolate/phoneME_feature</code>, changing directory 
-to <code>%COMPONENTS_DIR%/midp</code> means to change directory to 
-<code>/home/chocolate/phoneME_feature/midp</code>.
+software into the directory <code>/home/chocolate/mr4/phoneme_feature</code>, changing 
+directory to <code>%COMPONENTS_DIR%/midp</code> means to change directory to 
+<code>/home/chocolate/mr4/phoneme_feature/midp</code>.
 <p>
 <li>For all procedures and examples carried out on the Windows platform, the use of Cyg4Me 
 is assumed.  Instructions for installing Cyg4Me are provided
@@ -111,12 +147,12 @@ Build environment variables can be set in two ways:
 On a Windows x86 build platform, a system variable is set in the following way:
 <p>
 <ul>
-<code>$ set <i>VARIABLE</i>=<i>value</i></code>
+<code>C:\> set <i>VARIABLE</i>=<i>value</i></code>
 <P>
 For example, to set the <code>TARGET_CPU</code> as a system variable on a Windows x86
 platform, type:
 <P>
-<code>$ set TARGET_CPU=i386</code>
+<code>C:\> set TARGET_CPU=i386</code>
 <p>
 </ul>
 <p>
@@ -129,12 +165,12 @@ On a Windows x86 build platform, a command-line variable is set in the
 following way:
 <p>
 <ul>
-<code>$ make <i>VARIABLE</i>=<i>value</i> make_target</code>
+<code>C:\> make <i>VARIABLE</i>=<i>value</i> make_target</code>
 <P>
 For example, to set <code>TARGET_CPU</code> on a <code>make</code> command-line
 for a Windows x86 platform, use the following format:
 <P>
-<code>$ make TARGET_CPU=i386 all</code>
+<code>C:\> make TARGET_CPU=i386 all</code>
 <p>
 </ul>
 <p>
@@ -161,7 +197,7 @@ For example, to build the JavaCall porting layer to include JSR 120 (Wireless Me
 the <code>make</code> command-line looks like this:
 <p>
 <ol>
-<code>$ make USE_JSR_120=true JSR_120_DIR=%COMPONENTS_DIR%/jsr120 </code>  
+<code>C:\> make USE_JSR_120=true JSR_120_DIR=%COMPONENTS_DIR%/jsr120 </code>  
 </ol>
 <p>
 <b>Note:</b> For optional packages with two-digit numbers, the format is <code>USE_JSR_XX</code>
@@ -175,13 +211,26 @@ building optional packages:
 <li><code>ABSTRACTIONS_DIR=</code><em>path-to-abstractions-directory</em>
 </ul>
 <p>
-Certain JSRs have dependencies that must also be taken into consideration when building optional 
-packages.  For example, to properly build JSR 234, Advanced Multimedia Supplements API, 
-you <em>must</em> also build JSR 135, Mobile Media API and JSR 75, File Connection and Personal 
-Information Management API. 
+<a name="dependencies"></a>
+<h4>JSR Dependencies</h4>
 <p>
-Other variables are also required to build JSR 234.  For more information on using optional 
-package variables and the dependencies between specific optional packages, see 
+Certain JSRs have dependencies that must also be taken into consideration when building 
+optional packages.  
+<p>
+To build JSRs 172 (Web Services), 226 (SVG), and 280 (XML API) - either alone or in 
+combination - you must set the following variables, in addition to those shown above:  
+<p>
+<ul>
+<li><code>USE_XMLPARSER=true</code>
+<li><code>XMLPARSER_DIR=%COMPONENTS_DIR/xmlparser</code>
+</ul>
+<p>
+In a separate example, to properly build JSR 234 (Advanced Multimedia Supplements API), 
+you <em>must</em> also build JSR 135 (Mobile Media API) and JSR 75 (File Connection and 
+Personal Information Management API). Other variables are also required to build JSR 234.
+<p>
+For more information on using optional package variables and the dependencies between 
+specific optional packages, see 
 <a href="http://java.sun.com/javame/reference/docs/sjwc-2.2/pdf-html/html/build/index.html">
 <i>Sun Java Wireless Client Software Build Guide</i></a>.
 
@@ -213,7 +262,7 @@ target platform in the phoneME Feature client is <code>%COMPONENTS_DIR%/midp/bui
 and you want to build from any directory, enter the following: 
 <p>
 <ol>
-<code>$ make -C %COMPONENTS_DIR%/midp/build/javacall</code> <em>flag1 flag2 flag3</em>
+<code>C:\>$ make -C %COMPONENTS_DIR%/midp/build/javacall</code> <em>flag1 flag2 flag3</em>
 </ol>
 <p>
 
@@ -222,8 +271,9 @@ and you want to build from any directory, enter the following:
 
 </pre>
 
-<a href="./index_feature.html">first</a> | <a href="./download_feature.html">prev</a> | 
-<a href="./buildenv_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<a href="./index_feature.html">first</a> | 
+<a href="./download_feature.html">prev</a> | <a href="./buildenv_feature.html">next</a> | 
+<a href="./client_feature.html">last</a> 
 <p>
 
 <!-- =============================== END PAGE BODY ======================= -->
@@ -231,11 +281,8 @@ and you want to build from any directory, enter the following:
 <p>
 <hr noshade="noshade" size="1">
 
-<!--
-<p class=copyright>
-<a href="../style/copyright.html">Copyright</a> &#169;
-2008 Sun Microsystems, Inc. All rights reserved. 
+<p class="copyright"><a href="./style/copyright.html">Copyright</a>
+&#169; 2009 Sun Microsystems, Inc. All rights reserved. 
 </p>
--->
 
 </div></td></tr></tbody></table></body></html>
