@@ -2449,7 +2449,7 @@ public class Protocol extends ConnectionBaseAdapter
             // we got this connection from the pool
             connectionPool.returnForReuse(
                    (StreamConnectionElement)streamConnection);
-            connReused = false;
+            connReused = true;
             return;
         }
 

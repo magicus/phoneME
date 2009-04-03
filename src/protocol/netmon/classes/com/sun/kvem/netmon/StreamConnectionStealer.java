@@ -97,7 +97,7 @@ public class StreamConnectionStealer
                                   throws IOException {
 
         if (out == null) {
-            out = new OutputStreamStealer(URL, con.openOutputStream(), 
+            out = new OutputStreamStealer(URL, con.openOutputStream(),
                                           outputNetAgent, groupid);
         }
         
@@ -142,9 +142,27 @@ public class StreamConnectionStealer
     
     /**
      * Set a new URL. Used when a stream reusage is detected
-     */         
+     */
     public void resetURL(String URL) {
         this.URL = URL;
+    }
+
+    /**
+     * Reset the streams with a new URL. 
+     * Used when a stream reusage is detected.
+     */
+    public void reset(String URL) {
+        this.URL = URL;
+        groupid = System.currentTimeMillis();
+
+        if (out != null) {
+            out.reset(URL, groupid);
+        }
+
+        if (in != null) {
+            in.reset(URL, groupid);
+        }
+
     }
 
     /**
@@ -165,5 +183,5 @@ public class StreamConnectionStealer
 
     public int available() throws IOException {
         return in.available();
-    }    
+    }
 }

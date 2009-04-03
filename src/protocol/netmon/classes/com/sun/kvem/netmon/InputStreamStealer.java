@@ -62,6 +62,17 @@ public class InputStreamStealer
     }
 
     /**
+     * Resets the stream stealer for a new usage of the connection
+     * @param url New url
+     * @param groupid New group id
+     */
+    public void reset(String url, long groupid) {
+        this.URL = url;
+        this.groupid = groupid;
+        md = netAgent.newStream(URL, HttpAgent.SERVER2CLIENT, groupid);
+    }
+
+    /**
      * The name says it all.
      *
      *@param b
