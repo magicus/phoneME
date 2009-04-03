@@ -52,7 +52,14 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol {
     }
     
     StreamConnectionStealer newCon;
-    if (con instanceof StreamConnectionStealer) {
+    if ((con instanceof StreamConnectionElement) &&
+            ((StreamConnectionElement)con).getBaseConnection() instanceof
+                    StreamConnectionStealer) {
+        ((StreamConnectionStealer)
+                    ((StreamConnectionElement)con).getBaseConnection()).reset(
+                            theUrl);
+        return con;
+    } else if (con instanceof StreamConnectionStealer) {
         newCon = (StreamConnectionStealer)con;
         newCon.resetURL(theUrl);
     } else {
@@ -77,9 +84,18 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol {
     protected void disconnect() throws IOException {
         super.disconnect();
         if (connReused) {
-            StreamConnectionStealer stealer = (StreamConnectionStealer)
-                getStreamConnection();
-            stealer.disconnect();
+            /*
+             * connection was not closed and went to connection pool,
+             * but we need the stealer to be disconnected otherwise
+             * the connection will be still active in network monitor.
+             */
+            StreamConnection sc = getStreamConnection();
+            if (sc instanceof StreamConnectionElement) {
+                sc = ((StreamConnectionElement) sc).getBaseConnection();
+            }
+            if (sc instanceof StreamConnectionStealer) {
+                ((StreamConnectionStealer) sc).disconnect();
+            }
         }
     }
     
