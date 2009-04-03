@@ -147,6 +147,7 @@ public class ResourceHandler {
 
 	} catch (Exception e) {
 	    // Resource could not be found
+	    System.err.println("Could not load: " + resourceName);
 	    e.printStackTrace();
 	}
         return null;
