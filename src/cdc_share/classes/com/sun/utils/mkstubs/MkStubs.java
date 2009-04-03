@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -2214,7 +2214,7 @@ wr.pld(4,"System.out.println(\"callback - " + ifaceName + " - couldn't find meth
 
     private static void printHeader(JavaFile wr, String pkg) {
         wr.pl("/*");
-        wr.pl(" * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.");
+        wr.pl(" * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.");
         wr.pl(" * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");
         wr.pl("*/");
         wr.pl("/*");
