@@ -898,12 +898,17 @@ wr.pld(5,"System.out.println(\"Trying to call __invoke" + i + " " + mems[i].toSt
             wr.pl(2, "private static Method callbackMethod = null;");
             wr.pl(2, "public static Method getCallbackMethod() {");
             wr.pl(3, "if (callbackMethod == null) {");
-            wr.pl(4, "try {");
-            wr.pl(5, "callbackMethod = getExternalClass().getMethod(\"__callback\", new Class[] {int.class, java.lang.Object.class, java.lang.Object[].class});");
-            wr.pl(4, "} catch (NoSuchMethodException nsme) {");
-            wr.pld(5, "nsme.printStackTrace();");
-            wr.pl(5, "throw new RuntimeException(nsme.toString());");
-            wr.pl(4, "}");
+                wr.pl(4, "java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {");
+                wr.pl(5, "public Object run() {");
+            wr.pl(6, "try {");
+            wr.pl(7, "callbackMethod = getExternalClass().getMethod(\"__callback\", new Class[] {int.class, java.lang.Object.class, java.lang.Object[].class});");
+            wr.pl(6, "} catch (NoSuchMethodException nsme) {");
+            wr.pld(7, "nsme.printStackTrace();");
+            wr.pl(7, "throw new RuntimeException(nsme.toString());");
+            wr.pl(6, "}");
+            wr.pl(6, "return null;");
+            wr.pl(5, "} // run()");
+            wr.pl(4, "}); // doPrivileged()");
             wr.pl(3, "}");
             wr.pl(3, "return callbackMethod;");
             wr.pl(2, "}");
@@ -1237,17 +1242,19 @@ wr.pld(4,"System.out.println(\"class " + stubClsName + " - Init\");");
                 wr.pl(4, "return;");
                 wr.pl(3, "}");
 wr.pld(4,"System.out.println(\"Init 1\");");
-                wr.pl(3, "__cloader = sun.misc.MIDPConfig.getMIDPImplementationClassLoader();");
-                wr.pl(3, "if (__cloader == null) {");
-                wr.pl(4, "throw new RuntimeException(\"Cannot get ClassLoader\");");
-                wr.pl(3, "}");
-                wr.pl(3, "__init_classes();");
+                wr.pl(3, "java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {");
+                wr.pl(4, "public Object run() {");
+                wr.pl(5, "__cloader = sun.misc.MIDPConfig.getMIDPImplementationClassLoader();");
+                wr.pl(5, "if (__cloader == null) {");
+                wr.pl(6, "throw new RuntimeException(\"Cannot get ClassLoader\");");
+                wr.pl(5, "}");
+                wr.pl(5, "__init_classes();");
                 if (isInherit) {
-                    wr.pl(3, "__init_agent();");
+                    wr.pl(5, "__init_agent();");
                 }
                 if (!isInherit || (!isIface && clazz.isInterface())) {
                     if (mems.length > 0) {
-                        wr.pl(3, "try {");
+                        wr.pl(5, "try {");
                         for (int i = 0; i < mems.length; i++) {
                             if (!isGoodMember(mems[i])) {
                                 continue;
@@ -1257,7 +1264,7 @@ wr.pld(4,"System.out.println(\"Init 1\");");
                             }
                             Method met = (Method)mems[i];
     //wr.pld(4,"System.out.println(\"Method __method" + (int)(i + 1)+"\");");
-                            wr.p(4, "__method" + (int)(i + 1) + " = __clazz.getDeclaredMethod(\"" + met.getName() + "\", new Class[] {");
+                            wr.p(6, "__method" + (int)(i + 1) + " = __clazz.getDeclaredMethod(\"" + met.getName() + "\", new Class[] {");
                             Class pars[] = met.getParameterTypes();
                             if (pars != null && pars.length > 0) {
                                 for (int j = 0; j < pars.length; j++) {
@@ -1286,7 +1293,7 @@ wr.pld(4,"System.out.println(\"Init 1\");");
                             }
                             Constructor cons = (Constructor)mems[i];
     //wr.pld(4,"System.out.println(\"Constructor __cons" + (int)(i + 1)+"\");");
-                            wr.p(4, "__cons" + (int)(i + 1) + " = __clazz.getDeclaredConstructor(new Class[] {");
+                            wr.p(6, "__cons" + (int)(i + 1) + " = __clazz.getDeclaredConstructor(new Class[] {");
                             Class pars[] = cons.getParameterTypes();
                             if (pars != null && pars.length > 0) {
                                 for (int j = 0; j < pars.length; j++) {
@@ -1306,12 +1313,15 @@ wr.pld(4,"System.out.println(\"Init 1\");");
                             }
                             wr.pl("});");
                         }
-                        wr.pl(3, "} catch (NoSuchMethodException e) {");
-                        wr.pld(4, "e.printStackTrace();");
-                        wr.pl(4, "throw new RuntimeException(e);");
-                        wr.pl(3, "}");
+                        wr.pl(5, "} catch (NoSuchMethodException e) {");
+                        wr.pld(6, "e.printStackTrace();");
+                        wr.pl(6, "throw new RuntimeException(e);");
+                        wr.pl(5, "}");
                     }
                 }
+                wr.pl(4, "return null;");
+                wr.pl(4, "}");
+                wr.pl(3, "});");
                 wr.pl(3, "__initialized = true;");
                 wr.pl(2, "}");
                 wr.pl(1, "}");
@@ -1338,7 +1348,7 @@ wr.pld(0,"System.out.println(\"" + stubClsName + ".__getInstance() - WeakReferen
             wr.pl(2, "return new "+ stubClsName +"(" + translateClassNamePkg(clazz.getName()) + ".class, null, internal);");
             wr.pl(1, "}");
             wr.pl(1, "// Internal constructor");
-            wr.pl(1, "public " + stubClsName + "(Class cls, String fieldName, Object obj) {");
+            wr.pl(1, "public " + stubClsName + "(final Class cls, final String fieldName, final Object obj) {");
             if (isDerivedClass) {
                 wr.pl(2, "super(cls, fieldName, obj);");
             }
@@ -1347,15 +1357,20 @@ wr.pld(0,"System.out.println(\"" + stubClsName + "." + stubClsName + "() - inter
             wr.pl(2, "if (fieldName == null) {");
             wr.pl(3, "__setInternal(obj);");
             wr.pl(2, "} else {");
-            wr.pl(3, "try {");
-            wr.pl(4, "__setInternal(cls.getDeclaredField(fieldName).get(obj));");
-            wr.pl(3, "} catch (NoSuchFieldException nsfe) {");
-            wr.pld(4, "nsfe.printStackTrace();");
-            wr.pl(4, "throw new RuntimeException(nsfe);");
-            wr.pl(3, "} catch (IllegalAccessException iae) {");
-            wr.pld(4, "iae.printStackTrace();");
-            wr.pl(4, "throw new RuntimeException(iae);");
-            wr.pl(3, "}");
+                wr.pl(3, "java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {");
+                wr.pl(4, "public Object run() {");
+            wr.pl(5, "try {");
+            wr.pl(6, "__setInternal(cls.getDeclaredField(fieldName).get(obj));");
+            wr.pl(5, "} catch (NoSuchFieldException nsfe) {");
+            wr.pld(6, "nsfe.printStackTrace();");
+            wr.pl(6, "throw new RuntimeException(nsfe);");
+            wr.pl(5, "} catch (IllegalAccessException iae) {");
+            wr.pld(6, "iae.printStackTrace();");
+            wr.pl(6, "throw new RuntimeException(iae);");
+            wr.pl(5, "}");
+            wr.pl(4, "return null;");
+            wr.pl(4, "} // run()");
+            wr.pl(3, "}); // doPrivileged()");
             wr.pl(2, "}");
             wr.pl(2, "if (__getInternal() != null) {");
             wr.pl(3, "__objList.put(__getInternal(), new java.lang.ref.WeakReference(this));");
@@ -1578,18 +1593,36 @@ wr.pld(4,"System.out.println(\"It's my class!!\");");
                     String getFieldMethod = (String)e.nextElement();
                     String typeName = (String)fieldMethods.get(getFieldMethod);
                     wr.pl(1, "static " + 
-                        typeName + " __" + getFieldMethod + "Value(String fieldName) {");
+                        typeName + " __" + getFieldMethod + "Value(final String fieldName) {");
 wr.pld(4,"System.out.println(\"" + stubClsName + ".__" + getFieldMethod + "Value(String fieldName)" + "\");");
                     wr.pl(2, "__init();");
-                    wr.pl(2, "try {");
-                    wr.pl(3, "return ("+typeName+")__clazz.getField(fieldName)." + getFieldMethod + "(null);");
-                    wr.pl(2, "} catch (IllegalAccessException iae) {");
-                    wr.pld(3, "iae.printStackTrace();");
-                    wr.pl(3, "throw new RuntimeException(iae);");
-                    wr.pl(2, "} catch (NoSuchFieldException nsfe) {");
-                    wr.pld(3, "nsfe.printStackTrace();");
-                    wr.pl(3, "throw new RuntimeException(nsfe);");
-                    wr.pl(2, "}");
+                    if (isPrimitive(typeName)) {
+                        wr.pl(3, wrapperName(typeName)+" ret_val = ("+wrapperName(typeName)+")");
+                    } else {
+                        wr.pl(3, typeName+" ret_val = ("+typeName+")");
+                    }
+                    wr.p("java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {");
+                    wr.pl(4, "public Object run() {");
+                    wr.pl(5, "try {");
+                    if (isPrimitive(typeName)) {
+                        wr.pl(6, "return (Object) new "+wrapperName(typeName)+"(__clazz.getField(fieldName)." + getFieldMethod + "(null));");
+                    } else {
+                        wr.pl(6, "return (Object)__clazz.getField(fieldName)." + getFieldMethod + "(null);");
+                    }
+                    wr.pl(5, "} catch (IllegalAccessException iae) {");
+                    wr.pld(6, "iae.printStackTrace();");
+                    wr.pl(6, "throw new RuntimeException(iae);");
+                    wr.pl(5, "} catch (NoSuchFieldException nsfe) {");
+                    wr.pld(6, "nsfe.printStackTrace();");
+                    wr.pl(6, "throw new RuntimeException(nsfe);");
+                    wr.pl(5, "}");
+                    wr.pl(4, "} // run()");
+                    wr.pl(3, "}); // doPrivileged()");
+                    if (isPrimitive(typeName)) {
+                        wr.pl(3, "return ret_val."+typeName+"Value();");
+                    } else {
+                        wr.pl(3, "return ret_val;");
+                    }
                     wr.pl(1, "}");
                 } while (e.hasMoreElements());
             }
@@ -1665,6 +1698,15 @@ wr.pld(4,"System.out.println(\"" + stubClsName + ".__" + getFieldMethod + "Value
             }
         }
         return "\"invalid primitive name: '" + name + "'\"";
+    }
+    
+    private static boolean isPrimitive(String typeName) {
+        for (int i = 0; i < typeEncoding.length; i++) {
+            if (typeName.equals(typeEncoding[i].primitive)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     private static String primitiveName(String name) {
