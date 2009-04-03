@@ -35,6 +35,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.Vector;
+import java.util.StringTokenizer;
 
 /*
  *
@@ -56,12 +57,36 @@ class ClassLoader
 	classes = new Hashtable();
     }
 
+    /* private method that only lookup class from the current classloader */
+    private ClassInfo
+    lookupClass0(String key) {
+        return (ClassInfo)classes.get(key);
+    }
+
     public ClassInfo
     lookupClass(String key) {
         Assert.disallowClassloading();
         ClassInfo ci = null;
 	if (parent != null) {
-	    ci = parent.lookupClass(key);
+            if ((parent.getName()).equals("all")) {
+                String allLoaders = ClassTable.getClassLoaderNames();
+                StringTokenizer st = new StringTokenizer(allLoaders, ",");
+                while (st.hasMoreTokens()) {
+                    String pname = st.nextToken();
+		    if (!pname.equals("all")) {
+		        ClassLoader pcl = ClassTable.getClassLoader(pname);
+                        ci = pcl.lookupClass0(key);
+                        if (ci != null) {
+                            break;
+                        }
+		    }
+                }
+                if (ci == null) {
+                    ci = (ClassTable.getClassLoader("boot")).lookupClass0(key);
+                }
+            } else {
+	        ci = parent.lookupClass(key);
+            }
 	}
 	if (ci == null) {
 	    ci = (ClassInfo)classes.get(key);

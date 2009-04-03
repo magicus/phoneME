@@ -1570,7 +1570,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	/* write out the ClassLoader and ProtectionDomain */
 	int id = c.classInfo.loader.getID();
 	if (id != 0) {
-	    int clIDOff = 1; // first cl ID (boot == 0)
+	    int clIDOff = 2; // first cl ID (boot == 0, all == 1)
 	    int off = clRefOff + (id - clIDOff) * 2;
 	    classOut.println("    (CVMClassLoaderICell *)" +
 		"STATIC_STORE_ADDRESS(" + off + "), " +
