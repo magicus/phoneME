@@ -118,8 +118,11 @@ include $(SUBSYSTEM_CORE_DIR)/native_thread/$(LIB_MAKE_FILE)
 # Resource handler library
 # Description: Resource handler service
 #####################################################################
-
+ifneq ($(TARGET_VM), cdc_vm)
 include $(SUBSYSTEM_CORE_DIR)/resource_handler/$(LIB_MAKE_FILE)
+else 
+include $(SUBSYSTEM_CORE_DIR)/cdc_application/resource_handler/$(LIB_MAKE_FILE)
+endif
 
 #####################################################################
 # Resource manager library

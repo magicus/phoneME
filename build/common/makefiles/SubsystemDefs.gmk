@@ -45,9 +45,16 @@ $(MIDP_CLASSES_ZIP):: $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGE
 
 # rules for generating romized skin files
 #
+ifneq ($(TARGET_VM), cdc_vm)
 $(MIDP_CLASSES_ZIP):: $(SKINROMIZATION_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	$(romize_skin)
 	$(copy_lcdlf_resources)
+else
+$(MIDP_CLASSES_ZIP):: $(SKINROMIZATION_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+	$(romize_skin)
+	$(AT)mkdir -p $(CVM_RESOURCES_DIR)
+	$(AT)cp -f $(SUBSYSTEM_LCDLF_SKIN_RESOURCES_DIR)/*.png	$(CVM_RESOURCES_DIR)/
+endif
 
 # rules for building Romizer
 $(MIDP_CLASSES_ZIP):: $(ROMIZER_JAR_FILE)
