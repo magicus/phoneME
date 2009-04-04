@@ -48,7 +48,6 @@ information or have any questions.
     <property name="makefile.files_list.varname"    value="GENERATED_FILES"/>
 
     <property name="xslt.merge"             location="../xslt/merge.xsl"/>
-    <property name="xslt.prep"              location="../xslt/prep.xsl"/>
     <property name="xslt.main"              location="../xslt/${toolkit}/main.xsl"/>
     <property name="xsd"                    location="../xslt/screens.xsd"/>
 
@@ -94,12 +93,9 @@ information or have any questions.
                         value="${xsd.file}"/>
         </xmlvalidate>
 
-        <!-- Do some preliminary transformations -->
-        <xslt in="${out.root}/merged.xml" out="${out.root}/prep.xml" style="${xslt.prep}" force="yes"/>
-
         <!-- Run source generator -->
         <mkdir dir="${output-java-dir}"/>
-        <xslt in="${out.root}/prep.xml" out="${generated.files.list}" style="${xslt.main}">
+        <xslt in="${out.root}/merged.xml" out="${generated.files.list}" style="${xslt.main}">
             <param name="package-name" expression="${package}"/>
             <param name="output-java-dir" expression="file:///${output-java-dir}"/>
             <param name="output-xml-dir" expression="file:///${output-xml-dir}"/>
