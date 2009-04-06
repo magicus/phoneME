@@ -965,7 +965,7 @@ public class Protocol extends ConnectionBaseAdapter
              * and that this is the next chunk size, so put the char in the
              * buffer for readChunkSize and return
              */
-            stringbuffer.append(ch);
+            stringbuffer.append((char)ch);
             return;
         }
 
