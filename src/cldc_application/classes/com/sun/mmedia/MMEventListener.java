@@ -66,20 +66,20 @@ class MMEventListener implements EventListener {
      */
     public void process(Event event) {
         NativeEvent nevt = (NativeEvent)event;
-        BasicPlayer p;
+        HighLevelPlayer p;
 
 		if( EventTypes.MMAPI_EVENT != nevt.getType() ) return;
 		
         switch ( nevt.intParam4 ) {
         case EVENT_MEDIA_END_OF_MEDIA:
-            p = PlayerImpl.get(nevt.intParam1);
+            p = HighLevelPlayer.get(nevt.intParam1);
             if (p != null) {
                 p.sendEvent(PlayerListener.END_OF_MEDIA, new Long(nevt.intParam2 * 1000));
             }
             break;
 
         case EVENT_MEDIA_DURATION_UPDATED:
-            p = PlayerImpl.get(nevt.intParam1);
+            p = HighLevelPlayer.get(nevt.intParam1);
             if (p != null) {
                 p.sendEvent(PlayerListener.DURATION_UPDATED, new Long(nevt.intParam2 * 1000));
             }
@@ -93,60 +93,56 @@ class MMEventListener implements EventListener {
             if (nevt.intParam2 > 100) {
                 nevt.intParam2 = 100;
             }
-            PlayerImpl.sendExternalVolumeChanged(PlayerListener.VOLUME_CHANGED, nevt.intParam2);
+            HighLevelPlayer.sendExternalVolumeChanged(PlayerListener.VOLUME_CHANGED, nevt.intParam2);
             break;
 
         case EVENT_MEDIA_RECORD_SIZE_LIMIT:
-            p = PlayerImpl.get(nevt.intParam1);
+            p = HighLevelPlayer.get(nevt.intParam1);
             if(p != null) {
-                p.doReceiveRSL();
+                p.receiveRSL();
 			}	
             break;
         
         case EVENT_MEDIA_RECORD_ERROR:
-            p = PlayerImpl.get(nevt.intParam1);
+            p = HighLevelPlayer.get(nevt.intParam1);
             if (p != null) {
                 p.sendEvent(PlayerListener.RECORD_ERROR, new String("Unexpected Record Error"));
             }
             break;
 
         case EVENT_MEDIA_BUFFERING_STARTED:
-            p = PlayerImpl.get(nevt.intParam1);
+            p = HighLevelPlayer.get(nevt.intParam1);
             if (p != null) {
                 p.sendEvent(PlayerListener.BUFFERING_STARTED, new Long(nevt.intParam2 * 1000));
             }
             break;
         
         case EVENT_MEDIA_BUFFERING_STOPPED:
-            p = PlayerImpl.get(nevt.intParam1);
+            p = HighLevelPlayer.get(nevt.intParam1);
             if (p != null) {
                 p.sendEvent(PlayerListener.BUFFERING_STOPPED, new Long(nevt.intParam2 * 1000));
             }
             break;
 
         case EVENT_MEDIA_ERROR:
-            p = PlayerImpl.get(nevt.intParam1);
+            p = HighLevelPlayer.get(nevt.intParam1);
             if (p != null) {
                 p.sendEvent(PlayerListener.ERROR, new String("Unexpected Media Error"));
             }
             break;
 
         case EVENT_MEDIA_NEED_MORE_MEDIA_DATA:
-            p = PlayerImpl.get(nevt.intParam1);
+            p = HighLevelPlayer.get(nevt.intParam1);
             if (p != null) {
                 p.continueDownload();
             }
             break;
 
         case EVENT_MEDIA_SNAPSHOT_FINISHED:
-            p = PlayerImpl.get( nevt.intParam1 );
+            p = HighLevelPlayer.get( nevt.intParam1 );
             if( null != p )
             {
-                try{
-                    DirectPlayer dp = ( DirectPlayer )p;
-                    dp.notifySnapshotFinished();
-                }
-                catch( ClassCastException e ){}
+                p.notifySnapshotFinished();
             }
             break;
                 

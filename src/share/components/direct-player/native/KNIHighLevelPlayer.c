@@ -1,6 +1,6 @@
 /*
  * 
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ extern int unicodeToNative(const jchar *ustr, int ulen, unsigned char *bstr, int
 
 /*  protected native int nInit (int appId, int playerId, String URI) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_PlayerImpl_nInit) {
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nInit) {
     jint  appId = KNI_GetParameterAsInt(1);
     jint  playerId = KNI_GetParameterAsInt(2);
     jint  returnValue = 0;
@@ -81,9 +81,21 @@ LockAudioMutex();
             returnValue = (int)pKniInfo;
         } else if (res == JAVACALL_IO_ERROR) {
             MMP_FREE(pKniInfo);
+            KNI_ThrowNew( "java/io/IOException",
+                "\nUnable to create native player\n" );
             returnValue = -1; /* Can not create player - IO error */
-        } else {
+        } 
+        else if ( JAVACALL_NO_AUDIO_DEVICE == res )
+        {
             MMP_FREE(pKniInfo);
+            KNI_ThrowNew( "javax/microedition/media/MediaException",
+"\nNo audio device found. Please check your audio driver settings\n" );
+            returnValue = 0; /* Can not create player */
+        }
+        else {
+            MMP_FREE(pKniInfo);
+            KNI_ThrowNew( "javax/microedition/media/MediaException",
+            "\nUnable to create native player\n" );
             returnValue = 0; /* Can not create player */
         }
     } else {
@@ -101,7 +113,7 @@ UnlockAudioMutex();
 
 /*  protected native int nTerm ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_PlayerImpl_nTerm) {
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nTerm) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
@@ -125,7 +137,6 @@ UnlockAudioMutex();
 
     if (pKniInfo) {
         MMP_FREE(pKniInfo);
-        KNI_SetIntField(instance, KNI_GetFieldID(clazz, "hNative", "I"), 0);
     }
 
     KNI_EndHandles();
@@ -134,7 +145,7 @@ UnlockAudioMutex();
 
 /*  protected native String nGetMediaFormat(int handle); */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-KNIDECL(com_sun_mmedia_PlayerImpl_nGetMediaFormat) {
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nGetMediaFormat) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_media_format_type mFormat = JAVACALL_MEDIA_FORMAT_UNKNOWN;
@@ -157,7 +168,7 @@ UnlockAudioMutex();
 
 /*  protected native boolean nIsHandledByDevice(int handle); */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_PlayerImpl_nIsHandledByDevice) {
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nIsHandledByDevice) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jboolean returnValue = KNI_TRUE;
@@ -176,13 +187,12 @@ UnlockAudioMutex();
 }
 
 /*  protected native boolean nRealize(int handle, String mime); */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_PlayerImpl_nRealize) {
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nRealize) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     int mimeLength;
     jchar* pszMime = NULL;
-    jboolean returnValue = KNI_FALSE;
     javacall_result status = JAVACALL_FAIL;
 
     KNI_StartHandles(1);
@@ -210,12 +220,18 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nRealize) {
         pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_REALIZED,
         returns_no_data
     );
-    if (status == JAVACALL_OK) {
-        returnValue = KNI_TRUE;
+    if ( JAVACALL_NO_AUDIO_DEVICE == status ) {
+        KNI_ThrowNew( "javax/microedition/media/MediaException",
+"\nNo audio device found. Please check your audio driver settings\n" );
     }
+    else if(status != JAVACALL_OK) {
+        KNI_ThrowNew( "javax/microedition/media/MediaException",
+            "\nCannot realize\n" );
+    }
+    
 
     if (pszMime)      { MMP_FREE(pszMime); }
 
     KNI_EndHandles();
-    KNI_ReturnBoolean(returnValue);
+    KNI_ReturnVoid();
 }

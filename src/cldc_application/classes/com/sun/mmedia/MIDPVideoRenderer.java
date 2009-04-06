@@ -57,7 +57,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
     /** Application specified visibility flag. True if setVisible(true) */
     private boolean pvis;
     /** Player which is being controlled */
-    private BasicPlayer player;
+    private HighLevelPlayer player;
 
     /** Display X */
     private int dx, tmpdx;
@@ -99,13 +99,9 @@ public final class MIDPVideoRenderer extends VideoRenderer
      * VideoControl implementation
      ****************************************************************/
 
-    MIDPVideoRenderer(Player p) {
-        if (p instanceof BasicPlayer) {
-            this.player = (BasicPlayer)p;
-            locatorString = player.getLocator();
-        } else {
-            System.err.println("video renderer can't work with Players of this class: " + p.toString());
-        }
+    MIDPVideoRenderer(HighLevelPlayer p) {
+        this.player = p;
+        locatorString = player.getLocator();
     }
 
     private void checkState() {

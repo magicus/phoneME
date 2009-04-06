@@ -26,7 +26,7 @@ package com.sun.mmedia;
 
 import javax.microedition.media.Control;
 
-public class DirectCamera extends DirectPlayer 
+class DirectCamera extends DirectPlayer 
 {
     private Control _cameraControl;
     private Control _exposureControl;
@@ -42,7 +42,8 @@ public class DirectCamera extends DirectPlayer
     /**
      * It does not need data source
      */
-    public DirectCamera() {
+    public DirectCamera( HighLevelPlayer owner ) {
+        super( owner );
     }
 
     protected Control doGetControl(String type) {
@@ -56,7 +57,7 @@ public class DirectCamera extends DirectPlayer
                     if( null == _cameraControl )
                     {
                         _cameraControl = 
-                           Jsr234Proxy.getInstance().getCameraControl( this );
+                           Jsr234Proxy.getInstance().getCameraControl( getOwner() );
                     }
                     return _cameraControl;
                 } else if( camType.equals( "ExposureControl" ) )
@@ -64,7 +65,7 @@ public class DirectCamera extends DirectPlayer
                     if( null == _exposureControl )
                     {
                         _exposureControl = 
-                          Jsr234Proxy.getInstance().getExposureControl( this );
+                          Jsr234Proxy.getInstance().getExposureControl( getOwner() );
                     }
                     return _exposureControl;
                 } else if ( camType.equals( "FlashControl" ) )
@@ -72,7 +73,7 @@ public class DirectCamera extends DirectPlayer
                     if( null == _flashControl )
                     {
                         _flashControl = 
-                           Jsr234Proxy.getInstance().getFlashControl( this );
+                           Jsr234Proxy.getInstance().getFlashControl( getOwner() );
                     }
                     return _flashControl;
                 } else if( camType.equals( "FocusControl" ) )
@@ -80,7 +81,7 @@ public class DirectCamera extends DirectPlayer
                     if( null == _focusControl )
                     {
                         _focusControl = 
-                           Jsr234Proxy.getInstance().getFocusControl( this );
+                           Jsr234Proxy.getInstance().getFocusControl( getOwner() );
                     }
                     return _focusControl;
                 } else if( camType.equals( "SnapshotControl" ) )
@@ -88,7 +89,7 @@ public class DirectCamera extends DirectPlayer
                     if( null == _snapshotControl )
                     {
                         _snapshotControl = 
-                          Jsr234Proxy.getInstance().getSnapshotControl( this );
+                          Jsr234Proxy.getInstance().getSnapshotControl( getOwner() );
                     }
                     return _snapshotControl;
                 } else if( camType.equals( "ZoomControl" ) )
@@ -96,7 +97,7 @@ public class DirectCamera extends DirectPlayer
                     if( null == _zoomControl )
                     {
                         _zoomControl = 
-                              Jsr234Proxy.getInstance().getZoomControl( this );
+                              Jsr234Proxy.getInstance().getZoomControl( getOwner() );
                     }
                     return _zoomControl;
                 }
@@ -106,7 +107,7 @@ public class DirectCamera extends DirectPlayer
                 if( null == _imgFmtControl )
                 {
                     _imgFmtControl = 
-                       Jsr234Proxy.getInstance().getImageFormatControl( this );
+                       Jsr234Proxy.getInstance().getImageFormatControl( getOwner() );
                 }
                 return _imgFmtControl;
             }

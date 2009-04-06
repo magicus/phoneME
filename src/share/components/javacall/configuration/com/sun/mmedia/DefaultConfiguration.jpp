@@ -343,7 +343,7 @@ public class DefaultConfiguration extends Configuration {
      *
      * @return The video renderer
      */
-    public VideoRenderer getVideoRenderer(BasicPlayer player) {
+    public VideoRenderer getVideoRenderer(HighLevelPlayer player) {
         // workaround for demo only
         return ModelVideoRenderer.getVideoRenderer(player);
         //return new MIDPVideoRenderer(player);
