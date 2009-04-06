@@ -36,8 +36,20 @@ OBJLIBNAME = libobj$(LIB_SUFFIX)
 OBJLIB = $(OBJ_DIR)/$(OBJLIBNAME)
 OBJLIB_SCRIPT = $(OBJLIB)-list
 
+ifeq ($(MRI_OPT), )
+
+$(OBJLIB): $(OBJ_FILES)
+	@echo " ... libing $@" $(LOG)
+	$(AT)$(CREATE_LIB) $(LIB_OUTPUT)$@ $(OBJ_FILES) $(LOG) 
+	$(AT)$(RANLIB) $@ $(LOG)
+
+else 
+
 $(OBJLIB): $(OBJ_FILES)
 	$(shell echo $(MRI_CREATE)$(OBJLIBNAME) > $(OBJLIB_SCRIPT))
 	$(foreach path, $(OBJ_FILES), $(shell echo $(MRI_ADD)`$(call fixcygpath,$(path))` >> $(OBJLIB_SCRIPT)))
 	$(shell echo $(MRI_SAVE) >> $(OBJLIB_SCRIPT))
 	$(shell cd $(OBJ_DIR); $(AR) $(MRI_OPT)$(OBJLIB_SCRIPT); $(RANLIB) $(OBJLIBNAME))
+
+endif
+

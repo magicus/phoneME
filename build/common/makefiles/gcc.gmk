@@ -95,13 +95,14 @@ CPP		= $(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
 CC_OUTPUT	= -o
 
 LD		= $(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
-LINKER_OUTPUT	= -o
-LIBS		+= -lpthread -lm -lnsl
+LINKER_OUTPUT	?= -o
+GCC_LIBS ?= -lpthread -lm -lnsl
+LIBS     += $(GCC_LIBS)
 
 # Options to force single-pass linker to search undefined references repeatly.
 # Note. '-Wl,' option cannot be used instead of -Xlinker
-LD_START_GROUP = -Xlinker --start-group
-LD_END_GROUP = --end-group
+LD_START_GROUP ?= -Xlinker --start-group
+LD_END_GROUP ?= --end-group
 
 AR		= $(GNU_TOOLS_BINDIR)ar
 CREATE_LIB	= $(AR) -rcs
@@ -112,7 +113,7 @@ RANLIB  = $(GNU_TOOLS_BINDIR)ranlib
 MRI_ADD = 'ADDMOD '
 MRI_CREATE = 'CREATE '
 MRI_SAVE = 'SAVE'
-MRI_OPT = -M <
+MRI_OPT ?= -M <
 
 ASM		= $(GNU_TOOLS_BINDIR)as
 ASM_FLAGS	= -W

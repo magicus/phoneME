@@ -54,8 +54,19 @@ public class MenuLayer extends ScrollablePopupLayer {
      * than can fit on the menu.
      */
     protected int scrollIndex;
+
+    /**
+     * Amount of pixels left from previous content dragging
+     */
+    protected int leftToDrag = 0;
     
-    /** 
+    /**
+     *  Desired drag amount needed to return content
+     *  to the stable position.
+     */
+    protected int stableY = 0;
+
+    /**
      * The SoftButtonLayer maintains the overall set of
      * commands and their associated listeners.
      */
@@ -130,6 +141,9 @@ public class MenuLayer extends ScrollablePopupLayer {
      */
     public void updateScrollIndicator() {
     	if (scrollInd != null) {
+            if (stableY != 0) {
+                return;
+            }
             if (menuCmds.length > MenuSkin.MAX_ITEMS) {
                 scrollInd.setVerticalScroll(
                   (scrollIndex * 100) / (menuCmds.length - MenuSkin.MAX_ITEMS),
@@ -174,8 +188,10 @@ public class MenuLayer extends ScrollablePopupLayer {
      * @param y the y coordinate of the event
      */
     public boolean pointerInput(int type, int x, int y) {
+        super.pointerInput(type, x, y);
         switch (type) {
         case EventConstants.PRESSED:
+            leftToDrag = 0;
             itemIndexWhenPressed =  itemIndexAtPointerPosition(x, y);
 
             if (itemIndexWhenPressed != PRESS_OUT_OF_BOUNDS && itemIndexWhenPressed >= 0) {
@@ -186,6 +202,7 @@ public class MenuLayer extends ScrollablePopupLayer {
             }
             break;
         case EventConstants.RELEASED:
+            leftToDrag = 0;
             int itemIndexWhenReleased = itemIndexAtPointerPosition(x, y);
 
             // dismiss the menu layer if the user pressed outside the menu
@@ -423,16 +440,16 @@ public class MenuLayer extends ScrollablePopupLayer {
         
         if (menuCmds != null) {
                        
-            int y = MenuSkin.ITEM_TOPOFFSET;
+            int y = MenuSkin.ITEM_TOPOFFSET +
+                    (scrollIndex < 0 ? -scrollIndex * MenuSkin.ITEM_HEIGHT : 0);
             int x = 0;
             Image arrow = null;
-            
-            for (int cmdIndex = scrollIndex; 
+
+            for (int cmdIndex = scrollIndex < 0 ? 0 : scrollIndex;
                 (cmdIndex < menuCmds.length) 
                     && (cmdIndex - scrollIndex < MenuSkin.MAX_ITEMS);
                 cmdIndex++)
             {
-                
                 if (menuCmds[cmdIndex] instanceof SubMenuCommand) {
                     arrow = MenuSkin.IMAGE_SUBMENU_ARROW;
                     if (cmdIndex == selI && !cascadeMenuUp) {
@@ -505,18 +522,18 @@ public class MenuLayer extends ScrollablePopupLayer {
                     arrow = null;
                 }
                 if (ScreenSkin.RL_DIRECTION) {
-                         itemOffset = bounds[W] - MenuSkin.ITEM_ANCHOR_X - x;                                                     
-                     } else {
-                         itemOffset = MenuSkin.ITEM_ANCHOR_X;
-                     }
+                    itemOffset = bounds[W] - MenuSkin.ITEM_ANCHOR_X - x;
+                } else {
+                    itemOffset = MenuSkin.ITEM_ANCHOR_X + x;
+                }
                 g.drawString(menuCmds[cmdIndex].getLabel(),
-                             itemOffset,
-                             y, Graphics.TOP | ScreenSkin.TEXT_ORIENT);
-                            
+                         itemOffset,
+                         y, Graphics.TOP | ScreenSkin.TEXT_ORIENT);
+
                 x = 0;
                 y += MenuSkin.ITEM_HEIGHT;                 
             }
-        }       
+        }
     }
 
     /**
@@ -589,6 +606,7 @@ public class MenuLayer extends ScrollablePopupLayer {
                            "MenuLayer.scrollContent scrollType=" + scrollType + 
                            " thumbPosition=" + thumbPosition); 
         }
+        leftToDrag = 0;
         // keep old scrollIndex
         int oldScrollIndex = scrollIndex;
         
@@ -629,6 +647,52 @@ public class MenuLayer extends ScrollablePopupLayer {
             updateScrollIndicator();
             requestRepaint();
         }
+    }
+
+    /**
+     * Drag the contents to the specified amount of pixels.
+     * @param deltaY
+     * @return desired drag amount to become stable
+     */
+    public int dragContent(int deltaY) {
+        leftToDrag += deltaY;
+        int itemCnt = leftToDrag / MenuSkin.ITEM_HEIGHT;
+        if (itemCnt == 0) {
+            return stableY - leftToDrag;
+        }
+
+        scrollIndex += itemCnt;
+        if (deltaY > 0) {
+            if (selI < scrollIndex) {
+                selI = scrollIndex;
+                if (selI >= menuCmds.length) {
+                    selI = menuCmds.length - 1;
+                }
+            }
+        } else if (deltaY < 0) {
+            if (selI >= scrollIndex + MenuSkin.MAX_ITEMS) {
+                selI = scrollIndex + MenuSkin.MAX_ITEMS - 1;
+                if (selI < 0) {
+                    selI = 0;
+                }
+            }
+        }
+        updateScrollIndicator();
+        requestRepaint();
+        leftToDrag %= MenuSkin.ITEM_HEIGHT;
+        if (scrollIndex < 0) {
+            stableY = -scrollIndex * MenuSkin.ITEM_HEIGHT;
+        } else if (scrollIndex > menuCmds.length - MenuSkin.MAX_ITEMS
+                && menuCmds.length > MenuSkin.MAX_ITEMS) {
+            stableY = (menuCmds.length - MenuSkin.MAX_ITEMS - scrollIndex)
+                    * MenuSkin.ITEM_HEIGHT;
+        } else if (scrollIndex > 0
+                && menuCmds.length <= MenuSkin.MAX_ITEMS) {
+            stableY = -scrollIndex * MenuSkin.ITEM_HEIGHT;
+        } else {
+            stableY = 0;
+        }
+        return stableY - leftToDrag;
     }
 
     /**

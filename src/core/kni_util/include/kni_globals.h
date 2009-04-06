@@ -50,6 +50,14 @@
  * This buffer is not used to pass data from one function to another.
  */
 extern char gKNIBuffer[KNI_BUFFER_SIZE];
-    
+
+/**
+ * Returns a pointer to the gKNIBuffer. It is an alternative and preferred
+ * way how to get a pointer to the buffer.
+ *
+ * @return a pointer to the gKNIBuffer
+ */
+char * get_KNIBuffer();
+
 #endif /* KNI_GLOBALS_H */
 

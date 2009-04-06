@@ -96,6 +96,7 @@ class ScreenLFImpl extends DisplayableLFImpl {
         }
     }
 
+
     /**
      * Set the vertical scroll position and proportion
      *
@@ -244,11 +245,33 @@ class ScreenLFImpl extends DisplayableLFImpl {
     }
 
     /**
+     * Perform a scrolling by specified number of pixels.
+     * Returns amount of pixels to drag to return content
+     * to the stable position.
+     * @param deltaY number of pixels to scroll
+     * @return desired drag amount to become stable
+     */
+    protected int uScrollBy(int deltaY) {
+        int max = getMaxScroll();
+        viewable[Y] += deltaY;
+        if (viewable[Y] < 0) {
+            return -viewable[Y];
+        } else if (viewable[Y] > max) {
+            return max - viewable[Y];
+        }
+        return 0;
+    }
+
+    /**
      * The maximum amount of scroll needed to see all the contents
      * @return get the maximum scroll amount
      */
     protected int getMaxScroll() {
-        return viewable[HEIGHT] - viewport[HEIGHT];
+        if (viewable[HEIGHT] <= viewport[HEIGHT]) {
+            return 0;
+        } else {
+            return viewable[HEIGHT] - viewport[HEIGHT];
+        }
     }
     
     /**
@@ -305,7 +328,23 @@ class ScreenLFImpl extends DisplayableLFImpl {
             setupScroll();
         }
     }
-    
+
+    /**
+     * This method notify displayable to drag its content
+     *
+     * @param deltaY
+     * @return desired drag amount to become stable
+     */
+    public int uCallDragContent(int deltaY) {
+        int oldY = viewable[Y];
+        int ret = uScrollBy(deltaY);
+        if (oldY != viewable[Y]) {
+            uRequestPaint();
+            setupScroll();
+        }
+        return ret;
+    }
+
     /**
      * all scroll actions should be handled through here.
      * 
@@ -320,6 +359,10 @@ class ScreenLFImpl extends DisplayableLFImpl {
                            " lastScrollPosition] == "+lastScrollPosition +
                            "[F] >> viewable[HEIGHT] == "+viewable[HEIGHT] +
                            " lastScrollSize == "+lastScrollSize);
+        }
+
+        if (viewable[Y] < 0 || viewable[Y] > getMaxScroll()) {
+            return;
         }
         
         // check if scroll moves, and if so, refresh scrollbars
@@ -403,6 +446,7 @@ class ScreenLFImpl extends DisplayableLFImpl {
      * The value has no meaning for the actual scroll size
      */
     private int lastScrollSize = -1;
+
 
     // ************************************************************
     //  Static initializer, constructor

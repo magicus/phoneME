@@ -105,6 +105,15 @@ public interface ChamDisplayTunnel {
     public void callScrollContent(int scrollType, int thumbPosition);
 
     /**
+     * This method is used by Chameleon to invoke
+     * Displayable.uCallDragContent() method.
+     *
+     * @param deltaY 
+     * @return desired drag amount to become stable
+     */
+    public int callDragContent(int deltaY);
+
+    /**
      * Updates the scroll indicator.
      */
     public void updateScrollIndicator();

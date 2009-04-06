@@ -58,6 +58,16 @@ public final class EventConstants {
      * Minor ID indicating a pointer drag.
      */
     public static final int DRAGGED  = 3;  // pen
+    
+    /**
+     * Minor ID indicating a combined pointer flick event.
+     */
+    public static final int FLICKERED = 5; // pen
+
+    /**
+     * Minor ID indicating pointer out event.
+     */
+    public static final int GONE = 6; // pen
 
     /**
      * Minor ID indicating that command event requires posting a menu.
