@@ -153,7 +153,7 @@ Binary Files</a>.
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><kbd>MIDP_OUTPUT_DIR</kbd>
+<P><code>MIDP_OUTPUT_DIR</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
@@ -182,7 +182,7 @@ Feature to pick up PCSL libraries. For example,
 <TD ROWSPAN="1" COLSPAN="1">
 <P>Required for building phoneME Feature software. Must point to the location of 
 CLDC software build output. For example, 
-<kbd>CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/javacall_i386_vc/dist</kbd>.
+<code>CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/javacall_i386_vc/dist</code>.
 </P>
 </TD>
 </TR>
@@ -193,7 +193,7 @@ CLDC software build output. For example,
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
 <P>Location of tools generated during build process. Required for building 
-phoneME Feature software. For example, <kbd>TOOLS_DIR=%COMPONENTS_DIR%/tools</kbd>. 
+phoneME Feature software. For example, <code>TOOLS_DIR=%COMPONENTS_DIR%/tools</code>. 
 </P>
 </TD>
 </TR>
@@ -238,7 +238,7 @@ CLDC, as described in <a href="./cldc_feature.html">Building a CLDC Reference Po
 </TR>
 <TR>
 <TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P><kbd>JAVACALL_OUTPUT_DIR</kbd>
+<P><code>JAVACALL_OUTPUT_DIR</code>
 </P>
 </TD>
 <TD ROWSPAN="1" COLSPAN="1">
@@ -275,7 +275,8 @@ but not supported, in MR4), you <i>must</i> set this variable to
 Supports the use of the emulator binary plugin.  For example,
 <code>USE_ON_DEVICE_DEBUG=true</code>.
 <p>
-<b>Note:</b> This variable must be set to <code>true</code> or the emulator will not start.
+<b>Note:</b> This variable must be set to <code>true</code> or building for the 
+emulator will fail.
 </TD>
 </TR>
 <TR>
@@ -300,8 +301,8 @@ Supports the use of the emulator binary plugin.  For example,
 Supports the use of the On-Device Debugger (ODD) binary plugin.  For example, 
 <code>PRECOMPILED_ODD=true</code>.
 <p>
-<b>Note:</b> This variable must be set to <code>true</code> or the emulator will 
-not start.
+<b>Note:</b> This variable must be set to <code>true</code> or building for the 
+emulator will fail.
 <p>
 </TD>
 </TR>
@@ -315,7 +316,8 @@ not start.
 Sets the path to the On-Device Debugger (ODD) binary plugin.  For example,
 <code>ODD_JAR=%COMPONENTS_DIR%/phoneme-lib/odd.jar</code>.
 <p>
-<b>Note:</b> This variable must be set to <code>true</code> or the emulator will not start.
+<b>Note:</b> This variable must be set to <code>true</code> or building for the 
+emulator will fail.
 <p>
 </TD>
 </TR>
@@ -339,11 +341,11 @@ the following steps.
 <b><li>Run the</b> <code>make</code> <b>command as a single command-line string, using
 the <code>-C</code> option, as shown here.</b>
 <P>
-<code>C:\> make -C EMULATOR_DIR=C:/home/chocolate/mr4_emulator/phoneme_feature
-PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/javacall_i386_vc/dist
-TOOLS_DIR=%COMPONENTS_DIR%/tools TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools USE_MULTIPLE_ISOLATES=true 
-JAVACALL_PLATFORM=win32_i386_vc JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall USE_ON_DEVICE_DEBUG=true 
-USE_JAVA_DEBUGGER=true PRECOMPILED_ODD=true ODD_JAR=%COMPONENTS_DIR%/phoneme-lib/odd.jar</code>
+<code>C:\> make -C %COMPONENTS_DIR%/midp/build/javacall PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl 
+CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/javacall_i386_vc/dist TOOLS_DIR=%COMPONENTS_DIR%/tools 
+TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools USE_MULTIPLE_ISOLATES=true JAVACALL_PLATFORM=win32_i386_vc 
+JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall USE_ON_DEVICE_DEBUG=true USE_JAVA_DEBUGGER=true 
+PRECOMPILED_ODD=true ODD_JAR=%EMULATOR_DIR%/phoneme-lib/odd.jar</code>
 <P>
 <b>Note:</b> It is possible to include optional packages in your Windows x86 
 target build.  For more information, see 
