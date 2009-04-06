@@ -275,9 +275,10 @@ static void CALLBACK FAR audio_timer_callback(UINT uID, UINT uMsg,
 /**
  * 
  */
-static javacall_handle audio_create(int appId, int playerId, 
+static javacall_result audio_create(int appId, int playerId, 
                              jc_fmt mediaType, 
-                             const javacall_utf16_string URI) {
+                             const javacall_utf16_string URI,
+                             javacall_handle *pJCHandle ) {
 
     javacall_utf16 *mediaTypeWide;
     int mediaTypeWideLen;
@@ -286,20 +287,24 @@ static javacall_handle audio_create(int appId, int playerId,
     size_t uriLength = ( NULL != URI ) ? wcslen(URI) : 0;
 
     javacall_int64 res = 0;
-    audio_handle* pHandle = MALLOC(sizeof(audio_handle));
+    audio_handle* pHandle = NULL;
     
     int len = MAX_MIMETYPE_LENGTH;
     char *buff = MALLOC(len);
 
-    memset(pHandle,0,sizeof(audio_handle));
-
     if (buff == NULL) {
-        return NULL;
+        *pJCHandle = NULL;
+        return JAVACALL_OUT_OF_MEMORY;
     }
-    
+
+    pHandle = MALLOC(sizeof(audio_handle));
     if (NULL == pHandle) {
-        return NULL;
+        FREE( buff );
+        *pJCHandle = NULL;
+        return JAVACALL_OUT_OF_MEMORY;
     }
+
+    memset(pHandle,0,sizeof(audio_handle));
 
     if (f == NULL) {
         f = NewLimeFunction(LIME_MMAPI_PACKAGE,
@@ -318,7 +323,10 @@ static javacall_handle audio_create(int appId, int playerId,
     
     f->call(f, &res, mediaTypeWide, mediaTypeWideLen, URI, uriLength);
     if (res <= 0) {
-	    return NULL;
+        FREE( buff );
+        FREE( pHandle );
+	    *pJCHandle = NULL;
+        return JAVACALL_FAIL;
     }
 
     pHandle->hWnd             = (long)res;
@@ -346,7 +354,8 @@ static javacall_handle audio_create(int appId, int playerId,
         FREE(buff);
     }
 
-    return pHandle;
+    *pJCHandle = pHandle;
+    return JAVACALL_OK;
 }
 
 /**

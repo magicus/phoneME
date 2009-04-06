@@ -137,10 +137,10 @@ extern "C" {
 
 //=============================================================================
 
-static /*javacall_result*/javacall_handle dshow_create(int appId, 
+static javacall_result dshow_create(int appId, 
     int playerId,
     jc_fmt mediaType,
-    const javacall_utf16_string URI) //, javacall_handle* pHandle)
+    const javacall_utf16_string URI, javacall_handle* pHandle)
 {
     dshow_player* p = new dshow_player;
 
@@ -170,12 +170,11 @@ static /*javacall_result*/javacall_handle dshow_create(int appId,
 
     p->ppl              = NULL;
 
-    //*pHandle =(javacall_handle)p;
+    *pHandle =(javacall_handle)p;
 
     lcd_set_color_key( JAVACALL_FALSE, 0 );
 
-    //return JAVACALL_OK;
-    return p;
+    return JAVACALL_OK;
 }
 
 static javacall_result dshow_get_format(javacall_handle handle, jc_fmt* fmt)

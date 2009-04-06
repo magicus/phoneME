@@ -76,13 +76,14 @@ extern void * mmaudio_mutex_create();
 /**
  * 
  */
-static javacall_handle video_create(int appId, int playerId, 
+static javacall_result video_create(int appId, int playerId, 
                                     jc_fmt mediaType, 
-                                    const javacall_utf16_string URI)
+                                    const javacall_utf16_string URI,
+                                    /*OUT*/ javacall_handle *pJCHandle)
 {
     static LimeFunction *f = NULL;
     javacall_int64 res = 0;
-    audio_handle* pHandle = MALLOC(sizeof(audio_handle));
+    audio_handle* pHandle = NULL;
     size_t uriLength = ( NULL != URI ) ? wcslen(URI) : 0;
 
     javacall_utf16 *mediaTypeWide;
@@ -92,11 +93,15 @@ static javacall_handle video_create(int appId, int playerId,
     char *buff = MALLOC(len);
     
     if (buff == NULL) {
-        return NULL;
+        *pJCHandle = NULL;
+        return JAVACALL_OUT_OF_MEMORY;
     }
 
+    pHandle = MALLOC(sizeof(audio_handle));
     if (NULL == pHandle) {
-        return NULL;
+        FREE( buff );
+        *pJCHandle = NULL;
+        return JAVACALL_OUT_OF_MEMORY;
     }
 
     if (f == NULL) {
@@ -117,7 +122,10 @@ static javacall_handle video_create(int appId, int playerId,
     f->call(f, &res, mediaTypeWide, mediaTypeWideLen, URI, uriLength);
 
     if (res <= 0) {
-	    return NULL;
+        FREE( buff );
+        FREE( pHandle );
+        *pJCHandle = NULL;
+	    return JAVACALL_FAIL;
     }
 
     pHandle->hWnd             = (long) res;
@@ -154,7 +162,8 @@ static javacall_handle video_create(int appId, int playerId,
         FREE(buff);
     }
     
-    return pHandle;
+    *pJCHandle = pHandle;
+    return JAVACALL_OK;
 }
 
 /**
