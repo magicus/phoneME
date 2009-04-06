@@ -30,6 +30,7 @@ import com.sun.midp.chameleon.*;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
+import com.sun.midp.lcdui.EventConstants;
 
 import javax.microedition.lcdui.*;
 
@@ -50,13 +51,29 @@ import javax.microedition.lcdui.*;
  * PopupLayer and MIDPWindow can allow non visible popup layers.
  */
 public class ScrollablePopupLayer extends PopupLayer
-    implements ScrollListener {
+    implements ScrollListener, GestureAnimatorListener {
 
     /**
      * The scroll indicator layer to notify of scroll settings
      * in case not all content can fit on the menu.
      */
     protected ScrollIndLayer scrollInd;
+
+    /**
+     *  Y coordinate of pointer during pointer drag event.
+     */
+    private int pointerY = Integer.MAX_VALUE;
+
+    /**
+     *  Desired drag amount needed to return content
+     *  to the stable position.
+     */
+    private int stableY = 0;
+    
+    /**
+     * Last delta of pointer y coordinate during drag operation.
+     */
+    private int pointerDeltaY = 0;
     
     
     /**
@@ -65,6 +82,7 @@ public class ScrollablePopupLayer extends PopupLayer
      */
     public ScrollablePopupLayer() {
         super((Image)null, -1);
+        setSupportsInput(true);
     }
 
 
@@ -75,6 +93,7 @@ public class ScrollablePopupLayer extends PopupLayer
      */
     public ScrollablePopupLayer(Image bgImage, int bgColor) {
         super(bgImage, bgColor);
+        setSupportsInput(true);
     }
     
     /**
@@ -84,6 +103,7 @@ public class ScrollablePopupLayer extends PopupLayer
      */
     public ScrollablePopupLayer(Image[] bgImage, int bgColor) {
         super(bgImage, bgColor);
+        setSupportsInput(true);
     }
 
     /**
@@ -94,6 +114,16 @@ public class ScrollablePopupLayer extends PopupLayer
      * 
      */
     public void scrollContent(int scrollType, int thumbPosition) {
+    }
+
+    /**
+     * Drag the contents to the specified amount of pixels.
+     * @param deltaY
+     * @return desired drag amount to become stable
+     *
+     */
+    public int dragContent(int deltaY) {
+        return 0;
     }
 
     public void setScrollInd(ScrollIndLayer newScrollInd) {
@@ -172,5 +202,49 @@ public class ScrollablePopupLayer extends PopupLayer
             scrollInd.setBounds();
         }
     }
+
+    /**
+     * Handle input from a pen tap.
+     *
+     * Parameters describe the type of pen event and the x,y location in the
+     * layer at which the event occurred.
+     *
+     * Important: the x,y location of the pen tap will already be translated
+     * into the coordinate space of the layer.
+     *
+     * @param type the type of pen event
+     * @param x the x coordinate of the event
+     * @param y the y coordinate of the event
+     * @return
+     */
+    public boolean pointerInput(int type, int x, int y) {
+        switch (type) {
+            case EventConstants.PRESSED:
+                pointerY = y;
+                break;
+            case EventConstants.DRAGGED:
+                if (pointerY != Integer.MAX_VALUE) {
+                    pointerDeltaY = pointerY - y;
+                    stableY = dragContent(pointerY - y);
+                    pointerY = y;
+                }
+                break;
+            case EventConstants.FLICKERED:
+                if (pointerDeltaY != 0) {
+                    GestureAnimator.flick(this, pointerDeltaY);
+                }
+                break;
+            case EventConstants.RELEASED:
+            case EventConstants.GONE:
+                if (stableY != 0) {
+                    GestureAnimator.dragToStablePosition(this, stableY);
+                    stableY = 0;
+                }
+                pointerY = Integer.MAX_VALUE;
+                break;
+        }
+        return true;
+    }
+    
 }
 

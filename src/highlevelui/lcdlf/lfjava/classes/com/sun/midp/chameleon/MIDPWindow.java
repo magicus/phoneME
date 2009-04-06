@@ -252,7 +252,7 @@ public class MIDPWindow extends CWindow {
             addLayer(alertLayer);
         } else {
             titleLayer.setTitle(displayable.getTitle());
-	    bodyLayer.setVisible(true);
+            bodyLayer.setVisible(true);
         }
         addLayer(tickerLayer);
 

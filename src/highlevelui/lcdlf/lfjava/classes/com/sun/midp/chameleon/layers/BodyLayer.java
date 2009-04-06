@@ -31,13 +31,14 @@ import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
+import com.sun.midp.lcdui.EventConstants;
 
 /**
  * Basic layer containing the application area of the display. This layer
  * contains the current Displayable contents, such as a Form or Canvas.
  */
 public class BodyLayer extends CLayer
-    implements ScrollListener {
+    implements ScrollListener, GestureAnimatorListener {
 
     /**
      * The scroll indicator layer to notify of scroll settings
@@ -47,6 +48,22 @@ public class BodyLayer extends CLayer
 
     /** Tunnel instance to call Display methods */
     ChamDisplayTunnel tunnel;
+
+    /**
+     *  Y coordinate of pointer during pointer drag event.
+     */
+    private int pointerY = Integer.MAX_VALUE;
+    
+    /**
+     *  Desired drag amount needed to return content
+     *  to the stable position.
+     */
+    private int stableY = 0;
+
+    /**
+     * Last delta of pointer y coordinate during drag operation.
+     */
+    private int pointerDeltaY = 0;
 
     /**
      * Create a new BodyLayer.
@@ -76,7 +93,7 @@ public class BodyLayer extends CLayer
         super(bgImage, bgColor);
         this.tunnel = tunnel;
         this.visible = false;
-
+        setSupportsInput(true);
         setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
     
@@ -97,6 +114,7 @@ public class BodyLayer extends CLayer
         super(bgImage, bgColor);
         this.tunnel = tunnel;
         this.visible = false;
+        setSupportsInput(true);
         setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
 
@@ -355,5 +373,63 @@ public class BodyLayer extends CLayer
             scrollInd.setBounds();             
         }
     }
+
+    /**
+     * Handle input from a pen tap.
+     *
+     * Parameters describe the type of pen event and the x,y location in the
+     * layer at which the event occurred.
+     *
+     * Important: the x,y location of the pen tap will already be translated
+     * into the coordinate space of the layer.
+     *
+     * @param type the type of pen event
+     * @param x the x coordinate of the event
+     * @param y the y coordinate of the event
+     * @return
+     */
+    public boolean pointerInput(int type, int x, int y) {
+        if (tunnel != null) {
+            switch (type) {
+                case EventConstants.PRESSED:
+                    pointerY = y;
+                    break;
+                case EventConstants.DRAGGED:
+                    if (pointerY != Integer.MAX_VALUE) {
+                        pointerDeltaY = pointerY - y;
+                        stableY = tunnel.callDragContent(pointerDeltaY);
+                        pointerY = y;
+                    }
+                    break;
+                case EventConstants.FLICKERED:
+                    if (pointerDeltaY != 0) {
+                        GestureAnimator.flick(this, pointerDeltaY);
+                    }
+                    break;                    
+                case EventConstants.RELEASED:
+                case EventConstants.GONE:
+                    if (stableY != 0) {
+                        // IMPL_NOTE: should return 0
+                        GestureAnimator.dragToStablePosition(this, stableY);
+                        stableY = 0;
+                    }
+                    pointerY = Integer.MAX_VALUE;
+                    break;
+            }
+        }
+        // pass event to other consumers
+        return false;
+    }
+
+    /**
+     * Drag displayable content
+     * @param deltaY
+     * @return desired drag amount to become stable
+     */
+    public int dragContent(int deltaY) {
+        return tunnel.callDragContent(deltaY);
+    }
+
+
 }
 

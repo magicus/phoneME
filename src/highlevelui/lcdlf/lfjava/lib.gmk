@@ -183,7 +183,9 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/InputModeLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/VirtualKeyboardLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/VirtualKeyListener.java \
-    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/PTILayer.java
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/PTILayer.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/GestureAnimator.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/GestureAnimatorListener.java
 
 # generated skin files 
 SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE = $(GENERATED_DIR)/lib/skin.bin 

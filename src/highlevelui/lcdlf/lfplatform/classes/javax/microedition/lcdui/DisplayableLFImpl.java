@@ -543,6 +543,17 @@ abstract class DisplayableLFImpl implements DisplayableLF {
     }
 
     /**
+     * This method notifies displayable to drag its content
+     *
+     * @param deltaY
+     * @return desired drag amount to become stable
+     */
+    public int uCallDragContent(int deltaY) {
+        // by default nothing to do
+        return 0;
+    }
+
+    /**
      * <code>Display</code> calls this method on it's current 
      * <code>Displayable</code>.
      * <code>Displayable</code> uses this opportunity to do necessary stuff

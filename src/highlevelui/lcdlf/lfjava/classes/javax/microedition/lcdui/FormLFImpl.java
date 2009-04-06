@@ -795,6 +795,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * @param y The y coordinate of the press
      */
     void uCallPointerPressed(int x, int y) {
+
         ItemLFImpl v = null;
 
         pointerIndicator = true;
@@ -832,6 +833,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * @param y The y coordinate of the release
      */
     void uCallPointerReleased(int x, int y) {
+
         ItemLFImpl v = null;
 
         pointerIndicator = false;        
@@ -873,6 +875,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * @param y The y coordinate of the drag
      */
     void uCallPointerDragged(int x, int y) {
+
         ItemLFImpl v = null;
 
         synchronized (Display.LCDUILock) {
@@ -2372,8 +2375,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
     }
 
     /**
-     * Perform a scrolling at the given position. 
-     * @param context position  
+     * Perform a scrolling at the given position.
+     * @param position scroll position
      */
     protected void uScrollAt(int position) {
         ItemLFImpl[] items = null;
@@ -2388,6 +2391,35 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                                  items, traverseIndex);
             updateCommandSet();
         }
+    }
+
+
+    /**
+     * Perform a scrolling by specified number of pixels.
+     * Returns amount of pixels to drag to return content
+     * to the stable position.
+     * @param deltaY number of pixels to scroll
+     * @return desired drag amount to become stable
+     */
+    protected int uScrollBy(int deltaY) {
+        int ret = 0;
+        ItemLFImpl[] items = null;
+        synchronized (Display.LCDUILock) {
+            items = new ItemLFImpl[numOfLFs];
+            System.arraycopy(itemLFs, 0, items, 0, numOfLFs);
+        }
+        int oldY = viewable[Y];
+        if (owner instanceof TextBox && itemLFs[0] instanceof TextBoxLFImpl) {
+            ret = ((TextBoxLFImpl)itemLFs[0]).uScrollBy(deltaY);
+        } else {
+            ret = super.uScrollBy(deltaY);
+        }
+        if (oldY != viewable[Y]) {
+            uInitItemsInViewport(viewable[Y] > oldY ? Canvas.DOWN : Canvas.UP,
+                                 items, traverseIndex);
+            updateCommandSet();
+        }
+        return ret;
     }
 
     /**

@@ -561,8 +561,18 @@ class DisplayableLFImpl implements DisplayableLF {
     public void uCallScrollContent(int scrollType, int thumbPosition) {
         // by default nothing to do 
     }
-    
 
+    /**
+     * This method notify displayable to drag its content
+     *
+     * @param deltaY
+     * @return desired drag amount to become stable
+     */
+    public int uCallDragContent(int deltaY) {
+        // by default nothing to do
+        return 0;
+    }
+    
     /**
      * Display calls this method on it's current Displayable.
      * This function simply calls lCallPaint() after obtaining LCDUILock.
@@ -731,6 +741,10 @@ class DisplayableLFImpl implements DisplayableLF {
                         eventType = 2;
                     }
                     break;
+                case EventConstants.FLICKERED:
+                    if (sawPointerPress) {
+                        eventType = 3;
+                    }
                 default:
                     // will be handled below
                     break;
@@ -748,6 +762,9 @@ class DisplayableLFImpl implements DisplayableLF {
             break;
         case 2:
             uCallPointerDragged(x, y);
+            break;
+        case 3:
+            uCallPointerFlickered(x, y);
             break;
         default:
             if (sawPointerPress) {
@@ -780,6 +797,13 @@ class DisplayableLFImpl implements DisplayableLF {
      * @param y The y coordinate of the release
      */
     void uCallPointerReleased(int x, int y) { }
+    /**
+     * Handle a pointer flicker event
+     *
+     * @param x The x coordinate of the flickered
+     * @param y The y coordinate of the flickered
+     */
+     void uCallPointerFlickered(int x, int y) { }
         
 
     /**
@@ -1169,7 +1193,7 @@ class DisplayableLFImpl implements DisplayableLF {
      * Used to indicate the invalidate is needed
      */
     boolean pendingInvalidate;
-   
+
     // ************************************************************
     //  Static initializer, constructor
     // ************************************************************

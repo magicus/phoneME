@@ -630,6 +630,7 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
     void uCallPointerDragged(int x, int y) {
         try {
             synchronized (Display.calloutLock) {
+                itemWasPressed = false;
                 customItem.pointerDragged(x - contentBounds[X] -
                                           ScreenSkin.PAD_FORM_ITEMS, 
                                           y - contentBounds[Y] - 

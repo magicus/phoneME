@@ -27,6 +27,8 @@
 package com.sun.midp.chameleon;
 
 import com.sun.midp.chameleon.layers.BackgroundLayer;
+import com.sun.midp.lcdui.EventConstants;
+
 import javax.microedition.lcdui.*;
 
 /**
@@ -74,6 +76,9 @@ public abstract class CWindow {
 
     /** Layers replication to not keep the lock on painting */
     protected CLayer[] dirtyLayers = new CLayer[dirtyMaxCount];
+
+    /** Layer currently accepting pen events */
+    protected CLayer layerUnderPen;
 
     /**
      * Background layer of this window, should be the bottom most layer
@@ -261,12 +266,17 @@ public abstract class CWindow {
     public boolean pointerInput(int type, int x, int y) {
         CLayer layer;
         synchronized (layers) {
+            CLayer newLayerUnderPen = null;
             for (CLayerElement le = layers.getTop();
                     le != null; le = le.getLower()) {
                 layer = le.getLayer();
                 if (layer.visible && layer.supportsInput &&
                     layer.handlePoint(x, y))
                 {
+                    // remeber topmost layer under pen
+                    if (newLayerUnderPen == null) {
+                        newLayerUnderPen = layer;
+                    }
                     // If the layer is visible, supports input, and
                     // contains the point of the pointer press, we translate
                     // the point into the layer's coordinate space and
@@ -274,10 +284,20 @@ public abstract class CWindow {
                     if (layer.pointerInput(type, x - layer.bounds[X],
                                            y - layer.bounds[Y]))
                     {
+                        if (layerUnderPen != null && newLayerUnderPen != layerUnderPen) {
+                            layerUnderPen.pointerInput(EventConstants.GONE, -1, -1);
+                        }
+                        layerUnderPen = newLayerUnderPen;
                         return true;
                     }
                 }
             }
+
+            if (layerUnderPen != null && newLayerUnderPen != layerUnderPen) {
+                layerUnderPen.pointerInput(EventConstants.GONE, -1, -1);
+            }
+            layerUnderPen = newLayerUnderPen;
+
         } // sync
         return false;
     }

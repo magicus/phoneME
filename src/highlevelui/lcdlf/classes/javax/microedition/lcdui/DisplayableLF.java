@@ -241,6 +241,14 @@ interface DisplayableLF {
      */
     void uCallScrollContent(int scrollType, int thumbPosition);
 
+    /**
+     * This method notifies displayable to drag its content
+     *
+     * @param deltaY
+     * @return desired drag amount to become stable
+     */
+    int uCallDragContent(int deltaY);
+
     boolean uSetRotatedStatus (boolean newStatus);
 
     /**
