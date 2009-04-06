@@ -26,6 +26,9 @@
 
 package com.sun.j2me.content;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Vector;
 
@@ -186,7 +189,70 @@ public class ContentHandlerRegData {
         this.accessRestricted = copy(accessRestricted,true,false);
     }
     
-    /**
+    public ContentHandlerRegData(DataInputStream dataIn) throws IOException {
+    	ID = dataIn.readUTF();
+    	registrationMethod = dataIn.readInt();
+		types = readStringArray(dataIn);
+		suffixes = readStringArray(dataIn);
+		actions = readStringArray(dataIn);
+		
+		actionnames = new ActionNameMap[ dataIn.readInt() ]; 
+		for( int i = 0; i < actionnames.length; i++){
+			actionnames[i] = readActionNameMap( dataIn ); 
+		}
+    	
+		accessRestricted = readStringArray(dataIn);
+	}
+
+	public void serialize(DataOutputStream dataOut) throws IOException {
+		dataOut.writeUTF(ID);
+		dataOut.writeInt(registrationMethod);
+		serialize(types, dataOut);
+		serialize(suffixes, dataOut);
+		serialize(actions, dataOut);
+		
+    	dataOut.writeInt(actionnames.length);
+		for( int i = 0; i < actionnames.length; i++){
+			serialize( actionnames[i], dataOut );
+		}
+    	
+		serialize(accessRestricted, dataOut);
+	}
+	
+	private ActionNameMap readActionNameMap(DataInputStream dataIn) throws IOException {
+    	String locale = dataIn.readUTF();
+    	int size = dataIn.readInt();
+    	String[] actions = new String[ size ], names = new String[ size ];
+		for( int i = 0; i < size; i++){
+			actions[ i ] = dataIn.readUTF();
+			names[ i ] = dataIn.readUTF();
+		}
+		return new ActionNameMap( actions, names, locale );
+	}
+
+	private String[] readStringArray(DataInputStream dataIn) throws IOException {
+		String[] result = new String[ dataIn.readInt() ];
+		for( int i = 0; i < result.length; i++)
+			result[ i ] = dataIn.readUTF();
+		return result;
+	}
+
+    private static void serialize(ActionNameMap anm, DataOutputStream dataOut) throws IOException {
+    	dataOut.writeUTF(anm.getLocale());
+    	dataOut.writeInt(anm.size());
+    	for( int i = 0; i < anm.size(); i++){
+    		dataOut.writeUTF(anm.getAction(i));
+    		dataOut.writeUTF(anm.getActionName(i));
+    	}
+	}
+
+	private static void serialize(String[] strings, DataOutputStream dataOut) throws IOException {
+    	dataOut.writeInt(strings.length);
+    	for( int i = 0; i < strings.length; i++)
+    		dataOut.writeUTF(strings[i]);
+	}
+
+	/**
      * Get the content handler ID.  The ID uniquely identifies the
      * application which contains the content handler.
      * After registration and for every registered handler,
@@ -197,8 +263,8 @@ public class ContentHandlerRegData {
     public String getID() {
         return ID;
     }
-
-    /**
+    
+	/**
      * Checks that all of the string references are non-null
      * and not zero length.  If either the argument is null or
      * is an empty array the default ZERO length string array is used.
@@ -266,17 +332,4 @@ public class ContentHandlerRegData {
         return ZERO_ACTIONNAMES;
     }
 
-    /**
-     * Copy an array of ContentHandlers making a new ContentHandler
-     * for each ContentHandler.  Make copies of any multiple object.
-     * @param handlers the array of handlers duplicate
-     * @return the new array of content handlers
-     * /
-    public static ContentHandler[] copy(ContentHandler[] handlers) {
-        ContentHandler[] h = new ContentHandler[handlers.length];
-        for (int i = 0; i < handlers.length; i++) {
-            h[i] = handlers[i];
-        }
-        return h;
-    }*/
 }

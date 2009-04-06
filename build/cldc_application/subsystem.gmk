@@ -111,6 +111,8 @@ INTERNAL_JSR_211_JAVA_FILES := \
     $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/ContentHandlerImpl.java \
     $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/ContentReader.java \
     $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/RegistryImpl.java \
+    $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/RegistryGate.java \
+    $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/ContentHandlerHandle.java \
     $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/RequestListenerImpl.java \
     $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/ResponseListenerImpl.java \
     $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/InvocationImpl.java \

@@ -26,9 +26,9 @@
 
 package com.sun.j2me.content;
 
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.Vector;
-
-import com.sun.j2me.security.Token;
 
 /**
  * Standalone Registry Storage manager.
@@ -39,37 +39,16 @@ import com.sun.j2me.security.Token;
  * constructor and then releases its in the native finalizer.
  */
 class RegistryStore implements RegistryGate {
-
-    /** 
-     * Content Handler fields indexes.
-     * <BR>Used with functions: @link findHandler(), @link getValues() and 
-     * @link getArrayField().
-     * <BR> They should match according enums in jsr211_registry.h
-     */
-    static final int FIELD_ID         = 0;  /** Handler ID */
-    static final int FIELD_TYPES      = 1;  /** Types supported by a handler */
-    static final int FIELD_SUFFIXES   = 2;  /** Suffixes supported */
-                                            /** by a handler */
-    static final int FIELD_ACTIONS    = 3;  /** Actions supported */
-                                            /** by a handler */
-    static final int FIELD_LOCALES    = 4;  /** Locales supported */
-                                            /** by a handler */
-    static final int FIELD_ACTION_MAP = 5;  /** Handler action map */
-    static final int FIELD_ACCESSES   = 6; /** Access list */
-    static final int FIELD_COUNT      = 7; /** Total number of fields */
-    
+	
     static final Vector emptyVector = new Vector();
     static final ContentHandlerImpl[] emptyHandlersArray = new ContentHandlerImpl[0]; 
 
-    /** This class has a different security domain than the MIDlet suite */
-    private static Token classSecurityToken;
-    
-	public ContentHandlerImpl.Handle register(ApplicationID appID,
+	public ContentHandlerImpl.Data register(ApplicationID appID,
 										ContentHandlerRegData handlerData) {
         if( !register0(CLDCAppID.from(appID).suiteID, CLDCAppID.from(appID).className, 
         						handlerData) )
         	return null;
-        return new ContentHandlerHandle( handlerData.ID );
+        return new ContentHandlerImpl.Data(handlerData.ID, appID, handlerData.registrationMethod );
 	}
 
     /**
@@ -81,9 +60,9 @@ class RegistryStore implements RegistryGate {
         return unregister0(handlerId);
     }
 
-	public void enumHandlers(String callerId, int searchBy, String value,
+	public void enumHandlers(String callerId, int fieldId, String value,
 						ContentHandlerImpl.Handle.Receiver output) {
-		ContentHandlerImpl[] result = findHandler(callerId, searchBy, value);
+		ContentHandlerImpl[] result = findHandler(callerId, fieldId, value);
 		for( int i = 0; i < result.length; i++)
 			output.push(result[i].handle);
 	}
@@ -115,19 +94,19 @@ class RegistryStore implements RegistryGate {
      * <BR><CITE> Only content handlers that this application is allowed to
      * access will be included. </CITE> (in result).
      * @param callerId ID value to check access
-     * @param searchBy indicator of searchable field. Allowed: 
+     * @param fieldId indicator of searchable field. Allowed: 
      *        @link FIELD_TYPES, @link FIELD_SUFFIXES, @link FIELD_ACTIONS 
      *        values. The special case for the testId implementation: 
      *        @link FIELD_ID specified.
      * @param value Searched value
      * @return found handlers array.
      */
-    public ContentHandlerImpl[] findHandler(String callerId, int searchBy, 
+    public ContentHandlerImpl[] findHandler(String callerId, int fieldId, 
                                                 String value) {
         /* Check value for null */
         value.length();
         HandlersCollection collection = new HandlersCollection();
-        deserializeCHArray(findHandler0(callerId, searchBy, value), collection);
+        deserializeCHArray(findHandler0(callerId, fieldId, value), collection);
         return collection.getArray(); 
     }
 
@@ -143,12 +122,12 @@ class RegistryStore implements RegistryGate {
         return collection.getArray(); 
     }
     
-    public ContentHandlerImpl getHandler( ApplicationID appID ){
+    public ContentHandlerImpl.Data getHandler( ApplicationID appID ){
         ContentHandlerImpl[] arr = forSuite(CLDCAppID.from(appID).suiteID);
         String classname = CLDCAppID.from(appID).className;
         for (int i = 0; i < arr.length; i++) {
             if (classname.equals(CLDCAppID.from(arr[i].applicationID).className)) {
-                return arr[i];
+                return arr[i].getHandlerData();
             }
         }
         return null;
@@ -157,13 +136,13 @@ class RegistryStore implements RegistryGate {
     /**
      * Returns all stored in the Registry values for specified field.
      * @param callerId ID value to check access
-     * @param searchBy index of searchable field. Allowed: 
+     * @param fieldId index of searchable field. Allowed: 
      *        @link FIELD_TYPES, @link FIELD_SUFFIXES, @link FIELD_ACTIONS, 
      *        @link FIELD_ID values.
      * @return found values array.
      */
-    public String[] getValues(String callerId, int searchBy) {
-        String res = getValues0(callerId, searchBy);
+    public String[] getValues(String callerId, int fieldId) {
+        String res = getValues0(callerId, fieldId);
         Vector v = deserializeString(res);
         String[] result = new String[ v.size() ];
         v.copyInto(result);
@@ -179,19 +158,12 @@ class RegistryStore implements RegistryGate {
      *        values.
      * @return array of values
      */
-    static String[] getArrayField(String handlerId, int fieldId) {
+    public String[] getHandlerValues(String handlerId, int fieldId) {
         String res = loadFieldValues0(handlerId, fieldId);
         Vector v = deserializeString(res);
         String[] result = new String[ v.size() ];
         v.copyInto(result);
         return result;
-    }
-
-    static class HandlerData {
-    	int		suiteId;
-    	String 	classname;
-    	int		registrationMethod;
-		public String ID;
     }
     
     /**
@@ -204,16 +176,14 @@ class RegistryStore implements RegistryGate {
      * @return loaded ContentHandlerImpl object or
      * <code>null</code> if given handler ID is not found in Registry database.
      */
-    public ContentHandlerImpl getHandler(String callerId, String id, int searchMode) {
+    public ContentHandlerImpl.Data findHandler(String callerId, String id, int searchMode) {
         if (id.length() != 0) {
-	        HandlerData data = deserializeCH( getHandler0( callerId, id, searchMode ) );
-	        if( data != null )
-	            return new ContentHandlerHandle( data ).get();
+        	return deserializeCH( getHandler0( callerId, id, searchMode ) );
         }
     	return null;
     }
 
-	static HandlerData getHandler(String handlerID) {
+	public ContentHandlerImpl.Data getHandlerData(String handlerID) {
 		return deserializeCH( getHandler0( null, handlerID, SEARCH_EXACT ) );
 	}
 
@@ -264,7 +234,7 @@ class RegistryStore implements RegistryGate {
      * @param str ContentHandler main data in serialized form.
      * @return restored ContentHandlerImpl object or null
      */
-    private static HandlerData deserializeCH(String str) {
+    private static ContentHandlerImpl.Data deserializeCH(String str) {
         if(AppProxy.LOGGER != null) 
         	AppProxy.LOGGER.println( "RegistryStore.deserializeCH '" + str + "'");
         Vector components = deserializeString(str);
@@ -282,12 +252,7 @@ class RegistryStore implements RegistryGate {
         if (components.size() < 4) return null;
         int regMethod = Integer.parseInt((String)components.elementAt(3), 16);
 
-        HandlerData ch = new HandlerData();
-        ch.ID = id;
-        ch.suiteId = Integer.parseInt(storageId, 16);
-        ch.classname = class_name;
-        ch.registrationMethod = regMethod;
-        return ch;
+        return new ContentHandlerImpl.Data( id, new CLDCAppID( Integer.parseInt(storageId, 16), class_name ), regMethod );
     }
 
     /**
@@ -304,19 +269,6 @@ class RegistryStore implements RegistryGate {
     	}
     }
 
-    /**
-     * Sets the security token used for privileged operations.
-     * The token may only be set once.
-     * @param token a Security token
-     */
-    public void setSecurityToken(Token token) {
-		if (classSecurityToken != null) {
-            throw new SecurityException();
-        }
-        classSecurityToken = token;
-    }
-    
-    
     /** Singleton instance. Worker for the class static methods. */
     private static RegistryGate store = new RegistryStore();
 
@@ -419,39 +371,4 @@ class RegistryStore implements RegistryGate {
      */
     private static native boolean unregister0(String handlerId);
 
-}
-
-class ContentHandlerHandle implements ContentHandlerImpl.Handle {
-	private ContentHandlerImpl 	created = null;
-	
-	private final String	handlerID;
-	
-	ContentHandlerHandle( String handlerID ){
-		this.handlerID = handlerID;
-	}
-	
-	ContentHandlerHandle( RegistryStore.HandlerData data ){
-		this( data.ID );
-		Init( data );
-	}
-	
-	private void Init( final RegistryStore.HandlerData data ){
-		created = new ContentHandlerImpl(new CLDCAppID(data.suiteId, data.classname), this){{
-			this.ID = handlerID; 
-			this.registrationMethod = data.registrationMethod;
-		}};
-	}
-	
-	public ContentHandlerImpl get(){
-		if( created == null )
-			Init(RegistryStore.getHandler( handlerID ));
-		return created;
-	}
-	
-	public String getID() { return handlerID; }
-	//public int getSuiteId() { return get().storageId; }
-	
-	public String[] getArrayField(int fieldId) {
-		return RegistryStore.getArrayField( getID(), fieldId );
-	}
 }

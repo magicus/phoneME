@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -35,27 +35,6 @@ import javax.microedition.content.Registry;
 import javax.microedition.io.Connection;
 import javax.microedition.io.ConnectionNotFoundException;
 
-interface StoreGate {
-	int size();
-	void put(InvocationImpl invoc);
-	void resetListenNotifiedFlag(ApplicationID appID, boolean request);
-	void setCleanupFlag(ApplicationID appID, boolean cleanup);
-	void resetFlags(int tid);
-	void update(InvocationImpl invoc);
-	InvocationImpl getRequest(ApplicationID appID, boolean shouldBlock, 
-						Counter cancelCounter);
-	InvocationImpl getResponse(ApplicationID appID, boolean shouldBlock, 
-						Counter cancelCounter);
-	InvocationImpl getCleanup(ApplicationID appID);
-	InvocationImpl getByTid(int tid, boolean next);
-	void dispose(int tid);
-	
-	boolean waitForEvent(ApplicationID appID, boolean request, 
-						Counter cancelCounter);
-	void unblockWaitingThreads();
-}
-
-
 /**
  * Implementation of Invocation class.
  * <p>
@@ -82,7 +61,7 @@ public final class InvocationImpl {
      * The URL of the content; may be <code>null</code>.
      * URLs of up to and including 256 characters in length MUST be
      * supported. A URL with a length of zero is treated as
-     * <code>null</code> and is ignored..
+     * <code>null</code> and is ignored.
      */
     String url;
 
@@ -98,14 +77,8 @@ public final class InvocationImpl {
     /** The array of arguments; may be <code>null</code> */
     String[] arguments;
 
-    /** The length (returned by get0) of the argument array. */
-    int argsLen;
-
     /** The data array; may be <code>null</code>. */
     byte[] data;
-
-    /** The length (returned by get0) needed for the data array. */
-    int dataLen;
 
     /**
      * Set to <code>true</code> if the invoker must be notified of
@@ -123,10 +96,6 @@ public final class InvocationImpl {
     int tid = UNDEFINED_TID;
 
     ApplicationID	destinationApp;
-//    /** The MIDlet suite that should handle this Invocation. */
-//    int suiteId;
-//    /** The classname of the MIDlet to deliver to. */
-//    String classname;
 
     /**
      * The status of the request; one of
@@ -146,13 +115,14 @@ public final class InvocationImpl {
 
     ApplicationID	invokingApp;
     
-//    /** The MIDlet suite of the invoking application. */
-//    int invokingSuiteId;
-//    /** The classname in the invoking MIDlet suite for the response. */
-//    String invokingClassname;
-
     /** The application name of the invoking MIDlet suite. */
     String invokingAppName;
+
+    /** The length (returned by get0) of the argument array. */
+    int argsLen;
+
+    /** The length (returned by get0) needed for the data array. */
+    int dataLen;
 
     /** The previous invocation, if any. */
     InvocationImpl previous;

@@ -26,6 +26,10 @@
 
 package com.sun.j2me.content;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 public class CLDCAppID implements ApplicationID {
 	public int		suiteID;
 	public String	className;
@@ -39,6 +43,11 @@ public class CLDCAppID implements ApplicationID {
 		this(AppProxy.EXTERNAL_SUITE_ID, null);
 	}
 	
+	public CLDCAppID(DataInputStream in) throws IOException {
+		this.suiteID = in.readInt();
+		this.className = in.readUTF();
+	}
+
 	public boolean isNative() {
 		return suiteID == AppProxy.EXTERNAL_SUITE_ID;
 	}
@@ -47,6 +56,17 @@ public class CLDCAppID implements ApplicationID {
 		return new CLDCAppID(suiteID, className);
 	}
 
+	public void serialize(DataOutputStream dataOut) throws IOException {
+		dataOut.writeInt(suiteID);
+		dataOut.writeUTF(className);
+	}
+	
+	public ApplicationID read(DataInputStream dataIn) throws IOException {
+		suiteID = dataIn.readInt();
+		className = dataIn.readUTF();
+		return this;
+	}
+	
 	public static CLDCAppID from(ApplicationID appID) {
 		return (CLDCAppID)appID;
 	}
