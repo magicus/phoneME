@@ -32,13 +32,13 @@ public class Jsr234Proxy {
     
     protected Jsr234Proxy() {}
     
-    public static Jsr234Proxy getInstance() {
+    public static synchronized Jsr234Proxy getInstance() {
         if( null == _instance )
         {
             try {
                 _instance = ( Jsr234Proxy )Class.forName( "com.sun.amms." +
                         "SupplementsToMMAPI" ).newInstance();
-            } catch ( Throwable t )
+            } catch ( Exception e )
             {
                 _instance = new Jsr234Proxy();
             }
