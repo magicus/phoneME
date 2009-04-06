@@ -47,6 +47,10 @@ ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif
 
+define fixcygpath
+echo $(1)
+endef
+
 include $(JAVACALL_DIR)/build/common.gmk
 
 TEMP_OBJECTS1=$(patsubst %.c,%.o,$(PORTING_SOURCE))
