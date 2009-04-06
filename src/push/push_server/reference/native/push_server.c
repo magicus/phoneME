@@ -2388,16 +2388,16 @@ static int pushProcessPort(PushEntry* pe){
                     REPORT_INFO(LC_PROTOCOL, "(Push)TCP Server: "
                                 "Resource limit update error");
                 }
-            } else{
+            } else {
                 /**
                  * pcsl_serversocket_open can never return WOULDBLOCK
                  * thus anything other that PCSL_NET_SUCCESS is an
                  * indication of an error
                  */
-                midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
+                midp_snprintf(get_KNIBuffer(), KNI_BUFFER_SIZE,
                               "IOError in push::serversocket::open = %d\n",
                               pcsl_network_error(handle));
-                REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
+                REPORT_INFO1(LC_PROTOCOL, "%s\n", get_KNIBuffer());
 
                 pe->fd = -1;
             }
@@ -2431,10 +2431,10 @@ static int pushProcessPort(PushEntry* pe){
 #endif
 
     } else{
-        midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
+        midp_snprintf(get_KNIBuffer(), KNI_BUFFER_SIZE,
                       "Error in push::serversocket::open: "
                       "unknown connection type.\n");
-        REPORT_WARN1(LC_PROTOCOL, "%s\n", gKNIBuffer);
+        REPORT_WARN1(LC_PROTOCOL, "%s\n", get_KNIBuffer());
         return -3;
     }
 
