@@ -33,6 +33,7 @@ import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.resources.ChoiceGroupResources;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.layers.ScrollIndLayer;
+import com.sun.midp.chameleon.CGraphicsUtil;
 
 /**
  * This is the look &amps; feel implementation for ChoiceGroup.
@@ -882,11 +883,24 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             hilighted = (i == hilightedIndex && hasFocus);
 
             if (hilighted) {
-                g.setColor(ScreenSkin.COLOR_BG_HL);
-                g.fillRect(-ChoiceGroupSkin.PAD_H, 0,
+                //Rache load image if available 
+                Image bgImages []= ScreenSkin.IMAGE_BG_HL;
+                if (bgImages != null){
+                    System.out.println("ChoiceGroupLFImpl bgImages != null");
+                    this.bgImage = new Image[bgImages.length];
+                    System.arraycopy(bgImages, 0, this.bgImage, 0, bgImages.length);
+                    if (bgImage.length == 3) {
+                        System.out.println("ChoiceGroupLFImpl callin draw3pcsBackground");
+                        CGraphicsUtil.draw3pcsBackground(g, 0, 0, bounds[WIDTH], bgImage);
+                    }
+                }else{//no image available draw a rect with color as background
+                     System.out.println("ChoiceGroupLFImpl drawing filled rect as background");
+                     g.setColor(ScreenSkin.COLOR_BG_HL);
+                     g.fillRect(-ChoiceGroupSkin.PAD_H, 0,
                            ChoiceGroupSkin.PAD_H + contentW +
                            ChoiceGroupSkin.PAD_H,
                            elHeights[i]);
+                }
             }
 
             textOffset = 0;
@@ -1107,4 +1121,10 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
     boolean traversedIn;
 
     boolean hasFocusWhenPressed; // = false 
+
+     /**
+     * The image to use as a background for this layer if this layer
+     * is not transparent and does not use a fill color.
+     */
+    protected Image[] bgImage;
 }

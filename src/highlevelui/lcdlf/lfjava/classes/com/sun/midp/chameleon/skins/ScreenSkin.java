@@ -192,6 +192,15 @@ public class    ScreenSkin {
      */
     public static Image[] IMAGE_HS_BG_WO_TITLE;
 
+
+   /**
+     * This field corresponds to SCREEN_IMAGE_BG_HL skin property.
+     * See its comment for further details. A 'null' value for this 
+     * array means there is no image background and a solid fill color 
+     * should be used.
+     */
+    public static Image[] IMAGE_BG_HL;
+
     /**
      * Layout diraction. True if current diraction is right-to-left
      */

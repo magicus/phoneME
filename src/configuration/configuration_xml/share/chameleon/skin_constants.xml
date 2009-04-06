@@ -828,7 +828,23 @@
                      image or solid fill color is used instead of background 
                      image."/>
 
-
+<constant Type="int"
+            Name="SCREEN_IMAGE_BG_HL"
+            Comment="The 3 piece background image to be used in the 
+                     'selected item highloght background'.
+                     Piece 0: Left edge of the titlebar.
+                     Piece 1: Middle tile of the titlebar.
+                     Piece 2: Right edge of the titlebar.
+                     
+                     These images are used to render a background for the 
+                     titlebar. If the combined widths of the left, middle,
+                     and right images is less than the overall width of the 
+                     titlebar, the middle image will be tiled horizontally 
+                     to make up the difference.
+                     
+                     If isn't specified or cannot be loaded, either the tile 
+                     image or solid fill color is used instead of background 
+                     image."/>
 
   <!--
      Alert properties indentifiers    
