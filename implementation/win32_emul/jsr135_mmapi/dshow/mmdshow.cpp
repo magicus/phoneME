@@ -140,7 +140,8 @@ extern "C" {
 static javacall_result dshow_create(int appId, 
     int playerId,
     jc_fmt mediaType,
-    const javacall_utf16_string URI, javacall_handle* pHandle)
+    const javacall_utf16_string URI,
+    javacall_handle* pHandle)
 {
     dshow_player* p = new dshow_player;
 
