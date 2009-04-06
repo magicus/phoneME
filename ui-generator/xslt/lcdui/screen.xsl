@@ -26,7 +26,7 @@ information or have any questions.
 <xsl:stylesheet version="2.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                xmlns:morn="foo://sun.morn.net/">
+                xmlns:uig="foo://sun.me.ui-generator.net/">
 
     <xsl:template match="screen" mode="Screen-imports">
         <xsl:sequence select="(
@@ -71,13 +71,13 @@ information or have any questions.
         <xsl:if test="options[not(@style='fullscreen')]">
             <xsl:text>ItemCommandListener icl = new ItemCommandListener() {&#10;</xsl:text>
             <xsl:text>    public void commandAction(Command c, Item item)</xsl:text>
-            <xsl:value-of select="morn:Screen-event-handler-body(., options)"/>
+            <xsl:value-of select="uig:Screen-event-handler-body(., options)"/>
             <xsl:text>};&#10;</xsl:text>
             <xsl:for-each select="options">
                 <xsl:value-of select="concat(
-                    morn:Screen-item-variable-name(.),
+                    uig:Screen-item-variable-name(.),
                     '.setItemCommandListener(icl);&#10;',
-                    morn:Screen-item-variable-name(.),
+                    uig:Screen-item-variable-name(.),
                     '.addCommand(selectItemCommand);&#10;')"/>
             </xsl:for-each>
             <xsl:text>&#10;</xsl:text>
@@ -90,7 +90,7 @@ information or have any questions.
         <xsl:if test="$items">
             <xsl:text>javax.microedition.lcdui.CommandListener cl = new javax.microedition.lcdui.CommandListener() {&#10;</xsl:text>
             <xsl:text>    public void commandAction(Command item, Displayable d)</xsl:text>
-            <xsl:value-of select="morn:Screen-event-handler-body(., $items)"/>
+            <xsl:value-of select="uig:Screen-event-handler-body(., $items)"/>
             <xsl:text>};&#10;</xsl:text>
             <xsl:text>d.setCommandListener(cl);&#10;&#10;</xsl:text>
         </xsl:if>
@@ -123,7 +123,7 @@ information or have any questions.
 
     <xsl:template match="options" mode="Screen-options-get-selected-item">
         <xsl:value-of select="
-            concat(morn:Screen-item-variable-name(.), '.getSelectedIndex()')"/>
+            concat(uig:Screen-item-variable-name(.), '.getSelectedIndex()')"/>
     </xsl:template>
 
 
@@ -133,9 +133,9 @@ information or have any questions.
     <xsl:template match="screen/text" mode="Screen-create-item">
         <xsl:value-of select="concat(
             'new ',
-            morn:Screen-item-variable-type(.),
+            uig:Screen-item-variable-type(.),
             '(null, ',
-            morn:Screen-item-get-label(.),
+            uig:Screen-item-get-label(.),
             ', Item.PLAIN)')"/>
     </xsl:template>
 
@@ -150,9 +150,9 @@ information or have any questions.
     <xsl:template match="screen/options" mode="Screen-create-item">
         <xsl:value-of select="concat(
             'new ',
-            morn:Screen-item-variable-type(.),
+            uig:Screen-item-variable-type(.),
             '(',
-            morn:Screen-item-get-label(.))"/>
+            uig:Screen-item-get-label(.))"/>
         <xsl:text>, ChoiceGroup.</xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-options-type"/>
         <xsl:text>)</xsl:text>
@@ -170,9 +170,9 @@ information or have any questions.
     -->
     <xsl:template match="screen/options/option|screen/options/dynamic-option" mode="Screen-add-item-impl">
         <xsl:value-of select="concat(
-            morn:Screen-item-variable-name(..),
+            uig:Screen-item-variable-name(..),
             '.append(',
-            morn:Screen-item-get-label(.),
+            uig:Screen-item-get-label(.),
             ', null)')"/>
     </xsl:template>
 
@@ -183,9 +183,9 @@ information or have any questions.
     <xsl:template match="screen/progress" mode="Screen-create-item">
         <xsl:value-of select="concat(
             'new ',
-            morn:Screen-item-variable-type(.),
+            uig:Screen-item-variable-type(.),
             '(',
-            morn:Screen-item-get-label(.))"/>
+            uig:Screen-item-get-label(.))"/>
         <xsl:text>, false, 100, 0)</xsl:text>
     </xsl:template>
 
@@ -196,9 +196,9 @@ information or have any questions.
     <xsl:template match="command|dynamic-command" mode="Screen-create-item">
         <xsl:value-of select="concat(
             'new ',
-            morn:Screen-item-variable-type(.),
+            uig:Screen-item-variable-type(.),
             '(',
-            morn:Screen-item-get-label(.))"/>
+            uig:Screen-item-get-label(.))"/>
         <xsl:text>, </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-command-type"/>
         <xsl:text>, 1)</xsl:text>
@@ -223,11 +223,11 @@ information or have any questions.
         Appends an item to the form.
     -->
     <xsl:template match="text|progress|options[not(@style='fullscreen')]" mode="Screen-add-item-impl">
-        <xsl:value-of select="morn:Screen-item-variable-name(.)"/>
+        <xsl:value-of select="uig:Screen-item-variable-name(.)"/>
         <xsl:text>.setLayout(Item.LAYOUT_2 | </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-layout"/>
         <xsl:text>);&#10;d.append(</xsl:text>
-        <xsl:value-of select="morn:Screen-item-variable-name(.)"/>
+        <xsl:value-of select="uig:Screen-item-variable-name(.)"/>
         <xsl:text>)</xsl:text>
     </xsl:template>
 
@@ -235,7 +235,7 @@ information or have any questions.
 
     <xsl:template match="command|dynamic-command" mode="Screen-add-item-impl">
         <xsl:text>d.addCommand(</xsl:text>
-        <xsl:value-of select="morn:Screen-item-variable-name(.)"/>
+        <xsl:value-of select="uig:Screen-item-variable-name(.)"/>
         <xsl:text>)</xsl:text>
     </xsl:template>
 

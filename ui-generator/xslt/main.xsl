@@ -23,7 +23,10 @@ Clara, CA 95054 or visit www.sun.com if you need additional
 information or have any questions.
 -->
 
-<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:stylesheet version="2.0"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:uig="foo://sun.me.ui-generator.net/">
 
     <xsl:output
         method="text"
@@ -59,5 +62,12 @@ information or have any questions.
     <xsl:include href="i18n.xsl"/>
     <xsl:include href="screen.xsl"/>
     <xsl:include href="utest.xsl"/>
+
+
+    <xsl:template match="*">
+        <xsl:call-template name="error-unexpected"/>
+    </xsl:template>
+
+    <xsl:template match="text()"/>
 
 </xsl:stylesheet>

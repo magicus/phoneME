@@ -26,7 +26,7 @@ information or have any questions.
 <xsl:stylesheet version="2.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                xmlns:morn="foo://sun.morn.net/">
+                xmlns:uig="foo://sun.me.ui-generator.net/">
 
     <!--
         Writes all screen classes source code.
@@ -40,7 +40,9 @@ information or have any questions.
         Writes screen class source code.
     -->
     <xsl:template match="screen" mode="Screen-class">
-        <xsl:result-document href="{morn:classname-to-filepath(morn:Screen-classname(.))}">
+        <xsl:variable name="href" select="uig:classname-to-filepath(uig:Screen-classname(.))"/>
+        <xsl:value-of select="concat($href,'&#10;')"/>
+        <xsl:result-document href="{$href}">
             <xsl:apply-templates select="." mode="Screen-define"/>
         </xsl:result-document>
     </xsl:template>
@@ -65,9 +67,9 @@ information or have any questions.
 
         <!-- class hierarchy -->
         <xsl:text>public final class </xsl:text>
-        <xsl:value-of select="morn:Screen-classname(.)"/>
+        <xsl:value-of select="uig:Screen-classname(.)"/>
         <xsl:text> extends Screen </xsl:text>
-        <xsl:if test="morn:Screen-class-with-ProgressUpdater(.)">
+        <xsl:if test="uig:Screen-class-with-ProgressUpdater(.)">
             <xsl:text>implements ProgressUpdater</xsl:text>
         </xsl:if>
         <xsl:text> {&#10;</xsl:text>
@@ -76,37 +78,37 @@ information or have any questions.
         <xsl:apply-templates select="." mode="Screen-define-constants"/>
 
         <!-- member fields -->
-        <xsl:for-each select="descendant::*[morn:Screen-has-member-field-for-item(.)]">
+        <xsl:for-each select="descendant::*[uig:Screen-has-member-field-for-item(.)]">
             <xsl:text>    private </xsl:text>
-            <xsl:value-of select="morn:Screen-item-variable-type(.)"/>
+            <xsl:value-of select="uig:Screen-item-variable-type(.)"/>
             <xsl:text> </xsl:text>
-            <xsl:value-of select="morn:Screen-item-variable-name(.)"/>
+            <xsl:value-of select="uig:Screen-item-variable-name(.)"/>
             <xsl:text>;&#10;</xsl:text>
         </xsl:for-each>
-        <xsl:if test="morn:Screen-class-with-CommandListener(.)">
+        <xsl:if test="uig:Screen-class-with-CommandListener(.)">
             <xsl:text>    private CommandListener listener;&#10;&#10;</xsl:text>
         </xsl:if>
 
         <!-- ctor -->
         <xsl:text>    public </xsl:text>
-        <xsl:value-of select="morn:Screen-classname(.)"/>
+        <xsl:value-of select="uig:Screen-classname(.)"/>
         <xsl:text>(ScreenProperties props</xsl:text>
-        <xsl:if test="morn:Screen-class-with-CommandListener(.)">
+        <xsl:if test="uig:Screen-class-with-CommandListener(.)">
             <xsl:text>, CommandListener listener</xsl:text>
         </xsl:if>
         <xsl:text>) {&#10;        super(props);&#10;</xsl:text>
-        <xsl:if test="morn:Screen-class-with-CommandListener(.)">
+        <xsl:if test="uig:Screen-class-with-CommandListener(.)">
             <xsl:text>&#10;        this.listener = listener;&#10;&#10;</xsl:text>
         </xsl:if>
         <xsl:apply-templates select="." mode="Screen-ctor-body"/>
         <xsl:text>    }&#10;&#10;</xsl:text>
 
         <!-- 'progress' item specifics -->
-        <xsl:if test="morn:Screen-class-with-ProgressUpdater(.)">
+        <xsl:if test="uig:Screen-class-with-ProgressUpdater(.)">
             <xsl:text>    public void updateProgress(Object progressId, int value, int max) {&#10;</xsl:text>
             <xsl:for-each select="progress">
                 <xsl:value-of select="
-                    concat('        if (progressId.equals(', morn:Screen-item-id(.), ')) {&#10;')"/>
+                    concat('        if (progressId.equals(', uig:Screen-item-id(.), ')) {&#10;')"/>
                 <xsl:apply-templates select="." mode="Screen-progress-item-update"/>
                 <xsl:text>            return;&#10;</xsl:text>
                 <xsl:text>        }&#10;</xsl:text>
@@ -124,7 +126,7 @@ information or have any questions.
     <!--
         Returns screen class name.
     -->
-    <xsl:function name="morn:Screen-classname" as="xs:string">
+    <xsl:function name="uig:Screen-classname" as="xs:string">
         <xsl:param name="screen" as="element()"/>
         <xsl:value-of select="$screen/@name"/>
     </xsl:function>
@@ -133,7 +135,7 @@ information or have any questions.
     <!--
         Returns 'true' if screen class needs CommandListener.
     -->
-    <xsl:function name="morn:Screen-class-with-CommandListener" as="xs:boolean">
+    <xsl:function name="uig:Screen-class-with-CommandListener" as="xs:boolean">
         <xsl:param name="screen" as="element()"/>
         <xsl:value-of select="count($screen/descendant::*/@id) != 0"/>
     </xsl:function>
@@ -142,7 +144,7 @@ information or have any questions.
     <!--
         Returns 'true' if screen class needs ProgressUpdater.
     -->
-    <xsl:function name="morn:Screen-class-with-ProgressUpdater" as="xs:boolean">
+    <xsl:function name="uig:Screen-class-with-ProgressUpdater" as="xs:boolean">
         <xsl:param name="screen" as="element()"/>
         <xsl:value-of select="count($screen[progress]) != 0"/>
     </xsl:function>
@@ -151,7 +153,7 @@ information or have any questions.
     <!--
         Variable name for a screen item.
     -->
-    <xsl:function name="morn:Screen-item-variable-name" as="xs:string">
+    <xsl:function name="uig:Screen-item-variable-name" as="xs:string">
         <xsl:param name="e" as="element()"/>
         <xsl:value-of select="concat('item_', generate-id($e))"/>
     </xsl:function>
@@ -160,7 +162,7 @@ information or have any questions.
     <!--
         Variable type for a screen item.
     -->
-    <xsl:function name="morn:Screen-item-variable-type" as="xs:string">
+    <xsl:function name="uig:Screen-item-variable-type" as="xs:string">
         <xsl:param name="e" as="element()"/>
         <xsl:apply-templates select="$e" mode="Screen-item-variable-type-impl"/>
     </xsl:function>
@@ -170,7 +172,7 @@ information or have any questions.
         Returns 'true' if specified screen item should have corresponding
         member field in screen class.
     -->
-    <xsl:function name="morn:Screen-has-member-field-for-item" as="xs:boolean">
+    <xsl:function name="uig:Screen-has-member-field-for-item" as="xs:boolean">
         <xsl:param name="e" as="element()"/>
         <xsl:apply-templates select="$e" mode="Screen-has-member-field-for-item-impl"/>
     </xsl:function>
@@ -187,7 +189,7 @@ information or have any questions.
     <!--
         Id for screen item.
     -->
-    <xsl:function name="morn:Screen-item-id" as="xs:string">
+    <xsl:function name="uig:Screen-item-id" as="xs:string">
         <xsl:param name="e" as="element()"/>
         <xsl:apply-templates select="$e" mode="Screen-item-id-impl"/>
     </xsl:function>
@@ -205,13 +207,13 @@ information or have any questions.
         Output java code to create string to display
         at run-time from some element body.
     -->
-    <xsl:function name="morn:Screen-printf" as="xs:string">
+    <xsl:function name="uig:Screen-printf" as="xs:string">
         <xsl:param name="e" as="element()"/>
         <xsl:value-of>
             <xsl:text>printf(</xsl:text>
-            <xsl:value-of select="morn:I18N-key($e)"/>
+            <xsl:value-of select="uig:I18N-key($e)"/>
             <xsl:text>, new Object[] { </xsl:text>
-            <xsl:for-each select="morn:format-string-get-args($e)">
+            <xsl:for-each select="uig:format-string-get-args($e)">
                 <xsl:value-of select="concat('getProperty(KEY_', upper-case(.), '), ')"/>
             </xsl:for-each>
             <xsl:text>})</xsl:text>
@@ -222,16 +224,16 @@ information or have any questions.
     <!--
         Item's label if any
     -->
-    <xsl:function name="morn:Screen-item-get-label" as="xs:string">
+    <xsl:function name="uig:Screen-item-get-label" as="xs:string">
         <xsl:param name="e" as="element()"/>
         <xsl:apply-templates select="$e" mode="Screen-item-get-label-impl"/>
     </xsl:function>
 
     <xsl:template match="*[label]" mode="Screen-item-get-label-impl">
-        <xsl:value-of select="morn:Screen-printf(label)"/>
+        <xsl:value-of select="uig:Screen-printf(label)"/>
     </xsl:template>
     <xsl:template match="text|option|command" mode="Screen-item-get-label-impl">
-        <xsl:value-of select="morn:Screen-printf(.)"/>
+        <xsl:value-of select="uig:Screen-printf(.)"/>
     </xsl:template>
     <xsl:template match="dynamic-command|dynamic-option" mode="Screen-item-get-label-impl">
         <xsl:text>e.nextElement().toString()</xsl:text>
@@ -246,8 +248,8 @@ information or have any questions.
     -->
     <xsl:template match="screen" mode="Screen-define-constants">
         <xsl:variable name="all-format-string-args" as="xs:string*">
-            <xsl:for-each select="morn:get-format-string-elements(.)">
-                <xsl:for-each select="morn:format-string-get-args(.)">
+            <xsl:for-each select="uig:get-format-string-elements(.)">
+                <xsl:for-each select="uig:format-string-get-args(.)">
                     <xsl:value-of>
                         <xsl:text>    public final static String </xsl:text>
                         <xsl:value-of select="concat('KEY_', upper-case(.))"/>
@@ -273,7 +275,7 @@ information or have any questions.
 
     <xsl:template match="*" mode="Screen-define-ids">
         <xsl:text>    public final static int </xsl:text>
-        <xsl:value-of select="morn:Screen-item-id(.)"/>
+        <xsl:value-of select="uig:Screen-item-id(.)"/>
         <xsl:text> = </xsl:text>
         <xsl:value-of select="count(preceding::*[@id]) + 1"/>
         <xsl:text>;&#10;</xsl:text>
@@ -281,7 +283,7 @@ information or have any questions.
 
     <xsl:template match="screen/progress" mode="Screen-define-ids">
         <xsl:text>    public final static Object </xsl:text>
-        <xsl:value-of select="morn:Screen-item-id(.)"/>
+        <xsl:value-of select="uig:Screen-item-id(.)"/>
         <xsl:text> = "</xsl:text>
         <xsl:value-of select="@id"/>
         <xsl:text>";&#10;</xsl:text>
@@ -337,12 +339,12 @@ information or have any questions.
     </xsl:template>
 
     <xsl:template match="*" mode="Screen-declare-item">
-        <xsl:if test="not(morn:Screen-has-member-field-for-item(.))">
+        <xsl:if test="not(uig:Screen-has-member-field-for-item(.))">
             <xsl:text>final </xsl:text>
-            <xsl:value-of select="morn:Screen-item-variable-type(.)"/>
+            <xsl:value-of select="uig:Screen-item-variable-type(.)"/>
             <xsl:text> </xsl:text>
         </xsl:if>
-        <xsl:value-of select="morn:Screen-item-variable-name(.)"/>
+        <xsl:value-of select="uig:Screen-item-variable-name(.)"/>
         <xsl:text> = </xsl:text>
     </xsl:template>
 
@@ -364,7 +366,7 @@ information or have any questions.
             <xsl:value-of select="
                 concat(
                     ';&#10;commands.addElement(',
-                    morn:Screen-item-variable-name(.),
+                    uig:Screen-item-variable-name(.),
                     ')')"/>
         </xsl:if>
         <xsl:apply-templates select="." mode="Screen-add-item-impl"/>
@@ -393,7 +395,7 @@ information or have any questions.
         <xsl:apply-templates select="." mode="Screen-item-base-idx"/>
         <xsl:text>;&#10;</xsl:text>
         <xsl:text>for (Enumeration e = (Enumeration)getProperty("</xsl:text>
-        <xsl:value-of select="morn:Screen-item-id(.)"/>
+        <xsl:value-of select="uig:Screen-item-id(.)"/>
         <xsl:text>") ; e.hasMoreElements(); ++counter) {&#10;</xsl:text>
         <xsl:value-of>
             <xsl:variable name="body">
@@ -408,7 +410,7 @@ information or have any questions.
                     <xsl:value-of select="
                         concat(
                             'commands.addElement(',
-                            morn:Screen-item-variable-name(.),
+                            uig:Screen-item-variable-name(.),
                             ');&#10;')"/>
                 </xsl:if>
             </xsl:variable>
@@ -444,7 +446,7 @@ information or have any questions.
     <!--
         Body of compound event handler for all top level items.
     -->
-    <xsl:function name="morn:Screen-event-handler-body" as="xs:string">
+    <xsl:function name="uig:Screen-event-handler-body" as="xs:string">
         <xsl:param name="screen"    as="element()"/>
         <xsl:param name="items"     as="element()*"/>
 
@@ -464,11 +466,11 @@ information or have any questions.
             <xsl:text>&#10;&#10;</xsl:text>
             <xsl:text>if (commandIdIdx == -1)&#10;</xsl:text>
             <xsl:text>    listener.onCommand(</xsl:text>
-            <xsl:value-of select="morn:Screen-classname($screen)"/>
+            <xsl:value-of select="uig:Screen-classname($screen)"/>
             <xsl:text>.this, commandId);&#10;</xsl:text>
             <xsl:text> else&#10;</xsl:text>
             <xsl:text>    listener.onDynamicCommand(</xsl:text>
-            <xsl:value-of select="morn:Screen-classname($screen)"/>
+            <xsl:value-of select="uig:Screen-classname($screen)"/>
             <xsl:text>.this, commandId, commandIdIdx);&#10;</xsl:text>
         </xsl:variable>
         <xsl:value-of select="
@@ -482,12 +484,12 @@ information or have any questions.
         <xsl:text>else if (</xsl:text>
         <xsl:apply-templates select="." mode="Screen-event-handler-body-test-item"/>
         <xsl:text>) {&#10;</xsl:text>
-        <xsl:value-of select="replace(morn:Screen-item-map-command-id(.), '^', '    ', 'm')"/>
+        <xsl:value-of select="replace(uig:Screen-item-map-command-id(.), '^', '    ', 'm')"/>
         <xsl:text>} </xsl:text>
     </xsl:template>
 
     <xsl:template match="*" mode="Screen-event-handler-body-test-item">
-        <xsl:value-of select="concat('item == ', morn:Screen-item-variable-name(.))"/>
+        <xsl:value-of select="concat('item == ', uig:Screen-item-variable-name(.))"/>
     </xsl:template>
 
     <xsl:template match="option" mode="Screen-event-handler-body-test-item">
@@ -513,7 +515,7 @@ information or have any questions.
     <!--
         Maps item event into item's ID.
     -->
-    <xsl:function name="morn:Screen-item-map-command-id" as="xs:string">
+    <xsl:function name="uig:Screen-item-map-command-id" as="xs:string">
         <xsl:param name="e" as="element()"/>
         <xsl:value-of>
             <xsl:apply-templates select="$e" mode="Screen-item-map-command-id"/>
@@ -532,13 +534,13 @@ information or have any questions.
 
     <xsl:template match="command|option" mode="Screen-item-map-command-id">
         <xsl:text>commandId = </xsl:text>
-        <xsl:value-of select="morn:Screen-item-id(.)"/>
+        <xsl:value-of select="uig:Screen-item-id(.)"/>
         <xsl:text>;&#10;</xsl:text>
     </xsl:template>
 
     <xsl:template match="dynamic-command|dynamic-option" mode="Screen-item-map-command-id">
         <xsl:text>commandId = </xsl:text>
-        <xsl:value-of select="morn:Screen-item-id(.)"/>
+        <xsl:value-of select="uig:Screen-item-id(.)"/>
         <xsl:text>;&#10;</xsl:text>
         <xsl:text>commandIdIdx = idx - (</xsl:text>
         <xsl:apply-templates select="." mode="Screen-item-base-idx"/>
@@ -581,9 +583,9 @@ information or have any questions.
 
     <xsl:template match="screen/progress" mode="Screen-progress-item-update">
         <xsl:value-of select="
-            concat('            ', morn:Screen-item-variable-name(.), '.setMaxValue(max);&#10;')"/>
+            concat('            ', uig:Screen-item-variable-name(.), '.setMaxValue(max);&#10;')"/>
         <xsl:value-of select="
-            concat('            ', morn:Screen-item-variable-name(.), '.setValue(value);&#10;')"/>
+            concat('            ', uig:Screen-item-variable-name(.), '.setValue(value);&#10;')"/>
     </xsl:template>
 
 </xsl:stylesheet>

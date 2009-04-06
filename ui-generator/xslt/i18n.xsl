@@ -26,7 +26,7 @@ information or have any questions.
 <xsl:stylesheet version="2.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                xmlns:morn="foo://sun.morn.net/">
+                xmlns:uig="foo://sun.me.ui-generator.net/">
 
     <!--
         Generate i18n stuff
@@ -41,7 +41,9 @@ information or have any questions.
         Generate StringIds class
     -->
     <xsl:template name="I18N-StringIds">
-        <xsl:result-document href="{morn:classname-to-filepath('StringIds')}">
+        <xsl:variable name="href" select="uig:classname-to-filepath('StringIds')"/>
+        <xsl:value-of select="concat($href,'&#10;')"/>
+        <xsl:result-document href="{$href}">
             <xsl:call-template name="I18N-StringIds-impl"/>
         </xsl:result-document>
     </xsl:template>
@@ -51,9 +53,9 @@ information or have any questions.
         <xsl:value-of select="$package-name"/>
         <xsl:text>;&#10;&#10;&#10;</xsl:text>
         <xsl:text>interface StringIds {&#10;</xsl:text>
-        <xsl:for-each select="morn:get-all-format-string-elements(/)">
+        <xsl:for-each select="uig:get-all-format-string-elements(/)">
             <xsl:text>    public final static int </xsl:text>
-            <xsl:value-of select="morn:I18N-key(.)"/>
+            <xsl:value-of select="uig:I18N-key(.)"/>
             <xsl:text> = </xsl:text>
             <xsl:value-of select="position() - 1"/>
             <xsl:text>;&#10;</xsl:text>
@@ -66,7 +68,9 @@ information or have any questions.
         Generate StringTable class
     -->
     <xsl:template name="I18N-StringTable">
-        <xsl:result-document  href="{morn:classname-to-filepath('StringTable')}">
+        <xsl:variable name="href" select="uig:classname-to-filepath('StringTable')"/>
+        <xsl:value-of select="concat($href,'&#10;')"/>
+        <xsl:result-document href="{$href}">
             <xsl:call-template name="I18N-StringTable-impl"/>
         </xsl:result-document>
     </xsl:template>
@@ -77,9 +81,9 @@ information or have any questions.
         <xsl:text>;&#10;&#10;&#10;</xsl:text>
         <xsl:text>final class StringTable {&#10;</xsl:text>
         <xsl:text>    private static final String strings[] = new String[] {&#10;</xsl:text>
-        <xsl:for-each select="morn:get-all-format-string-elements(/)">
+        <xsl:for-each select="uig:get-all-format-string-elements(/)">
             <xsl:text>        </xsl:text>
-            <xsl:value-of select="morn:format-string-get-self(.)"/>
+            <xsl:value-of select="uig:format-string-get-self(.)"/>
             <xsl:text>,&#10;</xsl:text>
         </xsl:for-each>
         <xsl:text>    };&#10;&#10;</xsl:text>
@@ -93,7 +97,7 @@ information or have any questions.
     <!--
         Output i18n key
     -->
-    <xsl:function name="morn:I18N-key" as="xs:string">
+    <xsl:function name="uig:I18N-key" as="xs:string">
         <xsl:param name="e" as="element()"/>
         <xsl:apply-templates select="$e" mode="I18N-key-impl"/>
     </xsl:function>
@@ -103,7 +107,7 @@ information or have any questions.
         <xsl:value-of select="concat(
             upper-case($screen-id),
             '_ID',
-            count(preceding::*[ancestor::screen/@name=$screen-id and morn:is-format-string(.)]) + 1
+            count(preceding::*[ancestor::screen/@name=$screen-id and uig:is-format-string(.)]) + 1
             )"/>
     </xsl:template>
 

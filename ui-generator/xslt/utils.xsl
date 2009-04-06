@@ -26,7 +26,7 @@ information or have any questions.
 <xsl:stylesheet version="2.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                xmlns:morn="foo://sun.morn.net/">
+                xmlns:uig="foo://sun.me.ui-generator.net/">
 
     <!--
         Context independent utility stuff
@@ -37,7 +37,7 @@ information or have any questions.
     <!--
         Converts class name in file path.
     -->
-    <xsl:function name="morn:classname-to-filepath">
+    <xsl:function name="uig:classname-to-filepath">
         <xsl:param name="classname" as="xs:string"/>
         <xsl:value-of select="concat($output-java-dir,'/',$classname,'.java')"/>
     </xsl:function>
@@ -46,27 +46,27 @@ information or have any questions.
     <!--
         Utility functions to handle format strings.
     -->
-    <xsl:function name="morn:format-string-get-args" as="xs:string*">
+    <xsl:function name="uig:format-string-get-args" as="xs:string*">
         <xsl:param name="str" as="xs:string"/>
-        <xsl:sequence select="morn:format-string-base($str, 'get-args')"/>
+        <xsl:sequence select="uig:format-string-base($str, 'get-args')"/>
     </xsl:function>
 
-    <xsl:function name="morn:format-string-get-self" as="xs:string">
+    <xsl:function name="uig:format-string-get-self" as="xs:string">
         <xsl:param name="str" as="xs:string"/>
         <xsl:value-of>
             <xsl:text>"</xsl:text>
-            <xsl:for-each select="morn:format-string-base($str, 'get-self')">
+            <xsl:for-each select="uig:format-string-base($str, 'get-self')">
                 <xsl:value-of select="."/>
             </xsl:for-each>
             <xsl:text>"</xsl:text>
         </xsl:value-of>
     </xsl:function>
 
-    <xsl:function name="morn:format-string-base" as="xs:string*">
+    <xsl:function name="uig:format-string-base" as="xs:string*">
         <xsl:param name="str"       as="xs:string"/>
         <xsl:param name="action"    as="xs:string"/>
         <xsl:sequence select="
-            morn:format-string-base-impl(
+            uig:format-string-base-impl(
                 $str,
                 $action,
                 number('0'),
@@ -76,7 +76,7 @@ information or have any questions.
                     '%%'))"/>
     </xsl:function>
 
-    <xsl:function name="morn:format-string-base-impl" as="xs:string*">
+    <xsl:function name="uig:format-string-base-impl" as="xs:string*">
         <xsl:param name="str"           as="xs:string"/>
         <xsl:param name="action"        as="xs:string"/>
         <xsl:param name="level"         as="xs:double"/>
@@ -106,7 +106,7 @@ information or have any questions.
                     </xsl:when>
                 </xsl:choose>
                 <xsl:sequence select="
-                    morn:format-string-base-impl(
+                    uig:format-string-base-impl(
                         $str,
                         $action,
                         number($level + 1),
@@ -122,7 +122,7 @@ information or have any questions.
     <!--
         Returns sequence of all elements that may have format strings.
     -->
-    <xsl:function name="morn:get-all-format-string-elements" as="element()*">
+    <xsl:function name="uig:get-all-format-string-elements" as="element()*">
         <xsl:param name="ctx" as="document-node()"/>
         <xsl:sequence select="$ctx//(option|label|text|command)"/>
     </xsl:function>
@@ -131,7 +131,7 @@ information or have any questions.
         Returns sequence of child elements of the given element that may have
         format strings.
     -->
-    <xsl:function name="morn:get-format-string-elements" as="element()*">
+    <xsl:function name="uig:get-format-string-elements" as="element()*">
         <xsl:param name="ctx" as="element()"/>
         <xsl:sequence select="$ctx//(option|label|text|command)"/>
     </xsl:function>
@@ -139,10 +139,10 @@ information or have any questions.
     <!--
         Returns 'true' if the given element may have format string.
     -->
-    <xsl:function name="morn:is-format-string" as="xs:boolean">
+    <xsl:function name="uig:is-format-string" as="xs:boolean">
         <xsl:param name="e" as="element()"/>
         <xsl:value-of select="
-            count(morn:get-format-string-elements(
+            count(uig:get-format-string-elements(
                 $e/ancestor-or-self::screen)[generate-id(.) = generate-id($e)]) != 0"/>
     </xsl:function>
 

@@ -232,19 +232,35 @@ information or have any questions.
             <midlet name="TestMIDlet" class="${package}.TestMIDlet" />
         </wtkjad>
 
-        <filelist id="package-path" dir="${out.classes}">
-            <file name="${package}"/>
-        </filelist>
-        <pathconvert property="package-path" refid="package-path" dirsep="/">
-            <unpackagemapper from="${out.classes}${file.separator}*" to="*"/>
+        <!-- Run preverefier manually as wtkpackage is stick with
+            ===
+                [wtkpackage] JAR file creation failed with error -1
+                [wtkpackage] The preverified classes if any are in tmp41.
+            ===
+            error.
+        -->
+
+        <!-- classes to preverify -->
+        <pathconvert property="preverify.classes" pathsep=" ">
+            <packagemapper from="${out.classes}${file.separator}*.class" to="*"/>
+            <path>
+                <fileset dir="${out.classes}" includes="**/*.class"/>
+            </path>
         </pathconvert>
+
+        <exec   executable="${wtk.home}/bin/preverify"
+                dir="${out.classes}">
+            <arg line="-classpath"/>
+            <arg path="${classpath}"/>
+            <arg line="-d"/>
+            <arg path="${out.root}/preverified"/>
+            <arg line="${preverify.classes}"/>
+        </exec>
 
         <wtkpackage jadfile="${out.root}/test.jad"
                     jarfile="${out.root}/test.jar"
-                    basedir="${out.classes}"
-                    preverify="true">
-            <include name="${package-path}/**/*.class"/>
-        </wtkpackage>
+                    basedir="${out.root}/preverified"/>
+        <delete dir="${out.root}/preverified"/>
     </target>
 
 
