@@ -46,7 +46,7 @@ JAVACALL_OBJ_DIR=$(JAVACALL_OUTPUT_DIR)/obj$(g)
 
 MIDP_DEPS += $(JAVACALL_LIB_DIR)/$(LIB_PREFIX)javacall$(g)$(r)$(LIB_SUFFIX)
 
-EXTRA_CFLAGS += -I$(JAVACALL_INCLUDE_DIR) -Ic:/toolkit/lime/client/src/native/inc -I/toolkit/lime/client/src/native/inc
+EXTRA_CFLAGS += -I$(JAVACALL_INCLUDE_DIR)
 
 include Platform.gmk
 
