@@ -82,11 +82,11 @@
             Comment="The foreground color for a screen. This is the basic 
                      color that all foreground text is painted."/>
 
-  <constant Type="int"
+  <!--constant Type="int"
             Name="SCREEN_COLOR_BG_HL"
             Comment="The background highlight color for highlighted elements. 
                      This is often the solid background color for selected 
-                     text and things of that nature."/>
+                     text and things of that nature."/-->
 
   <constant Type="int"
             Name="SCREEN_COLOR_FG_HL"
