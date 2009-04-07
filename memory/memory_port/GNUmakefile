@@ -41,12 +41,16 @@ include $(PCSL_DIR)/makefiles/verify.gmk
 #
 
 all : verify $(OUTPUT_INC_DIR) $(OUTPUT_OBJ_DIR) $(OUTPUT_OBJ_DIR)/pcsl_memory_port.o
-	@cp -f $(MEMORY_PORT_DIR)/pcsl_memory_port.h $(OUTPUT_INC_DIR)
-	@cp -f $(MEMORY_PORT_SELECT_DIR)/pcsl_memory_port_impl.h $(OUTPUT_INC_DIR)
 
-$(OUTPUT_OBJ_DIR) $(OUTPUT_INC_DIR):
+.PHONY: $(OUTPUT_OBJ_DIR) $(OUTPUT_INC_DIR)
+
+$(OUTPUT_OBJ_DIR):
 	@mkdir -p $@
 
+$(OUTPUT_INC_DIR):
+	@mkdir -p $@
+	@cp -f $(MEMORY_PORT_DIR)/pcsl_memory_port.h $(OUTPUT_INC_DIR)
+	@cp -f $(MEMORY_PORT_SELECT_DIR)/pcsl_memory_port_impl.h $(OUTPUT_INC_DIR)
 $(OUTPUT_OBJ_DIR)/pcsl_memory_port.o: $(MEMORY_PORT_SELECT_DIR)/pcsl_memory_port.c
 	@$(CC) -I. -I.. -I$(MEMORY_PORT_SELECT_DIR) -I$(OUTPUT_INC_DIR) \
 		$(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`

@@ -112,6 +112,7 @@ endif
 #default modules
 MEMORY_DIR=$(PCSL_DIR)/memory
 MEMORY_PORT_DIR=$(MEMORY_DIR)/memory_port
+MEMORY_WRAPPER_DIR=$(MEMORY_DIR)/wrapper
 FILE_DIR=$(PCSL_DIR)/file
 ESCFILENAMES_DIR=$(PCSL_DIR)/escfilenames
 NETWORK_DIR=$(PCSL_DIR)/network
