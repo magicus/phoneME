@@ -317,6 +317,14 @@ int getCurrentIsolateId() {return 0;}
 
 int midpGetAmsIsolateId() {return 0;}
 
+/*=========================================================================
+ * Forces garbage collection.
+ *=======================================================================*/  
+void force_gc() {
+    //TODO force garbage collection
+}
+
+
 /* IMPL_NOTE - removed duplicate
  * DUMMY(midp_getCurrentThreadId)
  */

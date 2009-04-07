@@ -253,3 +253,12 @@ char* strdup(const char* str) {
     return p;                            /* null if p could not be allocated */
 }
 #endif /* NO_STRDUP */
+
+/*=========================================================================
+ * Forces garbage collection.
+ *=======================================================================*/  
+void force_gc() {
+    //force garbage collection
+    JVM_GarbageCollect(0, 0);
+}
+
