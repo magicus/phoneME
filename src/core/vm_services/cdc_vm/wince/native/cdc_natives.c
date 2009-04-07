@@ -677,6 +677,14 @@ DUMMY(midpStoreEventAndSignalForeground)
 
 int getCurrentIsolateId() {return 0;}
 int midpGetAmsIsolateId() {return 0;}
+/*=========================================================================
+ * Called from memory_allocation_failed_callback() on pcsl native memory 
+ * allocation failure. See midpMalloc.c.
+ *=======================================================================*/  
+void midp_native_allocation_failed_callback() {
+    //TODO force garbage collection
+}
+
 
 /* IMPL_NOTE - removed duplicate
  * DUMMY(midp_getCurrentThreadId)

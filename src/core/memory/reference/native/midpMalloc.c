@@ -66,6 +66,8 @@
 #include <midp_logging.h>
 #include <pcsl_memory.h>
 
+#include <midpServices.h>
+
 #include <jvm.h>
 
 #ifdef __cplusplus
@@ -82,8 +84,7 @@ extern "C" {
   * pcsl alloc retry.
   */  
 void memory_allocation_failed_callback() {
-    //force garbage colection now
-    (void)JVM_GarbageCollect(0, 0);
+    midp_native_allocation_failed_callback();
 }
 
 

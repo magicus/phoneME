@@ -253,3 +253,13 @@ char* strdup(const char* str) {
     return p;                            /* null if p could not be allocated */
 }
 #endif /* NO_STRDUP */
+
+/*=========================================================================
+ * Called from memory_allocation_failed_callback() on pcsl native memory 
+ * allocation failure. See midpMalloc.c.
+ *=======================================================================*/  
+void midp_native_allocation_failed_callback() {
+    //force garbage collection
+    JVM_GarbageCollect(0, 0);
+}
+
