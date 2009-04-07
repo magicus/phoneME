@@ -587,6 +587,17 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
     }
 
     /**
+     * Gets a secure filename base (including path separator if needed)
+     * for the suite. File build with the base will be automatically deleted
+     * when the suite is removed.
+     *
+     * @return secure filename base for this suite
+     */
+    public String getSecureFilenameBase() {
+        throw new RuntimeException("Not Implemented");
+    }
+
+    /**
      * Close the opened MIDletSuite
      */
     public void close() {

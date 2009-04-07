@@ -175,6 +175,9 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
         MIDletSuiteStorage storage;
         MIDletSuite suite = null;
 
+        storage = MIDletSuiteStorage.getMIDletSuiteStorage(
+                      internalSecurityToken);
+
         if (suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
             Properties props = null;
 
@@ -197,16 +200,13 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
             }
 
             if (props == null) {
-                suite = InternalMIDletSuiteImpl.create(midletDisplayName,
-                                                       suiteId);
+                suite = InternalMIDletSuiteImpl.create(storage,
+                            midletDisplayName, suiteId);
             } else {
-                suite = InternalMIDletSuiteImpl.create(midletDisplayName,
-                                                       suiteId, props);
+                suite = InternalMIDletSuiteImpl.create(storage,
+                            midletDisplayName, suiteId, props);
             }
         } else {
-            storage = MIDletSuiteStorage.
-                getMIDletSuiteStorage(internalSecurityToken);
-
             suite = storage.getMIDletSuite(suiteId, false);
             Logging.initLogSettings(suiteId);
         }

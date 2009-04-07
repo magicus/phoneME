@@ -181,13 +181,14 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
         MIDletSuiteStorage storage;
         MIDletSuite suite = null;
 
+        storage = MIDletSuiteStorage.
+                      getMIDletSuiteStorage(internalSecurityToken);
+
         if (suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
             // assume a class name of a MIDlet in the classpath
-            suite = InternalMIDletSuiteImpl.create(midletDisplayName, suiteId);
+            suite = InternalMIDletSuiteImpl.create(storage, midletDisplayName,
+                        suiteId);
         } else {
-            storage = MIDletSuiteStorage.
-                getMIDletSuiteStorage(internalSecurityToken);
-
             suite = storage.getMIDletSuite(suiteId, false);
             Logging.initLogSettings(suiteId);
         }

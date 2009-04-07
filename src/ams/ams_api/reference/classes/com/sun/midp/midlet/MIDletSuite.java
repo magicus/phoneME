@@ -297,6 +297,15 @@ public interface MIDletSuite {
     public boolean isEnabled();
 
     /**
+     * Gets a secure filename base (including path separator if needed)
+     * for the suite. File build with the base will be automatically deleted
+     * when the suite is removed.
+     *
+     * @return secure filename base for this suite
+     */
+    public String getSecureFilenameBase();
+
+    /**
      * Close the opened MIDletSuite
      */
     public void close();

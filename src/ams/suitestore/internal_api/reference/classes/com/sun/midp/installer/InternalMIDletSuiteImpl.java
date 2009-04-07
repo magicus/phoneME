@@ -32,7 +32,9 @@ import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
 import com.sun.midp.midlet.MIDletSuite;
+
 import com.sun.midp.midletsuite.MIDletInfo;
+import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
@@ -44,6 +46,9 @@ import com.sun.midp.util.Properties;
  * system. The class is only needed for internal romized midlets.
  */
 public class InternalMIDletSuiteImpl implements MIDletSuite {
+    /** MIDlet Suite Storage. */
+    private MIDletSuiteStorage midletSuiteStorage;
+
     /** Display name for permission dialogs. */
     private String displayName = null;
 
@@ -71,9 +76,10 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *
      * @return new MIDletSuite object
      */
-    public static MIDletSuite create(String theDisplayName, int theId) {
-        return new InternalMIDletSuiteImpl(theDisplayName, theId,
-                                           new Properties());
+    public static MIDletSuite create(MIDletSuiteStorage theMidletSuiteStorage,
+            String theDisplayName, int theId) {
+        return new InternalMIDletSuiteImpl(theMidletSuiteStorage,
+            theDisplayName, theId, new Properties());
     }
 
     /**
@@ -86,9 +92,10 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *
      * @return new MIDletSuite object
      */
-    public static MIDletSuite create(String theDisplayName, int theId,
-                                     Properties theProps) {
-        return new InternalMIDletSuiteImpl(theDisplayName, theId, theProps);
+    public static MIDletSuite create(MIDletSuiteStorage theMidletSuiteStorage,
+            String theDisplayName, int theId, Properties theProps) {
+        return new InternalMIDletSuiteImpl(theMidletSuiteStorage,
+            theDisplayName, theId, theProps);
     }
 
     /**
@@ -99,8 +106,11 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      * @param theId unique identifier for this suite
      * @param theProps Properties to use for this suite
      */
-    private InternalMIDletSuiteImpl(String theDisplayName, int theId,
-                                    Properties theProps) {
+    private InternalMIDletSuiteImpl(MIDletSuiteStorage theMidletSuiteStorage,
+        String theDisplayName, int theId, Properties theProps) {
+
+        midletSuiteStorage = theMidletSuiteStorage;
+
         if (theDisplayName != null) {
             displayName = theDisplayName;
         } else {
@@ -443,5 +453,16 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
         }
 
         return initialMIDletClassName;
+    }
+
+    /**
+     * Gets a secure filename base (including path separator if needed)
+     * for the suite. File build with the base will be automatically deleted
+     * when the suite is removed.
+     *
+     * @return secure filename base for this suite
+     */
+    public String getSecureFilenameBase() {
+        return midletSuiteStorage.getSecureFilenameBase(getID());
     }
 }
