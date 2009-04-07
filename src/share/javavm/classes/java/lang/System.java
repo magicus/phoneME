@@ -823,7 +823,11 @@ public final class System {
      * @see     java.lang.Runtime#gc()
      */
     public static void gc() {
-	Runtime.getRuntime().gc();
+        if (sun.misc.CVM.callerCLIsMIDCLs()) {
+            sun.misc.CVM.gc();
+        } else {
+            Runtime.getRuntime().gc();
+        }
     }
 
     /**

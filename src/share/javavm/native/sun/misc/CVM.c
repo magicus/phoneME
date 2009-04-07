@@ -1623,6 +1623,20 @@ CNIsun_misc_CVM_getThreadStarterClass(CVMExecEnv* ee,
     return CNI_SINGLE;
 }
 
+/*
+ * Do a minimal GC if System.gc() called directly by MIDlet
+ */
+CNIEXPORT CNIResultCode
+CNIsun_misc_CVM_gc(CVMExecEnv* ee,
+                   CVMStackVal32 *arguments,
+                   CVMMethodBlock **p_mb)
+{
+    CVMD_gcSafeExec(ee, {
+            CVMgcRunGCMin(ee);
+    });
+    return CNI_VOID;
+}          
+
 #include "generated/offsets/java_lang_ClassLoader.h"
 
 /*

@@ -544,6 +544,12 @@ extern void
 CVMgcRunGC(CVMExecEnv* ee);
 
 /*
+ * Like above, but only trys to free 1 byte.
+ */
+extern void
+CVMgcRunGCMin(CVMExecEnv* ee);
+
+/*
  * The null CVMFrameGCScannerFunc that doesn't do anything
  */
 extern void
