@@ -83,8 +83,8 @@ extern "C" {
   * of thin Java objects with large native buffers will free some memory before 
   * pcsl alloc retry.
   */  
-void memory_allocation_failed_callback() {
-    midp_native_allocation_failed_callback();
+static void memory_allocation_failed_callback() {
+    force_gc();
 }
 
 

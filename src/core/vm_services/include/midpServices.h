@@ -191,10 +191,9 @@ int getCurrentIsolateId();
 int getMaxIsolates();
 
 /**
- * Called from memory_allocation_failed_callback() on pcsl native memory 
- * allocation failure. See midpMalloc.c.
+ * Forces garbage collection.
  */  
-void midp_native_allocation_failed_callback();
+void force_gc();
 
 
 #ifdef __cplusplus

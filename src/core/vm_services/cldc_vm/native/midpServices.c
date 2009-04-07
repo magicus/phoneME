@@ -255,10 +255,9 @@ char* strdup(const char* str) {
 #endif /* NO_STRDUP */
 
 /*=========================================================================
- * Called from memory_allocation_failed_callback() on pcsl native memory 
- * allocation failure. See midpMalloc.c.
+ * Forces garbage collection.
  *=======================================================================*/  
-void midp_native_allocation_failed_callback() {
+void force_gc() {
     //force garbage collection
     JVM_GarbageCollect(0, 0);
 }
