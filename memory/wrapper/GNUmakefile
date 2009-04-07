@@ -29,7 +29,7 @@
 ######################################################################
 
 # Workspace directory
-PCSL_DIR		= $(CURDIR)/../
+PCSL_DIR		= $(CURDIR)/../../
 
 ifdef PCSL_PLATFORM
 include $(PCSL_DIR)/makefiles/top.gmk
@@ -38,19 +38,14 @@ endif
 # What to build
 #
 
-all doc donuts : verify $(MEMORY_PORT_DIR) $(MEMORY_SELECT_DIR)
-	@echo "building memory port module..."
-	@$(MAKE) -C $(MEMORY_PORT_DIR) $@
-	@cd $(MEMORY_WRAPPER_DIR); $(MAKE) all
-	@echo "building memory module..."
-	@cd $(MEMORY_SELECT_DIR); $(MAKE) $@
+all doc donuts : verify $(OUTPUT_OBJ_DIR)/pcsl_memory_wrappers.o 
 
-clean: verify_for_clean $(MEMORY_PORT_DIR) $(MEMORY_SELECT_DIR)
-	@echo "clean memory port module..."
-	@$(MAKE) -C $(MEMORY_PORT_DIR) $@
-	@echo "clean memory module..."
-	@cd $(MEMORY_SELECT_DIR); $(MAKE) $@
+clean: verify_for_clean
 
 include $(PCSL_DIR)/makefiles/verify.gmk
 
-.PHONY : all doc clean donuts verify
+$(OUTPUT_OBJ_DIR)/pcsl_memory_wrappers.o: pcsl_memory_wrappers.c
+	@$(CC) -I.. -I../$(MEMORY_MODULE) -I../../print -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` 
+
+
+.PHONY : all doc donuts verify
