@@ -42,8 +42,7 @@ endif
 # 'all' is the default target
 
 OBJS = $(OUTPUT_OBJ_DIR)/pcsl_memory.o \
-       $(OUTPUT_OBJ_DIR)/pcsl_memory_port.o \
-       $(OUTPUT_OBJ_DIR)/pcsl_memory_wrappers.o
+       $(OUTPUT_OBJ_DIR)/pcsl_memory_port.o
 
 all: verify $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR) \
      $(OUTPUT_LIB_DIR)/libpcsl_memory$(LIB_EXT)

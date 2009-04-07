@@ -41,7 +41,6 @@ endif
 all doc donuts : verify $(MEMORY_PORT_DIR) $(MEMORY_SELECT_DIR)
 	@echo "building memory port module..."
 	@$(MAKE) -C $(MEMORY_PORT_DIR) $@
-	@cd $(MEMORY_WRAPPER_DIR); $(MAKE) all
 	@echo "building memory module..."
 	@cd $(MEMORY_SELECT_DIR); $(MAKE) $@
 
