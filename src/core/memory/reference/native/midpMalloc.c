@@ -66,26 +66,11 @@
 #include <midp_logging.h>
 #include <pcsl_memory.h>
 
-#include <jvm.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #if ENABLE_MIDP_MALLOC
-
-/** PCSL callback function, called when pcsl_mem_(malloc | calloc | realloc) 
-  * of native memory fails in pcsl.
-  * After this callback returns, pcsl retries operation.
-  * We force garbage collection here, as there is a chance, that native finalizers
-  * of thin Java objects with large native buffers will free some memory before 
-  * pcsl alloc retry.
-  */  
-void memory_allocation_failed_callback() {
-    //force garbage colection now
-    (void)JVM_GarbageCollect(0, 0);
-}
-
 
 /**
  * FUNCTION:      midpInitializeMemory()
@@ -102,8 +87,6 @@ int
 midpInitializeMemory(int size) {
     int tmp = size;
     tmp++; /* avoid compile warning for unused variable */
-    //Set pcsl memory allocation error callback here to our GarbageCollecting function
-    set_pcsl_memory_allocationerror_callback(memory_allocation_failed_callback);
     return pcsl_mem_initialize(NULL, size);
 }
 
