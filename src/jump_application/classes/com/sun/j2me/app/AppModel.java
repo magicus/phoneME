@@ -72,8 +72,8 @@ public class AppModel{
 
         try
         {
-            String outStr = System.getProperty("microediton.profiles");
-            System.out.println(" DEBUG: microediton.profiles " + outStr);
+            String outStr = System.getProperty("microedition.profiles");
+            System.out.println(" DEBUG: microedition.profiles " + outStr);
             return MIDLET;
         }
         catch (Exception e) {
