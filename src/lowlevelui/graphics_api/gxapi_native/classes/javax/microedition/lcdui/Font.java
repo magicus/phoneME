@@ -26,6 +26,9 @@
 
 package javax.microedition.lcdui;
 
+import com.sun.midp.lcdui.FontAccess;
+import com.sun.midp.lcdui.OEMFont;
+
 /**
  * The <code>Font</code> class represents fonts and font
  * metrics. <code>Fonts</code> cannot be
@@ -169,6 +172,10 @@ public final class Font {
      * @see #getFont(int fontSpecifier)
      */
     public static final int FONT_INPUT_TEXT = 1;
+    
+    static {
+        OEMFont.registerFontAccessor(new FontAccessImpl());
+    }
 
     /**
      * Gets the <code>Font</code> used by the high level user interface
@@ -517,3 +524,8 @@ public final class Font {
     private native void init(int inp_face, int inp_style, int inp_size);
 }
 
+class FontAccessImpl implements FontAccess {
+    public Font getOEMFont(int style, int size) {
+        return Font.getOEMFont(style, size);
+    }
+}
