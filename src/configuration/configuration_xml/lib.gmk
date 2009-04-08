@@ -87,14 +87,12 @@ endif
 
 INT_XML_FILES := $(addprefix $(INT_XML_DIR)/, $(INT_XML_FILES_BASE_NAMES))
 
-SKIN_CONSTANTS := $(INT_COMMON_XML_DIR)/chameleon/skin_constants.xml
-
 # Input files common for all platfroms
 INT_XML_FILES += \
 	$(INT_COMMON_XML_DIR)/constants.xml \
 	$(INT_COMMON_XML_DIR)/i18n_constants.xml \
 	$(INT_COMMON_XML_DIR)/l10n/en-US.xml \
-	$(SKIN_CONSTANTS) \
+	$(INT_COMMON_XML_DIR)/chameleon/skin_constants.xml \
 	$(INT_COMMON_XML_DIR)/suitestore_constants.xml \
 	$(INT_COMMON_XML_DIR)/alert_type_constants.xml
 
