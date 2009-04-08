@@ -190,11 +190,6 @@ int getCurrentIsolateId();
  */
 int getMaxIsolates();
 
-/**
- * Forces garbage collection.
- */  
-void force_gc();
-
 
 #ifdef __cplusplus
 }
