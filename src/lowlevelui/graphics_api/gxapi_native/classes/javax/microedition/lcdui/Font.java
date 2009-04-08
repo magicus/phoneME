@@ -273,6 +273,25 @@ public final class Font {
             return f;
         }
     }
+    
+    static Font getOEMFont(int inp_style, int inp_size) {
+        if ((inp_style & ((STYLE_UNDERLINED << 1) - 1)) != inp_style) {
+            throw new IllegalArgumentException("Illegal style");
+        }
+
+        synchronized (Display.LCDUILock) {
+            /* IMPL_NOTE: this makes garbage.  But hashtables need Object keys. */
+            Integer key = new Integer(FACE_PROPORTIONAL | inp_style | inp_size);
+            Font f = (Font)table.get(key);
+            if (f == null) {
+                f = new Font(FACE_PROPORTIONAL, inp_style, inp_size);
+                table.put(key, f);
+            }
+
+            return f;
+        }
+        
+    }
 
     /**
      * Gets the style of the font. The value is an <code>OR'ed</code>
