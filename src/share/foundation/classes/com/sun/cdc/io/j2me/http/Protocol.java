@@ -99,6 +99,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     protected StreamConnectionPool connectionPool;
     private static StreamConnectionPool staticConnectionPool;
 
+    private static String platformUserAgent;
+
     static {
         maxNumberOfPersistentConnections = Integer.parseInt(
             (String) AccessController.doPrivileged(
@@ -111,6 +113,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         staticConnectionPool =
             new StreamConnectionPool(maxNumberOfPersistentConnections,
                                  connectionLingerTime);
+        platformUserAgent = (String) AccessController.doPrivileged(
+            new sun.security.action.GetPropertyAction(
+            "platform.browser.user.agent", null));
     }
     /*
      * A shared temporary buffer used in a couple of places
@@ -1033,6 +1038,14 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         if (connected) {
             return;
         }
+
+        String origUserAgentValue = getRequestProperty("User-Agent");
+        if (platformUserAgent != null &&
+                -1 == origUserAgentValue.indexOf(platformUserAgent)) {
+            reqProperties.put("User-Agent",
+                    origUserAgentValue + " " + platformUserAgent);
+        }
+
         sendRequest();
         try {
             readResponseMessage();
