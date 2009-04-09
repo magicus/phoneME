@@ -141,6 +141,32 @@ JVM_Halt(jint code);
 JNIEXPORT void JNICALL
 JVM_GC(void);
 
+/*
+ * Force a garbage collection to happen. Possible values for the
+ * flags parameter are (may be combined using binary OR):
+ *
+ * JVM_COLLECT_YOUNG_SPACE_ONLY:
+ *   - If false, the entire normal object space is collected.
+ *     If true, only the young object space is collected
+ *
+ * JVM_COLLECT_COMPILER_AREA:
+ *     NOTE: Ignored for the CVM implementation
+ *   - If true, the compiled area may be shrunk to accomodate
+ *     the requested size.
+ *   - If false, the compiler area is not affected by the garbage 
+ *     collection, even if the requested size cannot otherwise be
+ *     satisfied.
+ *
+ * The requested_free_bytes parameter specifies the desired amount of
+ * free space (in bytes) that should be available in the heap for
+ * object allocation.
+ */
+int JVM_GarbageCollect(int flags, int requested_free_bytes);
+
+#define JVM_COLLECT_YOUNG_SPACE_ONLY     (1 << 0)
+#define JVM_COLLECT_COMPILER_AREA        (1 << 1)
+
+
 /* Returns the number of real-time milliseconds that have elapsed since the
  * least-recently-inspected heap object was last inspected by the garbage
  * collector.

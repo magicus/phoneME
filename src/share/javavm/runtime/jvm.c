@@ -642,7 +642,7 @@ JVM_GetCallerClass(JNIEnv *env, int n)
 #ifndef CDC_10
 /* Assertion support. */
 
-jboolean
+JNIEXPORT jboolean JNICALL
 JVM_DesiredAssertionStatus(JNIEnv *env, jclass unused, jclass cls)
 {
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
@@ -666,7 +666,7 @@ JVM_DesiredAssertionStatus(JNIEnv *env, jclass unused, jclass cls)
 
 /* Return a new AssertionStatusDirectives object with the fields filled in with
    command-line assertion arguments (i.e., -ea, -da). */
-jobject
+JNIEXPORT jobject JNICALL
 JVM_AssertionStatusDirectives(JNIEnv *env, jclass unused)
 {
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
@@ -911,6 +911,26 @@ JNIEXPORT void JNICALL
 JVM_GC(void)
 {
     CVMgcRunGC(CVMgetEE());
+}
+
+/* JVM_GarbageCollect is implemented to support CLDC VM compatibility. */
+JNIEXPORT int JNICALL
+JVM_GarbageCollect(int flags, int requested_free_bytes)
+{
+    CVMExecEnv* ee = CVMgetEE();
+
+    /* We can't completely honor the JVM_COLLECT_YOUNG_SPACE_ONLY, since
+       there is no API to just collect the youngGen. However, unless -1
+       free bytes are requested, only the youngGen will be collected assuming
+       it satisfies requested_free_bytes. Also, if this flag is not set,
+       then we are suppose to do a full collection, which can be accomplished
+       by forcing requested_free_bytes = ~0.
+    */
+    if ((flags & JVM_COLLECT_YOUNG_SPACE_ONLY) != 0) {
+        requested_free_bytes = ~0;
+    }
+    CVMgcStopTheWorldAndGC(ee, requested_free_bytes);
+    return CVMgcFreeMemory(ee);
 }
 
 JNIEXPORT jlong JNICALL
