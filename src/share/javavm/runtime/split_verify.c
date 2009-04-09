@@ -3140,8 +3140,6 @@ CVMsplitVerifyClassDeleteMaps(CVMClassBlock* cb){
     struct CVMmapCacheMethod* nextMcmp;
     mccp = getMapCacheClass(cb, CVM_FALSE);
     if (mccp == NULL){
-	CVMdebugPrintf(("deleteMapCacheClass: couldn't find %C\n", cb));
-        CVMassert(CVM_FALSE);
 	return;
     }
     /* free method structures */

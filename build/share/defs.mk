@@ -315,7 +315,13 @@ else
     CVM_DUAL_STACK          ?= false
   endif
 endif
-CVM_SPLIT_VERIFY	?= true
+
+# We must use the split verifier for cldc/midp classes 
+ifeq ($(CVM_DUAL_STACK), true)
+    override CVM_SPLIT_VERIFY = true
+else
+    CVM_SPLIT_VERIFY ?= true
+endif
 
 CVM_JIT_REGISTER_LOCALS	?= true
 CVM_JIT_USE_FP_HARDWARE ?= false
