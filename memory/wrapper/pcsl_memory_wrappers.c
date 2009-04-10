@@ -45,20 +45,6 @@ void set_pcsl_memory_allocationerror_callback(void (*callback_pointer)()) {
  * Allocates memory of the given size from the private PCSL memory
  * pool.
  */
-#ifdef PCSL_DEBUG
-
-void*
-pcsl_mem_malloc(unsigned int size, char* filename, int lineno) {
-    void * ptr =  pcsl_mem_malloc_impl(size, filename, lineno);
-    if (ptr == NULL && pcsl_memory_allocation_failed_callback != NULL) {
-        pcsl_memory_allocation_failed_callback();
-        ptr = pcsl_mem_malloc_impl(size, filename, lineno);
-    }
-    return ptr;
-}
-
-#else 
- 
 void * pcsl_mem_malloc(unsigned int size) {
     void * ptr =  pcsl_mem_malloc_impl(size);
     if (ptr == NULL && pcsl_memory_allocation_failed_callback != NULL) {
@@ -68,7 +54,6 @@ void * pcsl_mem_malloc(unsigned int size) {
     return ptr;
 }
 
-#endif
 
 /** 
  * Allocates and clears the given number of elements of the given size
@@ -78,18 +63,13 @@ void * pcsl_mem_malloc(unsigned int size) {
 
 void*
 pcsl_mem_calloc(unsigned int nelem, unsigned int elsize, 
-                     char* filename, int lineno) {  
-    void * ptr =  pcsl_mem_calloc_impl(nelem, elsize, filename, lineno);
-    if (ptr == NULL && pcsl_memory_allocation_failed_callback != NULL) {
-        pcsl_memory_allocation_failed_callback();
-        ptr = pcsl_mem_calloc_impl(nelem, elsize, filename, lineno);
-    }
-    return ptr;
-}
- 
+                     char* filename, int lineno) { 
 #else
  
-void * pcsl_mem_calloc(unsigned int nelem, unsigned int elsize) {  
+void * pcsl_mem_calloc(unsigned int nelem, unsigned int elsize) {
+
+#endif 
+ 
     void * ptr =  pcsl_mem_calloc_impl(nelem, elsize);
     if (ptr == NULL && pcsl_memory_allocation_failed_callback != NULL) {
         pcsl_memory_allocation_failed_callback();
@@ -98,7 +78,6 @@ void * pcsl_mem_calloc(unsigned int nelem, unsigned int elsize) {
     return ptr;
 }
 
-#endif
 
 /**
  * Re-allocates memory at the given pointer location in the private
@@ -106,20 +85,6 @@ void * pcsl_mem_calloc(unsigned int nelem, unsigned int elsize) {
  * size.
  */
 
-#ifdef PCSL_DEBUG
-
-void*
-pcsl_mem_realloc(void* ptr, unsigned int size, char* filename, int lineno) {
-    void * retptr =  pcsl_mem_realloc_impl(ptr, size, fileanme, lineno);
-    if (retptr == NULL && pcsl_memory_allocation_failed_callback != NULL) {
-        pcsl_memory_allocation_failed_callback();
-        retptr = pcsl_mem_realloc_impl(ptr, size, fileanme, lineno);
-    }
-    return retptr;
-}
- 
-#else
- 
 void * pcsl_mem_realloc(void* ptr, unsigned int size) {
     void * retptr =  pcsl_mem_realloc_impl(ptr, size);
     if (retptr == NULL && pcsl_memory_allocation_failed_callback != NULL) {
@@ -129,7 +94,6 @@ void * pcsl_mem_realloc(void* ptr, unsigned int size) {
     return retptr;
 }
 
-#endif
 
 /**
  * Duplicates the given string after allocating the memory for it.
@@ -138,26 +102,20 @@ void * pcsl_mem_realloc(void* ptr, unsigned int size) {
 
 char*
 pcsl_mem_strdup(const char *s1, char* filename, int lineno) {
-    char * ptr =  pcsl_mem_strdup_impl(s1, filename, lineno);
-    if (ptr == NULL && pcsl_memory_allocation_failed_callback != NULL) {
-        pcsl_memory_allocation_failed_callback();
-        ptr = pcsl_mem_strdup_impl(s1);
-    }
-    return ptr;
-} 
 
 #else 
 
 char * pcsl_mem_strdup(const char *s1) {
+
+#endif
+
     char * ptr =  pcsl_mem_strdup_impl(s1);
     if (ptr == NULL && pcsl_memory_allocation_failed_callback != NULL) {
         pcsl_memory_allocation_failed_callback();
         ptr = pcsl_mem_strdup_impl(s1);
     }
     return ptr;
-}    
-
-#endif
+}
 
 #ifdef __cplusplus
 }
