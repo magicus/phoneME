@@ -524,9 +524,6 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
     /** pressed on a valid item in popup layer **/
     private boolean itemSelectedWhenPressed = false;
 
-    /** pointer dragged over popup layer **/
-    private boolean pointerDragged = false;
-
     /** The PopupLayer that represents open state of this ChoiceGroup POPUP. */
     CGPopupLayer popupLayer;
 
