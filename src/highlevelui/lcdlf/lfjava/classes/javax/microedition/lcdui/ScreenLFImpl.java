@@ -115,8 +115,8 @@ class ScreenLFImpl extends DisplayableLFImpl {
     boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
         this.vScrollPosition = scrollPosition;
         this.vScrollProportion = scrollProportion;
-            
-        if (lIsShown()) {
+
+        if (lIsShown() && scrollPosition >= 0 && scrollPosition <= 100) {
             return currentDisplay.setVerticalScroll(scrollPosition, scrollProportion);
         }
         return false;
@@ -370,11 +370,7 @@ class ScreenLFImpl extends DisplayableLFImpl {
                            "[F] >> viewable[HEIGHT] == "+viewable[HEIGHT] +
                            " lastScrollSize == "+lastScrollSize);
         }
-
-        if (viewable[Y] < 0 || viewable[Y] > getMaxScroll()) {
-            return;
-        }
-        
+       
         // check if scroll moves, and if so, refresh scrollbars
         if (!invalidScroll &&
             (viewable[Y] != lastScrollPosition ||
