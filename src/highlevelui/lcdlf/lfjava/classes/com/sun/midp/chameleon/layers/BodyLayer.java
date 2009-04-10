@@ -408,8 +408,9 @@ public class BodyLayer extends CLayer
                 case EventConstants.FLICKERED:
                     if (pointerY != Integer.MAX_VALUE && pointerDeltaY != 0) {
                         GestureAnimator.flick(this, pointerDeltaY);
+                        stableY = 0;
                     }
-                    break;                    
+                    break;
                 case EventConstants.RELEASED:
                 case EventConstants.GONE:
                     if (stableY != 0) {

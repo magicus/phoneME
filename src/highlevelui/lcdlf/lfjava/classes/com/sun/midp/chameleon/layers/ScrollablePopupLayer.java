@@ -232,6 +232,7 @@ public class ScrollablePopupLayer extends PopupLayer
             case EventConstants.FLICKERED:
                 if (pointerDeltaY != 0) {
                     GestureAnimator.flick(this, pointerDeltaY);
+                    stableY = 0;
                 }
                 break;
             case EventConstants.RELEASED:
