@@ -207,46 +207,20 @@ void set_pcsl_memory_allocationerror_callback(void (*callback_pointer)());
  */ 
 void * pcsl_mem_malloc(unsigned int size);
 
+/** 
+ * Allocates and clears the given number of elements of the given size
+ * from the private PCSL memory pool.
+ */
+void*
+pcsl_mem_calloc(unsigned int nelem, unsigned int elsize);
+
+
 /**
  * Re-allocates memory at the given pointer location in the private
  * PCSL memory pool (or null for new memory) so that it is the given
  * size.
  */ 
 void * pcsl_mem_realloc(void * ptr, unsigned int size);
-
-
-#ifdef PCSL_DEBUG
-
-/** 
- * Allocates and clears the given number of elements of the given size
- * from the private PCSL memory pool.
- */
-void*
-pcsl_mem_calloc(unsigned int nelem, unsigned int elsize, 
-                     char* filename, int lineno);
-                     
-/**
- * Duplicates the given string after allocating the memory for it.
- */
-char*
-pcsl_mem_strdup(const char *s1, char* filename, int lineno);
-
-#else //! PCSL_DEBUG 
-
-
-/** 
- * Allocates and clears the given number of elements of the given size
- * from the private PCSL memory pool.
- */         
-void * pcsl_mem_calloc(unsigned int nelem, unsigned int size);
-
-
-/**
- * Duplicates the given string after allocating the memory for it.
- */
-char * pcsl_mem_strdup(const char * s1);
-
-#endif //PCSL_DEBUG - #else
 
 
 /**

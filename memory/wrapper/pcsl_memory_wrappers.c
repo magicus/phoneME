@@ -54,22 +54,11 @@ void * pcsl_mem_malloc(unsigned int size) {
     return ptr;
 }
 
-
 /** 
  * Allocates and clears the given number of elements of the given size
  * from the private PCSL memory pool.
  */
-#ifdef PCSL_DEBUG
-
-void*
-pcsl_mem_calloc(unsigned int nelem, unsigned int elsize, 
-                     char* filename, int lineno) { 
-#else
- 
-void * pcsl_mem_calloc(unsigned int nelem, unsigned int elsize) {
-
-#endif 
- 
+void * pcsl_mem_calloc(unsigned int nelem, unsigned int elsize) { 
     void * ptr =  pcsl_mem_calloc_impl(nelem, elsize);
     if (ptr == NULL && pcsl_memory_allocation_failed_callback != NULL) {
         pcsl_memory_allocation_failed_callback();
@@ -98,17 +87,7 @@ void * pcsl_mem_realloc(void* ptr, unsigned int size) {
 /**
  * Duplicates the given string after allocating the memory for it.
  */
-#ifdef PCSL_DEBUG
-
-char*
-pcsl_mem_strdup(const char *s1, char* filename, int lineno) {
-
-#else 
-
 char * pcsl_mem_strdup(const char *s1) {
-
-#endif
-
     char * ptr =  pcsl_mem_strdup_impl(s1);
     if (ptr == NULL && pcsl_memory_allocation_failed_callback != NULL) {
         pcsl_memory_allocation_failed_callback();
