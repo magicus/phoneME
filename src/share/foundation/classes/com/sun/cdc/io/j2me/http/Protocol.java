@@ -1040,6 +1040,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
 
         String origUserAgentValue = getRequestProperty("User-Agent");
+        if (origUserAgentValue == null) {
+            origUserAgentValue = "";
+        }
         if (platformUserAgent != null &&
                 -1 == origUserAgentValue.indexOf(platformUserAgent)) {
             reqProperties.put("User-Agent",
