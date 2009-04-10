@@ -806,11 +806,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             if (numOfLFs == 0) {
                 return;
             }
-            
+
             v = findItemByPointer(x, y);
             pointerPressed = true;
         }
-        
+
         // SYNC NOTE: this call may result in a call to the
         // application, so we make sure we do this outside of the
         // LCDUILock
@@ -2421,6 +2421,26 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         }
         return ret;
     }
+
+    /**
+     * Checks whether it is allowed to start content dragging from
+     * this point
+     * @param x the x coordinate of the point to check
+     * @param y the y coordinate of the point to check
+     */
+    public boolean uIsDraggable(int x, int y) {
+        ItemLFImpl item = null;
+        synchronized (Display.LCDUILock) {
+            if (numOfLFs > 0) {
+                item = findItemByPointer(x, y);
+            }
+        }
+        if (item!= null && item instanceof CustomItemLFImpl) {
+            return false;
+        }
+        return true;
+    }
+
 
     /**
      * A boolean declaring whether the contents of the viewport

@@ -563,6 +563,16 @@ class DisplayableLFImpl implements DisplayableLF {
     }
 
     /**
+     * Checks whether it is allowed to start content dragging from
+     * this point
+     * @param x the x coordinate of the point to check
+     * @param y the y coordinate of the point to check
+     */
+    public boolean uIsDraggable(int x, int y) {
+        return true;
+    }
+
+    /**
      * This method notify displayable to drag its content
      *
      * @param deltaY
