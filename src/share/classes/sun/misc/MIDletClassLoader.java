@@ -74,6 +74,8 @@ public class MIDletClassLoader extends URLClassLoader {
     private boolean enableFilter;
     private ClassLoader auxClassLoader;
 
+    private MIDPBridgeInterface bridgeInterface;
+
     public MIDletClassLoader(
         URL base[],
         String systemPkgs[],
@@ -81,7 +83,8 @@ public class MIDletClassLoader extends URLClassLoader {
         MemberFilter mf,
         MIDPImplementationClassLoader  parent,
         boolean enableFilter,
-        ClassLoader auxClassLoader)
+        ClassLoader auxClassLoader,
+        MIDPBridgeInterface bridgeInterface)
     {
         super(base, parent);
         myBase = base;
@@ -91,6 +94,7 @@ public class MIDletClassLoader extends URLClassLoader {
         implementationClassLoader = parent;
         this.enableFilter = enableFilter;
         this.auxClassLoader = auxClassLoader;
+        this.bridgeInterface = bridgeInterface;
     }
 
     protected PermissionCollection getPermissions(CodeSource cs){
@@ -232,6 +236,10 @@ public class MIDletClassLoader extends URLClassLoader {
          */
         if (resultClass == null && auxClassLoader != null) {
             resultClass = auxClassLoader.loadClass(classname);
+        }
+
+        if (resultClass == null && bridgeInterface != null) {
+            resultClass = bridgeInterface.loadClass(classname);
         }
 
         if (resultClass == null) {

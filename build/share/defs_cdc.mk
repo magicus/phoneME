@@ -617,6 +617,7 @@ ifeq ($(CVM_DUAL_STACK), true)
 	sun.misc.MIDPConfig \
 	sun.misc.MIDletClassLoader \
 	sun.misc.MIDPLauncher \
+	sun.misc.MIDPBridgeInterface \
 	sun.misc.CDCAppClassLoader
 
 #
