@@ -31,6 +31,7 @@ class ContentHandlerHandle implements ContentHandlerImpl.Handle {
 	private ContentHandlerImpl created = null;
 	
 	ContentHandlerHandle( String handlerID ){
+		handlerID.length(); // null pointer check
 		this.handlerID = handlerID;
 	}
 	
@@ -41,7 +42,7 @@ class ContentHandlerHandle implements ContentHandlerImpl.Handle {
 	
 	private void Init( final ContentHandlerImpl.Data data ){
 		created = new ContentHandlerImpl(data.appID, this){{
-			this.ID = getID(); 
+			this.ID = handlerID; 
 			this.registrationMethod = data.registrationMethod;
 		}};
 	}

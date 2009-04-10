@@ -60,10 +60,7 @@
 #include <pcsl_string.h>
 
 #include <midpUtilKni.h>
-//#include <midpError.h>
-//#include <midp_logging.h>
 #include <midpServices.h>
-//#include <midpMalloc.h>
 
 #include <suitestore_common.h>
 #include <jsr211_invoc.h>
@@ -531,6 +528,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_get0) {
         /* Check if blocked invocation was cancelled. */
         if (isThreadCancelled()) {
             /* blocking is always false to cleanup and exit immediately */
+            // blockID == 0
             break;
         }
     
@@ -1324,6 +1322,9 @@ static void blockThread( int blockID ) {
  */
 static jboolean isThreadCancelled() {
     MidpReentryData* p = (MidpReentryData*)(SNI_GetReentryData(NULL));
+#ifdef TRACE_BLOCKING
+    printf( "isThreadCancelled(%p): %s\n", p, (p != NULL && p->status == JSR211_INVOKE_CANCELLED)? "yes" : "no" );
+#endif
     return (p != NULL && p->status == JSR211_INVOKE_CANCELLED);
 }
 
@@ -1359,7 +1360,7 @@ static void unblockWaitingThreads(int blockID, int newStatus) {
                 (blockID == 0 || p->pResult == (void *)blockID) ) {
             JVMSPI_ThreadID id = blocked_threads[i].thread_id;
 #ifdef TRACE_BLOCKING
-            printf( "try to unblock. id = %p\n", id );
+            printf( "try to unblock: threadId = %p, blockID = %p\n", id, p->pResult );
 #endif
             if (id != NULL) {
                 p->status = st;

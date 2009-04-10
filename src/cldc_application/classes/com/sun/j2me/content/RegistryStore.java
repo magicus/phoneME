@@ -26,8 +26,6 @@
 
 package com.sun.j2me.content;
 
-import java.io.DataInputStream;
-import java.io.IOException;
 import java.util.Vector;
 
 /**

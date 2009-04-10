@@ -106,7 +106,7 @@ class AppProxy extends CLDCAppID {
     private static AppProxy currentApp;
 
     /** The log flag to enable informational messages. */
-    static final Logger LOGGER = null; // new Logger();
+    static final Logger LOGGER = new Logger();
     
     private static final boolean isInSvmMode = isInSvmMode();
 

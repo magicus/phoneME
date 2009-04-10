@@ -419,9 +419,9 @@ public final class RegistryImpl {
             if (conflict != null) {
                 unregister(classname);
             }
-
-            ContentHandlerImpl result = 
-            	new ContentHandlerHandle(gate.register(appl, handlerData)).get();
+            ContentHandlerImpl.Data data = gate.register(appl, handlerData);
+            // data must not be null
+            ContentHandlerImpl result = new ContentHandlerHandle( data ).get();
             setServer(result);
 
             if (AppProxy.LOGGER != null) {
@@ -458,7 +458,10 @@ public final class RegistryImpl {
      * @return found handler or <code>null</code> if none found.
      */
     static ContentHandlerImpl getHandler(AppProxy appl) {
-        return new ContentHandlerHandle( gate.getHandler(appl) ).get();
+    	ContentHandlerImpl.Data data = gate.getHandler(appl);
+    	if( data == null )
+    		return null;
+        return new ContentHandlerHandle( data ).get();
     }
     
     /**
@@ -1119,7 +1122,9 @@ public final class RegistryImpl {
     	ContentHandlerImpl.Data data = 
     		gate.findHandler(getID(), ID, 
     				exact? RegistryGate.SEARCH_EXACT: RegistryGate.SEARCH_PREFIX);
-        return new ContentHandlerHandle( data ).get();
+    	if( data != null )
+    		return new ContentHandlerHandle( data ).get();
+    	return null;
     }
 
     /**

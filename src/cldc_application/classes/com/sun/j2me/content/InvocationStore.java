@@ -107,7 +107,7 @@ public class InvocationStore implements StoreGate {
      */
     public InvocationImpl getRequest(ApplicationID appID, int blockID) {
     	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( "InvocationStore.getRequest: " + appID );
+    		AppProxy.LOGGER.println( "InvocationStore.getRequest(" + appID + ", " + blockID + ")" );
     	
         CLDCAppID.from(appID).className.length(); // null pointer check
         return get(CLDCAppID.from(appID), MODE_REQUEST, blockID);
@@ -229,6 +229,8 @@ public class InvocationStore implements StoreGate {
     
     	int s = 0;
     	while ((s = get0(invoc, appID.suiteID, appID.className, mode, blockID)) != 1) {
+    		if( AppProxy.LOGGER != null )
+    			AppProxy.LOGGER.println("InvocationStore.get0 returns " + s);
     	    if (s == -1) {
         		/*
         		 * Sizes of arguments and data buffers were insufficient
@@ -250,7 +252,7 @@ public class InvocationStore implements StoreGate {
     
     	if (AppProxy.LOGGER != null) {
     	    AppProxy.LOGGER.println("Store get: " + appID +
-    					  		", mode: " + mode + ", " + invoc);
+    					  		", mode: " + mode + "\n\treturns " + invoc);
     	}
         return invoc;
     }

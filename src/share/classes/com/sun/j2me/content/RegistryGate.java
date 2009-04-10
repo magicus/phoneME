@@ -119,6 +119,8 @@ class RegistryRequestsConverter implements RegistryGate {
 			byte[] data = 
 				out.sendMessage(RegistryMessageProcessor.CODE_Register, 
 									dataOut.toByteArray());
+			if( data.length == 0 ) 
+				return null;
 			return toHandlerData(
 					new DataInputStream(new ByteArrayInputStream(data)));
 		} catch (IOException e) {
@@ -158,6 +160,8 @@ class RegistryRequestsConverter implements RegistryGate {
 			dataOut.writeInt(searchMode);
 			byte[] data = out.sendMessage(RegistryMessageProcessor.CODE_FindHandlerByName, 
 									dataOut.toByteArray());
+			if( data.length == 0 ) 
+				return null;
 			return toHandlerData( new DataInputStream( new ByteArrayInputStream( data ) ) );
 		} catch (IOException e) {
 			throw new RuntimeException( e.getMessage() );
@@ -194,6 +198,8 @@ class RegistryRequestsConverter implements RegistryGate {
 			appID.serialize( dataOut );
 			byte[] data = out.sendMessage(RegistryMessageProcessor.CODE_GetAppHandler, 
 								dataOut.toByteArray());
+			if( data.length == 0 ) 
+				return null;
 			return toHandlerData( new DataInputStream( new ByteArrayInputStream( data ) ) );
 		} catch (IOException e) {
 			throw new RuntimeException( e.getMessage() );
@@ -266,6 +272,8 @@ class RegistryRequestExecutor implements RegistryMessageProcessor {
 	}
 
 	private byte[] toBytes(ContentHandlerImpl.Data data) throws IOException {
+		if( data == null )
+			return ZERO_BYTES;
 		Bytes out = new Bytes();
 		data.serialize( out );
 		return out.toByteArray();
@@ -324,7 +332,8 @@ class RegistryRequestExecutor implements RegistryMessageProcessor {
 
 	private byte[] getAppHandler(DataInputStream dataIn) throws IOException {
 		ApplicationID appID = AppProxy.createAppID().read(dataIn);
-		return toBytes( gate.getHandler(appID) );
+		ContentHandlerImpl.Data data = gate.getHandler(appID);
+		return toBytes( data );
 	}
 
 	private byte[] getValues(DataInputStream dataIn) throws IOException {

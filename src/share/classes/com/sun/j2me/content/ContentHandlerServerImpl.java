@@ -69,9 +69,9 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
      * @see javax.microedition.content.ContentHandlerServer#finish
      */
     public Invocation getRequest(boolean wait) {
-    	if(AppProxy.LOGGER != null){
+    	Invocation result = null;
+    	if(AppProxy.LOGGER != null)
     		AppProxy.LOGGER.println( "ContentHandler.getRequest(" + wait + ")" );
-    	}
         // Application has tried to get a request; reset cleanup flags on all
         if (requestCalls == 0) {
         	InvocationImpl.store.setCleanupFlag(applicationID, false);
@@ -89,9 +89,11 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
             AppProxy.requestForeground(invoc.invokingApp, invoc.destinationApp);
             
 		    // Wrap it in an Invocation instance
-            return invoc.wrap();
+            result = invoc.wrap();
         }
-        return null;
+    	if(AppProxy.LOGGER != null)
+    		AppProxy.LOGGER.println( "ContentHandler.getRequest(" + wait + ") returns " + result );
+        return result;
     }
 
     /**
