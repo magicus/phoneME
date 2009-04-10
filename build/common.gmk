@@ -69,6 +69,7 @@ NOTIFIER_SOURCE+=$(foreach jsr,$(ALL_IMPL_JSR_LIST) $(JC_NOTIFIERS_LIST), $(if $
 SPECIFIC_DEFINITIONS += $(filter -DENABLE_JSR%, $(foreach jsr,$(ALL_IMPL_JSR_LIST), \
     $(if $(PREFIX_$(USE_$(jsr))), -DENABLE_$(jsr)=1)))
 
+ALL_JC_IMPL_LIST = $(JC_IMPL_LIST)
 #Form list of javacall header files
 ALL_JC_API_LIST = $(JSR_LIST) $(JC_API_LIST)
 JC_INCLUDE_DIR_SET_LOCAL=$(foreach jsr,$(ALL_JC_API_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_DIR)))
