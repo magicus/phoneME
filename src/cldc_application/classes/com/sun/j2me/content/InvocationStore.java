@@ -105,13 +105,12 @@ public class InvocationStore implements StoreGate {
      *  its status is set to ACTIVE;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    public InvocationImpl getRequest(ApplicationID appID,
-                            	boolean shouldBlock, Counter cancelCounter) {
+    public InvocationImpl getRequest(ApplicationID appID, int blockID) {
     	if( AppProxy.LOGGER != null )
     		AppProxy.LOGGER.println( "InvocationStore.getRequest: " + appID );
     	
         CLDCAppID.from(appID).className.length(); // null pointer check
-        return get(CLDCAppID.from(appID), MODE_REQUEST, shouldBlock, cancelCounter);
+        return get(CLDCAppID.from(appID), MODE_REQUEST, blockID);
     }
 
     /**
@@ -129,13 +128,12 @@ public class InvocationStore implements StoreGate {
      *  the same MIDlet suiteId and classname if one was requested;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    public InvocationImpl getResponse(ApplicationID appID, 
-    						boolean shouldBlock, Counter cancelCounter) {
+    public InvocationImpl getResponse(ApplicationID appID, int blockID) {
     	if( AppProxy.LOGGER != null )
     		AppProxy.LOGGER.println( "InvocationStore.getResponse: " + appID );
     	
     	CLDCAppID.from(appID).className.length(); // null pointer check
-        return get(CLDCAppID.from(appID), MODE_RESPONSE, shouldBlock, cancelCounter);
+        return get(CLDCAppID.from(appID), MODE_RESPONSE, blockID);
     }
 
     /**
@@ -164,7 +162,7 @@ public class InvocationStore implements StoreGate {
      *  <code>null</code> is returned if there is no matching Invocation
      */
     public InvocationImpl getCleanup(ApplicationID appID) {
-        return get(CLDCAppID.from(appID), MODE_CLEANUP, false, null);
+        return get(CLDCAppID.from(appID), MODE_CLEANUP, 0);
     }
 
     /**
@@ -226,15 +224,11 @@ public class InvocationStore implements StoreGate {
      *  the same MIDlet suiteId and classname if one was requested;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    private static InvocationImpl get(CLDCAppID appID,
-				      int mode, boolean shouldBlock, Counter cancelCounter) {
+    private static InvocationImpl get(CLDCAppID appID, int mode, int blockID) {
     	InvocationImpl invoc = new InvocationImpl();
     
     	int s = 0;
-    	int oldCancelCount = 0;
-    	if( shouldBlock )
-    		oldCancelCount = cancelCounter.getCounter();
-    	while ((s = get0(invoc, appID.suiteID, appID.className, mode, shouldBlock)) != 1) {
+    	while ((s = get0(invoc, appID.suiteID, appID.className, mode, blockID)) != 1) {
     	    if (s == -1) {
         		/*
         		 * Sizes of arguments and data buffers were insufficient
@@ -245,9 +239,8 @@ public class InvocationStore implements StoreGate {
         		continue;
     	    }
     	    // Don't wait unless requested
-    	    if (!shouldBlock || oldCancelCount != cancelCounter.getCounter()) {
+    	    if (blockID == 0)
                 break;
-    	    }
     	}
     
     	// Update the return if no invocation
@@ -274,20 +267,10 @@ public class InvocationStore implements StoreGate {
      *
      * @return true if a matching invocation is present; false otherwise
      */
-    public boolean waitForEvent(ApplicationID appID,
-                      boolean request, Counter cancelCounter) {
-    	final boolean shouldBlock = true;
+    public boolean waitForEvent(ApplicationID appID, boolean request, int blockID) {
         final int mode = (request ? MODE_LREQUEST : MODE_LRESPONSE);
-        boolean pending;
-        int oldCancelCount = 0;
         CLDCAppID app = CLDCAppID.from(appID);
-        if( shouldBlock ) 
-        	oldCancelCount = cancelCounter.getCounter();
-        while (!(pending = listen0(app.suiteID, app.className, mode, shouldBlock)) &&
-                    shouldBlock && oldCancelCount == cancelCounter.getCounter()) {
-            // No pending request; retry unless canceled
-        }
-
+        boolean pending = listen0(app.suiteID, app.className, mode, blockID);
         if (AppProxy.LOGGER != null) {
             AppProxy.LOGGER.println("Store listen: " + appID +
                                           ", request: " + request +
@@ -323,10 +306,10 @@ public class InvocationStore implements StoreGate {
      * Cancel a blocked {@link #get}  or {@link #listen}
      * method if it is blocked in the native code.
      */
-    public void unblockWaitingThreads() {
+    public void unblockWaitingThreads(int blockID) {
     	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( "InvocationStore.cancel called." );
-    	unblockWaitingThreads0();
+    		AppProxy.LOGGER.println( "InvocationStore.unblock(" + blockID + ")" );
+    	unblockWaitingThreads0(blockID);
     }
 
     /**
@@ -365,6 +348,11 @@ public class InvocationStore implements StoreGate {
 			}
 		}
 	}
+    
+    static private int freeBlockID = 1;
+    public int allocateBlockID(){
+    	return freeBlockID++;
+    }
 
     public void resetFlags(int tid) {
 		resetFlags0(tid);
@@ -395,7 +383,7 @@ public class InvocationStore implements StoreGate {
      * @param classname the classname to match
      * @param mode one of {@link #MODE_REQUEST}, {@link #MODE_RESPONSE},
      *    or {@link #MODE_CLEANUP}
-     * @param shouldBlock True if the method should block until an
+     * @param blockID True if the method should block until an
      *    Invocation is available
      * @return 1 if a matching invocation was found and returned
      *    in its entirety; zero if there was no matching invocation;
@@ -403,7 +391,7 @@ public class InvocationStore implements StoreGate {
      * @see #get
      */
     private static native int get0(InvocationImpl invoc, int suiteId, String classname, 
-                                    int mode, boolean shouldBlock);
+                                    int mode, int blockID);
 
     private static native int getByTid0(InvocationImpl invoc, int tid, int mode);
 
@@ -417,13 +405,13 @@ public class InvocationStore implements StoreGate {
      * @param suiteId the MIDletSuite ID to match
      * @param classname the classname to match
      * @param mode one of {@link #MODE_LREQUEST}, {@link #MODE_LRESPONSE}
-     * @param shouldBlock true if the method should block until an
+     * @param blockID true if the method should block until an
      *     Invocation is available
      * @return true if a matching invocation was found; otherwise false.
      * @see #get0
      */
     private static native boolean listen0(int suiteId, String classname,
-                                          int mode, boolean shouldBlock);
+                                          int mode, int blockID);
 
     /**
      * Native method to reset the listen notified state for pending
@@ -444,9 +432,10 @@ public class InvocationStore implements StoreGate {
      * Native method to unblock any threads that might be
      * waiting for an invocation by way of having called
      * {@link #get0}.
+     * @param blockID 
      *
      */
-    private static native void unblockWaitingThreads0();
+    private static native void unblockWaitingThreads0(int blockID);
 
     /**
      * Sets the cleanup flag in matching Invocations.

@@ -31,6 +31,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 interface MessageProcessor {
+	public static final byte[] ZERO_BYTES = new byte[0];
 	
 	byte[] sendMessage( int msgCode, byte[] data ) throws IOException;
 

@@ -290,7 +290,7 @@ class RegistryRequestExecutor implements RegistryMessageProcessor {
 	private byte[] register(DataInputStream dataIn) throws IOException {
 		ApplicationID appID = AppProxy.createAppID().read(dataIn);
 		ContentHandlerImpl.Data data = 
-			gate.register(appID, new ContentHandlerRegData(dataIn));
+			gate.register( appID, new ContentHandlerRegData(dataIn) );
 		return toBytes(data);
 	}
 
@@ -314,12 +314,12 @@ class RegistryRequestExecutor implements RegistryMessageProcessor {
 		String callerId = dataIn.readUTF();
 		int fieldId = dataIn.readInt();
 		String value = dataIn.readUTF();
-		return toBytes(gate.findHandler(callerId, fieldId, value));
+		return toBytes( gate.findHandler(callerId, fieldId, value) );
 	}
 
 	private byte[] forSuite(DataInputStream dataIn) throws IOException {
 		int suiteId = dataIn.readInt();
-		return toBytes(gate.forSuite(suiteId));
+		return toBytes( gate.forSuite(suiteId) );
 	}
 
 	private byte[] getAppHandler(DataInputStream dataIn) throws IOException {

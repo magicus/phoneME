@@ -68,7 +68,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
     	
     	public Data(){
     		this( null, null, ~REGISTERED_STATIC_FLAG & REGISTERED_STATIC_FLAG);
-    	};
+    	}
 		public Data(String handlerID, ApplicationID applicationID, int registrationMethod) {
 			ID = handlerID;
 			appID = applicationID;
@@ -604,9 +604,9 @@ public class ContentHandlerImpl extends ContentHandlerRegData
             if (listener != null || listenerImpl != null) {
                 // Create or update the active listener thread
                 if (listenerImpl == null) {
-                    listenerImpl = new RequestListenerImpl(this, listener);
+                    listenerImpl = new RequestListenerImpl(this);
                 } else {
-                    listenerImpl.setListener(listener);
+                    listenerImpl.activate(listener != null);
                 }
 
                 // If the listener thread no longer needed; clear it

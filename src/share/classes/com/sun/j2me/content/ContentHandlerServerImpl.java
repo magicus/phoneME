@@ -34,12 +34,12 @@ import javax.microedition.content.RequestListener;
  * The internal structure of a registered content handler.
  */
 final public class ContentHandlerServerImpl extends ContentHandlerImpl
-    			implements ContentHandlerServer, Counter
+    			implements ContentHandlerServer
 {
     /** The listener to notify. */
     private RequestListener listener;
     
-    int cancelCounter = 0;
+    private int currentBlockID = 0;
 
     /**
      * Construct an empty ContentHandlerServerImpl
@@ -78,8 +78,12 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
         }
         requestCalls++;
 
+        currentBlockID = 0;
+        if( wait ) 
+        	currentBlockID = InvocationImpl.store.allocateBlockID(); 
         InvocationImpl invoc =
-            InvocationImpl.store.getRequest(applicationID, wait, this);
+            InvocationImpl.store.getRequest(applicationID, currentBlockID);
+        currentBlockID = 0;
         if (invoc != null) {
             // Keep track of number of requests delivered to the application
             AppProxy.requestForeground(invoc.invokingApp, invoc.destinationApp);
@@ -98,8 +102,8 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
      * If no Thread is blocked; this call has no effect.
      */
     public void cancelGetRequest() {
-    	cancelCounter++;
-    	InvocationImpl.store.unblockWaitingThreads();
+    	if( currentBlockID != 0 )
+    		InvocationImpl.store.unblockWaitingThreads( currentBlockID );
     }
 
     /**
@@ -158,9 +162,4 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
 		    l.invocationRequestNotify(this);
 		}
     }
-
-	public int getCounter() {
-		return cancelCounter;
-	}
-
 }

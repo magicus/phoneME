@@ -32,15 +32,13 @@ import javax.microedition.content.RequestListener;
  * Thread to monitor pending invocations and notify a listener
  * when a matching one is present.
  */
-class RequestListenerImpl implements Runnable, Counter {
+class RequestListenerImpl implements Runnable {
 
     /** ContenHandlerImpl for which this is listening. */
     private final ContentHandlerImpl handler;
 
     /** The active thread processing the run method. */
-    private Thread thread;
-    
-    int stopFlag = 0;
+    private ThreadEx listenerThread;
 
     /**
      * Create a new listener for pending invocations.
@@ -48,9 +46,9 @@ class RequestListenerImpl implements Runnable, Counter {
      * @param handler the ContentHandlerImpl to listen for
      * @param listener the listener to notify when present
      */
-    RequestListenerImpl(ContentHandlerImpl handler, RequestListener listener) {
+    RequestListenerImpl(ContentHandlerImpl handler) {
 		this.handler = handler;
-		setListener(listener);
+		activate(true);
     }
 
     /**
@@ -62,27 +60,25 @@ class RequestListenerImpl implements Runnable, Counter {
      * Unblock any blocked threads so they can get the updated listener.
      * @param listener the listener to update
      */
-    void setListener(RequestListener listener) {
+    void activate(boolean activate) {
 
-		if (listener != null) {
+		if (activate) {
 		    // Ensure a thread is running to watch for it
-		    if (thread == null || !thread.isAlive()) {
-				thread = new Thread(this);
-				thread.start();
+		    if (listenerThread == null || !listenerThread.isAlive()) {
+				listenerThread = new ThreadEx(this);
+				listenerThread.start();
 		    }
 		} else {
 		    // Forget the thread doing the listening; it will exit
-		    thread = null;
+			ThreadEx t = listenerThread;
+		    listenerThread = null;
+			if( t != null && t.isAlive() ) t.unblock();
 		}
 	
 		/*
 		 * Reset notified flags on pending requests.
-		 * Unblock any threads waiting to notify current listeners
 		 */
 		InvocationImpl.store.resetListenNotifiedFlag(handler.applicationID, true);
-		// stop thread
-		stopFlag++;
-		InvocationImpl.store.unblockWaitingThreads();
     }
 
     /**
@@ -93,16 +89,13 @@ class RequestListenerImpl implements Runnable, Counter {
      */
     public void run() {
 		Thread mythread = Thread.currentThread();
-		while (mythread == thread) {
+		while (mythread == listenerThread) {
 		    // Wait for a matching invocation
-		    boolean pending = InvocationImpl.store.waitForEvent(handler.applicationID, true, this);
+		    boolean pending = InvocationImpl.store.waitForEvent(handler.applicationID, true, 
+		    											listenerThread.blockID);
 		    if (pending) {
 		    	handler.requestNotify();
 		    }
 		}
     }
-
-	public int getCounter() {
-		return stopFlag;
-	}
 }

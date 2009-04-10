@@ -26,6 +26,8 @@
 
 package com.sun.j2me.content;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 
 import javax.microedition.content.ContentHandler;
@@ -107,6 +109,12 @@ public final class InvocationImpl {
      */
     int status;
 
+    /** The previous invocation, if any. */
+    InvocationImpl previous;
+
+    /** The tid of the previous Invocation, if any. */
+    int previousTid = UNDEFINED_TID;
+
     /** The authority that authenticated this Invocation. */
     String invokingAuthority;
 
@@ -118,17 +126,8 @@ public final class InvocationImpl {
     /** The application name of the invoking MIDlet suite. */
     String invokingAppName;
 
-    /** The length (returned by get0) of the argument array. */
-    int argsLen;
-
-    /** The length (returned by get0) needed for the data array. */
-    int dataLen;
-
-    /** The previous invocation, if any. */
-    InvocationImpl previous;
-
-    /** The tid of the previous Invocation, if any. */
-    int previousTid;
+    /** The length (returned by native functions) of the argument and the data arrays. */
+    int argsLen, dataLen;
 
     /** A zero length array of strings to re-use when needed.  */
     private static final byte[] ZERO_BYTES = new byte[0];
@@ -140,7 +139,7 @@ public final class InvocationImpl {
      * STATUS_DISPOSE defined in invocStore.c.
      */
     static final int DISPOSE = 100;
-
+	
     /**
      * Create a fresh InvocationImpl.
      */
@@ -166,6 +165,84 @@ public final class InvocationImpl {
         this.invocation = invocation;
     }
 
+	public InvocationImpl(final DataInputStream dataIn) throws IOException {
+		class reader {
+			String s() throws IOException {
+				if( !dataIn.readBoolean() ) return null;
+				return dataIn.readUTF();
+			}
+		}
+		reader r = new reader();
+		url = r.s();
+		type = r.s();
+		ID = r.s();
+		action = r.s();
+		if( !dataIn.readBoolean() ){
+			arguments = new String[ dataIn.readInt() ];
+			for( int i = 0; i < arguments.length; i++)
+				arguments[ i ] = dataIn.readUTF();
+		}
+		if( !dataIn.readBoolean() ){
+			data = new byte[ dataIn.readInt() ];
+			dataIn.read(data);
+		}
+		responseRequired = dataIn.readBoolean();
+		username = r.s();
+		password = r.s();
+		tid = dataIn.readInt();
+		if( !dataIn.readBoolean() )
+			destinationApp = AppProxy.createAppID().read(dataIn);
+		status = dataIn.readInt();
+		invokingAuthority = r.s();
+		invokingID = r.s();
+		if( !dataIn.readBoolean() )
+			invokingApp = AppProxy.createAppID().read(dataIn);
+		invokingAppName = r.s();
+		previousTid = dataIn.readInt();
+        if (previousTid != 0) {
+            previous = store.getByTid(previousTid, false);
+        }
+	}
+
+	public void serialize(final DataOutputStream dataOut) throws IOException {
+		class writer {
+			boolean h( Object obj ) throws IOException {
+				dataOut.writeBoolean(obj != null);
+				return obj != null;
+			}
+			void s( String s ) throws IOException {
+				if( h(s) ) dataOut.writeUTF(s);
+			}
+		};
+		writer w = new writer();
+		w.s(url);
+		w.s(type);
+		w.s(ID);
+		w.s(action);
+		if( w.h(arguments) ){
+			dataOut.writeInt(arguments.length);
+			for( int i = 0; i < arguments.length; i++)
+				dataOut.writeUTF(arguments[i]);
+		}
+		if( w.h(data) ){
+			dataOut.writeInt(data.length);
+			dataOut.write(data);
+		}
+		dataOut.writeBoolean(responseRequired);
+		w.s(username);
+		w.s(password);
+		dataOut.writeInt(tid);
+		if( w.h(destinationApp) )
+			destinationApp.serialize(dataOut);
+		dataOut.writeInt(status);
+		w.s(invokingAuthority);
+		w.s(invokingID);
+		if( w.h(invokingApp) )
+			invokingApp.serialize(dataOut);
+		w.s(invokingAppName);
+		dataOut.writeInt(previousTid);
+	}
+	
     /**
      * Sets the argument list to a new array of Strings.  The arguments
      * are used by the application to communicate to the content
@@ -772,5 +849,17 @@ public final class InvocationImpl {
 		if( invocation == null )
 			invocation = tunnel.newInvocation(this);
 	    return invocation;
+	}
+}
+
+class ThreadEx extends Thread {
+	public final int blockID = InvocationImpl.store.allocateBlockID();
+	
+	public ThreadEx( Runnable r ){
+		super(r);
+	}
+	
+	void unblock(){
+		InvocationImpl.store.unblockWaitingThreads( blockID );
 	}
 }

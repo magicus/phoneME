@@ -45,7 +45,7 @@ import com.sun.j2me.security.Token;
  * The RegistryImpl class maintains an array of the current
  * registrations that is initialized on first use.
  */
-public final class RegistryImpl implements Counter {
+public final class RegistryImpl {
 	
 	static public final RegistryGate gate = RegistryStore.getInstance();
 	
@@ -85,7 +85,7 @@ public final class RegistryImpl implements Counter {
     /** The AppProxy for this registry. */
     final AppProxy application;
     
-    int cancelCounter = 0;
+    private int currentBlockID = 0;
 
     /** Count of responses received. */
     int responseCalls;
@@ -811,8 +811,12 @@ public final class RegistryImpl implements Counter {
         responseCalls++;
 
         // Find a response for this application and context
+        currentBlockID = 0;
+        if( wait )
+        	currentBlockID = InvocationImpl.store.allocateBlockID(); 
         InvocationImpl invoc =
-        	InvocationImpl.store.getResponse(application, wait, this);
+        	InvocationImpl.store.getResponse(application, currentBlockID);
+        currentBlockID = 0;
         if (invoc != null) {
             // Keep track of how many responses have been received;
         	final ApplicationID fromApp = invoc.invokingApp; 
@@ -870,8 +874,8 @@ public final class RegistryImpl implements Counter {
      * If no Thread is blocked; this call has no effect.
      */
     public void cancelGetResponse() {
-    	cancelCounter++;
-    	InvocationImpl.store.unblockWaitingThreads();
+    	if( currentBlockID != 0 )
+    		InvocationImpl.store.unblockWaitingThreads(currentBlockID);
     }
 
     /**
@@ -1195,9 +1199,4 @@ public final class RegistryImpl implements Counter {
         	AppProxy.LOGGER.println(getClass().getName() + ".removeActive(" + tid + ") = " + result );
         return result;
     }
-
-	public int getCounter() {
-		return cancelCounter;
-	}
-
 }
