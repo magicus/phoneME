@@ -226,23 +226,16 @@ public class InvocationStore implements StoreGate {
      */
     private static InvocationImpl get(CLDCAppID appID, int mode, int blockID) {
     	InvocationImpl invoc = new InvocationImpl();
-    
-    	int s = 0;
-    	while ((s = get0(invoc, appID.suiteID, appID.className, mode, blockID)) != 1) {
+    	int s;
+    	while((s = get0(invoc, appID.suiteID, appID.className, mode, blockID)) == -1) {
     		if( AppProxy.LOGGER != null )
     			AppProxy.LOGGER.println("InvocationStore.get0 returns " + s);
-    	    if (s == -1) {
-        		/*
-        		 * Sizes of arguments and data buffers were insufficient
-        		 * reallocate and retry.
-        		 */
-        		invoc.setArgs(new String[invoc.argsLen]);
-        		invoc.setData(new byte[invoc.dataLen]);
-        		continue;
-    	    }
-    	    // Don't wait unless requested
-    	    if (blockID == 0)
-                break;
+    		/*
+    		 * Sizes of arguments and data buffers were insufficient
+    		 * reallocate and retry.
+    		 */
+    		invoc.setArgs(new String[invoc.argsLen]);
+    		invoc.setData(new byte[invoc.dataLen]);
     	}
     
     	// Update the return if no invocation

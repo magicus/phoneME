@@ -39,7 +39,7 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
     /** The listener to notify. */
     private RequestListener listener;
     
-    private int currentBlockID = 0;
+    private int currentBlockID;
 
     /**
      * Construct an empty ContentHandlerServerImpl
@@ -48,6 +48,7 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
      */
     public ContentHandlerServerImpl(ContentHandlerImpl handler) {
     	super(handler);
+    	currentBlockID = InvocationImpl.store.allocateBlockID();
     }
     
     /**
@@ -78,12 +79,8 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
         }
         requestCalls++;
 
-        currentBlockID = 0;
-        if( wait ) 
-        	currentBlockID = InvocationImpl.store.allocateBlockID(); 
         InvocationImpl invoc =
-            InvocationImpl.store.getRequest(applicationID, currentBlockID);
-        currentBlockID = 0;
+            InvocationImpl.store.getRequest(applicationID, wait ? currentBlockID : 0);
         if (invoc != null) {
             // Keep track of number of requests delivered to the application
             AppProxy.requestForeground(invoc.invokingApp, invoc.destinationApp);
@@ -104,8 +101,8 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
      * If no Thread is blocked; this call has no effect.
      */
     public void cancelGetRequest() {
-    	if( currentBlockID != 0 )
-    		InvocationImpl.store.unblockWaitingThreads( currentBlockID );
+		InvocationImpl.store.unblockWaitingThreads( currentBlockID );
+    	currentBlockID = InvocationImpl.store.allocateBlockID();
     }
 
     /**

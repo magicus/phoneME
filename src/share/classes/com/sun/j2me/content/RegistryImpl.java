@@ -85,7 +85,7 @@ public final class RegistryImpl {
     /** The AppProxy for this registry. */
     final AppProxy application;
     
-    private int currentBlockID = 0;
+    private int currentBlockID;
 
     /** Count of responses received. */
     int responseCalls;
@@ -223,6 +223,7 @@ public final class RegistryImpl {
     private RegistryImpl(AppProxy app) throws ContentHandlerException
     {
         application = app;
+    	currentBlockID = InvocationImpl.store.allocateBlockID();
 
         /* Remember the ContentHandlerImpl, if there is one. */
         handlerImpl = getServer(application);
@@ -814,12 +815,8 @@ public final class RegistryImpl {
         responseCalls++;
 
         // Find a response for this application and context
-        currentBlockID = 0;
-        if( wait )
-        	currentBlockID = InvocationImpl.store.allocateBlockID(); 
         InvocationImpl invoc =
-        	InvocationImpl.store.getResponse(application, currentBlockID);
-        currentBlockID = 0;
+        	InvocationImpl.store.getResponse(application, wait? currentBlockID : 0);
         if (invoc != null) {
             // Keep track of how many responses have been received;
         	final ApplicationID fromApp = invoc.invokingApp; 
@@ -877,8 +874,8 @@ public final class RegistryImpl {
      * If no Thread is blocked; this call has no effect.
      */
     public void cancelGetResponse() {
-    	if( currentBlockID != 0 )
-    		InvocationImpl.store.unblockWaitingThreads(currentBlockID);
+		InvocationImpl.store.unblockWaitingThreads(currentBlockID);
+    	currentBlockID = InvocationImpl.store.allocateBlockID();
     }
 
     /**
