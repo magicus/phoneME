@@ -82,7 +82,7 @@ endif
 ifeq ($(MIDP_BIN_TARGET),sdk)
 SDK_BIN_DIR = $(MIDP_OUTPUT_DIR)/SDK
 all:: sdkbin
-sdkbin:  midp
+sdkbin:  midp $(SUBSYSTEM_AMS_EXECUTABLES)
 	$(AT)$(shell mkdir -p $(SDK_BIN_DIR)/bin \
 	$(SDK_BIN_DIR)/runtimes/cldc-hi/bin/ \
 	$(SDK_BIN_DIR)/runtimes/cldc-hi/lib/ \
