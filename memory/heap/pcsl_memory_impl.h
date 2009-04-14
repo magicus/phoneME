@@ -100,7 +100,7 @@ int pcsl_mem_malloc_dump_impl0(int countMemoryLeaksOnly);
  * @return pointer to the newly allocated memory, or NULL if the system cannot
  * fulfil the allocation request
  */
-extern void* pcsl_mem_malloc_impl0(unsigned int, char*, int);
+extern void* pcsl_mem_malloc_impl0(unsigned int, const char*, int);
 
 /**
  * Allocates memory from the private PCSL memory pool, and clears the
@@ -116,7 +116,7 @@ extern void* pcsl_mem_malloc_impl0(unsigned int, char*, int);
  * @return pointer to the newly allocated and cleared memory, or NULL if the
  * system cannot fulfil the allocation request
  */
-extern void* pcsl_mem_calloc_impl0(unsigned int, unsigned int, char*, int);
+extern void* pcsl_mem_calloc_impl0(unsigned int, unsigned int, const char*, int);
 
 /**
  * Re-allocates memory from the private PCSL memory pool.
@@ -133,7 +133,7 @@ extern void* pcsl_mem_calloc_impl0(unsigned int, unsigned int, char*, int);
  * @return pointer to the re-allocated memory, or NULL if the system cannot
  * fulfil the allocation request
  */
-extern void* pcsl_mem_realloc_impl0(void*, unsigned int, char*, int);
+extern void* pcsl_mem_realloc_impl0(void*, unsigned int, const char*, int);
 
 /**
  * Duplicates the given string after allocating the memory for it.
@@ -147,7 +147,7 @@ extern void* pcsl_mem_realloc_impl0(void*, unsigned int, char*, int);
  * @return pointer to the duplicate string, or NULL if the system cannot
  * fulfil the allocation request
  */
-extern char* pcsl_mem_strdup_impl0(const char*, char*, int);
+extern char* pcsl_mem_strdup_impl0(const char*, const char*, int);
 
 /**
  * Frees memory allocated from the private PCSL memory pool
@@ -158,7 +158,7 @@ extern char* pcsl_mem_strdup_impl0(const char*, char*, int);
  * @param lineno line number where the allocation call occured (for
  *        tracing purposes)
  */
-extern void  pcsl_mem_free_impl0(void*, char*, int);
+extern void  pcsl_mem_free_impl0(void*, const char*, int);
 
 /**
  * Allocates the given number of bytes from the private PCSL memory
