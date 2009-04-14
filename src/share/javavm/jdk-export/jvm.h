@@ -161,7 +161,8 @@ JVM_GC(void);
  * free space (in bytes) that should be available in the heap for
  * object allocation.
  */
-int JVM_GarbageCollect(int flags, int requested_free_bytes);
+JNIEXPORT int JNICALL
+JVM_GarbageCollect(int flags, int requested_free_bytes);
 
 #define JVM_COLLECT_YOUNG_SPACE_ONLY     (1 << 0)
 #define JVM_COLLECT_COMPILER_AREA        (1 << 1)
