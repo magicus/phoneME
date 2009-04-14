@@ -36,13 +36,13 @@
 #pragma comment(lib, "winmm.lib")
 
 
-nat32 const null = 0;
+const nat32 null = 0;
 
 
-//#define ENABLE_MMAPI_CONT_FLV_DS_ON2
+#define ENABLE_MMAPI_CONT_FLV_DS_ON2
 #define ENABLE_MMAPI_CONT_MP3_DS_EXT
 //#define ENABLE_MMAPI_FMT_MPEG1L3_DS_EXT
-//#define ENABLE_MMAPI_FMT_VP6_DS_ON2
+#define ENABLE_MMAPI_FMT_VP6_DS_ON2
 #define ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
 
 
@@ -55,11 +55,11 @@ nat32 const null = 0;
     namespace On2FlvSDK
     {
         #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-            HRESULT FlvSplitCreateInstance(IUnknown *, IID const &, void **);
+            HRESULT FlvSplitCreateInstance(IUnknown *, const IID &, void **);
         #endif
 
         #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-            HRESULT FlvDecVP6CreateInstance(IUnknown *, IID const &, void **);
+            HRESULT FlvDecVP6CreateInstance(IUnknown *, const IID &, void **);
         #endif
     }
 
@@ -600,7 +600,7 @@ class player_dshow : public player
     //result add_player_listener(player_listener *pplayer_listener)
     //result remove_player_listener(player_listener *pplayer_listener)
 
-    bool data(nat32 len, void const *pdata)
+    bool data(nat32 len, const void *pdata)
     {
         if(state == unrealized || state == realized || state == prefetched ||
             state == started)
@@ -614,10 +614,10 @@ class player_dshow : public player
         return pfi->data(len, pdata);
     }
 
-    friend bool create_player_dshow(nat32 len, char16 const *pformat, player_callback *pcallback, player **ppplayer);
+    friend bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcallback, player **ppplayer);
 };
 
-bool create_player_dshow(nat32 len, char16 const *pformat, player_callback *pcallback, player **ppplayer)
+bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcallback, player **ppplayer)
 {
     player_dshow *pplayer;
     if(!pformat || !pcallback || !ppplayer)

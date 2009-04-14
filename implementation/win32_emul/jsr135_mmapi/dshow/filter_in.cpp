@@ -73,6 +73,8 @@ class filter_in_pin : public IPin, public IAsyncReader
     nat32 data_a;
     bool data_finished;
 
+    HANDLE event_unblock;
+
     IPin *pconnected;
     bool flushing;
 
@@ -461,6 +463,7 @@ HRESULT __stdcall filter_in_pin::Disconnect()
     if(!pconnected) return S_FALSE;
     pconnected->Release();
     pconnected = null;
+    SetEvent(event_unblock);
     return S_OK;
 }
 
@@ -611,6 +614,7 @@ HRESULT __stdcall filter_in_pin::BeginFlush()
 #endif
     if(flushing) return S_FALSE;
     flushing = true;
+    SetEvent(event_unblock);
     return S_OK;
 }
 
@@ -679,77 +683,94 @@ HRESULT __stdcall filter_in_pin::SyncReadAligned(IMediaSample *pSample)
 #if write_level > 0
     print("filter_in_pin::SyncReadAligned called...\n");
 #endif
-
     if(!pSample) return E_POINTER;
 
-    int64 tstart1;
-    int64 tend1;
-    HRESULT r = pSample->GetTime(&tstart1, &tend1);
+    int64 tstart;
+    int64 tend;
+    HRESULT r = pSample->GetTime(&tstart, &tend);
     if(r != S_OK)
     {
         if(FAILED(r)) return r;
         return VFW_E_SAMPLE_TIME_NOT_SET;
     }
-    if(tend1 < tstart1) return VFW_E_START_TIME_AFTER_END;
-    if(tstart1 < 0 || tend1 > 21474836470000000) return VFW_E_RUNTIME_ERROR;
+    if(tstart < 0) return E_INVALIDARG;
+    if(tend < tstart) return VFW_E_START_TIME_AFTER_END;
+    if(tstart > 0xffffffffi64 * 10000000i64) return E_INVALIDARG;
+    if(tend - tstart > 0x7fffffffi64 * 10000000i64) return E_INVALIDARG;
+    if(tstart % 10000000 || tend % 10000000) return E_INVALIDARG;
 
-    nat32 tstart = nat32(tstart1 / 10000000);
-    nat32 tstart_rem = nat32(tstart1 % 10000000);
-    nat32 tend = nat32(tend1 / 10000000);
-    nat32 tend_rem = nat32(tend1 % 10000000);
-    if(tstart_rem || tend_rem) return VFW_E_RUNTIME_ERROR;
+    nat32 pos = nat32(tstart / 10000000);
+    nat32 len = nat32(tend / 10000000 - pos);
 
 #if write_level > 0
-    print("%u %u\n", tstart, tend);
+    print("%u %u\n", pos, len);
 #endif
 
-    HRESULT r2;
     EnterCriticalSection(&data_cs);
-    if(data_l < tend)
+    while(!data_finished &&
+        pconnected &&
+        !flushing &&
+        (data_l < pos || data_l - pos < len))
     {
-        tend = max(data_l, tstart);
-        r = S_FALSE;
+        LeaveCriticalSection(&data_cs);
+        WaitForSingleObject(event_unblock, INFINITE);
+        EnterCriticalSection(&data_cs);
+    }
+    if(flushing)
+    {
+        r = VFW_E_TIMEOUT;
+    }
+    else if(data_l < pos)
+    {
+        if(data_finished) r = E_INVALIDARG;
+        else
+        {
+            len = 0;
+            r = S_FALSE;
+        }
     }
     else
     {
-        r = S_OK;
-    }
-    if(tend - tstart)
-    {
-        bits8 *pb;
-        r2 = pSample->GetPointer(&pb);
-        if(r2 != S_OK)
+        if(data_l - pos < len)
         {
-            if(FAILED(r2)) r = r2;
-            else r = VFW_E_RUNTIME_ERROR;
+            len = data_l - pos;
+            r = S_FALSE;
         }
-        else
+        else r = S_OK;
+        if(len)
         {
-            memcpy(pb, (bits8 *)data_p + tstart, tend - tstart);
+            bits8 *pb;
+            HRESULT r2 = pSample->GetPointer(&pb);
+            if(r2 != S_OK)
+            {
+                if(FAILED(r2)) r = r2;
+                else r = VFW_E_RUNTIME_ERROR;
+            }
+            else
+            {
+                memcpy(pb, (bits8 *)data_p + pos, len);
+            }
         }
     }
     LeaveCriticalSection(&data_cs);
-
     if(FAILED(r)) return r;
 
-    r2 = pSample->SetActualDataLength(tend - tstart);
+    HRESULT r2 = pSample->SetActualDataLength(len);
     if(r2 != S_OK)
     {
         if(FAILED(r2)) return r2;
         return VFW_E_RUNTIME_ERROR;
     }
-
     if(r == S_FALSE)
     {
-        tend1 = (tend - tstart) * 10000000;
-        r2 = pSample->SetTime(&tstart1, &tend1);
+        tend = tstart + len * 10000000i64;
+        r2 = pSample->SetTime(&tstart, &tend);
         if(r2 != S_OK)
         {
             if(FAILED(r2)) return r2;
             return VFW_E_RUNTIME_ERROR;
         }
     }
-
     return r;
 }
 
@@ -758,50 +779,47 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
 #if write_level > 0
     print("filter_in_pin::SyncRead(%I64i, %i, %p) called...\n", llPosition, lLength, pBuffer);
 #endif
-
     if(!pBuffer) return E_POINTER;
-/*
+
+    if(llPosition < 0) return E_INVALIDARG;
     if(lLength < 0) return VFW_E_START_TIME_AFTER_END;
-    if(llPosition < 0 || llPosition + lLength > 0xffffffff) return VFW_E_RUNTIME_ERROR;
+    if(llPosition > 0xffffffff) return E_INVALIDARG;
+
+    nat32 pos = nat32(llPosition);
+    nat32 len = nat32(lLength);
 
     HRESULT r;
     EnterCriticalSection(&data_cs);
-    if(data_l < llPosition + lLength)
+    while(!data_finished &&
+        pconnected &&
+        !flushing &&
+        (data_l < pos || data_l - pos < len))
     {
-        lLength = max(data_l, llPosition + lLength) - llPosition;
+        LeaveCriticalSection(&data_cs);
+        WaitForSingleObject(event_unblock, INFINITE);
+        EnterCriticalSection(&data_cs);
+    }
+    if(flushing)
+    {
+        r = VFW_E_TIMEOUT;
+    }
+    else if(data_l < pos)
+    {
+        if(data_finished) r = E_INVALIDARG;
+        else r = S_FALSE;
     }
     else
     {
-        r = S_OK;
-    }
-    else if(data_l < llPosition + lLength)
-    {
-        memcpy(pBuffer, (bits8 *)data_p + nat32(llPosition), data_l - nat32(llPosition));
-        r = S_FALSE;
-    }
-    else
-    {
-        memcpy(pBuffer, (bits8 *)data_p + nat32(llPosition), lLength);
-        r = S_OK;
-    }
-    LeaveCriticalSection(&data_cs);
-    return r;*/
-
-    HRESULT r;
-    EnterCriticalSection(&data_cs);
-    if(data_l < llPosition)
-    {
-        r = S_FALSE;
-    }
-    else if(data_l < llPosition + lLength)
-    {
-        memcpy(pBuffer, (bits8 *)data_p + nat32(llPosition), data_l - nat32(llPosition));
-        r = S_FALSE;
-    }
-    else
-    {
-        memcpy(pBuffer, (bits8 *)data_p + nat32(llPosition), lLength);
-        r = S_OK;
+        if(data_l - pos < len)
+        {
+            len = data_l - pos;
+            r = S_FALSE;
+        }
+        else r = S_OK;
+        if(len)
+        {
+            memcpy(pBuffer, (bits8 *)data_p + pos, len);
+        }
     }
     LeaveCriticalSection(&data_cs);
     return r;
@@ -1032,6 +1050,7 @@ ULONG __stdcall filter_in_filter::Release()
         if(pclock) pclock->Release();
         if(ppin->pconnected) ppin->pconnected->Release();
         if(ppin->data_a) delete[] (bits8 *)ppin->data_p;
+        CloseHandle(ppin->event_unblock);
         DeleteCriticalSection(&ppin->data_cs);
         if(ppin->amt.pUnk) ppin->amt.pUnk->Release();
         if(ppin->amt.cbFormat) delete[] (bits8 *)ppin->amt.pbFormat;
@@ -1218,6 +1237,7 @@ bool filter_in_filter::data(nat32 len, const void *pdata)
         ppin->data_finished = true;
     }
     LeaveCriticalSection(&ppin->data_cs);
+    SetEvent(ppin->event_unblock);
     return true;
 }
 
@@ -1249,11 +1269,20 @@ bool filter_in_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallb
         delete pfilter;
         return false;
     }
+    pfilter->ppin->event_unblock = CreateEvent(null, false, false, null);
+    if(!pfilter->ppin->event_unblock)
+    {
+        DeleteCriticalSection(&pfilter->ppin->data_cs);
+        delete pfilter->ppin;
+        delete pfilter;
+        return false;
+    }
     if(pamt->cbFormat)
     {
         pfilter->ppin->amt.pbFormat = new bits8[pamt->cbFormat];
         if(!pfilter->ppin->amt.pbFormat)
         {
+            CloseHandle(pfilter->ppin->event_unblock);
             DeleteCriticalSection(&pfilter->ppin->data_cs);
             delete pfilter->ppin;
             delete pfilter;
