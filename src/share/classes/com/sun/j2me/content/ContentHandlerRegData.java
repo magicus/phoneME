@@ -332,4 +332,23 @@ public class ContentHandlerRegData {
         return ZERO_ACTIONNAMES;
     }
 
+    public String toString(){
+    	StringBuffer b = new StringBuffer();
+    	b.append("ID = '" + ID + "'");
+    	b.append(", rm = " + registrationMethod);
+    	arrayToString("types", types, b);
+    	arrayToString("suffixes", suffixes, b);
+    	arrayToString("actions", actions, b);
+    	arrayToString("access", accessRestricted, b);
+    	return b.toString();
+    }
+
+	private void arrayToString(String name, String[] values, StringBuffer b) {
+		if( values == null ) return;
+		b.append(", " + name + "[" + values.length + "] = {");
+    	for( int i = 0; i < values.length; i++)
+    		b.append( " '" + values[i] + "'," );
+    	b.deleteCharAt(b.length() - 1);
+    	b.append(" }");
+	}
 }

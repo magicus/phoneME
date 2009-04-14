@@ -638,43 +638,14 @@ public class ContentHandlerImpl extends ContentHandlerRegData
             sb.append("ContentHandler:");
             sb.append(", appID: ");
             sb.append(applicationID);
-            sb.append(", flag: ");
-            sb.append(registrationMethod);
-            sb.append(", types: ");
-            toString(sb, types);
-            sb.append(", ID: ");
-            sb.append(ID);
-            sb.append(", suffixes: ");
-            toString(sb, suffixes);
-            sb.append(", actions: ");
-            toString(sb, actions);
-            sb.append(", access: ");
-            toString(sb, accessRestricted);
             sb.append(", authority: ");
             sb.append(authority);
             sb.append(", appname: ");
             sb.append(appname);
+            sb.append("\n\t" + super.toString());
             return sb.toString();
         } else {
             return super.toString();
-        }
-    }
-
-    /**
-     * Append all of the strings in the array to the string buffer.
-     * @param sb a StringBuffer to append to
-     * @param strings an array of strings.
-     */
-    private void toString(StringBuffer sb, String[] strings) {
-        if (strings == null) {
-            sb.append("null");
-            return;
-        }
-        for (int i = 0; i < strings.length; i++) {
-            if (i > 0) {
-                sb.append(':');
-            }
-            sb.append(strings[i]);
         }
     }
 }

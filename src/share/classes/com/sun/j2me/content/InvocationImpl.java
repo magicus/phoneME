@@ -182,7 +182,7 @@ public final class InvocationImpl {
 		if( dataIn.readBoolean() ){
 			arguments = new String[ dataIn.readInt() ];
 			for( int i = 0; i < arguments.length; i++)
-				arguments[ i ] = dataIn.readUTF();
+				arguments[ i ] = r.s();
 		}
 		if( dataIn.readBoolean() ){
 			data = new byte[ dataIn.readInt() ];
@@ -201,9 +201,10 @@ public final class InvocationImpl {
 			invokingApp.read(dataIn);
 		invokingAppName = r.s();
 		previousTid = dataIn.readInt();
+        /* previous invocation is accessible only after invoke() and getResponse() 
         if (previousTid != 0) {
             previous = store.getByTid(previousTid, false);
-        }
+        }*/
 	}
 
 	public void serialize(final DataOutputStream dataOut) throws IOException {
@@ -224,7 +225,7 @@ public final class InvocationImpl {
 		if( w.h(arguments) ){
 			dataOut.writeInt(arguments.length);
 			for( int i = 0; i < arguments.length; i++)
-				dataOut.writeUTF(arguments[i]);
+				w.s(arguments[i]);
 		}
 		if( w.h(data) ){
 			dataOut.writeInt(data.length);

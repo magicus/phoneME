@@ -693,13 +693,13 @@ static int copyOut(const StoredInvoc *invoc, int mode,
     KNI_GetObjectField(invocObj, FID(data), obj);
     datalen = KNI_GetArrayLength(obj);
     if (datalen != invoc->dataLen) {
-        /* Data array allocated by Java is not correct size. */
+        /* Data array allocated by Java has not correct size. */
         return -1;
     }
     KNI_GetObjectField(invocObj, FID(arguments), obj);
     arraylen = KNI_GetArrayLength(obj);
     if (arraylen != invoc->argsLen) {
-        /* Args array allocated by Java is not correct size. */
+        /* Args array allocated by Java has not correct size. */
         return -1;
     }
 
