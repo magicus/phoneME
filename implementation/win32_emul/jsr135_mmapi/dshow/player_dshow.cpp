@@ -39,10 +39,10 @@
 const nat32 null = 0;
 
 
-#define ENABLE_MMAPI_CONT_FLV_DS_ON2
-#define ENABLE_MMAPI_CONT_MP3_DS_EXT
+//#define ENABLE_MMAPI_CONT_FLV_DS_ON2
+//#define ENABLE_MMAPI_CONT_MP3_DS_EXT
 //#define ENABLE_MMAPI_FMT_MPEG1L3_DS_EXT
-#define ENABLE_MMAPI_FMT_VP6_DS_ON2
+//#define ENABLE_MMAPI_FMT_VP6_DS_ON2
 #define ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
 
 
@@ -522,7 +522,7 @@ class player_dshow : public player
     //result set_time_base(time_base *master)
     //time_base *get_time_base(result *presult = 0)
 
-    int64 set_media_time(int64 /*now*/, result *presult)
+    int64 set_media_time(int64 now, result *presult)
     {
         if(state == realized || state == prefetched || state == started)
         {
@@ -533,7 +533,16 @@ class player_dshow : public player
             return media_time;
         }
 
-        *presult = result_media;
+        LONGLONG cur = now * 10;
+        HRESULT hr = pms->SetPositions(&cur, AM_SEEKING_AbsolutePositioning, null, AM_SEEKING_NoPositioning);
+        if(hr != S_OK)
+        {
+            *presult = result_media;
+            return media_time;
+        }
+
+        media_time = now;
+        *presult = result_success;
         return media_time;
     }
 
@@ -551,7 +560,11 @@ class player_dshow : public player
 
         LONGLONG cur;
         HRESULT hr = pms->GetCurrentPosition(&cur);
-        if(hr != S_OK) return media_time;
+        if(hr != S_OK)
+        {
+            *presult = result_media;
+            return media_time;
+        }
 
         cur /= 10;
         media_time = cur;
