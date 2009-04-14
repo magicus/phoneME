@@ -84,11 +84,11 @@ public class InvocationStore implements StoreGate {
      * @see #getRequest
      * @see #getResponse
      */
-    public void put(InvocationImpl invoc) {
+    public int put(InvocationImpl invoc) {
     	if (AppProxy.LOGGER != null) {
     	    AppProxy.LOGGER.println("Store put0: " + invoc);
     	}
-        put0(invoc);
+        return put0(invoc);
     }
 
     /**
@@ -334,6 +334,8 @@ public class InvocationStore implements StoreGate {
     }
 
     public void update(InvocationImpl invoc) {
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println("InvocationStore.update(" + invoc + ")");
 		if( invoc.tid != InvocationImpl.UNDEFINED_TID ){
 			if( invoc.status != InvocationImpl.DISPOSE )
 				update0(invoc);
@@ -362,7 +364,7 @@ public class InvocationStore implements StoreGate {
      * All of the fields of the InvocationImpl are stored.
      * @param invoc the InvocationImpl to store
     */
-    private static native void put0(InvocationImpl invoc);
+    private static native int put0(InvocationImpl invoc);
 
     /**
      * Native method to fill an available InvocationImpl with an

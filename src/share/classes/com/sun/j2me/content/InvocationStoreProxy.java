@@ -126,6 +126,8 @@ public final class InvocationStoreProxy {
 	            }	break;
 	            case Invocation.INIT:
 	            	// wrong state
+	            	if( AppProxy.LOGGER != null )
+	            		AppProxy.LOGGER.println( "invocation has wrong state (INIT)" );
 	            	break;
 	            case Invocation.ACTIVE:
 	            case Invocation.HOLD:

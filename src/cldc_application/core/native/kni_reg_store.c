@@ -364,7 +364,7 @@ static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassN
             ret = KNI_ENOMEM; break;
         }
 #ifdef TRACE_REGISTER
-    printf( "kni_reg_store.register0(fillHandlerData): {%ls, %ls}", handler->suite_id, handler->class_name );
+    printf( "kni_reg_store.register0(fillHandlerData): {%ls, %ls}\n", handler->suite_id, handler->class_name );
 #endif
 
         // flag

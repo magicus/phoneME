@@ -32,7 +32,7 @@ import java.io.IOException;
 
 interface StoreGate {
 	int size();
-	void put(InvocationImpl invoc);
+	int put(InvocationImpl invoc);
 	void resetListenNotifiedFlag(ApplicationID appID, boolean request);
 	void setCleanupFlag(ApplicationID appID, boolean cleanup);
 	void resetFlags(int tid);
@@ -82,11 +82,12 @@ class StoreRequestsConverter implements StoreGate {
 		}
 	}
 
-	public void put(InvocationImpl invoc) {
+	public int put(InvocationImpl invoc) {
 		Bytes dataOut = new Bytes();
 		try {
 			invoc.serialize(dataOut);
-			out.sendMessage(StoreMessageProcessor.CODE_Put, dataOut.toByteArray());
+			byte[] data = out.sendMessage(StoreMessageProcessor.CODE_Put, dataOut.toByteArray());
+			return new DataInputStream(new ByteArrayInputStream(data)).readInt();
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage());
 		}
@@ -154,6 +155,8 @@ class StoreRequestsConverter implements StoreGate {
 			dataOut.writeInt(blockID);
 			byte[] data = out.sendMessage(StoreMessageProcessor.CODE_GetRequest, 
 											dataOut.toByteArray());
+			if( data.length == 0 )
+				return null;
 			return new InvocationImpl( new DataInputStream(new ByteArrayInputStream(data)) );
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage());
@@ -167,6 +170,8 @@ class StoreRequestsConverter implements StoreGate {
 			dataOut.writeInt(blockID);
 			byte[] data = out.sendMessage(StoreMessageProcessor.CODE_GetResponse, 
 											dataOut.toByteArray());
+			if( data.length == 0 )
+				return null;
 			return new InvocationImpl( new DataInputStream(new ByteArrayInputStream(data)) );
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage());
@@ -179,6 +184,8 @@ class StoreRequestsConverter implements StoreGate {
 			appID.serialize(dataOut);
 			byte[] data = out.sendMessage(StoreMessageProcessor.CODE_GetCleanup, 
 											dataOut.toByteArray());
+			if( data.length == 0 )
+				return null;
 			return new InvocationImpl( new DataInputStream(new ByteArrayInputStream(data)) );
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage());
@@ -192,6 +199,8 @@ class StoreRequestsConverter implements StoreGate {
 			dataOut.writeBoolean(next);
 			byte[] data = out.sendMessage(StoreMessageProcessor.CODE_GetByTid, 
 											dataOut.toByteArray());
+			if( data.length == 0 )
+				return null;
 			return new InvocationImpl( new DataInputStream(new ByteArrayInputStream(data)) );
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage());
@@ -270,8 +279,9 @@ class StoreRequestsExecutor implements StoreMessageProcessor {
 	}
 
 	private byte[] put(DataInputStream dataIn) throws IOException {
-		gate.put(new InvocationImpl( dataIn ));
-		return MessageProcessor.ZERO_BYTES;
+		Bytes out = new Bytes();
+		out.writeInt( gate.put(new InvocationImpl( dataIn )) );
+		return out.toByteArray();
 	}
 
 	private byte[] resetListenNotifiedFlag(DataInputStream dataIn) throws IOException {
@@ -307,31 +317,43 @@ class StoreRequestsExecutor implements StoreMessageProcessor {
 	private byte[] getRequest(DataInputStream dataIn) throws IOException {
 		ApplicationID appID = AppProxy.createAppID().read(dataIn);
 		int blockID = dataIn.readInt();
+		InvocationImpl invoc = gate.getRequest(appID, blockID);
+		if( invoc == null )
+			return MessageProcessor.ZERO_BYTES;
 		Bytes out = new Bytes();
-		gate.getRequest(appID, blockID).serialize(out);
+		invoc.serialize(out);
 		return out.toByteArray();
 	}
 
 	private byte[] getResponse(DataInputStream dataIn) throws IOException {
 		ApplicationID appID = AppProxy.createAppID().read(dataIn);
 		int blockID = dataIn.readInt();
+		InvocationImpl invoc = gate.getResponse(appID, blockID);
+		if( invoc == null )
+			return MessageProcessor.ZERO_BYTES;
 		Bytes out = new Bytes();
-		gate.getResponse(appID, blockID).serialize(out);
+		invoc.serialize(out);
 		return out.toByteArray();
 	}
 
 	private byte[] getCleanup(DataInputStream dataIn) throws IOException {
 		ApplicationID appID = AppProxy.createAppID().read(dataIn);
+		InvocationImpl invoc = gate.getCleanup(appID);
+		if( invoc == null ) 
+			return MessageProcessor.ZERO_BYTES;
 		Bytes out = new Bytes();
-		gate.getCleanup(appID).serialize(out);
+		invoc.serialize(out);
 		return out.toByteArray();
 	}
 
 	private byte[] getByTid(DataInputStream dataIn) throws IOException {
 		int tid = dataIn.readInt();
 		boolean next = dataIn.readBoolean();
+		InvocationImpl invoc = gate.getByTid(tid, next);
+		if( invoc == null ) 
+			return MessageProcessor.ZERO_BYTES;
 		Bytes out = new Bytes();
-		gate.getByTid(tid, next).serialize(out);
+		invoc.serialize(out);
 		return out.toByteArray();
 	}
 

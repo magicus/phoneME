@@ -47,23 +47,9 @@ import com.sun.j2me.security.Token;
  */
 public final class RegistryImpl {
 	
-	static public final RegistryGate gate = RegistryStore.getInstance();
+	static public final RegistryGate gate = //RegistryStore.getInstance();
+		new RegistryRequestsConverter( new RegistryRequestExecutor( RegistryStore.getInstance() ) );
 	
-    /* *
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
-     * /
-    static private class SecurityTrusted implements TrustedClass {};
-
-    / ** This class has a different security domain than the App suite * /
-    private static Token securityToken;
-    
-    static {
-    	gate ;
-    	securityToken = SecurityInitializer.requestToken(new SecurityTrusted());
-    }
-    */
-    
     /** The set of active Invocations. */
     private /*static*/ final Hashtable activeInvocations = new Hashtable();
 
@@ -188,7 +174,7 @@ public final class RegistryImpl {
             curr = new RegistryImpl(appl);
             registries.put(appl, curr);
             if( AppProxy.LOGGER != null ){
-            	AppProxy.LOGGER.println( "registers:" );
+            	AppProxy.LOGGER.println( "registries:" );
             	java.util.Enumeration e = registries.keys();
             	while( e.hasMoreElements() ){
             		Object key = e.nextElement();
@@ -227,6 +213,8 @@ public final class RegistryImpl {
 
         /* Remember the ContentHandlerImpl, if there is one. */
         handlerImpl = getServer(application);
+        if( AppProxy.LOGGER != null )
+        	AppProxy.LOGGER.println("RegistryImpl(): handlerImpl = " + handlerImpl);
 
         if (handlerImpl == null && !application.isRegistered()) {
             // Classname is not a registered MIDlet or ContentHandler; fail
@@ -446,6 +434,8 @@ public final class RegistryImpl {
             RegistryImpl impl = (RegistryImpl)registries.get(server.applicationID);
             if (impl != null) {
                 impl.handlerImpl = server;
+                if( AppProxy.LOGGER != null )
+                	AppProxy.LOGGER.println(impl + ".setServer: handlerImpl = " + impl.handlerImpl);
             }
         }
     }
@@ -574,8 +564,10 @@ public final class RegistryImpl {
     public boolean unregister(String classname) {
     	classname.length(); // NullPointer check
 
-    	if(AppProxy.LOGGER != null)
-    		AppProxy.LOGGER.println( "unregister '" + classname + "'" );
+    	if(AppProxy.LOGGER != null){
+    		AppProxy.LOGGER.println( this + ".unregister '" + classname + "'" );
+    		//new Exception("call stack").printStackTrace();
+    	}
     	try {
     		AppProxy appl = application.forClass(classname);
 	        synchronized (mutex) {

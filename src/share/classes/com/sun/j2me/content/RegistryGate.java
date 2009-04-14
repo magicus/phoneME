@@ -155,7 +155,7 @@ class RegistryRequestsConverter implements RegistryGate {
 	public ContentHandlerImpl.Data findHandler(String callerId, String handlerID, int searchMode) {
 		Bytes dataOut = new Bytes();
 		try {
-			dataOut.writeUTF(callerId);
+			dataOut.writeUTFN(callerId);
 			dataOut.writeUTF(handlerID);
 			dataOut.writeInt(searchMode);
 			byte[] data = out.sendMessage(RegistryMessageProcessor.CODE_FindHandlerByName, 
@@ -171,7 +171,7 @@ class RegistryRequestsConverter implements RegistryGate {
 	public ContentHandlerImpl[] findHandler(String callerId, int fieldId, String value) {
 		Bytes dataOut = new Bytes();
 		try {
-			dataOut.writeUTF(callerId);
+			dataOut.writeUTFN(callerId);
 			dataOut.writeInt(fieldId);
 			dataOut.writeUTF(value);
 			return toHandlersArray(out.sendMessage(RegistryMessageProcessor.CODE_FindHandlerByField, 
@@ -209,7 +209,7 @@ class RegistryRequestsConverter implements RegistryGate {
 	public String[] getValues(String callerId, int fieldId) {
 		Bytes dataOut = new Bytes();
 		try {
-			dataOut.writeUTF(callerId);
+			dataOut.writeUTFN(callerId);
 			dataOut.writeInt(fieldId);
 			byte[] data = out.sendMessage(RegistryMessageProcessor.CODE_GetValues, 
 								dataOut.toByteArray());
@@ -255,7 +255,7 @@ class RegistryRequestExecutor implements RegistryMessageProcessor {
 	}
 
 	public byte[] sendMessage(int msgCode, byte[] data) throws IOException {
-		DataInputStream dataIn = new DataInputStream( new ByteArrayInputStream( data ) );
+		DataInputStreamExt dataIn = new DataInputStreamExt( new ByteArrayInputStream( data ) );
 		switch( msgCode ){
 			case CODE_Register: return register(dataIn);
 			case CODE_Unregister: return unregister(dataIn);
@@ -309,8 +309,8 @@ class RegistryRequestExecutor implements RegistryMessageProcessor {
 		return out.toByteArray();
 	}
 
-	private byte[] findHandlerByName(DataInputStream dataIn) throws IOException {
-		String callerId = dataIn.readUTF();
+	private byte[] findHandlerByName(DataInputStreamExt dataIn) throws IOException {
+		String callerId = dataIn.readUTFN();
 		String handlerID = dataIn.readUTF();
 		int searchMode = dataIn.readInt();
 		ContentHandlerImpl.Data data = 
@@ -318,8 +318,8 @@ class RegistryRequestExecutor implements RegistryMessageProcessor {
 		return toBytes(data);
 	}
 
-	private byte[] findHandlerByField(DataInputStream dataIn) throws IOException {
-		String callerId = dataIn.readUTF();
+	private byte[] findHandlerByField(DataInputStreamExt dataIn) throws IOException {
+		String callerId = dataIn.readUTFN();
 		int fieldId = dataIn.readInt();
 		String value = dataIn.readUTF();
 		return toBytes( gate.findHandler(callerId, fieldId, value) );
@@ -336,8 +336,8 @@ class RegistryRequestExecutor implements RegistryMessageProcessor {
 		return toBytes( data );
 	}
 
-	private byte[] getValues(DataInputStream dataIn) throws IOException {
-		String callerId = dataIn.readUTF();
+	private byte[] getValues(DataInputStreamExt dataIn) throws IOException {
+		String callerId = dataIn.readUTFN();
 		int fieldId = dataIn.readInt();
 		return toBytes( gate.getValues(callerId, fieldId) );
 	}

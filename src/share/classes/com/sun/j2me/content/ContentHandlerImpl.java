@@ -85,6 +85,10 @@ public class ContentHandlerImpl extends ContentHandlerRegData
 			appID.serialize(out);
 			out.writeInt(registrationMethod);
 		}
+		
+		public String toString(){
+			return "ContentHandlerImpl.Data { ID = '" + ID + "', appID = " + appID + ", regMethod = " + registrationMethod + "}";
+		}
     }
     
 	/**
@@ -624,17 +628,6 @@ public class ContentHandlerImpl extends ContentHandlerRegData
     protected void requestNotify() {
     }
 
-//    /**
-//     * Compare two ContentHandlerImpl's for equality.
-//     * Classname, storageID, and seqno must match.
-//     * @param other another ContentHandlerImpl
-//     * @return true if the other handler is for the same class,
-//     * storageID, and seqno.
-//     */
-//    boolean equals(ContentHandlerImpl other) {
-//        return storageId == other.storageId && classname.equals(other.classname);
-//    }
-
     /**
      * Debug routine to print the values.
      * @return a string with the details
@@ -642,10 +635,9 @@ public class ContentHandlerImpl extends ContentHandlerRegData
     public String toString() {
         if (AppProxy.LOGGER != null) {
             StringBuffer sb = new StringBuffer(80);
-            sb.append("CH:");
+            sb.append("ContentHandler:");
             sb.append(", appID: ");
             sb.append(applicationID);
-            sb.append(", removed: ");
             sb.append(", flag: ");
             sb.append(registrationMethod);
             sb.append(", types: ");

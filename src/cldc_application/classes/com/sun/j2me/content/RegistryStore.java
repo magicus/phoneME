@@ -121,14 +121,19 @@ class RegistryStore implements RegistryGate {
     }
     
     public ContentHandlerImpl.Data getHandler( ApplicationID appID ){
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println("RegistryStore.getHandler(" + appID + ")");
+    	ContentHandlerImpl.Data result = null;
         ContentHandlerImpl[] arr = forSuite(CLDCAppID.from(appID).suiteID);
         String classname = CLDCAppID.from(appID).className;
-        for (int i = 0; i < arr.length; i++) {
+        for (int i = 0; result == null && i < arr.length; i++) {
             if (classname.equals(CLDCAppID.from(arr[i].applicationID).className)) {
-                return arr[i].getHandlerData();
+                result = arr[i].getHandlerData();
             }
         }
-        return null;
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println("RegistryStore.getHandler(" + appID + ") = " + result);
+        return result;
     }
 
     /**

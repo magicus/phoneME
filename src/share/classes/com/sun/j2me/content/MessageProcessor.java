@@ -27,21 +27,38 @@
 package com.sun.j2me.content;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 interface MessageProcessor {
 	public static final byte[] ZERO_BYTES = new byte[0];
 	
 	byte[] sendMessage( int msgCode, byte[] data ) throws IOException;
-
 }
 
 class Bytes extends DataOutputStream {
 	public Bytes() { super( new ByteArrayOutputStream() ); }
-	byte[] toByteArray() throws IOException {
+	public byte[] toByteArray() throws IOException {
 		flush();
 		return ((ByteArrayOutputStream)out).toByteArray(); 
+	}
+	
+	public void writeUTFN( String v ) throws IOException {
+		writeBoolean(v != null);
+		if( v != null ) writeUTF( v );
+	}
+}
+
+class DataInputStreamExt extends DataInputStream {
+	public DataInputStreamExt(InputStream in) {
+		super(in);
+	}
+	
+	public String readUTFN() throws IOException {
+		if( !readBoolean() ) return null;
+		return readUTF();
 	}
 }
 

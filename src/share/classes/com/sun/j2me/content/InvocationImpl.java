@@ -47,7 +47,8 @@ import javax.microedition.io.ConnectionNotFoundException;
 public final class InvocationImpl {
 	
 	public static Tunnel tunnel = null;
-    public static final StoreGate store = InvocationStore.getInstance();
+    public static final StoreGate store = //InvocationStore.getInstance();
+    	new StoreRequestsConverter( new StoreRequestsExecutor( InvocationStore.getInstance() ) );
 	public static final int UNDEFINED_TID = 0;
 	
     /**
@@ -166,6 +167,7 @@ public final class InvocationImpl {
     }
 
 	public InvocationImpl(final DataInputStream dataIn) throws IOException {
+		this();
 		class reader {
 			String s() throws IOException {
 				if( !dataIn.readBoolean() ) return null;
@@ -177,12 +179,12 @@ public final class InvocationImpl {
 		type = r.s();
 		ID = r.s();
 		action = r.s();
-		if( !dataIn.readBoolean() ){
+		if( dataIn.readBoolean() ){
 			arguments = new String[ dataIn.readInt() ];
 			for( int i = 0; i < arguments.length; i++)
 				arguments[ i ] = dataIn.readUTF();
 		}
-		if( !dataIn.readBoolean() ){
+		if( dataIn.readBoolean() ){
 			data = new byte[ dataIn.readInt() ];
 			dataIn.read(data);
 		}
@@ -190,13 +192,13 @@ public final class InvocationImpl {
 		username = r.s();
 		password = r.s();
 		tid = dataIn.readInt();
-		if( !dataIn.readBoolean() )
-			destinationApp = AppProxy.createAppID().read(dataIn);
+		if( dataIn.readBoolean() )
+			destinationApp.read(dataIn);
 		status = dataIn.readInt();
 		invokingAuthority = r.s();
 		invokingID = r.s();
-		if( !dataIn.readBoolean() )
-			invokingApp = AppProxy.createAppID().read(dataIn);
+		if( dataIn.readBoolean() )
+			invokingApp.read(dataIn);
 		invokingAppName = r.s();
 		previousTid = dataIn.readInt();
         if (previousTid != 0) {
@@ -517,7 +519,7 @@ public final class InvocationImpl {
         destinationApp = handler.applicationID.duplicate();
 
         // Queue this Invocation
-        store.put(this);
+        tid = store.put(this);
         setStatus(Invocation.WAITING);
         
         // Set the status of the previous invocation

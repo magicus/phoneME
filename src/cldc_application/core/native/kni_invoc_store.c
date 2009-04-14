@@ -426,8 +426,9 @@ static jboolean update(StoredInvoc* invoc, jobject invocObj, jobject tmp1, jobje
  * @see StoredInvoc
  * @see #invocQueue
  */
-KNIEXPORT KNI_RETURNTYPE_VOID
+KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_j2me_content_InvocationStore_put0) {
+    jint newTid = 0;
     StoredInvoc* invoc = NULL;
 
     KNI_StartHandles(5);
@@ -451,8 +452,9 @@ KNIDECL(com_sun_j2me_content_InvocationStore_put0) {
         }
 
         /* Assign a new transaction id and set it */
-        invoc->tid = invocNextTid();
-        KNI_SetIntField(invocObj, FID(tid), invoc->tid);
+        newTid = invocNextTid();
+        invoc->tid = newTid;
+        // KNI_SetIntField(invocObj, FID(tid), invoc->tid);
     
         /*
          * Copy all the fields to native
@@ -477,7 +479,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_put0) {
     }
 
     KNI_EndHandles();
-    KNI_ReturnVoid();
+    KNI_ReturnInt( newTid );
 }
 /**
  * 
