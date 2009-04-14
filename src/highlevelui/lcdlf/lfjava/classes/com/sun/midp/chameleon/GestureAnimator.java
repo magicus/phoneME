@@ -119,7 +119,6 @@ public class GestureAnimator {
         listener = l;
 
         initAnimation(AT_STABLE, stY);
-
         timerTask = new dragTimerTask();
         getTimer().schedule(timerTask, 0, scrollAnimationRate);
     }
@@ -138,7 +137,6 @@ public class GestureAnimator {
         listener = l;
 
         initAnimation(AT_FLICK, dy);
-
         timerTask = new dragTimerTask();
         getTimer().schedule(timerTask, 0, scrollAnimationRate);
     }
@@ -146,6 +144,7 @@ public class GestureAnimator {
     /**
      * Set up animation parameters
      * @param t animation type
+     * @param param animation parameter
      */
     protected static void initAnimation(int t, int param) {
         type = t;
@@ -168,7 +167,7 @@ public class GestureAnimator {
         }
 
         currStep = 0;
-        if (yLeft > 0) {
+        if (dist > 0) {
             yDistance = yLeft = dist;
             ySign = 1;
         } else {

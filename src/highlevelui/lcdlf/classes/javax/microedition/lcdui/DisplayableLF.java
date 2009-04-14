@@ -242,6 +242,14 @@ interface DisplayableLF {
     void uCallScrollContent(int scrollType, int thumbPosition);
 
     /**
+     * Checks whether it is allowed to start content dragging from
+     * this point
+     * @param x the x coordinate of the point to check
+     * @param y the y coordinate of the point to check
+     */
+    boolean uIsDraggable(int x, int y);
+
+    /**
      * This method notifies displayable to drag its content
      *
      * @param deltaY

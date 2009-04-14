@@ -115,8 +115,8 @@ class ScreenLFImpl extends DisplayableLFImpl {
     boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
         this.vScrollPosition = scrollPosition;
         this.vScrollProportion = scrollProportion;
-            
-        if (lIsShown()) {
+
+        if (lIsShown() && scrollPosition >= 0 && scrollPosition <= 100) {
             return currentDisplay.setVerticalScroll(scrollPosition, scrollProportion);
         }
         return false;
@@ -330,6 +330,16 @@ class ScreenLFImpl extends DisplayableLFImpl {
     }
 
     /**
+     * Checks whether it is allowed to start content dragging from
+     * this point
+     * @param x the x coordinate of the point to check
+     * @param y the y coordinate of the point to check
+     */
+    public boolean uIsDraggable(int x, int y) {
+        return true;
+    }
+    
+    /**
      * This method notify displayable to drag its content
      *
      * @param deltaY
@@ -360,11 +370,7 @@ class ScreenLFImpl extends DisplayableLFImpl {
                            "[F] >> viewable[HEIGHT] == "+viewable[HEIGHT] +
                            " lastScrollSize == "+lastScrollSize);
         }
-
-        if (viewable[Y] < 0 || viewable[Y] > getMaxScroll()) {
-            return;
-        }
-        
+       
         // check if scroll moves, and if so, refresh scrollbars
         if (!invalidScroll &&
             (viewable[Y] != lastScrollPosition ||

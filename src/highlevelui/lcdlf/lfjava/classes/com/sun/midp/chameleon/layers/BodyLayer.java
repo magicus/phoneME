@@ -392,7 +392,11 @@ public class BodyLayer extends CLayer
         if (tunnel != null) {
             switch (type) {
                 case EventConstants.PRESSED:
-                    pointerY = y;
+                    if (tunnel.callIsDraggable(x, y)) {
+                        pointerY = y;
+                    } else {
+                        pointerY = Integer.MAX_VALUE;                        
+                    }
                     break;
                 case EventConstants.DRAGGED:
                     if (pointerY != Integer.MAX_VALUE) {
@@ -402,10 +406,11 @@ public class BodyLayer extends CLayer
                     }
                     break;
                 case EventConstants.FLICKERED:
-                    if (pointerDeltaY != 0) {
+                    if (pointerY != Integer.MAX_VALUE && pointerDeltaY != 0) {
                         GestureAnimator.flick(this, pointerDeltaY);
+                        stableY = 0;
                     }
-                    break;                    
+                    break;
                 case EventConstants.RELEASED:
                 case EventConstants.GONE:
                     if (stableY != 0) {

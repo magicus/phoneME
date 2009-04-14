@@ -940,6 +940,7 @@ abstract class ItemLFImpl implements ItemLF {
      */
     void uCallPointerPressed(int x, int y) {
         itemWasPressed = true;
+        pointerDragged = false;
     }
     
     /**
@@ -955,11 +956,13 @@ abstract class ItemLFImpl implements ItemLF {
         y -= contentBounds[Y];
         if ( (x >= 0 && x <= contentBounds[WIDTH] && y >= 0 &&
               y <= contentBounds[HEIGHT]) &&
-             (itemWasPressed && (hasFocus || item.owner.numCommands <= 1))) {
+             (itemWasPressed && !pointerDragged 
+                     && (hasFocus || item.owner.numCommands <= 1))) {
             //should check the x,y is in item's content area
             uCallKeyPressed(Constants.KEYCODE_SELECT);
         }
         itemWasPressed = false;
+        pointerDragged = false;
     }
     
     /**
@@ -970,7 +973,9 @@ abstract class ItemLFImpl implements ItemLF {
      *
      * @see #getInteractionModes
      */
-    void uCallPointerDragged(int x, int y) { }
+    void uCallPointerDragged(int x, int y) {
+        pointerDragged = true;
+    }
     
     /**
      * Called by the system to indicate the size available to this Item
@@ -1517,6 +1522,10 @@ abstract class ItemLFImpl implements ItemLF {
 
     /** true is the item has been focused before pointer down */
     boolean itemWasPressed; // = false
+
+    /** true if pointer dragged over the item **/
+    boolean pointerDragged; // = false;
+
     
     /** True if internal cycle need in this item.*/
     boolean isInternalCycle;
