@@ -26,6 +26,7 @@
 #include <control.h>
 #include <stdio.h>
 #include <uuids.h>
+#include <wmsdkidl.h>
 #include "filter_in.hpp"
 #include "filter_out.hpp"
 #include "player.hpp"
@@ -34,39 +35,45 @@
 #pragma comment(lib, "strmiids.lib")
 #pragma comment(lib, "winmm.lib")
 
-#pragma comment(linker, "/nodefaultlib:libcmt")
-#pragma comment(linker, "/nodefaultlib:msvcrt")
-
 
 nat32 const null = 0;
 
 
-extern "C" FILE _iob[3] = {__iob_func()[0], __iob_func()[1], __iob_func()[2]};
+//#define ENABLE_MMAPI_CONT_FLV_DS_ON2
+#define ENABLE_MMAPI_CONT_MP3_DS_EXT
+//#define ENABLE_MMAPI_FMT_MPEG1L3_DS_EXT
+//#define ENABLE_MMAPI_FMT_VP6_DS_ON2
+#define ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
 
 
-namespace On2FlvSDK
-{
-    HRESULT FlvSplitCreateInstance(IUnknown *, IID const &, void **);
-    HRESULT FlvDecVP6CreateInstance(IUnknown *, IID const &, void **);
-}
+#if defined(ENABLE_MMAPI_CONT_FLV_DS_ON2) || defined(ENABLE_MMAPI_FMT_VP6_DS_ON2)
+    #pragma comment(linker, "/nodefaultlib:libcmt")
+    #pragma comment(linker, "/nodefaultlib:msvcrt")
 
-// {59333afb-9992-4aa3-8c31-7fb03f6ffdf3}
-DEFINE_GUID(MEDIASUBTYPE_FLV,
-0x59333afb, 0x9992, 0x4aa3, 0x8c, 0x31, 0x7f, 0xb0, 0x3f, 0x6f, 0xfd, 0xf3);
+    extern "C" FILE _iob[3] = {__iob_func()[0], __iob_func()[1], __iob_func()[2]};
 
+    namespace On2FlvSDK
+    {
+        #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+            HRESULT FlvSplitCreateInstance(IUnknown *, IID const &, void **);
+        #endif
 
+        #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+            HRESULT FlvDecVP6CreateInstance(IUnknown *, IID const &, void **);
+        #endif
+    }
 
-#include "types.hpp"
+    #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+        // {59333afb-9992-4aa3-8c31-7fb03f6ffdf3}
+        DEFINE_GUID(MEDIASUBTYPE_FLV,
+        0x59333afb, 0x9992, 0x4aa3, 0x8c, 0x31, 0x7f, 0xb0, 0x3f, 0x6f, 0xfd, 0xf3);
+    #endif
+#endif
 
-struct IBaseFilter;
-struct IGraphBuilder;
-struct IMediaControl;
-struct IMediaSeeking;
-struct IPin;
-class filter_in;
 
 class player_dshow : public player
 {
+    AM_MEDIA_TYPE amt;
     player_callback *pcallback;
     int32 state;
     int64 media_time;
@@ -74,488 +81,590 @@ class player_dshow : public player
     IMediaControl *pmc;
     IMediaSeeking *pms;
     filter_in *pfi;
-    filter_out *pfo;
+    #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+        filter_out *pfo;
+    #endif
     IPin *pp;
-    IBaseFilter *pbf_flv_split;
-    IBaseFilter *pbf_flv_dec;
-public:
-    player_dshow(player_callback *pcallback);
-    virtual ~player_dshow();
-    virtual result realize();
-    virtual result prefetch();
-    virtual result start();
-    virtual result stop();
-    virtual result deallocate();
-    virtual void close();
-    //virtual result set_time_base(time_base *master);
-    //virtual time_base *get_time_base(result *presult = 0);
-    virtual int64 set_media_time(int64 now, result *presult = 0);
-    virtual int64 get_media_time(result *presult = 0);
-    virtual int32 get_state();
-    virtual int64 get_duration(result *presult = 0);
-    //virtual string16c get_content_type(result *presult = 0);
-    virtual result set_loop_count(int32 count);
-    //virtual result add_player_listener(player_listener *pplayer_listener);
-    //virtual result remove_player_listener(player_listener *pplayer_listener);
+    #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+        IBaseFilter *pbf_flv_split;
+    #endif
+    #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+        IBaseFilter *pbf_flv_dec;
+    #endif
 
-    virtual bool data(nat32 len, void const *pdata);
-};
-
-player_dshow::player_dshow(player_callback *pcallback)
-{
-    this->pcallback = pcallback;
-    state = unrealized;
-    media_time = time_unknown;
-}
-
-player_dshow::~player_dshow()
-{
-    close();
-}
-
-player::result player_dshow::realize()
-{
-    if(state == unrealized)
+    player_dshow()
     {
     }
-    else if(state == realized || state == prefetched || state == started)
+
+    ~player_dshow()
     {
+        close();
+    }
+
+    result realize()
+    {
+        if(state == unrealized)
+        {
+        }
+        else if(state == realized || state == prefetched || state == started)
+        {
+            return result_success;
+        }
+        else
+        {
+            print( "illegal state %i\n", state );
+            return result_illegal_state;
+        }
+
+        HRESULT hr = CoInitializeEx(null, COINIT_MULTITHREADED);
+        if(FAILED(hr))
+        {
+            error( "CoInitializeEx", hr );
+            return result_media;
+        }
+
+        hr = CoCreateInstance(CLSID_FilterGraph, null, CLSCTX_INPROC_SERVER,
+            IID_IGraphBuilder, (void **)&pgb);
+        if(hr != S_OK)
+        {
+            error( "CoCreateInstance", hr );
+            CoUninitialize();
+            return result_media;
+        }
+
+        hr = pgb->QueryInterface(IID_IMediaControl, (void **)&pmc);
+        if(hr != S_OK)
+        {
+            error( "IID_IMediaControl", hr );
+            pgb->Release();
+            CoUninitialize();
+            return result_media;
+        }
+
+        hr = pgb->QueryInterface(IID_IMediaSeeking, (void **)&pms);
+        if(hr != S_OK)
+        {
+            error( "IID_IMediaSeeking", hr );
+            pmc->Release();
+            pgb->Release();
+            CoUninitialize();
+            return result_media;
+        }
+
+        if(!filter_in::create(&amt, pcallback, &pfi))
+        {
+            error( "filter_in::create", 0 );
+            pms->Release();
+            pmc->Release();
+            pgb->Release();
+            CoUninitialize();
+            return result_media;
+        }
+
+        #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+            //majortype=MEDIATYPE_Audio, subtype=WMMEDIASUBTYPE_MP3, bFixedSizeSamples=TRUE, bTemporalCompression=FALSE, lSampleSize=1,
+            //formattype=FORMAT_WaveFormatEx, pUnk=0x00000000, cbFormat=30, pbFormat=0x00164c60, wFormatTag=WAVE_FORMAT_MPEGLAYER3, nChannels=1, nSamplesPerSec=44100, nAvgBytesPerSec=10000, nBlockAlign=1, wBitsPerSample=0, cbSize=12, wID=1, fdwFlags=0, nBlockSize=1, nFramesPerBlock=1, nCodecDelay=0
+            AM_MEDIA_TYPE amt2;
+            /*amt2.majortype = MEDIATYPE_Video;
+            amt2.subtype = MEDIASUBTYPE_RGB565;
+            amt2.bFixedSizeSamples = TRUE;
+            amt2.bTemporalCompression = FALSE;
+            amt2.lSampleSize = 1;
+            amt2.formattype = GUID_NULL;
+            amt2.pUnk = null;
+            amt2.cbFormat = 0;
+            amt2.pbFormat = null;*/
+
+            MPEGLAYER3WAVEFORMAT ml3wf;
+            amt2.majortype = MEDIATYPE_Audio;
+            amt2.subtype = WMMEDIASUBTYPE_MP3;
+            amt2.bFixedSizeSamples = TRUE;
+            amt2.bTemporalCompression = FALSE;
+            amt2.lSampleSize = 1;
+            amt2.formattype = FORMAT_WaveFormatEx;
+            amt2.pUnk = null;
+            amt2.cbFormat = sizeof(MPEGLAYER3WAVEFORMAT);
+            amt2.pbFormat = (BYTE*)&ml3wf;
+            ml3wf.wfx.wFormatTag = WAVE_FORMAT_MPEGLAYER3;
+            ml3wf.wfx.nChannels = 2;
+            ml3wf.wfx.nSamplesPerSec = 44100;
+            ml3wf.wfx.nAvgBytesPerSec = 16000;
+            ml3wf.wfx.nBlockAlign = 1;
+            ml3wf.wfx.wBitsPerSample = 0;
+            ml3wf.wfx.cbSize = MPEGLAYER3_WFX_EXTRA_BYTES;
+            ml3wf.wID = 1;
+            ml3wf.fdwFlags = 0;
+            ml3wf.nBlockSize = 1;
+            ml3wf.nFramesPerBlock = 1;
+            ml3wf.nCodecDelay = 0;
+
+            if(!filter_out::create(&amt2, pcallback, &pfo))
+            {
+                error( "filter_out::create", 0 );
+                pfi->Release();
+                pms->Release();
+                pmc->Release();
+                pgb->Release();
+                CoUninitialize();
+                return result_media;
+            }
+        #endif
+
+        hr = pfi->FindPin(L"Output", &pp);
+        if(hr != S_OK)
+        {
+            error( "FindPin", hr );
+            #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                pfo->Release();
+            #endif
+            pfi->Release();
+            pms->Release();
+            pmc->Release();
+            pgb->Release();
+            CoUninitialize();
+            return result_media;
+        }
+
+        #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+            hr = On2FlvSDK::FlvSplitCreateInstance(null, IID_IBaseFilter,
+                (void **)&pbf_flv_split);
+            if(hr != S_OK)
+            {
+                error( "FlvSplitCreateInstance", hr );
+                pp->Release();
+                #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                    pfo->Release();
+                #endif
+                pfi->Release();
+                pms->Release();
+                pmc->Release();
+                pgb->Release();
+                CoUninitialize();
+                return result_media;
+            }
+        #endif
+
+        #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+            hr = On2FlvSDK::FlvDecVP6CreateInstance(null, IID_IBaseFilter,
+                (void **)&pbf_flv_dec);
+            if(hr != S_OK)
+            {
+                error( "FlvDecVP6CreateInstance", hr );
+                #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+                    pbf_flv_split->Release();
+                #endif
+                pp->Release();
+                #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                    pfo->Release();
+                #endif
+                pfi->Release();
+                pms->Release();
+                pmc->Release();
+                pgb->Release();
+                CoUninitialize();
+                return result_media;
+            }
+        #endif
+
+        hr = pgb->AddFilter(pfi, L"Input filter");
+        if(hr != S_OK)
+        {
+            error( "AddFilter(I)", hr );
+            #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+                pbf_flv_dec->Release();
+            #endif
+            #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+                pbf_flv_split->Release();
+            #endif
+            pp->Release();
+            #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                pfo->Release();
+            #endif
+            pfi->Release();
+            pms->Release();
+            pmc->Release();
+            pgb->Release();
+            CoUninitialize();
+            return result_media;
+        }
+
+         #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+            hr = pgb->AddFilter(pfo, L"Output filter");
+            if(hr != S_OK)
+            {
+                error( "AddFilter(O)", hr );
+                #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+                    pbf_flv_dec->Release();
+                #endif
+                #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+                    pbf_flv_split->Release();
+                #endif
+                pp->Release();
+                #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                    pfo->Release();
+                #endif
+                pfi->Release();
+                pms->Release();
+                pmc->Release();
+                pgb->Release();
+                CoUninitialize();
+                return result_media;
+            }
+        #endif
+
+        #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+            hr = pgb->AddFilter(pbf_flv_split, L"FLV splitter");
+            if(hr != S_OK)
+            {
+                error( "AddFilter(S)", hr );
+                #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+                    pbf_flv_dec->Release();
+                #endif
+                #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+                    pbf_flv_split->Release();
+                #endif
+                pp->Release();
+                #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                    pfo->Release();
+                #endif
+                pfi->Release();
+                pms->Release();
+                pmc->Release();
+                pgb->Release();
+                CoUninitialize();
+                return result_media;
+            }
+        #endif
+
+        #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+            hr = pgb->AddFilter(pbf_flv_dec, L"FLV decoder");
+            if(hr != S_OK)
+            {
+                error( "AddFilter(D)", hr );
+                #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+                    pbf_flv_dec->Release();
+                #endif
+                #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+                    pbf_flv_split->Release();
+                #endif
+                pp->Release();
+                #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                    pfo->Release();
+                #endif
+                pfi->Release();
+                pms->Release();
+                pmc->Release();
+                pgb->Release();
+                CoUninitialize();
+                return result_media;
+            }
+        #endif
+
+        state = realized;
+
         return result_success;
     }
-    else
-    {
-        print( "illegal state %i\n", state );
-        return result_illegal_state;
-    }
 
-    HRESULT hr = CoInitializeEx(null, COINIT_MULTITHREADED);
-    if(FAILED(hr))
+    result prefetch()
     {
-        error( "CoInitializeEx", hr );
-        return result_media;
-    }
+        if(state == unrealized)
+        {
+            result r = realize();
+            if(r != result_success) return r;
+        }
+        else if(state == realized)
+        {
+        }
+        else if(state == prefetched || state == started)
+        {
+            return result_success;
+        }
+        else
+        {
+            return result_illegal_state;
+        }
 
-    hr = CoCreateInstance(CLSID_FilterGraph, null, CLSCTX_INPROC_SERVER,
-        IID_IGraphBuilder, (void **)&pgb);
-    if(hr != S_OK)
-    {
-        error( "CoCreateInstance", hr );
-        CoUninitialize();
-        return result_media;
-    }
+        HRESULT hr = pgb->Render(pp);
+        if(hr != S_OK)
+        {
+            error("IGraphBuilder::Render", hr);
+            return result_media;
+        }
 
-    hr = pgb->QueryInterface(IID_IMediaControl, (void **)&pmc);
-    if(hr != S_OK)
-    {
-        error( "IID_IMediaControl", hr );
-        pgb->Release();
-        CoUninitialize();
-        return result_media;
-    }
 
-    hr = pgb->QueryInterface(IID_IMediaSeeking, (void **)&pms);
-    if(hr != S_OK)
-    {
-        error( "IID_IMediaSeeking", hr );
-        pmc->Release();
-        pgb->Release();
-        CoUninitialize();
-        return result_media;
-    }
+        dump_filter_graph(pgb);
 
-    AM_MEDIA_TYPE amt;
-    amt.majortype = MEDIATYPE_Stream;
-    amt.subtype = MEDIASUBTYPE_FLV;
-    amt.bFixedSizeSamples = TRUE;
-    amt.bTemporalCompression = FALSE;
-    amt.lSampleSize = 1;
-    amt.formattype = FORMAT_None;
-    amt.pUnk = null;
-    amt.cbFormat = 0;
-    amt.pbFormat = null;
-    if(!filter_in::create(&amt, pcallback, &pfi))
-    {
-        error( "filter_in::create", 0 );
-        pms->Release();
-        pmc->Release();
-        pgb->Release();
-        CoUninitialize();
-        return result_media;
-    }
+        int64 tc = 40200000;
+        pms->SetPositions(&tc, AM_SEEKING_AbsolutePositioning, null, 0);
 
-    amt.majortype = MEDIATYPE_Video;
-    amt.subtype = MEDIASUBTYPE_RGB565;
-    amt.bFixedSizeSamples = TRUE;
-    amt.bTemporalCompression = FALSE;
-    amt.lSampleSize = 1;
-    amt.formattype = FORMAT_None;
-    amt.pUnk = null;
-    amt.cbFormat = 0;
-    amt.pbFormat = null;
-    if(!filter_out::create(&amt, pcallback, &pfo))
-    {
-        error( "filter_out::create", 0 );
-        pfi->Release();
-        pms->Release();
-        pmc->Release();
-        pgb->Release();
-        CoUninitialize();
-        return result_media;
-    }
+        hr = pmc->Pause();
+        if(FAILED(hr))
+        {
+            error("IMediaControl::Pause", hr);
+            return result_media;
+        }
 
-    hr = pfi->FindPin(L"Output", &pp);
-    if(hr != S_OK)
-    {
-        error( "FindPin", hr );
-        pfo->Release();
-        pfi->Release();
-        pms->Release();
-        pmc->Release();
-        pgb->Release();
-        CoUninitialize();
-        return result_media;
-    }
+        hr = pms->SetTimeFormat(&TIME_FORMAT_MEDIA_TIME);
+        if(hr != S_OK)
+        {
+            return result_media;
+        }
 
-    hr = On2FlvSDK::FlvSplitCreateInstance(null, IID_IBaseFilter,
-        (void **)&pbf_flv_split);
-    if(hr != S_OK)
-    {
-        error( "FlvSplitCreateInstance", hr );
-        pp->Release();
-        pfo->Release();
-        pfi->Release();
-        pms->Release();
-        pmc->Release();
-        pgb->Release();
-        CoUninitialize();
-        return result_media;
-    }
+        state = prefetched;
 
-    hr = On2FlvSDK::FlvDecVP6CreateInstance(null, IID_IBaseFilter,
-        (void **)&pbf_flv_dec);
-    if(hr != S_OK)
-    {
-        error( "FlvDecVP6CreateInstance", hr );
-        pbf_flv_split->Release();
-        pp->Release();
-        pfo->Release();
-        pfi->Release();
-        pms->Release();
-        pmc->Release();
-        pgb->Release();
-        CoUninitialize();
-        return result_media;
-    }
-
-    hr = pgb->AddFilter(pfi, L"Input filter");
-    if(hr != S_OK)
-    {
-        error( "AddFilter(I)", hr );
-        pbf_flv_dec->Release();
-        pbf_flv_split->Release();
-        pp->Release();
-        pfo->Release();
-        pfi->Release();
-        pms->Release();
-        pmc->Release();
-        pgb->Release();
-        CoUninitialize();
-        return result_media;
-    }
-
-    hr = pgb->AddFilter(pfo, L"Output filter");
-    if(hr != S_OK)
-    {
-        error( "AddFilter(O)", hr );
-        pbf_flv_dec->Release();
-        pbf_flv_split->Release();
-        pp->Release();
-        pfo->Release();
-        pfi->Release();
-        pms->Release();
-        pmc->Release();
-        pgb->Release();
-        CoUninitialize();
-        return result_media;
-    }
-
-    hr = pgb->AddFilter(pbf_flv_split, L"FLV splitter");
-    if(hr != S_OK)
-    {
-        error( "AddFilter(S)", hr );
-        pbf_flv_dec->Release();
-        pbf_flv_split->Release();
-        pp->Release();
-        pfo->Release();
-        pfi->Release();
-        pms->Release();
-        pmc->Release();
-        pgb->Release();
-        CoUninitialize();
-        return result_media;
-    }
-
-    hr = pgb->AddFilter(pbf_flv_dec, L"FLV decoder");
-    if(hr != S_OK)
-    {
-        error( "AddFilter(D)", hr );
-        pbf_flv_dec->Release();
-        pbf_flv_split->Release();
-        pp->Release();
-        pfo->Release();
-        pfi->Release();
-        pms->Release();
-        pmc->Release();
-        pgb->Release();
-        CoUninitialize();
-        return result_media;
-    }
-
-    state = realized;
-
-    return result_success;
-}
-
-player::result player_dshow::prefetch()
-{
-    if(state == unrealized)
-    {
-        result r = realize();
-        if(r != result_success) return r;
-    }
-    else if(state == realized)
-    {
-    }
-    else if(state == prefetched || state == started)
-    {
         return result_success;
     }
-    else
-    {
-        return result_illegal_state;
-    }
 
-    HRESULT hr = pgb->Render(pp);
-    if(hr != S_OK)
+    result start()
     {
-        return result_media;
-    }
+        if(state == unrealized || state == realized)
+        {
+            result r = prefetch();
+            if(r != result_success) return r;
+        }
+        else if(state == prefetched)
+        {
+        }
+        else if(state == started)
+        {
+            return result_success;
+        }
+        else
+        {
+            return result_illegal_state;
+        }
 
-    hr = pmc->Pause();
-    if(FAILED(hr))
-    {
-        return result_media;
-    }
+        HRESULT hr = pmc->Run();
+        if(FAILED(hr)) return result_media;
 
-    hr = pms->SetTimeFormat(&TIME_FORMAT_MEDIA_TIME);
-    if(hr != S_OK)
-    {
-        return result_media;
-    }
+        state = started;
 
-    state = prefetched;
-
-    return result_success;
-}
-
-player::result player_dshow::start()
-{
-    if(state == unrealized || state == realized)
-    {
-        result r = prefetch();
-        if(r != result_success) return r;
-    }
-    else if(state == prefetched)
-    {
-    }
-    else if(state == started)
-    {
         return result_success;
     }
-    else
+
+    result stop()
     {
-        return result_illegal_state;
-    }
+        if(state == unrealized || state == realized || state == prefetched)
+        {
+            return result_success;
+        }
+        else if(state == started)
+        {
+        }
+        else
+        {
+            return result_illegal_state;
+        }
 
-    HRESULT hr = pmc->Run();
-    if(FAILED(hr)) return result_media;
+        HRESULT hr = pmc->Pause();
+        if(FAILED(hr)) return result_media;
 
-    state = started;
+        state = prefetched;
 
-    return result_success;
-}
-
-player::result player_dshow::stop()
-{
-    if(state == unrealized || state == realized || state == prefetched)
-    {
         return result_success;
     }
-    else if(state == started)
+
+    result deallocate()
     {
-    }
-    else
-    {
-        return result_illegal_state;
-    }
+        if(state == unrealized || state == realized)
+        {
+            return result_success;
+        }
+        else if(state == prefetched)
+        {
+        }
+        else if(state == started)
+        {
+            stop();
+        }
+        else
+        {
+            return result_illegal_state;
+        }
 
-    HRESULT hr = pmc->Pause();
-    if(FAILED(hr)) return result_media;
+        state = realized;
 
-    state = prefetched;
-
-    return result_success;
-}
-
-player::result player_dshow::deallocate()
-{
-    if(state == unrealized || state == realized)
-    {
         return result_success;
     }
-    else if(state == prefetched)
+
+    void close()
     {
-    }
-    else if(state == started)
-    {
-        stop();
-    }
-    else
-    {
-        return result_illegal_state;
+        if(state == unrealized)
+        {
+            state = closed;
+        }
+        else if(state == realized || state == prefetched || state == started)
+        {
+            pmc->Stop();
+            Sleep(100);
+            #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+                pbf_flv_dec->Release();
+            #endif
+            #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+                pbf_flv_split->Release();
+            #endif
+            pp->Release();
+            #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                pfo->Release();
+            #endif
+            pfi->Release();
+            pms->Release();
+            pmc->Release();
+            pgb->Release();
+            CoUninitialize();
+            state = closed;
+        }
+        else
+        {
+        }
     }
 
-    state = realized;
+    //result set_time_base(time_base *master)
+    //time_base *get_time_base(result *presult = 0)
 
-    return result_success;
-}
+    int64 set_media_time(int64 /*now*/, result *presult)
+    {
+        if(state == realized || state == prefetched || state == started)
+        {
+        }
+        else
+        {
+            *presult = result_illegal_state;
+            return media_time;
+        }
 
-void player_dshow::close()
-{
-    if(state == unrealized)
-    {
-        state = closed;
-    }
-    else if(state == realized || state == prefetched || state == started)
-    {
-        pmc->Stop();
-        Sleep(100);
-        pbf_flv_dec->Release();
-        pbf_flv_split->Release();
-        pp->Release();
-        pfo->Release();
-        pfi->Release();
-        pms->Release();
-        pmc->Release();
-        pgb->Release();
-        CoUninitialize();
-        state = closed;
-    }
-    else
-    {
-    }
-}
-
-//result player_dshow::set_time_base(time_base *master)
-//time_base *player_dshow::get_time_base(result *presult = 0)
-
-int64 player_dshow::set_media_time(int64 /*now*/, result *presult)
-{
-    if(state == realized || state == prefetched || state == started)
-    {
-    }
-    else
-    {
-        *presult = result_illegal_state;
+        *presult = result_media;
         return media_time;
     }
 
-    *presult = result_media;
-    return media_time;
-}
+    int64 get_media_time(result *presult)
+    {
+        if(state == unrealized || state == realized || state == prefetched ||
+            state == started)
+        {
+        }
+        else
+        {
+            *presult = result_illegal_state;
+            return media_time;
+        }
 
-int64 player_dshow::get_media_time(result *presult)
-{
-    if(state == unrealized || state == realized || state == prefetched ||
-        state == started)
-    {
-    }
-    else
-    {
-        *presult = result_illegal_state;
+        LONGLONG cur;
+        HRESULT hr = pms->GetCurrentPosition(&cur);
+        if(hr != S_OK) return media_time;
+
+        cur /= 10;
+        media_time = cur;
+        *presult = result_success;
         return media_time;
     }
 
-    LONGLONG cur;
-    HRESULT hr = pms->GetCurrentPosition(&cur);
-    if(hr != S_OK) return media_time;
-
-    cur /= 10;
-    media_time = cur;
-    *presult = result_success;
-    return media_time;
-}
-
-int32 player_dshow::get_state()
-{
-    return state;
-}
-
-int64 player_dshow::get_duration(result *presult)
-{
-    if(state == unrealized || state == realized || state == prefetched ||
-        state == started)
+    int32 get_state()
     {
+        return state;
     }
-    else
+
+    int64 get_duration(result *presult)
     {
-        *presult = result_illegal_state;
+        if(state == unrealized || state == realized || state == prefetched ||
+            state == started)
+        {
+        }
+        else
+        {
+            *presult = result_illegal_state;
+            return time_unknown;
+        }
+
+        *presult = result_success;
         return time_unknown;
     }
 
-    *presult = result_success;
-    return time_unknown;
-}
+    //string16c get_content_type(result *presult = 0)
 
-//string16c player_dshow::get_content_type(result *presult = 0)
+    result set_loop_count(int32 count)
+    {
+        if(!count) return result_illegal_argument;
 
-player::result player_dshow::set_loop_count(int32 count)
+        if(state == unrealized || state == realized || state == prefetched)
+        {
+        }
+        else
+        {
+            return result_illegal_state;
+        }
+
+        return result_success;
+    }
+
+    //result add_player_listener(player_listener *pplayer_listener)
+    //result remove_player_listener(player_listener *pplayer_listener)
+
+    bool data(nat32 len, void const *pdata)
+    {
+        if(state == unrealized || state == realized || state == prefetched ||
+            state == started)
+        {
+        }
+        else
+        {
+            return false;
+        }
+
+        return pfi->data(len, pdata);
+    }
+
+    friend bool create_player_dshow(nat32 len, char16 const *pformat, player_callback *pcallback, player **ppplayer);
+};
+
+bool create_player_dshow(nat32 len, char16 const *pformat, player_callback *pcallback, player **ppplayer)
 {
-    if(!count) return result_illegal_argument;
-
-    if(state == unrealized || state == realized || state == prefetched)
+    player_dshow *pplayer;
+    if(!pformat || !pcallback || !ppplayer)
     {
+        return false;
     }
-    else
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+    else if(len >= wcslen(L"video/x-flv") && !wcsncmp(pformat, L"video/x-flv", wcslen(L"video/x-flv")))
     {
-        return result_illegal_state;
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        pplayer->amt.majortype = MEDIATYPE_Stream;
+        pplayer->amt.subtype = MEDIASUBTYPE_FLV;
+        pplayer->amt.bFixedSizeSamples = TRUE;
+        pplayer->amt.bTemporalCompression = FALSE;
+        pplayer->amt.lSampleSize = 1;
+        pplayer->amt.formattype = GUID_NULL;
+        pplayer->amt.pUnk = null;
+        pplayer->amt.cbFormat = 0;
+        pplayer->amt.pbFormat = null;
     }
-
-    return result_success;
-}
-
-//result player_dshow::add_player_listener(player_listener *pplayer_listener)
-//result player_dshow::remove_player_listener(player_listener *pplayer_listener)
-
-bool player_dshow::data(nat32 len, void const *pdata)
-{
-    if(state == unrealized || state == realized || state == prefetched ||
-        state == started)
+#endif
+#ifdef ENABLE_MMAPI_CONT_MP3_DS_EXT
+    else if(len >= wcslen(L"audio/mpeg") && !wcsncmp(pformat, L"audio/mpeg", wcslen(L"audio/mpeg")))
     {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        pplayer->amt.majortype = MEDIATYPE_Stream;
+        pplayer->amt.subtype = MEDIASUBTYPE_MPEG1Audio;
+        pplayer->amt.bFixedSizeSamples = TRUE;
+        pplayer->amt.bTemporalCompression = FALSE;
+        pplayer->amt.lSampleSize = 1;
+        pplayer->amt.formattype = GUID_NULL;
+        pplayer->amt.pUnk = null;
+        pplayer->amt.cbFormat = 0;
+        pplayer->amt.pbFormat = null;
     }
+#endif
     else
     {
         return false;
     }
-
-    return pfi->data(len, pdata);
-}
-
-bool create_player_dshow(nat32 /*len*/, char16 const * /*pformat*/, player_callback *pcallback, player **ppplayer)
-{
-    if(!pcallback || !ppplayer) return false;
-    player_dshow *pplayer = new player_dshow(pcallback);
-    if(!pplayer) return false;
+    pplayer->pcallback = pcallback;
+    pplayer->state = player::unrealized;
+    pplayer->media_time = player::time_unknown;
     *ppplayer = pplayer;
     return true;
 }

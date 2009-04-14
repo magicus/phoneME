@@ -30,7 +30,7 @@ class player_callback
 {
 public:
     virtual ~player_callback() = 0 {}
-    virtual void frame_ready(bits16 const *pframe) = 0;
+    virtual void frame_ready(const bits16 *pframe) = 0;
     virtual void size_changed(int16 w, int16 h) = 0;
     virtual void playback_finished() = 0;
 };
