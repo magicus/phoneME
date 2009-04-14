@@ -395,6 +395,9 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     // #endif ]
     
     protected void doPostStart() {
+        if (dVolumeControl == null) {
+            doGetControl("VolumeControl");
+        }
         if (dVolumeControl != null) {
             dVolumeControl.setToThisPlayerLevel();     /* set to this player's volume level */
             dVolumeControl.setToPlayerMute();          /* set to this player's mute state */
