@@ -278,11 +278,15 @@ static javacall_result dshow_realize(javacall_handle handle,
         get_int_param( mime, (javacall_const_utf16_string)L"duration", &(p->duration) );
 
         p->mediaType = JC_FMT_MPEG1_LAYER3;
+        mime = (javacall_const_utf16_string)L"audio/mpeg";
+        mimeLength = wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"video/x-vp6" ) ||
              mime_equal( mime, mimeLength, L"video/x-flv" ) )
     {
         p->mediaType = JC_FMT_FLV;
+        mime = (javacall_const_utf16_string)L"video/x-flv";
+        mimeLength = wcslen( (const wchar_t*)mime );
     }
     else
     {
