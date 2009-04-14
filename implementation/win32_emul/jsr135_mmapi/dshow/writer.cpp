@@ -48,8 +48,8 @@ void print(char8 const *fmt, ...)
     vsprintf_s(str8, 1024, fmt, args);
     va_end(args);
 
-    printf("%s", str8);
-    //OutputDebugStringA(str8);
+    //printf("%s", str8);
+    OutputDebugStringA(str8);
 }
 
 void print(char16 const *fmt, ...)
@@ -61,8 +61,8 @@ void print(char16 const *fmt, ...)
     vswprintf_s(str16, 1024, fmt, args);
     va_end(args);
 
-    wprintf(L"%s", str16);
-    //OutputDebugStringW(str16);
+    //wprintf(L"%s", str16);
+    OutputDebugStringW(str16);
 }
 
 void error(HRESULT hr)
