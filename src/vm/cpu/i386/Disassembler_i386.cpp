@@ -260,10 +260,10 @@ x86_disassembler::disassemble()
 {
   const struct instable *dp;
   int wbit, vbit;
-  unsigned mode, reg, r_m;
+  unsigned mode = 0, reg = 0, r_m = 0;
 
   // nibbles of the opcode
-  unsigned opcode1, opcode2, opcode3, opcode4, opcode5;
+  unsigned opcode1, opcode2, opcode3, opcode4, opcode5 = 0;
   long    lngval;
   const char *reg_name = NULL;
   int got_modrm_byte;
@@ -785,9 +785,9 @@ x86_disassembler::get_operand(unsigned mode, unsigned r_m, int wbit, int opindex
   const char *resultreg;        // representation of index(es) 
   const char *format;           // output format of result 
   int s_i_b;                    // flag presence of scale-index-byte 
-  unsigned ss;                  // scale-factor from opcode 
-  unsigned index;               // index register number 
-  unsigned base;                // base register number 
+  unsigned ss = 0;                  // scale-factor from opcode 
+  unsigned index = 0;               // index register number 
+  unsigned base = 0;                // base register number 
   char indexbuffer[16];         // char representation of index(es) 
 
   // if symbolic representation, skip override prefix, if any 

@@ -207,7 +207,7 @@ void StackmapGenerator::read_long_map(StackmapList* entry, int index,
 
   int bitmap_index = 3; // entries 0-2 are reserved
   int stackmap_index = 0;
-  unsigned short bmp_bits;
+  unsigned short bmp_bits = 0;
   int bits_left_after_locals = 0;  
   jushort *bitmap_base = bitmap().ushort_base_address();
 
