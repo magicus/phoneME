@@ -487,6 +487,8 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     switch( fmt )
     {
 #ifdef ENABLE_MMAPI_DSHOW
+    case JC_FMT_MPEG1_LAYER3:
+    case JC_FMT_MPEG1_LAYER3_PRO:
     case JC_FMT_RTP_MPA:
     case JC_FMT_FLV:
         return &g_dshow_itf;
@@ -505,8 +507,6 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MOV:
         return &g_video_itf;
 
-    case JC_FMT_MPEG1_LAYER3:
-    case JC_FMT_MPEG1_LAYER3_PRO:
     case JC_FMT_MPEG2_AAC:
     case JC_FMT_MPEG4_HE_AAC:
         return &g_audio_itf;
