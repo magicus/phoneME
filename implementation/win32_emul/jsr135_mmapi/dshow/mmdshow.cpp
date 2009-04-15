@@ -278,11 +278,15 @@ static javacall_result dshow_realize(javacall_handle handle,
         get_int_param( mime, (javacall_const_utf16_string)L"duration", &(p->duration) );
 
         p->mediaType = JC_FMT_MPEG1_LAYER3;
+        mime = (javacall_const_utf16_string)L"audio/mpeg";
+        mimeLength = wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"video/x-vp6" ) ||
              mime_equal( mime, mimeLength, L"video/x-flv" ) )
     {
         p->mediaType = JC_FMT_FLV;
+        mime = (javacall_const_utf16_string)L"video/x-flv";
+        mimeLength = wcslen( (const wchar_t*)mime );
     }
     else
     {
@@ -395,11 +399,13 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
 
             if( JAVACALL_FALSE == *need_more_data )
             {
+                PRINTF( "*** calling player_dhow::prefetch()***\n" );
                 if( player::result_success != p->ppl->prefetch() )
                 {
                     PRINTF( "*** player::prefetch() failed! ***\n" );
                     return JAVACALL_FAIL;
                 }
+                PRINTF( "*** player_dhow::prefetch() finished***\n" );
             }
         }
         else
@@ -491,7 +497,15 @@ static javacall_result dshow_get_time(javacall_handle handle, long* ms)
 static javacall_result dshow_set_time(javacall_handle handle, long* ms)
 {
     dshow_player* p = (dshow_player*)handle;
-    return JAVACALL_FAIL;
+    player::result r;
+
+    int64 mt = int64( 1000 ) * int64( *ms );
+
+    mt = p->ppl->set_media_time( mt, &r );
+
+    *ms = long( mt / 1000 );
+
+    return (player::result_success == r) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 static javacall_result dshow_get_duration(javacall_handle handle, long* ms)

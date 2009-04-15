@@ -27,7 +27,7 @@
 #include <vfwmsgs.h>
 #include "filter_out.hpp"
 
-#define write_level 0
+#define write_level 1
 
 #if write_level > 0
 #include "writer.hpp"
