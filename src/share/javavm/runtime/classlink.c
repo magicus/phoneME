@@ -188,14 +188,28 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine)
     }
 
     /* Verify the class if necessary. */
-    if (CVM_NEED_VERIFY(CVMcbClassLoader(cb) != NULL)) {
+    if (CVMloaderNeedsVerify(ee, CVMcbClassLoader(cb), CVM_TRUE)) {
 	CVMBool verified = CVM_FALSE;
+        CVMBool isMidletClass = CVM_FALSE;
+#ifdef CVM_DUAL_STACK
+        CVMD_gcUnsafeExec(ee, {
+            isMidletClass = CVMclassloaderIsMIDPClassLoader(
+                ee, CVMcbClassLoader(cb), CVM_FALSE);
+        });
+#endif
 #ifdef CVM_SPLIT_VERIFY
 	/*
 	 * JVM spec 3rd edition says there is an implicit empty
 	 * StackMapTable attribute if none is specified.
+         *
+         * Midlet classes should be verified with the split verifier just
+         * in case there is a missing StackMap resource.
 	 */
-	if (CVMsplitVerifyClassHasMaps(ee, cb) || cb->major_version >= 50) {
+	if (CVMglobals.splitVerify && 
+            (CVMsplitVerifyClassHasMaps(ee, cb) ||
+             isMidletClass ||
+             cb->major_version >= 50))
+        {
 	    verified = (CVMsplitVerifyClass(ee, cb, isRedefine) == 0);
 #ifndef CVM_50_0_FALL_BACK
 	    if (!verified) {

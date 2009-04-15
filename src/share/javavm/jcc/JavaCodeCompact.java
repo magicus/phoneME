@@ -286,7 +286,8 @@ public class JavaCodeCompact extends LinkerUtil {
 		    parent = ClassTable.getClassLoader(parentName);
 		    if (parent == null) {
 			/* parent classloader not defined */
-			System.err.println(Localizer.getString("javacodecompact.parent_classloader_not_defined", parentName) );
+			System.err.println(Localizer.getString(
+                            "javacodecompact.parent_classloader_not_defined", parentName) );
 			return false;
 		    }
 		} else {
@@ -553,7 +554,9 @@ public class JavaCodeCompact extends LinkerUtil {
 		"[Ljava/lang/Object;" // not strictly basic.
 	};
 	for ( int ino = 0; ino < basicArray.length; ino++ ){
-	    if (!ArrayClassInfo.collectArrayClass(basicArray[ino], verbose)) {
+		if (!ArrayClassInfo.collectArrayClass(basicArray[ino],
+			        ClassTable.getClassLoader("boot"), verbose))
+		{
 		good = false;
 	    }
 	}
@@ -573,7 +576,6 @@ public class JavaCodeCompact extends LinkerUtil {
     {
 	int nclasses = classTable.length;
 	boolean good = true;
-
 	// Now dredge through all class constant pools.
 	for ( int cno = 0; cno < nclasses; cno++ ){
 	    ClassInfo c = classTable[cno];
@@ -590,7 +592,7 @@ public class JavaCodeCompact extends LinkerUtil {
 		    if (cc.isResolved()){
 			continue; // not interesting
 		    }
-		    if (!vm.ArrayClassInfo.collectArrayClass(cname, verbose)) {
+		    if (!vm.ArrayClassInfo.collectArrayClass(cname, c.loader, verbose)) {
 			good = false;
 		    }
 		    cc.forget(); // forget the fact that we couldn't find it

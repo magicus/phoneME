@@ -66,7 +66,8 @@ java_crw_demo : ALL_INCLUDE_FLAGS := \
 # List of object files to build:
 #
 CVM_CRW_SHAREOBJS += \
-	java_crw_demo.o
+	java_crw_demo.o \
+	java_crw_demo_md.o
 
 CVM_CRW_OBJECTS0 = $(CVM_CRW_SHAREOBJS) $(CVM_CRW_TARGETOBJS)
 CVM_CRW_OBJECTS  = $(patsubst %.o,$(CVM_CRW_OBJDIR)/%.o,$(CVM_CRW_OBJECTS0))
@@ -91,6 +92,11 @@ CVM_CRW_FLAGS += \
         CVM_DYNAMIC_LINKING \
 
 CVM_CRW_FLAGS0 = $(foreach flag, $(CVM_CRW_FLAGS), $(flag).$($(flag)))
+
+ifeq ($(CVM_STATICLINK_TOOLS), true)
+CVM_OBJECTS += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(CVM_CRW_SHAREOBJS))
+CVM_INCLUDE_DIRS += $(CVM_CRW_INCLUDES)
+endif
 
 CVM_CRW_CLEANUP_ACTION = \
         rm -rf $(CVM_CRW_BUILD_TOP)

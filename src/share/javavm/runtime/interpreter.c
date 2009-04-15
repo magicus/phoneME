@@ -2499,12 +2499,13 @@ CVMverifyClassAccess(CVMExecEnv* ee,
      * CVMverifyMemberAccess3 for details.
      */
     if (resolverAccess) {	 	/* (a) */
-	CVMBool isTrustedClassLoader;   /* (b) */
+	CVMBool needsVerify;   		/* (b) */
 	CVMBool isSameClassLoader;      /* (c) */
 	CVMBool isSameProtectionDomain; /* (d) */
 
-	isTrustedClassLoader = 
-	    CVMisTrustedClassLoader(ee, CVMcbClassLoader(currentClass));
+	needsVerify = 
+	    CVMloaderNeedsVerify(ee, CVMcbClassLoader(currentClass),
+                                 CVM_FALSE);
 	isSameClassLoader =
 	    CVMcbClassLoader(currentClass) == CVMcbClassLoader(newClass);
 	CVMID_icellSameObjectNullCheck(ee,
@@ -2513,7 +2514,7 @@ CVMverifyClassAccess(CVMExecEnv* ee,
 				       isSameProtectionDomain);
 
 	/* Make sure (b), (c), and (d) hold true. */
-	if (!CVM_NEED_VERIFY(!isTrustedClassLoader) 
+	if (!needsVerify
 	    && isSameProtectionDomain
 	    && isSameClassLoader)
 	{
@@ -2615,12 +2616,13 @@ CVMverifyMemberAccess3(CVMExecEnv* ee,
      *	   have the same protection domain.
      */
     if (resolverAccess) {	 	/* (a) */
-	CVMBool isTrustedClassLoader;   /* (b) */
+	CVMBool needsVerify;   		/* (b) */
 	CVMBool isSameClassLoader;      /* (c) */
 	CVMBool isSameProtectionDomain; /* (d) */
 
-	isTrustedClassLoader = 
-	    CVMisTrustedClassLoader(ee, CVMcbClassLoader(currentClass));
+	needsVerify = 
+	    CVMloaderNeedsVerify(ee, CVMcbClassLoader(currentClass),
+                                 CVM_FALSE);
 	isSameClassLoader =
 	    (CVMcbClassLoader(currentClass) == CVMcbClassLoader(memberClass));
 	CVMID_icellSameObjectNullCheck(ee,
@@ -2629,7 +2631,7 @@ CVMverifyMemberAccess3(CVMExecEnv* ee,
 				       isSameProtectionDomain);
 
 	/* Make sure (b), (c), and (d) hold true. */
-	if (!CVM_NEED_VERIFY(!isTrustedClassLoader) 
+	if (!needsVerify
 	    && isSameProtectionDomain
 	    && isSameClassLoader)
 	{

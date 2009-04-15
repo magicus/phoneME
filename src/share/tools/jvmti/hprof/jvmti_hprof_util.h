@@ -103,7 +103,7 @@ void      setTag(jobject object, jlong tag);
 void      getObjectMonitorUsage(jobject object, jvmtiMonitorUsage *uinfo);
 void      getOwnedMonitorInfo(jthread thread, jobject **ppobjects, 
                         jint *pcount);
-void      getSystemProperty(const char *name, char **value);
+void      JVMTIgetSystemProperty(const char *name, char **value);
 void      getClassSignature(jclass klass, char**psignature, 
                         char **pgeneric_signature);
 void      getSourceFileName(jclass klass, char** src_name_ptr);

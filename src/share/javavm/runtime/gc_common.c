@@ -1563,6 +1563,14 @@ CVMgcRunGC(CVMExecEnv* ee)
     (void)stopTheWorldAndGCSafe(ee, ~0, NULL, NULL); 
 }
 
+/* Purpose: Do a synchronous GC cycle. */
+void
+CVMgcRunGCMin(CVMExecEnv* ee)
+{
+    /* Do a small-scale GC - young-gen only typically */
+    (void)stopTheWorldAndGCSafe(ee, 1, NULL, NULL); 
+}
+
 /*
  * Return the number of bytes free in the heap. 
  */

@@ -847,7 +847,7 @@ public final class CVM {
     //
     public native static boolean xdebugSet();
 
-    static class Preloader {
+    public static class Preloader {
 	//
 	// Register ClassLoader for ROMized classes
 	//
@@ -968,4 +968,11 @@ public final class CVM {
 
     /* Get Thread.threadStarterClass, a private field. */   
     public static native Class getThreadStarterClass(Thread t);
+
+    /* Do a minimal GC */
+    public static native void gc();
+
+    /* Used to set java.lang.ClassLoader.noVerification */
+    public static native void setNoVerification(ClassLoader cl,
+                                                boolean noVerification);
 }

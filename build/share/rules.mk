@@ -65,8 +65,10 @@ ALL_INCLUDE_FLAGS	:= $(call makeIncludeFlags,$(ALL_INCLUDE_DIRS))
 #
 
 ifneq ($(CVM_TOOLS_BUILD), true)
+ifneq ($(CVM_STATICLINK_TOOLS), true)
 tools :
 	$(MAKE) CVM_TOOLS_BUILD=true tools
+endif
 endif
 
 #########################

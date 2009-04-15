@@ -5431,7 +5431,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
                 });
                 (*env)->ExceptionClear(env);
             }
-	    CVMjvmtiSetShouldPostAnyThreadEvent(ee, threadBits);
+            CVMjvmtiSetShouldPostAnyThreadEvent(ee, threadBits);
             CVMID_freeGlobalRoot(ee, newClassRoot);
 #ifdef CVM_DEBUG
             if (err == JVMTI_ERROR_FAILS_VERIFICATION) {
@@ -5457,9 +5457,10 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
                 CVMcbClearRuntimeFlag(newcb, ee, VERIFIED);
                 CVMclassVerify(ee, newcb, CVM_TRUE);
                 CVMglobals.debugFlags = oldFlags;
+                (*env)->ExceptionClear(env);
             }
-	    goto cleanup;
 #endif
+            goto cleanup;
 	}
 	CVMjvmtiSetShouldPostAnyThreadEvent(ee, threadBits);
 	CVMcbJavaInstance(newcb) = NULL;

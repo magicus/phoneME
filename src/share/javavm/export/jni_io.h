@@ -84,6 +84,7 @@ struct CVMIOVector {
                                        CVMJavaLong millis);
     void           (*CVMjniIOCondvarNotify)(CVMCondVar *c);
     void           (*CVMjniIOCondvarNotifyAll)(CVMCondVar *c);
+    void           (*CVMjniIOExit)(CVMInt32 exitStatus);
 };
 
 

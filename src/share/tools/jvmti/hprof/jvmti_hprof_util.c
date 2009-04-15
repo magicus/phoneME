@@ -813,7 +813,7 @@ getOwnedMonitorInfo(jthread thread, jobject **ppobjects, jint *pcount)
 }
 
 void      
-getSystemProperty(const char *name, char **value)
+JVMTIgetSystemProperty(const char *name, char **value)
 {
     jvmtiError error;
     

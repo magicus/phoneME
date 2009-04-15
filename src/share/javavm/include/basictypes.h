@@ -49,7 +49,12 @@ enum CVMBasicType {
     CVM_T_SHORT,
     CVM_T_INT,
     CVM_T_LONG,
-    CVM_T_VOID = 17
+    CVM_T_VOID = 17,
+    /* The following is needed to make sure CVMBasicType is 32-bits on all
+     * platforms. Otherwise on some platforms OFFSET_CVMArrayInfo_elementCb
+     * is not correct.
+     */
+    CVM_T_FORCE_32_BIT = 0x80000000
 };
 
 typedef enum CVMBasicType CVMBasicType;

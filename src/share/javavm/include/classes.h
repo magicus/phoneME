@@ -1722,13 +1722,16 @@ enum { CVM_VERIFY_NONE = 0, CVM_VERIFY_REMOTE, CVM_VERIFY_ALL, CVM_VERIFY_UNRECO
 extern CVMInt32
 CVMclassVerificationSpecToEncoding(char* verifySpec);
 
-#ifdef CVM_TRUSTED_CLASSLOADERS
-#define CVM_NEED_VERIFY(cond) (CVM_FALSE)
-#else
-#define CVM_NEED_VERIFY(cond) \
-    ((CVMglobals.classVerificationLevel == CVM_VERIFY_ALL) || \
-     ((CVMglobals.classVerificationLevel == CVM_VERIFY_REMOTE) && (cond)))
-#endif /* CVM_TRUSTED_CLASSLOADERS */
+/*
+ * CVMloaderNeedsVerify - returns TRUE if the classloader requires
+ * verification of its loaded classes.
+ *
+ * verifyTrusted should be set true if verification must be done even
+ * for trusted class loaders when the verification level is REMOTE.
+ */
+CVMBool
+CVMloaderNeedsVerify(CVMExecEnv* ee, CVMClassLoaderICell* loader,
+                     CVMBool verifyTrusted);
 
 #endif /* CVM_CLASSLOADING */
 

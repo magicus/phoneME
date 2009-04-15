@@ -36,12 +36,17 @@ tool-clean: java_crw_demo-clean
 java_crw_demo-clean:
 	$(CVM_CRW_CLEANUP_ACTION)
 
+crw_build_list =
+
 ifeq ($(CVM_JVMTI), true)
+ifneq ($(CVM_STATICLINK_TOOLS), true)
     crw_build_list = crw_initbuild \
 		$(CVM_CRW_LIBDIR)/$(CVM_CRW_LIB) \
 		$(CVM_CRW_JARDIR)/$(CVM_CRW_JAR)
 else
-    crw_build_list =
+    crw_build_list = crw_initbuild \
+		$(CVM_CRW_JARDIR)/$(CVM_CRW_JAR)
+endif
 endif
 
 java_crw_demo: $(crw_build_list)
@@ -51,12 +56,16 @@ crw_initbuild: crw_check_cvm crw_checkflags $(CVM_CRW_BUILDDIRS)
 # Make sure that CVM is built before building crw.  If not, the issue a
 # warning and abort.
 crw_check_cvm:
+ifneq ($(CVM_STATICLINK_TOOLS), true)
 	@if [ ! -f $(CVM_BINDIR)/$(CVM) ]; then \
 	    echo "Warning! Need to build CVM before building crw."; \
 	    exit 1; \
 	else \
 	    echo; echo "Building crw library ..."; \
 	fi
+else
+	    echo; echo "Building crw library ...";
+endif
 
 # Make sure all of the build flags files are up to date. If not, then do
 # the requested cleanup action.

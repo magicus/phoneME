@@ -161,6 +161,10 @@ public abstract class ClassLoader {
     // The parent class loader for delegation
     private ClassLoader parent;
 
+    // Set true if ClassLoader instance does not require verification of
+    // loaded classes unless -Xverify:all is used.
+    private boolean noVerification;
+
     // Hashtable that maps packages to certs
     private Hashtable package2certs = new Hashtable(11);
 

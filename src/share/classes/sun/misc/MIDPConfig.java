@@ -331,7 +331,8 @@ class MIDPConfig{
         PermissionCollection perms,
 	MIDPImplementationClassLoader implClassLdr,
         boolean enableFilter,
-        ClassLoader auxClassLoader)
+        ClassLoader auxClassLoader,
+        MIDPBridgeInterface bridgeInterface)
     {
         if (midpImplCL == null) {
             throw new InternalError(
@@ -356,7 +357,8 @@ class MIDPConfig{
 	MIDletClassLoader midletCL = new MIDletClassLoader(
                                            midJarURL, systemPackages,
 					   perms, mf, implClassLdr,
-                                           enableFilter, auxClassLoader);
+                                           enableFilter, auxClassLoader,
+                                           bridgeInterface);
 
 	return midletCL;
     }
@@ -375,6 +377,7 @@ class MIDPConfig{
                                     perms,
                                     midpImplCL,
                                     true,
+                                    null,
                                     null);
     }
 
@@ -391,6 +394,7 @@ class MIDPConfig{
                                     midletPermissions,
                                     midpImplCL,
                                     true,
+                                    null,
                                     null);
     }
 
@@ -414,7 +418,22 @@ class MIDPConfig{
                                     midletPermissions,
                                     midpImplCL,
                                     enableFilter,
-                                    auxClassLoader);
+                                    auxClassLoader,
+                                    null);
+    }
+
+    public static MIDletClassLoader
+    newMIDletClassLoader(String midpPath[], boolean enableFilter,
+                         PermissionCollection perms,
+                         MIDPBridgeInterface bridgeInterface)
+    {
+        return newMIDletClassLoader(midpPath,
+                                    memberFilter,
+                                    perms,
+                                    midpImplCL,
+                                    enableFilter,
+                                    null,
+                                    bridgeInterface);
     }
 
     /*

@@ -270,6 +270,9 @@ static CVMNotifyFunc    CVMfastNotify, CVMdetNotify;
 static CVMNotifyAllFunc CVMfastNotifyAll, CVMdetNotifyAll;
 static CVMWaitFunc      CVMfastWait, CVMdetWait;
 
+static CVMExecEnv* objfreer;
+static int objfreerX;
+
 /*
  * The locking vector.
  */
@@ -2130,6 +2133,8 @@ CVMobjMonitorInit(CVMExecEnv *ee, CVMObjMonitor *m, CVMExecEnv *owner,
     m->next = NULL;
     m->obj = NULL;
     m->state = CVM_OBJMON_FREE;
+    objfreer = ee;
+    objfreerX = 2;
 #ifdef CVM_DEBUG
     m->magic = CVM_OBJMON_MAGIC;
     m->owner = NULL;
@@ -2451,7 +2456,8 @@ CVMmonitorScavengeBound(CVMExecEnv *ee, CVMObjMonitor **fromListPtr,
                 mon->obj->hdr.various32 = mon->bits;
                 mon->obj = NULL;
 		mon->state = CVM_OBJMON_FREE;
-
+                objfreer = ee;
+                objfreerX = 0;
                 /* NOTE: There is no CVMOwnedMonitor associated with this
                     CVMObjMonitor to be released because the object's lock
                     count is 0.  It was dis-associated with its CVMOwnedMonitor
@@ -2557,7 +2563,8 @@ CVMmonitorScavengeUnbound(CVMExecEnv *ee)
                 CVMprofiledMonitorExit(&mon->mon, ee);
             }
             mon->state = CVM_OBJMON_FREE;
-
+            objfreer = ee;
+            objfreerX = 1;
             /* Move the CVMObjMonitor over to the global free list: */
             *monPtr = mon->next;
             mon->next = CVMglobals.objLocksFree;

@@ -36,12 +36,13 @@ tool-clean: jvmti_hprof-clean
 jvmti_hprof-clean:
 	$(CVM_JVMTI_HPROF_CLEANUP_ACTION)
 
+jvmti_hprof_build_list =
 ifeq ($(CVM_JVMTI), true)
+ifneq ($(CVM_STATICLINK_TOOLS), true)
     jvmti_hprof_build_list = jvmti_hprof_initbuild \
                        $(CVM_JVMTI_HPROF_LIB) \
                        $(CVM_LIBDIR)/jvm.hprof.txt
-else
-    jvmti_hprof_build_list =
+endif
 endif
 
 jvmti_hprof: $(jvmti_hprof_build_list)

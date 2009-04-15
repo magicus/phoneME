@@ -2338,9 +2338,7 @@ CVMsplitVerifyClass(CVMExecEnv* ee, CLASS thisClass, CVMBool isRedefine)
     METHOD thisMethod;
     nMethods = CVMcbMethodCount(thisClass);
     if (nMethods > 0) {
-        if (!CVMcbCheckRuntimeFlag(thisClass, VERIFIED) && 
-	    CVM_NEED_VERIFY(CVMcbClassLoader(thisClass))) 
-	{
+        if (!CVMcbCheckRuntimeFlag(thisClass, VERIFIED)) {
             /* Verify all methods */
 	    cntxt = allocateContext(ee, thisClass);
 	    if (cntxt == NULL){
@@ -3158,8 +3156,6 @@ CVMsplitVerifyClassDeleteMaps(CVMClassBlock* cb){
     struct CVMmapCacheMethod* nextMcmp;
     mccp = getMapCacheClass(cb, CVM_FALSE);
     if (mccp == NULL){
-	CVMdebugPrintf(("deleteMapCacheClass: couldn't find %C\n", cb));
-        CVMassert(CVM_FALSE);
 	return;
     }
     /* free method structures */

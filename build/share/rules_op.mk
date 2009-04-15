@@ -264,6 +264,15 @@ endif
 include $(JSR_280_MAKE_FILE)
 endif
 
+# Include API Extensions
+ifeq ($(USE_API_EXTENSIONS), true)
+API_EXTENSIONS_RULES_FILE = $(API_EXTENSIONS_DIR)/build/cdc_share/$(SUBSYSTEM_RULES_FILE)
+ifeq ($(wildcard $(API_EXTENSIONS_RULES_FILE)),)
+$(error API_EXTENSIONS_DIR must point to a directory containing API Extensions sources)
+endif
+include $(API_EXTENSIONS_RULES_FILE)
+endif
+
 # Include XML PARSER
 ifeq ($(USE_XMLPARSER), true)
 export XMLPARSER_DIR ?= $(COMPONENTS_DIR)/xmlparser

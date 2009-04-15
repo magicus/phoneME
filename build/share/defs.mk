@@ -321,7 +321,13 @@ else
     CVM_DUAL_STACK          ?= false
   endif
 endif
-CVM_SPLIT_VERIFY	?= true
+
+# We must use the split verifier for cldc/midp classes 
+ifeq ($(CVM_DUAL_STACK), true)
+    override CVM_SPLIT_VERIFY = true
+else
+    CVM_SPLIT_VERIFY ?= true
+endif
 
 CVM_JIT_REGISTER_LOCALS	?= true
 CVM_JIT_USE_FP_HARDWARE ?= false
@@ -613,9 +619,9 @@ else
 LIB_CLASSESJAR = $(CVM_RTJARS_DIR)/$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar
 endif
 
-CVM_RESOURCES_DIR ?= $(CVM_BUILD_TOP)/resources
-CVM_RESOURCES_JAR_FILENAME ?= resources.jar
-CVM_RESOURCES_JAR ?= $(CVM_LIBDIR_ABS)/$(CVM_RESOURCES_JAR_FILENAME)
+export CVM_RESOURCES_DIR ?= $(CVM_BUILD_TOP)/resources
+export CVM_RESOURCES_JAR_FILENAME ?= resources.jar
+export CVM_RESOURCES_JAR ?= $(CVM_LIBDIR_ABS)/$(CVM_RESOURCES_JAR_FILENAME)
 
 #
 # command line flags
@@ -825,6 +831,10 @@ ifeq ($(CVM_STATICLINK_LIBS), true)
 	CVM_DEFINES   += -DCVM_STATICLINK_LIBS
 endif
 
+ifeq ($(CVM_STATICLINK_TOOLS), true)
+	CVM_DEFINES   += -DCVM_STATICLINK_TOOLS
+endif
+
 # Keep ant quiet unless a verbose build is requested. Note, you can set
 # CVM_ANT_OPTIONS=-v or CVM_ANT_OPTIONS=-d on the command line to make
 # ant much more verbose.
@@ -890,6 +900,7 @@ CVM_FLAGS += \
 	CVM_REFLECT \
 	CVM_SERIALIZATION \
 	CVM_STATICLINK_LIBS \
+	CVM_STATICLINK_TOOLS \
 	CVM_DYNAMIC_LINKING \
 	CVM_TEST_GC \
 	CVM_TEST_GENERATION_GC \
@@ -977,6 +988,9 @@ CVM_PRELOAD_SET_CLEANUP_ACTION = \
 	$(LIB_CLASSESJAR) $(LIB_CLASSESDIR)
 
 CVM_STATICLINK_LIBS_CLEANUP_ACTION = \
+	rm -rf $(CVM_LIBDIR) $(CVM_BINDIR)
+
+CVM_STATICLINK_TOOLS_CLEANUP_ACTION = \
 	rm -rf $(CVM_LIBDIR) $(CVM_BINDIR)
 
 CVM_DYNAMIC_LINKING_CLEANUP_ACTION = \

@@ -171,7 +171,7 @@ class ArrayClassInfo extends ClassInfo {
     }
 
     public static boolean
-	collectArrayClass(String cname, boolean verbose)
+	collectArrayClass(String cname, components.ClassLoader classloader, boolean verbose)
     {
 	// cname is the name of an array class
 	// make sure it doesn't exist ( it won't if it came from a 
@@ -189,7 +189,7 @@ class ArrayClassInfo extends ClassInfo {
 	    // it is a [[[[[Lsomething;
 	    // isolate the something and see if its defined.
 	    String baseClass = cname.substring(lastBracket+2, cname.length()-1);
-	    baseClassInfo = ClassTable.lookupClass(baseClass);
+	    baseClassInfo = ClassTable.lookupClass(baseClass, classloader);
 	    if (baseClassInfo == null) {
 		// base class not defined. punt this.
 		if (verbose) {
@@ -221,7 +221,7 @@ class ArrayClassInfo extends ClassInfo {
 	// enter sub-classes first
 	for (int i = lastBracket; i >= 0; --i) {
 	    String aname = cname.substring(i);
-	    ClassInfo cinfo = ClassTable.lookupClass(aname);
+	    ClassInfo cinfo = ClassTable.lookupClass(aname, loader);
 	    if (cinfo != null) {
                 // this one exists. But subclasses may not, so keep going.
 		continue;

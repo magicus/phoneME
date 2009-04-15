@@ -69,6 +69,7 @@ class ClassTable
     static Vector allClasses = new Vector();
     static ClassLoader bootLoader = new ClassLoader("boot", null);
     static ClassLoader loader = bootLoader;
+    static ClassLoader allLoader = new ClassLoader("all", null);
     static Hashtable loaders = new Hashtable();
     static Hashtable classTable = loader.classes;
     static String classLoaderNames = "";
@@ -76,6 +77,7 @@ class ClassTable
 
     static {
 	loaders.put("boot", bootLoader);		// ID 0
+        loaders.put("all", allLoader);                  // ID 1
 	allClasses = new Vector();
     }
 

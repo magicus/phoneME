@@ -1724,7 +1724,7 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
                             cname = "[L"+ cname +";";
 			}
                     }
-                    vm.ArrayClassInfo.collectArrayClass(cname, false);
+                    vm.ArrayClassInfo.collectArrayClass(cname, ClassTable.getClassLoader(), false);
                 }
                 
 	    default: 
