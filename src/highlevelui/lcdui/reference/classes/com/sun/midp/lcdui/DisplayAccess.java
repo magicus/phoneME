@@ -150,4 +150,12 @@ public interface DisplayAccess {
     * @param m MIDPWindow display mode
     */
     public void setMode(int m);
+
+    /**
+     * Called to get the list of current dirty screen regions which
+     * need to be refreshed
+     *
+     * @return Object[]  List of screen regions that need to be refreshed
+     */
+    public Object[] getDirtyRegions();
 }
