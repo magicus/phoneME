@@ -303,7 +303,12 @@ information or have any questions.
                 <xsl:apply-templates select="." mode="Screen-define-initializer-body"/>
                 <xsl:apply-templates select="." mode="Screen-define-initializer-footer"/>
             </xsl:variable>
-            <xsl:value-of select="replace($body, '^', '        ', 'm')"/>
+            <xsl:value-of select="
+                replace(
+                    replace($body, '^', '        ', 'm'),
+                    '^[ ]{1,};&#10;',
+                    '',
+                    'm')"/>
         </xsl:value-of>
         <xsl:text>    }&#10;</xsl:text>
     </xsl:template>
@@ -327,7 +332,7 @@ information or have any questions.
         Adds an item to the screen.
     -->
     <xsl:template match="*" mode="Screen-item-legend">
-<!--        <xsl:text>// </xsl:text>
+        <xsl:text>// </xsl:text>
         <xsl:value-of select="name()"/>
         <xsl:for-each select="attribute::*">
             <xsl:value-of select="concat(' ', name())"/>
@@ -335,7 +340,7 @@ information or have any questions.
             <xsl:value-of select="."/>
             <xsl:text>"</xsl:text>
         </xsl:for-each>
-        <xsl:text>&#10;</xsl:text>        -->
+        <xsl:text>&#10;</xsl:text>
     </xsl:template>
 
     <xsl:template match="*" mode="Screen-declare-item">
@@ -365,9 +370,9 @@ information or have any questions.
         <xsl:if test="../dynamic-command">
             <xsl:value-of select="
                 concat(
-                    ';&#10;commands.addElement(',
+                    'commands.addElement(',
                     uig:Screen-item-variable-name(.),
-                    ')')"/>
+                    ');&#10;')"/>
         </xsl:if>
         <xsl:apply-templates select="." mode="Screen-add-item-impl"/>
         <xsl:text>;&#10;&#10;</xsl:text>
@@ -501,7 +506,7 @@ information or have any questions.
         <xsl:apply-templates select="." mode="Screen-item-base-idx"/>
         <xsl:text><![CDATA[ <= (idx = commands.indexOf(item, ]]></xsl:text>
         <xsl:apply-templates select="." mode="Screen-item-base-idx"/>
-        <xsl:text><![CDATA[) && idx < ]]></xsl:text>
+        <xsl:text><![CDATA[)) && idx < ]]></xsl:text>
         <xsl:apply-templates select="." mode="Screen-dynamic-item-range-value"/>
     </xsl:template>
 

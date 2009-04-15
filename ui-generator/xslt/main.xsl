@@ -41,6 +41,11 @@ information or have any questions.
 
 
     <xsl:template match="/*">
+        <xsl:apply-templates select="." mode="main"/>
+    </xsl:template>
+
+
+    <xsl:template match="*" mode="main">
         <!--
             This is just a check to ensure that proper XSLT2.0 complient processor runs.
             The check relays on the fact that current-date() is not a part of XSLT1.0 spec.
