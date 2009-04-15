@@ -42,12 +42,16 @@ extern "C" {
 #endif
 
 
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+typedef unsigned int imgdcd_pixel_type;
+#else
 /**
  * 16-bit pixel.
  * The color encoding used in pixels is 565, that is,
  * 5+6+5=16 bits for red, green, blue.
  */
 typedef unsigned short imgdcd_pixel_type;
+#endif
 
 /** 8-bit alpha */
 typedef unsigned char imgdcd_alpha_type;

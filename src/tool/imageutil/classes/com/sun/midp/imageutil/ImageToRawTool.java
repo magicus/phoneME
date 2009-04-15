@@ -331,8 +331,7 @@ public class ImageToRawTool {
         int[] imageData = getBufferedImageData(image);
 
         // convert image
-        byte[] rawData = converter.convertToRaw(
-                imageData, width, height, hasAlpha);
+        byte[] rawData = converter.convertToRaw(imageData, width, height);
 
         // save image
         if (new File(destName).exists())

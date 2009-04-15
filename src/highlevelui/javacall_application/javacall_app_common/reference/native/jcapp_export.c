@@ -58,10 +58,17 @@ int jcapp_get_screen_buffer(int hardwareId) {
          javacall_lcd_get_screen (hardwareId,
                                   &gxj_system_screen_buffer.width,
                                   &gxj_system_screen_buffer.height,
-                                  &color_encoding);                                
-     if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {        
+                                  &color_encoding);
+
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+     if (JAVACALL_LCD_COLOR_RGBA != color_encoding) {
 	    return -2;
      };
+#else
+     if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {
+	    return -2;
+     };
+#endif
 
      return 0;
 }

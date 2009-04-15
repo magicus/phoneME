@@ -37,6 +37,8 @@ import sun.misc.MIDPConfig;
  */
 class ImageDataFactory implements AbstractImageDataFactory {
 
+    private static final int PIXEL_SIZE=4;
+
     /**
      * PNG Header Data
      */
@@ -127,7 +129,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
     public ImageData createImmutableCopy(ImageData mutableSource) {
         int width  = mutableSource.getWidth();
         int height = mutableSource.getHeight();
-        int length = width * height * 2;
+        int length = width * height * PIXEL_SIZE;
 
         return  new ImageData(width, height, false,
                               mutableSource.getPixelData());

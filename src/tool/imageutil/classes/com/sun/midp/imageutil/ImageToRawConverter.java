@@ -120,11 +120,9 @@ public class ImageToRawConverter {
      * @param imageData image pixels in 32bit ARGB format
      * @param width image width
      * @param height image height
-     * @param hasAlpha true if image has alpha channel
      * @return byte[] raw data
      */
-    public byte[] convertToRaw(int[] imageData, int width, int height, 
-            boolean hasAlpha)
+    public byte[] convertToRaw(int[] imageData, int width, int height)
     {
         if (imageData == null) {
             throw new IllegalArgumentException("Source image data is null");
@@ -134,9 +132,15 @@ public class ImageToRawConverter {
         // build raw data
         if ((rawFormat == RAW_FORMAT_PP) && 
             (colorFormat == COLOR_FORMAT_565)) {
+            boolean hasAlpha = reallyHasAlpha(imageData);
+
             ret = imageToPutpixel565(imageData, width, height, hasAlpha);
         } else if ((rawFormat == RAW_FORMAT_ARGB) && 
             (colorFormat == COLOR_FORMAT_888)) {
+            // there is no separate alpha channel needed for ARGB
+//            boolean hasAlpha = false;
+            boolean hasAlpha = reallyHasAlpha(imageData);
+
             ret = imageToARGB888(imageData, width, height, hasAlpha);
         }
         return ret;
@@ -179,8 +183,6 @@ public class ImageToRawConverter {
     private byte[] imageToPutpixel565(int[] imageData, int width, int height, 
             boolean hasAlpha)
     {
-        hasAlpha = reallyHasAlpha(imageData);
-
         // sizeof resulting raw buffer = 
         // sizeof(RAW_HEADER) + 
         // sizeof(MIDP_IMAGE_BUFFER_RAW.width) + 
@@ -233,15 +235,11 @@ public class ImageToRawConverter {
     private byte[] imageToARGB888(int[] imageData, int width, int height, 
             boolean hasAlpha)
     {
-        hasAlpha = reallyHasAlpha(imageData);
-
         // sizeof resulting raw buffer = 
         // sizeof(RAW_HEADER) + 
         // sizeof(MIDP_IMAGE_BUFFER_RAW.width) + 
         // sizeof(MIDP_IMAGE_BUFFER_RAW.height) + 
         // sizeof(MIDP_IMAGE_BUFFER_RAW.hasAlpha) + 
-        // sizeof(pixe_l565) * image_pixel_count + 
-        // (hasAlpha ? alpha_size * image_pixel_count : 0)
 
         int rawsz = 4 + 4 + 4 + 4 + 4 * imageData.length;
         int dataOffset = 4 + 4 + 4 + 4;

@@ -1093,11 +1093,9 @@ final class RomizedImageFactory {
 
         int width = image.getWidth(null);
         int height = image.getHeight(null);
-        boolean hasAlpha = image.getColorModel().hasAlpha();
         int[] imageData = getBufferedImageData(image);
         
-        byte[] rawData = converter.convertToRaw(imageData, width, height, 
-                hasAlpha);
+        byte[] rawData = converter.convertToRaw(imageData, width, height);
 
         return new RomizedImage(rawData, romizedImageCounter++);
     }

@@ -161,8 +161,8 @@ asm volatile(
 #endif 
 
 #if (!UNDER_CE)
-void unclipped_blit(unsigned short *dstRaster, int dstSpan,
-		    unsigned short *srcRaster, int srcSpan,
+void unclipped_blit(gxj_pixel_type *dstRaster, int dstSpan,
+		    gxj_pixel_type *srcRaster, int srcSpan,
 		    int height, int width, gxj_screen_buffer *dst) {
     (void)dst;
 
