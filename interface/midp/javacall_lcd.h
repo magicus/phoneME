@@ -59,7 +59,7 @@ extern "C" {
  * @def RGB2PIXELTYPE
  *
  * Conversion between 3 RGB octets to a pixel type is defined for the following
- * #define: For example RGB conversion of RGB to 16bpp can be of the form 6-5-6
+ * #define: For example RGB conversion of RGB to 16bpp can be of the form 5-6-5
  */
 
 #ifndef RGB2PIXELTYPE
