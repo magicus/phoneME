@@ -28,17 +28,6 @@ import javax.microedition.media.Control;
 
 class DirectCamera extends DirectPlayer 
 {
-    private Control _cameraControl;
-    private Control _exposureControl;
-    private Control _flashControl;
-    private Control _focusControl;
-    private Control _snapshotControl;
-    private Control _zoomControl;
-    private Control _imgFmtControl;
-
-    protected static final String JSR234_CAMERA_PACKAGE_NAME =
-        "javax.microedition.amms.control.camera.";
-
     /**
      * It does not need data source
      */
@@ -46,71 +35,10 @@ class DirectCamera extends DirectPlayer
         super( owner );
     }
 
-    protected Control doGetControl(String type) {
-        Control c = super.doGetControl(type);
-        if (c == null) {
-            if (type.startsWith(JSR234_CAMERA_PACKAGE_NAME)) {
-                String camType = type.substring( 
-                        JSR234_CAMERA_PACKAGE_NAME.length() );
-                if( camType.equals( "CameraControl" ) )
-                {
-                    if( null == _cameraControl )
-                    {
-                        _cameraControl = 
-                           Jsr234Proxy.getInstance().getCameraControl( getOwner() );
-                    }
-                    return _cameraControl;
-                } else if( camType.equals( "ExposureControl" ) )
-                {
-                    if( null == _exposureControl )
-                    {
-                        _exposureControl = 
-                          Jsr234Proxy.getInstance().getExposureControl( getOwner() );
-                    }
-                    return _exposureControl;
-                } else if ( camType.equals( "FlashControl" ) )
-                {
-                    if( null == _flashControl )
-                    {
-                        _flashControl = 
-                           Jsr234Proxy.getInstance().getFlashControl( getOwner() );
-                    }
-                    return _flashControl;
-                } else if( camType.equals( "FocusControl" ) )
-                {
-                    if( null == _focusControl )
-                    {
-                        _focusControl = 
-                           Jsr234Proxy.getInstance().getFocusControl( getOwner() );
-                    }
-                    return _focusControl;
-                } else if( camType.equals( "SnapshotControl" ) )
-                {
-                    if( null == _snapshotControl )
-                    {
-                        _snapshotControl = 
-                          Jsr234Proxy.getInstance().getSnapshotControl( getOwner() );
-                    }
-                    return _snapshotControl;
-                } else if( camType.equals( "ZoomControl" ) )
-                {
-                    if( null == _zoomControl )
-                    {
-                        _zoomControl = 
-                              Jsr234Proxy.getInstance().getZoomControl( getOwner() );
-                    }
-                    return _zoomControl;
-                }
-                
-            } else if (type.equals( 
-                    "javax.microedition.amms.control.ImageFormatControl" )) {
-                if( null == _imgFmtControl )
-                {
-                    _imgFmtControl = 
-                       Jsr234Proxy.getInstance().getImageFormatControl( getOwner() );
-                }
-                return _imgFmtControl;
-            }
+    protected Control doGetNewControl(String type) {
+        Control c = super.doGetNewControl(type);
+        if ( null == c ) {
+            c = Jsr234Proxy.getInstance().getNewControl( getOwner(), type );
         }
         return c;
     }

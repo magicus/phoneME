@@ -639,7 +639,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      * @return       <code>Control</code> for the class or interface
      * name.
      */
-    protected Control doGetControl(String type) {
+    protected Control doGetNewControl(String type) {
         String prefix = "javax.microedition.media.control.";
         String shortType = type;
 
@@ -719,23 +719,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
 
         if ( isRadioPlayer() )
         {
-            if( type.equals( 
-                    "javax.microedition.amms.control.tuner.RDSControl" ) )
-            {
-                if( null == rdsControl )
-                { 
-                    rdsControl = 
-                            Jsr234Proxy.getInstance().getRDSControl( getOwner() );
-                }
-                return rdsControl;
-            } else if (type.equals( 
-                    "javax.microedition.amms.control.tuner.TunerControl" )) {
-                if (null == tunerControl) {
-                    tunerControl =
-                            Jsr234Proxy.getInstance().getTunerControl( getOwner() );
-                }
-                return tunerControl;
-            }
+            return Jsr234Proxy.getInstance().getNewControl( getOwner(), type );
         }
         return null;
     }

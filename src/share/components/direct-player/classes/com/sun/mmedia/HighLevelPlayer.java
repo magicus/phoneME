@@ -82,7 +82,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * <code>&nbsp;&nbsp;&nbsp;allJsr135Ctrls[4]; // RateControl</code>
      *
      * @see    #getControls()
-     * @see    #doGetControl(String)
+     * @see    #doGetNewControl(String)
      * @see    #allJsr135Ctrls
      */
 
@@ -748,7 +748,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         lowLevelPlayer.doPrefetch();
 
-        VolumeControl vc = ( VolumeControl )lowLevelPlayer.doGetControl(
+        VolumeControl vc = ( VolumeControl )lowLevelPlayer.doGetNewControl(
                 pkgName + vocName);
         if (vc != null && (vc.getLevel() == -1)) {
                vc.setLevel(100);
@@ -1355,6 +1355,9 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         listeners.removeElement(playerListener);
     };
 
+
+    private Hashtable htControls = new Hashtable();
+
     /**
      *  Gets the controls attribute of the HighLevelPlayer object
      *
@@ -1415,7 +1418,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * @return       <code>Control</code> for the class or interface
      * name.
      */
-    public Control getControl(String type) {
+    public synchronized Control getControl(String type) {
         chkClosed(true);
 
         if (type == null) {
@@ -1424,22 +1427,27 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         // Prepend the package name if the type given does not
         // have the package prefix.
-        if (type.indexOf('.') < 0) {
-            // for non-fully qualified control names,
-            // look up the package in the allJsr135Ctrls array
-            for (int i = 0; i < allJsr135Ctrls.length; i++) {
-                if (allJsr135Ctrls[i].equals(type)) {
-                    // standard controls are specified
-                    // without package name in allJsr135Ctrls
-                    return lowLevelPlayer.doGetControl(pkgName + type);
-                } else if (allJsr135Ctrls[i].endsWith(type)) {
-                    // non-standard controls are with
-                    // full package name in allJsr135Ctrls
-                    return lowLevelPlayer.doGetControl(allJsr135Ctrls[i]);
-                }
+        String fullName = type;
+        if( fullName.indexOf('.') < 0 )
+        {
+            fullName = pkgName + type;
+        }
+
+        Control c;
+        if( htControls.containsKey( fullName ) )
+        {
+            c = ( Control )htControls.get( fullName );
+        }
+        else
+        {
+            c = lowLevelPlayer.doGetNewControl( fullName );
+            if( null != c )
+            {
+                htControls.put( fullName, c );
             }
         }
-        return lowLevelPlayer.doGetControl(type);
+        
+        return c;
     }
 
     /**
