@@ -121,6 +121,8 @@ information or have any questions.
             <param name="output-xml-dir" expression="file:///${output-xml-dir}"/>
             <param name="with-unit-tests" expression="${with-unit-tests}"/>
         </xslt>
+
+        <delete file="${xslt.main}.filtered"/>
     </target>
 
     <target name="gen-with-unit-tests">
