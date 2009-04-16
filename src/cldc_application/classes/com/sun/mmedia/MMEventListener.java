@@ -87,7 +87,7 @@ class MMEventListener implements EventListener {
             break;
 
         case EVENT_MEDIA_VOLUME_CHANGED:
-            p = HighLevelPlayer.get(e.playerId);
+            p = HighLevelPlayer.get(nevt.intParam1);
             if (p != null) {
                 if (nevt.intParam2 < 0) {
                     nevt.intParam2 = 0;
