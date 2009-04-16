@@ -43,8 +43,8 @@
 static void clipped_blit(gxj_screen_buffer* dst, int dstX, int dstY,
 			 gxj_screen_buffer* src, const jshort *clip);
 
-extern void unclipped_blit(gxj_pixel_type *dstRaster, int dstSpan,
-			   gxj_pixel_type *srcRaster, int srcSpan,
+extern void unclipped_blit(unsigned short *dstRaster, int dstSpan,
+			   unsigned short *srcRaster, int srcSpan,
 			   int height, int width, gxj_screen_buffer *dst);
 
 /**
@@ -77,9 +77,9 @@ draw_image(gxj_screen_buffer *imageSBuf,
        (x_dest + imageSBuf->width) <= clipX2 &&
        (y_dest + imageSBuf->height) <= clipY2) {
 #if ENABLE_RGBA8888_PIXEL_FORMAT
-      unclipped_blit(&destSBuf->pixelData[y_dest*destSBuf->width+x_dest],
+      unclipped_blit((unsigned short *)&destSBuf->pixelData[y_dest*destSBuf->width+x_dest],
 		    destSBuf->width<<2,
-		    &imageSBuf->pixelData[0], imageSBuf->width<<2,
+		    (unsigned short *)&imageSBuf->pixelData[0], imageSBuf->width<<2,
 		    imageSBuf->height, imageSBuf->width<<2, destSBuf);
 #else
       unclipped_blit(&destSBuf->pixelData[y_dest*destSBuf->width+x_dest],
@@ -196,8 +196,8 @@ clipped_blit(gxj_screen_buffer* dst, int dstX, int dstY, gxj_screen_buffer* src,
   dstRaster = dst->pixelData +         (startY * dst->width)      + startX;
 
 #if ENABLE_RGBA8888_PIXEL_FORMAT
-  unclipped_blit(dstRaster, dst->width<<2,
-		 srcRaster, src->width<<2, height, width<<2, dst);
+  unclipped_blit((unsigned short *)dstRaster, dst->width<<2,
+		 (unsigned short *)srcRaster, src->width<<2, height, width<<2, dst);
 #else
   unclipped_blit(dstRaster, dst->width<<1,
 		 srcRaster, src->width<<1, height, width<<1, dst);
