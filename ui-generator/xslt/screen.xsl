@@ -137,7 +137,7 @@ information or have any questions.
     -->
     <xsl:function name="uig:Screen-class-with-CommandListener" as="xs:boolean">
         <xsl:param name="screen" as="element()"/>
-        <xsl:value-of select="count($screen/descendant::*/@id) != 0"/>
+        <xsl:value-of select="count($screen/descendant::*[not(self::progress)]/@id) != 0"/>
     </xsl:function>
 
 

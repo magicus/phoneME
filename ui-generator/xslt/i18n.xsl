@@ -83,7 +83,13 @@ information or have any questions.
         <xsl:text>    private static final String strings[] = new String[] {&#10;</xsl:text>
         <xsl:for-each select="uig:get-all-format-string-elements(/)">
             <xsl:text>        </xsl:text>
-            <xsl:value-of select="uig:format-string-get-self(.)"/>
+            <xsl:value-of select="
+                replace(
+                    replace(uig:format-string-get-self(.),
+                    '&#13;&#10;',
+                    '&#10;'),
+                '&#10;',
+                '&#34; + &#10;&#34;')"/> <!-- &#34; is a double quote (") character -->
             <xsl:text>,&#10;</xsl:text>
         </xsl:for-each>
         <xsl:text>    };&#10;&#10;</xsl:text>
