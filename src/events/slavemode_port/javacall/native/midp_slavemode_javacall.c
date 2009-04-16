@@ -318,9 +318,9 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
             pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
             pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
     
-            /* VOLUME_CHANGED event must be sent to all players.             */
+            /* SYSTEM_VOLUME_CHANGED event must be sent to all players.             */
             /* MM_ISOLATE = -1 causes broadcast by StoreMIDPEventInVmThread() */
-            if(JAVACALL_EVENT_MEDIA_VOLUME_CHANGED == 
+            if(JAVACALL_EVENT_MEDIA_SYSTEM_VOLUME_CHANGED == 
                     event->data.multimediaEvent.mediaType) {
                 pNewMidpEvent->MM_ISOLATE = -1;
             }
