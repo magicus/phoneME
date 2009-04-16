@@ -86,15 +86,28 @@ class MMEventListener implements EventListener {
             }
             break;
 
-        /* Extern volume event handler - Send to the all players in this isolate */
         case EVENT_MEDIA_VOLUME_CHANGED:
+            p = HighLevelPlayer.get(e.playerId);
+            if (p != null) {
+                if (nevt.intParam2 < 0) {
+                    nevt.intParam2 = 0;
+                }
+                if (nevt.intParam2 > 100) {
+                    nevt.intParam2 = 100;
+                }
+                p.sendEvent(PlayerListener.VOLUME_CHANGED, new Long(nevt.intParam2));
+            }
+            break;
+
+        // System volume event handler - Send to the all players in this isolate
+        case EVENT_MEDIA_SYSTEM_VOLUME_CHANGED:
             if (nevt.intParam2 < 0) {
                 nevt.intParam2 = 0;
             }
             if (nevt.intParam2 > 100) {
                 nevt.intParam2 = 100;
             }
-            HighLevelPlayer.sendExternalVolumeChanged(PlayerListener.VOLUME_CHANGED, nevt.intParam2);
+            HighLevelPlayer.sendSystemVolumeChanged(nevt.intParam2);
             break;
 
         case EVENT_MEDIA_RECORD_SIZE_LIMIT:

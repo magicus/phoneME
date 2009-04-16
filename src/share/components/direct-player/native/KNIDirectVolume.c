@@ -25,7 +25,7 @@
 
 #include "KNICommon.h"
 
-/*  protected native int nGetVolume ( int mediaType ) ; */
+/*  protected native int nGetVolume ( int nHandle ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectVolume_nGetVolume) {
     jint handle = KNI_GetParameterAsInt(1);
@@ -47,7 +47,7 @@ KNIDECL(com_sun_mmedia_DirectVolume_nGetVolume) {
     KNI_ReturnInt((int)volume);
 }
 
-/*  protected native int nSetVolume ( int mediaType , int level ) ; */
+/*  protected native int nSetVolume ( int nHandle , int level ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectVolume_nSetVolume) {
 
@@ -75,7 +75,7 @@ KNIDECL(com_sun_mmedia_DirectVolume_nSetVolume) {
     KNI_ReturnInt((int)level);
 }
 
-/*  protected native boolean nIsMuted ( int mediaType ) ; */
+/*  protected native boolean nIsMuted ( int nHandle ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectVolume_nIsMuted) {
 
@@ -99,7 +99,7 @@ KNIDECL(com_sun_mmedia_DirectVolume_nIsMuted) {
     KNI_ReturnBoolean(returnValue);
 }
 
-/*  protected native int nSetMute ( int mediaType , boolean mute ) ; */
+/*  protected native int nSetMute ( int nHandle , boolean mute ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectVolume_nSetMute) {
 
@@ -125,3 +125,20 @@ KNIDECL(com_sun_mmedia_DirectVolume_nSetMute) {
 
     KNI_ReturnBoolean(returnValue);
 }
+
+/*  protected native int nGetSystemVolume () ; */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_mmedia_DirectVolume_nGetSystemVolume) {
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_int32 volume;
+
+    MMP_DEBUG_STR("[kni_volume] +nGetSystemVolume\n");
+
+    ret = javacall_media_get_system_volume(&volume);
+    if (ret != JAVACALL_OK) {
+        volume = -1;
+    }
+
+    KNI_ReturnInt((int)volume);
+}
+
