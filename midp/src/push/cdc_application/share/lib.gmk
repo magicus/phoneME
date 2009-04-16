@@ -1,0 +1,125 @@
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+# Adds to global SUBSYSTEMS list
+#
+CDC_PUSH_LIB = cdc_application
+LIB_SET += $(CDC_PUSH_LIB)
+
+# Common settings
+#
+
+CDC_SHARE_PUSH_DIR = $(SUBSYSTEM_PUSH_DIR)/$(CDC_PUSH_LIB)/share
+CDC_SHARE_PUSH_CLASSES_DIR = $(CDC_SHARE_PUSH_DIR)/classes
+CDC_SHARE_PUSH_TESTS_DIR = $(CDC_SHARE_PUSH_DIR)/tests
+
+CDC_SHARE_PUSH_PACKAGE = com.sun.midp.push
+
+CDC_SHARE_PUSH_PACKAGE_DIR = $(CDC_SHARE_PUSH_CLASSES_DIR)/$(shell echo $(CDC_SHARE_PUSH_PACKAGE) | tr '.' '/')
+
+MIDP_BOOTCLASSPATH_PACKAGES_LIST += $(CDC_SHARE_PUSH_PACKAGE)
+
+# Classes and files
+#
+
+# No native files so far
+SUBSYSTEM_CDC_SHARE_PUSH_NATIVE_FILES =
+SUBSYSTEM_CDC_SHARE_PUSH_EXTRA_INCLUDES =
+
+# Javadoc settings
+#
+LIB_JAVA_PUSH_SOURCEPATH = $(CDC_SHARE_PUSH_CLASSES_DIR)
+
+SUBSYSTEM_CDC_SHARE_PUSH_PACKAGES = \
+    $(CDC_SHARE_PUSH_PACKAGE).controller \
+    $(CDC_SHARE_PUSH_PACKAGE).ota \
+    $(CDC_SHARE_PUSH_PACKAGE).persistence \
+    $(CDC_SHARE_PUSH_PACKAGE).reservation.impl
+
+MIDP_JAVADOC_ALL += \
+    -group "Shared CDC Push implementation" \
+    $(shell echo $(SUBSYSTEM_CDC_SHARE_PUSH_PACKAGES) | tr ' ' $(PATHSEP))
+
+SUBSYSTEM_CDC_SHARE_PUSH_JAVA_FILES = \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/controller/AlarmController.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/controller/ConnectionController.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/controller/ConnectionInfo.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/controller/InstallerInterfaceImpl.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/controller/LifecycleAdapter.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/controller/MIDPApp.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/controller/PushController.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/ota/InstallerInterface.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/persistence/Store.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/ConnectionName.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/MapProtocolRegistry.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/ProtocolClassResolver.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/ProtocolRegistry.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/ReservationDescriptorFactory.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/RDFactory.java \
+    $(CDC_SHARE_PUSH_PACKAGE_DIR)/reservation/impl/ClassLoadingProtocolRegistry.java
+
+ifeq ($(USE_JUNIT_TEST), true)
+    # TBD: JUnitUtils should go into common tools
+    SUBSYSTEM_CDC_SHARE_PUSH_JUNIT_JAVA_FILES = \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/test/JUnitUtils.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/controller/AlarmControllerTest.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/controller/AllTests.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/controller/ConnectionControllerTest.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/controller/ListingLifecycleAdapter.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/controller/MIDPAppTest.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/persistence/AbstractStoreUtils.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/persistence/AllTests.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/persistence/StoreTest.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/controller/ProxyLifecycleAdapter.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/controller/ThrowingLifecycleAdapter.java \
+        $(CDC_SHARE_PUSH_PACKAGE_DIR)/persistence/InMemoryStore.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/reservation/impl/AllTests.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/reservation/impl/Common.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/reservation/impl/MapProtocolRegistryTest.java \
+        $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/reservation/impl/RDFactoryTest.java
+
+
+    # TBD: temporal hack: this file should be only included into only plain MIDP on CDC stack:
+    # any other CDC-based stack should provide its own copy of this class
+    ifneq ($(USE_JUMP), true)
+        SUBSYSTEM_CDC_SHARE_PUSH_JUNIT_JAVA_FILES += \
+            $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/persistence/StoreUtils.java
+    endif
+endif
+
+ifeq ($(USE_I3_TEST), true)
+    SUBSYSTEM_CDC_SHARE_PUSH_I3TEST_JAVA_FILES =
+endif
