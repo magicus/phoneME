@@ -72,6 +72,8 @@ public:
     long                  video_width;
     long                  video_height;
     javacall_pixel*       video_frame;
+    int                   out_width;
+    int                   out_height;
 
     BYTE                  buf[ XFER_BUFFER_SIZE ];
 
@@ -91,22 +93,46 @@ public:
 
 void dshow_player::frame_ready( bits16 const* pFrame )
 {
-    if( NULL == video_frame ) video_frame = new javacall_pixel[ video_width * video_height ];
+    EnterCriticalSection( &cs );
+    if( NULL == video_frame ) video_frame = new javacall_pixel[ out_width * out_height ];
 
-    for( int y = 0; y < video_height; y++ )
+    if( out_width == video_width && out_height == video_height )
     {
-        memcpy( video_frame + y * video_width, 
-                pFrame + ( video_height - y - 1 ) * video_width,
-                sizeof( javacall_pixel ) * video_width );
+        for( int y = 0; y < video_height; y++ )
+        {
+            memcpy( video_frame + y * video_width, 
+                    pFrame + ( video_height - y - 1 ) * video_width,
+                    sizeof( javacall_pixel ) * video_width );
+        }
+    }
+    else
+    {
+        double kx = double(video_width) / double(out_width);
+        double ky = double(video_height) / double(out_height);
+
+        for( int y = 0; y < out_height; y++ )
+        {
+            for( int x = 0; x < out_width; x++ )
+            {
+                int srcx = int( 0.5 + kx * x );
+                int srcy = int( 0.5 + ky * y );
+                *( video_frame + ( out_height - y - 1 ) * out_width + x )
+                    = *( pFrame + srcy * video_width + srcx );
+            }
+        }
     }
 
     lcd_output_video_frame( video_frame );
+    LeaveCriticalSection( &cs );
 }
 
 void dshow_player::size_changed( int16 w, int16 h )
 {
     video_width  = w;
     video_height = h;
+
+    if( -1 == out_width ) out_width = video_width;
+    if( -1 == out_height ) out_height = video_height;
 }
 
 void dshow_player::playback_finished()
@@ -168,6 +194,8 @@ static javacall_result dshow_create(int appId,
     p->video_width      = 0;
     p->video_height     = 0;
     p->video_frame      = NULL;
+    p->out_width        = -1;
+    p->out_height       = -1;
 
     p->ppl              = NULL;
 
@@ -614,7 +642,21 @@ static javacall_result dshow_set_video_visible(javacall_handle handle, javacall_
 
 static javacall_result dshow_set_video_location(javacall_handle handle, long x, long y, long w, long h)
 {
+    dshow_player* p = (dshow_player*)handle;
+
+    EnterCriticalSection( &(p->cs) );
+    if( NULL != p->video_frame )
+    {
+        lcd_output_video_frame( NULL );
+        delete p->video_frame;
+        p->video_frame = NULL;
+    }
+    p->out_width  = w;
+    p->out_height = h;
+    LeaveCriticalSection( &(p->cs) );
+
     lcd_set_video_rect( x, y, w, h );
+
     return JAVACALL_OK;
 }
 
