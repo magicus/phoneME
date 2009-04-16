@@ -22,16 +22,16 @@ Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 Clara, CA 95054 or visit www.sun.com if you need additional
 information or have any questions.
 -->
-<project name="ui screens" default="gen" basedir=".">
+<project name="uig-shared" default="gen" basedir=".">
     <description>Build UI screens from XML
     </description>
 
-    <property name="toolkit"        value="lcdui"/>
-    <property name="toolkit.src"    value="../src/classes/${toolkit}"/>
-    <property name="screens"        location="../src/screens.xml"/>
-    <property name="package"        value="com.sun.ams.ui"/>
+    <property name="uig-shared.root"    location="${ant.file.uig-shared}/../.."/>
 
-    <property name="classpath"      value=""/>
+    <property name="toolkit"        value="lcdui"/>
+    <property name="toolkit.src"    value="${uig-shared.root}/src/classes/${toolkit}"/>
+    <property name="screens"        location=""/>
+    <property name="package"        value="com.sun.ams.ui"/>
 
     <property name="debug.port"     value=""/> <!-- 8000 -->
 
@@ -40,7 +40,9 @@ information or have any questions.
     <property name="wtk.midp.version"   value="2.0"/>
     <property name="wtk.device"         value="DefaultColorPhone"/>
 
-    <property name="out.root"               location="../out"/>
+    <property name="utest.classpath"    value="${wtk.home}/lib/cldcapi11.jar${path.separator}${wtk.home}/lib/midpapi20.jar"/>
+
+    <property name="out.root"               location="${uig-shared.root}/out"/>
     <property name="out.classes"            location="${out.root}/classes"/>
     <property name="out.utest.classes"      location="${out.root}/utest_classes"/>
     <property name="out.src"                location="${out.root}/generated/classes"/>
@@ -49,9 +51,9 @@ information or have any questions.
     <property name="makefile"                       location="${out.root}/generated/ui_makefile"/>
     <property name="makefile.files_list.varname"    value="GENERATED_FILES"/>
 
-    <property name="xslt.merge"             location="../xslt/merge.xsl"/>
-    <property name="xslt.main"              location="../xslt/${toolkit}/main.xsl"/>
-    <property name="xsd"                    location="../xslt/screens.xsd"/>
+    <property name="xslt.merge"             location="${uig-shared.root}/xslt/merge.xsl"/>
+    <property name="xslt.main"              location="${uig-shared.root}/xslt/${toolkit}/main.xsl"/>
+    <property name="xsd"                    location="${uig-shared.root}/xslt/screens.xsd"/>
 
     <target name="gen">
         <description>Generate UI screen sources from XML with/without unit tests
@@ -95,9 +97,25 @@ information or have any questions.
                         value="${xsd.file}"/>
         </xmlvalidate>
 
+
+        <!-- Generate temporary xslt stylesheet resolving {UIG-SHARED-XSLT-DIR} token if any -->
+        <filelist id="uig-shared-xslt-dir" dir="${out.src}">
+            <file name="${uig-shared.root}/xslt"/>
+        </filelist>
+        <pathconvert property="uig-shared-xslt-dir" refid="uig-shared-xslt-dir" dirsep="/"/>
+
+        <copy file="${xslt.main}" tofile="${xslt.main}.filtered" overwrite="yes">
+            <filterchain>
+                <replacetokens>
+                    <token key="UIG-SHARED-XSLT-DIR" value="${uig-shared-xslt-dir}"/>
+                </replacetokens>
+            </filterchain>
+        </copy>
+
+
         <!-- Run source generator -->
         <mkdir dir="${output-java-dir}"/>
-        <xslt in="${out.root}/merged.xml" out="${generated.files.list}" style="${xslt.main}">
+        <xslt in="${out.root}/merged.xml" out="${generated.files.list}" style="${xslt.main}.filtered">
             <param name="package-name" expression="${package}"/>
             <param name="output-java-dir" expression="file:///${output-java-dir}"/>
             <param name="output-xml-dir" expression="file:///${output-xml-dir}"/>
@@ -139,7 +157,7 @@ information or have any questions.
 
         <!-- Build unit tests -->
         <mkdir dir="${out.utest.classes}"/>
-        <javac  srcdir="../test:../src/classes/shared"
+        <javac  srcdir="${uig-shared.root}/test${path.separator}${uig-shared.root}/src/classes/shared"
                 destdir="${out.utest.classes}"
                 debug="true">
             <include name="**/AllTests.java"/>
@@ -170,47 +188,12 @@ information or have any questions.
         <description>Generates and compiles UI screen sources with unit tests
         </description>
 
-        <loadfile property="generated.java.sources" srcfile="${generated.files.list}">
-            <filterchain>
-                <tokenfilter>
-                    <!-- Extract file basename -->
-                    <replaceregex pattern="^.*/([^/]{1,})$" replace="\1" flags="s"/>
-                </tokenfilter>
-                <linecontains>
-                  <contains value=".java"/>
-                </linecontains>
-                <prefixlines prefix="${package}."/>
-                <replacestring from="." to="/"/>
-                <replacestring from="/java" to=".java"/>
-                <prefixlines prefix=","/>
-                <striplinebreaks/>
-            </filterchain>
-        </loadfile>
-
-        <pathconvert pathsep="," property="java.sources">
-            <path id="javac.files.path">
-                <fileset dir="../test">
-                    <include name="**/BaseTest.java"/>
-                    <include name="**/TestMIDlet.java"/>
-                </fileset>
-                <fileset dir="../src/classes/shared"/>
-                <fileset dir="${toolkit.src}"/>
-            </path>
-            <chainedmapper>
-                <flattenmapper/>
-                <filtermapper>
-                    <prefixlines prefix="${package}."/>
-                    <replacestring from="." to="/"/>
-                    <replacestring from="/java" to=".java"/>
-                </filtermapper>
-            </chainedmapper>
-        </pathconvert>
-
         <mkdir dir="${out.classes}"/>
-        <javac  srcdir="../test:../src/classes/shared:${toolkit.src}:${out.src}"
+        <javac  srcdir="${uig-shared.root}/src/classes/shared${path.separator}${toolkit.src}${path.separator}${uig-shared.root}/test${path.separator}${out.src}"
                 destdir="${out.classes}"
-                classpath="${classpath}"
-                includes="${java.sources},${generated.java.sources}"
+                classpath="${utest.classpath}"
+                includes="**/*.java"
+                excludes="**/AllTests.java,**/TestBaseScreenStack.java"
                 debug="true"/>
     </target>
 
@@ -255,7 +238,7 @@ information or have any questions.
         <exec   executable="${wtk.home}/bin/preverify"
                 dir="${out.classes}">
             <arg line="-classpath"/>
-            <arg path="${classpath}"/>
+            <arg path="${utest.classpath}"/>
             <arg line="-d"/>
             <arg path="${out.root}/preverified"/>
             <arg line="${preverify.classes}"/>
@@ -288,12 +271,12 @@ information or have any questions.
         </description>
     </target>
 
-    <target name="build-test-midlet-before-preverify" depends="javac">
+    <target name="build-test-midlet-before-preverify">
         <description>Task executed before preverifier is called to preverify classes for test midlet
         </description>
     </target>
 
-    <target name="build-test-midlet-after-preverify" depends="javac">
+    <target name="build-test-midlet-after-preverify">
         <description>Task executed after preverifier preverified classes for test midlet
         </description>
     </target>
