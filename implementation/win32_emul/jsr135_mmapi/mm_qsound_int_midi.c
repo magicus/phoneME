@@ -26,6 +26,7 @@
 #include "mm_qsound_audio.h"
 
 extern globalMan g_QSoundGM[GLOBMAN_INDEX_MAX];
+extern int isolateIDtoGM(int isolateID);
 
 /**
  * 
