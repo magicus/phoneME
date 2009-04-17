@@ -23,7 +23,10 @@ Clara, CA 95054 or visit www.sun.com if you need additional
 information or have any questions.
 -->
 
-<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:stylesheet version="2.0"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:uig="foo://sun.me.ui-generator.net/">
 
     <!--
         Generate i18n stuff
@@ -38,11 +41,7 @@ information or have any questions.
         Generate StringIds class
     -->
     <xsl:template name="I18N-StringIds">
-        <xsl:variable name="href">
-            <xsl:call-template name="classname2filepath">
-                <xsl:with-param name="classname" select="'StringIds'"/>
-            </xsl:call-template>
-        </xsl:variable>
+        <xsl:variable name="href" select="uig:classname-to-filepath('StringIds')"/>
         <xsl:value-of select="concat($href,'&#10;')"/>
         <xsl:result-document href="{$href}">
             <xsl:call-template name="I18N-StringIds-impl"/>
@@ -54,9 +53,9 @@ information or have any questions.
         <xsl:value-of select="$package-name"/>
         <xsl:text>;&#10;&#10;&#10;</xsl:text>
         <xsl:text>interface StringIds {&#10;</xsl:text>
-        <xsl:for-each select="//text">
+        <xsl:for-each select="uig:get-all-format-string-elements(/)">
             <xsl:text>    public final static int </xsl:text>
-            <xsl:apply-templates select="." mode="I18N-key"/>
+            <xsl:value-of select="uig:I18N-key(.)"/>
             <xsl:text> = </xsl:text>
             <xsl:value-of select="position() - 1"/>
             <xsl:text>;&#10;</xsl:text>
@@ -69,11 +68,7 @@ information or have any questions.
         Generate StringTable class
     -->
     <xsl:template name="I18N-StringTable">
-        <xsl:variable name="href">
-            <xsl:call-template name="classname2filepath">
-                <xsl:with-param name="classname" select="'StringTable'"/>
-            </xsl:call-template>
-        </xsl:variable>
+        <xsl:variable name="href" select="uig:classname-to-filepath('StringTable')"/>
         <xsl:value-of select="concat($href,'&#10;')"/>
         <xsl:result-document href="{$href}">
             <xsl:call-template name="I18N-StringTable-impl"/>
@@ -86,7 +81,17 @@ information or have any questions.
         <xsl:text>;&#10;&#10;&#10;</xsl:text>
         <xsl:text>final class StringTable {&#10;</xsl:text>
         <xsl:text>    private static final String strings[] = new String[] {&#10;</xsl:text>
-        <xsl:apply-templates select="//screen" mode="I18N-StringTable-element"/>
+        <xsl:for-each select="uig:get-all-format-string-elements(/)">
+            <xsl:text>        </xsl:text>
+            <xsl:value-of select="
+                replace(
+                    replace(uig:format-string-get-self(.),
+                    '&#13;&#10;',
+                    '&#10;'),
+                '&#10;',
+                '&#34; + &#10;&#34;')"/> <!-- &#34; is a double quote (") character -->
+            <xsl:text>,&#10;</xsl:text>
+        </xsl:for-each>
         <xsl:text>    };&#10;&#10;</xsl:text>
         <xsl:text>    static String getString(int idx) {&#10;</xsl:text>
         <xsl:text>        return strings[idx];&#10;</xsl:text>
@@ -94,38 +99,22 @@ information or have any questions.
         <xsl:text>}&#10;</xsl:text>
     </xsl:template>
 
-    <xsl:template match="screen" mode="I18N-StringTable-element">
-        <xsl:apply-templates select="descendant::text" mode="I18N-StringTable-element"/>
-    </xsl:template>
-
-    <xsl:template match="text" mode="I18N-StringTable-element">
-        <xsl:text>        </xsl:text>
-        <xsl:apply-templates select="." mode="I18N-value"/>
-        <xsl:text>,&#10;</xsl:text>
-    </xsl:template>
-
 
     <!--
         Output i18n key
     -->
-    <xsl:template match="text" mode="I18N-key">
+    <xsl:function name="uig:I18N-key" as="xs:string">
+        <xsl:param name="e" as="element()"/>
+        <xsl:apply-templates select="$e" mode="I18N-key-impl"/>
+    </xsl:function>
+
+    <xsl:template match="*" mode="I18N-key-impl">
         <xsl:variable name="screen-id" select="ancestor::screen/@name"/>
-        <xsl:call-template name="toupper">
-            <xsl:with-param name="str" select="$screen-id"/>
-        </xsl:call-template>
-        <xsl:text>_ID</xsl:text>
-        <xsl:value-of select="count(preceding::text[ancestor::screen/@name=$screen-id]) + 1"/>
-    </xsl:template>
-
-
-    <!--
-        Output default i18n value
-    -->
-    <xsl:template match="text" mode="I18N-value">
-        <xsl:call-template name="expand">
-            <xsl:with-param name="str" select="."/>
-            <xsl:with-param name="action" select="'get-printf-format'"/>
-        </xsl:call-template>
+        <xsl:value-of select="concat(
+            upper-case($screen-id),
+            '_ID',
+            count(preceding::*[ancestor::screen/@name=$screen-id and uig:is-format-string(.)]) + 1
+            )"/>
     </xsl:template>
 
 </xsl:stylesheet>

@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <!--
-Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 
 This program is free software; you can redistribute it and/or
@@ -22,23 +22,27 @@ Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 Clara, CA 95054 or visit www.sun.com if you need additional
 information or have any questions.
 -->
-<project name="ui screens" default="gen" basedir=".">
+<project name="uig-shared" default="gen" basedir=".">
     <description>Build UI screens from XML
     </description>
 
-    <property name="toolkit"        value="lcdui"/>
-    <property name="screens"        location="../src/screens.xml"/>
-    <property name="package"        value="com.sun.ams.ui"/>
+    <property name="uig-shared.root"    location="${ant.file.uig-shared}/../.."/>
 
-    <property name="classpath"      value=""/>
+    <property name="toolkit"        value="lcdui"/>
+    <property name="toolkit.src"    value="${uig-shared.root}/src/classes/${toolkit}"/>
+    <property name="screens"        location=""/>
+    <property name="package"        value="com.sun.ams.ui"/>
 
     <property name="debug.port"     value=""/> <!-- 8000 -->
 
     <!-- used by Antenna -->
     <property name="wtk.home"           value="c:/WTK2.5.2"/>
     <property name="wtk.midp.version"   value="2.0"/>
+    <property name="wtk.device"         value="DefaultColorPhone"/>
 
-    <property name="out.root"               location="../out"/>
+    <property name="utest.classpath"    value="${wtk.home}/lib/cldcapi11.jar${path.separator}${wtk.home}/lib/midpapi20.jar"/>
+
+    <property name="out.root"               location="${uig-shared.root}/out"/>
     <property name="out.classes"            location="${out.root}/classes"/>
     <property name="out.utest.classes"      location="${out.root}/utest_classes"/>
     <property name="out.src"                location="${out.root}/generated/classes"/>
@@ -47,10 +51,9 @@ information or have any questions.
     <property name="makefile"                       location="${out.root}/generated/ui_makefile"/>
     <property name="makefile.files_list.varname"    value="GENERATED_FILES"/>
 
-    <property name="xslt.merge"             location="../xslt/merge.xsl"/>
-    <property name="xslt.prep"              location="../xslt/prep.xsl"/>
-    <property name="xslt.main"              location="../xslt/${toolkit}/main.xsl"/>
-    <property name="xsd"                    location="../xslt/screens.xsd"/>
+    <property name="xslt.merge"             location="${uig-shared.root}/xslt/merge.xsl"/>
+    <property name="xslt.main"              location="${uig-shared.root}/xslt/${toolkit}/main.xsl"/>
+    <property name="xsd"                    location="${uig-shared.root}/xslt/screens.xsd"/>
 
     <target name="gen">
         <description>Generate UI screen sources from XML with/without unit tests
@@ -94,17 +97,32 @@ information or have any questions.
                         value="${xsd.file}"/>
         </xmlvalidate>
 
-        <!-- Do some preliminary transformations -->
-        <xslt in="${out.root}/merged.xml" out="${out.root}/prep.xml" style="${xslt.prep}" force="yes"/>
+
+        <!-- Generate temporary xslt stylesheet resolving {UIG-SHARED-XSLT-DIR} token if any -->
+        <filelist id="uig-shared-xslt-dir" dir="${out.src}">
+            <file name="${uig-shared.root}/xslt"/>
+        </filelist>
+        <pathconvert property="uig-shared-xslt-dir" refid="uig-shared-xslt-dir" dirsep="/"/>
+
+        <copy file="${xslt.main}" tofile="${xslt.main}.filtered" overwrite="yes">
+            <filterchain>
+                <replacetokens>
+                    <token key="UIG-SHARED-XSLT-DIR" value="${uig-shared-xslt-dir}"/>
+                </replacetokens>
+            </filterchain>
+        </copy>
+
 
         <!-- Run source generator -->
         <mkdir dir="${output-java-dir}"/>
-        <xslt in="${out.root}/prep.xml" out="${generated.files.list}" style="${xslt.main}">
+        <xslt in="${out.root}/merged.xml" out="${generated.files.list}" style="${xslt.main}.filtered">
             <param name="package-name" expression="${package}"/>
             <param name="output-java-dir" expression="file:///${output-java-dir}"/>
             <param name="output-xml-dir" expression="file:///${output-xml-dir}"/>
             <param name="with-unit-tests" expression="${with-unit-tests}"/>
         </xslt>
+
+        <delete file="${xslt.main}.filtered"/>
     </target>
 
     <target name="gen-with-unit-tests">
@@ -141,7 +159,7 @@ information or have any questions.
 
         <!-- Build unit tests -->
         <mkdir dir="${out.utest.classes}"/>
-        <javac  srcdir="../test:../src/classes/shared"
+        <javac  srcdir="${uig-shared.root}/test${path.separator}${uig-shared.root}/src/classes/shared"
                 destdir="${out.utest.classes}"
                 debug="true">
             <include name="**/AllTests.java"/>
@@ -172,47 +190,12 @@ information or have any questions.
         <description>Generates and compiles UI screen sources with unit tests
         </description>
 
-        <loadfile property="generated.java.sources" srcfile="${generated.files.list}">
-            <filterchain>
-                <tokenfilter>
-                    <!-- Extract file basename -->
-                    <replaceregex pattern="^.*/([^/]{1,})$" replace="\1" flags="s"/>
-                </tokenfilter>
-                <linecontains>
-                  <contains value=".java"/>
-                </linecontains>
-                <prefixlines prefix="${package}."/>
-                <replacestring from="." to="/"/>
-                <replacestring from="/java" to=".java"/>
-                <prefixlines prefix=","/>
-                <striplinebreaks/>
-            </filterchain>
-        </loadfile>
-
-        <pathconvert pathsep="," property="java.sources">
-            <path id="javac.files.path">
-                <fileset dir="../test">
-                    <include name="**/BaseTest.java"/>
-                    <include name="**/TestMIDlet.java"/>
-                </fileset>
-                <fileset dir="../src/classes/shared"/>
-                <fileset dir="../src/classes/${toolkit}"/>
-            </path>
-            <chainedmapper>
-                <flattenmapper/>
-                <filtermapper>
-                    <prefixlines prefix="${package}."/>
-                    <replacestring from="." to="/"/>
-                    <replacestring from="/java" to=".java"/>
-                </filtermapper>
-            </chainedmapper>
-        </pathconvert>
-
         <mkdir dir="${out.classes}"/>
-        <javac  srcdir="../test:../src/classes/shared:../src/classes/${toolkit}:${out.src}"
+        <javac  srcdir="${uig-shared.root}/src/classes/shared${path.separator}${toolkit.src}${path.separator}${uig-shared.root}/test${path.separator}${out.src}"
                 destdir="${out.classes}"
-                classpath="${classpath}"
-                includes="${java.sources},${generated.java.sources}"
+                classpath="${utest.classpath}"
+                includes="**/*.java"
+                excludes="**/AllTests.java,**/TestBaseScreenStack.java"
                 debug="true"/>
     </target>
 
@@ -236,19 +219,39 @@ information or have any questions.
             <midlet name="TestMIDlet" class="${package}.TestMIDlet" />
         </wtkjad>
 
-        <filelist id="package-path" dir="${out.classes}">
-            <file name="${package}"/>
-        </filelist>
-        <pathconvert property="package-path" refid="package-path" dirsep="/">
-            <unpackagemapper from="${out.classes}${file.separator}*" to="*"/>
+        <!-- Run preverefier manually as wtkpackage is stuck with
+            ===
+                [wtkpackage] JAR file creation failed with error -1
+                [wtkpackage] The preverified classes if any are in tmp41.
+            ===
+            error.
+        -->
+
+        <antcall target="build-test-midlet-before-preverify"/>
+
+        <!-- classes to preverify -->
+        <pathconvert property="preverify.classes" pathsep=" ">
+            <packagemapper from="${out.classes}${file.separator}*.class" to="*"/>
+            <path>
+                <fileset dir="${out.classes}" includes="**/*.class"/>
+            </path>
         </pathconvert>
+
+        <exec   executable="${wtk.home}/bin/preverify"
+                dir="${out.classes}">
+            <arg line="-classpath"/>
+            <arg path="${utest.classpath}"/>
+            <arg line="-d"/>
+            <arg path="${out.root}/preverified"/>
+            <arg line="${preverify.classes}"/>
+        </exec>
+
+        <antcall target="build-test-midlet-after-preverify"/>
 
         <wtkpackage jadfile="${out.root}/test.jad"
                     jarfile="${out.root}/test.jar"
-                    basedir="${out.classes}"
-                    preverify="true">
-            <include name="${package-path}/**/*.class"/>
-        </wtkpackage>
+                    basedir="${out.root}/preverified"/>
+        <delete dir="${out.root}/preverified"/>
     </target>
 
 
@@ -257,14 +260,26 @@ information or have any questions.
     </condition>
 
     <target name="run-test-midlet-debug" depends="build-test-midlet" if="debug-run">
-        <wtkrun jadfile="${out.root}/test.jad" debug="${debug.port}"/>
+        <wtkrun jadfile="${out.root}/test.jad" debug="${debug.port}"
+                device="${wtk.device}"/>
     </target>
     <target name="run-test-midlet-nodebug" depends="build-test-midlet" unless="debug-run">
-        <wtkrun jadfile="${out.root}/test.jad"/>
+        <wtkrun jadfile="${out.root}/test.jad"
+                device="${wtk.device}"/>
     </target>
 
     <target name="run-test-midlet" depends="run-test-midlet-debug,run-test-midlet-nodebug">
         <description>Runs test midlet with emulator
+        </description>
+    </target>
+
+    <target name="build-test-midlet-before-preverify">
+        <description>Task executed before preverifier is called to preverify classes for test midlet
+        </description>
+    </target>
+
+    <target name="build-test-midlet-after-preverify">
+        <description>Task executed after preverifier preverified classes for test midlet
         </description>
     </target>
 </project>
