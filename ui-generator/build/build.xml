@@ -68,9 +68,7 @@ information or have any questions.
             <unpackagemapper from="${out.src}*" to="${out.src}*"/>
         </pathconvert>
 
-        <filelist id="output-xml-dir" dir="${out.src}">
-            <file name="${out.root}"/>
-        </filelist>
+        <path id="output-xml-dir" location="${out.root}"/>
         <pathconvert property="output-xml-dir" refid="output-xml-dir" dirsep="/"/>
 
         <!-- Produce a single xml from multiple files handling 'include' elements -->
@@ -99,9 +97,7 @@ information or have any questions.
 
 
         <!-- Generate temporary xslt stylesheet resolving {UIG-SHARED-XSLT-DIR} token if any -->
-        <filelist id="uig-shared-xslt-dir" dir="${out.src}">
-            <file name="${uig-shared.root}/xslt"/>
-        </filelist>
+        <path id="uig-shared-xslt-dir" location="${uig-shared.root}/xslt"/>
         <pathconvert property="uig-shared-xslt-dir" refid="uig-shared-xslt-dir" dirsep="/"/>
 
         <copy file="${xslt.main}" tofile="${xslt.main}.filtered" overwrite="yes">
