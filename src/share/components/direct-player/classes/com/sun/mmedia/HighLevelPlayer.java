@@ -748,7 +748,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         lowLevelPlayer.doPrefetch();
 
-        VolumeControl vc = ( VolumeControl )lowLevelPlayer.doGetNewControl(
+        VolumeControl vc = ( VolumeControl )getControl(
                 pkgName + vocName);
         if (vc != null && (vc.getLevel() == -1)) {
                vc.setLevel(100);
