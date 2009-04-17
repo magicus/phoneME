@@ -319,13 +319,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         state = Player.REALIZED;
     }
     
-    private boolean isRadioPlayer()
-    {
-        return ( null != getOwner().source.getLocator() &&
-            getOwner().source.getLocator().startsWith(
-                DefaultConfiguration.RADIO_CAPTURE_LOCATOR ) );
-    }
-    
     private void prefetchData() throws MediaException
     {
         int hNative = getOwner().getNativeHandle();
@@ -348,7 +341,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     
     private void acquireDevice() throws MediaException
     {
-        if( isRadioPlayer() )
+        if( getOwner().isRadioPlayer() )
         {
             if( !nAcquireRadioAccess() )
             {
@@ -511,7 +504,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
 
     private void releaseRadioAccess()
     {
-        if( isRadioPlayer() )
+        if( getOwner().isRadioPlayer() )
         {
             nReleaseRadioAccess();
             hasTakenRadioAccess = false;
@@ -717,7 +710,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             }
         }
 
-        if ( isRadioPlayer() )
+        if ( getOwner().isRadioPlayer() )
         {
             return Jsr234Proxy.getInstance().getNewControl( getOwner(), type );
         }

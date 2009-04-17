@@ -28,7 +28,7 @@ import javax.microedition.media.Control;
 
 public class Jsr234Proxy {
     private static Jsr234Proxy _instance;
-    private static String[] _emptyNamesList = { };
+    private static final String[] _emptyNamesList = { };
     
     protected Jsr234Proxy() {}
     
@@ -46,11 +46,23 @@ public class Jsr234Proxy {
         
         return _instance;
     }
-    
-    public String [] getJsr234PlayerControlNames() {
+
+    public boolean isJsr234Available() {
+        return false;
+    }
+
+    public String [] getCamControlNames() {
         return _emptyNamesList;
     }
     
+    public String [] getTunerControlNames() {
+        return _emptyNamesList;
+    }
+
+    public String getPanControlName() {
+        return null;
+    }
+
     public Control getNewControl( HighLevelPlayer p, String controlName )
     {
         return null;
