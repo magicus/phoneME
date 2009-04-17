@@ -378,6 +378,24 @@ javacall_textfield_initiate_voicecall(const char* phoneNumber);
 void /* OPTIONAL */ 
 javanotify_textfield_phonenumber_selection(char* /* OUT */ phoneNumber);
 
+/**
+ * Displays or hides the native keyboard.
+ * occurences.
+ * The platfrom indicates or hides the virtual native keyboard
+ * when this feature is supported.
+ * @param isDisplay <tt>JAVACALL_TRUE</tt> for displaying the virtual keyboard
+ *                  <tt>JAVACALL_FALSE</tt> for hiding the virtual keyboard
+ */
+void /* OPTIONAL */
+javacall_native_virtual_keyboard(javacall_bool isDisplay);
+
+/**
+* Handle the native virtual keyboard event.
+*/
+boolean virtKeyboard_HandleEvent(IApplet * pi, AEEEvent eCode,uint16 wParam, uint32 dwParam);
+
+extern int isKeybOn;
+
 /** @} */
 
 #ifdef __cplusplus
