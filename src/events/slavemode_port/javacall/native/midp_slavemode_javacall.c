@@ -44,6 +44,7 @@
 
 #include <midpServices.h>
 #include <midpEvents.h>
+#include <midpCompoundEvents.h>
 #include <midpAMS.h>  /* for midpFinalize() */
 
 #include <javacall_socket.h>
@@ -317,9 +318,9 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
             pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
             pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
     
-            /* VOLUME_CHANGED event must be sent to all players.             */
+            /* SYSTEM_VOLUME_CHANGED event must be sent to all players.             */
             /* MM_ISOLATE = -1 causes broadcast by StoreMIDPEventInVmThread() */
-            if(JAVACALL_EVENT_MEDIA_VOLUME_CHANGED == 
+            if(JAVACALL_EVENT_MEDIA_SYSTEM_VOLUME_CHANGED == 
                     event->data.multimediaEvent.mediaType) {
                 pNewMidpEvent->MM_ISOLATE = -1;
             }
@@ -475,8 +476,9 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
 		       int blocked_threads_count,
 		       jlong timeout) {
     int ret = -1;
-     static MidpReentryData newSignal;
+    static MidpReentryData newSignal;
     static MidpEvent newMidpEvent;
+    static MidpEvent newCompMidpEvent;
 
     newSignal.waitingFor = 0;
     newSignal.pResult = NULL;
@@ -506,6 +508,16 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
                 StoreMIDPEventInVmThread(newMidpEvent, -1);
             } else {
                 midpStoreEventAndSignalForeground(newMidpEvent);
+                /*
+                 * IMPL_NOTE: Currently compound events are implemented only for
+                 * UI_SIGNALs and only UI_SIGNALs are needed to identify UI
+                 * compound event, so trying to recognize compound event only
+                 * in this particular place.
+                 */
+                MIDP_EVENT_INITIALIZE(newCompMidpEvent);
+                if (midpCheckCompoundEvent(&newMidpEvent, &newCompMidpEvent)) {
+                    midpStoreEventAndSignalForeground(newCompMidpEvent);
+                }
             }
             break;
 

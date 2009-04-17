@@ -105,6 +105,14 @@ public interface ChamDisplayTunnel {
     public void callScrollContent(int scrollType, int thumbPosition);
 
     /**
+     * Checks whether it is allowed to start content dragging from
+     * this point
+     * @param x the x coordinate of the point to check
+     * @param y the y coordinate of the point to check
+     */
+    public boolean callIsDraggable(int x, int y);
+
+    /**
      * This method is used by Chameleon to invoke
      * Displayable.uCallDragContent() method.
      *

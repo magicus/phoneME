@@ -463,13 +463,17 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      * @param y the x coordinate of the pointer up
      */
     void uCallPointerReleased(int x, int y) {
-        if (!itemWasPressed)
+        if (!itemWasPressed || pointerDragged) {
+            itemSelectedWhenPressed = false;
+            itemWasPressed = false;
+            pointerDragged = false;
             return;
+        }
         
         if (popupLayer.isPopupOpen()) {
             // do not dismiss the popup until a new selection is made.
             int i = getIndexByPointer(x, y);
-            if ( (i >= 0 && hilightedIndex == i && itemSelectedWhenPressed && (!pointerDragged)) ||
+            if ( (i >= 0 && hilightedIndex == i && itemSelectedWhenPressed) ||
                  (!itemSelectedWhenPressed)) {
                 uCallKeyPressed(itemSelectedWhenPressed ?
                                 // close the popup with highlighted item selected
@@ -519,9 +523,6 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
     /** pressed on a valid item in popup layer **/
     private boolean itemSelectedWhenPressed = false;
-
-    /** pointer dragged over popup layer **/
-    private boolean pointerDragged = false;
 
     /** The PopupLayer that represents open state of this ChoiceGroup POPUP. */
     CGPopupLayer popupLayer;
