@@ -133,6 +133,23 @@ information or have any questions.
 
 
     <!--
+        Returns screen title.
+    -->
+    <xsl:function name="uig:Screen-title" as="xs:string">
+        <xsl:param name="screen" as="element()"/>
+        <xsl:choose>
+            <xsl:when test="$screen/title">
+                <xsl:value-of select="uig:Screen-printf($screen/title)"/>
+            </xsl:when>
+            <xsl:when test="$screen/options[@style='fullscreen']">
+                <xsl:value-of select="uig:Screen-printf($screen/options/label)"/>
+            </xsl:when>
+            <xsl:otherwise>null</xsl:otherwise>
+        </xsl:choose>
+    </xsl:function>
+
+
+    <!--
         Returns 'true' if screen class needs CommandListener.
     -->
     <xsl:function name="uig:Screen-class-with-CommandListener" as="xs:boolean">
@@ -324,7 +341,7 @@ information or have any questions.
     </xsl:template>
 
     <xsl:template match="screen" mode="Screen-define-initializer-body">
-        <xsl:apply-templates select="*" mode="Screen-add-item"/>
+        <xsl:apply-templates select="*[not(self::title)]" mode="Screen-add-item"/>
     </xsl:template>
 
 

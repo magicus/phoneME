@@ -56,11 +56,15 @@ information or have any questions.
     </xsl:template>
 
     <xsl:template match="screen" mode="LCDUI-create-displayable">
-        <xsl:text>Form d = createForm()</xsl:text>
+        <xsl:text>Form d = createForm(</xsl:text>
+        <xsl:value-of select="uig:Screen-title(.)"/>
+        <xsl:text>)</xsl:text>
     </xsl:template>
 
     <xsl:template match="screen[options/@style='fullscreen']" mode="LCDUI-create-displayable">
-        <xsl:text>List d = createList()</xsl:text>
+        <xsl:text>List d = createList(</xsl:text>
+        <xsl:value-of select="uig:Screen-title(.)"/>
+        <xsl:text>)</xsl:text>
     </xsl:template>
 
 
@@ -107,7 +111,7 @@ information or have any questions.
     <xsl:template match="screen/progress" mode="Screen-item-variable-type-impl">
         <xsl:text>Gauge</xsl:text>
     </xsl:template>
-    <xsl:template match="screen/options" mode="Screen-item-variable-type-impl">
+    <xsl:template match="screen/options[not(@style='fullscreen')]" mode="Screen-item-variable-type-impl">
         <xsl:text>ChoiceGroup</xsl:text>
     </xsl:template>
     <xsl:template match="screen/options/option|screen/options/dynamic-option" mode="Screen-item-variable-type-impl">
@@ -147,7 +151,7 @@ information or have any questions.
         <xsl:text>d</xsl:text>
     </xsl:template>
 
-    <xsl:template match="screen/options" mode="Screen-create-item">
+    <xsl:template match="screen/options[not(@style='fullscreen')]" mode="Screen-create-item">
         <xsl:value-of select="concat(
             'new ',
             uig:Screen-item-variable-type(.),

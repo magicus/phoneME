@@ -124,7 +124,7 @@ information or have any questions.
     -->
     <xsl:function name="uig:get-all-format-string-elements" as="element()*">
         <xsl:param name="ctx" as="document-node()"/>
-        <xsl:sequence select="$ctx//(option|label|text|command)"/>
+        <xsl:sequence select="$ctx//(option|label|text|command|title)"/>
     </xsl:function>
 
     <!--
@@ -133,7 +133,7 @@ information or have any questions.
     -->
     <xsl:function name="uig:get-format-string-elements" as="element()*">
         <xsl:param name="ctx" as="element()"/>
-        <xsl:sequence select="$ctx//(option|label|text|command)"/>
+        <xsl:sequence select="$ctx//(option|label|text|command|title)"/>
     </xsl:function>
 
     <!--

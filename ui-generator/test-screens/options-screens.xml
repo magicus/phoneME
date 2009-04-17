@@ -95,7 +95,7 @@ Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 
     <screen name="FullscreenOptionsScreen">
         <options style="fullscreen">
-            <label>Options N1</label>
+            <label>Options N1\nSecond line!</label>
             <option id="ID1">One</option>
             <option id="ID2">%two%</option>
             <option id="ID3">Hey,\nthis is N3 option after all!</option>
