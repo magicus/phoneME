@@ -32,19 +32,10 @@
 #include <commonKNIMacros.h>
 #include <nim.h>
 
-#ifdef WINCE
-#include <sipapi.h>
-#endif
-
 #define numElems(x) sizeof(x)/sizeof(x[0])
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifdef WINCE
-extern jboolean bVirtualModeEnabled;
-extern int midpPaintAllowed;
 #endif
 
 /* Macro to retrieve C structure representation of an Object */
@@ -403,23 +394,6 @@ KNIDECL(com_sun_midp_chameleon_input_InputModeFactory_getInputModeIds) {
     KNI_EndHandlesAndReturnObject(idListObj);
 }
 
-#ifdef WINCE
-KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_showNativeKeyboard) {
-    bVirtualModeEnabled = KNI_TRUE;
-    midpPaintAllowed = 0;
-    SipShowIM(SIPF_ON);
-    KNI_ReturnVoid();
-}
-
-KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_hideNativeKeyboard) {
-    bVirtualModeEnabled = KNI_FALSE;
-    midpPaintAllowed = 0;
-    SipShowIM(SIPF_OFF);
-    KNI_ReturnVoid();
-}
-#endif
 
 #ifdef __cplusplus
 }
