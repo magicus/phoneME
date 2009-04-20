@@ -47,6 +47,11 @@ public class Jsr234Proxy {
         return _instance;
     }
     
+    public boolean isJsr234Available()
+    {
+        return false;
+    }
+
     public String [] getJsr234PlayerControlNames() {
         return _emptyNamesList;
     }
