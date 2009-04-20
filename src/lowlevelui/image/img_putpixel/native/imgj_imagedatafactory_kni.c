@@ -985,3 +985,21 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRegion) {
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
+
+/**
+ * Returns how many bytes are in a pixel.
+ *
+ * @return number of bytes in native pixel
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(javax_microedition_lcdui_ImageDataFactory_bytesInPixel) {
+    int bytes;
+
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+    bytes = 4;
+#else
+    bytes = 2;
+#endif
+
+    KNI_ReturnInt(bytes);
+}

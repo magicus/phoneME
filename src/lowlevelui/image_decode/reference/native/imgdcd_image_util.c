@@ -43,9 +43,9 @@
 #if ENABLE_RGBA8888_PIXEL_FORMAT
 /** Convert separate r, g, b and alpha components to 32-bit pixel. */
 #define IMGDCD_RGBA2PIXEL(r, g, b, a) ( (((r) << 24) & 0xFF000000) | \
-                                     (((g) << 16) & 0xFF0000) | \
-                                     (((b) << 8) & 0xFF00) | \
-                                      ((a) & 0xFF) )
+                                        (((g) << 16) & 0xFF0000) | \
+                                        (((b) << 8) & 0xFF00) | \
+                                         ((a) & 0xFF) )
 #else
 /** Convert pre-masked triplet r, g, b to 16 bit pixel. */
 #define IMGDCD_RGB2PIXEL(r, g, b) ( b +(g << 5)+ (r << 11) )

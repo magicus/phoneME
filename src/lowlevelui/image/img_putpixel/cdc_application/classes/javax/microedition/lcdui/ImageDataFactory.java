@@ -37,7 +37,7 @@ import sun.misc.MIDPConfig;
  */
 class ImageDataFactory implements AbstractImageDataFactory {
 
-    private static final int PIXEL_SIZE=4;
+    private static final int PIXEL_SIZE = bytesInPixel();
 
     /**
      * PNG Header Data
@@ -765,4 +765,11 @@ class ImageDataFactory implements AbstractImageDataFactory {
                                    int x, int y,
                                    int width, int height,
                                    int transform);
+
+    /**
+     * Return how many bytes are in a pixel.
+     *
+     * @return number of bytes in native pixel
+     */
+    static native int bytesInPixel();
 }

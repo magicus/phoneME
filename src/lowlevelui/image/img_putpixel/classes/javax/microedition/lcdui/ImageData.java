@@ -32,7 +32,7 @@ package javax.microedition.lcdui;
  */
 final class ImageData implements AbstractImageData {
 
-    private static final int PIXEL_SIZE=4;
+    private static final int PIXEL_SIZE = ImageDataFactory.bytesInPixel();
 
     /**
      * The width, height of this Image
