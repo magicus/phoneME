@@ -144,11 +144,13 @@ void nim_end_input(jint id, jint* pInstanceData) {
 
 static jint input_mode_ids[] =
 {
-    KEYBOARD_INPUT_MODE,
+/*
+	KEYBOARD_INPUT_MODE,
     NUMERIC_INPUT_MODE,
     ALPHANUMERIC_INPUT_MODE,
     PREDICTIVE_TEXT_INPUT_MODE,
     SYMBOL_INPUT_MODE,
+*/
     VIRTUAL_INPUT_MODE
     /* native input modes, if any */
 /*

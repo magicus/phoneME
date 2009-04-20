@@ -143,19 +143,10 @@ public class DisplayEventListener implements EventListener {
         if (dc != null) {
             switch (event.getType()) {
                 case EventTypes.KEY_EVENT:
-					System.out.println("nativeEvent.intParam1=" + nativeEvent.intParam1);
                     if (nativeEvent.intParam1 == EventConstants.IME) {
                         dc.handleInputMethodEvent(nativeEvent.stringParam1);
                     }
-					if (nativeEvent.intParam1 == EventConstants.IME2) {
-						System.out.println("nativeEvent.intParam1 == EventConstants.IME2");
-						System.out.println("nativeEvent.stringParam1=" + nativeEvent.stringParam1);
-						for (int i = 0; i < nativeEvent.stringParam1.length(); ++i) {
-							dc.handleKeyEvent(
-								1, /* KEYMAP_STATE_PRESSED */
-								nativeEvent.stringParam1.charAt(i));
-						}
-                    }					
+										
                     if (Logging.REPORT_LEVEL < Constants.LOG_DISABLED &&
                             nativeEvent.intParam2 == EventConstants.DEBUG_TRACE1) {
                         // This is a special VM hook to print all stacks

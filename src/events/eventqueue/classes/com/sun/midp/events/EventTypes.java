@@ -370,6 +370,8 @@ public final class EventTypes {
      */
     public static final int VIRTUAL_KEYBOARD_EVENT = 58;
 
+	public static final int VIRTUAL_KEYBOARD_RETURN_DATA_EVENT = 580;
+
     /**
      * This event is sent by a native code to the Java installer to
      * enable or disable OCSP check. 

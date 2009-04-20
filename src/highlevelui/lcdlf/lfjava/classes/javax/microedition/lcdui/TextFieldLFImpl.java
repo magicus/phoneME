@@ -1945,7 +1945,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * Show virtual keybord popup
      */
     protected void showKeyboardLayer() {
-
+/*
         Display d = getCurrentDisplay();
 
         if (d != null) {
@@ -1972,6 +1972,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 }
             }
         }
+ */ 
     }
     
     /**
