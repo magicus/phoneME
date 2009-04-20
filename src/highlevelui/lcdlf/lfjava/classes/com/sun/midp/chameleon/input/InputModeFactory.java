@@ -43,12 +43,12 @@ public class InputModeFactory {
         if (id < NATIVE_INPUT_MODE_START) {
             InputMode im;
             switch(id) {
-                case KEYBOARD_INPUT_MODE:
-                case NUMERIC_INPUT_MODE:
-                case ALPHANUMERIC_INPUT_MODE:
-                case PREDICTIVE_TEXT_INPUT_MODE:
-                case VIRTUAL_INPUT_MODE: im = new VirtualKeyboardInputMode(); break;
+                case KEYBOARD_INPUT_MODE: im = new KeyboardInputMode(); break;
+                case NUMERIC_INPUT_MODE: im = new NumericInputMode(); break;
+                case ALPHANUMERIC_INPUT_MODE: im = new AlphaNumericInputMode(); break;
+                case PREDICTIVE_TEXT_INPUT_MODE: im = new PredictiveTextInputMode(); break;
                 case SYMBOL_INPUT_MODE: im = new SymbolInputMode(); break;
+                case VIRTUAL_INPUT_MODE: im = new VirtualKeyboardInputMode(); break;
                 default: throw new IllegalArgumentException("bad java input mode id: "+id);
             }
             return im;
