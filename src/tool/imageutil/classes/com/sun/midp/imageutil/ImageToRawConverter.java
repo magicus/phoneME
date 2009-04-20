@@ -138,8 +138,7 @@ public class ImageToRawConverter {
         } else if ((rawFormat == RAW_FORMAT_ARGB) && 
             (colorFormat == COLOR_FORMAT_888)) {
             // there is no separate alpha channel needed for ARGB
-//            boolean hasAlpha = false;
-            boolean hasAlpha = reallyHasAlpha(imageData);
+            boolean hasAlpha = false;
 
             ret = imageToARGB888(imageData, width, height, hasAlpha);
         }
@@ -160,7 +159,7 @@ public class ImageToRawConverter {
     }
 
     /**
-     * Converts image to PutPixel raw format, 16bit color format, big-endian.
+     * Converts image to PutPixel raw format, 16bit color format.
      * Output byte array represents the following c-struct:
      * typedef struct {
      *     byte header[4];  // Must equal RAW_HEADER 
@@ -212,7 +211,7 @@ public class ImageToRawConverter {
     }
 
     /**
-     * Converts image to ARGB with 24bits per pixel in big-endian.
+     * Converts image to ARGB with 24bits per pixel.
      * Output byte array represents the following c-struct:
      * typedef struct {
      *     byte header[4];  // Must equal RAW_HEADER 
@@ -286,7 +285,7 @@ public class ImageToRawConverter {
     }
     
     /**
-     * writes int to byte array at specified position 
+     * Writes int to byte array at specified position 
      * in big- or little- endian.
      *
      * @param data target byte array 
@@ -311,7 +310,7 @@ public class ImageToRawConverter {
     }
 
     /**
-     * writes short to byte array at specified position 
+     * Writes short to byte array at specified position
      * in big- or little- endian.
      *
      * @param data target byte array 

@@ -327,7 +327,6 @@ public class ImageToRawTool {
                 javax.imageio.ImageIO.read(new File(sourceName));
         int width = image.getWidth(null);
         int height = image.getHeight(null);
-        boolean hasAlpha = image.getColorModel().hasAlpha();
         int[] imageData = getBufferedImageData(image);
 
         // convert image
