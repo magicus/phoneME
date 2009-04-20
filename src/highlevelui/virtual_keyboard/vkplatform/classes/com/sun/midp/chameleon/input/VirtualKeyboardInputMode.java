@@ -64,7 +64,7 @@ public class VirtualKeyboardInputMode extends KeyboardInputMode {
 
 		public void process(Event event)
 		{
-			System.out.println("VirtualKeyboardInputMode.process");
+			System.out.println("VirtualKeyboardInputMode.process curInputMode=" + curInputMode);
 
 			if (curInputMode == null)
 			{
@@ -103,18 +103,18 @@ public class VirtualKeyboardInputMode extends KeyboardInputMode {
 
 					System.out.println("VirtualKeyboardInputMode.process: curInputMode.mediator.commit");
 					curInputMode.mediator.commit(nativeEvent.stringParam1);
+
+					System.out.println("VirtualKeyboardInputMode.process curInputMode.mediator.inputModeCompleted()");
+//					curInputMode.mediator.inputModeCompleted();
+
 					System.out.println("VirtualKeyboardInputMode.process: done");
-				}
+				}				
 			}
-			curInputMode = null;
+//			curInputMode = null;
 		}
 	}
 
 	private static KeyboardDataEventListener listener = new KeyboardDataEventListener();
-
-	VirtualKeyboardInputMode() {
-		listener.curInputMode = this;
-	}	
 
     /**
      * This method will be called before any input keys are passed
@@ -135,6 +135,8 @@ public class VirtualKeyboardInputMode extends KeyboardInputMode {
      * @param inputSubset current input subset
      */
     public void beginInput(InputModeMediator mediator, String inputSubset, int constraints) {
+		System.out.println("VirtualKeyboardInputMode.beginInput this=" + this);
+		listener.curInputMode = this;
 		showNativeKeyboard();
         super.beginInput(mediator, inputSubset, constraints);
     }
