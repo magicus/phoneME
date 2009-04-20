@@ -30,6 +30,7 @@ import com.sun.midp.lcdui.*;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
+import com.sun.midp.main.Configuration;
 import com.sun.midp.chameleon.*;
 import com.sun.midp.chameleon.input.*;
 import com.sun.midp.chameleon.layers.InputModeLayer;
@@ -1184,7 +1185,19 @@ class TextFieldLFImpl extends ItemLFImpl implements
             }
 
             pressedIn = false;
-        }
+            String showKeyboard = 
+			    Configuration.getProperty("com.sun.midp.showVirtKeyboard");
+			//if (showKeyboard != NULL && showKeyboard.equals("true")) {
+                Command[] inputCommands = inputMenu.getSubCommands();
+                for (int i = 0; i < inputModes.length; i++) {
+                    if (inputModes[i] instanceof VirtualKeyboardInputMode) {
+                        getInputSession().setCurrentInputMode(inputModes[i]);
+                        showKeyboardLayer();
+                        break;
+                    }
+                }
+			//}
+		}
     }
 
     /**
