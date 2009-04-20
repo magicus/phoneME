@@ -5086,25 +5086,6 @@ redefineClearBreakpoints(void *item, void *arg)
     return CVM_TRUE;
 }
 
-static unsigned short
-findMbIndex(CVMClassBlock *cb, CVMMethodBlock *mb) {
-    int offset = sizeof(CVMClassBlock *);
-    int range = 0;
-
-    /* Convert the address of mb into an index into the method array
-     * taking into account that the method array is split into 256
-     * methodblock sections with a classblock * at the start of each
-     * section. (See CVMMethodRange)
-     */
-    while ((unsigned int)mb >=
-	   (unsigned int)(((range + 1) * 256 * sizeof(CVMMethodBlock)) +
-	    (unsigned int)CVMcbMethods(cb) + offset)) {
-	offset += sizeof(CVMClassBlock*);
-	range++;
-    }
-    return (CVMmbMethodIndex(mb) + (range * 256));
-}
-
 static void
 fixupCallback(CVMExecEnv* ee,
 	      CVMClassBlock* cb,
@@ -5129,7 +5110,7 @@ fixupCallback(CVMExecEnv* ee,
 		    if (thisCb == oldcb) {
                         if (!CVMmbIsMiranda(thisMb)) {
                             newMb = CVMcbMethodSlot(newcb,
-                                        findMbIndex(oldcb, thisMb));
+                                        CVMmbFullMethodIndex(thisMb));
                         } else {
                             /* Miranda method */
                             newMb = CVMcbMethodTableSlot(newcb,

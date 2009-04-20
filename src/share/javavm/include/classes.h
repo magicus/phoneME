@@ -855,6 +855,14 @@ struct CVMMethodArray {
 #define CVMmbJitInvoker(mb)            ((mb)->jitInvokerX)
 #endif
 
+/* Similar to CVMmbMethodIndex, except it also takes into account the 
+   CVMMethodRange the method is in. It can produce an index that is
+   greater than 255 if needed, and used with CVMcbMethodSlot.
+*/
+#define CVMmbFullMethodIndex(mb)                                              \
+    (((CVMmbMethodRange(mb) - CVMcbMethods(CVMmbClassBlock(mb))->ranges) << 8)\
+     + CVMmbMethodIndex(mb))
+
 typedef CVMUint16 CVMCheckedException;
 
 struct CVMCheckedExceptions {

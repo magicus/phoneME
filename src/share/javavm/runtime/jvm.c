@@ -1401,7 +1401,7 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
 	
 	CVMD_arrayWriteInt(pcArray, count, (CVMJavaInt)
 			   ((lineno << 16) |
-			    (CVMmbMethodIndex(mb) & 0xffff)));
+			    (CVMmbFullMethodIndex(mb) & 0xffff)));
 	/* Write the class object into the backtrace array. */
 	{
 	    CVMClassICell* classICell = 
