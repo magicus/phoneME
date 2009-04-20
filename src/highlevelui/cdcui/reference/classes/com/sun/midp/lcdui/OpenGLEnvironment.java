@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -24,27 +24,30 @@
  * information or have any questions.
  */
 
-#include <midp_foreground_id.h>
+package com.sun.midp.lcdui;
 
-#include <kni.h>
-#include <jvm.h>
-
-/**
- * Sets the foreground display. 0 equals no display
- *
- * @param displayId ID of the foreground Display
- */
-KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_main_NativeForegroundState_setState) {
-    gForegroundDisplayId = KNI_GetParameterAsInt(1);
-    KNI_ReturnVoid();
-}
+import com.sun.midp.main.NativeForegroundState;
 
 /**
- * Gets the foreground display. 0 equals no display
- *
+ * This class provides methods needed for JSRs to access OpenGL 
+ * rendering capabilities in lcdui in order to properly synchronize 
+ * rendering on certain platforms
+ * 
  */
-KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_main_NativeForegroundState_getState) {
-    KNI_ReturnInt(gForegroundDisplayId);
+public class OpenGLEnvironment{
+    
+    /** 
+     * Prepare openGL renderer to switch between lcdui and some exernal
+     * API - can be either JSR226 or JSR239
+     *
+     */
+    public void flushOpengGL(DisplayContainer container) {
+        int displayId = NativeForegroundState.getState();
+        DisplayAccess da = container.findDisplayById(displayId);
+        Object[] dirtyRegions = da.getDirtyRegions();
+        flushOpenGL0(dirtyRegions, dirtyRegions.length, displayId);
+    }
+    
+    private native void flushOpenGL0(Object[] dirtyRegions,
+                                     int numberOfRegions, int displayId);
 }

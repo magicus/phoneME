@@ -188,6 +188,10 @@ ifeq ($(USE_DIRECTDRAW), true)
   JPP_DEFS += -DENABLE_DIRECT_DRAW
 endif
 
+ifeq ($(USE_OPENGL), true)
+  JPP_DEFS += -DENABLE_OPENGL
+endif
+
 ifeq ($(USE_MULTIPLE_DISPLAYS), true)
    JPP_DEFS     += -DENABLE_MULTIPLE_DISPLAYS
 endif

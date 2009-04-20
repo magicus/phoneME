@@ -34,6 +34,12 @@ CDCUI_NAME = cdcui
 CDCUI_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(CDCUI_NAME)
 CDCUI_CLASSES_DIR = $(CDCUI_DIR)/reference
 
+# vpath for cdcui module
+#
+vpath % \
+    $(CDCUI_CLASSES_DIR)/native
+
+
 # Add to library set for this build
 LIB_SET += $(CDCUI_NAME)
 
@@ -59,3 +65,12 @@ ifeq ($(TARGET_PLATFORM), win32_gci)
 SUBSYSTEM_CDCUI_JAVA_FILES += \
     $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GCIEventListener.java
 endif
+
+ifeq ($(USE_OPENGL), true)
+SUBSYSTEM_CDCUI_JAVA_FILES += \
+    $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/OpenGLEnvironment.java \
+    $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/OpenGLEnvironmentProxy.java
+SUBSYSTEM_CDCUI_NATIVE_FILES += \
+    opengl_environment_kni.c
+endif
+

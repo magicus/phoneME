@@ -99,6 +99,11 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.jump.isolate.MIDletContainer
 endif
 
+ifeq ($(USE_OPENGL), true)
+MIDP_CNI_CLASSES += \
+        com.sun.midp.lcdui.OpenGLEnvironment
+endif
+
 # The MIDP rom.config file
 ROMGEN_INCLUDE_PATHS += $(MIDP_DIR)/build/common/config
 
