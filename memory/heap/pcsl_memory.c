@@ -125,7 +125,7 @@ static void report(char* message, ...){
  * 
  * print_alloc( what, filename, lineno);
  */
-static void print_alloc(const char* what, char* filename, int lineno) {
+static void print_alloc(const char* what, const char* filename, int lineno) {
     report("alloc: %s at %s line %d\n", 
            what, filename, lineno);
 }
@@ -172,7 +172,7 @@ typedef struct _pcslMemStruct {
 #endif 
     unsigned int   size;                                    /* size of block */
 #ifdef PCSL_DEBUG
-    char*          filename;         /* filename where allocation took place */
+    const char*    filename;         /* filename where allocation took place */
     unsigned int   lineno;        /* line number wehre allocation took place */
     unsigned int   guard;                                    /* memory guard */
 #endif
