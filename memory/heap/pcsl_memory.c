@@ -397,7 +397,7 @@ pcsl_mem_finalize_impl0() {
  */
 #ifdef PCSL_DEBUG
 void*
-pcsl_mem_malloc_impl0(unsigned int size, char* filename, int lineno) {
+pcsl_mem_malloc_impl0(unsigned int size, const char* filename, int lineno) {
 #else
 void*
 pcsl_mem_malloc_impl0(unsigned int size) {
@@ -554,7 +554,7 @@ pcsl_mem_malloc_impl0(unsigned int size) {
 #ifdef PCSL_DEBUG
 void*
 pcsl_mem_calloc_impl0(unsigned int nelem, unsigned int elsize, 
-                     char* filename, int lineno) {
+                     const char* filename, int lineno) {
     void *loc = NULL;
 
     if ((loc = pcsl_mem_malloc_impl0((nelem) * (elsize), filename, lineno)) != NULL) {
@@ -591,7 +591,7 @@ pcsl_mem_calloc_impl0(unsigned int nelem, unsigned int elsize) {
  */
 #ifdef PCSL_DEBUG
 void*
-pcsl_mem_realloc_impl0(void* ptr, unsigned int size, char* filename, int lineno) {
+pcsl_mem_realloc_impl0(void* ptr, unsigned int size, const char* filename, int lineno) {
 #else
 void*
 pcsl_mem_realloc_impl0(void* ptr, unsigned int size) {
@@ -661,7 +661,7 @@ pcsl_mem_realloc_impl0(void* ptr, unsigned int size) {
 #ifdef PCSL_DEBUG
 
 char*
-pcsl_mem_strdup_impl0(const char *s1, char* filename, int lineno) {
+pcsl_mem_strdup_impl0(const char *s1, const char* filename, int lineno) {
 
     char *p = (char *)pcsl_mem_malloc_impl0(strlen(s1) + 1, filename, lineno);
 
@@ -701,7 +701,7 @@ pcsl_mem_strdup_impl0(const char *s1) {
 #ifdef PCSL_DEBUG
 	
 void
-pcsl_mem_free_impl0(void *ptr, char *filename, int lineno) {
+pcsl_mem_free_impl0(void *ptr, const char *filename, int lineno) {
     _PcslMemHdrPtr pcslMemoryHdr;
 
     if (ptr == NULL) {
