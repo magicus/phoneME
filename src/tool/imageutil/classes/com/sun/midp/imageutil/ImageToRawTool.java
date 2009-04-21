@@ -109,6 +109,7 @@ public class ImageToRawTool {
             // raw file formats
             "Putpixel",
             "ARGB",
+            "RGBA",
             // endianess
             "Little",
             "Big",
@@ -124,6 +125,7 @@ public class ImageToRawTool {
             // raw file formats
             ImageToRawConverter.RAW_FORMAT_PP,
             ImageToRawConverter.RAW_FORMAT_ARGB,
+            ImageToRawConverter.RAW_FORMAT_RGBA,
             // endianess
             ImageToRawConverter.INT_FORMAT_LITTLE_ENDIAN,
             ImageToRawConverter.INT_FORMAT_BIG_ENDIAN,

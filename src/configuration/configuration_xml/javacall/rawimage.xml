@@ -27,8 +27,8 @@
      YOU MAY NEED TO ADJUST THAT TO YOUR PLATFORM -->
 <configuration>
 <rawimage
-  Format="ARGB" 
-  Colors="888" 
+  Format="RGBA"
+  Colors="888"
   Endian="Little"
 />
 </configuration>

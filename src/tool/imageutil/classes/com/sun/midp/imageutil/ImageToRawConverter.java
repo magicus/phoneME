@@ -48,8 +48,10 @@ public class ImageToRawConverter {
     static public final int FORMAT_INVALID     = -1;
     /** Put Pixel raw format */
     static public final int RAW_FORMAT_PP      = 0;
-    /** RGBA raw format */
+    /** ARGB raw format */
     static public final int RAW_FORMAT_ARGB    = 1;
+    /** RGBA raw format */
+    static public final int RAW_FORMAT_RGBA    = 2;
 
     /** pixel format - 24bit color */
     static public final int COLOR_FORMAT_888   = 0;
@@ -64,11 +66,12 @@ public class ImageToRawConverter {
     /** list of supported pairs raw format - color format */
     static final int formatList [][]  = {
         {RAW_FORMAT_PP, COLOR_FORMAT_565}, 
-        {RAW_FORMAT_ARGB, COLOR_FORMAT_888}
+        {RAW_FORMAT_ARGB, COLOR_FORMAT_888},
+        {RAW_FORMAT_RGBA, COLOR_FORMAT_888}
     };
 
     /** byte sequence that indentifies raw format */
-    static final short[] rawMagic = { 0x89, 'S', 'U', 'N'};
+    static final short[] rawMagic = { 0x89, 'S', 'U', 'N' };
 
     /** current raw, color and int formats */
     protected int  rawFormat, colorFormat, intFormat;
@@ -131,16 +134,19 @@ public class ImageToRawConverter {
         byte [] ret = null;
         // build raw data
         if ((rawFormat == RAW_FORMAT_PP) && 
-            (colorFormat == COLOR_FORMAT_565)) {
+                (colorFormat == COLOR_FORMAT_565)) {
             boolean hasAlpha = reallyHasAlpha(imageData);
 
             ret = imageToPutpixel565(imageData, width, height, hasAlpha);
-        } else if ((rawFormat == RAW_FORMAT_ARGB) && 
-            (colorFormat == COLOR_FORMAT_888)) {
-            // there is no separate alpha channel needed for ARGB
+        } else if (colorFormat == COLOR_FORMAT_888) {
+            // there is no separate alpha channel needed for ARGB/RGBA
             boolean hasAlpha = false;
 
-            ret = imageToARGB888(imageData, width, height, hasAlpha);
+            if (rawFormat == RAW_FORMAT_ARGB) {
+                ret = imageToRGB888(imageData, width, height, hasAlpha, false);
+            } else if (rawFormat == RAW_FORMAT_RGBA) {
+                ret = imageToRGB888(imageData, width, height, hasAlpha, true);
+            }
         }
         return ret;
     }
@@ -211,7 +217,7 @@ public class ImageToRawConverter {
     }
 
     /**
-     * Converts image to ARGB with 24bits per pixel.
+     * Converts image to ARGB or RGBA with 24bits per pixel.
      * Output byte array represents the following c-struct:
      * typedef struct {
      *     byte header[4];  // Must equal RAW_HEADER 
@@ -223,16 +229,16 @@ public class ImageToRawConverter {
      * where RAW image file header
      * const byte RAW_HEADER[4] = {0x89, 'S', 'U', 'N'};
      * and data array consists of image pixel array - 24bit per pixel, 
-     * RGBA(8, 8, 8, 8)
+     * ARGB(8, 8, 8, 8) or RGBA(8, 8, 8, 8).
      *
      * @param imageData image pixels in 32 bit ARGB format
      * @param width image width
      * @param height image height
      * @param hasAlpha true if the image has alpha channel
-     * @return byte[] raw data in RGBA format
+     * @return byte[] raw data in ARGB/RGBA format
      */
-    private byte[] imageToARGB888(int[] imageData, int width, int height, 
-            boolean hasAlpha)
+    private byte[] imageToRGB888(int[] imageData, int width, int height, 
+            boolean hasAlpha, boolean RGBA)
     {
         // sizeof resulting raw buffer = 
         // sizeof(RAW_HEADER) + 
@@ -248,8 +254,10 @@ public class ImageToRawConverter {
         fillRawHeader(rawData, width, height, hasAlpha);
 
         for (int i = 0; i < imageData.length; ++i) {
-            // write ARGB
-            storeValue(rawData, dataOffset + i*4, imageData[i], intFormat);
+            // write RGBA/ARGB
+            int val = (RGBA) ? ((imageData[i] << 8) & 0xFFFFFF00) | (imageData[i] & 0xFF) :
+                               imageData[i];
+            storeValue(rawData, dataOffset + i * 4, val, intFormat);
         }
 
         return rawData;
