@@ -36,6 +36,15 @@ public class OEMFont {
         OEMFont.accessor = accessor;
     }
 
+    /**
+     * Obtains an object representing a javax.microedition.lcdui.Font
+     * having the specified size. Style is one of the Font.STYLE_XXX constants.
+     * Size may either be set via Font.SIZE_XXX constants
+     * or via -(actual size in pixels).
+     * @param style
+     * @param size
+     * @return Font object
+     */
     public static Font getOEMFont(int style, int size) {
         return accessor.getOEMFont(style, size);
     }
