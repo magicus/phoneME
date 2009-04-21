@@ -534,12 +534,12 @@ class player_dshow : public player
         }
 
         LONGLONG cur = now * 10;
-        HRESULT hr = pms->SetPositions(&cur, AM_SEEKING_AbsolutePositioning, null, AM_SEEKING_NoPositioning);
+        /*HRESULT hr = pms->SetPositions(&cur, AM_SEEKING_AbsolutePositioning, null, AM_SEEKING_NoPositioning);
         if(hr != S_OK)
         {
             *presult = result_media;
             return media_time;
-        }
+        }*/
 
         media_time = now;
         *presult = result_success;
