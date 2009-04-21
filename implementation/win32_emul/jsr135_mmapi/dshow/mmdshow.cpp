@@ -476,7 +476,8 @@ static javacall_result dshow_realize(javacall_handle handle,
         p->mediaType = JC_FMT_MPEG1_LAYER3;
     }
     else if( mime_equal( mime, mimeLength, L"video/x-vp6" ) ||
-             mime_equal( mime, mimeLength, L"video/x-flv" ) )
+             mime_equal( mime, mimeLength, L"video/x-flv" ) ||
+             mime_equal( mime, mimeLength, L"video/x-javafx" ) )
     {
         p->rate     = 44100;
         p->channels = 2;
