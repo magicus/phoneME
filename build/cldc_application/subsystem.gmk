@@ -1,7 +1,7 @@
 #
 #   
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -69,8 +69,9 @@ SUBSYSTEM_JSR_211_EXTRA_INCLUDES = \
         -I$(SUBSYSTEM_JSR_211_NATIVE_CLDC_DIR)/inc
 
 DOXYGEN_INPUT_LIST += \
-    $(SUBSYSTEM_JSR_211_NATIVE_SHARE_DIR)/include/jsr211_registry.h \
-    $(SUBSYSTEM_JSR_211_NATIVE_SHARE_DIR)/include/result.h \
+    $(SUBSYSTEM_JSR_211_NATIVE_SHARE_DIR)/include/jsr211_constants.h \
+    $(SUBSYSTEM_JSR_211_NATIVE_CLDC_DIR)/inc/jsr211_registry.h \
+    $(SUBSYSTEM_JSR_211_NATIVE_CLDC_DIR)/inc/jsr211_result.h \
     $(SUBSYSTEM_JSR_211_NATIVE_CLDC_DIR)/inc/jsr211_invoc.h
 
 # vpath for ( chapi ) subsystem
@@ -172,6 +173,8 @@ INTERNAL_JSR_211_NATIVE_FILES += \
 	jsr211_registry_impl.c \
 	jsr211_deploy.c \
 	kni_app_proxy.c \
+	utils.c \
+	kni_msg_processor.c \
 
 ifeq ($(USE_NATIVE_AMS), true)
 INTERNAL_JSR_211_NATIVE_FILES += \

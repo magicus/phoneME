@@ -112,9 +112,6 @@ static StoredLink* invocFind(SuiteIdType suiteId,
 static StoredLink* invocFindTid(int tid);
 static int invocNextTid();
 static jboolean modeCheck(StoredInvoc* invoc, int mode);
-static void blockThread( int blockID );
-static void unblockWaitingThreads(int blockID, int newStatus);
-static jboolean isThreadCancelled();
 
 #define isEmpty() (invocQueue == NULL)
 
@@ -466,7 +463,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_put0) {
         if (!invocPut(invoc))
             break;
     
-        unblockWaitingThreads(0, STATUS_OK);
+        unblockWaitingThreads(JSR211_WAIT_OK, 0, JSR211_WAIT_OK);
     
         /* Clear to skip cleanup and throwing exception */
         invoc = NULL;
@@ -608,7 +605,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_get0) {
         /* No match found. */
         /* If blocking, setup to block. */
         if (blockID != 0) {
-            blockThread( blockID );
+            blockThread( JSR211_WAIT_OK, blockID );
             /* Fall into the return to manage handles correctly */
         }
         ret = 0;
@@ -840,7 +837,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_listen0) {
     } else {
         if (blockID != 0) {
             /* No found; block the thread in the VM */
-            blockThread( blockID );
+            blockThread( JSR211_WAIT_OK, blockID );
             /* Fall into the return to manage handles correctly */
         }
     }
@@ -1008,7 +1005,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_unblockWaitingThreads0) {
     /* Argument indices must match Java native method declaration */
 #define unblockBlockIDArg 1
     jint blockID = KNI_GetParameterAsInt(unblockBlockIDArg);
-    unblockWaitingThreads(blockID, STATUS_CANCELLED);
+    unblockWaitingThreads(JSR211_WAIT_OK, blockID, JSR211_WAIT_CANCELLED);
     KNI_ReturnVoid();
 }
 
@@ -1050,7 +1047,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_update0) {
     match = invocFindTid(KNI_GetIntField(invocObj, FID(tid)));
     if( match != NULL && match->invoc != NULL ){
         update(match->invoc, invocObj, tmp1, tmp2);
-        unblockWaitingThreads(0, STATUS_OK);
+        unblockWaitingThreads(JSR211_WAIT_OK, 0, JSR211_WAIT_OK);
     }    
 
 #undef invocArgIdx
@@ -1293,83 +1290,6 @@ static int invocNextTid() {
     if (--prevTid >= UNDEFINED_TID)
         prevTid = UNDEFINED_TID - 1;
     return prevTid;
-}
-
-/**
- * Block this thread until unblocked.
- * Initialize the reentry data needed to unblock this thread later.
- * Only the waitingFor setting is used.
- * The status is set to STATUS_OK.
- * If canceled the status will be set to cancelled.
- */
-static void blockThread( int blockID ) {
-    /* Initialize the re-entry data so later this thread can
-     * be unblocked.
-     */
-    MidpReentryData* p = (MidpReentryData*)(SNI_GetReentryData(NULL));
-    if (p == NULL) {
-        p = (MidpReentryData*)(SNI_AllocateReentryData(sizeof (MidpReentryData)));
-    }
-#ifdef TRACE_BLOCKING
-    printf( "blockThread(%p) %p\n", blockID, p );
-#endif
-    p->waitingFor = JSR211_SIGNAL;
-    p->status = JSR211_INVOKE_OK;
-    p->pResult = (void *)blockID;
-    SNI_BlockThread();
-}
-
-/**
- * Check if this blocked thread was cancelled.
- */
-static jboolean isThreadCancelled() {
-    MidpReentryData* p = (MidpReentryData*)(SNI_GetReentryData(NULL));
-#ifdef TRACE_BLOCKING
-    printf( "isThreadCancelled(%p): %s\n", p, (p != NULL && p->status == JSR211_INVOKE_CANCELLED)? "yes" : "no" );
-#endif
-    return (p != NULL && p->status == JSR211_INVOKE_CANCELLED);
-}
-
-/**
- * Scan the block thread data for every thread blocked
- * for a JSR211_SIGNAL block type with INVOKE status and unblock it.
- * For now, every blocked thread is awoken; it should 
- * check if the thread is blocked for the requested application,
- * classname.
- *
- * @param the new status of the blocked thread; either
- *  STATUS_CANCELLED or STATUS_OK
- */
-static void unblockWaitingThreads(int blockID, int newStatus) {
-    int n;
-    int i;
-    JVMSPI_BlockedThreadInfo *blocked_threads = SNI_GetBlockedThreads(&n);
-    const int status_mask = JSR211_INVOKE_OK | JSR211_INVOKE_CANCELLED;
-    int st = newStatus==STATUS_OK ? JSR211_INVOKE_OK: JSR211_INVOKE_CANCELLED;
-
-#ifdef TRACE_BLOCKING
-    printf( "unblockWaitingThreads( %p, %d ). blocked_threads count = %d\n", blockID, newStatus, n );
-#endif
-    for (i = 0; i < n; i++) {
-        MidpReentryData *p = (MidpReentryData*)(blocked_threads[i].reentry_data);
-        if (p == NULL) {
-            continue;
-        }
-#ifdef TRACE_BLOCKING
-        printf( "blocked_thread[%d] %p, waitingFor '%x', status '%x'\n", i, p, p->waitingFor, p->status );
-#endif
-        if (p->waitingFor == JSR211_SIGNAL && (p->status & status_mask) != 0 && 
-                (blockID == 0 || p->pResult == (void *)blockID) ) {
-            JVMSPI_ThreadID id = blocked_threads[i].thread_id;
-#ifdef TRACE_BLOCKING
-            printf( "try to unblock: threadId = %p, blockID = %p\n", id, p->pResult );
-#endif
-            if (id != NULL) {
-                p->status = st;
-                SNI_UnblockThread(id);
-            }
-        }
-    }
 }
 
 /**
@@ -1682,7 +1602,7 @@ static void handle_javanotify_chapi_platform_finish(int invoc_id,
         invoc->notified = KNI_FALSE;
 
         /* Unblock any waiting threads so they can retrieve this. */
-        unblockWaitingThreads(0, STATUS_OK);
+        unblockWaitingThreads(JSR211_WAIT_OK, 0, JSR211_WAIT_OK);
 
     } else {
         jsr211_remove_invocation(invoc);
@@ -1865,7 +1785,7 @@ static void handle_javanotify_chapi_java_invoke(
                     if (!jsr211_enqueue_invocation(invoc))
                         res = JAVACALL_FAIL;
                     
-                    unblockWaitingThreads(0, STATUS_OK);
+                    unblockWaitingThreads(JSR211_WAIT_OK, 0, JSR211_WAIT_OK);
                     
                     /* IMPL_NOTE: The midlet handler should be launched on
                                   corresponding MIDP event processing */

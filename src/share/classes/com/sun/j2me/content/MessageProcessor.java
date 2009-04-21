@@ -62,3 +62,11 @@ class DataInputStreamExt extends DataInputStream {
 	}
 }
 
+class NativeMessageProcessor implements MessageProcessor {
+
+	public byte[] sendMessage(int msgCode, byte[] data) throws IOException {
+		return send(msgCode, data);
+	}
+	
+	private static native byte[] send(int msgCode, byte[] data) throws IOException;
+}
