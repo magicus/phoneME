@@ -131,17 +131,15 @@ public class ImageToRawConverter {
             throw new IllegalArgumentException("Source image data is null");
         }
 
+        boolean hasAlpha = reallyHasAlpha(imageData);
+
         byte [] ret = null;
         // build raw data
         if ((rawFormat == RAW_FORMAT_PP) && 
                 (colorFormat == COLOR_FORMAT_565)) {
-            boolean hasAlpha = reallyHasAlpha(imageData);
 
             ret = imageToPutpixel565(imageData, width, height, hasAlpha);
         } else if (colorFormat == COLOR_FORMAT_888) {
-            // there is no separate alpha channel needed for ARGB/RGBA
-            boolean hasAlpha = false;
-
             if (rawFormat == RAW_FORMAT_ARGB) {
                 ret = imageToRGB888(imageData, width, height, hasAlpha, false);
             } else if (rawFormat == RAW_FORMAT_RGBA) {
@@ -193,7 +191,7 @@ public class ImageToRawConverter {
         // sizeof(MIDP_IMAGE_BUFFER_RAW.width) + 
         // sizeof(MIDP_IMAGE_BUFFER_RAW.height) + 
         // sizeof(MIDP_IMAGE_BUFFER_RAW.hasAlpha) + 
-        // sizeof(pixe_l565) * image_pixel_count + 
+        // sizeof(pixel565) * image_pixel_count + 
         // (hasAlpha ? alpha_size * image_pixel_count : 0)
 
         int rawsz = 4 + 4 + 4 + 4 + 2 * imageData.length;
@@ -208,6 +206,7 @@ public class ImageToRawConverter {
         for (int i = 0; i < imageData.length; ++i) {
             short val = RGB888TORGB565(imageData[i]);
             storeValue(rawData, dataOffset + i * 2, val, intFormat);
+
             if (hasAlpha) {
                 rawData[alphaOffset + i] = (byte)((imageData[i] >> 24) & 0xFF);
             }
@@ -245,9 +244,13 @@ public class ImageToRawConverter {
         // sizeof(MIDP_IMAGE_BUFFER_RAW.width) + 
         // sizeof(MIDP_IMAGE_BUFFER_RAW.height) + 
         // sizeof(MIDP_IMAGE_BUFFER_RAW.hasAlpha) + 
+        // sizeof(pixel888) * image_pixel_count + 
+        // (hasAlpha ? alpha_size * image_pixel_count : 0)
 
         int rawsz = 4 + 4 + 4 + 4 + 4 * imageData.length;
         int dataOffset = 4 + 4 + 4 + 4;
+        int alphaOffset = rawsz;
+        if (hasAlpha) rawsz += 1 * imageData.length;
 
         byte[] rawData = new byte[rawsz];
 
@@ -258,6 +261,10 @@ public class ImageToRawConverter {
             int val = (RGBA) ? ((imageData[i] << 8) & 0xFFFFFF00) | (imageData[i] & 0xFF) :
                                imageData[i];
             storeValue(rawData, dataOffset + i * 4, val, intFormat);
+
+            if (hasAlpha) {
+                rawData[alphaOffset + i] = (byte)((imageData[i] >> 24) & 0xFF);
+            }
         }
 
         return rawData;
