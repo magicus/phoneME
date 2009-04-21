@@ -147,7 +147,6 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/HighLevelPlayer.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/MediaDownload.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectMIDIControl.java \
-    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectCamera.java \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MMEventListener.java \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/AudioTunnel.java \
 

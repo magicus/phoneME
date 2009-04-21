@@ -82,7 +82,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * <code>&nbsp;&nbsp;&nbsp;allJsr135Ctrls[4]; // RateControl</code>
      *
      * @see    #getControls()
-     * @see    #doGetControl(String)
+     * @see    #doGetNewControl(String)
      * @see    #allJsr135Ctrls
      */
 
@@ -167,7 +167,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * if available.
      * DO NOT USE DIRECTLY! Use getPossibleControlNames() instead.
      */
-    private static String[] allCtrls;
+    private static Vector possibleControlNames = null;
 
 
     public PlayerStateSubscriber state_subscriber = null;
@@ -683,8 +683,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         if ("GIF".equals(type)) {
             return new GIFPlayer( this );
-        } else if (MEDIA_FORMAT_CAPTURE_VIDEO.equals(type)) {
-            return new DirectCamera( this );
         } else if (DirectPlayer.nIsToneControlSupported(hNative)) {
             return new DirectTone( this );
         } else if (DirectPlayer.nIsMIDIControlSupported(hNative)) {
@@ -748,7 +746,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         lowLevelPlayer.doPrefetch();
 
-        VolumeControl vc = ( VolumeControl )lowLevelPlayer.doGetControl(
+        VolumeControl vc = ( VolumeControl )getControl(
                 pkgName + vocName);
         if (vc != null && (vc.getLevel() == -1)) {
                vc.setLevel(100);
@@ -873,7 +871,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
     protected boolean hasToneSequenceSet = false;
 
-    boolean isCapturePlayer()
+    public boolean isCapturePlayer()
     {
         return (mediaFormat.equals(MEDIA_FORMAT_CAPTURE_AUDIO) ||
                 mediaFormat.equals(MEDIA_FORMAT_CAPTURE_VIDEO) ||
@@ -1355,6 +1353,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         listeners.removeElement(playerListener);
     };
 
+
+    private Hashtable htControls = new Hashtable();
+    private Control [] controls = null;
+
+
     /**
      *  Gets the controls attribute of the HighLevelPlayer object
      *
@@ -1363,19 +1366,38 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     public final Control[] getControls() {
         chkClosed(true);
 
-        Vector v = new Vector(3);
-        // average maximum number of controls
+        synchronized( this )
+        {
+            if( null == controls )
+            {
+                Vector v = new Vector(3);
+                // average maximum number of controls
 
-        String [] ctrlNames = getPossibleControlNames();
-        for (int i = 0; i < ctrlNames.length; i++) {
-            Object c = getControl(ctrlNames[i]);
-            if ((c != null) && !v.contains(c)) {
-                v.addElement(c);
+                Enumeration ctrlNames = getPossibleControlNames().elements();
+                while( ctrlNames.hasMoreElements() ) {
+                    Object c = getControl( ( String )ctrlNames.nextElement() );
+                    if ((c != null) && !v.contains(c)) {
+                        v.addElement(c);
+                    }
+                }
+                controls = new Control[v.size()];
+                v.copyInto( controls );
             }
         }
-        Control[] ret = new Control[v.size()];
-        v.copyInto(ret);
-        return ret;
+
+        return controls;
+    }
+
+    public boolean isRadioPlayer()
+    {
+        return ( null != source.getLocator() &&
+            source.getLocator().startsWith(
+                DefaultConfiguration.RADIO_CAPTURE_LOCATOR ) );
+    }
+
+    public boolean isCameraPlayer()
+    {
+        return mediaFormat.equals(MEDIA_FORMAT_CAPTURE_VIDEO);
     }
 
     /**
@@ -1383,25 +1405,29 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * JSR-234 (if available) control names
      * that may be supported by HighLevelPlayer
      */
-    private static String [] getPossibleControlNames()
+    private static synchronized Vector getPossibleControlNames()
     {
-        if( null == allCtrls )
+        if( null == possibleControlNames )
         {
-            String [] ammsCtrlNames =
-                    Jsr234Proxy.getInstance().getJsr234PlayerControlNames();
-            allCtrls = new
-                    String [ allJsr135Ctrls.length + ammsCtrlNames.length ];
-            int i = 0;
-            for( i = 0; i < allJsr135Ctrls.length; i++ )
+            possibleControlNames = new Vector( allJsr135Ctrls.length );
+
+            for( int i = 0; i < allJsr135Ctrls.length; i++ )
             {
-                allCtrls[ i ] = allJsr135Ctrls[ i ];
+                possibleControlNames.addElement( allJsr135Ctrls[ i ] );
             }
-            for( int j = 0; i < allCtrls.length; i++, j++ )
+            Jsr234Proxy ammsProxy = Jsr234Proxy.getInstance();
+            if( ammsProxy.isJsr234Available() )
             {
-                allCtrls[ i ] = ammsCtrlNames[ j ];
+                String [] jsr234Names =
+                        ammsProxy.getJsr234PlayerControlNames();
+                for( int i = 0; i < jsr234Names.length; i++ )
+                {
+                    possibleControlNames.addElement( jsr234Names[ i ] );
+                }
             }
+
         }
-        return allCtrls;
+        return possibleControlNames;
     }
     
     /**
@@ -1424,22 +1450,28 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         // Prepend the package name if the type given does not
         // have the package prefix.
-        if (type.indexOf('.') < 0) {
-            // for non-fully qualified control names,
-            // look up the package in the allJsr135Ctrls array
-            for (int i = 0; i < allJsr135Ctrls.length; i++) {
-                if (allJsr135Ctrls[i].equals(type)) {
-                    // standard controls are specified
-                    // without package name in allJsr135Ctrls
-                    return lowLevelPlayer.doGetControl(pkgName + type);
-                } else if (allJsr135Ctrls[i].endsWith(type)) {
-                    // non-standard controls are with
-                    // full package name in allJsr135Ctrls
-                    return lowLevelPlayer.doGetControl(allJsr135Ctrls[i]);
+        String fullName = type;
+        if( fullName.indexOf('.') < 0 )
+        {
+            fullName = pkgName + type;
+        }
+
+        Control c = null;
+        synchronized( this )
+        {
+            c = ( Control )htControls.get( fullName );
+            if( null == c &&
+                null == controls &&
+                getPossibleControlNames().contains( type ) )
+            {
+                c = lowLevelPlayer.doGetNewControl( fullName );
+                if( null != c )
+                {
+                    htControls.put( fullName, c );
                 }
             }
         }
-        return lowLevelPlayer.doGetControl(type);
+        return c;
     }
 
     /**

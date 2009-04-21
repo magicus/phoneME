@@ -47,52 +47,18 @@ public class Jsr234Proxy {
         return _instance;
     }
     
+    public boolean isJsr234Available()
+    {
+        return false;
+    }
+
     public String [] getJsr234PlayerControlNames() {
         return _emptyNamesList;
     }
     
-    public Control getRDSControl( HighLevelPlayer p )
-    {
-        return null;
-    }
-    
-    public Control getTunerControl( HighLevelPlayer p )
+    public Control getNewControl( HighLevelPlayer p, String controlName )
     {
         return null;
     }
 
-    public Control getCameraControl( HighLevelPlayer p )
-    {
-        return null;
-    }
-
-    public Control getExposureControl( HighLevelPlayer p )
-    {
-        return null;
-    }
-    
-    public Control getFlashControl( HighLevelPlayer p )
-    {
-        return null;
-    }
-
-    public Control getFocusControl( HighLevelPlayer p )
-    {
-        return null;
-    }
-
-    public Control getSnapshotControl( HighLevelPlayer p )
-    {
-        return null;
-    }
-
-    public Control getZoomControl( HighLevelPlayer p )
-    {
-        return null;
-    }
-
-    public Control getImageFormatControl( HighLevelPlayer p )
-    {
-        return null;
-    }
 }

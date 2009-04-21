@@ -129,13 +129,17 @@ abstract class LowLevelPlayer {
     protected abstract long doGetDuration();
 
     /**
-     * The worker method to actually obtain the control.
+     * Get a new Control of this 'type', or null if no control of this 'type
+     * supported. 'New' means that no non-null Control of this 'type' has been
+     * gotten yet (for this instance of LowLevelPlayer). The caller should
+     * guarantee this to avoid the Control of a particular type created twice.
+     *
      *
      * @param  type  the class name of the <code>Control</code>.
      * @return       <code>Control</code> for the class or interface
      * name.
      */
-    protected abstract Control doGetControl(String type);
+    protected abstract Control doGetNewControl(String type);
 
     /**
      * Subclasses must override this to be notified of a change
