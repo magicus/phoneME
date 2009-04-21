@@ -24,6 +24,7 @@
  */
 
 #include "KNICommon.h"
+#include <jsrop_kni.h>
 
 #include "javautil_unicode.h"
 
@@ -123,6 +124,7 @@ KNIDECL(com_sun_mmedia_DirectMetaData_nGetKeyValue) {
             KNI_GetStringRegion(keyObj, 0, keyLength, key);
             key[keyLength] = 0;
         } else {
+            KNI_ThrowNew(jsropOutOfMemoryError, NULL);
             keyLength = 0;
         }
     }
@@ -130,21 +132,30 @@ KNIDECL(com_sun_mmedia_DirectMetaData_nGetKeyValue) {
     if (keyLength > 0) {
         if (pKniInfo && pKniInfo->pNativeHandle) {
             value = MMP_MALLOC(sizeof(javacall_utf16) * valueSize);
-            if (value != NULL) {
+            if (value == NULL) {
+                KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+            } else {
                 ret = javacall_media_get_metadata(pKniInfo->pNativeHandle, key, valueSize, value);
                 while (ret == JAVACALL_OUT_OF_MEMORY && valueSize < MAX_VALUE_LENGTH) {
                     valueSize <<= 1;
-                    value = MMP_REALLOC(key, sizeof(javacall_utf16) * valueSize);
-                    if (value == NULL)
+                    value = MMP_REALLOC(value, sizeof(javacall_utf16) * valueSize);
+                    if (value == NULL) {
+                        KNI_ThrowNew(jsropOutOfMemoryError, NULL);
                         break;
+                    }
                     ret = javacall_media_get_metadata(pKniInfo->pNativeHandle, key, valueSize, value);
                 }
-                if (key != NULL) {
+                if (key != NULL && value != NULL) {
                     if (ret == JAVACALL_OK) {
-                        javautil_unicode_utf16_ulength(value, &valueSize);
-                        KNI_NewString(value, valueSize, valueObj);
+                        if (value[0] != (javacall_utf16)-1 || value[1] != 0) {
+                            javautil_unicode_utf16_ulength(value, &valueSize);
+                            KNI_NewString(value, valueSize, valueObj);
+                        }
+                    } else {
+                        MMP_DEBUG_STR("[nGetKeyValue] Failed in JavaCall");
                     }
                     MMP_FREE(value);
+                    MMP_FREE(key);
                 }
             }
         } else {

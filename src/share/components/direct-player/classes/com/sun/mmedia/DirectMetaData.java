@@ -31,6 +31,7 @@ public class DirectMetaData implements MetaDataControl {
     private int hNative;    
     private Object keysLock = new Object();
     private String [] keys;
+    private boolean titleIsFake = false;
     
     private native int nGetKeyCount(int hNative);
     private native String nGetKey(int hNative, int index);
@@ -40,18 +41,18 @@ public class DirectMetaData implements MetaDataControl {
         Vector vKeys = new Vector( 5 );
         int nKeys = ( hNative != 0 ) ? nGetKeyCount( hNative ) : 0;
 
-        boolean author_key_found = false;
-        boolean title_key_found  = false;
-
+        if (nKeys == 0) {
+            synchronized (keysLock) {
+                keys = new String[1];
+                keys[0] = TITLE_KEY;
+                titleIsFake = true;
+            }
+            return;
+        }
         for( int i = 0; i < nKeys; i++ ) {
             String key = nGetKey( hNative, i );
             vKeys.addElement( key );
-            if( AUTHOR_KEY.equals( key ) ) author_key_found = true;
-            if( TITLE_KEY.equals( key ) ) title_key_found = true;
         }
-
-        if( !author_key_found ) vKeys.addElement( AUTHOR_KEY );
-        if( !title_key_found ) vKeys.addElement( TITLE_KEY );
 
         nKeys = vKeys.size();
 
@@ -63,6 +64,7 @@ public class DirectMetaData implements MetaDataControl {
             for( int i = 0; i < nKeys; i++ ) {
                 keys[ i ] = (String)( vKeys.elementAt( i ) );
             }
+            titleIsFake = false;
         }
     }    
 
@@ -91,7 +93,7 @@ public class DirectMetaData implements MetaDataControl {
                 if( key.equals( keys[ i ] ) ) {
                     String s = nGetKeyValue( hNative, key );
                     if( null == s ) {
-                        if( AUTHOR_KEY.equals( key ) || TITLE_KEY.equals( key ) ) {
+                        if (TITLE_KEY.equals(key) && titleIsFake) {
                             s = "Unknown";
                         }
                     }
