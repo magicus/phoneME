@@ -237,7 +237,11 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
   int height = sbuf->height;
   int count;
   gxj_pixel_type* pPtr;
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+  unsigned int c = (unsigned int)color;
+#else
   unsigned int c = ((unsigned int)color) << 16 | ((unsigned int)color);
+#endif
   jlong lcol = ((jlong) c) << 32 | ((jlong) c);
   registers_4 regs;
   regs.r0 = regs.r1 = regs.r2 = regs.r3 = c;
@@ -902,9 +906,13 @@ primDrawFilledRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     gxj_pixel_type* lPtr;
     registers_4	regs;
 
-	unsigned int c = ((unsigned int)color) << 16 | ((unsigned int)color);
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+    unsigned int c = (unsigned int)color;
+#else
+    unsigned int c = ((unsigned int)color) << 16 | ((unsigned int)color);
+#endif
     jlong lcol = ((jlong) c) << 32 | ((jlong) c);
-	regs.r0 = regs.r1 = regs.r2 = regs.r3 = c;
+    regs.r0 = regs.r1 = regs.r2 = regs.r3 = c;
 
 #if PRIM_CLIPPING
     y1 = (y1 < 0) ? 0 : ((y1 > height) ? height : y1);

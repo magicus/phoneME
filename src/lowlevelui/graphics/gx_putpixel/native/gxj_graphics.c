@@ -324,7 +324,7 @@ gx_draw_rgb(const jshort *clip,
 
     CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
 
-#if 1 // USE_SLOW_LOOPS
+#if USE_SLOW_LOOPS
     {
       gxj_pixel_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
       jint * psrc = &rgbData[offset];
