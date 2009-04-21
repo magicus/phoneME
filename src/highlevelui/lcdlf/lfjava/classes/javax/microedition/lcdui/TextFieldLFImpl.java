@@ -1187,16 +1187,18 @@ class TextFieldLFImpl extends ItemLFImpl implements
             pressedIn = false;
             String showKeyboard = 
 			    Configuration.getProperty("com.sun.midp.showVirtKeyboard");
-			//if (showKeyboard != NULL && showKeyboard.equals("true")) {
+			if (showKeyboard != null && showKeyboard.equals("true")) {
                 Command[] inputCommands = inputMenu.getSubCommands();
                 for (int i = 0; i < inputModes.length; i++) {
                     if (inputModes[i] instanceof VirtualKeyboardInputMode) {
-                        getInputSession().setCurrentInputMode(inputModes[i]);
-                        showKeyboardLayer();
+						TextInputSession session = getInputSession();
+						if (session != null && session instanceof BasicTextInputSession) {
+                            ((BasicTextInputSession)session).setCurrentInputMode1(inputModes[i]);
+						}
                         break;
                     }
                 }
-			//}
+			}
 		}
     }
 
@@ -1958,7 +1960,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * Show virtual keybord popup
      */
     protected void showKeyboardLayer() {
-/*
+
         Display d = getCurrentDisplay();
 
         if (d != null) {
@@ -1985,7 +1987,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 }
             }
         }
- */ 
     }
     
     /**
