@@ -44,7 +44,7 @@ static void PRINTF( const char* fmt, ... ) {
     vsprintf( str8, fmt, args );
     va_end(args);
 
-    //OutputDebugString( str8 );
+    OutputDebugString( str8 );
 }
 
 #define XFER_BUFFER_SIZE  4096
@@ -151,7 +151,7 @@ static javacall_result dshow_create(int appId,
     p->playerId         = playerId;
     p->mediaType        = mediaType;
     p->uri              = NULL;
-    p->is_video         = ( JC_FMT_FLV == mediaType );
+    p->is_video         = ( JC_FMT_FLV == mediaType || JC_FMT_VIDEO_3GPP == mediaType );
 
     p->realizing        = false;
     p->prefetching      = false;
@@ -259,6 +259,7 @@ static javacall_result dshow_realize(javacall_handle handle,
         {
         case JC_FMT_FLV:          mime = (javacall_const_utf16_string)L"video/x-flv"; break;
         case JC_FMT_MPEG1_LAYER3: mime = (javacall_const_utf16_string)L"audio/mpeg";  break;
+        case JC_FMT_VIDEO_3GPP:   mime = (javacall_const_utf16_string)L"video/3gpp";  break;
         default:
             return JAVACALL_FAIL;
         }
@@ -286,6 +287,12 @@ static javacall_result dshow_realize(javacall_handle handle,
     {
         p->mediaType = JC_FMT_FLV;
         mime = (javacall_const_utf16_string)L"video/x-flv";
+        mimeLength = wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mimeLength, L"video/3gpp" ) )
+    {
+        p->mediaType = JC_FMT_VIDEO_3GPP;
+        mime = (javacall_const_utf16_string)L"video/3gpp";
         mimeLength = wcslen( (const wchar_t*)mime );
     }
     else
