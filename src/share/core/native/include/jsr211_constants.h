@@ -38,6 +38,7 @@ typedef enum {
   JSR211_WAIT_OK          = 0x0001
 , JSR211_WAIT_CANCELLED   = 0x0002
 , JSR211_WAIT_MSG         = 0x0004
+, JSR211_WAIT_FOR_REQUEST = 0x0008
 } jsr211_wait_status;
 
 void blockThread( jsr211_wait_status status, int blockID );

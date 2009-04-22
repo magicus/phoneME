@@ -31,6 +31,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Hashtable;
 
 interface MessageProcessor {
 	public static final byte[] ZERO_BYTES = new byte[0];
@@ -62,11 +63,48 @@ class DataInputStreamExt extends DataInputStream {
 	}
 }
 
-class NativeMessageProcessor implements MessageProcessor {
+class NativeMessageSender implements MessageProcessor {
+	private final int queueId;
+	public NativeMessageSender( int qId ){ queueId = qId; }
 
 	public byte[] sendMessage(int msgCode, byte[] data) throws IOException {
-		return send(msgCode, data);
+		return send(queueId, msgCode, data);
 	}
 	
-	private static native byte[] send(int msgCode, byte[] data) throws IOException;
+	private static native byte[] send(int queueId, int msgCode, byte[] data) throws IOException;
+}
+
+class NativeMessageReceiver implements Runnable {
+	final private Hashtable table = new Hashtable();
+	
+	public void addProcessor( int qId, MessageProcessor p ){
+		table.put(new Integer(qId), p);
+	}
+
+	public void run() {
+		for(;;){
+			int queueId = waitForRequest();
+			MessageProcessor processor = 
+				(MessageProcessor)table.get(new Integer(queueId));
+			if( processor != null ){
+				int requestId = getRequestId();
+				int msgCode = getRequestMsgCode();
+				byte[] data = getRequestBytes();
+				try {
+					data = processor.sendMessage( msgCode, data );
+					postResponse( requestId, data );
+				} catch (Exception e) {
+					postResponse( requestId, null );
+				}
+			}
+			nextRequest();
+		}
+	}
+
+	private static native int waitForRequest();
+	private static native void nextRequest();
+	private static native int getRequestId();
+	private static native int getRequestMsgCode();
+	private static native byte[] getRequestBytes();
+	private static native void postResponse(int requestId, byte[] data);
 }
