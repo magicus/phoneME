@@ -1303,7 +1303,10 @@ javacall_result javacall_media_get_metadata_key(javacall_handle handle,
  * @param bufLength dataBuf buffer's size in bytes. 
  * @param dataBuf   Buffer that used to return meta data strings. 
  *                  NULL value should be appended to the end of string.
- * 
+ *
+ * @note  If the meta data value is null, the output buffer will contain
+ *        following two 16-bit units: 0xffff, 0x0000.
+ *
  * @retval JAVACALL_OK              Success
  * @retval JAVACALL_OUT_OF_MEMORY   dataBuf size is too small
  * @retval JAVACALL_FAIL            Fail
