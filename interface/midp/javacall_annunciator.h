@@ -224,7 +224,18 @@ javacall_result javacall_annunciator_play_audible_tone(
     
     
 /** @} */
-    
+
+typedef enum {
+    JAVACALL_TACTILE_PRESSED = 0,
+    JAVACALL_TACTILE_DRAGGED = 1,
+    JAVACALL_TACTILE_FLICKERED = 2
+} javacall_tactile_type;
+
+/**
+ * Get feedback on touching a control
+ * @param type must be one of the types defined in javacall_tactile_type enum
+ */
+javacall_result javacall_get_tactile_feedback(javacall_int32 type);
     
 #ifdef __cplusplus
 } //extern "C"

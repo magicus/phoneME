@@ -55,14 +55,17 @@ extern "C" {
  * @enum javacall_font_size
  * @brief Font size
  */
-typedef enum {
-    /** The "small" system-dependent font size. */
-    JAVACALL_FONT_SIZE_SMALL          =0x08,
-    /** The "medium" system-dependent font size. */
-    JAVACALL_FONT_SIZE_MEDIUM         =0x00,
-    /** The "large" system-dependent font size. */
-    JAVACALL_FONT_SIZE_LARGE          =0x10
-} javacall_font_size;    
+ 
+/*
+ * made not enum to support free integeral sizes on special devices
+ */
+typedef int javacall_font_size;    
+/** The "small" system-dependent font size. */
+#define JAVACALL_FONT_SIZE_SMALL          0x08
+/** The "medium" system-dependent font size. */
+#define JAVACALL_FONT_SIZE_MEDIUM         0x00
+/** The "large" system-dependent font size. */
+#define JAVACALL_FONT_SIZE_LARGE          0x10
 
 /**
  * @enum javacall_font_style
