@@ -827,27 +827,59 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         int offSetX = ChoiceGroupSkin.PAD_H;
 
         // start for
-        for (int iX, iY, iW, iH, i = 0; i < cg.numOfEls; i++) {
+        for (int iX, iY, iW, iH, i = 0; i < cg.numOfEls
+                                    && translatedY <= contentBounds[HEIGHT]; i++) {
 
+            if (translatedY <= contentBounds[Y]) {
+                translatedY += elHeights[i];
+                continue;
+            }
+                
             // note that background was cleared
             // we will need to repaint background only for
             // hilighted portion
+            hilighted = (i == hilightedIndex && hasFocus);
 
             choiceImg = getChoiceImage(cType,
                                        cType == Choice.MULTIPLE ?
                                            cg.cgElements[i].selected :
-                                           i == selectedIndex);
+                                           i == selectedIndex, hilighted);
             
+            if (hilighted) {
+                //Cache load image if available 
+                Image bgImages []= ChoiceGroupSkin.IMAGE_BG_HL;
+                if (bgImages != null){
+                    CGraphicsUtil.draw3pcsBackground(g, 0, 0, bounds[WIDTH], bgImages);
+                }else{//no image available draw a rect with color as background
+                     g.setColor(ScreenSkin.COLOR_BG_HL);
+                     g.fillRect(-ChoiceGroupSkin.PAD_H, 0,
+                           ChoiceGroupSkin.PAD_H + contentW +
+                           ChoiceGroupSkin.PAD_H,
+                           elHeights[i]);
+                }
+            } else {
+                Image bgImages []= ChoiceGroupSkin.IMAGE_BG;
+                if (bgImages != null){
+                    CGraphicsUtil.draw3pcsBackground(g, 0, 0, bounds[WIDTH], bgImages);
+                }else{//no image available draw a rect with color as background
+                     g.setColor(ScreenSkin.COLOR_BG);
+                     g.fillRect(-ChoiceGroupSkin.PAD_H, 0,
+                           ChoiceGroupSkin.PAD_H + contentW +
+                           ChoiceGroupSkin.PAD_H,
+                           elHeights[i]);
+                }
+            }
             if (choiceImg != null) {
                 if (ScreenSkin.RL_DIRECTION) {
                     g.drawImage(choiceImg, bounds[WIDTH]
                             - 2 * ChoiceGroupSkin.PAD_H - choiceImg.getWidth(),
-                            0, Graphics.LEFT | Graphics.TOP);
+                            ChoiceGroupSkin.PAD_V, Graphics.LEFT | Graphics.TOP);
                     offSetX = ChoiceGroupSkin.PAD_H;
                 } else {
-                    g.drawImage(choiceImg, 0, 0,
+                    g.drawImage(choiceImg, ChoiceGroupSkin.PAD_H,
+                            ChoiceGroupSkin.PAD_V,
                             Graphics.LEFT | Graphics.TOP);
-                    offSetX = ChoiceGroupSkin.PAD_H + choiceImg.getWidth();
+                    offSetX = 2 * ChoiceGroupSkin.PAD_H + choiceImg.getWidth();
                 }
             } else {
                 g.setColor(ChoiceGroupSkin.COLOR_FG);
@@ -878,30 +910,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                         break;
                 }
             }
-                g.translate(offSetX, 0);
-
-            hilighted = (i == hilightedIndex && hasFocus);
-
-            if (hilighted) {
-                //Rache load image if available 
-                Image bgImages []= ScreenSkin.IMAGE_BG_HL;
-                if (bgImages != null){
-                    System.out.println("ChoiceGroupLFImpl bgImages != null");
-                    this.bgImage = new Image[bgImages.length];
-                    System.arraycopy(bgImages, 0, this.bgImage, 0, bgImages.length);
-                    if (bgImage.length == 3) {
-                        System.out.println("ChoiceGroupLFImpl callin draw3pcsBackground");
-                        CGraphicsUtil.draw3pcsBackground(g, 0, 0, bounds[WIDTH], bgImage);
-                    }
-                }else{//no image available draw a rect with color as background
-                     System.out.println("ChoiceGroupLFImpl drawing filled rect as background");
-                     g.setColor(ScreenSkin.COLOR_BG_HL);
-                     g.fillRect(-ChoiceGroupSkin.PAD_H, 0,
-                           ChoiceGroupSkin.PAD_H + contentW +
-                           ChoiceGroupSkin.PAD_H,
-                           elHeights[i]);
-                }
-            }
+            g.translate(offSetX, 0);
 
             textOffset = 0;
             if (cg.cgElements[i].imageEl != null) {
@@ -930,14 +939,14 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                         ChoiceGroupSkin.PAD_H;
             }
 
-            g.translate(0, -1);
+            g.translate(0, ChoiceGroupSkin.PAD_V);
             Text.paint(g, cg.cgElements[i].stringEl,
                        cg.cgElements[i].getFont(),
                        ChoiceGroupSkin.COLOR_FG,
                        ScreenSkin.COLOR_FG_HL,
                        contentW, elHeights[i], textOffset,
-                       (hilighted) ? mode | Text.INVERT : mode, null);
-            g.translate(-offSetX, elHeights[i] + 1);
+                       mode, null);
+            g.translate(-offSetX, elHeights[i] - ChoiceGroupSkin.PAD_V);
             translatedY += elHeights[i];
 
         } // end for
@@ -1029,21 +1038,24 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
      *           "CHOICE_ON" image or the "CHOICE_OFF" image
      * @return the CHOICE_ON or CHOICE_OFF image as requested
      */
-    static Image getChoiceImage(int type, boolean on) {
+    static Image getChoiceImage(int type, boolean on, boolean sel) {
+        Image[] imgs;
         switch (type) {
         case Choice.EXCLUSIVE:
-            if (ChoiceGroupSkin.IMAGE_RADIO == null) {
+            imgs = sel ? ChoiceGroupSkin.IMAGE_RADIO_HL
+                               : ChoiceGroupSkin.IMAGE_RADIO;
+            if (imgs == null) {
                 return null;
             }
-            return (on ? ChoiceGroupSkin.IMAGE_RADIO[1] : 
-                ChoiceGroupSkin.IMAGE_RADIO[0]);
+            return (on ? imgs[1] : imgs[0]);
             
         case Choice.MULTIPLE:
-            if (ChoiceGroupSkin.IMAGE_CHKBOX == null) {
+            imgs = sel ? ChoiceGroupSkin.IMAGE_CHKBOX_HL
+                               : ChoiceGroupSkin.IMAGE_CHKBOX;
+            if (imgs == null) {
                 return null;
             }
-            return (on ? ChoiceGroupSkin.IMAGE_CHKBOX[1] :  
-                ChoiceGroupSkin.IMAGE_CHKBOX[0]);
+            return (on ? imgs[1] : imgs[0]);
 
         default: // IMPLICIT or POPUP
             return null;
@@ -1069,20 +1081,23 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         // IMPL_NOTE there is an assumption here that text height is always
         // taller then the choice image and taller then the content image
 
-        elHeights[i] = 20;
+        Image[] bg = ChoiceGroupSkin.IMAGE_BG;
+        elHeights[i] = bg == null ? 20 : bg[0].getHeight();
 
         int textOffset = (cgEl.imageEl == null) ? 0 : 
             ChoiceGroupSkin.WIDTH_IMAGE + 
             ChoiceGroupSkin.PAD_H;
         
         Font fnt = cgEl.getFont();
-        
+        int v = elHeights[i];
         if (cg.fitPolicy == ChoiceGroup.TEXT_WRAP_OFF) {
-            elHeights[i] += fnt.getHeight();
+            v = Math.max(fnt.getHeight(), v);
         } else {
-            elHeights[i] += Text.getHeightForWidth(cgEl.stringEl, fnt,
-                                                    availableWidth, textOffset);
+            v = Math.max(Text.getHeightForWidth(cgEl.stringEl, fnt,
+                                                    availableWidth, textOffset),
+                                                    v);
         }
+        elHeights[i] = v;
  
         return elHeights[i];
     }

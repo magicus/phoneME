@@ -137,12 +137,14 @@ public class ChoiceGroupSkin {
      * See its comment for further details.
      */
     public static Image[] IMAGE_RADIO;
+    public static Image[] IMAGE_RADIO_HL;
     
     /**
      * This field corresponds to CHOICE_IMAGE_CHKBX skin property.
      * See its comment for further details.
      */
     public static Image[] IMAGE_CHKBOX;
+    public static Image[] IMAGE_CHKBOX_HL;
     
     /**
      * This field corresponds to CHOICE_IMAGE_BG skin property.
@@ -152,6 +154,7 @@ public class ChoiceGroupSkin {
      * and a solid fill color should be used.
      */
     public static Image[] IMAGE_BG;
+    public static Image[] IMAGE_BG_HL;
     
     /**
      * This field corresponds to CHOICE_IMAGE_BTN_BG skin property.

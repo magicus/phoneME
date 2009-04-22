@@ -77,12 +77,12 @@ public class TextFieldResources {
         TextFieldSkin.COLOR_BORDER_SHD_UE = SkinLoader.getInt(
                 SkinPropertiesIDs.TEXTFIELD_COLOR_BRDR_SHD_UE);
         /*
-        Uncomment if background image for (un)editable text component is used
+        Uncomment if background image for (un)editable text component is used*/
         TextFieldSkin.IMAGE_BG = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.TEXTFIELD_IMAGE_BG, 9);
         TextFieldSkin.IMAGE_BG_UE = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.TEXTFIELD_IMAGE_BG_UE, 9);
-        */
+        /**/
 
         init = true;
     }

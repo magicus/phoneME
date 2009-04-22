@@ -107,10 +107,12 @@ public class MenuResources {
         MenuSkin.IMAGE_BG = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.MENU_IMAGE_BG, 9);
         /*
-        Uncomment if background image for selected item is used
+        Uncomment if background image for selected item is used */
         MenuSkin.IMAGE_ITEM_SEL_BG = SkinLoader.getCompositeImage(
-                SkinPropertiesIDs.MENU_IMAGE_ITEM_SEL_BG, 3);
-        */
+                SkinPropertiesIDs.MENU_IMAGE_ITEM_SEL_BG, 9);
+        MenuSkin.IMAGE_ITEM_BG = SkinLoader.getCompositeImage(
+                SkinPropertiesIDs.MENU_IMAGE_ITEM_BG, 9);
+        /**/
         MenuSkin.IMAGE_SUBMENU_ARROW = SkinLoader.getImage(
                 SkinPropertiesIDs.MENU_IMAGE_SUBMENU);
         MenuSkin.IMAGE_SUBMENU_ARROW_HL = SkinLoader.getImage(

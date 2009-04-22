@@ -269,8 +269,7 @@ public final class Font {
         }
 
         synchronized (Display.LCDUILock) {
-            /* IMPL_NOTE: this makes garbage.  But hashtables need Object keys. */
-            Integer key = new Integer(inp_face | inp_style | inp_size);
+            FontKey key = new FontKey(inp_face, inp_style, inp_size);
             Font f = (Font)table.get(key);
             if (f == null) {
                 f = new Font(inp_face, inp_style, inp_size);
@@ -285,16 +284,17 @@ public final class Font {
         if ((inp_style & ((STYLE_UNDERLINED << 1) - 1)) != inp_style) {
             throw new IllegalArgumentException("Illegal style");
         }
-
+        
+        inp_size = -inp_size;
+        
         synchronized (Display.LCDUILock) {
-            /* IMPL_NOTE: this makes garbage.  But hashtables need Object keys. */
-            Integer key = new Integer(FACE_PROPORTIONAL | inp_style | inp_size);
+            FontKey key = new FontKey(FACE_PROPORTIONAL, inp_style, inp_size);
             Font f = (Font)table.get(key);
             if (f == null) {
                 f = new Font(FACE_PROPORTIONAL, inp_style, inp_size);
                 table.put(key, f);
             }
-
+            System.out.println("++ got font: "+inp_size+" = "+f.getSize()+" "+inp_style+" = "+f.getStyle());
             return f;
         }
         
@@ -527,5 +527,27 @@ public final class Font {
 class FontAccessImpl implements FontAccess {
     public Font getOEMFont(int style, int size) {
         return Font.getOEMFont(style, size);
+    }
+}
+
+/**
+ * Private class used to create keys for font table.
+ */         
+class FontKey {
+    private int face;
+    private int style;
+    private int size;
+    
+    FontKey(int face, int style, int size) {
+        this.face = face;
+        this.style = style;
+        this.size = size;
+    }
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof FontKey))
+            return false;
+        FontKey that = (FontKey)obj;
+        return face == that.face && style == that.style &&
+            size == that.size;
     }
 }

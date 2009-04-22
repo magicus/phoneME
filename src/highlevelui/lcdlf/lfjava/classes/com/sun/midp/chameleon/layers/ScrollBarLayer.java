@@ -37,7 +37,7 @@ import com.sun.midp.log.LogChannels;
 import com.sun.midp.chameleon.CGraphicsUtil;
 import java.util.Timer;
 import java.util.TimerTask;
-
+import com.sun.midp.lcdui.TactileFeedback;
 
 /**
  * A ScrollBarLayer is a region of the display used for showing the Form's
@@ -361,7 +361,7 @@ public class ScrollBarLayer extends ScrollIndLayer {
                 // no action for tap-and-hold in scrollbar
                 // cancel timer for any press.
                 cancelTimer();
-
+                TactileFeedback.getTactileFeedback();
                 scrollType = getScrollType(x, y);
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
@@ -395,6 +395,7 @@ public class ScrollBarLayer extends ScrollIndLayer {
                 break;
             case EventConstants.DRAGGED:
                 if (scrollType == SCROLL_THUMBTRACK) {
+                    TactileFeedback.getTactileFeedback(TactileFeedback.DRAGGED);
                     if (y < lasty - DRAG_MIN || y > lasty + DRAG_MIN ||
                         /* accumulate drag events till reaching DRAG_MIN
                    or till reaching drag boundaries */

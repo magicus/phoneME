@@ -33,7 +33,7 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
-
+import com.sun.midp.lcdui.TactileFeedback;
 /**
  * A special popup layer which implements a system
  * menu. The system menu is a collection of commands,
@@ -196,6 +196,7 @@ public class MenuLayer extends ScrollablePopupLayer {
 
             if (itemIndexWhenPressed != PRESS_OUT_OF_BOUNDS && itemIndexWhenPressed >= 0) {
                 // press on valid menu item
+                TactileFeedback.getTactileFeedback();
                 selI = scrollIndex + itemIndexWhenPressed;
                 requestRepaint();
                 // if (btnLayer != null) btnLayer.serviceRepaints();
@@ -465,10 +466,10 @@ public class MenuLayer extends ScrollablePopupLayer {
                     if (MenuSkin.IMAGE_ITEM_SEL_BG != null) {
                         // We want to draw the selected item background
 
-                        CGraphicsUtil.draw3pcsBackground(g, 3,
-                            ((selI - scrollIndex) * MenuSkin.ITEM_HEIGHT) +
+                        CGraphicsUtil.draw9pcsBackground(g, 0,
+                            ((cmdIndex - scrollIndex) * MenuSkin.ITEM_HEIGHT) +
                                 MenuSkin.IMAGE_BG[0].getHeight(),
-                            bounds[W] - 3,
+                            bounds[W], MenuSkin.ITEM_HEIGHT,
                             MenuSkin.IMAGE_ITEM_SEL_BG);
                     } else {
                         if (ScreenSkin.RL_DIRECTION) {
@@ -483,6 +484,32 @@ public class MenuLayer extends ScrollablePopupLayer {
                             ((selI - scrollIndex) * MenuSkin.ITEM_HEIGHT) +
                                 MenuSkin.ITEM_TOPOFFSET,
                             MenuSkin.FONT_ITEM_SEL.stringWidth(
+                                menuCmds[cmdIndex].getLabel()) + 4 + x,
+                            MenuSkin.ITEM_HEIGHT,
+                            3, 3);
+                    }
+                } else {
+                    if (MenuSkin.IMAGE_ITEM_BG != null) {
+                        // We want to draw the non-selected item background
+
+                        CGraphicsUtil.draw9pcsBackground(g, 3,
+                            ((cmdIndex - scrollIndex) * MenuSkin.ITEM_HEIGHT) +
+                                MenuSkin.IMAGE_BG[0].getHeight(),
+                            bounds[W] - 3, MenuSkin.ITEM_HEIGHT,
+                            MenuSkin.IMAGE_ITEM_BG);
+                    } else {
+                        if (ScreenSkin.RL_DIRECTION) {
+                            itemOffset = bounds[W] - MenuSkin.ITEM_ANCHOR_X + 2 -
+                                MenuSkin.FONT_ITEM.stringWidth(
+                                menuCmds[cmdIndex].getLabel()) - 4 - x;
+                        } else {
+                            itemOffset = MenuSkin.ITEM_ANCHOR_X - 2;
+                        }
+                        g.setColor(MenuSkin.COLOR_BG_SEL);
+                        g.fillRoundRect(itemOffset,
+                            ((selI - scrollIndex) * MenuSkin.ITEM_HEIGHT) +
+                                MenuSkin.ITEM_TOPOFFSET,
+                            MenuSkin.FONT_ITEM.stringWidth(
                                 menuCmds[cmdIndex].getLabel()) + 4 + x,
                             MenuSkin.ITEM_HEIGHT,
                             3, 3);

@@ -23,7 +23,6 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 #include <commonKNIMacros.h>
 #include <anc_vibrate.h>
 #include <midpEventUtil.h>
@@ -67,5 +66,14 @@ KNIDECL(com_sun_midp_lcdui_DisplayDeviceAccess_vibrate0) {
     } else {
         KNI_ReturnBoolean(anc_start_vibrate());
     }
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_TactileFeedback_getTactileFeedback0) {
+
+    int type = KNI_GetParameterAsInt(1);
+    javacall_get_tactile_feedback(type);
+
+    KNI_ReturnVoid();
 }
 

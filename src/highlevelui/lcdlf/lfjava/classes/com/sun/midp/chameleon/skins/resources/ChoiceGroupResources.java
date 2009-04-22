@@ -82,11 +82,17 @@ public class ChoiceGroupResources {
                 SkinPropertiesIDs.CHOICE_IMAGE_RADIO, 2);
         ChoiceGroupSkin.IMAGE_CHKBOX = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.CHOICE_IMAGE_CHKBX, 2);
+        ChoiceGroupSkin.IMAGE_RADIO_HL = SkinLoader.getCompositeImage(
+                SkinPropertiesIDs.CHOICE_IMAGE_RADIO_HL, 2);
+        ChoiceGroupSkin.IMAGE_CHKBOX_HL = SkinLoader.getCompositeImage(
+                SkinPropertiesIDs.CHOICE_IMAGE_CHKBX_HL, 2);
         /*
-        Uncomment if background image is used
+        Uncomment if background image is used */
+        ChoiceGroupSkin.IMAGE_BG_HL = SkinLoader.getCompositeImage(
+                SkinPropertiesIDs.CHOICE_IMAGE_BG_HL, 3);
         ChoiceGroupSkin.IMAGE_BG = SkinLoader.getCompositeImage(
-                SkinPropertiesIDs.CHOICE_IMAGE_BG, 9);
-        */
+                SkinPropertiesIDs.CHOICE_IMAGE_BG, 3);
+        /**/
         ChoiceGroupSkin.IMAGE_BUTTON_BG = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.CHOICE_IMAGE_BTN_BG, 9);
         ChoiceGroupSkin.IMAGE_BUTTON_ICON = SkinLoader.getImage(

@@ -33,6 +33,7 @@ import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 import com.sun.midp.lcdui.EventConstants;
 
 import javax.microedition.lcdui.*;
+import com.sun.midp.lcdui.TactileFeedback;
 
 /**
  * A "Popup" layer is a special kind of layer which can
@@ -220,6 +221,7 @@ public class ScrollablePopupLayer extends PopupLayer
     public boolean pointerInput(int type, int x, int y) {
         switch (type) {
             case EventConstants.PRESSED:
+                TactileFeedback.getTactileFeedback();
                 pointerY = y;
                 break;
             case EventConstants.DRAGGED:
@@ -231,6 +233,8 @@ public class ScrollablePopupLayer extends PopupLayer
                 break;
             case EventConstants.FLICKERED:
                 if (pointerDeltaY != 0) {
+                    TactileFeedback.getTactileFeedback(
+                        TactileFeedback.FLICKERED);
                     GestureAnimator.flick(this, pointerDeltaY);
                     stableY = 0;
                 }

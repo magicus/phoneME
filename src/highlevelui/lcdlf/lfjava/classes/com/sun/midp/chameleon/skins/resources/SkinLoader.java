@@ -89,12 +89,16 @@ public class SkinLoader {
         if (locale != null && locale.equals("he-IL")) {
             ScreenSkin.TEXT_ORIENT = Graphics.RIGHT;
             TickerSkin.DIRECTION = Graphics.RIGHT;
-            TitleSkin.TEXT_ALIGN_X = Graphics.RIGHT;
+            /* Graphics.HCENTER must be kept */
+            if (TitleSkin.TEXT_ALIGN_X == Graphics.RIGHT) {
+            	TitleSkin.TEXT_ALIGN_X = Graphics.LEFT;
+            } else if (TitleSkin.TEXT_ALIGN_X == Graphics.LEFT) {
+                TitleSkin.TEXT_ALIGN_X = Graphics.RIGHT;
+            }
             ScreenSkin.RL_DIRECTION = true;
         } else {
             ScreenSkin.TEXT_ORIENT = Graphics.LEFT;
             TickerSkin.DIRECTION = Graphics.LEFT;
-            TitleSkin.TEXT_ALIGN_X = Graphics.LEFT;
             ScreenSkin.RL_DIRECTION = false;
         }
 

@@ -33,7 +33,7 @@ import com.sun.midp.chameleon.skins.resources.*;
 import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.lcdui.EventConstants;
-
+import com.sun.midp.lcdui.TactileFeedback;
 
 public class CascadeMenuLayer extends ScrollablePopupLayer {
     
@@ -63,7 +63,7 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
 
     public CascadeMenuLayer() {
         super();
-        setBackground(null, MenuSkin.COLOR_BG);
+        setBackground(MenuSkin.IMAGE_BG, MenuSkin.COLOR_BG);
     }
     
     public void setMenuCommands(Command[] cmdList, MenuLayer menuLayer) 
@@ -150,10 +150,12 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
             // dismiss the menu layer if the user pressed outside the menu
             if (itemIndexWhenPressed == PRESS_OUT_OF_BOUNDS) {
                 if (menuLayer != null) {
+                    TactileFeedback.getTactileFeedback();
                     menuLayer.dismissCascadeMenu();
                 }
                 consume = false;
             } else if (itemIndexWhenPressed >= 0) { // press on valid menu item
+                TactileFeedback.getTactileFeedback();
                 selI = scrollIndex + itemIndexWhenPressed;
                 requestRepaint();
                 // if (btnLayer != null) btnLayer.serviceRepaints();
@@ -352,12 +354,14 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
 
             int itemOffset = 0;
             if (cmdIndex == selI) {
+                System.out.println("+++ drawing selected menu item");
                 if (MenuSkin.IMAGE_ITEM_SEL_BG != null) {
                     // We want to draw the selected item background
-                    CGraphicsUtil.draw3pcsBackground(g, 3, 
-                        ((selI - scrollIndex) * MenuSkin.ITEM_HEIGHT) + 
-                            MenuSkin.IMAGE_BG[0].getHeight(),
-                        bounds[W] - 3,
+                    int yoff = ((selI - scrollIndex) * MenuSkin.ITEM_HEIGHT) + 
+                            MenuSkin.IMAGE_BG[0].getHeight();
+                    CGraphicsUtil.draw9pcsBackground(g, 0, 
+                        yoff,
+                        bounds[W], MenuSkin.ITEM_HEIGHT,
                         MenuSkin.IMAGE_ITEM_SEL_BG);
                 } else {
                     if (ScreenSkin.RL_DIRECTION) {
@@ -371,6 +375,32 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
                     g.fillRoundRect(itemOffset,
                         ((selI - scrollIndex) * MenuSkin.ITEM_HEIGHT),
                         MenuSkin.FONT_ITEM_SEL.stringWidth(
+                            menuCmds[cmdIndex].getLabel()) + 4,
+                        MenuSkin.ITEM_HEIGHT,
+                        3, 3);
+                }
+            } else {
+                System.out.println("+++ drawing non-selected menu item");
+                if (MenuSkin.IMAGE_ITEM_BG != null) {
+                    // We want to draw the selected item background
+                    int yoff = ((cmdIndex - scrollIndex) * MenuSkin.ITEM_HEIGHT) + 
+                            MenuSkin.IMAGE_BG[0].getHeight(); 
+                    CGraphicsUtil.draw9pcsBackground(g, 0, 
+                        yoff,
+                        bounds[W], MenuSkin.ITEM_HEIGHT,
+                        MenuSkin.IMAGE_ITEM_BG);
+                } else {
+                    if (ScreenSkin.RL_DIRECTION) {
+                            itemOffset = bounds[W] - MenuSkin.ITEM_ANCHOR_X + 2 -
+                                MenuSkin.FONT_ITEM.stringWidth(
+                                menuCmds[cmdIndex].getLabel()) - 4;
+                        } else {
+                            itemOffset = MenuSkin.ITEM_ANCHOR_X - 2;
+                        }
+                    g.setColor(MenuSkin.COLOR_BG);
+                    g.fillRoundRect(itemOffset,
+                        ((cmdIndex - scrollIndex) * MenuSkin.ITEM_HEIGHT),
+                        MenuSkin.FONT_ITEM.stringWidth(
                             menuCmds[cmdIndex].getLabel()) + 4,
                         MenuSkin.ITEM_HEIGHT,
                         3, 3);

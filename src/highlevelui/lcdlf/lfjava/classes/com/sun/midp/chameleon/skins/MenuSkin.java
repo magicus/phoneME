@@ -199,6 +199,15 @@ public class MenuSkin {
     public static Image[] IMAGE_ITEM_SEL_BG;
 
     /**
+     * This field corresponds to MENU_IMAGE_ITEM_BG skin property.
+     * See its comment for further details.
+     *
+     * A 'null' value for this array means there is no image background
+     * and a solid fill color should be used.
+     */
+    public static Image[] IMAGE_ITEM_BG;
+
+    /**
      * This field corresponds to MENU_IMAGE_SUBMENU skin property.
      * See its comment for further details.
      */
