@@ -1301,8 +1301,8 @@ javacall_result javacall_media_get_metadata_key(javacall_handle handle,
  * @param handle    Handle to the library 
  * @param key       Meta data key string
  * @param bufLength dataBuf buffer's size in bytes. 
- * @param dataBuf   Buffer that used to return meta data strings. 
- *                  NULL value should be appended to the end of string.
+ * @param dataBuf   Buffer that used to return meta data value as 
+ *                  null-terminated string.
  *
  * @note  If the meta data value is null, the output buffer will contain
  *        following two 16-bit units: 0xffff, 0x0000.
