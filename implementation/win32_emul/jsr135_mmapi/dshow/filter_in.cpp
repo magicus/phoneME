@@ -670,7 +670,7 @@ HRESULT __stdcall filter_in_pin::WaitForNext(DWORD /*dwTimeout*/, IMediaSample *
     print("filter_in_pin::WaitForNext called...\n");
 #endif
     if(!ppSample) return E_POINTER;
-    if(flushing)
+    //if(flushing) // temporarily commented out to fix occasional crashes
     {
         *ppSample = null;
         return VFW_E_WRONG_STATE;
