@@ -27,4 +27,4 @@
 #include "player.hpp"
 #include "player_callback.hpp"
 
-bool create_player_dshow(nat32 len, char16 const *pformat, player_callback *pcallback, player **ppplayer);
+bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcallback, player **ppplayer);

@@ -24,27 +24,28 @@
 
 #pragma once
 
-typedef __int16 unsigned bits16;
-typedef __int32 unsigned bits32;
-typedef __int64 unsigned bits64;
-typedef __int8  unsigned bits8 ;
+typedef unsigned __int16 bits16;
+typedef unsigned __int32 bits32;
+typedef unsigned __int64 bits64;
+typedef unsigned __int8  bits8 ;
 
 #ifdef _NATIVE_WCHAR_T_DEFINED
-typedef wchar_t char16;
+    typedef wchar_t char16;
 #else
-typedef short unsigned char16;
+    typedef unsigned __int16 char16;
 #endif
+
 typedef char char8;
 
-typedef __int16 signed int16;
-typedef __int32 signed int32;
-typedef __int64 signed int64;
-typedef __int8  signed int8 ;
+typedef signed __int16 int16;
+typedef signed __int32 int32;
+typedef signed __int64 int64;
+typedef signed __int8  int8 ;
 
-typedef __int16 unsigned nat16; // Natural numbers include 0
-typedef __int32 unsigned nat32;
-typedef __int64 unsigned nat64;
-typedef __int8  unsigned nat8 ;
+typedef unsigned __int16 nat16; // Natural numbers include 0
+typedef unsigned __int32 nat32;
+typedef unsigned __int64 nat64;
+typedef unsigned __int8  nat8 ;
 
 typedef float  real32;
 typedef double real64;
