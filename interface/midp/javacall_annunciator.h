@@ -235,7 +235,7 @@ typedef enum {
  * Get feedback on touching a control
  * @param type must be one of the types defined in javacall_tactile_type enum
  */
-javacall_result javacall_get_tactile_feedback(javacall_int32 type);
+javacall_result javacall_get_tactile_feedback(javacall_tactile_type type);
     
 #ifdef __cplusplus
 } //extern "C"
