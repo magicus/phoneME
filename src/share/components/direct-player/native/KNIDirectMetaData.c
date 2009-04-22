@@ -134,6 +134,7 @@ KNIDECL(com_sun_mmedia_DirectMetaData_nGetKeyValue) {
             value = MMP_MALLOC(sizeof(javacall_utf16) * valueSize);
             if (value == NULL) {
                 KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+                MMP_FREE(key);
             } else {
                 ret = javacall_media_get_metadata(pKniInfo->pNativeHandle, key, valueSize, value);
                 while (ret == JAVACALL_OUT_OF_MEMORY && valueSize < MAX_VALUE_LENGTH) {
@@ -141,13 +142,14 @@ KNIDECL(com_sun_mmedia_DirectMetaData_nGetKeyValue) {
                     value = MMP_REALLOC(value, sizeof(javacall_utf16) * valueSize);
                     if (value == NULL) {
                         KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+                        MMP_FREE(key);
                         break;
                     }
                     ret = javacall_media_get_metadata(pKniInfo->pNativeHandle, key, valueSize, value);
                 }
                 if (key != NULL && value != NULL) {
                     if (ret == JAVACALL_OK) {
-                        if (value[0] != (javacall_utf16)-1 || value[1] != 0) {
+                        if (value[0] != (javacall_utf16)0xffff || value[1] != 0) {
                             javautil_unicode_utf16_ulength(value, &valueSize);
                             KNI_NewString(value, valueSize, valueObj);
                         }
