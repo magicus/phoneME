@@ -32,7 +32,12 @@ extern "C" {
 #include "javacall_font.h"
     
 
-
+/** The "small" system-dependent font size. */
+const javacall_font_size JAVACALL_FONT_SIZE_SMALL = 0x8;
+/** The "medium" system-dependent font size. */
+const javacall_font_size JAVACALL_FONT_SIZE_MEDIUM = 0x12;
+/** The "large" system-dependent font size. */
+const javacall_font_size JAVACALL_FONT_SIZE_LARGE = 0x16;
 
     
 /**
