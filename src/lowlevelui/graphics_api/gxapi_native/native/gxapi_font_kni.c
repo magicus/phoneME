@@ -33,6 +33,7 @@
 #include <gx_font.h>
 #include <gxapi_constants.h>
 #include "gxapi_intern_graphics.h"
+#include "javacall_font.h"
 
 /**
  * @file
@@ -54,6 +55,7 @@
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(javax_microedition_lcdui_Font_init) {
+    jboolean free_size = KNI_GetParameterAsBoolean(4);
     int size  = (int)KNI_GetParameterAsInt(3);
     int style = (int)KNI_GetParameterAsInt(2);
     int face  = (int)KNI_GetParameterAsInt(1);
@@ -61,6 +63,11 @@ KNIDECL(javax_microedition_lcdui_Font_init) {
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(thisObject);
+    
+    if (free_size == KNI_FALSE) {
+        /* size is one of the SIZE_XXX constants */
+        size = JAVACALL_FONT_SIZE(size);
+    }
 
     KNI_GetParameterAsObject(0, thisObject);
 
@@ -70,11 +77,43 @@ KNIDECL(javax_microedition_lcdui_Font_init) {
 
     GET_FONT_PTR(thisObject)->baseline = (jint)ascent;
     GET_FONT_PTR(thisObject)->height = (jint)(ascent + descent + leading);
+    GET_FONT_PTR(thisObject)->size = (jint)size;
 
     SNI_END_RAW_POINTERS;
     
     KNI_EndHandles();
     KNI_ReturnVoid();
+}
+
+/**
+ * Gets the size of the this <tt>Font</tt> object.
+ * <p>
+ * Java declaration:
+ * <pre>
+ *     getSize(C)I
+ * </pre>
+ *
+ * @return one of the SIZE_XXX constants defined in the Font class
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(javax_microedition_lcdui_Font_getSize0) {
+    int face, style, size;
+
+    KNI_StartHandles(1);
+
+    KNI_DeclareHandle(thisObject);
+    KNI_GetParameterAsObject(0, thisObject);
+
+    DECLARE_FONT_PARAMS(thisObject);
+    if (size <= JAVACALL_FONT_SIZE_SMALL)
+        size = SIZE_SMALL;
+    else if (size >= JAVACALL_FONT_SIZE_LARGE)
+        size = SIZE_LARGE;
+    else
+        size = SIZE_MEDIUM;
+
+    KNI_EndHandles();
+    KNI_ReturnInt(size);
 }
 
 /**

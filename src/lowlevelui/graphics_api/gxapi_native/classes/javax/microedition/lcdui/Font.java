@@ -176,7 +176,7 @@ public final class Font {
     static {
         OEMFont.registerFontAccessor(new FontAccessImpl());
     }
-
+    
     /**
      * Gets the <code>Font</code> used by the high level user interface
      * for the <code>fontSpecifier</code> passed in. It should be used
@@ -211,13 +211,15 @@ public final class Font {
      * @param inp_face The face to use to construct the Font
      * @param inp_style The style to use to construct the Font
      * @param inp_size The point size to use to construct the Font
+     * @parma free_size true value means inp_size is set in pixels     
      */
-    private Font(int inp_face, int inp_style, int inp_size) {
+    private Font(int inp_face, int inp_style, int inp_size, boolean free_size) {
         face  = inp_face;
         style = inp_style;
         size  = inp_size;
+        freeSize = free_size;
 
-        init(inp_face, inp_style, inp_size);
+        init(inp_face, inp_style, inp_size, free_size);
     }
 
     /**
@@ -227,7 +229,8 @@ public final class Font {
     public static Font getDefaultFont() {
         synchronized (Display.LCDUILock) {
             if (DEFAULT_FONT == null)
-                DEFAULT_FONT = new Font(FACE_SYSTEM, STYLE_PLAIN, SIZE_MEDIUM);
+                DEFAULT_FONT = new Font(FACE_SYSTEM, STYLE_PLAIN, SIZE_MEDIUM,
+                    false);
             return DEFAULT_FONT;
         }
     }
@@ -269,11 +272,10 @@ public final class Font {
         }
 
         synchronized (Display.LCDUILock) {
-            /* IMPL_NOTE: this makes garbage.  But hashtables need Object keys. */
-            Integer key = new Integer(inp_face | inp_style | inp_size);
+            FontKey key = new FontKey(inp_face, inp_style, inp_size, false);
             Font f = (Font)table.get(key);
             if (f == null) {
-                f = new Font(inp_face, inp_style, inp_size);
+                f = new Font(inp_face, inp_style, inp_size, false);
                 table.put(key, f);
             }
 
@@ -285,16 +287,16 @@ public final class Font {
         if ((inp_style & ((STYLE_UNDERLINED << 1) - 1)) != inp_style) {
             throw new IllegalArgumentException("Illegal style");
         }
-
+        
         synchronized (Display.LCDUILock) {
-            /* IMPL_NOTE: this makes garbage.  But hashtables need Object keys. */
-            Integer key = new Integer(FACE_PROPORTIONAL | inp_style | inp_size);
+            FontKey key = new FontKey(FACE_PROPORTIONAL, inp_style,
+                                                        inp_size, true);
             Font f = (Font)table.get(key);
             if (f == null) {
-                f = new Font(FACE_PROPORTIONAL, inp_style, inp_size);
+                f = new Font(FACE_PROPORTIONAL, inp_style, inp_size, true);
                 table.put(key, f);
             }
-
+            System.out.println("++ got font: "+inp_size+" = "+f.getSize()+" "+inp_style+" = "+f.getStyle());
             return f;
         }
         
@@ -325,8 +327,10 @@ public final class Font {
      */
     public int getSize() {
         // SYNC NOTE: return of atomic value, no locking necessary
-        return size;
+        return getSize0();
     }
+    
+    private native int getSize0();
 
     /**
      * Gets the face of the font.
@@ -501,6 +505,8 @@ public final class Font {
     private int baseline;
     /** The height of this Font */
     private int height;
+    /** The flag for free size font */
+    private final boolean freeSize;
 
     /**
      * The "default" font, constructed from the 'system' face,
@@ -521,11 +527,36 @@ public final class Font {
      * @param inp_style The style to initialize the native Font
      * @param inp_size The point size to initialize the native Font
      */
-    private native void init(int inp_face, int inp_style, int inp_size);
+    private native void init(int inp_face, int inp_style, int inp_size,
+                             boolean free_size);
 }
 
 class FontAccessImpl implements FontAccess {
     public Font getOEMFont(int style, int size) {
         return Font.getOEMFont(style, size);
+    }
+}
+
+/**
+ * Private class used to create keys for font table.
+ */         
+class FontKey {
+    private final int face;
+    private final int style;
+    private final int size;
+    private final boolean freeSize;
+    
+    FontKey(int face, int style, int size, boolean freeSize) {
+        this.face = face;
+        this.style = style;
+        this.size = size;
+        this.freeSize = freeSize;
+    }
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof FontKey))
+            return false;
+        FontKey that = (FontKey)obj;
+        return face == that.face && style == that.style &&
+            size == that.size && freeSize == that.freeSize;
     }
 }

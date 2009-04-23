@@ -53,6 +53,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.lcdui.DisplayDeviceAccess \
         com.sun.midp.lcdui.DisplayDevice \
         com.sun.midp.lcdui.DisplayDeviceContainer \
+        com.sun.midp.lcdui.TactileFeedback \
         com.sun.midp.log.Logging \
         com.sun.midp.log.LoggingBase \
         com.sun.midp.main.CDCInit \

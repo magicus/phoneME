@@ -113,6 +113,7 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayFactory.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/FontAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/OEMFont.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/TactileFeedback.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/LayerManager.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameCanvas.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameAccessImpl.java \
