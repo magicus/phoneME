@@ -34,7 +34,7 @@
 #endif
 
 
-nat32 const null = 0;
+const nat32 null = 0;
 
 
 class filter_out_filter;
@@ -70,11 +70,9 @@ class filter_out_pin : public IPin, public IMemInputPin
     AM_MEDIA_TYPE amt;
 
     CRITICAL_SECTION data_cs;
-    nat32 data_l;
-    void *data_p;
-    nat32 data_a;
 
     IPin *pconnected;
+    bool flushing;
 
     filter_out_pin();
     ~filter_out_pin();
@@ -84,15 +82,15 @@ public:
     virtual ULONG __stdcall AddRef();
     virtual ULONG __stdcall Release();
     // IPin
-    virtual HRESULT __stdcall Connect(IPin *pReceivePin, AM_MEDIA_TYPE const *pmt);
-    virtual HRESULT __stdcall ReceiveConnection(IPin *pConnector, AM_MEDIA_TYPE const *pmt);
+    virtual HRESULT __stdcall Connect(IPin *pReceivePin, const AM_MEDIA_TYPE *pmt);
+    virtual HRESULT __stdcall ReceiveConnection(IPin *pConnector, const AM_MEDIA_TYPE *pmt);
     virtual HRESULT __stdcall Disconnect();
     virtual HRESULT __stdcall ConnectedTo(IPin **pPin);
     virtual HRESULT __stdcall ConnectionMediaType(AM_MEDIA_TYPE *pmt);
     virtual HRESULT __stdcall QueryPinInfo(PIN_INFO *pInfo);
     virtual HRESULT __stdcall QueryDirection(PIN_DIRECTION *pPinDir);
     virtual HRESULT __stdcall QueryId(LPWSTR *Id);
-    virtual HRESULT __stdcall QueryAccept(AM_MEDIA_TYPE const *pmt);
+    virtual HRESULT __stdcall QueryAccept(const AM_MEDIA_TYPE *pmt);
     virtual HRESULT __stdcall EnumMediaTypes(IEnumMediaTypes **ppEnum);
     virtual HRESULT __stdcall QueryInternalConnections(IPin **apPin, ULONG *nPin);
     virtual HRESULT __stdcall EndOfStream();
@@ -166,7 +164,7 @@ public:
     virtual HRESULT __stdcall JoinFilterGraph(IFilterGraph *pGraph, LPCWSTR pName);
     virtual HRESULT __stdcall QueryVendorInfo(LPWSTR *pVendorInfo);
 
-    static bool create(AM_MEDIA_TYPE const *pamt, player_callback *pcallback, filter_out_filter **ppfilter);
+    static bool create(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_out_filter **ppfilter);
 };
 
 //----------------------------------------------------------------------------
@@ -400,7 +398,7 @@ ULONG __stdcall filter_out_pin::Release()
     return pfilter->Release();
 }
 
-HRESULT __stdcall filter_out_pin::Connect(IPin *pReceivePin, AM_MEDIA_TYPE const * /*pmt*/)
+HRESULT __stdcall filter_out_pin::Connect(IPin *pReceivePin, const AM_MEDIA_TYPE * /*pmt*/)
 {
 #if write_level > 0
     print("filter_out_pin::Connect called...\n");
@@ -409,7 +407,7 @@ HRESULT __stdcall filter_out_pin::Connect(IPin *pReceivePin, AM_MEDIA_TYPE const
     return E_UNEXPECTED;
 }
 
-HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, AM_MEDIA_TYPE const *pmt)
+HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, const AM_MEDIA_TYPE *pmt)
 {
 #if write_level > 0
     print("filter_out_pin::ReceiveConnection(0x%p", pConnector);
@@ -427,7 +425,7 @@ HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, AM_MEDIA_T
         pmt->formattype != FORMAT_VideoInfo)
         return VFW_E_TYPE_NOT_ACCEPTED;
 
-    VIDEOINFOHEADER const *vih = (VIDEOINFOHEADER const *)pmt->pbFormat;
+    const VIDEOINFOHEADER *vih = (const VIDEOINFOHEADER *)pmt->pbFormat;
 #if write_level > 0
     print("%i %i\n", vih->bmiHeader.biWidth, vih->bmiHeader.biHeight);
 #endif
@@ -531,7 +529,7 @@ HRESULT __stdcall filter_out_pin::QueryId(LPWSTR *Id)
     return S_OK;
 }
 
-HRESULT __stdcall filter_out_pin::QueryAccept(AM_MEDIA_TYPE const * /*pmt*/)
+HRESULT __stdcall filter_out_pin::QueryAccept(const AM_MEDIA_TYPE * /*pmt*/)
 {
 #if write_level > 0
     print("filter_out_pin::QueryAccept called...\n");
@@ -596,7 +594,10 @@ HRESULT __stdcall filter_out_pin::BeginFlush()
 #if write_level > 0
     print("filter_out_pin::BeginFlush called...\n");
 #endif
-    return E_UNEXPECTED;
+    //EnterCriticalSection(&data_cs);
+    flushing = true;
+    //LeaveCriticalSection(&data_cs);
+    return S_OK;
 }
 
 HRESULT __stdcall filter_out_pin::EndFlush()
@@ -604,7 +605,10 @@ HRESULT __stdcall filter_out_pin::EndFlush()
 #if write_level > 0
     print("filter_out_pin::EndFlush called...\n");
 #endif
-    return E_UNEXPECTED;
+    //EnterCriticalSection(&data_cs);
+    flushing = false;
+    //LeaveCriticalSection(&data_cs);
+    return S_OK;
 }
 
 HRESULT __stdcall filter_out_pin::NewSegment(REFERENCE_TIME /*tStart*/, REFERENCE_TIME /*tStop*/, double /*dRate*/)
@@ -654,6 +658,7 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
     print("Actual data length=%i\n", pSample->GetActualDataLength());
 #endif
 
+    if(flushing) return S_FALSE;
     if(pfilter->state == State_Stopped) return VFW_E_WRONG_STATE;
 
     int64 tstart;
@@ -681,8 +686,13 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
         {
             Sleep(1);
         }
-        while(pfilter->state == State_Paused);
+        while(!flushing && pfilter->state == State_Paused);
 
+        if(flushing)
+        {
+            pms->Release();
+            return S_FALSE;
+        }
         if(pfilter->state == State_Stopped)
         {
             pms->Release();
@@ -916,7 +926,6 @@ ULONG __stdcall filter_out_filter::Release()
     {
         if(pclock) pclock->Release();
         if(ppin->pconnected) ppin->pconnected->Release();
-        if(ppin->data_a) delete[] (bits8 *)ppin->data_p;
         DeleteCriticalSection(&ppin->data_cs);
         if(ppin->amt.pUnk) ppin->amt.pUnk->Release();
         if(ppin->amt.cbFormat) delete[] ppin->amt.pbFormat;
@@ -1074,7 +1083,7 @@ inline nat32 filter_out_filter::round(nat32 n)
     return n;
 }
 
-bool filter_out_filter::create(AM_MEDIA_TYPE const *pamt, player_callback *pcallback, filter_out_filter **ppfilter)
+bool filter_out_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_out_filter **ppfilter)
 {
 #if write_level > 1
     print("filter_out_filter::create called...\n");
@@ -1109,10 +1118,6 @@ bool filter_out_filter::create(AM_MEDIA_TYPE const *pamt, player_callback *pcall
     else pfilter->ppin->amt.pbFormat = null;
     pfilter->reference_count = 1;
     pfilter->pcallback = pcallback;
-    pfilter->pgraph = null;
-    pfilter->pclock = null;
-    wcscpy_s(pfilter->name, MAX_FILTER_NAME, L"");
-    pfilter->state = State_Stopped;
     pfilter->ppin->pfilter = pfilter;
     pfilter->ppin->amt.majortype = pamt->majortype;
     pfilter->ppin->amt.subtype = pamt->subtype;
@@ -1123,9 +1128,12 @@ bool filter_out_filter::create(AM_MEDIA_TYPE const *pamt, player_callback *pcall
     pfilter->ppin->amt.pUnk = pamt->pUnk;
     if(pfilter->ppin->amt.pUnk) pfilter->ppin->amt.pUnk->AddRef();
     pfilter->ppin->amt.cbFormat = pamt->cbFormat;
-    pfilter->ppin->data_l = 0;
-    pfilter->ppin->data_a = 0;
     pfilter->ppin->pconnected = null;
+    pfilter->ppin->flushing = false;
+    pfilter->pgraph = null;
+    pfilter->pclock = null;
+    wcscpy_s(pfilter->name, MAX_FILTER_NAME, L"");
+    pfilter->state = State_Stopped;
     *ppfilter =  pfilter;
     return true;
 }
@@ -1134,7 +1142,7 @@ bool filter_out_filter::create(AM_MEDIA_TYPE const *pamt, player_callback *pcall
 // filter_out
 //----------------------------------------------------------------------------
 
-bool filter_out::create(AM_MEDIA_TYPE const *pamt, player_callback *pcallback, filter_out **ppfilter)
+bool filter_out::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_out **ppfilter)
 {
     if(!pamt || !ppfilter) return false;
     filter_out_filter *pfilter;

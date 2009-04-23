@@ -39,7 +39,7 @@
 #include "types.hpp"
 
 
-void print(char8 const *fmt, ...)
+void print(const char8 *fmt, ...)
 {
     char str8[1024];
     va_list args;
@@ -52,7 +52,7 @@ void print(char8 const *fmt, ...)
     OutputDebugStringA(str8);
 }
 
-void print(char16 const *fmt, ...)
+void print(const char16 *fmt, ...)
 {
     WCHAR str16[1024];
     va_list args;
@@ -86,7 +86,7 @@ void error(HRESULT hr)
     print("\n");
 }
 
-void error(char8 const *str, HRESULT hr)
+void error(const char8 *str, HRESULT hr)
 {
     print("%s. Errorcode: %x.", str, hr);
     WCHAR *buf;
@@ -152,12 +152,12 @@ DEFINE_GUID(MEDIASUBTYPE_s263,
 struct guid_item
 {
     GUID guid;
-    CHAR const *name;
+    const CHAR *name;
 };
 
 #define define_guid_item(name) name, #name
 
-guid_item const static guid_items[]=
+static const guid_item guid_items[]=
 {
     define_guid_item(DXVA_ModeWMV9_A                ),
     define_guid_item(DXVA_ModeWMV9_B                ),
@@ -282,7 +282,7 @@ void print(GUID guid)
 }
 
 
-void dump_media_type(AM_MEDIA_TYPE const *pamt)
+void dump_media_type(const AM_MEDIA_TYPE *pamt)
 {
     print("majortype=");
     print(pamt->majortype);

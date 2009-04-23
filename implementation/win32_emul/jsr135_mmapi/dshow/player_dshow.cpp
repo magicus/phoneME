@@ -22,18 +22,16 @@
 * information or have any questions.
 */
 
-#include <amvideo.h>
 #include <control.h>
 #include <stdio.h>
 #include <uuids.h>
-#include <wmsdkidl.h>
 #include "filter_in.hpp"
 #include "filter_out.hpp"
 #include "player.hpp"
 #include "writer.hpp"
 
 #pragma comment(lib, "strmiids.lib")
-#pragma comment(lib, "winmm.lib")
+//#pragma comment(lib, "winmm.lib")
 
 
 const nat32 null = 0;
@@ -70,13 +68,13 @@ const nat32 null = 0;
 
     namespace On2FlvSDK
     {
-        #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-            HRESULT FlvSplitCreateInstance(IUnknown *, const IID &, void **);
-        #endif
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+        HRESULT FlvSplitCreateInstance(IUnknown *, const IID &, void **);
+#endif
 
-        #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-            HRESULT FlvDecVP6CreateInstance(IUnknown *, const IID &, void **);
-        #endif
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+        HRESULT FlvDecVP6CreateInstance(IUnknown *, const IID &, void **);
+#endif
     }
 #endif
 
@@ -91,16 +89,16 @@ class player_dshow : public player
     IMediaControl *pmc;
     IMediaSeeking *pms;
     filter_in *pfi;
-    #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-        filter_out *pfo;
-    #endif
+#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+    filter_out *pfo;
+#endif
     IPin *pp;
-    #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-        IBaseFilter *pbf_flv_split;
-    #endif
-    #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-        IBaseFilter *pbf_flv_dec;
-    #endif
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+    IBaseFilter *pbf_flv_split;
+#endif
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+    IBaseFilter *pbf_flv_dec;
+#endif
 
     player_dshow()
     {
@@ -354,8 +352,16 @@ class player_dshow : public player
             return time_unknown;
         }
 
+        LONGLONG cur;
+        HRESULT hr = pms->GetDuration(&cur);
+        if(hr != S_OK)
+        {
+            *presult = result_media;
+            return media_time;
+        }
+
         *presult = result_success;
-        return time_unknown;
+        return cur / 10;
     }
 
     //string16c get_content_type(result *presult = 0)
