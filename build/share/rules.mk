@@ -65,10 +65,8 @@ ALL_INCLUDE_FLAGS	:= $(call makeIncludeFlags,$(ALL_INCLUDE_DIRS))
 #
 
 ifneq ($(CVM_TOOLS_BUILD), true)
-ifneq ($(CVM_STATICLINK_TOOLS), true)
 tools :
 	$(MAKE) CVM_TOOLS_BUILD=true tools
-endif
 endif
 
 #########################
@@ -704,6 +702,10 @@ $(J2ME_CLASSLIB):: jumptargets
 endif
 $(J2ME_CLASSLIB):: $(JSROP_JARS) $(JSROP_AGENT_JARS)
 $(J2ME_CLASSLIB):: headers $(CVM_ROMJAVA_LIST)
+ifeq ($(CVM_STATICLINK_TOOLS),true)
+$(J2ME_CLASSLIB):: tools
+#$(CVM_STATIC_TOOL_DEPS)
+endif
 $(J2ME_CLASSLIB):: $(CLASSLIB_DEPS)
 $(J2ME_CLASSLIB):: aotdeps
 $(J2ME_CLASSLIB):: $(CVM_BINDIR)/$(CVM)

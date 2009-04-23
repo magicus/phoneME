@@ -487,9 +487,10 @@ endif
 ifeq ($(USE_CDC_COM),true)
 -include $(CDC_COM_DIR)/build/share/defs_cdc_com.mk
 endif
+ifneq ($(CVM_TOOLS_BUILD),true)
 ifeq ($(CVM_STATICLINK_TOOLS),true)
-# Include the makefiles for tool libraries to build here since we are building
-# the tools into the executable statically:
+# Include the makefiles for tool libraries to setup LINKCVM_LIBS
+# dependencies for linking the executable statically:
 # NOTE: For jcov and hprof, the platform specific makefiles need to be
 #       included first.
 ifeq ($(CVM_JVMPI),true)
@@ -505,19 +506,15 @@ endif
 ifeq ($(CVM_JVMTI),true)
 -include $(CDC_DIR)/build/share/defs_jvmti_crw.mk
 -include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jvmti_crw.mk
--include $(CDC_DIR)/build/share/rules_jvmti_crw.mk
--include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/rules_jvmti_crw.mk
 -include $(CDC_DIR)/build/share/defs_jvmti_hprof.mk
 -include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jvmti_hprof.mk
--include $(CDC_DIR)/build/share/rules_jvmti_hprof.mk
--include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/rules_jvmti_hprof.mk
-#-include $(CDC_DIR)/build/share/defs_jdwp.mk
-#-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jdwp.mk
-#-include $(CDC_DIR)/build/share/rules_jdwp.mk
-#-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/rules_jdwp.mk
-#-include $(CDC_DIR)/build/share/defs_jdwp_transport.mk
-#-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jdwp_transport.mk
-#-include $(CDC_DIR)/build/share/rules_jdwp_transport.mk
+-include $(CDC_DIR)/build/share/defs_jdwp.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jdwp.mk
+-include $(CDC_DIR)/build/share/defs_jdwp_transport.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jdwp_transport.mk
+-include $(CDC_DIR)/build/share/defs_nb_profiler.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_nb_profiler.mk
+endif
 endif
 endif
 
@@ -568,6 +565,11 @@ ifeq ($(CVM_TOOLS_BUILD),true)
 -include $(CDC_DIR)/build/share/defs_jdwp_transport.mk
 -include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jdwp_transport.mk
 -include $(CDC_DIR)/build/share/rules_jdwp_transport.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/rules_jdwp_transport.mk
+-include $(CDC_DIR)/build/share/defs_nb_profiler.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_nb_profiler.mk
+-include $(CDC_DIR)/build/share/rules_nb_profiler.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/rules_nb_profiler.mk
 -include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/cvmc.mk
 -include $(CDC_DIR)/build/share/cvmc.mk
 endif

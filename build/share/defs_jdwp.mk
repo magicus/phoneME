@@ -46,7 +46,7 @@ CVM_JDWP_BUILDDIRS += \
         $(CVM_JDWP_FLAGSDIR) \
         $(CVM_JDWP_CLASSES)
 
-CVM_JDWP_LIB = $(LIB_PREFIX)jdwp$(LIB_POSTFIX)
+CVM_JDWP_LIB = $(CVM_JDWP_LIBDIR)/$(LIB_PREFIX)jdwp$(LIB_POSTFIX)
 
 CVM_JDWP_TRANSPORT = socket
 
@@ -74,9 +74,9 @@ ifeq ($(JPDA_NO_DLALLOC), true)
 CVM_JDWP_DEFINES += -DJPDA_NO_DLALLOC
 endif
 
-jdwp : ALL_INCLUDE_FLAGS := \
-	$(ALL_INCLUDE_FLAGS) $(call makeIncludeFlags,$(CVM_JDWP_INCLUDE_DIRS))
-jdwp : CVM_DEFINES += $(CVM_JDWP_DEFINES)
+ifeq ($(CVM_STATICLINK_TOOLS), true)
+CVM_STATIC_TOOL_LIBS += $(CVM_JDWP_LIB)
+endif
 
 #
 # List of object files to build:
@@ -147,9 +147,6 @@ CVM_JDWP_SRCDIRS  = \
 	$(CVM_JDWP_TARGETSHAREROOT)/javavm/runtime \
 	$(CVM_TOP)/src/portlibs/dlfcn
 
-vpath %.c      $(CVM_JDWP_SRCDIRS)
-vpath %.S      $(CVM_JDWP_SRCDIRS)
-
 CVM_JDWP_FLAGS += \
         CVM_SYMBOLS \
         CVM_OPTIMIZED \
@@ -166,6 +163,3 @@ CVM_JDWP_CLEANUP_ACTION = \
 CVM_JDWP_CLEANUP_OBJ_ACTION = \
         rm -rf $(CVM_JDWP_OBJDIR)
 
-
--include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jdwp_transport.mk
--include $(CDC_DIR)/build/share/defs_jdwp_transport.mk

@@ -36,7 +36,7 @@ jdwp-clean:
 ifeq ($(CVM_JVMTI), true)
     jdwp_build_list = jdwp_initbuild \
 	    $(CVM_JDWP_BUILD_TOP)/JDWPCommands.h \
-	    $(CVM_JDWP_LIBDIR)/$(CVM_JDWP_LIB) \
+	    $(CVM_JDWP_LIB) \
 	    jdwp-dt
 else
     jdwp_build_list =
@@ -44,17 +44,25 @@ endif
 
 jdwp: $(jdwp_build_list)
 
+jdwp : ALL_INCLUDE_FLAGS := \
+	$(ALL_INCLUDE_FLAGS) $(call makeIncludeFlags,$(CVM_JDWP_INCLUDE_DIRS))
+jdwp : CVM_DEFINES += $(CVM_JDWP_DEFINES)
+
 jdwp_initbuild: jdwp_check_cvm jdwp_checkflags $(CVM_JDWP_BUILDDIRS)
 
 # Make sure that CVM is built before building jdwp.  If not, the issue a
 # warning and abort.
 jdwp_check_cvm:
+ifneq ($(CVM_STATICLINK_TOOLS), true)
 	@if [ ! -f $(CVM_BINDIR)/$(CVM) ]; then \
 	    echo "Warning! Need to build CVM with before building JDWP."; \
 	    exit 1; \
 	else \
 	    echo; echo "Building JDWP tool ..."; \
 	fi
+else
+	echo; echo "Building JDWP tool ...";
+endif
 
 # Make sure all of the build flags files are up to date. If not, then do
 # the requested cleanup action.
@@ -68,13 +76,20 @@ jdwp_checkflags: $(CVM_JDWP_FLAGSDIR)
 		fi \
 	done
 
+vpath %.c      $(CVM_JDWP_SRCDIRS)
+vpath %.S      $(CVM_JDWP_SRCDIRS)
+
 $(CVM_JDWP_BUILDDIRS):
 	@echo ... mkdir $@
 	@if [ ! -d $@ ]; then mkdir -p $@; fi
 
-$(CVM_JDWP_LIBDIR)/$(CVM_JDWP_LIB): $(CVM_JDWP_OBJECTS)
+$(CVM_JDWP_LIB): $(CVM_JDWP_OBJECTS)
 	@echo "Linking $@"
+ifeq ($(CVM_STATICLINK_TOOLS), true)
+	$(call STATIC_LIB_LINK_CMD, $(CVM_JDWP_LINKLIBS))
+else
 	$(call SO_LINK_CMD, $(CVM_JDWP_LINKLIBS))
+endif
 	@echo "Done Linking $@"
 
 # The following are used to build the .o files needed for $(CVM_JDWP_OBJECTS):

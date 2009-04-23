@@ -6830,6 +6830,7 @@ translateRange(CVMJITCompilationContext* con,
 
 	/* Used to be Lossy mode: We now rely on quicken.c to 
          * do the right thing based on runtime decisions.
+         * Romized code has quickened opcode hence the check.
 	 * Quickened opcodes from opc_getfield and opc_getfield.
 	 * field index is embedded in the instruction.
 	 */
@@ -6837,7 +6838,7 @@ translateRange(CVMJITCompilationContext* con,
 	case opc_agetfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
 #ifdef CVM_JVMTI
-            if (CVMjvmtiIsEnabled()) {
+            if (CVMjvmtiIsEnabled() && !CVMcbIsInROM(cb)) {
                 goto unimplemented_opcode;
             }
 #endif
@@ -6849,7 +6850,7 @@ translateRange(CVMJITCompilationContext* con,
         case opc_getfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
 #ifdef CVM_JVMTI
-            if (CVMjvmtiIsEnabled()) {
+            if (CVMjvmtiIsEnabled() && !CVMcbIsInROM(cb)) {
                 goto unimplemented_opcode;
             }
 #endif
@@ -6862,7 +6863,7 @@ translateRange(CVMJITCompilationContext* con,
         case opc_getfield2_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
 #ifdef CVM_JVMTI
-            if (CVMjvmtiIsEnabled()) {
+            if (CVMjvmtiIsEnabled() && !CVMcbIsInROM(cb)) {
                 goto unimplemented_opcode;
             }
 #endif
@@ -6875,7 +6876,7 @@ translateRange(CVMJITCompilationContext* con,
 	case opc_aputfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
 #ifdef CVM_JVMTI
-            if (CVMjvmtiIsEnabled()) {
+            if (CVMjvmtiIsEnabled() && !CVMcbIsInROM(cb)) {
                 goto unimplemented_opcode;
             }
 #endif
@@ -6889,7 +6890,7 @@ translateRange(CVMJITCompilationContext* con,
         case opc_putfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
 #ifdef CVM_JVMTI
-            if (CVMjvmtiIsEnabled()) {
+            if (CVMjvmtiIsEnabled() && !CVMcbIsInROM(cb)) {
                 goto unimplemented_opcode;
             }
 #endif
@@ -6902,7 +6903,7 @@ translateRange(CVMJITCompilationContext* con,
         case opc_putfield2_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
 #ifdef CVM_JVMTI
-            if (CVMjvmtiIsEnabled()) {
+            if (CVMjvmtiIsEnabled() && !CVMcbIsInROM(cb)) {
                 goto unimplemented_opcode;
             }
 #endif

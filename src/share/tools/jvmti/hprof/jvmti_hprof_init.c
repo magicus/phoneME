@@ -1880,7 +1880,6 @@ getCapabilities(void)
 
 }
 
-#ifndef CVM_STATICLINK_TOOLS
 /* Dynamic library loading */
 static void *
 load_library(char *name)
@@ -1932,16 +1931,11 @@ lookup_library_symbol(void *library, char **symbols, int nsymbols)
     }
     return addr;
 }
-#endif
 
 /* ------------------------------------------------------------------- */
 /* The OnLoad interface */
 JNIEXPORT jint JNICALL
-#ifdef CVM_STATICLINK_TOOLS
-Agent_OnLoadJvmtiHprof
-#else
 Agent_OnLoad
-#endif
 (JavaVM *vm, char *options, void *reserved)
 {
     /* See if it's already loaded */
@@ -2040,7 +2034,6 @@ Agent_OnLoad
 
     /* Load java_crw_demo library and find function "java_crw_demo" */
     if ( gdata->bci ) {
-#ifndef CVM_STATICLINK_TOOLS
 	/* Load the library or get the handle to it */
 	gdata->java_crw_demo_library = load_library("java_crw_demo"); 
 	{ /* "java_crw_demo" */
@@ -2055,20 +2048,12 @@ Agent_OnLoad
 	           lookup_library_symbol(gdata->java_crw_demo_library, 
 			      symbols, (int)(sizeof(symbols)/sizeof(char*)));
         }
-#else
-        gdata->java_crw_demo_function = java_crw_demo;
-        gdata->java_crw_demo_classname_function = java_crw_demo_classname;
-#endif
     }
     
     return JNI_OK;
 }
 JNIEXPORT void JNICALL 
-#ifdef CVM_STATICLINK_TOOLS
-Agent_OnUnloadJvmtiHprof
-#else
 Agent_OnUnload
-#endif
 (JavaVM *vm)
 {
     Stack *stack;
@@ -2146,13 +2131,11 @@ Agent_OnUnload
 	gdata->debug_malloc_lock = NULL;
     #endif
 
-#ifndef CVM_STATICLINK_TOOLS
     /* Unload java_crw_demo library */
     if ( gdata->bci && gdata->java_crw_demo_library != NULL ) {
 	md_unload_library(gdata->java_crw_demo_library);
 	gdata->java_crw_demo_library = NULL;
     }
-#endif
     /* You would think you could clear out gdata and set it to NULL, but
      *   turns out that isn't a good idea.  Some of the threads could be
      *   blocked inside the CALLBACK*() macros, where they got blocked up
