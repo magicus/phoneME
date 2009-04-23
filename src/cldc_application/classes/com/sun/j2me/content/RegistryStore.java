@@ -289,6 +289,8 @@ class RegistryStore implements RegistryGate {
         if (!init()) {
             throw new RuntimeException("RegistryStore initialization failed");
         }
+		if( AppProxy.LOGGER != null )
+			AppProxy.LOGGER.println("RegistryStore has created");
     }
     
     public static RegistryGate getInstance(){

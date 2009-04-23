@@ -58,7 +58,7 @@ void blockThread( jsr211_wait_status status, int blockID ) {
         p = (MidpReentryData*)SNI_AllocateReentryData(sizeof(MidpReentryData));
     }
 #ifdef TRACE_BLOCKING
-    printf( "blockThread(%d, %p) %p\n", status, blockID, p );
+    printf( "blockThread(%d, %p), ~id = %p\n", status, blockID, p );
 #endif
     p->waitingFor = JSR211_SIGNAL;
     p->status = (int)status;
@@ -72,7 +72,7 @@ void blockThread( jsr211_wait_status status, int blockID ) {
 jboolean isThreadCancelled( void ) {
     MidpReentryData* p = (MidpReentryData*)(SNI_GetReentryData(NULL));
 #ifdef TRACE_BLOCKING
-    printf( "isThreadCancelled(%p): %s\n", p, (p != NULL && p->status == JSR211_WAIT_CANCELLED)? "yes" : "no" );
+    printf( "isThreadCancelled: ~id = %p, %s\n", p, (p != NULL && p->status == JSR211_WAIT_CANCELLED)? "yes" : "no" );
 #endif
     return (p != NULL && p->status == JSR211_WAIT_CANCELLED);
 }
@@ -118,9 +118,10 @@ void unblockThread( const JVMSPI_BlockedThreadInfo * p ){
     JVMSPI_ThreadID id = p->thread_id;
     if (id != NULL) {
 #ifdef TRACE_BLOCKING
-        printf( "unblock thread: id = %p\n", id );
+        MidpReentryData * mrd = (MidpReentryData *)p->reentry_data;
+        if( mrd != NULL )
+            printf( "unblockThread: (%d, %p), ~id = %p\n", mrd->status, mrd->pResult, mrd );
 #endif
-
         SNI_UnblockThread(id);
     }
 }

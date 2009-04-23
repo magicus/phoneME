@@ -47,8 +47,10 @@ import com.sun.j2me.security.Token;
  */
 public final class RegistryImpl {
 	
-	static public final RegistryGate gate = //RegistryStore.getInstance();
-		new RegistryRequestsConverter( new RegistryRequestExecutor( RegistryStore.getInstance() ) );
+	static public final RegistryGate gate = 
+		//RegistryStore.getInstance();
+		//new RegistryRequestsConverter( new RegistryRequestExecutor( RegistryStore.getInstance() ) );
+		new RegistryRequestsConverter( new NativeMessageSender(RegistryGate.channelID) );
 	
     /** The set of active Invocations. */
     private /*static*/ final Hashtable activeInvocations = new Hashtable();

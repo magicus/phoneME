@@ -26,7 +26,7 @@
 
 #include <stdio.h>
 
-#define TRACE_BLOCKING
+#define TRACE_MSGEXCHANGE
 
 #endif
 
@@ -38,8 +38,15 @@
 
 #include "jsr211_constants.h"
 
-javacall_result javacall_chapi_post_message( int queueId, int msgCode, const unsigned char * bytes, size_t bytesCount, int * dataExchangeID ){}
-javacall_result javacall_chapi_send_response( int dataExchangeID, const unsigned char * bytes, size_t bytesCount ){};
+javacall_result javacall_chapi_post_message( int queueId, int msgCode, const unsigned char * bytes, size_t bytesCount, int * dataExchangeID ){
+    static int freeDEID = 1;
+    *dataExchangeID = freeDEID++;
+    return( javanotify_chapi_process_msg_request( queueId, *dataExchangeID, msgCode, bytes, bytesCount ) );
+}
+
+javacall_result javacall_chapi_send_response( int dataExchangeID, const unsigned char * bytes, size_t bytesCount ){
+    return( javanotify_chapi_process_msg_result( dataExchangeID, bytes, bytesCount ) );
+}
 
 typedef struct {
   MidpReentryData  m_midpRD;
@@ -93,6 +100,9 @@ KNIDECL(com_sun_j2me_content_NativeMessageSender_send) {
 }
 
 javacall_result javanotify_chapi_process_msg_result( int dataExchangeID, const unsigned char * bytes, size_t count ){
+#ifdef TRACE_MSGEXCHANGE
+    printf( "javanotify_chapi_process_msg_result( exchangeID = %d, count = %d )\n", dataExchangeID, count );
+#endif
     if( bytes == NULL ){
         unblockWaitingThreads( JSR211_WAIT_MSG, dataExchangeID, JSR211_WAIT_CANCELLED );
     } else {
@@ -144,6 +154,10 @@ javacall_result javanotify_chapi_process_msg_request( int queueID, int dataExcha
     memcpy( newR->m_data, bytes, newR->m_count );
     newR->m_next = NULL;
 
+#ifdef TRACE_MSGEXCHANGE
+    printf( "javanotify_chapi_process_msg_request( qID = %d, exchangeID = %d, msg = %d, count = %d )\n", queueID, dataExchangeID, msg, count );
+#endif
+
     // insert request to the list
     // critial section {
     *s_tail = newR;
@@ -157,6 +171,9 @@ javacall_result javanotify_chapi_process_msg_request( int queueID, int dataExcha
 // int waitForRequest(); returns queueId
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_j2me_content_NativeMessageReceiver_waitForRequest) {
+#ifdef TRACE_BLOCKING
+    printf( "waitForRequest: head = %p\n", s_head );
+#endif
     if( s_head != NULL ){
         KNI_ReturnInt( s_head->m_qID );
     }
@@ -169,6 +186,9 @@ KNIDECL(com_sun_j2me_content_NativeMessageReceiver_waitForRequest) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_j2me_content_NativeMessageReceiver_nextRequest) {
     Request * r = s_head;
+#ifdef TRACE_BLOCKING
+    printf( "nextRequest: head = %p\n", s_head );
+#endif
     assert( s_head != NULL );
     // crirical section {
     if( s_tail == &s_head->m_next )

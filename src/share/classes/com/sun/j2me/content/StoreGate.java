@@ -31,6 +31,8 @@ import java.io.DataInputStream;
 import java.io.IOException;
 
 interface StoreGate {
+	static final int channelID = 1; 
+	
 	int size();
 	int put(InvocationImpl invoc);
 	void resetListenNotifiedFlag(ApplicationID appID, boolean request);
@@ -67,8 +69,8 @@ interface StoreMessageProcessor extends MessageProcessor {
 
 class StoreRequestsConverter implements StoreGate {
 
-	final private StoreMessageProcessor out;
-	StoreRequestsConverter( StoreMessageProcessor out ){
+	final private MessageProcessor out;
+	StoreRequestsConverter( MessageProcessor out ){
 		this.out = out;
 	}
 	

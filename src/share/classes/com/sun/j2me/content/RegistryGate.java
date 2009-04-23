@@ -31,6 +31,8 @@ import java.io.DataInputStream;
 import java.io.IOException;
 
 interface RegistryGate {
+	static final int channelID = 2;
+	
     /**
      * Search flags for @link getHandler() method. 
      */
@@ -83,8 +85,8 @@ interface RegistryMessageProcessor extends MessageProcessor {
 
 class RegistryRequestsConverter implements RegistryGate {
 
-	final private RegistryMessageProcessor out;
-	RegistryRequestsConverter( RegistryMessageProcessor out ){
+	final private MessageProcessor out;
+	RegistryRequestsConverter( MessageProcessor out ){
 		this.out = out;
 	}
 	

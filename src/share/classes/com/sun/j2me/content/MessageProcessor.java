@@ -64,10 +64,19 @@ class DataInputStreamExt extends DataInputStream {
 }
 
 class NativeMessageSender implements MessageProcessor {
+	static {
+		NativeMessageReceiver.init();
+	}
 	private final int queueId;
-	public NativeMessageSender( int qId ){ queueId = qId; }
+	public NativeMessageSender( int qId ){ 
+		if( AppProxy.LOGGER != null )
+			AppProxy.LOGGER.println("NativeMessageSender()");
+		queueId = qId; 
+	}
 
 	public byte[] sendMessage(int msgCode, byte[] data) throws IOException {
+		if( AppProxy.LOGGER != null )
+			AppProxy.LOGGER.println("NativeMessageSender.send( " + queueId + ", " + msgCode + " )");
 		return send(queueId, msgCode, data);
 	}
 	
@@ -75,17 +84,37 @@ class NativeMessageSender implements MessageProcessor {
 }
 
 class NativeMessageReceiver implements Runnable {
+	static final private NativeMessageReceiver receiver = 
+		new NativeMessageReceiver();
+	
 	final private Hashtable table = new Hashtable();
 	
+	public static void init() {
+		receiver.addProcessor(StoreGate.channelID, 
+				new StoreRequestsExecutor( InvocationStore.getInstance() ));
+		receiver.addProcessor(RegistryGate.channelID, 
+				new RegistryRequestExecutor( RegistryStore.getInstance() ));
+		new Thread(receiver).start();
+	}
+	
+	private NativeMessageReceiver(){
+		if( AppProxy.LOGGER != null )
+			AppProxy.LOGGER.println("NativeMessageReceiver()");
+	};
+
 	public void addProcessor( int qId, MessageProcessor p ){
 		table.put(new Integer(qId), p);
 	}
 
 	public void run() {
 		for(;;){
+			if( AppProxy.LOGGER != null )
+				AppProxy.LOGGER.println("NativeMessageReceiver.waitForRequest()");
 			int queueId = waitForRequest();
 			MessageProcessor processor = 
 				(MessageProcessor)table.get(new Integer(queueId));
+			if( AppProxy.LOGGER != null )
+				AppProxy.LOGGER.println("NativeMessageReceiver: request queue = " + queueId + ", " + processor);
 			if( processor != null ){
 				int requestId = getRequestId();
 				int msgCode = getRequestMsgCode();

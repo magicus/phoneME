@@ -75,6 +75,7 @@ public class CHManagerImpl extends CHManagerBase {
         // load Invocation class
         Class cl = Invocation.class;
         cl = cl.getClass();
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "Invocation class has loaded" );
     }
 
     /** Installed handlers accumulator. */

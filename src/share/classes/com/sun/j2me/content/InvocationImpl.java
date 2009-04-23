@@ -47,8 +47,10 @@ import javax.microedition.io.ConnectionNotFoundException;
 public final class InvocationImpl {
 	
 	public static Tunnel tunnel = null;
-    public static final StoreGate store = //InvocationStore.getInstance();
-    	new StoreRequestsConverter( new StoreRequestsExecutor( InvocationStore.getInstance() ) );
+    public static final StoreGate store = 
+    	//InvocationStore.getInstance();
+    	//new StoreRequestsConverter( new StoreRequestsExecutor( InvocationStore.getInstance() ) );
+    	new StoreRequestsConverter( new NativeMessageSender( StoreGate.channelID ) );
 	public static final int UNDEFINED_TID = 0;
 	
     /**

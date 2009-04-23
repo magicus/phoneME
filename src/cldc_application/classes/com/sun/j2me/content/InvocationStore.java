@@ -67,6 +67,8 @@ public class InvocationStore implements StoreGate {
      * Private constructor to prevent instance creation.
      */
     private InvocationStore() {
+		if( AppProxy.LOGGER != null )
+			AppProxy.LOGGER.println("InvocationStore has created");
     }
     
     static private StoreGate instance = new InvocationStore();
