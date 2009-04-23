@@ -304,12 +304,6 @@ static javacall_result dshow_realize(javacall_handle handle,
     {
         if( create_player_dshow( mimeLength, (const char16*)mime, p, &(p->ppl) ) )
         {
-            if( player::result_success != p->ppl->realize() )
-            {
-                PRINTF( "*** player::realize() failed! ***\n" );
-                return JAVACALL_FAIL;
-            }
-
             p->realizing = true;
 
             return JAVACALL_OK;
@@ -359,6 +353,7 @@ static javacall_result dshow_set_whole_content_size(javacall_handle handle,
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** 0x%08X set_whole_content_size: %ld***\n", handle, whole_content_size );
+    p->ppl->data( nat32(whole_content_size), NULL );
     return JAVACALL_OK;
 }
 
@@ -406,13 +401,21 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
 
             if( JAVACALL_FALSE == *need_more_data )
             {
-                PRINTF( "*** calling player_dhow::prefetch()***\n" );
+                PRINTF( "*** calling player::realize()***\n" );
+                if( player::result_success != p->ppl->realize() )
+                {
+                    PRINTF( "*** player::realize() failed! ***\n" );
+                    return JAVACALL_FAIL;
+                }
+                PRINTF( "*** player::realize() finished***\n" );
+
+                PRINTF( "*** calling player::prefetch()***\n" );
                 if( player::result_success != p->ppl->prefetch() )
                 {
                     PRINTF( "*** player::prefetch() failed! ***\n" );
                     return JAVACALL_FAIL;
                 }
-                PRINTF( "*** player_dhow::prefetch() finished***\n" );
+                PRINTF( "*** player::prefetch() finished***\n" );
             }
         }
         else
