@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+  @(#)package.html	1.6			06/10/25
+
+Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+-->
+
+</head>
+<body bgcolor="white">
+
+Provides the classes and interfaces for the security framework.
+This includes classes that implement an easily configurable,
+fine-grained access control security architecture.
+This package also supports
+the generation and storage of cryptographic public key pairs,
+as well as a number of exportable cryptographic operations
+including those for message digest and signature generation.  Finally,
+this package provides classes that support signed/guarded objects
+and secure random number generation.
+
+Many of the classes provided in this package (the cryptographic
+and secure random number generator classes in particular) are
+provider-based.  The class itself defines a programming interface
+to which applications may write.  The implementations themselves may
+then be written by independent third-party vendors and plugged
+in seamlessly as needed.  Therefore application developers may
+take advantage of any number of provider-based implementations
+without having to add or rewrite code.
+
+<h2>Package Specification</h2>
+
+<ul>
+  <li>PKCS8: Private-Key Information Standard, Version 1.2, November 1993
+</ul>
+
+<h2>Related Documentation</h2>
+
+For further documentation, please see:
+<ul>
+   <LI><a href="../../../guide/security/spec/security-spec.doc.html"><b>
+Security Architecture</b></a>
+
+   <LI><a href="../../../guide/security/CryptoSpec.html"><b>
+Cryptography Architecture</b></a>
+
+   <LI><a href="../../../guide/security/HowToImplAProvider.html"><b>
+How to Implement a Provider
+for the Java Cryptography Architecture</b></a>
+
+   <LI><a href="../../../guide/security/PolicyFiles.html"><b>Default Policy Implementation and Policy File Syntax</b></a>
+
+   <LI><a href="../../../guide/security/permissions.html"><b>
+Policy Permissions</b></a>
+
+   <LI><a href="../../../guide/security/SecurityToolsSummary.html"><b>
+Security Tools Summary</b></a>
+
+   <LI><b>keytool</b>
+(<a href="../../../tooldocs/solaris/keytool.html">for Solaris</a>) (<a href="../../../tooldocs/win32/keytool.html">for Windows</a>)
+
+   <LI><b>jarsigner</b>
+(<a href="../../../tooldocs/solaris/jarsigner.html">for Solaris</a>) (<a href="../../../tooldocs/win32/jarsigner.html">for Windows</a>)
+
+</ul>
+
+@since JDK1.1
+</body>
+</html>
