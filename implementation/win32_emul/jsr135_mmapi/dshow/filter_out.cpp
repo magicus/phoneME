@@ -359,7 +359,7 @@ HRESULT __stdcall filter_out_pin::QueryInterface(REFIID riid, void **ppvObject)
 #if write_level > 0
     print("filter_out_pin::QueryInterface(");
     print(riid);
-    print(", %p) called...\n", ppvObject);
+    print(", 0x%p) called...\n", ppvObject);
 #endif
     if(!ppvObject) return E_POINTER;
     if(riid == IID_IUnknown)
@@ -868,7 +868,7 @@ HRESULT __stdcall filter_out_filter::QueryInterface(REFIID riid, void **ppvObjec
 #if write_level > 0
     print("filter_out_filter::QueryInterface(");
     print(riid);
-    print(", %p) called...\n", ppvObject);
+    print(", 0x%p) called...\n", ppvObject);
 #endif
     if(!ppvObject) return E_POINTER;
     if(riid == IID_IUnknown)

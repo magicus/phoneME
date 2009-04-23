@@ -39,6 +39,8 @@
 const nat32 null = 0;
 
 
+//#define ENABLE_MMAPI_CONT_3GP_DS_EXT
+//#define ENABLE_MMAPI_CONT_FLV_DS_EXT
 //#define ENABLE_MMAPI_CONT_FLV_DS_ON2
 //#define ENABLE_MMAPI_CONT_MP3_DS_EXT
 //#define ENABLE_MMAPI_FMT_MPEG1L3_DS_EXT
@@ -46,7 +48,21 @@ const nat32 null = 0;
 #define ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
 
 
-#if defined(ENABLE_MMAPI_CONT_FLV_DS_ON2) || defined(ENABLE_MMAPI_FMT_VP6_DS_ON2)
+//#include <initguid.h>
+
+#ifdef ENABLE_MMAPI_CONT_3GP_DS_EXT
+    // {08e22ada-b715-45ed-9d20-7b87750301d4}
+    DEFINE_GUID(MEDIASUBTYPE_MP4,
+    0x08e22ada, 0xb715, 0x45ed, 0x9d, 0x20, 0x7b, 0x87, 0x75, 0x03, 0x01, 0xd4);
+#endif
+
+#if defined ENABLE_MMAPI_CONT_FLV_DS_EXT || defined ENABLE_MMAPI_CONT_FLV_DS_ON2
+    // {59333afb-9992-4aa3-8c31-7fb03f6ffdf3}
+    DEFINE_GUID(MEDIASUBTYPE_FLV,
+    0x59333afb, 0x9992, 0x4aa3, 0x8c, 0x31, 0x7f, 0xb0, 0x3f, 0x6f, 0xfd, 0xf3);
+#endif
+
+#if defined ENABLE_MMAPI_CONT_FLV_DS_ON2 || defined ENABLE_MMAPI_FMT_VP6_DS_ON2
     #pragma comment(linker, "/nodefaultlib:libcmt")
     #pragma comment(linker, "/nodefaultlib:msvcrt")
 
@@ -62,12 +78,6 @@ const nat32 null = 0;
             HRESULT FlvDecVP6CreateInstance(IUnknown *, const IID &, void **);
         #endif
     }
-
-    #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-        // {59333afb-9992-4aa3-8c31-7fb03f6ffdf3}
-        DEFINE_GUID(MEDIASUBTYPE_FLV,
-        0x59333afb, 0x9992, 0x4aa3, 0x8c, 0x31, 0x7f, 0xb0, 0x3f, 0x6f, 0xfd, 0xf3);
-    #endif
 #endif
 
 
@@ -112,253 +122,34 @@ class player_dshow : public player
         }
         else
         {
-            print( "illegal state %i\n", state );
+            print("illegal state %i\n", state);
             return result_illegal_state;
         }
 
-        HRESULT hr = CoInitializeEx(null, COINIT_MULTITHREADED);
+        HRESULT hr = pgb->Render(pp);
+        if(hr != S_OK)
+        {
+            error("IGraphBuilder::Render", hr);
+            return result_media;
+        }
+
+        /*dump_filter_graph(pgb);
+
+        int64 tc = 40200000;
+        pms->SetPositions(&tc, AM_SEEKING_AbsolutePositioning, null, 0);*/
+
+        hr = pmc->Pause();
         if(FAILED(hr))
         {
-            error( "CoInitializeEx", hr );
+            error("IMediaControl::Pause", hr);
             return result_media;
         }
 
-        hr = CoCreateInstance(CLSID_FilterGraph, null, CLSCTX_INPROC_SERVER,
-            IID_IGraphBuilder, (void **)&pgb);
+        hr = pms->SetTimeFormat(&TIME_FORMAT_MEDIA_TIME);
         if(hr != S_OK)
         {
-            error( "CoCreateInstance", hr );
-            CoUninitialize();
             return result_media;
         }
-
-        hr = pgb->QueryInterface(IID_IMediaControl, (void **)&pmc);
-        if(hr != S_OK)
-        {
-            error( "IID_IMediaControl", hr );
-            pgb->Release();
-            CoUninitialize();
-            return result_media;
-        }
-
-        hr = pgb->QueryInterface(IID_IMediaSeeking, (void **)&pms);
-        if(hr != S_OK)
-        {
-            error( "IID_IMediaSeeking", hr );
-            pmc->Release();
-            pgb->Release();
-            CoUninitialize();
-            return result_media;
-        }
-
-        if(!filter_in::create(&amt, pcallback, &pfi))
-        {
-            error( "filter_in::create", 0 );
-            pms->Release();
-            pmc->Release();
-            pgb->Release();
-            CoUninitialize();
-            return result_media;
-        }
-
-        #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-            //majortype=MEDIATYPE_Audio, subtype=WMMEDIASUBTYPE_MP3, bFixedSizeSamples=TRUE, bTemporalCompression=FALSE, lSampleSize=1,
-            //formattype=FORMAT_WaveFormatEx, pUnk=0x00000000, cbFormat=30, pbFormat=0x00164c60, wFormatTag=WAVE_FORMAT_MPEGLAYER3, nChannels=1, nSamplesPerSec=44100, nAvgBytesPerSec=10000, nBlockAlign=1, wBitsPerSample=0, cbSize=12, wID=1, fdwFlags=0, nBlockSize=1, nFramesPerBlock=1, nCodecDelay=0
-            AM_MEDIA_TYPE amt2;
-            /*amt2.majortype = MEDIATYPE_Video;
-            amt2.subtype = MEDIASUBTYPE_RGB565;
-            amt2.bFixedSizeSamples = TRUE;
-            amt2.bTemporalCompression = FALSE;
-            amt2.lSampleSize = 1;
-            amt2.formattype = GUID_NULL;
-            amt2.pUnk = null;
-            amt2.cbFormat = 0;
-            amt2.pbFormat = null;*/
-
-            MPEGLAYER3WAVEFORMAT ml3wf;
-            amt2.majortype = MEDIATYPE_Audio;
-            amt2.subtype = WMMEDIASUBTYPE_MP3;
-            amt2.bFixedSizeSamples = TRUE;
-            amt2.bTemporalCompression = FALSE;
-            amt2.lSampleSize = 1;
-            amt2.formattype = FORMAT_WaveFormatEx;
-            amt2.pUnk = null;
-            amt2.cbFormat = sizeof(MPEGLAYER3WAVEFORMAT);
-            amt2.pbFormat = (BYTE*)&ml3wf;
-            ml3wf.wfx.wFormatTag = WAVE_FORMAT_MPEGLAYER3;
-            ml3wf.wfx.nChannels = 2;
-            ml3wf.wfx.nSamplesPerSec = 44100;
-            ml3wf.wfx.nAvgBytesPerSec = 16000;
-            ml3wf.wfx.nBlockAlign = 1;
-            ml3wf.wfx.wBitsPerSample = 0;
-            ml3wf.wfx.cbSize = MPEGLAYER3_WFX_EXTRA_BYTES;
-            ml3wf.wID = 1;
-            ml3wf.fdwFlags = 0;
-            ml3wf.nBlockSize = 1;
-            ml3wf.nFramesPerBlock = 1;
-            ml3wf.nCodecDelay = 0;
-
-            if(!filter_out::create(&amt2, pcallback, &pfo))
-            {
-                error( "filter_out::create", 0 );
-                pfi->Release();
-                pms->Release();
-                pmc->Release();
-                pgb->Release();
-                CoUninitialize();
-                return result_media;
-            }
-        #endif
-
-        hr = pfi->FindPin(L"Output", &pp);
-        if(hr != S_OK)
-        {
-            error( "FindPin", hr );
-            #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-                pfo->Release();
-            #endif
-            pfi->Release();
-            pms->Release();
-            pmc->Release();
-            pgb->Release();
-            CoUninitialize();
-            return result_media;
-        }
-
-        #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-            hr = On2FlvSDK::FlvSplitCreateInstance(null, IID_IBaseFilter,
-                (void **)&pbf_flv_split);
-            if(hr != S_OK)
-            {
-                error( "FlvSplitCreateInstance", hr );
-                pp->Release();
-                #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-                    pfo->Release();
-                #endif
-                pfi->Release();
-                pms->Release();
-                pmc->Release();
-                pgb->Release();
-                CoUninitialize();
-                return result_media;
-            }
-        #endif
-
-        #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-            hr = On2FlvSDK::FlvDecVP6CreateInstance(null, IID_IBaseFilter,
-                (void **)&pbf_flv_dec);
-            if(hr != S_OK)
-            {
-                error( "FlvDecVP6CreateInstance", hr );
-                #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-                    pbf_flv_split->Release();
-                #endif
-                pp->Release();
-                #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-                    pfo->Release();
-                #endif
-                pfi->Release();
-                pms->Release();
-                pmc->Release();
-                pgb->Release();
-                CoUninitialize();
-                return result_media;
-            }
-        #endif
-
-        hr = pgb->AddFilter(pfi, L"Input filter");
-        if(hr != S_OK)
-        {
-            error( "AddFilter(I)", hr );
-            #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-                pbf_flv_dec->Release();
-            #endif
-            #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-                pbf_flv_split->Release();
-            #endif
-            pp->Release();
-            #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-                pfo->Release();
-            #endif
-            pfi->Release();
-            pms->Release();
-            pmc->Release();
-            pgb->Release();
-            CoUninitialize();
-            return result_media;
-        }
-
-         #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-            hr = pgb->AddFilter(pfo, L"Output filter");
-            if(hr != S_OK)
-            {
-                error( "AddFilter(O)", hr );
-                #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-                    pbf_flv_dec->Release();
-                #endif
-                #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-                    pbf_flv_split->Release();
-                #endif
-                pp->Release();
-                #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-                    pfo->Release();
-                #endif
-                pfi->Release();
-                pms->Release();
-                pmc->Release();
-                pgb->Release();
-                CoUninitialize();
-                return result_media;
-            }
-        #endif
-
-        #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-            hr = pgb->AddFilter(pbf_flv_split, L"FLV splitter");
-            if(hr != S_OK)
-            {
-                error( "AddFilter(S)", hr );
-                #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-                    pbf_flv_dec->Release();
-                #endif
-                #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-                    pbf_flv_split->Release();
-                #endif
-                pp->Release();
-                #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-                    pfo->Release();
-                #endif
-                pfi->Release();
-                pms->Release();
-                pmc->Release();
-                pgb->Release();
-                CoUninitialize();
-                return result_media;
-            }
-        #endif
-
-        #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-            hr = pgb->AddFilter(pbf_flv_dec, L"FLV decoder");
-            if(hr != S_OK)
-            {
-                error( "AddFilter(D)", hr );
-                #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-                    pbf_flv_dec->Release();
-                #endif
-                #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-                    pbf_flv_split->Release();
-                #endif
-                pp->Release();
-                #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-                    pfo->Release();
-                #endif
-                pfi->Release();
-                pms->Release();
-                pmc->Release();
-                pgb->Release();
-                CoUninitialize();
-                return result_media;
-            }
-        #endif
 
         state = realized;
 
@@ -382,32 +173,6 @@ class player_dshow : public player
         else
         {
             return result_illegal_state;
-        }
-
-        HRESULT hr = pgb->Render(pp);
-        if(hr != S_OK)
-        {
-            error("IGraphBuilder::Render", hr);
-            return result_media;
-        }
-
-
-        /*dump_filter_graph(pgb);
-
-        int64 tc = 40200000;
-        pms->SetPositions(&tc, AM_SEEKING_AbsolutePositioning, null, 0);*/
-
-        hr = pmc->Pause();
-        if(FAILED(hr))
-        {
-            error("IMediaControl::Pause", hr);
-            return result_media;
-        }
-
-        hr = pms->SetTimeFormat(&TIME_FORMAT_MEDIA_TIME);
-        if(hr != S_OK)
-        {
-            return result_media;
         }
 
         state = prefetched;
@@ -497,16 +262,16 @@ class player_dshow : public player
         {
             pmc->Stop();
             Sleep(100);
-            #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
                 pbf_flv_dec->Release();
-            #endif
-            #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+#endif
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
                 pbf_flv_split->Release();
-            #endif
+#endif
             pp->Release();
-            #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
                 pfo->Release();
-            #endif
+#endif
             pfi->Release();
             pms->Release();
             pmc->Release();
@@ -633,11 +398,28 @@ class player_dshow : public player
 bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcallback, player **ppplayer)
 {
     player_dshow *pplayer;
-    if(!pformat || !pcallback || !ppplayer)
+    if(len > 0x7fffffff || !pformat || !pcallback || !ppplayer)
     {
         return false;
     }
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+#ifdef ENABLE_MMAPI_CONT_3GP_DS_EXT
+    else if(len >= wcslen(L"video/3gpp") && !wcsncmp(pformat, L"video/3gpp", wcslen(L"video/3gpp")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        pplayer->amt.majortype = MEDIATYPE_Stream;
+        pplayer->amt.subtype = MEDIASUBTYPE_MP4;
+        pplayer->amt.bFixedSizeSamples = TRUE;
+        pplayer->amt.bTemporalCompression = FALSE;
+        pplayer->amt.lSampleSize = 1;
+        pplayer->amt.formattype = GUID_NULL;
+        pplayer->amt.pUnk = null;
+        pplayer->amt.cbFormat = 0;
+        pplayer->amt.pbFormat = null;
+    }
+#endif
+#if defined ENABLE_MMAPI_CONT_FLV_DS_EXT || defined ENABLE_MMAPI_CONT_FLV_DS_ON2
     else if(len >= wcslen(L"video/x-flv") && !wcsncmp(pformat, L"video/x-flv", wcslen(L"video/x-flv")))
     {
         pplayer = new player_dshow;
@@ -675,9 +457,162 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
     {
         return false;
     }
+
     pplayer->pcallback = pcallback;
     pplayer->state = player::unrealized;
     pplayer->media_time = player::time_unknown;
+
+    bool r = true;
+
+    HRESULT hr = CoInitializeEx(null, COINIT_MULTITHREADED);
+    if(FAILED(hr))
+    {
+        error("CoInitializeEx", hr);
+    }
+    else
+    {
+        hr = CoCreateInstance(CLSID_FilterGraph, null, CLSCTX_INPROC_SERVER,
+            IID_IGraphBuilder, (void **)&pplayer->pgb);
+        if(hr != S_OK)
+        {
+            error("CoCreateInstance", hr);
+        }
+        else
+        {
+            hr = pplayer->pgb->QueryInterface(IID_IMediaControl, (void **)&pplayer->pmc);
+            if(hr != S_OK)
+            {
+                error("IGraphBuilder::QueryInterface(IID_IMediaControl)", hr);
+            }
+            else
+            {
+                hr = pplayer->pgb->QueryInterface(IID_IMediaSeeking, (void **)&pplayer->pms);
+                if(hr != S_OK)
+                {
+                    error("IGraphBuilder::QueryInterface(IID_IMediaSeeking)", hr);
+                }
+                else
+                {
+                    if(!filter_in::create(&pplayer->amt, pcallback, &pplayer->pfi))
+                    {
+                        error("filter_in::create", 0);
+                    }
+                    else
+                    {
+#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                        AM_MEDIA_TYPE amt2;
+                        amt2.majortype = MEDIATYPE_Video;
+                        amt2.subtype = MEDIASUBTYPE_RGB565;
+                        amt2.bFixedSizeSamples = TRUE;
+                        amt2.bTemporalCompression = FALSE;
+                        amt2.lSampleSize = 1;
+                        amt2.formattype = GUID_NULL;
+                        amt2.pUnk = null;
+                        amt2.cbFormat = 0;
+                        amt2.pbFormat = null;
+                        if(!filter_out::create(&amt2, pcallback, &pplayer->pfo))
+                        {
+                            error("filter_out::create", 0);
+                        }
+                        else
+#endif
+                        {
+                            hr = pplayer->pfi->FindPin(L"Output", &pplayer->pp);
+                            if(hr != S_OK)
+                            {
+                                error("filter_in::FindPin", hr);
+                            }
+                            else
+                            {
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+                                hr = On2FlvSDK::FlvSplitCreateInstance(null, IID_IBaseFilter,
+                                    (void **)&pplayer->pbf_flv_split);
+                                if(hr != S_OK)
+                                {
+                                    error("FlvSplitCreateInstance", hr);
+                                }
+                                else
+#endif
+                                {
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+                                    hr = On2FlvSDK::FlvDecVP6CreateInstance(null, IID_IBaseFilter,
+                                        (void **)&pplayer->pbf_flv_dec);
+                                    if(hr != S_OK)
+                                    {
+                                        error("FlvDecVP6CreateInstance", hr);
+                                    }
+                                    else
+#endif
+                                    {
+
+                                        hr = pplayer->pgb->AddFilter(pplayer->pfi, L"Input filter");
+                                        if(hr != S_OK)
+                                        {
+                                            error("IGraphBuilder::AddFilter(Input filter)", hr);
+                                        }
+                                        else
+                                        {
+#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                                            hr = pplayer->pgb->AddFilter(pplayer->pfo, L"Output filter");
+                                            if(hr != S_OK)
+                                            {
+                                                error("IGraphBuilder::AddFilter(Output filter)", hr);
+                                            }
+                                            else
+#endif
+                                            {
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+                                                hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_split, L"FLV splitter");
+                                                if(hr != S_OK)
+                                                {
+                                                    error("IGraphBuilder::AddFilter(FLV splitter)", hr);
+                                                }
+                                                else
+#endif
+                                                {
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+                                                    hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_dec, L"FLV decoder");
+                                                    if(hr != S_OK)
+                                                    {
+                                                        error("IGraphBuilder::AddFilter(FLV decoder)", hr);
+                                                    }
+                                                    else
+#endif
+                                                    {
+                                                        r = true;
+                                                    }
+                                                }
+                                            }
+                                        }
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+                                        if(!r) pplayer->pbf_flv_dec->Release();
+#endif
+                                    }
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+                                    if(!r) pplayer->pbf_flv_split->Release();
+#endif
+                                }
+                                if(!r) pplayer->pp->Release();
+                            }
+#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                            if(!r) pplayer->pfo->Release();
+#endif
+                        }
+                        if(!r) pplayer->pfi->Release();
+                    }
+                    if(!r) pplayer->pms->Release();
+                }
+                if(!r) pplayer->pmc->Release();
+            }
+            if(!r) pplayer->pgb->Release();
+        }
+        if(!r) CoUninitialize();
+    }
+    if(!r)
+    {
+        delete pplayer;
+        return false;
+    }
     *ppplayer = pplayer;
     return true;
 }
