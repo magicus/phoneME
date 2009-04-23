@@ -72,7 +72,7 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_lcdui_TactileFeedback_getTactileFeedback0) {
 
     int type = KNI_GetParameterAsInt(1);
-    javacall_get_tactile_feedback(type);
+    javacall_play_tactile_feedback(type);
 
     KNI_ReturnVoid();
 }
