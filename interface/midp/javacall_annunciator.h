@@ -221,13 +221,16 @@ typedef enum {
 javacall_result javacall_annunciator_play_audible_tone(
                      javacall_audible_tone_type soundType);
     
-    
-    
-/** @} */
-
+/**
+ * @enum javacall_tactile_type
+ * @brief Tactile effect type for touch event
+ */
 typedef enum {
+    /** A button pressed effect */
     JAVACALL_TACTILE_PRESSED = 0,
+    /** An item dragged effect */
     JAVACALL_TACTILE_DRAGGED = 1,
+    /** A scroll list flickered effect */
     JAVACALL_TACTILE_FLICKERED = 2
 } javacall_tactile_type;
 
@@ -236,7 +239,10 @@ typedef enum {
  * @param type must be one of the types defined in javacall_tactile_type enum
  */
 javacall_result javacall_get_tactile_feedback(javacall_tactile_type type);
-    
+
+/** @} */
+
+
 #ifdef __cplusplus
 } //extern "C"
 #endif
