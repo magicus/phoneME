@@ -138,7 +138,7 @@ javacall_result javacall_annunciator_play_audible_tone(javacall_audible_tone_typ
  * Get feedback on touching a control
  * @param type must be one of the types defined in javacall_tactile_type enum
  */
-javacall_result javacall_get_tactile_feedback(javacall_int32 type) {
+javacall_result javacall_get_tactile_feedback(javacall_tactile_type type) {
     return JAVACALL_FAIL;
 }
     

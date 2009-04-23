@@ -33,11 +33,11 @@ extern "C" {
     
 
 /** The "small" system-dependent font size. */
-const javacall_font_size JAVACALL_FONT_SIZE_SMALL = 0x8;
+const javacall_font_size JAVACALL_FONT_SIZE_SMALL = 8;
 /** The "medium" system-dependent font size. */
-const javacall_font_size JAVACALL_FONT_SIZE_MEDIUM = 0x12;
+const javacall_font_size JAVACALL_FONT_SIZE_MEDIUM = 12;
 /** The "large" system-dependent font size. */
-const javacall_font_size JAVACALL_FONT_SIZE_LARGE = 0x16;
+const javacall_font_size JAVACALL_FONT_SIZE_LARGE = 16;
 
     
 /**

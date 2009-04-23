@@ -52,13 +52,12 @@ extern "C" {
 /* flags for font descriptors */
     
 /**
- * @enum javacall_font_size
+ * @int javacall_font_size
  * @brief Font size
+ * 
+ * Made not enum to support free integeral sizes on special devices  
  */
- 
-/*
- * made not enum to support free integeral sizes on special devices
- */
+
 typedef int javacall_font_size;
 /** The "small" system-dependent font size. */
 extern const javacall_font_size JAVACALL_FONT_SIZE_SMALL;
