@@ -30,7 +30,7 @@
 ######################################################################
 
 # Workspace directory
-PCSL_DIR		= $(CURDIR)/../../
+PCSL_DIR		= $(CURDIR)/../..
 MEMORY_MODULE		= heap
 
 # include top.gmk for various directory and module definitions

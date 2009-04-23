@@ -29,7 +29,7 @@
 ######################################################################
 
 # Workspace directory
-PCSL_DIR		= $(CURDIR)/../
+PCSL_DIR		= $(CURDIR)/..
 
 ifdef PCSL_PLATFORM
 include $(PCSL_DIR)/makefiles/top.gmk
