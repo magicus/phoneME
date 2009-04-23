@@ -82,6 +82,7 @@ public:
 
     long                  bytes_buffered;
     bool                  all_data_arrived;
+    long                  whole_content_size;
 
     long                  volume;
     javacall_bool         mute;
@@ -159,6 +160,7 @@ static javacall_result dshow_create(int appId,
     p->playing          = false;
 
     p->all_data_arrived = false;
+    p->whole_content_size = -1;
     p->bytes_buffered   = 0;
 
     p->media_time       = 0;
@@ -353,6 +355,7 @@ static javacall_result dshow_set_whole_content_size(javacall_handle handle,
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** 0x%08X set_whole_content_size: %ld***\n", handle, whole_content_size );
+    p->whole_content_size = whole_content_size;
     p->ppl->data( nat32(whole_content_size), NULL );
     return JAVACALL_OK;
 }
@@ -396,7 +399,15 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
         }
         else if( p->realizing )
         {
-            *need_more_data  = ( p->bytes_buffered < XFER_BUFFER_SIZE * 50 ) 
+            long preload_size = XFER_BUFFER_SIZE * 50;
+
+            if( -1 != p->whole_content_size && 
+                ( JC_FMT_VIDEO_3GPP == p->mediaType || JC_FMT_FLV == p->mediaType ) )
+            {
+                preload_size = p->whole_content_size;
+            }
+
+            *need_more_data  = ( p->bytes_buffered < preload_size ) 
                                ? JAVACALL_TRUE : JAVACALL_FALSE;
 
             if( JAVACALL_FALSE == *need_more_data )
