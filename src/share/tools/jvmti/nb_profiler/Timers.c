@@ -60,7 +60,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+#include "javavm/include/assert.h"
 
 #include "jni.h"
 #include "jvmti.h"

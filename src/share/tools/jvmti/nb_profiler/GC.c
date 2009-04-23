@@ -59,7 +59,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+#include "javavm/include/assert.h"
 #include <string.h>
 
 #include "jni.h"
