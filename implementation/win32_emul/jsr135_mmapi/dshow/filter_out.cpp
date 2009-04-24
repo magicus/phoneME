@@ -23,6 +23,8 @@
 */
 
 #include <amvideo.h>
+#include <dvdmedia.h>
+#include <uuids.h>
 #include <vfwmsgs.h>
 #include "filter_out.hpp"
 
@@ -444,11 +446,27 @@ HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, const AM_M
         return VFW_E_TYPE_NOT_ACCEPTED;
     }
 
-    const VIDEOINFOHEADER *vih = (const VIDEOINFOHEADER *)pmt->pbFormat;
+    if(pmt->formattype == FORMAT_VideoInfo)
+    {
+        const VIDEOINFOHEADER *vih = (const VIDEOINFOHEADER *)pmt->pbFormat;
 #if write_level > 0
-    print("%i %i\n", vih->bmiHeader.biWidth, vih->bmiHeader.biHeight);
+        print("Frame size - %i %i\n", vih->bmiHeader.biWidth, vih->bmiHeader.biHeight);
 #endif
-    pfilter->pcallback->size_changed(int16(vih->bmiHeader.biWidth), int16(vih->bmiHeader.biHeight));
+        pfilter->pcallback->size_changed(int16(vih->bmiHeader.biWidth), int16(vih->bmiHeader.biHeight));
+    }
+    else if(pmt->formattype == FORMAT_VideoInfo2)
+    {
+        const VIDEOINFOHEADER2 *vih2 = (const VIDEOINFOHEADER2 *)pmt->pbFormat;
+#if write_level > 0
+        print("Frame size - %i %i\n", vih2->bmiHeader.biWidth, vih2->bmiHeader.biHeight);
+#endif
+        pfilter->pcallback->size_changed(int16(vih2->bmiHeader.biWidth), int16(vih2->bmiHeader.biHeight));
+    }
+    else
+    {
+        LeaveCriticalSection(&cs_pin);
+        return VFW_E_TYPE_NOT_ACCEPTED;
+    }
 
     pconnected = pConnector;
     pconnected->AddRef();
