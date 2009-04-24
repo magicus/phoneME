@@ -46,6 +46,8 @@
                                         (((g) << 16) & 0xFF0000) | \
                                         (((b) << 8) & 0xFF00) | \
                                          ((a) & 0xFF) )
+
+#define IMGDCD_ARGB32TORGBFF32(x) ( ((x) << 8) | 0xFF )
 #else
 /** Convert pre-masked triplet r, g, b to 16 bit pixel. */
 #define IMGDCD_RGB2PIXEL(r, g, b) ( b +(g << 5)+ (r << 11) )
@@ -416,8 +418,8 @@ void
 imgdcd_decode_jpeg
 (unsigned char* srcBuffer, int length,
  int width, int height,
- imgdcd_pixel_type*pixelData, 
- imgdcd_alpha_type *alphaData,
+ imgdcd_pixel_type* pixelData, 
+ imgdcd_alpha_type* alphaData,
  img_native_error_codes* creationErrorPtr) {
 
 #if ENABLE_JPEG
@@ -450,6 +452,17 @@ imgdcd_decode_jpeg
         *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
     } else if (decode_jpeg_image((char*)srcBuffer, length,
         (char*)(pixelData), width, height) != FALSE) {
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+		/*
+		 * Decoder returns data in ARGB format therefore convert the content of
+		 * the output buffer to RGBA
+		 */
+		imgdcd_pixel_type* pPtr = pixelData;
+		imgdcd_pixel_type* pEndPtr = pPtr + width * height;
+		for (; pPtr < pEndPtr; pPtr++) {
+			*pPtr = IMGDCD_ARGB32TORGBFF32(*pPtr);
+		}
+#endif
         *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
     } else {
         *creationErrorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;
