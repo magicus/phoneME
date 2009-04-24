@@ -1418,7 +1418,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
             for( int i = 0; i < allJsr135Ctrls.length; i++ )
             {
-                possibleControlNames.addElement( allJsr135Ctrls[ i ] );
+                possibleControlNames.addElement(
+                        getFullControlName( allJsr135Ctrls[ i ] ) );
             }
             Jsr234Proxy ammsProxy = Jsr234Proxy.getInstance();
             if( ammsProxy.isJsr234Available() )
@@ -1434,7 +1435,19 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
         return possibleControlNames;
     }
-    
+
+    // Prepend the package name if the type given does not
+    // have the package prefix.
+    private static String getFullControlName( String name )
+    {
+        if( name.indexOf('.') < 0  )
+        {
+            return pkgName + name;
+        }
+        else {
+            return name;
+        }
+    }
     /**
      * Gets the <code>Control</code> that supports the specified
      * class or interface. The full class
@@ -1453,13 +1466,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             throw new IllegalArgumentException();
         }
 
-        // Prepend the package name if the type given does not
-        // have the package prefix.
-        String fullName = type;
-        if( fullName.indexOf('.') < 0 )
-        {
-            fullName = pkgName + type;
-        }
+        String fullName = getFullControlName( type );
 
         Control c = null;
         synchronized( this )
@@ -1467,7 +1474,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             c = ( Control )htControls.get( fullName );
             if( null == c &&
                 null == controls &&
-                getPossibleControlNames().contains( type ) )
+                getPossibleControlNames().contains( fullName ) )
             {
                 c = lowLevelPlayer.doGetNewControl( fullName );
                 if( null != c )
