@@ -33,10 +33,15 @@ import com.sun.midp.events.EventTypes;
 import com.sun.midp.main.MIDletProxy;
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletProxyListListener;
+import com.sun.midp.main.MIDletSuiteUtils;
 
 public class CHManagerBase extends com.sun.midp.content.CHManager 
 							implements MIDletProxyListListener, EventListener {
 
+	public CHManagerBase(){
+		if( MIDletSuiteUtils.isAmsIsolate() )
+			NativeMessageReceiver.init();
+	}
     /**
      * Setup to monitor for MIDlets starting and exiting and check
      * for incompletely handled Invocation requests.
