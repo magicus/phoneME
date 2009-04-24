@@ -22,12 +22,11 @@
 * information or have any questions.
 */
 
-#include <dshow.h>
-#include <uuids.h>
+#include <amvideo.h>
 #include <vfwmsgs.h>
 #include "filter_out.hpp"
 
-#define write_level 1
+#define write_level 0
 
 #if write_level > 0
 #include "writer.hpp"
@@ -66,12 +65,13 @@ class filter_out_pin : public IPin, public IMemInputPin
 {
     friend filter_out_filter;
 
-    HANDLE mutex_pin;
+    CRITICAL_SECTION cs_pin;
     filter_out_filter *pfilter;
     AM_MEDIA_TYPE amt;
     IPin *pconnected;
     bool flushing;
-    HANDLE mutex_receive;
+    HANDLE event_flushing;
+    CRITICAL_SECTION cs_receive;
 
     filter_out_pin();
     ~filter_out_pin();
@@ -131,7 +131,7 @@ class filter_out_filter : public filter_out
 {
     friend filter_out_pin;
 
-    HANDLE mutex_filter;
+    CRITICAL_SECTION cs_filter;
     nat32 reference_count;
     player_callback *pcallback;
     filter_out_pin *ppin;
@@ -140,7 +140,8 @@ class filter_out_filter : public filter_out
     char16 name[MAX_FILTER_NAME];
     FILTER_STATE state;
     FILTER_STATE state2;
-    REFERENCE_TIME t_start;
+    int64 t_start;
+    HANDLE event_state_set;
     HANDLE event_not_paused;
 
     filter_out_filter();
@@ -390,9 +391,9 @@ ULONG __stdcall filter_out_pin::AddRef()
 #if write_level > 1
     print("filter_out_pin::AddRef called...\n");
 #endif
-    WaitForSingleObject(mutex_pin, INFINITE);
+    EnterCriticalSection(&cs_pin);
     nat32 r = pfilter->AddRef();
-    ReleaseMutex(mutex_pin);
+    LeaveCriticalSection(&cs_pin);
     return r;
 }
 
@@ -401,9 +402,9 @@ ULONG __stdcall filter_out_pin::Release()
 #if write_level > 1
     print("filter_out_pin::Release called...\n");
 #endif
-    WaitForSingleObject(mutex_pin, INFINITE);
+    EnterCriticalSection(&cs_pin);
     nat32 r = pfilter->Release();
-    if(r) ReleaseMutex(mutex_pin);
+    if(r) LeaveCriticalSection(&cs_pin);
     return r;
 }
 
@@ -425,21 +426,21 @@ HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, const AM_M
     print(") called...\n");
 #endif
     if(!pConnector || !pmt) return E_POINTER;
-    WaitForSingleObject(mutex_pin, INFINITE);
+    EnterCriticalSection(&cs_pin);
     if(pfilter->state != State_Stopped)
     {
-        ReleaseMutex(mutex_pin);
+        LeaveCriticalSection(&cs_pin);
         return VFW_E_NOT_STOPPED;
     }
     if(pconnected)
     {
-        ReleaseMutex(mutex_pin);
+        LeaveCriticalSection(&cs_pin);
         return VFW_E_ALREADY_CONNECTED;
     }
     if(pmt->majortype != amt.majortype ||
         pmt->subtype != amt.subtype)
     {
-        ReleaseMutex(mutex_pin);
+        LeaveCriticalSection(&cs_pin);
         return VFW_E_TYPE_NOT_ACCEPTED;
     }
 
@@ -451,7 +452,7 @@ HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, const AM_M
 
     pconnected = pConnector;
     pconnected->AddRef();
-    ReleaseMutex(mutex_pin);
+    LeaveCriticalSection(&cs_pin);
     return S_OK;
 }
 
@@ -460,20 +461,20 @@ HRESULT __stdcall filter_out_pin::Disconnect()
 #if write_level > 0
     print("filter_out_pin::Disconnect called...\n");
 #endif
-    WaitForSingleObject(mutex_pin, INFINITE);
+    EnterCriticalSection(&cs_pin);
     if(pfilter->state != State_Stopped)
     {
-        ReleaseMutex(mutex_pin);
+        LeaveCriticalSection(&cs_pin);
         return VFW_E_NOT_STOPPED;
     }
     if(!pconnected)
     {
-        ReleaseMutex(mutex_pin);
+        LeaveCriticalSection(&cs_pin);
         return S_FALSE;
     }
     pconnected->Release();
     pconnected = null;
-    ReleaseMutex(mutex_pin);
+    LeaveCriticalSection(&cs_pin);
     return S_OK;
 }
 
@@ -483,16 +484,16 @@ HRESULT __stdcall filter_out_pin::ConnectedTo(IPin **pPin)
     print("filter_out_pin::ConnectedTo called...\n");
 #endif
     if(!pPin) return E_POINTER;
-    WaitForSingleObject(mutex_pin, INFINITE);
+    EnterCriticalSection(&cs_pin);
     if(!pconnected)
     {
-        ReleaseMutex(mutex_pin);
+        LeaveCriticalSection(&cs_pin);
         *pPin = null;
         return VFW_E_NOT_CONNECTED;
     }
     *pPin = pconnected;
     (*pPin)->AddRef();
-    ReleaseMutex(mutex_pin);
+    LeaveCriticalSection(&cs_pin);
     return S_OK;
 }
 
@@ -502,10 +503,10 @@ HRESULT __stdcall filter_out_pin::ConnectionMediaType(AM_MEDIA_TYPE *pmt)
     print("filter_out_pin::ConnectionMediaType called...\n");
 #endif
     if(!pmt) return E_POINTER;
-    WaitForSingleObject(mutex_pin, INFINITE);
+    EnterCriticalSection(&cs_pin);
     if(!pconnected)
     {
-        ReleaseMutex(mutex_pin);
+        LeaveCriticalSection(&cs_pin);
         memset(pmt, 0, sizeof(AM_MEDIA_TYPE));
         return VFW_E_NOT_CONNECTED;
     }
@@ -514,7 +515,7 @@ HRESULT __stdcall filter_out_pin::ConnectionMediaType(AM_MEDIA_TYPE *pmt)
         pmt->pbFormat = (bits8 *)CoTaskMemAlloc(amt.cbFormat);
         if(!pmt->pbFormat)
         {
-            ReleaseMutex(mutex_pin);
+            LeaveCriticalSection(&cs_pin);
             return E_OUTOFMEMORY;
         }
         memcpy(pmt->pbFormat, amt.pbFormat, amt.cbFormat);
@@ -529,7 +530,7 @@ HRESULT __stdcall filter_out_pin::ConnectionMediaType(AM_MEDIA_TYPE *pmt)
     pmt->pUnk = amt.pUnk;
     if(pmt->pUnk) pmt->pUnk->AddRef();
     pmt->cbFormat = amt.cbFormat;
-    ReleaseMutex(mutex_pin);
+    LeaveCriticalSection(&cs_pin);
     return S_OK;
 }
 
@@ -539,12 +540,12 @@ HRESULT __stdcall filter_out_pin::QueryPinInfo(PIN_INFO *pInfo)
     print("filter_out_pin::QueryPinInfo called...\n");
 #endif
     if(!pInfo) return E_POINTER;
-    WaitForSingleObject(mutex_pin, INFINITE);
+    EnterCriticalSection(&cs_pin);
     pInfo->pFilter = pfilter;
     pInfo->pFilter->AddRef();
     pInfo->dir = PINDIR_INPUT;
     wcscpy_s(pInfo->achName, MAX_PIN_NAME, L"Input");
-    ReleaseMutex(mutex_pin);
+    LeaveCriticalSection(&cs_pin);
     return S_OK;
 }
 
@@ -584,11 +585,11 @@ HRESULT __stdcall filter_out_pin::EnumMediaTypes(IEnumMediaTypes **ppEnum)
     print("filter_out_pin::EnumMediaTypes called...\n");
 #endif
     if(!ppEnum) return E_POINTER;
-    WaitForSingleObject(mutex_pin, INFINITE);
+    EnterCriticalSection(&cs_pin);
     filter_out_enum_media_types *penum_media_types = new filter_out_enum_media_types;
     if(!penum_media_types)
     {
-        ReleaseMutex(mutex_pin);
+        LeaveCriticalSection(&cs_pin);
         return E_OUTOFMEMORY;
     }
     if(amt.cbFormat)
@@ -596,7 +597,7 @@ HRESULT __stdcall filter_out_pin::EnumMediaTypes(IEnumMediaTypes **ppEnum)
         penum_media_types->amt.pbFormat = new bits8[amt.cbFormat];
         if(!penum_media_types->amt.pbFormat)
         {
-            ReleaseMutex(mutex_pin);
+            LeaveCriticalSection(&cs_pin);
             delete penum_media_types;
             return E_OUTOFMEMORY;
         }
@@ -615,7 +616,7 @@ HRESULT __stdcall filter_out_pin::EnumMediaTypes(IEnumMediaTypes **ppEnum)
     penum_media_types->amt.cbFormat = amt.cbFormat;
     penum_media_types->index = 0;
     *ppEnum = penum_media_types;
-    ReleaseMutex(mutex_pin);
+    LeaveCriticalSection(&cs_pin);
     return S_OK;
 }
 
@@ -633,9 +634,11 @@ HRESULT __stdcall filter_out_pin::EndOfStream()
 #if write_level > 0
     print("filter_out_pin::EndOfStream called...\n");
 #endif
-    WaitForSingleObject(mutex_pin, INFINITE);
+    EnterCriticalSection(&cs_pin);
+    EnterCriticalSection(&pfilter->cs_filter);
     pfilter->pcallback->playback_finished();
-    ReleaseMutex(mutex_pin);
+    LeaveCriticalSection(&pfilter->cs_filter);
+    LeaveCriticalSection(&cs_pin);
     return S_OK;
 }
 
@@ -644,21 +647,19 @@ HRESULT __stdcall filter_out_pin::BeginFlush()
 #if write_level > 0
     print("filter_out_pin::BeginFlush called...\n");
 #endif
-    WaitForSingleObject(mutex_pin, INFINITE);
-    WaitForSingleObject(pfilter->mutex_filter, INFINITE);
-    flushing = true;
-    if(pfilter->state == State_Paused) SetEvent(pfilter->event_not_paused);
-    ReleaseMutex(pfilter->mutex_filter);
-    ReleaseMutex(mutex_pin);
-
-    WaitForSingleObject(mutex_receive, INFINITE);
-    ReleaseMutex(mutex_receive);
-
-    WaitForSingleObject(mutex_pin, INFINITE);
-    WaitForSingleObject(pfilter->mutex_filter, INFINITE);
-    if(pfilter->state == State_Paused) ResetEvent(pfilter->event_not_paused);
-    ReleaseMutex(pfilter->mutex_filter);
-    ReleaseMutex(mutex_pin);
+    EnterCriticalSection(&cs_pin);
+    if(flushing)
+    {
+        LeaveCriticalSection(&cs_pin);
+    }
+    else
+    {
+        flushing = true;
+        SetEvent(event_flushing);
+        LeaveCriticalSection(&cs_pin);
+        EnterCriticalSection(&cs_receive);
+        LeaveCriticalSection(&cs_receive);
+    }
     return S_OK;
 }
 
@@ -667,9 +668,9 @@ HRESULT __stdcall filter_out_pin::EndFlush()
 #if write_level > 0
     print("filter_out_pin::EndFlush called...\n");
 #endif
-    WaitForSingleObject(mutex_pin, INFINITE);
+    EnterCriticalSection(&cs_pin);
     flushing = false;
-    ReleaseMutex(mutex_pin);
+    LeaveCriticalSection(&cs_pin);
     return S_OK;
 }
 
@@ -715,138 +716,143 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
     if(!pSample) return E_POINTER;
 
-    WaitForSingleObject(mutex_pin, INFINITE);
-    WaitForSingleObject(mutex_receive, INFINITE);
-
 #if write_level > 0
     print("Actual data length=%i\n", pSample->GetActualDataLength());
 #endif
 
-    print("Receive 0\n");
-    if(flushing)
-    {
-        ReleaseMutex(mutex_receive);
-        ReleaseMutex(mutex_pin);
-        return S_FALSE;
-    }
-
-    print("Receive 1\n");
-    if(pfilter->state == State_Stopped)
-    {
-        ReleaseMutex(mutex_receive);
-        ReleaseMutex(mutex_pin);
-        return VFW_E_WRONG_STATE;
-    }
-
-    print("Receive 2\n");
     int64 tstart;
     int64 tend;
     if(FAILED(pSample->GetTime(&tstart, &tend)))
     {
-        ReleaseMutex(mutex_receive);
-        ReleaseMutex(mutex_pin);
-        return VFW_E_RUNTIME_ERROR;
-    }
-
-    print("Receive 3\n");
-    IMediaSeeking *pms;
-    if(pfilter->pgraph->QueryInterface(
-        IID_IMediaSeeking, (void **)&pms) != S_OK)
-    {
-        ReleaseMutex(mutex_receive);
-        ReleaseMutex(mutex_pin);
-        return VFW_E_RUNTIME_ERROR;
-    }
-
-    print("Receive 4\n");
-    int64 tc;
-    if(pms->GetCurrentPosition(&tc) != S_OK)
-    {
-        print("Receive 5\n");
-        pms->Release();
-        ReleaseMutex(mutex_receive);
-        ReleaseMutex(mutex_pin);
-        return VFW_E_RUNTIME_ERROR;
-    }
-
-    print("Receive 6\n");
 #if write_level > 0
-    print("%I64i %I64i %I64i\n", tstart, tend, tc);
+        print("returns VFW_E_RUNTIME_ERROR\n");
 #endif
+        return VFW_E_RUNTIME_ERROR;
+    }
 
-    while(tstart > tc)
+    EnterCriticalSection(&cs_receive);
+    EnterCriticalSection(&cs_pin);
+
+    for(;;)
     {
-        print("wp0\n");
-        if(pfilter->state == State_Paused)
-        {
-            print("wp01\n");
-            HANDLE event_not_paused2 = pfilter->event_not_paused;
-            print("wp1\n");
-            ReleaseMutex(mutex_pin);
-            print("wp2\n");
-            WaitForSingleObject(event_not_paused2, INFINITE);
-            print("wp3\n");
-            WaitForSingleObject(mutex_pin, INFINITE);
-            print("wp4\n");
-        }
-        else
-        {
-            print("wp5\n");
-            ReleaseMutex(mutex_pin);
-            print("wp6\n");
-            Sleep(1);
-            print("wp7\n");
-            WaitForSingleObject(mutex_pin, INFINITE);
-            print("wp8\n");
-        }
-
-        //print("wp7a\n");
         if(flushing)
         {
-            pms->Release();
-            ReleaseMutex(mutex_receive);
-            ReleaseMutex(mutex_pin);
+            LeaveCriticalSection(&cs_pin);
+            LeaveCriticalSection(&cs_receive);
+
+#if write_level > 0
+            print("returns S_FALSE\n");
+#endif
             return S_FALSE;
         }
-        //print("wp7b\n");
+
+        EnterCriticalSection(&pfilter->cs_filter);
+
         if(pfilter->state == State_Stopped)
         {
-            pms->Release();
-            ReleaseMutex(mutex_receive);
-            ReleaseMutex(mutex_pin);
-            return VFW_E_WRONG_STATE;
-        }
+            if(pfilter->state2 == State_Stopped)
+            {
+                LeaveCriticalSection(&pfilter->cs_filter);
+                LeaveCriticalSection(&cs_pin);
+                LeaveCriticalSection(&cs_receive);
 
-        ReleaseMutex(mutex_pin);
-        print("Calling IMediaSeeking::GetCurrentPosition...\n");
-        HRESULT hr = pms->GetCurrentPosition(&tc);
-        print("Finished.\n");
-        if(hr != S_OK)
+#if write_level > 0
+                print("returns VFW_E_WRONG_STATE\n");
+#endif
+                return VFW_E_WRONG_STATE;
+            }
+            else
+            {
+                bits8 *pb;
+                if(pSample->GetPointer(&pb) != S_OK)
+                {
+                    LeaveCriticalSection(&pfilter->cs_filter);
+                    LeaveCriticalSection(&cs_pin);
+                    LeaveCriticalSection(&cs_receive);
+
+#if write_level > 0
+                    print("returns VFW_E_RUNTIME_ERROR\n");
+#endif
+                    return VFW_E_RUNTIME_ERROR;
+                }
+                pfilter->pcallback->frame_ready((bits16 *)pb);
+
+                pfilter->state = State_Paused;
+                SetEvent(pfilter->event_state_set);
+                ResetEvent(pfilter->event_not_paused);
+
+                LeaveCriticalSection(&pfilter->cs_filter);
+                LeaveCriticalSection(&cs_pin);
+                LeaveCriticalSection(&cs_receive);
+
+#if write_level > 0
+                print("returns S_OK\n");
+#endif
+                return S_OK;
+            }
+        }
+        else if(pfilter->state == State_Paused)
         {
-            //print("wp7d\n");
-            pms->Release();
-            ReleaseMutex(mutex_receive);
-            //ReleaseMutex(mutex_pin);
-            return VFW_E_RUNTIME_ERROR;
-        }
-        WaitForSingleObject(mutex_pin, INFINITE);
-        //print("wp7e\n");
-    }
-    print("wp9\n");
+            HANDLE events[2] = { pfilter->event_not_paused, event_flushing };
 
-    pms->Release();
-    bits8 *pb;
-    if(pSample->GetPointer(&pb) != S_OK)
-    {
-        ReleaseMutex(mutex_receive);
-        ReleaseMutex(mutex_pin);
-        return VFW_E_RUNTIME_ERROR;
+            LeaveCriticalSection(&pfilter->cs_filter);
+            LeaveCriticalSection(&cs_pin);
+
+            WaitForMultipleObjects(2, events, false, INFINITE);
+
+            EnterCriticalSection(&cs_pin);
+        }
+        else if(pfilter->state == State_Running)
+        {
+            int64 t;
+            if(FAILED(pfilter->pclock->GetTime(&t)))
+            {
+                LeaveCriticalSection(&pfilter->cs_filter);
+                LeaveCriticalSection(&cs_pin);
+                LeaveCriticalSection(&cs_receive);
+
+#if write_level > 0
+                print("returns VFW_E_RUNTIME_ERROR\n");
+#endif
+                return VFW_E_RUNTIME_ERROR;
+            }
+
+            if(t - pfilter->t_start < tstart)
+            {
+                LeaveCriticalSection(&pfilter->cs_filter);
+                LeaveCriticalSection(&cs_pin);
+
+                Sleep(1);
+
+                EnterCriticalSection(&cs_pin);
+            }
+            else
+            {
+                bits8 *pb;
+                if(pSample->GetPointer(&pb) != S_OK)
+                {
+                    LeaveCriticalSection(&pfilter->cs_filter);
+                    LeaveCriticalSection(&cs_pin);
+                    LeaveCriticalSection(&cs_receive);
+
+#if write_level > 0
+                    print("returns VFW_E_RUNTIME_ERROR\n");
+#endif
+                    return VFW_E_RUNTIME_ERROR;
+                }
+                pfilter->pcallback->frame_ready((bits16 *)pb);
+
+                LeaveCriticalSection(&pfilter->cs_filter);
+                LeaveCriticalSection(&cs_pin);
+                LeaveCriticalSection(&cs_receive);
+
+#if write_level > 0
+                print("returns S_OK\n");
+#endif
+                return S_OK;
+            }
+        }
     }
-    pfilter->pcallback->frame_ready((bits16 *)pb);
-    ReleaseMutex(mutex_receive);
-    ReleaseMutex(mutex_pin);
-    print("wp10\n");
-    return S_OK;
 }
 
 HRESULT __stdcall filter_out_pin::ReceiveMultiple(IMediaSample **pSamples, long /*nSamples*/, long *nSamplesProcessed)
@@ -855,13 +861,16 @@ HRESULT __stdcall filter_out_pin::ReceiveMultiple(IMediaSample **pSamples, long 
     print("filter_out_pin::ReceiveMultiple called...\n");
 #endif
     if(!pSamples || !nSamplesProcessed) return E_POINTER;
-    WaitForSingleObject(mutex_pin, INFINITE);
+    EnterCriticalSection(&cs_pin);
+    EnterCriticalSection(&pfilter->cs_filter);
     if(pfilter->state == State_Stopped)
     {
-        ReleaseMutex(mutex_pin);
+        LeaveCriticalSection(&pfilter->cs_filter);
+        LeaveCriticalSection(&cs_pin);
         return VFW_E_WRONG_STATE;
     }
-    ReleaseMutex(mutex_pin);
+    LeaveCriticalSection(&pfilter->cs_filter);
+    LeaveCriticalSection(&cs_pin);
     return VFW_E_RUNTIME_ERROR;
 }
 
@@ -1056,9 +1065,9 @@ ULONG __stdcall filter_out_filter::AddRef()
 #if write_level > 1
     print("filter_out_filter::AddRef called...\n");
 #endif
-    WaitForSingleObject(mutex_filter, INFINITE);
+    EnterCriticalSection(&cs_filter);
     nat32 r = ++reference_count;
-    ReleaseMutex(mutex_filter);
+    LeaveCriticalSection(&cs_filter);
     return r;
 }
 
@@ -1067,23 +1076,27 @@ ULONG __stdcall filter_out_filter::Release()
 #if write_level > 1
     print("filter_out_filter::Release called...\n");
 #endif
-    WaitForSingleObject(mutex_filter, INFINITE);
+    EnterCriticalSection(&cs_filter);
     if(reference_count == 1)
     {
+        CloseHandle(event_not_paused);
+        CloseHandle(event_state_set);
         if(pclock) pclock->Release();
-        CloseHandle(ppin->mutex_receive);
+
+        DeleteCriticalSection(&ppin->cs_receive);
+        CloseHandle(ppin->event_flushing);
         if(ppin->pconnected) ppin->pconnected->Release();
         if(ppin->amt.pUnk) ppin->amt.pUnk->Release();
         if(ppin->amt.cbFormat) delete[] ppin->amt.pbFormat;
-        CloseHandle(ppin->mutex_pin);
-        CloseHandle(event_not_paused);
-        CloseHandle(mutex_filter);
+        DeleteCriticalSection(&ppin->cs_pin);
+
+        DeleteCriticalSection(&cs_filter);
         delete ppin;
         delete this;
         return 0;
     }
     nat32 r = --reference_count;
-    ReleaseMutex(mutex_filter);
+    LeaveCriticalSection(&cs_filter);
     return r;
 }
 
@@ -1100,10 +1113,17 @@ HRESULT __stdcall filter_out_filter::Stop()
 #if write_level > 0
     print("filter_out_filter::Stop called...\n");
 #endif
-    WaitForSingleObject(mutex_filter, INFINITE);
+    EnterCriticalSection(&cs_filter);
     if(state == State_Stopped)
     {
-        state2 = State_Stopped;
+        if(state2 == State_Stopped)
+        {
+        }
+        else
+        {
+            state2 = State_Stopped;
+            SetEvent(event_state_set);
+        }
     }
     else if(state == State_Paused)
     {
@@ -1116,7 +1136,7 @@ HRESULT __stdcall filter_out_filter::Stop()
         state = State_Stopped;
         state2 = State_Stopped;
     }
-    ReleaseMutex(mutex_filter);
+    LeaveCriticalSection(&cs_filter);
     return S_OK;
 }
 
@@ -1126,10 +1146,17 @@ HRESULT __stdcall filter_out_filter::Pause()
     print("filter_out_filter::Pause called...\n");
 #endif
     HRESULT r;
-    WaitForSingleObject(mutex_filter, INFINITE);
+    EnterCriticalSection(&cs_filter);
     if(state == State_Stopped)
     {
-        state2 = State_Paused;
+        if(state2 == State_Stopped)
+        {
+            state2 = State_Paused;
+            ResetEvent(event_state_set);
+        }
+        else
+        {
+        }
         r = S_FALSE;
     }
     else if(state == State_Paused)
@@ -1143,7 +1170,7 @@ HRESULT __stdcall filter_out_filter::Pause()
         ResetEvent(event_not_paused);
         r = S_OK;
     }
-    ReleaseMutex(mutex_filter);
+    LeaveCriticalSection(&cs_filter);
     return r;
 }
 
@@ -1152,11 +1179,18 @@ HRESULT __stdcall filter_out_filter::Run(REFERENCE_TIME tStart)
 #if write_level > 0
     print("filter_out_filter::Run called...\n");
 #endif
-    WaitForSingleObject(mutex_filter, INFINITE);
+    EnterCriticalSection(&cs_filter);
     if(state == State_Stopped)
     {
         state = State_Running;
         state2 = State_Running;
+        if(state2 == State_Stopped)
+        {
+        }
+        else
+        {
+            SetEvent(event_state_set);
+        }
     }
     else if(state == State_Paused)
     {
@@ -1168,20 +1202,36 @@ HRESULT __stdcall filter_out_filter::Run(REFERENCE_TIME tStart)
     {
     }
     t_start = tStart;
-    ReleaseMutex(mutex_filter);
+    LeaveCriticalSection(&cs_filter);
     return S_OK;
 }
 
-HRESULT __stdcall filter_out_filter::GetState(DWORD /*dwMilliSecsTimeout*/, FILTER_STATE *State)
+HRESULT __stdcall filter_out_filter::GetState(DWORD dwMilliSecsTimeout, FILTER_STATE *State)
 {
 #if write_level > 0
     print("filter_out_filter::GetState called...\n");
 #endif
     if(!State) return E_POINTER;
-    WaitForSingleObject(mutex_filter, INFINITE);
-    if(state == State_Paused) return VFW_S_CANT_CUE;
+    EnterCriticalSection(&cs_filter);
+    if(state2 != state)
+    {
+        nat32 r = WaitForSingleObject(event_state_set, dwMilliSecsTimeout);
+        if(r == WAIT_OBJECT_0)
+        {
+        }
+        else if(r == WAIT_TIMEOUT)
+        {
+            LeaveCriticalSection(&cs_filter);
+            return VFW_S_STATE_INTERMEDIATE;
+        }
+        else
+        {
+            LeaveCriticalSection(&cs_filter);
+            return VFW_E_RUNTIME_ERROR;
+        }
+    }
     *State = state;
-    ReleaseMutex(mutex_filter);
+    LeaveCriticalSection(&cs_filter);
     return S_OK;
 }
 
@@ -1190,12 +1240,14 @@ HRESULT __stdcall filter_out_filter::SetSyncSource(IReferenceClock *pClock)
 #if write_level > 0
     print("filter_out_filter::SetSyncSource called...\n");
 #endif
+    EnterCriticalSection(&cs_filter);
     if(pClock != pclock)
     {
         if(pclock) pclock->Release();
         pclock = pClock;
         if(pclock) pclock->AddRef();
     }
+    LeaveCriticalSection(&cs_filter);
     return S_OK;
 }
 
@@ -1205,8 +1257,10 @@ HRESULT __stdcall filter_out_filter::GetSyncSource(IReferenceClock **pClock)
     print("filter_out_filter::GetSyncSource called...\n");
 #endif
     if(!pClock) return E_POINTER;
+    EnterCriticalSection(&cs_filter);
     *pClock = pclock;
     if(*pClock) (*pClock)->AddRef();
+    LeaveCriticalSection(&cs_filter);
     return S_OK;
 }
 
@@ -1216,13 +1270,19 @@ HRESULT __stdcall filter_out_filter::EnumPins(IEnumPins **ppEnum)
     print("filter_out_filter::EnumPins called...\n");
 #endif
     if(!ppEnum) return E_POINTER;
+    EnterCriticalSection(&cs_filter);
     filter_out_enum_pins *penum_pins = new filter_out_enum_pins;
-    if(!penum_pins) return E_OUTOFMEMORY;
+    if(!penum_pins)
+    {
+        LeaveCriticalSection(&cs_filter);
+        return E_OUTOFMEMORY;
+    }
     penum_pins->reference_count = 1;
     penum_pins->ppin = ppin;
     penum_pins->ppin->AddRef();
     penum_pins->index = 0;
     *ppEnum = penum_pins;
+    LeaveCriticalSection(&cs_filter);
     return S_OK;
 }
 
@@ -1232,12 +1292,15 @@ HRESULT __stdcall filter_out_filter::FindPin(LPCWSTR Id, IPin **ppPin)
     print("filter_out_filter::FindPin called...\n");
 #endif
     if(!ppPin) return E_POINTER;
+    EnterCriticalSection(&cs_filter);
     if(!wcscmp(Id, L"Output"))
     {
         *ppPin = ppin;
+        LeaveCriticalSection(&cs_filter);
         (*ppPin)->AddRef();
         return S_OK;
     }
+    LeaveCriticalSection(&cs_filter);
     *ppPin = null;
     return VFW_E_NOT_FOUND;
 }
@@ -1248,8 +1311,10 @@ HRESULT __stdcall filter_out_filter::QueryFilterInfo(FILTER_INFO *pInfo)
     print("filter_out_filter::QueryFilterInfo called...\n");
 #endif
     if(!pInfo) return E_POINTER;
+    EnterCriticalSection(&cs_filter);
     wcscpy_s(pInfo->achName, MAX_FILTER_NAME, name);
     pInfo->pGraph = pgraph;
+    LeaveCriticalSection(&cs_filter);
     if(pInfo->pGraph) pInfo->pGraph->AddRef();
     return S_OK;
 }
@@ -1259,9 +1324,11 @@ HRESULT __stdcall filter_out_filter::JoinFilterGraph(IFilterGraph *pGraph, LPCWS
 #if write_level > 0
     print("filter_out_filter::JoinFilterGraph called...\n");
 #endif
+    EnterCriticalSection(&cs_filter);
     pgraph = pGraph;
     if(pName) wcscpy_s(name, MAX_FILTER_NAME, pName);
     else wcscpy_s(name, MAX_FILTER_NAME, L"");
+    LeaveCriticalSection(&cs_filter);
     return S_OK;
 }
 
@@ -1292,57 +1359,87 @@ bool filter_out_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcall
     print("filter_out_filter::create called...\n");
 #endif
     if(!pamt || !pcallback || !ppfilter) return false;
+
     filter_out_filter *pfilter = new filter_out_filter;
     if(!pfilter) return false;
+
     pfilter->ppin = new filter_out_pin;
     if(!pfilter->ppin)
     {
         delete pfilter;
         return false;
     }
-    pfilter->mutex_filter = CreateMutex(null, false, null);
-    if(!pfilter->mutex_filter)
+
+    if(!InitializeCriticalSectionAndSpinCount(&pfilter->cs_filter, 0x80000000))
     {
         delete pfilter->ppin;
         delete pfilter;
         return false;
     }
+
+    if(!InitializeCriticalSectionAndSpinCount(&pfilter->ppin->cs_pin, 0x80000000))
+    {
+        DeleteCriticalSection(&pfilter->cs_filter);
+        delete pfilter->ppin;
+        delete pfilter;
+        return false;
+    }
+
+    pfilter->ppin->event_flushing = CreateEvent(null, true, false, null);
+    if(!pfilter->ppin->event_flushing)
+    {
+        DeleteCriticalSection(&pfilter->ppin->cs_pin);
+        DeleteCriticalSection(&pfilter->cs_filter);
+        delete pfilter->ppin;
+        delete pfilter;
+        return false;
+    }
+
+    if(!InitializeCriticalSectionAndSpinCount(&pfilter->ppin->cs_receive, 0x80000000))
+    {
+        CloseHandle(pfilter->ppin->event_flushing);
+        DeleteCriticalSection(&pfilter->ppin->cs_pin);
+        DeleteCriticalSection(&pfilter->cs_filter);
+        delete pfilter->ppin;
+        delete pfilter;
+        return false;
+    }
+
+    pfilter->event_state_set = CreateEvent(null, true, true, null);
+    if(!pfilter->event_state_set)
+    {
+        DeleteCriticalSection(&pfilter->ppin->cs_receive);
+        CloseHandle(pfilter->ppin->event_flushing);
+        DeleteCriticalSection(&pfilter->ppin->cs_pin);
+        DeleteCriticalSection(&pfilter->cs_filter);
+        delete pfilter->ppin;
+        delete pfilter;
+        return false;
+    }
+
     pfilter->event_not_paused = CreateEvent(null, true, true, null);
     if(!pfilter->event_not_paused)
     {
-        CloseHandle(pfilter->mutex_filter);
+        CloseHandle(pfilter->event_state_set);
+        DeleteCriticalSection(&pfilter->ppin->cs_receive);
+        CloseHandle(pfilter->ppin->event_flushing);
+        DeleteCriticalSection(&pfilter->ppin->cs_pin);
+        DeleteCriticalSection(&pfilter->cs_filter);
         delete pfilter->ppin;
         delete pfilter;
         return false;
     }
-    pfilter->ppin->mutex_pin = CreateMutex(null, false, null);
-    if(!pfilter->ppin->mutex_pin)
-    {
-        CloseHandle(pfilter->event_not_paused);
-        CloseHandle(pfilter->mutex_filter);
-        delete pfilter->ppin;
-        delete pfilter;
-        return false;
-    }
-    pfilter->ppin->mutex_receive = CreateMutex(null, false, null);
-    if(!pfilter->ppin->mutex_receive)
-    {
-        CloseHandle(pfilter->ppin->mutex_pin);
-        CloseHandle(pfilter->event_not_paused);
-        CloseHandle(pfilter->mutex_filter);
-        delete pfilter->ppin;
-        delete pfilter;
-        return false;
-    }
+
     if(pamt->cbFormat)
     {
         pfilter->ppin->amt.pbFormat = new bits8[pamt->cbFormat];
         if(!pfilter->ppin->amt.pbFormat)
         {
-            CloseHandle(pfilter->ppin->mutex_receive);
-            CloseHandle(pfilter->ppin->mutex_pin);
-            CloseHandle(pfilter->event_not_paused);
-            CloseHandle(pfilter->mutex_filter);
+            CloseHandle(pfilter->event_state_set);
+            DeleteCriticalSection(&pfilter->ppin->cs_receive);
+            CloseHandle(pfilter->ppin->event_flushing);
+            DeleteCriticalSection(&pfilter->ppin->cs_pin);
+            DeleteCriticalSection(&pfilter->cs_filter);
             delete pfilter->ppin;
             delete pfilter;
             return false;

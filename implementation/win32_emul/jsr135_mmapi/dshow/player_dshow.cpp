@@ -23,7 +23,6 @@
 */
 
 #include <control.h>
-#include <stdio.h>
 #include <uuids.h>
 #include "filter_in.hpp"
 #include "filter_out.hpp"
@@ -31,13 +30,12 @@
 #include "writer.hpp"
 
 #pragma comment(lib, "strmiids.lib")
-//#pragma comment(lib, "winmm.lib")
 
 
 const nat32 null = 0;
 
 
-#define ENABLE_MMAPI_CONT_3GP_DS_EXT
+//#define ENABLE_MMAPI_CONT_3GP_DS_EXT
 //#define ENABLE_MMAPI_CONT_FLV_DS_EXT
 //#define ENABLE_MMAPI_CONT_FLV_DS_ON2
 //#define ENABLE_MMAPI_CONT_MP3_DS_EXT
@@ -61,6 +59,10 @@ const nat32 null = 0;
 #endif
 
 #if defined ENABLE_MMAPI_CONT_FLV_DS_ON2 || defined ENABLE_MMAPI_FMT_VP6_DS_ON2
+    #include <stdio.h>
+
+    #pragma comment(lib, "winmm.lib")
+
     #pragma comment(linker, "/nodefaultlib:libcmt")
     #pragma comment(linker, "/nodefaultlib:msvcrt")
 
@@ -468,7 +470,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
     pplayer->state = player::unrealized;
     pplayer->media_time = player::time_unknown;
 
-    bool r = true;
+    bool r = false;
 
     HRESULT hr = CoInitializeEx(null, COINIT_MULTITHREADED);
     if(FAILED(hr))

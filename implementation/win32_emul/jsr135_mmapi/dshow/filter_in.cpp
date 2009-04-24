@@ -25,7 +25,7 @@
 #include <vfwmsgs.h>
 #include "filter_in.hpp"
 
-#define write_level 1
+#define write_level 0
 
 #if write_level > 0
 #include "writer.hpp"
