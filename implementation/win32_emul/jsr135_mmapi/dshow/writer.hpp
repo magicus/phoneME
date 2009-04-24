@@ -27,12 +27,12 @@
 #include <strmif.h>
 #include "types.hpp"
 
-void print(char8 const *fmt, ...);
-void print(char16 const *fmt, ...);
+void print(const char8 *fmt, ...);
+void print(const char16 *fmt, ...);
 void error(HRESULT hr);
-void error(char8 const *str, HRESULT hr);
+void error(const char8 *str, HRESULT hr);
 void print(GUID guid);
-void dump_media_type(AM_MEDIA_TYPE const *pamt);
+void dump_media_type(const AM_MEDIA_TYPE *pamt);
 bool dump_media_types(IPin *pp, nat32 indent = 0);
 bool dump_pin(IPin *pp, nat32 indent = 0);
 bool dump_pins(IBaseFilter *pbf, nat32 indent = 0);
