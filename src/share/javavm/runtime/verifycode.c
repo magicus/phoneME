@@ -255,9 +255,6 @@ typedef CVMOpcode opcode_type;
 
 typedef unsigned int *bitvector;
 
-/* opc_invokespecial calls to <init> need to be treated special */
-#define opc_invokeinit ((CVMOpcode)0x100)
-
 /* A hash mechanism used by the verifier.
  * Maps class names to unique 16 bit integers.
  * This is very similar to the classic VM's string intern table.

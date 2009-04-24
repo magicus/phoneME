@@ -4432,6 +4432,7 @@ handle_jit_osr:
 	}
  
 	CASE_ND(opc_xxxunusedxxx)
+	CASE_ND(opc_invokeinit)
 	    goto unimplemented_opcode;
 	DEFAULT
 	unimplemented_opcode:

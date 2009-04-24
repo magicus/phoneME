@@ -358,3 +358,4 @@ anewarray_quick    	  - 3 I     A  GC,EXC,QUICK anewarray_quick 0 0 0
 multianewarray_quick      - 4 ?     A  GC,EXC,QUICK multianewarray_quick 0 0 0 
 
 prefix	        	  - 0 -     -   -	prefix 0 0 0 /* prefix operation.   */
+invokeinit          	  - 3 ?     ?   INV,GC,EXC 	invokespecial 0 0 0 /* used only by the verifier. */
