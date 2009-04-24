@@ -193,7 +193,18 @@ typedef enum {
  *                      - JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE   
  *                          data = None.
  *                      - JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA
- *                          data = None.
+ *                          data = there are two options:
+ *                          - if just next portion of data is needed
+ *                            (without seeking), this param should equal
+ *                             ((void*)-1).
+ *                          - to seek to another position in the Java stream
+ *                            and request a portion of data starting from this
+ *                            position, please assign this value to the
+ *                            absolute position (offset) in bytes,
+ *                            unsigned long, from the
+ *                            beginning of the stream. For example, to seek to
+ *                            the beginning of the file, assign this parameter
+ *                            to zero.
  *                      - JAVACALL_EVENT_MEDIA_BUFFERING_STARTED
  *                          data = Designating the media time when the buffering is started.
  *                      - JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED
