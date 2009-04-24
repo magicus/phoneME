@@ -402,7 +402,7 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
             long preload_size = XFER_BUFFER_SIZE * 50;
 
             if( -1 != p->whole_content_size && 
-                ( JC_FMT_VIDEO_3GPP == p->mediaType || JC_FMT_FLV == p->mediaType ) )
+                ( JC_FMT_VIDEO_3GPP == p->mediaType )
             {
                 preload_size = p->whole_content_size;
             }
