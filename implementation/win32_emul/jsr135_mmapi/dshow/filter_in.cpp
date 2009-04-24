@@ -707,7 +707,7 @@ HRESULT __stdcall filter_in_pin::SyncReadAligned(IMediaSample *pSample)
     while(pconnected &&
         !flushing &&
         pos <= data_total &&
-        data_total - pos <= len &&
+        len <= data_total - pos &&
         (data_l < pos || data_l - pos < len))
     {
         LeaveCriticalSection(&data_cs);
@@ -791,7 +791,7 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
     while(pconnected &&
         !flushing &&
         pos <= data_total &&
-        data_total - pos <= len &&
+        len <= data_total - pos &&
         (data_l < pos || data_l - pos < len))
     {
         LeaveCriticalSection(&data_cs);
@@ -801,11 +801,17 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
     if(flushing)
     {
         r = VFW_E_TIMEOUT;
+#if write_level > 0
+        print("wp1, pconnected=%p, flushing=%s, pos=%u, len=%u, data_total=%u, data_l=%u\n", pconnected, flushing ? "true" : "false", pos, len, data_total, data_l);
+#endif
     }
     else if(data_l < pos)
     {
         /*if(data_finished) r = E_INVALIDARG;
         else */r = S_FALSE;
+#if write_level > 0
+        print("wp2, pconnected=%p, flushing=%s, pos=%u, len=%u, data_total=%u, data_l=%u\n", pconnected, flushing ? "true" : "false", pos, len, data_total, data_l);
+#endif
     }
     else
     {
@@ -813,6 +819,9 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
         {
             len = data_l - pos;
             r = S_FALSE;
+#if write_level > 0
+            print("wp3, pconnected=%p, flushing=%s, pos=%u, len=%u, data_total=%u, data_l=%u\n", pconnected, flushing ? "true" : "false", pos, len, data_total, data_l);
+#endif
         }
         else r = S_OK;
         if(len)
@@ -835,12 +844,18 @@ HRESULT __stdcall filter_in_pin::Length(LONGLONG *pTotal, LONGLONG *pAvailable)
     {
         *pTotal = data_total;
         *pAvailable = data_total;
+#if write_level > 0
+        print("%I64i %I64i\n", *pTotal, *pAvailable);
+#endif
         return S_OK;
     }
     else
     {
         *pTotal = data_total;
         *pAvailable = data_l;
+#if write_level > 0
+        print("%I64i %I64i\n", *pTotal, *pAvailable);
+#endif
         return VFW_S_ESTIMATED;
     }
 }
