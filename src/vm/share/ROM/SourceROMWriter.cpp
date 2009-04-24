@@ -1754,7 +1754,13 @@ void SourceROMWriter::sort_and_load_all_in_classpath(JVM_SINGLE_ARG_TRAPS) {
                                 (utf8)(byte_array().base_address()),
                                 len JVM_CHECK);
     instance_class =
-      SystemDictionary::resolve(&class_name, ErrorOnFailure JVM_CHECK);
+      SystemDictionary::resolve(&class_name, ErrorOnFailure JVM_NO_CHECK);
+    if( instance_class.is_null() ) {
+      tty->print( "Error romizing " );
+      class_name().print_value_on(tty);
+      tty->cr();
+      return;
+    } 
     instance_class().verify(JVM_SINGLE_ARG_CHECK);
   }
 
