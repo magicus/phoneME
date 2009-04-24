@@ -342,6 +342,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     {
         if( null != lowLevelPlayer )
         {
+            // Avoid blocking the event listener thread
             new Thread() {
                 public void run() {
                     lowLevelPlayer.doReceiveRSL();
