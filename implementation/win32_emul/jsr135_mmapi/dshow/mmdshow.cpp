@@ -401,10 +401,16 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
         {
             long preload_size = XFER_BUFFER_SIZE * 50;
 
-            if( -1 != p->whole_content_size && 
-                ( JC_FMT_VIDEO_3GPP == p->mediaType )
+            if( JC_FMT_FLV == p->mediaType ) preload_size = XFER_BUFFER_SIZE * 100;
+
+            if( -1 != p->whole_content_size )
             {
-                preload_size = p->whole_content_size;
+                if( preload_size > p->whole_content_size ) preload_size = p->whole_content_size;
+
+                if( JC_FMT_VIDEO_3GPP == p->mediaType || JC_FMT_FLV == p->mediaType )
+                {
+                    preload_size = p->whole_content_size;
+                }
             }
 
             *need_more_data  = ( p->bytes_buffered < preload_size ) 
@@ -447,9 +453,6 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
 
         *need_more_data  = JAVACALL_FALSE;
         *next_chunk_size = 0;
-
-        long t = p->get_media_time();
-        if( -1 != p->duration && t > p->duration ) t = p->duration;
     }
 
     return JAVACALL_OK;
@@ -532,7 +535,17 @@ static javacall_result dshow_set_time(javacall_handle handle, long* ms)
 static javacall_result dshow_get_duration(javacall_handle handle, long* ms)
 {
     dshow_player* p = (dshow_player*)handle;
-    *ms = p->duration;
+
+    player::result res;
+
+    int64 d = p->ppl->get_duration( &res );
+
+    if( res == player::result_success && player::time_unknown != d ) {
+        *ms = long( d / 1000 );
+    } else {
+        *ms = p->duration;
+    }
+
     return JAVACALL_OK;
 }
 
