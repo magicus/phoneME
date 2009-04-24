@@ -219,7 +219,7 @@
 
   <integer
         Key="SOFTBTN_HEIGHT"
-      Value="30"/>
+      Value="18"/>
 
   <integer
         Key="SOFTBTN_NUM_BUTTONS"
@@ -1024,7 +1024,7 @@
 
   <integer
         Key="MENU_HEIGHT"
-      Value="300"/>
+      Value="159"/>
 
   <integer
         Key="MENU_ALIGN_X"
@@ -1056,7 +1056,7 @@
 
   <integer
         Key="MENU_ITEM_HEIGHT"
-      Value="30"/>
+      Value="15"/>
 
   <integer
         Key="MENU_ITEM_TOPOFFSET"
@@ -1365,7 +1365,7 @@
 
   <integer_seq
         Key="SOFTBTN_BUTTON_MAX_WIDTH"
-      Value="120,120"/>
+      Value="85,85"/>
 
   <integer_seq
         Key="SOFTBTN_BUTTON_ANCHOR_X"

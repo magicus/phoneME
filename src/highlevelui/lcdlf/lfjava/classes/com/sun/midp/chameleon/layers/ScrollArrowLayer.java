@@ -32,6 +32,7 @@ import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
 import com.sun.midp.lcdui.EventConstants;
+import com.sun.midp.lcdui.TactileFeedback;
 
 /**
  * A ScrollArrowLayer is a region of the display used for showing scroll indicator
@@ -171,7 +172,7 @@ public class ScrollArrowLayer extends ScrollIndLayer {
             // case EventConstants.HOLD:
             // no action for tap-and-hold in scrollbar
             // cancel timer for any press.
-            
+            TactileFeedback.playTactileFeedback();            
             int scrollType = getScrollType(x, y);
             if (scrollType == SCROLL_LINEDOWN ||
                 scrollType ==  SCROLL_LINEUP) {

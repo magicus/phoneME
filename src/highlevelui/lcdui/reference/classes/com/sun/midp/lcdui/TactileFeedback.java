@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -24,38 +22,22 @@
  * information or have any questions.
  */
 
-package com.sun.midp.main;
+package com.sun.midp.lcdui;
 
-import com.sun.midp.security.*;
+public class TactileFeedback {
 
-/** This class enables the native foreground state to be changed. */
-public class NativeForegroundState {
-    /** This class only has static methods. */
-    private NativeForegroundState() {}
-
-    /**
-     * Set foreground display native state, so the native code will know
-     * which display can draw.
-     *
-     * @param token token with the "com.sun.midp.ams" permission allowed
-     * @param displayId Display ID
-     */
-    public static void setState(SecurityToken token, int displayId) {
-        token.checkIfPermissionAllowed(Permissions.AMS);
-        setState(displayId);
+    public static final int PRESSED = 0;
+    public static final int DRAGGED = 1;
+    public static final int FLICKERED = 2;
+    
+    public static void playTactileFeedback() {
+        playTactileFeedback0(PRESSED);
     }
 
-    /**
-     * Set foreground display native state, so the native code will know
-     * which display can draw.
-     *
-     * @param displayId Display ID
-     */
-    private static native void setState(int displayId);
-
-    /**
-     * Get foreground display native state
-     *
-     */
-    public static native int getState();
+    public static void playTactileFeedback(int type) {
+        playTactileFeedback0(type);
+    }
+    
+    private static native void playTactileFeedback0(int type);
+    
 }

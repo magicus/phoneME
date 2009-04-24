@@ -113,6 +113,7 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayFactory.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/FontAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/OEMFont.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/TactileFeedback.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/LayerManager.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameCanvas.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameAccessImpl.java \
@@ -186,6 +187,10 @@ endif
 # Define Jpp
 ifeq ($(USE_DIRECTDRAW), true)
   JPP_DEFS += -DENABLE_DIRECT_DRAW
+endif
+
+ifeq ($(USE_OPENGL), true)
+  JPP_DEFS += -DENABLE_OPENGL
 endif
 
 ifeq ($(USE_MULTIPLE_DISPLAYS), true)

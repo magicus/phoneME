@@ -115,4 +115,14 @@
 #define FACE_PROPORTIONAL  64
 /** @} */
 
+/**
+ * @name Translation of javax.microedition.lcdui.Font constants
+ * @{
+ */
+#define JAVACALL_FONT_SIZE(font_size) ( \
+    font_size == SIZE_SMALL ? JAVACALL_FONT_SIZE_SMALL : \
+    font_size == SIZE_LARGE ? JAVACALL_FONT_SIZE_LARGE : \
+    JAVACALL_FONT_SIZE_MEDIUM )
+/** @} */
+
 #endif /* _GXAPI_CONSTANTS_H_ */
