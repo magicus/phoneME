@@ -59,12 +59,14 @@ extern "C" {
  */
 
 typedef int javacall_font_size;
-/** The "small" system-dependent font size. */
-extern const javacall_font_size JAVACALL_FONT_SIZE_SMALL;
-/** The "medium" system-dependent font size. */
-extern const javacall_font_size JAVACALL_FONT_SIZE_MEDIUM;
-/** The "large" system-dependent font size. */
-extern const javacall_font_size JAVACALL_FONT_SIZE_LARGE;
+
+/** 
+ * Define the following constants in javacall_platform_defs.h:
+ * JAVACALL_FONT_SIZE_SMALL
+ * JAVACALL_FONT_SIZE_MEDIUM
+ * JAVACALL_FONT_SIZE_LARGE
+ */
+
 
 /**
  * @enum javacall_font_style
