@@ -706,8 +706,8 @@ HRESULT __stdcall filter_in_pin::SyncReadAligned(IMediaSample *pSample)
     EnterCriticalSection(&data_cs);
     while(pconnected &&
         !flushing &&
-        pos <= data_total &&
-        len <= data_total - pos &&
+        !(data_total < pos) &&
+        !(data_total - pos < len) &&
         (data_l < pos || data_l - pos < len))
     {
         LeaveCriticalSection(&data_cs);
@@ -790,8 +790,8 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
     EnterCriticalSection(&data_cs);
     while(pconnected &&
         !flushing &&
-        pos <= data_total &&
-        len <= data_total - pos &&
+        !(data_total < pos) &&
+        !(data_total - pos < len) &&
         (data_l < pos || data_l - pos < len))
     {
         LeaveCriticalSection(&data_cs);
