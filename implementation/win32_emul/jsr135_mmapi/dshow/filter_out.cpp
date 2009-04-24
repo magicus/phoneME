@@ -66,13 +66,12 @@ class filter_out_pin : public IPin, public IMemInputPin
 {
     friend filter_out_filter;
 
+    HANDLE mutex_pin;
     filter_out_filter *pfilter;
     AM_MEDIA_TYPE amt;
-
-    CRITICAL_SECTION data_cs;
-
     IPin *pconnected;
     bool flushing;
+    HANDLE mutex_receive;
 
     filter_out_pin();
     ~filter_out_pin();
@@ -132,6 +131,7 @@ class filter_out_filter : public filter_out
 {
     friend filter_out_pin;
 
+    HANDLE mutex_filter;
     nat32 reference_count;
     player_callback *pcallback;
     filter_out_pin *ppin;
@@ -139,6 +139,9 @@ class filter_out_filter : public filter_out
     IReferenceClock *pclock;
     char16 name[MAX_FILTER_NAME];
     FILTER_STATE state;
+    FILTER_STATE state2;
+    REFERENCE_TIME t_start;
+    HANDLE event_not_paused;
 
     filter_out_filter();
     ~filter_out_filter();
@@ -387,7 +390,10 @@ ULONG __stdcall filter_out_pin::AddRef()
 #if write_level > 1
     print("filter_out_pin::AddRef called...\n");
 #endif
-    return pfilter->AddRef();
+    WaitForSingleObject(mutex_pin, INFINITE);
+    nat32 r = pfilter->AddRef();
+    ReleaseMutex(mutex_pin);
+    return r;
 }
 
 ULONG __stdcall filter_out_pin::Release()
@@ -395,7 +401,10 @@ ULONG __stdcall filter_out_pin::Release()
 #if write_level > 1
     print("filter_out_pin::Release called...\n");
 #endif
-    return pfilter->Release();
+    WaitForSingleObject(mutex_pin, INFINITE);
+    nat32 r = pfilter->Release();
+    if(r) ReleaseMutex(mutex_pin);
+    return r;
 }
 
 HRESULT __stdcall filter_out_pin::Connect(IPin *pReceivePin, const AM_MEDIA_TYPE * /*pmt*/)
@@ -416,14 +425,23 @@ HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, const AM_M
     print(") called...\n");
 #endif
     if(!pConnector || !pmt) return E_POINTER;
-    if(pconnected) return VFW_E_ALREADY_CONNECTED;
-    if(pfilter->state != State_Stopped) return VFW_E_NOT_STOPPED;
-    if(pmt->majortype != MEDIATYPE_Video ||
-        pmt->subtype != MEDIASUBTYPE_RGB565 ||
-        pmt->bFixedSizeSamples != TRUE ||
-        pmt->bTemporalCompression != FALSE ||
-        pmt->formattype != FORMAT_VideoInfo)
+    WaitForSingleObject(mutex_pin, INFINITE);
+    if(pfilter->state != State_Stopped)
+    {
+        ReleaseMutex(mutex_pin);
+        return VFW_E_NOT_STOPPED;
+    }
+    if(pconnected)
+    {
+        ReleaseMutex(mutex_pin);
+        return VFW_E_ALREADY_CONNECTED;
+    }
+    if(pmt->majortype != amt.majortype ||
+        pmt->subtype != amt.subtype)
+    {
+        ReleaseMutex(mutex_pin);
         return VFW_E_TYPE_NOT_ACCEPTED;
+    }
 
     const VIDEOINFOHEADER *vih = (const VIDEOINFOHEADER *)pmt->pbFormat;
 #if write_level > 0
@@ -433,6 +451,7 @@ HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, const AM_M
 
     pconnected = pConnector;
     pconnected->AddRef();
+    ReleaseMutex(mutex_pin);
     return S_OK;
 }
 
@@ -441,10 +460,20 @@ HRESULT __stdcall filter_out_pin::Disconnect()
 #if write_level > 0
     print("filter_out_pin::Disconnect called...\n");
 #endif
-    if(pfilter->state != State_Stopped) return VFW_E_NOT_STOPPED;
-    if(!pconnected) return S_FALSE;
+    WaitForSingleObject(mutex_pin, INFINITE);
+    if(pfilter->state != State_Stopped)
+    {
+        ReleaseMutex(mutex_pin);
+        return VFW_E_NOT_STOPPED;
+    }
+    if(!pconnected)
+    {
+        ReleaseMutex(mutex_pin);
+        return S_FALSE;
+    }
     pconnected->Release();
     pconnected = null;
+    ReleaseMutex(mutex_pin);
     return S_OK;
 }
 
@@ -454,13 +483,16 @@ HRESULT __stdcall filter_out_pin::ConnectedTo(IPin **pPin)
     print("filter_out_pin::ConnectedTo called...\n");
 #endif
     if(!pPin) return E_POINTER;
+    WaitForSingleObject(mutex_pin, INFINITE);
     if(!pconnected)
     {
+        ReleaseMutex(mutex_pin);
         *pPin = null;
         return VFW_E_NOT_CONNECTED;
     }
     *pPin = pconnected;
     (*pPin)->AddRef();
+    ReleaseMutex(mutex_pin);
     return S_OK;
 }
 
@@ -470,15 +502,21 @@ HRESULT __stdcall filter_out_pin::ConnectionMediaType(AM_MEDIA_TYPE *pmt)
     print("filter_out_pin::ConnectionMediaType called...\n");
 #endif
     if(!pmt) return E_POINTER;
+    WaitForSingleObject(mutex_pin, INFINITE);
     if(!pconnected)
     {
+        ReleaseMutex(mutex_pin);
         memset(pmt, 0, sizeof(AM_MEDIA_TYPE));
         return VFW_E_NOT_CONNECTED;
     }
     if(amt.cbFormat)
     {
         pmt->pbFormat = (bits8 *)CoTaskMemAlloc(amt.cbFormat);
-        if(!pmt->pbFormat) return E_OUTOFMEMORY;
+        if(!pmt->pbFormat)
+        {
+            ReleaseMutex(mutex_pin);
+            return E_OUTOFMEMORY;
+        }
         memcpy(pmt->pbFormat, amt.pbFormat, amt.cbFormat);
     }
     else pmt->pbFormat = null;
@@ -491,6 +529,7 @@ HRESULT __stdcall filter_out_pin::ConnectionMediaType(AM_MEDIA_TYPE *pmt)
     pmt->pUnk = amt.pUnk;
     if(pmt->pUnk) pmt->pUnk->AddRef();
     pmt->cbFormat = amt.cbFormat;
+    ReleaseMutex(mutex_pin);
     return S_OK;
 }
 
@@ -500,10 +539,12 @@ HRESULT __stdcall filter_out_pin::QueryPinInfo(PIN_INFO *pInfo)
     print("filter_out_pin::QueryPinInfo called...\n");
 #endif
     if(!pInfo) return E_POINTER;
+    WaitForSingleObject(mutex_pin, INFINITE);
     pInfo->pFilter = pfilter;
     pInfo->pFilter->AddRef();
     pInfo->dir = PINDIR_INPUT;
     wcscpy_s(pInfo->achName, MAX_PIN_NAME, L"Input");
+    ReleaseMutex(mutex_pin);
     return S_OK;
 }
 
@@ -543,13 +584,19 @@ HRESULT __stdcall filter_out_pin::EnumMediaTypes(IEnumMediaTypes **ppEnum)
     print("filter_out_pin::EnumMediaTypes called...\n");
 #endif
     if(!ppEnum) return E_POINTER;
+    WaitForSingleObject(mutex_pin, INFINITE);
     filter_out_enum_media_types *penum_media_types = new filter_out_enum_media_types;
-    if(!penum_media_types) return E_OUTOFMEMORY;
+    if(!penum_media_types)
+    {
+        ReleaseMutex(mutex_pin);
+        return E_OUTOFMEMORY;
+    }
     if(amt.cbFormat)
     {
         penum_media_types->amt.pbFormat = new bits8[amt.cbFormat];
         if(!penum_media_types->amt.pbFormat)
         {
+            ReleaseMutex(mutex_pin);
             delete penum_media_types;
             return E_OUTOFMEMORY;
         }
@@ -568,6 +615,7 @@ HRESULT __stdcall filter_out_pin::EnumMediaTypes(IEnumMediaTypes **ppEnum)
     penum_media_types->amt.cbFormat = amt.cbFormat;
     penum_media_types->index = 0;
     *ppEnum = penum_media_types;
+    ReleaseMutex(mutex_pin);
     return S_OK;
 }
 
@@ -585,7 +633,9 @@ HRESULT __stdcall filter_out_pin::EndOfStream()
 #if write_level > 0
     print("filter_out_pin::EndOfStream called...\n");
 #endif
+    WaitForSingleObject(mutex_pin, INFINITE);
     pfilter->pcallback->playback_finished();
+    ReleaseMutex(mutex_pin);
     return S_OK;
 }
 
@@ -594,9 +644,21 @@ HRESULT __stdcall filter_out_pin::BeginFlush()
 #if write_level > 0
     print("filter_out_pin::BeginFlush called...\n");
 #endif
-    //EnterCriticalSection(&data_cs);
+    WaitForSingleObject(mutex_pin, INFINITE);
+    WaitForSingleObject(pfilter->mutex_filter, INFINITE);
     flushing = true;
-    //LeaveCriticalSection(&data_cs);
+    if(pfilter->state == State_Paused) SetEvent(pfilter->event_not_paused);
+    ReleaseMutex(pfilter->mutex_filter);
+    ReleaseMutex(mutex_pin);
+
+    WaitForSingleObject(mutex_receive, INFINITE);
+    ReleaseMutex(mutex_receive);
+
+    WaitForSingleObject(mutex_pin, INFINITE);
+    WaitForSingleObject(pfilter->mutex_filter, INFINITE);
+    if(pfilter->state == State_Paused) ResetEvent(pfilter->event_not_paused);
+    ReleaseMutex(pfilter->mutex_filter);
+    ReleaseMutex(mutex_pin);
     return S_OK;
 }
 
@@ -605,9 +667,9 @@ HRESULT __stdcall filter_out_pin::EndFlush()
 #if write_level > 0
     print("filter_out_pin::EndFlush called...\n");
 #endif
-    //EnterCriticalSection(&data_cs);
+    WaitForSingleObject(mutex_pin, INFINITE);
     flushing = false;
-    //LeaveCriticalSection(&data_cs);
+    ReleaseMutex(mutex_pin);
     return S_OK;
 }
 
@@ -651,65 +713,139 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #if write_level > 0
     print("filter_out_pin::Receive called...\n");
 #endif
-
     if(!pSample) return E_POINTER;
+
+    WaitForSingleObject(mutex_pin, INFINITE);
+    WaitForSingleObject(mutex_receive, INFINITE);
 
 #if write_level > 0
     print("Actual data length=%i\n", pSample->GetActualDataLength());
 #endif
 
-    if(flushing) return S_FALSE;
-    if(pfilter->state == State_Stopped) return VFW_E_WRONG_STATE;
+    print("Receive 0\n");
+    if(flushing)
+    {
+        ReleaseMutex(mutex_receive);
+        ReleaseMutex(mutex_pin);
+        return S_FALSE;
+    }
 
+    print("Receive 1\n");
+    if(pfilter->state == State_Stopped)
+    {
+        ReleaseMutex(mutex_receive);
+        ReleaseMutex(mutex_pin);
+        return VFW_E_WRONG_STATE;
+    }
+
+    print("Receive 2\n");
     int64 tstart;
     int64 tend;
-    if(FAILED(pSample->GetTime(&tstart, &tend))) return VFW_E_RUNTIME_ERROR;
-
-    IMediaSeeking *pms;
-    if(pfilter->pgraph->QueryInterface(
-        IID_IMediaSeeking, (void **)&pms) != S_OK) return VFW_E_RUNTIME_ERROR;
-
-    int64 tc;
-    if(pms->GetCurrentPosition(&tc) != S_OK)
+    if(FAILED(pSample->GetTime(&tstart, &tend)))
     {
-        pms->Release();
+        ReleaseMutex(mutex_receive);
+        ReleaseMutex(mutex_pin);
         return VFW_E_RUNTIME_ERROR;
     }
 
+    print("Receive 3\n");
+    IMediaSeeking *pms;
+    if(pfilter->pgraph->QueryInterface(
+        IID_IMediaSeeking, (void **)&pms) != S_OK)
+    {
+        ReleaseMutex(mutex_receive);
+        ReleaseMutex(mutex_pin);
+        return VFW_E_RUNTIME_ERROR;
+    }
+
+    print("Receive 4\n");
+    int64 tc;
+    if(pms->GetCurrentPosition(&tc) != S_OK)
+    {
+        print("Receive 5\n");
+        pms->Release();
+        ReleaseMutex(mutex_receive);
+        ReleaseMutex(mutex_pin);
+        return VFW_E_RUNTIME_ERROR;
+    }
+
+    print("Receive 6\n");
 #if write_level > 0
     print("%I64i %I64i %I64i\n", tstart, tend, tc);
 #endif
 
     while(tstart > tc)
     {
-        do
+        print("wp0\n");
+        if(pfilter->state == State_Paused)
         {
-            Sleep(1);
+            print("wp01\n");
+            HANDLE event_not_paused2 = pfilter->event_not_paused;
+            print("wp1\n");
+            ReleaseMutex(mutex_pin);
+            print("wp2\n");
+            WaitForSingleObject(event_not_paused2, INFINITE);
+            print("wp3\n");
+            WaitForSingleObject(mutex_pin, INFINITE);
+            print("wp4\n");
         }
-        while(!flushing && pfilter->state == State_Paused);
+        else
+        {
+            print("wp5\n");
+            ReleaseMutex(mutex_pin);
+            print("wp6\n");
+            Sleep(1);
+            print("wp7\n");
+            WaitForSingleObject(mutex_pin, INFINITE);
+            print("wp8\n");
+        }
 
+        //print("wp7a\n");
         if(flushing)
         {
             pms->Release();
+            ReleaseMutex(mutex_receive);
+            ReleaseMutex(mutex_pin);
             return S_FALSE;
         }
+        //print("wp7b\n");
         if(pfilter->state == State_Stopped)
         {
             pms->Release();
+            ReleaseMutex(mutex_receive);
+            ReleaseMutex(mutex_pin);
             return VFW_E_WRONG_STATE;
         }
 
-        if(pms->GetCurrentPosition(&tc) != S_OK)
+        ReleaseMutex(mutex_pin);
+        print("Calling IMediaSeeking::GetCurrentPosition...\n");
+        HRESULT hr = pms->GetCurrentPosition(&tc);
+        print("Finished.\n");
+        if(hr != S_OK)
         {
+            //print("wp7d\n");
             pms->Release();
+            ReleaseMutex(mutex_receive);
+            //ReleaseMutex(mutex_pin);
             return VFW_E_RUNTIME_ERROR;
         }
+        WaitForSingleObject(mutex_pin, INFINITE);
+        //print("wp7e\n");
     }
+    print("wp9\n");
 
     pms->Release();
     bits8 *pb;
-    if(pSample->GetPointer(&pb) != S_OK) return VFW_E_RUNTIME_ERROR;
+    if(pSample->GetPointer(&pb) != S_OK)
+    {
+        ReleaseMutex(mutex_receive);
+        ReleaseMutex(mutex_pin);
+        return VFW_E_RUNTIME_ERROR;
+    }
     pfilter->pcallback->frame_ready((bits16 *)pb);
+    ReleaseMutex(mutex_receive);
+    ReleaseMutex(mutex_pin);
+    print("wp10\n");
     return S_OK;
 }
 
@@ -719,7 +855,13 @@ HRESULT __stdcall filter_out_pin::ReceiveMultiple(IMediaSample **pSamples, long 
     print("filter_out_pin::ReceiveMultiple called...\n");
 #endif
     if(!pSamples || !nSamplesProcessed) return E_POINTER;
-    if(pfilter->state == State_Stopped) return VFW_E_WRONG_STATE;
+    WaitForSingleObject(mutex_pin, INFINITE);
+    if(pfilter->state == State_Stopped)
+    {
+        ReleaseMutex(mutex_pin);
+        return VFW_E_WRONG_STATE;
+    }
+    ReleaseMutex(mutex_pin);
     return VFW_E_RUNTIME_ERROR;
 }
 
@@ -914,7 +1056,10 @@ ULONG __stdcall filter_out_filter::AddRef()
 #if write_level > 1
     print("filter_out_filter::AddRef called...\n");
 #endif
-    return ++reference_count;
+    WaitForSingleObject(mutex_filter, INFINITE);
+    nat32 r = ++reference_count;
+    ReleaseMutex(mutex_filter);
+    return r;
 }
 
 ULONG __stdcall filter_out_filter::Release()
@@ -922,18 +1067,24 @@ ULONG __stdcall filter_out_filter::Release()
 #if write_level > 1
     print("filter_out_filter::Release called...\n");
 #endif
+    WaitForSingleObject(mutex_filter, INFINITE);
     if(reference_count == 1)
     {
         if(pclock) pclock->Release();
+        CloseHandle(ppin->mutex_receive);
         if(ppin->pconnected) ppin->pconnected->Release();
-        DeleteCriticalSection(&ppin->data_cs);
         if(ppin->amt.pUnk) ppin->amt.pUnk->Release();
         if(ppin->amt.cbFormat) delete[] ppin->amt.pbFormat;
+        CloseHandle(ppin->mutex_pin);
+        CloseHandle(event_not_paused);
+        CloseHandle(mutex_filter);
         delete ppin;
         delete this;
         return 0;
     }
-    return --reference_count;
+    nat32 r = --reference_count;
+    ReleaseMutex(mutex_filter);
+    return r;
 }
 
 HRESULT __stdcall filter_out_filter::GetClassID(CLSID * /*pClassID*/)
@@ -949,7 +1100,23 @@ HRESULT __stdcall filter_out_filter::Stop()
 #if write_level > 0
     print("filter_out_filter::Stop called...\n");
 #endif
-    state = State_Stopped;
+    WaitForSingleObject(mutex_filter, INFINITE);
+    if(state == State_Stopped)
+    {
+        state2 = State_Stopped;
+    }
+    else if(state == State_Paused)
+    {
+        state = State_Stopped;
+        state2 = State_Stopped;
+        SetEvent(event_not_paused);
+    }
+    else
+    {
+        state = State_Stopped;
+        state2 = State_Stopped;
+    }
+    ReleaseMutex(mutex_filter);
     return S_OK;
 }
 
@@ -958,16 +1125,50 @@ HRESULT __stdcall filter_out_filter::Pause()
 #if write_level > 0
     print("filter_out_filter::Pause called...\n");
 #endif
-    state = State_Paused;
-    return S_OK;
+    HRESULT r;
+    WaitForSingleObject(mutex_filter, INFINITE);
+    if(state == State_Stopped)
+    {
+        state2 = State_Paused;
+        r = S_FALSE;
+    }
+    else if(state == State_Paused)
+    {
+        r = S_OK;
+    }
+    else
+    {
+        state = State_Paused;
+        state2 = State_Paused;
+        ResetEvent(event_not_paused);
+        r = S_OK;
+    }
+    ReleaseMutex(mutex_filter);
+    return r;
 }
 
-HRESULT __stdcall filter_out_filter::Run(REFERENCE_TIME /*tStart*/)
+HRESULT __stdcall filter_out_filter::Run(REFERENCE_TIME tStart)
 {
 #if write_level > 0
     print("filter_out_filter::Run called...\n");
 #endif
-    state = State_Running;
+    WaitForSingleObject(mutex_filter, INFINITE);
+    if(state == State_Stopped)
+    {
+        state = State_Running;
+        state2 = State_Running;
+    }
+    else if(state == State_Paused)
+    {
+        state = State_Running;
+        state2 = State_Running;
+        SetEvent(event_not_paused);
+    }
+    else
+    {
+    }
+    t_start = tStart;
+    ReleaseMutex(mutex_filter);
     return S_OK;
 }
 
@@ -977,8 +1178,10 @@ HRESULT __stdcall filter_out_filter::GetState(DWORD /*dwMilliSecsTimeout*/, FILT
     print("filter_out_filter::GetState called...\n");
 #endif
     if(!State) return E_POINTER;
+    WaitForSingleObject(mutex_filter, INFINITE);
     if(state == State_Paused) return VFW_S_CANT_CUE;
     *State = state;
+    ReleaseMutex(mutex_filter);
     return S_OK;
 }
 
@@ -1088,7 +1291,7 @@ bool filter_out_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcall
 #if write_level > 1
     print("filter_out_filter::create called...\n");
 #endif
-    if(!pamt || !ppfilter) return false;
+    if(!pamt || !pcallback || !ppfilter) return false;
     filter_out_filter *pfilter = new filter_out_filter;
     if(!pfilter) return false;
     pfilter->ppin = new filter_out_pin;
@@ -1097,8 +1300,36 @@ bool filter_out_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcall
         delete pfilter;
         return false;
     }
-    if(!InitializeCriticalSectionAndSpinCount(&pfilter->ppin->data_cs, 0x80000000))
+    pfilter->mutex_filter = CreateMutex(null, false, null);
+    if(!pfilter->mutex_filter)
     {
+        delete pfilter->ppin;
+        delete pfilter;
+        return false;
+    }
+    pfilter->event_not_paused = CreateEvent(null, true, true, null);
+    if(!pfilter->event_not_paused)
+    {
+        CloseHandle(pfilter->mutex_filter);
+        delete pfilter->ppin;
+        delete pfilter;
+        return false;
+    }
+    pfilter->ppin->mutex_pin = CreateMutex(null, false, null);
+    if(!pfilter->ppin->mutex_pin)
+    {
+        CloseHandle(pfilter->event_not_paused);
+        CloseHandle(pfilter->mutex_filter);
+        delete pfilter->ppin;
+        delete pfilter;
+        return false;
+    }
+    pfilter->ppin->mutex_receive = CreateMutex(null, false, null);
+    if(!pfilter->ppin->mutex_receive)
+    {
+        CloseHandle(pfilter->ppin->mutex_pin);
+        CloseHandle(pfilter->event_not_paused);
+        CloseHandle(pfilter->mutex_filter);
         delete pfilter->ppin;
         delete pfilter;
         return false;
@@ -1108,7 +1339,10 @@ bool filter_out_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcall
         pfilter->ppin->amt.pbFormat = new bits8[pamt->cbFormat];
         if(!pfilter->ppin->amt.pbFormat)
         {
-            DeleteCriticalSection(&pfilter->ppin->data_cs);
+            CloseHandle(pfilter->ppin->mutex_receive);
+            CloseHandle(pfilter->ppin->mutex_pin);
+            CloseHandle(pfilter->event_not_paused);
+            CloseHandle(pfilter->mutex_filter);
             delete pfilter->ppin;
             delete pfilter;
             return false;
@@ -1134,6 +1368,7 @@ bool filter_out_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcall
     pfilter->pclock = null;
     wcscpy_s(pfilter->name, MAX_FILTER_NAME, L"");
     pfilter->state = State_Stopped;
+    pfilter->state2 = State_Stopped;
     *ppfilter =  pfilter;
     return true;
 }
@@ -1144,7 +1379,7 @@ bool filter_out_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcall
 
 bool filter_out::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_out **ppfilter)
 {
-    if(!pamt || !ppfilter) return false;
+    if(!pamt || !pcallback || !ppfilter) return false;
     filter_out_filter *pfilter;
     if(!filter_out_filter::create(pamt, pcallback, &pfilter)) return false;
     *ppfilter = pfilter;
