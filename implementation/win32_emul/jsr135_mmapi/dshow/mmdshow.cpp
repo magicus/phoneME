@@ -44,7 +44,7 @@ static void PRINTF( const char* fmt, ... ) {
     vsprintf( str8, fmt, args );
     va_end(args);
 
-    OutputDebugString( str8 );
+    //OutputDebugString( str8 );
 }
 
 #define XFER_BUFFER_SIZE  4096
@@ -401,7 +401,7 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
         {
             long preload_size = XFER_BUFFER_SIZE * 50;
 
-            if( JC_FMT_FLV == p->mediaType ) preload_size = XFER_BUFFER_SIZE * 100;
+            if( JC_FMT_FLV == p->mediaType ) preload_size = 400 * 1024;
 
             if( -1 != p->whole_content_size )
             {
@@ -449,7 +449,7 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
     {
         PRINTF( "           [all data arrived]\n" );
         p->all_data_arrived = true;
-        p->ppl->data( 0, NULL );
+        //p->ppl->data( 0, NULL );
 
         *need_more_data  = JAVACALL_FALSE;
         *next_chunk_size = 0;
@@ -539,6 +539,8 @@ static javacall_result dshow_get_duration(javacall_handle handle, long* ms)
     player::result res;
 
     int64 d = p->ppl->get_duration( &res );
+
+    PRINTF( "----------- get_duration: %i, %ld, (%i)\n", res, long( d / 1000 ), p->duration );
 
     if( res == player::result_success && player::time_unknown != d ) {
         *ms = long( d / 1000 );
