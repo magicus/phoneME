@@ -33,13 +33,13 @@ extern "C" {
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_showNativeKeyboard) {
-    javacall_native_virtual_keyboard(JAVACALL_TRUE);
+    javacall_native_virtual_keyboard(JAVACALL_TRUE, NULL, 0, 200, NULL);
     KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_hideNativeKeyboard) {
-    javacall_native_virtual_keyboard(JAVACALL_FALSE);
+    javacall_native_virtual_keyboard(JAVACALL_FALSE, NULL, 0, 0, NULL);
     KNI_ReturnVoid();
 }
 
