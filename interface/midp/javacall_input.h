@@ -398,7 +398,7 @@ javanotify_textfield_phonenumber_selection(char* /* OUT */ phoneNumber);
  */
 javacall_result  /* OPTIONAL */
 javacall_native_virtual_keyboard(javacall_bool isDisplay, javacall_utf16_string prepopulate,
-                                int mode, int maxSize, void* callBackDone);
+                                int mode, int maxSize, void (*callBackDone)(javacall_utf16*, int));
 
 /**
 * Handle the native virtual keyboard event.
