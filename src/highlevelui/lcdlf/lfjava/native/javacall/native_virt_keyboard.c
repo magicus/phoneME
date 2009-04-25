@@ -26,14 +26,20 @@
 
 #include <kni.h>
 #include <javacall_input.h>
+#include <midpEvents.h>
+#include <midp_foreground_id.h>
+#include <pcsl_string.h>
+#include <cdc_natives.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+static void callbackStringEntered(javacall_utf16_string ptr, int str_len);
+
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_showNativeKeyboard) {
-    javacall_native_virtual_keyboard(JAVACALL_TRUE, NULL, 0, 200, NULL);
+    javacall_native_virtual_keyboard(JAVACALL_TRUE, NULL, 0, 200, callbackStringEntered);
     KNI_ReturnVoid();
 }
 
@@ -41,6 +47,21 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_hideNativeKeyboard) {
     javacall_native_virtual_keyboard(JAVACALL_FALSE, NULL, 0, 0, NULL);
     KNI_ReturnVoid();
+}
+
+static void callbackStringEntered(javacall_utf16_string ptr, int str_len) {
+  MidpEvent event;
+  if (!str_len) {
+	return;
+  }
+  MIDP_EVENT_INITIALIZE(event);
+  event.intParam1 = 44 /* EventConstants.IME2 */;
+  event.type = 580; // EventTypes.VIRTUAL_KEYBOARD_RETURN_DATA_EVENT
+  event.DISPLAY = gForegroundDisplayId;
+
+  event.stringParam1.length = str_len;
+  pcsl_string_convert_from_utf16(ptr, str_len, &event.stringParam1); // TBD: check return status
+  sendMidpKeyEvent(&event);
 }
 
 #ifdef __cplusplus
