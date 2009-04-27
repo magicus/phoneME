@@ -532,7 +532,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_get0) {
         }
     
         /* Get the desired blocking mode. */
-        blockID = KNI_GetParameterAsBoolean(getBlockIDArg);
+        blockID = KNI_GetParameterAsInt(getBlockIDArg);
     
         if (!isEmpty()) {
             /* Get the desired type of invocation. */

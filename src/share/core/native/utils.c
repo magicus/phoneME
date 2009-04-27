@@ -58,7 +58,7 @@ void blockThread( jsr211_wait_status status, int blockID ) {
         p = (MidpReentryData*)SNI_AllocateReentryData(sizeof(MidpReentryData));
     }
 #ifdef TRACE_BLOCKING
-    printf( "blockThread(%d, %p), ~id = %p\n", status, blockID, p );
+    printf( "blockThread(%d, %d), ~id = %p\n", status, blockID, p );
 #endif
     p->waitingFor = JSR211_SIGNAL;
     p->status = (int)status;
@@ -86,6 +86,9 @@ void * enumWaitingThreads( int(* filter)(const MidpReentryData *, void *), void 
 #endif
     for (i = 0; result == NULL && i < n; i++) {
         MidpReentryData * p = (MidpReentryData *)blocked_threads[i].reentry_data;
+#ifdef TRACE_BLOCKING
+        printf( "\tThread[%d]: (%d, %d), ~id = %p\n", i, p?p->status:0, p?p->pResult:0, p );
+#endif
         if( !(*filter)( p, data ) ) continue;
         result = (*processor)( &blocked_threads[i], data );
     }
@@ -120,7 +123,7 @@ void unblockThread( const JVMSPI_BlockedThreadInfo * p ){
 #ifdef TRACE_BLOCKING
         MidpReentryData * mrd = (MidpReentryData *)p->reentry_data;
         if( mrd != NULL )
-            printf( "unblockThread: (%d, %p), ~id = %p\n", mrd->status, mrd->pResult, mrd );
+            printf( "unblockThread: (%d, %d), ~id = %p\n", mrd->status, mrd->pResult, mrd );
 #endif
         SNI_UnblockThread(id);
     }

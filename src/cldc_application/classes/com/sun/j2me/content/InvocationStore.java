@@ -132,7 +132,7 @@ public class InvocationStore implements StoreGate {
      */
     public InvocationImpl getResponse(ApplicationID appID, int blockID) {
     	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( "InvocationStore.getResponse: " + appID );
+    		AppProxy.LOGGER.println( "InvocationStore.getResponse: " + appID + ", blockID = " + blockID);
     	
     	CLDCAppID.from(appID).className.length(); // null pointer check
         return get(CLDCAppID.from(appID), MODE_RESPONSE, blockID);
