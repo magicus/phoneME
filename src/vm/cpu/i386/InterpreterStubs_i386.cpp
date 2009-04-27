@@ -55,8 +55,14 @@ void InterpreterStubs::generate() {
 
 void InterpreterStubs::generate_primordial_to_current_thread() {
   entry("primordial_to_current_thread");
+
+  // leave the esp 16 byte aligned
+  // (assumes pushal pushes x * 16 bytes)
+  subl(esp, Constant(16 - 2 * BytesPerWord));
+
   pushal();
   pushl(ebp);
+  
   movl(Address(Constant("_primordial_sp")), esp);
   get_thread(ecx);
   movl(esp, Address(ecx, Constant(Thread::stack_pointer_offset())));
@@ -78,8 +84,12 @@ void InterpreterStubs::generate_current_thread_to_primordial() {
   // get_thread(ecx);
   // movl(Address(ecx, Constant(Thread::stack_pointer_offset())), esp);
   movl(esp, Address(Constant("_primordial_sp")));
+
   popl(ebp);
   popal();
+
+  addl(esp, Constant(16 - 2 * BytesPerWord));
+
   ret();
   entry_end(); // current_thread_to_primordial
 }

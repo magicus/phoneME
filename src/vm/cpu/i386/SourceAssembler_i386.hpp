@@ -801,6 +801,8 @@ class SourceAssembler: public Assembler {
 
   static bool is_jvm_fast_global(const char * const reference);
 
+  static int log_base_2(int x);
+
   enum output_segment {
     NO_SEGMENT,
     CODE_SEGMENT,

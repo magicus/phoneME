@@ -871,10 +871,23 @@ void bc_lrem::generate() {
   orl(eax, ecx);
   jcc(zero, Constant("interpreter_throw_ArithmeticException"));
   pop_long(eax, edx);    // low, high   dividend
-  pushl(ecx); pushl(ebx);
-  pushl(edx); pushl(eax);
+
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(4 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), edx);
+  movl(Address(esp, Constant(2 * BytesPerWord)), ebx);
+  movl(Address(esp, Constant(3 * BytesPerWord)), ecx);
   call(Constant("jvm_lrem"));
-  addl(esp, Constant(4 * BytesPerWord));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_long(eax, edx);
 }
 
@@ -901,20 +914,45 @@ void bc_ldiv::generate() {
   jcc(zero, Constant("interpreter_throw_ArithmeticException"));
   pop_long(eax, edx);    // low, high   dividend
 
-  pushl(ecx); pushl(ebx);
-  pushl(edx); pushl(eax);
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(4 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), edx);
+  movl(Address(esp, Constant(2 * BytesPerWord)), ebx);
+  movl(Address(esp, Constant(3 * BytesPerWord)), ecx);
   call(Constant("jvm_ldiv"));
-  addl(esp, Constant(4 * BytesPerWord));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_long(eax, edx);
 }
 
 void bc_lmul::generate() {
   pop_long(ebx, ecx);    // low, high   second argument
   pop_long(eax, edx);    // low, high   first  argument
-  pushl(ecx); pushl(ebx);
-  pushl(edx); pushl(eax);
+
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(4 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), edx);
+  movl(Address(esp, Constant(2 * BytesPerWord)), ebx);
+  movl(Address(esp, Constant(3 * BytesPerWord)), ecx);
   call(Constant("jvm_lmul"));
-  addl(esp, Constant(4 * BytesPerWord));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_long(eax, edx);
 }
 

@@ -58,10 +58,21 @@ void NativeGenerator::generate_native_math_entries() {
   comment("store return address");
   popl(edi);
   pop_double(eax, ecx);
-  pushl(ecx);
-  pushl(eax);
+
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(2 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), ecx);
   call(Constant("jvm_sin"));
-  addl(esp, Constant(8));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
   rom_linkable_entry_end(); // native_math_sin_entry
@@ -72,10 +83,21 @@ void NativeGenerator::generate_native_math_entries() {
   comment("store return address");
   popl(edi);
   pop_double(eax, ecx);
-  pushl(ecx);
-  pushl(eax);
+
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(2 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), ecx);
   call(Constant("jvm_cos"));
-  addl(esp, Constant(8));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
   rom_linkable_entry_end(); // native_math_cos_entry
@@ -86,10 +108,21 @@ void NativeGenerator::generate_native_math_entries() {
   comment("store return address");
   popl(edi);
   pop_double(eax, ecx);
-  pushl(ecx);
-  pushl(eax);
+
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(2 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), ecx);
   call(Constant("jvm_tan"));
-  addl(esp, Constant(8));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
   rom_linkable_entry_end(); // native_math_tan_entry
@@ -100,10 +133,21 @@ void NativeGenerator::generate_native_math_entries() {
   comment("store return address");
   popl(edi);
   pop_double(eax, ecx);
-  pushl(ecx);
-  pushl(eax);
+
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(2 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), ecx);
   call(Constant("jvm_sqrt"));
-  addl(esp, Constant(8));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
   rom_linkable_entry_end(); // native_math_sqrt_entry
@@ -114,10 +158,21 @@ void NativeGenerator::generate_native_math_entries() {
   comment("store return address");
   popl(edi);
   pop_double(eax, ecx);
-  pushl(ecx);
-  pushl(eax);
+
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(2 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), ecx);
   call(Constant("jvm_ceil"));
-  addl(esp, Constant(8));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
   rom_linkable_entry_end(); // native_math_ceil_entry
@@ -128,10 +183,21 @@ void NativeGenerator::generate_native_math_entries() {
   comment("store return address");
   popl(edi);
   pop_double(eax, ecx);
-  pushl(ecx);
-  pushl(eax);
+
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(2 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), ecx);
   call(Constant("jvm_floor"));
-  addl(esp, Constant(8));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
   rom_linkable_entry_end(); // native_math_floor_entry
@@ -144,10 +210,21 @@ void NativeGenerator::generate_native_math_entries() {
   comment("store return address");
   popl(edi);
   pop_double(eax, ecx);
-  pushl(ecx);
-  pushl(eax);
+
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(2 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), ecx);
   call(Constant("jvm_asin"));
-  addl(esp, Constant(8));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
   rom_linkable_entry_end(); // native_math_asin_entry
@@ -158,10 +235,21 @@ void NativeGenerator::generate_native_math_entries() {
   comment("store return address");
   popl(edi);
   pop_double(eax, ecx);
-  pushl(ecx);
-  pushl(eax);
+
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(2 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), ecx);
   call(Constant("jvm_acos"));
-  addl(esp, Constant(8));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
   rom_linkable_entry_end(); // native_math_acos_entry
@@ -172,10 +260,21 @@ void NativeGenerator::generate_native_math_entries() {
   comment("store return address");
   popl(edi);
   pop_double(eax, ecx);
-  pushl(ecx);
-  pushl(eax);
+
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(2 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), ecx);
   call(Constant("jvm_atan"));
-  addl(esp, Constant(8));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
   rom_linkable_entry_end(); // native_math_atan_entry
@@ -187,12 +286,23 @@ void NativeGenerator::generate_native_math_entries() {
   popl(edi);
   pop_double(eax, ecx);
   pop_double(ebx, edx);
-  pushl(edx);
-  pushl(ebx);
-  pushl(ecx);
-  pushl(eax);
+
+  // 16 byte alignment
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(2 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), eax);
+  movl(Address(esp, Constant(BytesPerWord)), ecx);
+  movl(Address(esp, Constant(2 * BytesPerWord)), ebx);
+  movl(Address(esp, Constant(3 * BytesPerWord)), edx);
   call(Constant("jvm_atan2"));
-  addl(esp, Constant(8));
+
+  // restore esp and ebp
+  movl(esp, ebp);
+  popl(ebp);
+
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
   rom_linkable_entry_end(); // native_math_atan2_entry
@@ -766,6 +876,7 @@ void NativeGenerator::generate_native_system_entries() {
   shll(ecx, Constant(2));
 
   bind(cont);
+
   comment("memmove(edi, esi, ecx);");
   pushl(ecx);
   pushl(esi);

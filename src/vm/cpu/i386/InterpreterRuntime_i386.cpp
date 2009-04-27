@@ -63,7 +63,13 @@ OopDesc* newarray(JVM_SINGLE_ARG_TRAPS) {
 }
 
 address setup_stack_asm(address sp) {
-  jint* xsp = (jint*)sp;
+  jint* xsp;
+
+  // align sp
+  sp -= ((jint)sp + sizeof(jint)) & 15;
+
+  xsp = (jint*)sp;
+
   *--xsp = (jint)Thread::start_lightweight_thread;
   *--xsp = 0;                 // value of frame pointer
   return (address)xsp;

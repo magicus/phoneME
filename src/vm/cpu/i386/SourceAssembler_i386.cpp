@@ -173,7 +173,7 @@ void SourceAssembler::jcc(Condition condition, const Constant& cst) {
       else
         emit("\t{\n\textern void %s();\n", cst.reference());
     else
-      emit("\t.extern %s%s\n", extern_c_prefix(), cst.reference());
+      emit("\t.reference %s%s\n", extern_c_prefix(), cst.reference());
   }
   if (!GenerateInlineAsm)
     emit("\tj");
@@ -202,10 +202,20 @@ void SourceAssembler::define_call_info() {
 #endif // ENABLE_EMBEDDED_CALLINFO
 }
 
+int SourceAssembler::log_base_2(int x) {
+    int i = 0;
+    while (x != 1) {
+        ++i;
+        x >>= 1;
+    }
+
+    return i;
+}
+
 void SourceAssembler::align(int alignment) {
   if (alignment > 0) {
     if (GenerateGNUCode) {
-      emit("\t.align %d\n", alignment);
+      emit("\t.align %d\n", log_base_2(alignment));
     } else if (!GenerateInlineAsm) {
       emit("\tALIGN %d\n", alignment);
     } else {
@@ -233,7 +243,7 @@ void SourceAssembler::entry(const char* name, int alignment) {
     if (!GenerateGNUCode)
       emit("\tPUBLIC %s%s\n", extern_c_prefix(), name);
     else
-      emit("\t.global %s%s\n", extern_c_prefix(), name);
+      emit("\t.globl %s%s\n", extern_c_prefix(), name);
     emit("%s%s:\n", extern_c_prefix(), name);
   } else {
     emit("extern __declspec(naked)");
@@ -348,7 +358,7 @@ void SourceAssembler::emit_data_name(const char* c_type, const char* name) {
   if (GenerateInlineAsm) {
     emit("\n%s %s", c_type, name);
   } else if (GenerateGNUCode) {
-    emit("\n\t.global %s%s\n", extern_c_prefix(), name);
+    emit("\n\t.globl %s%s\n", extern_c_prefix(), name);
     emit("%s%s:\n", extern_c_prefix(), name);
   } else {
     emit("\n\tPUBLIC %s%s\n", extern_c_prefix(), name);
@@ -480,10 +490,10 @@ if (!GenerateGNUCode) {
   emit("\n");
 } else {
   if (name != 0) {
-    emit("\n\t.global %s%s\n", extern_c_prefix(), name);
+    emit("\n\t.globl %s%s\n", extern_c_prefix(), name);
   }
   if (cst.is_reference()) {
-    emit("\t.extern %s%s\n", extern_c_prefix(), cst.reference());
+    emit("\t.reference %s%s\n", extern_c_prefix(), cst.reference());
   }
   if (name != 0) {
     emit("%s%s: ", extern_c_prefix(), name);
@@ -739,14 +749,14 @@ if (!GenerateGNUCode) {
       case 'c' : { // Constant.
         const Constant* cst = va_arg(arguments, const Constant*);
         if (cst->is_reference()) {
-          emit("\t.extern %s%s\n", extern_c_prefix(), cst->reference());
+          emit("\t.reference %s%s\n", extern_c_prefix(), cst->reference());
         }
         break;
       }
       case 'a' : { // Address.
         const Address* adr = va_arg(arguments, const Address*);
         if (adr->displacement().is_reference()) {
-          emit("\t.extern %s%s\n", extern_c_prefix(), 
+          emit("\t.reference %s%s\n", extern_c_prefix(), 
                adr->displacement().reference());
         }
         break;
