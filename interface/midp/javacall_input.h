@@ -405,8 +405,6 @@ javacall_native_virtual_keyboard(javacall_bool isDisplay, javacall_utf16_string 
 */
 boolean virtKeyboard_HandleEvent(IApplet * pi, AEEEvent eCode,uint16 wParam, uint32 dwParam);
 
-extern int isKeybOn;
-
 /** @} */
 
 #ifdef __cplusplus
