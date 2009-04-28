@@ -329,6 +329,14 @@ else
     CVM_SPLIT_VERIFY ?= true
 endif
 
+# We must use J2ME_CLASSLIB=foundation in order to support CVM_DUAL_STACK=true
+ifeq ($(CVM_DUAL_STACK), true)
+ifeq ($(J2ME_CLASSLIB), cdc)
+$(error Must use J2ME_CLASSLIB=foundation because CVM_DUAL_STACK=true requires foundation)
+endif
+endif
+
+
 CVM_JIT_REGISTER_LOCALS	?= true
 CVM_JIT_USE_FP_HARDWARE ?= false
 
@@ -1226,8 +1234,9 @@ endif
 
 # MIDP package checker class
 MIDP_PKG_CHECKER = MIDPPkgChecker.java
+GENERATED_CLASSES + = sun.misc.MIDPPkgChecker
 
-CLASSLIB_CLASSES += \
+CVM_BUILDTIME_CLASSES_min += \
 	sun.misc.MIDPPkgChecker
 
 # The rom.config file used to generate the MIDPPkgChecker class

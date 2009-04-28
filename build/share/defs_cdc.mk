@@ -615,10 +615,12 @@ ifeq ($(CVM_DUAL_STACK), true)
 	sun.misc.MemberFilterConfig \
 	sun.misc.MIDPImplementationClassLoader \
 	sun.misc.MIDPConfig \
-	sun.misc.MIDletClassLoader \
 	sun.misc.MIDPLauncher \
 	sun.misc.MIDPBridgeInterface \
 	sun.misc.CDCAppClassLoader
+
+    CVM_OFFSETS_CLASSES += \
+	sun.misc.MIDletClassLoader \
 
 #
 # Classes needed for MIDP support

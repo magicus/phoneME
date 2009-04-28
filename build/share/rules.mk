@@ -1208,6 +1208,8 @@ endif
 ###########################################################
 $(CVM_DERIVEDROOT)/classes/sun/misc/$(MIDP_PKG_CHECKER):
 	@echo "... $@"
+	@echo "--- $(ROMGEN_INCLUDE_PATHS)"
+	@echo "XXX $(ROMGEN_CFG_FILES)"
 	$(AT)$(JAVAC_CMD) -d $(CVM_MISC_TOOLS_CLASSPATH) \
 		$(CVM_MISC_TOOLS_SRCDIR)/RomConfProcessor/RomConfProcessor.java
 	$(AT)$(CVM_JAVA) -classpath $(CVM_MISC_TOOLS_CLASSPATH) \
