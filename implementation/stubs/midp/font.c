@@ -30,11 +30,7 @@ extern "C" {
     
     
 #include "javacall_font.h"
-    
 
-
-
-    
 /**
  * Set font appearance params 
  * 

@@ -38,12 +38,12 @@ public:
         result_security         = 4,
     };
 
-    int32 const static unrealized = 100;
-    int32 const static realized   = 200;
-    int32 const static prefetched = 300;
-    int32 const static started    = 400;
-    int32 const static closed     =   0;
-    int64 const static time_unknown = -1;
+    static const int32 unrealized = 100;
+    static const int32 realized   = 200;
+    static const int32 prefetched = 300;
+    static const int32 started    = 400;
+    static const int32 closed     =   0;
+    static const int64 time_unknown = -1;
 
     virtual ~player() = 0 {}
     virtual result realize() = 0;
@@ -63,5 +63,5 @@ public:
     //virtual result add_player_listener(player_listener *pplayer_listener) = 0;
     //virtual result remove_player_listener(player_listener *pplayer_listener) = 0;
 
-    virtual bool data(nat32 len, void const *pdata) = 0;
+    virtual bool data(nat32 len, const void *pdata) = 0;
 };

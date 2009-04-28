@@ -72,8 +72,6 @@ public:
     long                  video_width;
     long                  video_height;
     javacall_pixel*       video_frame;
-    int                   out_width;
-    int                   out_height;
 
     BYTE                  buf[ XFER_BUFFER_SIZE ];
 
@@ -84,6 +82,7 @@ public:
 
     long                  bytes_buffered;
     bool                  all_data_arrived;
+    long                  whole_content_size;
 
     long                  volume;
     javacall_bool         mute;
@@ -93,46 +92,22 @@ public:
 
 void dshow_player::frame_ready( bits16 const* pFrame )
 {
-    EnterCriticalSection( &cs );
-    if( NULL == video_frame ) video_frame = new javacall_pixel[ out_width * out_height ];
+    if( NULL == video_frame ) video_frame = new javacall_pixel[ video_width * video_height ];
 
-    if( out_width == video_width && out_height == video_height )
+    for( int y = 0; y < video_height; y++ )
     {
-        for( int y = 0; y < video_height; y++ )
-        {
-            memcpy( video_frame + y * video_width, 
-                    pFrame + ( video_height - y - 1 ) * video_width,
-                    sizeof( javacall_pixel ) * video_width );
-        }
-    }
-    else
-    {
-        double kx = double(video_width) / double(out_width);
-        double ky = double(video_height) / double(out_height);
-
-        for( int y = 0; y < out_height; y++ )
-        {
-            for( int x = 0; x < out_width; x++ )
-            {
-                int srcx = int( 0.5 + kx * x );
-                int srcy = int( 0.5 + ky * y );
-                *( video_frame + ( out_height - y - 1 ) * out_width + x )
-                    = *( pFrame + srcy * video_width + srcx );
-            }
-        }
+        memcpy( video_frame + y * video_width, 
+                pFrame + ( video_height - y - 1 ) * video_width,
+                sizeof( javacall_pixel ) * video_width );
     }
 
     lcd_output_video_frame( video_frame );
-    LeaveCriticalSection( &cs );
 }
 
 void dshow_player::size_changed( int16 w, int16 h )
 {
     video_width  = w;
     video_height = h;
-
-    if( -1 == out_width ) out_width = video_width;
-    if( -1 == out_height ) out_height = video_height;
 }
 
 void dshow_player::playback_finished()
@@ -177,7 +152,7 @@ static javacall_result dshow_create(int appId,
     p->playerId         = playerId;
     p->mediaType        = mediaType;
     p->uri              = NULL;
-    p->is_video         = ( JC_FMT_FLV == mediaType );
+    p->is_video         = ( JC_FMT_FLV == mediaType || JC_FMT_VIDEO_3GPP == mediaType );
 
     p->realizing        = false;
     p->prefetching      = false;
@@ -185,6 +160,7 @@ static javacall_result dshow_create(int appId,
     p->playing          = false;
 
     p->all_data_arrived = false;
+    p->whole_content_size = -1;
     p->bytes_buffered   = 0;
 
     p->media_time       = 0;
@@ -194,8 +170,6 @@ static javacall_result dshow_create(int appId,
     p->video_width      = 0;
     p->video_height     = 0;
     p->video_frame      = NULL;
-    p->out_width        = -1;
-    p->out_height       = -1;
 
     p->ppl              = NULL;
 
@@ -287,6 +261,7 @@ static javacall_result dshow_realize(javacall_handle handle,
         {
         case JC_FMT_FLV:          mime = (javacall_const_utf16_string)L"video/x-flv"; break;
         case JC_FMT_MPEG1_LAYER3: mime = (javacall_const_utf16_string)L"audio/mpeg";  break;
+        case JC_FMT_VIDEO_3GPP:   mime = (javacall_const_utf16_string)L"video/3gpp";  break;
         default:
             return JAVACALL_FAIL;
         }
@@ -316,6 +291,12 @@ static javacall_result dshow_realize(javacall_handle handle,
         mime = (javacall_const_utf16_string)L"video/x-flv";
         mimeLength = wcslen( (const wchar_t*)mime );
     }
+    else if( mime_equal( mime, mimeLength, L"video/3gpp" ) )
+    {
+        p->mediaType = JC_FMT_VIDEO_3GPP;
+        mime = (javacall_const_utf16_string)L"video/3gpp";
+        mimeLength = wcslen( (const wchar_t*)mime );
+    }
     else
     {
         p->mediaType = JC_FMT_UNSUPPORTED;
@@ -325,12 +306,6 @@ static javacall_result dshow_realize(javacall_handle handle,
     {
         if( create_player_dshow( mimeLength, (const char16*)mime, p, &(p->ppl) ) )
         {
-            if( player::result_success != p->ppl->realize() )
-            {
-                PRINTF( "*** player::realize() failed! ***\n" );
-                return JAVACALL_FAIL;
-            }
-
             p->realizing = true;
 
             return JAVACALL_OK;
@@ -380,6 +355,8 @@ static javacall_result dshow_set_whole_content_size(javacall_handle handle,
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** 0x%08X set_whole_content_size: %ld***\n", handle, whole_content_size );
+    p->whole_content_size = whole_content_size;
+    p->ppl->data( nat32(whole_content_size), NULL );
     return JAVACALL_OK;
 }
 
@@ -422,18 +399,40 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
         }
         else if( p->realizing )
         {
-            *need_more_data  = ( p->bytes_buffered < XFER_BUFFER_SIZE * 50 ) 
+            long preload_size = XFER_BUFFER_SIZE * 50;
+
+            if( JC_FMT_FLV == p->mediaType ) preload_size = 400 * 1024;
+
+            if( -1 != p->whole_content_size )
+            {
+                if( preload_size > p->whole_content_size ) preload_size = p->whole_content_size;
+
+                if( JC_FMT_VIDEO_3GPP == p->mediaType || JC_FMT_FLV == p->mediaType )
+                {
+                    preload_size = p->whole_content_size;
+                }
+            }
+
+            *need_more_data  = ( p->bytes_buffered < preload_size ) 
                                ? JAVACALL_TRUE : JAVACALL_FALSE;
 
             if( JAVACALL_FALSE == *need_more_data )
             {
-                PRINTF( "*** calling player_dhow::prefetch()***\n" );
+                PRINTF( "*** calling player::realize()***\n" );
+                if( player::result_success != p->ppl->realize() )
+                {
+                    PRINTF( "*** player::realize() failed! ***\n" );
+                    return JAVACALL_FAIL;
+                }
+                PRINTF( "*** player::realize() finished***\n" );
+
+                PRINTF( "*** calling player::prefetch()***\n" );
                 if( player::result_success != p->ppl->prefetch() )
                 {
                     PRINTF( "*** player::prefetch() failed! ***\n" );
                     return JAVACALL_FAIL;
                 }
-                PRINTF( "*** player_dhow::prefetch() finished***\n" );
+                PRINTF( "*** player::prefetch() finished***\n" );
             }
         }
         else
@@ -450,13 +449,10 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
     {
         PRINTF( "           [all data arrived]\n" );
         p->all_data_arrived = true;
-        p->ppl->data( 0, NULL );
+        //p->ppl->data( 0, NULL );
 
         *need_more_data  = JAVACALL_FALSE;
         *next_chunk_size = 0;
-
-        long t = p->get_media_time();
-        if( -1 != p->duration && t > p->duration ) t = p->duration;
     }
 
     return JAVACALL_OK;
@@ -539,7 +535,19 @@ static javacall_result dshow_set_time(javacall_handle handle, long* ms)
 static javacall_result dshow_get_duration(javacall_handle handle, long* ms)
 {
     dshow_player* p = (dshow_player*)handle;
-    *ms = p->duration;
+
+    player::result res;
+
+    int64 d = p->ppl->get_duration( &res );
+
+    PRINTF( "----------- get_duration: %i, %ld, (%i)\n", res, long( d / 1000 ), p->duration );
+
+    if( res == player::result_success && player::time_unknown != d ) {
+        *ms = long( d / 1000 );
+    } else {
+        *ms = p->duration;
+    }
+
     return JAVACALL_OK;
 }
 
@@ -642,21 +650,7 @@ static javacall_result dshow_set_video_visible(javacall_handle handle, javacall_
 
 static javacall_result dshow_set_video_location(javacall_handle handle, long x, long y, long w, long h)
 {
-    dshow_player* p = (dshow_player*)handle;
-
-    EnterCriticalSection( &(p->cs) );
-    if( NULL != p->video_frame )
-    {
-        lcd_output_video_frame( NULL );
-        delete p->video_frame;
-        p->video_frame = NULL;
-    }
-    p->out_width  = w;
-    p->out_height = h;
-    LeaveCriticalSection( &(p->cs) );
-
     lcd_set_video_rect( x, y, w, h );
-
     return JAVACALL_OK;
 }
 
