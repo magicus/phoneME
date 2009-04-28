@@ -149,7 +149,7 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
     public void setListener(RequestListener listener) {
 		// Start/set the thread needed to monitor the InvocationStore
 		this.listener = listener;
-		super.setListener(listener);
+		super.activateListening(listener != null);
     }
 
     /**

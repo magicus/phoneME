@@ -26,8 +26,6 @@
 
 package com.sun.j2me.content;
 
-import javax.microedition.content.RequestListener;
-
 /**
  * Thread to monitor pending invocations and notify a listener
  * when a matching one is present.
@@ -70,6 +68,8 @@ class RequestListenerImpl implements Runnable {
 		    }
 		} else {
 		    // Forget the thread doing the listening; it will exit
+			if( AppProxy.LOGGER != null )
+				AppProxy.LOGGER.println("stop listening ...");
 			ThreadEx t = listenerThread;
 		    listenerThread = null;
 			if( t != null && t.isAlive() ) t.unblock();
@@ -88,7 +88,9 @@ class RequestListenerImpl implements Runnable {
      * notified.
      */
     public void run() {
-		Thread mythread = Thread.currentThread();
+		if( AppProxy.LOGGER != null )
+			AppProxy.LOGGER.println("listener thread started");
+		final Thread mythread = Thread.currentThread();
 		while (mythread == listenerThread) {
 		    // Wait for a matching invocation
 		    boolean pending = InvocationImpl.store.waitForEvent(handler.applicationID, true, 
@@ -97,5 +99,7 @@ class RequestListenerImpl implements Runnable {
 		    	handler.requestNotify();
 		    }
 		}
+		if( AppProxy.LOGGER != null )
+			AppProxy.LOGGER.println("listener thread stopped");
     }
 }

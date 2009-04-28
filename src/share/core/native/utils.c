@@ -87,7 +87,8 @@ void * enumWaitingThreads( int(* filter)(const MidpReentryData *, void *), void 
     for (i = 0; result == NULL && i < n; i++) {
         MidpReentryData * p = (MidpReentryData *)blocked_threads[i].reentry_data;
 #ifdef TRACE_BLOCKING
-        printf( "\tThread[%d]: (%d, %d), ~id = %p\n", i, p?p->status:0, p?p->pResult:0, p );
+        if( p != NULL && p->waitingFor == JSR211_SIGNAL )
+            printf( "\tThread[%d]: (%d, %d), ~id = %p\n", i, p->status, p->pResult, p );
 #endif
         if( !(*filter)( p, data ) ) continue;
         result = (*processor)( &blocked_threads[i], data );

@@ -104,7 +104,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
     /**
      * The RequestListenerImpl; if a listener is set.
      */
-    RequestListenerImpl listenerImpl;
+    private RequestListenerImpl listenerImpl;
 
     /** Property name for the current locale. */
     private final static String LOCALE_PROP = "microedition.locale";
@@ -133,11 +133,15 @@ public class ContentHandlerImpl extends ContentHandlerRegData
     	super( handler );
         handle = handler.handle;
         applicationID = handler.applicationID;
-        listenerImpl = handler.listenerImpl;
         version = handler.version;
         requestCalls = handler.requestCalls;
         authority = handler.authority;
         appname = handler.appname;
+        
+        if( handler.listenerImpl != null ){
+        	listenerImpl = new RequestListenerImpl(this);
+        	handler.activateListening(false);
+        }
     }
     
     protected ContentHandlerImpl( ApplicationID appID, Handle handle ){
@@ -603,18 +607,18 @@ public class ContentHandlerImpl extends ContentHandlerRegData
      * @param listener the listener to register;
      *   <code>null</code> to remove the listener.
      */
-    public void setListener(RequestListener listener) {
+    public void activateListening(boolean activate) {
         synchronized (this) {
-            if (listener != null || listenerImpl != null) {
+            if (activate || listenerImpl != null) {
                 // Create or update the active listener thread
                 if (listenerImpl == null) {
                     listenerImpl = new RequestListenerImpl(this);
                 } else {
-                    listenerImpl.activate(listener != null);
+                    listenerImpl.activate(activate);
                 }
 
                 // If the listener thread no longer needed; clear it
-                if (listener == null) {
+                if (!activate) {
                     listenerImpl = null;
                 }
             }

@@ -808,7 +808,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_listen0) {
         }
     
         /* Get the desired blocking mode. */
-        blockID = KNI_GetParameterAsBoolean(listenBlockIDArg);
+        blockID = KNI_GetParameterAsInt(listenBlockIDArg);
     
         if (!isEmpty()) {
             /* Queue is not empty
@@ -970,7 +970,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_setCleanupFlag0) {
             break;
         }
 
-        cleanup = KNI_GetParameterAsInt(markCleanup);
+        cleanup = KNI_GetParameterAsBoolean(markCleanup);
 
         /* Inspect the queue of Invocations and pick one that
          * matches the suiteId and classname.
