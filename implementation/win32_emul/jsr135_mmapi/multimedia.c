@@ -491,6 +491,7 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MPEG1_LAYER3_PRO:
     case JC_FMT_RTP_MPA:
     case JC_FMT_FLV:
+//    case JC_FMT_VIDEO_3GPP:
         return &g_dshow_itf;
         break;
 #endif // ENABLE_MMAPI_DSHOW
@@ -503,9 +504,14 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MPEG_1:
     case JC_FMT_MPEG_4_SVP:
     case JC_FMT_MPEG_4_AVC:
-    case JC_FMT_VIDEO_3GPP:
     case JC_FMT_MOV:
+    case JC_FMT_VIDEO_3GPP:    
         return &g_video_itf;
+
+#ifndef ENABLE_MMAPI_DSHOW // if both DSHOW and LIME are enabled, DSHOW overrides LIME
+    case JC_FMT_MPEG1_LAYER3:
+    case JC_FMT_MPEG1_LAYER3_PRO:
+#endif // ENABLE_MMAPI_DSHOW
 
     case JC_FMT_MPEG2_AAC:
     case JC_FMT_MPEG4_HE_AAC:
@@ -592,12 +598,13 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
         { L".mp3",  JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3 },
         { L".flv",  JAVACALL_MEDIA_FORMAT_FLV },
         { L".fxm",  JAVACALL_MEDIA_FORMAT_FLV },
+        { L".3gp",  JAVACALL_MEDIA_FORMAT_VIDEO_3GPP   },
+        { L".3g2",  JAVACALL_MEDIA_FORMAT_VIDEO_3GPP   },
 #endif // mp3
 
 #ifdef ENABLE_MMAPI_LIME
         { L".mpg",  JAVACALL_MEDIA_FORMAT_MPEG_1       },
         { L".mov",  JAVACALL_MEDIA_FORMAT_MOV          },
-        { L".3gp",  JAVACALL_MEDIA_FORMAT_VIDEO_3GPP   },
 #endif /* ENABLE_MMAPI_LIME */
         { L".gif",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   },
         { L".wmv",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   }
