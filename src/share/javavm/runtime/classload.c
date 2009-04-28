@@ -1576,6 +1576,8 @@ CVMclassClassPathDestroy(CVMExecEnv* ee)
 /* 
  * Check if the classloader is one of the MIDP dual-stack classloaders.
  */
+#include "generated/offsets/sun_misc_MIDletClassLoader.h"
+
 CVMBool
 CVMclassloaderIsMIDPClassLoader(CVMExecEnv *ee,
                                 CVMClassLoaderICell* loaderICell,
@@ -1586,8 +1588,19 @@ CVMclassloaderIsMIDPClassLoader(CVMExecEnv *ee,
                                   CVMID_icellDirect(ee, loaderICell));
         CVMClassTypeID loaderID = CVMcbClassName(loaderCB);
 
-        if (loaderID == CVMglobals.midletClassLoaderTid){
-            return CVM_TRUE;
+        if (loaderID == CVMglobals.midletClassLoaderTid) {
+            if (checkImplClassLoader) {
+                return CVM_TRUE;
+            } else {
+                /* Make sure this is a real MIDletClassLoader with
+                   filtering enabled. */
+                CVMBool enableFilter;
+                CVMD_fieldReadInt(
+                    loaderICell,
+                    CVMoffsetOfsun_misc_MIDletClassLoader_enableFilter,
+                    enableFilter);
+                return enableFilter;
+            }
         } else if (checkImplClassLoader) {
             if (loaderID == CVMglobals.midpImplClassLoaderTid) {
 	        return CVM_TRUE;
