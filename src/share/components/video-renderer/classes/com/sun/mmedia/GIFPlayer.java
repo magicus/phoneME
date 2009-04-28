@@ -150,7 +150,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      * @return            the control object if available,
      *                    otherwise null.
      */
-    protected Control doGetControl(String type) {
+    protected Control doGetNewControl(String type) {
         if (type.startsWith(HighLevelPlayer.pkgName)) {
             
             type = type.substring(HighLevelPlayer.pkgName.length());

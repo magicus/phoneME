@@ -122,8 +122,8 @@ final class DirectTone extends DirectPlayer {
      * @return       <code>Control</code> for the class or interface
      * name.
      */
-    protected Control doGetControl(String type) {
-        Control c = super.doGetControl(type);
+    protected Control doGetNewControl(String type) {
+        Control c = super.doGetNewControl(type);
         if (c != null) {
             return c;
         }

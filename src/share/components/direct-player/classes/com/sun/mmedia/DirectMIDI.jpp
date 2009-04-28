@@ -43,8 +43,8 @@ final class DirectMIDI extends DirectPlayer {
         super( owner );
     }
 
-    protected Control doGetControl(String type) {
-        Control c = super.doGetControl(type);
+    protected Control doGetNewControl(String type) {
+        Control c = super.doGetNewControl(type);
         if (c != null) return c;
 
         if (type.equals("javax.microedition.media.control.MIDIControl")) {
