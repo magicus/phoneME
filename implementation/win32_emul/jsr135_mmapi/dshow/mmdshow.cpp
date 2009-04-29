@@ -57,6 +57,7 @@ class dshow_player : public player_callback
 
 public:
     long                  get_media_time();
+    void                  prepare_scaled_frame();
 
     int                   appId;
     int                   playerId;
@@ -72,8 +73,10 @@ public:
     long                  video_width;
     long                  video_height;
     javacall_pixel*       video_frame;
+
     int                   out_width;
     int                   out_height;
+    javacall_pixel*       out_frame;
 
     BYTE                  buf[ XFER_BUFFER_SIZE ];
 
@@ -94,41 +97,52 @@ public:
     CRITICAL_SECTION      cs;
 };
 
+void dshow_player::prepare_scaled_frame()
+{
+    if( NULL == out_frame ) out_frame = new javacall_pixel[ out_width * out_height ];
+
+    if( out_width == video_width && out_height == video_height )
+    {
+        memcpy( out_frame, video_frame, 
+                sizeof( javacall_pixel ) * video_width * video_height );
+    }
+    else
+    {
+        double kx = double(video_width) / double(out_width);
+        double ky = double(video_height) / double(out_height);
+
+        for( int y = 0; y < out_height; y++ )
+        {
+            for( int x = 0; x < out_width; x++ )
+            {
+                int srcx = int( 0.5 + kx * x );
+                int srcy = int( 0.5 + ky * y );
+                *( out_frame + y * out_width + x )
+                    = *( video_frame + srcy * video_width + srcx );
+            }
+        }
+    }
+}
+
 void dshow_player::frame_ready( bits16 const* pFrame )
 {
     EnterCriticalSection( &cs );
+
+    if( NULL == video_frame ) video_frame = new javacall_pixel[ video_width * video_height ];
+
+    for( int y = 0; y < video_height; y++ )
+    {
+        memcpy( video_frame + y * video_width, 
+                pFrame + ( video_height - y - 1 ) * video_width,
+                sizeof( javacall_pixel ) * video_width );
+    }
+
     if( visible )
     {
-        if( NULL == video_frame ) video_frame = new javacall_pixel[ out_width * out_height ];
-
-        if( out_width == video_width && out_height == video_height )
-        {
-            for( int y = 0; y < video_height; y++ )
-            {
-                memcpy( video_frame + y * video_width, 
-                        pFrame + ( video_height - y - 1 ) * video_width,
-                        sizeof( javacall_pixel ) * video_width );
-            }
-        }
-        else
-        {
-            double kx = double(video_width) / double(out_width);
-            double ky = double(video_height) / double(out_height);
-
-            for( int y = 0; y < out_height; y++ )
-            {
-                for( int x = 0; x < out_width; x++ )
-                {
-                    int srcx = int( 0.5 + kx * x );
-                    int srcy = int( 0.5 + ky * y );
-                    *( video_frame + ( out_height - y - 1 ) * out_width + x )
-                        = *( pFrame + srcy * video_width + srcx );
-                }
-            }
-        }
-
-        lcd_output_video_frame( video_frame );
+        prepare_scaled_frame();
+        lcd_output_video_frame( out_frame );
     }
+
     LeaveCriticalSection( &cs );
 }
 
@@ -202,8 +216,10 @@ static javacall_result dshow_create(int appId,
     p->video_width      = 0;
     p->video_height     = 0;
     p->video_frame      = NULL;
+
     p->out_width        = -1;
     p->out_height       = -1;
+    p->out_frame        = NULL;
 
     p->ppl              = NULL;
 
@@ -232,6 +248,7 @@ static javacall_result dshow_destroy(javacall_handle handle)
     lcd_output_video_frame( NULL );
 
     if( NULL != p->video_frame ) delete p->video_frame;
+    if( NULL != p->out_frame ) delete p->out_frame;
     if( NULL != p->ppl ) delete p->ppl;
 
     DeleteCriticalSection( &(p->cs) );
@@ -693,7 +710,7 @@ static javacall_result dshow_set_video_visible(javacall_handle handle, javacall_
     p->visible = ( JAVACALL_TRUE == visible );
     if( visible )
     {
-        if( NULL != p->video_frame ) lcd_output_video_frame( p->video_frame );
+        if( NULL != p->out_frame ) lcd_output_video_frame( p->out_frame );
     }
     else
     {
@@ -709,20 +726,28 @@ static javacall_result dshow_set_video_location(javacall_handle handle, long x, 
     dshow_player* p = (dshow_player*)handle;
 
     EnterCriticalSection( &(p->cs) );
+
     if( p->out_width != w || p->out_height != h )
     {
-        if( NULL != p->video_frame )
-        {
-            lcd_output_video_frame( NULL );
-            delete p->video_frame;
-            p->video_frame = NULL;
-        }
         p->out_width  = w;
         p->out_height = h;
-    }
-    LeaveCriticalSection( &(p->cs) );
 
-    lcd_set_video_rect( x, y, w, h );
+        javacall_pixel* old_frame = p->out_frame;
+        p->out_frame = NULL;
+
+        if( NULL != p->video_frame ) p->prepare_scaled_frame();
+
+        lcd_set_video_rect( x, y, w, h );
+        lcd_output_video_frame( p->out_frame );
+
+        if( NULL != old_frame ) delete old_frame;
+    }
+    else
+    {
+        lcd_set_video_rect( x, y, w, h );
+    }
+
+    LeaveCriticalSection( &(p->cs) );
 
     return JAVACALL_OK;
 }
