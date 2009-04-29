@@ -1596,7 +1596,7 @@ CVMclassloaderIsMIDPClassLoader(CVMExecEnv *ee,
                    filtering enabled. */
                 CVMBool enableFilter;
                 CVMD_fieldReadInt(
-                    loaderICell,
+                    CVMID_icellDirect(ee, loaderICell),
                     CVMoffsetOfsun_misc_MIDletClassLoader_enableFilter,
                     enableFilter);
                 return enableFilter;
