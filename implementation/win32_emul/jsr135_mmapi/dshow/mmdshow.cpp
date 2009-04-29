@@ -709,11 +709,14 @@ static javacall_result dshow_set_video_location(javacall_handle handle, long x, 
     dshow_player* p = (dshow_player*)handle;
 
     EnterCriticalSection( &(p->cs) );
-    if( NULL != p->video_frame && ( p->out_width != w || p->out_height != h ) )
+    if( p->out_width != w || p->out_height != h )
     {
-        lcd_output_video_frame( NULL );
-        delete p->video_frame;
-        p->video_frame = NULL;
+        if( NULL != p->video_frame )
+        {
+            lcd_output_video_frame( NULL );
+            delete p->video_frame;
+            p->video_frame = NULL;
+        }
         p->out_width  = w;
         p->out_height = h;
     }
