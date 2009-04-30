@@ -27,6 +27,14 @@ package com.sun.midp.chameleon.input;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
+import com.sun.midp.lcdui.EventConstants;
+
+import com.sun.midp.events.Event;
+import com.sun.midp.events.EventTypes;
+import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.EventListener;
+import com.sun.midp.events.NativeEvent;
+
 /**
  * An InputMode instance which allows to use native Windows Mobile
  * input methods.
@@ -40,6 +48,73 @@ public class VirtualKeyboardInputMode extends KeyboardInputMode {
     static {
         modeName = Resource.getString(ResourceConstants.LCDUI_TF_NATIVE_VKBD);
     }
+
+	static private class KeyboardDataEventListener implements EventListener {
+		VirtualKeyboardInputMode curInputMode;
+
+		KeyboardDataEventListener() {
+			EventQueue eq = EventQueue.getEventQueue();
+			eq.registerEventListener(EventTypes.VIRTUAL_KEYBOARD_RETURN_DATA_EVENT, this);
+		}
+
+		public boolean preprocess(Event event, Event waitingEvent)
+		{
+			return true;
+		}
+
+		public void process(Event event)
+		{
+			System.out.println("VirtualKeyboardInputMode.process curInputMode=" + curInputMode);
+
+			if (curInputMode == null)
+			{
+				return;
+			}
+
+			NativeEvent nativeEvent = (NativeEvent)event;
+
+			if (event.getType() == EventTypes.VIRTUAL_KEYBOARD_RETURN_DATA_EVENT)
+			{
+				if (nativeEvent.intParam1 == EventConstants.IME2)
+				{
+					System.out.println("nativeEvent.intParam1 == EventConstants.IME2");
+					System.out.println("nativeEvent.stringParam1=" + nativeEvent.stringParam1);
+
+					int curAvailableSize = curInputMode.mediator.getAvailableSize();
+					for (; ; )
+					{
+						System.out.println("curAvailableSize=" + curAvailableSize);
+						try
+						{
+							curInputMode.mediator.clear(1);
+						}
+						catch (Exception e)
+						{
+							e.printStackTrace();
+							break;
+						}
+						if (curAvailableSize == curInputMode.mediator.getAvailableSize())
+						{
+							break;
+						}
+
+						curAvailableSize = curInputMode.mediator.getAvailableSize();
+					}
+
+					System.out.println("VirtualKeyboardInputMode.process: curInputMode.mediator.commit");
+					curInputMode.mediator.commit(nativeEvent.stringParam1);
+
+					System.out.println("VirtualKeyboardInputMode.process curInputMode.mediator.inputModeCompleted()");
+//					curInputMode.mediator.inputModeCompleted();
+
+					System.out.println("VirtualKeyboardInputMode.process: done");
+				}				
+			}
+//			curInputMode = null;
+		}
+	}
+
+	private static KeyboardDataEventListener listener = new KeyboardDataEventListener();
 
     /**
      * This method will be called before any input keys are passed
@@ -60,7 +135,9 @@ public class VirtualKeyboardInputMode extends KeyboardInputMode {
      * @param inputSubset current input subset
      */
     public void beginInput(InputModeMediator mediator, String inputSubset, int constraints) {
-        showNativeKeyboard();
+		System.out.println("VirtualKeyboardInputMode.beginInput this=" + this);
+		listener.curInputMode = this;
+		showNativeKeyboard();
         super.beginInput(mediator, inputSubset, constraints);
     }
 

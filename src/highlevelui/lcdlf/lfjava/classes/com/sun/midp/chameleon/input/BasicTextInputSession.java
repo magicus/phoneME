@@ -166,6 +166,10 @@ public class BasicTextInputSession implements
         if (mode == null || mode == currentMode) {
             return;
         }
+		setCurrentInputMode1(mode);
+	}
+	
+    public void setCurrentInputMode1(InputMode mode) {
         
         for (int i = 0; i < inputModeSet.length; i++) {
             if (inputModeSet[i] == mode) {

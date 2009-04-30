@@ -54,6 +54,11 @@ public final class EventConstants {
      */
     public static final int IME      = 4;
 
+	/**
+	 * Minor ID indicating a IME string typed (internal).
+	 */
+	public static final int IME2 = 44;
+
     /**
      * Minor ID indicating a pointer drag.
      */

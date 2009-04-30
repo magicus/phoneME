@@ -146,6 +146,7 @@ public class DisplayEventListener implements EventListener {
                     if (nativeEvent.intParam1 == EventConstants.IME) {
                         dc.handleInputMethodEvent(nativeEvent.stringParam1);
                     }
+										
                     if (Logging.REPORT_LEVEL < Constants.LOG_DISABLED &&
                             nativeEvent.intParam2 == EventConstants.DEBUG_TRACE1) {
                         // This is a special VM hook to print all stacks
@@ -182,7 +183,8 @@ public class DisplayEventListener implements EventListener {
                     return;
 
                 case EventTypes.ROTATION_EVENT:
-                    dc.handleRotationEvent();
+                    // FIXME: temporary disable rotation on device
+                    // dc.handleRotationEvent();
                     return;
 
 	    case EventTypes.DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT:

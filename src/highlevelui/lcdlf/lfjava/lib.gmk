@@ -49,6 +49,10 @@ SUBSYSTEM_LCDLF_SKIN_RESOURCES_DIR=$(LCDLF_J_DIR)/resource/skin
 #
 vpath % $(LCDLF_J_DIR)/native
 
+ifeq ($(USE_NATIVE_VIRTUAL_KEYBOARD), true)	
+vpath % $(LCDLF_J_DIR)/native/$(TARGET_PLATFORM)
+endif
+
 # Native files for the library
 #
 SUBSYSTEM_LCDLF_NATIVE_FILES += \
@@ -56,8 +60,14 @@ SUBSYSTEM_LCDLF_NATIVE_FILES += \
     lfj_cskin.c \
     lfj_native_input_mode.c \
     lfj_SoftButtonLayer_kni.c \
-    lfj_image_rom.c	
-
+    lfj_image_rom.c
+	
+ifeq ($(USE_NATIVE_VIRTUAL_KEYBOARD), true)	
+ifeq ($(TARGET_VM), cdc_vm)	
+SUBSYSTEM_LCDLF_NATIVE_FILES += \
+    native_cdc_virt_keyboard.c	
+endif
+endif
 
 $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.jpp
 	@$(call runjpp,$^,$@)
