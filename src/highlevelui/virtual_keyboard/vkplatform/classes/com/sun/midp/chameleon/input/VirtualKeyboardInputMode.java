@@ -41,8 +41,9 @@ import com.sun.midp.events.NativeEvent;
  */
 public class VirtualKeyboardInputMode extends KeyboardInputMode {
 
-    private static native void showNativeKeyboard();
-    private static native void hideNativeKeyboard();
+    public native void showNativeKeyboard();
+    private native void hideNativeKeyboard();
+    private native boolean isPopUp();
 
     private static String modeName;
     static {
@@ -64,7 +65,6 @@ public class VirtualKeyboardInputMode extends KeyboardInputMode {
 
 		public void process(Event event)
 		{
-			System.out.println("VirtualKeyboardInputMode.process curInputMode=" + curInputMode);
 
 			if (curInputMode == null)
 			{
@@ -77,13 +77,10 @@ public class VirtualKeyboardInputMode extends KeyboardInputMode {
 			{
 				if (nativeEvent.intParam1 == EventConstants.IME2)
 				{
-					System.out.println("nativeEvent.intParam1 == EventConstants.IME2");
-					System.out.println("nativeEvent.stringParam1=" + nativeEvent.stringParam1);
 
 					int curAvailableSize = curInputMode.mediator.getAvailableSize();
 					for (; ; )
 					{
-						System.out.println("curAvailableSize=" + curAvailableSize);
 						try
 						{
 							curInputMode.mediator.clear(1);
@@ -101,13 +98,10 @@ public class VirtualKeyboardInputMode extends KeyboardInputMode {
 						curAvailableSize = curInputMode.mediator.getAvailableSize();
 					}
 
-					System.out.println("VirtualKeyboardInputMode.process: curInputMode.mediator.commit");
 					curInputMode.mediator.commit(nativeEvent.stringParam1);
 
-					System.out.println("VirtualKeyboardInputMode.process curInputMode.mediator.inputModeCompleted()");
 //					curInputMode.mediator.inputModeCompleted();
 
-					System.out.println("VirtualKeyboardInputMode.process: done");
 				}				
 			}
 //			curInputMode = null;
@@ -135,9 +129,10 @@ public class VirtualKeyboardInputMode extends KeyboardInputMode {
      * @param inputSubset current input subset
      */
     public void beginInput(InputModeMediator mediator, String inputSubset, int constraints) {
-		System.out.println("VirtualKeyboardInputMode.beginInput this=" + this);
 		listener.curInputMode = this;
-		showNativeKeyboard();
+        if (isPopUp()) {
+		    showNativeKeyboard();
+		}
         super.beginInput(mediator, inputSubset, constraints);
     }
 
@@ -148,7 +143,9 @@ public class VirtualKeyboardInputMode extends KeyboardInputMode {
      */
     public void endInput() throws IllegalStateException {
         super.endInput();
-        hideNativeKeyboard();
+        if (isPopUp()) {
+            hideNativeKeyboard();
+		}
     }
 
     /**

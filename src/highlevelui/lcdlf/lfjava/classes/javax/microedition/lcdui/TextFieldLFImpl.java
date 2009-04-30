@@ -1194,6 +1194,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
 						TextInputSession session = getInputSession();
 						if (session != null && session instanceof BasicTextInputSession) {
                             ((BasicTextInputSession)session).setCurrentInputMode1(inputModes[i]);
+							((VirtualKeyboardInputMode)inputModes[i]).showNativeKeyboard();
 						}
                         break;
                     }
