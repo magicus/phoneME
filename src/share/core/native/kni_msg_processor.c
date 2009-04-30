@@ -37,16 +37,7 @@
 #include <midpServices.h>
 
 #include "jsr211_constants.h"
-
-javacall_result javacall_chapi_post_message( int queueId, int msgCode, const unsigned char * bytes, size_t bytesCount, int * dataExchangeID ){
-    static int freeDEID = 1;
-    *dataExchangeID = freeDEID++;
-    return( javanotify_chapi_process_msg_request( queueId, *dataExchangeID, msgCode, bytes, bytesCount ) );
-}
-
-javacall_result javacall_chapi_send_response( int dataExchangeID, const unsigned char * bytes, size_t bytesCount ){
-    return( javanotify_chapi_process_msg_result( dataExchangeID, bytes, bytesCount ) );
-}
+#include <javacall_chapi_msg_exchange.h>
 
 typedef struct {
   MidpReentryData  m_midpRD;

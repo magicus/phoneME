@@ -33,8 +33,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Hashtable;
 
-import com.sun.midp.main.MIDletSuiteUtils;
-
 interface MessageProcessor {
 	public static final byte[] ZERO_BYTES = new byte[0];
 	
@@ -91,13 +89,11 @@ class NativeMessageReceiver implements Runnable {
 	final private Hashtable table = new Hashtable();
 	
 	public static void init() {
-		if( MIDletSuiteUtils.isAmsIsolate() ){
-			receiver.addProcessor(StoreGate.channelID, 
-					new StoreRequestsExecutor( InvocationStore.getInstance() ));
-			receiver.addProcessor(RegistryGate.channelID, 
-					new RegistryRequestExecutor( RegistryStore.getInstance() ));
-			new Thread(receiver).start();
-		}
+		receiver.addProcessor(StoreGate.channelID, 
+				new StoreRequestsExecutor( InvocationStore.getInstance() ));
+		receiver.addProcessor(RegistryGate.channelID, 
+				new RegistryRequestExecutor( RegistryStore.getInstance() ));
+		new Thread(receiver).start();
 	}
 	
 	private NativeMessageReceiver(){}

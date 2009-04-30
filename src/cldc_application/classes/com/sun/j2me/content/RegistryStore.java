@@ -149,6 +149,13 @@ class RegistryStore implements RegistryGate {
         Vector v = deserializeString(res);
         String[] result = new String[ v.size() ];
         v.copyInto(result);
+        if( AppProxy.LOGGER != null ){
+        	StringBuffer b = new StringBuffer();
+        	for( int i = 0; i < result.length; i++)
+        		b.append( ", '" + result[ i ] + "'" );
+        	AppProxy.LOGGER.println("getValues(" + fieldId + ") = {" + 
+        			b.toString().substring(1)+ " }");
+        }
         return result;
     }
 

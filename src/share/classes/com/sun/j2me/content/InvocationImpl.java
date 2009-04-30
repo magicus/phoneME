@@ -37,8 +37,6 @@ import javax.microedition.content.Registry;
 import javax.microedition.io.Connection;
 import javax.microedition.io.ConnectionNotFoundException;
 
-import com.sun.midp.main.MIDletSuiteUtils;
-
 /**
  * Implementation of Invocation class.
  * <p>
@@ -49,10 +47,7 @@ import com.sun.midp.main.MIDletSuiteUtils;
 public final class InvocationImpl {
 	
 	public static Tunnel tunnel = null;
-    public static final StoreGate store = 
-    	MIDletSuiteUtils.isAmsIsolate() ? InvocationStore.getInstance() 
-    			: new StoreRequestsConverter( new NativeMessageSender( StoreGate.channelID ) );
-    	//new StoreRequestsConverter( new StoreRequestsExecutor( InvocationStore.getInstance() ) );
+    public static final StoreGate store = Config.getStoreGate();
 	public static final int UNDEFINED_TID = 0;
 	
     /**

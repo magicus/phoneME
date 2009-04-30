@@ -37,7 +37,6 @@ import javax.microedition.content.Registry;
 import javax.microedition.content.ResponseListener;
 
 import com.sun.j2me.security.Token;
-import com.sun.midp.main.MIDletSuiteUtils;
 
 /**
  * Implementation of Content Handler registry.  It maintains
@@ -48,10 +47,7 @@ import com.sun.midp.main.MIDletSuiteUtils;
  */
 public final class RegistryImpl {
 	
-	static public final RegistryGate gate = 
-		MIDletSuiteUtils.isAmsIsolate() ? RegistryStore.getInstance()
-			: new RegistryRequestsConverter( new NativeMessageSender(RegistryGate.channelID) );
-	//new RegistryRequestsConverter( new RegistryRequestExecutor( RegistryStore.getInstance() ) );
+	static public final RegistryGate gate = Config.getRegistryGate();
 	
     /** The set of active Invocations. */
     private /*static*/ final Hashtable activeInvocations = new Hashtable();
