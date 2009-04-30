@@ -50,6 +50,11 @@ KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_hideNativeKeyboard
     KNI_ReturnVoid();
 }
 
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_isPopUp) {
+  KNI_ReturnBoolean(KNI_TRUE);
+}
+
 #ifdef __cplusplus
 }
 #endif

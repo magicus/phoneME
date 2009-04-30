@@ -107,6 +107,10 @@ void callbackStringEntered(javacall_utf16_string ptr, int str_len) {
   CVMcondvarNotifyAll(&condVar);
 }
 
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_isPopUp) {
+  KNI_ReturnBoolean(KNI_FALSE);
+}
 
 
 #ifdef __cplusplus
