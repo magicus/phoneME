@@ -826,7 +826,7 @@ public final class System {
     public static void gc() {
 	String prop = (String)AccessController.doPrivileged(
 	    new GetPropertyAction("sun.misc.fullGC"));
-        if (prop == null && sun.misc.CVM.callerCLIsMIDCLs()) {
+        if (prop == null && sun.misc.CVM.callerIsMidlet()) {
             sun.misc.CVM.gc();
         } else {
             Runtime.getRuntime().gc();

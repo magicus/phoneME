@@ -712,6 +712,13 @@ public final class CVM {
     public static native boolean callerCLIsMIDCLs();
 
     /*
+     * Used to find out if the caller's caller is a Midlet
+     * used to avoid full GC since many midlets call System.gc()
+     * repeatedly 
+     */
+    public static native boolean callerIsMidlet();
+
+    /*
      * Returns true if method is being called in a MIDP context.
      */
     public static native boolean isMIDPContext();

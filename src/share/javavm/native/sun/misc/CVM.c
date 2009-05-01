@@ -618,10 +618,8 @@ CNIsun_misc_CVM_throwLocalException(CVMExecEnv* ee,
     return CNI_EXCEPTION;
 }
 
-CNIEXPORT CNIResultCode
-CNIsun_misc_CVM_callerCLIsMIDCLs(CVMExecEnv* ee,
-                                   CVMStackVal32 *arguments,
-                                   CVMMethodBlock **p_mb)
+static void isMIDPClass(CVMExecEnv *ee, CVMStackVal32 *arguments,
+                        CVMMethodBlock **p_mb, CVMBool checkImpl)
 {
 #ifndef CVM_DUAL_STACK
     arguments[0].j.i = CVM_FALSE;
@@ -637,8 +635,25 @@ CNIsun_misc_CVM_callerCLIsMIDCLs(CVMExecEnv* ee,
     loaderICell = (cb == NULL) ? NULL : CVMcbClassLoader(cb);
     
     arguments[0].j.i = CVMclassloaderIsMIDPClassLoader(
-        ee, loaderICell, CVM_TRUE);
+        ee, loaderICell, checkImpl);
 #endif
+}
+
+CNIEXPORT CNIResultCode
+CNIsun_misc_CVM_callerCLIsMIDCLs(CVMExecEnv* ee,
+                                   CVMStackVal32 *arguments,
+                                   CVMMethodBlock **p_mb)
+{
+    isMIDPClass(ee, arguments, p_mb, CVM_TRUE);
+    return CNI_SINGLE;
+}
+
+CNIEXPORT CNIResultCode
+CNIsun_misc_CVM_callerIsMidlet(CVMExecEnv* ee,
+                                   CVMStackVal32 *arguments,
+                                   CVMMethodBlock **p_mb)
+{
+    isMIDPClass(ee, arguments, p_mb, CVM_FALSE);
     return CNI_SINGLE;
 }
 
