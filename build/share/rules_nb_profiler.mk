@@ -21,69 +21,67 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional  
 # information or have any questions. 
 #
-# @(#)rules_jvmti_hprof.mk	1.23 06/10/24
+# @(#)rules_nb_profiler.mk	1.0 09/04/24
 #
 
 #
-#  Makefile for building the Hprof tool
+#  Makefile for building the netbeans profiler agent
 #
 ###############################################################################
 # Make rules:
 
-tools:: jvmti_hprof
-tool-clean: jvmti_hprof-clean
+tools:: nb_profiler
+tool-clean: nb_profiler-clean
 
-jvmti_hprof-clean:
-	$(CVM_JVMTI_HPROF_CLEANUP_ACTION)
+nb_profiler-clean:
+	$(CVM_NB_PROFILER_CLEANUP_ACTION)
 
-jvmti_hprof_build_list =
+nb_profiler_build_list =
 ifeq ($(CVM_JVMTI), true)
-    jvmti_hprof_build_list = jvmti_hprof_initbuild \
-                       $(CVM_JVMTI_HPROF_LIB) \
-                       $(CVM_LIBDIR)/jvm.hprof.txt
+    nb_profiler_build_list = nb_profiler_initbuild \
+                       $(CVM_NB_PROFILER_LIB)
 endif
 
-jvmti_hprof : ALL_INCLUDE_FLAGS := \
-	$(ALL_INCLUDE_FLAGS) $(call makeIncludeFlags,$(CVM_JVMTI_HPROF_INCLUDES))
-jvmti_hprof : CVM_DEFINES += -DSKIP_NPT -DHPROF_LOGGING
+nb_profiler: $(nb_profiler_build_list)
 
-jvmti_hprof: $(jvmti_hprof_build_list)
+nb_profiler : ALL_INCLUDE_FLAGS := \
+	$(ALL_INCLUDE_FLAGS) $(call makeIncludeFlags,$(CVM_NB_PROFILER_INCLUDES))
 
-jvmti_hprof_initbuild: jvmti_hprof_check_cvm jvmti_hprof_checkflags $(CVM_JVMTI_HPROF_BUILDDIRS)
+nb_profiler_initbuild: nb_profiler_check_cvm nb_profiler_checkflags $(CVM_NB_PROFILER_BUILDDIRS)
 
 # Make sure that CVM is built before building hprof.  If not, the issue a
 # warning and abort.
-jvmti_hprof_check_cvm:
+nb_profiler_check_cvm:
 ifneq ($(CVM_STATICLINK_TOOLS), true)
 	@if [ ! -f $(CVM_BINDIR)/$(CVM) ]; then \
-	    echo "Warning! Need to build CVM before building hprof."; \
+	    echo "Warning! Need to build CVM before building nb_profiler agent."; \
 	    exit 1; \
 	else \
-	    echo; echo "Building hprof tool ..."; \
+	    echo; echo "Building netbeans profiler agent ..."; \
 	fi
 else
-	    echo; echo "Building hprof tool ...";
+	    echo; echo "Building netbeans profiler agent ...";
 endif
 # Make sure all of the build flags files are up to date. If not, then do
 # the requested cleanup action.
-jvmti_hprof_checkflags: $(CVM_JVMTI_HPROF_FLAGSDIR)
-	@for filename in $(CVM_JVMTI_HPROF_FLAGS0); do \
-		if [ ! -f $(CVM_JVMTI_HPROF_FLAGSDIR)/$${filename} ]; then \
-			echo "Hprof flag $${filename} changed. Cleaning up."; \
-			rm -f $(CVM_JVMTI_HPROF_FLAGSDIR)/$${filename%.*}.*; \
-			touch $(CVM_JVMTI_HPROF_FLAGSDIR)/$${filename}; \
-			$(CVM_JVMTI_HPROF_CLEANUP_OBJ_ACTION); \
+nb_profiler_checkflags: $(CVM_NB_PROFILER_FLAGSDIR)
+	@for filename in $(CVM_NB_PROFILER_FLAGS0); do \
+		if [ ! -f $(CVM_NB_PROFILER_FLAGSDIR)/$${filename} ]; then \
+			echo "NB profiler flag $${filename} changed. Cleaning up."; \
+			rm -f $(CVM_NB_PROFILER_FLAGSDIR)/$${filename%.*}.*; \
+			touch $(CVM_NB_PROFILER_FLAGSDIR)/$${filename}; \
+			$(CVM_NB_PROFILER_CLEANUP_OBJ_ACTION); \
 		fi \
 	done
 
-vpath %.c      $(CVM_JVMTI_HPROF_SRCDIRS)
-vpath %.S      $(CVM_JVMTI_HPROF_SRCDIRS)
+vpath %.c      $(CVM_NB_PROFILER_SRCDIRS)
+vpath %.S      $(CVM_NB_PROFILER_SRCDIRS)
 
-$(CVM_JVMTI_HPROF_BUILDDIRS):
+$(CVM_NB_PROFILER_BUILDDIRS):
 	@echo ... mkdir $@
 	@if [ ! -d $@ ]; then mkdir -p $@; fi
 
-$(CVM_JVMTI_HPROF_LIB): $(CVM_JVMTI_HPROF_OBJECTS)
+$(CVM_NB_PROFILER_LIB): $(CVM_NB_PROFILER_OBJECTS)
 	@echo "Linking $@"
 ifeq ($(CVM_STATICLINK_TOOLS), true)
 	$(STATIC_LIB_LINK_CMD)
@@ -92,30 +90,21 @@ else
 endif
 	@echo "Done Linking $@"
 
-ifeq ($(CVM_JVMTI), true)
-ifeq ($(CVM_JVMPI), false)
-$(CVM_LIBDIR)/jvm.hprof.txt:
-	@echo "Copying $@"
-	@if [ ! -d $@ ]; then cp $(CVM_JVMTI_HPROF_SHAREROOT)/jvm.hprof.txt $@; fi
-	@echo "Done Copying $@"
-endif
-endif
-
-# The following are used to build the .o files needed for $(CVM_JVMTI_HPROF_OBJECTS):
+# The following are used to build the .o files needed for $(CVM_NB_PROFILER_OBJECTS):
 
 #####################################
 # include all of the dependency files
 #####################################
-files := $(foreach file, $(wildcard $(CVM_JVMTI_HPROF_OBJDIR)/*.d), $(file))
+files := $(foreach file, $(wildcard $(CVM_NB_PROFILER_OBJDIR)/*.d), $(file))
 ifneq ($(strip $(files)),)
     include $(files)
 endif
 
-$(CVM_JVMTI_HPROF_OBJDIR)/%.o: %.c
+$(CVM_NB_PROFILER_OBJDIR)/%.o: %.c
 	@echo "... $@"
 	$(SO_CC_CMD)
 	$(GENERATEMAKEFILES_CMD)
 
-$(CVM_JVMTI_HPROF_OBJDIR)/%.o: %.S
+$(CVM_NB_PROFILER_OBJDIR)/%.o: %.S
 	@echo "... $@"
 	$(SO_ASM_CMD)

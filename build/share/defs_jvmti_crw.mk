@@ -31,7 +31,10 @@
 ###############################################################################
 # Make definitions:
 
-CVM_CRW_LIB           = $(LIB_PREFIX)java_crw_demo$(LIB_POSTFIX)
+CVM_CRW_LIBDIR        ?= $(CVM_LIBDIR)
+CVM_CRW_LIB           = \
+	$(CVM_CRW_LIBDIR)/$(LIB_PREFIX)java_crw_demo$(LIB_POSTFIX)
+
 CVM_CRW_JAR           = java_crw_demo.jar
 
 CVM_CRW_BUILD_TOP     = $(CVM_BUILD_TOP)/jvmti/crw
@@ -39,7 +42,6 @@ CVM_CRW_OBJDIR        := $(call abs2rel,$(CVM_CRW_BUILD_TOP)/obj)
 CVM_CRW_FLAGSDIR      = $(CVM_CRW_BUILD_TOP)/flags
 CVM_CRW_CLASSES	      = $(CVM_CRW_BUILD_TOP)/classes
 
-CVM_CRW_LIBDIR        ?= $(CVM_LIBDIR)
 CVM_CRW_JARDIR        = $(CVM_LIBDIR)
 
 CVM_CRW_SHAREROOT     = $(CVM_SHAREROOT)/tools/jvmti/crw
@@ -59,8 +61,10 @@ CVM_CRW_INCLUDES  += \
         $(CVM_CRW_SHAREROOT) \
         $(CVM_CRW_TARGETROOT)
 
-java_crw_demo : ALL_INCLUDE_FLAGS := \
-	$(ALL_INCLUDE_FLAGS) $(call makeIncludeFlags,$(CVM_CRW_INCLUDES))
+ifeq ($(CVM_STATICLINK_TOOLS), true)
+CVM_STATIC_TOOL_LIBS += $(CVM_CRW_LIB)
+endif
+
 
 #
 # List of object files to build:
@@ -79,10 +83,6 @@ CVM_CRW_SRCDIRS  = \
 	$(CVM_CRW_SHAREROOT) \
 	$(CVM_CRW_TARGETROOT)
 
-vpath %.c      $(CVM_CRW_SRCDIRS)
-vpath %.S      $(CVM_CRW_SRCDIRS)
-vpath %.java   $(CVM_CRW_SHARECLASSESROOT)
-
 CVM_CRW_FLAGS += \
         CVM_SYMBOLS \
         CVM_OPTIMIZED \
@@ -93,10 +93,6 @@ CVM_CRW_FLAGS += \
 
 CVM_CRW_FLAGS0 = $(foreach flag, $(CVM_CRW_FLAGS), $(flag).$($(flag)))
 
-ifeq ($(CVM_STATICLINK_TOOLS), true)
-CVM_OBJECTS += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(CVM_CRW_SHAREOBJS))
-CVM_INCLUDE_DIRS += $(CVM_CRW_INCLUDES)
-endif
 
 CVM_CRW_CLEANUP_ACTION = \
         rm -rf $(CVM_CRW_BUILD_TOP)

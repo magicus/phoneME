@@ -30,6 +30,10 @@
 ###############################################################################
 # Make rules:
 
+vpath %.c      $(CVM_CRW_SRCDIRS)
+vpath %.S      $(CVM_CRW_SRCDIRS)
+vpath %.java   $(CVM_CRW_SHARECLASSESROOT)
+
 tools:: java_crw_demo
 tool-clean: java_crw_demo-clean
 
@@ -39,15 +43,13 @@ java_crw_demo-clean:
 crw_build_list =
 
 ifeq ($(CVM_JVMTI), true)
-ifneq ($(CVM_STATICLINK_TOOLS), true)
     crw_build_list = crw_initbuild \
-		$(CVM_CRW_LIBDIR)/$(CVM_CRW_LIB) \
-		$(CVM_CRW_JARDIR)/$(CVM_CRW_JAR)
-else
-    crw_build_list = crw_initbuild \
+		$(CVM_CRW_LIB) \
 		$(CVM_CRW_JARDIR)/$(CVM_CRW_JAR)
 endif
-endif
+
+java_crw_demo : ALL_INCLUDE_FLAGS := \
+	$(ALL_INCLUDE_FLAGS) $(call makeIncludeFlags,$(CVM_CRW_INCLUDES))
 
 java_crw_demo: $(crw_build_list)
 
@@ -83,9 +85,13 @@ $(CVM_CRW_BUILDDIRS):
 	@echo ... mkdir $@
 	@if [ ! -d $@ ]; then mkdir -p $@; fi
 
-$(CVM_CRW_LIBDIR)/$(CVM_CRW_LIB): $(CVM_CRW_OBJECTS)
+$(CVM_CRW_LIB): $(CVM_CRW_OBJECTS)
 	@echo "Linking $@"
+ifeq ($(CVM_STATICLINK_TOOLS), true)
+	$(STATIC_LIB_LINK_CMD)
+else
 	$(SO_LINK_CMD)
+endif
 	@echo "Done Linking $@"
 
 # The following are used to build the .o files needed for $(CVM_CRW_OBJECTS):
