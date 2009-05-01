@@ -29,7 +29,7 @@ package javax.microedition.rms;
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midlet.MIDletStateHandler;
 
-import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.rms.RmsEnvironment;
 
 import com.sun.midp.rms.RecordStoreImpl;
 import com.sun.midp.rms.RecordStoreEventConsumer;
@@ -438,7 +438,7 @@ public class RecordStore {
             throw new IllegalArgumentException();
         }
 
-        id = MIDletSuiteStorage.getSuiteID(vendorName, suiteName);
+        id = RmsEnvironment.getSuiteId(vendorName, suiteName);
 
         if (id == MIDletSuite.UNUSED_SUITE_ID) {
             throw new RecordStoreNotFoundException();
