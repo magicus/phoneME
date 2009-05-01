@@ -69,8 +69,16 @@ information or have any questions.
         <xsl:text>public final class </xsl:text>
         <xsl:value-of select="uig:Screen-classname(.)"/>
         <xsl:text> extends Screen </xsl:text>
-        <xsl:if test="uig:Screen-class-with-ProgressUpdater(.)">
-            <xsl:text>implements ProgressUpdater</xsl:text>
+        <xsl:variable name="ifaces" as="xs:string*">
+            <xsl:if test="uig:Screen-class-with-ProgressUpdater(.)">ProgressUpdater</xsl:if>
+            <xsl:if test="uig:Screen-class-with-TextFieldAccessor(.)">TextFieldAccessor</xsl:if>
+        </xsl:variable>
+        <xsl:if test="count($ifaces) != 0">
+            <xsl:text>implements </xsl:text>
+            <xsl:for-each select="$ifaces">
+                <xsl:value-of select="."/>
+                <xsl:if test="position() != last()">, </xsl:if>
+            </xsl:for-each>
         </xsl:if>
         <xsl:text> {&#10;</xsl:text>
 
@@ -103,17 +111,40 @@ information or have any questions.
         <xsl:apply-templates select="." mode="Screen-ctor-body"/>
         <xsl:text>    }&#10;&#10;</xsl:text>
 
-        <!-- 'progress' item specifics -->
         <xsl:if test="uig:Screen-class-with-ProgressUpdater(.)">
             <xsl:text>    public void updateProgress(Object progressId, int value, int max) {&#10;</xsl:text>
             <xsl:for-each select="progress">
                 <xsl:value-of select="
                     concat('        if (progressId.equals(', uig:Screen-item-id(.), ')) {&#10;')"/>
-                <xsl:apply-templates select="." mode="Screen-progress-item-update"/>
+                <xsl:apply-templates select="." mode="Screen-set-item-value"/>
                 <xsl:text>            return;&#10;</xsl:text>
                 <xsl:text>        }&#10;</xsl:text>
             </xsl:for-each>
             <xsl:text>        throw new RuntimeException(progressId + " not found");&#10;</xsl:text>
+            <xsl:text>    }&#10;&#10;</xsl:text>
+        </xsl:if>
+
+        <xsl:if test="uig:Screen-class-with-TextFieldAccessor(.)">
+            <xsl:text>    public String getTextFieldValue(Object itemId) {&#10;</xsl:text>
+            <xsl:for-each select="text-field">
+                <xsl:value-of select="
+                    concat('        if (itemId.equals(', uig:Screen-item-id(.), ')) {&#10;')"/>
+                <xsl:text>            return </xsl:text>
+                <xsl:apply-templates select="." mode="Screen-get-item-value"/>
+                <xsl:text>;&#10;</xsl:text>
+                <xsl:text>        }&#10;</xsl:text>
+            </xsl:for-each>
+            <xsl:text>        throw new RuntimeException(itemId + " not found");&#10;</xsl:text>
+            <xsl:text>    }&#10;&#10;</xsl:text>
+            <xsl:text>    public void setTextFieldValue(Object itemId, String value) {&#10;</xsl:text>
+            <xsl:for-each select="text-field">
+                <xsl:value-of select="
+                    concat('        if (itemId.equals(', uig:Screen-item-id(.), ')) {&#10;')"/>
+                <xsl:apply-templates select="." mode="Screen-set-item-value"/>
+                <xsl:text>            return;&#10;</xsl:text>
+                <xsl:text>        }&#10;</xsl:text>
+            </xsl:for-each>
+            <xsl:text>        throw new RuntimeException(itemId + " not found");&#10;</xsl:text>
             <xsl:text>    }&#10;&#10;</xsl:text>
         </xsl:if>
 
@@ -154,16 +185,25 @@ information or have any questions.
     -->
     <xsl:function name="uig:Screen-class-with-CommandListener" as="xs:boolean">
         <xsl:param name="screen" as="element()"/>
-        <xsl:value-of select="count($screen/descendant::*[not(self::progress)]/@id) != 0"/>
+        <xsl:value-of select="count($screen/descendant::*[not(self::progress|self::text-field)]/@id) != 0"/>
     </xsl:function>
 
 
     <!--
-        Returns 'true' if screen class needs ProgressUpdater.
+        Returns 'true' if screen class implements ProgressUpdater.
     -->
     <xsl:function name="uig:Screen-class-with-ProgressUpdater" as="xs:boolean">
         <xsl:param name="screen" as="element()"/>
         <xsl:value-of select="count($screen[progress]) != 0"/>
+    </xsl:function>
+
+
+    <!--
+        Returns 'true' if screen class implements TextFieldAccessor.
+    -->
+    <xsl:function name="uig:Screen-class-with-TextFieldAccessor" as="xs:boolean">
+        <xsl:param name="screen" as="element()"/>
+        <xsl:value-of select="count($screen[text-field]) != 0"/>
     </xsl:function>
 
 
@@ -198,7 +238,7 @@ information or have any questions.
         <xsl:value-of select="false()"/>
     </xsl:template>
 
-    <xsl:template match="screen/progress" mode="Screen-has-member-field-for-item-impl">
+    <xsl:template match="screen/progress|screen/text-field" mode="Screen-has-member-field-for-item-impl">
         <xsl:value-of select="true()"/>
     </xsl:template>
 
@@ -217,6 +257,10 @@ information or have any questions.
 
     <xsl:template match="progress" mode="Screen-item-id-impl">
         <xsl:value-of select="concat('PROGRESS_ID_', upper-case(@id))"/>
+    </xsl:template>
+
+    <xsl:template match="text-field" mode="Screen-item-id-impl">
+        <xsl:value-of select="concat('TEXT_FIELD_ID_', upper-case(@id))"/>
     </xsl:template>
 
 
@@ -298,7 +342,7 @@ information or have any questions.
         <xsl:text>;&#10;</xsl:text>
     </xsl:template>
 
-    <xsl:template match="screen/progress" mode="Screen-define-ids">
+    <xsl:template match="screen/progress|screen/text-field" mode="Screen-define-ids">
         <xsl:text>    public final static Object </xsl:text>
         <xsl:value-of select="uig:Screen-item-id(.)"/>
         <xsl:text> = "</xsl:text>
@@ -370,7 +414,7 @@ information or have any questions.
         <xsl:text> = </xsl:text>
     </xsl:template>
 
-    <xsl:template match="text|progress" mode="Screen-add-item">
+    <xsl:template match="text|progress|text-field" mode="Screen-add-item">
         <xsl:apply-templates select="." mode="Screen-item-legend"/>
         <xsl:apply-templates select="." mode="Screen-declare-item"/>
         <xsl:apply-templates select="." mode="Screen-create-item"/>
@@ -603,7 +647,16 @@ information or have any questions.
         <xsl:call-template name="error-not-implemented"/>
     </xsl:template>
 
-    <xsl:template match="screen/progress" mode="Screen-progress-item-update">
+    <xsl:template match="screen/text-field" mode="Screen-get-item-value">
+        <xsl:value-of select="concat(uig:Screen-item-variable-name(.), '.getString()')"/>
+    </xsl:template>
+
+    <xsl:template match="screen/text-field" mode="Screen-set-item-value">
+        <xsl:value-of select="
+            concat('            ', uig:Screen-item-variable-name(.), '.setString(value);&#10;')"/>
+    </xsl:template>
+
+    <xsl:template match="screen/progress" mode="Screen-set-item-value">
         <xsl:value-of select="
             concat('            ', uig:Screen-item-variable-name(.), '.setMaxValue(max);&#10;')"/>
         <xsl:value-of select="

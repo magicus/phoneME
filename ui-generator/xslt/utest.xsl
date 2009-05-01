@@ -179,7 +179,7 @@ information or have any questions.
 
 
     <xsl:template match="screen" mode="UTest-screen-command-listener"/>
-    <xsl:template match="screen[descendant::*[not(self::progress) and @id]]" mode="UTest-screen-command-listener">
+    <xsl:template match="screen[uig:Screen-class-with-CommandListener(.)]" mode="UTest-screen-command-listener">
         <xsl:text>,&#10;</xsl:text>
         <xsl:text>            new CommandListener() {&#10;</xsl:text>
         <xsl:text>                public void onCommand(Screen sender, int commandId) {&#10;</xsl:text>

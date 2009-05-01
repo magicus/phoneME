@@ -35,7 +35,7 @@ information or have any questions.
     </screen>
 
     <screen name="VeryLongTextLabelScreen">
-        <text>
+        <text align="center">
 Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 \n
@@ -67,6 +67,8 @@ Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
     <screen name="EntitledTextLabelWithCommandScreen">
         <title>This is a %Title%</title>
         <text>Hello!</text>
+        <text align="right">Hello!</text>
+        <text align="center">Hello!</text>
         <command id="ACTION">Do %ACTION%</command>
     </screen>
 

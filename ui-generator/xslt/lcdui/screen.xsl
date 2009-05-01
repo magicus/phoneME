@@ -35,6 +35,7 @@ information or have any questions.
             'javax.microedition.lcdui.Choice',
             'javax.microedition.lcdui.StringItem',
             'javax.microedition.lcdui.Gauge',
+            'javax.microedition.lcdui.TextField',
             'javax.microedition.lcdui.Spacer',
             'javax.microedition.lcdui.Item',
             'javax.microedition.lcdui.ItemCommandListener',
@@ -110,6 +111,9 @@ information or have any questions.
     </xsl:template>
     <xsl:template match="screen/progress" mode="Screen-item-variable-type-impl">
         <xsl:text>Gauge</xsl:text>
+    </xsl:template>
+    <xsl:template match="screen/text-field" mode="Screen-item-variable-type-impl">
+        <xsl:text>TextField</xsl:text>
     </xsl:template>
     <xsl:template match="screen/options[not(@style='fullscreen')]" mode="Screen-item-variable-type-impl">
         <xsl:text>ChoiceGroup</xsl:text>
@@ -195,6 +199,30 @@ information or have any questions.
 
 
     <!--
+        Top level 'text-field' element.
+    -->
+    <xsl:template match="screen/text-field" mode="Screen-create-item">
+        <xsl:value-of select="concat(
+            'new ',
+            uig:Screen-item-variable-type(.),
+            '(',
+            uig:Screen-item-get-label(.))"/>
+        <xsl:text>, "", </xsl:text>
+        <xsl:value-of select="@maxchars"/>
+        <xsl:text>, </xsl:text>
+        <xsl:apply-templates select="." mode="LCDUI-text-field-style"/>
+        <xsl:text>)</xsl:text>
+    </xsl:template>
+
+    <xsl:template match="text-field[@style='password']" mode="LCDUI-text-field-style">
+        <xsl:text>TextField.ANY | TextField.PASSWORD</xsl:text>
+    </xsl:template>
+    <xsl:template match="text-field[@style='plain' or not(@style)]" mode="LCDUI-text-field-style">
+        <xsl:text>TextField.ANY</xsl:text>
+    </xsl:template>
+
+
+    <!--
         Top level 'command' and 'dynamic-command' elements.
     -->
     <xsl:template match="command|dynamic-command" mode="Screen-create-item">
@@ -226,7 +254,7 @@ information or have any questions.
     <!--
         Appends an item to the form.
     -->
-    <xsl:template match="text|progress|options[not(@style='fullscreen')]" mode="Screen-add-item-impl">
+    <xsl:template match="text|progress|text-field|options[not(@style='fullscreen')]" mode="Screen-add-item-impl">
         <xsl:value-of select="uig:Screen-item-variable-name(.)"/>
         <xsl:text>.setLayout(Item.LAYOUT_2 | </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-layout"/>
