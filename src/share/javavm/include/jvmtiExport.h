@@ -1000,7 +1000,8 @@ CVMClassBlock *CVMjvmtiClassObject2ClassBlock(CVMExecEnv *ee, CVMObject *obj);
 
 void        CVMjvmtiRehash(void);
 CVMUint32   CVMjvmtiUniqueID();
-void        CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMConstantPool *cp);
+void        CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMClassBlock* oldcb,
+                                   CVMClassBlock *newcb, CVMConstantPool *cp);
 CVMBool     CVMjvmtiMbIsObsoleteX(CVMMethodBlock *mb);
 CVMConstantPool * CVMjvmtiMbConstantPool(CVMMethodBlock *mb);
 CVMBool     CVMjvmtiCheckLockInfo(CVMExecEnv *ee);

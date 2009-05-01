@@ -5249,6 +5249,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
     jint threadCount;
     jthread *threads;
     CVMUint16 oldFlags, newFlags;
+    CVMClassBlockData *oldCBData;
 
     CHECK_JVMTI_ENV;
 
@@ -5269,6 +5270,13 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
     }
     ALLOC(jvmtienv, CVMint2Long(classCount * sizeof(CVMClassBlock*)),
 	  (unsigned char**)&classes);
+
+    oldCBData = calloc(sizeof(CVMClassBlockData), 1);
+    if (oldCBData == NULL) {
+        err = JVMTI_ERROR_OUT_OF_MEMORY;
+        goto cleanup;
+    }
+
     node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
     CVMassert(node != NULL);
     for (i = 0; i < classCount; i++) {
@@ -5453,6 +5461,12 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
         className = NULL;
     }
     for (i = 0; i < classCount && classes[i] != NULL; i++) {
+        CVMClassBlockData **oldCBDataPtr;
+        CVMMethodArray *oldMethods;
+        CVMMethodBlock **oldMethodTablePtr;
+        CVMConstantPool *oldCp;
+        CVMInt32 oldCpCount;
+
 	klass = classDefinitions[i].klass;
 	oldcb = CVMjvmtiClassRef2ClassBlock(ee, klass);
 	newKlass = classes[i];
@@ -5496,11 +5510,11 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	char *methodName;
 
 	CVMtraceJVMTI(("JVMTI: Redefine: %s, oldcb: 0x%x, newcb 0x%x, "
-		       "klass 0x%x, 0x%x, oldCP 0x%x, newCP 0x%x\n", 
+		       "klass 0x%x, 0x%x\n", 
 		       className, (int)oldcb, (int)newcb, (int)newKlass,
-		       (int)newKlass->ref_DONT_ACCESS_DIRECTLY,
+		       (int)newKlass->ref_DONT_ACCESS_DIRECTLY));
+	CVMtraceJVMTI(("JVMTI: Redefine: oldCP 0x%x, newCP 0x%x\n", 
 		       CVMcbConstantPool(oldcb), CVMcbConstantPool(newcb)));
-
 	for (j = 0; j < CVMcbMethodCount(oldcb); j++) {
 	    CVMMethodBlock *oldmb = CVMcbMethodSlot(oldcb, j);
 	    CVMMethodBlock *newmb = CVMcbMethodSlot(newcb, j);
@@ -5531,12 +5545,36 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	    CVMMethodBlock *newmb = CVMcbMethodSlot(newcb, j);
 	    CVMmbClassBlock(newmb) = oldcb;
 	    CVMmbClassBlockInRange(newmb) = oldcb;
-            CVMjvmtiMarkAsObsolete(oldmb, CVMcbConstantPool(oldcb));
+            CVMmbClassBlockInRange(oldmb) = newcb;
+            CVMjvmtiMarkAsObsolete(oldmb, oldcb, newcb,
+                                   CVMcbConstantPool(oldcb));
 	}
+        oldMethods = CVMcbMethods(oldcb);
 	CVMcbMethods(oldcb) = CVMcbMethods(newcb);
+        CVMcbMethods(newcb) = oldMethods;
+        oldMethodTablePtr = CVMcbMethodTablePtr(oldcb);
 	CVMcbMethodTablePtr(oldcb) = CVMcbMethodTablePtr(newcb);
+        CVMcbMethodTablePtr(newcb) = oldMethodTablePtr;
+        oldCp = CVMcbConstantPool(oldcb);
+        oldCpCount = CVMcbConstantPoolCount(oldcb);
 	CVMcbConstantPool(oldcb) = CVMcbConstantPool(newcb);
 	CVMcbConstantPoolCount(oldcb) = CVMcbConstantPoolCount(newcb);
+	CVMcbConstantPool(newcb) = oldCp;
+	CVMcbConstantPoolCount(newcb) = oldCpCount;
+
+        newcb->oldCBData = oldCBData;
+        oldCBData->currentCb = oldcb;
+
+        /* make sure entries in new cp that point to old methods
+         * are fixed up to point to the new methods.  Note that we
+         * pass in oldcb as the cb to fixup AND we swap oldcb and
+         * newcb in the cpFixup structure since we have already 
+         * swapped method arrays above.
+         */
+	cpFixup.oldcb = newcb;
+	cpFixup.newcb = oldcb;
+        fixupCallback(ee, oldcb, &cpFixup);
+
         CVMjvmtiSetGCOwner(CVM_FALSE);
         CVMD_gcAllowUnsafeAll(ee);
         CVM_THREAD_UNLOCK(ee);

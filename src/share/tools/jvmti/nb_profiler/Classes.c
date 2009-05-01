@@ -179,6 +179,10 @@ JNIEXPORT jbyteArray JNICALL Java_org_netbeans_lib_profiler_server_system_Classe
     }
     
     ret = (*env)->NewByteArray(env, class_data_len);
+    if (ret == NULL) {
+        free(class_data);
+        return NULL;
+    }
     (*env)->SetByteArrayRegion(env, ret, 0, class_data_len, (jbyte*) class_data);
     free(class_data);
     return ret;

@@ -1404,8 +1404,17 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
 			    (CVMmbFullMethodIndex(mb) & 0xffff)));
 	/* Write the class object into the backtrace array. */
 	{
-	    CVMClassICell* classICell = 
-		CVMcbJavaInstance(CVMmbClassBlock(mb));
+	    CVMClassICell* classICell;
+            CVMClassBlock* cb;
+#ifdef CVM_JVMTI
+            if (CVMjvmtiMbIsObsolete(mb)) {
+                cb = CVMcbOldData(CVMmbClassBlock(mb))->currentCb;
+            } else
+#endif
+            {
+                cb = CVMmbClassBlock(mb);
+            }
+            classICell = CVMcbJavaInstance(cb);
 	    CVMD_arrayWriteRef(backtrace, count + 2, 
 			       CVMID_icellDirect(ee, classICell));
 	}

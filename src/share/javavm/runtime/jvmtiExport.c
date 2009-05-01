@@ -124,16 +124,30 @@ static CVMJvmtiMethodNode *getNode(CVMMethodBlock *mb)
 CVMBool
 CVMjvmtiMbIsObsoleteX(CVMMethodBlock *mb)
 {
+    return ((CVMmbIsJava(mb)) && CVMjmdIs(CVMmbJmd(mb), OBSOLETE));
+#if 0
     CVMJvmtiMethodNode *node;
     node = getNode(mb);
     if (node == NULL) {
 	return CVM_FALSE;
     }
     return node->isObsolete;
+#endif
 }
 
 CVMConstantPool *
-CVMjvmtiMbConstantPool(CVMMethodBlock *mb) {
+CVMjvmtiMbConstantPool(CVMMethodBlock *mb)
+{
+#if 0
+    CVMClassBlock *oldcb = CVMmbClassBlock(mb);
+
+    CVMassert(CVMcbOldData(oldcb) != NULL);
+    CVMassert(CVMcbOldData(oldcb)->oldCb != NULL);
+    return CVMcbConstantPool(CVMOldData(oldcb)->oldCb);
+#endif
+    return CVMcbConstantPool(CVMmbClassBlock(mb));
+
+#if 0
     CVMJvmtiMethodNode *node;
     jint slot;
     slot = methodHash((CVMUint32)mb);
@@ -143,11 +157,21 @@ CVMjvmtiMbConstantPool(CVMMethodBlock *mb) {
     }
     CVMassert(node->isObsolete);
     return node->cp;
+#endif
 }
 
 void
-CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMConstantPool *cp)
+CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMClassBlock *oldcb,
+                       CVMClassBlock* newcb, CVMConstantPool *cp)
 {
+    CVMExecEnv *ee = CVMgetEE();
+
+    JVMTI_LOCK(ee);
+    if (CVMmbIsJava(oldmb)) {
+        CVMjmdFlags(CVMmbJmd(oldmb)) |= CVM_JMD_OBSOLETE;
+    }
+
+#if 0
     CVMJvmtiMethodNode *node;
     CVMExecEnv *ee = CVMgetEE();
     jint slot;
@@ -167,6 +191,7 @@ CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMConstantPool *cp)
     node->cp = cp;
     node->mb = oldmb;
     node->isObsolete = CVM_TRUE;
+#endif
     JVMTI_UNLOCK(ee);
 }
 
