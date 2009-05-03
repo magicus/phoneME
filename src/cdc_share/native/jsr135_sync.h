@@ -30,9 +30,9 @@
 void LockAudioMutex();
 void UnlockAudioMutex();
 
-javacall_result mmapi_thread_suspend(int desc, javacall_result *pStatus,
+javacall_result mmapi_thread_suspend(int desc, int type, javacall_result *pStatus,
     void **pData);
-javacall_result mmapi_thread_resume(int desc, javacall_result status,
+javacall_result mmapi_thread_resume(int desc, int type, javacall_result status,
     void *data);
 
 #endif

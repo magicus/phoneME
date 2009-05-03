@@ -55,7 +55,26 @@ do { \
     while (result__ == JAVACALL_WOULD_BLOCK) { \
         void *data__;\
         CVMD_gcSafeExec(_ee,{ \
-        if (JAVACALL_OK != mmapi_thread_suspend(MAKE_PLAYER_DESCRIPTOR(app_id_, player_id_, javacall_event__), &result__, &data__)) { \
+        if (JAVACALL_OK != mmapi_thread_suspend(MAKE_PLAYER_DESCRIPTOR(app_id_, player_id_, javacall_event__), 0, &result__, &data__)) { \
+            result__ = JAVACALL_FAIL; \
+        } else if (result__ == JAVACALL_OK) { \
+            JAVACALL_MM_ASYNC_GET_RESULT_##args_ \
+        } \
+        }); \
+    } \
+    (status_) = result__; \
+} while(0)
+
+#define JAVACALL_AMMS_ASYNC_EXEC(status_,code_,handle_,app_id_,player_id_,javacall_event_,args_) \
+do { \
+    javacall_result result__ = JAVACALL_FAIL; \
+    javacall_handle handle__ = (handle_); \
+    int javacall_event__ = (int)(javacall_event_); \
+    result__ = (code_); \
+    while (result__ == JAVACALL_WOULD_BLOCK) { \
+        void *data__;\
+        CVMD_gcSafeExec(_ee,{ \
+        if (JAVACALL_OK != mmapi_thread_suspend(MAKE_PLAYER_AMMS_DESCRIPTOR(app_id_, player_id_, javacall_event__), 1, &result__, &data__)) { \
             result__ = JAVACALL_FAIL; \
         } else if (result__ == JAVACALL_OK) { \
             JAVACALL_MM_ASYNC_GET_RESULT_##args_ \
@@ -75,5 +94,10 @@ do { \
 
 #define PLAYER_DESCRIPTOR_EVENT_MASK    MAKE_PLAYER_DESCRIPTOR(-1, -1, JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER)
 
+#define MAKE_PLAYER_AMMS_DESCRIPTOR(appId_, playerId_, event_) \
+    (((((event_)-JAVACALL_EVENT_AMMS_JAVA_EVENTS_MARKER) & 0x3F) << 26) | \
+        (((appId_) & 0x3FF) << 16) | ((playerId_) & 0xFFFF))
+
+#define PLAYER_AMMS_DESCRIPTOR_EVENT_MASK    MAKE_PLAYER_AMMS_DESCRIPTOR(-1, -1, JAVACALL_EVENT_AMMS_JAVA_EVENTS_MARKER)
 
 #endif /* __mm_async_exec_H__ */
