@@ -220,7 +220,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         break;
 #ifdef ENABLE_JSR_234
     case MIDP_JC_EVENT_ADVANCED_MULTIMEDIA:
-        pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
+        pNewSignal->waitingFor = AMMS_EVENT_SIGNAL;
         pNewSignal->status     = JAVACALL_OK;
 
         pNewMidpEvent->type         = AMMS_EVENT;
