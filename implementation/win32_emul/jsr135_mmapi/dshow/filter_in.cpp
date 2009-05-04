@@ -1230,7 +1230,7 @@ inline nat32 filter_in_filter::round(nat32 n)
 bool filter_in_filter::data(nat32 len, const void *pdata)
 {
 #if write_level > 0
-    print("filter_in_filter::data(%u) called...\n", len);
+    print("filter_in_filter::data(%u, 0x%p) called...\n", len, pdata);
 #endif
     if(len)
     {

@@ -466,8 +466,29 @@ HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, const AM_M
 
     if(pmt->majortype == MEDIATYPE_Audio)
     {
+        if(pmt->formattype == FORMAT_WaveFormatEx && pmt->cbFormat >= sizeof(WAVEFORMATEX))
+        {
+            const WAVEFORMATEX *pwfe = (const WAVEFORMATEX *)pmt->pbFormat;
+            if(pwfe->wFormatTag == WAVE_FORMAT_PCM)
+            {
+#if write_level > 0
+                print("Audio format - %u %u %u\n", pwfe->nSamplesPerSec, pwfe->nChannels, pwfe->wBitsPerSample);
+#endif
+                pfilter->pcallback->audio_format_changed(pwfe->nSamplesPerSec, pwfe->nChannels, pwfe->wBitsPerSample);
+            }
+            else
+            {
+                LeaveCriticalSection(&cs_pin);
+                return VFW_E_TYPE_NOT_ACCEPTED;
+            }
+        }
+        else
+        {
+            LeaveCriticalSection(&cs_pin);
+            return VFW_E_TYPE_NOT_ACCEPTED;
+        }
     }
-    else if(pmt->majortype == MEDIATYPE_Video)
+    else if(pmt->majortype == MEDIATYPE_Video && pmt->cbFormat >= sizeof(VIDEOINFOHEADER))
     {
         if(pmt->formattype == FORMAT_VideoInfo)
         {
@@ -477,7 +498,7 @@ HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, const AM_M
 #endif
             pfilter->pcallback->size_changed(int16(vih->bmiHeader.biWidth), int16(vih->bmiHeader.biHeight));
         }
-        else if(pmt->formattype == FORMAT_VideoInfo2)
+        else if(pmt->formattype == FORMAT_VideoInfo2 && pmt->cbFormat >= sizeof(VIDEOINFOHEADER2))
         {
             const VIDEOINFOHEADER2 *vih2 = (const VIDEOINFOHEADER2 *)pmt->pbFormat;
 #if write_level > 0

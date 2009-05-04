@@ -308,10 +308,10 @@ void dump_media_type(const AM_MEDIA_TYPE *pamt)
     print(", pbFormat=0x%08x", UINT32(UINT64(pamt->pbFormat)));
     if(pamt->formattype == FORMAT_WaveFormatEx && pamt->cbFormat >= sizeof(WAVEFORMATEX) && pamt->pbFormat)
     {
-        WAVEFORMATEX *pwfe = (WAVEFORMATEX *) pamt->pbFormat;
+        const WAVEFORMATEX *pwfe = (const WAVEFORMATEX *)pamt->pbFormat;
         if(pwfe->wFormatTag == WAVE_FORMAT_MPEG && pamt->cbFormat >= sizeof(MPEG1WAVEFORMAT))
         {
-            MPEG1WAVEFORMAT *pm1wf = (MPEG1WAVEFORMAT *) pamt->pbFormat;
+            const MPEG1WAVEFORMAT *pm1wf = (const MPEG1WAVEFORMAT *)pamt->pbFormat;
             print(", wFormatTag=WAVE_FORMAT_MPEG");
             print(", nChannels=%u"      , pm1wf->wfx.nChannels      );
             print(", nSamplesPerSec=%u" , pm1wf->wfx.nSamplesPerSec );
@@ -330,7 +330,7 @@ void dump_media_type(const AM_MEDIA_TYPE *pamt)
         }
         else if(pwfe->wFormatTag == WAVE_FORMAT_MPEGLAYER3 && pamt->cbFormat >= sizeof(MPEGLAYER3WAVEFORMAT))
         {
-            MPEGLAYER3WAVEFORMAT *pml3wf = (MPEGLAYER3WAVEFORMAT *) pamt->pbFormat;
+            const MPEGLAYER3WAVEFORMAT *pml3wf = (const MPEGLAYER3WAVEFORMAT *)pamt->pbFormat;
             print(", wFormatTag=WAVE_FORMAT_MPEGLAYER3");
             print(", nChannels=%u"      , pml3wf->wfx.nChannels      );
             print(", nSamplesPerSec=%u" , pml3wf->wfx.nSamplesPerSec );

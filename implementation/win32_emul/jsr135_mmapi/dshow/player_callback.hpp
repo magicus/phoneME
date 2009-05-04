@@ -33,5 +33,6 @@ public:
     virtual void frame_ready(const bits16 *pframe) = 0;
     virtual void sample_ready(nat32 len, const void *pdata) = 0;
     virtual void size_changed(int16 w, int16 h) = 0;
+    virtual void audio_format_changed(nat32 samples_per_second, nat32 channels, nat32 bits_per_sample) = 0;
     virtual void playback_finished() = 0;
 };
