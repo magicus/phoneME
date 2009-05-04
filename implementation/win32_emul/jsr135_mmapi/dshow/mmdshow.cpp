@@ -201,6 +201,8 @@ void dshow_player::playback_finished()
     long t = get_media_time();
     javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
                                       appId, playerId, JAVACALL_OK, (void*)t );
+
+    ppl->stop();
 }
 
 void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
