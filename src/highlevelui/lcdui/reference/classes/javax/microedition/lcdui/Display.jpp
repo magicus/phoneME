@@ -681,6 +681,19 @@ public class Display {
     Display(Object theOwner) {
 	this(theOwner, displayDeviceContainer.getPrimaryDisplayDevice());
     }
+    
+    /**
+    * Release any resources, such as threads, which migth refer
+    * back to the application-level, which in turn may have
+    * a reference to the Display.
+    */
+	private void close()
+	{
+        // #ifdef ENABLE_CHAMELEON
+        // Free the window to allow it to GC.
+		window = null;
+	    // #endif ENABLE_CHAMELEON
+	}
 
     /**
      * Initializes the display with an accessor helper class.
@@ -1125,12 +1138,18 @@ public class Display {
     public void setCurrent(Displayable nextDisplayable) {
         synchronized (LCDUILock) {
 	    
+		// Handle null right away, to avoid risk of NullPointerException below.
+		if (nextDisplayable == null) {
+			setCurrentImpl(null, null);
+			return;
+		}
+			
 	    /** Check display capabilities. IllegalArgumentException is thrown 
 		if at least one displayable capability is not supported by the display */
 	    
 	    int displayCapabilities = displayDevice.getCapabilities();
 
-	    if ((displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TITLE) == 0 && 
+	    if ((displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TITLE) == 0 &&
 		(nextDisplayable.getTitle() != null)) {
 		throw new IllegalArgumentException("This display does not support title");
 	    }
@@ -1140,7 +1159,7 @@ public class Display {
 		throw new IllegalArgumentException("This display does not support ticker");
 	    }
 
-	    if ((displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_COMMANDS) == 0 && 
+	    if ((displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_COMMANDS) == 0 &&
 		(nextDisplayable.numCommands > 0)) {
 		throw new IllegalArgumentException("This display does not support commands");
 	    }
@@ -1664,6 +1683,9 @@ public class Display {
 	    for (int i = das.length; --i >= 0;) {
 		// Give up the foreground
 		das[i].getDisplay().setCurrent(null);
+		// Close the display to clean-up internal resources that otherwise
+		// prevent GC of application class loaders.
+		das[i].close();
 		ret = displayContainer.removeDisplay(das[i]);
 	    }	
 	}
@@ -2941,6 +2963,15 @@ public class Display {
         public Display getDisplay() {
             // return display;
             return Display.this;
+        }
+        
+        /**
+        * Called to release internal resources.
+        * This should only be called after a display
+        * has been released.
+        */
+        public void close() {
+			Display.this.close();
         }
 
         /**
