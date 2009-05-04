@@ -178,6 +178,7 @@ static const guid_item guid_items[]=
     define_guid_item(IID_IAMFilterMiscFlags         ),
     define_guid_item(IID_IAMOpenProgress            ),
     define_guid_item(IID_IAMPushSource              ),
+    define_guid_item(IID_IAMVfwCaptureDialogs       ),
     define_guid_item(IID_IAsyncReader               ),
     define_guid_item(IID_IBasicAudio                ),
     define_guid_item(IID_IBasicVideo                ),
@@ -188,10 +189,12 @@ static const guid_item guid_items[]=
     define_guid_item(IID_IMediaSeeking              ),
     define_guid_item(IID_IMemInputPin               ),
     define_guid_item(IID_IPersist                   ),
+    define_guid_item(IID_IReferenceClock            ),
     define_guid_item(IID_IStream                    ),
     define_guid_item(IID_IStreamBuilder             ),
     define_guid_item(IID_IStreamSwitcherInputPin    ),
     define_guid_item(IID_ISyncReader                ),
+    define_guid_item(IID_IUnknown                   ),
     define_guid_item(IID_IVideoWindow               ),
     define_guid_item(MEDIASUBTYPE_AIFF              ),
     define_guid_item(MEDIASUBTYPE_ARGB32            ),
@@ -428,11 +431,47 @@ bool dump_pin(IPin *pp, nat32 indent)
             for(UINT32 i = 0; i < indent; i++) print(" ");
             print("0x%08x ", UINT32(UINT64(pp)));
             print(L"%s", id);
+            IAMFilterMiscFlags *pamfmf;
+            if(pp->QueryInterface(IID_IAMFilterMiscFlags, (void **)&pamfmf) == S_OK)
+            {
+                print(" IAMFilterMiscFlags");
+                pamfmf->Release();
+            }
             IAsyncReader *par;
             if(pp->QueryInterface(IID_IAsyncReader, (void **)&par) == S_OK)
             {
                 par->Release();
                 print(" IAsyncReader");
+            }
+            IBasicAudio *pba;
+            if(pp->QueryInterface(IID_IBasicAudio, (void **)&pba) == S_OK)
+            {
+                print(" IBasicAudio");
+                pba->Release();
+            }
+            IBasicVideo *pbv;
+            if(pp->QueryInterface(IID_IBasicVideo, (void **)&pbv) == S_OK)
+            {
+                print(" IBasicVideo");
+                pbv->Release();
+            }
+            IKsPropertySet *pkps;
+            if(pp->QueryInterface(IID_IKsPropertySet, (void **)&pkps) == S_OK)
+            {
+                print(" IKsPropertySet");
+                pkps->Release();
+            }
+            IMediaPosition *pmp;
+            if(pp->QueryInterface(IID_IMediaPosition, (void **)&pmp) == S_OK)
+            {
+                print(" IMediaPosition");
+                pmp->Release();
+            }
+            IMediaSeeking *pms;
+            if(pp->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+            {
+                print(" IMediaSeeking");
+                pms->Release();
             }
             IMemInputPin *pmip;
             if(pp->QueryInterface(IID_IMemInputPin, (void **)&pmip) == S_OK)
@@ -440,6 +479,18 @@ bool dump_pin(IPin *pp, nat32 indent)
                 print(" IMemInputPin");
                 if(pmip->ReceiveCanBlock() == S_OK) print("(blocking)");
                 pmip->Release();
+            }
+            IReferenceClock *prc;
+            if(pp->QueryInterface(IID_IReferenceClock, (void **)&prc) == S_OK)
+            {
+                print(" IReferenceClock");
+                prc->Release();
+            }
+            IVideoWindow *pvw;
+            if(pp->QueryInterface(IID_IVideoWindow, (void **)&pvw) == S_OK)
+            {
+                print(" IVideoWindow");
+                pvw->Release();
             }
             print(" 0x%08x", UINT32(UINT64(pi.pFilter)));
             print(" %u ", pi.dir);
@@ -528,6 +579,67 @@ bool dump_filter(IBaseFilter *pbf, nat32 indent)
         {
             print(" ");
             print(clsid);
+        }
+        IAMFilterMiscFlags *pamfmf;
+        if(pbf->QueryInterface(IID_IAMFilterMiscFlags, (void **)&pamfmf) == S_OK)
+        {
+            print(" IAMFilterMiscFlags");
+            pamfmf->Release();
+        }
+        IAsyncReader *par;
+        if(pbf->QueryInterface(IID_IAsyncReader, (void **)&par) == S_OK)
+        {
+            par->Release();
+            print(" IAsyncReader");
+        }
+        IBasicAudio *pba;
+        if(pbf->QueryInterface(IID_IBasicAudio, (void **)&pba) == S_OK)
+        {
+            print(" IBasicAudio");
+            pba->Release();
+        }
+        IBasicVideo *pbv;
+        if(pbf->QueryInterface(IID_IBasicVideo, (void **)&pbv) == S_OK)
+        {
+            print(" IBasicVideo");
+            pbv->Release();
+        }
+        IKsPropertySet *pkps;
+        if(pbf->QueryInterface(IID_IKsPropertySet, (void **)&pkps) == S_OK)
+        {
+            print(" IKsPropertySet");
+            pkps->Release();
+        }
+        IMediaPosition *pmp;
+        if(pbf->QueryInterface(IID_IMediaPosition, (void **)&pmp) == S_OK)
+        {
+            print(" IMediaPosition");
+            pmp->Release();
+        }
+        IMediaSeeking *pms;
+        if(pbf->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            print(" IMediaSeeking");
+            pms->Release();
+        }
+        IMemInputPin *pmip;
+        if(pbf->QueryInterface(IID_IMemInputPin, (void **)&pmip) == S_OK)
+        {
+            print(" IMemInputPin");
+            if(pmip->ReceiveCanBlock() == S_OK) print("(blocking)");
+            pmip->Release();
+        }
+        IReferenceClock *prc;
+        if(pbf->QueryInterface(IID_IReferenceClock, (void **)&prc) == S_OK)
+        {
+            print(" IReferenceClock");
+            prc->Release();
+        }
+        IVideoWindow *pvw;
+        if(pbf->QueryInterface(IID_IVideoWindow, (void **)&pvw) == S_OK)
+        {
+            print(" IVideoWindow");
+            pvw->Release();
         }
         print(" 0x%08x", UINT32(UINT64(fi.pGraph)));
         if(fi.pGraph) fi.pGraph->Release();

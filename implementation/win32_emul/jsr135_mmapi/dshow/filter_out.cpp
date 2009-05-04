@@ -63,7 +63,7 @@ public:
     virtual HRESULT __stdcall Clone(IEnumMediaTypes **ppEnum);
 };
 
-class filter_out_pin : public IPin, public IMemInputPin
+class filter_out_pin : public IPin, IMemInputPin
 {
     friend filter_out_filter;
 
@@ -129,7 +129,7 @@ public:
     virtual HRESULT __stdcall Clone(IEnumPins **ppEnum);
 };
 
-class filter_out_filter : public filter_out
+class filter_out_filter : public filter_out, IMediaSeeking
 {
     friend filter_out_pin;
 
@@ -169,6 +169,24 @@ public:
     virtual HRESULT __stdcall QueryFilterInfo(FILTER_INFO *pInfo);
     virtual HRESULT __stdcall JoinFilterGraph(IFilterGraph *pGraph, LPCWSTR pName);
     virtual HRESULT __stdcall QueryVendorInfo(LPWSTR *pVendorInfo);
+    // IMediaSeeking
+    virtual HRESULT __stdcall GetCapabilities(DWORD *pCapabilities);
+    virtual HRESULT __stdcall CheckCapabilities(DWORD *pCapabilities);
+    virtual HRESULT __stdcall IsFormatSupported(const GUID *pFormat);
+    virtual HRESULT __stdcall QueryPreferredFormat(GUID *pFormat);
+    virtual HRESULT __stdcall GetTimeFormat(GUID *pFormat);
+    virtual HRESULT __stdcall IsUsingTimeFormat(const GUID *pFormat);
+    virtual HRESULT __stdcall SetTimeFormat(const GUID *pFormat);
+    virtual HRESULT __stdcall GetDuration(LONGLONG *pDuration);
+    virtual HRESULT __stdcall GetStopPosition(LONGLONG *pStop);
+    virtual HRESULT __stdcall GetCurrentPosition(LONGLONG *pCurrent);
+    virtual HRESULT __stdcall ConvertTimeFormat(LONGLONG *pTarget, const GUID *pTargetFormat, LONGLONG Source, const GUID *pSourceFormat);
+    virtual HRESULT __stdcall SetPositions(LONGLONG *pCurrent, DWORD dwCurrentFlags, LONGLONG *pStop, DWORD dwStopFlags);
+    virtual HRESULT __stdcall GetPositions(LONGLONG *pCurrent, LONGLONG *pStop);
+    virtual HRESULT __stdcall GetAvailable(LONGLONG *pEarliest, LONGLONG *pLatest);
+    virtual HRESULT __stdcall SetRate(double dRate);
+    virtual HRESULT __stdcall GetRate(double *pdRate);
+    virtual HRESULT __stdcall GetPreroll(LONGLONG *pllPreroll);
 
     static bool create(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_out_filter **ppfilter);
 };
@@ -1075,7 +1093,7 @@ HRESULT __stdcall filter_out_filter::QueryInterface(REFIID riid, void **ppvObjec
     if(!ppvObject) return E_POINTER;
     if(riid == IID_IUnknown)
     {
-        *(IUnknown **)ppvObject = this;
+        *(IUnknown **)ppvObject = (IBaseFilter *)this;
         ((IUnknown *)*ppvObject)->AddRef();
         return S_OK;
     }
@@ -1095,6 +1113,12 @@ HRESULT __stdcall filter_out_filter::QueryInterface(REFIID riid, void **ppvObjec
     {
         *(IBaseFilter **)ppvObject = this;
         ((IBaseFilter *)*ppvObject)->AddRef();
+        return S_OK;
+    }
+    if(riid == IID_IMediaSeeking)
+    {
+        *(IMediaSeeking **)ppvObject = this;
+        ((IMediaSeeking *)*ppvObject)->AddRef();
         return S_OK;
     }
     *ppvObject = null;
@@ -1279,7 +1303,7 @@ HRESULT __stdcall filter_out_filter::GetState(DWORD dwMilliSecsTimeout, FILTER_S
 HRESULT __stdcall filter_out_filter::SetSyncSource(IReferenceClock *pClock)
 {
 #if write_level > 0
-    print("filter_out_filter::SetSyncSource called...\n");
+    print("filter_out_filter::SetSyncSource(0x%p) called...\n", pClock);
 #endif
     EnterCriticalSection(&cs_filter);
     if(pClock != pclock)
@@ -1380,6 +1404,465 @@ HRESULT __stdcall filter_out_filter::QueryVendorInfo(LPWSTR *pVendorInfo)
 #endif
     if(!pVendorInfo) return E_POINTER;
     return E_NOTIMPL;
+}
+
+HRESULT __stdcall filter_out_filter::GetCapabilities(DWORD *pCapabilities)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->GetCapabilities(pCapabilities);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::CheckCapabilities(DWORD *pCapabilities)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->CheckCapabilities(pCapabilities);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::IsFormatSupported(const GUID *pFormat)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->IsFormatSupported(pFormat);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::QueryPreferredFormat(GUID *pFormat)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->QueryPreferredFormat(pFormat);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::GetTimeFormat(GUID *pFormat)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->GetTimeFormat(pFormat);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::IsUsingTimeFormat(const GUID *pFormat)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->IsUsingTimeFormat(pFormat);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::SetTimeFormat(const GUID *pFormat)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->SetTimeFormat(pFormat);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::GetDuration(LONGLONG *pDuration)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->GetDuration(pDuration);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::GetStopPosition(LONGLONG *pStop)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->GetStopPosition(pStop);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::GetCurrentPosition(LONGLONG *pCurrent)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->GetCurrentPosition(pCurrent);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::ConvertTimeFormat(LONGLONG *pTarget, const GUID *pTargetFormat, LONGLONG Source, const GUID *pSourceFormat)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->ConvertTimeFormat(pTarget, pTargetFormat, Source, pSourceFormat);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::SetPositions(LONGLONG *pCurrent, DWORD dwCurrentFlags, LONGLONG *pStop, DWORD dwStopFlags)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->SetPositions(pCurrent, dwCurrentFlags, pStop, dwStopFlags);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::GetPositions(LONGLONG *pCurrent, LONGLONG *pStop)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->GetPositions(pCurrent, pStop);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::GetAvailable(LONGLONG *pEarliest, LONGLONG *pLatest)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->GetAvailable(pEarliest, pLatest);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::SetRate(double dRate)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->SetRate(dRate);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::GetRate(double *pdRate)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->GetRate(pdRate);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
+}
+
+HRESULT __stdcall filter_out_filter::GetPreroll(LONGLONG *pllPreroll)
+{
+    HRESULT r;
+    EnterCriticalSection(&ppin->cs_pin);
+    EnterCriticalSection(&cs_filter);
+    if(ppin->pconnected)
+    {
+        IMediaSeeking *pms;
+        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            r = pms->GetPreroll(pllPreroll);
+            pms->Release();
+        }
+        else
+        {
+            r = E_NOTIMPL;
+        }
+    }
+    else
+    {
+        r = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&ppin->cs_pin);
+    return r;
 }
 
 inline nat32 filter_out_filter::round(nat32 n)

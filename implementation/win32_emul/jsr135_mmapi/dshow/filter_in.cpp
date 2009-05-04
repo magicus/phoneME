@@ -60,7 +60,7 @@ public:
     virtual HRESULT __stdcall Clone(IEnumMediaTypes **ppEnum);
 };
 
-class filter_in_pin : public IPin, public IAsyncReader
+class filter_in_pin : public IPin, IAsyncReader
 {
     friend filter_in_filter;
 
@@ -134,7 +134,7 @@ public:
     virtual HRESULT __stdcall Clone(IEnumPins **ppEnum);
 };
 
-class filter_in_filter : public filter_in, public IAMFilterMiscFlags
+class filter_in_filter : public filter_in, IAMFilterMiscFlags
 {
     friend filter_in_pin;
 
