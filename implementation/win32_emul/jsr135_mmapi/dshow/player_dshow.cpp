@@ -35,16 +35,22 @@
 const nat32 null = 0;
 
 
-//#define ENABLE_MMAPI_CONT_3GP_DS_EXT
-//#define ENABLE_MMAPI_CONT_FLV_DS_EXT
-//#define ENABLE_MMAPI_CONT_FLV_DS_ON2
-//#define ENABLE_MMAPI_CONT_MP3_DS_EXT
-//#define ENABLE_MMAPI_FMT_MPEG1L3_DS_EXT
-//#define ENABLE_MMAPI_FMT_VP6_DS_ON2
-#define ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+// #define ENABLE_MMAPI_CONT_AMR_DS_EXT // audio/amr; .amr
+// #define ENABLE_MMAPI_CONT_AVI_DS_EXT // video/avi; .avi
+// #define ENABLE_MMAPI_CONT_3GP_DS_EXT // video/3gpp; .3gp, .3g2
+// #define ENABLE_MMAPI_CONT_FLV_DS_EXT // video/x-flv; .flv, .f4v, .f4p, .f4a, .f4b
+// #define ENABLE_MMAPI_CONT_FLV_DS_ON2
+// #define ENABLE_MMAPI_CONT_MP3_DS_EXT // audio/mpeg; .mp3
+// #define ENABLE_MMAPI_CONT_MP4_DS_EXT // video/mp4; .mp4
+// #define ENABLE_MMAPI_CONT_MPG_DS_EXT // video/mpeg; .mpg, .mpeg, .mp1, .mp2, .mp3, .m1v, .m1a, .m2a, .mpa, .mpv
+// #define ENABLE_MMAPI_CONT_WAV_DS_EXT // audio/wav; .wav
+// #define ENABLE_MMAPI_FMT_MPEG1L3_DS_EXT
+// #define ENABLE_MMAPI_FMT_VP6_DS_ON2
+// #define ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+// #define ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
 
 
-//#include <initguid.h>
+// #include <initguid.h>
 
 #ifdef ENABLE_MMAPI_CONT_3GP_DS_EXT
     // {08e22ada-b715-45ed-9d20-7b87750301d4}
@@ -91,8 +97,11 @@ class player_dshow : public player
     IMediaControl *pmc;
     IMediaSeeking *pms;
     filter_in *pfi;
+#ifdef ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+    filter_out *pfo_a;
+#endif
 #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-    filter_out *pfo;
+    filter_out *pfo_v;
 #endif
     IPin *pp;
 #ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
@@ -133,10 +142,10 @@ class player_dshow : public player
             return result_media;
         }
 
-        /*dump_filter_graph(pgb);
+        // dump_filter_graph(pgb);
 
-        int64 tc = 40200000;
-        pms->SetPositions(&tc, AM_SEEKING_AbsolutePositioning, null, 0);*/
+        // int64 tc = 40200000;
+        // pms->SetPositions(&tc, AM_SEEKING_AbsolutePositioning, null, 0);
 
         hr = pmc->Pause();
         if(FAILED(hr))
@@ -270,7 +279,10 @@ class player_dshow : public player
 #endif
             pp->Release();
 #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-                pfo->Release();
+                pfo_v->Release();
+#endif
+#ifdef ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+                pfo_a->Release();
 #endif
             pfi->Release();
             pms->Release();
@@ -284,8 +296,8 @@ class player_dshow : public player
         }
     }
 
-    //result set_time_base(time_base *master)
-    //time_base *get_time_base(result *presult = 0)
+    // result set_time_base(time_base *master)
+    // time_base *get_time_base(result *presult = 0)
 
     int64 set_media_time(int64 now, result *presult)
     {
@@ -366,7 +378,7 @@ class player_dshow : public player
         return cur / 10;
     }
 
-    //string16c get_content_type(result *presult = 0)
+    // string16c get_content_type(result *presult = 0)
 
     result set_loop_count(int32 count)
     {
@@ -383,8 +395,8 @@ class player_dshow : public player
         return result_success;
     }
 
-    //result add_player_listener(player_listener *pplayer_listener)
-    //result remove_player_listener(player_listener *pplayer_listener)
+    // result add_player_listener(player_listener *pplayer_listener)
+    // result remove_player_listener(player_listener *pplayer_listener)
 
     bool data(nat32 len, const void *pdata)
     {
@@ -410,6 +422,40 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
     {
         return false;
     }
+#ifdef ENABLE_MMAPI_CONT_AMR_DS_EXT
+    else if(len >= wcslen(L"audio/amr") && !wcsncmp(pformat, L"audio/amr", wcslen(L"audio/amr")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        pplayer->amt.majortype = MEDIATYPE_Stream;
+        pplayer->amt.subtype = GUID_NULL;
+        pplayer->amt.bFixedSizeSamples = TRUE;
+        pplayer->amt.bTemporalCompression = FALSE;
+        pplayer->amt.lSampleSize = 1;
+        pplayer->amt.formattype = GUID_NULL;
+        pplayer->amt.pUnk = null;
+        pplayer->amt.cbFormat = 0;
+        pplayer->amt.pbFormat = null;
+    }
+#endif
+#ifdef ENABLE_MMAPI_CONT_AVI_DS_EXT
+    else if(len >= wcslen(L"video/avi") && !wcsncmp(pformat, L"video/avi", wcslen(L"video/avi")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        pplayer->amt.majortype = MEDIATYPE_Stream;
+        pplayer->amt.subtype = MEDIASUBTYPE_Avi;
+        pplayer->amt.bFixedSizeSamples = TRUE;
+        pplayer->amt.bTemporalCompression = FALSE;
+        pplayer->amt.lSampleSize = 1;
+        pplayer->amt.formattype = GUID_NULL;
+        pplayer->amt.pUnk = null;
+        pplayer->amt.cbFormat = 0;
+        pplayer->amt.pbFormat = null;
+    }
+#endif
 #ifdef ENABLE_MMAPI_CONT_3GP_DS_EXT
     else if(len >= wcslen(L"video/3gpp") && !wcsncmp(pformat, L"video/3gpp", wcslen(L"video/3gpp")))
     {
@@ -417,7 +463,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         if(!pplayer) return false;
 
         pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = MEDIASUBTYPE_MP4;
+        pplayer->amt.subtype = GUID_NULL;
         pplayer->amt.bFixedSizeSamples = TRUE;
         pplayer->amt.bTemporalCompression = FALSE;
         pplayer->amt.lSampleSize = 1;
@@ -434,7 +480,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         if(!pplayer) return false;
 
         pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = MEDIASUBTYPE_FLV;
+        pplayer->amt.subtype = GUID_NULL;
         pplayer->amt.bFixedSizeSamples = TRUE;
         pplayer->amt.bTemporalCompression = FALSE;
         pplayer->amt.lSampleSize = 1;
@@ -452,6 +498,57 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
 
         pplayer->amt.majortype = MEDIATYPE_Stream;
         pplayer->amt.subtype = MEDIASUBTYPE_MPEG1Audio;
+        pplayer->amt.bFixedSizeSamples = TRUE;
+        pplayer->amt.bTemporalCompression = FALSE;
+        pplayer->amt.lSampleSize = 1;
+        pplayer->amt.formattype = GUID_NULL;
+        pplayer->amt.pUnk = null;
+        pplayer->amt.cbFormat = 0;
+        pplayer->amt.pbFormat = null;
+    }
+#endif
+#ifdef ENABLE_MMAPI_CONT_MP4_DS_EXT
+    else if(len >= wcslen(L"video/mp4") && !wcsncmp(pformat, L"video/mp4", wcslen(L"video/mp4")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        pplayer->amt.majortype = MEDIATYPE_Stream;
+        pplayer->amt.subtype = GUID_NULL;
+        pplayer->amt.bFixedSizeSamples = TRUE;
+        pplayer->amt.bTemporalCompression = FALSE;
+        pplayer->amt.lSampleSize = 1;
+        pplayer->amt.formattype = GUID_NULL;
+        pplayer->amt.pUnk = null;
+        pplayer->amt.cbFormat = 0;
+        pplayer->amt.pbFormat = null;
+    }
+#endif
+#ifdef ENABLE_MMAPI_CONT_MPG_DS_EXT
+    else if(len >= wcslen(L"video/mpeg") && !wcsncmp(pformat, L"video/mpeg", wcslen(L"video/mpeg")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        pplayer->amt.majortype = MEDIATYPE_Stream;
+        pplayer->amt.subtype = MEDIASUBTYPE_MPEG1System;
+        pplayer->amt.bFixedSizeSamples = TRUE;
+        pplayer->amt.bTemporalCompression = FALSE;
+        pplayer->amt.lSampleSize = 1;
+        pplayer->amt.formattype = GUID_NULL;
+        pplayer->amt.pUnk = null;
+        pplayer->amt.cbFormat = 0;
+        pplayer->amt.pbFormat = null;
+    }
+#endif
+#ifdef ENABLE_MMAPI_CONT_WAV_DS_EXT
+    else if(len >= wcslen(L"audio/wav") && !wcsncmp(pformat, L"audio/wav", wcslen(L"audio/wav")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        pplayer->amt.majortype = MEDIATYPE_Stream;
+        pplayer->amt.subtype = MEDIASUBTYPE_WAVE;
         pplayer->amt.bFixedSizeSamples = TRUE;
         pplayer->amt.bTemporalCompression = FALSE;
         pplayer->amt.lSampleSize = 1;
@@ -507,103 +604,134 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                     }
                     else
                     {
-#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-                        AM_MEDIA_TYPE amt2;
-                        amt2.majortype = MEDIATYPE_Video;
-                        amt2.subtype = MEDIASUBTYPE_RGB565;
-                        amt2.bFixedSizeSamples = TRUE;
-                        amt2.bTemporalCompression = FALSE;
-                        amt2.lSampleSize = 1;
-                        amt2.formattype = GUID_NULL;
-                        amt2.pUnk = null;
-                        amt2.cbFormat = 0;
-                        amt2.pbFormat = null;
-                        if(!filter_out::create(&amt2, pcallback, &pplayer->pfo))
+#ifdef ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+                        AM_MEDIA_TYPE amt_a;
+                        amt_a.majortype = MEDIATYPE_Audio;
+                        amt_a.subtype = MEDIASUBTYPE_PCM;
+                        amt_a.bFixedSizeSamples = TRUE;
+                        amt_a.bTemporalCompression = FALSE;
+                        amt_a.lSampleSize = 1;
+                        amt_a.formattype = GUID_NULL;
+                        amt_a.pUnk = null;
+                        amt_a.cbFormat = 0;
+                        amt_a.pbFormat = null;
+                        if(!filter_out::create(&amt_a, pcallback, &pplayer->pfo_a))
                         {
-                            error("filter_out::create", 0);
+                            error("filter_out::create(Audio)", 0);
                         }
                         else
 #endif
                         {
-                            hr = pplayer->pfi->FindPin(L"Output", &pplayer->pp);
-                            if(hr != S_OK)
+#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                            AM_MEDIA_TYPE amt2;
+                            amt2.majortype = MEDIATYPE_Video;
+                            amt2.subtype = MEDIASUBTYPE_RGB565;
+                            amt2.bFixedSizeSamples = TRUE;
+                            amt2.bTemporalCompression = FALSE;
+                            amt2.lSampleSize = 1;
+                            amt2.formattype = GUID_NULL;
+                            amt2.pUnk = null;
+                            amt2.cbFormat = 0;
+                            amt2.pbFormat = null;
+                            if(!filter_out::create(&amt2, pcallback, &pplayer->pfo_v))
                             {
-                                error("filter_in::FindPin", hr);
+                                error("filter_out::create", 0);
                             }
                             else
+#endif
                             {
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-                                hr = On2FlvSDK::FlvSplitCreateInstance(null, IID_IBaseFilter,
-                                    (void **)&pplayer->pbf_flv_split);
+                                hr = pplayer->pfi->FindPin(L"Output", &pplayer->pp);
                                 if(hr != S_OK)
                                 {
-                                    error("FlvSplitCreateInstance", hr);
+                                    error("filter_in::FindPin", hr);
                                 }
                                 else
-#endif
                                 {
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-                                    hr = On2FlvSDK::FlvDecVP6CreateInstance(null, IID_IBaseFilter,
-                                        (void **)&pplayer->pbf_flv_dec);
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+                                    hr = On2FlvSDK::FlvSplitCreateInstance(null, IID_IBaseFilter,
+                                        (void **)&pplayer->pbf_flv_split);
                                     if(hr != S_OK)
                                     {
-                                        error("FlvDecVP6CreateInstance", hr);
+                                        error("FlvSplitCreateInstance", hr);
                                     }
                                     else
 #endif
                                     {
-
-                                        hr = pplayer->pgb->AddFilter(pplayer->pfi, L"Input filter");
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+                                        hr = On2FlvSDK::FlvDecVP6CreateInstance(null, IID_IBaseFilter,
+                                            (void **)&pplayer->pbf_flv_dec);
                                         if(hr != S_OK)
                                         {
-                                            error("IGraphBuilder::AddFilter(Input filter)", hr);
+                                            error("FlvDecVP6CreateInstance", hr);
                                         }
                                         else
+#endif
                                         {
-#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-                                            hr = pplayer->pgb->AddFilter(pplayer->pfo, L"Output filter");
+                                            hr = pplayer->pgb->AddFilter(pplayer->pfi, L"Input filter");
                                             if(hr != S_OK)
                                             {
-                                                error("IGraphBuilder::AddFilter(Output filter)", hr);
+                                                error("IGraphBuilder::AddFilter(Input filter)", hr);
                                             }
                                             else
-#endif
                                             {
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-                                                hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_split, L"FLV splitter");
+#ifdef ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+                                                hr = pplayer->pgb->AddFilter(pplayer->pfo_a, L"Output audio filter");
                                                 if(hr != S_OK)
                                                 {
-                                                    error("IGraphBuilder::AddFilter(FLV splitter)", hr);
+                                                    error("IGraphBuilder::AddFilter(Output audio filter)", hr);
                                                 }
                                                 else
 #endif
                                                 {
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-                                                    hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_dec, L"FLV decoder");
+#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+                                                    hr = pplayer->pgb->AddFilter(pplayer->pfo_v, L"Output video filter");
                                                     if(hr != S_OK)
                                                     {
-                                                        error("IGraphBuilder::AddFilter(FLV decoder)", hr);
+                                                        error("IGraphBuilder::AddFilter(Output video filter)", hr);
                                                     }
                                                     else
 #endif
                                                     {
-                                                        r = true;
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+                                                        hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_split, L"FLV splitter");
+                                                        if(hr != S_OK)
+                                                        {
+                                                            error("IGraphBuilder::AddFilter(FLV splitter)", hr);
+                                                        }
+                                                        else
+#endif
+                                                        {
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+                                                            hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_dec, L"FLV decoder");
+                                                            if(hr != S_OK)
+                                                            {
+                                                                error("IGraphBuilder::AddFilter(FLV decoder)", hr);
+                                                            }
+                                                            else
+#endif
+                                                            {
+                                                                r = true;
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
-                                        }
 #ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-                                        if(!r) pplayer->pbf_flv_dec->Release();
+                                            if(!r) pplayer->pbf_flv_dec->Release();
+#endif
+                                        }
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+                                        if(!r) pplayer->pbf_flv_split->Release();
 #endif
                                     }
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-                                    if(!r) pplayer->pbf_flv_split->Release();
-#endif
+                                    if(!r) pplayer->pp->Release();
                                 }
-                                if(!r) pplayer->pp->Release();
-                            }
 #ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
-                            if(!r) pplayer->pfo->Release();
+                                if(!r) pplayer->pfo_v->Release();
+#endif
+                            }
+#ifdef ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+                            if(!r) pplayer->pfo_a->Release();
 #endif
                         }
                         if(!r) pplayer->pfi->Release();

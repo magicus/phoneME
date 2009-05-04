@@ -652,7 +652,7 @@ javacall_result isolateIDtoGM(int isolateID, /*OUT*/ int *gmIdx )
     return res;
 }
 
-static void gmDetach(int gmIdx)
+void gmDetach(int gmIdx)
 {
     // NEED REVISIT: shutdown g_QSoundGM when isolateRefs gets to 0
     g_QSoundGM[gmIdx].isolateRefs--;

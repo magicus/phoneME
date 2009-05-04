@@ -60,7 +60,7 @@ public:
     virtual HRESULT __stdcall Clone(IEnumMediaTypes **ppEnum);
 };
 
-class filter_in_pin : public IPin, public IAsyncReader
+class filter_in_pin : public IPin, IAsyncReader
 {
     friend filter_in_filter;
 
@@ -108,8 +108,8 @@ public:
     virtual HRESULT __stdcall SyncReadAligned(IMediaSample *pSample);
     virtual HRESULT __stdcall SyncRead(LONGLONG llPosition, LONG lLength, BYTE *pBuffer);
     virtual HRESULT __stdcall Length(LONGLONG *pTotal, LONGLONG *pAvailable);
-    //virtual HRESULT __stdcall BeginFlush();
-    //virtual HRESULT __stdcall EndFlush();
+    // virtual HRESULT __stdcall BeginFlush();
+    // virtual HRESULT __stdcall EndFlush();
 };
 
 class filter_in_enum_pins : public IEnumPins
@@ -134,7 +134,7 @@ public:
     virtual HRESULT __stdcall Clone(IEnumPins **ppEnum);
 };
 
-class filter_in_filter : public filter_in, public IAMFilterMiscFlags
+class filter_in_filter : public filter_in, IAMFilterMiscFlags
 {
     friend filter_in_pin;
 
@@ -433,6 +433,13 @@ HRESULT __stdcall filter_in_pin::Connect(IPin *pReceivePin, const AM_MEDIA_TYPE 
     PIN_INFO pi;
     pReceivePin->QueryPinInfo(&pi);
     dump_filter(pi.pFilter, 0);
+    dump_media_type(&amt);
+    print("\n");
+    if(pmt)
+    {
+        dump_media_type(pmt);
+        print("\n");
+    }
 #endif
     HRESULT hr = pReceivePin->ReceiveConnection(this, &amt);
 #if write_level > 0
@@ -1223,7 +1230,7 @@ inline nat32 filter_in_filter::round(nat32 n)
 bool filter_in_filter::data(nat32 len, const void *pdata)
 {
 #if write_level > 0
-    print("filter_in_filter::data(%u) called...\n", len);
+    print("filter_in_filter::data(%u, 0x%p) called...\n", len, pdata);
 #endif
     if(len)
     {

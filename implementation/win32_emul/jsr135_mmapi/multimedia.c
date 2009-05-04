@@ -511,6 +511,9 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_RTP_MPA:
     case JC_FMT_FLV:
     case JC_FMT_VIDEO_3GPP:
+    case JC_FMT_AMR:
+    case JC_FMT_AMR_WB:
+    case JC_FMT_AMR_WB_PLUS:
         return &g_dshow_itf;
         break;
 #endif // ENABLE_MMAPI_DSHOW
@@ -543,7 +546,7 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MS_PCM:
         return &g_qsound_itf;
 
-#if( defined( ENABLE_AMR ) )
+#if( defined( ENABLE_AMR ) && !defined( ENABLE_MMAPI_DSHOW ) )
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
@@ -609,7 +612,7 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
         { L".mid",  JAVACALL_MEDIA_FORMAT_MIDI   },
         { L".midi", JAVACALL_MEDIA_FORMAT_MIDI   },
         { L".jts",  JAVACALL_MEDIA_FORMAT_TONE   },
-#ifdef ENABLE_AMR
+#if defined( ENABLE_AMR ) || defined( ENABLE_MMAPI_DSHOW )
         { L".amr",  JAVACALL_MEDIA_FORMAT_AMR    },
 #endif // ENABLE_AMR
 

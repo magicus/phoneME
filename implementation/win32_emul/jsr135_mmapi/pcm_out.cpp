@@ -92,11 +92,17 @@ pcm_handle_t pcm_out_open_channel( int          bits,
 
         #ifdef ENABLE_MMAPI_DSHOW
         r = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-        if( DS_OK != r ) return NULL;
+        if( DS_OK != r && S_FALSE != r )
+        {
+            return NULL;
+        }
         #endif //ENABLE_MMAPI_DSHOW
 
         r = DirectSoundCreate(NULL, &g_pDS, NULL);
-        if( DS_OK != r ) return NULL;
+        if( DS_OK != r )
+        {
+            return NULL;
+        }
 
         if( NULL == ( hwnd = GetForegroundWindow() ) ) hwnd = GetDesktopWindow();
         g_pDS->SetCooperativeLevel(hwnd, DSSCL_NORMAL);
