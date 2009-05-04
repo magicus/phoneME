@@ -30,5 +30,5 @@
 class filter_out : public IBaseFilter
 {
 public:
-    static bool create(AM_MEDIA_TYPE const *pamt, player_callback *pcallback, filter_out **ppfilter);
+    static bool create(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_out **ppfilter);
 };

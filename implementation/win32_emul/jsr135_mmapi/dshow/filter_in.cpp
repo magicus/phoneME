@@ -25,7 +25,7 @@
 #include <vfwmsgs.h>
 #include "filter_in.hpp"
 
-#define write_level 1
+#define write_level 0
 
 #if write_level > 0
 #include "writer.hpp"
@@ -71,7 +71,7 @@ class filter_in_pin : public IPin, public IAsyncReader
     nat32 data_l;
     void *data_p;
     nat32 data_a;
-    bool data_finished;
+    nat32 data_total;
 
     HANDLE event_unblock;
 
@@ -369,7 +369,7 @@ HRESULT __stdcall filter_in_pin::QueryInterface(REFIID riid, void **ppvObject)
 #if write_level > 0
     print("filter_in_pin::QueryInterface(");
     print(riid);
-    print(", %p) called...\n", ppvObject);
+    print(", 0x%p) called...\n", ppvObject);
 #endif
     if(!ppvObject) return E_POINTER;
     if(riid == IID_IUnknown)
@@ -670,11 +670,8 @@ HRESULT __stdcall filter_in_pin::WaitForNext(DWORD /*dwTimeout*/, IMediaSample *
     print("filter_in_pin::WaitForNext called...\n");
 #endif
     if(!ppSample) return E_POINTER;
-    if(flushing)
-    {
-        *ppSample = null;
-        return VFW_E_WRONG_STATE;
-    }
+    *ppSample = null;
+    if(flushing) return VFW_E_WRONG_STATE;
     return E_FAIL;
 }
 
@@ -707,9 +704,10 @@ HRESULT __stdcall filter_in_pin::SyncReadAligned(IMediaSample *pSample)
 #endif
 
     EnterCriticalSection(&data_cs);
-    while(!data_finished &&
-        pconnected &&
+    while(pconnected &&
         !flushing &&
+        !(data_total < pos) &&
+        !(data_total - pos < len) &&
         (data_l < pos || data_l - pos < len))
     {
         LeaveCriticalSection(&data_cs);
@@ -722,8 +720,8 @@ HRESULT __stdcall filter_in_pin::SyncReadAligned(IMediaSample *pSample)
     }
     else if(data_l < pos)
     {
-        if(data_finished) r = E_INVALIDARG;
-        else
+        /*if(data_finished) r = E_INVALIDARG;
+        else*/
         {
             len = 0;
             r = S_FALSE;
@@ -777,7 +775,7 @@ HRESULT __stdcall filter_in_pin::SyncReadAligned(IMediaSample *pSample)
 HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYTE *pBuffer)
 {
 #if write_level > 0
-    print("filter_in_pin::SyncRead(%I64i, %i, %p) called...\n", llPosition, lLength, pBuffer);
+    print("filter_in_pin::SyncRead(%I64i, %i, 0x%p) called...\n", llPosition, lLength, pBuffer);
 #endif
     if(!pBuffer) return E_POINTER;
 
@@ -790,9 +788,10 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
 
     HRESULT r;
     EnterCriticalSection(&data_cs);
-    while(!data_finished &&
-        pconnected &&
+    while(pconnected &&
         !flushing &&
+        !(data_total < pos) &&
+        !(data_total - pos < len) &&
         (data_l < pos || data_l - pos < len))
     {
         LeaveCriticalSection(&data_cs);
@@ -802,11 +801,17 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
     if(flushing)
     {
         r = VFW_E_TIMEOUT;
+#if write_level > 0
+        print("wp1, pconnected=%p, flushing=%s, pos=%u, len=%u, data_total=%u, data_l=%u\n", pconnected, flushing ? "true" : "false", pos, len, data_total, data_l);
+#endif
     }
     else if(data_l < pos)
     {
-        if(data_finished) r = E_INVALIDARG;
-        else r = S_FALSE;
+        /*if(data_finished) r = E_INVALIDARG;
+        else */r = S_FALSE;
+#if write_level > 0
+        print("wp2, pconnected=%p, flushing=%s, pos=%u, len=%u, data_total=%u, data_l=%u\n", pconnected, flushing ? "true" : "false", pos, len, data_total, data_l);
+#endif
     }
     else
     {
@@ -814,6 +819,9 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
         {
             len = data_l - pos;
             r = S_FALSE;
+#if write_level > 0
+            print("wp3, pconnected=%p, flushing=%s, pos=%u, len=%u, data_total=%u, data_l=%u\n", pconnected, flushing ? "true" : "false", pos, len, data_total, data_l);
+#endif
         }
         else r = S_OK;
         if(len)
@@ -831,21 +839,25 @@ HRESULT __stdcall filter_in_pin::Length(LONGLONG *pTotal, LONGLONG *pAvailable)
     print("filter_in_pin::Length called...\n");
 #endif
     if(!pTotal || !pAvailable) return E_POINTER;
-    HRESULT r;
-    EnterCriticalSection(&data_cs);
-    if(data_finished)
+
+    if(data_total < 0xffffffff)
     {
-        *pTotal = data_l;
-        r = S_OK;
+        *pTotal = data_total;
+        *pAvailable = data_total;
+#if write_level > 0
+        print("%I64i %I64i\n", *pTotal, *pAvailable);
+#endif
+        return S_OK;
     }
     else
     {
-        *pTotal = 0xffffffff;
-        r = VFW_S_ESTIMATED;
+        *pTotal = data_total;
+        *pAvailable = data_l;
+#if write_level > 0
+        print("%I64i %I64i\n", *pTotal, *pAvailable);
+#endif
+        return VFW_S_ESTIMATED;
     }
-    *pAvailable = data_l;
-    LeaveCriticalSection(&data_cs);
-    return r;
 }
 
 //----------------------------------------------------------------------------
@@ -995,7 +1007,7 @@ HRESULT __stdcall filter_in_filter::QueryInterface(REFIID riid, void **ppvObject
 #if write_level > 0
     print("filter_in_filter::QueryInterface(");
     print(riid);
-    print(", %p) called...\n", ppvObject);
+    print(", 0x%p) called...\n", ppvObject);
 #endif
     if(!ppvObject) return E_POINTER;
     if(riid == IID_IUnknown)
@@ -1213,31 +1225,34 @@ bool filter_in_filter::data(nat32 len, const void *pdata)
 #if write_level > 0
     print("filter_in_filter::data(%u) called...\n", len);
 #endif
-    EnterCriticalSection(&ppin->data_cs);
     if(len)
     {
-        nat32 l2 = ppin->data_l + min(len, 0xffffffff - ppin->data_l);
-        if(ppin->data_a < l2)
+        EnterCriticalSection(&ppin->data_cs);
+        if(pdata)
         {
-            nat32 a = round(l2);
-            void *p = new bits8[a];
-            if(ppin->data_a)
+            nat32 l2 = ppin->data_l + min(len, 0xffffffff - ppin->data_l);
+            if(ppin->data_a < l2)
             {
-                if(ppin->data_l) memcpy(p, ppin->data_p, ppin->data_l);
-                delete[] (bits8 *)ppin->data_p;
+                nat32 a = round(l2);
+                void *p = new bits8[a];
+                if(ppin->data_a)
+                {
+                    if(ppin->data_l) memcpy(p, ppin->data_p, ppin->data_l);
+                    delete[] (bits8 *)ppin->data_p;
+                }
+                ppin->data_p = p;
+                ppin->data_a = a;
             }
-            ppin->data_p = p;
-            ppin->data_a = a;
+            memcpy((bits8 *)ppin->data_p + ppin->data_l, pdata, len);
+            ppin->data_l = l2;
         }
-        memcpy((bits8 *)ppin->data_p + ppin->data_l, pdata, len);
-        ppin->data_l = l2;
+        else
+        {
+            ppin->data_total = len;
+        }
+        LeaveCriticalSection(&ppin->data_cs);
+        SetEvent(ppin->event_unblock);
     }
-    else
-    {
-        ppin->data_finished = true;
-    }
-    LeaveCriticalSection(&ppin->data_cs);
-    SetEvent(ppin->event_unblock);
     return true;
 }
 
@@ -1305,7 +1320,7 @@ bool filter_in_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallb
     pfilter->ppin->amt.cbFormat = pamt->cbFormat;
     pfilter->ppin->data_l = 0;
     pfilter->ppin->data_a = 0;
-    pfilter->ppin->data_finished = false;
+    pfilter->ppin->data_total = 0xffffffff;
     pfilter->ppin->pconnected = null;
     pfilter->ppin->flushing = false;
     pfilter->pgraph = null;

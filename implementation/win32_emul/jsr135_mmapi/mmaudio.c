@@ -44,6 +44,7 @@
 #define LIME_MMAPI_CLASS   "JavaCallBridge"
 
 #define DEFAULT_BUFFER_SIZE  1024 * 1024 // default buffer size 1 MB
+#define TIMER_TICK_PERIOD    100         // period between calls to audio_timer_callback
 
 /* forward declaration */
 javacall_result audio_start(javacall_handle handle);
@@ -229,9 +230,7 @@ static void CALLBACK FAR audio_timer_callback(UINT uID, UINT uMsg,
                                           DWORD dw2) {
     audio_handle* pHandle = (audio_handle*)dwUser;
 
-    if (pHandle->mutex)
-        mmaudio_mutex_lock(pHandle->mutex);
-
+    mmaudio_mutex_lock(pHandle->mutex);
     if (pHandle->timerId != uID || pHandle->hWnd <= 0) {
         // timer already closed
         timeKillEvent(uID);
@@ -277,8 +276,7 @@ static void CALLBACK FAR audio_timer_callback(UINT uID, UINT uMsg,
             }
         }
     }
-    if(pHandle->mutex)
-        mmaudio_mutex_unlock(pHandle->mutex);
+    mmaudio_mutex_unlock(pHandle->mutex);
 }
 
 
@@ -357,6 +355,13 @@ static javacall_result audio_create(int appId, int playerId,
     pHandle->mute             = JAVACALL_FALSE;
     pHandle->mutex            = mmaudio_mutex_create();
 
+    if(!pHandle->mutex) {
+        FREE( buff );
+        FREE( pHandle );
+	    *pJCHandle = NULL;
+        return JAVACALL_OUT_OF_MEMORY;
+    }
+
     // set the file name to the URI
     if (NULL != URI && uriLength>0) {
         wcstombs(pHandle->fileName, URI, uriLength);
@@ -379,9 +384,18 @@ javacall_result audio_close(javacall_handle handle){
     static LimeFunction *f = NULL;
     int res;
 
-    if (pHandle->mutex)
-        mmaudio_mutex_lock(pHandle->mutex);
-    
+    mmaudio_mutex_lock(pHandle->mutex);
+    /* Kill player timer */
+    if (pHandle->timerId) {
+        timeKillEvent(pHandle->timerId);
+        pHandle->timerId = 0;
+    }
+
+    /* make sure audio_timer_callback is finished */
+    mmaudio_mutex_unlock(pHandle->mutex);
+    Sleep(TIMER_TICK_PERIOD);
+    mmaudio_mutex_lock(pHandle->mutex);
+
     if (f == NULL) {
         f = NewLimeFunction(LIME_MMAPI_PACKAGE,
                             LIME_MMAPI_CLASS,
@@ -398,17 +412,10 @@ javacall_result audio_close(javacall_handle handle){
         FREE(pHandle->buffer);
     }
 
-    if (pHandle->mutex) {
-        mmaudio_mutex_unlock(pHandle->mutex);
-        mmaudio_mutex_destroy(pHandle->mutex);
-    }
-    pHandle->mutex = NULL;
-    pHandle->timerId = -1;
+    mmaudio_mutex_unlock(pHandle->mutex);
+    mmaudio_mutex_destroy(pHandle->mutex);
 
-
-    if (handle) {
-        FREE(handle);
-    }
+    FREE(pHandle);
 
     return JAVACALL_OK;
 }
@@ -579,7 +586,8 @@ javacall_result audio_start(javacall_handle handle){
     f->call(f, &res, pHandle->hWnd);
     
     pHandle->timerId = 
-            (UINT)timeSetEvent(TIMER_CALLBACK_DURATION, 100, audio_timer_callback,(DWORD)pHandle, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
+            (UINT)timeSetEvent(TIMER_CALLBACK_DURATION, TIMER_TICK_PERIOD, audio_timer_callback,(DWORD)pHandle, 
+            TIME_PERIODIC | TIME_CALLBACK_FUNCTION | TIME_KILL_SYNCHRONOUS);
     return JAVACALL_OK;
 }
 
@@ -592,8 +600,7 @@ javacall_result audio_stop(javacall_handle handle){
     static LimeFunction *f = NULL;
     int res;
 
-    if (pHandle->mutex)
-        mmaudio_mutex_lock(pHandle->mutex);
+    mmaudio_mutex_lock(pHandle->mutex);
 
     if (pHandle->hWnd > 0) {
         if (f == NULL) {
@@ -609,8 +616,7 @@ javacall_result audio_stop(javacall_handle handle){
         }
         //MCIWndStop(pHandle->hWnd);
     }
-    if (pHandle->mutex)
-        mmaudio_mutex_unlock(pHandle->mutex);
+    mmaudio_mutex_unlock(pHandle->mutex);
     
     return JAVACALL_OK;
 }
@@ -624,8 +630,7 @@ javacall_result audio_pause(javacall_handle handle) {
     static LimeFunction *f = NULL;
     int res;
     
-    if (pHandle->mutex)
-        mmaudio_mutex_lock(pHandle->mutex);
+    mmaudio_mutex_lock(pHandle->mutex);
 
     if (pHandle->hWnd > 0) {
         if (f == NULL) {
@@ -642,8 +647,8 @@ javacall_result audio_pause(javacall_handle handle) {
             pHandle->timerId = 0;
         }
     }
-    if (pHandle->mutex)
-        mmaudio_mutex_unlock(pHandle->mutex);
+
+    mmaudio_mutex_unlock(pHandle->mutex);
     
     return JAVACALL_OK;
 }
@@ -658,8 +663,9 @@ javacall_result audio_resume(javacall_handle handle) {
     int res;
     
     if (pHandle->hWnd > 0) {
-        pHandle->timerId = (UINT) timeSetEvent(TIMER_CALLBACK_DURATION, 100, 
-                audio_timer_callback, (DWORD)pHandle, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
+        pHandle->timerId = (UINT) timeSetEvent(TIMER_CALLBACK_DURATION, TIMER_TICK_PERIOD, 
+                audio_timer_callback, (DWORD)pHandle, 
+                TIME_PERIODIC | TIME_CALLBACK_FUNCTION | TIME_KILL_SYNCHRONOUS);
         if (f == NULL) {
             f = NewLimeFunction(LIME_MMAPI_PACKAGE,
                     LIME_MMAPI_CLASS,
