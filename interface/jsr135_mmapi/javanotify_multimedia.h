@@ -77,6 +77,8 @@ typedef enum {
     JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE,    
     /** Posted when the native player needs more media content from Java side. */
     JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
+    /** Posted when the native player needs to change position in the media stream on Java side. */
+    JAVACALL_EVENT_MEDIA_DATA_SEEK,
     /** Posted when the Player enters into a buffering mode. */
     JAVACALL_EVENT_MEDIA_BUFFERING_STARTED,     
     /** Posted when the Player leaves the buffering mode. */
@@ -168,6 +170,22 @@ typedef enum {
     JAVACALL_EVENT_MEDIA_ENCODE_COMPLETE    
 } javacall_media_notification_type;
 
+
+/**
+ * struct javacall_media_seek_info
+ * @brief Information sent with the event JAVACALL_EVENT_MEDIA_DATA_SEEK
+ * @see javacall_media_notification_type
+ * @see javanotify_on_media_notification
+ */
+typedef struct {
+    /** Requested offset in the media stream. Absolute position in bytes, from the beginning of the stream */
+    javacall_int32 offset;
+    /** Data size in bytes needed to read from the requested offset. Or -1 if unknown */
+    javacall_int32 size;
+} javacall_media_seek_info;
+
+
+
 /** 
  * @defgroup MediaNotification Notification API for Multimedia
  * @ingroup JSR135 
@@ -193,18 +211,9 @@ typedef enum {
  *                      - JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE   
  *                          data = None.
  *                      - JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA
- *                          data = there are two options:
- *                          - if just next portion of data is needed
- *                            (without seeking), this param should equal
- *                             ((void*)-1).
- *                          - to seek to another position in the Java stream
- *                            and request a portion of data starting from this
- *                            position, please assign this value to the
- *                            absolute position (offset) in bytes,
- *                            unsigned long, from the
- *                            beginning of the stream. For example, to seek to
- *                            the beginning of the file, assign this parameter
- *                            to zero.
+ *                          data = None.
+ *                      - JAVACALL_EVENT_MEDIA_DATA_SEEK
+ *                          data = pointer to a javacall_media_seek_info structure.
  *                      - JAVACALL_EVENT_MEDIA_BUFFERING_STARTED
  *                          data = Designating the media time when the buffering is started.
  *                      - JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED

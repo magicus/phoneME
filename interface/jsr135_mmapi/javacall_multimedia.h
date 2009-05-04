@@ -590,8 +590,12 @@ javacall_result javacall_media_download_handled_by_device(javacall_handle handle
  *    2) after 
  *
  * @param handle    Handle to the library
- * @param java_buffer_size  Desired size of java buffer
- * @param first_data_size  Size of the first chunk of media data, 
+ * @param java_buffer_size  Desired size of java buffer or -1 if size is
+ *                          undefined (e.g. if the event
+ *                          JAVACALL_EVENT_MEDIA_DATA_SEEK will be used do read
+ *                          various data portions from various offsets)
+ * @param first_data_size  Size of the first chunk of media data (from the
+ *                         beginning of the stream), 
  *                          provided from Java to native
  * 
  * @retval JAVACALL_OK
