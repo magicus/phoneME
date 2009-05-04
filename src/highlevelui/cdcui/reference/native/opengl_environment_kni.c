@@ -34,6 +34,7 @@
 #include <jvm.h>
 #include <commonKNIMacros.h>
 #include <midpEventUtil.h>
+#include "javacall_memory.h"
 
 extern void midpGL_flush(int dirtyRegions[], int numRegions);
 
@@ -56,6 +57,9 @@ extern void midpGL_flush(int dirtyRegions[], int numRegions);
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushOpenGL0) {
+    jbyte *regionArray;
+    jsize arrayLength;
+
     jint numRegions = KNI_GetParameterAsInt(2);
     jint displayId = KNI_GetParameterAsInt(3);
 
@@ -68,8 +72,13 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushOpenGL0) {
         if (KNI_IsNullHandle(dirtyRegions)) {
             KNI_ReturnVoid();
         }
+        /* convert dirty regions to a regular integer array */
+        arrayLength = KNI_GetArrayLength(dirtyRegions);
+        regionArray = javacall_malloc(sizeof(int)*arrayLength);
+        KNI_GetRawArrayRegion(dirtyRegions, 0, arrayLength*sizeof(int), 
+                              regionArray);
         /* here we need to call midpGL_flush() */
-        midpGL_flush(dirtyRegions, numRegions);
+        midpGL_flush(regionArray, numRegions);
         KNI_EndHandles();
     }
     KNI_ReturnVoid();

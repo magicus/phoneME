@@ -45,9 +45,18 @@ public class OpenGLEnvironment{
         int displayId = NativeForegroundState.getState();
         DisplayAccess da = container.findDisplayById(displayId);
         Object[] dirtyRegions = da.getDirtyRegions();
-        flushOpenGL0(dirtyRegions, dirtyRegions.length, displayId);
+        int regionArray[] = new int[dirtyRegions.length*4];
+        int[] curRegion;
+        for (int i=0; i<dirtyRegions.length; i++) {
+            curRegion = (int[])dirtyRegions[i];
+            regionArray[i]=curRegion[0];
+            regionArray[i+1]=curRegion[1];
+            regionArray[i+2]=curRegion[2];
+            regionArray[i+3]=curRegion[3];
+        }
+        flushOpenGL0(regionArray, dirtyRegions.length, displayId);
     }
     
-    private native void flushOpenGL0(Object[] dirtyRegions,
+    private native void flushOpenGL0(int[] regionArray,
                                      int numberOfRegions, int displayId);
 }
