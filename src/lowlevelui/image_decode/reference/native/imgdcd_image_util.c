@@ -252,7 +252,7 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
        */
       p->pixelData[y*p->width + x] = ((color << 8) & 0xFFFFFF00) | (alpha & 0xFF);
 #else
-
+      {
       int r = ((color >> 16) & 0xff) >> 3;
       int g = ((color >>  8) & 0xff) >> 2;
       int b = ((color >>  0) & 0xff) >> 3;
@@ -267,6 +267,7 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
       if (b < 0) b = 0; else if (b > 0xff) b = 0xff;
 
       p->pixelData[y*p->width + x] = IMGDCD_RGB2PIXEL(r, g, b);
+      }
 #endif
       p->alphaData[y*p->width + x] = alpha;
       if (alpha != 0xff) {
