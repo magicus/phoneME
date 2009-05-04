@@ -793,7 +793,14 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
                     return VFW_E_RUNTIME_ERROR;
                 }
-                pfilter->pcallback->frame_ready((bits16 *)pb);
+                if(amt.majortype == MEDIATYPE_Audio)
+                {
+                    pfilter->pcallback->sample_ready(pSample->GetActualDataLength(), (bits16 *)pb);
+                }
+                else
+                {
+                    pfilter->pcallback->frame_ready((bits16 *)pb);
+                }
 
                 pfilter->state = State_Paused;
                 SetEvent(pfilter->event_state_set);
@@ -858,7 +865,14 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
                     return VFW_E_RUNTIME_ERROR;
                 }
-                pfilter->pcallback->frame_ready((bits16 *)pb);
+                if(amt.majortype == MEDIATYPE_Audio)
+                {
+                    pfilter->pcallback->sample_ready(pSample->GetActualDataLength(), (bits16 *)pb);
+                }
+                else
+                {
+                    pfilter->pcallback->frame_ready((bits16 *)pb);
+                }
 
                 LeaveCriticalSection(&pfilter->cs_filter);
                 LeaveCriticalSection(&cs_pin);

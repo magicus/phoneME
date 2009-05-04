@@ -433,6 +433,13 @@ HRESULT __stdcall filter_in_pin::Connect(IPin *pReceivePin, const AM_MEDIA_TYPE 
     PIN_INFO pi;
     pReceivePin->QueryPinInfo(&pi);
     dump_filter(pi.pFilter, 0);
+    dump_media_type(&amt);
+    print("\n");
+    if(pmt)
+    {
+        dump_media_type(pmt);
+        print("\n");
+    }
 #endif
     HRESULT hr = pReceivePin->ReceiveConnection(this, &amt);
 #if write_level > 0

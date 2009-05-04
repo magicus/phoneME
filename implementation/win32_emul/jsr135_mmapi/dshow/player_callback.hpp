@@ -31,7 +31,7 @@ class player_callback
 public:
     virtual ~player_callback() = 0 {}
     virtual void frame_ready(const bits16 *pframe) = 0;
-    virtual void pcm_ready(nat32 nbytes, void const* pdata) = 0;
+    virtual void sample_ready(nat32 len, const void *pdata) = 0;
     virtual void size_changed(int16 w, int16 h) = 0;
     virtual void playback_finished() = 0;
 };
