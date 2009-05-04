@@ -142,7 +142,7 @@ class player_dshow : public player
             return result_media;
         }
 
-        dump_filter_graph(pgb);
+        // dump_filter_graph(pgb);
 
         // int64 tc = 40200000;
         // pms->SetPositions(&tc, AM_SEEKING_AbsolutePositioning, null, 0);

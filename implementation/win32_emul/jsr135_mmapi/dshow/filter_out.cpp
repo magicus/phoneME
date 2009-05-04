@@ -71,6 +71,7 @@ class filter_out_pin : public IPin, IMemInputPin
     filter_out_filter *pfilter;
     AM_MEDIA_TYPE amt;
     IPin *pconnected;
+    IMediaSeeking *pconnected_media_seeking;
     bool flushing;
     HANDLE event_flushing;
     CRITICAL_SECTION cs_receive;
@@ -515,6 +516,7 @@ HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, const AM_M
 
     pconnected = pConnector;
     pconnected->AddRef();
+    if(pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pconnected_media_seeking) != S_OK) pconnected_media_seeking = null;
     LeaveCriticalSection(&cs_pin);
 #if write_level > 0
         print("Connected.\n");
@@ -538,6 +540,7 @@ HRESULT __stdcall filter_out_pin::Disconnect()
         LeaveCriticalSection(&cs_pin);
         return S_FALSE;
     }
+    if(pconnected_media_seeking) pconnected_media_seeking->Release();
     pconnected->Release();
     pconnected = null;
     LeaveCriticalSection(&cs_pin);
@@ -1171,7 +1174,11 @@ ULONG __stdcall filter_out_filter::Release()
 
         DeleteCriticalSection(&ppin->cs_receive);
         CloseHandle(ppin->event_flushing);
-        if(ppin->pconnected) ppin->pconnected->Release();
+        if(ppin->pconnected)
+        {
+            if(ppin->pconnected_media_seeking) ppin->pconnected_media_seeking->Release();
+            ppin->pconnected->Release();
+        }
         if(ppin->amt.pUnk) ppin->amt.pUnk->Release();
         if(ppin->amt.cbFormat) delete[] ppin->amt.pbFormat;
         DeleteCriticalSection(&ppin->cs_pin);
@@ -1429,16 +1436,17 @@ HRESULT __stdcall filter_out_filter::QueryVendorInfo(LPWSTR *pVendorInfo)
 
 HRESULT __stdcall filter_out_filter::GetCapabilities(DWORD *pCapabilities)
 {
+#if write_level > 0
+    print("filter_out_filter::GetCapabilities called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->GetCapabilities(pCapabilities);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->GetCapabilities(pCapabilities);
         }
         else
         {
@@ -1456,16 +1464,17 @@ HRESULT __stdcall filter_out_filter::GetCapabilities(DWORD *pCapabilities)
 
 HRESULT __stdcall filter_out_filter::CheckCapabilities(DWORD *pCapabilities)
 {
+#if write_level > 0
+    print("filter_out_filter::CheckCapabilities called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->CheckCapabilities(pCapabilities);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->CheckCapabilities(pCapabilities);
         }
         else
         {
@@ -1483,16 +1492,17 @@ HRESULT __stdcall filter_out_filter::CheckCapabilities(DWORD *pCapabilities)
 
 HRESULT __stdcall filter_out_filter::IsFormatSupported(const GUID *pFormat)
 {
+#if write_level > 0
+    print("filter_out_filter::IsFormatSupported called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->IsFormatSupported(pFormat);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->IsFormatSupported(pFormat);
         }
         else
         {
@@ -1510,16 +1520,17 @@ HRESULT __stdcall filter_out_filter::IsFormatSupported(const GUID *pFormat)
 
 HRESULT __stdcall filter_out_filter::QueryPreferredFormat(GUID *pFormat)
 {
+#if write_level > 0
+    print("filter_out_filter::QueryPreferredFormat called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->QueryPreferredFormat(pFormat);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->QueryPreferredFormat(pFormat);
         }
         else
         {
@@ -1537,16 +1548,17 @@ HRESULT __stdcall filter_out_filter::QueryPreferredFormat(GUID *pFormat)
 
 HRESULT __stdcall filter_out_filter::GetTimeFormat(GUID *pFormat)
 {
+#if write_level > 0
+    print("filter_out_filter::GetTimeFormat called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->GetTimeFormat(pFormat);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->GetTimeFormat(pFormat);
         }
         else
         {
@@ -1564,16 +1576,17 @@ HRESULT __stdcall filter_out_filter::GetTimeFormat(GUID *pFormat)
 
 HRESULT __stdcall filter_out_filter::IsUsingTimeFormat(const GUID *pFormat)
 {
+#if write_level > 0
+    print("filter_out_filter::IsUsingTimeFormat called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->IsUsingTimeFormat(pFormat);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->IsUsingTimeFormat(pFormat);
         }
         else
         {
@@ -1591,16 +1604,17 @@ HRESULT __stdcall filter_out_filter::IsUsingTimeFormat(const GUID *pFormat)
 
 HRESULT __stdcall filter_out_filter::SetTimeFormat(const GUID *pFormat)
 {
+#if write_level > 0
+    print("filter_out_filter::SetTimeFormat called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->SetTimeFormat(pFormat);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->SetTimeFormat(pFormat);
         }
         else
         {
@@ -1618,16 +1632,17 @@ HRESULT __stdcall filter_out_filter::SetTimeFormat(const GUID *pFormat)
 
 HRESULT __stdcall filter_out_filter::GetDuration(LONGLONG *pDuration)
 {
+#if write_level > 0
+    print("filter_out_filter::GetDuration called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->GetDuration(pDuration);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->GetDuration(pDuration);
         }
         else
         {
@@ -1645,16 +1660,17 @@ HRESULT __stdcall filter_out_filter::GetDuration(LONGLONG *pDuration)
 
 HRESULT __stdcall filter_out_filter::GetStopPosition(LONGLONG *pStop)
 {
+#if write_level > 0
+    print("filter_out_filter::GetStopPosition called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->GetStopPosition(pStop);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->GetStopPosition(pStop);
         }
         else
         {
@@ -1672,16 +1688,17 @@ HRESULT __stdcall filter_out_filter::GetStopPosition(LONGLONG *pStop)
 
 HRESULT __stdcall filter_out_filter::GetCurrentPosition(LONGLONG *pCurrent)
 {
+#if write_level > 0
+    print("filter_out_filter::GetCurrentPosition called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->GetCurrentPosition(pCurrent);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->GetCurrentPosition(pCurrent);
         }
         else
         {
@@ -1699,16 +1716,17 @@ HRESULT __stdcall filter_out_filter::GetCurrentPosition(LONGLONG *pCurrent)
 
 HRESULT __stdcall filter_out_filter::ConvertTimeFormat(LONGLONG *pTarget, const GUID *pTargetFormat, LONGLONG Source, const GUID *pSourceFormat)
 {
+#if write_level > 0
+    print("filter_out_filter::ConvertTimeFormat called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->ConvertTimeFormat(pTarget, pTargetFormat, Source, pSourceFormat);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->ConvertTimeFormat(pTarget, pTargetFormat, Source, pSourceFormat);
         }
         else
         {
@@ -1726,16 +1744,17 @@ HRESULT __stdcall filter_out_filter::ConvertTimeFormat(LONGLONG *pTarget, const 
 
 HRESULT __stdcall filter_out_filter::SetPositions(LONGLONG *pCurrent, DWORD dwCurrentFlags, LONGLONG *pStop, DWORD dwStopFlags)
 {
+#if write_level > 0
+    print("filter_out_filter::SetPositions called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->SetPositions(pCurrent, dwCurrentFlags, pStop, dwStopFlags);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->SetPositions(pCurrent, dwCurrentFlags, pStop, dwStopFlags);
         }
         else
         {
@@ -1753,16 +1772,17 @@ HRESULT __stdcall filter_out_filter::SetPositions(LONGLONG *pCurrent, DWORD dwCu
 
 HRESULT __stdcall filter_out_filter::GetPositions(LONGLONG *pCurrent, LONGLONG *pStop)
 {
+#if write_level > 0
+    print("filter_out_filter::GetPositions called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->GetPositions(pCurrent, pStop);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->GetPositions(pCurrent, pStop);
         }
         else
         {
@@ -1780,16 +1800,17 @@ HRESULT __stdcall filter_out_filter::GetPositions(LONGLONG *pCurrent, LONGLONG *
 
 HRESULT __stdcall filter_out_filter::GetAvailable(LONGLONG *pEarliest, LONGLONG *pLatest)
 {
+#if write_level > 0
+    print("filter_out_filter::GetAvailable called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->GetAvailable(pEarliest, pLatest);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->GetAvailable(pEarliest, pLatest);
         }
         else
         {
@@ -1807,16 +1828,17 @@ HRESULT __stdcall filter_out_filter::GetAvailable(LONGLONG *pEarliest, LONGLONG 
 
 HRESULT __stdcall filter_out_filter::SetRate(double dRate)
 {
+#if write_level > 0
+    print("filter_out_filter::SetRate called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->SetRate(dRate);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->SetRate(dRate);
         }
         else
         {
@@ -1834,16 +1856,17 @@ HRESULT __stdcall filter_out_filter::SetRate(double dRate)
 
 HRESULT __stdcall filter_out_filter::GetRate(double *pdRate)
 {
+#if write_level > 0
+    print("filter_out_filter::GetRate called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->GetRate(pdRate);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->GetRate(pdRate);
         }
         else
         {
@@ -1861,16 +1884,17 @@ HRESULT __stdcall filter_out_filter::GetRate(double *pdRate)
 
 HRESULT __stdcall filter_out_filter::GetPreroll(LONGLONG *pllPreroll)
 {
+#if write_level > 0
+    print("filter_out_filter::GetPreroll called...\n");
+#endif
     HRESULT r;
     // EnterCriticalSection(&ppin->cs_pin);
     // EnterCriticalSection(&cs_filter);
     if(ppin->pconnected)
     {
-        IMediaSeeking *pms;
-        if(ppin->pconnected->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        if(ppin->pconnected_media_seeking)
         {
-            r = pms->GetPreroll(pllPreroll);
-            pms->Release();
+            r = ppin->pconnected_media_seeking->GetPreroll(pllPreroll);
         }
         else
         {
