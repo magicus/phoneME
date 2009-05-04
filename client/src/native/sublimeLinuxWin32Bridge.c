@@ -207,7 +207,7 @@ EVENT_HANDLE CreateEvent(void* sa, int manualReset, int initialState, char * nam
 	  opens this event */ 
     mkfifo(buf, S_IRWXO | S_IRWXU | S_IRWXG );
     
-    if ((fd = open(buf, O_RDWR | O_CREAT)) == -1){
+    if ((fd = open(buf, O_RDWR | O_CREAT, 0700)) == -1){
         fprintf(stderr, "error: open failed in CreateEvent\n");
         fflush(stderr);
 
