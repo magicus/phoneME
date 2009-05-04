@@ -46,8 +46,8 @@ const nat32 null = 0;
 // #define ENABLE_MMAPI_CONT_WAV_DS_EXT // audio/wav; .wav
 // #define ENABLE_MMAPI_FMT_MPEG1L3_DS_EXT
 // #define ENABLE_MMAPI_FMT_VP6_DS_ON2
-#define ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
-#define ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+// #define ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+// #define ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
 
 
 // #include <initguid.h>

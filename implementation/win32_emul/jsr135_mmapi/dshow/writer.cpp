@@ -150,6 +150,10 @@ DEFINE_GUID(MEDIASUBTYPE_S263,
 DEFINE_GUID(MEDIASUBTYPE_s263,
 0x33363273, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
 
+// {726d6173-0000-0010-8000-00aa00389b71}
+DEFINE_GUID(MEDIASUBTYPE_samr,
+0x726d6173, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+
 
 struct guid_item
 {
@@ -228,6 +232,7 @@ static const guid_item guid_items[]=
     define_guid_item(MEDIASUBTYPE_RGB8              ),
     define_guid_item(MEDIASUBTYPE_S263              ),
     define_guid_item(MEDIASUBTYPE_SPDIF_TAG_241h    ),
+    define_guid_item(MEDIASUBTYPE_samr              ),
     define_guid_item(MEDIASUBTYPE_UYVY              ),
     define_guid_item(MEDIASUBTYPE_WAVE              ),
     define_guid_item(MEDIASUBTYPE_WMVR              ),

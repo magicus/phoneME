@@ -446,31 +446,40 @@ HRESULT __stdcall filter_out_pin::ReceiveConnection(IPin *pConnector, const AM_M
         return VFW_E_TYPE_NOT_ACCEPTED;
     }
 
-    if(pmt->formattype == FORMAT_VideoInfo)
+    if(pmt->majortype == MEDIATYPE_Audio)
     {
-        const VIDEOINFOHEADER *vih = (const VIDEOINFOHEADER *)pmt->pbFormat;
-#if write_level > 0
-        print("Frame size - %i %i\n", vih->bmiHeader.biWidth, vih->bmiHeader.biHeight);
-#endif
-        pfilter->pcallback->size_changed(int16(vih->bmiHeader.biWidth), int16(vih->bmiHeader.biHeight));
     }
-    else if(pmt->formattype == FORMAT_VideoInfo2)
+    else if(pmt->majortype == MEDIATYPE_Video)
     {
-        const VIDEOINFOHEADER2 *vih2 = (const VIDEOINFOHEADER2 *)pmt->pbFormat;
+        if(pmt->formattype == FORMAT_VideoInfo)
+        {
+            const VIDEOINFOHEADER *vih = (const VIDEOINFOHEADER *)pmt->pbFormat;
 #if write_level > 0
-        print("Frame size - %i %i\n", vih2->bmiHeader.biWidth, vih2->bmiHeader.biHeight);
+            print("Frame size - %i %i\n", vih->bmiHeader.biWidth, vih->bmiHeader.biHeight);
 #endif
-        pfilter->pcallback->size_changed(int16(vih2->bmiHeader.biWidth), int16(vih2->bmiHeader.biHeight));
-    }
-    else
-    {
-        LeaveCriticalSection(&cs_pin);
-        return VFW_E_TYPE_NOT_ACCEPTED;
+            pfilter->pcallback->size_changed(int16(vih->bmiHeader.biWidth), int16(vih->bmiHeader.biHeight));
+        }
+        else if(pmt->formattype == FORMAT_VideoInfo2)
+        {
+            const VIDEOINFOHEADER2 *vih2 = (const VIDEOINFOHEADER2 *)pmt->pbFormat;
+#if write_level > 0
+            print("Frame size - %i %i\n", vih2->bmiHeader.biWidth, vih2->bmiHeader.biHeight);
+#endif
+            pfilter->pcallback->size_changed(int16(vih2->bmiHeader.biWidth), int16(vih2->bmiHeader.biHeight));
+        }
+        else
+        {
+            LeaveCriticalSection(&cs_pin);
+            return VFW_E_TYPE_NOT_ACCEPTED;
+        }
     }
 
     pconnected = pConnector;
     pconnected->AddRef();
     LeaveCriticalSection(&cs_pin);
+#if write_level > 0
+        print("Connected.\n");
+#endif
     return S_OK;
 }
 
