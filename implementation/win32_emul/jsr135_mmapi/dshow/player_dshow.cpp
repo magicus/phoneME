@@ -35,19 +35,19 @@
 const nat32 null = 0;
 
 
-// #define ENABLE_MMAPI_CONT_AMR_DS_EXT // audio/amr; .amr
-// #define ENABLE_MMAPI_CONT_AVI_DS_EXT // video/avi; .avi
-// #define ENABLE_MMAPI_CONT_3GP_DS_EXT // video/3gpp; .3gp, .3g2
+#define ENABLE_MMAPI_CONT_AMR_DS_EXT // audio/amr; .amr
+#define ENABLE_MMAPI_CONT_AVI_DS_EXT // video/avi; .avi
+#define ENABLE_MMAPI_CONT_3GP_DS_EXT // video/3gpp; .3gp, .3g2
 // #define ENABLE_MMAPI_CONT_FLV_DS_EXT // video/x-flv; .flv, .f4v, .f4p, .f4a, .f4b
-// #define ENABLE_MMAPI_CONT_FLV_DS_ON2
-// #define ENABLE_MMAPI_CONT_MP3_DS_EXT // audio/mpeg; .mp3
-// #define ENABLE_MMAPI_CONT_MP4_DS_EXT // video/mp4; .mp4
-// #define ENABLE_MMAPI_CONT_MPG_DS_EXT // video/mpeg; .mpg, .mpeg, .mp1, .mp2, .mp3, .m1v, .m1a, .m2a, .mpa, .mpv
-// #define ENABLE_MMAPI_CONT_WAV_DS_EXT // audio/wav; .wav
-// #define ENABLE_MMAPI_FMT_MPEG1L3_DS_EXT
-// #define ENABLE_MMAPI_FMT_VP6_DS_ON2
-// #define ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
-// #define ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+#define ENABLE_MMAPI_CONT_FLV_DS_ON2
+#define ENABLE_MMAPI_CONT_MP3_DS_EXT // audio/mpeg; .mp3
+#define ENABLE_MMAPI_CONT_MP4_DS_EXT // video/mp4; .mp4
+#define ENABLE_MMAPI_CONT_MPG_DS_EXT // video/mpeg; .mpg, .mpeg, .mp1, .mp2, .mp3, .m1v, .m1a, .m2a, .mpa, .mpv
+#define ENABLE_MMAPI_CONT_WAV_DS_EXT // audio/wav; .wav
+#define ENABLE_MMAPI_FMT_MPEG1L3_DS_EXT
+#define ENABLE_MMAPI_FMT_VP6_DS_ON2
+#define ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+#define ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
 
 
 // #include <initguid.h>
