@@ -108,8 +108,8 @@ public:
     virtual HRESULT __stdcall SyncReadAligned(IMediaSample *pSample);
     virtual HRESULT __stdcall SyncRead(LONGLONG llPosition, LONG lLength, BYTE *pBuffer);
     virtual HRESULT __stdcall Length(LONGLONG *pTotal, LONGLONG *pAvailable);
-    //virtual HRESULT __stdcall BeginFlush();
-    //virtual HRESULT __stdcall EndFlush();
+    // virtual HRESULT __stdcall BeginFlush();
+    // virtual HRESULT __stdcall EndFlush();
 };
 
 class filter_in_enum_pins : public IEnumPins

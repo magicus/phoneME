@@ -48,9 +48,9 @@ void print(const char8 *fmt, ...)
     vsprintf_s(str8, 1024, fmt, args);
     va_end(args);
 
-    printf("%s", str8);
-    //printf("%x %s", GetCurrentThreadId(), str8);
-    OutputDebugStringA(str8);
+    // printf("%s", str8);
+    // printf("%x %s", GetCurrentThreadId(), str8);
+    // OutputDebugStringA(str8);
 }
 
 void print(const char16 *fmt, ...)
@@ -62,9 +62,9 @@ void print(const char16 *fmt, ...)
     vswprintf_s(str16, 1024, fmt, args);
     va_end(args);
 
-    wprintf(L"%s", str16);
-    //wprintf(L"%x %s", GetCurrentThreadId(), str16);
-    OutputDebugStringW(str16);
+    // wprintf(L"%s", str16);
+    // wprintf(L"%x %s", GetCurrentThreadId(), str16);
+    // OutputDebugStringW(str16);
 }
 
 void error(HRESULT hr)
@@ -376,7 +376,7 @@ bool dump_media_types(IPin *pp, nat32 indent)
     hr = pp->EnumMediaTypes(&pemt);
     if(hr != S_OK)
     {
-        //error("IPin::EnumMediaTypes failed", hr);
+        // error("IPin::EnumMediaTypes failed", hr);
         r = true;
     }
     else

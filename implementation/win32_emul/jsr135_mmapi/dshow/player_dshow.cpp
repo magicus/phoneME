@@ -428,7 +428,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer = new player_dshow;
         if(!pplayer) return false;
 
-        pplayer->amt.majortype = GUID_NULL;
+        pplayer->amt.majortype = MEDIATYPE_Stream;
         pplayer->amt.subtype = GUID_NULL;
         pplayer->amt.bFixedSizeSamples = TRUE;
         pplayer->amt.bTemporalCompression = FALSE;
@@ -462,7 +462,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer = new player_dshow;
         if(!pplayer) return false;
 
-        pplayer->amt.majortype = GUID_NULL;
+        pplayer->amt.majortype = MEDIATYPE_Stream;
         pplayer->amt.subtype = GUID_NULL;
         pplayer->amt.bFixedSizeSamples = TRUE;
         pplayer->amt.bTemporalCompression = FALSE;
@@ -479,7 +479,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer = new player_dshow;
         if(!pplayer) return false;
 
-        pplayer->amt.majortype = GUID_NULL;
+        pplayer->amt.majortype = MEDIATYPE_Stream;
         pplayer->amt.subtype = GUID_NULL;
         pplayer->amt.bFixedSizeSamples = TRUE;
         pplayer->amt.bTemporalCompression = FALSE;
@@ -513,7 +513,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer = new player_dshow;
         if(!pplayer) return false;
 
-        pplayer->amt.majortype = GUID_NULL;
+        pplayer->amt.majortype = MEDIATYPE_Stream;
         pplayer->amt.subtype = GUID_NULL;
         pplayer->amt.bFixedSizeSamples = TRUE;
         pplayer->amt.bTemporalCompression = FALSE;
