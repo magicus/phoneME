@@ -2364,7 +2364,7 @@ public abstract class Installer {
         String ver1 = name1.substring(dash1 + 1, name1.length());
         String ver2 = name2.substring(dash2 + 1, name2.length());
 
-        return (vercmp(ver1, ver2) >= 0);
+        return base1.equals("JAVAFX") ? (vercmp(ver1, ver2) == 0) : (vercmp(ver1, ver2) >= 0);
     }
 
     /**
