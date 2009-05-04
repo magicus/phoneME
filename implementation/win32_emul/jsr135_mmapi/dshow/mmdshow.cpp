@@ -65,8 +65,9 @@ class dshow_player : public player_callback,
 {
     // player_callback methods:
     virtual void        frame_ready( bits16 const* pFrame );
-    virtual void        pcm_ready(nat32 nbytes, void const* pdata);
+    virtual void        sample_ready(nat32 nbytes, void const* pdata);
     virtual void        size_changed( int16 w, int16 h );
+    virtual void        audio_format_changed(nat32 samples_per_second, nat32 channels, nat32 bits_per_sample);
     virtual void        playback_finished();
 
     // IWaveStream methods:
@@ -109,6 +110,7 @@ public:
     long                  whole_content_size;
 
     long                  volume;
+    int                   pan;
     bool                  muted;
     bool                  visible;
 
@@ -187,6 +189,13 @@ void dshow_player::size_changed( int16 w, int16 h )
     if( -1 == out_height ) out_height = video_height;
 }
 
+void dshow_player::audio_format_changed(nat32 samples_per_second, 
+                                        nat32 _channels, nat32 bits_per_sample)
+{
+    channels = _channels;
+    rate     = samples_per_second;
+}
+
 void dshow_player::playback_finished()
 {
     long t = get_media_time();
@@ -194,11 +203,17 @@ void dshow_player::playback_finished()
                                       appId, playerId, JAVACALL_OK, (void*)t );
 }
 
-void dshow_player::pcm_ready(nat32 nbytes, void const* pdata)
+void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
 {
     EnterCriticalSection( &cs );
 
-    if( out_queue_n + nbytes > OUT_QUEUE_SIZE ) nbytes = OUT_QUEUE_SIZE - out_queue_n;
+    PRINTF( "$" );
+
+    if( out_queue_n + nbytes > OUT_QUEUE_SIZE )
+    {
+        PRINTF( "### overflow ###\n" );
+        nbytes = OUT_QUEUE_SIZE - out_queue_n;
+    }
 
     if( 0 != nbytes )
     {
@@ -228,7 +243,7 @@ void dshow_player::pcm_ready(nat32 nbytes, void const* pdata)
 long dshow_player::getFormat(int* pChannels, long* pSampleRate)
 {
     *pChannels   = channels;
-    *pSampleRate = 44100;
+    *pSampleRate = rate;
     return MQ234_ERROR_NO_ERROR;
 }
 
@@ -259,6 +274,7 @@ long dshow_player::read(short* buffer, int samples)
     if( nbytes > out_queue_n ) {
         zero_padding_size = nbytes - out_queue_n;
         nbytes = out_queue_n;
+        PRINTF( "### underflow ###\n" );
     }
 
     BYTE*  out = (BYTE*)buffer;
@@ -398,7 +414,7 @@ static javacall_result dshow_destroy(javacall_handle handle)
     if( NULL != p->pModule )
     {
         p->pModule->removePlayer( p );
-        if( p->our_module ) p->pModule->destroy();
+        //if( p->our_module ) p->pModule->destroy();
         p->pModule = NULL;
     }
 
@@ -431,7 +447,7 @@ static javacall_result dshow_close(javacall_handle handle)
     if( NULL != p->pModule )
     {
         p->pModule->removePlayer( p );
-        if( p->our_module ) p->pModule->destroy();
+        //if( p->our_module ) p->pModule->destroy();
         p->pModule = NULL;
     }
 
@@ -462,6 +478,9 @@ static javacall_result dshow_acquire_device(javacall_handle handle)
         IGlobalManager* gm = QSOUND_GET_GM(p->gmIdx).gm;
         p->pModule = gm->createEffectModule();
         p->our_module = true;
+
+        IPanControl* pan = (IPanControl*)( p->pModule->getControl( "PanControl" ) );
+        if( NULL != pan ) pan->setPan( p->pan );
     }
 
     p->pModule->addPlayer( p );
@@ -481,7 +500,7 @@ static javacall_result dshow_release_device(javacall_handle handle)
     if( NULL != p->pModule )
     {
         p->pModule->removePlayer( p );
-        if( p->our_module ) p->pModule->destroy();
+        //if( p->our_module ) p->pModule->destroy();
         p->pModule = NULL;
     }
 
@@ -510,6 +529,10 @@ static javacall_result dshow_realize(javacall_handle handle,
         case JC_FMT_FLV:          mime = (javacall_const_utf16_string)L"video/x-flv"; break;
         case JC_FMT_MPEG1_LAYER3: mime = (javacall_const_utf16_string)L"audio/mpeg";  break;
         case JC_FMT_VIDEO_3GPP:   mime = (javacall_const_utf16_string)L"video/3gpp";  break;
+        case JC_FMT_AMR:          
+        case JC_FMT_AMR_WB:          
+        case JC_FMT_AMR_WB_PLUS:          
+                                  mime = (javacall_const_utf16_string)L"audio/amr";  break;
         default:
             return JAVACALL_FAIL;
         }
@@ -521,11 +544,8 @@ static javacall_result dshow_realize(javacall_handle handle,
         mime_equal( mime, mimeLength, L"audio/MPA"  ) ||
         mime_equal( mime, mimeLength, L"audio/X-MP3-draft-00" ) )
     {
-        p->rate     = 90000;
-        p->channels = 1;
-
-        get_int_param( mime, (javacall_const_utf16_string)L"channels", &(p->channels) );
-        get_int_param( mime, (javacall_const_utf16_string)L"rate",     &(p->rate)     );
+        //get_int_param( mime, (javacall_const_utf16_string)L"channels", &(p->channels) );
+        //get_int_param( mime, (javacall_const_utf16_string)L"rate",     &(p->rate)     );
         get_int_param( mime, (javacall_const_utf16_string)L"duration", &(p->duration) );
 
         p->mediaType = JC_FMT_MPEG1_LAYER3;
@@ -536,9 +556,6 @@ static javacall_result dshow_realize(javacall_handle handle,
              mime_equal( mime, mimeLength, L"video/x-flv" ) ||
              mime_equal( mime, mimeLength, L"video/x-javafx" ) )
     {
-        p->rate     = 44100;
-        p->channels = 2;
-
         p->mediaType = JC_FMT_FLV;
         mime = (javacall_const_utf16_string)L"video/x-flv";
         mimeLength = wcslen( (const wchar_t*)mime );
@@ -547,6 +564,12 @@ static javacall_result dshow_realize(javacall_handle handle,
     {
         p->mediaType = JC_FMT_VIDEO_3GPP;
         mime = (javacall_const_utf16_string)L"video/3gpp";
+        mimeLength = wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mimeLength, L"audio/amr" ) )
+    {
+        p->mediaType = JC_FMT_AMR;
+        mime = (javacall_const_utf16_string)L"audio/amr";
         mimeLength = wcslen( (const wchar_t*)mime );
     }
     else
@@ -833,6 +856,8 @@ static javacall_result dshow_set_volume(javacall_handle handle,
     long* level)
 {
     dshow_player* p = (dshow_player*)handle;
+    IVolumeControl* vc = (IVolumeControl*)( p->pModule->getControl("VolumeControl") );
+    if( NULL != vc ) *level = vc->SetLevel( *level );
     p->volume = *level;
     return JAVACALL_OK;
 }
@@ -849,6 +874,8 @@ static javacall_result dshow_set_mute(javacall_handle handle,
     javacall_bool mute)
 {
     dshow_player* p = (dshow_player*)handle;
+    IVolumeControl* vc = (IVolumeControl*)( p->pModule->getControl("VolumeControl") );
+    if( NULL != vc ) vc->SetMute( mute );
     p->muted = ( JAVACALL_TRUE == mute );
     return JAVACALL_OK;
 }
@@ -1043,7 +1070,7 @@ javacall_result dshow_add_player_to_ss3d( javacall_handle handle, ISoundSource3D
     if( NULL != p->pModule )
     {
         p->pModule->removePlayer( p );
-        if( p->our_module ) p->pModule->destroy();
+        //if( p->our_module ) p->pModule->destroy();
         p->pModule = NULL;
     }
 
@@ -1082,6 +1109,33 @@ void dshow_notify_ss3d_going_down( ISoundSource3D* ss3d )
             dshow_player::players[i]->pModule->removePlayer( dshow_player::players[i] );
             dshow_player::players[i]->pModule = NULL;
         }
+    }
+}
+
+javacall_result dshow_set_pan( javacall_handle handle, int* pPan )
+{
+    javacall_impl_player*  pPlayer = (javacall_impl_player*)handle;
+    dshow_player*          p = (dshow_player*)pPlayer->mediaHandle;
+
+    p->pan = *pPan;
+
+    if( NULL != p->pModule )
+    {
+        IPanControl* pan = (IPanControl*)( p->pModule->getControl( "PanControl" ) );
+
+        if( NULL != pan )
+        {
+            *pPan = pan->setPan( *pPan );
+            return JAVACALL_OK;
+        }
+        else
+        {
+            return JAVACALL_FAIL;
+        }
+    }
+    else
+    {
+        return JAVACALL_OK;
     }
 }
 

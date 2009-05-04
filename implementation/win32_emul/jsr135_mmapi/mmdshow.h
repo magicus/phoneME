@@ -31,13 +31,12 @@
 extern "C" {
 #endif //__cplusplus
 
-
 javacall_bool   is_dshow_player( javacall_handle handle );
 javacall_result dshow_add_player_to_ss3d( javacall_handle handle, ISoundSource3D* ss3d );
 javacall_result dshow_remove_player_from_ss3d( javacall_handle handle, ISoundSource3D* ss3d );
 void            dshow_notify_ss3d_going_down( ISoundSource3D* ss3d );
 
-
+javacall_result dshow_set_pan( javacall_handle handle, int* pPan );
 
 #ifdef __cplusplus
 } // extern "C"
