@@ -71,9 +71,8 @@ void Template::fast_access_field(bool is_static, bool is_put, BasicType type,
 
   int entry_size = (is_static ? 0 : 1) + (is_put ? word_size_for(type) : 0);
   bool with_aload_0 = extended && !is_static;
-
   if (with_aload_0) {
-    GUARANTEE(!is_static && !is_put && entry_size == 1, "Sanity");
+    GUARANTEE(!is_put && entry_size == 1, "Sanity");
     entry_size = 0;
   }
 
@@ -85,10 +84,12 @@ void Template::fast_access_field(bool is_static, bool is_put, BasicType type,
 
   if (is_static) {
     GUARANTEE(param_bytes == 2, "1-byte param not supported");
+    Label restart;
+    bind(restart);
+
     // object:         class receiver
     // field_offset:   offset into class of field
     // tmp2 and tmp3 are temporaries
-
     // tmp0 gets the constant pool entry
     ldr_cp_entry_A(object, tmp2);
     get_class_list_base(tmp3);
@@ -134,18 +135,21 @@ bind(need_init);
     
     restore_stack_state_from(tos_on_stack);
     pop_arguments(entry_size);
-
 bind(class_is_initialized);
 #else
     comment("Get the JavaClass from class_id");
     ldr_class_from_index_and_base(object, object, tmp3);
+    if (extended) {   // i.e. with class initialization check
+      initialize_class_when_needed(object, tmp2, tmp3, restart, entry_size);
+    }
 #endif
   } else { 
-    object = is_put ? (word_size_for(type) == 1 ? tmp0 : tmp2) : tos_val;
-
-    if (with_aload_0) {
+    if (with_aload_0) { // i.e. with aload_0
       ldr(tos_val, local_addr_at(0, 0));
+      set_tag(basic_type2tag(T_OBJECT));
     }
+
+    object = is_put ? (word_size_for(type) == 1 ? tmp0 : tmp2) : tos_val;
 
     if (param_bytes == 2) {
       ldrb_imm12_w(tmp3, imm_index(bcp, 1));
@@ -224,14 +228,17 @@ bind(class_is_initialized);
     case T_BYTE:
       GUARANTEE(!is_static, "only non-static fields are packed");
       ldrsb(tos_val, object, field_offset, 0);
+      set_tag(basic_type2tag(type));
       break;
     case T_SHORT:
       GUARANTEE(!is_static, "only non-static fields are packed");
       ldrsh(tos_val, object, field_offset, 0);
+      set_tag(basic_type2tag(type));
       break;
     case T_CHAR:
       GUARANTEE(!is_static, "only non-static fields are packed");
       ldrh(tos_val, object, field_offset, 0);
+      set_tag(basic_type2tag(type));
       break;
     case T_OBJECT  : // fall through
     case T_FLOAT   : // fall through
@@ -239,6 +246,7 @@ bind(class_is_initialized);
       //ldr(tos_val, add_index(object, field_offset, lsl, multiplier));
       add(object, object, field_offset, lsl_shift, multiplier);
       ldr_imm12_w(tos_val, object);
+      set_tag(basic_type2tag(type));
       break;
     case T_LONG: // fall through
     case T_DOUBLE:
@@ -1044,8 +1052,7 @@ void bc_lrem::generate() {
   simple_c_setup_arguments(T_LONG, T_LONG);
   orr_w(tmp2, r2, reg(r3), lsl_shift, 0, set_CC);
 
-  // b("long_divide_by_zero", eq); IMPL_NOTE: this doesn't work yet
-  breakpoint(eq);
+  b("long_divide_by_zero", eq);
 
   fast_c_call("jvm_lrem");
 
@@ -1058,8 +1065,7 @@ void bc_ldiv::generate() {
   simple_c_setup_arguments(T_LONG, T_LONG);
   orr_w(tmp2, r2, reg(r3), lsl_shift, 0, set_CC);
 
-  // b("long_divide_by_zero", eq); IMPL_NOTE: this doesn't work yet
-  breakpoint(eq);
+  b("long_divide_by_zero", eq);
 
   fast_c_call("jvm_ldiv");
 
@@ -1540,11 +1546,15 @@ void bc_checkcast::generate() {
 }
 
 void bc_wide::generate() {
-  breakpoint();
-#if 0 // BEGIN_CONVERT_TO_T2
+//  breakpoint();
+#if 1 // BEGIN_CONVERT_TO_T2
   ldrb_at_bcp(bcode, 1);
-  ldr(tmp1, bytecode_impl(bcode));
-  ldr(tmp2, imm_index(tmp1, -BytesPerWord));
+//  ldr(tmp1, bytecode_impl(bcode));
+  sub(tmp1, gp, bcode, lsl_shift, 2);
+  ldr_imm12_w(tmp1, tmp1);
+
+  // +1, because we are in THUMB mode, and all adresses are increased
+  ldr(tmp2, imm_index(tmp1, -(BytesPerWord+1)));
   mov(pc, reg(tmp2));
 #endif // END_CONVERT_TO_T2
 }

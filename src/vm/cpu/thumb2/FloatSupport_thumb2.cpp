@@ -151,13 +151,78 @@ extern "C" {
   jfloat  jvm_d2f(jdouble x)             { return (jfloat)x;  }
 
   JVM_SOFTFP_LINKAGE 
-  jlong   jvm_f2l(jfloat x)              { return (jlong)x;   }
+  jlong   jvm_f2l(jfloat x)              {
+    union {
+      jint output;
+      jfloat input;
+    } convert;
+
+    convert.input = x;
+
+    jint raw = convert.output;
+
+    // expp is the unbiased exponent and mantissa
+    jint expp = (raw & 0x7FFFFFFF) - (0x7F << 23);
+    if (expp < 0) {
+      // value is less 1.0.  We can just return 0.
+      return 0;
+    } else if (expp >= (63 << 23)) {
+      // Value is either too large to fit into a long, or else it is NaN
+      if (expp > ((0xFF - 0x7F) << 23)) {
+        // Nan.  By definition, we return 0.
+        return 0;
+      } else {
+        return raw < 0 ? min_jlong : max_jlong;
+      }
+    } else {
+      // The implicit mantissa
+      juint  mantissa = (raw << 8) | 0x80000000;
+      // The amount by which this has to be shifted
+      int shift = 63 - (expp >> 23);
+      GUARANTEE(shift >= 1 && shift <= 63, "Sanity");
+
+      julong uresult = jlong_from_msw_lsw(mantissa, 0);
+      uresult =  uresult >> shift;
+
+      jlong result = (raw < 0) ?  -(jlong)uresult : (jlong)uresult;
+
+      //printf("f2l: %f %lld raw=%d %lld\n", x, result, raw, uresult);
+
+      return result;
+    }
+  }
 
   JVM_SOFTFP_LINKAGE 
   jint    jvm_f2i(jfloat x)              { return (jint)x;    }  
 
   JVM_SOFTFP_LINKAGE 
-  jlong   jvm_d2l(jdouble x)             { return (jlong)x;   }
+  jlong   jvm_d2l(jdouble x)             { 
+    juint raw_hi = __JHI(x);
+    juint raw_lo = __JLO(x);
+    jint expp = (raw_hi & 0x7FFFFFFF) - (right_n_bits(11 - 1) << 20);
+    if (expp < 0) {
+      return 0;
+    } else if (expp >= (63 << 20)) {
+      if (expp >= ((0x7FF - right_n_bits(10)) << 20)) {
+      // Infinite or NaN.  Very rare, I hope
+        if (expp > ((0x7FF - right_n_bits(10)) << 20) || raw_lo != 0) {
+          // NaN
+          return 0;
+        }
+      }
+      return ((jint)raw_hi) < 0 ? min_jlong : max_jlong;
+    } else {
+      juint mantissa_hi =  (((raw_hi & right_n_bits(20)) << 11) + (raw_lo >> 21))
+        | 0x80000000;
+      juint mantissa_lo = (raw_lo << 11);
+      julong mantissa = jlong_from_msw_lsw(mantissa_hi, mantissa_lo);
+      int shift = 63 - (expp >> 20);
+      GUARANTEE(shift >= 1 && shift <= 63, "Sanity");
+      julong uresult = mantissa >> shift;
+      jlong result = ((jint)raw_hi < 0) ?  -(jlong)uresult : (jlong)uresult;
+      return result;
+    }
+  }
 
   JVM_SOFTFP_LINKAGE 
   jint    jvm_d2i(jdouble x)             { return (jint)x;    }
