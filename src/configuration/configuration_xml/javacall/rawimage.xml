@@ -27,8 +27,8 @@
      YOU MAY NEED TO ADJUST THAT TO YOUR PLATFORM -->
 <configuration>
 <rawimage
-  Format="Putpixel" 
-  Colors="565" 
+  Format="RGBA"
+  Colors="888"
   Endian="Little"
 />
 </configuration>

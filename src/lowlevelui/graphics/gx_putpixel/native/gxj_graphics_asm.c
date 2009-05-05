@@ -143,7 +143,7 @@ asm volatile(
 #endif
 
 /**
- * unclippedBlit - low level simple blit of 16bit pixels from src to dst
+ * unclippedBlit - low level simple blit of pixels (multiple of 16bit) from src to dst
  * srcRaster - short* aligned pointer into source of pixels
  * dstRaster - short* aligned pointer into destination
  * srcSpan   - number of bytes per scanline of srcRaster (must be even)
@@ -215,7 +215,7 @@ void unclipped_blit(unsigned short *dstRaster, int dstSpan,
         subs   height, height, #1;
         bgt    copy_16xHEIGHT_loop;
         b      done;
-#endif
+#endif /* ASM_BLIT16x16 */
 
     height_test:
         cmp    height, #0;
@@ -229,7 +229,7 @@ void unclipped_blit(unsigned short *dstRaster, int dstSpan,
         mul    width, height, width;
         mov    height, #1;
     no_optimize:
-#endif
+#endif /* ASM_LOOPOPTIMIZE */
 
     height_loop:
         mov    r2, width;
@@ -426,7 +426,7 @@ void unclipped_blit(unsigned short *dstRaster, int dstSpan,
       }
     }
   }
-#endif
+#endif /* ASM_BLIT */
 }
 
 #endif // !UNDER_CE

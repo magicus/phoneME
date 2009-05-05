@@ -100,17 +100,23 @@ void
 gx_fill_triangle(jint color, const jshort *clip, 
 		  const java_imagedata *dst, int dotted, 
                   int x1, int y1, int x2, int y2, int x3, int y3) {
+  gxj_pixel_type pixelColor;
   gxj_screen_buffer screen_buffer;
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+  pixelColor = GXJ_RGB24TORGBFF32(color);
+#else
+  pixelColor = GXJ_RGB24TORGB16(color);
+#endif
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_triangle()\n");
 
   /* Surpress unused parameter warnings */
   (void)dotted;
 
-  fill_triangle(sbuf, GXJ_RGB24TORGB16(color), 
-		clip, x1, y1, x2, y2, x3, y3);
+  fill_triangle(sbuf, pixelColor, clip, x1, y1, x2, y2, x3, y3);
 }
 
 /**
@@ -128,6 +134,65 @@ gx_copy_area(const jshort *clip,
 		   x_src, y_src, 0);
 }
 
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+/* return value of src OVER dst, where:
+ *     src is an 8888 ARGB pixel in an int (LCDUI format)
+ *     dst is an 8888 RGBA pixel in an int (OpenGL ES format)
+ *     OVER is the Source Over Destination composite rule
+ * Note, we cannot assume that the destination alpha coming
+ * into this function is 1.0, as LCDUI normally assumes for
+ * a drawing target, since we are accumulating partial frame
+ * results for compositing to the screen through OpenGL ES.
+ * We will maintain the putpixel destination buffer in
+ * premultiplied alpha format, since this will eliminate
+ * 3 divides in the computation, and OpenGL ES allows us
+ * to use premultiplied pixel values in a texture.
+ * The incoming src pixels will not be in premultiplied
+ * format, so we must premultiply them if the alpha value
+ * is not 1.0.
+ * Reference: 
+ * http://graphics.stanford.edu/courses/cs248-01/comp/comp.html
+ * In particular:
+ * http://graphics.stanford.edu/courses/cs248-01/comp/comp.html#The compositing algebra
+ * http://graphics.stanford.edu/courses/cs248-01/comp/comp.html#Premultiplied alpha
+ */
+static jint alphaComposition(jint src, jint dst) { 
+
+    int Rs, Bs, Gs, As, Rd, Bd, Gd, Ad, ONE_MINUS_As;
+
+    /* Note src values are not premultiplied */
+    Bs = src & 0xff;
+    src = src >> 8;
+    Gs = src & 0xff;
+    src = src >> 8;
+    Rs = src & 0xff;
+    As = (src >> 8) & 0xff;
+    if (As == 0xff) {
+        /* src is opaque, so no blend and no premultiplication are necessary */
+        return((Rs << 24) | (Gs << 16) | (Bs << 8) | 0xff);
+    }
+
+    /* Note dst vales are already premultiplied */
+    Ad = dst & 0xff;
+    dst = dst >> 8;
+    Bd = dst & 0xff;
+    dst = dst >> 8;
+    Gd = dst & 0xff;
+    Rd = (dst >> 8) & 0xff;
+
+    ONE_MINUS_As = 0xff - As;
+    Rd = Rs * As + Rd * ONE_MINUS_As; /* premultiply Rs and blend with Rd */
+    Rd = div(Rd);                     /* scale back to 0-255 */
+    Gd = Gs * As + Gd * ONE_MINUS_As;
+    Gd = div(Gd);
+    Bd = Bs * As + Bd * ONE_MINUS_As;
+    Bd = div(Bd);
+    Ad = As * 0xff + Ad * ONE_MINUS_As; /* must scale As appropriately */
+    Ad = div(Ad);
+
+    return((Rd << 24) | (Gd << 16) | (Bd << 8) | Ad);
+}
+#else
 /* 
  * For A in [0..0xffff] 
  *
@@ -163,13 +228,24 @@ static unsigned short alphaComposition(jint src,
   /* compose RGB from separate color components */
   return ((Rr & 0xF8) << 8) + ((Gr & 0xFC) << 3) + (Br >> 3);
 }
-
+#endif /* ENABLE_RGBA8888_PIXEL_FORMAT */
 
 #if (UNDER_CE)
 extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
     int dstSpan, int width, int height);
 #endif
 
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+#define SRC_PIXEL_TO_DEST_WITH_ALPHA(pSrc, pDest) \
+        src = *pSrc++;  \
+        As = src >> 26; \
+        if (As == 0x3F) {   \
+            *pDest = GXJ_ARGB32TORGBFF32(src);  \
+        } else if (As != 0) {   \
+            *pDest = alphaComposition(src, *pDest);   \
+        }   \
+        pDest++
+#else
 #define SRC_PIXEL_TO_DEST_WITH_ALPHA(pSrc, pDest) \
         src = *pSrc++;  \
         As = src >> 26; \
@@ -179,11 +255,21 @@ extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
             *pDest = alphaComposition(src, *pDest, (unsigned char)As);   \
         }   \
         pDest++
+#endif
 
+
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+#define SRC_PIXEL_TO_DEST(pSrc, pDest) \
+        src = *pSrc++;  \
+        *pDest = GXJ_ARGB32TORGBFF32(src); \
+        pDest++
+#else
 #define SRC_PIXEL_TO_DEST(pSrc, pDest) \
         src = *pSrc++;  \
         *pDest = GXJ_RGB24TORGB16(src); \
         pDest++
+#endif /* ENABLE_RGBA8888_PIXEL_FORMAT */
+
 
 /** Draw image in RGB format */
 void
@@ -259,7 +345,11 @@ gx_draw_rgb(const jshort *clip,
 
 	    CHECK_PTR_CLIP(sbuf, pdst);
 
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+	    *pdst = GXJ_ARGB32TORGBFF32(src);
+#else
 	    *pdst = GXJ_RGB24TORGB16(src);
+#endif
 	  } while (++pdst < pdst_stop);
 
 	  psrc += psrc_delta;
@@ -275,7 +365,11 @@ gx_draw_rgb(const jshort *clip,
 
 	    CHECK_PTR_CLIP(sbuf, pdst);
 
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+	    *pdst = alphaComposition(src, *pdst);
+#else
 	    *pdst = alphaComposition(src, *pdst, As);
+#endif
 	  } while (++pdst < pdst_stop);
 
 	  psrc += psrc_delta;
@@ -368,7 +462,11 @@ gx_draw_rgb(const jshort *clip,
  */
 jint
 gx_get_displaycolor(jint color) {
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+    int newColor = color;
+#else
     int newColor = GXJ_RGB16TORGB24(GXJ_RGB24TORGB16(color));
+#endif
 
     REPORT_CALL_TRACE1(LC_LOWUI, "gx_getDisplayColor(%d)\n", color);
 
@@ -389,10 +487,16 @@ gx_draw_line(jint color, const jshort *clip,
               int x1, int y1, int x2, int y2)
 {
   int lineStyle = (dotted ? DOTTED : SOLID);
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
+  gxj_pixel_type pixelColor;
   gxj_screen_buffer screen_buffer;
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+  pixelColor = GXJ_RGB24TORGBFF32(color);
+#else
+  pixelColor = GXJ_RGB24TORGB16(color);
+#endif
   
   REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_line()\n");
   
@@ -413,10 +517,16 @@ gx_draw_rect(jint color, const jshort *clip,
 {
 
   int lineStyle = (dotted ? DOTTED : SOLID);
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
+  gxj_pixel_type pixelColor;
   gxj_screen_buffer screen_buffer;
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+  pixelColor = GXJ_RGB24TORGBFF32(color);
+#else
+  pixelColor = GXJ_RGB24TORGB16(color);
+#endif
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_rect()\n");
 
@@ -439,9 +549,9 @@ void fast_pixel_set(unsigned * mem, unsigned value, int number_of_pixels)
 }
 #endif
 
-void fastFill_rect(unsigned short color, gxj_screen_buffer *sbuf, int x, int y, int width, int height, int cliptop, int clipbottom) {
+void fastFill_rect(gxj_pixel_type color, gxj_screen_buffer *sbuf, int x, int y, int width, int height, int cliptop, int clipbottom) {
 	int screen_horiz=sbuf->width;
-	unsigned short* raster;
+	gxj_pixel_type* raster;
 
     if (width<=0) {return;}
 	if (x > screen_horiz) { return; }
@@ -467,8 +577,8 @@ gx_fill_rect(jint color, const jshort *clip,
 	      const java_imagedata *dst, int dotted, 
               int x, int y, int width, int height) {
 
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
   gxj_screen_buffer screen_buffer;
+  gxj_pixel_type pixelColor;
   const jshort clipX1 = clip[0];
   const jshort clipY1 = clip[1];
   const jshort clipX2 = clip[2];
@@ -476,12 +586,16 @@ gx_fill_rect(jint color, const jshort *clip,
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+  pixelColor = GXJ_RGB24TORGBFF32(color);
+#else
+  pixelColor = GXJ_RGB24TORGB16(color);
+#endif
 
   if ((clipX1==0)&&(clipX2==sbuf->width)&&(dotted!=DOTTED)) {
     fastFill_rect(pixelColor, sbuf, x, y, width, height, clipY1, clipY2 );
     return;
   }
-
   
   REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_rect()\n");
 
@@ -499,11 +613,17 @@ gx_draw_roundrect(jint color, const jshort *clip,
                    int x, int y, int width, int height,
                    int arcWidth, int arcHeight)
 {
+  gxj_pixel_type pixelColor;
   int lineStyle = (dotted?DOTTED:SOLID);
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
   gxj_screen_buffer screen_buffer;
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+  pixelColor = GXJ_RGB24TORGBFF32(color);
+#else
+  pixelColor = GXJ_RGB24TORGB16(color);
+#endif
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_roundrect()\n");
 
@@ -523,11 +643,17 @@ gx_fill_roundrect(jint color, const jshort *clip,
                    int x, int y, int width, int height,
                    int arcWidth, int arcHeight)
 {
+  gxj_pixel_type pixelColor;
   int lineStyle = (dotted?DOTTED:SOLID);
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
   gxj_screen_buffer screen_buffer;
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+  pixelColor = GXJ_RGB24TORGBFF32(color);
+#else
+  pixelColor = GXJ_RGB24TORGB16(color);
+#endif
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_fillround_rect()\n");
 
@@ -551,11 +677,19 @@ gx_draw_arc(jint color, const jshort *clip,
              int x, int y, int width, int height,
              int startAngle, int arcAngle)
 {
+  gxj_pixel_type pixelColor;
   int lineStyle = (dotted?DOTTED:SOLID);
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
   gxj_screen_buffer screen_buffer;
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+  pixelColor = GXJ_RGB24TORGBFF32(color);
+#else
+  pixelColor = GXJ_RGB24TORGB16(color);
+#endif
+
+  REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_arc()\n");
 
   draw_arc(pixelColor, clip, sbuf, lineStyle, x, y, 
 	   width, height, 0, startAngle, arcAngle);
@@ -573,12 +707,18 @@ gx_fill_arc(jint color, const jshort *clip,
              int x, int y, int width, int height,
              int startAngle, int arcAngle)
 {
+  gxj_pixel_type pixelColor;
   int lineStyle = (dotted?DOTTED:SOLID);
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
   gxj_screen_buffer screen_buffer;
   gxj_screen_buffer *sbuf = 
       gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+  pixelColor = GXJ_RGB24TORGBFF32(color);
+#else
+  pixelColor = GXJ_RGB24TORGB16(color);
+#endif
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_arc()\n");
 

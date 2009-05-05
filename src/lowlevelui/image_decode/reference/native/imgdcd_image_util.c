@@ -40,8 +40,20 @@
 #define CT_COLOR    0x02
 #define CT_ALPHA    0x04
 
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+/** Convert separate r, g, b and alpha components to 32-bit pixel. */
+#define IMGDCD_RGBA2PIXEL(r, g, b, a) ( (((r) << 24) & 0xFF000000) | \
+                                        (((g) << 16) & 0xFF0000) | \
+                                        (((b) << 8) & 0xFF00) | \
+                                         ((a) & 0xFF) )
+
+#define IMGDCD_ARGB32TORGBFF32(x) ( ((x) << 8) | 0xFF )
+#else
 /** Convert pre-masked triplet r, g, b to 16 bit pixel. */
 #define IMGDCD_RGB2PIXEL(r, g, b) ( b +(g << 5)+ (r << 11) )
+#endif
+
+
 
 typedef struct _imgDst {
   imageDstData   super;
@@ -170,6 +182,7 @@ static void
 sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
   _imageDstPtr p = (_imageDstPtr)self;
   int x;
+  int r, g, b, alpha, color, hasAlphaChannel;
 
   REPORT_CALL_TRACE(LC_LOWUI,
                     "LF:STUB:sendPixelsColor()\n");
@@ -180,23 +193,36 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
 
   if ((pixelType == CT_COLOR) ||              /* color triplet */
       (pixelType == (CT_COLOR | CT_ALPHA))) { /* color triplet with alpha */
-    for (x = 0; x < p->width; ++x) {
-      int r = pixels[0] >> 3;
-      int g = pixels[1] >> 2;
-      int b = pixels[2] >> 3;
-      int alpha = 0xff;
 
-      if (pixelType & CT_ALPHA) {
-        alpha = pixels[3];
-        pixels++;
-      } else if (p->hasTransMap) {
+    hasAlphaChannel = (( pixelType & CT_ALPHA) || p->hasTransMap) ? 1 : 0;
+    for (x = 0; x < p->width; ++x) {
+      alpha = 0xff;
+
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+      r = pixels[0];
+      g = pixels[1];
+      b = pixels[2];
+
+      if (hasAlphaChannel) {
         alpha = pixels[3];
         pixels++;
       }
       pixels += 3;
 
-      // p->pixelData[y*p->width + x] = (r<<16) + (g<<8) + b;
+      p->pixelData[y*p->width + x] = IMGDCD_RGBA2PIXEL(r, g, b, alpha);
+#else
+      r = pixels[0] >> 3;
+      g = pixels[1] >> 2;
+      b = pixels[2] >> 3;
+
+      if (hasAlphaChannel) {
+        alpha = pixels[3];
+        pixels++;
+      }
+      pixels += 3;
+
       p->pixelData[y*p->width + x] = IMGDCD_RGB2PIXEL(r, g, b);
+#endif
       p->alphaData[y*p->width + x] = alpha;
       if (alpha != 0xff) {
           p->hasAlpha = KNI_TRUE;
@@ -206,17 +232,8 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
     for (x = 0; x < p->width; ++x) {
       int cmapIndex = *pixels++;
 
-      int color = p->cmap[cmapIndex];
-
-      int r = ((color >> 16) & 0xff) >> 3;
-      int g = ((color >>  8) & 0xff) >> 2;
-      int b = ((color >>  0) & 0xff) >> 3;
-
-      int alpha = 0xff;
-
-      if (r < 0) r = 0; else if (r > 0xff) r = 0xff;
-      if (g < 0) g = 0; else if (g > 0xff) g = 0xff;
-      if (b < 0) b = 0; else if (b > 0xff) b = 0xff;
+      color = p->cmap[cmapIndex];
+      alpha = 0xff;
 
       if ((pixelType & (CT_ALPHA | CT_COLOR)) == CT_ALPHA) {
         alpha = *pixels++;
@@ -228,8 +245,29 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
         }
       }
 
-      // p->pixelData[y*p->width + x] = (r<<16) + (g<<8) + b;
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+      /* 
+       * We can make format conversion directly without splitting the color to
+       * separate color components
+       */
+      p->pixelData[y*p->width + x] = ((color << 8) & 0xFFFFFF00) | (alpha & 0xFF);
+#else
+
+      r = ((color >> 16) & 0xff) >> 3;
+      g = ((color >>  8) & 0xff) >> 2;
+      b = ((color >>  0) & 0xff) >> 3;
+
+      /* 
+       * IMPL_NOTE: Is this check really needed?
+       * Even if yes, remove it anyway and use 'unsigned char'
+       * instead of 'int'
+       */
+      if (r < 0) r = 0; else if (r > 0xff) r = 0xff;
+      if (g < 0) g = 0; else if (g > 0xff) g = 0xff;
+      if (b < 0) b = 0; else if (b > 0xff) b = 0xff;
+
       p->pixelData[y*p->width + x] = IMGDCD_RGB2PIXEL(r, g, b);
+#endif
       p->alphaData[y*p->width + x] = alpha;
       if (alpha != 0xff) {
           p->hasAlpha = KNI_TRUE;
@@ -324,7 +362,7 @@ imgdcd_decode_png
 }
 
 #if ENABLE_JPEG
-#define RGB565_PIXEL_SIZE sizeof(imgdcd_pixel_type)
+#define LCDUI_PIXEL_SIZE sizeof(imgdcd_pixel_type)
 
 
 /**
@@ -356,7 +394,7 @@ static int decode_jpeg_image(char* inData, int inDataLen,
             }
 
             if (JPEG_To_RGB_decodeData2(info, outData,
-                RGB565_PIXEL_SIZE, 0, 0, outDataWidth, outDataHeight) != 0) {
+                LCDUI_PIXEL_SIZE, 0, 0, outDataWidth, outDataHeight) != 0) {
                 result = TRUE;
             }
         }
@@ -380,8 +418,8 @@ void
 imgdcd_decode_jpeg
 (unsigned char* srcBuffer, int length,
  int width, int height,
- imgdcd_pixel_type*pixelData, 
- imgdcd_alpha_type *alphaData,
+ imgdcd_pixel_type* pixelData, 
+ imgdcd_alpha_type* alphaData,
  img_native_error_codes* creationErrorPtr) {
 
 #if ENABLE_JPEG
@@ -405,7 +443,7 @@ imgdcd_decode_jpeg
         ((imageDstPtr)&dstData)->setSize(
             ((imageDstPtr)&dstData), width, height);
         /*
-         pixelData = pcsl_mem_malloc(width * height * RGB565_PIXEL_SIZE);
+         pixelData = pcsl_mem_malloc(width * height * LCDUI_PIXEL_SIZE);
         */
     }
 
@@ -414,6 +452,17 @@ imgdcd_decode_jpeg
         *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
     } else if (decode_jpeg_image((char*)srcBuffer, length,
         (char*)(pixelData), width, height) != FALSE) {
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+		/*
+		 * Decoder returns data in ARGB format therefore convert the content of
+		 * the output buffer to RGBA
+		 */
+		imgdcd_pixel_type* pPtr = pixelData;
+		imgdcd_pixel_type* pEndPtr = pPtr + width * height;
+		for (; pPtr < pEndPtr; pPtr++) {
+			*pPtr = IMGDCD_ARGB32TORGBFF32(*pPtr);
+		}
+#endif
         *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
     } else {
         *creationErrorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;

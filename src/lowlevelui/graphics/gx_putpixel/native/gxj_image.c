@@ -45,7 +45,7 @@ static void clipped_blit(gxj_screen_buffer* dst, int dstX, int dstY,
 
 extern void unclipped_blit(unsigned short *dstRaster, int dstSpan,
 			   unsigned short *srcRaster, int srcSpan,
-			   int height, int width, gxj_screen_buffer * dst);
+			   int height, int width, gxj_screen_buffer *dst);
 
 /**
  * Renders the contents of the specified mutable image
@@ -76,10 +76,18 @@ draw_image(gxj_screen_buffer *imageSBuf,
     if (x_dest >= clipX1 && y_dest >= clipY1 &&
        (x_dest + imageSBuf->width) <= clipX2 &&
        (y_dest + imageSBuf->height) <= clipY2) {
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+      unclipped_blit((unsigned short *)&destSBuf->pixelData[y_dest*destSBuf->width+x_dest],
+		    destSBuf->width<<2,
+		    (unsigned short *)&imageSBuf->pixelData[0], imageSBuf->width<<2,
+		    imageSBuf->height, imageSBuf->width<<2, destSBuf);
+#else
       unclipped_blit(&destSBuf->pixelData[y_dest*destSBuf->width+x_dest],
 		    destSBuf->width<<1,
 		    &imageSBuf->pixelData[0], imageSBuf->width<<1,
-		    imageSBuf->height, imageSBuf->width<<1,destSBuf);
+		    imageSBuf->height, imageSBuf->width<<1, destSBuf);
+#endif
+
     } else {
       clipped_blit(destSBuf, x_dest, y_dest, imageSBuf, clip);
     }
@@ -131,8 +139,8 @@ clipped_blit(gxj_screen_buffer* dst, int dstX, int dstY, gxj_screen_buffer* src,
   int startX; int startY;   /* x,y into the dstRaster */
   int negY, negX;           /* x,y into the srcRaster */
   int diff;
-  unsigned short* srcRaster;
-  unsigned short* dstRaster;
+  gxj_pixel_type* srcRaster;
+  gxj_pixel_type* dstRaster;
   const jshort clipX1 = clip[0];
   const jshort clipY1 = clip[1];
   const jshort clipX2 = clip[2];
@@ -187,8 +195,13 @@ clipped_blit(gxj_screen_buffer* dst, int dstX, int dstY, gxj_screen_buffer* src,
   srcRaster = src->pixelData + (negY ? (negY   * src->width) : 0) + negX;
   dstRaster = dst->pixelData +         (startY * dst->width)      + startX;
 
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+  unclipped_blit((unsigned short *)dstRaster, dst->width<<2,
+		 (unsigned short *)srcRaster, src->width<<2, height, width<<2, dst);
+#else
   unclipped_blit(dstRaster, dst->width<<1,
-		 srcRaster, src->width<<1, height, width<<1,dst);
+		 srcRaster, src->width<<1, height, width<<1, dst);
+#endif
 }
 
 

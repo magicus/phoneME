@@ -48,15 +48,7 @@
         get_imagedata(IMGAPI_GET_IMAGEDATA_PTR(jimgData),   \
                       width, height, pixelData, alphaData)
 
-/** Convert 24-bit RGB color to 16bit (565) color */
-#define RGB24TORGB16(x) (((( x ) & 0x00F80000) >> 8) + \
-                             ((( x ) & 0x0000FC00) >> 5) + \
-                             ((( x ) & 0x000000F8) >> 3) )
-
-/** Convert 16-bit (565) color to 24-bit RGB color */
-#define RGB16TORGB24(x) ( ((x & 0x001F) << 3) | ((x & 0x001C) >> 2) |\
-                              ((x & 0x07E0) << 5) | ((x & 0x0600) >> 1) |\
-                              ((x & 0xF800) << 8) | ((x & 0xE000) << 3) )
+#include <gxj_putpixel.h>
 
 /**
  * Create native representation for a image.
@@ -260,7 +252,11 @@ void imgj_get_argb(const java_imagedata * srcImageDataPtr,
           pixel = srcPixelData[b*srcWidth + a];
           alpha = srcAlphaData[b*srcWidth + a];
           rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-            (alpha << 24) + RGB16TORGB24(pixel);
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+            GXJ_RGBA32TOARGB32(pixel);
+#else
+            (alpha << 24) + GXJ_RGB16TORGB24(pixel);
+#endif
         }
       }
     } else {
@@ -268,7 +264,11 @@ void imgj_get_argb(const java_imagedata * srcImageDataPtr,
         for (a = x; a < x + width; a++) {
           pixel = srcPixelData[b*srcWidth + a];
           rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-            RGB16TORGB24(pixel) | 0xFF000000;
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+            GXJ_RGBA32TOFFRGB32(pixel);
+#else
+            GXJ_RGB16TORGB24(pixel) | 0xFF000000;
+#endif
         }
       }
     }
@@ -786,12 +786,20 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
 
         if (alphaData != NULL) {
             for (i = 0; i < len; i++) {
-                pixelData[i] = RGB24TORGB16(rgbBuffer[i]);
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+                pixelData[i] = GXJ_ARGB32TORGBA32(rgbBuffer[i]);
+#else
+                pixelData[i] = GXJ_RGB24TORGB16(rgbBuffer[i]);
+#endif
                 alphaData[i] = (rgbBuffer[i] >> 24) & 0x00ff;
             }
         } else {
             for (i = 0; i < len; i++) {
-                pixelData[i] = RGB24TORGB16(rgbBuffer[i]);
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+                pixelData[i] = GXJ_ARGB32TORGBFF32(rgbBuffer[i]);
+#else
+                pixelData[i] = GXJ_RGB24TORGB16(rgbBuffer[i]);
+#endif
             }
         }
     }
@@ -976,4 +984,22 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRegion) {
 
     KNI_EndHandles();
     KNI_ReturnVoid();
+}
+
+/**
+ * Returns how many bytes are in a pixel.
+ *
+ * @return number of bytes in native pixel
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(javax_microedition_lcdui_ImageDataFactory_bytesInPixel) {
+    int bytes;
+
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+    bytes = 4;
+#else
+    bytes = 2;
+#endif
+
+    KNI_ReturnInt(bytes);
 }

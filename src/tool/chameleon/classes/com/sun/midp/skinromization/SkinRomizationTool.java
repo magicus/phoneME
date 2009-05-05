@@ -1093,11 +1093,9 @@ final class RomizedImageFactory {
 
         int width = image.getWidth(null);
         int height = image.getHeight(null);
-        boolean hasAlpha = image.getColorModel().hasAlpha();
         int[] imageData = getBufferedImageData(image);
         
-        byte[] rawData = converter.convertToRaw(imageData, width, height, 
-                hasAlpha);
+        byte[] rawData = converter.convertToRaw(imageData, width, height);
 
         return new RomizedImage(rawData, romizedImageCounter++);
     }
@@ -1270,6 +1268,7 @@ class SkinRomizer extends RomUtil {
         // raw file formats 
         "Putpixel",
         "ARGB",
+        "RGBA",
         // endianess
         "Little",
         "Big",
@@ -1283,6 +1282,7 @@ class SkinRomizer extends RomUtil {
         // raw file formats 
         ImageToRawConverter.RAW_FORMAT_PP,
         ImageToRawConverter.RAW_FORMAT_ARGB,
+        ImageToRawConverter.RAW_FORMAT_RGBA,
         // endianess
         ImageToRawConverter.INT_FORMAT_LITTLE_ENDIAN,
         ImageToRawConverter.INT_FORMAT_BIG_ENDIAN,

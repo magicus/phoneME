@@ -237,7 +237,11 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
   int height = sbuf->height;
   int count;
   gxj_pixel_type* pPtr;
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+  unsigned int c = (unsigned int)color;
+#else
   unsigned int c = ((unsigned int)color) << 16 | ((unsigned int)color);
+#endif
   jlong lcol = ((jlong) c) << 32 | ((jlong) c);
   registers_4 regs;
   regs.r0 = regs.r1 = regs.r2 = regs.r3 = c;
@@ -262,6 +266,29 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     --count;
   }
 
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+  while (count >= 8) {
+    CHECK_LLPTR_CLIP(sbuf,pPtr);
+    *((registers_4 *)pPtr) = regs;
+    pPtr += 4;
+    CHECK_LLPTR_CLIP(sbuf,pPtr);
+    *((registers_4 *)pPtr) = regs;
+    pPtr += 4;
+    count -= 8;
+  }
+  if (count >= 4) {
+    CHECK_LLPTR_CLIP(sbuf,pPtr);
+    *((registers_4 *)pPtr) = regs;
+    pPtr += 4;
+    count -= 4;
+  }
+  if (count >= 2) {
+    CHECK_LLPTR_CLIP(sbuf,pPtr);
+    *((jlong *)pPtr) = lcol;
+    pPtr += 2;
+    count -= 2;
+  }
+#else
   while (count >= 16) {
     CHECK_LLPTR_CLIP(sbuf,pPtr);
     *((registers_4 *)pPtr) = regs;
@@ -283,11 +310,13 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     pPtr += 4;
     count -= 4;
   }
+#endif /* ENABLE_RGBA8888_PIXEL_FORMAT */
   while (count >= 0) {
     CHECK_PTR_CLIP(sbuf,pPtr);
     *pPtr = color; pPtr += 1;
     count -= 1;
   }
+
 #endif
 }
 
@@ -902,9 +931,13 @@ primDrawFilledRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     gxj_pixel_type* lPtr;
     registers_4	regs;
 
-	unsigned int c = ((unsigned int)color) << 16 | ((unsigned int)color);
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+    unsigned int c = (unsigned int)color;
+#else
+    unsigned int c = ((unsigned int)color) << 16 | ((unsigned int)color);
+#endif
     jlong lcol = ((jlong) c) << 32 | ((jlong) c);
-	regs.r0 = regs.r1 = regs.r2 = regs.r3 = c;
+    regs.r0 = regs.r1 = regs.r2 = regs.r3 = c;
 
 #if PRIM_CLIPPING
     y1 = (y1 < 0) ? 0 : ((y1 > height) ? height : y1);
@@ -930,13 +963,36 @@ primDrawFilledRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
         *pPtr++ = color;
         --count;
       }
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+      while (count >= 8) {
+        CHECK_LLPTR_CLIP(sbuf,pPtr);
+        *((registers_4 *)pPtr) = regs;
+	pPtr += 4;
+	CHECK_LLPTR_CLIP(sbuf,pPtr);
+	*((registers_4 *)pPtr) = regs;
+	pPtr += 4;
+        count -= 8;
+      }
+      if (count >= 4) {
+        CHECK_LLPTR_CLIP(sbuf,pPtr);
+        *((registers_4 *)pPtr) = regs;
+        pPtr += 4;
+        count -= 4;
+      }
+      if (count >= 2) {
+        CHECK_LLPTR_CLIP(sbuf,pPtr);
+        *((jlong *)pPtr) = lcol;
+        pPtr += 2;
+        count -= 2;
+      }
+#else
       while (count >= 16) {
         CHECK_LLPTR_CLIP(sbuf,pPtr);
         *((registers_4 *)pPtr) = regs;
-		pPtr += 8;
-		CHECK_LLPTR_CLIP(sbuf,pPtr);
-		*((registers_4 *)pPtr) = regs;
-		pPtr += 8;
+	pPtr += 8;
+	CHECK_LLPTR_CLIP(sbuf,pPtr);
+	*((registers_4 *)pPtr) = regs;
+	pPtr += 8;
         count -= 16;
       }
       if (count >= 8) {
@@ -951,6 +1007,7 @@ primDrawFilledRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
         pPtr += 4;
         count -= 4;
       }
+#endif /* ENABLE_RGBA8888_PIXEL_FORMAT */
       while (count > 0) {
         CHECK_PTR_CLIP(sbuf,pPtr);
         *pPtr++ = color;
