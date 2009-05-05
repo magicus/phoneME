@@ -1772,6 +1772,7 @@ static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
         case JC_FMT_DEVICE_MIDI:
         {
             long pos;
+            IRateControl *pRateControl = NULL;
 
             if( h->midi.midiStream != NULL && h->midi.storage != NULL )
                 pos = mQ234_PlayControl_GetPosition(h->midi.synth);
@@ -1779,6 +1780,13 @@ static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
                 pos = h->midi.mtime;
 
             if(pos >= 0) *ms =  pos / 10;  // needs to be in millis
+            pRateControl = mQ234_PlayControl_getRateControl( h->midi.synth );
+            if( NULL != pRateControl )
+            {
+                javacall_int64 rate = mQ135_Rate_GetRate( pRateControl );
+                *ms =
+                   ( long )( ( ( javacall_int64 )( *ms ) * rate ) / 100000L );
+            }
         }
         break;
 
