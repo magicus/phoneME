@@ -183,8 +183,7 @@ public class DisplayEventListener implements EventListener {
                     return;
 
                 case EventTypes.ROTATION_EVENT:
-                    // FIXME: temporary disable rotation on device
-                    // dc.handleRotationEvent();
+                    dc.handleRotationEvent();
                     return;
 
 	    case EventTypes.DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT:
