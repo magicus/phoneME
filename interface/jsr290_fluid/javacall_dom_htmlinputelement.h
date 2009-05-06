@@ -260,11 +260,6 @@ javacall_dom_htmlinputelement_set_checked_finish(void *context);
  * "radio", this represents the HTML value attribute of the element. See 
  * the value attribute definition in HTML 4.01.
  *
- * <!--
- * <p><i>Implementation note</i>: please refer to the implementation note
- * found in <code>setValue()</code>.</p>
- * -->
- *
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
@@ -308,11 +303,6 @@ javacall_dom_htmlinputelement_get_value_start(javacall_handle handle,
  * "radio", this represents the HTML value attribute of the element. See 
  * the value attribute definition in HTML 4.01.
  *
- * <!--
- * <p><i>Implementation note</i>: please refer to the implementation note
- * found in <code>setValue()</code>.</p>
- * -->
- *
  * 
  * Note: If ret_value_len is less then length of the returned string this function 
  *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
@@ -350,17 +340,6 @@ javacall_dom_htmlinputelement_get_value_finish(void *context,
  * "radio", this represents the HTML value attribute of the element. See 
  * the value attribute definition in HTML 4.01.
  *
- * <!--
- * <p><i>Implementation note</i>: Please note that various implementations
- * of the Document Object Model (DOM) Level 2 HTML Specification 
- * interpret setting <code>HTMLInputElement</code>'s <code>value</code>
- * (here by means of <code>setValue()</code>) to <code>NULL</code>
- * differently, resulting in <code>value</code> being effectively set to 
- * e.g. <code>NULL</code> or the empty string <code>""</code> or the
- * string <code>"NULL"</code>. Reading the <code>value</code> subsequently
- * (here by mean of <code>getValue()</code>) may return any of these.</p>
- * -->
- *
  * 
  * @param handle Pointer to the object representing this htmlinputelement.
  * @param invocation_id Invocation identifier which MUST be used in the 
@@ -396,17 +375,6 @@ javacall_dom_htmlinputelement_set_value_start(javacall_handle handle,
  * "button", "hidden", "submit", "reset", "image", "checkbox" or 
  * "radio", this represents the HTML value attribute of the element. See 
  * the value attribute definition in HTML 4.01.
- *
- * <!--
- * <p><i>Implementation note</i>: Please note that various implementations
- * of the Document Object Model (DOM) Level 2 HTML Specification 
- * interpret setting <code>HTMLInputElement</code>'s <code>value</code>
- * (here by means of <code>setValue()</code>) to <code>NULL</code>
- * differently, resulting in <code>value</code> being effectively set to 
- * e.g. <code>NULL</code> or the empty string <code>""</code> or the
- * string <code>"NULL"</code>. Reading the <code>value</code> subsequently
- * (here by mean of <code>getValue()</code>) may return any of these.</p>
- * -->
  *
  * 
  * @param context The context saved during asynchronous operation.

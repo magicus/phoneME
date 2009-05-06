@@ -397,7 +397,7 @@ javacall_dom_window_get_top_finish(void *context,
  * OR returns the value of the <code>frameElement</code> attribute.
  *
  * <p>The <code>Element</code> returned is the parent element in which
- * this child is being embedded. It corresponds to one of 
+ * this child is being embedded. It corresponds e.g. to one of 
  * <code>&lt;html:object&gt;</code>, <code>&lt;html:frame&gt;</code>, 
  * <code>&lt;html:iframe&gt;</code>, 
  * <code>&lt;svg:foreignObject&gt;</code>, 
@@ -433,7 +433,7 @@ javacall_dom_window_get_frame_element_start(javacall_handle handle,
  * OR returns the value of the <code>frameElement</code> attribute.
  *
  * <p>The <code>Element</code> returned is the parent element in which
- * this child is being embedded. It corresponds to one of 
+ * this child is being embedded. It corresponds e.g. to one of 
  * <code>&lt;html:object&gt;</code>, <code>&lt;html:frame&gt;</code>, 
  * <code>&lt;html:iframe&gt;</code>, 
  * <code>&lt;svg:foreignObject&gt;</code>, 

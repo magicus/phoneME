@@ -288,6 +288,51 @@ javacall_dom_domimplementation_create_document_finish(void *context,
                                                       /* OUT */ javacall_handle* ret_value,
                                                       /* OUT */ javacall_dom_exceptions* exception_code);
 
+/*
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns handle to the new instance of DOM implementaiton
+ * 
+ * 
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value Pointer to the object representing 
+ *   new instance of DOM implementaiton. 
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_domimplementation_create_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_domimplementation_create_start(javacall_int32 invocation_id,
+                                            void **context,
+                                            /* OUT */ javacall_handle* ret_value);
+
+/*
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns handle to the new instance of DOM implementaiton
+ * 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value Pointer to the object representing 
+ *   new instance of DOM implementaiton. 
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_domimplementation_create_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_domimplementation_create_finish(void *context,
+                                             /* OUT */ javacall_handle* ret_value);
+
 /** 
  * Decrements ref counter of the native object specified number of times
  * 
