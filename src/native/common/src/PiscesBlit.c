@@ -950,8 +950,8 @@ blitPTSrc5658(Renderer *rdr, jint height) {
             assert(aidx < rdr->_paint_length / 4);
 
             cval = paint[aidx];
-            aa = alphaMap[(cval >> 24) & 0xff];
-            calpha = (cval >> 24) && 0xff;
+            calpha = (cval >> 24) & 0xff;
+            aa = alphaMap[calpha];
             cval = CONVERT_888_TO_565(cval);
 
             /* Scale combined alpha into [0, MAX_ALPHA] */
@@ -2289,8 +2289,8 @@ blitPTSrcOver5658(Renderer *rdr, jint height) {
             assert(aidx < rdr->_paint_length / 4);
 
             cval = paint[aidx];
-            aa = alphaMap[(cval >> 24) & 0xff];
-            calpha = (cval >> 24) && 0xff;
+            calpha = (cval >> 24) & 0xff;
+            aa = alphaMap[calpha];
             cval = CONVERT_888_TO_565(cval);
 
             /* Scale combined alpha into [0, MAX_ALPHA] */
