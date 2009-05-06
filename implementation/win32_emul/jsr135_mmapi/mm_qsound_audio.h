@@ -141,10 +141,15 @@ typedef struct
     HANDLE                  hMutexREAD;
 } globalMan;
 
-/* 
- * isolateIDtoGM is public for use in JSR234
- */
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
 
 javacall_result isolateIDtoGM(int isolateID, /*OUT*/ int *gmIdx );
+void            gmDetach(int gmIdx);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif //__cplusplus
 
 #endif /* __JSR135_MULTIMEDIA_AUDIO_H__ */
