@@ -483,6 +483,9 @@ static javacall_result dshow_acquire_device(javacall_handle handle)
 
         IPanControl* pan = (IPanControl*)( p->pModule->getControl( "PanControl" ) );
         if( NULL != pan ) pan->setPan( p->pan );
+
+        IVolumeControl* vc = (IVolumeControl*)( p->pModule->getControl( "VolumeControl" ) );
+        if( NULL != vc ) vc->SetLevel( p->volume );
     }
 
     p->pModule->addPlayer( p );
@@ -858,8 +861,11 @@ static javacall_result dshow_set_volume(javacall_handle handle,
     long* level)
 {
     dshow_player* p = (dshow_player*)handle;
-    IVolumeControl* vc = (IVolumeControl*)( p->pModule->getControl("VolumeControl") );
-    if( NULL != vc ) *level = vc->SetLevel( *level );
+    if( NULL != p->pModule )
+    {
+        IVolumeControl* vc = (IVolumeControl*)( p->pModule->getControl("VolumeControl") );
+        if( NULL != vc ) *level = vc->SetLevel( *level );
+    }
     p->volume = *level;
     return JAVACALL_OK;
 }
@@ -876,8 +882,11 @@ static javacall_result dshow_set_mute(javacall_handle handle,
     javacall_bool mute)
 {
     dshow_player* p = (dshow_player*)handle;
-    IVolumeControl* vc = (IVolumeControl*)( p->pModule->getControl("VolumeControl") );
-    if( NULL != vc ) vc->SetMute( mute );
+    if( NULL != p->pModule )
+    {
+        IVolumeControl* vc = (IVolumeControl*)( p->pModule->getControl("VolumeControl") );
+        if( NULL != vc ) vc->SetMute( mute );
+    }
     p->muted = ( JAVACALL_TRUE == mute );
     return JAVACALL_OK;
 }
