@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,6 @@ import java.util.Vector;
 import javax.microedition.content.ActionNameMap;
 import javax.microedition.content.ContentHandler;
 import javax.microedition.content.Invocation;
-import javax.microedition.content.RequestListener;
 
 /**
  * The internal structure of a registered content handler.
@@ -73,11 +72,15 @@ public class ContentHandlerImpl extends ContentHandlerRegData
 			ID = handlerID;
 			appID = applicationID;
 			this.registrationMethod = registrationMethod;
+			if( AppProxy.LOGGER != null )
+				AppProxy.LOGGER.println( "ContentHandlerImpl.Data(): " + this );
 		}
 		public Data(DataInputStream in) throws IOException {
 			ID = in.readUTF();
 			appID = AppProxy.createAppID().read(in);
 			registrationMethod = in.readInt();
+			if( AppProxy.LOGGER != null )
+				AppProxy.LOGGER.println( "ContentHandlerImpl.Data(): " + this );
 		}
 
 		public void serialize(DataOutputStream out) throws IOException {
@@ -87,7 +90,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
 		}
 		
 		public String toString(){
-			return "ContentHandlerImpl.Data { ID = '" + ID + "', appID = " + appID + ", regMethod = " + registrationMethod + "}";
+			return "{ ID = '" + ID + "', appID = " + appID + ", regMethod = " + registrationMethod + "}";
 		}
     }
     
@@ -640,7 +643,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
         if (AppProxy.LOGGER != null) {
             StringBuffer sb = new StringBuffer(80);
             sb.append("ContentHandler:");
-            sb.append(", appID: ");
+            sb.append("appID: ");
             sb.append(applicationID);
             sb.append(", authority: ");
             sb.append(authority);

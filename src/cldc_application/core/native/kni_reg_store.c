@@ -101,10 +101,7 @@ static void result2string(KNIDECLARGS JSR211_RESULT_BUFFER buffer, jstring str){
             KNI_ThrowNew(jsropOutOfMemoryError, "No memory to create result string!");
         }
 #ifdef TRACE_TRANSFER_DATA
-        printf( "kni_reg_store: data '" );
-        chars = (jchar *)data; 
-        while( length-- ) printf( "%04x", *chars++ );
-        printf( "'\n" );
+        memory__dump( "kni_reg_store: data", data, length * 2 );
 #endif
     }
     jsr211_release_result_buffer(buffer);

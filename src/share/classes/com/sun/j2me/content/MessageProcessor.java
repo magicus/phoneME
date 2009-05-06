@@ -76,7 +76,8 @@ class NativeMessageSender implements MessageProcessor {
 			AppProxy.LOGGER.println("NativeMessageSender.send( " + queueId + ", " + msgCode + " )");
 			//new Exception("trace");
 		}
-		return send(queueId, msgCode, data);
+		byte[] result = send(queueId, msgCode, data); 
+		return result;
 	}
 	
 	private static native byte[] send(int queueId, int msgCode, byte[] data) throws IOException;

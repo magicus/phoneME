@@ -27,6 +27,7 @@
 #include <stdio.h>
 
 #define TRACE_MSGEXCHANGE
+#define TRACE_RESULTBYTES
 
 #endif
 
@@ -38,6 +39,28 @@
 
 #include "jsr211_constants.h"
 #include <javacall_chapi_msg_exchange.h>
+
+#ifdef _DEBUG
+
+void memory__dump( const char * p_title, const unsigned char * p_bytes, size_t p_count ){
+    static char s_xd[] = "0123456789ABCDEF";
+    unsigned char a_line[ 32 * 4 + 10 ];
+    printf( "%s: bytes = %p, count = %u\n", p_title, p_bytes, p_count );
+    while( p_count ){
+        size_t a_l = (p_count < 32)? p_count : 32, i;
+        memset( a_line, ' ', sizeof(a_line) );
+        p_count -= a_l;
+        for( i = 0; i < a_l; i++, p_bytes++){
+            a_line[ i * 3 ] = s_xd[ (*p_bytes >> 4) & 0x0F ];
+            a_line[ i * 3 + 1 ] = s_xd[ *p_bytes & 0x0F ];
+            a_line[ 32 * 3 + 2 + i ] = (*p_bytes < ' ')? '.' : *p_bytes;
+        }
+        a_line[ 32 * 4 + 2 ] = '\0';
+        printf("  %s\n", a_line);
+    }
+}
+
+#endif
 
 typedef struct {
   MidpReentryData  m_midpRD;
@@ -83,8 +106,13 @@ KNIDECL(com_sun_j2me_content_NativeMessageSender_send) {
             if( KNI_IsNullHandle(data) ){
                 KNI_ThrowNew(jsropOutOfMemoryError, "");
             } else {
+#ifdef TRACE_RESULTBYTES
+                memory__dump( "com_sun_j2me_content_NativeMessageSender_send result", p->m_bytes, p->m_count );
+#endif
                 KNI_SetRawArrayRegion( data, 0, p->m_count, p->m_bytes );
             }
+            if( p->m_bytes != NULL ) JAVAME_FREE( p->m_bytes );
+            p->m_bytes = NULL;
         }
     }
     KNI_EndHandlesAndReturnObject(data);
@@ -92,7 +120,7 @@ KNIDECL(com_sun_j2me_content_NativeMessageSender_send) {
 
 javacall_result javanotify_chapi_process_msg_result( int dataExchangeID, const unsigned char * bytes, size_t count ){
 #ifdef TRACE_MSGEXCHANGE
-    printf( "javanotify_chapi_process_msg_result( exchangeID = %d, count = %d )\n", dataExchangeID, count );
+    printf( "javanotify_chapi_process_msg_result( exchangeID = %d, bytes = %p, count = %d )\n", dataExchangeID, bytes, count );
 #endif
     if( bytes == NULL ){
         unblockWaitingThreads( JSR211_WAIT_MSG, dataExchangeID, JSR211_WAIT_CANCELLED );
@@ -101,8 +129,9 @@ javacall_result javanotify_chapi_process_msg_result( int dataExchangeID, const u
         if( ti != NULL ){ 
             ReentryData * p = (ReentryData *)ti->reentry_data;
             if( p != NULL ){
+                p->m_bytes = NULL;
                 p->m_count = count;
-                if( count != 0 ){
+                if( p->m_count != 0 ){
                     // create copy of bytes
                     p->m_bytes = JAVAME_MALLOC( p->m_count );
                     if( p->m_bytes != NULL ){
