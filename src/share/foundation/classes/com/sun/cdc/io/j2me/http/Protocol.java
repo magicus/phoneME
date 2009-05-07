@@ -100,6 +100,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     private static StreamConnectionPool staticConnectionPool;
 
     private static String platformUserAgent;
+    private static String platformWapProfile;
 
     static {
         maxNumberOfPersistentConnections = Integer.parseInt(
@@ -116,6 +117,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         platformUserAgent = (String) AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction(
             "platform.browser.user.agent", null));
+        platformWapProfile = (String)AccessController.doPrivileged(
+            new sun.security.action.GetPropertyAction(
+            "platform.browser.wap.profile", null));
     }
     /*
      * A shared temporary buffer used in a couple of places
@@ -148,17 +152,24 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
-                String http_proxy;
-                String profileTemp =
-                    System.getProperty("microedition.profiles");
-                if (profileTemp != null && profileTemp.indexOf("MIDP") != -1) {
-                    // We want to look for a MIDP property specifying proxies.
-                    http_proxy =
-                        System.getProperty("com.sun.midp.io.http.proxy");
-                } else {
-                    // Default to CDC
-                    http_proxy =
-                        System.getProperty("com.sun.cdc.io.http.proxy");
+                String http_proxy =
+                       System.getProperty("platform.browser.http.proxy");
+                if (http_proxy == null)
+                {
+                    String profileTemp =
+                           System.getProperty("microedition.profiles");
+                    if (profileTemp != null && profileTemp.indexOf("MIDP") != -1)
+                    {
+                        // We want to look for a MIDP property specifying proxies.
+                        http_proxy =
+                                   System.getProperty("com.sun.midp.io.http.proxy");
+                    }
+                    else
+                    {
+                        // Default to CDC
+                        http_proxy =
+                            System.getProperty("com.sun.cdc.io.http.proxy");
+                    }
                 }
                 parseProxy(http_proxy);
                 return null;
@@ -1047,6 +1058,31 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                 -1 == origUserAgentValue.indexOf(platformUserAgent)) {
             reqProperties.put("User-Agent",
                     origUserAgentValue + " " + platformUserAgent);
+        }
+
+        String origWapProfileValue = getRequestProperty("x-wap-profile");
+        if (origWapProfileValue == null)
+        {
+            origWapProfileValue = "";
+        }
+        if (platformWapProfile != null &&
+                -1 == origWapProfileValue.indexOf(platformWapProfile))
+        {
+            reqProperties.put("x-wap-profile", platformWapProfile);
+        }
+
+        String platformNetworkType = (String)AccessController.doPrivileged(
+            new sun.security.action.GetPropertyAction(
+            "platform.browser.network.type", null));
+        String origNetworkTypeValue = getRequestProperty("network-type");
+        if (origNetworkTypeValue == null)
+        {
+            origNetworkTypeValue = "";
+        }
+        if (platformNetworkType != null &&
+                -1 == origNetworkTypeValue.indexOf(platformNetworkType))
+        {
+            reqProperties.put("network-type", platformNetworkType);
         }
 
         sendRequest();
