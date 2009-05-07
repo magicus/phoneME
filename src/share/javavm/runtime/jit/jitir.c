@@ -6830,7 +6830,8 @@ translateRange(CVMJITCompilationContext* con,
 
 	/* Used to be Lossy mode: We now rely on quicken.c to 
          * do the right thing based on runtime decisions.
-         * Romized code has quickened opcode hence the check.
+         * Romized code has quickened opcode hence the check for 
+         * !CVMcbIsInROM().
 	 * Quickened opcodes from opc_getfield and opc_getfield.
 	 * field index is embedded in the instruction.
 	 */

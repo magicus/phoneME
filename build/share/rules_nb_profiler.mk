@@ -108,3 +108,6 @@ $(CVM_NB_PROFILER_OBJDIR)/%.o: %.c
 $(CVM_NB_PROFILER_OBJDIR)/%.o: %.S
 	@echo "... $@"
 	$(SO_ASM_CMD)
+
+# post process...
+#$ unzip -l jfluid-server-cvm.jar | fgrep server | awk '{print $4}' | sed -e 's|/|.|g' | sed 's|.class||' > MIDPPermittedClasses.txt

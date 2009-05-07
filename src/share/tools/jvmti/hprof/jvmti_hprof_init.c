@@ -1935,8 +1935,7 @@ lookup_library_symbol(void *library, char **symbols, int nsymbols)
 /* ------------------------------------------------------------------- */
 /* The OnLoad interface */
 JNIEXPORT jint JNICALL
-Agent_OnLoad
-(JavaVM *vm, char *options, void *reserved)
+Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 {
     /* See if it's already loaded */
     if ( gdata!=NULL && gdata->isLoaded==JNI_TRUE ) {
@@ -2053,8 +2052,7 @@ Agent_OnLoad
     return JNI_OK;
 }
 JNIEXPORT void JNICALL 
-Agent_OnUnload
-(JavaVM *vm)
+Agent_OnUnload(JavaVM *vm)
 {
     Stack *stack;
     

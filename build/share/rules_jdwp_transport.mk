@@ -30,7 +30,11 @@
 
 tools:: jdwp-dt
 
-jdwp_dt_build_list = $(CVM_JDWP_DT_BUILDDIRS) $(CVM_JDWP_DT_LIB)
+ifeq ($(CVM_JVMTI), true)
+    jdwp_dt_build_list = $(CVM_JDWP_DT_BUILDDIRS) $(CVM_JDWP_DT_LIB)
+else
+    jdwp_dt_build_list =
+endif
 
 jdwp-dt: $(jdwp_dt_build_list)
 

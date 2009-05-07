@@ -5459,6 +5459,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	CVMID_freeGlobalRoot(ee, newClassRoot);
         free(className);
         className = NULL;
+	node->redefineCb = NULL;
     }
     for (i = 0; i < classCount && classes[i] != NULL; i++) {
         CVMClassBlockData **oldCBDataPtr;
@@ -5472,20 +5473,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	newKlass = classes[i];
 	newcb = CVMjvmtiClassRef2ClassBlock(ee, newKlass);
 	className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
-	/* 
-	 * This class's old methods  may have quickened bytecodes with
-	 * resolved entries.  Some stack frames will continue to execute
-	 * these old bytecodes so the constant pool needs to be updated.
-	 * Go through our cp and resolve all entries.  We should be able to
-	 * resolve at least as many entries as the original since all the
-	 * resolved classes must have been loaded to have been resolved
-	 * already.
-	 */
-	node->redefineCb = newcb;
-	CVMcpResolveCbEntriesWithoutClassLoading(ee, newcb);
 	node->redefineCb = NULL;
-	cpFixup.oldcb = oldcb;
-	cpFixup.newcb = newcb;
 	/*
 	 * Fixup all constant pools in other classes that point back to us 
 	 * as well as method table entries
@@ -5499,6 +5487,8 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
         CVM_THREAD_LOCK(ee);
         CVMD_gcBecomeSafeAll(ee);
         CVMjvmtiSetGCOwner(CVM_TRUE);
+	cpFixup.oldcb = oldcb;
+	cpFixup.newcb = newcb;
 
 	CVMclassIterateDynamicallyLoadedClasses(ee, fixupCallback, &cpFixup);
 	/* If we end up doing system classes then use this one */

@@ -489,10 +489,8 @@ ifeq ($(USE_CDC_COM),true)
 endif
 ifneq ($(CVM_TOOLS_BUILD),true)
 ifeq ($(CVM_STATICLINK_TOOLS),true)
-# Include the makefiles for tool libraries to setup LINKCVM_LIBS
+# Include the makefiles for tool libraries to setup CVM_STATIC_TOOL_LIBS
 # dependencies for linking the executable statically:
-# NOTE: For jcov and hprof, the platform specific makefiles need to be
-#       included first.
 ifeq ($(CVM_JVMPI),true)
 -include $(CDC_DIR)/build/share/defs_jcov.mk
 -include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jcov.mk

@@ -826,13 +826,13 @@ struct CVMJvmtiExecEnv {
     (CVMjvmtiIsEnabled() && CVMjvmtiDebugEventsEnabled(ee_) &&		\
      ((CVMglobals.jvmti.statics.context->				\
        envEventEnable.eventEnabled.enabledBits &			\
-       (((jlong)1) << CVMjvmtiEvent2EventBit(eventType_))) != 0))
+       (((jlong)1) << CVMjvmtiEvent2EventBit(eventType_)))) != 0)
 
 #define CVMjvmtiThreadEventEnabled(ee_, eventType_)			\
     (((ee_) != NULL) && CVMjvmtiIsEnabled() &&                          \
      CVMjvmtiDebugEventsEnabled(ee_) &&                                 \
      ((CVMjvmtiEventEnabled(ee_).enabledBits &                          \
-       (((jlong)1) << CVMjvmtiEvent2EventBit(eventType_))) != 0))
+       (((jlong)1) << CVMjvmtiEvent2EventBit(eventType_)))) != 0)
 
 
 #define CVMJVMTI_CHECK_PHASE(x) {	     \

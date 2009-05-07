@@ -75,6 +75,7 @@
 #define CALL_HELPER_AND_PASS_EE(HELPER)					\
 	mov	a1,  sp ;						\
 	ldr	a2,  [sp,  #OFFSET_CVMCCExecEnv_ee] ;			\
+	str     JSP, [JFP, #OFFSET_CVMFrame_topOfStack] ;               \
         str	lr,  [JFP, #OFFSET_CVMCompiledFrame_PC] ;		\
         str     JFP, [a2, #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame] ; \
 	BRANCH_TO_VM_FUNCTION(HELPER)
@@ -85,6 +86,7 @@
 	mov	a1,  sp
 	ldr	a2,  [sp,  #OFFSET_CVMCCExecEnv_ee]
         str	lr,  [JFP, #OFFSET_CVMCompiledFrame_PC]
+	str     JSP, [JFP, #OFFSET_CVMFrame_topOfStack]
         str     JFP, [a2, #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame]
 	BRANCH_TO_VM_FUNCTION($HELPER)
 	MEND
@@ -103,6 +105,7 @@
 #define CALL_HELPER_AND_PASS_CACHE_ADDR(HELPER)				\
 	ldr	a1,  [sp,  #OFFSET_CVMCCExecEnv_ee] ;			\
         str	lr,  [JFP, #OFFSET_CVMCompiledFrame_PC] ;		\
+	str     JSP, [JFP, #OFFSET_CVMFrame_topOfStack] ;               \
         str     JFP, [a1, #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame] ; \
 	mov	a1,  sp ;						\
 	BRANCH_TO_VM_FUNCTION(HELPER)
@@ -112,6 +115,7 @@
 	IMPORT $HELPER
 	ldr	a1,  [sp,  #OFFSET_CVMCCExecEnv_ee]
         str	lr,  [JFP, #OFFSET_CVMCompiledFrame_PC]
+	str     JSP, [JFP, #OFFSET_CVMFrame_topOfStack]
         str     JFP, [a1, #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame]
 	mov	a1,  sp
 	BRANCH_TO_VM_FUNCTION($HELPER)

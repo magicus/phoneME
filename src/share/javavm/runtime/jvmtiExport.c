@@ -468,6 +468,17 @@ CVMClassBlock* CVMjvmtiGetCurrentRedefinedClass(CVMExecEnv *ee)
     return node->oldCb;
 }
 
+CVMBool
+CVMjvmtiClassBeingRedefined(CVMExecEnv *ee, CVMClassBlock *cb)
+{
+    CVMJvmtiThreadNode *node;
+    if (CVMjvmtiIsEnabled()) {
+	node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
+	return node == NULL ? CVM_FALSE : (node->redefineCb == cb);
+    }
+    return CVM_FALSE;
+}
+
 /*
  * These functions maintain the linked list of currently running threads. 
  */
@@ -2188,17 +2199,6 @@ CVMjvmtiDeallocate(unsigned char *mem)
     jvmtienv = &context->jvmtiExternal;
     (*jvmtienv)->Deallocate(jvmtienv, mem);
     return JVMTI_ERROR_NONE;
-}
-
-CVMBool
-CVMjvmtiClassBeingRedefined(CVMExecEnv *ee, CVMClassBlock *cb)
-{
-    CVMJvmtiThreadNode *node;
-    if (CVMjvmtiIsEnabled()) {
-	node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
-	return node == NULL ? CVM_FALSE : (node->redefineCb == cb);
-    }
-    return CVM_FALSE;
 }
 
 static CVMJvmtiLockInfo *

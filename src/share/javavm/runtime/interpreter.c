@@ -3053,6 +3053,9 @@ CVMthreadSuspendConsistentRelease(CVMExecEnv* ee)
 static void*
 CVMfindBuiltinEntry(const char* name)
 {
+    /* Some platforms do not support shared libraries in any form hence we
+     * removed this assert.
+     */
     /*    CVMassert(CVMglobals.cvmDynHandle != NULL); */
     return CVMdynlinkSym(CVMglobals.cvmDynHandle, name);
 }
