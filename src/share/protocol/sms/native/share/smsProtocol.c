@@ -69,6 +69,13 @@
 #include <jsr120_jumpdriver.h>
 #include <JUMPEvents.h>
 #endif
+#define FIX_ENABLE_JAVACALL_SMS_NOTIFIER 
+
+#ifdef FIX_ENABLE_JAVACALL_SMS_NOTIFIER 
+#define JSR120_EVENT_QUEUE_ID 120
+#endif
+
+
 #endif
 
 #include <app_package.h>
@@ -407,6 +414,9 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_receive0) {
     /* The midlet suite name for this connection. */
     AppIdType msid = UNUSED_APP_ID;
     jboolean isOpen;
+#ifdef FIX_ENABLE_JAVACALL_SMS_NOTIFIER            
+    int len;    
+#endif 
 
     KNI_StartHandles(6);
 
@@ -438,9 +448,24 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_receive0) {
                     midp_thread_wait(WMA_SMS_READ_SIGNAL, handle, NULL);
 #else
         do {
+#ifdef FIX_ENABLE_JAVACALL_SMS_NOTIFIER            
+            static SmsMessage e;
+            CVMD_gcSafeExec(_ee, {
+               javacall_event_receive_cvm(JSR120_EVENT_QUEUE_ID,
+                   (unsigned char*)&e, sizeof(e), &len);
+            });               
+            jsr120_sms_pool_add_msg(&e);
+
+
+            if (sizeof(SmsMessage) != len) {
+                break;
+            }
+#else
             CVMD_gcSafeExec(_ee, {
                 jsr120_wait_for_signal(handle, WMA_SMS_READ_SIGNAL);
             });
+#endif
+
             psmsData = jsr120_sms_pool_peek_next_msg((jchar)port);
             isOpen = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
         } while (psmsData == NULL && isOpen);
