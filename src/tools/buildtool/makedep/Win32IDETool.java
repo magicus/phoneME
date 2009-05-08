@@ -1323,6 +1323,7 @@ class VC6VMProject extends VC6Project {
     Vector getBaseCppDefines(IDEProjectConfig config) {
         Vector v = new Vector();
         v.addElement("WIN32");
+        v.addElement("_CRT_SECURE_NO_WARNINGS");
 
         if (config.isDebug()) {
             v.addElement("DEBUG");

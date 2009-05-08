@@ -655,7 +655,6 @@ if( UseMethodExecutionTrace && _real_time_has_ticked
     }
   }
 #endif
-
   st->print_cr("* Sampling interval end\n");
   JVM::start_sampling_interval();
 }

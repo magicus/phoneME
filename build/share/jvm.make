@@ -892,10 +892,7 @@ CPP_DEF_FLAGS_debug     = -D_DEBUG -DAZZERT
 CPP_DEF_FLAGS_release   =
 CPP_DEF_FLAGS_product   = -DPRODUCT
 
-ifeq ($(USE_VS2005), true)
-CPP_DEF_FLAGS          += -D_CRT_SECURE_NO_DEPRECATE
-endif
-
+CPP_DEF_FLAGS          += -D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE
 CPP_DEF_FLAGS          += -DWIN32 -D_WINDOWS
 CPP_DEF_FLAGS          += $(CPP_DEF_FLAGS_$(BUILD))
 CPP_DEF_FLAGS          += -W3 -nologo  \
