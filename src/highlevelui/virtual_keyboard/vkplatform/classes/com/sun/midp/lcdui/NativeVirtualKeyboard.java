@@ -113,7 +113,7 @@ public class NativeVirtualKeyboard {
         }
 
         synchronized (LOCK) {
-            String res = editTextEdit0(text, maxChars, modes, constraint);
+            String res = editText0(text, maxChars, modes, constraint);
             if (null == res) {
                 // some internal error
                 throw new InterruptedException();
@@ -123,6 +123,6 @@ public class NativeVirtualKeyboard {
         }
     }
 
-    private static native String editTextEdit0(
+    private static native String editText0(
             String text, int maxChars, int modes, int constraint);
 }
