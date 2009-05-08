@@ -161,8 +161,7 @@ CVMjvmtiMbConstantPool(CVMMethodBlock *mb)
 }
 
 void
-CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMClassBlock *oldcb,
-                       CVMClassBlock* newcb, CVMConstantPool *cp)
+CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb)
 {
     CVMExecEnv *ee = CVMgetEE();
 

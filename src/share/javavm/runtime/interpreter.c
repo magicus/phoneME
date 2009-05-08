@@ -3056,7 +3056,7 @@ CVMfindBuiltinEntry(const char* name)
     /* Some platforms do not support shared libraries in any form hence we
      * removed this assert.
      */
-    /*    CVMassert(CVMglobals.cvmDynHandle != NULL); */
+    CVMassert(CVMglobals.cvmDynHandle != NULL);
     return CVMdynlinkSym(CVMglobals.cvmDynHandle, name);
 }
 

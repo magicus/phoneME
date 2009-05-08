@@ -704,7 +704,6 @@ $(J2ME_CLASSLIB):: $(JSROP_JARS) $(JSROP_AGENT_JARS)
 $(J2ME_CLASSLIB):: headers $(CVM_ROMJAVA_LIST)
 ifeq ($(CVM_STATICLINK_TOOLS),true)
 $(J2ME_CLASSLIB):: tools
-#$(CVM_STATIC_TOOL_DEPS)
 endif
 $(J2ME_CLASSLIB):: $(CLASSLIB_DEPS)
 $(J2ME_CLASSLIB):: aotdeps
@@ -1208,8 +1207,6 @@ endif
 ###########################################################
 $(CVM_DERIVEDROOT)/classes/sun/misc/$(MIDP_PKG_CHECKER):
 	@echo "... $@"
-	@echo "--- $(ROMGEN_INCLUDE_PATHS)"
-	@echo "XXX $(ROMGEN_CFG_FILES)"
 	$(AT)$(JAVAC_CMD) -d $(CVM_MISC_TOOLS_CLASSPATH) \
 		$(CVM_MISC_TOOLS_SRCDIR)/RomConfProcessor/RomConfProcessor.java
 	$(AT)$(CVM_JAVA) -classpath $(CVM_MISC_TOOLS_CLASSPATH) \

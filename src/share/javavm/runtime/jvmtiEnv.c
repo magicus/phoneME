@@ -5536,8 +5536,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	    CVMmbClassBlock(newmb) = oldcb;
 	    CVMmbClassBlockInRange(newmb) = oldcb;
             CVMmbClassBlockInRange(oldmb) = newcb;
-            CVMjvmtiMarkAsObsolete(oldmb, oldcb, newcb,
-                                   CVMcbConstantPool(oldcb));
+            CVMjvmtiMarkAsObsolete(oldmb);
 	}
         oldMethods = CVMcbMethods(oldcb);
 	CVMcbMethods(oldcb) = CVMcbMethods(newcb);

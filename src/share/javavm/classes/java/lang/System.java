@@ -40,7 +40,6 @@ import sun.security.util.SecurityConstants;
 import com.sun.cdc.config.PackageManager;
 import com.sun.cdc.config.DynamicProperties;
 import com.sun.cdc.config.PropertyProvider;
-import sun.security.action.GetPropertyAction;
 
 /**
  * The <code>System</code> class contains several useful class fields
@@ -824,9 +823,7 @@ public final class System {
      * @see     java.lang.Runtime#gc()
      */
     public static void gc() {
-	String prop = (String)AccessController.doPrivileged(
-	    new GetPropertyAction("sun.misc.fullGC"));
-        if (prop == null && sun.misc.CVM.callerIsMidlet()) {
+        if (sun.misc.CVM.callerIsMidlet()) {
             sun.misc.CVM.gc();
         } else {
             Runtime.getRuntime().gc();

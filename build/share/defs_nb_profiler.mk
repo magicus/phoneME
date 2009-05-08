@@ -70,8 +70,7 @@ CVM_NB_PROFILER_SHAREOBJS += \
 	GC.o \
 	Threads.o \
 	Stacks.o \
-	common_functions.o \
-	common_functions_md.o
+	common_functions.o
 
 
 CVM_NB_PROFILER_OBJECTS0 = $(CVM_NB_PROFILER_SHAREOBJS) $(CVM_NB_PROFILER_TARGETOBJS)

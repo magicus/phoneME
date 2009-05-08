@@ -71,7 +71,6 @@ endif
 #
 CVM_CRW_SHAREOBJS += \
 	java_crw_demo.o \
-	java_crw_demo_md.o
 
 CVM_CRW_OBJECTS0 = $(CVM_CRW_SHAREOBJS) $(CVM_CRW_TARGETOBJS)
 CVM_CRW_OBJECTS  = $(patsubst %.o,$(CVM_CRW_OBJDIR)/%.o,$(CVM_CRW_OBJECTS0))
