@@ -233,9 +233,11 @@ BUILDDIR_PATTERNS += \
 	top.mk \
 	defs.mk \
 	rules.mk \
-	jdwp*.mk \
-	jvmti*.mk \
-	hprof.mk
+	*_jdwp*.mk \
+	*_jvmti*.mk \
+	*_hprof.mk \
+	*_jcov.mk \
+	*_nb_profiler.mk
 
 SRCDIR_PATTERNS += \
 	javavm
