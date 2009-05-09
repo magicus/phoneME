@@ -681,6 +681,10 @@ public class Display {
     Display(Object theOwner) {
 	this(theOwner, displayDeviceContainer.getPrimaryDisplayDevice());
     }
+
+    private boolean initial_orientation = false;
+    private boolean current_orientation = false;
+    private boolean restore_orientation = false;
     
     /**
     * Release any resources, such as threads, which migth refer
@@ -748,6 +752,7 @@ public class Display {
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     WIDTH, HEIGHT,
                              gciScreenWidget.getDrawingSurface());
+        initial_orientation = (WIDTH > HEIGHT);
 
         // #else
 	width = displayDevice.getWidth();
@@ -755,8 +760,10 @@ public class Display {
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     width,
                                                     height);
+        initial_orientation = (width > height);
         // #endif ENABLE_GCI
-
+        current_orientation = initial_orientation;
+        restore_orientation = initial_orientation;
         /**
          * Sets this Display as creator of screen Graphics instance to
          * provide internal Graphics users with extended information
@@ -3670,7 +3677,8 @@ public class Display {
                 // #else
                 // TBD: not implemented for GCI yet
                 // #endif ENABLE_GCI
-                
+                current_orientation = Display.this.width > Display.this.height;
+                System.out.println("CURRENT ORIENTATION STATUS is " + current_orientation);
                 screenGraphics.setDimensions(Display.this.width, Display.this.height);
             }
             // #ifdef ENABLE_CHAMELEON
@@ -3947,6 +3955,10 @@ public class Display {
 
             } // synchronized
 
+            if (current_orientation != restore_orientation) {
+                java.lang.System.out.println("handleDisplayForegroundNotifyEvent: ROTATE");
+                consumer.handleRotationEvent();
+            }
 
             // SYNC NOTE: The implementation of dsPaint() could call
             // out to MIDlet's paint() function. So we have to call it
@@ -3974,6 +3986,11 @@ public class Display {
         public void handleDisplayBackgroundNotifyEvent() {
             // A copy of current LF object
             DisplayableLF currentCopy;
+                if (current_orientation != initial_orientation) {
+                    restore_orientation = current_orientation;
+                    java.lang.System.out.println("handleDisplayBackgroundNotifyEvent: ROTATE");
+                    consumer.handleRotationEvent();
+                }
 
             synchronized (LCDUILock) {
                 if (!hasForeground) {
