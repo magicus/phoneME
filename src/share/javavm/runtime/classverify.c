@@ -115,7 +115,7 @@ CVMloaderNeedsVerify(CVMExecEnv* ee, CVMClassLoaderICell* loader,
 }
 
 CVMBool
-CVMclassVerify(CVMExecEnv* ee, CVMClassBlock* cb)
+CVMclassVerify(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine)
 {
 #ifdef CVM_TRUSTED_CLASSLOADERS	
     CVMcbSetRuntimeFlag(cb, VERIFIED);
@@ -167,7 +167,7 @@ CVMclassVerify(CVMExecEnv* ee, CVMClassBlock* cb)
         char          message[256];
 	message[0] = 0;
 	result = 
-	    VerifyClass(ee, cb, message, sizeof(message));
+	    VerifyClass(ee, cb, message, sizeof(message), isRedefine);
 	if (!result) {
 	    if (!CVMexceptionOccurred(ee)) {
 		CVMthrowVerifyError(ee, "%s", message);

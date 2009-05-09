@@ -124,16 +124,30 @@ static CVMJvmtiMethodNode *getNode(CVMMethodBlock *mb)
 CVMBool
 CVMjvmtiMbIsObsoleteX(CVMMethodBlock *mb)
 {
+    return ((CVMmbIsJava(mb)) && CVMjmdIs(CVMmbJmd(mb), OBSOLETE));
+#if 0
     CVMJvmtiMethodNode *node;
     node = getNode(mb);
     if (node == NULL) {
 	return CVM_FALSE;
     }
     return node->isObsolete;
+#endif
 }
 
 CVMConstantPool *
-CVMjvmtiMbConstantPool(CVMMethodBlock *mb) {
+CVMjvmtiMbConstantPool(CVMMethodBlock *mb)
+{
+#if 0
+    CVMClassBlock *oldcb = CVMmbClassBlock(mb);
+
+    CVMassert(CVMcbOldData(oldcb) != NULL);
+    CVMassert(CVMcbOldData(oldcb)->oldCb != NULL);
+    return CVMcbConstantPool(CVMOldData(oldcb)->oldCb);
+#endif
+    return CVMcbConstantPool(CVMmbClassBlock(mb));
+
+#if 0
     CVMJvmtiMethodNode *node;
     jint slot;
     slot = methodHash((CVMUint32)mb);
@@ -143,11 +157,20 @@ CVMjvmtiMbConstantPool(CVMMethodBlock *mb) {
     }
     CVMassert(node->isObsolete);
     return node->cp;
+#endif
 }
 
 void
-CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMConstantPool *cp)
+CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb)
 {
+    CVMExecEnv *ee = CVMgetEE();
+
+    JVMTI_LOCK(ee);
+    if (CVMmbIsJava(oldmb)) {
+        CVMjmdFlags(CVMmbJmd(oldmb)) |= CVM_JMD_OBSOLETE;
+    }
+
+#if 0
     CVMJvmtiMethodNode *node;
     CVMExecEnv *ee = CVMgetEE();
     jint slot;
@@ -167,6 +190,7 @@ CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMConstantPool *cp)
     node->cp = cp;
     node->mb = oldmb;
     node->isObsolete = CVM_TRUE;
+#endif
     JVMTI_UNLOCK(ee);
 }
 
@@ -443,6 +467,17 @@ CVMClassBlock* CVMjvmtiGetCurrentRedefinedClass(CVMExecEnv *ee)
     return node->oldCb;
 }
 
+CVMBool
+CVMjvmtiClassBeingRedefined(CVMExecEnv *ee, CVMClassBlock *cb)
+{
+    CVMJvmtiThreadNode *node;
+    if (CVMjvmtiIsEnabled()) {
+	node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
+	return node == NULL ? CVM_FALSE : (node->redefineCb == cb);
+    }
+    return CVM_FALSE;
+}
+
 /*
  * These functions maintain the linked list of currently running threads. 
  */
@@ -457,10 +492,18 @@ CVMjvmtiFindThread(CVMExecEnv* ee, CVMObjectICell* thread)
     /* cast away volatility */
     node = (CVMJvmtiThreadNode *)CVMglobals.jvmti.statics.threadList;  
     while (node != NULL) {
-	CVMID_icellSameObject(ee, node->thread, thread, thrEq);
-	if (thrEq) {
-	    break;
-	}
+        if (CVMjvmtiIsSafeToAccessDirectObject(ee)) {
+            CVMObject* directObj1_ = CVMjvmtiGetICellDirect(ee, node->thread);
+            CVMObject* directObj2_ = CVMjvmtiGetICellDirect(ee, thread);
+            if (directObj1_ == directObj2_) {
+                break;
+            }
+        } else {
+            CVMID_icellSameObject(ee, node->thread, thread, thrEq);
+            if (thrEq) {
+                break;
+            }
+        }
 	node = node->next;
     }
     JVMTI_UNLOCK(ee);
@@ -1943,12 +1986,16 @@ void CVMjvmtiPostMonitorContendedEnterEvent(CVMExecEnv *ee,
     if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTER)) {
 	return;
     }
+    CVMjvmtiEventTypeDisable(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTER);
+
     context = GLOBAL_ENV;
     if (context != NULL) {
 	callback = context->eventCallbacks.MonitorContendedEnter;
 	if (callback != NULL) {
 	    CVMObjMonitor *mon = CVMcastProfiledMonitor2ObjMonitor(pm);
 	    if ((*env)->PushLocalFrame(env, 2) < 0) {
+                CVMjvmtiEventTypeEnable(ee,
+                                         JVMTI_EVENT_MONITOR_CONTENDED_ENTER);
 		return;
 	    }
 	    CVMID_localrootBegin(ee); {
@@ -1965,6 +2012,7 @@ void CVMjvmtiPostMonitorContendedEnterEvent(CVMExecEnv *ee,
 	    (*env)->PopLocalFrame(env, 0);
 	}
     }
+    CVMjvmtiEventTypeEnable(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTER);
 }
 
 /* Purpose: Posts a  JVMTI_EVENT_MONITOR_CONTENDED_ENTERED event. */
@@ -1984,13 +2032,16 @@ void CVMjvmtiPostMonitorContendedEnteredEvent(CVMExecEnv *ee,
     if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTERED)) {
 	return;
     }
+    CVMjvmtiEventTypeDisable(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTERED);
     context = GLOBAL_ENV;
     if (context != NULL) {
 	callback = context->eventCallbacks.MonitorContendedEntered;
 	if (callback != NULL) {
 	    CVMObjMonitor *mon = CVMcastProfiledMonitor2ObjMonitor(pm);
 	    if ((*env)->PushLocalFrame(env, 2) < 0) {
-		return;
+                CVMjvmtiEventTypeEnable(ee,
+                                        JVMTI_EVENT_MONITOR_CONTENDED_ENTERED);
+                return;
 	    }
 	    CVMID_localrootBegin(ee); {
 		CVMID_localrootDeclare(CVMObjectICell, tempObj);
@@ -2005,6 +2056,7 @@ void CVMjvmtiPostMonitorContendedEnteredEvent(CVMExecEnv *ee,
 	    (*env)->PopLocalFrame(env, 0);
 	}
     }
+    CVMjvmtiEventTypeEnable(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTERED);
 }
 
 /* Purpose: Posts a JVMTI_EVENT_MONITOR_WAIT_EVENT */
@@ -2023,11 +2075,13 @@ void CVMjvmtiPostMonitorWaitEvent(CVMExecEnv *ee,
     if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_MONITOR_WAIT)) {
 	return;
     }
+    CVMjvmtiEventTypeDisable(ee, JVMTI_EVENT_MONITOR_WAIT);
     context = GLOBAL_ENV;
     if (context != NULL) {
 	callback = context->eventCallbacks.MonitorWait;
 	if (callback != NULL) {
 	    if ((*env)->PushLocalFrame(env, 2) < 0) {
+                CVMjvmtiEventTypeEnable(ee, JVMTI_EVENT_MONITOR_WAIT);
 		return;
 	    }
 	    (*callback)(&context->jvmtiExternal, env,
@@ -2036,6 +2090,7 @@ void CVMjvmtiPostMonitorWaitEvent(CVMExecEnv *ee,
 	    (*env)->PopLocalFrame(env, 0);
 	}
     }
+    CVMjvmtiEventTypeEnable(ee, JVMTI_EVENT_MONITOR_WAIT);
 }
 
 /* Purpose: Posts a JVMTI_EVENT_MONITOR_WAITED_EVENT */
@@ -2054,11 +2109,13 @@ void CVMjvmtiPostMonitorWaitedEvent(CVMExecEnv *ee,
     if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_MONITOR_WAITED)) {
 	return;
     }
+    CVMjvmtiEventTypeDisable(ee, JVMTI_EVENT_MONITOR_WAITED);
     context = GLOBAL_ENV;
     if (context != NULL) {
 	callback = context->eventCallbacks.MonitorWaited;
 	if (callback != NULL) {
 	    if ((*env)->PushLocalFrame(env, 2) < 0) {
+                CVMjvmtiEventTypeEnable(ee, JVMTI_EVENT_MONITOR_WAITED);
 		return;
 	    }
 	    (*callback)(&context->jvmtiExternal, env,
@@ -2067,6 +2124,7 @@ void CVMjvmtiPostMonitorWaitedEvent(CVMExecEnv *ee,
 	    (*env)->PopLocalFrame(env, 0);
 	}
     }
+    CVMjvmtiEventTypeEnable(ee, JVMTI_EVENT_MONITOR_WAITED);
 }
 
 void CVMjvmtiPostObjectFreeEvent(CVMObject *obj)
@@ -2140,17 +2198,6 @@ CVMjvmtiDeallocate(unsigned char *mem)
     jvmtienv = &context->jvmtiExternal;
     (*jvmtienv)->Deallocate(jvmtienv, mem);
     return JVMTI_ERROR_NONE;
-}
-
-CVMBool
-CVMjvmtiClassBeingRedefined(CVMExecEnv *ee, CVMClassBlock *cb)
-{
-    CVMJvmtiThreadNode *node;
-    if (CVMjvmtiIsEnabled()) {
-	node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
-	return node == NULL ? CVM_FALSE : (node->redefineCb == cb);
-    }
-    return CVM_FALSE;
 }
 
 static CVMJvmtiLockInfo *

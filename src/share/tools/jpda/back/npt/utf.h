@@ -31,10 +31,8 @@
 #ifndef  _UTF_H
 #define _UTF_H
 
-#include <stdio.h>
-
-#include "jni.h"
 #include "utf_md.h"
+#include "jni.h"
 
 /* Error and assert macros */
 #define UTF_ERROR(m) utfError(__FILE__, __LINE__,  m)

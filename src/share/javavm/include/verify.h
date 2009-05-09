@@ -65,7 +65,8 @@ jboolean
 VerifyClass(CVMExecEnv *ee, 
 	    CVMClassBlock *cb,
 	    char * msg_buf, 
-	    jint buf_len);
+	    jint buf_len,
+            CVMBool isRedefine);
 
 /* 
  * This performs class format checks and fills in size 

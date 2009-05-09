@@ -128,7 +128,7 @@ void** const CVMJITcodeCacheDecompileStart =
     CVM_MIN_GLOBALROOTS_STACKCHUNK_SIZE
 #ifdef CVM_JVMTI
 #define CVM_MAX_WEAK_GLOBALROOTS_STACK_SIZE      \
-    CVM_MAX_GLOBALROOTS_STACK_SIZE * 4
+    CVM_MAX_GLOBALROOTS_STACK_SIZE * 8
 #else
 #define CVM_MAX_WEAK_GLOBALROOTS_STACK_SIZE      \
     CVM_MAX_GLOBALROOTS_STACK_SIZE
@@ -1247,6 +1247,13 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
 	CVMID_freeGlobalRoot(ee, gs->preallocatedStackOverflowError);
     }
 
+#if defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION)
+    if (CVMglobals.suspendCheckerInitialized) {
+	CVMsuspendCheckerDestroy();
+	CVMglobals.suspendCheckerInitialized = CVM_FALSE;
+    }
+#endif
+
     CVMeeSyncDestroyGlobal(ee, gs);
 
     CVMgcDestroyHeap();
@@ -1287,13 +1294,6 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
     CVMgcimplDestroyGlobalState(&gs->gc);
 
     CVMdestroyJNIJavaVM(&gs->javaVM);
-
-#if defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION)
-    if (CVMglobals.suspendCheckerInitialized) {
-	CVMsuspendCheckerDestroy();
-	CVMglobals.suspendCheckerInitialized = CVM_FALSE;
-    }
-#endif
 
     /*
      * Destroy class related data structures

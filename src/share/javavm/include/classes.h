@@ -75,6 +75,17 @@ struct CVMBigGCBitMap {
     CVMAddr           map[1];
 };
 
+#ifdef CVM_JVMTI
+typedef struct CVMClassBlockData CVMClassBlockData;
+struct CVMClassBlockData {
+    CVMClassBlockData *nextCBData;
+    CVMClassBlock *currentCb;  /* Pointer to *old* class block
+                                * It contains *new* methods and new
+                                * constantpool.
+                                */
+};
+#endif
+
 /*
  * CVMClassBlock - The main data structure for storing information about
  * a java class. Unlike some other VM's, this data type is not an instance
@@ -211,6 +222,9 @@ struct CVMClassBlock {
     /* class file version <major_version>.<minor_version> */
     CVMUint16        major_version;
     CVMUint16        minor_version;
+#ifdef CVM_JVMTI
+    CVMClassBlockData*   oldCBData;
+#endif
 };
 
 #ifdef CVM_CLASSLOADING
@@ -313,6 +327,10 @@ struct CVMClassBlock {
     (CVMisArrayObject(obj) ?						\
      CVMcbMethodTableSlot(CVMsystemClass(java_lang_Object), idx) :	\
      CVMcbMethodTableSlot(CVMobjectGetClass(obj), idx))
+#endif
+
+#ifdef CVM_JVMTI
+#define CVMcbOldData(cb)            ((cb)->oldCBData)
 #endif
 
 /* Only the classloader and the above macros should use these macros. */
@@ -1142,6 +1160,10 @@ struct CVMCompiledStackMaps {
 #define CVM_JMD_DID_REWRITE		4
 #define CVM_JMD_STRICT			8
 
+#ifdef CVM_JVMTI
+#define CVM_JMD_OBSOLETE               16
+#endif
+
 /*
  * When the stackmap disambiguator rewrites a Java method, it replaces
  * the entire CVMJavaMethodDescriptor with a newly allocated one. In
@@ -1429,6 +1451,12 @@ enum {
 #define CVM_INIT_CLASSLOADING_FIELDS(cl, pd)
 #endif
 
+#ifdef CVM_JVMTI
+#define CVM_OLD_DATA NULL,
+#else
+#define CVM_OLD_DATA
+#endif
+
 /*
  * Put the string representation of the class in
  */
@@ -1467,7 +1495,8 @@ enum {
 			  CVM_INIT_SOURCEFILENAME(sourceFileName)	\
 			  (CVMMethodBlock**)methodTablePtr,		\
                           (CVMInnerClassesInfo*)innerClassesInfo,	\
-                          0,0}
+                          0,0,                                          \
+                          CVM_OLD_DATA}
 
 #ifdef CVM_METHODBLOCK_HAS_CB
 #define CVM_INIT_METHODBLOCK_CB_FIELD(cb) (CVMClassBlock*)cb,
@@ -1719,7 +1748,7 @@ CVMclassDoClassUnloadingPass2(CVMExecEnv* ee);
 #ifdef CVM_CLASSLOADING
 
 extern CVMBool
-CVMclassVerify(CVMExecEnv* ee, CVMClassBlock* cb);
+CVMclassVerify(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine);
 
 enum { CVM_VERIFY_NONE = 0, CVM_VERIFY_REMOTE, CVM_VERIFY_ALL, CVM_VERIFY_UNRECOGNIZED };
 

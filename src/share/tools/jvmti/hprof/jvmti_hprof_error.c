@@ -72,7 +72,7 @@ setup_signal_handler(int sig)
 {
     /* Only if debug version or debug=y */
     if ( gdata->debug ) {
-        (void)signal(sig, (void(*)(int))(void*)&signal_handler);
+        (void)signal(sig, (void *)(void(*)(int))(void*)&signal_handler);
     }
 }
 

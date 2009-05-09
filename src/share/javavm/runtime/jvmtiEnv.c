@@ -1310,8 +1310,9 @@ jvmti_SuspendThread(jvmtiEnv* jvmtienv,
 	    if (CVMeeThreadIsSuspended(targetEE)) {
 		err = JVMTI_ERROR_THREAD_SUSPENDED;
 	    } else {
+                CVMlocksForThreadSuspendRelease(ee);
 		JVM_SuspendThread(env, (jobject)thread);
-		err = JVMTI_ERROR_NONE;
+		return JVMTI_ERROR_NONE;
 	    }
 	}
 	CVMlocksForThreadSuspendRelease(ee);
@@ -1987,12 +1988,14 @@ jvmti_GetThreadLocalStorage(jvmtiEnv* jvmtienv,
     /* check to see if thread is alive at all */
     err = jthreadToExecEnv(ee, thread, &threadEE);
     if (err != JVMTI_ERROR_NONE) {
+	CVMtraceJVMTI(("JVMTI: thread2execenv error: %d\n", (int)err));
 	return err;
     }
     node = CVMjvmtiFindThread(ee, thread);
     if (node == NULL) {
         node = CVMjvmtiInsertThread(ee, thread);
 	if (node == NULL) {
+            CVMtraceJVMTI(("JVMTI: thread insert error: \n"));
 	    return JVMTI_ERROR_THREAD_NOT_ALIVE;
 	}
     }
@@ -5246,6 +5249,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
     jint threadCount;
     jthread *threads;
     CVMUint16 oldFlags, newFlags;
+    CVMClassBlockData *oldCBData;
 
     CHECK_JVMTI_ENV;
 
@@ -5259,22 +5263,19 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
     }
 
+    CVMtraceJVMTI(("JVMTI: Redefine: Start 0x%x\n", (int)ee));
 
     if (CVMjniPushLocalFrame(env, classCount+1) != JNI_OK) {
 	return JVMTI_ERROR_OUT_OF_MEMORY;
     }
     ALLOC(jvmtienv, CVMint2Long(classCount * sizeof(CVMClassBlock*)),
 	  (unsigned char**)&classes);
-    ACQUIRE_SYS_MUTEXES
-    if ((err = suspendAllThreads(jvmtienv, ee, &threads,
-                                 &threadCount)) != JVMTI_ERROR_NONE) {
-	jvmti_Deallocate(jvmtienv, (unsigned char*)threads);
-	jvmti_Deallocate(jvmtienv, (unsigned char*)classes);
-	CVMjniPopLocalFrame(env, NULL);
-        RELEASE_SYS_MUTEXES
-	return err;
+
+    oldCBData = calloc(sizeof(CVMClassBlockData), 1);
+    if (oldCBData == NULL) {
+        err = JVMTI_ERROR_OUT_OF_MEMORY;
+        goto cleanup;
     }
-    RELEASE_SYS_MUTEXES
 
     node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
     CVMassert(node != NULL);
@@ -5305,6 +5306,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	node->oldCb = oldcb;
         className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
 	loader = CVMcbClassLoader(oldcb);
+        CVMtraceJVMTI(("JVMTI: Redefine: verify %s\n", className));
         res = CVMverifyClassFormat(className,
                                    classDefinitions[i].class_bytes,
                                    classDefinitions[i].class_byte_count,
@@ -5313,6 +5315,9 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
                                    CVM_FALSE,
 #endif
                                    CVM_TRUE);
+        if (res != JVMTI_ERROR_NONE) {
+            CVMtraceJVMTI(("JVMTI: Redefine: verify error %d\n", res));
+        }
 	if (res == -1) { /* nomem */
 	    err = JVMTI_ERROR_OUT_OF_MEMORY;
             goto cleanup;
@@ -5334,6 +5339,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	 * loader is 'NULL' since we don't want Class.java to call
 	 * addClass which would create a reference to the javaInstance
 	 */
+        CVMtraceJVMTI(("JVMTI: Redefine: define\n"));
 	newKlass =
 	    CVMdefineClass(ee,
 			   className,
@@ -5344,6 +5350,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 			   CVM_TRUE);
 	if (newKlass == NULL) {
 	    /* TODO: Not sure at this point how to get appropriate error */
+            CVMtraceJVMTI(("JVMTI: Redefine: define error\n"));
 	    err = JVMTI_ERROR_INVALID_CLASS;
 	    goto cleanup;
 	}
@@ -5374,27 +5381,9 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	node->redefineCb = newcb;
 	(*env)->CallVoidMethod(env, newKlass,
 			   CVMglobals.java_lang_Class_loadSuperClasses);
-	node->redefineCb = NULL;
 	if (CVMexceptionOccurred(ee)) {
 	    err = JVMTI_ERROR_INVALID_CLASS;
 	    goto cleanup;
-	}
-	if (loader != NULL) {
-	    /*
-	     * We don't want the class loader to have a reference to the 
-	     * new class so we make this call to remove it from its cache
-	     */
-	    loaderRemoveClass =
-		(*env)->GetMethodID(env,
-		CVMcbJavaInstance(CVMsystemClass(java_lang_ClassLoader)), 
-		"removeClass", "(Ljava/lang/Class;)V");
-
-	    (*env)->CallVoidMethod(env, loader,
-				   loaderRemoveClass, newKlass);
-	    if (CVMexceptionOccurred(ee)) {
-		err = JVMTI_ERROR_INVALID_CLASS;
-		goto cleanup;
-	    }
 	}
         if ((err = jvmtiCheckSchemas(oldcb, newcb)) != JVMTI_ERROR_NONE) {
             goto cleanup;
@@ -5433,9 +5422,36 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
                 });
                 (*env)->ExceptionClear(env);
             }
-	    CVMjvmtiSetShouldPostAnyThreadEvent(ee, threadBits);
+            CVMjvmtiSetShouldPostAnyThreadEvent(ee, threadBits);
             CVMID_freeGlobalRoot(ee, newClassRoot);
-	    goto cleanup;
+#ifdef CVM_DEBUG
+            if (err == JVMTI_ERROR_FAILS_VERIFICATION) {
+                int fd;
+                CVMUint32 oldFlags;
+                char *baseName;
+                char dbgName[64];
+                baseName = strrchr(className,'/');
+                baseName++;
+                strncpy(dbgName, baseName, 58);
+                strcat(dbgName, ".class");
+                fd = CVMioOpen(dbgName, O_RDWR | O_CREAT | O_TRUNC, 0);
+                if (fd < 0) {
+                    goto cleanup;
+                }
+                CVMioWrite(fd, classDefinitions[i].class_bytes,
+                           classDefinitions[i].class_byte_count);
+                CVMioClose(fd);
+                CVMconsolePrintf("JVMTI: Redefine: VERIFY ERROR in %s\n",
+                                 className);
+                oldFlags = CVMglobals.debugFlags;
+                CVMglobals.debugFlags |= 0x200000;
+                CVMcbClearRuntimeFlag(newcb, ee, VERIFIED);
+                CVMclassVerify(ee, newcb, CVM_TRUE);
+                CVMglobals.debugFlags = oldFlags;
+                (*env)->ExceptionClear(env);
+            }
+#endif
+            goto cleanup;
 	}
 	CVMjvmtiSetShouldPostAnyThreadEvent(ee, threadBits);
 	CVMcbJavaInstance(newcb) = NULL;
@@ -5443,29 +5459,37 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	CVMID_freeGlobalRoot(ee, newClassRoot);
         free(className);
         className = NULL;
+	node->redefineCb = NULL;
     }
     for (i = 0; i < classCount && classes[i] != NULL; i++) {
+        CVMClassBlockData **oldCBDataPtr;
+        CVMMethodArray *oldMethods;
+        CVMMethodBlock **oldMethodTablePtr;
+        CVMConstantPool *oldCp;
+        CVMInt32 oldCpCount;
+
 	klass = classDefinitions[i].klass;
 	oldcb = CVMjvmtiClassRef2ClassBlock(ee, klass);
 	newKlass = classes[i];
 	newcb = CVMjvmtiClassRef2ClassBlock(ee, newKlass);
 	className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
-	/* 
-	 * This class's old methods  may have quickened bytecodes with
-	 * resolved entries.  Some stack frames will continue to execute
-	 * these old bytecodes so the constant pool needs to be updated.
-	 * Go through our cp and resolve all entries.  We should be able to
-	 * resolve at least as many entries as the original since all the
-	 * resolved classes must have been loaded to have been resolved
-	 * already.
-	 */
-	CVMcpResolveCbEntriesWithoutClassLoading(ee, newcb);
-	cpFixup.oldcb = oldcb;
-	cpFixup.newcb = newcb;
+	node->redefineCb = NULL;
 	/*
 	 * Fixup all constant pools in other classes that point back to us 
 	 * as well as method table entries
 	 */
+        /* Roll all threads to safe points. */
+        CVM_NULL_CLASSLOADER_LOCK(ee);
+#ifdef CVM_JIT
+        CVMsysMutexLock(ee, &CVMglobals.jitLock);
+#endif
+        CVMsysMutexLock(ee, &CVMglobals.heapLock);
+        CVM_THREAD_LOCK(ee);
+        CVMD_gcBecomeSafeAll(ee);
+        CVMjvmtiSetGCOwner(CVM_TRUE);
+	cpFixup.oldcb = oldcb;
+	cpFixup.newcb = newcb;
+
 	CVMclassIterateDynamicallyLoadedClasses(ee, fixupCallback, &cpFixup);
 	/* If we end up doing system classes then use this one */
 	/* CVMclassIterateAllClasses(ee, fixupCpCallback, &cpFixup); */
@@ -5476,11 +5500,11 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	char *methodName;
 
 	CVMtraceJVMTI(("JVMTI: Redefine: %s, oldcb: 0x%x, newcb 0x%x, "
-		       "klass 0x%x, 0x%x, oldCP 0x%x, newCP 0x%x\n", 
+		       "klass 0x%x, 0x%x\n", 
 		       className, (int)oldcb, (int)newcb, (int)newKlass,
-		       (int)newKlass->ref_DONT_ACCESS_DIRECTLY,
+		       (int)newKlass->ref_DONT_ACCESS_DIRECTLY));
+	CVMtraceJVMTI(("JVMTI: Redefine: oldCP 0x%x, newCP 0x%x\n", 
 		       CVMcbConstantPool(oldcb), CVMcbConstantPool(newcb)));
-
 	for (j = 0; j < CVMcbMethodCount(oldcb); j++) {
 	    CVMMethodBlock *oldmb = CVMcbMethodSlot(oldcb, j);
 	    CVMMethodBlock *newmb = CVMcbMethodSlot(newcb, j);
@@ -5506,19 +5530,48 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	}
 	}
 #endif
-	CVMsysMutexLock(ee, &CVMglobals.heapLock);
 	for (j = 0; j < CVMcbMethodCount(oldcb); j++) {
 	    CVMMethodBlock *oldmb = CVMcbMethodSlot(oldcb, j);
 	    CVMMethodBlock *newmb = CVMcbMethodSlot(newcb, j);
 	    CVMmbClassBlock(newmb) = oldcb;
 	    CVMmbClassBlockInRange(newmb) = oldcb;
-            CVMjvmtiMarkAsObsolete(oldmb, CVMcbConstantPool(oldcb));
+            CVMmbClassBlockInRange(oldmb) = newcb;
+            CVMjvmtiMarkAsObsolete(oldmb);
 	}
-	CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
+        oldMethods = CVMcbMethods(oldcb);
 	CVMcbMethods(oldcb) = CVMcbMethods(newcb);
+        CVMcbMethods(newcb) = oldMethods;
+        oldMethodTablePtr = CVMcbMethodTablePtr(oldcb);
 	CVMcbMethodTablePtr(oldcb) = CVMcbMethodTablePtr(newcb);
+        CVMcbMethodTablePtr(newcb) = oldMethodTablePtr;
+        oldCp = CVMcbConstantPool(oldcb);
+        oldCpCount = CVMcbConstantPoolCount(oldcb);
 	CVMcbConstantPool(oldcb) = CVMcbConstantPool(newcb);
 	CVMcbConstantPoolCount(oldcb) = CVMcbConstantPoolCount(newcb);
+	CVMcbConstantPool(newcb) = oldCp;
+	CVMcbConstantPoolCount(newcb) = oldCpCount;
+
+        newcb->oldCBData = oldCBData;
+        oldCBData->currentCb = oldcb;
+
+        /* make sure entries in new cp that point to old methods
+         * are fixed up to point to the new methods.  Note that we
+         * pass in oldcb as the cb to fixup AND we swap oldcb and
+         * newcb in the cpFixup structure since we have already 
+         * swapped method arrays above.
+         */
+	cpFixup.oldcb = newcb;
+	cpFixup.newcb = oldcb;
+        fixupCallback(ee, oldcb, &cpFixup);
+
+        CVMjvmtiSetGCOwner(CVM_FALSE);
+        CVMD_gcAllowUnsafeAll(ee);
+        CVM_THREAD_UNLOCK(ee);
+        CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
+#ifdef CVM_JIT
+        CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
+#endif
+        CVM_NULL_CLASSLOADER_UNLOCK(ee);
 #if 0
 	/* NOTE: We don't know if/when old constant pool references and old mb 
 	 * references will go away so we can't just free up the unused space.
@@ -5564,6 +5617,9 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
         className = NULL;
     }
  cleanup:
+    if (err != JVMTI_ERROR_NONE) {
+        CVMtraceJVMTI(("JVMTI: Redefine: cleanup error %d\n", err));
+    }
     if (className != NULL) {
         free(className);
     }
@@ -5571,10 +5627,8 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	node->oldCb = NULL;
 	node->redefineCb = NULL;
     }
-    resumeAllThreads(jvmtienv, ee, threads, threadCount);
     CVMjniPopLocalFrame(env, NULL);
     jvmti_Deallocate(jvmtienv, (unsigned char *)classes);
-    jvmti_Deallocate(jvmtienv, (unsigned char *)threads);
     return err;
 }
 
@@ -7842,6 +7896,9 @@ CVMjvmtiGetInterface(JavaVM *vm, void **penv)
 
     /* Return the jvmtiEnv * ptr: */
     *penv = (void *)&context->jvmtiExternal;
+    CVMjvmtiGetPotentialCapabilities(getCapabilities(context),
+			       getProhibitedCapabilities(context),
+			       &context->currentCapabilities);
 
     return JNI_OK;
 }
@@ -7861,7 +7918,7 @@ static CVMJvmtiContext *CVMjvmtiCreateContext()
 }
 
 /* Destructor for the CVMJvmtiContext. */
-jint CVMjvmtiDestroyContext(CVMJvmtiContext *context)
+int CVMjvmtiDestroyContext(CVMJvmtiContext *context)
 {
     CVMassert(CVMglobals.jvmti.statics.context == context);
     CVMglobals.jvmti.statics.context = NULL;

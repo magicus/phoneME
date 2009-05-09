@@ -184,6 +184,7 @@ CVM_JVMDI               ?= false
 # For backwards compatibility of sorts, we migrate CVM_JVMDI to CVM_JVMTI
 CVM_JVMTI               ?= $(CVM_JVMDI)
 CVM_JVMTI_ROM           ?= $(CVM_JVMTI)
+CVM_JVMTI_IOVEC         ?= false
 
 # We need to check this here because the CVM_JVMTI option overrides many
 # others that follows through CVM_DEBUG:
@@ -197,6 +198,11 @@ endif
         override CVM_THREAD_SUSPENSION = true
 endif
 
+ifeq ($(CVM_JVMTI_IOVEC), true)
+ifneq ($(findstring true,$(CVM_JVMTI)$(CVM_JVMPI)), true)
+$(error CVM_JVMTI must be set to 'true' if CVM_JVMTI_IOVEC is 'true')
+endif
+endif
 
 ifeq ($(CVM_JVMTI_ROM), true)
 ifneq ($(CVM_JVMTI), true)
@@ -703,6 +709,9 @@ ifeq ($(CVM_JVMPI), true)
 else
         override CVM_JVMPI_TRACE_INSTRUCTION = false
 endif
+ifeq ($(CVM_JVMTI_IOVEC), true)
+	CVM_DEFINES      += -DCVM_JVMTI_IOVEC
+endif
 ifeq ($(CVM_JVMPI_TRACE_INSTRUCTION), true)
         override CVM_NO_CODE_COMPACTION = true
         CVM_DEFINES      += -DCVM_JVMPI_TRACE_INSTRUCTION
@@ -830,6 +839,10 @@ ifeq ($(CVM_STATICLINK_LIBS), true)
 	CVM_DEFINES   += -DCVM_STATICLINK_LIBS
 endif
 
+ifeq ($(CVM_STATICLINK_TOOLS), true)
+	CVM_DEFINES   += -DCVM_STATICLINK_TOOLS
+endif
+
 # Keep ant quiet unless a verbose build is requested. Note, you can set
 # CVM_ANT_OPTIONS=-v or CVM_ANT_OPTIONS=-d on the command line to make
 # ant much more verbose.
@@ -886,6 +899,7 @@ CVM_FLAGS += \
 	CVM_AGENTLIB \
 	CVM_JVMTI \
 	CVM_JVMTI_ROM \
+	CVM_JVMTI_IOVEC \
 	CVM_JVMPI \
 	CVM_JVMPI_TRACE_INSTRUCTION \
 	CVM_THREAD_SUSPENSION \
@@ -894,6 +908,7 @@ CVM_FLAGS += \
 	CVM_REFLECT \
 	CVM_SERIALIZATION \
 	CVM_STATICLINK_LIBS \
+	CVM_STATICLINK_TOOLS \
 	CVM_DYNAMIC_LINKING \
 	CVM_TEST_GC \
 	CVM_TEST_GENERATION_GC \
@@ -983,6 +998,9 @@ CVM_PRELOAD_SET_CLEANUP_ACTION = \
 CVM_STATICLINK_LIBS_CLEANUP_ACTION = \
 	rm -rf $(CVM_LIBDIR) $(CVM_BINDIR)
 
+CVM_STATICLINK_TOOLS_CLEANUP_ACTION = \
+	rm -rf $(CVM_LIBDIR) $(CVM_BINDIR)
+
 CVM_DYNAMIC_LINKING_CLEANUP_ACTION = \
 	rm -f $(CVM_OBJDIR)/jvm.o $(CVM_OBJDIR)/jni_impl.o \
 		$(CVM_OBJDIR)/linker_md.o $(CVM_OBJDIR)/common_exceptions.o
@@ -1032,6 +1050,7 @@ CVM_XRUN_CLEANUP_ACTION			= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_AGENTLIB_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_JVMTI_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_JVMTI_ROM_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_JVMTI_IOVEC_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_JVMPI_CLEANUP_ACTION                = \
         $(CVM_DEFAULT_CLEANUP_ACTION)     \
         $(CVM_DEBUG_CLASSINFO_CLEANUP_ACTION)

@@ -1894,7 +1894,7 @@ load_library(char *name)
     /* The library may be located in different ways, try both, but
      *   if it comes from outside the SDK/jre it isn't ours.
      */
-    getSystemProperty("sun.boot.library.path", &boot_path);
+    JVMTIgetSystemProperty("sun.boot.library.path", &boot_path);
     md_build_library_name(lname, FILENAME_MAX, boot_path, name);
     handle = md_load_library(lname, err_buf, (int)sizeof(err_buf));
     if ( handle == NULL ) {
@@ -1934,8 +1934,7 @@ lookup_library_symbol(void *library, char **symbols, int nsymbols)
 
 /* ------------------------------------------------------------------- */
 /* The OnLoad interface */
-
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 {
     /* See if it's already loaded */
@@ -1974,12 +1973,13 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 	gdata->debug_malloc_lock = createRawMonitor("HPROF debug_malloc lock");
     #endif
 
+    /* Initialize machine dependent code (micro state accounting) */
+    md_init();
+
     parse_options(options);
 
     LOG2("Agent_OnLoad", "Has jvmtiEnv and options parsed");
 
-    /* Initialize machine dependent code (micro state accounting) */
-    md_init();
 
     string_init();	/* Table index values look like: 0x10000000 */
     
@@ -2033,7 +2033,6 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 
     /* Load java_crw_demo library and find function "java_crw_demo" */
     if ( gdata->bci ) {
-
 	/* Load the library or get the handle to it */
 	gdata->java_crw_demo_library = load_library("java_crw_demo"); 
 	{ /* "java_crw_demo" */
@@ -2052,7 +2051,6 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     
     return JNI_OK;
 }
-
 JNIEXPORT void JNICALL 
 Agent_OnUnload(JavaVM *vm)
 {
@@ -2136,7 +2134,6 @@ Agent_OnUnload(JavaVM *vm)
 	md_unload_library(gdata->java_crw_demo_library);
 	gdata->java_crw_demo_library = NULL;
     }
-
     /* You would think you could clear out gdata and set it to NULL, but
      *   turns out that isn't a good idea.  Some of the threads could be
      *   blocked inside the CALLBACK*() macros, where they got blocked up

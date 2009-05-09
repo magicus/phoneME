@@ -37,6 +37,15 @@
 #include "javavm/include/porting/jit/jit.h"
 #include "javavm/include/sync.h"
 
+        /* Monitor enter/exit code may post an event which will
+         * push a JNI local frame on the stack.  Need to have frame->TOS
+         * consistent with JSP
+         */
+#ifdef CVM_JVMTI
+#define FLUSH_TOS	stw     JSP, OFFSET_CVMFrame_topOfStack(JFP)
+#else
+#define FLUSH_TOS
+#endif
 	.section	".text",""
 
 /*
@@ -569,6 +578,7 @@ ENTRY ( CVMCCMruntimeMonitorEnterGlue )
 	# code, then just the following 3 lines are needed.
 	#
 	mflr	r7
+        FLUSH_TOS
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
 #endif
 
@@ -697,6 +707,7 @@ _monenterFastReentryFailed:
 _monenterRecordNotAvailable:
         /* Let C helper do the hard stuff: */
 	mflr	r7
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
 	
 #undef OBJ
@@ -860,6 +871,7 @@ _monenterRecordNotAvailable:
 
         /* Load the ccee.  The obj arg is already loaded. */
 	mflr	r7
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
 
 #undef MICROLOCK
@@ -883,6 +895,7 @@ ENTRY ( CVMCCMruntimeMonitorExitGlue )
 	# code, then just the following 3 lines are needed.
 	#
 	mflr	r7
+        FLUSH_TOS
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
 #endif
 
@@ -1001,6 +1014,7 @@ _monexitFastTryUnlockFoundPrevLockRecord:
 _monexitFastTryUnlockFailed:
         /* Let C helper do the hard stuff: */
 	mflr	r7
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
 
 #undef OBJ
@@ -1016,6 +1030,7 @@ _monexitFastTryUnlockFailed:
 	/* TODO: if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SCHEDLOCK, then
 	 * use CVMschedLock for locking. For now, just defer to C */
 	mflr	r7
+        FLUSH_TOS
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
 #else
         /* CVM_MICROLOCK_SWAP_SPINLOCK version of monitorenter: */
@@ -1175,6 +1190,7 @@ _monexitFastTryUnlockFailed:
         /* Let C helper do the hard stuff: */
         /* Load the ccee.  The obj arg is already loaded. */
 	mflr	r7
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
 
 #undef OBJ

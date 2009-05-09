@@ -1754,17 +1754,6 @@ public abstract class ClassLoader {
     private static Object loadLibrary0(Class fromClass, final File file,
                                        boolean isXrunLibrary)
     {
-        // Check to see if the file exists:
-	Boolean exists = (Boolean)
-	    AccessController.doPrivileged(new PrivilegedAction() {
-		public Object run() {
-		    return new Boolean(file.exists());
-		}
-	    });
-	if (!exists.booleanValue()) {
-	    return null;
-	} 
-
         // Go load the library:
 	String name;
 	try {

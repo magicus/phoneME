@@ -125,6 +125,10 @@
 #define CVMjniNonNullICellPtrFor(jobj) \
     CVMID_NonNullICellPtrFor(jobj)
 
+#ifdef CVM_JVMTI_IOVEC
+static CVMIOVector CVMioFuncs;
+#endif
+
 static CVMUint32
 CVMjniAvailableCapacity(CVMStack* stack, CVMJNIFrame* frame)
 {
@@ -4445,6 +4449,10 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     CVMjvmtiEnterOnloadPhase();
     CVMtimeThreadCpuClockInit(&ee->threadInfo);
 #endif
+
+#ifdef CVM_JVMTI_IOVEC
+    CVMinitIOVector(&CVMioFuncs);
+#endif
     /* Run agents */
     /* Agents run before VM is fully initialized */
 #ifdef CVM_AGENTLIB
@@ -5134,6 +5142,7 @@ CVMjniDetachCurrentThread(JavaVM *vm)
     }
 }
 
+
 static jint JNICALL
 CVMjniGetEnv(JavaVM *vm, void **penv, jint version)
 {
@@ -5154,6 +5163,11 @@ CVMjniGetEnv(JavaVM *vm, void **penv, jint version)
         } else if (version == JVMTI_VERSION_1) {
             return CVMjvmtiGetInterface(vm, penv);
 #endif /* CVM_JVMTI */
+#ifdef CVM_JVMTI_IOVEC
+        } else if (version == JVMIOVEC_VERSION_1) {
+            *penv = (void *)&CVMioFuncs;
+            return JNI_OK;
+#endif
         } else {
 	    *penv = NULL;
 	    return JNI_EVERSION;

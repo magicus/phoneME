@@ -3050,6 +3050,13 @@ isInlinable(CVMJITCompilationContext* con, CVMMethodBlock* targetMb)
     CVMBool iamserver = (CVMglobals.isServer && CVMglobals.clientId <= 0);
 #endif
 
+#ifdef CVM_JVMTI
+    /* reject obsolete methods to make life easier */
+    if (CVMjvmtiMbIsObsolete(targetMb)) {
+	return InlineNotInlinable; 
+    }
+#endif
+
     /*
      * If the caller of this method has the CVMJIT_NEEDS_TO_INLINE flag set,
      * then don't let any of the imposed limits, like
@@ -6830,6 +6837,8 @@ translateRange(CVMJITCompilationContext* con,
 
 	/* Used to be Lossy mode: We now rely on quicken.c to 
          * do the right thing based on runtime decisions.
+         * Romized code has quickened opcode hence the check for 
+         * !CVMcbIsInROM().
 	 * Quickened opcodes from opc_getfield and opc_getfield.
 	 * field index is embedded in the instruction.
 	 */
@@ -6837,7 +6846,7 @@ translateRange(CVMJITCompilationContext* con,
 	case opc_agetfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
 #ifdef CVM_JVMTI
-            if (CVMjvmtiIsEnabled()) {
+            if (CVMjvmtiIsEnabled() && !CVMcbIsInROM(cb)) {
                 goto unimplemented_opcode;
             }
 #endif
@@ -6849,7 +6858,7 @@ translateRange(CVMJITCompilationContext* con,
         case opc_getfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
 #ifdef CVM_JVMTI
-            if (CVMjvmtiIsEnabled()) {
+            if (CVMjvmtiIsEnabled() && !CVMcbIsInROM(cb)) {
                 goto unimplemented_opcode;
             }
 #endif
@@ -6862,7 +6871,7 @@ translateRange(CVMJITCompilationContext* con,
         case opc_getfield2_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
 #ifdef CVM_JVMTI
-            if (CVMjvmtiIsEnabled()) {
+            if (CVMjvmtiIsEnabled() && !CVMcbIsInROM(cb)) {
                 goto unimplemented_opcode;
             }
 #endif
@@ -6875,7 +6884,7 @@ translateRange(CVMJITCompilationContext* con,
 	case opc_aputfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
 #ifdef CVM_JVMTI
-            if (CVMjvmtiIsEnabled()) {
+            if (CVMjvmtiIsEnabled() && !CVMcbIsInROM(cb)) {
                 goto unimplemented_opcode;
             }
 #endif
@@ -6889,7 +6898,7 @@ translateRange(CVMJITCompilationContext* con,
         case opc_putfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
 #ifdef CVM_JVMTI
-            if (CVMjvmtiIsEnabled()) {
+            if (CVMjvmtiIsEnabled() && !CVMcbIsInROM(cb)) {
                 goto unimplemented_opcode;
             }
 #endif
@@ -6902,7 +6911,7 @@ translateRange(CVMJITCompilationContext* con,
         case opc_putfield2_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
 #ifdef CVM_JVMTI
-            if (CVMjvmtiIsEnabled()) {
+            if (CVMjvmtiIsEnabled() && !CVMcbIsInROM(cb)) {
                 goto unimplemented_opcode;
             }
 #endif

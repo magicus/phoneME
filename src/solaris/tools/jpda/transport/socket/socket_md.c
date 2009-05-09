@@ -48,6 +48,12 @@
 #include "sysSocket.h"
 
 int
+dbgsysInit(JavaVM *jvm)
+{
+    return 0;
+}
+
+int
 dbgsysListen(int fd, long count) {
     return listen(fd, count);
 }

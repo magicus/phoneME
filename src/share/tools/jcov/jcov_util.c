@@ -115,7 +115,7 @@ INT32 read4bytes(UINT8 **buf, jint *len, int *err_code) {
 char *readUTF8(UINT8 **buf, jint *len, int utflen, int *err_code) {
     UINT8 *str = (UINT8*)jcov_calloc(utflen + 1);
     int count = 0;
-    int strlen = 0;
+    int stringlen = 0;
 
     while (count < utflen) {
         UINT8 char2, char3;
@@ -125,7 +125,7 @@ char *readUTF8(UINT8 **buf, jint *len, int utflen, int *err_code) {
         default:
             /* 0xxx xxxx */
             count++;
-            str[strlen++] = c;
+            str[stringlen++] = c;
             break;
         case 0xC: case 0xD:
             /* 110x xxxx   10xx xxxx */
@@ -133,7 +133,7 @@ char *readUTF8(UINT8 **buf, jint *len, int utflen, int *err_code) {
             CHK_UTF(count > utflen);
             char2 = read1bytes(buf, len, err_code);
             CHK_UTF((char2 & 0xC0) != 0x80);
-            str[strlen++] = '?';
+            str[stringlen++] = '?';
             break;
         case 0xE:
             /* 1110 xxxx  10xx xxxx  10xx xxxx */
@@ -142,7 +142,7 @@ char *readUTF8(UINT8 **buf, jint *len, int utflen, int *err_code) {
             char2 = read1bytes(buf, len, err_code);
             char3 = read1bytes(buf, len, err_code);
             CHK_UTF(((char2 & 0xC0) != 0x80) || ((char3 & 0xC0) != 0x80));
-            str[strlen++] = '?';
+            str[stringlen++] = '?';
             break;
         case 0x8: case 0x9: case 0xA: case 0xB: case 0xF:
             /* 10xx xxxx,  1111 xxxx */
@@ -150,7 +150,7 @@ char *readUTF8(UINT8 **buf, jint *len, int utflen, int *err_code) {
         }
         if (*err_code) return NULL;
     }
-    str[strlen] = '\0';
+    str[stringlen] = '\0';
     return (char*)str;
 }
 

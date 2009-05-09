@@ -734,12 +734,12 @@ typedef struct AttachOperation_ {
     (CVMglobals.jvmti.isWatchingFieldModification = (isWatching_))
 
 
-typedef enum CVMJvmtiLoadKind CVMJvmtiLoadKind;
 enum CVMJvmtiLoadKind {
   JVMTICLASSLOADKINDNORMAL   = 0,
   JVMTICLASSLOADKINDREDEFINE,
   JVMDICLASSLOADKINDRETRANSFORM
 };
+typedef enum CVMJvmtiLoadKind CVMJvmtiLoadKind;
 
 typedef struct CVMJvmtiLockInfo CVMJvmtiLockInfo;
 struct CVMJvmtiLockInfo {
@@ -786,6 +786,14 @@ struct CVMJvmtiExecEnv {
 #define CVMjvmtiUserEventEnabled(ee_)		\
     ((ee_)->jvmtiEE.jvmtiUserEventEnabled)
 
+#define CVMjvmtiEventTypeDisable(ee_, eventType_)               \
+    (CVMjvmtiEventEnabled(ee_).enabledBits &=                   \
+     ~(((jlong)1) << CVMjvmtiEvent2EventBit((eventType_))))
+
+#define CVMjvmtiEventTypeEnable(ee_, eventType_)                \
+    (CVMjvmtiEventEnabled(ee_).enabledBits |=                   \
+     (((jlong)1) << CVMjvmtiEvent2EventBit((eventType_))))
+
 #define CVMjvmtiEventEnabled(ee_)		\
     ((ee_)->jvmtiEE.jvmtiEventEnabled)
 
@@ -818,13 +826,13 @@ struct CVMJvmtiExecEnv {
     (CVMjvmtiIsEnabled() && CVMjvmtiDebugEventsEnabled(ee_) &&		\
      ((CVMglobals.jvmti.statics.context->				\
        envEventEnable.eventEnabled.enabledBits &			\
-       (((jlong)1) << CVMjvmtiEvent2EventBit(eventType_))) != 0))
+       (((jlong)1) << CVMjvmtiEvent2EventBit(eventType_)))) != 0)
 
 #define CVMjvmtiThreadEventEnabled(ee_, eventType_)			\
     (((ee_) != NULL) && CVMjvmtiIsEnabled() &&                          \
      CVMjvmtiDebugEventsEnabled(ee_) &&                                 \
      ((CVMjvmtiEventEnabled(ee_).enabledBits &                          \
-       (((jlong)1) << CVMjvmtiEvent2EventBit(eventType_))) != 0))
+       (((jlong)1) << CVMjvmtiEvent2EventBit(eventType_)))) != 0)
 
 
 #define CVMJVMTI_CHECK_PHASE(x) {	     \
@@ -992,7 +1000,7 @@ CVMClassBlock *CVMjvmtiClassObject2ClassBlock(CVMExecEnv *ee, CVMObject *obj);
 
 void        CVMjvmtiRehash(void);
 CVMUint32   CVMjvmtiUniqueID();
-void        CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMConstantPool *cp);
+void        CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb);
 CVMBool     CVMjvmtiMbIsObsoleteX(CVMMethodBlock *mb);
 CVMConstantPool * CVMjvmtiMbConstantPool(CVMMethodBlock *mb);
 CVMBool     CVMjvmtiCheckLockInfo(CVMExecEnv *ee);

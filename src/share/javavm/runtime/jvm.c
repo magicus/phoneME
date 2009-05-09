@@ -1404,8 +1404,17 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
 			    (CVMmbFullMethodIndex(mb) & 0xffff)));
 	/* Write the class object into the backtrace array. */
 	{
-	    CVMClassICell* classICell = 
-		CVMcbJavaInstance(CVMmbClassBlock(mb));
+	    CVMClassICell* classICell;
+            CVMClassBlock* cb;
+#ifdef CVM_JVMTI
+            if (CVMjvmtiMbIsObsolete(mb)) {
+                cb = CVMcbOldData(CVMmbClassBlock(mb))->currentCb;
+            } else
+#endif
+            {
+                cb = CVMmbClassBlock(mb);
+            }
+            classICell = CVMcbJavaInstance(cb);
 	    CVMD_arrayWriteRef(backtrace, count + 2, 
 			       CVMID_icellDirect(ee, classICell));
 	}
@@ -2220,7 +2229,10 @@ JVM_SuspendThread(JNIEnv *env, jobject thread)
     thisThreadCell = CVMcurrentThreadICell(ee);
     CVMID_icellSameObject(ee, thisThreadCell, thread, isSelf);
     if (!isSelf) {
-	CVMlocksForThreadSuspendAcquire(ee);
+#ifdef CVM_JIT
+        CVMsysMutexLock(ee, &CVMglobals.jitLock);
+#endif
+        CVMsysMutexLock(ee, &CVMglobals.threadLock);
 
 	CVMID_fieldReadLong(ee, thread,
 			    CVMoffsetOfjava_lang_Thread_eetop,
@@ -2260,21 +2272,47 @@ JVM_SuspendThread(JNIEnv *env, jobject thread)
                             millis = CVMlongAnd(millis, CVMint2Long(0xff));
                             millis = CVMlongAdd(millis, CVMlongConstOne());
 
+                            CVMsysMicroUnlockAll(ee);
+                            CVMthreadSuspendConsistentRelease(ee);
+                            CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
+#ifdef CVM_JIT
+                            CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
+#endif
+
 			    CVMsysMonitorEnter(ee, &mon);
 			    CVMsysMonitorWait(ee, &mon, millis);
 			    CVMsysMonitorExit(ee, &mon);
 			    CVMsysMonitorDestroy(&mon);
+
+#ifdef CVM_JIT
+                            CVMsysMutexLock(ee, &CVMglobals.jitLock);
+#endif
+                            CVMsysMutexLock(ee, &CVMglobals.threadLock);
+                            CVMthreadSuspendConsistentRequest(ee);
+                            CVMsysMicroLockAll(ee);
+
+                            CVMID_fieldReadLong(ee, thread,
+                                    CVMoffsetOfjava_lang_Thread_eetop,
+                                    eetopVal);
+                            targetEE = (CVMExecEnv *)CVMlong2VoidPtr(eetopVal);
+                            if (targetEE == NULL ||
+                                (targetEE->threadState & CVM_THREAD_SUSPENDED)){
+                                break;
+                            }
 			} else {
                             CVMthreadYield();
                         }
 		    }
                 }
 	    }
-	    CVMsysMicroUnlockAll(ee);
-	    CVMthreadSuspendConsistentRelease(ee);
+            CVMsysMicroUnlockAll(ee);
+            CVMthreadSuspendConsistentRelease(ee);
 	}
+        CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
+#ifdef CVM_JIT
+        CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
+#endif
 	
-	CVMlocksForThreadSuspendRelease(ee);
     } else {
 	/* %comment: rt034 */
 	ee->threadState |= CVM_THREAD_SUSPENDED;

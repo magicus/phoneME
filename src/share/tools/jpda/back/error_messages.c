@@ -61,7 +61,7 @@
  *          Do not use the ERROR* macros here.
  */
 static void
-vprint_message(FILE *fp, const char *prefix, const char *suffix, 
+vprint_message(int fd, const char *prefix, const char *suffix, 
                const char *format, va_list ap)
 {
     jbyte  utf8buf[MAX_MESSAGE_LEN+1];
@@ -76,7 +76,9 @@ vprint_message(FILE *fp, const char *prefix, const char *suffix,
     /* Convert to platform encoding (ignore errors, dangerous area) */
     (void)(gdata->npt->utf8ToPlatform)(gdata->npt->utf,
            utf8buf, len, pbuf, MAX_MESSAGE_LEN);
-    (void)fprintf(fp, "%s%s%s", prefix, pbuf, suffix);
+    md_write(fd, prefix, strlen(prefix));
+    md_write(fd, pbuf, strlen(pbuf));
+    md_write(fd, suffix, strlen(suffix));
 }
 
 /* Print message in platform encoding (assume all input is UTF-8 safe)
@@ -84,13 +86,13 @@ vprint_message(FILE *fp, const char *prefix, const char *suffix,
  *          Do not use the ERROR* macros here.
  */
 void
-print_message(FILE *fp, const char *prefix,  const char *suffix,
+print_message(int fd, const char *prefix,  const char *suffix,
               const char *format, ...)
 {
     va_list ap;
     
     va_start(ap, format);
-    vprint_message(fp, prefix, suffix, format, ap);
+    vprint_message(fd, prefix, suffix, format, ap);
     va_end(ap);
 }
 
@@ -101,7 +103,7 @@ error_message(const char *format, ...)
     va_list ap;
     
     va_start(ap, format);
-    vprint_message(stderr, "ERROR: ", "\n", format, ap);
+    vprint_message(fileno(stderr), "ERROR: ", "\n", format, ap);
     va_end(ap);
     if ( gdata->doerrorexit ) {
         EXIT_ERROR(AGENT_ERROR_INTERNAL,"Requested errorexit=y exit()");
@@ -115,7 +117,7 @@ tty_message(const char *format, ...)
     va_list ap;
     
     va_start(ap, format);
-    vprint_message(stdout, "", "\n", format, ap);
+    vprint_message(fileno(stdout), "", "\n", format, ap);
     va_end(ap);
     (void)fflush(stdout);
 }
@@ -125,7 +127,7 @@ void
 jdiAssertionFailed(char *fileName, int lineNumber, char *msg)
 {
     LOG_MISC(("ASSERT FAILED: %s : %d - %s\n", fileName, lineNumber, msg));
-    print_message(stderr, "ASSERT FAILED: ", "\n",
+    print_message(fileno(stderr), "ASSERT FAILED: ", "\n",
         "%s : %d - %s", fileName, lineNumber, msg);
     if (gdata && gdata->assertFatal) {
         EXIT_ERROR(AGENT_ERROR_INTERNAL,"Assertion Failed");

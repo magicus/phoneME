@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
 #   
 # This program is free software; you can redistribute it and/or  
@@ -21,7 +21,7 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional  
 # information or have any questions. 
 #
-# @(#)jdwp.mk	1.18 06/10/26
+# @(#)defs_jdwp.mk	1.18 06/10/26
 #
 
 #
@@ -46,7 +46,7 @@ CVM_JDWP_BUILDDIRS += \
         $(CVM_JDWP_FLAGSDIR) \
         $(CVM_JDWP_CLASSES)
 
-CVM_JDWP_LIB = $(LIB_PREFIX)jdwp$(LIB_POSTFIX)
+CVM_JDWP_LIB = $(CVM_JDWP_LIBDIR)/$(LIB_PREFIX)jdwp$(LIB_POSTFIX)
 
 CVM_JDWP_TRANSPORT = socket
 
@@ -65,7 +65,7 @@ CVM_JDWP_INCLUDE_DIRS  += \
 
 ifeq ($(CVM_DEBUG), true)
 CVM_JDWP_DEFINES += -DDEBUG
-CVM_JDWP_DEFINES +=  -DJDWP_LOGGING
+#CVM_JDWP_DEFINES +=  -DJDWP_LOGGING
 endif
 
 JPDA_NO_DLALLOC = true
@@ -74,9 +74,9 @@ ifeq ($(JPDA_NO_DLALLOC), true)
 CVM_JDWP_DEFINES += -DJPDA_NO_DLALLOC
 endif
 
-jdwp : ALL_INCLUDE_FLAGS := \
-	$(ALL_INCLUDE_FLAGS) $(call makeIncludeFlags,$(CVM_JDWP_INCLUDE_DIRS))
-jdwp : CVM_DEFINES += $(CVM_JDWP_DEFINES)
+ifeq ($(CVM_STATICLINK_TOOLS), true)
+CVM_STATIC_TOOL_LIBS += $(CVM_JDWP_LIB)
+endif
 
 #
 # List of object files to build:
@@ -147,9 +147,6 @@ CVM_JDWP_SRCDIRS  = \
 	$(CVM_JDWP_TARGETSHAREROOT)/javavm/runtime \
 	$(CVM_TOP)/src/portlibs/dlfcn
 
-vpath %.c      $(CVM_JDWP_SRCDIRS)
-vpath %.S      $(CVM_JDWP_SRCDIRS)
-
 CVM_JDWP_FLAGS += \
         CVM_SYMBOLS \
         CVM_OPTIMIZED \
@@ -166,95 +163,3 @@ CVM_JDWP_CLEANUP_ACTION = \
 CVM_JDWP_CLEANUP_OBJ_ACTION = \
         rm -rf $(CVM_JDWP_OBJDIR)
 
-###############################################################################
-# Make rules:
-
-tools:: jdwp
-tool-clean: jdwp-clean
-
-jdwp-clean:
-	$(CVM_JDWP_CLEANUP_ACTION)
-
-ifeq ($(CVM_JVMTI), true)
-    jdwp_build_list = jdwp_initbuild \
-	    $(CVM_JDWP_BUILD_TOP)/JDWPCommands.h \
-	    $(CVM_JDWP_LIBDIR)/$(CVM_JDWP_LIB) \
-	    jdwp-dt
-else
-    jdwp_build_list =
-endif
-
-jdwp: $(jdwp_build_list)
-
-jdwp_initbuild: jdwp_check_cvm jdwp_checkflags $(CVM_JDWP_BUILDDIRS)
-
-# Make sure that CVM is built before building jdwp.  If not, the issue a
-# warning and abort.
-jdwp_check_cvm:
-	@if [ ! -f $(CVM_BINDIR)/$(CVM) ]; then \
-	    echo "Warning! Need to build CVM with before building JDWP."; \
-	    exit 1; \
-	else \
-	    echo; echo "Building JDWP tool ..."; \
-	fi
-
-# Make sure all of the build flags files are up to date. If not, then do
-# the requested cleanup action.
-jdwp_checkflags: $(CVM_JDWP_FLAGSDIR)
-	@for filename in $(CVM_JDWP_FLAGS0); do \
-		if [ ! -f $(CVM_JDWP_FLAGSDIR)/$${filename} ]; then \
-			echo "JDWP flag $${filename} changed. Cleaning up."; \
-			rm -f $(CVM_JDWP_FLAGSDIR)/$${filename%.*}.*; \
-			touch $(CVM_JDWP_FLAGSDIR)/$${filename}; \
-			$(CVM_JDWP_CLEANUP_OBJ_ACTION); \
-		fi \
-	done
-
-$(CVM_JDWP_BUILDDIRS):
-	@echo ... mkdir $@
-	@if [ ! -d $@ ]; then mkdir -p $@; fi
-
-$(CVM_JDWP_LIBDIR)/$(CVM_JDWP_LIB): $(CVM_JDWP_OBJECTS)
-	@echo "Linking $@"
-	$(call SO_LINK_CMD, $(CVM_JDWP_LINKLIBS))
-	@echo "Done Linking $@"
-
-# The following are used to build the .o files needed for $(CVM_JDWP_OBJECTS):
-
-#####################################
-# include all of the dependency files
-#####################################
-files := $(foreach file, $(wildcard $(CVM_JDWP_OBJDIR)/*.d), $(file))
-ifneq ($(strip $(files)),)
-    include $(files)
-endif
-
-# jdwpgen
-
-JDWPGENPKGDIR = com/sun/tools/jdwpgen
-JDWPGENDIR = $(CVM_JDWP_SHAREROOT)/classes/$(JDWPGENPKGDIR)
-JDWP_SPEC = $(JDWPGENDIR)/jdwp.spec
-JDWPGEN = com.sun.tools.jdwpgen
-JDWPGEN_CLASS = $(CVM_JDWP_CLASSES)/$(JDWPGENPKGDIR)/Main.class
-
-$(JDWPGEN_CLASS) : $(CVM_JDWP_SHAREROOT)/classes/$(JDWPGENPKGDIR)/Main.java
-	$(CVM_JAVAC) -d $(CVM_JDWP_CLASSES) \
-		-sourcepath $(CVM_JDWP_SHAREROOT)/classes \
-		$<
-
-$(CVM_JDWP_BUILD_TOP)/JDWPCommands.h : $(JDWPGEN_CLASS)
-	$(CVM_JAVA) -Xbootclasspath/p:$(CVM_JDWP_CLASSES) \
-		$(JDWPGEN).Main $(JDWP_SPEC) \
-	    -include $@
-
-$(CVM_JDWP_OBJDIR)/%.o: %.c
-	@echo "... $@"
-	$(SO_CC_CMD)
-	$(GENERATEMAKEFILES_CMD)
-
-$(CVM_JDWP_OBJDIR)/%.o: %.S
-	@echo "... $@"
-	$(SO_ASM_CMD)
-
--include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/jdwp_transport.mk
--include $(CDC_DIR)/build/share/jdwp_transport.mk

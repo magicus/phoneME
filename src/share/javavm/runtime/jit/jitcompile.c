@@ -515,9 +515,9 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 #endif
 
 #ifdef CVM_JVMTI
-    if (CVMjvmtiIsInDebugMode()) {
+    if (CVMjvmtiIsInDebugMode() || CVMjvmtiMbIsObsolete(mb)) {
 	retVal = CVMJIT_CANNOT_COMPILE;
-	CVMJITsetErrorMessage(&con, "Debugger connected");
+	CVMJITsetErrorMessage(&con, "Debugger connected or obsolete method");
 	goto done;
     }
 #endif

@@ -37,6 +37,16 @@
 #include "javavm/include/porting/jit/jit.h"
 #include "javavm/include/sync.h"
 
+        /* Monitor enter/exit code may post an event which will
+         * push a JNI local frame on the stack.  Need to have frame->TOS
+         * consistent with JSP
+         */
+#ifdef CVM_JVMTI
+#define FLUSH_TOS	sw	JSP, OFFSET_CVMFrame_topOfStack(JFP)
+#else
+#define FLUSH_TOS
+#endif
+
 /*
  * Make a pc-relative branch instruction. Used for patching and instruction
  * to jump around generated code.
@@ -567,6 +577,7 @@ ENTRY ( CVMCCMruntimeMonitorEnterGlue )
 	 * If you just want to call the C helper and write very little
 	 * assembler code, then just the following.
 	 */
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
 #endif
 
@@ -682,6 +693,7 @@ _monenterFastRetryFailed:
 _monenterFastReentryFailed:
 _monenterRecordNotAvailable:
         /* Let C helper do the hard stuff: */
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
 	
 #undef OBJ
@@ -839,6 +851,7 @@ _monenterRecordNotAvailable:
         sw	v0, 0(MICROLOCK)
 
         /* Load the ccee. The obj arg is already loaded. */
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
 
 #undef MICROLOCK
@@ -862,6 +875,7 @@ ENTRY ( CVMCCMruntimeMonitorExitGlue )
 	#
 	# If you just want to call the C helper and write very little assembler
 	# code, then just the following.
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
 #endif
 
@@ -972,6 +986,7 @@ _monexitFastTryUnlockFoundPrevLockRecord:
 
 _monexitFastTryUnlockFailed:
         /* Let C helper do the hard stuff: */
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
 
 #undef OBJ
@@ -987,6 +1002,7 @@ _monexitFastTryUnlockFailed:
 	/* TODO: if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SCHEDLOCK, then
 	 * use CVMschedLock for locking. For now, just defer to C */
 	mflr	r7
+        FLUSH_TOS
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
 #else
         /* CVM_MICROLOCK_SWAP_SPINLOCK version of monitorenter: */
@@ -1140,6 +1156,7 @@ _monexitFastTryUnlockFailed:
 
         /* Let C helper do the hard stuff: */
         /* Load the ccee. The obj arg is already loaded. */
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
 
 #undef OBJ

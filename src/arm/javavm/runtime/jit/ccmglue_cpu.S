@@ -41,6 +41,16 @@
 #include "javavm/include/porting/jit/jit.h"
 #include "javavm/include/sync.h"
 
+        /* Monitor enter/exit code may post an event which will
+         * push a JNI local frame on the stack.  Need to have frame->TOS
+         * consistent with JSP
+         */
+#ifdef CVM_JVMTI
+#define FLUSH_TOS 	str     JSP, [JFP, #OFFSET_CVMFrame_topOfStack]
+#else
+#define FLUSH_TOS
+#endif
+
 /*
  * NOTE: Some linker such as the ARM RVCT (v2.2) linker sorts 
  *	 sections by attributes and section name. To make sure
@@ -703,6 +713,7 @@ ENTRY1 ( CVMCCMruntimeMonitorEnterGlue )
          *       r5 = v2 = jsp 
          *       sp = ccee 
 	 */
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
 
 /*
@@ -718,6 +729,7 @@ ENTRY1 ( CVMCCMruntimeMonitorExitGlue )
          *       r5 = v2 = jsp 
          *       sp = ccee 
 	 */
+        FLUSH_TOS
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
 
 /* Support for fastlocking with swap/spinlock based microlocks */
@@ -895,6 +907,7 @@ LABEL(_monenterRecordNotAvailable)
         /* Load the ccee.  The ee, and obj are already loaded. */
         mov     r0,  sp
         str     lr,  [JFP, #OFFSET_CVMCompiledFrame_PC]
+        FLUSH_TOS
         str     JFP, [a2, #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame]
         BRANCH_TO_VM_FUNCTION(CVMCCMruntimeMonitorEnter)
 
@@ -1082,6 +1095,7 @@ LABEL(_monexitFastTryUnlockFailed)
         /* Load the ccee.  The ee, and obj are already loaded. */
         mov     r0, sp
         str     lr,  [JFP, #OFFSET_CVMCompiledFrame_PC]
+        FLUSH_TOS
         str     JFP, [a2, #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame]
         BRANCH_TO_VM_FUNCTION(CVMCCMruntimeMonitorExit)
 
@@ -1117,6 +1131,7 @@ LABEL(_monexitFastTryUnlockFailed)
         ; If you just want to call the C helper and write very little
         ; assembler code, then just the following line is needed.
         ;
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
 
 #endif
@@ -1292,6 +1307,7 @@ _monenterFastReentryFailed
 _monenterRecordNotAvailable
         /* Let C helper do the hard stuff: */
         /* NOTE: It is expected that the OBJ pointer is already in r2. */
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
 
 #undef TEMP
@@ -1322,6 +1338,7 @@ _monenterRecordNotAvailable
         ; If you just want to call the C helper and write very little
         ; assembler code, then just the following line is needed.
         ;
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
 
 #endif
@@ -1476,6 +1493,7 @@ _monexitFastTryUnlockFoundPrevLockRecord
 _monexitFastTryUnlockFailed
         /* Let C helper do the hard stuff: */
         /* NOTE: It is expected that the OBJ pointer is already in r2. */
+        FLUSH_TOS
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
 
 #undef TEMP

@@ -170,6 +170,10 @@ onLoadX(JavaVM *vm, char *options, void *reserved)
     jint              jvmtiCompileTimeMinorVersion;
     jint              jvmtiCompileTimeMicroVersion;
 
+    /* init io subsystem first */
+    if (md_init(vm) != JNI_OK) {
+        return JNI_ERR;
+    }
     /* See if it's already loaded */
     if ( gdata!=NULL && gdata->isLoaded==JNI_TRUE ) {
         ERROR_MESSAGE(("Cannot load this JVM TI agent twice, check your java command line for duplicate jdwp options."));
@@ -639,7 +643,7 @@ jniFatalError(JNIEnv *env, const char *msg, jvmtiError error, int exit_code)
         (*((*env)->FatalError))(env, buf);
     } else {
         /* Should rarely ever reach here, means VM is really dead */
-        print_message(stderr, "ERROR: JDWP: ", "\n",
+        print_message(fileno(stderr), "ERROR: JDWP: ", "\n",
                 "Can't call JNI FatalError(NULL, \"%s\")", buf);
     }
     forceExit(exit_code);

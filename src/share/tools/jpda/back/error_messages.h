@@ -35,7 +35,7 @@
                 LOG_ERROR(args), \
                 error_message args )
 
-void print_message(FILE *fp, const char *prefix,  const char *suffix,
+void print_message(int fd, const char *prefix,  const char *suffix,
                    const char *format, ...);
 void error_message(const char *, ...);
 void tty_message(const char *, ...);
@@ -47,7 +47,7 @@ const char * jdwpErrorText(jdwpError);
 
 #define EXIT_ERROR(error,msg) \
         { \
-                print_message(stderr, "JDWP exit error ", "\n", \
+            print_message(fileno(stderr), "JDWP exit error ", "\n",     \
                         "%s(%d): %s [%s:%d]", \
                         jvmtiErrorText((jvmtiError)error), error, (msg==NULL?"":msg), \
                         __FILE__, __LINE__); \
