@@ -40,7 +40,7 @@ else
 CFLAGS= -O2 -Otime -c -W
 endif
 
-CFLAGS+= $(EXTRA_CFLAGS)
+CFLAGS+= $(VM_FLAGS) $(EXTRA_CFLAGS)
 
 LD_FLAGS=
 
