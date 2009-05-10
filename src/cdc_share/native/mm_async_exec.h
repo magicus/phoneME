@@ -65,6 +65,12 @@ do { \
     (status_) = result__; \
 } while(0)
 
+#define JAVACALL_AMMS_ASYNC_GET_RESULT_returns_data(num_args_,ret_args_)  \
+    JAVACALL_MM_ASYNC_RET_DATA_ARG##num_args_ ret_args_ \
+    javacall_amms_get_event_data(handle__, javacall_event__, data__, sizeof args__ / sizeof args__[0], args__); \
+
+#define JAVACALL_AMMS_ASYNC_GET_RESULT_returns_no_data  (void)handle__; /* empty */
+
 #define JAVACALL_AMMS_ASYNC_EXEC(status_,code_,handle_,app_id_,player_id_,javacall_event_,args_) \
 do { \
     javacall_result result__ = JAVACALL_FAIL; \
@@ -77,7 +83,7 @@ do { \
         if (JAVACALL_OK != mmapi_thread_suspend(MAKE_PLAYER_AMMS_DESCRIPTOR(app_id_, player_id_, javacall_event__), 1, &result__, &data__)) { \
             result__ = JAVACALL_FAIL; \
         } else if (result__ == JAVACALL_OK) { \
-            JAVACALL_MM_ASYNC_GET_RESULT_##args_ \
+            JAVACALL_AMMS_ASYNC_GET_RESULT_##args_ \
         } \
         }); \
     } \
