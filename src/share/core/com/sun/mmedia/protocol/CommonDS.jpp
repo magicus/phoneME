@@ -67,6 +67,8 @@ public class CommonDS extends BasicDS implements SourceStream {
         } catch (IOException ioe) {
                 //ignore
         }
+
+        // #ifndef ENABLE_CDC [
         if (is instanceof com.sun.cldc.io.ResourceInputStream) {
             try {
                 contentLength = is.available();
@@ -74,6 +76,7 @@ public class CommonDS extends BasicDS implements SourceStream {
                 contentLength = -1;
             }
         }
+        // #endif ]
     }
 
     public void connect() throws IOException {
