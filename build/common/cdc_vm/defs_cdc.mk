@@ -89,10 +89,15 @@ MIDP_CNI_CLASSES += \
         com.sun.pisces.SurfaceNativeFinalizer \
         com.sun.pisces.PiscesFinalizer \
         com.sun.pisces.Transform6 \
-        com.sun.pisces.PiscesRenderer \
+        com.sun.pisces.PiscesRendererMIDPImpl \
         com.sun.pisces.NativeSurface \
         com.sun.pisces.AbstractSurface \
         com.sun.pisces.GraphicsSurface
+endif
+
+ifeq ($(USE_JSR_226), true)
+MIDP_CNI_CLASSES += \
+        com.sun.perseus.midp.SVGCanvas
 endif
 
 ifeq ($(CVM_INCLUDE_JUMP), true)
