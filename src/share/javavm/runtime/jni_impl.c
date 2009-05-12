@@ -4065,7 +4065,7 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     options.classVerificationLevel = CVM_VERIFY_REMOTE;
 
 #ifdef CVM_SPLIT_VERIFY
-    options.splitVerify = CVM_FALSE;
+    options.splitVerify = CVM_TRUE;
 #endif
 #endif
 
