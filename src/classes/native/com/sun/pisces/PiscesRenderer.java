@@ -26,91 +26,16 @@
  
 package com.sun.pisces;
 
-public final class PiscesRenderer extends PathSink 
-        implements NativeFinalization {
-    static {
-        PiscesLibrary.load();
-    }
-
-    private static boolean messageShown = false;
+public interface PiscesRenderer extends NativeFinalization {
 
     public static final int ARC_OPEN = 0;
     public static final int ARC_CHORD = 1;
     public static final int ARC_PIE = 2;
     
-    long nativePtr = 0L;
-    protected AbstractSurface surface;
 
-    private final NativeFinalizer finalizer;
-        
-    static {
-        String strValue;
-        int strokeXBias = 0; // default x bias
-        int strokeYBias = 0; // default y bias
+    public void setAntialiasing(boolean antialiasingOn);
 
-        strValue = Configuration.getProperty("pisces.stroke.xbias");
-        if (strValue != null) {
-            try {
-                strokeXBias = Integer.parseInt(strValue);
-            } catch (NumberFormatException e) {
-            }
-        }
-        
-        strValue = Configuration.getProperty("pisces.stroke.ybias");
-        if (strValue != null) {
-            try {
-                strokeYBias = Integer.parseInt(strValue);
-            } catch (NumberFormatException e) {
-            }
-        }
-
-        staticInitialize(strokeXBias, strokeYBias);
-    }
-    
-    private void notImplemented() {
-//        System.out.println("not implemented");
-    }
-    
-    /**
-     * Creates a renderer that will write into a given pixel array.
-     *
-     * @param data the destination surface
-     * where pixel data should be written.
-     * @param width the width of the pixel array.
-     * @param height the height of the pixel array.
-     * @param offset the starting offset of the pixel array.
-     * @param scanlineStride the scanline stride of the pixel array, in array
-     * entries.
-     * @param pixelStride the pixel stride of the pixel array, in array
-     * entries.
-     * @param type the pixel format, one of the
-     * <code>RendererBase.TYPE_*</code> constants.
-     */
-    public PiscesRenderer(Object data, int width, int height,
-                          int offset, int scanlineStride, int pixelStride,
-                          int type) {
-        this((AbstractSurface)data);
-    }
-
-    public PiscesRenderer(AbstractSurface surface) {
-        if (!messageShown) {
-            System.out.println("Using Pisces Renderer (native version)");
-        }
-
-        this.finalizer = NativeFinalizer.createInstance(this);
-        this.surface = surface;
-        initialize();
-        messageShown = true;
-    }
-
-    private static native void staticInitialize(int strokeXBias, 
-            int strokeYBias);
-
-    private native void initialize();
-    
-    public native void setAntialiasing(boolean antialiasingOn);
-
-    public native boolean getAntialiasing();
+    public boolean getAntialiasing();
 
     /**
      * Sets the current paint color.
@@ -120,7 +45,7 @@ public final class PiscesRenderer extends PathSink
      * @param blue a value between 0 and 255.
      * @param alpha a value between 0 and 255.
      */
-    public native void setColor(int red, int green, int blue, int alpha);
+    public void setColor(int red, int green, int blue, int alpha);
 
     /**
      * Sets the current paint color.  An alpha value of 255 is used.
@@ -129,75 +54,17 @@ public final class PiscesRenderer extends PathSink
      * @param green a value between 0 and 255.
      * @param blue a value between 0 and 255.
      */
-    public void setColor(int red, int green, int blue) {
-        setColor(red, green, blue, 255);
-    }
+    public void setColor(int red, int green, int blue);
     
-    public native void setCompositeRule(int compositeRule);
+    public void setCompositeRule(int compositeRule);
 
-    public native void setComposite(int compositeRule, float alpha);
+    public void setComposite(int compositeRule, float alpha);
 
-    int[] gcm_fractions = null;
-    int[] gcm_rgba = null;
-    int gcm_cycleMethod = -1;
-    GradientColorMap gradientColorMap = null;
-    
-    private boolean arraysDiffer(int[] a, int[] b) {
-        if (a == null) {
-            return true;
-        }
-        int len = b.length;
-        if (a.length != len) {
-            return true;
-        }
-        for (int i = 0; i < len; i++) {
-            if (a[i] != b[i]) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    private int[] cloneArray(int[] src) {
-        int len = src.length;
-        int[] dst = new int[len];
-        System.arraycopy(src, 0, dst, 0, len);
-        return dst;
-    }
-    
-    private void setGradientColorMap(int[] fractions, int[] rgba,
-                                     int cycleMethod) {
-        if (fractions.length != rgba.length) {
-            throw new IllegalArgumentException("fractions.length != rgba.length!");
-        }
-        
-        if (gradientColorMap == null ||
-            gcm_cycleMethod != cycleMethod ||
-            arraysDiffer(gcm_fractions, fractions) ||
-            arraysDiffer(gcm_rgba, rgba)) {
-            this.gradientColorMap =
-                new GradientColorMap(fractions, rgba, cycleMethod);
-            this.gcm_cycleMethod = cycleMethod;
-            this.gcm_fractions = cloneArray(fractions);
-            this.gcm_rgba = cloneArray(rgba);
-        }
-    }
-    
-    private native void setLinearGradientImpl(int x0, int y0, int x1, int y1,
-                                              int[] colors,
-                                              int cycleMethod,
-                                              Transform6 gradientTransform);
 
     public void setLinearGradient(int x0, int y0, int x1, int y1,
                                   int[] fractions, int[] rgba,
                                   int cycleMethod,
-                                  Transform6 gradientTransform) {
-        setGradientColorMap(fractions, rgba, cycleMethod);
-        setLinearGradientImpl(x0, y0, x1, y1,
-                              gradientColorMap.colors, cycleMethod,
-                              gradientTransform);
-    }
+                                  Transform6 gradientTransform);
 
     /**
      * Java2D-style linear gradient creation. The color changes proportionally
@@ -215,64 +82,29 @@ public final class PiscesRenderer extends PathSink
      */
     public void setLinearGradient(int x0, int y0, int color0, 
                                   int x1, int y1, int color1,
-                                  int cycleMethod) {
-      int[] fractions = {0x0000, 0x10000};
-      int[] rgba = {color0, color1};
-      Transform6 ident = new Transform6(1 << 16, 0, 0, 1 << 16, 0, 0);
-      setLinearGradient(x0, y0, x1, y1, fractions, rgba, cycleMethod, ident);
-    }
-
-    private native void setRadialGradientImpl(int cx, int cy, int fx, int fy,
-                                              int radius,
-                                              int[] colors,
-                                              int cycleMethod,
-                                              Transform6 gradientTransform);
+                                  int cycleMethod);
 
     public void setRadialGradient(int cx, int cy, int fx, int fy,
                                   int radius,
                                   int[] fractions, int[] rgba,
                                   int cycleMethod,
-                                  Transform6 gradientTransform) {
-        setGradientColorMap(fractions, rgba, cycleMethod);
-        setRadialGradientImpl(cx, cy, fx, fy, radius,
-                              gradientColorMap.colors, cycleMethod,
-                              gradientTransform);
-    }
+                                  Transform6 gradientTransform);
 
-    public void setTextureOpacity(float opacity) {
-	notImplemented();
-    }
+    public void setTextureOpacity(float opacity);
 
     public void setTexture(int imageType,
                            Object imageData, 
                            int width, int height,
                            int offset, int stride,
                            Transform6 textureTransform,
-                           boolean repeat) {
-        if (imageData instanceof int[]) {
-            setTextureImpl(imageType, (int[])imageData, width, height, offset, 
-                    stride, textureTransform, repeat);
-        }
-    }
+                           boolean repeat);
 
-     private native void setTextureImpl(int imageType, int[] imageData,
-            int width, int height, int offset, int stride,
-            Transform6 textureTransform, boolean repeat);
     
-    public PathSink getStroker() {
-        notImplemented();
-        return null;
-    }
+    public PathSink getStroker();
 
-    public PathSink getFiller() {
-        notImplemented();
-        return null;
-    }
+    public PathSink getFiller();
 
-    public PathSink getTextFiller() {
-        notImplemented();
-        return null;
-    }
+    public PathSink getTextFiller();
 
     /**
      * Sets the current stroke parameters.
@@ -288,46 +120,33 @@ public final class PiscesRenderer extends PathSink
      * @param dashPhase the starting dash offset, in S15.16 format.
      */
     public void setStroke(int lineWidth, int capStyle, int joinStyle,
-            int miterLimit, int[] dashArray, int dashPhase) {
-        setStrokeImpl(lineWidth, capStyle, joinStyle, miterLimit, dashArray, dashPhase);
-    }
-    
-    private native void setStrokeImpl(int lineWidth, int capStyle, int joinStyle,
             int miterLimit, int[] dashArray, int dashPhase);
-
+    
     /**
      * Sets the current transform from user to window coordinates.
      *
      * @param transform an <code>Transform6</code> object.
      */
-    public native void setTransform(Transform6 transform);
+    public void setTransform(Transform6 transform);
     
-    public Transform6 getTransform() {
-        Transform6 transform = new Transform6();
-        getTransformImpl(transform);
-        return transform;
-    }
+    public Transform6 getTransform();
     
-    private native void getTransformImpl(Transform6 transform);
 
     /**
      * Sets a clip rectangle for all primitives.  Each primitive will be
      * clipped to the intersection of this rectangle and the destination
      * image bounds.
      */
-    public native void setClip(int minX, int minY, int width, int height);
+    public void setClip(int minX, int minY, int width, int height);
 
     /**
      * Resets the clip rectangle.  Each primitive will be clipped only
      * to the destination image bounds.
      */
-    public native void resetClip();
+    public void resetClip();
 
-    public void beginRendering(int windingRule) {
-        beginRenderingI(windingRule);
-    }
+    public void beginRendering(int windingRule);
     
-    private native void beginRenderingI(int windingRule);
 
     /**
      * Begins the rendering of path data.  The supplied clipping
@@ -336,18 +155,14 @@ public final class PiscesRenderer extends PathSink
      * rectangle may be written to.
      */
     public void beginRendering(int minX, int minY, 
-            int width, int height, int windingRule) {
-        beginRenderingIIIII(minX, minY, width, height, windingRule);
-    }
-    
-    private native void beginRenderingIIIII(int minX, int minY, 
             int width, int height, int windingRule);
+    
 
     /**
      * Completes the rendering of path data.  Destination pixels will
      * be written at this time.
      */
-    public native void endRendering();
+    public void endRendering();
 
     /**
      * Returns a bounding box containing all pixels drawn during the
@@ -355,34 +170,29 @@ public final class PiscesRenderer extends PathSink
      * (beginRendering/endRendering pair).  The bounding box is
      * returned in the form (x, y, width, height).
      */
-    public native void getBoundingBox(int[] bbox);
+    public void getBoundingBox(int[] bbox);
     
-    public void setStroke() {
-        setStrokeImplNoParam();
-    }
-    private native void setStrokeImplNoParam();
+    public void setStroke();
     
-    public native void setFill();
+    public void setFill();
 
-    public void setTextFill() {
-        notImplemented();
-    }
+    public void setTextFill();
 
-    public native void moveTo(int x0, int y0);
+    public void moveTo(int x0, int y0);
 
-    public native void lineTo(int x1, int y1);
+    public void lineTo(int x1, int y1);
 
-    public native void lineJoin();
+    public void lineJoin();
 
-    public native void quadTo(int x1, int y1, int x2, int y2);
+    public void quadTo(int x1, int y1, int x2, int y2);
 
-    public native void cubicTo(int x1, int y1, int x2, int y2, int x3, int y3);
+    public void cubicTo(int x1, int y1, int x2, int y2, int x3, int y3);
 
-    public native void close();
+    public void close();
 
-    public native void end();
+    public void end();
 
-    public native void drawLine(int x0, int y0, int x1, int y1);
+    public void drawLine(int x0, int y0, int x1, int y1);
 
     /**
      * 
@@ -391,34 +201,32 @@ public final class PiscesRenderer extends PathSink
      * @param w the width in S15.16 format.
      * @param h the height in S15.16 format.
      */
-    public native void fillRect(int x, int y, int w, int h);
+    public void fillRect(int x, int y, int w, int h);
 
-    public native void drawRect(int x, int y, int w, int h);
+    public void drawRect(int x, int y, int w, int h);
 
-    public native void drawOval(int x, int y, int w, int h);
+    public void drawOval(int x, int y, int w, int h);
 
-    public native void fillOval(int x, int y, int w, int h);
+    public void fillOval(int x, int y, int w, int h);
 
-    public native void fillRoundRect(int x, int y, int w, int h, 
+    public void fillRoundRect(int x, int y, int w, int h, 
             int aw, int ah);
 
-    public native void drawRoundRect(int x, int y, int w, int h, 
+    public void drawRoundRect(int x, int y, int w, int h, 
             int aw, int ah);
 
-    public native void drawArc(int x, int y, int width, int height,
+    public void drawArc(int x, int y, int width, int height,
             int startAngle, int arcAngle, int arcType);
 
-    public native void fillArc(int x, int y, int width, int height,
+    public void fillArc(int x, int y, int width, int height,
             int startAngle, int arcAngle, int arcType);
 
-    public void getImageData() {
-        notImplemented();
-    }
+    public void getImageData();
     
-    public native void clearRect(int x, int y, int w, int h);
+    public void clearRect(int x, int y, int w, int h);
 
-    public native void setPathData(float[] data, byte[] commands, 
+    public void setPathData(float[] data, byte[] commands, 
             int nCommands);
 
-    public native void nativeFinalize();
+    public void nativeFinalize();
 }

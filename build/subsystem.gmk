@@ -116,6 +116,25 @@ INTERNAL_PISCES_JAVA_FILES := \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Transform4.java \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Transformer.java
 
+
+MIDP_BOOTCLASSPATH_CLASSES_LIST += com.sun.pisces.PiscesRenderer \
+                                   com.sun.pisces.PiscesRendererFactory \
+                                   com.sun.pisces.GraphicsSurfaceIface \
+                                   com.sun.pisces.NativeFinalization \
+
+
+#                                   javax.microedition.lcdui.Graphics \
+#                                   javax.microedition.lcdui.Font \
+#                                   javax.microedition.lcdui.Image \
+#                                   javax.microedition.lcdui.Display \
+#                                   javax.microedition.lcdui.ImageData \
+#                                   javax.microedition.lcdui.AbstractImageDataFactory \
+#                                   javax.microedition.lcdui.ImageDataFactory \
+
+
+MIDP_BOOTCLASSPATH_PACKAGES_LIST += com.sun.pisces \
+
+
 ifeq ($(SUBSYSTEM_PISCES_MODULES), pure_java)
     INTERNAL_PISCES_JAVA_CLASSES_DIR := \
             $(INTERNAL_PISCES_DIR)/src/classes/java
@@ -149,11 +168,15 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
             $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/NativeFinalization.java \
             $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/PiscesRenderer.java \
             $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/Transform6.java \
+            $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/PiscesRendererMIDPImpl.java \
+            $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/PiscesRendererFactoryMIDPImpl.java \
+            $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/PiscesRendererFactory.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/Configuration.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/NativeFinalizer.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesFinalizer.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesLibrary.java \
             $(INTERNAL_PISCES_NATIVE-JWC_CLASSES_DIR)/com/sun/pisces/GraphicsSurface.java \
+            $(INTERNAL_PISCES_NATIVE-JWC_CLASSES_DIR)/com/sun/pisces/GraphicsSurfaceIface.java \
             $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/NativeSurface.java
 
 #            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurfaceDestination.java 
