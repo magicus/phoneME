@@ -28,16 +28,14 @@ package com.sun.pisces;
 
 import javax.microedition.lcdui.Graphics;
 
-public final class GraphicsSurface extends AbstractSurface implements GraphicsSurfaceIface {
-//    private Graphics g;
-    private Object g;
+public final class GraphicsSurface extends AbstractSurface {
+    private Graphics g;
 
     public GraphicsSurface() {
         initialize();
     }
     
-    public void bindTarget(Object g) {
-//        this.g = (Graphics) g;
+    public void bindTarget(Graphics g) {
         this.g = g;
     }
     

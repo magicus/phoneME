@@ -87,7 +87,7 @@ static jboolean
 initializeSurfaceFieldIds(CVMExecEnv* _ee, jobject objectHandle) {
     static const FieldDesc surfaceFieldDesc[] = {
                 { "nativePtr", "J" },
-                { "g", "Ljava/lang/Object;" },
+                { "g", "Ljavax/microedition/lcdui/Graphics;" },
                 { NULL, NULL }
             };
 
