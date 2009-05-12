@@ -25,6 +25,7 @@ package com.sun.mmedia;
 
 import java.util.Hashtable;
 import javax.microedition.media.Control;
+import javax.microedition.media.Manager;
 // #ifdef ENABLE_CDC [
 import java.security.*;
 // #endif ]
@@ -142,6 +143,24 @@ public abstract class Configuration {
     public final static String RADIO_CAPTURE_LOCATOR = "capture://radio";
     public final static String AUDIO_CAPTURE_LOCATOR = "capture://audio";
     public final static String VIDEO_CAPTURE_LOCATOR = "capture://video";
+
+    /**
+     * Get content type helper function
+     */
+    public static String getContentType(String locator) {
+        if (locator != null) {
+            if (locator.equals(Manager.TONE_DEVICE_LOCATOR)) {
+                return MIME_AUDIO_TONE;
+            } else if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
+                return MIME_AUDIO_MIDI;
+            } else if (locator.equals(Configuration.AUDIO_CAPTURE_LOCATOR)) {
+                return MIME_AUDIO_WAV;
+            } else if (locator.equals(Configuration.VIDEO_CAPTURE_LOCATOR)) {
+                return MIME_IMAGE_PNG;
+            }
+        }
+        return "";
+    }
 
     /**
      * A hash table of the protocol handlers.
@@ -293,30 +312,8 @@ public abstract class Configuration {
      */
     public static Configuration getConfiguration() {
         if (config != null) return config;
-    
-        String className = 
-// #ifdef ENABLE_CDC [
-            (String) AccessController.doPrivileged(new PrivilegedAction() {
-                    public Object run() {
-                        return
-// #endif ]
-            System.getProperty("mmapi-configuration");
-// #ifdef ENABLE_CDC [
-                    }
-                });
-// #endif ]
 
-        if (className != null) {        
-            try {
-                // ... try and instantiate the configuration class ...
-                Class handlerClass = Class.forName(className);
-                config = (Configuration) handlerClass.newInstance();
-            } catch (Exception e) {
-                // do nothing
-            }
-        } else {            
-            config = new DefaultConfiguration();
-        }
+        config = new GIFOnlyConfig();
 
         return config;
     }

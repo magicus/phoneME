@@ -232,18 +232,21 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     private static int systemVolume = 100;
 
     // Init native library
-    private native int nInit(int appId, int pID, String URI)
-                                            throws MediaException, IOException;
+    private int nInit(int appId, int pID, String URI)
+                                            throws MediaException, IOException
+    {
+        return 0;
+    }
     // Terminate native library
-    private native int nTerm(int handle);
+    private int nTerm(int handle) {return 0;}
     // Get Media Format
-    private native String nGetMediaFormat(int handle);
+    private String nGetMediaFormat(int handle) { return MEDIA_FORMAT_UNKNOWN; }
     // Need media Download in Java side?
-    private native boolean nIsHandledByDevice(int handle);
+    private boolean nIsHandledByDevice(int handle) { return false; }
 
     // Realize native player
-    private native void nRealize(int handle, String mime) throws
-            MediaException;
+    private void nRealize(int handle, String mime) throws
+            MediaException {}
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
     
@@ -361,9 +364,9 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             
     void continueDownload() {
         /* predownload media data to fill native buffers */
-        if (mediaDownload != null) {
-            mediaDownload.continueDownload();
-        }
+//        if (mediaDownload != null) {
+//            mediaDownload.continueDownload();
+//        }
     }
 
     public int getNativeHandle()
@@ -614,7 +617,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             nRealize(hNative, type);
         }
 
-        mediaDownload = null;
+//        mediaDownload = null;
 
         if (!handledByDevice && !handledByJava) {
             mediaFormat = nGetMediaFormat(hNative);
@@ -633,18 +636,18 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
             /* predownload media data to recognize media format and/or 
                specific media parameters (e.g. duration) */
-            if (!mediaFormat.equals(MEDIA_FORMAT_TONE)) {
-                mediaDownload = new MediaDownload(hNative, stream);
-                try {
-                    mediaDownload.fgDownload();
-                } catch(IOException ex1) {
-                    ex1.printStackTrace();
-                    throw new MediaException("Can not start download Thread: " + ex1);
-                }catch(Exception ex) {
-                    ex.printStackTrace();
-                    throw new MediaException( "Can not start download Thread: " + ex );
-                }
-            }
+//            if (!mediaFormat.equals(MEDIA_FORMAT_TONE)) {
+//                mediaDownload = new MediaDownload(hNative, stream);
+//                try {
+//                    mediaDownload.fgDownload();
+//                } catch(IOException ex1) {
+//                    ex1.printStackTrace();
+//                    throw new MediaException("Can not start download Thread: " + ex1);
+//                }catch(Exception ex) {
+//                    ex.printStackTrace();
+//                    throw new MediaException( "Can not start download Thread: " + ex );
+//                }
+//            }
         }
 
         if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {        
@@ -688,12 +691,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         if ("GIF".equals(type)) {
             return new GIFPlayer( this );
-        } else if (DirectPlayer.nIsToneControlSupported(hNative)) {
-            return new DirectTone( this );
-        } else if (DirectPlayer.nIsMIDIControlSupported(hNative)) {
-            return new DirectMIDI( this );
         } else {
-            return new DirectPlayer( this );
+            throw new MediaException( PL_ERR_SH + "Media Format is not supported" );
         }              
 
     }
@@ -1250,7 +1249,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         if (source == null) {
             // Call helper function to get a content type
-            type = DefaultConfiguration.getContentType(locator);
+            type = Configuration.getContentType(locator);
         } else {
             type = source.getContentType();
         }
@@ -1397,7 +1396,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     {
         return ( null != source.getLocator() &&
             source.getLocator().startsWith(
-                DefaultConfiguration.RADIO_CAPTURE_LOCATOR ) );
+                Configuration.RADIO_CAPTURE_LOCATOR ) );
     }
 
     public boolean isCameraPlayer()

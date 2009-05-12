@@ -37,7 +37,6 @@ import com.sun.mmedia.HighLevelPlayer;
 import com.sun.mmedia.TonePlayer;
 import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.*;
-import com.sun.mmedia.DefaultConfiguration;
 
 import javax.microedition.media.protocol.*;
 
@@ -523,7 +522,7 @@ public final class Manager {
      * @return           The list of supported content types for the given protocol.
      */
     public static String[] getSupportedContentTypes(String protocol) {
-        return config.getSupportedContentTypes(protocol);        
+        return config.getSupportedContentTypes(protocol);
     }
 
 
@@ -579,87 +578,10 @@ public final class Manager {
 
         String locStr = locator.toLowerCase();
 
-        
-        if( !isAudioDeviceFound && ( locStr.equals( MIDI_DEVICE_LOCATOR ) || 
-                                     locStr.equals( TONE_DEVICE_LOCATOR ) ) )
+        if( !locStr.endsWith(".gif") || ( !locStr.startsWith("file://") &&
+                                           locStr.startsWith("http://") ) )
         {
-            throw new MediaException( "No audio device found. Check your" +
-                    " audio driver settings" );
-        }
-
-        /* Verify if Protocol is supported */
-        String theProtocol = null;
-        boolean found = false;
-        int idx = locStr.indexOf(':');
-
-        if (idx != -1) {
-            theProtocol = locStr.substring(0, idx);
-        } else {
-            throw new MediaException("Malformed locator");
-        }
-
-        if (locStr.startsWith(DefaultConfiguration.RADIO_CAPTURE_LOCATOR))
-        {
-            if (!config.isRadioSupported())
-            {
-                throw new MediaException( "Radio Capture is not supported" );
-            }
-            parseRadioLocatorStr(locator);
-        }
-        else if (locStr.startsWith(DefaultConfiguration.AUDIO_CAPTURE_LOCATOR) ||
-            locStr.startsWith(DefaultConfiguration.VIDEO_CAPTURE_LOCATOR))
-        {
-            // separate device & encodings
-            int encInd = locator.indexOf('?');
-            String encStr = null;
-            if (encInd > 0) {
-                locStr = locStr.substring(0, encInd);
-                idx = locator.indexOf("encoding=");
-                if (idx != -1) {
-                    encStr = locator.substring(idx+9);
-                    if (encStr != null) {
-                        idx = encStr.indexOf('&');
-                        if (idx > 0) {
-                            encStr = encStr.substring(0, idx);
-                        }
-                        encStr = encStr.toLowerCase();
-                    }
-                }
-
-            }
-            found = true;
-            String encodings = null;
-            if (locStr.equals(DefaultConfiguration.AUDIO_CAPTURE_LOCATOR)) {
-                String supported = System.getProperty("supports.audio.capture");
-                encodings = System.getProperty("audio.encodings");
-                if (supported == null || supported.equals("false") || encodings == null) {
-                    found = false;
-                }
-            } else if (locStr.equals(DefaultConfiguration.VIDEO_CAPTURE_LOCATOR)) {
-                String supported = System.getProperty("supports.video.capture");
-                encodings = System.getProperty("video.encodings");
-                if (supported == null || supported.equals("false") || encodings == null) {
-                    found = false;
-                }
-            }
-            if (encStr != null && encodings != null && encodings.indexOf(encStr) == -1) {
-                found = false;
-            }
-            if (!found) {
-                throw new MediaException("Player cannot be created for " + locator);
-            }
-        } else {
-            String supportedProtocols[] = getSupportedProtocols(null);
-            for (int i = 0; i < supportedProtocols.length && !found; i++) {
-                if (theProtocol.equals(supportedProtocols[i])) {
-                    found = true;
-                }
-            }
-
-            if (!found) {
-                throw new MediaException("Player cannot be created for " + locator + 
-                                        " Unsupported protocol " + theProtocol);
-            }
+            throw new MediaException( "URI not supported" );
         }
 
         DataSource ds = createDataSource(locator);
@@ -680,13 +602,13 @@ public final class Manager {
     private static void parseRadioLocatorStr( String locator ) throws MediaException
     {
         final int prefixLen = 
-                DefaultConfiguration.RADIO_CAPTURE_LOCATOR.length();
+                Configuration.RADIO_CAPTURE_LOCATOR.length();
         
         if( null == locator )
         {
             throw new MediaException( "radio locator is null" );
         }
-        if( !locator.startsWith( DefaultConfiguration.RADIO_CAPTURE_LOCATOR ) )
+        if( !locator.startsWith( Configuration.RADIO_CAPTURE_LOCATOR ) )
         {
             throw new MediaException( "bad radio locator" );
         }
@@ -898,12 +820,11 @@ public final class Manager {
         
         type = type.toLowerCase();
 
-        if( !isAudioDeviceFound && type != null && type.startsWith( "audio" ) )
+        if( !type.equals("image/gif"))
         {
-            throw new MediaException( "No audio device found. Check your" +
-                    " audio driver settings" );
+            throw new MediaException( "Not supported ");
         }
-            
+
         // Wrap the input stream with a CommonDS where the input
         // can be handled in a generic way.
         
@@ -963,36 +884,7 @@ public final class Manager {
             return;
         }
 
-        if( !isAudioDeviceFound )
-        {
-            throw new MediaException( "No audio device found. Check your" +
-                        " audio driver settings" );
-        }
-
-        if (tonePlayer == null) {
-            tonePlayer = config.getTonePlayer();
-        }
-        
-        if (tonePlayer != null) {
-            int res = 
-            tonePlayer.playTone(note, duration, volume);
-            
-            if( TonePlayer.RESULT_FAIL == res )
-            {
-                throw new MediaException( "Failed to play tone" );
-            }
-            
-            if( TonePlayer.RESULT_NO_AUDIO_DEVICE == res )
-            {
-                isAudioDeviceFound = false;
-                throw new MediaException( "No audio device found. Check your" +
-                        " audio driver settings" );
-            }
-            
-            
-        } else {
-            throw new MediaException("no tone player");
-        }
+        throw new MediaException("no tone player");
     }
 
     private static boolean isAudioDeviceFound = true;
