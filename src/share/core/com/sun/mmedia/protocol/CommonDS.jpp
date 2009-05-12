@@ -67,13 +67,16 @@ public class CommonDS extends BasicDS implements SourceStream {
         } catch (IOException ioe) {
                 //ignore
         }
-/*
-        try {
-            contentLength = is.available();
-        } catch(IOException e) {
-            contentLength = -1;
+
+        // #ifndef ENABLE_CDC [
+        if (is instanceof com.sun.cldc.io.ResourceInputStream) {
+            try {
+                contentLength = is.available();
+            } catch (IOException e) {
+                contentLength = -1;
+            }
         }
-*/
+        // #endif ]
     }
 
     public void connect() throws IOException {
