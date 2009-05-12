@@ -95,6 +95,13 @@ public class MIDletClassLoader extends URLClassLoader {
         this.enableFilter = enableFilter;
         this.auxClassLoader = auxClassLoader;
         this.bridgeInterface = bridgeInterface;
+
+        /* Register the classloader */
+        String p = base[0].getPath();
+        String name = p.substring(
+            p.lastIndexOf(File.separatorChar)+1,
+            p.lastIndexOf('.'));
+        CVM.Preloader.registerClassLoader(name, this);
     }
 
     protected PermissionCollection getPermissions(CodeSource cs){
