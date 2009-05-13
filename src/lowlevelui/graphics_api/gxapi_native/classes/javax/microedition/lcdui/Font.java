@@ -298,7 +298,6 @@ public final class Font {
                 f = new Font(FACE_PROPORTIONAL, inp_style, inp_size, true);
                 table.put(key, f);
             }
-            System.out.println("++ got font: "+inp_size+" = "+f.getSize()+" "+inp_style+" = "+f.getStyle());
             return f;
         }
         
