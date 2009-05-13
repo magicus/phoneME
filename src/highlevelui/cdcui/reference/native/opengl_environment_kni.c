@@ -146,12 +146,10 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushPbufferSurface0) {
     KNI_DeclareHandle(imgHandle);
     KNI_GetParameterAsObject(1, imgHandle);
     srcImageDataPtr = IMGAPI_GET_IMAGE_PTR(imgHandle)->imageData;
-    //surfaceId = IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId;
-    psrcSBuf =
-      gxj_get_image_screen_buffer_impl(srcImageDataPtr, &srcSBuf, NULL);
-                IMGAPI_GET_IMAGE_PTR(imgHandle), srcSBuf.pixelData);
-    //midpGL_flushPbufferSurface(surfaceId, srcSBuf.pixelData, ystart, yend);
-    midpGL_flushPbufferSurface(IMGAPI_GET_IMAGE_PTR(imgHandle), srcSBuf.pixelData, ystart, yend);
+    psrcSBuf = gxj_get_image_screen_buffer_impl(srcImageDataPtr, 
+                                                &srcSBuf, NULL);
+    midpGL_flushPbufferSurface(IMGAPI_GET_IMAGE_PTR(imgHandle), 
+                               srcSBuf.pixelData, ystart, yend);
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
