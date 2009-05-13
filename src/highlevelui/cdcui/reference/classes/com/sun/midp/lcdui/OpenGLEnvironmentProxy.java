@@ -26,6 +26,9 @@
 
 package com.sun.midp.lcdui;
 
+import javax.microedition.lcdui.Image;
+import javax.microedition.lcdui.Graphics;
+
 /**
  * This class provides methods needed for JSRs to access OpenGL 
  * rendering capabilities in lcdui in order to properly synchronize 
@@ -75,5 +78,14 @@ public class OpenGLEnvironmentProxy{
      */
     public void flushOpengGL() {
         env.flushOpengGL(container);
+    }
+    
+    public void createPbufferSurface(Image img) {
+        env.createPbufferSurface(img);
+    }
+    
+    public void flushPbufferSurface(Image offscreen_buffer,
+                                    int ystart, int yend){
+        env.flushPbufferSurface(offscreen_buffer, ystart, yend);
     }
 }

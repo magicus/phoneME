@@ -2348,7 +2348,6 @@ public class Display {
 			}
 			// Be sure to convert the regions which are x,y,w,h to
 			// x1, y1, x2, y2
-//System.out.println("Display.jpp: calling refresh from callPaint\n");
 			displayDevice.refresh(displayId, subregion[0], subregion[1],
 				 subregion[0] + subregion[2],
 				 subregion[1] + subregion[3]);
@@ -3191,15 +3190,23 @@ public class Display {
 			    screenGraphics.translate(-tranX, -tranY);
 			    screenGraphics.setClip(x1, y1, width, height);
 			    
+                            //#ifdef ENABLE_OPENGL
+                            // flush the offscreen buffer to the backing surface
+                            com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                            ogl.flushPbufferSurface(offscreen_buffer, y1, y2);
+                            //#else
 			    screenGraphics.drawImage(offscreen_buffer,
 				     anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
-
+                            //#endif
 			    // restore initial clip area and translation
 			    screenGraphics.translate(tranX, tranY);
 			    screenGraphics.setClip(reg[0], reg[1], reg[2] - reg[0], reg[3] - reg[1]);
 			}
-//System.out.println("Display.jpp: calling refresh from doFlush\n");
+                        // #ifdef ENABLE_OPENGL
+                        // #else
 			displayDevice.refresh(displayId, x1, y1, x2, y2);
+                        // #endif
 		    }
 	    }
 	    finally {

@@ -72,15 +72,19 @@ $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java: \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.jpp
 	@$(call runjpp,$^,$@)
 
+$(GENERATED_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java: \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.jpp
+	@$(call runjpp,$^,$@)
+
 # Java files for the library
 #
 SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java \
     $(GENERATED_DIR)/classes/javax/microedition/lcdui/GraphicsAccessImpl.java \
     $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameMap.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameAccess.java \
-    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/CommandAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/TextPolicy.java \
