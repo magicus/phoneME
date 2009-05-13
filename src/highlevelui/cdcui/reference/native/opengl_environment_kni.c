@@ -94,7 +94,6 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_createPbufferSurface0) {
     jint surfaceId;
 
     // call into midpGL_createPbufferSurface();
-BREWprintf("createBufferSurface0\n");
     KNI_StartHandles(1);
     KNI_DeclareHandle(imgHandle);
     KNI_GetParameterAsObject(1, imgHandle);    
@@ -150,12 +149,9 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushPbufferSurface0) {
     //surfaceId = IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId;
     psrcSBuf =
       gxj_get_image_screen_buffer_impl(srcImageDataPtr, &srcSBuf, NULL);
-    //BREWprintf("flushPbufferSurface0: surfaceId is %d, imageData is %d\n", 
-BREWprintf("flushPbufferSurface0: handle is %d, imageData is %d\n", 
                 IMGAPI_GET_IMAGE_PTR(imgHandle), srcSBuf.pixelData);
     //midpGL_flushPbufferSurface(surfaceId, srcSBuf.pixelData, ystart, yend);
     midpGL_flushPbufferSurface(IMGAPI_GET_IMAGE_PTR(imgHandle), srcSBuf.pixelData, ystart, yend);
-    BREWprintf("opengl_environment.c: back from flushBufferSurface\n");
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
