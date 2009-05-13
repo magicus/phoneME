@@ -217,7 +217,6 @@ public final class Font {
         face  = inp_face;
         style = inp_style;
         size  = inp_size;
-        freeSize = free_size;
 
         init(inp_face, inp_style, inp_size, free_size);
     }
@@ -272,7 +271,9 @@ public final class Font {
         }
 
         synchronized (Display.LCDUILock) {
-            FontKey key = new FontKey(inp_face, inp_style, inp_size, false);
+            Integer key = new Integer((inp_face << 24)
+                                    | (inp_style << 16)
+                                    | (inp_size << 8));
             Font f = (Font)table.get(key);
             if (f == null) {
                 f = new Font(inp_face, inp_style, inp_size, false);
@@ -289,8 +290,9 @@ public final class Font {
         }
         
         synchronized (Display.LCDUILock) {
-            FontKey key = new FontKey(FACE_PROPORTIONAL, inp_style,
-                                                        inp_size, true);
+            Integer key = new Integer((FACE_PROPORTIONAL << 24)
+                                    | (inp_style << 16)
+                                    | (inp_size << 8) | 1);
             Font f = (Font)table.get(key);
             if (f == null) {
                 f = new Font(FACE_PROPORTIONAL, inp_style, inp_size, true);
@@ -327,10 +329,8 @@ public final class Font {
      */
     public int getSize() {
         // SYNC NOTE: return of atomic value, no locking necessary
-        return getSize0();
+        return size0;
     }
-    
-    private native int getSize0();
 
     /**
      * Gets the face of the font.
@@ -499,14 +499,14 @@ public final class Font {
     private int face;
     /** The style of this Font */
     private int style;
-    /** The point size of this Font */
+    /** The size of this Font, one of the constants */
     private int size;
+    /** The size of this Font in pixels*/
+    private int size0;
     /** The baseline of this Font */
     private int baseline;
     /** The height of this Font */
     private int height;
-    /** The flag for free size font */
-    private final boolean freeSize;
 
     /**
      * The "default" font, constructed from the 'system' face,
@@ -534,29 +534,5 @@ public final class Font {
 class FontAccessImpl implements FontAccess {
     public Font getOEMFont(int style, int size) {
         return Font.getOEMFont(style, size);
-    }
-}
-
-/**
- * Private class used to create keys for font table.
- */         
-class FontKey {
-    private final int face;
-    private final int style;
-    private final int size;
-    private final boolean freeSize;
-    
-    FontKey(int face, int style, int size, boolean freeSize) {
-        this.face = face;
-        this.style = style;
-        this.size = size;
-        this.freeSize = freeSize;
-    }
-    public boolean equals(Object obj) {
-        if (obj == null || !(obj instanceof FontKey))
-            return false;
-        FontKey that = (FontKey)obj;
-        return face == that.face && style == that.style &&
-            size == that.size && freeSize == that.freeSize;
     }
 }

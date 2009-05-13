@@ -78,42 +78,15 @@ KNIDECL(javax_microedition_lcdui_Font_init) {
     GET_FONT_PTR(thisObject)->baseline = (jint)ascent;
     GET_FONT_PTR(thisObject)->height = (jint)(ascent + descent + leading);
     GET_FONT_PTR(thisObject)->size = (jint)size;
+    GET_FONT_PTR(thisObject)->size0 = (jint) (
+        size <= JAVACALL_FONT_SIZE_SMALL ? SIZE_SMALL :
+        size >= JAVACALL_FONT_SIZE_LARGE ? SIZE_LARGE :
+        SIZE_MEDIUM);
 
     SNI_END_RAW_POINTERS;
     
     KNI_EndHandles();
     KNI_ReturnVoid();
-}
-
-/**
- * Gets the size of the this <tt>Font</tt> object.
- * <p>
- * Java declaration:
- * <pre>
- *     getSize(C)I
- * </pre>
- *
- * @return one of the SIZE_XXX constants defined in the Font class
- */
-KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(javax_microedition_lcdui_Font_getSize0) {
-    int face, style, size;
-
-    KNI_StartHandles(1);
-
-    KNI_DeclareHandle(thisObject);
-    KNI_GetParameterAsObject(0, thisObject);
-
-    DECLARE_FONT_PARAMS(thisObject);
-    if (size <= JAVACALL_FONT_SIZE_SMALL)
-        size = SIZE_SMALL;
-    else if (size >= JAVACALL_FONT_SIZE_LARGE)
-        size = SIZE_LARGE;
-    else
-        size = SIZE_MEDIUM;
-
-    KNI_EndHandles();
-    KNI_ReturnInt(size);
 }
 
 /**
