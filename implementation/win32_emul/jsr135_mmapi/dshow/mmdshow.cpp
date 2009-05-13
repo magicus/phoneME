@@ -108,6 +108,7 @@ public:
     long                  bytes_buffered;
     bool                  all_data_arrived;
     long                  whole_content_size;
+    bool                  eom_sent;
 
     long                  volume;
     int                   pan;
@@ -198,18 +199,24 @@ void dshow_player::audio_format_changed(nat32 samples_per_second,
 
 void dshow_player::playback_finished()
 {
-    long t = get_media_time();
-    javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
-                                      appId, playerId, JAVACALL_OK, (void*)t );
+    if( !eom_sent )
+    {
+        eom_sent = true;
 
-    ppl->stop();
+        long t = get_media_time();
+        PRINTF( "*** playback finished, t=%ld\n", t );
+        javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
+                                          appId, playerId, JAVACALL_OK, (void*)t );
+
+        PRINTF( "*** stopping...\n" );
+        player::result r = ppl->stop();
+        PRINTF( "*** player::stop = %i\n", r );
+    }
 }
 
 void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
 {
     EnterCriticalSection( &cs );
-
-    PRINTF( "$" );
 
     if( out_queue_n + nbytes > OUT_QUEUE_SIZE )
     {
@@ -749,6 +756,7 @@ static javacall_result dshow_start(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** start ***\n" );
+    p->eom_sent = false;
     if( player::result_success == p->ppl->start() )
     {
         PRINTF( "*** started ***\n" );
