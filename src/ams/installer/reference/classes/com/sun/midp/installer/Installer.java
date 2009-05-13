@@ -1491,6 +1491,12 @@ public abstract class Installer {
             }
         }
 
+        // Set application property with URL the MIDlet suite is downloaded from
+        if (state.jadProps == null) {
+            state.jadProps = new JadProperties();
+        }
+        state.jadProps.setProperty(MIDletSuite.JAR_DOWNLOAD_URL, info.jarUrl);
+
         MIDletSuiteInfo msi = new MIDletSuiteInfo(info.id);
 
         msi.displayName = state.getDisplayName();
