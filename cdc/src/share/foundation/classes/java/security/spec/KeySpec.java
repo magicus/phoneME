@@ -1,0 +1,65 @@
+/*
+ * @(#)KeySpec.java	1.20 06/10/10
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
+ */
+
+package java.security.spec;
+
+/**
+ * A (transparent) specification of the key material
+ * that constitutes a cryptographic key.
+ *
+ * <p>If the key is stored on a hardware device, its
+ * specification may contain information that helps identify the key on the
+ * device.
+ *
+ * <P> A key may be specified in an algorithm-specific way, or in an
+ * algorithm-independent encoding format (such as ASN.1).
+ * For example, a DSA private key may be specified by its components
+ * <code>x</code>, <code>p</code>, <code>q</code>, and <code>g</code>
+ * (see {@link DSAPrivateKeySpec}), or it may be
+ * specified using its DER encoding
+ * (see {@link PKCS8EncodedKeySpec}).
+ *
+ * <P> This interface contains no methods or constants. Its only purpose
+ * is to group (and provide type safety for) all key specifications.
+ * All key specifications must implement this interface.
+ *
+ * @author Jan Luehe
+ *
+ * @version 1.14, 02/02/00
+ *
+ * @see java.security.Key
+ * @see java.security.KeyFactory
+ * @see EncodedKeySpec
+ * @see X509EncodedKeySpec
+ * @see PKCS8EncodedKeySpec
+ * @see DSAPrivateKeySpec
+ * @see DSAPublicKeySpec
+ *
+ * @since 1.2
+ */
+
+public interface KeySpec { }
