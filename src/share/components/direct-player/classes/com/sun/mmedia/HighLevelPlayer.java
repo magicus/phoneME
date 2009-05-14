@@ -277,7 +277,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         mplayers.put(new Integer(pID), this);
 
-        mediaFormat     = nGetMediaFormat(hNative);
+//        mediaFormat     = nGetMediaFormat(hNative);
+        mediaFormat     = MEDIA_FORMAT_UNKNOWN;
 
         if( mediaFormat.equals( MEDIA_FORMAT_UNSUPPORTED ) ) {
             /* verify if handled by Java */
