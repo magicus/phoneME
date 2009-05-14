@@ -204,8 +204,10 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine)
          *
          * Midlet classes should be verified with the split verifier just
          * in case there is a missing StackMap resource.
+         * Redefined classes use full verifier since Netbeans doesn't
+         * copy stackmaps to new methods.
 	 */
-	if (CVMglobals.splitVerify && 
+	if (CVMglobals.splitVerify && !isRedefine &&
             (CVMsplitVerifyClassHasMaps(ee, cb) ||
              isMidletClass ||
              cb->major_version >= 50))
