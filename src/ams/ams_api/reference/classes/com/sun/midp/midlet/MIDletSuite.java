@@ -100,6 +100,8 @@ public interface MIDletSuite {
     /** MIDlet property for launching the MIDlet during system start-up. */
     public static final String LAUNCH_POWER_ON_PROP = "MIDlet-Launch-Power-On";
 
+    /** URL where MIDlet suite JAR package was downloaded from on installation. */
+    public static final String JAR_DOWNLOAD_URL = "MIDlet-Jar-Download-URL";
 
     /**
      * Get a property of the suite. A property is an attribute from
