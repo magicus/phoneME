@@ -313,7 +313,7 @@ public abstract class Configuration {
     public static Configuration getConfiguration() {
         if (config != null) return config;
 
-        config = new GIFOnlyConfig();
+        config = new SimpleConfig();
 
         return config;
     }

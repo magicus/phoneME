@@ -25,18 +25,13 @@
 #include <kni.h>
 #include "sni.h"
 
-typedef struct MPEG2Player {
-} MPEG2Player;
-
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_MPEG2Player_nCreate) {
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(URI);
-    
-    /* Get URI object parameter */
-    KNI_GetParameterAsObject(1, URI);
-    
-    KNI_EndHandles();
+    KNI_ReturnInt( 0 );
+}
 
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_MPEG2Player_nStart) {
+    KNI_ReturnBoolean( KNI_TRUE );
 }
 

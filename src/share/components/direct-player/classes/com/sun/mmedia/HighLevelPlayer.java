@@ -309,6 +309,17 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 mediaFormat = MEDIA_FORMAT_CAPTURE_RADIO;
             }
             handledByDevice = true;
+        } else if ( null != locator && locator.toLowerCase().endsWith(".mpg") )
+        {
+            if( locator.startsWith( "file://" ) )
+            {
+                handledByDevice = true;
+                mediaFormat = "MPEG_2";
+            }
+            else
+            {
+                throw new MediaException( "MPG is supported only from file" );
+            }
         }
 
         if (!handledByJava && !handledByDevice) {
@@ -692,7 +703,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         if ("GIF".equals(type)) {
             return new GIFPlayer( this );
-        } else {
+        } else if( type.equals("MPEG_2" ) )
+        {
+            return new MPEG2Player(this);
+        }
+        else {
             throw new MediaException( PL_ERR_SH + "Media Format is not supported" );
         }              
 
