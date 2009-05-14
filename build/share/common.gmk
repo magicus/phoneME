@@ -71,11 +71,16 @@ $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/protocol/CommonDS.java: \
   $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/CommonDS.jpp
 	@$(call runjpp,$^,$@)
 
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectVideo.java: \
+  $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectVideo.jpp
+	@$(call runjpp,$^,$@)
+
 
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/Configuration.java \
-    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/protocol/CommonDS.java
-
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/protocol/CommonDS.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectVideo.java
+    
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/Player.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/PlayerListener.java \
@@ -109,8 +114,9 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/VideoSource.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/PlayerStateSubscriber.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/HighLevelPlayer.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/MPEG2Player.java \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MMEventListener.java \
-    $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/AudioTunnel.java \
+    $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/AudioTunnel.java
 
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/FormatConversionUtils.java \

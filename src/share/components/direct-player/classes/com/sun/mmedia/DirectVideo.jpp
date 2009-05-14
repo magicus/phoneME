@@ -41,6 +41,10 @@ import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
 
+import com.sun.j2me.log.Logging;
+import com.sun.j2me.log.LogChannels;
+
+
 /**
  * Common MIDP/LCDUI-based Video Control
  * it implements VideoControl for DirectPlayer.
@@ -131,6 +135,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         clipy += diffy;
 
         if (x < clipx) return false;
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
+                "isInClippingArea return true - No graphic outside of clipping area"); 
+        }  
+
         if (y < clipy) return false;
         if (x + w > clipx + clipw) return false;
         if (y + h > clipy + cliph) return false;
@@ -139,6 +148,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "isInClippingArea return true - No graphic outside of clipping area"); 
         }  
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
+                "prepareVideoSurface " + x + "," + y + "," + w + "," + h); 
+        }    
+ 
 
         return true;
     }
@@ -193,6 +207,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             throw new IllegalStateException("initDisplayMode not called yet");
         }
     }
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
+                "initDisplayMode mode=" + mode + ", container=" + container); 
+        }     
+        
 
     void start() {
         started = true;
@@ -267,6 +286,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 // #endif ]
             visible = true;
         }
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
+                           "setDisplayLocation x=" + x + ",y=" + y); 
+        }
+
 
         return ret;
     }
@@ -278,6 +302,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     void close() {
         if (mmh != null && canvas != null) {
             // unregister this direct video handler with MMH
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
+                "setDisplaySize w=" + width + ",h=" + height); 
+        }
+
             mmh.unregisterPlayer(canvas, this);
         }
     }
@@ -440,6 +469,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
                                           imageType +
                                           "')is not supported" );
             }
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
+                "paintVideo x=" + x + ",y=" + y + ",w=" + w + ",h=" + h); 
+        }
+
         }
 
 
@@ -470,6 +504,10 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
+                "showVideoPreview"); 
+        }
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "paintVideo x=" + x + ",y=" + y + ",w=" + w + ",h=" + h); 
         }
@@ -494,6 +532,10 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "hideVideoPreview"); 
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
+                    "DVItem.paint visible=" + visible); 
+            }
         }
         source.setVideoVisible( false);
         hidden = true;
@@ -531,6 +573,9 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             repaint();
         }
         
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "showNotify"); 
+            }        
         public void paint(Graphics g, int w, int h) {
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
@@ -538,6 +583,9 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             }
             if (!hidden && visible) {
                 boolean isOverlapped = (null != mmh) && mmh.isDisplayOverlapped(g);
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "hideNotify"); 
+            }        
                 if (isOverlapped) {
                     prepareClippedPreview(g, 0, 0, w, h);
                 } else {
@@ -585,6 +633,10 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         public void hideNotify() {
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "hideNotify"); 
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "fullScreenLocationControl.activate"); 
+            }        
+
             }        
             source.setVideoVisible( false);
             hidden = true;
@@ -688,6 +740,10 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
 
         public void setDisplaySize(int width, int height) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "normalScreenLocationControl.activate"); 
+            }        
+
             synchronized(boundLock) {
 
                 boolean sizeChanged = ( dw != width || dh != height );
