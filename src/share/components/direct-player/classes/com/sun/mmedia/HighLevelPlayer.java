@@ -1438,7 +1438,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
     // Prepend the package name if the type given does not
     // have the package prefix.
-    private static String getFullControlName( String name )
+    static String getFullControlName( String name )
     {
         if( name.indexOf('.') < 0  )
         {

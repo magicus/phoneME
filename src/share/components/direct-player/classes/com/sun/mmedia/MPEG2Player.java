@@ -31,6 +31,7 @@ import javax.microedition.media.Player;
 class MPEG2Player extends LowLevelPlayer implements VideoSource {
 
     private int nativeHandle = 0;
+    private DirectVideo directVideo = null;
 
     MPEG2Player( HighLevelPlayer owner )
     {
@@ -85,7 +86,13 @@ class MPEG2Player extends LowLevelPlayer implements VideoSource {
     }
 
     protected Control doGetNewControl(String type) {
-        return null;
+        Control ctl = null;
+        if( type.endsWith( HighLevelPlayer.vicName ) )
+        {
+            directVideo = new DirectVideo( this, 0, 0 );
+            ctl = directVideo;
+        }
+        return ctl;
     }
 
     protected void doSetStopTime(long time) {
