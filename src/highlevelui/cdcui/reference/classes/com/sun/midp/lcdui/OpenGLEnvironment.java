@@ -26,6 +26,9 @@
 
 package com.sun.midp.lcdui;
 
+import javax.microedition.lcdui.Image;
+import javax.microedition.lcdui.Graphics;
+
 import com.sun.midp.main.NativeForegroundState;
 
 /**
@@ -57,6 +60,26 @@ public class OpenGLEnvironment{
         flushOpenGL0(regionArray, dirtyRegions.length, displayId);
     }
     
+    public void createPbufferSurface(Image img) {
+        System.out.println("OpenGLEnvironment: createPbufferSurface");
+        createPbufferSurface0(img);
+    }
+    
+    public void flushPbufferSurface(Image offscreen_buffer,
+                                    int ystart, int yend){
+        System.out.println("offscreen buffer is " + offscreen_buffer);
+        flushPbufferSurface0(offscreen_buffer, ystart, yend);
+        System.out.println("back from flushPbufferSurface0");
+    }
+    
+    public void createPixmapSurface(Graphics g, Image img) {
+        createPixmapSurface0(g, img);
+    }
+    
     private native void flushOpenGL0(int[] regionArray,
                                      int numberOfRegions, int displayId);
+    
+    private native void createPbufferSurface0(Image img);
+    private native void flushPbufferSurface0(Image src, int ystart, int yend);
+    private native void createPixmapSurface0(Graphics g, Image img);
 }

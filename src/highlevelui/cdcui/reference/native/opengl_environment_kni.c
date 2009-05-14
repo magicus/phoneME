@@ -31,10 +31,14 @@
  */
 
 #include <sni.h>
+#include <kni.h>
 #include <jvm.h>
 #include <commonKNIMacros.h>
 #include <midpEventUtil.h>
 #include "javacall_memory.h"
+#include "gxj_putpixel.h"
+#include "gxapi_graphics.h"
+#include "imgapi_image.h"
 
 extern void midpGL_flush(int dirtyRegions[], int numRegions);
 
@@ -81,5 +85,71 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushOpenGL0) {
         midpGL_flush(regionArray, numRegions);
         KNI_EndHandles();
     }
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_createPbufferSurface0) {
+    static jfieldID surface_fid = 0;
+    jint surfaceId;
+
+    // call into midpGL_createPbufferSurface();
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(imgHandle);
+    KNI_GetParameterAsObject(1, imgHandle);    
+    midpGL_createPbufferSurface(IMGAPI_GET_IMAGE_PTR(imgHandle));
+    //IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = surfaceId;
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_createPixmapSurface0) {
+    java_graphics * gr;
+    gxj_screen_buffer *pImageData;
+    gxj_screen_buffer screen_buffer;
+
+    // call into midpGL_createPixmapSurface();
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(graphicsHandle);
+    KNI_GetParameterAsObject(1, graphicsHandle);
+    if (!KNI_IsNullHandle(graphicsHandle)) {
+        java_graphics * gr;
+        gr = GXAPI_GET_GRAPHICS_PTR(graphicsHandle);
+        if (gr != NULL) {
+          pImageData = gxj_get_image_screen_buffer_impl(
+                        (gr != NULL && gr->img != NULL)?gr->img->imageData:NULL,
+                        &screen_buffer, graphicsHandle);
+        }
+    }
+    midpGL_createPixmapSurface(pImageData);
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushPbufferSurface0) {
+    byte *imgByteArray;
+    jsize arrayLength;
+    static jfieldID image_data_fid = 0;
+    static jfieldID pixel_data_fid = 0;
+    static jfieldID native_surface_id_fid = 0;
+    const java_imagedata *srcImageDataPtr;
+    gxj_screen_buffer srcSBuf;  
+    gxj_screen_buffer *psrcSBuf;
+    jint surfaceId;
+
+    jint ystart = KNI_GetParameterAsInt(2);
+    jint yend = KNI_GetParameterAsInt(3);
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(imgHandle);
+    KNI_GetParameterAsObject(1, imgHandle);
+    srcImageDataPtr = IMGAPI_GET_IMAGE_PTR(imgHandle)->imageData;
+    psrcSBuf = gxj_get_image_screen_buffer_impl(srcImageDataPtr, 
+                                                &srcSBuf, NULL);
+    midpGL_flushPbufferSurface(IMGAPI_GET_IMAGE_PTR(imgHandle), 
+                               srcSBuf.pixelData, ystart, yend);
+    KNI_EndHandles();
     KNI_ReturnVoid();
 }

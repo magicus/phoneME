@@ -193,7 +193,7 @@ ifeq ($(TARGET_VM), cldc_vm)
    EXTRA_CFLAGS        += -DENABLE_CDC=0
 else
    J2ME_CONFIGURATION   = cdc
-   EXTRA_CFLAGS        += -DENABLE_CDC=1
+   EXTRA_CFLAGS        += $(VM_FLAGS) -DENABLE_CDC=1
    JPP_DEFS            += -DENABLE_CDC
 endif
 

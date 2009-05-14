@@ -35,7 +35,7 @@ VIRTUAL_KEYBOARD_J_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(VIRTUAL_KEYBOARD_J_NAME)
 
 # Add to library set for this build
 LIB_SET += $(VIRTUAL_KEYBOARD_J_NAME)
-                    
+
 # Export include files
 #SUBSYSTEM_VIRTUAL_KEYBOARD_EXTRA_INCLUDES += -I$(VIRTUAL_KEYBOARD_J_DIR)/include
 
@@ -49,9 +49,10 @@ SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES += \
     $(GENERATED_DIR)/classes/com/sun/midp/chameleon/keyboards/Keyboards.java \
     $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/chameleon/input/VirtualKeyboardInputMode.java \
     $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/lcdui/Key.java \
+    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/lcdui/NativeVirtualKeyboard.java \
     $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboard.java \
     $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboardListener.java
-    
+
 # I3test files for the library
 #
 #ifeq ($(USE_I3_TEST), true)
