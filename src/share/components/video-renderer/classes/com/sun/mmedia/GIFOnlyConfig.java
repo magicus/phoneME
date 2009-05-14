@@ -25,6 +25,23 @@ package com.sun.mmedia;
 
 public class GIFOnlyConfig extends Configuration {
 
+    public GIFOnlyConfig()
+    {
+        super();
+
+        // Protocol handlers.
+        protocolHandlers.put("http", "com.sun.mmedia.protocol.CommonDS");
+
+        protocolHandlers.put("file", "com.sun.mmedia.protocol.CommonDS");
+
+        // Mime types
+        mFormats.put("gif", "GIF");
+
+        // Mime types
+        mimeTypes.put("gif", MIME_IMAGE_GIF);
+
+    }
+
     public String[] getSupportedContentTypes(String protocol) {
         String [] ret = null;
         if( null == protocol || protocol.equals("http") || protocol.equals("file") )

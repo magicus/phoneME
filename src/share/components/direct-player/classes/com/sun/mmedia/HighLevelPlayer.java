@@ -240,7 +240,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     // Terminate native library
     private int nTerm(int handle) {return 0;}
     // Get Media Format
-    private String nGetMediaFormat(int handle) { return MEDIA_FORMAT_UNKNOWN; }
+    private String nGetMediaFormat(int handle) { return MEDIA_FORMAT_UNSUPPORTED; }
     // Need media Download in Java side?
     private boolean nIsHandledByDevice(int handle) { return false; }
 
