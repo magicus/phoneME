@@ -47,6 +47,73 @@ extern void unclipped_blit(unsigned short *dstRaster, int dstSpan,
 			   unsigned short *srcRaster, int srcSpan,
 			   int height, int width, gxj_screen_buffer *dst);
 
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+/* 
+ * For A in [0..0xffff] 
+ *
+ *        A / 255 == A / 256 + ((A / 256) + (A % 256) + 1) / 256
+ *
+ */
+#define div(x)  (((x) >> 8) + ((((x) >> 8) + ((x) & 0xff) + 1) >> 8))
+
+/* return value of src OVER dst, where:
+ *     src and dst are an 8888 RGBA pixels in an int (OpenGL ES format)
+ *     OVER is the Source Over Destination composite rule
+ * Note, we cannot assume that the destination alpha coming
+ * into this function is 1.0, as LCDUI normally assumes for
+ * a drawing target, since we are accumulating partial frame
+ * results for compositing to the screen through OpenGL ES.
+ * We will maintain the putpixel destination buffer in
+ * premultiplied alpha format, since this will eliminate
+ * 3 divides in the computation, and OpenGL ES allows us
+ * to use premultiplied pixel values in a texture.
+ * The incoming src pixels will not be in premultiplied
+ * format, so we must premultiply them if the alpha value
+ * is not 1.0.
+ * Reference: 
+ * http://graphics.stanford.edu/courses/cs248-01/comp/comp.html
+ * In particular:
+ * http://graphics.stanford.edu/courses/cs248-01/comp/comp.html#The compositing algebra
+ * http://graphics.stanford.edu/courses/cs248-01/comp/comp.html#Premultiplied alpha
+ */
+static jint alphaComposition(jint src, jint dst) { 
+
+    int Rs, Bs, Gs, As, Rd, Bd, Gd, Ad, ONE_MINUS_As;
+
+    /* Note src values are not premultiplied */
+    As = src & 0xff;
+    if (As == 0xff) {
+        /* src is opaque, so no blend and no premultiplication are necessary */
+        return src;
+    }
+    src = src >> 8;
+    Bs = src & 0xff;
+    src = src >> 8;
+    Gs = src & 0xff;
+    Rs = (src >> 8) & 0xff;
+
+    /* Note dst vales are already premultiplied */
+    Ad = dst & 0xff;
+    dst = dst >> 8;
+    Bd = dst & 0xff;
+    dst = dst >> 8;
+    Gd = dst & 0xff;
+    Rd = (dst >> 8) & 0xff;
+
+    ONE_MINUS_As = 0xff - As;
+    Rd = Rs * As + Rd * ONE_MINUS_As; /* premultiply Rs and blend with Rd */
+    Rd = div(Rd);                     /* scale back to 0-255 */
+    Gd = Gs * As + Gd * ONE_MINUS_As;
+    Gd = div(Gd);
+    Bd = Bs * As + Bd * ONE_MINUS_As;
+    Bd = div(Bd);
+    Ad = As * 0xff + Ad * ONE_MINUS_As; /* must scale As appropriately */
+    Ad = div(Ad);
+
+    return((Rd << 24) | (Gd << 16) | (Bd << 8) | Ad);
+}
+#endif /* ENABLE_RGBA8888_PIXEL_FORMAT
+
 /**
  * Renders the contents of the specified mutable image
  * onto the destination specified.
@@ -461,6 +528,9 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
                         *pDest = *pSrc;
                     }
                     else if (*pSrcAlpha > 0x3) {
+#if ENABLE_RGBA8888_PIXEL_FORMAT
+                        *pDest = alphaComposition(*pSrc, *pDest);
+#else
                         r1 = (*pSrc >> 11);
                         g1 = ((*pSrc >> 5) & 0x3F);
                         b1 = (*pSrc & 0x1F);
@@ -477,6 +547,7 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
                         b1 = (b1 * a3 + b2 * (31 - a3)) >> 5;
 
                         *pDest = (gxj_pixel_type)((r1 << 11) | (g1 << 5) | (b1));
+#endif
                     }
                 }
 

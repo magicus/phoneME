@@ -134,6 +134,14 @@ gx_copy_area(const jshort *clip,
 		   x_src, y_src, 0);
 }
 
+/* 
+ * For A in [0..0xffff] 
+ *
+ *        A / 255 == A / 256 + ((A / 256) + (A % 256) + 1) / 256
+ *
+ */
+#define div(x)  (((x) >> 8) + ((((x) >> 8) + ((x) & 0xff) + 1) >> 8))
+
 #if ENABLE_RGBA8888_PIXEL_FORMAT
 /* return value of src OVER dst, where:
  *     src is an 8888 ARGB pixel in an int (LCDUI format)
@@ -193,14 +201,6 @@ static jint alphaComposition(jint src, jint dst) {
     return((Rd << 24) | (Gd << 16) | (Bd << 8) | Ad);
 }
 #else
-/* 
- * For A in [0..0xffff] 
- *
- *        A / 255 == A / 256 + ((A / 256) + (A % 256) + 1) / 256
- *
- */
-#define div(x)  (((x) >> 8) + ((((x) >> 8) + ((x) & 0xff) + 1) >> 8))
-
 static unsigned short alphaComposition(jint src, 
                                        unsigned short dst, 
                                        unsigned char As) {
