@@ -187,11 +187,11 @@ public final class MIDPVideoRenderer extends VideoRenderer
      *            allowed by this token
      */
     private void checkPermission() throws SecurityException {
-        try {
-            PermissionAccessor.checkPermissions(locatorString, PermissionAccessor.PERMISSION_SNAPSHOT);
-    	} catch (InterruptedException e) {
-    	    throw new SecurityException("Interrupted while trying to ask the user permission");
-    	}
+//        try {
+//            PermissionAccessor.checkPermissions(locatorString, PermissionAccessor.PERMISSION_SNAPSHOT);
+//    	} catch (InterruptedException e) {
+//    	    throw new SecurityException("Interrupted while trying to ask the user permission");
+//    	}
     }
 
     public void setVisible(boolean visible) {
@@ -377,11 +377,11 @@ public final class MIDPVideoRenderer extends VideoRenderer
             format = 4;
             pixelsize = 2;
         } else */
-         if (SNAPSHOT_PNG.equalsIgnoreCase(encoding)) {
-            return PNGEncoder.encode(rgbData, videoWidth, videoHeight, imageType);
-        } else  if (SNAPSHOT_JPEG.equalsIgnoreCase(encoding)){
-            return JPEGEncoder.encode(rgbData, videoWidth, videoHeight, imageType);
-        } else 
+         // if (SNAPSHOT_PNG.equalsIgnoreCase(encoding)) {
+            // return PNGEncoder.encode(rgbData, videoWidth, videoHeight, imageType);
+        // } else  if (SNAPSHOT_JPEG.equalsIgnoreCase(encoding)){
+            // return JPEGEncoder.encode(rgbData, videoWidth, videoHeight, imageType);
+        // } else 
             throw new MediaException("Image format " + imageType + " not supported");
         
         /*

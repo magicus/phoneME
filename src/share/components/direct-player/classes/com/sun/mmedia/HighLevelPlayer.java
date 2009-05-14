@@ -32,10 +32,10 @@ import  javax.microedition.media.protocol.DataSource;
 import  java.util.Enumeration;
 import  java.util.Hashtable;
 import  java.util.Vector;
-import  com.sun.j2me.app.AppPackage;
-import  com.sun.j2me.app.AppIsolate;
-import  com.sun.j2me.log.Logging;
-import  com.sun.j2me.log.LogChannels;
+//import  com.sun.j2me.app.AppPackage;
+//import  com.sun.j2me.app.AppIsolate;
+//import  com.sun.j2me.log.Logging;
+//import  com.sun.j2me.log.LogChannels;
 
 import java.io.IOException;
 
@@ -265,7 +265,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      */
     public HighLevelPlayer(DataSource source) throws MediaException, IOException {
         // Get current application ID to support MVM
-        int appId = AppIsolate.getIsolateId();
+        int appId = 0;
 
         synchronized (idLock) {
             pcount = (pcount + 1) % 32767;
@@ -326,11 +326,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             } else if (null == streams[0]) {
                 throw new MediaException("DataSource.getStreams()[0] is null");
             } else {
-                if (streams.length > 1 && Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
-                        "*** DataSource.getStreams() returned " + streams.length + 
-                        " streams, only first one will be used!");
-                }
+//                if (streams.length > 1 && Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+//                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+//                        "*** DataSource.getStreams() returned " + streams.length +
+//                        " streams, only first one will be used!");
+//                }
 
                 stream = streams[0];
             }
@@ -995,11 +995,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      *            allowed by this token
      */
     public void checkSnapshotPermission() {
-        try {
-            PermissionAccessor.checkPermissions( getLocator(), PermissionAccessor.PERMISSION_SNAPSHOT );
-        } catch( InterruptedException e ) {
-            throw new SecurityException( "Interrupted while trying to ask the user permission" );
-        }
+//        try {
+//            PermissionAccessor.checkPermissions( getLocator(), PermissionAccessor.PERMISSION_SNAPSHOT );
+//        } catch( InterruptedException e ) {
+//            throw new SecurityException( "Interrupted while trying to ask the user permission" );
+//        }
     }
 
     /**

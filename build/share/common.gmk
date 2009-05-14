@@ -112,11 +112,6 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MMEventListener.java \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/AudioTunnel.java \
 
-# Permission verifier
-SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/PermissionAccessor.java \
-    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/PermissionAccessorAbstractions.java
-
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/FormatConversionUtils.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/GIFPlayer.java \

@@ -23,7 +23,7 @@
  * information or have any questions. 
  */
 package com.sun.mmedia;
-import com.sun.j2me.app.AppModel;
+// import com.sun.j2me.app.AppModel;
 
 /**
  * Abstraction for the video renderer for the particular application model

@@ -31,8 +31,6 @@ import java.util.Vector;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
-import com.sun.j2me.log.Logging;
-import com.sun.j2me.log.LogChannels;
 import com.sun.mmedia.HighLevelPlayer;
 import com.sun.mmedia.TonePlayer;
 import com.sun.mmedia.Configuration;
