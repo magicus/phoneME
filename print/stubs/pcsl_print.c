@@ -35,5 +35,8 @@
  * Print contents of buffer to stdout.
  *
  */
+void pcsl_print_chars(const char* s, int length) {
+}
+
 void pcsl_print(const char* s) {
 }

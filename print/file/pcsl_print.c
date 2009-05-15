@@ -48,19 +48,20 @@ int outputFd;
  * Print contents of buffer to stdout.
  *
  */
-void pcsl_print(const char* s) {
-
-  int stat;
-
-  stat = pcsl_file_open(&fileName, 
-                        PCSL_FILE_O_RDWR | PCSL_FILE_O_CREAT | PCSL_FILE_O_APPEND,
-                        (void **)(&outputFd));
+void pcsl_print_chars(const char* s, int length) {
+  const int stat = pcsl_file_open(&fileName, 
+                      PCSL_FILE_O_RDWR | PCSL_FILE_O_CREAT | PCSL_FILE_O_APPEND,
+                      (void **)(&outputFd));
 
   if (stat == 0) {
-    pcsl_file_write((void *)outputFd, (unsigned char*)s, strlen(s));
+    pcsl_file_write((void *)outputFd, (unsigned char*)s, length);
     pcsl_file_commitwrite((void *)outputFd);
 
     pcsl_file_close((void *)outputFd);
   }
 
+}
+
+void pcsl_print(const char* s) {
+  pcsl_print_chars(s, strlen(s));
 }

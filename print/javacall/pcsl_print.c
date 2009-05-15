@@ -26,7 +26,10 @@
 
 #include <javacall_logging.h>
 
-void
-pcsl_print(const char *s) {
+void pcsl_print_chars(const char *s, const int length) {
+    javacall_print_chars(s, length);
+}
+
+void pcsl_print(const char *s) {
     javacall_print(s);
 }

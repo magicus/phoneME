@@ -43,3 +43,8 @@ void pcsl_print(const char* s) {
 */
     printf("%s", s);
 }
+
+void pcsl_print_chars(const char* s, int length) {
+    fwrite(s, length, 1, stdout);
+}
+
