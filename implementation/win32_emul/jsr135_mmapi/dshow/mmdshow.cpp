@@ -325,8 +325,12 @@ long dshow_player::get_media_time()
     {
         player::result r;
         int64 time = ppl->get_media_time( &r );
+
         if( player::time_unknown != time ) time /= 1000;
-        return ( media_time = long( time ) );
+
+        if( long( time ) > media_time ) media_time = long( time );
+
+        return media_time;
     }
 }
 
@@ -344,7 +348,7 @@ static javacall_result dshow_create(int appId,
 {
     dshow_player* p = new dshow_player;
 
-    PRINTF( "\n\n*** create ***\n" );
+    PRINTF( "\n\n*** create('%S') ***\n", URI );
 
     if( dshow_player::num_players >= MAX_DSHOW_PLAYERS )
         return JAVACALL_OUT_OF_MEMORY;
@@ -530,7 +534,7 @@ static javacall_result dshow_realize(javacall_handle handle,
 {
     dshow_player* p = (dshow_player*)handle;
 
-    PRINTF( "*** realize ***\n" );
+    PRINTF( "*** realize('%S') ***\n", mime );
 
     p->duration = -1;
 
@@ -755,11 +759,12 @@ static javacall_result dshow_clear_buffer(javacall_handle handle)
 static javacall_result dshow_start(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** start ***\n" );
+    player::result r;
+    PRINTF( "*** start, mt = %ld/%ld***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
     p->eom_sent = false;
     if( player::result_success == p->ppl->start() )
     {
-        PRINTF( "*** started ***\n" );
+        PRINTF( "*** started, mt = %ld/%ld ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
         p->playing = true;
         return JAVACALL_OK;
     }
@@ -773,12 +778,13 @@ static javacall_result dshow_start(javacall_handle handle)
 static javacall_result dshow_stop(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** stop... ***\n" );
+    player::result r;
+    PRINTF( "*** stop, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
     p->get_media_time();
     if( player::result_success == p->ppl->stop() )
     {
         p->playing = false;
-        PRINTF( "*** ...stopped ***\n" );
+        PRINTF( "*** ...stopped, mt=%ld/%ld ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
         return JAVACALL_OK;
     }
     else
@@ -802,6 +808,7 @@ static javacall_result dshow_get_time(javacall_handle handle, long* ms)
 {
     dshow_player* p = (dshow_player*)handle;
     *ms = p->get_media_time();
+    PRINTF( "--- get_time: %ld",*ms );
     // if( p->duration != -1 && *ms > p->duration ) *ms = p->duration;
     return JAVACALL_OK;
 }
@@ -813,9 +820,11 @@ static javacall_result dshow_set_time(javacall_handle handle, long* ms)
 
     int64 mt = int64( 1000 ) * int64( *ms );
 
-    mt = p->ppl->set_media_time( mt, &r );
+    p->media_time = long( p->ppl->set_media_time( mt, &r ) / 1000 );
 
-    *ms = long( mt / 1000 );
+    PRINTF( "--- set_time(%ld): %ld", *ms, p->media_time );
+
+    *ms = p->media_time;
 
     return (player::result_success == r) ? JAVACALL_OK : JAVACALL_FAIL;
 }
