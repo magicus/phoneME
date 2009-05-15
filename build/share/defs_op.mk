@@ -383,8 +383,12 @@ JSROP_OUTPUT_DIRS = $(foreach jsr_number,$(JSROP_NUMBERS),\
 
 CVM_INCLUDE_DIRS+= $(JSROP_INCLUDE_DIRS)
 
+CVM_LINK_WITH_JAVACALL ?= true
+
 ifneq ($(JAVACALL_LINKLIBS),)
+ifeq ($(CVM_LINK_WITH_JAVACALL), true)
 LINKCVM_LIBS    += $(call POSIX2HOST, $(JAVACALL_LINKLIBS))
+endif
 endif
 
 ifeq ($(CVM_PRELOAD_LIB), true)
