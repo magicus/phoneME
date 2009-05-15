@@ -205,10 +205,13 @@ KNIDECL(com_sun_mmedia_MPEG2Player_nCreate) {
   KNI_ReturnInt(player);
 }
 
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_MPEG2Player_nStart) {
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_MPEG2Player_nDestroy) {
   MPEG2Player* player = (MPEG2Player*)KNI_GetParameterAsInt(1);
-  player_start(player);  
-  KNI_ReturnBoolean( KNI_TRUE );
+  player_stop(player);
+  player_delete(player);  
+  KNI_ReturnVoid();
 }
+
 

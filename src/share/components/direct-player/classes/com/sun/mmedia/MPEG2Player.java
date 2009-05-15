@@ -52,6 +52,7 @@ class MPEG2Player extends LowLevelPlayer implements VideoSource {
 
     private native boolean nStart( int handle );
     private native int nCreate( String locator );
+    private native void nDestroy( int handle );
     
     protected boolean doStart() {
         nativeHandle = nCreate( getOwner().source.getLocator() );
@@ -71,6 +72,9 @@ class MPEG2Player extends LowLevelPlayer implements VideoSource {
     }
 
     protected void doClose() {
+        nDestroy( nativeHandle );
+        nativeHandle = 0;
+        getOwner().setNativeHandleToNull();
     }
 
     protected long doSetMediaTime(long now) throws MediaException {
