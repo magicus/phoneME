@@ -548,7 +548,8 @@ static javacall_result dshow_realize(javacall_handle handle,
         case JC_FMT_AMR:          
         case JC_FMT_AMR_WB:          
         case JC_FMT_AMR_WB_PLUS:          
-                                  mime = (javacall_const_utf16_string)L"audio/amr";  break;
+                                  mime = (javacall_const_utf16_string)L"audio/amr";   break;
+        case JC_FMT_MS_PCM:       mime = (javacall_const_utf16_string)L"audio/wav"; break;
         default:
             return JAVACALL_FAIL;
         }
@@ -566,7 +567,6 @@ static javacall_result dshow_realize(javacall_handle handle,
 
         p->mediaType = JC_FMT_MPEG1_LAYER3;
         mime = (javacall_const_utf16_string)L"audio/mpeg";
-        mimeLength = wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"video/x-vp6" ) ||
              mime_equal( mime, mimeLength, L"video/x-flv" ) ||
@@ -574,19 +574,22 @@ static javacall_result dshow_realize(javacall_handle handle,
     {
         p->mediaType = JC_FMT_FLV;
         mime = (javacall_const_utf16_string)L"video/x-flv";
-        mimeLength = wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"video/3gpp" ) )
     {
         p->mediaType = JC_FMT_VIDEO_3GPP;
         mime = (javacall_const_utf16_string)L"video/3gpp";
-        mimeLength = wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"audio/amr" ) )
     {
         p->mediaType = JC_FMT_AMR;
         mime = (javacall_const_utf16_string)L"audio/amr";
-        mimeLength = wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mimeLength, L"audio/x-wav" ) ||
+             mime_equal( mime, mimeLength, L"audio/wav" ) )
+    {
+        p->mediaType = JC_FMT_MS_PCM;
+        mime = (javacall_const_utf16_string)L"audio/wav";
     }
     else
     {
@@ -595,6 +598,7 @@ static javacall_result dshow_realize(javacall_handle handle,
 
     if( JC_FMT_UNSUPPORTED != p->mediaType )
     {
+        mimeLength = wcslen( (const wchar_t*)mime );
         if( create_player_dshow( mimeLength, (const char16*)mime, p, &(p->ppl) ) )
         {
             p->realizing = true;

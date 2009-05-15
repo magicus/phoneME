@@ -46,7 +46,7 @@
 static javacall_media_caps g_caps[] = 
 {
 //    mediaFormat,                   contentTypes,           'whole' protocols,              streaming protocols
-    { JAVACALL_MEDIA_FORMAT_MS_PCM,  "audio/x-wav audio/wav",             JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_MS_PCM,  "audio/wav audio/x-wav",             JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_MIDI,    "audio/midi audio/mid audio/x-midi", JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_SP_MIDI, "audio/sp-midi",                     JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_TONE,    "audio/x-tone-seq audio/tone",       JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
@@ -55,11 +55,11 @@ static javacall_media_caps g_caps[] =
     { JAVACALL_MEDIA_FORMAT_RTP_MPA, "audio/X-MP3-draft-00",              0, JAVACALL_MEDIA_MEMORY_PROTOCOL },
     { JAVACALL_MEDIA_FORMAT_FLV,     "video/x-flv",                       0, JAVACALL_MEDIA_MEMORY_PROTOCOL },
 #endif //ENABLE_MMAPI_DSHOW
-    { JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO, "audio/wav",                   JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
 #ifdef ENABLE_AMR
     { JAVACALL_MEDIA_FORMAT_AMR,     "audio/amr",                         JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
 #endif // ENABLE_AMR
-    { JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO, "audio/wav",                   JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
     { NULL,                          NULL,                   0,                              0 }
 };
 
@@ -514,6 +514,7 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
+    case JC_FMT_MS_PCM:
         return &g_dshow_itf;
         break;
 #endif // ENABLE_MMAPI_DSHOW
@@ -543,7 +544,9 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_TONE:
     case JC_FMT_MIDI:
     case JC_FMT_SP_MIDI:
+#ifndef ENABLE_MMAPI_DSHOW
     case JC_FMT_MS_PCM:
+#endif // ENABLE_MMAPI_DSHOW
         return &g_qsound_itf;
 
 #if( defined( ENABLE_AMR ) && !defined( ENABLE_MMAPI_DSHOW ) )
@@ -2029,7 +2032,7 @@ javacall_result javacall_media_get_record_content_type_length(javacall_handle ha
 
 /**
  * Get the current recording data content type mime string length
- * For example : 'audio/x-wav' for audio recording
+ * For example : 'audio/wav' for audio recording
  *
  * @param handle                Handle of native player
  * @param contentTypeBuf        Buffer to return content type Unicode string
