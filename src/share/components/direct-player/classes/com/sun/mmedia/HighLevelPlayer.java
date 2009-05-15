@@ -273,6 +273,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
 
         locator = source.getLocator();
+        System.out.println( "locator is " + locator );
         hNative = nInit(appId, pID, locator);
 
         mplayers.put(new Integer(pID), this);
@@ -311,10 +312,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             handledByDevice = true;
         } else if ( null != locator && locator.toLowerCase().endsWith(".mpg") )
         {
-            if( locator.startsWith( "file://" ) )
+            if( locator.startsWith( "file:" ) )
             {
                 handledByDevice = true;
                 mediaFormat = "MPEG_2";
+                System.out.println( "MPEG-2. Handled By Device" );
             }
             else
             {
