@@ -24,6 +24,19 @@
  */
 
 
+/**
+ * @file javacall_chapi_msg_exchange.h
+ * @ingroup CHAPI
+ * @brief interprocess communication layer
+ */
+
+/**
+ * @defgroup CHAPI JSR-211 Content Handler API (CHAPI)
+ *
+ *  The following API definitions are required by JSR-211.
+ * @{
+ */
+
 #ifndef __JAVACALL_CHAPI_MSG_EXCHANGE_H
 #define __JAVACALL_CHAPI_MSG_EXCHANGE_H
 
@@ -42,14 +55,14 @@ extern "C" {
 /**
   This function is called by the local (application) part of the JSR and it must
 - allocate an unique identifier for this data exchange (not zero)
-- transmit all parameters to the remote AMS process
+- transmit all parameters to the remote AMS process, where the function javanotify_chapi_process_msg_request must be called
 */
 javacall_result javacall_chapi_post_message( int queueId, int msgCode, const unsigned char * bytes, size_t bytesCount, 
                                                    int * dataExchangeID );
 
 /**
   This function is called by the AMS part of the JSR and it must send all parameters to the caller. The caller must be determined 
-by the dataExchangeID parameter value.
+by the dataExchangeID parameter value. The function javanotify_chapi_process_msg_result must be called in application process.
 */
 javacall_result javacall_chapi_send_response( int dataExchangeID, const unsigned char * bytes, size_t bytesCount );
 
