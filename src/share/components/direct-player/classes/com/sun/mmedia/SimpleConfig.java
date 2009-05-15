@@ -37,7 +37,7 @@ public class SimpleConfig extends GIFOnlyConfig {
     public String[] getSupportedContentTypes(String protocol) {
         String[] superTypes = super.getSupportedContentTypes(protocol);
         String[] types = superTypes;
-        if(  protocol.equals( "file" ) )
+        if(  "file".equals( protocol ) )
         {
             types = new String [ superTypes.length + 1  ];
             for( int i = 0; i < superTypes.length; i++ )
@@ -53,7 +53,7 @@ public class SimpleConfig extends GIFOnlyConfig {
         String [] retSuper = super.getSupportedProtocols(ctype);
         String [] ret = retSuper;
 
-        if( null == ret && ctype.equals("video/mpeg") )
+        if( null == ret && "video/mpeg".equals( ctype ) )
         {
             ret = new String [] { "file" };
         }
