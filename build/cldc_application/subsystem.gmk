@@ -31,7 +31,8 @@
 
 JSROP_PLATFORM = cldc_application
 
-EXTRA_CFLAGS += -DENABLE_JSR_135=1
+EXTRA_CFLAGS += -DENABLE_JSR_135=1 `pkg-config --cflags --libs glib-2.0 gstreamer-0.10 | sed -r -e "s,(-[LI])(/usr/),\1${SYSROOT}\2,g"`
+LD_FLAGS+=  -Xlinker -L$(SYSROOT)/usr/lib -L$(SYSROOT)/lib  -pthread -lgstreamer-0.10 -lgobject-2.0 -lgmodule-2.0 -lgthread-2.0 -lrt -lxml2 -lglib-2.0	
 
 ifeq ($(PROJECT_JSR_135_DIR),)
 JSR_135_PROJECT_SRC_DIR=$(JSR_135_DIR)/src/$(JSROP_PLATFORM)
