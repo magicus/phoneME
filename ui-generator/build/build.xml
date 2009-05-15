@@ -28,12 +28,13 @@ information or have any questions.
 
     <property name="uig-shared.root"    location="${ant.file.uig-shared}/../.."/>
 
-    <property name="toolkit"        value="lcdui"/>
-    <property name="toolkit.src"    value="${uig-shared.root}/src/classes/${toolkit}"/>
-    <property name="screens"        location=""/>
-    <property name="package"        value="com.sun.ams.ui"/>
+    <property name="toolkit"            value="lcdui"/>
+    <property name="toolkit.src"        value="${uig-shared.root}/src/classes/${toolkit}"/>
+    <property name="screens"            location=""/>
+    <property name="toolkit.traits"     value=""/>
+    <property name="package"            value="com.sun.ams.ui"/>
 
-    <property name="debug.port"     value=""/> <!-- 8000 -->
+    <property name="debug.port"         value=""/> <!-- 8000 -->
 
     <!-- used by Antenna -->
     <property name="wtk.home"           value="c:/WTK2.5.2"/>
@@ -70,6 +71,12 @@ information or have any questions.
 
         <path id="output-xml-dir" location="${out.root}"/>
         <pathconvert property="output-xml-dir" refid="output-xml-dir" dirsep="/"/>
+
+        <condition property="toolkit.traits.set">
+            <not><equals arg1="${toolkit.traits}" arg2="" trim="true"/></not>
+        </condition>
+        <path id="toolkit-traits" location="${toolkit.traits}"/>
+        <pathconvert property="toolkit-traits" refid="toolkit-traits" dirsep="/"/>
 
         <!-- Produce a single xml from multiple files handling 'include' elements -->
         <mkdir dir="${out.root}"/>
@@ -116,6 +123,7 @@ information or have any questions.
             <param name="output-java-dir" expression="file:///${output-java-dir}"/>
             <param name="output-xml-dir" expression="file:///${output-xml-dir}"/>
             <param name="with-unit-tests" expression="${with-unit-tests}"/>
+            <param name="toolkit-traits" expression="file:///${toolkit-traits}" if="toolkit.traits.set"/>
         </xslt>
 
         <delete file="${xslt.main}.filtered"/>

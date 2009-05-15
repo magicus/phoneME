@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <!--
-Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 
 This program is free software; you can redistribute it and/or
@@ -64,6 +64,7 @@ information or have any questions.
 
 
     <xsl:include href="utils.xsl"/>
+    <xsl:include href="traits.xsl"/>
     <xsl:include href="i18n.xsl"/>
     <xsl:include href="screen.xsl"/>
     <xsl:include href="utest.xsl"/>
