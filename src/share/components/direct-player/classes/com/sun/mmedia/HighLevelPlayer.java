@@ -273,7 +273,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
 
         locator = source.getLocator();
-        System.out.println( "locator is " + locator );
         hNative = nInit(appId, pID, locator);
 
         mplayers.put(new Integer(pID), this);
@@ -300,6 +299,13 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             } else if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
                 mediaFormat = MEDIA_FORMAT_DEVICE_MIDI;
                 handledByDevice = true;
+            } else if ( locator.toLowerCase().endsWith(".mpg")) {
+                if (locator.startsWith("file:")) {
+                    handledByDevice = true;
+                    mediaFormat = "MPEG_2";
+                } else {
+                    throw new MediaException("MPG is supported only from file");
+                }
             }
         } else if (locator != null && locator.startsWith(Configuration.CAPTURE_LOCATOR)) {
             if (locator.startsWith(Configuration.AUDIO_CAPTURE_LOCATOR)) {
@@ -310,18 +316,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 mediaFormat = MEDIA_FORMAT_CAPTURE_RADIO;
             }
             handledByDevice = true;
-        } else if ( null != locator && locator.toLowerCase().endsWith(".mpg") )
-        {
-            if( locator.startsWith( "file:" ) )
-            {
-                handledByDevice = true;
-                mediaFormat = "MPEG_2";
-                System.out.println( "MPEG-2. Handled By Device" );
-            }
-            else
-            {
-                throw new MediaException( "MPG is supported only from file" );
-            }
         }
 
         if (!handledByJava && !handledByDevice) {
