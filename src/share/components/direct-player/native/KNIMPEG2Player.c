@@ -205,6 +205,12 @@ KNIDECL(com_sun_mmedia_MPEG2Player_nCreate) {
   KNI_ReturnInt(player);
 }
 
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_MPEG2Player_nStart) {
+  MPEG2Player* player = (MPEG2Player*)KNI_GetParameterAsInt(1);
+  player_start(player);  
+  KNI_ReturnBoolean( KNI_TRUE );
+}
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_MPEG2Player_nDestroy) {
@@ -214,4 +220,14 @@ KNIDECL(com_sun_mmedia_MPEG2Player_nDestroy) {
   KNI_ReturnVoid();
 }
 
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_MPEG2Player_nSetVideoLocation) {
+  MPEG2Player* player = (MPEG2Player*)KNI_GetParameterAsInt(1);
+  jint x = KNI_GetParameterAsInt(2);
+  jint y = KNI_GetParameterAsInt(3);
+  jint width = KNI_GetParameterAsInt(4);
+  jint height = KNI_GetParameterAsInt(5);
+  
+  KNI_ReturnBoolean( KNI_TRUE );
+}
 

@@ -53,6 +53,8 @@ class MPEG2Player extends LowLevelPlayer implements VideoSource {
     private native boolean nStart( int handle );
     private native int nCreate( String locator );
     private native void nDestroy( int handle );
+    private native boolean nSetVideoLocation( int handle,
+            int x, int y, int w, int h );
     
     protected boolean doStart() {
         nativeHandle = nCreate( getOwner().source.getLocator() );
@@ -108,7 +110,7 @@ class MPEG2Player extends LowLevelPlayer implements VideoSource {
 
     
     public boolean setVideoLocation(int x, int y, int w, int h) {
-        return false;
+        return nSetVideoLocation( nativeHandle, x, y, w, h );
     }
 
 
