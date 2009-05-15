@@ -72,15 +72,15 @@ public class ContentHandlerImpl extends ContentHandlerRegData
 			ID = handlerID;
 			appID = applicationID;
 			this.registrationMethod = registrationMethod;
-			if( AppProxy.LOGGER != null )
-				AppProxy.LOGGER.println( "ContentHandlerImpl.Data(): " + this );
+			if( Logger.LOGGER != null )
+				Logger.LOGGER.println( "ContentHandlerImpl.Data(): " + this );
 		}
 		public Data(DataInputStream in) throws IOException {
 			ID = in.readUTF();
 			appID = AppProxy.createAppID().read(in);
 			registrationMethod = in.readInt();
-			if( AppProxy.LOGGER != null )
-				AppProxy.LOGGER.println( "ContentHandlerImpl.Data(): " + this );
+			if( Logger.LOGGER != null )
+				Logger.LOGGER.println( "ContentHandlerImpl.Data(): " + this );
 		}
 
 		public void serialize(DataOutputStream out) throws IOException {
@@ -483,7 +483,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
     private void loadAppData() {
         if (appname == null) {
             try {
-                AppProxy app = AppProxy.getCurrent().forApp(applicationID);
+                AppProxy app = AppProxy.forApp(applicationID);
                 appname = app.getApplicationName();
                 version = app.getVersion();
                 authority = app.getAuthority();
@@ -640,7 +640,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
      * @return a string with the details
      */
     public String toString() {
-        if (AppProxy.LOGGER != null) {
+        if (Logger.LOGGER != null) {
             StringBuffer sb = new StringBuffer(80);
             sb.append("ContentHandler:");
             sb.append("appID: ");

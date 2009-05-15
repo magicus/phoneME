@@ -153,8 +153,8 @@ public final class RegistryImpl {
         // Synchronize between competing operations
         RegistryImpl curr = null;
         synchronized (mutex) {
-        	if( AppProxy.LOGGER != null )
-        		AppProxy.LOGGER.println( 
+        	if( Logger.LOGGER != null )
+        		Logger.LOGGER.println( 
         				"RegistryImpl.getRegistryImpl( '" + appl + "' )");
             // Check if class already has a RegistryImpl
             curr = (RegistryImpl)registries.get(appl);
@@ -172,12 +172,12 @@ public final class RegistryImpl {
             // Create a new instance and insert it into the list
             curr = new RegistryImpl(appl);
             registries.put(appl, curr);
-            if( AppProxy.LOGGER != null ){
-            	AppProxy.LOGGER.println( "registries:" );
+            if( Logger.LOGGER != null ){
+            	Logger.LOGGER.println( "registries:" );
             	java.util.Enumeration e = registries.keys();
             	while( e.hasMoreElements() ){
             		Object key = e.nextElement();
-            		AppProxy.LOGGER.println( "\t" + key + " " + registries.get(key) );
+            		Logger.LOGGER.println( "\t" + key + " " + registries.get(key) );
             	}
             }
         }
@@ -212,8 +212,8 @@ public final class RegistryImpl {
 
         /* Remember the ContentHandlerImpl, if there is one. */
         handlerImpl = getServer(application);
-        if( AppProxy.LOGGER != null )
-        	AppProxy.LOGGER.println("RegistryImpl(): handlerImpl = " + handlerImpl);
+        if( Logger.LOGGER != null )
+        	Logger.LOGGER.println("RegistryImpl(): handlerImpl = " + handlerImpl);
 
         if (handlerImpl == null && !application.isRegistered()) {
             // Classname is not a registered MIDlet or ContentHandler; fail
@@ -379,8 +379,8 @@ public final class RegistryImpl {
         throws SecurityException, IllegalArgumentException,
                ClassNotFoundException, ContentHandlerException
     {
-        if(AppProxy.LOGGER != null){
-			AppProxy.LOGGER.println( getClass().getName() + ".register '" + classname + "'" );
+        if(Logger.LOGGER != null){
+			Logger.LOGGER.println( getClass().getName() + ".register '" + classname + "'" );
         }
         
         application.checkRegisterPermission("register");
@@ -412,8 +412,8 @@ public final class RegistryImpl {
             ContentHandlerImpl result = new ContentHandlerHandle( data ).get();
             setServer(result);
 
-            if (AppProxy.LOGGER != null) {
-            	AppProxy.LOGGER.println("Register: " + classname + ", id: " + id);
+            if (Logger.LOGGER != null) {
+            	Logger.LOGGER.println("Register: " + classname + ", id: " + id);
             }
 
             return result;
@@ -433,8 +433,8 @@ public final class RegistryImpl {
             RegistryImpl impl = (RegistryImpl)registries.get(server.applicationID);
             if (impl != null) {
                 impl.handlerImpl = server;
-                if( AppProxy.LOGGER != null )
-                	AppProxy.LOGGER.println(impl + ".setServer: handlerImpl = " + impl.handlerImpl);
+                if( Logger.LOGGER != null )
+                	Logger.LOGGER.println(impl + ".setServer: handlerImpl = " + impl.handlerImpl);
             }
         }
     }
@@ -447,7 +447,7 @@ public final class RegistryImpl {
      *
      * @return found handler or <code>null</code> if none found.
      */
-    static ContentHandlerImpl getHandler(AppProxy appl) {
+    static ContentHandlerImpl getHandler(ApplicationID appl) {
     	ContentHandlerImpl.Data data = gate.getHandler(appl);
     	if( data == null )
     		return null;
@@ -464,7 +464,7 @@ public final class RegistryImpl {
      * @return a ContentHandlerImpl within the suite that
      *  need to be removed to register the new ContentHandler
      */
-    static ContentHandlerImpl checkConflicts(String handlerID, AppProxy appl)
+    static ContentHandlerImpl checkConflicts(String handlerID, ApplicationID appl)
                 throws ContentHandlerException
     {
         ContentHandlerImpl[] handlers = gate.findConflicted(handlerID);
@@ -563,8 +563,8 @@ public final class RegistryImpl {
     public boolean unregister(String classname) {
     	classname.length(); // NullPointer check
 
-    	if(AppProxy.LOGGER != null){
-    		AppProxy.LOGGER.println( this + ".unregister '" + classname + "'" );
+    	if(Logger.LOGGER != null){
+    		Logger.LOGGER.println( this + ".unregister '" + classname + "'" );
     		//new Exception("call stack").printStackTrace();
     	}
     	try {
@@ -584,8 +584,8 @@ public final class RegistryImpl {
 	    } catch (ClassNotFoundException e) {
 	    }
 
-    	if(AppProxy.LOGGER != null)
-    		AppProxy.LOGGER.println( "unregister() failed." );
+    	if(Logger.LOGGER != null)
+    		Logger.LOGGER.println( "unregister() failed." );
         return false;
     }
 
@@ -849,7 +849,7 @@ public final class RegistryImpl {
             }
 
             // Make an attempt to gain the foreground
-        	AppProxy.requestForeground(fromApp, toApp);
+            AMSGate.inst.requestForeground(fromApp, toApp);
 
             return invoc.wrap();
         }
@@ -1175,8 +1175,8 @@ public final class RegistryImpl {
      */
     private void insertActive(InvocationImpl invoc) {
         Integer tid = new Integer(invoc.tid);
-        if( AppProxy.LOGGER != null )
-        	AppProxy.LOGGER.println(getClass().getName() + ".insertActive(" + tid + ")");
+        if( Logger.LOGGER != null )
+        	Logger.LOGGER.println(getClass().getName() + ".insertActive(" + tid + ")");
         activeInvocations.put(tid, invoc);
     }
 
@@ -1188,8 +1188,8 @@ public final class RegistryImpl {
     private InvocationImpl removeActive(InvocationImpl invoc) {
         Integer tid = new Integer(invoc.tid);
         InvocationImpl result = (InvocationImpl)activeInvocations.remove(tid); 
-        if( AppProxy.LOGGER != null )
-        	AppProxy.LOGGER.println(getClass().getName() + ".removeActive(" + tid + ") = " + result );
+        if( Logger.LOGGER != null )
+        	Logger.LOGGER.println(getClass().getName() + ".removeActive(" + tid + ") = " + result );
         return result;
     }
 }

@@ -67,8 +67,8 @@ public class InvocationStore implements StoreGate {
      * Private constructor to prevent instance creation.
      */
     private InvocationStore() {
-		if( AppProxy.LOGGER != null )
-			AppProxy.LOGGER.println("InvocationStore has created");
+		if( Logger.LOGGER != null )
+			Logger.LOGGER.println("InvocationStore has created");
     }
     
     static private StoreGate instance = new InvocationStore();
@@ -87,8 +87,8 @@ public class InvocationStore implements StoreGate {
      * @see #getResponse
      */
     public int put(InvocationImpl invoc) {
-    	if (AppProxy.LOGGER != null) {
-    	    AppProxy.LOGGER.println("Store put0: " + invoc);
+    	if (Logger.LOGGER != null) {
+    	    Logger.LOGGER.println("Store put0: " + invoc);
     	}
         return put0(invoc);
     }
@@ -108,8 +108,8 @@ public class InvocationStore implements StoreGate {
      *  <code>null</code> is returned if there is no matching Invocation
      */
     public InvocationImpl getRequest(ApplicationID appID, int blockID) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( "InvocationStore.getRequest(" + appID + ", " + blockID + ")" );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( "InvocationStore.getRequest(" + appID + ", " + blockID + ")" );
     	
         CLDCAppID.from(appID).className.length(); // null pointer check
         return get(CLDCAppID.from(appID), MODE_REQUEST, blockID);
@@ -131,8 +131,8 @@ public class InvocationStore implements StoreGate {
      *  <code>null</code> is returned if there is no matching Invocation
      */
     public InvocationImpl getResponse(ApplicationID appID, int blockID) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( "InvocationStore.getResponse: " + appID + ", blockID = " + blockID);
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( "InvocationStore.getResponse: " + appID + ", blockID = " + blockID);
     	
     	CLDCAppID.from(appID).className.length(); // null pointer check
         return get(CLDCAppID.from(appID), MODE_RESPONSE, blockID);
@@ -202,8 +202,8 @@ public class InvocationStore implements StoreGate {
     	    invoc = null;
     	}
     
-    	if (AppProxy.LOGGER != null) {
-    	    AppProxy.LOGGER.println("Store getByTid: (" +
+    	if (Logger.LOGGER != null) {
+    	    Logger.LOGGER.println("Store getByTid: (" +
     					  		tid + "), mode: " + mode + ", " + invoc);
     	}
         return invoc;
@@ -230,8 +230,8 @@ public class InvocationStore implements StoreGate {
     	InvocationImpl invoc = new InvocationImpl();
     	int s;
     	while((s = get0(invoc, appID.suiteID, appID.className, mode, blockID)) == -1) {
-    		if( AppProxy.LOGGER != null )
-    			AppProxy.LOGGER.println("InvocationStore.get0 returns " + s);
+    		if( Logger.LOGGER != null )
+    			Logger.LOGGER.println("InvocationStore.get0 returns " + s);
     		/*
     		 * Sizes of arguments and data buffers were insufficient
     		 * reallocate and retry.
@@ -245,8 +245,8 @@ public class InvocationStore implements StoreGate {
     	    invoc = null;
     	}
     
-    	if (AppProxy.LOGGER != null) {
-    	    AppProxy.LOGGER.println("Store get: " + appID +
+    	if (Logger.LOGGER != null) {
+    	    Logger.LOGGER.println("Store get: " + appID +
     					  		", mode: " + mode + "\n\treturns " + invoc);
     	}
         return invoc;
@@ -268,8 +268,8 @@ public class InvocationStore implements StoreGate {
         final int mode = (request ? MODE_LREQUEST : MODE_LRESPONSE);
         CLDCAppID app = CLDCAppID.from(appID);
         boolean pending = listen0(app.suiteID, app.className, mode, blockID);
-        if (AppProxy.LOGGER != null) {
-            AppProxy.LOGGER.println("Store listen: " + appID +
+        if (Logger.LOGGER != null) {
+            Logger.LOGGER.println("Store listen: " + appID +
                                           ", request: " + request +
                                           ", pending: " + pending);
         }
@@ -292,8 +292,8 @@ public class InvocationStore implements StoreGate {
         CLDCAppID app = CLDCAppID.from(appID);
         resetListenNotifiedFlag0(app.suiteID, app.className, mode);
 
-        if (AppProxy.LOGGER != null) {
-            AppProxy.LOGGER.println("Store setListenNotify: " +
+        if (Logger.LOGGER != null) {
+            Logger.LOGGER.println("Store setListenNotify: " +
                                           appID +
                                           ", request: " + request);
         }
@@ -304,8 +304,8 @@ public class InvocationStore implements StoreGate {
      * method if it is blocked in the native code.
      */
     public void unblockWaitingThreads(int blockID) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( "InvocationStore.unblock(" + blockID + ")" );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( "InvocationStore.unblock(" + blockID + ")" );
     	unblockWaitingThreads0(blockID);
     }
 
@@ -320,8 +320,8 @@ public class InvocationStore implements StoreGate {
      */
 
     public void setCleanupFlag(ApplicationID appID, boolean cleanup) {
-        if (AppProxy.LOGGER != null) {
-            AppProxy.LOGGER.println("Store setCleanup: " + appID +
+        if (Logger.LOGGER != null) {
+            Logger.LOGGER.println("Store setCleanup: " + appID +
                                           ": " + cleanup);
         }
         setCleanupFlag0(CLDCAppID.from(appID).suiteID, CLDCAppID.from(appID).className, cleanup);
@@ -336,13 +336,13 @@ public class InvocationStore implements StoreGate {
     }
 
     public void update(InvocationImpl invoc) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println("InvocationStore.update(" + invoc + ")");
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println("InvocationStore.update(" + invoc + ")");
 		if( invoc.tid != InvocationImpl.UNDEFINED_TID ){
 			if( invoc.status != InvocationImpl.DISPOSE )
 				update0(invoc);
 			else {
-				dispose0(invoc.tid);
+				dispose(invoc.tid);
 				invoc.tid = InvocationImpl.UNDEFINED_TID;
 			}
 		}

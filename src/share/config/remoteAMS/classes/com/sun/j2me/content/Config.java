@@ -43,8 +43,12 @@ public class Config {
 
 	public static RegistryGate getRegistryGate() {
 		return MIDletSuiteUtils.isAmsIsolate() ? RegistryStore.getInstance()
-				: new RegistryRequestsConverter( new NativeMessageSender(RegistryGate.channelID) );
+				: new RegistryRequestsConverter( new NativeMessageSender( RegistryGate.channelID ) );
 		//new RegistryRequestsConverter( new RegistryRequestExecutor( RegistryStore.getInstance() ) );
 	}
 
+	public static AMSGate getAMSGate() {
+		return MIDletSuiteUtils.isAmsIsolate() ? AppProxy.getGateInstance()
+				: new AMSRequestsConverter( new NativeMessageSender( AMSGate.channelID ) );
+	}
 }

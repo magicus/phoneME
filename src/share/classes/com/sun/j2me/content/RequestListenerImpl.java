@@ -68,8 +68,8 @@ class RequestListenerImpl implements Runnable {
 		    }
 		} else {
 		    // Forget the thread doing the listening; it will exit
-			if( AppProxy.LOGGER != null )
-				AppProxy.LOGGER.println("stop listening ...");
+			if( Logger.LOGGER != null )
+				Logger.LOGGER.println("stop listening ...");
 			ThreadEx t = listenerThread;
 		    listenerThread = null;
 			if( t != null && t.isAlive() ) t.unblock();
@@ -88,8 +88,8 @@ class RequestListenerImpl implements Runnable {
      * notified.
      */
     public void run() {
-		if( AppProxy.LOGGER != null )
-			AppProxy.LOGGER.println("listener thread started");
+		if( Logger.LOGGER != null )
+			Logger.LOGGER.println("listener thread started");
 		final Thread mythread = Thread.currentThread();
 		while (mythread == listenerThread) {
 		    // Wait for a matching invocation
@@ -99,7 +99,7 @@ class RequestListenerImpl implements Runnable {
 		    	handler.requestNotify();
 		    }
 		}
-		if( AppProxy.LOGGER != null )
-			AppProxy.LOGGER.println("listener thread stopped");
+		if( Logger.LOGGER != null )
+			Logger.LOGGER.println("listener thread stopped");
     }
 }

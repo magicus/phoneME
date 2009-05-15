@@ -29,16 +29,39 @@ package com.sun.j2me.content;
 import javax.microedition.content.ContentHandlerException;
 import javax.microedition.content.Invocation;
 
-public final class InvocationStoreProxy {
+import com.sun.midp.security.SecurityToken;
+
+public abstract class AppProxyAgent implements AMSGate {
 
 	static final public int LIT_APP_START_FAILED = 0;
 	static final public int LIT_APP_STARTED = 1;
 	static final public int LIT_NATIVE_STARTED = 2;
 	static final public int LIT_INVOCATION_REMOVED = 3;
 	
-	static public int launchInvocationTarget(InvocationImpl invoc){
-		if( AppProxy.LOGGER != null ){
-			AppProxy.LOGGER.println( "launchInvocationTarget: " + invoc ); 
+    /** This class has a different security domain than the MIDlet suite */
+    protected static SecurityToken classSecurityToken;
+    
+    protected static final boolean isInSvmMode = isInSvmMode();
+
+    /**
+     * Sets the security token used for privileged operations.
+     * The token may only be set once.
+     * @param token a Security token
+     */
+    static void setSecurityToken(Object token) {
+        token.getClass(); // null pointer check
+        if (classSecurityToken != null) {
+            throw new SecurityException();
+        }
+        classSecurityToken = (SecurityToken)token;
+    }
+    
+	/*
+	 * REMOTE_AMS_CFG: this method must be called on 'AMS side'
+	 */
+	public int launchInvocationTarget(InvocationImpl invoc){
+		if( Logger.LOGGER != null ){
+			Logger.LOGGER.println( "launchInvocationTarget: " + invoc ); 
 		}
         // check if it is native handler
         /* IMPL_NOTE: null suite ID is an indication of platform request */
@@ -47,18 +70,27 @@ public final class InvocationStoreProxy {
         	// status is returned without launching of a handler
         	if( invoc.getStatus() == Invocation.WAITING ) {
 	            try {
-	                if( AppProxy.launchNativeHandler(invoc.getID()) )
+	                if( launchNativeHandler(invoc.getID()) )
 	                	invoc.finish(Invocation.INITIATED);
 	                return LIT_NATIVE_STARTED;
 	            } catch (ContentHandlerException che) {
 	                // Ignore => invocation will be deleted
 	            }
-        	}
+        	} else {
+            	// 'native to java' invocation is finished
+                platformFinish(invoc.tid);
+                
+                // TODO: invocation should not be deleted there
+                // interface to native handlers should be redesigned
+                invoc.setStatus(InvocationImpl.DISPOSE);
+                
+                return LIT_NATIVE_STARTED;
+            }
         } else {
             try {
-                AppProxy appl = AppProxy.getCurrent().forApp(invoc.destinationApp);
+                AppProxy appl = AppProxy.forApp(invoc.destinationApp);
             	// if MIDlet already started report STARTED
-                int rc = appl.launch("Application")? LIT_APP_STARTED 
+                int rc = CLDCAppProxyAgent.launch(appl, "Application")? LIT_APP_STARTED 
                 						: LIT_APP_START_FAILED;
                 return rc;
             } catch (ClassNotFoundException cnfe) {
@@ -85,12 +117,12 @@ public final class InvocationStoreProxy {
      * @return <code>true</code> if some midlets are started 
      */
     static public boolean invokeNext() {
-    	if(AppProxy.LOGGER!=null) {
-    		AppProxy.LOGGER.println( "InvocationStoreProxy.invokeNext() called. Invocations count = " + InvocationImpl.store.size());
+    	if(Logger.LOGGER != null) {
+    		Logger.LOGGER.println( "InvocationStoreProxy.invokeNext() called. Invocations count = " + InvocationImpl.store.size());
     		int tid = 0;
     		InvocationImpl invoc;
     		while( (invoc = InvocationImpl.store.getByTid(tid, true)) != null ){
-	        	AppProxy.LOGGER.println( "invocation[" + tid + "]: " + invoc ); 
+	        	Logger.LOGGER.println( "invocation[" + tid + "]: " + invoc ); 
                 tid = invoc.tid;
     		}
     	}
@@ -105,7 +137,7 @@ public final class InvocationStoreProxy {
         while (!done && (invoc = InvocationImpl.store.getByTid(tid, true)) != null) {
             switch (invoc.getStatus()){
 	            case Invocation.WAITING: {
-	                switch( launchInvocationTarget(invoc) ){
+	                switch( AMSGate.inst.launchInvocationTarget(invoc) ){
 		                case LIT_APP_START_FAILED: done = true; break;
 		                case LIT_APP_STARTED: launchedAppsCount++; break;
 		                case LIT_NATIVE_STARTED: case LIT_INVOCATION_REMOVED: break;
@@ -117,7 +149,7 @@ public final class InvocationStoreProxy {
 	            case Invocation.INITIATED:
 	            {
 	            	if( invoc.getResponseRequired() ){
-	            		switch( launchInvocationTarget(invoc) ){
+	            		switch( AMSGate.inst.launchInvocationTarget(invoc) ){
 		                	case LIT_APP_START_FAILED: done = true; break;
 	            			case LIT_APP_STARTED: launchedAppsCount++; break; 
 			                case LIT_NATIVE_STARTED: case LIT_INVOCATION_REMOVED: break;
@@ -126,8 +158,8 @@ public final class InvocationStoreProxy {
 	            }	break;
 	            case Invocation.INIT:
 	            	// wrong state
-	            	if( AppProxy.LOGGER != null )
-	            		AppProxy.LOGGER.println( "invocation has wrong state (INIT)" );
+	            	if( Logger.LOGGER != null )
+	            		Logger.LOGGER.println( "invocation has wrong state (INIT)" );
 	            	break;
 	            case Invocation.ACTIVE:
 	            case Invocation.HOLD:
@@ -139,8 +171,57 @@ public final class InvocationStoreProxy {
             // so we will start only one new midlet
             done = done || (launchedAppsCount > 0);
         }
-        if(AppProxy.LOGGER!=null) 
-        	AppProxy.LOGGER.println( "invokeNext() finished: started apps = " + launchedAppsCount);
+        if(Logger.LOGGER != null) 
+        	Logger.LOGGER.println( "invokeNext() finished: started apps = " + launchedAppsCount);
         return launchedAppsCount > 0;
     }
+    /**
+     * Starts native content handler.
+     * 
+	 * REMOTE_AMS_CFG: this method must be called on 'AMS side'
+	 * 
+     * @param handler Content handler to be executed.
+     * @return true if invoking app should exit.
+     * @exception ContentHandlerException if no such handler ID in the Registry
+     * or native handlers execution is not supported.
+     */
+    static boolean launchNativeHandler(String handlerID) 
+    										throws ContentHandlerException {
+        int result = launchNativeHandler0(handlerID);
+        if (result < 0) {
+            throw new ContentHandlerException(
+                        "Unable to launch platform handler",
+                        ContentHandlerException.NO_REGISTERED_HANDLER);
+        }
+        return (result > 0);
+    }
+
+    /**
+     * Informs platform about finishing of processing platform's request
+     * 
+	 * REMOTE_AMS_CFG: this method must be called on 'AMS side'
+	 * 
+     * @param invoc finished invocation
+     * @return should_exit flag for the invocation handler
+     */
+    static boolean platformFinish(int tid) {
+        return platformFinish0(tid);
+    }
+    
+    // native methods
+    /**
+     * Starts native content handler.
+     * @param handlerId ID of the handler to be executed
+     * @return result status:
+     * <ul>
+     * <li> 0 - LAUNCH_OK 
+     * <li> > 0 - LAUNCH_OK_SHOULD_EXIT
+     * <li> &lt; 0 - error
+     * </ul>
+     */
+    private static native int launchNativeHandler0(String handlerId);
+
+    private static native boolean platformFinish0(int tid);
+
+    private static native boolean isInSvmMode();
 }

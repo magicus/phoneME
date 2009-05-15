@@ -77,10 +77,10 @@ class RegistryStore implements RegistryGate {
      */
 	public ContentHandlerImpl[] findConflicted(String testID) {
         ContentHandlerImpl[] result = findHandler(null, FIELD_ID, testID);
-        if(AppProxy.LOGGER != null){
-			AppProxy.LOGGER.println( "conflictedHandlers for '" + testID + "' [" + result.length + "]:" );
+        if(Logger.LOGGER != null){
+			Logger.LOGGER.println( "conflictedHandlers for '" + testID + "' [" + result.length + "]:" );
 			for( int i = 0; i < result.length; i++){
-				AppProxy.LOGGER.println( "app = " + result[i].applicationID + ", ID = '" + result[i].ID + "'" );
+				Logger.LOGGER.println( "app = " + result[i].applicationID + ", ID = '" + result[i].ID + "'" );
 			}
         }
 		return result;
@@ -121,8 +121,8 @@ class RegistryStore implements RegistryGate {
     }
     
     public ContentHandlerImpl.Data getHandler( ApplicationID appID ){
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println("RegistryStore.getHandler(" + appID + ")");
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println("RegistryStore.getHandler(" + appID + ")");
     	ContentHandlerImpl.Data result = null;
         ContentHandlerImpl[] arr = forSuite(CLDCAppID.from(appID).suiteID);
         String classname = CLDCAppID.from(appID).className;
@@ -131,8 +131,8 @@ class RegistryStore implements RegistryGate {
                 result = arr[i].getHandlerData();
             }
         }
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println("RegistryStore.getHandler(" + appID + ") = " + result);
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println("RegistryStore.getHandler(" + appID + ") = " + result);
         return result;
     }
 
@@ -149,11 +149,11 @@ class RegistryStore implements RegistryGate {
         Vector v = deserializeString(res);
         String[] result = new String[ v.size() ];
         v.copyInto(result);
-        if( AppProxy.LOGGER != null ){
+        if( Logger.LOGGER != null ){
         	StringBuffer b = new StringBuffer();
         	for( int i = 0; i < result.length; i++)
         		b.append( ", '" + result[ i ] + "'" );
-        	AppProxy.LOGGER.println("getValues(" + fieldId + ") = {" + 
+        	Logger.LOGGER.println("getValues(" + fieldId + ") = {" + 
         			b.toString().substring(1)+ " }");
         }
         return result;
@@ -223,16 +223,16 @@ class RegistryStore implements RegistryGate {
     	Vector result = new Vector();
     	// all lengths in bytes
     	int pos = 0;
-//        if(AppProxy.LOGGER != null) 
-//        	AppProxy.LOGGER.println( "deserializeString: string length = " + str.length() );
+//        if(Logger.LOGGER != null) 
+//        	Logger.LOGGER.println( "deserializeString: string length = " + str.length() );
     	while( pos < str.length() ){
     		int elem_length = (int)str.charAt(pos++) / 2;
-//            if(AppProxy.LOGGER != null) 
-//            	AppProxy.LOGGER.println( "deserializeString: pos = " + pos + 
+//            if(Logger.LOGGER != null) 
+//            	Logger.LOGGER.println( "deserializeString: pos = " + pos + 
 //            							", elem_length = " + elem_length );
     		result.addElement(str.substring(pos, pos + elem_length));
-//            if(AppProxy.LOGGER != null)
-//            	AppProxy.LOGGER.println( "deserializeString: '" + str.substring(pos, pos + elem_length) + "'" );
+//            if(Logger.LOGGER != null)
+//            	Logger.LOGGER.println( "deserializeString: '" + str.substring(pos, pos + elem_length) + "'" );
     		pos += elem_length;
     	}
         return result;
@@ -245,8 +245,8 @@ class RegistryStore implements RegistryGate {
      * @return restored ContentHandlerImpl object or null
      */
     private static ContentHandlerImpl.Data deserializeCH(String str) {
-        if(AppProxy.LOGGER != null) 
-        	AppProxy.LOGGER.println( "RegistryStore.deserializeCH '" + str + "'");
+        if(Logger.LOGGER != null) 
+        	Logger.LOGGER.println( "RegistryStore.deserializeCH '" + str + "'");
         Vector components = deserializeString(str);
 
         if (components.size() < 1) return null;
@@ -296,8 +296,8 @@ class RegistryStore implements RegistryGate {
         if (!init()) {
             throw new RuntimeException("RegistryStore initialization failed");
         }
-		if( AppProxy.LOGGER != null )
-			AppProxy.LOGGER.println("RegistryStore has created");
+		if( Logger.LOGGER != null )
+			Logger.LOGGER.println("RegistryStore has created");
     }
     
     public static RegistryGate getInstance(){

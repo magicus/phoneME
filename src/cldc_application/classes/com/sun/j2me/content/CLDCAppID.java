@@ -84,7 +84,7 @@ public class CLDCAppID implements ApplicationID {
 	}
 	
 	public String toString(){
-		if( AppProxy.LOGGER != null )
+		if( Logger.LOGGER != null )
 			return "{" + suiteID + ", " + className + "}";
 		return super.toString();
 	}

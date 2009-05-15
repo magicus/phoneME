@@ -144,8 +144,8 @@ public final class InvocationImpl {
      * Create a fresh InvocationImpl.
      */
     InvocationImpl() {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + " is created" );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + " is created" );
         status = Invocation.INIT;
         responseRequired = true;
         arguments = ContentHandlerImpl.ZERO_STRINGS;
@@ -285,8 +285,8 @@ public final class InvocationImpl {
      * @see #getData
      */
     public void setData(byte[] data) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".setData " + data );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".setData " + data );
         this.data = (data == null) ? ZERO_BYTES : data;
     }
 
@@ -320,8 +320,8 @@ public final class InvocationImpl {
      * @see #getURL
      */
     public void setURL(String url) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".setURL " + url );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".setURL " + url );
         this.url = url;
     }
 
@@ -342,8 +342,8 @@ public final class InvocationImpl {
      * @see #getType
      */
     public void setType(String type) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".setType " + type );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".setType " + type );
         this.type = type;
     }
 
@@ -364,8 +364,8 @@ public final class InvocationImpl {
      * @see #getAction
      */
     public void setAction(String action) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".setAction " + action );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".setAction " + action );
         this.action = action;
     }
 
@@ -400,8 +400,8 @@ public final class InvocationImpl {
      * @see #getResponseRequired
      */
     public void setResponseRequired(boolean responseRequired) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".setResponseRequired " + responseRequired );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".setResponseRequired " + responseRequired );
         if (getStatus() != Invocation.INIT) {
             throw new IllegalStateException();
         }
@@ -425,8 +425,8 @@ public final class InvocationImpl {
      * @see #getID
      */
     public void setID(String ID) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".setID " + ID );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".setID " + ID );
         this.ID = ID;
     }
 
@@ -496,8 +496,8 @@ public final class InvocationImpl {
     boolean invoke(InvocationImpl previous, ContentHandlerImpl handler)
         				throws IllegalArgumentException, IOException
     {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".invoke prev = " + 
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".invoke prev = " + 
     				previous + ", handler = '" + handler + "'" );
         /*
          * Check all of the arguments for validity.
@@ -527,8 +527,8 @@ public final class InvocationImpl {
             previous.setStatus(Invocation.HOLD);
         }
         
-        return InvocationStoreProxy.launchInvocationTarget( this ) == 
-        					InvocationStoreProxy.LIT_APP_START_FAILED;
+        return AMSGate.inst.launchInvocationTarget( this ) == 
+        						AppProxyAgent.LIT_APP_START_FAILED;
     }
 
 	/**
@@ -546,8 +546,8 @@ public final class InvocationImpl {
      *    is not <code>OK</code> or <code>CANCELLED</code>
      */
     boolean finish(int status) {
-    	if( AppProxy.LOGGER != null ){
-    		AppProxy.LOGGER.println( "finish( " + status + "), Invocation " + this);
+    	if( Logger.LOGGER != null ){
+    		Logger.LOGGER.println( "finish( " + status + "), Invocation " + this);
     	}
         switch( status ){
         	case Invocation.OK:
@@ -561,12 +561,8 @@ public final class InvocationImpl {
         setStatus(status);
 
         if (getResponseRequired()) {
-            if (destinationApp.isNative()) {
-            	// 'native to java' invocation is finished
-                return AppProxy.platformFinish(tid);
-            }
-            return InvocationStoreProxy.launchInvocationTarget( this ) == 
-						InvocationStoreProxy.LIT_APP_START_FAILED;
+            return AMSGate.inst.launchInvocationTarget( this ) == 
+						AppProxyAgent.LIT_APP_START_FAILED;
         }
         return false;
     }
@@ -819,7 +815,7 @@ public final class InvocationImpl {
      * @return a String containing a printable form
      */
     public String toString() {
-        if (AppProxy.LOGGER != null) {
+        if (Logger.LOGGER != null) {
             StringBuffer sb = new StringBuffer(200);
             
             sb.append("tid: "); sb.append(tid);

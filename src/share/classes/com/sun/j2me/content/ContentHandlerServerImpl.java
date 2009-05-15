@@ -71,8 +71,8 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
      */
     public Invocation getRequest(boolean wait) {
     	Invocation result = null;
-    	if(AppProxy.LOGGER != null)
-    		AppProxy.LOGGER.println( "ContentHandler.getRequest(" + wait + ")" );
+    	if(Logger.LOGGER != null)
+    		Logger.LOGGER.println( "ContentHandler.getRequest(" + wait + ")" );
         // Application has tried to get a request; reset cleanup flags on all
         if (requestCalls == 0) {
         	InvocationImpl.store.setCleanupFlag(applicationID, false);
@@ -83,13 +83,13 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
             InvocationImpl.store.getRequest(applicationID, wait ? currentBlockID : 0);
         if (invoc != null) {
             // Keep track of number of requests delivered to the application
-            AppProxy.requestForeground(invoc.invokingApp, invoc.destinationApp);
+        	AMSGate.inst.requestForeground(invoc.invokingApp, invoc.destinationApp);
             
 		    // Wrap it in an Invocation instance
             result = invoc.wrap();
         }
-    	if(AppProxy.LOGGER != null)
-    		AppProxy.LOGGER.println( "ContentHandler.getRequest(" + wait + ") returns " + result );
+    	if(Logger.LOGGER != null)
+    		Logger.LOGGER.println( "ContentHandler.getRequest(" + wait + ") returns " + result );
         return result;
     }
 

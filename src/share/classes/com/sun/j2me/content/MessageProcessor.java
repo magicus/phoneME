@@ -66,14 +66,14 @@ class DataInputStreamExt extends DataInputStream {
 class NativeMessageSender implements MessageProcessor {
 	private final int queueId;
 	public NativeMessageSender( int qId ){ 
-		if( AppProxy.LOGGER != null )
-			AppProxy.LOGGER.println("NativeMessageSender()");
+		if( Logger.LOGGER != null )
+			Logger.LOGGER.println("NativeMessageSender()");
 		queueId = qId; 
 	}
 
 	public byte[] sendMessage(int msgCode, byte[] data) throws IOException {
-		if( AppProxy.LOGGER != null ){
-			AppProxy.LOGGER.println("NativeMessageSender.send( " + queueId + ", " + msgCode + " )");
+		if( Logger.LOGGER != null ){
+			Logger.LOGGER.println("NativeMessageSender.send( " + queueId + ", " + msgCode + " )");
 			//new Exception("trace");
 		}
 		byte[] result = send(queueId, msgCode, data); 
@@ -94,6 +94,8 @@ class NativeMessageReceiver implements Runnable {
 				new StoreRequestsExecutor( InvocationStore.getInstance() ));
 		receiver.addProcessor(RegistryGate.channelID, 
 				new RegistryRequestExecutor( RegistryStore.getInstance() ));
+		receiver.addProcessor(AMSGate.channelID, 
+				new AMSRequestExecutor( AppProxy.getGateInstance() ));
 		new Thread(receiver).start();
 	}
 	
@@ -104,16 +106,16 @@ class NativeMessageReceiver implements Runnable {
 	}
 
 	public void run() {
-		if( AppProxy.LOGGER != null )
-			AppProxy.LOGGER.println("NativeMessageReceiver.run()");
+		if( Logger.LOGGER != null )
+			Logger.LOGGER.println("NativeMessageReceiver.run()");
 		for(;;){
-			if( AppProxy.LOGGER != null )
-				AppProxy.LOGGER.println("NativeMessageReceiver.waitForRequest()");
+			if( Logger.LOGGER != null )
+				Logger.LOGGER.println("NativeMessageReceiver.waitForRequest()");
 			int queueId = waitForRequest();
 			final MessageProcessor processor = 
 				(MessageProcessor)table.get(new Integer(queueId));
-			if( AppProxy.LOGGER != null )
-				AppProxy.LOGGER.println("NativeMessageReceiver: request queue = " + queueId + ", " + processor);
+			if( Logger.LOGGER != null )
+				Logger.LOGGER.println("NativeMessageReceiver: request queue = " + queueId + ", " + processor);
 			if( processor != null ){
 				final int requestId = getRequestId();
 				final int msgCode = getRequestMsgCode();

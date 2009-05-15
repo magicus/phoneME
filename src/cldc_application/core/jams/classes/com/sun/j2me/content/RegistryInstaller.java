@@ -90,8 +90,8 @@ final class RegistryInstaller {
         int suiteId = appl.suiteID;
         ContentHandlerImpl[] chs;
         
-        if( AppProxy.LOGGER != null ) 
-        	AppProxy.LOGGER.println( "RegistryInstaller.preInstall: appl = " + appl );        
+        if( Logger.LOGGER != null ) 
+        	Logger.LOGGER.println( "RegistryInstaller.preInstall: appl = " + appl );        
 
         /*
          * Check for any CHAPI attributes;
@@ -100,20 +100,20 @@ final class RegistryInstaller {
         handlersToRemove = new Hashtable();
         handlersToInstall = parseAttributes(appl);
 
-        if( AppProxy.LOGGER != null ) 
-        	AppProxy.LOGGER.println( "RegistryInstaller.preInstall: handlersToInstall.size = " + handlersToInstall.size() );        
+        if( Logger.LOGGER != null ) 
+        	Logger.LOGGER.println( "RegistryInstaller.preInstall: handlersToInstall.size = " + handlersToInstall.size() );        
 
         /*
          * Remove all static registrations. Verify dynamically registered.
          */
         chs = RegistryImpl.gate.forSuite(suiteId);
         sz = (chs == null? 0: chs.length);
-        if( AppProxy.LOGGER != null ) 
-        	AppProxy.LOGGER.println( "RegistryInstaller.preInstall: suite " + suiteId + 
+        if( Logger.LOGGER != null ) 
+        	Logger.LOGGER.println( "RegistryInstaller.preInstall: suite " + suiteId + 
         				" handlers number = " + sz );        
         for (int i = 0; i < sz; i++) {
-            if( AppProxy.LOGGER != null ) 
-            	AppProxy.LOGGER.println( "RegistryInstaller.preInstall: chs[" + i + "] = " + chs[i] );        
+            if( Logger.LOGGER != null ) 
+            	Logger.LOGGER.println( "RegistryInstaller.preInstall: chs[" + i + "] = " + chs[i] );        
             if (chs[i] == null) continue;
             if( 0 == (chs[i].registrationMethod & 
             					ContentHandlerImpl.REGISTERED_STATIC_FLAG) ) {
@@ -137,14 +137,14 @@ final class RegistryInstaller {
                 }
             }
 
-            if( AppProxy.LOGGER != null ) 
-            	AppProxy.LOGGER.println( "RegistryInstaller.preInstall: mark " + i );        
+            if( Logger.LOGGER != null ) 
+            	Logger.LOGGER.println( "RegistryInstaller.preInstall: mark " + i );        
             // Remove handler -- either [static] or [replaced] or [invalid]
             handlersToRemove.put(chs[i].ID, chs[i]);
             chs[i] = null;
         }
-        if( AppProxy.LOGGER != null ) 
-        	AppProxy.LOGGER.println( getClass().getName() + 
+        if( Logger.LOGGER != null ) 
+        	Logger.LOGGER.println( getClass().getName() + 
         			".preInstall: handlersToRemove " + handlersToRemove.size() );        
 
         /* Verify new registrations */
@@ -185,13 +185,13 @@ final class RegistryInstaller {
         if( handlersToInstall.size() > 0 )
         	appl.checkRegisterPermission("register");
         
-        if( AppProxy.LOGGER != null ){ 
-        	AppProxy.LOGGER.println( getClass().getName() + ".preInstall: handlersToInstall(" + 
+        if( Logger.LOGGER != null ){ 
+        	Logger.LOGGER.println( getClass().getName() + ".preInstall: handlersToInstall(" + 
         						handlersToInstall.size() + "):");
         	Enumeration keys = handlersToInstall.keys();
         	while( keys.hasMoreElements() ){
         		String classname = (String)keys.nextElement();
-        		AppProxy.LOGGER.println( "\t[" + classname + "] " + 
+        		Logger.LOGGER.println( "\t[" + classname + "] " + 
         				handlersToInstall.get(classname).toString() );
         	}
         }
@@ -225,8 +225,8 @@ final class RegistryInstaller {
             String sindex = Integer.toString(index);
             String handler_n = CH_PREFIX.concat(sindex);
             String value = appl.getProperty(handler_n);
-            if(AppProxy.LOGGER != null)
-            	AppProxy.LOGGER.println( "RegistryInstaller.parseAttributes: appl.getProperty(" + handler_n + ") = '" + 
+            if(Logger.LOGGER != null)
+            	Logger.LOGGER.println( "RegistryInstaller.parseAttributes: appl.getProperty(" + handler_n + ") = '" + 
             				value + "'" );            
             if (value == null)
                 break;
@@ -266,8 +266,8 @@ final class RegistryInstaller {
             // Get the application info for this new class;
             // Throws ClassNotFoundException or IllegalArgumentException
             AppProxy newAppl = appl.forClass(classname);
-            if(AppProxy.LOGGER != null)
-            	AppProxy.LOGGER.println( "RegistryInstaller.parseAttributes: newAppl = " + 
+            if(Logger.LOGGER != null)
+            	Logger.LOGGER.println( "RegistryInstaller.parseAttributes: newAppl = " + 
             				newAppl );            
 
             ActionNameMap[] actionnames =
@@ -411,11 +411,11 @@ final class RegistryInstaller {
      */
     void install() {
         // Remove static and conflicted handlers.
-        if( AppProxy.LOGGER != null && handlersToRemove != null ){ 
-        	AppProxy.LOGGER.println( getClass().getName() + 
+        if( Logger.LOGGER != null && handlersToRemove != null ){ 
+        	Logger.LOGGER.println( getClass().getName() + 
         				".install: handlersToRemove(" + handlersToRemove.size() + "):");
         	Enumeration htr = handlersToRemove.keys();
-        	while( htr.hasMoreElements() ) AppProxy.LOGGER.println( "\t" + htr.nextElement() );
+        	while( htr.hasMoreElements() ) Logger.LOGGER.println( "\t" + htr.nextElement() );
         }
     	Enumeration htr = handlersToRemove.keys();
     	while( htr.hasMoreElements() ) {
@@ -431,8 +431,8 @@ final class RegistryInstaller {
                 	(ContentHandlerRegData)handlersToInstall.get(classname);
                 try {
                 	RegistryImpl.gate.register(appl.forClass(classname), handlerData);
-	                if (AppProxy.LOGGER != null) {
-	                    AppProxy.LOGGER.println("Register: " + classname + ", id: " + handlerData.getID());
+	                if (Logger.LOGGER != null) {
+	                    Logger.LOGGER.println("Register: " + classname + ", id: " + handlerData.getID());
 	                }
 				} catch (ClassNotFoundException e) {
 					// assert( false );

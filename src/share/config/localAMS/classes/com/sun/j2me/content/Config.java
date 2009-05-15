@@ -39,4 +39,7 @@ public class Config {
 		return RegistryStore.getInstance();
 	}
 
+	public static AMSGate getAMSGate() {
+		return AppProxy.getGateInstance();
+	}
 }
