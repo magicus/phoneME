@@ -576,8 +576,13 @@ public final class Manager {
 
         String locStr = locator.toLowerCase();
 
-        if( !locStr.endsWith(".gif") || ( !locStr.startsWith("file://") &&
+        if( locStr.endsWith(".gif") && ( locStr.startsWith("file://") ||
                                            locStr.startsWith("http://") ) )
+        {
+            
+        } else if( locStr.endsWith(".mpg") && ( locStr.startsWith("file:///") ) )
+        {
+        } else
         {
             throw new MediaException( "URI not supported" );
         }
