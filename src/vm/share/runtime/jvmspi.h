@@ -50,7 +50,7 @@
 extern "C" {
 #endif
 
-void JVMSPI_PrintRaw(const char* s);
+void JVMSPI_PrintRaw(const char* s, int length);
 
 /** 
  * Called from the VM when it wants to exit *abnormally*.

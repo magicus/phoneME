@@ -288,8 +288,8 @@ void Java_illegal_method_execution(JVM_SINGLE_ARG_TRAPS) {
 
 // native public void write(int b)
 void Java_com_sun_cldchi_io_ConsoleOutputStream_write() {
-  jint value = KNI_GetParameterAsInt(1);
-  tty->print("%c", value);
+  const jint value = KNI_GetParameterAsInt(1);
+  tty->put(value);
 }
 
   // com.sun.cldchi.jvm natives

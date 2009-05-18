@@ -55,14 +55,6 @@ void Stream::print_cr(const char* format, ...) {
   cr();
 }
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE || ENABLE_PERFORMANCE_COUNTERS \
-    || ENABLE_WTK_PROFILER || USE_AOT_COMPILATION
-void Stream::put(char ch) {
-  GUARANTEE(ch != 0, "please fix call site");
-  char buf[] = { ch, '\0' };
-  print_raw(buf);
-}
-#endif
 
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE
 void Stream::vprint(const char *format, va_list argptr) {
@@ -94,9 +86,9 @@ void Stream::print_hex8(int n) {
     print("%x", n);
   }
 }
-void DupStream::print_raw(const char *c){
-  stream1()->print_raw(c);
-  stream2()->print_raw(c);
+void DupStream::print_raw(const char* s, const int length){
+  stream1()->print_raw(s, length);
+  stream2()->print_raw(s, length);
   _position = stream1()->position();
 }
 
@@ -111,22 +103,24 @@ void Stream::indent() {
 #endif // !PRODUCT
 
 #if ENABLE_PERFORMANCE_COUNTERS || USE_DEBUG_PRINTING || ENABLE_JVMPI_PROFILE
-void ByteArrayOutputStream::print_raw(const char *c) {
-  int length = jvm_strlen(c);
-  for (const char *p=c; *p; p++) {
-    if (*p == '\n') {
-      _position = 0;
-    } else {
-      _position ++;
+void ByteArrayOutputStream::print_raw(const char* s, int length) {
+  {
+    int position = _position;
+    for (int i = 0; i < length; i++) {
+      if (s[i] == '\n') {
+        position = 0;
+      } else {
+        position++;
+      }
     }
+    _position = position;
   }
   if (_array == NULL) {
     _array_size = length + 1000;
     _array = (char *)jvm_malloc(_array_size);
     GUARANTEE( _array ,  "failed to alloc initial buffer" ) ;
     if (_array == NULL) return;
-  }
-  if (length + _current_size + 1 > _array_size) {
+  } else if (length + _current_size + 1 > _array_size) {
     // Expand array acapacity if necessary
     int new_array_size = length + _current_size + 1000;
     char *new_array = (char *)jvm_malloc(new_array_size);
@@ -137,7 +131,7 @@ void ByteArrayOutputStream::print_raw(const char *c) {
     _array = new_array;
     _array_size = new_array_size;
   }
-  jvm_memcpy(_array + _current_size, c, length);
+  jvm_memcpy(_array + _current_size, s, length);
   _current_size += length;
   _array[_current_size] = '\0';
 }
@@ -187,22 +181,22 @@ void FileStream::open(const PathChar* file_name) {
   _file = OsFile_open(file_name, "w");
 }
 
-void FileStream::print_raw(const char* s) {
+void FileStream::print_raw(const char* s, int length) {
   if (_file == NULL) {
       return;
   }
-  OsFile_write(_file, s, sizeof(char), jvm_strlen(s));
-  for (;;) {
-    char ch = *s++;
-    if (ch == 0) {
-      break;
-    } else if (ch == '\n') {
-      _position = 0;
-    } else if (ch == '\t') {
-      GUARANTEE(tab_size == 8, "correct this code");
-      _position = ((_position >> 3) + 1) << 3;
-    } else {
-      _position += 1;
+  OsFile_write(_file, s, sizeof(char), length);
+  for (int i = 0; i < length; i++) {
+    switch (s[i]) {
+      case '\n':
+        _position = 0;
+        break;
+      case '\t':
+        GUARANTEE(tab_size == 8, "correct this code");
+        _position = ((_position >> 3) + 1) << 3;
+        break;
+      default:
+        _position += 1;
     }
   }
 #if USE_BINARY_IMAGE_GENERATOR
@@ -289,7 +283,7 @@ void BufferedFileStream::open(const PathChar* file_name) {
   }
 }
 
-void BufferedFileStream::print_raw(const char* /*s*/) {
+void BufferedFileStream::print_raw(const char* /*s*/, int /*length*/) {
   UNIMPLEMENTED();
 }
 
@@ -364,28 +358,29 @@ void BufferedFileStream::restore(BufferedFileStreamState *state) {
 #endif /* USE_BINARY_IMAGE_GENERATOR */
 
 #if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_DYNAMIC_NATIVE_METHODS || USE_DEBUG_PRINTING || ENABLE_MEMORY_PROFILER
-void FixedArrayOutputStream::print_raw(const char *s) {
-  int length = jvm_strlen(s);
+void FixedArrayOutputStream::print_raw(const char* s, int length) {
   if (length + _current_size + 1 >= _limit) {
     length = _limit - _current_size - 1;
   }
-  if (length > 0) {
-    // This is only for debugging.  So we can ignore anything that doesn't fit
-    jvm_memcpy(_array + _current_size, s, length);
-    _current_size += length;
-    _array[_current_size] = '\0';
+  if (length <= 0) {
+    return;
   }
-  for (;;) {
-    char ch = *s++;
-    if (ch == 0) {
-      break;
-    } else if (ch == '\n') {
-      _position = 0;
-    } else if (ch == '\t') {
-      GUARANTEE(tab_size == 8, "correct this code");
-      _position = ((_position >> 3) + 1) << 3;
-    } else {
-      _position += 1;
+  // This is only for debugging.  So we can ignore anything that doesn't fit
+  jvm_memcpy(_array + _current_size, s, length);
+  _current_size += length;
+  _array[_current_size] = '\0';
+
+  for (int i = 0; i < length; i++) {
+    switch (s[i]) {
+      case '\n':
+        _position = 0;
+        break;
+      case '\t':
+        GUARANTEE(tab_size == 8, "correct this code");
+        _position = ((_position >> 3) + 1) << 3;
+        break;
+      default:
+        _position += 1;
     }
   }
 }
