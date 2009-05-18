@@ -303,6 +303,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
         pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
         pNewMidpEvent->intParam1 = JSR290_LISTENER_FAILED;
+        pNewMidpEvent->intParam4 = (jint)(event->data.jsr290FluidEvent.failure_type);
         {
             int len = 0;
             if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text, &len)) {
