@@ -48,34 +48,49 @@ extern "C" {
 #include <javacall_defs.h>
 
 /*
-  The functions below should be implemented only if the JSR is used in REMOTE_AMS configuration.
+  The functions below should be implemented only if the JSR is used in REMOTE_AMS configuration (REMOTE_AMS_CFG=true).
 */
 
 
 /**
-  This function is called by the local (application) part of the JSR and it must
-- allocate an unique identifier for this data exchange (not zero)
-- transmit all parameters to the remote AMS process, where the function javanotify_chapi_process_msg_request must be called
-*/
+ *  This function is called by the local (application) part of the JSR and it must
+ * - allocate an unique identifier for this data exchange (not zero)
+ * - transmit all parameters to the remote AMS process, where the function javanotify_chapi_process_msg_request must be called
+ *
+ * @param queueId must be passed as the queueID parameter to the javanotify_chapi_process_msg_request function in the AMS process
+ * @param msgCode must be passed as the msg parameter to the javanotify_chapi_process_msg_request function in the AMS process
+ * @param bytes must be passed as the bytes parameter to the javanotify_chapi_process_msg_request function in the AMS process
+ * @param bytesCount must be passed as the count parameter to the javanotify_chapi_process_msg_request function in the AMS process
+ * @param dataExchangeID must be initialized and passed as the dataExchangeID parameter to the javanotify_chapi_process_msg_request 
+ * function in the AMS process
+ * @return JAVACALL_OK if operation was successful, error code otherwise
+ */
 javacall_result javacall_chapi_post_message( int queueId, int msgCode, const unsigned char * bytes, size_t bytesCount, 
                                                    int * dataExchangeID );
 
 /**
-  This function is called by the AMS part of the JSR and it must send all parameters to the caller. The caller must be determined 
-by the dataExchangeID parameter value. The function javanotify_chapi_process_msg_result must be called in application process.
-*/
+ *  This function is called by the AMS part of the JSR and it must send all parameters to the caller. The caller must be determined 
+ * by the dataExchangeID parameter value. The function javanotify_chapi_process_msg_result must be called in application process.
+ *
+ * @param dataExchangeID must be passed as the dataExchangeID parameter to the javanotify_chapi_process_msg_result function in the caller process
+ * @param bytes must be passed as the bytes parameter to the javanotify_chapi_process_msg_result function in the caller process
+ * @param bytesCount must be passed as the count parameter to the javanotify_chapi_process_msg_result function in the caller process
+ * @return JAVACALL_OK if operation was successful, error code otherwise
+ */
 javacall_result javacall_chapi_send_response( int dataExchangeID, const unsigned char * bytes, size_t bytesCount );
 
 
 /**
-  This function must be called in the AMS part of the JSR when new request is arrived (transmitted).
-*/
+ * This function must be called in the AMS part of the JSR when a new request is arrived (transmitted).
+ * see javacall_chapi_post_message
+ */
 javacall_result javanotify_chapi_process_msg_request( int queueID, int dataExchangeID, 
                                                 int msg, const unsigned char * bytes, size_t count );
 
 /**
-  This function must be called in the local (application) part of the JSR when a response to some request is arrived.
-*/
+ * This function must be called in the local (application) part of the JSR when a response to some request is arrived.
+ * see javacall_chapi_send_response
+ */
 javacall_result javanotify_chapi_process_msg_result( int dataExchangeID, const unsigned char * bytes, size_t count );
 
 #ifdef __cplusplus
