@@ -213,6 +213,9 @@ class SourceMacros: public SourceAssembler {
 
 #if ENABLE_ISOLATES
   void get_mirror_from_clinit_list(Register tm, Register klass, Register temp);
+#else
+  void initialize_class_when_needed(Register dst, Register tmp1, Register tmp2,
+                                    Label& restart, int args_from_stack = 0);
 #endif
   
  protected:

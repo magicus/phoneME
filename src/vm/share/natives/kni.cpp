@@ -538,13 +538,28 @@ KNIEXPORT jlong KNI_GetParameterAsLong(jint index) {
 
 KNIEXPORT jfloat KNI_GetParameterAsFloat(jint index) {
   GUARANTEE(!_in_kvm_native_method, "sanity");
-  return *(jfloat*)parameter_address(index);
+  jint j = *(jint*)parameter_address(index);
+  union {
+    jfloat output;
+    jint input;
+  } convert;
+
+  convert.input = j;
+
+  return convert.output;
 }
 
 KNIEXPORT jdouble KNI_GetParameterAsDouble(jint index) {
   GUARANTEE(!_in_kvm_native_method, "sanity");
   jlong j = KNI_GetParameterAsLong(index);
-  return *(jdouble*)&j;
+  union {
+    jdouble output;
+    jlong input;
+  } convert;
+ 
+  convert.input = j;
+
+  return convert.output;
 }
 
 #endif

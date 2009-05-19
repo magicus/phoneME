@@ -2297,7 +2297,14 @@ static inline jlong double_bits(jdouble d) {
 }
 
 static inline jfloat float_from_bits(jint bits) {
-  return *(jfloat*)&bits;
+  union {
+    jfloat output;
+    jint input;
+  } convert;
+ 
+  convert.input = bits;
+
+  return convert.output;
 }
 
 static inline jdouble double_from_bits(jlong bits) {

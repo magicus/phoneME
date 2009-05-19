@@ -135,7 +135,7 @@ void CompiledMethod::print_name_on(Stream* st) {
 
 #endif // ENABLE_COMPILER
 
-#if !defined(PRODUCT) || USE_DEBUG_PRINTING
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 
 void CompiledMethod::iterate(OopVisitor* visitor) {
 #if USE_OOP_VISITOR

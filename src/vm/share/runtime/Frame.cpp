@@ -654,7 +654,7 @@ jint JavaFrame::bci_with_flags() const {
 
 void JavaFrame::oops_do(void do_oop(OopDesc**)) {
   GUARANTEE(in_gc_state() || (ENABLE_MEMORY_PROFILER && _debugger_active), 
-            "We can only execute oops_do in gc state or in memory profiler");
+	    "We can only execute oops_do in gc state or in memory profiler");
 
   // Compute length info before visiting method
   jint llength = local_length();

@@ -1178,6 +1178,46 @@ bind(find_task);
 bind(found_class);
 #endif // END_CONVERT_TO_T2
 }
+#else
+void SourceMacros::initialize_class_when_needed(Register dst,
+                                                Register tmp1, Register tmp2,
+                                                Label& restart,
+                                                int args_from_stack) {
+  Register mirror = tmp1;
+  Register status = tmp2;
+  Register thread = tmp2;
+  Label class_is_initialized, do_initialize;
+
+  comment("Get Java mirror for the class");
+  ldr(mirror, imm_index(dst, JavaClass::java_mirror_offset()));
+  comment("Check if the class is already initialized");
+  ldr(status, imm_index(mirror, JavaClassObj::status_offset()));
+  tst(status, imm(JavaClassObj::INITIALIZED));
+  b(class_is_initialized, ne);
+  comment("Check if the class is being initialized by the current thread");
+  tst(status, imm(JavaClassObj::IN_PROGRESS));
+  b(do_initialize, eq);
+  get_thread(thread);
+  ldr(mirror, imm_index(mirror, JavaClassObj::thread_offset()));
+  ldr(thread, imm_index(thread, Thread::thread_obj_offset()));
+  cmp(mirror, reg(thread));
+  b(class_is_initialized, eq);
+
+  bind(do_initialize);
+  comment("Call VM runtime to initialize class");
+  if (args_from_stack != 0) {
+    push_results(args_from_stack);
+    set_stack_state_to(tos_on_stack);
+  }
+  mov(r1, reg(dst));
+  interpreter_call_vm("initialize_class", T_VOID);
+  if (args_from_stack != 0) {
+    restore_stack_state_from(tos_on_stack);
+    pop_arguments(args_from_stack);
+  }
+  b(restart);
+  bind(class_is_initialized);
+}
 #endif
 
 void SourceMacros::emit_raw(juint instr) {

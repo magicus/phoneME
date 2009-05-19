@@ -32,7 +32,7 @@ HANDLE_CHECK(MixedOop, is_mixed_oop())
 #define MIXED_OOP_TYPE_STRING(x, y) \
     case MixedOopDesc::Type_ ## x: return STR(x);
 
-#if !defined(PRODUCT) || USE_DEBUG_PRINTING
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
 
 const char *MixedOop::type_string() {
   switch (type()) {

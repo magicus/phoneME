@@ -64,14 +64,20 @@ class Stream: public GlobalObj {
   void print_cr(const char* format, ...);
   void vprint(const char *format, va_list argptr);
   void vprint_cr(const char* format, va_list argptr);
-  virtual void print_raw(const char* /*str*/) JVM_PURE_VIRTUAL;
-  inline void sp() {
-    this->print_raw(" ");
+  virtual void print_raw(const char* s, int length) JVM_PURE_VIRTUAL;
+  void print_raw(const char* s) {
+    print_raw(s, jvm_strlen(s));
   }
-  void cr() {
-    this->print_raw("\n");
+  void put(const char c) {
+    print_raw (&c, 1);
   }
-  inline void fill_to(int col) {
+  void sp(void) {
+    put(' ');
+  }
+  void cr(void) {
+    put('\n');
+  }
+  void fill_to(const int col) {
     while (_position < col) {
       sp();
     }
@@ -104,12 +110,6 @@ public:
       print("%g", d);
     }
   }
-#endif
-
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING \
-    || ENABLE_PERFORMANCE_COUNTERS || ENABLE_WTK_PROFILER \
-    || USE_AOT_COMPILATION
-  void put(char ch);
 #endif
 
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE
@@ -173,7 +173,7 @@ class FileStream : public Stream {
   }
   void open(const JvmPathChar* file_name);
   int is_open() const { return _file != NULL; }
-  virtual void print_raw(const char* c);
+  virtual void print_raw(const char* c, int length);
   virtual void flush();
   virtual void close();
   void close(FileStreamState* state) {
@@ -202,7 +202,7 @@ public:
   }
   ~FixedArrayOutputStream()  { }
   virtual void flush() {}
-  virtual void print_raw(const char* c);
+  virtual void print_raw(const char* s, int length);
   char *array() { return _array; }
   void reset()  { _current_size = 0; _array[0] = 0; }
   int current_size() {return _current_size;}
@@ -231,7 +231,7 @@ public:
     _stream2 = stream2;
   }
 
-  virtual void print_raw(const char *c);
+  virtual void print_raw(const char* s, int length);
 
   virtual void flush();
 
@@ -254,7 +254,7 @@ public:
     }
   }
   virtual void flush() {}
-  virtual void print_raw(const char* c);
+  virtual void print_raw(const char* c, int length);
   void dump_to(Stream *s) {
     s->print_raw(_array); _current_size = 0; _array[0] = 0;
   }
@@ -288,7 +288,7 @@ public:
 class BufferedFileStream : public Stream {
 public:
   void open(const JvmPathChar* file_name);
-  virtual void print_raw(const char* c);
+  virtual void print_raw(const char* s, int length);
   void print_int(const juint i);
   void print_int_ref(const juint i) {
     // This used to have a different meaning, but now it's just the same

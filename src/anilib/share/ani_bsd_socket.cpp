@@ -220,9 +220,9 @@ asynchronous_socket_read(void *parameter, jboolean is_non_blocking) {
   int n;
   SocketBufferParameter *p = (SocketBufferParameter *) parameter;
 
-  //JVMSPI_PrintRaw("[");
+  //JVMSPI_PrintRaw("[", 1);
   n = recv(p->fd, p->buffer, p->buffer_size, 0);
-  //JVMSPI_PrintRaw("]");
+  //JVMSPI_PrintRaw("]", 1);
   if (n == 0) {
     // If remote side has shut down the connection gracefully, and all
     // data has been received, recv() will complete immediately with

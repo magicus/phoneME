@@ -42,12 +42,12 @@ extern "C" {
 int javacall_time_initialize();
 }
 
-void JVMSPI_PrintRaw(const char* s) {
+void JVMSPI_PrintRaw(const char* s, int length) {
   /* Print the string to the standard output device */
 #if ENABLE_PCSL
-  pcsl_print(s);
+  pcsl_print_chars(s, length);
 #else
-  javacall_print(s);
+  javacall_print_chars(s, length);
 #endif
 }
 

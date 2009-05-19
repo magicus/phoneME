@@ -78,7 +78,7 @@ extern "C" {
 }
 
 // Display the message on the on-screen console
-static void write_console(const char* s) {
+static void write_console(const char* s, int length) {
   if (!_WindowSystem) {
     return;
   }
@@ -92,7 +92,7 @@ static void write_console(const char* s) {
       _line_buffer[_line_pos++] = '\r';
     }
     _line_buffer[_line_pos] = ch;
-    if (ch == 0x0) {
+    if (si == length) {
       break;
     }
   }
@@ -116,8 +116,12 @@ static void write_console(const char* s) {
   }
 }
 
+static void write_console(const char* s) {
+  write_console(s, strlen(s));
+}
+
 // Log the message to /jvm.log
-static void log_console(const char* s) {
+static void log_console(const char* s, int length) {
   static bool first = true;
 
   if (first && _log_file == NULL) {
@@ -154,7 +158,7 @@ static void log_console(const char* s) {
     first = false;
   }
   if (_log_file != NULL) {
-    fprintf(_log_file, "%s", s);
+    fwrite(s, length, 1, _log_file);
     fflush(_log_file);
   }
 }
@@ -162,10 +166,10 @@ static void log_console(const char* s) {
 extern "C"
 void JVMSPI_PrintRaw(const char* s) {
   if (WriteConsole) {
-    write_console(s);
+    write_console(s, length);
   }
   if (LogConsole) {
-    log_console(s);
+    log_console(s, length);
   }
 }
 

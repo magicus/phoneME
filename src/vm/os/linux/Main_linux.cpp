@@ -40,11 +40,11 @@ extern "C" {
  * on the Linux platform.
  */
 
-void JVMSPI_PrintRaw(const char* s) {
+void JVMSPI_PrintRaw(const char* s, int length) {
 #if ENABLE_PCSL
-  pcsl_print(s);
+  pcsl_print_chars(s, length);
 #else
-  jvm_printf("%s", s);
+  jvm_fwrite(s, length, 1, stdout);
   jvm_fflush(stdout);
 #endif
 }

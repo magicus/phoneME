@@ -36,11 +36,11 @@ extern "C" {
 }
 #endif
 
-void JVMSPI_PrintRaw(const char* s) {
+void JVMSPI_PrintRaw(const char* s, int length) {
 #if ENABLE_PCSL && 0
-  pcsl_print(s);
+  pcsl_print_chars(s, length);
 #else
-  printf("%s", s);
+  jvm_fwrite(s, length, 1, stdout);
 #endif
 }
 

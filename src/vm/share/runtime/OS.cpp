@@ -82,7 +82,7 @@ class DefaultStream : public Stream {
     return (void*)(&singleton);
   }
 
-  virtual void print_raw(const char* s);
+  virtual void print_raw(const char* s, int length);
 };
 
 static JvmPathChar __log_name[]  = {'c','l','d','c','_','a','.','l','o','g',0};
@@ -99,12 +99,12 @@ bool DefaultStream::has_log_file() {
 
 static unsigned int __charcount;
 
-void DefaultStream::print_raw(const char* s) {
-  JVMSPI_PrintRaw(s);
+void DefaultStream::print_raw(const char* s, int length) {
+  JVMSPI_PrintRaw(s, length);
 
   // print to log file
   if (LogVMOutput && has_log_file()) {
-    OsFile_write(_log_file, s, sizeof(char), jvm_strlen(s));
+    OsFile_write(_log_file, s, sizeof(char), length);
     //    OsFile_flush(_log_file);
     if (++__charcount == 200000000) {
       OsFile_flush(_log_file);
@@ -123,16 +123,15 @@ void DefaultStream::print_raw(const char* s) {
 
 
 #if !defined(PRODUCT) || ENABLE_PROFILER || ENABLE_TTY_TRACE
-  while (true) {
-    char ch = *s++;
-    if (ch == 0) {
-      break;
-    } else if (ch == '\n') {
-      _position = 0;
-    } else {
-      _position += 1;
+  int position = _position;
+  for (int i = 0; i < length; i++) {
+    if (s[i] == '\n') {
+      position = 0;
+      continue;
     }
+    position++;
   }
+  _position = position;
 #endif
 }
 
