@@ -437,14 +437,13 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         displayName =
             Resource.getString(ResourceConstants.INSTALL_APPLICATION);
         try {
+            midletSuite.setTempProperty(null, "installerRunning", "1");
+
             midletStateHandler.startMIDlet(
                 "com.sun.midp.installer.GraphicalInstaller", displayName);
-            /*
-             * Give the create MIDlet notification 1 second to get to
-             * AMS.
-             */
-            Thread.sleep(1000);
-            notifyDestroyed();
+
+new Thread(new WaitingThread(midletSuite)).start();
+//            notifyDestroyed();
         } catch (Exception ex) {
             StringBuffer sb = new StringBuffer();
 
@@ -695,4 +694,27 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
             typeOfInstall = InstallerResource.FILE_INSTALL;
         }       
     }      
+
+    class WaitingThread implements Runnable {
+        private MIDletSuite midletSuite;
+
+        public WaitingThread(MIDletSuite ms) {
+            midletSuite = ms;
+        }
+
+        public void run() {
+            /* wait until the graphical installer is finished */
+            String isRunning;
+            do {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                }
+                isRunning = midletSuite.getProperty("installerRunning");
+            } while ("1".equals(isRunning));
+
+            notifyDestroyed();
+        }
+    }
+
 }

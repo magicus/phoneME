@@ -240,6 +240,7 @@ void fbapp_refresh(int hardwareId, int x1, int y1, int x2, int y2) {
  * @param repeatedKeySupport true if MIDP should support repeated key
  *   presses on its own, false if platform supports repeated keys itself
  */
+#include <stdio.h>
 void fbapp_map_keycode_to_event(
         MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent,
         int midpKeyCode, jboolean isPressed, jboolean repeatedKeySupport) {
@@ -304,6 +305,17 @@ void fbapp_map_keycode_to_event(
         break;
 
     default:
+#if ENABLE_WTK_PROFILER
+        if (isPressed) {
+            if (midpKeyCode == 'E' || midpKeyCode == 'D') {
+                pNewSignal->waitingFor = AMS_SIGNAL;
+                pNewMidpEvent->type = MIDP_JAVA_PROFILER_CONTROL_EVENT;
+                pNewMidpEvent->intParam1 = (midpKeyCode == 'e') ? 1 : 0;
+                break;
+            }
+        }
+#endif
+
 #if ENABLE_ON_DEVICE_DEBUG
         if (isPressed) {
             /* assert(posInSequence == sizeof(pStartOddKeySequence) - 1) */

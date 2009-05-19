@@ -43,6 +43,7 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.main.TrustedMIDletIcon;
 
 import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.midletsuite.*;
 
@@ -575,6 +576,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      */
     void exit(boolean success) {
         chmanager.installDone(success);
+
+        MIDletStateHandler midletStateHandler =
+                MIDletStateHandler.getMidletStateHandler();
+        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
+        midletSuite.setTempProperty(null, "installerRunning", "0");
 
         notifyDestroyed();
     }
