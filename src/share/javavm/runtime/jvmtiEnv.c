@@ -7460,7 +7460,7 @@ jvmti_DisposeEnvironment(jvmtiEnv* jvmtienv)
 
     cap = getCapabilities(context);
     CVMjvmtiRelinquishCapabilities(cap, cap, cap);
-
+    jvmti_SetEventCallbacks(jvmtienv, NULL, 0);
     /* TODO: The following clean up should only be done if we are disposing
        of the last agentLib JVMTI environment.  However, since we only support
        one agentLib for now, we can do this unconditionally for now. */

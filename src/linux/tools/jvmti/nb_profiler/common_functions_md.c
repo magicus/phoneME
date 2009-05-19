@@ -38,95 +38,32 @@
  * Version 2 license, then the option applies only if the new code is
  * made subject to such option by the copyright holder.
  */
-/*
- * author Tomas Hurka
- *        Ian Formanek
- *        Misha Dmitriev
+/* 
+ * author Ian Formanek
+ *        Tomas Hurka
+ *        Misha Dimitiev
  */
 
-#ifdef WIN32
-//#include <Windows.h>
-#else
-//#include <sys/time.h>
-//#include <fcntl.h>
-//#include <time.h>
-#endif
-
-#ifdef SOLARIS
-#define _STRUCTURED_PROC 1
-#include <sys/procfs.h>
-#include <unistd.h>
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include "javavm/include/assert.h"
-
-#include "jni.h"
 #include "jvmti.h"
 
-#include "org_netbeans_lib_profiler_server_system_Timers.h"
-
 #include "common_functions.h"
+#include <time.h>
 
-#ifdef CVM_JVMTI
-/*
- * Class:     org_netbeans_lib_profiler_server_system_Timers
- * Method:    getCurrentTimeInCounts
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_org_netbeans_lib_profiler_server_system_Timers_getCurrentTimeInCounts
-  (JNIEnv *env, jclass clz)
+void
+md_init(JavaVM *jvm)
 {
-        jlong time;
-        jvmtiError res;
-
-        res = (*_jvmti)->GetTime(_jvmti,&time);
-        if (res != JVMTI_ERROR_NONE) fprintf(stderr, "Profiler Agent Error: GetTime failed with %d\n",res);
-        assert(res == JVMTI_ERROR_NONE);
-        return time;
 }
 
-#endif
-
-/*
- * Class:     org_netbeans_lib_profiler_server_system_Timers
- * Method:    getThreadCPUTimeInNanos
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_org_netbeans_lib_profiler_server_system_Timers_getThreadCPUTimeInNanos
-  (JNIEnv *env, jclass clz)
-{   
-	jlong threadTime;
-	jvmtiError res;
-	
-	res = (*_jvmti)->GetCurrentThreadCpuTime(_jvmti,&threadTime);
-	if (res != JVMTI_ERROR_NONE) fprintf(stderr, "Profiler Agent Error: GetCurrentThreadCpuTime failed with %d\n",res);
-	assert(res == JVMTI_ERROR_NONE);
-	return threadTime;
+void 
+md_sleep(unsigned seconds)
+{
+    struct timespec rqtp;
+    rqtp.tv_sec = 0;
+    rqtp.tv_nsec = seconds * 1000000000;
+    nanosleep(&rqtp, NULL);
 }
 
-
-/*
- * Class:     org_netbeans_lib_profiler_server_system_Timers
- * Method:    osSleep
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_org_netbeans_lib_profiler_server_system_Timers_osSleep
-  (JNIEnv *env, jclass clz, jint ns)
+void
+md_enable_microstate_accounting(CVMBool enable)
 {
-    md_sleep(ns/1000000000);
-}
-
-
-/*
- * Class:     org_netbeans_lib_profiler_server_system_Timers
- * Method:    enableMicrostateAccounting
- * Signature: (Z)V
- */
-JNIEXPORT void JNICALL Java_org_netbeans_lib_profiler_server_system_Timers_enableMicrostateAccounting
-  (JNIEnv *env, jclass clz, jboolean enable)
-{
-
-    md_enable_microstate_accounting(enable);
 }

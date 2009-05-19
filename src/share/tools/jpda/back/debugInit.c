@@ -720,6 +720,7 @@ initialize(JNIEnv *env, jthread thread, EventIndex triggering_ei)
         (arg.startCount == 0) && 
         initOnStartup) {
         EXIT_ERROR(map2jvmtiError(arg.error), "No transports initialized");
+        return;
     }
 
     eventHandler_initialize(currentSessionID);
