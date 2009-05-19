@@ -75,7 +75,8 @@ public class NativeVirtualKeyboard {
             throw new IllegalArgumentException();
         }
 
-        if (text != null && maxChars < text.length()) {
+        if (text != null && maxChars < text.length()
+        && 0 == (modes & MODE_DELETE_INITIAL_TEXT)) {
             throw new IllegalArgumentException();
         }
 
