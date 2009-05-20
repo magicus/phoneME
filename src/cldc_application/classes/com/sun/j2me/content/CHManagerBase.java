@@ -33,10 +33,15 @@ import com.sun.midp.events.EventTypes;
 import com.sun.midp.main.MIDletProxy;
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletProxyListListener;
+import com.sun.midp.main.MIDletSuiteUtils;
 
 public class CHManagerBase extends com.sun.midp.content.CHManager 
 							implements MIDletProxyListListener, EventListener {
 
+	public CHManagerBase(){
+		Config.init();
+	}
+	
     /**
      * Setup to monitor for MIDlets starting and exiting and check
      * for incompletely handled Invocation requests.
@@ -47,8 +52,10 @@ public class CHManagerBase extends com.sun.midp.content.CHManager
      * @param eventQueue reference to AMS isolate event queue
      */
     public void init(MIDletProxyList midletProxyList, EventQueue eventQueue) {
-        midletProxyList.addListener(this);
-        eventQueue.registerEventListener(EventTypes.CHAPI_EVENT, this);
+		if( MIDletSuiteUtils.isAmsIsolate() ){
+	        midletProxyList.addListener(this);
+	        eventQueue.registerEventListener(EventTypes.CHAPI_EVENT, this);
+		}
     }
 
     /**
@@ -59,7 +66,7 @@ public class CHManagerBase extends com.sun.midp.content.CHManager
      * @param classname the midlet classname
      */
     public void midletInit(int suiteId, String classname) {
-    	InvocationStore.setCleanup(new CLDCAppID(suiteId, classname), true);
+    	InvocationImpl.store.setCleanupFlag(new CLDCAppID(suiteId, classname), true);
     }
 
     /**
@@ -72,7 +79,7 @@ public class CHManagerBase extends com.sun.midp.content.CHManager
      * @param midlet The proxy of the MIDlet being added
      */
     public void midletAdded(MIDletProxy midlet) {
-    	AppProxy.midletIsAdded( midlet.getSuiteId(), midlet.getClassName() );
+    	CLDCAppProxyAgent.midletIsAdded( midlet.getSuiteId(), midlet.getClassName() );
     }
 
     /**
@@ -93,15 +100,15 @@ public class CHManagerBase extends com.sun.midp.content.CHManager
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println("midletRemoved: " + midlet.getClassName());
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println("midletRemoved: " + midlet.getClassName());
 	
 		// Cleanup unprocessed Invocations
     	CLDCAppID appID = new CLDCAppID(midlet.getSuiteId(), midlet.getClassName());
 		RegistryImpl.cleanup(appID);
-		AppProxy.midletIsRemoved( appID.suiteID, appID.className );
+		CLDCAppProxyAgent.midletIsRemoved( appID.suiteID, appID.className );
 		// Check for and execute a pending MIDlet suite
-		InvocationStoreProxy.invokeNext();
+		AppProxyAgent.invokeNext();
     }
 
     /**
@@ -117,11 +124,11 @@ public class CHManagerBase extends com.sun.midp.content.CHManager
                           int errorCode, String errorDetails) {
 		// Cleanup unprocessed Invocations
     	CLDCAppID appID = new CLDCAppID(suiteId, className);
-    	InvocationStore.setCleanup(appID, true);
+    	InvocationImpl.store.setCleanupFlag(appID, true);
 		RegistryImpl.cleanup(appID);
-		AppProxy.midletIsRemoved( suiteId, className );
+		CLDCAppProxyAgent.midletIsRemoved( suiteId, className );
 		// Check for and execute a pending MIDlet suite
-		InvocationStoreProxy.invokeNext();
+		AppProxyAgent.invokeNext();
     }
 
     /**
@@ -147,6 +154,6 @@ public class CHManagerBase extends com.sun.midp.content.CHManager
      * @param event event to process
      */
     public void process(Event event) {
-        InvocationStoreProxy.invokeNext();
+        AppProxyAgent.invokeNext();
     }
 }

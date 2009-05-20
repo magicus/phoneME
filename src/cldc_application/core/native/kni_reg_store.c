@@ -101,10 +101,7 @@ static void result2string(KNIDECLARGS JSR211_RESULT_BUFFER buffer, jstring str){
             KNI_ThrowNew(jsropOutOfMemoryError, "No memory to create result string!");
         }
 #ifdef TRACE_TRANSFER_DATA
-        printf( "kni_reg_store: data '" );
-        chars = (jchar *)data; 
-        while( length-- ) printf( "%04x", *chars++ );
-        printf( "'\n" );
+        memory__dump( "kni_reg_store: data", data, length * 2 );
 #endif
     }
     jsr211_release_result_buffer(buffer);
@@ -364,7 +361,7 @@ static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassN
             ret = KNI_ENOMEM; break;
         }
 #ifdef TRACE_REGISTER
-    printf( "kni_reg_store.register0(fillHandlerData): {%ls, %ls}", handler->suite_id, handler->class_name );
+    printf( "kni_reg_store.register0(fillHandlerData): {%ls, %ls}\n", handler->suite_id, handler->class_name );
 #endif
 
         // flag
@@ -581,10 +578,10 @@ KNIDECL(com_sun_j2me_content_RegistryStore_forSuite0) {
     KNI_EndHandlesAndReturnObject(strObj);
 }
 
-/**
+/* *
  * java call:
  *  private native String getByURL0(String callerId, String url, String action);
- */
+ * /
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_j2me_content_RegistryStore_getByURL0) {
     jchar* callerId = NULL;
@@ -620,7 +617,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getByURL0) {
 
     KNI_EndHandlesAndReturnObject(resultObj);
 }
-
+*/
 
 /**
  * java call:
@@ -767,7 +764,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_finalize) {
  * private native int launchNativeHandler0(String handlerId);
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_j2me_content_AppProxy_launchNativeHandler0) {
+KNIDECL(com_sun_j2me_content_AppProxyAgent_launchNativeHandler0) {
     jchar* id = NULL;
     jsr211_launch_result result;
 
@@ -793,7 +790,7 @@ KNIDECL(com_sun_j2me_content_AppProxy_launchNativeHandler0) {
  * private native boolean platformFinish0(String handlerId);
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_j2me_content_AppProxy_platformFinish0) {
+KNIDECL(com_sun_j2me_content_AppProxyAgent_platformFinish0) {
     jint tid;
     jsr211_boolean should_exit;
 

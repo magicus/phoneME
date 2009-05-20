@@ -105,11 +105,6 @@ class AppProxy extends CLDCAppID {
     /** The current AppProxy. */
     private static AppProxy currentApp;
 
-    /** The log flag to enable informational messages. */
-    static final Logger LOGGER = null; // new Logger();
-    
-    private static final boolean isInSvmMode = isInSvmMode();
-
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
 
@@ -143,15 +138,6 @@ class AppProxy extends CLDCAppID {
     
     static final int EXTERNAL_SUITE_ID = MIDletSuite.UNUSED_SUITE_ID;
 
-    // native methods
-    static native boolean isInSvmMode();
-    
-    static native void midletIsAdded( int suiteId, String className );
-    static native boolean isMidletRunning( int suiteId, String className );
-    static native void midletIsRemoved( int suiteId, String className );
-    
-    static native boolean isSuiteRunning( int suiteId );
-
     /**
      * Sets the security token used for privileged operations.
      * The token may only be set once.
@@ -172,6 +158,8 @@ class AppProxy extends CLDCAppID {
     /**
      * Gets the AppProxy for the currently running application.
      * @return the current application.
+     * 
+     * REMOTE_AMS_CFG: this method must be called only on 'midlet side'
      */
     static AppProxy getCurrent() {
         synchronized (mutex) {
@@ -227,8 +215,8 @@ class AppProxy extends CLDCAppID {
         this.msuite = msuite;
         new VAGetter().execute();
         this.appmap = appmap;
-        if (LOGGER != null)
-        	LOGGER.println("AppProxy created: " + this);
+        if (Logger.LOGGER != null)
+        	Logger.LOGGER.println("AppProxy created: " + this);
     }
 
 	protected AppProxy verify() throws ClassNotFoundException {
@@ -236,8 +224,8 @@ class AppProxy extends CLDCAppID {
 	        verifyApplication(className);
 	        initAppInfo(new MIDletSuiteUser());
 	        appmap.put(className, this);
-	        if (LOGGER != null)
-	        	LOGGER.println("AppProxy verified: ID " + super.toString() );
+	        if (Logger.LOGGER != null)
+	        	Logger.LOGGER.println("AppProxy verified: ID " + super.toString() );
 		}
         return this;
 	}
@@ -249,15 +237,15 @@ class AppProxy extends CLDCAppID {
      * @param storageId the suiteId
      * @param classname the classname
      */
-    protected AppProxy(int suiteID, String classname)
+    private AppProxy(int suiteID, String classname)
     {
     	super( suiteID, classname );
         msuite = null;
 
 		initAppInfo( new VAGetter() ); 
 
-        if (LOGGER != null) {
-        	LOGGER.println("AppProxy created: " + classname);
+        if (Logger.LOGGER != null) {
+        	Logger.LOGGER.println("AppProxy created: " + classname);
         }
     }
 
@@ -297,34 +285,15 @@ class AppProxy extends CLDCAppID {
      * @exception IllegalArgumentException if classname is not
      *   a valid application
      */
-    AppProxy forApp(ApplicationID appID) throws ClassNotFoundException
+    static AppProxy forApp(ApplicationID appID) throws ClassNotFoundException
     {
         // Check in the current suite
     	CLDCAppID id = CLDCAppID.from(appID);
-        if (id.suiteID == this.suiteID) {
-            return forClass(id.className);
-        }
+        // if (id.suiteID == this.suiteID) return forClass(id.className);
 
         // Create a new instance
         return new AppProxy(id.suiteID, id.className);
     }
-
-//    /**
-//     * Gets the storage ID of this application.
-//     * The ID uniquely identifies the package/application bundle.
-//     * @return the application ID.
-//     */
-//    int getStorageId() {
-//        return storageId;
-//    }
-//
-//    /**
-//     * Gets the classname of this application.
-//     * @return the classname
-//     */
-//    String getClassname() {
-//        return classname;
-//    }
 
     /**
      * Gets the user friendly application name.
@@ -424,81 +393,6 @@ class AppProxy extends CLDCAppID {
             }
         }
     }
-
-    /**
-     * Request the transition of the foreground to this application
-     * from the invoking application.
-     * @param fromApp the invoking application
-     * @param toApp the target application
-     */
-    static void requestForeground(ApplicationID fromApp, ApplicationID toApp)
-    {
-    	if( LOGGER != null ) LOGGER.println(
-    			"requestForeground: " + fromApp + " -> " + toApp);
-    	
-        NativeEvent event =
-            new NativeEvent(EventTypes.FOREGROUND_TRANSFER_EVENT);
-        event.intParam1 = CLDCAppID.from(fromApp).suiteID;
-        event.stringParam1 = CLDCAppID.from(fromApp).className;
-        event.intParam2 = CLDCAppID.from(toApp).suiteID;
-        event.stringParam2 = CLDCAppID.from(toApp).className;
-
-        int amsIsolateId = MIDletSuiteUtils.getAmsIsolateId();
-        EventQueue eventQueue = EventQueue.getEventQueue(classSecurityToken);
-        eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
-    }
-
-    /* *
-     * The stronger variant for request the transition of
-     * the foreground to this application.
-     * @param targetSuiteId the target suiteId
-     * @param targetClassname the target classname
-     * /
-    static void requestForeground(int targetSuiteId,
-                                  String targetClassname)
-    {
-        NativeEvent event =
-            new NativeEvent(EventTypes.SET_FOREGROUND_BY_NAME_REQUEST);
-        event.intParam1 = targetSuiteId;
-        event.stringParam1 = targetClassname;
-
-        int amsIsolateId = MIDletSuiteUtils.getAmsIsolateId();
-        EventQueue eventQueue = EventQueue.getEventQueue(classSecurityToken);
-        eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
-    }
-    /**/
-    
-    /**
-     * Launch this application.
-     * Don't launch another application unless
-     * the execute allows this application to continue after
-     * the launch.
-     * <p>
-     * In SVM, (sequential applications) only the first
-     * execute matters; later ones should not override the
-     * first.  All pending Invocations are queued in InvocationStore
-     * so they will not be lost.  When MIDlets exit, another
-     * application will be selected from those pending.
-     *
-     * @param displayName name to show to the user of what to launch
-     * @return <code>true</code> if the application is started.
-     */
-    boolean launch(String displayName) {
-    	if( isMidletRunning(suiteID, className) )
-        	return true;
-	    if( LOGGER != null ) 
-	    	LOGGER.println("AppProxy.launch(): " + (MIDletSuiteUtils.isAmsIsolate()?"":"NOT ") + "isAmsIsolate()");
-    	if( isInSvmMode && !MIDletSuiteUtils.isAmsIsolate() )
-    		return false;
-    	if( suiteID != MIDletSuite.INTERNAL_SUITE_ID && isSuiteRunning(suiteID) )
-    		return false;
-    	if( LOGGER != null )
-        	LOGGER.println("AppProxy.launch(): send 'launch' request {" + suiteID + ", '" + className + "'}");
-    	// always launch an application in background mode
-        return MIDletSuiteUtils.execute(classSecurityToken,
-        							suiteID, className, displayName);
-    }
-
 
     /**
      * Verify that the classname is a valid application.
@@ -628,52 +522,11 @@ class AppProxy extends CLDCAppID {
     }
 
     /**
-     * Starts native content handler.
-     * @param handler Content handler to be executed.
-     * @return true if invoking app should exit.
-     * @exception ContentHandlerException if no such handler ID in the Registry
-     * or native handlers execution is not supported.
-     */
-    static boolean launchNativeHandler(String handlerID) 
-    										throws ContentHandlerException {
-        int result = launchNativeHandler0(handlerID);
-        if (result < 0) {
-            throw new ContentHandlerException(
-                        "Unable to launch platform handler",
-                        ContentHandlerException.NO_REGISTERED_HANDLER);
-        }
-        return (result > 0);
-    }
-
-    /**
-     * Informs platform about finishing of processing platform's request
-     * @param invoc finished invocation
-     * @return should_exit flag for the invocation handler
-     */
-    static boolean platformFinish(int tid) {
-        return platformFinish0(tid);
-    }
-
-    /**
-     * Starts native content handler.
-     * @param handlerId ID of the handler to be executed
-     * @return result status:
-     * <ul>
-     * <li> 0 - LAUNCH_OK 
-     * <li> > 0 - LAUNCH_OK_SHOULD_EXIT
-     * <li> &lt; 0 - error
-     * </ul>
-     */
-    private static native int launchNativeHandler0(String handlerId);
-
-    private static native boolean platformFinish0(int tid);
-
-    /**
      * Create a printable representation of this AppProxy.
      * @return a printable string
      */
     public String toString() {
-        if (LOGGER != null) {
+        if (Logger.LOGGER != null) {
             return super.toString() +
                 ", registered: " + isRegistered +
                 ", name: " + applicationName +
@@ -687,14 +540,14 @@ class AppProxy extends CLDCAppID {
     	void use( MIDletSuite msuite ){};
     	MIDletSuiteUser execute() {
     		if( msuite != null ){
-                if (LOGGER != null) LOGGER.println("msuite isn't null: " + msuite);
+                if (Logger.LOGGER != null) Logger.LOGGER.println("msuite isn't null: " + msuite);
     			use( msuite );
     		} else if( suiteID != MIDletSuite.INTERNAL_SUITE_ID ){
 	            try {
 	                MIDletSuite suite = MIDletSuiteStorage.
 	                        getMIDletSuiteStorage(classSecurityToken).
 	                        getMIDletSuite(suiteID, false);
-	                if (LOGGER != null) LOGGER.println("use msuite " + suite);
+	                if (Logger.LOGGER != null) Logger.LOGGER.println("use msuite " + suite);
 	                if( suite != null ){
 	                	try {
 	                		use(suite);
@@ -703,16 +556,115 @@ class AppProxy extends CLDCAppID {
 	                	}
 	                }
 	            } catch (MIDletSuiteLockedException msle) {
-	                if (LOGGER != null) {
-	                	LOGGER.log("AppProxy initialization failed", msle);
+	                if (Logger.LOGGER != null) {
+	                	Logger.LOGGER.log("AppProxy initialization failed", msle);
 	                }
 	            } catch (MIDletSuiteCorruptedException msce) {
-	                if (LOGGER != null) {
-	                	LOGGER.log("AppProxy initialization failed", msce);
+	                if (Logger.LOGGER != null) {
+	                	Logger.LOGGER.log("AppProxy initialization failed", msce);
 	                }
 	            }
     		}
 			return this;
     	}
     }
+    
+    private final static AMSGate gate;
+    static {
+    	gate = new CLDCAppProxyAgent();
+        if (Logger.LOGGER != null) {
+        	Logger.LOGGER.println("AppProxy.gate = " + gate);
+        }
+    }
+    
+	public static AMSGate getGateInstance() {
+		return gate;
+	}
+}
+
+class CLDCAppProxyAgent extends AppProxyAgent {
+    /**
+     * Request the transition of the foreground to this application
+     * from the invoking application.
+     * 
+	 * REMOTE_AMS_CFG: this method must be called on 'AMS side'
+	 * 
+     * @param fromApp the invoking application
+     * @param toApp the target application
+     */
+    public void requestForeground(ApplicationID fromApp, ApplicationID toApp)
+    {
+    	if( Logger.LOGGER != null ) Logger.LOGGER.println(
+    			"requestForeground: " + fromApp + " -> " + toApp);
+    	
+        NativeEvent event =
+            new NativeEvent(EventTypes.FOREGROUND_TRANSFER_EVENT);
+        event.intParam1 = CLDCAppID.from(fromApp).suiteID;
+        event.stringParam1 = CLDCAppID.from(fromApp).className;
+        event.intParam2 = CLDCAppID.from(toApp).suiteID;
+        event.stringParam2 = CLDCAppID.from(toApp).className;
+
+        int amsIsolateId = MIDletSuiteUtils.getAmsIsolateId();
+        EventQueue eventQueue = EventQueue.getEventQueue(classSecurityToken);
+        eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
+    }
+
+    /* *
+     * The stronger variant for request the transition of
+     * the foreground to this application.
+     * @param targetSuiteId the target suiteId
+     * @param targetClassname the target classname
+     * /
+    static void requestForeground(int targetSuiteId,
+                                  String targetClassname)
+    {
+        NativeEvent event =
+            new NativeEvent(EventTypes.SET_FOREGROUND_BY_NAME_REQUEST);
+        event.intParam1 = targetSuiteId;
+        event.stringParam1 = targetClassname;
+
+        int amsIsolateId = MIDletSuiteUtils.getAmsIsolateId();
+        EventQueue eventQueue = EventQueue.getEventQueue(classSecurityToken);
+        eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
+    }
+    /**/
+    
+    /**
+     * Launch this application.
+     * Don't launch another application unless
+     * the execute allows this application to continue after
+     * the launch.
+     * <p>
+     * In SVM, (sequential applications) only the first
+     * execute matters; later ones should not override the
+     * first.  All pending Invocations are queued in InvocationStore
+     * so they will not be lost.  When MIDlets exit, another
+     * application will be selected from those pending.
+     * 
+	 * REMOTE_AMS_CFG: this method must be called on 'AMS side'
+     *
+     * @param displayName name to show to the user of what to launch
+     * @return <code>true</code> if the application is started.
+     */
+    static boolean launch(CLDCAppID appID, String displayName) {
+    	if( isMidletRunning(appID.suiteID, appID.className) )
+        	return true;
+	    if( Logger.LOGGER != null ) 
+	    	Logger.LOGGER.println("AppProxy.launch(): " + (MIDletSuiteUtils.isAmsIsolate()?"":"NOT ") + "isAmsIsolate()");
+    	if( isInSvmMode && !MIDletSuiteUtils.isAmsIsolate() )
+    		return false;
+    	if( appID.suiteID != MIDletSuite.INTERNAL_SUITE_ID && isSuiteRunning(appID.suiteID) )
+    		return false;
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println("AppProxy.launch(): send 'launch' request {" + appID.suiteID + ", '" + appID.className + "'}");
+    	// always launch an application in background mode
+        return MIDletSuiteUtils.execute(classSecurityToken,
+        							appID.suiteID, appID.className, displayName);
+    }
+
+    static native void midletIsAdded( int suiteId, String className );
+    static native void midletIsRemoved( int suiteId, String className );
+    
+    static native boolean isMidletRunning( int suiteId, String className );
+    static native boolean isSuiteRunning( int suiteId );
 }

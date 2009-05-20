@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -54,16 +54,13 @@
 #endif
 
 #include <jsrop_kni.h>
+#include <jsrop_suitestore.h>
 #include <sni.h>
 
 #include <pcsl_string.h>
-#include <jsrop_suitestore.h>
 
 #include <midpUtilKni.h>
-#include <midpError.h>
-#include <midp_logging.h>
 #include <midpServices.h>
-#include <midpMalloc.h>
 
 #include <suitestore_common.h>
 #include <jsr211_invoc.h>
@@ -115,9 +112,6 @@ static StoredLink* invocFind(SuiteIdType suiteId,
 static StoredLink* invocFindTid(int tid);
 static int invocNextTid();
 static jboolean modeCheck(StoredInvoc* invoc, int mode);
-static void blockThread();
-static void unblockWaitingThreads(int newStatus);
-static jboolean isThreadCancelled();
 
 #define isEmpty() (invocQueue == NULL)
 
@@ -429,8 +423,9 @@ static jboolean update(StoredInvoc* invoc, jobject invocObj, jobject tmp1, jobje
  * @see StoredInvoc
  * @see #invocQueue
  */
-KNIEXPORT KNI_RETURNTYPE_VOID
+KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_j2me_content_InvocationStore_put0) {
+    jint newTid = 0;
     StoredInvoc* invoc = NULL;
 
     KNI_StartHandles(5);
@@ -448,14 +443,15 @@ KNIDECL(com_sun_j2me_content_InvocationStore_put0) {
         /* Allocate a new zero'ed struct to save the values in */
         invoc = newStoredInvoc();
         if (invoc == NULL) {
-            KNI_ThrowNew(midpOutOfMemoryError, 
+            KNI_ThrowNew(jsropOutOfMemoryError, 
                                 "InvocationStore_put0 no memory for [invoc]");
             break;
         }
 
         /* Assign a new transaction id and set it */
-        invoc->tid = invocNextTid();
-        KNI_SetIntField(invocObj, FID(tid), invoc->tid);
+        newTid = invocNextTid();
+        invoc->tid = newTid;
+        // KNI_SetIntField(invocObj, FID(tid), invoc->tid);
     
         /*
          * Copy all the fields to native
@@ -467,7 +463,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_put0) {
         if (!invocPut(invoc))
             break;
     
-        unblockWaitingThreads(STATUS_OK);
+        unblockWaitingThreads(JSR211_WAIT_OK, 0, JSR211_WAIT_OK);
     
         /* Clear to skip cleanup and throwing exception */
         invoc = NULL;
@@ -476,11 +472,11 @@ KNIDECL(com_sun_j2me_content_InvocationStore_put0) {
     if (invoc != NULL) {
         /* An allocation error occurred; free any remaining */
         invocFree(invoc);
-        KNI_ThrowNew(midpOutOfMemoryError, "invocStore.c allocation failed");
+        KNI_ThrowNew(jsropOutOfMemoryError, "invocStore.c allocation failed");
     }
 
     KNI_EndHandles();
-    KNI_ReturnVoid();
+    KNI_ReturnInt( newTid );
 }
 /**
  * 
@@ -513,14 +509,14 @@ KNIDECL(com_sun_j2me_content_InvocationStore_get0) {
     KNI_DeclareHandle(invocObj);  /* Arg1: Invocation object; non-null */
     KNI_DeclareHandle(classname); /* Arg3: non-null classname */
     int mode = MODE_REQUEST;      /* Arg4: mode for get */
-    jboolean blocking = KNI_FALSE; /* Arg5: true if should block */
+    jint blockID = 0; /* Arg5: 0 if shouldn't block */
 
     /* Argument indices must match Java native method declaration */
 #define getInvokeObjArg 1
 #define getSuiteIdArg 2
 #define getClassnameArg 3
 #define getModeArg 4
-#define getBlockingArg 5
+#define getBlockIDArg 5
 
     StoredLink* match = NULL;
 
@@ -531,11 +527,12 @@ KNIDECL(com_sun_j2me_content_InvocationStore_get0) {
         /* Check if blocked invocation was cancelled. */
         if (isThreadCancelled()) {
             /* blocking is always false to cleanup and exit immediately */
+            // blockID == 0
             break;
         }
     
         /* Get the desired blocking mode. */
-        blocking = KNI_GetParameterAsBoolean(getBlockingArg);
+        blockID = KNI_GetParameterAsInt(getBlockIDArg);
     
         if (!isEmpty()) {
             /* Get the desired type of invocation. */
@@ -544,7 +541,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_get0) {
             KNI_GetParameterAsObject(getClassnameArg, classname);
             if (PCSL_STRING_OK != 
                     midp_jstring_to_pcsl_string(classname, &desiredClassname)) {
-                KNI_ThrowNew(midpOutOfMemoryError, 
+                KNI_ThrowNew(jsropOutOfMemoryError, 
                    "InvocationStore_get0 no memory for [desiredClassname]");
                 break;
             }
@@ -597,7 +594,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_get0) {
             break;
         case 0:
             /* Insufficient memory for strings. */
-            KNI_ThrowNew(midpOutOfMemoryError, "invocStore returning strings");
+            KNI_ThrowNew(jsropOutOfMemoryError, "invocStore returning strings");
             KNI_ReleaseHandle(invocObj);
             break;
         default:
@@ -607,8 +604,8 @@ KNIDECL(com_sun_j2me_content_InvocationStore_get0) {
     } else {
         /* No match found. */
         /* If blocking, setup to block. */
-        if (blocking) {
-            blockThread();
+        if (blockID != 0) {
+            blockThread( JSR211_WAIT_OK, blockID );
             /* Fall into the return to manage handles correctly */
         }
         ret = 0;
@@ -650,7 +647,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_getByTid0) {
                     break;
                 case 0:
                     /* Insufficient memory for strings. */
-                    KNI_ThrowNew(midpOutOfMemoryError, "invocStore returning strings");
+                    KNI_ThrowNew(jsropOutOfMemoryError, "invocStore returning strings");
                     KNI_ReleaseHandle(invocObj);
                     break;
                 default:
@@ -693,13 +690,13 @@ static int copyOut(const StoredInvoc *invoc, int mode,
     KNI_GetObjectField(invocObj, FID(data), obj);
     datalen = KNI_GetArrayLength(obj);
     if (datalen != invoc->dataLen) {
-        /* Data array allocated by Java is not correct size. */
+        /* Data array allocated by Java has not correct size. */
         return -1;
     }
     KNI_GetObjectField(invocObj, FID(arguments), obj);
     arraylen = KNI_GetArrayLength(obj);
     if (arraylen != invoc->argsLen) {
-        /* Args array allocated by Java is not correct size. */
+        /* Args array allocated by Java has not correct size. */
         return -1;
     }
 
@@ -795,13 +792,13 @@ KNIDECL(com_sun_j2me_content_InvocationStore_listen0) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(classname); /* Arg2: non-null classname */
     int mode;                  /* Arg3: requested invocation mode */
-    jboolean blocking = KNI_FALSE; /* Arg4: true if should block */
+    jint blockID = 0; /* Arg4: 0 if shouldn't block */
 
     /* Argument indices must match Java native method declaration */
 #define listenSuiteIdArg 1
 #define listenClassnameArg 2
 #define listenModeArg 3
-#define listenBlockingArg 4
+#define listenBlockIDArg 4
 
     do {/* Block to break out of on exceptions */
         /* Check if blocked invocation was cancelled. */
@@ -811,7 +808,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_listen0) {
         }
     
         /* Get the desired blocking mode. */
-        blocking = KNI_GetParameterAsBoolean(listenBlockingArg);
+        blockID = KNI_GetParameterAsInt(listenBlockIDArg);
     
         if (!isEmpty()) {
             /* Queue is not empty
@@ -821,7 +818,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_listen0) {
             desiredSuiteId = KNI_GetParameterAsInt(listenSuiteIdArg);
             KNI_GetParameterAsObject(listenClassnameArg, classname);
             if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(classname, &desiredClassname)) {
-                KNI_ThrowNew(midpOutOfMemoryError, 
+                KNI_ThrowNew(jsropOutOfMemoryError, 
                     "InvocationStore_listen0 no memory for [desiredClassname]");
                 break;
             }
@@ -838,9 +835,9 @@ KNIDECL(com_sun_j2me_content_InvocationStore_listen0) {
     if (match != NULL) {
         match->invoc->notified = KNI_TRUE;
     } else {
-        if (blocking) {
+        if (blockID != 0) {
             /* No found; block the thread in the VM */
-            blockThread();
+            blockThread( JSR211_WAIT_OK, blockID );
             /* Fall into the return to manage handles correctly */
         }
     }
@@ -859,7 +856,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_listen0) {
  * @param mode one of {@link #MODE_LREQUEST}, {@link #MODE_LRESPONSE}
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_j2me_content_InvocationStore_setListenNotify0) {
+KNIDECL(com_sun_j2me_content_InvocationStore_resetListenNotifiedFlag0) {
     StoredLink* link;
     StoredInvoc* invoc;
     SuiteIdType desiredSuiteId;
@@ -884,7 +881,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_setListenNotify0) {
     
             KNI_GetParameterAsObject(listenClassnameArg, classname);
             if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(classname, &desiredClassname)) {
-                KNI_ThrowNew(midpOutOfMemoryError, 
+                KNI_ThrowNew(jsropOutOfMemoryError, 
                     "InvocationStore_setListenNotify0 no memory for [desiredClassname]");
                 break;
             }
@@ -941,7 +938,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_setListenNotify0) {
  * @see #invocQueue
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_j2me_content_InvocationStore_setCleanup0) {
+KNIDECL(com_sun_j2me_content_InvocationStore_setCleanupFlag0) {
     StoredLink* link;
     StoredInvoc* invoc;
     SuiteIdType desiredSuiteId;
@@ -968,12 +965,12 @@ KNIDECL(com_sun_j2me_content_InvocationStore_setCleanup0) {
         KNI_GetParameterAsObject(markClassnameArg, classname);
         if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(classname, 
                            &desiredClassname)) {
-            KNI_ThrowNew(midpOutOfMemoryError, 
+            KNI_ThrowNew(jsropOutOfMemoryError, 
                 "InvocationStore_setListenCleanup0 no memory for [desiredClassname]");
             break;
         }
 
-        cleanup = KNI_GetParameterAsInt(markCleanup);
+        cleanup = KNI_GetParameterAsBoolean(markCleanup);
 
         /* Inspect the queue of Invocations and pick one that
          * matches the suiteId and classname.
@@ -1001,13 +998,14 @@ KNIDECL(com_sun_j2me_content_InvocationStore_setCleanup0) {
 }
 
 /**
- * Unblocks any thread blocked waiting in get0.
- * ALL threads will be unblocked; higher levels may
- * need to restart function calls.
+ * Unblocks blocked thread.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_j2me_content_InvocationStore_cancel0) {
-    unblockWaitingThreads(STATUS_CANCELLED);
+KNIDECL(com_sun_j2me_content_InvocationStore_unblockWaitingThreads0) {
+    /* Argument indices must match Java native method declaration */
+#define unblockBlockIDArg 1
+    jint blockID = KNI_GetParameterAsInt(unblockBlockIDArg);
+    unblockWaitingThreads(JSR211_WAIT_OK, blockID, JSR211_WAIT_CANCELLED);
     KNI_ReturnVoid();
 }
 
@@ -1049,7 +1047,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_update0) {
     match = invocFindTid(KNI_GetIntField(invocObj, FID(tid)));
     if( match != NULL && match->invoc != NULL ){
         update(match->invoc, invocObj, tmp1, tmp2);
-        unblockWaitingThreads(STATUS_OK);
+        unblockWaitingThreads(JSR211_WAIT_OK, 0, JSR211_WAIT_OK);
     }    
 
 #undef invocArgIdx
@@ -1292,78 +1290,6 @@ static int invocNextTid() {
     if (--prevTid >= UNDEFINED_TID)
         prevTid = UNDEFINED_TID - 1;
     return prevTid;
-}
-
-/**
- * Block this thread until unblocked.
- * Initialize the reentry data needed to unblock this thread later.
- * Only the waitingFor setting is used.
- * The status is set to STATUS_OK.
- * If canceled the status will be set to cancelled.
- */
-static void blockThread() {
-    /* Initialize the re-entry data so later this thread can
-     * be unblocked.
-     */
-    MidpReentryData* p = (MidpReentryData*)(SNI_GetReentryData(NULL));
-    if (p == NULL) {
-        p = (MidpReentryData*)(SNI_AllocateReentryData(sizeof (MidpReentryData)));
-    }
-#ifdef TRACE_BLOCKING
-    printf( "blockThread %p\n", p );
-#endif
-    p->waitingFor = JSR211_SIGNAL;
-    p->status = JSR211_INVOKE_OK;
-    SNI_BlockThread();
-}
-
-/**
- * Check if this blocked thread was cancelled.
- */
-static jboolean isThreadCancelled() {
-    MidpReentryData* p = (MidpReentryData*)(SNI_GetReentryData(NULL));
-    return (p != NULL && p->status == JSR211_INVOKE_CANCELLED);
-}
-
-/**
- * Scan the block thread data for every thread blocked
- * for a JSR211_SIGNAL block type with INVOKE status and unblock it.
- * For now, every blocked thread is awoken; it should 
- * check if the thread is blocked for the requested application,
- * classname.
- *
- * @param the new status of the blocked thread; either
- *  STATUS_CANCELLED or STATUS_OK
- */
-static void unblockWaitingThreads(int newStatus) {
-    int n;
-    int i;
-    JVMSPI_BlockedThreadInfo *blocked_threads = SNI_GetBlockedThreads(&n);
-    const int status_mask = JSR211_INVOKE_OK | JSR211_INVOKE_CANCELLED;
-    int st = newStatus==STATUS_OK ? JSR211_INVOKE_OK: JSR211_INVOKE_CANCELLED;
-
-#ifdef TRACE_BLOCKING
-    printf( "unblockWaitingThreads( %d ). blocked_threads count = %d\n", newStatus, n );
-#endif
-    for (i = 0; i < n; i++) {
-        MidpReentryData *p = (MidpReentryData*)(blocked_threads[i].reentry_data);
-        if (p == NULL) {
-            continue;
-        }
-#ifdef TRACE_BLOCKING
-        printf( "blocked_thread[%d] %p, waitingFor '%x', status '%x'\n", i, p, p->waitingFor, p->status );
-#endif
-        if (p->waitingFor == JSR211_SIGNAL && (p->status | status_mask) != 0) {
-            JVMSPI_ThreadID id = blocked_threads[i].thread_id;
-#ifdef TRACE_BLOCKING
-            printf( "try to unblock. id = %p\n", id );
-#endif
-            if (id != NULL) {
-                p->status = st;
-                SNI_UnblockThread(id);
-            }
-        }
-    }
 }
 
 /**
@@ -1676,7 +1602,7 @@ static void handle_javanotify_chapi_platform_finish(int invoc_id,
         invoc->notified = KNI_FALSE;
 
         /* Unblock any waiting threads so they can retrieve this. */
-        unblockWaitingThreads(STATUS_OK);
+        unblockWaitingThreads(JSR211_WAIT_OK, 0, JSR211_WAIT_OK);
 
     } else {
         jsr211_remove_invocation(invoc);
@@ -1859,7 +1785,7 @@ static void handle_javanotify_chapi_java_invoke(
                     if (!jsr211_enqueue_invocation(invoc))
                         res = JAVACALL_FAIL;
                     
-                    unblockWaitingThreads(STATUS_OK);
+                    unblockWaitingThreads(JSR211_WAIT_OK, 0, JSR211_WAIT_OK);
                     
                     /* IMPL_NOTE: The midlet handler should be launched on
                                   corresponding MIDP event processing */

@@ -27,7 +27,9 @@
 package com.sun.j2me.content;
 
 class Logger {
-	
+    /** The log flag to enable informational messages. */
+    public static final Logger LOGGER = null; // new Logger();
+    
 	static final private java.io.PrintStream out = System.out;
 
     /**

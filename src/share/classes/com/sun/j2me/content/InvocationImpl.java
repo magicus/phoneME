@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,8 @@
 
 package com.sun.j2me.content;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 
 import javax.microedition.content.ContentHandler;
@@ -34,7 +36,6 @@ import javax.microedition.content.Invocation;
 import javax.microedition.content.Registry;
 import javax.microedition.io.Connection;
 import javax.microedition.io.ConnectionNotFoundException;
-
 
 /**
  * Implementation of Invocation class.
@@ -46,6 +47,7 @@ import javax.microedition.io.ConnectionNotFoundException;
 public final class InvocationImpl {
 	
 	public static Tunnel tunnel = null;
+    public static final StoreGate store = Config.getStoreGate();
 	public static final int UNDEFINED_TID = 0;
 	
     /**
@@ -61,7 +63,7 @@ public final class InvocationImpl {
      * The URL of the content; may be <code>null</code>.
      * URLs of up to and including 256 characters in length MUST be
      * supported. A URL with a length of zero is treated as
-     * <code>null</code> and is ignored..
+     * <code>null</code> and is ignored.
      */
     String url;
 
@@ -77,14 +79,8 @@ public final class InvocationImpl {
     /** The array of arguments; may be <code>null</code> */
     String[] arguments;
 
-    /** The length (returned by get0) of the argument array. */
-    int argsLen;
-
     /** The data array; may be <code>null</code>. */
     byte[] data;
-
-    /** The length (returned by get0) needed for the data array. */
-    int dataLen;
 
     /**
      * Set to <code>true</code> if the invoker must be notified of
@@ -102,10 +98,6 @@ public final class InvocationImpl {
     int tid = UNDEFINED_TID;
 
     ApplicationID	destinationApp;
-//    /** The MIDlet suite that should handle this Invocation. */
-//    int suiteId;
-//    /** The classname of the MIDlet to deliver to. */
-//    String classname;
 
     /**
      * The status of the request; one of
@@ -117,6 +109,12 @@ public final class InvocationImpl {
      */
     int status;
 
+    /** The previous invocation, if any. */
+    InvocationImpl previous;
+
+    /** The tid of the previous Invocation, if any. */
+    int previousTid = UNDEFINED_TID;
+
     /** The authority that authenticated this Invocation. */
     String invokingAuthority;
 
@@ -125,19 +123,11 @@ public final class InvocationImpl {
 
     ApplicationID	invokingApp;
     
-//    /** The MIDlet suite of the invoking application. */
-//    int invokingSuiteId;
-//    /** The classname in the invoking MIDlet suite for the response. */
-//    String invokingClassname;
-
     /** The application name of the invoking MIDlet suite. */
     String invokingAppName;
 
-    /** The previous invocation, if any. */
-    InvocationImpl previous;
-
-    /** The tid of the previous Invocation, if any. */
-    int previousTid;
+    /** The length (returned by native functions) of the argument and the data arrays. */
+    int argsLen, dataLen;
 
     /** A zero length array of strings to re-use when needed.  */
     private static final byte[] ZERO_BYTES = new byte[0];
@@ -149,13 +139,13 @@ public final class InvocationImpl {
      * STATUS_DISPOSE defined in invocStore.c.
      */
     static final int DISPOSE = 100;
-
+	
     /**
      * Create a fresh InvocationImpl.
      */
     InvocationImpl() {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + " is created" );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + " is created" );
         status = Invocation.INIT;
         responseRequired = true;
         arguments = ContentHandlerImpl.ZERO_STRINGS;
@@ -175,6 +165,86 @@ public final class InvocationImpl {
         this.invocation = invocation;
     }
 
+	public InvocationImpl(final DataInputStream dataIn) throws IOException {
+		this();
+		class reader {
+			String s() throws IOException {
+				if( !dataIn.readBoolean() ) return null;
+				return dataIn.readUTF();
+			}
+		}
+		reader r = new reader();
+		url = r.s();
+		type = r.s();
+		ID = r.s();
+		action = r.s();
+		if( dataIn.readBoolean() ){
+			arguments = new String[ dataIn.readInt() ];
+			for( int i = 0; i < arguments.length; i++)
+				arguments[ i ] = r.s();
+		}
+		if( dataIn.readBoolean() ){
+			data = new byte[ dataIn.readInt() ];
+			dataIn.read(data);
+		}
+		responseRequired = dataIn.readBoolean();
+		username = r.s();
+		password = r.s();
+		tid = dataIn.readInt();
+		if( dataIn.readBoolean() )
+			destinationApp.read(dataIn);
+		status = dataIn.readInt();
+		invokingAuthority = r.s();
+		invokingID = r.s();
+		if( dataIn.readBoolean() )
+			invokingApp.read(dataIn);
+		invokingAppName = r.s();
+		previousTid = dataIn.readInt();
+        /* previous invocation is accessible only after invoke() and getResponse() 
+        if (previousTid != 0) {
+            previous = store.getByTid(previousTid, false);
+        }*/
+	}
+
+	public void serialize(final DataOutputStream dataOut) throws IOException {
+		class writer {
+			boolean h( Object obj ) throws IOException {
+				dataOut.writeBoolean(obj != null);
+				return obj != null;
+			}
+			void s( String s ) throws IOException {
+				if( h(s) ) dataOut.writeUTF(s);
+			}
+		};
+		writer w = new writer();
+		w.s(url);
+		w.s(type);
+		w.s(ID);
+		w.s(action);
+		if( w.h(arguments) ){
+			dataOut.writeInt(arguments.length);
+			for( int i = 0; i < arguments.length; i++)
+				w.s(arguments[i]);
+		}
+		if( w.h(data) ){
+			dataOut.writeInt(data.length);
+			dataOut.write(data);
+		}
+		dataOut.writeBoolean(responseRequired);
+		w.s(username);
+		w.s(password);
+		dataOut.writeInt(tid);
+		if( w.h(destinationApp) )
+			destinationApp.serialize(dataOut);
+		dataOut.writeInt(status);
+		w.s(invokingAuthority);
+		w.s(invokingID);
+		if( w.h(invokingApp) )
+			invokingApp.serialize(dataOut);
+		w.s(invokingAppName);
+		dataOut.writeInt(previousTid);
+	}
+	
     /**
      * Sets the argument list to a new array of Strings.  The arguments
      * are used by the application to communicate to the content
@@ -215,8 +285,8 @@ public final class InvocationImpl {
      * @see #getData
      */
     public void setData(byte[] data) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".setData " + data );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".setData " + data );
         this.data = (data == null) ? ZERO_BYTES : data;
     }
 
@@ -250,8 +320,8 @@ public final class InvocationImpl {
      * @see #getURL
      */
     public void setURL(String url) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".setURL " + url );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".setURL " + url );
         this.url = url;
     }
 
@@ -272,8 +342,8 @@ public final class InvocationImpl {
      * @see #getType
      */
     public void setType(String type) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".setType " + type );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".setType " + type );
         this.type = type;
     }
 
@@ -294,8 +364,8 @@ public final class InvocationImpl {
      * @see #getAction
      */
     public void setAction(String action) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".setAction " + action );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".setAction " + action );
         this.action = action;
     }
 
@@ -330,8 +400,8 @@ public final class InvocationImpl {
      * @see #getResponseRequired
      */
     public void setResponseRequired(boolean responseRequired) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".setResponseRequired " + responseRequired );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".setResponseRequired " + responseRequired );
         if (getStatus() != Invocation.INIT) {
             throw new IllegalStateException();
         }
@@ -355,8 +425,8 @@ public final class InvocationImpl {
      * @see #getID
      */
     public void setID(String ID) {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".setID " + ID );
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".setID " + ID );
         this.ID = ID;
     }
 
@@ -426,8 +496,8 @@ public final class InvocationImpl {
     boolean invoke(InvocationImpl previous, ContentHandlerImpl handler)
         				throws IllegalArgumentException, IOException
     {
-    	if( AppProxy.LOGGER != null )
-    		AppProxy.LOGGER.println( getClass().getName() + ".invoke prev = " + 
+    	if( Logger.LOGGER != null )
+    		Logger.LOGGER.println( getClass().getName() + ".invoke prev = " + 
     				previous + ", handler = '" + handler + "'" );
         /*
          * Check all of the arguments for validity.
@@ -449,7 +519,7 @@ public final class InvocationImpl {
         destinationApp = handler.applicationID.duplicate();
 
         // Queue this Invocation
-        InvocationStore.put(this);
+        tid = store.put(this);
         setStatus(Invocation.WAITING);
         
         // Set the status of the previous invocation
@@ -457,8 +527,8 @@ public final class InvocationImpl {
             previous.setStatus(Invocation.HOLD);
         }
         
-        return InvocationStoreProxy.launchInvocationTarget( this ) == 
-        					InvocationStoreProxy.LIT_MIDLET_START_FAILED;
+        return AMSGate.inst.launchInvocationTarget( this ) == 
+        						AppProxyAgent.LIT_APP_START_FAILED;
     }
 
 	/**
@@ -476,8 +546,8 @@ public final class InvocationImpl {
      *    is not <code>OK</code> or <code>CANCELLED</code>
      */
     boolean finish(int status) {
-    	if( AppProxy.LOGGER != null ){
-    		AppProxy.LOGGER.println( "finish( " + status + "), Invocation " + this);
+    	if( Logger.LOGGER != null ){
+    		Logger.LOGGER.println( "finish( " + status + "), Invocation " + this);
     	}
         switch( status ){
         	case Invocation.OK:
@@ -491,12 +561,8 @@ public final class InvocationImpl {
         setStatus(status);
 
         if (getResponseRequired()) {
-            if (destinationApp.isNative()) {
-            	// 'native to java' invocation is finished
-                return AppProxy.platformFinish(tid);
-            }
-            return InvocationStoreProxy.launchInvocationTarget( this ) == 
-						InvocationStoreProxy.LIT_MIDLET_START_FAILED;
+            return AMSGate.inst.launchInvocationTarget( this ) == 
+						AppProxyAgent.LIT_APP_START_FAILED;
         }
         return false;
     }
@@ -582,7 +648,7 @@ public final class InvocationImpl {
                  */
                 if (!responseRequired){
                 	if( tid != UNDEFINED_TID ){
-	                	InvocationStore.dispose(tid);
+                		store.dispose(tid);
 	                	tid = UNDEFINED_TID;
                 	}
                 	return;
@@ -593,12 +659,12 @@ public final class InvocationImpl {
                 invokingApp = destinationApp;
                 destinationApp = tmpApp;
 
-                InvocationStore.update(this);
+                store.update(this);
                 /* Unmark the response it is "new" to the target */
-                InvocationStore.resetFlags(tid);
+                store.resetFlags(tid);
         		break;
         	default:
-                InvocationStore.update(this);
+        		store.update(this);
         		break;
         }
     }
@@ -749,7 +815,7 @@ public final class InvocationImpl {
      * @return a String containing a printable form
      */
     public String toString() {
-        if (AppProxy.LOGGER != null) {
+        if (Logger.LOGGER != null) {
             StringBuffer sb = new StringBuffer(200);
             
             sb.append("tid: "); sb.append(tid);
@@ -781,5 +847,17 @@ public final class InvocationImpl {
 		if( invocation == null )
 			invocation = tunnel.newInvocation(this);
 	    return invocation;
+	}
+}
+
+class ThreadEx extends Thread {
+	public final int blockID = InvocationImpl.store.allocateBlockID();
+	
+	public ThreadEx( Runnable r ){
+		super(r);
+	}
+	
+	void unblock(){
+		InvocationImpl.store.unblockWaitingThreads( blockID );
 	}
 }

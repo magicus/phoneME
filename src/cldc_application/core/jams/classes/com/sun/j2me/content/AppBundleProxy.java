@@ -72,8 +72,8 @@ class AppBundleProxy extends AppProxy {
         this.state = state;
         this.authority = authority;
         
-        if (LOGGER != null)
-            LOGGER.println("AppBundleProxy created: installer = " + this.installer + 
+        if (Logger.LOGGER != null)
+        	Logger.LOGGER.println("AppBundleProxy created: installer = " + this.installer + 
             		", state = " + this.state + "\n\tauthority = '" + this.authority + "'");
     }
 
@@ -97,13 +97,8 @@ class AppBundleProxy extends AppProxy {
 		        // Create a new instance and check if it is a valid app
 		        curr = new AppBundleProxy(installer, state,
 		                         msuite, classname, authority, appmap).verify();
-// moved into constructor		        
-//		        // Throws ClassNotFoundException or IllegalArgumentException
-//		        curr.verifyApplication(classname);
-//		        curr.initAppInfo( msuite );
-//		        appmap.put(classname, curr);
-		        if (LOGGER != null)
-		            LOGGER.println("AppBundleProxy for class '" + classname + "' created: " + curr);
+		        if (Logger.LOGGER != null)
+		        	Logger.LOGGER.println("AppBundleProxy for class '" + classname + "' created: " + curr);
 	        }
 	    }
 	    return curr;
@@ -121,8 +116,8 @@ class AppBundleProxy extends AppProxy {
     protected void verifyApplication(String classname)
     							throws ClassNotFoundException
     {
-    	if(AppProxy.LOGGER != null) 
-    		AppProxy.LOGGER.println("AppBundleProxy.verifyApplication: installer = " + 
+    	if(Logger.LOGGER != null) 
+    		Logger.LOGGER.println("AppBundleProxy.verifyApplication: installer = " + 
     				installer );
 	    try {
 	        installer.verifyMIDlet(classname);

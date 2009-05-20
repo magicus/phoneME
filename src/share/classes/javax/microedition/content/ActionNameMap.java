@@ -85,20 +85,20 @@ public final class ActionNameMap {
 			 String[] actionnames,
 			 String locale)
     {
-	if (locale.length() == 0) {	// trigger NullPointerException
-	    throw new IllegalArgumentException("empty string");
-	}
-	if (actions.length != actionnames.length ||
-	    actions.length == 0) {
-	    throw new IllegalArgumentException("lengths incorrect");
-	}
-
-	this.locale = locale;
-	this.actions = ContentHandlerRegData.copy(actions,false,false);
-	this.actionnames = ContentHandlerRegData.copy(actionnames,false,false);
-	if (findDuplicate(this.actions) >= 0) {
-	    throw new IllegalArgumentException("duplicate string");
-	}        
+		if (locale.length() == 0) {	// trigger NullPointerException
+		    throw new IllegalArgumentException("empty string");
+		}
+		if (actions.length != actionnames.length ||
+		    actions.length == 0) {
+		    throw new IllegalArgumentException("lengths incorrect");
+		}
+	
+		this.locale = locale;
+		this.actions = ContentHandlerRegData.copy(actions,false,false);
+		this.actionnames = ContentHandlerRegData.copy(actionnames,false,false);
+		if (findDuplicate(this.actions) >= 0) {
+		    throw new IllegalArgumentException("duplicate string");
+		}        
     }
 
     /**
@@ -111,8 +111,8 @@ public final class ActionNameMap {
      * @exception NullPointerException if action is <code>null</code>
      */
     public String getActionName(String action) {
-	int index = find(actions, action);
-	return (index >= 0) ? actionnames[index] : null;
+		int index = find(actions, action);
+		return (index >= 0) ? actionnames[index] : null;
     }
 
     /**
@@ -128,8 +128,8 @@ public final class ActionNameMap {
      * @exception NullPointerException if actionname is <code>null</code>
      */
     public String getAction(String actionname) {
-	int index = find(actionnames, actionname);
-	return (index >= 0) ? actions[index] : null;
+		int index = find(actionnames, actionname);
+		return (index >= 0) ? actions[index] : null;
     }
 
     /**
@@ -137,7 +137,7 @@ public final class ActionNameMap {
      * @return the locale string; must not be <code>null</code>
      */
     public String getLocale() {
-	return locale;
+		return locale;
     }
 
     /**
@@ -145,7 +145,7 @@ public final class ActionNameMap {
      * @return the number of actions and corresponding action names
      */ 
     public int size() {
-	return actions.length;
+		return actions.length;
     }
 
     /**
@@ -157,7 +157,7 @@ public final class ActionNameMap {
      *     greater than or equal to the value of the {@link #size size} method.
      */
     public String getAction(int index) {
-	return actions[index];
+		return actions[index];
     }
 
 
@@ -170,7 +170,7 @@ public final class ActionNameMap {
      *     greater than or equal to the value of the {@link #size size} method.
      */
     public String getActionName(int index) {
-	return actionnames[index];
+		return actionnames[index];
     }
     /**
      * Search a String for a string.
@@ -180,12 +180,12 @@ public final class ActionNameMap {
      * @exception NullPointerException if string is <code>null</code>
      */
     private int find(String[] strings, String string) {
-	for (int i = 0; i < strings.length; i++) {
-	    if (string.equals(strings[i])) {
-		return i;
-	    }
-	}
-	return -1;
+		for (int i = 0; i < strings.length; i++) {
+		    if (string.equals(strings[i])) {
+				return i;
+		    }
+		}
+		return -1;
     }
 
     /**
@@ -196,13 +196,13 @@ public final class ActionNameMap {
      * 
      */
     private int findDuplicate(String[] strings) {
-	for (int i = 0; i < strings.length; i++) {
-	    for (int j = i + 1; j < strings.length; j++) {
-		if (strings[i].equals(strings[j])) {
-		    return j;
+		for (int i = 0; i < strings.length; i++) {
+		    for (int j = i + 1; j < strings.length; j++) {
+				if (strings[i].equals(strings[j])) {
+				    return j;
+				}
+		    }
 		}
-	    }
-	}
-	return -1;
+		return -1;
     }
 }

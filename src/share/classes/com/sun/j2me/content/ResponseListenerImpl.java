@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -32,8 +32,7 @@ import javax.microedition.content.ResponseListener;
  * Thread to monitor pending invocations and notify a listener
  * when a matching one is present.
  */
-class ResponseListenerImpl implements Runnable, Counter {
-
+class ResponseListenerImpl implements Runnable {
     /** ContenHandlerServer for which this is listening. */
     private final RegistryImpl registry;
 
@@ -41,9 +40,7 @@ class ResponseListenerImpl implements Runnable, Counter {
     private ResponseListener listener;
 
     /** The active thread processing the run method. */
-    private Thread thread;
-    
-    private int stopFlag = 0;
+    private ThreadEx listenerThread;
 
     /**
      * Create a new listener for pending invocations.
@@ -70,23 +67,21 @@ class ResponseListenerImpl implements Runnable, Counter {
 	
 		if (listener != null) {
 		    // Ensure a thread is running to watch for it
-		    if (thread == null || !thread.isAlive()) {
-				thread = new Thread(this);
-				thread.start();
+		    if (listenerThread == null || !listenerThread.isAlive()) {
+				listenerThread = new ThreadEx(this);
+				listenerThread.start();
 		    }
 		} else {
 		    // Forget the thread doing the listening; it will exit
-		    thread = null;
+			ThreadEx t = listenerThread;
+		    listenerThread = null;
+			if( t != null && t.isAlive() ) t.unblock();
 		}
 	
 		/*
 		 * Reset notified flags on pending responses.
-		 * Unblock any threads waiting to notify current listeners
 		 */
-		InvocationStore.setListenNotify(registry.application, false);
-		// stop listening thread
-		stopFlag++;
-		InvocationStore.cancel();
+		InvocationImpl.store.resetListenNotifiedFlag(registry.application, false);
     }
 
     /**
@@ -97,21 +92,18 @@ class ResponseListenerImpl implements Runnable, Counter {
      */
     public void run() {
 		Thread mythread = Thread.currentThread();
-		while (mythread == thread) {
+		while (mythread == listenerThread) {
 		    // Remember the listener to notify to avoid a race condition
 		    ResponseListener l = listener;
 		    if (l != null) {
 				// Wait for a matching invocation
 				boolean pending =
-				    InvocationStore.listen(registry.application, false, true, this);
+					InvocationImpl.store.waitForEvent(registry.application, false, 
+												listenerThread.blockID);
 				if (pending) {
 				    l.invocationResponseNotify(registry.getRegistry());
 				}
 		    }
 		}
     }
-
-	public int getCounter() {
-		return stopFlag;
-	}
 }

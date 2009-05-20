@@ -38,7 +38,7 @@
 //---------------------------------------------------------
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_j2me_content_AppProxy_isInSvmMode) {
+KNIDECL(com_sun_j2me_content_AppProxyAgent_isInSvmMode) {
     int res;
 #if ENABLE_MULTIPLE_ISOLATES
     res = JAVACALL_FALSE;
@@ -90,7 +90,7 @@ static MidletIdChain ** findMidletIdChain( SuiteIdType suiteId, javacall_utf16_s
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_j2me_content_AppProxy_midletIsAdded) {
+KNIDECL(com_sun_j2me_content_CLDCAppProxyAgent_midletIsAdded) {
     SuiteIdType suiteId;
     KNI_StartHandles(1);
 
@@ -120,7 +120,7 @@ KNIDECL(com_sun_j2me_content_AppProxy_midletIsAdded) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_j2me_content_AppProxy_midletIsRemoved) {
+KNIDECL(com_sun_j2me_content_CLDCAppProxyAgent_midletIsRemoved) {
     SuiteIdType suiteId;
     KNI_StartHandles(1);
 
@@ -145,7 +145,7 @@ KNIDECL(com_sun_j2me_content_AppProxy_midletIsRemoved) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_j2me_content_AppProxy_isMidletRunning) {
+KNIDECL(com_sun_j2me_content_CLDCAppProxyAgent_isMidletRunning) {
     int res = 0;
     SuiteIdType suiteId;
     KNI_StartHandles(1);
@@ -165,7 +165,7 @@ KNIDECL(com_sun_j2me_content_AppProxy_isMidletRunning) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_j2me_content_AppProxy_isSuiteRunning) {
+KNIDECL(com_sun_j2me_content_CLDCAppProxyAgent_isSuiteRunning) {
     int res = 0;
     SuiteIdType suiteId = KNI_GetParameterAsInt(1);
     MidletIdChain * p = runningMidletsChain;

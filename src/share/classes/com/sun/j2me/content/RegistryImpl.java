@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -36,10 +36,7 @@ import javax.microedition.content.Invocation;
 import javax.microedition.content.Registry;
 import javax.microedition.content.ResponseListener;
 
-import com.sun.j2me.content.ContentHandlerImpl.Handle;
 import com.sun.j2me.security.Token;
-import com.sun.j2me.security.TrustedClass;
-import com.sun.jsr211.security.SecurityInitializer;
 
 /**
  * Implementation of Content Handler registry.  It maintains
@@ -48,23 +45,10 @@ import com.sun.jsr211.security.SecurityInitializer;
  * The RegistryImpl class maintains an array of the current
  * registrations that is initialized on first use.
  */
-public final class RegistryImpl implements Counter {
+public final class RegistryImpl {
 	
-    /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
-     */
-    static private class SecurityTrusted implements TrustedClass {};
-
-    /** This class has a different security domain than the App suite */
-    private static Token securityToken;
-    
-    static {
-    	securityToken =
-        	SecurityInitializer.requestToken(new SecurityTrusted());
-	    RegistryStore.setSecurityToken(securityToken);
-    }
-    
+	static public final RegistryGate gate = Config.getRegistryGate();
+	
     /** The set of active Invocations. */
     private /*static*/ final Hashtable activeInvocations = new Hashtable();
 
@@ -86,7 +70,7 @@ public final class RegistryImpl implements Counter {
     /** The AppProxy for this registry. */
     final AppProxy application;
     
-    int cancelCounter = 0;
+    private int currentBlockID;
 
     /** Count of responses received. */
     int responseCalls;
@@ -164,13 +148,13 @@ public final class RegistryImpl implements Counter {
      * @exception NullPointerException if <code>classname</code> is
      *       <code>null</code>
      */
-    static RegistryImpl getRegistryImpl(AppProxy appl) throws ContentHandlerException
+    private static RegistryImpl getRegistryImpl(AppProxy appl) throws ContentHandlerException
     {
         // Synchronize between competing operations
         RegistryImpl curr = null;
         synchronized (mutex) {
-        	if( AppProxy.LOGGER != null )
-        		AppProxy.LOGGER.println( 
+        	if( Logger.LOGGER != null )
+        		Logger.LOGGER.println( 
         				"RegistryImpl.getRegistryImpl( '" + appl + "' )");
             // Check if class already has a RegistryImpl
             curr = (RegistryImpl)registries.get(appl);
@@ -188,12 +172,12 @@ public final class RegistryImpl implements Counter {
             // Create a new instance and insert it into the list
             curr = new RegistryImpl(appl);
             registries.put(appl, curr);
-            if( AppProxy.LOGGER != null ){
-            	AppProxy.LOGGER.println( "registers:" );
+            if( Logger.LOGGER != null ){
+            	Logger.LOGGER.println( "registries:" );
             	java.util.Enumeration e = registries.keys();
             	while( e.hasMoreElements() ){
             		Object key = e.nextElement();
-            		AppProxy.LOGGER.println( "\t" + key + " " + registries.get(key) );
+            		Logger.LOGGER.println( "\t" + key + " " + registries.get(key) );
             	}
             }
         }
@@ -203,7 +187,7 @@ public final class RegistryImpl implements Counter {
          * Mark any existing Invocations so that at cleanup the pre-existing
          * Invocations can be handled properly.
          */
-        InvocationStore.setCleanup(curr.application, true);
+        InvocationImpl.store.setCleanupFlag(curr.application, true);
         return curr;
     }
 
@@ -224,9 +208,12 @@ public final class RegistryImpl implements Counter {
     private RegistryImpl(AppProxy app) throws ContentHandlerException
     {
         application = app;
+    	currentBlockID = InvocationImpl.store.allocateBlockID();
 
         /* Remember the ContentHandlerImpl, if there is one. */
         handlerImpl = getServer(application);
+        if( Logger.LOGGER != null )
+        	Logger.LOGGER.println("RegistryImpl(): handlerImpl = " + handlerImpl);
 
         if (handlerImpl == null && !application.isRegistered()) {
             // Classname is not a registered MIDlet or ContentHandler; fail
@@ -294,7 +281,7 @@ public final class RegistryImpl implements Counter {
      */
     static void cleanup(ApplicationID appID) {
         InvocationImpl invoc = null;
-        while ((invoc = InvocationStore.getCleanup(appID)) != null) {
+        while ((invoc = InvocationImpl.store.getCleanup(appID)) != null) {
             invoc.setStatus(Invocation.ERROR);
         }
     }
@@ -392,8 +379,8 @@ public final class RegistryImpl implements Counter {
         throws SecurityException, IllegalArgumentException,
                ClassNotFoundException, ContentHandlerException
     {
-        if(AppProxy.LOGGER != null){
-			AppProxy.LOGGER.println( getClass().getName() + ".register '" + classname + "'" );
+        if(Logger.LOGGER != null){
+			Logger.LOGGER.println( getClass().getName() + ".register '" + classname + "'" );
         }
         
         application.checkRegisterPermission("register");
@@ -420,16 +407,16 @@ public final class RegistryImpl implements Counter {
             if (conflict != null) {
                 unregister(classname);
             }
+            ContentHandlerImpl.Data data = gate.register(appl, handlerData);
+            // data must not be null
+            ContentHandlerImpl result = new ContentHandlerHandle( data ).get();
+            setServer(result);
 
-            ContentHandlerImpl.Handle handle = 
-            	RegistryStore.register(appl, handlerData);
-            setServer(handle.get());
-
-            if (AppProxy.LOGGER != null) {
-            	AppProxy.LOGGER.println("Register: " + classname + ", id: " + id);
+            if (Logger.LOGGER != null) {
+            	Logger.LOGGER.println("Register: " + classname + ", id: " + id);
             }
 
-            return handle.get();
+            return result;
         }
     }
 
@@ -446,6 +433,8 @@ public final class RegistryImpl implements Counter {
             RegistryImpl impl = (RegistryImpl)registries.get(server.applicationID);
             if (impl != null) {
                 impl.handlerImpl = server;
+                if( Logger.LOGGER != null )
+                	Logger.LOGGER.println(impl + ".setServer: handlerImpl = " + impl.handlerImpl);
             }
         }
     }
@@ -458,8 +447,11 @@ public final class RegistryImpl implements Counter {
      *
      * @return found handler or <code>null</code> if none found.
      */
-    static ContentHandlerImpl getHandler(AppProxy appl) {
-        return RegistryStore.getHandler(appl);
+    static ContentHandlerImpl getHandler(ApplicationID appl) {
+    	ContentHandlerImpl.Data data = gate.getHandler(appl);
+    	if( data == null )
+    		return null;
+        return new ContentHandlerHandle( data ).get();
     }
     
     /**
@@ -472,10 +464,10 @@ public final class RegistryImpl implements Counter {
      * @return a ContentHandlerImpl within the suite that
      *  need to be removed to register the new ContentHandler
      */
-    static ContentHandlerImpl checkConflicts(String handlerID, AppProxy appl)
+    static ContentHandlerImpl checkConflicts(String handlerID, ApplicationID appl)
                 throws ContentHandlerException
     {
-        ContentHandlerImpl[] handlers = RegistryStore.findConflicted(handlerID);
+        ContentHandlerImpl[] handlers = gate.findConflicted(handlerID);
         ContentHandlerImpl existing = null;
 
         if (handlers != null) {
@@ -513,7 +505,7 @@ public final class RegistryImpl implements Counter {
      * @return an array of types; MUST NOT be <code>null</code>
      */
     public String[] getTypes() {
-        return RegistryStore.getValues(getID(), Handle.FIELD_TYPES);
+        return gate.getValues(getID(), RegistryGate.FIELD_TYPES);
     }
 
     /**
@@ -525,7 +517,7 @@ public final class RegistryImpl implements Counter {
      *  MUST NOT be <code>null</code>
      */
     public String[] getIDs() {
-        return RegistryStore.getValues(getID(), Handle.FIELD_ID);
+        return gate.getValues(getID(), RegistryGate.FIELD_ID);
     }
 
     /**
@@ -539,7 +531,7 @@ public final class RegistryImpl implements Counter {
      *  MUST NOT be <code>null</code>
      */
     public String[] getActions() {
-        return RegistryStore.getValues(getID(), Handle.FIELD_ACTIONS);
+        return gate.getValues(getID(), RegistryGate.FIELD_ACTIONS);
     }
 
     /**
@@ -553,7 +545,7 @@ public final class RegistryImpl implements Counter {
      *  MUST NOT be <code>null</code>
      */
     public String[] getSuffixes() {
-        return RegistryStore.getValues(getID(), Handle.FIELD_SUFFIXES);
+        return gate.getValues(getID(), RegistryGate.FIELD_SUFFIXES);
     }
 
     /**
@@ -571,15 +563,17 @@ public final class RegistryImpl implements Counter {
     public boolean unregister(String classname) {
     	classname.length(); // NullPointer check
 
-    	if(AppProxy.LOGGER != null)
-    		AppProxy.LOGGER.println( "unregister '" + classname + "'" );
+    	if(Logger.LOGGER != null){
+    		Logger.LOGGER.println( this + ".unregister '" + classname + "'" );
+    		//new Exception("call stack").printStackTrace();
+    	}
     	try {
     		AppProxy appl = application.forClass(classname);
 	        synchronized (mutex) {
 	            RegistryImpl reg = (RegistryImpl)registries.get(appl);
 	            ContentHandlerImpl curr = (reg != null)? reg.getServer() : getHandler(appl);
 	            if (curr != null) {
-	                RegistryStore.unregister(curr.getID());
+	            	gate.unregister(curr.getID());
 	                if (reg != null && appl.equals(curr.applicationID)) {
 	                    reg.handlerImpl = null;
 	                }
@@ -590,8 +584,8 @@ public final class RegistryImpl implements Counter {
 	    } catch (ClassNotFoundException e) {
 	    }
 
-    	if(AppProxy.LOGGER != null)
-    		AppProxy.LOGGER.println( "unregister() failed." );
+    	if(Logger.LOGGER != null)
+    		Logger.LOGGER.println( "unregister() failed." );
         return false;
     }
 
@@ -807,13 +801,13 @@ public final class RegistryImpl implements Counter {
     {
         // Application has tried to get a response; reset cleanup flags on all
         if (responseCalls == 0) {
-            InvocationStore.setCleanup(application, false);
+        	InvocationImpl.store.setCleanupFlag(application, false);
         }
         responseCalls++;
 
         // Find a response for this application and context
         InvocationImpl invoc =
-            InvocationStore.getResponse(application, wait, this);
+        	InvocationImpl.store.getResponse(application, wait? currentBlockID : 0);
         if (invoc != null) {
             // Keep track of how many responses have been received;
         	final ApplicationID fromApp = invoc.invokingApp; 
@@ -845,7 +839,7 @@ public final class RegistryImpl implements Counter {
                      * There will be a previous Invocation unless the app has
                      * already finished it. It will have a HOLD status.
                      */
-                    invoc.previous = InvocationStore.getByTid(invoc.previousTid, false);
+                    invoc.previous = InvocationImpl.store.getByTid(invoc.previousTid, false);
                 }
             }
             if (invoc.previous != null && invoc.previous.getStatus() == Invocation.HOLD) {
@@ -855,7 +849,7 @@ public final class RegistryImpl implements Counter {
             }
 
             // Make an attempt to gain the foreground
-        	AppProxy.requestForeground(fromApp, toApp);
+            AMSGate.inst.requestForeground(fromApp, toApp);
 
             return invoc.wrap();
         }
@@ -871,8 +865,8 @@ public final class RegistryImpl implements Counter {
      * If no Thread is blocked; this call has no effect.
      */
     public void cancelGetResponse() {
-    	cancelCounter++;
-        InvocationStore.cancel();
+		InvocationImpl.store.unblockWaitingThreads(currentBlockID);
+    	currentBlockID = InvocationImpl.store.allocateBlockID();
     }
 
     /**
@@ -1006,20 +1000,20 @@ public final class RegistryImpl implements Counter {
                 }
                 if (invoc.getType() != null) {
                     // The type is known; lookup the handlers
-                	RegistryStore.enumHandlers( getID(), 
-                			ContentHandlerImpl.Handle.FIELD_TYPES, invoc.getType(), 
+                	gate.enumHandlers( getID(), 
+                			RegistryGate.FIELD_TYPES, invoc.getType(), 
                 			output );
                 } else if (invoc.getURL() != null) {
                 	int lpIdx = invoc.getURL().lastIndexOf('.');
                 	if( lpIdx != -1 ){
 	                	String suffix = invoc.getURL().substring(lpIdx);
-	                	RegistryStore.enumHandlers( getID(), 
-	                			ContentHandlerImpl.Handle.FIELD_SUFFIXES, suffix, 
+	                	gate.enumHandlers( getID(), 
+	                			RegistryGate.FIELD_SUFFIXES, suffix, 
 	                			output );
                 	}
                 } else if (invoc.getAction() != null) {
-                	RegistryStore.enumHandlers( getID(), 
-                			ContentHandlerImpl.Handle.FIELD_ACTIONS, invoc.getAction(), 
+                	gate.enumHandlers( getID(), 
+                			RegistryGate.FIELD_ACTIONS, invoc.getAction(), 
                 			collection /* skip action filter here */ );
                 } else {
                     throw new IllegalArgumentException(
@@ -1051,7 +1045,7 @@ public final class RegistryImpl implements Counter {
      *       <code>null</code>
      */
     public ContentHandler[] forType(String type) {
-        return RegistryStore.findHandler(getID(), Handle.FIELD_TYPES, type);
+        return gate.findHandler(getID(), RegistryGate.FIELD_TYPES, type);
     }
 
     /**
@@ -1069,7 +1063,7 @@ public final class RegistryImpl implements Counter {
      *       <code>null</code>
      */
     public ContentHandler[] forAction(String action) {
-        return RegistryStore.findHandler(getID(), Handle.FIELD_ACTIONS, action);
+        return gate.findHandler(getID(), RegistryGate.FIELD_ACTIONS, action);
     }
 
     /**
@@ -1089,7 +1083,7 @@ public final class RegistryImpl implements Counter {
      *       <code>null</code>
      */
     public ContentHandler[] forSuffix(String suffix) {
-        return RegistryStore.findHandler(getID(), Handle.FIELD_SUFFIXES, suffix);
+        return gate.findHandler(getID(), RegistryGate.FIELD_SUFFIXES, suffix);
     }
 
     /**
@@ -1113,8 +1107,12 @@ public final class RegistryImpl implements Counter {
      *       <code>null</code>
      */
     public ContentHandler forID(String ID, boolean exact) {
-        return RegistryStore.getHandler(getID(), ID, 
-                exact? RegistryStore.SEARCH_EXACT: RegistryStore.SEARCH_PREFIX);
+    	ContentHandlerImpl.Data data = 
+    		gate.findHandler(getID(), ID, 
+    				exact? RegistryGate.SEARCH_EXACT: RegistryGate.SEARCH_PREFIX);
+    	if( data != null )
+    		return new ContentHandlerHandle( data ).get();
+    	return null;
     }
 
     /**
@@ -1177,8 +1175,8 @@ public final class RegistryImpl implements Counter {
      */
     private void insertActive(InvocationImpl invoc) {
         Integer tid = new Integer(invoc.tid);
-        if( AppProxy.LOGGER != null )
-        	AppProxy.LOGGER.println(getClass().getName() + ".insertActive(" + tid + ")");
+        if( Logger.LOGGER != null )
+        	Logger.LOGGER.println(getClass().getName() + ".insertActive(" + tid + ")");
         activeInvocations.put(tid, invoc);
     }
 
@@ -1190,13 +1188,8 @@ public final class RegistryImpl implements Counter {
     private InvocationImpl removeActive(InvocationImpl invoc) {
         Integer tid = new Integer(invoc.tid);
         InvocationImpl result = (InvocationImpl)activeInvocations.remove(tid); 
-        if( AppProxy.LOGGER != null )
-        	AppProxy.LOGGER.println(getClass().getName() + ".removeActive(" + tid + ") = " + result );
+        if( Logger.LOGGER != null )
+        	Logger.LOGGER.println(getClass().getName() + ".removeActive(" + tid + ") = " + result );
         return result;
     }
-
-	public int getCounter() {
-		return cancelCounter;
-	}
-
 }

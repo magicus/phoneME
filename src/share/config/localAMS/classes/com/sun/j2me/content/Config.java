@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -26,13 +26,20 @@
 
 package com.sun.j2me.content;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+public class Config {
 
-public interface ApplicationID {
-	ApplicationID duplicate();
-	boolean isNative();
-	void serialize(DataOutputStream dataOut) throws IOException;
-	ApplicationID read(DataInputStream dataIn) throws IOException;
+	public static void init() {
+	}
+
+	public static StoreGate getStoreGate() {
+    	return InvocationStore.getInstance();
+	}
+
+	public static RegistryGate getRegistryGate() {
+		return RegistryStore.getInstance();
+	}
+
+	public static AMSGate getAMSGate() {
+		return AppProxy.getGateInstance();
+	}
 }

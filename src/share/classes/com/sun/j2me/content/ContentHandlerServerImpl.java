@@ -34,12 +34,12 @@ import javax.microedition.content.RequestListener;
  * The internal structure of a registered content handler.
  */
 final public class ContentHandlerServerImpl extends ContentHandlerImpl
-    			implements ContentHandlerServer, Counter
+    			implements ContentHandlerServer
 {
     /** The listener to notify. */
     private RequestListener listener;
     
-    int cancelCounter = 0;
+    private int currentBlockID;
 
     /**
      * Construct an empty ContentHandlerServerImpl
@@ -48,6 +48,7 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
      */
     public ContentHandlerServerImpl(ContentHandlerImpl handler) {
     	super(handler);
+    	currentBlockID = InvocationImpl.store.allocateBlockID();
     }
     
     /**
@@ -69,25 +70,27 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
      * @see javax.microedition.content.ContentHandlerServer#finish
      */
     public Invocation getRequest(boolean wait) {
-    	if(AppProxy.LOGGER != null){
-    		AppProxy.LOGGER.println( "ContentHandler.getRequest(" + wait + ")" );
-    	}
+    	Invocation result = null;
+    	if(Logger.LOGGER != null)
+    		Logger.LOGGER.println( "ContentHandler.getRequest(" + wait + ")" );
         // Application has tried to get a request; reset cleanup flags on all
         if (requestCalls == 0) {
-            InvocationStore.setCleanup(applicationID, false);
+        	InvocationImpl.store.setCleanupFlag(applicationID, false);
         }
         requestCalls++;
 
         InvocationImpl invoc =
-            InvocationStore.getRequest(applicationID, wait, this);
+            InvocationImpl.store.getRequest(applicationID, wait ? currentBlockID : 0);
         if (invoc != null) {
             // Keep track of number of requests delivered to the application
-            AppProxy.requestForeground(invoc.invokingApp, invoc.destinationApp);
+        	AMSGate.inst.requestForeground(invoc.invokingApp, invoc.destinationApp);
             
 		    // Wrap it in an Invocation instance
-            return invoc.wrap();
+            result = invoc.wrap();
         }
-        return null;
+    	if(Logger.LOGGER != null)
+    		Logger.LOGGER.println( "ContentHandler.getRequest(" + wait + ") returns " + result );
+        return result;
     }
 
     /**
@@ -98,8 +101,8 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
      * If no Thread is blocked; this call has no effect.
      */
     public void cancelGetRequest() {
-    	cancelCounter++;
-        InvocationStore.cancel();
+		InvocationImpl.store.unblockWaitingThreads( currentBlockID );
+    	currentBlockID = InvocationImpl.store.allocateBlockID();
     }
 
     /**
@@ -146,7 +149,7 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
     public void setListener(RequestListener listener) {
 		// Start/set the thread needed to monitor the InvocationStore
 		this.listener = listener;
-		super.setListener(listener);
+		super.activateListening(listener != null);
     }
 
     /**
@@ -158,9 +161,4 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
 		    l.invocationRequestNotify(this);
 		}
     }
-
-	public int getCounter() {
-		return cancelCounter;
-	}
-
 }

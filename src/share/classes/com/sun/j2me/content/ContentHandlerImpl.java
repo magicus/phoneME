@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -26,12 +26,14 @@
 
 package com.sun.j2me.content;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Vector;
 
 import javax.microedition.content.ActionNameMap;
 import javax.microedition.content.ContentHandler;
 import javax.microedition.content.Invocation;
-import javax.microedition.content.RequestListener;
 
 /**
  * The internal structure of a registered content handler.
@@ -44,26 +46,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
 			void push( Handle handle );
 		}
 		
-	    /** 
-	     * Content Handler fields indexes.
-	     * <BR>Used with functions: @link findHandler(), @link getValues() and 
-	     * @link getArrayField().
-	     * <BR> They should match according enums in jsr211_registry.h
-	     */
-	    static final int FIELD_ID         = 0;  /** Handler ID */
-	    static final int FIELD_TYPES      = 1;  /** Types supported by a handler */
-	    static final int FIELD_SUFFIXES   = 2;  /** Suffixes supported */
-	                                            /** by a handler */
-	    static final int FIELD_ACTIONS    = 3;  /** Actions supported */
-	                                            /** by a handler */
-	    static final int FIELD_LOCALES    = 4;  /** Locales supported */
-	                                            /** by a handler */
-	    static final int FIELD_ACTION_MAP = 5;  /** Handler action map */
-	    static final int FIELD_ACCESSES   = 6; /** Access list */
-	    static final int FIELD_COUNT      = 7; /** Total number of fields */
-	    
 		String				getID();
-		//int 				getSuiteId();
 		
 	    /**
 	     * Returns array field
@@ -73,11 +56,44 @@ public class ContentHandlerImpl extends ContentHandlerRegData
 	     *        values.
 	     * @return array of values
 	     */
-	    String[] getArrayField(int fieldId);
-
+	    String[] getHandlerValues(int fieldId);
 		ContentHandlerImpl 	get();
 	}
 	
+    static class Data {
+		String 			ID;
+    	ApplicationID 	appID;
+    	int				registrationMethod;
+    	
+    	public Data(){
+    		this( null, null, ~REGISTERED_STATIC_FLAG & REGISTERED_STATIC_FLAG);
+    	}
+		public Data(String handlerID, ApplicationID applicationID, int registrationMethod) {
+			ID = handlerID;
+			appID = applicationID;
+			this.registrationMethod = registrationMethod;
+			if( Logger.LOGGER != null )
+				Logger.LOGGER.println( "ContentHandlerImpl.Data(): " + this );
+		}
+		public Data(DataInputStream in) throws IOException {
+			ID = in.readUTF();
+			appID = AppProxy.createAppID().read(in);
+			registrationMethod = in.readInt();
+			if( Logger.LOGGER != null )
+				Logger.LOGGER.println( "ContentHandlerImpl.Data(): " + this );
+		}
+
+		public void serialize(DataOutputStream out) throws IOException {
+			out.writeUTF(ID);
+			appID.serialize(out);
+			out.writeInt(registrationMethod);
+		}
+		
+		public String toString(){
+			return "{ ID = '" + ID + "', appID = " + appID + ", regMethod = " + registrationMethod + "}";
+		}
+    }
+    
 	/**
 	 * handle of registered content handler.
 	 */
@@ -85,26 +101,13 @@ public class ContentHandlerImpl extends ContentHandlerRegData
 	
 	final protected ApplicationID applicationID;
 
-//    /**
-//     * The MIDlet suite storagename that contains the MIDlet.
-//     */
-//    protected int storageId;
-//
-//    /**
-//     * The application class name that implements this content
-//     * handler.  Note: Only the application that registered the class
-//     * will see the classname; for other applications the value will be
-//     * <code>null</code>.
-//     */
-//    protected String classname;
-
     /** Count of requests retrieved via {@link #getRequest}. */
     protected int requestCalls;
 
     /**
      * The RequestListenerImpl; if a listener is set.
      */
-    RequestListenerImpl listenerImpl;
+    private RequestListenerImpl listenerImpl;
 
     /** Property name for the current locale. */
     private final static String LOCALE_PROP = "microedition.locale";
@@ -133,19 +136,27 @@ public class ContentHandlerImpl extends ContentHandlerRegData
     	super( handler );
         handle = handler.handle;
         applicationID = handler.applicationID;
-        listenerImpl = handler.listenerImpl;
         version = handler.version;
         requestCalls = handler.requestCalls;
         authority = handler.authority;
         appname = handler.appname;
+        
+        if( handler.listenerImpl != null ){
+        	listenerImpl = new RequestListenerImpl(this);
+        	handler.activateListening(false);
+        }
     }
     
     protected ContentHandlerImpl( ApplicationID appID, Handle handle ){
     	this.applicationID = appID;
     	this.handle = handle; 
     }
+    
+    public Data getHandlerData(){
+    	return new Data( getID(), applicationID, getRegistrationMethod() );
+    }
 
-    /**
+	/**
      * Get the nth type supported by the content handler.
      * @param index the index into the types
      * @return the nth type
@@ -174,7 +185,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
      */
     public String[] getTypes() {
         if (types == null) {
-            types = handle.getArrayField(Handle.FIELD_TYPES);
+            types = handle.getHandlerValues(RegistryGate.FIELD_TYPES);
         }
         return types;
     }
@@ -233,7 +244,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
      */
     public String[] getSuffixes() {
         if (suffixes == null) {
-            suffixes = handle.getArrayField(Handle.FIELD_SUFFIXES);
+            suffixes = handle.getHandlerValues(RegistryGate.FIELD_SUFFIXES);
         }
         return suffixes;
     }
@@ -279,7 +290,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
      */
     public String[] getActions() {
         if (actions == null) {
-            actions = handle.getArrayField(Handle.FIELD_ACTIONS);
+            actions = handle.getHandlerValues(RegistryGate.FIELD_ACTIONS);
         }
         return actions;
     }
@@ -390,9 +401,6 @@ public class ContentHandlerImpl extends ContentHandlerRegData
      *     {@link #getActionNameMapCount getActionNameMapCount} method.
      */
     public ActionNameMap getActionNameMap(int index) {
-        if (index < 0 || index >= getActionNames().length) {
-            throw new IndexOutOfBoundsException();
-        }
         return getActionNames()[index];
     }
 
@@ -403,8 +411,8 @@ public class ContentHandlerImpl extends ContentHandlerRegData
      */
     private ActionNameMap[] getActionNames() {
         if (actionnames == null) {
-            String[] locales = handle.getArrayField(Handle.FIELD_LOCALES);
-            String[] names   = handle.getArrayField(Handle.FIELD_ACTION_MAP);
+            String[] locales = handle.getHandlerValues(RegistryGate.FIELD_LOCALES);
+            String[] names   = handle.getHandlerValues(RegistryGate.FIELD_ACTION_MAP);
 
             actionnames = new ActionNameMap[locales.length];
             for (int index = 0; index < locales.length; index++) {
@@ -475,11 +483,11 @@ public class ContentHandlerImpl extends ContentHandlerRegData
     private void loadAppData() {
         if (appname == null) {
             try {
-                AppProxy app = AppProxy.getCurrent().forApp(applicationID);
+                AppProxy app = AppProxy.forApp(applicationID);
                 appname = app.getApplicationName();
                 version = app.getVersion();
                 authority = app.getAuthority();
-            } catch (Throwable t) {
+            } catch (Exception t) {
             }
             if (appname == null) {
                 appname = "";
@@ -552,7 +560,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
      */
     public String[] getAccessRestricted() {
         if (accessRestricted == null) {
-            accessRestricted = handle.getArrayField(Handle.FIELD_ACCESSES);
+            accessRestricted = handle.getHandlerValues(RegistryGate.FIELD_ACCESSES);
         }
         return accessRestricted;
     }
@@ -602,18 +610,18 @@ public class ContentHandlerImpl extends ContentHandlerRegData
      * @param listener the listener to register;
      *   <code>null</code> to remove the listener.
      */
-    public void setListener(RequestListener listener) {
+    public void activateListening(boolean activate) {
         synchronized (this) {
-            if (listener != null || listenerImpl != null) {
+            if (activate || listenerImpl != null) {
                 // Create or update the active listener thread
                 if (listenerImpl == null) {
-                    listenerImpl = new RequestListenerImpl(this, listener);
+                    listenerImpl = new RequestListenerImpl(this);
                 } else {
-                    listenerImpl.setListener(listener);
+                    listenerImpl.activate(activate);
                 }
 
                 // If the listener thread no longer needed; clear it
-                if (listener == null) {
+                if (!activate) {
                     listenerImpl = null;
                 }
             }
@@ -627,65 +635,24 @@ public class ContentHandlerImpl extends ContentHandlerRegData
     protected void requestNotify() {
     }
 
-//    /**
-//     * Compare two ContentHandlerImpl's for equality.
-//     * Classname, storageID, and seqno must match.
-//     * @param other another ContentHandlerImpl
-//     * @return true if the other handler is for the same class,
-//     * storageID, and seqno.
-//     */
-//    boolean equals(ContentHandlerImpl other) {
-//        return storageId == other.storageId && classname.equals(other.classname);
-//    }
-
     /**
      * Debug routine to print the values.
      * @return a string with the details
      */
     public String toString() {
-        if (AppProxy.LOGGER != null) {
+        if (Logger.LOGGER != null) {
             StringBuffer sb = new StringBuffer(80);
-            sb.append("CH:");
-            sb.append(", appID: ");
+            sb.append("ContentHandler:");
+            sb.append("appID: ");
             sb.append(applicationID);
-            sb.append(", removed: ");
-            sb.append(", flag: ");
-            sb.append(registrationMethod);
-            sb.append(", types: ");
-            toString(sb, types);
-            sb.append(", ID: ");
-            sb.append(ID);
-            sb.append(", suffixes: ");
-            toString(sb, suffixes);
-            sb.append(", actions: ");
-            toString(sb, actions);
-            sb.append(", access: ");
-            toString(sb, accessRestricted);
             sb.append(", authority: ");
             sb.append(authority);
             sb.append(", appname: ");
             sb.append(appname);
+            sb.append("\n\t" + super.toString());
             return sb.toString();
         } else {
             return super.toString();
-        }
-    }
-
-    /**
-     * Append all of the strings in the array to the string buffer.
-     * @param sb a StringBuffer to append to
-     * @param strings an array of strings.
-     */
-    private void toString(StringBuffer sb, String[] strings) {
-        if (strings == null) {
-            sb.append("null");
-            return;
-        }
-        for (int i = 0; i < strings.length; i++) {
-            if (i > 0) {
-                sb.append(':');
-            }
-            sb.append(strings[i]);
         }
     }
 }

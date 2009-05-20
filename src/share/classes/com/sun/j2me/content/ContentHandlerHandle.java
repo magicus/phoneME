@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,36 @@
 
 package com.sun.j2me.content;
 
-public interface Counter {
-	int getCounter();
+class ContentHandlerHandle implements ContentHandlerImpl.Handle {
+	private final String handlerID;
+	private ContentHandlerImpl created = null;
+	
+	ContentHandlerHandle( String handlerID ){
+		handlerID.length(); // null pointer check
+		this.handlerID = handlerID;
+	}
+	
+	ContentHandlerHandle( ContentHandlerImpl.Data data ){
+		this( data.ID );
+		Init( data );
+	}
+	
+	private void Init( final ContentHandlerImpl.Data data ){
+		created = new ContentHandlerImpl(data.appID, this){{
+			this.ID = handlerID; 
+			this.registrationMethod = data.registrationMethod;
+		}};
+	}
+	
+	public ContentHandlerImpl get(){
+		if( created == null )
+			Init(RegistryImpl.gate.getHandlerData( getID() ));
+		return created;
+	}
+	
+	public String getID() { return handlerID; }
+	
+	public String[] getHandlerValues(int fieldId) {
+		return RegistryImpl.gate.getHandlerValues( getID(), fieldId );
+	}
 }

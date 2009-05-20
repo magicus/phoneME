@@ -1,7 +1,7 @@
 /*
  * 
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -38,74 +38,13 @@
 #define _JSR211_INVOCATION_H_
 
 #include <pcsl_string.h>
+#include "jsr211_constants.h"
 #include "jsr211_result.h"
 #include "jsr211_registry.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif/*__cplusplus*/
-
-/**
- * Status code for threads waiting for registry store access and 
- * invocation events
- */
-typedef enum {
-  JSR211_INVOKE_OK          = 1,
-  JSR211_INVOKE_CANCELLED   = 2,
-  JSR211_WAIT_JAVA          = 0x10,
-  JSR211_WAIT_NATIVE        = 0x20
-} jsr211_wait_status;
-
-/* invocation statuses: */
-/*
- * This Invocation was just constructed and is being initialized.
- */
-#define STATUS_INIT 1
-
-/*
- * This Invocation is a new request and is being handled by the content handler.
- */
-#define STATUS_ACTIVE 2
-
-/*
- * This Invocation has been invoked and is waiting to be complete.
- */
-#define STATUS_WAITING 3
-
-/*
- * This Invocation is on hold until a chained Invocation is completed.
- */
-#define STATUS_HOLD 4
-
-/*
- * The content handler successfully completed processing the Invocation.
- */
-#define STATUS_OK 5
-
-/*
- * The processing of the Invocation was cancelled by the ContentHandler.
- */
-#define STATUS_CANCELLED 6
-
-/*
- * The content handler failed to correctly process the Invocation request.
- */
-#define STATUS_ERROR 7
-
-/*
- * The processing of the Invocation has been initiated and will
- * continue. This status is only appropriate when the content
- * handler can not provide a response when it is finished.
- */
-#define STATUS_INITIATED 8
-
-/*
- * The DISPOSE status is used with {@link #setStatus setStatus}
- * to discard the native Invocation. It must not overlap with
- * Status values defined in the Invocation class and must match
- * STATUS_DISPOSE defined in invocStore.c and InvocationImpl.
- */
-#define STATUS_DISPOSE 100
 
 /** Stored ApplicationID (CLDC version) */
 typedef struct _StoredCLDCAppID {

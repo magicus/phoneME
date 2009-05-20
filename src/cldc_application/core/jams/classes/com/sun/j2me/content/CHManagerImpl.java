@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -40,15 +40,7 @@ import javax.microedition.midlet.MIDlet;
 import com.sun.midp.installer.InstallState;
 import com.sun.midp.installer.Installer;
 import com.sun.midp.installer.InvalidJadException;
-import com.sun.midp.main.MIDletProxy;
-import com.sun.midp.main.MIDletProxyList;
-import com.sun.midp.main.MIDletProxyListListener;
 import com.sun.midp.midlet.MIDletSuite;
-
-import com.sun.midp.events.EventListener;
-import com.sun.midp.events.EventQueue;
-import com.sun.midp.events.Event;
-import com.sun.midp.events.EventTypes;
 
 /**
  * Handle all of the details of installing ContentHandlers.
@@ -74,15 +66,17 @@ public class CHManagerImpl extends CHManagerBase {
     static private class SecurityTrusted implements ImplicitlyTrustedClass {};
 
     static {
-        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.<static initializer>" );
+        if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.<static initializer>" );
         SecurityToken classSecurityToken =
                 SecurityInitializer.requestToken(new SecurityTrusted());
         com.sun.midp.content.CHManager.setCHManager(classSecurityToken, new CHManagerImpl());
         AppProxy.setSecurityToken(classSecurityToken);
+        CLDCAppProxyAgent.setSecurityToken(classSecurityToken);
         
         // load Invocation class
         Class cl = Invocation.class;
         cl = cl.getClass();
+        if( Logger.LOGGER != null ) Logger.LOGGER.println( "Invocation class has loaded" );
     }
 
     /** Installed handlers accumulator. */
@@ -101,7 +95,7 @@ public class CHManagerImpl extends CHManagerBase {
      */
     private CHManagerImpl() {
         super();
-        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl()" );
+        if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl()" );
     }
 
     /**
@@ -110,7 +104,7 @@ public class CHManagerImpl extends CHManagerBase {
      * attributes.
      */
     public void install() {
-        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.install" );
+        if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.install" );
         if (regInstaller != null) {
             regInstaller.install();
             regInstaller = null; // Let GC take it.
@@ -141,8 +135,8 @@ public class CHManagerImpl extends CHManagerBase {
     public void preInstall(Installer installer, InstallState state,
 					MIDletSuite msuite, String authority) throws InvalidJadException
     {
-        if( AppProxy.LOGGER != null ) 
-        	AppProxy.LOGGER.println( "CHManagerImpl.preInstall(): installer = " + 
+        if( Logger.LOGGER != null ) 
+        	Logger.LOGGER.println( "CHManagerImpl.preInstall(): installer = " + 
         			installer + ", state = " + state + ", msuite = " + msuite + 
         			"\n\tauthority = '" + authority + "'" );
 		try {
@@ -167,7 +161,7 @@ public class CHManagerImpl extends CHManagerBase {
 		    throw new InvalidJadException(InvalidJadException.CORRUPT_JAR,
 						  cnfe.getMessage());
 		}
-        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.preInstall() exit" );
+        if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.preInstall() exit" );
     }
 
     /**
@@ -176,7 +170,7 @@ public class CHManagerImpl extends CHManagerBase {
      * @param suiteId the suiteId
      */
     public void uninstall(int suiteId) {
-        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.uninstall()" );
+        if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.uninstall()" );
         RegistryInstaller.uninstallAll(suiteId, false);
     }
 
@@ -220,7 +214,7 @@ public class CHManagerImpl extends CHManagerBase {
      * @see com.sun.midp.content.CHManagerImpl
      */
     public void installDone(boolean success) {
-        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.installDone()" );
+        if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.installDone()" );
         if (installInvoc != null) {
 		    handler.finish(installInvoc,
 				   success ? Invocation.OK : Invocation.CANCELLED);
