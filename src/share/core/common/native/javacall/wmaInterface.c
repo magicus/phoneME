@@ -78,8 +78,6 @@ void javanotify_incoming_sms(
         SmsMessage* sms = jsr120_sms_new_msg(
             msgType, (unsigned char*)sourceAddress, sourcePortNum, destPortNum, timeStamp, msgBufferLen, msgBuffer);
 
-        DBGPRINTF("jsr120_sms_is_message_expected");
-
         jsr120_sms_pool_add_msg(sms);
 
         /* Notify all listeners of the new message. */
