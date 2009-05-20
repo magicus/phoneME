@@ -367,7 +367,9 @@ static javacall_result dshow_create(int appId,
     p->playerId         = playerId;
     p->mediaType        = mediaType;
     p->uri              = NULL;
-    p->is_video         = ( JC_FMT_FLV == mediaType || JC_FMT_VIDEO_3GPP == mediaType );
+    p->is_video         = ( JC_FMT_FLV == mediaType || 
+                            JC_FMT_MPEG_1 == mediaType || 
+                            JC_FMT_VIDEO_3GPP == mediaType );
 
     p->realizing        = false;
     p->prefetching      = false;
@@ -549,6 +551,7 @@ static javacall_result dshow_realize(javacall_handle handle,
         case JC_FMT_AMR_WB:          
         case JC_FMT_AMR_WB_PLUS:          
                                   mime = (javacall_const_utf16_string)L"audio/amr";  break;
+        case JC_FMT_MPEG_1:       mime = (javacall_const_utf16_string)L"video/mpeg"; break;
         default:
             return JAVACALL_FAIL;
         }
@@ -587,6 +590,10 @@ static javacall_result dshow_realize(javacall_handle handle,
         p->mediaType = JC_FMT_AMR;
         mime = (javacall_const_utf16_string)L"audio/amr";
         mimeLength = wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mimeLength, L"video/mpeg" ) )
+    {
+        p->mediaType = JC_FMT_MPEG_1;
     }
     else
     {
@@ -698,7 +705,9 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
             {
                 if( preload_size > p->whole_content_size ) preload_size = p->whole_content_size;
 
-                if( JC_FMT_VIDEO_3GPP == p->mediaType || JC_FMT_FLV == p->mediaType )
+                // IMPL_NOTE: this is a temporary solution. is actually disables 'progressive' playback
+                //            and forces all data to be downloaded before playback is started
+                if( true/*JC_FMT_VIDEO_3GPP == p->mediaType || JC_FMT_FLV == p->mediaType*/ )
                 {
                     preload_size = p->whole_content_size;
                 }
