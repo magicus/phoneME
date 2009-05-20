@@ -173,6 +173,12 @@ typedef enum {
  * the initial letter of each sentence should be capitalized.
  */
 #define JAVACALL_TEXTFIELD_MODIFIER_INITIAL_CAPS_SENTENCE	0x200000 
+
+/** 
+ * This flag is a hint to the implementation that before text editing, 
+ * the initial text should be deleted.
+ */
+#define JAVACALL_TEXTFIELD_MODIFIER_DELETE_INITIAL_TEXT		0x400000 
     
 /**
  * @enum javacall_textfield_status
@@ -243,9 +249,10 @@ typedef enum {
  *		- JAVACALL_TEXTFIELD_MODIFIER_PASSWORD
  *		- JAVACALL_TEXTFIELD_MODIFIER_UNEDITABLE
  *		- JAVACALL_TEXTFIELD_MODIFIER_SENSITIVE	
- *		- JAVACALL_TEXTFIELD_MODIFIER_NON_PREDICTIVE	
+ *		- JAVACALL_TEXTFIELD_MODIFIER_NON_PREDICTIVE
  *		- JAVACALL_TEXTFIELD_MODIFIER_INITIAL_CAPS_WORD	
  *		- JAVACALL_TEXTFIELD_MODIFIER_INITIAL_CAPS_SENTENCE 
+ *		- JAVACALL_TEXTFIELD_MODIFIER_DELETE_INITIAL_TEXT
  * @param keyCode the first key that the user pressed that should be inserted to the text box
  *
  * @return should return one of the following statuses:

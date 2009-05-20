@@ -1822,6 +1822,126 @@ javacall_result
 javacall_dom_element_get_previous_element_sibling_finish(void *context,
                                                          /* OUT */ javacall_handle* ret_value);
 
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the value of the <code>contentDocument</code> attribute.
+ *
+ * <p>The value of the <code>contentDocument</code> attribute of an object
+ * that implements the <code>EmbeddingElement</code> interface 
+ * <span class="rfc2119">must</span> be the child document's 
+ * <code>Document</code> object or <code>NULL</code> if there is no such
+ * object.</p>
+ *
+ * 
+ * @param handle Pointer to the object representing this element.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value Pointer to the object representing 
+ *   the value of the <code>contentDocument</code> attribute. If
+ * none is available, then the value is <code>NULL</code>.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_element_get_content_document_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_content_document_start(javacall_handle handle,
+                                                javacall_int32 invocation_id,
+                                                void **context,
+                                                /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the value of the <code>contentDocument</code> attribute.
+ *
+ * <p>The value of the <code>contentDocument</code> attribute of an object
+ * that implements the <code>EmbeddingElement</code> interface 
+ * <span class="rfc2119">must</span> be the child document's 
+ * <code>Document</code> object or <code>NULL</code> if there is no such
+ * object.</p>
+ *
+ * 
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value Pointer to the object representing 
+ *   the value of the <code>contentDocument</code> attribute. If
+ * none is available, then the value is <code>NULL</code>.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_element_get_content_document_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_content_document_finish(void *context,
+                                                 /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the value of the <code>contentWindow</code> attribute.
+ *
+ * <p>The value of the <code>contentWindow</code> attribute of an object
+ * that implements the <code>EmbeddingElement</code> interface
+ * <span class="rfc2119">must</span> be the child document's 
+ * <code>Window</code> object or <code>NULL</code> if there is no such
+ * object.</p>
+ *
+ * 
+ * @param handle Pointer to the object representing this element.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value Pointer to the object representing 
+ *   the value of the <code>contentWindow</code> attribute.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_element_get_content_window_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_content_window_start(javacall_handle handle,
+                                              javacall_int32 invocation_id,
+                                              void **context,
+                                              /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns the value of the <code>contentWindow</code> attribute.
+ *
+ * <p>The value of the <code>contentWindow</code> attribute of an object
+ * that implements the <code>EmbeddingElement</code> interface
+ * <span class="rfc2119">must</span> be the child document's 
+ * <code>Window</code> object or <code>NULL</code> if there is no such
+ * object.</p>
+ *
+ * 
+ * @param context The context saved during asynchronous operation.
+ * @param ret_value Pointer to the object representing 
+ *   the value of the <code>contentWindow</code> attribute.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_element_get_content_window_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_content_window_finish(void *context,
+                                               /* OUT */ javacall_handle* ret_value);
+
 /** 
  * Decrements ref counter of the native object specified number of times
  * 

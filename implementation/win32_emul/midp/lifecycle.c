@@ -133,6 +133,23 @@ void javacall_lifecycle_state_changed(javacall_lifecycle_state state,
                                       javacall_result status,
                                       struct javacall_lifecycle_additional_info *additionalInfo){
 
+    if (state == JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN) {
+       /*
+        * in this state, configuration files are already finalized, so we don't
+        * want to call javautil_debug_print which is using dynamic properties
+        * thus invoking javacall_initialize_configurations and re-initializing
+        * the configuration.
+        */
+       javacall_print ("javacall_lifecycle_state_changed() ");
+       javacall_print ("lifecycle: event is JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN");
+       if(status == JAVACALL_OK) {
+	 javacall_print ("status is JAVACALL_OK\n");
+       } else {
+	 javacall_print ("status is JAVACALL_FAILED\n");
+       }
+       return;
+    }
+    
     javautil_debug_print (JAVACALL_LOG_INFORMATION, "lifecycle", "javacall_lifecycle_state_changed() ");
     switch(state) {
     case  JAVACALL_LIFECYCLE_MIDLET_STARTED:

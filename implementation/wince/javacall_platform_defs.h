@@ -79,6 +79,12 @@ typedef unsigned __int16 javacall_uint16;
 typedef __int32 javacall_int32;
 
 /**
+ * @typedef javacall_uint32
+ * @brief 32 bit unsigned integer type
+ */
+typedef unsigned __int32 javacall_uint32;
+
+/**
  * @typedef javacall_int64
  * @brief 64 bit interger type
  */
@@ -141,6 +147,22 @@ typedef unsigned __int64 javacall_uint64;
  * 
  */
 #define JAVACALL_PIM_MAX_FIELDS         (19)
+
+/** 
+ * @def JAVACALL_FONT_SIZE_SMALL
+ *  
+ */
+#define JAVACALL_FONT_SIZE_SMALL    8
+/** 
+ * @def JAVACALL_FONT_SIZE_MEDIUM
+ *  
+ */
+#define JAVACALL_FONT_SIZE_MEDIUM   12
+/** 
+ * @def JAVACALL_FONT_SIZE_LARGE
+ *  
+ */
+#define JAVACALL_FONT_SIZE_LARGE    16
 
 /**
  * @}

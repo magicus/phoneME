@@ -49,11 +49,16 @@ char print_buffer[PRINT_BUFFER_SIZE];
 */
 void javacall_print(const char *s) {
     if(s != NULL) {
-    printf("%s", s);
+        printf("%s", s);
     } else {
         printf("NULL\n");
     }
 }
+
+void javacall_print_chars(const char* s, int length) {   
+    fwrite(s, length, 1, stdout);
+}
+
 
 /*
  * Returns the jlong-specifier prefix used with type characters in

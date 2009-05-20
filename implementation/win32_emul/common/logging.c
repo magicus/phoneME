@@ -50,24 +50,32 @@ char print_buffer[PRINT_BUFFER_SIZE];
 char debug_print_buffer[PRINT_BUFFER_SIZE];
 
 /**
+* Prints out an array of characters to a system specific output stream
+*
+* @param s address of the first character to print
+* @param length number of the characters to print
+*/
+void javacall_print_chars(const char* s, int length) {
+    fwrite(s, length, 1, stdout);
+    fflush(stdout);
+#ifdef ENABLE_OUTPUT_REDIRECTION
+    /**
+     * redirect output to sockets
+     * does nothing if the socket numbers are not set via command line
+     */
+    SIOWrite(1, s, length);
+#endif /* ENABLE_OUTPUT_REDIRECTION */
+}
+
+/**
 * Prints out a string to a system specific output stream
 *
 * @param s a NULL terminated character buffer to be printed
 */
 void javacall_print(const char *s) {
     //OutputDebugString(s);
-    printf("%s", s);
-	fflush(stdout);
-
-#ifdef ENABLE_OUTPUT_REDIRECTION
-    /**
-     * redirect output to sockets
-     * does nothing if the socket numbers are not set via command line
-     */
-	SIOWrite(1, s, strlen(s));
-#endif /* ENABLE_OUTPUT_REDIRECTION */
+    javacall_print_chars(s, strlen(s));
 }
-
 
 static char* convertSeverity2String(int  severity){
     switch(severity) {

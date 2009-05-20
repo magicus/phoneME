@@ -55,6 +55,8 @@ extern "C" {
  * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
+ * @param namespaceURI The namespace URI associated with this event at 
+ *              initialization time, or null if it is unspecified.
  * @param type The event type for which the user is registering
  * @param use_capture If true, <code>use_capture</code> indicates that the 
  *   user wishes to initiate capture. After initiating capture, all 
@@ -77,6 +79,7 @@ javacall_result
 javacall_dom_eventsdispatcher_add_event_listener_start(javacall_handle handle,
                                            javacall_int32 invocation_id,
                                            void **context,
+                                           javacall_const_utf16_string namespaceURI,
                                            javacall_const_utf16_string type,
                                            javacall_bool use_capture,
                                            /*OUT*/javacall_handle* ret_value);
@@ -125,6 +128,8 @@ javacall_dom_eventsdispatcher_add_event_listener_finish(void *context,
  * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
+ * @param namespaceURI The namespace URI associated with this event at 
+ *              initialization time, or null if it is unspecified.
  * @param type Specifies the event type of the <code>EventListener</code> 
  *   being removed. 
  * @param listener The <code>EventListener</code> parameter indicates the 
@@ -146,7 +151,8 @@ javacall_result
 javacall_dom_eventsdispatcher_remove_event_listener_start(javacall_handle handle,
                                               javacall_int32 invocation_id,
                                               void **context,
-											  javacall_const_utf16_string type,
+                                              javacall_const_utf16_string namespaceURI,
+                                              javacall_const_utf16_string type,
                                               javacall_bool use_capture,
                                               javacall_handle listener);
 

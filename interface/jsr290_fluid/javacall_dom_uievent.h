@@ -47,6 +47,49 @@ extern "C" {
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The <code>view</code> attribute identifies the 
+ * <code>AbstractView</code> from which the event was generated. 
+ * 
+ * @param handle Pointer to the object representing this uievent.
+ * @param invocation_id Invocation identifier which MUST be used in the 
+ *                  corresponding javanotify function.
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
+ *             context,
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_uievent_get_view_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_uievent_get_view_start(javacall_handle handle,
+                                    javacall_int32 invocation_id,
+                                    void **context,
+                                    /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
+ * OR returns  The <code>view</code> attribute identifies the 
+ * <code>AbstractView</code> from which the event was generated. 
+ * 
+ * @param context The context saved during asynchronous operation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error in native code occured
+ *         JAVACALL_WOULD_BLOCK caller must call the 
+ *             javacall_dom_uievent_get_view_finish function to complete the 
+ *             operation,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_uievent_get_view_finish(void *context,
+                                     /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns  Specifies some detail information about the <code>Event</code>, 
  * depending on the type of event. 
  * 
@@ -104,6 +147,9 @@ javacall_dom_uievent_get_detail_finish(void *context,
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>Event.initEvent()</code> 
  *   method for a description of this parameter. 
+ * @param view_arg Pointer to the object of
+ *    Specifies <code>UIEvent.view</code>. This value may be 
+ *   <code>NULL</code>. 
  * @param detail_arg  Specifies <code>UIEvent.detail</code>.   
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -122,6 +168,7 @@ javacall_dom_uievent_init_ui_event_start(javacall_handle handle,
                                          javacall_const_utf16_string type_arg,
                                          javacall_bool can_bubble_arg,
                                          javacall_bool cancelable_arg,
+                                         javacall_handle view_arg,
                                          javacall_int32 detail_arg);
 
 /**
@@ -160,6 +207,9 @@ javacall_dom_uievent_init_ui_event_finish(void *context);
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>Event.initEventNS()</code> 
  *   method for a description of this parameter. 
+ * @param view_arg Pointer to the object of
+ *    Refer to the <code>UIEvent.initUIEvent()</code> method 
+ *   for a description of this parameter. 
  * @param detail_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
  *   method for a description of this parameter.
  *
@@ -181,6 +231,7 @@ javacall_dom_uievent_init_ui_event_ns_start(javacall_handle handle,
                                             javacall_const_utf16_string type_arg,
                                             javacall_bool can_bubble_arg,
                                             javacall_bool cancelable_arg,
+                                            javacall_handle view_arg,
                                             javacall_int32 detail_arg);
 
 /**

@@ -42,3 +42,5 @@ PORTING_SOURCE += $(notdir $(wildcard $(JPEG_JC_DIR)/decoder/*.c))
 SPECIFIC_DEFINITIONS+=-I$(JPEG_JC_DIR)/decoder
 SPECIFIC_DEFINITIONS+=-I$(JPEG_JC_DIR)/decoder/inc
 endif
+
+JAVACALL_SOURCE_OUTPUT_LIST += implementation/share/jpeg

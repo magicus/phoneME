@@ -1,5 +1,5 @@
 #   
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -47,6 +47,10 @@ ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif
 
+define fixcygpath
+echo $(1)
+endef
+
 include $(JAVACALL_DIR)/build/common.gmk
 
 TEMP_OBJECTS1=$(patsubst %.c,%.o,$(PORTING_SOURCE))
@@ -70,6 +74,15 @@ CFLAGS+= $(SPECIFIC_DEFINITIONS)
 
 CPPFLAGS+= -I$(JAVACALL_OUTPUT_INCLUDE_DIR)
 CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
+
+LOCAL_CFLAGS_debug= -g 
+LOCAL_CPPFLAGS_debug= -g 
+
+LOCAL_CFLAGS_nodebug=
+LOCAL_CPPFLAGS_nodebug=
+
+CXXFLAGS+= $(LOCAL_CFLAGS_$(BUILD))
+CFLAGS+= $(LOCAL_CFLAGS_$(BUILD))
 
 ifneq ($(NOTIFIER_OBJECTS)x,x)
 EXTRA_LDFLAGS+=-lnotifiers$(BUILD_EXT) -L$(JAVACALL_OUTPUT_LIB_DIR)

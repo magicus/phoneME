@@ -49,11 +49,15 @@ extern "C" {
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns the document this object contains, if there is any and it is available, 
  * or <code>NULL</code> otherwise.
+ *
  * 
  * @param handle Pointer to the object representing this htmlobjectelement.
  * @param invocation_id Invocation identifier which MUST be used in the 
  *                  corresponding javanotify function.
  * @param context The context saved during asynchronous operation.
+ * @param ret_value Pointer to the object representing 
+ *   the document this object contains.
+ *
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -74,8 +78,12 @@ javacall_dom_htmlobjectelement_get_content_document_start(javacall_handle handle
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns the document this object contains, if there is any and it is available, 
  * or <code>NULL</code> otherwise.
+ *
  * 
  * @param context The context saved during asynchronous operation.
+ * @param ret_value Pointer to the object representing 
+ *   the document this object contains.
+ *
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured

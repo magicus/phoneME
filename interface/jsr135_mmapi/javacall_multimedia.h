@@ -164,6 +164,9 @@ extern "C" {
 /** Apple Quicktime, video/quicktime */
 #define JAVACALL_MEDIA_FORMAT_MOV               "MOV"
 
+/** Flash video */
+#define JAVACALL_MEDIA_FORMAT_FLV               "FLV"
+
 /** Image formats section */
 /** MPEG JPEG, image/jpeg */
 #define JAVACALL_MEDIA_FORMAT_JPEG              "JPEG"
@@ -466,6 +469,14 @@ javacall_result javacall_media_get_event_data(javacall_handle handle,
  * @retval JAVACALL_IO_ERROR                IO error occurred while connecting
  *                                          the URL or getting data 
  * @retval JAVACALL_INVALID_ARGUMENT        Invalid URL or other parameter
+ * @retval JAVACALL_NO_AUDIO_DEVICE     No audio device found and therefore
+ *                                      playback is impossible. JVM will throw
+ *                                      a MediaException. Please return this
+ *                                      code only in case you want to
+ *                                      reject playback, i.e. when the content
+ *                                      is audio only. If some kind of playback
+ *                                      is still possible (e.g. mute video),
+ *                                      please return JAVACALL_OK instead
  * @retval JAVACALL_FAIL                    General failure or the following
  *                                          situation. Porting Layer may
  *                                          decide to reject the creation for
@@ -670,8 +681,16 @@ javacall_result javacall_media_clear_buffer(javacall_handle handle);
  *                      NULL if unknown
  * @param mimeLength    String length of media MIME type.
  * 
- * @retval JAVACALL_OK
- * @retval JAVACALL_FAIL   
+ * @retval JAVACALL_OK                  Success
+ * @retval JAVACALL_NO_AUDIO_DEVICE     No audio device found and therefore
+ *                                      playback is impossible. JVM will throw
+ *                                      a MediaException. Please return this
+ *                                      code only in case you want to
+ *                                      reject playback, i.e. when the content
+ *                                      is audio only. If some kind of playback
+ *                                      is still possible (e.g. mute video),
+ *                                      please return JAVACALL_OK instead
+ * @retval JAVACALL_FAIL                General failure
  */
 javacall_result javacall_media_realize(javacall_handle handle,
                                       javacall_const_utf16_string mime,
@@ -852,8 +871,11 @@ javacall_result javacall_media_set_mute(javacall_handle handle, javacall_bool mu
  * @param duration the duration of the note in ms 
  * @param volume   volume of this play. From 0 to 100 inclusive.
  * 
- * @retval JAVACALL_OK      Success
- * @retval JAVACALL_FAIL    Fail. JVM will raise the media exception.
+ * @retval JAVACALL_OK                  Success
+ * @retval JAVACALL_NO_AUDIO_DEVICE     No audio device found. JVM will throw a
+ *                                      MediaException
+ * @retval JAVACALL_FAIL                General fail. JVM will raise the media
+ *                                      exception.
  */
 javacall_result javacall_media_play_tone(int appID, long note, long duration, long volume);
 
@@ -1012,18 +1034,154 @@ javacall_result javacall_media_get_video_snapshot_data(javacall_handle handle,
                                                        /*OUT*/ char* buffer, long size);
 
 
- /**
-  * Set video fullscreen mode
-  * 
-  * @param handle    Handle to the library 
-  * @param fullScreenMode whether to set video playback in fullscreen mode
-  * 
-  * @retval JAVACALL_OK      Success
-  * @retval JAVACALL_FAIL    Fail
-  * @retval JAVACALL_NOT_IMPLEMENTED    Native FullScreen mode not implemented
-  */
- javacall_result javacall_media_set_video_full_screen_mode(javacall_handle handle, javacall_bool fullScreenMode);
+/**
+ * Set video fullscreen mode
+ * 
+ * @param handle    Handle to the library 
+ * @param fullScreenMode whether to set video playback in fullscreen mode
+ * 
+ * @retval JAVACALL_OK      Success
+ * @retval JAVACALL_FAIL    Fail
+ * @retval JAVACALL_NOT_IMPLEMENTED    Native FullScreen mode not implemented
+ */
+javacall_result javacall_media_set_video_full_screen_mode(javacall_handle handle, javacall_bool fullScreenMode);
 
+/** @} */
+
+ /**
+ * @defgroup MediaOptionalImageEncoding  Optional image encoding
+ *           API
+ * @ingroup JSR135
+ * 
+ * @brief Image encoding is used by snapshot API if native player
+ *        doesn't provide such functionality.
+ * 
+ * @note  Currently it is used for GIF player snapshot only.
+ *
+ * @{
+ */
+ 
+/**
+ * @enum javacall_encoder_type
+ * @brief Supported native encoders
+ */
+typedef enum {
+    JAVACALL_JPEG_ENCODER,
+    JAVACALL_PNG_ENCODER
+}javacall_encoder_type;
+
+/**
+ * Encodes given raw RGB888 image to specified format.
+ * 
+ * @param rgb888        [IN] soure raw image to be encoded
+ * @param width         [IN] source image width
+ * @param height        [IN] source image height
+ * @param encode        [IN]destination format
+ * @param quality       [IN]quality of encoded image (for format
+ *                      with losses)
+ * @param result_buffer [OUT]a pointer where result buffer will
+ *                      be stored. Must be released by
+ *                      <tt>javacall_media_release_data</tt>
+ *                      when it is no more need.
+ * @param result_buffer_len [OUT] a pointer for result buffer
+ *                          size
+ * @param context       [OUT] a context saved during
+ *                      asynchronous operation. An javacall
+ *                      implementation is responsible for
+ *                      allocation/releasing of the handle.
+ * 
+ * @retval  JAVACALL_OK  in case of success,
+ * @retval  JAVACALL_OUT_OF_MEMORY if there is no memory for
+ *          destination buffer
+ * @retval  JAVACALL_FAIL if encoder failed
+ *          JAVACALL_WOULD_BLOCK if operation requires time to
+ *          complete, an application should call
+ *          <tt>javacall_media_encode_finish</tt> later in
+ *          respose to JAVACALL_EVENT_MEDIA_ENCODE_COMPLETE
+ *          event.
+ */
+javacall_result javacall_media_encode_start(javacall_uint8* rgb888, javacall_uint8 width, javacall_uint8 height,
+                                      javacall_encoder_type encode, javacall_uint8 quality,
+                                            javacall_uint8** result_buffer, javacall_uint32* result_buffer_len,
+                                            javacall_handle* context);
+
+/**
+ * Finish encode procedure for given raw RGB888 image.
+ * 
+ * @param result_buffer [OUT]a pointer where result buffer will
+ *                      be stored. Must be released by
+ *                      <tt>javacall_media_release_data</tt>
+ *                      when it is no more need.
+ * @param result_buffer_len [OUT] a pointer for result buffer
+ *                          size
+ * @param context       [IN] a context saved during
+ *                      asynchronous operation. . An javacall
+ *                      implementation is responsible for
+ *                      allocation/releasing of the handle.
+ * 
+ * @retval  JAVACALL_OK  in case of success
+ * @retval  JAVACALL_OUT_OF_MEMORY if there is no memory
+ *          for destination buffer
+ * @retval  JAVACALL_FAIL if encoder failed
+ * @retval  JAVACALL_WOULD_BLOCK if operation is not complete
+ *          yet, an application should recall this function
+ *          later again. Generally this error code means that
+ *          blocked java thread was unblocked at wrong time,
+ *          probably due to implemenetation bug.
+ * 
+ */
+javacall_result javacall_media_encode_finish(javacall_handle context,
+                                      javacall_uint8** result_buffer, javacall_uint32* result_buffer_len);
+
+/**
+ * Release a data was acuired by
+ * <tt>javacall_media_encode_start</tt> or
+ * <tt>javacall_media_encode_finish</tt>
+ * 
+ * @param result_buffer     a pointer to a buffer need to be
+ *                          released
+ * @param result_buffer_len the buffer length
+ */
+void javacall_media_release_data(javacall_uint8* result_buffer, javacall_uint32 result_buffer_len);
+
+/** @} */
+
+ /**
+ * @defgroup MediaOptionalSystemVolume  Optional system volume API
+ * 
+ * @ingroup JSR135
+ * 
+ * @brief System (Master) volume can be adjusted e.g. by dedicated volume keys.
+ *        This API provides a way to get the volume level value from 
+ *        the platform.
+ * 
+ * @{
+ */
+ 
+/**
+ * Get current system audio volume level.
+ * Audio volume range have to be in 0 to 100 inclusive. 0 means that audio is
+ * muted.
+ *
+ * @note Player's volume level will be multiplied by the system volume 
+ *       (divided by 100) before the javacall_media_set_volume() method will be 
+ *       called by the Java layer. To block this calculation 
+ *       the javacall_media_get_system_volume() method must return 
+ *       JAVACALL_NO_DATA_AVAILABLE.
+ *
+ * @note If the device have a system mute/unmute capability 
+ *       the Javacall layer is responsible for saving/restoring the current 
+ *       system volume level when the audio is muted/unmuted.
+ * 
+ * @note This method must return JAVACALL_NO_DATA_AVAILABLE when the 
+ *       System volume feature is not implemented.
+ *
+ * @param volume        Volume value
+ *
+ * @retval JAVACALL_OK                Success
+ * @retval JAVACALL_NO_DATA_AVAILABLE System volume is not available
+ */
+javacall_result javacall_media_get_system_volume(/*OUT*/ javacall_int32 *volume);
 /** @} */
 
 /**********************************************************************************/
@@ -1143,9 +1301,12 @@ javacall_result javacall_media_get_metadata_key(javacall_handle handle,
  * @param handle    Handle to the library 
  * @param key       Meta data key string
  * @param bufLength dataBuf buffer's size in bytes. 
- * @param dataBuf   Buffer that used to return meta data strings. 
- *                  NULL value should be appended to the end of string.
- * 
+ * @param dataBuf   Buffer that used to return meta data value as 
+ *                  null-terminated string.
+ *
+ * @note  If the meta data value is null, the output buffer will contain
+ *        following two 16-bit units: 0xffff, 0x0000.
+ *
  * @retval JAVACALL_OK              Success
  * @retval JAVACALL_OUT_OF_MEMORY   dataBuf size is too small
  * @retval JAVACALL_FAIL            Fail

@@ -86,6 +86,7 @@ typedef struct {
     IEventTrigger           *doneCallback;
     MQ234_HostBlock         *midiStream;
     IHostStorage            *storage;
+    long                    mtime; /* stores media time when state < PREFETCHED */
 } ah_midi;
 
 
@@ -108,6 +109,7 @@ typedef struct {
     /* Decoded data variables */
     unsigned char           *playBuffer;
     int                     playBufferLen;
+    int                     dataChunkLen;
     int                     playPos;
     int                     bytesPerMilliSec;
     javacall_bool           buffering;
@@ -139,10 +141,15 @@ typedef struct
     HANDLE                  hMutexREAD;
 } globalMan;
 
-/* 
- * isolateIDtoGM is public for use in JSR234
- */
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
 
-int isolateIDtoGM(int isolateID); 
+javacall_result isolateIDtoGM(int isolateID, /*OUT*/ int *gmIdx );
+void            gmDetach(int gmIdx);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif //__cplusplus
 
 #endif /* __JSR135_MULTIMEDIA_AUDIO_H__ */

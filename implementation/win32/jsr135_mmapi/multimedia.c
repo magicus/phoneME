@@ -1447,3 +1447,125 @@ javacall_result javacall_media_get_midibank_program(javacall_handle handle,
                                                     long channel, /*OUT*/long* prog) {
     return JAVACALL_FAIL;
 }
+
+
+#define JFIF_HEADER_MAXIMUM_LENGTH 1024
+/**
+ * Encodes given raw RGB888 image to specified format.
+ * 
+ * @param rgb888        [IN] soure raw image to be encoded
+ * @param width         [IN] source image width
+ * @param height        [IN] source image height
+ * @param encode        [IN]destination format
+ * @param quality       [IN]quality of encoded image (for format
+ *                      with losses)
+ * @param result_buffer [OUT]a pointer where result buffer will
+ *                      be stored
+ * @param result_buffer_len [OUT] a pointer for result buffer
+ *                          size
+ * @param context       [OUT] a context saved during
+ *                      asynchronous operation
+ * 
+ * @return  JAVACALL_OK  in case of success,
+ *          JAVACALL_OUT_OF_MEMORY if there is no memory for
+ *          destination buffer
+ *          JAVACALL_FAIL if encoder failed
+ *          JAVACALL_WOULD_BLOCK if operation requires time to
+ *          complete, an application should call
+ *          <tt>javacall_media_encode_finish</tt> to get result
+ */
+javacall_result javacall_media_encode_start(javacall_uint8* rgb888, 
+                                            javacall_uint8 width, 
+                                            javacall_uint8 height,
+                                            javacall_encoder_type encode,
+                                            javacall_uint8 quality,
+                                            javacall_uint8** result_buffer,
+                                            javacall_uint32* result_buffer_len,
+                                            javacall_handle* context) {
+    if (JAVACALL_JPEG_ENCODER == encode) {
+        /// It's hard to suppose, how large will be jpeg image 
+        int nWidth = ((width+7)&(~7));
+        int nHeight = ((height+7)&(~7));
+        int jpegLen = nWidth*nHeight*5 + JFIF_HEADER_MAXIMUM_LENGTH;
+        *result_buffer = javacall_malloc(jpegLen);
+        if (NULL != *result_buffer) {
+            *result_buffer_len = RGBToJPEG(rgb888, width, height, quality, 
+                                           *result_buffer, JPEG_ENCODER_COLOR_RGB);
+            return (*result_buffer_len > 0) ? JAVACALL_OK : JAVACALL_FAIL;
+        }
+    } else if (JAVACALL_PNG_ENCODER == encode) {
+        int pngLen = javautil_media_get_png_size(width, height);
+        *result_buffer = javacall_malloc(pngLen);
+        if (NULL != *result_buffer) {
+            *result_buffer_len = javautil_media_rgb_to_png(rgb888, *result_buffer, 
+                                                               width, height);
+            return (*result_buffer_len > 0) ? JAVACALL_OK : JAVACALL_FAIL;
+        }
+    }
+
+    return JAVACALL_OUT_OF_MEMORY;
+}
+#undef JFIF_HEADER_MAXIMUM_LENGTH
+
+/**
+ * Finish encode procedure for given raw RGB888 image.
+ * 
+ * @param result_buffer [OUT]a pointer where result buffer will
+ *                      be stored
+ * @param result_buffer_len [OUT] a pointer for result buffer
+ *                          size
+ * @param context       [OUT] a context saved during
+ *                      asynchronous operation
+ * 
+ * @return  JAVACALL_OK  in case of success,
+ *          JAVACALL_OUT_OF_MEMORY if there is no memory for
+ *          destination buffer
+ *          JAVACALL_FAIL if encoder failed
+ *          JAVACALL_WOULD_BLOCK if operation requires time to
+ *          complete, an application should call
+ *          <tt>javacall_media_encode_finish</tt> to get result
+ */
+javacall_result javacall_media_encode_finish(javacall_handle context,
+                                             javacall_uint8** result_buffer, javacall_uint32* result_buffer_len) {
+    // should never be called
+    return JAVACALL_FAIL;
+}
+
+/**
+ * Release a data was acuired by <tt>javacall_media_encode</tt>
+ * 
+ * @param result_buffer     a pointer to a buffer need to be
+ *                          released
+ * @param result_buffer_len the buffer length
+ */
+void javacall_media_release_data(javacall_uint8* result_buffer, javacall_uint32 result_buffer_len) {
+    javacall_free(result_buffer);
+}
+
+/**
+ * Get current system audio volume level.
+ * Audio volume range have to be in 0 to 100 inclusive. 0 means that audio is
+ * muted.
+ *
+ * @note Player's volume level will be multiplied by the system volume 
+ *       (divided by 100) before the javacall_media_set_volume() method will be 
+ *       called by the Java layer. To block this calculation 
+ *       the javacall_media_get_system_volume() method must return 
+ *       JAVACALL_NO_DATA_AVAILABLE.
+ *
+ * @note If the device have a system mute/unmute capability 
+ *       the Javacall layer is responsible for saving/restoring the current 
+ *       system volume level when the audio is muted/unmuted.
+ * 
+ * @note This method must return JAVACALL_NO_DATA_AVAILABLE when the 
+ *       System volume feature is not implemented.
+ *
+ * @param volume        Volume value
+ *
+ * @retval JAVACALL_OK                Success
+ * @retval JAVACALL_NO_DATA_AVAILABLE System volume is not available
+ */
+javacall_result javacall_media_get_system_volume(/*OUT*/ javacall_int32 *volume) {
+    return JAVACALL_NO_DATA_AVAILABLE;
+}
+

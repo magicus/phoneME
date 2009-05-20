@@ -51,6 +51,14 @@ extern "C" {
  */
 void javacall_print(const char *s);
 
+/**
+ * Prints out a character array to a system specific output strream
+ *
+ * @param s address of the first character to print
+ * @param length number of the characters to print
+ */
+void javacall_print_chars(const char* s, int length);
+
 
 typedef enum {
     javacall_channel_default = 2608,

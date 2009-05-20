@@ -452,12 +452,14 @@ static void MQ234_CALLBACK  mq_mutex_unlock( void* m )
 
 /******************************************************************************/
 
-static int gmInit(int isolateID, int gmIdx)
+static javacall_result gmInit(int isolateID, int gmIdx)
 {
     MQ234_CreateOptions opts;
     MQ234_SynthConfig synthConfig;
     MQ234_HostBlock dlsData;
     MQ234_ERROR err;
+    javacall_result res = JAVACALL_FAIL;
+    
     memset(&opts, '\0', sizeof(opts));
 
     opts.mutexCreateParams = NULL;
@@ -593,23 +595,39 @@ static int gmInit(int isolateID, int gmIdx)
 
     JC_MM_DEBUG_PRINT1( "# pcm_out_open_channel returned 0x%08X\n",
             (int)(g_QSoundGM[gmIdx].pcm_handle) );
-    JC_MM_ASSERT(NULL != g_QSoundGM[gmIdx].pcm_handle);
+
+    /* This happens if no audio device is found. Should proceed with the
+       proper Java exceptions, not just debug assertion failure */
+    /* JC_MM_ASSERT(NULL != g_QSoundGM[gmIdx].pcm_handle); */
+    
+    if( NULL == g_QSoundGM[gmIdx].pcm_handle )
+    {
+        res = JAVACALL_NO_AUDIO_DEVICE;
+    }
+    else 
+    {
+        res = JAVACALL_OK;
+    }
 
     g_QSoundGM[gmIdx].isolateRefs = 1;
 
-    return gmIdx;
+    return res;
 }
 
-int isolateIDtoGM(int isolateID)
+javacall_result isolateIDtoGM(int isolateID, /*OUT*/ int *gmIdx )
 {
     int i = GLOBMAN_INDEX_MAX-1;
+    javacall_result res = JAVACALL_FAIL;
 
     while(i>=0)
     {
         if((g_QSoundGM[i].gm != NULL) && (g_QSoundGM[i].isolateId == isolateID))
         {
             g_QSoundGM[i].isolateRefs++;
-            return i;
+            *gmIdx = i;
+            res = ( NULL == g_QSoundGM[i].pcm_handle ) ?
+                  JAVACALL_NO_AUDIO_DEVICE : JAVACALL_OK;
+            return res;
         }
 
         --i;
@@ -621,15 +639,20 @@ int isolateIDtoGM(int isolateID)
     while(i>=0)
     {
         if(g_QSoundGM[i].gm == NULL)
-            return gmInit(isolateID, i);
+        {
+            res = gmInit(isolateID, i);
+            *gmIdx = i;
+            return res;
+        }
 
         --i;
     }
 
-    return i;
+    *gmIdx = i;
+    return res;
 }
 
-static void gmDetach(int gmIdx)
+void gmDetach(int gmIdx)
 {
     // NEED REVISIT: shutdown g_QSoundGM when isolateRefs gets to 0
     g_QSoundGM[gmIdx].isolateRefs--;
@@ -650,7 +673,12 @@ size_t mmaudio_get_isolate_mix( void *buffer, size_t length, void* param )
 {
     MQ234_ERROR err;
     int isolateid = (int)param;
-    int gmIdx     = isolateIDtoGM(isolateid);
+    int gmIdx = -1;
+
+    javacall_result res = isolateIDtoGM(isolateid, &gmIdx);
+    
+    JC_MM_ASSERT( JAVACALL_OK == res );
+    
     //long i;
     //long sampleBytes = ( length > ENV_BLOCK_BYTES ) ? ENV_BLOCK_BYTES : length;
     //int  sampleCount = (((int)sampleBytes * 8) / ENV_BITS) / ENV_CHANNELS;   // sc * bitsbytes / bits / nchannels
@@ -677,12 +705,19 @@ size_t mmaudio_get_isolate_mix( void *buffer, size_t length, void* param )
 /*---------------------------------------------------------------------------*/
 
 // NEED REVISIT: need handle to structure for the synth on this isolate.
-int mmaudio_tone_note(long isolateid, long note, long dur, long vol)
+javacall_result mmaudio_tone_note(long isolateid, long note, long dur, long vol)
 {
     unsigned char msg[2];
     unsigned char status;
     int tchnl = 5; // NEED REVISIT: Need to see which channel should actually be used for tones.
-    int gmidx = isolateIDtoGM(isolateid);
+    int gmidx = -1;
+    javacall_result res = isolateIDtoGM( isolateid, &gmidx );
+    
+    if( JAVACALL_NO_AUDIO_DEVICE == res )
+    {
+        gmDetach(gmidx);
+        return res;
+    }
 
     if (vol < 0) {
         vol = 0;
@@ -716,19 +751,29 @@ int mmaudio_tone_note(long isolateid, long note, long dur, long vol)
 
     gmDetach(gmidx);
 
-    return 0;
+    return JAVACALL_OK;
 }
 
 /**
  *
  */
-static javacall_handle audio_qs_create(int appId, int playerId,
+static javacall_result audio_qs_create(int appId, int playerId,
                                        jc_fmt mediaType,
-                                       const javacall_utf16_string URI)
+                                       const javacall_utf16_string URI,
+                                       /* OUT */ javacall_handle *pHandle)
 {
     ah *newHandle = NULL;
     int isolateId = appId;
-    int gmIdx = isolateIDtoGM(isolateId);
+    int gmIdx = -1;
+    javacall_result res = isolateIDtoGM( isolateId, &gmIdx );
+    
+    if( JAVACALL_OK != res )
+    {
+        gmDetach( gmIdx );
+        *pHandle = ( javacall_handle )NULL;
+        return res;
+    }
+    
     JC_MM_DEBUG_PRINT1("audio create %s\n", __FILE__);
     JC_MM_ASSERT(gmIdx>=0);
     switch(mediaType)
@@ -784,7 +829,7 @@ static javacall_handle audio_qs_create(int appId, int playerId,
                 (IControl*)mQ234_PlayControl_getVolumeControl(synth);
 
             newHandle->midi.synth    = synth;
-            
+            newHandle->midi.mtime    = -1;
         }
         break;
 
@@ -836,7 +881,8 @@ static javacall_handle audio_qs_create(int appId, int playerId,
                             mediaType, (int)newHandle, gmIdx);
 
     newHandle->hdr.state = PL135_UNREALIZED;
-    return (javacall_handle)newHandle;
+    *pHandle = (javacall_handle)newHandle;
+    return res;
 }
 
 /**
@@ -1062,6 +1108,10 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                         h->midi.doneCallback);
 
                     r = h->hdr.dataBufferLen;
+
+                    if( -1 != h->midi.mtime ) {
+                        mQ234_PlayControl_SetPosition( h->midi.synth, h->midi.mtime );
+                    }
                 }
 
                 /* NB: r==-1 here may mean that the buffered Tone Sequence
@@ -1135,9 +1185,6 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 h->wav.stream = NULL;
             }
 
-            h->wav.bytesPerMilliSec = (h->wav.rate *
-                h->wav.channels * (h->wav.bits >> 3)) / 1000;
-
             if(h->wav.stream != NULL) {
                 mQ234_EffectModule_addPlayer(
                     g_QSoundGM[gmIdx].EM135, h->wav.stream);
@@ -1146,7 +1193,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
 
             JC_MM_DEBUG_PRINT4( 
                 "wavBuffered: bytes=%d rate=%d channels=%d bits=%d\n",
-                h->wav.streamBufferLen, h->wav.rate,
+                h->wav.playBufferLen, h->wav.rate,
                 h->wav.channels, h->wav.bits);
         break;
 #if( defined( ENABLE_AMR ) && ( defined( AMR_USE_QSOUND ) || defined( AMR_USE_QT )))
@@ -1234,6 +1281,12 @@ static javacall_result audio_qs_release_device(javacall_handle handle){
                 mQ234_EventTrigger_Destroy(h->midi.doneCallback);
                 h->midi.doneCallback = NULL;
             }
+
+            if( h->midi.midiStream != NULL && h->midi.storage != NULL )
+            {
+                h->midi.mtime = mQ234_PlayControl_GetPosition( h->midi.synth );
+            }
+
             if( h->midi.midiStream != NULL )
             {
                 FREE( h->midi.midiStream );
@@ -1533,11 +1586,6 @@ static javacall_result audio_qs_start(javacall_handle handle){
 
     h->hdr.state = PL135_STARTED;
    
-    if (JAVACALL_OK == audio_qs_get_duration(handle, &duration) && 
-            duration != -1) {
-        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DURATION_UPDATED,
-            h->hdr.isolateID, h->hdr.playerID, JAVACALL_OK, (void*)duration);
-    }
     //printf("audio_start...\n");
     switch(h->hdr.mediaType)
     {
@@ -1723,9 +1771,22 @@ static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
         {
-            long pos = mQ234_PlayControl_GetPosition(h->midi.synth);
+            long pos;
+            IRateControl *pRateControl = NULL;
+
+            if( h->midi.midiStream != NULL && h->midi.storage != NULL )
+                pos = mQ234_PlayControl_GetPosition(h->midi.synth);
+            else
+                pos = h->midi.mtime;
 
             if(pos >= 0) *ms =  pos / 10;  // needs to be in millis
+            pRateControl = mQ234_PlayControl_getRateControl( h->midi.synth );
+            if( NULL != pRateControl )
+            {
+                javacall_int64 rate = mQ135_Rate_GetRate( pRateControl );
+                *ms =
+                   ( long )( ( ( javacall_int64 )( *ms ) * rate ) / 100000L );
+            }
         }
         break;
 
@@ -1755,9 +1816,15 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long* ms){
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
         {
-           currtime = mQ234_PlayControl_SetPosition(h->midi.synth, (*ms)*10) != 0 ?
-           mQ234_PlayControl_GetPosition(h->midi.synth)/10 : 0;
-
+            if( h->midi.midiStream != NULL && h->midi.storage != NULL )
+            {
+                currtime = mQ234_PlayControl_SetPosition(h->midi.synth, (*ms)*10) != 0 ?
+                mQ234_PlayControl_GetPosition(h->midi.synth)/10 : 0;
+            }
+            else
+            {
+                currtime = h->midi.mtime = (*ms)*10;
+            }
         }
         break;
 
@@ -1828,7 +1895,7 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
         case JC_FMT_MS_PCM:
         {
             if(h->wav.bytesPerMilliSec != 0 && (h->hdr.dataEnded || h->hdr.dataStopped))
-                *ms = h->wav.playBufferLen / h->wav.bytesPerMilliSec;
+                *ms = h->wav.dataChunkLen / h->wav.bytesPerMilliSec;
         }
         break;
 

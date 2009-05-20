@@ -87,6 +87,8 @@ typedef enum {
     JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED,
     /** Posted when an error had occurred. */
     JAVACALL_EVENT_MEDIA_ERROR,
+    /** Posted when the System Volume level has changed. */
+    JAVACALL_EVENT_MEDIA_SYSTEM_VOLUME_CHANGED,
     /** 
      * All events that should be sent to Java listeners must be defined
      * above this marker.
@@ -161,8 +163,9 @@ typedef enum {
     /** Posted when the blocked set volume finished */
     JAVACALL_EVENT_MEDIA_VOLUME_SET,
     /** Posted when the blocked set mute finished */
-    JAVACALL_EVENT_MEDIA_MUTE_SET
-    
+    JAVACALL_EVENT_MEDIA_MUTE_SET,
+    /** Posted when the blocked encode finished */
+    JAVACALL_EVENT_MEDIA_ENCODE_COMPLETE    
 } javacall_media_notification_type;
 
 /** 
