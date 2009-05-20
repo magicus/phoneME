@@ -47,12 +47,6 @@
 
 #if (ENABLE_CDC == 1)
   #include "jsr120_signals.h"
-#define FIX_ENABLE_JAVACALL_SMS_NOTIFIER 
-
-#ifdef FIX_ENABLE_JAVACALL_SMS_NOTIFIER 
-#define JSR120_EVENT_QUEUE_ID 120
-#endif
-
 #endif
 
 /**
@@ -79,14 +73,19 @@ void javanotify_incoming_sms(
         unsigned short          destPortNum,
         javacall_int64          timeStamp) {
 
-    SmsMessage* sms = jsr120_sms_new_msg(
-        msgType, sourceAddress, sourcePortNum, destPortNum, timeStamp, msgBufferLen, msgBuffer);
-#ifdef FIX_ENABLE_JAVACALL_SMS_NOTIFIER
-    /* Just the event type, no more data is needed. */
-    javacall_event_send_cvm(JSR120_EVENT_QUEUE_ID, (unsigned char*)sms,sizeof(SmsMessage));
-#else
-    jsr120_sms_pool_add_msg(sms);
-#endif
+    if (WMA_OK == jsr120_sms_is_message_expected(destPortNum, sourceAddress)) {
+
+        SmsMessage* sms = jsr120_sms_new_msg(
+            msgType, (unsigned char*)sourceAddress, sourcePortNum, destPortNum, timeStamp, msgBufferLen, msgBuffer);
+
+        DBGPRINTF("jsr120_sms_is_message_expected");
+
+        jsr120_sms_pool_add_msg(sms);
+
+        /* Notify all listeners of the new message. */
+        jsr120_sms_message_arrival_notifier(sms);
+    } 
+
 }
 
 void javanotify_sms_send_completed(

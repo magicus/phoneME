@@ -447,8 +447,9 @@ WMA_STATUS jsr120_sms_unblock_thread(jint handle, jint waitingFor) {
     return jsr120_unblock_sms_read_threads(handle, waitingFor);
 #else
     jsr120_throw_signal(handle, waitingFor);
+    return WMA_OK; 
 #endif
-    return WMA_ERR;
+
 
 }
 
