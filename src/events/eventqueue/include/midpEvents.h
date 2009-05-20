@@ -309,10 +309,10 @@ extern "C" {
 #define MIDP_OUT_OF_MEMORY_HANDLED 80
 
 /**
-* Notification sent by the Brew or brew applets. this event is not handled by MIDP.
+* Notification sent by platform. this event is not handled by MIDP.
 * dispatched by com_sun_midp_events_NativeEventMonitor_waitForNativeEvent
 */
-#define BREW_PLATFORM_EVENT 81
+#define PLATFORM_EVENT 81
 
 /** @} */
 
@@ -320,8 +320,8 @@ extern "C" {
 /**
  * @name Minor event type IDs of PLATFORM_NOTIFICATION_EVENT.
  *
- * Some of JSRs should use this event when receiving the Brew event from other applets or brew platform
- * because CVMmutexLock cannot be called on Brew callback functions directly.
+ * Some of JSRs should use this event when receiving the externel event from platform side
+ * because CVMmutexLock cannot be called on specific callback functions directly.
  * 
  * @{
  */
