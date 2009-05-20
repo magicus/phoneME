@@ -451,8 +451,8 @@ JVMSPI_DebuggerNotification(jboolean is_active) {
  *
  * @param s a string sent to a system specific output stream
  */
-void JVMSPI_PrintRaw(const char* s) {
-    pcsl_print(s);
+void JVMSPI_PrintRaw(const char* s, int length) {
+    pcsl_print_chars(s, length);
 }
 
 /**
