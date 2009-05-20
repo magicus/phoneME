@@ -180,7 +180,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 textOffset = 0;
             }
 
-            int yOffset = height - cg.cgElements[s].imageEl.getHeight();
+            int yOffset = height - 2 - cg.cgElements[s].imageEl.getHeight();
             yOffset = yOffset <= 0 ? 0 : yOffset >> 1;
 
             g.clipRect(textOffset, yOffset,
@@ -204,7 +204,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
         Font font = cg.cgElements[s].getFont();
         
-        int yOffset = height - font.getHeight();
+        int yOffset = height - 2 - font.getHeight();
         yOffset = yOffset <= 0 ? 0 : yOffset >> 1;
 
         g.translate(textOffset, yOffset);
