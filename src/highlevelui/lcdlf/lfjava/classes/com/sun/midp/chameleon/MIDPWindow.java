@@ -492,6 +492,7 @@ public class MIDPWindow extends CWindow {
      * @param mode the mode to be set
      */
     public void setMode(int mode) {
+	screenMode = mode ;
 
 	if (mode == NO_SOFT_BUTTON_MODE){
 	    softButtonMode = mode;
