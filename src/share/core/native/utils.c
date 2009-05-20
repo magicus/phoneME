@@ -28,9 +28,10 @@
 extern "C" {
 #endif/*__cplusplus*/
 
-#ifdef _DEBUG
-
+#include <stddef.h>
 #include <assert.h>
+
+#ifdef _DEBUG
 #include <stdio.h>
 
 #define TRACE_BLOCKING
