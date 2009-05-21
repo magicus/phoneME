@@ -78,7 +78,7 @@ do { \
 
 #define JAVACALL_AMMS_ASYNC_GET_RESULT_returns_data(num_args_,ret_args_)  \
     JAVACALL_MM_ASYNC_RET_DATA_ARG##num_args_ ret_args_ \
-    javacall_amms_get_event_data(handle__, javacall_event__, data__, sizeof args__ / sizeof args__[0], args__); \
+    javacall_amms_get_event_data(handle__, javacall_event__, ctx__->pResult, sizeof args__ / sizeof args__[0], args__); \
 
 #define JAVACALL_AMMS_ASYNC_GET_RESULT_returns_no_data  (void)handle__; /* empty */
 
