@@ -44,19 +44,6 @@
  *        Misha Dmitriev
  */
 
-#ifdef WIN32
-//#include <Windows.h>
-#else
-//#include <sys/time.h>
-//#include <fcntl.h>
-//#include <time.h>
-#endif
-
-#ifdef SOLARIS
-#define _STRUCTURED_PROC 1
-#include <sys/procfs.h>
-#include <unistd.h>
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

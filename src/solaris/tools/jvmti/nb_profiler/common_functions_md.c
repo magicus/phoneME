@@ -44,6 +44,10 @@
  *        Misha Dimitiev
  */
 
+#define _STRUCTURED_PROC 1
+#include <sys/procfs.h>
+#include <unistd.h>
+
 #include "jvmti.h"
 
 #include "common_functions.h"
