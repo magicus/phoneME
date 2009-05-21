@@ -54,6 +54,8 @@ static javacall_media_caps g_caps[] =
 #ifdef ENABLE_MMAPI_DSHOW
     { JAVACALL_MEDIA_FORMAT_RTP_MPA, "audio/X-MP3-draft-00",              0, JAVACALL_MEDIA_MEMORY_PROTOCOL },
     { JAVACALL_MEDIA_FORMAT_FLV,     "video/x-flv",                       0, JAVACALL_MEDIA_MEMORY_PROTOCOL },
+    { JAVACALL_MEDIA_FORMAT_AVI,     "video/avi",                         0, JAVACALL_MEDIA_MEMORY_PROTOCOL },
+    { JAVACALL_MEDIA_FORMAT_MPEG4_HE_AAC, "video/mp4",                    0, JAVACALL_MEDIA_MEMORY_PROTOCOL },
 #endif //ENABLE_MMAPI_DSHOW
     { JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
 #ifdef ENABLE_AMR
@@ -515,6 +517,9 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
+    case JC_FMT_MS_PCM:
+    case JC_FMT_AVI:
+    case JC_FMT_MPEG4_HE_AAC:
         return &g_dshow_itf;
         break;
 #endif // ENABLE_MMAPI_DSHOW
@@ -534,17 +539,19 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MPEG1_LAYER3:
     case JC_FMT_MPEG1_LAYER3_PRO:
     case JC_FMT_VIDEO_3GPP:
+    case JC_FMT_MPEG4_HE_AAC:
 #endif // ENABLE_MMAPI_DSHOW
 
     case JC_FMT_MPEG2_AAC:
-    case JC_FMT_MPEG4_HE_AAC:
         return &g_audio_itf;
 #endif // ENABLE_MMAPI_LIME
 
     case JC_FMT_TONE:
     case JC_FMT_MIDI:
     case JC_FMT_SP_MIDI:
+#ifndef ENABLE_MMAPI_DSHOW
     case JC_FMT_MS_PCM:
+#endif // ENABLE_MMAPI_DSHOW
         return &g_qsound_itf;
 
 #if( defined( ENABLE_AMR ) && !defined( ENABLE_MMAPI_DSHOW ) )
@@ -616,6 +623,11 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
 #if defined( ENABLE_AMR ) || defined( ENABLE_MMAPI_DSHOW )
         { L".amr",  JAVACALL_MEDIA_FORMAT_AMR    },
 #endif // ENABLE_AMR
+
+#ifdef ENABLE_MMAPI_DSHOW
+        { L".avi",  JAVACALL_MEDIA_FORMAT_AVI   },
+        { L".mp4",  JAVACALL_MEDIA_FORMAT_MPEG4_HE_AAC  },
+#endif
 
 #if defined(ENABLE_MMAPI_DSHOW) || defined(ENABLE_MMAPI_LIME)
         { L".mp3",  JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3 },

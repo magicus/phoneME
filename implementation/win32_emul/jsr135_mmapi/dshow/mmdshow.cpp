@@ -369,7 +369,9 @@ static javacall_result dshow_create(int appId,
     p->uri              = NULL;
     p->is_video         = ( JC_FMT_FLV == mediaType || 
                             JC_FMT_MPEG_1 == mediaType || 
-                            JC_FMT_VIDEO_3GPP == mediaType );
+                            JC_FMT_VIDEO_3GPP == mediaType ||
+                            JC_FMT_AVI == mediaType ||
+                            JC_FMT_MPEG4_HE_AAC == mediaType );
 
     p->realizing        = false;
     p->prefetching      = false;
@@ -552,6 +554,9 @@ static javacall_result dshow_realize(javacall_handle handle,
         case JC_FMT_AMR_WB_PLUS:          
                                   mime = (javacall_const_utf16_string)L"audio/amr";  break;
         case JC_FMT_MPEG_1:       mime = (javacall_const_utf16_string)L"video/mpeg"; break;
+        case JC_FMT_MS_PCM:       mime = (javacall_const_utf16_string)L"audio/wav";  break;
+        case JC_FMT_AVI:          mime = (javacall_const_utf16_string)L"video/avi";  break;
+        case JC_FMT_MPEG4_HE_AAC: mime = (javacall_const_utf16_string)L"video/mp4";  break;
         default:
             return JAVACALL_FAIL;
         }
@@ -561,42 +566,36 @@ static javacall_result dshow_realize(javacall_handle handle,
     if( mime_equal( mime, mimeLength, L"audio/mp3"  ) ||
         mime_equal( mime, mimeLength, L"audio/mpeg" ) ||
         mime_equal( mime, mimeLength, L"audio/MPA"  ) ||
-        mime_equal( mime, mimeLength, L"audio/X-MP3-draft-00" ) )
-    {
-        //get_int_param( mime, (javacall_const_utf16_string)L"channels", &(p->channels) );
-        //get_int_param( mime, (javacall_const_utf16_string)L"rate",     &(p->rate)     );
-        get_int_param( mime, (javacall_const_utf16_string)L"duration", &(p->duration) );
-
+        mime_equal( mime, mimeLength, L"audio/X-MP3-draft-00" ) ) {
         p->mediaType = JC_FMT_MPEG1_LAYER3;
         mime = (javacall_const_utf16_string)L"audio/mpeg";
         mimeLength = wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"video/x-vp6" ) ||
              mime_equal( mime, mimeLength, L"video/x-flv" ) ||
-             mime_equal( mime, mimeLength, L"video/x-javafx" ) )
-    {
+             mime_equal( mime, mimeLength, L"video/x-javafx" ) ) {
         p->mediaType = JC_FMT_FLV;
         mime = (javacall_const_utf16_string)L"video/x-flv";
         mimeLength = wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mimeLength, L"video/3gpp" ) )
-    {
+    } else if( mime_equal( mime, mimeLength, L"video/3gpp" ) ) {
         p->mediaType = JC_FMT_VIDEO_3GPP;
-        mime = (javacall_const_utf16_string)L"video/3gpp";
-        mimeLength = wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mimeLength, L"audio/amr" ) )
-    {
+    } else if( mime_equal( mime, mimeLength, L"audio/amr" ) ) {
         p->mediaType = JC_FMT_AMR;
-        mime = (javacall_const_utf16_string)L"audio/amr";
-        mimeLength = wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mimeLength, L"video/mpeg" ) )
-    {
+    } else if( mime_equal( mime, mimeLength, L"video/mpeg" ) ) {
         p->mediaType = JC_FMT_MPEG_1;
-    }
-    else
-    {
+    } else if( mime_equal( mime, mimeLength, L"video/avi" ) ||
+               mime_equal( mime, mimeLength, L"video/x-msvideo" )) {
+        p->mediaType = JC_FMT_AVI;
+        mime = (javacall_const_utf16_string)L"video/avi";
+        mimeLength = wcslen( (const wchar_t*)mime );
+    } else if( mime_equal( mime, mimeLength, L"video/mp4" ) ) {
+        p->mediaType = JC_FMT_MPEG4_HE_AAC;
+    } else if( mime_equal( mime, mimeLength, L"audio/wav" ) ||
+               mime_equal( mime, mimeLength, L"audio/x-wav" ) ) {
+        p->mediaType = JC_FMT_MPEG_1;
+        mime = (javacall_const_utf16_string)L"audio/wav";
+        mimeLength = wcslen( (const wchar_t*)mime );
+    } else {
         p->mediaType = JC_FMT_UNSUPPORTED;
     }
 
