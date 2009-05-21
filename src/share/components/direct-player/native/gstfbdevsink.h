@@ -27,6 +27,8 @@
 
 #include <linux/fb.h>
 
+#define MY_MAX_INT (int)(((unsigned int)-1)/2 - 1)
+
 G_BEGIN_DECLS
 
 #define GST_TYPE_FBDEVSINK \
@@ -59,6 +61,12 @@ struct _GstFBDEVSink {
   unsigned char *framebuffer;
 
   char *device;
+
+  /* clip view params */
+  int clip_x;
+  int clip_y;
+  int clip_width;
+  int clip_height;
 
   int width, height;
   int cx, cy, linelen, lines, bytespp;

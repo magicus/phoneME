@@ -50,6 +50,10 @@ enum
 {
   ARG_0,
   ARG_DEVICE,
+  ARG_CLIP_X,
+  ARG_CLIP_Y,
+  ARG_CLIP_WIDTH,
+  ARG_CLIP_HEIGHT
 };
 
 static void gst_fbdevsink_base_init (gpointer g_class);
@@ -234,6 +238,8 @@ gst_fbdevsink_setcaps (GstBaseSink * bsink, GstCaps * vscapslist)
   if (fbdevsink->lines > fbdevsink->varinfo.yres)
     fbdevsink->lines = fbdevsink->varinfo.yres;
 
+  g_print("Caps: cx=%d cy=%d linelen=%d lines=%d\n",fbdevsink->cx, fbdevsink->cy, fbdevsink->linelen,  fbdevsink->lines);
+  g_print("Clip: x=%d y=%d w=%d h=%d", fbdevsink->clip_x,  fbdevsink->clip_y, fbdevsink->clip_width,  fbdevsink->clip_height);
   return TRUE;
 }
 
@@ -243,21 +249,22 @@ gst_fbdevsink_render (GstBaseSink * bsink, GstBuffer * buf)
 {
 
   GstFBDEVSink *fbdevsink;
-  int i;
+  int i, w, h;
 
   fbdevsink = GST_FBDEVSINK (bsink);
 
   /* optimization could remove this memcpy by allocating the buffer
      in framebuffer memory, but would only work when xres matches
      the video width */
-
-  for (i = 0; i < fbdevsink->lines; i++)
+  h = (fbdevsink->lines > fbdevsink->clip_height) ? fbdevsink->clip_height : fbdevsink->lines;
+  for (i = 0; i < h; i++) {
+    w = (fbdevsink->linelen > fbdevsink->clip_width * fbdevsink->bytespp) ? fbdevsink->clip_width * fbdevsink->bytespp : fbdevsink->linelen;
     memcpy (fbdevsink->framebuffer
-        + (i + fbdevsink->cy) * fbdevsink->fixinfo.line_length
-        + fbdevsink->cx * fbdevsink->bytespp,
+        + (i + fbdevsink->clip_y) * fbdevsink->fixinfo.line_length
+        + fbdevsink->clip_x * fbdevsink->bytespp,
         GST_BUFFER_DATA (buf) + i * fbdevsink->width * fbdevsink->bytespp,
-        fbdevsink->linelen);
-
+        w);
+  }
   return GST_FLOW_OK;
 }
 
@@ -325,6 +332,22 @@ gst_fbdevsink_set_property (GObject * object, guint prop_id,
       fbdevsink->device = g_value_dup_string (value);
       break;
     }
+    case ARG_CLIP_X: {
+      fbdevsink->clip_x = g_value_get_int(value);
+      break;
+    }
+    case ARG_CLIP_Y: {
+      fbdevsink->clip_y = g_value_get_int(value);
+      break;
+    }
+    case ARG_CLIP_WIDTH: {
+      fbdevsink->clip_width = g_value_get_int(value);
+      break;
+    }
+    case ARG_CLIP_HEIGHT: {
+      fbdevsink->clip_height = g_value_get_int(value);
+      break;
+    }
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -343,6 +366,22 @@ gst_fbdevsink_get_property (GObject * object, guint prop_id, GValue * value,
   switch (prop_id) {
     case ARG_DEVICE:{
       g_value_set_string (value, fbdevsink->device);
+      break;
+    }
+    case ARG_CLIP_X:{
+      g_value_set_int (value, fbdevsink->clip_x);
+      break;
+    }
+    case ARG_CLIP_Y:{
+      g_value_set_int (value, fbdevsink->clip_y);
+      break;
+    }
+    case ARG_CLIP_WIDTH:{
+      g_value_set_int (value, fbdevsink->clip_width);
+      break;
+    }
+    case ARG_CLIP_HEIGHT:{
+      g_value_set_int (value, fbdevsink->clip_height);
       break;
     }
     default:
@@ -402,6 +441,18 @@ gst_fbdevsink_class_init (GstFBDEVSinkClass * klass)
   g_object_class_install_property (G_OBJECT_CLASS (klass), ARG_DEVICE,
       g_param_spec_string ("device", "device",
           "The framebuffer device eg: /dev/fb0", NULL, G_PARAM_READWRITE));
+  g_object_class_install_property (G_OBJECT_CLASS (klass), ARG_CLIP_X,
+      g_param_spec_int ("clip_x", "clip_x",
+                        "Screen X offset", 0, G_MAXINT, 0, G_PARAM_READWRITE));
+  g_object_class_install_property (G_OBJECT_CLASS (klass), ARG_CLIP_Y,
+      g_param_spec_int ("clip_y", "clip_y",
+                        "Screen Y offset", 0, G_MAXINT, 0, G_PARAM_READWRITE));
+  g_object_class_install_property (G_OBJECT_CLASS (klass), ARG_CLIP_WIDTH,
+      g_param_spec_int ("clip_width", "clip_width",
+                        "Clip view width", 0, G_MAXINT, G_MAXINT, G_PARAM_READWRITE));
+  g_object_class_install_property (G_OBJECT_CLASS (klass), ARG_CLIP_HEIGHT,
+      g_param_spec_int ("clip_height", "clip_height",
+                        "Clip view height", 0, G_MAXINT, G_MAXINT, G_PARAM_READWRITE));
 
   gstvs_class->set_caps = GST_DEBUG_FUNCPTR (gst_fbdevsink_setcaps);
   gstvs_class->get_caps = GST_DEBUG_FUNCPTR (gst_fbdevsink_getcaps);

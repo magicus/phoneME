@@ -33,9 +33,11 @@
 // lib for g_* functions
 #include <glib.h>
 
+
 typedef struct MPEG2Player {
   GMainLoop *loop;
   GstElement *playbin;
+  GstElement* video_sink;
 } MPEG2Player;
 
 
@@ -69,6 +71,16 @@ bus_call (GstBus     *bus,
     g_main_loop_quit (loop);
     break;
   }
+  case GST_MESSAGE_WARNING: {
+    gchar  *debug;
+    GError *error;
+    
+    gst_message_parse_warning (msg, &error, &debug);
+    g_free (debug);
+    g_print ("Warning: %s\n", error->message);
+    g_error_free (error);
+    break;
+  }
   default:
     g_print("Unprocessed message %s from %s\n", GST_MESSAGE_TYPE_NAME (msg), GST_OBJECT_NAME(GST_MESSAGE_SRC(msg)));
     break;
@@ -77,6 +89,7 @@ bus_call (GstBus     *bus,
   return TRUE;
 }
 
+/** Asynchronous thread to process gstreamer messages */
 static gpointer message_pump(gpointer data) {
   GMainLoop* loop = (GMainLoop*)data;
 
@@ -88,7 +101,7 @@ static gpointer message_pump(gpointer data) {
 
 static MPEG2Player* player_init(char* url){
   GstBus *bus;
-  GstElement *video_sink, *audio_sink;
+  GstElement *audio_sink;
   GError* error;
   MPEG2Player* player = midpMalloc(sizeof(MPEG2Player));
   if(NULL == player) {
@@ -124,14 +137,14 @@ static MPEG2Player* player_init(char* url){
      g_object_set (G_OBJECT (player->playbin), "uri", url, NULL);
 
 #ifdef ARM
-     video_sink = gst_element_factory_make("fbdevsink", "sink");
-     if (!video_sink){
+     player->video_sink = gst_element_factory_make("fbdevsink", "sink");
+     if (!player->video_sink){
        g_printerr("Can't create fbdevsink\n");
        break;
      }
      /* override default video sink */
      g_object_set(G_OBJECT (player->playbin), "video_sink", 
-                  video_sink, NULL);
+                  player->video_sink, NULL);
      //gst_object_unref (video_sink);
 #endif  
 
@@ -189,6 +202,22 @@ static jboolean player_delete(MPEG2Player* player) {
   /* TODO: need to stop message pump? */
   return KNI_TRUE;
 }
+
+static jboolean player_set_clip(MPEG2Player* player,
+                                 jint x, jint y, jint w, jint h) {
+  /* TODO: need to pause? */
+  g_print("Setting video clip: %d, %d, %d, %d \n", x, y, w, h);
+  g_object_set(G_OBJECT (player->video_sink), "clip_height", 
+               h, NULL);
+  g_object_set(G_OBJECT (player->video_sink), "clip_width", 
+               w, NULL);
+  g_object_set(G_OBJECT (player->video_sink), "clip_x", 
+               x, NULL);
+  g_object_set(G_OBJECT (player->video_sink), "clip_y", 
+               y, NULL);
+  return KNI_TRUE;
+}
+
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_MPEG2Player_nCreate) {
   int player = 0;
@@ -228,6 +257,8 @@ KNIDECL(com_sun_mmedia_MPEG2Player_nSetVideoLocation) {
   jint width = KNI_GetParameterAsInt(4);
   jint height = KNI_GetParameterAsInt(5);
   
+  player_set_clip(player, x, y, width, height);
+
   KNI_ReturnBoolean( KNI_TRUE );
 }
 
