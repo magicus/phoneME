@@ -39,7 +39,7 @@ nb_profiler-clean:
 nb_profiler_build_list =
 ifeq ($(CVM_JVMTI), true)
     nb_profiler_build_list = nb_profiler_initbuild \
-                       $(CVM_NB_PROFILER_LIB)
+                       $(CVM_NB_PROFILER_LIB) jfluid_libs
 endif
 
 nb_profiler: $(nb_profiler_build_list)
@@ -89,6 +89,11 @@ else
 	$(call SO_LINK_CMD,$(CVM_JVMTI_LINKLIBS))
 endif
 	@echo "Done Linking $@"
+
+jfluid_libs:
+	@echo copying jfluid libraries
+	$(AT)cp -r $(CVM_NB_PROFILER_SHAREROOT)/profiler $(CVM_LIBDIR)
+	-$(AT)find $(CVM_LIBDIR)/profiler -name .svn -exec rm -rf {} \;
 
 # The following are used to build the .o files needed for $(CVM_NB_PROFILER_OBJECTS):
 
