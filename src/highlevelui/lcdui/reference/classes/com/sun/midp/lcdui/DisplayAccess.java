@@ -165,4 +165,11 @@ public interface DisplayAccess {
      * @return Object[]  List of screen regions that need to be refreshed
      */
     public Object[] getDirtyRegions();
+
+    /**
+     * Checks is the display is foregroud.
+     *
+     * @return true when display is foreground
+     */
+    public boolean isDisplayForeground();
 }

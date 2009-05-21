@@ -3013,6 +3013,15 @@ public class Display {
         }
 
         /**
+         * Checks is the display is foregroud.
+         *
+         * @return true when display is foreground
+         */
+        public boolean isDisplayForeground() {
+            return (wantsForeground == WANTS_FOREGROUND);
+		}
+
+        /**
          * Called to get key mask of all the keys that were pressed.
          * DisplayAccess I/F method.
          *
