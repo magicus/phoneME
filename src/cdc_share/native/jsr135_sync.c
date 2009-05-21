@@ -67,6 +67,7 @@ static init_done = 0;
  * Adds a thread to the list, associating it with the given descriptor.
  *
  * @param desc player descriptor.
+ * @param type type of event: 0 - MMAPI event, 1 - AMMS event
  * @return pointer to the thread with the same descriptor if it already exists
  *     in the list, or to a newly created thread.
  */
