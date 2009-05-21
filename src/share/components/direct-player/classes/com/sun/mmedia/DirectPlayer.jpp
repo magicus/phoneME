@@ -460,7 +460,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     protected long doGetMediaTime() {
         int ret = nGetMediaTime(getOwner().getNativeHandle());
         if (ret != Player.TIME_UNKNOWN) {
-            return (ret * 1000);
+            return ((long)ret * 1000);
         }
         return ret;
     }
@@ -602,7 +602,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         if (ret == -1) {
             throw new MediaException("media time cannot be set");
         }                
-        return (ret * 1000);
+        return ((long)ret * 1000);
     }
     
     /**
@@ -619,7 +619,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         } else {
             int ret = nGetDuration(getOwner().getNativeHandle());
             if (ret != Player.TIME_UNKNOWN) {
-                return (ret * 1000);    
+                return ((long)ret * 1000);    
             }
             return ret;
         }
