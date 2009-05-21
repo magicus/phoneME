@@ -50,7 +50,7 @@ void UnlockAudioMutex() {
  */
 typedef struct _ThreadInfo {
     int desc;
-    int type;
+    AsyncEventType type;
     CVMCondVar cv;
     javacall_result *pStatus;
     void **pData;
@@ -67,11 +67,11 @@ static init_done = 0;
  * Adds a thread to the list, associating it with the given descriptor.
  *
  * @param desc player descriptor.
- * @param type type of event: 0 - MMAPI event, 1 - AMMS event
+ * @param type type of event: MMAPI event or AMMS event
  * @return pointer to the thread with the same descriptor if it already exists
  *     in the list, or to a newly created thread.
  */
-static ThreadInfo * new_thread(int desc, int type) {
+static ThreadInfo * new_thread(int desc, AsyncEventType type) {
     ThreadInfo *ti = head;
     ThreadInfo *prev;
 
@@ -107,12 +107,13 @@ static ThreadInfo * new_thread(int desc, int type) {
  * is non-zero, otherwise the event part is ignored).
  *
  * @param desc player descriptor.
+ * @param type type of event: MMAPI event or AMMS event
  * @param from pointer to the thread preceding the one to start the search from.
  *     If NULL, the search will be started from head, otherwise the search is
  *     started from the next thread in the list.
  * @return pointer to the thread if found, NULL otherwise.
  */
-static ThreadInfo * match_next_thread(int desc, int type, ThreadInfo *prev) {
+static ThreadInfo * match_next_thread(int desc, AsyncEventType type, ThreadInfo *prev) {
     ThreadInfo *ti;
 
     for (ti = (NULL != prev) ? prev->next : head; NULL != ti; ti = ti->next) {
@@ -130,6 +131,7 @@ static ThreadInfo * match_next_thread(int desc, int type, ThreadInfo *prev) {
  * descriptor.
  *
  * @param desc player descriptor.
+ * @param type type of event: MMAPI event or AMMS event
  * @param pStatus pointer to store the operation completion status upon resume
  *            of the thread.
  * @param pData pointer to store the event data upon resume of the thread.
@@ -137,7 +139,7 @@ static ThreadInfo * match_next_thread(int desc, int type, ThreadInfo *prev) {
  *         JAVACALL_FAIL if a thread for this descriptor is already suspended,
  *         JAVACALL_OUT_OF_MEMORY if the thread description cannot be allocated
  */
-javacall_result mmapi_thread_suspend(int desc, int type, javacall_result *pStatus, void **pData) {
+javacall_result mmapi_thread_suspend(int desc, AsyncEventType type, javacall_result *pStatus, void **pData) {
     ThreadInfo *ti;
 
     if (!init_done) {
@@ -181,13 +183,14 @@ javacall_result mmapi_thread_suspend(int desc, int type, javacall_result *pStatu
  *
  * @param desc player descriptor to match. If the event part is equal to zero,
  *            all threads with the current appId and playerId are resumed.
+ * @param type type of event: MMAPI event or AMMS event
  * @param status operation completion status that will be passed to each resumed
  *            thread.
  * @param data arbitrary event data that will be passed to each resumed thread.
  * @return JAVACALL_OK if any thread was resumed,
  *         JAAVCALL_FAIL otherwise
  */
-javacall_result mmapi_thread_resume(int desc, int type, javacall_result status, void *data) {
+javacall_result mmapi_thread_resume(int desc, AsyncEventType type, javacall_result status, void *data) {
     ThreadInfo *ti = NULL;
     javacall_result res = JAVACALL_FAIL;
 
