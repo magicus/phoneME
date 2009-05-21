@@ -30,9 +30,14 @@
 void LockAudioMutex();
 void UnlockAudioMutex();
 
-javacall_result mmapi_thread_suspend(int desc, javacall_result *pStatus,
+typedef enum AsyncEventType_enum {
+    ASYNC_EVENT_MMAPI = 0,
+    ASYNC_EVENT_AMMS
+} AsyncEventType;
+
+javacall_result mmapi_thread_suspend(int desc, AsyncEventType type, javacall_result *pStatus,
     void **pData);
-javacall_result mmapi_thread_resume(int desc, javacall_result status,
+javacall_result mmapi_thread_resume(int desc, AsyncEventType type, javacall_result status,
     void *data);
 
 #endif

@@ -50,6 +50,7 @@ void UnlockAudioMutex() {
  */
 typedef struct _ThreadInfo {
     int desc;
+    AsyncEventType type;
     CVMCondVar cv;
     javacall_result *pStatus;
     void **pData;
@@ -66,10 +67,11 @@ static init_done = 0;
  * Adds a thread to the list, associating it with the given descriptor.
  *
  * @param desc player descriptor.
+ * @param type type of event: MMAPI event or AMMS event
  * @return pointer to the thread with the same descriptor if it already exists
  *     in the list, or to a newly created thread.
  */
-static ThreadInfo * new_thread(int desc) {
+static ThreadInfo * new_thread(int desc, AsyncEventType type) {
     ThreadInfo *ti = head;
     ThreadInfo *prev;
 
@@ -84,6 +86,7 @@ static ThreadInfo * new_thread(int desc) {
         return NULL;
     }
     ti->desc = desc;
+    ti->type = type;
     CVMcondvarInit(&ti->cv, &tMutex);
     ti->pStatus = NULL;
     ti->pData = NULL;
@@ -104,17 +107,19 @@ static ThreadInfo * new_thread(int desc) {
  * is non-zero, otherwise the event part is ignored).
  *
  * @param desc player descriptor.
+ * @param type type of event: MMAPI event or AMMS event
  * @param from pointer to the thread preceding the one to start the search from.
  *     If NULL, the search will be started from head, otherwise the search is
  *     started from the next thread in the list.
  * @return pointer to the thread if found, NULL otherwise.
  */
-static ThreadInfo * match_next_thread(int desc, ThreadInfo *prev) {
+static ThreadInfo * match_next_thread(int desc, AsyncEventType type, ThreadInfo *prev) {
     ThreadInfo *ti;
 
     for (ti = (NULL != prev) ? prev->next : head; NULL != ti; ti = ti->next) {
-        if (ti->desc == desc ||
-            (ti->desc & PLAYER_DESCRIPTOR_EVENT_MASK) == desc) {
+        if (ti->type == type &&
+            (ti->desc == desc ||
+            (ti->desc & PLAYER_DESCRIPTOR_EVENT_MASK) == desc)) {
             return ti;
         }
     }
@@ -126,6 +131,7 @@ static ThreadInfo * match_next_thread(int desc, ThreadInfo *prev) {
  * descriptor.
  *
  * @param desc player descriptor.
+ * @param type type of event: MMAPI event or AMMS event
  * @param pStatus pointer to store the operation completion status upon resume
  *            of the thread.
  * @param pData pointer to store the event data upon resume of the thread.
@@ -133,7 +139,7 @@ static ThreadInfo * match_next_thread(int desc, ThreadInfo *prev) {
  *         JAVACALL_FAIL if a thread for this descriptor is already suspended,
  *         JAVACALL_OUT_OF_MEMORY if the thread description cannot be allocated
  */
-javacall_result mmapi_thread_suspend(int desc, javacall_result *pStatus, void **pData) {
+javacall_result mmapi_thread_suspend(int desc, AsyncEventType type, javacall_result *pStatus, void **pData) {
     ThreadInfo *ti;
 
     if (!init_done) {
@@ -142,7 +148,7 @@ javacall_result mmapi_thread_suspend(int desc, javacall_result *pStatus, void **
     }
 
     CVMmutexLock(&tMutex);
-    ti = new_thread(desc);
+    ti = new_thread(desc, type);
     if (NULL == ti) {
         CVMmutexUnlock(&tMutex);
         return JAVACALL_OUT_OF_MEMORY;
@@ -177,13 +183,14 @@ javacall_result mmapi_thread_suspend(int desc, javacall_result *pStatus, void **
  *
  * @param desc player descriptor to match. If the event part is equal to zero,
  *            all threads with the current appId and playerId are resumed.
+ * @param type type of event: MMAPI event or AMMS event
  * @param status operation completion status that will be passed to each resumed
  *            thread.
  * @param data arbitrary event data that will be passed to each resumed thread.
  * @return JAVACALL_OK if any thread was resumed,
  *         JAAVCALL_FAIL otherwise
  */
-javacall_result mmapi_thread_resume(int desc, javacall_result status, void *data) {
+javacall_result mmapi_thread_resume(int desc, AsyncEventType type, javacall_result status, void *data) {
     ThreadInfo *ti = NULL;
     javacall_result res = JAVACALL_FAIL;
 
@@ -197,7 +204,7 @@ javacall_result mmapi_thread_resume(int desc, javacall_result status, void *data
      * The search of the next matching thread is protected by the mutex, so
      * ThreadInfo data being checked is still valid.
      */
-    while (NULL != (ti = match_next_thread(desc, ti))) {
+    while (NULL != (ti = match_next_thread(desc, type, ti))) {
         if (NULL != ti->pStatus) {
             *ti->pStatus = status;
             *ti->pData = data;
