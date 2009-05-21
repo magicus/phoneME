@@ -590,7 +590,9 @@ CLASSLIB_CLASSES += \
    com.sun.cdc.io.ConnectionBaseInterface \
    com.sun.cdc.i18n.Helper \
    com.sun.cdc.i18n.StreamReader \
-   com.sun.cdc.i18n.StreamWriter
+   com.sun.cdc.i18n.StreamWriter \
+   com.sun.orientation.OrientationHandler \
+   com.sun.orientation.OrientationListener
 
 ifeq ($(USE_CDC_FILE_PROTOCOL), true)
 CLASSLIB_CLASSES += \
