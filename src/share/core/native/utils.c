@@ -39,7 +39,7 @@ extern "C" {
 
 #include <sni.h>
 
-#include <midpServices.h>
+#include <midpservices.h>
 
 #include "jsr211_constants.h"
 
@@ -114,7 +114,9 @@ static void * ftProcessor(const JVMSPI_BlockedThreadInfo * p, void * data) {
 }
 
 const JVMSPI_BlockedThreadInfo * findThread( jsr211_wait_status status, int blockID ) {
-    struct ftData data = { status, blockID };
+    struct ftData data; // = { status, blockID };
+    data.m_status = status;
+    data.m_blockID = blockID;
     assert( blockID != 0 );
     return( (JVMSPI_BlockedThreadInfo *)enumWaitingThreads( ftFilter, ftProcessor, &data ) );
 }
@@ -156,7 +158,10 @@ static void * uwtProcessor(const JVMSPI_BlockedThreadInfo * ti, void * data) {
  *
  */
 void unblockWaitingThreads( jsr211_wait_status status, int blockID, jsr211_wait_status newStatus ) {
-    struct uwtData data = { { status, blockID }, newStatus };
+    struct uwtData data; // = { { status, blockID }, newStatus };
+    data.ft.m_status = status;
+    data.ft.m_blockID = blockID;
+    data.m_newStatus = newStatus;
     enumWaitingThreads( uwtFilter, uwtProcessor, &data );
 }
 
