@@ -49,7 +49,7 @@ SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES += \
     $(GENERATED_DIR)/classes/com/sun/midp/chameleon/keyboards/Keyboards.java \
     $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/chameleon/input/VirtualKeyboardInputMode.java \
     $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/lcdui/Key.java \
-    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/lcdui/NativeVirtualKeyboard.java \
+    $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/lcdui/NativeVirtualKeyboard.java \
     $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboard.java \
     $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboardListener.java
 
