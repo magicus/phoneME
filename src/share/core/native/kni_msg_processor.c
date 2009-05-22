@@ -32,7 +32,7 @@
 #endif
 
 #include <assert.h>
-#include <memory.h>
+#include <string.h>
 
 #include <jsrop_kni.h>
 #include <midpServices.h>
