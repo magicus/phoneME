@@ -151,4 +151,5 @@ abstract class LowLevelPlayer {
 
     protected abstract String doGetContentType();
 
+    protected abstract void doSetSystemVolume(int level);
 }
