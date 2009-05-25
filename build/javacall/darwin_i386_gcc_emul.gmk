@@ -51,6 +51,10 @@ EXTRA_LIBS +=
 
 GCC_LIBS = -lpthread -lm
 
+# don't omit frame pointer on darwin
+# if used the compiler produces incorrect code
+GCC_OMIT_FRAME_POINTER = 
+
 LINKER_OUTPUT = -o # one space after -o included intentionally
 LD_START_GROUP =
 LD_END_GROUP =
