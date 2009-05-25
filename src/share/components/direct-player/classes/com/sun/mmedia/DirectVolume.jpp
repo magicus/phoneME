@@ -27,13 +27,17 @@ package com.sun.mmedia;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
+import com.sun.mmedia.control.*;
 import javax.microedition.media.*;
 import javax.microedition.media.control.*;
+// #ifdef ENABLE_CDC [
+import java.security.*;
+// #endif ]
 
 /**
  * Native volume control implementation
  */
-public class DirectVolume implements VolumeControl {
+class DirectVolume {
 
     // VolumeControl functions
     protected native int nGetVolume(int hNative);
@@ -42,18 +46,77 @@ public class DirectVolume implements VolumeControl {
     protected native boolean nSetMute(int hNative, boolean mute);
     protected native int nGetSystemVolume();
 
-    private int _level = 100;
-    private int _mute = -1;
-    private int _hNative;
-    private HighLevelPlayer _player;
-    private int _systemLevel = -1;
+    protected int _level = 100;
+    protected int _mute = -1;
+    protected int _hNative;
+    protected HighLevelPlayer _player;
+    protected int _systemLevel = -1;
+    private VolumeControl volumeControl = null;
+    private static boolean tryCustomClass = true;
 
-    DirectVolume(HighLevelPlayer player, int hNative) {
+    protected DirectVolume() {} // protect from improper instantiation
+    
+    private void init(HighLevelPlayer player, int hNative) {
         _player = player;
         _hNative = hNative;
         if (_hNative != 0) {
             _systemLevel = nGetSystemVolume();
         }
+    }
+    
+    static DirectVolume newDirectVolume(HighLevelPlayer player, int hNative) {
+        DirectVolume control = null;
+        if (!tryCustomClass) {
+            control = new DirectVolume();
+        } else {
+            String className = 
+// #ifdef ENABLE_CDC [
+            (String) AccessController.doPrivileged(new PrivilegedAction() {
+                    public Object run() {
+                        return
+// #endif ]
+            System.getProperty("mmapi-control.VolumeControl");
+// #ifdef ENABLE_CDC [
+                    }
+                });
+// #endif ]
+
+            if (className != null) {
+                try {
+                    // ... try and instantiate the class ...
+                    Class handlerClass = Class.forName(className);
+                    control = (DirectVolume) handlerClass.newInstance();
+                } catch (Exception e) {
+                    // do nothing
+                }
+            }
+            if (control == null) {
+                control = new DirectVolume();
+                tryCustomClass = false;
+            }
+        }
+        control.init(player, hNative);
+        return control;
+    }
+    
+    VolumeControl getVolumeControl() {
+        if (volumeControl == null) {
+            volumeControl = new VolumeControl() {
+                public int getLevel() {
+                    return getLevelImpl();
+                }
+                public int setLevel(int level) {
+                    return setLevelImpl(level);
+                }
+                public boolean isMuted() {
+                    return isMutedImpl();
+                }
+                public void setMute(boolean mute) {
+                    setMuteImpl(mute);
+                }
+            };
+        }
+        return volumeControl;
     }
     
     void setToThisPlayerLevel() {
@@ -85,14 +148,14 @@ public class DirectVolume implements VolumeControl {
         }
     }
 
-    public int getLevel() {
+    int getLevelImpl() {
         if (_hNative != 0 && _level == -1) {
             _level = nGetVolume(_hNative);
         }
         return _level;
     }
 
-    public int setLevel(int level) {
+    int setLevelImpl(int level) {
         if (level < 0) {
             if (Logging.REPORT_LEVEL <= Logging.ERROR) {
                 Logging.report(Logging.ERROR, LogChannels.LC_MMAPI, 
@@ -124,12 +187,12 @@ public class DirectVolume implements VolumeControl {
         }
 
         _level = level;
-        _player.sendEvent(PlayerListener.VOLUME_CHANGED, this);
+        _player.sendEvent(PlayerListener.VOLUME_CHANGED, getVolumeControl());
         
         return _level;
     }
 
-    public boolean isMuted() {
+    boolean isMutedImpl() {
         if (_hNative == 0 || _mute != -1)
             return (_mute == 1);
         if (nIsMuted(_hNative)) {
@@ -141,7 +204,7 @@ public class DirectVolume implements VolumeControl {
         }
     }
 
-    public void setMute(boolean mute) {
+    void setMuteImpl(boolean mute) {
         if (_hNative != 0) {
             nSetMute(_hNative, mute);
         }

@@ -697,9 +697,9 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         } else if (shortType.equals(HighLevelPlayer.vocName)) {
             if (nIsVolumeControlSupported(hNative)) {
                 if (dVolumeControl == null) {
-                    dVolumeControl = new DirectVolume( getOwner(), hNative);
+                    dVolumeControl = DirectVolume.newDirectVolume(getOwner(), hNative);
                 }
-                c = dVolumeControl;
+                c = dVolumeControl.getVolumeControl();
             }
         }
 
@@ -784,6 +784,12 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         }
 
         return ctype;
+    }
+
+    protected void doNotifySystemVolumeChanged(int level) {
+        if (dVolumeControl != null) {
+            dVolumeControl.setSystemVolume(level);
+        }
     }
     
     private boolean isVideoPlayer()
