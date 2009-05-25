@@ -39,7 +39,7 @@ nb_profiler-clean:
 nb_profiler_build_list =
 ifeq ($(CVM_JVMTI), true)
     nb_profiler_build_list = nb_profiler_initbuild \
-                       $(CVM_NB_PROFILER_LIB) jfluid_libs
+                       $(CVM_NB_PROFILER_LIB) profiler_module jfluid_libs
 endif
 
 nb_profiler: $(nb_profiler_build_list)
@@ -90,10 +90,27 @@ else
 endif
 	@echo "Done Linking $@"
 
-jfluid_libs:
+profiler_module:
+ifneq ($(STATIC_APP),true)
+	@echo copying profiler patched modules
+	-$(AT)rm -rf $(CVM_LIBDIR)/profiler/modules
+	-$(AT)mkdir -p $(CVM_LIBDIR)/profiler/modules
+	$(AT)cp -r $(CVM_NB_PROFILER_SHAREROOT)/modules $(CVM_LIBDIR)/profiler
+	-$(AT)find $(CVM_LIBDIR)/profiler/modules -depth -name .svn -exec rm -rf {} \;
+endif
+
+jfluid_libs: $(CVM_LIBDIR)/profiler/lib/jfluid-server.jar $(CVM_LIBDIR)/profiler/lib/jfluid-server-cvm.jar
+
+$(CVM_LIBDIR)/profiler/lib/jfluid-%.jar: $(CVM_NB_PROFILER_SHAREROOT)/profiler/lib/jfluid-%.jar
 	@echo copying jfluid libraries
-	$(AT)cp -r $(CVM_NB_PROFILER_SHAREROOT)/profiler $(CVM_LIBDIR)
-	-$(AT)find $(CVM_LIBDIR)/profiler -name .svn -exec rm -rf {} \;
+	-$(AT)rm -rf $(CVM_LIBDIR)/profiler/lib
+	-$(AT)mkdir -p $(CVM_LIBDIR)/profiler/lib/deployed/cvm/cvmoem
+	$(AT)cp -r $(CVM_NB_PROFILER_SHAREROOT)/profiler/lib/deployed $(CVM_LIBDIR)/profiler/lib
+	$(AT)cp $< $(CVM_LIBDIR)/profiler/lib
+	-$(AT)find $(CVM_LIBDIR)/profiler -depth -name .svn -exec rm -rf {} \;
+	$(AT)unzip -l $@ | fgrep server | awk '{print $$4}' | sed -e 's|/|.|g' | sed -e 's|.class||' >MIDPPermittedClasses.txt
+	$(AT)jar uf $@ MIDPPermittedClasses.txt
+	$(AT)-rm -f MIDPPermittedClasses.txt
 
 # The following are used to build the .o files needed for $(CVM_NB_PROFILER_OBJECTS):
 

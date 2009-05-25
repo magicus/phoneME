@@ -98,10 +98,11 @@ void initializeJVMTI(JavaVM *jvm) {
     capas.can_get_current_thread_cpu_time = 1;
     capas.can_generate_vm_object_alloc_events = 1;
     err = (*_jvmti)->AddCapabilities(_jvmti, &capas);
+#if 0
     if (err != JVMTI_ERROR_NONE) {
         fprintf(stderr, "Profiler Agent Error: Failed to obtain JVMTI capabilities, error code: %d\n", err);
     }
-
+#endif
     /* Zero out the callbacks data structure for future use*/
     _jvmti_callbacks = &_jvmti_callbacks_static;
     memset(_jvmti_callbacks, 0, sizeof(jvmtiEventCallbacks));

@@ -271,7 +271,7 @@ void get_saved_class_file_bytes(JNIEnv *env, char *name, jobject loader, jint *c
     }
   
     if (_ctable_classnames[pos] == NULL) {
-        printf("Profiler Agent Warning: Failed to lookup cached class %s\n", name);
+        //        printf("Profiler Agent Warning: Failed to lookup cached class %s\n", name);
         *class_data_len = 0;
         *class_data = NULL;
         (*env)->MonitorExit(env, _ctable_lock);
