@@ -38,6 +38,9 @@
 #include <stdint.h>
 
 #include "gstfbdevsink.h"
+#include "gst/gstmessage.h"
+#include "gst/gstplugin.h"
+#include "gst/base/gstbasesink.h"
 
 /* elementfactory information */
 static const GstElementDetails gst_fbdevsink_details =
@@ -139,6 +142,7 @@ swapendian (uint32_t val)
 static GstCaps *
 gst_fbdevsink_getcaps (GstBaseSink * bsink)
 {
+  g_print("Requesting CAPS\n");
   GstFBDEVSink *fbdevsink;
   GstCaps *caps;
   uint32_t rmask;
@@ -408,13 +412,16 @@ gst_fbdevsink_change_state (GstElement * element, GstStateChange transition)
   return ret;
 }
 
-static gboolean
+gboolean
 plugin_init (GstPlugin * plugin)
 {
-  if (!gst_element_register (plugin, "fbdevsink", GST_RANK_NONE,
-          GST_TYPE_FBDEVSINK))
+  g_print("Registering dbfevsink_mod: ");
+  if (!gst_element_register (plugin, "fbdevsink_mod", GST_RANK_NONE,
+                             GST_TYPE_FBDEVSINK)) {
+    g_printerr("FAIL\n");
     return FALSE;
-
+  }
+  g_print("OK\n");
   return TRUE;
 }
 
@@ -493,14 +500,8 @@ gst_fbdevsink_get_type (void)
     };
 
     fbdevsink_type =
-        g_type_register_static (GST_TYPE_BASE_SINK, "GstFBDEVSink",
+        g_type_register_static (GST_TYPE_BASE_SINK, "GstFBDEVSink-mod",
         &fbdevsink_info, 0);
   }
   return fbdevsink_type;
 }
-
-GST_PLUGIN_DEFINE (GST_VERSION_MAJOR,
-    GST_VERSION_MINOR,
-    "fbdevsink",
-    "linux framebuffer video sink",
-    plugin_init, VERSION, GST_LICENSE, GST_PACKAGE_NAME, GST_PACKAGE_ORIGIN)

@@ -27,7 +27,6 @@
 
 #include <linux/fb.h>
 
-#define MY_MAX_INT (int)(((unsigned int)-1)/2 - 1)
 
 G_BEGIN_DECLS
 
@@ -80,6 +79,7 @@ struct _GstFBDEVSinkClass {
 };
 
 GType gst_fbdevsink_get_type(void);
+gboolean plugin_init (GstPlugin * plugin);
 
 G_END_DECLS
 

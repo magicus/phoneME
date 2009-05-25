@@ -33,6 +33,10 @@
 // lib for g_* functions
 #include <glib.h>
 
+#include <gst/gstmessage.h>
+#include <gst/gsttaglist.h>
+
+#include "gstfbdevsink.h"
 
 typedef struct MPEG2Player {
   GMainLoop *loop;
@@ -57,7 +61,14 @@ bus_call (GstBus     *bus,
     g_print ("End of stream\n");
     g_main_loop_quit (loop);
     break;
-
+  case GST_MESSAGE_TAG: {
+    GstTagList* tag_list;
+    g_print("Tag received ");
+    gst_message_parse_tag(msg, &tag_list);
+    
+    gst_tag_list_free(tag_list);
+    break;
+  }
   case GST_MESSAGE_ERROR: {
     gchar  *debug;
     GError *error;
@@ -119,6 +130,23 @@ static MPEG2Player* player_init(char* url){
      if (!g_thread_supported ()) {
        g_thread_init (NULL);
      }
+     
+     g_print("Registering sink: ");
+     if (!gst_plugin_register_static(GST_VERSION_MAJOR,
+                                     GST_VERSION_MINOR,
+                                     "fbdevsink_mod",
+                                     "linux framebuffer video sink",
+                                     plugin_init, 
+                                     "1.0", 
+                                     "LGPL", 
+                                     "fucking source WTF?",
+                                     "fbdevsink modified", 
+                                     "gstreamer")) {
+       g_printerr("FAIL\n");
+     }
+     g_print("OK\n");
+
+
 
      /* TODO:  need to check how to share one loop between different players */
      if (!(player->loop = g_main_loop_new (NULL, FALSE))){
@@ -137,7 +165,7 @@ static MPEG2Player* player_init(char* url){
      g_object_set (G_OBJECT (player->playbin), "uri", url, NULL);
 
 #ifdef ARM
-     player->video_sink = gst_element_factory_make("fbdevsink", "sink");
+     player->video_sink = gst_element_factory_make("fbdevsink_mod", "sink");
      if (!player->video_sink){
        g_printerr("Can't create fbdevsink\n");
        break;
@@ -180,6 +208,7 @@ static MPEG2Player* player_init(char* url){
 
   g_print ("Error occured. Deleting pipeline\n");
   gst_object_unref (GST_OBJECT (player->playbin));
+  /* TODO: delete all created objects */
   return NULL;
 }
 
@@ -199,6 +228,7 @@ static jboolean player_delete(MPEG2Player* player) {
   g_print("Delete player\n");
   gst_object_unref (GST_OBJECT (player->playbin));  
   player->playbin = NULL;
+  midpFree(player);
   /* TODO: need to stop message pump? */
   return KNI_TRUE;
 }
@@ -261,4 +291,6 @@ KNIDECL(com_sun_mmedia_MPEG2Player_nSetVideoLocation) {
 
   KNI_ReturnBoolean( KNI_TRUE );
 }
+
+
 
