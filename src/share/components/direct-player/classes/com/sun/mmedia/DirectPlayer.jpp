@@ -786,7 +786,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         return ctype;
     }
 
-    protected void doSetSystemVolume(int level) {
+    protected void doNotifySystemVolumeChanged(int level) {
         if (dVolumeControl != null) {
             dVolumeControl.setSystemVolume(level);
         }

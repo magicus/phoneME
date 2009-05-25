@@ -445,8 +445,6 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
     
     protected void doNotifySnapshotFinished() {}
 
-    protected void doSetSystemVolume(int level) {}
-
     /**
      * The run method driving the play thread.
      */

@@ -1535,7 +1535,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                         /* Send event to player if this player is in realized state (or above) */
                         int state = p.getState();
                         if (state >= Player.REALIZED && p.lowLevelPlayer != null) {
-                            p.lowLevelPlayer.doSetSystemVolume(systemVolume);
+                            p.lowLevelPlayer.doNotifySystemVolumeChanged(systemVolume);
                         }
                     }
                     synchronized (this) {

@@ -151,5 +151,12 @@ abstract class LowLevelPlayer {
 
     protected abstract String doGetContentType();
 
-    protected abstract void doSetSystemVolume(int level);
+    /**
+     * HighLevelPlayer invokes this method when the system volume
+     * level is changing. If the subclass' player can produce sound
+     * it must override this method.
+     *
+     * @param level new system volume level
+     */
+    protected void doNotifySystemVolumeChanged(int level) {}
 }
