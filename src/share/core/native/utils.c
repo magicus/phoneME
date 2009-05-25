@@ -39,7 +39,7 @@ extern "C" {
 
 #include <sni.h>
 
-#include <midpservices.h>
+#include <midpServices.h>
 
 #include "jsr211_constants.h"
 

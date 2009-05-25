@@ -191,7 +191,7 @@ javacall_result javanotify_chapi_process_msg_request( int queueID, int dataExcha
 // int waitForRequest(); returns queueId
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_j2me_content_NativeMessageReceiver_waitForRequest) {
-#ifdef TRACE_BLOCKING
+#ifdef TRACE_MSGEXCHANGE
     printf( "waitForRequest: head = %p\n", s_head );
 #endif
     if( s_head != NULL ){
@@ -224,6 +224,9 @@ KNIDECL(com_sun_j2me_content_NativeMessageReceiver_nextRequest) {
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_j2me_content_NativeMessageReceiver_getRequestMsgCode) {
     assert( s_head != NULL );
+#ifdef TRACE_MSGEXCHANGE
+    printf( "getRequestMsgCode: msg = %d\n", s_head->m_msg );
+#endif
     KNI_ReturnInt( s_head->m_msg );
 }
 
@@ -231,6 +234,9 @@ KNIDECL(com_sun_j2me_content_NativeMessageReceiver_getRequestMsgCode) {
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_j2me_content_NativeMessageReceiver_getRequestId) {
     assert( s_head != NULL );
+#ifdef TRACE_MSGEXCHANGE
+    printf( "getRequestId: id = %d\n", s_head->m_requestID );
+#endif
     KNI_ReturnInt( s_head->m_requestID );
 }
 
@@ -240,6 +246,9 @@ KNIDECL(com_sun_j2me_content_NativeMessageReceiver_getRequestBytes) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(data);
     assert( s_head != NULL );
+#ifdef TRACE_MSGEXCHANGE
+    printf( "getRequestBytes: count = %d\n", s_head->m_count );
+#endif
     SNI_NewArray( SNI_BYTE_ARRAY, s_head->m_count, data );
     if( KNI_IsNullHandle(data) ){
         KNI_ThrowNew(jsropOutOfMemoryError, "");
@@ -255,6 +264,9 @@ KNIDECL(com_sun_j2me_content_NativeMessageReceiver_postResponse) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(data);
     KNI_GetParameterAsObject(2, data);
+#ifdef TRACE_MSGEXCHANGE
+    printf( "postResponse: data = %p\n", data );
+#endif
     if( KNI_IsNullHandle(data) ){
         javacall_chapi_send_response( KNI_GetParameterAsInt(1), NULL, 0 );
     } else {
