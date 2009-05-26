@@ -72,7 +72,10 @@ public final class PermissionAccessor {
         "file://",
         "http://",
         "https://",
-        "rtsp://"
+        "rtsp://",
+        "cdma-http://",
+        "cdma-https://",
+        "cdma-rtsp://"
     };
     
     // inidicates that corresponding locator type needs no special permissions.
@@ -88,7 +91,10 @@ public final class PermissionAccessor {
         /* "file://"         */ PERMISSION_FILE_READ,
         /* "http://"         */ PERMISSION_HTTP_READ,
         /* "https://"        */ PERMISSION_HTTPS_READ,
-        /* "rtsp://"         */ PERMISSION_HTTP_READ // IMPL_NOTE: should become PERMISSION_RTSP_READ as soon as new spec allows it
+        /* "rtsp://"         */ PERMISSION_HTTP_READ, // IMPL_NOTE: should become PERMISSION_RTSP_READ as soon as new spec allows it
+        /* "cdma-http://"    */ PERMISSION_HTTP_READ,
+        /* "cdma-https://"   */ PERMISSION_HTTPS_READ,
+        /* "cdma-rtsp://"    */ PERMISSION_HTTP_READ // IMPL_NOTE: should become PERMISSION_RTSP_READ as soon as new spec allows it
     };
     
     /**

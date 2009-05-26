@@ -65,7 +65,9 @@ public class DefaultConfiguration extends Configuration {
                                                                  "rtsp",
                                                                  // #endif ]
                                                                  "http",
-                                                                 "https"
+                                                                 "cdma-http",
+                                                                 "https",
+                                                                 "cdma-https"
                                                                };
 
     private static boolean isJavaProtocol(String protocol) {
@@ -90,7 +92,7 @@ public class DefaultConfiguration extends Configuration {
         return false;
     }
 
-    private final static String[] RTP_PROTOCOLS = new String[] { "rtp", "rtsp" };
+    private final static String[] RTP_PROTOCOLS = new String[] { "rtp", "rtsp", "cdma-rtsp" };
 
     private static boolean isRtpProtocol(String protocol) {
         for (int i = 0; i < RTP_PROTOCOLS.length; i++) {
@@ -140,7 +142,9 @@ public class DefaultConfiguration extends Configuration {
 
         // Protocol handlers.
         protocolHandlers.put("http", "com.sun.mmedia.protocol.CommonDS");
+        protocolHandlers.put("cdma-http", "com.sun.mmedia.protocol.CommonDS");
         protocolHandlers.put("https", "com.sun.mmedia.protocol.CommonDS");
+        protocolHandlers.put("cdma-https", "com.sun.mmedia.protocol.CommonDS");
 
         // #ifdef USE_FILE_CONNECTION [
         protocolHandlers.put("file", "com.sun.mmedia.protocol.CommonDS");
@@ -151,6 +155,7 @@ public class DefaultConfiguration extends Configuration {
         // protocolHandlers.put( "rtp", "com.sun.mmedia.protocol.CommonDS" );
         // #else ] [
         protocolHandlers.put("rtsp", "com.sun.mmedia.protocol.CommonDS");
+        protocolHandlers.put("cdma-rtsp", "com.sun.mmedia.protocol.CommonDS");
         protocolHandlers.put("rtp", "com.sun.mmedia.protocol.CommonDS");
         // #endif ]
 

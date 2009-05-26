@@ -47,9 +47,12 @@ static struct _protocolNames {
     {JAVACALL_MEDIA_FILE_LOCAL_PROTOCOL, "file"},
     {JAVACALL_MEDIA_FILE_REMOTE_PROTOCOL,"file"},
     {JAVACALL_MEDIA_HTTP_PROTOCOL,       "http"},
+    {JAVACALL_MEDIA_HTTP_PROTOCOL,       "cdma-http"},
     {JAVACALL_MEDIA_HTTPS_PROTOCOL,      "https"},
+    {JAVACALL_MEDIA_HTTPS_PROTOCOL,      "cdma-https"},
     {JAVACALL_MEDIA_RTP_PROTOCOL,        "rtp"},
     {JAVACALL_MEDIA_RTSP_PROTOCOL,       "rtsp"},
+    {JAVACALL_MEDIA_RTSP_PROTOCOL,       "cdma-rtsp"},
     {JAVACALL_MEDIA_CAPTURE_PROTOCOL,    "capture"}
 };
 

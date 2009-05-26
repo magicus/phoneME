@@ -107,7 +107,8 @@ public class CommonDS extends BasicDS implements SourceStream {
 
         try {
             String locStr = locator.toLowerCase();
-            if (locStr.startsWith("http:") || locStr.startsWith("https:")) {
+            if (locStr.startsWith("http:") || locStr.startsWith("https:")
+                || locStr.startsWith("cdma-http:") || locStr.startsWith("cdma-https:")) {
                 HttpConnection httpCon = 
                     (HttpConnection)Connector.open(locator);
                 int rescode = httpCon.getResponseCode();
@@ -158,7 +159,7 @@ public class CommonDS extends BasicDS implements SourceStream {
                 inputStream = null;
                 contentLength = -1;
                 goodurl = true;
-            } else if (locator.startsWith("rtsp:")) {
+            } else if (locator.startsWith("rtsp:") || locator.startsWith("cdma-rtsp:")) {
                 System.out.println( "*** CommonDS::getConnection() -- RTSP!!!" );
                 //if( "unknown".equals( contentType ) ) {
                     contentType = "application/sdp";
