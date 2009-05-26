@@ -109,7 +109,7 @@ $(CVM_LIBDIR)/profiler/lib/jfluid-%.jar: $(CVM_NB_PROFILER_SHAREROOT)/profiler/l
 	$(AT)cp $< $(CVM_LIBDIR)/profiler/lib
 	-$(AT)find $(CVM_LIBDIR)/profiler -depth -name .svn -exec rm -rf {} \;
 	$(AT)unzip -l $@ | fgrep server | awk '{print $$4}' | sed -e 's|/|.|g' | sed -e 's|.class||' >MIDPPermittedClasses.txt
-	$(AT)jar uf $@ MIDPPermittedClasses.txt
+	$(AT)$(CVM_JAR) uf $@ MIDPPermittedClasses.txt
 	$(AT)-rm -f MIDPPermittedClasses.txt
 
 # The following are used to build the .o files needed for $(CVM_NB_PROFILER_OBJECTS):
