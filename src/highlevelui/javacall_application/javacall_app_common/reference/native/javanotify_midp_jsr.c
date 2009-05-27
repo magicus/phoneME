@@ -1125,7 +1125,8 @@ void javanotify_fluid_handle_event_request (javacall_handle  request_handle) {
 
 void
 javanotify_fluid_display_box (
-    javacall_handle                       fluid_image
+    javacall_handle                       fluid_image,
+    javacall_const_utf16_string           message
     ) {
 
     midp_jc_event_union e;
