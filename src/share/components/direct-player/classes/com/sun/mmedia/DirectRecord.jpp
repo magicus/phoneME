@@ -122,16 +122,18 @@ public final class DirectRecord implements RecordControl, DirectControls {
         } else if (0 == ret) {
 
             // #ifdef USE_FILE_CONNECTION [
-            if (!(locator.startsWith("file:") || locator.startsWith("http:") || locator.startsWith("https:"))) {
+            if (!(locator.startsWith("file:") || locator.startsWith("http:") || locator.startsWith("https:")
+                || locator.startsWith("cdma-http:") || locator.startsWith("cdma-https:"))) {
                 throw new MediaException("Unsupported protocol");
             }
             // #else ][
-            if (!(locator.startsWith("http:") || locator.startsWith("https:"))) {
+            if (!(locator.startsWith("http:") || locator.startsWith("https:")
+                || locator.startsWith("cdma-http:") || locator.startsWith("cdma-https:"))) {
                 throw new MediaException("Unsupported protocol");
             }
             // #endif
         
-            if (locator.startsWith("http:")) {
+            if (locator.startsWith("http:") || locator.startsWith("cdma-http:")) {
         	    try {
         	        httpCon = (HttpConnection)Connector.open(locator);
         	    } catch (IllegalArgumentException e) {
@@ -144,7 +146,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
 
         	    stream = httpCon.openOutputStream();
                     extStream = false;
-            } else if (locator.startsWith("https:")) {
+            } else if (locator.startsWith("https:") || locator.startsWith("cdma-https:")) {
         	    try {
         	        httpsCon = (HttpsConnection)Connector.open(locator);
         	    } catch (IllegalArgumentException e) {
