@@ -103,9 +103,7 @@ jfluid_libs: $(CVM_LIBDIR)/profiler/lib/jfluid-server.jar $(CVM_LIBDIR)/profiler
 
 $(CVM_LIBDIR)/profiler/lib/jfluid-%.jar: $(CVM_NB_PROFILER_SHAREROOT)/profiler/lib/jfluid-%.jar
 	@echo copying jfluid libraries
-	-$(AT)rm -rf $(CVM_LIBDIR)/profiler/lib
-	-$(AT)mkdir -p $(CVM_LIBDIR)/profiler/lib/deployed/cvm/cvmoem
-	$(AT)cp -r $(CVM_NB_PROFILER_SHAREROOT)/profiler/lib/deployed $(CVM_LIBDIR)/profiler/lib
+	-$(AT)mkdir -p $(CVM_LIBDIR)/profiler/lib
 	$(AT)cp $< $(CVM_LIBDIR)/profiler/lib
 	-$(AT)find $(CVM_LIBDIR)/profiler -depth -name .svn -exec rm -rf {} \;
 	$(AT)unzip -l $@ | fgrep server | awk '{print $$4}' | sed -e 's|/|.|g' | sed -e 's|.class||' >MIDPPermittedClasses.txt
