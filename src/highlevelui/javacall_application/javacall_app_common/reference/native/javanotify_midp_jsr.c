@@ -1057,6 +1057,20 @@ javanotify_fluid_listener_warning (
 }
 
 void
+javanotify_fluid_listener_document_available (
+    javacall_handle                       fluid_image,
+    javacall_handle                       document
+    ) {
+	midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_DOCUMENT_AVAILABLE;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.spare = document;
+
+    midp_jc_event_send(&e);
+}
+
+void
 javanotify_fluid_request_resource (
     javacall_handle                       fluid_image,
     javacall_handle                       request,
