@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!-- 
+Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation. 
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt). 
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA 
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions. 
+-->
+
+<project name="Build source bundle" basedir=".">
+    
+    <!--
+    
+     SOURCE_OUTPUT_DIR needs to be defined as the destination 
+        directory where the sources are expanded.  This build
+        will fail if it is not defined.
+              
+     Property keys used in this build:
+     
+       Property: jump.src-bundle.dir
+       Desc.:    The directory to place the source bundle file.
+       Default:  dist/src-bundle
+           
+       Property: jump.src-bundle.name   
+       Desc.:    The name of the source bundle file
+       Default:  src.zip
+       Note:     The src-bundle file is immediately removed after its contents
+                 are expanded into SOURCE_OUTPUT_DIR/jump.
+       
+    -->
+    
+    <property environment="env"/>
+    
+    <target name="init-src-bundle">
+        <property name="ws.dir" value="${basedir}/.."/> 
+        <property name="dist.dir" value="${ws.dir}/dist"/>
+        
+        <property name="defaultDirName" value="${dist.dir}/src-bundle"/>        
+        <condition property="dirName"
+                   value="${jump.src-bundle.dir}"
+                   else="${defaultDirName}">
+            <isset property="jump.src-bundle.dir"/>
+        </condition>   
+        
+        <property name="defaultFileName" value="src.zip"/>
+        
+        <condition property="fileName" 
+                   value="${dirName}/${jump.src-bundle.name}"
+                   else="${dirName}/${defaultFileName}">
+            <isset property="jump.src-bundle.name"/>
+        </condition>
+        
+        <mkdir dir="${dirName}"/> 
+        
+        <fail unless="env.SOURCE_OUTPUT_DIR" message="SOURCE_OUTPUT_DIR not defined."/>
+        
+    </target>
+    
+    <target name="filter-sources">
+        <property name="includes" value="src/**, build/**, doc/**, tools/scripts/**"/>
+        <property name="excludes" value="**/.svn/**"/>
+    </target>
+    
+    <target name="source-bundle" depends="init-src-bundle,filter-sources">
+        
+        <property name="sourceOutputDir" value="${env.SOURCE_OUTPUT_DIR}/jump"/>
+        
+        <zip destfile="${fileName}"
+             basedir=".."
+             update="true"
+             includes="${includes}"
+             excludes="${excludes}"
+        />
+        
+        <echo message="Extracting JUMP source bundle to ${sourceOutputDir}..."/>
+        
+        <mkdir dir="${sourceOutputDir}"/>
+        
+        <unzip src="${fileName}" dest="${sourceOutputDir}"/>
+        
+        <delete dir="${dirName}"/>
+        
+    </target>
+    
+</project>
