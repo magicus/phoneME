@@ -34,6 +34,8 @@ public class RmsEnvironment {
     static SuiteContainer suiteContainer;
     private static RmsEnvironment rmsEnv;
 
+    public final static int UNUSED_SUITE_ID = 0;
+
     private RmsEnvironment() {
     }
  
@@ -54,12 +56,18 @@ public class RmsEnvironment {
         suiteContainer = container;
     }
 
-    /* Called by java.microedition.rms.RecordStore. */
+    /*
+     * Called by java.microedition.rms.RecordStore. Returns 0 if 
+     * a suite is not calling or the suite is destroyed.
+     */
     public static int getCallersSuiteId() {
         return suiteContainer.getCallersSuiteId();
     }
 
-    /* Called by java.microedition.rms.RecordStore. */
+    /*
+     * Called by java.microedition.rms.RecordStore, returns 0 if suite not
+     *  found.
+     */
     public static int getSuiteId(String vendorName, String suiteName) {
         return suiteContainer.getSuiteId(vendorName, suiteName);
     }
