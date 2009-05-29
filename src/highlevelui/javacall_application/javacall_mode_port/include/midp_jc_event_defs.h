@@ -69,6 +69,7 @@ extern "C" {
 #include "javanotify_location.h"
 #endif /* ENABLE_JSR_179 */
 #ifdef ENABLE_JSR_211
+#include "jsr211_constants.h"
 #include "jsr211_platform_invoc.h"
 #endif /* ENABLE_JSR_211 */
 #if ENABLE_JSR_234
@@ -144,6 +145,8 @@ typedef enum {
 #ifdef ENABLE_JSR_211
     JSR211_JC_EVENT_PLATFORM_FINISH    ,
     JSR211_JC_EVENT_JAVA_INVOKE        ,
+    JSR211_JC_EVENT_REQUEST_RECEIVED   ,
+    JSR211_JC_EVENT_RESPONSE_RECEIVED  ,
 #endif
 #if ENABLE_JSR_234
     MIDP_JC_EVENT_ADVANCED_MULTIMEDIA  ,
@@ -154,7 +157,7 @@ typedef enum {
 #endif /* ENABLE_ON_DEVICE_DEBUG */
     MIDP_JC_EVENT_ROTATION             ,
     MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED,
-	MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED,
+    MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED,
     MIDP_JC_EVENT_MENU_SELECTION,
     MIDP_JC_EVENT_SET_VM_ARGS          ,
     MIDP_JC_EVENT_SET_HEAP_SIZE        ,
@@ -334,6 +337,14 @@ typedef struct {
     int invoc_id;
     jsr211_platform_event *jsr211event;
 } jsr211_jc_event_platform_event;
+
+typedef struct {
+    jsr211_request_data * data;
+} jsr211_jc_event_request_data;
+
+typedef struct {
+    jsr211_response_data * data;
+} jsr211_jc_event_response_data;
 #endif
 
 #if !ENABLE_CDC
@@ -463,6 +474,8 @@ typedef struct {
         jsr75_jc_event_root_changed        jsr75RootchangedEvent;
 #ifdef ENABLE_JSR_211
         jsr211_jc_event_platform_event     jsr211PlatformEvent;
+        jsr211_jc_event_request_data       jsr211RequestEvent;
+        jsr211_jc_event_response_data      jsr211ResponseEvent;
 #endif
 
         midp_event_heap_size               heap_size;

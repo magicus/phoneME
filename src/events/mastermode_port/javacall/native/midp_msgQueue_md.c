@@ -281,6 +281,17 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->pResult    = event->data.jsr211PlatformEvent.jsr211event;
         pNewMidpEvent->type    = CHAPI_EVENT;
         break;
+    case JSR211_JC_EVENT_REQUEST_RECEIVED:
+        pNewSignal->waitingFor = JSR211_REQUEST_SIGNAL;
+        pNewSignal->pResult    = event->data.jsr211RequestEvent.data;
+        pNewMidpEvent->type    = CHAPI_EVENT;
+        break;
+    case JSR211_JC_EVENT_RESPONSE_RECEIVED:
+        pNewSignal->waitingFor = JSR211_RESPONSE_SIGNAL;
+        pNewSignal->pResult    = event->data.jsr211ResponseEvent.data;
+        pNewMidpEvent->type    = CHAPI_EVENT;
+        break;
+
 #endif /* ENABLE_JSR_211 */
 
 #ifdef ENABLE_JSR_290
@@ -410,7 +421,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor   = JSR290_INVOCATION_COMPLETION_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290NotificationEvent.invocation_id;
         break;
-        case JSR290_JC_EVENT_HANDLE_EVENT:
+    case JSR290_JC_EVENT_HANDLE_EVENT:
         pNewSignal->waitingFor   = JSR290_FLUID_EVENT_SIGNAL;
     	pNewMidpEvent->type = FLUID_EVENT;
         pNewMidpEvent->intParam4 = (int)((jlong)(event->data.jsr290HandleEventRequest.request_handle));
