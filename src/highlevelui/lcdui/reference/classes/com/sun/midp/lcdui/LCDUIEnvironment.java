@@ -24,8 +24,12 @@
 
 package com.sun.midp.lcdui;
 
+import com.sun.midp.orientation.OrientationHandler;
+import com.sun.midp.orientation.OrientationListener;
+import com.sun.midp.orientation.OrientationFactory;
 import com.sun.midp.security.*;
 import com.sun.midp.events.EventQueue;
+import com.sun.midp.main.Configuration;
 import javax.microedition.lcdui.Image;
 
 /**
@@ -41,6 +45,11 @@ public class LCDUIEnvironment {
      * functionality that can not be publicly added to a javax package.
      */
     private DisplayEventHandler displayEventHandler;
+
+    /**
+     * Saved instance of the event queue.
+     */
+    private EventQueue eventQueue;
 
     /**
      * Creates lcdui event producers/handlers/listeners.
@@ -121,6 +130,16 @@ public class LCDUIEnvironment {
 
         // Set a listener in the event queue for foreground events
         new ForegroundEventListener(eventQueue, displayContainer);
+
+        // Initialize a handler to process rotation events
+        String orientClassName = Configuration.getProperty("com.sun.midp.orientClassName");
+		if (orientClassName != null && orientClassName.length() > 0) {
+            OrientationHandler orientHandler = OrientationFactory.createOrientHandler(orientClassName);
+		    if (orientHandler != null) {
+		        this.eventQueue = eventQueue;
+			    orientHandler.addListener(new OrientationListenerImpl());
+			}
+		}
     }
 
     /**
@@ -149,4 +168,20 @@ public class LCDUIEnvironment {
     public void setTrustedState(boolean isTrusted) {
         displayEventHandler.setTrustedState(isTrusted);
     }
+
+    /** This is nested inside LCDUIEnvironment so that it can see the private fields. */
+    private class OrientationListenerImpl implements OrientationListener {
+	
+    /**
+         * Calls when orientation is changed. 
+         *
+         * @param orientation the orientation state
+         */
+        public void orientationChanged(int orientation) {
+            DisplayAccess da = displayContainer.findForegroundDisplay();
+	    	if (da != null) {
+			    da.getDisplayEventConsumer().handleRotationEvent(orientation);
+		    }
+	    }
+	}
 }

@@ -1,7 +1,7 @@
 /*
  *  
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -182,7 +182,7 @@ public class DisplayEventListener implements EventListener {
                     return;
 
                 case EventTypes.ROTATION_EVENT:
-                    dc.handleRotationEvent();
+                    dc.handleRotationEvent(-1);
                     return;
 
 	    case EventTypes.DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT:
