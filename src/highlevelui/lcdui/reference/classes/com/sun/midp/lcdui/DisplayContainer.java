@@ -154,25 +154,6 @@ public class DisplayContainer {
 
         return null;
     }
-    
-    /**
-     * Find the foreground display.
-     *
-     * @return a display access object or null if not found
-     */
-    public synchronized DisplayAccess findForegroundDisplay() {
-        int size = displays.size();
-        
-        for (int i = 0; i < size; i++) {
-            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
-
-            if (current.isDisplayForeground()) {
-                return current;
-            }
-        }
-
-        return null;
-    }
 
     /**
      * Find a display's access object.

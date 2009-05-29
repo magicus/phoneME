@@ -41,7 +41,6 @@ import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
-import com.sun.midp.lcdui.TactileFeedback;
 /**
  * Soft button layer.
  */
@@ -569,7 +568,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * @param buttonID the button pushed
      */
     protected void softPress(int buttonID) {
-        TactileFeedback.playTactileFeedback();
         switch (buttonID) {
             case 0:
                 soft1();

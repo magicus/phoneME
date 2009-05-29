@@ -56,13 +56,6 @@ public class GameCanvasLFImpl {
      * To keep track of graphics provided users with
      */
     Vector gVector = new Vector();
-
-    // #ifdef ENABLE_OPENGL
-    /** 
-     * To track whether backing surface is initialized or not
-     */
-     boolean backingSurfaceCreated=false;
-    // #endif
     
     /**
      * Create new implementation instance for the given GameCanvas
@@ -167,19 +160,12 @@ public class GameCanvasLFImpl {
                     }
                 }
             }
-            // #ifdef ENABLE_OPENGL
-            // create the backing surface for this Game Canvas
-            if (!backingSurfaceCreated) {
-                backingSurfaceCreated=true;
-                OpenGLEnvironmentProxy ogl = OpenGLEnvironmentProxy.getInstance();
-                ogl.createPbufferSurface(offscreenBuffer);
-            }
-            // #endif
             return g;
         }
         
         return null;
     }
+
     /**
      * Render the off-screen buffer content to the Graphics object
      * @param g the Graphics object to render off-screen buffer content

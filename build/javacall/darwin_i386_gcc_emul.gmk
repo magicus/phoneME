@@ -49,6 +49,18 @@ EXTRA_CPPFLAGS +=
 LD_FLAGS +=
 EXTRA_LIBS += 
 
-LIBS += -L$(JAVACALL_LIB_DIR) -ljavacall$(g)$(r) $(shell pkg-config --libs pangocairo gstreamer-0.10 gstreamer-interfaces-0.10 gstreamer-app-0.10)
+GCC_LIBS = -lpthread -lm
+
+# don't omit frame pointer on darwin
+# if used the compiler produces incorrect code
+GCC_OMIT_FRAME_POINTER = 
+
+LINKER_OUTPUT = -o # one space after -o included intentionally
+LD_START_GROUP =
+LD_END_GROUP =
+
+# the ar doesn't support MRI scripts 
+MRI_OPT = 
 
 MIDP_BIN_TARGET ?= sdk
+

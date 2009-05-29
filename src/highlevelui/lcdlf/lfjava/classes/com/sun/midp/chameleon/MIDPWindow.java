@@ -110,11 +110,6 @@ public class MIDPWindow extends CWindow {
      */
     int screenMode;
 
-    /**
-     * Current soft button mode.
-     */
-    int softButtonMode=0;
-
     /** Cache of screen commands */
     Command[] scrCmdCache;
 
@@ -154,6 +149,7 @@ public class MIDPWindow extends CWindow {
     public MIDPWindow(ChamDisplayTunnel tunnel) {
         super(ScreenSkin.IMAGE_BG, ScreenSkin.COLOR_BG, 
 	      tunnel.getDisplayWidth(), tunnel.getDisplayHeight());
+
         this.tunnel = tunnel;
 
         for (int i = LAST_LAYER - 1; i >= 0; i-- ) {
@@ -492,11 +488,7 @@ public class MIDPWindow extends CWindow {
      * @param mode the mode to be set
      */
     public void setMode(int mode) {
-	screenMode = mode ;
-
-	if (mode == NO_SOFT_BUTTON_MODE){
-	    softButtonMode = mode;
-	}
+        screenMode = mode;
         updateLayout();
     }
 
@@ -859,10 +851,6 @@ public class MIDPWindow extends CWindow {
                     "MIDPWindow: screenMode=" + screenMode);
                 return;
         }
-	if(softButtonMode == NO_SOFT_BUTTON_MODE){
-	    buttonLayer.visible = false;
-	}
-
 
         for (int i = 0; i < LAST_LAYER; i++) {
             CLayer l = mainLayers[i];

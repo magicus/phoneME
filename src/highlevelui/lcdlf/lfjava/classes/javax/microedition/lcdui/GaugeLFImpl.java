@@ -1014,10 +1014,9 @@ class GaugeLFImpl extends ItemLFImpl implements GaugeLF {
             g.drawImage(UpdateBarSkin.IMAGE_BG, 0, 0,
                         Graphics.LEFT | Graphics.TOP);
         } else {
-            //No need for backgroung image 
-           /* g.setColor(0xCCCCCC);
+            g.setColor(0xCCCCCC);
             g.fillRect(0, 0, UpdateBarSkin.WIDTH, UpdateBarSkin.HEIGHT);
-            g.setColor(0);*/
+            g.setColor(0);
         }
         
         if (UpdateBarSkin.IMAGE_FRAME != null 
@@ -1064,11 +1063,9 @@ class GaugeLFImpl extends ItemLFImpl implements GaugeLF {
             g.drawImage(BusyCursorSkin.IMAGE_BG, 0, 0,
                         Graphics.LEFT | Graphics.TOP);
         } else {
-            //No need to draw a backgroung image for indicator (it will remove gray square)
-
-            /*g.setColor(0xCCCCCC);
+            g.setColor(0xCCCCCC);
             g.fillRect(0, 0, BusyCursorSkin.WIDTH, BusyCursorSkin.HEIGHT);
-            g.setColor(0);*/
+            g.setColor(0);
         }
         
         if (BusyCursorSkin.IMAGE_FRAME != null &&
@@ -1285,7 +1282,6 @@ class GaugeLFImpl extends ItemLFImpl implements GaugeLF {
                          percentLoc[0], percentLoc[1], 
                          Graphics.LEFT | Graphics.TOP);
         } else {
-            //Do not draw percentage for sprint rpository
             g.drawString("%", percentLoc[0], percentLoc[1], 
                          Graphics.LEFT | Graphics.TOP);
         }

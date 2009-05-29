@@ -33,7 +33,6 @@ import com.sun.midp.chameleon.skins.resources.*;
 import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.lcdui.EventConstants;
-import com.sun.midp.lcdui.TactileFeedback;
 
 
 public class CascadeMenuLayer extends ScrollablePopupLayer {
@@ -151,12 +150,10 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
             // dismiss the menu layer if the user pressed outside the menu
             if (itemIndexWhenPressed == PRESS_OUT_OF_BOUNDS) {
                 if (menuLayer != null) {
-                    TactileFeedback.playTactileFeedback();
                     menuLayer.dismissCascadeMenu();
                 }
                 consume = false;
             } else if (itemIndexWhenPressed >= 0) { // press on valid menu item
-                TactileFeedback.playTactileFeedback();
                 selI = scrollIndex + itemIndexWhenPressed;
                 requestRepaint();
                 // if (btnLayer != null) btnLayer.serviceRepaints();

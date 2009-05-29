@@ -681,10 +681,6 @@ public class Display {
     Display(Object theOwner) {
 	this(theOwner, displayDeviceContainer.getPrimaryDisplayDevice());
     }
-
-    private boolean initial_orientation = false;
-    private boolean current_orientation = false;
-    private boolean restore_orientation = false;
     
     /**
     * Release any resources, such as threads, which migth refer
@@ -752,7 +748,6 @@ public class Display {
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     WIDTH, HEIGHT,
                              gciScreenWidget.getDrawingSurface());
-        initial_orientation = (WIDTH > HEIGHT);
 
         // #else
 	width = displayDevice.getWidth();
@@ -760,10 +755,8 @@ public class Display {
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     width,
                                                     height);
-        initial_orientation = (width > height);
         // #endif ENABLE_GCI
-        current_orientation = initial_orientation;
-        restore_orientation = initial_orientation;
+
         /**
          * Sets this Display as creator of screen Graphics instance to
          * provide internal Graphics users with extended information
@@ -2365,11 +2358,6 @@ public class Display {
 		// #endif ENABLE_CHAMELEON
 	}
 	finally {
-                // #ifdef ENABLE_OPENGL
-                // This call to refresh a "zero" region is inserted to
-                // trigger display update on some platforms
-                displayDevice.refresh(displayId, 0, 0, 0, 0);
-                // #endif
 		// #ifdef ENABLE_GCI
 		int[] bounds = {x1,y1,x2,y2};
 		gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
@@ -3013,15 +3001,6 @@ public class Display {
         }
 
         /**
-         * Checks is the display is foregroud.
-         *
-         * @return true when display is foreground
-         */
-        public boolean isDisplayForeground() {
-            return (wantsForeground == WANTS_FOREGROUND);
-		}
-
-        /**
          * Called to get key mask of all the keys that were pressed.
          * DisplayAccess I/F method.
          *
@@ -3035,16 +3014,6 @@ public class Display {
             } else {
                 return 0;
             }
-        }
-
-        /**
-         * Called to get the list of current dirty screen regions which
-         * need to be refreshed
-         *
-         * @return Object[]  List of screen regions that need to be refreshed
-         */
-        public Object[] getDirtyRegions() {
-            return Display.this.graphicsQ.getRefreshRegions();
         }
 
         private long lastFlushTime = 0;
@@ -3199,31 +3168,17 @@ public class Display {
 			    screenGraphics.translate(-tranX, -tranY);
 			    screenGraphics.setClip(x1, y1, width, height);
 			    
-                            //#ifdef ENABLE_OPENGL
-                            // flush the offscreen buffer to the backing surface
-                            com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
-                                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-                            ogl.flushPbufferSurface(offscreen_buffer, y1, y2);
-                            //#else
 			    screenGraphics.drawImage(offscreen_buffer,
 				     anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
-                            //#endif
+
 			    // restore initial clip area and translation
 			    screenGraphics.translate(tranX, tranY);
 			    screenGraphics.setClip(reg[0], reg[1], reg[2] - reg[0], reg[3] - reg[1]);
 			}
-                        // #ifdef ENABLE_OPENGL
-                        // #else
 			displayDevice.refresh(displayId, x1, y1, x2, y2);
-                        // #endif
 		    }
 	    }
 	    finally {
-                // #ifdef ENABLE_OPENGL
-                // This call to refresh a "zero" region is inserted to
-                // trigger display update on some platforms
-                displayDevice.refresh(displayId, 0, 0, 0, 0);
-                // #endif
 		// #ifdef ENABLE_GCI
 		int[] bounds = {x,y,x+width,y+height};
 		gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
@@ -3693,8 +3648,7 @@ public class Display {
                 // #else
                 // TBD: not implemented for GCI yet
                 // #endif ENABLE_GCI
-                current_orientation = Display.this.width > Display.this.height;
-                System.out.println("CURRENT ORIENTATION STATUS is " + current_orientation);
+                
                 screenGraphics.setDimensions(Display.this.width, Display.this.height);
             }
             // #ifdef ENABLE_CHAMELEON
@@ -3971,10 +3925,6 @@ public class Display {
 
             } // synchronized
 
-            if (current_orientation != restore_orientation) {
-                java.lang.System.out.println("handleDisplayForegroundNotifyEvent: ROTATE");
-                consumer.handleRotationEvent();
-            }
 
             // SYNC NOTE: The implementation of dsPaint() could call
             // out to MIDlet's paint() function. So we have to call it
@@ -4002,11 +3952,6 @@ public class Display {
         public void handleDisplayBackgroundNotifyEvent() {
             // A copy of current LF object
             DisplayableLF currentCopy;
-                if (current_orientation != initial_orientation) {
-                    restore_orientation = current_orientation;
-                    java.lang.System.out.println("handleDisplayBackgroundNotifyEvent: ROTATE");
-                    consumer.handleRotationEvent();
-                }
 
             synchronized (LCDUILock) {
                 if (!hasForeground) {

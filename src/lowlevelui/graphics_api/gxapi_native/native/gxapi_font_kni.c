@@ -33,7 +33,6 @@
 #include <gx_font.h>
 #include <gxapi_constants.h>
 #include "gxapi_intern_graphics.h"
-#include "javacall_font.h"
 
 /**
  * @file
@@ -55,7 +54,6 @@
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(javax_microedition_lcdui_Font_init) {
-    jboolean free_size = KNI_GetParameterAsBoolean(4);
     int size  = (int)KNI_GetParameterAsInt(3);
     int style = (int)KNI_GetParameterAsInt(2);
     int face  = (int)KNI_GetParameterAsInt(1);
@@ -63,11 +61,6 @@ KNIDECL(javax_microedition_lcdui_Font_init) {
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(thisObject);
-    
-    if (free_size == KNI_FALSE) {
-        /* size is one of the SIZE_XXX constants */
-        size = JAVACALL_FONT_SIZE(size);
-    }
 
     KNI_GetParameterAsObject(0, thisObject);
 
@@ -77,11 +70,6 @@ KNIDECL(javax_microedition_lcdui_Font_init) {
 
     GET_FONT_PTR(thisObject)->baseline = (jint)ascent;
     GET_FONT_PTR(thisObject)->height = (jint)(ascent + descent + leading);
-    GET_FONT_PTR(thisObject)->size = (jint)size;
-    GET_FONT_PTR(thisObject)->size0 = (jint) (
-        size <= JAVACALL_FONT_SIZE_SMALL ? SIZE_SMALL :
-        size >= JAVACALL_FONT_SIZE_LARGE ? SIZE_LARGE :
-        SIZE_MEDIUM);
 
     SNI_END_RAW_POINTERS;
     

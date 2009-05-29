@@ -34,10 +34,9 @@ import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
-import com.sun.midp.chameleon.CGraphicsUtil;
 import java.util.Timer;
 import java.util.TimerTask;
-import com.sun.midp.lcdui.TactileFeedback;
+
 
 /**
  * A ScrollBarLayer is a region of the display used for showing the Form's
@@ -69,7 +68,7 @@ public class ScrollBarLayer extends ScrollIndLayer {
     private int thumbHeight;
     
     /** The height of arrow area. IMPL_NOTE: has to be moved to skin */ 
-    protected static final int ARROW_HEIGHT = 0;//18;
+    protected static final int ARROW_HEIGHT = 18;
 
     /** The min height of the thumb */ 
     protected static final int THUMB_HEIGHT_MIN = 12;
@@ -90,10 +89,7 @@ public class ScrollBarLayer extends ScrollIndLayer {
      */
     public ScrollBarLayer(CLayer layer, ScrollListener listener) {
         super(layer, listener);
-        // set background color only if we do not draw the scroll from an image
-        if (ScrollIndSkin.IMAGE_DN == null) {
-            setBackground(null, ScrollIndSkin.COLOR_BG);
-        }
+        setBackground(null, ScrollIndSkin.COLOR_BG);
     }
     
     /**
@@ -177,11 +173,7 @@ public class ScrollBarLayer extends ScrollIndLayer {
             if (alertMode) {
                 bounds[X] -= 1; 
             }
-            if (ScrollIndSkin.IMAGE_DN != null) {
-                barHeight = bounds[H];
-            }else{
-                 barHeight = bounds[H] - ARROW_HEIGHT * 2;
-            }
+            barHeight = bounds[H] - ARROW_HEIGHT * 2;
         }
     }
 
@@ -212,96 +204,77 @@ public class ScrollBarLayer extends ScrollIndLayer {
         int arrowSignHeight = 4;
         int arrowSignWidth = 7;
 
-        if (/*ScrollIndSkin.IMAGE_FG*/ ScrollIndSkin.IMAGE_DN != null) {
-            //System.out.println("ScrollBarLayer paintin IMAGE_FG");
-            thumbHeight = barHeight * proportion / 100;
-            if (thumbHeight < THUMB_HEIGHT_MIN) {
-                thumbHeight = THUMB_HEIGHT_MIN; 
-            }
-            // System.out.println("ScrollBarLayer thumbHeight="+thumbHeight);
-            thumbY = (barHeight - thumbHeight) * position / 100; //this value is in translated coordinates space
-            // System.out.println("ScrollBarLayer thumbY="+thumbY);
-            if (thumbY+thumbHeight > barHeight) {
-                thumbY = barHeight - thumbHeight;
-            }
+        // draw up and down arrows
+        g.setColor(scrollType == SCROLL_LINEUP ? ScrollIndSkin.COLOR_UP_ARROW :
+                   ScrollIndSkin.COLOR_FG);
+        g.fillRect(0, 0, bounds[W], ARROW_HEIGHT);
 
-           
-            //System.out.println("ScrollBarLayer drawing image x=1 thumbY="+thumbY);
-             g.drawImage(ScrollIndSkin.IMAGE_DN,1, thumbY, Graphics.LEFT | Graphics.TOP);
-        }else{
-    // System.out.println("ScrollBarLayer IMAGE_FG ==null");
-            // draw up and down arrows
-            g.setColor(scrollType == SCROLL_LINEUP ? ScrollIndSkin.COLOR_UP_ARROW :
-                       ScrollIndSkin.COLOR_FG);
-            g.fillRect(0, 0, bounds[W], ARROW_HEIGHT);
-    
-            g.setColor(scrollType == SCROLL_LINEDOWN ? ScrollIndSkin.COLOR_UP_ARROW :
-                       ScrollIndSkin.COLOR_FG);
-            g.fillRect(0, bounds[H] - ARROW_HEIGHT, bounds[W], ARROW_HEIGHT);
-    
-            g.setColor(ScrollIndSkin.COLOR_FRAME);
-           
-            g.drawLine(0, ARROW_HEIGHT, bounds[W], ARROW_HEIGHT);
-            g.drawLine(0, bounds[H]-ARROW_HEIGHT, bounds[W], bounds[H] - ARROW_HEIGHT);
-    
-            int x2 = bounds[W] / 2;
-            int y2 = ARROW_HEIGHT / 2 - arrowSignHeight / 2; 
-            
-            // draw down arrow
-            g.setColor(scrollType == SCROLL_LINEUP ? ScrollIndSkin.COLOR_DN_ARROW :
-                       ScrollIndSkin.COLOR_UP_ARROW);
-            g.fillTriangle(x2 - arrowSignWidth / 2, y2 + arrowSignHeight - 1, 
-                           x2, y2, 
-                           x2+arrowSignWidth / 2, y2 + arrowSignHeight - 1);
-    
-            y2 = bounds[H] - ARROW_HEIGHT+ARROW_HEIGHT / 2+arrowSignHeight / 2; 
-            
-            // draw up arrow
-            g.setColor(scrollType == SCROLL_LINEDOWN ? ScrollIndSkin.COLOR_DN_ARROW :
-                       ScrollIndSkin.COLOR_UP_ARROW);
-    
-            g.fillTriangle(x2 - arrowSignWidth / 2, y2 - arrowSignHeight + 1, 
-                           x2, y2, 
-                           x2 + arrowSignWidth / 2, y2 - arrowSignHeight + 1);
-    
-    
-            // draw thumb
-            g.translate(0, ARROW_HEIGHT);
-    
-            thumbHeight = barHeight * proportion / 100;
-            if (thumbHeight < THUMB_HEIGHT_MIN) {
-                thumbHeight = THUMB_HEIGHT_MIN; 
-            }
-            thumbY = (barHeight - thumbHeight) * position / 100; //this value is in translated coordinates space
-            
-            if (thumbY+thumbHeight > barHeight) {
-                thumbY = barHeight - thumbHeight;
-            }
-    
-            g.setColor(ScrollIndSkin.COLOR_FG);
-            g.fillRect(1, thumbY, bounds[W], thumbHeight);
-            
-            //3 horizontal stripes at center of thumb
-            g.setColor(ScrollIndSkin.COLOR_FRAME);
-            g.drawLine(3, thumbY - 2 + thumbHeight / 2, bounds[W] - 3 ,thumbY - 2 + thumbHeight / 2);
-            g.drawLine(3, thumbY + thumbHeight / 2, bounds[W] - 3 , thumbY + thumbHeight / 2);
-            g.drawLine(3, thumbY + 2 + thumbHeight / 2, bounds[W] - 3 ,thumbY + 2 + thumbHeight / 2);
-            
-            
-            //draw the frame of the scroll bar
-            g.setColor(ScrollIndSkin.COLOR_FRAME);
-            g.drawLine(0, thumbY, bounds[W] - 1, thumbY);
-            g.drawLine(0, thumbY + thumbHeight, bounds[W] - 1, thumbY+thumbHeight);
-    
-            g.translate(0, -ARROW_HEIGHT);
-    
-            g.drawLine(0, 0, 0, bounds[H]);
-            if (true) { // IMPL_NOTE: add param drawBOrder
-               g.drawRect(0, 0, bounds[W], bounds[H]);
-            } 
-    
-            thumbY += ARROW_HEIGHT; //translate it to the whole scrollbar coordinates space!
+        g.setColor(scrollType == SCROLL_LINEDOWN ? ScrollIndSkin.COLOR_UP_ARROW :
+                   ScrollIndSkin.COLOR_FG);
+        g.fillRect(0, bounds[H] - ARROW_HEIGHT, bounds[W], ARROW_HEIGHT);
+
+        g.setColor(ScrollIndSkin.COLOR_FRAME);
+       
+        g.drawLine(0, ARROW_HEIGHT, bounds[W], ARROW_HEIGHT);
+        g.drawLine(0, bounds[H]-ARROW_HEIGHT, bounds[W], bounds[H] - ARROW_HEIGHT);
+
+        int x2 = bounds[W] / 2;
+        int y2 = ARROW_HEIGHT / 2 - arrowSignHeight / 2; 
+        
+        // draw down arrow
+        g.setColor(scrollType == SCROLL_LINEUP ? ScrollIndSkin.COLOR_DN_ARROW :
+                   ScrollIndSkin.COLOR_UP_ARROW);
+        g.fillTriangle(x2 - arrowSignWidth / 2, y2 + arrowSignHeight - 1, 
+                       x2, y2, 
+                       x2+arrowSignWidth / 2, y2 + arrowSignHeight - 1);
+
+        y2 = bounds[H] - ARROW_HEIGHT+ARROW_HEIGHT / 2+arrowSignHeight / 2; 
+        
+        // draw up arrow
+        g.setColor(scrollType == SCROLL_LINEDOWN ? ScrollIndSkin.COLOR_DN_ARROW :
+                   ScrollIndSkin.COLOR_UP_ARROW);
+
+        g.fillTriangle(x2 - arrowSignWidth / 2, y2 - arrowSignHeight + 1, 
+                       x2, y2, 
+                       x2 + arrowSignWidth / 2, y2 - arrowSignHeight + 1);
+
+
+        // draw thumb
+        g.translate(0, ARROW_HEIGHT);
+
+        thumbHeight = barHeight * proportion / 100;
+        if (thumbHeight < THUMB_HEIGHT_MIN) {
+            thumbHeight = THUMB_HEIGHT_MIN; 
         }
+        thumbY = (barHeight - thumbHeight) * position / 100; //this value is in translated coordinates space
+        
+        if (thumbY+thumbHeight > barHeight) {
+            thumbY = barHeight - thumbHeight;
+        }
+
+        g.setColor(ScrollIndSkin.COLOR_FG);
+        g.fillRect(1, thumbY, bounds[W], thumbHeight);
+        
+        //3 horizontal stripes at center of thumb
+        g.setColor(ScrollIndSkin.COLOR_FRAME);
+        g.drawLine(3, thumbY - 2 + thumbHeight / 2, bounds[W] - 3 ,thumbY - 2 + thumbHeight / 2);
+        g.drawLine(3, thumbY + thumbHeight / 2, bounds[W] - 3 , thumbY + thumbHeight / 2);
+        g.drawLine(3, thumbY + 2 + thumbHeight / 2, bounds[W] - 3 ,thumbY + 2 + thumbHeight / 2);
+        
+        
+        //draw the frame of the scroll bar
+        g.setColor(ScrollIndSkin.COLOR_FRAME);
+        g.drawLine(0, thumbY, bounds[W] - 1, thumbY);
+        g.drawLine(0, thumbY + thumbHeight, bounds[W] - 1, thumbY+thumbHeight);
+
+        g.translate(0, -ARROW_HEIGHT);
+
+        g.drawLine(0, 0, 0, bounds[H]);
+        if (true) { // IMPL_NOTE: add param drawBOrder
+           g.drawRect(0, 0, bounds[W], bounds[H]);
+        } 
+
+        thumbY += ARROW_HEIGHT; //translate it to the whole scrollbar coordinates space!
     }
 
     /**
@@ -361,7 +334,7 @@ public class ScrollBarLayer extends ScrollIndLayer {
                 // no action for tap-and-hold in scrollbar
                 // cancel timer for any press.
                 cancelTimer();
-                TactileFeedback.playTactileFeedback();
+
                 scrollType = getScrollType(x, y);
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
@@ -395,7 +368,6 @@ public class ScrollBarLayer extends ScrollIndLayer {
                 break;
             case EventConstants.DRAGGED:
                 if (scrollType == SCROLL_THUMBTRACK) {
-                    TactileFeedback.playTactileFeedback(TactileFeedback.DRAGGED);
                     if (y < lasty - DRAG_MIN || y > lasty + DRAG_MIN ||
                         /* accumulate drag events till reaching DRAG_MIN
                    or till reaching drag boundaries */

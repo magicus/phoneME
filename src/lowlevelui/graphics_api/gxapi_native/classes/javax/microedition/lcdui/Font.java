@@ -26,9 +26,6 @@
 
 package javax.microedition.lcdui;
 
-import com.sun.midp.lcdui.FontAccess;
-import com.sun.midp.lcdui.OEMFont;
-
 /**
  * The <code>Font</code> class represents fonts and font
  * metrics. <code>Fonts</code> cannot be
@@ -172,11 +169,7 @@ public final class Font {
      * @see #getFont(int fontSpecifier)
      */
     public static final int FONT_INPUT_TEXT = 1;
-    
-    static {
-        OEMFont.registerFontAccessor(new FontAccessImpl());
-    }
-    
+
     /**
      * Gets the <code>Font</code> used by the high level user interface
      * for the <code>fontSpecifier</code> passed in. It should be used
@@ -211,14 +204,13 @@ public final class Font {
      * @param inp_face The face to use to construct the Font
      * @param inp_style The style to use to construct the Font
      * @param inp_size The point size to use to construct the Font
-     * @parma free_size true value means inp_size is set in pixels     
      */
-    private Font(int inp_face, int inp_style, int inp_size, boolean free_size) {
+    private Font(int inp_face, int inp_style, int inp_size) {
         face  = inp_face;
         style = inp_style;
         size  = inp_size;
 
-        init(inp_face, inp_style, inp_size, free_size);
+        init(inp_face, inp_style, inp_size);
     }
 
     /**
@@ -228,8 +220,7 @@ public final class Font {
     public static Font getDefaultFont() {
         synchronized (Display.LCDUILock) {
             if (DEFAULT_FONT == null)
-                DEFAULT_FONT = new Font(FACE_SYSTEM, STYLE_PLAIN, SIZE_MEDIUM,
-                    false);
+                DEFAULT_FONT = new Font(FACE_SYSTEM, STYLE_PLAIN, SIZE_MEDIUM);
             return DEFAULT_FONT;
         }
     }
@@ -271,36 +262,16 @@ public final class Font {
         }
 
         synchronized (Display.LCDUILock) {
-            Integer key = new Integer((inp_face << 24)
-                                    | (inp_style << 16)
-                                    | (inp_size << 8));
+            /* IMPL_NOTE: this makes garbage.  But hashtables need Object keys. */
+            Integer key = new Integer(inp_face | inp_style | inp_size);
             Font f = (Font)table.get(key);
             if (f == null) {
-                f = new Font(inp_face, inp_style, inp_size, false);
+                f = new Font(inp_face, inp_style, inp_size);
                 table.put(key, f);
             }
 
             return f;
         }
-    }
-    
-    static Font getOEMFont(int inp_style, int inp_size) {
-        if ((inp_style & ((STYLE_UNDERLINED << 1) - 1)) != inp_style) {
-            throw new IllegalArgumentException("Illegal style");
-        }
-        
-        synchronized (Display.LCDUILock) {
-            Integer key = new Integer((FACE_PROPORTIONAL << 24)
-                                    | (inp_style << 16)
-                                    | (inp_size << 8) | 1);
-            Font f = (Font)table.get(key);
-            if (f == null) {
-                f = new Font(FACE_PROPORTIONAL, inp_style, inp_size, true);
-                table.put(key, f);
-            }
-            return f;
-        }
-        
     }
 
     /**
@@ -328,7 +299,7 @@ public final class Font {
      */
     public int getSize() {
         // SYNC NOTE: return of atomic value, no locking necessary
-        return size0;
+        return size;
     }
 
     /**
@@ -498,10 +469,8 @@ public final class Font {
     private int face;
     /** The style of this Font */
     private int style;
-    /** The size of this Font, one of the constants */
+    /** The point size of this Font */
     private int size;
-    /** The size of this Font in pixels*/
-    private int size0;
     /** The baseline of this Font */
     private int baseline;
     /** The height of this Font */
@@ -526,12 +495,6 @@ public final class Font {
      * @param inp_style The style to initialize the native Font
      * @param inp_size The point size to initialize the native Font
      */
-    private native void init(int inp_face, int inp_style, int inp_size,
-                             boolean free_size);
+    private native void init(int inp_face, int inp_style, int inp_size);
 }
 
-class FontAccessImpl implements FontAccess {
-    public Font getOEMFont(int style, int size) {
-        return Font.getOEMFont(style, size);
-    }
-}

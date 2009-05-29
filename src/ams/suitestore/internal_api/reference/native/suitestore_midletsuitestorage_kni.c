@@ -1157,37 +1157,34 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_remove0) {
     KNI_GetParameterAsObject(NUM, PARAM); \
  \
     numberOfStrings = (int)KNI_GetArrayLength(PARAM); \
-	if (numberOfStrings > 0) { \
  \
-        (PROPS.pStringArr) = alloc_pcsl_string_list(numberOfStrings); \
-        if ((PROPS.pStringArr) == NULL) { \
+    (PROPS.pStringArr) = alloc_pcsl_string_list(numberOfStrings); \
+    if ((PROPS.pStringArr) == NULL) { \
+        (STATUS) = OUT_OF_MEMORY; \
+        break; \
+    } \
+ \
+    (PROPS.numberOfProperties) = numberOfStrings / 2; \
+    for (i = 0; i < numberOfStrings; i++) { \
+        KNI_GetObjectArrayElement(PARAM, (jint)i, STRINGOBJ); \
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string((STRINGOBJ), \
+                &(PROPS.pStringArr[i]))) { \
+            int j; \
+            for (j = 0; j < i; j++) { \
+                pcsl_string_free(&(PROPS.pStringArr[j])); \
+            } \
+            midpFree((PROPS.pStringArr)); \
+            (PROPS.numberOfProperties) = 0; \
             (STATUS) = OUT_OF_MEMORY; \
             break; \
         } \
+    } \
  \
-        (PROPS.numberOfProperties) = numberOfStrings / 2; \
-        for (i = 0; i < numberOfStrings; i++) { \
-            KNI_GetObjectArrayElement(PARAM, (jint)i, STRINGOBJ); \
-            if (PCSL_STRING_OK != midp_jstring_to_pcsl_string((STRINGOBJ), \
-                    &(PROPS.pStringArr[i]))) { \
-                int j; \
-                for (j = 0; j < i; j++) { \
-                    pcsl_string_free(&(PROPS.pStringArr[j])); \
-                } \
-                midpFree((PROPS.pStringArr)); \
-                (PROPS.numberOfProperties) = 0; \
-			     PROPS.pStringArr = NULL; \
-                (STATUS) = OUT_OF_MEMORY; \
-                break; \
-            } \
-			KNI_ReleaseHandle(STRINGOBJ); \
-        } \
+    if ((STATUS) != ALL_OK) { \
+        break; \
+    } \
  \
-        if ((STATUS) != ALL_OK) { \
-            break; \
-        } \
- \
-	} \
+    KNI_ReleaseHandle(STRINGOBJ); \
 }
 
 /**
@@ -1608,10 +1605,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
                            installInfo.jadProps, status);
         }
 
-		if (!pcsl_string_is_null(&installInfo.jarUrl_s)) {
-            GET_PROP_PARAM(6, tmpHandle, tmpHandle2, 
-				installInfo.jarProps, status);
-		}
+        GET_PROP_PARAM(6, tmpHandle, tmpHandle2, installInfo.jarProps, status);
     } while (0);
 
     if (status == ALL_OK) {
@@ -1637,19 +1631,15 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
         pcsl_string_free(&installInfo.jadUrl_s);
     }
 
-	if (!pcsl_string_is_null(&installInfo.jarUrl_s)) {
-        if (installInfo.jarProps.pStringArr != NULL) {
-            free_pcsl_string_list(installInfo.jarProps.pStringArr,
+    if (installInfo.jarProps.pStringArr != NULL) {
+        free_pcsl_string_list(installInfo.jarProps.pStringArr,
                               installInfo.jarProps.numberOfProperties * 2);
-		    pcsl_string_free(&installInfo.jarUrl_s);
-        }
-	}
+    }
 
-    if (!pcsl_string_is_null(&installInfo.domain_s)) 
-        pcsl_string_free(&installInfo.domain_s);
+    pcsl_string_free(&installInfo.jarUrl_s);
+    pcsl_string_free(&installInfo.domain_s);
     
-	if (!pcsl_string_is_null(&suiteData.varSuiteData.pathToJar))
-        pcsl_string_free(&suiteData.varSuiteData.pathToJar);
+    pcsl_string_free(&suiteData.varSuiteData.pathToJar);
 
     /* end of cleanup */
 

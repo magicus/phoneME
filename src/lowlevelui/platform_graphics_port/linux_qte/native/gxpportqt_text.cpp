@@ -73,13 +73,13 @@ find_font(int face, int style, int size) {
 
 	switch (size) {
 	default:
-	case JAVACALL_FONT_SIZE_SMALL:
+	case SIZE_SMALL:
 	    pointsize = face == FACE_MONOSPACE ? 7: 11;
 	    break;
-	case JAVACALL_FONT_SIZE_MEDIUM:
+	case SIZE_MEDIUM:
 	    pointsize = 13;
 	    break;
-	case JAVACALL_FONT_SIZE_LARGE:
+	case SIZE_LARGE:
 	    pointsize = 17;
 	    break;
 	}

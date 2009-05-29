@@ -24,20 +24,14 @@
 
 package com.sun.midp.lcdui;
 
-import com.sun.orientation.OrientationHandler;
-import com.sun.orientation.OrientationListener;
-import com.sun.midp.orientation.OrientationFactory;
 import com.sun.midp.security.*;
 import com.sun.midp.events.EventQueue;
-import com.sun.midp.events.EventTypes;
-import com.sun.midp.events.NativeEvent;
-import com.sun.midp.main.Configuration;
 import javax.microedition.lcdui.Image;
 
 /**
  * Initialize the LCDUI environment.
  */
-public class LCDUIEnvironment implements OrientationListener {
+public class LCDUIEnvironment {
 
     /** Stores array of active displays for a MIDlet suite isolate. */
     private DisplayContainer displayContainer;
@@ -47,11 +41,6 @@ public class LCDUIEnvironment implements OrientationListener {
      * functionality that can not be publicly added to a javax package.
      */
     private DisplayEventHandler displayEventHandler;
-
-    /**
-     * Saved instance of the event queue.
-     */
-    private EventQueue eventQueue;
 
     /**
      * Creates lcdui event producers/handlers/listeners.
@@ -132,31 +121,7 @@ public class LCDUIEnvironment implements OrientationListener {
 
         // Set a listener in the event queue for foreground events
         new ForegroundEventListener(eventQueue, displayContainer);
-
-        // Initialize a handler to process rotation events
-        String orientClassName = Configuration.getProperty("com.sun.midp.orientClassName");
-		if (orientClassName != null && orientClassName.length() > 0) {
-            OrientationHandler orientHandler = OrientationFactory.createOrientHandler(orientClassName);
-		    if (orientHandler != null) {
-		        this.eventQueue = eventQueue;
-			    orientHandler.addListener(this);
-			}
-		}
     }
-	
-    /**
-     * Calls when orientation is changed. 
-     *
-     * @param orientation the orientation state
-     */
-    public void orientationChanged(int orientation) {
-        DisplayAccess da = displayContainer.findForegroundDisplay();
-		if (da != null) {
-		    NativeEvent rotEvent = new NativeEvent(EventTypes.ROTATION_EVENT);
-			rotEvent.intParam4 = da.getDisplayId();
-            eventQueue.post(rotEvent);
-		}
-	}
 
     /**
      * Gets DisplayContainer instance. 

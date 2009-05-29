@@ -32,7 +32,6 @@ import com.sun.midp.chameleon.skins.PTISkin;
 import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.input.*;
-import com.sun.midp.lcdui.TactileFeedback;
 
 /**
  * A "PTILayer" layer is a special kind of layer which can
@@ -273,7 +272,6 @@ public class PTILayer extends PopupLayer {
             
             switch(type) {
             case EventConstants.PRESSED:
-                TactileFeedback.playTactileFeedback();
                 switch (area) {
                 case LEFT_ARROW_AREA:
                     selId = (selId - 1 + l.length) % l.length;
