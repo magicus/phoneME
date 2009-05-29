@@ -38,7 +38,8 @@
 #include <midpServices.h>
 
 #include "jsr211_constants.h"
-#include <javacall_chapi_msg_exchange.h>
+#include "javacall_memory.h"
+#include "javacall_chapi_msg_exchange.h"
 
 #ifdef _DEBUG
 
@@ -98,6 +99,7 @@ KNIDECL(com_sun_j2me_content_NativeMessageSender_send) {
     } else if( isThreadCancelled() ){
         KNI_ThrowNew(jsropIOException, "data exchange failed");
     } else {
+        // thread is unblocked
         if( p->m_count > 0 && p->m_bytes == NULL ){
             KNI_ThrowNew(jsropOutOfMemoryError, "");
         } else {            
@@ -111,71 +113,50 @@ KNIDECL(com_sun_j2me_content_NativeMessageSender_send) {
 #endif
                 KNI_SetRawArrayRegion( data, 0, p->m_count, p->m_bytes );
             }
-            if( p->m_bytes != NULL ) JAVAME_FREE( p->m_bytes );
+            if( p->m_bytes != NULL && p->m_count > 0 ) javacall_free( p->m_bytes );
             p->m_bytes = NULL;
         }
     }
     KNI_EndHandlesAndReturnObject(data);
 }
 
-javacall_result javanotify_chapi_process_msg_result( int dataExchangeID, const unsigned char * bytes, size_t count ){
+void jsr211_process_msg_result( const jsr211_response_data * data ){
 #ifdef TRACE_MSGEXCHANGE
-    printf( "javanotify_chapi_process_msg_result( exchangeID = %d, bytes = %p, count = %d )\n", dataExchangeID, bytes, count );
+    printf( "jsr211_process_msg_result( exchangeID = %d, bytes = %p, count = %d )\n", data->dataExchangeID, data->bytes, data->count );
 #endif
-    if( bytes == NULL ){
-        unblockWaitingThreads( JSR211_WAIT_MSG, dataExchangeID, JSR211_WAIT_CANCELLED );
+    if( data->bytes == NULL ){
+        unblockWaitingThreads( JSR211_WAIT_MSG, data->dataExchangeID, JSR211_WAIT_CANCELLED );
     } else {
-        const JVMSPI_BlockedThreadInfo * ti = findThread( JSR211_WAIT_MSG, dataExchangeID );
+        const JVMSPI_BlockedThreadInfo * ti = findThread( JSR211_WAIT_MSG, data->dataExchangeID );
         if( ti != NULL ){ 
             ReentryData * p = (ReentryData *)ti->reentry_data;
             if( p != NULL ){
-                p->m_bytes = NULL;
-                p->m_count = count;
-                if( p->m_count != 0 ){
-                    // create copy of bytes
-                    p->m_bytes = JAVAME_MALLOC( p->m_count );
-                    if( p->m_bytes != NULL ){
-                        memcpy( p->m_bytes, bytes, p->m_count );
-                    }
-                }
+                p->m_bytes = data->bytes;
+                p->m_count = data->count;
             }
             unblockThread( ti );
         }
     }
-    return( JAVACALL_OK );
 }
 
 //----------------------------------------------------------
 
 typedef struct _Request {
-    int m_qID;
-    int m_requestID;
-    int m_msg;
-    unsigned char * m_data;
-    size_t m_count;
+    jsr211_request_data m_data;
     struct _Request * m_next;
 } Request;
 
 static Request * s_head = NULL, ** s_tail = &s_head;
 
-javacall_result javanotify_chapi_process_msg_request( int queueID, int dataExchangeID, 
-                                                int msg, const unsigned char * bytes, size_t count ){
+int jsr211_process_msg_request( const jsr211_request_data * data ){
     Request * newR = JAVAME_MALLOC( sizeof(Request) );
-    if( newR == NULL ) return( JAVACALL_FAIL );
-    newR->m_qID = queueID;
-    newR->m_requestID = dataExchangeID;
-    newR->m_msg = msg;
-    newR->m_count = count;
-    newR->m_data = JAVAME_MALLOC( count );
-    if( newR->m_data == NULL ){
-        JAVAME_FREE( newR );
-        return( JAVACALL_FAIL );
-    }
-    memcpy( newR->m_data, bytes, newR->m_count );
+    if( newR == NULL ) return( JAVACALL_FALSE );
+    newR->m_data = *data;
     newR->m_next = NULL;
 
 #ifdef TRACE_MSGEXCHANGE
-    printf( "javanotify_chapi_process_msg_request( qID = %d, exchangeID = %d, msg = %d, count = %d )\n", queueID, dataExchangeID, msg, count );
+    printf( "jsr211_process_msg_request( qID = %d, exchangeID = %d, msg = %d, count = %d )\n", 
+                data->queueID, data->dataExchangeID, data->msg, data->count );
 #endif
 
     // insert request to the list
@@ -185,7 +166,7 @@ javacall_result javanotify_chapi_process_msg_request( int queueID, int dataExcha
     // }
 
     unblockWaitingThreads( JSR211_WAIT_FOR_REQUEST, 0, JSR211_WAIT_FOR_REQUEST );
-    return( JAVACALL_OK );
+    return( JAVACALL_TRUE );
 }
 
 // int waitForRequest(); returns queueId
@@ -195,7 +176,7 @@ KNIDECL(com_sun_j2me_content_NativeMessageReceiver_waitForRequest) {
     printf( "waitForRequest: head = %p\n", s_head );
 #endif
     if( s_head != NULL ){
-        KNI_ReturnInt( s_head->m_qID );
+        KNI_ReturnInt( s_head->m_data.queueID );
     }
     // block thread
     blockThread( JSR211_WAIT_FOR_REQUEST, 0 );
@@ -215,7 +196,7 @@ KNIDECL(com_sun_j2me_content_NativeMessageReceiver_nextRequest) {
         s_tail = &s_head;
     s_head = r->m_next;
     // }
-    JAVAME_FREE( r->m_data );
+    if( r->m_data.count > 0 ) javacall_free( r->m_data.bytes );
     JAVAME_FREE( r );
     KNI_ReturnVoid();
 }
@@ -225,9 +206,9 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_j2me_content_NativeMessageReceiver_getRequestMsgCode) {
     assert( s_head != NULL );
 #ifdef TRACE_MSGEXCHANGE
-    printf( "getRequestMsgCode: msg = %d\n", s_head->m_msg );
+    printf( "getRequestMsgCode: msg = %d\n", s_head->m_data.msg );
 #endif
-    KNI_ReturnInt( s_head->m_msg );
+    KNI_ReturnInt( s_head->m_data.msg );
 }
 
 // int getRequestId();
@@ -235,9 +216,9 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_j2me_content_NativeMessageReceiver_getRequestId) {
     assert( s_head != NULL );
 #ifdef TRACE_MSGEXCHANGE
-    printf( "getRequestId: id = %d\n", s_head->m_requestID );
+    printf( "getRequestId: id = %d\n", s_head->m_data.dataExchangeID );
 #endif
-    KNI_ReturnInt( s_head->m_requestID );
+    KNI_ReturnInt( s_head->m_data.dataExchangeID );
 }
 
 // byte[] getRequestBytes();
@@ -247,13 +228,13 @@ KNIDECL(com_sun_j2me_content_NativeMessageReceiver_getRequestBytes) {
     KNI_DeclareHandle(data);
     assert( s_head != NULL );
 #ifdef TRACE_MSGEXCHANGE
-    printf( "getRequestBytes: count = %d\n", s_head->m_count );
+    printf( "getRequestBytes: count = %d\n", s_head->m_data.count );
 #endif
-    SNI_NewArray( SNI_BYTE_ARRAY, s_head->m_count, data );
+    SNI_NewArray( SNI_BYTE_ARRAY, s_head->m_data.count, data );
     if( KNI_IsNullHandle(data) ){
         KNI_ThrowNew(jsropOutOfMemoryError, "");
     } else {
-        KNI_SetRawArrayRegion( data, 0, s_head->m_count, s_head->m_data );
+        KNI_SetRawArrayRegion( data, 0, s_head->m_data.count, s_head->m_data.bytes );
     }
     KNI_EndHandlesAndReturnObject(data);
 }
