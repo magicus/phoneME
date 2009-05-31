@@ -422,9 +422,17 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     	pNewMidpEvent->type = FLUID_EVENT;
         pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
         pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
-        pNewMidpEvent->intParam4 = (int)4;
-        pNewMidpEvent->intParam5 = (int)5;
+        pNewMidpEvent->intParam4 = (int)event->data.jsr290FluidEvent.result;
         pNewMidpEvent->intParam1 = JSR290_DISPLAY_BOX;
+        {
+            int len = 0;
+            if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text, &len)) {
+                len = 0;
+            }
+            pcsl_string_convert_from_utf16(event->data.jsr290FluidEvent.text, len,
+                                           &pNewMidpEvent->stringParam1);
+        }
+        javacall_free(event->data.jsr290FluidEvent.text);
     	break;
 #endif /* ENABLE_JSR_290 */
 
