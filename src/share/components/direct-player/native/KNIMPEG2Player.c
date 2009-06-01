@@ -28,6 +28,8 @@
 #include "midpMalloc.h"
 #include "midpUtilKni.h"
 #include "midpError.h"
+#include "midpEvents.h"
+#include <midp_thread.h>
 
 #include <gst/gst.h>
 // lib for g_* functions
@@ -35,13 +37,19 @@
 
 #include <gst/gstmessage.h>
 #include <gst/gsttaglist.h>
+#include <gst/gststructure.h>
 
 #include "gstfbdevsink.h"
 
+
+/** GStreamer event loop */
+GMainLoop *loop = NULL;
+
 typedef struct MPEG2Player {
-  GMainLoop *loop;
   GstElement *playbin;
   GstElement* video_sink;
+  int width;
+  int height;
 } MPEG2Player;
 
 
@@ -59,6 +67,10 @@ bus_call (GstBus     *bus,
 
   case GST_MESSAGE_EOS:
     g_print ("End of stream\n");
+    
+    /* unblock any waiting thread */
+    midp_thread_signal(MMAPI_EVENT, -1, 0);
+
     g_main_loop_quit (loop);
     break;
   case GST_MESSAGE_TAG: {
@@ -80,6 +92,9 @@ bus_call (GstBus     *bus,
     g_error_free (error);
 
     g_main_loop_quit (loop);
+    
+    /* unblock any wating thread */
+    midp_thread_signal(MMAPI_EVENT, -1, 0);
     break;
   }
   case GST_MESSAGE_WARNING: {
@@ -90,6 +105,20 @@ bus_call (GstBus     *bus,
     g_free (debug);
     g_print ("Warning: %s\n", error->message);
     g_error_free (error);
+    break;
+  }
+  case GST_MESSAGE_ELEMENT: {
+    GstStructure  *data;
+    data =  gst_message_get_structure (msg);
+    /*
+    gst_structure_get_int (structure, "CLIP_WIDTH", &fbdevsink->width);
+    */
+
+    /* unblock any wating thread */
+    g_print("Message event from %d ", (int)GST_MESSAGE_SRC(msg));
+    midp_thread_signal(MMAPI_EVENT, -1, 0);
+    // gst_message_unref(msg);
+    // gst_structure_free(data);
     break;
   }
   default:
@@ -119,7 +148,7 @@ static MPEG2Player* player_init(char* url){
     g_printerr("KNIMPEG2Player: can't allocate memory for player structure\n");
     return KNI_FALSE;
   }
-  memset(player, 0, sizeof(player));
+  memset(player, 0, sizeof(MPEG2Player));
 
   do {
     if (KNI_FALSE == gst_init_check(NULL, NULL, NULL)) {
@@ -149,7 +178,7 @@ static MPEG2Player* player_init(char* url){
 
 
      /* TODO:  need to check how to share one loop between different players */
-     if (!(player->loop = g_main_loop_new (NULL, FALSE))){
+     if (!(loop = g_main_loop_new (NULL, FALSE))){
        break;
      }
 
@@ -189,9 +218,10 @@ static MPEG2Player* player_init(char* url){
 
      /* we add a message handler */
      bus = gst_pipeline_get_bus (GST_PIPELINE (player->playbin));
-     gst_bus_add_watch (bus, bus_call, player->loop);
+     gst_bus_add_watch (bus, bus_call, loop);
      gst_object_unref (bus);
 
+#if 0
      /* TODO: need to start message pump in separate thread */
      g_print("Creating new loop thread: ");
      if (g_thread_create(message_pump,
@@ -203,6 +233,8 @@ static MPEG2Player* player_init(char* url){
        g_printerr("FAILED\n");
        break;
      }
+#endif
+
      return player;
   } while (0);
 
@@ -248,6 +280,27 @@ static jboolean player_set_clip(MPEG2Player* player,
   return KNI_TRUE;
 }
 
+static jboolean player_get_dimensions(MPEG2Player* player,
+                                      jint *w,
+                                      jint* h) {
+ /* TODO: need to pause? */
+ g_object_get(G_OBJECT (player->video_sink), "clip_height", 
+              h, NULL);
+ g_object_get(G_OBJECT (player->video_sink), "clip_width", 
+              w, NULL);
+ g_print("Getting video size: %d, %d\n", *w, *h);
+}
+
+extern jboolean checkForMultiMediaSignal(MidpReentryData* pNewSignal,
+                                         MidpEvent* pNewMidpEvent, jlong timeout64) {
+  if (NULL != loop) {
+    GMainContext* context = g_main_loop_get_context(loop);
+    return g_main_context_iteration(context, FALSE);
+  }
+  return KNI_FALSE;
+}
+
+
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_MPEG2Player_nCreate) {
   int player = 0;
@@ -292,5 +345,24 @@ KNIDECL(com_sun_mmedia_MPEG2Player_nSetVideoLocation) {
   KNI_ReturnBoolean( KNI_TRUE );
 }
 
-
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_MPEG2Player_nGetDimensions) {
+  MPEG2Player* player = (MPEG2Player*)KNI_GetParameterAsInt(1);
+  KNI_StartHandles(1);
+  KNI_DeclareHandle(retIntArr);
+  KNI_GetParameterAsObject(2, retIntArr);
+  if(!KNI_IsNullHandle(retIntArr)) {
+    player_get_dimensions(player, &player->width, &player->height);
+    if (!(player->width |  player->height)) {
+      /* if not initialized
+         wait for initialized event */
+      g_print("No dimention is available. Wating for %d\n", (int)player->video_sink);
+      midp_thread_wait(MMAPI_EVENT, -1, NULL);
+    }
+    KNI_SetIntArrayElement(retIntArr, 0, player->width);
+    KNI_SetIntArrayElement(retIntArr, 1, player->height);
+  }
+  KNI_EndHandles();
+  KNI_ReturnBoolean(KNI_TRUE);
+}
 

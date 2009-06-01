@@ -42,6 +42,8 @@
 #include "gst/gstplugin.h"
 #include "gst/base/gstbasesink.h"
 
+#include "midpEvents.h"
+
 /* elementfactory information */
 static const GstElementDetails gst_fbdevsink_details =
 GST_ELEMENT_DETAILS ("fbdev video sink",
@@ -209,7 +211,8 @@ static gboolean
 gst_fbdevsink_setcaps (GstBaseSink * bsink, GstCaps * vscapslist)
 {
   GstFBDEVSink *fbdevsink;
-  GstStructure *structure;
+  GstStructure *structure, *mmapi_message_data;
+  GstMessage *mmapi_message;
   const GValue *fps;
 
   fbdevsink = GST_FBDEVSINK (bsink);
@@ -244,6 +247,18 @@ gst_fbdevsink_setcaps (GstBaseSink * bsink, GstCaps * vscapslist)
 
   g_print("Caps: cx=%d cy=%d linelen=%d lines=%d\n",fbdevsink->cx, fbdevsink->cy, fbdevsink->linelen,  fbdevsink->lines);
   g_print("Clip: x=%d y=%d w=%d h=%d", fbdevsink->clip_x,  fbdevsink->clip_y, fbdevsink->clip_width,  fbdevsink->clip_height);
+
+
+  fbdevsink->clip_width = fbdevsink->width;
+  fbdevsink->clip_height = fbdevsink->lines;;
+
+  mmapi_message_data = gst_structure_new("MMAPI_EVENT", "CLIP_WIDTH", G_TYPE_INT, fbdevsink->clip_width, 
+                                    "CLIP_HEIGHT", G_TYPE_INT, fbdevsink->clip_height, NULL);
+  mmapi_message = gst_message_new_element(bsink, mmapi_message_data);
+  gst_element_post_message(bsink, mmapi_message);
+  
+  //gst_message_unref(mmapi_message);
+  
   return TRUE;
 }
 

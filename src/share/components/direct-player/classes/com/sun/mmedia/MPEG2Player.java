@@ -32,6 +32,8 @@ class MPEG2Player extends LowLevelPlayer implements VideoSource {
 
     private int nativeHandle = 0;
     private DirectVideo directVideo = null;
+    private int width = 0;
+    private int height = 0;
 
     MPEG2Player( HighLevelPlayer owner )
     {
@@ -45,11 +47,19 @@ class MPEG2Player extends LowLevelPlayer implements VideoSource {
     }
 
     protected void doRealize() throws MediaException {
+        nativeHandle = nCreate( getOwner().source.getLocator() );
+        /*  only PLAY state fits for size acquiring */
+        nStart( nativeHandle );
+        int[] intArr = new int[2];
+        nGetDimensions(nativeHandle, intArr);
+        width = intArr[0];
+        height = intArr[1];
     }
 
     protected void doPrefetch() throws MediaException {
     }
 
+    private native boolean nGetDimensions(int handle, int[] intArr);
     private native boolean nStart( int handle );
     private native int nCreate( String locator );
     private native void nDestroy( int handle );
@@ -57,8 +67,7 @@ class MPEG2Player extends LowLevelPlayer implements VideoSource {
             int x, int y, int w, int h );
     
     protected boolean doStart() {
-        nativeHandle = nCreate( getOwner().source.getLocator() );
-        return nStart( nativeHandle );
+        return true;
     }
 
     protected void doPostStart() {
@@ -95,7 +104,7 @@ class MPEG2Player extends LowLevelPlayer implements VideoSource {
         Control ctl = null;
         if( type.endsWith( HighLevelPlayer.vicName ) )
         {
-            directVideo = new DirectVideo( this, 0, 0 );
+            directVideo = new DirectVideo( this, width, height);
             ctl = directVideo;
         }
         return ctl;
