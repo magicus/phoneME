@@ -1865,58 +1865,6 @@ javacall_dom_document_create_event_finish(void *context,
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR  Test if the implementation can generate events of a specified type. 
- * 
- * @param handle Pointer to the object representing this document.
- * @param invocation_id Invocation identifier which MUST be used in the 
- *                  corresponding javanotify function.
- * @param context The context saved during asynchronous operation.
- * @param namespace_uri  Specifies the <code>Event.namespace_uri</code> of 
- *   the event, may be NULL. 
- * @param type  Specifies the <code>Event.type</code> of the event. 
- * @param ret_value  <code>true</code> if the implementation can generate and 
- *   dispatch this event type, <code>false</code> otherwise. 
- *
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_OUT_OF_MEMORY if function fails to allocate memory for the 
- *             context,
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_document_can_dispatch_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_document_can_dispatch_start(javacall_handle handle,
-                                         javacall_int32 invocation_id,
-                                         void **context,
-                                         javacall_const_utf16_string namespace_uri,
-                                         javacall_const_utf16_string type,
-                                         /* OUT */ javacall_bool* ret_value);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
- * OR  Test if the implementation can generate events of a specified type. 
- * 
- * @param context The context saved during asynchronous operation.
- * @param ret_value  <code>true</code> if the implementation can generate and 
- *   dispatch this event type, <code>false</code> otherwise. 
- *
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error in native code occured
- *         JAVACALL_WOULD_BLOCK caller must call the 
- *             javacall_dom_document_can_dispatch_finish function to complete the 
- *             operation,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_document_can_dispatch_finish(void *context,
-                                          /* OUT */ javacall_bool* ret_value);
-
-/**
- * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
  * OR returns the default <code>AbstractView</code> for this <code>Document</code>, 
  * or <code>NULL</code> if none available.
  * 
