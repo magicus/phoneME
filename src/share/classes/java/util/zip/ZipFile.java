@@ -46,7 +46,7 @@ import sun.io.MarkableReader;
  * @author	David Connelly
  */
 public
-class ZipFile implements ZipConstants {
+    class ZipFile implements ZipConstants {
     private long jzfile;  // address of jzfile data
     private String name;  // zip file name
     private int total;	  // total number of entries
@@ -71,9 +71,9 @@ class ZipFile implements ZipConstants {
     public static final int OPEN_DELETE = 0x4;
     
     static {
-	AccessController.doPrivileged(
-			  new sun.security.action.LoadLibraryAction("zip"));
-	initIDs();
+        AccessController.doPrivileged(
+                                      new sun.security.action.LoadLibraryAction("zip"));
+        initIDs();
     }
 
     private static native void initIDs();
@@ -94,7 +94,7 @@ class ZipFile implements ZipConstants {
      * @see SecurityManager#checkRead(java.lang.String)
      */
     public ZipFile(String name) throws IOException {
-	this(new File(name), OPEN_READ);
+        this(new File(name), OPEN_READ);
     }
 
 
@@ -128,24 +128,24 @@ class ZipFile implements ZipConstants {
         }
 
         String name = file.getPath();
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
-	    sm.checkRead(name);
-	    if ((mode & OPEN_DELETE) != 0) {
-		sm.checkDelete(name);
-	    }
-	}
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkRead(name);
+            if ((mode & OPEN_DELETE) != 0) {
+                sm.checkDelete(name);
+            }
+        }
 
-	/* Mask out OPEN_DELETE */
-	if ((mode & OPEN_DELETE) != 0) {
+        /* Mask out OPEN_DELETE */
+        if ((mode & OPEN_DELETE) != 0) {
             mode &= ~OPEN_DELETE;
             deletemode = true;
             zipfile = file;
         }
 
-	long jzfileCopy = open(name, mode, file.lastModified());
-	this.name = name;
-	this.total = getTotal(jzfileCopy);
+        long jzfileCopy = open(name, mode, file.lastModified());
+        this.name = name;
+        this.total = getTotal(jzfileCopy);
         jzfile = jzfileCopy;
     }
 
@@ -159,7 +159,7 @@ class ZipFile implements ZipConstants {
      * @exception IOException if an I/O error has occurred
      */
     public ZipFile(File file) throws ZipException, IOException {
-	this(file, OPEN_READ);
+        this(file, OPEN_READ);
     }
 
     /**
@@ -215,7 +215,7 @@ class ZipFile implements ZipConstants {
      * @exception IllegalStateException if the zip file has been closed
      */
     public InputStream getInputStream(ZipEntry entry) throws IOException {
-	return getInputStream(entry.name);
+        return getInputStream(entry.name);
     }
 
     /**
@@ -223,11 +223,11 @@ class ZipFile implements ZipConstants {
      * entry, or null if the entry was not found.
      */
     private InputStream getInputStream(String name) throws IOException {
-	if (name == null) {
-	    throw new NullPointerException("name");
-	}
+        if (name == null) {
+            throw new NullPointerException("name");
+        }
         long jzentry = 0;
-        InputStream in = null;
+        ZipFileInputStream in = null;
         synchronized (this) {
             ensureOpen(jzfile);
             jzentry = getEntry(jzfile, name);
@@ -236,49 +236,48 @@ class ZipFile implements ZipConstants {
             }
             in = new ZipFileInputStream(jzentry, this);
         }
-	switch (getMethod(jzentry)) {
-	case STORED:
-	    return in;
-	case DEFLATED:
-	    return new InflaterInputStream(in, getInflater()) {
+        final ZipFileInputStream zfin = in;
+        switch (getMethod(jzentry)) {
+        case STORED:
+            return zfin;
+        case DEFLATED:
+            return new InflaterInputStream(zfin, getInflater()) {
                 private boolean isClosed = false;
                 
-		public void close() throws IOException {
+                public void close() throws IOException {
                     if (!isClosed) {
-                         releaseInflater(inf);
+                        releaseInflater(inf);
                         this.in.close();
                         isClosed = true;
                     }
-		}
-		// Override fill() method to provide an extra "dummy" byte
-		// at the end of the input stream. This is required when
-		// using the "nowrap" Inflater option.
-		protected void fill() throws IOException {
-		    if (eof) {
-			throw new EOFException(
-			    "Unexpected end of ZLIB input stream");
-		    }
-		    len = this.in.read(buf, 0, buf.length);
-		    if (len == -1) {
-			buf[0] = 0;
-			len = 1;
-			eof = true;
-		    }
-		    inf.setInput(buf, 0, len);
-		}
-		private boolean eof;
+                }
+                // Override fill() method to provide an extra "dummy" byte
+                // at the end of the input stream. This is required when
+                // using the "nowrap" Inflater option.
+                protected void fill() throws IOException {
+                    if (eof) {
+                        throw new EOFException(
+                                               "Unexpected end of ZLIB input stream");
+                    }
+                    len = this.in.read(buf, 0, buf.length);
+                    if (len == -1) {
+                        buf[0] = 0;
+                        len = 1;
+                        eof = true;
+                    }
+                    inf.setInput(buf, 0, len);
+                }
+                private boolean eof;
 
                 public int available() throws IOException {
-                    if (super.available() != 0) {
-                        return this.in.available();
-                    } else {
+                    if (isClosed)
                         return 0;
-                    }
+                    return zfin.size() - inf.getTotalOut();
                 }
-	    };
-	default:
-	    throw new ZipException("invalid compression method");
-	}
+            };
+        default:
+            throw new ZipException("invalid compression method");
+        }
     }
 
     private static native int getMethod(long jzentry);
@@ -288,25 +287,25 @@ class ZipFile implements ZipConstants {
      * a new one.
      */
     private Inflater getInflater() {
-	synchronized (inflaters) {
-	    int size = inflaters.size();
-	    if (size > 0) {
-		Inflater inf = (Inflater)inflaters.remove(size - 1);
-		inf.reset();
-		return inf;
-	    } else {
-		return new Inflater(true);
-	    }
-	}
+        synchronized (inflaters) {
+            int size = inflaters.size();
+            if (size > 0) {
+                Inflater inf = (Inflater)inflaters.remove(size - 1);
+                inf.reset();
+                return inf;
+            } else {
+                return new Inflater(true);
+            }
+        }
     }
 
     /*
      * Releases the specified inflater to the list of available inflaters.
      */
     private void releaseInflater(Inflater inf) {
-	synchronized (inflaters) {
-	    inflaters.add(inf);
-	}
+        synchronized (inflaters) {
+            inflaters.add(inf);
+        }
     }
 
     // List of available Inflater objects for decompression
@@ -328,44 +327,44 @@ class ZipFile implements ZipConstants {
     public Enumeration entries() {
         ensureOpen(jzfile);
         return new Enumeration() {
-                private int i = 0;
-                public boolean hasMoreElements() {
-                    synchronized (ZipFile.this) {
+            private int i = 0;
+            public boolean hasMoreElements() {
+                synchronized (ZipFile.this) {
+                    if (ZipFile.this.jzfile == 0) {
+                        throw new IllegalStateException("zip file closed");
+                    }
+                    ensureOpen(ZipFile.this.jzfile);
+                }
+                return i < total;
+            }
+            public Object nextElement() throws NoSuchElementException {
+                synchronized (ZipFile.this) {
+                    ensureOpen(ZipFile.this.jzfile);
+                    if (i >= total) {
+                        throw new NoSuchElementException();
+                    }
+                    long jzentry = getNextEntry(jzfile, i++);
+                    if (jzentry == 0) {
+                        String message;
                         if (ZipFile.this.jzfile == 0) {
-                            throw new IllegalStateException("zip file closed");
+                            message = "ZipFile concurrently closed";
+                        } else {
+                            message = getZipMessage(ZipFile.this.jzfile);
                         }
-                        ensureOpen(ZipFile.this.jzfile);
+                        throw new InternalError("jzentry == 0" +
+                                                ",\n jzfile = " + ZipFile.this.jzfile +
+                                                ",\n total = " + ZipFile.this.total +
+                                                ",\n name = " + ZipFile.this.name +
+                                                ",\n i = " + i +
+                                                ",\n message = " + message
+                                                );
                     }
-                    return i < total;
+                    ZipEntry ze = new ZipEntry(jzentry);
+                    freeEntry(jzfile, jzentry);
+                    return ze;
                 }
-                public Object nextElement() throws NoSuchElementException {
-                    synchronized (ZipFile.this) {
-                        ensureOpen(ZipFile.this.jzfile);
-                        if (i >= total) {
-                            throw new NoSuchElementException();
-                        }
-                        long jzentry = getNextEntry(jzfile, i++);
-                        if (jzentry == 0) {
-                            String message;
-                            if (ZipFile.this.jzfile == 0) {
-                                message = "ZipFile concurrently closed";
-                            } else {
-                                message = getZipMessage(ZipFile.this.jzfile);
-                            }
-                            throw new InternalError("jzentry == 0" +
-                                                    ",\n jzfile = " + ZipFile.this.jzfile +
-                                                    ",\n total = " + ZipFile.this.total +
-                                                    ",\n name = " + ZipFile.this.name +
-                                                    ",\n i = " + i +
-                                                    ",\n message = " + message
-                                );
-                        }
-                        ZipEntry ze = new ZipEntry(jzentry);
-                        freeEntry(jzfile, jzentry);
-                        return ze;
-                    }
-                }
-            };
+            }
+        };
     }
 
     private static native long getNextEntry(long jzfile, int i);
@@ -377,7 +376,7 @@ class ZipFile implements ZipConstants {
      */
     public int size() {
         ensureOpen(jzfile);
-	return total;
+        return total;
     }
 
     /**
@@ -397,11 +396,11 @@ class ZipFile implements ZipConstants {
                 close(zf);
                 if (deletemode) {
                     AccessController.doPrivileged(new PrivilegedAction() {
-                        public Object run() {
-                            zipfile.delete();
-                            return null;
-                        }
-                    });
+                            public Object run() {
+                                zipfile.delete();
+                                return null;
+                            }
+                        });
                 }
                 
                 // Release inflaters
@@ -437,113 +436,118 @@ class ZipFile implements ZipConstants {
     private static native void close(long jzfile);
 
     private void ensureOpen(long fd) {
-	if (fd == 0) {
-	    throw new IllegalStateException("zip file closed");
-	}
+        if (fd == 0) {
+            throw new IllegalStateException("zip file closed");
+        }
     }
 	
     /*
-     * Inner class implementing the input stream used to read a zip file entry.
+     * Inner class implementing the input stream used to read
+     * (possibly compressed ) zip file entry.
      */
-   private class ZipFileInputStream extends InputStream {
-	private long jzentry;	// address of jzentry data
-	private int pos;	// current position within entry data
-	private int rem;	// number of remaining bytes within entry
+    private class ZipFileInputStream extends InputStream {
+        private long jzentry;	// address of jzentry data
+        private int pos;	// current position within entry data
+        private int rem;	// number of remaining bytes within entry
         private int size;       // uncompressed size of this entry
         private ZipFile handle; // this would prevent the zip file from being GCed
         private MarkableReader reader; // adds support of mark/reset functionality
 
-	ZipFileInputStream(long jzentry, ZipFile zf) {
-        reader = new MarkableReader(new NativeReader());
-	    pos = 0;
-	    rem = getCSize(jzentry);
+        ZipFileInputStream(long jzentry, ZipFile zf) {
+            reader = new MarkableReader(new NativeReader());
+            pos = 0;
+            rem = getCSize(jzentry);
             size = getSize(jzentry);
-	    this.handle = zf;
-	    this.jzentry = jzentry;
-	}
+            this.handle = zf;
+            this.jzentry = jzentry;
+        }
 
-	public int read(byte b[], int off, int len) throws IOException {
-        return reader.read(b, off, len);
-    }
+        public int read(byte b[], int off, int len) throws IOException {
+            return reader.read(b, off, len);
+        }
 
-    private class NativeReader implements Markable {
+        private class NativeReader implements Markable {
 
-        public int readNative(byte b[], int off, int len) throws IOException {
-            if (rem == 0) {
+            public int readNative(byte b[], int off, int len) throws IOException {
+                if (rem == 0) {
+                    return -1;
+                }
+                if (len <= 0) {
+                    return 0;
+                }
+                if (len > rem) {
+                    len = rem;
+                }
+                synchronized (ZipFile.this) {
+                    if (ZipFile.this.jzfile == 0)
+                        throw new ZipException("ZipFile closed.");
+                    len = ZipFile.read(ZipFile.this.jzfile, jzentry, pos, b,
+                                       off, len);
+                }
+                if (len > 0) {
+                    pos += len;
+                    rem -= len;
+                }
+                if (rem == 0) {
+                    close();
+                }
+                return len;
+            }
+        }
+
+        public int read() throws IOException {
+            byte[] b = new byte[1];
+            if (read(b, 0, 1) == 1) {
+                return b[0] & 0xff;
+            } else {
                 return -1;
             }
-            if (len <= 0) {
-                return 0;
-            }
-            if (len > rem) {
-                len = rem;
-            }
-            synchronized (ZipFile.this) {
-                if (ZipFile.this.jzfile == 0)
-                    throw new ZipException("ZipFile closed.");
-                len = ZipFile.read(ZipFile.this.jzfile, jzentry, pos, b,
-                                   off, len);
-            }
-            if (len > 0) {
-                pos += len;
-                rem -= len;
-            }
+        }
+
+        public long skip(long n) {
+            int len = n > rem ? rem : (int)n;
+            pos += len;
+            rem -= len;
             if (rem == 0) {
                 close();
             }
             return len;
         }
-    }
 
-	public int read() throws IOException {
-	    byte[] b = new byte[1];
-	    if (read(b, 0, 1) == 1) {
-		return b[0] & 0xff;
-	    } else {
-		return -1;
-	    }
-	}
+        public int available() {
+            return rem;
+        }
 
-	public long skip(long n) {
-	    int len = n > rem ? rem : (int)n;
-	    pos += len;
-	    rem -= len;
-	    if (rem == 0) {
-		close();
-	    }
-	    return len;
-	}
+        public int size() {
+            return size;
+        }
 
-	public int available() {
-	    return size;
-	}
+        public void close() {
+            rem = 0;
+            synchronized (ZipFile.this) {
+                if (jzentry != 0 && ZipFile.this.jzfile != 0) {
+                    freeEntry(ZipFile.this.jzfile, jzentry);
+                    jzentry = 0;
+                }
+            }
+        }
 
-       public void close() {
-           rem = 0;
-           synchronized (ZipFile.this) {
-               if (jzentry != 0 && ZipFile.this.jzfile != 0) {
-                   freeEntry(ZipFile.this.jzfile, jzentry);
-                   jzentry = 0;
-               }
-           }
-       }
+        public synchronized void mark(int readlimit) {
+            reader.mark(readlimit);
+        }
 
-    public synchronized void mark(int readlimit) {
-        reader.mark(readlimit);
-    }
+        public synchronized void reset() throws IOException {
+            reader.reset();
+        }
 
-    public synchronized void reset() throws IOException {
-        reader.reset();
-    }
-
-    public boolean markSupported() {
-       return reader.markSupported();
-    }
+        public boolean markSupported() {
+            return reader.markSupported();
+        }
 
     }
 
     private static native int read(long jzfile, long jzentry,
-				   int pos, byte[] b, int off, int len);
+                                   int pos, byte[] b, int off, int len);
 
     private static native int getCSize(long jzentry);
 
