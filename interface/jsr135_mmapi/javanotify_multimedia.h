@@ -79,7 +79,9 @@ typedef enum {
     JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
     /** Posted when the native player needs to change position in the media stream on Java side. */
     JAVACALL_EVENT_MEDIA_DATA_SEEK,
-    /** Posted when the Player enters into a buffering mode. */
+    /** Posted when the Player enters into a buffering mode. Should not be
+      *  posted when Java layer is performing data transfer to Javacall. Ignored if posted during a buffering cycle
+      */
     JAVACALL_EVENT_MEDIA_BUFFERING_STARTED,     
     /** Posted when the Player leaves the buffering mode. */
     JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED,
