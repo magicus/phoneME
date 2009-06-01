@@ -734,6 +734,8 @@ class DisplayableLFImpl implements DisplayableLF {
      */
     public void uCallPointerEvent(int type, int x, int y) {
         int eventType = -1;
+        prevPointerX = x;
+        prevPointerY = y;
 
         synchronized (Display.LCDUILock) {
             switch (type) {
@@ -1192,6 +1194,9 @@ class DisplayableLFImpl implements DisplayableLF {
 
     /** true, if a key press is in progress. */
     boolean sawKeyPress;
+
+    /** previous pointer (x,y) */
+    int prevPointerX, prevPointerY;
 
     /** stores key code of the current key pressed at least once */
     // caters to the GameCanvas.getKeyStats()
