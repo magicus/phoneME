@@ -158,35 +158,6 @@ public class MidpNullWindow extends MIDPWindow {
     }
 
     /**
-     * Add the given layer to this window. This method is
-     * overridden from CWindow in order to special case
-     * popup layers. Popup layers can have their own commands
-     * which supercede those of the current displayable.
-     *
-     * @param layer the CLayer to add to this window
-     * @return true if new layer was added, false otherwise
-     */
-    public boolean addLayer(CLayer layer) {
-        return false;
-    }
-
-    /**
-     * Remove the given layer from this window. This method is
-     * overridden from CWindow in order to special case popup
-     * layers. Popup layers can have their own commands which
-     * supercede those of the current displayable. In this case,
-     * the popup is removed and the commands in the soft button
-     * bar are restored to either the next top-most popup layer
-     * or the current displayable itself.
-     *
-     * @param layer the CLayer to remove from this window
-     * @return true if the layer was able to be removed
-     */
-    public boolean removeLayer(CLayer layer) {
-        return false;
-    }
-
-    /**
      * Return bounds of BodyLayer currently
      * @return array of bounds
      */
@@ -270,18 +241,18 @@ public class MidpNullWindow extends MIDPWindow {
      *
      * @return the command that's tied to the left soft button
      */
-    //public Command getSoftOne() {
-    //    return xbuttonLayer.getSoftOne();
-    //}
+    public Command getSoftOne() {
+        return null;
+    }
 
     /**
      * Returns the command array tied to the right soft button (two).
      *
      * @return the command array that's tied to the right soft button
      */
-    //public Command[] getSoftTwo() {
-    //    return xbuttonLayer.getSoftTwo();
-    //}
+    public Command[] getSoftTwo() {
+        return null;
+    }
 
     /**
      * Called by soft button layer when interactive state of it
@@ -425,5 +396,177 @@ public class MidpNullWindow extends MIDPWindow {
      * titles, tickers, fullscreen mode, etc. change state.
      */
     public void resize() {
+    }
+
+    /** Resize window and its background according to updated skin values */
+    public void resize(int width, int height) {
+    }
+
+    /**
+     * Add a new CLayer to the "deck" of layers associated
+     * with this CWindow. This method will sequentially add
+     * layers to the window, placing subsequently added layers
+     * on top of previously added layers.
+     *
+     * @param layer the new layer to add to this window
+     * @return true if new layer was added, false otherwise 
+     */
+    public boolean addLayer(CLayer layer) {
+        return false;
+    }
+
+    /**
+     * Remove a layer from this CWindow. This method will remove
+     * the given layer from the "deck" of layers associated with
+     * this CWindow. If successfull, this method will return true,
+     * false otherwise (for example, if the layer does not belong
+     * to this window).
+     *
+     * @param layer the layer to remove from this window
+     * @return true if successful, false otherwise
+     */
+    public boolean removeLayer(CLayer layer) {
+        return false;
+    }
+
+    /**
+     * Move layer to anotger location
+     * @param newBounds new bounds for this layer 
+     * @param x New 'x' coordinate of the layer's origin
+     * @param y New 'y' coordinate of the layer's origin
+     * @param w New width of the layer
+     * @param h New height of the layer
+
+     * @return true if successful, false otherwise
+     */
+    public boolean relocateLayer(CLayer layer, int x, int y, int w, int h) {
+        return false;
+    }
+
+    /**
+     * Allow this window to process key input. The type of key input
+     * will be press, release, repeat, etc. The key code will identify
+     * which key generated the event. This method will return true if
+     * the event was processed by this window or one of its layers,
+     * false otherwise.
+     *
+     * @param type the type of key event (press, release, repeat)
+     * @param keyCode the identifier of the key which generated the event
+     * @return true if this window or one of its layers processed the event
+     */
+    public boolean keyInput(int type, int keyCode) {
+        return false;
+    }
+
+    /**
+     * Allow this window to process pointer input. The type of pointer input
+     * will be press, release, drag, etc. The x and y coordinates will 
+     * identify the point at which the pointer event occurred in the coordinate
+     * system of this window. This window will translate the coordinates
+     * appropriately for each layer contained in this window. This method will
+     * return true if the event was processed by this window or one of its 
+     * layers, false otherwise.
+     *
+     * @param type the type of pointer event (press, release, drag)
+     * @param x the x coordinate of the location of the event
+     * @param y the y coordinate of the location of the event
+     * @return true if this window or one of its layers processed the event
+     */
+    public boolean pointerInput(int type, int x, int y) {
+        return false;
+    }
+
+    /**
+     * Handle input from some type of device-dependent
+     * input method. This could be input from something
+     * such as T9, or a phonebook lookup, etc.
+     *
+     * @param str the text to handle as direct input
+     * @return true if this window or one of its layers processed the event
+     */
+    public boolean methodInput(String str) {
+        return false;
+    }
+
+    /**
+     * Check whether layer is overlapped with a higher visible layer
+     * in the layer stack of the window
+     *
+     * @param l layer to check overlapping
+     * @return true if overlapped, false otherwise
+     */
+    public boolean isOverlapped(CLayer l) {
+        return false;
+    }
+
+    /**
+     * Update dirty regions of all visible layers in the stack regarding
+     * the entire area of the given layer as being dirty. The method is
+     * needed to perform layer move/resize/remove opertion, since other
+     * layers should be informed of changed area.
+     *
+     * @param layer the layer whose area should be reported as dirty to
+     *   other stack layers
+     * @return element of the window layers list that contains swept
+     *   layer, it can be used for further layer processing
+     */
+    CLayerElement sweepLayer(CLayer layer) {
+        return null;
+    }
+
+    /**
+     * Sets all visible layers to dirty state.
+     * The method is needed on system events like screen rotation,
+     * when generic layers system is not capabel to properly analyze
+     * layers changes, e.g. of move/resize kind. It could be fixed in
+     * the future and this method will be out of use. 
+     */
+    public void setAllDirty() {
+    }
+
+    /**
+     * Paint this window. This method should not generally be overridden by
+     * subclasses. This method carefully stores the clip, translation, and
+     * color before calling into subclasses. The graphics context should be
+     * translated such that it is in this window's coordinate space (0,0 is
+     * the top left corner of this window). 
+     *
+     * @param g The graphics object to use to paint this window.
+     * @param refreshQ The custom queue which holds the set of refresh
+     *        regions needing to be blitted to the screen
+     */
+    public void paint(Graphics g, CGraphicsQ refreshQ) {
+    }
+
+    /**
+     * Establish a background. This method will evaluate the parameters
+     * and create a background which is appropriate. If the image is non-null,
+     * the image will be used to create the background. If the image is null,
+     * the values for the colors will be used and the background will be
+     * painted in fill color instead. If the image is null, and the background
+     * color is a negative value, this layer will become transparent and no
+     * background will be painted.
+     *
+     * @param bgImage the image to use for the background tile (or null)
+     * @param bgColor if the image is null, use this color as a background
+     *                fill color
+     */
+    void setBackground(Image bgImage, int bgColor) {
+    }
+    
+    /**
+     * Returns true if any layer of this window is in need of repainting.
+     *
+     * @return true if any layer of this window is marked as 'dirty' 
+     *         and needs repainting.
+     */
+    public boolean isDirty() {
+        return false;
+    }
+    
+    /**
+     * Mark this window as being dirty and requiring a repaint.
+     */    
+    public void setDirty() {
     }
 }

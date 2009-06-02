@@ -148,7 +148,7 @@ public class MIDPWindow extends CWindow {
      * Construct a dummy MIDPWindow without a tunnel.
      */
     MIDPWindow() {
-        super(ScreenSkin.IMAGE_BG, ScreenSkin.COLOR_BG, 0, 0);
+        super();
     }
 
     /**
