@@ -72,6 +72,23 @@ extern "C" {
 #define GET_GREEN_FROM_PIXEL(P) (((P) >> 16) & 0xFF)
 #define GET_BLUE_FROM_PIXEL(P)  (((P) >>  8) & 0xFF)
 
+#elif ENABLE_ABGR8888_PIXEL_FORMAT
+
+/**
+ * @def RGB2PIXELTYPE
+ *
+ * Convert 3 RGB octets to a pixel type.
+ */
+#define RGB2PIXELTYPE(r, g, b) ( 0xFF000000 | \
+                                 (((b) << 16) & 0xFF0000) | \
+                                 (((g) << 8)  & 0xFF00) | \
+                                 (((r)     )  & 0xFF) )
+
+/** Separate colors are 8 bits. */
+#define GET_RED_FROM_PIXEL(P)   (((P)      ) & 0xFF)
+#define GET_GREEN_FROM_PIXEL(P) (((P) >>  8) & 0xFF)
+#define GET_BLUE_FROM_PIXEL(P)  (((P) >> 16) & 0xFF)
+
 #else
 
 /**

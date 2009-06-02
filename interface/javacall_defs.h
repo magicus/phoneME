@@ -260,7 +260,7 @@ typedef const char* javacall_const_ascii_string;
  * @typedef javacall_pixel
  * @brief Pixel type for LCD graphics
  */
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
 typedef unsigned int javacall_pixel;
 #else
 typedef unsigned short javacall_pixel;
