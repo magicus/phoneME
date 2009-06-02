@@ -41,16 +41,30 @@
 #define CT_ALPHA    0x04
 
 #if ENABLE_RGBA8888_PIXEL_FORMAT
+
 /** Convert separate r, g, b and alpha components to 32-bit pixel. */
 #define IMGDCD_RGBA2PIXEL(r, g, b, a) ( (((r) << 24) & 0xFF000000) | \
                                         (((g) << 16) & 0xFF0000) | \
                                         (((b) << 8) & 0xFF00) | \
                                          ((a) & 0xFF) )
+#define IMGDCD_MIDPTOOPAQUEPIXEL(x) ( ((x) << 8) | 0xFF )
+#define IMGDCD_MIDPTOPIXEL(x) ( (((x) << 8) & 0xFFFFFF00) | (((x) >> 24) & 0xFF) )
 
-#define IMGDCD_ARGB32TORGBFF32(x) ( ((x) << 8) | 0xFF )
+#elif ENABLE_ABGR8888_PIXEL_FORMAT
+
+#define IMGDCD_RGBA2PIXEL(r, g, b, a) ( (((a) << 24) & 0xFF000000) | \
+                                       (((b) << 16) & 0xFF0000) | \
+                                       (((g) << 8) & 0xFF00) | \
+                                        ((r) & 0xFF) )
+#define IMGDCD_MIDPTOOPAQUEPIXEL(x) ( ((x) & 0xFF00FF00) | \
+                                     (((x) << 16) & 0xFF0000) | \
+                                     (((x) >> 16) & 0xFF) | \
+                                     0xFF000000)
+#define IMGDCD_MIDPTOPIXEL(x) ( ((x) & 0xFF00FF00) | (((x) << 16) & 0xFF0000) | (((x) >> 16) & 0xFF))
+
 #else
 /** Convert pre-masked triplet r, g, b to 16 bit pixel. */
-#define IMGDCD_RGB2PIXEL(r, g, b) ( b +(g << 5)+ (r << 11) )
+#define IMGDCD_RGB2PIXEL(r, g, b) ( b + (g << 5) + (r << 11) )
 #endif
 
 
@@ -198,7 +212,7 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
     for (x = 0; x < p->width; ++x) {
       alpha = 0xff;
 
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
       r = pixels[0];
       g = pixels[1];
       b = pixels[2];
@@ -245,14 +259,9 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
         }
       }
 
-#if ENABLE_RGBA8888_PIXEL_FORMAT
-      /* 
-       * We can make format conversion directly without splitting the color to
-       * separate color components
-       */
-      p->pixelData[y*p->width + x] = ((color << 8) & 0xFFFFFF00) | (alpha & 0xFF);
+#if ENABLE_32BITS_PIXEL_FORMAT
+      p->pixelData[y*p->width + x] = IMGDCD_MIDPTOPIXEL((color & 0x00FFFFFF) | ((alpha << 24) & 0xFF000000));
 #else
-
       r = ((color >> 16) & 0xff) >> 3;
       g = ((color >>  8) & 0xff) >> 2;
       b = ((color >>  0) & 0xff) >> 3;
@@ -452,15 +461,15 @@ imgdcd_decode_jpeg
         *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
     } else if (decode_jpeg_image((char*)srcBuffer, length,
         (char*)(pixelData), width, height) != FALSE) {
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
 		/*
 		 * Decoder returns data in ARGB format therefore convert the content of
-		 * the output buffer to RGBA
+		 * the output buffer to putpixel format (RGBA or ABGR)
 		 */
 		imgdcd_pixel_type* pPtr = pixelData;
 		imgdcd_pixel_type* pEndPtr = pPtr + width * height;
 		for (; pPtr < pEndPtr; pPtr++) {
-			*pPtr = IMGDCD_ARGB32TORGBFF32(*pPtr);
+			*pPtr = IMGDCD_MIDPTOOPAQUEPIXEL(*pPtr);
 		}
 #endif
         *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;

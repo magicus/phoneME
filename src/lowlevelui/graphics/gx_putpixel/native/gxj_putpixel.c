@@ -237,7 +237,7 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
   int height = sbuf->height;
   int count;
   gxj_pixel_type* pPtr;
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
   unsigned int c = (unsigned int)color;
 #else
   unsigned int c = ((unsigned int)color) << 16 | ((unsigned int)color);
@@ -266,7 +266,7 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     --count;
   }
 
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
   while (count >= 8) {
     CHECK_LLPTR_CLIP(sbuf,pPtr);
     *((registers_4 *)pPtr) = regs;
@@ -310,7 +310,7 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     pPtr += 4;
     count -= 4;
   }
-#endif /* ENABLE_RGBA8888_PIXEL_FORMAT */
+#endif /* ENABLE_32BITS_PIXEL_FORMAT */
   while (count >= 0) {
     CHECK_PTR_CLIP(sbuf,pPtr);
     *pPtr = color; pPtr += 1;
@@ -931,7 +931,7 @@ primDrawFilledRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     gxj_pixel_type* lPtr;
     registers_4	regs;
 
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
     unsigned int c = (unsigned int)color;
 #else
     unsigned int c = ((unsigned int)color) << 16 | ((unsigned int)color);
@@ -963,7 +963,7 @@ primDrawFilledRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
         *pPtr++ = color;
         --count;
       }
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
       while (count >= 8) {
         CHECK_LLPTR_CLIP(sbuf,pPtr);
         *((registers_4 *)pPtr) = regs;
@@ -1007,7 +1007,7 @@ primDrawFilledRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
         pPtr += 4;
         count -= 4;
       }
-#endif /* ENABLE_RGBA8888_PIXEL_FORMAT */
+#endif /* ENABLE_32BITS_PIXEL_FORMAT */
       while (count > 0) {
         CHECK_PTR_CLIP(sbuf,pPtr);
         *pPtr++ = color;

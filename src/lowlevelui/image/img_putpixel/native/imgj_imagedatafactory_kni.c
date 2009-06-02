@@ -252,10 +252,10 @@ void imgj_get_argb(const java_imagedata * srcImageDataPtr,
           pixel = srcPixelData[b*srcWidth + a];
           alpha = srcAlphaData[b*srcWidth + a];
           rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-#if ENABLE_RGBA8888_PIXEL_FORMAT
-            GXJ_RGBA32TOARGB32(pixel);
+#if ENABLE_32BITS_PIXEL_FORMAT
+            GXJ_PIXELTOMIDP(pixel);
 #else
-            (alpha << 24) + GXJ_RGB16TORGB24(pixel);
+            GXJ_PIXELTOMIDP(pixel) | ((alpha << 24) & 0xFF000000);
 #endif
         }
       }
@@ -264,10 +264,10 @@ void imgj_get_argb(const java_imagedata * srcImageDataPtr,
         for (a = x; a < x + width; a++) {
           pixel = srcPixelData[b*srcWidth + a];
           rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-#if ENABLE_RGBA8888_PIXEL_FORMAT
-            GXJ_RGBA32TOFFRGB32(pixel);
+#if ENABLE_32BITS_PIXEL_FORMAT
+            GXJ_PIXELTOOPAQUEMIDP(pixel);
 #else
-            GXJ_RGB16TORGB24(pixel) | 0xFF000000;
+            GXJ_PIXELTOMIDP(pixel) | 0xFF000000;
 #endif
         }
       }
@@ -786,20 +786,12 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
 
         if (alphaData != NULL) {
             for (i = 0; i < len; i++) {
-#if ENABLE_RGBA8888_PIXEL_FORMAT
-                pixelData[i] = GXJ_ARGB32TORGBA32(rgbBuffer[i]);
-#else
-                pixelData[i] = GXJ_RGB24TORGB16(rgbBuffer[i]);
-#endif
+                pixelData[i] = GXJ_MIDPTOPIXEL(rgbBuffer[i]);
                 alphaData[i] = (rgbBuffer[i] >> 24) & 0x00ff;
             }
         } else {
             for (i = 0; i < len; i++) {
-#if ENABLE_RGBA8888_PIXEL_FORMAT
-                pixelData[i] = GXJ_ARGB32TORGBFF32(rgbBuffer[i]);
-#else
-                pixelData[i] = GXJ_RGB24TORGB16(rgbBuffer[i]);
-#endif
+                pixelData[i] = GXJ_MIDPTOOPAQUEPIXEL(rgbBuffer[i]);
             }
         }
     }
@@ -995,7 +987,7 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(javax_microedition_lcdui_ImageDataFactory_bytesInPixel) {
     int bytes;
 
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
     bytes = 4;
 #else
     bytes = 2;

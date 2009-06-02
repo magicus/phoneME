@@ -1269,6 +1269,7 @@ class SkinRomizer extends RomUtil {
         "Putpixel",
         "ARGB",
         "RGBA",
+        "ABGR",
         // endianess
         "Little",
         "Big",
@@ -1283,6 +1284,7 @@ class SkinRomizer extends RomUtil {
         ImageToRawConverter.RAW_FORMAT_PP,
         ImageToRawConverter.RAW_FORMAT_ARGB,
         ImageToRawConverter.RAW_FORMAT_RGBA,
+        ImageToRawConverter.RAW_FORMAT_ABGR,
         // endianess
         ImageToRawConverter.INT_FORMAT_LITTLE_ENDIAN,
         ImageToRawConverter.INT_FORMAT_BIG_ENDIAN,

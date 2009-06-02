@@ -60,7 +60,7 @@ int jcapp_get_screen_buffer(int hardwareId) {
                                   &gxj_system_screen_buffer.height,
                                   &color_encoding);
 
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
      if (JAVACALL_LCD_COLOR_RGBA != color_encoding) {
 	    return -2;
      };

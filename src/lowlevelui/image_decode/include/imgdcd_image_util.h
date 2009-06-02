@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
 typedef unsigned int imgdcd_pixel_type;
 #else
 /**

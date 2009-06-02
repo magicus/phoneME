@@ -78,11 +78,7 @@ int gxjport_draw_chars(int pixel, const jshort *clip, gxj_screen_buffer *dst,
     }
 
     result = javacall_font_draw(
-#if ENABLE_RGBA8888_PIXEL_FORMAT
-                                     (javacall_pixel)GXJ_RGB24TORGBFF32(pixel),
-#else
-                                     (javacall_pixel)GXJ_RGB24TORGB16(pixel),
-#endif
+                                     (javacall_pixel)GXJ_MIDPTOOPAQUEPIXEL(pixel),
                                      clip[0],
                                      clip[1],
                                      clip[2],

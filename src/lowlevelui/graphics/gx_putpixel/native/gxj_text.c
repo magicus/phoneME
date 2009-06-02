@@ -379,11 +379,7 @@ drawString(jint pixel, const jshort *clip,
 
     widthRemaining = width;
 
-#if ENABLE_RGBA8888_PIXEL_FORMAT
-    pixelColor = GXJ_RGB24TORGBFF32(pixel);
-#else
-    pixelColor = GXJ_RGB24TORGB16(pixel);
-#endif
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL(pixel);
 
     switch (direction) {
         case RIGHT_TO_LEFT:

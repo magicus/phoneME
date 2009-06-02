@@ -47,7 +47,7 @@ extern void unclipped_blit(unsigned short *dstRaster, int dstSpan,
 			   unsigned short *srcRaster, int srcSpan,
 			   int height, int width, gxj_screen_buffer *dst);
 
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
 /* 
  * For A in [0..0xffff] 
  *
@@ -57,7 +57,7 @@ extern void unclipped_blit(unsigned short *dstRaster, int dstSpan,
 #define div(x)  (((x) >> 8) + ((((x) >> 8) + ((x) & 0xff) + 1) >> 8))
 
 /* return value of src OVER dst, where:
- *     src and dst are an 8888 RGBA pixels in an int (OpenGL ES format)
+ *     src and dst are an 8888 RGBA or ABGR pixel in an int (OpenGL ES format or inverted OpenGL ES format)
  *     OVER is the Source Over Destination composite rule
  * Note, we cannot assume that the destination alpha coming
  * into this function is 1.0, as LCDUI normally assumes for
@@ -81,6 +81,7 @@ static jint alphaComposition(jint src, jint dst) {
     int Rs, Bs, Gs, As, Rd, Bd, Gd, Ad, ONE_MINUS_As;
 
     /* Note src values are not premultiplied */
+#if ENABLE_RGBA8888_PIXEL_FORMAT
     As = src & 0xff;
     if (As == 0xff) {
         /* src is opaque, so no blend and no premultiplication are necessary */
@@ -91,14 +92,35 @@ static jint alphaComposition(jint src, jint dst) {
     src = src >> 8;
     Gs = src & 0xff;
     Rs = (src >> 8) & 0xff;
+#elif ENABLE_ABGR8888_PIXEL_FORMAT
+    Rs = src & 0xff;
+    src = src >> 8;
+    Gs = src & 0xff;
+    src = src >> 8;
+    Bs = src & 0xff;
+    As = (src >> 8) & 0xff;
+    if (As == 0xff) {
+        /* src is opaque, so no blend and no premultiplication are necessary */
+        return src;
+    }
+#endif
 
     /* Note dst vales are already premultiplied */
+#if ENABLE_RGBA8888_PIXEL_FORMAT
     Ad = dst & 0xff;
     dst = dst >> 8;
     Bd = dst & 0xff;
     dst = dst >> 8;
     Gd = dst & 0xff;
     Rd = (dst >> 8) & 0xff;
+#elif ENABLE_ABGR8888_PIXEL_FORMAT
+    Rd = dst & 0xff;
+    dst = dst >> 8;
+    Gd = dst & 0xff;
+    dst = dst >> 8;
+    Bd = dst & 0xff;
+    Ad = (dst >> 8) & 0xff;
+#endif
 
     ONE_MINUS_As = 0xff - As;
     Rd = Rs * As + Rd * ONE_MINUS_As; /* premultiply Rs and blend with Rd */
@@ -110,9 +132,14 @@ static jint alphaComposition(jint src, jint dst) {
     Ad = As * 0xff + Ad * ONE_MINUS_As; /* must scale As appropriately */
     Ad = div(Ad);
 
+#if ENABLE_RGBA8888_PIXEL_FORMAT
     return((Rd << 24) | (Gd << 16) | (Bd << 8) | Ad);
+#elif ENABLE_ABGR8888_PIXEL_FORMAT
+    return((Ad << 24) | (Bd << 16) | (Gd << 8) | Rd);
+#endif
+
 }
-#endif /* ENABLE_RGBA8888_PIXEL_FORMAT
+#endif /* ENABLE_32BITS_PIXEL_FORMAT
 
 /**
  * Renders the contents of the specified mutable image
@@ -143,7 +170,7 @@ draw_image(gxj_screen_buffer *imageSBuf,
     if (x_dest >= clipX1 && y_dest >= clipY1 &&
        (x_dest + imageSBuf->width) <= clipX2 &&
        (y_dest + imageSBuf->height) <= clipY2) {
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
       unclipped_blit((unsigned short *)&destSBuf->pixelData[y_dest*destSBuf->width+x_dest],
 		    destSBuf->width<<2,
 		    (unsigned short *)&imageSBuf->pixelData[0], imageSBuf->width<<2,
@@ -262,7 +289,7 @@ clipped_blit(gxj_screen_buffer* dst, int dstX, int dstY, gxj_screen_buffer* src,
   srcRaster = src->pixelData + (negY ? (negY   * src->width) : 0) + negX;
   dstRaster = dst->pixelData +         (startY * dst->width)      + startX;
 
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
   unclipped_blit((unsigned short *)dstRaster, dst->width<<2,
 		 (unsigned short *)srcRaster, src->width<<2, height, width<<2, dst);
 #else
@@ -528,7 +555,7 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
                         *pDest = *pSrc;
                     }
                     else if (*pSrcAlpha > 0x3) {
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT
                         *pDest = alphaComposition(*pSrc, *pDest);
 #else
                         r1 = (*pSrc >> 11);
