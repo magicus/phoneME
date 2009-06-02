@@ -539,7 +539,7 @@ void Task::terminate_current_isolate(Thread *thread JVM_TRAPS) {
   JarFileParser::flush_caches();
 
 #if ENABLE_JAVA_DEBUGGER
-  if (_debugger_active) {
+  {
     UsingFastOops fastoops;
     Transport::Fast t = transport();
     if (!t.is_null()) {

@@ -979,9 +979,15 @@ void JavaDebugger::close_java_debugger(Transport *t) {
       ops->disconnect_transport(t);
     }
       
+    JVMSPI_DebuggerNotification(KNI_FALSE);
+  }
+
 #if ENABLE_ISOLATES
-    Transport::Fast transport = Universe::transport_head();
-    Transport::Fast prev;
+  // Need to unlink transport even if no active debug session
+  if (t->not_null()) {
+    GUARANTEE(t->not_null(), "Null transport");
+    Transport::Raw transport = Universe::transport_head();
+    Transport::Raw prev;
     GUARANTEE(!transport.is_null(), "No debugger transports");
     if (t->equals(transport)) {
       *Universe::transport_head() = transport().next();
@@ -992,18 +998,17 @@ void JavaDebugger::close_java_debugger(Transport *t) {
       }
       GUARANTEE(!transport.is_null(), "can't find correct debugger transport");
 
-      Transport::Fast next = transport().next();
+      Transport::Raw next = transport().next();
       prev().set_next(&next);
     }
-  {
-    // clear transport in the task
-    Oop::Raw null_oop;
-    Task::Raw task = Task::get_task(t->task_id());
-    task().set_transport(&null_oop);
+    {
+      // clear transport in the task
+      Oop::Raw null_oop;
+      Task::Raw task = Task::get_task(t->task_id());
+      task().set_transport(&null_oop);
+    }
   }
 #endif
-    JVMSPI_DebuggerNotification(KNI_FALSE);
-  }
 }
 
 static const char *_null_transport = "";
