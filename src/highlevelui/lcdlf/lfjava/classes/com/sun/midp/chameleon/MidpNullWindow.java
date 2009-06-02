@@ -26,13 +26,15 @@
 
 package com.sun.midp.chameleon;
 
+import javax.microedition.lcdui.*;
+
 /**
  * This class is used to replace the window in a closed display so the
  * Display does not have to check the window for null before each use.
  */
 public class MidpNullWindow extends MIDPWindow {
     /** The null window. */
-    private static MidpNullWindow;
+    private static MidpNullWindow window;
 
     /**
      * Returns a MIDP null window.
@@ -268,18 +270,18 @@ public class MidpNullWindow extends MIDPWindow {
      *
      * @return the command that's tied to the left soft button
      */
-    public Command getSoftOne() {
-        return xbuttonLayer.getSoftOne();
-    }
+    //public Command getSoftOne() {
+    //    return xbuttonLayer.getSoftOne();
+    //}
 
     /**
      * Returns the command array tied to the right soft button (two).
      *
      * @return the command array that's tied to the right soft button
      */
-    public Command[] getSoftTwo() {
-        return xbuttonLayer.getSoftTwo();
-    }
+    //public Command[] getSoftTwo() {
+    //    return xbuttonLayer.getSoftTwo();
+    //}
 
     /**
      * Called by soft button layer when interactive state of it
