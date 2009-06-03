@@ -367,7 +367,9 @@ static javacall_result dshow_create(int appId,
     p->playerId         = playerId;
     p->mediaType        = mediaType;
     p->uri              = NULL;
-    p->is_video         = ( JC_FMT_FLV == mediaType || JC_FMT_VIDEO_3GPP == mediaType );
+    p->is_video         = ( JC_FMT_FLV          == mediaType || 
+                            JC_FMT_VIDEO_3GPP   == mediaType ||
+                            JC_FMT_MPEG_1       == mediaType);
 
     p->realizing        = false;
     p->prefetching      = false;
@@ -545,6 +547,7 @@ static javacall_result dshow_realize(javacall_handle handle,
         case JC_FMT_FLV:          mime = (javacall_const_utf16_string)L"video/x-flv"; break;
         case JC_FMT_MPEG1_LAYER3: mime = (javacall_const_utf16_string)L"audio/mpeg";  break;
         case JC_FMT_VIDEO_3GPP:   mime = (javacall_const_utf16_string)L"video/3gpp";  break;
+        case JC_FMT_MPEG_1:       mime = (javacall_const_utf16_string)L"video/mpeg";  break;
         case JC_FMT_AMR:          
         case JC_FMT_AMR_WB:          
         case JC_FMT_AMR_WB_PLUS:          
@@ -580,6 +583,12 @@ static javacall_result dshow_realize(javacall_handle handle,
     {
         p->mediaType = JC_FMT_VIDEO_3GPP;
         mime = (javacall_const_utf16_string)L"video/3gpp";
+        mimeLength = wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mimeLength, L"video/mpeg" ) )
+    {
+        p->mediaType = JC_FMT_MPEG_1;
+        mime = (javacall_const_utf16_string)L"video/mpeg";
         mimeLength = wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"audio/amr" ) )
@@ -698,7 +707,9 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
             {
                 if( preload_size > p->whole_content_size ) preload_size = p->whole_content_size;
 
-                if( JC_FMT_VIDEO_3GPP == p->mediaType || JC_FMT_FLV == p->mediaType )
+                if( JC_FMT_VIDEO_3GPP   == p->mediaType || 
+                    JC_FMT_FLV          == p->mediaType ||  
+                    JC_FMT_MPEG_1       == p->mediaType )
                 {
                     preload_size = p->whole_content_size;
                 }

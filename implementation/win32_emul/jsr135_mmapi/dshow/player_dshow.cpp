@@ -531,7 +531,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         if(!pplayer) return false;
 
         pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = MEDIASUBTYPE_MPEG1System;
+        pplayer->amt.subtype = GUID_NULL; //MEDIASUBTYPE_MPEG1System;
         pplayer->amt.bFixedSizeSamples = TRUE;
         pplayer->amt.bTemporalCompression = FALSE;
         pplayer->amt.lSampleSize = 1;

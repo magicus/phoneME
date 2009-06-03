@@ -514,6 +514,7 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
+    case JC_FMT_MPEG_1:
         return &g_dshow_itf;
         break;
 #endif // ENABLE_MMAPI_DSHOW
@@ -523,7 +524,6 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
         break;
 
 #ifdef ENABLE_MMAPI_LIME
-    case JC_FMT_MPEG_1:
     case JC_FMT_MPEG_4_SVP:
     case JC_FMT_MPEG_4_AVC:
     case JC_FMT_MOV:
