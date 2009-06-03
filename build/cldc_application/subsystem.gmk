@@ -45,7 +45,8 @@ endif
 ifeq ($(JSR_177_PACKAGE), full)
 MODULE_SATSA_COMMON_JAVA_FILES += \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/lang/UnsupportedOperationException.java \
-    $(JSR_177_DIR)/src/cldc_application/common/classes/com/sun/satsa/security/SecurityInitializer.java
+    $(JSR_177_DIR)/src/cldc_application/common/classes/com/sun/satsa/security/SecurityInitializer.java \
+    $(JSR_177_DIR)/src/cldc_application/common/classes/com/sun/j2me/dialog/PinMessageDialog.java
 endif
 
 # Definition for the build directory
