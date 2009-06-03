@@ -63,6 +63,40 @@ public class MessageDialog {
     }
 
     /**
+     * Displays dialog with input field.
+     * @param title dialog title
+     * @param message message text
+     * @param token security token.
+     * @return strings or null if cancelled. String contains
+     * user input.
+     * @throws InterruptedException  if interrupted
+     */
+    public static String promptMessage(String title,
+                           String message,
+                           Token token)
+            throws InterruptedException {
+
+        Dialog d = new Dialog(title, true);
+        d.append(new StringItem(message, null));
+        
+        TextField userInput = new TextField(" ",
+            "", 32, 0);
+        d.append(userInput);
+
+        while (true) {
+            if (d.waitForAnswer(token) == Dialog.CANCELLED) {
+                return null;
+            }
+
+            String s = userInput.getString().trim();
+            if (s.equals("")) {
+                continue;
+            }
+            return s;
+        }
+    }
+
+    /**
      * Displays dialog that allows user to select one element
      * from the list.
      * @param title dialog title
@@ -95,7 +129,7 @@ public class MessageDialog {
     public static String[] enterNewPIN(Token token)
             throws InterruptedException {
 
-        Dialog d = new Dialog(
+        /*Dialog d = new Dialog(
             // "New PIN", 
             Resource.getString(
                 ResourceConstants.JSR177_PINDIALOG_TITLE_NEWPIN),
@@ -142,7 +176,8 @@ public class MessageDialog {
                 continue;
             }
             return new String[] {s, h1};
-        }
+        }  */
+	return new String[]{"", ""};
     }
 
     /**
