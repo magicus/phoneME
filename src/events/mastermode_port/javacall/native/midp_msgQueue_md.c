@@ -422,8 +422,16 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     	pNewMidpEvent->type = FLUID_EVENT;
         pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
         pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
-        pNewMidpEvent->intParam4 = (int)event->data.jsr290FluidEvent.result;
-        pNewMidpEvent->intParam1 = JSR290_DISPLAY_BOX;
+        pNewMidpEvent->intParam4 = (int)((jlong)(event->data.jsr290FluidEvent.spare));
+        pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290FluidEvent.spare) >> 32);
+        switch ((int)event->data.jsr290FluidEvent.result) {
+            case 0: pNewMidpEvent->intParam1 = JSR290_DISPLAY_ALERT_BOX;
+                break;
+            case 1: pNewMidpEvent->intParam1 = JSR290_DISPLAY_CONFIRM_BOX;
+                break;
+            case 2: pNewMidpEvent->intParam1 = JSR290_DISPLAY_PROMPT_BOX;
+                break;
+        }
         {
             int len = 0;
             if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text, &len)) {

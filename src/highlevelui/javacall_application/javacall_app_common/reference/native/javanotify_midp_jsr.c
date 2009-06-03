@@ -1128,6 +1128,7 @@ void javanotify_fluid_handle_event_request (javacall_handle  request_handle) {
 void
 javanotify_fluid_display_box (
     javacall_handle                       fluid_image,
+    javacall_handle                       request,
     javacall_const_utf16_string           message,
     javacall_int32			              type
     ) {
@@ -1136,6 +1137,7 @@ javanotify_fluid_display_box (
 
     e.eventType = JSR290_JC_EVENT_DISPLAY_BOX;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.spare       = request;
     e.data.jsr290FluidEvent.text        = javautil_wcsdup(message);
     e.data.jsr290FluidEvent.result      = type;
 
