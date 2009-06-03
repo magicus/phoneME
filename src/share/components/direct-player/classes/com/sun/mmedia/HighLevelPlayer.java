@@ -350,6 +350,89 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }.start();
         }
     }
+    
+    private boolean deviceNotAvailable = false;
+    private Object deviceNotAvailableSync = new Object();
+    private String deviceName = null;
+    void notifyDeviceAvailable(final boolean available, final String deviceName) {
+        int state = getState();
+        
+System.out.println("notifyDeviceAvailable: state="+state);
+        if (null == lowLevelPlayer || state == UNREALIZED || state == CLOSED) {
+            return;
+        }
+        this.deviceName = deviceName;
+        if (state == REALIZED) {
+            synchronized (deviceNotAvailableSync) {
+                if (available != !deviceNotAvailable) {
+                    if (available) {
+System.out.println("notifyDeviceAvailable: sending1 DEVICE_AVAILABLE");
+                        deviceNotAvailable = false;
+                        sendEvent(PlayerListener.DEVICE_AVAILABLE, deviceName);
+                    } else {
+System.out.println("notifyDeviceAvailable: sending1 DEVICE_UNAVAILABLE");
+                        deviceNotAvailable = true;
+                        sendEvent(PlayerListener.DEVICE_UNAVAILABLE, deviceName);
+                    }
+                }
+            }
+            return;
+        }
+        if (available && state > REALIZED) {
+System.out.println("notifyDeviceAvailable: will not send DEVICE_AVAILABLE. "+
+    "state="+state+" "+
+    "deviceNotAvailable="+deviceNotAvailable);
+            return;
+        }
+        
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+    System.out.println("notifyDeviceAvailable: state1="+getState());
+                    
+                    if (getState() > PREFETCHED) {
+                        // wait for all events achieve player
+    System.out.println("notifyDeviceAvailable: wait for all events achieve player");
+                        try {Thread.sleep(300);} catch (InterruptedException ie) {}
+                    }
+    System.out.println("notifyDeviceAvailable: state2="+getState());
+                    if (getState() >= PREFETCHED) {
+    System.out.println("notifyDeviceAvailable: before deallocate");
+                        deallocate();
+    System.out.println("notifyDeviceAvailable: after deallocate");
+                    }
+    System.out.println("notifyDeviceAvailable: state3="+getState());
+                    if (getState() == REALIZED) {
+                        synchronized (deviceNotAvailableSync) {
+                            if (available != !deviceNotAvailable) {
+                                if (available) {
+                    System.out.println("notifyDeviceAvailable: sending2 DEVICE_AVAILABLE");
+                                    deviceNotAvailable = false;
+                                    sendEvent(PlayerListener.DEVICE_AVAILABLE, deviceName);
+                                } else {
+                    System.out.println("notifyDeviceAvailable: sending2 DEVICE_UNAVAILABLE");
+                                    deviceNotAvailable = true;
+                                    sendEvent(PlayerListener.DEVICE_UNAVAILABLE, deviceName);
+                                }
+                            }
+                        }
+                    }
+                } catch (IllegalStateException ise) {
+    System.out.println("notifyDeviceAvailable: IllegalStateException="+ise);
+    ise.printStackTrace();
+                    // ignore
+                } catch (RuntimeException re) {
+    System.out.println("notifyDeviceAvailable: RuntimeException="+re);
+    re.printStackTrace();
+                    throw re;
+                } catch (Exception e) {
+    System.out.println("notifyDeviceAvailable: Exception="+e);
+                    sendEvent(PlayerListener.ERROR, "Error "+deviceName+" "+e);
+                }
+            }
+        }).start();
+        
+    }
 
     void notifySnapshotFinished()
     {
@@ -585,7 +668,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * <i>REALIZED</i> state.
      * <p>
      * If <code>realize</code> is called when the <code>Player</code> is in
-     * the <i>REALIZED</i>, <i>PREFETCHTED</i> or <i>STARTED</i> state,
+     * the <i>REALIZED</i>, <i>PREFETCHED</i> or <i>STARTED</i> state,
      * the request will be ignored.
      *
      * @exception IllegalStateException Thrown if the <code>Player</code>
@@ -749,6 +832,13 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
 
+        synchronized (deviceNotAvailableSync) {
+            if (deviceNotAvailable) {
+    System.out.println("prefetch: sending2 DEVICE_AVAILABLE");
+                deviceNotAvailable = false;
+                sendEvent(PlayerListener.DEVICE_AVAILABLE, deviceName);
+            }
+        }
         lowLevelPlayer.doPrefetch();
 
         VolumeControl vc = ( VolumeControl )getControl(

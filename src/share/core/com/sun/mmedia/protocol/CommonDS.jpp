@@ -137,16 +137,32 @@ public class CommonDS extends BasicDS implements SourceStream {
                 }
             } else if (locator.startsWith("file:")) {
                 // #ifdef USE_FILE_CONNECTION [
-                FileConnection fileCon = 
-                                (FileConnection)Connector.open(locator);
-                if (fileCon.exists() && !fileCon.isDirectory() &&
-                    fileCon.canRead()) {
+                FileConnection fileCon = null;
+                try {
+                    String loc = locator;
+                    int idx = locator.indexOf(':');
+                    if (idx != -1) {
+                        loc = locator.substring(idx + 1);
+                    }
+                    com.sun.j2me.io.ConnectionBaseInterface cbi = 
+                        (com.sun.j2me.io.ConnectionBaseInterface)Class
+                            .forName("com.sun.midp.io.j2me.file.Protocol")
+                            .newInstance();
+                    fileCon = (FileConnection)
+                        cbi.openPrim(loc, Connector.READ, true);
+                } catch (ClassNotFoundException cnfe) {
+                } catch (IllegalAccessException cnfe) {
+                } catch (InstantiationException ife) {}
+                if (fileCon != null && fileCon.exists() && 
+                        !fileCon.isDirectory() && fileCon.canRead()) {
                     inputStream = fileCon.openInputStream();
                     contentLength = fileCon.fileSize();
                     fileCon.close();
                     goodurl = true;
                 } else {
-                    fileCon.close();
+                    if (fileCon != null) {
+                        fileCon.close();
+                    }
                     goodurl = false;
                 }
                 // #else ] [
