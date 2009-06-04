@@ -85,6 +85,10 @@ extern "C" {
 #include <javacall_contactless.h>
 #endif
 
+#ifdef ENABLE_JSR_290
+#include <javacall_fluid_image.h>
+#endif
+
 #ifdef ENABLE_ON_DEVICE_DEBUG
 #include <javacall_odd.h>
 #endif /* ENABLE_ON_DEVICE_DEBUG */
@@ -1004,7 +1008,7 @@ void
 javanotify_fluid_listener_failed (
     javacall_handle                       fluid_image,
     javacall_const_utf16_string           failure,
-    const javacall_int32                  failure_type
+    const javacall_fluid_failure_types    failure_type
     ) {
     midp_jc_event_union e;
 
