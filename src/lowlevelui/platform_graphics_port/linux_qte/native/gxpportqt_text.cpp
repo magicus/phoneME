@@ -35,7 +35,7 @@
 #include <gxpport_graphics.h>
 #include <gxpport_font.h>
 #include <gxpportqt_image.h>
-
+#include <font_constants.h>
 
 
 /**
@@ -73,13 +73,13 @@ find_font(int face, int style, int size) {
 
 	switch (size) {
 	default:
-	case SIZE_SMALL:
+	case OEM_FONT_SIZE_SMALL:
 	    pointsize = face == FACE_MONOSPACE ? 7: 11;
 	    break;
-	case SIZE_MEDIUM:
+	case OEM_FONT_SIZE_MEDIUM:
 	    pointsize = 13;
 	    break;
-	case SIZE_LARGE:
+	case OEM_FONT_SIZE_LARGE:
 	    pointsize = 17;
 	    break;
 	}
