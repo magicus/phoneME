@@ -39,6 +39,10 @@ PUTPIXEL_PORT_STUBS_DIR = $(SUBSYSTEM_LOWUI_DIR)/putpixel_port/stubs
 #
 vpath % $(PUTPIXEL_PORT_STUBS_DIR)/native
 
+# Include path for the sub-system
+#
+SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
+    -I$(PUTPIXEL_PORT_STUBS_DIR)/include 
 
 # Native files for the sub-system
 #
