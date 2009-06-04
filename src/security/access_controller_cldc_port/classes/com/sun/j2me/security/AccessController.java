@@ -147,7 +147,7 @@ public final class AccessController {
      * @exception SecurityException if the specified permission
      * is not permitted, based on the current security policy
      */
-    public static synchronized void checkPermission(String name,
+    public static void checkPermission(String name,
             String resource, String extraValue) throws SecurityException {
 
         if (context == null) {
