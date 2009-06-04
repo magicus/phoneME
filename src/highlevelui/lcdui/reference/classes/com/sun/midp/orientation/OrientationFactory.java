@@ -41,15 +41,15 @@ public class OrientationFactory {
      * @return the orientation handler or null when the name is wrong
      */
     public static OrientationHandler createOrientHandler(String name) {
-	    OrientationHandler retV = null;
-		if (name != null) {
+        OrientationHandler retV = null;
+        if (name != null) {
             try {
                 retV = (OrientationHandler)(Class.forName(name).newInstance());
-			} catch (ClassNotFoundException exc) {
-			} catch (InstantiationException exc) {
-			} catch (IllegalAccessException exc) {
-			}
-		}
-		return retV;
-	}
+            } catch (ClassNotFoundException exc) {
+            } catch (InstantiationException exc) {
+            } catch (IllegalAccessException exc) {
+            }
+        }
+        return retV;
+    }
 }

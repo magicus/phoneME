@@ -58,12 +58,12 @@ public interface DisplayAccess {
     /** Called to get the display to request the foreground. */
     public void requestForeground();
 
-	/**
-	* Called to release internal resources.
-	* This should only be called after a display
-	* has been released.
-	 */
-	public void close();
+    /**
+    * Called to release internal resources.
+    * This should only be called after a display
+    * has been released.
+     */
+    public void close();
 
     // API's for accessing Display from Games Package
 
@@ -83,7 +83,7 @@ public interface DisplayAccess {
      * @param height The height of the region to be flushed
      */
     void flush(Displayable screen, Image offscreen_buffer,
-	       int x, int y, int width, int height);
+           int x, int y, int width, int height);
 
     /**
      * Called when the system needs to temporarily prevent the application

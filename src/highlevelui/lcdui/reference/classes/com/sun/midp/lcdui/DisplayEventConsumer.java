@@ -172,7 +172,7 @@ public interface DisplayEventConsumer {
      * Called by event delivery when size of screen was changed.
      *
      * @param state The new state or -1 when state is not supported
-	 * @see OrientationListener interface
+     * @see OrientationListener interface
      */
      public void handleRotationEvent(int state);
 

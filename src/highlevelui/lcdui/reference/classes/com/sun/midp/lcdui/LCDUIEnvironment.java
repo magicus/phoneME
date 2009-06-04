@@ -105,11 +105,11 @@ public class LCDUIEnvironment {
          * has been run and then hook up its objects.
          */
         displayEventHandler.initDisplayEventHandler(
-	    displayEventProducer,
+            displayEventProducer,
             foregroundController,
             repaintEventProducer,
             displayContainer,
-	    displayDeviceContainer);
+            displayDeviceContainer);
 
         // Set a listener in the event queue for display events
         new DisplayEventListener(
@@ -133,13 +133,13 @@ public class LCDUIEnvironment {
 
         // Initialize a handler to process rotation events
         String orientClassName = Configuration.getProperty("com.sun.midp.orientClassName");
-		if (orientClassName != null && orientClassName.length() > 0) {
+        if (orientClassName != null && orientClassName.length() > 0) {
             OrientationHandler orientHandler = OrientationFactory.createOrientHandler(orientClassName);
-		    if (orientHandler != null) {
-		        this.eventQueue = eventQueue;
-			    orientHandler.addListener(new OrientationListenerImpl());
-			}
-		}
+            if (orientHandler != null) {
+                this.eventQueue = eventQueue;
+                orientHandler.addListener(new OrientationListenerImpl());
+            }
+        }
     }
 
     /**
@@ -148,7 +148,7 @@ public class LCDUIEnvironment {
      * @return DisplayContainer
      */
     public DisplayContainer getDisplayContainer() {
-	return displayContainer;
+        return displayContainer;
     }
 
     /** 
@@ -157,7 +157,7 @@ public class LCDUIEnvironment {
     public void shutDown() {
 
         // shutdown any preempting
-	displayEventHandler.donePreempting(null);
+        displayEventHandler.donePreempting(null);
     }
 
     /**
@@ -171,7 +171,7 @@ public class LCDUIEnvironment {
 
     /** This is nested inside LCDUIEnvironment so that it can see the private fields. */
     private class OrientationListenerImpl implements OrientationListener {
-	
+    
     /**
          * Calls when orientation is changed. 
          *
@@ -179,9 +179,9 @@ public class LCDUIEnvironment {
          */
         public void orientationChanged(int orientation) {
             DisplayAccess da = displayContainer.findForegroundDisplay();
-	    	if (da != null) {
-			    da.getDisplayEventConsumer().handleRotationEvent(orientation);
-		    }
-	    }
-	}
+            if (da != null) {
+                da.getDisplayEventConsumer().handleRotationEvent(orientation);
+            }
+        }
+    }
 }

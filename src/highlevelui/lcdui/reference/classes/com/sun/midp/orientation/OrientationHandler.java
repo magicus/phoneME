@@ -34,8 +34,8 @@ public interface OrientationHandler {
 
     /**
      * Adds the orientation listener.
-	 *
-	 * This method adds the orientation listener.
+     *
+     * This method adds the orientation listener.
      *
      * @param listener the orientation listener instance for adding. 
      */
@@ -50,7 +50,7 @@ public interface OrientationHandler {
 
     /**
      * Gets the current orientation state.
-	 *
+     *
      * @return the current orientation state
      */
     public int getState();
