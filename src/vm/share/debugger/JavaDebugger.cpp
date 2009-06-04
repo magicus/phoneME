@@ -671,9 +671,11 @@ bool JavaDebugger::dispatch(int timeout)
       // Only want to connect if current thread is correct one for this 
       // transport
       if (t().task_id() != Thread::current()->task_id()) {
-        // Try next one
-        t = next_t.obj();
-        continue;
+        if (!is_suspend(&t) || !JVM_IsIsolateSuspended(t().task_id())) {
+          // Try next one
+          t = next_t.obj();
+          continue;
+        }
       }
 #endif
       // VM started with -nosuspend and we haven't connected with a debugger
@@ -899,7 +901,15 @@ bool JavaDebugger::initialize_java_debugger(JVM_SINGLE_ARG_TRAPS) {
       }
       if (is_suspend(&t)) {
         // Wait for debugger to connect
-        ops->connect_transport(&t, Transport::SERVER, -1);
+        int timeout = -1;
+#if ENABLE_ISOLATES
+        if (Task::get_num_tasks() > 2) {
+          // If this is not the only task in the VM, we do not block on 
+          // connect to let other tasks run.
+          timeout = 0;
+        }
+#endif
+        ops->connect_transport(&t, Transport::SERVER, timeout);
       } else {
         // Don't wait just check
         ops->connect_transport(&t, Transport::SERVER, 0);
@@ -920,6 +930,15 @@ bool JavaDebugger::sync_debugger(Transport *t)
 
   if (!ops->initialized(t)) {
     if (is_suspend(t)) {
+#if ENABLE_ISOLATES
+      if (Task::get_num_tasks() > 2) {
+        // If this is not the only task in the VM, we connect in non-blocking
+        // mode to let other tasks run. The connecting task is suspended
+        // waiting for a connection from the debugger.
+        JVM_SuspendIsolate(t->task_id());
+        return true;
+      }
+#endif
       // Should have made a connection if in suspend mode.  Something failed.
       return false;
     }
@@ -928,9 +947,17 @@ bool JavaDebugger::sync_debugger(Transport *t)
     return true;
   }
   _debugger_active = (_debugger_active + 2) | DEBUGGER_ACTIVE;
+#if ENABLE_ISOLATES
+  TaskContext tmp(t->task_id());
+#endif
   // Get the handshake from the proxy
   //  JavaDebugger::dispatch(-1 JVM_CHECK_0);
   VMEvent::vminit(t);
+#if ENABLE_ISOLATES
+  if (is_suspend(t) && JVM_IsIsolateSuspended(t->task_id())) {
+    JVM_ResumeIsolate(t->task_id());
+  }
+#endif
   if (!_debugger_active) {
     // We must have gotten a VM_Exit command during init, return false
     return false;
