@@ -2981,7 +2981,7 @@ public class Display {
         * has been released.
         */
         public void close() {
-                        Display.this.close();
+            Display.this.close();
         }
 
         /**
