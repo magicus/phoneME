@@ -149,48 +149,60 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
             throws InterruptedException {
         Display tempDisplay;
         String title;
-
+        System.out.println("preemptDisplay 1");
         if (d == null) {
             throw new NullPointerException(
                 "The displayable can't be null");
         }
 
+        System.out.println("preemptDisplay 2");
         title = d.getTitle();
         if (title == null) {
             throw new NullPointerException(
                 "The title of the displayable can't be null");
         }
 
+        System.out.println("preemptDisplay 3");
         if (EventQueue.isDispatchThread()) {
             // Developer programming error
             throw new RuntimeException(
                 "Blocking call performed in the event thread");
         }
 
+        System.out.println("preemptDisplay 4");
         /**
          * This sync protects preempt related local fields:
          * preemptingDisplay and destroyPreemptingDisplay.
          */
         synchronized (this) {
+            System.out.println("preemptDisplay 5");
             if (preemptingDisplay != null) {
+                System.out.println("preemptDisplay 6");
 
                 if (!waitForDisplay) {
+                    System.out.println("preemptDisplay 7");
                     return null;
                 }
 
+                System.out.println("preemptDisplay 8");
                 this.wait();
+                System.out.println("preemptDisplay 9");
             }
 
             // This class will own the display.
             tempDisplay =
                 new Display("com.sun.midp.lcdui.DisplayEventHandlerImpl");
 
+            System.out.println("preemptDisplay 10");
             foregroundController.startPreempting(tempDisplay.displayId);
 
+            System.out.println("preemptDisplay 11");
             tempDisplay.setCurrent(d);
 
+            System.out.println("preemptDisplay 12");
             preemptingDisplay = tempDisplay.accessor;
 
+            System.out.println("preemptDisplay 13");
             return preemptingDisplay;
         }
     }

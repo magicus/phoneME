@@ -1136,13 +1136,15 @@ public class Display {
      * @see #getCurrent
      */
     public void setCurrent(Displayable nextDisplayable) {
+        System.out.println("Display 0");
         synchronized (LCDUILock) {
-	    
+	    System.out.println("Display 1");
 		// Handle null right away, to avoid risk of NullPointerException below.
 		if (nextDisplayable == null) {
 			setCurrentImpl(null, null);
 			return;
 		}
+        System.out.println("Display 2");
 			
 	    /** Check display capabilities. IllegalArgumentException is thrown 
 		if at least one displayable capability is not supported by the display */
@@ -1806,7 +1808,9 @@ public class Display {
             return;
         }
 
+        System.out.println("sutCurrentImpl 1");
         if (nextDisplayable instanceof Alert) {
+        System.out.println("sutCurrentImpl 1 alert");
             if (wantsForeground != WANTS_FOREGROUND_FOR_ALERT) {
 		// A non-alert or null was replaced by an alert
 		wantsForeground = WANTS_FOREGROUND_FOR_ALERT;
@@ -1838,7 +1842,7 @@ public class Display {
         if (nextDisplayable instanceof Form) {
 	    ((FormLF)nextDisplayable.displayableLF).uItemMakeVisible(nextItem);
 	}
-
+        System.out.println("sutCurrentImpl 2");
         requestScreenChange(nextDisplayable);
     }
 
@@ -1863,6 +1867,7 @@ public class Display {
      */
     void requestScreenChange(Displayable nextDisplayable) {
         pendingCurrent = nextDisplayable.displayableLF;
+        System.out.println("screen change");
         displayEventProducer.sendScreenChangeEvent(consumer, nextDisplayable);
     }
 
