@@ -255,7 +255,7 @@ void imgj_get_argb(const java_imagedata * srcImageDataPtr,
 #if ENABLE_32BITS_PIXEL_FORMAT
             GXJ_PIXELTOMIDP(pixel);
 #else
-            GXJ_PIXELTOMIDP(pixel) | ((alpha << 24) & 0xFF000000);
+            GXJ_PIXELTOMIDP(pixel, alpha);
 #endif
         }
       }
@@ -264,11 +264,7 @@ void imgj_get_argb(const java_imagedata * srcImageDataPtr,
         for (a = x; a < x + width; a++) {
           pixel = srcPixelData[b*srcWidth + a];
           rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-#if ENABLE_32BITS_PIXEL_FORMAT
             GXJ_PIXELTOOPAQUEMIDP(pixel);
-#else
-            GXJ_PIXELTOMIDP(pixel) | 0xFF000000;
-#endif
         }
       }
     }
@@ -787,7 +783,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
         if (alphaData != NULL) {
             for (i = 0; i < len; i++) {
                 pixelData[i] = GXJ_MIDPTOPIXEL(rgbBuffer[i]);
-                alphaData[i] = (rgbBuffer[i] >> 24) & 0x00ff;
+                alphaData[i] = (rgbBuffer[i] >> 24) & 0xff;
             }
         } else {
             for (i = 0; i < len; i++) {
