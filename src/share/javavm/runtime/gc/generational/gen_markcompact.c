@@ -363,6 +363,11 @@ void CVMgcReplaceWithPlaceHolderObject(CVMObject *currObj, CVMUint32 objSize)
 #endif
 }
 
+static void
+scanObjectsInRangeSkipUnmarked(CVMGenMarkCompactGeneration* thisGen,
+			       CVMExecEnv* ee, CVMGCOptions* gcOpts,
+			       CVMUint32* base, CVMUint32* top);
+
 /*
  * Scan objects in contiguous range, and do all special handling as well.
  * Replace unmarked objects with equivalent sized place holder objects.
@@ -376,6 +381,11 @@ scanObjectsInYoungGenRange(CVMGenMarkCompactGeneration* thisGen,
     CVMtraceGcCollect(("GC[MC,full]: "
 		       "Scanning object range (skip unmarked) [%x,%x)\n",
 		       base, top));
+#ifdef CVM_JVMTI
+    if (!CVMjvmtiIsEnabled()) {
+        scanObjectsInRangeSkipUnmarked(thisGen, ee, gcOpts, base, top);
+    }
+#endif
     while (curr < top) {
 	CVMObject* currObj    = (CVMObject*)curr;
 	CVMAddr    classWord  = CVMobjectGetClassWord(currObj);

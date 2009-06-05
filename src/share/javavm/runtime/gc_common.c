@@ -1382,7 +1382,9 @@ CVMgcStopTheWorldAndGCSafePostAction(CVMExecEnv *ee, void *data,
     if (CVMjvmtiShouldPostGarbageCollectionFinish()) {
         CVMjvmtiPostGCFinishEvent();
     }
-    CVMjvmtiTagRehash();
+    if (CVMjvmtiIsEnabled()) {
+        CVMjvmtiTagRehash();
+    }
 #endif
 
     /* After GC is done and before we allow all threads to become unsafe
