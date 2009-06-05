@@ -696,12 +696,7 @@ static javacall_result dshow_do_buffering(javacall_handle handle,
 
             if( -1 != p->whole_content_size )
             {
-                if( preload_size > p->whole_content_size ) preload_size = p->whole_content_size;
-
-                if( JC_FMT_VIDEO_3GPP == p->mediaType || JC_FMT_FLV == p->mediaType )
-                {
-                    preload_size = p->whole_content_size;
-                }
+                preload_size = p->whole_content_size;
             }
 
             *need_more_data  = ( p->bytes_buffered < preload_size ) 
