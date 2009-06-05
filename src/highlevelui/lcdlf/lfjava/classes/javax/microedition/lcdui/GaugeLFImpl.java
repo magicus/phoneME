@@ -801,7 +801,7 @@ class GaugeLFImpl extends ItemLFImpl implements GaugeLF {
         // display current value of gauge
         drawNumber(g, GaugeSkin.IMAGE_VALUES, 11, value, 
                    GaugeSkin.VALUE_X, GaugeSkin.VALUE_Y,
-                   (value * 100) / maxValue);
+                   value);
 
         if (GaugeSkin.IMAGE_DEC_BTN != null) {
             // decrease button            
