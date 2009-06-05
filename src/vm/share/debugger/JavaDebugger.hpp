@@ -84,19 +84,20 @@ public:
   static bool initialize_java_debugger(JVM_SINGLE_ARG_TRAPS);
 
   enum DebugMode {
-    NO_DEBUG = 0,
-    DEBUG_SUSPEND = 1,
-    DEBUG_NO_SUSPEND = 2
+    NoDebug = 0,
+    DebugSuspend = 1,
+    DebugNoSuspend = 2,
   };
 
 #if ENABLE_ISOLATES
   static void on_task_termination();
 
   static DebugMode main_debug_mode() {
-    DebugMode debug_mode = NO_DEBUG;
+    DebugMode debug_mode = NoDebug;
     if (is_debugger_option_on() &&
         (!is_debug_isolate_option_on() || is_debug_main_option_on())) {
-      debug_mode = is_suspend_option() ? DEBUG_SUSPEND : DEBUG_NO_SUSPEND;
+      debug_mode = 
+        is_suspend_option() ? DebugSuspend : DebugNoSuspend;
     }
     return debug_mode;
   }
@@ -250,7 +251,7 @@ public:
 #if ENABLE_ISOLATES && ENABLE_JAVA_DEBUGGER
 bool Task::is_debug_suspend() const {
   JavaDebuggerContext::Raw context = debugger_context();
-  return context().debug_mode() == JavaDebugger::DEBUG_SUSPEND;
+  return context().debug_mode() == JavaDebugger::DebugSuspend;
 }
 #endif
 
