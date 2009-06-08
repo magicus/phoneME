@@ -92,7 +92,7 @@ ABSTRACTIONS_CLASSES += \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordEnumerationImpl.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/ContactlessPermission.java \
 
-ifeq ($(filter true_full,$(USE_JSR_290)_full $(USE_JSR_177)_$(JSR_177_PACKAGE)), true)
+ifeq ($(filter true_full,$(USE_JSR_290)_full $(USE_JSR_177)_$(JSR_177_PACKAGE)), true_full)
 ABSTRACTIONS_CLASSES += \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java
