@@ -96,10 +96,8 @@ public class LCDUIEventListener implements EventListener {
         switch (newEvent.getType()) {
         case EventTypes.INVALIDATE_EVENT:
         case EventTypes.CALL_SERIALLY_EVENT:
-            System.out.println("catched event from midp eventqueue. Its is INVALIDATE or CALL_SEr.. event");
             return preprocessAllowOnlyOneEvent(newEvent, waitingEvent);
         case EventTypes.SCREEN_CHANGE_EVENT:
-            System.out.println("preprocess SCREEN_CHANGE event thread id: " + Thread.currentThread().getName());
             return preprocessScreenChangeEvent
                         (newEvent, waitingEvent);
         // case EventTypes.ITEM_EVENT: 
@@ -115,6 +113,7 @@ public class LCDUIEventListener implements EventListener {
      */
     public void process(Event event) {
         LCDUIEvent lcduiEvent = (LCDUIEvent)event;
+        
         switch (event.getType()) {
         case EventTypes.SCREEN_CHANGE_EVENT:
             /*
@@ -122,7 +121,6 @@ public class LCDUIEventListener implements EventListener {
              * from event field.
              * Assumed that target consumer is not null.
              */
-            System.out.println("process SCREEN_CHANGE_EVENT thread id: " + Thread.currentThread().getName());
             lcduiEvent.display.handleScreenChangeEvent(lcduiEvent.nextScreen);
             return;
 
@@ -132,7 +130,6 @@ public class LCDUIEventListener implements EventListener {
              * from event field.
              * Assumed that target consumer is not null.
              */
-            System.out.println("process REPAINT");
             lcduiEvent.display.handleScreenRepaintEvent();
             return;
 
@@ -142,7 +139,6 @@ public class LCDUIEventListener implements EventListener {
              * from event field.
              * Assumed that target consumer is not null.
              */
-            System.out.println("process INVALIDATE");
             lcduiEvent.display.handleInvalidateEvent();
             return;
 
@@ -159,7 +155,6 @@ public class LCDUIEventListener implements EventListener {
              * from event field.
              * Assumed that target consumer is not null.
              */
-            System.out.println("process CALL_SERIALLY_EVENT");
             lcduiEvent.display.handleCallSeriallyEvent();
             return;
             
@@ -212,10 +207,8 @@ public class LCDUIEventListener implements EventListener {
         LCDUIEvent newEvent;
         LCDUIEvent waitingEvent;
 
-        System.out.println("preprocessScreenChangeEvent 1");
         if (genericEvent2 == null) {
             // There is no other event, queue this event
-            System.out.println("preprocessScreenChangeEvent 2");
             return true;
         }
 
@@ -224,7 +217,6 @@ public class LCDUIEventListener implements EventListener {
 
         if (newEvent.nextScreen != waitingEvent.nextScreen) {
              // The events are different, queue this event
-            System.out.println("preprocessScreenChangeEvent 3");
              return true;
         }
 
