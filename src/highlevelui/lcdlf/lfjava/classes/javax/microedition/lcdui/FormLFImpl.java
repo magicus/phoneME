@@ -523,8 +523,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             }
         } // synchronized
 
-        if (Constants.FINGER_TOUCH && pointerIndicator) {
-            paintPointerIndicator(g,pointerX,pointerY);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            if (Constants.FINGER_TOUCH && pointerIndicator) {
+                paintPointerIndicator(g,pointerX,pointerY);
+            }
         }
 
     }
