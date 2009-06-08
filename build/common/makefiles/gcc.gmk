@@ -105,6 +105,7 @@ LD_START_GROUP ?= -Xlinker --start-group
 LD_END_GROUP ?= --end-group
 
 AR		= $(GNU_TOOLS_BINDIR)ar
+AR_FLAGS	= -rcs
 CREATE_LIB	= $(AR) -rcs
 LIB_OUTPUT      =
 RANLIB  = $(GNU_TOOLS_BINDIR)ranlib

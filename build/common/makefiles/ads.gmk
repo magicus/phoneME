@@ -66,9 +66,6 @@ LIBS            =
 
 LD_FLAGS        =
 
-LIB_OUTPUT      = --create ''
-
-
 ASM             = armasm
 ASM_FLAGS       =
 ASM_OUTPUT      = -o
