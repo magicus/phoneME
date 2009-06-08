@@ -68,6 +68,7 @@ CREATE_LIB      = lib
 LIB_OUTPUT      = -OUT:
 
 AR = lib
+AR_OUTPUT = -OUT:
 # commands for AR (lib) script
 MRI_ADD = 
 MRI_CREATE = -OUT:

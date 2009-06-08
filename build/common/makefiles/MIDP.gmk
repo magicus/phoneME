@@ -276,7 +276,7 @@ clean::
 ifneq ($(MIDP_LIB),)
 $(MIDP_LIB): $(MIDP_LIB_FILES)
 	@echo " ... libing $@ " $(LOG)
-	$(AR) $(LIB_OUTPUT)`$(call fixcygpath,$@ $(MIDP_LIB_FILES))` $(LOG)
+	$(AR) $(AR_FLAGS) $(AR_OUTPUT)`$(call fixcygpath,$@ $(MIDP_LIB_FILES))` $(LOG)
 
 ifeq ($(CREATE_MIDP_LIB),true)
 MIDP_DEPS += $(MIDP_LIB)
