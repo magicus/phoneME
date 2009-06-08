@@ -1121,7 +1121,7 @@ void javanotify_fluid_handle_event_request (javacall_handle  request_handle) {
 
     REPORT_INFO(LC_CORE, "javanotify_fluid_event_request() >>\n");
     e.eventType = JSR290_JC_EVENT_HANDLE_EVENT;
-	e.data.jsr290HandleEventRequest.request_handle = request_handle;
+    e.data.jsr290HandleEventRequest.request_handle = request_handle;
     midp_jc_event_send(&e);
 }
 
@@ -1130,7 +1130,7 @@ javanotify_fluid_display_box (
     javacall_handle                       fluid_image,
     javacall_handle                       request,
     javacall_const_utf16_string           message,
-    javacall_int32			              type
+    javacall_int32                        type
     ) {
 
     midp_jc_event_union e;
