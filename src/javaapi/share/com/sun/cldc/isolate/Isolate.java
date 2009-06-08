@@ -339,6 +339,26 @@ public final class Isolate {
      */
     public final static int MAX_PRIORITY = 3;
 
+	/**
+     * A flag to indicate that Java debugging is disabled for this Isolate.
+     */
+    public final static int NO_DEBUG = 0;
+    
+	/**
+     * A flag to indicate that Java debugging should be enabled for this
+     * Isolate and the Isolate should suspend on start waiting for the 
+     * debugger to attach.
+     */
+	public final static int DEBUG_SUSPEND = 1;
+    
+	/**
+     * A flag to indicate that Java debugging should be enabled for this
+     * Isolate and the Isolate should not wait for the debugger to attach.
+     */
+    public final static int DEBUG_NO_SUSPEND = 2;
+
+	
+
     /**
      * Creates a new isolated java application with a default configuration.
      *
@@ -946,8 +966,16 @@ public final class Isolate {
         }
     }
 
-    public void setDebug(boolean mode) {
-        _ConnectDebugger = (mode == true ? 1 : 0);
+	public void setDebug(int mode) {
+		 switch (mode) {
+		      case NO_DEBUG:
+		      case DEBUG_SUSPEND:
+		      case DEBUG_NO_SUSPEND:
+		        _ConnectDebugger = mode;
+		        break;
+		      default:
+		        throw new IllegalArgumentException("Unknown debug mode: " + mode);
+		}
     }
 
     public void attachDebugger() {
