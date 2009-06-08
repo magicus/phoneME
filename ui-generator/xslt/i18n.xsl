@@ -79,7 +79,8 @@ information or have any questions.
         <xsl:text>package </xsl:text>
         <xsl:value-of select="$package-name"/>
         <xsl:text>;&#10;&#10;&#10;</xsl:text>
-        <xsl:text>final class StringTable {&#10;</xsl:text>
+        <xsl:text>import com.sun.uig.Strings;&#10;&#10;&#10;</xsl:text>
+        <xsl:text>final public class StringTable implements Strings {&#10;</xsl:text>
         <xsl:text>    private static final String strings[] = new String[] {&#10;</xsl:text>
         <xsl:for-each select="uig:get-all-format-string-elements(/)">
             <xsl:text>        </xsl:text>
@@ -93,8 +94,8 @@ information or have any questions.
             <xsl:text>,&#10;</xsl:text>
         </xsl:for-each>
         <xsl:text>    };&#10;&#10;</xsl:text>
-        <xsl:text>    static String getString(int idx) {&#10;</xsl:text>
-        <xsl:text>        return strings[idx];&#10;</xsl:text>
+        <xsl:text>    public String getString(int id) {&#10;</xsl:text>
+        <xsl:text>        return strings[id];&#10;</xsl:text>
         <xsl:text>    }&#10;</xsl:text>
         <xsl:text>}&#10;</xsl:text>
     </xsl:template>

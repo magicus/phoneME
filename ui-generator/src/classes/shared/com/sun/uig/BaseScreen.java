@@ -22,15 +22,12 @@
  * information or have any questions.
  */
 
-package com.sun.ams.ui;
+package com.sun.uig;
 
-public abstract class BaseScreen implements StringIds {
+public abstract class BaseScreen {
     BaseScreenStack             stack;
     private ScreenProperties    props;
-
-    private static String localizeString(int id) {
-        return StringTable.getString(id);
-    }
+    private Strings             strings;
 
     private static String printfImpl(String format, Object args[]) {
         StringBuffer returnString = new StringBuffer();
@@ -62,16 +59,17 @@ public abstract class BaseScreen implements StringIds {
         return returnString.toString();
     }
 
-    static String printf(int id, Object args[]) {
-        return printfImpl(localizeString(id), args);
+    protected String printf(int id, Object args[]) {
+        return printfImpl(strings.getString(id), args);
     }
 
     protected Object getProperty(String key) {
         return props.get(key);
     }
 
-    public BaseScreen(ScreenProperties props) {
+    protected BaseScreen(ScreenProperties props, Strings strings) {
         this.props = props;
+        this.strings = strings;
     }
 
     private static void test(String format, String expected) {

@@ -22,7 +22,7 @@
  * information or have any questions.
  */
 
-package com.sun.ams.ui;
+package com.sun.uig;
 
 
 

@@ -38,10 +38,10 @@ information or have any questions.
 
 
     <!--
-        Output TestClassList class
+        Output TestClassList text file
     -->
     <xsl:template name="TestClassList">
-        <xsl:variable name="href" select="uig:classname-to-filepath('TestClassList')"/>
+        <xsl:variable name="href" select="concat($output-java-dir,'/TestClassList.txt')"/>
         <xsl:value-of select="concat($href,'&#10;')"/>
         <xsl:result-document href="{$href}">
             <xsl:call-template name="TestClassList-impl"/>
@@ -49,22 +49,14 @@ information or have any questions.
     </xsl:template>
 
     <xsl:template name="TestClassList-impl">
-        <xsl:text>package </xsl:text>
-        <xsl:value-of select="$package-name"/>
-        <xsl:text>;&#10;&#10;&#10;</xsl:text>
-        <xsl:text>final class TestClassList {&#10;</xsl:text>
-        <xsl:text>    static final String names[] = new String[] {&#10;</xsl:text>
         <xsl:apply-templates select="//screen" mode="TestClassList-element"/>
-        <xsl:text>    };&#10;</xsl:text>
-        <xsl:text>}&#10;</xsl:text>
     </xsl:template>
 
     <xsl:template match="screen" mode="TestClassList-element">
-        <xsl:text>        "</xsl:text>
         <xsl:value-of select="$package-name"/>
         <xsl:text>.</xsl:text>
         <xsl:value-of select="uig:UTest-classname(.)"/>
-        <xsl:text>",&#10;</xsl:text>
+        <xsl:text>&#10;</xsl:text>
     </xsl:template>
 
 
@@ -83,6 +75,7 @@ information or have any questions.
         <xsl:text>package </xsl:text>
         <xsl:value-of select="$package-name"/>
         <xsl:text>;&#10;&#10;&#10;</xsl:text>
+        <xsl:text>import com.sun.uig.*;&#10;&#10;&#10;</xsl:text>
         <xsl:text>public final class </xsl:text>
         <xsl:value-of select="uig:UTest-classname(.)"/>
         <xsl:text><![CDATA[ extends BaseTest {
@@ -114,6 +107,7 @@ information or have any questions.
         <xsl:value-of select="uig:Screen-classname(.)"/>
         <xsl:text>(&#10;</xsl:text>
         <xsl:apply-templates select="." mode="UTest-screen-props"/>
+        <xsl:text>,&#10;            new StringTable()</xsl:text>
         <xsl:apply-templates select="." mode="UTest-screen-command-listener"/>
         <xsl:text>);&#10;</xsl:text>
         <xsl:text>        BaseTest.screens.show(s);&#10;</xsl:text>
@@ -187,7 +181,7 @@ information or have any questions.
         <xsl:text>                }&#10;</xsl:text>
         <xsl:text>                public void onDynamicCommand(Screen sender, int commandId, int idx) {&#10;</xsl:text>
         <xsl:text>                    switch (commandId) {&#10;</xsl:text>
-        <xsl:apply-templates select="descendant::*[not(self::progress) and @id]" mode="UTest-screen-command-listener"/>
+        <xsl:apply-templates select="descendant::*[not(self::progress|self::text-field) and @id]" mode="UTest-screen-command-listener"/>
         <xsl:text>                    default:&#10;</xsl:text>
         <xsl:text>                        throw new RuntimeException("unexpected commandId: " + commandId);&#10;</xsl:text>
         <xsl:text>                    }&#10;</xsl:text>

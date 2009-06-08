@@ -24,43 +24,31 @@
  * information or have any questions.
  */
 
-package com.sun.ams.ui;
+package com.sun.uig;
 
-import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Display;
-import javax.microedition.lcdui.Command;
-import javax.microedition.lcdui.Form;
-import javax.microedition.lcdui.List;
 
 
-public abstract class Screen extends BaseScreen {
-    private Displayable displayable;
+public class ScreenStack extends BaseScreenStack {
+    private Display display;
 
-    protected abstract Displayable createDisplayable();
-
-    protected Command getSelectItemCommand() {
-        //  TODO: i18n for OK string - bug 6781618
-        return new Command("OK", Command.OK, 1);
+    public ScreenStack(Display d) {
+        display = d;
     }
 
-    protected static Form
-    createForm(String title) {
-        return new Form(title);
+    protected void setDisplay(Display d) {
+        display = d;
     }
 
-    protected static List
-    createList(String title) {
-        return new List(title, List.EXCLUSIVE | List.IMPLICIT);
+    protected Display getDisplay() {
+        return display;
     }
 
-    public Screen(ScreenProperties props) {
-        super(props);
+    protected void showScreen(Screen screen) {
+        display.setCurrent(screen.getDisplayable());
     }
 
-    synchronized Displayable getDisplayable() {
-        if (displayable == null) {
-            displayable = createDisplayable();
-        }
-        return displayable;
+    protected void destroyImpl() {
+        // TBD: implementation
     }
 }

@@ -55,6 +55,7 @@ information or have any questions.
         <xsl:value-of>
             <xsl:variable name="imports" as="xs:string*">
                 <xsl:sequence select="(
+                    'com.sun.uig.*',
                     'java.util.Enumeration',
                     'java.util.Vector')"/>
                 <xsl:apply-templates select="." mode="Screen-imports"/>
@@ -100,11 +101,11 @@ information or have any questions.
         <!-- ctor -->
         <xsl:text>    public </xsl:text>
         <xsl:value-of select="uig:Screen-classname(.)"/>
-        <xsl:text>(ScreenProperties props</xsl:text>
+        <xsl:text>(ScreenProperties props, Strings strings</xsl:text>
         <xsl:if test="uig:Screen-class-with-CommandListener(.)">
             <xsl:text>, CommandListener listener</xsl:text>
         </xsl:if>
-        <xsl:text>) {&#10;        super(props);&#10;</xsl:text>
+        <xsl:text>) {&#10;        super(props, strings);&#10;</xsl:text>
         <xsl:if test="uig:Screen-class-with-CommandListener(.)">
             <xsl:text>&#10;        this.listener = listener;&#10;&#10;</xsl:text>
         </xsl:if>
@@ -271,7 +272,7 @@ information or have any questions.
     <xsl:function name="uig:Screen-printf" as="xs:string">
         <xsl:param name="e" as="element()"/>
         <xsl:value-of>
-            <xsl:text>printf(</xsl:text>
+            <xsl:text>printf(StringIds.</xsl:text>
             <xsl:value-of select="uig:I18N-key($e)"/>
             <xsl:text>, new Object[] { </xsl:text>
             <xsl:for-each select="uig:format-string-get-args($e)">

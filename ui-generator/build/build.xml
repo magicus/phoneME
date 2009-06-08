@@ -32,7 +32,7 @@ information or have any questions.
     <property name="toolkit.src"        value="${uig-shared.root}/src/classes/${toolkit}"/>
     <property name="screens"            location=""/>
     <property name="toolkit.traits"     value=""/>
-    <property name="package"            value="com.sun.ams.ui"/>
+    <property name="package"            value="foo"/>
 
     <property name="debug.port"         value=""/> <!-- 8000 -->
 
@@ -56,18 +56,18 @@ information or have any questions.
     <property name="xslt.main"              location="${uig-shared.root}/xslt/${toolkit}/main.xsl"/>
     <property name="xsd"                    location="${uig-shared.root}/xslt/screens.xsd"/>
 
+    <filelist id="output-java-dir" dir="${out.src}">
+        <file name="${package}"/>
+    </filelist>
+    <pathconvert property="output-java-dir" refid="output-java-dir" dirsep="/">
+        <unpackagemapper from="${out.src}*" to="${out.src}*"/>
+    </pathconvert>
+
     <target name="gen">
         <description>Generate UI screen sources from XML with/without unit tests
         </description>
 
         <property name="with-unit-tests" value="no"/>
-
-        <filelist id="output-java-dir" dir="${out.src}">
-            <file name="${package}"/>
-        </filelist>
-        <pathconvert property="output-java-dir" refid="output-java-dir" dirsep="/">
-            <unpackagemapper from="${out.src}*" to="${out.src}*"/>
-        </pathconvert>
 
         <path id="output-xml-dir" location="${out.root}"/>
         <pathconvert property="output-xml-dir" refid="output-xml-dir" dirsep="/"/>
@@ -183,7 +183,7 @@ information or have any questions.
         </condition>
 
         <!-- Run unit tests -->
-        <java   classname="com.sun.ams.ui.AllTests"
+        <java   classname="com.sun.uig.AllTests"
                 classpath="${out.utest.classes}"
                 fork="true">
             <jvmarg line="${run-unit-tests.java.jvmargs}"/>
@@ -220,7 +220,7 @@ information or have any questions.
                 vendor="SUN Microsystems"
                 name="TestMIDlet"
                 version="1.0">
-            <midlet name="TestMIDlet" class="${package}.TestMIDlet" />
+            <midlet name="TestMIDlet" class="com.sun.uig.TestMIDlet" />
         </wtkjad>
 
         <!-- Run preverefier manually as wtkpackage is stuck with
@@ -249,6 +249,8 @@ information or have any questions.
             <arg path="${out.root}/preverified"/>
             <arg line="${preverify.classes}"/>
         </exec>
+
+        <copy file="${output-java-dir}/TestClassList.txt" todir="${out.root}/preverified"/>
 
         <antcall target="build-test-midlet-after-preverify"/>
 

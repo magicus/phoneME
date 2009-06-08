@@ -24,25 +24,9 @@
  * information or have any questions.
  */
 
-package com.sun.ams.ui;
+package com.sun.uig;
 
 
-public class AllTests {
-    public static void main(String args[]) throws Exception {
-        System.out.println("Running TestBaseScreenStack...");
-        TestBaseScreenStack.main(args);
-        System.out.println("Running BaseScreen...");
-        BaseScreen.main(args);
-        System.out.println("ok");
-    }
-}
-
-
-interface StringIds {}
-
-
-class StringTable {
-    static String getString(int id) {
-        return null;
-    }
+public interface Strings {
+    public String getString(int id);
 }

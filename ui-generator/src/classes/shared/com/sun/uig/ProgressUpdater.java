@@ -24,9 +24,9 @@
  * information or have any questions.
  */
 
-package com.sun.ams.ui;
+package com.sun.uig;
 
 
-class BaseTest {
-    static ScreenStack screens;
+public interface ProgressUpdater {
+    public void updateProgress(Object progressId, int value, int max);
 }

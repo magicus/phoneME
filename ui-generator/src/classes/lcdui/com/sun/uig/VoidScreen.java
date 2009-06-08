@@ -22,7 +22,7 @@
  * information or have any questions.
  */
 
-package com.sun.ams.ui;
+package com.sun.uig;
 
 import javax.microedition.lcdui.Displayable;
 
@@ -33,7 +33,7 @@ import javax.microedition.lcdui.Displayable;
  */
 public final class VoidScreen extends Screen {
     public VoidScreen() {
-        super(null);
+        super(null, null);
     }
 
     protected Displayable createDisplayable() {

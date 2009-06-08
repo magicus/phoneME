@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-package com.sun.ams.ui;
+package com.sun.uig;
 
 
 import javax.microedition.lcdui.List;
@@ -34,12 +34,19 @@ import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
 
+import java.util.Vector;
+
+import java.io.Reader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+
 
 
 
 public class TestMIDlet extends MIDlet implements CommandListener {
     private Display display;
     private List    testList;
+    private Vector  testClasses = new Vector();
     private Command exitCommand = new Command("Exit", Command.EXIT, 1);
     private Command runTestCommand = new Command("Run", Command.ITEM, 1);
 
@@ -57,8 +64,33 @@ public class TestMIDlet extends MIDlet implements CommandListener {
         testList.addCommand(exitCommand);
         testList.setCommandListener(this);
 
-        for (int i = 0; i != TestClassList.names.length; ++i) {
-            testList.append(getLabel(TestClassList.names[i]), null);
+        // Read TestClassList.txt text file from resources.
+        // Every line in the file is a name of a test class.
+        Reader r = new InputStreamReader(
+            getClass().getResourceAsStream("/TestClassList.txt"));
+        try {
+            int chr;
+            StringBuffer curClassName = new StringBuffer();
+            while (-1 != (chr = r.read())) {
+                if ('\n' != chr && '\r' != chr) {
+                    curClassName.append((char)chr);
+                } else if (0 != curClassName.length()) {
+                    String className = curClassName.toString();
+                    curClassName.setLength(0);
+
+                    testClasses.addElement(className);
+                    testList.append(getLabel(className), null);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException();
+        } finally {
+            try {
+                r.close();
+            } catch (Exception e) {
+                e.printStackTrace(); // should never happen
+            }
         }
     }
 
@@ -77,7 +109,8 @@ public class TestMIDlet extends MIDlet implements CommandListener {
             destroyApp(true);
             notifyDestroyed();
         } else if (c == runTestCommand) {
-            String testClass = TestClassList.names[testList.getSelectedIndex()];
+            String testClass =
+                (String)testClasses.elementAt(testList.getSelectedIndex());
             try {
                 Class.forName(testClass).newInstance();
             } catch (Exception e) {

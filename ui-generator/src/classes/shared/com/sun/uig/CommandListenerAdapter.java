@@ -24,9 +24,13 @@
  * information or have any questions.
  */
 
-package com.sun.ams.ui;
+package com.sun.uig;
 
 
-public interface ScreenProperties {
-    public Object get(String key);
+public class CommandListenerAdapter implements CommandListener {
+    public void onCommand(Screen sender, int commandId) {
+    }
+
+    public void onDynamicCommand(Screen sender, int commandId, int idx) {
+    }
 }
