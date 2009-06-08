@@ -68,6 +68,8 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             USE_DEBUG=$(USE_DEBUG) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
 	             USE_MIDP_MALLOC=$(USE_MIDP_MALLOC) \
+                 MIDP_LIB=$(MIDP_STATIC_LIB) MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
+                 CVM_STATICLINK_LIBS=$(CVM_STATICLINK_LIBS) \
 	             VERIFY_BUILD_ENV= \
 	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
 	             USE_QT_FB=$(USE_QT_FB) USE_DIRECTFB=$(USE_DIRECTFB) \
@@ -79,7 +81,6 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             MIDP_CLASSES_ZIP=$(MIDP_CLASSES_ZIP) \
                      MIDP_PRIV_CLASSES_ZIP=$(MIDP_PRIV_CLASSES_ZIP) \
                      MIDP_PUB_CLASSES_ZIP=$(MIDP_PUB_CLASSES_ZIP) \
-	             MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
 		     VM_BOOTCLASSPATH=$(VM_BOOTCLASSPATH) \
 		     CVM_BUILDTIME_CLASSESZIP=$(CVM_BUILDTIME_CLASSESZIP) \
 	             $(MIDP_JSROP_USE_FLAGS) \
@@ -113,6 +114,8 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
 	             USE_DEBUG=$(USE_DEBUG) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
 	             USE_MIDP_MALLOC=$(USE_MIDP_MALLOC) \
+                 MIDP_LIB=$(MIDP_STATIC_LIB) MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
+                 CVM_STATICLINK_LIBS=$(CVM_STATICLINK_LIBS) \
 	             VERIFY_BUILD_ENV= \
 	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
 	             USE_QT_FB=$(USE_QT_FB) USE_DIRECTFB=$(USE_DIRECTFB) \
@@ -126,7 +129,6 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
 	             MIDP_CLASSES_ZIP=$(MIDP_CLASSES_ZIP) \
                      MIDP_PRIV_CLASSES_ZIP=$(MIDP_PRIV_CLASSES_ZIP) \
                      MIDP_PUB_CLASSES_ZIP=$(MIDP_PUB_CLASSES_ZIP) \
-	             MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
 	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
 	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             source_bundle -C $(MIDP_MAKEFILE_DIR) 
@@ -142,13 +144,17 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
 #
 # Now build MIDP natives. MIDP natives are linked into CVM binary.
 #
-ifeq ($(CVM_STATICLINK_LIBS), true)
-$(MIDP_OBJECTS): $(RUNMIDLET)
-else
-$(CVM_BINDIR)/$(CVM):: $(RUNMIDLET)
-endif
+# Only one of MIDP_STATIC_LIB and MIDP_SHARED_LIB variables should be defined!
+#
 
-$(RUNMIDLET): force_midp_build
+# Make $(CVM_BINDIR)/$(CVM) depend on $(MIDP_LIB)
+$(CVM_BINDIR)/$(CVM):: $(MIDP_LIB)
+
+# Ensure MIDP native lib is build after MIDP classes get compiled and 
+# JNI headers get generated
+$(MIDP_LIB): $(CVM_ROMJAVA_LIST) $(MIDP_CLASSLIST)
+
+$(MIDP_LIB): force_midp_build
 	@echo "====> start building MIDP natives"
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
@@ -156,6 +162,8 @@ $(RUNMIDLET): force_midp_build
 	             USE_DEBUG=$(USE_DEBUG) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
 	             USE_MIDP_MALLOC=$(USE_MIDP_MALLOC) \
+                 MIDP_LIB=$(MIDP_STATIC_LIB) MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
+                 CVM_STATICLINK_LIBS=$(CVM_STATICLINK_LIBS) \
 	             VERIFY_BUILD_ENV= \
 	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
 	             USE_QT_FB=$(USE_QT_FB) USE_DIRECTFB=$(USE_DIRECTFB) \
@@ -167,12 +175,13 @@ $(RUNMIDLET): force_midp_build
 	             MIDP_CLASSES_ZIP=$(MIDP_CLASSES_ZIP) \
                      MIDP_PRIV_CLASSES_ZIP=$(MIDP_PRIV_CLASSES_ZIP) \
                      MIDP_PUB_CLASSES_ZIP=$(MIDP_PUB_CLASSES_ZIP) \
-	             MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
 		     VM_BOOTCLASSPATH=$(VM_BOOTCLASSPATH) \
 	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
 	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             $(MIDP_JSROP_USE_FLAGS) \
-	             -C $(MIDP_MAKEFILE_DIR)
+	             -C $(MIDP_MAKEFILE_DIR) \
+                 $@
+	$(AT)if [ ! -f $@ ]; then exit 1; fi
 ifneq ($(USE_JUMP), true)
   ifeq ($(INCLUDE_SHELL_SCRIPTS), true)
 	$(AT)cp $@ $(CVM_BINDIR)

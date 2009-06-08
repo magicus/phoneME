@@ -151,23 +151,23 @@ MIDP_PRIV_CLASSES_ZIP   ?= $(MIDP_OUTPUT_DIR)/classespriv.zip
 endif
 ifneq ($(CVM_STATICLINK_LIBS), true)
 MIDP_SHARED_LIB		?= $(CVM_LIBDIR_ABS)/libmidp$(LIB_POSTFIX)
+else
+MIDP_STATIC_LIB		?= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/libmidp.a
 endif
+MIDP_LIB			= $(MIDP_SHARED_LIB) $(MIDP_STATIC_LIB)
 
 #List of MIDP classes
 MIDP_CLASSLIST		= $(CVM_BUILD_TOP)/.midpclasslist
 CVM_MIDPCLASSLIST_FILES += $(MIDP_CLASSLIST)
 
-RUNMIDLET		?= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/runMidlet
-MIDP_OBJECTS		?= $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/*.o
 ifeq ($(CVM_STATICLINK_LIBS), true)
-CVM_OBJECTS		+= $(MIDP_OBJECTS)
+CVM_OBJECTS		+= $(MIDP_STATIC_LIB)
 MIDP_LIBS 		?= \
         -L$(PCSL_OUTPUT_DIR)/$(PCSL_TARGET)/lib -lpcsl_file \
         -lpcsl_memory -lpcsl_network -lpcsl_print -lpcsl_string \
         -lpcsl_escfilenames
 LINKLIBS 		+= $(MIDP_LIBS)
 endif
-
 include $(MIDP_DEFS_CDC_MK)
 
 ifeq ($(CVM_PRELOAD_LIB), true)
