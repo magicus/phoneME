@@ -483,8 +483,8 @@ typedef struct {
 
 #ifdef ENABLE_JSR_290
         jsr290_jc_event_fluid                         jsr290FluidEvent;
-	jsr290_jc_event_completion_notification       jsr290NotificationEvent;
-	jsr290_jc_event_handle_event_request	      jsr290HandleEventRequest;
+        jsr290_jc_event_completion_notification       jsr290NotificationEvent;
+        jsr290_jc_event_handle_event_request	      jsr290HandleEventRequest;
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_257
