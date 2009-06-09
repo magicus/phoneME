@@ -25,9 +25,9 @@
 #ifndef _FONT_CONSTANTS_H_
 #define _FONT_CONSTANTS_H_
 
-#define OEM_FONT_SIZE_SMALL   9
-#define OEM_FONT_SIZE_MEDIUM  13
-#define OEM_FONT_SIZE_LARGE   17
+#define OEM_FONT_SIZE_SMALL   8
+#define OEM_FONT_SIZE_MEDIUM  12
+#define OEM_FONT_SIZE_LARGE   16
 
 #endif /* _FONT_CONSTANTS_H_ */
 
