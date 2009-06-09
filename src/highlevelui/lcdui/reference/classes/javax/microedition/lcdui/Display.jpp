@@ -428,6 +428,9 @@ public class Display {
     /** Owner of the Display, can be any class. */
     Object owner;
 
+    /** True, if this Display has been closed. */
+    boolean displayClosed;
+
     /** If the current display mode is known. 
      * We don't know it before the lSetFullScreen is
      * called for the first time and after we being 
@@ -693,6 +696,8 @@ public class Display {
      * a reference to the Display.
      */
     private void close() {
+        displayClosed = true;
+
         // #ifdef ENABLE_CHAMELEON
         /*
          * "Free" the window to allow it to GC, but there too many places
@@ -1798,6 +1803,20 @@ public class Display {
      *                 inside nextDisplayable
      */
     void setCurrentImpl(Displayable nextDisplayable, Item nextItem) {
+        if (displayClosed) {
+            System.err.println("");
+            new IllegalStateException(
+                "setCurrent called on a closed Display").printStackTrace();
+            System.err.println("  this = " + this);
+            System.err.println("  this.owner = " + owner);
+            System.err.println("  nextDisplayable = " + nextDisplayable);
+            if (nextDisplayable != null) {
+                System.err.println("  nextDisplayable.title = " +
+                    nextDisplayable.getTitle());
+            }
+            System.err.println("");
+        }
+
         if (nextDisplayable == null) {
             if (wantsForeground != WANTS_BACKGROUND) {
                 /*
