@@ -56,7 +56,11 @@ public class PushConnectionsPool implements Runnable {
                 ConnectionReservationImpl reservation1 = (ConnectionReservationImpl)iter.next();
                 if (reservation1.getPort()  == reservation.getPort() &&
                     reservation1.getFilter().equals(reservation.getFilter())) {
-                    throw new java.io.IOException("connection already registered");
+                    // throw new java.io.IOException("connection already registered");
+                    System.out.println("connection already registered"
+                                       + " " + reservation.getPort()
+                                       + " " + reservation.getFilter());
+                    return;
                 }
             }
 
