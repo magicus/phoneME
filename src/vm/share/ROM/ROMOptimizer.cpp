@@ -500,7 +500,7 @@ void ROMOptimizer::make_restricted_methods_final(JVM_SINGLE_ARG_TRAPS) {
     AccessFlags flags = klass().access_flags();
 
     if (!flags.is_final()) {
-          bool hidden = is_in_hidden_package(&klass JVM_CHECK);
+      const bool hidden = is_in_hidden_package(&klass JVM_CHECK);
       if (hidden || is_in_restricted_package(&klass)) {
         make_virtual_methods_final(&klass, &log_vector JVM_CHECK);
       }

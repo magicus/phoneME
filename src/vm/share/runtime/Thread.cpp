@@ -299,7 +299,7 @@ void Thread::lightweight_thread_exit() {
   if (!Scheduler::get_next_runnable_thread()->is_null()) {
     // Another thread will run, cleanup the task that may have just
     // terminated.
-    int thread_count = 0;
+    int thread_count;
     {
       Task::Raw task = Task::get_task(tid);
       thread_count = task().thread_count();

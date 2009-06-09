@@ -541,8 +541,19 @@ private:
   ReturnOop get_subclass_list(jushort klass_id);
   //ENDOF SUBCLASS CACHE ZONE
 
+  enum {
+    UNRESTRICTED_PACKAGE = 0,
+    RESTRICTED_PACKAGE   = 1,
+    HIDDEN_PACKAGE       = 2
+  };
+
+  // used by ROMOptimizer::remove_unused_static_fields
+  enum {
+    DEAD_FIELD = 0x10000
+  };
+
   jint get_package_flags(InstanceClass *ic JVM_TRAPS) {
-    bool hidden = is_in_hidden_package(ic JVM_CHECK_0);
+    const bool hidden = is_in_hidden_package(ic JVM_CHECK_0);
     if (hidden) {
       return HIDDEN_PACKAGE;
     } else if (is_in_restricted_package(ic)) {
@@ -552,15 +563,6 @@ private:
     }
   }
 
-  enum {
-    UNRESTRICTED_PACKAGE = 0,
-    RESTRICTED_PACKAGE   = 1,
-    HIDDEN_PACKAGE       = 2
-  };
-  // used by ROMOptimizer::remove_unused_static_fields
-  enum {
-    DEAD_FIELD = 0x10000
-  };
 
   class MethodIterator : public ObjectHeapVisitor
   {
