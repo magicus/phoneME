@@ -85,6 +85,10 @@ extern "C" {
 #include <javacall_contactless.h>
 #endif
 
+ #ifdef ENABLE_JSR_290
+ #include <javacall_fluid_image.h>
+ #endif
+
 #ifdef ENABLE_ON_DEVICE_DEBUG
 #include <javacall_odd.h>
 #endif /* ENABLE_ON_DEVICE_DEBUG */
@@ -983,7 +987,6 @@ javanotify_fluid_image_notify_dirty (
 
     e.eventType = JSR290_JC_EVENT_FLUID_INVALIDATE;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.result      = 0;
 
     midp_jc_event_send(&e);
 }
@@ -1130,7 +1133,7 @@ javanotify_fluid_display_box (
     javacall_handle                       fluid_image,
     javacall_handle                       request,
     javacall_const_utf16_string           message,
-    javacall_int32                        type
+    const javacall_fluid_message_box_type type
     ) {
 
     midp_jc_event_union e;

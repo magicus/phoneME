@@ -366,7 +366,7 @@ typedef struct {
     javacall_utf16_string       text;
     javacall_utf16_string       text1;
     float                       percentage;
-    javacall_result             result;
+    javacall_int32              result;
 } jsr290_jc_event_fluid;
 
 typedef struct {
