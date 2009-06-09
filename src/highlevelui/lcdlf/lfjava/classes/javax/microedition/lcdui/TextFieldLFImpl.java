@@ -1176,6 +1176,33 @@ class TextFieldLFImpl extends ItemLFImpl implements
         acceptPTI();
         
         if (pressedIn) {
+            String showKeyboard = 
+                Configuration.getProperty("com.sun.midp.showVirtKeyboard");
+            while (showKeyboard != null && showKeyboard.equals("true") 
+                && editable) {
+                
+                String newText = null;
+                try {
+                    int constraints = tf.getConstraints();
+                    int modes = NativeVirtualKeyboard.MODE_EDIT_INITIAL_TEXT;
+                        
+                    if ((constraints & TextField.PASSWORD) != 0) {
+                        modes |= NativeVirtualKeyboard.MODE_PASSWORD;
+                    }
+                        
+                    newText = NativeVirtualKeyboard.editText(
+                            tf.getString(), tf.getMaxSize(), 
+                            modes, 
+                            constraints & TextField.CONSTRAINT_MASK);
+                } catch (InterruptedException e) {
+                    e.printStackTrace(System.err);
+                    break;
+                }
+                
+                tf.setString(newText);
+                break;
+            }
+            
             int newId = getIndexAt(x, y);
             if (newId >= 0 &&
                 newId <= tf.buffer.length() &&
@@ -1186,35 +1213,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
             }
 
             pressedIn = false;
-            
-            String showKeyboard = 
-                Configuration.getProperty("com.sun.midp.showVirtKeyboard");
-            if (showKeyboard != null && showKeyboard.equals("true") 
-                && editable) {
-                
-                String newText = null;
-                synchronized (Display.LCDUILock) {
-                    try {
-                        int constraints = tf.getConstraints();
-                        int modes = 
-                            NativeVirtualKeyboard.MODE_EDIT_INITIAL_TEXT;
-                        
-                        if ((constraints & TextField.PASSWORD) != 0) {
-                            modes |= NativeVirtualKeyboard.MODE_PASSWORD;
-                        }
-                        
-                        newText = NativeVirtualKeyboard.editText(
-                            tf.getString(), tf.getMaxSize(), 
-                            modes, 
-                            constraints & TextField.CONSTRAINT_MASK);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace(System.err);
-                        return;
-                    }
-                }
-                
-                tf.setString(newText);
-            }
         }
     }
 

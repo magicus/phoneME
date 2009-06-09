@@ -56,19 +56,22 @@ __asm {
 
     mov     r0,mem
     mov     r2,number_of_pixels
-    add     r2, r0, r2, lsl #1
-    add     r3, value, value, lsl #0x10
-
-    and     r1, r0, #0x3
-    cmp     r1,#0
-    strneh  r3, [r0],#2
-    subne   r2, r2, #1
+    add     r2, r0, r2, lsl #2
+    mov     r3, value
 
     sub     r1, r2, #0x1f
 
     cmp     r0, r1
     bge     loop2
 
+
+    mov r4,  r3
+    mov r5,  r3
+    mov r6,  r3
+    mov r7,  r3
+    mov r8,  r3
+    mov r9,  r3
+    mov r10, r3
 
 #if (__ARMCC_VERSION < 120848)
     stmfd sp, {r4-r11}
@@ -94,7 +97,7 @@ loop:
 
  loop2:
     cmp    r0,r2;
-    strlth r3, [r0],#2
+    strlt  r3, [r0],#4
     blt    loop2
 
     } 

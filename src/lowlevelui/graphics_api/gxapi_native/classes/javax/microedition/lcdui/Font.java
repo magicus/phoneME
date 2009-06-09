@@ -211,7 +211,7 @@ public final class Font {
      * @param inp_face The face to use to construct the Font
      * @param inp_style The style to use to construct the Font
      * @param inp_size The point size to use to construct the Font
-     * @parma free_size true value means inp_size is set in pixels     
+     * @param free_size true value means inp_size is set in pixels     
      */
     private Font(int inp_face, int inp_style, int inp_size, boolean free_size) {
         face  = inp_face;

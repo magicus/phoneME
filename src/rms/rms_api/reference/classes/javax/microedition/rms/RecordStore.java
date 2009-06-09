@@ -26,14 +26,10 @@
 
 package javax.microedition.rms;
 
-import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midlet.MIDletStateHandler;
-
-import com.sun.midp.midletsuite.MIDletSuiteStorage;
-
 import com.sun.midp.rms.RecordStoreImpl;
 import com.sun.midp.rms.RecordStoreEventConsumer;
 import com.sun.midp.rms.RecordStoreRegistry;
+import com.sun.midp.rms.RmsEnvironment;
 
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.SecurityToken;
@@ -200,14 +196,20 @@ public class RecordStore {
      */
     public static void deleteRecordStore(String recordStoreName)
         throws RecordStoreException, RecordStoreNotFoundException {
-        int id = MIDletStateHandler.getMidletStateHandler().
-            getMIDletSuite().getID();
+        int id = RmsEnvironment.getCallersSuiteId();
+
+        if (id == RmsEnvironment.UNUSED_SUITE_ID) {
+System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
+            throw new RecordStoreException("Calling MIDlet is DESTROYED");
+        }
+
         deleteRecordStore(recordStoreName, id);
     }
 
-	static void deleteRecordStore(String recordStoreName, int suiteId)
-			throws RecordStoreNotFoundException, RecordStoreException {
-		if (recordStoreName == null || recordStoreName.length() == 0) {
+    static void deleteRecordStore(String recordStoreName, int suiteId)
+            throws RecordStoreNotFoundException, RecordStoreException {
+
+        if (recordStoreName == null || recordStoreName.length() == 0) {
             throw new RecordStoreNotFoundException();
         }
 
@@ -230,7 +232,7 @@ public class RecordStore {
             RecordStoreImpl.deleteRecordStore(
                 classSecurityToken, suiteId, recordStoreName);
         }
-	}
+    }
 
     /**
      * Open (and possibly create) a record store associated with the
@@ -260,8 +262,12 @@ public class RecordStore {
         throws RecordStoreException, RecordStoreFullException,
         RecordStoreNotFoundException {
 
-        int id = MIDletStateHandler.getMidletStateHandler().
-            getMIDletSuite().getID();
+        int id = RmsEnvironment.getCallersSuiteId();
+
+        if (id == RmsEnvironment.UNUSED_SUITE_ID) {
+System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
+            throw new RecordStoreException("Calling MIDlet is DESTROYED");
+        }
 
         return doOpen(id, recordStoreName, createIfNecessary);
     }
@@ -332,8 +338,7 @@ public class RecordStore {
         try {
             recordStore = openRecordStore(recordStoreName, false);
             isExistingStorage = true;
-        } catch (RecordStoreNotFoundException ex)
-        {
+        } catch (RecordStoreNotFoundException ex) {
             recordStore = openRecordStore(recordStoreName, createIfNecessary);
         }
 
@@ -348,10 +353,12 @@ public class RecordStore {
                 }
 
                 try {
-                    int id = MIDletStateHandler.getMidletStateHandler().
-                        getMIDletSuite().getID();
-                    RecordStoreImpl.deleteRecordStore(
-                        classSecurityToken, id, recordStoreName);
+                    int id = RmsEnvironment.getCallersSuiteId();
+
+                    if (id != RmsEnvironment.UNUSED_SUITE_ID) {
+                        RecordStoreImpl.deleteRecordStore(
+                            classSecurityToken, id, recordStoreName);
+                    }
                 } catch (Exception ex) {
                     // do not overthrow the real exception
                 }
@@ -423,10 +430,13 @@ public class RecordStore {
                                               String suiteName)
         throws RecordStoreException, RecordStoreNotFoundException {
 
-        int currentID = MIDletStateHandler.getMidletStateHandler().
-            getMIDletSuite().getID();
+        int currentID = RmsEnvironment.getCallersSuiteId();
         int id;
         RecordStore recordStore;
+
+        if (currentID == RmsEnvironment.UNUSED_SUITE_ID) {
+            throw new RecordStoreException("Calling MIDlet is DESTROYED");
+        }
 
         if (vendorName == null || suiteName == null) {
             throw new IllegalArgumentException("vendorName and " +
@@ -438,9 +448,9 @@ public class RecordStore {
             throw new IllegalArgumentException();
         }
 
-        id = MIDletSuiteStorage.getSuiteID(vendorName, suiteName);
+        id = RmsEnvironment.getSuiteId(vendorName, suiteName);
 
-        if (id == MIDletSuite.UNUSED_SUITE_ID) {
+        if (id == RmsEnvironment.UNUSED_SUITE_ID) {
             throw new RecordStoreNotFoundException();
         }
 
@@ -500,7 +510,7 @@ public class RecordStore {
      */
     public void setMode(int authmode, boolean writable)
             throws RecordStoreException {
-	checkOpen();
+        checkOpen();
         if (! isRecordStoreOwner()) {
             throw new SecurityException("not the owner");
         } else if (authmode != AUTHMODE_PRIVATE &&
@@ -560,18 +570,17 @@ public class RecordStore {
      * have any record stores, this function will return null.
      */
     public static String[] listRecordStores() {
-        MIDletSuite currentSuite =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
+        int currentSuiteId = RmsEnvironment.getCallersSuiteId();
 
-        if (currentSuite == null) {
+        if (currentSuiteId == RmsEnvironment.UNUSED_SUITE_ID) {
             return null;
         }
 
         // static calls synchronize on openRecordStores
         synchronized (openRecordStores) {
-	    return RecordStoreImpl.listRecordStores(
-                classSecurityToken, currentSuite.getID());
-	}
+            return RecordStoreImpl.listRecordStores(
+                classSecurityToken, currentSuiteId);
+        }
     }
 
     /**
@@ -669,7 +678,7 @@ public class RecordStore {
      *          not open
      */
     public long getLastModified() throws RecordStoreNotOpenException {
-	    checkOpen();
+            checkOpen();
         return peer.getLastModified();
     }
 
@@ -741,7 +750,7 @@ public class RecordStore {
      */
     public void removeRecordListener(RecordListener listener) {
         synchronized (recordListeners) {
-	        recordListeners.removeElement(listener);
+                recordListeners.removeElement(listener);
             if (recordListeners.isEmpty()) {
                 stopRecordStoreListening();
             }
@@ -949,7 +958,7 @@ public class RecordStore {
     public byte[] getRecord(int recordId)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
             RecordStoreException {
-	checkOpen();
+        checkOpen();
         return peer.getRecord(recordId);
     }
 
@@ -1090,7 +1099,7 @@ public class RecordStore {
      *         or null if the record store is closed.
      */
     int[] getRecordIDs() {
-	return peer.getRecordIDs();
+        return peer.getRecordIDs();
     }
 
     /**
@@ -1136,8 +1145,7 @@ public class RecordStore {
      * <code>false</code> otherwise
      */
     private boolean isRecordStoreOwner() {
-        int currentId = MIDletStateHandler.getMidletStateHandler().
-            getMIDletSuite().getID();
+        int currentId = RmsEnvironment.getCallersSuiteId();
 
         return (suiteId == currentId);
     }
@@ -1311,8 +1319,7 @@ public class RecordStore {
         RecordStoreNotFoundException {
 
         RecordStore recordStore;
-        int suiteId = MIDletStateHandler.getMidletStateHandler().
-            getMIDletSuite().getID();
+        int suiteId = RmsEnvironment.getCallersSuiteId();
 
         recordStore = new RecordStore(suiteId, recordStoreName);
         recordStore.peer = RecordStoreImpl.openRecordStore(
@@ -1323,7 +1330,7 @@ public class RecordStore {
     }
 
     // used via Tunnel
-	void setWritable() throws RecordStoreException {
-		peer.setMode(AUTHMODE_ANY, true);
-	}
+        void setWritable() throws RecordStoreException {
+                peer.setMode(AUTHMODE_ANY, true);
+        }
 }

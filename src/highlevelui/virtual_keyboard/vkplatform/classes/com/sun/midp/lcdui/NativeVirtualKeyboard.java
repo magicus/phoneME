@@ -26,6 +26,10 @@ package com.sun.midp.lcdui;
 
 import javax.microedition.lcdui.TextField;
 
+import com.sun.midp.lcdui.DisplayContainer;
+import com.sun.midp.lcdui.ForegroundEventConsumer;
+import com.sun.midp.main.NativeForegroundState;
+
 
 /**
  * Native virtual keyboard.
@@ -47,6 +51,18 @@ public class NativeVirtualKeyboard {
     public static final int MODE_PASSWORD               = 0x10;
 
     private final static Object LOCK = new Object();
+
+    private static DisplayContainer displayContainer;
+
+    static {
+        // should initialize 'displayContainer' from
+        // 'javax.microedition.lcdui.Display' class
+        init0();
+
+        if (displayContainer == null) {
+            throw new IllegalStateException();
+        }
+    }
 
     /**
      * Runs native virtual keyboard to edit the given text.
@@ -75,7 +91,8 @@ public class NativeVirtualKeyboard {
             throw new IllegalArgumentException();
         }
 
-        if (text != null && maxChars < text.length()) {
+        if (text != null && maxChars < text.length()
+        && 0 == (modes & MODE_DELETE_INITIAL_TEXT)) {
             throw new IllegalArgumentException();
         }
 
@@ -112,16 +129,35 @@ public class NativeVirtualKeyboard {
             throw new IllegalArgumentException();
         }
 
-        synchronized (LOCK) {
-            String res = editText0(text, maxChars, modes, constraint);
-            if (null == res) {
-                // some internal error
-                throw new InterruptedException();
-            }
+        ForegroundEventConsumer fc =
+                displayContainer.findForegroundEventConsumer(
+                    NativeForegroundState.getState());
+        if (fc == null) {
+            // no current display
+            throw new InterruptedException();
+        }
 
-            return res;
+        // Disable screen updates
+        fc.handleDisplayBackgroundNotifyEvent();
+
+        try {
+            synchronized (LOCK) {
+                String res = editText0(text, maxChars, modes, constraint);
+
+                if (null == res) {
+                    // some internal error
+                    throw new InterruptedException();
+                }
+
+                return res;
+            }
+        } finally {
+            // Enable screen updates and redraw screen
+            fc.handleDisplayForegroundNotifyEvent();
         }
     }
+
+    private static native void init0();
 
     private static native String editText0(
             String text, int maxChars, int modes, int constraint);

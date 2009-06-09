@@ -61,15 +61,15 @@ public class OpenGLEnvironment{
     }
     
     public void createPbufferSurface(Image img) {
-        System.out.println("OpenGLEnvironment: createPbufferSurface");
+        //System.out.println("OpenGLEnvironment: createPbufferSurface");
         createPbufferSurface0(img);
     }
     
     public void flushPbufferSurface(Image offscreen_buffer,
                                     int ystart, int yend){
-        System.out.println("offscreen buffer is " + offscreen_buffer);
+        //System.out.println("offscreen buffer is " + offscreen_buffer);
         flushPbufferSurface0(offscreen_buffer, ystart, yend);
-        System.out.println("back from flushPbufferSurface0");
+        //System.out.println("back from flushPbufferSurface0");
     }
     
     public void createPixmapSurface(Graphics g, Image img) {
