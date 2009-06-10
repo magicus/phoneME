@@ -69,6 +69,7 @@ interface RegistryGate {
 	String[] getValues(String callerId, int fieldId);
 	ContentHandlerImpl.Data getHandlerData(String handlerID);
 	String[] getHandlerValues(String handlerID, int fieldId);
+	int selectSingleHandler(ContentHandlerRegData[] list, String action);
 }
 
 interface RegistryMessageProcessor extends MessageProcessor {
@@ -81,6 +82,7 @@ interface RegistryMessageProcessor extends MessageProcessor {
 	static final int CODE_GetValues = 7;
 	static final int CODE_GetHandlerValues = 8;
 	static final int CODE_GetHandlerData = 9;
+	static final int CODE_SelectSingleHandler = 10;
 }
 
 class RegistryRequestsConverter implements RegistryGate {
@@ -246,6 +248,21 @@ class RegistryRequestsConverter implements RegistryGate {
 			throw new RuntimeException( e.getMessage() );
 		}
 	}
+
+	public int selectSingleHandler(ContentHandlerRegData[] list, String action) {
+		Bytes dataOut = new Bytes();
+		try {
+			dataOut.writeInt(list.length);
+			for( int i = 0; i < list.length; i++)
+				list[i].serialize(dataOut);
+			dataOut.writeUTF(action);
+			byte[] data = out.sendMessage(RegistryMessageProcessor.CODE_SelectSingleHandler, 
+								dataOut.toByteArray());
+			return new DataInputStream( new ByteArrayInputStream( data ) ).readInt();
+		} catch (IOException e) {
+			throw new RuntimeException( e.getMessage() );
+		}
+	}
 }
 
 class RegistryRequestExecutor implements RegistryMessageProcessor {
@@ -268,6 +285,7 @@ class RegistryRequestExecutor implements RegistryMessageProcessor {
 			case CODE_GetValues: return getValues(dataIn);
 			case CODE_GetHandlerValues: return getHandlerValues(dataIn);
 			case CODE_GetHandlerData: return getHandlerData(dataIn);
+			case CODE_SelectSingleHandler: return selectSinleHandler(dataIn);
 			default:
 				throw new RuntimeException( "illegal msg code " + msgCode );
 		}
@@ -353,5 +371,15 @@ class RegistryRequestExecutor implements RegistryMessageProcessor {
 	private byte[] getHandlerData(DataInputStream dataIn) throws IOException {
 		String handlerID = dataIn.readUTF();
 		return toBytes( gate.getHandlerData(handlerID) );
+	}
+	
+	private byte[] selectSinleHandler(DataInputStreamExt dataIn) throws IOException {
+		ContentHandlerRegData list[] = new ContentHandlerRegData[ dataIn.readInt() ];
+		for( int i = 0; i < list.length; i++)
+			list[ i ] = new ContentHandlerRegData( dataIn );
+		String action = dataIn.readUTF();
+		Bytes out = new Bytes();
+		out.writeInt( gate.selectSingleHandler(list, action) );
+		return out.toByteArray();
 	}
 }

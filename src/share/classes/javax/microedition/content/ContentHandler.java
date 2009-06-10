@@ -391,6 +391,8 @@ public interface ContentHandler {
     public static final String ACTION_SELECT = "select";
     /** Action to <code>install</code> the content on the device. */
     public static final String ACTION_INSTALL = "install";
+    /** Action <code>install only</code> the content on the device with user interaction limited to the minimum. */
+    public static final String ACTION_INSTALL_ONLY = "install_only";
     /** Action to <code>print</code> the content. */
     public static final String ACTION_PRINT = "print";
     /** Action to create <code>new</code> content. */

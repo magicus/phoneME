@@ -197,17 +197,16 @@ class RegistryStore implements RegistryGate {
 		return deserializeCH( getHandler0( null, handlerID, SEARCH_EXACT ) );
 	}
 
-    /* *
-     * Returns content handler suitable for URL.
-     * @param callerId ID of calling application.
-     * @param URL content URL.
-     * @param action requested action.
-     * @return found handler if any or null.
-     * /
-    static ContentHandlerImpl getByURL(String callerId, String url, 
-                                       String action) {
-        return new ContentHandlerHandle( deserializeCH( store.getByURL0(callerId, url, action) ) ).get();
-    }*/
+	public int selectSingleHandler(ContentHandlerRegData[] list, String action) {
+		String locale = System.getProperty("microedition.locale");
+
+		String pairs[] = new String[ list.length * 2 ];
+		for( int i = 0; i < list.length; i++){
+			pairs[ i * 2 ] = list[ i ].getID();
+			pairs[ i * 2 + 1 ] = list[ i ].getActionName(action, locale);
+		}
+		return selectSingleHandler0(pairs);
+	}
 
     /**
      * Transforms serialized form to array of Strings.
@@ -346,15 +345,12 @@ class RegistryStore implements RegistryGate {
      */
     private static native String loadFieldValues0(String handlerId, int fieldId);
 
-    /* *
-     * Returns content handler suitable for URL.
-     * @param callerId ID of calling application.
-     * @param URL content URL.
-     * @param action requested action.
-     * @return ID of found handler if any or null.
-     * /
-    private native String getByURL0(String callerId, String url, String action);
-    */
+    /**
+     * Selects one of handlers passed as the <code>list</code> array
+     * @param list array of pairs (handlerID, action name)
+     * @return index of the selected handler
+     */
+    private static native int selectSingleHandler0(String[] pairs);
     
     /**
      * Initialize persistence storage.
@@ -382,5 +378,4 @@ class RegistryStore implements RegistryGate {
      * @return true if success, false - otherwise.
      */
     private static native boolean unregister0(String handlerId);
-
 }

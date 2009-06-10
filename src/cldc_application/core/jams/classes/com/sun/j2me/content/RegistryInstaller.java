@@ -324,7 +324,7 @@ final class RegistryInstaller {
             String localeAttr = prefix.concat(locales[i]);
             String localeValue = appl.getProperty(localeAttr);
             if (localeValue == null) {
-                throw new IllegalArgumentException("missing locale");
+                throw new IllegalArgumentException("missing locale '" + locales[i] + "'");
             }
             String[] actionnames = split(localeValue, ',');
             ActionNameMap map =

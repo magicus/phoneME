@@ -69,11 +69,10 @@ static jchar* rowHandlers[] = {
     L"com.sun.midp.installer.GraphicalInstaller\0"
     L"text/vnd.sun.j2me.app-descriptor\0application/java-archive\0\0"    
     L".jad\0.jar\0\0"
-    L"install\0remove\0\0"
-    L"en\0de\0ru\0\0"
-    L"Install\0Remove\0" // en
-    L"Installieren\0Umziehen\0" // de
-    L"\x0423\x0441\x0442\x0430\x043D\x043E\x0432\x0438\x0442\x044C\0\x0423\x0434\x0430\x043B\x0438\x0442\x044C\0\0" // ru
+    L"install\0install_only\0open\0\0"
+    L"en\0\0"
+    L"Install\0Install Only\0Open\0" // en
+    L"\0" // end of action names
     L"\0" // empty access list
 };
 

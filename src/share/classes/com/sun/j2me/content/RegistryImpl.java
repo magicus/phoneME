@@ -589,6 +589,20 @@ public final class RegistryImpl {
         return false;
     }
 
+	private ContentHandlerImpl selectSingleHandler(InvocationImpl invocation)
+									throws IOException, ContentHandlerException {
+		ContentHandler[] list = findHandler(invocation);
+		if( list.length == 1 )
+			return (ContentHandlerImpl)list[0];
+
+		int idx = gate.selectSingleHandler( (ContentHandlerRegData[])list, 
+												invocation.getAction());
+		if( idx == -1 )
+            throw new ContentHandlerException("canceled",
+                    ContentHandlerException.NO_REGISTERED_HANDLER);
+		return (ContentHandlerImpl)list[ idx ];
+	}
+
     /**
      * Checks the Invocation and uses the ID, type, URL, and action,
      * if present, to find a matching ContentHandler and queues this
@@ -660,8 +674,7 @@ public final class RegistryImpl {
     {
         synchronized (mutex) {
             // Locate the content handler for this Invocation.
-            ContentHandlerImpl handler =
-                        (ContentHandlerImpl)findHandler(invocation)[0];
+            ContentHandlerImpl handler = selectSingleHandler(invocation);
 
             // Fill in information about the invoking application
             invocation.invokingID = getID();
@@ -671,6 +684,7 @@ public final class RegistryImpl {
             invocation.invokingAppName = application.getApplicationName();
 
             boolean shouldExit = invocation.invoke(previous, handler);
+            
             // Remember the invoked invocation for getResponse
             insertActive(invocation);
 
@@ -736,9 +750,7 @@ public final class RegistryImpl {
                ContentHandlerException, SecurityException
     {
         synchronized (mutex) {
-            // Locate the content handler for this Invocation.
-            ContentHandlerImpl handler =
-                                (ContentHandlerImpl)findHandler(invocation)[0];
+            ContentHandlerImpl handler = selectSingleHandler(invocation);
 
             // Save the TID in case the invoke method fails
             int tid = invocation.tid;
