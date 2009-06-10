@@ -4016,7 +4016,7 @@ public class Display {
 
             if (current_orientation != restore_orientation) {
                 java.lang.System.out.println("handleDisplayForegroundNotifyEvent: ROTATE");
-                consumer.handleRotationEvent();
+//                consumer.handleRotationEvent();
             }
 
             // SYNC NOTE: The implementation of dsPaint() could call
@@ -4048,7 +4048,7 @@ public class Display {
                 if (current_orientation != initial_orientation) {
                     restore_orientation = current_orientation;
                     java.lang.System.out.println("handleDisplayBackgroundNotifyEvent: ROTATE");
-                    consumer.handleRotationEvent();
+//                    consumer.handleRotationEvent();
                 }
 
             synchronized (LCDUILock) {

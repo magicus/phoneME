@@ -54,6 +54,7 @@ public interface DisplayAccess {
      * @return Display height.
      */
     public int getDisplayHeight();
+    public boolean isDisplayForeground() ;
 
     /** Called to get the display to request the foreground. */
     public void requestForeground();
